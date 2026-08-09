@@ -2,6 +2,7 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
+import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
@@ -24,8 +25,8 @@ export function PlayerStatusCard(props: {
 			.join("");
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={styles.card}>
+			<div className={styles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}

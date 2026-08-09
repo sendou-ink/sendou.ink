@@ -2,6 +2,7 @@ import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
+import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { modeLabel, stageLabel } from "./labels";
@@ -21,8 +22,8 @@ export function MapStartCard(props: {
 		props;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={styles.card}>
+			<div className={styles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}

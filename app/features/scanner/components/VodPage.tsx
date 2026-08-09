@@ -39,6 +39,7 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
+import scannerStyles from "../scanner.module.css";
 import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";
 import {
@@ -72,6 +73,7 @@ import {
 } from "./sendou-ingest";
 import { sendouUpload } from "./sendou-upload";
 import { thumbnailFromBlob } from "./thumbnail";
+import styles from "./VodPage.module.css";
 
 /** The scan knows the on-screen sides only, not who is playing. */
 const SCANNER_TEAM_LABELS = ["Alpha", "Bravo"] as const;
@@ -551,7 +553,9 @@ export function VodPage({
 		<div>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
 			<div
-				className={clsx("dropzone", { over })}
+				className={clsx(scannerStyles.dropzone, {
+					[scannerStyles.over]: over,
+				})}
 				onDragOver={(e) => {
 					e.preventDefault();
 					setOver(true);
@@ -579,17 +583,18 @@ export function VodPage({
 					/>
 				</label>
 			</div>
-			<div className="controls">
+			<div className={scannerStyles.controls}>
 				{showVodView ? (
 					<>
 						<button type="button" onClick={backToList}>
 							← All VoDs
 						</button>
 						<span
-							className={clsx("status", {
-								watching: status === "scanning",
-								detected: status === "done",
-								idle: status !== "scanning" && status !== "done",
+							className={clsx(scannerStyles.status, {
+								[scannerStyles.watching]: status === "scanning",
+								[scannerStyles.detected]: status === "done",
+								[scannerStyles.idle]:
+									status !== "scanning" && status !== "done",
 							})}
 						>
 							{source === "stored" ? "saved" : status}
@@ -600,7 +605,7 @@ export function VodPage({
 								: null}
 						</span>
 						{progress ? (
-							<span className="score">
+							<span className={scannerStyles.score}>
 								{formatTime(progress.t)} / {formatTime(progress.duration)}
 								{progress.duration > 0
 									? ` (${Math.round((progress.t / progress.duration) * 100)}%)`
@@ -611,13 +616,13 @@ export function VodPage({
 							</span>
 						) : null}
 						{upload?.url ? (
-							<Link to={upload.url} className="link-button">
+							<Link to={upload.url} className={styles.linkButton}>
 								<Video aria-hidden />
 								Add VoD
 							</Link>
 						) : null}
 						{upload?.problem ? (
-							<span className="score">
+							<span className={scannerStyles.score}>
 								upload unavailable: {upload.problem}
 							</span>
 						) : null}
@@ -634,8 +639,8 @@ export function VodPage({
 						) : null}
 						{resultsSend ? (
 							<span
-								className={clsx("score", {
-									error:
+								className={clsx(scannerStyles.score, {
+									[scannerStyles.error]:
 										resultsSend.state === "done" && Boolean(resultsSend.error),
 								})}
 							>
@@ -655,21 +660,21 @@ export function VodPage({
 					</>
 				) : null}
 			</div>
-			{error ? <p className="error">{error}</p> : null}
+			{error ? <p className={scannerStyles.error}>{error}</p> : null}
 			{showVodView && telemetry ? (
 				<TelemetryPanel telemetry={telemetry} />
 			) : null}
 			{!showVodView ? (
-				<div className="vod-list">
+				<div className={styles.vodList}>
 					{vods.length === 0 ? (
-						<p className="score">
+						<p className={scannerStyles.score}>
 							No saved VoDs yet — scan one and it will show up here.
 						</p>
 					) : null}
 					{vods.map((vod) => (
-						<div key={vod.name} className="vod-item">
-							<span className="name">{vod.name}</span>
-							<span className="score">
+						<div key={vod.name} className={styles.vodItem}>
+							<span className={styles.vodName}>{vod.name}</span>
+							<span className={clsx(scannerStyles.score, styles.vodMeta)}>
 								{vod.eventCount} event{vod.eventCount === 1 ? "" : "s"} ·{" "}
 								{formatTime(vod.duration)} · {formatSavedAt(vod.savedAt)}
 							</span>
@@ -684,7 +689,7 @@ export function VodPage({
 									variant="destructive"
 									size="small"
 									shape="square"
-									className="vod-delete"
+									className={styles.vodDelete}
 									icon={<Trash2 />}
 									aria-label="Delete"
 								/>
@@ -694,7 +699,7 @@ export function VodPage({
 				</div>
 			) : null}
 			<div
-				className="live-layout"
+				className={scannerStyles.liveLayout}
 				style={{
 					display: showVodView ? undefined : "none",
 					// a reopened saved VoD has no video to review — give the feed the full width
@@ -704,12 +709,12 @@ export function VodPage({
 				<div style={{ display: source === "scan" ? undefined : "none" }}>
 					<canvas
 						ref={previewRef}
-						className="preview"
+						className={scannerStyles.preview}
 						style={{ display: status === "scanning" ? "block" : "none" }}
 					/>
 					<video
 						ref={videoRef}
-						className="preview"
+						className={scannerStyles.preview}
 						muted
 						playsInline
 						controls
@@ -718,9 +723,9 @@ export function VodPage({
 						}}
 					/>
 				</div>
-				<div className="feed">
+				<div className={scannerStyles.feed}>
 					{matches.length === 0 ? (
-						<p className="score">
+						<p className={scannerStyles.score}>
 							{status === "scanning"
 								? "Scanning — matches appear here as scoreboards are detected."
 								: "No matches found in this VoD."}
@@ -840,7 +845,7 @@ function ExportMenu({
 			trigger={
 				<SendouButton
 					icon={<Download />}
-					className="icon-menu"
+					className={scannerStyles.iconMenu}
 					aria-label="Export"
 				/>
 			}
@@ -884,7 +889,7 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 	);
 	const coveredS = telemetry.activeVideoS + telemetry.skimVideoS;
 	return (
-		<details className="telemetry">
+		<details className={styles.telemetry}>
 			<summary>
 				telemetry · analyzed {telemetry.analyzedFrames}/
 				{telemetry.decodedFrames} decoded frames

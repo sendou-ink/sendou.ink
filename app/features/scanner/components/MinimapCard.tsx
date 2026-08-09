@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { Ability } from "~/components/Ability";
@@ -10,10 +11,12 @@ import {
 	type MinimapTeammate,
 } from "../core/detectors/minimap/index";
 import type { CardSlot } from "../core/detectors/minimap/rois";
+import eventCardStyles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
+import styles from "./MinimapCard.module.css";
 
 const ENEMY_SLOT_LETTERS = ["A", "B", "X", "Y"] as const;
 
@@ -39,10 +42,10 @@ function AbilityRow({
 
 function TeammateMarker({ slot }: { slot: CardSlot }) {
 	if (slot === "self") {
-		return <span className="slot-marker">●</span>;
+		return <span className={styles.slotMarker}>●</span>;
 	}
 	return (
-		<span className={`slot-marker ${slot}`}>
+		<span className={clsx(styles.slotMarker, styles[slot])}>
 			<ChevronUp strokeWidth={3.5} aria-label={slot} role="img" />
 		</span>
 	);
@@ -56,30 +59,36 @@ function PlayerRow({
 	player: MinimapTeammate | MinimapEnemy;
 }) {
 	return (
-		<div className="minimap-player">
+		<div className={styles.player}>
 			{marker}
 			{player.weaponId !== null ? (
 				<WeaponImage
 					weaponSplId={player.weaponId}
 					variant="build"
 					size={24}
-					className="weapon-icon"
+					className={styles.weapon}
 				/>
 			) : (
-				<span className="weapon-missing">?</span>
+				<span className={styles.weaponMissing}>?</span>
 			)}
-			<span className="name">{player.name ?? ""}</span>
+			<span className={styles.name}>{player.name ?? ""}</span>
 			{player.dead ? (
-				<span className="status-chip dead" title="respawning (struck out)">
+				<span
+					className={clsx(styles.statusChip, styles.dead)}
+					title="respawning (struck out)"
+				>
 					✕
 				</span>
 			) : null}
 			{player.specialReady ? (
-				<span className="status-chip special" title="special ready (camo)">
+				<span
+					className={clsx(styles.statusChip, styles.special)}
+					title="special ready (camo)"
+				>
 					★
 				</span>
 			) : null}
-			<span className="abilities">
+			<span className={styles.abilities}>
 				<AbilityRow abilities={player.abilities} />
 			</span>
 		</div>
@@ -100,8 +109,8 @@ export function MinimapCard(props: {
 		props;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={eventCardStyles.card}>
+			<div className={eventCardStyles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -117,8 +126,8 @@ export function MinimapCard(props: {
 					fixture={{ data, type: "Minimap" }}
 				/>
 			</div>
-			<div className="teams">
-				<div className="team">
+			<div className={eventCardStyles.teams}>
+				<div className={eventCardStyles.team}>
 					<h3>Team</h3>
 					{data.teammates.map((p) => (
 						<PlayerRow
@@ -129,13 +138,13 @@ export function MinimapCard(props: {
 					))}
 				</div>
 				{data.enemies.length > 0 ? (
-					<div className="team">
+					<div className={eventCardStyles.team}>
 						<h3>Enemies</h3>
 						{data.enemies.map((p, i) => (
 							<PlayerRow
 								key={i}
 								marker={
-									<span className="slot-marker">
+									<span className={styles.slotMarker}>
 										{ENEMY_SLOT_LETTERS[i] ?? i + 1}
 									</span>
 								}

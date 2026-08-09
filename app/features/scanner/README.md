@@ -10,9 +10,8 @@ detected game per object, every field nullable — which feed `/ingest`
 emberz repo; see `MIGRATION.md` there.
 
 Deliberate convention exceptions (dev tool, ported wholesale): the UI is
-English-only (no i18next) and styled by one global `components/styles.css`
-instead of per-component CSS modules; `tests/node-test-compat.ts` uses a
-default export to stay a `node:test` drop-in.
+English-only (no i18next) and `tests/node-test-compat.ts` uses a default
+export to stay a `node:test` drop-in.
 
 ## Commands
 

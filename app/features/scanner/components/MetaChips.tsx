@@ -7,6 +7,7 @@
 import { Clock, Gauge } from "lucide-react";
 import { EventTypeIcon } from "./EventTypeIcon";
 import { formatTime } from "./format";
+import styles from "./MetaChips.module.css";
 
 export function MetaPills({
 	t,
@@ -20,16 +21,16 @@ export function MetaPills({
 	label: string;
 }) {
 	return (
-		<div className="meta-pills">
-			<span className="meta-chip" title="Video timestamp">
-				<Clock size={12} aria-hidden className="meta-chip-icon" />
+		<div className={styles.pills}>
+			<span className={styles.chip} title="Video timestamp">
+				<Clock size={12} aria-hidden />
 				{formatTime(t)}
 			</span>
-			<span className="meta-chip" title="Detection confidence">
-				<Gauge size={12} aria-hidden className="meta-chip-icon" />
+			<span className={styles.chip} title="Detection confidence">
+				<Gauge size={12} aria-hidden />
 				{(confidence * 100).toFixed(0)}%
 			</span>
-			<span className="status detected">
+			<span className={styles.chip}>
 				<EventTypeIcon type={type} />
 				{label}
 			</span>

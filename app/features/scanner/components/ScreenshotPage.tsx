@@ -30,6 +30,7 @@ import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
 import type { DetectedEvent } from "../core/detectors/types";
+import scannerStyles from "../scanner.module.css";
 import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";
 import { AnalyzerClient } from "../worker/client";
@@ -43,6 +44,7 @@ import {
 	stageLabel,
 	weaponLabel,
 } from "./labels";
+import styles from "./ScreenshotPage.module.css";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
 
@@ -77,11 +79,11 @@ function RoiCrop(props: {
 
 function Stat(props: { label: string; raw?: unknown; children: ReactNode }) {
 	return (
-		<span className="stat">
-			<span className="stat-label">{props.label}</span>
-			<span className="stat-value">{props.children}</span>
+		<span className={styles.stat}>
+			<span className={styles.statLabel}>{props.label}</span>
+			<span className={styles.statValue}>{props.children}</span>
 			{props.raw != null && props.raw !== "" ? (
-				<span className="stat-raw">raw: {String(props.raw)}</span>
+				<span className={styles.statRaw}>raw: {String(props.raw)}</span>
 			) : null}
 		</span>
 	);
@@ -104,15 +106,18 @@ function LabeledCrop(props: {
 /** One pill per player slot: number = alive, ★ = special held, ✗ = splatted. */
 function StatusSlots(props: { data: PlayerStatusData }) {
 	return (
-		<span className="status-slots">
+		<span className={styles.statusSlots}>
 			{([0, 1] as const).map((side) => (
-				<span key={side} className="status-side">
+				<span key={side} className={styles.statusSide}>
 					{props.data.dead[side].map((dead, slot) => {
 						const special = !dead && props.data.special[side][slot];
 						return (
 							<span
 								key={slot}
-								className={clsx("status-slot", { dead, special })}
+								className={clsx(styles.statusSlot, {
+									[styles.dead]: dead,
+									[styles.special]: special,
+								})}
 							>
 								{dead ? "✗" : special ? "★" : slot + 1}
 							</span>
@@ -511,7 +516,9 @@ export function ScreenshotPage() {
 		<div>
 			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
 			<div
-				className={clsx("dropzone", { over })}
+				className={clsx(scannerStyles.dropzone, {
+					[scannerStyles.over]: over,
+				})}
 				onDragOver={(e) => {
 					e.preventDefault();
 					setOver(true);
@@ -540,10 +547,10 @@ export function ScreenshotPage() {
 				</label>
 				{busy ? " — analyzing…" : null}
 			</div>
-			{error ? <p className="error">{error}</p> : null}
+			{error ? <p className={scannerStyles.error}>{error}</p> : null}
 
 			<div
-				className="screenshot-frame"
+				className={styles.frame}
 				style={{ display: frame ? "block" : "none" }}
 			>
 				<canvas ref={displayRef} />
@@ -575,26 +582,30 @@ export function ScreenshotPage() {
 			) : null}
 
 			{Object.keys(results).length > 0 ? (
-				<div className="gate-list">
+				<div className={styles.gateList}>
 					{Object.values(results).map((result) => (
 						<div
 							key={result.detector}
-							className={clsx("gate-row", { fired: result.gate.pass })}
+							className={clsx(styles.gateRow, {
+								[styles.fired]: result.gate.pass,
+							})}
 						>
-							<span className="gate-badge">
+							<span className={styles.gateBadge}>
 								{result.gate.pass ? "fired" : "no fire"}
 							</span>
-							<span className="gate-name">{result.detector}</span>
-							<span className="gate-score">{result.gate.score.toFixed(3)}</span>
-							<span className="gate-note">{gateSummary(result)}</span>
+							<span className={styles.gateName}>{result.detector}</span>
+							<span className={styles.gateScore}>
+								{result.gate.score.toFixed(3)}
+							</span>
+							<span className={styles.gateNote}>{gateSummary(result)}</span>
 						</div>
 					))}
 				</div>
 			) : null}
 
 			{frame && event && isReplay ? (
-				<div className="detail">
-					<div className="detail-stats">
+				<div className={styles.detail}>
+					<div className={styles.detailStats}>
 						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
 						<Stat label="code" raw={event.debug?.codeRaw}>
 							{event.data.replayCode ?? "?"}
@@ -604,7 +615,7 @@ export function ScreenshotPage() {
 						</Stat>
 						<Stat label="winner panel">{winnerSide}</Stat>
 					</div>
-					<div className="detail-crops">
+					<div className={styles.detailCrops}>
 						<LabeledCrop
 							label="header"
 							frame={frame}
@@ -620,15 +631,15 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame && event && isScoreboardBattleLog ? (
-				<div className="detail">
-					<div className="detail-stats">
+				<div className={styles.detail}>
+					<div className={styles.detailStats}>
 						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
 						<Stat label="match scores">
 							{JSON.stringify(event.data.matchScores)}
 						</Stat>
 						<Stat label="winner panel">{winnerSide}</Stat>
 					</div>
-					<div className="detail-crops">
+					<div className={styles.detailCrops}>
 						<LabeledCrop
 							label="header top"
 							frame={frame}
@@ -644,12 +655,12 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame && event && isDeath ? (
-				<div className="detail">
+				<div className={styles.detail}>
 					{(() => {
 						const data = event.data as unknown as DeathData;
 						return (
 							<>
-								<div className="detail-stats">
+								<div className={styles.detailStats}>
 									<Stat label="weapon" raw={event.debug?.weaponRaw}>
 										{weaponLabel(data.weaponType, data.weaponId) ?? "?"}
 									</Stat>
@@ -660,7 +671,7 @@ export function ScreenshotPage() {
 										{data.abilities.map((row) => row.join(" ")).join(" | ")}
 									</Stat>
 								</div>
-								<div className="detail-crops">
+								<div className={styles.detailCrops}>
 									<LabeledCrop
 										label="weapon line"
 										frame={frame}
@@ -679,12 +690,12 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame && event && isMapStart ? (
-				<div className="detail">
+				<div className={styles.detail}>
 					{(() => {
 						const data = event.data as unknown as MapStartData;
 						return (
 							<>
-								<div className="detail-stats">
+								<div className={styles.detailStats}>
 									<Stat label="mode" raw={event.debug?.modeReading}>
 										{modeLabel(data.mode) ?? "?"}
 									</Stat>
@@ -692,7 +703,7 @@ export function ScreenshotPage() {
 										{stageLabel(data.stage) ?? "?"}
 									</Stat>
 								</div>
-								<div className="detail-crops">
+								<div className={styles.detailCrops}>
 									<LabeledCrop
 										label="mode block"
 										frame={frame}
@@ -712,12 +723,12 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame && event && isOwn ? (
-				<div className="detail">
+				<div className={styles.detail}>
 					{(() => {
 						const data = event.data as unknown as ScoreboardOwnData;
 						return (
 							<>
-								<div className="detail-stats">
+								<div className={styles.detailStats}>
 									<Stat label="weapon" raw={event.debug?.weaponReading}>
 										{mainWeaponLabel(data.weaponId) ?? "?"}
 									</Stat>
@@ -725,7 +736,7 @@ export function ScreenshotPage() {
 										{data.abilities.map((row) => row.join(" ")).join(" | ")}
 									</Stat>
 								</div>
-								<div className="detail-crops">
+								<div className={styles.detailCrops}>
 									<LabeledCrop
 										label="title band"
 										frame={frame}
@@ -752,12 +763,12 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame && event && isMinimap ? (
-				<div className="detail">
+				<div className={styles.detail}>
 					{(() => {
 						const data = event.data as unknown as MinimapData;
 						return (
 							<>
-								<div className="detail-stats">
+								<div className={styles.detailStats}>
 									<Stat label="stage">{stageLabel(data.stage) ?? "?"}</Stat>
 									<Stat label="view">
 										{data.spectator ? "spectator map" : "POV overlay"}
@@ -782,7 +793,7 @@ export function ScreenshotPage() {
 									) : null}
 								</div>
 								{!data.spectator ? (
-									<div className="detail-crops">
+									<div className={styles.detailCrops}>
 										{minimap.CARD_LAYOUTS.map((card) => (
 											<LabeledCrop
 												key={card.slot}
@@ -800,7 +811,7 @@ export function ScreenshotPage() {
 			) : null}
 
 			{frame && event && isObjective ? (
-				<div className="detail">
+				<div className={styles.detail}>
 					{(() => {
 						const data = event.data as unknown as ObjectiveData;
 						const status = active?.events.find(
@@ -808,7 +819,7 @@ export function ScreenshotPage() {
 						) as DetectedEvent<PlayerStatusData> | undefined;
 						return (
 							<>
-								<div className="detail-stats">
+								<div className={styles.detailStats}>
 									<Stat label="timer">{formatTimer(data.time)}</Stat>
 									<Stat label="score">
 										{data.score[0] ?? "?"}–{data.score[1] ?? "?"}
@@ -832,7 +843,7 @@ export function ScreenshotPage() {
 										</>
 									) : null}
 								</div>
-								<div className="detail-crops">
+								<div className={styles.detailCrops}>
 									<LabeledCrop
 										label="left count"
 										frame={frame}
@@ -873,7 +884,7 @@ export function ScreenshotPage() {
 			!isOwn &&
 			!isMinimap &&
 			!isObjective ? (
-				<table className="inspector">
+				<table className={styles.inspector}>
 					<thead>
 						<tr>
 							<th>row</th>
@@ -895,16 +906,23 @@ export function ScreenshotPage() {
 										<RoiCrop frame={frame} roi={roi.weapon} />
 									</td>
 									<td>
-										<div className="candidates weapon-candidates">
+										<div
+											className={clsx(
+												styles.candidates,
+												styles.weaponCandidates,
+											)}
+										>
 											{dbg?.weapon?.top.map((c) => (
-												<span className="cand" key={c.id}>
+												<span className={styles.candidate} key={c.id}>
 													<img
-														className="weapon-icon"
+														className={styles.weaponIcon}
 														src={`${mainWeaponImageUrl(Number(c.id) as MainWeaponId)}.avif`}
 														alt={c.id}
 													/>
 													{c.id}
-													<span className="score">{c.score.toFixed(3)}</span>
+													<span className={scannerStyles.score}>
+														{c.score.toFixed(3)}
+													</span>
 												</span>
 											))}
 										</div>
@@ -912,20 +930,24 @@ export function ScreenshotPage() {
 									<td>
 										<RoiCrop frame={frame} roi={roi.name} />
 										<b>{player?.name || "—"}</b>{" "}
-										<span className="score">{dbg?.nameScore.toFixed(3)}</span>
+										<span className={scannerStyles.score}>
+											{dbg?.nameScore.toFixed(3)}
+										</span>
 									</td>
 									<td>
 										<RoiCrop frame={frame} roi={roi.paint} />
 										<b>{player?.paint ?? "—"}</b>{" "}
-										<span className="score">{dbg?.paintScore.toFixed(3)}</span>
+										<span className={scannerStyles.score}>
+											{dbg?.paintScore.toFixed(3)}
+										</span>
 									</td>
 									<td>
-										<div className="candidates">
+										<div className={styles.candidates}>
 											{([0, 1, 2] as const).map((s) => (
-												<span className="cand" key={s}>
+												<span className={styles.candidate} key={s}>
 													<RoiCrop frame={frame} roi={roi.stats[s]} scale={2} />
 													<b>{[player?.ka, player?.d, player?.s][s] ?? "—"}</b>
-													<span className="score">
+													<span className={scannerStyles.score}>
 														{dbg?.statScores[s].toFixed(2)}
 													</span>
 												</span>

@@ -18,6 +18,7 @@ import type { BuiltMatch } from "../core/match-builder";
 import { assignMatchSets } from "../core/match-sets";
 import type { ScannerLobby } from "../scanner-types";
 import { SetDivider } from "./MatchCard";
+import styles from "./MatchLobbyTabs.module.css";
 
 type LobbyGroup = "private" | "x" | "other";
 
@@ -62,7 +63,7 @@ export function MatchLobbyTabs<E extends DetectedEvent>({
 				))}
 			</SendouTabList>
 			{groups.map(({ group, matches: groupMatches }) => (
-				<SendouTabPanel key={group} id={group} className="match-list">
+				<SendouTabPanel key={group} id={group} className={styles.matchList}>
 					<MatchList
 						matches={groupMatches}
 						sets={group === "private"}

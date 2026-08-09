@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { WeaponImage } from "~/components/Image";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import type {
@@ -6,7 +7,9 @@ import type {
 } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
+import scannerStyles from "../scanner.module.css";
 import { AbilityPopover } from "./AbilityGrid";
+import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
 import { useEventTimeFormatter } from "./format";
@@ -24,18 +27,18 @@ function PlayerRows({
 	abilities?: PlayerAbilityMap;
 }) {
 	return (
-		<table className="players">
+		<table className={styles.players}>
 			<tbody>
 				{players.map((p, i) => (
 					<tr key={i}>
 						<td>
-							<span className="weapon-cell">
+							<span className={styles.weaponCell}>
 								{p.weaponId !== null ? (
 									<WeaponImage
 										weaponSplId={p.weaponId}
 										variant="build"
 										size={28}
-										className="weapon-icon"
+										className={styles.weaponIcon}
 									/>
 								) : null}
 								{abilities?.has(offset + i) ? (
@@ -44,8 +47,8 @@ function PlayerRows({
 							</span>
 						</td>
 						<td>{p.name || "?"}</td>
-						<td className="num">{p.paint ?? "?"}p</td>
-						<td className="num">
+						<td className={styles.num}>{p.paint ?? "?"}p</td>
+						<td className={styles.num}>
 							{p.ka ?? "?"}/{p.d ?? "?"}/{p.s ?? "?"}
 						</td>
 					</tr>
@@ -82,8 +85,8 @@ export function ScoreboardCard(props: {
 	const isScoreboardBattleLog = eventType === SCOREBOARD_BATTLE_LOG_EVENT_TYPE;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={styles.card}>
+			<div className={styles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -109,7 +112,7 @@ export function ScoreboardCard(props: {
 				) : null}
 				{data.timestamp ? <span>{data.timestamp}</span> : null}
 				{data.replayCode ? (
-					<span className="score">{data.replayCode}</span>
+					<span className={scannerStyles.score}>{data.replayCode}</span>
 				) : null}
 				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
@@ -119,8 +122,8 @@ export function ScoreboardCard(props: {
 					fixture={{ data, type: eventType }}
 				/>
 			</div>
-			<div className="teams">
-				<div className="team win">
+			<div className={styles.teams}>
+				<div className={clsx(styles.team, styles.win)}>
 					<h3>{teamHeading("Victory", data, 0)}</h3>
 					<PlayerRows
 						players={data.players.slice(0, 4)}
@@ -128,7 +131,7 @@ export function ScoreboardCard(props: {
 						abilities={props.abilities}
 					/>
 				</div>
-				<div className="team lose">
+				<div className={clsx(styles.team, styles.lose)}>
 					<h3>{teamHeading("Defeat", data, 1)}</h3>
 					<PlayerRows
 						players={data.players.slice(4, 8)}

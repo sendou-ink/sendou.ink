@@ -43,5 +43,5 @@ export function EventTypeIcon({
 	size?: number;
 }) {
 	const Icon = EVENT_TYPE_ICONS[type] ?? CircleHelp;
-	return <Icon size={size} aria-hidden className="event-type-icon" />;
+	return <Icon size={size} aria-hidden />;
 }

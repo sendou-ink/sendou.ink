@@ -39,6 +39,7 @@ import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { DeathCard } from "./DeathCard";
+import styles from "./EventCard.module.css";
 import type { FixtureData } from "./fixture-export";
 import { useEventTimeFormatter } from "./format";
 import { MapStartCard } from "./MapStartCard";
@@ -89,7 +90,7 @@ export function EventCard(props: {
 	const card = renderCard(type, data, shared, props.abilities);
 	if (!props.send && !props.onSend) return card;
 	return (
-		<div className="send-wrap">
+		<div className={styles.sendWrap}>
 			{card}
 			<SendStrip send={props.send} onSend={props.onSend} />
 		</div>
@@ -114,12 +115,14 @@ function SendStrip({
 	const state = send?.state;
 	const formatSentAt = useEventTimeFormatter();
 	return (
-		<div className={clsx("send-strip", state ?? "unsent")}>
+		<div className={clsx(styles.sendStrip, state ? styles[state] : null)}>
 			<span>
 				sendou.ink: {state ? SEND_LABELS[state] : "not sent"}
 				{state === "sent" && send ? ` ${formatSentAt(send.at)}` : null}
 			</span>
-			{send?.error ? <span className="error">{send.error}</span> : null}
+			{send?.error ? (
+				<span className={styles.sendError}>{send.error}</span>
+			) : null}
 			{onSend && state !== "sent" && state !== "sending" ? (
 				<button type="button" onClick={onSend}>
 					{state === "failed" ? "Retry" : "Send"}

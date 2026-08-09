@@ -9,6 +9,7 @@ import { ExternalLink, FlaskConical } from "lucide-react";
 import { useEffect, useRef, useState } from "react";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import styles from "./FrameThumb.module.css";
 import { type FixtureData, saveFixtureFromEvent } from "./fixture-export";
 
 export function FrameThumb({
@@ -60,26 +61,26 @@ export function FrameThumb({
 		<>
 			<button
 				type="button"
-				className="thumb-button"
+				className={styles.thumbButton}
 				title="View frame"
 				onClick={show}
 			>
-				<img className="thumb" src={thumbnail} alt="analyzed frame" />
+				<img className={styles.thumb} src={thumbnail} alt="analyzed frame" />
 			</button>
 			{open ? (
 				<SendouDialog
 					isDismissable
 					aria-label="Analyzed frame"
-					className="scanner-frame-dialog"
+					className={styles.dialog}
 					onClose={() => setOpen(false)}
 				>
 					<img
-						className="frame-full"
+						className={styles.frameFull}
 						src={frameUrl ?? thumbnail}
 						alt="analyzed frame"
 					/>
 					{onInspect || onSaveFixture ? (
-						<div className="frame-actions">
+						<div className={styles.frameActions}>
 							{onInspect ? (
 								<SendouButton
 									size="small"

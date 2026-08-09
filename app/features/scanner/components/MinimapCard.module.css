@@ -1,0 +1,96 @@
+.player {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: 3px;
+	font-size: var(--font-xs);
+}
+
+.weaponMissing {
+	flex-shrink: 0;
+	width: 24px;
+	text-align: center;
+	color: var(--color-text-high);
+}
+
+/* the minimap cards are tighter than the scanner's default weapon puck */
+.weapon {
+	flex-shrink: 0;
+	width: 24px;
+	height: 24px;
+	vertical-align: middle;
+	background: var(--color-bg-badge);
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5);
+}
+
+.name {
+	flex: 1 1 0;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.abilities {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	flex-shrink: 0;
+}
+
+.statusChip {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 16px;
+	height: 16px;
+	border-radius: var(--radius-full);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+
+	&.dead {
+		background: var(--color-error-low);
+		color: var(--color-error-high);
+	}
+
+	&.special {
+		background: var(--color-warning-low);
+		color: var(--color-warning-high);
+	}
+}
+
+/* d-pad chevron / face-button pucks, same round-solid language as weapon icons */
+.slotMarker {
+	flex-shrink: 0;
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	width: 20px;
+	height: 20px;
+	border-radius: var(--radius-full);
+	background: var(--color-bg-badge);
+	color: #fff;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+
+	& svg {
+		width: 13px;
+		height: 13px;
+	}
+
+	&.right svg {
+		transform: rotate(90deg);
+	}
+
+	&.down svg {
+		transform: rotate(180deg);
+	}
+
+	&.left svg {
+		transform: rotate(-90deg);
+	}
+}

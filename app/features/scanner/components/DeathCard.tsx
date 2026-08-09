@@ -1,3 +1,4 @@
+import clsx from "clsx";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -5,6 +6,8 @@ import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
 } from "../core/detectors/death/index";
+import styles from "./DeathCard.module.css";
+import eventCardStyles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { weaponLabel } from "./labels";
@@ -25,8 +28,8 @@ export function DeathCard(props: {
 	const weaponName = weaponLabel(data.weaponType, data.weaponId);
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className="card">
-			<div className="meta">
+		<div className={eventCardStyles.card}>
+			<div className={eventCardStyles.meta}>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -41,26 +44,26 @@ export function DeathCard(props: {
 					fixture={{ data, type: "Death" }}
 				/>
 			</div>
-			<div className="teams death">
-				<div className="team">
-					<div className="death-body">
+			<div className={clsx(eventCardStyles.teams, eventCardStyles.death)}>
+				<div className={eventCardStyles.team}>
+					<div className={styles.body}>
 						{data.weaponId !== null && data.weaponType === "MAIN" ? (
 							<WeaponImage
 								weaponSplId={data.weaponId as MainWeaponId}
 								variant="build"
 								size={28}
-								className="weapon-icon"
+								className={eventCardStyles.weaponIcon}
 							/>
 						) : null}
-						<div className="death-info">
-							<span className="death-name">
+						<div className={styles.info}>
+							<span className={styles.name}>
 								splatted by <b>{data.name ?? "?"}</b>
 							</span>
-							<span className="death-weapon">{weaponName ?? "?"}</span>
+							<span className={styles.weapon}>{weaponName ?? "?"}</span>
 						</div>
-						<div className="death-abilities">
+						<div className={styles.abilities}>
 							{data.abilities.map((row, i) => (
-								<div key={i} className="gear">
+								<div key={i} className={styles.gear}>
 									{row.map((id, j) => (
 										<Ability
 											key={j}

@@ -14,6 +14,7 @@ import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
 import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
+import styles from "./EventsSummary.module.css";
 import { EventTypeIcon } from "./EventTypeIcon";
 
 const EVENT_TYPE_LABELS: Record<string, string> = {
@@ -40,23 +41,23 @@ export function EventsSummary({
 	const sorted = Object.entries(counts).toSorted((a, b) => b[1] - a[1]);
 
 	return (
-		<div className="events-summary">
+		<div className={styles.summary}>
 			{sorted.map(([type, count]) => {
 				const label = EVENT_TYPE_LABELS[type] ?? type;
 				return (
 					<span
 						key={type}
-						className="events-summary-type"
+						className={styles.type}
 						title={`${count} ${label}${count === 1 ? "" : "s"}`}
 					>
-						<span className="events-summary-icon">
+						<span className={styles.icon}>
 							<EventTypeIcon type={type} />
 						</span>
 						×{count}
 					</span>
 				);
 			})}
-			<button type="button" className="events-toggle" onClick={onToggle}>
+			<button type="button" className={styles.toggle} onClick={onToggle}>
 				{open ? "Hide events" : "Show events"}
 			</button>
 		</div>

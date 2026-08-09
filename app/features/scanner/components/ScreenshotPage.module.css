@@ -1,0 +1,233 @@
+.frame {
+	position: relative;
+	margin-bottom: var(--s-4);
+
+	& canvas {
+		width: 100%;
+		border-radius: var(--radius-box);
+		border: var(--border-width) solid var(--color-bg-high);
+	}
+}
+
+/* ---- per-detector gate results ---- */
+
+.gateList {
+	display: grid;
+	grid-template-columns: repeat(3, max-content) 1fr;
+	column-gap: var(--s-4);
+	row-gap: var(--s-1-5);
+	align-items: baseline;
+	font-size: var(--font-xs);
+	margin-block: var(--s-4);
+}
+
+.gateRow {
+	display: contents;
+}
+
+.gateBadge {
+	justify-self: start;
+	align-self: center;
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-high);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	white-space: nowrap;
+}
+
+.gateRow:not(.fired) .gateName {
+	color: var(--color-text-high);
+}
+
+.gateRow.fired {
+	& .gateBadge {
+		background: var(--color-success-low);
+		color: var(--color-success-high);
+	}
+
+	& .gateName {
+		font-weight: var(--weight-bold);
+	}
+}
+
+.gateScore {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.gateNote {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+/* ---- fired detector's parse detail ---- */
+
+.detail {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	margin-block: var(--s-4);
+}
+
+.detailStats {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+}
+
+.stat {
+	display: inline-flex;
+	align-items: baseline;
+	gap: var(--s-1-5);
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+	background: var(--color-bg-high);
+	font-size: var(--font-xs);
+}
+
+.statLabel {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	white-space: nowrap;
+}
+
+.statValue {
+	font-weight: var(--weight-bold);
+}
+
+.statRaw {
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+}
+
+.detailCrops {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	align-items: end;
+
+	& figure {
+		margin: 0;
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-1);
+		min-width: 0;
+	}
+
+	& canvas {
+		display: block;
+		max-width: 100%;
+		background: #000;
+		border-radius: var(--radius-selector);
+		border: var(--border-width) solid var(--color-bg-high);
+	}
+
+	& figcaption {
+		color: var(--color-text-high);
+		font-size: var(--font-2xs);
+	}
+}
+
+/* one pill per player slot */
+.statusSlots {
+	display: inline-flex;
+	gap: var(--s-2);
+	align-self: center;
+}
+
+.statusSide {
+	display: inline-flex;
+	gap: var(--s-0-5);
+}
+
+.statusSlot {
+	display: inline-flex;
+	align-items: center;
+	justify-content: center;
+	inline-size: 1.25rem;
+	block-size: 1.25rem;
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-higher);
+	color: var(--color-text-high);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+
+	&.dead {
+		background: var(--color-error-low);
+		color: var(--color-error-high);
+	}
+
+	&.special {
+		background: var(--color-warning-low);
+		color: var(--color-warning-high);
+	}
+}
+
+/* ---- per-row parse inspector ---- */
+
+.inspector {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-xs);
+
+	& th {
+		text-align: left;
+		color: var(--color-text-high);
+		font-size: var(--font-2xs);
+		font-weight: var(--weight-bold);
+		padding: var(--s-1-5);
+		border-bottom: var(--border-style);
+	}
+
+	& td {
+		padding: var(--s-1-5);
+		border-bottom: 1px solid var(--color-bg-high);
+		vertical-align: middle;
+	}
+
+	& canvas {
+		display: block;
+		background: #000;
+		border-radius: var(--radius-selector);
+	}
+}
+
+.candidates {
+	display: flex;
+	gap: var(--s-2);
+	align-items: center;
+}
+
+.candidate {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.weaponCandidates .candidate:first-child {
+	color: var(--color-success);
+}
+
+.weaponIcon {
+	width: 28px;
+	height: 28px;
+	vertical-align: middle;
+	background: var(--color-bg-badge);
+	border-radius: var(--radius-full);
+	padding: var(--s-0-5);
+}
+
+/* the ROI crops set the width; scroll them instead of the whole page */
+@container scanner (width < 700px) {
+	.inspector {
+		display: block;
+		overflow-x: auto;
+	}
+}

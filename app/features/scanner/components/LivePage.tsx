@@ -28,6 +28,7 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
+import scannerStyles from "../scanner.module.css";
 import {
 	clearEvents,
 	deleteEvents,
@@ -43,6 +44,7 @@ import { EventCard } from "./EventCard";
 import { EventsSummary } from "./EventsSummary";
 import { downloadEventsCsv } from "./events-csv";
 import { type FixtureData, saveFixture } from "./fixture-export";
+import styles from "./LivePage.module.css";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import { objectiveDomain, playerStatusTeams } from "./player-status-view";
@@ -305,7 +307,7 @@ export function LivePage({
 
 	return (
 		<div>
-			<div className="controls">
+			<div className={scannerStyles.controls}>
 				{!running ? (
 					<>
 						<button
@@ -319,7 +321,7 @@ export function LivePage({
 						</button>
 						<button
 							type="button"
-							className="outlined"
+							className={scannerStyles.outlined}
 							onClick={() => void start(false)}
 						>
 							Start capture (no sending)
@@ -332,7 +334,7 @@ export function LivePage({
 						</button>
 						<button
 							type="button"
-							className="outlined"
+							className={scannerStyles.outlined}
 							disabled={!sendouUser}
 							title={sendouUser ? undefined : "Log in on sendou.ink first"}
 							onClick={() => {
@@ -345,7 +347,11 @@ export function LivePage({
 						</button>
 					</>
 				)}
-				<select value={deviceId} onChange={(e) => setDeviceId(e.target.value)}>
+				<select
+					className={styles.deviceSelect}
+					value={deviceId}
+					onChange={(e) => setDeviceId(e.target.value)}
+				>
 					<option value="">Default camera (OBS Virtual Camera)</option>
 					{devices.map((d) => (
 						<option key={d.deviceId} value={d.deviceId}>
@@ -354,17 +360,20 @@ export function LivePage({
 					))}
 				</select>
 				<span
-					className={clsx("status", {
-						detected: status === "detected",
-						watching: status === "watching",
-						idle: status !== "detected" && status !== "watching",
+					className={clsx(scannerStyles.status, {
+						[scannerStyles.detected]: status === "detected",
+						[scannerStyles.watching]: status === "watching",
+						[scannerStyles.idle]:
+							status !== "detected" && status !== "watching",
 					})}
 				>
 					{status}
 					{gateScore !== null ? ` · gate ${gateScore.toFixed(2)}` : null}
 				</span>
 				{liveSend ? (
-					<span className="status watching">sending matches live</span>
+					<span className={clsx(scannerStyles.status, scannerStyles.watching)}>
+						sending matches live
+					</span>
 				) : null}
 				<LiveMenu
 					canSaveFixture={running}
@@ -390,13 +399,20 @@ export function LivePage({
 					}}
 				/>
 			</div>
-			{error ? <p className="error">{error}</p> : null}
-			{sendouError ? <p className="error">{sendouError}</p> : null}
-			<div className="live-layout">
-				<video ref={videoRef} className="preview" muted playsInline />
-				<div className="feed">
+			{error ? <p className={scannerStyles.error}>{error}</p> : null}
+			{sendouError ? (
+				<p className={scannerStyles.error}>{sendouError}</p>
+			) : null}
+			<div className={scannerStyles.liveLayout}>
+				<video
+					ref={videoRef}
+					className={scannerStyles.preview}
+					muted
+					playsInline
+				/>
+				<div className={scannerStyles.feed}>
 					{feed.length === 0 ? (
-						<p className="score">No detections yet.</p>
+						<p className={scannerStyles.score}>No detections yet.</p>
 					) : null}
 					<MatchLobbyTabs
 						matches={builtMatches}
@@ -533,7 +549,7 @@ function LiveMenu({
 			trigger={
 				<SendouButton
 					icon={<Ellipsis />}
-					className="icon-menu"
+					className={scannerStyles.iconMenu}
 					aria-label="More actions"
 				/>
 			}

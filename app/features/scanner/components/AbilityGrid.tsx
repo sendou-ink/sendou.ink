@@ -7,6 +7,8 @@ import { Button } from "react-aria-components";
 import { Ability } from "~/components/Ability";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
+import styles from "./AbilityGrid.module.css";
+import eventCardStyles from "./EventCard.module.css";
 
 const ROW_LABELS = ["head", "clothes", "shoes"] as const;
 
@@ -16,7 +18,7 @@ export function AbilityGrid({
 	abilities: AbilityWithUnknown[][];
 }) {
 	return (
-		<table className="players">
+		<table className={eventCardStyles.players}>
 			<tbody>
 				{abilities.map((row, i) => (
 					<tr key={i}>
@@ -48,7 +50,7 @@ export function AbilityPopover({
 		<SendouPopover
 			trigger={
 				<Button
-					className="ability-trigger"
+					className={styles.abilityTrigger}
 					aria-label="Show abilities (from death events)"
 				>
 					<Ability ability={trigger} size="TINY" />

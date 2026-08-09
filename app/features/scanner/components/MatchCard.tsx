@@ -21,6 +21,7 @@ import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
 import { formatTime, useEventTimeFormatter } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
+import styles from "./MatchCard.module.css";
 
 /** the game score a knockout wins at */
 const KO_MATCH_SCORE = 100;
@@ -89,24 +90,24 @@ export function MatchCard({
 
 	const inner = (
 		<>
-			<div className="match-card-main">
+			<div className={styles.main}>
 				{match.mode !== null ? (
-					<ModeImage mode={match.mode} size={30} className="match-mode" />
+					<ModeImage mode={match.mode} size={30} className={styles.mode} />
 				) : null}
-				<div className="match-headline">
-					<div className="match-title">
-						<div className="match-stage">
+				<div className={styles.headline}>
+					<div className={styles.title}>
+						<div className={styles.stage}>
 							{stageLabel(match.stage) ?? "Unknown stage"}
 						</div>
 						<StatusChip send={send} skipReason={skipReason} live={live} />
 					</div>
-					{meta ? <div className="match-meta">{meta}</div> : null}
+					{meta ? <div className={styles.meta}>{meta}</div> : null}
 					<TeamWeapons match={match} />
 				</div>
-				<div className="match-side">
+				<div className={styles.side}>
 					{live ? (
-						<span className="match-chip live">
-							<span className="dot" />
+						<span className={clsx(styles.chip, styles.live)}>
+							<span className={styles.dot} />
 							live
 						</span>
 					) : (
@@ -125,7 +126,7 @@ export function MatchCard({
 							size="small"
 							shape="circle"
 							icon={<ChevronDown />}
-							className={clsx("match-expand", { expanded })}
+							className={clsx(styles.expand, { [styles.expanded]: expanded })}
 							aria-expanded={expanded}
 							aria-label={expanded ? "Hide events" : "Show events"}
 							onPress={() => setExpanded(!expanded)}
@@ -134,17 +135,21 @@ export function MatchCard({
 				</div>
 			</div>
 			{send?.state === "failed" && send.error ? (
-				<div className="match-error">{send.error}</div>
+				<div className={styles.error}>{send.error}</div>
 			) : null}
 		</>
 	);
 
-	const className = clsx("match-card", send?.state, {
-		enter,
-		live,
-		"flash-sent": flash === "sent",
-		"flash-failed": flash === "failed",
-	});
+	const className = clsx(
+		styles.matchCard,
+		send?.state ? styles[send.state] : null,
+		{
+			[styles.enter]: enter,
+			[styles.live]: live,
+			[styles.flashSent]: flash === "sent",
+			[styles.flashFailed]: flash === "failed",
+		},
+	);
 
 	const card =
 		match.stage !== null ? (
@@ -157,16 +162,16 @@ export function MatchCard({
 
 	if (!children) return card;
 	return (
-		<div className="match-card-group">
+		<div className={styles.group}>
 			{card}
-			{expanded ? <div className="match-events">{children}</div> : null}
+			{expanded ? <div className={styles.events}>{children}</div> : null}
 		</div>
 	);
 }
 
 /** Labeled rule above the newest card of each set in the feed. */
 export function SetDivider({ number }: { number: number }) {
-	return <div className="set-divider">Set {number}</div>;
+	return <div className={styles.setDivider}>Set {number}</div>;
 }
 
 function timeRangeLabel(match: ScannerMatch): string {
@@ -186,8 +191,8 @@ function Score({
 	if (match.matchScores === null) {
 		if (!inProgress) return null;
 		return (
-			<span className="match-chip in-progress">
-				<span className="dot" />
+			<span className={clsx(styles.chip, styles.inProgress)}>
+				<span className={styles.dot} />
 				in progress
 			</span>
 		);
@@ -200,12 +205,12 @@ function Score({
 	// scoreboard-sourced matches list the winners first
 	const winnerKnown = match.winner !== null;
 	return (
-		<div className="match-score">
-			<span className={winnerKnown ? "win" : undefined}>
+		<div className={styles.matchScore}>
+			<span className={winnerKnown ? styles.win : undefined}>
 				{scoreLabel(alpha, objectiveScores[0])}
 			</span>
-			<span className="sep"> – </span>
-			<span className={winnerKnown ? "lose" : undefined}>
+			<span> – </span>
+			<span className={winnerKnown ? styles.lose : undefined}>
 				{scoreLabel(bravo, objectiveScores[1])}
 			</span>
 		</div>
@@ -251,10 +256,10 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 	if (alpha.length + bravo.length === 0) return null;
 
 	return (
-		<div className="match-weapons">
+		<div className={styles.weapons}>
 			{alpha.length > 0 ? <WeaponRow weapons={alpha} /> : null}
 			{alpha.length > 0 && bravo.length > 0 ? (
-				<span className="vs">vs</span>
+				<span className={styles.vs}>vs</span>
 			) : null}
 			{bravo.length > 0 ? <WeaponRow weapons={bravo} /> : null}
 		</div>
@@ -264,14 +269,14 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 /** One team's weapons, kept together when the card is too narrow for both. */
 function WeaponRow({ weapons }: { weapons: TeamWeapon[] }) {
 	return (
-		<div className="weapon-row">
+		<div className={styles.weaponRow}>
 			{weapons.map((weapon, i) => (
 				<WeaponImage
 					key={i}
 					weaponSplId={weapon.weaponId}
 					variant="build"
 					size={22}
-					className={clsx("weapon-icon", { pov: weapon.pov })}
+					className={clsx(styles.weapon, { [styles.pov]: weapon.pov })}
 				/>
 			))}
 		</div>
@@ -290,7 +295,7 @@ function StatusChip({
 	const formatSentAt = useEventTimeFormatter();
 	if (skipReason) {
 		return (
-			<span className="match-chip">
+			<span className={styles.chip}>
 				{skipReason === "disconnect" ? "disconnect" : "not ingested"}
 			</span>
 		);
@@ -298,7 +303,7 @@ function StatusChip({
 	if (send?.state === "sent") {
 		return (
 			<span
-				className="match-chip sent"
+				className={clsx(styles.chip, styles.sent)}
 				title={`ingested ${formatSentAt(send.at)}`}
 			>
 				✓
@@ -316,16 +321,19 @@ function StatusChip({
 	}
 	if (send) {
 		return (
-			<span className={clsx("match-chip", send.state)} title={send.error}>
+			<span
+				className={clsx(styles.chip, styles[send.state])}
+				title={send.error}
+			>
 				{send.state === "queued" || send.state === "sending" ? (
-					<span className="dot" />
+					<span className={styles.dot} />
 				) : null}
 				{SEND_CHIP_LABELS[send.state]}
 			</span>
 		);
 	}
 	if (live) return null;
-	return <span className="match-chip">not sent</span>;
+	return <span className={styles.chip}>not sent</span>;
 }
 
 function ingestedMatchUrl(link: IngestedMatchLink): string {
