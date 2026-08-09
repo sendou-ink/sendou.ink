@@ -109,6 +109,16 @@ const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
 const DEAD_RUN_MIN_SECONDS = 3.5;
 const ALIVE_RUN_MIN_SECONDS = 2;
 
+/**
+ * A held special only goes away by being used (or by dying), and regaining
+ * one takes at least this long — no special charges off ~10s of painting
+ * even with max Special Charge Up. So an interior not-ready run flanked by
+ * ready reads closer together than this, with no death inside the run, is
+ * a misread gap (the ready wash pulses through a dim trough; overlays
+ * clip the icons) and is bridged to ready.
+ */
+const SPECIAL_REGAIN_MIN_SECONDS = 10;
+
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
 	/**
@@ -566,19 +576,21 @@ function buildProgress(
 		liveStatuses.length === 0
 			? null
 			: {
-					samples: withImpossibleDeadRunsFlipped(
-						liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
-							const swapped = read.fromMinimap
-								? minimapSwapped
-								: nearestSwapFlag(live, swapFlags, read.t) !== swap;
-							const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
-							return {
-								t: Math.max(0, Math.floor(read.t)),
-								time: read.data.time,
-								special: [read.data.special[a], read.data.special[b]],
-								dead: [read.data.dead[a], read.data.dead[b]],
-							};
-						}),
+					samples: withShortSpecialGapsBridged(
+						withImpossibleDeadRunsFlipped(
+							liveStatuses.map((read): ScannerMatchPlayerStatusSample => {
+								const swapped = read.fromMinimap
+									? minimapSwapped
+									: nearestSwapFlag(live, swapFlags, read.t) !== swap;
+								const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+								return {
+									t: Math.max(0, Math.floor(read.t)),
+									time: read.data.time,
+									special: [read.data.special[a], read.data.special[b]],
+									dead: [read.data.dead[a], read.data.dead[b]],
+								};
+							}),
+						),
 					),
 				};
 
@@ -635,6 +647,54 @@ function withImpossibleDeadRunsFlipped(
 		}
 	}
 	return smoothed;
+}
+
+/**
+ * Bridge per-slot special-ready gaps: an interior not-ready run whose
+ * flanking ready reads sit closer together than a special could truly be
+ * regained (SPECIAL_REGAIN_MIN_SECONDS), with no death inside the run to
+ * explain the loss, is a misread gap (the ready wash pulses through a dim
+ * trough) and reads ready throughout. Short READY runs are left alone — a
+ * just-charged special really can be spent within a read or two. Edge
+ * runs stay too: nothing attests the state beyond the match window.
+ */
+function withShortSpecialGapsBridged(
+	samples: ScannerMatchPlayerStatusSample[],
+): ScannerMatchPlayerStatusSample[] {
+	let bridged = samples;
+	for (const side of [0, 1] as const) {
+		for (let slot = 0; slot < PLAYERS_PER_TEAM; slot++) {
+			const series = samples.map((sample) => sample.special[side][slot]);
+			let runStart = 0;
+			for (let i = 1; i <= series.length; i++) {
+				if (i < series.length && series[i] === series[runStart]) continue;
+				const interiorGap =
+					!series[runStart] && runStart > 0 && i < series.length;
+				const impossiblyShort =
+					interiorGap &&
+					samples[i]!.t - samples[runStart - 1]!.t < SPECIAL_REGAIN_MIN_SECONDS;
+				const diedInside =
+					interiorGap &&
+					samples.slice(runStart, i).some((sample) => sample.dead[side][slot]);
+				if (impossiblyShort && !diedInside) {
+					if (bridged === samples) {
+						bridged = samples.map((sample) => ({
+							...sample,
+							special: [[...sample.special[0]], [...sample.special[1]]] as [
+								PlayerStatusFlags,
+								PlayerStatusFlags,
+							],
+						}));
+					}
+					for (let j = runStart; j < i; j++) {
+						bridged[j]!.special[side][slot] = true;
+					}
+				}
+				runStart = i;
+			}
+		}
+	}
+	return bridged;
 }
 
 /** A status read from either source, sides as read (pre-orientation). */

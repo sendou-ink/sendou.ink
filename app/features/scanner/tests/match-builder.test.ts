@@ -1000,6 +1000,73 @@ test("a lone dead read between sparse reads is kept", () => {
 	assert.deepEqual(built[0]!.match.playerStatus!.samples[1]!.dead, dead);
 });
 
+test("a sub-10s not-ready gap between ready reads with no death bridges to ready", () => {
+	const specialAt = (on: boolean) =>
+		[
+			[on, false, false, false],
+			[false, false, false, false],
+		] as PlayerStatusData["special"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(100, { special: specialAt(true) }),
+		playerStatus(102, { special: specialAt(false) }),
+		playerStatus(104, { special: specialAt(false) }),
+		playerStatus(106, { special: specialAt(true) }),
+		playerStatus(108, { special: specialAt(false) }),
+		scoreboard(300),
+	]);
+	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.special[0][0],
+	);
+	// the interior gap bridges; the trailing not-ready run is an edge and stays
+	assert.deepEqual(slot0Specials, [true, true, true, true, false]);
+});
+
+test("a not-ready gap explained by a death inside it is kept", () => {
+	const read = (special: boolean, dead: boolean) => ({
+		special: [
+			[special, false, false, false],
+			[false, false, false, false],
+		] as PlayerStatusData["special"],
+		dead: [
+			[dead, false, false, false],
+			[false, false, false, false],
+		] as PlayerStatusData["dead"],
+	});
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(100, read(true, false)),
+		playerStatus(102, read(false, true)),
+		playerStatus(106, read(false, false)),
+		playerStatus(108, read(true, false)),
+		scoreboard(300),
+	]);
+	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.special[0][0],
+	);
+	assert.deepEqual(slot0Specials, [true, false, false, true]);
+});
+
+test("a not-ready gap wide enough to regain a special is kept", () => {
+	const specialAt = (on: boolean) =>
+		[
+			[on, false, false, false],
+			[false, false, false, false],
+		] as PlayerStatusData["special"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(100, { special: specialAt(true) }),
+		playerStatus(102, { special: specialAt(false) }),
+		playerStatus(112, { special: specialAt(false) }),
+		playerStatus(114, { special: specialAt(true) }),
+		scoreboard(300),
+	]);
+	const slot0Specials = built[0]!.match.playerStatus!.samples.map(
+		(sample) => sample.special[0][0],
+	);
+	assert.deepEqual(slot0Specials, [true, false, false, true]);
+});
+
 test("a known non-SZ match drops its player-status reads too", () => {
 	const events = [
 		mapStart(0, { mode: "CB" }),

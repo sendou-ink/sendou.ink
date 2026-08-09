@@ -91,12 +91,17 @@ sequenceDiagram
   both geometries on how decisively the bodies read and sticks with the
   established layout unless the other wins clearly — the special-ready
   wash also pulses, so its dim trough is told apart from a splat by its
-  pale body), with
+  pale body, and a cast-layout ready read must also see a washed
+  (ink-poor) body: pale backdrop or the lead banner leaking past an icon
+  edge fakes the shoulder glow on the overhead map view's badge-less
+  strip), with
   the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. The builder additionally
   flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
   outlasts the respawn wait, so those are misread blips (background ink
-  bleeding through a crossed-out icon). Objective reads land on `ScannerMatch` as
+  bleeding through a crossed-out icon) — and bridges sub-10s not-ready
+  gaps between ready reads when no death inside the gap explains them (no
+  special regains that fast, so the gap is the wash's dim pulse trough). Objective reads land on `ScannerMatch` as
   progress samples anchored to the game clock; broadcast replay wipes re-run
   an earlier moment with the counter intact, so the builder keeps only the
   dominant cluster of clock-zero projections (`t + time`) and drops replay

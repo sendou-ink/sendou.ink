@@ -232,6 +232,19 @@ export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
 export const STATUS_READY_MIN_BODY_PALE = 0.32;
 
 /**
+ * Cast-layout ready guard: the cast wash REPLACES the body's team ink
+ * (attested washed bodies <=0.36 — the top end is stage ink bleeding
+ * around the washed icon), so an ink-heavy body proves a bright
+ * shoulder/pale read is backdrop leaking past the icon edge — the
+ * spectator overhead view draws a badge-less strip whose left column sits
+ * ~12px off the cast centers, sliding the probes onto pale buildings and
+ * the team-color lead banner (attested leaks read body ink >=0.44). POV
+ * ready icons instead light up IN team color (attested ink up to 0.68),
+ * so the guard is cast-only.
+ */
+export const STATUS_READY_WASH_MAX_BODY_INK = 0.4;
+
+/**
  * Layout scoring (see player-status.ts): per-slot decisiveness is the
  * body-ink distance from the dead threshold, capped so one saturated slot
  * cannot carry a misaligned geometry. The sticky margin is what the

@@ -9,8 +9,8 @@ import {
 	type ScannerTab,
 	scannerSearchParams,
 } from "../scanner-search-params";
-import styles from "./ScannerApp.module.css";
 import { LivePage } from "./LivePage";
+import styles from "./ScannerApp.module.css";
 import { ScreenshotPage } from "./ScreenshotPage";
 import type { SendouUser } from "./sendou-ingest";
 import { VodPage } from "./VodPage";

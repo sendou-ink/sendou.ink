@@ -35,6 +35,7 @@ import {
 	STATUS_PALE_MIN_VALUE,
 	STATUS_READY_MIN_BODY_PALE,
 	STATUS_READY_MIN_SHOULDER_GLOW,
+	STATUS_READY_WASH_MAX_BODY_INK,
 	STATUS_SHOULDER_BOX_CAST,
 	STATUS_SHOULDER_BOX_POV,
 	STATUS_SLOT_CENTERS_CAST,
@@ -164,7 +165,7 @@ function readSlots(
 				w: bodyBox.w,
 				h: bodyBox.h,
 			});
-			return classifySlot(body.ink, body.pale, shoulder.glow);
+			return classifySlot(body.ink, body.pale, shoulder.glow, layout);
 		}),
 	) as [SlotRead[], SlotRead[]];
 }
@@ -223,11 +224,16 @@ function layoutDecisiveness(frame: Mat, layout: PlayerStatusLayout): number {
 /**
  * State from the three fractions, with a confidence scaled by the distance
  * to the nearest decision boundary (1 at twice the threshold / at zero).
+ * On the cast layout a ready icon is always the wash, which replaces the
+ * body's team ink — an ink-heavy body there means the bright read is
+ * backdrop leaking past the icon edge, not a held special (see
+ * STATUS_READY_WASH_MAX_BODY_INK).
  */
 function classifySlot(
 	bodyInk: number,
 	bodyPale: number,
 	shoulderGlow: number,
+	layout: PlayerStatusLayout,
 ): SlotRead {
 	const dead =
 		bodyInk <= STATUS_DEAD_MAX_BODY_INK &&
@@ -236,7 +242,8 @@ function classifySlot(
 	const special =
 		!dead &&
 		(shoulderGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
-			bodyPale >= STATUS_READY_MIN_BODY_PALE);
+			bodyPale >= STATUS_READY_MIN_BODY_PALE) &&
+		(layout === "pov" || bodyInk <= STATUS_READY_WASH_MAX_BODY_INK);
 	const confidence = dead
 		? Math.min(
 				1,
