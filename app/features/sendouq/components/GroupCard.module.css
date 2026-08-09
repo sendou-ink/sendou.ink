@@ -25,9 +25,10 @@
 	gap: var(--s-2);
 	align-items: center;
 	background-color: var(--color-bg);
-	border-radius: calc(var(--radius-box) + 6px);
+	border-radius: var(--radius-full);
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
+	padding: var(--s-1);
 	padding-inline-end: var(--s-3);
 }
 
@@ -46,6 +47,10 @@
 
 .tier {
 	margin-inline-start: auto;
+
+	& button {
+		height: auto;
+	}
 }
 
 .tierPlaceholder {
