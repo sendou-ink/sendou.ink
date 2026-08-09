@@ -27,6 +27,7 @@ import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
 import { connectAbilities } from "../core/ability-harvest";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
 import {
 	mergeScanTelemetry,
 	type ScanTelemetry,
@@ -177,7 +178,11 @@ export function VodPage({
 	);
 	const vodMatchByEvent = new Map(matches.map((m) => [m.event, m] as const));
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
-	const ungroupedMatches = matches.filter((m) => !groupedEvents.has(m.event));
+	// strip weapon evidence is assignment input, not a detection worth a card
+	const ungroupedMatches = matches.filter(
+		(m) =>
+			!groupedEvents.has(m.event) && m.event.type !== STRIP_WEAPONS_EVENT_TYPE,
+	);
 
 	// "Send results" sends the whole scan in one go, so its outcome maps
 	// onto every ingestable card; a partial failure (some chunks sent, some
@@ -750,7 +755,8 @@ export function VodPage({
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
 								(e) =>
 									e.type !== OBJECTIVE_EVENT_TYPE &&
-									e.type !== PLAYER_STATUS_EVENT_TYPE,
+									e.type !== PLAYER_STATUS_EVENT_TYPE &&
+									e.type !== STRIP_WEAPONS_EVENT_TYPE,
 							);
 							return (
 								<MatchCard

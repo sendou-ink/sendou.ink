@@ -30,6 +30,10 @@ import {
 	type PlayerStatusData,
 	type PlayerStatusFlags,
 } from "./detectors/objective/player-status";
+import {
+	STRIP_WEAPONS_EVENT_TYPE,
+	type StripWeaponsData,
+} from "./detectors/objective/strip-weapons";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import {
@@ -52,6 +56,13 @@ import type {
 	ScannerMatchPlayerStatusSample,
 	ScannerMatchTeam,
 } from "./scanner-match";
+import {
+	applyPermutation,
+	IDENTITY_PERMUTATION,
+	nameSlotRowPermutation,
+	type SlotRowPermutation,
+	weaponSlotRowPermutation,
+} from "./slot-row-assignment";
 
 /** The lobby header value private battles (tournament games) carry. */
 const TOURNAMENT_LOBBY = "PRIVATE";
@@ -146,6 +157,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 	let orphanDeaths: E[] = [];
 	let orphanObjectives: E[] = [];
 	let orphanPlayerStatuses: E[] = [];
+	let orphanStripWeapons: E[] = [];
 	const finalize = (): void => {
 		if (!open) return;
 		if (open.scoreboard || open.minimaps.length > 0) {
@@ -164,6 +176,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			orphanDeaths = [];
 			orphanObjectives = [];
 			orphanPlayerStatuses = [];
+			orphanStripWeapons = [];
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			if (!open) {
 				open = startMatch();
@@ -176,6 +189,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 				open.playerStatuses = orphanPlayerStatuses.filter(
 					(status) => event.t - status.t <= FALLBACK_WINDOW_SECONDS,
 				);
+				open.stripWeapons = orphanStripWeapons.filter(
+					(read) => event.t - read.t <= FALLBACK_WINDOW_SECONDS,
+				);
 			}
 			open.scoreboard = event;
 			vote(open.stageVotes, (event.data as ScoreboardData).stage);
@@ -183,6 +199,7 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			orphanDeaths = [];
 			orphanObjectives = [];
 			orphanPlayerStatuses = [];
+			orphanStripWeapons = [];
 		} else if (event.type === MINIMAP_EVENT_TYPE) {
 			const stage = (event.data as MinimapData).stage;
 			if (open) {
@@ -210,6 +227,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			(open?.objectives ?? orphanObjectives).push(event);
 		} else if (event.type === PLAYER_STATUS_EVENT_TYPE) {
 			(open?.playerStatuses ?? orphanPlayerStatuses).push(event);
+		} else if (event.type === STRIP_WEAPONS_EVENT_TYPE) {
+			(open?.stripWeapons ?? orphanStripWeapons).push(event);
 		}
 	}
 	finalize();
@@ -266,7 +285,8 @@ export function invalidObjectiveEvents<E extends DetectedEvent>(
 			b.sources.filter(
 				(event) =>
 					event.type === OBJECTIVE_EVENT_TYPE ||
-					event.type === PLAYER_STATUS_EVENT_TYPE,
+					event.type === PLAYER_STATUS_EVENT_TYPE ||
+					event.type === STRIP_WEAPONS_EVENT_TYPE,
 			),
 		);
 }
@@ -338,6 +358,8 @@ interface OpenMatch<E extends DetectedEvent> {
 	objectives: E[];
 	/** icon-strip reads; become the match's `playerStatus` samples */
 	playerStatuses: E[];
+	/** sampled per-slot weapon evidence for the slot→row assignment */
+	stripWeapons: E[];
 	scoreboard: E | null;
 	/**
 	 * per-stage read counts (a MapStart's stage seeds it); the plurality
@@ -356,6 +378,7 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 		deaths: [],
 		objectives: [],
 		playerStatuses: [],
+		stripWeapons: [],
 		scoreboard: null,
 		stageVotes: new Map(),
 		lastMinimapT: null,
@@ -406,6 +429,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		...open.deaths,
 		...open.objectives,
 		...open.playerStatuses,
+		...open.stripWeapons,
 		...(open.scoreboard ? [open.scoreboard] : []),
 	].sort((a, b) => a.t - b.t);
 
@@ -428,6 +452,10 @@ function toBuiltMatch<E extends DetectedEvent>(
 		t: event.t,
 		data: event.data as PlayerStatusData,
 	}));
+	const stripWeapons = open.stripWeapons.map((event) => ({
+		t: event.t,
+		data: event.data as StripWeaponsData,
+	}));
 	const minimapReads = open.minimaps.map((event) => ({
 		t: event.t,
 		data: event.data as MinimapData,
@@ -443,6 +471,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const progress = buildProgress(
 		counterModeValid ? objectives : [],
 		counterModeValid ? playerStatuses : [],
+		counterModeValid ? stripWeapons : [],
 		minimapReads,
 		board,
 		minimapTeamColors(minimaps),
@@ -515,14 +544,25 @@ function floorOrNull(t: number | undefined): number | null {
  * Their sides are own/alpha-vs-enemy/bravo — camera-stable, unlike the
  * plates — so they skip the per-read cluster orientation and map to
  * `teams` through the same minimap ink anchor the whole match uses
- * (identity on a minimap-grouped match by construction). Whether the
- * minimap's card order matches the icon strip's slot order within a side
- * is unattested so far; both follow the order `teams` players are seated
- * in for their respective sources.
+ * (identity on a minimap-grouped match by construction).
+ *
+ * Within a side, the strip's slot order is the lobby seating while a
+ * results scoreboard re-sorts its rows per game (attested in the
+ * sendou-triton VoD) — so on a scoreboard-closed match each side's slots
+ * are reordered into row order via the slot→row assignment
+ * (slot-row-assignment.ts): weapon votes from the sampled StripWeapons
+ * evidence plus the minimap's card columns, which mirror the strip's
+ * seating (attested for the enemy column; the spectator screen's own
+ * column is assumed symmetric). The POV overlay's teammate diamond
+ * follows neither order, so diamond-sourced flags map by card name
+ * instead, and keep their as-drawn order when too few names resolve. A
+ * minimap-grouped match's `teams` come from the cards themselves, so its
+ * samples stay as drawn by construction.
  */
 function buildProgress(
 	objectives: readonly { t: number; data: ObjectiveData }[],
 	playerStatuses: readonly { t: number; data: PlayerStatusData }[],
+	stripWeapons: readonly { t: number; data: StripWeaponsData }[],
 	minimapReads: readonly { t: number; data: MinimapData }[],
 	board: ScoreboardData | undefined,
 	minimapColors: [InkRgb | null, InkRgb | null] | null,
@@ -555,6 +595,18 @@ function buildProgress(
 		: minimapAnchorSwap(clusterHues, minimapColors);
 	const minimapSwapped = swap !== minimapAnchorSwap(clusterHues, minimapColors);
 
+	const perms = board
+		? slotRowPermutations(
+				board,
+				stripWeapons,
+				minimapReads,
+				live,
+				swapFlags,
+				swap,
+				minimapSwapped,
+			)
+		: null;
+
 	const objective =
 		oriented.length === 0
 			? null
@@ -583,11 +635,20 @@ function buildProgress(
 									? minimapSwapped
 									: nearestSwapFlag(live, swapFlags, read.t) !== swap;
 								const [a, b] = swapped ? ([1, 0] as const) : ([0, 1] as const);
+								const arrange = (
+									flags: readonly [PlayerStatusFlags, PlayerStatusFlags],
+								): [PlayerStatusFlags, PlayerStatusFlags] =>
+									[a, b].map((source, side) =>
+										applyPermutation(
+											flags[source]!,
+											readPermutation(perms, read, source, side as 0 | 1),
+										),
+									) as [PlayerStatusFlags, PlayerStatusFlags];
 								return {
 									t: Math.max(0, Math.floor(read.t)),
 									time: read.data.time,
-									special: [read.data.special[a], read.data.special[b]],
-									dead: [read.data.dead[a], read.data.dead[b]],
+									special: arrange(read.data.special),
+									dead: arrange(read.data.dead),
 								};
 							}),
 						),
@@ -595,6 +656,136 @@ function buildProgress(
 				};
 
 	return { objective, playerStatus };
+}
+
+/** The slot→row permutations of a scoreboard-closed match, per source. */
+interface SlotRowPerms {
+	/** per teams side, for strip-seated slots (the strip and card columns) */
+	strip: [SlotRowPermutation, SlotRowPermutation];
+	/** for the POV diamond's teammate flags; null = keep as drawn */
+	diamond: SlotRowPermutation | null;
+}
+
+/**
+ * How much one minimap card's parsed weapon counts next to the strip
+ * evidence's raw NCC scores (~0.3-0.6 per candidate per read): the card
+ * parser is gated on a clean read, so one card outweighs a single strip
+ * sample without being able to drown a match's worth of them.
+ */
+const MINIMAP_CARD_VOTE = 1;
+
+/**
+ * Accumulate the match's weapon votes (sampled strip evidence oriented
+ * read-by-read like the status samples; minimap cards through the match's
+ * minimap anchor) and solve each side's slot→row assignment against the
+ * scoreboard's weapons, plus the diamond's name-based assignment for POV
+ * teammate cards.
+ */
+function slotRowPermutations(
+	board: ScoreboardData,
+	stripWeapons: readonly { t: number; data: StripWeaponsData }[],
+	minimapReads: readonly { t: number; data: MinimapData }[],
+	live: readonly { t: number; data: ObjectiveData }[],
+	swapFlags: readonly boolean[],
+	swap: boolean,
+	minimapSwapped: boolean,
+): SlotRowPerms {
+	const votes: Map<MainWeaponId, number>[][] = [0, 1].map(() =>
+		[0, 1, 2, 3].map(() => new Map<MainWeaponId, number>()),
+	);
+	const addVote = (
+		side: 0 | 1,
+		slot: number,
+		weaponId: MainWeaponId,
+		score: number,
+	): void => {
+		const slotVotes = votes[side]![slot]!;
+		slotVotes.set(weaponId, (slotVotes.get(weaponId) ?? 0) + score);
+	};
+
+	for (const read of stripWeapons) {
+		const swapped = nearestSwapFlag(live, swapFlags, read.t) !== swap;
+		for (const side of [0, 1] as const) {
+			const source = swapped ? ((1 - side) as 0 | 1) : side;
+			for (const [slot, candidates] of read.data.slots[source].entries()) {
+				for (const candidate of candidates ?? []) {
+					addVote(side, slot, candidate.weaponId, candidate.score);
+				}
+			}
+		}
+	}
+
+	// enemy cards mirror the strip seating (attested); the spectator
+	// screen's own column is assumed symmetric. The POV diamond is not
+	// strip-seated and votes for nothing.
+	const enemySide = minimapSwapped ? 0 : 1;
+	for (const read of minimapReads) {
+		for (const [slot, enemy] of read.data.enemies.entries()) {
+			if (enemy.weaponId !== null) {
+				addVote(enemySide, slot, enemy.weaponId, MINIMAP_CARD_VOTE);
+			}
+		}
+		if (!read.data.spectator) continue;
+		for (const [slot, mate] of read.data.teammates.entries()) {
+			if (mate.weaponId !== null) {
+				addVote(
+					(1 - enemySide) as 0 | 1,
+					slot,
+					mate.weaponId,
+					MINIMAP_CARD_VOTE,
+				);
+			}
+		}
+	}
+
+	const rowWeapons = (side: 0 | 1) =>
+		board.players
+			.slice(side * PLAYERS_PER_TEAM, (side + 1) * PLAYERS_PER_TEAM)
+			.map((player) => player.weaponId);
+	const strip = [0, 1].map((side) =>
+		weaponSlotRowPermutation(votes[side]!, rowWeapons(side as 0 | 1)),
+	) as [SlotRowPermutation, SlotRowPermutation];
+
+	const friendlySide = minimapSwapped ? 1 : 0;
+	const cardNames: (string | null)[] = [null, null, null, null];
+	for (const read of minimapReads) {
+		if (read.data.spectator) continue;
+		for (const [slot, mate] of read.data.teammates.entries()) {
+			cardNames[slot] ??= mate.name?.trim() || null;
+		}
+	}
+	const diamond = cardNames.some((name) => name !== null)
+		? nameSlotRowPermutation(
+				cardNames,
+				board.players
+					.slice(
+						friendlySide * PLAYERS_PER_TEAM,
+						(friendlySide + 1) * PLAYERS_PER_TEAM,
+					)
+					.map((player) => player.name.trim() || null),
+			)
+		: null;
+
+	return { strip, diamond };
+}
+
+/**
+ * Which permutation a status read's `sourceSide` flags go through on their
+ * way to teams side `side`: strip-seated sources (the strip itself, card
+ * columns) take the weapon-vote assignment, the POV diamond its name
+ * assignment; a minimap-grouped match (no perms) keeps everything as drawn.
+ */
+function readPermutation(
+	perms: SlotRowPerms | null,
+	read: StatusRead,
+	sourceSide: 0 | 1,
+	side: 0 | 1,
+): SlotRowPermutation {
+	if (!perms) return IDENTITY_PERMUTATION;
+	if (read.fromMinimap && sourceSide === 0 && !read.spectator) {
+		return perms.diamond ?? IDENTITY_PERMUTATION;
+	}
+	return perms.strip[side];
 }
 
 /**
@@ -702,6 +893,12 @@ interface StatusRead {
 	t: number;
 	/** minimap sides are own/enemy — camera-stable, unlike the HUD plates */
 	fromMinimap: boolean;
+	/**
+	 * minimap reads only: the 8-card spectator screen, whose own-side
+	 * column is card-seated like the enemy one — the POV overlay's
+	 * teammate diamond is not (see readPermutation)
+	 */
+	spectator?: boolean;
 	data: {
 		time: number | null;
 		special: [PlayerStatusFlags, PlayerStatusFlags];
@@ -726,6 +923,7 @@ function minimapStatusReads(
 			{
 				t: read.t,
 				fromMinimap: true,
+				spectator: read.data.spectator,
 				data: {
 					time: null,
 					special: [

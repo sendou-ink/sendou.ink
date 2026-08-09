@@ -280,6 +280,62 @@ export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
  */
 export const STATUS_LAYOUT_STICKY_MAX_GAP_S = 30;
 
+// ---- strip weapon-icon evidence (the StripWeapons event) ----
+//
+// Each slot draws the player's weapon render over its squid plate; the
+// match builder aggregates sampled per-slot candidate rankings across a
+// match to solve the strip-slot → scoreboard-row assignment
+// (strip-weapons.ts). Calibrated on the sendou-triton VoD (cast geometry
+// on 720p footage upscaled to canonical space).
+
+/**
+ * Weapon search window relative to a slot center: generous enough to hold
+ * the render at either strip geometry (the render measures ~65px on the
+ * cast strip, smaller on POV) without swallowing a neighbor slot's art.
+ */
+export const STRIP_WEAPON_BOX = { dx: -50, y: 20, w: 100, h: 100 };
+
+/**
+ * Template render heights to try inside the window; the attested cast
+ * strip draws renders at ~55-70px depending on the weapon's aspect.
+ */
+export const STRIP_WEAPON_TEMPLATE_SIZES = [44, 52, 60, 68, 76] as const;
+
+/**
+ * The flat grey the knocked-out plate pixels become and templates are
+ * composited over — mid-grey, so both dark barrels and white bodies keep
+ * contrast against it.
+ */
+export const STRIP_WEAPON_TEMPLATE_BACKGROUND = 90;
+
+/** Ink floor for the NCC coverage penalty over that background. */
+export const STRIP_WEAPON_INK_THRESHOLD = 140;
+
+/**
+ * A plate pixel: saturated and bright (the plate is drawn in team ink),
+ * within the hue band of the region's modal saturated hue. The spread and
+ * value floors sit under the modal-vote floors (+15 in strip-weapons.ts)
+ * so the knockout reaches the plate's dimmer edge pixels the vote skips.
+ */
+export const STRIP_WEAPON_KNOCKOUT_MIN_SPREAD = 55;
+export const STRIP_WEAPON_KNOCKOUT_MIN_VALUE = 90;
+export const STRIP_WEAPON_MAX_PLATE_HUE_DIST = 30;
+
+/**
+ * Candidates kept per slot: single reads only rank the true weapon top-1
+ * about half the time on attested footage, but it lands in the top 8 in
+ * enough reads for the cross-match aggregate to decide.
+ */
+export const STRIP_WEAPON_TOP_K = 8;
+
+/**
+ * Every Nth successful counter read samples the strip weapons: identities
+ * are fixed per match, ~1 read/s makes ~20 samples over a short match —
+ * attested to assign correctly — and the full-atlas NCC sweep is too
+ * heavy to run on every read.
+ */
+export const STRIP_WEAPON_SAMPLE_INTERVAL = 5;
+
 /**
  * Cast-layout discriminator: the spectator HUD always draws white camera
  * badges under the right team's icons; nothing fixed sits there on POV

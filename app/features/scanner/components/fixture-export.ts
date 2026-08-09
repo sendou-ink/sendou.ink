@@ -24,6 +24,10 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
+import {
+	STRIP_WEAPONS_EVENT_TYPE,
+	type StripWeaponsData,
+} from "../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
 import {
@@ -44,7 +48,8 @@ export type FixtureData =
 	| ScoreboardOwnData
 	| MinimapData
 	| ObjectiveData
-	| PlayerStatusData;
+	| PlayerStatusData
+	| StripWeaponsData;
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
@@ -167,6 +172,29 @@ function buildExpectedJson(
 					time: status.time,
 					special: status.special,
 					dead: status.dead,
+				},
+			},
+			null,
+			2,
+		)}\n`;
+	}
+	if (eventType === STRIP_WEAPONS_EVENT_TYPE) {
+		const strip = data as StripWeaponsData;
+		return `${JSON.stringify(
+			{
+				event: eventType,
+				data: {
+					layout: strip.layout,
+					time: strip.time,
+					// the top candidate per slot; hand-correct to the true weapons
+					weapons: strip.slots.map((side) =>
+						side.map((candidates) => candidates?.[0]?.weaponId ?? null),
+					),
+					weaponLabels: strip.slots.map((side) =>
+						side.map((candidates) =>
+							mainWeaponLabel(candidates?.[0]?.weaponId ?? null),
+						),
+					),
 				},
 			},
 			null,

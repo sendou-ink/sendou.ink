@@ -67,6 +67,7 @@ import {
 	SCORE_ROIS,
 	SCORE_TEXT_HEIGHTS,
 	STATUS_LAYOUT_STICKY_MAX_GAP_S,
+	STRIP_WEAPON_SAMPLE_INTERVAL,
 	TIMER_BIN_THRESHOLD,
 	TIMER_DARK_PROBES,
 	TIMER_DIGIT_MIN_CONF,
@@ -74,6 +75,7 @@ import {
 	TIMER_DIGIT_ROI,
 	TIMER_TEXT_HEIGHTS,
 } from "./rois";
+import { parseStripWeapons, type StripWeaponsData } from "./strip-weapons";
 
 export type ObjectiveData = SplatZonesObjectiveData;
 
@@ -137,9 +139,12 @@ interface SideRead {
 
 export function createObjectiveDetector(
 	resources: ScoreboardResources,
-): Detector<ObjectiveData | PlayerStatusData> {
+): Detector<ObjectiveData | PlayerStatusData | StripWeaponsData> {
 	const cv = getCV();
 	let lastStatus: { layout: PlayerStatusLayout; t: number } | undefined;
+	// primed so the very first counter read samples — short matches and
+	// single-frame runs (fixtures) get evidence too
+	let readsSinceWeaponSample = STRIP_WEAPON_SAMPLE_INTERVAL;
 
 	const scoreSets: GlyphSet[] = resources.paintDigits
 		? SCORE_TEXT_HEIGHTS.map((h) =>
@@ -345,7 +350,7 @@ export function createObjectiveDetector(
 	function parse(
 		frame: Mat,
 		t: number,
-	): DetectedEvent<ObjectiveData | PlayerStatusData>[] {
+	): DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[] {
 		const gray = new cv.Mat();
 		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
 
@@ -384,6 +389,24 @@ export function createObjectiveDetector(
 		);
 		lastStatus = { layout: playerStatus.data.layout, t };
 
+		// sampled slot-identity evidence for the strip → scoreboard-row
+		// assignment; every read would re-measure fixed identities at full
+		// template-sweep cost
+		let stripWeapons: DetectedEvent<StripWeaponsData> | null = null;
+		readsSinceWeaponSample++;
+		if (
+			resources.stripWeapons &&
+			readsSinceWeaponSample >= STRIP_WEAPON_SAMPLE_INTERVAL
+		) {
+			readsSinceWeaponSample = 0;
+			stripWeapons = parseStripWeapons(
+				frame,
+				t,
+				playerStatus.data,
+				resources.stripWeapons,
+			);
+		}
+
 		const confidences = sides.flatMap((side) => [
 			...(side.score.value !== null ? [side.score.confidence] : []),
 			...(side.penalty?.value != null ? [side.penalty.confidence] : []),
@@ -416,6 +439,7 @@ export function createObjectiveDetector(
 				},
 			},
 			playerStatus,
+			...(stripWeapons ? [stripWeapons] : []),
 		];
 	}
 

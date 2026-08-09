@@ -96,7 +96,23 @@ sequenceDiagram
   edge fakes the shoulder glow on the overhead map view's badge-less
   strip), with
   the same `time` value so the two reads pair downstream; its fixtures
-  live under `tests/fixtures/player-status/`. The builder additionally
+  live under `tests/fixtures/player-status/`. Within a side the strip's
+  slot order is the lobby seating, while the results scoreboard re-sorts
+  each team per game (attested in the sendou-triton VoD: strip [Planetz,
+  .52, Neo Splash, Snipewriter] vs rows [.52, Neo Splash, Snipewriter,
+  Planetz], and the orders differ per game while the seating holds) — so
+  every 5th counter read also samples a `StripWeapons` evidence event: a
+  ranked weapon-icon match per alive slot (the squid plate's team ink is
+  hue-knocked-out to flat grey first; splatted slots grey the render out
+  and are skipped). Single reads rank the true weapon top-1 only about
+  half the time; the builder aggregates them across the match — plus the
+  minimap cards' parsed weapons, whose column order mirrors the strip
+  seating (attested for the enemy column) — and takes the best-scoring of
+  the 24 slot→row assignments against the scoreboard's weapons
+  (`core/slot-row-assignment.ts`), falling back to as-drawn order on thin
+  or tied evidence. The POV overlay's teammate diamond follows neither
+  order and maps by card name instead. Strip-weapon fixtures live under
+  `tests/fixtures/strip-weapons/`. The builder additionally
   flips sub-2s dead-flag runs flanked by dense opposite reads — a splat
   outlasts the respawn wait, so those are misread blips (background ink
   bleeding through a crossed-out icon) — and bridges sub-10s not-ready

@@ -18,6 +18,7 @@ import {
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
@@ -282,7 +283,10 @@ export function LivePage({
 	const builtMatches = buildScannerMatches(feed);
 	const skipReasons = ingestSkipReasons(builtMatches);
 	const groupedEvents = new Set(builtMatches.flatMap((b) => b.sources));
-	const ungroupedFeed = feed.filter((e) => !groupedEvents.has(e));
+	// strip weapon evidence is assignment input, not a detection worth a card
+	const ungroupedFeed = feed.filter(
+		(e) => !groupedEvents.has(e) && e.type !== STRIP_WEAPONS_EVENT_TYPE,
+	);
 	const abilityMap = connectAbilities(feed);
 
 	const stop = () => {
@@ -430,7 +434,8 @@ export function LivePage({
 							const cardEvents = withoutRepeatEvents(built.sources).filter(
 								(e) =>
 									e.type !== OBJECTIVE_EVENT_TYPE &&
-									e.type !== PLAYER_STATUS_EVENT_TYPE,
+									e.type !== PLAYER_STATUS_EVENT_TYPE &&
+									e.type !== STRIP_WEAPONS_EVENT_TYPE,
 							);
 							const newest = built === builtMatches.at(-1);
 							return (

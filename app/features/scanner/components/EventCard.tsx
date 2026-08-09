@@ -30,6 +30,10 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
+import {
+	STRIP_WEAPONS_EVENT_TYPE,
+	type StripWeaponsData,
+} from "../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
@@ -48,6 +52,7 @@ import { ObjectiveCard } from "./ObjectiveCard";
 import { PlayerStatusCard } from "./PlayerStatusCard";
 import { ScoreboardCard } from "./ScoreboardCard";
 import { ScoreboardOwnCard } from "./ScoreboardOwnCard";
+import { StripWeaponsCard } from "./StripWeaponsCard";
 
 export type GetFrame = () => Promise<Blob | null | undefined>;
 
@@ -157,6 +162,8 @@ function renderCard(
 		<ObjectiveCard {...shared} data={data as ObjectiveData} />
 	) : type === PLAYER_STATUS_EVENT_TYPE ? (
 		<PlayerStatusCard {...shared} data={data as PlayerStatusData} />
+	) : type === STRIP_WEAPONS_EVENT_TYPE ? (
+		<StripWeaponsCard {...shared} data={data as StripWeaponsData} />
 	) : (
 		<ScoreboardCard
 			{...shared}

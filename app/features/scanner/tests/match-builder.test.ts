@@ -14,6 +14,7 @@ import type {
 import { SPECTATOR_SLOTS } from "../core/detectors/minimap/rois";
 import type { ObjectiveData } from "../core/detectors/objective/index";
 import type { PlayerStatusData } from "../core/detectors/objective/player-status";
+import type { StripWeaponsData } from "../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardBattleLogReplayData } from "../core/detectors/scoreboard-battle-log-replay/index";
@@ -858,6 +859,23 @@ function playerStatus(
 	return { type: "PlayerStatus", t, confidence: 0.9, data };
 }
 
+function stripWeaponsEvent(
+	t: number,
+	slots: [(MainWeaponId | null)[], (MainWeaponId | null)[]],
+	{ score = 0.6, time = (300 - Math.round(t)) as number | null } = {},
+): DetectedEvent {
+	const data: StripWeaponsData = {
+		time,
+		layout: "cast",
+		slots: slots.map((side) =>
+			side.map((weaponId) =>
+				weaponId === null ? null : [{ weaponId, score }],
+			),
+		) as StripWeaponsData["slots"],
+	};
+	return { type: "StripWeapons", t, confidence: score, data };
+}
+
 test("player-status reads become teams-order samples on the match", () => {
 	const special = [
 		[true, false, false, false],
@@ -1156,5 +1174,103 @@ test("a losing-side pov swaps minimap-sourced samples into teams order", () => {
 	assert.deepEqual(sample.dead, [
 		[false, false, false, false],
 		[true, false, false, false],
+	]);
+});
+
+// ---- strip-slot → scoreboard-row assignment ----
+
+test("strip weapon evidence reorders status slots into scoreboard rows", () => {
+	// strip seating [2010, 40, 3030, 1001] vs scoreboard rows ALPHA
+	// [40, 1001, 2010, 3030]: slot0 belongs to row2
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(120, {
+			dead: [
+				[true, false, false, false],
+				[false, false, false, false],
+			],
+		}),
+		stripWeaponsEvent(121, [
+			[2010, 40, 3030, 1001],
+			[null, null, null, null],
+		]),
+		scoreboard(300),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples[0]!;
+	assert.deepEqual(sample.dead, [
+		[false, false, true, false],
+		[false, false, false, false],
+	]);
+});
+
+test("weapon evidence below the assignment floor keeps the as-drawn order", () => {
+	const dead = [
+		[true, false, false, false],
+		[false, false, false, false],
+	] as PlayerStatusData["dead"];
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(120, { dead }),
+		stripWeaponsEvent(
+			121,
+			[
+				[2010, null, null, null],
+				[null, null, null, null],
+			],
+			{
+				score: 0.5,
+			},
+		),
+		scoreboard(300),
+	]);
+	assert.deepEqual(built[0]!.match.playerStatus!.samples[0]!.dead, dead);
+});
+
+test("minimap enemy-card weapons vote the strip assignment too", () => {
+	// enemy cards in strip seating [4010, 50, 8000, 210] vs rows BRAVO
+	// [50, 210, 4010, 8000]: the strip-sourced side1 slot0 belongs to row2
+	const seating: (MainWeaponId | null)[] = [4010, 50, 8000, 210];
+	const built = buildScannerMatches([
+		mapStart(0),
+		minimap(60, { bravo: seating }),
+		minimap(90, { bravo: seating }),
+		playerStatus(120, {
+			dead: [
+				[false, false, false, false],
+				[true, false, false, false],
+			],
+		}),
+		scoreboard(300),
+	]);
+	const strip = built[0]!.match.playerStatus!.samples.at(-1)!;
+	assert.deepEqual(strip.dead, [
+		[false, false, false, false],
+		[false, false, true, false],
+	]);
+});
+
+test("pov diamond cards map to scoreboard rows by name", () => {
+	const cards = [
+		{ ...teammate(ALPHA[1]!, 0), name: "w2", dead: true },
+		{ ...teammate(ALPHA[0]!, 1), name: "w1" },
+		{ ...teammate(ALPHA[3]!, 2), name: "w4" },
+		{ ...teammate(ALPHA[2]!, 3), name: "w3" },
+	];
+	const data: MinimapData = {
+		stage: 0 as StageId,
+		spectator: false,
+		teammates: cards,
+		enemies: BRAVO.map((id) => enemy(id)),
+		teamColors: [null, null],
+	};
+	const built = buildScannerMatches([
+		mapStart(0),
+		{ type: "Minimap", t: 90, confidence: 0.8, data } as DetectedEvent,
+		scoreboard(300),
+	]);
+	const sample = built[0]!.match.playerStatus!.samples[0]!;
+	assert.deepEqual(sample.dead, [
+		[false, true, false, false],
+		[false, false, false, false],
 	]);
 });

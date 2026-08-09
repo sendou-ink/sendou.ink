@@ -28,6 +28,10 @@ import {
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
 import {
+	STRIP_WEAPONS_EVENT_TYPE,
+	type StripWeaponsData,
+} from "../core/detectors/objective/strip-weapons";
+import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
 } from "../core/detectors/scoreboard/index";
@@ -114,6 +118,17 @@ function formatMinimapPlayers(data: MinimapData): string {
 		...data.teammates.map((p) => fmt(p.slot, p)),
 		...data.enemies.map((p, i) => fmt(`enemy${i + 1}`, p)),
 	].join("; ");
+}
+
+/** one team's four slots as top-candidate weapon names, ✕ = splatted */
+function formatStripWeaponsSide(data: StripWeaponsData, side: 0 | 1): string {
+	return data.slots[side]
+		.map((candidates) =>
+			candidates === null
+				? "✕"
+				: (mainWeaponLabel(candidates[0]?.weaponId ?? null) ?? "?"),
+		)
+		.join(" | ");
 }
 
 /** one team's four icons as ✕ splatted / ★ special ready / · alive */
@@ -253,6 +268,25 @@ function eventCells(event: CsvEvent): Cell[] {
 				"",
 				"",
 				`${clock}${formatPlayerStatusSide(d, 0)} vs ${formatPlayerStatusSide(d, 1)} (${d.layout})`,
+				"",
+				"",
+			];
+		}
+		case STRIP_WEAPONS_EVENT_TYPE: {
+			const d = event.data as StripWeaponsData;
+			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
+			return [
+				...base,
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				"",
+				`${clock}${formatStripWeaponsSide(d, 0)} vs ${formatStripWeaponsSide(d, 1)} (${d.layout})`,
 				"",
 				"",
 			];

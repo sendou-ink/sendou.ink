@@ -72,6 +72,7 @@ interface ExpectedScoreboard {
 		| "Minimap"
 		| "Objective"
 		| "PlayerStatus"
+		| "StripWeapons"
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
@@ -112,8 +113,15 @@ interface ExpectedScoreboard {
 		special?: [boolean[], boolean[]];
 		/** PlayerStatus only: splatted per slot, [left team, right team] */
 		dead?: [boolean[], boolean[]];
-		/** PlayerStatus only: which icon-strip geometry the frame shows */
+		/** PlayerStatus + StripWeapons: which icon-strip geometry the frame shows */
 		layout?: "pov" | "cast" | "cast-mirror";
+		/**
+		 * StripWeapons only: the true weapon per slot, [left team, right
+		 * team], null = slot skipped (splatted icon). weaponLabels is
+		 * informational for the human corrector.
+		 */
+		weapons?: [(MainWeaponId | null)[], (MainWeaponId | null)[]];
+		weaponLabels?: [(string | null)[], (string | null)[]];
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */
 		spectator?: boolean;
 		/** Minimap only: own-team callout cards in slot order */

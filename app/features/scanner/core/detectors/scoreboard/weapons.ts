@@ -64,6 +64,7 @@ export interface WeaponTemplate {
 export interface WeaponMatch {
 	id: string;
 	score: number;
+	/** best candidates, most likely first (3 unless options.topN says more) */
 	top: { id: string; score: number }[];
 	/** true when a scoped/unscoped twin tie was resolved by the unscoped prior */
 	twinAmbiguous?: boolean;
@@ -308,10 +309,11 @@ function coarseShortlist(
 export function matchWeapon(
 	searchRgb: Mat,
 	templates: WeaponTemplate[],
-	options: { inkThreshold?: number } = {},
+	options: { inkThreshold?: number; topN?: number } = {},
 ): WeaponMatch {
 	const cv = getCV();
 	const inkThreshold = options.inkThreshold ?? INK_THRESHOLD;
+	const topN = options.topN ?? 3;
 
 	// icon ink present in the search region (pixel access needs a copy)
 	const cont = new cv.Mat();
@@ -348,7 +350,7 @@ export function matchWeapon(
 	const ranked = [...best.entries()]
 		.map(([id, score]) => ({ id, score }))
 		.sort((a, b) => b.score - a.score);
-	const top = ranked.slice(0, 3);
+	const top = ranked.slice(0, topN);
 	let first = top[0] ?? { id: "unknown", score: -1 };
 	let twinAmbiguous = false;
 	const unscopedId = SCOPED_TWINS.get(first.id);
@@ -360,7 +362,7 @@ export function matchWeapon(
 			const i = top.findIndex((t) => t.id === twin.id);
 			if (i >= 0) top.splice(i, 1);
 			top.unshift(twin);
-			top.length = Math.min(top.length, 3);
+			top.length = Math.min(top.length, topN);
 		}
 	}
 	return { id: first.id, score: first.score, top, twinAmbiguous };

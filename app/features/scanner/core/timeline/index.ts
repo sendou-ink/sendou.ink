@@ -16,6 +16,7 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	samePlayerStatusData,
 } from "../detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "../detectors/objective/strip-weapons";
 import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
@@ -39,6 +40,12 @@ export interface TimelineOptions {
 	sameEventDataByType: Record<string, (a: unknown, b: unknown) => boolean>;
 	/** events below this confidence are dropped */
 	minConfidence: number;
+	/**
+	 * per-type confidence floor overrides: evidence-carrying events whose
+	 * scores live on a different scale than parse confidences (raw NCC
+	 * peaks) opt out of the shared floor
+	 */
+	minConfidenceByType: Record<string, number>;
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
@@ -54,11 +61,14 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	// stretches into one event per state. Player statuses can revisit an
 	// exact prior state no sooner than a respawn takes (~9s), so their
 	// window must stay under that
+	// strip weapon evidence is sampled every ~5s and consecutive samples are
+	// distinct evidence — only same-frame re-reads should collapse
 	mergeWindowByType: {
 		Death: 8,
 		[MINIMAP_EVENT_TYPE]: 5,
 		[OBJECTIVE_EVENT_TYPE]: 10,
 		[PLAYER_STATUS_EVENT_TYPE]: 5,
+		[STRIP_WEAPONS_EVENT_TYPE]: 2,
 	},
 	sameEventDataByType: {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
@@ -69,6 +79,9 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[PLAYER_STATUS_EVENT_TYPE]: samePlayerStatusData,
 	},
 	minConfidence: 0.6,
+	minConfidenceByType: {
+		[STRIP_WEAPONS_EVENT_TYPE]: 0,
+	},
 };
 
 export type TimelineAction =
@@ -90,7 +103,10 @@ export class TimelineBuilder {
 	}
 
 	push(event: DetectedEvent): TimelineAction {
-		if (event.confidence < this.#options.minConfidence) {
+		const minConfidence =
+			this.#options.minConfidenceByType[event.type] ??
+			this.#options.minConfidence;
+		if (event.confidence < minConfidence) {
 			return { action: "dropped", reason: "low-confidence" };
 		}
 		const window =
