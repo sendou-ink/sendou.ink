@@ -16,5 +16,6 @@ export type Role =
 	| "API_ACCESSER"
 	| "QA"
 	| "DEV"
+	| "SCANNER_TESTER"
 	| "SUPPORTER" // patrons of "Supporter" tier or higher
 	| "MINOR_SUPPORT"; // patrons of "Support" tier or higher

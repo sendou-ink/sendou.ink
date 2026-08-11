@@ -38,8 +38,9 @@ export default function ScannerPage() {
 	const isHydrated = useHydrated();
 	const isAdmin = useHasRole("ADMIN");
 	const isDev = useHasRole("DEV");
+	const isScannerTester = useHasRole("SCANNER_TESTER");
 
-	if (!Config.scannerEnabled && !isAdmin && !isDev) {
+	if (!Config.scannerEnabled && !isAdmin && !isDev && !isScannerTester) {
 		return <Redirect to="/" />;
 	}
 

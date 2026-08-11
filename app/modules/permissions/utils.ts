@@ -2,6 +2,7 @@ import {
 	ADMIN_ID,
 	DEV_IDS,
 	QA_IDS,
+	SCANNER_TESTER_IDS,
 	STAFF_IDS,
 } from "~/features/admin/admin-constants";
 
@@ -25,6 +26,12 @@ export function isQa(user?: { id: number }) {
 	if (!user) return false;
 
 	return QA_IDS.includes(user.id);
+}
+
+export function isScannerTester(user?: { id: number }) {
+	if (!user) return false;
+
+	return SCANNER_TESTER_IDS.includes(user.id);
 }
 
 export function isSupporter(user?: { patronTier: number | null }) {
