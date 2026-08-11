@@ -1,5 +1,7 @@
 import { type ActionFunction, redirect } from "react-router";
+import type { PeakXP } from "~/db/tables-json";
 import { requireUser } from "~/features/auth/core/user.server";
+import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { userPage } from "~/utils/urls";
 import * as UserCardRepository from "../UserCardRepository.server";
@@ -50,19 +52,21 @@ export const action: ActionFunction = async ({ request }) => {
 		xpDivision: data.xpDivision,
 		unverifiedPeakXP:
 			data.unverifiedXpPoints && verifiedXp
-				? {
-						overall: data.unverifiedXpPoints,
-						tentatek:
-							verifiedXp.region === "WEST" ? data.unverifiedXpPoints : null,
-						takoroka:
-							verifiedXp.region === "JPN" ? data.unverifiedXpPoints : null,
-					}
+				? peakXP(data.unverifiedXpPoints, data.xpDivision ?? verifiedXp.region)
 				: null,
 		hiddenCardStats: resolveHiddenStats(data),
 	});
 
 	throw redirect(returnTo ?? userPage(user));
 };
+
+function peakXP(points: number, region: XRankPlacementRegion): PeakXP {
+	return {
+		overall: points,
+		tentatek: region === "WEST" ? points : null,
+		takoroka: region === "JPN" ? points : null,
+	};
+}
 
 function resolveBanner({
 	bannerType,

@@ -237,6 +237,56 @@ describe("UserCardRepository.findAllByUserIds", () => {
 		});
 	});
 
+	it("surfaces self-reported peak XP equal to the other division's verified peak", async () => {
+		await insertVerifiedXp(owner.id, 3100, "WEST");
+		await insertVerifiedXp(owner.id, 3000, "JPN");
+		await withUserId(owner.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 3100, takoroka: 3100, tentatek: null },
+				xpDivision: "JPN",
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
+		);
+
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
+			type: "XP",
+			values: [
+				{ isVerified: false, region: "JPN", points: 3100 },
+				{ isVerified: true, region: "JPN", points: 3000 },
+			],
+		});
+	});
+
+	it("keeps the self-reported peak XP in the picked division without placements there", async () => {
+		await insertVerifiedXp(owner.id, 2639.5, "WEST");
+		await withUserId(owner.id, () =>
+			UserCardRepository.updateOwnCard({
+				shortBio: null,
+				bannerPresetImg: null,
+				bannerImgId: null,
+				unverifiedPeakXP: { overall: 2650, takoroka: 2650, tentatek: null },
+				xpDivision: "JPN",
+				hiddenCardStats: [],
+			}),
+		);
+
+		const { userCards } = await withNoUser(() =>
+			UserCardRepository.findAllByUserIds({ userIds: [owner.id] }),
+		);
+
+		expect(findXpStat(userCards.get(owner.id))).toMatchObject({
+			type: "XP",
+			values: [{ isVerified: false, region: "JPN", points: 2650 }],
+		});
+	});
+
 	it("ignores self-reported peak XP when there is no verified XP", async () => {
 		await withUserId(owner.id, () =>
 			UserCardRepository.updateOwnCard({

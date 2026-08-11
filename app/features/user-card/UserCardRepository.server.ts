@@ -516,8 +516,7 @@ function xpPeaksJson(eb: ExpressionBuilder<Tables, "User">) {
 }
 
 /**
- * Self-reported peak XP from the `User.unverifiedPeakXP` column. Its division is the one the
- * verified XP resolved to, since a claim only counts as one made on top of that value.
+ * Self-reported peak XP from the `User.unverifiedPeakXP` column.
  */
 function xpUnverifiedPointsScalar() {
 	return sql<number | null>`"User"."unverifiedPeakXP" ->> '$.overall'`;
@@ -645,6 +644,7 @@ function enrichUserCardData(
 	const stats = userCardStats({
 		div: cardData.div,
 		plusTier: cardData.plusTier,
+		xpDivision: cardData.xpDivision,
 		xpVerified: verifiedXp(cardData.xpPeaks, cardData.xpDivision),
 		xpUnverifiedPoints: cardData.xpUnverifiedPoints,
 		seasonSkill,
@@ -714,6 +714,7 @@ function enrichBanner(
 function userCardStats({
 	div,
 	plusTier,
+	xpDivision,
 	xpVerified,
 	xpUnverifiedPoints,
 	seasonSkill,
@@ -721,6 +722,7 @@ function userCardStats({
 }: {
 	div: string | null;
 	plusTier: number | null;
+	xpDivision: XRankPlacementRegion | null;
 	xpVerified: { points: number; region: XRankPlacementRegion } | null;
 	xpUnverifiedPoints: number | null;
 	seasonSkill: TieredSkill | undefined;
@@ -729,26 +731,22 @@ function userCardStats({
 	const stats: Array<UserCardStat> = [];
 
 	if (xpVerified) {
-		const xpValues: Array<UserCardStatXPValue> = [];
-		// self-reported peak XP is only surfaced as a valid claim sitting on top of a verified placement
-		if (
-			xpUnverifiedPoints !== null &&
-			isValidUnverifiedXp({
-				unverified: xpUnverifiedPoints,
-				verified: xpVerified.points,
-			})
-		) {
+		const unverified = unverifiedXpValue({
+			points: xpUnverifiedPoints,
+			region: xpDivision ?? xpVerified.region,
+			verifiedPoints: xpVerified.points,
+		});
+
+		const xpValues: Array<UserCardStatXPValue> = unverified ? [unverified] : [];
+		// the verified peak joins the claim only when it is from the division the claim was made in;
+		// in another division it is a peak on a ladder the card is not about
+		if (!unverified || unverified.region === xpVerified.region) {
 			xpValues.push({
-				isVerified: false,
+				isVerified: true,
 				region: xpVerified.region,
-				points: xpUnverifiedPoints,
+				points: xpVerified.points,
 			});
 		}
-		xpValues.push({
-			isVerified: true,
-			region: xpVerified.region,
-			points: xpVerified.points,
-		});
 
 		stats.push({ type: "XP", values: xpValues });
 	}
@@ -766,4 +764,21 @@ function userCardStats({
 	}
 
 	return stats;
+}
+
+function unverifiedXpValue({
+	points,
+	region,
+	verifiedPoints,
+}: {
+	points: number | null;
+	region: XRankPlacementRegion;
+	verifiedPoints: number;
+}): UserCardStatXPValue | null {
+	if (points === null) return null;
+	if (!isValidUnverifiedXp({ unverified: points, verified: verifiedPoints })) {
+		return null;
+	}
+
+	return { isVerified: false, region, points };
 }
