@@ -68,10 +68,13 @@ export const GATE_SCORE_MIN_MAX_BRIGHTNESS = 200;
 
 /**
  * Gate anchor: the match timer above the plates — white M:SS digits in a
- * near-black box only the in-match HUD draws. In-match HUD reads <=30 on
- * each dark probe; every other screen lights one past 70. Turf War and
- * the death cam (one centered pill) also show a timer — there the plate
- * probes and no-readable-count parse confirmation carry the rejection.
+ * near-black box only the in-match HUD draws. In-match HUD reads <=32 on
+ * each dark probe; other screens light one past this ceiling — the closest
+ * lookalike is the replay-browser header, whose black stage tag reaches
+ * under the side probes when the stage name is long ("Banlieue Balibot"
+ * reads ~48 there). Turf War and the death cam (one centered pill) also
+ * show a timer — there the plate probes and no-readable-count parse
+ * confirmation carry the rejection.
  */
 export const TIMER_DIGIT_ROI: Roi = { x: 908, y: 54, w: 100, h: 40 };
 export const TIMER_DARK_PROBES: readonly Roi[] = [
@@ -79,7 +82,7 @@ export const TIMER_DARK_PROBES: readonly Roi[] = [
 	{ x: 897, y: 57, w: 8, h: 26 },
 	{ x: 1012, y: 57, w: 7, h: 26 },
 ];
-export const GATE_TIMER_MAX_MEAN = 70;
+export const GATE_TIMER_MAX_MEAN = 40;
 export const GATE_TIMER_MIN_MAX_BRIGHTNESS = 240;
 
 /**

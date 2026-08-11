@@ -82,11 +82,14 @@ function parseTopBand(reading: string): TopBandParse {
 	let stage: StageId | null = null;
 	let stageScore = 0;
 	// The top band reads with the BlitzMain name glyphs, where 1/I/l/| are
-	// identical bars ("I9:04") and O rides a hair above 0 ("2O26"); in the
-	// digits-only timestamp every bar is a '1' and every O a '0'. Match on
-	// the normalized line, keep the stage part's original reading (the
-	// replacements are 1:1, so offsets line up).
-	const normalized = reading.replace(/[Il|]/g, "1").replace(/O/g, "0");
+	// identical bars ("I9:04"), O/o ride a hair off 0, and 8 can surface as
+	// S ("O9/OS/2Oo6"); in the digits-only timestamp every lookalike folds
+	// to its digit. Match on the normalized line, keep the stage part's
+	// original reading (the replacements are 1:1, so offsets line up).
+	const normalized = reading
+		.replace(/[Il|]/g, "1")
+		.replace(/[Oo]/g, "0")
+		.replace(/S/g, "5");
 	const m = TIMESTAMP_RE.exec(normalized);
 	const stageReading = m
 		? reading.slice(reading.length - m[3]!.length)
