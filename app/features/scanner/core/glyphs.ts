@@ -512,6 +512,83 @@ function mergeSplitGlyphs(
 }
 
 /**
+ * A wide-segment split can land inside a glyph instead of at the true
+ * boundary: capture blur can leave the gap between two glyphs shallower in
+ * the column profile than the hollows of their bowls, so the deepest-dip cut
+ * severs a bowl edge ("do" reading as "′k"). Both halves of such a miscut
+ * classify poorly, so adjacent low-scoring segments are re-cut: each profile
+ * dip across their joint span is tried as the boundary and the cut whose
+ * weaker half classifies best wins. Template scores carry real noise at the
+ * blur levels where miscuts happen (a wrong "l|U" outscored a true "d|u" by
+ * 0.07), so a re-cut is adopted only when it is both a decent read in
+ * absolute terms and decisively better than the original pair — otherwise
+ * the read stays as segmented.
+ */
+const RECUT_MAX_SCORE = 0.75;
+const RECUT_MARGIN = 0.08;
+const RECUT_MIN_SCORE = 0.7;
+
+function dipCuts(profile: number[], x0: number, x1: number): number[] {
+	const cuts = new Set<number>();
+	for (let x = x0 + 3; x <= x1 - 3; x++) {
+		const v = profile[x]!;
+		if (v <= profile[x - 1]! && v <= profile[x + 1]!) {
+			cuts.add(x);
+			// ink ownership over the dip is ambiguous; try its far edge too
+			if (x + 1 <= x1 - 3) cuts.add(x + 1);
+		}
+	}
+	return [...cuts];
+}
+
+function recutMiscutPairs(
+	items: ClassifiedSegment[],
+	profile: number[],
+	binary: Mat,
+	masked: Mat,
+	set: GlyphSet,
+): void {
+	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
+	for (let i = 0; i + 1 < items.length; i++) {
+		const a = items[i]!;
+		const b = items[i + 1]!;
+		const aScore = a.ranked[0]?.score ?? 0;
+		const bScore = b.ranked[0]?.score ?? 0;
+		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) continue;
+		if (b.seg.x0 - a.seg.x1 > maxGap) continue;
+		let floor = Math.max(
+			RECUT_MIN_SCORE,
+			Math.max(aScore, bScore) + RECUT_MARGIN,
+		);
+		let best: [ClassifiedSegment, ClassifiedSegment] | null = null;
+		for (const cut of dipCuts(profile, a.seg.x0, b.seg.x1)) {
+			// a cut inside the existing gap reproduces the original pair
+			if (cut >= a.seg.x1 && cut <= b.seg.x0) continue;
+			const left = measureSegment(binary, { x0: a.seg.x0, x1: cut });
+			const right = measureSegment(binary, { x0: cut, x1: b.seg.x1 });
+			// probe with the floor first (see mergeSplitGlyphs): most candidate
+			// cuts can't beat it and the probes early-stop almost immediately
+			const canWin = (seg: SegmentInfo) =>
+				classifySegment(masked, seg, set, floor).some((c) => c.score > floor);
+			if (!canWin(left) || !canWin(right)) continue;
+			const leftRanked = classifySegment(masked, left, set);
+			const rightRanked = classifySegment(masked, right, set);
+			const weaker = Math.min(
+				leftRanked[0]?.score ?? 0,
+				rightRanked[0]?.score ?? 0,
+			);
+			if (weaker <= floor) continue;
+			floor = weaker;
+			best = [
+				{ seg: left, ranked: leftRanked },
+				{ seg: right, ranked: rightRanked },
+			];
+		}
+		if (best) items.splice(i, 2, ...best);
+	}
+}
+
+/**
  * Recognize white-on-dark text in a grayscale crop.
  * The crop must be tight vertically (one text line).
  */
@@ -551,6 +628,7 @@ export function recognizeText(
 		ranked: classifySegment(masked, seg, set),
 	}));
 	mergeSplitGlyphs(items, binary, masked, set);
+	recutMiscutPairs(items, profile, binary, masked, set);
 
 	const chars: RecognizedChar[] = [];
 	let text = "";

@@ -121,10 +121,12 @@ export function parseReplayCode(rgb: Mat, glyphs: GlyphSet): ParsedReplayCode {
 	green.delete();
 
 	let text = resolveQsByDescent(resolved).toUpperCase();
-	// Dashes are thin and can drop out of segmentation; a clean 16-char
-	// alphanumeric read is unambiguous, so re-insert them.
-	if (/^[0-9A-Z]{16}$/.test(text)) {
-		text = text.replace(/(.{4})(?=.)/g, "$1-");
+	// Dashes are thin and can drop out of segmentation (any subset of the
+	// three); the 16 alphanumerics are unambiguous on their own, so re-derive
+	// the grouping from them alone.
+	const compact = text.replaceAll("-", "");
+	if (/^[0-9A-Z]{16}$/.test(compact)) {
+		text = compact.replace(/(.{4})(?=.)/g, "$1-");
 	}
 	return {
 		code: CODE_RE.test(text) ? text : null,

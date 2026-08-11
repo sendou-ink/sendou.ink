@@ -1,7 +1,7 @@
 /**
  * Player name recognition: glyph matching over the name ROI.
  */
-import type { Mat } from "../../cv";
+import { getCV, type Mat } from "../../cv";
 import {
 	type GlyphSet,
 	type RecognizedChar,
@@ -172,6 +172,68 @@ function fixRaisedDots(raw: RecognizedText): RecognizedText {
 }
 
 /**
+ * On soft captures BlitzMain's 'b' and 'h' come down to whether the bowl
+ * closes at the bottom, and template correlation weighs that stroke too
+ * lightly to be trusted (a font 'h' beats a fixture 'b' by ~0.003 on a true
+ * 'b'). The segment's own pixels decide: the bottom band between the stems
+ * is solid ink in a 'b' (the bowl floor) and empty in an 'h' (open legs) —
+ * measured 0.90 vs 0.15 across fixtures. Only near-tied twin reads are
+ * re-decided; confident reads keep the template pick. Small text is exempt:
+ * below ~20px of ink height the blur closes a true 'h' too (a 15px 'h'
+ * measured 0.67), so the pixels only outrank the templates at row scale.
+ */
+const BH_TWINS: Record<string, string> = { b: "h", h: "b" };
+const BH_SCORE_MARGIN = 0.08;
+const BH_INK_THRESHOLD = 150;
+const BH_BOWL_MIN_FRACTION = 0.5;
+const BH_MIN_INK_HEIGHT_PX = 20;
+
+function resolveBhByBowlFloor(
+	raw: RecognizedText,
+	grayView: Mat,
+): RecognizedText {
+	const contested = (c: RecognizedChar) => {
+		const twin = BH_TWINS[c.char];
+		if (!twin || c.y1 - c.y0 < BH_MIN_INK_HEIGHT_PX) return false;
+		return (
+			c.candidates?.some(
+				(k) => k.char === twin && c.score - k.score <= BH_SCORE_MARGIN,
+			) ?? false
+		);
+	};
+	if (!raw.chars.some(contested)) return raw;
+
+	// the crop is an ROI view, so copy before pixel access
+	const gray = new (getCV().Mat)();
+	grayView.copyTo(gray);
+	const { cols, data } = gray;
+	const chars = raw.chars.map((c) => {
+		if (!contested(c)) return c;
+		const w = c.x1 - c.x0;
+		const h = c.y1 - c.y0;
+		const cx0 = c.x0 + Math.round(w * 0.3);
+		const cx1 = c.x1 - Math.round(w * 0.3);
+		const by0 = c.y1 - Math.max(2, Math.round(h * 0.18));
+		let ink = 0;
+		let total = 0;
+		for (let y = by0; y < c.y1; y++) {
+			for (let x = cx0; x < cx1; x++) {
+				total++;
+				if (data[y * cols + x]! > BH_INK_THRESHOLD) ink++;
+			}
+		}
+		const bowlClosed = total > 0 && ink / total >= BH_BOWL_MIN_FRACTION;
+		return { ...c, char: bowlClosed ? "b" : "h" };
+	});
+	gray.delete();
+	let ci = 0;
+	const text = [...raw.text]
+		.map((ch) => (ch === " " ? ch : chars[ci++]!.char))
+		.join("");
+	return { ...raw, text, chars };
+}
+
+/**
  * BlitzMain's 'P' and 'p' tight-crop to the same stem-and-bowl shape, so the
  * template scores between them are noise — but unlike the bars and ohs the
  * pixels do decide: 'p' hangs below the baseline while 'P' sits on it. The
@@ -220,7 +282,11 @@ export function parseName(
 	return {
 		name: normalizeLongBars(
 			normalizeOhs(
-				normalizeBars(resolveCaseByDescent(fixRaisedDots(raw)).trim()),
+				normalizeBars(
+					resolveCaseByDescent(
+						resolveBhByBowlFloor(fixRaisedDots(raw), gray),
+					).trim(),
+				),
 			),
 		),
 		confidence: raw.confidence,

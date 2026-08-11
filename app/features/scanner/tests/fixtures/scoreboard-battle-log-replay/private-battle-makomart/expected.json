@@ -1,0 +1,81 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 10,
+    "stageLabel": "MakoMart",
+    "timestamp": "8/8/2026 9:44",
+    "replayCode": "R3KH-BTXL-PMW0-C1U6",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "bran",
+        "weaponId": 211,
+        "paint": 321,
+        "ka": 11,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "queue",
+        "weaponId": 2070,
+        "paint": 572,
+        "ka": 6,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "Shadowind",
+        "weaponId": 6011,
+        "paint": 474,
+        "ka": 6,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "Jared",
+        "weaponId": 5010,
+        "paint": 533,
+        "ka": 4,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "soro",
+        "weaponId": 2070,
+        "paint": 669,
+        "ka": 4,
+        "d": 2,
+        "s": 3
+      },
+      {
+        "name": "★Bønk★•PE•",
+        "weaponId": 1001,
+        "paint": 401,
+        "ka": 2,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "name": "yaeba",
+        "weaponId": 5001,
+        "paint": 412,
+        "ka": 5,
+        "d": 5,
+        "s": 1
+      },
+      {
+        "name": "kera",
+        "weaponId": 50,
+        "paint": 462,
+        "ka": 2,
+        "d": 6,
+        "s": 2
+      }
+    ]
+  }
+}
