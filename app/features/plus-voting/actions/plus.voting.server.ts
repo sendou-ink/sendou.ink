@@ -6,7 +6,7 @@ import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import { isVotingActive } from "~/features/plus-voting/core/voting-time";
+import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -21,7 +21,7 @@ export const action: ActionFunction = async ({ request }) => {
 		schema: votingActionSchema,
 	});
 
-	if (!isVotingActive()) {
+	if (!isVotingOpen()) {
 		throw new Response(null, { status: 400 });
 	}
 

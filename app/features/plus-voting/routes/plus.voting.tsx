@@ -8,6 +8,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { RelativeTime } from "~/components/RelativeTime";
 import styles from "~/features/plus-suggestions/plus.module.css";
 import { usePlusVoting } from "~/features/plus-voting/core";
+import { UserCard } from "~/features/user-card/components/UserCard";
 import { metaTags } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
@@ -124,8 +125,14 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 			)}
 			{currentUser ? (
 				<div className="stack md items-center">
-					<Avatar user={currentUser.user} size="lg" />
-					<h2>{currentUser.user.username}</h2>
+					<h2>
+						<UserCard userId={currentUser.user.id}>
+							<span className={styles.votingUserTrigger}>
+								<Avatar user={currentUser.user} size="lg" />
+								{currentUser.user.username}
+							</span>
+						</UserCard>
+					</h2>
 					<div className="stack horizontal lg">
 						<SendouButton
 							className={clsx(

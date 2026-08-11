@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { SquarePen, Trash } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
-import { Link, Outlet, useLoaderData } from "react-router";
+import { Outlet, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
 import { Catcher } from "~/components/Catcher";
@@ -17,6 +17,7 @@ import {
 	isVotingActive,
 	nextNonCompletedVoting,
 } from "~/features/plus-voting/core";
+import { UserCard } from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import {
 	useSearchParam,
@@ -24,7 +25,7 @@ import {
 } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
-import { plusSuggestionCommentPage, userPage } from "~/utils/urls";
+import { plusSuggestionCommentPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
 import styles from "../plus.module.css";
@@ -198,11 +199,13 @@ function SuggestedUser({
 	return (
 		<div className="stack md">
 			<div className={styles.suggestedUserInfo}>
-				<Avatar user={suggestion.suggested} size="md" />
 				<h2>
-					<Link className="all-unset" to={userPage(suggestion.suggested)}>
-						{suggestion.suggested.username}
-					</Link>
+					<UserCard userId={suggestion.suggested.id}>
+						<span className={styles.suggestedUserTrigger}>
+							<Avatar user={suggestion.suggested} size="md" />
+							{suggestion.suggested.username}
+						</span>
+					</UserCard>
 				</h2>
 				{canAddCommentToSuggestionFE({
 					user,
@@ -266,7 +269,11 @@ export function PlusSuggestionComments({
 				{suggestion.entries.map((entry) => {
 					return (
 						<fieldset key={entry.id} className={styles.comment}>
-							<legend>{entry.author.username}</legend>
+							<legend>
+								<UserCard userId={entry.author.id}>
+									{entry.author.username}
+								</UserCard>
+							</legend>
 							{entry.text}
 							<div className="stack horizontal xs items-center">
 								<span className={styles.commentTime}>
