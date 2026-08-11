@@ -97,6 +97,7 @@ describe("resolveTimelineMaps()", () => {
 				],
 			}),
 			[],
+			[],
 		);
 
 		expect(result).toHaveLength(1);
@@ -108,6 +109,7 @@ describe("resolveTimelineMaps()", () => {
 			matchWith({
 				mapList: [{ id: 1, stageId: 1, mode: "SZ", winnerGroupId: BRAVO_ID }],
 			}),
+			[],
 			[],
 		);
 
@@ -130,6 +132,7 @@ describe("resolveTimelineMaps()", () => {
 				},
 			}),
 			[],
+			[],
 		);
 
 		expect(result[0].weapons).toBeUndefined();
@@ -151,6 +154,7 @@ describe("resolveTimelineMaps()", () => {
 				},
 			}),
 			[{ mapIndex: 0, userId: 1, weaponSplId: 40 }] as never,
+			[],
 		);
 
 		expect(result[0].weapons).toEqual({

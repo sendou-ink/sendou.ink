@@ -506,6 +506,12 @@ export function buildCases(fx: Fixtures): {
 			),
 	);
 	add(
+		"ScannerIngestRepository.findScoreboardsByGroupMatchId",
+		fx.heavyGroupMatchId,
+		(groupMatchId) =>
+			ScannerIngestRepository.findScoreboardsByGroupMatchId(groupMatchId),
+	);
+	add(
 		"ScannerIngestRepository.gamesInTournamentMatch",
 		fx.heavyTournamentMatchId,
 		(tournamentMatchId) =>

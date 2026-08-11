@@ -1,4 +1,8 @@
 import { useTranslation } from "react-i18next";
+import {
+	resolveTimelineScoreboard,
+	resolveTimelineWeapons,
+} from "~/components/match-page/ingested-scoreboard";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs, TAB_KEYS } from "~/components/match-page/MatchTabs";
@@ -7,10 +11,7 @@ import type {
 	TimelinePickBanEvent,
 } from "~/components/match-page/MatchTimeline";
 import type { WeaponPoolWeapon } from "~/components/match-page/WeaponPool";
-import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
-import type { PlayerStatusTimelineSample } from "~/components/PlayerStatusTimeline";
 import { useUser } from "~/features/auth/core/user";
-import type { IngestedScoreboardData } from "~/features/scanner-ingest/core/Scoreboards";
 import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
@@ -20,13 +21,9 @@ import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import { tournamentTeamPage } from "~/utils/urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
-import { resolveTimelineWeapons } from "../tournament-match-utils";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
-
-/** Ingested scoreboard rows come winning team first, 4 players per side. */
-const SCOREBOARD_PLAYERS_PER_TEAM = 4;
 
 export function TournamentMatchTabs({
 	data,
@@ -200,94 +197,12 @@ function resolveTimelineMaps(
 				? { alpha: alphaWeapons, bravo: bravoWeapons }
 				: undefined,
 			ko: result.ko != null ? Boolean(result.ko) : undefined,
-			scoreboard: resolveTimelineScoreboard(ingestedScoreboard, alphaIsWinner),
+			scoreboard: resolveTimelineScoreboard(
+				ingestedScoreboard?.data,
+				alphaIsWinner,
+			),
 		};
 	});
-}
-
-function resolveTimelineScoreboard(
-	ingestedScoreboard:
-		| TournamentMatchLoaderData["ingestedScoreboards"][number]
-		| undefined,
-	alphaIsWinner: boolean,
-): TimelineMap["scoreboard"] {
-	if (!ingestedScoreboard) return undefined;
-
-	const toTimelinePlayers = (
-		players: (typeof ingestedScoreboard)["data"]["players"],
-	) =>
-		players.map((player) => ({
-			name: player.name,
-			weaponSplId: player.weaponSplId,
-			ka: player.ka,
-			d: player.d,
-			s: player.s,
-			paint: player.paint,
-			abilities: player.abilities,
-		}));
-
-	const winnerRows = ingestedScoreboard.data.players.slice(
-		0,
-		SCOREBOARD_PLAYERS_PER_TEAM,
-	);
-	const loserRows = ingestedScoreboard.data.players.slice(
-		SCOREBOARD_PLAYERS_PER_TEAM,
-	);
-	const [winnerScore, loserScore] = ingestedScoreboard.data.scores;
-
-	return {
-		scores: alphaIsWinner
-			? ([winnerScore, loserScore] as [number | null, number | null])
-			: ([loserScore, winnerScore] as [number | null, number | null]),
-		alpha: toTimelinePlayers(alphaIsWinner ? winnerRows : loserRows),
-		bravo: toTimelinePlayers(alphaIsWinner ? loserRows : winnerRows),
-		objective: toTimelineObjective(
-			ingestedScoreboard.data.objective,
-			alphaIsWinner,
-		),
-		playerStatus: toTimelinePlayerStatus(
-			ingestedScoreboard.data.playerStatus,
-			alphaIsWinner,
-		),
-	};
-}
-
-/** Stored counter samples are winner-first; the timeline charts alpha-first. */
-function toTimelineObjective(
-	objective: IngestedScoreboardData["objective"],
-	alphaIsWinner: boolean,
-): ObjectiveTimelineEvent[] | undefined {
-	if (!objective) return undefined;
-
-	const alphaFirst = <T,>(pair: [T, T]): [T, T] =>
-		alphaIsWinner ? pair : [pair[1], pair[0]];
-
-	return objective.samples.map((sample) => ({
-		t: sample.t,
-		data: {
-			time: sample.time,
-			score: alphaFirst(sample.score),
-			penalty: alphaFirst(sample.penalty),
-			control: alphaFirst(sample.control),
-		},
-	}));
-}
-
-/** Stored status samples are winner-first; the timeline charts alpha-first. */
-function toTimelinePlayerStatus(
-	playerStatus: IngestedScoreboardData["playerStatus"],
-	alphaIsWinner: boolean,
-): PlayerStatusTimelineSample[] | undefined {
-	if (!playerStatus) return undefined;
-
-	const alphaFirst = <T,>(pair: [T, T]): [T, T] =>
-		alphaIsWinner ? pair : [pair[1], pair[0]];
-
-	return playerStatus.samples.map((sample) => ({
-		t: sample.t,
-		special: alphaFirst(sample.special),
-		dead: alphaFirst(sample.dead),
-	}));
 }
 
 function resolveTimelinePickBanData(

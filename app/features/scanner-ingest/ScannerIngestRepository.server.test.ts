@@ -223,6 +223,58 @@ describe("addLinks", () => {
 	});
 });
 
+describe("findScoreboardsByGroupMatchId", () => {
+	test("derives group-stamped scoreboards for linked reported maps only", async () => {
+		const user = await UserFactory.create();
+		const { match: groupMatch, maps } = await setupSendouqMatch({
+			isConcluded: true,
+		});
+		const unreportedMap = maps.find((map) => map.winnerGroupId === null)!;
+
+		const { effectiveMatches } =
+			await ScannerIngestRepository.addOrMergeMatches({
+				povUserId: user.id,
+				submitterUserId: user.id,
+				matches: [
+					testMatch(),
+					testMatch({ playedAt: PLAYED_AT + 60 * 60 * 1000, stage: 1 }),
+				],
+				context: null,
+			});
+		await ScannerIngestRepository.addLinks({
+			links: [
+				{
+					ingestedMatchId: effectiveMatches[0].id,
+					match: effectiveMatches[0].data,
+					game: sendouqGame(maps[0]),
+				},
+				{
+					ingestedMatchId: effectiveMatches[1].id,
+					match: effectiveMatches[1].data,
+					game: sendouqGame(unreportedMap),
+				},
+			],
+			povUserId: user.id,
+		});
+
+		const scoreboards =
+			await ScannerIngestRepository.findScoreboardsByGroupMatchId(
+				groupMatch.id,
+			);
+
+		expect(scoreboards).toHaveLength(1);
+		expect(scoreboards[0].mapIndex).toBe(maps[0].index);
+		// alpha won every map and the ingested winner team holds NAMES w1-w4,
+		// so the winner-first rows come out stamped alpha then bravo
+		expect(scoreboards[0].data.scores).toEqual([100, 52]);
+		expect(scoreboards[0].data.players.map((p) => p.name)).toEqual(NAMES);
+		expect(scoreboards[0].data.players.map((p) => p.tournamentTeamId)).toEqual([
+			...Array(4).fill(groupMatch.alphaGroup.id),
+			...Array(4).fill(groupMatch.bravoGroup.id),
+		]);
+	});
+});
+
 describe("gamesInTournamentMatch", () => {
 	test("returns the match's own games only, leaving the rest of the tournament out", async () => {
 		const users = await UserFactory.createMany(TOURNAMENT_TEAM_COUNT);
@@ -310,12 +362,15 @@ function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
 	};
 }
 
-async function setupSendouqMatch() {
+async function setupSendouqMatch(options: { isConcluded?: boolean } = {}) {
 	const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
-	const match = await SQMatchFactory.create({
-		alphaUserIds: users.slice(0, FULL_GROUP_SIZE).map((user) => user.id),
-		bravoUserIds: users.slice(FULL_GROUP_SIZE).map((user) => user.id),
-	});
+	const match = await SQMatchFactory.create(
+		{
+			alphaUserIds: users.slice(0, FULL_GROUP_SIZE).map((user) => user.id),
+			bravoUserIds: users.slice(FULL_GROUP_SIZE).map((user) => user.id),
+		},
+		options,
+	);
 
 	const maps = await db
 		.selectFrom("GroupMatchMap")

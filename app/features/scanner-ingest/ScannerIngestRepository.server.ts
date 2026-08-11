@@ -375,6 +375,69 @@ export async function findScoreboardsByTournamentMatchId(
 }
 
 /**
+ * Returns a SendouQ match's ingested scoreboards with their 0-based map
+ * indexes, each derived from the map's linked ingested matches.
+ */
+export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
+	const rows = await db
+		.selectFrom("IngestedMatchLink")
+		.innerJoin(
+			"IngestedMatch",
+			"IngestedMatch.id",
+			"IngestedMatchLink.ingestedMatchId",
+		)
+		.innerJoin(
+			"GroupMatchMap",
+			"GroupMatchMap.id",
+			"IngestedMatchLink.groupMatchMapId",
+		)
+		.innerJoin("GroupMatch", "GroupMatch.id", "GroupMatchMap.matchId")
+		.select([
+			"GroupMatchMap.id as groupMatchMapId",
+			"GroupMatchMap.index as mapIndex",
+			"GroupMatchMap.winnerGroupId",
+			"GroupMatch.alphaGroupId",
+			"GroupMatch.bravoGroupId",
+			"IngestedMatch.data",
+			"IngestedMatch.povUserId",
+		])
+		.where("GroupMatchMap.matchId", "=", groupMatchId)
+		.where("GroupMatchMap.winnerGroupId", "is not", null)
+		.orderBy("GroupMatchMap.index", "asc")
+		.orderBy("IngestedMatchLink.createdAt", "asc")
+		.orderBy("IngestedMatchLink.id", "asc")
+		.execute();
+
+	const byMap = new Map<number, typeof rows>();
+	for (const row of rows) {
+		const mapRows = byMap.get(row.groupMatchMapId) ?? [];
+		mapRows.push(row);
+		byMap.set(row.groupMatchMapId, mapRows);
+	}
+
+	return [...byMap.values()].flatMap((mapRows) => {
+		const first = mapRows[0]!;
+		const winnerGroupId = first.winnerGroupId!;
+		const loserGroupId =
+			winnerGroupId === first.alphaGroupId
+				? first.bravoGroupId
+				: first.alphaGroupId;
+
+		const data = Scoreboards.deriveScoreboardData({
+			linked: mapRows.map((row) => ({
+				data: row.data,
+				povUserId: row.povUserId,
+			})),
+			winnerTeamId: winnerGroupId,
+			loserTeamId: loserGroupId,
+		});
+		if (!data) return [];
+
+		return [{ mapIndex: first.mapIndex, data }];
+	});
+}
+
+/**
  * Stores ingested matches, merging partials: a match that
  * `Matches.isSameMatch` recognizes as an already stored one (same POV user
  * scope) enriches that row instead of inserting. Identical resends are
