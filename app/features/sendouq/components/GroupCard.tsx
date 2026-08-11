@@ -53,6 +53,7 @@ export function GroupCard({
 	action,
 	suggestable = false,
 	trail,
+	isSuggested = false,
 	displayOnly = false,
 	hideVc = false,
 	hideWeapons = false,
@@ -67,6 +68,8 @@ export function GroupCard({
 	/** Can the viewer point their own teammates at this group? */
 	suggestable?: boolean;
 	trail?: GroupCardTrail;
+	/** Has someone in the viewer's own group pointed this group out? */
+	isSuggested?: boolean;
 	displayOnly?: boolean;
 	hideVc?: SqlBool;
 	hideWeapons?: SqlBool;
@@ -101,7 +104,10 @@ export function GroupCard({
 			isOwnGroup={isOwnGroup}
 			layout={layout}
 		>
-			<section className={styles.group} data-testid="sendouq-group-card">
+			<section
+				className={clsx(styles.group, { [styles.suggested]: isSuggested })}
+				data-testid="sendouq-group-card"
+			>
 				{group.members ? (
 					<div className="stack md">
 						{group.members.map((member) => {

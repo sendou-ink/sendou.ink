@@ -246,9 +246,11 @@ function Groups() {
 		data.likes.given.map((like) => [like.groupId, like.createdByUsername]),
 	);
 
+	const suggestedGroupIds = new Set(suggestedByUsernames.keys());
+
 	const groups = sortGroups(data.groups, {
 		userCards: data.userCards,
-		suggestedGroupIds: new Set(suggestedByUsernames.keys()),
+		suggestedGroupIds,
 	});
 
 	const trailOf = (groupId: number): GroupCardTrail | undefined => {
@@ -288,6 +290,7 @@ function Groups() {
 							group={group}
 							action="UNLIKE"
 							trail={trailOf(group.id)}
+							isSuggested={suggestedGroupIds.has(group.id)}
 							ownGroup={data.ownGroup}
 							layout={layout}
 						/>
@@ -395,6 +398,7 @@ function Groups() {
 											}
 											suggestable={isSuggestable(group.id)}
 											trail={trailOf(group.id)}
+											isSuggested={suggestedGroupIds.has(group.id)}
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -424,6 +428,7 @@ function Groups() {
 											action={action()}
 											suggestable={isSuggestable(group.id)}
 											trail={trailOf(group.id)}
+											isSuggested={suggestedGroupIds.has(group.id)}
 											ownGroup={data.ownGroup}
 											layout={layout}
 										/>
@@ -463,6 +468,7 @@ function Groups() {
 									action={action()}
 									suggestable={isSuggestable(group.id)}
 									trail={trailOf(group.id)}
+									isSuggested={suggestedGroupIds.has(group.id)}
 									ownGroup={data.ownGroup}
 									layout={layout}
 								/>

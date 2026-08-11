@@ -10,6 +10,12 @@
 	color: var(--color-text);
 }
 
+/* a suggested card floats to the top of the list, and the browser would keep the
+   card in view by scrolling along with it, yanking the viewer up the page */
+.suggested {
+	overflow-anchor: none;
+}
+
 .noScreen {
 	background-color: var(--color-error-low);
 	border-radius: 100%;

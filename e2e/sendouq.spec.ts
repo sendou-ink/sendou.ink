@@ -194,6 +194,47 @@ test.describe("SendouQ", () => {
 		await isNotVisible(looking.locators.suggestButtons);
 	});
 
+	test.describe("On a phone sized screen", () => {
+		test.use({ viewport: { width: 390, height: 844 } });
+
+		test("Suggesting floats the group without dragging the viewer's scroll position along", async ({
+			page,
+			factories,
+		}) => {
+			const [owner, teammate] = await factories.UserFactory.createMany(2);
+			await factories.SQGroupFactory.create({
+				memberUserIds: [owner.id, teammate.id],
+			});
+
+			const otherUsers = await factories.UserFactory.createMany(12);
+			for (const [index, user] of otherUsers.entries()) {
+				const group = await factories.SQGroupFactory.create({
+					memberUserIds: [user.id],
+				});
+				// the least recently active group sorts last, giving the suggestion
+				// the whole page to move the card up
+				await factories.backdate("Group", group.id, {
+					latestActionAt: sub(new Date(), { minutes: index }),
+				});
+			}
+
+			await impersonate(page, owner.id);
+
+			const looking = new SendouQLookingPage(page);
+			await looking.goto();
+
+			const lastCard = looking.groupCard(otherUsers.length - 1);
+			await lastCard.root.scrollIntoViewIfNeeded();
+			const scrollBefore = await page.evaluate(() => window.scrollY);
+			expect(scrollBefore).toBeGreaterThan(0);
+
+			await lastCard.pressSuggest();
+
+			await expect(looking.groupCard(0).trail).toBeVisible();
+			expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+		});
+	});
+
 	test("Previewing the queue shows the groups without any way to act on them", async ({
 		page,
 		factories,
