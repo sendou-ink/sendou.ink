@@ -248,6 +248,8 @@ export default function Chart({
 						},
 					},
 					plugins: {
+						// Legend is registered globally by ObjectiveTimeline, opt out explicitly
+						legend: { display: false },
 						tooltip: {
 							enabled: false,
 							external: ({ chart, tooltip }) => {
