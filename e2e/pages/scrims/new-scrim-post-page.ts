@@ -24,7 +24,7 @@ export class NewScrimPostPage {
 
 	/** Posts as a pick-up instead of as a team, the author being its first user. */
 	async selectPickupUsers(userNames: string[]) {
-		await this.page.getByLabel("With").selectOption("PICKUP");
+		await this.selectWith("Pick-up");
 
 		for (const [index, userName] of userNames.entries()) {
 			await selectUser({
@@ -33,6 +33,23 @@ export class NewScrimPostPage {
 				userName,
 			});
 		}
+	}
+
+	/** Posts as a pick-up saved from an earlier post, identified by its member names. */
+	async selectSavedPickup(userNames: string[]) {
+		await this.selectWith(`Pick-up ${userNames.join(", ")}`);
+	}
+
+	private async selectWith(optionName: string) {
+		await this.page.getByLabel("With").click();
+		await this.page
+			.getByRole("option", { name: optionName, exact: true })
+			.click();
+	}
+
+	/** The user field of the pick-up member, counting the author as the first one. */
+	pickupUser(nth: number) {
+		return this.page.getByLabel(`User ${nth}`);
 	}
 
 	/** Limits who sees the post to one of the author's associations. */

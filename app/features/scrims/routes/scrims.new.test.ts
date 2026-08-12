@@ -4,6 +4,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { SerializeFrom } from "~/utils/remix";
 import { wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scrims.new.server";
+import { loader as scrimsNewLoader } from "../loaders/scrims.new.server";
 import { loader } from "../loaders/scrims.server";
 import type { scrimsNewFormSchema } from "../scrims-schemas";
 
@@ -15,6 +16,12 @@ const newScrimAction = wrappedAction<typeof scrimsNewFormSchema>({
 const scrimPostsLoader = wrappedLoader<SerializeFrom<typeof loader>>({
 	loader,
 });
+
+const newScrimPostLoader = wrappedLoader<SerializeFrom<typeof scrimsNewLoader>>(
+	{
+		loader: scrimsNewLoader,
+	},
+);
 
 const defaultNewScrimPostArgs = (): Parameters<typeof newScrimAction>[0] => ({
 	at: new Date(),
@@ -78,5 +85,18 @@ describe("New scrim post action", () => {
 
 		expect(posts.neutral).toHaveLength(1);
 		expect(posts.neutral[0]!.isScheduledForFuture).toBe(true);
+	});
+
+	test("scrim post made as a pick-up saves the roster for reuse", async () => {
+		await newScrimAction(defaultNewScrimPostArgs(), { user: "regular" });
+
+		const { recentPickupRosters } = await newScrimPostLoader({
+			user: "regular",
+		});
+
+		expect(recentPickupRosters).toHaveLength(1);
+		expect(recentPickupRosters[0]!.users.map((user) => user.id)).toEqual(
+			pickupMembers.map((user) => user.id).sort((a, b) => a - b),
+		);
 	});
 });

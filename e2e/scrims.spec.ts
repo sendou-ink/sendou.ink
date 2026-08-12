@@ -58,6 +58,32 @@ test.describe("Scrims", () => {
 		await expect(scrims.locators.deleteButtons).toHaveCount(0);
 	});
 
+	test("reuses a pick-up saved from an earlier scrim post", async ({
+		page,
+		factories,
+	}) => {
+		await createNamedUsers(factories, PICKUP_NAMES);
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const newPost = new NewScrimPostPage(page);
+		await newPost.goto();
+		await newPost.selectPickupUsers(PICKUP_NAMES);
+		await newPost.save();
+
+		await newPost.goto();
+		await newPost.selectSavedPickup(PICKUP_NAMES);
+
+		for (const [index, userName] of PICKUP_NAMES.entries()) {
+			await expect(newPost.pickupUser(index + 2)).toContainText(userName);
+		}
+
+		await newPost.save();
+
+		const scrims = new ScrimsPage(page);
+		await expect(scrims.locators.deleteButtons).toHaveCount(2);
+	});
+
 	test("requests an existing scrim post & cancels the request", async ({
 		page,
 		factories,

@@ -39,6 +39,8 @@
 	"forms.with.explanation": "您可以通过用户名、Discord ID 或 sendou.ink 的个人资料链接来搜索用户。",
 	"forms.with.user": "队员 {{nth}}",
 	"forms.with.pick-up": "临时队员",
+	"forms.with.pick-up-new": "",
+	"forms.with.pick-up-recent": "",
 	"forms.when.title": "开始时间",
 	"forms.when.explanation": "如果想立刻寻找对抗战，请保持默认",
 	"forms.rangeEnd.title": "弹性开始时间",

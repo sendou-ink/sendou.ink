@@ -14,6 +14,7 @@ import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import { getMemberRoleType } from "../../team/team-utils";
+import * as ScrimPickupRosterRepository from "../ScrimPickupRosterRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
@@ -93,6 +94,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}),
 		),
 	});
+
+	if (data.from.mode === "PICKUP") {
+		await ScrimPickupRosterRepository.upsertOwn(data.from.users);
+	}
 
 	return redirect(scrimsPage());
 };

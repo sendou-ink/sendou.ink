@@ -2,6 +2,7 @@ import * as AssociationRepository from "~/features/associations/AssociationRepos
 import { requireUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import * as TeamRepository from "../../team/TeamRepository.server";
+import * as ScrimPickupRosterRepository from "../ScrimPickupRosterRepository.server";
 
 export type ScrimsNewLoaderData = SerializeFrom<typeof loader>;
 
@@ -11,5 +12,6 @@ export const loader = async () => {
 	return {
 		teams: await TeamRepository.findAllByMemberUserId(user.id),
 		associations: await AssociationRepository.findByMemberUserId(user.id),
+		recentPickupRosters: await ScrimPickupRosterRepository.findAllOwnRecent(),
 	};
 };

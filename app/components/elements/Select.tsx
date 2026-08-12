@@ -30,6 +30,8 @@ import { SendouButton } from "~/components/elements/Button";
 import { Image } from "../Image";
 import styles from "./Select.module.css";
 
+const ROW_HEIGHT = 33;
+
 export interface SendouSelectProps<T extends object>
 	extends Omit<SelectProps<T>, "children"> {
 	label?: string;
@@ -48,6 +50,8 @@ export interface SendouSelectProps<T extends object>
 	onSearchInputChange?: (value: string) => void;
 	clearable?: boolean;
 	filter?: AutocompleteProps<object>["filter"];
+	/** Measured height of the items, for when they are taller than a single line of text. */
+	estimatedRowHeight?: number;
 }
 
 /**
@@ -78,6 +82,7 @@ export function SendouSelect<T extends object>({
 	clearable = false,
 	className,
 	filter,
+	estimatedRowHeight,
 	onOpenChange,
 	...props
 }: SendouSelectProps<T>) {
@@ -97,7 +102,12 @@ export function SendouSelect<T extends object>({
 	};
 
 	const listBox = (
-		<Virtualizer layout={ListLayout} layoutOptions={{ rowHeight: 33 }}>
+		<Virtualizer
+			layout={ListLayout}
+			layoutOptions={
+				estimatedRowHeight ? { estimatedRowHeight } : { rowHeight: ROW_HEIGHT }
+			}
+		>
 			<ListBox
 				items={items}
 				className={clsx(styles.listBox, "scrollbar")}

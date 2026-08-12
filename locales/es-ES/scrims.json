@@ -39,6 +39,8 @@
 	"forms.with.explanation": "Puedes buscar usuarios por nombre de usuario, ID de Discord o URL del perfil en sendou.ink.",
 	"forms.with.user": "Usuario {{nth}}",
 	"forms.with.pick-up": "Pick-up",
+	"forms.with.pick-up-new": "",
+	"forms.with.pick-up-recent": "",
 	"forms.when.title": "Inicio",
 	"forms.when.explanation": "Déjalo por defecto si quieres buscar una scrim ahora",
 	"forms.rangeEnd.title": "Flexibilidad de hora de inicio",

@@ -1197,6 +1197,20 @@ export interface ScrimPostUser {
 	isOwner: DBBoolean;
 }
 
+export interface ScrimPickupRoster {
+	id: GeneratedAlways<number>;
+	/** User who used the pick-up roster */
+	userId: number;
+	/** When the roster was last used to make a scrim post */
+	usedAt: Generated<number>;
+}
+
+export interface ScrimPickupRosterUser {
+	scrimPickupRosterId: number;
+	/** Member of the pick-up roster, excluding the roster's owner */
+	userId: number;
+}
+
 export interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
@@ -1393,6 +1407,8 @@ export interface DB {
 	ScrimPostUser: ScrimPostUser;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimPickupRoster: ScrimPickupRoster;
+	ScrimPickupRosterUser: ScrimPickupRosterUser;
 	ScrimMapList: ScrimMapList;
 	ScrimMap: ScrimMap;
 	Association: Association;
