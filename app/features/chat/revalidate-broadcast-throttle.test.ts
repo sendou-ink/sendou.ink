@@ -30,13 +30,32 @@ describe("createRevalidateBroadcastThrottle", () => {
 		const { throttle } = setup();
 
 		expect(throttle.throttles({ revalidateOnly: true })).toBe(true);
+		expect(throttle.throttles({})).toBe(false);
+	});
+
+	test("does not throttle broadcasts whose sound must not be dropped", () => {
+		const { throttle } = setup();
+
+		expect(
+			throttle.throttles({ revalidateOnly: true, type: "MATCH_STARTED" }),
+		).toBe(false);
+		expect(
+			throttle.throttles({ revalidateOnly: true, type: "READY_CHECK_STARTED" }),
+		).toBe(false);
+	});
+
+	test("throttles broadcasts whose type plays no sound", () => {
+		const { throttle } = setup();
+
 		expect(
 			throttle.throttles({ revalidateOnly: true, type: "TOURNAMENT_UPDATED" }),
 		).toBe(true);
 		expect(
-			throttle.throttles({ revalidateOnly: true, type: "MATCH_STARTED" }),
+			throttle.throttles({
+				revalidateOnly: true,
+				type: "TOURNAMENT_MATCH_UPDATED",
+			}),
 		).toBe(true);
-		expect(throttle.throttles({})).toBe(false);
 	});
 
 	test("first broadcast of a window is delivered immediately", () => {

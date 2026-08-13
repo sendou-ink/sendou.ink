@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useFetchers, useLocation, useNavigation } from "react-router";
+import { useRefreshOnReconnect } from "~/features/chat/chat-hooks";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { useBackgroundResource } from "~/hooks/useBackgroundResource";
 import type { SerializeFrom } from "~/utils/remix";
@@ -57,7 +58,7 @@ export function NotificationsProvider({
 	}, [loggedIn, refresh]);
 
 	useRefreshOnPing({ version: chat?.notificationsVersion ?? 0, refresh });
-	useRefreshOnReconnect({ readyState, refresh });
+	useRefreshOnReconnect(readyState, refresh);
 	useRefreshOnVisible({ enabled: loggedIn, refresh });
 	useFallbackPoll({ enabled: wsDown, refresh });
 
@@ -102,28 +103,6 @@ function useRefreshOnPing({
 		const timeout = setTimeout(refresh, Math.random() * PING_REFRESH_JITTER_MS);
 		return () => clearTimeout(timeout);
 	}, [version, refresh]);
-}
-
-/** Refetches after the websocket comes back up, covering pings missed while down. */
-function useRefreshOnReconnect({
-	readyState,
-	refresh,
-}: {
-	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
-	refresh: () => void;
-}) {
-	const hadConnectedRef = React.useRef(false);
-
-	React.useEffect(() => {
-		if (readyState !== "CONNECTED") return;
-
-		if (!hadConnectedRef.current) {
-			hadConnectedRef.current = true;
-			return;
-		}
-
-		refresh();
-	}, [readyState, refresh]);
 }
 
 /** Refetches when the tab becomes visible again (e.g. waking from sleep). */

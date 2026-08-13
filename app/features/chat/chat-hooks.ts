@@ -1,10 +1,17 @@
 import * as React from "react";
+import { useRevalidator } from "react-router";
 import { useUser } from "../auth/core/user";
+import type { ChatContextValue } from "./chat-provider-types";
 import type { ChatMessage } from "./chat-types";
+import { scheduleBroadcastRevalidation } from "./revalidation-scope";
 import { useChatContext } from "./useChatContext";
 
 // increasing this = scrolling happens even when scrolled more upwards
 const THRESHOLD = 100;
+// how long the tab must have been hidden for returning to it to be worth a catch-up
+const CATCH_UP_HIDDEN_MS = 20 * 1000;
+// how often to catch up while the websocket is down and no broadcast can arrive
+const WS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 // how long after wheel/touch/keyboard input a scroll event still counts as user-initiated
 const USER_SCROLL_INTENT_MS = 150;
 
@@ -158,6 +165,8 @@ export function useWebsocketRevalidation(topic: string, connected = true) {
 	const unsubscribeTopic = chat?.unsubscribeTopic;
 	const readyState = chat?.readyState;
 
+	useLiveRevalidation(connected);
+
 	React.useEffect(() => {
 		if (!connected || readyState !== "CONNECTED") return;
 		if (!subscribeTopic || !unsubscribeTopic) return;
@@ -165,4 +174,78 @@ export function useWebsocketRevalidation(topic: string, connected = true) {
 		subscribeTopic(topic);
 		return () => unsubscribeTopic(topic);
 	}, [topic, connected, readyState, subscribeTopic, unsubscribeTopic]);
+}
+
+export function useLiveRevalidation(enabled = true) {
+	const chat = useChatContext();
+	const { revalidate } = useRevalidator();
+
+	// a logged out visitor has no websocket to miss broadcasts from in the first place,
+	// and revalidating for them would only add load
+	const active = enabled && chat !== null;
+	const readyState = chat?.readyState ?? "CLOSED";
+
+	// goes through the broadcast scheduler so a catch-up shares its jitter (many clients
+	// return to a page at once after a skalop deploy) and absorption into a broadcast
+	// that is already scheduled
+	const catchUp = React.useEffectEvent(() => {
+		scheduleBroadcastRevalidation(revalidate, undefined);
+	});
+
+	// while inactive nothing can be missed, so the connect that follows counts as the first
+	useRefreshOnReconnect(active ? readyState : "CLOSED", catchUp);
+
+	React.useEffect(() => {
+		if (!active) return;
+
+		let hiddenAt: number | null = null;
+
+		const handleVisibilityChange = () => {
+			if (document.visibilityState !== "visible") {
+				hiddenAt = Date.now();
+				return;
+			}
+
+			// a quick tab away can not have missed anything the socket would not
+			// still deliver, and revalidating for it would be pure server load
+			if (hiddenAt !== null && Date.now() - hiddenAt >= CATCH_UP_HIDDEN_MS) {
+				catchUp();
+			}
+			hiddenAt = null;
+		};
+
+		document.addEventListener("visibilitychange", handleVisibilityChange);
+		return () =>
+			document.removeEventListener("visibilitychange", handleVisibilityChange);
+	}, [active]);
+
+	React.useEffect(() => {
+		if (!active || readyState === "CONNECTED") return;
+
+		const interval = setInterval(catchUp, WS_DOWN_CATCH_UP_MS);
+		return () => clearInterval(interval);
+	}, [active, readyState]);
+}
+
+/**
+ * Calls `onReconnect` every time the websocket comes back up, skipping the initial
+ * connect: only what happened while the socket was down needs catching up on.
+ */
+export function useRefreshOnReconnect(
+	readyState: ChatContextValue["readyState"],
+	onReconnect: () => void,
+) {
+	const handleReconnect = React.useEffectEvent(onReconnect);
+	const hasConnectedRef = React.useRef(false);
+
+	React.useEffect(() => {
+		if (readyState !== "CONNECTED") return;
+
+		if (!hasConnectedRef.current) {
+			hasConnectedRef.current = true;
+			return;
+		}
+
+		handleReconnect();
+	}, [readyState]);
 }

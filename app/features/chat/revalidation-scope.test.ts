@@ -6,6 +6,8 @@ import {
 	scheduleBroadcastRevalidation,
 } from "./revalidation-scope";
 
+const PENDING_REVALIDATION_STALE_MS = 30 * 1000;
+
 const revalidationArgs = () =>
 	({
 		currentUrl: new URL("https://sendou.ink/to/1/brackets"),
@@ -126,5 +128,50 @@ describe("scheduleBroadcastRevalidation", () => {
 		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
 
 		resolve();
+	});
+
+	test("a scoped broadcast does not narrow an unscoped revalidation still in flight", async () => {
+		// let anything still in flight from an earlier test settle first
+		await vi.runAllTimersAsync();
+
+		const unscoped = deferred();
+		revalidateWithScope(() => unscoped.promise, undefined);
+
+		scheduleBroadcastRevalidation(() => Promise.resolve(), "MATCH_RESULTS");
+		vi.runAllTimers();
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
+
+		unscoped.resolve();
+		await vi.runAllTimersAsync();
+	});
+
+	test("a scope left stuck by a never settling revalidation is forgotten once stale", async () => {
+		// let anything still in flight from an earlier test settle first
+		await vi.runAllTimersAsync();
+
+		const neverSettles = new Promise<void>(() => {});
+
+		// a revalidation interrupted by a navigation never settles
+		revalidateWithScope(() => neverSettles, "MATCH_RESULTS");
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(true);
+
+		await vi.advanceTimersByTimeAsync(PENDING_REVALIDATION_STALE_MS);
+
+		const unscoped = deferred();
+		scheduleBroadcastRevalidation(() => unscoped.promise, undefined);
+		vi.runAllTimers();
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
+
+		unscoped.resolve();
+		await vi.runAllTimersAsync();
+
+		const scoped = deferred();
+		scheduleBroadcastRevalidation(() => scoped.promise, "MATCH_RESULTS");
+		vi.runAllTimers();
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(true);
+
+		scoped.resolve();
+		await vi.runAllTimersAsync();
+		expect(isMatchResultsScopedRevalidation(revalidationArgs())).toBe(false);
 	});
 });

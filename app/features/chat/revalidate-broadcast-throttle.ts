@@ -1,4 +1,5 @@
 import type { ChatMessage } from "./chat-types";
+import { messageTypeToSound } from "./chat-utils";
 
 type ThrottleableMessage = Pick<
 	ChatMessage,
@@ -27,8 +28,12 @@ export const MAX_ENTRIES = 5_000;
  * the same room within the window coalesce into a single trailing broadcast at the
  * window's end, so subscribers never miss the final state. A trailing broadcast
  * covers every coalesced one: its scope is widened to the broadest seen and it
- * carries no author (nobody may skip it as their own) and no type (an absorbed
- * broadcast's sound is dropped — the room heard the window's leading one already).
+ * carries no author (nobody may skip it as their own) and no type.
+ *
+ * Broadcasts whose type plays a sound (a starting match, a ready check) are left alone:
+ * coalescing would cost the player the sound, and they are rare enough not to be worth
+ * rate limiting. Soundless types (a reported tournament game) are throttled like the
+ * rest — they are the bulk of the traffic the throttle exists for.
  */
 export function createRevalidateBroadcastThrottle({
 	windowMs,
@@ -57,11 +62,11 @@ export function createRevalidateBroadcastThrottle({
 
 	return {
 		/**
-		 * Whether the throttle applies to the message: every revalidation broadcast.
-		 * Real chat messages always pass through untouched.
+		 * Whether the throttle applies to the message: a revalidation broadcast carrying
+		 * no sound. Real chat messages always pass through untouched.
 		 */
 		throttles(msg: Pick<ChatMessage, "type" | "revalidateOnly">): boolean {
-			return Boolean(msg.revalidateOnly);
+			return Boolean(msg.revalidateOnly) && !messageTypeToSound(msg.type);
 		},
 		handle(msg: ThrottleableMessage): void {
 			const now = Date.now();

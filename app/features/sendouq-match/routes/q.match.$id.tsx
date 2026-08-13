@@ -2,6 +2,7 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { MatchPage } from "~/components/match-page/MatchPage";
+import { useLiveRevalidation } from "~/features/chat/chat-hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SENDOUQ_PAGE } from "~/utils/urls";
@@ -40,6 +41,10 @@ export const handle: SendouRouteHandle = {
 
 export default function SendouQMatchPage() {
 	const data = useLoaderData<typeof loader>();
+
+	// the page's updates are broadcast to its chat room, subscribed to by the chat
+	// provider via the loader's chatCode rather than by a topic of our own
+	useLiveRevalidation();
 
 	return (
 		<Main>
