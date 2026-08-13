@@ -91,13 +91,21 @@ export async function findAllPosts(user?: {
 		.$narrowType<{ author: NotNull }>()
 		.execute();
 
-	return rows.filter((row) => {
-		if (!row.plusTierVisibility) return true;
-		if (row.author.id === userId) return true;
-		if (!user?.plusTier) return false;
+	return rows
+		.filter((row) => {
+			if (!row.plusTierVisibility) return true;
+			if (row.author.id === userId) return true;
+			if (!user?.plusTier) return false;
 
-		return row.plusTierVisibility >= user.plusTier;
-	});
+			return row.plusTierVisibility >= user.plusTier;
+		})
+		.map((row) => ({
+			...row,
+			permissions: {
+				EDIT: [row.author.id],
+				DELETE: [row.author.id],
+			},
+		}));
 }
 
 const postExpiryCutoff = () =>

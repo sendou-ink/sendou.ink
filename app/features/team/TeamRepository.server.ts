@@ -130,14 +130,14 @@ export type findByCustomUrl = NonNullable<
 	Awaited<ReturnType<typeof findByCustomUrl>>
 >;
 
-export function findByCustomUrl(
+export async function findByCustomUrl(
 	customUrl: string,
 	{ includeInviteCode = false, includeUnvalidatedImages = false } = {},
 ) {
 	// join the unvalidated table (instead of the validated-only `UserSubmittedImage` view) so the
 	// edit page can preview images still pending moderation; for everyone else the url is gated on
 	// `validatedAt` so pending images stay hidden
-	return db
+	const row = await db
 		.selectFrom("Team")
 		.leftJoin(
 			"UnvalidatedUserSubmittedImage as AvatarImage",
@@ -200,6 +200,23 @@ export function findByCustomUrl(
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
+
+	if (!row) return null;
+
+	const managerIds = row.members
+		.filter((member) => member.isOwner || member.isManager)
+		.map((member) => member.id);
+
+	return {
+		...row,
+		permissions: {
+			EDIT: managerIds,
+			MANAGE_ROSTER: managerIds,
+			DELETE: row.members
+				.filter((member) => member.isOwner)
+				.map((member) => member.id),
+		},
+	};
 }
 
 export type FindResultPlacementsById = NonNullable<

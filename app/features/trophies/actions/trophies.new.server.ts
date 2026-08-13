@@ -9,6 +9,7 @@ import { resolveNotifications } from "~/features/notifications/core/resolve.serv
 import { clearTrophiesCache } from "~/features/trophies/loaders/trophies.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import * as TrophyRepository from "../TrophyRepository.server";
@@ -17,11 +18,7 @@ import {
 	pendingTrophyActionSchema,
 	trophyFormSchema,
 } from "../trophies-schemas";
-import {
-	canEditTrophy,
-	canReviewTrophies,
-	compressTrophyModel,
-} from "../trophies-utils";
+import { canReviewTrophies, compressTrophyModel } from "../trophies-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -51,10 +48,7 @@ export const action: ActionFunction = async ({ request }) => {
 		if (data._action === "UPDATE") {
 			const trophy = await TrophyRepository.findById(data.targetTrophyId);
 			errorToastIfFalsy(trophy, "Trophy not found");
-			errorToastIfFalsy(
-				canEditTrophy(user, { managerId: trophy.manager?.id ?? null }),
-				"Not allowed",
-			);
+			requirePermission(trophy, "EDIT");
 
 			const nameExists = await TrophyRepository.existsByName({
 				name: data.name,

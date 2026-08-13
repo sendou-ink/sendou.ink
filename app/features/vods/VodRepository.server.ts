@@ -210,10 +210,19 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 
 		const matches = await videoMatchQuery.execute();
 
+		const pov = resolvePov(matches);
+		const povUserId = typeof pov === "string" ? undefined : pov?.id;
+
 		return {
 			...video,
-			pov: resolvePov(matches),
+			pov,
 			matches: R.map(matches, R.omit(["players", "playerNames"])),
+			permissions: {
+				EDIT:
+					povUserId === undefined
+						? [video.submitterUserId]
+						: [video.submitterUserId, povUserId],
+			},
 		};
 	}
 	return null;

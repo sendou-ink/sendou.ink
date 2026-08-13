@@ -10,9 +10,9 @@ import * as TournamentOrganizationRepository from "~/features/tournament-organiz
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { requireRole } from "~/modules/permissions/guards.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import { tournamentBracketsPage } from "~/utils/urls";
 import { calendarNewSearchParams } from "../calendar-search-params";
-import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -58,7 +58,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			return true;
 		}
 
-		return canEditCalendarEvent({ user, event: eventToEdit });
+		return hasPermission(eventToEdit, "EDIT", user);
 	})();
 
 	// no editing tournament after the start

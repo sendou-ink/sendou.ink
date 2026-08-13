@@ -4,6 +4,7 @@ import type { Tables } from "~/db/tables";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { LFG_PAGE } from "~/utils/urls";
 import * as LFGRepository from "../LFGRepository.server";
@@ -80,8 +81,5 @@ const validateCanUpdatePost = async ({
 	const posts = await LFGRepository.findAllPosts(user);
 	const post = posts.find((post) => post.id === postId);
 	errorToastIfFalsy(post, "Post to update not found");
-	errorToastIfFalsy(
-		post.author.id === user.id,
-		"You can only update your own posts",
-	);
+	requirePermission(post, "EDIT");
 };

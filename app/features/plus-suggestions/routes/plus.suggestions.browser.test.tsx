@@ -40,6 +40,10 @@ const suggestionOf = (
 			updatedAt: null,
 			updatedAtRelative: null,
 			author: AUTHOR,
+			permissions: {
+				EDIT: [AUTHOR.id],
+				DELETE: [AUTHOR.id],
+			},
 		},
 	],
 });
@@ -54,14 +58,13 @@ describe("PlusSuggestionComments", () => {
 		const router = createBrowserRouter([
 			{
 				path: "*",
+				loader: () => ({ user: AUTHOR_AS_LOGGED_IN_USER }),
 				element: (
 					<PlusSuggestionComments
 						suggestion={suggestions[0]}
 						deleteButtonArgs={{
 							suggested: suggestions[0].suggested,
-							user: AUTHOR_AS_LOGGED_IN_USER,
 							tier: "2",
-							suggestions,
 						}}
 						defaultOpen
 					/>

@@ -2,6 +2,7 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
@@ -9,20 +10,17 @@ import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { editTeamActionSchema } from "../team-schemas";
 import { teamParamsSchema } from "../team-schemas.server";
-import { canAddCustomizedColors, isTeamManager } from "../team-utils";
+import { canAddCustomizedColors } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
-	const user = requireUser();
+	requireUser();
 	const { customUrl } = teamParamsSchema.parse(params);
 
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl),
 	);
 
-	errorToastIfFalsy(
-		isTeamManager({ team, user }) || user.roles.includes("ADMIN"),
-		"You are not a team manager",
-	);
+	requirePermission(team, "EDIT");
 
 	const result = await parseFormDataWithImages({
 		request,

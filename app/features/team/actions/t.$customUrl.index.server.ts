@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import {
 	errorToastIfFalsy,
 	notFoundIfNullish,
@@ -53,10 +54,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			break;
 		}
 		case "DELETE_TEAM": {
-			errorToastIfFalsy(
-				isTeamOwner({ user, team }) || user.roles.includes("ADMIN"),
-				"You are not the team owner",
-			);
+			requirePermission(team, "DELETE");
 
 			await TeamRepository.deleteById(team.id);
 			throw redirect("/");

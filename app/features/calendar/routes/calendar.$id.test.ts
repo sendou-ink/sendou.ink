@@ -5,7 +5,7 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { assertResponseErrored, wrappedAction } from "~/utils/Test";
+import { wrappedAction } from "~/utils/Test";
 import { action } from "./calendar.$id";
 
 const deleteAction = wrappedAction<z.ZodType<Record<string, never>>>({
@@ -20,14 +20,15 @@ describe("calendar event deletion", () => {
 			authorId: admin.id,
 		});
 
-		const response = await deleteAction(
-			{},
-			{ user: "regular", params: { id: String(tournament.eventId) } },
-		);
+		await expect(
+			deleteAction(
+				{},
+				{ user: "regular", params: { id: String(tournament.eventId) } },
+			),
+		).rejects.toThrow("Response thrown with status code: 403");
 
 		const eventAfter = await CalendarRepository.findById(tournament.eventId);
 		expect(eventAfter, "the tournament was deleted").toBeTruthy();
-		assertResponseErrored(response);
 	});
 
 	test("lets the author delete their own not-yet-started tournament", async () => {

@@ -19,6 +19,7 @@ import {
 } from "~/features/plus-voting/core";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
+import { hasPermission } from "~/modules/permissions/utils";
 import {
 	useSearchParam,
 	useSearchParamsTyped,
@@ -38,10 +39,7 @@ import {
 } from "../plus-suggestions-search-params";
 import {
 	canAddCommentToSuggestionFE,
-	canDeleteComment,
-	canEditSuggestion,
 	canSuggestNewUser,
-	isFirstSuggestion,
 } from "../plus-suggestions-utils";
 
 export { action, loader };
@@ -231,9 +229,7 @@ function SuggestedUser({
 				suggestion={suggestion}
 				deleteButtonArgs={{
 					suggested: suggestion.suggested,
-					user,
 					tier: String(tier),
-					suggestions: data.suggestions,
 				}}
 			/>
 		</div>
@@ -247,14 +243,13 @@ export function PlusSuggestionComments({
 }: {
 	suggestion: PlusSuggestionRepository.FindAllByMonthItem;
 	deleteButtonArgs?: {
-		user?: Pick<Tables["User"], "id" | "discordId">;
-		suggestions: PlusSuggestionRepository.FindAllByMonthItem[];
 		tier: string;
 		suggested: PlusSuggestionRepository.FindAllByMonthItem["suggested"];
 	};
 	defaultOpen?: true;
 }) {
 	const { t } = useTranslation(["common"]);
+	const user = useUser();
 	const [, setEditingSuggestionId] = useSearchParam(
 		plusSuggestionsSearchParams,
 		"editingSuggestionId",
@@ -298,13 +293,7 @@ export function PlusSuggestionComments({
 										)
 									</span>
 								) : null}
-								{deleteButtonArgs &&
-								canEditSuggestion({
-									author: entry.author,
-									user: deleteButtonArgs.user,
-									suggestionId: entry.id,
-									suggestions: deleteButtonArgs.suggestions,
-								}) ? (
+								{deleteButtonArgs && hasPermission(entry, "EDIT", user) ? (
 									<SendouButton
 										className="plus__edit-button"
 										icon={<SquarePen />}
@@ -313,21 +302,12 @@ export function PlusSuggestionComments({
 										onPress={() => setEditingSuggestionId(entry.id)}
 									/>
 								) : null}
-								{deleteButtonArgs &&
-								canDeleteComment({
-									author: entry.author,
-									user: deleteButtonArgs.user,
-									suggestionId: entry.id,
-									suggestions: deleteButtonArgs.suggestions,
-								}) ? (
+								{deleteButtonArgs && hasPermission(entry, "DELETE", user) ? (
 									<CommentDeleteButton
 										suggestionId={entry.id}
 										tier={deleteButtonArgs.tier}
 										suggestedUsername={deleteButtonArgs.suggested.username}
-										isFirstSuggestion={isFirstSuggestion({
-											suggestionId: entry.id,
-											suggestions: deleteButtonArgs.suggestions,
-										})}
+										isFirstSuggestion={suggestion.entries[0].id === entry.id}
 									/>
 								) : null}
 							</div>

@@ -2,7 +2,7 @@
 
 Repositories are the only place database queries are written. One per feature (`app/features/<feature>/FeatureRepository.server.ts`), imported as a module: `import * as VodRepository from "~/features/vods/VodRepository.server"`.
 
-See [database-schemas.md](./database-schemas.md) for how columns are typed and [database-relations.md](./database-relations.md) for how the tables relate.
+See [database-schemas.md](./database-schemas.md) for how columns are typed and [database-relations.md](./database-relations.md) for how the tables relate. Entities that can be acted on get their `permissions` object built in the Repository read function — see [permissions.md](./permissions.md).
 
 Note: plenty of older repositories don't follow this yet. Fix them as you touch them rather than leaving a new style behind.
 

@@ -1,6 +1,6 @@
 import { requireUser } from "~/features/auth/core/user.server";
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
-import { isAdmin } from "./utils";
+import { hasPermission } from "./utils";
 
 /**
  * Checks if a user has the required global role.
@@ -24,14 +24,8 @@ export function requirePermission<
 	K extends keyof T["permissions"],
 >(obj: T, permission: K) {
 	const user = requireUser();
-	// admin can do anything in production but not in development for better testing
-	if (process.env.NODE_ENV === "production" && isAdmin(user)) {
-		return;
-	}
 
-	const permissions = obj.permissions as Record<K, number[]>;
-
-	if (permissions[permission].includes(user.id)) {
+	if (hasPermission(obj, permission, user)) {
 		return;
 	}
 

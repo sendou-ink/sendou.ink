@@ -15,7 +15,10 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { requireRole } from "~/modules/permissions/guards.server";
+import {
+	requirePermission,
+	requireRole,
+} from "~/modules/permissions/guards.server";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -30,7 +33,7 @@ import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
 import { calendarNewSchemaServer } from "../calendar-new-schemas.server";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
-import { canEditCalendarEvent, regClosesAtDate } from "../calendar-utils";
+import { regClosesAtDate } from "../calendar-utils";
 import { findValidOrganizations } from "../loaders/calendar.new.server";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -168,10 +171,7 @@ export const action: ActionFunction = async ({ request }) => {
 			}
 		} else {
 			// editing regular calendar event
-			errorToastIfFalsy(
-				canEditCalendarEvent({ user, event: eventToEdit }),
-				"Not authorized",
-			);
+			requirePermission(eventToEdit, "EDIT");
 		}
 
 		await CalendarRepository.update({
