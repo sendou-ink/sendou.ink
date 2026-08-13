@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { wrappedAction } from "~/utils/Test";
@@ -20,7 +20,7 @@ const requestsForPost = async (scrimPostId: number) =>
 	(await ScrimPostRepository.findById(scrimPostId))?.requests;
 
 describe("Scrim requests: pickup roster validation", () => {
-	it("does not add a user who opted out of non-friend pickups (parity with post creation)", async () => {
+	test("does not add a user who opted out of non-friend pickups (parity with post creation)", async () => {
 		// attacker who sends the request (the built-in "regular" test user)
 		await UserFactory.createRegular();
 

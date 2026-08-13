@@ -4,7 +4,7 @@ import * as Engine from "../index";
 import type { BracketData } from "../types";
 
 describe("Previous and next match update in double elimination stage", () => {
-	test("should end a match and determine next matches", () => {
+	test("ends a match and determine next matches", () => {
 		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -49,7 +49,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		).toBe(matchById(data, 0).opponent2?.id); // Loser of first match round 1
 	});
 
-	test("should propagate winner when BYE is already in next match in loser bracket", () => {
+	test("propagates winner when BYE is already in next match in loser bracket", () => {
 		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, null],
@@ -81,7 +81,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		expect(matchById(data, 4).opponent2?.id).toBeNull(); // Propagated winner is removed.
 	});
 
-	test("should determine matches in grand final", () => {
+	test("determines matches in grand final", () => {
 		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
@@ -148,7 +148,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		).not.toThrow();
 	});
 
-	test("should determine next matches and reset them", () => {
+	test("determines next matches and reset them", () => {
 		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4],
@@ -172,7 +172,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		expect(afterReset.opponent1?.position).toBe(1); // It must stay.
 	});
 
-	test("should choose the correct previous and next matches based on losers ordering", () => {
+	test("chooses the correct previous and next matches based on losers ordering", () => {
 		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -219,7 +219,7 @@ describe("Previous and next match update in double elimination stage", () => {
 		expect(Engine.matchStatus(data, 8)).toBe("COMPLETED"); // WB 2.1
 	});
 
-	test("should send the losers to the right LB matches in round 1", () => {
+	test("sends the losers to the right LB matches in round 1", () => {
 		let data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],

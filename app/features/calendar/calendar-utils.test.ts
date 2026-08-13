@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
 	calendarEventMaxDate,
 	calendarEventMinDate,
@@ -8,18 +8,18 @@ import {
 } from "./calendar-utils";
 
 describe("calendar-utils", () => {
-	it("calendarEventMinDate should return a fixed date", () => {
+	test("calendarEventMinDate should return a fixed date", () => {
 		expect(calendarEventMinDate()).toEqual(new Date(Date.UTC(2015, 4, 28)));
 	});
 
-	it("calendarEventMaxDate should return a date one year from now", () => {
+	test("calendarEventMaxDate should return a date one year from now", () => {
 		const result = calendarEventMaxDate();
 		const expected = new Date();
 		expected.setFullYear(expected.getFullYear() + 1);
 		expect(result.getFullYear()).toBe(expected.getFullYear());
 	});
 
-	it("regClosesAtDate should return correct date based on closesAt option", () => {
+	test("regClosesAtDate should return correct date based on closesAt option", () => {
 		const startTime = new Date();
 		expect(regClosesAtDate({ startTime, closesAt: "5min" })).toEqual(
 			new Date(startTime.getTime() - 5 * 60 * 1000),
@@ -29,12 +29,12 @@ describe("calendar-utils", () => {
 		);
 	});
 
-	it("regClosesAtToDisplayName should return correct display name", () => {
+	test("regClosesAtToDisplayName should return correct display name", () => {
 		expect(regClosesAtToDisplayName("5min")).toBe("5 minutes");
 		expect(regClosesAtToDisplayName("1h")).toBe("1 hour");
 	});
 
-	it("datesToRegClosesAt should return correct closesAt option based on date difference", () => {
+	test("datesToRegClosesAt should return correct closesAt option based on date difference", () => {
 		const startTime = new Date();
 		expect(
 			datesToRegClosesAt({

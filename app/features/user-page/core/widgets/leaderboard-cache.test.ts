@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 // One finished season, one user sitting at rank 5 (so: top-10 AND top-100).
 vi.mock("~/features/mmr/core/Seasons", () => ({
@@ -11,7 +11,7 @@ vi.mock("~/features/leaderboards/LeaderboardRepository.server", () => ({
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 describe("SendouQ leaderboard widget cache", () => {
-	it("counts a season once when the cache is filled concurrently", async () => {
+	test("counts a season once when the cache is filled concurrently", async () => {
 		// This is exactly how UserRepository.findWidgetsByUserId drives it: the
 		// top-10-seasons and top-100-seasons widgets both call the cache inside the
 		// same Promise.all, so a cold cache is populated by two concurrent callers.

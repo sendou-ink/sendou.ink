@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import { createResolved } from "~/features/tournament-bracket/core/engine/create";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
@@ -16,7 +16,7 @@ import {
 } from "./Standings";
 
 describe("tournamentStandings", () => {
-	it("returns single-division standings for a tournament with one starting bracket", () => {
+	test("returns single-division standings for a tournament with one starting bracket", () => {
 		const tournament = singleEliminationTournament();
 
 		const result = tournamentStandings(tournament);
@@ -28,7 +28,7 @@ describe("tournamentStandings", () => {
 		expect(result.standings[0].team.id).toBe(1);
 	});
 
-	it("returns one div per starting bracket for a tournament with multiple starting brackets", () => {
+	test("returns one div per starting bracket for a tournament with multiple starting brackets", () => {
 		const tournament = testTournament({
 			ctx: {
 				settings: { bracketProgression: progressions.manyStartBrackets },
@@ -54,7 +54,7 @@ describe("tournamentStandings", () => {
 		expect(new Set(divs).size).toBe(2);
 	});
 
-	it("splits A/B divisions finals into 'A' and 'B' divs with teams partitioned by abDivision", () => {
+	test("splits A/B divisions finals into 'A' and 'B' divs with teams partitioned by abDivision", () => {
 		const tournament = abDivisionsTournament();
 
 		const result = tournamentStandings(tournament);
@@ -70,7 +70,7 @@ describe("tournamentStandings", () => {
 		expect(b.standings.every((s) => s.team.abDivision === 1)).toBe(true);
 	});
 
-	it("re-numbers placements within each A/B division starting from 1", () => {
+	test("re-numbers placements within each A/B division starting from 1", () => {
 		const tournament = abDivisionsTournament();
 
 		const result = tournamentStandings(tournament);
@@ -81,7 +81,7 @@ describe("tournamentStandings", () => {
 		expect(b.standings.map((s) => s.placement)).toEqual([1, 2]);
 	});
 
-	it("breaks ties of a bracket with the results of its underground bracket", () => {
+	test("breaks ties of a bracket with the results of its underground bracket", () => {
 		const tournament = singleEliminationWithUndergroundTournament();
 
 		const result = tournamentStandings(tournament);
@@ -97,7 +97,7 @@ describe("tournamentStandings", () => {
 		]);
 	});
 
-	it("keeps teams that skipped the underground bracket tied below those who played it", () => {
+	test("keeps teams that skipped the underground bracket tied below those who played it", () => {
 		const tournament = singleEliminationWithUndergroundTournament({
 			undergroundSeeding: [7, 8],
 		});
@@ -113,7 +113,7 @@ describe("tournamentStandings", () => {
 		]);
 	});
 
-	it("does not break ties with an underground bracket that is still in progress", () => {
+	test("does not break ties with an underground bracket that is still in progress", () => {
 		// only the semi-finals of the underground bracket have been played so the two teams
 		// still alive there have no placement yet
 		const tournament = singleEliminationWithUndergroundTournament({
@@ -134,7 +134,7 @@ describe("tournamentStandings", () => {
 		]);
 	});
 
-	it("places teams eliminated in a redemption bracket above the teams of a lower placed bracket", () => {
+	test("places teams eliminated in a redemption bracket above the teams of a lower placed bracket", () => {
 		const tournament = groupsToRedemptionAndConsolationTournament();
 
 		const result = tournamentStandings(tournament);
@@ -150,7 +150,7 @@ describe("tournamentStandings", () => {
 		]);
 	});
 
-	it("does not break ties with an underground bracket that was never started", () => {
+	test("does not break ties with an underground bracket that was never started", () => {
 		// an underground bracket set in the progression can be skipped altogether
 		const tournament = singleEliminationWithUndergroundTournament({
 			undergroundStarted: false,
@@ -170,7 +170,7 @@ describe("tournamentStandings", () => {
 });
 
 describe("reNumberPlacements", () => {
-	it("keeps already contiguous placements unchanged", () => {
+	test("keeps already contiguous placements unchanged", () => {
 		const result = reNumberPlacements([
 			{ placement: 1 },
 			{ placement: 2 },
@@ -180,7 +180,7 @@ describe("reNumberPlacements", () => {
 		expect(result.map((s) => s.placement)).toEqual([1, 2, 3]);
 	});
 
-	it("groups tied placements and skips numbers to match team count", () => {
+	test("groups tied placements and skips numbers to match team count", () => {
 		const result = reNumberPlacements([
 			{ placement: 1 },
 			{ placement: 1 },
@@ -192,7 +192,7 @@ describe("reNumberPlacements", () => {
 		expect(result.map((s) => s.placement)).toEqual([1, 1, 3, 3, 5]);
 	});
 
-	it("re-numbers from 1 when the input has been filtered (e.g. top finishers removed)", () => {
+	test("re-numbers from 1 when the input has been filtered (e.g. top finishers removed)", () => {
 		const result = reNumberPlacements([
 			{ placement: 3 },
 			{ placement: 3 },
@@ -203,7 +203,7 @@ describe("reNumberPlacements", () => {
 		expect(result.map((s) => s.placement)).toEqual([1, 1, 3, 4]);
 	});
 
-	it("adds the offset to every placement", () => {
+	test("adds the offset to every placement", () => {
 		const result = reNumberPlacements(
 			[{ placement: 1 }, { placement: 1 }, { placement: 3 }],
 			10,
@@ -212,7 +212,7 @@ describe("reNumberPlacements", () => {
 		expect(result.map((s) => s.placement)).toEqual([11, 11, 13]);
 	});
 
-	it("preserves non-placement fields on each standing", () => {
+	test("preserves non-placement fields on each standing", () => {
 		const result = reNumberPlacements([
 			{ placement: 1, team: { id: 7 }, note: "a" },
 			{ placement: 2, team: { id: 8 }, note: "b" },
@@ -224,14 +224,14 @@ describe("reNumberPlacements", () => {
 		]);
 	});
 
-	it("returns an empty array when given an empty array", () => {
+	test("returns an empty array when given an empty array", () => {
 		expect(reNumberPlacements([])).toEqual([]);
 		expect(reNumberPlacements([], 5)).toEqual([]);
 	});
 });
 
 describe("matchesPlayed", () => {
-	it("tags each match with the bracket index it was actually played in", () => {
+	test("tags each match with the bracket index it was actually played in", () => {
 		const tournament = roundRobinToSingleEliminationTournament();
 
 		const matches = matchesPlayed({ tournament, teamId: 1 });
@@ -245,7 +245,7 @@ describe("matchesPlayed", () => {
 		expect(singleEliminationMatches).toHaveLength(1);
 	});
 
-	it("includes matches of brackets that are not part of the standings, in the order they were played", () => {
+	test("includes matches of brackets that are not part of the standings, in the order they were played", () => {
 		const tournament = roundRobinWithRedemptionTournament();
 
 		const matches = matchesPlayed({ tournament, teamId: 4 });

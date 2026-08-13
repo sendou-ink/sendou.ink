@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
 	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
@@ -31,7 +31,7 @@ const row = (overrides: {
 });
 
 describe("damageMultipliersForWeapon", () => {
-	it("collects only rows applying to the weapon for the given kind", () => {
+	test("collects only rows applying to the weapon for the given kind", () => {
 		const rows = {
 			a: row({
 				specialWeaponIds: [11],
@@ -48,7 +48,7 @@ describe("damageMultipliersForWeapon", () => {
 		expect(result.map((m) => m.target)).toEqual(["Chariot"]);
 	});
 
-	it("de-duplicates identical target histories shared across rows", () => {
+	test("de-duplicates identical target histories shared across rows", () => {
 		const sharedTarget: DamageMultiplierWithHistory = {
 			target: "GreatBarrier_Barrier",
 			current: 1.4,
@@ -67,7 +67,7 @@ describe("damageMultipliersForWeapon", () => {
 		expect(result).toHaveLength(1);
 	});
 
-	it("merges several rows of the same target into the most informative entry", () => {
+	test("merges several rows of the same target into the most informative entry", () => {
 		const rows = {
 			swing: row({
 				specialWeaponIds: [11],
@@ -95,7 +95,7 @@ describe("damageMultipliersForWeapon", () => {
 		expect(result[0].current).toBe(3.273);
 	});
 
-	it("orders entries like DAMAGE_RECEIVERS", () => {
+	test("orders entries like DAMAGE_RECEIVERS", () => {
 		const rows = {
 			a: row({
 				specialWeaponIds: [11],
@@ -117,7 +117,7 @@ describe("patchHistory damage multipliers", () => {
 	const buildWith = (multiplier: DamageMultiplierWithHistory) =>
 		WeaponParams.patchHistory(emptyParsed(11), VERSIONS, [], [multiplier]);
 
-	it("attributes a change to the version after the recorded one and flags a higher rate as a buff", () => {
+	test("attributes a change to the version after the recorded one and flags a higher rate as a buff", () => {
 		const patches = buildWith({
 			target: "Wsb_Shield",
 			current: 2.2,
@@ -137,7 +137,7 @@ describe("patchHistory damage multipliers", () => {
 		]);
 	});
 
-	it("flags a lower rate as a nerf", () => {
+	test("flags a lower rate as a nerf", () => {
 		const patches = buildWith({
 			target: "NiceBall_Armor",
 			current: 1.82,
@@ -151,7 +151,7 @@ describe("patchHistory damage multipliers", () => {
 });
 
 describe("incomingDamageMultipliersForWeapon", () => {
-	it("collects other weapons' rates against the weapon's receiver targets", () => {
+	test("collects other weapons' rates against the weapon's receiver targets", () => {
 		const rows = {
 			fromSpecial: row({
 				specialWeaponIds: [10],
@@ -193,7 +193,7 @@ describe("incomingDamageMultipliersForWeapon", () => {
 		expect(result[1].attackers.mainWeaponIds).toEqual([200, 201]);
 	});
 
-	it("de-duplicates the same attacker group and target across rows", () => {
+	test("de-duplicates the same attacker group and target across rows", () => {
 		const target = {
 			target: "GreatBarrier_Barrier",
 			current: 1.4,
@@ -213,7 +213,7 @@ describe("incomingDamageMultipliersForWeapon", () => {
 		expect(result).toHaveLength(1);
 	});
 
-	it("returns nothing for a weapon that is not a damageable object", () => {
+	test("returns nothing for a weapon that is not a damageable object", () => {
 		const rows = {
 			a: row({
 				specialWeaponIds: [10],
@@ -235,7 +235,7 @@ describe("incomingDamageMultipliersForWeapon", () => {
 });
 
 describe("patchHistory incoming damage multipliers", () => {
-	it("flags a higher incoming rate as a nerf to the defending weapon and carries the attackers", () => {
+	test("flags a higher incoming rate as a nerf to the defending weapon and carries the attackers", () => {
 		const patches = WeaponParams.patchHistory(
 			emptyParsed(2),
 			VERSIONS,
@@ -267,7 +267,7 @@ describe("patchHistory incoming damage multipliers", () => {
 		});
 	});
 
-	it("flags a lower incoming rate as a buff to the defending weapon", () => {
+	test("flags a lower incoming rate as a buff to the defending weapon", () => {
 		const patches = WeaponParams.patchHistory(
 			emptyParsed(2),
 			VERSIONS,
@@ -292,7 +292,7 @@ describe("patchHistory incoming damage multipliers", () => {
 });
 
 describe("parse damage falloff curves", () => {
-	it("serializes a DistanceDamage array into a scaled damage @ distance string", () => {
+	test("serializes a DistanceDamage array into a scaled damage @ distance string", () => {
 		const parsed = WeaponParams.parse(
 			0,
 			{
@@ -311,7 +311,7 @@ describe("parse damage falloff curves", () => {
 		);
 	});
 
-	it("flattens nested breakpoint arrays", () => {
+	test("flattens nested breakpoint arrays", () => {
 		const parsed = WeaponParams.parse(
 			0,
 			{
@@ -330,7 +330,7 @@ describe("parse damage falloff curves", () => {
 		);
 	});
 
-	it("tracks per-version history of a damage falloff curve", () => {
+	test("tracks per-version history of a damage falloff curve", () => {
 		const parsed = WeaponParams.parse(
 			0,
 			{
@@ -349,19 +349,19 @@ describe("parse damage falloff curves", () => {
 });
 
 describe("classifyParamChange damage falloff curves", () => {
-	it("flags higher damage as a buff", () => {
+	test("flags higher damage as a buff", () => {
 		expect(
 			classifyParamChange("BlastParam", "DistanceDamage", "40 @ 4", "60 @ 4"),
 		).toBe("buff");
 	});
 
-	it("flags lower damage as a nerf", () => {
+	test("flags lower damage as a nerf", () => {
 		expect(
 			classifyParamChange("BlastParam", "DistanceDamage", "60 @ 4", "40 @ 4"),
 		).toBe("nerf");
 	});
 
-	it("flags longer reach at the same damage as a buff", () => {
+	test("flags longer reach at the same damage as a buff", () => {
 		expect(
 			classifyParamChange(
 				"BlastParam",
@@ -372,7 +372,7 @@ describe("classifyParamChange damage falloff curves", () => {
 		).toBe("buff");
 	});
 
-	it("flags shorter reach at the same damage as a nerf", () => {
+	test("flags shorter reach at the same damage as a nerf", () => {
 		expect(
 			classifyParamChange(
 				"BlastParam",
@@ -383,13 +383,13 @@ describe("classifyParamChange damage falloff curves", () => {
 		).toBe("nerf");
 	});
 
-	it("is neutral when damage rises but reach shrinks", () => {
+	test("is neutral when damage rises but reach shrinks", () => {
 		expect(
 			classifyParamChange("BlastParam", "DistanceDamage", "60 @ 4", "70 @ 3.5"),
 		).toBe("neutral");
 	});
 
-	it("is neutral when the curve gains or loses a breakpoint", () => {
+	test("is neutral when the curve gains or loses a breakpoint", () => {
 		expect(
 			classifyParamChange(
 				"BlastParam",
@@ -445,7 +445,7 @@ describe("kitPatchHistories", () => {
 			specialIncomingDamageMultipliers: {},
 		});
 
-	it("folds the kit's main, sub and special weapon changes into one descending history", () => {
+	test("folds the kit's main, sub and special weapon changes into one descending history", () => {
 		const [history] = kitHistory();
 
 		expect(history.weaponId).toBe(11);
@@ -455,7 +455,7 @@ describe("kitPatchHistories", () => {
 		]);
 	});
 
-	it("tags each change with its source and groups main before sub before special", () => {
+	test("tags each change with its source and groups main before sub before special", () => {
 		const [history] = kitHistory();
 
 		const v2 = history.patches.find((patch) => patch.version === "2.0.0")!;

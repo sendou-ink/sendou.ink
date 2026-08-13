@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { topSearchSearchParams } from "./top-search-search-params";
 
 describe("topSearchSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(topSearchSearchParams, {
 			mode: ["SZ", "TC", "RM", "CB"],
 			region: ["WEST", "JPN"],
@@ -15,7 +15,7 @@ describe("topSearchSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(topSearchSearchParams, "mode", [
 			["TW"],
 			["garbage"],

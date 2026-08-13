@@ -9,12 +9,12 @@ import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 const MEMBERS_PER_TEAM = 4;
 const TEAM_COUNT = 3;
 
-let users: Array<{ id: number }>;
+const users = UserFactory.pool();
 
 const createTournament = () =>
-	TournamentFactory.create({ authorId: users[0].id });
+	TournamentFactory.create({ authorId: users.id(1) });
 
-const createTeam = (
+const createTournamentTeam = (
 	tournamentId: number,
 	{ nth, isCheckedIn }: { nth: number; isCheckedIn: boolean },
 ) =>
@@ -22,8 +22,8 @@ const createTeam = (
 		{
 			tournamentId,
 			memberUserIds: users
-				.slice(nth * MEMBERS_PER_TEAM, (nth + 1) * MEMBERS_PER_TEAM)
-				.map((user) => user.id),
+				.ids()
+				.slice(nth * MEMBERS_PER_TEAM, (nth + 1) * MEMBERS_PER_TEAM),
 		},
 		{ isCheckedIn },
 	);
@@ -38,14 +38,14 @@ const showcaseCounts = async (tournamentId: number) => {
 
 describe("TournamentRepository.findShowcaseCountsById", () => {
 	beforeEach(async () => {
-		users = await UserFactory.createMany(MEMBERS_PER_TEAM * TEAM_COUNT);
+		await users.create(MEMBERS_PER_TEAM * TEAM_COUNT);
 	});
 
 	test("counts every registered team before a bracket has been started", async () => {
 		const { id: tournamentId } = await createTournament();
-		await createTeam(tournamentId, { nth: 0, isCheckedIn: true });
-		await createTeam(tournamentId, { nth: 1, isCheckedIn: true });
-		await createTeam(tournamentId, { nth: 2, isCheckedIn: false });
+		await createTournamentTeam(tournamentId, { nth: 0, isCheckedIn: true });
+		await createTournamentTeam(tournamentId, { nth: 1, isCheckedIn: true });
+		await createTournamentTeam(tournamentId, { nth: 2, isCheckedIn: false });
 
 		const counts = await showcaseCounts(tournamentId);
 
@@ -55,9 +55,9 @@ describe("TournamentRepository.findShowcaseCountsById", () => {
 
 	test("counts only checked in teams after a bracket has been started", async () => {
 		const { id: tournamentId } = await createTournament();
-		await createTeam(tournamentId, { nth: 0, isCheckedIn: true });
-		await createTeam(tournamentId, { nth: 1, isCheckedIn: true });
-		await createTeam(tournamentId, { nth: 2, isCheckedIn: false });
+		await createTournamentTeam(tournamentId, { nth: 0, isCheckedIn: true });
+		await createTournamentTeam(tournamentId, { nth: 1, isCheckedIn: true });
+		await createTournamentTeam(tournamentId, { nth: 2, isCheckedIn: false });
 
 		await TournamentFactory.startBracket(tournamentId);
 
@@ -69,8 +69,11 @@ describe("TournamentRepository.findShowcaseCountsById", () => {
 
 	test("counts a team having several check in rows once", async () => {
 		const { id: tournamentId } = await createTournament();
-		const team = await createTeam(tournamentId, { nth: 0, isCheckedIn: true });
-		await createTeam(tournamentId, { nth: 1, isCheckedIn: true });
+		const team = await createTournamentTeam(tournamentId, {
+			nth: 0,
+			isCheckedIn: true,
+		});
+		await createTournamentTeam(tournamentId, { nth: 1, isCheckedIn: true });
 
 		await TournamentFactory.startBracket(tournamentId);
 		await actAs(team.ownerUserId, () =>

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost } from "../scrims-types";
@@ -28,7 +28,7 @@ function createPost(users: MockUser[], requests: MockRequest[]): ScrimPost {
 }
 
 describe("participantIdsListFromAccepted", () => {
-	it("returns only post users if no accepted request", () => {
+	test("returns only post users if no accepted request", () => {
 		const post = createPost(
 			[{ id: 10 }, { id: 20 }],
 			[
@@ -43,7 +43,7 @@ describe("participantIdsListFromAccepted", () => {
 		expect(result).toEqual([10, 20]);
 	});
 
-	it("returns post users and accepted request users", () => {
+	test("returns post users and accepted request users", () => {
 		const post = createPost(
 			[{ id: 10 }, { id: 20 }],
 			[
@@ -62,7 +62,7 @@ describe("participantIdsListFromAccepted", () => {
 		expect(result).toEqual([10, 20, 40, 50]);
 	});
 
-	it("returns post users if accepted request has no users", () => {
+	test("returns post users if accepted request has no users", () => {
 		const post = createPost(
 			[{ id: 10 }],
 			[
@@ -77,7 +77,7 @@ describe("participantIdsListFromAccepted", () => {
 		expect(result).toEqual([10]);
 	});
 
-	it("returns empty array if no users and no accepted request", () => {
+	test("returns empty array if no users and no accepted request", () => {
 		const post = createPost([], []);
 
 		const result = participantIdsListFromAccepted(post);
@@ -86,7 +86,7 @@ describe("participantIdsListFromAccepted", () => {
 });
 
 describe("sideDisplayName", () => {
-	it("returns the team name when team is set", () => {
+	test("returns the team name when team is set", () => {
 		const result = sideDisplayName({
 			team: { name: "Team Olive" },
 			users: [{ username: "sendou", isOwner: true }],
@@ -94,7 +94,7 @@ describe("sideDisplayName", () => {
 		expect(result).toBe("Team Olive");
 	});
 
-	it("falls back to {owner}'s pickup when team is null", () => {
+	test("falls back to {owner}'s pickup when team is null", () => {
 		const result = sideDisplayName({
 			team: null,
 			users: [
@@ -139,7 +139,7 @@ describe("applyFilters", () => {
 	}
 
 	describe("with no filters", () => {
-		it("returns true when all filters are null", () => {
+		test("returns true when all filters are null", () => {
 			const post = createPostForFilters(new Date("2025-01-15T14:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -152,7 +152,7 @@ describe("applyFilters", () => {
 	});
 
 	describe("division filters", () => {
-		it("returns true when post has no divs but filter has divs", () => {
+		test("returns true when post has no divs but filter has divs", () => {
 			const post = createPostForFilters(new Date("2025-01-15T14:00:00"));
 			const filters: ScrimFilters = {
 				divs: { min: "5", max: "3" },
@@ -163,7 +163,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns true when only filter min is set and post max is at or above filter min", () => {
+		test("returns true when only filter min is set and post max is at or above filter min", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -178,7 +178,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when only filter min is set and post max is below filter min", () => {
+		test("returns false when only filter min is set and post max is below filter min", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -193,7 +193,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns true when only filter max is set and post min is at or below filter max", () => {
+		test("returns true when only filter max is set and post min is at or below filter max", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -208,7 +208,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when only filter max is set and post min is above filter max", () => {
+		test("returns false when only filter max is set and post min is above filter max", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -223,7 +223,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns true when post divs overlap with filter divs", () => {
+		test("returns true when post divs overlap with filter divs", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -238,7 +238,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns true when post divs exactly match filter divs", () => {
+		test("returns true when post divs exactly match filter divs", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -253,7 +253,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when post divs are too high for filter", () => {
+		test("returns false when post divs are too high for filter", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -268,7 +268,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns false when post divs are too low for filter", () => {
+		test("returns false when post divs are too low for filter", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -285,7 +285,7 @@ describe("applyFilters", () => {
 	});
 
 	describe("weekday time filters", () => {
-		it("returns true when post time overlaps with weekday time filter", () => {
+		test("returns true when post time overlaps with weekday time filter", () => {
 			const post = createPostForFilters(new Date("2025-01-15T14:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -296,7 +296,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when post time is before weekday time filter", () => {
+		test("returns false when post time is before weekday time filter", () => {
 			const post = createPostForFilters(new Date("2025-01-15T08:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -307,7 +307,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns false when post time is after weekday time filter", () => {
+		test("returns false when post time is after weekday time filter", () => {
 			const post = createPostForFilters(new Date("2025-01-15T18:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -318,7 +318,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns true when post time range overlaps with weekday time filter", () => {
+		test("returns true when post time range overlaps with weekday time filter", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T09:00:00"),
 				new Date("2025-01-15T11:00:00"),
@@ -332,7 +332,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when post time range does not overlap with weekday time filter", () => {
+		test("returns false when post time range does not overlap with weekday time filter", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T06:00:00"),
 				new Date("2025-01-15T08:00:00"),
@@ -346,7 +346,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns true when post time range ends exactly at the filter start edge", () => {
+		test("returns true when post time range ends exactly at the filter start edge", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T09:00:00"),
 				new Date("2025-01-15T10:00:00"),
@@ -360,7 +360,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns true when a post time range crossing midnight overlaps the filter", () => {
+		test("returns true when a post time range crossing midnight overlaps the filter", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T23:00:00"),
 				new Date("2025-01-16T01:00:00"),
@@ -374,7 +374,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns true when a filter crossing midnight covers the post time", () => {
+		test("returns true when a filter crossing midnight covers the post time", () => {
 			const post = createPostForFilters(new Date("2025-01-15T21:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -387,7 +387,7 @@ describe("applyFilters", () => {
 	});
 
 	describe("weekend time filters", () => {
-		it("returns true when post time overlaps with weekend time filter on Saturday", () => {
+		test("returns true when post time overlaps with weekend time filter on Saturday", () => {
 			const post = createPostForFilters(new Date("2025-01-18T14:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -398,7 +398,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns true when post time overlaps with weekend time filter on Sunday", () => {
+		test("returns true when post time overlaps with weekend time filter on Sunday", () => {
 			const post = createPostForFilters(new Date("2025-01-19T14:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -409,7 +409,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when post time is outside weekend time filter", () => {
+		test("returns false when post time is outside weekend time filter", () => {
 			const post = createPostForFilters(new Date("2025-01-18T20:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -420,7 +420,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("ignores weekday time filter on weekends", () => {
+		test("ignores weekday time filter on weekends", () => {
 			const post = createPostForFilters(new Date("2025-01-18T20:00:00"));
 			const filters: ScrimFilters = {
 				divs: null,
@@ -433,7 +433,7 @@ describe("applyFilters", () => {
 	});
 
 	describe("combined filters", () => {
-		it("returns true when both div and time filters match", () => {
+		test("returns true when both div and time filters match", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -448,7 +448,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(true);
 		});
 
-		it("returns false when div filter matches but time filter does not", () => {
+		test("returns false when div filter matches but time filter does not", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T18:00:00"),
 				undefined,
@@ -463,7 +463,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns false when time filter matches but div filter does not", () => {
+		test("returns false when time filter matches but div filter does not", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T14:00:00"),
 				undefined,
@@ -478,7 +478,7 @@ describe("applyFilters", () => {
 			expect(applyFilters(post, filters)).toBe(false);
 		});
 
-		it("returns false when neither filter matches", () => {
+		test("returns false when neither filter matches", () => {
 			const post = createPostForFilters(
 				new Date("2025-01-15T18:00:00"),
 				undefined,
@@ -496,7 +496,7 @@ describe("applyFilters", () => {
 });
 
 describe("sideOfUser", () => {
-	it("returns ALPHA for users in the post's users list", () => {
+	test("returns ALPHA for users in the post's users list", () => {
 		const post = createPost(
 			[{ id: 1 }],
 			[{ isAccepted: true, users: [{ id: 2 }] }],
@@ -504,7 +504,7 @@ describe("sideOfUser", () => {
 		expect(sideOfUser(post, 1)).toBe("ALPHA");
 	});
 
-	it("returns BRAVO for users in the accepted request's users list", () => {
+	test("returns BRAVO for users in the accepted request's users list", () => {
 		const post = createPost(
 			[{ id: 1 }],
 			[{ isAccepted: true, users: [{ id: 2 }] }],
@@ -512,7 +512,7 @@ describe("sideOfUser", () => {
 		expect(sideOfUser(post, 2)).toBe("BRAVO");
 	});
 
-	it("returns null for non-participants", () => {
+	test("returns null for non-participants", () => {
 		const post = createPost(
 			[{ id: 1 }],
 			[{ isAccepted: true, users: [{ id: 2 }] }],
@@ -520,7 +520,7 @@ describe("sideOfUser", () => {
 		expect(sideOfUser(post, 99)).toBeNull();
 	});
 
-	it("ignores users only in non-accepted requests", () => {
+	test("ignores users only in non-accepted requests", () => {
 		const post = createPost(
 			[{ id: 1 }],
 			[{ isAccepted: false, users: [{ id: 2 }] }],
@@ -533,23 +533,23 @@ describe("isTrackingLocked", () => {
 	const ONE_HOUR_MS = 60 * 60 * 1000;
 	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
 
-	it("returns false when no map list submitted yet", () => {
+	test("returns false when no map list submitted yet", () => {
 		expect(isTrackingLocked([], [], Date.now())).toBe(false);
 	});
 
-	it("returns false just inside the auto-lock window from list submission", () => {
+	test("returns false just inside the auto-lock window from list submission", () => {
 		const now = 1_000_000_000;
 		const updatedAt = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
 		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(false);
 	});
 
-	it("returns true just past the auto-lock window from list submission", () => {
+	test("returns true just past the auto-lock window from list submission", () => {
 		const now = 1_000_000_000;
 		const updatedAt = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
 		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(true);
 	});
 
-	it("uses the most recent reported map as the reference point", () => {
+	test("uses the most recent reported map as the reference point", () => {
 		const now = 1_000_000_000;
 		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
 		const recentMapSeconds = (now - ONE_HOUR_MS) / 1000;
@@ -562,7 +562,7 @@ describe("isTrackingLocked", () => {
 		).toBe(false);
 	});
 
-	it("uses the most recent list update when there are no reported maps", () => {
+	test("uses the most recent list update when there are no reported maps", () => {
 		const now = 1_000_000_000;
 		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
 		const recentUpdatedAt = (now - ONE_HOUR_MS) / 1000;

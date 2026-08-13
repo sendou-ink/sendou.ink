@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { scannerSearchParams } from "./scanner-search-params";
 
 describe("scannerSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(scannerSearchParams, {
 			tab: ["live", "screenshot", "vod"],
 			inspect: ["1723456789012-abc123", null],
@@ -14,7 +14,7 @@ describe("scannerSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(scannerSearchParams, "tab", [["garbage"], ["LIVE"]]);
 	});
 });

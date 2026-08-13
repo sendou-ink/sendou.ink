@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { unwrap } from "~/utils/result";
@@ -29,17 +29,12 @@ describe("MapList.generate()", () => {
 	}
 
 	describe("singular map list", () => {
-		it("returns an array with given amount of items", () => {
+		test.each([1, 3, 5])("returns an array of %d items", (amount) => {
 			const gen = initGenerator();
-			expect(gen.next({ amount: 3 }).value).toHaveLength(3);
+			expect(gen.next({ amount }).value).toHaveLength(amount);
 		});
 
-		it("returns an array with only one item", () => {
-			const gen = initGenerator();
-			expect(gen.next({ amount: 1 }).value).toHaveLength(1);
-		});
-
-		it("includes only maps from the given map pool", () => {
+		test("includes only maps from the given map pool", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 3 }).value;
 
@@ -48,7 +43,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("contains only unique maps, when possible", () => {
+		test("contains only unique maps, when possible", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 3 }).value;
 
@@ -57,7 +52,7 @@ describe("MapList.generate()", () => {
 			);
 		});
 
-		it("repeats maps when amount is larger than pool size", () => {
+		test("repeats maps when amount is larger than pool size", () => {
 			const gen = initGenerator(
 				new MapPool({
 					TW: [1],
@@ -75,7 +70,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("contains every mode once before repeating", () => {
+		test("contains every mode once before repeating", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 5 }).value;
 			const modes = maps.map((m) => m.mode);
@@ -85,21 +80,21 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("repeats a mode following the pattern when amount bigger than mode count", () => {
+		test("repeats a mode following the pattern when amount bigger than mode count", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 6 }).value;
 
 			expect(maps[0].mode).toBe(maps[5].mode);
 		});
 
-		it("handles empty map pool", () => {
+		test("handles empty map pool", () => {
 			const gen = initGenerator(MapPool.EMPTY);
 			const maps = gen.next({ amount: 3 }).value;
 
 			expect(maps).toHaveLength(0);
 		});
 
-		it("follows a pattern", () => {
+		test("follows a pattern", () => {
 			for (let i = 0; i < 10; i++) {
 				const gen = initGenerator();
 				const maps = gen.next({ amount: 3, pattern: "*SZ*" }).value;
@@ -109,7 +104,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("follows and repeats a pattern", () => {
+		test("follows and repeats a pattern", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 5, pattern: "*SZ*" }).value;
 
@@ -118,7 +113,7 @@ describe("MapList.generate()", () => {
 			expect(maps[3].mode).toBe("SZ");
 		});
 
-		it("guarantees a must-include even when the pattern's only ANY slot is in the back half", () => {
+		test("guarantees a must-include even when the pattern's only ANY slot is in the back half", () => {
 			for (let i = 0; i < 10; i++) {
 				const gen = initGenerator();
 				const maps = gen.next({ amount: 3, pattern: "[RM!]SZTC*" }).value;
@@ -128,7 +123,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("follows a one mode only pattern", () => {
+		test("follows a one mode only pattern", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 3, pattern: "SZ" }).value;
 
@@ -137,7 +132,7 @@ describe("MapList.generate()", () => {
 			expect(maps[2].mode).toBe("SZ");
 		});
 
-		it("follows a pattern where starting and ending mode is the same", () => {
+		test("follows a pattern where starting and ending mode is the same", () => {
 			const gen = initGenerator(
 				new MapPool({
 					...ALL_MODES_TEST_MAP_POOL.getClonedObject(),
@@ -151,7 +146,7 @@ describe("MapList.generate()", () => {
 			expect(maps[4].mode, "Map 5 is not SZ").toBe("SZ");
 		});
 
-		it("follows a one mode only pattern (Bo9)", () => {
+		test("follows a one mode only pattern (Bo9)", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 9, pattern: "SZ" }).value;
 
@@ -160,7 +155,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("includes a mustInclude mode", () => {
+		test("includes a mustInclude mode", () => {
 			for (let i = 0; i < 10; i++) {
 				const gen = initGenerator();
 				const maps = gen.next({ amount: 1, pattern: "[SZ]" }).value;
@@ -169,7 +164,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("includes a mustInclude mode (guaranteed)", () => {
+		test("includes a mustInclude mode (guaranteed)", () => {
 			const gen = initGenerator();
 			for (let i = 0; i < 50; i++) {
 				const maps = gen.next({ amount: 5, pattern: "[SZ!]" }).value;
@@ -178,7 +173,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("includes a mustInclude mode with pattern", () => {
+		test("includes a mustInclude mode with pattern", () => {
 			const gen = initGenerator();
 			for (let i = 0; i < 50; i++) {
 				const maps = gen.next({ amount: 3, pattern: "[SZ]*TC*" }).value;
@@ -187,7 +182,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("follows a pattern with multiple specific modes", () => {
+		test("follows a pattern with multiple specific modes", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 5, pattern: "SZ*TC" }).value;
 
@@ -196,14 +191,14 @@ describe("MapList.generate()", () => {
 			expect(maps[2].mode, "missign TC (required by pattern)").toBe("TC");
 		});
 
-		it("places a non-guaranteed must-include when the pattern has no flexible slots but more maps than pattern parts", () => {
+		test("places a non-guaranteed must-include when the pattern has no flexible slots but more maps than pattern parts", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 5, pattern: "[RM]SZTC" }).value;
 
 			expect(maps.map((map) => map.mode)).toContain("RM");
 		});
 
-		it("handles a conflict between pattern and must include", () => {
+		test("handles a conflict between pattern and must include", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 1, pattern: "TW[SZ]" }).value;
 
@@ -211,7 +206,7 @@ describe("MapList.generate()", () => {
 			expect(maps[0].mode).toBe("TW"); // pattern has priority
 		});
 
-		it("handles more must include modes than amount", () => {
+		test("handles more must include modes than amount", () => {
 			const gen = initGenerator();
 			const maps = gen.next({ amount: 1, pattern: "[TW][SZ]" }).value;
 
@@ -219,7 +214,7 @@ describe("MapList.generate()", () => {
 			expect(["TW", "SZ"]).toContain(maps[0].mode);
 		});
 
-		it("ignores a mode in the pattern not in the map pool", () => {
+		test("ignores a mode in the pattern not in the map pool", () => {
 			const gen = initGenerator(
 				new MapPool({
 					TW: [1, 2, 3],
@@ -237,7 +232,7 @@ describe("MapList.generate()", () => {
 			expect(maps[2].mode).toBe("TW");
 		});
 
-		it("ignores a must include mode not in the map pool", () => {
+		test("ignores a must include mode not in the map pool", () => {
 			const gen = initGenerator(
 				new MapPool({
 					TW: [1, 2, 3],
@@ -255,7 +250,7 @@ describe("MapList.generate()", () => {
 	});
 
 	describe("many map lists", () => {
-		it("generates many map lists", () => {
+		test("generates many map lists", () => {
 			const gen = initGenerator();
 			const first = gen.next({ amount: 3 }).value;
 			const second = gen.next({ amount: 3 }).value;
@@ -264,7 +259,7 @@ describe("MapList.generate()", () => {
 			expect(second).toBeInstanceOf(Array);
 		});
 
-		it("has different maps in each list", () => {
+		test("has different maps in each list", () => {
 			// TW, SZ & TC with 3 maps each
 			const mapPool = new MapPool({
 				TW: [1, 2, 3],
@@ -291,7 +286,7 @@ describe("MapList.generate()", () => {
 			expect(all).toContainEqual({ mode: "TC", stageId: 9 });
 		});
 
-		it("randomizes the stage order", () => {
+		test("randomizes the stage order", () => {
 			const stagesSeen = new Set<number>();
 			for (let i = 0; i < 10; i++) {
 				const gen = initGenerator(ALL_MAPS_TEST_MAP_POOL);
@@ -303,7 +298,7 @@ describe("MapList.generate()", () => {
 			expect(stagesSeen.size).toBeGreaterThan(1);
 		});
 
-		it("cycles a single mode order continuously across sets", () => {
+		test("cycles a single mode order continuously across sets", () => {
 			// 5 modes, Bo3 sets -> the order keeps rolling without resetting
 			const gen = initGenerator();
 			const first = gen.next({ amount: 3 }).value!.map((m) => m.mode);
@@ -313,7 +308,7 @@ describe("MapList.generate()", () => {
 			expect(second[2]).toBe(first[0]);
 		});
 
-		it("uses the same mode order when a set spans the whole rotation", () => {
+		test("uses the same mode order when a set spans the whole rotation", () => {
 			// 5 modes, Bo5 sets -> each set is exactly one full rotation
 			const gen = initGenerator();
 			const first = gen.next({ amount: 5 }).value!.map((m) => m.mode);
@@ -322,7 +317,7 @@ describe("MapList.generate()", () => {
 			expect(second).toEqual(first);
 		});
 
-		it("keeps cycling other modes across sets when a must-include pattern is set", () => {
+		test("keeps cycling other modes across sets when a must-include pattern is set", () => {
 			// A single generator drives every bracket round. With a `[SZ]`
 			// must-include pattern the non-SZ slots should keep advancing through
 			// the mode order across rounds instead of replaying the order's prefix
@@ -342,7 +337,7 @@ describe("MapList.generate()", () => {
 			expect(modesSeen).toContain("RM");
 		});
 
-		it("keeps cycling other modes across sets when a positional pattern is set", () => {
+		test("keeps cycling other modes across sets when a positional pattern is set", () => {
 			// With a `*SZ*` pattern and Bo3 sets the two ANY slots are filled from
 			// the non-SZ modes (TC, RM, CB). Because the cycle offset advances by the
 			// full set size (3) instead of the slots actually consumed, every round
@@ -371,7 +366,7 @@ describe("MapList.generate()", () => {
 			expect([...modesSeen].sort()).toEqual(["CB", "RM", "SZ", "TC"]);
 		});
 
-		it("advances the cycle by the ANY slots consumed when a positional pattern is set", () => {
+		test("advances the cycle by the ANY slots consumed when a positional pattern is set", () => {
 			const gen = MapList.generate({
 				mapPool: new MapPool({
 					TW: [],
@@ -392,7 +387,7 @@ describe("MapList.generate()", () => {
 			expect(nextModes()).toEqual(["RM", "SZ", "CB"]);
 		});
 
-		it("replenishes the stage id pool with different order", () => {
+		test("replenishes the stage id pool with different order", () => {
 			const gen = initGenerator(
 				new MapPool({
 					TW: [],
@@ -417,7 +412,7 @@ describe("MapList.generate()", () => {
 			expect(someDifferent).toBe(true);
 		});
 
-		it("should find unique maps when possible (All 4 One #50 bug)", () => {
+		test("finds unique maps when possible (All 4 One #50 bug)", () => {
 			const mapPool = new MapPool({
 				TW: [],
 				SZ: [1, 2, 3, 4, 5, 6, 7],
@@ -444,7 +439,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("should find unique maps when possible (All 4 One #51 bug)", () => {
+		test("finds unique maps when possible (All 4 One #51 bug)", () => {
 			const mapPool = new MapPool({
 				TW: [],
 				SZ: [1, 2, 3, 4, 5, 6, 7],
@@ -468,7 +463,7 @@ describe("MapList.generate()", () => {
 			}
 		});
 
-		it("applies different weight penalties based on guaranteed positions when considerGuaranteed is true", () => {
+		test("applies different weight penalties based on guaranteed positions when considerGuaranteed is true", () => {
 			const mapPool = new MapPool({
 				TW: [],
 				SZ: [1, 2, 3, 4, 5],
@@ -517,49 +512,49 @@ describe("MapList.generate()", () => {
 });
 
 describe("MapList.parsePattern()", () => {
-	it("parses a simple pattern", () => {
+	test("parses a simple pattern", () => {
 		expect(unwrap(MapList.parsePattern("SZ*TC"))).toEqual({
 			pattern: ["SZ", "ANY", "TC"],
 		});
 	});
 
-	it("handles extra spaces", () => {
+	test("handles extra spaces", () => {
 		expect(unwrap(MapList.parsePattern(" *  SZ    "))).toEqual({
 			pattern: ["ANY", "SZ"],
 		});
 	});
 
-	it("handles the same mode twice in pattern", () => {
+	test("handles the same mode twice in pattern", () => {
 		expect(unwrap(MapList.parsePattern("SZ*SZ"))).toEqual({
 			pattern: ["SZ", "ANY", "SZ"],
 		});
 	});
 
-	it("returns error on invalid mode", () => {
+	test("returns error on invalid mode", () => {
 		expect(MapList.parsePattern("*INVALID*").ok).toBe(false);
 	});
 
-	it("if starts and ends with ANY, the ending ANY is dropped", () => {
+	test("if starts and ends with ANY, the ending ANY is dropped", () => {
 		expect(unwrap(MapList.parsePattern("*SZ*"))).toEqual({
 			pattern: ["ANY", "SZ"],
 		});
 	});
 
-	it("parses a mustInclude mode", () => {
+	test("parses a mustInclude mode", () => {
 		expect(unwrap(MapList.parsePattern("[SZ]"))).toEqual({
 			mustInclude: [{ mode: "SZ", isGuaranteed: false }],
 			pattern: [],
 		});
 	});
 
-	it("parses a guaranteed mustInclude mode", () => {
+	test("parses a guaranteed mustInclude mode", () => {
 		expect(unwrap(MapList.parsePattern("[SZ!]"))).toEqual({
 			mustInclude: [{ mode: "SZ", isGuaranteed: true }],
 			pattern: [],
 		});
 	});
 
-	it("parses a complex pattern", () => {
+	test("parses a complex pattern", () => {
 		expect(unwrap(MapList.parsePattern(" * [SZ] * TC [TW]"))).toEqual({
 			mustInclude: [
 				{ mode: "TW", isGuaranteed: false },
@@ -569,20 +564,20 @@ describe("MapList.parsePattern()", () => {
 		});
 	});
 
-	it("ignores repeated must include mode", () => {
+	test("ignores repeated must include mode", () => {
 		expect(unwrap(MapList.parsePattern("[SZ][SZ]"))).toEqual({
 			mustInclude: [{ mode: "SZ", isGuaranteed: false }],
 			pattern: [],
 		});
 	});
 
-	it("parses an empty pattern", () => {
+	test("parses an empty pattern", () => {
 		expect(unwrap(MapList.parsePattern(""))).toEqual({
 			pattern: [],
 		});
 	});
 
-	it("returns error when pattern is too long", () => {
+	test("returns error when pattern is too long", () => {
 		const longPattern = "a".repeat(51);
 		const result = MapList.parsePattern(longPattern);
 		expect(result.ok).toBe(false);
@@ -591,7 +586,7 @@ describe("MapList.parsePattern()", () => {
 		}
 	});
 
-	it("return error on lorem ipsum", () => {
+	test("return error on lorem ipsum", () => {
 		expect(
 			MapList.parsePattern(
 				"Lorem ipsum dolor sit amet, consectetur adipiscing elit. Morbi ut varius velit. Ut egestas lacus dolor, sit amet iaculis justo dictum sed. Fusce aliquet sed nunc sit amet ullamcorper. Interdum et malesuada fames ac ante ipsum primis in faucibus. Integer leo ex, congue eu porta nec, imperdiet sed neque.",
@@ -601,7 +596,7 @@ describe("MapList.parsePattern()", () => {
 });
 
 describe("MapList.generate() with initialWeights", () => {
-	it("accepts initialWeights parameter without errors", () => {
+	test("accepts initialWeights parameter without errors", () => {
 		const mapPool = new MapPool({
 			SZ: [1, 2, 3],
 			TC: [4, 5],
@@ -623,7 +618,7 @@ describe("MapList.generate() with initialWeights", () => {
 		expect(maps.every((m) => mapPool.has(m))).toBe(true);
 	});
 
-	it("handles empty initialWeights", () => {
+	test("handles empty initialWeights", () => {
 		const mapPool = new MapPool({
 			SZ: [1, 2],
 			TC: [],
@@ -640,7 +635,7 @@ describe("MapList.generate() with initialWeights", () => {
 		expect(maps).toHaveLength(2);
 	});
 
-	it("handles undefined initialWeights", () => {
+	test("handles undefined initialWeights", () => {
 		const mapPool = new MapPool({
 			SZ: [1, 2],
 			TC: [],
@@ -657,7 +652,7 @@ describe("MapList.generate() with initialWeights", () => {
 		expect(maps).toHaveLength(2);
 	});
 
-	it("initialWeights affect stage selection", () => {
+	test("initialWeights affect stage selection", () => {
 		const mapPool = new MapPool({
 			SZ: [1, 2, 3, 4, 5],
 			TC: [],
@@ -700,13 +695,13 @@ describe("MapList.resume()", () => {
 		return result![0];
 	}
 
-	it("starts with the pool's first mode when history is empty", () => {
+	test("starts with the pool's first mode when history is empty", () => {
 		for (let i = 0; i < 20; i++) {
 			expect(nextMap([]).mode).toBe("SZ");
 		}
 	});
 
-	it("rotates through modes in pool order across history length", () => {
+	test("rotates through modes in pool order across history length", () => {
 		expect(nextMap([{ mode: "SZ", stageId: 1 }]).mode).toBe("TC");
 		expect(
 			nextMap([
@@ -723,7 +718,7 @@ describe("MapList.resume()", () => {
 		).toBe("CB");
 	});
 
-	it("wraps the mode order back to the start after a full rotation", () => {
+	test("wraps the mode order back to the start after a full rotation", () => {
 		const history = [
 			{ mode: "SZ", stageId: 1 },
 			{ mode: "TC", stageId: 4 },
@@ -733,7 +728,7 @@ describe("MapList.resume()", () => {
 		expect(nextMap([...history]).mode).toBe("SZ");
 	});
 
-	it("avoids already-played (mode, stage) pairs", () => {
+	test("avoids already-played (mode, stage) pairs", () => {
 		const history = [
 			{ mode: "SZ", stageId: 1 },
 			{ mode: "TC", stageId: 4 },
@@ -748,7 +743,7 @@ describe("MapList.resume()", () => {
 		}
 	});
 
-	it("rotates only through modes present in the pool", () => {
+	test("rotates only through modes present in the pool", () => {
 		const threeModePool = new MapPool({
 			TW: [],
 			SZ: [1, 2, 3],
@@ -782,7 +777,7 @@ describe("MapList.resume()", () => {
 		).toBe("SZ");
 	});
 
-	it("avoids the just-played stage when alternatives exist, even across modes", () => {
+	test("avoids the just-played stage when alternatives exist, even across modes", () => {
 		const sharedPool = new MapPool({
 			TW: [],
 			SZ: [1, 2, 3, 4, 5],

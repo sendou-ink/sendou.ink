@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as RunComps from "./RunComps";
 
@@ -15,11 +15,11 @@ const observation = (
 ): RunComps.CompObservation => ({ playerKey, weaponSplId, mapOrder });
 
 describe("buildComp", () => {
-	it("returns an empty comp for no observations", () => {
+	test("returns an empty comp for no observations", () => {
 		expect(RunComps.buildComp([])).toEqual([]);
 	});
 
-	it("picks each player's most played weapon", () => {
+	test("picks each player's most played weapon", () => {
 		expect(
 			RunComps.buildComp([
 				observation("a", SHOOTER, 0),
@@ -29,7 +29,7 @@ describe("buildComp", () => {
 		).toEqual([SHOOTER]);
 	});
 
-	it("breaks a most played tie by the most recently played weapon", () => {
+	test("breaks a most played tie by the most recently played weapon", () => {
 		expect(
 			RunComps.buildComp([
 				observation("a", CHARGER, 0),
@@ -38,7 +38,7 @@ describe("buildComp", () => {
 		).toEqual([SHOOTER]);
 	});
 
-	it("sorts the comp by weapon id with Tacticooler weapons last", () => {
+	test("sorts the comp by weapon id with Tacticooler weapons last", () => {
 		expect(
 			RunComps.buildComp([
 				observation("a", ROLLER, 0),
@@ -48,7 +48,7 @@ describe("buildComp", () => {
 		).toEqual([SHOOTER, ROLLER, TACTICOOLER_WEAPON]);
 	});
 
-	it("keeps the players that played the most maps when there are more than four", () => {
+	test("keeps the players that played the most maps when there are more than four", () => {
 		const fullSet = (playerKey: string, weaponSplId: MainWeaponId) => [
 			observation(playerKey, weaponSplId, 0),
 			observation(playerKey, weaponSplId, 1),
@@ -67,7 +67,7 @@ describe("buildComp", () => {
 });
 
 describe("mapObservations", () => {
-	it("keeps reported weapons and ingested rows of other players", () => {
+	test("keeps reported weapons and ingested rows of other players", () => {
 		expect(
 			RunComps.mapObservations({
 				mapOrder: 3,
@@ -80,7 +80,7 @@ describe("mapObservations", () => {
 		]);
 	});
 
-	it("drops an ingested row linked to a user that already reported", () => {
+	test("drops an ingested row linked to a user that already reported", () => {
 		expect(
 			RunComps.mapObservations({
 				mapOrder: 0,
@@ -90,7 +90,7 @@ describe("mapObservations", () => {
 		).toEqual([observation("user-1", SHOOTER, 0)]);
 	});
 
-	it("drops an unlinked ingested row whose weapon a report accounts for, counting duplicates as a multiset", () => {
+	test("drops an unlinked ingested row whose weapon a report accounts for, counting duplicates as a multiset", () => {
 		expect(
 			RunComps.mapObservations({
 				mapOrder: 0,
@@ -106,7 +106,7 @@ describe("mapObservations", () => {
 		]);
 	});
 
-	it("skips ingested rows without a weapon", () => {
+	test("skips ingested rows without a weapon", () => {
 		expect(
 			RunComps.mapObservations({
 				mapOrder: 0,

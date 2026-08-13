@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { lfgNewSearchParams, lfgSearchParams } from "./lfg-search-params";
 
 describe("lfgSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(lfgSearchParams, {
 			weapons: [[], [0], [0, 10, 4001]],
 			type: [null, "PLAYER_FOR_TEAM", "COACH_FOR_TEAM"],
@@ -18,7 +18,7 @@ describe("lfgSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(lfgSearchParams, "type", [["NOT_A_TYPE"], [""]]);
 		assertDecodesToDefault(lfgSearchParams, "timezone", [
 			["13"],
@@ -32,13 +32,13 @@ describe("lfgSearchParams", () => {
 });
 
 describe("lfgNewSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(lfgNewSearchParams, {
 			postId: [1, 123],
 		});
 	});
 
-	it("garbage decodes to default", () => {
+	test("garbage decodes to default", () => {
 		assertDecodesToDefault(lfgNewSearchParams, "postId", [["abc"], ["0"]]);
 	});
 });

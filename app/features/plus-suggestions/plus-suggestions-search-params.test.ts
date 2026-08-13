@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { plusSuggestionsSearchParams } from "./plus-suggestions-search-params";
 
 describe("plusSuggestionsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(plusSuggestionsSearchParams, {
 			tier: ["1", "2", "3"],
 			alert: [false, true],
@@ -14,7 +14,7 @@ describe("plusSuggestionsSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(plusSuggestionsSearchParams, "tier", [
 			["0"],
 			["4"],

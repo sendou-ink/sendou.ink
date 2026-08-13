@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { IngestedScoreboardPlayer } from "~/features/scanner-ingest/core/Scoreboards";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { resolveTimelineWeapons } from "./ingested-scoreboard";
@@ -22,7 +22,7 @@ function ingestedPlayer(
 }
 
 describe("resolveTimelineWeapons()", () => {
-	it("passes reported weapons through and leaves gaps null without ingested rows", () => {
+	test("passes reported weapons through and leaves gaps null without ingested rows", () => {
 		expect(
 			resolveTimelineWeapons({
 				linkedWeapons: [10, null, 20, null],
@@ -32,7 +32,7 @@ describe("resolveTimelineWeapons()", () => {
 		).toEqual([10, null, 20, null]);
 	});
 
-	it("fills gaps from unaccounted ingested rows, marked unverified", () => {
+	test("fills gaps from unaccounted ingested rows, marked unverified", () => {
 		expect(
 			resolveTimelineWeapons({
 				linkedWeapons: [10, null, null, null],
@@ -50,7 +50,7 @@ describe("resolveTimelineWeapons()", () => {
 		]);
 	});
 
-	it("does not reuse an ingested row whose weapon a roster member already reported", () => {
+	test("does not reuse an ingested row whose weapon a roster member already reported", () => {
 		expect(
 			resolveTimelineWeapons({
 				linkedWeapons: [10, null, null, null],
@@ -60,7 +60,7 @@ describe("resolveTimelineWeapons()", () => {
 		).toEqual([10, null, null, null]);
 	});
 
-	it("keeps the extra ingested row of a weapon two players ran when only one reported it", () => {
+	test("keeps the extra ingested row of a weapon two players ran when only one reported it", () => {
 		expect(
 			resolveTimelineWeapons({
 				linkedWeapons: [10, null, null, null],
@@ -73,7 +73,7 @@ describe("resolveTimelineWeapons()", () => {
 		).toEqual([10, { weaponSplId: 10, unverified: true }, null, null]);
 	});
 
-	it("skips ingested rows already attributed to a user, from the other team or without a weapon", () => {
+	test("skips ingested rows already attributed to a user, from the other team or without a weapon", () => {
 		expect(
 			resolveTimelineWeapons({
 				linkedWeapons: [null, null, null, null],

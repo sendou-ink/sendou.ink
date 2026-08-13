@@ -1,5 +1,5 @@
 import type { Location } from "react-router";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { metaTags } from "./remix";
 import { COMMON_PREVIEW_IMAGE } from "./urls";
 
@@ -9,13 +9,13 @@ const contentOf = (tags: ReturnType<typeof metaTags>, property: string) =>
 	tags.find((tag) => "property" in tag && tag.property === property)?.content;
 
 describe("metaTags()", () => {
-	it("uses the common preview image when no image given", () => {
+	test("uses the common preview image when no image given", () => {
 		const tags = metaTags({ title: "sendou.ink", location });
 
 		expect(contentOf(tags, "og:image")).toBe(COMMON_PREVIEW_IMAGE);
 	});
 
-	it("uses the given image url", () => {
+	test("uses the given image url", () => {
 		const tags = metaTags({
 			title: "sendou.ink",
 			location,
@@ -27,13 +27,13 @@ describe("metaTags()", () => {
 		);
 	});
 
-	it("resolves og:url from the location pathname", () => {
+	test("resolves og:url from the location pathname", () => {
 		const tags = metaTags({ title: "sendou.ink", location });
 
 		expect(contentOf(tags, "og:url")).toBe("https://sendou.ink/to/1/brackets");
 	});
 
-	it("prefers the url override over the location pathname", () => {
+	test("prefers the url override over the location pathname", () => {
 		const tags = metaTags({ title: "sendou.ink", location, url: "/to/1" });
 
 		expect(contentOf(tags, "og:url")).toBe("https://sendou.ink/to/1");

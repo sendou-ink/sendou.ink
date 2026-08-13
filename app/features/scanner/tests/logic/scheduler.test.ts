@@ -9,8 +9,8 @@ import assert from "node:assert/strict";
 import {
 	DetectorScheduler,
 	type SchedulingInfo,
-} from "../core/detectors/scheduler";
-import test from "./node-test-compat";
+} from "../../core/detectors/scheduler";
+import test from "../node-test-compat";
 
 const OPTS = {
 	refineIntervalS: 0.1,

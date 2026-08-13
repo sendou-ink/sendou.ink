@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as SearchParams from "~/modules/search-params/search-params";
 import {
 	assertDecodesToDefault,
@@ -7,7 +7,7 @@ import {
 import { calculatorSearchParams } from "./calculator-search-params";
 
 describe("calculatorSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(calculatorSearchParams, {
 			weapon: [
 				{ type: "MAIN", id: 0 },
@@ -21,13 +21,13 @@ describe("calculatorSearchParams", () => {
 		});
 	});
 
-	it("decodes the legacy bare numeric weapon format", () => {
+	test("decodes the legacy bare numeric weapon format", () => {
 		expect(
 			SearchParams.decodeParam(calculatorSearchParams.shape.weapon, ["1000"]),
 		).toEqual({ type: "MAIN", id: 1000 });
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(calculatorSearchParams, "weapon", [
 			[""],
 			["MAIN_999999"],

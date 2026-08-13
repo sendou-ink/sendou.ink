@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { testTournament } from "./tests/test-utils";
 
@@ -19,7 +19,7 @@ describe("regularCheckInStartsAt in a DST observing timezone", () => {
 		}
 	});
 
-	it("check-in opens one hour of real time before the start also on the spring forward night", () => {
+	test("check-in opens one hour of real time before the start also on the spring forward night", () => {
 		// 3:30 AM EDT on the night the USA moves to daylight saving time
 		const startsAt = new Date("2025-03-09T07:30:00Z");
 
@@ -32,7 +32,7 @@ describe("regularCheckInStartsAt in a DST observing timezone", () => {
 		);
 	});
 
-	it("check-in opens one hour of real time before the start also on the fall back night", () => {
+	test("check-in opens one hour of real time before the start also on the fall back night", () => {
 		// 1:30 AM EST on the night the USA moves off daylight saving time
 		const startsAt = new Date("2025-11-02T06:30:00Z");
 

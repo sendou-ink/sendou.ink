@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,14 +6,14 @@ import {
 import { settingsSearchParams } from "./settings-search-params";
 
 describe("settingsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(settingsSearchParams, {
 			tab: [null, "preferences", "match-profile", "locale", "theme", "sounds"],
 			lng: [null, "en", "fr", "zh-TW"],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(settingsSearchParams, "tab", [["garbage"]]);
 	});
 });

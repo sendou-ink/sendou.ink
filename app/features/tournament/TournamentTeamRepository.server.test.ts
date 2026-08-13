@@ -37,10 +37,11 @@ const FINAL_MAPS: TournamentFactory.RoundMaps = {
 	list: [{ mode: "TC", stageId: 2 }],
 };
 
-let organizer: { id: number };
-let owner: { id: number };
-let member: { id: number };
-let anotherMember: { id: number };
+const users = UserFactory.pool();
+const organizerId = () => users.id(1);
+const ownerId = () => users.id(2);
+const memberId = () => users.id(3);
+const anotherMemberId = () => users.id(4);
 
 const membersByTeamId = (tournamentTeamId: number) =>
 	db
@@ -69,24 +70,24 @@ const roleOf = (
 
 describe("TournamentTeamRepository", () => {
 	beforeEach(async () => {
-		[organizer, owner, member, anotherMember] = await UserFactory.createMany(4);
+		await users.create(4);
 	});
 
 	describe("upsertRegistration", () => {
 		test("gives a new team's members their roles", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 
-			await withUserId(organizer.id, () =>
+			await withUserId(organizerId(), () =>
 				TournamentTeamRepository.upsertRegistration({
 					tournamentId: tournament.id,
 					name: "Team Olive",
 					teamId: null,
 					avatarImgId: null,
-					ownerUserId: owner.id,
+					ownerUserId: ownerId(),
 					ownerChange: null,
-					membersToAdd: [owner.id, member.id, anotherMember.id],
+					membersToAdd: [ownerId(), memberId(), anotherMemberId()],
 					membersToRemove: [],
 					inGameNameUpdates: [],
 					tournamentNameUpdates: [],
@@ -102,31 +103,31 @@ describe("TournamentTeamRepository", () => {
 			const members = await membersByTeamId(team.id);
 
 			expect(members).toHaveLength(3);
-			expect(roleOf(members, owner.id)).toBe("OWNER");
-			expect(roleOf(members, member.id)).toBe("REGULAR");
-			expect(roleOf(members, anotherMember.id)).toBe("REGULAR");
+			expect(roleOf(members, ownerId())).toBe("OWNER");
+			expect(roleOf(members, memberId())).toBe("REGULAR");
+			expect(roleOf(members, anotherMemberId())).toBe("REGULAR");
 		});
 
 		test("added members of an existing team don't take the owner role", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
-				memberUserIds: [owner.id],
+				memberUserIds: [ownerId()],
 				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
 			});
 
-			await withUserId(organizer.id, () =>
+			await withUserId(organizerId(), () =>
 				TournamentTeamRepository.upsertRegistration({
 					tournamentTeamId: team.id,
 					tournamentId: tournament.id,
 					name: "Team Olive",
 					teamId: null,
 					avatarImgId: null,
-					ownerUserId: owner.id,
+					ownerUserId: ownerId(),
 					ownerChange: null,
-					membersToAdd: [member.id, anotherMember.id],
+					membersToAdd: [memberId(), anotherMemberId()],
 					membersToRemove: [],
 					inGameNameUpdates: [],
 					tournamentNameUpdates: [],
@@ -136,25 +137,25 @@ describe("TournamentTeamRepository", () => {
 			const members = await membersByTeamId(team.id);
 
 			expect(members).toHaveLength(3);
-			expect(roleOf(members, owner.id)).toBe("OWNER");
-			expect(roleOf(members, member.id)).toBe("REGULAR");
-			expect(roleOf(members, anotherMember.id)).toBe("REGULAR");
+			expect(roleOf(members, ownerId())).toBe("OWNER");
+			expect(roleOf(members, memberId())).toBe("REGULAR");
+			expect(roleOf(members, anotherMemberId())).toBe("REGULAR");
 		});
 
 		test("marks added members as organizer added", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 
-			await withUserId(organizer.id, () =>
+			await withUserId(organizerId(), () =>
 				TournamentTeamRepository.upsertRegistration({
 					tournamentId: tournament.id,
 					name: "Team Olive",
 					teamId: null,
 					avatarImgId: null,
-					ownerUserId: owner.id,
+					ownerUserId: ownerId(),
 					ownerChange: null,
-					membersToAdd: [owner.id, member.id],
+					membersToAdd: [ownerId(), memberId()],
 					membersToRemove: [],
 					inGameNameUpdates: [],
 					tournamentNameUpdates: [],
@@ -176,58 +177,58 @@ describe("TournamentTeamRepository", () => {
 
 		test("updates tournament names of members", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 
 			const { appliedTournamentNameChanges } = await withUserId(
-				organizer.id,
+				organizerId(),
 				() =>
 					TournamentTeamRepository.upsertRegistration({
 						tournamentId: tournament.id,
 						name: "Team Olive",
 						teamId: null,
 						avatarImgId: null,
-						ownerUserId: owner.id,
+						ownerUserId: ownerId(),
 						ownerChange: null,
-						membersToAdd: [owner.id, member.id],
+						membersToAdd: [ownerId(), memberId()],
 						membersToRemove: [],
 						inGameNameUpdates: [],
 						tournamentNameUpdates: [
-							{ userId: owner.id, tournamentName: "Sendou" },
-							{ userId: member.id, tournamentName: null },
+							{ userId: ownerId(), tournamentName: "Sendou" },
+							{ userId: memberId(), tournamentName: null },
 						],
 					}),
 			);
 
 			expect(appliedTournamentNameChanges).toEqual([
 				{
-					userId: owner.id,
+					userId: ownerId(),
 					previousTournamentName: null,
 					tournamentName: "Sendou",
 				},
 			]);
-			expect(await tournamentNameOf(owner.id)).toBe("Sendou");
-			expect(await tournamentNameOf(member.id)).toBeNull();
+			expect(await tournamentNameOf(ownerId())).toBe("Sendou");
+			expect(await tournamentNameOf(memberId())).toBeNull();
 		});
 
 		test("logs a tournament name change in the audit log", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 
-			await withUserId(organizer.id, () =>
+			await withUserId(organizerId(), () =>
 				TournamentTeamRepository.upsertRegistration({
 					tournamentId: tournament.id,
 					name: "Team Olive",
 					teamId: null,
 					avatarImgId: null,
-					ownerUserId: owner.id,
+					ownerUserId: ownerId(),
 					ownerChange: null,
-					membersToAdd: [owner.id],
+					membersToAdd: [ownerId()],
 					membersToRemove: [],
 					inGameNameUpdates: [],
 					tournamentNameUpdates: [
-						{ userId: owner.id, tournamentName: "Sendou" },
+						{ userId: ownerId(), tournamentName: "Sendou" },
 					],
 				}),
 			);
@@ -243,35 +244,35 @@ describe("TournamentTeamRepository", () => {
 				.execute();
 
 			expect(events).toHaveLength(1);
-			expect(events[0].actorUserId).toBe(organizer.id);
-			expect(events[0].subjectUserId).toBe(owner.id);
+			expect(events[0].actorUserId).toBe(organizerId());
+			expect(events[0].subjectUserId).toBe(ownerId());
 			expect(events[0].metadata?.tournamentName).toBe("Sendou");
 		});
 
 		test("does not touch a tournament name that did not change", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
-				memberUserIds: [owner.id],
+				memberUserIds: [ownerId()],
 				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
 			});
 
 			const upsert = (tournamentName: string) =>
-				withUserId(organizer.id, () =>
+				withUserId(organizerId(), () =>
 					TournamentTeamRepository.upsertRegistration({
 						tournamentTeamId: team.id,
 						tournamentId: tournament.id,
 						name: "Team Olive",
 						teamId: null,
 						avatarImgId: null,
-						ownerUserId: owner.id,
+						ownerUserId: ownerId(),
 						ownerChange: null,
 						membersToAdd: [],
 						membersToRemove: [],
 						inGameNameUpdates: [],
-						tournamentNameUpdates: [{ userId: owner.id, tournamentName }],
+						tournamentNameUpdates: [{ userId: ownerId(), tournamentName }],
 					}),
 				);
 
@@ -293,25 +294,25 @@ describe("TournamentTeamRepository", () => {
 	describe("join", () => {
 		test("joining on your own is not marked as organizer added", async () => {
 			const tournament = await TournamentFactory.create({
-				authorId: organizer.id,
+				authorId: organizerId(),
 			});
 			const team = await TournamentTeamFactory.create({
 				tournamentId: tournament.id,
-				memberUserIds: [owner.id],
+				memberUserIds: [ownerId()],
 				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
 			});
 
-			await withUserId(member.id, () =>
+			await withUserId(memberId(), () =>
 				TournamentTeamRepository.join({
 					newTeamId: team.id,
-					userId: member.id,
+					userId: memberId(),
 				}),
 			);
 
 			const members = await membersByTeamId(team.id);
 
 			expect(
-				members.find((teamMember) => teamMember.userId === member.id)
+				members.find((teamMember) => teamMember.userId === memberId())
 					?.isOrganizerAdded,
 			).toBe(0);
 		});
@@ -325,7 +326,7 @@ describe("TournamentTeamRepository", () => {
 			const players = await UserFactory.createMany(TEAM_COUNT);
 			const tournament = await TournamentFactory.createPlayed(
 				{
-					authorId: organizer.id,
+					authorId: organizerId(),
 					bracketProgression: POOLS_TO_FINAL,
 					minMembersPerTeam: 1,
 				},

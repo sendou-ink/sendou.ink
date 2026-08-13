@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { RunningTournaments } from "./RunningTournaments.server";
 import { testTournament, tournamentCtxTeam } from "./tests/test-utils";
 
@@ -26,7 +26,7 @@ describe("RunningTournaments", () => {
 	});
 
 	describe("add", () => {
-		it("adds a tournament to the registry", () => {
+		test("adds a tournament to the registry", () => {
 			const tournament = createTestTournament(1, [
 				{ teamId: 1, userIds: [100, 101] },
 			]);
@@ -37,7 +37,7 @@ describe("RunningTournaments", () => {
 			expect(RunningTournaments.get(1)).toBe(tournament);
 		});
 
-		it("updates existing tournament when added again with different instance", () => {
+		test("updates existing tournament when added again with different instance", () => {
 			const tournament1 = createTestTournament(1, [
 				{ teamId: 1, userIds: [100] },
 			]);
@@ -53,7 +53,7 @@ describe("RunningTournaments", () => {
 	});
 
 	describe("remove", () => {
-		it("removes a tournament from the registry", () => {
+		test("removes a tournament from the registry", () => {
 			const tournament = createTestTournament(1, [
 				{ teamId: 1, userIds: [100] },
 			]);
@@ -65,7 +65,7 @@ describe("RunningTournaments", () => {
 			expect(RunningTournaments.get(1)).toBeUndefined();
 		});
 
-		it("does nothing when tournament not in registry", () => {
+		test("does nothing when tournament not in registry", () => {
 			RunningTournaments.remove(999);
 
 			expect(RunningTournaments.has(999)).toBe(false);
@@ -73,7 +73,7 @@ describe("RunningTournaments", () => {
 	});
 
 	describe("clear", () => {
-		it("removes all tournaments", () => {
+		test("removes all tournaments", () => {
 			const tournament1 = createTestTournament(1, [
 				{ teamId: 1, userIds: [100] },
 			]);

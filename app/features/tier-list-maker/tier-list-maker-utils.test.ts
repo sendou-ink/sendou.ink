@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { TIER_LIST_SEARCH_PARAM_NAMES } from "./tier-list-maker-constants";
 import type { TierListItem, TierListState } from "./tier-list-maker-schemas";
 import { tierListMakerSearchParams } from "./tier-list-maker-search-params";
@@ -25,7 +25,7 @@ const splattershot: TierListItem = { type: "main-weapon", id: 40 };
 const splatRoller: TierListItem = { type: "main-weapon", id: 1010 };
 
 describe("addItemToTier", () => {
-	it("appends the item to the target tier", () => {
+	test("appends the item to the target tier", () => {
 		const state = makeState();
 
 		const result = addItemToTier(state, "tier-a", splattershot);
@@ -33,7 +33,7 @@ describe("addItemToTier", () => {
 		expect(result.tierItems.get("tier-a")).toEqual([splattershot]);
 	});
 
-	it("appends to the end keeping existing items", () => {
+	test("appends to the end keeping existing items", () => {
 		const state = makeState({ "tier-a": [splattershot] });
 
 		const result = addItemToTier(state, "tier-a", splatRoller);
@@ -41,7 +41,7 @@ describe("addItemToTier", () => {
 		expect(result.tierItems.get("tier-a")).toEqual([splattershot, splatRoller]);
 	});
 
-	it("does not mutate the original state", () => {
+	test("does not mutate the original state", () => {
 		const state = makeState({ "tier-a": [splattershot] });
 
 		addItemToTier(state, "tier-a", splatRoller);
@@ -49,7 +49,7 @@ describe("addItemToTier", () => {
 		expect(state.tierItems.get("tier-a")).toEqual([splattershot]);
 	});
 
-	it("leaves other tiers untouched", () => {
+	test("leaves other tiers untouched", () => {
 		const state = makeState({ "tier-b": [splatRoller] });
 
 		const result = addItemToTier(state, "tier-a", splattershot);
@@ -57,7 +57,7 @@ describe("addItemToTier", () => {
 		expect(result.tierItems.get("tier-b")).toEqual([splatRoller]);
 	});
 
-	it("returns the same state reference when the tier does not exist", () => {
+	test("returns the same state reference when the tier does not exist", () => {
 		const state = makeState();
 
 		const result = addItemToTier(state, "tier-missing", splattershot);
@@ -67,13 +67,13 @@ describe("addItemToTier", () => {
 });
 
 describe("getNextNthForItem", () => {
-	it("returns 1 when the item is not yet placed", () => {
+	test("returns 1 when the item is not yet placed", () => {
 		const state = makeState();
 
 		expect(getNextNthForItem(splattershot, state)).toBe(1);
 	});
 
-	it("returns max nth + 1 across all tiers", () => {
+	test("returns max nth + 1 across all tiers", () => {
 		const state = makeState({
 			"tier-a": [splattershot],
 			"tier-b": [{ ...splattershot, nth: 2 }],
@@ -90,7 +90,7 @@ describe("tierListMakerPathWithState", () => {
 		return tierListMakerSearchParams.parse(searchParams).state;
 	}
 
-	it("round trips the tier list state", () => {
+	test("round trips the tier list state", () => {
 		const state = makeState({
 			"tier-a": [splattershot, { ...splatRoller, nth: 2 }],
 			"tier-b": [splatRoller],
@@ -105,7 +105,7 @@ describe("tierListMakerPathWithState", () => {
 		expect(parseStateFromPath(path)).toEqual(state);
 	});
 
-	it("includes the title", () => {
+	test("includes the title", () => {
 		const path = tierListMakerPathWithState({
 			state: makeState(),
 			title: "Weapons ranked & sorted",
@@ -119,7 +119,7 @@ describe("tierListMakerPathWithState", () => {
 		).toBe("Weapons ranked & sorted");
 	});
 
-	it("only includes tier headers param when they are hidden", () => {
+	test("only includes tier headers param when they are hidden", () => {
 		const withHeaders = tierListMakerPathWithState({
 			state: makeState(),
 			title: "",
@@ -143,11 +143,11 @@ describe("tierListMakerPathWithState", () => {
 });
 
 describe("tierListItemId", () => {
-	it("omits nth when it is not set", () => {
+	test("omits nth when it is not set", () => {
 		expect(tierListItemId(splattershot)).toBe("main-weapon:40");
 	});
 
-	it("includes nth when set", () => {
+	test("includes nth when set", () => {
 		expect(tierListItemId({ ...splattershot, nth: 2 })).toBe(
 			"main-weapon:40:2",
 		);

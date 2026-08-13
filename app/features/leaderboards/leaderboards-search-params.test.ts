@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { leaderboardsSearchParams } from "./leaderboards-search-params";
 
 describe("leaderboardsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(leaderboardsSearchParams, {
 			type: [
 				"USER",
@@ -21,7 +21,7 @@ describe("leaderboardsSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(leaderboardsSearchParams, "type", [
 			["garbage"],
 			["XP-WEAPON-99999"],

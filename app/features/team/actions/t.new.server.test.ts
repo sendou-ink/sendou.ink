@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { wrappedAction } from "~/utils/Test";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
@@ -14,14 +14,14 @@ describe("team creation", () => {
 		await UserFactory.createRegular();
 	});
 
-	it("prevents creating a team with a duplicate name", async () => {
+	test("prevents creating a team with a duplicate name", async () => {
 		await action({ name: "Team 1" }, { user: "regular" });
 		const res = await action({ name: "Team 1" }, { user: "regular" });
 
 		expect(res.fieldErrors.name).toBe("forms:errors.duplicateName");
 	});
 
-	it("prevents creating a team whose name is only special characters", async () => {
+	test("prevents creating a team whose name is only special characters", async () => {
 		const res = await action({ name: "𝓢𝓲𝓵" }, { user: "regular" });
 
 		expect(res.fieldErrors.name).toBe("forms:errors.noOnlySpecialCharacters");

@@ -1,5 +1,5 @@
 import { sql } from "kysely";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -12,7 +12,7 @@ import type { Tables } from "./tables";
 const JSON_SHAPED_TEXT = '{"note":"gg"}';
 
 describe("computedJsonColumns", () => {
-	it("recognizes a json helper selection but not a coalesce over user text", () => {
+	test("recognizes a json helper selection but not a coalesce over user text", () => {
 		const query = db
 			.selectFrom("User")
 			.select((eb) => [
@@ -32,7 +32,7 @@ describe("computedJsonColumns", () => {
 		);
 	});
 
-	it("recognizes a json column contributed by another branch of a compound select", () => {
+	test("recognizes a json column contributed by another branch of a compound select", () => {
 		const query = db
 			.selectFrom("CalendarEventResultTeam")
 			.select([
@@ -47,7 +47,7 @@ describe("computedJsonColumns", () => {
 		);
 	});
 
-	it("recognizes a json selection passed through a derived table", () => {
+	test("recognizes a json selection passed through a derived table", () => {
 		const query = db
 			.selectFrom((eb) =>
 				eb
@@ -72,7 +72,7 @@ describe("computedJsonColumns", () => {
 });
 
 describe("reading rows", () => {
-	it("keeps a JSON-object-shaped in-tournament name as text", async () => {
+	test("keeps a JSON-object-shaped in-tournament name as text", async () => {
 		const [organizer, member] = await UserFactory.createMany(2);
 		const tournament = await TournamentFactory.create({
 			authorId: organizer.id,
@@ -106,7 +106,7 @@ describe("reading rows", () => {
 		expect(row.username).toBe(JSON_SHAPED_TEXT);
 	});
 
-	it("parses json columns and json helper selections", async () => {
+	test("parses json columns and json helper selections", async () => {
 		const user = await UserFactory.create(undefined, {
 			matchProfile: { languages: ["en", "ja"] },
 		});

@@ -4,7 +4,7 @@ import * as Engine from "./index";
 import type { BracketData } from "./types";
 
 describe("BYE handling", () => {
-	test("should propagate BYEs through the brackets", () => {
+	test("propagates BYEs through the brackets", () => {
 		const data = createResolved({
 			type: "double_elimination",
 			seeding: [1, null, null, null],
@@ -24,7 +24,7 @@ describe("BYE handling", () => {
 		expect(matchById(data, 5).opponent2).toBe(null);
 	});
 
-	test("should handle incomplete seeding during creation", () => {
+	test("handles incomplete seeding during creation", () => {
 		const data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, null, null],
@@ -50,7 +50,7 @@ describe("Position checks", () => {
 		});
 	});
 
-	test("should not have a position when we don't need the origin of a participant", () => {
+	test("does not have a position when we don't need the origin of a participant", () => {
 		const matchFromWbRound2 = matchById(data, 4);
 		expect(matchFromWbRound2.opponent1?.position).toBe(undefined);
 		expect(matchFromWbRound2.opponent2?.position).toBe(undefined);
@@ -62,7 +62,7 @@ describe("Position checks", () => {
 		expect(matchFromGrandFinal.opponent1?.position).toBe(undefined);
 	});
 
-	test("should have a position where we need the origin of a participant", () => {
+	test("has a position where we need the origin of a participant", () => {
 		const matchFromWbRound1 = matchById(data, 0);
 		expect(matchFromWbRound1.opponent1?.position).toBe(1);
 		expect(matchFromWbRound1.opponent2?.position).toBe(8);
@@ -80,7 +80,7 @@ describe("Position checks", () => {
 });
 
 describe("Special cases", () => {
-	test("should pad the seeding with BYEs to the next power of two", () => {
+	test("pads the seeding with BYEs to the next power of two", () => {
 		const data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7],
@@ -91,7 +91,7 @@ describe("Special cases", () => {
 		expect(matchById(data, 0).opponent2).toBe(null);
 	});
 
-	test("should throw if the participant count of a stage is less than two", () => {
+	test("throws if the participant count of a stage is less than two", () => {
 		expect(() =>
 			createResolved({
 				type: "single_elimination",
@@ -121,7 +121,7 @@ describe("Seeding and ordering in elimination", () => {
 		});
 	});
 
-	test("should have the good orderings everywhere", () => {
+	test("has the good orderings everywhere", () => {
 		const firstRoundMatchWB = matchById(data, 0);
 		expect(firstRoundMatchWB.opponent1?.position).toBe(1);
 		expect(firstRoundMatchWB.opponent2?.position).toBe(16);
@@ -145,7 +145,7 @@ describe("Seeding and ordering in elimination", () => {
 });
 
 describe("Reset match", () => {
-	test("should reset results of a match", () => {
+	test("resets results of a match", () => {
 		// Seeds 1 and 2 are placed into the same first-round match (positions 1
 		// and 8) so that match 0 is a real two-team match under the default
 		// space_between ordering, while the rest of the bracket is BYEs.
@@ -184,7 +184,7 @@ describe("Reset match", () => {
 		expect(matchById(data, 6).opponent2).toBe(null);
 	});
 
-	test("should throw when at least one of the following match is locked", () => {
+	test("throws when at least one of the following match is locked", () => {
 		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],

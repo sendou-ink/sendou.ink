@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { buildsSearchParams } from "./builds-search-params";
 
 describe("buildsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(buildsSearchParams, {
 			limit: [24, 48, 1, 240],
 			abilities: [
@@ -23,7 +23,7 @@ describe("buildsSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(buildsSearchParams, "limit", [
 			[""],
 			["0"],

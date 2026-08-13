@@ -1,9 +1,9 @@
 import { readFileSync } from "node:fs";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { JSON_COLUMNS } from "./json-columns";
 
 describe("JSON_COLUMNS", () => {
-	it("matches the JSONColumnType declarations in tables.ts", () => {
+	test("matches the JSONColumnType declarations in tables.ts", () => {
 		expect([...JSON_COLUMNS].sort()).toEqual(jsonColumnsFromTablesSource());
 	});
 });

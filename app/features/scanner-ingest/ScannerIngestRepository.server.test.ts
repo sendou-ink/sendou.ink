@@ -3,18 +3,13 @@ import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import type {
-	ScannerMatch,
-	ScannerMatchPlayer,
-} from "~/features/scanner/core/scanner-match";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as Matches from "./core/Matches";
 import type { IngestableGame } from "./core/Scoreboards";
+import { NAMES, scannerMatch, WEAPONS } from "./core/tests/fixtures";
 import * as ScannerIngestRepository from "./ScannerIngestRepository.server";
 
-const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
-const WEAPONS: MainWeaponId[] = [10, 20, 30, 40, 50, 60, 70, 80];
 const PLAYED_AT = Date.UTC(2026, 7, 1, 18, 0, 0);
 /** enough teams for the bracket winner to play more than one match */
 const TOURNAMENT_TEAM_COUNT = 4;
@@ -328,38 +323,9 @@ describe("gamesInTournamentMatch", () => {
 	});
 });
 
-function player(name: string, weaponId: MainWeaponId): ScannerMatchPlayer {
-	return {
-		name,
-		weaponId,
-		paint: 1000,
-		ka: 10,
-		d: 5,
-		s: 2,
-	};
-}
-
+/** The default roster's match, stamped with the fixed PLAYED_AT this suite asserts on. */
 function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
-	return {
-		startsAt: 100,
-		endsAt: 400,
-		playedAt: PLAYED_AT,
-		lobby: "PRIVATE",
-		mode: "SZ",
-		stage: 0,
-		matchScores: [100, 52],
-		replayCode: null,
-		cast: false,
-		objective: null,
-		playerStatus: null,
-		teams: [
-			{ players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)) },
-			{ players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)) },
-		],
-		winner: 0,
-		pov: null,
-		...partial,
-	};
+	return scannerMatch({ playedAt: PLAYED_AT, ...partial });
 }
 
 async function setupSendouqMatch(options: { isConcluded?: boolean } = {}) {

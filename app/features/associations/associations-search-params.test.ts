@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,13 +6,13 @@ import {
 import { associationsSearchParams } from "./associations-search-params";
 
 describe("associationsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(associationsSearchParams, {
 			inviteCode: ["abcdefghij", "A1b2C3d4E5"],
 		});
 	});
 
-	it("garbage decodes to default", () => {
+	test("garbage decodes to default", () => {
 		assertDecodesToDefault(associationsSearchParams, "inviteCode", [
 			["short"],
 			["waytoolonginvitecode"],

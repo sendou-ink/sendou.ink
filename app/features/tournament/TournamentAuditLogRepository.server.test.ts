@@ -9,13 +9,16 @@ import { withUserId } from "~/utils/Test";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
-let actor: { id: number };
-let subject: { id: number };
+const users = UserFactory.pool();
+/** Whoever performs the audited action, and whoever it is performed on. */
+const actorId = () => users.id(1);
+const subjectId = () => users.id(2);
 
-const createTournament = () => TournamentFactory.create({ authorId: actor.id });
+const createTournament = () =>
+	TournamentFactory.create({ authorId: actorId() });
 
 /** Registering a team is itself audited, so the team comes with a `TEAM_REGISTERED` event. */
-const createTeam = (
+const createTournamentTeam = (
 	tournamentId: number,
 	name: string,
 	options?: { isCheckedIn: boolean },
@@ -23,14 +26,14 @@ const createTeam = (
 	TournamentTeamFactory.create(
 		{
 			tournamentId,
-			memberUserIds: [actor.id],
+			memberUserIds: [actorId()],
 			team: { name, prefersNotToHost: 0, teamId: null },
 		},
 		options,
 	);
 
 const deleteTeam = (tournamentTeamId: number) =>
-	withUserId(actor.id, () =>
+	withUserId(actorId(), () =>
 		TournamentTeamRepository.deleteById(tournamentTeamId),
 	);
 
@@ -52,12 +55,12 @@ const insertEvent = ({
 
 describe("TournamentAuditLogRepository", () => {
 	beforeEach(async () => {
-		[actor, subject] = await UserFactory.createMany(3);
+		await users.create(3);
 	});
 
 	test("insert creates a stable history row from the live team", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Team Olive");
+		const team = await createTournamentTeam(tournament.id, "Team Olive");
 
 		const teams = await TournamentAuditLogRepository.findTeamsByTournamentId(
 			tournament.id,
@@ -72,7 +75,7 @@ describe("TournamentAuditLogRepository", () => {
 		const tournament = await createTournament();
 		await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
-			memberUserIds: [actor.id, subject.id],
+			memberUserIds: [actorId(), subjectId()],
 			team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
 		});
 
@@ -85,15 +88,15 @@ describe("TournamentAuditLogRepository", () => {
 		expect(events).toHaveLength(2);
 		// newest first
 		expect(events[0].type).toBe("MEMBER_ADDED");
-		expect(events[0].actor?.id).toBe(actor.id);
-		expect(events[0].subject?.id).toBe(subject.id);
+		expect(events[0].actor?.id).toBe(actorId());
+		expect(events[0].subject?.id).toBe(subjectId());
 		expect(events[0].team?.name).toBe("Team Olive");
 		expect(events[1].type).toBe("TEAM_REGISTERED");
 	});
 
 	test("team name survives the team being deleted", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Team Olive");
+		const team = await createTournamentTeam(tournament.id, "Team Olive");
 
 		await deleteTeam(team.id);
 
@@ -109,11 +112,11 @@ describe("TournamentAuditLogRepository", () => {
 
 	test("a reused team id does not collapse two teams into one history", async () => {
 		const tournament = await createTournament();
-		const teamA = await createTeam(tournament.id, "Team A");
+		const teamA = await createTournamentTeam(tournament.id, "Team A");
 
 		await deleteTeam(teamA.id);
 
-		const teamB = await createTeam(tournament.id, "Team B");
+		const teamB = await createTournamentTeam(tournament.id, "Team B");
 		// SQLite reuses the highest deleted rowid for the next insert
 		expect(teamB.id).toBe(teamA.id);
 
@@ -144,10 +147,10 @@ describe("TournamentAuditLogRepository", () => {
 
 	test("filters by event type and by team", async () => {
 		const tournament = await createTournament();
-		const teamA = await createTeam(tournament.id, "Team A", {
+		const teamA = await createTournamentTeam(tournament.id, "Team A", {
 			isCheckedIn: true,
 		});
-		await createTeam(tournament.id, "Team B");
+		await createTournamentTeam(tournament.id, "Team B");
 
 		const byType = await TournamentAuditLogRepository.findByTournamentId({
 			tournamentId: tournament.id,
@@ -181,13 +184,13 @@ describe("TournamentAuditLogRepository", () => {
 
 	test("paginates via limit and offset", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Team Olive");
+		const team = await createTournamentTeam(tournament.id, "Team Olive");
 
 		// two more on top of the team's own TEAM_REGISTERED
 		for (let i = 0; i < 2; i++) {
 			await insertEvent({
 				type: "TEAM_CHECKED_IN",
-				actorUserId: actor.id,
+				actorUserId: actorId(),
 				tournamentTeamId: team.id,
 			});
 		}
@@ -209,11 +212,11 @@ describe("TournamentAuditLogRepository", () => {
 
 	test("stores and reads back metadata", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Team Olive");
+		const team = await createTournamentTeam(tournament.id, "Team Olive");
 
 		await insertEvent({
 			type: "TEAM_CHECKED_IN",
-			actorUserId: actor.id,
+			actorUserId: actorId(),
 			tournamentTeamId: team.id,
 			metadata: { bracketIdx: 2 },
 		});
@@ -229,13 +232,13 @@ describe("TournamentAuditLogRepository", () => {
 
 	test("stores and reads back the in-game name for name change events", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Team Olive");
+		const team = await createTournamentTeam(tournament.id, "Team Olive");
 
 		await insertEvent({
 			type: "UPDATE_IN_GAME_NAME",
-			actorUserId: actor.id,
+			actorUserId: actorId(),
 			tournamentTeamId: team.id,
-			subjectUserId: subject.id,
+			subjectUserId: subjectId(),
 			metadata: { inGameName: "New IGN#1234" },
 		});
 
@@ -246,13 +249,13 @@ describe("TournamentAuditLogRepository", () => {
 		});
 
 		expect(events[0].type).toBe("UPDATE_IN_GAME_NAME");
-		expect(events[0].subject?.id).toBe(subject.id);
+		expect(events[0].subject?.id).toBe(subjectId());
 		expect(events[0].metadata?.inGameName).toBe("New IGN#1234");
 	});
 
 	test("updateTeamHistoryName keeps the preserved name current", async () => {
 		const tournament = await createTournament();
-		const team = await createTeam(tournament.id, "Old Name");
+		const team = await createTournamentTeam(tournament.id, "Old Name");
 
 		await db.transaction().execute((trx) =>
 			TournamentAuditLogRepository.updateTeamHistoryName(trx, {

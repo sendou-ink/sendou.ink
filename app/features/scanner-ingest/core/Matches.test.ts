@@ -1,69 +1,18 @@
-import { describe, expect, it } from "vitest";
-import type {
-	ScannerMatch,
-	ScannerMatchPlayer,
-} from "~/features/scanner/core/scanner-match";
+import { describe, expect, test } from "vitest";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as Matches from "./Matches";
-
-const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];
-const WEAPONS: MainWeaponId[] = [10, 20, 30, 40, 50, 60, 70, 80];
-
-function player(
-	name: string | null,
-	weaponId: MainWeaponId | null,
-	partial: Partial<ScannerMatchPlayer> = {},
-): ScannerMatchPlayer {
-	return {
-		name,
-		weaponId,
-		paint: null,
-		ka: null,
-		d: null,
-		s: null,
-		...partial,
-	};
-}
-
-function testMatch(partial: Partial<ScannerMatch> = {}): ScannerMatch {
-	return {
-		startsAt: 100,
-		endsAt: 400,
-		playedAt: null,
-		lobby: "PRIVATE",
-		mode: "SZ",
-		stage: 0,
-		matchScores: [100, 52],
-		replayCode: null,
-		cast: false,
-		objective: null,
-		playerStatus: null,
-		teams: [
-			{ players: NAMES.slice(0, 4).map((n, i) => player(n, WEAPONS[i]!)) },
-			{ players: NAMES.slice(4).map((n, i) => player(n, WEAPONS[4 + i]!)) },
-		],
-		winner: 0,
-		pov: null,
-		...partial,
-	};
-}
-
-/** The same rosters seen from the other side (e.g. a minimap alpha/bravo view). */
-function sideSwapped(match: ScannerMatch): ScannerMatch {
-	return {
-		...match,
-		teams: [match.teams[1], match.teams[0]],
-		winner: match.winner === null ? null : match.winner === 0 ? 1 : 0,
-		matchScores:
-			match.matchScores === null
-				? null
-				: [match.matchScores[1], match.matchScores[0]],
-	};
-}
+import {
+	NAMES,
+	scannerMatch,
+	scannerMatchPlayer,
+	sideSwapped,
+	WEAPONS,
+} from "./tests/fixtures";
 
 describe("canonicalMatch", () => {
-	it("serializes identically regardless of input key order", () => {
-		const match = testMatch({
+	test("serializes identically regardless of input key order", () => {
+		const match = scannerMatch({
 			objective: {
 				mode: "SZ",
 				samples: [
@@ -102,16 +51,16 @@ describe("canonicalMatch", () => {
 });
 
 describe("isSameMatch", () => {
-	it("recognizes an identical match", () => {
-		expect(Matches.isSameMatch(testMatch(), testMatch())).toBe(true);
+	test("recognizes an identical match", () => {
+		expect(Matches.isSameMatch(scannerMatch(), scannerMatch())).toBe(true);
 	});
 
-	it("matching replay codes are a strong key", () => {
-		const a = testMatch({
+	test("matching replay codes are a strong key", () => {
+		const a = scannerMatch({
 			replayCode: "RABC-DEFG-HIJK-LMNO",
-			teams: testMatch().teams,
+			teams: scannerMatch().teams,
 		});
-		const b = testMatch({
+		const b = scannerMatch({
 			replayCode: "RABC-DEFG-HIJK-LMNO",
 			matchScores: null,
 			teams: [{ players: [] }, { players: [] }],
@@ -120,21 +69,21 @@ describe("isSameMatch", () => {
 		expect(Matches.isSameMatch(a, b)).toBe(true);
 	});
 
-	it("tolerates OCR jitter in the replay code", () => {
-		const a = testMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
-		const b = testMatch({ replayCode: "RA8C-DEFG-HIJK-LMN0" });
+	test("tolerates OCR jitter in the replay code", () => {
+		const a = scannerMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
+		const b = scannerMatch({ replayCode: "RA8C-DEFG-HIJK-LMN0" });
 		expect(Matches.isSameMatch(a, b)).toBe(true);
 	});
 
-	it("clearly different replay codes contradict identity", () => {
-		const a = testMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
-		const b = testMatch({ replayCode: "RZYX-WVUT-SRQP-ONML" });
+	test("clearly different replay codes contradict identity", () => {
+		const a = scannerMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
+		const b = scannerMatch({ replayCode: "RZYX-WVUT-SRQP-ONML" });
 		expect(Matches.isSameMatch(a, b)).toBe(false);
 	});
 
-	it("close play times identify a match", () => {
-		const a = testMatch({ playedAt: 1_700_000_000_000 });
-		const b = testMatch({
+	test("close play times identify a match", () => {
+		const a = scannerMatch({ playedAt: 1_700_000_000_000 });
+		const b = scannerMatch({
 			playedAt: 1_700_000_000_000 + 5 * 60 * 1000,
 			matchScores: null,
 			teams: [{ players: [] }, { players: [] }],
@@ -143,77 +92,88 @@ describe("isSameMatch", () => {
 		expect(Matches.isSameMatch(a, b)).toBe(true);
 	});
 
-	it("far-apart play times contradict identity even with equal rosters", () => {
-		const a = testMatch({ playedAt: 1_700_000_000_000 });
-		const b = testMatch({ playedAt: 1_700_000_000_000 + 60 * 60 * 1000 });
+	test("far-apart play times contradict identity even with equal rosters", () => {
+		const a = scannerMatch({ playedAt: 1_700_000_000_000 });
+		const b = scannerMatch({ playedAt: 1_700_000_000_000 + 60 * 60 * 1000 });
 		expect(Matches.isSameMatch(a, b)).toBe(false);
 	});
 
-	it("differing modes or stages contradict identity", () => {
+	test("differing modes or stages contradict identity", () => {
 		expect(
-			Matches.isSameMatch(testMatch({ mode: "SZ" }), testMatch({ mode: "TC" })),
+			Matches.isSameMatch(
+				scannerMatch({ mode: "SZ" }),
+				scannerMatch({ mode: "TC" }),
+			),
 		).toBe(false);
 		expect(
-			Matches.isSameMatch(testMatch({ stage: 0 }), testMatch({ stage: 1 })),
+			Matches.isSameMatch(
+				scannerMatch({ stage: 0 }),
+				scannerMatch({ stage: 1 }),
+			),
 		).toBe(false);
 	});
 
-	it("a null mode does not contradict a read one", () => {
+	test("a null mode does not contradict a read one", () => {
 		expect(
-			Matches.isSameMatch(testMatch({ mode: null }), testMatch({ mode: "TC" })),
+			Matches.isSameMatch(
+				scannerMatch({ mode: null }),
+				scannerMatch({ mode: "TC" }),
+			),
 		).toBe(true);
 	});
 
-	it("roster overlap identifies a match even side-swapped", () => {
-		expect(Matches.isSameMatch(testMatch(), sideSwapped(testMatch()))).toBe(
-			true,
-		);
+	test("roster overlap identifies a match even side-swapped", () => {
+		expect(
+			Matches.isSameMatch(scannerMatch(), sideSwapped(scannerMatch())),
+		).toBe(true);
 	});
 
-	it("roster overlap survives a couple of misread names", () => {
-		const b = testMatch();
-		b.teams[0].players[0] = player("misread", WEAPONS[0]!);
-		b.teams[1].players[3] = player(null, WEAPONS[7]!);
-		expect(Matches.isSameMatch(testMatch(), b)).toBe(true);
+	test("roster overlap survives a couple of misread names", () => {
+		const b = scannerMatch();
+		b.teams[0].players[0] = scannerMatchPlayer("misread", WEAPONS[0]!);
+		b.teams[1].players[3] = scannerMatchPlayer(null, WEAPONS[7]!);
+		expect(Matches.isSameMatch(scannerMatch(), b)).toBe(true);
 	});
 
-	it("weapons alone identify a match when names are unread (minimap vs scoreboard)", () => {
-		const minimap = testMatch({
+	test("weapons alone identify a match when names are unread (minimap vs scoreboard)", () => {
+		const minimap = scannerMatch({
 			winner: null,
 			lobby: null,
 			matchScores: null,
 			teams: [
-				{ players: WEAPONS.slice(0, 4).map((w) => player(null, w)) },
-				{ players: WEAPONS.slice(4).map((w) => player(null, w)) },
+				{
+					players: WEAPONS.slice(0, 4).map((w) => scannerMatchPlayer(null, w)),
+				},
+				{ players: WEAPONS.slice(4).map((w) => scannerMatchPlayer(null, w)) },
 			],
 		});
-		expect(Matches.isSameMatch(testMatch(), minimap)).toBe(true);
+		expect(Matches.isSameMatch(scannerMatch(), minimap)).toBe(true);
 	});
 
-	it("unrelated matches are not the same", () => {
-		const other = testMatch({
+	test("unrelated matches are not the same", () => {
+		const other = scannerMatch({
 			matchScores: [88, 12],
 			teams: [
 				{
 					players: ["a", "b", "c", "d"].map((n, i) =>
-						player(n, (100 + 10 * i) as MainWeaponId),
+						scannerMatchPlayer(n, (100 + 10 * i) as MainWeaponId),
 					),
 				},
 				{
 					players: ["e", "f", "g", "h"].map((n, i) =>
-						player(n, (200 + 10 * i) as MainWeaponId),
+						scannerMatchPlayer(n, (200 + 10 * i) as MainWeaponId),
 					),
 				},
 			],
 		});
-		expect(Matches.isSameMatch(testMatch(), other)).toBe(false);
+		expect(Matches.isSameMatch(scannerMatch(), other)).toBe(false);
 	});
 });
 
 describe("mergeMatches", () => {
-	it("fills stored nulls and reports no change when nothing was added", () => {
-		const existing = testMatch({ mode: null, playedAt: null });
-		const incoming = testMatch({ mode: "SZ", playedAt: 1_700_000_000_000 });
+	test("fills stored nulls and reports no change when nothing was added", () => {
+		const existing = scannerMatch({ mode: null, playedAt: null });
+		const incoming = scannerMatch({ mode: "SZ", playedAt: 1_700_000_000_000 });
 
 		const first = Matches.mergeMatches(existing, incoming);
 		expect(first.changed).toBe(true);
@@ -224,20 +184,23 @@ describe("mergeMatches", () => {
 		expect(second.changed).toBe(false);
 	});
 
-	it("stored values win on conflict", () => {
-		const existing = testMatch({ stage: 0 });
-		const incoming = testMatch({ stage: null });
-		incoming.teams[0].players[0] = player("other", 999 as MainWeaponId);
+	test("stored values win on conflict", () => {
+		const existing = scannerMatch({ stage: 0 });
+		const incoming = scannerMatch({ stage: null });
+		incoming.teams[0].players[0] = scannerMatchPlayer(
+			"other",
+			999 as MainWeaponId,
+		);
 
 		const { merged } = Matches.mergeMatches(existing, incoming);
 		expect(merged.stage).toBe(0);
 		expect(merged.teams[0].players[0]!.name).toBe("w1");
 	});
 
-	it("aligns a side-swapped incoming match before merging", () => {
-		const existing = testMatch({ winner: null, matchScores: null });
+	test("aligns a side-swapped incoming match before merging", () => {
+		const existing = scannerMatch({ winner: null, matchScores: null });
 		const incoming = sideSwapped(
-			testMatch({ matchScores: [84, 71], playedAt: 1_700_000_000_000 }),
+			scannerMatch({ matchScores: [84, 71], playedAt: 1_700_000_000_000 }),
 		);
 
 		const { merged } = Matches.mergeMatches(existing, incoming);
@@ -248,15 +211,15 @@ describe("mergeMatches", () => {
 		);
 	});
 
-	it("merges player rows by name, keeping stored stats and adding missing ones", () => {
-		const existing = testMatch();
-		existing.teams[1].players[1] = player("l2", null);
-		const incoming = testMatch();
+	test("merges player rows by name, keeping stored stats and adding missing ones", () => {
+		const existing = scannerMatch();
+		existing.teams[1].players[1] = scannerMatchPlayer("l2", null);
+		const incoming = scannerMatch();
 		incoming.teams[1].players = [
-			player("l2", WEAPONS[5]!, { ka: 12, abilities: [["ISM"]] }),
-			player("l1", WEAPONS[4]!),
-			player("l3", WEAPONS[6]!),
-			player("l4", WEAPONS[7]!),
+			scannerMatchPlayer("l2", WEAPONS[5]!, { ka: 12, abilities: [["ISM"]] }),
+			scannerMatchPlayer("l1", WEAPONS[4]!),
+			scannerMatchPlayer("l3", WEAPONS[6]!),
+			scannerMatchPlayer("l4", WEAPONS[7]!),
 		];
 
 		const { merged } = Matches.mergeMatches(existing, incoming);
@@ -266,14 +229,14 @@ describe("mergeMatches", () => {
 		expect(l2.abilities).toEqual([["ISM"]]);
 	});
 
-	it("fills empty teams from the incoming match", () => {
-		const existing = testMatch({
+	test("fills empty teams from the incoming match", () => {
+		const existing = scannerMatch({
 			winner: null,
 			matchScores: null,
 			teams: [{ players: [] }, { players: [] }],
 			replayCode: "RABC-DEFG-HIJK-LMNO",
 		});
-		const incoming = testMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
+		const incoming = scannerMatch({ replayCode: "RABC-DEFG-HIJK-LMNO" });
 
 		const { merged, changed } = Matches.mergeMatches(existing, incoming);
 		expect(changed).toBe(true);
@@ -303,25 +266,25 @@ describe("playerStatus", () => {
 		],
 	};
 
-	it("merges whole-series first-ingest-wins", () => {
+	test("merges whole-series first-ingest-wins", () => {
 		const filled = Matches.mergeMatches(
-			testMatch(),
-			testMatch({ playerStatus: STATUS }),
+			scannerMatch(),
+			scannerMatch({ playerStatus: STATUS }),
 		);
 		expect(filled.merged.playerStatus).toEqual(STATUS);
 		expect(filled.changed).toBe(true);
 
 		const kept = Matches.mergeMatches(
-			testMatch({ playerStatus: STATUS }),
-			testMatch({ playerStatus: { samples: [] } }),
+			scannerMatch({ playerStatus: STATUS }),
+			scannerMatch({ playerStatus: { samples: [] } }),
 		);
 		expect(kept.merged.playerStatus).toEqual(STATUS);
 	});
 
-	it("side-aligning an incoming match swaps its status samples too", () => {
-		const incoming = sideSwapped(testMatch({ playerStatus: STATUS }));
+	test("side-aligning an incoming match swaps its status samples too", () => {
+		const incoming = sideSwapped(scannerMatch({ playerStatus: STATUS }));
 		const { merged } = Matches.mergeMatches(
-			testMatch({ winner: null, matchScores: null, playerStatus: null }),
+			scannerMatch({ winner: null, matchScores: null, playerStatus: null }),
 			incoming,
 		);
 		expect(merged.playerStatus!.samples[0]!.dead).toEqual([

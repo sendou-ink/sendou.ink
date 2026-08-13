@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -11,7 +11,7 @@ import {
 } from "./vods-search-params";
 
 describe("vodsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(vodsSearchParams, {
 			page: [1, 2, 1000],
 			weapon: [null, 0, 40, 8010],
@@ -21,7 +21,7 @@ describe("vodsSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(vodsSearchParams, "page", [
 			["0"],
 			["1001"],
@@ -44,7 +44,7 @@ describe("vodsNewSearchParams", () => {
 		weapons: [40 as const, null],
 	};
 
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(vodsNewSearchParams, {
 			vod: [null, 1, 12345],
 			ingest: [
@@ -55,7 +55,7 @@ describe("vodsNewSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(vodsNewSearchParams, "vod", [
 			["0"],
 			["-1"],
@@ -71,13 +71,13 @@ describe("vodsNewSearchParams", () => {
 });
 
 describe("vodsVodSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(vodsVodSearchParams, {
 			start: [0, 1, 5312],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(vodsVodSearchParams, "start", [
 			["-1"],
 			["NaN"],
@@ -87,7 +87,7 @@ describe("vodsVodSearchParams", () => {
 });
 
 describe("userVodsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(userVodsSearchParams, {
 			page: [1, 7, 1000],
 		});

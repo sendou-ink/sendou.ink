@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { tournamentOrganizationSearchParams } from "./tournament-organization-search-params";
 
 describe("tournamentOrganizationSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentOrganizationSearchParams, {
 			month: [0, 11],
 			year: [2020, 2100],
@@ -16,7 +16,7 @@ describe("tournamentOrganizationSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(tournamentOrganizationSearchParams, "month", [
 			["12"],
 			["-1"],

@@ -1,9 +1,9 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "./UserRepository.server";
 
 describe("profile bio is always a string", () => {
-	it("keeps a JSON-object-shaped bio as text (not a parsed object)", async () => {
+	test("keeps a JSON-object-shaped bio as text (not a parsed object)", async () => {
 		// a bio the user typed that happens to be valid JSON of object shape
 		const user = await UserFactory.create({
 			profile: { bio: '{"note":"gg"}' },

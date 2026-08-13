@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -9,7 +9,7 @@ import {
 } from "./tournament-admin-search-params";
 
 describe("tournamentAuditSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentAuditSearchParams, {
 			page: [1, 2, 100],
 			auditType: ["MEMBER_ADDED", "UPDATE_IN_GAME_NAME"],
@@ -17,7 +17,7 @@ describe("tournamentAuditSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(tournamentAuditSearchParams, "page", [
 			["0"],
 			["-1"],
@@ -35,13 +35,13 @@ describe("tournamentAuditSearchParams", () => {
 });
 
 describe("tournamentImportTeamsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentImportTeamsSearchParams, {
 			fromTournamentId: [1, 999999],
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(
 			tournamentImportTeamsSearchParams,
 			"fromTournamentId",

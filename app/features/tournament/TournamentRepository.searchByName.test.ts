@@ -7,11 +7,11 @@ import * as TournamentRepository from "./TournamentRepository.server";
 
 const QUERY = "In The Zone";
 
-let author: { id: number };
+const users = UserFactory.pool();
 
 const createTournament = (name: string, startsAt: Date) =>
 	TournamentFactory.create({
-		authorId: author.id,
+		authorId: users.id(1),
 		name,
 		startTimes: [dateToDatabaseTimestamp(startsAt)],
 	});
@@ -23,7 +23,7 @@ const search = async (limit = 10) =>
 
 describe("TournamentRepository.searchByName", () => {
 	beforeEach(async () => {
-		author = await UserFactory.create();
+		await users.create(1);
 	});
 
 	test("sorts a tournament that is happening right now first", async () => {

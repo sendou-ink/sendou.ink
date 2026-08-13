@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -7,7 +7,7 @@ import { MapPool } from "./core/map-pool";
 import { mapListGeneratorSearchParams } from "./map-list-generator-search-params";
 
 describe("mapListGeneratorSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(mapListGeneratorSearchParams, {
 			pool: [
 				MapPool.ANARCHY.serialized,
@@ -18,7 +18,7 @@ describe("mapListGeneratorSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(mapListGeneratorSearchParams, "eventId", [
 			["abc"],
 			["-1"],

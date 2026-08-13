@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	BEST_TIER_NUMBER,
@@ -28,7 +28,7 @@ const notStartedSeason = newestSeason + 1000;
 const currentYear = new Date().getFullYear();
 
 describe("userResultsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(userResultsSearchParams, {
 			highlightsOnly: [false, true],
 			page: [1, 2, 1000],
@@ -45,7 +45,7 @@ describe("userResultsSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(userResultsSearchParams, "highlightsOnly", [
 			["1"],
 			["yes"],
@@ -87,7 +87,7 @@ describe("userResultsSearchParams", () => {
 });
 
 describe("userSeasonsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(userSeasonsSearchParams, {
 			page: [1, 2, 99],
 			info: ["weapons", "stages", "mates", "enemies"],
@@ -95,7 +95,7 @@ describe("userSeasonsSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(userSeasonsSearchParams, "page", [["0"], ["abc"]]);
 		assertDecodesToDefault(userSeasonsSearchParams, "info", [["INVALID"]]);
 		assertDecodesToDefault(userSeasonsSearchParams, "season", [
@@ -105,7 +105,7 @@ describe("userSeasonsSearchParams", () => {
 		]);
 	});
 
-	it("decodes a season correctly even if the same URL was visited before the season started", () => {
+	test("decodes a season correctly even if the same URL was visited before the season started", () => {
 		vi.useFakeTimers();
 		try {
 			// crawler or a user replays ?season=1 a few days before season 1 opens
@@ -126,13 +126,13 @@ describe("userSeasonsSearchParams", () => {
 });
 
 describe("userSeasonSummaryGraphicSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(userSeasonSummaryGraphicSearchParams, {
 			season: [null, newestSeason, oldestSeason],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(userSeasonSummaryGraphicSearchParams, "season", [
 			[String(notStartedSeason)],
 			["abc"],
@@ -141,14 +141,14 @@ describe("userSeasonSummaryGraphicSearchParams", () => {
 });
 
 describe("userBuildsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(userBuildsSearchParams, {
 			weapon: ["ALL", "PUBLIC", "PRIVATE", 0, 40, 8010],
 			sorting: [false, true],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(userBuildsSearchParams, "weapon", [
 			["999999"],
 			["foo"],
@@ -159,14 +159,14 @@ describe("userBuildsSearchParams", () => {
 });
 
 describe("userArtSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(userArtSearchParams, {
 			source: ["ALL", "MADE-BY", "MADE-OF"],
 			tag: ["chibi", "tag with spaces"],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(userArtSearchParams, "source", [["INVALID"]]);
 	});
 });

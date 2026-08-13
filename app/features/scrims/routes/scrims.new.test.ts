@@ -30,7 +30,7 @@ const defaultNewScrimPostArgs = (): Parameters<typeof newScrimAction>[0] => ({
 	divs: [null, null],
 	from: {
 		mode: "PICKUP",
-		users: pickupMembers.map((user) => user.id),
+		users: pickupMembers.ids(),
 	},
 	managedByAnyone: false,
 	postText: "Test",
@@ -41,12 +41,12 @@ const defaultNewScrimPostArgs = (): Parameters<typeof newScrimAction>[0] => ({
 	mapsTournamentId: null,
 });
 
-let pickupMembers: Array<{ id: number }>;
+const pickupMembers = UserFactory.pool();
 
 describe("New scrim post action", () => {
 	beforeEach(async () => {
 		await UserFactory.createRegular();
-		pickupMembers = await UserFactory.createMany(3);
+		await pickupMembers.create(3);
 	});
 
 	test("scrim post made for now has isScheduledForFuture = false", async () => {
@@ -96,7 +96,7 @@ describe("New scrim post action", () => {
 
 		expect(recentPickupRosters).toHaveLength(1);
 		expect(recentPickupRosters[0]!.users.map((user) => user.id)).toEqual(
-			pickupMembers.map((user) => user.id).sort((a, b) => a - b),
+			pickupMembers.ids().sort((a, b) => a - b),
 		);
 	});
 });

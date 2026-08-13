@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
@@ -35,19 +35,19 @@ describe("Swiss", () => {
 	};
 
 	describe("create()", () => {
-		it("creates a swiss bracket with correct amount of initial matches", () => {
+		test("creates a swiss bracket with correct amount of initial matches", () => {
 			const data = Swiss.create(createArgsWithDefaults());
 
 			expect(data.match).toHaveLength(2);
 		});
 
-		it("creates a swiss bracket with correct amount of rounds as default", () => {
+		test("creates a swiss bracket with correct amount of rounds as default", () => {
 			const data = Swiss.create(createArgsWithDefaults());
 
 			expect(data.round).toHaveLength(5);
 		});
 
-		it("creates a swiss bracket with correct amount of rounds as parameter", () => {
+		test("creates a swiss bracket with correct amount of rounds as parameter", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					settings: {
@@ -60,7 +60,7 @@ describe("Swiss", () => {
 			expect(data.round).toHaveLength(4);
 		});
 
-		it("creates a swiss bracket with two groups", () => {
+		test("creates a swiss bracket with two groups", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					settings: {
@@ -77,7 +77,7 @@ describe("Swiss", () => {
 			expect(matchGroupIds).toContain(1);
 		});
 
-		it("every team has a match", () => {
+		test("every team has a match", () => {
 			const data = Swiss.create(createArgsWithDefaults());
 
 			for (const teamId of [1, 2, 3, 4]) {
@@ -90,7 +90,7 @@ describe("Swiss", () => {
 			}
 		});
 
-		it("assigns a BYE if odd number of teams", () => {
+		test("assigns a BYE if odd number of teams", () => {
 			const data = Swiss.create(
 				createArgsWithDefaults({
 					seeding: [1, 2, 3, 4, 5],
@@ -101,7 +101,7 @@ describe("Swiss", () => {
 			expect(byes).toHaveLength(1);
 		});
 
-		it("if no teams, should generate a bracket data with no matches", () => {
+		test("if no teams, should generate a bracket data with no matches", () => {
 			const data = Swiss.create(createArgsWithDefaults({ seeding: [] }));
 
 			expect(data.match).toHaveLength(0);
@@ -124,7 +124,7 @@ describe("Swiss", () => {
 				}),
 			).matches;
 
-			it("finds new opponents for each team in the last round", () => {
+			test("finds new opponents for each team in the last round", () => {
 				for (const match of matches) {
 					if (match.opponent2 === null) continue;
 
@@ -142,12 +142,12 @@ describe("Swiss", () => {
 				}
 			});
 
-			it("generates a bye", () => {
+			test("generates a bye", () => {
 				const byes = matches.filter((match) => match.opponent2 === null);
 				expect(byes).toHaveLength(1);
 			});
 
-			it("every pair is max one set win from each other", () => {
+			test("every pair is max one set win from each other", () => {
 				for (const match of matches) {
 					if (match.opponent2 === null) continue;
 
@@ -197,7 +197,7 @@ describe("Swiss", () => {
 				stats: { setWins: record.setWins, setLosses: record.setLosses },
 			}));
 
-		it("gives a bye to the only team left in the running", () => {
+		test("gives a bye to the only team left in the running", () => {
 			const round = unwrap(
 				Engine.generateRound(bracketWithFinishedRound(), {
 					groupId: 0,
@@ -216,7 +216,7 @@ describe("Swiss", () => {
 			]);
 		});
 
-		it("generates no round if no team is left in the running", () => {
+		test("generates no round if no team is left in the running", () => {
 			const round = Engine.generateRound(bracketWithFinishedRound(), {
 				groupId: 0,
 				standings: standingsOf([
@@ -235,7 +235,7 @@ describe("Swiss", () => {
 	const PAIR_UP_TEST_CASES = [RUSH_WEEKEND_3, LOW_INK_AUGUST_2025];
 
 	describe("pairUp()", () => {
-		it.for(PAIR_UP_TEST_CASES)(
+		test.for(PAIR_UP_TEST_CASES)(
 			"all teams have matches (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
@@ -252,7 +252,7 @@ describe("Swiss", () => {
 			},
 		);
 
-		it.for(PAIR_UP_TEST_CASES)(
+		test.for(PAIR_UP_TEST_CASES)(
 			"every pair is max one set win from each other (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
@@ -276,8 +276,8 @@ describe("Swiss", () => {
 			},
 		);
 
-		it.for(PAIR_UP_TEST_CASES)(
-			"should match perfect records against each other as much as possible (pair up test cases idx %#)",
+		test.for(PAIR_UP_TEST_CASES)(
+			"matches perfect records against each other as much as possible (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
 
@@ -313,7 +313,7 @@ describe("Swiss", () => {
 			},
 		);
 
-		it.for(PAIR_UP_TEST_CASES)(
+		test.for(PAIR_UP_TEST_CASES)(
 			"generates max one bye (pair up test cases idx %#)",
 			(testCase) => {
 				const result = Swiss.pairUp(testCase);
@@ -327,13 +327,13 @@ describe("Swiss", () => {
 			},
 		);
 
-		it("gives a bye to a lone team", () => {
+		test("gives a bye to a lone team", () => {
 			expect(Swiss.pairUp([{ id: 1, score: 2, avoid: [] }])).toEqual([
 				{ opponentOne: 1, opponentTwo: null },
 			]);
 		});
 
-		it("replays if a rematch free pairing does not exist for every team", () => {
+		test("replays if a rematch free pairing does not exist for every team", () => {
 			// only 1 & 2 have not played each other yet
 			const result = Swiss.pairUp([
 				{ id: 1, score: 1, avoid: [3, 4] },
@@ -347,7 +347,7 @@ describe("Swiss", () => {
 			expect(includesPair(result, 3, 4)).toBe(true);
 		});
 
-		it("prefers replaying teams that have met the fewest times", () => {
+		test("prefers replaying teams that have met the fewest times", () => {
 			// everyone has played everyone, but 1 & 2 have already played twice
 			const result = Swiss.pairUp([
 				{ id: 1, score: 1, avoid: [2, 2, 3, 4] },
@@ -359,7 +359,7 @@ describe("Swiss", () => {
 			expect(includesPair(result, 1, 2)).toBe(false);
 		});
 
-		it("prefers giving the bye to the lowest standing team without a previous bye", () => {
+		test("prefers giving the bye to the lowest standing team without a previous bye", () => {
 			// five team swiss entering round 4: teams 3, 4 and 5 have already had a
 			// bye, team 3 in the round right before this one. Teams 1 and 2 have not,
 			// and a rematch free pairing where team 2 (the lowest standing team
@@ -379,7 +379,7 @@ describe("Swiss", () => {
 	});
 
 	describe("calculateTeamStatus()", () => {
-		it("returns 'advanced' when team has enough wins", () => {
+		test("returns 'advanced' when team has enough wins", () => {
 			expect(
 				Swiss.calculateTeamStatus({
 					wins: 3,
@@ -406,7 +406,7 @@ describe("Swiss", () => {
 			).toBe("advanced");
 		});
 
-		it("returns 'eliminated' when team has too many losses", () => {
+		test("returns 'eliminated' when team has too many losses", () => {
 			expect(
 				Swiss.calculateTeamStatus({
 					wins: 0,
@@ -433,7 +433,7 @@ describe("Swiss", () => {
 			).toBe("eliminated");
 		});
 
-		it("returns 'active' when team can still advance or be eliminated", () => {
+		test("returns 'active' when team can still advance or be eliminated", () => {
 			expect(
 				Swiss.calculateTeamStatus({
 					wins: 2,
@@ -468,7 +468,7 @@ describe("Swiss", () => {
 			).toBe("active");
 		});
 
-		it("handles different tournament configurations", () => {
+		test("handles different tournament configurations", () => {
 			// 4-round tournament with advance threshold 2
 			expect(
 				Swiss.calculateTeamStatus({
@@ -522,7 +522,7 @@ describe("Swiss", () => {
 			).toBe("active");
 		});
 
-		it("handles edge cases correctly", () => {
+		test("handles edge cases correctly", () => {
 			// Team reaches advance threshold exactly
 			expect(
 				Swiss.calculateTeamStatus({
@@ -565,7 +565,7 @@ describe("Swiss", () => {
 
 	describe("Threshold validation utilities", () => {
 		describe("maxAdvanceThreshold()", () => {
-			it("calculates maximum advance threshold correctly", () => {
+			test("calculates maximum advance threshold correctly", () => {
 				expect(Swiss.maxAdvanceThreshold({ roundCount: 3 })).toBe(3); // ceil(3/2) + 1 = 2 + 1 = 3
 				expect(Swiss.maxAdvanceThreshold({ roundCount: 4 })).toBe(3); // ceil(4/2) + 1 = 2 + 1 = 3
 				expect(Swiss.maxAdvanceThreshold({ roundCount: 5 })).toBe(4); // ceil(5/2) + 1 = 3 + 1 = 4
@@ -575,7 +575,7 @@ describe("Swiss", () => {
 		});
 
 		describe("isValidAdvanceThreshold()", () => {
-			it("validates correct thresholds", () => {
+			test("validates correct thresholds", () => {
 				expect(
 					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 3 }),
 				).toBe(true);
@@ -590,7 +590,7 @@ describe("Swiss", () => {
 				).toBe(true);
 			});
 
-			it("rejects invalid thresholds", () => {
+			test("rejects invalid thresholds", () => {
 				// Threshold too high
 				expect(
 					Swiss.isValidAdvanceThreshold({ roundCount: 5, advanceThreshold: 5 }),
@@ -611,7 +611,7 @@ describe("Swiss", () => {
 				).toBe(false);
 			});
 
-			it("handles edge cases", () => {
+			test("handles edge cases", () => {
 				expect(
 					Swiss.isValidAdvanceThreshold({ roundCount: 3, advanceThreshold: 2 }),
 				).toBe(true); // minimum valid
@@ -622,7 +622,7 @@ describe("Swiss", () => {
 		});
 
 		describe("validAdvanceThresholdOptions()", () => {
-			it("returns correct options for different round counts", () => {
+			test("returns correct options for different round counts", () => {
 				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 3 })).toEqual([
 					2, 3,
 				]);
@@ -634,7 +634,7 @@ describe("Swiss", () => {
 				]);
 			});
 
-			it("handles minimal round counts", () => {
+			test("handles minimal round counts", () => {
 				expect(Swiss.validAdvanceThresholdOptions({ roundCount: 2 })).toEqual([
 					2,
 				]);
@@ -643,7 +643,7 @@ describe("Swiss", () => {
 				]);
 			});
 
-			it("includes thresholds up to the calculated maximum for large round counts", () => {
+			test("includes thresholds up to the calculated maximum for large round counts", () => {
 				const roundCount = 9;
 				const max = Swiss.maxAdvanceThreshold({ roundCount });
 

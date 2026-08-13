@@ -16,7 +16,7 @@ describe("Update matches", () => {
 		data = createResolved(EXAMPLE);
 	});
 
-	test("should start a match", () => {
+	test("starts a match", () => {
 		expect(Engine.matchStatus(data, 0)).toBe("STARTED");
 
 		data = Engine.reportResult(data, {
@@ -28,7 +28,7 @@ describe("Update matches", () => {
 		expect(matchById(data, 0).opponent1?.score).toBe(0);
 	});
 
-	test("should update the scores for a match", () => {
+	test("updates the scores for a match", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			scores: [2, 1],
@@ -42,7 +42,7 @@ describe("Update matches", () => {
 		expect(after.opponent1?.id).toBe(1);
 	});
 
-	test("should end the match by only setting the winner", () => {
+	test("ends the match by only setting the winner", () => {
 		expect(matchById(data, 0).winnerSide).toBeFalsy();
 
 		data = Engine.reportResult(data, {
@@ -54,7 +54,7 @@ describe("Update matches", () => {
 		expect(matchById(data, 0).winnerSide).toBe("opponent1");
 	});
 
-	test("should change the winner of the match and update in the next match", () => {
+	test("changes the winner of the match and update in the next match", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			winnerSide: "opponent1",
@@ -74,7 +74,7 @@ describe("Update matches", () => {
 		expect(matchById(data, 8).opponent1?.id).toBe(16);
 	});
 
-	test("should update the status of the next match", () => {
+	test("updates the status of the next match", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			winnerSide: "opponent1",
@@ -90,7 +90,7 @@ describe("Update matches", () => {
 		expect(Engine.matchStatus(data, 8)).toBe("STARTED");
 	});
 
-	test("should remove results from a match without score", () => {
+	test("removes results from a match without score", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			winnerSide: "opponent1",
@@ -102,7 +102,7 @@ describe("Update matches", () => {
 		expect(matchById(data, 0).winnerSide).toBeFalsy();
 	});
 
-	test("should remove results from a match with score", () => {
+	test("removes results from a match with score", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			scores: [16, 12],
@@ -115,7 +115,7 @@ describe("Update matches", () => {
 		expect(matchById(data, 0).winnerSide).toBeFalsy();
 	});
 
-	test("should keep the scores as they are if none given", () => {
+	test("keeps the scores as they are if none given", () => {
 		data = Engine.reportResult(data, {
 			matchId: 1,
 			scores: [1, 0],
@@ -129,7 +129,7 @@ describe("Update matches", () => {
 		expect(after.opponent2?.score).toBe(0);
 	});
 
-	test("should end the match by setting the winner and the scores", () => {
+	test("ends the match by setting the winner and the scores", () => {
 		data = Engine.reportResult(data, {
 			matchId: 1,
 			scores: [6, 3],
@@ -152,7 +152,7 @@ describe("Locked matches", () => {
 		data = createResolved(EXAMPLE);
 	});
 
-	test("should throw when the matches leading to the match have not been completed yet", () => {
+	test("throws when the matches leading to the match have not been completed yet", () => {
 		expect(() => Engine.reportResult(data, { matchId: 0 })).not.toThrow(); // No problem when no previous match.
 
 		expect(() => Engine.reportResult(data, { matchId: 8 })).toThrow(

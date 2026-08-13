@@ -1,4 +1,4 @@
-import { afterEach, beforeEach, describe, expect, it, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as PlusVoteFactory from "~/db/seed/factories/PlusVoteFactory";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
@@ -274,7 +274,7 @@ describe("Account migration", () => {
 		await createUsers(2);
 	});
 
-	it("migrates a blank account", async () => {
+	test("migrates a blank account", async () => {
 		expect(await UserRepository.findProfileByIdentifier("0")).toBeDefined();
 		expect(await UserRepository.findProfileByIdentifier("1")).toBeDefined();
 
@@ -287,7 +287,7 @@ describe("Account migration", () => {
 		expect(newUser?.id).toBe(users.id(1)); // took the old user's id
 	});
 
-	it("two accounts with teams results in an error", async () => {
+	test("two accounts with teams results in an error", async () => {
 		await TeamFactory.create({ memberUserIds: [users.id(1)] });
 		await TeamFactory.create({ memberUserIds: [users.id(2)] });
 
@@ -303,7 +303,7 @@ describe("Account migration", () => {
 			.where("userId", "=", userId)
 			.executeTakeFirst();
 
-	it("deletes past team membership status of the new user", async () => {
+	test("deletes past team membership status of the new user", async () => {
 		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
 		await TeamRepository.deleteById(team.id);
 
@@ -317,7 +317,7 @@ describe("Account migration", () => {
 		expect(membershipAfterMigration).toBeUndefined();
 	});
 
-	it("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
+	test("handles old user member of the same team as new user (old user has left the team, new user current)", async () => {
 		const team = await TeamFactory.create({
 			memberUserIds: [users.id(2), users.id(1)],
 		});
@@ -340,7 +340,7 @@ describe("Account migration", () => {
 		expect(membershipNewUser).toBeUndefined();
 	});
 
-	it("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
+	test("deletes weapon pool from the new user when migrating (takes weapon pool from the old user)", async () => {
 		await UserFactory.grant(users.id(1), {
 			weapons: [{ weaponSplId: 1, isFavorite: 1 }],
 		});
@@ -357,7 +357,7 @@ describe("Account migration", () => {
 		]);
 	});
 
-	it("deletes builds from the new user when migrating", async () => {
+	test("deletes builds from the new user when migrating", async () => {
 		await BuildFactory.create({ ownerId: users.id(2) });
 
 		const buildsBefore = await BuildRepository.findAllByUserId(users.id(2));

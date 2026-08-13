@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as SearchParams from "~/modules/search-params/search-params";
 import {
 	assertDecodesToDefault,
@@ -20,7 +20,7 @@ const FILLED_STATE: TierListState = {
 };
 
 describe("tierListMakerSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tierListMakerSearchParams, {
 			state: [
 				{ tiers: DEFAULT_TIERS, tierItems: new Map() },
@@ -37,7 +37,7 @@ describe("tierListMakerSearchParams", () => {
 		});
 	});
 
-	it("always emits the compressed form for state", () => {
+	test("always emits the compressed form for state", () => {
 		const encoded = SearchParams.encodeParam(
 			tierListMakerSearchParams.shape.state,
 			FILLED_STATE,
@@ -47,7 +47,7 @@ describe("tierListMakerSearchParams", () => {
 		expect(encoded[0]).toMatch(/^lz~/);
 	});
 
-	it("decodes the legacy JSON modes format", () => {
+	test("decodes the legacy JSON modes format", () => {
 		expect(
 			SearchParams.decodeParam(tierListMakerSearchParams.shape.modes, [
 				'["SZ","TC"]',
@@ -55,7 +55,7 @@ describe("tierListMakerSearchParams", () => {
 		).toEqual(["SZ", "TC"]);
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(tierListMakerSearchParams, "state", [
 			[""],
 			["garbage"],

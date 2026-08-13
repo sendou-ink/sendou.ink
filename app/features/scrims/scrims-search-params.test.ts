@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { scrimsSearchParams } from "./scrims-search-params";
 
 describe("scrimsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		// divs examples are in the normalized shape the divsSchema transform
 		// produces (max is the higher div) so decode(encode(x)) equals x
 		assertRoundTrips(scrimsSearchParams, {
@@ -28,7 +28,7 @@ describe("scrimsSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(scrimsSearchParams, "weekdayTimes", [
 			["25:00-22:00"],
 			["18:00x22:00"],

@@ -1,7 +1,10 @@
 import assert from "node:assert/strict";
-import { assignMatchSets } from "../core/match-sets";
-import type { ScannerMatch, ScannerMatchPlayer } from "../core/scanner-match";
-import test from "./node-test-compat";
+import { assignMatchSets } from "../../core/match-sets";
+import type {
+	ScannerMatch,
+	ScannerMatchPlayer,
+} from "../../core/scanner-match";
+import test from "../node-test-compat";
 
 const TEAM_A = ["Sendou", "Kiver", "Brian", "Zed"];
 const TEAM_B = ["Gos", "Noah", "Alice", "Bob"];

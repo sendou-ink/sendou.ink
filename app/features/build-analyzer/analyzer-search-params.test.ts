@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
 import {
@@ -20,7 +20,7 @@ const PARTIAL_BUILD: BuildAbilitiesTupleWithUnknown = [
 ];
 
 describe("analyzerSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(analyzerSearchParams, {
 			weapon: [0, 10, 8000],
 			build: [EMPTY_BUILD, FULL_BUILD, PARTIAL_BUILD],
@@ -31,7 +31,7 @@ describe("analyzerSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(analyzerSearchParams, "weapon", [
 			[""],
 			["9999999"],

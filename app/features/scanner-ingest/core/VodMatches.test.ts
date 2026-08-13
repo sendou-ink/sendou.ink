@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import {
 	type IngestVodMatchInput,
@@ -24,7 +24,7 @@ function testMatch(
 }
 
 describe("prefillVodMatches", () => {
-	it("maps validated match rows into the form's prefill shape", () => {
+	test("maps validated match rows into the form's prefill shape", () => {
 		const prefilled = prefillVodMatches([testMatch({ povWeapon: 20 })]);
 
 		expect(prefilled).toHaveLength(1);
@@ -37,7 +37,7 @@ describe("prefillVodMatches", () => {
 		});
 	});
 
-	it("keeps unread (null) fields for the user to fill in the form", () => {
+	test("keeps unread (null) fields for the user to fill in the form", () => {
 		const prefilled = prefillVodMatches([
 			testMatch({
 				mode: null,
@@ -56,14 +56,14 @@ describe("prefillVodMatches", () => {
 		});
 	});
 
-	it("rejects rows that are not sendou ids", () => {
+	test("rejects rows that are not sendou ids", () => {
 		const parsed = ingestVodPrefillSchema.safeParse({
 			matches: [{ ...testMatch(), stage: "Scorch Gorge" }],
 		});
 		expect(parsed.success).toBe(false);
 	});
 
-	it("accepts the `ingest` search param the scanner VoD tab sends", () => {
+	test("accepts the `ingest` search param the scanner VoD tab sends", () => {
 		// what the scanner VoD tab's "Add VoD" button puts in the URL
 		// (~/features/scanner/components/sendou-upload.ts): a { type?, matches }
 		// payload in the compressed `ingest` param

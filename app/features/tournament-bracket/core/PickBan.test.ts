@@ -1,6 +1,7 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { WhoSide } from "../tournament-bracket-constants";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,
 	currentTurnSessionStartedAt,
@@ -17,7 +18,7 @@ import {
 } from "./PickBan";
 
 describe("validateCustomFlowSection", () => {
-	it("returns no errors for valid preSet steps", () => {
+	test("returns no errors for valid preSet steps", () => {
 		const steps = [
 			{ action: "BAN" as const, side: "HIGHER_SEED" as const },
 			{ action: "BAN" as const, side: "LOWER_SEED" as const },
@@ -27,7 +28,7 @@ describe("validateCustomFlowSection", () => {
 		expect(validateCustomFlowSection(steps, "preSet")).toEqual([]);
 	});
 
-	it("returns no errors for valid postGame steps", () => {
+	test("returns no errors for valid postGame steps", () => {
 		const steps = [
 			{ action: "BAN" as const, side: "WINNER" as const },
 			{ action: "PICK" as const, side: "LOSER" as const },
@@ -36,7 +37,7 @@ describe("validateCustomFlowSection", () => {
 		expect(validateCustomFlowSection(steps, "postGame")).toEqual([]);
 	});
 
-	it("returns STEP_MISSING_ACTION when a step has no action", () => {
+	test("returns STEP_MISSING_ACTION when a step has no action", () => {
 		const steps = [
 			{ side: "ALPHA" as const },
 			{ action: "PICK" as const, side: "ALPHA" as const },
@@ -47,7 +48,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns STEP_MISSING_WHO when a non-ROLL step has no side", () => {
+	test("returns STEP_MISSING_WHO when a non-ROLL step has no side", () => {
 		const steps = [{ action: "BAN" as const }];
 
 		expect(validateCustomFlowSection(steps, "preSet")).toContain(
@@ -55,13 +56,13 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("does not require side for ROLL steps", () => {
+	test("does not require side for ROLL steps", () => {
 		const steps = [{ action: "ROLL" as const }];
 
 		expect(validateCustomFlowSection(steps, "preSet")).toEqual([]);
 	});
 
-	it("returns LAST_STEP_MUST_BE_PICK_OR_ROLL when last step is BAN", () => {
+	test("returns LAST_STEP_MUST_BE_PICK_OR_ROLL when last step is BAN", () => {
 		const steps = [
 			{ action: "PICK" as const, side: "ALPHA" as const },
 			{ action: "BAN" as const, side: "BRAVO" as const },
@@ -72,7 +73,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("accepts PICK_NO_MODE_REPEAT as the last (map picking) step", () => {
+	test("accepts PICK_NO_MODE_REPEAT as the last (map picking) step", () => {
 		const steps = [
 			{ action: "BAN" as const, side: "HIGHER_SEED" as const },
 			{ action: "PICK_NO_MODE_REPEAT" as const, side: "LOWER_SEED" as const },
@@ -81,7 +82,7 @@ describe("validateCustomFlowSection", () => {
 		expect(validateCustomFlowSection(steps, "postGame")).toEqual([]);
 	});
 
-	it("counts PICK_NO_MODE_REPEAT toward TOO_MANY_MAP_PICKS", () => {
+	test("counts PICK_NO_MODE_REPEAT toward TOO_MANY_MAP_PICKS", () => {
 		const steps = [
 			{ action: "PICK" as const, side: "HIGHER_SEED" as const },
 			{ action: "PICK_NO_MODE_REPEAT" as const, side: "LOWER_SEED" as const },
@@ -92,7 +93,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns SAME_TEAM_MODE_AND_MAP_PICK for PICK_NO_MODE_REPEAT by the mode picker", () => {
+	test("returns SAME_TEAM_MODE_AND_MAP_PICK for PICK_NO_MODE_REPEAT by the mode picker", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "HIGHER_SEED" as const },
 			{ action: "PICK_NO_MODE_REPEAT" as const, side: "HIGHER_SEED" as const },
@@ -103,7 +104,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns LAST_STEP_MUST_BE_PICK_OR_ROLL when last step is MODE_BAN", () => {
+	test("returns LAST_STEP_MUST_BE_PICK_OR_ROLL when last step is MODE_BAN", () => {
 		const steps = [{ action: "MODE_BAN" as const, side: "ALPHA" as const }];
 
 		expect(validateCustomFlowSection(steps, "preSet")).toContain(
@@ -111,7 +112,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("allows PICK as last step", () => {
+	test("allows PICK as last step", () => {
 		const steps = [{ action: "PICK" as const, side: "ALPHA" as const }];
 
 		const errors = validateCustomFlowSection(steps, "preSet");
@@ -121,7 +122,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("allows ROLL as last step", () => {
+	test("allows ROLL as last step", () => {
 		const steps = [{ action: "ROLL" as const }];
 
 		const errors = validateCustomFlowSection(steps, "postGame");
@@ -131,7 +132,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns WINNER_LOSER_IN_PRE_SET when WINNER is used in preSet", () => {
+	test("returns WINNER_LOSER_IN_PRE_SET when WINNER is used in preSet", () => {
 		const steps = [{ action: "PICK" as const, side: "WINNER" as const }];
 
 		expect(validateCustomFlowSection(steps, "preSet")).toContain(
@@ -139,7 +140,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns WINNER_LOSER_IN_PRE_SET when LOSER is used in preSet", () => {
+	test("returns WINNER_LOSER_IN_PRE_SET when LOSER is used in preSet", () => {
 		const steps = [{ action: "PICK" as const, side: "LOSER" as const }];
 
 		expect(validateCustomFlowSection(steps, "preSet")).toContain(
@@ -147,7 +148,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("allows WINNER/LOSER in postGame", () => {
+	test("allows WINNER/LOSER in postGame", () => {
 		const steps = [
 			{ action: "BAN" as const, side: "WINNER" as const },
 			{ action: "PICK" as const, side: "LOSER" as const },
@@ -156,7 +157,7 @@ describe("validateCustomFlowSection", () => {
 		expect(validateCustomFlowSection(steps, "postGame")).toEqual([]);
 	});
 
-	it("returns TOO_MANY_MODE_PICKS when more than one MODE_PICK", () => {
+	test("returns TOO_MANY_MODE_PICKS when more than one MODE_PICK", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
 			{ action: "MODE_PICK" as const, side: "BRAVO" as const },
@@ -168,7 +169,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns TOO_MANY_MAP_PICKS when section has PICK and ROLL", () => {
+	test("returns TOO_MANY_MAP_PICKS when section has PICK and ROLL", () => {
 		const steps = [
 			{ action: "BAN" as const, side: "ALPHA" as const },
 			{ action: "PICK" as const, side: "BRAVO" as const },
@@ -180,7 +181,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns TOO_MANY_MAP_PICKS when section has two ROLLs", () => {
+	test("returns TOO_MANY_MAP_PICKS when section has two ROLLs", () => {
 		const steps = [{ action: "ROLL" as const }, { action: "ROLL" as const }];
 
 		expect(validateCustomFlowSection(steps, "preSet")).toContain(
@@ -188,7 +189,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns TOO_MANY_MAP_PICKS when section has two PICKs", () => {
+	test("returns TOO_MANY_MAP_PICKS when section has two PICKs", () => {
 		const steps = [
 			{ action: "PICK" as const, side: "ALPHA" as const },
 			{ action: "MODE_BAN" as const, side: "BRAVO" as const },
@@ -200,7 +201,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("allows exactly one PICK or ROLL", () => {
+	test("allows exactly one PICK or ROLL", () => {
 		const stepsWithPick = [
 			{ action: "BAN" as const, side: "ALPHA" as const },
 			{ action: "PICK" as const, side: "BRAVO" as const },
@@ -218,7 +219,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("allows exactly one MODE_PICK", () => {
+	test("allows exactly one MODE_PICK", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
 			{ action: "PICK" as const, side: "BRAVO" as const },
@@ -231,13 +232,13 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns LAST_STEP_MUST_BE_PICK_OR_ROLL for empty steps array", () => {
+	test("returns LAST_STEP_MUST_BE_PICK_OR_ROLL for empty steps array", () => {
 		expect(validateCustomFlowSection([], "preSet")).toContain(
 			CUSTOM_FLOW_VALIDATION_ERRORS.LAST_STEP_MUST_BE_PICK_OR_ROLL,
 		);
 	});
 
-	it("returns SAME_TEAM_MODE_AND_MAP_PICK when same side does MODE_PICK and PICK", () => {
+	test("returns SAME_TEAM_MODE_AND_MAP_PICK when same side does MODE_PICK and PICK", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
 			{ action: "PICK" as const, side: "ALPHA" as const },
@@ -248,7 +249,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("returns SAME_TEAM_MODE_AND_MAP_PICK even with bans between", () => {
+	test("returns SAME_TEAM_MODE_AND_MAP_PICK even with bans between", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "HIGHER_SEED" as const },
 			{ action: "BAN" as const, side: "LOWER_SEED" as const },
@@ -260,7 +261,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("does not return SAME_TEAM_MODE_AND_MAP_PICK when different sides", () => {
+	test("does not return SAME_TEAM_MODE_AND_MAP_PICK when different sides", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
 			{ action: "PICK" as const, side: "BRAVO" as const },
@@ -271,7 +272,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("does not return SAME_TEAM_MODE_AND_MAP_PICK for MODE_PICK followed by ROLL", () => {
+	test("does not return SAME_TEAM_MODE_AND_MAP_PICK for MODE_PICK followed by ROLL", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "ALPHA" as const },
 			{ action: "ROLL" as const },
@@ -282,7 +283,7 @@ describe("validateCustomFlowSection", () => {
 		);
 	});
 
-	it("can return multiple errors at once", () => {
+	test("can return multiple errors at once", () => {
 		const steps = [
 			{ action: "MODE_PICK" as const, side: "WINNER" as const },
 			{ action: "MODE_PICK" as const, side: "LOSER" as const },
@@ -312,7 +313,7 @@ describe("resolveCurrentStep", () => {
 		{ action: "PICK" as const, side: "LOSER" as const },
 	];
 
-	it("returns preSet steps when eventCount < preSet.length", () => {
+	test("returns preSet steps when eventCount < preSet.length", () => {
 		expect(
 			resolveCurrentStep({ eventCount: 0, preSet, postGame, resultsCount: 0 }),
 		).toEqual(preSet[0]);
@@ -324,13 +325,13 @@ describe("resolveCurrentStep", () => {
 		).toEqual(preSet[2]);
 	});
 
-	it("returns null when waiting for game result after preSet", () => {
+	test("returns null when waiting for game result after preSet", () => {
 		expect(
 			resolveCurrentStep({ eventCount: 3, preSet, postGame, resultsCount: 0 }),
 		).toBeNull();
 	});
 
-	it("throws when postGame is empty", () => {
+	test("throws when postGame is empty", () => {
 		expect(() =>
 			resolveCurrentStep({
 				eventCount: 3,
@@ -341,7 +342,7 @@ describe("resolveCurrentStep", () => {
 		).toThrow();
 	});
 
-	it("returns postGame steps after first game result", () => {
+	test("returns postGame steps after first game result", () => {
 		expect(
 			resolveCurrentStep({ eventCount: 3, preSet, postGame, resultsCount: 1 }),
 		).toEqual(postGame[0]);
@@ -350,13 +351,13 @@ describe("resolveCurrentStep", () => {
 		).toEqual(postGame[1]);
 	});
 
-	it("returns null when waiting for next game result after postGame cycle", () => {
+	test("returns null when waiting for next game result after postGame cycle", () => {
 		expect(
 			resolveCurrentStep({ eventCount: 5, preSet, postGame, resultsCount: 1 }),
 		).toBeNull();
 	});
 
-	it("cycles postGame steps after subsequent results", () => {
+	test("cycles postGame steps after subsequent results", () => {
 		expect(
 			resolveCurrentStep({ eventCount: 5, preSet, postGame, resultsCount: 2 }),
 		).toEqual(postGame[0]);
@@ -371,120 +372,50 @@ describe("resolveTeamFromSide", () => {
 		{ id: 100, seed: 2 },
 		{ id: 200, seed: 1 },
 	];
+	// the same two teams the other way around, so seed-based sides cannot pass
+	// by reading an array position
+	const swappedTeams: [PickBanTeam, PickBanTeam] = [teams[1], teams[0]];
 
-	it("resolves ALPHA to teams[0]", () => {
-		expect(resolveTeamFromSide({ side: "ALPHA", teams, results: [] })).toBe(
-			100,
-		);
+	test.each<{
+		side: WhoSide;
+		args: Omit<Partial<Parameters<typeof resolveTeamFromSide>[0]>, "teams"> & {
+			teams: [PickBanTeam, PickBanTeam];
+		};
+		expected: number;
+	}>([
+		{ side: "ALPHA", args: { teams }, expected: 100 },
+		{ side: "BRAVO", args: { teams }, expected: 200 },
+		{ side: "HIGHER_SEED", args: { teams }, expected: 200 },
+		{ side: "HIGHER_SEED", args: { teams: swappedTeams }, expected: 200 },
+		{ side: "LOWER_SEED", args: { teams }, expected: 100 },
+		{ side: "LOWER_SEED", args: { teams: swappedTeams }, expected: 100 },
+		{
+			side: "WINNER",
+			args: { teams, results: [{ winnerTeamId: 200 }] },
+			expected: 200,
+		},
+		{
+			side: "LOSER",
+			args: { teams, results: [{ winnerTeamId: 200 }] },
+			expected: 100,
+		},
+		{ side: "RANDOM", args: { teams, randomTeamIndex: 0 }, expected: 100 },
+		{ side: "RANDOM", args: { teams, randomTeamIndex: 1 }, expected: 200 },
+		{
+			side: "RANDOM_OTHER",
+			args: { teams, randomTeamIndex: 0 },
+			expected: 200,
+		},
+		{
+			side: "RANDOM_OTHER",
+			args: { teams, randomTeamIndex: 1 },
+			expected: 100,
+		},
+	])("resolves $side to $expected", ({ side, args, expected }) => {
+		expect(resolveTeamFromSide({ side, results: [], ...args })).toBe(expected);
 	});
 
-	it("resolves BRAVO to teams[1]", () => {
-		expect(resolveTeamFromSide({ side: "BRAVO", teams, results: [] })).toBe(
-			200,
-		);
-	});
-
-	it("resolves HIGHER_SEED to teams[1]", () => {
-		expect(
-			resolveTeamFromSide({ side: "HIGHER_SEED", teams, results: [] }),
-		).toBe(200);
-	});
-
-	it("resolves LOWER_SEED to teams[0]", () => {
-		expect(
-			resolveTeamFromSide({ side: "LOWER_SEED", teams, results: [] }),
-		).toBe(100);
-	});
-
-	it("resolves HIGHER_SEED by seed, not array position", () => {
-		const swappedTeams: [PickBanTeam, PickBanTeam] = [
-			{ id: 200, seed: 1 },
-			{ id: 100, seed: 2 },
-		];
-
-		expect(
-			resolveTeamFromSide({
-				side: "HIGHER_SEED",
-				teams: swappedTeams,
-				results: [],
-			}),
-		).toBe(200);
-	});
-
-	it("resolves LOWER_SEED by seed, not array position", () => {
-		const swappedTeams: [PickBanTeam, PickBanTeam] = [
-			{ id: 200, seed: 1 },
-			{ id: 100, seed: 2 },
-		];
-
-		expect(
-			resolveTeamFromSide({
-				side: "LOWER_SEED",
-				teams: swappedTeams,
-				results: [],
-			}),
-		).toBe(100);
-	});
-
-	it("resolves WINNER to last game winner", () => {
-		expect(
-			resolveTeamFromSide({
-				side: "WINNER",
-				teams,
-				results: [{ winnerTeamId: 200 }],
-			}),
-		).toBe(200);
-	});
-
-	it("resolves LOSER to last game loser", () => {
-		expect(
-			resolveTeamFromSide({
-				side: "LOSER",
-				teams,
-				results: [{ winnerTeamId: 200 }],
-			}),
-		).toBe(100);
-	});
-
-	it("resolves RANDOM to the coin-flip team index", () => {
-		expect(
-			resolveTeamFromSide({
-				side: "RANDOM",
-				teams,
-				results: [],
-				randomTeamIndex: 0,
-			}),
-		).toBe(100);
-		expect(
-			resolveTeamFromSide({
-				side: "RANDOM",
-				teams,
-				results: [],
-				randomTeamIndex: 1,
-			}),
-		).toBe(200);
-	});
-
-	it("resolves RANDOM_OTHER to the complement of the coin flip", () => {
-		expect(
-			resolveTeamFromSide({
-				side: "RANDOM_OTHER",
-				teams,
-				results: [],
-				randomTeamIndex: 0,
-			}),
-		).toBe(200);
-		expect(
-			resolveTeamFromSide({
-				side: "RANDOM_OTHER",
-				teams,
-				results: [],
-				randomTeamIndex: 1,
-			}),
-		).toBe(100);
-	});
-
-	it("throws when RANDOM side is missing randomTeamIndex", () => {
+	test("throws when RANDOM side is missing randomTeamIndex", () => {
 		expect(() =>
 			resolveTeamFromSide({ side: "RANDOM", teams, results: [] }),
 		).toThrow();
@@ -492,7 +423,7 @@ describe("resolveTeamFromSide", () => {
 });
 
 describe("randomWhoTeamIndex", () => {
-	it("is deterministic for the same match and draw group", () => {
+	test("is deterministic for the same match and draw group", () => {
 		const args = {
 			matchId: 42,
 			eventIndex: 0,
@@ -503,7 +434,7 @@ describe("randomWhoTeamIndex", () => {
 		expect(randomWhoTeamIndex(args)).toBe(randomWhoTeamIndex(args));
 	});
 
-	it("returns 0 or 1", () => {
+	test("returns 0 or 1", () => {
 		for (let matchId = 1; matchId <= 20; matchId++) {
 			const result = randomWhoTeamIndex({
 				matchId,
@@ -515,7 +446,7 @@ describe("randomWhoTeamIndex", () => {
 		}
 	});
 
-	it("shares a single flip across all pre-set steps", () => {
+	test("shares a single flip across all pre-set steps", () => {
 		const base = { matchId: 7, preSetLength: 3, postGameLength: 2 };
 		const draw0 = randomWhoTeamIndex({ ...base, eventIndex: 0 });
 		const draw1 = randomWhoTeamIndex({ ...base, eventIndex: 1 });
@@ -525,7 +456,7 @@ describe("randomWhoTeamIndex", () => {
 		expect(draw2).toBe(draw0);
 	});
 
-	it("shares a single flip within a post-game cycle but re-keys per map", () => {
+	test("shares a single flip within a post-game cycle but re-keys per map", () => {
 		const base = { matchId: 7, preSetLength: 3, postGameLength: 2 };
 		// cycle 0 => eventIndex 3, 4
 		const cycle0a = randomWhoTeamIndex({ ...base, eventIndex: 3 });
@@ -538,7 +469,7 @@ describe("randomWhoTeamIndex", () => {
 		expect(cycle1b).toBe(cycle1a);
 	});
 
-	it("re-flips independently across maps (some match reflips)", () => {
+	test("re-flips independently across maps (some match reflips)", () => {
 		const differs = Array.from({ length: 30 }, (_, i) => i + 1).some(
 			(matchId) => {
 				const base = { matchId, preSetLength: 0, postGameLength: 1 };
@@ -572,7 +503,7 @@ describe("turnOf / teamOfEvent — RANDOM sides", () => {
 	];
 	const teamIds = [100, 200];
 
-	it("resolves RANDOM to one of the two teams", () => {
+	test("resolves RANDOM to one of the two teams", () => {
 		const result = turnOf({
 			matchId: 55,
 			results: [],
@@ -585,7 +516,7 @@ describe("turnOf / teamOfEvent — RANDOM sides", () => {
 		expect(result?.action).toBe("BAN");
 	});
 
-	it("resolves RANDOM_OTHER to the complement of RANDOM within the same pre-set", () => {
+	test("resolves RANDOM_OTHER to the complement of RANDOM within the same pre-set", () => {
 		const randomTurn = turnOf({
 			matchId: 55,
 			results: [],
@@ -605,7 +536,7 @@ describe("turnOf / teamOfEvent — RANDOM sides", () => {
 		expect(teamIds).toContain(randomOtherTurn?.teamId);
 	});
 
-	it("keeps RANDOM stable across steps sharing a draw group", () => {
+	test("keeps RANDOM stable across steps sharing a draw group", () => {
 		const firstRandom = turnOf({
 			matchId: 55,
 			results: [],
@@ -624,7 +555,7 @@ describe("turnOf / teamOfEvent — RANDOM sides", () => {
 		expect(secondRandom?.teamId).toBe(firstRandom?.teamId);
 	});
 
-	it("is deterministic across repeated calls", () => {
+	test("is deterministic across repeated calls", () => {
 		const first = turnOf({
 			matchId: 55,
 			results: [],
@@ -643,7 +574,7 @@ describe("turnOf / teamOfEvent — RANDOM sides", () => {
 		expect(second).toEqual(first);
 	});
 
-	it("teamOfEvent agrees with the pending turnOf resolution for the same event", () => {
+	test("teamOfEvent agrees with the pending turnOf resolution for the same event", () => {
 		for (const eventIndex of [0, 1, 2]) {
 			const pending = turnOf({
 				matchId: 55,
@@ -687,7 +618,7 @@ describe("turnOf — CUSTOM flow", () => {
 		{ id: 200, seed: 1 },
 	];
 
-	it("returns first preSet step", () => {
+	test("returns first preSet step", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -704,7 +635,7 @@ describe("turnOf — CUSTOM flow", () => {
 		});
 	});
 
-	it("returns second preSet step", () => {
+	test("returns second preSet step", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -721,7 +652,7 @@ describe("turnOf — CUSTOM flow", () => {
 		});
 	});
 
-	it("returns null when waiting for game result", () => {
+	test("returns null when waiting for game result", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -733,7 +664,7 @@ describe("turnOf — CUSTOM flow", () => {
 		expect(result).toBeNull();
 	});
 
-	it("returns postGame step after result", () => {
+	test("returns postGame step after result", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [{ winnerTeamId: 200 }],
@@ -750,7 +681,7 @@ describe("turnOf — CUSTOM flow", () => {
 		});
 	});
 
-	it("returns null for ROLL steps", () => {
+	test("returns null for ROLL steps", () => {
 		const rollMaps: TournamentRoundMaps = {
 			count: 3,
 			type: "BEST_OF",
@@ -772,7 +703,7 @@ describe("turnOf — CUSTOM flow", () => {
 		expect(result).toBeNull();
 	});
 
-	it("returns null when set is over", () => {
+	test("returns null when set is over", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [
@@ -788,7 +719,7 @@ describe("turnOf — CUSTOM flow", () => {
 		expect(result).toBeNull();
 	});
 
-	it("returns null when no customFlow defined", () => {
+	test("returns null when no customFlow defined", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -807,7 +738,7 @@ describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
 		{ id: 200, seed: 1 },
 	];
 
-	it("counts consecutive bans by same side in preSet", () => {
+	test("counts consecutive bans by same side in preSet", () => {
 		const maps: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",
@@ -836,7 +767,7 @@ describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
 		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
 	});
 
-	it("counts consecutive bans by same side in postGame", () => {
+	test("counts consecutive bans by same side in postGame", () => {
 		const maps: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",
@@ -882,7 +813,7 @@ describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
 		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
 	});
 
-	it("does not group consecutive steps with different sides", () => {
+	test("does not group consecutive steps with different sides", () => {
 		const maps: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",
@@ -906,7 +837,7 @@ describe("turnOf — CUSTOM flow stepCurrent/stepTotal", () => {
 		).toMatchObject({ stepCurrent: 1, stepTotal: 1 });
 	});
 
-	it("does not group consecutive steps with different actions", () => {
+	test("does not group consecutive steps with different actions", () => {
 		const maps: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",
@@ -942,7 +873,7 @@ describe("turnOf — BAN_2 flow", () => {
 		{ id: 200, seed: 1 },
 	];
 
-	it("returns action BAN for first picker", () => {
+	test("returns action BAN for first picker", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -967,7 +898,7 @@ describe("turnOf — BAN_2 flow", () => {
 		expect(result).toEqual({ teamId: 200, action: "BAN" });
 	});
 
-	it("returns null when both teams have banned", () => {
+	test("returns null when both teams have banned", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -1015,7 +946,7 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 		},
 	};
 
-	it("restricts to picked mode even when bans happen after MODE_PICK", () => {
+	test("restricts to picked mode even when bans happen after MODE_PICK", () => {
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "MODE_PICK", stageId: null, mode: SZ },
 			{ type: "BAN", stageId: 3 as StageId, mode: TC },
@@ -1044,7 +975,7 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 		expect(legalModes.has(RM)).toBe(false);
 	});
 
-	it("does not carry MODE_PICK restriction from a previous game section", () => {
+	test("does not carry MODE_PICK restriction from a previous game section", () => {
 		const mapsWithPostGameModePick: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",
@@ -1121,7 +1052,7 @@ describe("mapsListWithLegality — pre-set MODE_PICK only restricts the first ma
 		},
 	};
 
-	it("does not lock the second map's mode to the pre-set MODE_PICK", () => {
+	test("does not lock the second map's mode to the pre-set MODE_PICK", () => {
 		// preSet: HIGHER_SEED picks mode SZ, LOWER_SEED picks SZ stage 1
 		// game 1: SZ stage 1 played, team 200 wins
 		// postGame cycle 1: LOSER (100) is now at PICK for game 2's map
@@ -1179,7 +1110,7 @@ describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
 		},
 	};
 
-	it("excludes modes already played in the set", () => {
+	test("excludes modes already played in the set", () => {
 		// game 1: SZ stage 1 played, now at PICK_NO_MODE_REPEAT for game 2's map
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "PICK", stageId: 1 as StageId, mode: SZ },
@@ -1206,7 +1137,7 @@ describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
 		expect(legalModes.has(RM)).toBe(true);
 	});
 
-	it("falls back to allowing every mode once all modes have been played", () => {
+	test("falls back to allowing every mode once all modes have been played", () => {
 		// every mode has been played, but each still has an unplayed stage; a mode
 		// repeat is now unavoidable so the restriction lifts and the remaining
 		// stages of already-played modes become legal again
@@ -1273,7 +1204,7 @@ describe("mapsListWithLegality — pre-set MODE_BAN persists into postGame", () 
 		},
 	};
 
-	it("keeps a mode banned in pre-set unavailable for picks in later postGame cycles", () => {
+	test("keeps a mode banned in pre-set unavailable for picks in later postGame cycles", () => {
 		// preSet: HIGHER_SEED bans mode SZ, ROLL lands on TC stage 3
 		// game 1: TC stage 3 played, team 200 wins
 		// postGame cycle 1: WINNER (200) bans stage 4 (TC); LOSER (100) is now at PICK
@@ -1344,7 +1275,7 @@ describe("isModeLegal", () => {
 		toSetMapPool,
 	};
 
-	it("returns true for a mode present in the pool with no bans", () => {
+	test("returns true for a mode present in the pool with no bans", () => {
 		expect(
 			isModeLegal({
 				mode: TC,
@@ -1354,7 +1285,7 @@ describe("isModeLegal", () => {
 		).toBe(true);
 	});
 
-	it("returns false for a mode that has been banned", () => {
+	test("returns false for a mode that has been banned", () => {
 		const pickBanEvents: PickBanEvent[] = [
 			{ type: "MODE_BAN", stageId: null, mode: TC },
 		];
@@ -1368,7 +1299,7 @@ describe("isModeLegal", () => {
 		).toBe(false);
 	});
 
-	it("returns false for a mode not in the map pool", () => {
+	test("returns false for a mode not in the map pool", () => {
 		expect(
 			isModeLegal({
 				mode: CB,
@@ -1390,7 +1321,7 @@ describe("turnOf — COUNTERPICK flow", () => {
 		{ id: 200, seed: 1 },
 	];
 
-	it("returns action PICK for loser of last game", () => {
+	test("returns action PICK for loser of last game", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [{ winnerTeamId: 200 }],
@@ -1409,7 +1340,7 @@ describe("turnOf — COUNTERPICK flow", () => {
 		expect(result).toEqual({ teamId: 100, action: "PICK" });
 	});
 
-	it("returns null when match was completed without per-game results (drop-out)", () => {
+	test("returns null when match was completed without per-game results (drop-out)", () => {
 		const result = turnOf({
 			matchId: 1,
 			results: [],
@@ -1428,7 +1359,7 @@ describe("teamOfEvent", () => {
 		{ id: 200, seed: 1 },
 	];
 
-	it("returns null when setup is not pick/ban", () => {
+	test("returns null when setup is not pick/ban", () => {
 		const result = teamOfEvent({
 			matchId: 1,
 			eventIndex: 0,
@@ -1447,7 +1378,7 @@ describe("teamOfEvent", () => {
 			pickBan: "BAN_2",
 		};
 
-		it("assigns event 0 to teams[1] (first picker)", () => {
+		test("assigns event 0 to teams[1] (first picker)", () => {
 			expect(
 				teamOfEvent({
 					matchId: 1,
@@ -1459,7 +1390,7 @@ describe("teamOfEvent", () => {
 			).toBe(200);
 		});
 
-		it("assigns event 1 to teams[0] (second picker)", () => {
+		test("assigns event 1 to teams[0] (second picker)", () => {
 			expect(
 				teamOfEvent({
 					matchId: 1,
@@ -1471,7 +1402,7 @@ describe("teamOfEvent", () => {
 			).toBe(100);
 		});
 
-		it("returns null for further indices", () => {
+		test("returns null for further indices", () => {
 			expect(
 				teamOfEvent({
 					matchId: 1,
@@ -1491,7 +1422,7 @@ describe("teamOfEvent", () => {
 			pickBan: "COUNTERPICK",
 		};
 
-		it("attributes the counterpick to the loser of the preceding result", () => {
+		test("attributes the counterpick to the loser of the preceding result", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 0,
@@ -1503,7 +1434,7 @@ describe("teamOfEvent", () => {
 			expect(result).toBe(200);
 		});
 
-		it("also works for COUNTERPICK_MODE_REPEAT_OK", () => {
+		test("also works for COUNTERPICK_MODE_REPEAT_OK", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 1,
@@ -1515,7 +1446,7 @@ describe("teamOfEvent", () => {
 			expect(result).toBe(100);
 		});
 
-		it("returns null when no corresponding result exists", () => {
+		test("returns null when no corresponding result exists", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 0,
@@ -1545,7 +1476,7 @@ describe("teamOfEvent", () => {
 			},
 		};
 
-		it("resolves preSet steps via side (HIGHER_SEED → teams[1])", () => {
+		test("resolves preSet steps via side (HIGHER_SEED → teams[1])", () => {
 			expect(
 				teamOfEvent({
 					matchId: 1,
@@ -1557,7 +1488,7 @@ describe("teamOfEvent", () => {
 			).toBe(200);
 		});
 
-		it("resolves preSet steps via side (LOWER_SEED → teams[0])", () => {
+		test("resolves preSet steps via side (LOWER_SEED → teams[0])", () => {
 			expect(
 				teamOfEvent({
 					matchId: 1,
@@ -1569,7 +1500,7 @@ describe("teamOfEvent", () => {
 			).toBe(100);
 		});
 
-		it("resolves postGame WINNER using the result of that cycle", () => {
+		test("resolves postGame WINNER using the result of that cycle", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 2,
@@ -1581,7 +1512,7 @@ describe("teamOfEvent", () => {
 			expect(result).toBe(100);
 		});
 
-		it("resolves postGame LOSER using the result of that cycle", () => {
+		test("resolves postGame LOSER using the result of that cycle", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 3,
@@ -1593,7 +1524,7 @@ describe("teamOfEvent", () => {
 			expect(result).toBe(200);
 		});
 
-		it("uses the correct cycle's result across multiple post-game cycles", () => {
+		test("uses the correct cycle's result across multiple post-game cycles", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 4,
@@ -1605,7 +1536,7 @@ describe("teamOfEvent", () => {
 			expect(result).toBe(200);
 		});
 
-		it("returns null when customFlow is missing", () => {
+		test("returns null when customFlow is missing", () => {
 			const result = teamOfEvent({
 				matchId: 1,
 				eventIndex: 0,
@@ -1617,7 +1548,7 @@ describe("teamOfEvent", () => {
 			expect(result).toBeNull();
 		});
 
-		it("returns null for ROLL steps (no side)", () => {
+		test("returns null for ROLL steps (no side)", () => {
 			const rollMaps: TournamentRoundMaps = {
 				count: 3,
 				type: "BEST_OF",
@@ -1647,7 +1578,7 @@ describe("currentTurnSessionStartedAt", () => {
 		{ id: 200, seed: 1 },
 	];
 
-	it("returns null when there is no current turn", () => {
+	test("returns null when there is no current turn", () => {
 		const result = currentTurnSessionStartedAt({
 			matchId: 1,
 			currentTurn: null,
@@ -1661,7 +1592,7 @@ describe("currentTurnSessionStartedAt", () => {
 		expect(result).toBeNull();
 	});
 
-	it("returns null when matchStartedAt is null", () => {
+	test("returns null when matchStartedAt is null", () => {
 		const result = currentTurnSessionStartedAt({
 			matchId: 1,
 			currentTurn: { teamId: 200, action: "BAN" },
@@ -1675,7 +1606,7 @@ describe("currentTurnSessionStartedAt", () => {
 		expect(result).toBeNull();
 	});
 
-	it("falls back to matchStartedAt when no events or results exist", () => {
+	test("falls back to matchStartedAt when no events or results exist", () => {
 		const result = currentTurnSessionStartedAt({
 			matchId: 1,
 			currentTurn: { teamId: 200, action: "BAN" },
@@ -1689,7 +1620,7 @@ describe("currentTurnSessionStartedAt", () => {
 		expect(result).toBe(1000);
 	});
 
-	it("BAN_2: second banner's session starts at the first ban's timestamp", () => {
+	test("BAN_2: second banner's session starts at the first ban's timestamp", () => {
 		const result = currentTurnSessionStartedAt({
 			matchId: 1,
 			currentTurn: { teamId: 100, action: "BAN" },
@@ -1703,7 +1634,7 @@ describe("currentTurnSessionStartedAt", () => {
 		expect(result).toBe(1500);
 	});
 
-	it("COUNTERPICK: loser's session starts when the result is reported", () => {
+	test("COUNTERPICK: loser's session starts when the result is reported", () => {
 		const result = currentTurnSessionStartedAt({
 			matchId: 1,
 			currentTurn: { teamId: 200, action: "PICK" },
@@ -1717,7 +1648,7 @@ describe("currentTurnSessionStartedAt", () => {
 		expect(result).toBe(2000);
 	});
 
-	it("CUSTOM: consecutive same-team events share the session start", () => {
+	test("CUSTOM: consecutive same-team events share the session start", () => {
 		const customMaps: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",
@@ -1745,7 +1676,7 @@ describe("currentTurnSessionStartedAt", () => {
 		expect(result).toBe(1000);
 	});
 
-	it("CUSTOM: a result restarts the session even when the same team is responsible again", () => {
+	test("CUSTOM: a result restarts the session even when the same team is responsible again", () => {
 		const customMaps: TournamentRoundMaps = {
 			count: 5,
 			type: "BEST_OF",

@@ -1,4 +1,4 @@
-import { afterAll, beforeAll, describe, expect, it } from "vitest";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type {
 	MainWeaponId,
 	ModeShort,
@@ -15,55 +15,55 @@ import {
 } from "./vods-utils";
 
 describe("extractYoutubeIdFromVideoUrl", () => {
-	it("should extract YouTube ID from a standard YouTube URL", () => {
+	test("extracts YouTube ID from a standard YouTube URL", () => {
 		const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
-	it("should extract YouTube ID from a shortened YouTube URL", () => {
+	test("extracts YouTube ID from a shortened YouTube URL", () => {
 		const url = "https://youtu.be/dQw4w9WgXcQ";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
-	it("should extract YouTube ID from a YouTube live URL", () => {
+	test("extracts YouTube ID from a YouTube live URL", () => {
 		const url = "https://www.youtube.com/live/dQw4w9WgXcQ";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
-	it("should strip share tracking params from a shortened YouTube URL", () => {
+	test("strips share tracking params from a shortened YouTube URL", () => {
 		const url = "https://youtu.be/fuj_pSAbU-A?si=mAzDxgrIJWLO1ykq";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("fuj_pSAbU-A");
 	});
 
-	it("should strip extra query params from a standard YouTube URL", () => {
+	test("strips extra query params from a standard YouTube URL", () => {
 		const url = "https://www.youtube.com/watch?v=dQw4w9WgXcQ&t=120";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
-	it("should strip query params from a YouTube live URL", () => {
+	test("strips query params from a YouTube live URL", () => {
 		const url = "https://www.youtube.com/live/dQw4w9WgXcQ?feature=shared";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
-	it("should strip url fragments", () => {
+	test("strips url fragments", () => {
 		const url = "https://youtu.be/dQw4w9WgXcQ#t=1m";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBe("dQw4w9WgXcQ");
 	});
 
-	it("should return null for an invalid YouTube URL", () => {
+	test("returns null for an invalid YouTube URL", () => {
 		const url = "https://www.example.com/watch?v=dQw4w9WgXcQ";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBeNull();
 	});
 
-	it("should return null for a URL without a video ID", () => {
+	test("returns null for a URL without a video ID", () => {
 		const url = "https://www.youtube.com/watch?v=";
 		const result = extractYoutubeIdFromVideoUrl(url);
 		expect(result).toBeNull();
@@ -71,28 +71,28 @@ describe("extractYoutubeIdFromVideoUrl", () => {
 });
 
 describe("secondsToHoursMinutesSecondString", () => {
-	it("should convert seconds to HH:MM:SS format", () => {
+	test("converts seconds to HH:MM:SS format", () => {
 		const result = secondsToHoursMinutesSecondString(3661);
 		expect(result).toBe("1:01:01");
 	});
 
-	it("should convert seconds to MM:SS format if less than an hour", () => {
+	test("converts seconds to MM:SS format if less than an hour", () => {
 		const result = secondsToHoursMinutesSecondString(61);
 		expect(result).toBe("1:01");
 	});
 
-	it("should handle zero seconds", () => {
+	test("handles zero seconds", () => {
 		const result = secondsToHoursMinutesSecondString(0);
 		expect(result).toBe("0:00");
 	});
 
-	it("should throw an error for a negative number of seconds", () => {
+	test("throws an error for a negative number of seconds", () => {
 		expect(() => secondsToHoursMinutesSecondString(-1)).toThrow(
 			"Negative number of seconds",
 		);
 	});
 
-	it("should throw an error for a non-integer number of seconds", () => {
+	test("throws an error for a non-integer number of seconds", () => {
 		expect(() => secondsToHoursMinutesSecondString(1.5)).toThrow(
 			"Non-integer number of seconds",
 		);
@@ -141,7 +141,7 @@ const LONG_MODE_RESOLVERS = {
 };
 
 describe("generateYoutubeTimestamps", () => {
-	it("should include intro line when first match starts after 0", () => {
+	test("includes intro line when first match starts after 0", () => {
 		const matches = [
 			makeMatch({
 				startsAt: 521,
@@ -164,7 +164,7 @@ describe("generateYoutubeTimestamps", () => {
 		);
 	});
 
-	it("should not include intro line when first match starts at 0", () => {
+	test("does not include intro line when first match starts at 0", () => {
 		const matches = [
 			makeMatch({
 				startsAt: 0,
@@ -179,7 +179,7 @@ describe("generateYoutubeTimestamps", () => {
 		expect(result).toBe("0:00 Splattershot / RM Scorch Gorge");
 	});
 
-	it("should not include weapon for CAST type", () => {
+	test("does not include weapon for CAST type", () => {
 		const matches = [
 			makeMatch({
 				startsAt: 25,
@@ -194,7 +194,7 @@ describe("generateYoutubeTimestamps", () => {
 		expect(result).toBe("0:00 Intro\n0:25 CB MakoMart");
 	});
 
-	it("should use long mode names when resolver returns them", () => {
+	test("uses long mode names when resolver returns them", () => {
 		const matches = [
 			makeMatch({
 				startsAt: 521,
@@ -235,7 +235,7 @@ describe("vodToVideoBeingAdded", () => {
 		process.env.TZ = originalTimezone;
 	});
 
-	it("round-trips the stored day/month/year regardless of server timezone", () => {
+	test("round-trips the stored day/month/year regardless of server timezone", () => {
 		const date = { day: 5, month: 0, year: 2024 };
 		const vod: Vod = {
 			id: 1,
@@ -254,27 +254,27 @@ describe("vodToVideoBeingAdded", () => {
 });
 
 describe("hoursMinutesSecondsStringToSeconds", () => {
-	it("should convert HH:MM:SS format to seconds", () => {
+	test("converts HH:MM:SS format to seconds", () => {
 		const result = hoursMinutesSecondsStringToSeconds("1:01:01");
 		expect(result).toBe(3661);
 	});
 
-	it("should convert MM:SS format to seconds", () => {
+	test("converts MM:SS format to seconds", () => {
 		const result = hoursMinutesSecondsStringToSeconds("1:01");
 		expect(result).toBe(61);
 	});
 
-	it("should convert MM:SS format to seconds (zero padded minutes)", () => {
+	test("converts MM:SS format to seconds (zero padded minutes)", () => {
 		const result = hoursMinutesSecondsStringToSeconds("01:01");
 		expect(result).toBe(61);
 	});
 
-	it("should handle zero seconds", () => {
+	test("handles zero seconds", () => {
 		const result = hoursMinutesSecondsStringToSeconds("0:00");
 		expect(result).toBe(0);
 	});
 
-	it("should throw an error for an invalid format", () => {
+	test("throws an error for an invalid format", () => {
 		expect(() => hoursMinutesSecondsStringToSeconds("1:01:01:01")).toThrow(
 			"Invalid time format",
 		);

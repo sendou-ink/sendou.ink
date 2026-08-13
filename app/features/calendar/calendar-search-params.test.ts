@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -11,7 +11,7 @@ import {
 import * as CalendarEvent from "./core/CalendarEvent";
 
 describe("calendarSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(calendarSearchParams, {
 			modes: [CalendarEvent.defaultFilters().modes, ["SZ", "TC"], ["TB"]],
 			modesExact: [false, true],
@@ -39,7 +39,7 @@ describe("calendarSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(calendarSearchParams, "preferredStartTime", [
 			["XX"],
 			["eu"],
@@ -76,13 +76,13 @@ describe("calendarSearchParams", () => {
 });
 
 describe("calendarEventsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(calendarEventsSearchParams, {
 			view: [null, "registered", "hosting", "scrims", "saved", "organization"],
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(calendarEventsSearchParams, "view", [
 			["invalid"],
 			["Registered"],
@@ -92,7 +92,7 @@ describe("calendarEventsSearchParams", () => {
 });
 
 describe("calendarNewSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(calendarNewSearchParams, {
 			eventId: [null, 1, 12345],
 			copyEventId: [null, 99],
@@ -100,7 +100,7 @@ describe("calendarNewSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(calendarNewSearchParams, "eventId", [
 			["0"],
 			["-1"],

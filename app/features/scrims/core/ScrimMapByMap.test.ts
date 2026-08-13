@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { stagesObj } from "~/modules/in-game-lists/stage-ids";
@@ -21,7 +21,7 @@ function makeMap(overrides: Partial<MapRow> & { index: number }): MapRow {
 }
 
 describe("ScrimMapByMap.unionPool", () => {
-	it("deduplicates stage-mode pairs across multiple lists", () => {
+	test("deduplicates stage-mode pairs across multiple lists", () => {
 		const pool = unionPool([
 			{
 				mapList: [
@@ -46,7 +46,7 @@ describe("ScrimMapByMap.unionPool", () => {
 		);
 	});
 
-	it("merges entries across modes", () => {
+	test("merges entries across modes", () => {
 		const pool = unionPool([
 			{
 				mapList: [
@@ -62,7 +62,7 @@ describe("ScrimMapByMap.unionPool", () => {
 });
 
 describe("ScrimMapByMap.generateNextMap", () => {
-	it("avoids the just-played stage when alternatives exist", () => {
+	test("avoids the just-played stage when alternatives exist", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART, stagesObj.WAHOO_WORLD],
 			TC: [],
@@ -80,7 +80,7 @@ describe("ScrimMapByMap.generateNextMap", () => {
 		}
 	});
 
-	it("advances from the last played mode when a mode was replayed", () => {
+	test("advances from the last played mode when a mode was replayed", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART],
 			TC: [stagesObj.HAMMERHEAD_BRIDGE],
@@ -100,7 +100,7 @@ describe("ScrimMapByMap.generateNextMap", () => {
 		expect(next.mode).toBe("TC");
 	});
 
-	it("advances mode rotation after a manual pick inside the pool", () => {
+	test("advances mode rotation after a manual pick inside the pool", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART],
 			TC: [stagesObj.HAMMERHEAD_BRIDGE],
@@ -120,7 +120,7 @@ describe("ScrimMapByMap.generateNextMap", () => {
 		expect(next.mode).toBe("CB");
 	});
 
-	it("falls back to the pool's first mode after a manual pick outside the pool's modes", () => {
+	test("falls back to the pool's first mode after a manual pick outside the pool's modes", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE, stagesObj.MAKOMART],
 			TC: [stagesObj.HAMMERHEAD_BRIDGE],
@@ -140,7 +140,7 @@ describe("ScrimMapByMap.generateNextMap", () => {
 		expect(next.mode).toBe("SZ");
 	});
 
-	it("can still generate when only one stage is available", () => {
+	test("can still generate when only one stage is available", () => {
 		const pool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE],
 			TC: [],
@@ -155,7 +155,7 @@ describe("ScrimMapByMap.generateNextMap", () => {
 });
 
 describe("ScrimMapByMap.canUndo", () => {
-	it("returns true for the most recent reported map", () => {
+	test("returns true for the most recent reported map", () => {
 		const history = [
 			makeMap({ index: 0, reportedAt: 100 }),
 			makeMap({ index: 1, reportedAt: 200 }),
@@ -164,12 +164,12 @@ describe("ScrimMapByMap.canUndo", () => {
 		expect(canUndo(history[1], history)).toBe(true);
 	});
 
-	it("returns false for unreported maps", () => {
+	test("returns false for unreported maps", () => {
 		const history = [makeMap({ index: 0, reportedAt: null })];
 		expect(canUndo(history[0], history)).toBe(false);
 	});
 
-	it("returns false for a non-latest reported map", () => {
+	test("returns false for a non-latest reported map", () => {
 		const history = [
 			makeMap({ index: 0, reportedAt: 100 }),
 			makeMap({ index: 1, reportedAt: 200 }),
@@ -177,11 +177,11 @@ describe("ScrimMapByMap.canUndo", () => {
 		expect(canUndo(history[0], history)).toBe(false);
 	});
 
-	it("returns false when given undefined", () => {
+	test("returns false when given undefined", () => {
 		expect(canUndo(undefined, [])).toBe(false);
 	});
 
-	it("returns true when an unreported next map exists after the latest reported", () => {
+	test("returns true when an unreported next map exists after the latest reported", () => {
 		const history = [
 			makeMap({ index: 0, reportedAt: 100 }),
 			makeMap({ index: 1, reportedAt: 200 }),
@@ -224,7 +224,7 @@ describe("ScrimMapByMap.stats", () => {
 		}),
 	];
 
-	it("aggregates wins/losses from the viewer's perspective", () => {
+	test("aggregates wins/losses from the viewer's perspective", () => {
 		const result = stats(history, "ALPHA");
 
 		const szMode = result.byMode.find((r) => r.key === "SZ");
@@ -234,7 +234,7 @@ describe("ScrimMapByMap.stats", () => {
 		expect(tcMode).toEqual({ key: "TC", wins: 1, losses: 0 });
 	});
 
-	it("flips wins/losses when viewing as BRAVO", () => {
+	test("flips wins/losses when viewing as BRAVO", () => {
 		const result = stats(history, "BRAVO");
 
 		const szMode = result.byMode.find((r) => r.key === "SZ");
@@ -244,14 +244,14 @@ describe("ScrimMapByMap.stats", () => {
 		expect(tcMode).toEqual({ key: "TC", wins: 0, losses: 1 });
 	});
 
-	it("filters out empty rows", () => {
+	test("filters out empty rows", () => {
 		const result = stats(history, "ALPHA");
 		for (const row of result.byMode) {
 			expect(row.wins + row.losses).toBeGreaterThan(0);
 		}
 	});
 
-	it("respects restrictToPool", () => {
+	test("respects restrictToPool", () => {
 		const restrictToPool = new MapPool({
 			SZ: [stagesObj.SCORCH_GORGE],
 			TC: [],

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
 	leaderboardsPage,
 	tournamentOrganizationPage,
@@ -6,7 +6,7 @@ import {
 } from "./urls";
 
 describe("leaderboardsPage()", () => {
-	it("encodes season 0 in the query string", () => {
+	test("encodes season 0 in the query string", () => {
 		const url = leaderboardsPage({ season: 0, type: "USER" });
 
 		const params = new URLSearchParams(url.split("?")[1]);
@@ -15,7 +15,7 @@ describe("leaderboardsPage()", () => {
 });
 
 describe("userArtPage()", () => {
-	it("joins source and bigArtId params with a single query string", () => {
+	test("joins source and bigArtId params with a single query string", () => {
 		const url = userArtPage({ discordId: "123" }, "MADE-BY", 456);
 
 		const params = new URLSearchParams(url.split("?")[1]);
@@ -25,7 +25,7 @@ describe("userArtPage()", () => {
 });
 
 describe("tournamentOrganizationPage()", () => {
-	it("round-trips the tournament name through the source param", () => {
+	test("round-trips the tournament name through the source param", () => {
 		const tournamentName = "100% Series";
 
 		const url = tournamentOrganizationPage({

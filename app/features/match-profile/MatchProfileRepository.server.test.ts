@@ -4,7 +4,7 @@ import type { UserMapModePreferences } from "~/db/tables-json";
 import { withUserId } from "~/utils/Test";
 import * as MatchProfileRepository from "./MatchProfileRepository.server";
 
-let userId: number;
+const users = UserFactory.pool();
 
 const PREFERENCES: UserMapModePreferences = {
 	modes: [{ mode: "SZ", preference: "PREFER" }],
@@ -21,7 +21,7 @@ const updateProfile = (
 		Parameters<typeof MatchProfileRepository.updateOwnMatchProfile>[0]
 	> = {},
 ) =>
-	withUserId(userId, () =>
+	withUserId(users.id(1), () =>
 		MatchProfileRepository.updateOwnMatchProfile({
 			mapModePreferences: PREFERENCES,
 			vc: "NO",
@@ -34,10 +34,9 @@ const updateProfile = (
 
 describe("updateOwnMatchProfile", () => {
 	beforeEach(async () => {
-		const user = await UserFactory.create(null, {
+		await users.create(1, null, {
 			matchProfile: { mapModePreferences: PREFERENCES, noScreen: 0 },
 		});
-		userId = user.id;
 	});
 
 	test("reports no change when nothing matchmaking-relevant changed", async () => {

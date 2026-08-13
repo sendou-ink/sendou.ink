@@ -4,16 +4,16 @@ import type {
 	MainWeaponId,
 	StageId,
 } from "~/modules/in-game-lists/types";
-import { withoutRepeatEvents } from "../components/dedupe-events";
-import type { DeathData } from "../core/detectors/death/index";
+import { withoutRepeatEvents } from "../../components/dedupe-events";
+import type { DeathData } from "../../core/detectors/death/index";
 import type {
 	MinimapData,
 	MinimapEnemy,
 	MinimapTeammate,
-} from "../core/detectors/minimap/index";
-import { SPECTATOR_SLOTS } from "../core/detectors/minimap/rois";
-import type { DetectedEvent } from "../core/detectors/types";
-import test from "./node-test-compat";
+} from "../../core/detectors/minimap/index";
+import { SPECTATOR_SLOTS } from "../../core/detectors/minimap/rois";
+import type { DetectedEvent } from "../../core/detectors/types";
+import test from "../node-test-compat";
 
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];
 const BRAVO: MainWeaponId[] = [50, 210, 4010, 8000];

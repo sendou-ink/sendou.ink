@@ -1,8 +1,6 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action as _teamPageAction } from "../actions/t.$customUrl.index.server";
 import { action as teamIndexPageAction } from "../actions/t.new.server";
@@ -11,6 +9,10 @@ import type {
 	createTeamSchema,
 	teamProfilePageActionSchema,
 } from "../team-schemas";
+import {
+	createTeamOwnedByRegular,
+	createTeamWithRegularMember,
+} from "../tests/fixtures";
 
 const createTeamAction = wrappedAction<typeof createTeamSchema>({
 	action: teamIndexPageAction,
@@ -31,29 +33,13 @@ async function loadTeams() {
 	return { team: mainTeam, secondaryTeams };
 }
 
-/** A team the regular user is a member but not the owner of. */
-const createTeamWithRegularMember = (
-	overrides: Partial<Parameters<typeof TeamFactory.create>[0]> = {},
-) =>
-	TeamFactory.create({
-		memberUserIds: [ADMIN_ID, REGULAR_USER_TEST_ID],
-		...overrides,
-	});
-
-const createTeamOwnedByRegular = (name: string, isMainTeam = true) =>
-	TeamFactory.create({
-		name,
-		isMainTeam,
-		memberUserIds: [REGULAR_USER_TEST_ID],
-	});
-
 describe("Secondary teams", () => {
 	beforeEach(async () => {
 		await UserFactory.createAdmin();
 		await UserFactory.createRegular();
 	});
 
-	it("first team created becomes main team", async () => {
+	test("first team created becomes main team", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 
 		const { team, secondaryTeams } = await loadTeams();
@@ -62,7 +48,7 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams).toHaveLength(0);
 	});
 
-	it("second team created becomes secondary", async () => {
+	test("second team created becomes secondary", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
@@ -72,7 +58,7 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams[0].name).toBe("Team 2");
 	});
 
-	it("makes secondary team main team", async () => {
+	test("makes secondary team main team", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
@@ -82,7 +68,7 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams[0].name).toBe("Team 2");
 	});
 
-	it("sets main team (2 team)", async () => {
+	test("sets main team (2 team)", async () => {
 		await createTeamOwnedByRegular("Team 1");
 		const secondary = await createTeamOwnedByRegular("Team 2", false);
 
@@ -96,7 +82,7 @@ describe("Secondary teams", () => {
 		expect(team!.name).toBe("Team 2");
 	});
 
-	it("when deleting the main team, the secondary team becomes main", async () => {
+	test("when deleting the main team, the secondary team becomes main", async () => {
 		const main = await createTeamOwnedByRegular("Team 1");
 		await createTeamOwnedByRegular("Team 2", false);
 
@@ -116,7 +102,7 @@ describe("Secondary teams", () => {
 		expect(secondaryTeams).toHaveLength(0);
 	});
 
-	it("only the team owner (or admin) can delete a team", async () => {
+	test("only the team owner (or admin) can delete a team", async () => {
 		const { customUrl } = await createTeamWithRegularMember({ name: "Team 1" });
 
 		const response = await teamPageAction(
@@ -129,7 +115,7 @@ describe("Secondary teams", () => {
 		expect(await TeamRepository.findByCustomUrl(customUrl)).toBeTruthy();
 	});
 
-	it("when leaving the main team, the secondary team becomes main", async () => {
+	test("when leaving the main team, the secondary team becomes main", async () => {
 		// owned by the admin because you can't leave a team you own
 		const main = await createTeamWithRegularMember({ name: "Team 1" });
 		await createTeamWithRegularMember({ name: "Team 2", isMainTeam: false });
@@ -156,7 +142,7 @@ describe("Secondary teams", () => {
 		expect(newSecondaryTeams).toHaveLength(0);
 	});
 
-	it("creates max 2 teams as non-patron", async () => {
+	test("creates max 2 teams as non-patron", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 
@@ -174,7 +160,7 @@ describe("Secondary teams as patron", () => {
 		await UserFactory.createRegular(null, { patronTier: 2 });
 	});
 
-	it("creates more than 2 teams as patron", async () => {
+	test("creates more than 2 teams as patron", async () => {
 		await createTeamAction({ name: "Team 1" }, { user: "regular" });
 		await createTeamAction({ name: "Team 2" }, { user: "regular" });
 		await createTeamAction({ name: "Team 3" }, { user: "regular" });

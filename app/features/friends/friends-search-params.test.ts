@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,13 +6,13 @@ import {
 import { friendsSearchParams } from "./friends-search-params";
 
 describe("friendsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(friendsSearchParams, {
 			view: [null, "friends", "team", "all"],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(friendsSearchParams, "view", [["garbage"]]);
 	});
 });

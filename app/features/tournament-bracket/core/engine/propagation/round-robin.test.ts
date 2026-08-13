@@ -14,7 +14,7 @@ describe("Update scores in a round-robin stage", () => {
 		});
 	});
 
-	test("should set all the scores", () => {
+	test("sets all the scores", () => {
 		const results: Engine.ReportResultInput[] = [
 			{
 				matchId: 0,
@@ -59,7 +59,7 @@ describe("Update scores in a round-robin stage", () => {
 		}
 	});
 
-	test("should unlock next round matches as soon as both participants are ready", () => {
+	test("unlocks next round matches as soon as both participants are ready", () => {
 		// Round robin with 4 teams: [1, 2, 3, 4]
 		// Round 1: Match 0 (1 vs 2), Match 1 (3 vs 4)
 		// Round 2: Match 2 (1 vs 3), Match 3 (2 vs 4)
@@ -97,7 +97,7 @@ describe("Update scores in a round-robin stage", () => {
 		expect(Engine.matchStatus(data, 3)).toBe("STARTED"); // Ready
 	});
 
-	test("should lock the next round again if a result of the previous round is reset", () => {
+	test("locks the next round again if a result of the previous round is reset", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			scores: [16, 9],
@@ -116,7 +116,7 @@ describe("Update scores in a round-robin stage", () => {
 		expect(Engine.matchStatus(data, 2)).toBe("PENDING");
 	});
 
-	test("should keep a started next round match playable if a result of the previous round is reset (issue #2690)", () => {
+	test("keeps a started next round match playable if a result of the previous round is reset (issue #2690)", () => {
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			scores: [16, 9],
@@ -146,7 +146,7 @@ describe("Update scores in a round-robin stage", () => {
 		).not.toThrow();
 	});
 
-	test("should leave every match Ready when independentRounds is set", () => {
+	test("leaves every match Ready when independentRounds is set", () => {
 		data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4],
@@ -167,7 +167,7 @@ describe("Update scores in a round-robin stage", () => {
 		).not.toThrow();
 	});
 
-	test("should let the only real match be played in a group with fewer teams than slots", () => {
+	test("lets the only real match be played in a group with fewer teams than slots", () => {
 		// Group sized for 3 but only 2 teams placed (the 3rd slot is a BYE).
 		// The two real teams only meet in round 3, preceded by two BYE rounds
 		// that can never be reported. The real match must still be playable.
@@ -192,7 +192,7 @@ describe("Update scores in a round-robin stage", () => {
 		).not.toThrow();
 	});
 
-	test("should unlock next round matches with BYE participants", () => {
+	test("unlocks next round matches with BYE participants", () => {
 		// Create a round robin with 3 teams (odd number creates rounds where one team doesn't play)
 		data = createResolved({
 			type: "round_robin",

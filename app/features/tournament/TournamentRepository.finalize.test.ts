@@ -6,10 +6,10 @@ import { db } from "~/db/sql";
 import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
 import * as TournamentRepository from "./TournamentRepository.server";
 
-let player: { id: number };
+const users = UserFactory.pool();
 
 const createTournament = () =>
-	TournamentFactory.create({ authorId: player.id });
+	TournamentFactory.create({ authorId: users.id(1) });
 
 const emptySummary = (
 	skills: TournamentSummary["skills"],
@@ -39,12 +39,12 @@ const finalizePriorSeason = async (
 describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
 		// four users so that the "1-2-3-4" team identifier the tests use names real ones
-		[player] = await UserFactory.createMany(4);
+		await users.create(4);
 	});
 
 	test("matchesCount on a new season's Skill row does not include prior seasons", async () => {
 		await finalizePriorSeason({
-			userId: player.id,
+			userId: users.id(1),
 			identifier: null,
 			mu: 25,
 			sigma: 8.333,
@@ -58,7 +58,7 @@ describe("TournamentRepository.finalize", () => {
 			season: 1,
 			summary: emptySummary([
 				{
-					userId: player.id,
+					userId: users.id(1),
 					identifier: null,
 					mu: 25,
 					sigma: 8.333,
@@ -70,7 +70,7 @@ describe("TournamentRepository.finalize", () => {
 		const inserted = await db
 			.selectFrom("Skill")
 			.select("matchesCount")
-			.where("userId", "=", player.id)
+			.where("userId", "=", users.id(1))
 			.where("season", "=", 1)
 			.executeTakeFirstOrThrow();
 
@@ -114,7 +114,7 @@ describe("TournamentRepository.finalize", () => {
 
 	test("finalizes and records placements when season is undefined (between-seasons tournament)", async () => {
 		await finalizePriorSeason({
-			userId: player.id,
+			userId: users.id(1),
 			identifier: null,
 			mu: 25,
 			sigma: 8.333,
@@ -124,7 +124,7 @@ describe("TournamentRepository.finalize", () => {
 		const { id: tournamentId } = await createTournament();
 		const { id: tournamentTeamId } = await TournamentTeamFactory.create({
 			tournamentId,
-			memberUserIds: [player.id],
+			memberUserIds: [users.id(1)],
 		});
 
 		await TournamentRepository.finalize({
@@ -137,7 +137,7 @@ describe("TournamentRepository.finalize", () => {
 				playerResultDeltas: [],
 				tournamentResults: [
 					{
-						userId: player.id,
+						userId: users.id(1),
 						placement: 1,
 						participantCount: 1,
 						tournamentTeamId,
@@ -163,7 +163,7 @@ describe("TournamentRepository.finalize", () => {
 			.selectFrom("TournamentResult")
 			.select("placement")
 			.where("tournamentId", "=", tournamentId)
-			.where("userId", "=", player.id)
+			.where("userId", "=", users.id(1))
 			.executeTakeFirstOrThrow();
 
 		expect(tournament.isFinalized).toBe(1);
@@ -178,7 +178,7 @@ describe("TournamentRepository.finalize", () => {
 			season: 1,
 			summary: emptySummary([
 				{
-					userId: player.id,
+					userId: users.id(1),
 					identifier: null,
 					mu: 25,
 					sigma: 8.333,
@@ -193,7 +193,7 @@ describe("TournamentRepository.finalize", () => {
 			season: 1,
 			summary: emptySummary([
 				{
-					userId: player.id,
+					userId: users.id(1),
 					identifier: null,
 					mu: 25,
 					sigma: 8.333,
@@ -205,7 +205,7 @@ describe("TournamentRepository.finalize", () => {
 		const second = await db
 			.selectFrom("Skill")
 			.select("matchesCount")
-			.where("userId", "=", player.id)
+			.where("userId", "=", users.id(1))
 			.where("tournamentId", "=", secondTournamentId)
 			.executeTakeFirstOrThrow();
 

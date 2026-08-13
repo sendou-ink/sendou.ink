@@ -3,7 +3,7 @@ import type { BracketData } from "../types";
 import { createResolved } from "./index";
 
 describe("Create single elimination stage", () => {
-	test("should create a single elimination stage", () => {
+	test("creates a single elimination stage", () => {
 		const data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -17,7 +17,7 @@ describe("Create single elimination stage", () => {
 		expect(data.match.length).toBe(15);
 	});
 
-	test("should create a single elimination stage with BYEs", () => {
+	test("creates a single elimination stage with BYEs", () => {
 		const data = createResolved({
 			type: "single_elimination",
 			seeding: [1, null, 3, 4, null, null, 7, 8],
@@ -30,7 +30,7 @@ describe("Create single elimination stage", () => {
 		expect(matchById(data, 5).opponent2?.id).toBe(3);
 	});
 
-	test("should create a single elimination stage with consolation final", () => {
+	test("creates a single elimination stage with consolation final", () => {
 		const data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -42,7 +42,7 @@ describe("Create single elimination stage", () => {
 		expect(data.match.length).toBe(8);
 	});
 
-	test("should create a single elimination stage with consolation final and BYEs", () => {
+	test("creates a single elimination stage with consolation final and BYEs", () => {
 		const data = createResolved({
 			type: "single_elimination",
 			seeding: [null, null, null, 4, 5, 6, 7, 8],
@@ -57,7 +57,7 @@ describe("Create single elimination stage", () => {
 		expect(matchById(data, 7).opponent2?.id).toBe(null);
 	});
 
-	test("should create a single elimination stage with Bo3 matches", () => {
+	test("creates a single elimination stage with Bo3 matches", () => {
 		const data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -69,7 +69,7 @@ describe("Create single elimination stage", () => {
 		expect(data.match.length).toBe(7);
 	});
 
-	test("should throw if the seeding has duplicate participants", () => {
+	test("throws if the seeding has duplicate participants", () => {
 		expect(() =>
 			createResolved({
 				type: "single_elimination",

@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -10,7 +10,7 @@ import {
 } from "./tournament-search-params";
 
 describe("tournamentSearchSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentSearchSearchParams, {
 			q: ["", "paddling pool", "with spaces & symbols?"],
 			limit: [25, 1, 6],
@@ -19,7 +19,7 @@ describe("tournamentSearchSearchParams", () => {
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(tournamentSearchSearchParams, "limit", [
 			["0"],
 			["26"],
@@ -35,7 +35,7 @@ describe("tournamentSearchSearchParams", () => {
 });
 
 describe("tournamentJoinSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentJoinSearchParams, {
 			code: ["abc123XYZ", "F3-9_xyz"],
 		});
@@ -43,13 +43,13 @@ describe("tournamentJoinSearchParams", () => {
 });
 
 describe("tournamentTeamsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentTeamsSearchParams, {
 			page: [1, 2, 17],
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(tournamentTeamsSearchParams, "page", [
 			["0"],
 			["abc"],

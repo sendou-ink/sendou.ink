@@ -79,6 +79,12 @@
 
 - library used for unit testing is Vitest
 - Vitest browser mode can be used to write tests for components
+- use `test`, not `it`
+- name a test after the behaviour it establishes, with no `"should "` prefix (`test("returns null for an unknown id")`)
+- `describe` takes the bare function name, except for files consumed through a `* as Module` import, where it takes `Module.fn` — the way callers write it
+- when a test is `input -> expected output` with no setup, make it a `test.each` table rather than a run of near-identical `test` blocks; give every row a short label (`$why`, `%s`) so a failure names the case
+- users come from `UserFactory.pool()` declared at module scope and filled in `beforeEach` — never a module-level `let` reassigned per test. Where positions carry meaning, name them with accessors next to the pool (`const actorId = () => users.id(1)`)
+- fixture builders shared by more than one test file live in a `tests/` folder of the feature they belong to (`app/features/<feature>/**/tests/fixtures.ts`); don't copy a builder into a second file
 
 ## i18n
 

@@ -10,13 +10,16 @@ detected game per object, every field nullable — which feed `/ingest`
 emberz repo; see `MIGRATION.md` there.
 
 Deliberate convention exceptions (dev tool, ported wholesale): the UI is
-English-only (no i18next) and `tests/node-test-compat.ts` uses a default
-export to stay a `node:test` drop-in.
+English-only (no i18next), `tests/node-test-compat.ts` uses a default export
+to stay a `node:test` drop-in, and the suites assert with `node:assert/strict`
+rather than the repo-wide `expect`. Keep whichever file you touch on the
+idiom it already uses — a half-migration would leave three idioms behind.
 
 ## Commands
 
 ```sh
 pnpm test:scanner                       # golden-file suite over tests/fixtures/ (Vitest, Node)
+pnpm test:unit:browser                  # includes tests/logic/ — the fixture-free half, see below
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
@@ -218,6 +221,17 @@ condensed Kurokane and Rowdy (`death-weapon-ja`). Regeneration order:
 `scanner:build-localized-entries` (expects a splat3 checkout at `../splat3`)
 then the atlas rebuild; planner atlas via `scanner:build-planner-signatures`
 (reads the assets repo's `assets/planner-maps/`, MINI variant).
+
+## Tests
+
+`tests/*.test.ts` are the golden-file suites: they read frames from
+`tests/fixtures/` and need game icons from a sibling `sendou-ink/assets`
+checkout, so they run in their own Vitest project (`vitest.scanner.config.ts`)
+and stay out of CI.
+
+`tests/logic/*.test.ts` are pure logic over synthetic events — no images, no
+assets checkout — so they belong to the `unit` project and do run in CI. Put
+new tests there whenever they can be written without a frame.
 
 ## Fixtures
 

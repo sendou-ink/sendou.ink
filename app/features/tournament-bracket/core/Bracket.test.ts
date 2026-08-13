@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import invariant from "../../../utils/invariant";
 import * as Engine from "./engine";
 import { createResolved } from "./engine/create";
@@ -13,7 +13,7 @@ const TEAM_ERROR_404_ID = 17354;
 const TEAM_THIS_IS_FINE_ID = 17513;
 
 describe("swiss standings - losses against tied", () => {
-	it("should calculate losses against tied", () => {
+	test("calculates losses against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
 		});
@@ -27,7 +27,7 @@ describe("swiss standings - losses against tied", () => {
 		expect(standing.stats?.lossesAgainstTied).toBe(1);
 	});
 
-	it("breaks ties on losses against tied, not wins against tied", () => {
+	test("breaks ties on losses against tied, not wins against tied", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
 		});
@@ -54,7 +54,7 @@ describe("swiss standings - losses against tied", () => {
 		);
 	});
 
-	it("ranks fewer losses against tied above a higher opponent set win %", () => {
+	test("ranks fewer losses against tied above a higher opponent set win %", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
 		});
@@ -78,7 +78,7 @@ describe("swiss standings - losses against tied", () => {
 		expect(noTiedLosses.placement).toBeLessThan(oneTiedLoss.placement);
 	});
 
-	it("should ignore early dropped out teams for standings (losses against tied)", () => {
+	test("ignores early dropped out teams for standings (losses against tied)", () => {
 		const tournament = new Tournament({
 			...LOW_INK_DECEMBER_2024(),
 		});
@@ -91,7 +91,7 @@ describe("swiss standings - losses against tied", () => {
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
 	});
 
-	it("should ignore a dropped out team with an identical record (losses against tied)", () => {
+	test("ignores a dropped out team with an identical record (losses against tied)", () => {
 		const data = Engine.create({
 			type: "swiss",
 			seeding: [1, 2, 3, 4, 5, 6],
@@ -190,7 +190,7 @@ describe("swiss standings - losses against tied", () => {
 		});
 	};
 
-	it("should handle a team with only one bye", () => {
+	test("handles a team with only one bye", () => {
 		const tournament = inProgressSwissTestTournament();
 
 		const standings = tournament.bracketByIdx(0)!.liveStandings;
@@ -205,7 +205,7 @@ describe("swiss standings - losses against tied", () => {
 		expect(teamWithBye?.stats?.setLosses).toBe(0);
 	});
 
-	it("team with only unfinished matches should be in the current standings with blank stats", () => {
+	test("team with only unfinished matches should be in the current standings with blank stats", () => {
 		const tournament = inProgressSwissTestTournament();
 
 		const standings = tournament.bracketByIdx(0)!.liveStandings;
@@ -266,7 +266,7 @@ describe("swiss standings - cross group ties", () => {
 		});
 	};
 
-	it("ranks the group winner with the better effective seed first", () => {
+	test("ranks the group winner with the better effective seed first", () => {
 		const standings = twoGroupSwissTournament().bracketByIdx(0)!.standings;
 
 		const upsetWinnerIdx = standings.findIndex((s) => s.team.id === 6);
@@ -349,7 +349,7 @@ describe("swiss standings - rematches between tied teams", () => {
 		});
 	};
 
-	it("counts every meeting between tied teams for the head-to-head tiebreaker", () => {
+	test("counts every meeting between tied teams for the head-to-head tiebreaker", () => {
 		const standings = swissTournamentWithRematches().bracketByIdx(0)!.standings;
 
 		const team1 = standings.find((s) => s.team.id === 1)!;
@@ -362,7 +362,7 @@ describe("swiss standings - rematches between tied teams", () => {
 });
 
 describe("round robin standings", () => {
-	it("should sort teams primarily by set wins (per group) in paddling pool 255", () => {
+	test("sorts teams primarily by set wins (per group) in paddling pool 255", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
 
 		const standings = tournamentPP255.bracketByIdx(0)!.standings;
@@ -394,7 +394,7 @@ describe("round robin standings", () => {
 		}
 	});
 
-	it("breaks same placement ties across groups by effective seed (own seed or best seed beaten)", () => {
+	test("breaks same placement ties across groups by effective seed (own seed or best seed beaten)", () => {
 		const tournamentPP255 = new Tournament(PADDLING_POOL_255());
 		const bracket = tournamentPP255.bracketByIdx(0)!;
 
@@ -538,7 +538,7 @@ describe("round robin standings - dropped out teams", () => {
 		});
 	};
 
-	it("should not credit wins against a team that dropped out before completing all of their matches", () => {
+	test("does not credit wins against a team that dropped out before completing all of their matches", () => {
 		// Team 4 dropped out before playing their match against team 3.
 		const tournament = droppedOutTournament({ skipMatchups: ["3-4"] });
 		const standings = tournament.bracketByIdx(0)!.liveStandings;
@@ -557,7 +557,7 @@ describe("round robin standings - dropped out teams", () => {
 		expect(team3Standing?.stats?.setLosses).toBe(2);
 	});
 
-	it("should still count matches against a team that dropped out only after all of their matches were reported", () => {
+	test("stills count matches against a team that dropped out only after all of their matches were reported", () => {
 		const tournament = droppedOutTournament();
 		const standings = tournament.bracketByIdx(0)!.standings;
 
@@ -575,7 +575,7 @@ describe("round robin standings - dropped out teams", () => {
 		expect(team3Standing?.stats?.setLosses).toBe(2);
 	});
 
-	it("should not credit wins against a team that dropped out before completing all of their matches (forfeit-closed)", () => {
+	test("does not credit wins against a team that dropped out before completing all of their matches (forfeit-closed)", () => {
 		// Production scenario: team 4 dropped before playing 3-4, then admin's
 		// drop action ran endDroppedTeamMatches which closed 3-4 with a result
 		// (team 3 marked winner) but no score on either side. Wins against team
@@ -598,7 +598,7 @@ describe("round robin standings - dropped out teams", () => {
 		expect(team3Standing?.stats?.setLosses).toBe(2);
 	});
 
-	it("should report relevantMatchesFinished=true when a dropped team's remaining matches were forfeited (no score)", () => {
+	test("reports relevantMatchesFinished=true when a dropped team's remaining matches were forfeited (no score)", () => {
 		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
 
 		const { relevantMatchesFinished } = tournament
@@ -608,7 +608,7 @@ describe("round robin standings - dropped out teams", () => {
 		expect(relevantMatchesFinished).toBe(true);
 	});
 
-	it("includes a fully-forfeited dropped team in standings", () => {
+	test("includes a fully-forfeited dropped team in standings", () => {
 		const tournament = droppedOutTournament({ forfeitMatchups: ["3-4"] });
 		const standings = tournament.bracketByIdx(0)!.standings;
 
@@ -698,14 +698,14 @@ describe("round robin standings - dropped out teams", () => {
 		};
 	};
 
-	it("includes a team whose every group opponent dropped out in standings", () => {
+	test("includes a team whose every group opponent dropped out in standings", () => {
 		const { tournament, survivingTeamId } = twoTeamGroupDropoutTournament();
 		const standings = tournament.bracketByIdx(0)!.standings;
 
 		expect(standings.map((s) => s.team.id)).toContain(survivingTeamId);
 	});
 
-	it("reports relevantMatchesFinished=true when a 2-team group ended via drop out", () => {
+	test("reports relevantMatchesFinished=true when a 2-team group ended via drop out", () => {
 		const { tournament } = twoTeamGroupDropoutTournament();
 
 		const { relevantMatchesFinished } = tournament
@@ -785,7 +785,7 @@ describe("round robin A/B divisions standings", () => {
 		});
 	};
 
-	it("filtering by abDivision preserves standard tiebreaker order within each division", () => {
+	test("filtering by abDivision preserves standard tiebreaker order within each division", () => {
 		const tournament = abDivisionsTournament();
 		const standings = tournament.bracketByIdx(0)!.liveStandings;
 
@@ -798,14 +798,14 @@ describe("round robin A/B divisions standings", () => {
 		expect(divisionB.map((s) => s.team.id)).toEqual([2, 4]);
 	});
 
-	it("source({ placements: [1] }) returns top team from each division", () => {
+	test("source({ placements: [1] }) returns top team from each division", () => {
 		const tournament = abDivisionsTournament();
 		const { teams } = tournament.bracketByIdx(0)!.source({ placements: [1] });
 
 		expect(teams).toEqual([1, 2]);
 	});
 
-	it("source({ placements: [1, 2] }) returns top two teams from each division", () => {
+	test("source({ placements: [1, 2] }) returns top two teams from each division", () => {
 		const tournament = abDivisionsTournament();
 		const { teams } = tournament
 			.bracketByIdx(0)!
@@ -817,7 +817,7 @@ describe("round robin A/B divisions standings", () => {
 		expect(teams.slice(2, 4)).toEqual([2, 4]);
 	});
 
-	it("source ignores placements beyond division size", () => {
+	test("source ignores placements beyond division size", () => {
 		const tournament = abDivisionsTournament();
 		const { teams } = tournament
 			.bracketByIdx(0)!
@@ -893,7 +893,7 @@ describe("single elimination standings - third place match", () => {
 		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
 	};
 
-	it("excludes semifinal losers from standings before the third place match concludes", () => {
+	test("excludes semifinal losers from standings before the third place match concludes", () => {
 		const { tournament } = singleEliminationTournament({
 			thirdPlaceMatchReported: false,
 		});
@@ -903,7 +903,7 @@ describe("single elimination standings - third place match", () => {
 		expect(standings).toHaveLength(0);
 	});
 
-	it("places third place match winner 3rd and loser 4th once it is played", () => {
+	test("places third place match winner 3rd and loser 4th once it is played", () => {
 		const { tournament, thirdPlaceWinnerId, thirdPlaceLoserId } =
 			singleEliminationTournament({
 				thirdPlaceMatchReported: true,
@@ -1005,7 +1005,7 @@ describe("single elimination standings - byes in later rounds", () => {
 			data: legacyByeBracketData(),
 		});
 
-	it("places every team when a match is won against a bye", () => {
+	test("places every team when a match is won against a bye", () => {
 		const tournament = legacyByeTournament();
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -1020,7 +1020,7 @@ describe("single elimination standings - byes in later rounds", () => {
 		]);
 	});
 
-	it("gives third place to the only semifinal loser when the third place match is a bye", () => {
+	test("gives third place to the only semifinal loser when the third place match is a bye", () => {
 		const tournament = legacyByeTournament();
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -1072,7 +1072,7 @@ describe("single elimination standings - projected ties", () => {
 		return { tournament, decidedLoserId };
 	};
 
-	it("projects a finished semifinal loser as tied 3rd before the other semifinal finishes", () => {
+	test("projects a finished semifinal loser as tied 3rd before the other semifinal finishes", () => {
 		const { tournament, decidedLoserId } = partialSingleEliminationTournament();
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -1160,7 +1160,7 @@ describe("double elimination standings - projected ties", () => {
 		return { tournament, decidedLoserId, stillPlayingTeamIds };
 	};
 
-	it("projects a finished losers-round-2 loser as tied 5th before the sibling match finishes", () => {
+	test("projects a finished losers-round-2 loser as tied 5th before the sibling match finishes", () => {
 		const { tournament, decidedLoserId } = partialDoubleEliminationTournament();
 
 		const standings = tournament.bracketByIdx(0)!.standings;
@@ -1170,7 +1170,7 @@ describe("double elimination standings - projected ties", () => {
 		);
 	});
 
-	it("does not yet place teams still playing their losers round 2 match", () => {
+	test("does not yet place teams still playing their losers round 2 match", () => {
 		const { tournament, stillPlayingTeamIds } =
 			partialDoubleEliminationTournament();
 
@@ -1231,7 +1231,7 @@ describe("single elimination source - underground", () => {
 		return { tournament, firstRoundLoserIds };
 	};
 
-	it("sources the first-round losers when placements are [-1]", () => {
+	test("sources the first-round losers when placements are [-1]", () => {
 		const { tournament, firstRoundLoserIds } =
 			playedSingleEliminationTournament();
 
@@ -1292,7 +1292,7 @@ describe("single elimination source - positive placements", () => {
 		});
 	};
 
-	it("sources the winner when placements are [1]", () => {
+	test("sources the winner when placements are [1]", () => {
 		const tournament = singleEliminationTournament({ playedRounds: "all" });
 
 		const { teams, relevantMatchesFinished } = tournament
@@ -1303,7 +1303,7 @@ describe("single elimination source - positive placements", () => {
 		expect(teams).toEqual([1]);
 	});
 
-	it("sources the top 2 when placements are [1, 2]", () => {
+	test("sources the top 2 when placements are [1, 2]", () => {
 		const tournament = singleEliminationTournament({ playedRounds: "all" });
 
 		const { teams, relevantMatchesFinished } = tournament
@@ -1314,7 +1314,7 @@ describe("single elimination source - positive placements", () => {
 		expect(teams).toEqual([1, 2]);
 	});
 
-	it("sources both tied semifinal losers when placements are [3]", () => {
+	test("sources both tied semifinal losers when placements are [3]", () => {
 		const tournament = singleEliminationTournament({ playedRounds: "all" });
 
 		const { teams } = tournament.bracketByIdx(0)!.source({ placements: [3] });
@@ -1322,7 +1322,7 @@ describe("single elimination source - positive placements", () => {
 		expect([...teams].sort((a, b) => a - b)).toEqual([3, 4]);
 	});
 
-	it("reports relevant matches unfinished while the bracket is underway", () => {
+	test("reports relevant matches unfinished while the bracket is underway", () => {
 		const tournament = singleEliminationTournament({ playedRounds: "first" });
 
 		const { teams, relevantMatchesFinished } = tournament
@@ -1380,7 +1380,7 @@ describe("double elimination source - positive placements", () => {
 		});
 	};
 
-	it("sources the winner when placements are [1]", () => {
+	test("sources the winner when placements are [1]", () => {
 		const tournament = doubleEliminationTournament({ playedRounds: "all" });
 
 		const { teams, relevantMatchesFinished } = tournament
@@ -1391,7 +1391,7 @@ describe("double elimination source - positive placements", () => {
 		expect(teams).toEqual([1]);
 	});
 
-	it("sources the top 2 when placements are [1, 2]", () => {
+	test("sources the top 2 when placements are [1, 2]", () => {
 		const tournament = doubleEliminationTournament({ playedRounds: "all" });
 
 		const { teams, relevantMatchesFinished } = tournament
@@ -1402,7 +1402,7 @@ describe("double elimination source - positive placements", () => {
 		expect(teams).toEqual([1, 2]);
 	});
 
-	it("reports relevant matches unfinished while the bracket is underway", () => {
+	test("reports relevant matches unfinished while the bracket is underway", () => {
 		const tournament = doubleEliminationTournament({ playedRounds: "first" });
 
 		const { teams, relevantMatchesFinished } = tournament
@@ -1444,7 +1444,7 @@ describe("swiss between rounds", () => {
 		return data;
 	};
 
-	it("tournament is not over while swiss still has unpaired rounds", () => {
+	test("tournament is not over while swiss still has unpaired rounds", () => {
 		const tournament = testTournament({
 			ctx: {
 				settings: { bracketProgression: [SWISS_MAIN_BRACKET] },
@@ -1455,7 +1455,7 @@ describe("swiss between rounds", () => {
 		expect(tournament.everyBracketOver).toBe(false);
 	});
 
-	it("can't finalize between swiss rounds when progression also has an underground bracket", () => {
+	test("can't finalize between swiss rounds when progression also has an underground bracket", () => {
 		const tournament = testTournament({
 			ctx: {
 				settings: {

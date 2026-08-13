@@ -3,7 +3,7 @@ import type { BracketData, MatchData } from "../types";
 import { createResolved } from "./index";
 
 describe("Create a round-robin stage", () => {
-	test("should create a round-robin stage", () => {
+	test("creates a round-robin stage", () => {
 		const data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -17,7 +17,7 @@ describe("Create a round-robin stage", () => {
 		expect(data.match.length).toBe(12);
 	});
 
-	test("should drop empty slots instead of creating BYE matches", () => {
+	test("drops empty slots instead of creating BYE matches", () => {
 		const data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5, null, null, null],
@@ -32,7 +32,7 @@ describe("Create a round-robin stage", () => {
 		}
 	});
 
-	test("should not pad a short group with empty rounds when teams divide unevenly", () => {
+	test("does not pad a short group with empty rounds when teams divide unevenly", () => {
 		// 5 teams in 2 groups -> groups of 3 and 2. The 2-team group must be a
 		// clean single-round single-match group, not padded with BYE-only rounds
 		// that strand the real match in a later round.
@@ -66,7 +66,7 @@ describe("Create a round-robin stage", () => {
 		expect(realMatchRound.number).toBe(1);
 	});
 
-	test("should create a round-robin stage split across multiple groups", () => {
+	test("creates a round-robin stage split across multiple groups", () => {
 		const data = createResolved({
 			type: "round_robin",
 			seeding: Array.from({ length: 16 }, (_, i) => i + 1),
@@ -80,7 +80,7 @@ describe("Create a round-robin stage", () => {
 		expect(data.match.length).toBe(4 * 3 * 2);
 	});
 
-	test("should order the groups with snake seeding", () => {
+	test("orders the groups with snake seeding", () => {
 		const data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],
@@ -93,7 +93,7 @@ describe("Create a round-robin stage", () => {
 		expect(matchById(data, 0).opponent2?.id).toBe(8);
 	});
 
-	test("should throw if no group count given", () => {
+	test("throws if no group count given", () => {
 		expect(() =>
 			createResolved({
 				type: "round_robin",
@@ -103,7 +103,7 @@ describe("Create a round-robin stage", () => {
 		).toThrow("You must specify a group count for round-robin stages.");
 	});
 
-	test("should throw if the group count is not strictly positive", () => {
+	test("throws if the group count is not strictly positive", () => {
 		expect(() =>
 			createResolved({
 				type: "round_robin",

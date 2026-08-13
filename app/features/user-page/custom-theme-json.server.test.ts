@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import * as UserRepository from "./UserRepository.server";
@@ -19,7 +19,7 @@ const CUSTOM_THEME = clampThemeToGamut({
 });
 
 describe("supporter custom theme on the profile layout", () => {
-	it("comes back parsed", async () => {
+	test("comes back parsed", async () => {
 		const user = await UserFactory.create(null, {
 			patronTier: 2,
 			customTheme: CUSTOM_THEME,
@@ -36,7 +36,7 @@ describe("supporter custom theme on the profile layout", () => {
 		);
 	});
 
-	it("is null for a user who is not a supporter", async () => {
+	test("is null for a user who is not a supporter", async () => {
 		const user = await UserFactory.create(null, {
 			customTheme: CUSTOM_THEME,
 		});

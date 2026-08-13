@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { z } from "zod";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
@@ -83,23 +83,23 @@ function validationIssues(formValues: {
 }
 
 describe("progressionToFormValues + formValuesToInputBrackets", () => {
-	it("round-trips a single double elimination bracket", () => {
+	test("round-trips a single double elimination bracket", () => {
 		expect(roundTrip(DOUBLE_ELIMINATION)).toEqual(DOUBLE_ELIMINATION);
 	});
 
-	it("round-trips round robin to single elimination with an underground bracket", () => {
+	test("round-trips round robin to single elimination with an underground bracket", () => {
 		expect(roundTrip(RR_TO_SE_WITH_UNDERGROUND)).toEqual(
 			RR_TO_SE_WITH_UNDERGROUND,
 		);
 	});
 
-	it("round-trips swiss with early advance (empty placements)", () => {
+	test("round-trips swiss with early advance (empty placements)", () => {
 		expect(roundTrip(SWISS_EARLY_ADVANCE_TO_TOP_CUT)).toEqual(
 			SWISS_EARLY_ADVANCE_TO_TOP_CUT,
 		);
 	});
 
-	it("round-trips the N+ rest placements syntax", () => {
+	test("round-trips the N+ rest placements syntax", () => {
 		const progression: Progression.ParsedBracket[] = [
 			RR_TO_SE_WITH_UNDERGROUND[0],
 			RR_TO_SE_WITH_UNDERGROUND[1],
@@ -112,7 +112,7 @@ describe("progressionToFormValues + formValuesToInputBrackets", () => {
 		expect(roundTrip(progression)).toEqual(progression);
 	});
 
-	it("round-trips a bracket sourcing teams from two brackets", () => {
+	test("round-trips a bracket sourcing teams from two brackets", () => {
 		const progression: Progression.ParsedBracket[] = [
 			RR_TO_SE_WITH_UNDERGROUND[0],
 			RR_TO_SE_WITH_UNDERGROUND[2],
@@ -128,7 +128,7 @@ describe("progressionToFormValues + formValuesToInputBrackets", () => {
 		expect(roundTrip(progression)).toEqual(progression);
 	});
 
-	it("round-trips bracket start time", () => {
+	test("round-trips bracket start time", () => {
 		const progression: Progression.ParsedBracket[] = [
 			RR_TO_SE_WITH_UNDERGROUND[0],
 			{ ...RR_TO_SE_WITH_UNDERGROUND[1], startTime: 1735689600 },
@@ -138,7 +138,7 @@ describe("progressionToFormValues + formValuesToInputBrackets", () => {
 		expect(roundTrip(progression)).toEqual(progression);
 	});
 
-	it("ignores stale settings of other format types", () => {
+	test("ignores stale settings of other format types", () => {
 		const { brackets, progression } = defaultBracketsFormValues();
 		const withStaleSettings = [
 			{ ...brackets[0], hasAbDivisions: true, earlyAdvance: true },
@@ -158,7 +158,7 @@ describe("progressionToFormValues + formValuesToInputBrackets", () => {
 		]);
 	});
 
-	it("ignores placements and check-in of a bracket sourcing from sign-up", () => {
+	test("ignores placements and check-in of a bracket sourcing from sign-up", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[2] = {
 			...formValues.progression[2],
@@ -178,11 +178,11 @@ describe("progressionToFormValues + formValuesToInputBrackets", () => {
 });
 
 describe("validateBracketProgressionFormValues", () => {
-	it("accepts the default form values", () => {
+	test("accepts the default form values", () => {
 		expect(validationIssues(defaultBracketsFormValues())).toHaveLength(0);
 	});
 
-	it("attaches unparseable placements to the progression entry", () => {
+	test("attaches unparseable placements to the progression entry", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
@@ -198,7 +198,7 @@ describe("validateBracketProgressionFormValues", () => {
 		);
 	});
 
-	it("attaches a duplicate bracket name to both name fields", () => {
+	test("attaches a duplicate bracket name to both name fields", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.brackets[2] = { ...formValues.brackets[2], name: "Top cut" };
 
@@ -210,7 +210,7 @@ describe("validateBracketProgressionFormValues", () => {
 		]);
 	});
 
-	it("rejects an out of range source bracket", () => {
+	test("rejects an out of range source bracket", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
@@ -229,7 +229,7 @@ describe("validateBracketProgressionFormValues", () => {
 		]);
 	});
 
-	it("rejects a non-canonical source bracket idx string", () => {
+	test("rejects a non-canonical source bracket idx string", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
@@ -248,7 +248,7 @@ describe("validateBracketProgressionFormValues", () => {
 		]);
 	});
 
-	it("rejects a bracket sourcing itself", () => {
+	test("rejects a bracket sourcing itself", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
@@ -267,7 +267,7 @@ describe("validateBracketProgressionFormValues", () => {
 		]);
 	});
 
-	it("rejects the same source bracket twice for one bracket", () => {
+	test("rejects the same source bracket twice for one bracket", () => {
 		const formValues = progressionToFormValues(RR_TO_SE_WITH_UNDERGROUND);
 		formValues.progression[1] = {
 			...formValues.progression[1],
