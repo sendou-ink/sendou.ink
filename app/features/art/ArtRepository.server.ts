@@ -59,6 +59,12 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
+			jsonArrayFrom(
+				eb
+					.selectFrom("ArtUserMetadata")
+					.select("ArtUserMetadata.userId as id")
+					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+			).as("linkedUsers"),
 		])
 		.orderBy("Art.isShowcase", "desc")
 		.orderBy("Art.createdAt", "desc")
@@ -77,6 +83,10 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			discordId: a.discordId,
 			username: a.username,
 		},
+		permissions: artPermissions({
+			authorId: a.userId,
+			linkedUsers: a.linkedUsers,
+		}),
 	}));
 
 	const { seededShuffle } = seededRandom(getDailySeed());
@@ -100,6 +110,12 @@ export async function findShowcaseArtsByTag(
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
+			jsonArrayFrom(
+				eb
+					.selectFrom("ArtUserMetadata")
+					.select("ArtUserMetadata.userId as id")
+					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+			).as("linkedUsers"),
 		])
 		.where("TaggedArt.tagId", "=", tagId)
 		.orderBy("Art.isShowcase", "desc")
@@ -130,6 +146,10 @@ export async function findShowcaseArtsByTag(
 				discordId: a.discordId,
 				username: a.username,
 			},
+			permissions: artPermissions({
+				authorId: a.userId,
+				linkedUsers: a.linkedUsers,
+			}),
 		}));
 }
 
@@ -147,6 +167,12 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
+			jsonArrayFrom(
+				eb
+					.selectFrom("ArtUserMetadata")
+					.select("ArtUserMetadata.userId as id")
+					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+			).as("linkedUsers"),
 		])
 		.orderBy("Art.createdAt", "desc")
 		.limit(100)
@@ -164,6 +190,10 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			discordId: a.discordId,
 			username: a.username,
 		},
+		permissions: artPermissions({
+			authorId: a.userId,
+			linkedUsers: a.linkedUsers,
+		}),
 	}));
 }
 
@@ -178,6 +208,35 @@ export async function deleteOrphanTags() {
 		.executeTakeFirst();
 
 	return Number(result.numDeletedRows);
+}
+
+/** Art by its id, with the ids of the users tagged in it. */
+export async function findById(id: Tables["Art"]["id"]) {
+	const row = await db
+		.selectFrom("Art")
+		.select(({ eb }) => [
+			"Art.id",
+			"Art.authorId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("ArtUserMetadata")
+					.select("ArtUserMetadata.userId as id")
+					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+			).as("linkedUsers"),
+		])
+		.where("Art.id", "=", id)
+		.executeTakeFirst();
+
+	if (!row) return null;
+
+	return {
+		id: row.id,
+		linkedUserIds: row.linkedUsers.map((linkedUser) => linkedUser.id),
+		permissions: artPermissions({
+			authorId: row.authorId,
+			linkedUsers: row.linkedUsers,
+		}),
+	};
 }
 
 export async function findArtsByUserId(
@@ -279,6 +338,10 @@ export async function findArtsByUserId(
 				customAvatarUrl: row.customAvatarUrl,
 				commissionsOpen: row.commissionsOpen,
 			},
+			permissions: artPermissions({
+				authorId: row.userId,
+				linkedUsers: row.linkedUsers,
+			}),
 		})),
 		...authored.map((row) => ({
 			id: row.id,
@@ -289,6 +352,10 @@ export async function findArtsByUserId(
 			tags: row.tags.length > 0 ? row.tags : undefined,
 			linkedUsers: row.linkedUsers.length > 0 ? row.linkedUsers : undefined,
 			author: undefined,
+			permissions: artPermissions({
+				authorId: userId,
+				linkedUsers: row.linkedUsers,
+			}),
 		})),
 	];
 
@@ -431,4 +498,17 @@ async function insertTags(
 		.insertInto("TaggedArt")
 		.values(tagIds.map((tagId) => ({ artId, tagId })))
 		.execute();
+}
+
+function artPermissions({
+	authorId,
+	linkedUsers,
+}: {
+	authorId: number;
+	linkedUsers: Array<{ id: number }>;
+}): ListedArt["permissions"] {
+	return {
+		EDIT: [authorId],
+		UNLINK: linkedUsers.map((linkedUser) => linkedUser.id),
+	};
 }

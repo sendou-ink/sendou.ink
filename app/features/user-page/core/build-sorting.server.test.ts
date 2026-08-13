@@ -26,6 +26,7 @@ const mockBuild = (
 		title: "",
 		updatedAt: databaseTimestampNow(),
 		weapons: [{ weaponSplId: 0, isTop500: 0 }],
+		permissions: { EDIT: [] },
 		...partialBuild,
 	};
 };

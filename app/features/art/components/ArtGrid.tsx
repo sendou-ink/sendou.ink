@@ -12,6 +12,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { usePagination } from "~/hooks/usePagination";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { artPage, newArtPage, userArtPage, userPage } from "~/utils/urls";
@@ -25,12 +26,10 @@ import styles from "./ArtGrid.module.css";
 export function ArtGrid({
 	arts,
 	enablePreview = false,
-	canEdit = false,
 	showUploadDate = false,
 }: {
 	arts: ListedArt[];
 	enablePreview?: boolean;
-	canEdit?: boolean;
 	showUploadDate?: boolean;
 }) {
 	const {
@@ -62,7 +61,6 @@ export function ArtGrid({
 					<ImagePreview
 						key={art.id}
 						art={art}
-						canEdit={canEdit}
 						enablePreview={enablePreview}
 						showUploadDate={showUploadDate}
 						onClick={enablePreview ? () => setBigArtId(art.id) : undefined}
@@ -155,15 +153,15 @@ function ImagePreview({
 	art,
 	onClick,
 	enablePreview = false,
-	canEdit = false,
 	showUploadDate = false,
 }: {
 	art: ListedArt;
 	onClick?: () => void;
 	enablePreview?: boolean;
-	canEdit?: boolean;
 	showUploadDate?: boolean;
 }) {
+	const canEdit = useHasPermission(art, "EDIT");
+	const canUnlink = useHasPermission(art, "UNLINK");
 	const [imageSettled, setImageSettled] = React.useState(false);
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
@@ -227,7 +225,7 @@ function ImagePreview({
 				{img}
 				<div
 					className={clsx("stack horizontal justify-between", {
-						"mt-2": canEdit,
+						"mt-2": canUnlink,
 					})}
 				>
 					<Link
@@ -248,7 +246,7 @@ function ImagePreview({
 							{uploadDateText}
 						</div>
 					) : null}
-					{canEdit ? (
+					{canUnlink ? (
 						<FormWithConfirm
 							dialogHeading={t("art:unlink.title", {
 								username: art.author.username,

@@ -5,9 +5,12 @@ import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { parseFormData } from "~/form/parse.server";
-import { requireRole } from "~/modules/permissions/guards.server";
+import {
+	requirePermission,
+	requireRole,
+} from "~/modules/permissions/guards.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { errorToastIfFalsy } from "~/utils/remix.server";
+import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { userArtPage } from "~/utils/urls";
 import { ART_FORM_MAX_BODY_BYTES } from "../art-image";
@@ -34,11 +37,10 @@ export const action: ActionFunction = async ({ request }) => {
 	);
 
 	if (data.artId) {
-		const userArts = await ArtRepository.findArtsByUserId(user.id, {
-			includeTagged: false,
-		});
-		const existingArt = userArts.find((art) => art.id === data.artId);
-		errorToastIfFalsy(existingArt, "Art author is someone else");
+		const existingArt = badRequestIfFalsy(
+			await ArtRepository.findById(data.artId),
+		);
+		requirePermission(existingArt, "EDIT");
 
 		const editedArtId = await ArtRepository.update(data.artId, {
 			description: data.description,
@@ -47,11 +49,8 @@ export const action: ActionFunction = async ({ request }) => {
 			tags: data.tags,
 		});
 
-		const existingLinkedUserIds =
-			existingArt.linkedUsers?.map((u) => u.id) ?? [];
-
 		notify({
-			userIds: R.difference(linkedUsers, existingLinkedUserIds),
+			userIds: R.difference(linkedUsers, existingArt.linkedUserIds),
 			notification: {
 				type: "TAGGED_TO_ART",
 				meta: {

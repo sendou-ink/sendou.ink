@@ -61,7 +61,12 @@ export async function findAllByUserId(
 		.orderBy("Build.updatedAt", "desc")
 		.execute();
 
-	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
+	return rows.map((row) => ({
+		...buildRowToResult(row, shouldSortAbilities),
+		permissions: {
+			EDIT: [userId],
+		},
+	}));
 }
 
 interface CreateArgs {

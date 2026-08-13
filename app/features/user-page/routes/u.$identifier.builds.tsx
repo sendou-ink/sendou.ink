@@ -17,6 +17,7 @@ import {
 import { buildsActionSchema } from "~/features/user-page/user-page-schemas";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+import { hasPermission } from "~/modules/permissions/utils";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage, weaponCategoryUrl } from "~/utils/urls";
@@ -109,7 +110,7 @@ export default function UserBuildsPage() {
 							build={build}
 							owner={layoutData.user}
 							showOwner={false}
-							canEdit={isOwnPage}
+							canEdit={hasPermission(build, "EDIT", user)}
 						/>
 					))}
 				</div>
