@@ -1,29 +1,32 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import type { SerializeFrom } from "~/utils/remix";
+import type { Bracket } from "../core/Bracket";
 import type { Tournament } from "../core/Tournament";
 import {
 	serializeBracket,
 	tournamentFromParams,
 } from "../core/Tournament.server";
 import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
+import { showsOneGroupAtATime } from "../tournament-bracket-utils";
 
 export type TournamentBracketsLoaderData = SerializeFrom<typeof loader>;
 
 /**
  * Match data of the one bracket the view renders, selected by the `idx` search param.
- * The other brackets are represented by the layout's bracket state alone.
+ * The other brackets are represented by the layout's bracket state alone. Of a swiss
+ * bracket only the group the view renders, selected by the `group` search param.
  */
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const { tournament, user } = await tournamentFromParams(params, {
 		for: "view",
 	});
 
-	const bracketIdx = resolveBracketIdx(
-		tournament,
-		tournamentBracketsSearchParams.parse(request).idx,
-	);
+	const searchParams = tournamentBracketsSearchParams.parse(request);
+
+	const bracketIdx = resolveBracketIdx(tournament, searchParams.idx);
 	const bracket = tournament.bracketByIdx(bracketIdx);
+	const groupId = resolveGroupId(bracket, searchParams.group);
 
 	if (user) {
 		await resolveNotifications({
@@ -35,7 +38,13 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	return {
 		bracketIdx,
-		bracket: bracket ? serializeBracket(bracket) : null,
+		groupId,
+		bracket: bracket
+			? serializeBracket(bracket, {
+					// a preview bracket is generated whole and small, its team counts read from that
+					groupId: bracket.preview ? null : groupId,
+				})
+			: null,
 		// the layout does not ship these, standings derived in the view need them
 		participatedUserIds: tournament.participatedUserIds,
 		teamProgressStatus: tournament.teamMemberOfProgressStatus(user),
@@ -67,4 +76,14 @@ function resolveBracketIdx(tournament: Tournament, idx: number | null) {
 			: 1;
 
 	return isVisible(defaultIdx) ? defaultIdx : (visibleBrackets[0]?.idx ?? 0);
+}
+
+function resolveGroupId(bracket: Bracket | null, groupId: number | null) {
+	if (!bracket || !showsOneGroupAtATime(bracket.type)) return null;
+
+	const groupIds = bracket.data.group.map((group) => group.id);
+
+	return groupId !== null && groupIds.includes(groupId)
+		? groupId
+		: (groupIds[0] ?? null);
 }

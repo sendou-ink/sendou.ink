@@ -23,7 +23,10 @@ export function TournamentMatchHeader({
 					to={tournamentBracketsPage({
 						tournamentId: tournament.ctx.id,
 						bracketIdx: data.bracketContext.bracketIdx,
-						groupId: data.match.groupId,
+						groupId:
+							data.bracketContext.bracketType === "swiss"
+								? data.match.groupId
+								: undefined,
 					})}
 					state={{ scrollToMatchId: data.match.id } satisfies BracketsPageState}
 					variant="outlined"
