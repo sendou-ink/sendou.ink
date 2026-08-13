@@ -10,6 +10,14 @@
 	margin-inline: auto;
 }
 
+.badgesCompact {
+	min-width: 0;
+	max-width: 100%;
+	min-height: 0;
+	flex-wrap: wrap;
+	justify-content: center;
+}
+
 .smallBadges {
 	display: grid;
 	place-items: center;

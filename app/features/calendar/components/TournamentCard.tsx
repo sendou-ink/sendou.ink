@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { ShieldMinus, Trophy as TrophyIcon, Users } from "lucide-react";
+import { ShieldMinus, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -13,7 +13,6 @@ import { Trophy } from "~/features/trophies/components/Trophy";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
@@ -37,7 +36,7 @@ export function TournamentCard({
 	const isCalendar = tournament.type === "calendar";
 	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
 	const modes =
-		tournament.modes && !isDefaultModes(tournament.modes)
+		isCalendar && tournament.modes && tournament.modes.length > 0
 			? tournament.modes
 			: null;
 
@@ -53,7 +52,12 @@ export function TournamentCard({
 			})}
 			data-testid="tournament-card"
 		>
-			<Link to={tournament.url} className={styles.card}>
+			<Link
+				to={tournament.url}
+				className={clsx(styles.card, {
+					[styles.cardRanked]: tournament.isRanked === true,
+				})}
+			>
 				<div className="stack horizontal justify-between">
 					{tournament.logoUrl ? (
 						<div className={styles.imgContainer}>
@@ -121,7 +125,7 @@ export function TournamentCard({
 				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
-						<Tags tags={tournament.tags} small centered />
+						<Tags tags={tournament.tags} small centered maxVisible={2} />
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacers.length > 0 ? (
@@ -140,17 +144,8 @@ export function TournamentCard({
 				{isShowcase && "hasVods" in tournament && tournament.hasVods ? (
 					<div className={styles.vodIndicator}>📺 VODs</div>
 				) : null}
-				{modes ? <ModesPill modes={modes} /> : null}
-				<div
-					className={clsx(styles.pillsContainer, {
-						[styles.lonely]: !modes && isHostedOnSendouInk,
-					})}
-				>
-					{tournament.isRanked ? (
-						<div className={clsx(styles.pill, styles.pillRanked)}>
-							<TrophyIcon />
-						</div>
-					) : null}
+				{modes ? <ModesRow modes={modes} /> : null}
+				<div className={styles.pillsContainer}>
 					{isCalendar &&
 					(tournament.trophy ||
 						(tournament.badges && tournament.badges.length > 0)) ? (
@@ -315,16 +310,12 @@ function ParticipantsPill({
 	);
 }
 
-function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
-	const size = 16;
-
+function ModesRow({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
 	return (
-		<div className={styles.modesPillContainer}>
-			<div className={styles.modesPill}>
-				{modes.map((mode) => (
-					<ModeImage key={mode} mode={mode} size={size} />
-				))}
-			</div>
+		<div className={styles.modesRow}>
+			{modes.map((mode) => (
+				<ModeImage key={mode} mode={mode} size={18} />
+			))}
 		</div>
 	);
 }
@@ -345,7 +336,7 @@ function PrizesPill({
 					className={styles.badgePill}
 				>
 					<Image
-						size={16}
+						size={18}
 						path={trophy ? navIconUrl("trophies") : navIconUrl("badges")}
 						alt="Badge prizes"
 						className={styles.badgeNavIcon}
@@ -356,20 +347,8 @@ function PrizesPill({
 			{trophy ? (
 				<Trophy model={trophy} className={styles.trophyPreview} />
 			) : badges ? (
-				<BadgeDisplay
-					badges={badges}
-					showText={false}
-					className={styles.badgeDisplay}
-				/>
+				<BadgeDisplay badges={badges} showText={false} compact />
 			) : null}
 		</SendouPopover>
-	);
-}
-
-/** Modes pill is only interesting when the tournament deviates from the standard ranked modes */
-function isDefaultModes(modes: NonNullable<CalendarEvent["modes"]>) {
-	return (
-		modes.length === rankedModesShort.length &&
-		rankedModesShort.every((mode) => modes.includes(mode))
 	);
 }

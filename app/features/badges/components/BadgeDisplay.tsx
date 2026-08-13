@@ -17,6 +17,8 @@ export interface BadgeDisplayProps {
 	onChange?: (badgeIds: number[]) => void;
 	children?: React.ReactNode;
 	showText?: boolean;
+	/** Fit inside tight containers (e.g. a popover) instead of the fixed 20rem box */
+	compact?: boolean;
 	className?: string;
 }
 
@@ -25,6 +27,7 @@ export function BadgeDisplay({
 	onChange,
 	children,
 	showText = true,
+	compact = false,
 	className,
 }: BadgeDisplayProps) {
 	const { t } = useTranslation("badges");
@@ -69,6 +72,7 @@ export function BadgeDisplay({
 			) : null}
 			<div
 				className={clsx(className, styles.badges, {
+					[styles.badgesCompact]: compact,
 					"justify-center": smallBadges.length === 0,
 				})}
 			>
