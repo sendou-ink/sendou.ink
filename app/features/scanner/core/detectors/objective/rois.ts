@@ -266,17 +266,24 @@ export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
 export const STATUS_READY_MIN_BODY_PALE = 0.3;
 
 /**
- * Cast-layout ready guard: the cast wash REPLACES the body's team ink
- * (attested washed bodies <=0.36 — the top end is stage ink bleeding
- * around the washed icon), so an ink-heavy body proves a bright
- * shoulder/pale read is backdrop leaking past the icon edge — the
- * spectator overhead view draws a badge-less strip whose left column sits
- * ~12px off the cast centers, sliding the probes onto pale buildings and
- * the team-color lead banner (attested leaks read body ink >=0.44). POV
- * ready icons instead light up IN team color (attested ink up to 0.68),
- * so the guard is cast-only.
+ * Cast-layout ready guard: the cast wash REPLACES the body's team ink, so
+ * an ink-heavy body proves a bright shoulder/pale read is backdrop leaking
+ * past the icon edge — the spectator overhead view draws a badge-less
+ * strip whose left column sits ~12px off the cast centers, sliding the
+ * probes onto pale buildings and the team-color lead banner (attested
+ * leaks read body ink >=0.44). The guard is graded: clean washes read ink
+ * <=0.28, and the attested inky washes (stage ink bleeding around the
+ * washed icon, 0.316/0.344) still show a strongly pale body (>=0.399) —
+ * while the S3 POV Um'ami backdrop leak that faked a star read ink 0.36
+ * with pale only 0.269, so the mid band demands the pale corroboration.
+ * POV ready icons instead light up IN team color (attested ink up to
+ * 0.68), so the guard is cast-only. Margins are THIN (true ink 0.344 vs
+ * hard ceiling 0.4; true pale 0.399 vs floor 0.35) — re-measure before
+ * moving any of the three.
  */
 export const STATUS_READY_WASH_MAX_BODY_INK = 0.4;
+export const STATUS_READY_CLEAN_WASH_MAX_BODY_INK = 0.3;
+export const STATUS_READY_INKY_WASH_MIN_BODY_PALE = 0.35;
 
 /**
  * Layout scoring (see player-status.ts): per-slot decisiveness is the
@@ -325,6 +332,20 @@ export const STATUS_COMB_GAP_HALF_WIDTH = 7;
 export const STATUS_COMB_MAX_SHIFT = 10;
 export const STATUS_MIRROR_COMB_MIN = 0.5;
 export const STATUS_MIRROR_COMB_LEAD = 0.25;
+
+/**
+ * Sticky flips away from an established cast layout also need comb
+ * corroboration (challenger comb past this floor AND leading cast's comb
+ * by STATUS_MIRROR_COMB_LEAD): S3 POV footage draws the cast icon
+ * geometry, but while the POV player is dead the whole strip shrinks
+ * toward the timer (~0.77 scale, left column landing near the mirror
+ * pitches), and those transient frames spike the mirror decisiveness past
+ * the sticky margin — the 2026-08-11 Um'ami POV VoD locked 107 of 136
+ * reads into mirror that way. Attested true mirror stretches comb
+ * 0.41-0.81 with >=0.31 lead over cast; the worst POV-footage mirror comb
+ * is 0.20 with a negative lead.
+ */
+export const STATUS_STICKY_FLIP_COMB_MIN = 0.3;
 
 /**
  * An established layout only carries forward across reads this close in

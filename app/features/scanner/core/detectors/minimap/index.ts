@@ -53,6 +53,7 @@ import {
 	CARD_LAYOUTS,
 	type CardSlot,
 	CROSS_MIN_FRACTION,
+	CROSS_MIN_LAPLACIAN,
 	CROSS_SATURATION_MIN,
 	CROSS_VALUE_MIN,
 	ENEMY_BADGE_XS,
@@ -75,12 +76,14 @@ import {
 	NAME_TEXT_HEIGHT,
 	PRESENCE_MIN_LAPLACIAN,
 	SPECIAL_READY_INK_THRESHOLD,
+	SPECIAL_READY_MAX_CORNER_SATURATION,
 	SPECIAL_READY_MIN_CORNER_MEAN,
 	SPECIAL_READY_WEAPON_MIN_SCORE,
 	SPECTATOR_ENEMY_DX,
 	SPECTATOR_NAME_TEXT_HEIGHTS,
 	SPECTATOR_SLOTS,
 	spectatorCardLayout,
+	WEAPON_BLEED_MIN_CORNER_MEAN,
 	WEAPON_MIN_SCORE,
 } from "./rois";
 import { matchStage, plannerSignature, type StageMatch } from "./stage";
@@ -176,17 +179,31 @@ export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
 const ABILITY_MIN_SCORE = 0.45;
 
 /**
- * Light-camo (special-charged) probe: min of the two 8x8 top-corner means
- * of the weapon box. Camo backgrounds brighten both corners (140-165); on
- * a dark card at least one stays dark even when avatar bleed or a
- * cross-out stroke lights up the other.
+ * Light-camo (special-charged) probe: the dimmer of the two 8x8 top
+ * corners of the weapon box, its brightness and saturation. Camo
+ * backgrounds brighten both corners (140-165) and are gray-green
+ * unsaturated; on a dark card at least one corner stays dark even when
+ * avatar bleed or a cross-out stroke lights up the other, and a bright
+ * scene bleeding through the card lights both but stays colored (see
+ * SPECIAL_READY_MAX_CORNER_SATURATION).
  */
-function minTopCornerMean(gray: Mat, roi: Roi): number {
+function minTopCorner(
+	gray: Mat,
+	hsv: Mat,
+	roi: Roi,
+): { mean: number; saturation: number } {
 	const corners: Roi[] = [
 		{ x: roi.x, y: roi.y, w: 8, h: 8 },
 		{ x: roi.x + roi.w - 8, y: roi.y, w: 8, h: 8 },
 	];
-	return Math.min(...corners.map((c) => meanBrightness(gray, c)));
+	const means = corners.map((c) => meanBrightness(gray, c));
+	const dimmer = corners[means[0]! <= means[1]! ? 0 : 1]!;
+	const crop = copyRoi(hsv, dimmer);
+	const n = crop.rows * crop.cols;
+	let satSum = 0;
+	for (let i = 0; i < n; i++) satSum += crop.data[i * 3 + 1]!;
+	crop.delete();
+	return { mean: Math.min(...means), saturation: satSum / n };
 }
 
 /** fraction of the probe that is saturated-and-bright (cross-out strokes) */
@@ -314,6 +331,53 @@ export function createMinimapDetector(
 	}
 
 	/**
+	 * Weapon icon match against the composite set for the surface behind
+	 * it: light templates on the camo surface, dark templates on a dark
+	 * card — and on a bright-bleed surface (see
+	 * WEAPON_BLEED_MIN_CORNER_MEAN) both sets, better score wins, since
+	 * neither composite matches scene bleed exactly.
+	 */
+	function matchSurfaceWeapon(
+		rgb: Mat,
+		roi: Roi,
+		lightSurface: boolean,
+		cornerMin: number,
+	): WeaponMatch | null {
+		const darkThreshold = Math.max(
+			MINIMAP_WEAPON_INK_THRESHOLD,
+			Math.round(cornerMin) + 50,
+		);
+		const crop = cropRoi(rgb, roi);
+		let match: WeaponMatch | null = null;
+		if (lightSurface) {
+			match = lightWeapons
+				? matchWeapon(crop, lightWeapons, {
+						inkThreshold: SPECIAL_READY_INK_THRESHOLD,
+					})
+				: null;
+		} else {
+			match = cardWeapons
+				? matchWeapon(crop, cardWeapons, { inkThreshold: darkThreshold })
+				: null;
+			if (lightWeapons && cornerMin >= WEAPON_BLEED_MIN_CORNER_MEAN) {
+				const bleed = matchWeapon(crop, lightWeapons, {
+					inkThreshold: SPECIAL_READY_INK_THRESHOLD,
+				});
+				if (match === null || bleed.score > match.score) match = bleed;
+			}
+		}
+		crop.delete();
+		return match;
+	}
+
+	/** The score floor for the surface the weapon was matched over. */
+	function weaponScoreFloor(lightSurface: boolean, cornerMin: number): number {
+		return lightSurface || cornerMin >= WEAPON_BLEED_MIN_CORNER_MEAN
+			? SPECIAL_READY_WEAPON_MIN_SCORE
+			: WEAPON_MIN_SCORE;
+	}
+
+	/**
 	 * Near-tied weapon icons whose kits differ by sub (plain vs Custom
 	 * Dualie Squelchers): let the card/row's team-tinted sub tile break the
 	 * tie. Shape-only matching survives the tint, the camo surface, and a
@@ -377,9 +441,15 @@ export function createMinimapDetector(
 				}
 				sideSubTiles[dx === 0 ? 0 : 1].push(layout.subTile);
 				const crossFraction = saturatedFraction(hsv, layout.cross);
-				const occluded = crossFraction >= CROSS_MIN_FRACTION;
-				const cornerMin = minTopCornerMean(gray, layout.weapon);
-				const lightSurface = cornerMin >= SPECIAL_READY_MIN_CORNER_MEAN;
+				const crossLap = meanBrightness(lap, layout.cross);
+				const occluded =
+					crossFraction >= CROSS_MIN_FRACTION &&
+					crossLap >= CROSS_MIN_LAPLACIAN;
+				const corner = minTopCorner(gray, hsv, layout.weapon);
+				const cornerMin = corner.mean;
+				const lightSurface =
+					corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
+					corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION;
 
 				let name: string | null = null;
 				let nameRaw = "";
@@ -388,18 +458,13 @@ export function createMinimapDetector(
 				let abilities: (AbilityWithUnknown | null)[] = [];
 				// the spectator cross-out sits clear of the weapon ROI (like
 				// overlay enemy rows), so the weapon stays readable when struck
-				const templates = lightSurface ? lightWeapons : cardWeapons;
-				if (templates) {
-					const crop = cropRoi(rgb, layout.weapon);
-					weapon = matchWeapon(crop, templates, {
-						inkThreshold: lightSurface
-							? SPECIAL_READY_INK_THRESHOLD
-							: Math.max(
-									MINIMAP_WEAPON_INK_THRESHOLD,
-									Math.round(cornerMin) + 50,
-								),
-					});
-					crop.delete();
+				weapon = matchSurfaceWeapon(
+					rgb,
+					layout.weapon,
+					lightSurface,
+					cornerMin,
+				);
+				if (weapon) {
 					weapon = resolveTieBySubTile(rgb, weapon, layout.subTile);
 					confidences.push(Math.max(0, weapon.score));
 				}
@@ -423,6 +488,7 @@ export function createMinimapDetector(
 					row,
 					presence,
 					crossFraction,
+					crossLap,
 					occluded,
 					cornerMin,
 					lightSurface,
@@ -431,9 +497,7 @@ export function createMinimapDetector(
 					badges: badgeDebug,
 				});
 
-				const floor = lightSurface
-					? SPECIAL_READY_WEAPON_MIN_SCORE
-					: WEAPON_MIN_SCORE;
+				const floor = weaponScoreFloor(lightSurface, cornerMin);
 				const matched =
 					weapon !== null && weapon.score >= floor ? weapon : null;
 				const fields = {
@@ -524,9 +588,14 @@ export function createMinimapDetector(
 				continue;
 			}
 			const crossFraction = saturatedFraction(hsv, layout.cross);
-			const occluded = crossFraction >= CROSS_MIN_FRACTION;
-			const cornerMin = minTopCornerMean(gray, layout.weapon);
-			const lightSurface = cornerMin >= SPECIAL_READY_MIN_CORNER_MEAN;
+			const crossLap = meanBrightness(lap, layout.cross);
+			const occluded =
+				crossFraction >= CROSS_MIN_FRACTION && crossLap >= CROSS_MIN_LAPLACIAN;
+			const corner = minTopCorner(gray, hsv, layout.weapon);
+			const cornerMin = corner.mean;
+			const lightSurface =
+				corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
+				corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION;
 
 			let name: string | null = null;
 			let nameRaw = "";
@@ -544,15 +613,13 @@ export function createMinimapDetector(
 					if (parsed.name.length > 0) name = parsed.name;
 					confidences.push(parsed.confidence);
 				}
-				const templates = lightSurface ? lightWeapons : cardWeapons;
-				if (templates) {
-					const crop = cropRoi(rgb, layout.weapon);
-					weapon = matchWeapon(crop, templates, {
-						inkThreshold: lightSurface
-							? SPECIAL_READY_INK_THRESHOLD
-							: MINIMAP_WEAPON_INK_THRESHOLD,
-					});
-					crop.delete();
+				weapon = matchSurfaceWeapon(
+					rgb,
+					layout.weapon,
+					lightSurface,
+					cornerMin,
+				);
+				if (weapon) {
 					weapon = resolveTieBySubTile(rgb, weapon, layout.subTile);
 					confidences.push(Math.max(0, weapon.score));
 				}
@@ -573,17 +640,17 @@ export function createMinimapDetector(
 				slot: layout.slot,
 				presence,
 				crossFraction,
+				crossLap,
 				occluded,
 				cornerMin,
+				cornerSaturation: corner.saturation,
 				lightSurface,
 				nameRaw,
 				weapon,
 				badges: badgeDebug,
 			});
 
-			const floor = lightSurface
-				? SPECIAL_READY_WEAPON_MIN_SCORE
-				: WEAPON_MIN_SCORE;
+			const floor = weaponScoreFloor(lightSurface, cornerMin);
 			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
 			// an occluding cross-out is itself proof the card is drawn
 			const hasEvidence =
@@ -615,22 +682,19 @@ export function createMinimapDetector(
 				continue;
 			}
 			const crossFraction = saturatedFraction(hsv, enemyCrossRoi(cy));
-			const occluded = crossFraction >= CROSS_MIN_FRACTION;
+			const crossLap = meanBrightness(lap, enemyCrossRoi(cy));
+			const occluded =
+				crossFraction >= CROSS_MIN_FRACTION && crossLap >= CROSS_MIN_LAPLACIAN;
 
 			// light camo rows: pick the template variant by the weapon box's
 			// corner brightness and raise the ink threshold past that background
-			const cornerMin = minTopCornerMean(gray, weaponRoi);
-			const lightSurface = cornerMin >= SPECIAL_READY_MIN_CORNER_MEAN;
-			const templates = lightSurface ? lightWeapons : cardWeapons;
-			const inkThreshold = lightSurface
-				? SPECIAL_READY_INK_THRESHOLD
-				: Math.max(MINIMAP_WEAPON_INK_THRESHOLD, Math.round(cornerMin) + 50);
-
-			let weapon: WeaponMatch | null = null;
-			if (templates) {
-				const crop = cropRoi(rgb, weaponRoi);
-				weapon = matchWeapon(crop, templates, { inkThreshold });
-				crop.delete();
+			const corner = minTopCorner(gray, hsv, weaponRoi);
+			const cornerMin = corner.mean;
+			const lightSurface =
+				corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
+				corner.saturation <= SPECIAL_READY_MAX_CORNER_SATURATION;
+			let weapon = matchSurfaceWeapon(rgb, weaponRoi, lightSurface, cornerMin);
+			if (weapon) {
 				weapon = resolveTieBySubTile(rgb, weapon, enemySubTileRoi(cy));
 				confidences.push(Math.max(0, weapon.score));
 			}
@@ -648,16 +712,16 @@ export function createMinimapDetector(
 				cy,
 				presence,
 				crossFraction,
+				crossLap,
 				occluded,
 				lightSurface,
 				cornerMin,
+				cornerSaturation: corner.saturation,
 				weapon,
 				badges: badgeDebug,
 			});
 
-			const floor = lightSurface
-				? SPECIAL_READY_WEAPON_MIN_SCORE
-				: WEAPON_MIN_SCORE;
+			const floor = weaponScoreFloor(lightSurface, cornerMin);
 			const matched = weapon !== null && weapon.score >= floor ? weapon : null;
 			sideSubTiles[1].push(enemySubTileRoi(cy));
 			enemies.push({

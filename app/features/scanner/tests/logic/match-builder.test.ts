@@ -853,9 +853,10 @@ function playerStatus(
 		special = ALL_FALSE,
 		dead = ALL_FALSE,
 		layout = "pov" as PlayerStatusData["layout"],
+		castProven = false,
 	} = {},
 ): DetectedEvent {
-	const data: PlayerStatusData = { time, special, dead, layout };
+	const data: PlayerStatusData = { time, special, dead, layout, castProven };
 	return { type: "PlayerStatus", t, confidence: 0.9, data };
 }
 

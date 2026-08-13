@@ -122,6 +122,16 @@ export const NAME_BIN_THRESHOLD = 170;
 export const CROSS_SATURATION_MIN = 110;
 export const CROSS_VALUE_MIN = 110;
 export const CROSS_MIN_FRACTION = 0.08;
+/**
+ * A saturated probe alone is not a cross-out: the fully-rendered POV map
+ * screen draws bright team ink through the translucent cards/panel
+ * (attested phantom fractions 0.61-0.65 on the Um'ami fixture with
+ * everyone alive). The X stroke is crisp UI while the bleed is softened by
+ * the surface — mean |Laplacian| over the probe separates them (struck
+ * >=98 vs bleed <=34; the floor only gates the fraction, clean cards read
+ * up to ~62 of crisp line art at fraction ~0).
+ */
+export const CROSS_MIN_LAPLACIAN = 65;
 
 /**
  * Weapon templates built with cropToArt (54px card box needs padding
@@ -144,14 +154,34 @@ export const SPECIAL_READY_INK_THRESHOLD = SPECIAL_READY_BACKGROUND + 50;
 /**
  * Corner mean above this = special-ready camo (measures 140-165); a dark
  * card keeps at least one top corner <=90 despite avatar/cross-out bleed.
+ * The fully-rendered POV map screen can push a clean card's corners past
+ * the mean floor (attested 136.7 on the Um'ami fixture vs true camo
+ * >=139.9), so the camo call also requires the dimmer corner to be
+ * unsaturated like the gray-green camo — attested camo <=53 vs bright
+ * scene bleed >=67 (the dimmer corner, because a cross-out stroke can
+ * saturate the brighter one on a struck camo row). Margins are THIN on
+ * both probes — re-measure before moving either.
  */
 export const SPECIAL_READY_MIN_CORNER_MEAN = 120;
+export const SPECIAL_READY_MAX_CORNER_SATURATION = 60;
 /**
  * Camo surfaces score systematically lower (blob pattern depresses NCC):
  * 0.45-0.61 on correct matches vs 0.77+ on dark surfaces.
  */
 export const WEAPON_MIN_SCORE = 0.55;
 export const SPECIAL_READY_WEAPON_MIN_SCORE = 0.42;
+
+/**
+ * A non-camo card whose dimmer corner still reads this bright sits on
+ * scene bleed (the fully-rendered POV map screen lights the translucent
+ * surfaces to ~95-137): neither composite matches such a surface exactly,
+ * so both template sets are tried and the better score wins, under the
+ * camo floor — bleed depresses NCC the same way (attested true matches
+ * 0.55-0.66 there, and the E-liter card wins as the light set's 0.611
+ * over the dark set's misranked 0.599 — THIN, re-measure before touching).
+ * Dark cards (corners <=77 attested) keep the plain dark match.
+ */
+export const WEAPON_BLEED_MIN_CORNER_MEAN = 90;
 
 /**
  * Overlay is crisp over a blurred scene: mean |Laplacian| over the name

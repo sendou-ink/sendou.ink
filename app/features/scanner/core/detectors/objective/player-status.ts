@@ -52,6 +52,8 @@ import {
 	STATUS_MIRROR_COMB_MIN,
 	STATUS_PALE_MAX_SPREAD,
 	STATUS_PALE_MIN_VALUE,
+	STATUS_READY_CLEAN_WASH_MAX_BODY_INK,
+	STATUS_READY_INKY_WASH_MIN_BODY_PALE,
 	STATUS_READY_MIN_BODY_PALE,
 	STATUS_READY_MIN_SHOULDER_GLOW,
 	STATUS_READY_WASH_MAX_BODY_INK,
@@ -60,6 +62,7 @@ import {
 	STATUS_SLOT_CENTERS_CAST,
 	STATUS_SLOT_CENTERS_CAST_MIRROR,
 	STATUS_SLOT_CENTERS_POV,
+	STATUS_STICKY_FLIP_COMB_MIN,
 	STATUS_WHITE_MAX_SPREAD,
 	STATUS_WHITE_MIN_VALUE,
 } from "./rois";
@@ -80,8 +83,16 @@ export interface PlayerStatusData {
 	special: [PlayerStatusFlags, PlayerStatusFlags];
 	/** splatted per slot, same arrangement */
 	dead: [PlayerStatusFlags, PlayerStatusFlags];
-	/** which icon-strip geometry the frame showed */
+	/**
+	 * which icon-strip geometry the frame showed. S3 first-person POV
+	 * footage draws the same steady-state geometry as the casted spectator
+	 * HUD (measured identical on the 2026-08-11 Um'ami POV VoD), so "cast"
+	 * here means the geometry, not the footage type — only `castProven`
+	 * reads and the mirror arrangement are evidence of an actual broadcast
+	 */
 	layout: PlayerStatusLayout;
+	/** the white camera badges proved a cast arrangement on this frame */
+	castProven: boolean;
 }
 
 /**
@@ -145,6 +156,7 @@ export function parsePlayerStatus(
 				side.map((read) => read.dead),
 			) as PlayerStatusData["dead"],
 			layout,
+			castProven: scores === null,
 		},
 		debug: {
 			layout,
@@ -274,11 +286,25 @@ function pickLayout(
 		return { layout: "cast-mirror", scores };
 	}
 	if (prevLayout) {
-		const challenger = SCORED_FLIPS[prevLayout].reduce((a, b) =>
-			scores[b] > scores[a] ? b : a,
+		// flips away from cast additionally need positional corroboration:
+		// S3 POV footage draws cast geometry, but while the POV player is
+		// dead the strip shrinks toward the timer and those transient frames
+		// spike the challenger decisiveness past the sticky margin (the
+		// 2026-08-11 POV VoD locked into mirror that way) — a real
+		// arrangement change moves the slot comb with it, a shrink does not
+		const challengers = SCORED_FLIPS[prevLayout].filter(
+			(layout) =>
+				prevLayout !== "cast" ||
+				(combs[layout] >= STATUS_STICKY_FLIP_COMB_MIN &&
+					combs[layout] >= combs.cast + STATUS_MIRROR_COMB_LEAD),
 		);
+		const challenger =
+			challengers.length > 0
+				? challengers.reduce((a, b) => (scores[b] > scores[a] ? b : a))
+				: null;
 		return {
 			layout:
+				challenger !== null &&
 				scores[challenger] > scores[prevLayout] + STATUS_LAYOUT_STICKY_MARGIN
 					? challenger
 					: prevLayout,
@@ -314,8 +340,9 @@ function layoutDecisiveness(frame: Mat, layout: PlayerStatusLayout): number {
  * distance to the nearest decision boundary (1 at twice the threshold / at
  * zero). On the cast layouts a ready icon is always the wash, which
  * replaces the body's team ink — an ink-heavy body there means the bright
- * read is backdrop leaking past the icon edge, not a held special (see
- * STATUS_READY_WASH_MAX_BODY_INK) — and the wash glow is pale, so only the
+ * read is backdrop leaking past the icon edge, not a held special, unless
+ * the body also reads strongly pale (the graded STATUS_READY_*WASH*
+ * guards) — and the wash glow is pale, so only the
  * unsaturated glow fraction counts (a saturated bright leak, like sky over
  * a dead icon's shoulder, is not a wash — see STATUS_GLOW_MAX_SPREAD).
  */
@@ -331,11 +358,15 @@ function classifySlot(
 		bodyInk <= STATUS_DEAD_MAX_BODY_INK &&
 		washGlow <= STATUS_DEAD_MAX_SHOULDER_GLOW &&
 		bodyPale <= STATUS_DEAD_MAX_BODY_PALE;
+	const washedBody =
+		bodyInk <= STATUS_READY_CLEAN_WASH_MAX_BODY_INK ||
+		(bodyInk <= STATUS_READY_WASH_MAX_BODY_INK &&
+			bodyPale >= STATUS_READY_INKY_WASH_MIN_BODY_PALE);
 	const special =
 		!dead &&
 		(washGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
 			bodyPale >= STATUS_READY_MIN_BODY_PALE) &&
-		(layout === "pov" || bodyInk <= STATUS_READY_WASH_MAX_BODY_INK);
+		(layout === "pov" || washedBody);
 	const confidence = dead
 		? Math.min(
 				1,
