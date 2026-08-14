@@ -123,33 +123,6 @@ export async function findAllByMonth(args: MonthYear & { tier?: number }) {
 		}));
 }
 
-// the first entry is the suggestion itself; deleting it deletes the whole
-// suggestion which the author may only do while it has no comments
-function entryPermissions({
-	authorId,
-	isFirstSuggestion,
-	entryCount,
-	votingActive,
-}: {
-	authorId: number;
-	isFirstSuggestion: boolean;
-	entryCount: number;
-	votingActive: boolean;
-}) {
-	if (!isFirstSuggestion) {
-		return { EDIT: [], DELETE: [authorId] };
-	}
-
-	if (votingActive) {
-		return { EDIT: [], DELETE: [] };
-	}
-
-	return {
-		EDIT: [authorId],
-		DELETE: entryCount === 1 ? [authorId] : [],
-	};
-}
-
 export interface MonthSummary {
 	/** How many users have been suggested, per tier. */
 	suggestionCountsByTier: Record<PlusTier, number>;
@@ -239,6 +212,33 @@ export function deleteWithCommentsBySuggestedUserId({
 }
 
 /** Plus tier the suggested user already has, if any. */
+// the first entry is the suggestion itself; deleting it deletes the whole
+// suggestion which the author may only do while it has no comments
+function entryPermissions({
+	authorId,
+	isFirstSuggestion,
+	entryCount,
+	votingActive,
+}: {
+	authorId: number;
+	isFirstSuggestion: boolean;
+	entryCount: number;
+	votingActive: boolean;
+}) {
+	if (!isFirstSuggestion) {
+		return { EDIT: [], DELETE: [authorId] };
+	}
+
+	if (votingActive) {
+		return { EDIT: [], DELETE: [] };
+	}
+
+	return {
+		EDIT: [authorId],
+		DELETE: entryCount === 1 ? [authorId] : [],
+	};
+}
+
 function suggestedPlusTier(eb: ExpressionBuilder<DB, "PlusSuggestion">) {
 	return eb
 		.selectFrom("PlusTier")

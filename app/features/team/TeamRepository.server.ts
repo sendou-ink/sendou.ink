@@ -201,7 +201,7 @@ export async function findByCustomUrl(
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
 
-	if (!row) return null;
+	if (!row) return;
 
 	const managerIds = row.members
 		.filter((member) => member.isOwner || member.isManager)

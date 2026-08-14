@@ -92,6 +92,7 @@ export interface Fixtures {
 	} | null;
 	heavyArtUserId: number | null;
 	heavyArtTagId: number | null;
+	heavyArtId: number | null;
 	imageSubmitterId: number | null;
 	imageId: number | null;
 	vod: { userId: number; videoId: number } | null;
@@ -177,6 +178,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		xrank: await resolveXRank(),
 		heavyArtUserId: await resolveHeavyArtUserId(),
 		heavyArtTagId: await resolveHeavyArtTagId(),
+		heavyArtId: await resolveHeavyArtId(),
 		imageSubmitterId: await resolveImageSubmitterId(),
 		imageId: await resolveImageId(),
 		vod: await resolveVod(),
@@ -1064,6 +1066,18 @@ async function resolveHeavyArtTagId() {
 		.executeTakeFirst();
 
 	return row?.tagId ?? null;
+}
+
+async function resolveHeavyArtId() {
+	const row = await db
+		.selectFrom("ArtUserMetadata")
+		.select(({ fn }) => ["artId", fn.countAll<number>().as("count")])
+		.groupBy("artId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.artId ?? null;
 }
 
 async function resolveImageSubmitterId() {

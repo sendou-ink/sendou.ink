@@ -1,4 +1,4 @@
-import { sql, type Transaction } from "kysely";
+import { type ExpressionBuilder, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -59,12 +59,7 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ArtUserMetadata")
-					.select("ArtUserMetadata.userId as id")
-					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
-			).as("linkedUsers"),
+			linkedUsersSubquery(eb).as("linkedUsers"),
 		])
 		.orderBy("Art.isShowcase", "desc")
 		.orderBy("Art.createdAt", "desc")
@@ -110,12 +105,7 @@ export async function findShowcaseArtsByTag(
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ArtUserMetadata")
-					.select("ArtUserMetadata.userId as id")
-					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
-			).as("linkedUsers"),
+			linkedUsersSubquery(eb).as("linkedUsers"),
 		])
 		.where("TaggedArt.tagId", "=", tagId)
 		.orderBy("Art.isShowcase", "desc")
@@ -167,12 +157,7 @@ export async function findRecentlyUploadedArts(): Promise<ListedArt[]> {
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
 				"url",
 			),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ArtUserMetadata")
-					.select("ArtUserMetadata.userId as id")
-					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
-			).as("linkedUsers"),
+			linkedUsersSubquery(eb).as("linkedUsers"),
 		])
 		.orderBy("Art.createdAt", "desc")
 		.limit(100)
@@ -217,17 +202,12 @@ export async function findById(id: Tables["Art"]["id"]) {
 		.select(({ eb }) => [
 			"Art.id",
 			"Art.authorId",
-			jsonArrayFrom(
-				eb
-					.selectFrom("ArtUserMetadata")
-					.select("ArtUserMetadata.userId as id")
-					.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
-			).as("linkedUsers"),
+			linkedUsersSubquery(eb).as("linkedUsers"),
 		])
 		.where("Art.id", "=", id)
 		.executeTakeFirst();
 
-	if (!row) return null;
+	if (!row) return;
 
 	return {
 		id: row.id,
@@ -498,6 +478,15 @@ async function insertTags(
 		.insertInto("TaggedArt")
 		.values(tagIds.map((tagId) => ({ artId, tagId })))
 		.execute();
+}
+
+function linkedUsersSubquery(eb: ExpressionBuilder<DB, "Art">) {
+	return jsonArrayFrom(
+		eb
+			.selectFrom("ArtUserMetadata")
+			.select("ArtUserMetadata.userId as id")
+			.whereRef("ArtUserMetadata.artId", "=", "Art.id"),
+	);
 }
 
 function artPermissions({
