@@ -213,13 +213,15 @@ test.describe("Team page", () => {
 				memberUserIds: [secondaryTeamOwner.id],
 			});
 
-		await impersonate(page, ADMIN_ID);
+		await impersonate(page, secondaryTeamOwner.id);
 
 		const secondaryTeam = new TeamPage(page);
 		await secondaryTeam.goto(secondaryCustomUrl);
 
 		const roster = await secondaryTeam.openManageRoster();
 		const inviteLink = await roster.inviteLink();
+
+		await impersonate(page, ADMIN_ID);
 
 		const join = new JoinTeamPage(page);
 		await join.goto(inviteLink);
@@ -285,8 +287,8 @@ test.describe("Team page", () => {
 		);
 		await team.confirmLeaving();
 
-		await team.openActionsMenu();
-		await isNotVisible(team.locators.leaveTeamButton);
+		await expect(team.ownerBadge(NZAP_TEST_ID)).toBeVisible();
+		await isNotVisible(team.locators.actionsMenuButton);
 	});
 });
 
