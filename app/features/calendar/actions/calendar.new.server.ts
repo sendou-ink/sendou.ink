@@ -151,10 +151,7 @@ export const action: ActionFunction = async ({ request }) => {
 			await CalendarRepository.findById(data.eventToEditId),
 		);
 		if (eventToEdit.tournamentId) {
-			const tournament = await tournamentFromDB({
-				tournamentId: eventToEdit.tournamentId,
-				user,
-			});
+			const tournament = await tournamentFromDB(eventToEdit.tournamentId);
 			errorToastIfFalsy(
 				!tournament.hasStarted,
 				"Tournament has already started",

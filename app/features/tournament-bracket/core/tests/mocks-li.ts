@@ -6663,7 +6663,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157607,
 				activeRosterUserIds: [25875, 21063, 11226, 31597],
-				inviteCode: null,
 				memberUserIds: [11226, 27529, 25875, 21063, 31597],
 				ownerUserId: 11226,
 				checkIns: [
@@ -6687,7 +6686,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157629,
 				activeRosterUserIds: [14837, 27260, 42704, 9379],
-				inviteCode: null,
 				memberUserIds: [14837, 27260, 42704, 6211, 9379],
 				ownerUserId: 14837,
 				checkIns: [
@@ -6711,7 +6709,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733161494,
 				activeRosterUserIds: [34424, 31195, 31395, 26103],
-				inviteCode: null,
 				memberUserIds: [34424, 31195, 31395, 41682, 26103],
 				ownerUserId: 34424,
 				checkIns: [
@@ -6735,7 +6732,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166918,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [20292, 44033, 19717, 9404],
 				ownerUserId: 20292,
 				checkIns: [
@@ -6759,7 +6755,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166213,
 				activeRosterUserIds: [32160, 29267, 25591, 36962],
-				inviteCode: null,
 				memberUserIds: [32160, 29267, 25591, 36962, 37749],
 				ownerUserId: 32160,
 				checkIns: [
@@ -6783,7 +6778,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733189945,
 				activeRosterUserIds: [12418, 34355, 2319, 7430],
-				inviteCode: null,
 				memberUserIds: [12418, 34355, 2319, 39480, 7430],
 				ownerUserId: 12418,
 				checkIns: [
@@ -6807,7 +6801,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733244862,
 				activeRosterUserIds: [29425, 31524, 35674, 26285],
-				inviteCode: null,
 				memberUserIds: [29425, 31524, 35674, 7126, 26285],
 				ownerUserId: 29425,
 				checkIns: [
@@ -6831,7 +6824,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733282085,
 				activeRosterUserIds: [26747, 27292, 5708, 6309],
-				inviteCode: null,
 				memberUserIds: [26747, 5708, 1661, 27292, 21588, 6309],
 				ownerUserId: 26747,
 				checkIns: [
@@ -6855,7 +6847,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733291438,
 				activeRosterUserIds: [24459, 40851, 23974, 43608],
-				inviteCode: null,
 				memberUserIds: [43608, 23974, 24459, 40851, 18090, 42350],
 				ownerUserId: 43608,
 				checkIns: [
@@ -6879,7 +6870,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733439755,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [11085, 37000, 37835, 26807],
 				ownerUserId: 11085,
 				checkIns: [
@@ -6903,7 +6893,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733485884,
 				activeRosterUserIds: [30686, 1961, 30685, 22396],
-				inviteCode: null,
 				memberUserIds: [30685, 30686, 22396, 1961, 46305, 18698],
 				ownerUserId: 30685,
 				checkIns: [
@@ -6927,7 +6916,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733937993,
 				activeRosterUserIds: [12434, 30263, 5861, 24275],
-				inviteCode: null,
 				memberUserIds: [12434, 30411, 24275, 30263, 5861, 30870],
 				ownerUserId: 12434,
 				checkIns: [
@@ -6951,7 +6939,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733166818,
 				activeRosterUserIds: [32670, 38046, 42638, 34589],
-				inviteCode: null,
 				memberUserIds: [32670, 38046, 42638, 34589, 44378],
 				ownerUserId: 32670,
 				checkIns: [
@@ -6975,7 +6962,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733167616,
 				activeRosterUserIds: [45102, 26711, 41739, 4533],
-				inviteCode: null,
 				memberUserIds: [4533, 45102, 3362, 41739, 26711],
 				ownerUserId: 4533,
 				checkIns: [
@@ -6999,7 +6985,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733201503,
 				activeRosterUserIds: [20807, 31556, 33373, 42703],
-				inviteCode: null,
 				memberUserIds: [20807, 35282, 20774, 33373, 42703, 31556],
 				ownerUserId: 20807,
 				checkIns: [
@@ -7023,7 +7008,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733218069,
 				activeRosterUserIds: [26509, 7959, 7690, 7958],
-				inviteCode: null,
 				memberUserIds: [7958, 7690, 7959, 26509, 7102],
 				ownerUserId: 7958,
 				checkIns: [
@@ -7047,7 +7031,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733319202,
 				activeRosterUserIds: [10714, 21685, 8840, 10028],
-				inviteCode: null,
 				memberUserIds: [4285, 21685, 34842, 10714, 10028, 8840],
 				ownerUserId: 4285,
 				checkIns: [
@@ -7071,7 +7054,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733471556,
 				activeRosterUserIds: [17532, 30204, 36007, 38896],
-				inviteCode: null,
 				memberUserIds: [17532, 36007, 38896, 30204, 41285],
 				ownerUserId: 17532,
 				checkIns: [
@@ -7095,7 +7077,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733501938,
 				activeRosterUserIds: [30495, 43073, 30488, 45295],
-				inviteCode: null,
 				memberUserIds: [28410, 43073, 30495, 30488, 45295],
 				ownerUserId: 30488,
 				checkIns: [
@@ -7119,7 +7100,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733622364,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [5584, 30612, 13671, 36898],
 				ownerUserId: 5584,
 				checkIns: [],
@@ -7137,7 +7117,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733635706,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [2279, 30466, 26162, 24013],
 				ownerUserId: 2279,
 				checkIns: [
@@ -7161,7 +7140,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733671856,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [33632, 29433, 21181, 32002],
 				ownerUserId: 33632,
 				checkIns: [
@@ -7185,7 +7163,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733810204,
 				activeRosterUserIds: [1959, 17352, 33954, 22403],
-				inviteCode: null,
 				memberUserIds: [1959, 5906, 17352, 22403, 33954],
 				ownerUserId: 1959,
 				checkIns: [
@@ -7209,7 +7186,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733889961,
 				activeRosterUserIds: [6696, 32107, 33402, 30619],
-				inviteCode: null,
 				memberUserIds: [6696, 32107, 33402, 30619, 35133],
 				ownerUserId: 6696,
 				checkIns: [
@@ -7233,7 +7209,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733892132,
 				activeRosterUserIds: [21670, 8993, 8395, 3566],
-				inviteCode: null,
 				memberUserIds: [21670, 8993, 8395, 3566, 46637],
 				ownerUserId: 21670,
 				checkIns: [
@@ -7257,7 +7232,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734035170,
 				activeRosterUserIds: [24510, 10670, 22577, 31143],
-				inviteCode: null,
 				memberUserIds: [24510, 31143, 10670, 5261, 22577],
 				ownerUserId: 24510,
 				checkIns: [
@@ -7281,7 +7255,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734107844,
 				activeRosterUserIds: [28170, 14309, 17310, 23164],
-				inviteCode: null,
 				memberUserIds: [28170, 14309, 23164, 17310, 2199],
 				ownerUserId: 28170,
 				checkIns: [
@@ -7305,7 +7278,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734132225,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [11117, 16387, 31154, 6051],
 				ownerUserId: 11117,
 				checkIns: [
@@ -7329,7 +7301,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733194304,
 				activeRosterUserIds: [40505, 29011, 23082, 45036],
-				inviteCode: null,
 				memberUserIds: [40505, 29011, 23082, 21549, 45036],
 				ownerUserId: 40505,
 				checkIns: [
@@ -7353,7 +7324,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733195091,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [30122, 26820, 3513, 10297],
 				ownerUserId: 30122,
 				checkIns: [
@@ -7377,7 +7347,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733364647,
 				activeRosterUserIds: [22801, 31150, 35354, 27747],
-				inviteCode: null,
 				memberUserIds: [22801, 8953, 27747, 31150, 35354],
 				ownerUserId: 22801,
 				checkIns: [
@@ -7401,7 +7370,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733374295,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [26441, 38686, 12005, 31295],
 				ownerUserId: 12005,
 				checkIns: [
@@ -7425,7 +7393,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733433864,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [18574, 40636, 44489, 34314, 28247, 41628],
 				ownerUserId: 18574,
 				checkIns: [],
@@ -7443,7 +7410,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733513814,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [5037, 26321, 22324, 11088],
 				ownerUserId: 5037,
 				checkIns: [
@@ -7467,7 +7433,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733602400,
 				activeRosterUserIds: [10826, 4248, 20419, 11180],
-				inviteCode: null,
 				memberUserIds: [11180, 20419, 4248, 10826, 28504],
 				ownerUserId: 11180,
 				checkIns: [
@@ -7491,7 +7456,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733753214,
 				activeRosterUserIds: [27903, 28446, 34634, 30728],
-				inviteCode: null,
 				memberUserIds: [27903, 28446, 30728, 32158, 34634],
 				ownerUserId: 27903,
 				checkIns: [
@@ -7515,7 +7479,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733914001,
 				activeRosterUserIds: [32909, 10190, 35922, 40304],
-				inviteCode: null,
 				memberUserIds: [32909, 31189, 10190, 37959, 40304, 35922],
 				ownerUserId: 32909,
 				checkIns: [
@@ -7539,7 +7502,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733966548,
 				activeRosterUserIds: [35617, 37669, 37436, 35811],
-				inviteCode: null,
 				memberUserIds: [37246, 35617, 37669, 37436, 35811],
 				ownerUserId: 37669,
 				checkIns: [
@@ -7563,7 +7525,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734032213,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [2990, 1925, 11391, 27355],
 				ownerUserId: 2990,
 				checkIns: [
@@ -7587,7 +7548,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734106606,
 				activeRosterUserIds: [37173, 43269, 43623, 16054],
-				inviteCode: null,
 				memberUserIds: [43623, 43269, 37173, 34448, 16054],
 				ownerUserId: 43623,
 				checkIns: [
@@ -7611,7 +7571,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734116765,
 				activeRosterUserIds: [25312, 10378, 46771, 26044],
-				inviteCode: null,
 				memberUserIds: [25312, 10378, 46771, 5350, 12609, 26044],
 				ownerUserId: 25312,
 				checkIns: [
@@ -7635,7 +7594,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734125312,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [25806, 43060, 22622, 22968],
 				ownerUserId: 25806,
 				checkIns: [
@@ -7659,7 +7617,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734134382,
 				activeRosterUserIds: [26758, 25689, 42164, 44475],
-				inviteCode: null,
 				memberUserIds: [44475, 42164, 25689, 43524, 26758],
 				ownerUserId: 44475,
 				checkIns: [
@@ -7683,7 +7640,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733156802,
 				activeRosterUserIds: [9036, 7434, 3738, 9112],
-				inviteCode: null,
 				memberUserIds: [3742, 9112, 3738, 7434, 9036],
 				ownerUserId: 9036,
 				checkIns: [
@@ -7707,7 +7663,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733157391,
 				activeRosterUserIds: [5935, 38204, 3741, 8080],
-				inviteCode: null,
 				memberUserIds: [5935, 38204, 35506, 3741, 31728, 8080],
 				ownerUserId: 5935,
 				checkIns: [
@@ -7731,7 +7686,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733162274,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [40972, 42975, 20319, 28054],
 				ownerUserId: 40972,
 				checkIns: [
@@ -7755,7 +7709,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733367806,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [46245, 46586, 33790, 18632],
 				ownerUserId: 46245,
 				checkIns: [
@@ -7779,7 +7732,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733456080,
 				activeRosterUserIds: [10386, 33369, 29617, 22942],
-				inviteCode: null,
 				memberUserIds: [34071, 10386, 22942, 33369, 29617],
 				ownerUserId: 22942,
 				checkIns: [
@@ -7803,7 +7755,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733579092,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [26089, 14170, 25419, 14413],
 				ownerUserId: 26089,
 				checkIns: [],
@@ -7821,7 +7772,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733769667,
 				activeRosterUserIds: [3481, 38022, 41269, 43551],
-				inviteCode: null,
 				memberUserIds: [3481, 38022, 41269, 7935, 43856, 43551],
 				ownerUserId: 3481,
 				checkIns: [
@@ -7845,7 +7795,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733794148,
 				activeRosterUserIds: [22820, 29636, 27036, 28959],
-				inviteCode: null,
 				memberUserIds: [28959, 27036, 22820, 28021, 1890, 29636],
 				ownerUserId: 28959,
 				checkIns: [
@@ -7869,7 +7818,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733820540,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [35310, 21989, 25242, 43081],
 				ownerUserId: 35310,
 				checkIns: [
@@ -7893,7 +7841,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733825084,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [4334, 24252, 32444, 36113],
 				ownerUserId: 4334,
 				checkIns: [
@@ -7917,7 +7864,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733865890,
 				activeRosterUserIds: [15425, 41975, 28938, 8587],
-				inviteCode: null,
 				memberUserIds: [15425, 27828, 41975, 28938, 8587],
 				ownerUserId: 15425,
 				checkIns: [
@@ -7941,7 +7887,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733873149,
 				activeRosterUserIds: [40550, 7115, 29674, 30031],
-				inviteCode: null,
 				memberUserIds: [40550, 7115, 29674, 39569, 30031, 28866],
 				ownerUserId: 40550,
 				checkIns: [
@@ -7965,7 +7910,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733875608,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [15110, 33824, 35608, 22677],
 				ownerUserId: 15110,
 				checkIns: [
@@ -7989,7 +7933,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733888417,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [26269, 30030, 21454, 42483],
 				ownerUserId: 26269,
 				checkIns: [
@@ -8013,7 +7956,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734008857,
 				activeRosterUserIds: [30266, 37341, 22699, 28145],
-				inviteCode: null,
 				memberUserIds: [30266, 37341, 22699, 28145, 39363],
 				ownerUserId: 30266,
 				checkIns: [
@@ -8037,7 +7979,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734018352,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [34147, 20990, 22469, 41594],
 				ownerUserId: 34147,
 				checkIns: [
@@ -8061,7 +8002,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734019701,
 				activeRosterUserIds: [35421, 33524, 22500, 32802],
-				inviteCode: null,
 				memberUserIds: [32802, 35421, 33524, 22500, 42081, 20063],
 				ownerUserId: 32802,
 				checkIns: [
@@ -8085,7 +8025,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734023441,
 				activeRosterUserIds: [1852, 2898, 25763, 3466],
-				inviteCode: null,
 				memberUserIds: [1852, 2898, 25763, 3466, 34662],
 				ownerUserId: 1852,
 				checkIns: [
@@ -8109,7 +8048,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734099744,
 				activeRosterUserIds: [39098, 22624, 28137, 2769],
-				inviteCode: null,
 				memberUserIds: [2769, 7461, 39098, 22624, 28137],
 				ownerUserId: 2769,
 				checkIns: [
@@ -8133,7 +8071,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734109256,
 				activeRosterUserIds: [29661, 15158, 35067, 31655],
-				inviteCode: null,
 				memberUserIds: [15158, 29661, 10333, 35067, 31655, 40743],
 				ownerUserId: 15158,
 				checkIns: [
@@ -8157,7 +8094,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734125682,
 				activeRosterUserIds: [36575, 30425, 32430, 24290],
-				inviteCode: null,
 				memberUserIds: [30425, 32430, 26701, 30584, 24290, 36575],
 				ownerUserId: 30425,
 				checkIns: [
@@ -8181,7 +8117,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733515005,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [25543, 36921, 37563, 37665],
 				ownerUserId: 25543,
 				checkIns: [
@@ -8205,7 +8140,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733521735,
 				activeRosterUserIds: [44772, 38912, 36853, 42599],
-				inviteCode: null,
 				memberUserIds: [44772, 38912, 23357, 36853, 42599],
 				ownerUserId: 44772,
 				checkIns: [
@@ -8229,7 +8163,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733525617,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [11783, 21818, 22991, 2266],
 				ownerUserId: 11783,
 				checkIns: [
@@ -8253,7 +8186,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733847805,
 				activeRosterUserIds: [33615, 32015, 45778, 32970],
-				inviteCode: null,
 				memberUserIds: [33615, 32015, 30663, 45778, 32970],
 				ownerUserId: 33615,
 				checkIns: [
@@ -8277,7 +8209,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733858126,
 				activeRosterUserIds: [34545, 35567, 41108, 41255],
-				inviteCode: null,
 				memberUserIds: [41255, 35567, 41108, 34545, 26564],
 				ownerUserId: 41255,
 				checkIns: [
@@ -8301,7 +8232,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733966096,
 				activeRosterUserIds: [39470, 42874, 32878, 25741],
-				inviteCode: null,
 				memberUserIds: [10788, 25741, 42874, 39470, 32878],
 				ownerUserId: 10788,
 				checkIns: [
@@ -8325,7 +8255,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734021147,
 				activeRosterUserIds: [45250, 45174, 6976, 10222],
-				inviteCode: null,
 				memberUserIds: [45250, 45174, 10222, 6976, 46504],
 				ownerUserId: 45250,
 				checkIns: [
@@ -8349,7 +8278,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734040772,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [33573, 43753, 45806, 46648],
 				ownerUserId: 33573,
 				checkIns: [
@@ -8373,7 +8301,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734033803,
 				activeRosterUserIds: [27800, 12235, 30044, 29531],
-				inviteCode: null,
 				memberUserIds: [27800, 44328, 12235, 29531, 30044],
 				ownerUserId: 27800,
 				checkIns: [
@@ -8397,7 +8324,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734099612,
 				activeRosterUserIds: [24572, 7058, 37641, 33913],
-				inviteCode: null,
 				memberUserIds: [7058, 37641, 33913, 42597, 24572],
 				ownerUserId: 7058,
 				checkIns: [
@@ -8421,7 +8347,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734113463,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [20209, 33276, 41038, 11198],
 				ownerUserId: 20209,
 				checkIns: [
@@ -8445,7 +8370,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734118202,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [9200, 14927, 1236, 27069],
 				ownerUserId: 9200,
 				checkIns: [],
@@ -8463,7 +8387,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734134334,
 				activeRosterUserIds: [11186, 27611, 25952, 23481],
-				inviteCode: null,
 				memberUserIds: [27544, 25952, 27611, 11186, 23481],
 				ownerUserId: 27544,
 				checkIns: [
@@ -8487,7 +8410,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733169181,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [31145, 38610, 40713, 40766],
 				ownerUserId: 31145,
 				checkIns: [
@@ -8511,7 +8433,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733247691,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [46518, 46538, 46523, 46501],
 				ownerUserId: 46518,
 				checkIns: [
@@ -8535,7 +8456,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733452618,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [42089, 17049, 36888, 46546, 42172],
 				ownerUserId: 42089,
 				checkIns: [],
@@ -8553,7 +8473,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733481710,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [44893, 40912, 30455, 27649, 43703],
 				ownerUserId: 44893,
 				checkIns: [],
@@ -8571,7 +8490,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733508949,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [44493, 46451, 44412, 45194],
 				ownerUserId: 44493,
 				checkIns: [
@@ -8595,7 +8513,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733611261,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [18149, 21755, 27984, 27990],
 				ownerUserId: 18149,
 				checkIns: [
@@ -8619,7 +8536,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733841846,
 				activeRosterUserIds: [41943, 46289, 45290, 46394],
-				inviteCode: null,
 				memberUserIds: [46289, 41943, 45290, 46394, 46400],
 				ownerUserId: 46289,
 				checkIns: [
@@ -8643,7 +8559,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1733878153,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [40484, 38960, 32199, 40126],
 				ownerUserId: 40484,
 				checkIns: [
@@ -8667,7 +8582,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				abDivision: null,
 				createdAt: 1734135144,
 				activeRosterUserIds: null,
-				inviteCode: null,
 				memberUserIds: [44839, 44866, 44642, 45391],
 				ownerUserId: 44839,
 				checkIns: [

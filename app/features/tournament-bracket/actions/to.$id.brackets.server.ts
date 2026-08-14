@@ -181,7 +181,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			ShowcaseTournaments.clearCachedTournaments();
 
 			// update RunningTournaments
-			await tournamentFromDB({ tournamentId, user });
+			await tournamentFromDB(tournamentId);
 
 			emitTournamentUpdate = true;
 

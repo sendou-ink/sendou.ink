@@ -19,7 +19,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: tournamentTeamPageParamsSchema,
 	});
 
-	const tournament = await tournamentDataCached({ tournamentId });
+	const tournament = await tournamentDataCached(tournamentId);
 	const team = tournament?.ctx.teams.find(
 		(team) => team.id === tournamentTeamId,
 	);

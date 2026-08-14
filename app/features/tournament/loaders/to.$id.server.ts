@@ -42,7 +42,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: idObject,
 	});
 
-	const tournament = await tournamentDataCached({ tournamentId, user });
+	const tournament = await tournamentDataCached(tournamentId);
 	requireTournamentVisible({ ctx: tournament.ctx, user });
 
 	const friendCodeVisibilityDays = tournament.ctx.parentTournamentId ? 120 : 30;

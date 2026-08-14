@@ -16,7 +16,6 @@ export const tournamentCtxTeam = (
 		startingBracketIdx: null,
 		abDivision: null,
 		hasMapPool: false,
-		inviteCode: null,
 		memberUserIds: [],
 		ownerUserId: null,
 		activeRosterUserIds: [],

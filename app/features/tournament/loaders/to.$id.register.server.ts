@@ -10,7 +10,7 @@ import {
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		{ for: "view", personalized: true },
+		{ for: "view" },
 	);
 	if (!user) return null;
 

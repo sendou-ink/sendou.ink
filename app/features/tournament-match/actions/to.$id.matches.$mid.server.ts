@@ -675,7 +675,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	// update RunningTournaments to make sure sidebar is not showing stale matches at the end
 	// of the tournament in case the TO is not finalizing the tournament right away
 	if (setIsOver) {
-		const refreshedTournament = await tournamentFromDB({ tournamentId, user });
+		const refreshedTournament = await tournamentFromDB(tournamentId);
 		// the teams that just advanced now populate following matches, so their
 		// "waiting for teams" pages need to revalidate too
 		followingMatchIds = refreshedTournament

@@ -39,10 +39,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 		return {
 			...event,
-			tournament: await tournamentData({
-				tournamentId: event.tournamentId,
-				user,
-			}),
+			tournament: await tournamentData(event.tournamentId),
 			rules: await TournamentRepository.findRulesById(event.tournamentId),
 		};
 	};

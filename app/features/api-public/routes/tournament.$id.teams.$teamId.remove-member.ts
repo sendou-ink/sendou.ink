@@ -38,7 +38,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
 	return wrapActionForApi(async () => {
 		const user = requireUser();
-		const tournament = await tournamentFromDB({ tournamentId, user });
+		const tournament = await tournamentFromDB(tournamentId);
 		requireTournamentOrganizer(tournament, user);
 
 		const team = tournament.teamById(teamId);

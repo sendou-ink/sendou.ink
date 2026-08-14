@@ -15,10 +15,7 @@ export const NotifyCheckInStartRoutine = new Routine({
 		});
 
 		for (const { tournamentId } of tournaments) {
-			const tournament = await tournamentDataCached({
-				tournamentId: tournamentId!,
-				user: undefined,
-			});
+			const tournament = await tournamentDataCached(tournamentId!);
 
 			if (tournament.ctx.settings.isTest || tournament.ctx.settings.isDraft) {
 				continue;
