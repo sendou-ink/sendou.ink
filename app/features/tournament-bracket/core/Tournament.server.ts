@@ -9,7 +9,6 @@ import {
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { LRUCache } from "~/modules/cache";
 import { hasPermission } from "~/modules/permissions/utils";
@@ -36,18 +35,44 @@ import {
 	type TournamentStream,
 } from "./Tournament";
 
-const combinedTournamentData = async (tournamentId: number) => {
+/**
+ * Everything a tournament is made of including brackets and streams.
+ */
+export async function tournamentData(tournamentId: number) {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;
 
+	const data = await BracketRepository.findByTournamentId(tournamentId);
+	const tournamentHasStarted = data.stage.length > 0;
+
+	const tentativeTier =
+		!ctx.tier && ctx.organization?.id
+			? getTentativeTier(ctx.organization.id, ctx.name)
+			: null;
+
 	return {
-		data: await BracketRepository.findByTournamentId(tournamentId),
-		ctx,
+		data,
 		participatedUsers:
 			await TournamentRepository.findParticipatedUserIdsById(tournamentId),
 		streams: await fetchTournamentStreams(tournamentId),
+		ctx: {
+			...ctx,
+			tentativeTier,
+			teams: ctx.teams.map(
+				({
+					teamLogoUrl,
+					pickupAvatarUrl,
+					inviteCode: _inviteCode,
+					...team
+				}): TournamentDataTeam => ({
+					...team,
+					logoUrl:
+						teamLogoUrl ?? (tournamentHasStarted ? pickupAvatarUrl : null),
+				}),
+			),
+		},
 	};
-};
+}
 
 /**
  * Live streams of the tournament read fresh from the database, bypassing the tournament
@@ -228,54 +253,6 @@ export async function tournamentFromParams(
 	return { tournament, tournamentId, user };
 }
 
-export async function tournamentData(tournamentId: number) {
-	const data = await combinedTournamentData(tournamentId);
-	if (!data) return null;
-
-	return dataMapped(data);
-}
-
-function dataMapped({
-	data,
-	ctx,
-	participatedUsers,
-	streams,
-}: {
-	data: BracketData;
-	ctx: TournamentRepository.FindById;
-	participatedUsers: number[];
-	streams: TournamentStream[];
-}) {
-	const tournamentHasStarted = data.stage.length > 0;
-
-	const tentativeTier =
-		!ctx.tier && ctx.organization?.id
-			? getTentativeTier(ctx.organization.id, ctx.name)
-			: null;
-
-	return {
-		data,
-		participatedUsers,
-		streams,
-		ctx: {
-			...ctx,
-			tentativeTier,
-			teams: ctx.teams.map(
-				({
-					teamLogoUrl,
-					pickupAvatarUrl,
-					inviteCode: _inviteCode,
-					...team
-				}): TournamentDataTeam => ({
-					...team,
-					logoUrl:
-						teamLogoUrl ?? (tournamentHasStarted ? pickupAvatarUrl : null),
-				}),
-			),
-		},
-	};
-}
-
 export async function tournamentFromDB(tournamentId: number) {
 	const data = notFoundIfNullish(await tournamentData(tournamentId));
 
@@ -292,9 +269,7 @@ type TournamentDataCacheEntry = {
 	storedAt: number;
 	// caching promise ensures that if many requests are made for the same tournament
 	// at the same time they reuse the same resolving promise
-	combined: ReturnType<typeof combinedTournamentData>;
-	// the mapping is the same for every viewer, nothing in it is censored per user
-	mapped?: ReturnType<typeof dataMapped>;
+	data: ReturnType<typeof tournamentData>;
 	// what the brackets derive from is the same for every viewer, so building them once
 	// per cache fill serves every request
 	tournament?: Tournament;
@@ -309,14 +284,7 @@ export async function tournamentDataCached(tournamentId: number) {
 		return notFoundIfNullish(await tournamentData(tournamentId));
 	}
 
-	const entry = tournamentDataCacheEntry(tournamentId);
-	const data = notFoundIfNullish(await entry.combined);
-
-	if (!entry.mapped) {
-		entry.mapped = dataMapped(data);
-	}
-
-	return entry.mapped;
+	return notFoundIfNullish(await tournamentDataCacheEntry(tournamentId).data);
 }
 
 /**
@@ -332,13 +300,9 @@ export async function tournamentSharedCached(tournamentId: number) {
 	}
 
 	const entry = tournamentDataCacheEntry(tournamentId);
-	const data = notFoundIfNullish(await entry.combined);
 
-	if (!entry.mapped) {
-		entry.mapped = dataMapped(data);
-	}
 	if (!entry.tournament) {
-		entry.tournament = new Tournament(entry.mapped);
+		entry.tournament = new Tournament(notFoundIfNullish(await entry.data));
 	}
 
 	return entry.tournament;
@@ -381,9 +345,9 @@ function tournamentDataCacheEntry(tournamentId: number) {
 
 	const entry: TournamentDataCacheEntry = {
 		storedAt: Date.now(),
-		combined: combinedTournamentData(tournamentId),
+		data: tournamentData(tournamentId),
 	};
-	entry.combined.catch(() => {
+	entry.data.catch(() => {
 		if (tournamentDataCache.get(tournamentId) === entry) {
 			tournamentDataCache.delete(tournamentId);
 		}
