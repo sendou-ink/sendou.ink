@@ -71,6 +71,7 @@ export const action: ActionFunction = async ({ request }) => {
 		const matched = Scoreboards.matchedGames({
 			matches: effectiveMatches.map((effective) => effective.data),
 			games: resolved.games,
+			povUserId,
 		});
 
 		linkedGamesCount = await ScannerIngestRepository.addLinks({
@@ -228,7 +229,11 @@ async function resolveIngestContext({
 	} | null = null;
 	for (const candidate of candidates) {
 		const games = await candidate.loadGames();
-		const matched = Scoreboards.matchedGames({ matches, games }).length;
+		const matched = Scoreboards.matchedGames({
+			matches,
+			games,
+			povUserId,
+		}).length;
 		if (!best || matched > best.matched) {
 			best = { candidate, games, matched };
 		}
@@ -260,7 +265,7 @@ async function resolveIngestContext({
 				}),
 			])
 		).flat();
-		const context = Scoreboards.resolveContext({ matches, games });
+		const context = Scoreboards.resolveContext({ matches, games, povUserId });
 		if (context) {
 			const key = Scoreboards.contextKey(context);
 			logger.debug(

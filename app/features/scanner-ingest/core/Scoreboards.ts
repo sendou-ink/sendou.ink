@@ -53,9 +53,13 @@ export interface IngestableGame {
 	mapIndex: number;
 	mode: ModeShort;
 	stageId: StageId;
-	/** known in-game names of the winning team's roster, used to validate scoreboard sides */
+	/** user ids of the winning team's roster; the POV sender's side pins the scan's sides to the game's teams */
+	winnerUserIds: number[];
+	/** user ids of the losing team's roster; the POV sender's side pins the scan's sides to the game's teams */
+	loserUserIds: number[];
+	/** known in-game names of the winning team's roster, the side fallback for reads without a POV seat */
 	winnerInGameNames: string[];
-	/** known in-game names of the losing team's roster, used to validate scoreboard sides */
+	/** known in-game names of the losing team's roster, the side fallback for reads without a POV seat */
 	loserInGameNames: string[];
 	/** database timestamp used to order games chronologically across matches */
 	playedAt: number;
@@ -97,9 +101,11 @@ export function contextKey(context: IngestContext): string {
 export function resolveContext({
 	matches,
 	games,
+	povUserId = null,
 }: {
 	matches: ScannerMatch[];
 	games: IngestableGameWithContext[];
+	povUserId?: number | null;
 }): IngestContext | null {
 	const byContext = new Map<string, IngestableGameWithContext[]>();
 	for (const game of games) {
@@ -114,6 +120,7 @@ export function resolveContext({
 		const matched = matchedGames({
 			matches,
 			games: contextGames,
+			povUserId,
 		}).length;
 		if (!best || matched > best.matched) {
 			best = { context: contextGames[0]!.context, matched };
@@ -132,10 +139,13 @@ export function resolveContext({
  * minimap-only match can never link — its winner and stats are unread).
  * Matches and games are both walked in chronological order: each match is
  * assigned to the next not-yet-assigned game with the same mode and stage
- * whose sides don't contradict the teams' known in-game names (the winning
- * rows should overlap the game winner's roster, not the loser's). Matches
- * from other lobbies, with unreadable mode/stage or duplicated detections
- * of the same game are skipped.
+ * whose sides agree with what is known. The POV seat decides where it can:
+ * the sender is the POV player, so which of the game's rosters they belong
+ * to pins the scan's sides to the game's teams — OCR'd names are too
+ * unreliable to overrule it. Only when no seat can decide (cast footage, no
+ * POV read) do the known in-game names arbitrate the sides. Matches from
+ * other lobbies, with unreadable mode/stage or duplicated detections of the
+ * same game are skipped.
  *
  * One session's matches may arrive over many requests (one per game), so
  * games another ingest already linked to are skipped — unless the incoming
@@ -146,9 +156,12 @@ export function resolveContext({
 export function matchedGames({
 	matches,
 	games,
+	povUserId = null,
 }: {
 	matches: ScannerMatch[];
 	games: IngestableGame[];
+	/** the sender, who is the POV player of the request's non-cast matches */
+	povUserId?: number | null;
 }): MatchedGame[] {
 	const views = dedupeViews(
 		matches
@@ -177,8 +190,12 @@ export function matchedGames({
 				if (!isLinkedDuplicate(view, game.linkedPlayerNames)) {
 					continue;
 				}
-			} else if (!sidesMatchKnownPlayers(view, game)) {
-				continue;
+			} else {
+				const agreement = povSideAgreement(view, game, povUserId);
+				if (agreement === false) continue;
+				if (agreement === null && !sidesMatchKnownPlayers(view, game)) {
+					continue;
+				}
 			}
 
 			result.push({ matchIndex: view.matchIndex, game });
@@ -509,7 +526,27 @@ function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 }
 
 /**
- * Checks that the view's sides don't contradict the teams' known rosters:
+ * Whether the POV seat's side in the scan agrees with the sender's side in
+ * the game: the sender is the POV player, so the roster their user id sits
+ * in says whether their seat should be on the winning rows. Null when the
+ * check cannot decide — no POV seat read, no sender, or the sender in
+ * neither roster (cast footage) — leaving the sides to the name fallback.
+ */
+function povSideAgreement(
+	view: WinnerFirstView,
+	game: IngestableGame,
+	povUserId: number | null,
+): boolean | null {
+	if (povUserId === null || view.povIndex === null) return null;
+
+	const povOnWinningSide = view.povIndex < PLAYERS_PER_TEAM;
+	if (game.winnerUserIds.includes(povUserId)) return povOnWinningSide;
+	if (game.loserUserIds.includes(povUserId)) return !povOnWinningSide;
+	return null;
+}
+
+/**
+ * The side fallback for reads no POV seat can pin (cast footage above all):
  * the winning rows should overlap the game winner's in-game names at least
  * as well as the losing team's (and vice versa). A contradiction means the
  * match belongs to some other game. No overlap at all (e.g. no in-game
