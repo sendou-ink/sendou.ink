@@ -6,7 +6,6 @@ import {
 	LEAGUES,
 	TOURNAMENT,
 } from "~/features/tournament/tournament-constants";
-import { isTournamentOrganizer } from "~/features/tournament-bracket/core/Tournament";
 import {
 	bracketsMetaCached,
 	requireTournamentVisible,
@@ -14,6 +13,7 @@ import {
 	tournamentDataCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
@@ -52,7 +52,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	);
 	const showFriendCodes =
 		tournamentStartedRecently &&
-		isTournamentOrganizer({ ctx: tournament.ctx, user });
+		hasPermission(tournament.ctx, "ORGANIZE", user);
 
 	const isLeagueSignup = Object.values(LEAGUES)
 		.flat()
@@ -79,7 +79,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			? await TournamentRepository.findFriendCodesByTournamentId(tournamentId)
 			: undefined,
 		preparedMaps:
-			isTournamentOrganizer({ ctx: tournament.ctx, user }) &&
+			hasPermission(tournament.ctx, "ORGANIZE", user) &&
 			!tournament.ctx.isFinalized
 				? await TournamentRepository.findPreparedMapsById(tournamentId)
 				: undefined,

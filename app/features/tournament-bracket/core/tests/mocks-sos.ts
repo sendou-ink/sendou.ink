@@ -1969,6 +1969,13 @@ export const SWIM_OR_SINK_167 = (
 			customUrl: "grace",
 			customAvatarUrl: null,
 		},
+		permissions: {
+			ADMIN: [1402],
+			ORGANIZE: [1402],
+			MANAGE_MATCHES: [1402],
+			EDIT_EVENT_INFO: [1402],
+			EDIT_IN_GAME_NAMES: [],
+		},
 		staff: [
 			{
 				id: 52,

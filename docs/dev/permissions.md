@@ -32,6 +32,6 @@ Rules:
 Two documented boundaries:
 
 1. **Non-enumerable grants**: permissions held by an open class of users can't be expressed as an id list. Example: any high-enough plus tier member may comment on a suggestion (`canAddCommentToSuggestion*` in plus-suggestions). These stay as plain helper functions.
-2. **State-machine-heavy domain classes**: the `Tournament` class computes its checks (`isOrganizer`, `canFinalize`, ...) from rich runtime state and is already instantiated from one serialized source on both server and client. Leave it as is.
+2. **Derived-state checks**: a grant that depends on state the repository cannot see at read time. In the `Tournament` class, `canFinalize`, `canCheckInToBracket`, `canAddNewSubPost` and friends all read bracket state that only exists once the bracket engine has run, so they stay methods. Their authorization half still goes through the permissions object: `hasPermission(this.ctx, "ORGANIZE", user) && everyBracketOver`, never a re-implemented organizer check.
 
 Also not authorization: membership/domain logic like `isTeamMember`, `isTeamFull`, `resolveNewOwner` — these describe domain facts, not grants, and remain ordinary helpers.

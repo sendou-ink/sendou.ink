@@ -89,6 +89,13 @@ export const testTournament = ({
 			],
 		},
 		castedMatchesInfo: null,
+		permissions: {
+			ADMIN: [1],
+			ORGANIZE: [1],
+			MANAGE_MATCHES: [1],
+			EDIT_EVENT_INFO: [1],
+			EDIT_IN_GAME_NAMES: [],
+		},
 		teams: nTeams(participant.length, Math.min(...participant)),
 		author: {
 			customUrl: null,

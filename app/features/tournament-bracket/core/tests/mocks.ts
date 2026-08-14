@@ -1278,6 +1278,13 @@ export const PADDLING_POOL_257 = () =>
 				customUrl: "alicetheto",
 				customAvatarUrl: null,
 			},
+			permissions: {
+				ADMIN: [860],
+				ORGANIZE: [860],
+				MANAGE_MATCHES: [860],
+				EDIT_EVENT_INFO: [860],
+				EDIT_IN_GAME_NAMES: [],
+			},
 			staff: [
 				{
 					id: 1536,
@@ -3922,6 +3929,13 @@ export const PADDLING_POOL_255 = () =>
 				customUrl: "alicetheto",
 				customAvatarUrl: null,
 			},
+			permissions: {
+				ADMIN: [860],
+				ORGANIZE: [860],
+				MANAGE_MATCHES: [860],
+				EDIT_EVENT_INFO: [860],
+				EDIT_IN_GAME_NAMES: [],
+			},
 			staff: [
 				{
 					id: 1536,
@@ -6438,6 +6452,13 @@ export const IN_THE_ZONE_32 = ({
 				discordAvatar: "6fc41a44b069a0d2152ac06d1e496c6c",
 				customUrl: "sendou",
 				customAvatarUrl: null,
+			},
+			permissions: {
+				ADMIN: [274],
+				ORGANIZE: [274],
+				MANAGE_MATCHES: [274],
+				EDIT_EVENT_INFO: [274],
+				EDIT_IN_GAME_NAMES: [],
 			},
 			staff: [
 				{

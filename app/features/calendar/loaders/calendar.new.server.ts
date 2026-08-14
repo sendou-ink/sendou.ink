@@ -50,12 +50,8 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const eventToEdit = await eventWithTournament(eventId);
 	const canEditEvent = (() => {
 		if (!eventToEdit) return false;
-		if (
-			eventToEdit.tournament?.ctx.organization?.members.some(
-				(member) => member.userId === user.id && member.role === "ADMIN",
-			)
-		) {
-			return true;
+		if (eventToEdit.tournament) {
+			return hasPermission(eventToEdit.tournament.ctx, "EDIT_EVENT_INFO", user);
 		}
 
 		return hasPermission(eventToEdit, "EDIT", user);

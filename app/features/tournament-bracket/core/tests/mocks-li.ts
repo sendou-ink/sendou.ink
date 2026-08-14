@@ -6481,6 +6481,13 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 			customUrl: "hoeenhero",
 			customAvatarUrl: null,
 		},
+		permissions: {
+			ADMIN: [4941],
+			ORGANIZE: [4941],
+			MANAGE_MATCHES: [4941],
+			EDIT_EVENT_INFO: [4941],
+			EDIT_IN_GAME_NAMES: [],
+		},
 		staff: [
 			{
 				id: 405,

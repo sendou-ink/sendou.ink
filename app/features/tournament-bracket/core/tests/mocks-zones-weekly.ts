@@ -322,6 +322,13 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 			customUrl: "puma",
 			customAvatarUrl: null,
 		},
+		permissions: {
+			ADMIN: [13370],
+			ORGANIZE: [13370],
+			MANAGE_MATCHES: [13370],
+			EDIT_EVENT_INFO: [13370],
+			EDIT_IN_GAME_NAMES: [],
+		},
 		staff: [
 			{
 				id: 1183,

@@ -160,10 +160,7 @@ export const action: ActionFunction = async ({ request }) => {
 				"Tournament has already started",
 			);
 
-			errorToastIfFalsy(
-				tournament.canEditEventInfo(user, { isTournamentAdder }),
-				"Not authorized",
-			);
+			errorToastIfFalsy(tournament.canEditEventInfo(user), "Not authorized");
 
 			// once published, a tournament can't be flipped back to draft
 			if (!tournament.isDraft) {
