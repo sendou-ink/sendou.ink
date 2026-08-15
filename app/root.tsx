@@ -59,6 +59,7 @@ import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
+import { InitialI18nStore } from "./modules/i18n/InitialI18nStore";
 import {
 	getLocale,
 	i18nCookie,
@@ -253,6 +254,7 @@ function Document({
 					</SearchParamsProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
+				<InitialI18nStore locale={locale} />
 				<Scripts />
 			</body>
 		</html>

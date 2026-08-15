@@ -12,6 +12,11 @@ export function i18nLoader() {
 		.init({
 			...config,
 			ns: getInitialNamespaces(),
+			// the SSR HTML embeds the initial namespaces (see InitialI18nStore) so
+			// init needs no HTTP round-trips before hydration; anything not embedded
+			// still loads via the backend thanks to partialBundledLanguages
+			resources: window.__initialI18nStore,
+			partialBundledLanguages: true,
 			backend: {
 				loadPath: (lng: any, ns: any) => {
 					// use vite static asset fingerprinting
