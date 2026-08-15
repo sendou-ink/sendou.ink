@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "Personal",
 	"matchProfile.maps.preferencesFor": "Preferences for",
 	"matchProfile.maps.teamExplanation": "Team map list is used for all members when queueing as a team",
+	"matchProfile.maps.teamPreferencesHint": "Looking for your team's map preferences? They are on the Edit team page.",
 	"matchProfile.maps.avoid": "Avoid",
 	"matchProfile.maps.prefer": "Prefer",
 	"matchProfile.maps.neutral": "Neutral",

@@ -246,6 +246,11 @@
 	margin-block: var(--s-6);
 }
 
+.mapPreferencesDivider {
+	margin-block-start: var(--s-6);
+	margin-block-end: var(--s-2);
+}
+
 @container (width >= 640px) {
 	.bannerFlags {
 		display: flex;

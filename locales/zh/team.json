@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "创建新队伍",
 	"editTeam.header": "正在编辑 {{teamName}}",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "搜索队伍或玩家...",
 	"actionButtons.leaveTeam": "退出队伍",
 	"actionButtons.makeMainTeam": "设置为主要队伍",

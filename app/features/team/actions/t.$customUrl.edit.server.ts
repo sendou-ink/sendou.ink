@@ -47,6 +47,22 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			return { ok: true };
 		}
+		case "UPDATE_MAP_MODE_PREFERENCES": {
+			await TeamRepository.updateMapModePreferences({
+				id: team.id,
+				mapModePreferences: data.mapModePreferences,
+			});
+
+			return { ok: true };
+		}
+		case "REMOVE_MAP_MODE_PREFERENCES": {
+			await TeamRepository.updateMapModePreferences({
+				id: team.id,
+				mapModePreferences: null,
+			});
+
+			return { ok: true };
+		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
 			const teams = await TeamRepository.findAllUndisbanded();

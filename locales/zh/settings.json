@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "个人",
 	"matchProfile.maps.preferencesFor": "偏好于",
 	"matchProfile.maps.teamExplanation": "以队伍身份排队时，系统将对所有成员应用队伍的场地列表偏好",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "避开",
 	"matchProfile.maps.prefer": "偏好",
 	"matchProfile.maps.neutral": "中立",

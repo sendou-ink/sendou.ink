@@ -1,9 +1,10 @@
 import { type Insertable, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
-import type { CustomTheme } from "~/db/tables-json";
+import type { CustomTheme, UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import { mergeExcludedModePreferences } from "~/features/match-profile/MatchProfileRepository.server";
 import { NON_PLAYER_TEAM_ROLES } from "~/features/team/team-constants";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -157,6 +158,7 @@ export async function findByCustomUrl(
 			"Team.tag",
 			"Team.customUrl",
 			"Team.customTheme",
+			"Team.mapModePreferences",
 			"Team.avatarImgId",
 			"Team.bannerImgId",
 			concatUserSubmittedImagePrefix(
@@ -457,6 +459,44 @@ export async function updateCustomTheme({
 		.set({
 			customTheme: customTheme ? JSON.stringify(customTheme) : null,
 		})
+		.where("id", "=", id)
+		.execute();
+}
+
+/** Updates the team's SendouQ map/mode preferences, or clears them when passed `null`. Keeps existing map pools of modes missing from the new value. */
+export async function updateMapModePreferences({
+	id,
+	mapModePreferences,
+}: {
+	id: number;
+	mapModePreferences: UserMapModePreferences | null;
+}) {
+	if (!mapModePreferences) {
+		await db
+			.updateTable("AllTeam")
+			.set({ mapModePreferences: null })
+			.where("id", "=", id)
+			.execute();
+		return;
+	}
+
+	const current = await db
+		.selectFrom("Team")
+		.select("Team.mapModePreferences")
+		.where("Team.id", "=", id)
+		.executeTakeFirstOrThrow();
+
+	const merged: UserMapModePreferences = {
+		...mapModePreferences,
+		pool: mergeExcludedModePreferences(
+			mapModePreferences.pool,
+			current.mapModePreferences?.pool,
+		),
+	};
+
+	await db
+		.updateTable("AllTeam")
+		.set({ mapModePreferences: JSON.stringify(merged) })
 		.where("id", "=", id)
 		.execute();
 }
