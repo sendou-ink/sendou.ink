@@ -30,6 +30,8 @@ function testGame(
 		mapIndex: 0,
 		mode: "SZ",
 		stageId: 0 as StageId,
+		winnerUserIds: [],
+		loserUserIds: [],
 		winnerInGameNames: [],
 		loserInGameNames: [],
 		playedAt: 1000,
@@ -384,6 +386,57 @@ describe("matchedGames", () => {
 		});
 
 		expect(matched.map(tournamentMatchIdOf)).toEqual([2]);
+	});
+
+	test("pins the sides via the POV sender's roster, overruling contradicting names", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [
+				testMatch({
+					// names read flipped, but the sender's seat is on the winning rows
+					names: ["l1", "l2", "l3", "l4", "w1", "w2", "w3", "w4"],
+					povIndex: 0,
+				}),
+			],
+			games: [
+				testGame({
+					winnerUserIds: [77],
+					loserUserIds: [88],
+					winnerInGameNames: ["w1", "w2"],
+					loserInGameNames: ["l1", "l2"],
+				}),
+			],
+			povUserId: 77,
+		});
+
+		expect(matched).toHaveLength(1);
+	});
+
+	test("skips a game seating the POV sender on the wrong side", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [testMatch({ povIndex: 4 })],
+			games: [testGame({ winnerUserIds: [77], loserUserIds: [88] })],
+			// the sender won the game, yet the read has their seat on the losing rows
+			povUserId: 77,
+		});
+
+		expect(matched).toHaveLength(0);
+	});
+
+	test("falls back to the name check when the sender is in neither roster", () => {
+		const matched = Scoreboards.matchedGames({
+			matches: [testMatch({ povIndex: 0 })],
+			games: [
+				testGame({
+					winnerUserIds: [77],
+					loserUserIds: [88],
+					winnerInGameNames: ["l1", "l2"],
+					loserInGameNames: ["w1", "w2"],
+				}),
+			],
+			povUserId: 99,
+		});
+
+		expect(matched).toHaveLength(0);
 	});
 
 	test("matches known in-game names ignoring discriminator, case and unicode width", () => {

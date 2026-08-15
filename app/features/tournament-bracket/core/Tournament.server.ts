@@ -315,13 +315,20 @@ export async function bracketsMetaCached(
 	return (await tournamentSharedCached(tournamentId)).bracketsDerivedMeta;
 }
 
-/** One bracket with its match data, in the shape {@link Tournament.withBrackets} revives. */
-export function serializeBracket(bracket: Bracket): SerializedBracket {
+/**
+ * One bracket with its match data, in the shape {@link Tournament.withBrackets} revives.
+ * With a `groupId` only that group's rounds and matches are included, every group of the
+ * bracket still being listed so that the view can offer switching to the others.
+ */
+export function serializeBracket(
+	bracket: Bracket,
+	args?: { groupId: number | null },
+): SerializedBracket {
 	return {
 		id: bracket.id,
 		idx: bracket.idx,
 		preview: bracket.preview,
-		data: bracket.data,
+		data: args?.groupId ? groupsData(bracket.data, args.groupId) : bracket.data,
 		type: bracket.type,
 		participantsReady: bracket.participantsReady,
 		name: bracket.name,
@@ -334,6 +341,17 @@ export function serializeBracket(bracket: Bracket): SerializedBracket {
 		startTime: bracket.startTime
 			? dateToDatabaseTimestamp(bracket.startTime)
 			: null,
+	};
+}
+
+function groupsData(
+	data: SerializedBracket["data"],
+	groupId: number,
+): SerializedBracket["data"] {
+	return {
+		...data,
+		round: data.round.filter((round) => round.groupId === groupId),
+		match: data.match.filter((match) => match.groupId === groupId),
 	};
 }
 

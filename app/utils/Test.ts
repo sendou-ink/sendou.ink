@@ -16,6 +16,13 @@ import {
 } from "~/features/auth/core/user-context.server";
 import { logger } from "./logger";
 
+/**
+ * The user a wrapped action/loader call runs as: one of the pinned seed users,
+ * or any user's id — scenario tests' users are participants and staff the test
+ * itself created, not fixed ids.
+ */
+export type TestUser = "admin" | "regular" | number;
+
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	return (
 		arr1.length === arr2.length && arr1.every((item) => arr2.includes(item))
@@ -63,10 +70,7 @@ export function wrappedAction<T extends z.ZodTypeAny>({
 }) {
 	return async (
 		args: z.infer<T>,
-		{
-			user,
-			params = {},
-		}: { user?: "admin" | "regular"; params?: Params<string> } = {},
+		{ user, params = {} }: { user?: TestUser; params?: Params<string> } = {},
 	) => {
 		const body = isJsonSubmission
 			? JSON.stringify(args)
@@ -127,7 +131,7 @@ export function wrappedLoader<T>({
 		user,
 		params = {},
 	}: {
-		user?: "admin" | "regular";
+		user?: TestUser;
 		params?: Params<string>;
 	} = {}) => {
 		const request = new Request("http://app.com/path", {
@@ -182,14 +186,18 @@ export function assertResponseErrored(response: Response, message?: string) {
 	}
 }
 
-async function authHeader(
-	user?: "admin" | "regular",
-): Promise<[string, string][]> {
-	if (!user) return [];
+async function authHeader(user?: TestUser): Promise<[string, string][]> {
+	if (user === undefined) return [];
 
 	const session = await authSessionStorage.getSession();
 
-	session.set(SESSION_KEY, user === "admin" ? ADMIN_ID : REGULAR_USER_TEST_ID);
+	session.set(SESSION_KEY, testUserId(user));
 
 	return [["Cookie", await authSessionStorage.commitSession(session)]];
+}
+
+function testUserId(user: Exclude<TestUser, undefined>): number {
+	if (typeof user === "number") return user;
+
+	return user === "admin" ? ADMIN_ID : REGULAR_USER_TEST_ID;
 }

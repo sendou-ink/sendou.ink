@@ -62,7 +62,10 @@ import {
 	type TournamentBracketsLoaderData,
 } from "../loaders/to.$id.brackets.server";
 import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
-import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
+import {
+	tournamentBracketWebsocketRoom,
+	tournamentWebsocketRoom,
+} from "../tournament-bracket-utils";
 
 export { action, loader };
 
@@ -108,6 +111,16 @@ function TournamentBracketsView() {
 
 	useWebsocketRevalidation(
 		tournamentWebsocketRoom(tournament.ctx.id),
+		!tournament.ctx.isFinalized,
+	);
+	// results of the loaded bracket (and group) broadcast to their own room, so that
+	// another bracket's or group's live scores do not make this view refetch
+	useWebsocketRevalidation(
+		tournamentBracketWebsocketRoom({
+			tournamentId: tournament.ctx.id,
+			bracketIdx: data.bracketIdx,
+			groupId: data.groupId,
+		}),
 		!tournament.ctx.isFinalized,
 	);
 
@@ -248,6 +261,7 @@ function TournamentBracketsView() {
 					<BracketTabContent
 						bracket={bracket}
 						bracketIdx={data.bracketIdx}
+						groupId={data.groupId}
 						waitingForTeamsText={waitingForTeamsText}
 						teamsSourceText={teamsSourceText}
 					/>
@@ -567,19 +581,23 @@ function BracketTabs({
 function BracketTabContent({
 	bracket,
 	bracketIdx,
+	groupId,
 	waitingForTeamsText,
 	teamsSourceText,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	groupId: number | null;
 	waitingForTeamsText: (bracket: BracketType, bracketIdx: number) => string;
 	teamsSourceText: (bracket: BracketType) => string | null;
 }) {
+	const tournament = useTournament();
+
 	return (
 		<>
 			<AbDivisionsImbalanceAlert bracket={bracket} />
 			<PrepareMapsButton bracket={bracket} bracketIdx={bracketIdx} />
-			{bracket.enoughTeams ? (
+			{tournament.bracketsMeta[bracketIdx].enoughTeams ? (
 				<>
 					{bracket.type !== "round_robin" && !bracket.preview ? (
 						<div className="stack horizontal sm mb-4">
@@ -587,7 +605,11 @@ function BracketTabContent({
 						</div>
 					) : null}
 					<StartBracketAlert bracket={bracket} bracketIdx={bracketIdx} />
-					<Bracket bracket={bracket} bracketIdx={bracketIdx} />
+					<Bracket
+						bracket={bracket}
+						bracketIdx={bracketIdx}
+						groupId={groupId}
+					/>
 				</>
 			) : (
 				<div>

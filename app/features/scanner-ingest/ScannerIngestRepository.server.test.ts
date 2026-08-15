@@ -384,6 +384,8 @@ function sendouqGame(map: {
 		mapIndex: map.index,
 		mode: map.mode,
 		stageId: map.stageId,
+		winnerUserIds: [],
+		loserUserIds: [],
 		winnerInGameNames: [],
 		loserInGameNames: [],
 		playedAt: Math.floor(PLAYED_AT / 1000),

@@ -14,6 +14,11 @@ export default defineConfig({
 			"app/features/scanner/tests/*.test.{ts,tsx}",
 		],
 		setupFiles: ["./app/test-setup.ts"],
+		// the scanner-ingest scenario suite exercises the real ingest action,
+		// whose gate reads Config.scannerEnabled from this variable
+		env: {
+			VITE_SCANNER_ENABLED: "true",
+		},
 	},
 	resolve: {
 		tsconfigPaths: true,

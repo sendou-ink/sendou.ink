@@ -94,7 +94,12 @@ export function gamesInTournamentMatch(tournamentMatchId: number) {
 	return tournamentGames({ tournamentMatchIds: [tournamentMatchId] });
 }
 
-/** Returns a SendouQ match's games (its whole map list), in map order. */
+/**
+ * Returns a SendouQ match's reported games, in map order. The match's
+ * pre-generated unplayed maps are left out: only a reported game is a link
+ * target, so a match sent before its game's report stays unlinked (and gets
+ * linked by a later resend instead).
+ */
 export function gamesInGroupMatch(groupMatchId: number) {
 	return sendouqGames({ groupMatchId });
 }
@@ -782,7 +787,7 @@ async function tournamentGames({
 		.orderBy("TournamentMatchGameResult.number", "asc")
 		.execute();
 
-	const inGameNamesByTeamId = await teamInGameNames(
+	const rostersByTeamId = await teamRosters(
 		rows.flatMap((row) => [row.opponentOneId, row.opponentTwoId]),
 	);
 	const linkedNames = await linkedPlayerNamesByTarget(
@@ -798,6 +803,10 @@ async function tournamentGames({
 					? row.opponentOneId
 					: null;
 
+		const winnerRoster = rostersByTeamId.get(row.winnerTeamId);
+		const loserRoster =
+			loserTeamId !== null ? rostersByTeamId.get(loserTeamId) : undefined;
+
 		return {
 			target: {
 				type: "tournament",
@@ -808,28 +817,33 @@ async function tournamentGames({
 			mapIndex: row.number - 1,
 			mode: row.mode,
 			stageId: row.stageId,
-			winnerInGameNames: inGameNamesByTeamId.get(row.winnerTeamId) ?? [],
-			loserInGameNames:
-				(loserTeamId !== null
-					? inGameNamesByTeamId.get(loserTeamId)
-					: undefined) ?? [],
+			winnerUserIds: winnerRoster?.userIds ?? [],
+			loserUserIds: loserRoster?.userIds ?? [],
+			winnerInGameNames: winnerRoster?.inGameNames ?? [],
+			loserInGameNames: loserRoster?.inGameNames ?? [],
 			playedAt: row.playedAt,
 			linkedPlayerNames: linkedNames.get(row.matchGameResultId) ?? null,
 		};
 	});
 }
 
-async function teamInGameNames(teamIds: Array<number | null>) {
+interface Roster {
+	userIds: number[];
+	inGameNames: string[];
+}
+
+async function teamRosters(teamIds: Array<number | null>) {
 	const uniqueTeamIds = [
 		...new Set(teamIds.filter((id): id is number => id !== null)),
 	];
-	if (uniqueTeamIds.length === 0) return new Map<number, string[]>();
+	if (uniqueTeamIds.length === 0) return new Map<number, Roster>();
 
 	const members = await db
 		.selectFrom("TournamentTeamMember")
 		.innerJoin("User", "User.id", "TournamentTeamMember.userId")
 		.select((eb) => [
 			"TournamentTeamMember.tournamentTeamId",
+			"TournamentTeamMember.userId",
 			eb.fn
 				.coalesce("TournamentTeamMember.inGameName", "User.inGameName")
 				.as("inGameName"),
@@ -837,12 +851,15 @@ async function teamInGameNames(teamIds: Array<number | null>) {
 		.where("TournamentTeamMember.tournamentTeamId", "in", uniqueTeamIds)
 		.execute();
 
-	const result = new Map<number, string[]>();
+	const result = new Map<number, Roster>();
 	for (const member of members) {
-		if (!member.inGameName) continue;
-		const names = result.get(member.tournamentTeamId) ?? [];
-		names.push(member.inGameName);
-		result.set(member.tournamentTeamId, names);
+		const roster = result.get(member.tournamentTeamId) ?? {
+			userIds: [],
+			inGameNames: [],
+		};
+		roster.userIds.push(member.userId);
+		if (member.inGameName) roster.inGameNames.push(member.inGameName);
+		result.set(member.tournamentTeamId, roster);
 	}
 
 	return result;
@@ -872,7 +889,9 @@ async function sendouqGames({
 			"GroupMatch.createdAt as playedAt",
 		])
 		.$if(groupMatchId !== undefined, (qb) =>
-			qb.where("GroupMatchMap.matchId", "=", groupMatchId!),
+			qb
+				.where("GroupMatchMap.matchId", "=", groupMatchId!)
+				.where("GroupMatchMap.winnerGroupId", "is not", null),
 		)
 		// joined (not EXISTS) so the planner drives off the user's own
 		// membership index instead of scanning the whole createdAt window
@@ -888,8 +907,6 @@ async function sendouqGames({
 					),
 			),
 		)
-		// content resolution walks played games only; a current match's
-		// pre-generated unplayed maps would flood the candidate sequence
 		.$if(since !== undefined, (qb) =>
 			qb
 				.where("GroupMatch.createdAt", ">=", since!)
@@ -899,7 +916,7 @@ async function sendouqGames({
 		.orderBy("GroupMatchMap.index", "asc")
 		.execute();
 
-	const inGameNamesByGroupId = await groupInGameNames(
+	const rostersByGroupId = await groupRosters(
 		rows.flatMap((row) => [row.alphaGroupId, row.bravoGroupId]),
 	);
 	const linkedNames = await linkedPlayerNamesByTarget(
@@ -915,6 +932,13 @@ async function sendouqGames({
 					? row.alphaGroupId
 					: null;
 
+		const winnerRoster =
+			row.winnerGroupId !== null
+				? rostersByGroupId.get(row.winnerGroupId)
+				: undefined;
+		const loserRoster =
+			loserGroupId !== null ? rostersByGroupId.get(loserGroupId) : undefined;
+
 		return {
 			target: {
 				type: "sendouq",
@@ -925,37 +949,36 @@ async function sendouqGames({
 			mapIndex: row.mapIndex,
 			mode: row.mode,
 			stageId: row.stageId,
-			winnerInGameNames:
-				(row.winnerGroupId !== null
-					? inGameNamesByGroupId.get(row.winnerGroupId)
-					: undefined) ?? [],
-			loserInGameNames:
-				(loserGroupId !== null
-					? inGameNamesByGroupId.get(loserGroupId)
-					: undefined) ?? [],
+			winnerUserIds: winnerRoster?.userIds ?? [],
+			loserUserIds: loserRoster?.userIds ?? [],
+			winnerInGameNames: winnerRoster?.inGameNames ?? [],
+			loserInGameNames: loserRoster?.inGameNames ?? [],
 			playedAt: row.playedAt,
 			linkedPlayerNames: linkedNames.get(row.groupMatchMapId) ?? null,
 		};
 	});
 }
 
-async function groupInGameNames(groupIds: number[]) {
+async function groupRosters(groupIds: number[]) {
 	const uniqueGroupIds = [...new Set(groupIds)];
-	if (uniqueGroupIds.length === 0) return new Map<number, string[]>();
+	if (uniqueGroupIds.length === 0) return new Map<number, Roster>();
 
 	const members = await db
 		.selectFrom("GroupMember")
 		.innerJoin("User", "User.id", "GroupMember.userId")
-		.select(["GroupMember.groupId", "User.inGameName"])
+		.select(["GroupMember.groupId", "GroupMember.userId", "User.inGameName"])
 		.where("GroupMember.groupId", "in", uniqueGroupIds)
 		.execute();
 
-	const result = new Map<number, string[]>();
+	const result = new Map<number, Roster>();
 	for (const member of members) {
-		if (!member.inGameName) continue;
-		const names = result.get(member.groupId) ?? [];
-		names.push(member.inGameName);
-		result.set(member.groupId, names);
+		const roster = result.get(member.groupId) ?? {
+			userIds: [],
+			inGameNames: [],
+		};
+		roster.userIds.push(member.userId);
+		if (member.inGameName) roster.inGameNames.push(member.inGameName);
+		result.set(member.groupId, roster);
 	}
 
 	return result;

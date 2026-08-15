@@ -751,8 +751,11 @@ export class Tournament {
 	}
 
 	matchIdToBracketIdx(matchId: number) {
-		const idx = this.brackets.findIndex((bracket) =>
-			bracket.data.match.some((match) => match.id === matchId),
+		const idx = this.brackets.findIndex(
+			(bracket) =>
+				// preview brackets have locally generated match ids that can collide with real ones
+				!bracket.preview &&
+				bracket.data.match.some((match) => match.id === matchId),
 		);
 
 		if (idx === -1) return null;
