@@ -239,7 +239,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		: null;
 
 	return {
-		...(await UserCardRepository.findAllByUserIds({
+		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: match.players.map((p) => p.id),
 			include: {
 				friendCode: isParticipant || isSiteStaff || isTournamentStaff,

@@ -4,6 +4,8 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
 import * as PrivateUserNoteRepository from "~/features/sendouq/PrivateUserNoteRepository.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { withNoUser, withUserId } from "~/utils/Test";
 import * as UserCardRepository from "./UserCardRepository.server";
 import type { UserCardData } from "./user-card-types";
@@ -485,6 +487,39 @@ describe("UserCardRepository.findAllByUserIdsCached", () => {
 
 		const { userCards } = await cachedCard(target.id);
 		expect(userCards.get(target.id)?.shortBio).toBe("edited");
+	});
+
+	test("overlays the latest friend code only when opted in", async () => {
+		const user = await UserFactory.create({ friendCode: null });
+		for (const [friendCode, createdAt] of [
+			["1111-2222-3333", new Date("2024-01-01")],
+			["4444-5555-6666", new Date("2025-01-01")],
+		] as const) {
+			await UserRepository.insertFriendCode({
+				userId: user.id,
+				submitterUserId: user.id,
+				friendCode,
+				createdAt: dateToDatabaseTimestamp(createdAt),
+			});
+		}
+
+		const withoutInclude = await cachedCard(user.id);
+		expect(withoutInclude.userCards.get(user.id)?.friendCode).toBeNull();
+
+		// served from the entry the call above cached, with the friend code overlaid on top
+		const withInclude = await withNoUser(() =>
+			UserCardRepository.findAllByUserIdsCached({
+				userIds: [user.id],
+				include: { friendCode: true },
+			}),
+		);
+		expect(withInclude.userCards.get(user.id)?.friendCode).toBe(
+			"4444-5555-6666",
+		);
+
+		// the include must not have stuck to the cached entry
+		const withoutIncludeAgain = await cachedCard(user.id);
+		expect(withoutIncludeAgain.userCards.get(user.id)?.friendCode).toBeNull();
 	});
 
 	test("coalesces concurrent misses for the same user into one query", async () => {

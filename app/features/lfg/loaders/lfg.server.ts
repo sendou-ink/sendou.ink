@@ -21,7 +21,7 @@ export const loader = async () => {
 	return {
 		posts,
 		tiersMap: await postsUsersTiersMap(posts),
-		...(await UserCardRepository.findAllByUserIds({
+		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: cardUserIds,
 		})),
 	};

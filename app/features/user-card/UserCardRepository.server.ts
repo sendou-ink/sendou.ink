@@ -70,19 +70,19 @@ export async function findAllByUserIds({
 }
 
 const CARD_CACHE_TTL_MS = 30 * 1000;
-const CARD_CACHE_MAX_ENTRIES = 2_000;
+const CARD_CACHE_MAX_ENTRIES = 3_000;
 const cardCache = new LRUCache<
 	number,
 	{ storedAt: number; card: Promise<UserCardData | undefined> }
 >({ max: CARD_CACHE_MAX_ENTRIES });
 
 /**
- * Like {@link findAllByUserIds} (with the default options) but serves the
- * viewer-independent card data from a short-lived in-memory cache, querying only users
- * whose entry is missing or stale. The per-viewer `privateNote` is overlaid fresh on
- * every call so a cached card is never viewer-specific. For high-frequency views (the
- * SendouQ looking page) where broadcast-driven revalidation makes many clients rebuild
- * the same cards at once; cards may be up to 30 seconds stale.
+ * Like {@link findAllByUserIds} but serves the viewer-independent card data from a
+ * short-lived in-memory cache, querying only users whose entry is missing or stale.
+ * The per-viewer `privateNote` and the opt-in `friendCode` are overlaid fresh on
+ * every call so a cached card is never viewer- or caller-specific. For high-frequency
+ * views (the SendouQ looking page) where broadcast-driven revalidation makes many
+ * clients rebuild the same cards at once; cards may be up to 30 seconds stale.
  *
  * The cache holds the in-flight query rather than its result, so concurrent misses for
  * the same user (exactly what a revalidation burst causes) await one shared query
@@ -90,10 +90,13 @@ const cardCache = new LRUCache<
  */
 export async function findAllByUserIdsCached({
 	userIds,
+	include,
 }: {
 	userIds: Array<number>;
+	/** Opt-in fields skipped by default; defaults to `false` each. */
+	include?: { friendCode?: boolean };
 }): Promise<{ userCards: Map<number, UserCardData> }> {
-	if (ServerConfig.disableCache) return findAllByUserIds({ userIds });
+	if (ServerConfig.disableCache) return findAllByUserIds({ userIds, include });
 	if (userIds.length === 0) return { userCards: new Map() };
 
 	const now = Date.now();
@@ -122,12 +125,16 @@ export async function findAllByUserIdsCached({
 	}
 
 	const privateNotes = await findPrivateNotesByTargetIds([...cards.keys()]);
+	const friendCodes = include?.friendCode
+		? await findFriendCodesByUserIds([...cards.keys()])
+		: new Map<number, string>();
 
 	const userCards = new Map<number, UserCardData>();
 	for (const [userId, card] of cards) {
 		userCards.set(userId, {
 			...card,
 			privateNote: privateNotes.get(userId) ?? null,
+			friendCode: friendCodes.get(userId) ?? null,
 		});
 	}
 
@@ -228,6 +235,28 @@ async function findPrivateNotesByTargetIds(userIds: Array<number>) {
 	}
 
 	return notes;
+}
+
+/**
+ * Latest friend code of each given user, keyed by their user id. Scanned oldest to newest so the
+ * newest code is the one left in the map, matching {@link friendCodeScalar}.
+ */
+async function findFriendCodesByUserIds(userIds: Array<number>) {
+	const friendCodes = new Map<number, string>();
+	if (userIds.length === 0) return friendCodes;
+
+	const rows = await db
+		.selectFrom("UserFriendCode")
+		.select(["UserFriendCode.userId", "UserFriendCode.friendCode"])
+		.where("UserFriendCode.userId", "in", userIds)
+		.orderBy("UserFriendCode.createdAt", "asc")
+		.execute();
+
+	for (const row of rows) {
+		friendCodes.set(row.userId, row.friendCode);
+	}
+
+	return friendCodes;
 }
 
 /**
