@@ -21,7 +21,6 @@ import { TeamSearchFormField } from "./fields/TeamSearchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
 import { TimeRangeFormField } from "./fields/TimeRangeFormField";
 import { TournamentSearchFormField } from "./fields/TournamentSearchFormField";
-import { TrophiesFormField } from "./fields/TrophiesFormField";
 import { UserSearchFormField } from "./fields/UserSearchFormField";
 import {
 	WeaponPoolFormField,
@@ -48,6 +47,14 @@ import {
 	getNestedValue,
 	validateField,
 } from "./utils";
+
+// lazy loaded so the trophies field's WebGL renderer stays out of the eager
+// bundle of every page rendering a form
+const TrophiesFormField = React.lazy(() =>
+	import("./fields/TrophiesFormField").then((module) => ({
+		default: module.TrophiesFormField,
+	})),
+);
 
 export type { CustomFieldRenderProps };
 
@@ -560,14 +567,16 @@ export function FormField({
 			throw new Error("Trophies form field requires options prop");
 		}
 		return (
-			<TrophiesFormField
-				{...commonProps}
-				{...formField}
-				value={value as number[]}
-				onChange={handleChange as (v: number[]) => void}
-				options={options as TrophyOption[]}
-				{...(maxCount !== undefined ? { maxCount } : {})}
-			/>
+			<React.Suspense>
+				<TrophiesFormField
+					{...commonProps}
+					{...formField}
+					value={value as number[]}
+					onChange={handleChange as (v: number[]) => void}
+					options={options as TrophyOption[]}
+					{...(maxCount !== undefined ? { maxCount } : {})}
+				/>
+			</React.Suspense>
 		);
 	}
 

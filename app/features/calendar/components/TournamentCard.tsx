@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { ShieldMinus, Users } from "lucide-react";
+import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -9,7 +10,6 @@ import { Image, ModeImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { Trophy } from "~/features/trophies/components/Trophy";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
@@ -18,6 +18,14 @@ import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
+
+// lazy loaded so the WebGL renderer stays out of the eager bundle of every
+// page showing tournament cards, as the trophy only renders inside a popover
+const Trophy = lazy(() =>
+	import("~/features/trophies/components/Trophy").then((module) => ({
+		default: module.Trophy,
+	})),
+);
 
 export function TournamentCard({
 	tournament,
@@ -345,7 +353,9 @@ function PrizesPill({
 			}
 		>
 			{trophy ? (
-				<Trophy model={trophy} className={styles.trophyPreview} />
+				<Suspense fallback={<div className={styles.trophyPreviewFallback} />}>
+					<Trophy model={trophy} className={styles.trophyPreview} />
+				</Suspense>
 			) : badges ? (
 				<BadgeDisplay badges={badges} showText={false} compact />
 			) : null}

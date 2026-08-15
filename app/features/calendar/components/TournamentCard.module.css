@@ -171,3 +171,11 @@
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
 }
+
+.trophyPreviewFallback {
+	width: 19rem;
+	max-width: 100%;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
