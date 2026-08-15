@@ -253,7 +253,11 @@ function Groups() {
 		suggestedGroupIds,
 	});
 
+	const isSoloGroup = data.ownGroup?.members.length === 1;
+
 	const trailOf = (groupId: number): GroupCardTrail | undefined => {
+		if (isSoloGroup) return undefined;
+
 		const invitedBy = invitedByUsernames.get(groupId);
 		if (invitedBy) return { type: "INVITED", username: invitedBy };
 
