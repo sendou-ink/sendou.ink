@@ -219,8 +219,7 @@ async function globalSetup(config: FullConfig) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
 		// react-router-serve directly instead of `pnpm start`: ensureMigratedDb
-		// above already migrated (the script's `migrate up` step is redundant) and
-		// the Sentry instrument import only adds request overhead with no DSN set
+		// above already migrated, making the script's `migrate up` step redundant
 		const serverProcess = spawn(
 			process.execPath,
 			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],

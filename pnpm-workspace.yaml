@@ -1,5 +1,4 @@
 allowBuilds:
-  '@sentry/cli': true
   aws-sdk: false
   core-js: false
   esbuild: true
