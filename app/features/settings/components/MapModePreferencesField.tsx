@@ -9,7 +9,7 @@ import { ModeMapPoolPicker } from "./ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "./PreferenceRadioGroup";
 
 export function preferencesFromRaw(
-	raw: UserMapModePreferences | null,
+	raw: UserMapModePreferences | null | undefined,
 ): UserMapModePreferences {
 	if (!raw) return { pool: [], modes: [] };
 

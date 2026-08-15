@@ -4,7 +4,7 @@ import type { DB, Tables } from "~/db/tables";
 import type { CustomTheme, UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
-import { mergeExcludedModePreferences } from "~/features/match-profile/MatchProfileRepository.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { NON_PLAYER_TEAM_ROLES } from "~/features/team/team-constants";
 import { subsOfResult } from "~/features/team/team-utils";
 import { databaseTimestampNow } from "~/utils/dates";
@@ -133,7 +133,11 @@ export type findByCustomUrl = NonNullable<
 
 export async function findByCustomUrl(
 	customUrl: string,
-	{ includeInviteCode = false, includeUnvalidatedImages = false } = {},
+	{
+		includeInviteCode = false,
+		includeUnvalidatedImages = false,
+		includeMapModePreferences = false,
+	} = {},
 ) {
 	// join the unvalidated table (instead of the validated-only `UserSubmittedImage` view) so the
 	// edit page can preview images still pending moderation; for everyone else the url is gated on
@@ -158,7 +162,6 @@ export async function findByCustomUrl(
 			"Team.tag",
 			"Team.customUrl",
 			"Team.customTheme",
-			"Team.mapModePreferences",
 			"Team.avatarImgId",
 			"Team.bannerImgId",
 			concatUserSubmittedImagePrefix(
@@ -200,6 +203,9 @@ export async function findByCustomUrl(
 			).as("members"),
 		])
 		.$if(includeInviteCode, (qb) => qb.select("Team.inviteCode"))
+		.$if(includeMapModePreferences, (qb) =>
+			qb.select("Team.mapModePreferences"),
+		)
 		.where("Team.customUrl", "=", customUrl.toLowerCase())
 		.executeTakeFirst();
 
@@ -488,7 +494,7 @@ export async function updateMapModePreferences({
 
 	const merged: UserMapModePreferences = {
 		...mapModePreferences,
-		pool: mergeExcludedModePreferences(
+		pool: MatchProfileRepository.mergeExcludedModePreferences(
 			mapModePreferences.pool,
 			current.mapModePreferences?.pool,
 		),

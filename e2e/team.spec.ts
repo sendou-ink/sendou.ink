@@ -98,6 +98,14 @@ test.describe("Team page", () => {
 		await teamEdit.removeMapPreferences();
 		await isNotVisible(teamEdit.locators.removeMapPreferencesButton);
 
+		// the form re-syncs in place, so a following save can't restore what was removed
+		await expect(teamEdit.maps.preferenceRadio("SZ", "Neutral")).toBeChecked();
+		await expect(teamEdit.maps.preferenceRadio("TW", "Neutral")).toBeChecked();
+		await teamEdit.maps.selectModeTab("SZ");
+		await expect(teamEdit.maps.mapButton("SZ", 1)).not.toHaveClass(
+			SELECTED_MAP_CLASS,
+		);
+
 		await teamEdit.goto(customUrl);
 		await expect(teamEdit.maps.preferenceRadio("SZ", "Neutral")).toBeChecked();
 		await isNotVisible(teamEdit.locators.removeMapPreferencesButton);

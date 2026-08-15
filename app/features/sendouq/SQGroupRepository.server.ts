@@ -199,22 +199,23 @@ export async function insertFromPrevious(
  * preferences rather than on those of its members.
  */
 export async function syncTeamId(groupId: number, trx: Transaction<DB>) {
+	// the tables are joined directly instead of through `TeamMemberWithSecondary`,
+	// which SQLite materializes in full before the group filter narrows it down
 	const members = await trx
 		.selectFrom("GroupMember")
-		.leftJoin(
-			"TeamMemberWithSecondary",
-			"TeamMemberWithSecondary.userId",
-			"GroupMember.userId",
+		.innerJoin("AllTeamMember", (join) =>
+			join
+				.onRef("AllTeamMember.userId", "=", "GroupMember.userId")
+				.on("AllTeamMember.leftAt", "is", null),
 		)
-		.select(["TeamMemberWithSecondary.teamId"])
+		.innerJoin("Team", "Team.id", "AllTeamMember.teamId")
+		.select(["AllTeamMember.teamId"])
 		.where("GroupMember.groupId", "=", groupId)
 		.execute();
 
 	const counts = new Map<number, number>();
 
 	for (const member of members) {
-		if (member.teamId === null) continue;
-
 		const newCount = (counts.get(member.teamId) ?? 0) + 1;
 		if (newCount === FULL_GROUP_SIZE) {
 			await trx

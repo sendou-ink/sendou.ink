@@ -119,6 +119,7 @@ function TeamMapModePreferences() {
 				{t("team:mapPreferences.explanation")}
 			</div>
 			<SendouForm
+				key={JSON.stringify(team.mapModePreferences ?? null)}
 				schema={updateTeamMapModePreferencesSchema}
 				defaultValues={{
 					mapModePreferences: preferencesFromRaw(team.mapModePreferences),
