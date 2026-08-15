@@ -22,7 +22,6 @@ export function preferencesFromRaw(
 	};
 }
 
-// xxx: common field?
 export function MapModePreferencesField({
 	value,
 	onChange,
