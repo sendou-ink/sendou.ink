@@ -134,6 +134,9 @@ function ImageExportDialogContent({
 		try {
 			const { snapdom } = await import("@zumer/snapdom");
 
+			// defensive/speculative fix
+			await document.fonts.ready;
+
 			const blob = await snapdom.toBlob(frameRef.current, {
 				type: "png",
 				quality: 1,

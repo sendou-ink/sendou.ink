@@ -420,7 +420,7 @@ export function SeasonSummaryGraphic({
 							</div>
 						</div>
 						{typeof bestTournament.tier === "number" ? (
-							<TierPill tier={bestTournament.tier} />
+							<TierPill tier={bestTournament.tier} withoutAnimation />
 						) : null}
 					</div>
 				</>

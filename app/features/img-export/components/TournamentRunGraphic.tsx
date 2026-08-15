@@ -25,6 +25,8 @@ import {
 } from "./TournamentResultsGraphic";
 import styles from "./TournamentRunGraphic.module.css";
 
+const ROUND_NAME_ONE_LINE_MAX_LENGTH = 9;
+
 const SERIES_WIN_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 	day: "numeric",
 	month: "short",
@@ -153,7 +155,9 @@ export function TournamentRunGraphic({
 										<div
 											className={clsx(graphicStyles.boxLabel, styles.roundName)}
 										>
-											{match.roundName}
+											{roundNameLines(match.roundName).map((line) => (
+												<div key={line}>{line}</div>
+											))}
 										</div>
 										<GraphicScore
 											ownScore={match.ownScore}
@@ -172,6 +176,34 @@ export function TournamentRunGraphic({
 				path={tournamentTeamPage({ tournamentId, tournamentTeamId })}
 			/>
 		</GraphicContainer>
+	);
+}
+
+function roundNameLines(roundName: string) {
+	const words = roundName.split(" ");
+
+	if (
+		roundName.length <= ROUND_NAME_ONE_LINE_MAX_LENGTH ||
+		words.length === 1
+	) {
+		return [roundName];
+	}
+
+	const splitIndex =
+		R.firstBy(R.range(1, words.length), (index) =>
+			longestLineLength(words, index),
+		) ?? 1;
+
+	return [
+		words.slice(0, splitIndex).join(" "),
+		words.slice(splitIndex).join(" "),
+	];
+}
+
+function longestLineLength(words: string[], splitIndex: number) {
+	return Math.max(
+		words.slice(0, splitIndex).join(" ").length,
+		words.slice(splitIndex).join(" ").length,
 	);
 }
 

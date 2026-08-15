@@ -20,9 +20,11 @@ const POLISHED_TIERS = [1, 2, 3];
 export function TierPill({
 	tier,
 	isTentative = false,
+	withoutAnimation = false,
 }: {
 	tier: number;
 	isTentative?: boolean;
+	withoutAnimation?: boolean;
 }) {
 	const { t } = useTranslation();
 	const tierName = tierNumberToName(tier);
@@ -33,6 +35,7 @@ export function TierPill({
 		<div
 			className={clsx(styles.pill, tierClass, {
 				[styles.polished]: POLISHED_TIERS.includes(tier),
+				[styles.withoutAnimation]: withoutAnimation,
 			})}
 			data-testid={isTentative ? "tentative-tier" : "confirmed-tier"}
 			title={
