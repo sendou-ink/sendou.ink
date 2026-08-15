@@ -468,9 +468,10 @@ function AddSubsPopOver() {
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const tournament = useTournament();
 	const user = useUser();
+	const data = useLoaderData<TournamentBracketsLoaderData>();
 
 	const ownedTeam = tournament.ownedTeamByUser(user);
-	if (!ownedTeam) {
+	if (!ownedTeam || !data.ownTeamInviteCode) {
 		const teamMemberOf = tournament.teamMemberOfByUser(user);
 		if (!teamMemberOf) return null;
 
@@ -482,7 +483,7 @@ function AddSubsPopOver() {
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,
-		inviteCode: ownedTeam.inviteCode!,
+		inviteCode: data.ownTeamInviteCode,
 	})}`;
 
 	return (

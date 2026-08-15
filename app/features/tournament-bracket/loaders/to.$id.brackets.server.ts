@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import type { Bracket } from "../core/Bracket";
 import type { Tournament } from "../core/Tournament";
@@ -36,6 +37,8 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		});
 	}
 
+	const ownedTeam = tournament.ownedTeamByUser(user);
+
 	return {
 		bracketIdx,
 		groupId,
@@ -44,6 +47,10 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					// a preview bracket is generated whole and small, its team counts read from that
 					groupId: bracket.preview ? null : groupId,
 				})
+			: null,
+		// the invite link of the add subs popover, only the team's own captain sees it
+		ownTeamInviteCode: ownedTeam
+			? await TournamentTeamRepository.findInviteCodeById(ownedTeam.id)
 			: null,
 		// the layout does not ship these, standings derived in the view need them
 		participatedUserIds: tournament.participatedUserIds,

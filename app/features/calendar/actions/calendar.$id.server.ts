@@ -1,19 +1,16 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { z } from "zod";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
-import { canDeleteCalendarEvent } from "../calendar-utils";
 
 export const action: ActionFunction = async ({ params }) => {
-	const user = requireUser();
 	const parsedParams = z
 		.object({ id: z.preprocess(actualNumber, id) })
 		.parse(params);
@@ -21,14 +18,7 @@ export const action: ActionFunction = async ({ params }) => {
 		await CalendarRepository.findById(parsedParams.id),
 	);
 
-	errorToastIfFalsy(
-		canDeleteCalendarEvent({
-			user,
-			event,
-			startTime: databaseTimestampToDate(event.startTimes[0]),
-		}),
-		"Cannot delete event",
-	);
+	requirePermission(event, "DELETE");
 
 	if (event.tournamentId) {
 		errorToastIfFalsy(

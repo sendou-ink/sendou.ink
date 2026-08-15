@@ -2,7 +2,7 @@ import { formatDistance } from "date-fns";
 import type { ExpressionBuilder, Insertable, NotNull } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
-import type { MonthYear } from "~/features/plus-voting/core";
+import { isVotingActive, type MonthYear } from "~/features/plus-voting/core";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { commonUserSelect, jsonObjectFrom } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
@@ -104,7 +104,23 @@ export async function findAllByMonth(args: MonthYear & { tier?: number }) {
 		}
 	}
 
-	return result.sort((a, b) => b.entries[0].createdAt - a.entries[0].createdAt);
+	const votingActive =
+		process.env.NODE_ENV === "test" ? false : isVotingActive();
+
+	return result
+		.sort((a, b) => b.entries[0].createdAt - a.entries[0].createdAt)
+		.map((suggestion) => ({
+			...suggestion,
+			entries: suggestion.entries.map((entry, index) => ({
+				...entry,
+				permissions: entryPermissions({
+					authorId: entry.author.id,
+					isFirstSuggestion: index === 0,
+					entryCount: suggestion.entries.length,
+					votingActive,
+				}),
+			})),
+		}));
 }
 
 export interface MonthSummary {
@@ -196,6 +212,33 @@ export function deleteWithCommentsBySuggestedUserId({
 }
 
 /** Plus tier the suggested user already has, if any. */
+// the first entry is the suggestion itself; deleting it deletes the whole
+// suggestion which the author may only do while it has no comments
+function entryPermissions({
+	authorId,
+	isFirstSuggestion,
+	entryCount,
+	votingActive,
+}: {
+	authorId: number;
+	isFirstSuggestion: boolean;
+	entryCount: number;
+	votingActive: boolean;
+}) {
+	if (!isFirstSuggestion) {
+		return { EDIT: [], DELETE: [authorId] };
+	}
+
+	if (votingActive) {
+		return { EDIT: [], DELETE: [] };
+	}
+
+	return {
+		EDIT: [authorId],
+		DELETE: entryCount === 1 ? [authorId] : [],
+	};
+}
+
 function suggestedPlusTier(eb: ExpressionBuilder<DB, "PlusSuggestion">) {
 	return eb
 		.selectFrom("PlusTier")

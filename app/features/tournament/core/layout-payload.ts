@@ -7,7 +7,6 @@ import type { TournamentLoaderData } from "../loaders/to.$id.server";
  */
 const NULL_COMPACTED_TEAM_KEYS = [
 	"seed",
-	"inviteCode",
 	"logoUrl",
 	"activeRosterUserIds",
 	"startingBracketIdx",

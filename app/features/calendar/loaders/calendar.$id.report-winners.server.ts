@@ -1,29 +1,17 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
-import {
-	notFoundIfNullish,
-	parseParams,
-	unauthorizedIfFalsy,
-} from "~/utils/remix.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/zod";
-import { canReportCalendarEventWinners } from "../calendar-utils";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const params = parseParams({
 		params: args.params,
 		schema: idObject,
 	});
-	const user = requireUser();
 	const event = notFoundIfNullish(await CalendarRepository.findById(params.id));
 
-	unauthorizedIfFalsy(
-		canReportCalendarEventWinners({
-			user,
-			event,
-			startTimes: event.startTimes,
-		}),
-	);
+	requirePermission(event, "REPORT_WINNERS");
 
 	return {
 		name: event.name,

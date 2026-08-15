@@ -3,7 +3,7 @@ import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, DBBoolean, Tables } from "~/db/tables";
 import type {
 	CastedMatchesInfo,
 	PreparedMaps,
@@ -17,7 +17,9 @@ import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { isSupporter } from "~/modules/permissions/utils";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -33,6 +35,7 @@ import {
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
+import type { TournamentStaffRole } from "./tournament-constants";
 import { updatedCastedMatchesInfo } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
@@ -98,6 +101,8 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.role",
 									...commonUserSelect(eb),
 									"User.pronouns",
+									"User.isTournamentOrganizer",
+									"User.patronTier",
 								])
 								.whereRef(
 									"TournamentOrganizationMember.organizationId",
@@ -275,8 +280,19 @@ export async function findById(id: number) {
 
 	if (!result) return null;
 
+	const { organization, ...rest } = result;
+
 	return {
-		...result,
+		...rest,
+		organization: organization
+			? {
+					...organization,
+					members: organization.members.map(
+						({ isTournamentOrganizer, patronTier, ...member }) => member,
+					),
+				}
+			: organization,
+		permissions: permissionsOf(result),
 		teams: result.teams.map(({ members, ...team }) => ({
 			...team,
 			avgSeedingSkillOrdinal:
@@ -290,6 +306,78 @@ export async function findById(id: number) {
 		latestTeamIdByDuplicatedUserId: latestTeamIdByDuplicatedUserId(
 			result.teams,
 		),
+	};
+}
+
+/**
+ * Who may act on the tournament, following the convention in docs/dev/permissions.md.
+ *
+ * - `ADMIN`: full control of the tournament
+ * - `ORGANIZE`: running the tournament
+ * - `MANAGE_MATCHES`: casting, locking and admining individual matches
+ * - `EDIT_EVENT_INFO`: editing the calendar event the tournament belongs to. Organization
+ *   admins only qualify when the organization is established or they may add tournaments
+ *   of their own anyway.
+ * - `EDIT_IN_GAME_NAMES`: setting the in-game names of the tournament's players. Restricted
+ *   to members of an established organization because the name they set is shown in every
+ *   tournament from then on, not only in this one.
+ */
+function permissionsOf(tournament: {
+	author: { id: number };
+	staff: Array<{ id: number; role: TournamentStaffRole }>;
+	organization: {
+		isEstablished: DBBoolean;
+		members: Array<{
+			userId: number;
+			role: TournamentOrganizationRole;
+			isTournamentOrganizer: DBBoolean;
+			patronTier: number | null;
+		}>;
+	} | null;
+}) {
+	const organizationMembers = tournament.organization?.members ?? [];
+	const isEstablished = Boolean(tournament.organization?.isEstablished);
+
+	const membersWithRole = (roles: Array<TournamentOrganizationRole>) =>
+		organizationMembers
+			.filter((member) => roles.includes(member.role))
+			.map((member) => member.userId);
+	const staffWithRole = (roles: Array<TournamentStaffRole>) =>
+		tournament.staff
+			.filter((staff) => roles.includes(staff.role))
+			.map((staff) => staff.id);
+
+	const ADMIN = R.unique([tournament.author.id, ...membersWithRole(["ADMIN"])]);
+	const ORGANIZE = R.unique([
+		...ADMIN,
+		...membersWithRole(["ORGANIZER"]),
+		...staffWithRole(["ORGANIZER"]),
+	]);
+	const MANAGE_MATCHES = R.unique([
+		...ORGANIZE,
+		...membersWithRole(["STREAMER"]),
+		...staffWithRole(["STREAMER"]),
+	]);
+
+	return {
+		ADMIN,
+		ORGANIZE,
+		MANAGE_MATCHES,
+		EDIT_EVENT_INFO: R.unique([
+			tournament.author.id,
+			...organizationMembers
+				.filter(
+					(member) =>
+						member.role === "ADMIN" &&
+						(isEstablished ||
+							Boolean(member.isTournamentOrganizer) ||
+							isSupporter(member)),
+				)
+				.map((member) => member.userId),
+		]),
+		EDIT_IN_GAME_NAMES: isEstablished
+			? membersWithRole(["ADMIN", "ORGANIZER"])
+			: [],
 	};
 }
 

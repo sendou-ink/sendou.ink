@@ -333,11 +333,24 @@ export async function findById(
 
 	if (!firstRow) return null;
 
+	const startTimes = [firstRow, ...rest].map((row) => row.startsAt);
+	const now = new Date();
+
 	return {
 		...firstRow,
 		tags: firstRow.tags ?? [],
-		startTimes: [firstRow, ...rest].map((row) => row.startsAt),
+		startTimes,
 		startsAt: undefined,
+		permissions: {
+			EDIT: [firstRow.authorId],
+			DELETE:
+				databaseTimestampToDate(startTimes[0]) > now ? [firstRow.authorId] : [],
+			REPORT_WINNERS: startTimes.every(
+				(startTime) => databaseTimestampToDate(startTime) < now,
+			)
+				? [firstRow.authorId]
+				: [],
+		},
 	};
 }
 

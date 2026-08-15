@@ -89,7 +89,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	}
 
 	// ensure RunningTournament = sidebar updates
-	await tournamentFromDB({ tournamentId, user });
+	await tournamentFromDB(tournamentId);
 
 	return successToastWithRedirect({
 		url: tournamentBracketsPage({ tournamentId }),

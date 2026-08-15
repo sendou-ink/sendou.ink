@@ -1,11 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { teamParamsSchema } from "../team-schemas.server";
-import { canAddCustomizedColors, isTeamManager } from "../team-utils";
+import { canAddCustomizedColors } from "../team-utils";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -17,7 +18,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		}),
 	);
 
-	if (!isTeamManager({ team, user }) && !user.roles.includes("ADMIN")) {
+	if (!hasPermission(team, "EDIT", user)) {
 		throw redirect(teamPage(customUrl));
 	}
 

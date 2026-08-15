@@ -1022,6 +1022,17 @@ async function findTeamRecentMaps(
 		.execute();
 }
 
+/** Invite code of one team, the secret the tournament layout data does not carry. */
+export async function findInviteCodeById(tournamentTeamId: number) {
+	const row = await db
+		.selectFrom("TournamentTeam")
+		.select("TournamentTeam.inviteCode")
+		.where("TournamentTeam.id", "=", tournamentTeamId)
+		.executeTakeFirst();
+
+	return row?.inviteCode ?? null;
+}
+
 export function findByInviteCode(inviteCode: string) {
 	return db
 		.selectFrom("TournamentTeam")

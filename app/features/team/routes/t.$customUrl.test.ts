@@ -105,12 +105,12 @@ describe("Secondary teams", () => {
 	test("only the team owner (or admin) can delete a team", async () => {
 		const { customUrl } = await createTeamWithRegularMember({ name: "Team 1" });
 
-		const response = await teamPageAction(
-			{ _action: "DELETE_TEAM" },
-			{ user: "regular", params: { customUrl } },
-		);
-
-		assertResponseErrored(response);
+		await expect(
+			teamPageAction(
+				{ _action: "DELETE_TEAM" },
+				{ user: "regular", params: { customUrl } },
+			),
+		).rejects.toThrow("Response thrown with status code: 403");
 
 		expect(await TeamRepository.findByCustomUrl(customUrl)).toBeTruthy();
 	});

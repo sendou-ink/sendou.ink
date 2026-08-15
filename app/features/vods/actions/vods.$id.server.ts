@@ -1,9 +1,9 @@
 import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { badRequestIfFalsy, unauthorizedIfFalsy } from "~/utils/remix.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { badRequestIfFalsy } from "~/utils/remix.server";
 import { userVodsPage } from "~/utils/urls";
 import * as VodRepository from "../VodRepository.server";
-import { canEditVideo } from "../vods-utils";
 
 export const action = async ({ params }: ActionFunctionArgs) => {
 	const user = requireUser();
@@ -12,13 +12,7 @@ export const action = async ({ params }: ActionFunctionArgs) => {
 		await VodRepository.findVodById(Number(params.id)),
 	);
 
-	unauthorizedIfFalsy(
-		canEditVideo({
-			userId: user.id,
-			submitterUserId: vod.submitterUserId,
-			povUserId: typeof vod.pov === "string" ? undefined : vod.pov?.id,
-		}),
-	);
+	requirePermission(vod, "EDIT");
 
 	await VodRepository.deleteById(vod.id);
 

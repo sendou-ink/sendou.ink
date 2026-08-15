@@ -22,9 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		tournamentImportTeamsSearchParams.parse(request).fromTournamentId,
 	);
 
-	const { ctx } = await tournamentDataCached({
-		tournamentId: fromTournamentId,
-	});
+	const { ctx } = await tournamentDataCached(fromTournamentId);
 	requireTournamentVisible({ ctx, user });
 
 	const fromTournamentTeams = await tournamentTeamsFullCached({

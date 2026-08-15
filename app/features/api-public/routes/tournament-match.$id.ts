@@ -3,7 +3,7 @@ import { z } from "zod";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
@@ -74,10 +74,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
-	const tournament = await tournamentFromDBCached({
-		tournamentId: match.tournamentId,
-		user: undefined,
-	});
+	const tournament = await tournamentSharedCached(match.tournamentId);
 
 	const mapList = async (): Promise<GetTournamentMatchResponse["mapList"]> => {
 		const { opponentOne, opponentTwo } = match;

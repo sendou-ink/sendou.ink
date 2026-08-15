@@ -6,13 +6,13 @@ import type {
 	MemberRoleType,
 } from "~/features/team/team-constants";
 import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { CUSTOM_ROLE_VALUE } from "../team-schemas";
 import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
-import { isTeamManager } from "../team-utils";
 
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
@@ -21,10 +21,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl),
 	);
-	errorToastIfFalsy(
-		isTeamManager({ team, user }) || user.roles.includes("ADMIN"),
-		"Only team manager or owner can manage roster",
-	);
+	requirePermission(team, "MANAGE_ROSTER");
 
 	const result = await parseFormData({
 		request,

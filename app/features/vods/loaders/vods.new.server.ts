@@ -5,12 +5,12 @@ import {
 	prefillVodMatches,
 } from "~/features/scanner-ingest/core/VodMatches";
 import type { IngestVodPrefill } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
+import { hasPermission } from "~/modules/permissions/utils";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import * as VodRepository from "../VodRepository.server";
 import type { videoMatchTypes } from "../vods-constants";
 import { vodsNewSearchParams } from "../vods-search-params";
 import {
-	canEditVideo,
 	secondsToHoursMinutesSecondString,
 	vodToVideoBeingAdded,
 } from "../vods-utils";
@@ -27,14 +27,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const vod = notFoundIfNullish(await VodRepository.findVodById(vodId));
 	const vodToEdit = vodToVideoBeingAdded(vod);
 
-	if (
-		!canEditVideo({
-			submitterUserId: vod.submitterUserId,
-			userId: user.id,
-			povUserId:
-				vodToEdit.pov?.type === "USER" ? vodToEdit.pov.userId : undefined,
-		})
-	) {
+	if (!hasPermission(vod, "EDIT", user)) {
 		return { vodToEdit: null, vodPrefill: null };
 	}
 

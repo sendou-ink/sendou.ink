@@ -18,20 +18,6 @@ export function isTeamOwner({
 	return team.members.some((member) => member.isOwner && member.id === user.id);
 }
 
-export function isTeamManager({
-	team,
-	user,
-}: {
-	team: TeamRepository.findByCustomUrl;
-	user?: { id: number };
-}) {
-	if (!user) return false;
-
-	return team.members.some(
-		(member) => (member.isManager || member.isOwner) && member.id === user.id,
-	);
-}
-
 export function isTeamMember({
 	team,
 	user,

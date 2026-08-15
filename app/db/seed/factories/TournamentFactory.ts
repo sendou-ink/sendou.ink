@@ -147,7 +147,7 @@ export async function playOut(
 	brackets: PlayedBrackets = 0,
 	{ maps }: { maps?: RoundMaps } = {},
 ): Promise<PlayedMatch[]> {
-	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const tournament = await tournamentFromDB(tournamentId);
 	const bracketIdxs =
 		brackets === "all"
 			? tournament.ctx.settings.bracketProgression.map((_, idx) => idx)
@@ -192,7 +192,7 @@ export async function startBracket(
 		maps = ROUND_MAPS,
 	}: { bracketIdx?: number; maps?: RoundMaps } = {},
 ) {
-	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const tournament = await tournamentFromDB(tournamentId);
 
 	const bracket = tournament.bracketByIdx(bracketIdx);
 	invariant(bracket, `Tournament has no bracket at index ${bracketIdx}`);
@@ -219,7 +219,7 @@ export async function startBracket(
 
 	clearTournamentDataCache(tournamentId);
 
-	const started = await tournamentFromDB({ tournamentId, user: undefined });
+	const started = await tournamentFromDB(tournamentId);
 	const startedBracket = started.bracketByIdx(bracketIdx);
 	invariant(startedBracket, `Bracket at index ${bracketIdx} was not created`);
 
@@ -280,7 +280,7 @@ interface PlayedMatch {
 export async function playMatches(
 	tournamentId: number,
 ): Promise<PlayedMatch[]> {
-	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const tournament = await tournamentFromDB(tournamentId);
 
 	const played = playableMatches(tournament);
 	for (const match of played) {
@@ -305,7 +305,7 @@ async function generateNextSwissRound(
 	tournamentId: number,
 	bracketIdx: number,
 ) {
-	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const tournament = await tournamentFromDB(tournamentId);
 
 	const bracket = tournament.bracketByIdx(bracketIdx);
 	if (bracket?.type !== "swiss" || bracket.preview) return false;
@@ -405,7 +405,7 @@ function playableMatches(
 }
 
 async function setActiveRosters(tournamentId: number, match: PlayedMatch) {
-	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const tournament = await tournamentFromDB(tournamentId);
 
 	for (const teamId of [match.winnerTeamId, match.loserTeamId]) {
 		const team = tournament.teamById(teamId);
@@ -434,10 +434,7 @@ async function playOutMatch(tournamentId: number, match: PlayedMatch) {
 
 	while (!setOver) {
 		// rehydrated per map, the previous report having moved the score on
-		const tournament = await tournamentFromDB({
-			tournamentId,
-			user: undefined,
-		});
+		const tournament = await tournamentFromDB(tournamentId);
 		const matchRow = await findMatch(match.id);
 
 		const reported = await reportScore({
@@ -461,7 +458,7 @@ async function playOutMatch(tournamentId: number, match: PlayedMatch) {
 }
 
 async function finalize(tournamentId: number) {
-	const tournament = await tournamentFromDB({ tournamentId, user: undefined });
+	const tournament = await tournamentFromDB(tournamentId);
 
 	const event = await CalendarRepository.findById(tournament.ctx.eventId, {
 		includeBadgePrizes: true,

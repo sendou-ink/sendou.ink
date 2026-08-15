@@ -3,8 +3,8 @@ import * as R from "remeda";
 import type { getUser } from "~/features/auth/core/user.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import {
-	tournamentFromDBCached,
 	tournamentFromParams,
+	tournamentSharedCached,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
@@ -24,7 +24,7 @@ export type LookingLoaderData = SerializeFrom<typeof loader>;
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
 		params,
-		{ for: "view", personalized: true },
+		{ for: "view" },
 	);
 
 	if (!tournament.lfgEnabled) {
@@ -171,10 +171,7 @@ async function resolveOwnTeam({
 	if (!user) return null;
 	if (ownGroup) return null;
 
-	const tournament = await tournamentFromDBCached({
-		tournamentId,
-		user,
-	});
+	const tournament = await tournamentSharedCached(tournamentId);
 
 	const teamLite = tournament.teamMemberOfByUser(user);
 	if (!teamLite) return null;

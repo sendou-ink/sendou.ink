@@ -1,5 +1,3 @@
-import type { Tables } from "~/db/tables";
-import { isAdmin } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "../../utils/dates";
 import { HOURS_MINUTES_SECONDS_REGEX } from "./vods-schemas";
 import type { VideoBeingAdded, Vod } from "./vods-types";
@@ -30,24 +28,6 @@ export function vodToVideoBeingAdded(vod: Vod): VideoBeingAdded {
 						}
 					: undefined,
 	};
-}
-
-export function canEditVideo({
-	userId,
-	submitterUserId,
-	povUserId,
-}: {
-	userId?: Tables["User"]["id"];
-	submitterUserId: Tables["User"]["id"];
-	povUserId?: Tables["User"]["id"];
-}) {
-	if (!userId) return false;
-
-	return (
-		isAdmin({ id: userId }) ||
-		userId === submitterUserId ||
-		userId === povUserId
-	);
 }
 
 export function extractYoutubeIdFromVideoUrl(url: string): string | null {

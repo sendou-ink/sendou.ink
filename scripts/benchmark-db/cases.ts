@@ -119,6 +119,9 @@ export function buildCases(fx: Fixtures): {
 	add("ArtRepository.findArtsByUserId", fx.heavyArtUserId, (userId) =>
 		ArtRepository.findArtsByUserId(userId),
 	);
+	add("ArtRepository.findById", fx.heavyArtId, (artId) =>
+		ArtRepository.findById(artId),
+	);
 
 	// AssociationRepository
 	add("AssociationRepository.findById", fx.heavyAssociation, (association) =>
@@ -1132,6 +1135,12 @@ export function buildCases(fx: Fixtures): {
 		"TournamentTeamRepository.findByInviteCode",
 		fx.tournamentTeamInviteCode,
 		(inviteCode) => TournamentTeamRepository.findByInviteCode(inviteCode),
+	);
+	add(
+		"TournamentTeamRepository.findInviteCodeById",
+		fx.heavyTournamentTeamId,
+		(tournamentTeamId) =>
+			TournamentTeamRepository.findInviteCodeById(tournamentTeamId),
 	);
 	add(
 		"TournamentTeamRepository.findRecentlyPlayedMapsByIds",

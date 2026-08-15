@@ -2,9 +2,10 @@ import type { ActionFunction } from "react-router";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { userArtPageActionSchema } from "~/features/art/art-schemas.server";
 import { requireUser } from "~/features/auth/core/user.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { logger } from "~/utils/logger";
 import {
-	errorToastIfFalsy,
+	badRequestIfFalsy,
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
@@ -22,11 +23,10 @@ export const action: ActionFunction = async ({ request }) => {
 			// this actually doesn't delete the image itself from the static hosting
 			// but the idea is that storage is cheap anyway and if needed later
 			// then we can have a routine that checks all the images still current and nukes the rest
-			const userArts = await ArtRepository.findArtsByUserId(user.id, {
-				includeTagged: false,
-			});
-			const artToDelete = userArts.find((art) => art.id === data.id);
-			errorToastIfFalsy(artToDelete, "Insufficient permissions");
+			const artToDelete = badRequestIfFalsy(
+				await ArtRepository.findById(data.id),
+			);
+			requirePermission(artToDelete, "EDIT");
 
 			await ArtRepository.deleteById(data.id);
 
