@@ -1,15 +1,37 @@
 // timezone example is 'Asia/Tokyo'
 
+/** Hours between the local clock times of two timezones, wrapped to [-12, 12]. */
 export function hourDifferenceBetweenTimezones(
 	timezone1: string,
 	timezone2: string,
 ) {
-	const offset1 = getTimezoneOffset(timezone1);
-	const offset2 = getTimezoneOffset(timezone2);
-	const rawDifference = (offset1 - offset2) / 60;
+	return createTimezoneHourDifference()(timezone1, timezone2);
+}
 
-	// wrap to [-12, 12] so timezones across the date line compare by local clock time
-	return ((((rawDifference + 12) % 24) + 24) % 24) - 12;
+/**
+ * Same as {@link hourDifferenceBetweenTimezones}, but resolving each timezone's
+ * offset only once. Resolving an offset is expensive, so comparing many
+ * timezones (filtering a list of posts, say) should share one instance.
+ */
+export function createTimezoneHourDifference() {
+	const offsets = new Map<string, number>();
+
+	const offsetOf = (timezone: string) => {
+		const cached = offsets.get(timezone);
+		if (typeof cached === "number") return cached;
+
+		const offset = getTimezoneOffset(timezone);
+		offsets.set(timezone, offset);
+
+		return offset;
+	};
+
+	return (timezone1: string, timezone2: string) => {
+		const rawDifference = (offsetOf(timezone1) - offsetOf(timezone2)) / 60;
+
+		// wrap to [-12, 12] so timezones across the date line compare by local clock time
+		return ((((rawDifference + 12) % 24) + 24) % 24) - 12;
+	};
 }
 
 // https://stackoverflow.com/a/29268535

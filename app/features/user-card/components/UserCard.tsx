@@ -29,6 +29,7 @@ import {
 	acceptFriendRequestSchema,
 	sendFriendRequestBaseSchema,
 } from "~/features/friends/friends-schemas";
+import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
 import { userCardEditPage } from "~/features/user-card/user-card-urls";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
@@ -268,7 +269,7 @@ function CardContent({
 			<Banner banner={data.banner} />
 			{data.freeAgentPostId !== null ? (
 				<LinkButton
-					to={`${LFG_PAGE}#${data.freeAgentPostId}`}
+					to={`${lfgSearchParams.href(LFG_PAGE, { post: data.freeAgentPostId })}#${data.freeAgentPostId}`}
 					size="miniscule"
 					icon={<Megaphone />}
 					className={styles.freeAgentBadge}

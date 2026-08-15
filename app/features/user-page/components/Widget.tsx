@@ -19,6 +19,7 @@ import type { Tables } from "~/db/tables";
 import { userArtPage } from "~/features/art/art-urls";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
 import { tierListMakerSearchParams } from "~/features/tier-list-maker/tier-list-maker-search-params";
 import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
@@ -496,7 +497,7 @@ function LFGPosts({
 			{posts.map((post) => (
 				<Link
 					key={post.id}
-					to={`${LFG_PAGE}#${post.id}`}
+					to={`${lfgSearchParams.href(LFG_PAGE, { post: post.id })}#${post.id}`}
 					className={styles.lfgPost}
 				>
 					{t(`lfg:types.${post.type}`)}

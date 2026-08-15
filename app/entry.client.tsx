@@ -3,6 +3,7 @@ import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
 import type { LanguageCode } from "~/modules/i18n/config";
+import { writeViewerTimezoneCookie } from "./features/timezone/timezone-cookie";
 import { i18nLoader } from "./modules/i18n/loader";
 import { loadDateFnsLocale } from "./utils/dates";
 import { logger } from "./utils/logger";
@@ -12,6 +13,8 @@ import { getSessionId } from "./utils/session-id";
 const FETCH_RETRY_DELAYS_MS = [0, 5000, 15000];
 /** Random jitter added to each retry delay to avoid a thundering herd against a struggling server. */
 const FETCH_RETRY_JITTER_MS = 1000;
+
+writeViewerTimezoneCookie();
 
 const originalFetch = window.fetch;
 window.fetch = (input, init) => {
