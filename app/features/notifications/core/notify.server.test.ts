@@ -1,10 +1,15 @@
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { withUserId } from "~/utils/Test";
 import { APP_ICON_URL } from "~/utils/urls";
 import * as NotificationRepository from "../NotificationRepository.server";
 import { notificationMeta } from "../notifications-utils";
-import { clearSentNotificationsForTesting, notify } from "./notify.server";
+import {
+	clearSentNotificationsForTesting,
+	notify,
+	PUSH_NOTIFICATION_GRACE_PERIOD_MS,
+} from "./notify.server";
 
 const users = UserFactory.pool();
 
@@ -331,38 +336,60 @@ describe("notify() - web push notifications", () => {
 		mockWebPushEnabled.value = false;
 	});
 
-	test("sends web push notification when user has subscription", async () => {
-		const mockSubscription = {
-			endpoint: "https://fcm.googleapis.com/fcm/send/test",
-			keys: {
-				auth: "test-auth-key",
-				p256dh: "test-p256dh-key",
-			},
-		};
+	const subscribe = (userId: number, endpoint: string) =>
+		withUserId(userId, () =>
+			NotificationRepository.upsertOwnSubscription({
+				endpoint,
+				keys: { auth: "test-auth-key", p256dh: "test-p256dh-key" },
+			}),
+		);
 
-		vi.spyOn(
-			NotificationRepository,
-			"findAllSubscriptionsByUserIds",
-		).mockResolvedValue([
-			{
-				id: 1,
-				subscription: mockSubscription,
-			},
-		]);
+	const pushedEndpoints = () =>
+		mockSendNotification.mock.calls.map(
+			([subscription]) => subscription.endpoint,
+		);
 
+	const notifyAndElapseGracePeriod = async (
+		args: Parameters<typeof notify>[0],
+		duringGracePeriod?: () => Promise<unknown>,
+	) => {
+		vi.useFakeTimers();
+		try {
+			await notify(args);
+			await duringGracePeriod?.();
+			await vi.advanceTimersByTimeAsync(PUSH_NOTIFICATION_GRACE_PERIOD_MS);
+		} finally {
+			vi.useRealTimers();
+		}
+	};
+
+	test("sends web push notification after the grace period", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
 		mockWebPushEnabled.value = true;
 
-		await notify({
-			userIds: [users.id(1)],
-			notification: {
-				type: "SCRIM_NEW_REQUEST",
-				meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
-			},
-		});
+		vi.useFakeTimers();
+		try {
+			await notify({
+				userIds: [users.id(1)],
+				notification: {
+					type: "SCRIM_NEW_REQUEST",
+					meta: { fromUserId: 1, fromUsername: "alice", scrimPostId: 1 },
+				},
+			});
+
+			expect(mockSendNotification).not.toHaveBeenCalled();
+
+			await vi.advanceTimersByTimeAsync(PUSH_NOTIFICATION_GRACE_PERIOD_MS);
+		} finally {
+			vi.useRealTimers();
+		}
 
 		expect(mockSendNotification).toHaveBeenCalledTimes(1);
 		expect(mockSendNotification).toHaveBeenCalledWith(
-			mockSubscription,
+			{
+				endpoint: "https://push.example.com/1",
+				keys: { auth: "test-auth-key", p256dh: "test-p256dh-key" },
+			},
 			expect.any(String),
 			{ urgency: "high" },
 		);
@@ -376,39 +403,11 @@ describe("notify() - web push notifications", () => {
 	});
 
 	test("sends web push to multiple subscriptions", async () => {
-		const mockSubscription1 = {
-			endpoint: "https://fcm.googleapis.com/fcm/send/test1",
-			keys: {
-				auth: "test-auth-key-1",
-				p256dh: "test-p256dh-key-1",
-			},
-		};
-
-		const mockSubscription2 = {
-			endpoint: "https://fcm.googleapis.com/fcm/send/test2",
-			keys: {
-				auth: "test-auth-key-2",
-				p256dh: "test-p256dh-key-2",
-			},
-		};
-
-		vi.spyOn(
-			NotificationRepository,
-			"findAllSubscriptionsByUserIds",
-		).mockResolvedValue([
-			{
-				id: 1,
-				subscription: mockSubscription1,
-			},
-			{
-				id: 2,
-				subscription: mockSubscription2,
-			},
-		]);
-
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(2), "https://push.example.com/2");
 		mockWebPushEnabled.value = true;
 
-		await notify({
+		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1), users.id(2)],
 			notification: {
 				type: "BADGE_ADDED",
@@ -417,38 +416,18 @@ describe("notify() - web push notifications", () => {
 		});
 
 		expect(mockSendNotification).toHaveBeenCalledTimes(2);
-		expect(mockSendNotification).toHaveBeenCalledWith(
-			mockSubscription1,
-			expect.any(String),
-			{ urgency: "normal" },
-		);
-		expect(mockSendNotification).toHaveBeenCalledWith(
-			mockSubscription2,
-			expect.any(String),
-			{ urgency: "normal" },
+		expect(pushedEndpoints()).toEqual(
+			expect.arrayContaining([
+				"https://push.example.com/1",
+				"https://push.example.com/2",
+			]),
 		);
 	});
 
 	test("does not send web push when webPushEnabled is false", async () => {
-		const mockSubscription = {
-			endpoint: "https://fcm.googleapis.com/fcm/send/test",
-			keys: {
-				auth: "test-auth-key",
-				p256dh: "test-p256dh-key",
-			},
-		};
+		await subscribe(users.id(1), "https://push.example.com/1");
 
-		vi.spyOn(
-			NotificationRepository,
-			"findAllSubscriptionsByUserIds",
-		).mockResolvedValue([
-			{
-				id: 1,
-				subscription: mockSubscription,
-			},
-		]);
-
-		await notify({
+		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_NEW_REQUEST",
@@ -459,28 +438,52 @@ describe("notify() - web push notifications", () => {
 		expect(mockSendNotification).not.toHaveBeenCalled();
 	});
 
-	test("includes opponent team name for scrim notifications", async () => {
-		const mockSubscription = {
-			endpoint: "https://fcm.googleapis.com/fcm/send/test",
-			keys: {
-				auth: "test-auth-key",
-				p256dh: "test-p256dh-key",
-			},
-		};
-
-		vi.spyOn(
-			NotificationRepository,
-			"findAllSubscriptionsByUserIds",
-		).mockResolvedValue([
-			{
-				id: 1,
-				subscription: mockSubscription,
-			},
-		]);
-
+	test("skips the push for a user who saw the notification during the grace period", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(2), "https://push.example.com/2");
 		mockWebPushEnabled.value = true;
 
-		await notify({
+		await notifyAndElapseGracePeriod(
+			{
+				userIds: [users.id(1), users.id(2)],
+				notification: {
+					type: "SQ_NEW_MATCH",
+					meta: { matchId: 1 },
+				},
+			},
+			() =>
+				NotificationRepository.markAsSeenByType({
+					userIds: [users.id(1)],
+					type: "SQ_NEW_MATCH",
+					meta: { matchId: 1 },
+				}),
+		);
+
+		expect(pushedEndpoints()).toEqual(["https://push.example.com/2"]);
+	});
+
+	test("skips the push for users who had the notification seen by default", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(2), "https://push.example.com/2");
+		mockWebPushEnabled.value = true;
+
+		await notifyAndElapseGracePeriod({
+			userIds: [users.id(1), users.id(2)],
+			defaultSeenUserIds: [users.id(1)],
+			notification: {
+				type: "SQ_NEW_MATCH",
+				meta: { matchId: 1 },
+			},
+		});
+
+		expect(pushedEndpoints()).toEqual(["https://push.example.com/2"]);
+	});
+
+	test("includes opponent team name for scrim notifications", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		mockWebPushEnabled.value = true;
+
+		await notifyAndElapseGracePeriod({
 			userIds: [users.id(1)],
 			notification: {
 				type: "SCRIM_SCHEDULED",

@@ -33,6 +33,7 @@ logger.info(
 await notify({
 	userIds: [user.id],
 	notification: { type: "SEASON_STARTED", meta: { seasonNth } },
+	skipPushGracePeriod: true,
 });
 
 logger.info("Notification sent");

@@ -180,6 +180,30 @@ export function upsertOwnSubscription(subscription: NotificationSubscription) {
 		.execute();
 }
 
+/**
+ * Finds the push subscriptions of the given notification's recipients who have
+ * not seen it yet. Lets the push sender skip users who already addressed what
+ * the notification is about during the delivery grace period.
+ */
+export function findUnseenSubscriptionsByNotificationId(
+	notificationId: number,
+) {
+	return db
+		.selectFrom("NotificationUser")
+		.innerJoin(
+			"NotificationUserSubscription",
+			"NotificationUserSubscription.userId",
+			"NotificationUser.userId",
+		)
+		.select([
+			"NotificationUserSubscription.id",
+			"NotificationUserSubscription.subscription",
+		])
+		.where("NotificationUser.notificationId", "=", notificationId)
+		.where("NotificationUser.seen", "=", 0)
+		.execute();
+}
+
 export function findAllSubscriptionsByUserIds(userIds: number[]) {
 	return db
 		.selectFrom("NotificationUserSubscription")

@@ -279,3 +279,82 @@ describe("upsertOwnSubscription", () => {
 		).toHaveLength(2);
 	});
 });
+
+describe("findUnseenSubscriptionsByNotificationId", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	const subscribe = (userId: number, endpoint: string) =>
+		withUserId(userId, () =>
+			NotificationRepository.upsertOwnSubscription({
+				endpoint,
+				keys: { auth: "auth", p256dh: "p256dh" },
+			}),
+		);
+
+	const subscribedEndpointsOf = async (notificationId: number) => {
+		const subscriptions =
+			await NotificationRepository.findUnseenSubscriptionsByNotificationId(
+				notificationId,
+			);
+		return subscriptions.map(({ subscription }) => subscription.endpoint);
+	};
+
+	test("returns the subscriptions of recipients who have not seen the notification", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(2), "https://push.example.com/2");
+
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1) }, { userId: users.id(2) }],
+		});
+
+		expect(await subscribedEndpointsOf(notification.id)).toEqual(
+			expect.arrayContaining([
+				"https://push.example.com/1",
+				"https://push.example.com/2",
+			]),
+		);
+	});
+
+	test("excludes recipients who have seen the notification", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(2), "https://push.example.com/2");
+
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1), seen: 1 }, { userId: users.id(2) }],
+		});
+
+		expect(await subscribedEndpointsOf(notification.id)).toEqual([
+			"https://push.example.com/2",
+		]);
+	});
+
+	test("excludes subscriptions of users who did not receive the notification", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(3), "https://push.example.com/3");
+
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1) }, { userId: users.id(2) }],
+		});
+
+		expect(await subscribedEndpointsOf(notification.id)).toEqual([
+			"https://push.example.com/1",
+		]);
+	});
+
+	test("returns every subscription of an unseen recipient", async () => {
+		await subscribe(users.id(1), "https://push.example.com/1");
+		await subscribe(users.id(1), "https://push.example.com/2");
+
+		const notification = await NotificationFactory.create({
+			notification: { type: "SQ_READY_CHECK" },
+			users: [{ userId: users.id(1) }],
+		});
+
+		expect(await subscribedEndpointsOf(notification.id)).toHaveLength(2);
+	});
+});
