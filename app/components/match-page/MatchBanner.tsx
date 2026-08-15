@@ -51,7 +51,10 @@ export function MatchBanner({
 			}}
 			data-testid="stage-banner"
 		>
-			<div className={clsx(styles.map, styles.thickText)}>
+			<div
+				className={clsx(styles.map, styles.thickText)}
+				data-testid={`banner-map-${mode}-${stageId}`}
+			>
 				<ModeImage mode={mode} size={24} />
 				{t(`game-misc:MODE_SHORT_${mode}`)} {t(`game-misc:STAGE_${stageId}`)}
 			</div>

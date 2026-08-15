@@ -135,7 +135,11 @@ export function GroupCard({
 						<div className="stack horizontal sm justify-center">
 							{futureMatchModes.map((mode) => {
 								return (
-									<div key={mode} className={styles.futureMatchMode}>
+									<div
+										key={mode}
+										className={styles.futureMatchMode}
+										data-testid={`group-card-mode-${mode}`}
+									>
 										<ModeImage mode={mode} />
 									</div>
 								);

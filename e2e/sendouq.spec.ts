@@ -1,5 +1,11 @@
 import { sub } from "date-fns";
-import { FULL_GROUP_SIZE, SENDOUQ } from "~/features/sendouq/q-constants";
+import { SENDOUQ_MAP_POOL } from "~/features/match-profile/banned-maps";
+import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
+import {
+	FULL_GROUP_SIZE,
+	SENDOUQ,
+	SENDOUQ_BEST_OF,
+} from "~/features/sendouq/q-constants";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PAGE,
@@ -16,9 +22,15 @@ import {
 } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
+import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
 import { SendouQPage } from "./pages/sendouq/sendouq-page";
 import { SendouQReadyPage } from "./pages/sendouq/sendouq-ready-page";
 import { MatchProfilePage } from "./pages/settings/match-profile-page";
+
+const TEAM_MODE = "TC" as const;
+const TEAM_MAP_POOL = SENDOUQ_MAP_POOL.parsed[TEAM_MODE]
+	.slice(0, AMOUNT_OF_MAPS_IN_POOL_PER_MODE)
+	.map((stageId) => ({ mode: TEAM_MODE, stageId }));
 
 test.describe("SendouQ", () => {
 	test("Group preparation flow - add friends and users via invite link", async ({
@@ -273,6 +285,86 @@ test.describe("SendouQ", () => {
 		await looking.gotoPreview();
 
 		await expect(page).toHaveURL(SENDOUQ_PAGE);
+	});
+
+	test("A team's map preferences decide its modes and the maps it is given", async ({
+		page,
+		factories,
+	}) => {
+		const members = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
+		// the opponents want the same mode as the team, so an overlap of exactly it
+		// can only come from the team's own preferences: its members have none
+		const opponents = await factories.UserFactory.createMany(
+			FULL_GROUP_SIZE,
+			null,
+			{
+				matchProfile: {
+					mapModePreferences: {
+						modes: [{ mode: TEAM_MODE, preference: "PREFER" }],
+						pool: [],
+					},
+				},
+			},
+		);
+
+		await factories.TeamFactory.create(
+			{ memberUserIds: members.map((member) => member.id) },
+			{
+				mapModePreferences: {
+					modes: [{ mode: TEAM_MODE, preference: "PREFER" }],
+					pool: [
+						{
+							mode: TEAM_MODE,
+							stages: TEAM_MAP_POOL.map((map) => map.stageId),
+						},
+					],
+				},
+			},
+		);
+
+		const teamGroup = await factories.SQGroupFactory.create({
+			memberUserIds: members.map((member) => member.id),
+		});
+		const opponentGroup = await factories.SQGroupFactory.create({
+			memberUserIds: opponents.map((member) => member.id),
+		});
+
+		await impersonate(page, opponents[0].id);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+
+		// the modes the match would be played on are the team's, not its members'
+		await expect(looking.groupCard(1).modes).toHaveCount(1);
+		await expect(looking.groupCard(1).mode(TEAM_MODE)).toBeVisible();
+
+		await factories.SQReadyCheckFactory.create(
+			{
+				alphaGroupId: teamGroup.id,
+				bravoGroupId: opponentGroup.id,
+				confirmedByUserId: members[0].id,
+			},
+			{
+				confirmedByUserIds: [
+					...members.slice(1).map((member) => member.id),
+					...opponents.slice(0, -1).map((member) => member.id),
+				],
+			},
+		);
+
+		// the last confirmation is what makes the match, and with it its map list
+		await impersonate(page, opponents.at(-1)!.id);
+
+		const ready = new SendouQReadyPage(page);
+		await ready.goto();
+		await ready.confirmReady();
+
+		await expect(page).toHaveURL(/\/q\/match\/\d+/);
+
+		const match = new SendouQMatchPage(page);
+		await expect(match.modeProgress(TEAM_MODE)).toBeVisible();
+		await expect(match.mapCountText(SENDOUQ_BEST_OF)).toBeVisible();
+		await expect(match.currentMap(TEAM_MAP_POOL)).toBeVisible();
 	});
 
 	test("Ready check flow - both groups confirm and the match starts", async ({

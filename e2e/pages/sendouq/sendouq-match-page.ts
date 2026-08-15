@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
+import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { sendouQMatchPage } from "~/utils/urls";
 import {
 	expect,
@@ -65,6 +66,24 @@ export class SendouQMatchPage {
 
 	score(alpha: number, bravo: number) {
 		return this.page.getByText(new RegExp(`${alpha}\\s*-\\s*${bravo}`)).first();
+	}
+
+	/** The banner of the map being played, when it is one of `maps`. */
+	currentMap(maps: ModeWithStage[]) {
+		const alternatives = maps.map((map) => `${map.mode}-${map.stageId}`);
+		return this.page.getByTestId(
+			new RegExp(`^banner-map-(${alternatives.join("|")})$`),
+		);
+	}
+
+	/** The badge of a mode played in the set, one per map unless every map shares the mode. */
+	modeProgress(mode: ModeWithStage["mode"]) {
+		return this.page.getByTestId(`mode-progress-${mode}`);
+	}
+
+	/** How many maps the one shown mode is played on, shown only when every map shares it. */
+	mapCountText(count: number) {
+		return this.page.getByText(`\u00d7${count}`);
 	}
 
 	reportedWeaponImage(name: string) {
