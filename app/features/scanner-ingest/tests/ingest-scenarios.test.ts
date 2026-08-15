@@ -1,6 +1,8 @@
 import { describe, expect, test } from "vitest";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import {
 	ALPHA_NAMES,
+	anotherSendouqMatch,
 	BRAVO_NAMES,
 	createUser,
 	daysAgo,
@@ -9,6 +11,7 @@ import {
 	fetchReportedWeapons,
 	hoursLater,
 	ingest,
+	minutesAgo,
 	qMatchPage,
 	renamed,
 	scannedGame,
@@ -256,11 +259,60 @@ describe("SendouQ flow", () => {
 		]);
 	});
 
+	test("Q9 live send of an earlier set: queueing again afterwards does not capture the read", async () => {
+		const w = await sendouqWorld({ createdAt: minutesAgo(90) });
+		const maps = await w.conclude(minutesAgo(70));
+		const playedMap = maps[0]!;
+		await anotherSendouqMatch(w, minutesAgo(60));
+
+		const res = await ingest(w.povUser, [
+			w.scanned(playedMap, { playedAt: minutesAgo(85).getTime() }),
+		]);
+
+		expect(res.linkedMatches).toEqual([
+			{ matchIndex: 0, link: { type: "sendouq", groupMatchId: w.match.id } },
+		]);
+		expect((await fetchIngestedMatches())[0]!.groupMatchIdHint).toBe(
+			w.match.id,
+		);
+		expect((await qMatchPage(w.match.id)).ingestedScoreboards).toHaveLength(1);
+	});
+
+	test("Q10 the same map twice in one set: the read links to the play it was taken from", async () => {
+		const w = await sendouqWorld({
+			mapList: [
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "TC", stageId: 2 },
+				{ mode: "RM", stageId: 3 },
+				{ mode: "SZ", stageId: 1 },
+				{ mode: "CB", stageId: 4 },
+				{ mode: "SZ", stageId: 5 },
+				{ mode: "TC", stageId: 6 },
+			],
+		});
+		const maps = await w.conclude();
+		const replay = maps[3]!;
+		expect(replay.mode).toBe(maps[0]!.mode);
+		expect(replay.stageId).toBe(maps[0]!.stageId);
+
+		const res = await ingest(w.povUser, [
+			w.scanned(replay, {
+				playedAt: databaseTimestampToJavascriptTimestamp(replay.reportedAt!),
+			}),
+		]);
+
+		expect(res.linkedGamesCount).toBe(1);
+		expect((await fetchLinks())[0]!.groupMatchMapId).toBe(replay.id);
+		expect((await qMatchPage(w.match.id)).ingestedScoreboards).toEqual([
+			expect.objectContaining({ mapIndex: 3 }),
+		]);
+	});
+
 	test("Q7 content-based fallback: old match resolves from mode+stage history", async () => {
 		const createdAt = daysAgo(10);
 		const w = await sendouqWorld({ createdAt });
-		await w.conclude();
 		const playedAt = hoursLater(createdAt, 3).getTime();
+		await w.conclude(new Date(playedAt));
 
 		const res = await ingest(w.povUser, [
 			w.scanned(w.maps[0]!, { playedAt }),
@@ -304,6 +356,60 @@ describe("tournament flow", () => {
 		]);
 		const round1Page = await tournamentMatchPage(w.tournamentId, round1.id);
 		expect(round1Page.ingestedScoreboards).toHaveLength(0);
+	});
+
+	test("T5 live send of an earlier set: the team's next set does not capture the read", async () => {
+		const w = await tournamentWorld();
+		const [earlierSet, laterSet] = w.matchesOfTeam(w.championTeamId);
+		const [game1] = await w.games(earlierSet!.id);
+
+		const res = await ingest(w.povUser, [
+			w.scanned(game1!, { playedAt: game1!.playedAt }),
+		]);
+
+		expect(res.linkedMatches).toEqual([
+			{
+				matchIndex: 0,
+				link: {
+					type: "tournament",
+					tournamentId: w.tournamentId,
+					matchId: earlierSet!.id,
+				},
+			},
+		]);
+		const earlierPage = await tournamentMatchPage(
+			w.tournamentId,
+			earlierSet!.id,
+		);
+		expect(earlierPage.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([
+			0,
+		]);
+		const laterPage = await tournamentMatchPage(w.tournamentId, laterSet!.id);
+		expect(laterPage.ingestedScoreboards).toHaveLength(0);
+	});
+
+	test("T6 the next set starting moments later: the read lands in the set that was played", async () => {
+		const w = await tournamentWorld();
+		const [earlierSet, laterSet] = w.matchesOfTeam(w.championTeamId);
+		const [game1] = await w.games(earlierSet!.id);
+		// the next round is created as the finished set gets reported, so it
+		// starts inside the read's clock-skew allowance
+		const playedAt = w.startedAtOf(laterSet!.id) - 2 * 60 * 1000;
+
+		const res = await ingest(w.povUser, [w.scanned(game1!, { playedAt })]);
+
+		expect(res.linkedMatches).toEqual([
+			{
+				matchIndex: 0,
+				link: {
+					type: "tournament",
+					tournamentId: w.tournamentId,
+					matchId: earlierSet!.id,
+				},
+			},
+		]);
+		const laterPage = await tournamentMatchPage(w.tournamentId, laterSet!.id);
+		expect(laterPage.ingestedScoreboards).toHaveLength(0);
 	});
 
 	test("T2 VoD scan spanning two sets links each read into its own set", async () => {

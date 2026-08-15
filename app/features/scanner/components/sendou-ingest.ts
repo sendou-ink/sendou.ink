@@ -5,10 +5,12 @@
  * (useUser) instead of an identity probe. sendou.ink authenticates the
  * session user and resolves the tournament/match server-side.
  *
- * The send unit is one ScannerMatch (core/match-builder.ts); every source
- * event's IndexedDB record tracks the outcome (the `send` status the feed
- * cards display). Resends are safe: sendou.ink dedupes matches by content
- * hash, merges partials, and scoreboards first-ingest-wins.
+ * The unit of accounting is one ScannerMatch (core/match-builder.ts) —
+ * every source event's IndexedDB record tracks its outcome (the `send`
+ * status the feed cards display) — while the unit of transport is a request
+ * of up to `MAX_MATCHES_PER_REQUEST` of them. Resends are safe: sendou.ink
+ * dedupes matches by content hash, merges partials, and scoreboards
+ * first-ingest-wins.
  */
 
 import * as R from "remeda";
@@ -52,7 +54,17 @@ export interface SendResult {
 /**
  * Builds the stored events into matches, POSTs the ingestable ones `include`
  * selects, and records the outcome on every source event's `send` status
- * (calling `onStatus` after each store write so the feed can refresh).
+ * (calling `onStatus` after each request's store writes so the feed can
+ * refresh).
+ *
+ * Matches go out as few requests as the server cap allows rather than one
+ * apiece: sendou.ink resolves a whole request at once, so a request carrying
+ * several matches anchors on their mode+stage sequence instead of guessing a
+ * set from one match's timestamp. A live send is a single match either way;
+ * catching up on a session's backlog is where it counts. One request resolves
+ * to one context, so a backlog spanning two of them links the larger and
+ * leaves the rest "unlinked" — the retry then carries only those, and they
+ * resolve to their own context.
  */
 export async function sendMatches({
 	events,
@@ -70,38 +82,46 @@ export async function sendMatches({
 	await clearOrphanedQueued(events, allBuilt);
 
 	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
-	for (const built of selected) {
-		const ids = built.sources.map((e) => e.id!);
-		await updateEventsSend(ids, { state: "sending", at: Date.now() });
+	for (const request of R.chunk(selected, MAX_MATCHES_PER_REQUEST)) {
+		const idsPerMatch = request.map((built) => built.sources.map((e) => e.id!));
+		await updateEventsSend(idsPerMatch.flat(), {
+			state: "sending",
+			at: Date.now(),
+		});
 		onStatus();
 		try {
-			const response = await postIngestMatches([built.match]);
-			const link = response.linkedMatches?.find(
-				(linked) => linked.matchIndex === 0,
-			)?.link;
-			// stored but not linked, and sendou.ink knows which tournament or
-			// SendouQ match this is: the game is just not reported yet, so a
-			// later resend can still land it. Without a context there is nothing
-			// to wait for and the match is as done as it will get.
-			const unlinked = !link && response.contextResolved;
-			await updateEventsSend(ids, {
-				state: unlinked ? "unlinked" : "sent",
-				at: Date.now(),
-				...(link ? { link } : null),
-				...(unlinked
-					? {
-							attempts: (aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
-						}
-					: null),
-			});
-			result.sentMatches++;
+			const response = await postIngestMatches(
+				request.map((built) => built.match),
+			);
+			for (const [matchIndex, built] of request.entries()) {
+				const link = response.linkedMatches?.find(
+					(linked) => linked.matchIndex === matchIndex,
+				)?.link;
+				// stored but not linked, and sendou.ink knows which tournament or
+				// SendouQ match this is: the game is just not reported yet, so a
+				// later resend can still land it. Without a context there is nothing
+				// to wait for and the match is as done as it will get.
+				const unlinked = !link && response.contextResolved;
+				await updateEventsSend(idsPerMatch[matchIndex]!, {
+					state: unlinked ? "unlinked" : "sent",
+					at: Date.now(),
+					...(link ? { link } : null),
+					...(unlinked
+						? {
+								attempts:
+									(aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
+							}
+						: null),
+				});
+			}
+			result.sentMatches += request.length;
 		} catch (err) {
-			await updateEventsSend(ids, {
+			await updateEventsSend(idsPerMatch.flat(), {
 				state: "failed",
 				at: Date.now(),
 				error: err instanceof Error ? err.message : String(err),
 			});
-			result.failedMatches++;
+			result.failedMatches += request.length;
 		}
 		onStatus();
 	}

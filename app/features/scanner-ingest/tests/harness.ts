@@ -29,6 +29,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scanner-ingest.server";
@@ -52,6 +53,8 @@ const DISCRIMINATOR = "1111";
 const PLAYERS_PER_TEAM = 4;
 /** minutes between consecutive tournament sets' backdated timestamps */
 const SET_STAGGER_MINUTES = 10;
+/** minutes between a SendouQ set's consecutive map reports */
+const MAP_REPORT_STAGGER_MINUTES = 5;
 
 /** A game a `scanned()` read can be derived from, so rosters/mode/stage line up. */
 export interface ScannableGame {
@@ -59,6 +62,11 @@ export interface ScannableGame {
 	stage: StageId;
 	/** chronological position among the world's games, spacing reads apart */
 	order: number;
+	/**
+	 * wall-clock ms the game was reported, for cases whose read has to sit on
+	 * the world's real timeline rather than the default "now + order" spacing
+	 */
+	playedAt?: number;
 	winnerNames: string[];
 	loserNames: string[];
 	/**
@@ -111,7 +119,13 @@ export async function withScannerDisabled(fn: () => Promise<void>) {
  * the way the teams report it (alpha sweeps), making its maps linkable, and
  * returns the refreshed map rows.
  */
-export async function sendouqWorld(options: { createdAt?: Date } = {}) {
+export async function sendouqWorld(
+	options: {
+		createdAt?: Date;
+		/** the set's maps, when a case needs a specific one (e.g. the same map twice) */
+		mapList?: Array<{ mode: ModeShort; stageId: StageId }>;
+	} = {},
+) {
 	const users = await createNamedUsers([...ALPHA_NAMES, ...BRAVO_NAMES]);
 	const alphaUsers = users.slice(0, PLAYERS_PER_TEAM);
 	const bravoUsers = users.slice(PLAYERS_PER_TEAM);
@@ -120,6 +134,14 @@ export async function sendouqWorld(options: { createdAt?: Date } = {}) {
 		{
 			alphaUserIds: alphaUsers.map((user) => user.id),
 			bravoUserIds: bravoUsers.map((user) => user.id),
+			...(options.mapList
+				? {
+						mapList: options.mapList.map((map) => ({
+							...map,
+							source: "BOTH" as const,
+						})),
+					}
+				: null),
 		},
 		options.createdAt ? { createdAt: options.createdAt } : undefined,
 	);
@@ -131,8 +153,9 @@ export async function sendouqWorld(options: { createdAt?: Date } = {}) {
 		alphaUsers,
 		bravoUsers,
 		povUser: alphaUsers[0]!,
-		conclude: async () => {
+		conclude: async (reportedThrough?: Date) => {
 			await concludeGroupMatch(match.id);
+			await stampMapReports(match.id, reportedThrough ?? new Date());
 			return groupMatchMaps(match.id);
 		},
 		scanned: (
@@ -183,7 +206,9 @@ export async function tournamentWorld(
 		{ authorId: author.id },
 		{ teamRosters, playedOut: options.playedOut ?? 0 },
 	);
-	await staggerTournamentTimeline(tournament.matches);
+	const startedAtByMatchId = await staggerTournamentTimeline(
+		tournament.matches,
+	);
 	clearAllTournamentDataCache();
 
 	const nameByUserId = new Map(
@@ -213,6 +238,12 @@ export async function tournamentWorld(
 				(match) =>
 					match.winnerTeamId === teamId || match.loserTeamId === teamId,
 			),
+		/** wall-clock ms the set's backdated `startedAt` sits at. */
+		startedAtOf: (matchId: number) => {
+			const startedAt = startedAtByMatchId.get(matchId);
+			invariant(startedAt, `Match ${matchId} is not part of the world`);
+			return startedAt.getTime();
+		},
 		games: async (matchId: number): Promise<ScannableGame[]> => {
 			const played = matches.find((match) => match.id === matchId);
 			invariant(played, `Match ${matchId} is not part of the world`);
@@ -220,7 +251,7 @@ export async function tournamentWorld(
 
 			const rows = await db
 				.selectFrom("TournamentMatchGameResult")
-				.select(["number", "mode", "stageId", "winnerTeamId"])
+				.select(["number", "mode", "stageId", "winnerTeamId", "createdAt"])
 				.where("matchId", "=", matchId)
 				.orderBy("number", "asc")
 				.execute();
@@ -229,6 +260,7 @@ export async function tournamentWorld(
 				mode: row.mode,
 				stage: row.stageId,
 				order: matchIdx * SET_STAGGER_MINUTES + row.number,
+				playedAt: databaseTimestampToJavascriptTimestamp(row.createdAt),
 				winnerNames: namesByTeamId.get(row.winnerTeamId)!,
 				loserNames: namesByTeamId.get(
 					row.winnerTeamId === played.winnerTeamId
@@ -253,6 +285,26 @@ export async function tournamentWorld(
 	};
 }
 
+/**
+ * Another SendouQ match between a world's same players, made at `createdAt` —
+ * the later queueing an earlier match's read must not be captured by.
+ */
+export function anotherSendouqMatch(
+	world: {
+		alphaUsers: Array<{ id: number }>;
+		bravoUsers: Array<{ id: number }>;
+	},
+	createdAt: Date,
+) {
+	return SQMatchFactory.create(
+		{
+			alphaUserIds: world.alphaUsers.map((user) => user.id),
+			bravoUserIds: world.bravoUsers.map((user) => user.id),
+		},
+		{ createdAt },
+	);
+}
+
 /** A user outside any world, optionally with an in-game name set. */
 export function createUser(inGameName?: string) {
 	return UserFactory.create({
@@ -264,7 +316,8 @@ export function createUser(inGameName?: string) {
  * Derives a full `ScannerMatch` from a sendou.ink game so mode/stage/rosters
  * line up by construction; options spell out a case's deviation. The default
  * read is winner-first with the POV on seat 0 of the winning team, played
- * "now" (offset by `order` so multi-read requests stay chronological).
+ * when the game says it was — or, for games that carry no time of their own,
+ * "now" offset by `order` so multi-read requests stay chronological.
  */
 export function scannedGame(
 	game: ScannableGame,
@@ -284,7 +337,7 @@ export function scannedGame(
 	const base: ScannerMatch = {
 		startsAt,
 		endsAt: startsAt + 300,
-		playedAt: Date.now() + game.order * 60_000,
+		playedAt: game.playedAt ?? Date.now() + game.order * 60_000,
 		lobby: "PRIVATE",
 		mode: game.mode,
 		stage: game.stage,
@@ -380,6 +433,10 @@ export function daysAgo(days: number) {
 	return subDays(new Date(), days);
 }
 
+export function minutesAgo(minutes: number) {
+	return subMinutes(new Date(), minutes);
+}
+
 export function hoursLater(date: Date, hours: number) {
 	return addHours(date, hours);
 }
@@ -403,6 +460,27 @@ function groupMatchMaps(matchId: number) {
 		.where("matchId", "=", matchId)
 		.orderBy("index", "asc")
 		.execute();
+}
+
+/**
+ * Backdates the set's reported maps so they look played minutes apart ending
+ * at `reportedThrough`, rather than all inside the same test second.
+ * Production reports a map as it finishes, and matching leans on that spacing
+ * to tell two plays of one map apart.
+ */
+async function stampMapReports(matchId: number, reportedThrough: Date) {
+	const reported = (await groupMatchMaps(matchId)).filter(
+		(map) => map.winnerGroupId !== null,
+	);
+
+	for (const [position, map] of reported.entries()) {
+		await backdate("GroupMatchMap", map.id, {
+			reportedAt: subMinutes(
+				reportedThrough,
+				(reported.length - 1 - position) * MAP_REPORT_STAGGER_MINUTES,
+			),
+		});
+	}
 }
 
 /** Plays the match out, alpha winning every map, both teams agreeing on the score. */
@@ -451,17 +529,21 @@ async function concludeGroupMatch(matchId: number) {
  * past, staggered in play order: everything production stamps within the
  * same test second becomes an unambiguous timeline, so "latest match" and
  * game order come out the same on every run.
+ *
+ * @returns each set's `startedAt`, keyed by match id
  */
 async function staggerTournamentTimeline(
 	matches: Array<{ id: number }>,
-): Promise<void> {
+): Promise<Map<number, Date>> {
 	const now = new Date();
+	const startedAtByMatchId = new Map<number, Date>();
 
 	for (const [matchIdx, match] of matches.entries()) {
 		const startedAt = subMinutes(
 			now,
 			(matches.length - matchIdx) * SET_STAGGER_MINUTES,
 		);
+		startedAtByMatchId.set(match.id, startedAt);
 		await backdate("TournamentMatch", match.id, { startedAt });
 
 		const games = await db
@@ -475,6 +557,8 @@ async function staggerTournamentTimeline(
 			});
 		}
 	}
+
+	return startedAtByMatchId;
 }
 
 function scannedTeam(

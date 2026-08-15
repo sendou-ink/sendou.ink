@@ -10,6 +10,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import * as Matches from "./Matches";
 
 /** Lobby header value scoreboards of tournament/SendouQ games are expected to have. */
@@ -31,6 +32,17 @@ const PLAYERS_PER_TEAM = 4;
  * across a user's history; two already carry order.
  */
 const MIN_RESOLVED_SCOREBOARDS = 2;
+
+/**
+ * How far a scan's play time may sit from a game's report for the two to
+ * still be the same game. Reporting follows the game by minutes, so this is
+ * mostly headroom for a slow reporter and for the scan's clock (the client's
+ * own) — while staying far inside the gap between two plays of one map. A
+ * scan that lands outside every candidate stays unlinked rather than
+ * guessing: an unlinked scan keeps its hint and can be re-sent, a wrongly
+ * linked one silently puts strangers on a match page.
+ */
+const PLAYED_AT_TOLERANCE_MS = 30 * 60 * 1000;
 
 /** The match context an ingest request was resolved to belong to. */
 export type IngestContext =
@@ -61,7 +73,11 @@ export interface IngestableGame {
 	winnerInGameNames: string[];
 	/** known in-game names of the losing team's roster, the side fallback for reads without a POV seat */
 	loserInGameNames: string[];
-	/** database timestamp used to order games chronologically across matches */
+	/**
+	 * database timestamp of the game's own report — both the chronological
+	 * ordering key across matches and what a scan's play time is measured
+	 * against to tell two plays of one map apart
+	 */
 	playedAt: number;
 	/**
 	 * player names (winner-first, in scoreboard row order) of an already
@@ -138,10 +154,16 @@ export function resolveContext({
  * Only matches whose winner is known with two full teams qualify (a
  * minimap-only match can never link — its winner and stats are unread).
  * Matches and games are both walked in chronological order: each match is
- * assigned to the next not-yet-assigned game with the same mode and stage
- * whose sides agree with what is known. The POV seat decides where it can:
- * the sender is the POV player, so which of the game's rosters they belong
- * to pins the scan's sides to the game's teams — OCR'd names are too
+ * assigned to a not-yet-assigned game with the same mode and stage whose
+ * sides agree with what is known. Among those, a match carrying a wall clock
+ * takes the game reported nearest it (and none at all when every candidate
+ * is further off than `PLAYED_AT_TOLERANCE_MS`); a match without one — a VoD
+ * read, whose times are offsets into a video — takes the next in sequence,
+ * which is what the chronological walk is for.
+ *
+ * The POV seat decides the sides where it can: the sender is the POV player,
+ * so which of the game's rosters they belong to pins the scan's sides to the
+ * game's teams — OCR'd names are too
  * unreliable to overrule it. Only when no seat can decide (cast footage, no
  * POV read) do the known in-game names arbitrate the sides. Matches from
  * other lobbies, with unreadable mode/stage or duplicated detections of the
@@ -183,25 +205,11 @@ export function matchedGames({
 	for (const view of views) {
 		if (view.mode === null || view.stage === null) continue;
 
-		for (let i = nextGameIdx; i < orderedGames.length; i++) {
-			const game = orderedGames[i]!;
-			if (game.mode !== view.mode || game.stageId !== view.stage) continue;
-			if (game.linkedPlayerNames) {
-				if (!isLinkedDuplicate(view, game.linkedPlayerNames)) {
-					continue;
-				}
-			} else {
-				const agreement = povSideAgreement(view, game, povUserId);
-				if (agreement === false) continue;
-				if (agreement === null && !sidesMatchKnownPlayers(view, game)) {
-					continue;
-				}
-			}
+		const gameIdx = pickGame(view, orderedGames, nextGameIdx, povUserId);
+		if (gameIdx === null) continue;
 
-			result.push({ matchIndex: view.matchIndex, game });
-			nextGameIdx = i + 1;
-			break;
-		}
+		result.push({ matchIndex: view.matchIndex, game: orderedGames[gameIdx]! });
+		nextGameIdx = gameIdx + 1;
 	}
 
 	return result;
@@ -326,6 +334,8 @@ interface WinnerFirstView {
 	/** status samples winner-first, on the same rebased `t` axis */
 	playerStatus: ScannerMatchPlayerStatus | null;
 	povIndex: number | null;
+	/** wall-clock ms the game was played, when the read carried a clock at all */
+	playedAt: number | null;
 	/** chronological walk key: wall-clock, else video time, else input order */
 	order: number;
 }
@@ -388,6 +398,7 @@ function winnerFirstView(
 				: match.pov.team === match.winner
 					? match.pov.index
 					: PLAYERS_PER_TEAM + match.pov.index,
+		playedAt: match.playedAt,
 		order: match.playedAt ?? match.startsAt ?? index,
 	};
 }
@@ -523,6 +534,60 @@ function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 	}
 
 	return result;
+}
+
+/**
+ * The index of the game `view` should link to, or null when none fits. Only
+ * games from `from` on are considered, so two scans of one request never
+ * take the same game and the sequence stays ordered.
+ *
+ * A scan that knows when it was played takes the candidate reported nearest
+ * that moment, which keeps two plays of one map apart — they sit minutes
+ * from their own report and a session apart from each other. One that does
+ * not takes the next candidate in sequence.
+ */
+function pickGame(
+	view: IndexedView,
+	orderedGames: IngestableGame[],
+	from: number,
+	povUserId: number | null,
+): number | null {
+	let best: { index: number; distance: number } | null = null;
+
+	for (let i = from; i < orderedGames.length; i++) {
+		const game = orderedGames[i]!;
+		if (!canLink(view, game, povUserId)) continue;
+		if (view.playedAt === null) return i;
+
+		const distance = Math.abs(
+			view.playedAt - databaseTimestampToJavascriptTimestamp(game.playedAt),
+		);
+		if (distance > PLAYED_AT_TOLERANCE_MS) continue;
+		if (!best || distance < best.distance) best = { index: i, distance };
+	}
+
+	return best?.index ?? null;
+}
+
+/**
+ * Whether a game is a candidate for a scan at all: the same map, and sides
+ * that do not contradict — an already linked game only through being a
+ * re-detection of the scan already on it.
+ */
+function canLink(
+	view: WinnerFirstView,
+	game: IngestableGame,
+	povUserId: number | null,
+): boolean {
+	if (game.mode !== view.mode || game.stageId !== view.stage) return false;
+
+	if (game.linkedPlayerNames) {
+		return isLinkedDuplicate(view, game.linkedPlayerNames);
+	}
+
+	const agreement = povSideAgreement(view, game, povUserId);
+	if (agreement === false) return false;
+	return agreement !== null || sidesMatchKnownPlayers(view, game);
 }
 
 /**

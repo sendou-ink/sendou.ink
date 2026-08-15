@@ -29,12 +29,12 @@ const MERGE_CANDIDATE_LIMIT = 50;
 /** How long before the events' timestamp their match may have started (long sets, swiss rounds get startedAt at creation). */
 const MATCH_WINDOW_BEFORE_SECONDS = 4 * 60 * 60;
 /** Event timestamps come from client clocks, so allow the match to have "started" a little after them. */
-const MATCH_WINDOW_AFTER_SECONDS = 60 * 60;
+const MATCH_WINDOW_AFTER_SECONDS = 5 * 60;
 
 /** SendouQ sets run well under this long; matches created further before the events cannot be theirs. */
 const GROUP_MATCH_WINDOW_BEFORE_SECONDS = 2 * 60 * 60;
 /** Event timestamps come from client clocks, so allow the match to have been created a little after them. */
-const GROUP_MATCH_WINDOW_AFTER_SECONDS = 60 * 60;
+const GROUP_MATCH_WINDOW_AFTER_SECONDS = 5 * 60;
 
 /** Returns the games a user played in a tournament, in chronological order. */
 export function gamesPlayedByUserInTournament(params: {
@@ -120,8 +120,10 @@ export function sendouqGamesPlayedByUserSince(params: {
 /**
  * The tournament match the user was (probably) playing at the given
  * wall-clock time: their team is in a match whose `startedAt` is close
- * enough before `at`. When several qualify (rare) the latest-started one
- * wins.
+ * enough before `at`. When several qualify the one that started most
+ * recently before `at` wins — a later round of the same event is still
+ * within the window, and taking it would scope an earlier set's games out
+ * of reach.
  */
 export async function tournamentActivityAt({
 	userId,
@@ -168,7 +170,7 @@ export async function tournamentActivityAt({
 			">=",
 			atSeconds - MATCH_WINDOW_BEFORE_SECONDS,
 		)
-		.orderBy("TournamentMatch.startedAt", "desc")
+		.orderBy(startedNearestBefore("TournamentMatch.startedAt", atSeconds))
 		.executeTakeFirst();
 
 	return row
@@ -179,7 +181,9 @@ export async function tournamentActivityAt({
 /**
  * The SendouQ match the user was (probably) playing at the given wall-clock
  * time: a group they are a member of is in a non-canceled match created
- * close enough before `at`. When several qualify the latest-created wins.
+ * close enough before `at`. When several qualify the one created most
+ * recently before `at` wins — queueing again right after a set still falls
+ * within the window, and the newer match is not the one that was played.
  */
 export async function groupMatchIdAt({
 	userId,
@@ -227,7 +231,7 @@ export async function groupMatchIdAt({
 			atSeconds - GROUP_MATCH_WINDOW_BEFORE_SECONDS,
 		)
 		.where("GroupMatch.cancelAcceptedByUserId", "is", null)
-		.orderBy("GroupMatch.createdAt", "desc")
+		.orderBy(startedNearestBefore("GroupMatch.createdAt", atSeconds))
 		.executeTakeFirst();
 
 	return row?.id ?? null;
@@ -709,6 +713,21 @@ function newestFirst<T extends { createdAt: number }>(a: T[], b: T[]): T[] {
 		.slice(0, MERGE_CANDIDATE_LIMIT);
 }
 
+/**
+ * Orders activity candidates by how well their start explains a scan taken
+ * at `atSeconds`: the one that started most recently at or before it, and
+ * only when none did, the nearest one starting after (the window's clock-skew
+ * allowance). Ordering by start alone would prefer whatever started last,
+ * which for an event running back-to-back rounds is the wrong set.
+ */
+function startedNearestBefore(
+	column: "TournamentMatch.startedAt" | "GroupMatch.createdAt",
+	atSeconds: number,
+) {
+	const start = sql.ref(column);
+	return sql<number>`case when ${start} <= ${atSeconds} then 0 else 1 end, abs(${start} - ${atSeconds})`;
+}
+
 /** wall-clock ms → database timestamp (seconds) */
 function toDbTimestamp(ms: number | null): number | null {
 	return ms === null ? null : Math.floor(ms / 1000);
@@ -877,7 +896,7 @@ async function sendouqGames({
 	const rows = await db
 		.selectFrom("GroupMatchMap")
 		.innerJoin("GroupMatch", "GroupMatch.id", "GroupMatchMap.matchId")
-		.select([
+		.select((eb) => [
 			"GroupMatchMap.id as groupMatchMapId",
 			"GroupMatchMap.matchId as groupMatchId",
 			"GroupMatchMap.index as mapIndex",
@@ -886,7 +905,11 @@ async function sendouqGames({
 			"GroupMatchMap.winnerGroupId",
 			"GroupMatch.alphaGroupId",
 			"GroupMatch.bravoGroupId",
-			"GroupMatch.createdAt as playedAt",
+			// the map's own report is when it was played; the match's creation is
+			// only when the set was made, and is shared by all of its maps
+			eb.fn
+				.coalesce("GroupMatchMap.reportedAt", "GroupMatch.createdAt")
+				.as("playedAt"),
 		])
 		.$if(groupMatchId !== undefined, (qb) =>
 			qb
