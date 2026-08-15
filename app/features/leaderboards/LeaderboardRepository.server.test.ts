@@ -7,12 +7,14 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
+import { actAs } from "~/db/seed/core/actAs";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentReportedWeaponFactory from "~/db/seed/factories/TournamentReportedWeaponFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { userIdsToIdentifier } from "~/features/mmr/mmr-utils";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -25,7 +27,7 @@ const OVER_THRESHOLD = MATCHES_COUNT_NEEDED_FOR_LEADERBOARD + 1;
 const IN_SEASON = SEASON_RANGE.starts;
 const OUT_OF_SEASON = new Date(SEASON_RANGE.starts.getTime() - 60 * 1000);
 
-/** The first two report their weapons; the rest fill out their SendouQ groups. */
+/** Players of the tests' SendouQ groups. Weapon reports come from the first two. */
 const users = UserFactory.pool();
 
 const createSendouqMatch = (createdAt: Date) =>
@@ -231,5 +233,83 @@ describe("findSeasonPopularUsersWeapon", () => {
 			await LeaderboardRepository.findSeasonPopularUsersWeapon(SEASON);
 
 		expect(result).toEqual({});
+	});
+});
+
+describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
+	/** The two rosters share three of their players, both beating the third one. */
+	const topRoster = () => [users.id(1), users.id(2), users.id(3), users.id(4)];
+	const sharedPlayersRoster = () => [
+		users.id(1),
+		users.id(2),
+		users.id(3),
+		users.id(9),
+	];
+	const beatenRoster = () => [
+		users.id(5),
+		users.id(6),
+		users.id(7),
+		users.id(8),
+	];
+
+	const playSeasonInWith = async (alphaUserIds: number[]) => {
+		for (let i = 0; i < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD; i++) {
+			await SQMatchFactory.create(
+				{ alphaUserIds, bravoUserIds: beatenRoster() },
+				{ isConcluded: true, createdAt: IN_SEASON },
+			);
+		}
+	};
+
+	const skipTeam = (userIds: number[]) =>
+		actAs(users.id(1), () =>
+			LeaderboardRepository.insertTeamSkip({
+				season: SEASON,
+				identifier: userIdsToIdentifier(userIds),
+			}),
+		);
+
+	const placements = async () =>
+		(
+			await LeaderboardRepository.findTeamLeaderboardBySeason({
+				season: SEASON,
+				onlyOneEntryPerUser: true,
+			})
+		).map((entry) => [entry.identifier, entry.placementRank]);
+
+	beforeEach(async () => {
+		await users.create(9);
+		await playSeasonInWith(topRoster());
+		await playSeasonInWith(sharedPlayersRoster());
+	});
+
+	test("shows only the highest placing roster of each player", async () => {
+		expect(await placements()).toEqual([
+			[userIdsToIdentifier(topRoster()), 1],
+			[userIdsToIdentifier(beatenRoster()), 2],
+		]);
+	});
+
+	test("keeps a skipped team in its spot without a placement, freeing its players' other roster", async () => {
+		await skipTeam(topRoster());
+
+		expect(await placements()).toEqual([
+			[userIdsToIdentifier(topRoster()), null],
+			[userIdsToIdentifier(sharedPlayersRoster()), 1],
+			[userIdsToIdentifier(beatenRoster()), 2],
+		]);
+	});
+
+	test("gives a team its placement back when it is unskipped", async () => {
+		await skipTeam(topRoster());
+		await LeaderboardRepository.deleteTeamSkip({
+			season: SEASON,
+			identifier: userIdsToIdentifier(topRoster()),
+		});
+
+		expect(await placements()).toEqual([
+			[userIdsToIdentifier(topRoster()), 1],
+			[userIdsToIdentifier(beatenRoster()), 2],
+		]);
 	});
 });

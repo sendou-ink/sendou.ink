@@ -1,4 +1,3 @@
-import { cachified } from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -8,9 +7,9 @@ import type {
 	RankedModeShort,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import {
 	cachedFullUserLeaderboard,
+	cachedTeamLeaderboard,
 	filterByWeaponCategory,
 	ownEntryPeek,
 	shownUserLeaderboard,
@@ -36,17 +35,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 	const teamLeaderboard =
 		type === "TEAM" || type === "TEAM-ALL"
-			? await cachified({
-					key: `team-leaderboard-season-${season}-${type}`,
-					cache,
-					ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
-					staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
-					async getFreshValue() {
-						return LeaderboardRepository.findTeamLeaderboardBySeason({
-							season,
-							onlyOneEntryPerUser: type !== "TEAM-ALL",
-						});
-					},
+			? await cachedTeamLeaderboard({
+					season,
+					onlyOneEntryPerUser: type !== "TEAM-ALL",
 				})
 			: null;
 

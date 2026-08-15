@@ -1,15 +1,21 @@
+import clsx from "clsx";
+import { Ban, MoreHorizontal, RotateCcw } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { SendouButton } from "~/components/elements/Button";
+import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
+import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -22,16 +28,22 @@ import {
 	userSeasonsPage,
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
+import { action } from "../actions/leaderboards.server";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import type { XPLeaderboardItem } from "../LeaderboardRepository.server";
-import { LEADERBOARD_TYPES } from "../leaderboards-constants";
+import {
+	LEADERBOARD_TYPES,
+	TEAM_LEADERBOARD_QUALIFYING_COUNT,
+} from "../leaderboards-constants";
+import { leaderboardsActionSchema } from "../leaderboards-schemas";
 import { leaderboardsSearchParams } from "../leaderboards-search-params";
 import { seasonHasTopTen } from "../leaderboards-utils";
 import { loader } from "../loaders/leaderboards.server";
 
-export { loader };
+export { action, loader };
 
 import styles from "../../top-search/top-search.module.css";
+import leaderboardsStyles from "./leaderboards.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods"],
@@ -344,13 +356,14 @@ function TeamTable({
 }) {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
+	const isStaff = useHasRole("STAFF");
 	const isCurrentSeason = data.season === Seasons.current()?.nth;
 	const showQualificationDividers =
 		_showQualificationDividers && isCurrentSeason && entries.length > 20;
 
 	return (
 		<div className={styles.table}>
-			{entries.map((entry, i) => {
+			{entries.map((entry) => {
 				return (
 					<React.Fragment key={entry.entryId}>
 						<div className={styles.tableRow}>
@@ -368,7 +381,11 @@ function TeamTable({
 										/>
 									</Link>
 								) : null}
-								<div className="text-xs">
+								<div
+									className={clsx("text-xs", {
+										[leaderboardsStyles.skippedTeam]: entry.isSkipped,
+									})}
+								>
 									{entry.members.map((member, i) => {
 										return (
 											<React.Fragment key={member.id}>
@@ -381,9 +398,11 @@ function TeamTable({
 								<div className={styles.tablePower}>
 									{entry.power.toFixed(2)}
 								</div>
+								{isStaff ? <TeamStaffMenu entry={entry} /> : null}
 							</div>
 						</div>
-						{i === 11 && showQualificationDividers ? (
+						{entry.placementRank === TEAM_LEADERBOARD_QUALIFYING_COUNT &&
+						showQualificationDividers ? (
 							<div
 								className={`${styles.tableRow} ${styles.tableRowQualification}`}
 							>
@@ -397,6 +416,49 @@ function TeamTable({
 				);
 			})}
 		</div>
+	);
+}
+
+function TeamStaffMenu({
+	entry,
+}: {
+	entry: NonNullable<SerializeFrom<typeof loader>["teamLeaderboard"]>[number];
+}) {
+	const data = useLoaderData<typeof loader>();
+	const { submit } = useActionSubmit(leaderboardsActionSchema, {
+		encType: "application/json",
+	});
+
+	const fields = { season: data.season, identifier: entry.identifier };
+
+	return (
+		<SendouMenu
+			trigger={
+				<SendouButton
+					size="miniscule"
+					variant="outlined"
+					icon={<MoreHorizontal />}
+					aria-label="Actions"
+				/>
+			}
+		>
+			{entry.isSkipped ? (
+				<SendouMenuItem
+					icon={<RotateCcw />}
+					onAction={() => submit("UNSKIP_TEAM", fields)}
+				>
+					Unskip
+				</SendouMenuItem>
+			) : (
+				<SendouMenuItem
+					icon={<Ban />}
+					isDestructive
+					onAction={() => submit("SKIP_TEAM", fields)}
+				>
+					Skip
+				</SendouMenuItem>
+			)}
+		</SendouMenu>
 	);
 }
 

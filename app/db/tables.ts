@@ -551,6 +551,16 @@ export interface SkillTeamUser {
 	userId: number;
 }
 
+/** A team that is shown on the team leaderboard but doesn't count for its placements, e.g. because its players want to qualify with another roster. */
+export interface LeaderboardTeamSkip {
+	id: GeneratedAlways<number>;
+	season: number;
+	/** The team's roster, same as `Skill.identifier`. */
+	identifier: SkillTeamIdentifier;
+	skippedByUserId: number;
+	createdAt: Generated<number>;
+}
+
 /** Used for tournament auto-seeding. Calculates off tournament matches same as SP but does not have seasonal resets. */
 export interface SeedingSkill {
 	mu: number;
@@ -1343,6 +1353,7 @@ export interface DB {
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
+	LeaderboardTeamSkip: LeaderboardTeamSkip;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
 	/** VIEW over `AllTeam`, excludes soft-deleted teams. Insert/update via `AllTeam`. */

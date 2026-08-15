@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import { actorId } from "~/features/auth/core/user.server";
 import type {
 	MainWeaponId,
 	RankedModeShort,
@@ -16,10 +17,9 @@ import {
 } from "~/utils/kysely.server";
 import { dateToDatabaseTimestamp } from "../../utils/dates";
 import * as Seasons from "../mmr/core/Seasons";
-import { ordinalToSp } from "../mmr/mmr-utils";
+import { ordinalToSp, type SkillTeamIdentifier } from "../mmr/mmr-utils";
 import {
 	DEFAULT_LEADERBOARD_MAX_SIZE,
-	IGNORED_TEAMS,
 	MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
 } from "./leaderboards-constants";
 
@@ -33,11 +33,16 @@ function addPowers<T extends { ordinal: number }>(entries: T[]) {
 	}));
 }
 
-function addPlacementRank<T>(entries: T[]) {
-	return entries.map((entry, index) => ({
-		...entry,
-		placementRank: index + 1,
-	}));
+/** Numbers the entries by placement. A skipped team keeps its spot in the order but takes no number, the one below it getting the number it would have had. */
+function addPlacementRank<T extends { isSkipped: boolean }>(entries: T[]) {
+	let placementRank = 0;
+
+	return entries.map((entry): T & { placementRank: number | null } => {
+		if (entry.isSkipped) return { ...entry, placementRank: null };
+
+		placementRank++;
+		return { ...entry, placementRank };
+	});
 }
 
 const teamLeaderboardBySeasonQuery = (season: number) =>
@@ -47,7 +52,11 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 				.selectFrom(
 					latestSkillPerSeason({ season, by: "identifier" }).as("LatestOfTeam"),
 				)
-				.select(["LatestOfTeam.latestId as entryId", "LatestOfTeam.ordinal"])
+				.select([
+					"LatestOfTeam.latestId as entryId",
+					"LatestOfTeam.ordinal",
+					"LatestOfTeam.identifier",
+				])
 				.where(
 					"LatestOfTeam.matchesCount",
 					">=",
@@ -60,6 +69,7 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 		.select((eb) => [
 			"Entry.entryId",
 			"Entry.ordinal",
+			"Entry.identifier",
 			jsonArrayFrom(
 				eb
 					.selectFrom("SkillTeamUser")
@@ -95,10 +105,14 @@ const teamLeaderboardBySeasonQuery = (season: number) =>
 					.whereRef("SkillTeamUser.skillId", "=", "Entry.entryId"),
 			).as("teams"),
 		])
-		.orderBy("Entry.ordinal", "desc");
+		.orderBy("Entry.ordinal", "desc")
+		.$narrowType<{ identifier: SkillTeamIdentifier }>();
 type TeamLeaderboardBySeasonQueryReturnType = InferResult<
 	ReturnType<typeof teamLeaderboardBySeasonQuery>
 >;
+type TeamLeaderboardEntry = TeamLeaderboardBySeasonQueryReturnType[number] & {
+	isSkipped: boolean;
+};
 
 export async function findTeamLeaderboardBySeason({
 	season,
@@ -107,25 +121,35 @@ export async function findTeamLeaderboardBySeason({
 	season: number;
 	onlyOneEntryPerUser: boolean;
 }) {
-	const entries = await teamLeaderboardBySeasonQuery(season).execute();
+	const entries = addSkipped({
+		entries: await teamLeaderboardBySeasonQuery(season).execute(),
+		skippedIdentifiers: await findAllTeamSkipIdentifiersBySeason(season),
+	});
 	const withNonSqPlayersHandled = onlyOneEntryPerUser
 		? await filterOutNonSqPlayers({ season, entries })
 		: entries;
-	const withIgnoredHandled = onlyOneEntryPerUser
-		? ignoreTeams({ season, entries: withNonSqPlayersHandled })
-		: withNonSqPlayersHandled;
 
 	const oneEntryPerUser = onlyOneEntryPerUser
-		? filterOneEntryPerUser(withIgnoredHandled)
-		: withIgnoredHandled;
+		? filterOneEntryPerUser(withNonSqPlayersHandled)
+		: withNonSqPlayersHandled;
 	const withSharedTeam = resolveSharedTeam(oneEntryPerUser);
 	const withPower = addPowers(withSharedTeam);
 
 	return addPlacementRank(withPower);
 }
 
-async function filterOutNonSqPlayers(args: {
+function addSkipped(args: {
 	entries: TeamLeaderboardBySeasonQueryReturnType;
+	skippedIdentifiers: Set<SkillTeamIdentifier>;
+}): TeamLeaderboardEntry[] {
+	return args.entries.map((entry) => ({
+		...entry,
+		isSkipped: args.skippedIdentifiers.has(entry.identifier),
+	}));
+}
+
+async function filterOutNonSqPlayers(args: {
+	entries: TeamLeaderboardEntry[];
 	season: number;
 }) {
 	const validUserIds = new Set(
@@ -193,11 +217,13 @@ export async function hasEnoughSqMatchesByUserId(userId: number) {
 	return rows.count >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD;
 }
 
-function filterOneEntryPerUser(
-	entries: TeamLeaderboardBySeasonQueryReturnType,
-) {
+/** The highest placing entry of each user. A skipped team is always kept and doesn't spend
+ * its players' entry, so a roster sharing players with it can still place below it. */
+function filterOneEntryPerUser(entries: TeamLeaderboardEntry[]) {
 	const encounteredUserIds = new Set<number>();
 	return entries.filter((entry) => {
+		if (entry.isSkipped) return true;
+
 		if (entry.members.some((m) => encounteredUserIds.has(m.id))) {
 			return false;
 		}
@@ -232,28 +258,37 @@ function resolveSharedTeam(entries: ReturnType<typeof filterOneEntryPerUser>) {
 	});
 }
 
-function ignoreTeams({
-	season,
-	entries,
-}: {
+async function findAllTeamSkipIdentifiersBySeason(season: number) {
+	const rows = await db
+		.selectFrom("LeaderboardTeamSkip")
+		.select("LeaderboardTeamSkip.identifier")
+		.where("LeaderboardTeamSkip.season", "=", season)
+		.execute();
+
+	return new Set(rows.map((row) => row.identifier));
+}
+
+/** Marks a team as not counting for the season's team leaderboard placements. Records the acting user as `skippedByUserId`. */
+export async function insertTeamSkip(args: {
 	season: number;
-	entries: TeamLeaderboardBySeasonQueryReturnType;
+	identifier: SkillTeamIdentifier;
 }) {
-	const ignoredTeams = IGNORED_TEAMS.get(season);
+	await db
+		.insertInto("LeaderboardTeamSkip")
+		.values({ ...args, skippedByUserId: actorId() })
+		.onConflict((oc) => oc.columns(["season", "identifier"]).doNothing())
+		.execute();
+}
 
-	if (!ignoredTeams) return entries;
-
-	return entries.filter((entry) => {
-		if (
-			ignoredTeams.some((team) =>
-				team.every((userId) => entry.members.some((m) => m.id === userId)),
-			)
-		) {
-			return false;
-		}
-
-		return true;
-	});
+export async function deleteTeamSkip(args: {
+	season: number;
+	identifier: SkillTeamIdentifier;
+}) {
+	await db
+		.deleteFrom("LeaderboardTeamSkip")
+		.where("LeaderboardTeamSkip.season", "=", args.season)
+		.where("LeaderboardTeamSkip.identifier", "=", args.identifier)
+		.execute();
 }
 
 export async function findSeasonsParticipatedInByUserId(userId: number) {
