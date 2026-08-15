@@ -42,7 +42,7 @@ import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
+import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 import {
 	useBracketExpanded,
 	useTournamentPreparedMaps,
@@ -73,6 +73,7 @@ export const handle: SendouRouteHandle = {
 	mainBreakout: true,
 };
 
+import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {

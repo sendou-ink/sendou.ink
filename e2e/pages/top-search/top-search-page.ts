@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { Tables } from "~/db/tables";
+import { topSearchPage } from "~/features/top-search/top-search-urls";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import { topSearchPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { PlacementsTable } from "./placements-table";
 

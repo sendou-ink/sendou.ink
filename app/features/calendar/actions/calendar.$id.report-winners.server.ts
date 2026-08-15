@@ -6,7 +6,7 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { calendarEventPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { reportWinnersFormSchema } from "../calendar-schemas";
+import { reportWinnersFormSchema } from "../calendar-report-winners-schemas";
 
 export const action: ActionFunction = async (args) => {
 	const params = parseParams({

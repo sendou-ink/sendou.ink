@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { topSearchPlayerPage } from "~/utils/urls";
+import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { navigate } from "../../helpers/playwright";
 import { PlacementsTable } from "./placements-table";
 import { TopSearchPage } from "./top-search-page";

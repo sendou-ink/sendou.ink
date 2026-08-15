@@ -16,9 +16,13 @@ import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
 import { UserLink } from "~/components/UserLink";
 import type { Tables } from "~/db/tables";
+import { userArtPage } from "~/features/art/art-urls";
 import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { tierListMakerSearchParams } from "~/features/tier-list-maker/tier-list-maker-search-params";
+import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { VodListing } from "~/features/vods/components/VodListing";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -44,10 +48,6 @@ import {
 	modeImageUrl,
 	navIconUrl,
 	teamPage,
-	topSearchPlayerPage,
-	tournamentBracketsPage,
-	tournamentOrganizationPage,
-	userArtPage,
 	userBuildsPage,
 	userResultsPage,
 	userVodsPage,

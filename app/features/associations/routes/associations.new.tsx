@@ -1,9 +1,9 @@
 import { useTranslation } from "react-i18next";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
+import { associationsPage } from "~/features/associations/associations-urls";
 import { SendouForm } from "~/form/SendouForm";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage } from "~/utils/urls";
 
 import { action } from "../actions/associations.new.server";
 

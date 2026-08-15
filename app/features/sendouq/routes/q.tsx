@@ -31,7 +31,6 @@ import {
 	SENDOUQ_PAGE,
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_STREAMS_PAGE,
-	userSeasonsPage,
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
@@ -43,6 +42,7 @@ import { userCanJoinQueueAt } from "../q-utils";
 
 export { action, loader };
 
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import styles from "./q.module.css";
 
 export const handle: SendouRouteHandle = {

@@ -8,11 +8,8 @@ import { Placement } from "~/components/Placement";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
 import { UserLink } from "~/components/UserLink";
-import {
-	calendarEventPage,
-	tournamentBracketsPage,
-	tournamentTeamPage,
-} from "~/utils/urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
+import { calendarEventPage, tournamentTeamPage } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
 import styles from "../user-page.module.css";
 import {

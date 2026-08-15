@@ -15,9 +15,9 @@ import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import { TierPill } from "~/components/TierPill";
 import type { TierName } from "~/features/mmr/mmr-constants";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
-import { userSeasonsPage } from "~/utils/urls";
 import {
 	GRAPHIC_DATE_FORMAT_OPTIONS,
 	GraphicContainer,

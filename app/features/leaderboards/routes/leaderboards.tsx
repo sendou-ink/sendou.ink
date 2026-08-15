@@ -39,9 +39,7 @@ import {
 	LEADERBOARDS_PAGE,
 	navIconUrl,
 	teamPage,
-	topSearchPlayerPage,
 	userPage,
-	userSeasonsPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
@@ -56,6 +54,8 @@ import { loader } from "../loaders/leaderboards.server";
 
 export { action, loader };
 
+import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import styles from "../../top-search/top-search.module.css";
 import leaderboardsStyles from "./leaderboards.module.css";
 

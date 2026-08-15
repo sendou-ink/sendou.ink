@@ -30,6 +30,7 @@ import {
 	sendFriendRequestBaseSchema,
 } from "~/features/friends/friends-schemas";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
+import { userCardEditPage } from "~/features/user-card/user-card-urls";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
 import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -43,7 +44,6 @@ import {
 	LFG_PAGE,
 	navIconUrl,
 	stageBannerImageUrl,
-	userCardEditPage,
 	userCardFriendshipPage,
 	userCardNotePage,
 	userPage,

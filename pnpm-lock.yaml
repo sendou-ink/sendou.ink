@@ -73,6 +73,9 @@ importers:
       edmonds-blossom-fixed:
         specifier: 1.0.1
         version: 1.0.1
+      fflate:
+        specifier: 0.8.3
+        version: 0.8.3
       gray-matter:
         specifier: 4.0.3
         version: 4.0.3
@@ -118,9 +121,6 @@ importers:
       p-limit:
         specifier: 7.3.1
         version: 7.3.1
-      pako:
-        specifier: ^3.0.1
-        version: 3.0.1
       partysocket:
         specifier: 1.3.0
         version: 1.3.0(react@19.2.8)
@@ -3724,9 +3724,6 @@ packages:
   p-map@7.0.6:
     resolution: {integrity: sha512-I4Prw6ivkd6p8PiYR1tXASOAOBzIJwu0TB7fqaX0c/8c3QAehNYmX57EijyGGGBt3c/BIowGwV03RVBtXvHEVg==}
     engines: {node: '>=18'}
-
-  pako@3.0.1:
-    resolution: {integrity: sha512-GupotUUI0mlhugKjUs4bjOwLt3nrehy9Ys2dxC0GtgVef5cnKggkDMmf2bq2poCCuVXopWPmqsc9VDT2iJUy+w==}
 
   parseurl@1.3.3:
     resolution: {integrity: sha512-CiyeOxFT/JZyN5m0z9PfXw4SCBJ6Sygz1Dpl0wqjlhDEGGBP1GnsUVEL0p63hoG1fcj3fHynXi9NYO4nWOL+qQ==}
@@ -8018,8 +8015,6 @@ snapshots:
       yocto-queue: 1.2.2
 
   p-map@7.0.6: {}
-
-  pako@3.0.1: {}
 
   parseurl@1.3.3: {}
 

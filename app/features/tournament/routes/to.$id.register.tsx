@@ -23,6 +23,7 @@ import {
 	useCounterPickMapPoolValidationStatus,
 } from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
@@ -33,7 +34,6 @@ import { useHydrated } from "~/hooks/useHydrated";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
-	tournamentJoinPage,
 	userEditProfilePage,
 } from "~/utils/urls";
 import { action } from "../actions/to.$id.register.server";

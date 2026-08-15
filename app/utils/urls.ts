@@ -2,68 +2,24 @@ import slugify from "slugify";
 import { Config } from "~/config";
 import type { Tables } from "~/db/tables";
 import type { Preference } from "~/db/tables-json";
-import {
-	artGridSearchParams,
-	artNewSearchParams,
-	artSearchParams,
-} from "~/features/art/art-search-params";
-import type { ArtSource } from "~/features/art/art-types";
-import { associationsSearchParams } from "~/features/associations/associations-search-params";
 import type { AuthErrorCode } from "~/features/auth/core/errors";
-import { analyzerSearchParams } from "~/features/build-analyzer/analyzer-search-params";
-import {
-	calendarNewSearchParams,
-	calendarSearchParams,
-} from "~/features/calendar/calendar-search-params";
-import type { CalendarFilters } from "~/features/calendar/calendar-types";
-import { leaderboardsSearchParams } from "~/features/leaderboards/leaderboards-search-params";
-import { lfgNewSearchParams } from "~/features/lfg/lfg-search-params";
-import type { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { mapListGeneratorSearchParams } from "~/features/map-list-generator/map-list-generator-search-params";
 import type {
 	StageBackgroundStyle,
 	StageWaterLevel,
 } from "~/features/map-planner/plans-types";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import { calculatorSearchParams } from "~/features/object-damage-calculator/calculator-search-params";
-import {
-	type PlusTierParam,
-	plusSuggestionsSearchParams,
-} from "~/features/plus-suggestions/plus-suggestions-search-params";
-import {
-	qSearchParams,
-	weaponUsageSearchParams,
-} from "~/features/sendouq/q-search-params";
-import { teamJoinSearchParams } from "~/features/team/team-search-params";
-import { topSearchSearchParams } from "~/features/top-search/top-search-search-params";
-import { tournamentJoinSearchParams } from "~/features/tournament/tournament-search-params";
-import { tournamentImportTeamsSearchParams } from "~/features/tournament-admin/tournament-admin-search-params";
-import { tournamentBracketsSearchParams } from "~/features/tournament-bracket/tournament-bracket-search-params";
-import { tournamentOrganizationSearchParams } from "~/features/tournament-organization/tournament-organization-search-params";
-import { userCardEditSearchParams } from "~/features/user-card/user-card-search-params";
-import {
-	userArtSearchParams,
-	userBuildsNewSearchParams,
-	userSeasonSummaryGraphicSearchParams,
-	userSeasonsSearchParams,
-} from "~/features/user-page/user-page-search-params";
-import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import type {
-	Ability,
 	AbilityWithUnknown,
 	BrandId,
-	BuildAbilitiesTupleWithUnknown,
 	GearType,
 	MainWeaponId,
 	ModeShort,
 	ModeShortWithSpecial,
-	RankedModeShort,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
 import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
-import type { DayMonthYear } from "~/utils/zod";
 
 export const discordAvatarUrl = ({
 	discordId,
@@ -186,7 +142,6 @@ export const LFG_PAGE = "/lfg";
 export const EVENTS_PAGE = "/events";
 export const FRIENDS_PAGE = "/friends";
 export const SETTINGS_PAGE = "/settings";
-const USER_CARD_EDIT_PAGE = "/user-card/edit";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
 
@@ -232,47 +187,13 @@ export const trophyWinsPage = (args: { trophyId: number; userId: number }) =>
 export const trophyTournamentsPage = (trophyId: number) =>
 	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
 
-interface UserLinkArgs {
+export interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];
 	customUrl?: Tables["User"]["customUrl"];
 }
 
 export const userPage = (user: UserLinkArgs) =>
 	`/u/${user.customUrl ?? user.discordId}`;
-export const userSeasonsPage = ({
-	user,
-	season,
-}: {
-	user: UserLinkArgs;
-	season?: number;
-}) =>
-	userSeasonsSearchParams.href(`${userPage(user)}/seasons`, {
-		season: season ?? null,
-	});
-export const userSeasonSummaryGraphicPage = ({
-	user,
-	season,
-}: {
-	user: UserLinkArgs;
-	season: number;
-}) =>
-	userSeasonSummaryGraphicSearchParams.href(
-		`${userPage(user)}/seasons/summary-graphic`,
-		{ season },
-	);
-export const userSeasonsStatsPage = ({
-	user,
-	season,
-	info,
-}: {
-	user: UserLinkArgs;
-	season?: number;
-	info?: "weapons" | "stages" | "mates" | "enemies";
-}) =>
-	userSeasonsSearchParams.href(`${userPage(user)}/seasons/stats`, {
-		...(info ? { info } : {}),
-		season: season ?? null,
-	});
 export const userEditProfilePage = (user: UserLinkArgs) =>
 	`${userPage(user)}/edit`;
 export const userBuildsPage = (user: UserLinkArgs) =>
@@ -280,113 +201,21 @@ export const userBuildsPage = (user: UserLinkArgs) =>
 export const userResultsPage = (user: UserLinkArgs) =>
 	`${userPage(user)}/results`;
 export const userVodsPage = (user: UserLinkArgs) => `${userPage(user)}/vods`;
-export const userCardEditPage = (args?: { returnTo?: string }) =>
-	userCardEditSearchParams.href(USER_CARD_EDIT_PAGE, {
-		returnTo: args?.returnTo ?? null,
-	});
-export const newVodPage = (vodToEditId?: number) =>
-	vodsNewSearchParams.href(`${VODS_PAGE}/new`, { vod: vodToEditId ?? null });
 export const userResultsEditHighlightsPage = (user: UserLinkArgs) =>
 	`${userResultsPage(user)}/highlights`;
 export const userAdminPage = (user: UserLinkArgs) => `${userPage(user)}/admin`;
-export const artPage = (tag?: string) =>
-	artSearchParams.href("/art", { tag: tag ?? null });
-export const userArtPage = (
-	user: UserLinkArgs,
-	source?: ArtSource,
-	bigArtId?: number,
-) =>
-	artGridSearchParams.href(
-		userArtSearchParams.href(`${userPage(user)}/art`, {
-			...(source ? { source } : {}),
-		}),
-		{ big: bigArtId ?? null },
-	);
-export const newArtPage = (artId?: Tables["Art"]["id"]) =>
-	artNewSearchParams.href(`${artPage()}/new`, { art: artId ?? null });
-export const userNewBuildPage = (
-	user: UserLinkArgs,
-	params?: { weapon: MainWeaponId; build: BuildAbilitiesTupleWithUnknown },
-) =>
-	params
-		? userBuildsNewSearchParams.href(`${userBuildsPage(user)}/new`, {
-				weapon: params.weapon,
-				build: params.build,
-			})
-		: `${userBuildsPage(user)}/new`;
 
 export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 export const editTeamPage = (customUrl: string) =>
 	`${teamPage(customUrl)}/edit`;
 export const manageTeamRosterPage = (customUrl: string) =>
 	`${teamPage(customUrl)}/roster`;
-export const joinTeamPage = ({
-	customUrl,
-	inviteCode,
-}: {
-	customUrl: string;
-	inviteCode: string;
-}) =>
-	teamJoinSearchParams.href(`${teamPage(customUrl)}/join`, {
-		code: inviteCode,
-	});
-
-export const topSearchPage = (args?: {
-	month: number;
-	year: number;
-	mode: ModeShort;
-	region: Tables["XRankPlacement"]["region"];
-}) =>
-	args
-		? topSearchSearchParams.href("/xsearch", {
-				...args,
-				mode: args.mode as RankedModeShort,
-			})
-		: "/xsearch";
-export const topSearchPlayerPage = (playerId: number) =>
-	`${topSearchPage()}/player/${playerId}`;
-
-export const leaderboardsPage = (args: {
-	season?: number;
-	type?: "USER" | "TEAM";
-}) =>
-	leaderboardsSearchParams.href(LEADERBOARDS_PAGE, {
-		season: args.season ?? null,
-		...(args.type ? { type: args.type } : {}),
-	});
 
 export const authErrorUrl = (errorCode: AuthErrorCode) =>
 	`/?authError=${errorCode}`;
 export const impersonateUrl = (idToLogInAs: number) =>
 	`/auth/impersonate?id=${idToLogInAs}`;
 export const badgePage = (badgeId: number) => `${BADGES_PAGE}/${badgeId}`;
-/** The suggestions page loads one tier at a time, so its links carry the tier. */
-const tierParam = (tier?: string | number) =>
-	tier ? { tier: String(tier) as PlusTierParam } : {};
-export const plusSuggestionPage = ({
-	tier,
-	showAlert,
-}: {
-	tier?: string | number;
-	showAlert?: boolean;
-} = {}) =>
-	plusSuggestionsSearchParams.href("/plus/suggestions", {
-		...tierParam(tier),
-		alert: Boolean(showAlert),
-	});
-export const plusSuggestionsNewPage = (tier?: string | number) =>
-	plusSuggestionsSearchParams.href("/plus/suggestions/new", tierParam(tier));
-export const plusSuggestionCommentPage = ({
-	tier,
-	userId,
-}: {
-	tier: string | number;
-	userId: number;
-}) =>
-	plusSuggestionsSearchParams.href(
-		`/plus/suggestions/comment/${tier}/${userId}`,
-		tierParam(tier),
-	);
 
 export const weaponBuildPage = (weaponSlug: string) =>
 	`${BUILDS_PAGE}/${weaponSlug}`;
@@ -396,32 +225,7 @@ export const weaponBuildPopularPage = (weaponSlug: string) =>
 	`${weaponBuildPage(weaponSlug)}/popular`;
 export const weaponParamsPage = (weaponSlug: string) => `/params/${weaponSlug}`;
 
-export const calendarPage = (args?: { dayMonthYear?: DayMonthYear }) =>
-	calendarSearchParams.href(CALENDAR_PAGE, {
-		...(args?.dayMonthYear
-			? {
-					day: args.dayMonthYear.day,
-					month: args.dayMonthYear.month,
-					year: args.dayMonthYear.year,
-				}
-			: {}),
-	});
-
-export const calendarIcalFeed = (filters?: CalendarFilters) =>
-	calendarSearchParams.href(`${SENDOU_INK_BASE_URL}/calendar.ics`, {
-		...(filters ?? {}),
-	});
-
 export const calendarEventPage = (eventId: number) => `/calendar/${eventId}`;
-export const calendarEditPage = (eventId?: number) =>
-	calendarNewSearchParams.href("/calendar/new", {
-		eventId: eventId ?? null,
-	});
-export const tournamentEditPage = (eventId: number) =>
-	calendarNewSearchParams.href("/calendar/new", {
-		eventId,
-		tournament: true,
-	});
 export const calendarReportWinnersPage = (eventId: number) =>
 	`/calendar/${eventId}/report-winners`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
@@ -455,30 +259,6 @@ export const tournamentAdminRegistrationEditPage = (
 	tournamentId: number,
 	tournamentTeamId: number,
 ) => `${tournamentAdminRegistrationPage(tournamentId)}/${tournamentTeamId}`;
-export const tournamentAdminImportTeamsPage = ({
-	tournamentId,
-	fromTournamentId,
-}: {
-	tournamentId: number;
-	fromTournamentId: number;
-}) =>
-	tournamentImportTeamsSearchParams.href(
-		`${tournamentAdminPage(tournamentId)}/import-teams`,
-		{ fromTournamentId },
-	);
-export const tournamentBracketsPage = ({
-	tournamentId,
-	bracketIdx,
-	groupId,
-}: {
-	tournamentId: number;
-	bracketIdx?: number | null;
-	groupId?: number;
-}) =>
-	tournamentBracketsSearchParams.href(`/to/${tournamentId}/brackets`, {
-		idx: bracketIdx ?? null,
-		group: groupId ?? null,
-	});
 export const tournamentDivisionsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
@@ -490,40 +270,12 @@ export const tournamentMatchPage = ({
 	tournamentId: number;
 	matchId: number;
 }) => `/to/${tournamentId}/matches/${matchId}`;
-export const tournamentJoinPage = ({
-	tournamentId,
-	inviteCode,
-}: {
-	tournamentId: number;
-	inviteCode: string;
-}) =>
-	tournamentJoinSearchParams.href(`/to/${tournamentId}/join`, {
-		code: inviteCode,
-	});
 export const tournamentSubsPage = (tournamentId: number) => {
 	return `/to/${tournamentId}/looking`;
 };
 export const tournamentStreamsPage = (tournamentId: number) => {
 	return `/to/${tournamentId}/streams`;
 };
-
-export const tournamentOrganizationPage = ({
-	organizationSlug,
-	tournamentName,
-}: {
-	organizationSlug: string;
-	tournamentName?: string;
-}) =>
-	tournamentOrganizationSearchParams.href(`/org/${organizationSlug}`, {
-		source: tournamentName ?? null,
-	});
-export const tournamentOrganizationEditPage = (organizationSlug: string) =>
-	`${tournamentOrganizationPage({ organizationSlug })}/edit`;
-export const tournamentOrganizationStatsPage = (organizationSlug: string) =>
-	`${tournamentOrganizationPage({ organizationSlug })}/stats`;
-
-export const sendouQInviteLink = (inviteCode: string) =>
-	qSearchParams.href(SENDOUQ_PAGE, { join: inviteCode });
 
 export const sendouQMatchPage = (id: Tables["GroupMatch"]["id"]) => {
 	return `${SENDOUQ_PAGE}/match/${id}`;
@@ -541,53 +293,13 @@ export const newScrimPostPage = () => {
 	return "/scrims/new";
 };
 
-export const associationsPage = (inviteCode?: string) =>
-	associationsSearchParams.href("/associations", {
-		inviteCode: inviteCode ?? null,
-	});
-
 export const newAssociationsPage = () => {
 	return "/associations/new";
 };
 
-export const getWeaponUsage = (args: {
-	userId: number;
-	season: number;
-	modeShort: ModeShort;
-	stageId: StageId;
-}) => weaponUsageSearchParams.href("/weapon-usage", args);
-
-export const mapsPageWithMapPool = (mapPool: MapPool) =>
-	mapListGeneratorSearchParams.href(MAPS_URL, {
-		readonly: true,
-		pool: mapPool.serialized,
-	});
 export const articlePage = (slug: string) => `${ARTICLES_MAIN_PAGE}/${slug}`;
-export const analyzerPage = (args?: {
-	weaponId: MainWeaponId;
-	abilities: Ability[];
-}) =>
-	args
-		? analyzerSearchParams.href("/analyzer", {
-				weapon: args.weaponId,
-				build: [
-					args.abilities.slice(0, 4),
-					args.abilities.slice(4, 8),
-					args.abilities.slice(8, 12),
-				] as BuildAbilitiesTupleWithUnknown,
-			})
-		: "/analyzer";
-export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>
-	typeof weaponId === "number"
-		? calculatorSearchParams.href("/object-damage-calculator", {
-				weapon: { type: "MAIN", id: weaponId },
-			})
-		: "/object-damage-calculator";
 
 export const vodVideoPage = (videoId: number) => `${VODS_PAGE}/${videoId}`;
-
-export const lfgNewPostPage = (postId?: number) =>
-	lfgNewSearchParams.href(`${LFG_PAGE}/new`, { postId: postId ?? null });
 
 export const badgeUrl = ({
 	code,

@@ -4,13 +4,10 @@ import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SubmitButton } from "~/components/SubmitButton";
+import { sendouQInviteLink } from "~/features/sendouq/q-urls";
 import { useFriendsForAdding } from "~/hooks/swr";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import {
-	SENDOU_INK_BASE_URL,
-	SENDOUQ_PREPARING_PAGE,
-	sendouQInviteLink,
-} from "~/utils/urls";
+import { SENDOU_INK_BASE_URL, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import type { SendouQPreparingAction } from "../actions/q.preparing.server";
 import { preparingSchema } from "../q-action-schemas";
 

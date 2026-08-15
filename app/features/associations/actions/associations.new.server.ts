@@ -1,9 +1,9 @@
 import { type ActionFunctionArgs, redirect } from "react-router";
 import { createNewAssociationSchema } from "~/features/associations/associations-schemas";
+import { associationsPage } from "~/features/associations/associations-urls";
 import { requireUser } from "~/features/auth/core/user.server";
 import { parseFormData } from "~/form/parse.server";
 import { LimitReachedError } from "~/utils/errors";
-import { associationsPage } from "~/utils/urls";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {

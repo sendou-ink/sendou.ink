@@ -1,14 +1,11 @@
 import useSWRImmutable from "swr/immutable";
 import type { PatronsListLoaderData } from "~/features/front-page/routes/patrons-list";
+import { getWeaponUsage } from "~/features/sendouq/q-urls";
 import type { FriendsForAddingLoaderData } from "~/features/sendouq/routes/friends-for-adding";
 import type { WeaponUsageLoaderData } from "~/features/sendouq/routes/weapon-usage";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
-import {
-	GET_FRIENDS_FOR_ADDING_ROUTE,
-	getWeaponUsage,
-	PATRONS_LIST_ROUTE,
-} from "~/utils/urls";
+import { GET_FRIENDS_FOR_ADDING_ROUTE, PATRONS_LIST_ROUTE } from "~/utils/urls";
 
 // TODO: replace with useFetcher after proper errr handling is implemented https://github.com/remix-run/react-router/discussions/10013
 

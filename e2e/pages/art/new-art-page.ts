@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { Tables } from "~/db/tables";
 import { artFormSchema } from "~/features/art/art-schemas";
-import { newArtPage } from "~/utils/urls";
+import { newArtPage } from "~/features/art/art-urls";
 import { navigate } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { UserArtPage } from "./user-art-page";

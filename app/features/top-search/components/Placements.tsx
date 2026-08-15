@@ -2,11 +2,10 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Image, WeaponImage } from "~/components/Image";
 import {
-	brandImageUrl,
-	modeImageUrl,
 	topSearchPage,
 	topSearchPlayerPage,
-} from "~/utils/urls";
+} from "~/features/top-search/top-search-urls";
+import { brandImageUrl, modeImageUrl } from "~/utils/urls";
 import styles from "../top-search.module.css";
 import { monthYearToSpan } from "../top-search-utils";
 import type * as XRankPlacementRepository from "../XRankPlacementRepository.server";

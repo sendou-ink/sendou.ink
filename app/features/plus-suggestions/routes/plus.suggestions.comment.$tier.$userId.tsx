@@ -2,8 +2,11 @@ import { useMatches, useParams } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
+import {
+	plusSuggestionCommentPage,
+	plusSuggestionPage,
+} from "~/features/plus-suggestions/plus-suggestions-urls";
 import { SendouForm } from "~/form/SendouForm";
-import { plusSuggestionCommentPage, plusSuggestionPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.comment.$tier.$userId.server";
 import { isPlusTier } from "../plus-suggestions-constants";
 import { followUpCommentFormSchema } from "../plus-suggestions-schemas";

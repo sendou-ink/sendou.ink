@@ -20,7 +20,7 @@ import {
 	EMPTY_REPORTED_PLAYER,
 	type ReportedPlayer,
 	reportWinnersFormSchema,
-} from "../calendar-schemas";
+} from "../calendar-report-winners-schemas";
 import { loader } from "../loaders/calendar.$id.report-winners.server";
 
 export { action, loader };

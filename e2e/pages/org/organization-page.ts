@@ -3,7 +3,7 @@ import {
 	banUserActionSchema,
 	updateIsEstablishedSchema,
 } from "~/features/tournament-organization/tournament-organization-schemas";
-import { tournamentOrganizationPage } from "~/utils/urls";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import {
 	modalClickConfirmButton,
 	navigate,

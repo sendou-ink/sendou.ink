@@ -11,6 +11,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
+import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
 import {
 	UserCard,
 	useUserCardData,
@@ -20,7 +21,6 @@ import { useHydrated } from "~/hooks/useHydrated";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { lfgNewPostPage } from "~/utils/urls";
 import { hourDifferenceBetweenTimezones } from "../core/timezone";
 import type { LFGLoaderData } from "../routes/lfg";
 

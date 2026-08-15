@@ -11,12 +11,9 @@ import TimePopover from "~/components/TimePopover";
 import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { databaseTimestampToDate } from "~/utils/dates";
-import {
-	SENDOU_INK_BASE_URL,
-	tournamentOrganizationPage,
-	tournamentPage,
-} from "~/utils/urls";
+import { SENDOU_INK_BASE_URL, tournamentPage } from "~/utils/urls";
 import { saveTournamentSchema } from "../tournament-schemas";
 import { tournamentNameParts } from "../tournament-utils";
 import styles from "./TournamentHeader.module.css";

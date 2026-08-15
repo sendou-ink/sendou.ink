@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { userSeasonsPage } from "~/utils/urls";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { navigate } from "../../helpers/playwright";
 
 /** A user profile's `/seasons` page, including the season summary image export. */

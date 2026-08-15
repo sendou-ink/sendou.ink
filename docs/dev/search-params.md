@@ -103,7 +103,7 @@ buildsSearchParams.href(buildsPage(slug), { f: filters });
 // → "/builds/splattershot?f=%5B…%5D"   (defaults omitted)
 ```
 
-Used by `<Link to>` and by the query-building helpers in `app/utils/urls.ts`.
+Used by `<Link to>` and by query-building helpers. Those helpers live in `app/features/<feature>/<feature>-urls.ts`, next to the definition they encode with — never in `app/utils/urls.ts`, which is imported by the root and so must stay free of feature schemas. `urls.ts` keeps the plain path constants and builders that carry no search params.
 
 ## Revalidation
 

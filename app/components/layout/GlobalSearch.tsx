@@ -21,6 +21,7 @@ import { Input } from "~/components/Input";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { searchSearchParams } from "~/features/search/search-search-params";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -29,7 +30,6 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import {
 	navIconUrl,
 	teamPage,
-	tournamentOrganizationPage,
 	userPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
