@@ -6,17 +6,33 @@ import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
-import { TierImage, WeaponImage } from "~/components/Image";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
+import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { WeaponSelect } from "~/components/WeaponSelect";
+import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -26,15 +42,13 @@ import {
 	topSearchPlayerPage,
 	userPage,
 	userSeasonsPage,
+	weaponCategoryUrl,
 } from "~/utils/urls";
 import { InfoPopover } from "../../../components/InfoPopover";
 import { action } from "../actions/leaderboards.server";
 import { TopTenPlayer } from "../components/TopTenPlayer";
 import type { XPLeaderboardItem } from "../LeaderboardRepository.server";
-import {
-	LEADERBOARD_TYPES,
-	TEAM_LEADERBOARD_QUALIFYING_COUNT,
-} from "../leaderboards-constants";
+import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "../leaderboards-constants";
 import { leaderboardsActionSchema } from "../leaderboards-schemas";
 import { leaderboardsSearchParams } from "../leaderboards-search-params";
 import { seasonHasTopTen } from "../leaderboards-utils";
@@ -69,29 +83,17 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function LeaderboardsPage() {
-	const { t } = useTranslation(["common", "game-misc", "weapons"]);
+	const { t } = useTranslation(["common"]);
 	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
 	const data = useLoaderData<typeof loader>();
 
 	const isAllUserLeaderboard = params.type === "USER";
 
-	const seasonPlusTypeToKey = ({
-		season,
-		type,
-	}: {
-		season: number;
-		type: string;
-	}) => `${type};${season}`;
-
-	// XP leaderboards are not tied to a season, so their option values have no
-	// season suffix and the select value must match
-	const selectValue = () =>
-		params.type.startsWith("XP")
-			? params.type
-			: seasonPlusTypeToKey({
-					season: data.season,
-					type: params.type,
-				});
+	const selectedTab = params.type.startsWith("XP")
+		? "XP"
+		: params.type.startsWith("TEAM")
+			? "TEAMS"
+			: "PLAYERS";
 
 	const showTopTen = Boolean(
 		seasonHasTopTen(data.season) &&
@@ -105,73 +107,54 @@ export default function LeaderboardsPage() {
 
 	return (
 		<Main halfWidth className="stack lg">
-			<select
-				className="text-sm"
-				value={selectValue()}
-				onChange={(e) => {
-					const [type, season] = e.target.value.split(";");
-					setParams({
-						type: type as (typeof LEADERBOARD_TYPES)[number],
-						season: season ? Number(season) : null,
-					});
+			<SendouTabs
+				selectedKey={selectedTab}
+				onSelectionChange={(key) => {
+					if (key === selectedTab) return;
+					if (key === "PLAYERS") return setParams({ type: "USER" });
+					if (key === "TEAMS") return setParams({ type: "TEAM" });
+					setParams({ type: "XP-ALL", season: null });
 				}}
 			>
-				{Seasons.allStarted().map((season) => {
-					return (
-						<optgroup label={`SP - Season ${season}`} key={season}>
-							{LEADERBOARD_TYPES.filter((type) => !type.includes("XP")).map(
-								(type) => {
-									const userOrTeam = type.includes("USER") ? "USER" : "TEAM";
-									const category = weaponCategories.find((c) =>
-										type.includes(c.name),
-									)?.name;
-
-									return (
-										<option
-											key={type}
-											value={seasonPlusTypeToKey({ season, type })}
-										>
-											{t(`common:leaderboard.type.${userOrTeam}`)}
-											{type.includes("ALL")
-												? ` (${t("leaderboard.type.XP-ALL")})`
-												: null}
-											{category
-												? ` (${t(`common:weapon.category.${category}`)})`
-												: ""}
-										</option>
-									);
-								},
-							)}
-						</optgroup>
-					);
-				})}
-				<optgroup label="XP">
-					<option value="XP-ALL">{t("common:leaderboard.type.XP-ALL")}</option>
-					{rankedModesShort.map((mode) => {
-						return (
-							<option key={mode} value={`XP-MODE-${mode}`}>
-								{t(`game-misc:MODE_LONG_${mode}`)}
-							</option>
-						);
-					})}
-				</optgroup>
-				{weaponCategories.map((category) => {
-					return (
-						<optgroup
-							key={category.name}
-							label={`XP (${t(`common:weapon.category.${category.name}`)})`}
-						>
-							{category.weaponIds.map((weaponId) => {
-								return (
-									<option key={weaponId} value={`XP-WEAPON-${weaponId}`}>
-										{t(`weapons:MAIN_${weaponId}`)}
-									</option>
-								);
-							})}
-						</optgroup>
-					);
-				})}
-			</select>
+				<SendouTabList>
+					<SendouTab
+						id="PLAYERS"
+						icon={<Image path={navIconUrl("sendouq")} alt="" width={16} />}
+					>
+						{t("common:leaderboard.tabs.players")}
+					</SendouTab>
+					<SendouTab
+						id="TEAMS"
+						icon={<Image path={navIconUrl("sendouq")} alt="" width={16} />}
+					>
+						{t("common:leaderboard.tabs.teams")}
+					</SendouTab>
+					<SendouTab
+						id="XP"
+						icon={<Image path={navIconUrl("xsearch")} alt="" width={16} />}
+					>
+						{t("common:leaderboard.tabs.xp")}
+					</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id="PLAYERS">
+					<div className="stack md">
+						<LeaderboardSeasonSelect />
+						<WeaponCategoryFilter />
+					</div>
+				</SendouTabPanel>
+				<SendouTabPanel id="TEAMS">
+					<div className="stack md">
+						<LeaderboardSeasonSelect />
+						<TeamScopeFilter />
+					</div>
+				</SendouTabPanel>
+				<SendouTabPanel id="XP">
+					<div className="stack md">
+						<XPModeFilter />
+						<XPWeaponSelect />
+					</div>
+				</SendouTabPanel>
+			</SendouTabs>
 			{showTopTen ? (
 				<div className="stack lg mx-auto">
 					{data
@@ -210,7 +193,7 @@ export default function LeaderboardsPage() {
 			{data.teamLeaderboard ? (
 				<TeamTable
 					entries={data.teamLeaderboard}
-					showQualificationDividers={!selectValue().includes("ALL")}
+					showQualificationDividers={params.type !== "TEAM-ALL"}
 				/>
 			) : null}
 			{data.xpLeaderboard ? <XPTable entries={data.xpLeaderboard} /> : null}
@@ -229,6 +212,130 @@ export default function LeaderboardsPage() {
 				</div>
 			) : null}
 		</Main>
+	);
+}
+
+function LeaderboardSeasonSelect() {
+	const { t } = useTranslation(["common"]);
+	const data = useLoaderData<typeof loader>();
+	const [, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SeasonSelect
+			label={t("common:leaderboard.season")}
+			season={data.season}
+			onChange={(season) => setParams({ season })}
+		/>
+	);
+}
+
+function WeaponCategoryFilter() {
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SendouChipRadioGroup wrap>
+			<SendouChipRadio
+				name="weapon-category"
+				value="ALL"
+				checked={params.type === "USER"}
+				onChange={() => setParams({ type: "USER" })}
+			>
+				{t("common:leaderboard.filter.all")}
+			</SendouChipRadio>
+			{weaponCategories.map((category) => (
+				<SendouChipRadio
+					key={category.name}
+					name="weapon-category"
+					value={category.name}
+					checked={params.type === `USER-${category.name}`}
+					onChange={() => setParams({ type: `USER-${category.name}` })}
+				>
+					<span className="stack horizontal xs items-center">
+						<Image path={weaponCategoryUrl(category.name)} size={18} alt="" />
+						{t(`common:weapon.category.${category.name}`)}
+					</span>
+				</SendouChipRadio>
+			))}
+		</SendouChipRadioGroup>
+	);
+}
+
+function TeamScopeFilter() {
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SendouChipRadioGroup>
+			<SendouChipRadio
+				name="team-scope"
+				value="TEAM"
+				checked={params.type === "TEAM"}
+				onChange={() => setParams({ type: "TEAM" })}
+			>
+				{t("common:leaderboard.teams.best")}
+			</SendouChipRadio>
+			<SendouChipRadio
+				name="team-scope"
+				value="TEAM-ALL"
+				checked={params.type === "TEAM-ALL"}
+				onChange={() => setParams({ type: "TEAM-ALL" })}
+			>
+				{t("common:leaderboard.teams.all")}
+			</SendouChipRadio>
+		</SendouChipRadioGroup>
+	);
+}
+
+function XPModeFilter() {
+	const { t } = useTranslation(["common", "game-misc"]);
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	return (
+		<SendouChipRadioGroup wrap>
+			<SendouChipRadio
+				name="xp-mode"
+				value="XP-ALL"
+				checked={params.type === "XP-ALL"}
+				onChange={() => setParams({ type: "XP-ALL" })}
+			>
+				{t("common:leaderboard.filter.allModes")}
+			</SendouChipRadio>
+			{rankedModesShort.map((mode) => (
+				<SendouChipRadio
+					key={mode}
+					name="xp-mode"
+					value={`XP-MODE-${mode}`}
+					checked={params.type === `XP-MODE-${mode}`}
+					onChange={() => setParams({ type: `XP-MODE-${mode}` })}
+				>
+					<span className="stack horizontal xs items-center">
+						<ModeImage mode={mode} size={18} />
+						{t(`game-misc:MODE_LONG_${mode}`)}
+					</span>
+				</SendouChipRadio>
+			))}
+		</SendouChipRadioGroup>
+	);
+}
+
+function XPWeaponSelect() {
+	const [params, setParams] = useSearchParamsTyped(leaderboardsSearchParams);
+
+	const selectedWeaponId = params.type.startsWith("XP-WEAPON")
+		? (Number(params.type.split("-")[2]) as MainWeaponId)
+		: null;
+
+	return (
+		<WeaponSelect
+			clearable
+			value={selectedWeaponId}
+			onChange={(weaponId) =>
+				setParams({
+					type: weaponId === null ? "XP-ALL" : `XP-WEAPON-${weaponId}`,
+				})
+			}
+		/>
 	);
 }
 
@@ -356,7 +463,9 @@ function TeamTable({
 }) {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
+	const [type] = useSearchParam(leaderboardsSearchParams, "type");
 	const isStaff = useHasRole("STAFF");
+	const showStaffActions = isStaff && type !== "TEAM-ALL";
 	const isCurrentSeason = data.season === Seasons.current()?.nth;
 	const showQualificationDividers =
 		_showQualificationDividers && isCurrentSeason && entries.length > 20;
@@ -398,7 +507,7 @@ function TeamTable({
 								<div className={styles.tablePower}>
 									{entry.power.toFixed(2)}
 								</div>
-								{isStaff ? <TeamStaffMenu entry={entry} /> : null}
+								{showStaffActions ? <TeamStaffMenu entry={entry} /> : null}
 							</div>
 						</div>
 						{entry.placementRank === TEAM_LEADERBOARD_QUALIFYING_COUNT &&

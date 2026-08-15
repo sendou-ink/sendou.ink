@@ -11,6 +11,14 @@ const mocks = vi.hoisted(() => ({
 }));
 vi.mock("~/features/auth/core/user", () => ({ useUser: () => mocks.user }));
 
+const userLeaderboardData = {
+	userLeaderboard: [],
+	ownEntryPeek: null,
+	teamLeaderboard: null,
+	xpLeaderboard: null,
+	season: 9,
+};
+
 const xpLeaderboardData = {
 	userLeaderboard: undefined,
 	ownEntryPeek: null,
@@ -64,6 +72,11 @@ const teamLeaderboardData = {
 };
 
 function renderPage(loaderData: unknown) {
+	// the app's flex body would otherwise size the render container to its
+	// content, laying the page out too narrow for its elements to be clickable
+	const container = document.body.appendChild(document.createElement("div"));
+	container.style.width = "100%";
+
 	const router = createBrowserRouter([
 		{
 			path: "*",
@@ -72,7 +85,7 @@ function renderPage(loaderData: unknown) {
 		},
 	]);
 
-	return render(<RouterProvider router={router} />);
+	return render(<RouterProvider router={router} />, { container });
 }
 
 afterEach(() => {
@@ -80,33 +93,76 @@ afterEach(() => {
 	mocks.user = null;
 });
 
-const showTeamLeaderboard = () =>
+const showLeaderboard = (
+	params: Parameters<typeof leaderboardsSearchParams.href>[1],
+) =>
 	window.history.replaceState(
 		null,
 		"",
-		leaderboardsSearchParams.href(window.location.pathname, {
-			type: "TEAM",
-			season: 9,
-		}),
+		leaderboardsSearchParams.href(window.location.pathname, params),
 	);
 
+const showTeamLeaderboard = () => showLeaderboard({ type: "TEAM", season: 9 });
+
+const currentSearchParams = () => new URLSearchParams(window.location.search);
+
 describe("LeaderboardsPage", () => {
-	test("type select shows the selected XP leaderboard instead of the default SP leaderboard", async () => {
-		window.history.replaceState(
-			null,
-			"",
-			leaderboardsSearchParams.href(window.location.pathname, {
-				type: "XP-ALL",
-				season: null,
-			}),
-		);
+	test("tab navigation shows the selected XP leaderboard instead of the default SP leaderboard", async () => {
+		showLeaderboard({ type: "XP-ALL", season: null });
 
 		const screen = await renderPage(xpLeaderboardData);
 
-		const select = screen.getByRole("combobox");
-		await expect.element(select).toBeVisible();
+		const xpTab = screen.getByRole("tab", { name: "X Battle" });
+		await expect.element(xpTab).toHaveAttribute("aria-selected", "true");
+	});
 
-		expect((select.element() as HTMLSelectElement).value).toBe("XP-ALL");
+	test("clears the season when moving to the X Battle tab", async () => {
+		showLeaderboard({ type: "USER", season: 9 });
+
+		const screen = await renderPage(userLeaderboardData);
+		await screen.getByRole("tab", { name: "X Battle" }).click();
+
+		await expect.poll(() => currentSearchParams().get("type")).toBe("XP-ALL");
+		expect(currentSearchParams().get("season")).toBeNull();
+	});
+
+	test("keeps the season when moving to the teams tab", async () => {
+		showLeaderboard({ type: "USER", season: 9 });
+
+		const screen = await renderPage(userLeaderboardData);
+		await screen.getByRole("tab", { name: "Teams" }).click();
+
+		await expect.poll(() => currentSearchParams().get("type")).toBe("TEAM");
+		expect(currentSearchParams().get("season")).toBe("9");
+	});
+
+	test("switches the team leaderboard to all rosters from the scope chips", async () => {
+		showTeamLeaderboard();
+
+		const screen = await renderPage(teamLeaderboardData);
+		await screen.getByText("All rosters").click();
+
+		await expect.poll(() => currentSearchParams().get("type")).toBe("TEAM-ALL");
+		expect(currentSearchParams().get("season")).toBe("9");
+	});
+
+	test("preselects the weapon of a weapon XP leaderboard", async () => {
+		showLeaderboard({ type: "XP-WEAPON-40", season: null });
+
+		const screen = await renderPage(xpLeaderboardData);
+
+		await expect
+			.element(screen.getByTestId("weapon-select"))
+			.toHaveTextContent("Splattershot");
+	});
+
+	test("falls back to all X Battle when the weapon is cleared", async () => {
+		showLeaderboard({ type: "XP-WEAPON-40", season: null });
+
+		const screen = await renderPage(xpLeaderboardData);
+		await screen.getByRole("button", { name: "Clear" }).click();
+
+		await expect.poll(() => currentSearchParams().get("type")).toBe("XP-ALL");
 	});
 
 	test("crosses out the players of a skipped team", async () => {
@@ -124,6 +180,20 @@ describe("LeaderboardsPage", () => {
 
 	test("hides the skip menu from a user without a staff role", async () => {
 		showTeamLeaderboard();
+
+		const screen = await renderPage(teamLeaderboardData);
+		await expect
+			.element(screen.getByRole("link", { name: "placing_team_player" }))
+			.toBeVisible();
+
+		expect(screen.getByRole("button", { name: "Actions" }).all()).toHaveLength(
+			0,
+		);
+	});
+
+	test("hides the skip menu from staff on the all rosters leaderboard", async () => {
+		showLeaderboard({ type: "TEAM-ALL", season: 9 });
+		mocks.user = { id: 1, roles: ["STAFF"] };
 
 		const screen = await renderPage(teamLeaderboardData);
 		await expect

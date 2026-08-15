@@ -15,11 +15,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
-	SendouSelect,
-	SendouSelectItem,
-	SendouSelectItemSection,
-} from "~/components/elements/Select";
-import {
 	SendouTab,
 	SendouTabList,
 	SendouTabs,
@@ -34,6 +29,7 @@ import { SeasonSummaryGraphic } from "~/features/img-export/components/SeasonSum
 import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
 import { TopTenPlayer } from "~/features/leaderboards/components/TopTenPlayer";
 import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-utils";
+import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -305,30 +301,17 @@ function SeasonHeader({
 	const { t } = useTranslation(["user"]);
 	const { starts, ends } = Seasons.nthToDateRange(seasonViewed);
 	const [, setSeason] = useSearchParam(userSeasonsSearchParams, "season");
-	const options = useSeasonSelectOptions();
 
 	return (
 		<div>
-			<SendouSelect
+			<SeasonSelect
 				label={t("user:seasons.season")}
-				selectedKey={seasonViewed}
-				onSelectionChange={(seasonNth) => setSeason(Number(seasonNth))}
-				items={options}
-			>
-				{({ year, items, key }) => (
-					<SendouSelectItemSection heading={year} key={key}>
-						{items.map((item) => (
-							<SendouSelectItem
-								key={item.key}
-								id={item.seasonNth}
-								isDisabled={!seasonsParticipatedIn.includes(item.seasonNth)}
-							>
-								{item.name}
-							</SendouSelectItem>
-						))}
-					</SendouSelectItemSection>
-				)}
-			</SendouSelect>
+				season={seasonViewed}
+				onChange={setSeason}
+				isSeasonDisabled={(seasonNth) =>
+					!seasonsParticipatedIn.includes(seasonNth)
+				}
+			/>
 			<div className="text-sm text-lighter mt-2">
 				<LocaleTimeRange
 					from={new Date(starts)}
@@ -343,36 +326,6 @@ function SeasonHeader({
 			</div>
 		</div>
 	);
-}
-
-function useSeasonSelectOptions() {
-	const { t } = useTranslation(["user"]);
-
-	const seasonSelectItems = Seasons.allStarted().map((seasonNth) => ({
-		seasonNth,
-		key: seasonNth,
-		name: `${t("user:seasons.season")} ${seasonNth}`,
-	}));
-
-	const groupedSeasonItems = seasonSelectItems.reduce(
-		(acc, item) => {
-			const year = Seasons.nthToDateRange(item.seasonNth).starts.getFullYear();
-			if (!acc[year]) {
-				acc[year] = [];
-			}
-			acc[year].push(item);
-			return acc;
-		},
-		{} as Record<number, typeof seasonSelectItems>,
-	);
-
-	return Object.entries(groupedSeasonItems)
-		.sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
-		.map(([year, items]) => ({
-			year,
-			items: items.sort((a, b) => b.seasonNth - a.seasonNth),
-			key: year,
-		}));
 }
 
 function Winrates({
