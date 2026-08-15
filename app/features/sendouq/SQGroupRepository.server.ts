@@ -63,6 +63,7 @@ export async function findCurrentGroups() {
 			.selectFrom("Group")
 			.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
 			.innerJoin("User", "User.id", "GroupMember.userId")
+			.leftJoin("AllTeam", "AllTeam.id", "Group.teamId")
 			.leftJoin("GroupMatch", (join) =>
 				join.on((eb) =>
 					eb.or([
@@ -77,6 +78,7 @@ export async function findCurrentGroups() {
 				"Group.inviteCode",
 				"Group.latestActionAt",
 				"Group.status",
+				"AllTeam.mapModePreferences as teamMapModePreferences",
 				"GroupMatch.id as matchId",
 				commonUserMembersAgg(eb, {
 					mapModePreferences: eb.ref("User.mapModePreferences"),
@@ -154,12 +156,11 @@ export async function insertFromPrevious(
 	return db.transaction().execute(async (trx) => {
 		const createdGroup = await trx
 			.insertInto("Group")
-			.columns(["teamId", "chatCode", "inviteCode", "status", "matchmade"])
+			.columns(["chatCode", "inviteCode", "status", "matchmade"])
 			.expression((eb) =>
 				eb
 					.selectFrom("Group")
 					.select((eb) => [
-						"Group.teamId",
 						"Group.chatCode",
 						eb.val(shortNanoid()).as("inviteCode"),
 						eb.val(status).as("status"),
@@ -180,6 +181,8 @@ export async function insertFromPrevious(
 			)
 			.execute();
 
+		await syncTeamId(createdGroup.id, trx);
+
 		if (!(await isGroupCorrect(createdGroup.id, trx))) {
 			throw new SendouQError(
 				"Group has too many members or member in multiple groups",
@@ -188,6 +191,49 @@ export async function insertFromPrevious(
 
 		return createdGroup;
 	});
+}
+
+/**
+ * Stamps the group as a team's, when a full group's worth of its members share one,
+ * and clears the stamp otherwise. A team's group queues on the team's own map & mode
+ * preferences rather than on those of its members.
+ */
+export async function syncTeamId(groupId: number, trx: Transaction<DB>) {
+	// the tables are joined directly instead of through `TeamMemberWithSecondary`,
+	// which SQLite materializes in full before the group filter narrows it down
+	const members = await trx
+		.selectFrom("GroupMember")
+		.innerJoin("AllTeamMember", (join) =>
+			join
+				.onRef("AllTeamMember.userId", "=", "GroupMember.userId")
+				.on("AllTeamMember.leftAt", "is", null),
+		)
+		.innerJoin("Team", "Team.id", "AllTeamMember.teamId")
+		.select(["AllTeamMember.teamId"])
+		.where("GroupMember.groupId", "=", groupId)
+		.execute();
+
+	const counts = new Map<number, number>();
+
+	for (const member of members) {
+		const newCount = (counts.get(member.teamId) ?? 0) + 1;
+		if (newCount === FULL_GROUP_SIZE) {
+			await trx
+				.updateTable("Group")
+				.set({ teamId: member.teamId })
+				.where("id", "=", groupId)
+				.execute();
+			return;
+		}
+
+		counts.set(member.teamId, newCount);
+	}
+
+	await trx
+		.updateTable("Group")
+		.set({ teamId: null })
+		.where("id", "=", groupId)
+		.execute();
 }
 
 function deleteLikesByGroupId(groupId: number, trx: Transaction<DB>) {
@@ -248,6 +294,7 @@ export function morphGroups({
 			.where("GroupMember.groupId", "=", otherGroupId)
 			.execute();
 
+		await syncTeamId(survivingGroupId, trx);
 		await deleteLikesAndSuggestionsByGroupId(survivingGroupId, trx);
 		await refreshGroup(survivingGroupId, trx);
 
@@ -310,6 +357,7 @@ export async function insertMember(
 			})
 			.execute();
 
+		await syncTeamId(groupId, trx);
 		await deleteLikesAndSuggestionsByGroupId(groupId, trx);
 
 		if (!(await isGroupCorrect(groupId, trx))) {
@@ -784,6 +832,8 @@ export function leaveGroup(userId: number) {
 		if (match) {
 			throw new SendouQError("Can't leave group when already in a match");
 		}
+
+		await syncTeamId(userGroup.id, trx);
 
 		return { abortedReadyCheckGroupIds };
 	});

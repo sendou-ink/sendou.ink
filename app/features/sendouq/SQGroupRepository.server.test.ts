@@ -4,6 +4,7 @@ import { backdate } from "~/db/seed/core/backdate";
 import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
@@ -40,6 +41,26 @@ const fetchVotes = (groupId: number) =>
 
 const castYesVote = (userId: number, groupId: number) =>
 	GroupMatchContinueVoteFactory.create({ userId, groupId });
+
+/** Creates a full team's worth of users and the team they are all members of. */
+const setupTeam = async () => {
+	const members = await UserFactory.createMany(FULL_GROUP_SIZE);
+	const team = await TeamFactory.create({
+		memberUserIds: members.map((member) => member.id),
+	});
+
+	return { team, members };
+};
+
+const teamIdOfGroup = async (groupId: number) => {
+	const group = await db
+		.selectFrom("Group")
+		.select("Group.teamId")
+		.where("Group.id", "=", groupId)
+		.executeTakeFirstOrThrow();
+
+	return group.teamId;
+};
 
 describe("insert", () => {
 	test("records implicit no-vote on previous matchmade group when user creates a new group", async () => {
@@ -223,5 +244,68 @@ describe("setOldGroupsAsInactive", () => {
 
 		expect(likes).toHaveLength(0);
 		expect(suggestions).toHaveLength(0);
+	});
+});
+
+describe("syncTeamId", () => {
+	test("stamps the group as the team's once the last of its members joins", async () => {
+		const { team, members } = await setupTeam();
+		const group = await SQGroupFactory.create({
+			memberUserIds: members.slice(0, -1).map((member) => member.id),
+		});
+
+		expect(await teamIdOfGroup(group.id)).toBeNull();
+
+		await SQGroupRepository.insertMember(group.id, {
+			userId: members.at(-1)!.id,
+		});
+
+		expect(await teamIdOfGroup(group.id)).toBe(team.id);
+	});
+
+	test("leaves the group unstamped when its members are not all of one team", async () => {
+		const { members } = await setupTeam();
+		const outsider = await UserFactory.create();
+		const group = await SQGroupFactory.create({
+			memberUserIds: members.slice(0, -1).map((member) => member.id),
+		});
+
+		await SQGroupRepository.insertMember(group.id, { userId: outsider.id });
+
+		expect(await teamIdOfGroup(group.id)).toBeNull();
+	});
+
+	test("clears the stamp when a member leaves", async () => {
+		const { team, members } = await setupTeam();
+		const group = await SQGroupFactory.create({
+			memberUserIds: members.map((member) => member.id),
+		});
+
+		expect(await teamIdOfGroup(group.id)).toBe(team.id);
+
+		await SQGroupRepository.leaveGroup(members[0].id);
+
+		expect(await teamIdOfGroup(group.id)).toBeNull();
+	});
+
+	test("recomputes the stamp rather than copying it from the previous group", async () => {
+		const { team, members } = await setupTeam();
+		const previousGroup = await SQGroupFactory.create({
+			memberUserIds: members.map((member) => member.id),
+		});
+
+		expect(await teamIdOfGroup(previousGroup.id)).toBe(team.id);
+
+		await backdate("Group", previousGroup.id, {
+			latestActionAt: sub(new Date(), { hours: 2 }),
+		});
+		await SQGroupRepository.setOldGroupsAsInactive();
+
+		const newGroup = await SQGroupRepository.insertFromPrevious({
+			previousGroupId: previousGroup.id,
+			memberUserIds: members.slice(0, -1).map((member) => member.id),
+		});
+
+		expect(await teamIdOfGroup(newGroup.id)).toBeNull();
 	});
 });

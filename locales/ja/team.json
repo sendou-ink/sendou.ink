@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "新しいチームを作成する",
 	"editTeam.header": "",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "チーム・プレイヤーを検索...",
 	"actionButtons.leaveTeam": "チームを抜ける",
 	"actionButtons.makeMainTeam": "新しいメインチームを作る",

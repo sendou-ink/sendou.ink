@@ -615,8 +615,8 @@ export function insert({
 			)
 			.execute();
 
-		await syncGroupTeamId(alphaGroupId, trx);
-		await syncGroupTeamId(bravoGroupId, trx);
+		await SQGroupRepository.syncTeamId(alphaGroupId, trx);
+		await SQGroupRepository.syncTeamId(bravoGroupId, trx);
 
 		// both groups are locked into this match, so anything pending is moot
 		await SQGroupRepository.deleteLikesAndSuggestionsByGroupId(
@@ -639,43 +639,6 @@ export function insert({
 
 		return match;
 	});
-}
-
-async function syncGroupTeamId(groupId: number, trx: Transaction<DB>) {
-	const members = await trx
-		.selectFrom("GroupMember")
-		.leftJoin(
-			"TeamMemberWithSecondary",
-			"TeamMemberWithSecondary.userId",
-			"GroupMember.userId",
-		)
-		.select(["TeamMemberWithSecondary.teamId"])
-		.where("GroupMember.groupId", "=", groupId)
-		.execute();
-
-	const teamIds = members.map((m) => m.teamId).filter((id) => id !== null);
-
-	const counts = new Map<number, number>();
-
-	for (const teamId of teamIds) {
-		const newCount = (counts.get(teamId) ?? 0) + 1;
-		if (newCount === 4) {
-			await trx
-				.updateTable("Group")
-				.set({ teamId })
-				.where("id", "=", groupId)
-				.execute();
-			return;
-		}
-
-		counts.set(teamId, newCount);
-	}
-
-	await trx
-		.updateTable("Group")
-		.set({ teamId: null })
-		.where("id", "=", groupId)
-		.execute();
 }
 
 async function validateCreatedMatch(

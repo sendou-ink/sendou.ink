@@ -15,6 +15,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl, {
 			includeUnvalidatedImages: true,
+			includeMapModePreferences: true,
 		}),
 	);
 

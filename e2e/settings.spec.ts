@@ -4,10 +4,8 @@ import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";
 import { CalendarPage } from "./pages/calendar/calendar-page";
-import {
-	MatchProfilePage,
-	SELECTED_MAP_CLASS,
-} from "./pages/settings/match-profile-page";
+import { SELECTED_MAP_CLASS } from "./pages/settings/map-mode-preferences-field";
+import { MatchProfilePage } from "./pages/settings/match-profile-page";
 import { SettingsPage } from "./pages/settings/settings-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentResultsPage } from "./pages/tournament/tournament-results-page";
@@ -82,20 +80,20 @@ test.describe("Match profile map preferences", () => {
 		const matchProfile = new MatchProfilePage(page);
 		await matchProfile.goto();
 
-		await matchProfile.setModePreference("SZ", "Prefer");
-		await matchProfile.selectModeTab("SZ");
-		await matchProfile.mapButton("SZ", 1).click();
-		await expect(matchProfile.mapButton("SZ", 1)).toHaveClass(
+		await matchProfile.maps.setModePreference("SZ", "Prefer");
+		await matchProfile.maps.selectModeTab("SZ");
+		await matchProfile.maps.mapButton("SZ", 1).click();
+		await expect(matchProfile.maps.mapButton("SZ", 1)).toHaveClass(
 			SELECTED_MAP_CLASS,
 		);
 
 		// avoiding hides the picker, but the selection should be remembered
-		await matchProfile.setModePreference("SZ", "Avoid");
-		await isNotVisible(matchProfile.mapButton("SZ", 1));
+		await matchProfile.maps.setModePreference("SZ", "Avoid");
+		await isNotVisible(matchProfile.maps.mapButton("SZ", 1));
 
-		await matchProfile.setModePreference("SZ", "Prefer");
-		await matchProfile.selectModeTab("SZ");
-		await expect(matchProfile.mapButton("SZ", 1)).toHaveClass(
+		await matchProfile.maps.setModePreference("SZ", "Prefer");
+		await matchProfile.maps.selectModeTab("SZ");
+		await expect(matchProfile.maps.mapButton("SZ", 1)).toHaveClass(
 			SELECTED_MAP_CLASS,
 		);
 	});
@@ -109,19 +107,19 @@ test.describe("Match profile map preferences", () => {
 		await matchProfile.goto();
 
 		// Save a map pool for both SZ and TC (stage 2 is not banned in TC).
-		await matchProfile.setModePreference("SZ", "Prefer");
-		await matchProfile.selectModeTab("SZ");
-		await matchProfile.mapButton("SZ", 1).click();
-		await matchProfile.setModePreference("TC", "Prefer");
-		await matchProfile.selectModeTab("TC");
-		await matchProfile.mapButton("TC", 2).click();
+		await matchProfile.maps.setModePreference("SZ", "Prefer");
+		await matchProfile.maps.selectModeTab("SZ");
+		await matchProfile.maps.mapButton("SZ", 1).click();
+		await matchProfile.maps.setModePreference("TC", "Prefer");
+		await matchProfile.maps.selectModeTab("TC");
+		await matchProfile.maps.mapButton("TC", 2).click();
 		await matchProfile.save();
 
 		// Switch to "zones only" by avoiding every mode except SZ, then save.
-		await matchProfile.setModePreference("TW", "Avoid");
-		await matchProfile.setModePreference("TC", "Avoid");
-		await matchProfile.setModePreference("RM", "Avoid");
-		await matchProfile.setModePreference("CB", "Avoid");
+		await matchProfile.maps.setModePreference("TW", "Avoid");
+		await matchProfile.maps.setModePreference("TC", "Avoid");
+		await matchProfile.maps.setModePreference("RM", "Avoid");
+		await matchProfile.maps.setModePreference("CB", "Avoid");
 		await matchProfile.save();
 
 		// Reload so the form loads the persisted preferences. The previously saved

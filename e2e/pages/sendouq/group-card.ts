@@ -1,4 +1,5 @@
 import type { Locator } from "@playwright/test";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { modalClickConfirmButton, submit } from "../../helpers/playwright";
 import { UserCard } from "../user/user-card";
 
@@ -11,6 +12,8 @@ export class GroupCard {
 	readonly trail: Locator;
 	/** One per member who missed a ready check, and can thus be kicked. */
 	readonly kickButtons: Locator;
+	/** One per mode the match against this group would be played on. */
+	readonly modes: Locator;
 
 	constructor(root: Locator) {
 		this.root = root;
@@ -19,6 +22,11 @@ export class GroupCard {
 		this.suggestButton = root.getByTestId("group-card-suggest-button");
 		this.trail = root.getByTestId("group-card-trail");
 		this.kickButtons = root.getByTestId("group-card-kick-button");
+		this.modes = root.getByTestId(/^group-card-mode-/);
+	}
+
+	mode(mode: ModeShort) {
+		return this.root.getByTestId(`group-card-mode-${mode}`);
 	}
 
 	/** Challenges or invites the group, accepts what it offered, or undoes either. */

@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "Criando um novo time",
 	"editTeam.header": "",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "Pesquisar por um time ou jogador...",
 	"actionButtons.leaveTeam": "Sair do Time",
 	"actionButtons.makeMainTeam": "",

@@ -1,24 +1,38 @@
+import { Trash2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
+import { ActionButton } from "~/components/ActionButton";
 import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { Divider } from "~/components/Divider";
 import { Main, mainStyles } from "~/components/Main";
+import type { UserMapModePreferences } from "~/db/tables-json";
+import {
+	MapModePreferencesField,
+	preferencesFromRaw,
+} from "~/features/settings/components/MapModePreferencesField";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { ThemeInput } from "~/utils/oklch-gamut";
 import { metaTags } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/t.$customUrl.edit.server";
 import { loader } from "../loaders/t.$customUrl.edit.server";
 import styles from "../team.module.css";
 import {
+	editTeamActionSchema,
 	editTeamFormSchema,
 	updateTeamCustomThemeSchema,
+	updateTeamMapModePreferencesSchema,
 } from "../team-schemas";
 
 export { action, loader };
+
+export const handle: SendouRouteHandle = {
+	i18n: ["settings"],
+};
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -60,6 +74,10 @@ export default function EditTeamPage() {
 						</>
 					)}
 				</SendouForm>
+				<Divider className={styles.mapPreferencesDivider} smallText>
+					{t("team:mapPreferences.header")}
+				</Divider>
+				<TeamMapModePreferences />
 				{canAddCustomizedColors ? (
 					<>
 						<Divider className={styles.formDivider} smallText>
@@ -70,6 +88,60 @@ export default function EditTeamPage() {
 				) : null}
 			</div>
 		</Main>
+	);
+}
+
+function TeamMapModePreferences() {
+	const { t } = useTranslation(["common", "team"]);
+	const { team } = useLoaderData<typeof loader>();
+
+	return (
+		<div className="stack md">
+			{team.mapModePreferences ? (
+				<ActionButton
+					schema={editTeamActionSchema}
+					action="REMOVE_MAP_MODE_PREFERENCES"
+					variant="minimal-destructive"
+					size="small"
+					icon={<Trash2 />}
+					className="mx-auto"
+					aria-label="Remove team map preferences"
+					confirm={{
+						dialogHeading: t("team:mapPreferences.remove.header", {
+							teamName: team.name,
+						}),
+					}}
+				>
+					{t("common:actions.remove")}
+				</ActionButton>
+			) : null}
+			<div className="text-lighter text-sm text-center">
+				{t("team:mapPreferences.explanation")}
+			</div>
+			<SendouForm
+				key={JSON.stringify(team.mapModePreferences ?? null)}
+				schema={updateTeamMapModePreferencesSchema}
+				defaultValues={{
+					mapModePreferences: preferencesFromRaw(team.mapModePreferences),
+				}}
+				submitButtonText={t("common:actions.save")}
+				submitButtonTestId="team-map-preferences-submit-button"
+			>
+				{({ FormField }) => (
+					<FormField name="mapModePreferences">
+						{(props: {
+							value: unknown;
+							onChange: (value: UserMapModePreferences) => void;
+						}) => (
+							<MapModePreferencesField
+								value={props.value as UserMapModePreferences}
+								onChange={props.onChange}
+							/>
+						)}
+					</FormField>
+				)}
+			</SendouForm>
+		</div>
 	);
 }
 

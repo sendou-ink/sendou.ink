@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "Создать новую команду",
 	"editTeam.header": "",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "Поиск игрока или команды...",
 	"actionButtons.leaveTeam": "Покинуть команду",
 	"actionButtons.makeMainTeam": "Сделать главной командой",

@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "",
 	"editTeam.header": "",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "",
 	"actionButtons.leaveTeam": "",
 	"actionButtons.makeMainTeam": "",

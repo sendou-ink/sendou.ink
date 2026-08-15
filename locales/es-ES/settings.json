@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "Personal",
 	"matchProfile.maps.preferencesFor": "Preferencias para",
 	"matchProfile.maps.teamExplanation": "La lista de mapas del equipo se usa para todos los miembros al entrar en cola como equipo",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "Evitar",
 	"matchProfile.maps.prefer": "Preferir",
 	"matchProfile.maps.neutral": "Neutral",

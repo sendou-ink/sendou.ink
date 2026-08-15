@@ -83,6 +83,7 @@ class SendouQClass {
 			...group,
 			noScreen: this.#groupNoScreen(group),
 			modePreferences: this.#groupModePreferences(group),
+			teamMapModePreferences: undefined,
 			tier: this.#groupTier(group) as TieredSkill["tier"] | null,
 			tierRange: null as TierRange | null,
 			skillDifference:
@@ -442,27 +443,26 @@ class SendouQClass {
 			: null;
 	}
 
-	#groupModePreferences(
-		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
-	): ModeShort[] {
+	#groupModePreferences(group: DBGroupRow): ModeShort[] {
+		// a team's own preferences speak for its members, the way they do when the
+		// map list of the team's match is generated
+		const countedPreferences = group.teamMapModePreferences
+			? [group.teamMapModePreferences.modes]
+			: group.members.map((member) => member.mapModePreferences?.modes);
+
 		const modePreferences: ModeShort[] = [];
 
 		for (const mode of modesShort) {
 			let score = 0;
-			for (const member of group.members) {
-				const userModePreferences = member.mapModePreferences?.modes;
-				if (!userModePreferences) continue;
+			for (const preferences of countedPreferences) {
+				if (!preferences) continue;
 
 				if (
-					userModePreferences.some(
-						(p) => p.mode === mode && p.preference === "PREFER",
-					)
+					preferences.some((p) => p.mode === mode && p.preference === "PREFER")
 				) {
 					score += 1;
 				} else if (
-					userModePreferences.some(
-						(p) => p.mode === mode && p.preference === "AVOID",
-					)
+					preferences.some((p) => p.mode === mode && p.preference === "AVOID")
 				) {
 					score -= 1;
 				}

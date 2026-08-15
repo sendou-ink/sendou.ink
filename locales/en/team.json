@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "Creating a new team",
 	"editTeam.header": "Editing {{teamName}}",
+	"mapPreferences.header": "SendouQ map preferences",
+	"mapPreferences.explanation": "When set, these map preferences are used for the whole team's map votes when queueing together in SendouQ, instead of each member's personal preferences.",
+	"mapPreferences.remove.header": "Remove {{teamName}}'s map preferences? Members' personal preferences will be used instead.",
 	"teamSearch.placeholder": "Search for a team or player...",
 	"actionButtons.leaveTeam": "Leave Team",
 	"actionButtons.makeMainTeam": "Make main team",
