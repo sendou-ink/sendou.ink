@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
 import { isSetOverByScore, matchEndedEarly } from "../status";
 import type { BracketData, EngineResult, MatchData, Side } from "../types";
-import invariant from "../utils/invariant";
 import { reportResult } from "./report-result";
 import { resetMatchResults } from "./reset-result";
 

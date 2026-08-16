@@ -353,6 +353,9 @@ importers:
       '@sendou/in-game-lists':
         specifier: workspace:*
         version: link:../in-game-lists
+      '@sendou/utils':
+        specifier: workspace:*
+        version: link:../utils
       edmonds-blossom-fixed:
         specifier: 1.0.1
         version: 1.0.1

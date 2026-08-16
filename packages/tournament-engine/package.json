@@ -10,6 +10,7 @@
 	},
 	"dependencies": {
 		"@sendou/in-game-lists": "workspace:*",
+		"@sendou/utils": "workspace:*",
 		"edmonds-blossom-fixed": "1.0.1",
 		"remeda": "2.39.0"
 	},

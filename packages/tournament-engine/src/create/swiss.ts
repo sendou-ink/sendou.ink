@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import { ENGINE_DEFAULTS } from "../constants";
 import type {
 	BracketData,
@@ -5,7 +6,6 @@ import type {
 	ResolvedCreateBracketInput,
 } from "../types";
 import { nullFilledArray } from "../utils/arrays";
-import invariant from "../utils/invariant";
 
 /**
  * Creates a Swiss bracket data set: all rounds up front, matches for round 1 only.
