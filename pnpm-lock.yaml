@@ -31,6 +31,9 @@ importers:
       date-fns:
         specifier: 4.4.0
         version: 4.4.0
+      fflate:
+        specifier: ^0.8.3
+        version: 0.8.3
       kysely:
         specifier: 0.29.0
         version: 0.29.0(patch_hash=a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a)

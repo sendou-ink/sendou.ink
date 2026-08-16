@@ -22,6 +22,7 @@
 		"@sendou/in-game-lists": "workspace:*",
 		"@sendou/utils": "workspace:*",
 		"date-fns": "4.4.0",
+		"fflate": "^0.8.3",
 		"kysely": "0.29.0",
 		"lru-cache": "^11.2.1",
 		"remeda": "2.39.0",
