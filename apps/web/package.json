@@ -8,6 +8,7 @@
 	},
 	"scripts": {
 		"dev": "pnpm run combine-locales && vite dev",
+		"dev:prod": "pnpm run combine-locales && cross-env DB_PATH=../web-react/db-prod.sqlite3 VITE_PROD_MODE=true vite dev",
 		"build": "pnpm run combine-locales && vite build",
 		"build:all-locales": "tsx scripts/build-with-all-locales.ts",
 		"preview": "vite preview",
@@ -39,6 +40,7 @@
 		"@sveltejs/kit": "3.0.0-next.23",
 		"@sveltejs/vite-plugin-svelte": "^7.3.0",
 		"@types/node": "26.1.2",
+		"cross-env": "10.1.0",
 		"svelte": "^5.56.9",
 		"svelte-check": "^4.7.6",
 		"tsx": "^4.20.5",

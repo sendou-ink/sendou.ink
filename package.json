@@ -10,6 +10,8 @@
 		"dev": "pnpm --filter web-react run dev",
 		"dev:fast": "pnpm --filter web-react run dev:fast",
 		"dev:prod": "pnpm --filter web-react run dev:prod",
+		"dev:web": "pnpm --filter web run dev",
+		"dev:web:prod": "pnpm --filter web run dev:prod",
 		"start": "pnpm --filter web-react run start",
 		"migrate": "pnpm --filter web-react run migrate",
 		"migrate:new": "pnpm --filter web-react run migrate:new",

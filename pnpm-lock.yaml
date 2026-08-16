@@ -77,6 +77,9 @@ importers:
       '@types/node':
         specifier: 26.1.2
         version: 26.1.2
+      cross-env:
+        specifier: 10.1.0
+        version: 10.1.0
       svelte:
         specifier: ^5.56.9
         version: 5.56.9
