@@ -6,10 +6,15 @@ import type { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import { logger } from "@sendou/utils/logger";
 import { getUser, requireUser } from "#lib/features/auth/user.server.ts";
 import { requireRole } from "#lib/modules/permissions/guards.server.ts";
-import { command, query, requested } from "$app/server";
+import { IS_E2E_TEST_RUN } from "#lib/utils/e2e.ts";
+import { command, prerender, query, requested } from "$app/server";
 import * as Seasons from "../mmr/Seasons.ts";
 import * as LeaderboardRepository from "./LeaderboardRepository.server.ts";
-import { WEAPON_LEADERBOARD_MAX_SIZE } from "./leaderboards-constants.ts";
+import {
+	WEAPON_LEADERBOARD_MAX_SIZE,
+	XP_LEADERBOARD_TYPES,
+	type XPLeaderboardType,
+} from "./leaderboards-constants.ts";
 import {
 	cachedFullUserLeaderboard,
 	cachedTeamLeaderboard,
@@ -21,6 +26,7 @@ import {
 import {
 	leaderboardsQuerySchema,
 	teamLeaderboardEntrySchema,
+	xpLeaderboardTypeSchema,
 } from "./leaderboards-schemas.ts";
 
 export const getLeaderboards = query(
@@ -60,19 +66,6 @@ export const getLeaderboards = query(
 		const showOwnEntryPeek =
 			fullUserLeaderboard && !isWeaponLeaderboard && user;
 
-		const xpLeaderboard =
-			type === "XP-ALL"
-				? await LeaderboardRepository.findAllXPLeaderboard()
-				: type.startsWith("XP-MODE")
-					? await LeaderboardRepository.findModeXPLeaderboard(
-							type.split("-")[2] as RankedModeShort,
-						)
-					: type.startsWith("XP-WEAPON")
-						? await LeaderboardRepository.findWeaponXPLeaderboard(
-								Number(type.split("-")[2]) as MainWeaponId,
-							)
-						: null;
-
 		return {
 			userLeaderboard: filteredLeaderboard ?? userLeaderboard,
 			ownEntryPeek: showOwnEntryPeek
@@ -83,11 +76,34 @@ export const getLeaderboards = query(
 					})
 				: null,
 			teamLeaderboard,
-			xpLeaderboard,
 			season,
 		};
 	},
 );
+
+// prerendered data would be baked from the build machine's database, so the
+// e2e build keeps this as a regular query against the per-worker test dbs
+export const getXPLeaderboard = IS_E2E_TEST_RUN
+	? query(xpLeaderboardTypeSchema, findXPLeaderboard)
+	: prerender(xpLeaderboardTypeSchema, findXPLeaderboard, {
+			inputs: () => [...XP_LEADERBOARD_TYPES],
+		});
+
+function findXPLeaderboard(type: XPLeaderboardType) {
+	if (type === "XP-ALL") {
+		return LeaderboardRepository.findAllXPLeaderboard();
+	}
+
+	if (type.startsWith("XP-MODE")) {
+		return LeaderboardRepository.findModeXPLeaderboard(
+			type.split("-")[2] as RankedModeShort,
+		);
+	}
+
+	return LeaderboardRepository.findWeaponXPLeaderboard(
+		Number(type.split("-")[2]) as MainWeaponId,
+	);
+}
 
 export const skipTeam = command(
 	teamLeaderboardEntrySchema,

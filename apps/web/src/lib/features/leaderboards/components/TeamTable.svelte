@@ -9,27 +9,29 @@ import { hasRole } from "#lib/features/auth/user-state.ts";
 import * as Seasons from "#lib/features/mmr/Seasons.ts";
 import { m } from "#lib/paraglide/messages.js";
 import { teamPage, userPage } from "#lib/utils/urls.ts";
-import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "../leaderboards-constants.ts";
-import type { LeaderboardsQueryArgs } from "../leaderboards-schemas.ts";
+import {
+	type LeaderboardType,
+	TEAM_LEADERBOARD_QUALIFYING_COUNT,
+} from "../leaderboards-constants.ts";
 import type { TeamLeaderboardEntry } from "../leaderboards-types.ts";
 import TeamStaffMenu from "./TeamStaffMenu.svelte";
 
 interface Props {
 	entries: TeamLeaderboardEntry[];
 	season: number;
-	queryArgs: LeaderboardsQueryArgs;
+	leaderboardType: LeaderboardType;
 	showQualificationDividers?: boolean;
 }
 
 let {
 	entries,
 	season,
-	queryArgs,
+	leaderboardType,
 	showQualificationDividers: showQualificationDividersProp,
 }: Props = $props();
 
 const isStaff = $derived(hasRole("STAFF"));
-const showStaffActions = $derived(isStaff && queryArgs.type !== "TEAM-ALL");
+const showStaffActions = $derived(isStaff && leaderboardType !== "TEAM-ALL");
 const isCurrentSeason = $derived(season === Seasons.current()?.nth);
 const showQualificationDividers = $derived(
 	showQualificationDividersProp && isCurrentSeason && entries.length > 20,

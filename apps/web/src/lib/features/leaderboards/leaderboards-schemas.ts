@@ -1,11 +1,16 @@
 import * as v from "valibot";
 import type { SkillTeamIdentifier } from "#lib/features/mmr/mmr-utils.ts";
-import { LEADERBOARD_TYPES } from "./leaderboards-constants.ts";
+import {
+	SEASONAL_LEADERBOARD_TYPES,
+	XP_LEADERBOARD_TYPES,
+} from "./leaderboards-constants.ts";
 
 export const leaderboardsQuerySchema = v.object({
-	type: v.picklist(LEADERBOARD_TYPES),
+	type: v.picklist(SEASONAL_LEADERBOARD_TYPES),
 	season: v.nullable(v.pipe(v.number(), v.integer())),
 });
+
+export const xpLeaderboardTypeSchema = v.picklist(XP_LEADERBOARD_TYPES);
 
 export type LeaderboardsQueryArgs = v.InferOutput<
 	typeof leaderboardsQuerySchema

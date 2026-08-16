@@ -27,7 +27,11 @@ import {
 	userSeasonsPage,
 	weaponCategoryUrl,
 } from "#lib/utils/urls.ts";
-import { getLeaderboards } from "../leaderboards.remote.ts";
+import { getLeaderboards, getXPLeaderboard } from "../leaderboards.remote.ts";
+import {
+	isXPLeaderboardType,
+	type LeaderboardType,
+} from "../leaderboards-constants.ts";
 import { leaderboardsSearchParams } from "../leaderboards-search-params.ts";
 import { seasonHasTopTen } from "../leaderboards-utils.ts";
 import TopTenPlayer from "../TopTenPlayer.svelte";
@@ -38,7 +42,7 @@ import XPTable from "./XPTable.svelte";
 
 const params = searchParamsState(leaderboardsSearchParams);
 
-const data = $derived(await getLeaderboards(params.current));
+const data = $derived(await loadLeaderboards(params.current));
 
 const isAllUserLeaderboard = $derived(params.current.type === "USER");
 
@@ -74,6 +78,26 @@ function onTabChange(key: string) {
 	if (key === "PLAYERS") return params.set({ type: "USER" });
 	if (key === "TEAMS") return params.set({ type: "TEAM" });
 	params.set({ type: "XP-ALL", season: null });
+}
+
+async function loadLeaderboards(query: {
+	type: LeaderboardType;
+	season: number | null;
+}) {
+	if (isXPLeaderboardType(query.type)) {
+		return {
+			xpLeaderboard: await getXPLeaderboard(query.type),
+			userLeaderboard: null,
+			ownEntryPeek: null,
+			teamLeaderboard: null,
+			season: Seasons.currentOrPrevious()!.nth,
+		};
+	}
+
+	return {
+		xpLeaderboard: null,
+		...(await getLeaderboards({ type: query.type, season: query.season })),
+	};
 }
 </script>
 
@@ -234,7 +258,7 @@ function onTabChange(key: string) {
 			<TeamTable
 				entries={data.teamLeaderboard}
 				season={data.season}
-				queryArgs={params.current}
+				leaderboardType={params.current.type}
 				showQualificationDividers={params.current.type !== "TEAM-ALL"}
 			/>
 		{/if}

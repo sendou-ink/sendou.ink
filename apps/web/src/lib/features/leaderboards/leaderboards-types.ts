@@ -1,4 +1,7 @@
-import type { getLeaderboards } from "./leaderboards.remote.ts";
+import type {
+	getLeaderboards,
+	getXPLeaderboard,
+} from "./leaderboards.remote.ts";
 
 export type LeaderboardsData = Awaited<ReturnType<typeof getLeaderboards>>;
 
@@ -10,8 +13,8 @@ export type TeamLeaderboardEntry = NonNullable<
 	LeaderboardsData["teamLeaderboard"]
 >[number];
 
-export type XPLeaderboardEntry = NonNullable<
-	LeaderboardsData["xpLeaderboard"]
+export type XPLeaderboardEntry = Awaited<
+	ReturnType<typeof getXPLeaderboard>
 >[number];
 
 export type OwnEntryPeekData = NonNullable<LeaderboardsData["ownEntryPeek"]>;
