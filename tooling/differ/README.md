@@ -25,7 +25,12 @@ pnpm run differ -- --filter /leaderboards
 pnpm run differ -- --max-rows 20 --themes light --viewports desktop
 pnpm run differ -- --seed-now 2026-08-16T12:00:00Z --concurrency 2
 pnpm run differ -- --skip-prepare     # reuse the previous build + seeded dbs
+pnpm run differ -- --right-app web --filter /leaderboards   # React vs Svelte
 ```
+
+`--right-app web` serves `apps/web` (the SvelteKit app) on the right side;
+the default (`web-react`) is the React-vs-React control run. The left side is
+always the React oracle.
 
 Heads-up: a run holds two production servers plus a Chromium instance — a
 couple of GB of memory. Run it from a plain terminal, not nested under other

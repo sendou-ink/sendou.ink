@@ -165,10 +165,14 @@ async function createContexts(
 				};
 			});
 
+			// the redirect target is app-specific (and may not exist on a
+			// partially migrated right side), so only the impersonation
+			// response itself is checked
 			const impersonate = await context.request.post(
 				`/auth/impersonate?id=${census.adminUserId}`,
+				{ maxRedirects: 0 },
 			);
-			if (!impersonate.ok()) {
+			if (impersonate.status() >= 400) {
 				throw new Error(
 					`Impersonation on ${server.baseURL} failed with status ${impersonate.status()}`,
 				);

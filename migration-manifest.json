@@ -76,7 +76,8 @@
 			"status": "pending"
 		},
 		"leaderboards": {
-			"status": "pending"
+			"status": "migrated",
+			"notes": "phase 2 vertical slice; verified pending differ + e2e run"
 		},
 		"lfg": {
 			"status": "pending"
@@ -218,7 +219,7 @@
 			"feature": "front-page"
 		},
 		"features/layout/routes/sidenav.ts": {
-			"status": "pending",
+			"status": "migrated",
 			"path": "/sidenav",
 			"feature": "layout"
 		},
@@ -729,9 +730,10 @@
 			"feature": "top-search"
 		},
 		"features/leaderboards/routes/leaderboards.tsx": {
-			"status": "pending",
+			"status": "migrated",
 			"path": "/leaderboards",
-			"feature": "leaderboards"
+			"feature": "leaderboards",
+			"notes": "ported by hand as the phase 2 golden slice; loader -> getLeaderboards query, action -> skipTeam/unskipTeam commands"
 		},
 		"features/links/routes/links.tsx": {
 			"status": "pending",
@@ -1099,7 +1101,7 @@
 			"feature": "user-page"
 		},
 		"features/theme/routes/theme.ts": {
-			"status": "pending",
+			"status": "migrated",
 			"path": "/theme",
 			"feature": "theme"
 		},

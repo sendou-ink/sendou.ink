@@ -5,6 +5,8 @@
 	"type": "module",
 	"scripts": {
 		"mono-split": "node src/mono-split.ts",
+		"route-map": "node src/route-map.ts",
+		"remote-scaffold": "node src/remote-scaffold.ts",
 		"manifest:generate": "node src/manifest.ts generate",
 		"manifest:report": "node src/manifest.ts report"
 	},

@@ -315,7 +315,7 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 }
 
 /** Waits until no navigation, revalidation or fetcher is in flight. */
-async function expectRouterIdle(page: Page) {
+export async function expectRouterIdle(page: Page) {
 	// A submit's redirect plus the target page's loaders can exceed the default
 	// expect timeout when the full suite is loading all workers.
 	try {

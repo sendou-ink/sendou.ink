@@ -28,8 +28,15 @@ const { values } = parseArgs({
 		"seed-now": { type: "string" },
 		"skip-prepare": { type: "boolean", default: false },
 		out: { type: "string" },
+		"right-app": { type: "string", default: "web-react" },
 	},
 });
+
+if (values["right-app"] !== "web-react" && values["right-app"] !== "web") {
+	throw new Error(
+		`--right-app must be "web-react" or "web", got "${values["right-app"]}"`,
+	);
+}
 
 const seedNow = values["seed-now"]
 	? new Date(values["seed-now"]).getTime()
@@ -64,6 +71,8 @@ const e2eBasePort = Number(process.env.PORT || envPort || 5173) + 500;
 const config: RunConfig = {
 	repoRoot: REPO_ROOT,
 	webReactDir,
+	webDir: path.join(REPO_ROOT, "apps", "web"),
+	rightApp: values["right-app"],
 	bakedSiteDomain: `http://localhost:${e2eBasePort}`,
 	outDir,
 	seedNow,

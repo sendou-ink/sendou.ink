@@ -20,22 +20,32 @@ export async function startServers(
 
 	const servers = (
 		[
-			{ name: "left", port: config.leftPort, dbFile: dbFiles.left },
-			{ name: "right", port: config.rightPort, dbFile: dbFiles.right },
+			{ name: "left", app: "web-react", port: config.leftPort, dbFile: dbFiles.left },
+			{ name: "right", app: config.rightApp, port: config.rightPort, dbFile: dbFiles.right },
 		] as const
-	).map(({ name, port, dbFile }): AppServer => {
+	).map(({ name, app, port, dbFile }): AppServer => {
+		const isSvelteApp = app === "web";
 		const serverProcess = spawn(
 			process.execPath,
-			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],
+			isSvelteApp
+				? ["./build/index.js"]
+				: [
+						"./node_modules/@react-router/serve/bin.cjs",
+						"./build/server/index.js",
+					],
 			{
-				cwd: config.webReactDir,
+				cwd: isSvelteApp ? config.webDir : config.webReactDir,
 				env: {
 					...process.env,
 					NODE_ENV: "production",
 					// bounded heap so two servers plus the browser cannot push the
 					// machine into memory-pressure kills
 					NODE_OPTIONS: "--max-old-space-size=1024",
-					DB_PATH: dbFile,
+					// the db files live in the web-react dir either way (they are
+					// produced by its seed scripts)
+					DB_PATH: isSvelteApp
+						? `${config.webReactDir}/${dbFile}`
+						: dbFile,
 					PORT: String(port),
 					DISCORD_CLIENT_ID: "123",
 					DISCORD_CLIENT_SECRET: "secret",

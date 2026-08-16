@@ -10,6 +10,12 @@ import {
 } from "./helpers/playwright";
 
 const DEBUG = process.env.E2E_DEBUG === "true";
+/** `E2E_TARGET_APP=web` serves `apps/web` (the SvelteKit app) instead of this
+ * React app, for running migrated specs against the other side of the
+ * migration (`svelte-big-bang.md`). Factories keep writing through this app's
+ * code either way — the database files are shared. */
+const TARGET_APP = process.env.E2E_TARGET_APP === "web" ? "web" : "web-react";
+const WEB_APP_DIR = new URL("../../web", import.meta.url).pathname;
 const SERVER_PROCESSES: ChildProcess[] = [];
 const MINIO_MARKER_FILE = ".e2e-minio-started";
 const STORAGE_BUCKET = "sendou";
@@ -127,6 +133,21 @@ async function globalSetup(config: FullConfig) {
 			: "Built the application",
 	);
 
+	if (TARGET_APP === "web") {
+		// biome-ignore lint/suspicious/noConsole: CLI script output
+		console.log("Building apps/web (E2E_TARGET_APP=web)...");
+		execSync("pnpm run build", {
+			stdio: "inherit",
+			cwd: WEB_APP_DIR,
+			env: {
+				...process.env,
+				NODE_ENV: "production",
+				VITE_E2E_TEST_RUN: "true",
+				VITE_SITE_DOMAIN: `http://localhost:${E2E_BASE_PORT}`,
+			},
+		});
+	}
+
 	// Prepare databases and start servers for each worker
 	const serverPromises: Promise<void>[] = [];
 
@@ -156,12 +177,19 @@ async function globalSetup(config: FullConfig) {
 		// above already migrated, making the script's `migrate up` step redundant
 		const serverProcess = spawn(
 			process.execPath,
-			["./node_modules/@react-router/serve/bin.cjs", "./build/server/index.js"],
+			TARGET_APP === "web"
+				? [`${WEB_APP_DIR}/build/index.js`]
+				: [
+						"./node_modules/@react-router/serve/bin.cjs",
+						"./build/server/index.js",
+					],
 			{
 				env: {
 					...process.env,
 					NODE_ENV: "production",
-					DB_PATH: dbPath,
+					// the db files live in this app's directory either way (the
+					// factories and migrations run through this app's code)
+					DB_PATH: TARGET_APP === "web" ? `${process.cwd()}/${dbPath}` : dbPath,
 					PORT: String(port),
 					DISCORD_CLIENT_ID: "123",
 					DISCORD_CLIENT_SECRET: "secret",

@@ -22,6 +22,15 @@ export function prepare(config: RunConfig): Census {
 			E2E_BUILD_SITE_DOMAIN: config.bakedSiteDomain,
 		});
 
+		if (config.rightApp === "web") {
+			log("Building apps/web (right side)...");
+			runIn(config.webDir, "pnpm", ["run", "build"], {
+				VITE_E2E_TEST_RUN: "true",
+				VITE_SITE_DOMAIN: config.bakedSiteDomain,
+				NODE_ENV: "production",
+			});
+		}
+
 		log(`Seeding ${SEED_DB} at ${new Date(config.seedNow).toISOString()}...`);
 		for (const dbFile of [SEED_DB, LEFT_DB, RIGHT_DB]) {
 			deleteDbFiles(path.join(config.webReactDir, dbFile));
@@ -98,8 +107,17 @@ function run(
 	args: string[],
 	env: Record<string, string>,
 ) {
+	runIn(config.webReactDir, command, args, env);
+}
+
+function runIn(
+	cwd: string,
+	command: string,
+	args: string[],
+	env: Record<string, string>,
+) {
 	const result = spawnSync(command, args, {
-		cwd: config.webReactDir,
+		cwd,
 		stdio: "inherit",
 		env: { ...process.env, ...env },
 	});

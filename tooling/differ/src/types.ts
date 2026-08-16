@@ -21,6 +21,10 @@ export interface Viewport {
 export interface RunConfig {
 	repoRoot: string;
 	webReactDir: string;
+	/** Directory of the SvelteKit app (`apps/web`). */
+	webDir: string;
+	/** Which app serves the right side; the left side is always `web-react` (the oracle). */
+	rightApp: "web-react" | "web";
 	/** The site domain baked into the shared e2e build; must be derived the
 	 * same way as `E2E_BASE_PORT` so the e2e build gets reused. */
 	bakedSiteDomain: string;
