@@ -6,6 +6,8 @@
  */
 
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import type { IngestSkipReason } from "@sendou/scanner-core/match-builder";
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import type * as React from "react";
@@ -16,8 +18,6 @@ import { matchScoresFromObjective } from "~/components/objective-timeline-utils"
 import { StageBannerBox } from "~/components/StageBannerBox";
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
-import type { IngestSkipReason } from "../core/match-builder";
-import type { ScannerMatch } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
 import { formatTime, useEventTimeFormatter } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";

@@ -1,8 +1,8 @@
+import invariant from "@sendou/utils/invariant";
 import { BarChart3, Key, ScrollText, Tally5, Users } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import invariant from "~/utils/invariant";
 import { SendouTab, SendouTabList, SendouTabs } from "../elements/Tabs";
 import styles from "./MatchTabs.module.css";
 import { matchPageSearchParams } from "./match-page-search-params";

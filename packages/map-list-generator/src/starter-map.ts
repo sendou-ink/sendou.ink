@@ -5,8 +5,8 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { ModeWithStage } from "@sendou/in-game-lists/types";
-import { logger } from "~/utils/logger";
-import { seededRandom } from "~/utils/random";
+import { logger } from "@sendou/utils/logger";
+import { seededRandom } from "@sendou/utils/random";
 import type { TournamentMapListMap, TournamentMaplistInput } from "./types";
 
 type StarterMapArgs = Pick<

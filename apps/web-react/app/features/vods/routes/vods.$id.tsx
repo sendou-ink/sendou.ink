@@ -1,4 +1,5 @@
 import { shortStageName } from "@sendou/in-game-lists/stage-ids";
+import type { Unpacked } from "@sendou/utils/types";
 import clsx from "clsx";
 import { Check, ClipboardCopy, Copy, SquarePen, Trash } from "lucide-react";
 import * as React from "react";
@@ -19,7 +20,6 @@ import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import type { Unpacked } from "~/utils/types";
 import {
 	modeImageUrl,
 	navIconUrl,

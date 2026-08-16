@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as TournamentAuditLogRepository from "../features/tournament/TournamentAuditLogRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteOldTournamentAuditLogsRoutine = new Routine({

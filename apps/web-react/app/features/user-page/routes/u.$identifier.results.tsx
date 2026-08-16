@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
@@ -5,7 +6,6 @@ import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import invariant from "~/utils/invariant";
 import { userPage, userResultsEditHighlightsPage } from "~/utils/urls";
 import { ResultsFiltersBar } from "../components/ResultsFiltersBar";
 import { SubPageHeader } from "../components/SubPageHeader";

@@ -1,9 +1,9 @@
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import { describe, expect, test } from "vitest";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as Matches from "./core/Matches";
 import type { IngestableGame } from "./core/Scoreboards";

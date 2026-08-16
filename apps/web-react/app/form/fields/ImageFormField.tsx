@@ -1,9 +1,9 @@
+import { logger } from "@sendou/utils/logger";
 import clsx from "clsx";
 import Compressor from "compressorjs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
-import { logger } from "~/utils/logger";
 import {
 	type ImageFieldValue,
 	resolveImageFieldDimensions,

@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as NotificationRepository from "../features/notifications/NotificationRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteOldNotificationsRoutine = new Routine({

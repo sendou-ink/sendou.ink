@@ -1,6 +1,6 @@
+import { assertType } from "@sendou/utils/types";
 import { z } from "zod";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
-import { assertType } from "~/utils/types";
 import { safeJSONParse } from "~/utils/zod";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "./plus-voting-constants";
 

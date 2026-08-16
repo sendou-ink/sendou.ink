@@ -1,3 +1,8 @@
+import {
+	DAMAGE_TYPE,
+	possibleApValues,
+} from "@sendou/build-analyzer/analyzer-constants";
+import type { AnyWeapon } from "@sendou/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -12,11 +17,6 @@ import {
 	weaponCategories,
 } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
-import {
-	DAMAGE_TYPE,
-	possibleApValues,
-} from "~/features/build-analyzer/analyzer-constants";
-import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 

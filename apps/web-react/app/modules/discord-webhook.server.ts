@@ -1,4 +1,4 @@
-import { logger } from "~/utils/logger";
+import { logger } from "@sendou/utils/logger";
 import { SENDOU_INK_BASE_URL, userAdminPage, userPage } from "~/utils/urls";
 
 const EMBED_FIELD_VALUE_MAX_LENGTH = 1000;

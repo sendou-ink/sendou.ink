@@ -1,7 +1,7 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import { userArtPage } from "~/features/art/art-urls";
 import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
-import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
 	FRIENDS_PAGE,

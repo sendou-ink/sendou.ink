@@ -4,6 +4,13 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import type {
+	BaseWeaponStats,
+	MainWeaponParams,
+	ParamsJson,
+	SubWeaponParams,
+	WeaponKit,
+} from "@sendou/build-analyzer/analyzer-types";
+import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
@@ -13,16 +20,9 @@ import {
 	subWeaponIds,
 	weaponIdToBaseWeaponId,
 } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import { z } from "zod";
-import type {
-	BaseWeaponStats,
-	MainWeaponParams,
-	ParamsJson,
-	SubWeaponParams,
-	WeaponKit,
-} from "~/features/build-analyzer/analyzer-types";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import {
 	LANG_JSONS_TO_CREATE,
 	loadLangDicts,

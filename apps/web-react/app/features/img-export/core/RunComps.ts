@@ -1,6 +1,6 @@
+import { weaponParams } from "@sendou/build-analyzer/core/utils";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import * as R from "remeda";
-import { weaponParams } from "~/features/build-analyzer/core/utils";
 
 const TACTICOOLER_SPECIAL_WEAPON_ID = 15;
 const COMP_SIZE = 4;

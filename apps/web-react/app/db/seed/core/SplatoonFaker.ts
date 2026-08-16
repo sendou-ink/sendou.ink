@@ -16,11 +16,11 @@ import {
 	canonicalWeaponSplId,
 	mainWeaponIds,
 } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
 import {
 	IN_GAME_NAME,
 	sanitizeInGameName,
 } from "~/features/user-page/in-game-name";
-import invariant from "~/utils/invariant";
 import { faker } from "./faker";
 
 const STACKABLE_ABILITIES = abilities

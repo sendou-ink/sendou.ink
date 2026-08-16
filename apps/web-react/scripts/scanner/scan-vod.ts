@@ -17,23 +17,23 @@
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
 import { basename } from "node:path";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
+import { MAP_START_EVENT_TYPE } from "@sendou/scanner-core/detectors/map-start/index";
+import {
+	createAllDetectors,
+	SCOREBOARD_EVENT_TYPES,
+} from "@sendou/scanner-core/detectors/registry";
+import { DetectorScheduler } from "@sendou/scanner-core/detectors/scheduler";
+import {
+	createScanTelemetry,
+	detectorTelemetry,
+} from "@sendou/scanner-core/detectors/telemetry";
+import { normalizeFrame, toMat } from "@sendou/scanner-core/image";
+import { TimelineBuilder } from "@sendou/scanner-core/timeline/index";
 import {
 	type CsvEvent,
 	eventsToCsv,
 } from "../../app/features/scanner/components/events-csv";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
-import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
-import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../../app/features/scanner/core/detectors/registry";
-import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
-import {
-	createScanTelemetry,
-	detectorTelemetry,
-} from "../../app/features/scanner/core/detectors/telemetry";
-import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
-import { TimelineBuilder } from "../../app/features/scanner/core/timeline/index";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
 
 const FRAME_WIDTH = 1920;

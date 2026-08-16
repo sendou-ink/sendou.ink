@@ -1,3 +1,4 @@
+import { safeNumberParse } from "@sendou/utils/number";
 import {
 	type AliasedRawBuilder,
 	type ColumnType,
@@ -20,7 +21,6 @@ import {
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
-import { safeNumberParse } from "./number";
 
 /**
  * Base query selecting the user matching a URL identifier, which can be their user id, their Discord

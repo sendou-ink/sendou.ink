@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import { db } from "~/db/sql";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 
 async function main() {
 	const name = process.argv[2]?.trim();

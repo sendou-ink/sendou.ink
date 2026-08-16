@@ -1,5 +1,5 @@
 import assert from "node:assert/strict";
-import { loadOpenCV, minMaxLoc } from "../core/cv";
+import { loadOpenCV, minMaxLoc } from "@sendou/scanner-core/cv";
 import test from "./node-test-compat";
 
 test("opencv.js loads in Node and matchTemplate works", async () => {

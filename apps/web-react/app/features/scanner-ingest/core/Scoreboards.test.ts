@@ -4,14 +4,14 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
-import { describe, expect, test } from "vitest";
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayer,
 	ScannerMatchPlayerStatus,
-} from "~/features/scanner/core/scanner-match";
-import type { ScannerLobby } from "~/features/scanner/scanner-types";
+} from "@sendou/scanner-core/scanner-match";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
+import { describe, expect, test } from "vitest";
 import * as Scoreboards from "./Scoreboards";
 import { NAMES } from "./tests/fixtures";
 

@@ -5,15 +5,15 @@
  * entirely once everything lives in a match.
  */
 
+import { DEATH_EVENT_TYPE } from "@sendou/scanner-core/detectors/death/index";
+import { MAP_START_EVENT_TYPE } from "@sendou/scanner-core/detectors/map-start/index";
+import { MINIMAP_EVENT_TYPE } from "@sendou/scanner-core/detectors/minimap/index";
+import { OBJECTIVE_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/index";
+import { SCOREBOARD_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
+import { SCOREBOARD_OWN_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-own/index";
 import * as R from "remeda";
-import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
-import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
-import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
-import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
-import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
-import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
-import { SCOREBOARD_OWN_EVENT_TYPE } from "../core/detectors/scoreboard-own/index";
 import styles from "./EventsSummary.module.css";
 import { EventTypeIcon } from "./EventTypeIcon";
 

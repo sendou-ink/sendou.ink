@@ -3,13 +3,13 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
+import { logger } from "@sendou/utils/logger";
 import { sub } from "date-fns";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { logger } from "~/utils/logger";
 
 export interface Fixtures {
 	heavyUser: { id: number; identifier: string } | null;

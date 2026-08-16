@@ -1,7 +1,7 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { StageId } from "@sendou/in-game-lists/types";
-import invariant from "~/utils/invariant";
+import invariant from "@sendou/utils/invariant";
 import type { MapPoolObject, ReadonlyMapPoolObject } from "./types";
 
 export function mapPoolToSerializedString(

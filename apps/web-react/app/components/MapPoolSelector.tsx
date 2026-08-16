@@ -1,16 +1,16 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
+import { assertType } from "@sendou/utils/types";
 import clsx from "clsx";
 import { ArrowLeft, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import type { Tables } from "~/db/tables";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { split, startsWith } from "~/utils/strings";
-import { assertType } from "~/utils/types";
 import { modeImageUrl, stageImageUrl } from "~/utils/urls";
 import { SendouButton } from "./elements/Button";
 

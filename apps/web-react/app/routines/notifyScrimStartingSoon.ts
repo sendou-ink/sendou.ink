@@ -1,8 +1,8 @@
+import { logger } from "@sendou/utils/logger";
 import { add, sub } from "date-fns";
 import { notify } from "../features/notifications/core/notify.server";
 import * as Scrim from "../features/scrims/core/Scrim";
 import * as ScrimPostRepository from "../features/scrims/ScrimPostRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const NotifyScrimStartingSoonRoutine = new Routine({

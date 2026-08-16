@@ -1,3 +1,4 @@
+import type { AnyWeapon } from "@sendou/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { filterWeapon } from "@sendou/in-game-lists/utils";
 import {
@@ -19,7 +20,6 @@ import {
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
 import { Image, WeaponImage } from "~/components/Image";
-import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,

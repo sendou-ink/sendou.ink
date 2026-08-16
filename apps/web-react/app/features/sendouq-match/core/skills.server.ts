@@ -1,3 +1,4 @@
+import { roundToNDecimalPlaces } from "@sendou/utils/number";
 import { ordinal, type Rating } from "openskill";
 import type { Tables } from "~/db/tables";
 import type {
@@ -11,7 +12,6 @@ import {
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { seasonRatings } from "~/features/mmr/mmr-utils.server";
-import { roundToNDecimalPlaces } from "~/utils/number";
 
 export type MementoSkillDifferences = {
 	users: Record<

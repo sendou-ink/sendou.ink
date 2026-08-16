@@ -1,3 +1,4 @@
+import type { Unpacked } from "@sendou/utils/types";
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { getUser } from "~/features/auth/core/user.server";
@@ -6,7 +7,6 @@ import { userSkills } from "~/features/mmr/tiered.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { paginate } from "~/utils/remix.server";
-import type { Unpacked } from "~/utils/types";
 import { filterPosts, type TiersMap } from "../core/filtering";
 import * as LFGRepository from "../LFGRepository.server";
 import { LFG } from "../lfg-constants";

@@ -1,10 +1,10 @@
 import { rankedModesShort } from "@sendou/in-game-lists/modes";
 import type { RankedModeShort } from "@sendou/in-game-lists/types";
+import { unwrap, unwrapErr } from "@sendou/utils/result";
 import { describe, expect, test } from "vitest";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { unwrap, unwrapErr } from "~/utils/result";
 import { generateBalancedMapList } from "./balanced-map-list";
 import { DEFAULT_MAP_POOL } from "./constants";
+import { MapPool } from "./map-pool";
 import type { TournamentMaplistInput } from "./types";
 
 const team1Picks = new MapPool([

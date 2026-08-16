@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import type { Tables } from "~/db/tables";
 import * as TournamentMatchVodRepository from "~/features/tournament-bracket/TournamentMatchVodRepository.server";
 import { hasTwitchEnvVars } from "~/modules/twitch/utils.server";
@@ -6,7 +7,6 @@ import {
 	getUsersByLogin,
 	parseTwitchDuration,
 } from "~/modules/twitch/vods";
-import { logger } from "~/utils/logger";
 import { Routine } from "./routine.server";
 
 const VOD_TIMESTAMP_OFFSET_SECONDS = 180;

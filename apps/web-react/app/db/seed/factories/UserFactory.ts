@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import { add } from "date-fns";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
@@ -7,7 +8,6 @@ import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
 import { toDBBoolean } from "~/utils/sql";
 import {
 	ORG_ADMIN_TEST_ID,

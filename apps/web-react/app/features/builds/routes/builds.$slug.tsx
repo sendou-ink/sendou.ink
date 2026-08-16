@@ -1,3 +1,4 @@
+import { possibleApValues } from "@sendou/build-analyzer/analyzer-constants";
 import { abilities } from "@sendou/in-game-lists/abilities";
 import { modesShort } from "@sendou/in-game-lists/modes";
 import type { Ability as AbilityType } from "@sendou/in-game-lists/types";
@@ -18,7 +19,6 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { ModeImage } from "~/components/Image";
 import { Main } from "~/components/Main";
-import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";

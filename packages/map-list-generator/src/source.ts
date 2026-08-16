@@ -1,4 +1,4 @@
-import invariant from "~/utils/invariant";
+import invariant from "@sendou/utils/invariant";
 import { sourceTypes } from "./constants";
 import type {
 	DBTournamentMaplistSource,

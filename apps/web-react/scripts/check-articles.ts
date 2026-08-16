@@ -1,7 +1,7 @@
 // validates all articles files in the project are following the correct .md + grey matter format
 
+import { logger } from "@sendou/utils/logger";
 import { mostRecentArticles } from "~/features/articles/core/list.server";
-import { logger } from "~/utils/logger";
 
 async function main() {
 	await mostRecentArticles(1000);

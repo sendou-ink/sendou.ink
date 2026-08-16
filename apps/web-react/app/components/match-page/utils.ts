@@ -1,6 +1,6 @@
+import { seededRandom } from "@sendou/utils/random";
 import * as R from "remeda";
 import type { CommonUser } from "~/utils/kysely.server";
-import { seededRandom } from "~/utils/random";
 
 type MatchSide = "ALPHA" | "BRAVO";
 

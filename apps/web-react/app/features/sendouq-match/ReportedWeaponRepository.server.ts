@@ -3,13 +3,13 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
+import { assertUnreachable } from "@sendou/utils/types";
 import type { NotNull, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { assertUnreachable } from "~/utils/types";
 
 export async function upsertOwn({
 	groupMatchId,

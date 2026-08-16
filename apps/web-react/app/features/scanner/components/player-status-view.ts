@@ -2,8 +2,9 @@
  * Prop derivation for rendering a ScannerMatch's status samples with the
  * shared <PlayerStatusTimeline />, used by the Live and VoD tabs.
  */
+
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import type { PlayerStatusTimelineTeam } from "~/components/PlayerStatusTimeline";
-import type { ScannerMatch } from "../core/scanner-match";
 
 /** Row weapons per team from the match's known players, slots by index. */
 export function playerStatusTeams(

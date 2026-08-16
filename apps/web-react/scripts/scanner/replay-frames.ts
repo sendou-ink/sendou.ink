@@ -13,14 +13,14 @@
  */
 import { readdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
-import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
+import { MAP_START_EVENT_TYPE } from "@sendou/scanner-core/detectors/map-start/index";
 import {
 	createAllDetectors,
 	SCOREBOARD_EVENT_TYPES,
-} from "../../app/features/scanner/core/detectors/registry";
-import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
-import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
+} from "@sendou/scanner-core/detectors/registry";
+import { DetectorScheduler } from "@sendou/scanner-core/detectors/scheduler";
+import { normalizeFrame, toMat } from "@sendou/scanner-core/image";
 import { readImage } from "../../app/features/scanner/node/image-io";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
 

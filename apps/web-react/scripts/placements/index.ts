@@ -1,10 +1,10 @@
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import { xRankSchema } from "./schemas";
 
 const rawJsonNumber = process.argv[2]?.trim();

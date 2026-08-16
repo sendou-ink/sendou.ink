@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -10,7 +11,6 @@ import {
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { requireUser } from "../../auth/core/user.server";

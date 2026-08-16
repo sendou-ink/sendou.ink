@@ -1,19 +1,19 @@
 import type {
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "@sendou/in-game-lists/types";
-import { weaponIdToBaseWeaponId } from "@sendou/in-game-lists/weapon-ids";
-import * as R from "remeda";
-import type {
 	AbilityPoints,
 	AnalyzedBuild,
 	AnyWeapon,
 	Damage,
 	DamageType,
-} from "~/features/build-analyzer/analyzer-types";
-import invariant from "~/utils/invariant";
-import { roundToNDecimalPlaces } from "~/utils/number";
+} from "@sendou/build-analyzer/analyzer-types";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
+import { weaponIdToBaseWeaponId } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
+import { roundToNDecimalPlaces } from "@sendou/utils/number";
+import * as R from "remeda";
 import {
 	DAMAGE_RECEIVERS,
 	damagePriorities,

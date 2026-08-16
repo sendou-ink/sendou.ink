@@ -1,4 +1,5 @@
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -11,7 +12,6 @@ import { SendouTabPanel } from "~/components/elements/Tabs";
 import { ModeImage, StageImage } from "~/components/Image";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { Table } from "~/components/Table";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as ScrimMapByMap from "../core/ScrimMapByMap";
 import type { loader } from "../loaders/scrims.$id.server";
 import styles from "./ScrimMatchStatsTab.module.css";

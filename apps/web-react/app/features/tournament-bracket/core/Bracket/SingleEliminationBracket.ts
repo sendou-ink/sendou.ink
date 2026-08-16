@@ -3,9 +3,9 @@ import type {
 	MatchData,
 	RoundData,
 } from "@sendou/tournament-engine/types";
+import invariant from "@sendou/utils/invariant";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
-import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 import { cumulativeEliminationsByRound } from "./utils";

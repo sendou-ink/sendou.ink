@@ -9,19 +9,22 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
-import { createDeathDetector } from "../core/detectors/death/index";
-import { createMapStartDetector } from "../core/detectors/map-start/index";
-import { createMinimapDetector } from "../core/detectors/minimap/index";
-import { createObjectiveDetector } from "../core/detectors/objective/index";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
+import { createDeathDetector } from "@sendou/scanner-core/detectors/death/index";
+import { createMapStartDetector } from "@sendou/scanner-core/detectors/map-start/index";
+import { createMinimapDetector } from "@sendou/scanner-core/detectors/minimap/index";
+import { createObjectiveDetector } from "@sendou/scanner-core/detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
-} from "../core/detectors/objective/player-status";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
-import { createScoreboardOwnDetector } from "../core/detectors/scoreboard-own/index";
-import type { DetectedEvent, Detector } from "../core/detectors/types";
+} from "@sendou/scanner-core/detectors/objective/player-status";
+import { createScoreboardDetector } from "@sendou/scanner-core/detectors/scoreboard/index";
+import { createScoreboardBattleLogReplayDetector } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
+import { createScoreboardOwnDetector } from "@sendou/scanner-core/detectors/scoreboard-own/index";
+import type {
+	DetectedEvent,
+	Detector,
+} from "@sendou/scanner-core/detectors/types";
 import {
 	type Fixture,
 	isFieldSkipped,

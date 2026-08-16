@@ -1,7 +1,7 @@
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 
 const discordId = process.argv[2]?.trim();
 

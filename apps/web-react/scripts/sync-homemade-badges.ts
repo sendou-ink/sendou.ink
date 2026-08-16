@@ -1,6 +1,6 @@
+import { logger } from "@sendou/utils/logger";
 import { db } from "~/db/sql";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
-import { logger } from "~/utils/logger";
 
 const HOMEMADE_BADGES_URL =
 	"https://raw.githubusercontent.com/sendou-ink/assets/main/homemade.json";

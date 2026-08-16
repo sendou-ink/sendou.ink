@@ -1,4 +1,5 @@
 import cachified from "@epic-web/cachified";
+import { logger } from "@sendou/utils/logger";
 import * as R from "remeda";
 import {
 	COMBINED_STREAMS_KEY,
@@ -13,7 +14,6 @@ import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as QStreamsRepository from "~/features/sendouq-streams/QStreamsRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import { logger } from "~/utils/logger";
 import { navIconUrl, SENDOUQ_STREAMS_PAGE, tierImageUrl } from "~/utils/urls";
 import { SENDOUQ_STREAMS_KEY } from "../q-streams-constants";
 

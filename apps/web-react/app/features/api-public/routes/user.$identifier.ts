@@ -1,3 +1,4 @@
+import { safeNumberParse } from "@sendou/utils/number";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -6,7 +7,6 @@ import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { jsonArrayFrom, peakXpOverallSql } from "~/utils/kysely.server";
-import { safeNumberParse } from "~/utils/number";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";

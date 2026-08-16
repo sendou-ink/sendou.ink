@@ -1,3 +1,5 @@
+import invariant from "@sendou/utils/invariant";
+import { assertUnreachable } from "@sendou/utils/types";
 import { ClipboardList, DoorOpen, Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Form, useLoaderData } from "react-router";
@@ -7,8 +9,6 @@ import { FriendCodeInput } from "~/components/FriendCodeInput";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
-import invariant from "~/utils/invariant";
-import { assertUnreachable } from "~/utils/types";
 import {
 	tournamentRegisterPage,
 	tournamentTeamPage,

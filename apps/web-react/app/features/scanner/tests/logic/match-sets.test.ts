@@ -1,9 +1,9 @@
 import assert from "node:assert/strict";
-import { assignMatchSets } from "../../core/match-sets";
+import { assignMatchSets } from "@sendou/scanner-core/match-sets";
 import type {
 	ScannerMatch,
 	ScannerMatchPlayer,
-} from "../../core/scanner-match";
+} from "@sendou/scanner-core/scanner-match";
 import test from "../node-test-compat";
 
 const TEAM_A = ["Sendou", "Kiver", "Brian", "Zed"];

@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
@@ -6,7 +7,6 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import invariant from "../../../utils/invariant";
 
 export interface DBSource {
 	/** Index of the bracket where the teams come from */

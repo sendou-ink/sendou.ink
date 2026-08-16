@@ -1,4 +1,4 @@
-import { logger } from "./logger";
+import { logger } from "@sendou/utils/logger";
 
 // https://stackoverflow.com/a/50101022
 export async function fetchWithTimeout(

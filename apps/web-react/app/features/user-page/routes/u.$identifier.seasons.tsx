@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import clsx from "clsx";
 import { HardDriveDownload } from "lucide-react";
 import * as React from "react";
@@ -38,7 +39,6 @@ import {
 	userSeasonsStatsPage,
 } from "~/features/user-page/user-page-urls";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	resolveAvatarUrl,

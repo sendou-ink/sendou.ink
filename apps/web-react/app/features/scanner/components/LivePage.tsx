@@ -1,3 +1,25 @@
+import { connectAbilities } from "@sendou/scanner-core/ability-harvest";
+import { DEATH_EVENT_TYPE } from "@sendou/scanner-core/detectors/death/index";
+import {
+	MAP_START_EVENT_TYPE,
+	type MapStartData,
+} from "@sendou/scanner-core/detectors/map-start/index";
+import { MINIMAP_EVENT_TYPE } from "@sendou/scanner-core/detectors/minimap/index";
+import { OBJECTIVE_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/strip-weapons";
+import { SCOREBOARD_EVENT_TYPES } from "@sendou/scanner-core/detectors/registry";
+import type {
+	DetectedEvent,
+	GateResult,
+} from "@sendou/scanner-core/detectors/types";
+import type { BuiltMatch } from "@sendou/scanner-core/match-builder";
+import {
+	buildScannerMatches,
+	ingestSkipReasons,
+	invalidObjectiveEvents,
+} from "@sendou/scanner-core/match-builder";
+import { TimelineBuilder } from "@sendou/scanner-core/timeline/index";
 import clsx from "clsx";
 import { Camera, Ellipsis, FileText, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -9,25 +31,6 @@ import {
 	openVirtualCamera,
 	startSampler,
 } from "../capture/sampler";
-import { connectAbilities } from "../core/ability-harvest";
-import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../core/detectors/map-start/index";
-import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
-import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
-import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
-import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
-import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
-import type { DetectedEvent, GateResult } from "../core/detectors/types";
-import type { BuiltMatch } from "../core/match-builder";
-import {
-	buildScannerMatches,
-	ingestSkipReasons,
-	invalidObjectiveEvents,
-} from "../core/match-builder";
-import { TimelineBuilder } from "../core/timeline/index";
 import scannerStyles from "../scanner.module.css";
 import {
 	clearEvents,

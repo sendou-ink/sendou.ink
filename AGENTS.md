@@ -1,7 +1,7 @@
 ## Monorepo layout
 
 - pnpm workspace (Phase 0 of `svelte-big-bang.md`): the React app lives in `apps/web-react/` — every `app/...`, `e2e/...`, `scripts/...`, `locales/...`, `migrations/...` path below is relative to it
-- `packages/` holds extracted libraries (`@sendou/in-game-lists`, `@sendou/tournament-engine`); never import them via relative paths, always via the package name
+- `packages/` holds extracted libraries (`@sendou/in-game-lists`, `@sendou/tournament-engine`, `@sendou/utils`, `@sendou/build-analyzer`, `@sendou/map-list-generator`, `@sendou/scanner-core`); never import them via relative paths, always via the package name
 - `tooling/codemods/` has the migration codemods and the `migration-manifest.json` updater; `pnpm run <script>` at the repo root delegates to `apps/web-react`, so root commands keep working as documented
 
 ## General
@@ -114,6 +114,7 @@
 ## Scanner feature (app/features/scanner)
 
 - computer-vision match-event detection; full docs in `app/features/scanner/README.md` — read it before touching detector/recognition code
+- the detection core lives in the `@sendou/scanner-core` workspace package (`packages/scanner-core`); capture, UI, Node helpers, tests, and fixtures stay in the feature folder
 - OpenCV ROI-view gotcha: `.data`/`.clone()` are broken on ROI views — always `view.copyTo(freshMat)` before pixel access
 - fixture workflow: every live misread becomes a fixture under `app/features/scanner/tests/fixtures/`; ground-truth labels are hand-corrected by the maintainer and definitive over any matcher output
 - test with `pnpm test:scanner`; accuracy report with `pnpm scanner:report`; atlas regen commands and the assets-repo/CDN flow are in the README

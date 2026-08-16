@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import {
 	escapeMarkdown,
 	sendSQCancelDiscordWebhook,
@@ -5,7 +6,6 @@ import {
 	userPageLink,
 	type WebhookUser,
 } from "~/modules/discord-webhook.server";
-import invariant from "~/utils/invariant";
 import { SENDOU_INK_BASE_URL, sendouQMatchPage } from "~/utils/urls";
 
 type MatchMember = WebhookUser & { id: number };

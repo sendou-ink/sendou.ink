@@ -6,8 +6,9 @@
  * so listing the feed never deserializes megabytes of blobs. The store is
  * capped: saving past MAX_EVENTS evicts the oldest events and their frames.
  */
+
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import type { DetectedEvent } from "../core/detectors/types";
 import { db, EVENTS_STORE, FRAMES_STORE, tx } from "./db";
 
 /** Oldest events (and their frames) are evicted past this count. */

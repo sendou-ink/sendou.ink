@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -5,7 +6,6 @@ import { parseFormDataWithImages } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { editTeamActionSchema } from "../team-schemas";

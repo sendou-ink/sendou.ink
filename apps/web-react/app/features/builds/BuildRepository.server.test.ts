@@ -1,3 +1,4 @@
+import { buildToAbilityPoints } from "@sendou/build-analyzer/core/ability-points";
 import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
@@ -7,7 +8,6 @@ import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
-import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import * as BuildRepository from "./BuildRepository.server";
 
 const users = UserFactory.pool();

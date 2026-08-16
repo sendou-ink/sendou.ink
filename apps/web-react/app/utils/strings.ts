@@ -1,5 +1,5 @@
 import type { GearType } from "@sendou/in-game-lists/types";
-import { assertUnreachable } from "./types";
+import { assertUnreachable } from "@sendou/utils/types";
 
 export function inGameNameWithoutDiscriminator(inGameName: string) {
 	return inGameName.split("#")[0];

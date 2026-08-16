@@ -1,9 +1,9 @@
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
 } from "~/modules/search-params/search-params-test-utils";
-import { MapPool } from "./core/map-pool";
 import { mapListGeneratorSearchParams } from "./map-list-generator-search-params";
 
 describe("mapListGeneratorSearchParams", () => {

@@ -1,3 +1,4 @@
+import type { Unpacked } from "@sendou/utils/types";
 import clsx from "clsx";
 import { Trash } from "lucide-react";
 import * as React from "react";
@@ -8,7 +9,6 @@ import { SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
 import { BADGE } from "~/features/badges/badges-constants";
 import { usePagination } from "~/hooks/usePagination";
-import type { Unpacked } from "~/utils/types";
 import { badgeExplanationText } from "../badges-utils";
 import styles from "./BadgeDisplay.module.css";
 

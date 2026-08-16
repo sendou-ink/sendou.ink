@@ -1,9 +1,9 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { parseRequestPayload } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE, sendouQMatchPage } from "~/utils/urls";
 import * as ReadyCheck from "../core/ready-check.server";
 import { SendouQ } from "../core/SendouQ.server";

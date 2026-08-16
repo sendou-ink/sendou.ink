@@ -1,6 +1,6 @@
+import { logger } from "@sendou/utils/logger";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const CloseExpiredContinueVotesRoutine = new Routine({

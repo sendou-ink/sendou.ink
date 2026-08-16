@@ -1,7 +1,7 @@
+import invariant from "@sendou/utils/invariant";
 import { db } from "~/db/sql";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import invariant from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";

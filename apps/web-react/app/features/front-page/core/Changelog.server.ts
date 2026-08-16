@@ -1,6 +1,6 @@
+import { logger } from "@sendou/utils/logger";
 import { formatDistance } from "date-fns";
 import { z } from "zod";
-import { logger } from "~/utils/logger";
 
 const BSKY_URL =
 	"https://public.api.bsky.app/xrpc/app.bsky.feed.getAuthorFeed?actor=did:plc:3hjmoa7vbx6bsqc3n2vu54v3&filter=posts_no_replies'";

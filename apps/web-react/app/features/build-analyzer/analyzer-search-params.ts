@@ -1,13 +1,16 @@
+import { MAX_LDE_INTENSITY } from "@sendou/build-analyzer/analyzer-constants";
+import type { SpecialEffectType } from "@sendou/build-analyzer/analyzer-types";
+import {
+	deserializeBuild,
+	serializeBuild,
+} from "@sendou/build-analyzer/core/serializer";
+import { SPECIAL_EFFECTS } from "@sendou/build-analyzer/core/specialEffects";
 import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/zod";
-import { MAX_LDE_INTENSITY } from "./analyzer-constants";
-import type { SpecialEffectType } from "./analyzer-types";
-import { deserializeBuild, serializeBuild } from "./core/serializer";
-import { SPECIAL_EFFECTS } from "./core/specialEffects";
 
 export const serializedBuildCodec = z.codec(
 	z.string(),

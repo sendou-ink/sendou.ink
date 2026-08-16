@@ -1,9 +1,9 @@
-import type { MainWeaponId } from "@sendou/in-game-lists/types";
-import type { Namespace, TFunction } from "i18next";
 import type {
 	AnyWeapon,
 	DamageType,
-} from "~/features/build-analyzer/analyzer-types";
+} from "@sendou/build-analyzer/analyzer-types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import type { Namespace, TFunction } from "i18next";
 import type { CombineWith, DamageReceiver } from "./calculator-types";
 import type objectDamages from "./data/object-dmg.json";
 

@@ -13,30 +13,26 @@
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
+import { loadOpenCV, type Mat } from "@sendou/scanner-core/cv";
 import {
 	TAG_NAME_INNER,
 	TAG_NAME_OUTER,
 	TAG_NAME_TEXT_HEIGHT,
 	TAG_TILT_DEG,
-} from "../../app/features/scanner/core/detectors/death/rois";
+} from "@sendou/scanner-core/detectors/death/rois";
 import {
 	nameRoi,
 	paintRoi,
 	ROW_CENTERS,
 	statRoi,
 	TEAM_SCORE_ROIS,
-} from "../../app/features/scanner/core/detectors/scoreboard/rois";
+} from "@sendou/scanner-core/detectors/scoreboard/rois";
 import {
 	CODE_TEXT_HEIGHT,
 	REPLAY_CODE_ROI,
-} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
-import type { AtlasMeta } from "../../app/features/scanner/core/glyphs";
-import {
-	normalizeFrame,
-	type Roi,
-	toMat,
-} from "../../app/features/scanner/core/image";
+} from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/rois";
+import type { AtlasMeta } from "@sendou/scanner-core/glyphs";
+import { normalizeFrame, type Roi, toMat } from "@sendou/scanner-core/image";
 import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
 import { FIXTURES_DIR } from "../../app/features/scanner/node/fixtures";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";

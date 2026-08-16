@@ -5,26 +5,26 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
-import type { DeathData } from "../../core/detectors/death/index";
+import type { DeathData } from "@sendou/scanner-core/detectors/death/index";
 import type {
 	MinimapData,
 	MinimapEnemy,
 	MinimapTeammate,
-} from "../../core/detectors/minimap/index";
-import { SPECTATOR_SLOTS } from "../../core/detectors/minimap/rois";
-import type { ObjectiveData } from "../../core/detectors/objective/index";
-import type { PlayerStatusData } from "../../core/detectors/objective/player-status";
-import type { StripWeaponsData } from "../../core/detectors/objective/strip-weapons";
-import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
-import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
-import type { ScoreboardBattleLogReplayData } from "../../core/detectors/scoreboard-battle-log-replay/index";
-import type { DetectedEvent } from "../../core/detectors/types";
+} from "@sendou/scanner-core/detectors/minimap/index";
+import { SPECTATOR_SLOTS } from "@sendou/scanner-core/detectors/minimap/rois";
+import type { ObjectiveData } from "@sendou/scanner-core/detectors/objective/index";
+import type { PlayerStatusData } from "@sendou/scanner-core/detectors/objective/player-status";
+import type { StripWeaponsData } from "@sendou/scanner-core/detectors/objective/strip-weapons";
+import type { ScoreboardData } from "@sendou/scanner-core/detectors/scoreboard/index";
+import type { ScoreboardBattleLogData } from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
+import type { ScoreboardBattleLogReplayData } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
 import {
 	buildScannerMatches,
 	ingestSkipReasons,
 	invalidObjectiveEvents,
-} from "../../core/match-builder";
-import type { ScannerLobby } from "../../scanner-types";
+} from "@sendou/scanner-core/match-builder";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
 import test from "../node-test-compat";
 
 const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];

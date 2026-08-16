@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
@@ -21,7 +22,6 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { ParticipationPill } from "~/features/user-page/components/ParticipationPill";
-import invariant from "~/utils/invariant";
 import { action } from "../actions/to.$id.brackets.finalize.server";
 import {
 	type FinalizeTournamentLoaderData,

@@ -1,8 +1,8 @@
+import { logger } from "@sendou/utils/logger";
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import { logger } from "~/utils/logger";
 import {
 	errorToastIfFalsy,
 	notFoundIfNullish,

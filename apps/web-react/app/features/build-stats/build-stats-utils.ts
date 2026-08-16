@@ -1,9 +1,9 @@
+import { MAX_AP } from "@sendou/build-analyzer/analyzer-constants";
+import { isStackableAbility } from "@sendou/build-analyzer/core/ability-points";
 import { abilities } from "@sendou/in-game-lists/abilities";
 import type { Ability } from "@sendou/in-game-lists/types";
-import invariant from "~/utils/invariant";
-import { roundToNDecimalPlaces } from "~/utils/number";
-import { MAX_AP } from "../build-analyzer/analyzer-constants";
-import { isStackableAbility } from "../build-analyzer/core/ability-points";
+import invariant from "@sendou/utils/invariant";
+import { roundToNDecimalPlaces } from "@sendou/utils/number";
 import type {
 	AverageAbilityPointsResult,
 	PopularBuildsRow,

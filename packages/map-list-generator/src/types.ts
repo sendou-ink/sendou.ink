@@ -1,6 +1,6 @@
 import type { ModeShort, ModeWithStage } from "@sendou/in-game-lists/types";
-import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { sourceTypes } from "./constants";
+import type { MapPool } from "./map-pool";
 
 export interface TournamentMaplistInput {
 	count: number;

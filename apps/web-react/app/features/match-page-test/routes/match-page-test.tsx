@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import { ArrowLeft, Ban, Undo2 } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -24,7 +25,6 @@ import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
 import type { PlayerStatusTimelineSample } from "~/components/PlayerStatusTimeline";
-import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 /** Counter reads of a made-up zones game, for previewing the timeline chart. */

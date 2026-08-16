@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as FriendRepository from "../features/friends/FriendRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteOldPendingFriendRequestsRoutine = new Routine({

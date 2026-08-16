@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
@@ -8,7 +9,6 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
-import { assertUnreachable } from "~/utils/types";
 import { settingsActionSchema } from "../settings-schemas.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {

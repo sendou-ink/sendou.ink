@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import type { LoaderFunctionArgs } from "react-router";
 import {
 	tournamentDataCached,
@@ -6,7 +7,6 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
-import invariant from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import * as Standings from "../core/Standings";

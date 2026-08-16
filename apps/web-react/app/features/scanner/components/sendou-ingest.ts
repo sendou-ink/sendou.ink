@@ -13,15 +13,18 @@
  * first-ingest-wins.
  */
 
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import type { BuiltMatch } from "@sendou/scanner-core/match-builder";
+import {
+	buildScannerMatches,
+	ingestSkipReasons,
+} from "@sendou/scanner-core/match-builder";
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import * as R from "remeda";
 import type {
 	IngestedMatchLink,
 	IngestResponse,
 } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import type { DetectedEvent } from "../core/detectors/types";
-import type { BuiltMatch } from "../core/match-builder";
-import { buildScannerMatches, ingestSkipReasons } from "../core/match-builder";
-import type { ScannerMatch } from "../core/scanner-match";
 import {
 	type SendStatus,
 	type StoredEvent,

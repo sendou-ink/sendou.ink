@@ -6,6 +6,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
+import { roundToNDecimalPlaces } from "@sendou/utils/number";
 import clsx from "clsx";
 import {
 	ArrowRight,
@@ -24,7 +25,6 @@ import type {
 	UserSkillDifference,
 } from "~/db/tables-json";
 import type { CommonUser } from "~/utils/kysely.server";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { abilityImageUrl, navIconUrl } from "~/utils/urls";
 import { Ability } from "../Ability";
 import { Avatar } from "../Avatar";

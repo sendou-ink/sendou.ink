@@ -73,6 +73,11 @@ apps/
 packages/
   components/     the UI kit: Button, Dialog, Select, VirtualList, use:sortable, …
   tournament-engine/   self-contained bracket/standings/progression logic
+  in-game-lists/  modes, stages, weapons, abilities — the shared game vocabulary
+  utils/          pure leaf helpers (invariant, result, random, number, types, logger)
+  build-analyzer/ build stat math + weapon params (analyzer, object dmg calc, scanner all consume it)
+  map-list-generator/  MapPool + tournament map list generation
+  scanner-core/   the scanner's CV detection core (detectors, glyphs, match building)
   …               more only when a block earns it
 tooling/
   codemods/       ts-morph transforms (below)
@@ -81,7 +86,7 @@ tooling/
 
 Notes on the shape:
 
-- **Workspaces are reserved for things with a real boundary**: the UI kit (developed against the showcase, testable standalone, knows nothing about sendou.ink) and self-contained blocks like `tournament-engine` — pure logic that could ship as its own library: no db imports, no i18n, no app state. Candidates beyond the engine: `map-list-generator`, `in-game-lists`, the scanner's detection core. A block gets extracted only when its boundary is *already* clean — extraction is a promotion, not a project.
+- **Workspaces are reserved for things with a real boundary**: the UI kit (developed against the showcase, testable standalone, knows nothing about sendou.ink) and self-contained blocks like `tournament-engine` — pure logic that could ship as its own library: no db imports, no i18n, no app state. Extracted so far: `in-game-lists`, `tournament-engine`, `utils`, `build-analyzer`, `map-list-generator`, `scanner-core`. A block gets extracted only when its boundary is *already* clean — extraction is a promotion, not a project.
 - **Features are plain folders inside `apps/web`**, same as today — they keep importing each other freely, repositories stay inside their feature folder, and there is no cycle-breaking project because there are no forced package boundaries between features.
 - **Route files are thin shells.** We use SvelteKit's folder routing, but a `+page.svelte` carries no logic of its own: it composes a few components imported from `lib/features/<name>/` and wires in the feature's remote functions — **~100 lines max per route component**. Everything real (components, remote functions, repositories, utils) lives in the feature folder, exactly as `routes.ts` + feature folders work today; only the wiring moved into the filesystem. The `route-map` codemod generates route files in this shape, and a lint check keeps them thin so the fleet can't quietly grow logic into `src/routes/`.
 - **db and i18n live inside `apps/web`** — single consumer, no workspace overhead. During the migration window `apps/web-react` keeps its own frozen copies; drift is impossible by policy because the schema doesn't change during the migration (a boring migration needs no new tables) and locale JSONs are shared by both apps read-only.

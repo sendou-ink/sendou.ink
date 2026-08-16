@@ -13,9 +13,9 @@ import {
 	subWeaponIds,
 	weaponIdToType,
 } from "@sendou/in-game-lists/weapon-ids";
+import { assertUnreachable } from "@sendou/utils/types";
 import * as React from "react";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { assertUnreachable } from "~/utils/types";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
 import type {
 	TierListItem,

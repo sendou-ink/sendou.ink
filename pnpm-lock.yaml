@@ -55,12 +55,24 @@ importers:
       '@react-router/serve':
         specifier: 8.1.0
         version: 8.1.0(patch_hash=0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738)(react-router@8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8))(typescript@7.0.2)
+      '@sendou/build-analyzer':
+        specifier: workspace:*
+        version: link:../../packages/build-analyzer
       '@sendou/in-game-lists':
         specifier: workspace:*
         version: link:../../packages/in-game-lists
+      '@sendou/map-list-generator':
+        specifier: workspace:*
+        version: link:../../packages/map-list-generator
+      '@sendou/scanner-core':
+        specifier: workspace:*
+        version: link:../../packages/scanner-core
       '@sendou/tournament-engine':
         specifier: workspace:*
         version: link:../../packages/tournament-engine
+      '@sendou/utils':
+        specifier: workspace:*
+        version: link:../../packages/utils
       '@techstark/opencv-js':
         specifier: 5.0.0-release.1
         version: 5.0.0-release.1(patch_hash=0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3)
@@ -267,7 +279,67 @@ importers:
         specifier: 2.2.0
         version: 2.2.0(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(vitest@4.1.10)
 
+  packages/build-analyzer:
+    dependencies:
+      '@sendou/in-game-lists':
+        specifier: workspace:*
+        version: link:../in-game-lists
+      '@sendou/utils':
+        specifier: workspace:*
+        version: link:../utils
+      nanoid:
+        specifier: 6.0.1
+        version: 6.0.1
+      remeda:
+        specifier: 2.39.0
+        version: 2.39.0
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(@vitest/ui@4.1.10)(vite@8.2.0(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))
+
   packages/in-game-lists:
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(@vitest/ui@4.1.10)(vite@8.2.0(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))
+
+  packages/map-list-generator:
+    dependencies:
+      '@sendou/in-game-lists':
+        specifier: workspace:*
+        version: link:../in-game-lists
+      '@sendou/utils':
+        specifier: workspace:*
+        version: link:../utils
+      remeda:
+        specifier: 2.39.0
+        version: 2.39.0
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(@vitest/ui@4.1.10)(vite@8.2.0(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))
+
+  packages/scanner-core:
+    dependencies:
+      '@sendou/build-analyzer':
+        specifier: workspace:*
+        version: link:../build-analyzer
+      '@sendou/in-game-lists':
+        specifier: workspace:*
+        version: link:../in-game-lists
+      '@techstark/opencv-js':
+        specifier: 5.0.0-release.1
+        version: 5.0.0-release.1(patch_hash=0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3)
     devDependencies:
       typescript:
         specifier: 7.0.2
@@ -284,6 +356,22 @@ importers:
       edmonds-blossom-fixed:
         specifier: 1.0.1
         version: 1.0.1
+      remeda:
+        specifier: 2.39.0
+        version: 2.39.0
+    devDependencies:
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+      vitest:
+        specifier: 4.1.10
+        version: 4.1.10(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(@vitest/ui@4.1.10)(vite@8.2.0(@types/node@26.1.2)(jiti@2.7.0)(yaml@2.9.0))
+
+  packages/utils:
+    dependencies:
+      nanoid:
+        specifier: 6.0.1
+        version: 6.0.1
       remeda:
         specifier: 2.39.0
         version: 2.39.0

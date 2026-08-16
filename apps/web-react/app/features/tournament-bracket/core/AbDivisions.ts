@@ -1,4 +1,4 @@
-import { err, ok, type Result } from "~/utils/result";
+import { err, ok, type Result } from "@sendou/utils/result";
 
 interface ValidateArgs {
 	abDivisionsBySeedOrder: (number | null | undefined)[];

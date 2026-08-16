@@ -1,5 +1,6 @@
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
+import { logger } from "@sendou/utils/logger";
 import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
@@ -20,7 +21,6 @@ import {
 } from "./routines/list.server";
 import { loadAllDateFnsLocales } from "./utils/dates";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
-import { logger } from "./utils/logger";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;

@@ -23,6 +23,7 @@ import {
 	subWeaponIds,
 	weaponCategories,
 } from "@sendou/in-game-lists/weapon-ids";
+import { logger } from "@sendou/utils/logger";
 import {
 	AssetRecordType,
 	createShapeId,
@@ -51,7 +52,6 @@ import { getSpecialWeaponRange } from "~/features/comp-analyzer/core/special-wea
 import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
-import { logger } from "~/utils/logger";
 import {
 	mainWeaponImageUrl,
 	modeImageUrl,

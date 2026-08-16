@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
 import { sub } from "date-fns";
 import { FULL_GROUP_SIZE, SENDOUQ } from "~/features/sendouq/q-constants";
-import invariant from "~/utils/invariant";
 import { faker } from "../core/faker";
 import * as SQGroupFactory from "../factories/SQGroupFactory";
 import * as SQMatchFactory from "../factories/SQMatchFactory";

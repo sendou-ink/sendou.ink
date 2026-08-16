@@ -1,7 +1,7 @@
+import { logger } from "@sendou/utils/logger";
 import { notify } from "../features/notifications/core/notify.server";
 import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { tournamentDataCached } from "../features/tournament-bracket/core/Tournament.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const NotifyCheckInStartRoutine = new Routine({

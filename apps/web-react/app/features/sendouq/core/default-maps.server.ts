@@ -1,8 +1,8 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
+import * as MapList from "@sendou/map-list-generator/MapList";
+import { logger } from "@sendou/utils/logger";
 import { differenceInDays } from "date-fns";
-import * as MapList from "~/features/map-list-generator/core/MapList";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { logger } from "~/utils/logger";
 import { SENDOUQ_BEST_OF } from "../q-constants";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 

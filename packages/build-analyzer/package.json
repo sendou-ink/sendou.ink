@@ -1,0 +1,19 @@
+{
+	"name": "@sendou/build-analyzer",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"dependencies": {
+		"@sendou/in-game-lists": "workspace:*",
+		"@sendou/utils": "workspace:*",
+		"nanoid": "6.0.1",
+		"remeda": "2.39.0"
+	},
+	"devDependencies": {
+		"typescript": "7.0.2",
+		"vitest": "4.1.10"
+	}
+}

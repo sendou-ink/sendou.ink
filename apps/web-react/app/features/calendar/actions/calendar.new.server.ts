@@ -1,11 +1,11 @@
 import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {

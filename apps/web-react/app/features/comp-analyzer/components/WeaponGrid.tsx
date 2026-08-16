@@ -1,3 +1,4 @@
+import { mainWeaponParams } from "@sendou/build-analyzer/core/utils";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -12,7 +13,6 @@ import {
 import { useTranslation } from "react-i18next";
 import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
-import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,

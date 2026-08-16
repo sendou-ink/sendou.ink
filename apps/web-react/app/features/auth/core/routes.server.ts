@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import { isbot } from "isbot";
 import type { ActionFunction, LoaderFunction } from "react-router";
 import { redirect } from "react-router";
@@ -6,7 +7,6 @@ import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-con
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isStaff } from "~/modules/permissions/utils";
-import { logger } from "~/utils/logger";
 import {
 	canAccessLohiEndpoint,
 	errorToastRedirect,

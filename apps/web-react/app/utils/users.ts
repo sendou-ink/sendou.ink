@@ -1,4 +1,4 @@
-import { logger } from "./logger";
+import { logger } from "@sendou/utils/logger";
 import { isCustomUrl } from "./urls";
 
 const longUrlRegExp = /(https:\/\/)?sendou\.ink\/u\/([^/?#]+)/;

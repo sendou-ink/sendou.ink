@@ -1,9 +1,9 @@
+import invariant from "@sendou/utils/invariant";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
-import invariant from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 

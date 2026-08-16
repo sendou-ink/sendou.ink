@@ -1,5 +1,5 @@
+import invariant from "@sendou/utils/invariant";
 import { db } from "~/db/sql";
-import invariant from "~/utils/invariant";
 
 const discordId = process.argv[2]?.trim();
 const discordId2 = process.argv[3]?.trim();

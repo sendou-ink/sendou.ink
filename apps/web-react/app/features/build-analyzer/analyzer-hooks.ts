@@ -1,3 +1,11 @@
+import type { SpecialEffectType } from "@sendou/build-analyzer/analyzer-types";
+import { buildToAbilityPoints } from "@sendou/build-analyzer/core/ability-points";
+import {
+	applySpecialEffects,
+	SPECIAL_EFFECTS,
+} from "@sendou/build-analyzer/core/specialEffects";
+import { buildStats } from "@sendou/build-analyzer/core/stats";
+import { buildIsEmpty } from "@sendou/build-analyzer/core/utils";
 import { abilities } from "@sendou/in-game-lists/abilities";
 import type {
 	Ability,
@@ -9,11 +17,6 @@ import { isAbility } from "@sendou/in-game-lists/utils";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { analyzerSearchParams } from "./analyzer-search-params";
-import type { SpecialEffectType } from "./analyzer-types";
-import { buildToAbilityPoints } from "./core/ability-points";
-import { applySpecialEffects, SPECIAL_EFFECTS } from "./core/specialEffects";
-import { buildStats } from "./core/stats";
-import { buildIsEmpty } from "./core/utils";
 
 export function useAnalyzeBuild() {
 	const [params, setParams] = useSearchParamsTyped(analyzerSearchParams);

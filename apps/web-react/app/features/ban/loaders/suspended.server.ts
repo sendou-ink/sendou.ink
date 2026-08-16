@@ -1,3 +1,4 @@
+import type { Nullish } from "@sendou/utils/types";
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import {
@@ -5,7 +6,6 @@ import {
 	SESSION_KEY,
 } from "~/features/auth/core/authenticator.server";
 import { authSessionStorage } from "~/features/auth/core/session.server";
-import type { Nullish } from "~/utils/types";
 import { refreshBannedCache, userIsBanned } from "../core/banned.server";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {

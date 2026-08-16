@@ -1,4 +1,6 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
+import invariant from "@sendou/utils/invariant";
+import { assertUnreachable } from "@sendou/utils/types";
 import clsx from "clsx";
 import { Pencil as EditIcon, Puzzle as PuzzleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -25,10 +27,8 @@ import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
-import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { rawSensToString } from "~/utils/strings";
-import { assertUnreachable } from "~/utils/types";
 import { bskyUrl, modeImageUrl, navIconUrl, teamPage } from "~/utils/urls";
 import { MutualFriends } from "../components/MutualFriends";
 import type { UserPageNavItem } from "../components/UserPageIconNav";

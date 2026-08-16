@@ -3,19 +3,19 @@
  * Draw all scoreboard ROIs on a (normalized) frame for visual calibration.
  * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log]
  */
-import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
-import * as death from "../../app/features/scanner/core/detectors/death/rois";
-import * as mapStart from "../../app/features/scanner/core/detectors/map-start/rois";
-import * as minimap from "../../app/features/scanner/core/detectors/minimap/rois";
-import * as sb from "../../app/features/scanner/core/detectors/scoreboard/rois";
-import * as bl from "../../app/features/scanner/core/detectors/scoreboard-battle-log/rois";
-import * as replay from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
+import { loadOpenCV, type Mat } from "@sendou/scanner-core/cv";
+import * as death from "@sendou/scanner-core/detectors/death/rois";
+import * as mapStart from "@sendou/scanner-core/detectors/map-start/rois";
+import * as minimap from "@sendou/scanner-core/detectors/minimap/rois";
+import * as sb from "@sendou/scanner-core/detectors/scoreboard/rois";
+import * as bl from "@sendou/scanner-core/detectors/scoreboard-battle-log/rois";
+import * as replay from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/rois";
 import {
 	matToFrameData,
 	normalizeFrame,
 	type Roi,
 	toMat,
-} from "../../app/features/scanner/core/image";
+} from "@sendou/scanner-core/image";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 
 const [imagePath, outPath = "roi-overlay.png", detector = "scoreboard"] =

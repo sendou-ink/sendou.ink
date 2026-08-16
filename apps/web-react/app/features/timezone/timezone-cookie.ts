@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import { z } from "zod";
-import { logger } from "~/utils/logger";
 
 const COOKIE_NAME = "timezone";
 const TEN_YEARS_IN_MS = 315_360_000_000;

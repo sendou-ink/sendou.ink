@@ -1,11 +1,11 @@
 import * as Engine from "@sendou/tournament-engine";
 import type { BracketData } from "@sendou/tournament-engine/types";
+import invariant from "@sendou/utils/invariant";
 import { hoursToMilliseconds } from "date-fns";
 import * as R from "remeda";
 import type { PreparedMaps } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { nullFilledArray } from "~/utils/arrays";
-import invariant from "~/utils/invariant";
 import type { Bracket } from "./Bracket";
 import * as Progression from "./Progression";
 import type { BracketMeta, Tournament } from "./Tournament";

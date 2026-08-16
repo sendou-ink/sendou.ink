@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import { z } from "zod";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
@@ -14,7 +15,6 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
-import { assertUnreachable } from "~/utils/types";
 
 const SWISS_DEFAULT_ADVANCE_THRESHOLD = 3;
 

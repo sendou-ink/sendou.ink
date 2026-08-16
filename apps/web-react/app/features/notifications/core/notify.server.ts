@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import type { TFunction } from "i18next";
 import pLimit from "p-limit";
 import { type Urgency, WebPushError } from "web-push";
@@ -6,7 +7,6 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { APP_ICON_URL } from "~/utils/urls";
 import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
-import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
 import { notificationLink, notificationMeta } from "../notifications-utils";

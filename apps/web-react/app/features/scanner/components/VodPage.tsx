@@ -13,6 +13,22 @@
  * Completed scans are persisted to IndexedDB keyed by file name
  * (src/store/vods.ts); the default view lists them for reinspection.
  */
+
+import { connectAbilities } from "@sendou/scanner-core/ability-harvest";
+import { OBJECTIVE_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "@sendou/scanner-core/detectors/objective/strip-weapons";
+import {
+	mergeScanTelemetry,
+	type ScanTelemetry,
+} from "@sendou/scanner-core/detectors/telemetry";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import {
+	buildScannerMatches,
+	ingestSkipReasons,
+	invalidObjectiveEvents,
+} from "@sendou/scanner-core/match-builder";
+import { TimelineBuilder } from "@sendou/scanner-core/timeline/index";
 import clsx from "clsx";
 import { Download, FileText, Send, Trash2, Video } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
@@ -24,21 +40,6 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { GameTimeline } from "~/components/GameTimeline";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { openSeekScan, probeWebCodecs } from "../capture/vod-frames";
-import { connectAbilities } from "../core/ability-harvest";
-import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
-import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
-import { STRIP_WEAPONS_EVENT_TYPE } from "../core/detectors/objective/strip-weapons";
-import {
-	mergeScanTelemetry,
-	type ScanTelemetry,
-} from "../core/detectors/telemetry";
-import type { DetectedEvent } from "../core/detectors/types";
-import {
-	buildScannerMatches,
-	ingestSkipReasons,
-	invalidObjectiveEvents,
-} from "../core/match-builder";
-import { TimelineBuilder } from "../core/timeline/index";
 import scannerStyles from "../scanner.module.css";
 import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";

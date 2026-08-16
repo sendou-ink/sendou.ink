@@ -8,6 +8,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 }));
 
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import invariant from "@sendou/utils/invariant";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -17,7 +18,6 @@ import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRe
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { withUserId, wrappedAction } from "~/utils/Test";
 import * as ReadyCheck from "../core/ready-check.server";
 import { refreshSendouQInstance } from "../core/SendouQ.server";

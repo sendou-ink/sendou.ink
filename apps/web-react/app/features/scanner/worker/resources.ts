@@ -13,11 +13,15 @@ import {
 	loadPlannerStages,
 	type PlannerManifest,
 	type PlannerStage,
-} from "../core/detectors/minimap/stage";
-import type { ScoreboardResources } from "../core/detectors/scoreboard/index";
-import { type AtlasMeta, type GlyphSet, loadGlyphSet } from "../core/glyphs";
-import type { FrameData } from "../core/image";
-import { assembleScoreboardResources } from "../core/resources";
+} from "@sendou/scanner-core/detectors/minimap/stage";
+import type { ScoreboardResources } from "@sendou/scanner-core/detectors/scoreboard/index";
+import {
+	type AtlasMeta,
+	type GlyphSet,
+	loadGlyphSet,
+} from "@sendou/scanner-core/glyphs";
+import type { FrameData } from "@sendou/scanner-core/image";
+import { assembleScoreboardResources } from "@sendou/scanner-core/resources";
 
 /** Scanner parser atlases; the version segment guards against CDN cache skew —
  * bump it together with breaking atlas format changes (must match the

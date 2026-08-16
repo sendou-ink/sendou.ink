@@ -1,3 +1,13 @@
+import { MAX_AP } from "@sendou/build-analyzer/analyzer-constants";
+import type {
+	FullInkTankOption,
+	SpecialWeaponParams,
+} from "@sendou/build-analyzer/analyzer-types";
+import { fullInkTankOptions } from "@sendou/build-analyzer/core/stats";
+import {
+	mainWeaponParams,
+	weaponParams,
+} from "@sendou/build-analyzer/core/utils";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import * as React from "react";
@@ -5,10 +15,6 @@ import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-import { MAX_AP } from "../analyzer-constants";
-import type { FullInkTankOption, SpecialWeaponParams } from "../analyzer-types";
-import { fullInkTankOptions } from "../core/stats";
-import { mainWeaponParams, weaponParams } from "../core/utils";
 import styles from "../routes/analyzer.module.css";
 
 interface PerInkTankGridProps {

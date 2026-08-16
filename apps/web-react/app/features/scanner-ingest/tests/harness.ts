@@ -9,6 +9,8 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
+import invariant from "@sendou/utils/invariant";
 import { addHours, addMinutes, subDays, subMinutes } from "date-fns";
 import * as R from "remeda";
 import { afterAll, beforeAll } from "vitest";
@@ -18,7 +20,6 @@ import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import {
 	loader as qMatchLoader,
 	type SendouQMatchLoaderData,
@@ -31,7 +32,6 @@ import {
 	loader as tournamentMatchLoader,
 } from "~/features/tournament-match/loaders/to.$id.matches.$mid.server";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { wrappedAction, wrappedLoader } from "~/utils/Test";
 import { action } from "../actions/scanner-ingest.server";
 import type {

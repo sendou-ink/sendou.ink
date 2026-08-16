@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
+import invariant from "@sendou/utils/invariant";
 import { qSearchParams } from "~/features/sendouq/q-search-params";
-import invariant from "~/utils/invariant";
 import { SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import { expect, navigate } from "../../helpers/playwright";
 import { GroupCard } from "./group-card";

@@ -1,4 +1,4 @@
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { MapPool } from "./map-pool";
 
 export const sourceTypes = [
 	"DEFAULT",

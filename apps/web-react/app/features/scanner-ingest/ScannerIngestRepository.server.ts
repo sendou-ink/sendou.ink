@@ -1,9 +1,9 @@
 import { createHash } from "node:crypto";
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import { subDays } from "date-fns";
 import { sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
-import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Matches from "./core/Matches";
 import type {

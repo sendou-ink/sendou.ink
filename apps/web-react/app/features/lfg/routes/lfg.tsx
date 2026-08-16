@@ -1,4 +1,5 @@
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import type { Unpacked } from "@sendou/utils/types";
 import clsx from "clsx";
 import { add, sub } from "date-fns";
 import { useTranslation } from "react-i18next";
@@ -22,7 +23,6 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lfg.server";
 import { LFGPost } from "../components/LFGPost";

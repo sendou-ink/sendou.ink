@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
-import invariant from "~/utils/invariant";
 import * as UserCardRepository from "../UserCardRepository.server";
 
 export const loader = async () => {

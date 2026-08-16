@@ -1,12 +1,12 @@
-import clsx from "clsx";
-import { WeaponImage } from "~/components/Image";
-import type { PlayerAbilityMap } from "../core/ability-harvest";
+import type { PlayerAbilityMap } from "@sendou/scanner-core/ability-harvest";
 import type {
 	ScoreboardData,
 	ScoreboardPlayer,
-} from "../core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
-import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
+} from "@sendou/scanner-core/detectors/scoreboard/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
+import clsx from "clsx";
+import { WeaponImage } from "~/components/Image";
 import scannerStyles from "../scanner.module.css";
 import { AbilityPopover } from "./AbilityGrid";
 import styles from "./EventCard.module.css";

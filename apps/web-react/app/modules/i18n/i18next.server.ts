@@ -1,4 +1,5 @@
 import { AsyncLocalStorage } from "node:async_hooks";
+import invariant from "@sendou/utils/invariant";
 import {
 	createInstance,
 	type DefaultNamespace,
@@ -14,7 +15,6 @@ import {
 	type RouterContextProvider,
 } from "react-router";
 import { createI18nextMiddleware } from "remix-i18next";
-import invariant from "~/utils/invariant";
 import { config } from "./config";
 import { resources } from "./resources.server";
 

@@ -1,5 +1,5 @@
+import { assertType } from "@sendou/utils/types";
 import { z } from "zod";
-import { assertType } from "~/utils/types";
 import {
 	ability,
 	hexCodeWithoutAlpha,

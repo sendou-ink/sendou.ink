@@ -1,5 +1,5 @@
+import { unwrap, unwrapErr } from "@sendou/utils/result";
 import { describe, expect, test } from "vitest";
-import { unwrap, unwrapErr } from "~/utils/result";
 import * as AbDivisions from "./AbDivisions";
 
 describe("AbDivisions.validate", () => {

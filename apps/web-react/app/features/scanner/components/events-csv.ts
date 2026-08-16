@@ -10,40 +10,40 @@ import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
-} from "../core/detectors/death/index";
+} from "@sendou/scanner-core/detectors/death/index";
 import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
-} from "../core/detectors/map-start/index";
+} from "@sendou/scanner-core/detectors/map-start/index";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
-} from "../core/detectors/minimap/index";
+} from "@sendou/scanner-core/detectors/minimap/index";
 import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
-} from "../core/detectors/objective/index";
+} from "@sendou/scanner-core/detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
-} from "../core/detectors/objective/player-status";
+} from "@sendou/scanner-core/detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
-} from "../core/detectors/objective/strip-weapons";
+} from "@sendou/scanner-core/detectors/objective/strip-weapons";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
-} from "../core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
+} from "@sendou/scanner-core/detectors/scoreboard/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
 import {
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	type ScoreboardBattleLogReplayData,
-} from "../core/detectors/scoreboard-battle-log-replay/index";
+} from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
-} from "../core/detectors/scoreboard-own/index";
+} from "@sendou/scanner-core/detectors/scoreboard-own/index";
 import { formatClock, formatTime } from "./format";
 import {
 	lobbyLabel,

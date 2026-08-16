@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunctionArgs } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -11,7 +12,6 @@ import {
 	successToast,
 } from "~/utils/remix.server";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
-import { assertUnreachable } from "~/utils/types";
 import { normalizeFriendCode } from "~/utils/zod";
 import { adminActionSchema } from "../admin-schemas";
 import {

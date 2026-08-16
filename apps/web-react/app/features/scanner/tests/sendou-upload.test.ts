@@ -1,10 +1,10 @@
 import assert from "node:assert/strict";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import type { MinimapData } from "@sendou/scanner-core/detectors/minimap/index";
+import type { ScoreboardData } from "@sendou/scanner-core/detectors/scoreboard/index";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import { sendouUpload } from "../components/sendou-upload";
-import type { MinimapData } from "../core/detectors/minimap/index";
-import type { ScoreboardData } from "../core/detectors/scoreboard/index";
-import type { DetectedEvent } from "../core/detectors/types";
 import test from "./node-test-compat";
 
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];

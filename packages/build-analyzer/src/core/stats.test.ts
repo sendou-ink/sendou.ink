@@ -1,7 +1,7 @@
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
+import { roundToNDecimalPlaces } from "@sendou/utils/number";
 import { describe, expect, test } from "vitest";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { damageTypeToWeaponType } from "../analyzer-constants";
 import { buildStats } from "./stats";
 import { mainWeaponParams } from "./utils";

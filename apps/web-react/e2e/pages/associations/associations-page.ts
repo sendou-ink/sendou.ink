@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
+import invariant from "@sendou/utils/invariant";
 import { associationsPage } from "~/features/associations/associations-urls";
-import invariant from "~/utils/invariant";
 import {
 	modalClickConfirmButton,
 	navigate,

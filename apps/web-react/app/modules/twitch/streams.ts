@@ -1,7 +1,7 @@
 import { cachified } from "@epic-web/cachified";
+import { logger } from "@sendou/utils/logger";
 import { cache } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { logger } from "~/utils/logger";
 import { twitchFetch } from "./fetch";
 import { type RawStream, type StreamsResponse, streamsSchema } from "./schemas";
 

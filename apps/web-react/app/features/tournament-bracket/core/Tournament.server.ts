@@ -1,3 +1,4 @@
+import type { Unwrapped } from "@sendou/utils/types";
 import { sub } from "date-fns";
 import { type Params, redirect } from "react-router";
 import { ServerConfig } from "~/config.server";
@@ -22,7 +23,6 @@ import {
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
-import type { Unwrapped } from "~/utils/types";
 import { tournamentPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
 import type { Bracket } from "./Bracket";

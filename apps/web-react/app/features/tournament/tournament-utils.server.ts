@@ -1,7 +1,7 @@
 import * as Engine from "@sendou/tournament-engine";
+import { logger } from "@sendou/utils/logger";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
-import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import type { Tournament } from "../tournament-bracket/core/Tournament";

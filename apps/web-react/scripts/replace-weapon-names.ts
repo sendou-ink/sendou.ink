@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { logger } from "~/utils/logger";
+import { logger } from "@sendou/utils/logger";
 import { loadWeaponInfoMain } from "./utils";
 
 const __filename = fileURLToPath(import.meta.url);

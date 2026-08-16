@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { z } from "zod";
@@ -8,7 +9,6 @@ import {
 } from "~/modules/permissions/guards.server";
 import { diff } from "~/utils/arrays";
 import { notFoundIfNullish, parseRequestPayload } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
 import { actualNumber } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";

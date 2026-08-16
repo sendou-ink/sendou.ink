@@ -28,6 +28,53 @@ import type {
 	StageId,
 } from "@sendou/in-game-lists/types";
 import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
+import {
+	DEATH_EVENT_TYPE,
+	type DeathData,
+} from "@sendou/scanner-core/detectors/death/index";
+import { ALL_WEAPON_ENTRIES } from "@sendou/scanner-core/detectors/death/weapon-names";
+import {
+	MAP_START_EVENT_TYPE,
+	type MapStartData,
+} from "@sendou/scanner-core/detectors/map-start/index";
+import {
+	MINIMAP_EVENT_TYPE,
+	type MinimapData,
+	type MinimapEnemy,
+	type MinimapTeammate,
+} from "@sendou/scanner-core/detectors/minimap/index";
+import type { CardSlot } from "@sendou/scanner-core/detectors/minimap/rois";
+import {
+	OBJECTIVE_EVENT_TYPE,
+	type ObjectiveData,
+} from "@sendou/scanner-core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+	type PlayerStatusFlags,
+	type PlayerStatusLayout,
+} from "@sendou/scanner-core/detectors/objective/player-status";
+import {
+	STRIP_WEAPONS_EVENT_TYPE,
+	type StripWeaponsData,
+} from "@sendou/scanner-core/detectors/objective/strip-weapons";
+import {
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardData,
+	type ScoreboardPlayer,
+} from "@sendou/scanner-core/detectors/scoreboard/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
+import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import {
+	type BuiltMatch,
+	buildScannerMatches,
+} from "@sendou/scanner-core/match-builder";
+import type {
+	ScannerMatch,
+	ScannerMatchPlayerStatusSample,
+} from "@sendou/scanner-core/scanner-match";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
 import { statusSpans } from "../../app/components/PlayerStatusTimeline";
 import { formatTime } from "../../app/features/scanner/components/format";
 import {
@@ -36,53 +83,6 @@ import {
 	modeLabel,
 	stageLabel,
 } from "../../app/features/scanner/components/labels";
-import {
-	DEATH_EVENT_TYPE,
-	type DeathData,
-} from "../../app/features/scanner/core/detectors/death/index";
-import { ALL_WEAPON_ENTRIES } from "../../app/features/scanner/core/detectors/death/weapon-names";
-import {
-	MAP_START_EVENT_TYPE,
-	type MapStartData,
-} from "../../app/features/scanner/core/detectors/map-start/index";
-import {
-	MINIMAP_EVENT_TYPE,
-	type MinimapData,
-	type MinimapEnemy,
-	type MinimapTeammate,
-} from "../../app/features/scanner/core/detectors/minimap/index";
-import type { CardSlot } from "../../app/features/scanner/core/detectors/minimap/rois";
-import {
-	OBJECTIVE_EVENT_TYPE,
-	type ObjectiveData,
-} from "../../app/features/scanner/core/detectors/objective/index";
-import {
-	PLAYER_STATUS_EVENT_TYPE,
-	type PlayerStatusData,
-	type PlayerStatusFlags,
-	type PlayerStatusLayout,
-} from "../../app/features/scanner/core/detectors/objective/player-status";
-import {
-	STRIP_WEAPONS_EVENT_TYPE,
-	type StripWeaponsData,
-} from "../../app/features/scanner/core/detectors/objective/strip-weapons";
-import {
-	SCOREBOARD_EVENT_TYPE,
-	type ScoreboardData,
-	type ScoreboardPlayer,
-} from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
-import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
-import type { DetectedEvent } from "../../app/features/scanner/core/detectors/types";
-import {
-	type BuiltMatch,
-	buildScannerMatches,
-} from "../../app/features/scanner/core/match-builder";
-import type {
-	ScannerMatch,
-	ScannerMatchPlayerStatusSample,
-} from "../../app/features/scanner/core/scanner-match";
-import type { ScannerLobby } from "../../app/features/scanner/scanner-types";
 
 /** Mirrors PlayerStatusTimeline's MAX_BRIDGE_SECONDS: longer sample gaps render as unobserved. */
 const OBSERVATION_GAP_SECONDS = 15;

@@ -1,6 +1,6 @@
+import { logger } from "@sendou/utils/logger";
+import { assertUnreachable } from "@sendou/utils/types";
 import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
-import { logger } from "~/utils/logger";
-import { assertUnreachable } from "~/utils/types";
 import type { DayMonthYear } from "~/utils/zod";
 import {
 	DAYS_SHOWN_AT_A_TIME,

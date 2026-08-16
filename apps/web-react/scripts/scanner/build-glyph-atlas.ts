@@ -24,16 +24,16 @@ import { createCanvas, GlobalFonts } from "@napi-rs/canvas";
 import {
 	DEATH_MESSAGE_TEMPLATES,
 	LOCALIZED_WEAPON_NAMES,
-} from "../../app/features/scanner/core/detectors/death/localized-messages";
-import { ALL_WEAPON_ENTRIES } from "../../app/features/scanner/core/detectors/death/weapon-names";
-import type { AtlasMeta } from "../../app/features/scanner/core/glyphs";
+} from "@sendou/scanner-core/detectors/death/localized-messages";
+import { ALL_WEAPON_ENTRIES } from "@sendou/scanner-core/detectors/death/weapon-names";
+import type { AtlasMeta } from "@sendou/scanner-core/glyphs";
 import {
 	ALL_LOBBY_ENTRIES,
 	ALL_MODE_ENTRIES,
 	ALL_MODE_LABELS,
 	ALL_STAGE_ENTRIES,
 	RESULT_TAG_ENTRIES,
-} from "../../app/features/scanner/core/localized";
+} from "@sendou/scanner-core/localized";
 import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 import { readFontCoverage } from "./otf-cmap";

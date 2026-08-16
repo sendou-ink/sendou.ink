@@ -1,11 +1,11 @@
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import type { TournamentMaplistSource } from "@sendou/map-list-generator/types";
+import { logger } from "@sendou/utils/logger";
 import type { TFunction } from "i18next";
 import * as R from "remeda";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
-import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
-import { logger } from "~/utils/logger";
 
 export const tournamentMatchWebsocketRoom = (matchId: number) =>
 	`match__${matchId}`;

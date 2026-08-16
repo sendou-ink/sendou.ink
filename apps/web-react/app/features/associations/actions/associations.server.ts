@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunctionArgs } from "react-router";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { associationsPageActionSchema } from "~/features/associations/associations-schemas";
@@ -9,7 +10,6 @@ import {
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import * as AssociationRepository from "../AssociationRepository.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {

@@ -17,6 +17,27 @@ const APP_ROOT = new URL("../../../apps/web-react", import.meta.url).pathname;
 const SPECIFIER_PREFIX_MAP: ReadonlyArray<[from: string, to: string]> = [
 	["~/modules/in-game-lists", "@sendou/in-game-lists"],
 	["~/features/tournament-bracket/core/engine", "@sendou/tournament-engine"],
+	["~/utils/invariant", "@sendou/utils/invariant"],
+	["~/utils/result", "@sendou/utils/result"],
+	["~/utils/random", "@sendou/utils/random"],
+	["~/utils/number", "@sendou/utils/number"],
+	["~/utils/types", "@sendou/utils/types"],
+	["~/utils/logger", "@sendou/utils/logger"],
+	["~/utils/session-id", "@sendou/utils/session-id"],
+	["~/features/build-analyzer/core", "@sendou/build-analyzer/core"],
+	["~/features/build-analyzer/data", "@sendou/build-analyzer/data"],
+	[
+		"~/features/build-analyzer/analyzer-types",
+		"@sendou/build-analyzer/analyzer-types",
+	],
+	[
+		"~/features/build-analyzer/analyzer-constants",
+		"@sendou/build-analyzer/analyzer-constants",
+	],
+	["~/features/map-list-generator/core", "@sendou/map-list-generator"],
+	["~/modules/tournament-map-list-generator", "@sendou/map-list-generator"],
+	["~/features/scanner/core", "@sendou/scanner-core"],
+	["~/features/scanner/scanner-types", "@sendou/scanner-core/scanner-types"],
 ];
 
 /**
@@ -38,6 +59,87 @@ const RELATIVE_SPECIFIER_RULES: ReadonlyArray<{
 		dirPrefix: "app/features/tournament-bracket",
 		pattern: /(?:\.\.\/|\.\/)+(?:core\/)?engine(?=[/"'])/,
 		packageName: "@sendou/tournament-engine",
+	},
+	{
+		dirPrefix: "app/utils",
+		pattern:
+			/\.\/(?=(?:invariant|result|random|number|types|logger|session-id)["'])/,
+		packageName: "@sendou/utils/",
+	},
+	{
+		dirPrefix: "",
+		pattern:
+			/(?:\.\.\/)+(?:app\/)?utils\/(?=(?:invariant|result|random|number|types|logger|session-id)["'])/,
+		packageName: "@sendou/utils/",
+	},
+	{
+		dirPrefix: "",
+		pattern:
+			/(?:\.\.\/)+(?:app\/)?modules\/tournament-map-list-generator(?=[/"'])/,
+		packageName: "@sendou/map-list-generator",
+	},
+	{
+		dirPrefix: "app/features/",
+		pattern: /(?:\.\.\/)+map-list-generator\/core(?=[/"'])/,
+		packageName: "@sendou/map-list-generator",
+	},
+	{
+		dirPrefix: "app/features/",
+		pattern:
+			/(?:\.\.\/)+build-analyzer\/(?=(?:core|data)\/|analyzer-types["']|analyzer-constants["'])/,
+		packageName: "@sendou/build-analyzer/",
+	},
+	{
+		dirPrefix: "app/features/",
+		pattern: /(?:\.\.\/)+scanner\/core(?=[/"'])/,
+		packageName: "@sendou/scanner-core",
+	},
+	{
+		dirPrefix: "app/features/",
+		pattern: /(?:\.\.\/)+scanner\/scanner-types(?=["'])/,
+		packageName: "@sendou/scanner-core/scanner-types",
+	},
+	{
+		dirPrefix: "",
+		pattern:
+			/(?:\.\.\/)+(?:app\/)?features\/build-analyzer\/(?=(?:core|data)\/|analyzer-types["']|analyzer-constants["'])/,
+		packageName: "@sendou/build-analyzer/",
+	},
+	{
+		dirPrefix: "",
+		pattern: /(?:\.\.\/)+(?:app\/)?features\/map-list-generator\/core(?=[/"'])/,
+		packageName: "@sendou/map-list-generator",
+	},
+	{
+		dirPrefix: "",
+		pattern: /(?:\.\.\/)+(?:app\/)?features\/scanner\/core(?=[/"'])/,
+		packageName: "@sendou/scanner-core",
+	},
+	{
+		dirPrefix: "",
+		pattern: /(?:\.\.\/)+(?:app\/)?features\/scanner\/scanner-types(?=["'])/,
+		packageName: "@sendou/scanner-core/scanner-types",
+	},
+	{
+		dirPrefix: "app/features/build-analyzer/",
+		pattern:
+			/(?:\.\.\/|\.\/)+(?=(?:core|data)\/|analyzer-types["']|analyzer-constants["'])/,
+		packageName: "@sendou/build-analyzer/",
+	},
+	{
+		dirPrefix: "app/features/map-list-generator/",
+		pattern: /(?:\.\.\/|\.\/)+core(?=[/"'])/,
+		packageName: "@sendou/map-list-generator",
+	},
+	{
+		dirPrefix: "app/features/scanner/",
+		pattern: /(?:\.\.\/|\.\/)+core(?=[/"'])/,
+		packageName: "@sendou/scanner-core",
+	},
+	{
+		dirPrefix: "app/features/scanner/",
+		pattern: /(?:\.\.\/|\.\/)+scanner-types(?=["'])/,
+		packageName: "@sendou/scanner-core/scanner-types",
 	},
 ];
 

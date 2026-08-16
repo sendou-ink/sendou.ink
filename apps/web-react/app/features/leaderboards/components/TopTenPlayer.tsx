@@ -1,8 +1,8 @@
+import invariant from "@sendou/utils/invariant";
 import clsx from "clsx";
 import { Flag } from "~/components/Flag";
 import { Image } from "~/components/Image";
 import { Placement } from "~/components/Placement";
-import invariant from "~/utils/invariant";
 import { winnersImageUrl } from "~/utils/urls";
 import playerData from "../top-ten.json";
 import styles from "./TopTenPlayer.module.css";

@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as ExternalStreamRepository from "../features/admin/ExternalStreamRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteOldExternalStreamsRoutine = new Routine({

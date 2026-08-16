@@ -9,7 +9,7 @@ import type {
 	ScannerMatchPlayer,
 	ScannerMatchPlayerStatus,
 	ScannerMatchTeam,
-} from "~/features/scanner/core/scanner-match";
+} from "@sendou/scanner-core/scanner-match";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 
 /**

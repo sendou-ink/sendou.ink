@@ -1,5 +1,5 @@
+import invariant from "@sendou/utils/invariant";
 import { ServerConfig } from "~/config.server";
-import invariant from "~/utils/invariant";
 
 export const hasTwitchEnvVars = () =>
 	Boolean(ServerConfig.twitch.clientId && ServerConfig.twitch.clientSecret);

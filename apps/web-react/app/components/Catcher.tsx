@@ -1,3 +1,4 @@
+import { getSessionId } from "@sendou/utils/session-id";
 import { RefreshCcw } from "lucide-react";
 import * as React from "react";
 import {
@@ -7,7 +8,6 @@ import {
 	useRouteError,
 } from "react-router";
 import { useUser } from "~/features/auth/core/user";
-import { getSessionId } from "~/utils/session-id";
 import {
 	ERROR_GIRL_IMAGE_PATH,
 	LOG_IN_URL,

@@ -1,5 +1,6 @@
 import cachified from "@epic-web/cachified";
 import { matchEndedEarly } from "@sendou/tournament-engine";
+import { logger } from "@sendou/utils/logger";
 import type { LoaderFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
@@ -23,7 +24,6 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { tournamentMatchPage } from "~/utils/urls";

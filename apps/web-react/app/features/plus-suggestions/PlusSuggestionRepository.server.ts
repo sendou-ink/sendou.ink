@@ -1,3 +1,4 @@
+import type { Unwrapped } from "@sendou/utils/types";
 import { formatDistance } from "date-fns";
 import type { ExpressionBuilder, Insertable, NotNull } from "kysely";
 import { db } from "~/db/sql";
@@ -5,7 +6,6 @@ import type { DB } from "~/db/tables";
 import { isVotingActive, type MonthYear } from "~/features/plus-voting/core";
 import { databaseTimestampNow, databaseTimestampToDate } from "~/utils/dates";
 import { commonUserSelect, jsonObjectFrom } from "~/utils/kysely.server";
-import type { Unwrapped } from "~/utils/types";
 import {
 	isPlusTier,
 	type PlusTier,

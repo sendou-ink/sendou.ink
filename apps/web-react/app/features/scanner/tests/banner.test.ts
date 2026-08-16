@@ -7,7 +7,7 @@ import assert from "node:assert/strict";
 import {
 	type BannerScoreRead,
 	resolveMatchScores,
-} from "../core/detectors/scoreboard/banner";
+} from "@sendou/scanner-core/detectors/scoreboard/banner";
 import test from "./node-test-compat";
 
 function read(value: number | null, confidence = 0.9): BannerScoreRead {

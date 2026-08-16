@@ -1,3 +1,4 @@
+import type { TournamentMaplistSource } from "@sendou/map-list-generator/types";
 import clsx from "clsx";
 import { HardDriveDownload } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -13,7 +14,6 @@ import { ImageExportDialog } from "~/features/img-export/components/ImageExportD
 import { TournamentRunGraphic } from "~/features/img-export/components/TournamentRunGraphic";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
-import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { metaTags } from "~/utils/remix";
 import {
 	teamPage,

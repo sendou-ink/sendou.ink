@@ -5,11 +5,11 @@
  *
  * Usage: pnpm scanner:fixtures [case-name-substring]
  */
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import {
 	createScoreboardDetector,
 	type ScoreboardRowDebug,
-} from "../../app/features/scanner/core/detectors/scoreboard/index";
+} from "@sendou/scanner-core/detectors/scoreboard/index";
 import {
 	loadFixtures,
 	runDetectorOnFixture,

@@ -1,4 +1,4 @@
-import { logger } from "../utils/logger";
+import { logger } from "@sendou/utils/logger";
 
 export class Routine {
 	readonly name;

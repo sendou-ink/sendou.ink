@@ -1,3 +1,5 @@
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -5,8 +7,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 
 const tournamentIdArg = process.argv[2]?.trim();
 const placementsArg = process.argv[3]?.trim();

@@ -1,9 +1,9 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import * as MapList from "@sendou/map-list-generator/MapList";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
+import type { MapPoolObject } from "@sendou/map-list-generator/map-pool-serializer/types";
 import type { Tables } from "~/db/tables";
-import * as MapList from "~/features/map-list-generator/core/MapList";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import type { MapPoolObject } from "~/features/map-list-generator/core/map-pool-serializer/types";
 
 type ResolvedMapListRow = {
 	mapList: Array<{ mode: ModeShort; stageId: StageId }>;

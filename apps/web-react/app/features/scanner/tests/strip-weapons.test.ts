@@ -11,14 +11,14 @@
 
 import assert from "node:assert/strict";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
-import { loadOpenCV } from "../core/cv";
-import { createObjectiveDetector } from "../core/detectors/objective/index";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
+import { createObjectiveDetector } from "@sendou/scanner-core/detectors/objective/index";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
-} from "../core/detectors/objective/strip-weapons";
-import type { DetectedEvent } from "../core/detectors/types";
-import { weaponSlotRowPermutation } from "../core/slot-row-assignment";
+} from "@sendou/scanner-core/detectors/objective/strip-weapons";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import { weaponSlotRowPermutation } from "@sendou/scanner-core/slot-row-assignment";
 import {
 	type Fixture,
 	isFieldSkipped,

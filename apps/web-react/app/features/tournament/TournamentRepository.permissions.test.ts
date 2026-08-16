@@ -1,8 +1,8 @@
+import invariant from "@sendou/utils/invariant";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import invariant from "~/utils/invariant";
 import * as TournamentRepository from "./TournamentRepository.server";
 
 const users = UserFactory.pool();

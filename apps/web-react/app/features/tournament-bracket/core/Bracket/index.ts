@@ -1,4 +1,4 @@
-import { assertUnreachable } from "~/utils/types";
+import { assertUnreachable } from "@sendou/utils/types";
 import type { Bracket, CreateBracketArgs } from "./Bracket";
 import { DoubleEliminationBracket } from "./DoubleEliminationBracket";
 import { RoundRobinBracket } from "./RoundRobinBracket";

@@ -1,11 +1,11 @@
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
-import clsx from "clsx";
-import { Ability } from "~/components/Ability";
-import { WeaponImage } from "~/components/Image";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
-} from "../core/detectors/death/index";
+} from "@sendou/scanner-core/detectors/death/index";
+import clsx from "clsx";
+import { Ability } from "~/components/Ability";
+import { WeaponImage } from "~/components/Image";
 import styles from "./DeathCard.module.css";
 import eventCardStyles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";

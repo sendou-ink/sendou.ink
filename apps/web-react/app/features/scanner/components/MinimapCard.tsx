@@ -1,16 +1,16 @@
 import type { AbilityWithUnknown } from "@sendou/in-game-lists/types";
-import clsx from "clsx";
-import { ChevronUp } from "lucide-react";
-import type { ReactNode } from "react";
-import { Ability } from "~/components/Ability";
-import { WeaponImage } from "~/components/Image";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
 	type MinimapEnemy,
 	type MinimapTeammate,
-} from "../core/detectors/minimap/index";
-import type { CardSlot } from "../core/detectors/minimap/rois";
+} from "@sendou/scanner-core/detectors/minimap/index";
+import type { CardSlot } from "@sendou/scanner-core/detectors/minimap/rois";
+import clsx from "clsx";
+import { ChevronUp } from "lucide-react";
+import type { ReactNode } from "react";
+import { Ability } from "~/components/Ability";
+import { WeaponImage } from "~/components/Image";
 import eventCardStyles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";

@@ -1,7 +1,7 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import clsx from "clsx";
 import { Check, CircleAlert, OctagonAlert, TriangleAlert } from "lucide-react";
 import type * as React from "react";
-import { assertUnreachable } from "~/utils/types";
 import styles from "./Alert.module.css";
 
 export type AlertVariation = "INFO" | "WARNING" | "ERROR" | "SUCCESS";

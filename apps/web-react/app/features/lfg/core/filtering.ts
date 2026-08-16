@@ -3,10 +3,10 @@ import {
 	mainWeaponIds,
 	weaponIdToBaseWeaponId,
 } from "@sendou/in-game-lists/weapon-ids";
+import type { Unpacked } from "@sendou/utils/types";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { compareTwoTiers } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import type { Unpacked } from "~/utils/types";
 import type * as LFGRepository from "../LFGRepository.server";
 import type { LFGFilterValues } from "../lfg-types";
 import { createTimezoneHourDifference } from "./timezone";

@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
@@ -9,7 +10,6 @@ import {
 import { isVotingOpen } from "~/features/plus-voting/core/voting-time";
 import * as PlusVotingRepository from "~/features/plus-voting/PlusVotingRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { badRequestIfFalsy, parseRequestPayload } from "~/utils/remix.server";
 import { PLUS_UPVOTE } from "../plus-voting-constants";
 import { votingActionSchema } from "../plus-voting-schemas";

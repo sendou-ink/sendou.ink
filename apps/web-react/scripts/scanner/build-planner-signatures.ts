@@ -16,18 +16,18 @@
  */
 import { mkdirSync, readdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import {
 	PLANNER_SIG_H,
 	PLANNER_SIG_W,
 	type PlannerManifest,
 	plannerSignature,
-} from "../../app/features/scanner/core/detectors/minimap/stage";
+} from "@sendou/scanner-core/detectors/minimap/stage";
 import {
 	type FrameData,
 	normalizeFrame,
 	toMat,
-} from "../../app/features/scanner/core/image";
+} from "@sendou/scanner-core/image";
 import { SCANNER_ASSETS_DIR } from "../../app/features/scanner/node/assets-dir";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 

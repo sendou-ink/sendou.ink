@@ -10,6 +10,21 @@
  * every frame — the big VoD speedup, since sequential decode bounds scan
  * wall-clock time.
  */
+
+import { loadOpenCV } from "@sendou/scanner-core/cv";
+import { MAP_START_EVENT_TYPE } from "@sendou/scanner-core/detectors/map-start/index";
+import {
+	createAllDetectors,
+	SCOREBOARD_EVENT_TYPES,
+} from "@sendou/scanner-core/detectors/registry";
+import { DetectorScheduler } from "@sendou/scanner-core/detectors/scheduler";
+import {
+	createScanTelemetry,
+	detectorTelemetry,
+	type ScanTelemetry,
+} from "@sendou/scanner-core/detectors/telemetry";
+import type { Detector } from "@sendou/scanner-core/detectors/types";
+import { normalizeFrame, toMat } from "@sendou/scanner-core/image";
 import {
 	ALL_FORMATS,
 	BlobSource,
@@ -18,20 +33,6 @@ import {
 	type VideoSample,
 	VideoSampleSink,
 } from "mediabunny";
-import { loadOpenCV } from "../core/cv";
-import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
-import {
-	createAllDetectors,
-	SCOREBOARD_EVENT_TYPES,
-} from "../core/detectors/registry";
-import { DetectorScheduler } from "../core/detectors/scheduler";
-import {
-	createScanTelemetry,
-	detectorTelemetry,
-	type ScanTelemetry,
-} from "../core/detectors/telemetry";
-import type { Detector } from "../core/detectors/types";
-import { normalizeFrame, toMat } from "../core/image";
 import type {
 	AnalyzeRequest,
 	InitRequest,

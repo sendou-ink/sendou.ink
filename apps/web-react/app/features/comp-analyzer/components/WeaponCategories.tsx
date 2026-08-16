@@ -1,3 +1,4 @@
+import { mainWeaponParams } from "@sendou/build-analyzer/core/utils";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -5,7 +6,6 @@ import type {
 } from "@sendou/in-game-lists/types";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
-import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
 import {
 	SPECIAL_CATEGORY_ORDER,

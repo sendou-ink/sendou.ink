@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useTranslation } from "react-i18next";
@@ -8,7 +9,6 @@ import {
 } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useHydrated } from "~/hooks/useHydrated";
-import invariant from "~/utils/invariant";
 import { FormMessage } from "./FormMessage";
 import { SubmitButton } from "./SubmitButton";
 

@@ -1,7 +1,7 @@
 import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
-} from "../core/detectors/objective/index";
+} from "@sendou/scanner-core/detectors/objective/index";
 import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";

@@ -8,8 +8,8 @@
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createCanvas, Image, ImageData } from "@napi-rs/canvas";
+import type { FrameData } from "@sendou/scanner-core/image";
 import sharp from "sharp";
-import type { FrameData } from "../core/image";
 
 export async function readImage(path: string): Promise<FrameData> {
 	// @napi-rs/canvas mis-decodes AVIF at partial-alpha pixels (white-matte

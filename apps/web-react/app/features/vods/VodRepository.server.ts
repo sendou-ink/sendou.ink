@@ -4,6 +4,7 @@ import type {
 	StageId,
 } from "@sendou/in-game-lists/types";
 import { weaponIdToArrayWithAlts } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
 import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -12,7 +13,6 @@ import {
 	dateToDatabaseTimestamp,
 	dayMonthYearToDatabaseTimestamp,
 } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import {
 	type CommonUser,
 	commonUserJsonObject,

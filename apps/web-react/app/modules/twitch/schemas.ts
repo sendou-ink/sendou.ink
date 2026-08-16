@@ -1,5 +1,5 @@
+import type { Unpacked } from "@sendou/utils/types";
 import { z } from "zod";
-import type { Unpacked } from "~/utils/types";
 
 export const streamsSchema = z.object({
 	data: z.array(

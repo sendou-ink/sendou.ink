@@ -1,12 +1,12 @@
 import { modesShort, rankedModesShort } from "@sendou/in-game-lists/modes";
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { sub } from "date-fns";
 import * as R from "remeda";
 import type { CastedMatchesInfo } from "~/db/tables-json";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import type { Tables } from "../../db/tables";
-import { MapPool } from "../map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "../match-profile/banned-maps";
 import * as Seasons from "../mmr/core/Seasons";
 import type { Bracket as BracketClass } from "../tournament-bracket/core/Bracket";

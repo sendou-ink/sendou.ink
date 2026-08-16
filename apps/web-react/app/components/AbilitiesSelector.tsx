@@ -1,8 +1,8 @@
 import { abilities } from "@sendou/in-game-lists/abilities";
 import type { BuildAbilitiesTupleWithUnknown } from "@sendou/in-game-lists/types";
+import invariant from "@sendou/utils/invariant";
 import clsx from "clsx";
 import * as React from "react";
-import invariant from "~/utils/invariant";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./AbilitiesSelector.module.css";
 import { Ability } from "./Ability";

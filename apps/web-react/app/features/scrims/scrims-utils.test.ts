@@ -1,5 +1,5 @@
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { describe, expect, test } from "vitest";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	formatFlexTimeDisplay,
 	generateTimeOptions,

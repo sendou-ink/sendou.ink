@@ -1,3 +1,5 @@
+import { parseMaplistSource } from "@sendou/map-list-generator/source";
+import { logger } from "@sendou/utils/logger";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -6,9 +8,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
-import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import { jsonArrayFrom } from "~/utils/kysely.server";
-import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentMatchResponse } from "../schema";

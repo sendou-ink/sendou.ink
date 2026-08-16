@@ -15,15 +15,15 @@ import { modesShort } from "@sendou/in-game-lists/modes";
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { Ability } from "@sendou/in-game-lists/types";
 import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
-import { z } from "zod";
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayer,
 	ScannerMatchPlayerStatus,
 	ScannerMatchTeam,
-} from "./core/scanner-match";
-import { SCANNER_LOBBIES } from "./scanner-types";
+} from "@sendou/scanner-core/scanner-match";
+import { SCANNER_LOBBIES } from "@sendou/scanner-core/scanner-types";
+import { z } from "zod";
 
 const detectionText = z.string().max(500);
 

@@ -1,3 +1,4 @@
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -15,7 +16,6 @@ import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
 import { calendarEditPage } from "~/features/calendar/calendar-urls";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";

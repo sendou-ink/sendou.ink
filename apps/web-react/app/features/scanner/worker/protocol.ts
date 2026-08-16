@@ -1,5 +1,8 @@
-import type { ScanTelemetry } from "../core/detectors/telemetry";
-import type { DetectedEvent, GateResult } from "../core/detectors/types";
+import type { ScanTelemetry } from "@sendou/scanner-core/detectors/telemetry";
+import type {
+	DetectedEvent,
+	GateResult,
+} from "@sendou/scanner-core/detectors/types";
 
 export interface InitRequest {
 	kind: "init";

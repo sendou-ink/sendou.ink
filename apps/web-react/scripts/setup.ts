@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import { db } from "~/db/sql";
-import { logger } from "~/utils/logger";
 import { seedImages } from "./seed-images";
 
 async function main() {

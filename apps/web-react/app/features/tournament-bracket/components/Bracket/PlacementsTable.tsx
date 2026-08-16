@@ -1,13 +1,13 @@
 import * as Swiss from "@sendou/tournament-engine/swiss/team-status";
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
-import { logger } from "../../../../utils/logger";
 import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import type { Bracket, Standing } from "../../core/Bracket";

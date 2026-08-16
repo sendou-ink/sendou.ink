@@ -1,9 +1,9 @@
-import clsx from "clsx";
-import { WeaponImage } from "~/components/Image";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
-} from "../core/detectors/scoreboard-own/index";
+} from "@sendou/scanner-core/detectors/scoreboard-own/index";
+import clsx from "clsx";
+import { WeaponImage } from "~/components/Image";
 import { AbilityGrid } from "./AbilityGrid";
 import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";

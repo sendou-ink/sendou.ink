@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import invariant from "~/utils/invariant";
+import invariant from "@sendou/utils/invariant";
 import { TIER_LIST_MAKER_URL } from "~/utils/urls";
 import { expect, expectIsHydrated, navigate } from "../../helpers/playwright";
 

@@ -1,8 +1,8 @@
+import invariant from "@sendou/utils/invariant";
 import type { ExpressionBuilder, NotNull } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import { sortBadgesByFavorites } from "~/features/user-page/core/badge-sorting.server";
-import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	jsonArrayFrom,

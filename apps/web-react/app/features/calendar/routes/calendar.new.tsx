@@ -1,4 +1,5 @@
 import type { RankedModeShort } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -13,7 +14,6 @@ import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { SubmitButton } from "~/components/SubmitButton";
 import type { Tables } from "~/db/tables";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";

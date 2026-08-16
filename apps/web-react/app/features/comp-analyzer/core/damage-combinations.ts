@@ -1,14 +1,14 @@
-import type { MainWeaponId } from "@sendou/in-game-lists/types";
-import { damageTypeToWeaponType } from "~/features/build-analyzer/analyzer-constants";
+import { damageTypeToWeaponType } from "@sendou/build-analyzer/analyzer-constants";
 import type {
 	AbilityPoints,
 	DamageType,
-} from "~/features/build-analyzer/analyzer-types";
+} from "@sendou/build-analyzer/analyzer-types";
 import {
 	buildStats,
 	subWeaponDamageValue,
-} from "~/features/build-analyzer/core/stats";
-import { weaponParams } from "~/features/build-analyzer/core/utils";
+} from "@sendou/build-analyzer/core/stats";
+import { weaponParams } from "@sendou/build-analyzer/core/utils";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import {
 	COMBO_DAMAGE_THRESHOLD,
 	LETHAL_DAMAGE,

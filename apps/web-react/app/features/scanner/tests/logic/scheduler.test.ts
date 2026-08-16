@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import {
 	DetectorScheduler,
 	type SchedulingInfo,
-} from "../../core/detectors/scheduler";
+} from "@sendou/scanner-core/detectors/scheduler";
 import test from "../node-test-compat";
 
 const OPTS = {

@@ -1,6 +1,6 @@
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { differenceInMinutes } from "date-fns";
 import * as R from "remeda";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { databaseTimestampToDate } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
 import { LUTI_DIVS } from "./scrims-constants";

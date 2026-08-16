@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import invariant from "~/utils/invariant";
+import invariant from "@sendou/utils/invariant";
 import { userBuildsPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { BuildCard } from "./build-card";

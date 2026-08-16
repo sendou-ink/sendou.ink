@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import clsx from "clsx";
 import { Check } from "lucide-react";
 import * as React from "react";
@@ -10,7 +11,6 @@ import styles from "~/features/plus-suggestions/plus.module.css";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { metaTags } from "~/utils/remix";
-import { assertUnreachable } from "~/utils/types";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
 
 import { action } from "../actions/plus.voting.server";

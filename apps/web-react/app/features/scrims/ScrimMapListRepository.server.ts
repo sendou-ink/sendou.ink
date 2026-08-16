@@ -1,8 +1,8 @@
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { databaseTimestampNow } from "~/utils/dates";
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import * as ScrimMapRepository from "./ScrimMapRepository.server";

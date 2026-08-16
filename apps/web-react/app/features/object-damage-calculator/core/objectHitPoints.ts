@@ -1,24 +1,24 @@
+import type {
+	AbilityPoints,
+	SpecialWeaponParams,
+	SubWeaponParams,
+} from "@sendou/build-analyzer/analyzer-types";
+import {
+	specialDeviceHp,
+	specialFieldHp,
+	subStats,
+} from "@sendou/build-analyzer/core/stats";
+import {
+	hpDivided,
+	mainWeaponParams,
+	weaponParams,
+} from "@sendou/build-analyzer/core/utils";
 import {
 	BIG_BUBBLER_ID,
 	CRAB_TANK_ID,
 	SPLASH_WALL_ID,
 } from "@sendou/in-game-lists/weapon-ids";
-import type {
-	AbilityPoints,
-	SpecialWeaponParams,
-	SubWeaponParams,
-} from "~/features/build-analyzer/analyzer-types";
-import {
-	specialDeviceHp,
-	specialFieldHp,
-	subStats,
-} from "~/features/build-analyzer/core/stats";
-import {
-	hpDivided,
-	mainWeaponParams,
-	weaponParams,
-} from "~/features/build-analyzer/core/utils";
-import invariant from "~/utils/invariant";
+import invariant from "@sendou/utils/invariant";
 import type { HitPoints } from "../calculator-types";
 
 const WAVE_BREAKER_HP = 480;

@@ -6,8 +6,9 @@
  * worker decodes and analyzes a VoD time slice by itself, streaming results
  * and progress until "chunkDone").
  */
+
+import type { ScanTelemetry } from "@sendou/scanner-core/detectors/telemetry";
 import { Config } from "../../../config";
-import type { ScanTelemetry } from "../core/detectors/telemetry";
 import type { WorkerResponse } from "./protocol";
 
 export type ResultHandler = (

@@ -12,13 +12,13 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../../core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import {
 	createDeathDetector,
 	type DeathData,
-} from "../../core/detectors/death/index";
-import { createScoreboardDetector } from "../../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
+} from "@sendou/scanner-core/detectors/death/index";
+import { createScoreboardDetector } from "@sendou/scanner-core/detectors/scoreboard/index";
+import { createScoreboardBattleLogReplayDetector } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
 import {
 	type Fixture,
 	isFieldSkipped,

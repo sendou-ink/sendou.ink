@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import { nanoid } from "nanoid";
 import { WebSocket } from "partysocket";
 import * as React from "react";
@@ -9,7 +10,6 @@ import {
 } from "react-router";
 import { Config } from "~/config";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
-import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
 import { useRefreshOnReconnect } from "./chat-hooks";
 import { useLastReadCounts, writeLastReadCount } from "./chat-last-read";

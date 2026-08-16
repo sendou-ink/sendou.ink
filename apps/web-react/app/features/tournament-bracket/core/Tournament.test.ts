@@ -4,8 +4,8 @@ import type {
 	GeneratedRound,
 	MatchData,
 } from "@sendou/tournament-engine/types";
+import { unwrap } from "@sendou/utils/result";
 import { describe, expect, test } from "vitest";
-import { unwrap } from "~/utils/result";
 import type * as Progression from "./Progression";
 import { Tournament } from "./Tournament";
 import {

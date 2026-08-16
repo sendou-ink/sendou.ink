@@ -1,7 +1,7 @@
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
-} from "../core/detectors/objective/strip-weapons";
+} from "@sendou/scanner-core/detectors/objective/strip-weapons";
 import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";

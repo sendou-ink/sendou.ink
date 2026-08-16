@@ -1,10 +1,10 @@
+import invariant from "@sendou/utils/invariant";
 import { beforeEach, describe, expect, test } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import invariant from "~/utils/invariant";
 import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { wrappedAction } from "~/utils/Test";
 import type { editTeamActionSchema } from "../team-schemas";

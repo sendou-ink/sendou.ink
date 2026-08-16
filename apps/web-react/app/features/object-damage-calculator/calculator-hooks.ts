@@ -1,13 +1,13 @@
-import { exampleMainWeaponIdWithSpecialWeaponId } from "@sendou/in-game-lists/weapon-ids";
-import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import { assertType } from "~/utils/types";
-import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";
+import type { DAMAGE_TYPE } from "@sendou/build-analyzer/analyzer-constants";
 import type {
 	AnalyzedBuild,
 	AnyWeapon,
 	DamageType,
-} from "../build-analyzer/analyzer-types";
-import { buildStats } from "../build-analyzer/core/stats";
+} from "@sendou/build-analyzer/analyzer-types";
+import { buildStats } from "@sendou/build-analyzer/core/stats";
+import { exampleMainWeaponIdWithSpecialWeaponId } from "@sendou/in-game-lists/weapon-ids";
+import { assertType } from "@sendou/utils/types";
+import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { calculatorSearchParams } from "./calculator-search-params";
 import {
 	calculateDamage,

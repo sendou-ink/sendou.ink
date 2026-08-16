@@ -10,13 +10,13 @@ import type {
 	AbilityWithUnknown,
 	MainWeaponId,
 } from "@sendou/in-game-lists/types";
-import { connectAbilities } from "../core/ability-harvest";
+import { connectAbilities } from "@sendou/scanner-core/ability-harvest";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
-} from "../core/detectors/death/index";
-import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
-import type { DetectedEvent } from "../core/detectors/types";
+} from "@sendou/scanner-core/detectors/death/index";
+import { SCOREBOARD_EVENT_TYPE } from "@sendou/scanner-core/detectors/scoreboard/index";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
 import test from "./node-test-compat";
 
 const GRID_A: AbilityWithUnknown[][] = [

@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import { Config } from "~/config";
-import { logger } from "~/utils/logger";
 import { NOTIFICATIONS_SUBSCRIBE_ROUTE } from "~/utils/urls";
 
 /** Whether this browser supports push notifications. Only call after hydration. */

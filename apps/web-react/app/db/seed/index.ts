@@ -1,6 +1,6 @@
+import { withoutInfoLogs } from "@sendou/utils/logger";
 import { deleteAllRows } from "~/db/wipe";
 import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
-import { withoutInfoLogs } from "~/utils/logger";
 import { resetFactories } from "./core/defineFactory";
 import { resetFaker } from "./core/faker";
 import { seedBadges } from "./dev/badges";

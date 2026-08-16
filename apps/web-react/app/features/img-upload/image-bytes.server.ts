@@ -1,4 +1,4 @@
-import invariant from "~/utils/invariant";
+import invariant from "@sendou/utils/invariant";
 
 export type ImageExtension = "webp" | "png" | "jpeg";
 

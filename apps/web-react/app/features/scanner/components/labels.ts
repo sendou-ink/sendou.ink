@@ -12,12 +12,12 @@ import type {
 	StageId,
 	SubWeaponId,
 } from "@sendou/in-game-lists/types";
-import gameMisc from "../../../../locales/en/game-misc.json";
 import {
 	ALL_WEAPON_ENTRIES,
 	type WeaponType,
-} from "../core/detectors/death/weapon-names";
-import type { ScannerLobby } from "../scanner-types";
+} from "@sendou/scanner-core/detectors/death/weapon-names";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
+import gameMisc from "../../../../locales/en/game-misc.json";
 
 const MISC = gameMisc as Record<string, string>;
 

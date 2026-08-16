@@ -8,11 +8,11 @@
  * this only filters what gets rendered.
  */
 
-import { isDeepEqual, omit } from "remeda";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
-} from "../core/detectors/minimap/index";
+} from "@sendou/scanner-core/detectors/minimap/index";
+import { isDeepEqual, omit } from "remeda";
 
 export function withoutRepeatEvents<T extends { type: string; data: unknown }>(
 	events: readonly T[],

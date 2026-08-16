@@ -1,4 +1,10 @@
 import type {
+	AbilityPoints,
+	AnalyzedBuild,
+	DamageType,
+} from "@sendou/build-analyzer/analyzer-types";
+import { buildStats } from "@sendou/build-analyzer/core/stats";
+import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
@@ -9,12 +15,6 @@ import {
 	specialWeaponIds,
 } from "@sendou/in-game-lists/weapon-ids";
 import { describe, expect, test } from "vitest";
-import type {
-	AbilityPoints,
-	AnalyzedBuild,
-	DamageType,
-} from "~/features/build-analyzer/analyzer-types";
-import { buildStats } from "~/features/build-analyzer/core/stats";
 import { calculateDamage } from "./objectDamage";
 
 function calculate({

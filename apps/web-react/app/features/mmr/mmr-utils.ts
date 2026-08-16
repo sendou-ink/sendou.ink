@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import {
 	rate as openskillRate,
 	ordinal,
@@ -5,7 +6,6 @@ import {
 	rating,
 	type Team,
 } from "openskill";
-import invariant from "~/utils/invariant";
 import type { TierName } from "./mmr-constants";
 import { TIERS } from "./mmr-constants";
 

@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -14,7 +15,6 @@ import {
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { adminBracketsActionSchema } from "../tournament-admin-schemas";
 
 export const action: ActionFunction = async ({ request, params }) => {

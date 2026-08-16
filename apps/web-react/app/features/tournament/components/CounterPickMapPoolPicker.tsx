@@ -1,7 +1,7 @@
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { TOURNAMENT } from "../tournament-constants";

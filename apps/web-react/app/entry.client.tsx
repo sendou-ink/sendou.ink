@@ -1,3 +1,5 @@
+import { logger } from "@sendou/utils/logger";
+import { getSessionId } from "@sendou/utils/session-id";
 import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
@@ -6,8 +8,6 @@ import type { LanguageCode } from "~/modules/i18n/config";
 import { writeViewerTimezoneCookie } from "./features/timezone/timezone-cookie";
 import { i18nLoader } from "./modules/i18n/loader";
 import { loadDateFnsLocale } from "./utils/dates";
-import { logger } from "./utils/logger";
-import { getSessionId } from "./utils/session-id";
 
 /** Base delays in milliseconds before each retry attempt following the initial request. */
 const FETCH_RETRY_DELAYS_MS = [0, 5000, 15000];

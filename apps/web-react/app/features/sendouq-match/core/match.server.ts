@@ -1,9 +1,15 @@
 import { modesShort } from "@sendou/in-game-lists/modes";
 import type { ModeShort, ModeWithStage } from "@sendou/in-game-lists/types";
+import * as MapList from "@sendou/map-list-generator/MapList";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
+import type {
+	TournamentMapListMap,
+	TournamentMaplistSource,
+} from "@sendou/map-list-generator/types";
+import { logger } from "@sendou/utils/logger";
+import { averageArray } from "@sendou/utils/number";
 import * as R from "remeda";
 import type { ParsedMemento, UserMapModePreferences } from "~/db/tables-json";
-import * as MapList from "~/features/map-list-generator/core/MapList";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	BANNED_MAPS,
 	SENDOUQ_MAP_POOL,
@@ -16,12 +22,6 @@ import type {
 	SQUncensoredGroup,
 } from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
-import type {
-	TournamentMapListMap,
-	TournamentMaplistSource,
-} from "~/modules/tournament-map-list-generator/types";
-import { logger } from "~/utils/logger";
-import { averageArray } from "~/utils/number";
 
 type WeightsMap = Map<string, number>;
 

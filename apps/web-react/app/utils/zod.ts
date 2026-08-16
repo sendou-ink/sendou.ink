@@ -8,11 +8,11 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "@sendou/in-game-lists/weapon-ids";
+import type { Unpacked } from "@sendou/utils/types";
+import { assertType } from "@sendou/utils/types";
 import type { ZodType } from "zod";
 import { z } from "zod";
 import { SHORT_NANOID_LENGTH } from "./id";
-import type { Unpacked } from "./types";
-import { assertType } from "./types";
 
 export const id = z.coerce.number({ message: "Required" }).int().positive();
 export const idObject = z.object({

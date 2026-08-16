@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
@@ -13,7 +14,6 @@ import {
 } from "~/features/notifications/core/pushSubscription";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
-import { logger } from "~/utils/logger";
 import {
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,

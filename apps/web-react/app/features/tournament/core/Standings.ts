@@ -1,8 +1,8 @@
+import invariant from "@sendou/utils/invariant";
 import * as R from "remeda";
 import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import invariant from "~/utils/invariant";
 import { getBracketProgressionLabel } from "../tournament-utils";
 
 export type TournamentStandingsResult =

@@ -1,4 +1,5 @@
 import * as Engine from "@sendou/tournament-engine";
+import invariant from "@sendou/utils/invariant";
 import * as R from "remeda";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -15,7 +16,6 @@ import {
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
-import invariant from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 import { eventDefaults } from "./CalendarEventFactory";
 import * as TournamentTeamFactory from "./TournamentTeamFactory";

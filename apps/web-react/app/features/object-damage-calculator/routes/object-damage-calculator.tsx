@@ -1,3 +1,5 @@
+import { possibleApValues } from "@sendou/build-analyzer/analyzer-constants";
+import type { DamageType } from "@sendou/build-analyzer/analyzer-types";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -11,6 +13,7 @@ import {
 	TRIPLE_SPLASHDOWN_ID,
 	WAVE_BREAKER_ID,
 } from "@sendou/in-game-lists/weapon-ids";
+import { roundToNDecimalPlaces } from "@sendou/utils/number";
 import clsx from "clsx";
 import React, { type JSX } from "react";
 import { Button } from "react-aria-components";
@@ -23,9 +26,6 @@ import { Image, WeaponImage } from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
-import type { DamageType } from "~/features/build-analyzer/analyzer-types";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {

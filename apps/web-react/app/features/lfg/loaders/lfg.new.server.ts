@@ -1,8 +1,8 @@
+import type { Unpacked } from "@sendou/utils/types";
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import type { Unpacked } from "~/utils/types";
 import * as LFGRepository from "../LFGRepository.server";
 import { lfgNewSearchParams } from "../lfg-search-params";
 

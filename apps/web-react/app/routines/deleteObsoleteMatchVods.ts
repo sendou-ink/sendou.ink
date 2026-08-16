@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as TournamentMatchVodRepository from "../features/tournament-bracket/TournamentMatchVodRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteObsoleteMatchVodsRoutine = new Routine({

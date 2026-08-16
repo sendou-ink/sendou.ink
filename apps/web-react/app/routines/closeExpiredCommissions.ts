@@ -1,6 +1,6 @@
+import { logger } from "@sendou/utils/logger";
 import { sub } from "date-fns";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { logger } from "~/utils/logger";
 import { db } from "../db/sql";
 import { notify } from "../features/notifications/core/notify.server";
 import { Routine } from "./routine.server";

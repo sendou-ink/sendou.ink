@@ -1,4 +1,4 @@
-import { logger } from "~/utils/logger";
+import { logger } from "@sendou/utils/logger";
 import { getToken, purgeCachedToken } from "./token";
 import { getTwitchEnvVars } from "./utils.server";
 

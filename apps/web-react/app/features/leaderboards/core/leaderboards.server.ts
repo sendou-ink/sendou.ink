@@ -1,6 +1,7 @@
 import { cachified } from "@epic-web/cachified";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
+import type { Unwrapped } from "@sendou/utils/types";
 import type {
 	SeasonPopularUsersWeapon,
 	UserSPLeaderboardItem,
@@ -11,7 +12,6 @@ import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-c
 import { freshUserSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import type { Unwrapped } from "~/utils/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import { seasonHasTopTen } from "../leaderboards-utils";
 

@@ -1,3 +1,4 @@
+import { mainWeaponParams } from "@sendou/build-analyzer/core/utils";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
@@ -10,7 +11,6 @@ import {
 	weaponIdToType,
 } from "@sendou/in-game-lists/weapon-ids";
 import type { LoaderFunctionArgs } from "react-router";
-import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import {
 	specialWeaponNameSlugToId,

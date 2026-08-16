@@ -1,4 +1,5 @@
 import { matchEndedEarly } from "@sendou/tournament-engine";
+import type { Unpacked } from "@sendou/utils/types";
 import clsx from "clsx";
 import { Eye } from "lucide-react";
 import type * as React from "react";
@@ -12,7 +13,6 @@ import { useTournamentVods } from "~/features/tournament/routes/to.$id";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
-import type { Unpacked } from "~/utils/types";
 import {
 	tournamentMatchPage,
 	tournamentStreamsPage,

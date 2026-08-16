@@ -1,0 +1,23 @@
+{
+	"include": ["src/**/*.ts", "src/**/*.d.ts"],
+	"compilerOptions": {
+		"lib": ["es2024"],
+		"module": "ESNext",
+		"isolatedModules": true,
+		"erasableSyntaxOnly": true,
+		"esModuleInterop": true,
+		"moduleResolution": "Bundler",
+		"resolveJsonModule": true,
+		"target": "ES2022",
+		"strict": true,
+		"noEmit": true,
+		"forceConsistentCasingInFileNames": true,
+		"allowJs": false,
+		"noUnusedLocals": true,
+		"noUnusedParameters": true,
+		"noImplicitReturns": true,
+		"noFallthroughCasesInSwitch": true,
+		"useUnknownInCatchVariables": true,
+		"skipLibCheck": true
+	}
+}

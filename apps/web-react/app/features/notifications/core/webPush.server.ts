@@ -1,7 +1,7 @@
+import { logger } from "@sendou/utils/logger";
 import webPush from "web-push";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
-import { logger } from "~/utils/logger";
 
 export let webPushEnabled = false;
 

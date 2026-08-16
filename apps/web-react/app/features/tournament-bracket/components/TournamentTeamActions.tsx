@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import clsx from "clsx";
 import { sub } from "date-fns";
 import { Check } from "lucide-react";
@@ -12,7 +13,6 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import { checkInSchema } from "~/features/tournament/tournament-schemas";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
 import { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
-import { logger } from "~/utils/logger";
 import {
 	soundPath,
 	tournamentMatchPage,

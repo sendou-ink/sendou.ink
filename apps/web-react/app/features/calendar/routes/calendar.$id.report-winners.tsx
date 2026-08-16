@@ -1,3 +1,4 @@
+import type { Unpacked } from "@sendou/utils/types";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -13,7 +14,6 @@ import type { ArrayItemRenderContext } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
 import type { SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import type { Unpacked } from "~/utils/types";
 import { action } from "../actions/calendar.$id.report-winners.server";
 import { CALENDAR_EVENT_RESULT } from "../calendar-constants";
 import {

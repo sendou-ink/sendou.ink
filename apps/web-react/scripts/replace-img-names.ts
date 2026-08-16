@@ -1,8 +1,8 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);

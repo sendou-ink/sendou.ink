@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
@@ -6,7 +7,6 @@ import {
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { idObject } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament-constants";
 import { saveTournamentSchema } from "../tournament-schemas";

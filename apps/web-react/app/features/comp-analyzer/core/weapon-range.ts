@@ -1,6 +1,6 @@
+import { mainWeaponParams } from "@sendou/build-analyzer/core/utils";
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
-import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 
 export interface TrajectoryParams {
 	spawnSpeed: number;

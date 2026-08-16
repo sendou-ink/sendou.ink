@@ -3,7 +3,7 @@ import { join } from "node:path";
 import { Readable } from "node:stream";
 import { S3 } from "@aws-sdk/client-s3";
 import { Upload } from "@aws-sdk/lib-storage";
-import { logger } from "~/utils/logger";
+import { logger } from "@sendou/utils/logger";
 import {
 	getArtFilename,
 	SEED_ART_URLS,

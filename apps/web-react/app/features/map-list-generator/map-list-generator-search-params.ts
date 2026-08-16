@@ -1,7 +1,7 @@
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { z } from "zod";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { MapPool } from "./core/map-pool";
 
 export const mapListGeneratorSearchParams = SearchParams.define({
 	pool: SP.param(z.string(), {

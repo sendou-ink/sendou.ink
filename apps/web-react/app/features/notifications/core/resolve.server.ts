@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { logger } from "~/utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
 import type { Notification } from "../notifications-types";
 

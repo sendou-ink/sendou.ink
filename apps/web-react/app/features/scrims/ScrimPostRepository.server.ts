@@ -1,3 +1,5 @@
+import invariant from "@sendou/utils/invariant";
+import type { Unwrapped } from "@sendou/utils/types";
 import { sub } from "date-fns";
 import type { Insertable } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
@@ -17,8 +19,6 @@ import {
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { db } from "../../db/sql";
-import invariant from "../../utils/invariant";
-import type { Unwrapped } from "../../utils/types";
 import type { AssociationVisibility } from "../associations/associations-types";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";

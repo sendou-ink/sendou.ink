@@ -1,3 +1,36 @@
+import {
+	damageTypeToWeaponType,
+	MAX_AP,
+	MAX_LDE_INTENSITY,
+	TENACITY_PLAYER_DEFICITS,
+} from "@sendou/build-analyzer/analyzer-constants";
+import type {
+	AbilityPoints,
+	AnalyzedBuild,
+	Damage,
+	DamageType,
+	SpecialEffectType,
+	Stat,
+	SubWeaponDamage,
+} from "@sendou/build-analyzer/analyzer-types";
+import { INK_CONSUME_TYPES } from "@sendou/build-analyzer/analyzer-types";
+import {
+	isMainOnlyAbility,
+	isStackableAbility,
+} from "@sendou/build-analyzer/core/ability-points";
+import {
+	ABILITIES_WITHOUT_CHUNKS,
+	getAbilityChunksMapAsArray,
+} from "@sendou/build-analyzer/core/abilityChunksCalc";
+import {
+	lastDitchEffortIntensityToAp,
+	SPECIAL_EFFECTS,
+} from "@sendou/build-analyzer/core/specialEffects";
+import { buildStats } from "@sendou/build-analyzer/core/stats";
+import {
+	buildIsEmpty,
+	damageIsSubWeaponDamage,
+} from "@sendou/build-analyzer/core/utils";
 import { abilitiesShort } from "@sendou/in-game-lists/abilities";
 import type {
 	Ability as AbilityType,
@@ -16,6 +49,8 @@ import {
 	TORPEDO_ID,
 	TOXIC_MIST_ID,
 } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import clsx from "clsx";
 import { FlaskConical, SlidersHorizontal } from "lucide-react";
 import * as React from "react";
@@ -45,8 +80,6 @@ import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { userNewBuildPage } from "~/features/user-page/user-page-urls";
 import { useHydrated } from "~/hooks/useHydrated";
 import { nullFilledArray } from "~/utils/arrays";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	ANALYZER_URL,
@@ -59,35 +92,8 @@ import {
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags } from "../../../utils/remix";
-import {
-	damageTypeToWeaponType,
-	MAX_AP,
-	MAX_LDE_INTENSITY,
-	TENACITY_PLAYER_DEFICITS,
-} from "../analyzer-constants";
 import { useAnalyzeBuild } from "../analyzer-hooks";
-import type {
-	AbilityPoints,
-	AnalyzedBuild,
-	Damage,
-	DamageType,
-	SpecialEffectType,
-	Stat,
-	SubWeaponDamage,
-} from "../analyzer-types";
-import { INK_CONSUME_TYPES } from "../analyzer-types";
 import { PerInkTankGrid } from "../components/PerInkTankGrid";
-import { isMainOnlyAbility, isStackableAbility } from "../core/ability-points";
-import {
-	ABILITIES_WITHOUT_CHUNKS,
-	getAbilityChunksMapAsArray,
-} from "../core/abilityChunksCalc";
-import {
-	lastDitchEffortIntensityToAp,
-	SPECIAL_EFFECTS,
-} from "../core/specialEffects";
-import { buildStats } from "../core/stats";
-import { buildIsEmpty, damageIsSubWeaponDamage } from "../core/utils";
 import styles from "./analyzer.module.css";
 
 export const CURRENT_PATCH = "11.2";

@@ -8,8 +8,8 @@ import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayerStatus,
-} from "~/features/scanner/core/scanner-match";
-import type { ScannerLobby } from "~/features/scanner/scanner-types";
+} from "@sendou/scanner-core/scanner-match";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import * as Matches from "./Matches";
 

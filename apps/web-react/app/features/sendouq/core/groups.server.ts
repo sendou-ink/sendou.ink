@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import invariant from "~/utils/invariant";
 import type { TierDifference } from "../q-types";
 
 const allTiersOrdered = TIERS.flatMap((tier) => [

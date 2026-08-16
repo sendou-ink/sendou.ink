@@ -1,6 +1,6 @@
 import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { z } from "zod";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	array,
 	badges,

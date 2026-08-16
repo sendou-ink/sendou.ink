@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import clsx from "clsx";
 import type { JSX } from "react";
 import * as React from "react";
@@ -6,7 +7,6 @@ import {
 	type ButtonProps as ReactAriaButtonProps,
 } from "react-aria-components";
 import { Link, type LinkProps } from "react-router";
-import { assertUnreachable } from "~/utils/types";
 import styles from "./Button.module.css";
 
 type ButtonVariant =

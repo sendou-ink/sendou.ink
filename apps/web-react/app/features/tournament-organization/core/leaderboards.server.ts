@@ -1,7 +1,7 @@
+import type { Unpacked } from "@sendou/utils/types";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { CommonUser } from "~/utils/kysely.server";
-import type { Unpacked } from "~/utils/types";
 import type * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 
 const THIRD_PLACE_POINTS = 1;

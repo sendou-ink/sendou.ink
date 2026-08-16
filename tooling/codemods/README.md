@@ -6,7 +6,7 @@ source of truth.
 
 | Script | Status | Purpose |
 | --- | --- | --- |
-| `mono-split` | done (Phase 0) | rewrites `apps/web-react` import specifiers to the extracted workspace packages (`@sendou/in-game-lists`, `@sendou/tournament-engine`) |
+| `mono-split` | done (Phase 0) | rewrites `apps/web-react` import specifiers to the extracted workspace packages (`@sendou/in-game-lists`, `@sendou/tournament-engine`, `@sendou/utils`, `@sendou/build-analyzer`, `@sendou/map-list-generator`, `@sendou/scanner-core`) |
 | `manifest` | done (Phase 0) | `generate` merges features + routes into `migration-manifest.json` preserving recorded statuses; `report` prints progress totals |
 | `route-map` | planned (Phase 2+) | `routes.ts` → SvelteKit route directories + URL-parity manifest |
 | `remote-scaffold` | planned (Phase 2+) | loader files → `query()` scaffolds; action files → per-`_action`-branch `form()`/`command()` scaffolds |

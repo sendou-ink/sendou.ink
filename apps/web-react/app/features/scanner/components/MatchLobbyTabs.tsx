@@ -6,6 +6,10 @@
  * that tab gets set dividers, and set numbers are assigned within the tab.
  */
 
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import type { BuiltMatch } from "@sendou/scanner-core/match-builder";
+import { assignMatchSets } from "@sendou/scanner-core/match-sets";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
 import { Fragment, useEffect, useRef } from "react";
 import {
 	SendouTab,
@@ -13,10 +17,6 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import type { DetectedEvent } from "../core/detectors/types";
-import type { BuiltMatch } from "../core/match-builder";
-import { assignMatchSets } from "../core/match-sets";
-import type { ScannerLobby } from "../scanner-types";
 import { SetDivider } from "./MatchCard";
 import styles from "./MatchLobbyTabs.module.css";
 

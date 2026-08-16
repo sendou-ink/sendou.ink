@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as ScrimPickupRosterRepository from "../features/scrims/ScrimPickupRosterRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteOldScrimPickupRostersRoutine = new Routine({

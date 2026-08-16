@@ -4,15 +4,15 @@ import type {
 	MainWeaponId,
 	StageId,
 } from "@sendou/in-game-lists/types";
-import { withoutRepeatEvents } from "../../components/dedupe-events";
-import type { DeathData } from "../../core/detectors/death/index";
+import type { DeathData } from "@sendou/scanner-core/detectors/death/index";
 import type {
 	MinimapData,
 	MinimapEnemy,
 	MinimapTeammate,
-} from "../../core/detectors/minimap/index";
-import { SPECTATOR_SLOTS } from "../../core/detectors/minimap/rois";
-import type { DetectedEvent } from "../../core/detectors/types";
+} from "@sendou/scanner-core/detectors/minimap/index";
+import { SPECTATOR_SLOTS } from "@sendou/scanner-core/detectors/minimap/rois";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import { withoutRepeatEvents } from "../../components/dedupe-events";
 import test from "../node-test-compat";
 
 const ALPHA: MainWeaponId[] = [40, 1001, 2010, 3030];

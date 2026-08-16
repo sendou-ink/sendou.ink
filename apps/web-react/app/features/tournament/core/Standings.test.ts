@@ -1,6 +1,7 @@
 import * as Engine from "@sendou/tournament-engine";
 import { createResolved } from "@sendou/tournament-engine/create";
 import type { BracketData } from "@sendou/tournament-engine/types";
+import invariant from "@sendou/utils/invariant";
 import { describe, expect, test } from "vitest";
 import {
 	mergeStages,
@@ -8,7 +9,6 @@ import {
 	testTournament,
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
-import invariant from "~/utils/invariant";
 import {
 	matchesPlayed,
 	reNumberPlacements,

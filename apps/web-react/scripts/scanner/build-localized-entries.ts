@@ -29,19 +29,19 @@ import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
-import { ALL_WEAPON_ENTRIES } from "../../app/features/scanner/core/detectors/death/weapon-names";
-import type { ScannerLobby } from "../../app/features/scanner/scanner-types";
+import { ALL_WEAPON_ENTRIES } from "@sendou/scanner-core/detectors/death/weapon-names";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
 import gameMisc from "../../locales/en/game-misc.json";
 
 const SPLAT3_DIR =
 	process.argv[2] ?? new URL("../../../splat3", import.meta.url).pathname;
 const LANG_DIR = join(SPLAT3_DIR, "data", "language");
 const OUT_ENTRIES = new URL(
-	"../../app/features/scanner/core/localized-entries.ts",
+	"@sendou/scanner-core/localized-entries.ts",
 	import.meta.url,
 ).pathname;
 const OUT_MESSAGES = new URL(
-	"../../app/features/scanner/core/detectors/death/localized-messages.ts",
+	"@sendou/scanner-core/detectors/death/localized-messages.ts",
 	import.meta.url,
 ).pathname;
 

@@ -12,6 +12,8 @@ import type {
 	RankedModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
+import type { DBTournamentMaplistSource } from "@sendou/map-list-generator/types";
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import type {
 	ParticipantResult,
 	Side,
@@ -47,7 +49,6 @@ import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
-import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
 	MemberRole,
@@ -68,7 +69,6 @@ import type { BuildSort } from "~/features/user-page/user-page-constants";
 import type { UserReportCategory } from "~/features/user-report/user-report-constants";
 import type { videoMatchTypes } from "~/features/vods/vods-constants";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
-import type { DBTournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 
 type Generated<T> =

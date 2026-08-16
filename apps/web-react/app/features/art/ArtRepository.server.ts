@@ -1,3 +1,4 @@
+import { seededRandom } from "@sendou/utils/random";
 import { type ExpressionBuilder, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
@@ -7,7 +8,6 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 } from "~/utils/kysely.server";
-import { seededRandom } from "~/utils/random";
 import type { ListedArt } from "./art-types";
 
 export function unlinkOwnFromArt(artId: number) {

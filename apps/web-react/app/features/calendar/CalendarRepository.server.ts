@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import { sub } from "date-fns";
 import type {
 	Expression,
@@ -19,7 +20,6 @@ import {
 	databaseTimestampToJavascriptTimestamp,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,

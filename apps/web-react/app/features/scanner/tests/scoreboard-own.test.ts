@@ -6,16 +6,16 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
-import { createDeathDetector } from "../core/detectors/death/index";
-import { createMapStartDetector } from "../core/detectors/map-start/index";
-import { createScoreboardDetector } from "../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogReplayDetector } from "../core/detectors/scoreboard-battle-log-replay/index";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
+import { createDeathDetector } from "@sendou/scanner-core/detectors/death/index";
+import { createMapStartDetector } from "@sendou/scanner-core/detectors/map-start/index";
+import { createScoreboardDetector } from "@sendou/scanner-core/detectors/scoreboard/index";
+import { createScoreboardBattleLogReplayDetector } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
-} from "../core/detectors/scoreboard-own/index";
-import type { Detector } from "../core/detectors/types";
+} from "@sendou/scanner-core/detectors/scoreboard-own/index";
+import type { Detector } from "@sendou/scanner-core/detectors/types";
 import {
 	type Fixture,
 	isFieldSkipped,

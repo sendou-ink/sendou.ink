@@ -1,4 +1,29 @@
 import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import {
+	CANONICAL_HEIGHT,
+	CANONICAL_WIDTH,
+	type Roi,
+} from "@sendou/scanner-core/canonical";
+import type { DeathData } from "@sendou/scanner-core/detectors/death/index";
+import * as death from "@sendou/scanner-core/detectors/death/rois";
+import type { MapStartData } from "@sendou/scanner-core/detectors/map-start/index";
+import * as mapStart from "@sendou/scanner-core/detectors/map-start/rois";
+import type { MinimapData } from "@sendou/scanner-core/detectors/minimap/index";
+import * as minimap from "@sendou/scanner-core/detectors/minimap/rois";
+import type { ObjectiveData } from "@sendou/scanner-core/detectors/objective/index";
+import {
+	PLAYER_STATUS_EVENT_TYPE,
+	type PlayerStatusData,
+	type PlayerStatusLayout,
+} from "@sendou/scanner-core/detectors/objective/player-status";
+import * as objective from "@sendou/scanner-core/detectors/objective/rois";
+import type { ScoreboardRowDebug } from "@sendou/scanner-core/detectors/scoreboard/index";
+import * as sb from "@sendou/scanner-core/detectors/scoreboard/rois";
+import * as bl from "@sendou/scanner-core/detectors/scoreboard-battle-log/rois";
+import * as replay from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/rois";
+import type { ScoreboardOwnData } from "@sendou/scanner-core/detectors/scoreboard-own/index";
+import * as own from "@sendou/scanner-core/detectors/scoreboard-own/rois";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
 import clsx from "clsx";
 import {
 	type ReactNode,
@@ -9,27 +34,6 @@ import {
 } from "react";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
-import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
-import type { DeathData } from "../core/detectors/death/index";
-import * as death from "../core/detectors/death/rois";
-import type { MapStartData } from "../core/detectors/map-start/index";
-import * as mapStart from "../core/detectors/map-start/rois";
-import type { MinimapData } from "../core/detectors/minimap/index";
-import * as minimap from "../core/detectors/minimap/rois";
-import type { ObjectiveData } from "../core/detectors/objective/index";
-import {
-	PLAYER_STATUS_EVENT_TYPE,
-	type PlayerStatusData,
-	type PlayerStatusLayout,
-} from "../core/detectors/objective/player-status";
-import * as objective from "../core/detectors/objective/rois";
-import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
-import * as sb from "../core/detectors/scoreboard/rois";
-import * as bl from "../core/detectors/scoreboard-battle-log/rois";
-import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
-import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
-import * as own from "../core/detectors/scoreboard-own/rois";
-import type { DetectedEvent } from "../core/detectors/types";
 import scannerStyles from "../scanner.module.css";
 import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";

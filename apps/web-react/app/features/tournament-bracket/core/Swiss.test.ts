@@ -1,6 +1,8 @@
 import * as Engine from "@sendou/tournament-engine";
 import { pairUp } from "@sendou/tournament-engine/swiss/pairing";
 import * as TeamStatus from "@sendou/tournament-engine/swiss/team-status";
+import invariant from "@sendou/utils/invariant";
+import { unwrap } from "@sendou/utils/result";
 import { describe, expect, test } from "vitest";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -9,8 +11,6 @@ import {
 	RUSH_WEEKEND_3,
 } from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
-import invariant from "~/utils/invariant";
-import { unwrap } from "~/utils/result";
 
 const Swiss = {
 	...TeamStatus,

@@ -1,5 +1,8 @@
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { ModeWithStage } from "@sendou/in-game-lists/types";
+import * as MapList from "@sendou/map-list-generator/MapList";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
+import invariant from "@sendou/utils/invariant";
 import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -12,12 +15,9 @@ import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
 import type { Tables } from "~/db/tables";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ipLabsMaps, MAPS_URL, navIconUrl } from "~/utils/urls";
-import * as MapList from "../core/MapList";
-import { MapPool } from "../core/map-pool";
 import { mapListGeneratorSearchParams } from "../map-list-generator-search-params";
 
 import styles from "./maps.module.css";

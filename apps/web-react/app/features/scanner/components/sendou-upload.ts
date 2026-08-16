@@ -14,15 +14,15 @@
  */
 
 import type { MainWeaponId, ModeShort } from "@sendou/in-game-lists/types";
+import type { DetectedEvent } from "@sendou/scanner-core/detectors/types";
+import { buildScannerMatches } from "@sendou/scanner-core/match-builder";
+import type { ScannerMatch } from "@sendou/scanner-core/scanner-match";
 import type {
 	IngestVodMatchInput,
 	IngestVodPrefill,
 } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import { newVodPage } from "~/features/vods/vods-urls";
-import type { DetectedEvent } from "../core/detectors/types";
-import { buildScannerMatches } from "../core/match-builder";
-import type { ScannerMatch } from "../core/scanner-match";
 
 /**
  * GET query params ride the request line, and servers/proxies commonly cap

@@ -1,5 +1,7 @@
 // for testing use the command `pnpm exec vite-node ./scripts/create-league-divisions.ts 6 'https://gist.githubusercontent.com/sendou-ink/38aa4d5d8426035ce178c09598ae627f/raw/17be9bb53a9f017c2097d0624f365d1c5a029f01/league.csv'`
 
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -8,8 +10,6 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 
 const tournamentId = Number(process.argv[2]?.trim());
 

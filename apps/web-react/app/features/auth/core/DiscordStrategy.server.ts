@@ -1,10 +1,10 @@
+import { logger } from "@sendou/utils/logger";
 import { add } from "date-fns";
 import { OAuth2Strategy } from "remix-auth-oauth2";
 import { z } from "zod";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { logger } from "~/utils/logger";
 
 let discordApiCooldownUntil: number | null = null;
 

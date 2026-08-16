@@ -1,7 +1,7 @@
 import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
-} from "../core/detectors/map-start/index";
+} from "@sendou/scanner-core/detectors/map-start/index";
 import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";

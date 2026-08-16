@@ -1,5 +1,5 @@
+import { MAX_AP } from "@sendou/build-analyzer/analyzer-constants";
 import { z } from "zod";
-import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { isValidDate } from "~/utils/dates";
 import { ability } from "~/utils/zod";
 import { MAX_BUILD_FILTERS } from "./builds-constants";

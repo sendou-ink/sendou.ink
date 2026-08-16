@@ -1,6 +1,6 @@
+import { MapPool } from "@sendou/map-list-generator/map-pool";
 import { z } from "zod";
 import { userIsBanned } from "~/features/ban/core/banned.server";
-import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {

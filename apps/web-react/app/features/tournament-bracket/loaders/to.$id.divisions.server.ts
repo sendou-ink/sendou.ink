@@ -1,7 +1,7 @@
+import type { Unwrapped } from "@sendou/utils/types";
 import type { LoaderFunctionArgs } from "react-router";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { notFoundIfNullish } from "~/utils/remix.server";
-import type { Unwrapped } from "../../../utils/types";
 import {
 	tournamentFromDB,
 	tournamentFromParams,

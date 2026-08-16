@@ -12,10 +12,14 @@ import {
 	loadPlannerStages,
 	type PlannerManifest,
 	type PlannerStage,
-} from "../core/detectors/minimap/stage";
-import type { ScoreboardResources } from "../core/detectors/scoreboard/index";
-import { type AtlasMeta, type GlyphSet, loadGlyphSet } from "../core/glyphs";
-import { assembleScoreboardResources } from "../core/resources";
+} from "@sendou/scanner-core/detectors/minimap/stage";
+import type { ScoreboardResources } from "@sendou/scanner-core/detectors/scoreboard/index";
+import {
+	type AtlasMeta,
+	type GlyphSet,
+	loadGlyphSet,
+} from "@sendou/scanner-core/glyphs";
+import { assembleScoreboardResources } from "@sendou/scanner-core/resources";
 import { SCANNER_ASSETS_DIR as ASSETS_DIR, GAME_IMG_DIR } from "./assets-dir";
 import { readImage } from "./image-io";
 

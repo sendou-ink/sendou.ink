@@ -1,8 +1,8 @@
+import { logger } from "@sendou/utils/logger";
 import { parseLutiDivFromName } from "../features/scrims/scrims-utils";
 import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { LEAGUES } from "../features/tournament/tournament-constants";
 import * as UserRepository from "../features/user-page/UserRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 /**

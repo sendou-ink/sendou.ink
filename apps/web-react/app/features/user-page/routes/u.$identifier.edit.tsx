@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
@@ -9,7 +10,6 @@ import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
-import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit.server";

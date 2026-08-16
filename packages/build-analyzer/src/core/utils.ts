@@ -5,8 +5,8 @@ import type {
 	SpecialWeaponId,
 } from "@sendou/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "@sendou/in-game-lists/weapon-ids";
-import invariant from "~/utils/invariant";
-import type { Unpacked } from "~/utils/types";
+import invariant from "@sendou/utils/invariant";
+import type { Unpacked } from "@sendou/utils/types";
 import type {
 	AbilityPoints,
 	AnalyzedBuild,

@@ -1,8 +1,8 @@
+import { logger } from "@sendou/utils/logger";
 import { format, isWeekend } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { logger } from "~/utils/logger";
 import { LUTI_DIVS, SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
 import type { ScrimFilters, ScrimPost, ScrimSide } from "../scrims-types";
 

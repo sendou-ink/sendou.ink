@@ -1,3 +1,8 @@
+import { MAIN_SLOT_AP } from "@sendou/build-analyzer/analyzer-constants";
+import {
+	buildToAbilityPoints,
+	isStackableAbility,
+} from "@sendou/build-analyzer/core/ability-points";
 import { modesShort } from "@sendou/in-game-lists/modes";
 import type {
 	Ability,
@@ -6,18 +11,13 @@ import type {
 	ModeShort,
 } from "@sendou/in-game-lists/types";
 import { canonicalWeaponSplId } from "@sendou/in-game-lists/weapon-ids";
+import invariant from "@sendou/utils/invariant";
 import { type NotNull, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
-import invariant from "~/utils/invariant";
 import { commonUserJsonObject, jsonArrayFrom } from "~/utils/kysely.server";
-import { MAIN_SLOT_AP } from "../build-analyzer/analyzer-constants";
-import {
-	buildToAbilityPoints,
-	isStackableAbility,
-} from "../build-analyzer/core/ability-points";
 import { BUILD } from "./builds-constants";
 import { sortAbilities } from "./core/ability-sorting.server";
 

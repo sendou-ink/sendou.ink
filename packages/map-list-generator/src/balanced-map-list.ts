@@ -1,9 +1,9 @@
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
-import { seededRandom } from "~/utils/random";
-import { err, ok, type Result } from "~/utils/result";
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
+import { seededRandom } from "@sendou/utils/random";
+import { err, ok, type Result } from "@sendou/utils/result";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type {
 	TournamentMapListMap,

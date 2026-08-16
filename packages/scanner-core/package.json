@@ -1,0 +1,19 @@
+{
+	"name": "@sendou/scanner-core",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./scanner-types": "./src/scanner-types.ts",
+		"./*": "./src/core/*.ts"
+	},
+	"dependencies": {
+		"@sendou/build-analyzer": "workspace:*",
+		"@sendou/in-game-lists": "workspace:*",
+		"@techstark/opencv-js": "5.0.0-release.1"
+	},
+	"devDependencies": {
+		"typescript": "7.0.2",
+		"vitest": "4.1.10"
+	}
+}

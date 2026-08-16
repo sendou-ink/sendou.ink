@@ -13,14 +13,14 @@ import type {
 	ModeShort,
 	StageId,
 } from "@sendou/in-game-lists/types";
-import type { ScoreboardData } from "../core/detectors/scoreboard/index";
+import type { ScoreboardData } from "@sendou/scanner-core/detectors/scoreboard/index";
 import type {
 	DetectedEvent,
 	Detector,
 	GateResult,
-} from "../core/detectors/types";
-import { normalizeFrame, toMat } from "../core/image";
-import type { ScannerLobby } from "../scanner-types";
+} from "@sendou/scanner-core/detectors/types";
+import { normalizeFrame, toMat } from "@sendou/scanner-core/image";
+import type { ScannerLobby } from "@sendou/scanner-core/scanner-types";
 import { readImage } from "./image-io";
 
 export const FIXTURES_DIR = new URL("../tests/fixtures", import.meta.url)

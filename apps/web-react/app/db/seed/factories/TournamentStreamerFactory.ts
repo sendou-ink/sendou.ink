@@ -1,5 +1,5 @@
+import invariant from "@sendou/utils/invariant";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
-import invariant from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 
 type InsertArgs = Parameters<

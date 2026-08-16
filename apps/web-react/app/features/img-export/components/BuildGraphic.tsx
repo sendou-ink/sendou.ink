@@ -1,3 +1,7 @@
+import type { AbilityPoints } from "@sendou/build-analyzer/analyzer-types";
+import { buildToAbilityPoints } from "@sendou/build-analyzer/core/ability-points";
+import { getAbilityChunksMapAsArray } from "@sendou/build-analyzer/core/abilityChunksCalc";
+import { apFromMap } from "@sendou/build-analyzer/core/utils";
 import type {
 	Ability as AbilityType,
 	BuildAbilitiesTuple,
@@ -10,10 +14,6 @@ import { Ability } from "~/components/Ability";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { Tables } from "~/db/tables";
-import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
-import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
-import { getAbilityChunksMapAsArray } from "~/features/build-analyzer/core/abilityChunksCalc";
-import { apFromMap } from "~/features/build-analyzer/core/utils";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import { gearImageUrl, navIconUrl, resolveAvatarUrl } from "~/utils/urls";
 import styles from "./BuildGraphic.module.css";

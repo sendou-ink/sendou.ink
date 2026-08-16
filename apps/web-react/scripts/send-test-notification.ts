@@ -1,9 +1,9 @@
+import invariant from "@sendou/utils/invariant";
+import { logger } from "@sendou/utils/logger";
 import { db } from "~/db/sql";
 import { notify } from "~/features/notifications/core/notify.server";
 import { webPushEnabled } from "~/features/notifications/core/webPush.server";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
-import invariant from "~/utils/invariant";
-import { logger } from "~/utils/logger";
 
 const username = process.argv[2]?.trim() ?? "Sendou";
 const seasonNth = Number(process.argv[3] ?? 1);

@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import { isSameMonth, startOfMonth, subMonths } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -5,7 +6,6 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as UserReportRepository from "~/features/user-report/UserReportRepository.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { logger } from "~/utils/logger";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import { convertSnowflakeToDate } from "~/utils/users";
 

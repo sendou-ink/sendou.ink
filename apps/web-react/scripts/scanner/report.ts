@@ -7,30 +7,30 @@
  *
  * Usage: pnpm scanner:report
  */
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import {
 	createDeathDetector,
 	type DeathData,
-} from "../../app/features/scanner/core/detectors/death/index";
+} from "@sendou/scanner-core/detectors/death/index";
 import {
 	createMapStartDetector,
 	type MapStartData,
-} from "../../app/features/scanner/core/detectors/map-start/index";
+} from "@sendou/scanner-core/detectors/map-start/index";
 import {
 	createMinimapDetector,
 	type MinimapData,
-} from "../../app/features/scanner/core/detectors/minimap/index";
-import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
-import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
+} from "@sendou/scanner-core/detectors/minimap/index";
+import { createScoreboardDetector } from "@sendou/scanner-core/detectors/scoreboard/index";
+import { createScoreboardBattleLogDetector } from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
 import {
 	createScoreboardBattleLogReplayDetector,
 	type ScoreboardBattleLogReplayData,
-} from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
+} from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
 import {
 	createScoreboardOwnDetector,
 	type ScoreboardOwnData,
-} from "../../app/features/scanner/core/detectors/scoreboard-own/index";
-import type { Detector } from "../../app/features/scanner/core/detectors/types";
+} from "@sendou/scanner-core/detectors/scoreboard-own/index";
+import type { Detector } from "@sendou/scanner-core/detectors/types";
 import {
 	loadFixtures,
 	runDetectorOnFixture,

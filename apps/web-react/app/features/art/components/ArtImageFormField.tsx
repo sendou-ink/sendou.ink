@@ -1,10 +1,10 @@
+import { logger } from "@sendou/utils/logger";
 import clsx from "clsx";
 import Compressor from "compressorjs";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { CustomFieldRenderProps } from "~/form";
 import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
-import { logger } from "~/utils/logger";
 import { ART } from "../art-constants";
 import {
 	ART_IMAGE_TOO_LARGE_ERROR,

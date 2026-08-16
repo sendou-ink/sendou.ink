@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { requireRole } from "~/modules/permissions/guards.server";
@@ -6,7 +7,6 @@ import {
 	parseRequestPayload,
 	successToast,
 } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import * as ImageRepository from "../ImageRepository.server";
 import { validateImageSchema } from "../upload-schemas";
 

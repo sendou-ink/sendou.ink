@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -8,7 +9,6 @@ import type {
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import { teamPage } from "~/utils/urls";
 import * as TeamRepository from "../TeamRepository.server";
 import { CUSTOM_ROLE_VALUE } from "../team-schemas";

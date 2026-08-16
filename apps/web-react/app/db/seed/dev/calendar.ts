@@ -1,5 +1,5 @@
+import invariant from "@sendou/utils/invariant";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import invariant from "~/utils/invariant";
 import { faker } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
 import * as CalendarEventFactory from "../factories/CalendarEventFactory";

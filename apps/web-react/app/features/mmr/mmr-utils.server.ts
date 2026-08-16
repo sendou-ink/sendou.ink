@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
 import { rating } from "openskill";
 import type { Tables } from "~/db/tables";
-import invariant from "~/utils/invariant";
 import { identifierToUserIds, type SkillTeamIdentifier } from "./mmr-utils";
 import * as SkillRepository from "./SkillRepository.server";
 

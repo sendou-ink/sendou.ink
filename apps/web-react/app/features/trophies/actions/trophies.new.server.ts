@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { ADMIN_ID, QA_IDS } from "~/features/admin/admin-constants";
 import {
@@ -11,7 +12,6 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
 import {

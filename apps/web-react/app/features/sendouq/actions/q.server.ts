@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
@@ -9,7 +10,6 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,

@@ -1,7 +1,7 @@
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
-} from "../core/detectors/objective/player-status";
+} from "@sendou/scanner-core/detectors/objective/player-status";
 import styles from "./EventCard.module.css";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";

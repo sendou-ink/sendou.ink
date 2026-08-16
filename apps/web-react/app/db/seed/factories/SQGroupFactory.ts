@@ -1,6 +1,6 @@
+import invariant from "@sendou/utils/invariant";
 import { db } from "~/db/sql";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
-import invariant from "~/utils/invariant";
 import { defineFactory } from "../core/defineFactory";
 
 type InsertArgs = Omit<

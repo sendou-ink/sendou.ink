@@ -1,7 +1,7 @@
+import { logger } from "@sendou/utils/logger";
+import { assertType } from "@sendou/utils/types";
 import type { LanguageCode } from "~/modules/i18n/config";
 import type { Namespace } from "~/modules/i18n/resources.server";
-import { logger } from "./logger";
-import { assertType } from "./types";
 
 // note: cannot get from resources.server.ts directly, because that is a server-only file
 const ALL_NAMESPACES = [

@@ -1,3 +1,4 @@
+import invariant from "@sendou/utils/invariant";
 import {
 	LogOut,
 	Menu,
@@ -28,7 +29,6 @@ import { useUser } from "~/features/auth/core/user";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useHasPermission } from "~/modules/permissions/hooks";
-import invariant from "~/utils/invariant";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
 import type * as TeamRepository from "../TeamRepository.server";

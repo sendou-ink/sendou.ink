@@ -1,3 +1,4 @@
+import { logger } from "@sendou/utils/logger";
 import type {
 	ActionFunctionArgs,
 	LoaderFunctionArgs,
@@ -14,7 +15,6 @@ import {
 	getUserFromRequest,
 	userAsyncLocalStorage,
 } from "~/features/auth/core/user-context.server";
-import { logger } from "./logger";
 
 /**
  * The user a wrapped action/loader call runs as: one of the pinned seed users,

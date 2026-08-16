@@ -7,15 +7,15 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import type {
 	ScoreboardPlayer,
 	ScoreboardRowDebug,
-} from "../core/detectors/scoreboard/index";
+} from "@sendou/scanner-core/detectors/scoreboard/index";
 import {
 	createScoreboardBattleLogDetector,
 	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
-} from "../core/detectors/scoreboard-battle-log/index";
+} from "@sendou/scanner-core/detectors/scoreboard-battle-log/index";
 import {
 	type Fixture,
 	isFieldSkipped,

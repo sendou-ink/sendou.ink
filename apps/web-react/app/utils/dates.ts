@@ -3,12 +3,12 @@ import {
 	CalendarDateTime,
 	parseDate,
 } from "@internationalized/date";
+import { logger } from "@sendou/utils/logger";
 import type { Locale } from "date-fns";
 import { formatDistanceToNow as dateFnsFormatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
 import type { MonthYear } from "~/features/plus-voting/core";
 import type { LanguageCode } from "~/modules/i18n/config";
-import { logger } from "./logger";
 import type { DayMonthYear } from "./zod";
 
 // en-US ships with date-fns core as the default locale, so it costs no extra bytes

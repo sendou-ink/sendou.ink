@@ -1,6 +1,5 @@
 import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
-import type { Tables } from "~/db/tables";
 import {
 	mapPoolToSerializedString,
 	serializedStringToMapPool,
@@ -10,9 +9,7 @@ import type {
 	ReadonlyMapPoolObject,
 } from "./map-pool-serializer/types";
 
-export type DbMapPoolList = Array<
-	Pick<Tables["MapPoolMap"], "stageId" | "mode">
->;
+export type DbMapPoolList = Array<{ stageId: StageId; mode: ModeShort }>;
 
 export class MapPool {
 	private source: string | ReadonlyMapPoolObject;
@@ -134,9 +131,7 @@ export class MapPool {
 		};
 	}
 
-	private mapPoolListToMapPoolObject(
-		mapPoolList: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>,
-	) {
+	private mapPoolListToMapPoolObject(mapPoolList: DbMapPoolList) {
 		const result: MapPoolObject = {
 			TW: [],
 			SZ: [],

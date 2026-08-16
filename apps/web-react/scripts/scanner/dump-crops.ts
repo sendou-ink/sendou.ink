@@ -9,13 +9,13 @@
  */
 import { mkdirSync } from "node:fs";
 import { join } from "node:path";
-import { loadOpenCV } from "../../app/features/scanner/core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import {
 	cropRoi,
 	matToFrameData,
 	normalizeFrame,
 	toMat,
-} from "../../app/features/scanner/core/image";
+} from "@sendou/scanner-core/image";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 
 const [imagePath, outDir, ...specs] = process.argv.slice(2);

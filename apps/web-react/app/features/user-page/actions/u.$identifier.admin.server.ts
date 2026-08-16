@@ -1,3 +1,4 @@
+import { assertUnreachable } from "@sendou/utils/types";
 import type { ActionFunctionArgs } from "react-router";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -6,7 +7,6 @@ import { adminTabActionSchema } from "~/features/user-page/user-page-schemas";
 import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { badRequestIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
-import { assertUnreachable } from "~/utils/types";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const loggedInUser = requireUser();

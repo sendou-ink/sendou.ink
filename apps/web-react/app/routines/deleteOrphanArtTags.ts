@@ -1,5 +1,5 @@
+import { logger } from "@sendou/utils/logger";
 import * as ArtRepository from "../features/art/ArtRepository.server";
-import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
 export const DeleteOrphanArtTagsRoutine = new Routine({

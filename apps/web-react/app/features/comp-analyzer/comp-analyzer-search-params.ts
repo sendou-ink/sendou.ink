@@ -1,6 +1,6 @@
+import { MAX_AP } from "@sendou/build-analyzer/analyzer-constants";
 import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
-import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/zod";

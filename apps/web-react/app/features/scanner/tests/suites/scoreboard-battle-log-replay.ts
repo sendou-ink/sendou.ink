@@ -14,12 +14,12 @@
  */
 
 import assert from "node:assert/strict";
-import { loadOpenCV } from "../../core/cv";
+import { loadOpenCV } from "@sendou/scanner-core/cv";
 import type {
 	ScoreboardPlayer,
 	ScoreboardRowDebug,
-} from "../../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
+} from "@sendou/scanner-core/detectors/scoreboard/index";
+import { createScoreboardBattleLogReplayDetector } from "@sendou/scanner-core/detectors/scoreboard-battle-log-replay/index";
 import {
 	type Fixture,
 	isFieldSkipped,

@@ -1,6 +1,6 @@
+import { logger } from "@sendou/utils/logger";
 import * as ics from "ics";
 import type { CalendarEvent } from "~/features/calendar/calendar-types";
-import { logger } from "~/utils/logger";
 import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 
 export async function getICalendar(events: Array<CalendarEvent>) {

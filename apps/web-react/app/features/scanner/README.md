@@ -9,6 +9,14 @@ detected game per object, every field nullable — which feed `/ingest`
 (features/scanner-ingest) and the `/vods/new` prefill. Imported from the
 emberz repo; see `MIGRATION.md` there.
 
+The detection core is the workspace package `@sendou/scanner-core`
+(`packages/scanner-core/src/core/`, plus `scanner-types.ts` at
+`packages/scanner-core/src/scanner-types.ts`); `core/...` paths in this
+document refer to files inside that package's `src/core/`. Everything else —
+capture, worker, UI, Node helpers, tests, fixtures — stays in this feature
+folder and imports the package (`@sendou/scanner-core/<file>`,
+`@sendou/scanner-core/scanner-types`).
+
 Deliberate convention exceptions (dev tool, ported wholesale): the UI is
 English-only (no i18next), `tests/node-test-compat.ts` uses a default export
 to stay a `node:test` drop-in, and the suites assert with `node:assert/strict`
@@ -63,8 +71,8 @@ sequenceDiagram
 
 - `core/` is pure (mats in, events/matches out) and runs in the worker, the
   Screenshot tab, and Node tests. No DOM/browser APIs; Node-only helpers live
-  in `node/`. Pure data/type imports from `~/modules` and
-  `~/features/build-analyzer/data` are fine — zod and the app config graph
+  in `node/`. Pure data/type imports from `@sendou/in-game-lists` and
+  `@sendou/build-analyzer/data` are fine — zod and the app config graph
   are not (schemas live in `scanner-schemas.ts`; core only `import type`s
   the shapes).
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart

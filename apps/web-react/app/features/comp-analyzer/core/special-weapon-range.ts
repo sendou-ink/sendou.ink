@@ -1,6 +1,6 @@
+import { specialWeaponParams } from "@sendou/build-analyzer/core/utils";
 import type { SpecialWeaponId } from "@sendou/in-game-lists/types";
 import { specialWeaponIds } from "@sendou/in-game-lists/weapon-ids";
-import { specialWeaponParams } from "~/features/build-analyzer/core/utils";
 import {
 	calculateGroundRange,
 	simulateTrajectoryPoints,
