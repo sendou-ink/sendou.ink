@@ -6,6 +6,9 @@ import { defineConfig } from "vite";
 const IS_E2E_BUILD = process.env.VITE_E2E_TEST_RUN === "true";
 
 export default defineConfig(({ mode }) => ({
+	// xxx: during the migration both apps must bake identical VITE_* values, and
+	// apps/web-react/.env is the single source of truth for them
+	envDir: "../web-react",
 	define: {
 		__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
 	},

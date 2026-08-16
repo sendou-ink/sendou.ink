@@ -1,6 +1,10 @@
 <script lang="ts">
 import Avatar from "#lib/components/Avatar.svelte";
-import TierImage from "#lib/components/TierImage.svelte";
+import PlacementsTable, {
+	placementName,
+	placementRow,
+	placementTierHeader,
+} from "#lib/components/PlacementsTable.svelte";
 import WeaponImage from "#lib/components/WeaponImage.svelte";
 import { userSeasonsPage } from "#lib/utils/urls.ts";
 import type { UserLeaderboardEntry } from "../leaderboards-types.ts";
@@ -20,37 +24,36 @@ const shownEntries = $derived(
 );
 </script>
 
-<div class="table">
+<PlacementsTable>
 	{#each shownEntries as entry (entry.entryId)}
 		{#if entry.firstOfTier && showTiers}
-			<div class="tierHeader">
-				<TierImage tier={entry.firstOfTier} width={32} />
-				{entry.firstOfTier.name}{entry.firstOfTier.isPlus ? "+" : ""}
-			</div>
+			{@render placementTierHeader(entry.firstOfTier)}
 		{/if}
-		<a href={userSeasonsPage({ user: entry, season })} class="tableRow">
-			<div class="tableInnerRow">
-				<div class="tableRank">{entry.placementRank}</div>
-				<div>
-					<Avatar size="xxs" user={entry} />
-				</div>
-				{#if typeof entry.weaponSplId === "number"}
-					<WeaponImage
-						class="tableWeapon"
-						variant="build"
-						weaponSplId={entry.weaponSplId}
-						width={32}
-						height={32}
-					/>
-				{/if}
-				<div class="tableName">{entry.username}</div>
-				{#if entry.pendingPlusTier}
-					<div class="text-xs text-theme whitespace-nowrap">
-						➜ +{entry.pendingPlusTier}
-					</div>
-				{/if}
-				<div class="tablePower">{entry.power.toFixed(2)}</div>
+		{#snippet content()}
+			<div>
+				<Avatar size="xxs" user={entry} />
 			</div>
-		</a>
+			{#if typeof entry.weaponSplId === "number"}
+				<WeaponImage
+					class="tableWeapon"
+					variant="build"
+					weaponSplId={entry.weaponSplId}
+					width={32}
+					height={32}
+				/>
+			{/if}
+			{@render placementName(entry.username)}
+			{#if entry.pendingPlusTier}
+				<div class="text-xs text-theme whitespace-nowrap">
+					➜ +{entry.pendingPlusTier}
+				</div>
+			{/if}
+		{/snippet}
+		{@render placementRow({
+			href: userSeasonsPage({ user: entry, season }),
+			rank: entry.placementRank,
+			power: entry.power.toFixed(2),
+			children: content,
+		})}
 	{/each}
-</div>
+</PlacementsTable>

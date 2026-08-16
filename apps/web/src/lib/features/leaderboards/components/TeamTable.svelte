@@ -1,6 +1,10 @@
 <script lang="ts">
 import Avatar from "#lib/components/Avatar.svelte";
 import InfoPopover from "#lib/components/InfoPopover.svelte";
+import PlacementsTable, {
+	placementDivider,
+	placementRow,
+} from "#lib/components/PlacementsTable.svelte";
 import { hasRole } from "#lib/features/auth/user-state.ts";
 import * as Seasons from "#lib/features/mmr/Seasons.ts";
 import { m } from "#lib/paraglide/messages.js";
@@ -32,35 +36,48 @@ const showQualificationDividers = $derived(
 );
 </script>
 
-<div class="table">
+<PlacementsTable>
 	{#each entries as entry (entry.entryId)}
-		<div class="tableRow">
-			<div class="tableInnerRow">
-				<div class="tableRank">{entry.placementRank}</div>
-				{#if entry.team?.avatarUrl}
-					<a href={teamPage(entry.team.customUrl)} title={entry.team.name}>
-						<Avatar size="xxs" url={entry.team.avatarUrl} class="avatar" />
-					</a>
-				{/if}
-				<div class={["text-xs", { skippedTeam: entry.isSkipped }]}>
-					{#each entry.members as member, i (member.id)}
-						<a href={userPage(member)}>{member.username}</a
-						>{i !== entry.members.length - 1 ? ", " : ""}
-					{/each}
-				</div>
-				<div class="tablePower">{entry.power.toFixed(2)}</div>
-				{#if showStaffActions}
-					<TeamStaffMenu {entry} {season} {queryArgs} />
-				{/if}
+		{#snippet content()}
+			{#if entry.team?.avatarUrl}
+				<a href={teamPage(entry.team.customUrl)} title={entry.team.name}>
+					<Avatar size="xxs" url={entry.team.avatarUrl} class="avatar" />
+				</a>
+			{/if}
+			<div class={["text-xs", { skippedTeam: entry.isSkipped }]}>
+				{#each entry.members as member, i (member.id)}
+					<a href={userPage(member)}>{member.username}</a
+					>{i !== entry.members.length - 1 ? ", " : ""}
+				{/each}
 			</div>
-		</div>
+		{/snippet}
+		{#snippet staffActions()}
+			<TeamStaffMenu {entry} {season} {queryArgs} />
+		{/snippet}
+		{@render placementRow({
+			rank: entry.placementRank,
+			power: entry.power.toFixed(2),
+			children: content,
+			end: showStaffActions ? staffActions : undefined,
+		})}
 		{#if entry.placementRank === TEAM_LEADERBOARD_QUALIFYING_COUNT && showQualificationDividers}
-			<div class="tableRow tableRowQualification">
+			{#snippet qualification()}
 				{m.common_leaderboard_qualification()}
 				<InfoPopover tiny>
 					{m.common_leaderboard_qualification_info()}
 				</InfoPopover>
-			</div>
+			{/snippet}
+			{@render placementDivider(qualification)}
 		{/if}
 	{/each}
-</div>
+</PlacementsTable>
+
+<style>
+	.skippedTeam {
+		text-decoration: line-through;
+
+		a {
+			color: var(--color-text-high);
+		}
+	}
+</style>

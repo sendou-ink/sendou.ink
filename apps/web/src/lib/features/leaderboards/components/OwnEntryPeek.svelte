@@ -1,6 +1,10 @@
 <script lang="ts">
 import Avatar from "#lib/components/Avatar.svelte";
-import TierImage from "#lib/components/TierImage.svelte";
+import {
+	placementName,
+	placementRow,
+	placementTierHeader,
+} from "#lib/components/PlacementsTable.svelte";
 import WeaponImage from "#lib/components/WeaponImage.svelte";
 import { ordinalToSp } from "#lib/features/mmr/mmr-utils.ts";
 import { userSeasonsPage } from "#lib/utils/urls.ts";
@@ -17,31 +21,30 @@ let { entry, nextTier, season }: Props = $props();
 
 <div>
 	{#if entry.firstOfTier}
-		<div class="tierHeader">
-			<TierImage tier={entry.firstOfTier} width={32} />
-			{entry.firstOfTier.name}{entry.firstOfTier.isPlus ? "+" : ""}
-		</div>
+		{@render placementTierHeader(entry.firstOfTier)}
 	{/if}
 	<div>
-		<a href={userSeasonsPage({ user: entry, season })} class="tableRow">
-			<div class="tableInnerRow">
-				<div class="tableRank">{entry.placementRank}</div>
-				<div>
-					<Avatar size="xxs" user={entry} />
-				</div>
-				{#if typeof entry.weaponSplId === "number"}
-					<WeaponImage
-						class="tableWeapon"
-						variant="build"
-						weaponSplId={entry.weaponSplId}
-						width={32}
-						height={32}
-					/>
-				{/if}
-				<div class="tableName">{entry.username}</div>
-				<div class="tablePower">{entry.power}</div>
+		{#snippet content()}
+			<div>
+				<Avatar size="xxs" user={entry} />
 			</div>
-		</a>
+			{#if typeof entry.weaponSplId === "number"}
+				<WeaponImage
+					class="tableWeapon"
+					variant="build"
+					weaponSplId={entry.weaponSplId}
+					width={32}
+					height={32}
+				/>
+			{/if}
+			{@render placementName(entry.username)}
+		{/snippet}
+		{@render placementRow({
+			href: userSeasonsPage({ user: entry, season }),
+			rank: entry.placementRank,
+			power: entry.power,
+			children: content,
+		})}
 	</div>
 	{#if nextTier}
 		<div class="text-xs text-lighter ml-auto stack items-end">

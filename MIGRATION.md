@@ -138,17 +138,27 @@ zod codec.
 - Each component's `.module.css` contents move into its `<style>` block
   verbatim; `styles.foo` references become plain `class="foo"`.
 - **Shared module classes** (one `.module.css` imported by several components,
-  e.g. the leaderboard table styles from `top-search.module.css`): declare them
-  once in the feature's top component under a scoped wrapper class with
-  `:global(...)` descendants (`.leaderboards :global(.tableRow) { ... }`);
-  child components just use the plain class names. Same technique for
-  cross-component selectors inside one logical component family
-  (`Tabs.svelte` styling `.tabList`/`.tabContainer` rendered by its children).
+  e.g. the leaderboard table styles from `top-search.module.css`): the shared
+  markup and its styles become **one component file with exported snippets**
+  (`#lib/components/PlacementsTable.svelte` — the default export is the `.table`
+  wrapper component; the row pieces (`placementRow`, `placementName`,
+  `placementTierHeader`, `placementDivider`) are snippets exported from
+  `<script module>`). Snippet markup keeps the scope hash of the file that
+  defines it, so the styles stay plainly scoped, and consumers import the
+  snippets instead of duplicating rules or reaching across components with
+  `:global`. (The first `/leaderboards` port instead globalized the whole
+  stylesheet in the parent — `.leaderboards :global(.tableRow)` — which is the
+  anti-pattern; it was reworked to this.)
+- `:global(...)` stays an escape hatch for two cases only, always
+  ancestor-scoped: a class forwarded into another component's markup
+  (`.tableInnerRow :global(.tableWeapon)` for a `class` prop landing inside
+  `WeaponImage`), and cross-component selectors inside one logical component
+  family (`Tabs.svelte` styling `.tabList`/`.tabContainer` rendered by its
+  children).
 - Global styles (`vars.css`, `utils.css`, `normalize.css`, `common.css`,
   `flags.css`, `fonts.css`) are imported once in `+layout.svelte`.
 - A `<Main className="stack lg">` in React becomes `<Main>` wrapping a
-  `<div class="stack lg <feature>">` — the wrapper also carries the feature's
-  scoped `:global` styles. Visually identical; noted for the differ.
+  `<div class="stack lg">`. Visually identical; noted for the differ.
 
 ## i18n
 
@@ -201,3 +211,14 @@ zod codec.
   proxy headers, guessing `https://` bare; e2e builds set
   `paths.origin` + `csrf.trustedOrigins: ["*"]` (see `vite.config.ts`) or every
   tooling/e2e form POST is rejected 403.
+- `top-search.module.css` had two consumers in React (leaderboards +
+  top-search's `Placements.tsx`). Its classes now live in
+  `PlacementsTable.svelte`; when the top-search slice migrates, `Placements`
+  imports those snippets, and the two classes leaderboards doesn't use
+  (`.tableMode`, `.time`) get added to `PlacementsTable.svelte` at that point.
+- `apps/web` sets `envDir: "../web-react"` (vite.config.ts): `Config` values
+  are baked from `VITE_*` at build time, and without it the Svelte builds saw
+  no `.env` at all — the differ caught `VITE_TOURNAMENT_DEFAULT_LOGO` falling
+  back to `.avif` while the oracle baked `.png` from `apps/web-react/.env`
+  (broken sidebar event logos). One shared `.env` is the source of truth until
+  the cutover; tooling overrides passed via `process.env` still win over it.

@@ -78,7 +78,7 @@ function onTabChange(key: string) {
 </script>
 
 <Main halfWidth>
-	<div class="stack lg leaderboards">
+	<div class="stack lg">
 		<Tabs selectedKey={selectedTab} onSelectionChange={onTabChange}>
 			<TabList>
 				<Tab id="PLAYERS">
@@ -258,97 +258,3 @@ function onTabChange(key: string) {
 	</div>
 </Main>
 
-<style>
-	.leaderboards :global(.table) {
-		display: flex;
-		flex-direction: column;
-		gap: var(--s-0-5);
-		font-size: var(--font-sm);
-		font-weight: var(--weight-semi);
-	}
-
-	.leaderboards :global(.tableRank) {
-		min-width: 28px;
-		text-align: right;
-	}
-
-	.leaderboards :global(.tableName) {
-		white-space: nowrap;
-		text-overflow: ellipsis;
-		overflow: hidden;
-		max-width: 117px;
-	}
-
-	.leaderboards :global(.tierHeader) {
-		display: flex;
-		align-items: center;
-		gap: var(--s-2);
-		margin-block: var(--s-2);
-		color: var(--color-text-high);
-	}
-
-	.leaderboards :global(.tableRow) {
-		background-color: var(--color-bg-high);
-		display: flex;
-		padding: var(--s-2) var(--s-3);
-		align-items: center;
-		justify-content: space-between;
-		color: var(--color-text);
-		transition: 0.1s ease-in-out background-color;
-		border-radius: 0;
-	}
-
-	.leaderboards :global(.tableRow:first-of-type) {
-		border-radius: var(--radius-box) var(--radius-box) 0 0;
-	}
-
-	.leaderboards :global(.tableRow:last-of-type) {
-		border-radius: 0 0 var(--radius-box) var(--radius-box);
-	}
-
-	.leaderboards :global(.tableRow:only-child) {
-		border-radius: var(--radius-box);
-	}
-
-	.leaderboards :global(a.tableRow:hover) {
-		background-color: var(--color-bg-higher);
-	}
-
-	.leaderboards :global(.tableRowQualification) {
-		font-size: var(--font-xs);
-		font-weight: var(--weight-semi);
-		justify-content: center;
-		background-color: var(--color-bg-higher);
-		display: flex;
-		gap: var(--s-2);
-	}
-
-	.leaderboards :global(.tableWeapon) {
-		background-color: var(--color-bg);
-		border-radius: 100%;
-	}
-
-	.leaderboards :global(.tablePower) {
-		margin-inline-start: auto;
-	}
-
-	.leaderboards :global(.tableInnerRow) {
-		display: flex;
-		align-items: center;
-		gap: var(--s-3);
-		width: 100%;
-	}
-
-	.leaderboards :global(.avatar) {
-		min-width: 24px;
-		min-height: 24px;
-	}
-
-	.leaderboards :global(.skippedTeam) {
-		text-decoration: line-through;
-	}
-
-	.leaderboards :global(.skippedTeam a) {
-		color: var(--color-text-high);
-	}
-</style>
