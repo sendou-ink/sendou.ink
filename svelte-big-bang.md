@@ -98,6 +98,10 @@ This is the part of the codebase best positioned for the migration:
 - Actions already use `_action`-discriminated zod unions → the codemod **splits each union branch into its own `form()`/`command()`**. This is the one place the code gets structurally *better* for free, while staying boring externally.
 - `<ActionButton>` (typed `_action` + hidden inputs) → a button wired to a remote `command` or a remote form's button props — same type-safety guarantee, less machinery.
 - `SendouForm` (`app/form/`) → `SendouForm.svelte` wrapping a remote `form`: same schema-driven field API on top, remote-function plumbing underneath. **This wrapper is the churn insulation** — when the experimental API moves, we fix one file, not 81.
+- **Single-flight mutations are the house style for every mutation** ([docs](https://svelte.dev/docs/kit/remote-functions#Single-flight-mutations)). The default behavior — `form` refreshing *all* queries on the page in a second round trip — is exactly wrong for both of our hard goals (one server, snappy UX): it doubles the request count per mutation and re-runs every query on the page against the database. Convention instead:
+  - **Server-driven refreshes preferred**: the `form`/`command` handler itself calls `getX(args).refresh()` (or `getX(args).set(result)` when the mutation already computed the new value — zero extra query cost) for precisely the queries it invalidated. Fresh data rides back in the mutation response — one round trip, minimal DB work, and callers don't need to know what to invalidate.
+  - **Client-driven `.updates(...)` is the fallback**, only where the server genuinely can't know which query instances the client holds (filter/pagination args); pair with `.withOverride()` where optimistic UI is worth it.
+  - Enforced structurally, not by vigilance: `SendouForm.svelte` and the `command` helper are where mutations live, so the wrappers make the server-driven refresh the paved path, and the cookbook's write-path entry (from the `/scrims` slice) shows only this shape — the fleet never emits refresh-everything mutations.
 - `requireUser`/auth context → `getRequestEvent()` inside remote functions; same repository calls.
 - **`prerender()` where the data allows it** — the fourth remote function type bakes query results to static payloads at build time, served without touching the server or the database. Targets identified up front:
   - **articles** — repo content, the textbook case.
@@ -132,6 +136,7 @@ This is the part of the codebase best positioned for the migration:
 | `useSWRImmutable` hooks over resource routes (`app/hooks/swr.ts`, 3 hooks) | remote `query()` called on demand from the component — caching per args is built in; `swr` dependency and the resource routes it fetched both go away |
 | nprogress on navigation state | nprogress driven by SvelteKit's navigation store |
 | `shouldRevalidate` + search-params module | search-params core is pure TS with round-trip tests — port the module, re-map its revalidation semantics to SvelteKit's fine-grained invalidation / `query.refresh()` |
+| revalidation after actions | **single-flight mutations, server-driven** — the handler refreshes/`set`s exactly the queries it touched (see the data-layer convention above); never the refresh-everything default |
 
 **CSS decision (made): migrate CSS modules → Svelte scoped styles.** 232 `.module.css` files convert as part of the feature migration, not after. The mechanics:
 
@@ -219,7 +224,7 @@ Deliverable: the **golden read-path pattern** — the first cookbook entries com
 
 ### Phase 3 — Vertical slice 2: `/scrims` (Fable)
 
-The second slice picks a feature with everything the first one didn't have: login required, real mutations, forms, posting/accepting flows. It forces: hand-rolled Discord OAuth (cookie-compatible sessions), `SendouForm.svelte` + the remote-form wrappers (the churn insulation gets proven here), the `ActionButton → command` mapping, Dialog/Select/Combobox-grade components, and the realtime foundation — the in-process event bus with the notification bell dot as the first `query.live` consumer (scrim offers generate notifications; the 10s-grace-period behavior carries over). `scrims.spec.ts` green + differ clean.
+The second slice picks a feature with everything the first one didn't have: login required, real mutations, forms, posting/accepting flows. It forces: hand-rolled Discord OAuth (cookie-compatible sessions), `SendouForm.svelte` + the remote-form wrappers (the churn insulation gets proven here), the `ActionButton → command` mapping with **single-flight mutations proven end-to-end** (accept-scrim refreshes exactly the scrim queries server-side, one round trip on a real write path), Dialog/Select/Combobox-grade components, and the realtime foundation — the in-process event bus with the notification bell dot as the first `query.live` consumer (scrim offers generate notifications; the 10s-grace-period behavior carries over). `scrims.spec.ts` green + differ clean.
 
 Deliverable: the **golden write-path pattern**. Between the two slices, every architectural bet in this plan (remote functions, remote forms, paraglide, scoped styles, `query.live`, the differ) has been exercised on production code.
 
