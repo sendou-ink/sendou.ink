@@ -1,5 +1,6 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
+import { SvelteMap } from "svelte/reactivity";
 import { setSelectContext } from "./select-context.ts";
 
 interface Props {
@@ -63,17 +64,15 @@ interface RegisteredItem {
 	textValue: string;
 	disabled: boolean;
 }
-const items = new Map<string | number, RegisteredItem>();
-let itemsVersion = $state(0);
+const items = new SvelteMap<string | number, RegisteredItem>();
 
 let triggerElement = $state<HTMLButtonElement | null>(null);
 let popoverElement = $state<HTMLDivElement | null>(null);
 let searchInputElement = $state<HTMLInputElement | null>(null);
 
-const selectedText = $derived.by(() => {
-	itemsVersion;
-	return currentKey !== null ? items.get(currentKey)?.textValue : undefined;
-});
+const selectedText = $derived(
+	currentKey !== null ? items.get(currentKey)?.textValue : undefined,
+);
 
 setSelectContext({
 	get selectedKey() {
@@ -84,10 +83,8 @@ setSelectContext({
 	},
 	registerItem(key, element, options) {
 		items.set(key, { element, ...options });
-		itemsVersion++;
 		return () => {
 			items.delete(key);
-			itemsVersion++;
 		};
 	},
 	select(key) {
@@ -245,10 +242,7 @@ function onPopoverToggle(event: Event) {
 	}
 }
 
-const hasVisibleItems = $derived.by(() => {
-	itemsVersion;
-	return items.size > 0;
-});
+const hasVisibleItems = $derived(items.size > 0);
 
 const uid = $props.id();
 const labelId = $derived(label ? `${uid}-select-label` : undefined);

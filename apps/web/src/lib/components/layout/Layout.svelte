@@ -51,25 +51,20 @@ let sideNavCollapsed = $state(initialCollapsed);
 let sideNavModalOpen = $state(false);
 let hydrated = $state(false);
 
-let notifications = $state<NotificationRow[] | null>(null);
-
 $effect(() => {
 	hydrated = true;
 });
 
 // the bell data loads lazily like the React app's NotificationsProvider:
 // after hydration, never blocking SSR
-$effect(() => {
-	if (!user) {
-		notifications = null;
-		return;
-	}
-	void getNotifications().then((result) => {
-		notifications = result.notifications
-			? toNotificationRows(result.notifications)
-			: null;
-	});
-});
+const notificationsQuery = $derived(
+	hydrated && user ? getNotifications() : null,
+);
+const notifications = $derived<NotificationRow[] | null>(
+	notificationsQuery?.current?.notifications
+		? toNotificationRows(notificationsQuery.current.notifications)
+		: null,
+);
 
 const unseenIds = $derived(
 	notifications
