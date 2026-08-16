@@ -13,6 +13,7 @@ import Layout from "#lib/components/layout/Layout.svelte";
 import PwaLinks from "#lib/components/PwaLinks.svelte";
 import ThemeHead from "#lib/features/theme/ThemeHead.svelte";
 import { IS_E2E_TEST_RUN } from "#lib/utils/e2e.ts";
+import { afterNavigate, beforeNavigate } from "$app/navigation";
 import { navigating } from "$app/state";
 import type { LayoutProps } from "./$types";
 
@@ -24,21 +25,33 @@ const theme = $derived(data.theme ?? null);
 
 NProgress.configure({ parent: "#nprogress-anchor", showSpinner: false });
 
-const isNavigating = $derived(Boolean(navigating.to));
+let startTimeout: ReturnType<typeof setTimeout> | null = null;
 
-$effect(() => {
-	const navigationOngoing = isNavigating;
+beforeNavigate((navigation) => {
+	// `complete` never settles for a navigation that unloads the document
+	if (navigation.willUnload) return;
 
-	const timeout = setTimeout(() => {
-		if (navigationOngoing) {
-			NProgress.start();
-		} else {
-			NProgress.done();
-		}
+	startTimeout ??= setTimeout(() => {
+		NProgress.start();
 	}, LOADING_INDICATOR_DELAY_MS);
 
-	return () => clearTimeout(timeout);
+	// an aborted navigation gets no `afterNavigate`, but the navigation that
+	// superseded it will, and the indicator should stay up until then
+	navigation.complete.catch(() => {
+		if (!navigating.to) stopLoadingIndicator();
+	});
 });
+
+afterNavigate(stopLoadingIndicator);
+
+function stopLoadingIndicator() {
+	if (startTimeout) {
+		clearTimeout(startTimeout);
+		startTimeout = null;
+	}
+
+	NProgress.done();
+}
 </script>
 
 <ThemeHead {theme} />
