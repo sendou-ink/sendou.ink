@@ -274,7 +274,7 @@
 		aria-haspopup="listbox"
 		aria-expanded={open}
 		aria-label={ariaLabel}
-		aria-required={isRequired || undefined}
+		data-required={isRequired || undefined}
 		onclick={() => setOpen(!open)}
 		onkeydown={onTriggerKeydown}
 	>

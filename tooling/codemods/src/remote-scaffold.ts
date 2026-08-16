@@ -57,10 +57,7 @@ const queries = loaderFiles.map((file) => ({
 }));
 
 const commands = actionFiles.flatMap((file) => {
-	const source = readFileSync(
-		join(featureDir, "actions", file),
-		"utf8",
-	);
+	const source = readFileSync(join(featureDir, "actions", file), "utf8");
 	const schemaImports = source.match(/from "[^"]*-schemas"/g) ?? [];
 	const schemaSources = [
 		source,

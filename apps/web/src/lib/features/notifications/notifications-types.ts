@@ -1,0 +1,115 @@
+export type Notification =
+	| NotificationItem<
+			"SQ_ADDED_TO_GROUP",
+			{
+				adderUsername: string;
+			}
+	  >
+	| NotificationItem<"SQ_READY_CHECK">
+	| NotificationItem<
+			"SQ_NEW_MATCH",
+			{
+				matchId: number;
+			}
+	  >
+	| NotificationItem<
+			"TO_ADDED_TO_TEAM",
+			{
+				tournamentId: number;
+				tournamentName: string;
+				adderUsername: string;
+				teamName: string;
+				tournamentTeamId: number;
+			}
+	  >
+	| NotificationItem<
+			"TO_BRACKET_STARTED",
+			{
+				tournamentId: number;
+				bracketIdx: number;
+				bracketName: string;
+				tournamentName: string;
+			}
+	  >
+	| NotificationItem<
+			"TO_CHECK_IN_OPENED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+			}
+	  >
+	| NotificationItem<
+			"TO_TEST_CREATED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+			}
+	  >
+	| NotificationItem<"BADGE_ADDED", { badgeName: string; badgeId: number }>
+	| NotificationItem<
+			"BADGE_MANAGER_ADDED",
+			{ badgeName: string; badgeId: number }
+	  >
+	| NotificationItem<
+			"TROPHY_SUBMITTED",
+			{ trophyName: string; submitterUsername: string }
+	  >
+	| NotificationItem<
+			"TROPHY_SUBMISSION_ACCEPTED",
+			{ trophyName: string; trophyId: number }
+	  >
+	| NotificationItem<"TROPHY_SUBMISSION_DECLINED", { trophyName: string }>
+	| NotificationItem<
+			"PLUS_VOTING_STARTED",
+			{
+				seasonNth: number;
+			}
+	  >
+	| NotificationItem<"PLUS_SUGGESTION_ADDED", { tier: number }>
+	| NotificationItem<
+			"TAGGED_TO_ART",
+			{ adderUsername: string; adderDiscordId: string; artId: number }
+	  >
+	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
+	| NotificationItem<
+			"SCRIM_NEW_REQUEST",
+			{ fromUserId: number; fromUsername: string; scrimPostId: number }
+	  >
+	| NotificationItem<
+			"SCRIM_SCHEDULED",
+			{ id: number; opponentTeamName: string }
+	  >
+	| NotificationItem<"SCRIM_CANCELED", { id: number; opponentTeamName: string }>
+	| NotificationItem<
+			"SCRIM_STARTING_SOON",
+			{ id: number; opponentTeamName: string }
+	  >
+	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
+	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
+	| NotificationItem<
+			"FRIEND_REQUEST_RECEIVED",
+			{ senderId: number; senderUsername: string }
+	  >
+	| NotificationItem<
+			"TO_LIKE_RECEIVED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+				likerUsername: string;
+			}
+	  >
+	| NotificationItem<
+			"TO_LIKE_ACCEPTED",
+			{
+				tournamentId: number;
+				tournamentName: string;
+				accepterUsername: string;
+			}
+	  >;
+
+type NotificationItem<
+	T extends string,
+	M extends Record<string, number | string> | undefined = undefined,
+> = M extends undefined
+	? { type: T; pictureUrl?: string }
+	: { type: T; meta: M; pictureUrl?: string };

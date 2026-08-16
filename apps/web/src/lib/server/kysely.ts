@@ -117,6 +117,116 @@ export type UserWithPlusTier = Tables["User"] & {
 	plusTier: Tables["PlusTier"]["tier"] | null;
 };
 
+/** SQL expression resolving to a SplatoonPlayer's overall peak XP. `"SplatoonPlayer"` must be in scope at the call site. */
+export function peakXpOverallSql<T extends number | null = number | null>() {
+	return sql<T>`"SplatoonPlayer"."peakXp" ->> '$.overall'`;
+}
+
+/**
+ * Constructs a SQL expression that returns the full URL for a tournament's logo.
+ * If the tournament has a custom logo (via avatarImgId), returns that logo's URL.
+ * Otherwise, falls back to the default tournament logo.
+ */
+export function tournamentLogoWithDefault(
+	eb: ExpressionBuilder<Tables, "CalendarEvent">,
+) {
+	return concatUserSubmittedImagePrefix(
+		eb.fn.coalesce(
+			eb
+				.selectFrom("UnvalidatedUserSubmittedImage")
+				.select("UnvalidatedUserSubmittedImage.url")
+				.whereRef(
+					"CalendarEvent.avatarImgId",
+					"=",
+					"UnvalidatedUserSubmittedImage.id",
+				)
+				.$asScalar(),
+			sql.lit(Config.tournamentDefaultLogo),
+		),
+	);
+}
+
+/** Expression resolving to whether any of a tournament's brackets has been started. */
+function tournamentHasStarted(eb: ExpressionBuilder<DB, "Tournament">) {
+	return eb.exists(
+		eb
+			.selectFrom("TournamentStage")
+			.select("TournamentStage.id")
+			.whereRef("TournamentStage.tournamentId", "=", "Tournament.id"),
+	);
+}
+
+/**
+ * Subquery resolving to the non-placeholder teams of a tournament that are still relevant to it:
+ * every registered team as long as no bracket has been started, only the checked in ones after
+ * that. Mirrors how the tournament page itself resolves its teams, so keep the two in sync.
+ * Correlates on `"Tournament"."id"`.
+ */
+function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
+	return eb
+		.selectFrom("TournamentTeam")
+		.leftJoin(
+			"TournamentTeamCheckIn",
+			"TournamentTeamCheckIn.tournamentTeamId",
+			"TournamentTeam.id",
+		)
+		.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.where((eb2) =>
+			eb2.or([
+				eb2("TournamentTeamCheckIn.checkedInAt", "is not", null),
+				eb2.not(tournamentHasStarted(eb)),
+			]),
+		);
+}
+
+/**
+ * Subquery counting the teams of {@link tournamentCheckedInTeams}. Correlates on
+ * `"Tournament"."id"`. Alias it `.as("teamsCount")` when selecting it directly.
+ */
+export function tournamentTeamsCount(eb: ExpressionBuilder<DB, "Tournament">) {
+	return tournamentCheckedInTeams(eb).select(({ fn }) => [
+		fn.count<number>("TournamentTeam.id").distinct().as("count"),
+	]);
+}
+
+/**
+ * Expression resolving to a tournament's participant count: rostered players of the teams from
+ * {@link tournamentCheckedInTeams} while the tournament is still ongoing, players who actually got
+ * a result once it has been finalized. Correlates on `"Tournament"."id"`. Alias it
+ * `.as("membersCount")` when selecting it directly.
+ */
+export function tournamentMembersCount(
+	eb: ExpressionBuilder<DB, "Tournament">,
+) {
+	return eb
+		.case()
+		.when("Tournament.isFinalized", "=", 1)
+		.then(
+			eb
+				.selectFrom("TournamentResult")
+				.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
+				.select(({ fn }) => [
+					fn.count<number>("TournamentResult.userId").distinct().as("count"),
+				]),
+		)
+		.else(
+			tournamentCheckedInTeams(eb)
+				.innerJoin(
+					"TournamentTeamMember",
+					"TournamentTeamMember.tournamentTeamId",
+					"TournamentTeam.id",
+				)
+				.select(({ fn }) => [
+					fn
+						.count<number>("TournamentTeamMember.userId")
+						.distinct()
+						.as("count"),
+				]),
+		)
+		.end();
+}
+
 /** Resolves the name a user is shown under in tournaments: `tournamentName` when set, otherwise `username`. */
 export function tournamentUsername(alias = "User") {
 	return sql<string>`coalesce(${sql.ref(`${alias}.tournamentName`)}, ${sql.ref(

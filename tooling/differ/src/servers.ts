@@ -20,8 +20,18 @@ export async function startServers(
 
 	const servers = (
 		[
-			{ name: "left", app: "web-react", port: config.leftPort, dbFile: dbFiles.left },
-			{ name: "right", app: config.rightApp, port: config.rightPort, dbFile: dbFiles.right },
+			{
+				name: "left",
+				app: "web-react",
+				port: config.leftPort,
+				dbFile: dbFiles.left,
+			},
+			{
+				name: "right",
+				app: config.rightApp,
+				port: config.rightPort,
+				dbFile: dbFiles.right,
+			},
 		] as const
 	).map(({ name, app, port, dbFile }): AppServer => {
 		const isSvelteApp = app === "web";
@@ -43,9 +53,7 @@ export async function startServers(
 					NODE_OPTIONS: "--max-old-space-size=1024",
 					// the db files live in the web-react dir either way (they are
 					// produced by its seed scripts)
-					DB_PATH: isSvelteApp
-						? `${config.webReactDir}/${dbFile}`
-						: dbFile,
+					DB_PATH: isSvelteApp ? `${config.webReactDir}/${dbFile}` : dbFile,
 					PORT: String(port),
 					DISCORD_CLIENT_ID: "123",
 					DISCORD_CLIENT_SECRET: "secret",

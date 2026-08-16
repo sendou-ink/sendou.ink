@@ -1,0 +1,58 @@
+<script lang="ts">
+	interface Props {
+		class?: string;
+		testId?: string;
+	}
+
+	let { class: className, testId }: Props = $props();
+</script>
+
+<span class={["dotWrapper", className]} data-testid={testId}>
+	<span class="pulse"></span>
+	<span class="dot"></span>
+</span>
+
+<style>
+	.dotWrapper {
+		position: absolute;
+		top: var(--dot-top, -2px);
+		right: var(--dot-right, -2px);
+		width: 8px;
+		height: 8px;
+		pointer-events: none;
+	}
+
+	.dot {
+		display: block;
+		width: 100%;
+		height: 100%;
+		position: absolute;
+		background-color: var(--color-text-accent);
+		border-radius: 100%;
+		outline: 2px solid var(--color-bg);
+	}
+
+	.pulse {
+		display: block;
+		width: calc(100% + 20px);
+		height: calc(100% + 20px);
+		position: absolute;
+		top: -10px;
+		left: -10px;
+		border-radius: 100%;
+		background-color: var(--color-text-accent);
+		animation: pulse 2s infinite;
+		opacity: 0;
+	}
+
+	@keyframes pulse {
+		from {
+			transform: scale(0);
+			opacity: 1;
+		}
+		70% {
+			transform: scale(1);
+			opacity: 0;
+		}
+	}
+</style>

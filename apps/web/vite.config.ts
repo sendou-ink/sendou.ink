@@ -4,6 +4,9 @@ import { sveltekit } from "@sveltejs/kit/vite";
 import { defineConfig } from "vite";
 
 export default defineConfig(({ mode }) => ({
+	define: {
+		__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
+	},
 	plugins: [
 		paraglideVitePlugin({
 			project: "./project.inlang",

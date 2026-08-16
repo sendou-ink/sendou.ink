@@ -570,11 +570,51 @@ function extractHead(html: string): string {
 	return match?.[1] ?? "";
 }
 
+/** `<link rel>` values that carry SEO/PWA meaning and must survive the cutover. */
+const MEANINGFUL_LINK_RELS = new Set([
+	"canonical",
+	"alternate",
+	"manifest",
+	"icon",
+	"apple-touch-icon",
+	"apple-touch-startup-image",
+]);
+
+/**
+ * Reduces a `<head>` to the tags that must match across the two apps: the
+ * title and every meta plus SEO/PWA-meaningful links. Framework output
+ * (hashed stylesheets, module preloads, inline scripts) legitimately differs
+ * between React Router and SvelteKit and is dropped. Tags are compared as a
+ * sorted set since the frameworks emit them in different orders.
+ */
 function normalizeHead(head: string, origins: string[]): string {
-	return normalizeOrigins(head, origins)
-		.replace(/>\s+</g, ">\n<")
-		.replace(/[ \t]+/g, " ")
-		.trim();
+	const withoutComments = normalizeOrigins(head, origins).replace(
+		/<!--[\s\S]*?-->/g,
+		"",
+	);
+
+	const tags: string[] = [];
+
+	const titleMatch = withoutComments.match(/<title[^>]*>([\s\S]*?)<\/title>/i);
+	if (titleMatch) {
+		tags.push(`<title>${titleMatch[1].trim()}</title>`);
+	}
+
+	for (const match of withoutComments.matchAll(/<(meta|link)\b[^>]*>/gi)) {
+		const tag = match[0]
+			.replace(/\s+/g, " ")
+			.replace(/\s*\/?>$/, ">")
+			.trim();
+
+		if (match[1].toLowerCase() === "link") {
+			const rel = tag.match(/\brel="([^"]*)"/i)?.[1]?.toLowerCase();
+			if (!rel || !MEANINGFUL_LINK_RELS.has(rel)) continue;
+		}
+
+		tags.push(tag);
+	}
+
+	return tags.sort().join("\n");
 }
 
 function normalizeOrigins(text: string, origins: string[]): string {

@@ -6,8 +6,16 @@ import type {
 	ColumnType,
 	GeneratedAlways,
 	Insertable,
+	JSONColumnType,
 	Selectable,
 } from "kysely";
+import type { AssociationVisibility } from "#lib/features/associations/associations-types.ts";
+import type { Notification as NotificationValue } from "#lib/features/notifications/notifications-types.ts";
+import type {
+	TournamentSettingsLite,
+	TournamentStaffRole,
+	TournamentTierNumber,
+} from "#lib/features/tournament/tournament-types.ts";
 import type {
 	PeakXP,
 	UserPreferences,
@@ -61,8 +69,10 @@ export interface User {
 	isApiAccesser: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	patronTier: number | null;
+	patronStartedAt: number | null;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	plusSkippedForSeasonNth: number | null;
+	twitch: string | null;
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
 }
@@ -214,9 +224,246 @@ export interface GroupMember {
 }
 
 export interface Tournament {
+	/** Trimmed to the fields the migrated features read; the React app's `TournamentSettings` stays the source of truth. */
+	settings: JSONColumnType<TournamentSettingsLite>;
 	id: GeneratedAlways<number>;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
+	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
+	tier: TournamentTierNumber | null;
+}
+
+export interface CalendarEvent {
+	authorId: number;
+	bracketUrl: string;
+	description: string | null;
+	discordInviteCode: string | null;
+	id: GeneratedAlways<number>;
+	discordUrl: GeneratedAlways<string | null>;
+	name: string;
+	participantCount: number | null;
+	hidden: Generated<DBBoolean>;
+	tournamentId: number | null;
+	organizationId: number | null;
+	avatarImgId: number | null;
+	trophyId: number | null;
+}
+
+export interface CalendarEventDate {
+	eventId: number;
+	id: GeneratedAlways<number>;
+	startsAt: number;
+}
+
+export interface SavedCalendarEvent {
+	id: GeneratedAlways<number>;
+	userId: number;
+	calendarEventId: number;
+	createdAt: Generated<number>;
+}
+
+export interface TournamentStaff {
+	tournamentId: number;
+	userId: number;
+	role: TournamentStaffRole;
+}
+
+export interface TournamentTeam {
+	createdAt: Generated<number>;
+	id: GeneratedAlways<number>;
+	inviteCode: string;
+	name: string;
+	prefersNotToHost: Generated<DBBoolean>;
+	droppedOut: Generated<DBBoolean>;
+	seed: number | null;
+	/** For formats that have many starting brackets, where should the team start? */
+	startingBracketIdx: number | null;
+	activeRosterUserIds: JSONColumnTypeNullable<number[]>;
+	tournamentId: number;
+	teamId: number | null;
+	avatarImgId: number | null;
+	isLooking: Generated<DBBoolean>;
+	isPlaceholder: Generated<DBBoolean>;
+	lfgNote: string | null;
+	chatCode: Generated<string | null>;
+	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
+	abDivision: number | null;
+	/** The team's `TournamentTeamHistory` row, created lazily on its first audited event. */
+	tournamentTeamHistoryId: number | null;
+}
+
+export interface TournamentTeamCheckIn {
+	checkedInAt: number;
+	/** Which bracket checked in for. If missing is check in for the whole event. */
+	bracketIdx: number | null;
+	tournamentTeamId: number;
+	/** Indicates that this bracket defaults to checked in and this team has been explicitly checked out from it */
+	isCheckOut: Generated<DBBoolean>;
+}
+
+export interface TournamentTeamMember {
+	createdAt: Generated<number>;
+	inGameName: string | null;
+	tournamentTeamId: number;
+	userId: number;
+	role: Generated<"OWNER" | "MANAGER" | "REGULAR">;
+	isStayAsSub: Generated<DBBoolean>;
+	/** Set when the member was added to the roster after registration closed. */
+	isSub: Generated<DBBoolean>;
+	/** Set when the member was added to the roster by the tournament organizer instead of joining on their own. */
+	isOrganizerAdded: Generated<DBBoolean>;
+	// denormalized from TournamentTeam.isLooking
+	isLooking: Generated<DBBoolean>;
+}
+
+export interface TournamentOrganization {
+	id: GeneratedAlways<number>;
+	name: string;
+	slug: string;
+	description: string | null;
+	socials: JSONColumnTypeNullable<string[]>;
+	avatarImgId: number | null;
+	isEstablished: Generated<DBBoolean>;
+}
+
+export interface TournamentOrganizationSeries {
+	id: GeneratedAlways<number>;
+	organizationId: number;
+	name: string;
+	description: string | null;
+	substringMatches: JSONColumnType<string[]>;
+	showLeaderboard: Generated<DBBoolean>;
+	tierHistory: JSONColumnTypeNullable<TournamentTierNumber[]>;
+}
+
+export interface TournamentMatchVod {
+	id: GeneratedAlways<number>;
+	matchId: number;
+	userId: number | null;
+	platform: "TWITCH";
+	account: string;
+	platformVideoId: string;
+	timestampSeconds: number;
+	viewCount: number;
+}
+
+export interface Friendship {
+	id: GeneratedAlways<number>;
+	userOneId: number;
+	userTwoId: number;
+	createdAt: Generated<number>;
+}
+
+/** Pending friend request from one user to another. */
+export interface FriendRequest {
+	id: GeneratedAlways<number>;
+	senderId: number;
+	receiverId: number;
+	createdAt: Generated<number>;
+}
+
+export interface Group {
+	chatCode: string | null;
+	createdAt: Generated<number>;
+	id: GeneratedAlways<number>;
+	inviteCode: string;
+	latestActionAt: Generated<number>;
+	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
+	matchmade: Generated<DBBoolean>;
+	status: "PREPARING" | "ACTIVE" | "INACTIVE" | "READY_CHECK";
+	teamId: number | null;
+}
+
+export interface LiveStream {
+	id: GeneratedAlways<number>;
+	userId: number | null;
+	viewerCount: number;
+	thumbnailUrl: string;
+	twitch: string | null;
+}
+
+export interface ExternalStream {
+	id: GeneratedAlways<number>;
+	name: string;
+	url: string;
+	avatarImgId: number | null;
+	startsAt: number;
+	createdAt: Generated<number>;
+}
+
+export interface Notification {
+	id: GeneratedAlways<number>;
+	type: NotificationValue["type"];
+	meta: JSONColumnTypeNullable<Record<string, number | string>>;
+	pictureUrl: string | null;
+	createdAt: Generated<number>;
+}
+
+export interface NotificationUser {
+	notificationId: number;
+	userId: number;
+	seen: Generated<DBBoolean>;
+}
+
+export interface ScrimPost {
+	id: GeneratedAlways<number>;
+	/** When is the scrim scheduled to happen */
+	startsAt: number;
+	/** Optional end of time range indicating team accepts scrims starting between startsAt and rangeEndsAt */
+	rangeEndsAt: number | null;
+	/** Highest LUTI div accepted */
+	maxDiv: number | null;
+	/** Lowest LUTI div accepted */
+	minDiv: number | null;
+	/** Who sees the post */
+	visibility: JSONColumnTypeNullable<AssociationVisibility>;
+	/** Any additional info */
+	text: string | null;
+	/** The key to access the scrim chat, used after scrim is scheduled with another team */
+	chatCode: string;
+	/** Refers to the team looking for the team (can also be a pick-up) */
+	teamId: number | null;
+	/** Indicates if anyone in the post can manage it */
+	managedByAnyone: DBBoolean;
+	/** When the scrim was canceled */
+	canceledAt: number | null;
+	/** User id who canceled the scrim */
+	canceledByUserId: number | null;
+	/** Reason for canceling the scrim */
+	cancelReason: string | null;
+	/** When the post was made was it scheduled for a future time slot (as opposed to looking now) */
+	isScheduledForFuture: Generated<DBBoolean>;
+	/** Maps/modes the scrim is available for. If null means no preference unless "mapsTournamentId" is set */
+	maps: "SZ" | "ALL" | "RANKED" | null;
+	/** If set, specifies the maps of a tournament to play */
+	mapsTournamentId: number | null;
+	createdAt: Generated<number>;
+	updatedAt: Generated<number>;
+}
+
+export interface ScrimPostUser {
+	scrimPostId: number;
+	userId: number;
+	/** User is the author of the post */
+	isOwner: DBBoolean;
+}
+
+export interface ScrimPostRequest {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	teamId: number | null;
+	message: string | null;
+	/** Specific time selected by requester (required when post has rangeEndsAt) */
+	startsAt: number | null;
+	isAccepted: Generated<DBBoolean>;
+	createdAt: Generated<number>;
+}
+
+export interface ScrimPostRequestUser {
+	scrimPostRequestId: number;
+	/** User that made the request */
+	userId: number;
+	isOwner: DBBoolean;
 }
 
 export interface TournamentStage {
@@ -258,11 +505,25 @@ export interface DB {
 	AllTeam: Team;
 	/** Table backing the `TeamMember` & `TeamMemberWithSecondary` views. Includes members who have left and members of deleted teams. */
 	AllTeamMember: TeamMember;
+	CalendarEvent: CalendarEvent;
+	CalendarEventDate: CalendarEventDate;
+	ExternalStream: ExternalStream;
+	FriendRequest: FriendRequest;
+	Friendship: Friendship;
+	Group: Group;
 	GroupMatch: GroupMatch;
 	GroupMember: GroupMember;
 	LeaderboardTeamSkip: LeaderboardTeamSkip;
+	LiveStream: LiveStream;
+	Notification: Notification;
+	NotificationUser: NotificationUser;
 	PlusTier: PlusTier;
 	ReportedWeapon: ReportedWeapon;
+	SavedCalendarEvent: SavedCalendarEvent;
+	ScrimPost: ScrimPost;
+	ScrimPostRequest: ScrimPostRequest;
+	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimPostUser: ScrimPostUser;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
 	SplatoonPlayer: SplatoonPlayer;
@@ -274,8 +535,15 @@ export interface DB {
 	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
 	TournamentMatch: TournamentMatch;
+	TournamentMatchVod: TournamentMatchVod;
+	TournamentOrganization: TournamentOrganization;
+	TournamentOrganizationSeries: TournamentOrganizationSeries;
 	TournamentResult: TournamentResult;
+	TournamentStaff: TournamentStaff;
 	TournamentStage: TournamentStage;
+	TournamentTeam: TournamentTeam;
+	TournamentTeamCheckIn: TournamentTeamCheckIn;
+	TournamentTeamMember: TournamentTeamMember;
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	User: User;
 	UserFriendCode: UserFriendCode;

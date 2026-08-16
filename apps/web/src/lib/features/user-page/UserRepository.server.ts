@@ -48,6 +48,17 @@ export async function findLeanById(id: number) {
 	};
 }
 
+/** Every current patron, highest tiers first, longest-running patrons first within a tier. */
+export function findAllPatrons() {
+	return db
+		.selectFrom("User")
+		.select(["User.id", "User.discordId", "User.username", "User.patronTier"])
+		.where("User.patronTier", "is not", null)
+		.orderBy("User.patronTier", "desc")
+		.orderBy("User.patronStartedAt", "asc")
+		.execute();
+}
+
 /** Every user in the plus server with their tier. */
 export function findAllPlusServerMembers() {
 	return db
