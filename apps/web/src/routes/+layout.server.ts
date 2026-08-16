@@ -1,14 +1,10 @@
-import { readSessionCookie } from "#lib/features/auth/session.server.ts";
 import { resolveSidebarData } from "#lib/features/sidebar/sidebar.server.ts";
+import { readSidenavCollapsed } from "#lib/features/sidenav/sidenav.server.ts";
 import { getTheme } from "#lib/features/theme/theme.server.ts";
 import type { LayoutServerLoad } from "./$types";
 
-const SIDENAV_COOKIE_NAME = "sidenav";
-
 export const load: LayoutServerLoad = async ({ locals, cookies }) => {
 	const user = locals.user;
-
-	const sidenavSession = readSessionCookie(cookies.get(SIDENAV_COOKIE_NAME));
 
 	return {
 		user: user
@@ -28,7 +24,7 @@ export const load: LayoutServerLoad = async ({ locals, cookies }) => {
 					createdAt: user.createdAt,
 				}
 			: undefined,
-		sidenavCollapsed: sidenavSession?.collapsed === true,
+		sidenavCollapsed: readSidenavCollapsed(cookies),
 		sidebar: await resolveSidebarData(user?.id ?? null),
 		theme: getTheme(cookies),
 	};

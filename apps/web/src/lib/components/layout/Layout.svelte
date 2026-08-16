@@ -7,6 +7,7 @@ import { loggedInUser } from "#lib/features/auth/user-state.ts";
 import { getPatrons } from "#lib/features/front-page/front-page.remote.ts";
 import { getNotifications } from "#lib/features/notifications/notifications.remote.ts";
 import { toNotificationRows } from "#lib/features/notifications/notifications-utils.ts";
+import { setSidenavCollapsed } from "#lib/features/sidenav/sidenav.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
 import { getLocale } from "#lib/paraglide/runtime.js";
 import { GIT_COMMIT } from "#lib/utils/git-commit.ts";
@@ -100,13 +101,14 @@ function unseenRequestsLabel(count: number) {
 		: m.friends_unseenRequests_other({ count });
 }
 
-function toggleSideNavCollapsed() {
+const sideNavCollapseForm = setSidenavCollapsed.enhance(async ({ submit }) => {
 	sideNavCollapsed = !sideNavCollapsed;
-	void fetch("/sidenav", {
-		method: "POST",
-		body: new URLSearchParams({ collapsed: String(sideNavCollapsed) }),
-	});
-}
+	try {
+		await submit().updates();
+	} catch {
+		// losing the preference cookie is fine, the optimistic state stays
+	}
+});
 
 // mobile hide-on-scroll header, ported from the React useNavOffset
 const MOBILE_BREAKPOINT = 600;
@@ -389,13 +391,17 @@ function formatRelativeDate(timestamp: number) {
 			class="sideNavCollapseButtonContainer"
 			data-testid="sidenav-collapse-button"
 		>
-			<button
-				type="button"
-				class="collapseButton sideNavCollapseButton"
-				onclick={toggleSideNavCollapsed}
-			>
-				<PanelLeft />
-			</button>
+			<form class="sideNavCollapseForm" {...sideNavCollapseForm}>
+				<input
+					{...setSidenavCollapsed.fields.collapsed.as(
+						"hidden",
+						!sideNavCollapsed,
+					)}
+				/>
+				<button class="collapseButton sideNavCollapseButton">
+					<PanelLeft />
+				</button>
+			</form>
 			{#if sideNavCollapsed && showUnseenDot}
 				<NotificationDot />
 			{/if}
@@ -661,6 +667,10 @@ function formatRelativeDate(timestamp: number) {
 				display: flex;
 			}
 		}
+	}
+
+	.sideNavCollapseForm {
+		display: contents;
 	}
 
 	.collapseButton {
