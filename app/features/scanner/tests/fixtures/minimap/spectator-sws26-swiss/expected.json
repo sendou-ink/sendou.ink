@@ -1,0 +1,118 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 1,
+    "spectator": true,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "King Inate",
+        "abilities": [
+          "LDE",
+          "RSU",
+          "RSU"
+        ],
+        "weaponLabel": "Zink Mini Splatling",
+        "weaponId": 4001,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "right",
+        "name": "todo",
+        "abilities": [
+          "CB",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Mint Decavitator",
+        "weaponId": 8020,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "down",
+        "name": "tanaha",
+        "abilities": [
+          "RSU",
+          "SSU",
+          "SCU"
+        ],
+        "weaponLabel": "Splat Brella",
+        "weaponId": 6000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "left",
+        "name": "soph",
+        "abilities": [
+          "RSU",
+          "RSU",
+          "SJ"
+        ],
+        "weaponLabel": "Heavy Splatling",
+        "weaponId": 4010,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "name": "Burstie",
+        "abilities": [
+          "SSU",
+          "SSU",
+          "SSU"
+        ],
+        "weaponLabel": ".96 Gal",
+        "weaponId": 80,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "[K]yo!",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ],
+        "weaponLabel": "Slosher",
+        "weaponId": 3000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "leafi !!",
+        "abilities": [
+          "OG",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Custom Blaster",
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "biscuit",
+        "abilities": [
+          "LDE",
+          "SCU",
+          "ISM"
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Eeltail Alley"
+  },
+  "options": {
+    "skipFields": [
+      "teammates.0.name"
+    ],
+    "notes": "8-player spectator map screen from the SWS26 cast, same game as the objective/ splat-zones-cast-* fixtures: green team left column, purple right — the cross-detector anchor pair for objective team-color tracking. teammates.0.name skipped: King Inate reads King lnate — capital I and lowercase l are pixel-identical in BlitzMain at this size (the POV nameplate in the sibling frame confirms Inate)."
+  }
+}

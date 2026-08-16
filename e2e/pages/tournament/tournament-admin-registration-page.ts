@@ -1,9 +1,15 @@
 import { expect, type Page } from "@playwright/test";
 import { adminRegistrationFormSchema } from "~/features/tournament-admin/tournament-admin-registration-schemas";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	tournamentAdminRegistrationEditPage,
 	tournamentAdminRegistrationPage,
 } from "~/utils/urls";
+import {
+	counterpickMap,
+	pickCounterpickMaps,
+	pickedCounterpickMap,
+} from "../../helpers/counterpick-map-pool";
 import {
 	navigate,
 	selectTournament,
@@ -27,6 +33,7 @@ export class TournamentAdminRegistrationPage {
 			teamNameInput: page.getByLabel("Team name"),
 			importTeamButton: page.getByRole("button", { name: "Import team" }),
 			importDialogHeading: page.getByRole("heading", { name: "Import team" }),
+			invalidMapPoolError: page.getByText("Invalid map pool"),
 		};
 	}
 
@@ -60,6 +67,11 @@ export class TournamentAdminRegistrationPage {
 		await this.page.keyboard.press("Enter");
 	}
 
+	/** Names the roster member at `index` for tournaments. Only shown to organizers who may set it. */
+	async setTournamentName(index: number, name: string) {
+		await this.page.getByLabel("Tournament name").nth(index).fill(name);
+	}
+
 	async selectCaptain(userId: number) {
 		await this.page
 			.getByLabel("Captain", { exact: true })
@@ -68,6 +80,23 @@ export class TournamentAdminRegistrationPage {
 
 	save() {
 		return submit(this.page);
+	}
+
+	/** Picks the required amount of counterpick maps for every mode, skipping banned ones. */
+	pickCounterpickMaps() {
+		return pickCounterpickMaps(this.page);
+	}
+
+	pickCounterpickMap(mode: ModeShort, stageId: StageId) {
+		return counterpickMap(this.page, mode, stageId).click();
+	}
+
+	unpickCounterpickMap(mode: ModeShort, stageId: StageId) {
+		return pickedCounterpickMap(this.page, mode, stageId).click();
+	}
+
+	pickedCounterpickMap(mode: ModeShort, stageId: StageId) {
+		return pickedCounterpickMap(this.page, mode, stageId);
 	}
 
 	async openImportDialog() {

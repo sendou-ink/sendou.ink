@@ -5,6 +5,7 @@ export type Notification =
 				adderUsername: string;
 			}
 	  >
+	| NotificationItem<"SQ_READY_CHECK">
 	| NotificationItem<
 			"SQ_NEW_MATCH",
 			{
@@ -70,7 +71,10 @@ export type Notification =
 			{ adderUsername: string; adderDiscordId: string; artId: number }
 	  >
 	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
-	| NotificationItem<"SCRIM_NEW_REQUEST", { fromUsername: string }>
+	| NotificationItem<
+			"SCRIM_NEW_REQUEST",
+			{ fromUserId: number; fromUsername: string; scrimPostId: number }
+	  >
 	| NotificationItem<
 			"SCRIM_SCHEDULED",
 			{ id: number; opponentTeamName: string }
@@ -82,7 +86,10 @@ export type Notification =
 	  >
 	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
 	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
-	| NotificationItem<"FRIEND_REQUEST_RECEIVED", { senderUsername: string }>
+	| NotificationItem<
+			"FRIEND_REQUEST_RECEIVED",
+			{ senderId: number; senderUsername: string }
+	  >
 	| NotificationItem<
 			"TO_LIKE_RECEIVED",
 			{

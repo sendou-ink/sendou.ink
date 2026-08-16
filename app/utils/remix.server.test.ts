@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { paginate } from "./remix.server";
 
 const buildUrl = (url: string) => new URL(url);
@@ -14,7 +14,7 @@ const captureRedirect = (fn: () => void) => {
 };
 
 describe("paginate()", () => {
-	it("returns the page count rounded up", () => {
+	test("returns the page count rounded up", () => {
 		const result = paginate({
 			url: buildUrl("https://sendou.ink/vods?page=1"),
 			page: 1,
@@ -25,7 +25,7 @@ describe("paginate()", () => {
 		expect(result).toEqual({ currentPage: 1, pagesCount: 5 });
 	});
 
-	it("does not redirect when page is within bounds", () => {
+	test("does not redirect when page is within bounds", () => {
 		const response = captureRedirect(() =>
 			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=2"),
@@ -38,7 +38,7 @@ describe("paginate()", () => {
 		expect(response).toBeNull();
 	});
 
-	it("does not redirect when page equals pagesCount", () => {
+	test("does not redirect when page equals pagesCount", () => {
 		const response = captureRedirect(() =>
 			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=5"),
@@ -51,7 +51,7 @@ describe("paginate()", () => {
 		expect(response).toBeNull();
 	});
 
-	it("redirects to last page when page exceeds pagesCount", () => {
+	test("redirects to last page when page exceeds pagesCount", () => {
 		const response = captureRedirect(() =>
 			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=99"),
@@ -65,7 +65,7 @@ describe("paginate()", () => {
 		expect(response?.headers.get("Location")).toBe("/vods?page=5");
 	});
 
-	it("preserves other search params when redirecting", () => {
+	test("preserves other search params when redirecting", () => {
 		const response = captureRedirect(() =>
 			paginate({
 				url: buildUrl(
@@ -88,7 +88,7 @@ describe("paginate()", () => {
 		// biome-ignore-end lint/plugin: asserting on the raw redirect URL is the point of the test
 	});
 
-	it("stays on page 1 when there are no results", () => {
+	test("stays on page 1 when there are no results", () => {
 		const result = paginate({
 			url: buildUrl("https://sendou.ink/vods?page=1"),
 			page: 1,
@@ -99,7 +99,7 @@ describe("paginate()", () => {
 		expect(result).toEqual({ currentPage: 1, pagesCount: 1 });
 	});
 
-	it("redirects to page 1 when there are no results and page exceeds 1", () => {
+	test("redirects to page 1 when there are no results and page exceeds 1", () => {
 		const response = captureRedirect(() =>
 			paginate({
 				url: buildUrl("https://sendou.ink/vods?page=4"),

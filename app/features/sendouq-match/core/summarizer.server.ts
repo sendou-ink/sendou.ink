@@ -1,7 +1,5 @@
 import type { Tables } from "~/db/tables";
-import * as Seasons from "~/features/mmr/core/Seasons";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import invariant from "~/utils/invariant";
 import { winnersArrayToWinner } from "../q-match-utils";
 
 type MatchForSummarizing = {
@@ -12,16 +10,15 @@ type MatchForSummarizing = {
 
 export function summarizeMaps({
 	match,
+	season,
 	winners,
 	members,
 }: {
 	match: MatchForSummarizing;
+	season: number;
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
-	const season = Seasons.currentOrPrevious()?.nth;
-	invariant(typeof season === "number", "No ranked season for skills");
-
 	const result: Array<Tables["MapResult"]> = [];
 
 	const playedMaps = match.mapList.slice(0, winners.length);
@@ -62,16 +59,15 @@ export function summarizeMaps({
 
 export function summarizePlayerResults({
 	match,
+	season,
 	winners,
 	members,
 }: {
 	match: MatchForSummarizing;
+	season: number;
 	winners: ("ALPHA" | "BRAVO")[];
 	members: { id: number; groupId: number }[];
 }) {
-	const season = Seasons.currentOrPrevious()?.nth;
-	invariant(typeof season === "number", "No ranked season for skills");
-
 	const result: Array<Tables["PlayerResult"]> = [];
 
 	const addMapResult = ({

@@ -14,7 +14,7 @@ describe("Set results in a bracket with map info", () => {
 		data = bracketWithMaps({ count: 3, type: "BEST_OF" });
 	});
 
-	test("should resolve the winner from the scores once the set is over", () => {
+	test("resolves the winner from the scores once the set is over", () => {
 		data = Engine.reportGameResult(data, {
 			matchId: 0,
 			winnerTeamId: TEAM_ONE,
@@ -31,13 +31,13 @@ describe("Set results in a bracket with map info", () => {
 		expect(matchById(data, 0).winnerSide).toBe("opponent1");
 	});
 
-	test("should resolve the winner when only the scores are reported", () => {
+	test("resolves the winner when only the scores are reported", () => {
 		data = Engine.reportResult(data, { matchId: 0, scores: [0, 2] }).data;
 
 		expect(matchById(data, 0).winnerSide).toBe("opponent2");
 	});
 
-	test("should not resolve a winner for a play all set that ended in a tie", () => {
+	test("does not resolve a winner for a play all set that ended in a tie", () => {
 		data = bracketWithMaps({ count: 2, type: "PLAY_ALL" });
 
 		data = Engine.reportResult(data, { matchId: 0, scores: [1, 1] }).data;
@@ -45,7 +45,7 @@ describe("Set results in a bracket with map info", () => {
 		expect(matchById(data, 0).winnerSide).toBeFalsy();
 	});
 
-	test("should end the set early with the given winner, keeping the scores", () => {
+	test("ends the set early with the given winner, keeping the scores", () => {
 		data = Engine.reportGameResult(data, {
 			matchId: 0,
 			winnerTeamId: TEAM_TWO,
@@ -59,7 +59,7 @@ describe("Set results in a bracket with map info", () => {
 		expect(after.opponent2?.score).toBe(1);
 	});
 
-	test("should clear the winner when a game is undone", () => {
+	test("clears the winner when a game is undone", () => {
 		for (const _ of [1, 2]) {
 			data = Engine.reportGameResult(data, {
 				matchId: 0,
@@ -76,7 +76,7 @@ describe("Set results in a bracket with map info", () => {
 		expect(matchById(data, 0).opponent1?.score).toBe(1);
 	});
 
-	test("should clear the winner when the match is reopened", () => {
+	test("clears the winner when the match is reopened", () => {
 		for (const _ of [1, 2]) {
 			data = Engine.reportGameResult(data, {
 				matchId: 0,
@@ -92,7 +92,7 @@ describe("Set results in a bracket with map info", () => {
 		expect(matchById(data, 0).opponent1?.score).toBe(1);
 	});
 
-	test("should clear the winner when a set that ended early is reopened", () => {
+	test("clears the winner when a set that ended early is reopened", () => {
 		data = Engine.reportGameResult(data, {
 			matchId: 0,
 			winnerTeamId: TEAM_ONE,

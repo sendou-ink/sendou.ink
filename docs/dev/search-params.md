@@ -34,6 +34,7 @@ Options accepted by every declaration:
 - `loader` (required) — whether changing this param must run loaders. `loader: true` params write through react-router navigation; `loader: false` params write through `history.replaceState` and never trigger loaders, revalidation or full-page rerenders.
 - `resets` — param keys reset to their defaults whenever this param is written (the "filter change resets `page`" idiom, declared once).
 - `compress` (default `false`) — the canonical encoding is the compressed form. Only for params whose values are inherently large.
+- `timeDependent` (default `false`) — the value schema reads the clock (`?season=13` only validating once season 13 has started, say). Decode results are cached per raw value, so without this the first decode's verdict would be served to every later request in the process, long after the clock moved past it.
 
 ### `SP.param` and the derivation table
 
@@ -102,7 +103,7 @@ buildsSearchParams.href(buildsPage(slug), { f: filters });
 // → "/builds/splattershot?f=%5B…%5D"   (defaults omitted)
 ```
 
-Used by `<Link to>` and by the query-building helpers in `app/utils/urls.ts`.
+Used by `<Link to>` and by query-building helpers. Those helpers live in `app/features/<feature>/<feature>-urls.ts`, next to the definition they encode with — never in `app/utils/urls.ts`, which is imported by the root and so must stay free of feature schemas. `urls.ts` keeps the plain path constants and builders that carry no search params.
 
 ## Revalidation
 

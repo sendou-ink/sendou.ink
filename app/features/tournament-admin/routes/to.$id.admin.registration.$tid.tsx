@@ -4,21 +4,29 @@ import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import { Label } from "~/components/Label";
+import { useUser } from "~/features/auth/core/user";
+import {
+	type CounterPickMapPool,
+	CounterPickMapPoolPicker,
+	MapPoolValidationStatusMessage,
+	useCounterPickMapPoolValidationStatus,
+} from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentAdminImportTeamsPage } from "~/features/tournament-admin/tournament-admin-urls";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
+import { FormFieldMessages } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type {
 	ArrayItemRenderContext,
+	CustomFieldRenderProps,
 	SelectOption,
 	TeamSearchFieldOptions,
 	TournamentSearchFieldOptions,
 	UserSearchFieldOptions,
 } from "~/form/types";
-import {
-	tournamentAdminImportTeamsPage,
-	tournamentAdminPage,
-} from "~/utils/urls";
+import { tournamentAdminPage } from "~/utils/urls";
 import type { TournamentAdminRegistrationLoaderData } from "../loaders/to.$id.admin.registration.$tid.server";
 import {
 	type AdminRegistrationFormValues,
@@ -34,6 +42,7 @@ export { loader } from "../loaders/to.$id.admin.registration.$tid.server";
 type RosterMemberValue = {
 	userId?: number;
 	inGameName?: string | null;
+	tournamentName?: string | null;
 };
 
 type ImportableTeam = ImportTeamsLoaderData["teams"][number];
@@ -75,7 +84,9 @@ export default function TournamentAdminRegistrationPage() {
 					inGameName: tournament.ctx.settings.requireInGameNames
 						? (member.inGameName ?? null)
 						: null,
+					tournamentName: member.tournamentName ?? null,
 				})),
+				mapPool: team.mapPool ?? [],
 			}
 		: undefined;
 
@@ -104,6 +115,7 @@ export default function TournamentAdminRegistrationPage() {
 function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 	const { t } = useTranslation(["forms"]);
 	const tournament = useTournament();
+	const user = useUser();
 	const { values, setValue, revalidateAll, hasSubmitted } =
 		useFormFieldContext();
 
@@ -122,6 +134,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 	const linkedTeam = Boolean(values.linkedTeam);
 	const members = (values.members as RosterMemberValue[]) ?? [];
 	const requireInGameNames = tournament.ctx.settings.requireInGameNames;
+	const canEditTournamentNames = tournament.canEditTournamentNames(user);
 
 	const handleImport = (importedTeam: ImportableTeam) => {
 		setUsernames((prev) => {
@@ -154,6 +167,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 		importedValues.members = importedTeam.members.map((member) => ({
 			userId: member.userId,
 			inGameName: member.inGameName,
+			tournamentName: member.tournamentName,
 			// fresh key so the member rows remount and their user-search inputs
 			// re-resolve when importing a different team over a previous import
 			_key: crypto.randomUUID(),
@@ -240,6 +254,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 									selected.members.map((member) => ({
 										userId: member.id,
 										inGameName: null,
+										tournamentName: member.tournamentName,
 									})),
 								);
 								setValue("ownerId", String(selected.members[0]?.id ?? ""));
@@ -269,6 +284,14 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 										if (requireInGameNames && user.inGameName) {
 											setValue(`${itemName}.inGameName`, user.inGameName);
 										}
+										// the field is saved as is, so it has to show the name the
+										// user already has or saving would clear it
+										if (canEditTournamentNames) {
+											setValue(
+												`${itemName}.tournamentName`,
+												user.tournamentName,
+											);
+										}
 									},
 								} satisfies UserSearchFieldOptions
 							}
@@ -276,11 +299,52 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 						{requireInGameNames ? (
 							<FormField name={`${itemName}.inGameName`} />
 						) : null}
+						{canEditTournamentNames ? (
+							<FormField name={`${itemName}.tournamentName`} />
+						) : null}
 					</div>
 				)}
 			</FormField>
 			<FormField name="ownerId" options={ownerOptions} />
+			{tournament.teamsPrePickMaps && !tournament.hasStarted ? (
+				<FormField name="mapPool">
+					{(props: CustomFieldRenderProps) => (
+						<MapPoolField
+							{...props}
+							value={props.value as CounterPickMapPool}
+						/>
+					)}
+				</FormField>
+			) : null}
 		</>
+	);
+}
+
+function MapPoolField({
+	name,
+	value,
+	error,
+	onChange,
+	disabled,
+}: CustomFieldRenderProps<CounterPickMapPool>) {
+	const { t } = useTranslation(["common"]);
+	const validationStatus = useCounterPickMapPoolValidationStatus(value);
+
+	// the pickers are a group of buttons rather than one control, so there is no
+	// input for the label to point at
+	return (
+		<div className="stack sm">
+			<Label spaced={false}>{t("common:maps.mapPool")}</Label>
+			<div className="stack lg">
+				<CounterPickMapPoolPicker
+					mapPool={value}
+					onChange={onChange}
+					disabled={disabled}
+				/>
+				<MapPoolValidationStatusMessage status={validationStatus} />
+			</div>
+			<FormFieldMessages name={name} error={error} />
+		</div>
 	);
 }
 

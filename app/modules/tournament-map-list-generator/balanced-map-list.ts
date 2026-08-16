@@ -55,7 +55,11 @@ function generateWithInput(
 	if (validationError) return err(validationError);
 
 	const { seededShuffle } = seededRandom(input.seed);
-	const stages = seededShuffle(resolveCommonStages());
+	// trying the least recently played maps first lets the search find a good
+	// enough list before the recursion depth cap is hit
+	const stages = seededShuffle(resolveCommonStages()).sort(
+		(a, b) => recencyPenalty(a) - recencyPenalty(b),
+	);
 	const mapList: Array<ModeWithStageAndScore & { score: number }> = [];
 	const bestMapList: { maps?: Array<ModeWithStageAndScore>; score: number } = {
 		score: Number.POSITIVE_INFINITY,
@@ -108,10 +112,12 @@ function generateWithInput(
 		return true;
 	};
 
-	const success = backtrack();
+	const searchExhausted = backtrack();
 
-	if (!success) return err("MAX_RECURSION_DEPTH_EXCEEDED");
+	// a complete list found before the depth cap was hit is still valid,
+	// only its optimality is unproven
 	if (bestMapList.maps) return ok(bestMapList.maps);
+	if (!searchExhausted) return err("MAX_RECURSION_DEPTH_EXCEEDED");
 
 	return err("COULD_NOT_GENERATE_MAPLIST");
 
@@ -435,24 +441,22 @@ function generateWithInput(
 			score += 100;
 		}
 
-		if (input.recentlyPlayedMaps) {
-			for (const map of mapList) {
-				const recentIndex = input.recentlyPlayedMaps.findIndex(
-					(recent) =>
-						recent.stageId === map.stageId && recent.mode === map.mode,
-				);
-
-				if (recentIndex !== -1) {
-					const recencyPenalty = Math.max(
-						10 - Math.floor(recentIndex / 2) * 2,
-						0,
-					);
-					score += recencyPenalty;
-				}
-			}
+		for (const map of mapList) {
+			score += recencyPenalty(map);
 		}
 
 		return score;
+	}
+
+	function recencyPenalty(map: Pick<TournamentMapListMap, "stageId" | "mode">) {
+		if (!input.recentlyPlayedMaps) return 0;
+
+		const recentIndex = input.recentlyPlayedMaps.findIndex(
+			(recent) => recent.stageId === map.stageId && recent.mode === map.mode,
+		);
+		if (recentIndex === -1) return 0;
+
+		return Math.max(10 - Math.floor(recentIndex / 2) * 2, 0);
 	}
 
 	function lastMapIsAGoodTieBreaker() {

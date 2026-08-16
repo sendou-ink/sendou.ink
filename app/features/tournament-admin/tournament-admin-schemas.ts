@@ -1,7 +1,12 @@
 import { z } from "zod";
+import {
+	TOURNAMENT,
+	TOURNAMENT_STAGE_TYPES,
+} from "~/features/tournament/tournament-constants";
+import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { _action, id, safeJSONParse } from "~/utils/zod";
-import { bracketProgressionSchema } from "../calendar/calendar-schemas";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 
@@ -52,6 +57,58 @@ export const adminTeamsActionSchema = z.union([
 		teamId: id,
 	}),
 ]);
+
+const bracketProgressionSchema = z.preprocess(
+	safeJSONParse,
+	z
+		.array(
+			z.object({
+				type: z.enum(TOURNAMENT_STAGE_TYPES),
+				name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+				settings: z
+					.object({
+						thirdPlaceMatch: z.boolean().optional(),
+						teamsPerGroup: z.number().int().optional(),
+						hasAbDivisions: z.boolean().optional(),
+						groupCount: z.number().int().optional(),
+						roundCount: z.number().int().optional(),
+						advanceThreshold: z.number().int().optional(),
+					})
+					.refine(
+						(settings) => {
+							if (settings.advanceThreshold) {
+								return Swiss.isValidAdvanceThreshold({
+									roundCount:
+										settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+									advanceThreshold: settings.advanceThreshold,
+								});
+							}
+							return true;
+						},
+						{
+							message: "Invalid advance threshold for the given round count",
+							path: ["advanceThreshold"],
+						},
+					),
+				requiresCheckIn: z.boolean(),
+				startTime: z.number().optional(),
+				sources: z
+					.array(
+						z.object({
+							bracketIdx: z.number(),
+							placements: z.array(z.number()),
+							rest: z.boolean().optional(),
+						}),
+					)
+					.optional(),
+			}),
+		)
+		.refine(
+			(progression) =>
+				Progression.bracketsToValidationError(progression) === null,
+			"Invalid bracket progression",
+		),
+);
 
 export const adminBracketsActionSchema = z.union([
 	z.object({

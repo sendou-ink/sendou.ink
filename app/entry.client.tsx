@@ -2,8 +2,8 @@ import i18next from "i18next";
 import { hydrateRoot } from "react-dom/client";
 import { I18nextProvider } from "react-i18next";
 import { HydratedRouter } from "react-router/dom";
-import { Config } from "~/config";
 import type { LanguageCode } from "~/modules/i18n/config";
+import { writeViewerTimezoneCookie } from "./features/timezone/timezone-cookie";
 import { i18nLoader } from "./modules/i18n/loader";
 import { loadDateFnsLocale } from "./utils/dates";
 import { logger } from "./utils/logger";
@@ -13,6 +13,8 @@ import { getSessionId } from "./utils/session-id";
 const FETCH_RETRY_DELAYS_MS = [0, 5000, 15000];
 /** Random jitter added to each retry delay to avoid a thundering herd against a struggling server. */
 const FETCH_RETRY_JITTER_MS = 1000;
+
+writeViewerTimezoneCookie();
 
 const originalFetch = window.fetch;
 window.fetch = (input, init) => {
@@ -100,75 +102,18 @@ if ("serviceWorker" in navigator) {
 	});
 }
 
-/**
- * Max time hydration waits for Sentry to initialize. If Sentry loads within
- * this window its instrumentation is passed to the router (enabling the
- * pageload trace); if not, hydration proceeds without it and errors are still
- * captured once Sentry finishes loading.
- */
-const SENTRY_INIT_TIMEOUT_MS = 1000;
-
-const sentryPromise = initSentry();
-
 // the server rendered with the page language's date-fns locale, so it must be
 // cached before hydration to avoid a markup mismatch
 Promise.all([
 	i18nLoader(),
 	loadDateFnsLocale(document.documentElement.lang as LanguageCode),
-	Promise.race([sentryPromise, wait(SENTRY_INIT_TIMEOUT_MS)]),
 ])
-	.then(([, , sentry]) =>
+	.then(() =>
 		hydrateRoot(
 			document,
 			<I18nextProvider i18n={i18next}>
-				<HydratedRouter
-					instrumentations={
-						sentry ? [sentry.tracing.clientInstrumentation] : []
-					}
-					onError={(error) => {
-						if (error instanceof Error) {
-							void sentryPromise.then((sentry) =>
-								sentry?.captureException(error),
-							);
-						}
-					}}
-				/>
+				<HydratedRouter />
 			</I18nextProvider>,
 		),
 	)
 	.catch(logger.error);
-
-// Sentry is dynamically imported so its code is not downloaded at all when
-// disabled. A load failure (e.g. an ad blocker) must not block hydration,
-// hence the catch.
-async function initSentry() {
-	if (!Config.sentry.enabled) return null;
-
-	try {
-		const Sentry = await import("@sentry/react-router");
-
-		const tracing = Sentry.reactRouterTracingIntegration({
-			useInstrumentationAPI: true,
-		});
-
-		Sentry.init({
-			dsn: Config.sentry.dsn,
-			sendDefaultPii: false,
-			integrations: [
-				tracing,
-				Sentry.thirdPartyErrorFilterIntegration({
-					filterKeys: ["sendou-ink"],
-					behaviour: "drop-error-if-contains-third-party-frames",
-				}),
-			],
-			enableLogs: true,
-			tracesSampleRate: 0.1,
-			tracePropagationTargets: [/^\//],
-		});
-
-		return { tracing, captureException: Sentry.captureException };
-	} catch (error) {
-		logger.error("Failed to initialize Sentry", error);
-		return null;
-	}
-}

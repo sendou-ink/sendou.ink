@@ -4,12 +4,15 @@ import { backdate } from "~/db/seed/core/backdate";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	freshUserSkills,
 	refreshUserSkills,
 } from "~/features/mmr/tiered.server";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -60,6 +63,24 @@ const alignLatestActionAt = async (groupIds: number[]) => {
 
 const inviteCodeOf = (position: number) =>
 	SendouQ.findOwnGroup(users.id(position))!.inviteCode;
+
+const preferring = (mode: ModeShort): UserMapModePreferences => ({
+	modes: [{ mode, preference: "PREFER" }],
+	pool: [],
+});
+
+/** Gives the user a match profile that prefers one mode and is neutral on the rest. */
+const prefer = (position: number, mode: ModeShort) =>
+	UserFactory.grant(users.id(position), {
+		matchProfile: { mapModePreferences: preferring(mode) },
+	});
+
+/** Puts the users in a team whose own preferences prefer one mode. */
+const createTeam = (memberPositions: number[], mode: ModeShort) =>
+	TeamFactory.create(
+		{ memberUserIds: userIds(memberPositions) },
+		{ mapModePreferences: preferring(mode) },
+	);
 
 /** Ranks a user: a higher `mu` is a higher ordinal, and with it a higher tier. */
 const createSkill = (position: number, mu: number) =>
@@ -138,28 +159,6 @@ describe("SendouQ", () => {
 			expect(group).toBeUndefined();
 		});
 
-		test("returns group with correct role when user is OWNER", async () => {
-			await createGroup([1, 2]);
-			await refreshSendouQInstance();
-
-			const group = SendouQ.findOwnGroup(users.id(1));
-
-			expect(group).toBeDefined();
-			const member = group?.members.find((m) => m.id === users.id(1));
-			expect(member?.role).toBe("OWNER");
-		});
-
-		test("returns group with correct role when user is REGULAR member", async () => {
-			await createGroup([1, 2]);
-			await refreshSendouQInstance();
-
-			const group = SendouQ.findOwnGroup(users.id(2));
-
-			expect(group).toBeDefined();
-			const member = group?.members.find((m) => m.id === users.id(2));
-			expect(member?.role).toBe("REGULAR");
-		});
-
 		test("returns correct group when multiple groups exist", async () => {
 			await createGroup([1, 2]);
 			await createGroup([3, 4]);
@@ -224,6 +223,49 @@ describe("SendouQ", () => {
 
 			expect(group).toBeDefined();
 			expect(group?.members[0].id).toBe(users.id(2));
+		});
+	});
+
+	describe("modePreferences", () => {
+		beforeEach(async () => {
+			await users.create(4);
+		});
+
+		test("counts each member's own preferences when the group is not a team's", async () => {
+			await prefer(1, "TC");
+
+			await createGroup([1, 2, 3, 4]);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.findOwnGroup(users.id(1))!.modePreferences).toEqual([
+				"TC",
+			]);
+		});
+
+		test("counts the team's own preferences when the group is a team's", async () => {
+			for (const position of [1, 2, 3, 4]) {
+				await prefer(position, "TC");
+			}
+			await createTeam([1, 2, 3, 4], "RM");
+
+			await createGroup([1, 2, 3, 4]);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.findOwnGroup(users.id(1))!.modePreferences).toEqual([
+				"RM",
+			]);
+		});
+
+		test("counts members' own preferences when only some of them share a team", async () => {
+			await prefer(1, "TC");
+			await createTeam([1, 2, 3], "RM");
+
+			await createGroup([1, 2, 3, 4]);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.findOwnGroup(users.id(1))!.modePreferences).toEqual([
+				"TC",
+			]);
 		});
 	});
 

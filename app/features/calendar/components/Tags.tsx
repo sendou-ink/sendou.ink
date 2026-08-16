@@ -12,10 +12,13 @@ export function Tags({
 	onDelete,
 	small = false,
 	centered = false,
+	maxVisible,
 }: {
 	tags: Array<CalendarEventTag>;
 	small?: boolean;
 	centered?: boolean;
+	/** How many tags to show at most, rest are collapsed into a "+N" indicator. If undefined all tags are shown. */
+	maxVisible?: number;
 
 	/** Called when tag delete button clicked. If undefined delete buttons won't be shown. */
 	onDelete?: (tag: CalendarEventTag) => void;
@@ -24,6 +27,9 @@ export function Tags({
 
 	if (tags.length === 0) return null;
 
+	const visibleTags = maxVisible ? tags.slice(0, maxVisible) : tags;
+	const hiddenCount = tags.length - visibleTags.length;
+
 	return (
 		<ul
 			className={clsx(styles.tags, {
@@ -31,7 +37,7 @@ export function Tags({
 				[styles.centered]: centered,
 			})}
 		>
-			{tags.map((tag) => (
+			{visibleTags.map((tag) => (
 				<React.Fragment key={tag}>
 					<li
 						style={{ backgroundColor: allTags[tag].color }}
@@ -51,6 +57,9 @@ export function Tags({
 					</li>
 				</React.Fragment>
 			))}
+			{hiddenCount > 0 ? (
+				<li className={styles.overflowTag}>+{hiddenCount}</li>
+			) : null}
 		</ul>
 	);
 }

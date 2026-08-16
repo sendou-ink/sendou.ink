@@ -14,6 +14,7 @@ import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import { getMemberRoleType } from "../../team/team-utils";
+import * as ScrimPickupRosterRepository from "../ScrimPickupRosterRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
@@ -38,12 +39,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const data = result.data;
 
 	if (data.from.mode === "PICKUP") {
-		if (data.from.users.includes(user.id)) {
-			return {
-				fieldErrors: { from: "Don't add yourself to the pickup member list" },
-			};
-		}
-
 		const pickupUserError = await validatePickup(data.from.users, user.id);
 		if (pickupUserError) {
 			return { fieldErrors: { from: pickupUserError.error } };
@@ -100,6 +95,10 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		),
 	});
 
+	if (data.from.mode === "PICKUP") {
+		await ScrimPickupRosterRepository.upsertOwn(data.from.users);
+	}
+
 	return redirect(scrimsPage());
 };
 
@@ -139,7 +138,12 @@ export const usersListForPost = async ({
 	return result.includes(authorId) ? result : [authorId, ...result];
 };
 
-async function validatePickup(userIds: number[], authorId: number) {
+/** Validates that a pickup roster can be put together by the author. */
+export async function validatePickup(userIds: number[], authorId: number) {
+	if (userIds.includes(authorId)) {
+		return { error: "Don't add yourself to the pickup member list" };
+	}
+
 	const friendsError = await validatePickupFriends(userIds, authorId);
 	if (friendsError) {
 		return friendsError;

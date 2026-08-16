@@ -1,0 +1,113 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 3,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "こむぎこをこねたユウ",
+        "abilities": [
+          "CB",
+          "ISS",
+          "SJ"
+        ],
+        "weaponLabel": "Splattershot",
+        "weaponId": 40,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "left",
+        "name": "Snix",
+        "abilities": [
+          "CB",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Splatana Stamper",
+        "weaponId": 8000,
+        "dead": false,
+        "specialReady": true
+      },
+      {
+        "slot": "right",
+        "name": "スライムLv.13",
+        "abilities": [
+          "ISS",
+          "ISS",
+          "ISS"
+        ],
+        "weaponLabel": "Splattershot Jr.",
+        "weaponId": 10,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "self",
+        "name": "Sendou",
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ],
+        "weaponLabel": "Custom Blaster",
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "abilities": [
+          "CB",
+          "QR",
+          "SJ"
+        ],
+        "weaponLabel": "Inkbrush Nouveau",
+        "weaponId": 1101,
+        "dead": false,
+        "specialReady": true
+      },
+      {
+        "abilities": [
+          "OG",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": ".52 Gal",
+        "weaponId": 50,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "abilities": [
+          "ISM",
+          "SSU",
+          "SCU"
+        ],
+        "weaponLabel": "Big Swig Roller",
+        "weaponId": 1040,
+        "dead": false,
+        "specialReady": true
+      },
+      {
+        "abilities": [
+          "SSU",
+          "NS",
+          "SSU"
+        ],
+        "weaponLabel": "Luna Blaster Neo",
+        "weaponId": 201,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Undertow Spillway"
+  },
+  "options": {
+    "skipFields": [
+      "teammates.0.name"
+    ],
+    "notes": "Tower Control frame with three special-ready camo surfaces: the left card (Splatana Stamper — dark art whose padded-square icon renders bigger than the 54px weapon box, unmatchable before the art-cropped templates) and enemy rows 0 (Inkbrush Nouveau) and 2 (Big Swig Roller). Self card is a Custom Blaster on a warm translucent background (kit tiles: Point Sensor + Triple Splashdown). teammates.0.name skipped: the up card reads こむきこをこねたユウ — the ぎ dakuten is below atlas resolution at 29px. Control values are the deterministic estimator output."
+  }
+}

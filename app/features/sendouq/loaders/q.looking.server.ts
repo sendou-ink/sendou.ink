@@ -1,13 +1,13 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { groupExpiryStatus } from "../core/groups";
-import { SendouQ } from "../core/SendouQ.server";
+import { SendouQ, sqRedirectIfNeeded } from "../core/SendouQ.server";
 import { qLookingSearchParams } from "../q-search-params";
-import { sqRedirectIfNeeded } from "../q-utils.server";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -22,9 +22,16 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			: SendouQ.lookingGroups(user.id);
 
 	if (!isPreview) {
-		sqRedirectIfNeeded({
+		await sqRedirectIfNeeded({
 			ownGroup,
 			currentLocation: "looking",
+		});
+	}
+
+	if (ownGroup) {
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "SQ_ADDED_TO_GROUP",
 		});
 	}
 
@@ -41,7 +48,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	]);
 
 	return {
-		...(await UserCardRepository.findAllByUserIds({
+		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: cardUserIds,
 		})),
 		groups: groupsToShow,
@@ -52,6 +59,14 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 					given: [],
 					received: [],
 				},
+		suggestions: ownGroup
+			? await SQGroupRepository.findAllSuggestionsByGroupId(ownGroup.id)
+			: [],
+		kickableUserIds: ownGroup
+			? await SQGroupRepository.findAllMissedReadyCheckUserIdsByGroupId(
+					ownGroup.id,
+				)
+			: [],
 		lastUpdated: Date.now(),
 		streamsCount: (await cachedStreams()).length,
 		chatCode:

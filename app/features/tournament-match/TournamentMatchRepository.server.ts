@@ -1,12 +1,11 @@
 import { type Insertable, sql, type Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Side } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
-import { commonUserSelect } from "~/utils/kysely.server";
+import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 
@@ -51,7 +50,7 @@ export async function findMatchById(id: number) {
 					.selectFrom("TournamentTeamMember")
 					.innerJoin("User", "User.id", "TournamentTeamMember.userId")
 					.select((eb) => [
-						...commonUserSelect(eb),
+						...commonUserSelect(eb, { inTournament: true }),
 						"TournamentTeamMember.tournamentTeamId",
 						sql<
 							string | null
@@ -479,7 +478,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 								"otherTeam.id",
 							),
 					)
-					.select((eb) => commonUserSelect(eb))
+					.select((eb) => [...commonUserSelect(eb), "User.country"])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",
 						"=",

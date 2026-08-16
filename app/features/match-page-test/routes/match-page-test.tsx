@@ -22,8 +22,16 @@ import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
+import type { ObjectiveTimelineEvent } from "~/components/ObjectiveTimeline";
+import type { PlayerStatusTimelineSample } from "~/components/PlayerStatusTimeline";
 import { logger } from "~/utils/logger";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+
+/** Counter reads of a made-up zones game, for previewing the timeline chart. */
+const MOCK_OBJECTIVE_EVENTS = mockObjectiveEvents();
+
+/** Icon-strip reads of the same made-up game, for previewing the status bands. */
+const MOCK_PLAYER_STATUS_SAMPLES = mockPlayerStatusSamples();
 
 type ActionVariant =
 	| "winner"
@@ -693,6 +701,89 @@ export default function MatchPageTestRoute() {
 									alpha: [40, null, 1100, 3040],
 									bravo: [null, 210, null, 4010],
 								},
+								scoreboard: {
+									objective: MOCK_OBJECTIVE_EVENTS,
+									playerStatus: MOCK_PLAYER_STATUS_SAMPLES,
+									scores: [100, 0],
+									alpha: [
+										{
+											name: "Sendou",
+											weaponSplId: 40,
+											ka: 12,
+											d: 4,
+											s: 3,
+											paint: 1102,
+											abilities: [
+												["LDE", "IRU", "IRU", "SCU"],
+												["SPU", "ISM", "ISM", "SCU"],
+												["SCU", "QSJ", "SRU", "SCU"],
+											],
+										},
+										{
+											name: "Lean",
+											weaponSplId: 1100,
+											ka: 9,
+											d: 6,
+											s: 2,
+											paint: 987,
+										},
+										{
+											name: "Kiver",
+											weaponSplId: 3040,
+											ka: 7,
+											d: 5,
+											s: 4,
+											paint: 1345,
+										},
+										{
+											name: "Brian",
+											weaponSplId: null,
+											ka: null,
+											d: null,
+											s: null,
+											paint: null,
+										},
+									],
+									bravo: [
+										{
+											name: "Naga",
+											weaponSplId: 210,
+											ka: 8,
+											d: 7,
+											s: 1,
+											paint: 876,
+											abilities: [
+												["CB", "SPU", "SPU", "SPU"],
+												["SCU", "SCU", "SS", "SCU"],
+												["SJ", "SRU", "QSJ", "QSJ"],
+											],
+										},
+										{
+											name: "Grey",
+											weaponSplId: 4010,
+											ka: 5,
+											d: 8,
+											s: 2,
+											paint: 1204,
+										},
+										{
+											name: "Poppy",
+											weaponSplId: 50,
+											ka: 6,
+											d: 9,
+											s: 3,
+											paint: 743,
+										},
+										{
+											name: "Lime",
+											weaponSplId: 2010,
+											ka: 4,
+											d: 10,
+											s: 1,
+											paint: 654,
+										},
+									],
+								},
 								rosters: {
 									alpha: [
 										{
@@ -770,4 +861,88 @@ export default function MatchPageTestRoute() {
 			</MatchPage>
 		</Main>
 	);
+}
+
+/**
+ * Plays out a zones game second by second: the controlling side burns its
+ * penalty before its count moves, and losing the zone after counting hands
+ * the side a penalty to burn next time.
+ */
+function mockObjectiveEvents(): ObjectiveTimelineEvent[] {
+	const PHASES: Array<{ seconds: number; control: [boolean, boolean] }> = [
+		{ seconds: 12, control: [false, false] },
+		{ seconds: 30, control: [true, false] },
+		{ seconds: 14, control: [false, false] },
+		{ seconds: 44, control: [false, true] },
+		{ seconds: 10, control: [false, false] },
+		{ seconds: 80, control: [true, false] },
+	];
+	const PENALTY_ON_LOSING_ZONE = 12;
+	const SAMPLE_EVERY_SECONDS = 2;
+
+	const score: [number, number] = [100, 100];
+	const penalty: [number, number] = [0, 0];
+	const events: ObjectiveTimelineEvent[] = [];
+	let previousControl: [boolean, boolean] = [false, false];
+	let t = 0;
+
+	for (const phase of PHASES) {
+		for (const side of [0, 1] as const) {
+			if (previousControl[side] && !phase.control[side]) {
+				penalty[side] += PENALTY_ON_LOSING_ZONE;
+			}
+		}
+		previousControl = phase.control;
+
+		for (let second = 0; second < phase.seconds; second++) {
+			for (const side of [0, 1] as const) {
+				if (!phase.control[side]) continue;
+				if (penalty[side] > 0) penalty[side] -= 1;
+				else score[side] = Math.max(0, score[side] - 1);
+			}
+
+			t += 1;
+			if (t % SAMPLE_EVERY_SECONDS !== 0) continue;
+			events.push({
+				t,
+				data: {
+					time: 300 - t,
+					score: [score[0], score[1]],
+					penalty: [penalty[0] || null, penalty[1] || null],
+					control: [phase.control[0], phase.control[1]],
+				},
+			});
+		}
+	}
+
+	return events;
+}
+
+/**
+ * Staggered respawn and special cycles per player over the same game as
+ * `mockObjectiveEvents`, sampled at the same cadence.
+ */
+function mockPlayerStatusSamples(): PlayerStatusTimelineSample[] {
+	const DURATION_SECONDS = 190;
+	const SAMPLE_EVERY_SECONDS = 2;
+
+	const samples: PlayerStatusTimelineSample[] = [];
+	for (
+		let t = SAMPLE_EVERY_SECONDS;
+		t <= DURATION_SECONDS;
+		t += SAMPLE_EVERY_SECONDS
+	) {
+		const flags = (kind: "dead" | "special", side: number) =>
+			[0, 1, 2, 3].map((slot) => {
+				const phase = t + slot * 17 + side * 31;
+				return kind === "dead" ? phase % 61 < 8 : phase % 47 < 12;
+			}) as [boolean, boolean, boolean, boolean];
+
+		samples.push({
+			t,
+			dead: [flags("dead", 0), flags("dead", 1)],
+			special: [flags("special", 0), flags("special", 1)],
+		});
+	}
+	return samples;
 }

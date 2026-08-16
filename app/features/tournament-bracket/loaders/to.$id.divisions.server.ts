@@ -32,10 +32,7 @@ const tournamentDivisionsCache = new Map<
 
 async function divisionsCached(tournamentId: number) {
 	if (!tournamentDivisionsCache.has(tournamentId)) {
-		const tournament = await tournamentFromDB({
-			tournamentId,
-			user: undefined,
-		});
+		const tournament = await tournamentFromDB(tournamentId);
 
 		if (!tournament.isLeagueSignup) {
 			return null;

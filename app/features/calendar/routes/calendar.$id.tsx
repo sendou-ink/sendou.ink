@@ -14,27 +14,21 @@ import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
-import { useUser } from "~/features/auth/core/user";
+import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { databaseTimestampToDate } from "~/utils/dates";
+import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	CALENDAR_PAGE,
-	calendarEditPage,
 	calendarEventPage,
 	calendarReportWinnersPage,
-	mapsPageWithMapPool,
 	navIconUrl,
 	resolveBaseUrl,
 } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 import { action } from "../actions/calendar.$id.server";
 import styles from "../calendar-event.module.css";
-import {
-	canDeleteCalendarEvent,
-	canEditCalendarEvent,
-	canReportCalendarEventWinners,
-} from "../calendar-utils";
 import { Tags } from "../components/Tags";
 import { loader } from "../loaders/calendar.$id.server";
 
@@ -77,9 +71,11 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function CalendarEventPage() {
-	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "calendar"]);
+	const canEdit = useHasPermission(data.event, "EDIT");
+	const canReportWinners = useHasPermission(data.event, "REPORT_WINNERS");
+	const canDelete = useHasPermission(data.event, "DELETE");
 
 	return (
 		<Main className="stack lg">
@@ -134,26 +130,22 @@ export default function CalendarEventPage() {
 						>
 							{resolveBaseUrl(data.event.bracketUrl)}
 						</LinkButton>
-						{canEditCalendarEvent({ user, event: data.event }) && (
+						{canEdit ? (
 							<LinkButton
 								size="small"
 								to={calendarEditPage(data.event.eventId)}
 							>
 								{t("common:actions.edit")}
 							</LinkButton>
-						)}
-						{canReportCalendarEventWinners({
-							user,
-							event: data.event,
-							startTimes: data.event.startTimes,
-						}) && (
+						) : null}
+						{canReportWinners ? (
 							<LinkButton
 								size="small"
 								to={calendarReportWinnersPage(data.event.eventId)}
 							>
 								{t("calendar:actions.reportWinners")}
 							</LinkButton>
-						)}
+						) : null}
 					</div>
 				</div>
 			</section>
@@ -161,11 +153,7 @@ export default function CalendarEventPage() {
 			<MapPoolInfo />
 			<div className="stack md">
 				<Description />
-				{canDeleteCalendarEvent({
-					user,
-					startTime: databaseTimestampToDate(data.event.startTimes[0]),
-					event: data.event,
-				}) ? (
+				{canDelete ? (
 					<FormWithConfirm
 						dialogHeading={t("calendar:actions.delete.confirm", {
 							name: data.event.name,

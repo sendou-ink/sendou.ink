@@ -1,4 +1,5 @@
 import { z } from "zod";
+import { ingestVodPrefillSchema } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
@@ -28,6 +29,10 @@ export const vodsSearchParams = SearchParams.define({
 
 export const vodsNewSearchParams = SearchParams.define({
 	vod: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	ingest: SP.json(ingestVodPrefillSchema.nullable(), {
+		loader: true,
+		compress: true,
+	}),
 });
 
 export const vodsVodSearchParams = SearchParams.define({

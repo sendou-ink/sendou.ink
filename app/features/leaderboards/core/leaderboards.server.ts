@@ -48,6 +48,44 @@ export async function cachedFullUserLeaderboard(season: number) {
 	});
 }
 
+export async function cachedTeamLeaderboard({
+	season,
+	onlyOneEntryPerUser,
+}: {
+	season: number;
+	onlyOneEntryPerUser: boolean;
+}) {
+	return cachified({
+		key: teamLeaderboardCacheKey({ season, onlyOneEntryPerUser }),
+		cache,
+		ttl: ttl(IN_MILLISECONDS.HALF_HOUR),
+		staleWhileRevalidate: ttl(IN_MILLISECONDS.TWO_HOURS),
+		async getFreshValue() {
+			return LeaderboardRepository.findTeamLeaderboardBySeason({
+				season,
+				onlyOneEntryPerUser,
+			});
+		},
+	});
+}
+
+/** Clears both variants of a season's cached team leaderboard, so that a change to which teams are skipped shows without waiting for the cache to expire. */
+export function clearCachedTeamLeaderboards(season: number) {
+	for (const onlyOneEntryPerUser of [true, false]) {
+		cache.delete(teamLeaderboardCacheKey({ season, onlyOneEntryPerUser }));
+	}
+}
+
+function teamLeaderboardCacheKey({
+	season,
+	onlyOneEntryPerUser,
+}: {
+	season: number;
+	onlyOneEntryPerUser: boolean;
+}) {
+	return `team-leaderboard-season-${season}-${onlyOneEntryPerUser ? "TEAM" : "TEAM-ALL"}`;
+}
+
 async function addTiers<T extends UserSPLeaderboardItem>(
 	entries: T[],
 	season: number,

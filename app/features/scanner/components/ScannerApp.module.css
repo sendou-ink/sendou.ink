@@ -1,0 +1,36 @@
+.topbar {
+	display: flex;
+	align-items: center;
+	gap: var(--s-6);
+	padding-bottom: var(--s-3);
+	border-bottom: var(--border-width) solid var(--color-bg-high);
+	margin-bottom: var(--s-4);
+
+	& nav {
+		display: flex;
+		gap: var(--s-2);
+
+		& a {
+			color: var(--color-text-high);
+			font-size: var(--font-xs);
+			font-weight: var(--weight-bold);
+			text-decoration: none;
+			padding: var(--s-1) var(--s-2-5);
+			border-radius: var(--radius-field);
+
+			&:hover {
+				color: var(--color-text);
+			}
+
+			&:focus-visible {
+				outline: var(--focus-ring);
+				outline-offset: 1px;
+			}
+
+			&.active {
+				color: var(--color-text-accent);
+				background: var(--color-bg-high);
+			}
+		}
+	}
+}

@@ -1,5 +1,4 @@
 import { sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
@@ -18,6 +17,7 @@ import {
 	type CommonUser,
 	commonUserJsonObject,
 	commonUserSelect,
+	jsonArrayFrom,
 } from "~/utils/kysely.server";
 import { VODS_PAGE_BATCH_SIZE } from "./vods-constants";
 import type { VideoBeingAdded, Vod } from "./vods-types";
@@ -210,10 +210,19 @@ export async function findVodById(id: Tables["Video"]["id"]) {
 
 		const matches = await videoMatchQuery.execute();
 
+		const pov = resolvePov(matches);
+		const povUserId = typeof pov === "string" ? undefined : pov?.id;
+
 		return {
 			...video,
-			pov: resolvePov(matches),
+			pov,
 			matches: R.map(matches, R.omit(["players", "playerNames"])),
+			permissions: {
+				EDIT:
+					povUserId === undefined
+						? [video.submitterUserId]
+						: [video.submitterUserId, povUserId],
+			},
 		};
 	}
 	return null;

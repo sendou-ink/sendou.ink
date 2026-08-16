@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { tournamentBracketsPage } from "~/utils/urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import {
 	expect,
 	modalClickConfirmButton,

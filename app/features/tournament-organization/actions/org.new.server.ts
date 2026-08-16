@@ -1,9 +1,9 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { parseFormData } from "~/form/parse.server";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
-import { tournamentOrganizationPage } from "~/utils/urls";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
 import { TOURNAMENT_ORGANIZATION } from "../tournament-organization-constants";
 import { newOrganizationSchemaServer } from "../tournament-organization-schemas.server";

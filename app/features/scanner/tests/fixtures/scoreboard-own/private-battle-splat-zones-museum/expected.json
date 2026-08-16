@@ -1,0 +1,31 @@
+{
+  "event": "ScoreboardOwn",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 6,
+    "weaponId": 50,
+    "abilities": [
+      [
+        "OG",
+        "SSU",
+        "RES",
+        "SSU"
+      ],
+      [
+        "SSU",
+        "SRU",
+        "SSU",
+        "SSU"
+      ],
+      [
+        "SJ",
+        "IA",
+        "QSJ",
+        "IA"
+      ]
+    ],
+    "stageLabel": "Museum d'Alfonsino",
+    "weaponLabel": ".52 Gal"
+  }
+}

@@ -23,8 +23,61 @@ import {
 	userSearch,
 } from "./fields";
 import { SendouForm, useFormFieldContext } from "./SendouForm";
+import type { ArrayItemRenderContext } from "./types";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
+
+/** `fieldset` registers its metadata onto the object it is handed, so anything nested needs a fresh one. */
+const singleTextField = () =>
+	z.object({
+		name: textField({ label: "labels.name", maxLength: 100 }),
+	});
+
+const SINGLE_TEXT_FIELD = singleTextField();
+
+const NESTED_FIELDSET = z.object({
+	member: fieldset({
+		label: "labels.member",
+		fields: singleTextField(),
+	}),
+});
+
+const FIELDSET_ARRAY = z.object({
+	members: array({
+		label: "labels.members",
+		min: 0,
+		max: 10,
+		field: fieldset({ fields: singleTextField() }),
+	}),
+});
+
+const TEXT_FIELD_ARRAY = z.object({
+	urls: array({
+		label: "labels.urls",
+		min: 0,
+		max: 5,
+		field: textField({ maxLength: 100 }),
+	}),
+});
+
+const TOGGLE = z.object({
+	noScreen: toggleField({ label: "labels.noScreen" }),
+});
+
+const CHECKBOX_GROUP = z.object({
+	modes: checkboxGroup({
+		label: "labels.buildModes",
+		items: [
+			{ label: "modes.TW", value: "TW" },
+			{ label: "modes.SZ", value: "SZ" },
+		],
+		minLength: 1,
+	}),
+});
+
+const TIME_RANGE = z.object({
+	times: timeRangeOptional({}),
+});
 
 vi.mock("react-router", async () => {
 	const actual = await vi.importActual("react-router");
@@ -85,21 +138,15 @@ describe("SendouForm", () => {
 
 	describe("basic form rendering", () => {
 		test("renders form with title", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
+			const screen = await renderForm(SINGLE_TEXT_FIELD, {
+				title: "Test Form",
 			});
-
-			const screen = await renderForm(schema, { title: "Test Form" });
 
 			await expect.element(screen.getByText("Test Form")).toBeVisible();
 		});
 
 		test("renders submit button with default text", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(SINGLE_TEXT_FIELD);
 
 			await expect
 				.element(screen.getByRole("button", { name: "Submit" }))
@@ -107,11 +154,7 @@ describe("SendouForm", () => {
 		});
 
 		test("renders submit button with custom text", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(SINGLE_TEXT_FIELD, {
 				submitButtonText: "Save Changes",
 			});
 
@@ -121,11 +164,9 @@ describe("SendouForm", () => {
 		});
 
 		test("hides submit button in autoSubmit mode", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
+			const screen = await renderForm(SINGLE_TEXT_FIELD, {
+				mode: "autoSubmit",
 			});
-
-			const screen = await renderForm(schema, { mode: "autoSubmit" });
 
 			const submitButton = screen.container.querySelector(
 				'button[type="submit"]',
@@ -136,21 +177,13 @@ describe("SendouForm", () => {
 
 	describe("text field", () => {
 		test("renders with label", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(SINGLE_TEXT_FIELD);
 
 			await expect.element(screen.getByLabelText("Name")).toBeVisible();
 		});
 
 		test("typing updates value", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(SINGLE_TEXT_FIELD);
 			const input = screen.getByLabelText("Name");
 
 			await userEvent.type(input.element(), "Test Value");
@@ -159,11 +192,7 @@ describe("SendouForm", () => {
 		});
 
 		test("shows error on blur when required field is empty", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(SINGLE_TEXT_FIELD);
 			const input = screen.getByLabelText("Name");
 
 			await userEvent.click(input.element());
@@ -175,11 +204,7 @@ describe("SendouForm", () => {
 		});
 
 		test("shows error on submit when required field is empty", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(SINGLE_TEXT_FIELD);
 
 			await screen.getByRole("button", { name: "Submit" }).click();
 
@@ -189,11 +214,7 @@ describe("SendouForm", () => {
 		});
 
 		test("clears error when valid value is entered after submit", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(SINGLE_TEXT_FIELD);
 
 			await screen.getByRole("button", { name: "Submit" }).click();
 			await expect
@@ -221,11 +242,7 @@ describe("SendouForm", () => {
 		});
 
 		test("initializes with default value", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(SINGLE_TEXT_FIELD, {
 				defaultValues: { name: "Default Name" },
 			});
 
@@ -409,11 +426,7 @@ describe("SendouForm", () => {
 
 	describe("toggle/switch field", () => {
 		test("renders toggle with label", async () => {
-			const schema = z.object({
-				noScreen: toggleField({ label: "labels.noScreen" }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TOGGLE);
 
 			await expect
 				.element(screen.getByText("[Accessibility] Avoid Splattercolor Screen"))
@@ -421,11 +434,7 @@ describe("SendouForm", () => {
 		});
 
 		test("clicking toggles value", async () => {
-			const schema = z.object({
-				noScreen: toggleField({ label: "labels.noScreen" }),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TOGGLE);
 			const switchElement = screen.getByRole("switch");
 
 			await expect.element(switchElement).not.toBeChecked();
@@ -439,11 +448,7 @@ describe("SendouForm", () => {
 		});
 
 		test("initializes with default value", async () => {
-			const schema = z.object({
-				noScreen: toggleField({ label: "labels.noScreen" }),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(TOGGLE, {
 				defaultValues: { noScreen: true },
 			});
 
@@ -576,18 +581,7 @@ describe("SendouForm", () => {
 		});
 
 		test("shows error when minimum selections not met", async () => {
-			const schema = z.object({
-				modes: checkboxGroup({
-					label: "labels.buildModes",
-					items: [
-						{ label: "modes.TW", value: "TW" },
-						{ label: "modes.SZ", value: "SZ" },
-					],
-					minLength: 1,
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(CHECKBOX_GROUP);
 
 			await screen.getByRole("button", { name: "Submit" }).click();
 
@@ -597,18 +591,7 @@ describe("SendouForm", () => {
 		});
 
 		test("checking an option that satisfies the minimum shows no error", async () => {
-			const schema = z.object({
-				modes: checkboxGroup({
-					label: "labels.buildModes",
-					items: [
-						{ label: "modes.TW", value: "TW" },
-						{ label: "modes.SZ", value: "SZ" },
-					],
-					minLength: 1,
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(CHECKBOX_GROUP);
 
 			await userEvent.click(screen.getByLabelText("Turf War").element());
 
@@ -618,18 +601,7 @@ describe("SendouForm", () => {
 		});
 
 		test("unchecking below the minimum shows the error without a submit", async () => {
-			const schema = z.object({
-				modes: checkboxGroup({
-					label: "labels.buildModes",
-					items: [
-						{ label: "modes.TW", value: "TW" },
-						{ label: "modes.SZ", value: "SZ" },
-					],
-					minLength: 1,
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(CHECKBOX_GROUP);
 			const twCheckbox = screen.getByLabelText("Turf War");
 
 			await userEvent.click(twCheckbox.element());
@@ -748,15 +720,11 @@ describe("SendouForm", () => {
 
 	describe("server error fallback", () => {
 		test("shows fallback error when server returns error for field without DOM element", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
 			mockFetcherData = {
 				fieldErrors: { hiddenField: "forms:errors.required" },
 			};
 
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(SINGLE_TEXT_FIELD, {
 				defaultValues: { name: "Test" },
 			});
 
@@ -766,15 +734,11 @@ describe("SendouForm", () => {
 		});
 
 		test("does not show fallback error when server error has corresponding DOM element", async () => {
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
-
 			mockFetcherData = {
 				fieldErrors: { name: "forms:errors.required" },
 			};
 
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(SINGLE_TEXT_FIELD, {
 				defaultValues: { name: "Test" },
 			});
 
@@ -785,10 +749,7 @@ describe("SendouForm", () => {
 
 	describe("time range field", () => {
 		test("renders two time inputs", async () => {
-			const schema = z.object({
-				times: timeRangeOptional({}),
-			});
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TIME_RANGE);
 
 			const timeInputs =
 				screen.container.querySelectorAll('input[type="time"]');
@@ -796,11 +757,7 @@ describe("SendouForm", () => {
 		});
 
 		test("initializes with default value", async () => {
-			const schema = z.object({
-				times: timeRangeOptional({}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(TIME_RANGE, {
 				defaultValues: { times: { start: "09:00", end: "17:00" } },
 			});
 
@@ -811,11 +768,7 @@ describe("SendouForm", () => {
 		});
 
 		test("updating time input changes value", async () => {
-			const schema = z.object({
-				times: timeRangeOptional({}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TIME_RANGE);
 
 			const timeInputs =
 				screen.container.querySelectorAll('input[type="time"]');
@@ -830,9 +783,6 @@ describe("SendouForm", () => {
 	describe("onApply callback", () => {
 		test("calls onApply with form values instead of fetcher.submit", async () => {
 			const onApply = vi.fn();
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
 
 			const router = createMemoryRouter(
 				[
@@ -840,7 +790,7 @@ describe("SendouForm", () => {
 						path: "/",
 						element: (
 							<SendouForm
-								schema={schema}
+								schema={SINGLE_TEXT_FIELD}
 								defaultValues={{ name: "Test Value" }}
 								onApply={onApply}
 							>
@@ -860,16 +810,13 @@ describe("SendouForm", () => {
 
 		test("does not call onApply when validation fails", async () => {
 			const onApply = vi.fn();
-			const schema = z.object({
-				name: textField({ label: "labels.name", maxLength: 100 }),
-			});
 
 			const router = createMemoryRouter(
 				[
 					{
 						path: "/",
 						element: (
-							<SendouForm schema={schema} onApply={onApply}>
+							<SendouForm schema={SINGLE_TEXT_FIELD} onApply={onApply}>
 								<FormField name="name" />
 							</SendouForm>
 						),
@@ -890,16 +837,7 @@ describe("SendouForm", () => {
 
 	describe("fieldset field", () => {
 		test("renders fieldset with legend", async () => {
-			const schema = z.object({
-				member: fieldset({
-					label: "labels.member",
-					fields: z.object({
-						name: textField({ label: "labels.name", maxLength: 100 }),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(NESTED_FIELDSET);
 
 			await expect.element(screen.getByText("Member")).toBeVisible();
 		});
@@ -922,16 +860,7 @@ describe("SendouForm", () => {
 		});
 
 		test("typing in nested field updates value", async () => {
-			const schema = z.object({
-				member: fieldset({
-					label: "labels.member",
-					fields: z.object({
-						name: textField({ label: "labels.name", maxLength: 100 }),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(NESTED_FIELDSET);
 			const input = screen.getByLabelText("Name");
 
 			await userEvent.type(input.element(), "Test Name");
@@ -940,16 +869,7 @@ describe("SendouForm", () => {
 		});
 
 		test("initializes nested fields with default values", async () => {
-			const schema = z.object({
-				member: fieldset({
-					label: "labels.member",
-					fields: z.object({
-						name: textField({ label: "labels.name", maxLength: 100 }),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(NESTED_FIELDSET, {
 				defaultValues: { member: { name: "Default Name" } },
 			});
 
@@ -961,16 +881,7 @@ describe("SendouForm", () => {
 
 	describe("array field with primitive items", () => {
 		test("renders add button", async () => {
-			const schema = z.object({
-				urls: array({
-					label: "labels.urls",
-					min: 0,
-					max: 5,
-					field: textField({ maxLength: 100 }),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TEXT_FIELD_ARRAY);
 
 			await expect
 				.element(screen.getByRole("button", { name: "Add" }))
@@ -978,16 +889,7 @@ describe("SendouForm", () => {
 		});
 
 		test("renders one starter item for an empty array", async () => {
-			const schema = z.object({
-				urls: array({
-					label: "labels.urls",
-					min: 0,
-					max: 5,
-					field: textField({ maxLength: 100 }),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TEXT_FIELD_ARRAY);
 
 			const inputs = screen.container.querySelectorAll('input[type="text"]');
 			expect(inputs.length).toBe(1);
@@ -999,16 +901,7 @@ describe("SendouForm", () => {
 		});
 
 		test("clicking add creates new item", async () => {
-			const schema = z.object({
-				urls: array({
-					label: "labels.urls",
-					min: 0,
-					max: 5,
-					field: textField({ maxLength: 100 }),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(TEXT_FIELD_ARRAY);
 
 			// Adding from the single empty starter row materializes it and appends a
 			// new one, so one click goes from 1 visible row to 2.
@@ -1024,16 +917,7 @@ describe("SendouForm", () => {
 		});
 
 		test("renders remove button for each item when above minimum", async () => {
-			const schema = z.object({
-				urls: array({
-					label: "labels.urls",
-					min: 0,
-					max: 5,
-					field: textField({ maxLength: 100 }),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(TEXT_FIELD_ARRAY, {
 				defaultValues: { urls: ["http://example.com"] },
 			});
 
@@ -1044,16 +928,7 @@ describe("SendouForm", () => {
 		});
 
 		test("clicking remove deletes item", async () => {
-			const schema = z.object({
-				urls: array({
-					label: "labels.urls",
-					min: 0,
-					max: 5,
-					field: textField({ maxLength: 100 }),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(TEXT_FIELD_ARRAY, {
 				defaultValues: { urls: ["http://example.com", "http://test.com"] },
 			});
 
@@ -1090,20 +965,7 @@ describe("SendouForm", () => {
 
 	describe("array field with fieldset items", () => {
 		test("renders array items as fieldsets", async () => {
-			const schema = z.object({
-				members: array({
-					label: "labels.members",
-					min: 0,
-					max: 10,
-					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(FIELDSET_ARRAY, {
 				defaultValues: { members: [{ name: "Alice" }] },
 			});
 
@@ -1112,20 +974,7 @@ describe("SendouForm", () => {
 		});
 
 		test("renders one starter fieldset for an empty array", async () => {
-			const schema = z.object({
-				members: array({
-					label: "labels.members",
-					min: 0,
-					max: 10,
-					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(FIELDSET_ARRAY);
 
 			await expect.element(screen.getByText("#1")).toBeVisible();
 
@@ -1139,20 +988,7 @@ describe("SendouForm", () => {
 		});
 
 		test("add button creates new fieldset item", async () => {
-			const schema = z.object({
-				members: array({
-					label: "labels.members",
-					min: 0,
-					max: 10,
-					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema);
+			const screen = await renderForm(FIELDSET_ARRAY);
 
 			await screen.getByRole("button", { name: "Add" }).click();
 			await screen.getByRole("button", { name: "Add" }).click();
@@ -1161,20 +997,7 @@ describe("SendouForm", () => {
 		});
 
 		test("remove button removes fieldset item", async () => {
-			const schema = z.object({
-				members: array({
-					label: "labels.members",
-					min: 0,
-					max: 10,
-					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(FIELDSET_ARRAY, {
 				defaultValues: { members: [{ name: "Alice" }, { name: "Bob" }] },
 			});
 
@@ -1198,9 +1021,7 @@ describe("SendouForm", () => {
 					max: 10,
 					sortable: true,
 					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
+						fields: singleTextField(),
 					}),
 				}),
 			});
@@ -1230,20 +1051,7 @@ describe("SendouForm", () => {
 		});
 
 		test("non-sortable array renders no move buttons", async () => {
-			const schema = z.object({
-				members: array({
-					label: "labels.members",
-					min: 0,
-					max: 10,
-					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(FIELDSET_ARRAY, {
 				defaultValues: { members: [{ name: "Alice" }, { name: "Bob" }] },
 			});
 
@@ -1305,20 +1113,7 @@ describe("SendouForm", () => {
 		});
 
 		test("typing in nested fieldset field updates value", async () => {
-			const schema = z.object({
-				members: array({
-					label: "labels.members",
-					min: 0,
-					max: 10,
-					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
-					}),
-				}),
-			});
-
-			const screen = await renderForm(schema, {
+			const screen = await renderForm(FIELDSET_ARRAY, {
 				defaultValues: { members: [{ name: "" }] },
 			});
 
@@ -1413,9 +1208,7 @@ describe("SendouForm", () => {
 					min: 1,
 					max: 10,
 					field: fieldset({
-						fields: z.object({
-							name: textField({ label: "labels.name", maxLength: 100 }),
-						}),
+						fields: singleTextField(),
 					}),
 				}),
 			});
@@ -1458,6 +1251,269 @@ describe("SendouForm", () => {
 
 			await expect.element(inputA).toHaveValue("Value A");
 			await expect.element(inputB).toHaveValue("Value B");
+		});
+	});
+
+	describe("array field with custom-rendered items", () => {
+		const memberSchema = () =>
+			z.object({
+				members: array({
+					label: "labels.members",
+					min: 0,
+					max: 10,
+					field: fieldset({
+						fields: z.object({
+							name: textField({ label: "labels.name", maxLength: 100 }),
+							role: select({
+								label: "labels.staffRole",
+								items: [
+									{ value: "ORGANIZER", label: "options.staffRole.ORGANIZER" },
+									{ value: "STREAMER", label: "options.staffRole.STREAMER" },
+								],
+							}),
+						}),
+					}),
+				}),
+			});
+
+		function renderCustomArrayForm(options?: {
+			defaultValues?: Record<string, unknown>;
+			onApply?: (values: Record<string, unknown>) => void;
+		}) {
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={memberSchema()}
+								defaultValues={options?.defaultValues}
+								onApply={options?.onApply}
+							>
+								<FormField name="members">
+									{(ctx: ArrayItemRenderContext) => (
+										<div>
+											<div data-testid={`member-${ctx.index}`}>
+												{ctx.values.name as string} /{" "}
+												{ctx.values.role as string}
+											</div>
+											<button
+												type="button"
+												onClick={() =>
+													ctx.setItemField(
+														"name",
+														`${ctx.values.name as string} edited`,
+													)
+												}
+											>
+												Edit member {ctx.index + 1}
+											</button>
+											{ctx.canRemove ? (
+												<button type="button" onClick={() => ctx.remove()}>
+													Remove member {ctx.index + 1}
+												</button>
+											) : null}
+										</div>
+									)}
+								</FormField>
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			return render(<RouterProvider router={router} />);
+		}
+
+		const memberTestIds = (screen: Awaited<ReturnType<typeof render>>) =>
+			screen.container.querySelectorAll('[data-testid^="member-"]');
+
+		test("renders each item through the render function with its values", async () => {
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+					],
+				},
+			});
+
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Alice / ORGANIZER");
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("Bob / STREAMER");
+		});
+
+		test("add button appends a new custom-rendered item", async () => {
+			const screen = await renderCustomArrayForm();
+
+			expect(memberTestIds(screen).length).toBe(1);
+
+			await screen.getByRole("button", { name: "Add" }).click();
+
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("/ ORGANIZER");
+			expect(memberTestIds(screen).length).toBe(2);
+		});
+
+		test("remove removes exactly the clicked item", async () => {
+			const onApply = vi.fn();
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+						{ name: "Carol", role: "STREAMER" },
+					],
+				},
+				onApply,
+			});
+
+			await screen.getByRole("button", { name: "Remove member 2" }).click();
+
+			expect(memberTestIds(screen).length).toBe(2);
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Alice / ORGANIZER");
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("Carol / STREAMER");
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice", role: "ORGANIZER" }),
+					expect.objectContaining({ name: "Carol", role: "STREAMER" }),
+				],
+			});
+		});
+
+		test("remove after add acts on the grown array, not a stale one", async () => {
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+					],
+				},
+			});
+
+			await screen.getByRole("button", { name: "Add" }).click();
+			await screen.getByRole("button", { name: "Remove member 1" }).click();
+
+			// A stale remove would have filtered the pre-add two-item array and
+			// dropped the freshly added row along with Alice.
+			expect(memberTestIds(screen).length).toBe(2);
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Bob / STREAMER");
+		});
+
+		test("remove after editing a different item keeps the edit", async () => {
+			const onApply = vi.fn();
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+						{ name: "Carol", role: "STREAMER" },
+					],
+				},
+				onApply,
+			});
+
+			// Editing item 1 does not re-render the memoized item 3, so its remove
+			// callback must read the current array instead of a stale closure.
+			await screen.getByRole("button", { name: "Edit member 1" }).click();
+			await screen.getByRole("button", { name: "Remove member 3" }).click();
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice edited", role: "ORGANIZER" }),
+					expect.objectContaining({ name: "Bob", role: "STREAMER" }),
+				],
+			});
+		});
+
+		test("setItemField updates only the targeted item's field", async () => {
+			const onApply = vi.fn();
+			const screen = await renderCustomArrayForm({
+				defaultValues: {
+					members: [
+						{ name: "Alice", role: "ORGANIZER" },
+						{ name: "Bob", role: "STREAMER" },
+					],
+				},
+				onApply,
+			});
+
+			await screen.getByRole("button", { name: "Edit member 2" }).click();
+
+			await expect
+				.element(screen.getByTestId("member-1"))
+				.toHaveTextContent("Bob edited / STREAMER");
+			await expect
+				.element(screen.getByTestId("member-0"))
+				.toHaveTextContent("Alice / ORGANIZER");
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice", role: "ORGANIZER" }),
+					expect.objectContaining({ name: "Bob edited", role: "STREAMER" }),
+				],
+			});
+		});
+
+		test("itemName renders a nested FormField bound to the item", async () => {
+			const onApply = vi.fn();
+			const schema = memberSchema();
+
+			const router = createMemoryRouter(
+				[
+					{
+						path: "/",
+						element: (
+							<SendouForm
+								schema={schema}
+								defaultValues={{
+									members: [{ name: "Alice", role: "ORGANIZER" }],
+								}}
+								onApply={onApply}
+							>
+								<FormField name="members">
+									{(ctx: ArrayItemRenderContext) => (
+										<FormField name={`${ctx.itemName}.name`} />
+									)}
+								</FormField>
+							</SendouForm>
+						),
+					},
+				],
+				{ initialEntries: ["/"] },
+			);
+
+			const screen = await render(<RouterProvider router={router} />);
+			const input = screen.getByLabelText("Name");
+
+			await expect.element(input).toHaveValue("Alice");
+
+			await userEvent.type(input.element(), " Smith");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			expect(onApply).toHaveBeenCalledWith({
+				members: [
+					expect.objectContaining({ name: "Alice Smith", role: "ORGANIZER" }),
+				],
+			});
 		});
 	});
 

@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "יצירת צוות חדש",
 	"editTeam.header": "",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "חיפוש צוות או שחקן...",
 	"actionButtons.leaveTeam": "לעזוב צוות",
 	"actionButtons.makeMainTeam": "",

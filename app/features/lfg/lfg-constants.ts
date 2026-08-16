@@ -16,6 +16,7 @@ export const LFG = {
 	MAX_TEXT_LENGTH: 2_000,
 	POST_FRESHNESS_DAYS: 30 as const,
 	MAX_WEAPON_FILTERS: 10,
+	POSTS_PER_PAGE: 24,
 	types: LFG_TYPES,
 };
 

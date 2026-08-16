@@ -49,6 +49,7 @@ async function searchByType({
 				id: u.id,
 				name: u.username,
 				inGameName: u.inGameName,
+				tournamentName: u.tournamentName,
 				avatarUrl: null,
 				discordId: u.discordId,
 				discordAvatar: u.discordAvatar,

@@ -1,13 +1,13 @@
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import { tournamentFromDBCached } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentSharedCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { resolveMapList } from "~/features/tournament-match/core/mapList.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { parseMaplistSource } from "~/modules/tournament-map-list-generator/source";
+import { jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
@@ -74,10 +74,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
-	const tournament = await tournamentFromDBCached({
-		tournamentId: match.tournamentId,
-		user: undefined,
-	});
+	const tournament = await tournamentSharedCached(match.tournamentId);
 
 	const mapList = async (): Promise<GetTournamentMatchResponse["mapList"]> => {
 		const { opponentOne, opponentTwo } = match;
@@ -123,6 +120,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				match.mapPickingStyle !== "TO"
 					? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 							teamIds: [opponentOne.id, opponentTwo.id],
+							excludeMatchId: id,
 						}).catch((error) => {
 							logger.error("Failed to fetch recently played maps", error);
 							return [];

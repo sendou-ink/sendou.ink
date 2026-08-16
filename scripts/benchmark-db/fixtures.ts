@@ -1,4 +1,5 @@
 import { sub } from "date-fns";
+import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
@@ -91,12 +92,25 @@ export interface Fixtures {
 	} | null;
 	heavyArtUserId: number | null;
 	heavyArtTagId: number | null;
+	heavyArtId: number | null;
 	imageSubmitterId: number | null;
 	imageId: number | null;
 	vod: { userId: number; videoId: number } | null;
 	apiTokenUserId: number | null;
 	logInLinkCode: string | null;
 	modNoteId: number | null;
+	scannerIngest: {
+		povUserId: number;
+		tournamentId: number;
+		atMs: number;
+		sinceTimestamp: number;
+	} | null;
+	scannerIngestSendouq: {
+		userId: number;
+		atMs: number;
+		sinceTimestamp: number;
+	} | null;
+	castedTournamentId: number | null;
 }
 
 /**
@@ -164,12 +178,16 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		xrank: await resolveXRank(),
 		heavyArtUserId: await resolveHeavyArtUserId(),
 		heavyArtTagId: await resolveHeavyArtTagId(),
+		heavyArtId: await resolveHeavyArtId(),
 		imageSubmitterId: await resolveImageSubmitterId(),
 		imageId: await resolveImageId(),
 		vod: await resolveVod(),
 		apiTokenUserId: await resolveApiTokenUserId(),
 		logInLinkCode: await resolveLogInLinkCode(),
 		modNoteId: await resolveModNoteId(),
+		scannerIngest: await resolveScannerIngest(),
+		scannerIngestSendouq: await resolveScannerIngestSendouq(),
+		castedTournamentId: await resolveCastedTournamentId(),
 	};
 
 	const nullFixtures = Object.entries(fixtures)
@@ -1050,6 +1068,18 @@ async function resolveHeavyArtTagId() {
 	return row?.tagId ?? null;
 }
 
+async function resolveHeavyArtId() {
+	const row = await db
+		.selectFrom("ArtUserMetadata")
+		.select(({ fn }) => ["artId", fn.countAll<number>().as("count")])
+		.groupBy("artId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.artId ?? null;
+}
+
 async function resolveImageSubmitterId() {
 	const row = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
@@ -1127,6 +1157,116 @@ async function resolveModNoteId() {
 		.selectFrom("ModNote")
 		.select("id")
 		.orderBy("id", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.id ?? null;
+}
+
+const SCANNER_INGEST_SINCE_WINDOW_SECONDS = 365 * 24 * 60 * 60;
+
+async function resolveScannerIngest() {
+	const participantRow = await db
+		.selectFrom("TournamentMatchGameResultParticipant")
+		.select(({ fn }) => ["userId", fn.countAll<number>().as("count")])
+		.groupBy("userId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!participantRow) return null;
+
+	const latestGame = await db
+		.selectFrom("TournamentMatchGameResultParticipant")
+		.innerJoin(
+			"TournamentMatchGameResult",
+			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+		)
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchGameResult.matchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select([
+			"TournamentMatchGameResult.createdAt",
+			"TournamentStage.tournamentId",
+		])
+		.where(
+			"TournamentMatchGameResultParticipant.userId",
+			"=",
+			participantRow.userId,
+		)
+		.orderBy("TournamentMatchGameResult.createdAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!latestGame) return null;
+
+	return {
+		povUserId: participantRow.userId,
+		tournamentId: latestGame.tournamentId,
+		atMs: latestGame.createdAt * 1000,
+		sinceTimestamp: latestGame.createdAt - SCANNER_INGEST_SINCE_WINDOW_SECONDS,
+	};
+}
+
+async function resolveScannerIngestSendouq() {
+	const memberRow = await db
+		.selectFrom("GroupMember")
+		.select(({ fn }) => ["userId", fn.countAll<number>().as("count")])
+		.groupBy("userId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!memberRow) return null;
+
+	const latestMatch = await db
+		.selectFrom("GroupMatch")
+		.select("GroupMatch.createdAt")
+		.where((eb) =>
+			eb.exists(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where("GroupMember.userId", "=", memberRow.userId)
+					.where((memberEb) =>
+						memberEb.or([
+							memberEb(
+								"GroupMember.groupId",
+								"=",
+								memberEb.ref("GroupMatch.alphaGroupId"),
+							),
+							memberEb(
+								"GroupMember.groupId",
+								"=",
+								memberEb.ref("GroupMatch.bravoGroupId"),
+							),
+						]),
+					),
+			),
+		)
+		.orderBy("GroupMatch.createdAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!latestMatch) return null;
+
+	return {
+		userId: memberRow.userId,
+		atMs: latestMatch.createdAt * 1000,
+		sinceTimestamp: latestMatch.createdAt - SCANNER_INGEST_SINCE_WINDOW_SECONDS,
+	};
+}
+
+async function resolveCastedTournamentId() {
+	const row = await db
+		.selectFrom("Tournament")
+		.select("id")
+		.where("castedMatchesInfo", "is not", null)
+		.orderBy(sql`length("castedMatchesInfo")`, "desc")
 		.limit(1)
 		.executeTakeFirst();
 

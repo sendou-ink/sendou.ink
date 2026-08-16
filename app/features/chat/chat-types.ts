@@ -4,6 +4,7 @@ export type SystemMessageType =
 	| "NEW_GROUP"
 	| "USER_LEFT"
 	| "MATCH_STARTED"
+	| "READY_CHECK_STARTED"
 	| "LIKE_RECEIVED"
 	| "SCORE_REPORTED"
 	| "SCORE_CONFIRMED"

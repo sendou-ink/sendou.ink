@@ -173,6 +173,7 @@ same place as an auto margin would but leaves their text room to breathe.
 
 .teamInfo {
 	min-width: 0;
+	overflow: hidden;
 }
 
 .teamName {
@@ -205,10 +206,12 @@ same place as an auto margin would but leaves their text room to breathe.
 }
 
 .player {
-	display: flex;
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
 	gap: var(--s-1-5);
 	min-width: 0;
+	overflow: hidden;
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	color: var(--graphic-text-dim);

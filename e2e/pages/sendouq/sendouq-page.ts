@@ -1,5 +1,6 @@
 import type { Page } from "@playwright/test";
-import { SENDOUQ_PAGE, sendouQInviteLink } from "~/utils/urls";
+import { sendouQInviteLink } from "~/features/sendouq/q-urls";
+import { SENDOUQ_PAGE } from "~/utils/urls";
 import { navigate, submit } from "../../helpers/playwright";
 import { SendouQLookingPage } from "./sendouq-looking-page";
 import { SendouQPreparingPage } from "./sendouq-preparing-page";

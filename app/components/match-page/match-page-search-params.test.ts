@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,13 +6,13 @@ import {
 import { matchPageSearchParams } from "./match-page-search-params";
 
 describe("matchPageSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(matchPageSearchParams, {
 			tab: [null, "rosters", "action", "result", "stats", "admin"],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(matchPageSearchParams, "tab", [["garbage"]]);
 	});
 });

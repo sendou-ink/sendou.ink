@@ -34,3 +34,9 @@ dump
 .e2e-build-marker
 
 notepad.txt
+
+# proprietary game fonts for the scanner glyph-atlas builders (scripts/scanner)
+/assets/fonts/
+
+*.mp4
+*.mkv

@@ -1,3 +1,4 @@
+import type { Tables } from "~/db/tables";
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
@@ -7,6 +8,30 @@ import type { Standing } from "./core/Bracket";
 
 export const tournamentWebsocketRoom = (tournamentId: number) =>
 	`tournament__${tournamentId}`;
+
+/**
+ * Room of the slice of the brackets page one bracket's (for the types viewed one group at
+ * a time, one group's) match data is rendered in. Broadcasts that can only have changed
+ * that match data go here rather than to the whole tournament's room, so that the viewers
+ * of the other brackets and groups do not refetch.
+ */
+export const tournamentBracketWebsocketRoom = ({
+	tournamentId,
+	bracketIdx,
+	groupId,
+}: {
+	tournamentId: number;
+	bracketIdx: number;
+	/** Only set for the bracket types {@link showsOneGroupAtATime}. */
+	groupId: number | null;
+}) =>
+	`${tournamentWebsocketRoom(tournamentId)}__bracket__${bracketIdx}${
+		groupId !== null ? `__group__${groupId}` : ""
+	}`;
+
+/** Whether the brackets page shows one group of this bracket type at a time, rather than all of them. */
+export const showsOneGroupAtATime = (type: Tables["TournamentStage"]["type"]) =>
+	type === "swiss";
 
 /**
  * Converts a group number to its corresponding letter representation.

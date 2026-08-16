@@ -6,13 +6,13 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { requireRole } from "~/modules/permissions/guards.server";
-import { tournamentBracketsPage } from "~/utils/urls";
+import { hasPermission } from "~/modules/permissions/utils";
 import { calendarNewSearchParams } from "../calendar-search-params";
-import { canEditCalendarEvent } from "../calendar-utils";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const user = requireUser();
@@ -39,10 +39,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 		return {
 			...event,
-			tournament: await tournamentData({
-				tournamentId: event.tournamentId,
-				user,
-			}),
+			tournament: await tournamentData(event.tournamentId),
 			rules: await TournamentRepository.findRulesById(event.tournamentId),
 		};
 	};
@@ -50,15 +47,11 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const eventToEdit = await eventWithTournament(eventId);
 	const canEditEvent = (() => {
 		if (!eventToEdit) return false;
-		if (
-			eventToEdit.tournament?.ctx.organization?.members.some(
-				(member) => member.userId === user.id && member.role === "ADMIN",
-			)
-		) {
-			return true;
+		if (eventToEdit.tournament) {
+			return hasPermission(eventToEdit.tournament.ctx, "EDIT_EVENT_INFO", user);
 		}
 
-		return canEditCalendarEvent({ user, event: eventToEdit });
+		return hasPermission(eventToEdit, "EDIT", user);
 	})();
 
 	// no editing tournament after the start

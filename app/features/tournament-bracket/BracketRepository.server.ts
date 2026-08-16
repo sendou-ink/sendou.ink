@@ -1,9 +1,9 @@
 import { sql as kyselySql, type RawBuilder, type Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
+import { jsonArrayFrom } from "~/utils/kysely.server";
 import { matchStatuses } from "./core/engine/status";
 import type {
 	BracketData,

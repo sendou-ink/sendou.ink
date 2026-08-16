@@ -2,6 +2,7 @@ import { type ActionFunctionArgs, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
@@ -13,7 +14,6 @@ import {
 	errorToastIfFalsy,
 	unauthorizedIfFalsy,
 } from "~/utils/remix.server";
-import { plusSuggestionPage } from "~/utils/urls";
 import { PLUS_TIERS } from "../plus-suggestions-constants";
 import { newSuggestionFormSchemaServer } from "../plus-suggestions-schemas.server";
 import { canSuggestNewUser } from "../plus-suggestions-utils";
@@ -46,13 +46,15 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const votingMonthYear = rangeToMonthYear(
 		badRequestIfFalsy(nextNonCompletedVoting(new Date())),
 	);
-	const suggestions =
-		await PlusSuggestionRepository.findAllByMonth(votingMonthYear);
+	const summary = await PlusSuggestionRepository.findMonthSummary({
+		...votingMonthYear,
+		userId: user.id,
+	});
 
 	errorToastIfFalsy(
 		canSuggestNewUser({
 			user,
-			suggestions,
+			hasSuggestedThisMonth: summary.hasSuggested,
 		}),
 		"Can't make a suggestion right now",
 	);

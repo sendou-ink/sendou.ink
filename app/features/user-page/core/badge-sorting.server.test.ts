@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { sortBadgesByFavorites } from "./badge-sorting.server";
 
 const badge = (id: number) => ({
@@ -8,7 +8,7 @@ const badge = (id: number) => ({
 });
 
 describe("sortBadgesByFavorites", () => {
-	it("returns badges sorted by descending id when no favorites", () => {
+	test("returns badges sorted by descending id when no favorites", () => {
 		const result = sortBadgesByFavorites({
 			favoriteBadgeIds: null,
 			badges: [badge(1), badge(3), badge(2)],
@@ -19,7 +19,7 @@ describe("sortBadgesByFavorites", () => {
 		expect(result.favoriteBadgeIds).toBeNull();
 	});
 
-	it("places favorites first in order for supporters", () => {
+	test("places favorites first in order for supporters", () => {
 		const result = sortBadgesByFavorites({
 			favoriteBadgeIds: [2, 1],
 			badges: [badge(1), badge(2), badge(3)],
@@ -30,7 +30,7 @@ describe("sortBadgesByFavorites", () => {
 		expect(result.favoriteBadgeIds).toEqual([2, 1]);
 	});
 
-	it("limits non-supporters to one favorite", () => {
+	test("limits non-supporters to one favorite", () => {
 		const result = sortBadgesByFavorites({
 			favoriteBadgeIds: [2, 3],
 			badges: [badge(1), badge(2), badge(3)],
@@ -41,7 +41,7 @@ describe("sortBadgesByFavorites", () => {
 		expect(result.badges[0].id).toBe(2);
 	});
 
-	it("filters out unowned favorite badge ids", () => {
+	test("filters out unowned favorite badge ids", () => {
 		const result = sortBadgesByFavorites({
 			favoriteBadgeIds: [99, 1],
 			badges: [badge(1), badge(2)],
@@ -51,7 +51,7 @@ describe("sortBadgesByFavorites", () => {
 		expect(result.favoriteBadgeIds).toEqual([1]);
 	});
 
-	it("returns null favoriteBadgeIds when all favorites are unowned", () => {
+	test("returns null favoriteBadgeIds when all favorites are unowned", () => {
 		const result = sortBadgesByFavorites({
 			favoriteBadgeIds: [99],
 			badges: [badge(1), badge(2)],

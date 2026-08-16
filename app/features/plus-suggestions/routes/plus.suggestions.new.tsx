@@ -2,8 +2,8 @@ import { useMatches } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import { SendouForm } from "~/form/SendouForm";
-import { plusSuggestionPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.new.server";
 import { PLUS_TIERS } from "../plus-suggestions-constants";
 import { newSuggestionFormSchema } from "../plus-suggestions-schemas";
@@ -28,10 +28,9 @@ export default function PlusNewSuggestionModalPage() {
 	}));
 
 	if (
-		!data.suggestions ||
 		!canSuggestNewUser({
 			user,
-			suggestions: data.suggestions,
+			hasSuggestedThisMonth: data.summary.hasSuggested,
 		}) ||
 		tierOptions.length === 0
 	) {

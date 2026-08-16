@@ -1,0 +1,98 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 6,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "STONKS",
+        "abilities": [
+          "IRU",
+          "RP",
+          "SJ"
+        ],
+        "weaponLabel": "Tri-Stringer",
+        "weaponId": 7010,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "left",
+        "name": "Player",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ],
+        "weaponLabel": "Splattershot Jr.",
+        "weaponId": 10,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "right",
+        "name": null,
+        "abilities": [],
+        "weaponLabel": null,
+        "weaponId": null,
+        "dead": true,
+        "specialReady": false
+      },
+      {
+        "slot": "self",
+        "name": "Edd",
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ],
+        "weaponLabel": "Ballpoint Splatling",
+        "weaponId": 4030,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "abilities": [
+          "BRU",
+          "SS",
+          "IRU"
+        ],
+        "weaponLabel": "Slosher",
+        "weaponId": 3000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "abilities": [],
+        "weaponLabel": "Splat Roller",
+        "weaponId": 1010,
+        "dead": true,
+        "specialReady": false
+      },
+      {
+        "abilities": [],
+        "weaponLabel": "Dualie Squelchers",
+        "weaponId": 5030,
+        "dead": true,
+        "specialReady": true
+      },
+      {
+        "abilities": [
+          "IRU",
+          "QR",
+          "SS"
+        ],
+        "weaponLabel": "Splattershot",
+        "weaponId": 40,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Museum d'Alfonsino"
+  },
+  "options": {
+    "notes": "One respawning card per team plus a struck-out special-ready (camo) enemy row. Enemy row 1's label was corrected from Flingza Roller to Splat Roller when the art-cropped templates landed (white roll, blue L-frame, yellow-striped grip — matches the 1010 icon exactly). Enemy row 2 is both struck out and special-ready: the red dualie art reads through the X, but the Custom-vs-plain Dualie Squelchers tag is hidden behind a stroke, so the icon matcher near-ties the twins (5031 0.600 vs 5030 0.597); the row's sub tile (Splat Bomb silhouette, readable despite the stroke clipping it) breaks the tie to plain Dualie Squelchers (subResolved). Control values are the deterministic estimator output (share of visible map surface, not in-game turf %)."
+  }
+}

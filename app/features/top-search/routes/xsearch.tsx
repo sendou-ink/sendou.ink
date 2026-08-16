@@ -1,23 +1,35 @@
-import { nanoid } from "nanoid";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import {
+	SendouSelect,
+	SendouSelectItem,
+	SendouSelectItemSection,
+} from "~/components/elements/Select";
+import { Image, ModeImage } from "~/components/Image";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
-import type { Tables } from "~/db/tables";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { topSearchPage } from "~/features/top-search/top-search-urls";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { navIconUrl, topSearchPage } from "~/utils/urls";
+import { brandImageUrl, navIconUrl } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.server";
 import { topSearchSearchParams } from "../top-search-search-params";
-import type { MonthYear } from "../top-search-utils";
+import { type MonthYear, monthYearToSpan } from "../top-search-utils";
 
 export { loader };
+
+const DIVISIONS = [
+	{ region: "WEST", brandId: "B10" },
+	{ region: "JPN", brandId: "B11" },
+] as const;
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -38,119 +50,146 @@ export const meta: MetaFunction = (args) => {
 };
 
 export default function XSearchPage() {
-	const [params, setParams] = useSearchParamsTyped(topSearchSearchParams);
-	const { t } = useTranslation(["common", "game-misc"]);
-	const { formatter: monthYearRangeFormatter } = useDateTimeFormat({
-		month: "numeric",
-		year: "numeric",
-	});
 	const data = useLoaderData<typeof loader>();
-
-	const handleSelectChange = (event: React.ChangeEvent<HTMLSelectElement>) => {
-		const [month, year, mode, region] = event.target.value.split("-");
-		invariant(month, "month is missing");
-		invariant(year, "year is missing");
-		invariant(mode, "mode is missing");
-		invariant(region, "region is missing");
-
-		setParams({
-			month: Number(month),
-			year: Number(year),
-			mode: mode as RankedModeShort,
-			region: region as "WEST" | "JPN",
-		});
-	};
-
-	const selectValue = `${
-		params.month ?? data.availableMonthYears[0].month
-	}-${params.year ?? data.availableMonthYears[0].year}-${params.mode}-${params.region}`;
-
-	const formatMonthYearRange = (from: MonthYear, to: MonthYear) =>
-		monthYearRangeFormatter.formatRange(
-			new Date(from.year, from.month - 1),
-			new Date(to.year, to.month - 1),
-		) ?? "";
 
 	return (
 		<Main halfWidth className="stack lg">
-			<select
-				className="text-sm"
-				onChange={handleSelectChange}
-				value={selectValue}
-				data-testid="xsearch-select"
-			>
-				{selectOptions(data.availableMonthYears).map((group) => (
-					<optgroup
-						key={group[0].id}
-						label={t(`common:divisions.${group[0].region}`)}
-					>
-						{group.map((option) => (
-							<option
-								key={option.id}
-								value={`${option.span.value.month}-${option.span.value.year}-${option.mode}-${option.region}`}
-							>
-								{formatMonthYearRange(option.span.from, option.span.to)} /{" "}
-								{t(`game-misc:MODE_SHORT_${option.mode}`)} /{" "}
-								{t(`common:divisions.${option.region}`)}
-							</option>
-						))}
-					</optgroup>
-				))}
-			</select>
+			<div className="stack md">
+				<SeasonMonthsSelect />
+				<ModeFilter />
+				<DivisionFilter />
+			</div>
 			<PlacementsTable placements={data.placements} />
 		</Main>
 	);
 }
 
-interface SelectOption {
-	id: string;
-	region: Tables["XRankPlacement"]["region"];
-	mode: RankedModeShort;
-	span: {
-		from: MonthYear;
-		to: MonthYear;
-		value: MonthYear;
+function SeasonMonthsSelect() {
+	const { t } = useTranslation(["common"]);
+	const data = useLoaderData<typeof loader>();
+	const [params, setParams] = useSearchParamsTyped(topSearchSearchParams);
+
+	const selected = {
+		month: params.month ?? data.availableMonthYears[0].month,
+		year: params.year ?? data.availableMonthYears[0].year,
 	};
+
+	return (
+		<SendouSelect
+			label={t("common:leaderboard.season")}
+			selectedKey={monthYearToKey(selected)}
+			onSelectionChange={(key) => setParams(keyToMonthYear(String(key)))}
+			items={monthYearsGroupedByYear(data.availableMonthYears)}
+			data-testid="xsearch-select"
+		>
+			{({ year, monthYears }) => (
+				<SendouSelectItemSection heading={year} key={year}>
+					{monthYears.map((monthYear) => (
+						<SendouSelectItem
+							key={monthYearToKey(monthYear)}
+							id={monthYearToKey(monthYear)}
+							textValue={monthYearSpanTextValue(monthYear)}
+						>
+							<MonthYearSpan monthYear={monthYear} />
+						</SendouSelectItem>
+					))}
+				</SendouSelectItemSection>
+			)}
+		</SendouSelect>
+	);
 }
 
-function selectOptions(monthYears: MonthYear[]) {
-	const options: SelectOption[][] = [];
-	for (const monthYear of monthYears) {
-		for (const region of ["WEST", "JPN"] as const) {
-			const regionOptions: SelectOption[] = [];
-			for (const mode of rankedModesShort) {
-				regionOptions.push({
-					id: nanoid(),
-					region,
-					mode,
-					span: monthYearToSpan(monthYear),
-				});
-			}
+/**
+ * Rendered as its own component (rather than formatted where the select's items are built)
+ * because React Aria snapshots item content when it builds the collection, which happens
+ * before hydration and thus before the locale aware formatting is available.
+ */
+function MonthYearSpan({ monthYear }: { monthYear: MonthYear }) {
+	const span = monthYearToSpan(monthYear);
 
-			options.push(regionOptions);
-		}
-	}
-
-	return options;
+	return (
+		<LocaleTimeRange
+			from={new Date(span.from.year, span.from.month - 1)}
+			to={new Date(span.to.year, span.to.month - 1)}
+			options={{ month: "numeric", year: "numeric" }}
+			inline
+			data-testid={`xsearch-select-option-${monthYearToKey(monthYear)}`}
+		/>
+	);
 }
 
-function monthYearToSpan(monthYear: MonthYear) {
-	const date = new Date(monthYear.year, monthYear.month - 1);
-	const lastMonth = new Date(date.getFullYear(), date.getMonth(), 0);
-	const threeMonthsAgo = new Date(date.getFullYear(), date.getMonth() - 3, 1);
+function ModeFilter() {
+	const { t } = useTranslation(["game-misc"]);
+	const [params, setParams] = useSearchParamsTyped(topSearchSearchParams);
 
-	return {
-		from: {
-			month: threeMonthsAgo.getMonth() + 1,
-			year: threeMonthsAgo.getFullYear(),
-		},
-		to: {
-			month: lastMonth.getMonth() + 1,
-			year: lastMonth.getFullYear(),
-		},
-		value: {
-			month: date.getMonth() + 1,
-			year: date.getFullYear(),
-		},
-	};
+	return (
+		<SendouChipRadioGroup wrap>
+			{rankedModesShort.map((mode) => (
+				<SendouChipRadio
+					key={mode}
+					name="mode"
+					value={mode}
+					checked={params.mode === mode}
+					onChange={() => setParams({ mode })}
+				>
+					<span className="stack horizontal xs items-center">
+						<ModeImage mode={mode} size={18} />
+						{t(`game-misc:MODE_LONG_${mode}`)}
+					</span>
+				</SendouChipRadio>
+			))}
+		</SendouChipRadioGroup>
+	);
+}
+
+function DivisionFilter() {
+	const { t } = useTranslation(["common"]);
+	const [params, setParams] = useSearchParamsTyped(topSearchSearchParams);
+
+	return (
+		<SendouChipRadioGroup>
+			{DIVISIONS.map(({ region, brandId }) => (
+				<SendouChipRadio
+					key={region}
+					name="region"
+					value={region}
+					checked={params.region === region}
+					onChange={() => setParams({ region })}
+				>
+					<span className="stack horizontal xs items-center">
+						<Image path={brandImageUrl(brandId)} size={18} alt="" />
+						{t(`common:divisions.${region}`)}
+					</span>
+				</SendouChipRadio>
+			))}
+		</SendouChipRadioGroup>
+	);
+}
+
+function monthYearToKey({ month, year }: MonthYear) {
+	return `${month}-${year}`;
+}
+
+function keyToMonthYear(key: string): MonthYear {
+	const [month, year] = key.split("-").map(Number);
+
+	return { month, year };
+}
+
+/** Locale independent fallback used for type to select, the visible text is localized separately. */
+function monthYearSpanTextValue(monthYear: MonthYear) {
+	const span = monthYearToSpan(monthYear);
+
+	return `${span.from.month}/${span.from.year} - ${span.to.month}/${span.to.year}`;
+}
+
+function monthYearsGroupedByYear(monthYears: Array<MonthYear>) {
+	const grouped = Object.groupBy(monthYears, (monthYear) => monthYear.year);
+
+	return Object.entries(grouped)
+		.sort(([yearA], [yearB]) => Number(yearB) - Number(yearA))
+		.map(([year, monthYearsOfYear]) => ({
+			year,
+			monthYears: (monthYearsOfYear ?? []).sort((a, b) => b.month - a.month),
+		}));
 }

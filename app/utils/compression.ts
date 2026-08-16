@@ -1,4 +1,4 @@
-import { deflateRaw, Inflate } from "pako";
+import { deflateSync, Inflate, strToU8 } from "fflate";
 
 /**
  * Compresses a string with raw deflate and encodes the result as base64.
@@ -8,7 +8,7 @@ export function compressToBase64(
 	value: string,
 	options?: { urlSafe?: boolean },
 ) {
-	const bytes = deflateRaw(value, { level: 9 });
+	const bytes = deflateSync(strToU8(value), { level: 9 });
 	let binary = "";
 
 	for (const byte of bytes) {
@@ -36,23 +36,21 @@ export function decompressFromBase64(
 
 	try {
 		const base64 = compressed.replace(/-/g, "+").replace(/_/g, "/");
-		const inflator = new Inflate({ raw: true });
 
 		const chunks: Array<Uint8Array> = [];
 		let decompressedBytes = 0;
-		inflator.onData = (chunk) => {
+		const inflator = new Inflate((chunk) => {
 			decompressedBytes += chunk.length;
 			if (decompressedBytes > maxDecompressedBytes) {
 				throw new Error("Decompressed value over the maximum size");
 			}
 			chunks.push(chunk);
-		};
+		});
 
-		const succeeded = inflator.push(
+		inflator.push(
 			Uint8Array.from(atob(base64), (c) => c.charCodeAt(0)),
 			true,
 		);
-		if (!succeeded) return null;
 
 		const value = new TextDecoder().decode(concatChunks(chunks));
 

@@ -32,6 +32,11 @@ import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { BannedUsersList } from "~/features/tournament-organization/components/BannedPlayersList";
 import {
+	tournamentOrganizationEditPage,
+	tournamentOrganizationPage,
+	tournamentOrganizationStatsPage,
+} from "~/features/tournament-organization/tournament-organization-urls";
+import {
 	Trophy,
 	TrophyContextProvider,
 	TrophyGrid,
@@ -51,9 +56,6 @@ import {
 	BLANK_IMAGE_URL,
 	calendarEventPage,
 	navIconUrl,
-	tournamentOrganizationEditPage,
-	tournamentOrganizationPage,
-	tournamentOrganizationStatsPage,
 	tournamentPage,
 	trophyTournamentsPage,
 } from "~/utils/urls";

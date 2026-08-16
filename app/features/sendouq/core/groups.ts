@@ -32,6 +32,14 @@ export function groupAfterMorph({
 	return ourGroup;
 }
 
+/**
+ * Whether the group's members can suggest other groups to each other. A suggestion
+ * is a pointer for teammates, so a solo group has no one to point at anything.
+ */
+export function canSuggest(group: { members: unknown[] }) {
+	return group.members.length > 1;
+}
+
 export function groupExpiryStatus(
 	latestActionAt: number,
 ): GroupExpiryStatus | null {

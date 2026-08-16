@@ -1,22 +1,14 @@
-import { beforeEach, describe, expect, it } from "vitest";
-import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
-import * as TeamFactory from "~/db/seed/factories/TeamFactory";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { wrappedAction } from "~/utils/Test";
 import { action as _editTeamAction } from "../routes/t.$customUrl.edit";
 import type { editTeamFormSchema } from "../team-schemas";
+import { createTeamOwnedByRegular } from "../tests/fixtures";
 
 const editTeamAction = wrappedAction<typeof editTeamFormSchema>({
 	action: _editTeamAction,
 	isJsonSubmission: true,
 });
-
-const createTeam = (name: string, isMainTeam = true) =>
-	TeamFactory.create({
-		name,
-		isMainTeam,
-		memberUserIds: [REGULAR_USER_TEST_ID],
-	});
 
 const DEFAULT_FIELDS = {
 	tag: null,
@@ -31,9 +23,9 @@ describe("team name editing", () => {
 		await UserFactory.createRegular();
 	});
 
-	it("can't take another team's name via editing", async () => {
-		const team = await createTeam("Team 1");
-		await createTeam("Team 2", false);
+	test("can't take another team's name via editing", async () => {
+		const team = await createTeamOwnedByRegular("Team 1");
+		await createTeamOwnedByRegular("Team 2", false);
 
 		const res = await editTeamAction(
 			{
@@ -47,8 +39,8 @@ describe("team name editing", () => {
 		expect(res.fieldErrors.name).toBe("forms:errors.duplicateName");
 	});
 
-	it("prevents editing team name to only special characters", async () => {
-		const team = await createTeam("Team 1");
+	test("prevents editing team name to only special characters", async () => {
+		const team = await createTeamOwnedByRegular("Team 1");
 
 		const res = await editTeamAction(
 			{

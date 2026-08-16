@@ -11,6 +11,9 @@ interface CommonEvent {
 	id: number;
 	name: string;
 	teamsCount: number;
+	/** How many players in total are rostered in the counted teams */
+	membersCount: number;
+	minMembersPerTeam: number;
 	logoUrl: string | null;
 	url: string;
 	/** Is the tournament ranked? If null, tournament is not hosted on sendou.ink */
@@ -51,7 +54,6 @@ export interface ShowcaseCalendarEvent extends CommonEvent {
 	/** Tournament is hidden from the public (test tournament) */
 	hidden: boolean;
 	isFinalized: boolean;
-	minMembersPerTeam: number;
 	firstPlacers: Array<{
 		teamName: string;
 		logoUrl: string | null;

@@ -19,6 +19,10 @@ export interface ListedArt {
 		customAvatarUrl: string | null;
 		commissionsOpen: Tables["User"]["commissionsOpen"];
 	};
+	permissions: {
+		EDIT: Array<number>;
+		UNLINK: Array<number>;
+	};
 }
 
 export const ART_SOURCES = ["ALL", "MADE-BY", "MADE-OF"] as const;

@@ -7,19 +7,19 @@ type InsertArgs = Omit<
 	Parameters<typeof SQGroupRepository.insert>[0],
 	"userId"
 > & {
-	/** The group's members, the first of them its owner. */
+	/** The group's members, the first of them its creator. */
 	memberUserIds: number[];
 };
 
 type Options = {
 	/** Was the group made in the matchmaking UI? */
 	isMatchmade?: boolean;
-	/** Groups that have liked this one, each of them as its own owner. */
+	/** Groups that have liked this one. */
 	likedByGroupIds?: number[];
 };
 
 /**
- * Creates SendouQ groups. The first of `memberUserIds` is the owner, whose
+ * Creates SendouQ groups. The first of `memberUserIds` is the creator, whose
  * membership the repository creates with the group; the rest join it the way they do
  * in production. Invite and chat codes are the repository's own.
  */
@@ -28,25 +28,32 @@ export const { create } = defineFactory({
 		status: "ACTIVE" as const,
 	}),
 	insert: async ({ memberUserIds, ...args }: InsertArgs) => {
-		const [ownerUserId, ...otherMemberUserIds] = memberUserIds;
-		invariant(ownerUserId, "A group needs at least an owner");
+		const [creatorUserId, ...otherMemberUserIds] = memberUserIds;
+		invariant(creatorUserId, "A group needs at least one member");
 
 		const group = await SQGroupRepository.insert({
 			...args,
-			userId: ownerUserId,
+			userId: creatorUserId,
 		});
 
 		for (const userId of otherMemberUserIds) {
 			await SQGroupRepository.insertMember(group.id, { userId });
 		}
 
-		return { id: group.id, memberUserIds, ownerUserId };
+		return { id: group.id, memberUserIds };
 	},
 	applyOptions: async (group, { isMatchmade, likedByGroupIds }: Options) => {
 		for (const likerGroupId of likedByGroupIds ?? []) {
+			const liker = await db
+				.selectFrom("GroupMember")
+				.select("GroupMember.userId")
+				.where("GroupMember.groupId", "=", likerGroupId)
+				.executeTakeFirstOrThrow();
+
 			await SQGroupRepository.insertLike({
 				likerGroupId,
 				targetGroupId: group.id,
+				createdByUserId: liker.userId,
 			});
 		}
 

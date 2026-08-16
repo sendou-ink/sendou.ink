@@ -49,6 +49,12 @@
 	gap: var(--s-2);
 }
 
+.suggestedUserTrigger {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
 .comment {
 	white-space: pre-wrap;
 	overflow-wrap: break-word;
@@ -78,6 +84,13 @@
 .votingContainer {
 	max-width: 32rem;
 	margin-inline: auto;
+}
+
+.votingUserTrigger {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
 }
 
 .votingVoteButton {

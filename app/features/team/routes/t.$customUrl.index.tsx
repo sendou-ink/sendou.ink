@@ -27,7 +27,7 @@ import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { useHasRole } from "~/modules/permissions/hooks";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import invariant from "~/utils/invariant";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
@@ -36,7 +36,6 @@ import styles from "../team.module.css";
 import { teamProfilePageActionSchema } from "../team-schemas";
 import {
 	getMemberRoleType,
-	isTeamManager,
 	isTeamMember,
 	isTeamOwner,
 	resolveNewOwner,
@@ -110,19 +109,20 @@ export default function TeamIndexPage() {
 function ActionButtons() {
 	const { t } = useTranslation(["team"]);
 	const user = useUser();
-	const isAdmin = useHasRole("ADMIN");
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.loaderData as TeamLoaderData;
 	const team = layoutData.team;
+	const canManageRoster = useHasPermission(team, "MANAGE_ROSTER");
+	const canEditTeam = useHasPermission(team, "EDIT");
 
-	if (!isTeamMember({ user, team }) && !isAdmin) {
+	if (!isTeamMember({ user, team }) && !canManageRoster && !canEditTeam) {
 		return null;
 	}
 
 	return (
 		<div className={styles.actionButtons}>
-			{isTeamManager({ user, team }) || isAdmin ? (
+			{canManageRoster ? (
 				<LinkButton
 					size="small"
 					to={manageTeamRosterPage(team.customUrl)}
@@ -134,7 +134,7 @@ function ActionButtons() {
 					{t("team:actionButtons.manageRoster")}
 				</LinkButton>
 			) : null}
-			{isTeamManager({ user, team }) || isAdmin ? (
+			{canEditTeam ? (
 				<LinkButton
 					size="small"
 					to={editTeamPage(team.customUrl)}
@@ -154,7 +154,6 @@ function ActionButtons() {
 function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 	const { t } = useTranslation(["common", "team"]);
 	const user = useUser();
-	const isAdmin = useHasRole("ADMIN");
 	const { submit } = useActionSubmit(teamProfilePageActionSchema);
 	const [confirming, setConfirming] = React.useState<"LEAVE" | "DELETE" | null>(
 		null,
@@ -166,7 +165,7 @@ function TeamActionsMenu({ team }: { team: TeamLoaderData["team"] }) {
 	const showMainTeamIndicator = isTeamMember({ user, team }) && isMainTeam;
 	const canMakeMainTeam = isTeamMember({ user, team }) && !isMainTeam;
 	const canLeaveTeam = isTeamMember({ user, team }) && team.members.length > 1;
-	const canDeleteTeam = isTeamOwner({ user, team }) || isAdmin;
+	const canDeleteTeam = useHasPermission(team, "DELETE");
 
 	if (
 		!showMainTeamIndicator &&

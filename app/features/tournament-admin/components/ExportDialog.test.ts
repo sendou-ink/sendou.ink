@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { scopedAndSortedTeams } from "./ExportDialog";
 
@@ -39,7 +39,7 @@ describe("scopedAndSortedTeams() check-in filtering", () => {
 	describe("bracket without its own check-in", () => {
 		const bracketParticipantIds = new Set([checkedInAtEventLevel.id]);
 
-		it("includes an event-level checked-in team in 'Checked in only'", () => {
+		test("includes an event-level checked-in team in 'Checked in only'", () => {
 			const result = scopedAndSortedTeams({
 				teams: [checkedInAtEventLevel],
 				status: "checkedIn",
@@ -52,7 +52,7 @@ describe("scopedAndSortedTeams() check-in filtering", () => {
 			expect(result.map((t) => t.id)).toEqual([checkedInAtEventLevel.id]);
 		});
 
-		it("excludes an event-level checked-in team from 'Not checked in'", () => {
+		test("excludes an event-level checked-in team from 'Not checked in'", () => {
 			const result = scopedAndSortedTeams({
 				teams: [checkedInAtEventLevel],
 				status: "notCheckedIn",
@@ -79,7 +79,7 @@ describe("scopedAndSortedTeams() check-in filtering", () => {
 			onlyEventLevel.id,
 		]);
 
-		it("keeps only the team checked into the bracket in 'Checked in only'", () => {
+		test("keeps only the team checked into the bracket in 'Checked in only'", () => {
 			const result = scopedAndSortedTeams({
 				teams: [checkedIntoBracket, onlyEventLevel],
 				status: "checkedIn",
@@ -92,7 +92,7 @@ describe("scopedAndSortedTeams() check-in filtering", () => {
 			expect(result.map((t) => t.id)).toEqual([checkedIntoBracket.id]);
 		});
 
-		it("lists a bracket team pending check-in in 'Not checked in'", () => {
+		test("lists a bracket team pending check-in in 'Not checked in'", () => {
 			const result = scopedAndSortedTeams({
 				teams: [checkedIntoBracket, onlyEventLevel],
 				status: "notCheckedIn",
@@ -105,7 +105,7 @@ describe("scopedAndSortedTeams() check-in filtering", () => {
 			expect(result.map((t) => t.id)).toEqual([onlyEventLevel.id]);
 		});
 
-		it("excludes a not-checked-in team that does not participate in the bracket", () => {
+		test("excludes a not-checked-in team that does not participate in the bracket", () => {
 			const notInBracket = team(3, checkIns([]));
 
 			const result = scopedAndSortedTeams({

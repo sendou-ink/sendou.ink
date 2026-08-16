@@ -139,7 +139,7 @@ async function cancelMatch(
 ) {
 	const request = await SQMatchRepository.requestCancelMatch({
 		matchId: match.id,
-		requestedByUserId: match.alphaGroup.ownerUserId,
+		requestedByUserId: match.alphaGroup.memberUserIds[0],
 		...requested,
 	});
 
@@ -150,7 +150,7 @@ async function cancelMatch(
 
 	const acceptance = await SQMatchRepository.acceptCancelMatch({
 		matchId: match.id,
-		acceptedByUserId: match.bravoGroup.ownerUserId,
+		acceptedByUserId: match.bravoGroup.memberUserIds[0],
 		...accepted,
 	});
 

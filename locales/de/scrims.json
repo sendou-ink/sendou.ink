@@ -39,6 +39,8 @@
 	"forms.with.explanation": "Du kannst nach Usern per Nutzername, Discord ID oder sendou.ink Profil-URL suchen.",
 	"forms.with.user": "Nutzer {{nth}}",
 	"forms.with.pick-up": "Pick-up",
+	"forms.with.pick-up-new": "",
+	"forms.with.pick-up-recent": "",
 	"forms.when.title": "",
 	"forms.when.explanation": "",
 	"forms.rangeEnd.title": "",

@@ -1,23 +1,20 @@
 import { Pencil } from "lucide-react";
-import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useLocation } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
-import { ModeImage } from "~/components/Image";
-import type { Preference, UserMapModePreferences } from "~/db/tables-json";
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
-import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
+import { FormMessage } from "~/components/FormMessage";
+import type { UserMapModePreferences } from "~/db/tables-json";
+import { userCardEditPage } from "~/features/user-card/user-card-urls";
 import { SendouForm } from "~/form/SendouForm";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { userCardEditPage } from "~/utils/urls";
 import type { loader } from "../loaders/settings.server";
 import { updateMatchProfileSchema } from "../match-profile-schemas";
-import { ModeMapPoolPicker } from "./ModeMapPoolPicker";
-import { PreferenceRadioGroup } from "./PreferenceRadioGroup";
+import {
+	MapModePreferencesField,
+	preferencesFromRaw,
+} from "./MapModePreferencesField";
 
 export function MatchProfileTab() {
-	const { t } = useTranslation(["user"]);
+	const { t } = useTranslation(["user", "settings"]);
 	const data = useLoaderData<typeof loader>();
 	const location = useLocation();
 	const matchProfile = data.matchProfile;
@@ -66,6 +63,9 @@ export function MatchProfileTab() {
 								/>
 							)}
 						</FormField>
+						<FormMessage type="info">
+							{t("settings:matchProfile.maps.teamPreferencesHint")}
+						</FormMessage>
 						<FormField name="weaponPool" />
 						<FormField name="vc" />
 						<FormField name="languages" />
@@ -73,96 +73,6 @@ export function MatchProfileTab() {
 					</>
 				)}
 			</SendouForm>
-		</div>
-	);
-}
-
-function preferencesFromRaw(
-	raw: UserMapModePreferences | null,
-): UserMapModePreferences {
-	if (!raw) return { pool: [], modes: [] };
-
-	return {
-		modes: raw.modes,
-		pool: raw.pool.map((p) => ({
-			mode: p.mode,
-			stages: p.stages.filter((s) => !BANNED_MAPS[p.mode].includes(s)),
-		})),
-	};
-}
-
-function MapModePreferencesField({
-	value,
-	onChange,
-}: {
-	value: UserMapModePreferences;
-	onChange: (value: UserMapModePreferences) => void;
-}) {
-	const handleModePreferenceChange = ({
-		mode,
-		preference,
-	}: {
-		mode: ModeShort;
-		preference: Preference & "NEUTRAL";
-	}) => {
-		const newModePreferences = value.modes.filter((map) => map.mode !== mode);
-		if (preference !== "NEUTRAL") {
-			newModePreferences.push({ mode, preference });
-		}
-		onChange({ modes: newModePreferences, pool: value.pool });
-	};
-
-	const handlePoolChange = (mode: ModeShort, stages: StageId[]) => {
-		const filtered = value.pool.filter((p) => p.mode !== mode);
-		filtered.push({ mode, stages });
-		onChange({ ...value, pool: filtered });
-	};
-
-	const pickableModes = modesShort.filter((mode) => {
-		const mp = value.modes.find((p) => p.mode === mode);
-		return mp?.preference !== "AVOID";
-	});
-
-	const [selectedMode, setSelectedMode] = React.useState<ModeShort>(
-		modesShort[0],
-	);
-	const activeMode = pickableModes.includes(selectedMode)
-		? selectedMode
-		: pickableModes[0];
-
-	return (
-		<div className="stack lg">
-			<div className="stack items-center">
-				{modesShort.map((modeShort) => {
-					const preference = value.modes.find(
-						(preference) => preference.mode === modeShort,
-					);
-
-					return (
-						<div key={modeShort} className="stack horizontal xs my-1">
-							<ModeImage mode={modeShort} width={32} />
-							<PreferenceRadioGroup
-								preference={preference?.preference}
-								onPreferenceChange={(preference) =>
-									handleModePreferenceChange({ mode: modeShort, preference })
-								}
-								aria-label={`Select preference towards ${modeShort}`}
-							/>
-						</div>
-					);
-				})}
-			</div>
-
-			{activeMode ? (
-				<ModeMapPoolPicker
-					mode={activeMode}
-					modeTabs={pickableModes}
-					onModeChange={setSelectedMode}
-					amountToPick={AMOUNT_OF_MAPS_IN_POOL_PER_MODE}
-					pool={value.pool.find((p) => p.mode === activeMode)?.stages ?? []}
-					onChange={(stages) => handlePoolChange(activeMode, stages)}
-				/>
-			) : null}
 		</div>
 	);
 }

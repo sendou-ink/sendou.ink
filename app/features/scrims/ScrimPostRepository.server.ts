@@ -1,6 +1,5 @@
 import { sub } from "date-fns";
 import type { Insertable } from "kysely";
-import { jsonArrayFrom, jsonBuildObject } from "kysely/helpers/sqlite";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -13,6 +12,8 @@ import {
 	type CommonUser,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonBuildObject,
 	tournamentLogoWithDefault,
 } from "~/utils/kysely.server";
 import { db } from "../../db/sql";

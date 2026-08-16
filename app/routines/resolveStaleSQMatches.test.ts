@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
 	removeRoom: vi.fn(),
 	setMetadata: vi.fn(),
 }));
@@ -23,11 +24,16 @@ import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 
-let alphaUserIds: number[];
-let bravoUserIds: number[];
+const users = UserFactory.pool();
+/** The two SendouQ groups: the first FULL_GROUP_SIZE users against the rest. */
+const alphaUserIds = () => users.ids().slice(0, FULL_GROUP_SIZE);
+const bravoUserIds = () => users.ids().slice(FULL_GROUP_SIZE);
 
 const setupMatch = (options: { isReported?: boolean; createdAt?: Date } = {}) =>
-	SQMatchFactory.create({ alphaUserIds, bravoUserIds }, options);
+	SQMatchFactory.create(
+		{ alphaUserIds: alphaUserIds(), bravoUserIds: bravoUserIds() },
+		options,
+	);
 
 const fetchMatch = (matchId: number) =>
 	db
@@ -51,9 +57,7 @@ describe("ResolveStaleSQMatchesRoutine", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
 
-		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
-		alphaUserIds = users.slice(0, FULL_GROUP_SIZE).map((user) => user.id);
-		bravoUserIds = users.slice(FULL_GROUP_SIZE).map((user) => user.id);
+		await users.create(FULL_GROUP_SIZE * 2);
 	});
 
 	afterEach(() => {
@@ -84,7 +88,7 @@ describe("ResolveStaleSQMatchesRoutine", () => {
 			await SQMatchRepository.reportMapWinner({
 				matchId: match.id,
 				winnerId: match.alphaGroup.id,
-				reportedByUserId: alphaUserIds[0],
+				reportedByUserId: users.id(1),
 				reportedCount,
 			});
 		}

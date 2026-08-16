@@ -20,9 +20,12 @@ import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 export function SwissBracket({
 	bracket,
 	bracketIdx,
+	groupId,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	/** Group whose matches were loaded, null when every group's were. */
+	groupId?: number | null;
 }) {
 	const user = useUser();
 	const tournament = useTournament();
@@ -30,18 +33,13 @@ export function SwissBracket({
 	const { censored, matchCensorLevel } = useBracketSpoilerCensor();
 
 	const groups = getGroups(bracket);
-	const [selectedGroupIdParam, setSelectedGroupId] = useSearchParam(
+	const [, setSelectedGroupId] = useSearchParam(
 		tournamentBracketsSearchParams,
 		"group",
 	);
-	// when bracket starts we go from "virtual id" to a real one
-	// which would cause the admin to see empty group after starting
-	// bracket
-	const selectedGroupId =
-		typeof selectedGroupIdParam === "number" &&
-		groups.some((g) => g.groupId === selectedGroupIdParam)
-			? selectedGroupIdParam
-			: groups[0].groupId;
+	// the group of the shipped matches rather than that of the search param, so that
+	// the group being switched to only shows up once its matches have loaded
+	const selectedGroupId = groupId ?? groups[0].groupId;
 
 	const selectedGroup = groups.find((g) => g.groupId === selectedGroupId)!;
 
@@ -266,23 +264,8 @@ export function SwissBracket({
 }
 
 function getGroups(bracket: BracketType) {
-	const result: Array<{
-		groupName: string;
-		matches: MatchType[];
-		groupId: number;
-	}> = [];
-
-	for (const group of bracket.data.group) {
-		const matches = bracket.data.match.filter(
-			(match) => match.groupId === group.id,
-		);
-
-		result.push({
-			groupName: `Group ${groupNumberToLetters(group.number)}`,
-			matches,
-			groupId: group.id,
-		});
-	}
-
-	return result;
+	return bracket.data.group.map((group) => ({
+		groupName: `Group ${groupNumberToLetters(group.number)}`,
+		groupId: group.id,
+	}));
 }

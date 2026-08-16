@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { subsOfResult } from "./team-utils";
 
 describe("subsOfResult()", () => {
-	it("returns empty array if all participants are current members", () => {
+	test("returns empty array if all participants are current members", () => {
 		const result = {
 			participants: [{ id: 1 }, { id: 2 }],
 			startsAt: 1000,
@@ -15,7 +15,7 @@ describe("subsOfResult()", () => {
 		expect(subs).toEqual([]);
 	});
 
-	it("returns participant not in members as sub", () => {
+	test("returns participant not in members as sub", () => {
 		const result = {
 			participants: [{ id: 1 }, { id: 2 }],
 			startsAt: 1000,
@@ -25,7 +25,7 @@ describe("subsOfResult()", () => {
 		expect(subs).toEqual([{ id: 2 }]);
 	});
 
-	it("returns participant as sub if they left before result startTime", () => {
+	test("returns participant as sub if they left before result startTime", () => {
 		const result = {
 			participants: [{ id: 1 }, { id: 2 }],
 			startsAt: 1000,
@@ -38,7 +38,7 @@ describe("subsOfResult()", () => {
 		expect(subs).toEqual([{ id: 1 }]);
 	});
 
-	it("does not return participant as sub if they were a member during result", () => {
+	test("does not return participant as sub if they were a member during result", () => {
 		const result = {
 			participants: [{ id: 1 }, { id: 2 }],
 			startsAt: 1000,
@@ -51,7 +51,7 @@ describe("subsOfResult()", () => {
 		expect(subs).toEqual([]);
 	});
 
-	it("returns multiple subs correctly", () => {
+	test("returns multiple subs correctly", () => {
 		const result = {
 			participants: [{ id: 1 }, { id: 2 }, { id: 3 }],
 			startsAt: 1000,
@@ -64,7 +64,7 @@ describe("subsOfResult()", () => {
 		expect(subs).toEqual([{ id: 1 }, { id: 3 }]);
 	});
 
-	it("returns empty array if no participants", () => {
+	test("returns empty array if no participants", () => {
 		const result = {
 			participants: [],
 			startsAt: 1000,

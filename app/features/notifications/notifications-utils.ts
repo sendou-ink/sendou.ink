@@ -1,23 +1,28 @@
+import { userArtPage } from "~/features/art/art-urls";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
 	FRIENDS_PAGE,
 	NEW_TROPHY_PAGE,
 	PLUS_VOTING_PAGE,
-	plusSuggestionPage,
 	SENDOUQ_PAGE,
+	SENDOUQ_READY_PAGE,
 	scrimPage,
 	scrimsPage,
 	sendouQMatchPage,
-	tournamentBracketsPage,
 	tournamentRegisterPage,
 	tournamentSubsPage,
 	tournamentTeamPage,
 	trophyPage,
-	userArtPage,
 	userEditProfilePage,
 } from "~/utils/urls";
 import type { Notification } from "./notifications-types";
+
+/** Values the notification's title and text interpolate. Some notification types have none. */
+export const notificationMeta = (notification: Notification) =>
+	"meta" in notification ? notification.meta : undefined;
 
 export const notificationNavIcon = (type: Notification["type"]) => {
 	switch (type) {
@@ -33,6 +38,7 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 			return "plus";
 		case "SQ_ADDED_TO_GROUP":
 		case "SQ_NEW_MATCH":
+		case "SQ_READY_CHECK":
 		case "SEASON_STARTED":
 			return "sendouq";
 		case "TAGGED_TO_ART":
@@ -78,6 +84,8 @@ export const notificationLink = (notification: Notification) => {
 			return SENDOUQ_PAGE;
 		case "SQ_NEW_MATCH":
 			return sendouQMatchPage(notification.meta.matchId);
+		case "SQ_READY_CHECK":
+			return SENDOUQ_READY_PAGE;
 		case "TAGGED_TO_ART":
 			return userArtPage(
 				{ discordId: notification.meta.adderDiscordId },

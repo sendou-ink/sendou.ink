@@ -1,7 +1,6 @@
 import { useUser } from "~/features/auth/core/user";
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
-import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { isAdmin } from "./utils";
+import { hasPermission } from "./utils";
 
 /**
  * Determines whether a user has a specific global role.
@@ -27,16 +26,5 @@ export function useHasPermission<
 >(obj: T, permission: K) {
 	const user = useUser();
 
-	if (!user) return false;
-
-	// admin can do anything in production but not in development for better testing
-	if (
-		process.env.NODE_ENV === "production" &&
-		!IS_E2E_TEST_RUN &&
-		isAdmin(user)
-	) {
-		return true;
-	}
-
-	return (obj.permissions as Record<K, number[]>)[permission].includes(user.id);
+	return hasPermission(obj, permission, user);
 }

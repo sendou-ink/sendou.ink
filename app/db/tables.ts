@@ -34,6 +34,7 @@ import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
+import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
 import type { SplatoonRotationType } from "~/features/splatoon-rotations/splatoon-rotations-constants";
 import type {
 	MemberRole,
@@ -303,7 +304,7 @@ export interface Group {
 	latestActionAt: Generated<number>;
 	/** If truthy, group was at least partly made in the matchmaking UI (/q/looking) */
 	matchmade: Generated<DBBoolean>;
-	status: "PREPARING" | "ACTIVE" | "INACTIVE";
+	status: "PREPARING" | "ACTIVE" | "INACTIVE" | "READY_CHECK";
 	teamId: number | null;
 }
 
@@ -312,6 +313,9 @@ export interface GroupLike {
 	likerGroupId: number;
 	targetGroupId: number;
 	isRechallenge: Generated<DBBoolean>;
+	// TODO: migrate to not null
+	/** Member of the liker group who sent the invite. `null` for invites sent before the column existed. */
+	createdByUserId: number | null;
 }
 
 export interface GroupMatch {
@@ -367,9 +371,34 @@ export interface GroupMatchMap {
 export interface GroupMember {
 	createdAt: Generated<number>;
 	groupId: number;
+	/** When the member last let a {@link GroupReadyCheck} expire without confirming, letting the rest of the group kick them. `null` if they have not. */
+	missedReadyCheckAt: number | null;
 	note: string | null;
-	role: "OWNER" | "MANAGER" | "REGULAR";
 	userId: number;
+}
+
+/** Both groups' members confirming they are ready to play, before their match is created */
+export interface GroupReadyCheck {
+	alphaGroupId: number;
+	bravoGroupId: number;
+	createdAt: Generated<number>;
+	id: GeneratedAlways<number>;
+}
+
+/** One member confirming they are ready to play in a {@link GroupReadyCheck} */
+export interface GroupReadyCheckConfirmation {
+	createdAt: Generated<number>;
+	readyCheckId: number;
+	userId: number;
+}
+
+/** A group member pointing their own group at another group, without inviting it */
+export interface GroupSuggestion {
+	createdAt: Generated<number>;
+	/** Group whose members see the suggestion */
+	suggesterGroupId: number;
+	targetGroupId: number;
+	createdByUserId: number;
 }
 
 export interface PrivateUserNote {
@@ -477,6 +506,30 @@ export interface ReportedWeapon {
 	createdAt: Generated<number>;
 }
 
+export interface IngestedMatch {
+	id: GeneratedAlways<number>;
+	povUserId: number | null;
+	submitterUserId: number | null;
+	/** database timestamp (seconds) the match was played at, when known */
+	playedAt: number | null;
+	data: JSONColumnType<ScannerMatch>;
+	matchHash: string;
+	/** server-resolved tournament the match probably belongs to; aids future linking */
+	tournamentIdHint: number | null;
+	/** server-resolved SendouQ match the match probably belongs to; aids future linking */
+	groupMatchIdHint: number | null;
+	createdAt: Generated<number>;
+}
+
+/** Links an ingested match to the game result it describes (exactly one target). */
+export interface IngestedMatchLink {
+	id: GeneratedAlways<number>;
+	ingestedMatchId: number;
+	tournamentMatchGameResultId: number | null;
+	groupMatchMapId: number | null;
+	createdAt: Generated<number>;
+}
+
 export interface Skill {
 	groupMatchId: number | null;
 	id: GeneratedAlways<number>;
@@ -496,6 +549,16 @@ export interface Skill {
 export interface SkillTeamUser {
 	skillId: number;
 	userId: number;
+}
+
+/** A team that is shown on the team leaderboard but doesn't count for its placements, e.g. because its players want to qualify with another roster. */
+export interface LeaderboardTeamSkip {
+	id: GeneratedAlways<number>;
+	season: number;
+	/** The team's roster, same as `Skill.identifier`. */
+	identifier: SkillTeamIdentifier;
+	skippedByUserId: number;
+	createdAt: Generated<number>;
 }
 
 /** Used for tournament auto-seeding. Calculates off tournament matches same as SP but does not have seasonal resets. */
@@ -856,6 +919,8 @@ export interface User {
 	customName: string | null;
 	/** coalesce(customName, discordName) */
 	username: ColumnType<string, never, never>;
+	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
+	tournamentName: string | null;
 	discordUniqueName: string | null;
 	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
 	favoriteBadgeIds: JSONColumnTypeNullable<number[]>;
@@ -899,6 +964,8 @@ export interface User {
 	div: string | null;
 	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
 	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
+	/** Division the user card's XP is taken from. `null` when the user has not picked one, showing their highest XP across both. */
+	xpDivision: XRankPlacementRegion | null;
 }
 
 export interface UserResultHighlight {
@@ -1140,6 +1207,20 @@ export interface ScrimPostUser {
 	isOwner: DBBoolean;
 }
 
+export interface ScrimPickupRoster {
+	id: GeneratedAlways<number>;
+	/** User who used the pick-up roster */
+	userId: number;
+	/** When the roster was last used to make a scrim post */
+	usedAt: Generated<number>;
+}
+
+export interface ScrimPickupRosterUser {
+	scrimPickupRosterId: number;
+	/** Member of the pick-up roster, excluding the roster's owner */
+	userId: number;
+}
+
 export interface ScrimPostRequest {
 	id: GeneratedAlways<number>;
 	scrimPostId: number;
@@ -1253,6 +1334,11 @@ export interface DB {
 	GroupMatchContinueVote: GroupMatchContinueVote;
 	GroupMatchMap: GroupMatchMap;
 	GroupMember: GroupMember;
+	GroupReadyCheck: GroupReadyCheck;
+	GroupReadyCheckConfirmation: GroupReadyCheckConfirmation;
+	GroupSuggestion: GroupSuggestion;
+	IngestedMatch: IngestedMatch;
+	IngestedMatchLink: IngestedMatchLink;
 	PrivateUserNote: PrivateUserNote;
 	LogInLink: LogInLink;
 	LFGPost: LFGPost;
@@ -1267,6 +1353,7 @@ export interface DB {
 	ReportedWeapon: ReportedWeapon;
 	Skill: Skill;
 	SkillTeamUser: SkillTeamUser;
+	LeaderboardTeamSkip: LeaderboardTeamSkip;
 	SeedingSkill: SeedingSkill;
 	SplatoonPlayer: SplatoonPlayer;
 	/** VIEW over `AllTeam`, excludes soft-deleted teams. Insert/update via `AllTeam`. */
@@ -1331,6 +1418,8 @@ export interface DB {
 	ScrimPostUser: ScrimPostUser;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
+	ScrimPickupRoster: ScrimPickupRoster;
+	ScrimPickupRosterUser: ScrimPickupRosterUser;
 	ScrimMapList: ScrimMapList;
 	ScrimMap: ScrimMap;
 	Association: Association;

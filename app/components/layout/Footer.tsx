@@ -3,6 +3,7 @@ import { Link } from "react-router";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { usePatrons } from "~/hooks/swr";
+import { GIT_COMMIT } from "~/utils/git-commit";
 import {
 	API_PAGE,
 	CONTRIBUTIONS_PAGE,
@@ -15,8 +16,6 @@ import {
 	userPage,
 	WELCOME_PAGE,
 } from "~/utils/urls";
-
-declare const __GIT_COMMIT__: string;
 
 import { Image } from "../Image";
 import { DiscordIcon } from "../icons/Discord";
@@ -96,14 +95,14 @@ export function Footer() {
 					</a>
 				</p>
 			</div>
-			{__GIT_COMMIT__ ? (
+			{GIT_COMMIT ? (
 				<a
 					className={styles.sourceLink}
-					href={`${SENDOU_INK_GITHUB_URL}/commits/${__GIT_COMMIT__}/`}
+					href={`${SENDOU_INK_GITHUB_URL}/commits/${GIT_COMMIT}/`}
 					target="_blank"
 					rel="noreferrer"
 				>
-					{t("footer.version")} {__GIT_COMMIT__.slice(0, 10)}
+					{t("footer.version")} {GIT_COMMIT.slice(0, 10)}
 				</a>
 			) : null}
 		</footer>

@@ -2,7 +2,7 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 /**
  * Client (`VITE_*`) configuration. Import with `import { Config } from "~/config"`
- * and read values like `Config.siteDomain` or `Config.sentry.enabled`.
+ * and read values like `Config.siteDomain` or `Config.skalop.wsUrl`.
  *
  * Values are validated once when this module is first imported, surfacing a
  * single clear error for any misconfigured variable. Variables required in
@@ -42,10 +42,9 @@ const values = {
 	VITE_PROD_MODE: stringBool("VITE_PROD_MODE"),
 	VITE_SHOW_LUTI_NAV_ITEM: stringBool("VITE_SHOW_LUTI_NAV_ITEM"),
 	VITE_FUSE_ENABLED: stringBool("VITE_FUSE_ENABLED"),
+	VITE_SCANNER_ENABLED: stringBool("VITE_SCANNER_ENABLED"),
 	VITE_LEAGUE_GOOGLE_FORM_URL: env.VITE_LEAGUE_GOOGLE_FORM_URL,
 	VITE_SHOW_BANNER_FOR_SEASON: env.VITE_SHOW_BANNER_FOR_SEASON,
-	VITE_SENTRY_DSN: env.VITE_SENTRY_DSN,
-	VITE_SENTRY_ENABLED: stringBool("VITE_SENTRY_ENABLED"),
 	VITE_SKALOP_WS_URL: env.VITE_SKALOP_WS_URL,
 	VITE_VAPID_PUBLIC_KEY: env.VITE_VAPID_PUBLIC_KEY,
 };
@@ -66,15 +65,12 @@ export const Config = {
 	/** Whether to show the LUTI navigation item. */
 	showLutiNavItem: values.VITE_SHOW_LUTI_NAV_ITEM,
 	fuseEnabled: values.VITE_FUSE_ENABLED,
+	/** Whether the scanner is available to everyone. While false only the admin and devs can use the scanner page and its ingest endpoint. */
+	scannerEnabled: values.VITE_SCANNER_ENABLED,
 	/** Google Form URL for league registration, if configured. */
 	leagueGoogleFormUrl: values.VITE_LEAGUE_GOOGLE_FORM_URL,
 	/** Season identifier to show the registration banner for, if any. */
 	showBannerForSeason: values.VITE_SHOW_BANNER_FOR_SEASON,
-	/** Sentry client configuration. */
-	sentry: {
-		dsn: values.VITE_SENTRY_DSN,
-		enabled: values.VITE_SENTRY_ENABLED,
-	},
 	/** Skalop (chat) client configuration. */
 	skalop: {
 		wsUrl: values.VITE_SKALOP_WS_URL,

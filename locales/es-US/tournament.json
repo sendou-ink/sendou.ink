@@ -70,7 +70,6 @@
 	"pickInfo.default": "Elección de la comunidad",
 	"pickInfo.default.explanation": "No había un mapa adecuado en los grupos de los participantes. Este mapa fue seleccionado del conjunto de mapas populares.",
 	"pickInfo.votes_one": "{{count}} voto",
-	"pickInfo.votes_many": "",
 	"pickInfo.votes_other": "{{count}} votos",
 	"pickInfo.teamMapList": "Lista de mapas de {{teamName}}",
 	"pickInfo.counterpick": "Contraselección",
@@ -103,6 +102,8 @@
 	"admin.audit.event.TEAM_DROPPED_OUT": "El equipo se retiró",
 	"admin.audit.event.TEAM_DROP_OUT_UNDONE": "Retirada del equipo deshecha",
 	"admin.audit.event.UPDATE_IN_GAME_NAME": "Nombre en el juego cambiado",
+	"admin.audit.event.UPDATE_TOURNAMENT_NAME": "",
+	"admin.audit.detail.tournamentNameCleared": "",
 	"admin.actions.CHANGE_TEAM_OWNER": "Cambiar capitán",
 	"admin.actions.CHANGE_TEAM_NAME": "Cambiar nombre de equipo",
 	"admin.actions.CHECK_IN": "Check in",
@@ -124,9 +125,8 @@
 	"staff.editOrganization": "Editar organización",
 	"actions.addSub": "Añadir sub",
 	"actions.shareLink": "Comparte enlace de invitación para añadir miembros: {{inviteLink}}",
-	"actions.sub.prompt_one": "Aún puedes añadir {{count}} sub a tu equipo",
-	"actions.sub.prompt_many": "",
 	"actions.sub.prompt_other": "Aún puedes añadir {{count}} subs a tu equipo",
+	"actions.sub.prompt_one": "Aún puedes añadir {{count}} sub a tu equipo",
 	"actions.sub.prompt_zero": "Tu equipo está lleno y no puedes añadir más subs",
 	"actions.finalize": "Finalizando torneo",
 	"actions.finalize.button": "Finalizar torneo",
@@ -287,22 +287,5 @@
 	"pickBan.banMap": "Banea un mapa",
 	"pickBan.pickMode": "Elige un modo",
 	"pickBan.banMode": "Banea un modo",
-	"pickBan.waitingFor": "Esperando a {{teamName}}",
-	"bracket": {
-		"sources": {
-			"header": "Equipos uniéndose a este bracket: {{sources}}",
-			"top": "{{bracket}} (top {{count}})",
-			"placements": "{{bracket}} (posiciones {{placements}})",
-			"eliminated": "{{bracket}} (eliminados en las primeras {{count}} rondas)",
-			"earlyAdvancers": "{{bracket}} (equipos que ganan {{count}} sets)"
-		}
-	},
-	"progression": {
-		"error": {
-			"MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "Una fuente no puede mezclar posiciones que avanzan con equipos eliminados",
-			"DUPLICATE_SOURCE_BRACKET": "El mismo bracket solo puede ser fuente una vez por bracket",
-			"CYCLIC_PROGRESSION": "Los brackets no pueden ser fuente entre sí en un ciclo",
-			"MERGED_STARTING_BRACKETS": "Los equipos que empezaron en brackets distintos no pueden enfrentarse"
-		}
-	}
+	"pickBan.waitingFor": "Esperando a {{teamName}}"
 }

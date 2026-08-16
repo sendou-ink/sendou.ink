@@ -6,8 +6,7 @@ import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 
-let author: { id: number };
-let otherAuthor: { id: number };
+const users = UserFactory.pool();
 
 const { mockNotify } = vi.hoisted(() => ({
 	mockNotify: vi.fn(),
@@ -22,7 +21,7 @@ describe("NotifyCheckInStartRoutine", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2025-01-15T12:00:00Z"));
 		clearAllTournamentDataCache();
-		[author, otherAuthor] = await UserFactory.createMany(2);
+		await users.create(2);
 		mockNotify.mockClear();
 	});
 
@@ -36,7 +35,7 @@ describe("NotifyCheckInStartRoutine", () => {
 
 		await TournamentFactory.create({
 			name: "Tournament 1 Hour Away",
-			authorId: author.id,
+			authorId: users.id(1),
 			startTimes: [dateToDatabaseTimestamp(oneHourFromNow)],
 		});
 
@@ -60,7 +59,7 @@ describe("NotifyCheckInStartRoutine", () => {
 
 		await TournamentFactory.create({
 			name: "Tournament Starting Now",
-			authorId: author.id,
+			authorId: users.id(1),
 			startTimes: [dateToDatabaseTimestamp(now)],
 		});
 
@@ -75,7 +74,7 @@ describe("NotifyCheckInStartRoutine", () => {
 
 		await TournamentFactory.create({
 			name: "Tournament 30 Minutes Away",
-			authorId: author.id,
+			authorId: users.id(1),
 			startTimes: [dateToDatabaseTimestamp(thirtyMinutesFromNow)],
 		});
 
@@ -100,7 +99,7 @@ describe("NotifyCheckInStartRoutine", () => {
 
 		await TournamentFactory.create({
 			name: "Tournament 1.5 Hours Away",
-			authorId: author.id,
+			authorId: users.id(1),
 			startTimes: [dateToDatabaseTimestamp(oneAndHalfHoursFromNow)],
 		});
 
@@ -116,13 +115,13 @@ describe("NotifyCheckInStartRoutine", () => {
 
 		await TournamentFactory.create({
 			name: "Tournament A",
-			authorId: author.id,
+			authorId: users.id(1),
 			startTimes: [dateToDatabaseTimestamp(thirtyMinutesFromNow)],
 		});
 
 		await TournamentFactory.create({
 			name: "Tournament B",
-			authorId: otherAuthor.id,
+			authorId: users.id(2),
 			startTimes: [dateToDatabaseTimestamp(fortyFiveMinutesFromNow)],
 		});
 

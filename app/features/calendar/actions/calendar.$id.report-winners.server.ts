@@ -1,20 +1,14 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import { requireUser } from "~/features/auth/core/user.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { parseFormData } from "~/form/parse.server";
-import {
-	errorToastIfFalsy,
-	notFoundIfNullish,
-	parseParams,
-} from "~/utils/remix.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { calendarEventPage } from "~/utils/urls";
 import { idObject } from "~/utils/zod";
-import { reportWinnersFormSchema } from "../calendar-schemas";
-import { canReportCalendarEventWinners } from "../calendar-utils";
+import { reportWinnersFormSchema } from "../calendar-report-winners-schemas";
 
 export const action: ActionFunction = async (args) => {
-	const user = requireUser();
 	const params = parseParams({
 		params: args.params,
 		schema: idObject,
@@ -29,14 +23,7 @@ export const action: ActionFunction = async (args) => {
 	}
 
 	const event = notFoundIfNullish(await CalendarRepository.findById(params.id));
-	errorToastIfFalsy(
-		canReportCalendarEventWinners({
-			user,
-			event,
-			startTimes: event.startTimes,
-		}),
-		"Unauthorized",
-	);
+	requirePermission(event, "REPORT_WINNERS");
 
 	await CalendarRepository.upsertReportedScores({
 		eventId: params.id,

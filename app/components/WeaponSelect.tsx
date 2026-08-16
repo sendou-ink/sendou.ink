@@ -1,3 +1,4 @@
+import type { TFunction } from "i18next";
 import * as React from "react";
 import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -74,23 +75,25 @@ export function WeaponSelect<
 			: value && typeof value === "object" && value.type === "MAIN"
 				? (value.id as MainWeaponId)
 				: null;
+	const isControlled = value !== undefined;
+	const [isOpen, setIsOpen] = React.useState(false);
+	const [lastUncontrolledKey, setLastUncontrolledKey] = React.useState<
+		string | null
+	>(() => keyify(initialValue) ?? null);
+	const selectedKey = isControlled ? keyify(value) : lastUncontrolledKey;
 	const { items, filterValue, setFilterValue } = useWeaponItems({
 		includeSubSpecial,
 		quickSelectWeaponsIds,
 		selectedWeaponId,
+		isOpen,
+		selectedKey,
 	});
 	const filter = useWeaponFilter();
 
-	const isControlled = value !== undefined;
-
-	const keyify = (value?: MainWeaponId | AnyWeapon | null) => {
-		if (typeof value === "number") return `MAIN_${value}`;
-		if (!value) return value;
-
-		return `${value.type}_${value.id}`;
-	};
-
 	const handleOnChange = (key: Key | null) => {
+		if (!isControlled) {
+			setLastUncontrolledKey(key === null ? null : String(key));
+		}
 		if (key === null) return onChange?.(null as any);
 		const [type, id] = (key as string).split("_");
 		const weapon = {
@@ -117,6 +120,7 @@ export function WeaponSelect<
 			}}
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
+			onOpenChange={setIsOpen}
 			selectedKey={isControlled ? keyify(value) : undefined}
 			defaultSelectedKey={
 				isControlled ? undefined : (keyify(initialValue) as Key)
@@ -191,26 +195,16 @@ export function WeaponSelect<
 	);
 }
 
+const weaponNameToWeaponMapCache = new Map<string, Map<string, AnyWeapon>>();
+
 function useWeaponFilter() {
-	const { t } = useTranslation(["weapons"]);
+	const { t, i18n } = useTranslation(["weapons"]);
 
-	const weaponNameToWeaponMap = (() => {
-		const map = new Map<string, AnyWeapon>();
-
-		for (const id of mainWeaponIds) {
-			map.set(t(`weapons:MAIN_${id}`), { id, type: "MAIN" });
-		}
-
-		for (const id of subWeaponIds) {
-			map.set(t(`weapons:SUB_${id}`), { id, type: "SUB" });
-		}
-
-		for (const id of specialWeaponIds) {
-			map.set(t(`weapons:SPECIAL_${id}`), { id, type: "SPECIAL" });
-		}
-
-		return map;
-	})();
+	const cached = weaponNameToWeaponMapCache.get(i18n.language);
+	const weaponNameToWeaponMap = cached ?? buildWeaponNameToWeaponMap(t);
+	if (!cached && i18n.hasLoadedNamespace("weapons")) {
+		weaponNameToWeaponMapCache.set(i18n.language, weaponNameToWeaponMap);
+	}
 
 	return (value: string, searchValue: string) => {
 		const weapon = weaponNameToWeaponMap.get(value);
@@ -224,18 +218,51 @@ function useWeaponFilter() {
 	};
 }
 
+function buildWeaponNameToWeaponMap(t: TFunction<["weapons"]>) {
+	const map = new Map<string, AnyWeapon>();
+
+	for (const id of mainWeaponIds) {
+		map.set(t(`weapons:MAIN_${id}`), { id, type: "MAIN" });
+	}
+
+	for (const id of subWeaponIds) {
+		map.set(t(`weapons:SUB_${id}`), { id, type: "SUB" });
+	}
+
+	for (const id of specialWeaponIds) {
+		map.set(t(`weapons:SPECIAL_${id}`), { id, type: "SPECIAL" });
+	}
+
+	return map;
+}
+
 function useWeaponItems({
 	includeSubSpecial,
 	quickSelectWeaponsIds,
 	selectedWeaponId,
+	isOpen,
+	selectedKey,
 }: {
 	includeSubSpecial: boolean | undefined;
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
 	selectedWeaponId?: MainWeaponId | null;
+	isOpen: boolean;
+	selectedKey: string | null | undefined;
 }) {
 	const items = useAllWeaponCategories(includeSubSpecial);
 	const [filterValue, setFilterValue] = React.useState("");
 	const { t } = useTranslation(["common"]);
+
+	// While closed only the selected item is needed (the trigger's value
+	// display); react-aria renders every item passed to it into a hidden
+	// collection even when the popover is closed.
+	if (!isOpen) {
+		return {
+			items: collapseToSelectedItem(items, selectedKey),
+			filterValue,
+			setFilterValue,
+		};
+	}
 
 	const showQuickSelectWeapons =
 		filterValue === "" && quickSelectWeaponsIds?.length;
@@ -285,9 +312,29 @@ function useWeaponItems({
 	};
 }
 
-function useAllWeaponCategories(withSubSpecial = false) {
-	const { t } = useTranslation(["weapons"]);
+const allWeaponCategoriesCache = new Map<
+	string,
+	ReturnType<typeof buildAllWeaponCategories>
+>();
 
+function useAllWeaponCategories(withSubSpecial = false) {
+	const { t, i18n } = useTranslation(["weapons"]);
+
+	const cacheKey = `${i18n.language}-${withSubSpecial}`;
+	const cached = allWeaponCategoriesCache.get(cacheKey);
+	if (cached) return cached;
+
+	const categories = buildAllWeaponCategories(t, withSubSpecial);
+	if (i18n.hasLoadedNamespace("weapons")) {
+		allWeaponCategoriesCache.set(cacheKey, categories);
+	}
+	return categories;
+}
+
+function buildAllWeaponCategories(
+	t: TFunction<["weapons"]>,
+	withSubSpecial: boolean,
+) {
 	const mainWeaponCategories = weaponCategories.map((category, idx) => ({
 		name: category.name,
 		key: category.name,
@@ -342,4 +389,38 @@ function useAllWeaponCategories(withSubSpecial = false) {
 		specialWeaponCategory,
 		...mainWeaponCategories.map((c) => ({ ...c, idx: c.idx + 2 })),
 	];
+}
+
+function keyify(value?: MainWeaponId | AnyWeapon | null) {
+	if (typeof value === "number") return `MAIN_${value}`;
+	if (!value) return value;
+
+	return `${value.type}_${value.id}`;
+}
+
+function collapseToSelectedItem<
+	Category extends { items: Array<{ weapon: { anyWeaponId: string } }> },
+>(categories: Category[], selectedKey: string | null | undefined): Category[] {
+	// react-stately refuses to open a select whose collection is empty, so even
+	// with nothing selected the closed collection keeps one item around.
+	const fallbackItems = () => {
+		const firstCategory = categories[0];
+		if (!firstCategory) return [];
+		return [
+			{ ...firstCategory, items: firstCategory.items.slice(0, 1) } as Category,
+		];
+	};
+
+	if (!selectedKey) return fallbackItems();
+
+	for (const category of categories) {
+		const selectedItem = category.items.find(
+			(item) => item.weapon.anyWeaponId === selectedKey,
+		);
+		if (selectedItem) {
+			return [{ ...category, items: [selectedItem] } as Category];
+		}
+	}
+
+	return fallbackItems();
 }

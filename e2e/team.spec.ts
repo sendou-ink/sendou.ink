@@ -9,6 +9,7 @@ import {
 	test,
 } from "./helpers/playwright";
 import { AnythingAdder } from "./pages/layout/anything-adder";
+import { SELECTED_MAP_CLASS } from "./pages/settings/map-mode-preferences-field";
 import { JoinTeamPage } from "./pages/team/join-team-page";
 import { NewTeamPage } from "./pages/team/new-team-page";
 import { TeamEditPage } from "./pages/team/team-edit-page";
@@ -60,6 +61,54 @@ test.describe("Team page", () => {
 			"href",
 			"https://bsky.app/profile/BetterAllianceRogue",
 		);
+	});
+
+	test("edits and removes team map preferences", async ({
+		page,
+		factories,
+	}) => {
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID],
+		});
+
+		await impersonate(page, ADMIN_ID);
+
+		const teamEdit = new TeamEditPage(page);
+		await teamEdit.goto(customUrl);
+
+		// a team without preferences has nothing to remove
+		await isNotVisible(teamEdit.locators.removeMapPreferencesButton);
+
+		await teamEdit.maps.setModePreference("SZ", "Prefer");
+		await teamEdit.maps.setModePreference("TW", "Avoid");
+		await teamEdit.maps.selectModeTab("SZ");
+		await teamEdit.maps.mapButton("SZ", 1).click();
+		await teamEdit.saveMapPreferences();
+
+		// reload so the form shows what was actually persisted
+		await teamEdit.goto(customUrl);
+		await expect(teamEdit.maps.preferenceRadio("SZ", "Prefer")).toBeChecked();
+		await expect(teamEdit.maps.preferenceRadio("TW", "Avoid")).toBeChecked();
+		await teamEdit.maps.selectModeTab("SZ");
+		await expect(teamEdit.maps.mapButton("SZ", 1)).toHaveClass(
+			SELECTED_MAP_CLASS,
+		);
+
+		await teamEdit.removeMapPreferences();
+		await isNotVisible(teamEdit.locators.removeMapPreferencesButton);
+
+		// the form re-syncs in place, so a following save can't restore what was removed
+		await expect(teamEdit.maps.preferenceRadio("SZ", "Neutral")).toBeChecked();
+		await expect(teamEdit.maps.preferenceRadio("TW", "Neutral")).toBeChecked();
+		await teamEdit.maps.selectModeTab("SZ");
+		await expect(teamEdit.maps.mapButton("SZ", 1)).not.toHaveClass(
+			SELECTED_MAP_CLASS,
+		);
+
+		await teamEdit.goto(customUrl);
+		await expect(teamEdit.maps.preferenceRadio("SZ", "Neutral")).toBeChecked();
+		await isNotVisible(teamEdit.locators.removeMapPreferencesButton);
 	});
 
 	test("kicks a member & changes a role", async ({ page, factories }) => {
@@ -213,13 +262,15 @@ test.describe("Team page", () => {
 				memberUserIds: [secondaryTeamOwner.id],
 			});
 
-		await impersonate(page, ADMIN_ID);
+		await impersonate(page, secondaryTeamOwner.id);
 
 		const secondaryTeam = new TeamPage(page);
 		await secondaryTeam.goto(secondaryCustomUrl);
 
 		const roster = await secondaryTeam.openManageRoster();
 		const inviteLink = await roster.inviteLink();
+
+		await impersonate(page, ADMIN_ID);
 
 		const join = new JoinTeamPage(page);
 		await join.goto(inviteLink);
@@ -285,8 +336,8 @@ test.describe("Team page", () => {
 		);
 		await team.confirmLeaving();
 
-		await team.openActionsMenu();
-		await isNotVisible(team.locators.leaveTeamButton);
+		await expect(team.ownerBadge(NZAP_TEST_ID)).toBeVisible();
+		await isNotVisible(team.locators.actionsMenuButton);
 	});
 });
 

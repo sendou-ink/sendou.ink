@@ -223,7 +223,11 @@ function RequeueTab({
 	const { alphaWins, bravoWins } = SendouQMatch.score(data.match);
 	const score = { alpha: alphaWins, bravo: bravoWins };
 	const teams = resolveTimelineTeams(data.match, t);
-	const maps = resolveTimelineMaps(data.match, data.reportedWeapons);
+	const maps = resolveTimelineMaps(
+		data.match,
+		data.reportedWeapons,
+		data.ingestedScoreboards,
+	);
 
 	const viewerGroup =
 		viewerSide === "ALPHA"
@@ -274,10 +278,7 @@ function RequeueTab({
 					{!data.isOffSeason &&
 					!viewerGroup.matchmade &&
 					(!awaitingConfirmation || isOnReporterTeam) ? (
-						<TrustedRejoinSection
-							viewerGroup={viewerGroup}
-							viewerUserId={user.id}
-						/>
+						<TrustedRejoinSection viewerGroup={viewerGroup} />
 					) : null}
 					{isOnReporterTeam ? <hr className={styles.divider} /> : null}
 

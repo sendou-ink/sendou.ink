@@ -1,0 +1,86 @@
+{
+  "event": "Scoreboard",
+  "options": {
+    "skipFields": [
+      "players.3.name"
+    ],
+    "notes": "KNOCKOUT! burst on the RIGHT banner side (loser's Score: 0 on the left) - regression guard for the burst reading as a 7-0 score. players.3 truth is AHOOUUUUUU but reads AHOOLUUUUU (U misread as L). players.6 name uses dotless i (as parsed) - verify against source if it ever fails."
+  },
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 2,
+    "stageLabel": "Hagglefish Market",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 7,
+    "players": [
+      {
+        "name": "nwrm",
+        "weaponId": 50,
+        "paint": 381,
+        "ka": 8,
+        "d": 2,
+        "s": 0
+      },
+      {
+        "name": "slord",
+        "weaponId": 20,
+        "paint": 613,
+        "ka": 4,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "Olise",
+        "weaponId": 2070,
+        "paint": 456,
+        "ka": 3,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "AHOOUUUUUU",
+        "weaponId": 1015,
+        "paint": 287,
+        "ka": 1,
+        "d": 2,
+        "s": 1
+      },
+      {
+        "name": "★Bønk★•PE•",
+        "weaponId": 1001,
+        "paint": 327,
+        "ka": 3,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "Enamel",
+        "weaponId": 2070,
+        "paint": 408,
+        "ka": 1,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "Rιppιng_H",
+        "weaponId": 8001,
+        "paint": 270,
+        "ka": 3,
+        "d": 3,
+        "s": 1
+      },
+      {
+        "name": "Sendou",
+        "weaponId": 10,
+        "paint": 354,
+        "ka": 0,
+        "d": 3,
+        "s": 1
+      }
+    ]
+  }
+}

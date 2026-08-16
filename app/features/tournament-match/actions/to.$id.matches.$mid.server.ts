@@ -7,6 +7,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import { executeBracketOperation } from "~/features/tournament-bracket/core/executeBracketOperation.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	requireTournamentOrganizer,
@@ -17,7 +18,11 @@ import {
 	matchPageParamsSchema,
 	matchSchema,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
-import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
+import {
+	showsOneGroupAtATime,
+	tournamentBracketWebsocketRoom,
+	tournamentWebsocketRoom,
+} from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
@@ -675,7 +680,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	// update RunningTournaments to make sure sidebar is not showing stale matches at the end
 	// of the tournament in case the TO is not finalizing the tournament right away
 	if (setIsOver) {
-		const refreshedTournament = await tournamentFromDB({ tournamentId, user });
+		const refreshedTournament = await tournamentFromDB(tournamentId);
 		// the teams that just advanced now populate following matches, so their
 		// "waiting for teams" pages need to revalidate too
 		followingMatchIds = refreshedTournament
@@ -710,7 +715,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([
 			{
-				room: tournamentWebsocketRoom(tournament.ctx.id),
+				room: onlyMatchResultsChanged
+					? matchResultsRoom(tournament, match)
+					: tournamentWebsocketRoom(tournament.ctx.id),
 				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
 				revalidateScope,
@@ -720,6 +727,31 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	return null;
 };
+
+/**
+ * Room of the brackets page views that render this match, i.e. the ones a change of its
+ * results can be seen in. Falls back to the whole tournament's room if the match's bracket
+ * can not be resolved.
+ */
+function matchResultsRoom(
+	tournament: Tournament,
+	match: NonNullable<FindMatchById>,
+) {
+	const bracketIdx = tournament.matchIdToBracketIdx(match.id);
+
+	if (typeof bracketIdx !== "number") {
+		logger.error("matchResultsRoom: Bracket not found");
+		return tournamentWebsocketRoom(tournament.ctx.id);
+	}
+
+	const { type } = tournament.ctx.settings.bracketProgression[bracketIdx];
+
+	return tournamentBracketWebsocketRoom({
+		tournamentId: tournament.ctx.id,
+		bracketIdx,
+		groupId: showsOneGroupAtATime(type) ? match.groupId : null,
+	});
+}
 
 function canReportTournamentScore({
 	match,

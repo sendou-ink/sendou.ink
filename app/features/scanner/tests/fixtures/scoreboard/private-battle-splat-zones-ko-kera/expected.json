@@ -1,0 +1,80 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 6,
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 3,
+    "players": [
+      {
+        "name": "Mongering",
+        "weaponId": 261,
+        "paint": 503,
+        "ka": 11,
+        "d": 1,
+        "s": 2
+      },
+      {
+        "name": "y0s",
+        "weaponId": 2070,
+        "paint": 766,
+        "ka": 8,
+        "d": 0,
+        "s": 3
+      },
+      {
+        "name": "fuzzy",
+        "weaponId": 20,
+        "paint": 624,
+        "ka": 5,
+        "d": 2,
+        "s": 2
+      },
+      {
+        "name": "kera",
+        "weaponId": 400,
+        "paint": 323,
+        "ka": 5,
+        "d": 3,
+        "s": 0
+      },
+      {
+        "name": "sigma",
+        "weaponId": 2070,
+        "paint": 500,
+        "ka": 4,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "name": "Reefslider",
+        "weaponId": 3050,
+        "paint": 503,
+        "ka": 3,
+        "d": 6,
+        "s": 1
+      },
+      {
+        "name": "Cucumber",
+        "weaponId": 5015,
+        "paint": 427,
+        "ka": 2,
+        "d": 5,
+        "s": 2
+      },
+      {
+        "name": "tomato",
+        "weaponId": 8020,
+        "paint": 414,
+        "ka": 1,
+        "d": 6,
+        "s": 1
+      }
+    ],
+    "stageLabel": "Museum d'Alfonsino"
+  }
+}

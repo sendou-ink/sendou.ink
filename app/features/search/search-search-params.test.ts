@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,7 +6,7 @@ import {
 import { searchSearchParams } from "./search-search-params";
 
 describe("searchSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(searchSearchParams, {
 			q: ["", "sendou", "a".repeat(100), "with spaces & specials?"],
 			type: ["users", "teams", "organizations", "tournaments"],
@@ -14,7 +14,7 @@ describe("searchSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(searchSearchParams, "q", [["a".repeat(101)]]);
 		assertDecodesToDefault(searchSearchParams, "type", [["weapons"]]);
 		assertDecodesToDefault(searchSearchParams, "limit", [

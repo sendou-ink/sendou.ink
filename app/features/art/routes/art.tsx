@@ -14,9 +14,10 @@ import {
 } from "~/components/elements/Tabs";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { artPage } from "~/features/art/art-urls";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { artPage, navIconUrl } from "~/utils/urls";
+import { navIconUrl } from "~/utils/urls";
 import { metaTags, type SerializeFrom } from "../../../utils/remix";
 import { ART_TABS, artSearchParams } from "../art-search-params";
 import { ArtGrid } from "../components/ArtGrid";

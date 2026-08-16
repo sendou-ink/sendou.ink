@@ -1,0 +1,115 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 4,
+    "spectator": true,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "ももドラグーン",
+        "abilities": [
+          "LDE",
+          "SCU",
+          "ISM"
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "right",
+        "name": "れいまるがんばれや!",
+        "abilities": [
+          "SCU",
+          "SSU",
+          "SSU"
+        ],
+        "weaponLabel": "Splash-o-matic",
+        "weaponId": 20,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "down",
+        "name": "ひまじん",
+        "abilities": [
+          "OG",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Custom Blaster",
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "left",
+        "name": "!のりしお!",
+        "abilities": [
+          "CB",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Splatana Stamper",
+        "weaponId": 8000,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "name": "とど",
+        "abilities": [
+          "CB",
+          "H",
+          "SJ"
+        ],
+        "weaponLabel": "Mint Decavitator",
+        "weaponId": 8020,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "たなは",
+        "abilities": [
+          "RSU",
+          "SSU",
+          "SCU"
+        ],
+        "weaponLabel": "Splat Brella",
+        "weaponId": 6000,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "いなてんきんぐ",
+        "abilities": [
+          "LDE",
+          "RSU",
+          "RSU"
+        ],
+        "weaponLabel": "Zink Mini Splatling",
+        "weaponId": 4001,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "そふ",
+        "abilities": [
+          "RSU",
+          "RSU",
+          "RES"
+        ],
+        "weaponLabel": "Heavy Splatling",
+        "weaponId": 4010,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Mincemeat Metalworks"
+  },
+  "options": {
+    "notes": "8-player spectator map screen (AREA CUP, Winners Quarterfinals), the frame that motivated the spectator gate: the stream chrome covers both overlay gate anchors (close disc behind the branding top-left, spawn-pill area behind the bottom name bar). ももドラグーン also appears in spectator-area-cup-round1 with the identical loadout — a cross-fixture consistency anchor. れいまるがんばれや! ties 29px vs 30px name reads at equal confidence; the 29px read (correct がんばれ) wins as first-tried."
+  }
+}

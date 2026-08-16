@@ -1,5 +1,4 @@
 import { type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -13,7 +12,7 @@ import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";
-import { commonUserJsonObject } from "~/utils/kysely.server";
+import { commonUserJsonObject, jsonArrayFrom } from "~/utils/kysely.server";
 import { MAIN_SLOT_AP } from "../build-analyzer/analyzer-constants";
 import {
 	buildToAbilityPoints,
@@ -62,7 +61,12 @@ export async function findAllByUserId(
 		.orderBy("Build.updatedAt", "desc")
 		.execute();
 
-	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
+	return rows.map((row) => ({
+		...buildRowToResult(row, shouldSortAbilities),
+		permissions: {
+			EDIT: [userId],
+		},
+	}));
 }
 
 interface CreateArgs {

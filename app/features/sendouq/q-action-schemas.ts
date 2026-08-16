@@ -37,20 +37,16 @@ export const lookingSchema = z.union([
 		targetGroupId: id,
 	}),
 	z.object({
+		_action: _action("SUGGEST"),
+		targetGroupId: id,
+	}),
+	z.object({
 		_action: _action("GROUP_UP"),
 		targetGroupId: id,
 	}),
 	z.object({
 		_action: _action("MATCH_UP"),
 		targetGroupId: id,
-	}),
-	z.object({
-		_action: _action("GIVE_MANAGER"),
-		userId: id,
-	}),
-	z.object({
-		_action: _action("REMOVE_MANAGER"),
-		userId: id,
 	}),
 	z.object({
 		_action: _action("LEAVE_GROUP"),
@@ -64,3 +60,7 @@ export const lookingSchema = z.union([
 	}),
 	updateGroupNoteSchema,
 ]);
+
+export const readySchema = z.object({
+	_action: _action("CONFIRM_READY"),
+});

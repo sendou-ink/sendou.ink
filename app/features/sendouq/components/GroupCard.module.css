@@ -10,6 +10,12 @@
 	color: var(--color-text);
 }
 
+/* a suggested card floats to the top of the list, and the browser would keep the
+   card in view by scrolling along with it, yanking the viewer up the page */
+.suggested {
+	overflow-anchor: none;
+}
+
 .noScreen {
 	background-color: var(--color-error-low);
 	border-radius: 100%;
@@ -25,9 +31,10 @@
 	gap: var(--s-2);
 	align-items: center;
 	background-color: var(--color-bg);
-	border-radius: calc(var(--radius-box) + 6px);
+	border-radius: var(--radius-full);
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
+	padding: var(--s-1);
 	padding-inline-end: var(--s-3);
 }
 
@@ -46,6 +53,10 @@
 
 .tier {
 	margin-inline-start: auto;
+
+	& button {
+		height: auto;
+	}
 }
 
 .tierPlaceholder {
@@ -99,20 +110,6 @@
 	height: 15px;
 }
 
-.star {
-	min-width: 18px;
-	max-width: 18px;
-	color: var(--color-text-accent);
-}
-
-.starFilled {
-	fill: var(--color-text-accent);
-}
-
-.starInactive {
-	color: var(--color-text-high);
-}
-
 .displayTier {
 	display: flex;
 	gap: var(--s-1);
@@ -138,4 +135,27 @@
 	text-decoration-style: dotted;
 	font-weight: var(--weight-bold);
 	height: 19.8281px;
+}
+
+.hiddenMember {
+	min-height: 2.75rem;
+}
+
+.hiddenMemberName {
+	color: var(--color-text-high);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.1em;
+	padding-block: var(--s-2);
+	padding-inline-start: var(--s-3);
+}
+
+.readyIcon {
+	width: 18px;
+	height: 18px;
+	color: var(--color-text-high);
+}
+
+.readyIconConfirmed {
+	color: var(--color-success);
 }

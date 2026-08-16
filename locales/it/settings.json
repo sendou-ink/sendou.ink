@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "",
 	"matchProfile.maps.preferencesFor": "",
 	"matchProfile.maps.teamExplanation": "",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "Evita",
 	"matchProfile.maps.prefer": "Preferisci",
 	"matchProfile.maps.neutral": "Neutrale",
@@ -23,6 +24,7 @@
 	"matchProfile.mapPool.notOk": "Scegli {{count}} mappe per modalità che non hai evitato per salvare le tue preferenze",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

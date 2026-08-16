@@ -134,10 +134,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					"This group must use the continue vote",
 				);
 
-				const requester = previousGroup.members.find((m) => m.id === user.id);
 				errorToastIfFalsy(
-					requester?.role === "OWNER",
-					"You are not the owner of the group",
+					previousGroup.members.some((m) => m.id === user.id),
+					"Not a member of the group",
 				);
 
 				for (const member of previousGroup.members) {
@@ -147,10 +146,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await SQGroupRepository.insertFromPrevious({
 					previousGroupId: data.previousGroupId,
-					members: previousGroup.members.map((m) => ({
-						id: m.id,
-						role: m.role,
-					})),
+					memberUserIds: previousGroup.members.map((m) => m.id),
 					status: "ACTIVE",
 				});
 
@@ -226,14 +222,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				});
 
 				if (votingResult?.type === "RESOLVED") {
-					const survivors = viewerGroup.members
-						.filter((m) => votingResult.continuingUserIds.includes(m.id))
-						.map((m) => ({ id: m.id, role: m.role }));
+					const survivors = viewerGroup.members.filter((m) =>
+						votingResult.continuingUserIds.includes(m.id),
+					);
 
 					try {
 						await SQGroupRepository.insertFromPrevious({
 							previousGroupId: viewerGroup.id,
-							members: survivors,
+							memberUserIds: survivors.map((m) => m.id),
 							status: "ACTIVE",
 						});
 					} catch (error) {

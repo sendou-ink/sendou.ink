@@ -147,9 +147,16 @@ export async function findAllUsersForVoting(loggedInUser: {
 	const votingRange = nextNonCompletedVoting(new Date());
 	invariant(votingRange, "No next voting found");
 
-	const suggestedUsers = (
-		await PlusSuggestionRepository.findAllByMonth(rangeToMonthYear(votingRange))
-	).filter((suggestion) => suggestion.tier === loggedInUser.plusTier);
+	const suggestedUsers = await PlusSuggestionRepository.findAllByMonth({
+		...rangeToMonthYear(votingRange),
+		tier: loggedInUser.plusTier,
+	});
+
+	// the suggestions page does not render bios, so they are not part of a
+	// suggestion and are looked up for the voting page separately
+	const suggestedUserBios = await findBiosByUserIds(
+		suggestedUsers.map((suggestion) => suggestion.suggested.id),
+	);
 
 	const result: UsersForVoting = [];
 
@@ -174,7 +181,7 @@ export async function findAllUsersForVoting(loggedInUser: {
 				username: suggestion.suggested.username,
 				discordAvatar: suggestion.suggested.discordAvatar,
 				customAvatarUrl: suggestion.suggested.customAvatarUrl,
-				bio: suggestion.suggested.bio,
+				bio: suggestedUserBios.get(suggestion.suggested.id) ?? null,
 			},
 			suggestion,
 		});
@@ -222,4 +229,16 @@ export function upsertMany(votes: UpsertManyPlusVotesArgs) {
 
 		await trx.insertInto("PlusVote").values(votes).execute();
 	});
+}
+
+async function findBiosByUserIds(userIds: number[]) {
+	if (userIds.length === 0) return new Map<number, string | null>();
+
+	const rows = await db
+		.selectFrom("User")
+		.select(["User.id", "User.bio"])
+		.where("User.id", "in", userIds)
+		.execute();
+
+	return new Map(rows.map((row) => [row.id, row.bio]));
 }

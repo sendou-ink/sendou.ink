@@ -30,6 +30,10 @@
 	}
 }
 
+.cardRanked {
+	box-shadow: inset 0 -3px 0 var(--color-accent);
+}
+
 .imgContainer {
 	background-color: var(--color-bg);
 	padding: var(--s-1-5);
@@ -81,7 +85,7 @@
 	max-width: 165px;
 }
 
-.teamCount {
+.participantsPill {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	background-color: var(--color-bg-higher);
@@ -92,6 +96,7 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+	white-space: nowrap;
 
 	& svg {
 		width: var(--tournament-card-icon-size);
@@ -99,19 +104,17 @@
 	}
 }
 
-.modesPillContainer {
-	padding-inline-start: 12px;
+.participantsTeamsCount {
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
 }
 
-.modesPill {
-	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-selector);
-	width: max-content;
-	padding: 0 var(--s-1-5);
+.modesRow {
 	display: flex;
+	flex: none;
 	gap: var(--s-1);
-	height: var(--selector-size);
 	align-items: center;
+	padding-inline-start: 12px;
 }
 
 .pillsContainer {
@@ -120,31 +123,6 @@
 	justify-content: end;
 	padding-inline-end: 12px;
 	width: 100%;
-
-	&.lonely {
-		padding-inline-end: 0px;
-		padding-inline-start: 12px;
-	}
-}
-
-.pill {
-	font-size: var(--font-2xs);
-	font-weight: var(--weight-bold);
-	border-radius: var(--radius-selector);
-	height: var(--selector-size);
-	padding: 0 var(--s-1-5);
-	display: grid;
-	place-items: center;
-}
-
-.pillRanked {
-	background-color: var(--color-info-low);
-	color: var(--color-text-accent);
-
-	& svg {
-		width: var(--tournament-card-icon-size);
-		height: var(--tournament-card-icon-size);
-	}
 }
 
 .firstPlacers {
@@ -166,11 +144,6 @@
 	min-width: 16px;
 }
 
-.badgeDisplay {
-	min-width: initial;
-	min-height: initial;
-}
-
 .vodIndicator {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
@@ -190,13 +163,19 @@
 }
 
 .badgePill {
-	background-color: var(--color-bg-higher);
-	border-radius: var(--radius-selector);
-	padding: 0 var(--s-1-5);
+	padding: 0 var(--s-1);
 	height: var(--selector-size);
 }
 
 .trophyPreview {
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-box);
+}
+
+.trophyPreviewFallback {
+	width: 19rem;
+	max-width: 100%;
+	aspect-ratio: 1 / 1;
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
 }

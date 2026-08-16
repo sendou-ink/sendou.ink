@@ -37,7 +37,6 @@ List of the dependencies in production:
 - Twitch - Streams  
 - Patreon - Supporter status (hourly routine)  
 - Bluesky - Front page changelog  
-- Sentry - Error monitoring & tracing
 
 Configuration for these lives in `app/config.ts` (client, `VITE_*` variables, imported as `Config`) and `app/config.server.ts` (server only, imported as `ServerConfig`). Both validate their environment variables once on import.
 

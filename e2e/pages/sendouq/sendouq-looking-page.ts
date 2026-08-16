@@ -1,5 +1,8 @@
 import type { Page } from "@playwright/test";
-import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_LOOKING_PREVIEW_PAGE,
+} from "~/utils/urls";
 import { navigate, submit } from "../../helpers/playwright";
 import { GroupCard } from "./group-card";
 
@@ -12,11 +15,18 @@ export class SendouQLookingPage {
 		this.locators = {
 			groupCards: page.getByTestId("sendouq-group-card"),
 			undoButtons: page.getByRole("button", { name: "Undo" }),
+			actionButtons: page.getByTestId("group-card-action-button"),
+			suggestButtons: page.getByTestId("group-card-suggest-button"),
 		};
 	}
 
 	async goto() {
 		await navigate({ page: this.page, url: SENDOUQ_LOOKING_PAGE });
+	}
+
+	/** Opens the supporter only view of the queue, without being in it. */
+	async gotoPreview() {
+		await navigate({ page: this.page, url: SENDOUQ_LOOKING_PREVIEW_PAGE });
 	}
 
 	/** The own group's card, always the first one on the page. */

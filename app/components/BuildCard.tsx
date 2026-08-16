@@ -11,6 +11,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
+import { analyzerPage } from "~/features/build-analyzer/analyzer-urls";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import {
 	BuildGraphic,
@@ -27,7 +28,6 @@ import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { gearTypeToInitial } from "~/utils/strings";
 import {
-	analyzerPage,
 	gearImageUrl,
 	mainWeaponImageUrl,
 	modeImageUrl,

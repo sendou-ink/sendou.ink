@@ -68,7 +68,11 @@ export default function NewScrimPage() {
 					<>
 						<FormField name="from">
 							{(props: CustomFieldRenderProps) => (
-								<WithFormField usersTeams={data.teams} {...props} />
+								<WithFormField
+									usersTeams={data.teams}
+									recentPickupRosters={data.recentPickupRosters}
+									{...props}
+								/>
 							)}
 						</FormField>
 

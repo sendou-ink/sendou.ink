@@ -6,6 +6,7 @@ import type { Tables } from "../../../db/tables";
 import type * as Progression from "./Progression";
 import { tournamentSummary } from "./summarizer.server";
 import type { TournamentDataTeam } from "./Tournament.server";
+import { tournamentCtxTeam } from "./tests/test-utils";
 
 const createOpponent = (
 	id: number,
@@ -22,27 +23,13 @@ const createOpponent = (
 });
 
 describe("tournamentSummary()", () => {
-	const createTeam = (
-		teamId: number,
-		userIds: number[],
-	): TournamentDataTeam => ({
-		checkIns: [],
-		createdAt: 0,
-		id: teamId,
-		avgSeedingSkillOrdinal: null,
-		startingBracketIdx: null,
-		abDivision: null,
-		hasMapPool: false,
-		inviteCode: null,
-		memberUserIds: userIds,
-		ownerUserId: userIds[0] ?? null,
-		name: `Team ${teamId}`,
-		prefersNotToHost: 0,
-		droppedOut: 0,
-		logoUrl: null,
-		seed: 1,
-		activeRosterUserIds: [],
-	});
+	const createTeam = (teamId: number, userIds: number[]) =>
+		tournamentCtxTeam(teamId, {
+			checkIns: [],
+			memberUserIds: userIds,
+			ownerUserId: userIds[0] ?? null,
+			seed: 1,
+		});
 
 	function summarize({
 		results,

@@ -1,6 +1,7 @@
 import { isWithinInterval, sub } from "date-fns";
+import { redirect } from "react-router";
 import * as R from "remeda";
-import type { DBBoolean, Tables } from "~/db/tables";
+import type { DBBoolean } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -14,10 +15,18 @@ import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { SerializeFrom } from "~/utils/remix";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	SENDOUQ_READY_PAGE,
+	sendouQMatchPage,
+} from "~/utils/urls";
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierRange } from "../q-types";
 import { getTierIndex } from "../q-utils.server";
 import { tierDifferenceToRangeOrExact } from "./groups.server";
+import * as ReadyCheck from "./ready-check.server";
 
 type DBGroupRow = Awaited<
 	ReturnType<typeof SQGroupRepository.findCurrentGroups>
@@ -74,12 +83,12 @@ class SendouQClass {
 			...group,
 			noScreen: this.#groupNoScreen(group),
 			modePreferences: this.#groupModePreferences(group),
+			teamMapModePreferences: undefined,
 			tier: this.#groupTier(group) as TieredSkill["tier"] | null,
 			tierRange: null as TierRange | null,
 			skillDifference:
 				undefined as ParsedMemento["groups"][number]["skillDifference"],
 			isReplay: false,
-			usersRole: null as Tables["GroupMember"]["role"] | null,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
 
@@ -110,26 +119,19 @@ class SendouQClass {
 		if (!ownGroup) return "default";
 		if (ownGroup.status === "PREPARING") return "preparing";
 		if (ownGroup.matchId) return "match";
+		if (ownGroup.status === "READY_CHECK") return "ready";
 
 		return "looking";
 	}
 
 	/**
 	 * Finds the group that a user belongs to.
-	 * @returns The user's group with their role, or undefined if not in a group
+	 * @returns The user's group, or undefined if not in a group
 	 */
 	findOwnGroup(userId: number) {
-		const result = this.groups.find((group) =>
+		return this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
-		if (!result) return;
-
-		const member = result.members.find((m) => m.id === userId)!;
-
-		return {
-			...result,
-			usersRole: member.role,
-		};
 	}
 
 	/**
@@ -441,27 +443,26 @@ class SendouQClass {
 			: null;
 	}
 
-	#groupModePreferences(
-		group: DBGroupRow | DBMatch["groupAlpha"] | DBMatch["groupBravo"],
-	): ModeShort[] {
+	#groupModePreferences(group: DBGroupRow): ModeShort[] {
+		// a team's own preferences speak for its members, the way they do when the
+		// map list of the team's match is generated
+		const countedPreferences = group.teamMapModePreferences
+			? [group.teamMapModePreferences.modes]
+			: group.members.map((member) => member.mapModePreferences?.modes);
+
 		const modePreferences: ModeShort[] = [];
 
 		for (const mode of modesShort) {
 			let score = 0;
-			for (const member of group.members) {
-				const userModePreferences = member.mapModePreferences?.modes;
-				if (!userModePreferences) continue;
+			for (const preferences of countedPreferences) {
+				if (!preferences) continue;
 
 				if (
-					userModePreferences.some(
-						(p) => p.mode === mode && p.preference === "PREFER",
-					)
+					preferences.some((p) => p.mode === mode && p.preference === "PREFER")
 				) {
 					score += 1;
 				} else if (
-					userModePreferences.some(
-						(p) => p.mode === mode && p.preference === "AVOID",
-					)
+					preferences.some((p) => p.mode === mode && p.preference === "AVOID")
 				) {
 					score -= 1;
 				}
@@ -603,4 +604,61 @@ async function freshSendouQInstance() {
 	]);
 
 	return new SendouQClass(groups, recentMatches, skills);
+}
+
+/** User needs to be on certain page depending on their SendouQ group status. This functions throws a `Redirect` if they are trying to load the wrong page. */
+export async function sqRedirectIfNeeded({
+	ownGroup,
+	currentLocation,
+}: {
+	ownGroup?: SQOwnGroup;
+	currentLocation: "default" | "preparing" | "looking" | "ready" | "match";
+}) {
+	const newLocation = groupRedirectLocation(
+		await groupUnlessSeasonIsOver(ownGroup),
+	);
+
+	// we are already in the correct location, don't redirect
+	if (currentLocation === "default" && newLocation === SENDOUQ_PAGE) return;
+	if (currentLocation === "preparing" && newLocation === SENDOUQ_PREPARING_PAGE)
+		return;
+	if (currentLocation === "looking" && newLocation === SENDOUQ_LOOKING_PAGE)
+		return;
+	if (currentLocation === "ready" && newLocation === SENDOUQ_READY_PAGE) return;
+	if (currentLocation === "match" && newLocation.includes("match")) return;
+
+	throw redirect(newLocation);
+}
+
+/**
+ * Takes the group out of the queue if the season it was queueing for has ended,
+ * leaving nowhere for it to be redirected but the front page. A group that got
+ * its match stays as it is, so the match can be reported during its grace period.
+ */
+async function groupUnlessSeasonIsOver(ownGroup?: SQOwnGroup) {
+	if (!ownGroup || ownGroup.matchId || Seasons.current()) return ownGroup;
+
+	// the ready check the group is in can't produce a rated match anymore, and
+	// leaving it behind would have the expiry routine mark its members as having
+	// missed a check they never had the chance to make
+	if (ownGroup.status === "READY_CHECK") {
+		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(
+			ownGroup.id,
+		);
+		if (readyCheck) await ReadyCheck.abort(readyCheck);
+	}
+
+	await SQGroupRepository.setAsInactive(ownGroup.id);
+	await refreshSendouQInstance();
+
+	return undefined;
+}
+
+function groupRedirectLocation(group?: SQOwnGroup) {
+	if (group?.status === "PREPARING") return SENDOUQ_PREPARING_PAGE;
+	if (group?.matchId) return sendouQMatchPage(group.matchId);
+	if (group?.status === "READY_CHECK") return SENDOUQ_READY_PAGE;
+	if (group) return SENDOUQ_LOOKING_PAGE;
+
+	return SENDOUQ_PAGE;
 }

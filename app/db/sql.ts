@@ -1,15 +1,14 @@
 import { DatabaseSync } from "node:sqlite";
 import { styleText } from "node:util";
-import * as Sentry from "@sentry/react-router";
 import { Kysely, type LogEvent } from "kysely";
 import { format } from "sql-formatter";
-import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import { logger } from "~/utils/logger";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { EmptyValuesNoopPlugin } from "./empty-values-noop-plugin";
+import { JSON_COLUMNS } from "./json-columns";
+import { computedJsonColumns } from "./json-selections";
 import { NodeSqliteDialect } from "./node-sqlite-dialect";
-import { FastParseJSONResultsPlugin } from "./parse-json-results-plugin";
 import type { DB } from "./tables";
 import { WriteTrackerPlugin } from "./write-tracker";
 
@@ -51,13 +50,11 @@ export const db = new Kysely<DB>({
 	dialect: new NodeSqliteDialect({
 		database: sql,
 		cacheStatements: true,
+		jsonColumns: JSON_COLUMNS,
+		computedJsonColumns,
 	}),
 	log,
-	plugins: [
-		new EmptyValuesNoopPlugin(),
-		new FastParseJSONResultsPlugin(),
-		new WriteTrackerPlugin(),
-	],
+	plugins: [new EmptyValuesNoopPlugin(), new WriteTrackerPlugin()],
 });
 
 // Every test worker gets its own in-memory database, built by replaying the
@@ -97,18 +94,6 @@ function applyMigratedSchema(target: DatabaseSync) {
 }
 
 function log(event: LogEvent) {
-	if (Config.sentry.enabled && event.level === "query") {
-		// Backdated span so the query nests under the active loader/action span
-		// in Sentry's waterfall. `onlyIfParent: true` skips emission when there's
-		// no active trace (e.g. cron routines), avoiding orphan root spans.
-		Sentry.startInactiveSpan({
-			name: event.query.sql,
-			op: "db.sql.query",
-			startTime: new Date(Date.now() - event.queryDurationMillis),
-			onlyIfParent: true,
-		}).end();
-	}
-
 	if (ServerConfig.sqlLog === "trunc" || ServerConfig.sqlLog === "full") {
 		logQuery(event);
 	} else {

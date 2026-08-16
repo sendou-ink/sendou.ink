@@ -1,4 +1,5 @@
 import { execSync } from "node:child_process";
+import { createHash } from "node:crypto";
 import fs from "node:fs";
 import path from "node:path";
 import { DatabaseSync } from "node:sqlite";
@@ -24,8 +25,13 @@ export function setup() {
 
 /**
  * Ensures the SQLite file at `dbPath` has every migration applied: creates it
- * if missing, applies pending migrations, and rebuilds it from scratch if it
- * contains a migration that no longer exists on disk.
+ * if missing, applies pending migrations, and rebuilds it from scratch if an
+ * already applied migration no longer exists on disk or its contents changed
+ * since it was applied.
+ *
+ * Rebuilding on changed contents matters because a branch edits the migration
+ * it added rather than stacking a new one, so the file name kysely tracks stays
+ * the same while the schema it produces does not.
  */
 export function ensureMigratedDb(dbPath: string) {
 	const resolvedPath = path.resolve(ROOT_DIR, dbPath);
@@ -39,7 +45,9 @@ export function ensureMigratedDb(dbPath: string) {
 	const onDisk = migrationFilesOnDisk();
 
 	const hasDrift =
-		applied === null || applied.some((name) => !onDisk.has(name));
+		applied === null ||
+		applied.some((name) => !onDisk.has(name)) ||
+		readContentsMarker(resolvedPath) !== migrationContentsHash();
 	if (hasDrift) {
 		deleteDbFiles(resolvedPath);
 		migrateUp(resolvedPath);
@@ -50,6 +58,29 @@ export function ensureMigratedDb(dbPath: string) {
 	const hasPending = [...onDisk].some((name) => !appliedSet.has(name));
 	if (hasPending) {
 		migrateUp(resolvedPath);
+	}
+}
+
+/** Fingerprint of every migration's name and contents. */
+function migrationContentsHash() {
+	const hash = createHash("sha256");
+	for (const file of fs.readdirSync(MIGRATIONS_DIR).sort()) {
+		hash.update(file);
+		hash.update(fs.readFileSync(path.join(MIGRATIONS_DIR, file)));
+	}
+	return hash.digest("hex");
+}
+
+/** Sidecar recording the migration contents the database was built from. */
+function contentsMarkerPath(dbPath: string) {
+	return `${dbPath}.migrations`;
+}
+
+function readContentsMarker(dbPath: string) {
+	try {
+		return fs.readFileSync(contentsMarkerPath(dbPath), "utf8");
+	} catch {
+		return null;
 	}
 }
 
@@ -90,6 +121,7 @@ function deleteDbFiles(dbPath: string) {
 	for (const suffix of ["", "-shm", "-wal"]) {
 		fs.rmSync(`${dbPath}${suffix}`, { force: true });
 	}
+	fs.rmSync(contentsMarkerPath(dbPath), { force: true });
 }
 
 function migrateUp(dbPath: string) {
@@ -98,4 +130,5 @@ function migrateUp(dbPath: string) {
 		stdio: "inherit",
 		env: { ...process.env, DB_PATH: dbPath },
 	});
+	fs.writeFileSync(contentsMarkerPath(dbPath), migrationContentsHash());
 }

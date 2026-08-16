@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { Tables } from "~/db/tables";
+import { topSearchPage } from "~/features/top-search/top-search-urls";
 import type { RankedModeShort } from "~/modules/in-game-lists/types";
-import { topSearchPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { PlacementsTable } from "./placements-table";
 
@@ -10,6 +10,18 @@ type Leaderboard = Pick<
 	"month" | "year" | "region"
 > & {
 	mode: RankedModeShort;
+};
+
+const MODE_NAMES: Record<RankedModeShort, string> = {
+	SZ: "Splat Zones",
+	TC: "Tower Control",
+	RM: "Rainmaker",
+	CB: "Clam Blitz",
+};
+
+const DIVISION_NAMES: Record<Tables["XRankPlacement"]["region"], string> = {
+	WEST: "Tentatek",
+	JPN: "Takoroka",
 };
 
 /** `/xsearch` */
@@ -22,7 +34,7 @@ export class TopSearchPage {
 		this.page = page;
 		this.placements = new PlacementsTable(page);
 		this.locators = {
-			leaderboardSelect: this.page.getByTestId("xsearch-select"),
+			seasonMonthsSelect: this.page.getByTestId("xsearch-select"),
 		};
 	}
 
@@ -31,8 +43,13 @@ export class TopSearchPage {
 	}
 
 	async selectLeaderboard({ month, year, mode, region }: Leaderboard) {
-		await this.locators.leaderboardSelect.selectOption(
-			`${month}-${year}-${mode}-${region}`,
-		);
+		await this.locators.seasonMonthsSelect.click();
+		// the trigger renders a copy of the selected option, so scope to the listbox
+		await this.page
+			.getByRole("listbox")
+			.getByTestId(`xsearch-select-option-${month}-${year}`)
+			.click();
+		await this.page.getByText(MODE_NAMES[mode], { exact: true }).click();
+		await this.page.getByText(DIVISION_NAMES[region], { exact: true }).click();
 	}
 }

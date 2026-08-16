@@ -14,7 +14,7 @@ import {
 import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { ModeShort } from "~/modules/in-game-lists/types";
-import { isAdmin } from "~/modules/permissions/utils";
+import { hasPermission } from "~/modules/permissions/utils";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -751,8 +751,11 @@ export class Tournament {
 	}
 
 	matchIdToBracketIdx(matchId: number) {
-		const idx = this.brackets.findIndex((bracket) =>
-			bracket.data.match.some((match) => match.id === matchId),
+		const idx = this.brackets.findIndex(
+			(bracket) =>
+				// preview brackets have locally generated match ids that can collide with real ones
+				!bracket.preview &&
+				bracket.data.match.some((match) => match.id === matchId),
 		);
 
 		if (idx === -1) return null;
@@ -1377,71 +1380,27 @@ export class Tournament {
 
 	/** Checks if the given user is an admin of the tournament. */
 	isAdmin(user: OptionalIdObject) {
-		if (!user) return false;
-		if (isAdmin(user)) return true;
-
-		if (
-			this.ctx.organization?.members.some(
-				(member) => member.userId === user.id && member.role === "ADMIN",
-			)
-		) {
-			return true;
-		}
-
-		return this.ctx.author.id === user.id;
+		return hasPermission(this.ctx, "ADMIN", user);
 	}
 
-	/**
-	 * Checks if the given user can edit the tournament's calendar event info.
-	 *
-	 * Mirrors the authorization enforced when the edit is submitted: organization
-	 * admins can only edit when the organization is established, unless they have
-	 * the TOURNAMENT_ADDER role.
-	 */
-	canEditEventInfo(
-		user: OptionalIdObject,
-		{ isTournamentAdder }: { isTournamentAdder: boolean },
-	) {
-		if (!user) return false;
-		if (isAdmin(user)) return true;
-		if (this.ctx.author.id === user.id) return true;
+	/** Checks if the given user can edit the tournament's calendar event info. */
+	canEditEventInfo(user: OptionalIdObject) {
+		return hasPermission(this.ctx, "EDIT_EVENT_INFO", user);
+	}
 
-		const isOrganizationAdmin = this.ctx.organization?.members.some(
-			(member) => member.userId === user.id && member.role === "ADMIN",
-		);
-
-		return Boolean(
-			isOrganizationAdmin &&
-				(isTournamentAdder || this.ctx.organization?.isEstablished),
-		);
+	/** Checks if the given user can set the in-game names of the tournament's players. */
+	canEditTournamentNames(user: OptionalIdObject) {
+		return hasPermission(this.ctx, "EDIT_IN_GAME_NAMES", user);
 	}
 
 	/** Checks if the given user is an organizer of the tournament. */
 	isOrganizer(user: OptionalIdObject) {
-		return isTournamentOrganizer({ ctx: this.ctx, user });
+		return hasPermission(this.ctx, "ORGANIZE", user);
 	}
 
 	/** Checks if the given user is an organizer or streamer of the tournament. */
 	isOrganizerOrStreamer(user: OptionalIdObject) {
-		if (!user) return false;
-		if (isAdmin(user)) return true;
-
-		if (this.ctx.author.id === user.id) return true;
-
-		if (
-			this.ctx.organization?.members.some(
-				(member) =>
-					member.userId === user.id &&
-					["ADMIN", "ORGANIZER", "STREAMER"].includes(member.role),
-			)
-		) {
-			return true;
-		}
-
-		return this.ctx.staff.some(
-			(staff) =>
-				staff.id === user.id && ["ORGANIZER", "STREAMER"].includes(staff.role),
-		);
+		return hasPermission(this.ctx, "MANAGE_MATCHES", user);
 	}
 
 	/** Live streams of the tournament, empty in the views whose loader did not ship them. */
@@ -1495,41 +1454,4 @@ function swissTeamRecord(matches: MatchData[], teamId: number) {
 	}
 
 	return { wins, losses };
-}
-
-/** The parts of a tournament that decide who organizes it. */
-export type TournamentOrganizerCtx = Pick<
-	TournamentData["ctx"],
-	"author" | "staff" | "organization"
->;
-
-/**
- * Checks if the given user is an organizer of the tournament, off its context alone.
- * {@link Tournament.isOrganizer} is the same check for when a `Tournament` is at hand.
- */
-export function isTournamentOrganizer({
-	ctx,
-	user,
-}: {
-	ctx: TournamentOrganizerCtx;
-	user: OptionalIdObject;
-}) {
-	if (!user) return false;
-	if (isAdmin(user)) return true;
-
-	if (ctx.author.id === user.id) return true;
-
-	if (
-		ctx.organization?.members.some(
-			(member) =>
-				member.userId === user.id &&
-				["ADMIN", "ORGANIZER"].includes(member.role),
-		)
-	) {
-		return true;
-	}
-
-	return ctx.staff.some(
-		(staff) => staff.id === user.id && staff.role === "ORGANIZER",
-	);
 }

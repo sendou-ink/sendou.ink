@@ -1,5 +1,10 @@
+import { Config } from "~/config";
 import * as Seasons from "../../mmr/core/Seasons";
 import type { MonthYear } from "./types";
+
+/** In local development voting is always open so that the voting page can be tested outside a voting window. */
+const VOTING_ALWAYS_OPEN =
+	process.env.NODE_ENV === "development" && !Config.prodMode;
 
 export function lastCompletedVoting(now: Date): MonthYear {
 	let match: { startDate: Date; endDate: Date } | null = null;
@@ -54,6 +59,15 @@ export function seasonToVotingRange(season: Seasons.ListItem) {
 	startDate.setUTCDate(startDate.getUTCDate() - 2);
 
 	return { startDate, endDate };
+}
+
+/**
+ * Whether votes can be cast right now. Unlike {@link isVotingActive}, which also decides when
+ * suggesting is locked, this is always true in local development so the voting page can be
+ * tested outside an actual voting window.
+ */
+export function isVotingOpen() {
+	return VOTING_ALWAYS_OPEN || isVotingActive();
 }
 
 export function isVotingActive() {

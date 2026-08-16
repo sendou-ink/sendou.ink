@@ -1,0 +1,29 @@
+{
+  "event": "Death",
+  "data": {
+    "weaponId": 40,
+    "weaponType": "MAIN",
+    "abilities": [
+      [
+        "LDE",
+        "RSU",
+        "ISS",
+        "ISS"
+      ],
+      [
+        "SSU",
+        "SSU",
+        "QR",
+        "SS"
+      ],
+      [
+        "SJ",
+        "SSU",
+        "QR",
+        "QSJ"
+      ]
+    ],
+    "name": "Aviators",
+    "weaponLabel": "Splattershot"
+  }
+}

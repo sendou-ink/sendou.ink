@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as SearchParams from "~/modules/search-params/search-params";
 import {
 	assertDecodesToDefault,
@@ -7,7 +7,7 @@ import {
 import { weaponParamsSearchParams } from "./params-search-params";
 
 describe("weaponParamsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(weaponParamsSearchParams, {
 			tab: ["params", "patches"],
 			hidden: [[], [10], [0, 50, 1000]],
@@ -16,7 +16,7 @@ describe("weaponParamsSearchParams", () => {
 		});
 	});
 
-	it("accepts legacy comma-joined hidden ids", () => {
+	test("accepts legacy comma-joined hidden ids", () => {
 		expect(
 			SearchParams.decodeParam(weaponParamsSearchParams.shape.hidden, [
 				"10,20,30",
@@ -24,7 +24,7 @@ describe("weaponParamsSearchParams", () => {
 		).toEqual([10, 20, 30]);
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(weaponParamsSearchParams, "tab", [["bogus"]]);
 		assertDecodesToDefault(weaponParamsSearchParams, "hidden", [
 			["abc"],

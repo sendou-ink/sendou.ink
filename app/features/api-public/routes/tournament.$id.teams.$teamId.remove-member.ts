@@ -38,7 +38,7 @@ export const action = async (args: ActionFunctionArgs) => {
 
 	return wrapActionForApi(async () => {
 		const user = requireUser();
-		const tournament = await tournamentFromDB({ tournamentId, user });
+		const tournament = await tournamentFromDB(tournamentId);
 		requireTournamentOrganizer(tournament, user);
 
 		const team = tournament.teamById(teamId);
@@ -72,6 +72,7 @@ export const action = async (args: ActionFunctionArgs) => {
 			type: "participant",
 			userId,
 		});
+		await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 		await syncPickupChatMetadata({
 			teamId: team.id,

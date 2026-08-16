@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "个人",
 	"matchProfile.maps.preferencesFor": "偏好于",
 	"matchProfile.maps.teamExplanation": "以队伍身份排队时，系统将对所有成员应用队伍的场地列表偏好",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "避开",
 	"matchProfile.maps.prefer": "偏好",
 	"matchProfile.maps.neutral": "中立",
@@ -23,6 +24,7 @@
 	"matchProfile.mapPool.notOk": "为每个模式选择 {{count}} 个您不想避开的场地以设置场地偏好",
 	"sounds.likeReceived": "收到小组邀请",
 	"sounds.groupNewMember": "小组邀请已通过",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "SendouQ 对局开始",
 	"sounds.tournamentMatchStarted": "赛事对局开始"
 }

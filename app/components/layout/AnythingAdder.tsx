@@ -1,21 +1,21 @@
 import { Plus } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { newArtPage } from "~/features/art/art-urls";
 import { useUser } from "~/features/auth/core/user";
+import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
+import { plusSuggestionsNewPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
+import { userNewBuildPage } from "~/features/user-page/user-page-urls";
+import { newVodPage } from "~/features/vods/vods-urls";
 import {
 	CALENDAR_NEW_PAGE,
-	lfgNewPostPage,
 	NEW_TEAM_PAGE,
 	NEW_TROPHY_PAGE,
 	navIconUrl,
-	newArtPage,
 	newAssociationsPage,
 	newScrimPostPage,
-	newVodPage,
 	ORGANIZATION_NEW_PAGE,
-	plusSuggestionsNewPage,
 	TOURNAMENT_NEW_PAGE,
-	userNewBuildPage,
 } from "~/utils/urls";
 import { SendouButton } from "../elements/Button";
 import {

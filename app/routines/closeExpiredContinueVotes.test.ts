@@ -3,6 +3,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyNotificationsChanged: vi.fn(),
 	removeRoom: vi.fn(),
 	setMetadata: vi.fn(),
 }));
@@ -14,8 +15,10 @@ import { db } from "~/db/sql";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 
-let alphaUserIds: number[];
-let bravoUserIds: number[];
+const users = UserFactory.pool();
+/** The two SendouQ groups: the first FULL_GROUP_SIZE users against the rest. */
+const alphaUserIds = () => users.ids().slice(0, FULL_GROUP_SIZE);
+const bravoUserIds = () => users.ids().slice(FULL_GROUP_SIZE);
 
 const setupMatch = async ({
 	isMatchmade,
@@ -25,7 +28,7 @@ const setupMatch = async ({
 	confirmedAt: Date;
 }) => {
 	const match = await SQMatchFactory.create(
-		{ alphaUserIds, bravoUserIds, isMatchmade },
+		{ alphaUserIds: alphaUserIds(), bravoUserIds: bravoUserIds(), isMatchmade },
 		{ isConcluded: true, confirmedAt },
 	);
 
@@ -50,9 +53,7 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 		vi.useFakeTimers();
 		vi.setSystemTime(new Date("2026-01-15T12:00:00Z"));
 
-		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
-		alphaUserIds = users.slice(0, FULL_GROUP_SIZE).map((user) => user.id);
-		bravoUserIds = users.slice(FULL_GROUP_SIZE).map((user) => user.id);
+		await users.create(FULL_GROUP_SIZE * 2);
 	});
 
 	afterEach(() => {
@@ -64,8 +65,8 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 			isMatchmade: true,
 			confirmedAt: sub(new Date(), { hours: 2 }),
 		});
-		await castContinueVote(alphaGroupId, alphaUserIds[0]);
-		await castContinueVote(alphaGroupId, alphaUserIds[1]);
+		await castContinueVote(alphaGroupId, users.id(1));
+		await castContinueVote(alphaGroupId, users.id(2));
 
 		await CloseExpiredContinueVotesRoutine.run();
 
@@ -75,7 +76,7 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 		expect(alphaVotes).toHaveLength(4);
 		expect(alphaVotes.every((v) => v.isContinuing === 0)).toBe(true);
 		expect(new Set(alphaVotes.map((v) => v.userId))).toEqual(
-			new Set(alphaUserIds),
+			new Set(alphaUserIds()),
 		);
 
 		expect(bravoVotes).toHaveLength(4);
@@ -87,7 +88,7 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 			isMatchmade: true,
 			confirmedAt: sub(new Date(), { minutes: 30 }),
 		});
-		await castContinueVote(alphaGroupId, alphaUserIds[0]);
+		await castContinueVote(alphaGroupId, users.id(1));
 
 		await CloseExpiredContinueVotesRoutine.run();
 
@@ -114,7 +115,7 @@ describe("CloseExpiredContinueVotesRoutine", () => {
 			isMatchmade: true,
 			confirmedAt: sub(new Date(), { hours: 2 }),
 		});
-		for (const userId of alphaUserIds) {
+		for (const userId of alphaUserIds()) {
 			await castContinueVote(alphaGroupId, userId);
 		}
 

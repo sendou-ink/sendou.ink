@@ -1,12 +1,13 @@
 import { sub } from "date-fns";
 import { type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { LFG } from "./lfg-constants";
@@ -90,12 +91,21 @@ export async function findAllPosts(user?: {
 		.$narrowType<{ author: NotNull }>()
 		.execute();
 
-	return rows.filter((row) => {
-		if (!row.plusTierVisibility) return true;
-		if (!user?.plusTier) return false;
+	return rows
+		.filter((row) => {
+			if (!row.plusTierVisibility) return true;
+			if (row.author.id === userId) return true;
+			if (!user?.plusTier) return false;
 
-		return row.plusTierVisibility >= user.plusTier;
-	});
+			return row.plusTierVisibility >= user.plusTier;
+		})
+		.map((row) => ({
+			...row,
+			permissions: {
+				EDIT: [row.author.id],
+				DELETE: [row.author.id],
+			},
+		}));
 }
 
 const postExpiryCutoff = () =>

@@ -1,3 +1,4 @@
+import type { UserMapModePreferences } from "~/db/tables-json";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { TEAM } from "~/features/team/team-constants";
 import invariant from "~/utils/invariant";
@@ -18,6 +19,8 @@ type Options = {
 	hasAvatar?: boolean;
 	/** Filename of the logo; one seeded to the local image storage renders in dev. */
 	avatarUrl?: string;
+	/** SendouQ map & mode preferences, saved as the team edit page saves them. */
+	mapModePreferences?: UserMapModePreferences;
 };
 
 /**
@@ -48,7 +51,17 @@ export const { create } = defineFactory({
 
 		return { ...team, name: args.name, ownerUserId, memberUserIds };
 	},
-	applyOptions: async (team, { hasAvatar, avatarUrl }: Options) => {
+	applyOptions: async (
+		team,
+		{ hasAvatar, avatarUrl, mapModePreferences }: Options,
+	) => {
+		if (mapModePreferences) {
+			await TeamRepository.updateMapModePreferences({
+				id: team.id,
+				mapModePreferences,
+			});
+		}
+
 		if (!hasAvatar && !avatarUrl) return;
 
 		const image = await ImageFactory.create(

@@ -187,6 +187,10 @@ export default [
 			route("audit", "features/tournament-admin/routes/to.$id.admin.audit.tsx"),
 		]),
 		route("results", "features/tournament/routes/to.$id.results.tsx"),
+		route(
+			"teams/:tid/comps",
+			"features/tournament/routes/to.$id.teams.$tid.comps.ts",
+		),
 		route("streams", "features/tournament/routes/to.$id.streams.tsx"),
 
 		route("looking", "features/tournament-lfg/routes/to.$id.looking.tsx"),
@@ -274,6 +278,7 @@ export default [
 		route("info", "features/sendouq/routes/q.info.tsx"),
 		route("looking", "features/sendouq/routes/q.looking.tsx"),
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
+		route("ready", "features/sendouq/routes/q.ready.tsx"),
 		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
 		route("settings", "features/match-profile/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),
@@ -314,6 +319,11 @@ export default [
 	route("/admin", "features/admin/routes/admin.tsx"),
 	route("/admin/streams", "features/admin/routes/admin.streams.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
+	route("/api/layout", "features/layout/routes/api.layout.ts"),
+	route(
+		"/api/notifications",
+		"features/notifications/routes/api.notifications.ts",
+	),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [
@@ -345,11 +355,15 @@ export default [
 		),
 	]),
 
+	route("/end-season", "features/api-private/routes/end-season.ts"),
 	route("/patrons", "features/api-private/routes/patrons.ts"),
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),
 	route("/seed", "features/api-private/routes/seed.ts"),
 	route("/users", "features/api-private/routes/users.ts"),
+
+	route("/scanner", "features/scanner/routes/scanner.tsx"),
+	route("/ingest", "features/scanner-ingest/routes/scanner-ingest.ts"),
 
 	layout("features/api-public/routes/api.layout.tsx", [
 		...prefix("/api", [

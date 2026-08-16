@@ -1,0 +1,79 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 1,
+    "replayCode": "RX02-7VV9-8EPS-Y9FE",
+    "matchScores": [
+      null,
+      100
+    ],
+    "players": [
+      {
+        "name": "liンチ¯",
+        "weaponId": 60,
+        "paint": 1229,
+        "ka": 10,
+        "d": 8,
+        "s": 4
+      },
+      {
+        "name": "æ Rαι×ι!",
+        "weaponId": 8000,
+        "paint": 1068,
+        "ka": 7,
+        "d": 6,
+        "s": 5
+      },
+      {
+        "name": "あんとl",
+        "weaponId": 211,
+        "paint": 725,
+        "ka": 7,
+        "d": 9,
+        "s": 3
+      },
+      {
+        "name": "æ weapon",
+        "weaponId": 2021,
+        "paint": 975,
+        "ka": 2,
+        "d": 3,
+        "s": 4
+      },
+      {
+        "name": "bran",
+        "weaponId": 3000,
+        "paint": 916,
+        "ka": 14,
+        "d": 6,
+        "s": 3
+      },
+      {
+        "name": "queue",
+        "weaponId": 2070,
+        "paint": 1159,
+        "ka": 12,
+        "d": 2,
+        "s": 4
+      },
+      {
+        "name": "Jared",
+        "weaponId": 5010,
+        "paint": 842,
+        "ka": 10,
+        "d": 7,
+        "s": 2
+      },
+      {
+        "name": "Shaoowind",
+        "weaponId": 6011,
+        "paint": 960,
+        "ka": 5,
+        "d": 5,
+        "s": 3
+      }
+    ]
+  }
+}

@@ -1,0 +1,13 @@
+{
+	"event": "Objective",
+	"data": {
+		"mode": "SZ",
+		"time": 249,
+		"score": [100, 29],
+		"penalty": [null, null],
+		"control": [false, true]
+	},
+	"options": {
+		"notes": "Same cast game seconds later after a camera swap put the lime team's plate on the right: white '29' on the bright lime fill, leading '2' blur-eroded under the main digit floor (was truncated to 9). Gray-band noise on this frame matches digit templates at up to 0.66 — the anchor-digit rule must keep rejecting it."
+	}
+}

@@ -50,15 +50,6 @@ export function canEditAnyTrophy(user?: { roles: Array<Role> } | null) {
 	return user.roles.includes("ADMIN");
 }
 
-export function canEditTrophy(
-	user: { id: number; roles: Array<Role> } | null | undefined,
-	trophy: { managerId: number | null },
-) {
-	if (!user) return false;
-	if (canEditAnyTrophy(user)) return true;
-	return trophy.managerId === user.id;
-}
-
 export function hasUpcomingTournamentSoon(
 	upcomingTournamentAt: number | null | undefined,
 ) {

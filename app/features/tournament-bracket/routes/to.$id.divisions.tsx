@@ -2,8 +2,8 @@ import clsx from "clsx";
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import type { SerializeFrom } from "~/utils/remix";
-import { tournamentBracketsPage } from "../../../utils/urls";
 
 import { loader } from "../loaders/to.$id.divisions.server";
 import styles from "./to.$id.divisions.module.css";

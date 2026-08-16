@@ -158,7 +158,8 @@ export async function deleteFriendRequest({
 		.deleteFrom("FriendRequest")
 		.where("FriendRequest.id", "=", id)
 		.where("FriendRequest.senderId", "=", senderId)
-		.execute();
+		.returning("FriendRequest.receiverId")
+		.executeTakeFirst();
 }
 
 export function deleteOldPendingRequests() {
@@ -276,7 +277,8 @@ export async function findFriendRequestByIdAndReceiver({
 }) {
 	return db
 		.selectFrom("FriendRequest")
-		.select("FriendRequest.senderId")
+		.innerJoin("User", "User.id", "FriendRequest.senderId")
+		.select(["FriendRequest.senderId", "User.username as senderUsername"])
 		.where("FriendRequest.id", "=", id)
 		.where("FriendRequest.receiverId", "=", receiverId)
 		.executeTakeFirst();

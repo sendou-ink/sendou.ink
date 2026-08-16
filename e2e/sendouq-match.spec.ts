@@ -191,7 +191,8 @@ test.describe("SendouQ match page", () => {
 			isConcluded: true,
 		});
 
-		await impersonate(page, bravo[0].id);
+		// any member can re-queue the group, not only the member who created it
+		await impersonate(page, bravo[1].id);
 		const match = new SendouQMatchPage(page);
 		await match.goto(matchId);
 		await match.lookAgain();
@@ -239,6 +240,55 @@ test.describe("SendouQ match page", () => {
 		await match.voteNo();
 
 		await expect(match.locators.declinedText).toBeVisible();
+	});
+
+	test("Rejoin vote: queueing solo after voting yes shows the rest a no", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, alpha } = await createMatch(factories, {
+			isMatchmade: true,
+			isConcluded: true,
+		});
+
+		const [owner, impatient, memberC, memberD] = alpha;
+
+		await impersonate(page, owner.id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+		await match.voteYes();
+
+		await impersonate(page, impatient.id);
+		await match.goto(matchId);
+		await match.voteYes();
+
+		// ...and then gives up on waiting for the rest and queues up alone instead
+		const q = new SendouQPage(page);
+		await q.goto();
+		await q.joinSolo();
+
+		await impersonate(page, owner.id);
+		await match.goto(matchId);
+
+		// their checkmark turned into a cross, taking the yes votes cast for a
+		// group of four with it
+		await expect(match.locators.votedNo).toHaveCount(1);
+		await expect(match.locators.votedYes).toHaveCount(0);
+		await expect(match.locators.pendingVotes).toHaveCount(3);
+
+		for (const member of [owner, memberC, memberD]) {
+			await impersonate(page, member.id);
+			await match.goto(matchId);
+			await match.voteYes();
+		}
+
+		// the three who stayed get their group, rather than being sent back to /q
+		await impersonate(page, owner.id);
+		await q.goto();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+
+		const looking = new SendouQLookingPage(page);
+		await expect(looking.ownGroupCard.members).toHaveCount(3);
 	});
 
 	test("Rejoin vote: cascade wipes yes on no, revote completes and rejoins", async ({

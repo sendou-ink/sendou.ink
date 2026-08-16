@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "Personal",
 	"matchProfile.maps.preferencesFor": "Preferences for",
 	"matchProfile.maps.teamExplanation": "Team map list is used for all members when queueing as a team",
+	"matchProfile.maps.teamPreferencesHint": "Looking for your team's map preferences? They are on the Edit Team page.",
 	"matchProfile.maps.avoid": "Avoid",
 	"matchProfile.maps.prefer": "Prefer",
 	"matchProfile.maps.neutral": "Neutral",
@@ -23,6 +24,7 @@
 	"matchProfile.mapPool.notOk": "Pick {{count}} stages per mode that you didn't avoid to save your preferences",
 	"sounds.likeReceived": "Group invitation received",
 	"sounds.groupNewMember": "Group invitation accepted",
+	"sounds.readyCheckStarted": "SendouQ ready check started",
 	"sounds.matchStarted": "SendouQ match started",
 	"sounds.tournamentMatchStarted": "Tournament match started"
 }

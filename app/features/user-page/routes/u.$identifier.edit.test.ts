@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { wrappedAction } from "~/utils/Test";
@@ -37,7 +37,7 @@ describe("user page editing", () => {
 		userId = (await UserFactory.createRegular()).id;
 	});
 
-	it("saves profile with default fields", async () => {
+	test("saves profile with default fields", async () => {
 		const response = await action(
 			{
 				...DEFAULT_FIELDS,

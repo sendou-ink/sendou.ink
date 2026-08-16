@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
-import { tournamentOrganizationEditPage } from "~/utils/urls";
+import { tournamentOrganizationEditPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { navigate, submit } from "../../helpers/playwright";
 
 export class OrganizationEditPage {

@@ -12,8 +12,10 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
+import { newVodPage } from "~/features/vods/vods-urls";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -21,7 +23,6 @@ import type { Unpacked } from "~/utils/types";
 import {
 	modeImageUrl,
 	navIconUrl,
-	newVodPage,
 	stageImageUrl,
 	VODS_PAGE,
 	vodVideoPage,
@@ -33,7 +34,6 @@ import { loader } from "../loaders/vods.$id.server";
 import { vodsVodSearchParams } from "../vods-search-params";
 import type { Vod } from "../vods-types";
 import {
-	canEditVideo,
 	generateYoutubeTimestamps,
 	secondsToHoursMinutesSecondString,
 } from "../vods-utils";
@@ -80,6 +80,7 @@ export default function VodPage() {
 	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["common", "vods"]);
 	const user = useUser();
+	const canEdit = useHasPermission(data.vod, "EDIT");
 
 	return (
 		<Main className="stack lg">
@@ -105,12 +106,7 @@ export default function VodPage() {
 						/>
 					</div>
 
-					{canEditVideo({
-						submitterUserId: data.vod.submitterUserId,
-						userId: user?.id,
-						povUserId:
-							typeof data.vod.pov === "string" ? undefined : data.vod.pov?.id,
-					}) ? (
+					{canEdit ? (
 						<div className="stack horizontal md">
 							{user?.id === data.vod.submitterUserId ? (
 								<CopyTimestampsButton

@@ -92,7 +92,11 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 				<MatchResultTab
 					teams={resolveTimelineTeams(data.match, t)}
 					score={{ alpha: alphaWins, bravo: bravoWins }}
-					maps={resolveTimelineMaps(data.match, data.reportedWeapons)}
+					maps={resolveTimelineMaps(
+						data.match,
+						data.reportedWeapons,
+						data.ingestedScoreboards,
+					)}
 					spChanges={resolveTimelineSpChanges(data.match)}
 					isOngoing={!isLocked && hasReportedMaps}
 				>

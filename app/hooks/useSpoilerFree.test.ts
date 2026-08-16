@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,11 +6,11 @@ import {
 import { revealedTournamentsPersisted } from "./useSpoilerFree";
 
 describe("revealedTournamentsPersisted", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(revealedTournamentsPersisted, [[], [1, 2, 3]]);
 	});
 
-	it("malformed values decode to the default", () => {
+	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(revealedTournamentsPersisted, ["not json", "1"]);
 	});
 });

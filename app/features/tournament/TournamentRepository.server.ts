@@ -1,10 +1,9 @@
 import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { DB, Tables } from "~/db/tables";
+import type { DB, DBBoolean, Tables } from "~/db/tables";
 import type {
 	CastedMatchesInfo,
 	PreparedMaps,
@@ -18,17 +17,25 @@ import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { isSupporter } from "~/modules/permissions/utils";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoWithDefault,
+	tournamentMembersCount,
+	tournamentTeamsCount,
+	tournamentUsername,
 } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 import type { TournamentTierNumber } from "./core/tiering";
+import type { TournamentStaffRole } from "./tournament-constants";
 import { updatedCastedMatchesInfo } from "./tournament-utils";
 
 export type FindById = NonNullable<Unwrapped<typeof findById>>;
@@ -94,6 +101,8 @@ export async function findById(id: number) {
 									"TournamentOrganizationMember.role",
 									...commonUserSelect(eb),
 									"User.pronouns",
+									"User.isTournamentOrganizer",
+									"User.patronTier",
 								])
 								.whereRef(
 									"TournamentOrganizationMember.organizationId",
@@ -271,8 +280,19 @@ export async function findById(id: number) {
 
 	if (!result) return null;
 
+	const { organization, ...rest } = result;
+
 	return {
-		...result,
+		...rest,
+		organization: organization
+			? {
+					...organization,
+					members: organization.members.map(
+						({ isTournamentOrganizer, patronTier, ...member }) => member,
+					),
+				}
+			: organization,
+		permissions: permissionsOf(result),
 		teams: result.teams.map(({ members, ...team }) => ({
 			...team,
 			avgSeedingSkillOrdinal:
@@ -286,6 +306,78 @@ export async function findById(id: number) {
 		latestTeamIdByDuplicatedUserId: latestTeamIdByDuplicatedUserId(
 			result.teams,
 		),
+	};
+}
+
+/**
+ * Who may act on the tournament, following the convention in docs/dev/permissions.md.
+ *
+ * - `ADMIN`: full control of the tournament
+ * - `ORGANIZE`: running the tournament
+ * - `MANAGE_MATCHES`: casting, locking and admining individual matches
+ * - `EDIT_EVENT_INFO`: editing the calendar event the tournament belongs to. Organization
+ *   admins only qualify when the organization is established or they may add tournaments
+ *   of their own anyway.
+ * - `EDIT_IN_GAME_NAMES`: setting the in-game names of the tournament's players. Restricted
+ *   to members of an established organization because the name they set is shown in every
+ *   tournament from then on, not only in this one.
+ */
+function permissionsOf(tournament: {
+	author: { id: number };
+	staff: Array<{ id: number; role: TournamentStaffRole }>;
+	organization: {
+		isEstablished: DBBoolean;
+		members: Array<{
+			userId: number;
+			role: TournamentOrganizationRole;
+			isTournamentOrganizer: DBBoolean;
+			patronTier: number | null;
+		}>;
+	} | null;
+}) {
+	const organizationMembers = tournament.organization?.members ?? [];
+	const isEstablished = Boolean(tournament.organization?.isEstablished);
+
+	const membersWithRole = (roles: Array<TournamentOrganizationRole>) =>
+		organizationMembers
+			.filter((member) => roles.includes(member.role))
+			.map((member) => member.userId);
+	const staffWithRole = (roles: Array<TournamentStaffRole>) =>
+		tournament.staff
+			.filter((staff) => roles.includes(staff.role))
+			.map((staff) => staff.id);
+
+	const ADMIN = R.unique([tournament.author.id, ...membersWithRole(["ADMIN"])]);
+	const ORGANIZE = R.unique([
+		...ADMIN,
+		...membersWithRole(["ORGANIZER"]),
+		...staffWithRole(["ORGANIZER"]),
+	]);
+	const MANAGE_MATCHES = R.unique([
+		...ORGANIZE,
+		...membersWithRole(["STREAMER"]),
+		...staffWithRole(["STREAMER"]),
+	]);
+
+	return {
+		ADMIN,
+		ORGANIZE,
+		MANAGE_MATCHES,
+		EDIT_EVENT_INFO: R.unique([
+			tournament.author.id,
+			...organizationMembers
+				.filter(
+					(member) =>
+						member.role === "ADMIN" &&
+						(isEstablished ||
+							Boolean(member.isTournamentOrganizer) ||
+							isSupporter(member)),
+				)
+				.map((member) => member.userId),
+		]),
+		EDIT_IN_GAME_NAMES: isEstablished
+			? membersWithRole(["ADMIN", "ORGANIZER"])
+			: [],
 	};
 }
 
@@ -355,7 +447,7 @@ export async function findStreamsByTournamentId(tournamentId: number) {
 				"LiveStream.viewerCount",
 				"LiveStream.thumbnailUrl",
 				"TournamentTeam.name as teamName",
-				...commonUserSelect(eb),
+				...commonUserSelect(eb, { inTournament: true }),
 			])
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
 			.where("TournamentTeam.isPlaceholder", "=", 0)
@@ -464,8 +556,9 @@ export async function findTeamsFullByTournamentId(tournamentId: number) {
 							),
 					)
 					.select((eb) => [
-						...commonUserSelect(eb, { idAs: "userId" }),
+						...commonUserSelect(eb, { idAs: "userId", inTournament: true }),
 						"User.country",
+						"User.tournamentName",
 						"SeedingSkill.ordinal",
 						"TournamentTeamMember.role",
 						"TournamentTeamMember.createdAt",
@@ -795,29 +888,8 @@ export function findAllForShowcase() {
 			"CalendarEvent.organizationId",
 			"CalendarEventDate.startsAt",
 			"CalendarEvent.hidden",
-			eb
-				.selectFrom("TournamentTeam")
-				.leftJoin("TournamentTeamCheckIn", (join) =>
-					join
-						.on("TournamentTeamCheckIn.bracketIdx", "is", null)
-						.onRef(
-							"TournamentTeamCheckIn.tournamentTeamId",
-							"=",
-							"TournamentTeam.id",
-						),
-				)
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.where((eb) =>
-					eb.or([
-						eb("TournamentTeamCheckIn.checkedInAt", "is not", null),
-						eb("CalendarEventDate.startsAt", ">", databaseTimestampNow()),
-					]),
-				)
-				.select(({ fn }) => [
-					fn.count<number>("TournamentTeam.id").distinct().as("teamsCount"),
-				])
-				.as("teamsCount"),
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonObjectFrom(
 				eb
@@ -855,7 +927,7 @@ export function findAllForShowcase() {
 					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
 					.where("TournamentResult.placement", "=", 1)
 					.select((eb) => [
-						...commonUserSelect(eb),
+						...commonUserSelect(eb, { inTournament: true }),
 						"User.country",
 						"TournamentResult.div",
 						"TournamentTeam.name as teamName",
@@ -885,7 +957,7 @@ export function findAllForShowcase() {
 		])
 		.where("CalendarEventDate.startsAt", ">", databaseTimestampWeekAgo())
 		.orderBy("CalendarEventDate.startsAt", "asc")
-		.$narrowType<{ teamsCount: NotNull }>()
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
 		.execute();
 }
 
@@ -895,6 +967,22 @@ function databaseTimestampWeekAgo() {
 	now.setDate(now.getDate() - 7);
 
 	return dateToDatabaseTimestamp(now);
+}
+
+/**
+ * Resolves the team & participant counts of one tournament exactly like {@link findAllForShowcase}
+ * does, meant for refreshing those counts of an already cached showcase tournament.
+ */
+export function findShowcaseCountsById(tournamentId: number) {
+	return db
+		.selectFrom("Tournament")
+		.select((eb) => [
+			tournamentTeamsCount(eb).as("teamsCount"),
+			tournamentMembersCount(eb).as("membersCount"),
+		])
+		.where("Tournament.id", "=", tournamentId)
+		.$narrowType<{ teamsCount: NotNull; membersCount: NotNull }>()
+		.executeTakeFirst();
 }
 
 export function findAllBetweenTwoTimestamps({
@@ -1545,6 +1633,14 @@ export function finalizeWithoutSummary(tournamentId: number) {
 		.execute();
 }
 
+/** How close to its start time a tournament counts as happening right now. */
+const TOURNAMENT_ONGOING_WINDOW_IN_SECONDS = 24 * 60 * 60;
+
+/**
+ * Searches tournaments whose calendar event name contains the query, hidden events excluded.
+ *
+ * Ordered so that the tournaments most likely being looked for come first
+ */
 export async function searchByName({
 	query,
 	limit,
@@ -1556,6 +1652,12 @@ export async function searchByName({
 	minStartTime?: Date;
 	maxStartTime?: Date;
 }) {
+	const now = databaseTimestampNow();
+	const distanceFromNow = sql<number>`abs("CalendarEventDate"."startsAt" - ${now})`;
+	// window function so that the next tournament up is the next one of all the matches,
+	// not only of the ones that happen to fit in the limit
+	const nextUpStartsAt = sql<number>`min(case when "CalendarEventDate"."startsAt" - ${now} >= ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then "CalendarEventDate"."startsAt" end) over ()`;
+
 	let sqlQuery = db
 		.selectFrom("Tournament")
 		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
@@ -1572,7 +1674,15 @@ export async function searchByName({
 		])
 		.where("CalendarEvent.name", "like", `%${query}%`)
 		.where("CalendarEvent.hidden", "=", 0)
-		.orderBy("CalendarEventDate.startsAt", "desc")
+		.orderBy(
+			sql`case
+				when ${distanceFromNow} < ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then 0
+				when "CalendarEventDate"."startsAt" = ${nextUpStartsAt} then 1
+				else 2
+			end`,
+		)
+		.orderBy(distanceFromNow)
+		.orderBy("Tournament.id")
 		.limit(limit);
 
 	if (minStartTime) {
@@ -1624,7 +1734,7 @@ export function updateTeamSeeds({
 						.select([
 							"TournamentTeamMember.tournamentTeamId",
 							"User.id as userId",
-							"User.username",
+							tournamentUsername().as("username"),
 						])
 						.where("TournamentTeamMember.tournamentTeamId", "in", teamIds)
 						.execute()

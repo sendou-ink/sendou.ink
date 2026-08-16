@@ -15,6 +15,7 @@ import {
 	type QueryCompiler,
 	type QueryResult,
 	RawNode,
+	type RootOperationNode,
 	SelectQueryNode,
 	SqliteAdapter,
 	SqliteIntrospector,
@@ -57,6 +58,8 @@ const SCHEMA_PRESERVING_RAW_COMMANDS = new Set([
 
 const STATEMENT_CACHE_SIZE = 5000;
 
+const NO_JSON_OUTPUT_NAMES: ReadonlySet<string> = new Set();
+
 export interface NodeSqliteDialectConfig {
 	database: DatabaseSync;
 	/**
@@ -66,6 +69,23 @@ export interface NodeSqliteDialectConfig {
 	 * connection, which is not true while migrations run.
 	 */
 	cacheStatements?: boolean;
+	/**
+	 * "Table.column" names whose text content is a JSON document. When given,
+	 * result values of these columns are parsed into objects. Other text columns
+	 * are always returned verbatim, so JSON-shaped user input stays a string.
+	 * Origin metadata from `statement.columns()` sees through aliases, views,
+	 * subqueries and CTEs, so the names here are the underlying table names
+	 * (e.g. `AllTeam`, not the `Team` view).
+	 */
+	jsonColumns?: ReadonlySet<string>;
+	/**
+	 * Output names of a query's computed result columns whose value is a JSON
+	 * document, which is what `jsonArrayFrom`/`jsonObjectFrom` subqueries compile
+	 * to. SQLite reports no origin for a computed expression, so only the query's
+	 * own AST tells those apart from an ordinary `coalesce(...)` over user text.
+	 * Called once per prepared statement. Requires {@link jsonColumns}.
+	 */
+	computedJsonColumns?: (query: RootOperationNode) => ReadonlySet<string>;
 }
 
 /**
@@ -174,20 +194,36 @@ class NodeSqliteDriver implements Driver {
 	}
 }
 
+/** Which result columns of one query hold a JSON document: by column origin, and by output name for the columns that have no origin. */
+interface JsonColumns {
+	byOrigin: ReadonlySet<string>;
+	byOutputName: ReadonlySet<string>;
+}
+
 interface PreparedStatement {
 	statement: StatementSync;
 	/** Empty for statements that return no rows, which is how writes are detected. */
 	columnNames: string[];
+	/** Per result column: parse text values as JSON when building rows. */
+	jsonColumnFlags: boolean[];
+	/** Kept for re-deriving the flags when the column list turns out to be stale. */
+	jsonColumns?: JsonColumns;
 }
 
 class NodeSqliteConnection implements DatabaseConnection {
 	readonly #database: DatabaseSync;
 	readonly #cacheStatements: boolean;
+	readonly #jsonColumns?: ReadonlySet<string>;
+	readonly #computedJsonColumns?: (
+		query: RootOperationNode,
+	) => ReadonlySet<string>;
 	readonly #cache = new Map<string, PreparedStatement>();
 
 	constructor(config: NodeSqliteDialectConfig) {
 		this.#database = config.database;
 		this.#cacheStatements = config.cacheStatements ?? false;
+		this.#jsonColumns = config.jsonColumns;
+		this.#computedJsonColumns = config.computedJsonColumns;
 	}
 
 	async executeQuery<R>(compiledQuery: CompiledQuery): Promise<QueryResult<R>> {
@@ -218,14 +254,16 @@ class NodeSqliteConnection implements DatabaseConnection {
 
 		// deliberately uncached: the cursor stays open across yields, so sharing the
 		// statement with another query would reset it mid-iteration
-		const prepared = prepare(this.#database, compiledQuery.sql);
+		const prepared = prepare(
+			this.#database,
+			compiledQuery.sql,
+			this.#jsonColumnsFor(compiledQuery.query),
+		);
 		const parameters = compiledQuery.parameters as SQLInputValue[];
 
 		for (const row of prepared.statement.iterate(...parameters)) {
 			yield {
-				rows: [
-					toRow<R>(prepared.columnNames, row as unknown as SQLOutputValue[]),
-				],
+				rows: [toRow<R>(prepared, row as unknown as SQLOutputValue[])],
 			};
 		}
 	}
@@ -243,7 +281,7 @@ class NodeSqliteConnection implements DatabaseConnection {
 				this.#cache.clear();
 			}
 
-			return prepare(this.#database, sql);
+			return prepare(this.#database, sql, this.#jsonColumnsFor(query));
 		}
 
 		const cached = this.#cache.get(sql);
@@ -254,7 +292,7 @@ class NodeSqliteConnection implements DatabaseConnection {
 			return cached;
 		}
 
-		const prepared = prepare(this.#database, sql);
+		const prepared = prepare(this.#database, sql, this.#jsonColumnsFor(query));
 
 		if (this.#cache.size >= STATEMENT_CACHE_SIZE) {
 			this.#cache.delete(this.#cache.keys().next().value!);
@@ -262,6 +300,15 @@ class NodeSqliteConnection implements DatabaseConnection {
 		this.#cache.set(sql, prepared);
 
 		return prepared;
+	}
+
+	#jsonColumnsFor(query: RootOperationNode): JsonColumns | undefined {
+		if (!this.#jsonColumns) return undefined;
+
+		return {
+			byOrigin: this.#jsonColumns,
+			byOutputName: this.#computedJsonColumns?.(query) ?? NO_JSON_OUTPUT_NAMES,
+		};
 	}
 }
 
@@ -274,11 +321,33 @@ function canChangeSchema(sql: string) {
 	return !SCHEMA_PRESERVING_RAW_COMMANDS.has(firstKeyword);
 }
 
-function prepare(database: DatabaseSync, sql: string): PreparedStatement {
+function prepare(
+	database: DatabaseSync,
+	sql: string,
+	jsonColumns: JsonColumns | undefined,
+): PreparedStatement {
 	const statement = database.prepare(sql);
 	statement.setReturnArrays(true);
 
-	return { statement, columnNames: statement.columns().map((it) => it.name) };
+	return { statement, jsonColumns, ...columnMetadata(statement, jsonColumns) };
+}
+
+function columnMetadata(
+	statement: StatementSync,
+	jsonColumns: JsonColumns | undefined,
+) {
+	const columns = statement.columns();
+
+	return {
+		columnNames: columns.map((it) => it.name),
+		jsonColumnFlags: columns.map((it) => {
+			if (!jsonColumns) return false;
+			// a null origin is a computed expression (a jsonArrayFrom subquery, but also
+			// e.g. a coalesce over user text), which only the query itself can classify
+			if (it.column === null) return jsonColumns.byOutputName.has(it.name);
+			return jsonColumns.byOrigin.has(`${it.table}.${it.column}`);
+		}),
+	};
 }
 
 function readRows<R>(
@@ -294,24 +363,89 @@ function readRows<R>(
 	// `select *` widens when a migration adds a column, leaving a cached statement
 	// with a stale column list until the next read notices the mismatch
 	if (rawRows[0].length !== prepared.columnNames.length) {
-		prepared.columnNames = prepared.statement.columns().map((it) => it.name);
+		Object.assign(
+			prepared,
+			columnMetadata(prepared.statement, prepared.jsonColumns),
+		);
 	}
 
 	const rows = new Array<R>(rawRows.length);
 	for (let i = 0; i < rawRows.length; i++) {
-		rows[i] = toRow<R>(prepared.columnNames, rawRows[i]);
+		rows[i] = toRow<R>(prepared, rawRows[i]);
 	}
 
 	return rows;
 }
 
-function toRow<R>(columnNames: string[], rawRow: SQLOutputValue[]): R {
-	const row: Record<string, SQLOutputValue> = {};
+function toRow<R>(prepared: PreparedStatement, rawRow: SQLOutputValue[]): R {
+	const { columnNames, jsonColumnFlags } = prepared;
+
+	const row: Record<string, unknown> = {};
 	for (let i = 0; i < columnNames.length; i++) {
-		row[columnNames[i]] = rawRow[i];
+		const value = rawRow[i];
+		row[columnNames[i]] =
+			jsonColumnFlags[i] && typeof value === "string" && maybeJson(value)
+				? parseJsonValue(value)
+				: value;
 	}
 
 	return row as R;
+}
+
+function maybeJson(value: string) {
+	return (
+		(value.startsWith("{") && value.endsWith("}")) ||
+		(value.startsWith("[") && value.endsWith("]"))
+	);
+}
+
+function parseJsonValue(value: string): unknown {
+	let parsed: unknown;
+	try {
+		parsed = JSON.parse(value);
+	} catch {
+		return value;
+	}
+
+	sanitizeParsedJson(parsed);
+	return parsed;
+}
+
+/** Strips `__proto__` and `constructor.prototype` so the parsed document can not prototype-pollute downstream merges. */
+function sanitizeParsedJson(value: unknown) {
+	if (Array.isArray(value)) {
+		for (const item of value) {
+			sanitizeParsedJson(item);
+		}
+		return;
+	}
+
+	if (!isPlainObject(value)) return;
+
+	for (const key of Object.keys(value)) {
+		if (key === "__proto__") {
+			delete value[key];
+			continue;
+		}
+
+		const child = value[key];
+		if (
+			key === "constructor" &&
+			isPlainObject(child) &&
+			Object.hasOwn(child, "prototype")
+		) {
+			delete child.prototype;
+		}
+
+		sanitizeParsedJson(child);
+	}
+}
+
+function isPlainObject(value: unknown): value is Record<string, unknown> {
+	if (typeof value !== "object" || value === null) return false;
+
+	const proto = Object.getPrototypeOf(value);
+	return proto === null || proto === Object.prototype;
 }
 
 function savepointCommand(command: string, savepointName: string) {

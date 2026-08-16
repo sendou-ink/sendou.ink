@@ -1,26 +1,51 @@
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { compareTwoTiers } from "~/features/mmr/mmr-utils";
+import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	mainWeaponIds,
 	weaponIdToBaseWeaponId,
 } from "~/modules/in-game-lists/weapon-ids";
+import type { Unpacked } from "~/utils/types";
+import type * as LFGRepository from "../LFGRepository.server";
 import type { LFGFilterValues } from "../lfg-types";
-import type { LFGLoaderData, LFGLoaderPost, TiersMap } from "../routes/lfg";
-import { hourDifferenceBetweenTimezones } from "./timezone";
+import { createTimezoneHourDifference } from "./timezone";
+
+export type FilterablePost = Unpacked<
+	Awaited<ReturnType<typeof LFGRepository.findAllPosts>>
+>;
+
+export type TiersMap = Map<
+	number,
+	{ latest?: TieredSkill["tier"]; previous?: TieredSkill["tier"] }
+>;
+
+export interface FilterContext {
+	tiersMap: TiersMap;
+	/** `null` when the viewer's timezone is unknown, which disables the timezone filter. */
+	viewerTimezone: string | null;
+}
+
+interface PostFilterContext extends FilterContext {
+	hourDifference: ReturnType<typeof createTimezoneHourDifference>;
+}
 
 export function filterPosts(
-	posts: LFGLoaderData["posts"],
+	posts: Array<FilterablePost>,
 	filters: LFGFilterValues,
-	tiersMap: TiersMap,
+	context: FilterContext,
 ) {
-	return posts.filter((post) => postMatchesFilters(post, filters, tiersMap));
+	const hourDifference = createTimezoneHourDifference();
+
+	return posts.filter((post) =>
+		postMatchesFilters(post, filters, { ...context, hourDifference }),
+	);
 }
 
 function postMatchesFilters(
-	post: LFGLoaderPost,
+	post: FilterablePost,
 	filters: LFGFilterValues,
-	tiersMap: TiersMap,
+	context: PostFilterContext,
 ) {
 	if (
 		post.type === "COACH_FOR_TEAM" &&
@@ -36,7 +61,10 @@ function postMatchesFilters(
 		return false;
 	}
 	if (filters.type !== null && post.type !== filters.type) return false;
-	if (filters.timezone !== null && !matchesTimezone(post, filters.timezone)) {
+	if (
+		filters.timezone !== null &&
+		!matchesTimezone(post, filters.timezone, context)
+	) {
 		return false;
 	}
 	if (
@@ -50,13 +78,13 @@ function postMatchesFilters(
 	}
 	if (
 		filters.maxTier !== null &&
-		!matchesMaxTier(post, filters.maxTier, tiersMap)
+		!matchesMaxTier(post, filters.maxTier, context.tiersMap)
 	) {
 		return false;
 	}
 	if (
 		filters.minTier !== null &&
-		!matchesMinTier(post, filters.minTier, tiersMap)
+		!matchesMinTier(post, filters.minTier, context.tiersMap)
 	) {
 		return false;
 	}
@@ -64,7 +92,7 @@ function postMatchesFilters(
 	return true;
 }
 
-function matchesWeapons(post: LFGLoaderPost, weapons: MainWeaponId[]) {
+function matchesWeapons(post: FilterablePost, weapons: MainWeaponId[]) {
 	const weaponIdsWithRelated = weapons.flatMap(weaponIdToRelated);
 
 	return checkMatchesSomeUserInPost(post, (user) =>
@@ -74,16 +102,20 @@ function matchesWeapons(post: LFGLoaderPost, weapons: MainWeaponId[]) {
 	);
 }
 
-function matchesTimezone(post: LFGLoaderPost, maxHourDifference: number) {
-	const userTimezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+function matchesTimezone(
+	post: FilterablePost,
+	maxHourDifference: number,
+	{ viewerTimezone, hourDifference }: PostFilterContext,
+) {
+	// nothing to compare against until the browser has reported its timezone
+	if (viewerTimezone === null) return true;
 
 	return (
-		Math.abs(hourDifferenceBetweenTimezones(post.timezone, userTimezone)) <=
-		maxHourDifference
+		Math.abs(hourDifference(post.timezone, viewerTimezone)) <= maxHourDifference
 	);
 }
 
-function matchesPlusTier(post: LFGLoaderPost, plusTier: number) {
+function matchesPlusTier(post: FilterablePost, plusTier: number) {
 	return checkMatchesSomeUserInPost(
 		post,
 		(user) => user.plusTier && user.plusTier <= plusTier,
@@ -91,7 +123,7 @@ function matchesPlusTier(post: LFGLoaderPost, plusTier: number) {
 }
 
 function matchesMaxTier(
-	post: LFGLoaderPost,
+	post: FilterablePost,
 	maxTier: TierName,
 	tiersMap: TiersMap,
 ) {
@@ -112,7 +144,7 @@ function matchesMaxTier(
 }
 
 function matchesMinTier(
-	post: LFGLoaderPost,
+	post: FilterablePost,
 	minTier: TierName,
 	tiersMap: TiersMap,
 ) {
@@ -133,8 +165,8 @@ function matchesMinTier(
 }
 
 const checkMatchesSomeUserInPost = (
-	post: LFGLoaderPost,
-	check: (user: LFGLoaderPost["author"]) => boolean | undefined | null | 0,
+	post: FilterablePost,
+	check: (user: FilterablePost["author"]) => boolean | undefined | null | 0,
 ) => {
 	if (check(post.author)) return true;
 	if (post.team?.members.some(check)) return true;

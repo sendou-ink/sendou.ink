@@ -10,11 +10,9 @@ vi.mock("../loaders/plus.suggestions.server", () => ({ loader: vi.fn() }));
 const AUTHOR = {
 	id: 5,
 	username: "Suggester",
-	discordId: "1005",
-	discordAvatar: null,
-	customUrl: null,
-	customAvatarUrl: null,
 };
+
+const AUTHOR_AS_LOGGED_IN_USER = { id: AUTHOR.id, discordId: "1005" };
 
 const suggestedUser = (id: number, username: string) => ({
 	id,
@@ -23,8 +21,6 @@ const suggestedUser = (id: number, username: string) => ({
 	discordAvatar: null,
 	customUrl: null,
 	customAvatarUrl: null,
-	bio: null,
-	plusTier: null,
 });
 
 const NOW_TIMESTAMP = Math.floor(Date.now() / 1000);
@@ -44,6 +40,10 @@ const suggestionOf = (
 			updatedAt: null,
 			updatedAtRelative: null,
 			author: AUTHOR,
+			permissions: {
+				EDIT: [AUTHOR.id],
+				DELETE: [AUTHOR.id],
+			},
 		},
 	],
 });
@@ -58,14 +58,13 @@ describe("PlusSuggestionComments", () => {
 		const router = createBrowserRouter([
 			{
 				path: "*",
+				loader: () => ({ user: AUTHOR_AS_LOGGED_IN_USER }),
 				element: (
 					<PlusSuggestionComments
 						suggestion={suggestions[0]}
 						deleteButtonArgs={{
 							suggested: suggestions[0].suggested,
-							user: AUTHOR,
 							tier: "2",
-							suggestions,
 						}}
 						defaultOpen
 					/>

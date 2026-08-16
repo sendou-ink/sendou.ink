@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "",
 	"matchProfile.maps.preferencesFor": "",
 	"matchProfile.maps.teamExplanation": "",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "避ける",
 	"matchProfile.maps.prefer": "好み",
 	"matchProfile.maps.neutral": "普通",
@@ -23,6 +24,7 @@
 	"matchProfile.mapPool.notOk": "モードにつきステージを {{count}} 個選んでください。（避けるステージに入っていない）",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

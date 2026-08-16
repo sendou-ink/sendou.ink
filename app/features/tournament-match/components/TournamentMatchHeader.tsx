@@ -3,7 +3,7 @@ import { LinkButton } from "~/components/elements/Button";
 import { MatchPageHeader } from "~/components/match-page/MatchPageHeader";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { BracketsPageState } from "~/features/tournament-bracket/routes/to.$id.brackets";
-import { tournamentBracketsPage } from "~/utils/urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 
 export function TournamentMatchHeader({
@@ -23,7 +23,10 @@ export function TournamentMatchHeader({
 					to={tournamentBracketsPage({
 						tournamentId: tournament.ctx.id,
 						bracketIdx: data.bracketContext.bracketIdx,
-						groupId: data.match.groupId,
+						groupId:
+							data.bracketContext.bracketType === "swiss"
+								? data.match.groupId
+								: undefined,
 					})}
 					state={{ scrollToMatchId: data.match.id } satisfies BracketsPageState}
 					variant="outlined"

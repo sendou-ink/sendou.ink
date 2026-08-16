@@ -1,6 +1,9 @@
 import { z } from "zod";
+import type { UserMapModePreferences } from "~/db/tables-json";
+import { mapModePreferencesValueSchema } from "~/features/settings/match-profile-schemas";
 import {
 	array,
+	customField,
 	fieldset,
 	idConstant,
 	image,
@@ -86,10 +89,24 @@ export const updateTeamCustomThemeSchema = z.object({
 	),
 });
 
+export const updateTeamMapModePreferencesSchema = z.object({
+	_action: stringConstant("UPDATE_MAP_MODE_PREFERENCES"),
+	mapModePreferences: customField(
+		{ initialValue: { modes: [], pool: [] } satisfies UserMapModePreferences },
+		mapModePreferencesValueSchema,
+	),
+});
+
+const removeTeamMapModePreferencesSchema = z.object({
+	_action: _action("REMOVE_MAP_MODE_PREFERENCES"),
+});
+
 /** Every payload the team edit route action accepts, discriminated by `_action`. */
 export const editTeamActionSchema = z.union([
 	editTeamFormSchema,
 	updateTeamCustomThemeSchema,
+	updateTeamMapModePreferencesSchema,
+	removeTeamMapModePreferencesSchema,
 ]);
 
 /** Sentinel `role` value selected to switch a member to a free-text custom role. Never stored. */

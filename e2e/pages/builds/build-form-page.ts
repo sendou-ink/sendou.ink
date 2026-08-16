@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { newBuildBaseSchema } from "~/features/user-page/user-page-schemas";
+import { userNewBuildPage } from "~/features/user-page/user-page-urls";
 import type { Ability, GearType } from "~/modules/in-game-lists/types";
-import { userNewBuildPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 

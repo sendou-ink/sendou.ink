@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, it } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -71,7 +71,7 @@ describe("team page editing", () => {
 	describe("custom theme", () => {
 		beforeEach(() => createTeam());
 
-		it("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {
+		test("sets a custom theme via UPDATE_CUSTOM_THEME", async () => {
 			const response = await editTeamProfileAction(
 				{
 					_action: "UPDATE_CUSTOM_THEME",
@@ -84,7 +84,7 @@ describe("team page editing", () => {
 			expect((await teamRow()).customTheme).toEqual(expectedStoredTheme());
 		});
 
-		it("clears a custom theme via UPDATE_CUSTOM_THEME with null", async () => {
+		test("clears a custom theme via UPDATE_CUSTOM_THEME with null", async () => {
 			await editTeamProfileAction(
 				{
 					_action: "UPDATE_CUSTOM_THEME",
@@ -105,7 +105,7 @@ describe("team page editing", () => {
 			expect((await teamRow()).customTheme).toBeNull();
 		});
 
-		it("prevents setting an invalid custom theme", async () => {
+		test("prevents setting an invalid custom theme", async () => {
 			const response = await editTeamProfileAction(
 				{
 					_action: "UPDATE_CUSTOM_THEME",
@@ -120,7 +120,7 @@ describe("team page editing", () => {
 			expect(response.fieldErrors["newValue.baseHue"]).toBeTruthy();
 		});
 
-		it("preserves an existing custom theme when editing the team profile", async () => {
+		test("preserves an existing custom theme when editing the team profile", async () => {
 			await editTeamProfileAction(
 				{
 					_action: "UPDATE_CUSTOM_THEME",
@@ -156,7 +156,7 @@ describe("team page editing", () => {
 			imageId = avatarImgId;
 		});
 
-		it("deletes the submitted image row when an image is removed while editing", async () => {
+		test("deletes the submitted image row when an image is removed while editing", async () => {
 			await editTeamProfileAction(
 				{ ...DEFAULT_EDIT_FIELDS },
 				{ user: "regular", params: { customUrl } },
@@ -166,7 +166,7 @@ describe("team page editing", () => {
 			expect(await imageExists(imageId)).toBe(false);
 		});
 
-		it("keeps the submitted image row when an existing image is unchanged", async () => {
+		test("keeps the submitted image row when an existing image is unchanged", async () => {
 			await editTeamProfileAction(
 				{
 					...DEFAULT_EDIT_FIELDS,

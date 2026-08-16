@@ -1,0 +1,18 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "cast",
+		"time": 256,
+		"special": [
+			[true, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[true, false, true, false]
+		]
+	},
+	"options": {
+		"notes": "Same badge-less AREA CUP spectator HUD two seconds on. Left team's outermost slot holds special caught at the dim trough of the ready wash's pulse — pale but below the glow floor, previously misread as splatted. Right team's first and third slots are splatted (grey X'd icons)."
+	}
+}

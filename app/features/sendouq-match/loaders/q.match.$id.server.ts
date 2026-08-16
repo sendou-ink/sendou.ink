@@ -2,6 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -30,7 +32,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const isStaff = user?.roles.includes("STAFF") ?? false;
 	const isParticipant = Boolean(user && matchUsers.includes(user.id));
 
+	if (user && isParticipant) {
+		await resolveNotifications({
+			userIds: [user.id],
+			type: "SQ_NEW_MATCH",
+			meta: { matchId },
+		});
+	}
+
 	const reportedWeapons = await ReportedWeaponRepository.findByMatchId(matchId);
+	const ingestedScoreboards =
+		await ScannerIngestRepository.findScoreboardsByGroupMatchId(matchId);
 
 	const match = SendouQ.mapMatch(matchUnmapped, user);
 
@@ -41,6 +53,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		})),
 		match,
 		reportedWeapons,
+		ingestedScoreboards,
 		isOffSeason: Seasons.current() === null,
 		chatCode: (() => {
 			if (!(isStaff || isParticipant)) return null;

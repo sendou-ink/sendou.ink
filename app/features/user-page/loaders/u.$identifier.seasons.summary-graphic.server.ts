@@ -205,8 +205,9 @@ async function findTeamEntry({
 		})
 	).find(hasUser);
 
+	// a skipped team is on the leaderboard without taking a placement
 	if (rankedEntry)
-		return { entry: rankedEntry, rank: rankedEntry.placementRank };
+		return { entry: rankedEntry, rank: rankedEntry.placementRank ?? undefined };
 
 	// rosters that only show up on the "all entries" leaderboard have no
 	// placement comparable to the one shown on the main team leaderboard

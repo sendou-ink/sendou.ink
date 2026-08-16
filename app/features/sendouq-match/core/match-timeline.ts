@@ -1,4 +1,8 @@
 import type { TFunction } from "i18next";
+import {
+	resolveTimelineScoreboard,
+	resolveTimelineWeapons,
+} from "~/components/match-page/ingested-scoreboard";
 import type {
 	TimelineMap,
 	TimelineSpChanges,
@@ -37,23 +41,33 @@ export function resolveTimelineTeams(match: MatchData, t: TFunction<["q"]>) {
 export function resolveTimelineMaps(
 	match: MatchData,
 	reportedWeapons: SendouQMatchLoaderData["reportedWeapons"],
+	ingestedScoreboards: SendouQMatchLoaderData["ingestedScoreboards"],
 ): TimelineMap[] {
 	return match.mapList
 		.map((map, mapIndex) => ({ map, mapIndex }))
 		.filter(({ map }) => map.winnerGroupId !== null)
 		.map(({ map, mapIndex }) => {
-			const alphaWeapons = match.groupAlpha.members.map((member) => {
-				const w = reportedWeapons?.find(
-					(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
-				);
-				return w?.weaponSplId ?? null;
-			});
-			const bravoWeapons = match.groupBravo.members.map((member) => {
-				const w = reportedWeapons?.find(
-					(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
-				);
-				return w?.weaponSplId ?? null;
-			});
+			const ingestedScoreboard = ingestedScoreboards.find(
+				(scoreboard) => scoreboard.mapIndex === mapIndex,
+			);
+			const alphaIsWinner = map.winnerGroupId === match.groupAlpha.id;
+
+			const weaponsFor = (
+				group: MatchData["groupAlpha"] | MatchData["groupBravo"],
+			) =>
+				resolveTimelineWeapons({
+					linkedWeapons: group.members.map(
+						(member) =>
+							reportedWeapons?.find(
+								(rw) => rw.mapIndex === mapIndex && rw.userId === member.id,
+							)?.weaponSplId ?? null,
+					),
+					ingestedPlayers: ingestedScoreboard?.data.players ?? [],
+					tournamentTeamId: group.id,
+				});
+
+			const alphaWeapons = weaponsFor(match.groupAlpha);
+			const bravoWeapons = weaponsFor(match.groupBravo);
 
 			const hasAnyWeapon =
 				alphaWeapons.some((w) => w !== null) ||
@@ -65,10 +79,7 @@ export function resolveTimelineMaps(
 				timestamp: databaseTimestampToJavascriptTimestamp(
 					map.reportedAt ?? match.createdAt,
 				),
-				winner:
-					map.winnerGroupId === match.groupAlpha.id
-						? ("ALPHA" as const)
-						: ("BRAVO" as const),
+				winner: alphaIsWinner ? ("ALPHA" as const) : ("BRAVO" as const),
 				rosters: {
 					alpha: match.groupAlpha.members,
 					bravo: match.groupBravo.members,
@@ -76,6 +87,10 @@ export function resolveTimelineMaps(
 				weapons: hasAnyWeapon
 					? { alpha: alphaWeapons, bravo: bravoWeapons }
 					: undefined,
+				scoreboard: resolveTimelineScoreboard(
+					ingestedScoreboard?.data,
+					alphaIsWinner,
+				),
 			};
 		});
 }

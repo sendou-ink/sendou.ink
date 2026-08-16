@@ -1,0 +1,118 @@
+{
+  "event": "Minimap",
+  "data": {
+    "stage": 14,
+    "spectator": true,
+    "teammates": [
+      {
+        "slot": "up",
+        "name": "リビア",
+        "abilities": [
+          "SSU",
+          "SCU",
+          "SJ"
+        ],
+        "weaponLabel": "Splash-o-matic",
+        "weaponId": 20,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "right",
+        "name": "がらっこ",
+        "abilities": [
+          "LDE",
+          "SPU",
+          "SJ"
+        ],
+        "weaponLabel": "Dread Wringer",
+        "weaponId": 3050,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "down",
+        "name": "ーロたべる",
+        "abilities": [
+          "OG",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": "Custom Blaster",
+        "weaponId": 211,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "slot": "left",
+        "name": "ももドラグーン",
+        "abilities": [
+          "LDE",
+          "SCU",
+          "ISM"
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "enemies": [
+      {
+        "name": "ウルボー",
+        "abilities": [
+          "LDE",
+          "SPU",
+          "SJ"
+        ],
+        "weaponLabel": "Snipewriter 5H",
+        "weaponId": 2070,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "ねこすき",
+        "abilities": [
+          "OG",
+          "QR",
+          "SJ"
+        ],
+        "weaponLabel": "S-BLAST '91",
+        "weaponId": 261,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "そっぴ",
+        "abilities": [
+          "RSU",
+          "RSU",
+          "SJ"
+        ],
+        "weaponLabel": "Zink Mini Splatling",
+        "weaponId": 4001,
+        "dead": false,
+        "specialReady": false
+      },
+      {
+        "name": "しゅーた",
+        "abilities": [
+          "OG",
+          "SSU",
+          "SJ"
+        ],
+        "weaponLabel": ".52 Gal",
+        "weaponId": 50,
+        "dead": false,
+        "specialReady": false
+      }
+    ],
+    "stageLabel": "Manta Maria"
+  },
+  "options": {
+    "skipFields": [
+      "enemies.0.name"
+    ],
+    "notes": "8-player spectator map screen from the AREA CUP stream (Round 1), pre-match — teams at spawn, so the control estimate sits near zero (spawn markers only). Formerly negative/map-screen-2; relabeled when the spectator variant became gated off the X jump-button disc. enemies.0.name skipped: ウルボー reads ウルホー — the ボ dakuten is below atlas resolution at this size (same limit as snix-special-ready's ぎ). teammates.2.name ーロたべる is the pixel reading; if the real name uses kanji (一口たべる) it is unrecoverable — 一/ー and 口/ロ are pixel-identical and the atlas carries no kanji."
+  }
+}

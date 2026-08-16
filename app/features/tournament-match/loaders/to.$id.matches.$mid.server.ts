@@ -2,6 +2,7 @@ import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -67,6 +68,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const reportedWeapons =
 		await ReportedWeaponRepository.findByTournamentMatchId(matchId);
+
+	const ingestedScoreboards =
+		await ScannerIngestRepository.findScoreboardsByTournamentMatchId(matchId);
 
 	const matchIsOver = Boolean(match.winnerSide);
 
@@ -139,6 +143,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 							match.mapPickingStyle !== "TO"
 								? await TournamentTeamRepository.findRecentlyPlayedMapsByIds({
 										teamIds: [match.opponentOne.id, match.opponentTwo.id],
+										excludeMatchId: matchId,
 									}).catch((error) => {
 										logger.error("Failed to fetch recently played maps", error);
 										return [];
@@ -234,7 +239,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		: null;
 
 	return {
-		...(await UserCardRepository.findAllByUserIds({
+		...(await UserCardRepository.findAllByUserIdsCached({
 			userIds: match.players.map((p) => p.id),
 			include: {
 				friendCode: isParticipant || isSiteStaff || isTournamentStaff,
@@ -247,6 +252,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		},
 		results,
 		reportedWeapons,
+		ingestedScoreboards,
 		mapList,
 		teams: [match.opponentOne?.id, match.opponentTwo?.id].flatMap(
 			(tournamentTeamId) => {

@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import * as Seeding from "./Seeding";
 
 // first round lineups of the standard bracket ("space_between") by bracket size,
@@ -8,7 +8,7 @@ const LINEUP_16 = [1, 16, 8, 9, 4, 13, 5, 12, 2, 15, 7, 10, 3, 14, 6, 11];
 
 describe("Seeding.forFollowUpBracket()", () => {
 	describe("group spreading", () => {
-		it("spreads 4 groups of 4 across the quarters of a 16 bracket", () => {
+		test("spreads 4 groups of 4 across the quarters of a 16 bracket", () => {
 			const { teams, source } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
@@ -21,7 +21,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("keeps placement tiers intact while spreading", () => {
+		test("keeps placement tiers intact while spreading", () => {
 			const { teams, source } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
@@ -34,7 +34,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("does not reorder the group winners (best two can only meet in the finals)", () => {
+		test("does not reorder the group winners (best two can only meet in the finals)", () => {
 			const { teams, source } = groupsOfFour();
 
 			const result = Seeding.forFollowUpBracket({
@@ -45,7 +45,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			expect(result.slice(0, 4)).toEqual(teams.slice(0, 4));
 		});
 
-		it("spreads 4 groups of 2 across the halves of an 8 bracket", () => {
+		test("spreads 4 groups of 2 across the halves of an 8 bracket", () => {
 			const groups = [
 				[101, 102],
 				[201, 202],
@@ -64,7 +64,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("keeps 2 groups of 4 out of same group round 1 matches (Swiss top cut shape)", () => {
+		test("keeps 2 groups of 4 out of same group round 1 matches (Swiss top cut shape)", () => {
 			const groups = [
 				[101, 102, 103, 104],
 				[201, 202, 203, 204],
@@ -81,7 +81,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("returns the incoming order when each group sends one team", () => {
+		test("returns the incoming order when each group sends one team", () => {
 			const groups = [[101], [201], [301], [401], [501], [601], [701], [801]];
 			const teams = [101, 201, 301, 401, 501, 601, 701, 801];
 
@@ -93,7 +93,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			expect(result).toEqual(teams);
 		});
 
-		it("spreads 3 groups of 4 across the quarters of a 12 team bracket (byes)", () => {
+		test("spreads 3 groups of 4 across the quarters of a 12 team bracket (byes)", () => {
 			const groups = [
 				[101, 102, 103, 104],
 				[201, 202, 203, 204],
@@ -114,7 +114,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("spreads groups of uneven sizes (a team missing due to no check-in)", () => {
+		test("spreads groups of uneven sizes (a team missing due to no check-in)", () => {
 			const groups = [
 				[101, 102, 103, 104],
 				[201, 202, 203, 204],
@@ -137,7 +137,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("halves the group block size when the ideal spread is unreachable", () => {
+		test("halves the group block size when the ideal spread is unreachable", () => {
 			// The two groups of four cannot hold a quarter each: only two quarters are
 			// reachable by their two lowest placement tiers, and both tiers are needed
 			// by both groups. The halved block size is satisfiable though, and it still
@@ -170,7 +170,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 	});
 
 	describe("previous encounter avoidance", () => {
-		it("single group: avoids a round 1 rematch by reordering the bottom half", () => {
+		test("single group: avoids a round 1 rematch by reordering the bottom half", () => {
 			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
 
 			const result = Seeding.forFollowUpBracket({
@@ -181,7 +181,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			expect(result).toEqual([1, 2, 3, 4, 5, 6, 8, 7]);
 		});
 
-		it("single group: reorders only the bottom half even when every natural match would be a rematch", () => {
+		test("single group: reorders only the bottom half even when every natural match would be a rematch", () => {
 			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
 			const naturalMatches: Array<[number, number]> = [
 				[1, 8],
@@ -204,7 +204,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("single group: falls back to the incoming order when rematches are unavoidable", () => {
+		test("single group: falls back to the incoming order when rematches are unavoidable", () => {
 			const teams = [1, 2, 3, 4, 5, 6, 7, 8];
 			const everyPair: Array<[number, number]> = [];
 			for (const one of teams) {
@@ -221,7 +221,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			expect(result).toEqual(teams);
 		});
 
-		it("single group: counts the middle seed of an odd team count into the bottom half", () => {
+		test("single group: counts the middle seed of an odd team count into the bottom half", () => {
 			// with 13 teams the top half is seeds 1-6, leaving seeds 7-13 interchangeable.
 			// Team 5 has played every one of those but team 7, so team 7 is the only team
 			// that can take seed 12, the seed team 5 faces in round 1.
@@ -250,7 +250,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 			}
 		});
 
-		it("single group: returns a complete lineup when the search runs out of nodes", () => {
+		test("single group: returns a complete lineup when the search runs out of nodes", () => {
 			// team 1 has played every team of the bottom half pool, so no arrangement of
 			// it avoids their round 1 rematch and the search exhausts its node budget
 			// before the next relaxation rung takes over
@@ -268,7 +268,7 @@ describe("Seeding.forFollowUpBracket()", () => {
 		});
 	});
 
-	it("returns the incoming order for fewer than 4 teams", () => {
+	test("returns the incoming order for fewer than 4 teams", () => {
 		const teams = [1, 2, 3];
 
 		const result = Seeding.forFollowUpBracket({

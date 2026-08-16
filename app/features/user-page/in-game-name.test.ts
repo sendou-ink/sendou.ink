@@ -1,8 +1,8 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { inGameNameIsValid } from "./in-game-name";
 
 describe("inGameNameIsValid", () => {
-	it("should pass valid in-game names", () => {
+	test("passes valid in-game names", () => {
 		const validNames = [
 			"Sendou#12345",
 			"The Player#12345",
@@ -38,7 +38,7 @@ describe("inGameNameIsValid", () => {
 		}
 	});
 
-	it("should not pass invalid in-game names", () => {
+	test("does not pass invalid in-game names", () => {
 		const invalidNames = [
 			"#1234",
 			"Sendou1234",
@@ -58,7 +58,7 @@ describe("inGameNameIsValid", () => {
 		}
 	});
 
-	it("should reject characters the Switch keyboard does not allow in names", () => {
+	test("rejects characters the Switch keyboard does not allow in names", () => {
 		const invalidNames = [
 			"test@me#1234",
 			"100%#1234",

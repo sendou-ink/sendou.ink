@@ -118,6 +118,11 @@
 	}
 }
 
+.withoutAnimation::after {
+	animation: none;
+	visibility: hidden;
+}
+
 @media (prefers-reduced-motion: reduce) {
 	.polished::after {
 		animation: none;

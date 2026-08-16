@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -10,7 +10,7 @@ import {
 } from "./q-search-params";
 
 describe("qSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(qSearchParams, {
 			join: [null, "abc123", "1BFXar-zY"],
 		});
@@ -18,21 +18,21 @@ describe("qSearchParams", () => {
 });
 
 describe("qLookingSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(qLookingSearchParams, {
 			preview: [false, true],
 			joining: [false, true],
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(qLookingSearchParams, "preview", [["1"], ["yes"]]);
 		assertDecodesToDefault(qLookingSearchParams, "joining", [["1"], ["TRUE"]]);
 	});
 });
 
 describe("weaponUsageSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(weaponUsageSearchParams, {
 			userId: [null, 1, 123456],
 			season: [null, 0, 1, 10],
@@ -41,7 +41,7 @@ describe("weaponUsageSearchParams", () => {
 		});
 	});
 
-	it("malformed values decode to defaults", () => {
+	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(weaponUsageSearchParams, "userId", [
 			["0"],
 			["-1"],

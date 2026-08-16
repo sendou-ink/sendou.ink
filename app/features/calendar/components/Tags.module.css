@@ -32,6 +32,11 @@
 	color: var(--color-text-inverse);
 }
 
+.overflowTag {
+	background-color: var(--color-bg-higher);
+	color: var(--color-text-high);
+}
+
 :global(html.light) .tag {
 	color: var(--color-text);
 }

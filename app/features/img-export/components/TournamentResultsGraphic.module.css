@@ -1,3 +1,9 @@
+.tierPillContainer {
+	display: inline-flex;
+	vertical-align: middle;
+	margin-inline-start: var(--s-2);
+}
+
 .organizationName {
 	max-width: 12rem;
 	overflow: hidden;

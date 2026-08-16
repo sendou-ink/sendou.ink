@@ -7,6 +7,8 @@
 			"!scripts/output/**/*",
 			"!app/db/seed/data/placements.json",
 			"!build/**/*",
+			"!app/features/scanner/tests/fixtures",
+			"!public/scanner/**/*",
 			"!test-results/**/*",
 			"!playwright-report/**/*",
 			"!.react-router/**/*",
@@ -88,6 +90,10 @@
 		{
 			"includes": ["app/db/seed/dev/**", "app/db/seed/index.ts"],
 			"plugins": ["./biome-plugins/no-raw-db-writes-in-dev-seed.grit"]
+		},
+		{
+			"includes": ["**", "!app/utils/kysely.server.ts"],
+			"plugins": ["./biome-plugins/no-kysely-sqlite-helpers.grit"]
 		}
 	]
 }

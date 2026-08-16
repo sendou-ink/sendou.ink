@@ -1,0 +1,13 @@
+button.abilityTrigger {
+	height: auto;
+	padding: var(--s-0-5);
+	background: var(--color-bg-higher);
+	border: 1px solid var(--color-border-high);
+	border-radius: var(--radius-selector);
+
+	& img {
+		display: block;
+		width: var(--field-size-icon);
+		height: var(--field-size-icon);
+	}
+}

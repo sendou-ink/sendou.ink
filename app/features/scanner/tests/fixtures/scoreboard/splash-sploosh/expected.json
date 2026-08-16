@@ -1,0 +1,85 @@
+{
+  "event": "Scoreboard",
+  "options": {
+    "skipFields": [
+      "players.2.name"
+    ]
+  },
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 13,
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 1,
+    "players": [
+      {
+        "name": "Bocchi",
+        "weaponId": 60,
+        "paint": 1422,
+        "ka": 15,
+        "d": 10,
+        "s": 6
+      },
+      {
+        "name": "have faith",
+        "weaponId": 3005,
+        "paint": 1161,
+        "ka": 13,
+        "d": 6,
+        "s": 4
+      },
+      {
+        "name": "くらうに ★～",
+        "weaponId": 2030,
+        "paint": 993,
+        "ka": 6,
+        "d": 2,
+        "s": 5
+      },
+      {
+        "name": "Florescent",
+        "weaponId": 211,
+        "paint": 1046,
+        "ka": 13,
+        "d": 6,
+        "s": 5
+      },
+      {
+        "name": "Elis",
+        "weaponId": 60,
+        "paint": 1662,
+        "ka": 15,
+        "d": 2,
+        "s": 6
+      },
+      {
+        "name": "Jrod_14",
+        "weaponId": 4041,
+        "paint": 1105,
+        "ka": 10,
+        "d": 10,
+        "s": 3
+      },
+      {
+        "name": "GOLD SHIP",
+        "weaponId": 2030,
+        "paint": 799,
+        "ka": 2,
+        "d": 2,
+        "s": 4
+      },
+      {
+        "name": "merocï¬・~",
+        "weaponId": 0,
+        "paint": 1155,
+        "ka": 8,
+        "d": 12,
+        "s": 6
+      }
+    ],
+    "stageLabel": "Brinewater Springs"
+  }
+}

@@ -1,5 +1,6 @@
 import clsx from "clsx";
-import { ShieldMinus, Trophy as TrophyIcon, Users } from "lucide-react";
+import { ShieldMinus, Users } from "lucide-react";
+import { lazy, Suspense } from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -9,7 +10,6 @@ import { Image, ModeImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
-import { Trophy } from "~/features/trophies/components/Trophy";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useSpoilerFree } from "~/hooks/useSpoilerFree";
@@ -18,6 +18,14 @@ import { navIconUrl } from "~/utils/urls";
 import type { CalendarEvent, ShowcaseCalendarEvent } from "../calendar-types";
 import { Tags } from "./Tags";
 import styles from "./TournamentCard.module.css";
+
+// lazy loaded so the WebGL renderer stays out of the eager bundle of every
+// page showing tournament cards, as the trophy only renders inside a popover
+const Trophy = lazy(() =>
+	import("~/features/trophies/components/Trophy").then((module) => ({
+		default: module.Trophy,
+	})),
+);
 
 export function TournamentCard({
 	tournament,
@@ -35,6 +43,10 @@ export function TournamentCard({
 	const isShowcase = tournament.type === "showcase";
 	const isCalendar = tournament.type === "calendar";
 	const isHostedOnSendouInk = typeof tournament.isRanked === "boolean";
+	const modes =
+		isCalendar && tournament.modes && tournament.modes.length > 0
+			? tournament.modes
+			: null;
 
 	const startDate = isShowcase
 		? databaseTimestampToDate(tournament.startsAt)
@@ -48,7 +60,12 @@ export function TournamentCard({
 			})}
 			data-testid="tournament-card"
 		>
-			<Link to={tournament.url} className={styles.card}>
+			<Link
+				to={tournament.url}
+				className={clsx(styles.card, {
+					[styles.cardRanked]: tournament.isRanked === true,
+				})}
+			>
 				<div className="stack horizontal justify-between">
 					{tournament.logoUrl ? (
 						<div className={styles.imgContainer}>
@@ -116,7 +133,7 @@ export function TournamentCard({
 				) : null}
 				{isCalendar ? (
 					<div className="stack sm items-center my-2">
-						<Tags tags={tournament.tags} small centered />
+						<Tags tags={tournament.tags} small centered maxVisible={2} />
 					</div>
 				) : null}
 				{isShowcase && tournament.firstPlacers.length > 0 ? (
@@ -135,17 +152,8 @@ export function TournamentCard({
 				{isShowcase && "hasVods" in tournament && tournament.hasVods ? (
 					<div className={styles.vodIndicator}>📺 VODs</div>
 				) : null}
-				{tournament.modes ? <ModesPill modes={tournament.modes} /> : null}
-				<div
-					className={clsx(styles.pillsContainer, {
-						[styles.lonely]: !tournament.modes && isHostedOnSendouInk,
-					})}
-				>
-					{tournament.isRanked ? (
-						<div className={clsx(styles.pill, styles.pillRanked)}>
-							<TrophyIcon />
-						</div>
-					) : null}
+				{modes ? <ModesRow modes={modes} /> : null}
+				<div className={styles.pillsContainer}>
 					{isCalendar &&
 					(tournament.trophy ||
 						(tournament.badges && tournament.badges.length > 0)) ? (
@@ -155,9 +163,11 @@ export function TournamentCard({
 						/>
 					) : null}
 					{isHostedOnSendouInk ? (
-						<div className={styles.teamCount}>
-							<Users /> {tournament.teamsCount}
-						</div>
+						<ParticipantsPill
+							teamsCount={tournament.teamsCount}
+							membersCount={tournament.membersCount}
+							minMembersPerTeam={tournament.minMembersPerTeam}
+						/>
 					) : null}
 				</div>
 			</div>
@@ -284,16 +294,36 @@ function SpoilerRevealPill({ onReveal }: { onReveal: () => void }) {
 	);
 }
 
-function ModesPill({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
-	const size = 16;
+function ParticipantsPill({
+	teamsCount,
+	membersCount,
+	minMembersPerTeam,
+}: {
+	teamsCount: number;
+	membersCount: number;
+	minMembersPerTeam: number;
+}) {
+	const isSolo = minMembersPerTeam === 1;
 
 	return (
-		<div className={styles.modesPillContainer}>
-			<div className={styles.modesPill}>
-				{modes.map((mode) => (
-					<ModeImage key={mode} mode={mode} size={size} />
-				))}
-			</div>
+		<div className={styles.participantsPill}>
+			<Users />
+			<span>
+				{isSolo ? teamsCount : membersCount}
+				{isSolo ? null : (
+					<span className={styles.participantsTeamsCount}>/{teamsCount}</span>
+				)}
+			</span>
+		</div>
+	);
+}
+
+function ModesRow({ modes }: { modes: NonNullable<CalendarEvent["modes"]> }) {
+	return (
+		<div className={styles.modesRow}>
+			{modes.map((mode) => (
+				<ModeImage key={mode} mode={mode} size={18} />
+			))}
 		</div>
 	);
 }
@@ -314,7 +344,7 @@ function PrizesPill({
 					className={styles.badgePill}
 				>
 					<Image
-						size={16}
+						size={18}
 						path={trophy ? navIconUrl("trophies") : navIconUrl("badges")}
 						alt="Badge prizes"
 						className={styles.badgeNavIcon}
@@ -323,13 +353,11 @@ function PrizesPill({
 			}
 		>
 			{trophy ? (
-				<Trophy model={trophy} className={styles.trophyPreview} />
+				<Suspense fallback={<div className={styles.trophyPreviewFallback} />}>
+					<Trophy model={trophy} className={styles.trophyPreview} />
+				</Suspense>
 			) : badges ? (
-				<BadgeDisplay
-					badges={badges}
-					showText={false}
-					className={styles.badgeDisplay}
-				/>
+				<BadgeDisplay badges={badges} showText={false} compact />
 			) : null}
 		</SendouPopover>
 	);

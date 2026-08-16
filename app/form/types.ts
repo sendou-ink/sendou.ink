@@ -224,14 +224,10 @@ export type FormFieldProps<T extends FormField["type"]> = Omit<
 	onBlur: (latestValue?: unknown) => void;
 };
 
-export interface ArrayItemRenderContext<
-	TItem = Record<string, unknown>,
-	TForm = Record<string, unknown>,
-> {
+export interface ArrayItemRenderContext<TItem = Record<string, unknown>> {
 	index: number;
 	itemName: string;
 	values: TItem;
-	formValues: TForm;
 	setItemField: <K extends keyof TItem>(field: K, value: TItem[K]) => void;
 	canRemove: boolean;
 	remove: () => void;

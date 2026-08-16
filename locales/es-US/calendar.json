@@ -89,18 +89,5 @@
 	"events.view.organization": "Organización",
 	"events.empty": "No hay eventos en esta categoría",
 	"events.emptyAll": "No tienes próximos eventos.",
-	"events.findOnCalendar": "¡Busca un evento en el calendario para participar!",
-	"filter": {
-		"minTier": "Tier más alto",
-		"maxTier": "Tier más bajo"
-	},
-	"filterBar": {
-		"eventType": "Tipo de evento",
-		"tier": "Tier",
-		"tags": "Etiquetas",
-		"organizers": "Organizadores",
-		"timeAndSize": "Hora y tamaño",
-		"sendou": "sendou.ink",
-		"ranked": "Competitivo"
-	}
+	"events.findOnCalendar": "¡Busca un evento en el calendario para participar!"
 }

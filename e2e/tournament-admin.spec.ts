@@ -1,6 +1,7 @@
 import * as fs from "node:fs/promises";
 import { addMinutes, subDays } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
+import type { TournamentMapPickingStyle } from "~/features/tournament/tournament-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, test } from "./helpers/playwright";
@@ -15,16 +16,23 @@ import { TournamentAdminAuditPage } from "./pages/tournament/tournament-admin-au
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentSubsPage } from "./pages/tournament/tournament-subs-page";
+import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 
 const ROSTER_SIZE = 4;
 const CAPTAIN_DISCORD_ID = "1234567890123456789";
+/** Stage above the ones the counterpick picking helper uses, so swapping to it is always a change. */
+const REPLACEMENT_STAGE_ID = 17;
 
 test.describe("Tournament admin team management", () => {
 	test("edits a registration, checks a team in and out, unregisters it and records it in the audit log", async ({
 		page,
 		factories,
 	}) => {
-		const tournament = await createTournament(factories);
+		// an established organization's tournament, so its captain's tournament name
+		// can be set as part of the edit
+		const tournament = await createTournament(factories, {
+			establishedOrganization: true,
+		});
 		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
 		const team = await factories.TournamentTeamFactory.create({
 			tournamentId: tournament.id,
@@ -39,6 +47,7 @@ test.describe("Tournament admin team management", () => {
 		await expect(registration.locators.editHeading).toBeVisible();
 
 		await registration.form.fill("pickUpName", "Renamed Team");
+		await registration.setTournamentName(0, "Riko");
 		await registration.save();
 
 		// back on the team list, the rename is reflected
@@ -46,6 +55,12 @@ test.describe("Tournament admin team management", () => {
 		await expect(admin.locators.searchInput).toBeVisible();
 		await expect(admin.teamName("Renamed Team")).toBeVisible();
 
+		// the captain is shown under the name the organizer gave them
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournament.id, team.id);
+		await expect(teamPage.locators.memberNames.first()).toHaveText("Riko");
+
+		await admin.goto(tournament.id);
 		await admin.checkTeamIn(0);
 		await admin.checkTeamOut(0);
 
@@ -58,6 +73,7 @@ test.describe("Tournament admin team management", () => {
 		await expect(audit.eventCell("Team checked in")).toBeVisible();
 		await expect(audit.eventCell("Team checked out")).toBeVisible();
 		await expect(audit.eventCell("Team unregistered")).toBeVisible();
+		await expect(audit.eventCell("Tournament name changed")).toBeVisible();
 	});
 
 	test("adds a new team and records it in the audit log", async ({
@@ -123,6 +139,71 @@ test.describe("Tournament admin team management", () => {
 		await expect(registration.locators.teamNameInput).toHaveValue(
 			"Imported Legends",
 		);
+	});
+
+	test("sets the counterpick map pool of a team that has none, rejects an incomplete edit to it and then edits it", async ({
+		page,
+		factories,
+	}) => {
+		// teams pre-pick their maps, so the registration form has a map pool to edit
+		const tournament = await createTournament(factories, {
+			mapPickingStyle: "AUTO_ALL",
+		});
+		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		const team = await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			team: pickUpTeam("Poolless Pandas"),
+			memberUserIds: roster.map((user) => user.id),
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const registration = new TournamentAdminRegistrationPage(page);
+		await registration.gotoEdit(tournament.id, team.id);
+		await expect(registration.locators.editHeading).toBeVisible();
+
+		const picked = await registration.pickCounterpickMaps();
+		await registration.save();
+
+		const admin = new TournamentAdminPage(page);
+		await expect(admin.locators.searchInput).toBeVisible();
+
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournament.id, team.id);
+		for (const { mode, stageId } of picked) {
+			await expect(teamPage.mapPoolStage(mode, stageId)).toBeVisible();
+		}
+
+		// a pool left incomplete is rejected instead of overwriting the saved one
+		const [replaced] = picked;
+		await registration.gotoEdit(tournament.id, team.id);
+		await expect(
+			registration.pickedCounterpickMap(replaced.mode, replaced.stageId),
+		).toBeVisible();
+		await registration.unpickCounterpickMap(replaced.mode, replaced.stageId);
+		await registration.save();
+		await expect(registration.locators.invalidMapPoolError).toBeVisible();
+
+		await teamPage.goto(tournament.id, team.id);
+		await expect(
+			teamPage.mapPoolStage(replaced.mode, replaced.stageId),
+		).toBeVisible();
+
+		// swapping one of the picked maps for another is reflected on the team page
+		await registration.gotoEdit(tournament.id, team.id);
+		await registration.unpickCounterpickMap(replaced.mode, replaced.stageId);
+		await registration.pickCounterpickMap(replaced.mode, REPLACEMENT_STAGE_ID);
+		await registration.save();
+
+		await expect(admin.locators.searchInput).toBeVisible();
+
+		await teamPage.goto(tournament.id, team.id);
+		await expect(
+			teamPage.mapPoolStage(replaced.mode, REPLACEMENT_STAGE_ID),
+		).toBeVisible();
+		await expect(
+			teamPage.mapPoolStage(replaced.mode, replaced.stageId),
+		).toHaveCount(0);
 	});
 
 	test("exports the team list", async ({ page, factories }) => {
@@ -308,10 +389,29 @@ test.describe("Tournament admin bracket progression editing", () => {
 });
 
 /** A tournament whose check-in window is open but that has not started. */
-function createTournament(factories: Factories) {
+async function createTournament(
+	factories: Factories,
+	{
+		establishedOrganization = false,
+		mapPickingStyle,
+	}: {
+		establishedOrganization?: boolean;
+		mapPickingStyle?: TournamentMapPickingStyle;
+	} = {},
+) {
+	const organization = establishedOrganization
+		? await factories.TournamentOrganizationFactory.create(
+				{ ownerId: NZAP_TEST_ID },
+				{ isEstablished: true },
+			)
+		: null;
+
 	return factories.TournamentFactory.create({
 		authorId: NZAP_TEST_ID,
+		organizationId: organization?.id ?? null,
 		startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		// spread so the factory's own default is not overwritten with undefined
+		...(mapPickingStyle ? { mapPickingStyle } : {}),
 	});
 }
 

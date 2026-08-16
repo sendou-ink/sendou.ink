@@ -12,9 +12,12 @@ import { SwissBracket } from "./Swiss";
 export function Bracket({
 	bracket,
 	bracketIdx,
+	groupId,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	/** Group whose matches were loaded, for the bracket types shown one group at a time. */
+	groupId?: number | null;
 }) {
 	const { bracketExpanded } = useBracketExpanded();
 
@@ -29,7 +32,11 @@ export function Bracket({
 	if (bracket.type === "swiss") {
 		return (
 			<BracketContainer>
-				<SwissBracket bracket={bracket} bracketIdx={bracketIdx} />
+				<SwissBracket
+					bracket={bracket}
+					bracketIdx={bracketIdx}
+					groupId={groupId}
+				/>
 			</BracketContainer>
 		);
 	}

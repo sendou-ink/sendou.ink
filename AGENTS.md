@@ -79,6 +79,12 @@
 
 - library used for unit testing is Vitest
 - Vitest browser mode can be used to write tests for components
+- use `test`, not `it`
+- name a test after the behaviour it establishes, with no `"should "` prefix (`test("returns null for an unknown id")`)
+- `describe` takes the bare function name, except for files consumed through a `* as Module` import, where it takes `Module.fn` — the way callers write it
+- when a test is `input -> expected output` with no setup, make it a `test.each` table rather than a run of near-identical `test` blocks; give every row a short label (`$why`, `%s`) so a failure names the case
+- users come from `UserFactory.pool()` declared at module scope and filled in `beforeEach` — never a module-level `let` reassigned per test. Where positions carry meaning, name them with accessors next to the pool (`const actorId = () => users.id(1)`)
+- fixture builders shared by more than one test file live in a `tests/` folder of the feature they belong to (`app/features/<feature>/**/tests/fixtures.ts`); don't copy a builder into a second file
 
 ## i18n
 
@@ -98,3 +104,11 @@
 
 - use the template `/github/pull_request_template.md`
 - do not mention claude or claude code in the description
+
+## Scanner feature (app/features/scanner)
+
+- computer-vision match-event detection; full docs in `app/features/scanner/README.md` — read it before touching detector/recognition code
+- OpenCV ROI-view gotcha: `.data`/`.clone()` are broken on ROI views — always `view.copyTo(freshMat)` before pixel access
+- fixture workflow: every live misread becomes a fixture under `app/features/scanner/tests/fixtures/`; ground-truth labels are hand-corrected by the maintainer and definitive over any matcher output
+- test with `pnpm test:scanner`; accuracy report with `pnpm scanner:report`; atlas regen commands and the assets-repo/CDN flow are in the README
+- events, snap tables, and fixtures speak sendou ids (`ModeShort`/`StageId`/weapon ids/`Ability`) — never reintroduce English game-name literals outside the generated localized snap tables

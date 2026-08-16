@@ -1,6 +1,9 @@
 {
 	"newTeam.header": "Crea una nuova team",
 	"editTeam.header": "",
+	"mapPreferences.header": "",
+	"mapPreferences.explanation": "",
+	"mapPreferences.remove.header": "",
 	"teamSearch.placeholder": "Cerca un team o un giocatore",
 	"actionButtons.leaveTeam": "Lascia team",
 	"actionButtons.makeMainTeam": "Rendi team principale",

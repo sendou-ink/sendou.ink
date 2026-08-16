@@ -37,6 +37,39 @@ test.describe("User card", () => {
 			"rgb(65, 105, 225)",
 		);
 	});
+
+	test("shows the verified peak XP of the selected division", async ({
+		page,
+		factories,
+	}) => {
+		await factories.SQGroupFactory.create({ memberUserIds: [ADMIN_ID] });
+		await factories.XRankPlacementFactory.create({
+			playerUserId: ADMIN_ID,
+			power: 3010,
+			region: "WEST",
+		});
+		await factories.XRankPlacementFactory.create(
+			{ playerUserId: ADMIN_ID, power: 3000, region: "JPN" },
+			{ refreshPeakXp: true },
+		);
+
+		await impersonate(page);
+
+		const looking = new SendouQLookingPage(page);
+		await looking.goto();
+
+		const card = await looking.ownGroupCard.openMemberCard("Sendou");
+		await expect(card.xp(3010)).toBeVisible();
+
+		const cardEdit = await card.openEditPage();
+		await cardEdit.form.select("xpDivision", "JPN");
+		await cardEdit.save();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+
+		await looking.ownGroupCard.openMemberCard("Sendou");
+		await expect(card.xp(3000)).toBeVisible();
+		await expect(card.xp(3010)).not.toBeVisible();
+	});
 });
 
 test.describe("User card friend request", () => {

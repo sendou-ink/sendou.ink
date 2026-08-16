@@ -1,5 +1,4 @@
 import { reactRouter } from "@react-router/dev/vite";
-import { sentryReactRouter } from "@sentry/react-router";
 import MagicString from "magic-string";
 import { defineConfig, loadEnv } from "vite";
 import babel from "vite-plugin-babel";
@@ -41,8 +40,8 @@ export default defineConfig((config) => {
 				},
 			},
 			reactRouter(),
-			// React Compiler and Sentry are skipped in dev where their per-module
-			// transform cost outweighs their value.
+			// React Compiler is skipped in dev where its per-module transform cost
+			// outweighs its value.
 			...(isBuild
 				? [
 						babel({
@@ -52,34 +51,17 @@ export default defineConfig((config) => {
 								plugins: [["babel-plugin-react-compiler", {}]],
 							},
 						}),
-						sentryReactRouter(
-							{
-								org: process.env.SENTRY_ORG,
-								project: process.env.SENTRY_PROJECT,
-								authToken: process.env.SENTRY_AUTH_TOKEN,
-								telemetry: false,
-								unstable_sentryVitePluginOptions: {
-									applicationKey: "sendou-ink",
-									// tree-shakes SDK features we don't use (Replay, debug logging)
-									// out of the dynamically imported client bundle
-									bundleSizeOptimizations: {
-										excludeDebugStatements: true,
-										excludeReplayCanvas: true,
-										excludeReplayShadowDom: true,
-										excludeReplayIframe: true,
-										excludeReplayWorker: true,
-									},
-								},
-							},
-							config,
-						),
 					]
 				: []),
 		],
 
 		test: {
 			globalSetup: ["./scripts/ensure-test-db.ts"],
-			projects: ["./vitest.unit.config.ts", "./vitest.browser.config.ts"],
+			projects: [
+				"./vitest.unit.config.ts",
+				"./vitest.browser.config.ts",
+				"./vitest.scanner.config.ts",
+			],
 		},
 		define: {
 			__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
@@ -90,18 +72,17 @@ export default defineConfig((config) => {
 
 				return undefined;
 			},
-			sourcemap: true,
 		},
 		resolve: {
 			tsconfigPaths: true,
 		},
 		optimizeDeps: {
-			exclude: ["@sentry/react-router"],
 			// Dependencies which are only imported by specific route modules.
 			// Pre-bundling them at startup avoids mid-session re-optimization
 			// and full page reloads on first navigations.
 			include: [
 				"@date-fns/tz",
+				"@techstark/opencv-js",
 				"@dnd-kit/core",
 				"@dnd-kit/modifiers",
 				"@dnd-kit/sortable",
@@ -128,14 +109,14 @@ export default defineConfig((config) => {
 				"date-fns/locale/ru",
 				"date-fns/locale/zh-CN",
 				"edmonds-blossom-fixed",
+				"fflate",
 				"i18next-browser-languagedetector",
 				"i18next-http-backend",
 				"kysely",
-				"kysely/helpers/sqlite",
 				"markdown-to-jsx",
+				"mediabunny",
 				"nanoid",
 				"openskill",
-				"pako",
 				"partysocket",
 				"picocad2-web",
 				"qrcode.react",

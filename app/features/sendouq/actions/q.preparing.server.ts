@@ -26,11 +26,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	const ownGroup = SendouQ.findOwnGroup(user.id);
 	errorToastIfFalsy(ownGroup, "No group found");
 
-	// no perms, possibly just lost them so no more graceful degradation
-	if (ownGroup.usersRole === "REGULAR") {
-		return null;
-	}
-
 	const season = Seasons.current();
 	errorToastIfFalsy(season, "Season is not active");
 
@@ -67,10 +62,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
 					ownGroup.id,
-					{
-						userId: data.id,
-						role: "MANAGER",
-					},
+					{ userId: data.id },
 				);
 
 				if (chatCodeToRevalidate) {

@@ -2,7 +2,7 @@ import { describe, expect, test } from "vitest";
 import { createResolved } from "./index";
 
 describe("Create double elimination stage", () => {
-	test("should create a double elimination stage", () => {
+	test("creates a double elimination stage", () => {
 		const data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16],
@@ -16,7 +16,7 @@ describe("Create double elimination stage", () => {
 		expect(data.match.length).toBe(31);
 	});
 
-	test("should create a tournament with 256+ tournaments", () => {
+	test("creates a tournament with 256+ tournaments", () => {
 		expect(() =>
 			createResolved({
 				type: "double_elimination",
@@ -26,7 +26,7 @@ describe("Create double elimination stage", () => {
 		).not.toThrow();
 	});
 
-	test("should create a tournament with a double grand final", () => {
+	test("creates a tournament with a double grand final", () => {
 		const data = createResolved({
 			type: "double_elimination",
 			seeding: [1, 2, 3, 4, 5, 6, 7, 8],

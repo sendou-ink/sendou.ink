@@ -1,7 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
-import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -21,7 +20,6 @@ export const handle: SendouRouteHandle = {
 const ALL_TAGS_KEY = "ALL";
 export default function UserArtPage() {
 	const { t } = useTranslation(["art"]);
-	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const [type, setType] = useSearchParam(userArtSearchParams, "source");
 	const [tagParam, setFilteredTag] = useSearchParam(userArtSearchParams, "tag");
@@ -136,11 +134,7 @@ export default function UserArtPage() {
 				</div>
 			) : null}
 
-			<ArtGrid
-				arts={arts}
-				enablePreview
-				canEdit={layoutData.user.id === user?.id}
-			/>
+			<ArtGrid arts={arts} enablePreview />
 		</div>
 	);
 }

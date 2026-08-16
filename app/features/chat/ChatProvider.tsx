@@ -11,6 +11,7 @@ import { Config } from "~/config";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
+import { useRefreshOnReconnect } from "./chat-hooks";
 import { useLastReadCounts, writeLastReadCount } from "./chat-last-read";
 import type {
 	RoomInfo,
@@ -20,7 +21,7 @@ import type {
 import { chatUsersSearchParams } from "./chat-search-params";
 import type { ChatMessage, ChatUser } from "./chat-types";
 import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
-import { revalidateWithScope } from "./revalidation-scope";
+import { scheduleBroadcastRevalidation } from "./revalidation-scope";
 import { ChatContext } from "./useChatContext";
 
 const PING_INTERVAL_MS = 60_000;
@@ -119,6 +120,7 @@ function ChatProviderInner({
 		{},
 	);
 	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
+	const [notificationsVersion, setNotificationsVersion] = React.useState(0);
 
 	const ws = React.useRef<WebSocket>(undefined);
 
@@ -191,6 +193,13 @@ function ChatProviderInner({
 			return;
 		}
 
+		// Notifications changed server-side; handled before the fallthrough below
+		// so a contentless ping is never treated as a chat message
+		if (parsed.event === "NOTIFICATIONS_CHANGED") {
+			setNotificationsVersion((version) => version + 1);
+			return;
+		}
+
 		// CHAT_HISTORY response (also returned by SUBSCRIBE with metadata)
 		if (parsed.event === "CHAT_HISTORY" && Array.isArray(parsed.messages)) {
 			logger.debug(
@@ -252,7 +261,12 @@ function ChatProviderInner({
 			const isOwnRevalidate =
 				messageArr[0].revalidateOnly && messageArr[0].authorUserId === userId;
 			if (!isOwnRevalidate) {
-				revalidateWithScope(revalidate, messageArr[0].revalidateScope);
+				// jittered so a broadcast fanning out to a whole room does not make
+				// every subscribed client refetch in the same instant
+				scheduleBroadcastRevalidation(
+					revalidate,
+					messageArr[0].revalidateScope,
+				);
 			}
 		}
 
@@ -482,6 +496,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
+			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			setChatOpen,
@@ -505,6 +520,7 @@ function ChatProviderInner({
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
+			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			activeRooms,
@@ -558,31 +574,19 @@ function useChatRouteSync({
 	const subscribedRoomRef = React.useRef<string[]>([]);
 	const previousRouteChatCodeRef = React.useRef<string[]>([]);
 	const previousPathnameRef = React.useRef<string | null>(null);
-	const hasConnectedRef = React.useRef(false);
 
 	// On reconnect the server sends a fresh initial rooms payload that drops
 	// rooms we joined via SUBSCRIBE as a non-participant, and the previous
 	// socket's subscriptions died with it. Clear the subscription tracking so
 	// the route sync effect below re-subscribes once the new payload arrives,
 	// and refresh history for the open room to fill any gap from the downtime.
-	const onReconnect = React.useEffectEvent(() => {
+	useRefreshOnReconnect(readyState, () => {
 		logger.debug("WS reconnected, re-acquiring room subscriptions and history");
 		subscribedRoomRef.current = [];
 		for (const code of activeRooms) {
 			requestHistory(code);
 		}
 	});
-
-	React.useEffect(() => {
-		if (readyState !== "CONNECTED") return;
-
-		if (!hasConnectedRef.current) {
-			hasConnectedRef.current = true;
-			return;
-		}
-
-		onReconnect();
-	}, [readyState]);
 
 	React.useEffect(() => {
 		if (isLoading) return;

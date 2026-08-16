@@ -12,7 +12,11 @@ import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import type { ArrayItemRenderContext, CustomFieldRenderProps } from "~/form";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { FormRenderProps } from "~/form/SendouForm";
-import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import {
+	SendouForm,
+	useFormValue,
+	useOptionalFormFieldContext,
+} from "~/form/SendouForm";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
@@ -47,21 +51,23 @@ export default function NewVodPage() {
 
 	const defaultValues = data.vodToEdit
 		? vodToEditToFormValues(data.vodToEdit)
-		: {
-				type: "TOURNAMENT" as const,
-				teamSize: "4" as const,
-				pov: { type: "USER" as const },
-				matches: [
-					{
-						mode: "SZ" as const,
-						stageId: 1 as StageId,
-						startsAt: "",
-						weapon: undefined as MainWeaponId | undefined,
-						weaponsTeamOne: [] as WeaponPoolItem[],
-						weaponsTeamTwo: [] as WeaponPoolItem[],
-					},
-				],
-			};
+		: data.vodPrefill
+			? vodPrefillToFormValues(data.vodPrefill)
+			: {
+					type: "TOURNAMENT" as const,
+					teamSize: "4" as const,
+					pov: { type: "USER" as const },
+					matches: [
+						{
+							mode: "SZ" as const,
+							stageId: 1 as StageId,
+							startsAt: "",
+							weapon: undefined as MainWeaponId | undefined,
+							weaponsTeamOne: [] as WeaponPoolItem[],
+							weaponsTeamTwo: [] as WeaponPoolItem[],
+						},
+					],
+				};
 
 	return (
 		<Main halfWidth className={styles.layout}>
@@ -122,14 +128,56 @@ function vodToEditToFormValues(vodToEdit: VodToEdit) {
 	};
 }
 
+type VodPrefill = NonNullable<Awaited<ReturnType<typeof loader>>["vodPrefill"]>;
+
+/**
+ * Prefill from the emberz VoD parser's `ingest` search param (see the loader):
+ * detected matches with anything the detectors missed left at the blank form's
+ * defaults for the user to fill. CAST weapons are the alpha team's four slots
+ * then bravo's; unread slots are dropped so the remaining empty (required)
+ * selects surface them. A non-CAST VoD instead takes the POV player's weapon,
+ * which the scan only knows when a scoreboard identified their seat.
+ */
+function vodPrefillToFormValues(prefill: VodPrefill) {
+	const teamSize = 4;
+	const isCast = prefill.type === "CAST";
+
+	return {
+		type: prefill.type ?? ("TOURNAMENT" as const),
+		teamSize: "4" as const,
+		pov: { type: "USER" as const },
+		matches: prefill.matches.map((match) => ({
+			startsAt: match.startsAt,
+			mode: match.mode ?? ("SZ" as const),
+			stageId: (match.stageId ?? 1) as StageId,
+			weapon: isCast
+				? undefined
+				: ((match.povWeapon ?? undefined) as MainWeaponId | undefined),
+			weaponsTeamOne: isCast
+				? weaponPoolFromPrefill(match.weapons.slice(0, teamSize))
+				: ([] as WeaponPoolItem[]),
+			weaponsTeamTwo: isCast
+				? weaponPoolFromPrefill(match.weapons.slice(teamSize, teamSize * 2))
+				: ([] as WeaponPoolItem[]),
+		})),
+	};
+}
+
+function weaponPoolFromPrefill(
+	weapons: VodPrefill["matches"][number]["weapons"],
+): WeaponPoolItem[] {
+	return weapons
+		.filter((id): id is MainWeaponId => id !== null)
+		.map((id) => ({ id, isFavorite: false }));
+}
+
 function YouTubeEmbedWrapper({
 	onPlayerReady,
 }: {
 	onPlayerReady: (player: YT.Player) => void;
 }) {
-	const { values } = useFormFieldContext();
 	const floatWidth = useFloatingEmbedWidth();
-	const youtubeUrl = values.youtubeUrl as string | undefined;
+	const youtubeUrl = useFormValue("youtubeUrl") as string | undefined;
 
 	if (!youtubeUrl) return null;
 
@@ -197,8 +245,7 @@ function VodFormFields({
 	player: YT.Player | null;
 	FormField: VodFormFieldComponent;
 }) {
-	const { values } = useFormFieldContext();
-	const videoType = values.type as string;
+	const videoType = useFormValue("type") as string;
 
 	return (
 		<>
@@ -219,7 +266,6 @@ function VodFormFields({
 						index={ctx.index}
 						itemName={ctx.itemName}
 						values={ctx.values as unknown as MatchFieldValues}
-						formValues={ctx.formValues}
 						setItemField={
 							ctx.setItemField as <K extends keyof MatchFieldValues>(
 								field: K,
@@ -239,12 +285,12 @@ function VodFormFields({
 }
 
 function TeamSizeField({ FormField }: { FormField: VodFormFieldComponent }) {
-	const { setValueFromPrev } = useFormFieldContext();
+	const context = useOptionalFormFieldContext();
 
 	// The weapon count per match is tied to the team size, so any already picked
 	// weapons would no longer fit the new size.
 	const clearMatchWeapons = () => {
-		setValueFromPrev("matches", (prev) =>
+		context?.setValueFromPrev("matches", (prev) =>
 			((prev ?? []) as Array<Record<string, unknown>>).map((match) => ({
 				...match,
 				weaponsTeamOne: [],
@@ -345,7 +391,6 @@ function MatchFieldsetContent({
 	index,
 	itemName,
 	values: matchValues,
-	formValues,
 	setItemField,
 	canRemove,
 	remove,
@@ -355,6 +400,8 @@ function MatchFieldsetContent({
 }: MatchFieldsetContentProps) {
 	const { t } = useTranslation(["vods", "common"]);
 	const [currentTime, setCurrentTime] = useState<string>("");
+	const previousWeapons = (useFormValue(`matches[${index - 1}]`) ??
+		null) as MatchFieldValues | null;
 
 	useEffect(() => {
 		if (!player) return;
@@ -372,9 +419,6 @@ function MatchFieldsetContent({
 
 		return () => clearInterval(interval);
 	}, [player]);
-
-	const allMatches = formValues.matches as MatchFieldValues[];
-	const previousWeapons = index > 0 ? allMatches[index - 1] : null;
 
 	return (
 		<>
@@ -418,7 +462,6 @@ function MatchFieldsetContent({
 					setItemField={setItemField}
 					videoType={videoType}
 					previousWeapons={previousWeapons}
-					formValues={formValues}
 				/>
 			</div>
 		</>
@@ -431,7 +474,6 @@ function WeaponsField({
 	setItemField,
 	videoType,
 	previousWeapons,
-	formValues,
 }: {
 	index: number;
 	matchValues: MatchFieldValues;
@@ -441,10 +483,9 @@ function WeaponsField({
 	) => void;
 	videoType: string;
 	previousWeapons: MatchFieldValues | null;
-	formValues: Record<string, unknown>;
 }) {
 	const { t } = useTranslation(["vods", "forms"]);
-	const teamSizeValue = formValues.teamSize as string | undefined;
+	const teamSizeValue = useFormValue("teamSize") as string | undefined;
 	const teamSize = teamSizeValue ? Number(teamSizeValue) : 4;
 	const { recentlyReportedWeapons, addRecentlyReportedWeapon } =
 		useRecentlyReportedWeapons();

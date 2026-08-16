@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "",
 	"matchProfile.maps.preferencesFor": "",
 	"matchProfile.maps.teamExplanation": "",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "Evitar",
 	"matchProfile.maps.prefer": "Prefere",
 	"matchProfile.maps.neutral": "Neutro",
@@ -23,6 +24,7 @@
 	"matchProfile.mapPool.notOk": "Escolha {{count}} mapas por modo que você não evitou para salvar suas preferências",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

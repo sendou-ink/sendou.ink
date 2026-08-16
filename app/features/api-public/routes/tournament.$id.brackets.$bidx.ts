@@ -14,10 +14,7 @@ const paramsSchema = z.object({
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id, bidx } = parseParams({ params, schema: paramsSchema });
 
-	const tournament = await tournamentFromDB({
-		user: undefined,
-		tournamentId: id,
-	});
+	const tournament = await tournamentFromDB(id);
 
 	const bracket = notFoundIfNullish(tournament.bracketByIdx(bidx));
 

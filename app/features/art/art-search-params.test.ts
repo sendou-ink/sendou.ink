@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -10,7 +10,7 @@ import {
 } from "./art-search-params";
 
 describe("artSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(artSearchParams, {
 			tag: ["cat", "some tag"],
 			tab: ["recently-uploaded", "showcase"],
@@ -18,20 +18,20 @@ describe("artSearchParams", () => {
 		});
 	});
 
-	it("garbage decodes to default", () => {
+	test("garbage decodes to default", () => {
 		assertDecodesToDefault(artSearchParams, "tab", [["not-a-tab"]]);
 		assertDecodesToDefault(artSearchParams, "open", [["yes"], ["1"]]);
 	});
 });
 
 describe("artGridSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(artGridSearchParams, {
 			big: [1, 42],
 		});
 	});
 
-	it("garbage decodes to default", () => {
+	test("garbage decodes to default", () => {
 		assertDecodesToDefault(artGridSearchParams, "big", [
 			["abc"],
 			["-1"],
@@ -41,13 +41,13 @@ describe("artGridSearchParams", () => {
 });
 
 describe("artNewSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(artNewSearchParams, {
 			art: [1, 999],
 		});
 	});
 
-	it("garbage decodes to default", () => {
+	test("garbage decodes to default", () => {
 		assertDecodesToDefault(artNewSearchParams, "art", [["abc"], ["0"]]);
 	});
 });

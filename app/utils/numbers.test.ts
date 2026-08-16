@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
 	averageArray,
 	cutToNDecimalPlaces,
@@ -7,133 +7,71 @@ import {
 } from "./number";
 
 describe("roundToNDecimalPlaces()", () => {
-	it("rounds to 2 decimal places by default", () => {
-		expect(roundToNDecimalPlaces(1.234)).toBe(1.23);
-		expect(roundToNDecimalPlaces(1.235)).toBe(1.24);
-		expect(roundToNDecimalPlaces(1.2)).toBe(1.2);
-		expect(roundToNDecimalPlaces(1)).toBe(1);
+	test.each([
+		[1.234, 1.23],
+		[1.235, 1.24],
+		[1.2, 1.2],
+		[1, 1],
+	])("rounds %d to %d with the default 2 decimal places", (input, expected) => {
+		expect(roundToNDecimalPlaces(input)).toBe(expected);
 	});
 
-	it("rounds to 0 decimal places", () => {
-		expect(roundToNDecimalPlaces(1.6, 0)).toBe(2);
-		expect(roundToNDecimalPlaces(1.4, 0)).toBe(1);
-		expect(roundToNDecimalPlaces(2.5, 0)).toBe(3);
-	});
-
-	it("rounds to 3 decimal places", () => {
-		expect(roundToNDecimalPlaces(1.23456, 3)).toBe(1.235);
-		expect(roundToNDecimalPlaces(1.23444, 3)).toBe(1.234);
-	});
-
-	it("handles negative numbers", () => {
-		expect(roundToNDecimalPlaces(-1.2345, 2)).toBe(-1.23);
-		expect(roundToNDecimalPlaces(-1.2355, 2)).toBe(-1.24);
-	});
-
-	it("handles zero", () => {
-		expect(roundToNDecimalPlaces(0, 2)).toBe(0);
-		expect(roundToNDecimalPlaces(0, 0)).toBe(0);
-	});
-
-	it("handles large numbers", () => {
-		expect(roundToNDecimalPlaces(123456.789, 1)).toBe(123456.8);
-		expect(roundToNDecimalPlaces(123456.789, 0)).toBe(123457);
+	test.each([
+		[1.6, 0, 2],
+		[1.4, 0, 1],
+		[2.5, 0, 3],
+		[1.23456, 3, 1.235],
+		[1.23444, 3, 1.234],
+		[-1.2345, 2, -1.23],
+		[-1.2355, 2, -1.24],
+		[0, 2, 0],
+		[0, 0, 0],
+		[123456.789, 1, 123456.8],
+		[123456.789, 0, 123457],
+	])("rounds %d to %d decimal places as %d", (input, decimals, expected) => {
+		expect(roundToNDecimalPlaces(input, decimals)).toBe(expected);
 	});
 });
 
 describe("cutToNDecimalPlaces()", () => {
-	test("cutOff truncates decimal places correctly", () => {
-		const result = cutToNDecimalPlaces(3.9999, 2);
-		expect(result).toBe(3.99);
-	});
-
-	test("cutOff can change amount of decimals returned", () => {
-		const result = cutToNDecimalPlaces(3.12, 1);
-		expect(result).toBe(3.1);
-	});
-
-	test("cutOff preserves decimal values with the desired number of decimal places correctly", () => {
-		const result = cutToNDecimalPlaces(100, 2);
-		expect(result).toBe(100);
-	});
-
-	test("cutOff cuts off decimal places and removes trailing zeros correctly", () => {
-		const result = cutToNDecimalPlaces(3.0001, 2);
-		expect(result).toBe(3);
-	});
-
-	test("cutOff preserves a value already at the desired number of decimal places", () => {
-		const result = cutToNDecimalPlaces(0.29, 2);
-		expect(result).toBe(0.29);
-	});
-
-	test("cutOff is not thrown off by floating point representation error", () => {
-		expect(cutToNDecimalPlaces(2.32, 2)).toBe(2.32);
-		expect(cutToNDecimalPlaces(-0.29, 2)).toBe(-0.29);
+	test.each([
+		[3.9999, 2, 3.99],
+		[3.12, 1, 3.1],
+		[100, 2, 100],
+		[3.0001, 2, 3],
+		[0.29, 2, 0.29],
+		// values whose binary representation is just below the decimal shown
+		[2.32, 2, 2.32],
+		[-0.29, 2, -0.29],
+	])("cuts %d to %d decimal places as %d", (input, decimals, expected) => {
+		expect(cutToNDecimalPlaces(input, decimals)).toBe(expected);
 	});
 });
 
 describe("averageArray()", () => {
-	it("returns the average of positive numbers", () => {
-		const result = averageArray([2, 4, 6, 8]);
-		expect(result).toBe(5);
-	});
-
-	it("returns the average of negative numbers", () => {
-		const result = averageArray([-2, -4, -6, -8]);
-		expect(result).toBe(-5);
-	});
-
-	it("returns the average of mixed positive and negative numbers", () => {
-		const result = averageArray([10, -10, 20, -20]);
-		expect(result).toBe(0);
-	});
-
-	it("returns the value itself for a single-element array", () => {
-		const result = averageArray([42]);
-		expect(result).toBe(42);
-	});
-
-	it("returns 0 for an empty array", () => {
-		const result = averageArray([]);
-		expect(result).toBe(0);
+	test.each([
+		[[2, 4, 6, 8], 5],
+		[[-2, -4, -6, -8], -5],
+		[[10, -10, 20, -20], 0],
+		[[42], 42],
+		[[], 0],
+	])("averages %j to %d", (input, expected) => {
+		expect(averageArray(input)).toBe(expected);
 	});
 });
 
 describe("safeNumberParse()", () => {
-	it("returns null for null input", () => {
-		expect(safeNumberParse(null)).toBeNull();
-	});
-
-	it("parses valid integer string", () => {
-		expect(safeNumberParse("42")).toBe(42);
-	});
-
-	it("parses valid float string", () => {
-		expect(safeNumberParse("3.14")).toBe(3.14);
-	});
-
-	it("returns null for non-numeric string", () => {
-		expect(safeNumberParse("abc")).toBeNull();
-	});
-
-	it("returns null for empty string", () => {
-		expect(safeNumberParse("")).toBeNull();
-	});
-
-	it("parses string with leading/trailing spaces", () => {
-		expect(safeNumberParse("  7 ")).toBe(7);
-	});
-
-	it("parses negative numbers", () => {
-		expect(safeNumberParse("-123")).toBe(-123);
-	});
-
-	it("parses zero", () => {
-		expect(safeNumberParse("0")).toBe(0);
-	});
-
-	it("returns null for string with only spaces", () => {
-		expect(safeNumberParse("   ")).toBeNull();
+	test.each([
+		["42", 42],
+		["3.14", 3.14],
+		["  7 ", 7],
+		["-123", -123],
+		["0", 0],
+		["abc", null],
+		["", null],
+		["   ", null],
+		[null, null],
+	])("parses %j as %j", (input, expected) => {
+		expect(safeNumberParse(input)).toBe(expected);
 	});
 });

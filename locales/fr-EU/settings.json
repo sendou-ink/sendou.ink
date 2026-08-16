@@ -8,6 +8,7 @@
 	"matchProfile.maps.personal": "",
 	"matchProfile.maps.preferencesFor": "",
 	"matchProfile.maps.teamExplanation": "",
+	"matchProfile.maps.teamPreferencesHint": "",
 	"matchProfile.maps.avoid": "Détester",
 	"matchProfile.maps.prefer": "Préférer",
 	"matchProfile.maps.neutral": "Neutre",
@@ -23,6 +24,7 @@
 	"matchProfile.mapPool.notOk": "Sélectionner {{count}} stages par mode que vous n'avez pas évité pour enregistrer vos préférences",
 	"sounds.likeReceived": "",
 	"sounds.groupNewMember": "",
+	"sounds.readyCheckStarted": "",
 	"sounds.matchStarted": "",
 	"sounds.tournamentMatchStarted": ""
 }

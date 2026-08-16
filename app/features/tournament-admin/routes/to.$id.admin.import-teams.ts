@@ -22,9 +22,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		tournamentImportTeamsSearchParams.parse(request).fromTournamentId,
 	);
 
-	const { ctx } = await tournamentDataCached({
-		tournamentId: fromTournamentId,
-	});
+	const { ctx } = await tournamentDataCached(fromTournamentId);
 	requireTournamentVisible({ ctx, user });
 
 	const fromTournamentTeams = await tournamentTeamsFullCached({
@@ -45,6 +43,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 				userId: member.userId,
 				username: member.username,
 				inGameName: member.inGameName,
+				tournamentName: member.tournamentName,
 				isOwner: member.role === "OWNER",
 			})),
 		})),

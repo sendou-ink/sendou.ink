@@ -211,11 +211,14 @@ export function insert({
 /**
  * Creates a new registration or applies a full-state edit to an existing one in a
  * single transaction: team name, linked sendou.ink team, owner assignment/transfer,
- * member adds/removes and in-game name updates. Pass `tournamentTeamId` to edit an
- * existing team, or omit it to create a new one (all members are then "added" and
- * `ownerUserId` becomes the owner). The caller is responsible for validating the
- * derived ops and for any side effects (cache updates, notifications) outside the
- * transaction.
+ * member adds/removes, in-game name updates, tournament name updates and the
+ * counterpick map pool. Pass `tournamentTeamId` to edit an existing team, or omit it
+ * to create a new one (all members are then "added" and `ownerUserId` becomes the
+ * owner). The caller is responsible for validating the derived ops and for any side
+ * effects (cache updates, notifications) outside the transaction.
+ *
+ * Returns the tournament name changes that were actually applied (submitted values
+ * equal to the user's current one are no-ops), for the caller to log.
  */
 export function upsertRegistration({
 	tournamentTeamId,
@@ -228,6 +231,8 @@ export function upsertRegistration({
 	membersToAdd,
 	membersToRemove,
 	inGameNameUpdates,
+	tournamentNameUpdates,
+	mapPool,
 }: {
 	/** Present when editing an existing team, omitted when creating a new one. */
 	tournamentTeamId?: number;
@@ -244,6 +249,13 @@ export function upsertRegistration({
 	membersToAdd: number[];
 	membersToRemove: number[];
 	inGameNameUpdates: Array<{ userId: number; inGameName: string }>;
+	/** Organizer-set names shown in every tournament. `null` clears the user's current one. */
+	tournamentNameUpdates: Array<{
+		userId: number;
+		tournamentName: string | null;
+	}>;
+	/** Counterpick map pool to replace the team's with. Omitted leaves it as is. */
+	mapPool?: MapPool;
 }) {
 	const isNew = typeof tournamentTeamId !== "number";
 
@@ -290,6 +302,10 @@ export function upsertRegistration({
 				tournamentTeamId: id,
 				name,
 			});
+		}
+
+		if (mapPool) {
+			await replaceCounterpickMaps(trx, { tournamentTeamId: id, mapPool });
 		}
 
 		for (const userId of membersToRemove) {
@@ -395,6 +411,45 @@ export function upsertRegistration({
 				trx,
 			);
 		}
+
+		const appliedTournamentNameChanges: Array<{
+			userId: number;
+			previousTournamentName: string | null;
+			tournamentName: string | null;
+		}> = [];
+		for (const { userId, tournamentName } of tournamentNameUpdates) {
+			const { tournamentName: previousTournamentName } = await trx
+				.selectFrom("User")
+				.select("User.tournamentName")
+				.where("User.id", "=", userId)
+				.executeTakeFirstOrThrow();
+
+			if (previousTournamentName === tournamentName) continue;
+
+			await trx
+				.updateTable("User")
+				.set({ tournamentName })
+				.where("User.id", "=", userId)
+				.execute();
+
+			await TournamentAuditLogRepository.insert(
+				{
+					type: "UPDATE_TOURNAMENT_NAME",
+					tournamentTeamId: id,
+					subjectUserId: userId,
+					metadata: { tournamentName },
+				},
+				trx,
+			);
+
+			appliedTournamentNameChanges.push({
+				userId,
+				previousTournamentName,
+				tournamentName,
+			});
+		}
+
+		return { appliedTournamentNameChanges };
 	});
 }
 
@@ -908,33 +963,47 @@ export function leave({
 	});
 }
 
-export function upsertCounterpickMaps({
-	tournamentTeamId,
-	mapPool,
-}: {
+export function upsertCounterpickMaps(args: {
 	tournamentTeamId: Tables["TournamentTeam"]["id"];
 	mapPool: MapPool;
 }) {
-	return db.transaction().execute(async (trx) => {
-		await trx
-			.deleteFrom("MapPoolMap")
-			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
-			.execute();
-
-		await trx
-			.insertInto("MapPoolMap")
-			.values(
-				mapPool.stageModePairs.map(({ stageId, mode }) => ({
-					tournamentTeamId,
-					stageId,
-					mode,
-				})),
-			)
-			.execute();
-	});
+	return db.transaction().execute((trx) => replaceCounterpickMaps(trx, args));
 }
 
-async function findTeamRecentMaps(teamId: number, limit: number) {
+async function replaceCounterpickMaps(
+	trx: Transaction<DB>,
+	{
+		tournamentTeamId,
+		mapPool,
+	}: {
+		tournamentTeamId: Tables["TournamentTeam"]["id"];
+		mapPool: MapPool;
+	},
+) {
+	await trx
+		.deleteFrom("MapPoolMap")
+		.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
+		.execute();
+
+	if (mapPool.stageModePairs.length === 0) return;
+
+	await trx
+		.insertInto("MapPoolMap")
+		.values(
+			mapPool.stageModePairs.map(({ stageId, mode }) => ({
+				tournamentTeamId,
+				stageId,
+				mode,
+			})),
+		)
+		.execute();
+}
+
+async function findTeamRecentMaps(
+	teamId: number,
+	excludeMatchId: number,
+	limit: number,
+) {
 	return db
 		.selectFrom("TournamentMatchGameResult")
 		.innerJoin(
@@ -947,9 +1016,21 @@ async function findTeamRecentMaps(teamId: number, limit: number) {
 			"TournamentMatchGameResult.stageId",
 		])
 		.where("TournamentMatchGameResultParticipant.tournamentTeamId", "=", teamId)
+		.where("TournamentMatchGameResult.matchId", "!=", excludeMatchId)
 		.orderBy("TournamentMatchGameResult.createdAt", "desc")
 		.limit(limit)
 		.execute();
+}
+
+/** Invite code of one team, the secret the tournament layout data does not carry. */
+export async function findInviteCodeById(tournamentTeamId: number) {
+	const row = await db
+		.selectFrom("TournamentTeam")
+		.select("TournamentTeam.inviteCode")
+		.where("TournamentTeam.id", "=", tournamentTeamId)
+		.executeTakeFirst();
+
+	return row?.inviteCode ?? null;
 }
 
 export function findByInviteCode(inviteCode: string) {
@@ -993,10 +1074,15 @@ export async function findMapPoolsByTeamIds(tournamentTeamIds: number[]) {
 
 export async function findRecentlyPlayedMapsByIds({
 	teamIds,
+	excludeMatchId,
 	limit = 5,
 }: {
 	/** Team IDs to retrieve recent maps for */
 	teamIds: [number, number];
+	/** Match whose own games are left out, being the match the maps are resolved for.
+	 * Without it a set's map list changes under the teams mid-set, as the games they
+	 * already played would count as recently played when it is regenerated. */
+	excludeMatchId: number;
 	/** Limit of recent maps to retrieve per team
 	 *
 	 * @default 5
@@ -1004,8 +1090,8 @@ export async function findRecentlyPlayedMapsByIds({
 	limit?: number;
 }): Promise<Array<{ mode: ModeShort; stageId: StageId }>> {
 	const [teamOneMaps, teamTwoMaps] = await Promise.all([
-		findTeamRecentMaps(teamIds[0], limit),
-		findTeamRecentMaps(teamIds[1], limit),
+		findTeamRecentMaps(teamIds[0], excludeMatchId, limit),
+		findTeamRecentMaps(teamIds[1], excludeMatchId, limit),
 	]);
 
 	return flatZip(teamOneMaps, teamTwoMaps);

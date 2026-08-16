@@ -7,6 +7,7 @@ import { render } from "vitest-browser-react";
 const { mockTournament } = vi.hoisted(() => ({
 	mockTournament: {
 		ctx: { id: 1, settings: { requireInGameNames: false } },
+		canEditTournamentNames: () => false,
 	},
 }));
 

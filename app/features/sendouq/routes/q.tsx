@@ -14,7 +14,6 @@ import { Image } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
-import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -32,7 +31,6 @@ import {
 	SENDOUQ_PAGE,
 	SENDOUQ_RULES_PAGE,
 	SENDOUQ_STREAMS_PAGE,
-	userSeasonsPage,
 } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
@@ -44,6 +42,7 @@ import { userCanJoinQueueAt } from "../q-utils";
 
 export { action, loader };
 
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import styles from "./q.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -228,7 +227,6 @@ function JoinTeamDialog({
 	close: () => void;
 	members: {
 		username: string;
-		role: Tables["GroupMember"]["role"];
 	}[];
 }) {
 	const { t, i18n } = useTranslation(["q"]);

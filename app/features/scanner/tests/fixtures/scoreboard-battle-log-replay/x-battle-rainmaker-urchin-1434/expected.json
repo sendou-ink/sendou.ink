@@ -1,0 +1,84 @@
+{
+  "event": "ScoreboardBattleLogReplay",
+  "data": {
+    "lobby": "X",
+    "mode": "RM",
+    "stage": 24,
+    "timestamp": "9/7/2026 14:34",
+    "replayCode": "RUCT-5HNH-XWDC-J51U",
+    "matchScores": [
+      32,
+      7
+    ],
+    "players": [
+      {
+        "name": "Mesh Cap",
+        "weaponId": 0,
+        "paint": 1365,
+        "ka": 16,
+        "d": 7,
+        "s": 4
+      },
+      {
+        "name": "Braid",
+        "weaponId": 2030,
+        "paint": 1230,
+        "ka": 11,
+        "d": 3,
+        "s": 2
+      },
+      {
+        "name": "Sneaky",
+        "weaponId": 7030,
+        "paint": 1345,
+        "ka": 9,
+        "d": 9,
+        "s": 5
+      },
+      {
+        "name": "Wave",
+        "weaponId": 20,
+        "paint": 923,
+        "ka": 11,
+        "d": 9,
+        "s": 2
+      },
+      {
+        "name": "Splashy",
+        "weaponId": 50,
+        "paint": 1288,
+        "ka": 18,
+        "d": 7,
+        "s": 4
+      },
+      {
+        "name": "Capped",
+        "weaponId": 0,
+        "paint": 1321,
+        "ka": 7,
+        "d": 11,
+        "s": 8
+      },
+      {
+        "name": "Slugger",
+        "weaponId": 2031,
+        "paint": 894,
+        "ka": 6,
+        "d": 7,
+        "s": 2
+      },
+      {
+        "name": "Sunshield",
+        "weaponId": 7030,
+        "paint": 1320,
+        "ka": 4,
+        "d": 9,
+        "s": 7
+      }
+    ],
+    "stageLabel": "Urchin Underpass"
+  },
+  "options": {
+    "notes": "Heavily compressed stream capture, anonymized-view names. Code hand-verified from the zoomed frame; a prior parse misread U>D, T>7, 5>6, N>H, U>L."
+  }
+}

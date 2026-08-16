@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,11 +6,11 @@ import {
 import { recentlyReportedWeaponsPersisted } from "./useRecentlyReportedWeapons";
 
 describe("recentlyReportedWeaponsPersisted", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(recentlyReportedWeaponsPersisted, [[], [0, 10, 8000]]);
 	});
 
-	it("malformed values decode to the default", () => {
+	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(recentlyReportedWeaponsPersisted, [
 			"not json",
 			"[99999]",

@@ -11,7 +11,7 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
-import { useUser } from "~/features/auth/core/user";
+import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
 import {
 	UserCard,
 	useUserCardData,
@@ -19,9 +19,8 @@ import {
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
-import { useHasRole } from "~/modules/permissions/hooks";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { lfgNewPostPage } from "~/utils/urls";
 import { hourDifferenceBetweenTimezones } from "../core/timezone";
 import type { LFGLoaderData } from "../routes/lfg";
 
@@ -39,8 +38,8 @@ export function LFGPost({ post }: { post: Post }) {
 
 const USER_POST_EXPANDABLE_CRITERIA = 300;
 function UserLFGPost({ post }: { post: Post }) {
-	const user = useUser();
-	const isAdmin = useHasRole("ADMIN");
+	const canEdit = useHasPermission(post, "EDIT");
+	const canDelete = useHasPermission(post, "DELETE");
 	const [isExpanded, setIsExpanded] = React.useState(false);
 
 	return (
@@ -54,14 +53,14 @@ function UserLFGPost({ post }: { post: Post }) {
 				<PostPills
 					languages={post.languages}
 					timezone={post.timezone}
-					canEdit={post.author.id === user?.id}
+					canEdit={canEdit}
 					postId={post.id}
 				/>
 			</div>
 			<div>
 				<div className="stack horizontal justify-between items-center">
 					<PostTextTypeHeader type={post.type} />
-					{post.author.id === user?.id || isAdmin ? (
+					{canDelete ? (
 						<PostDeleteButton id={post.id} type={post.type} />
 					) : null}
 				</div>
@@ -82,8 +81,8 @@ function TeamLFGPost({
 	post: Post & { team: NonNullable<Post["team"]> };
 }) {
 	const isHydrated = useHydrated();
-	const user = useUser();
-	const isAdmin = useHasRole("ADMIN");
+	const canEdit = useHasPermission(post, "EDIT");
+	const canDelete = useHasPermission(post, "DELETE");
 	const [isExpanded, setIsExpanded] = React.useState(false);
 
 	return (
@@ -102,9 +101,7 @@ function TeamLFGPost({
 					<Divider />
 					<div className="stack horizontal justify-between items-center">
 						<PostTime createdAt={post.createdAt} updatedAt={post.updatedAt} />
-						{post.author.id === user?.id ? (
-							<PostEditButton id={post.id} />
-						) : null}
+						{canEdit ? <PostEditButton id={post.id} /> : null}
 					</div>
 				</div>
 				{isExpanded ? (
@@ -116,7 +113,7 @@ function TeamLFGPost({
 			<div>
 				<div className="stack horizontal justify-between">
 					<PostTextTypeHeader type={post.type} />
-					{post.author.id === user?.id || isAdmin ? (
+					{canDelete ? (
 						<PostDeleteButton id={post.id} type={post.type} />
 					) : null}
 				</div>

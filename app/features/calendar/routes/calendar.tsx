@@ -30,7 +30,7 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { CALENDAR_PAGE, calendarIcalFeed, navIconUrl } from "~/utils/urls";
+import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
 import type { DayMonthYear } from "~/utils/zod";
 import { action } from "../actions/calendar";
 import { daysForCalendar } from "../calendar-utils";
@@ -40,6 +40,7 @@ import { type CalendarLoaderData, loader } from "../loaders/calendar.server";
 
 export { action, loader };
 
+import { calendarIcalFeed } from "~/features/calendar/calendar-urls";
 import styles from "./calendar.module.css";
 
 export const meta: MetaFunction = (args) => {

@@ -1,0 +1,27 @@
+/* time + confidence + event type read as one unit, the detail text after it
+   sits further away */
+.pills {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+/* neutral chip, the icon carries the accent and documents the value — full
+   label on hover via title */
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: 5px;
+	padding: var(--s-0-5) var(--s-2-5);
+	border-radius: var(--radius-full);
+	border: var(--border-style);
+	background: var(--color-bg);
+	color: var(--color-text);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+
+	& svg {
+		color: var(--color-text-accent);
+	}
+}

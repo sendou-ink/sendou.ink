@@ -29,7 +29,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournamentId,
 		user,
 	} = await tournamentFromParams(params, { for: "view" });
-	const { data, ctx } = await tournamentDataCached({ tournamentId });
+	const { data, ctx } = await tournamentDataCached(tournamentId);
 
 	const team = (await tournamentTeamsFullCached({ tournamentId, user })).find(
 		(t) => t.id === tournamentTeamId,
@@ -79,6 +79,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			),
 		})),
 		winCounts: winCounts(sets),
+		participatedUsersCount: fullTournament.participatedUserIds?.length ?? 0,
 		division:
 			standingsResult.type === "multi"
 				? (standingsResult.standings.find((div) =>

@@ -1278,6 +1278,13 @@ export const PADDLING_POOL_257 = () =>
 				customUrl: "alicetheto",
 				customAvatarUrl: null,
 			},
+			permissions: {
+				ADMIN: [860],
+				ORGANIZE: [860],
+				MANAGE_MATCHES: [860],
+				EDIT_EVENT_INFO: [860],
+				EDIT_IN_GAME_NAMES: [],
+			},
 			staff: [
 				{
 					id: 1536,
@@ -1342,7 +1349,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709743534,
-					inviteCode: null,
 					memberUserIds: [10293, 5728, 185, 9925],
 					ownerUserId: 10293,
 					checkIns: [
@@ -1371,7 +1377,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709737918,
-					inviteCode: null,
 					memberUserIds: [15916, 1300, 27958, 7265, 4603],
 					ownerUserId: 15916,
 					checkIns: [
@@ -1400,7 +1405,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709743523,
-					inviteCode: null,
 					memberUserIds: [223, 343, 193, 10615],
 					ownerUserId: 223,
 					checkIns: [
@@ -1429,7 +1433,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709743262,
-					inviteCode: null,
 					memberUserIds: [22661, 28485, 8734, 7094],
 					ownerUserId: 22661,
 					checkIns: [
@@ -1458,7 +1461,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709741396,
-					inviteCode: null,
 					memberUserIds: [8157, 2622, 8139, 11199, 13227],
 					ownerUserId: 8157,
 					checkIns: [
@@ -1487,7 +1489,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709711811,
-					inviteCode: null,
 					memberUserIds: [23746, 8258, 13562, 25721, 1447],
 					ownerUserId: 23746,
 					checkIns: [
@@ -1516,7 +1517,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709738831,
-					inviteCode: null,
 					memberUserIds: [9125, 14489, 20755, 11056, 175],
 					ownerUserId: 9125,
 					checkIns: [
@@ -1545,7 +1545,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709737837,
-					inviteCode: null,
 					memberUserIds: [22746, 21979, 11627, 12976],
 					ownerUserId: 22746,
 					checkIns: [
@@ -1574,7 +1573,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709741719,
-					inviteCode: null,
 					memberUserIds: [30449, 6508, 32579, 24585, 27515, 11151],
 					ownerUserId: 30449,
 					checkIns: [
@@ -1603,7 +1601,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709730354,
-					inviteCode: null,
 					memberUserIds: [3161, 379, 8480, 5229, 7336],
 					ownerUserId: 3161,
 					checkIns: [
@@ -1632,7 +1629,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709745630,
-					inviteCode: null,
 					memberUserIds: [28482, 9403, 18039, 38062, 25210],
 					ownerUserId: 28482,
 					checkIns: [
@@ -1659,7 +1655,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709592381,
-					inviteCode: null,
 					memberUserIds: [30582, 29321, 3930, 1740, 5368, 29433],
 					ownerUserId: 30582,
 					checkIns: [
@@ -1688,7 +1683,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709723749,
-					inviteCode: null,
 					memberUserIds: [32155, 35118, 30730, 30758, 76],
 					ownerUserId: 32155,
 					checkIns: [
@@ -1717,7 +1711,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709668399,
-					inviteCode: null,
 					memberUserIds: [18734, 28851, 13832, 23307, 20143, 27108],
 					ownerUserId: 18734,
 					checkIns: [
@@ -1746,7 +1739,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709735267,
-					inviteCode: null,
 					memberUserIds: [19035, 23016, 6053, 23858],
 					ownerUserId: 19035,
 					checkIns: [
@@ -1780,7 +1772,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709745849,
-					inviteCode: null,
 					memberUserIds: [6870, 29904, 20698, 23820],
 					ownerUserId: 6870,
 					checkIns: [
@@ -1814,7 +1805,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709742258,
-					inviteCode: null,
 					memberUserIds: [7007, 30220, 7440, 26665, 27686],
 					ownerUserId: 7007,
 					checkIns: [
@@ -1841,7 +1831,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709738744,
-					inviteCode: null,
 					memberUserIds: [11017, 7270, 18703, 27578, 8715],
 					ownerUserId: 11017,
 					checkIns: [
@@ -1870,7 +1859,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709746054,
-					inviteCode: null,
 					memberUserIds: [9874, 22434, 10992, 2302],
 					ownerUserId: 9874,
 					checkIns: [
@@ -1902,7 +1890,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709744894,
-					inviteCode: null,
 					memberUserIds: [22948, 35807, 23505, 271],
 					ownerUserId: 22948,
 					checkIns: [
@@ -1931,7 +1918,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709728278,
-					inviteCode: null,
 					memberUserIds: [8868, 22452, 11625, 11716],
 					ownerUserId: 8868,
 					checkIns: [
@@ -1960,7 +1946,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709715006,
-					inviteCode: null,
 					memberUserIds: [3929, 10883, 27664, 2137],
 					ownerUserId: 3929,
 					checkIns: [
@@ -1989,7 +1974,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709660578,
-					inviteCode: null,
 					memberUserIds: [21698, 12214, 29723, 28602],
 					ownerUserId: 21698,
 					checkIns: [
@@ -2023,7 +2007,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709721869,
-					inviteCode: null,
 					memberUserIds: [24705, 9367, 28191, 34238, 2781],
 					ownerUserId: 24705,
 					checkIns: [
@@ -2055,7 +2038,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709743633,
-					inviteCode: null,
 					memberUserIds: [5528, 6935, 8243, 19002],
 					ownerUserId: 5528,
 					checkIns: [
@@ -2089,7 +2071,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709738747,
-					inviteCode: null,
 					memberUserIds: [12526, 28822, 24441, 28629, 9211],
 					ownerUserId: 12526,
 					checkIns: [
@@ -2123,7 +2104,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709626047,
-					inviteCode: null,
 					memberUserIds: [25545, 368, 1624, 25088, 15526],
 					ownerUserId: 25545,
 					checkIns: [
@@ -2152,7 +2132,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709727951,
-					inviteCode: null,
 					memberUserIds: [9411, 18143, 30942, 21583],
 					ownerUserId: 9411,
 					checkIns: [
@@ -2181,7 +2160,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709741482,
-					inviteCode: null,
 					memberUserIds: [27529, 9307, 5735, 10010, 17798, 11635],
 					ownerUserId: 27529,
 					checkIns: [
@@ -2208,7 +2186,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709744451,
-					inviteCode: null,
 					memberUserIds: [28834, 28271, 34715, 12188],
 					ownerUserId: 28834,
 					checkIns: [
@@ -2242,7 +2219,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709726536,
-					inviteCode: null,
 					memberUserIds: [19231, 26454, 5740, 27468],
 					ownerUserId: 19231,
 					checkIns: [
@@ -2272,7 +2248,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709558706,
-					inviteCode: null,
 					memberUserIds: [32688, 28194, 11226, 10370],
 					ownerUserId: 32688,
 					checkIns: [
@@ -2306,7 +2281,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709744323,
-					inviteCode: null,
 					memberUserIds: [20063, 35382, 23037, 27768, 38120],
 					ownerUserId: 20063,
 					checkIns: [
@@ -2340,7 +2314,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709677397,
-					inviteCode: null,
 					memberUserIds: [23009, 28178, 23353, 31658],
 					ownerUserId: 23009,
 					checkIns: [
@@ -2369,7 +2342,6 @@ export const PADDLING_POOL_257 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1709618711,
-					inviteCode: null,
 					memberUserIds: [17734, 28338, 30928, 37658, 26758],
 					ownerUserId: 17734,
 					checkIns: [
@@ -3922,6 +3894,13 @@ export const PADDLING_POOL_255 = () =>
 				customUrl: "alicetheto",
 				customAvatarUrl: null,
 			},
+			permissions: {
+				ADMIN: [860],
+				ORGANIZE: [860],
+				MANAGE_MATCHES: [860],
+				EDIT_EVENT_INFO: [860],
+				EDIT_IN_GAME_NAMES: [],
+			},
 			staff: [
 				{
 					id: 1536,
@@ -3984,7 +3963,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708476597,
-					inviteCode: null,
 					memberUserIds: [11517, 62, 4275, 11593],
 					ownerUserId: 11517,
 					checkIns: [
@@ -4013,7 +3991,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708535137,
-					inviteCode: null,
 					memberUserIds: [1447, 31358, 32579, 27515],
 					ownerUserId: 1447,
 					checkIns: [
@@ -4042,7 +4019,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708533764,
-					inviteCode: null,
 					memberUserIds: [10812, 27958, 4061, 38062, 2414],
 					ownerUserId: 10812,
 					checkIns: [
@@ -4069,7 +4045,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708537512,
-					inviteCode: null,
 					memberUserIds: [9535, 4234, 331, 205, 319],
 					ownerUserId: 9535,
 					checkIns: [
@@ -4098,7 +4073,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708533309,
-					inviteCode: null,
 					memberUserIds: [22661, 3400, 7094, 3161],
 					ownerUserId: 22661,
 					checkIns: [
@@ -4127,7 +4101,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708430641,
-					inviteCode: null,
 					memberUserIds: [15326, 13562, 8852, 23746, 28485],
 					ownerUserId: 15326,
 					checkIns: [
@@ -4156,7 +4129,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708536306,
-					inviteCode: null,
 					memberUserIds: [115, 10578, 11151, 222],
 					ownerUserId: 115,
 					checkIns: [
@@ -4183,7 +4155,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708526368,
-					inviteCode: null,
 					memberUserIds: [15880, 10615, 31690, 6710],
 					ownerUserId: 15880,
 					checkIns: [
@@ -4212,7 +4183,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708506060,
-					inviteCode: null,
 					memberUserIds: [9125, 14489, 28725, 16, 20755, 4606],
 					ownerUserId: 9125,
 					checkIns: [
@@ -4241,7 +4211,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708526814,
-					inviteCode: null,
 					memberUserIds: [22746, 12976, 21979, 11627],
 					ownerUserId: 22746,
 					checkIns: [
@@ -4268,7 +4237,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708466421,
-					inviteCode: null,
 					memberUserIds: [22948, 38080, 35807, 23128, 26392],
 					ownerUserId: 22948,
 					checkIns: [
@@ -4297,7 +4265,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708377426,
-					inviteCode: null,
 					memberUserIds: [18734, 23307, 28851, 27108, 23820],
 					ownerUserId: 18734,
 					checkIns: [
@@ -4324,7 +4291,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708448289,
-					inviteCode: null,
 					memberUserIds: [30582, 1740, 3930, 29321, 29433, 5368],
 					ownerUserId: 30582,
 					checkIns: [
@@ -4353,7 +4319,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708532602,
-					inviteCode: null,
 					memberUserIds: [25400, 15346, 13296, 13832],
 					ownerUserId: 25400,
 					checkIns: [
@@ -4382,7 +4347,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708535205,
-					inviteCode: null,
 					memberUserIds: [24585, 30449, 28441, 12619, 31131],
 					ownerUserId: 24585,
 					checkIns: [
@@ -4411,7 +4375,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708515945,
-					inviteCode: null,
 					memberUserIds: [6508, 418, 23858, 28662],
 					ownerUserId: 6508,
 					checkIns: [
@@ -4440,7 +4403,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708453334,
-					inviteCode: null,
 					memberUserIds: [12351, 5072, 13997, 7735],
 					ownerUserId: 12351,
 					checkIns: [
@@ -4467,7 +4429,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708522730,
-					inviteCode: null,
 					memberUserIds: [11017, 7270, 18703, 27578, 8715],
 					ownerUserId: 11017,
 					checkIns: [
@@ -4496,7 +4457,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708375443,
-					inviteCode: null,
 					memberUserIds: [15526, 27686, 10841, 23784, 9342],
 					ownerUserId: 15526,
 					checkIns: [
@@ -4525,7 +4485,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708532665,
-					inviteCode: null,
 					memberUserIds: [6870, 29904, 11506, 32328],
 					ownerUserId: 6870,
 					checkIns: [
@@ -4559,7 +4518,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708364254,
-					inviteCode: null,
 					memberUserIds: [3929, 2137, 10883, 27664, 342],
 					ownerUserId: 3929,
 					checkIns: [
@@ -4593,7 +4551,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708464101,
-					inviteCode: null,
 					memberUserIds: [8169, 2535, 2670, 6202, 9547],
 					ownerUserId: 8169,
 					checkIns: [
@@ -4625,7 +4582,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708520249,
-					inviteCode: null,
 					memberUserIds: [3060, 5844, 9654, 461, 10819],
 					ownerUserId: 3060,
 					checkIns: [
@@ -4654,7 +4610,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708535804,
-					inviteCode: null,
 					memberUserIds: [2302, 9874, 10992, 22434],
 					ownerUserId: 2302,
 					checkIns: [
@@ -4683,7 +4638,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708535891,
-					inviteCode: null,
 					memberUserIds: [8868, 11625, 22452, 12642, 11716],
 					ownerUserId: 8868,
 					checkIns: [
@@ -4712,7 +4666,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708521749,
-					inviteCode: null,
 					memberUserIds: [7007, 7440, 26665, 9719, 30220],
 					ownerUserId: 7007,
 					checkIns: [
@@ -4741,7 +4694,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708536584,
-					inviteCode: null,
 					memberUserIds: [2589, 28745, 32688, 26792],
 					ownerUserId: 2589,
 					checkIns: [
@@ -4770,7 +4722,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708537772,
-					inviteCode: null,
 					memberUserIds: [6935, 5528, 12358, 19002, 306, 8243],
 					ownerUserId: 6935,
 					checkIns: [
@@ -4805,7 +4756,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708379916,
-					inviteCode: null,
 					memberUserIds: [25242, 13736, 27960, 25814, 31311],
 					ownerUserId: 25242,
 					checkIns: [
@@ -4834,7 +4784,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708519753,
-					inviteCode: null,
 					memberUserIds: [12526, 24441, 28629, 28822, 9211],
 					ownerUserId: 12526,
 					checkIns: [
@@ -4868,7 +4817,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708534312,
-					inviteCode: null,
 					memberUserIds: [21989, 30234, 35118, 32156, 30751],
 					ownerUserId: 21989,
 					checkIns: [
@@ -4900,7 +4848,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708531929,
-					inviteCode: null,
 					memberUserIds: [4807, 16634, 2392, 26726],
 					ownerUserId: 4807,
 					checkIns: [
@@ -4929,7 +4876,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708477155,
-					inviteCode: null,
 					memberUserIds: [25954, 14973, 17137, 8391],
 					ownerUserId: 25954,
 					checkIns: [
@@ -4963,7 +4909,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708531564,
-					inviteCode: null,
 					memberUserIds: [18969, 17940, 30972, 38902, 29099, 26683, 30767],
 					ownerUserId: 18969,
 					checkIns: [
@@ -4997,7 +4942,6 @@ export const PADDLING_POOL_255 = () =>
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1708503356,
-					inviteCode: null,
 					memberUserIds: [18290, 15135, 31597, 34933, 14927, 7461],
 					ownerUserId: 18290,
 					checkIns: [
@@ -6439,6 +6383,13 @@ export const IN_THE_ZONE_32 = ({
 				customUrl: "sendou",
 				customAvatarUrl: null,
 			},
+			permissions: {
+				ADMIN: [274],
+				ORGANIZE: [274],
+				MANAGE_MATCHES: [274],
+				EDIT_EVENT_INFO: [274],
+				EDIT_IN_GAME_NAMES: [],
+			},
 			staff: [
 				{
 					id: 860,
@@ -6483,7 +6434,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707443313,
-					inviteCode: null,
 					memberUserIds: [147, 118, 133, 257],
 					ownerUserId: 147,
 					checkIns: [
@@ -6507,7 +6457,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707366405,
-					inviteCode: null,
 					memberUserIds: [100, 164, 138, 305],
 					ownerUserId: 100,
 					checkIns: [
@@ -6531,7 +6480,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1706912643,
-					inviteCode: null,
 					memberUserIds: [32, 123, 1043, 702],
 					ownerUserId: 32,
 					checkIns: [
@@ -6555,7 +6503,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707359335,
-					inviteCode: null,
 					memberUserIds: [11517, 439, 81, 23381, 26278, 104],
 					ownerUserId: 11517,
 					checkIns: [
@@ -6579,7 +6526,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707171426,
-					inviteCode: null,
 					memberUserIds: [185, 10293, 5728, 35, 99],
 					ownerUserId: 185,
 					checkIns: [
@@ -6603,7 +6549,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707342696,
-					inviteCode: null,
 					memberUserIds: [145, 48, 172, 126, 160],
 					ownerUserId: 145,
 					checkIns: [
@@ -6627,7 +6572,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707513942,
-					inviteCode: null,
 					memberUserIds: [22893, 957, 25423, 20583, 1105, 14],
 					ownerUserId: 22893,
 					checkIns: [
@@ -6651,7 +6595,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707526815,
-					inviteCode: null,
 					memberUserIds: [249, 451, 141, 260, 202, 276],
 					ownerUserId: 249,
 					checkIns: [
@@ -6675,7 +6618,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707583385,
-					inviteCode: null,
 					memberUserIds: [70, 124, 255, 252],
 					ownerUserId: 70,
 					checkIns: [
@@ -6699,7 +6641,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707486395,
-					inviteCode: null,
 					memberUserIds: [18, 151, 15418, 411],
 					ownerUserId: 18,
 					checkIns: [
@@ -6723,7 +6664,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707513290,
-					inviteCode: null,
 					memberUserIds: [76, 3298, 5337, 6557],
 					ownerUserId: 76,
 					checkIns: [
@@ -6747,7 +6687,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707531084,
-					inviteCode: null,
 					memberUserIds: [112, 57, 1658, 2801],
 					ownerUserId: 112,
 					checkIns: [
@@ -6771,7 +6710,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707568466,
-					inviteCode: null,
 					memberUserIds: [319, 291, 372, 392, 7326],
 					ownerUserId: 319,
 					checkIns: [
@@ -6795,7 +6733,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707481625,
-					inviteCode: null,
 					memberUserIds: [211, 286, 206, 11010],
 					ownerUserId: 211,
 					checkIns: [
@@ -6819,7 +6756,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707530166,
-					inviteCode: null,
 					memberUserIds: [41, 94, 232, 233],
 					ownerUserId: 41,
 					checkIns: [
@@ -6843,7 +6779,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707181792,
-					inviteCode: null,
 					memberUserIds: [1300, 12976, 15916, 27958, 4603],
 					ownerUserId: 1300,
 					checkIns: [
@@ -6867,7 +6802,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707550321,
-					inviteCode: null,
 					memberUserIds: [22344, 10200, 229, 246, 14564],
 					ownerUserId: 22344,
 					checkIns: [
@@ -6896,7 +6830,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707575096,
-					inviteCode: null,
 					memberUserIds: [236, 8734, 16980, 272, 6710],
 					ownerUserId: 236,
 					checkIns: [
@@ -6920,7 +6853,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707569490,
-					inviteCode: null,
 					memberUserIds: [321, 11593, 50, 8, 331, 132],
 					ownerUserId: 321,
 					checkIns: [
@@ -6944,7 +6876,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707537425,
-					inviteCode: null,
 					memberUserIds: [1117, 36, 335, 292],
 					ownerUserId: 1117,
 					checkIns: [
@@ -6968,7 +6899,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707564691,
-					inviteCode: null,
 					memberUserIds: [2414, 4061, 10592, 10812, 115, 12395],
 					ownerUserId: 2414,
 					checkIns: [
@@ -6997,7 +6927,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707145818,
-					inviteCode: null,
 					memberUserIds: [11007, 71, 204, 4762, 6048],
 					ownerUserId: 11007,
 					checkIns: [],
@@ -7015,7 +6944,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707558330,
-					inviteCode: null,
 					memberUserIds: [9125, 14489, 26392, 28725],
 					ownerUserId: 9125,
 					checkIns: [
@@ -7039,7 +6967,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707586842,
-					inviteCode: null,
 					memberUserIds: [6307, 15403, 9718, 18039],
 					ownerUserId: 6307,
 					checkIns: [
@@ -7063,7 +6990,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707583597,
-					inviteCode: null,
 					memberUserIds: [18734, 3258, 27108, 20143, 23820, 28851],
 					ownerUserId: 18734,
 					checkIns: [
@@ -7087,7 +7013,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707429804,
-					inviteCode: null,
 					memberUserIds: [25400, 13296, 15346, 21099, 4099],
 					ownerUserId: 25400,
 					checkIns: [
@@ -7111,7 +7036,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707539973,
-					inviteCode: null,
 					memberUserIds: [405, 20859, 13614, 22041, 20731],
 					ownerUserId: 405,
 					checkIns: [
@@ -7140,7 +7064,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707507831,
-					inviteCode: null,
 					memberUserIds: [11467, 346, 1038, 6255, 4097],
 					ownerUserId: 11467,
 					checkIns: [
@@ -7164,7 +7087,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707586297,
-					inviteCode: null,
 					memberUserIds: [14605, 9674, 28482, 10841, 20154],
 					ownerUserId: 14605,
 					checkIns: [
@@ -7186,7 +7108,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707583885,
-					inviteCode: null,
 					memberUserIds: [37105, 4307, 21339, 1136, 1441, 25117],
 					ownerUserId: 37105,
 					checkIns: [
@@ -7210,7 +7131,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707578076,
-					inviteCode: null,
 					memberUserIds: [34238, 168, 1178, 9064, 11148],
 					ownerUserId: 34238,
 					checkIns: [
@@ -7237,7 +7157,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707582953,
-					inviteCode: null,
 					memberUserIds: [22948, 23128, 38080, 35807],
 					ownerUserId: 22948,
 					checkIns: [
@@ -7261,7 +7180,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707575330,
-					inviteCode: null,
 					memberUserIds: [10192, 24705, 9367, 28191, 13342],
 					ownerUserId: 10192,
 					checkIns: [
@@ -7292,7 +7210,6 @@ export const IN_THE_ZONE_32 = ({
 					abDivision: null,
 					activeRosterUserIds: [],
 					createdAt: 1707527645,
-					inviteCode: null,
 					memberUserIds: [26942, 8927, 4434],
 					ownerUserId: 26942,
 					checkIns: [],

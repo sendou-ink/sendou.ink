@@ -1,6 +1,5 @@
 import { sub } from "date-fns";
 import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
@@ -12,6 +11,8 @@ import {
 import {
 	calendarEventStartTime,
 	commonUserSelect,
+	jsonArrayFrom,
+	jsonObjectFrom,
 	peakXpOverallSql,
 	tournamentLogoWithDefault,
 	tournamentTeamCount,
@@ -284,7 +285,13 @@ export async function findById(trophyId: number) {
 
 	const { specialOwners, ...trophy } = row;
 
-	return { ...trophy, owners: [...trophy.owners, ...specialOwners] };
+	return {
+		...trophy,
+		owners: [...trophy.owners, ...specialOwners],
+		permissions: {
+			EDIT: trophy.manager ? [trophy.manager.id] : [],
+		},
+	};
 }
 
 export async function findTournamentsByTrophyId(trophyId: number) {

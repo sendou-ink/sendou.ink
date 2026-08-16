@@ -1,4 +1,4 @@
-import { describe, it } from "vitest";
+import { describe, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -6,14 +6,14 @@ import {
 import { tournamentBracketsSearchParams } from "./tournament-bracket-search-params";
 
 describe("tournamentBracketsSearchParams", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(tournamentBracketsSearchParams, {
 			idx: [0, 3],
 			group: [1, 173],
 		});
 	});
 
-	it("decodes garbage to defaults", () => {
+	test("decodes garbage to defaults", () => {
 		assertDecodesToDefault(tournamentBracketsSearchParams, "idx", [
 			["-1"],
 			["abc"],

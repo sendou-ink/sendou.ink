@@ -11,11 +11,11 @@ import { Main } from "~/components/Main";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
+import { joinTeamPage } from "~/features/team/team-urls";
 import { SendouForm } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { metaTags } from "~/utils/remix";
-import { joinTeamPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.roster.server";
 import { loader } from "../loaders/t.$customUrl.roster.server";
 import {

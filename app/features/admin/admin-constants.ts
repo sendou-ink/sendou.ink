@@ -9,6 +9,9 @@ export const STAFF_IDS = [11329, 9719, 9342, 20774, 23094];
 export const DEV_IDS = [27883];
 //                               hfcRed Dreamy Cafy   Acing
 export const QA_IDS: number[] = [27883, 38176, 10654, 9342];
+//                                           xi
+/** Users who can access the scanner while it is not yet enabled for everyone */
+export const SCANNER_TESTER_IDS: number[] = [30228];
 
 export const STAFF_DISCORD_IDS = [
 	"138757634500067328",

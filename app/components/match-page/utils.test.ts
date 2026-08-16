@@ -1,4 +1,4 @@
-import { describe, expect, it, test } from "vitest";
+import { describe, expect, test } from "vitest";
 import type { CommonUser } from "~/utils/kysely.server";
 import { inferSubstitutions, resolveRoomPass } from "./utils";
 
@@ -14,7 +14,7 @@ function user(id: number): CommonUser {
 }
 
 describe("inferSubstitutions", () => {
-	it("returns an empty array when rosters are unchanged", () => {
+	test("returns an empty array when rosters are unchanged", () => {
 		const rosters = {
 			alpha: [user(1), user(2), user(3), user(4)],
 			bravo: [user(5), user(6), user(7), user(8)],
@@ -23,7 +23,7 @@ describe("inferSubstitutions", () => {
 		expect(inferSubstitutions(rosters, rosters)).toEqual([]);
 	});
 
-	it("detects a single substitution on alpha", () => {
+	test("detects a single substitution on alpha", () => {
 		const previous = {
 			alpha: [user(1), user(2), user(3), user(4)],
 			bravo: [user(5), user(6), user(7), user(8)],
@@ -38,7 +38,7 @@ describe("inferSubstitutions", () => {
 		]);
 	});
 
-	it("detects substitutions on both sides in the same map transition", () => {
+	test("detects substitutions on both sides in the same map transition", () => {
 		const previous = {
 			alpha: [user(1), user(2)],
 			bravo: [user(3), user(4)],
@@ -54,7 +54,7 @@ describe("inferSubstitutions", () => {
 		]);
 	});
 
-	it("pairs multiple substitutions on the same side by roster order", () => {
+	test("pairs multiple substitutions on the same side by roster order", () => {
 		const previous = {
 			alpha: [user(1), user(2), user(3), user(4)],
 			bravo: [user(5), user(6)],
@@ -70,7 +70,7 @@ describe("inferSubstitutions", () => {
 		]);
 	});
 
-	it("ignores unpaired leavers when no new player joined", () => {
+	test("ignores unpaired leavers when no new player joined", () => {
 		const previous = {
 			alpha: [user(1), user(2), user(3), user(4)],
 			bravo: [user(5), user(6)],
@@ -83,7 +83,7 @@ describe("inferSubstitutions", () => {
 		expect(inferSubstitutions(previous, current)).toEqual([]);
 	});
 
-	it("ignores unpaired joiners when no player left", () => {
+	test("ignores unpaired joiners when no player left", () => {
 		const previous = {
 			alpha: [user(1), user(2), user(3)],
 			bravo: [user(5), user(6)],
@@ -96,7 +96,7 @@ describe("inferSubstitutions", () => {
 		expect(inferSubstitutions(previous, current)).toEqual([]);
 	});
 
-	it("treats players switching sides as separate substitutions on each side", () => {
+	test("treats players switching sides as separate substitutions on each side", () => {
 		const previous = {
 			alpha: [user(1), user(2)],
 			bravo: [user(3), user(4)],

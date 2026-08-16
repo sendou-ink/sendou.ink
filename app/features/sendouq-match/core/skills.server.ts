@@ -5,14 +5,12 @@ import type {
 	UserSkillDifference,
 } from "~/db/tables-json";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import * as Seasons from "~/features/mmr/core/Seasons";
 import {
 	ordinalToSp,
 	rate,
 	userIdsToIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { seasonRatings } from "~/features/mmr/mmr-utils.server";
-import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 
 export type MementoSkillDifferences = {
@@ -32,12 +30,14 @@ export type MementoSkillDifferences = {
 
 export async function calculateMatchSkills({
 	groupMatchId,
+	season,
 	winner,
 	loser,
 	winnerGroupId,
 	loserGroupId,
 }: {
 	groupMatchId: Tables["GroupMatch"]["id"];
+	season: number;
 	winner: Tables["User"]["id"][];
 	loser: Tables["User"]["id"][];
 	winnerGroupId: Tables["Group"]["id"];
@@ -50,9 +50,6 @@ export async function calculateMatchSkills({
 		>
 	> = [];
 	const differences: MementoSkillDifferences = { users: {}, groups: {} };
-
-	const season = Seasons.currentOrPrevious()?.nth;
-	invariant(typeof season === "number", "No ranked season for skills");
 
 	const winnerTeamIdentifier = userIdsToIdentifier(winner);
 	const loserTeamIdentifier = userIdsToIdentifier(loser);

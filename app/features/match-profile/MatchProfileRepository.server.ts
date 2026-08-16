@@ -96,7 +96,7 @@ export async function updateOwnMatchProfile({
  * Preserves existing preferences for modes not included in the new submission.
  * So if they later want to play this mode again, the system remembers their maps.
  */
-function mergeExcludedModePreferences(
+export function mergeExcludedModePreferences(
 	newPool: UserMapModePreferences["pool"],
 	currentPool: UserMapModePreferences["pool"] | undefined,
 ) {

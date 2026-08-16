@@ -1,0 +1,80 @@
+{
+	"event": "Minimap",
+	"data": {
+		"stage": 15,
+		"stageLabel": "Um'ami Ruins",
+		"spectator": false,
+		"teammates": [
+			{
+				"slot": "up",
+				"name": "Bread-Chan",
+				"abilities": ["LDE", "SCU", "SPU"],
+				"weaponLabel": "Clawz .96 Gal",
+				"weaponId": 82,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"slot": "left",
+				"name": "amo",
+				"abilities": ["LDE", "RP", "OS"],
+				"weaponLabel": "E-liter 4K",
+				"weaponId": 2030,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"slot": "right",
+				"name": "mr 2",
+				"abilities": ["CB", "SSU", "SJ"],
+				"weaponLabel": "Splatana Stamper",
+				"weaponId": 8000,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"slot": "self",
+				"name": "Sendou",
+				"abilities": ["CB", "QR", "SJ"],
+				"weaponLabel": "Custom Blaster",
+				"weaponId": 211,
+				"dead": false,
+				"specialReady": false
+			}
+		],
+		"enemies": [
+			{
+				"abilities": ["CB", "QR", "SJ"],
+				"weaponLabel": "Custom Blaster",
+				"weaponId": 211,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"abilities": ["LDE", "RP", "OS"],
+				"weaponLabel": "E-liter 4K",
+				"weaponId": 2030,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"abilities": ["LDE", "SCU", "SJ"],
+				"weaponLabel": "N-ZAP '85",
+				"weaponId": 60,
+				"dead": false,
+				"specialReady": false
+			},
+			{
+				"abilities": ["OG", "SSU", "SJ"],
+				"weaponLabel": ".52 Gal",
+				"weaponId": 50,
+				"dead": false,
+				"specialReady": false
+			}
+		]
+	},
+	"options": {
+		"skipFields": ["teammates.3.weapon"],
+		"notes": "Sendou POV, Um'ami Ruins SZ at ~4:55 (t=18 in the 2026-08-11 VoD) — fully rendered POV map screen, everyone alive on both teams. The scan's read off this moment claimed mr 2 (right card) and enemy rows 1–2 splatted, amo holding special, and Sendou on Octobrush — four phantoms in one read, seconds into the match. Teammate abilities transcribed from adjacent clean reads (t=12/t=40/t=42.5) that agree with the card icons. The phantom splats (bright ink bled through the translucent surfaces) are fenced by the cross probe's crispness gate, the phantom special by the camo probe's corner-saturation cap, and the bright-bleed surfaces get a dual template-set match with the camo floor. Sendou's own weapon stays skipped: the self-card render is soft and half-covered by the yellow freshness tag badge, and the blaster family trails Octobrush by 0.006 NCC — no robust margin to assert."
+	}
+}

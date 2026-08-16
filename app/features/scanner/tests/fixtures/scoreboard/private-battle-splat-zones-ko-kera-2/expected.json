@@ -1,0 +1,80 @@
+{
+  "event": "Scoreboard",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 3,
+    "matchScores": [
+      85,
+      82
+    ],
+    "povIndex": 3,
+    "players": [
+      {
+        "name": "Mongering",
+        "weaponId": 261,
+        "paint": 1312,
+        "ka": 23,
+        "d": 8,
+        "s": 6
+      },
+      {
+        "name": "y0s",
+        "weaponId": 4050,
+        "paint": 1460,
+        "ka": 18,
+        "d": 6,
+        "s": 5
+      },
+      {
+        "name": "fuzzy",
+        "weaponId": 20,
+        "paint": 1525,
+        "ka": 13,
+        "d": 10,
+        "s": 5
+      },
+      {
+        "name": "kera",
+        "weaponId": 400,
+        "paint": 953,
+        "ka": 15,
+        "d": 8,
+        "s": 2
+      },
+      {
+        "name": "Cucumber",
+        "weaponId": 5015,
+        "paint": 1284,
+        "ka": 21,
+        "d": 10,
+        "s": 5
+      },
+      {
+        "name": "Reefslider",
+        "weaponId": 3050,
+        "paint": 1584,
+        "ka": 16,
+        "d": 10,
+        "s": 6
+      },
+      {
+        "name": "sigma",
+        "weaponId": 4050,
+        "paint": 1336,
+        "ka": 12,
+        "d": 9,
+        "s": 6
+      },
+      {
+        "name": "tomato",
+        "weaponId": 8020,
+        "paint": 1051,
+        "ka": 11,
+        "d": 12,
+        "s": 3
+      }
+    ],
+    "stageLabel": "Undertow Spillway"
+  }
+}

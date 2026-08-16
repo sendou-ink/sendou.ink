@@ -4,7 +4,7 @@ import * as Engine from "../index";
 import type { BracketData } from "../types";
 
 describe("Previous and next match update", () => {
-	test("should determine matches in consolation final", () => {
+	test("determines matches in consolation final", () => {
 		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],
@@ -33,7 +33,7 @@ describe("Previous and next match update", () => {
 		expect(Engine.matchStatus(data, 3)).toBe("STARTED");
 	});
 
-	test("should play both the final and consolation final in parallel", () => {
+	test("plays both the final and consolation final in parallel", () => {
 		let data = createResolved({
 			type: "single_elimination",
 			seeding: [1, 2, 3, 4],

@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { z } from "zod";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { action as adminAction } from "~/features/tournament-admin/actions/to.$id.admin.registration.server";
+import { upsertRegistrationAction } from "~/features/tournament-admin/actions/to.$id.admin.registration.server";
 import { ADMIN_REGISTRATION_MAX_MEMBERS } from "~/features/tournament-admin/tournament-admin-registration-schemas";
 import { existingImage } from "~/form/image-field";
 import { parseBody, parseParams } from "~/utils/remix.server";
@@ -76,12 +76,21 @@ export const action = async (args: ActionFunctionArgs) => {
 				userId: member.userId,
 				inGameName: member.inGameName ?? null,
 			})),
+			// the API can't edit counterpick maps, so the team's existing pool is carried over as is
+			mapPool: existingTeam?.mapPool ?? [],
 		}),
 	});
 
-	return wrapActionForApi(adminAction, {
-		...args,
-		params: { id: String(tournamentId) },
-		request: internalRequest,
-	});
+	return wrapActionForApi(
+		(actionArgs) =>
+			upsertRegistrationAction(actionArgs, {
+				// tournament names can only be read through the API, never written
+				allowTournamentNameUpdates: false,
+			}),
+		{
+			...args,
+			params: { id: String(tournamentId) },
+			request: internalRequest,
+		},
+	);
 };

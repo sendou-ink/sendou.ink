@@ -8,7 +8,7 @@ import {
 import { ordering } from "./seeding";
 
 describe("Round-robin groups", () => {
-	test("should place participants in groups", () => {
+	test("places participants in groups", () => {
 		expect(makeGroups([1, 2, 3, 4, 5], 2)).toEqual([
 			[1, 2, 3],
 			[4, 5],
@@ -24,7 +24,7 @@ describe("Round-robin groups", () => {
 		]);
 	});
 
-	test("should make the rounds for a round-robin group", () => {
+	test("makes the rounds for a round-robin group", () => {
 		assertRoundRobin([1, 2, 3], makeRoundRobinMatches([1, 2, 3]));
 		assertRoundRobin([1, 2, 3, 4], makeRoundRobinMatches([1, 2, 3, 4]));
 		assertRoundRobin([1, 2, 3, 4, 5], makeRoundRobinMatches([1, 2, 3, 4, 5]));
@@ -36,7 +36,7 @@ describe("Round-robin groups", () => {
 });
 
 describe("A/B divisions round-robin groups", () => {
-	test("should pair every A with every B exactly once for N=2..6", () => {
+	test("pairs every A with every B exactly once for N=2..6", () => {
 		for (const n of [2, 3, 4, 5, 6]) {
 			const divisionA = Array.from({ length: n }, (_, i) => i + 1);
 			const divisionB = Array.from({ length: n }, (_, i) => i + 1 + n);
@@ -49,7 +49,7 @@ describe("A/B divisions round-robin groups", () => {
 		}
 	});
 
-	test("should produce N rounds and N^2 matches total", () => {
+	test("produces N rounds and N^2 matches total", () => {
 		for (const n of [2, 3, 4, 5, 6]) {
 			const divisionA = Array.from({ length: n }, (_, i) => i + 1);
 			const divisionB = Array.from({ length: n }, (_, i) => i + 1 + n);
@@ -286,37 +286,37 @@ describe("A/B division group distribution", () => {
 });
 
 describe("Seed ordering methods", () => {
-	test("should make a natural ordering", () => {
+	test("makes a natural ordering", () => {
 		expect(ordering.natural([1, 2, 3, 4, 5, 6, 7, 8])).toEqual([
 			1, 2, 3, 4, 5, 6, 7, 8,
 		]);
 	});
 
-	test("should make a reverse ordering", () => {
+	test("makes a reverse ordering", () => {
 		expect(ordering.reverse([1, 2, 3, 4, 5, 6, 7, 8])).toEqual([
 			8, 7, 6, 5, 4, 3, 2, 1,
 		]);
 	});
 
-	test("should make a half shift ordering", () => {
+	test("makes a half shift ordering", () => {
 		expect(ordering.half_shift([1, 2, 3, 4, 5, 6, 7, 8])).toEqual([
 			5, 6, 7, 8, 1, 2, 3, 4,
 		]);
 	});
 
-	test("should make a reverse half shift ordering", () => {
+	test("makes a reverse half shift ordering", () => {
 		expect(ordering.reverse_half_shift([1, 2, 3, 4, 5, 6, 7, 8])).toEqual([
 			4, 3, 2, 1, 8, 7, 6, 5,
 		]);
 	});
 
-	test("should make a pair flip ordering", () => {
+	test("makes a pair flip ordering", () => {
 		expect(ordering.pair_flip([1, 2, 3, 4, 5, 6, 7, 8])).toEqual([
 			2, 1, 4, 3, 6, 5, 8, 7,
 		]);
 	});
 
-	test("should make a snake ordering for groups", () => {
+	test("makes a snake ordering for groups", () => {
 		expect(
 			ordering["groups.seed_optimized"]([1, 2, 3, 4, 5, 6, 7, 8], 4),
 		).toEqual([1, 8, 2, 7, 3, 6, 4, 5]);

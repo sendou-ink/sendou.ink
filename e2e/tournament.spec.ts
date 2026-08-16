@@ -8,6 +8,7 @@ import {
 	navigate,
 	test,
 } from "./helpers/playwright";
+import { NotificationPopover } from "./pages/layout/notification-popover";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentPage } from "./pages/tournament/tournament-page";
 import { TournamentRegisterPage } from "./pages/tournament/tournament-register-page";
@@ -75,6 +76,13 @@ test.describe("Tournament", () => {
 			team: pickUpTeam(TEAM_NAME),
 			memberUserIds: roster.map((user) => user.id),
 		});
+		await factories.NotificationFactory.create({
+			notification: {
+				type: "TO_CHECK_IN_OPENED",
+				meta: { tournamentId: tournament.id, tournamentName: "In The Zone" },
+			},
+			users: roster.map((user) => ({ userId: user.id })),
+		});
 
 		const opponents = await factories.UserFactory.createMany(2);
 		for (const [i, opponent] of opponents.entries()) {
@@ -97,7 +105,15 @@ test.describe("Tournament", () => {
 
 		const register = new TournamentRegisterPage(page);
 		await register.goto(tournament.id);
+
+		const notifications = new NotificationPopover(page);
+		await expect(notifications.locators.bellDot).toBeVisible();
+
 		await register.checkIn();
+
+		// checking in resolved the check-in notification without the bell
+		// having been opened
+		await expect(notifications.locators.bellDot).toBeHidden();
 
 		const bracketsAfterCheckIn = await register.openBrackets();
 

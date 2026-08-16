@@ -12,6 +12,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { ModeImage, StageImage, WeaponImage } from "~/components/Image";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useWeaponUsage } from "~/hooks/swr";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -19,7 +20,6 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userSeasonsPage } from "~/utils/urls";
 import {
 	loader,
 	type UserSeasonsStatsLoaderData,

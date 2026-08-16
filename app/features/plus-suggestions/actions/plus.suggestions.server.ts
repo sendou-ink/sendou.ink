@@ -1,22 +1,18 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import {
 	isVotingActive,
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import invariant from "~/utils/invariant";
-import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
+import { badRequestIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { plusSuggestionPage } from "~/utils/urls";
 import { suggestionActionSchema } from "../plus-suggestions-schemas";
-import {
-	canDeleteComment,
-	canEditSuggestion,
-	isFirstSuggestion,
-} from "../plus-suggestions-utils";
 
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
@@ -48,15 +44,7 @@ export const action: ActionFunction = async ({ request }) => {
 			const entry = suggestion.entries.find((e) => e.id === data.suggestionId);
 			invariant(entry);
 
-			errorToastIfFalsy(
-				canEditSuggestion({
-					user,
-					author: entry.author,
-					suggestionId: data.suggestionId,
-					suggestions,
-				}),
-				"No permissions to edit this suggestion",
-			);
+			requirePermission(entry, "EDIT");
 
 			await PlusSuggestionRepository.updateTextById(
 				data.suggestionId,
@@ -78,24 +66,13 @@ export const action: ActionFunction = async ({ request }) => {
 			);
 			invariant(entryToDelete);
 
-			errorToastIfFalsy(
-				canDeleteComment({
-					user,
-					author: entryToDelete.author,
-					suggestionId: data.suggestionId,
-					suggestions,
-				}),
-				"No permissions to delete this comment",
-			);
+			requirePermission(entryToDelete, "DELETE");
 
 			const suggestionHasComments = suggestionToDelete.entries.length > 1;
 
 			if (
 				suggestionHasComments &&
-				isFirstSuggestion({
-					suggestionId: data.suggestionId,
-					suggestions,
-				})
+				suggestionToDelete.entries[0].id === data.suggestionId
 			) {
 				// admin only action
 				await PlusSuggestionRepository.deleteWithCommentsBySuggestedUserId({

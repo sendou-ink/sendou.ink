@@ -1,6 +1,5 @@
 import type { ExpressionBuilder, NotNull } from "kysely";
 import { sql } from "kysely";
-import { jsonArrayFrom } from "kysely/helpers/sqlite";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
@@ -20,9 +19,11 @@ import { isSupporter } from "~/modules/permissions/utils";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
+	asJson,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	customAvatarUrl,
+	jsonArrayFrom,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
 	userChatNameHue,
@@ -107,12 +108,9 @@ export function findLayoutDataByIdentifier(
 			"PlusTier.tier as plusTier",
 			"User.commissionText",
 			"User.commissionsOpen",
-			sql<Record<
-				string,
-				string
-			> | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`.as(
-				"customTheme",
-			),
+			asJson(
+				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+			).as("customTheme"),
 			eb
 				.selectFrom("TournamentResult")
 				.whereRef("TournamentResult.userId", "=", "User.id")
@@ -946,6 +944,7 @@ const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 	[
 		...commonUserSelect(eb),
 		"User.inGameName",
+		"User.tournamentName",
 		"PlusTier.tier as plusTier",
 		eb
 			.fn<string | null>("iif", [

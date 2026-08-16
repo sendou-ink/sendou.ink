@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import { matchCensorLevel } from "./useBracketSpoilerCensor";
 
 const BASE_ARGS = {
@@ -8,7 +8,7 @@ const BASE_ARGS = {
 } as const;
 
 describe("matchCensorLevel()", () => {
-	it("returns undefined when not censored", () => {
+	test("returns undefined when not censored", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,
@@ -18,7 +18,7 @@ describe("matchCensorLevel()", () => {
 		).toBeUndefined();
 	});
 
-	it("returns 'score-only' for DE winners round 1", () => {
+	test("returns 'score-only' for DE winners round 1", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,
@@ -28,7 +28,7 @@ describe("matchCensorLevel()", () => {
 		).toBe("score-only");
 	});
 
-	it("returns 'full' for DE winners round 2+", () => {
+	test("returns 'full' for DE winners round 2+", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,
@@ -40,7 +40,7 @@ describe("matchCensorLevel()", () => {
 		).toBe("full");
 	});
 
-	it("returns 'full' for DE losers round", () => {
+	test("returns 'full' for DE losers round", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,
@@ -50,7 +50,7 @@ describe("matchCensorLevel()", () => {
 		).toBe("full");
 	});
 
-	it("returns 'score-only' for swiss round 1", () => {
+	test("returns 'score-only' for swiss round 1", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,
@@ -59,7 +59,7 @@ describe("matchCensorLevel()", () => {
 		).toBe("score-only");
 	});
 
-	it("returns 'full' for swiss round 2+", () => {
+	test("returns 'full' for swiss round 2+", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,
@@ -70,7 +70,7 @@ describe("matchCensorLevel()", () => {
 		).toBe("full");
 	});
 
-	it("returns 'score-only' for round robin", () => {
+	test("returns 'score-only' for round robin", () => {
 		expect(
 			matchCensorLevel({
 				...BASE_ARGS,

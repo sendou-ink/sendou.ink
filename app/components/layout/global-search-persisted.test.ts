@@ -1,4 +1,4 @@
-import { describe, expect, it } from "vitest";
+import { describe, expect, test } from "vitest";
 import {
 	assertDecodesToDefault,
 	assertRoundTrips,
@@ -9,7 +9,7 @@ import {
 } from "./global-search-persisted";
 
 describe("searchTypePersisted", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(searchTypePersisted, [
 			"weapons",
 			"users",
@@ -19,21 +19,21 @@ describe("searchTypePersisted", () => {
 		]);
 	});
 
-	it("decodes legacy plain-string values", () => {
+	test("decodes legacy plain-string values", () => {
 		expect(searchTypePersisted.decode("users")).toBe("users");
 	});
 
-	it("malformed values decode to the default", () => {
+	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(searchTypePersisted, ["USER", "[1]"]);
 	});
 });
 
 describe("recentWeaponsPersisted", () => {
-	it("round-trips", () => {
+	test("round-trips", () => {
 		assertRoundTrips(recentWeaponsPersisted, [[], [0, 10, 8000]]);
 	});
 
-	it("malformed values decode to the default", () => {
+	test("malformed values decode to the default", () => {
 		assertDecodesToDefault(recentWeaponsPersisted, ["not json", "[99999]"]);
 	});
 });

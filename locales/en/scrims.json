@@ -39,6 +39,8 @@
 	"forms.with.explanation": "You can search for users with username, Discord ID or sendou.ink profile URL.",
 	"forms.with.user": "User {{nth}}",
 	"forms.with.pick-up": "Pick-up",
+	"forms.with.pick-up-new": "Pick-up (new)",
+	"forms.with.pick-up-recent": "Pick-up ({{users}})",
 	"forms.when.title": "Start",
 	"forms.when.explanation": "Leave to default if you want to look for a scrim now",
 	"forms.rangeEnd.title": "Start time flexibility",

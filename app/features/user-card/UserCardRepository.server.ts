@@ -1,7 +1,7 @@
 import { sub } from "date-fns";
 import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
-import { jsonBuildObject, jsonObjectFrom } from "kysely/helpers/sqlite";
+import { ServerConfig } from "~/config.server";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { CustomTheme, PeakXP } from "~/db/tables-json";
@@ -13,11 +13,15 @@ import { TIERS } from "~/features/mmr/mmr-constants";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { userSkills } from "~/features/mmr/tiered.server";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
+import { LRUCache } from "~/modules/cache";
 import type { StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
+	asJson,
 	commonUserObjectFields,
 	concatUserSubmittedImagePrefix,
+	jsonBuildObject,
+	jsonObjectFrom,
 } from "~/utils/kysely.server";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import type {
@@ -55,8 +59,127 @@ export async function findAllByUserIds({
 }): Promise<{ userCards: Map<number, UserCardData> }> {
 	if (userIds.length === 0) return { userCards: new Map() };
 
-	const viewerId = actorIdOrNull();
+	return {
+		userCards: await queryUserCards({
+			userIds,
+			viewerId: actorIdOrNull(),
+			include,
+			includeHiddenStats,
+		}),
+	};
+}
 
+const CARD_CACHE_TTL_MS = 30 * 1000;
+const CARD_CACHE_MAX_ENTRIES = 3_000;
+const cardCache = new LRUCache<
+	number,
+	{ storedAt: number; card: Promise<UserCardData | undefined> }
+>({ max: CARD_CACHE_MAX_ENTRIES });
+
+/**
+ * Like {@link findAllByUserIds} but serves the viewer-independent card data from a
+ * short-lived in-memory cache, querying only users whose entry is missing or stale.
+ * The per-viewer `privateNote` and the opt-in `friendCode` are overlaid fresh on
+ * every call so a cached card is never viewer- or caller-specific. For high-frequency
+ * views (the SendouQ looking page) where broadcast-driven revalidation makes many
+ * clients rebuild the same cards at once; cards may be up to 30 seconds stale.
+ *
+ * The cache holds the in-flight query rather than its result, so concurrent misses for
+ * the same user (exactly what a revalidation burst causes) await one shared query
+ * instead of each firing their own.
+ */
+export async function findAllByUserIdsCached({
+	userIds,
+	include,
+}: {
+	userIds: Array<number>;
+	/** Opt-in fields skipped by default; defaults to `false` each. */
+	include?: { friendCode?: boolean };
+}): Promise<{ userCards: Map<number, UserCardData> }> {
+	if (ServerConfig.disableCache) return findAllByUserIds({ userIds, include });
+	if (userIds.length === 0) return { userCards: new Map() };
+
+	const now = Date.now();
+	const pendingCards = new Map<number, Promise<UserCardData | undefined>>();
+	const missingIds: Array<number> = [];
+	for (const userId of userIds) {
+		const entry = cardCache.get(userId);
+		if (entry && now - entry.storedAt < CARD_CACHE_TTL_MS) {
+			pendingCards.set(userId, entry.card);
+		} else {
+			missingIds.push(userId);
+		}
+	}
+
+	if (missingIds.length > 0) {
+		const query = queryUserCards({ userIds: missingIds, viewerId: null });
+		for (const userId of missingIds) {
+			pendingCards.set(userId, cacheQueriedCard({ userId, query, now }));
+		}
+	}
+
+	const cards = new Map<number, UserCardData>();
+	for (const [userId, pendingCard] of pendingCards) {
+		const card = await pendingCard;
+		if (card) cards.set(userId, card);
+	}
+
+	const privateNotes = await findPrivateNotesByTargetIds([...cards.keys()]);
+	const friendCodes = include?.friendCode
+		? await findFriendCodesByUserIds([...cards.keys()])
+		: new Map<number, string>();
+
+	const userCards = new Map<number, UserCardData>();
+	for (const [userId, card] of cards) {
+		userCards.set(userId, {
+			...card,
+			privateNote: privateNotes.get(userId) ?? null,
+			friendCode: friendCodes.get(userId) ?? null,
+		});
+	}
+
+	return { userCards };
+}
+
+/** Forgets every cached card, so the next read builds them from the database again. */
+export function clearUserCardCache() {
+	cardCache.clear();
+}
+
+function cacheQueriedCard({
+	userId,
+	query,
+	now,
+}: {
+	userId: number;
+	query: Promise<Map<number, UserCardData>>;
+	now: number;
+}) {
+	const card = query.then((userCards) => userCards.get(userId));
+	const entry = { storedAt: now, card };
+
+	// a failed query must not stay behind as this user's cached entry
+	card.catch(() => {
+		if (cardCache.get(userId) === entry) {
+			cardCache.delete(userId);
+		}
+	});
+	cardCache.set(userId, entry);
+
+	return card;
+}
+
+async function queryUserCards({
+	userIds,
+	viewerId,
+	include,
+	includeHiddenStats = false,
+}: {
+	userIds: Array<number>;
+	viewerId: number | null;
+	include?: { friendCode?: boolean };
+	includeHiddenStats?: boolean;
+}): Promise<Map<number, UserCardData>> {
 	// a user's card surfaces the better of their last two finished seasons (see bestSeasonResult)
 	const [rows, seasonResults] = await Promise.all([
 		db
@@ -85,13 +208,61 @@ export async function findAllByUserIds({
 		);
 	}
 
-	return { userCards };
+	return userCards;
+}
+
+/** The acting user's private notes about the given users, keyed by their user id. */
+async function findPrivateNotesByTargetIds(userIds: Array<number>) {
+	const notes = new Map<number, NonNullable<UserCardData["privateNote"]>>();
+
+	const viewerId = actorIdOrNull();
+	if (viewerId === null || userIds.length === 0) return notes;
+
+	const rows = await db
+		.selectFrom("PrivateUserNote")
+		.select([
+			"PrivateUserNote.targetId",
+			"PrivateUserNote.text",
+			"PrivateUserNote.sentiment",
+			"PrivateUserNote.updatedAt",
+		])
+		.where("PrivateUserNote.authorId", "=", viewerId)
+		.where("PrivateUserNote.targetId", "in", userIds)
+		.execute();
+
+	for (const { targetId, ...privateNote } of rows) {
+		notes.set(targetId, privateNote);
+	}
+
+	return notes;
+}
+
+/**
+ * Latest friend code of each given user, keyed by their user id. Scanned oldest to newest so the
+ * newest code is the one left in the map, matching {@link friendCodeScalar}.
+ */
+async function findFriendCodesByUserIds(userIds: Array<number>) {
+	const friendCodes = new Map<number, string>();
+	if (userIds.length === 0) return friendCodes;
+
+	const rows = await db
+		.selectFrom("UserFriendCode")
+		.select(["UserFriendCode.userId", "UserFriendCode.friendCode"])
+		.where("UserFriendCode.userId", "in", userIds)
+		.orderBy("UserFriendCode.createdAt", "asc")
+		.execute();
+
+	for (const row of rows) {
+		friendCodes.set(row.userId, row.friendCode);
+	}
+
+	return friendCodes;
 }
 
 /**
  * Raw card fields the edit form needs that are not part of {@link UserCardData}: the uploaded banner
- * image (id + preview url, for the image field's default value), the self-reported peak XP, and the
- * hidden stat types (to pre-check the visibility toggles).
+ * image (id + preview url, for the image field's default value), the self-reported peak XP, the
+ * picked XP division, and the hidden stat types (to pre-check the visibility toggles).
  */
 export async function findCardEditExtrasByUserId(userId: number) {
 	const row = await db
@@ -99,6 +270,7 @@ export async function findCardEditExtrasByUserId(userId: number) {
 		.select((eb) => [
 			"User.bannerImgId",
 			"User.unverifiedPeakXP",
+			"User.xpDivision",
 			"User.hiddenCardStats",
 			bannerImageUrl(eb).as("bannerImageUrl"),
 		])
@@ -109,20 +281,44 @@ export async function findCardEditExtrasByUserId(userId: number) {
 		bannerImgId: row?.bannerImgId ?? null,
 		bannerImageUrl: row?.bannerImageUrl ?? null,
 		unverifiedPeakXP: row?.unverifiedPeakXP ?? null,
+		xpDivision: row?.xpDivision ?? null,
 		hiddenCardStats: row?.hiddenCardStats ?? [],
 	};
 }
 
-/** Updates the editable user card fields of the acting user (their own card). */
-export function updateOwnCard(args: {
+/**
+ * The verified XP the user's card shows if their XP division were `xpDivision`, resolved exactly as
+ * {@link findAllByUserIds} does (see {@link verifiedXp}). `null` when they have no X Rank placements.
+ * Lets the edit form judge a self-reported peak XP against the very value it will sit on top of.
+ */
+export async function findVerifiedXpByUserId(
+	userId: number,
+	xpDivision: XRankPlacementRegion | null,
+) {
+	const row = await db
+		.selectFrom("User")
+		.select((eb) => xpPeaksJson(eb).as("xpPeaks"))
+		.where("User.id", "=", userId)
+		.executeTakeFirst();
+
+	return verifiedXp(row?.xpPeaks ?? null, xpDivision);
+}
+
+/**
+ * Updates the editable user card fields of the acting user (their own card), dropping their
+ * cached card so they are not shown their pre-edit one by {@link findAllByUserIdsCached}.
+ */
+export async function updateOwnCard(args: {
 	shortBio: string | null;
 	bannerPresetImg: string | null;
 	bannerImgId: number | null;
 	unverifiedPeakXP: PeakXP | null;
+	/** `null` leaves the card showing their highest XP across both divisions. */
+	xpDivision: XRankPlacementRegion | null;
 	hiddenCardStats: Array<HideableUserCardStat>;
 }) {
 	const userId = actorId();
-	return db.transaction().execute(async (trx) => {
+	await db.transaction().execute(async (trx) => {
 		// a removed or replaced uploaded banner is no longer referenced by anything,
 		// so its submitted image row is cleaned up (mirrors custom avatar handling)
 		const current = await trx
@@ -147,6 +343,7 @@ export function updateOwnCard(args: {
 				unverifiedPeakXP: args.unverifiedPeakXP
 					? JSON.stringify(args.unverifiedPeakXP)
 					: null,
+				xpDivision: args.xpDivision,
 				hiddenCardStats:
 					args.hiddenCardStats.length > 0
 						? JSON.stringify(args.hiddenCardStats)
@@ -155,6 +352,8 @@ export function updateOwnCard(args: {
 			.where("id", "=", userId)
 			.execute();
 	});
+
+	cardCache.delete(userId);
 }
 
 /** SQLite `case` expression mapping `User.id % PRESET_COLORS.length` to a preset banner color. */
@@ -187,7 +386,9 @@ function userCardDataJsonObject(
 		...commonUserObjectFields(eb),
 		shortBio: eb.ref("User.shortBio"),
 		div: eb.ref("User.div"),
-		customTheme: sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+		customTheme: asJson(
+			sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+		),
 		hiddenCardStats: eb.ref("User.hiddenCardStats"),
 		banner: bannerJson(eb),
 		friendCode: include?.friendCode
@@ -196,8 +397,9 @@ function userCardDataJsonObject(
 		privateNote: privateNoteJson(eb, viewerId),
 		freeAgentPostId: freeAgentPostIdScalar(eb),
 		plusTier: plusTierScalar(eb),
-		xpVerified: xpVerifiedJson(eb),
-		xpUnverified: xpUnverifiedJson(),
+		xpDivision: eb.ref("User.xpDivision"),
+		xpPeaks: xpPeaksJson(eb),
+		xpUnverifiedPoints: xpUnverifiedPointsScalar(),
 	});
 }
 
@@ -310,8 +512,14 @@ function plusTierScalar(eb: ExpressionBuilder<Tables, "User">) {
 		.$asScalar();
 }
 
-/** Single highest X Rank power placement (verified XP). */
-function xpVerifiedJson(eb: ExpressionBuilder<Tables, "User">) {
+type XpPeaks = Record<XRankPlacementRegion, number | null> | null;
+
+/**
+ * Highest X Rank power placement (verified XP) per division. Both are read because the division the
+ * card settles on is resolved in the app layer (see {@link verifiedXp}); with no placements at all
+ * the aggregates simply come back null.
+ */
+function xpPeaksJson(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonObjectFrom(
 		eb
 			.selectFrom("XRankPlacement")
@@ -322,30 +530,25 @@ function xpVerifiedJson(eb: ExpressionBuilder<Tables, "User">) {
 			)
 			.whereRef("SplatoonPlayer.userId", "=", "User.id")
 			.select([
-				sql<number>`"XRankPlacement"."power"`.as("points"),
-				"XRankPlacement.region",
-			])
-			.orderBy("XRankPlacement.power", "desc")
-			.limit(1),
+				sql<
+					number | null
+				>`max(iif("XRankPlacement"."region" = 'WEST', "XRankPlacement"."power", null))`.as(
+					"WEST",
+				),
+				sql<
+					number | null
+				>`max(iif("XRankPlacement"."region" = 'JPN', "XRankPlacement"."power", null))`.as(
+					"JPN",
+				),
+			]),
 	);
 }
 
 /**
- * Self-reported peak XP from the `User.unverifiedPeakXP` column. Has exactly one of `tentatek` /
- * `takoroka` defined, which decides the region (`tentatek` = `WEST`, `takoroka` = `JPN`); `points`
- * is that region's value.
+ * Self-reported peak XP from the `User.unverifiedPeakXP` column.
  */
-function xpUnverifiedJson() {
-	return sql<{ points: number; region: XRankPlacementRegion } | null>`
-		iif(
-			"User"."unverifiedPeakXP" is null,
-			null,
-			json_object(
-				'points', "User"."unverifiedPeakXP" ->> '$.overall',
-				'region', iif("User"."unverifiedPeakXP" ->> '$.tentatek' is not null, 'WEST', 'JPN')
-			)
-		)
-	`;
+function xpUnverifiedPointsScalar() {
+	return sql<number | null>`"User"."unverifiedPeakXP" ->> '$.overall'`;
 }
 
 type SeasonResult = {
@@ -470,8 +673,9 @@ function enrichUserCardData(
 	const stats = userCardStats({
 		div: cardData.div,
 		plusTier: cardData.plusTier,
-		xpVerified: cardData.xpVerified,
-		xpUnverified: cardData.xpUnverified,
+		xpDivision: cardData.xpDivision,
+		xpVerified: verifiedXp(cardData.xpPeaks, cardData.xpDivision),
+		xpUnverifiedPoints: cardData.xpUnverifiedPoints,
 		seasonSkill,
 		seasonTop,
 	});
@@ -495,6 +699,33 @@ function enrichUserCardData(
 	};
 }
 
+/**
+ * The verified XP a card shows: the peak of the division the user picked, since the two divisions
+ * are separate ladders and a peak in one says nothing about the other. Falls back to their highest
+ * across both when they picked no division or have never placed in the one they picked.
+ */
+function verifiedXp(
+	peaks: XpPeaks,
+	xpDivision: XRankPlacementRegion | null,
+): { points: number; region: XRankPlacementRegion } | null {
+	if (!peaks) return null;
+
+	const pickedPeak = xpDivision ? peaks[xpDivision] : null;
+	if (xpDivision && pickedPeak !== null) {
+		return { points: pickedPeak, region: xpDivision };
+	}
+
+	const { WEST, JPN } = peaks;
+	if (WEST !== null && (JPN === null || WEST >= JPN)) {
+		return { points: WEST, region: "WEST" };
+	}
+	if (JPN !== null) {
+		return { points: JPN, region: "JPN" };
+	}
+
+	return null;
+}
+
 function enrichBanner(
 	banner: RawUserCardData["banner"],
 ): UserCardData["banner"] {
@@ -512,43 +743,40 @@ function enrichBanner(
 function userCardStats({
 	div,
 	plusTier,
+	xpDivision,
 	xpVerified,
-	xpUnverified,
+	xpUnverifiedPoints,
 	seasonSkill,
 	seasonTop,
 }: {
 	div: string | null;
 	plusTier: number | null;
+	xpDivision: XRankPlacementRegion | null;
 	xpVerified: { points: number; region: XRankPlacementRegion } | null;
-	xpUnverified: { points: number; region: XRankPlacementRegion } | null;
+	xpUnverifiedPoints: number | null;
 	seasonSkill: TieredSkill | undefined;
 	seasonTop: number | null;
 }): Array<UserCardStat> {
 	const stats: Array<UserCardStat> = [];
 
-	const xpValues: Array<UserCardStatXPValue> = [];
-	// self-reported peak XP is only surfaced as a valid claim sitting on top of a verified placement
-	if (
-		xpUnverified &&
-		isValidUnverifiedXp({
-			unverified: xpUnverified.points,
-			verified: xpVerified?.points ?? null,
-		})
-	) {
-		xpValues.push({
-			isVerified: false,
-			region: xpUnverified.region,
-			points: xpUnverified.points,
-		});
-	}
 	if (xpVerified) {
-		xpValues.push({
-			isVerified: true,
-			region: xpVerified.region,
-			points: xpVerified.points,
+		const unverified = unverifiedXpValue({
+			points: xpUnverifiedPoints,
+			region: xpDivision ?? xpVerified.region,
+			verifiedPoints: xpVerified.points,
 		});
-	}
-	if (xpValues.length > 0) {
+
+		const xpValues: Array<UserCardStatXPValue> = unverified ? [unverified] : [];
+		// the verified peak joins the claim only when it is from the division the claim was made in;
+		// in another division it is a peak on a ladder the card is not about
+		if (!unverified || unverified.region === xpVerified.region) {
+			xpValues.push({
+				isVerified: true,
+				region: xpVerified.region,
+				points: xpVerified.points,
+			});
+		}
+
 		stats.push({ type: "XP", values: xpValues });
 	}
 
@@ -565,4 +793,21 @@ function userCardStats({
 	}
 
 	return stats;
+}
+
+function unverifiedXpValue({
+	points,
+	region,
+	verifiedPoints,
+}: {
+	points: number | null;
+	region: XRankPlacementRegion;
+	verifiedPoints: number;
+}): UserCardStatXPValue | null {
+	if (points === null) return null;
+	if (!isValidUnverifiedXp({ unverified: points, verified: verifiedPoints })) {
+		return null;
+	}
+
+	return { isVerified: false, region, points };
 }

@@ -1,5 +1,13 @@
+import { addHours } from "date-fns";
 import { Config } from "~/config";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+
+/**
+ * How long past a season's end its matches can still be resolved. A match can be
+ * created up to the very end of the season and the stale match routine resolves
+ * it 24h after creation, with up to an hour of scheduling lag on top.
+ */
+const REPORTING_GRACE_HOURS = 25;
 
 /**
  * List of seasons with their respective start and end dates.
@@ -110,7 +118,7 @@ export type ListItem = (typeof list)[number];
  *
  * @returns The current season if it exists; otherwise, the previous season.
  */
-export function currentOrPrevious(date = new Date()): ListItem | null {
+export function currentOrPrevious(date?: Date): ListItem | null {
 	const _currentSeason = current(date);
 	if (_currentSeason) return _currentSeason;
 
@@ -131,14 +139,31 @@ export function previous(date = new Date()): ListItem | null {
 	return latestPreviousSeason;
 }
 
+let seasonEndedOverride = false;
+
+/**
+ * Tests only: makes `current()` resolve to `null` as if every season had ended, so
+ * tests can cover the season boundary without one having to actually pass. Only
+ * "now" is affected, an explicitly given date still resolves to its real season.
+ */
+export function DANGEROUS_setSeasonEndedOverride(seasonEnded: boolean) {
+	seasonEndedOverride = seasonEnded;
+}
+
 /**
  * Determines the current ongoing season relative to the provided date (defaults to now).
  *
  * @returns The current season if one exists.
  */
-export function current(date = new Date()): ListItem | null {
+export function current(date?: Date): ListItem | null {
+	if (seasonEndedOverride && !date) return null;
+
+	const resolvedDate = date ?? new Date();
+
 	for (const season of list) {
-		if (date >= season.starts && date <= season.ends) return season;
+		if (resolvedDate >= season.starts && resolvedDate <= season.ends) {
+			return season;
+		}
 	}
 
 	return null;
@@ -172,6 +197,22 @@ export function nthToDateRange(nth: number) {
 	return {
 		starts: seasonObject.starts,
 		ends: seasonObject.ends,
+	};
+}
+
+/**
+ * Retrieves the date range within which a season's results can land, i.e. the season
+ * itself plus the grace period matches started at the buzzer are resolved within.
+ *
+ * @returns An object containing the start date of the specified season and the end of its reporting grace period.
+ * @throws {Error} If the season does not exist.
+ */
+export function nthToReportingDateRange(nth: number) {
+	const { starts, ends } = nthToDateRange(nth);
+
+	return {
+		starts,
+		ends: addHours(ends, REPORTING_GRACE_HOURS),
 	};
 }
 

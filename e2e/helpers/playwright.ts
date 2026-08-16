@@ -212,6 +212,19 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 	return retryPost(page, "impersonate", `/auth/impersonate?id=${userId}`);
 }
 
+/**
+ * Makes the worker's server resolve every season as over, so tests can cover the
+ * season boundary. Undone before the next test starts.
+ */
+export async function endSeason(page: Page) {
+	const response = await retryPost(page, "endSeason", "/end-season");
+	if (!response?.ok()) {
+		throw new Error(
+			`Ending the season failed with status ${response?.status()}`,
+		);
+	}
+}
+
 /** Runs the named server Routine (normally cron-driven) in the worker's server process. */
 export async function runRoutine(page: Page, name: string) {
 	const response = await retryPost(page, "runRoutine", "/run-routine", {
@@ -250,9 +263,16 @@ async function retryPost(
 	throw new Error(`${name}: unreachable`);
 }
 
-export async function submit(page: Page, testId?: string) {
+/** Clicks a submit button and waits for the POST it fires. Takes a locator when
+ * the test id alone is ambiguous, e.g. one button per card on a list page. */
+export async function submit(page: Page, target?: string | Locator) {
+	const button =
+		typeof target === "object"
+			? target
+			: page.getByTestId(target ?? "submit-button");
+
 	await waitForPOSTResponse(page, async () => {
-		await page.getByTestId(testId ?? "submit-button").click();
+		await button.click();
 	});
 
 	// Toast flash params are stripped right after via a replace navigation
@@ -298,11 +318,25 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 async function expectRouterIdle(page: Page) {
 	// A submit's redirect plus the target page's loaders can exceed the default
 	// expect timeout when the full suite is loading all workers.
-	await expect(page.getByTestId("hydrated")).toHaveAttribute(
-		"data-router-idle",
-		"true",
-		{ timeout: 15_000 },
-	);
+	try {
+		await expect(page.getByTestId("hydrated")).toHaveAttribute(
+			"data-router-idle",
+			"true",
+			{ timeout: 15_000 },
+		);
+	} catch (error) {
+		// data-router-busy names what is still in flight, which the attribute
+		// assertion's own message does not
+		const busy = await page
+			.getByTestId("hydrated")
+			.getAttribute("data-router-busy")
+			.catch(() => null);
+
+		throw new Error(
+			`Router never went idle at ${page.url()} (in flight: ${busy ?? "unknown"})`,
+			{ cause: error },
+		);
+	}
 }
 
 /** Asserts the page rendered rather than the error boundary catching something. */

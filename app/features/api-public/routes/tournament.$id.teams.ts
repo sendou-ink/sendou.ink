@@ -1,5 +1,4 @@
 import { sql } from "kysely";
-import { jsonArrayFrom, jsonObjectFrom } from "kysely/helpers/sqlite";
 import type { LoaderFunctionArgs } from "react-router";
 import { z } from "zod";
 import { db } from "~/db/sql";
@@ -8,7 +7,12 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
+import {
+	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+	jsonObjectFrom,
+	tournamentUsername,
+} from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentTeamsResponse } from "../schema";
@@ -78,7 +82,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					)
 					.select([
 						"User.id as userId",
-						"User.username",
+						tournamentUsername().as("username"),
 						"User.discordId",
 						"User.discordAvatar",
 						"User.battlefy",

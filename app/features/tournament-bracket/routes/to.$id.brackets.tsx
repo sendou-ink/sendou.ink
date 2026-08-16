@@ -17,7 +17,6 @@ import {
 	Outlet,
 	useLoaderData,
 	useLocation,
-	useNavigation,
 	useOutletContext,
 } from "react-router";
 import { Alert } from "~/components/Alert";
@@ -31,7 +30,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
-import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -44,7 +42,7 @@ import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { SENDOU_INK_BASE_URL, tournamentJoinPage } from "~/utils/urls";
+import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 import {
 	useBracketExpanded,
 	useTournamentPreparedMaps,
@@ -64,7 +62,10 @@ import {
 	type TournamentBracketsLoaderData,
 } from "../loaders/to.$id.brackets.server";
 import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
-import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
+import {
+	tournamentBracketWebsocketRoom,
+	tournamentWebsocketRoom,
+} from "../tournament-bracket-utils";
 
 export { action, loader };
 
@@ -72,6 +73,7 @@ export const handle: SendouRouteHandle = {
 	mainBreakout: true,
 };
 
+import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
 import styles from "../tournament-bracket.module.css";
 
 export default function TournamentBracketsPage() {
@@ -110,6 +112,16 @@ function TournamentBracketsView() {
 
 	useWebsocketRevalidation(
 		tournamentWebsocketRoom(tournament.ctx.id),
+		!tournament.ctx.isFinalized,
+	);
+	// results of the loaded bracket (and group) broadcast to their own room, so that
+	// another bracket's or group's live scores do not make this view refetch
+	useWebsocketRevalidation(
+		tournamentBracketWebsocketRoom({
+			tournamentId: tournament.ctx.id,
+			bracketIdx: data.bracketIdx,
+			groupId: data.groupId,
+		}),
 		!tournament.ctx.isFinalized,
 	);
 
@@ -250,6 +262,7 @@ function TournamentBracketsView() {
 					<BracketTabContent
 						bracket={bracket}
 						bracketIdx={data.bracketIdx}
+						groupId={data.groupId}
 						waitingForTeamsText={waitingForTeamsText}
 						teamsSourceText={teamsSourceText}
 					/>
@@ -456,9 +469,10 @@ function AddSubsPopOver() {
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const tournament = useTournament();
 	const user = useUser();
+	const data = useLoaderData<TournamentBracketsLoaderData>();
 
 	const ownedTeam = tournament.ownedTeamByUser(user);
-	if (!ownedTeam) {
+	if (!ownedTeam || !data.ownTeamInviteCode) {
 		const teamMemberOf = tournament.teamMemberOfByUser(user);
 		if (!teamMemberOf) return null;
 
@@ -470,7 +484,7 @@ function AddSubsPopOver() {
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,
-		inviteCode: ownedTeam.inviteCode!,
+		inviteCode: data.ownTeamInviteCode,
 	})}`;
 
 	return (
@@ -523,7 +537,8 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 
 /**
  * Bracket switcher. Only the bracket the loader shipped the match data of is rendered;
- * switching navigates so that the newly selected bracket's data gets loaded.
+ * switching navigates so that the newly selected bracket's data gets loaded, the
+ * previously loaded bracket staying up until it arrives.
  */
 function BracketTabs({
 	loadedBracketIdx,
@@ -533,33 +548,15 @@ function BracketTabs({
 	children: React.ReactNode;
 }) {
 	const tournament = useTournament();
-	const [idxParam, setIdxParam] = useSearchParam(
-		tournamentBracketsSearchParams,
-		"idx",
-	);
-	const navigation = useNavigation();
+	const [, setIdxParam] = useSearchParam(tournamentBracketsSearchParams, "idx");
 
 	const visibleBrackets = tournament.visibleBracketsMeta;
-
-	// while the newly selected bracket is being loaded its tab is already the selected one
-	const pendingIdx = navigation.location
-		? tournamentBracketsSearchParams.parse(
-				new URLSearchParams(navigation.location.search),
-			).idx
-		: null;
-	const requestedIdx = pendingIdx ?? idxParam ?? loadedBracketIdx;
-	// the search param can point to a bracket without a tab e.g. one hidden after finalization
-	const selectedIdx = visibleBrackets.some(
-		(bracket) => bracket.idx === requestedIdx,
-	)
-		? requestedIdx
-		: loadedBracketIdx;
 
 	const bracketNameForTab = (name: string) => name.replace("bracket", "");
 
 	return (
 		<SendouTabs
-			selectedKey={String(selectedIdx)}
+			selectedKey={String(loadedBracketIdx)}
 			onSelectionChange={(key) => setIdxParam(Number(key))}
 		>
 			<SendouTabList>
@@ -575,7 +572,7 @@ function BracketTabs({
 			</SendouTabList>
 			{visibleBrackets.map((bracket) => (
 				<SendouTabPanel key={bracket.idx} id={String(bracket.idx)}>
-					{bracket.idx === loadedBracketIdx ? children : <Placeholder />}
+					{children}
 				</SendouTabPanel>
 			))}
 		</SendouTabs>
@@ -585,19 +582,23 @@ function BracketTabs({
 function BracketTabContent({
 	bracket,
 	bracketIdx,
+	groupId,
 	waitingForTeamsText,
 	teamsSourceText,
 }: {
 	bracket: BracketType;
 	bracketIdx: number;
+	groupId: number | null;
 	waitingForTeamsText: (bracket: BracketType, bracketIdx: number) => string;
 	teamsSourceText: (bracket: BracketType) => string | null;
 }) {
+	const tournament = useTournament();
+
 	return (
 		<>
 			<AbDivisionsImbalanceAlert bracket={bracket} />
 			<PrepareMapsButton bracket={bracket} bracketIdx={bracketIdx} />
-			{bracket.enoughTeams ? (
+			{tournament.bracketsMeta[bracketIdx].enoughTeams ? (
 				<>
 					{bracket.type !== "round_robin" && !bracket.preview ? (
 						<div className="stack horizontal sm mb-4">
@@ -605,7 +606,11 @@ function BracketTabContent({
 						</div>
 					) : null}
 					<StartBracketAlert bracket={bracket} bracketIdx={bracketIdx} />
-					<Bracket bracket={bracket} bracketIdx={bracketIdx} />
+					<Bracket
+						bracket={bracket}
+						bracketIdx={bracketIdx}
+						groupId={groupId}
+					/>
 				</>
 			) : (
 				<div>
