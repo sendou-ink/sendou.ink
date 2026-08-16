@@ -54,11 +54,19 @@ function share() {
 		});
 	}
 }
+
+function showModal(dialog: HTMLDialogElement) {
+	dialog.showModal();
+}
 </script>
 
-<div class={["panelOverlay", { noAnimation: skipAnimation }]}>
-	<div class={["menuOverlay", "scrollbar", { noAnimation: skipAnimation }]}>
-		<div data-testid="mobile-nav-panel" class="panelDialog" role="dialog">
+<dialog
+	class={["menuOverlay", "scrollbar", { noAnimation: skipAnimation }]}
+	closedby="any"
+	onclose={onClose}
+	{@attach showModal}
+>
+	<div data-testid="mobile-nav-panel" class="panelDialog">
 			<header class="menuHeader">
 				<div class="panelIconContainer">
 					<Menu size={18} />
@@ -132,30 +140,35 @@ function share() {
 				</ul>
 			</section>
 			<GhostTabBar tabCount={ghostTabCount} onTabPress={onGhostTabPress} />
-		</div>
 	</div>
-</div>
+</dialog>
 
 <style>
-	.panelOverlay {
-		position: fixed;
-		inset: 0;
-		bottom: var(--layout-nav-height);
-		z-index: 18;
-		background-color: rgba(0, 0, 0, 0.25);
-		backdrop-filter: blur(10px);
-		animation: fade-in 200ms ease-out;
-	}
-
 	.menuOverlay {
 		position: fixed;
-		inset: 0;
-		z-index: 20;
+		inset: 0 0 var(--layout-nav-height) 0;
+		margin: 0;
+		border: none;
+		padding: 0;
+		width: 100%;
+		max-width: none;
+		height: calc(100dvh - var(--layout-nav-height));
+		max-height: none;
 		background-color: var(--color-bg);
+		color: inherit;
 		overflow-y: auto;
-		display: flex;
-		flex-direction: column;
-		animation: fade-in 200ms ease-out;
+
+		&[open] {
+			display: flex;
+			flex-direction: column;
+			animation: fade-in 200ms ease-out;
+		}
+
+		&::backdrop {
+			bottom: var(--layout-nav-height);
+			background-color: rgba(0, 0, 0, 0.25);
+			backdrop-filter: blur(10px);
+		}
 	}
 
 	@keyframes fade-in {
@@ -167,7 +180,7 @@ function share() {
 		}
 	}
 
-	.noAnimation {
+	.noAnimation[open] {
 		animation: none;
 	}
 

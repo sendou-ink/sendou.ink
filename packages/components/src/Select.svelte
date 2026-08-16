@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
 import { SvelteMap } from "svelte/reactivity";
+import { closePopoverOnScrollClip } from "./popover-scroll-close.svelte.ts";
 import { setSelectContext } from "./select-context.ts";
 
 interface Props {
@@ -70,6 +71,12 @@ let triggerElement = $state<HTMLButtonElement | null>(null);
 let popoverElement = $state<HTMLDivElement | null>(null);
 let searchInputElement = $state<HTMLInputElement | null>(null);
 
+closePopoverOnScrollClip({
+	isOpen: () => open,
+	element: () => popoverElement,
+	close: () => setOpen(false),
+});
+
 const selectedText = $derived(
 	currentKey !== null ? items.get(currentKey)?.textValue : undefined,
 );
@@ -106,46 +113,11 @@ function commitSelection(key: string | number | null) {
 
 function setOpen(next: boolean) {
 	if (open === next) return;
-	open = next;
-	onOpenChange?.(next);
 
 	if (next) {
 		popoverElement?.showPopover();
-		positionPopover();
-		focusedKey = currentKey ?? orderedKeys(false)[0] ?? null;
-		requestAnimationFrame(() => {
-			if (search) {
-				searchInputElement?.focus();
-			} else {
-				popoverElement?.focus();
-			}
-			scrollFocusedIntoView();
-		});
 	} else {
 		popoverElement?.hidePopover();
-		searchValue = "";
-		focusedKey = null;
-	}
-}
-
-function positionPopover() {
-	if (!triggerElement || !popoverElement) return;
-
-	const rect = triggerElement.getBoundingClientRect();
-	const popover = popoverElement;
-	popover.style.width = `${rect.width}px`;
-	popover.style.left = `${rect.left}px`;
-
-	const maxHeight = 300;
-	const spaceBelow = window.innerHeight - rect.bottom - 8;
-	if (spaceBelow < 150) {
-		popover.style.top = "auto";
-		popover.style.bottom = `${window.innerHeight - rect.top + 4}px`;
-		popover.style.maxHeight = `${Math.min(maxHeight, rect.top - 8)}px`;
-	} else {
-		popover.style.bottom = "auto";
-		popover.style.top = `${rect.bottom + 4}px`;
-		popover.style.maxHeight = `${Math.min(maxHeight, spaceBelow)}px`;
 	}
 }
 
@@ -186,12 +158,7 @@ function scrollFocusedIntoView() {
 }
 
 function onTriggerKeydown(event: KeyboardEvent) {
-	if (
-		event.key === "ArrowDown" ||
-		event.key === "ArrowUp" ||
-		event.key === "Enter" ||
-		event.key === " "
-	) {
+	if (event.key === "ArrowDown" || event.key === "ArrowUp") {
 		event.preventDefault();
 		setOpen(true);
 	}
@@ -233,10 +200,22 @@ function onPopoverKeydown(event: KeyboardEvent) {
 }
 
 function onPopoverToggle(event: Event) {
-	const toggleEvent = event as ToggleEvent;
-	if (toggleEvent.newState === "closed" && open) {
-		open = false;
-		onOpenChange?.(false);
+	const next = (event as ToggleEvent).newState === "open";
+	if (next === open) return;
+	open = next;
+	onOpenChange?.(next);
+
+	if (next) {
+		focusedKey = currentKey ?? orderedKeys(false)[0] ?? null;
+		requestAnimationFrame(() => {
+			if (search) {
+				searchInputElement?.focus();
+			} else {
+				popoverElement?.focus();
+			}
+			scrollFocusedIntoView();
+		});
+	} else {
 		searchValue = "";
 		focusedKey = null;
 	}
@@ -247,12 +226,9 @@ const hasVisibleItems = $derived(items.size > 0);
 const uid = $props.id();
 const labelId = $derived(label ? `${uid}-select-label` : undefined);
 const valueId = `${uid}-select-value`;
+const popoverId = `${uid}-select-popover`;
+const anchorName = `--select-anchor-${uid}`;
 </script>
-
-<svelte:window
-	onresize={() => open && positionPopover()}
-	onscroll={() => open && positionPopover()}
-/>
 
 <div class="select" data-testid={testId}>
 	{#if label}
@@ -268,7 +244,8 @@ const valueId = `${uid}-select-value`;
 		aria-label={ariaLabel}
 		aria-labelledby={labelId && !ariaLabel ? `${valueId} ${labelId}` : undefined}
 		data-required={isRequired || undefined}
-		onclick={() => setOpen(!open)}
+		popovertarget={popoverId}
+		style:anchor-name={anchorName}
 		onkeydown={onTriggerKeydown}
 	>
 		<span id={valueId} class="selectValue" data-placeholder={selectedText === undefined ? "true" : undefined}>
@@ -321,8 +298,10 @@ const valueId = `${uid}-select-value`;
 	<!-- svelte-ignore a11y_no_static_element_interactions -- keydown steers the listbox inside -->
 	<div
 		bind:this={popoverElement}
-		popover="manual"
+		id={popoverId}
+		popover="auto"
 		class={["popover", popoverClass]}
+		style:position-anchor={anchorName}
 		ontoggle={onPopoverToggle}
 		onkeydown={onPopoverKeydown}
 		tabindex="-1"
@@ -385,14 +364,6 @@ const valueId = `${uid}-select-value`;
 		</div>
 	</div>
 </div>
-
-{#if open}
-	<div
-		class="backdrop"
-		onclick={() => setOpen(false)}
-		aria-hidden="true"
-	></div>
-{/if}
 
 <style>
 	.select {
@@ -463,7 +434,11 @@ const valueId = `${uid}-select-value`;
 
 	.popover {
 		position: fixed;
-		margin: 0;
+		position-area: block-end;
+		position-try-fallbacks: flip-block;
+		width: anchor-size(width);
+		max-height: 300px;
+		margin: var(--s-1) 0;
 		padding: var(--s-1);
 		border: var(--border-style);
 		border-radius: var(--radius-box);
@@ -562,11 +537,5 @@ const valueId = `${uid}-select-value`;
 		min-width: 14px;
 		max-width: 14px;
 		margin-inline-end: var(--s-1);
-	}
-
-	.backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 1;
 	}
 </style>

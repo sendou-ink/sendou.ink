@@ -1,6 +1,7 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
 import { type MenuTriggerProps, setMenuContext } from "./menu-context.ts";
+import { closePopoverOnScrollClip } from "./popover-scroll-close.svelte.ts";
 
 interface Props {
 	trigger: Snippet<[MenuTriggerProps]>;
@@ -16,32 +17,26 @@ let open = $state(false);
 let triggerContainer = $state<HTMLSpanElement | null>(null);
 let popoverElement = $state<HTMLDivElement | null>(null);
 
-function setOpen(next: boolean) {
-	if (open === next) return;
+const uid = $props.id();
+const popoverId = `${uid}-menu`;
+const anchorName = `--menu-anchor-${uid}`;
+
+closePopoverOnScrollClip({
+	isOpen: () => open,
+	element: () => popoverElement,
+	close: () => popoverElement?.hidePopover(),
+});
+
+function onPopoverToggle(event: Event) {
+	const next = (event as ToggleEvent).newState === "open";
+	if (next === open) return;
 	open = next;
 
 	if (next) {
-		popoverElement?.showPopover();
-		positionPopover();
 		requestAnimationFrame(() => {
 			focusItem("first");
 		});
-	} else {
-		popoverElement?.hidePopover();
 	}
-}
-
-function positionPopover() {
-	const triggerElement = triggerContainer?.firstElementChild;
-	if (!triggerElement || !popoverElement) return;
-
-	const rect = triggerElement.getBoundingClientRect();
-	const popover = popoverElement;
-	popover.style.top = `${rect.bottom + 8}px`;
-
-	const popoverWidth = popover.getBoundingClientRect().width;
-	const alignedLeft = opensLeft ? rect.left : rect.right - popoverWidth;
-	popover.style.left = `${Math.max(8, Math.min(alignedLeft, window.innerWidth - popoverWidth - 8))}px`;
 }
 
 function menuItems() {
@@ -74,7 +69,7 @@ function focusItem(target: "first" | "last" | "next" | "previous") {
 function onPopoverKeydown(event: KeyboardEvent) {
 	if (event.key === "Escape") {
 		event.preventDefault();
-		setOpen(false);
+		popoverElement?.hidePopover();
 		(triggerContainer?.firstElementChild as HTMLElement | null)?.focus();
 		return;
 	}
@@ -101,53 +96,69 @@ function onPopoverKeydown(event: KeyboardEvent) {
 
 setMenuContext({
 	close() {
-		setOpen(false);
+		popoverElement?.hidePopover();
 	},
 });
 
 const triggerProps: MenuTriggerProps = {
+	popovertarget: popoverId,
 	get "aria-expanded"() {
 		return open;
 	},
 	"aria-haspopup": "menu",
-	onclick: () => setOpen(!open),
 };
 </script>
 
-<span class="triggerContainer" bind:this={triggerContainer}>
+<!-- xxx: fix always first item selected -->
+<span
+	class="triggerContainer"
+	bind:this={triggerContainer}
+	style:--menu-anchor={anchorName}
+>
 	{@render trigger(triggerProps)}
 </span>
 <!-- svelte-ignore a11y_no_static_element_interactions -- keydown steers the menu inside -->
 <div
 	bind:this={popoverElement}
-	popover="manual"
-	class={["popover", "scrollbar", popoverClass, { scrolling }]}
+	id={popoverId}
+	popover="auto"
+	class={["popover", "scrollbar", popoverClass, { scrolling, opensLeft }]}
+	style:position-anchor={anchorName}
+	ontoggle={onPopoverToggle}
 	onkeydown={onPopoverKeydown}
 >
 	<div class="itemsContainer" role="menu">
 		{@render children()}
 	</div>
 </div>
-{#if open}
-	<div class="backdrop" onclick={() => setOpen(false)} aria-hidden="true"></div>
-{/if}
 
 <style>
 	.triggerContainer {
 		display: contents;
+
+		> :global(*) {
+			anchor-name: var(--menu-anchor);
+		}
 	}
 
 	.popover {
 		position: fixed;
-		margin: 0;
+		position-area: block-end span-inline-start;
+		position-try-fallbacks: flip-block;
+		margin: var(--s-2) 0;
 		border-radius: var(--radius-box);
 		background-color: var(--color-bg-high);
 		border: var(--border-style);
 		width: max-content;
+		max-width: calc(100vw - var(--s-4));
 		font-size: var(--font-sm);
 		font-weight: var(--weight-semi);
 		padding: var(--s-2);
 		color: var(--color-text);
+	}
+
+	.opensLeft {
+		position-area: block-end span-inline-end;
 	}
 
 	.scrolling {
@@ -163,11 +174,5 @@ const triggerProps: MenuTriggerProps = {
 		&:focus-visible {
 			outline: none;
 		}
-	}
-
-	.backdrop {
-		position: fixed;
-		inset: 0;
-		z-index: 1;
 	}
 </style>

@@ -7,7 +7,7 @@ export type ClientUser = Omit<AuthenticatedUser, "customTheme" | "patronTier">;
 
 /** The logged in user, or `undefined` when logged out. Reactive to navigation. */
 export function loggedInUser(): ClientUser | undefined {
-	return (page.data as { user?: ClientUser }).user;
+	return page.data.user;
 }
 
 /** Whether the logged in user has the given global role. Always `false` when logged out. */

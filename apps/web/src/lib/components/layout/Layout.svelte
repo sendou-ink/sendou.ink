@@ -12,13 +12,14 @@ import { setSidenavCollapsed } from "#lib/features/sidenav/sidenav.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
 import { getLocale } from "#lib/paraglide/runtime.js";
 import { GIT_COMMIT } from "#lib/utils/git-commit.ts";
+import { IsMounted } from "#lib/utils/is-mounted.svelte.ts";
 import { EVENTS_PAGE, FRIENDS_PAGE } from "#lib/utils/urls.ts";
 import { afterNavigate } from "$app/navigation";
 import { page } from "$app/state";
 import Footer from "./Footer.svelte";
 import FriendMenu from "./FriendMenu.svelte";
 import ListLink from "./ListLink.svelte";
-import type { NotificationRow, SidebarData } from "./layout-types.ts";
+import type { Breadcrumb, NotificationRow } from "./layout-types.ts";
 import MobileNav from "./MobileNav.svelte";
 import SideNav from "./SideNav.svelte";
 import SideNavFooter from "./SideNavFooter.svelte";
@@ -30,14 +31,6 @@ import TopRightButtons from "./TopRightButtons.svelte";
 
 const MAX_DESKTOP_FRIENDS = 4;
 
-interface Breadcrumb {
-	type: "IMAGE" | "TEXT";
-	imgPath?: string;
-	href: string;
-	text?: string;
-	identiconInput?: string;
-}
-
 interface Props {
 	children: Snippet;
 }
@@ -45,23 +38,18 @@ interface Props {
 let { children }: Props = $props();
 
 const user = $derived(loggedInUser());
-const sidebarData = $derived((page.data as { sidebar?: SidebarData }).sidebar);
-const initialCollapsed =
-	(page.data as { sidenavCollapsed?: boolean }).sidenavCollapsed ?? false;
+const sidebarData = $derived(page.data.sidebar);
+const initialCollapsed = page.data.sidenavCollapsed ?? false;
 
 // svelte-ignore state_referenced_locally -- the cookie value seeds the initial state only
 let sideNavCollapsed = $state(initialCollapsed);
 let sideNavModalOpen = $state(false);
-let hydrated = $state(false);
-
-$effect(() => {
-	hydrated = true;
-});
+const mounted = new IsMounted();
 
 // the bell data loads lazily like the React app's NotificationsProvider:
 // after hydration, never blocking SSR
 const notificationsQuery = $derived(
-	hydrated && user ? getNotifications() : null,
+	mounted.current && user ? getNotifications() : null,
 );
 const notifications = $derived<NotificationRow[] | null>(
 	notificationsQuery?.current?.notifications
@@ -91,9 +79,7 @@ const isFrontPage = $derived(page.url.pathname === "/");
 // phase 3); until then the button renders for layout parity with the React app
 const noopUntilChatRebuild = () => {};
 
-const breadcrumbs = $derived(
-	(page.data as { breadcrumbs?: Breadcrumb[] }).breadcrumbs ?? [],
-);
+const breadcrumbs = $derived(page.data.breadcrumbs ?? []);
 const currentPageText = $derived(breadcrumbs.at(-1)?.text);
 
 function unseenRequestsLabel(count: number) {
@@ -169,6 +155,10 @@ function handleScroll() {
 afterNavigate(() => {
 	sideNavModalOpen = false;
 });
+
+function showModal(dialog: HTMLDialogElement) {
+	dialog.showModal();
+}
 
 function formatRelativeDate(timestamp: number) {
 	const locale = getLocale();
@@ -273,7 +263,7 @@ function formatRelativeDate(timestamp: number) {
 			user={event.user ?? undefined}
 		>
 			{#snippet subtitle()}
-				{#if hydrated}
+				{#if mounted.current}
 					{formatRelativeDate(event.startsAt)}
 				{:else}
 					<span class="invisible">Placeholder</span>
@@ -436,21 +426,20 @@ function formatRelativeDate(timestamp: number) {
 </div>
 
 {#if sideNavModalOpen}
-	<!-- svelte-ignore a11y_click_events_have_key_events, a11y_no_static_element_interactions -->
-	<div
-		class="sideNavModalOverlay"
-		onclick={(event) => {
-			if (event.target === event.currentTarget) sideNavModalOpen = false;
+	<dialog
+		class="sideNavModal"
+		closedby="any"
+		onclose={() => {
+			sideNavModalOpen = false;
 		}}
+		{@attach showModal}
 	>
-		<div class="sideNavModal">
-			<SideNav class="sideNavInModal" topCentered={isFrontPage}>
-				{#snippet top()}{@render siteTitle()}{/snippet}
-				{#snippet footer()}{@render sideNavFooterContent()}{/snippet}
-				{@render sideNavChildren()}
-			</SideNav>
-		</div>
-	</div>
+		<SideNav class="sideNavInModal" topCentered={isFrontPage}>
+			{#snippet top()}{@render siteTitle()}{/snippet}
+			{#snippet footer()}{@render sideNavFooterContent()}{/snippet}
+			{@render sideNavChildren()}
+		</SideNav>
+	</dialog>
 {/if}
 
 <style>
@@ -591,8 +580,13 @@ function formatRelativeDate(timestamp: number) {
 			height: calc(var(--layout-nav-height) + env(safe-area-inset-top));
 		}
 
-		.sideNavModalOverlay {
+		.sideNavModal {
 			top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+			height: calc(100dvh - var(--layout-nav-height) - env(safe-area-inset-top));
+
+			&::backdrop {
+				top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+			}
 		}
 	}
 
@@ -711,19 +705,24 @@ function formatRelativeDate(timestamp: number) {
 		}
 	}
 
-	.sideNavModalOverlay {
-		position: fixed;
-		inset: 0;
-		top: var(--layout-nav-height);
-		background-color: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(4px);
-		z-index: 20;
-	}
-
 	.sideNavModal {
-		height: 100%;
+		position: fixed;
+		inset: var(--layout-nav-height) auto 0 0;
+		margin: 0;
+		border: none;
+		padding: 0;
+		height: calc(100dvh - var(--layout-nav-height));
+		max-height: none;
 		width: var(--layout-sidenav-width);
+		max-width: none;
+		background: transparent;
 		border-right: 1.5px solid var(--color-border);
+
+		&::backdrop {
+			top: var(--layout-nav-height);
+			background-color: rgba(0, 0, 0, 0.4);
+			backdrop-filter: blur(4px);
+		}
 	}
 
 	.sideNavModal :global(.sideNavInModal) {

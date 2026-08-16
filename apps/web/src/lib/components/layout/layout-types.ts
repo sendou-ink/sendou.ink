@@ -82,3 +82,12 @@ export interface NotificationRow {
 	href: string;
 	navIcon: string;
 }
+
+/** A breadcrumb trail entry a page's load sets for the header's site title. */
+export interface Breadcrumb {
+	type: "IMAGE" | "TEXT";
+	imgPath?: string;
+	href: string;
+	text?: string;
+	identiconInput?: string;
+}

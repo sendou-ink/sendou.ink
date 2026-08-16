@@ -13,6 +13,7 @@ interface Props {
 	badge?: string | null;
 	badgeVariant?: "default" | "warning";
 	onclick?: () => void;
+	popovertarget?: string;
 	"aria-expanded"?: boolean;
 	"aria-haspopup"?: "menu" | "dialog";
 }
@@ -24,6 +25,7 @@ let {
 	badge,
 	badgeVariant,
 	onclick,
+	popovertarget,
 	"aria-expanded": ariaExpanded,
 	"aria-haspopup": ariaHaspopup,
 }: Props = $props();
@@ -34,6 +36,7 @@ let {
 	data-testid="list-button"
 	class="listButton"
 	{onclick}
+	{popovertarget}
 	aria-expanded={ariaExpanded}
 	aria-haspopup={ariaHaspopup}
 >

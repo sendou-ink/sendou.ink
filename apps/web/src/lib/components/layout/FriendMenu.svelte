@@ -115,9 +115,7 @@ function resolveActivity(friend: {
 			{subtitle}
 			badge={badgeText}
 			badgeVariant={streamUrl ? "warning" : "default"}
-			aria-expanded={triggerProps["aria-expanded"]}
-			aria-haspopup={triggerProps["aria-haspopup"]}
-			onclick={triggerProps.onclick}
+			{...triggerProps}
 		>
 			{name}
 		</ListButton>

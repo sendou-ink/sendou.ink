@@ -1,9 +1,9 @@
 import { getContext, setContext } from "svelte";
 
 export interface MenuTriggerProps {
+	readonly popovertarget: string;
 	readonly "aria-expanded": boolean;
 	readonly "aria-haspopup": "menu";
-	onclick: () => void;
 }
 
 export interface MenuContext {

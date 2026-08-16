@@ -49,6 +49,7 @@ interface NavCategoryItem {
 </script>
 
 <script lang="ts">
+	import { closePopoverOnScrollClip } from "@sendou/components";
 	import { page } from "$app/state";
 	import { dev } from "$app/env";
 	import { hasRole, loggedInUser } from "#lib/features/auth/user-state.ts";
@@ -91,14 +92,42 @@ interface NavCategoryItem {
 	}
 
 	let openCategory = $state<string | null>(null);
+	let openMenuElement = $state<HTMLElement | null>(null);
 	const returnTo = $derived(`${page.url.pathname}${page.url.search}`);
-</script>
 
-<svelte:window
-	onclick={() => {
-		if (openCategory !== null) openCategory = null;
-	}}
-/>
+	const uid = $props.id();
+
+	closePopoverOnScrollClip({
+		isOpen: () => openCategory !== null,
+		element: () => openMenuElement,
+		close: () => openMenuElement?.hidePopover(),
+	});
+
+	function menuId(name: string) {
+		return `${uid}-nav-menu-${name}`;
+	}
+
+	function anchorName(name: string) {
+		return `--top-nav-anchor-${uid}-${name}`;
+	}
+
+	function onMenuToggle(event: Event, name: string) {
+		const isOpen = (event as ToggleEvent).newState === "open";
+		if (isOpen) {
+			openCategory = name;
+			openMenuElement = event.currentTarget as HTMLElement;
+		} else if (openCategory === name) {
+			openCategory = null;
+			openMenuElement = null;
+		}
+	}
+
+	function closeContainingPopover(event: Event) {
+		(event.currentTarget as HTMLElement)
+			.closest<HTMLElement>("[popover]")
+			?.hidePopover();
+	}
+</script>
 
 <nav class="container">
 	{#each NAV_CATEGORIES as category (category.name)}
@@ -106,39 +135,38 @@ interface NavCategoryItem {
 			<button
 				type="button"
 				class="menuButton"
+				popovertarget={menuId(category.name)}
 				aria-expanded={openCategory === category.name}
-				aria-haspopup="dialog"
-				onclick={(event) => {
-					event.stopPropagation();
-					openCategory =
-						openCategory === category.name ? null : category.name;
-				}}
+				style:anchor-name={anchorName(category.name)}
 			>
 				{categoryLabel(category.name)}
 			</button>
-			{#if openCategory === category.name}
-				<div class="menuPopover">
-					<div data-testid="menu-content" class="menuContent">
-						{#each visibleItems(category.items) as item (item.url)}
-							<a
-								href="/{item.url}"
-								class="menuItem"
-								onclick={() => {
-									openCategory = null;
-								}}
-							>
-								<Image
-									path={navIconUrl(item.icon ?? item.name)}
-									alt=""
-									size={20}
-									class="menuItemIcon"
-								/>
-								{pageLabel(item.name)}
-							</a>
-						{/each}
-					</div>
+			<div
+				id={menuId(category.name)}
+				popover="auto"
+				class="menuPopover"
+				style:position-anchor={anchorName(category.name)}
+				ontoggle={(event) => onMenuToggle(event, category.name)}
+			>
+				<div data-testid="menu-content" class="menuContent">
+					{#each visibleItems(category.items) as item (item.url)}
+						<a
+							href="/{item.url}"
+							class="menuItem"
+							onclick={closeContainingPopover}
+						>
+							<Image
+								path={navIconUrl(item.icon ?? item.name)}
+								alt=""
+								size={20}
+								class="menuItemIcon"
+							/>
+							{pageLabel(item.name)}
+						</a>
+					{/each}
 				</div>
-			{:else}
+			</div>
+			{#if openCategory !== category.name}
 				<div class="preview">
 					{#each visibleItems(category.items) as item (item.url)}
 						<a
@@ -164,35 +192,37 @@ interface NavCategoryItem {
 			<button
 				type="button"
 				class="menuButton"
+				popovertarget={menuId("dev")}
 				aria-expanded={openCategory === "dev"}
-				aria-haspopup="dialog"
-				onclick={(event) => {
-					event.stopPropagation();
-					openCategory = openCategory === "dev" ? null : "dev";
-				}}
+				style:anchor-name={anchorName("dev")}
 			>
 				Dev
 			</button>
-			{#if openCategory === "dev"}
-				<div class="menuPopover">
-					<div data-testid="menu-content" class="menuContent">
-						{#each DEV_IMPERSONATE_ITEMS as item (item.name)}
-							<form class="menuItemForm" method="post" action={item.action}>
-								<input type="hidden" name="returnTo" value={returnTo} />
-								<button type="submit" class="menuItem menuItemButton">
-									<Image
-										path={navIconUrl(item.icon)}
-										alt=""
-										size={20}
-										class="menuItemIcon"
-									/>
-									{item.name}
-								</button>
-							</form>
-						{/each}
-					</div>
+			<div
+				id={menuId("dev")}
+				popover="auto"
+				class="menuPopover"
+				style:position-anchor={anchorName("dev")}
+				ontoggle={(event) => onMenuToggle(event, "dev")}
+			>
+				<div data-testid="menu-content" class="menuContent">
+					{#each DEV_IMPERSONATE_ITEMS as item (item.name)}
+						<form class="menuItemForm" method="post" action={item.action}>
+							<input type="hidden" name="returnTo" value={returnTo} />
+							<button type="submit" class="menuItem menuItemButton">
+								<Image
+									path={navIconUrl(item.icon)}
+									alt=""
+									size={20}
+									class="menuItemIcon"
+								/>
+								{item.name}
+							</button>
+						</form>
+					{/each}
 				</div>
-			{:else}
+			</div>
+			{#if openCategory !== "dev"}
 				<div class="preview">
 					{#each DEV_IMPERSONATE_ITEMS as item (item.name)}
 						<form class="menuItemForm" method="post" action={item.action}>
@@ -249,10 +279,10 @@ interface NavCategoryItem {
 	}
 
 	.menuPopover {
-		position: absolute;
-		top: calc(100% + var(--s-1));
-		left: 0;
-		z-index: 21;
+		position: fixed;
+		position-area: block-end span-inline-end;
+		position-try-fallbacks: flip-inline;
+		margin: var(--s-1) 0 0;
 		max-width: min(20rem, calc(100vw - var(--s-4)));
 		padding: var(--s-2);
 		border: var(--border-style);
@@ -260,6 +290,7 @@ interface NavCategoryItem {
 		font-size: var(--font-sm);
 		font-weight: var(--weight-semi);
 		background-color: var(--color-bg-high);
+		color: var(--color-text);
 	}
 
 	.menuContent {

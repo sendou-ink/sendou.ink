@@ -22,42 +22,39 @@ let {
 	onGhostTabPress,
 	skipAnimation,
 }: Props = $props();
+
+function showModal(dialog: HTMLDialogElement) {
+	dialog.showModal();
+}
 </script>
 
-<div class={["panelOverlay", { noAnimation: skipAnimation }]}>
-	<div class={["panel", { noAnimation: skipAnimation }]}>
-		<div data-testid="mobile-nav-panel" class="panelDialog" role="dialog">
-			<header class="panelHeader">
-				<div class="panelIconContainer">{@render icon()}</div>
-				<h2 class="panelTitle">{title}</h2>
-				<button
-					type="button"
-					data-testid="panel-close-button"
-					class="panelCloseButton"
-					onclick={onClose}
-				>
-					<X size={18} />
-				</button>
-			</header>
-			<div class="panelContent scrollbar">
-				{@render children()}
-			</div>
-			<GhostTabBar tabCount={ghostTabCount} onTabPress={onGhostTabPress} />
+<dialog
+	class={["panel", { noAnimation: skipAnimation }]}
+	closedby="any"
+	onclose={onClose}
+	{@attach showModal}
+>
+	<div data-testid="mobile-nav-panel" class="panelDialog">
+		<header class="panelHeader">
+			<div class="panelIconContainer">{@render icon()}</div>
+			<h2 class="panelTitle">{title}</h2>
+			<button
+				type="button"
+				data-testid="panel-close-button"
+				class="panelCloseButton"
+				onclick={onClose}
+			>
+				<X size={18} />
+			</button>
+		</header>
+		<div class="panelContent scrollbar">
+			{@render children()}
 		</div>
+		<GhostTabBar tabCount={ghostTabCount} onTabPress={onGhostTabPress} />
 	</div>
-</div>
+</dialog>
 
 <style>
-	.panelOverlay {
-		position: fixed;
-		inset: 0;
-		bottom: var(--layout-nav-height);
-		z-index: 18;
-		background-color: rgba(0, 0, 0, 0.25);
-		backdrop-filter: blur(10px);
-		animation: fade-in 200ms ease-out;
-	}
-
 	@keyframes fade-in {
 		from {
 			opacity: 0;
@@ -69,17 +66,37 @@ let {
 
 	.panel {
 		position: fixed;
-		bottom: 0;
-		left: 0;
-		right: 0;
-		height: 85%;
+		inset: auto 0 var(--layout-nav-height) 0;
+		margin: 0;
+		border: none;
+		padding: 0;
+		width: 100%;
+		max-width: none;
+		height: calc((100dvh - var(--layout-nav-height)) * 0.85);
+		max-height: none;
 		background-color: var(--color-bg);
+		color: inherit;
 		border-radius: var(--radius-box) var(--radius-box) 0 0;
 		overflow: hidden;
-		display: flex;
-		flex-direction: column;
 		padding-block-end: env(safe-area-inset-bottom);
-		animation: slide-up 200ms ease-out;
+
+		&[open] {
+			display: flex;
+			flex-direction: column;
+			animation: slide-up 200ms ease-out;
+		}
+
+		&::backdrop {
+			bottom: var(--layout-nav-height);
+			background-color: rgba(0, 0, 0, 0.25);
+			backdrop-filter: blur(10px);
+			animation: fade-in 200ms ease-out;
+		}
+	}
+
+	.noAnimation[open],
+	.noAnimation::backdrop {
+		animation: none;
 	}
 
 	@keyframes slide-up {

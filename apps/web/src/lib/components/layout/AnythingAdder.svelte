@@ -47,9 +47,7 @@ const items = $derived.by(() => {
 				size="small"
 				shape={compact ? "square" : undefined}
 				testId="anything-adder-menu-button"
-				aria-expanded={triggerProps["aria-expanded"]}
-				aria-haspopup={triggerProps["aria-haspopup"]}
-				onclick={triggerProps.onclick}
+				{...triggerProps}
 			>
 				{#snippet icon()}<Plus />{/snippet}
 				{#if !compact}{`${m.common_actions_addNew()}…`}{/if}

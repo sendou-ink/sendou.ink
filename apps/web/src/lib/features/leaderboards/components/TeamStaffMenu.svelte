@@ -24,9 +24,7 @@ const fields = $derived({ season, identifier: entry.identifier });
 			size="miniscule"
 			variant="outlined"
 			aria-label="Actions"
-			aria-expanded={triggerProps["aria-expanded"]}
-			aria-haspopup={triggerProps["aria-haspopup"]}
-			onclick={triggerProps.onclick}
+			{...triggerProps}
 		>
 			{#snippet icon()}<MoreHorizontal />{/snippet}
 		</Button>

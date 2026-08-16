@@ -1,6 +1,6 @@
 <script lang="ts">
 import type { Snippet } from "svelte";
-import { ElementVisibility } from "./element-visibility.ts";
+import { closePopoverOnScrollClip } from "./popover-scroll-close.svelte.ts";
 
 export interface PopoverTriggerProps {
 	readonly popovertarget: string;
@@ -16,8 +16,6 @@ interface Props {
 }
 
 let { trigger, popoverClass, onOpenChange, isOpen, children }: Props = $props();
-
-const VISIBLE_RATIO_THRESHOLD = 0.98;
 
 // svelte-ignore state_referenced_locally -- controlled vs. uncontrolled is decided once at mount
 const isControlled = isOpen !== undefined;
@@ -39,33 +37,10 @@ $effect(() => {
 	}
 });
 
-const visibility = new ElementVisibility(() => {
-	if (!open || !popoverElement) return null;
-	return {
-		element: popoverElement,
-		marginTop: popoverBoundaryTop(popoverElement),
-		threshold: VISIBLE_RATIO_THRESHOLD,
-	};
-});
-
-// a popover too tall to ever fit fully (or one measured before it is shown)
-// must not close itself; only a fully visible popover that scroll clips does
-let wasFullyVisible = false;
-
-$effect(() => {
-	if (!open) {
-		wasFullyVisible = false;
-		return;
-	}
-
-	const ratio = visibility.ratio;
-	if (ratio === null) return;
-
-	if (ratio >= VISIBLE_RATIO_THRESHOLD) {
-		wasFullyVisible = true;
-	} else if (wasFullyVisible) {
-		setOpen(false);
-	}
+closePopoverOnScrollClip({
+	isOpen: () => open,
+	element: () => popoverElement,
+	close: () => setOpen(false),
 });
 
 function setOpen(next: boolean) {
@@ -91,13 +66,6 @@ const triggerProps: PopoverTriggerProps = {
 	"aria-haspopup": "dialog",
 };
 
-function popoverBoundaryTop(element: Element) {
-	return (
-		Number.parseFloat(
-			getComputedStyle(element).getPropertyValue("--popover-boundary-top"),
-		) || 0
-	);
-}
 </script>
 
 <span class="triggerContainer" style:--popover-anchor={anchorName}>

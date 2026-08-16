@@ -9,6 +9,7 @@ import {
 	User,
 	Users,
 } from "@lucide/svelte";
+import { MediaQuery } from "svelte/reactivity";
 import Avatar from "#lib/components/Avatar.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
 import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
@@ -46,7 +47,18 @@ let {
 }: Props = $props();
 
 let activePanel = $state<PanelType>("closed");
-let previousPanel: PanelType = "closed";
+let previousPanel = $state<PanelType>("closed");
+
+// xxx: no 600px hard coded many places, one centralized helper
+// the panels are modal dialogs; leaving them open past the mobile breakpoint
+// would keep the rest of the page inert while the tab bar is display: none
+const isDesktop = new MediaQuery("width >= 600px");
+
+$effect(() => {
+	if (isDesktop.current && activePanel !== "closed") {
+		closePanel();
+	}
+});
 
 const user = $derived(loggedInUser());
 

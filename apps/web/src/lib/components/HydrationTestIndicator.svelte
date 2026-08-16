@@ -29,12 +29,12 @@ function patchFetchOnce() {
 
 <script lang="ts">
 	import { navigating } from "$app/state";
+	import { IsMounted } from "#lib/utils/is-mounted.svelte.ts";
 
-	let hydrated = $state(false);
+	const mounted = new IsMounted();
 
 	$effect(() => {
 		patchFetchOnce();
-		hydrated = true;
 	});
 
 	const busy = $derived.by(() => {
@@ -47,7 +47,7 @@ function patchFetchOnce() {
 	});
 </script>
 
-{#if hydrated}
+{#if mounted.current}
 	<div
 		style="display: none"
 		data-testid="hydrated"

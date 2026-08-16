@@ -23,7 +23,7 @@ let { tabCount, onTabPress }: Props = $props();
 <style>
 	.ghostTabBar {
 		position: fixed;
-		bottom: calc(0px - var(--layout-nav-height));
+		bottom: 0;
 		left: 0;
 		right: 0;
 		height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
@@ -31,7 +31,6 @@ let { tabCount, onTabPress }: Props = $props();
 		display: flex;
 		justify-content: space-around;
 		align-items: center;
-		z-index: 100;
 	}
 
 	.ghostTab {
