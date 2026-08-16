@@ -17,17 +17,17 @@ export class SideNav {
 
 	constructor(page: Page) {
 		this.page = page;
-		this.root = page.locator("nav[class*='sideNav']:visible");
+		this.root = page.locator('[data-testid="side-nav"]:visible');
 		this.locators = {
 			collapseButton: page.getByTestId("sidenav-collapse-button"),
 			modalTrigger: page.getByTestId("sidenav-modal-trigger"),
 			unseenRequestsBadge: page.getByRole("status", {
 				name: /unseen friend request/,
 			}),
-			upcomingDivider: this.root.locator("[class*='upcomingDivider']"),
+			upcomingDivider: this.root.getByTestId("upcoming-divider"),
 			/** Every row of the sidebar's link lists, in render order: events, then streams. */
-			listItems: this.root.locator("a[class*='listLink']"),
-			friendItems: this.root.locator("button[class*='listButton']"),
+			listItems: this.root.getByTestId("list-link"),
+			friendItems: this.root.getByTestId("list-button"),
 		};
 	}
 
@@ -41,14 +41,15 @@ export class SideNav {
 	}
 
 	viewAllLink(section: "Events" | "Friends") {
-		return this.sectionHeading(section)
-			.locator("xpath=..")
+		return this.root
+			.getByTestId("side-nav-header")
+			.filter({ has: this.page.getByRole("heading", { name: section }) })
 			.getByRole("link", { name: /View all/ });
 	}
 
 	/** Text shown in place of a section's rows when it has none. */
 	emptyText(text: string) {
-		return this.page.locator("[class*='sideNavEmpty']:visible", {
+		return this.page.locator('[data-testid="side-nav-empty"]:visible', {
 			hasText: text,
 		});
 	}
@@ -62,11 +63,11 @@ export class SideNav {
 	}
 
 	itemSubtitle(name: string) {
-		return this.eventItem(name).locator("span[class*='listLinkSubtitle']");
+		return this.eventItem(name).getByTestId("list-item-subtitle");
 	}
 
 	itemBadge(name: string) {
-		return this.eventItem(name).locator("span[class*='listLinkBadge']");
+		return this.eventItem(name).getByTestId("list-item-badge");
 	}
 
 	/** The tier an upcoming tournament's stream row is pilled with. */
@@ -79,7 +80,7 @@ export class SideNav {
 	}
 
 	savedStreamIcon(streamName: string) {
-		return this.streamItem(streamName).locator("svg.lucide-bookmark-check");
+		return this.streamItem(streamName).getByTestId("stream-saved-icon");
 	}
 
 	async saveStream(streamName: string) {
@@ -117,8 +118,8 @@ export class FriendRow {
 		this.page = page;
 		this.trigger = root.getByRole("button", { name });
 		this.locators = {
-			subtitle: this.trigger.locator("span[class*='listLinkSubtitle']"),
-			badge: this.trigger.locator("span[class*='listLinkBadge']"),
+			subtitle: this.trigger.getByTestId("list-item-subtitle"),
+			badge: this.trigger.getByTestId("list-item-badge"),
 		};
 	}
 

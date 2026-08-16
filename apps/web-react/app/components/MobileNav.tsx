@@ -309,12 +309,13 @@ function MobilePanel({
 			<Modal
 				className={clsx(styles.panel, skipAnimation && styles.noAnimation)}
 			>
-				<Dialog className={styles.panelDialog}>
+				<Dialog data-testid="mobile-nav-panel" className={styles.panelDialog}>
 					<header className={styles.panelHeader}>
 						<div className={styles.panelIconContainer}>{icon}</div>
 						<h2 className={styles.panelTitle}>{title}</h2>
 						<button
 							type="button"
+							data-testid="panel-close-button"
 							className={styles.panelCloseButton}
 							onClick={onClose}
 						>
@@ -363,7 +364,7 @@ function MenuOverlay({
 					skipAnimation && styles.noAnimation,
 				)}
 			>
-				<Dialog className={styles.panelDialog}>
+				<Dialog data-testid="mobile-nav-panel" className={styles.panelDialog}>
 					<header className={styles.menuHeader}>
 						<div className={styles.panelIconContainer}>
 							<Menu size={18} />
@@ -387,6 +388,7 @@ function MenuOverlay({
 							/>
 							<button
 								type="button"
+								data-testid="panel-close-button"
 								className={styles.panelCloseButton}
 								onClick={onClose}
 							>
@@ -433,7 +435,7 @@ function MenuOverlay({
 							</h3>
 						</header>
 						{streams.length === 0 ? (
-							<div className={styles.sideNavEmpty}>
+							<div data-testid="side-nav-empty" className={styles.sideNavEmpty}>
 								{t("front:sideNav.noStreams")}
 							</div>
 						) : null}
@@ -483,7 +485,7 @@ function FriendsPanel({
 					<FriendMenu key={friend.id} {...friend} onNavigate={onClose} />
 				))
 			) : (
-				<div className={styles.sideNavEmpty}>
+				<div data-testid="side-nav-empty" className={styles.sideNavEmpty}>
 					{user
 						? t("front:sideNav.friends.noFriends")
 						: t("front:sideNav.friends.notLoggedIn")}
@@ -573,7 +575,12 @@ function YouPanel({
 					onClick={onClose}
 				>
 					<Avatar user={user} size="sm" />
-					<span className={styles.youPanelUsername}>{user.username}</span>
+					<span
+						data-testid="you-panel-username"
+						className={styles.youPanelUsername}
+					>
+						{user.username}
+					</span>
 				</Link>
 				<Link
 					to={SETTINGS_PAGE}
@@ -619,7 +626,7 @@ function ChatPanel({
 					skipAnimation && styles.noAnimation,
 				)}
 			>
-				<Dialog className={styles.panelDialog}>
+				<Dialog data-testid="mobile-nav-panel" className={styles.panelDialog}>
 					<ChatSidebar onClose={onClose} />
 					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
 				</Dialog>
@@ -652,6 +659,7 @@ function GhostTabBar({
 				<button
 					key={tab}
 					type="button"
+					data-testid="ghost-tab"
 					className={styles.ghostTab}
 					tabIndex={-1}
 					onClick={() => onTabPress(tab)}

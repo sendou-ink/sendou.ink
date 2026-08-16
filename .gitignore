@@ -18,6 +18,7 @@ dump
 
 apps/web-react/scripts/output/*
 !apps/web-react/scripts/output/.gitkeep
+tooling/differ/output/
 
 apps/web-react/scripts/dicts/**/*
 apps/web-react/scripts/badge

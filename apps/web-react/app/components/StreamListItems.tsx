@@ -78,7 +78,10 @@ export function StreamListItems({
 				return (
 					<React.Fragment key={stream.id}>
 						{showUpcomingDivider ? (
-							<div className={styles.upcomingDivider}>
+							<div
+								data-testid="upcoming-divider"
+								className={styles.upcomingDivider}
+							>
 								{t("front:sideNav.streams.upcoming")}
 							</div>
 						) : null}
@@ -169,7 +172,12 @@ function SaveTournamentStreamButton({
 			/>
 			<input type="hidden" name="revalidateRoot" value="true" />
 			<button type="submit" className={styles.saveIconButton} title="Save">
-				<Icon size={14} />
+				<Icon
+					size={14}
+					data-testid={
+						optimisticSaved ? "stream-saved-icon" : "stream-save-icon"
+					}
+				/>
 			</button>
 		</fetcher.Form>
 	);

@@ -12,7 +12,7 @@ export class TopNavMenus {
 		this.locators = {
 			// a closed menu renders the same links as an icon-only preview, so
 			// anything asserted about an open menu has to be scoped to it
-			openMenu: page.locator("[class*='menuContent']"),
+			openMenu: page.getByTestId("menu-content"),
 		};
 	}
 

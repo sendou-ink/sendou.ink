@@ -186,7 +186,11 @@ export function WeaponParamsTable({
 								const slug = naming.slug(weaponId);
 
 								return (
-									<th key={weaponId} className={clsx(styles.weaponHeader, {})}>
+									<th
+										key={weaponId}
+										data-testid="weapon-header"
+										className={clsx(styles.weaponHeader, {})}
+									>
 										<Link
 											to={weaponParamsPage(slug)}
 											className={styles.weaponHeaderContent}
@@ -247,11 +251,13 @@ export function WeaponParamsTable({
 										return (
 											<tr
 												key={fullKey}
+												data-testid={hasHistory ? "expandable-row" : undefined}
 												className={clsx({
 													[styles.expandableRow]: hasHistory,
 												})}
 											>
 												<td
+													data-testid="param-name"
 													className={styles.paramName}
 													onClick={
 														hasHistory ? () => toggleRow(fullKey) : undefined
@@ -434,9 +440,11 @@ function DamageRateInfoSection({
 				return (
 					<tr
 						key={fullKey}
+						data-testid={hasHistory ? "expandable-row" : undefined}
 						className={clsx({ [styles.expandableRow]: hasHistory })}
 					>
 						<td
+							data-testid="param-name"
 							className={styles.paramName}
 							onClick={hasHistory ? () => onToggle(fullKey) : undefined}
 						>
@@ -541,8 +549,12 @@ function SpecialPointsRow({
 	);
 
 	return (
-		<tr className={clsx({ [styles.expandableRow]: hasHistory })}>
+		<tr
+			data-testid={hasHistory ? "expandable-row" : undefined}
+			className={clsx({ [styles.expandableRow]: hasHistory })}
+		>
 			<td
+				data-testid="param-name"
 				className={styles.paramName}
 				onClick={hasHistory ? onToggle : undefined}
 			>
@@ -605,7 +617,9 @@ function SpecialPointCell({
 					))}
 				</div>
 				{kitsWithHistory.length > 0 && !isExpanded ? (
-					<span className={styles.historyBadge}>{kitsWithHistory.length}</span>
+					<span data-testid="history-badge" className={styles.historyBadge}>
+						{kitsWithHistory.length}
+					</span>
 				) : null}
 			</div>
 			{showHistory ? (
@@ -659,7 +673,9 @@ function ParamCell({
 					{WeaponParams.formatValue(param.current)}
 				</span>
 				{param.history.length > 0 && !isExpanded ? (
-					<span className={styles.historyBadge}>{param.history.length}</span>
+					<span data-testid="history-badge" className={styles.historyBadge}>
+						{param.history.length}
+					</span>
 				) : null}
 			</div>
 			{showHistory ? (

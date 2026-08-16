@@ -26,13 +26,15 @@ export class MobileNav {
 
 	constructor(page: Page) {
 		this.page = page;
-		this.openPanelDialog = page.locator("[class*='panelDialog']:visible");
+		this.openPanelDialog = page.locator(
+			'[data-testid="mobile-nav-panel"]:visible',
+		);
 		this.locators = {
 			menuPanel: page.getByLabel("Menu", { exact: true }),
 			streamsHeading: page.locator("h3").filter({ hasText: "Streams" }),
 			viewAllLink: page.getByRole("link", { name: "View all", exact: true }),
-			youPanelUsername: page.locator("[class*='youPanelUsername']"),
-			friendItems: this.openPanelDialog.locator("button[class*='listButton']"),
+			youPanelUsername: page.getByTestId("you-panel-username"),
+			friendItems: this.openPanelDialog.getByTestId("list-button"),
 		};
 	}
 
@@ -50,13 +52,13 @@ export class MobileNav {
 	 */
 	async switchPanel(panel: Panel) {
 		await this.page
-			.locator("[class*='ghostTab']:not([class*='ghostTabBar'])")
+			.getByTestId("ghost-tab")
 			.nth(PANELS.indexOf(panel))
 			.dispatchEvent("click");
 	}
 
 	async closePanel() {
-		await this.page.locator("button:has(svg.lucide-x)").first().click();
+		await this.page.getByTestId("panel-close-button").first().click();
 	}
 
 	menuLink(name: string) {

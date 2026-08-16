@@ -139,7 +139,7 @@ function SegmentBar({
 					subWeaponId={params.subWeaponId}
 					specialWeaponId={params.specialWeaponId}
 				/>
-				<span className={styles.damageValue}>
+				<span data-testid="damage-value" className={styles.damageValue}>
 					{segment.damageValue}
 					{segment.count > 1 ? (
 						<span className={styles.hitMultiplier}>×{segment.count}</span>
@@ -148,6 +148,7 @@ function SegmentBar({
 			</div>
 			<button
 				type="button"
+				data-testid="damage-type-label"
 				className={styles.damageTypeLabel}
 				onClick={handleFilterClick}
 			>
@@ -179,7 +180,9 @@ function InkTimeSegment({
 				<Image path={abilityImageUrl("RES")} alt="" size={18} />
 				<span className={styles.inkTimeDamage}>{inkDamage.toFixed(1)}</span>
 			</div>
-			<div className={styles.inkTimeLabel}>{inkTimeFrames}f</div>
+			<div data-testid="ink-time-label" className={styles.inkTimeLabel}>
+				{inkTimeFrames}f
+			</div>
 		</div>
 	);
 }
@@ -243,6 +246,7 @@ function FilteredItem({ filterKey, onRestore }: FilteredItemProps) {
 	return (
 		<button
 			type="button"
+			data-testid="filtered-item"
 			className={styles.filteredItem}
 			onClick={() => onRestore(filterKey)}
 		>
@@ -331,7 +335,7 @@ export function DamageComboList({ weaponIds }: DamageComboListProps) {
 				<span className={styles.collapseIcon}>{isCollapsed ? "+" : "-"}</span>
 			</button>
 			{isCollapsed ? null : (
-				<div className={styles.content}>
+				<div data-testid="damage-combo-content" className={styles.content}>
 					<div className={styles.slidersContainer}>
 						<Image path={abilityImageUrl("SRU")} alt="" size={24} />
 						<label className={styles.resSliderLabel}>

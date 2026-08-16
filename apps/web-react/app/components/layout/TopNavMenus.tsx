@@ -106,7 +106,7 @@ function DevMenu() {
 				isOpen={isOpen}
 				onOpenChange={setIsOpen}
 			>
-				<div className={styles.menuContent}>
+				<div data-testid="menu-content" className={styles.menuContent}>
 					{DEV_IMPERSONATE_ITEMS.map((item) => (
 						<Form
 							key={item.name}
@@ -226,7 +226,7 @@ function CategoryMenu({
 				isOpen={isOpen}
 				onOpenChange={setIsOpen}
 			>
-				<div className={styles.menuContent}>
+				<div data-testid="menu-content" className={styles.menuContent}>
 					{visibleItems.map((item) => (
 						<Link
 							key={item.url}

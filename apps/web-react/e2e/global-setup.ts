@@ -1,6 +1,7 @@
 import { type ChildProcess, execSync, spawn } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
+import { ensureE2eBuild } from "../scripts/ensure-e2e-build";
 import { ensureMigratedDb } from "../scripts/ensure-test-db";
 import {
 	E2E_BASE_PORT,
@@ -14,15 +15,6 @@ const MINIO_MARKER_FILE = ".e2e-minio-started";
 const STORAGE_BUCKET = "sendou";
 /** Anonymously listable only once the bucket exists and its public policy is set. */
 const MINIO_BUCKET_URL = `http://127.0.0.1:9000/${STORAGE_BUCKET}/`;
-const BUILD_MARKER_FILE = ".e2e-build-marker";
-const BUILD_INPUTS = [
-	"app",
-	"public",
-	"package.json",
-	"../../pnpm-lock.yaml",
-	"vite.config.ts",
-	"react-router.config.ts",
-];
 
 declare global {
 	var __E2E_SERVERS__: ChildProcess[];
@@ -116,40 +108,6 @@ async function waitForServer(port: number, timeout = 120000): Promise<void> {
 	throw new Error(`Server on port ${port} did not start within ${timeout}ms`);
 }
 
-/**
- * The last e2e build can be reused when no build input changed since its marker
- * was written. Directory mtimes catch deletes and renames; a build made outside
- * the e2e flow (no marker, or output newer than the marker) forces a rebuild, as
- * does a marker from a different port setup. E2E_FORCE_BUILD=true overrides.
- */
-function isBuildFresh(): boolean {
-	if (process.env.E2E_FORCE_BUILD === "true") return false;
-	if (!fs.existsSync(BUILD_MARKER_FILE)) return false;
-	if (!fs.existsSync("build/server/index.js")) return false;
-
-	try {
-		const marker = JSON.parse(fs.readFileSync(BUILD_MARKER_FILE, "utf8"));
-		if (marker.siteDomain !== `http://localhost:${E2E_BASE_PORT}`) return false;
-		if (marker.skalopWsUrl !== "") return false;
-	} catch {
-		return false;
-	}
-
-	const markerMtime = fs.statSync(BUILD_MARKER_FILE).mtimeMs;
-	if (fs.statSync("build/server/index.js").mtimeMs > markerMtime) return false;
-
-	try {
-		const changedInput = execSync(
-			`find ${BUILD_INPUTS.join(" ")} -newer ${BUILD_MARKER_FILE} -print -quit`,
-		)
-			.toString()
-			.trim();
-		return changedInput === "";
-	} catch {
-		return false;
-	}
-}
-
 async function globalSetup(config: FullConfig) {
 	const workerCount = config.workers;
 
@@ -161,37 +119,13 @@ async function globalSetup(config: FullConfig) {
 
 	// Build the app once with E2E test flag so VITE_E2E_TEST_RUN is embedded
 	// Use port 6173 as the base - tests will rewrite URLs as needed
-	if (isBuildFresh()) {
-		// biome-ignore lint/suspicious/noConsole: CLI script output
-		console.log(
-			"Reusing existing build (no source changes since last e2e build)",
-		);
-	} else {
-		// biome-ignore lint/suspicious/noConsole: CLI script output
-		console.log("Building the application...");
-		fs.rmSync(BUILD_MARKER_FILE, { force: true });
-		execSync("pnpm run build", {
-			stdio: "inherit",
-			env: {
-				...process.env,
-				VITE_E2E_TEST_RUN: "true",
-				VITE_SITE_DOMAIN: `http://localhost:${E2E_BASE_PORT}`,
-				// Skalop is disconnected in e2e: all workers sharing one instance
-				// cross-talk (identical seeded row ids -> colliding room names ->
-				// spurious revalidations). When e2e tests for chat etc. are added
-				// this needs an actual solution: one skalop (or stub) per worker
-				// with a runtime-derived ws URL, since this build is shared.
-				VITE_SKALOP_WS_URL: "",
-			},
-		});
-		fs.writeFileSync(
-			BUILD_MARKER_FILE,
-			JSON.stringify({
-				siteDomain: `http://localhost:${E2E_BASE_PORT}`,
-				skalopWsUrl: "",
-			}),
-		);
-	}
+	const { reused } = ensureE2eBuild(`http://localhost:${E2E_BASE_PORT}`);
+	// biome-ignore lint/suspicious/noConsole: CLI script output
+	console.log(
+		reused
+			? "Reusing existing build (no source changes since last e2e build)"
+			: "Built the application",
+	);
 
 	// Prepare databases and start servers for each worker
 	const serverPromises: Promise<void>[] = [];

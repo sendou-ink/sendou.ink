@@ -40,7 +40,11 @@ export function ParamComparisonDialog({
 		>
 			<div className={styles.bars}>
 				{sortedEntries.map((entry) => (
-					<div key={entry.weaponId} className={styles.row}>
+					<div
+						key={entry.weaponId}
+						data-testid="comparison-bar-row"
+						className={styles.row}
+					>
 						<div className={styles.weapon}>
 							<WeaponParamImage kind={kind} id={entry.weaponId} size={28} />
 							<span className={styles.name}>{entry.name}</span>

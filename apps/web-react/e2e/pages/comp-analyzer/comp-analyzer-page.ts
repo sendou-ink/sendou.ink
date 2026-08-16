@@ -61,23 +61,23 @@ class DamageComboList {
 	}
 
 	get content() {
-		return this.root.locator(".content, [class*='content']");
+		return this.root.getByTestId("damage-combo-content");
 	}
 
 	get damageValues() {
-		return this.root.locator("[class*='damageValue']");
+		return this.root.getByTestId("damage-value");
 	}
 
 	get inkTimes() {
-		return this.root.locator("[class*='inkTime']");
+		return this.root.getByTestId("ink-time-label");
 	}
 
 	get damageTypeLabels() {
-		return this.root.locator("[class*='damageTypeLabel']");
+		return this.root.getByTestId("damage-type-label");
 	}
 
 	get filteredItems() {
-		return this.root.locator("button[class*='filteredItem']");
+		return this.root.getByTestId("filtered-item");
 	}
 
 	get subDefenseSlider() {

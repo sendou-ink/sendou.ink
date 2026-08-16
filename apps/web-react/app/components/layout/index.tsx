@@ -337,7 +337,9 @@ export function Layout({
 					</ListLink>
 				))
 			) : (
-				<div className={styles.sideNavEmpty}>{t("front:sideNav.noEvents")}</div>
+				<div data-testid="side-nav-empty" className={styles.sideNavEmpty}>
+					{t("front:sideNav.noEvents")}
+				</div>
 			)}
 
 			<SideNavHeader
@@ -371,7 +373,7 @@ export function Layout({
 					.slice(0, MAX_DESKTOP_FRIENDS)
 					.map((friend) => <FriendMenu key={friend.id} {...friend} />)
 			) : (
-				<div className={styles.sideNavEmpty}>
+				<div data-testid="side-nav-empty" className={styles.sideNavEmpty}>
 					{user
 						? t("front:sideNav.friends.noFriends")
 						: t("front:sideNav.friends.notLoggedIn")}
@@ -380,7 +382,7 @@ export function Layout({
 
 			<SideNavHeader icon={<Tv />}>{t("front:sideNav.streams")}</SideNavHeader>
 			{streams.length === 0 ? (
-				<div className={styles.sideNavEmpty}>
+				<div data-testid="side-nav-empty" className={styles.sideNavEmpty}>
 					{t("front:sideNav.noStreams")}
 				</div>
 			) : null}

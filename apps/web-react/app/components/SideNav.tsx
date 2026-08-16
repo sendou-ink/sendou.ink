@@ -25,6 +25,7 @@ export function SideNav({
 }) {
 	return (
 		<nav
+			data-testid="side-nav"
 			className={clsx(styles.sideNav, className, {
 				[styles.sideNavCollapsed]: collapsed,
 			})}
@@ -54,7 +55,7 @@ export function SideNavHeader({
 	action?: React.ReactNode;
 }) {
 	return (
-		<header className={styles.sideNavHeader}>
+		<header data-testid="side-nav-header" className={styles.sideNavHeader}>
 			{icon ? <div className={styles.iconContainer}>{icon}</div> : null}
 			<h2>{children}</h2>
 			{action ? (
@@ -115,6 +116,7 @@ function ListItemContent({
 					<div className={styles.listLinkSubtitleRow}>
 						{subtitle ? (
 							<span
+								data-testid="list-item-subtitle"
 								className={styles.listLinkSubtitle}
 								suppressHydrationWarning={suppressSubtitleHydrationWarning}
 							>
@@ -123,6 +125,7 @@ function ListItemContent({
 						) : null}
 						{typeof badge === "string" ? (
 							<span
+								data-testid="list-item-badge"
 								className={clsx(styles.listLinkBadge, {
 									[styles.listLinkBadgeWarning]: badgeVariant === "warning",
 								})}
@@ -167,6 +170,7 @@ export function ListLink({
 	return (
 		<Link
 			to={to}
+			data-testid="list-link"
 			className={styles.listLink}
 			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
@@ -202,7 +206,7 @@ export function ListButton({
 	badgeVariant?: "default" | "warning";
 }) {
 	return (
-		<Button className={styles.listButton}>
+		<Button data-testid="list-button" className={styles.listButton}>
 			<ListItemContent
 				user={user}
 				subtitle={subtitle}

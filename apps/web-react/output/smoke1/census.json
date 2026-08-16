@@ -1,0 +1,1008 @@
+{
+	"seedNow": "1786865257741",
+	"adminUserId": 274,
+	"rows": [
+		{
+			"pattern": "/",
+			"url": "/",
+			"file": "features/front-page/routes/index.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/a/:slug",
+			"url": "/a/20xx-series-6-recap",
+			"file": "features/articles/routes/a.$slug.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/admin",
+			"url": "/admin",
+			"file": "features/admin/routes/admin.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/admin/streams",
+			"url": "/admin/streams",
+			"file": "features/admin/routes/admin.streams.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/analyzer",
+			"url": "/analyzer",
+			"file": "features/build-analyzer/routes/analyzer.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/api",
+			"url": "/api",
+			"file": "features/api/routes/api.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/api/calendar/:year/:week",
+			"url": "/api/calendar/2025/52",
+			"file": "features/api-public/routes/calendar.$year.$week.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/chat-users",
+			"url": "/api/chat-users",
+			"file": "features/chat/routes/api.chat-users.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/layout",
+			"url": "/api/layout",
+			"file": "features/layout/routes/api.layout.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/notifications",
+			"url": "/api/notifications",
+			"file": "features/notifications/routes/api.notifications.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/org/:id",
+			"url": "/api/org/1",
+			"file": "features/api-public/routes/org.$id.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/sendouq/active-match/:userId",
+			"url": "/api/sendouq/active-match/274",
+			"file": "features/api-public/routes/sendouq.active-match.$userId.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/sendouq/match/:matchId",
+			"url": "/api/sendouq/match/1",
+			"file": "features/api-public/routes/sendouq.match.$matchId.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/team/:id",
+			"url": "/api/team/1",
+			"file": "features/api-public/routes/team.$id.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament-match/:id",
+			"url": "/api/tournament-match/2",
+			"file": "features/api-public/routes/tournament-match.$id.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id",
+			"url": "/api/tournament/2",
+			"file": "features/api-public/routes/tournament.$id.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/brackets/:bidx",
+			"url": "/api/tournament/2/brackets/0",
+			"file": "features/api-public/routes/tournament.$id.brackets.$bidx.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/brackets/:bidx/standings",
+			"url": "/api/tournament/2/brackets/0/standings",
+			"file": "features/api-public/routes/tournament.$id.brackets.$bidx.standings.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/casted",
+			"url": "/api/tournament/2/casted",
+			"file": "features/api-public/routes/tournament.$id.casted.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/players",
+			"url": "/api/tournament/2/players",
+			"file": "features/api-public/routes/tournament.$id.players.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/seeds",
+			"url": "/api/tournament/2/seeds",
+			"file": "features/api-public/routes/tournament.$id.seeds.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/starting-brackets",
+			"url": "/api/tournament/2/starting-brackets",
+			"file": "features/api-public/routes/tournament.$id.starting-brackets.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/streams",
+			"url": "/api/tournament/2/streams",
+			"file": "features/api-public/routes/tournament.$id.streams.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/teams",
+			"url": "/api/tournament/2/teams",
+			"file": "features/api-public/routes/tournament.$id.teams.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/teams/:teamId/add-member",
+			"url": "/api/tournament/2/teams/17/add-member",
+			"file": "features/api-public/routes/tournament.$id.teams.$teamId.add-member.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/teams/:teamId/remove-member",
+			"url": "/api/tournament/2/teams/17/remove-member",
+			"file": "features/api-public/routes/tournament.$id.teams.$teamId.remove-member.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/teams/:teamId/update-member-ign",
+			"url": "/api/tournament/2/teams/17/update-member-ign",
+			"file": "features/api-public/routes/tournament.$id.teams.$teamId.update-member-ign.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/tournament/:id/teams/upsert",
+			"url": "/api/tournament/2/teams/upsert",
+			"file": "features/api-public/routes/tournament.$id.teams.upsert.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/user/:identifier",
+			"url": "/api/user/sendou",
+			"file": "features/api-public/routes/user.$identifier.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/user/:identifier/ids",
+			"url": "/api/user/sendou/ids",
+			"file": "features/api-public/routes/user.$identifier.ids.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/api/user/:userId/active-match",
+			"url": "/api/user/274/active-match",
+			"file": "features/api-public/routes/user.$userId.active-match.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/art/new",
+			"url": "/art/new",
+			"file": "features/art/routes/art.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/associations",
+			"url": "/associations",
+			"file": "features/associations/routes/associations.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/associations/new",
+			"url": "/associations/new",
+			"file": "features/associations/routes/associations.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/auth/callback",
+			"url": "/auth/callback",
+			"file": "features/auth/routes/auth.callback.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/auth/create-link",
+			"url": "/auth/create-link",
+			"file": "features/auth/routes/auth.create-link.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/auth/impersonate",
+			"url": "/auth/impersonate",
+			"file": "features/auth/routes/auth.impersonate.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/auth/impersonate/stop",
+			"url": "/auth/impersonate/stop",
+			"file": "features/auth/routes/auth.impersonate.stop.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/auth/login",
+			"url": "/auth/login",
+			"file": "features/auth/routes/auth.login.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/auth/logout",
+			"url": "/auth/logout",
+			"file": "features/auth/routes/auth.logout.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/badges",
+			"url": "/badges",
+			"file": "features/badges/routes/badges.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/badges/:id",
+			"url": "/badges/1",
+			"file": "features/badges/routes/badges.$id.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/badges/:id/edit",
+			"url": "/badges/1/edit",
+			"file": "features/badges/routes/badges.$id.edit.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/builds/:slug/popular",
+			"url": "/builds/splattershot/popular",
+			"file": "features/build-stats/routes/builds.$slug.popular.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/builds/:slug/stats",
+			"url": "/builds/splattershot/stats",
+			"file": "features/build-stats/routes/builds.$slug.stats.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/calendar.ics",
+			"url": "/calendar.ics",
+			"file": "features/calendar/routes/calendar.ics.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/calendar/:id",
+			"url": "/calendar/1",
+			"file": "features/calendar/routes/calendar.$id.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/calendar/:id/report-winners",
+			"url": "/calendar/1/report-winners",
+			"file": "features/calendar/routes/calendar.$id.report-winners.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/calendar/new",
+			"url": "/calendar/new",
+			"file": "features/calendar/routes/calendar.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/comp-analyzer",
+			"url": "/comp-analyzer",
+			"file": "features/comp-analyzer/routes/comp-analyzer.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/contributions",
+			"url": "/contributions",
+			"file": "features/info/routes/contributions.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/end-season",
+			"url": "/end-season",
+			"file": "features/api-private/routes/end-season.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/events",
+			"url": "/events",
+			"file": "features/calendar/routes/events.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/faq",
+			"url": "/faq",
+			"file": "features/info/routes/faq.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/friends",
+			"url": "/friends",
+			"file": "features/friends/routes/friends.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/friends-for-adding",
+			"url": "/friends-for-adding",
+			"file": "features/sendouq/routes/friends-for-adding.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/ingest",
+			"url": "/ingest",
+			"file": "features/scanner-ingest/routes/scanner-ingest.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/leaderboards",
+			"url": "/leaderboards",
+			"file": "features/leaderboards/routes/leaderboards.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/lfg/new",
+			"url": "/lfg/new",
+			"file": "features/lfg/routes/lfg.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/links",
+			"url": "/links",
+			"file": "features/links/routes/links.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/luti",
+			"url": "/luti",
+			"file": "features/tournament/routes/luti.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/maps",
+			"url": "/maps",
+			"file": "features/map-list-generator/routes/maps.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/notifications",
+			"url": "/notifications",
+			"file": "features/notifications/routes/notifications.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/notifications/seen",
+			"url": "/notifications/seen",
+			"file": "features/notifications/routes/notifications.seen.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/notifications/subscribe",
+			"url": "/notifications/subscribe",
+			"file": "features/notifications/routes/notifications.subscribe.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/object-damage-calculator",
+			"url": "/object-damage-calculator",
+			"file": "features/object-damage-calculator/routes/object-damage-calculator.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/org/:slug/edit",
+			"url": "/org/sendouink/edit",
+			"file": "features/tournament-organization/routes/org.$slug.edit.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/org/:slug/stats",
+			"url": "/org/sendouink/stats",
+			"file": "features/tournament-organization/routes/org.$slug.stats.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/org/new",
+			"url": "/org/new",
+			"file": "features/tournament-organization/routes/org.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/params/:slug",
+			"url": "/params/splattershot",
+			"file": "features/params/routes/params.$slug.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/patrons",
+			"url": "/patrons",
+			"file": "features/api-private/routes/patrons.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/patrons-list",
+			"url": "/patrons-list",
+			"file": "features/front-page/routes/patrons-list.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/plans",
+			"url": "/plans",
+			"file": "features/map-planner/routes/plans.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/play",
+			"url": "/play",
+			"file": "features/sendouq/routes/play.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/plus",
+			"url": "/plus",
+			"file": "features/plus-suggestions/routes/plus.index.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/plus/list",
+			"url": "/plus/list",
+			"file": "features/plus-voting/routes/plus.list.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/plus/suggestions",
+			"url": "/plus/suggestions",
+			"file": "features/plus-suggestions/routes/plus.suggestions.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/plus/suggestions/comment/:tier/:userId",
+			"url": "/plus/suggestions/comment/2/475",
+			"file": "features/plus-suggestions/routes/plus.suggestions.comment.$tier.$userId.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/plus/suggestions/new",
+			"url": "/plus/suggestions/new",
+			"file": "features/plus-suggestions/routes/plus.suggestions.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/plus/voting",
+			"url": "/plus/voting",
+			"file": "features/plus-voting/routes/plus.voting.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/plus/voting/results",
+			"url": "/plus/voting/results",
+			"file": "features/plus-voting/routes/plus.voting.results.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/info",
+			"url": "/q/info",
+			"file": "features/sendouq/routes/q.info.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/looking",
+			"url": "/q/looking",
+			"file": "features/sendouq/routes/q.looking.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/match/:id",
+			"url": "/q/match/1",
+			"file": "features/sendouq-match/routes/q.match.$id.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/preparing",
+			"url": "/q/preparing",
+			"file": "features/sendouq/routes/q.preparing.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/ready",
+			"url": "/q/ready",
+			"file": "features/sendouq/routes/q.ready.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/rules",
+			"url": "/q/rules",
+			"file": "features/sendouq/routes/q.rules.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/settings",
+			"url": "/q/settings",
+			"file": "features/match-profile/routes/q.settings.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/q/streams",
+			"url": "/q/streams",
+			"file": "features/sendouq-streams/routes/q.streams.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/refresh-caches",
+			"url": "/refresh-caches",
+			"file": "features/api-private/routes/refresh-caches.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/run-routine",
+			"url": "/run-routine",
+			"file": "features/api-private/routes/run-routine.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/scanner",
+			"url": "/scanner",
+			"file": "features/scanner/routes/scanner.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/scrims/:id",
+			"url": "/scrims/1",
+			"file": "features/scrims/routes/scrims.$id.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/scrims/new",
+			"url": "/scrims/new",
+			"file": "features/scrims/routes/scrims.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/search",
+			"url": "/search",
+			"file": "features/search/routes/search.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/seed",
+			"url": "/seed",
+			"file": "features/api-private/routes/seed.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/settings",
+			"url": "/settings",
+			"file": "features/settings/routes/settings.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/short/:customUrl",
+			"url": "/short/nzap",
+			"file": "features/user-page/routes/short.$customUrl.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/sidenav",
+			"url": "/sidenav",
+			"file": "features/layout/routes/sidenav.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/support",
+			"url": "/support",
+			"file": "features/info/routes/support.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/suspended",
+			"url": "/suspended",
+			"file": "features/ban/routes/suspended.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t",
+			"url": "/t",
+			"file": "features/team/routes/t.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t/:customUrl",
+			"url": "/t/alliance-rogue",
+			"file": "features/team/routes/t.$customUrl.index.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t/:customUrl/edit",
+			"url": "/t/alliance-rogue/edit",
+			"file": "features/team/routes/t.$customUrl.edit.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t/:customUrl/join",
+			"url": "/t/alliance-rogue/join",
+			"file": "features/team/routes/t.$customUrl.join.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t/:customUrl/results",
+			"url": "/t/alliance-rogue/results",
+			"file": "features/team/routes/t.$customUrl.results.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t/:customUrl/roster",
+			"url": "/t/alliance-rogue/roster",
+			"file": "features/team/routes/t.$customUrl.roster.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/t/new",
+			"url": "/t/new",
+			"file": "features/team/routes/t.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/theme",
+			"url": "/theme",
+			"file": "features/theme/routes/theme.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/tier-list-maker",
+			"url": "/tier-list-maker",
+			"file": "features/tier-list-maker/routes/tier-list-maker.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/tiers",
+			"url": "/tiers",
+			"file": "features/sendouq/routes/tiers.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id",
+			"url": "/to/2",
+			"file": "features/tournament/routes/to.$id.index.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/to/:id/admin",
+			"url": "/to/2/admin",
+			"file": "features/tournament-admin/routes/to.$id.admin._index.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/audit",
+			"url": "/to/2/admin/audit",
+			"file": "features/tournament-admin/routes/to.$id.admin.audit.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/brackets",
+			"url": "/to/2/admin/brackets",
+			"file": "features/tournament-admin/routes/to.$id.admin.brackets.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/import-teams",
+			"url": "/to/2/admin/import-teams",
+			"file": "features/tournament-admin/routes/to.$id.admin.import-teams.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/to/:id/admin/registration",
+			"url": "/to/2/admin/registration",
+			"file": "features/tournament-admin/routes/to.$id.admin.registration.$tid.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/registration/:tid",
+			"url": "/to/2/admin/registration/17",
+			"file": "features/tournament-admin/routes/to.$id.admin.registration.$tid.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/seeds",
+			"url": "/to/2/admin/seeds",
+			"file": "features/tournament-admin/routes/to.$id.admin.seeds.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/staff",
+			"url": "/to/2/admin/staff",
+			"file": "features/tournament-admin/routes/to.$id.admin.staff.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/admin/stream",
+			"url": "/to/2/admin/stream",
+			"file": "features/tournament-admin/routes/to.$id.admin.stream.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/brackets",
+			"url": "/to/2/brackets",
+			"file": "features/tournament-bracket/routes/to.$id.brackets.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/brackets/finalize",
+			"url": "/to/2/brackets/finalize",
+			"file": "features/tournament-bracket/routes/to.$id.brackets.finalize.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/divisions",
+			"url": "/to/2/divisions",
+			"file": "features/tournament-bracket/routes/to.$id.divisions.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/info",
+			"url": "/to/2/info",
+			"file": "features/tournament/routes/to.$id.info.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/join",
+			"url": "/to/2/join",
+			"file": "features/tournament/routes/to.$id.join.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/looking",
+			"url": "/to/2/looking",
+			"file": "features/tournament-lfg/routes/to.$id.looking.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/matches/:mid",
+			"url": "/to/2/matches/2",
+			"file": "features/tournament-match/routes/to.$id.matches.$mid.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/register",
+			"url": "/to/2/register",
+			"file": "features/tournament/routes/to.$id.register.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/results",
+			"url": "/to/2/results",
+			"file": "features/tournament/routes/to.$id.results.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/rules",
+			"url": "/to/2/rules",
+			"file": "features/tournament/routes/to.$id.rules.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/streams",
+			"url": "/to/2/streams",
+			"file": "features/tournament/routes/to.$id.streams.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/subs",
+			"url": "/to/2/subs",
+			"file": "features/tournament-subs/routes/to.$id.subs.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/teams",
+			"url": "/to/2/teams",
+			"file": "features/tournament/routes/to.$id.teams.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/teams/:tid",
+			"url": "/to/2/teams/17",
+			"file": "features/tournament/routes/to.$id.teams.$tid.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/to/:id/teams/:tid/comps",
+			"url": "/to/2/teams/17/comps",
+			"file": "features/tournament/routes/to.$id.teams.$tid.comps.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/to/search",
+			"url": "/to/search",
+			"file": "features/tournament/routes/to.search.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/trophies",
+			"url": "/trophies",
+			"file": "features/trophies/routes/trophies.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/trophies/:id",
+			"url": "/trophies/1",
+			"file": "features/trophies/routes/trophies.$id.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/trophies/:id/tournaments",
+			"url": "/trophies/1/tournaments",
+			"file": "features/trophies/routes/trophies.$id.tournaments.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/trophies/:id/wins/:userId",
+			"url": "/trophies/1/wins/2",
+			"file": "features/trophies/routes/trophies.$id.wins.$userId.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/trophies/new",
+			"url": "/trophies/new",
+			"file": "features/trophies/routes/trophies.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u",
+			"url": "/u",
+			"file": "features/user-search/routes/u.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier",
+			"url": "/u/sendou",
+			"file": "features/user-page/routes/u.$identifier.index.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/admin",
+			"url": "/u/sendou/admin",
+			"file": "features/user-page/routes/u.$identifier.admin.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/art",
+			"url": "/u/sendou/art",
+			"file": "features/user-page/routes/u.$identifier.art.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/builds",
+			"url": "/u/sendou/builds",
+			"file": "features/user-page/routes/u.$identifier.builds.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/builds/new",
+			"url": "/u/sendou/builds/new",
+			"file": "features/user-page/routes/u.$identifier.builds.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/edit",
+			"url": "/u/sendou/edit",
+			"file": "features/user-page/routes/u.$identifier.edit.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/edit-widgets",
+			"url": "/u/sendou/edit-widgets",
+			"file": "features/user-page/routes/u.$identifier.edit-widgets.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/results",
+			"url": "/u/sendou/results",
+			"file": "features/user-page/routes/u.$identifier.results.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/results/highlights",
+			"url": "/u/sendou/results/highlights",
+			"file": "features/user-page/routes/u.$identifier.results.highlights.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/seasons",
+			"url": "/u/sendou/seasons",
+			"file": "features/user-page/routes/u.$identifier.seasons.index.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/seasons/stats",
+			"url": "/u/sendou/seasons/stats",
+			"file": "features/user-page/routes/u.$identifier.seasons.stats.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/u/:identifier/seasons/summary-graphic",
+			"url": "/u/sendou/seasons/summary-graphic",
+			"file": "features/user-page/routes/u.$identifier.seasons.summary-graphic.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/u/:identifier/vods",
+			"url": "/u/sendou/vods",
+			"file": "features/user-page/routes/u.$identifier.vods.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/upload/admin",
+			"url": "/upload/admin",
+			"file": "features/img-upload/routes/upload.admin.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/user-card/:id/friendship",
+			"url": "/user-card/274/friendship",
+			"file": "features/user-card/routes/user-card.$id.friendship.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/user-card/:id/note",
+			"url": "/user-card/274/note",
+			"file": "features/user-card/routes/user-card.$id.note.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/user-card/edit",
+			"url": "/user-card/edit",
+			"file": "features/user-card/routes/user-card.edit.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/user-report/:id",
+			"url": "/user-report/274",
+			"file": "features/user-report/routes/user-report.$id.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/users",
+			"url": "/users",
+			"file": "features/api-private/routes/users.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/vods/:id",
+			"url": "/vods/1",
+			"file": "features/vods/routes/vods.$id.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/vods/new",
+			"url": "/vods/new",
+			"file": "features/vods/routes/vods.new.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/weapon-usage",
+			"url": "/weapon-usage",
+			"file": "features/sendouq/routes/weapon-usage.ts",
+			"kind": "resource"
+		},
+		{
+			"pattern": "/welcome",
+			"url": "/welcome",
+			"file": "features/info/routes/welcome.tsx",
+			"kind": "page"
+		},
+		{
+			"pattern": "/xsearch/player/:id",
+			"url": "/xsearch/player/1",
+			"file": "features/top-search/routes/xsearch.player.$id.tsx",
+			"kind": "page"
+		}
+	]
+}

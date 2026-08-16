@@ -54,7 +54,11 @@ export function WeaponPatchHistory({ patches }: { patches: WeaponPatch[] }) {
 	return (
 		<div className={styles.container}>
 			{patches.map((patch) => (
-				<div key={patch.version} className={styles.column}>
+				<div
+					key={patch.version}
+					data-testid="patch-column"
+					className={styles.column}
+				>
 					<PatchColumnHeader version={patch.version} date={patch.date} />
 					<div className={styles.changes}>
 						{patch.changes.map((change, i) => (
@@ -185,7 +189,7 @@ function KitPatchColumn({
 	);
 
 	return (
-		<div className={styles.column}>
+		<div data-testid="patch-column" className={styles.column}>
 			<PatchColumnHeader version={patch.version} date={patch.date} />
 			<div className={styles.changes}>
 				{mainChanges.map((change, i) => (

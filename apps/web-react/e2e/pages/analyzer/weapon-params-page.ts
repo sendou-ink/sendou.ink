@@ -9,17 +9,17 @@ export class WeaponParamsPage {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			weaponHeaders: page.locator("th[class*='weaponHeader']"),
+			weaponHeaders: page.getByTestId("weapon-header"),
 			hideWeaponButtons: page.locator("[data-testid^='hide-weapon-']"),
 			showAllWeaponsButton: page.getByTestId("show-all-weapons"),
 			compareParamButtons: page.getByTestId("compare-param"),
 			comparisonDialog: page.getByRole("dialog"),
 			comparisonBars: page
 				.getByRole("dialog")
-				.locator("[class*='bars'] [class*='row']"),
-			expandableRows: page.locator("[class*='expandableRow']"),
+				.getByTestId("comparison-bar-row"),
+			expandableRows: page.getByTestId("expandable-row"),
 			patchHistoryTab: page.getByRole("tab", { name: /Patch history/ }),
-			patchColumns: page.locator("[class*='column']"),
+			patchColumns: page.getByTestId("patch-column"),
 			subAndSpecialChangesSwitch: page.getByRole("switch", {
 				name: /Show sub & special changes/,
 			}),
@@ -68,10 +68,10 @@ class ParamHistoryRow {
 
 	/** Shown while the row is collapsed, hidden once expanded */
 	get historyBadge() {
-		return this.root.locator("[class*='historyBadge']").first();
+		return this.root.getByTestId("history-badge").first();
 	}
 
 	async toggle() {
-		await this.root.locator("td[class*='paramName']").click();
+		await this.root.getByTestId("param-name").click();
 	}
 }

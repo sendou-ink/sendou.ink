@@ -392,6 +392,25 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  tooling/differ:
+    dependencies:
+      '@playwright/test':
+        specifier: 1.62.1
+        version: 1.62.1
+      pixelmatch:
+        specifier: 7.1.0
+        version: 7.1.0
+      pngjs:
+        specifier: 7.0.0
+        version: 7.0.0
+    devDependencies:
+      '@types/pngjs':
+        specifier: 6.0.5
+        version: 6.0.5
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
 packages:
 
   '@aws-sdk/checksums@3.1000.27':
@@ -2792,6 +2811,9 @@ packages:
   '@types/nprogress@0.2.3':
     resolution: {integrity: sha512-k7kRA033QNtC+gLc4VPlfnue58CM1iQLgn1IMAU8VPHGOj7oIHPp9UlhedEnD/Gl8evoCjwkZjlBORtZ3JByUA==}
 
+  '@types/pngjs@6.0.5':
+    resolution: {integrity: sha512-0k5eKfrA83JOZPppLtS2C7OUtyNAl2wKNxfyYl9Q5g9lPkgBl/9hNyAu6HuEH2J4XmIv2znEpkDd0SaZVxW6iQ==}
+
   '@types/ramda@0.31.1':
     resolution: {integrity: sha512-Vt6sFXnuRpzaEj+yeutA0q3bcAsK7wdPuASIzR9LXqL4gJPyFw8im9qchlbp4ltuf3kDEIRmPJTD/Fkg60dn7g==}
 
@@ -3869,6 +3891,10 @@ packages:
   picomatch@4.0.5:
     resolution: {integrity: sha512-RvwwcruNjI1ncT5xRakeyS9Lf8lcItv34KD+aif+VH9kduAyfYBipGh12274xtenIPZ119/R9BdTBa8gAwSh0A==}
     engines: {node: '>=12'}
+
+  pixelmatch@7.1.0:
+    resolution: {integrity: sha512-1wrVzJ2STrpmONHKBy228LM1b84msXDUoAzVEl0R8Mz4Ce6EPr+IVtxm8+yvrqLYMHswREkjYFaMxnyGnaY3Ng==}
+    hasBin: true
 
   pkg-types@2.3.1:
     resolution: {integrity: sha512-y+ichcgc2LrADuhLNAx8DFjVfgz91pRxfZdI3UDhxHvcVEZsenLO+7XaU5vOp0u/7V/wZ+plyuQxtrDlZJ+yeg==}
@@ -7131,6 +7157,10 @@ snapshots:
 
   '@types/nprogress@0.2.3': {}
 
+  '@types/pngjs@6.0.5':
+    dependencies:
+      '@types/node': 26.1.2
+
   '@types/ramda@0.31.1':
     dependencies:
       types-ramda: 0.31.0
@@ -8114,6 +8144,10 @@ snapshots:
   picocolors@1.1.1: {}
 
   picomatch@4.0.5: {}
+
+  pixelmatch@7.1.0:
+    dependencies:
+      pngjs: 7.0.0
 
   pkg-types@2.3.1:
     dependencies:
