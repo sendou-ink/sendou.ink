@@ -1,6 +1,7 @@
 <script lang="ts">
 import { Calendar, ChevronRight, PanelLeft, Tv, Users } from "@lucide/svelte";
 import type { Snippet } from "svelte";
+import { MediaQuery } from "svelte/reactivity";
 import Image from "#lib/components/Image.svelte";
 import NotificationDot from "#lib/components/NotificationDot.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
@@ -111,17 +112,24 @@ const sideNavCollapseForm = setSidenavCollapsed.enhance(async ({ submit }) => {
 });
 
 // mobile hide-on-scroll header, ported from the React useNavOffset
-const MOBILE_BREAKPOINT = 600;
 const NAV_HEIGHT_FALLBACK = 55;
 const SCROLL_THRESHOLD_PX = 200;
+
+const isMobile = new MediaQuery("width < 600px");
 
 let headerElement = $state<HTMLElement | null>(null);
 let navOffset = $state(0);
 let lastScrollY = 0;
 let scrollAccumulator = 0;
 
+$effect(() => {
+	if (!isMobile.current) {
+		navOffset = 0;
+	}
+});
+
 function handleScroll() {
-	if (window.innerWidth >= MOBILE_BREAKPOINT) {
+	if (!isMobile.current) {
 		navOffset = 0;
 		lastScrollY = window.scrollY;
 		scrollAccumulator = 0;
@@ -155,12 +163,6 @@ function handleScroll() {
 	}
 
 	lastScrollY = currentScrollY;
-}
-
-function handleResize() {
-	if (window.innerWidth >= MOBILE_BREAKPOINT) {
-		navOffset = 0;
-	}
 }
 
 // the tablet-only sidenav modal closes on navigation
@@ -203,7 +205,7 @@ function formatRelativeDate(timestamp: number) {
 }
 </script>
 
-<svelte:window onscroll={handleScroll} onresize={handleResize} />
+<svelte:window onscroll={handleScroll} />
 
 {#snippet siteLogoContent()}
 	<span class="siteLogoS">S</span>
