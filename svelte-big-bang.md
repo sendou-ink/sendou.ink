@@ -78,6 +78,7 @@ packages/
   build-analyzer/ build stat math + weapon params (analyzer, object dmg calc, scanner all consume it)
   map-list-generator/  MapPool + tournament map list generation
   scanner-core/   the scanner's CV detection core (detectors, glyphs, match building)
+  schemas/        reusable valibot schemas (id/field primitives, shared form shapes) consumed by app code
   …               more only when a block earns it
 tooling/
   codemods/       ts-morph transforms (below)
@@ -99,7 +100,7 @@ Notes on the shape:
 
 This is the part of the codebase best positioned for the migration:
 
-- Loaders already live in dedicated `loaders/` files → each becomes a `query()` in `<feature>.remote.ts`. Zod 4 implements Standard Schema, so **existing zod schemas plug directly into remote function validation**.
+- Loaders already live in dedicated `loaders/` files → each becomes a `query()` in `<feature>.remote.ts`. Remote function validation accepts any Standard Schema, so the **valibot schemas** (converted from zod — see the validation subsection below) plug directly in.
 - Actions already use `_action`-discriminated zod unions → the codemod **splits each union branch into its own `form()`/`command()`**. This is the one place the code gets structurally *better* for free, while staying boring externally.
 - `<ActionButton>` (typed `_action` + hidden inputs) → a button wired to a remote `command` or a remote form's button props — same type-safety guarantee, less machinery.
 - `SendouForm` (`app/form/`) → `SendouForm.svelte` wrapping a remote `form`: same schema-driven field API on top, remote-function plumbing underneath. **This wrapper is the churn insulation** — when the experimental API moves, we fix one file, not 81.
@@ -115,6 +116,15 @@ This is the part of the codebase best positioned for the migration:
   - **build stats / popular builds per weapon** — currently cachified with a 1-hour TTL; `inputs` = all weapon slugs, and an hour-stale copy was already the accepted freshness, so build-time baking is strictly better (no cold cache, no server work).
 
   The tradeoff to respect: prerendered data is frozen until the next deploy, so it fits where data changes slower than the deploy cadence or where TTL-staleness was already accepted. cachified's remaining users (sidebar counts, streams, trophies, tiers) genuinely need runtime freshness — they stay as cached `query()`s, and `@epic-web/cachified` shrinks to those few call sites.
+
+### Validation: zod → valibot
+
+Decided: the Svelte app validates with **valibot** ([migration guide](https://valibot.dev/guides/migrate-from-zod/)); zod does not come along.
+
+- **Why**: valibot's modular, function-based design tree-shakes — a schema costs only the validators it actually uses. That matters more than before because schemas now ship to the client inside remote forms; zod's monolithic class API can't shrink the same way. And valibot implements Standard Schema, so remote function validation, `SendouForm.svelte`, and the search-params module consume it exactly as they would have consumed zod — nothing downstream cares which library produced the schema.
+- **`packages/schemas` (`@sendou/schemas`) holds the reusable schemas**: id/field primitives (`id`, `weaponSplId`, `modeShort`, `ability`, …), shared form shapes (usernames, URLs, dates, pagination), and cross-feature schemas that repositories and remote functions validate against. App code imports them by package name; feature-specific one-off schemas stay in the feature folder next to their remote functions — the package is for schemas with 2+ consumers, same promotion rule as every other workspace package.
+- **Conversion is mechanical**: valibot maintains an official codemod for the zod → valibot rewrite; our `zod-to-valibot` pass (see the codemod suite) wraps it, runs per feature alongside `remote-scaffold`, promotes shared schemas into `@sendou/schemas`, and flags the exotic zod APIs it can't prove (`z.preprocess`, custom `superRefine` logic) with `@MIGRATE` for hand-finish.
+- **The React app stays on zod untouched** — it's frozen, and its schemas remain the conversion source of truth until each feature migrates. zod leaves the dependency tree at cutover along with React.
 
 ### Pattern cookbook (the Opus bible)
 
@@ -138,6 +148,7 @@ This is the part of the codebase best positioned for the migration:
 | `<LocaleTime>` etc. | ported to `packages/components`, same names |
 | meta functions | `<svelte:head>` (verified by SSR HTML diff) |
 | `handle.i18n` namespaces | **gone** — paraglide messages are plain imports, tree-shaken per route; no namespace loading, no `i18next-http-backend` round-trips |
+| zod schemas | **valibot** via the `zod-to-valibot` codemod; shared schemas promoted to `@sendou/schemas`, one-offs stay in the feature folder |
 | `useSWRImmutable` hooks over resource routes (`app/hooks/swr.ts`, 3 hooks) | remote `query()` called on demand from the component — caching per args is built in; `swr` dependency and the resource routes it fetched both go away |
 | nprogress on navigation state | nprogress driven by SvelteKit's navigation store |
 | `shouldRevalidate` + search-params module | search-params core is pure TS with round-trip tests — port the module, re-map its revalidation semantics to SvelteKit's fine-grained invalidation / `query.refresh()` |
@@ -273,10 +284,11 @@ All idempotent, all manifest-aware, all re-runnable while React remains source o
 
 1. **`mono-split`** — moves the app to `apps/web-react` and extracts the few real packages (`tournament-engine` et al) with import rewriting (Phase 0, runs on React code).
 2. **`route-map`** — `routes.ts` → SvelteKit route directories + URL-parity manifest.
-3. **`remote-scaffold`** — loader files → `query()` scaffolds; action files → per-`_action`-branch `form()`/`command()` scaffolds, reusing the existing zod schemas verbatim.
-4. **`jsx-to-svelte`** — the deterministic 80%: `className`→`class` (unwrapping `clsx(...)` calls into Svelte's native clsx-compatible array/object form and dropping the import), ternaries→`{#if}`, `.map()`→`{#each}` (keys from React `key=`), fragments, props→`$props()`, `useState`→`$state`, handler casing, style objects. Anything it can't prove correct becomes an `@MIGRATE` marker with the original JSX preserved in a sidecar comment — that's the Opus hand-finish surface. Deterministic ≠ complete: the codemod's job is to make the LLM's job mechanical and reviewable, not to be a compiler.
-5. **`css-inline`** — inlines each component's `.module.css` classes into its `<style>` block, rewrites `styles.foo` → `"foo"` in the template, and flags shared-module classes and cross-component selectors with `@MIGRATE` for the agent to partition.
-6. **`manifest`** — ledger updater + progress report.
+3. **`remote-scaffold`** — loader files → `query()` scaffolds; action files → per-`_action`-branch `form()`/`command()` scaffolds, wiring in the schemas as converted by `zod-to-valibot`.
+4. **`zod-to-valibot`** — wraps valibot's official migration codemod: rewrites a feature's zod schemas to valibot, promotes schemas with 2+ consumers into `@sendou/schemas`, and marks unprovable zod APIs (`z.preprocess`, custom `superRefine`) with `@MIGRATE`.
+5. **`jsx-to-svelte`** — the deterministic 80%: `className`→`class` (unwrapping `clsx(...)` calls into Svelte's native clsx-compatible array/object form and dropping the import), ternaries→`{#if}`, `.map()`→`{#each}` (keys from React `key=`), fragments, props→`$props()`, `useState`→`$state`, handler casing, style objects. Anything it can't prove correct becomes an `@MIGRATE` marker with the original JSX preserved in a sidecar comment — that's the Opus hand-finish surface. Deterministic ≠ complete: the codemod's job is to make the LLM's job mechanical and reviewable, not to be a compiler.
+6. **`css-inline`** — inlines each component's `.module.css` classes into its `<style>` block, rewrites `styles.foo` → `"foo"` in the template, and flags shared-module classes and cross-component selectors with `@MIGRATE` for the agent to partition.
+7. **`manifest`** — ledger updater + progress report.
 
 ---
 
