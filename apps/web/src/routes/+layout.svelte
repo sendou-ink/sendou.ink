@@ -13,13 +13,12 @@ import Layout from "#lib/components/layout/Layout.svelte";
 import PwaLinks from "#lib/components/PwaLinks.svelte";
 import ThemeHead from "#lib/features/theme/ThemeHead.svelte";
 import { IS_E2E_TEST_RUN } from "#lib/utils/e2e.ts";
-import { navigating, page } from "$app/state";
+import { navigating } from "$app/state";
+import type { LayoutProps } from "./$types";
 
-let { children } = $props();
+let { data, children }: LayoutProps = $props();
 
-const theme = $derived(
-	(page.data as { theme?: "dark" | "light" | null }).theme ?? null,
-);
+const theme = $derived(data.theme ?? null);
 
 NProgress.configure({ parent: "#nprogress-anchor", showSpinner: false });
 
