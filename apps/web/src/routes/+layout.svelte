@@ -16,18 +16,28 @@ import { IS_E2E_TEST_RUN } from "#lib/utils/e2e.ts";
 import { navigating } from "$app/state";
 import type { LayoutProps } from "./$types";
 
+const LOADING_INDICATOR_DELAY_MS = 150;
+
 let { data, children }: LayoutProps = $props();
 
 const theme = $derived(data.theme ?? null);
 
 NProgress.configure({ parent: "#nprogress-anchor", showSpinner: false });
 
+const isNavigating = $derived(Boolean(navigating.to));
+
 $effect(() => {
-	if (navigating.to) {
-		NProgress.start();
-	} else {
-		NProgress.done();
-	}
+	const navigationOngoing = isNavigating;
+
+	const timeout = setTimeout(() => {
+		if (navigationOngoing) {
+			NProgress.start();
+		} else {
+			NProgress.done();
+		}
+	}, LOADING_INDICATOR_DELAY_MS);
+
+	return () => clearTimeout(timeout);
 });
 </script>
 
