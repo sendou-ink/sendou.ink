@@ -154,6 +154,20 @@ Decided: the Svelte app validates with **valibot** ([migration guide](https://va
 | `shouldRevalidate` + search-params module | search-params core is pure TS with round-trip tests — port the module, re-map its revalidation semantics to SvelteKit's fine-grained invalidation / `query.refresh()` |
 | revalidation after actions | **single-flight mutations, server-driven** — the handler refreshes/`set`s exactly the queries it touched (see the data-layer convention above); never the refresh-everything default |
 
+Two conventions that apply across every cookbook entry:
+
+- **Snippets are how a bigger component splits into smaller ones.** In React we split a large component into small helper components in the same file; the Svelte equivalent is `{#snippet}` blocks rendered with `{@render}` — private, in-file, and able to take parameters like props. A helper only graduates to its own `.svelte` file when it gains a second consumer or a real standalone identity, same promotion rule as everywhere else in the plan. This also shrinks the file-split surface of the `css-inline` codemod: React helper components that stay in-file as snippets keep their classes in the same `<style>` block, no CSS partition needed.
+- **`xxx:` comments are the migration's TODO marker.** Anything discovered mid-migration that must be resolved before the migration is complete — but isn't being fixed on the spot — gets an `xxx:` comment at the site (`// xxx: keyboard nav not ported yet`). It complements the codemod-emitted `@MIGRATE` markers: `@MIGRATE` means "the codemod couldn't prove this, hand-finish it", `xxx:` means "a human or agent judged this unfinished". Both are grep-gates — cutover (Phase 7) requires zero `@MIGRATE` and zero `xxx:` comments in `apps/web`.
+
+### Svelte skills (installed, mandatory)
+
+The official Svelte skills from [sveltejs/ai-tools](https://github.com/sveltejs/ai-tools) are installed in `.claude/skills/` and are **always used for Svelte work** — no agent writes, edits, or reviews `.svelte` / `.svelte.ts` code without them:
+
+- **`svelte-core-bestpractices`** — load before touching any Svelte code; it's the authority on runes usage (`$state.raw` for reassign-only data, `$derived` over `$effect`, effects as escape hatch), keyed each blocks, snippets, event handling, and the legacy-feature blocklist.
+- **`svelte-code-writer`** — the `npx @sveltejs/mcp` CLI: `list-sections`/`get-documentation` when unsure about syntax, and **`svelte-autofixer` runs on every Svelte file before it's marked done** — it's part of the fleet's per-feature loop alongside e2e and the differ. Always pass `--async` (we use await expressions; without it every `await` in a component is a bogus "issue"). Known false-positive classes from the first sweep, don't churn on them: `svelte-ignore <code> -- reason` prose is valid in runes mode (the compiler stops parsing codes at the first one without a trailing comma) but the autofixer flags each prose word as an unused ignore; ephemeral `Map`/`Set`/`Date` inside a `$derived.by` or non-reactive module caches don't need the `Svelte*` reactive variants; and mounted-flag `$effect`s (`hydrated = true`) plus external-API sync effects (nprogress, popover positioning) are accepted patterns.
+
+Where skill guidance and this plan disagree (e.g. the skill prefers `{@attach}` over `use:` actions, and context over shared-module state), the conflict is resolved in the cookbook and the cookbook wins — agents never pick sides ad hoc.
+
 **CSS decision (made): migrate CSS modules → Svelte scoped styles.** 232 `.module.css` files convert as part of the feature migration, not after. The mechanics:
 
 - The `css-inline` codemod inlines each component's `.module.css` into its `<style>` block and rewrites `styles.foo` → `"foo"` (only **5** dynamic `styles[...]` accesses exist in the whole codebase — hand-fix those). Conditional classes need no library: Svelte's `class` attribute accepts clsx-style arrays/objects natively.
@@ -324,7 +338,7 @@ All idempotent, all manifest-aware, all re-runnable while React remains source o
 
 ## What "done" means
 
-Per feature: e2e specs green against `apps/web`, pixel + HTML diffs clean (structure diff reviewed), lint ratchets pass, manifest row `verified`.
+Per feature: e2e specs green against `apps/web`, pixel + HTML diffs clean (structure diff reviewed), lint ratchets pass, `svelte-autofixer` clean, no `@MIGRATE` or `xxx:` comments left, manifest row `verified`.
 Overall: every manifest row verified, hardening suite green, perf budgets met, cutover flipped, soak survived, planner split out to `planner.sendou.ink`, `web-react` deleted.
 
 ## Open decisions (sendou's call, before the fleet starts)

@@ -11,6 +11,7 @@ import { m } from "#lib/paraglide/messages.js";
 import { getLocale } from "#lib/paraglide/runtime.js";
 import { GIT_COMMIT } from "#lib/utils/git-commit.ts";
 import { EVENTS_PAGE, FRIENDS_PAGE } from "#lib/utils/urls.ts";
+import { afterNavigate } from "$app/navigation";
 import { page } from "$app/state";
 import Footer from "./Footer.svelte";
 import FriendMenu from "./FriendMenu.svelte";
@@ -108,72 +109,60 @@ function toggleSideNavCollapsed() {
 }
 
 // mobile hide-on-scroll header, ported from the React useNavOffset
+const MOBILE_BREAKPOINT = 600;
+const NAV_HEIGHT_FALLBACK = 55;
+const SCROLL_THRESHOLD_PX = 200;
+
 let headerElement = $state<HTMLElement | null>(null);
 let navOffset = $state(0);
+let lastScrollY = 0;
+let scrollAccumulator = 0;
 
-$effect(() => {
-	const MOBILE_BREAKPOINT = 600;
-	const NAV_HEIGHT_FALLBACK = 55;
-	const SCROLL_THRESHOLD_PX = 200;
+function handleScroll() {
+	if (window.innerWidth >= MOBILE_BREAKPOINT) {
+		navOffset = 0;
+		lastScrollY = window.scrollY;
+		scrollAccumulator = 0;
+		return;
+	}
 
-	let lastScrollY = 0;
-	let scrollAccumulator = 0;
+	const navHeight = headerElement?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
+	const currentScrollY = window.scrollY;
+	const scrollDelta = currentScrollY - lastScrollY;
 
-	const handleScroll = () => {
-		if (window.innerWidth >= MOBILE_BREAKPOINT) {
-			navOffset = 0;
-			lastScrollY = window.scrollY;
-			scrollAccumulator = 0;
-			return;
-		}
+	const directionChanged =
+		(scrollDelta > 0 && scrollAccumulator < 0) ||
+		(scrollDelta < 0 && scrollAccumulator > 0);
 
-		const navHeight = headerElement?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
-		const currentScrollY = window.scrollY;
-		const scrollDelta = currentScrollY - lastScrollY;
+	if (directionChanged) {
+		scrollAccumulator = 0;
+	}
 
-		const directionChanged =
-			(scrollDelta > 0 && scrollAccumulator < 0) ||
-			(scrollDelta < 0 && scrollAccumulator > 0);
+	scrollAccumulator += scrollDelta;
 
-		if (directionChanged) {
-			scrollAccumulator = 0;
-		}
+	if (Math.abs(scrollAccumulator) >= SCROLL_THRESHOLD_PX) {
+		const overflow =
+			scrollAccumulator > 0
+				? scrollAccumulator - SCROLL_THRESHOLD_PX
+				: scrollAccumulator + SCROLL_THRESHOLD_PX;
 
-		scrollAccumulator += scrollDelta;
+		navOffset = Math.max(-navHeight, Math.min(0, navOffset - overflow));
 
-		if (Math.abs(scrollAccumulator) >= SCROLL_THRESHOLD_PX) {
-			const overflow =
-				scrollAccumulator > 0
-					? scrollAccumulator - SCROLL_THRESHOLD_PX
-					: scrollAccumulator + SCROLL_THRESHOLD_PX;
+		scrollAccumulator =
+			scrollAccumulator > 0 ? SCROLL_THRESHOLD_PX : -SCROLL_THRESHOLD_PX;
+	}
 
-			navOffset = Math.max(-navHeight, Math.min(0, navOffset - overflow));
+	lastScrollY = currentScrollY;
+}
 
-			scrollAccumulator =
-				scrollAccumulator > 0 ? SCROLL_THRESHOLD_PX : -SCROLL_THRESHOLD_PX;
-		}
-
-		lastScrollY = currentScrollY;
-	};
-
-	const handleResize = () => {
-		if (window.innerWidth >= MOBILE_BREAKPOINT) {
-			navOffset = 0;
-		}
-	};
-
-	window.addEventListener("scroll", handleScroll, { passive: true });
-	window.addEventListener("resize", handleResize);
-
-	return () => {
-		window.removeEventListener("scroll", handleScroll);
-		window.removeEventListener("resize", handleResize);
-	};
-});
+function handleResize() {
+	if (window.innerWidth >= MOBILE_BREAKPOINT) {
+		navOffset = 0;
+	}
+}
 
 // the tablet-only sidenav modal closes on navigation
-$effect(() => {
-	page.url.pathname;
+afterNavigate(() => {
 	sideNavModalOpen = false;
 });
 
@@ -211,6 +200,8 @@ function formatRelativeDate(timestamp: number) {
 	return dateTimeFormatter.format(date);
 }
 </script>
+
+<svelte:window onscroll={handleScroll} onresize={handleResize} />
 
 {#snippet siteLogoContent()}
 	<span class="siteLogoS">S</span>
