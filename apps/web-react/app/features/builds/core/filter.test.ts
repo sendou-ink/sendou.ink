@@ -1,10 +1,10 @@
-import { describe, expect, test } from "vitest";
-import type { Tables } from "~/db/tables";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
 	ModeShort,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import { describe, expect, test } from "vitest";
+import type { Tables } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { filterBuilds } from "./filter.server";
 

@@ -1,17 +1,17 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
 // To run this script drop the https://github.com/Leanny/splat3 repo into scripts/dicts/splat3
 import {
 	loadDamageRateInfo,

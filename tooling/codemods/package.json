@@ -1,0 +1,14 @@
+{
+	"name": "@sendou/codemods",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"scripts": {
+		"mono-split": "node src/mono-split.ts",
+		"manifest:generate": "node src/manifest.ts generate",
+		"manifest:report": "node src/manifest.ts report"
+	},
+	"devDependencies": {
+		"typescript": "7.0.2"
+	}
+}

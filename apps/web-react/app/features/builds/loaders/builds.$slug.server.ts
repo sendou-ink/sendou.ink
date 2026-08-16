@@ -1,7 +1,7 @@
+import { weaponIdToType } from "@sendou/in-game-lists/weapon-ids";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
-import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
 import * as BuildRepository from "../BuildRepository.server";

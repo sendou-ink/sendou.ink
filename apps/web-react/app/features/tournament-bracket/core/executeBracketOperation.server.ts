@@ -1,9 +1,9 @@
+import type * as Engine from "@sendou/tournament-engine";
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as BracketRepository from "../BracketRepository.server";
-import type * as Engine from "./engine";
 import type { Tournament } from "./Tournament";
 
 /**

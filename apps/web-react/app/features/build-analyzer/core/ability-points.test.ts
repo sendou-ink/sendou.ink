@@ -1,5 +1,5 @@
+import type { AbilityWithUnknown } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
-import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import { buildToAbilityPoints } from "./ability-points";
 
 describe("buildToAbilityPoints", () => {

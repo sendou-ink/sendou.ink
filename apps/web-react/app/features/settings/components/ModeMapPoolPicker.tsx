@@ -1,3 +1,5 @@
+import { shortStageName, stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Check } from "lucide-react";
 import * as React from "react";
@@ -5,8 +7,6 @@ import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
 import { ModeImage } from "~/components/Image";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
-import { shortStageName, stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import { stageImageUrl } from "~/utils/urls";
 import styles from "./ModeMapPoolPicker.module.css";

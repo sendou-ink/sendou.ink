@@ -1,3 +1,4 @@
+import type { BrandId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import {
 	BadgeCheck,
@@ -36,7 +37,6 @@ import { MutualFriends } from "~/features/user-page/components/MutualFriends";
 import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
-import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,

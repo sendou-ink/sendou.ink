@@ -1,11 +1,11 @@
+import * as Engine from "@sendou/tournament-engine";
+import type { MatchData as MatchType } from "@sendou/tournament-engine/types";
 import clsx from "clsx";
 import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import { useUser } from "~/features/auth/core/user";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import { useTournament } from "~/features/tournament/tournament-context";
-import * as Engine from "~/features/tournament-bracket/core/engine";
-import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import styles from "../../tournament-bracket.module.css";

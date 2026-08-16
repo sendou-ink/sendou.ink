@@ -1,9 +1,9 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import type { InferResult } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { peakXpOverallSql } from "~/utils/kysely.server";
 
 export type XRankPlacementInsertArgs = Omit<

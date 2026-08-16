@@ -1,5 +1,5 @@
+import * as Engine from "@sendou/tournament-engine";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
-import * as Engine from "~/features/tournament-bracket/core/engine";
 import { executeBracketOperation } from "~/features/tournament-bracket/core/executeBracketOperation.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";

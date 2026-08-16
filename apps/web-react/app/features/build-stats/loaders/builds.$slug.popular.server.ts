@@ -1,8 +1,8 @@
 import { cachified } from "@epic-web/cachified";
+import { weaponIdToType } from "@sendou/in-game-lists/weapon-ids";
 import type { LoaderFunctionArgs } from "react-router";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { getServerTFunction } from "~/modules/i18n/i18next.server";
-import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";

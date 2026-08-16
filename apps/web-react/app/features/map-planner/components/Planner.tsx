@@ -9,6 +9,20 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { snapCenterToCursor } from "@dnd-kit/modifiers";
+import { modesShort } from "@sendou/in-game-lists/modes";
+import { stageIds, stagesObj } from "@sendou/in-game-lists/stage-ids";
+import type {
+	MainWeaponId,
+	ModeShort,
+	SpecialWeaponId,
+	StageId,
+} from "@sendou/in-game-lists/types";
+import {
+	mainWeaponIds,
+	specialWeaponIds,
+	subWeaponIds,
+	weaponCategories,
+} from "@sendou/in-game-lists/weapon-ids";
 import {
 	AssetRecordType,
 	createShapeId,
@@ -37,20 +51,6 @@ import { getSpecialWeaponRange } from "~/features/comp-analyzer/core/special-wea
 import { getWeaponRange } from "~/features/comp-analyzer/core/weapon-range";
 import { useTheme } from "~/features/theme/core/provider";
 import type { LanguageCode } from "~/modules/i18n/config";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds, stagesObj } from "~/modules/in-game-lists/stage-ids";
-import type {
-	MainWeaponId,
-	ModeShort,
-	SpecialWeaponId,
-	StageId,
-} from "~/modules/in-game-lists/types";
-import {
-	mainWeaponIds,
-	specialWeaponIds,
-	subWeaponIds,
-	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
 import { logger } from "~/utils/logger";
 import {
 	mainWeaponImageUrl,

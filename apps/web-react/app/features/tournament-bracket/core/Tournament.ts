@@ -1,3 +1,6 @@
+import type { ModeShort } from "@sendou/in-game-lists/types";
+import { calculateTeamStatus } from "@sendou/tournament-engine/swiss/team-status";
+import type { MatchData } from "@sendou/tournament-engine/types";
 import { sub } from "date-fns";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
@@ -11,9 +14,7 @@ import {
 	tournamentInWeaponReportingWindow,
 	tournamentIsRanked,
 } from "~/features/tournament/tournament-utils";
-import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import { hasPermission } from "~/modules/permissions/utils";
 import {
 	databaseTimestampToDate,
@@ -24,7 +25,6 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
-import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
 import type { TournamentData } from "./Tournament.server";

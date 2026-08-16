@@ -1,8 +1,8 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as XRankPlacementRepository from "./XRankPlacementRepository.server";
 
 const SPLOOSH_O_MATIC: MainWeaponId = 0;

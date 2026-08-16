@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { add, sub } from "date-fns";
 import { useTranslation } from "react-i18next";
@@ -17,7 +18,6 @@ import { TIERS } from "~/features/mmr/mmr-constants";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";

@@ -1,3 +1,14 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { filterWeapon } from "@sendou/in-game-lists/utils";
+import {
+	mainWeaponIds,
+	nonDamagingSpecialWeaponIds,
+	SPLAT_BOMB_ID,
+	specialWeaponIds,
+	subWeaponIds,
+	TRIZOOKA_ID,
+	weaponCategories,
+} from "@sendou/in-game-lists/weapon-ids";
 import type { TFunction } from "i18next";
 import * as React from "react";
 import type { Key } from "react-aria-components";
@@ -9,17 +20,6 @@ import {
 } from "~/components/elements/Select";
 import { Image, WeaponImage } from "~/components/Image";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { filterWeapon } from "~/modules/in-game-lists/utils";
-import {
-	mainWeaponIds,
-	nonDamagingSpecialWeaponIds,
-	SPLAT_BOMB_ID,
-	specialWeaponIds,
-	subWeaponIds,
-	TRIZOOKA_ID,
-	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
 import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,

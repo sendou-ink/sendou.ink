@@ -15,7 +15,7 @@
  * renders per stage and reports only the winning tile's stage; mode comes
  * from map-start/scoreboard header instead.
  */
-import type { StageId } from "~/modules/in-game-lists/types";
+import type { StageId } from "@sendou/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import type { FrameData } from "../../image";
 

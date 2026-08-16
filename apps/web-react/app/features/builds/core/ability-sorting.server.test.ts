@@ -1,5 +1,5 @@
+import type { BuildAbilitiesTuple } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
-import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { sortAbilities } from "./ability-sorting.server";
 
 describe("sortAbilities()", () => {

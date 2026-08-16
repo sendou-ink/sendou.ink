@@ -1,8 +1,7 @@
 import { beforeEach, describe, expect, test } from "vitest";
-import type { TournamentRoundMaps } from "~/db/tables-json";
 import { create } from "../create";
 import * as Engine from "../index";
-import type { BracketData, MatchData } from "../types";
+import type { BracketData, MatchData, TournamentRoundMaps } from "../types";
 
 const TEAM_ONE = 1;
 const TEAM_TWO = 2;

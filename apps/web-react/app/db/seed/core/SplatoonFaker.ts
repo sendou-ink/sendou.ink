@@ -1,25 +1,25 @@
-import {
-	IN_GAME_NAME,
-	sanitizeInGameName,
-} from "~/features/user-page/in-game-name";
-import { abilities } from "~/modules/in-game-lists/abilities";
+import { abilities } from "@sendou/in-game-lists/abilities";
 import {
 	clothesGearIds,
 	headGearIds,
 	shoesGearIds,
-} from "~/modules/in-game-lists/gear-ids";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+} from "@sendou/in-game-lists/gear-ids";
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeWithStage,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import {
 	canonicalWeaponSplId,
 	mainWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import {
+	IN_GAME_NAME,
+	sanitizeInGameName,
+} from "~/features/user-page/in-game-name";
 import invariant from "~/utils/invariant";
 import { faker } from "./faker";
 

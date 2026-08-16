@@ -1,5 +1,5 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import { z } from "zod";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { modeShort, numericEnum } from "~/utils/zod";

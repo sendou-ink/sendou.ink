@@ -16,7 +16,7 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import { toAbilityWithUnknown } from "../../../scanner-types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import {

@@ -1,13 +1,13 @@
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import type { NotNull, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { assertUnreachable } from "~/utils/types";
 

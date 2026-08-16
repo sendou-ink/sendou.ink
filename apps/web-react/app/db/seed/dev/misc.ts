@@ -1,8 +1,8 @@
+import type { MainWeaponId, ModeShort } from "@sendou/in-game-lists/types";
 import { sub } from "date-fns";
 import { Config } from "~/config";
 import type { Tables } from "~/db/tables";
 import type { Notification } from "~/features/notifications/notifications-types";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import {
 	getArtFilename,
 	SEED_ART_URLS,

@@ -1,4 +1,4 @@
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { modesShort } from "@sendou/in-game-lists/modes";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import type { SQGroup } from "./core/SendouQ.server";

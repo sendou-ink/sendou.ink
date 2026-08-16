@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { tournamentTeamPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 

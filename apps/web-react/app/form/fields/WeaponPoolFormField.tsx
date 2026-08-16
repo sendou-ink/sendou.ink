@@ -14,6 +14,8 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { weaponIdToArrayWithAlts } from "@sendou/in-game-lists/weapon-ids";
 import clsx from "clsx";
 import { Star, Trash } from "lucide-react";
 import * as React from "react";
@@ -21,8 +23,6 @@ import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { WeaponImage } from "~/components/Image";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
 import type { FormFieldProps } from "../types";
 import { FormFieldWrapper } from "./FormFieldWrapper";
 

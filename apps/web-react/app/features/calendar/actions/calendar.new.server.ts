@@ -1,3 +1,4 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
@@ -14,7 +15,6 @@ import {
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { parseFormDataWithImages } from "~/form/parse.server";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import {
 	requirePermission,
 	requireRole,

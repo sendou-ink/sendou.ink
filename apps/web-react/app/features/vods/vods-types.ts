@@ -1,6 +1,6 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import type { z } from "zod";
 import type { Tables } from "~/db/tables";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { videoSchema } from "./vods-schemas";
 
 export type VideoBeingAdded = z.infer<typeof videoSchema>;

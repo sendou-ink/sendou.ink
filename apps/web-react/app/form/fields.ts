@@ -1,10 +1,10 @@
+import { canonicalWeaponSplId } from "@sendou/in-game-lists/weapon-ids";
 import * as R from "remeda";
 import { z } from "zod";
 import {
 	IN_GAME_NAME_MAX_LENGTH,
 	inGameNameIsValid,
 } from "~/features/user-page/in-game-name";
-import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import {
 	date,
 	falsyToNull,

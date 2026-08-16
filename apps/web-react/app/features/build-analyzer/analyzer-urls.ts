@@ -2,7 +2,7 @@ import type {
 	Ability,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import { analyzerSearchParams } from "./analyzer-search-params";
 
 export const analyzerPage = (args?: {

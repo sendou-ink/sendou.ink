@@ -1,4 +1,4 @@
-import { assertUnreachable } from "~/utils/types";
+import { assertUnreachable } from "./assert";
 import type { MainWeaponId, SpecialWeaponId, SubWeaponId } from "./types";
 
 export const weaponCategories = [

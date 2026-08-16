@@ -1,3 +1,5 @@
+import { gamesShort, versusShort } from "@sendou/in-game-lists/games";
+import { modesShortWithSpecial } from "@sendou/in-game-lists/modes";
 import { Star, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -19,8 +21,6 @@ import {
 	CheckboxGroupFormField,
 	RadioGroupFormField,
 } from "~/form/fields/InputGroupFormField";
-import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
-import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import * as CalendarEvent from "../core/CalendarEvent";
 import type { CalendarLoaderData } from "../loaders/calendar.server";

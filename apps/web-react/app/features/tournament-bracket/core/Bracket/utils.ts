@@ -1,5 +1,5 @@
+import type { BracketData } from "@sendou/tournament-engine/types";
 import * as R from "remeda";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /**
  * Maps each roundId to the cumulative number of teams eliminated by the end of

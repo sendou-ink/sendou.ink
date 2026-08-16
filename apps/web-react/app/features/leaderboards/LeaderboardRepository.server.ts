@@ -1,13 +1,13 @@
+import type {
+	MainWeaponId,
+	RankedModeShort,
+} from "@sendou/in-game-lists/types";
 import type { InferResult } from "kysely";
 import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import type {
-	MainWeaponId,
-	RankedModeShort,
-} from "~/modules/in-game-lists/types";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,

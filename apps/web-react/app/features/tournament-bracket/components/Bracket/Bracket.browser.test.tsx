@@ -1,8 +1,8 @@
+import type { BracketData } from "@sendou/tournament-engine/types";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import styles from "~/features/tournament-bracket/components/Bracket/bracket.module.css";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
 import { Bracket } from "./index";

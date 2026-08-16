@@ -1,9 +1,9 @@
+import type { Ability, MainWeaponId } from "@sendou/in-game-lists/types";
 import type { LoaderFunctionArgs } from "react-router";
 import type { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
-import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SearchParamsValues } from "~/modules/search-params/search-params";
 import type { newBuildBaseSchema } from "../user-page-schemas";
 import { userBuildsNewSearchParams } from "../user-page-search-params";

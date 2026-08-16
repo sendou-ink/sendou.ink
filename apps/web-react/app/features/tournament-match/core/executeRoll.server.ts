@@ -1,7 +1,7 @@
+import type { ModeWithStage } from "@sendou/in-game-lists/types";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { seededRandom } from "~/utils/random";
 import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";

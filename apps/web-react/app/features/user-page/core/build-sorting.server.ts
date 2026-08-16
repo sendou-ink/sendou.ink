@@ -1,8 +1,8 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { weaponIdToBaseWeaponId } from "@sendou/in-game-lists/weapon-ids";
 import type * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { BuildSort } from "~/features/user-page/user-page-constants";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
 interface SortBuildsArgs {

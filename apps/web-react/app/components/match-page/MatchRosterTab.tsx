@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Armchair, Edit } from "lucide-react";
 import { useState } from "react";
@@ -13,7 +14,6 @@ import {
 	UserCard,
 	useUserCardData,
 } from "~/features/user-card/components/UserCard";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import type { CommonUser } from "~/utils/kysely.server";
 import { tierImageUrl } from "~/utils/urls";

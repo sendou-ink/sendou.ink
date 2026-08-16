@@ -1,9 +1,9 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import type { Side } from "@sendou/tournament-engine/types";
 import { type Insertable, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
-import type { Side } from "~/features/tournament-bracket/core/engine/types";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";

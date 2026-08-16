@@ -1,4 +1,4 @@
-import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
+import type { Ability, MainWeaponId } from "@sendou/in-game-lists/types";
 
 export interface BuildWeaponWithTop500Info {
 	weaponSplId: MainWeaponId;

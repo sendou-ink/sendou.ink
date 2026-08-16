@@ -1,7 +1,7 @@
+import type { BuildAbilitiesTuple } from "@sendou/in-game-lists/types";
 import { subDays } from "date-fns";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
-import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { BuildFormPage } from "./pages/builds/build-form-page";
 import { BuildsPage } from "./pages/builds/builds-page";

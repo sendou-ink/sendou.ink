@@ -26,6 +26,11 @@ export type MainWeaponId = (typeof mainWeaponIds)[number];
 export type SubWeaponId = (typeof subWeaponIds)[number];
 export type SpecialWeaponId = (typeof specialWeaponIds)[number];
 
+export type AnyWeapon =
+	| { type: "MAIN"; id: MainWeaponId }
+	| { type: "SUB"; id: SubWeaponId }
+	| { type: "SPECIAL"; id: SpecialWeaponId };
+
 export type BuildAbilitiesTuple = [
 	head: [main: Ability, s1: Ability, s2: Ability, s3: Ability],
 	clothes: [main: Ability, s1: Ability, s2: Ability, s3: Ability],

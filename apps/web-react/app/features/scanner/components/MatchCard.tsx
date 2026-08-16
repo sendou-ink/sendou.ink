@@ -5,6 +5,7 @@
  * so the raw per-event view stays one click away.
  */
 
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import type * as React from "react";
@@ -14,7 +15,6 @@ import { ModeImage, WeaponImage } from "~/components/Image";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
 import type { IngestSkipReason } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";

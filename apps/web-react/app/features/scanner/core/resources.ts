@@ -9,12 +9,12 @@
  * builds alone are ~7k resizes) dominated startup.
  */
 
-import { abilities as abilityList } from "~/modules/in-game-lists/abilities";
+import { abilities as abilityList } from "@sendou/in-game-lists/abilities";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
 import { prepareAbilityTemplates } from "./detectors/death/abilities";
 import { BURST_ICON_TEMPLATE_SIZES } from "./detectors/death/rois";
 import { prepareMinimapAbilityTemplates } from "./detectors/minimap/abilities";

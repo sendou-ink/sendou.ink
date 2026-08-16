@@ -1,11 +1,11 @@
-import type { TierName } from "~/features/mmr/mmr-constants";
-import { compareTwoTiers } from "~/features/mmr/mmr-utils";
-import type { TieredSkill } from "~/features/mmr/tiered.server";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import {
 	mainWeaponIds,
 	weaponIdToBaseWeaponId,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import type { TierName } from "~/features/mmr/mmr-constants";
+import { compareTwoTiers } from "~/features/mmr/mmr-utils";
+import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { Unpacked } from "~/utils/types";
 import type * as LFGRepository from "../LFGRepository.server";
 import type { LFGFilterValues } from "../lfg-types";

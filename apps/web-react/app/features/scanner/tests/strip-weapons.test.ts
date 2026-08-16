@@ -10,7 +10,7 @@
  */
 
 import assert from "node:assert/strict";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { loadOpenCV } from "../core/cv";
 import { createObjectiveDetector } from "../core/detectors/objective/index";
 import {

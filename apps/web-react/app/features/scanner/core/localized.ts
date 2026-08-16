@@ -7,7 +7,7 @@
  * languages — which keeps the cross product from inventing pairings no UI
  * would show.
  */
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { ScannerLobby } from "../scanner-types";
 import {
 	LANGUAGE_ENTRIES,

@@ -1,11 +1,11 @@
 import * as R from "remeda";
-import type { TournamentRoundMaps } from "~/db/tables-json";
 import type {
 	BracketData,
 	MatchData,
 	MatchResults,
 	RoundData,
 	Side,
+	TournamentRoundMaps,
 } from "./types";
 
 /**

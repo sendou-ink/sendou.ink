@@ -1,3 +1,8 @@
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import {
 	ChartColumnBig,
@@ -19,11 +24,6 @@ import {
 import { InfoPopover } from "~/components/InfoPopover";
 import { translateDamageReceiver } from "~/features/object-damage-calculator/calculator-constants";
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
-import type {
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mySlugify, weaponParamsPage } from "~/utils/urls";
 import { getParamExplanation } from "../core/param-explanations";

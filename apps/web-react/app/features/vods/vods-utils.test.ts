@@ -1,9 +1,9 @@
-import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { dayMonthYearToDatabaseTimestamp } from "~/utils/dates";
 import type { Vod } from "./vods-types";
 import {

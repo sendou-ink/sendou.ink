@@ -1,15 +1,15 @@
 import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
+import type {
 	ScannerMatch,
 	ScannerMatchObjective,
 	ScannerMatchPlayerStatus,
 } from "~/features/scanner/core/scanner-match";
 import type { ScannerLobby } from "~/features/scanner/scanner-types";
-import type {
-	AbilityWithUnknown,
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import * as Matches from "./Matches";
 

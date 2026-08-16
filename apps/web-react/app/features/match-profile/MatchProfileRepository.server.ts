@@ -1,3 +1,4 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DBBoolean, Tables } from "~/db/tables";
@@ -5,7 +6,6 @@ import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import { matchProfileWeapons } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 

@@ -1,10 +1,8 @@
-import { nanoid } from "nanoid";
-import * as R from "remeda";
 import type {
 	Ability,
 	MainWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import {
 	ANGLE_SHOOTER_ID,
 	AUTO_BOMB_ID,
@@ -21,7 +19,9 @@ import {
 	subWeaponIds,
 	TORPEDO_ID,
 	ZIPCASTER_ID,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { nanoid } from "nanoid";
+import * as R from "remeda";
 import invariant from "~/utils/invariant";
 import { cutToNDecimalPlaces, roundToNDecimalPlaces } from "~/utils/number";
 import { assertUnreachable } from "~/utils/types";

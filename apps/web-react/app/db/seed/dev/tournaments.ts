@@ -1,11 +1,11 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { sub } from "date-fns";
 import type { TournamentSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";

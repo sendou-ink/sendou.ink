@@ -1,3 +1,4 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
 import { z } from "zod";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
@@ -18,7 +19,6 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { id } from "~/utils/zod";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import {

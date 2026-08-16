@@ -1,6 +1,6 @@
 import { expect, type Page } from "@playwright/test";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { adminRegistrationFormSchema } from "~/features/tournament-admin/tournament-admin-registration-schemas";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	tournamentAdminRegistrationEditPage,
 	tournamentAdminRegistrationPage,

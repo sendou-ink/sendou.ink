@@ -9,12 +9,13 @@
  * the other way), so zod never enters the worker bundle; runtime validation
  * happens at the boundaries (ingest action, prefill loader).
  */
+
+import { abilities } from "@sendou/in-game-lists/abilities";
+import { modesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { Ability } from "@sendou/in-game-lists/types";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
-import { abilities } from "~/modules/in-game-lists/abilities";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { Ability } from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,

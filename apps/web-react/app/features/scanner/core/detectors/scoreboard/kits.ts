@@ -6,11 +6,9 @@
  * near-tied weapon icon matches be disambiguated by kit. The minimap's
  * sub-tile disambiguation (assets/cv/sub-weapons) reads `sub` the same way.
  */
+
+import type { SpecialWeaponId, SubWeaponId } from "@sendou/in-game-lists/types";
 import { weaponParams } from "~/features/build-analyzer/data/weapon-params";
-import type {
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
 
 export interface WeaponKit {
 	/** sendou.ink sub weapon id */

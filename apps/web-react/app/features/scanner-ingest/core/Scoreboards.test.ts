@@ -1,3 +1,9 @@
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
 import type {
 	ScannerMatch,
@@ -6,12 +12,6 @@ import type {
 	ScannerMatchPlayerStatus,
 } from "~/features/scanner/core/scanner-match";
 import type { ScannerLobby } from "~/features/scanner/scanner-types";
-import type {
-	AbilityWithUnknown,
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import * as Scoreboards from "./Scoreboards";
 import { NAMES } from "./tests/fixtures";
 

@@ -1,8 +1,8 @@
+import * as Swiss from "@sendou/tournament-engine/swiss/team-status";
 import { useTranslation } from "react-i18next";
 import { FormMessage } from "~/components/FormMessage";
 import { InfoPopover } from "~/components/InfoPopover";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import { FormField } from "~/form/FormField";
 import { useFormFieldContext, useFormValue } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";

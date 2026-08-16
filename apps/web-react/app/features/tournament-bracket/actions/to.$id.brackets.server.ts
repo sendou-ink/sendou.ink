@@ -1,3 +1,4 @@
+import * as Engine from "@sendou/tournament-engine";
 import type { ActionFunction } from "react-router";
 import type { PreparedMaps } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -20,7 +21,6 @@ import {
 import { assertUnreachable } from "~/utils/types";
 import * as BracketRepository from "../BracketRepository.server";
 import * as AbDivisions from "../core/AbDivisions";
-import * as Engine from "../core/engine";
 import * as PreparedMapsUtils from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
 import {

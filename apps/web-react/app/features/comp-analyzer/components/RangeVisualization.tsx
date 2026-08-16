@@ -1,7 +1,7 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { WeaponImage } from "~/components/Image";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	BENCHMARK_WEAPON_IDS,
 	getBenchmarkTrajectories,

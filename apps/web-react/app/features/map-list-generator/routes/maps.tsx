@@ -1,3 +1,5 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeWithStage } from "@sendou/in-game-lists/types";
 import { Check, Clipboard } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -9,8 +11,6 @@ import { Main } from "~/components/Main";
 import { MapPoolSelector, MapPoolStages } from "~/components/MapPoolSelector";
 import type { Tables } from "~/db/tables";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import { metaTags } from "~/utils/remix";

@@ -1,14 +1,8 @@
-import { z } from "zod";
-import {
-	DAMAGE_TYPE,
-	possibleApValues,
-} from "~/features/build-analyzer/analyzer-constants";
-import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import {
 	mainWeaponIds,
 	nonBombSubWeaponIds,
@@ -16,7 +10,13 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { z } from "zod";
+import {
+	DAMAGE_TYPE,
+	possibleApValues,
+} from "~/features/build-analyzer/analyzer-constants";
+import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 

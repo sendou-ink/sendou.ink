@@ -1,11 +1,11 @@
+import { gamesShort, versusShort } from "@sendou/in-game-lists/games";
+import { modesShortWithSpecial } from "@sendou/in-game-lists/modes";
 import { z } from "zod";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import {
 	BEST_TIER_NUMBER,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
-import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
-import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { gamesShortSchema, id, modeShortWithSpecial } from "~/utils/zod";
 import { CALENDAR_EVENT } from "./calendar-constants";
 

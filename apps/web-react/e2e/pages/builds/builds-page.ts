@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { BUILDS_PAGE } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 

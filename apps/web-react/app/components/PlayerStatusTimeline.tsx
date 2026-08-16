@@ -8,8 +8,9 @@
  * observed, so bands never bridge across one (the state there is unknown,
  * not continued).
  */
+
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { useTranslation } from "react-i18next";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import { Image, WeaponImage } from "./Image";
 import {

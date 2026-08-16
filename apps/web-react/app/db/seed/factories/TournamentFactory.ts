@@ -1,3 +1,4 @@
+import * as Engine from "@sendou/tournament-engine";
 import * as R from "remeda";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -6,7 +7,6 @@ import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
-import * as Engine from "~/features/tournament-bracket/core/engine";
 import { finalizeTournament } from "~/features/tournament-bracket/core/finalizeTournament.server";
 import {
 	clearTournamentDataCache,

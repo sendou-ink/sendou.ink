@@ -1,8 +1,8 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { RankedModeShort } from "@sendou/in-game-lists/types";
 import { z } from "zod";
 import gameMisc from "~/../locales/en/game-misc.json";
 import type { TablesInsertable } from "~/db/tables";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { SPLATOON3_INK_SCHEDULES_URL } from "~/utils/urls";
 
 const STAGE_NAME_TO_ID = Object.fromEntries(

@@ -1,8 +1,8 @@
+import type { BuildAbilitiesTuple } from "@sendou/in-game-lists/types";
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import { parseFormData } from "~/form/parse.server";
-import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import { toDBBoolean } from "~/utils/sql";
 import { userBuildsPage } from "~/utils/urls";
 import { newBuildSchemaServer } from "../user-page-schemas.server";

@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
@@ -24,7 +25,6 @@ import { searchSearchParams } from "~/features/search/search-search-params";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import { useDebounce } from "~/hooks/useDebounce";
 import { useHydrated } from "~/hooks/useHydrated";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import {

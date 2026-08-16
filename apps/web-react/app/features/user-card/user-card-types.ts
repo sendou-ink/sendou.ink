@@ -1,7 +1,7 @@
+import type { StageId } from "@sendou/in-game-lists/types";
 import type { Tables } from "~/db/tables";
 import type { CustomTheme } from "~/db/tables-json";
 import type { XRankPlacementRegion } from "~/features/top-search/top-search-types";
-import type { StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TieredSkill } from "../mmr/tiered.server";
 

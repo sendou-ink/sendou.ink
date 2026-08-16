@@ -1,8 +1,8 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import type { RankedModeShort } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { unwrap, unwrapErr } from "~/utils/result";
-import { rankedModesShort } from "../in-game-lists/modes";
-import type { RankedModeShort } from "../in-game-lists/types";
 import { generateBalancedMapList } from "./balanced-map-list";
 import { DEFAULT_MAP_POOL } from "./constants";
 import type { TournamentMaplistInput } from "./types";

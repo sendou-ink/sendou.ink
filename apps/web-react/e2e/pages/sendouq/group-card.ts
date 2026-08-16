@@ -1,5 +1,5 @@
 import type { Locator } from "@playwright/test";
-import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { ModeShort } from "@sendou/in-game-lists/types";
 import { modalClickConfirmButton, submit } from "../../helpers/playwright";
 import { UserCard } from "../user/user-card";
 

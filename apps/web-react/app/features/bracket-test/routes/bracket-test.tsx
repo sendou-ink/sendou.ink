@@ -1,3 +1,5 @@
+import * as Engine from "@sendou/tournament-engine";
+import type { BracketData } from "@sendou/tournament-engine/types";
 import { useState } from "react";
 import { Outlet } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -8,8 +10,6 @@ import { Main } from "~/components/Main";
 import type { Tables } from "~/db/tables";
 import { TournamentProvider } from "~/features/tournament/tournament-context";
 import type { Bracket as BracketType } from "~/features/tournament-bracket/core/Bracket";
-import * as Engine from "~/features/tournament-bracket/core/engine";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type { Tournament as TournamentClass } from "~/features/tournament-bracket/core/Tournament";
 import styles from "../bracket-test.module.css";
 

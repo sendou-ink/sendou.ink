@@ -1,10 +1,10 @@
+import { gamesShort, versusShort } from "@sendou/in-game-lists/games";
+import { modesShortWithSpecial } from "@sendou/in-game-lists/modes";
 import { z } from "zod";
 import {
 	BEST_TIER_NUMBER,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
-import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
-import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import {

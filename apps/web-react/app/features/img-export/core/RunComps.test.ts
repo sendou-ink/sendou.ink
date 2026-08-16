@@ -1,5 +1,5 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as RunComps from "./RunComps";
 
 const SHOOTER = 40 as MainWeaponId;

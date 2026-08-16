@@ -1,13 +1,13 @@
-import clsx from "clsx";
-import { useTranslation } from "react-i18next";
-import type { TierName } from "~/features/mmr/mmr-constants";
 import type {
 	MainWeaponId,
 	ModeShortWithSpecial,
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import clsx from "clsx";
+import { useTranslation } from "react-i18next";
+import type { TierName } from "~/features/mmr/mmr-constants";
 import {
 	mainWeaponImageUrl,
 	modeImageUrl,

@@ -7,6 +7,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { actAs } from "~/db/seed/core/actAs";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReportedWeaponFactory from "~/db/seed/factories/SQReportedWeaponFactory";
@@ -16,7 +17,6 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userIdsToIdentifier } from "~/features/mmr/mmr-utils";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as LeaderboardRepository from "./LeaderboardRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "./leaderboards-constants";

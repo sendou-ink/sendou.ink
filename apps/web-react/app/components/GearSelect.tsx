@@ -1,3 +1,10 @@
+import { brandIds } from "@sendou/in-game-lists/brand-ids";
+import {
+	clothesGearBrandGrouped,
+	headGearBrandGrouped,
+	shoesGearBrandGrouped,
+} from "@sendou/in-game-lists/gear-ids";
+import type { GearType } from "@sendou/in-game-lists/types";
 import { useTranslation } from "react-i18next";
 import {
 	SendouSelect,
@@ -5,13 +12,6 @@ import {
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
 import { Image } from "~/components/Image";
-import { brandIds } from "~/modules/in-game-lists/brand-ids";
-import {
-	clothesGearBrandGrouped,
-	headGearBrandGrouped,
-	shoesGearBrandGrouped,
-} from "~/modules/in-game-lists/gear-ids";
-import type { GearType } from "~/modules/in-game-lists/types";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";

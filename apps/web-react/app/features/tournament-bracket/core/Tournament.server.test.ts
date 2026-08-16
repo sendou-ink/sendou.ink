@@ -1,5 +1,5 @@
+import * as Engine from "@sendou/tournament-engine";
 import { describe, expect, test } from "vitest";
-import * as Engine from "./engine";
 import { serializeBracket } from "./Tournament.server";
 import { testTournament } from "./tests/test-utils";
 

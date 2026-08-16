@@ -1,10 +1,10 @@
-import type { MetaFunction } from "react-router";
-import { useLoaderData } from "react-router";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import type { MetaFunction } from "react-router";
+import { useLoaderData } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";

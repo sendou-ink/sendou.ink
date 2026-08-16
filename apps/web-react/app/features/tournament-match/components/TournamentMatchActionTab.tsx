@@ -1,3 +1,4 @@
+import { isSetOverByScore } from "@sendou/tournament-engine";
 import { Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -8,7 +9,6 @@ import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponRepo
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useActionSubmit } from "~/hooks/useActionSubmit";

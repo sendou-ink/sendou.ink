@@ -1,8 +1,8 @@
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
 import {
 	mainWeaponIds,
 	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
 
 export const MATCHES_COUNT_NEEDED_FOR_LEADERBOARD = 7;
 export const DEFAULT_LEADERBOARD_MAX_SIZE = 500;

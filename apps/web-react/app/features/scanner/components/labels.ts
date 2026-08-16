@@ -11,7 +11,7 @@ import type {
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import gameMisc from "../../../../locales/en/game-misc.json";
 import {
 	ALL_WEAPON_ENTRIES,

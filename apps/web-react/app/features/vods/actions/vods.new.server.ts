@@ -1,9 +1,9 @@
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import { type ActionFunction, redirect } from "react-router";
 import type { z } from "zod";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import { parseFormData } from "~/form/parse.server";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { vodVideoPage } from "~/utils/urls";
 import * as VodRepository from "../VodRepository.server";

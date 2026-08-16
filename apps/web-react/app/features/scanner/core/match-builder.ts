@@ -10,7 +10,7 @@
  * `ingestSkipReasons` filters those. Deaths are harvested onto player rows
  * as enemy builds (ability-harvest.ts).
  */
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import { harvestAbilities } from "./ability-harvest";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import {

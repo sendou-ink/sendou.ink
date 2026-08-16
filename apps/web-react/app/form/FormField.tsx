@@ -1,6 +1,6 @@
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import * as React from "react";
 import type { z } from "zod";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { BadgesFormField } from "./fields/BadgesFormField";

@@ -5,7 +5,7 @@
  * mapped to the sendou.ink id it means (core/localized.ts derives the
  * flattened match sets detectors snap OCR output against).
  */
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { ScannerLobby } from "../scanner-types";
 
 export interface LocalizedLobby {

@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Mic, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
@@ -22,7 +23,6 @@ import { SendouForm } from "~/form/SendouForm";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
 import {
 	lookingSchema,

@@ -1,7 +1,7 @@
+import type { AbilityWithUnknown } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import React from "react";
 import { useTranslation } from "react-i18next";
-import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./Ability.module.css";
 import { Image } from "./Image";

@@ -1,17 +1,17 @@
-import type { LoaderFunctionArgs } from "react-router";
-import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
-import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import {
 	specialWeaponIds,
 	subWeaponIds,
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import type { LoaderFunctionArgs } from "react-router";
+import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
+import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import {
 	specialWeaponNameSlugToId,
 	subWeaponNameSlugToId,

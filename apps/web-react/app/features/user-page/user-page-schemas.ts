@@ -1,3 +1,8 @@
+import {
+	clothesGearIds,
+	headGearIds,
+	shoesGearIds,
+} from "@sendou/in-game-lists/gear-ids";
 import { z } from "zod";
 import { BADGE } from "~/features/badges/badges-constants";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
@@ -23,11 +28,6 @@ import {
 	trophies,
 	weaponPool,
 } from "~/form/fields";
-import {
-	clothesGearIds,
-	headGearIds,
-	shoesGearIds,
-} from "~/modules/in-game-lists/gear-ids";
 import { rawSensToString } from "~/utils/strings";
 import { isCustomUrl } from "~/utils/urls";
 import {

@@ -1,3 +1,8 @@
+import {
+	BIG_BUBBLER_ID,
+	CRAB_TANK_ID,
+	SPLASH_WALL_ID,
+} from "@sendou/in-game-lists/weapon-ids";
 import type {
 	AbilityPoints,
 	SpecialWeaponParams,
@@ -13,11 +18,6 @@ import {
 	mainWeaponParams,
 	weaponParams,
 } from "~/features/build-analyzer/core/utils";
-import {
-	BIG_BUBBLER_ID,
-	CRAB_TANK_ID,
-	SPLASH_WALL_ID,
-} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { HitPoints } from "../calculator-types";
 

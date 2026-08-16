@@ -1,4 +1,4 @@
-import type { GearType } from "~/modules/in-game-lists/types";
+import type { GearType } from "@sendou/in-game-lists/types";
 import { assertUnreachable } from "./types";
 
 export function inGameNameWithoutDiscriminator(inGameName: string) {

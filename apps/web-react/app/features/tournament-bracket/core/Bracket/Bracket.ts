@@ -1,15 +1,12 @@
+import * as Engine from "@sendou/tournament-engine";
+import type { BracketData, RoundData } from "@sendou/tournament-engine/types";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import type {
-	BracketData,
-	RoundData,
-} from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import * as AbDivisions from "../AbDivisions";
-import * as Engine from "../engine";
 import * as Progression from "../Progression";
 import type { OptionalIdObject, Tournament } from "../Tournament";
 import type { TournamentDataTeam } from "../Tournament.server";

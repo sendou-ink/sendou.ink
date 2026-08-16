@@ -3,6 +3,12 @@
  * ingest wrapper (act), page-loader wrappers and row fetchers (assert).
  * Cases import only from here, plus vitest. See README.md for the design.
  */
+
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import { addHours, addMinutes, subDays, subMinutes } from "date-fns";
 import * as R from "remeda";
 import { afterAll, beforeAll } from "vitest";
@@ -24,11 +30,6 @@ import {
 	type TournamentMatchLoaderData,
 	loader as tournamentMatchLoader,
 } from "~/features/tournament-match/loaders/to.$id.matches.$mid.server";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { wrappedAction, wrappedLoader } from "~/utils/Test";

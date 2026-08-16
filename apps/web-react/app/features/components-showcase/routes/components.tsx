@@ -1,4 +1,5 @@
 import { parseDate } from "@internationalized/date";
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
@@ -74,7 +75,6 @@ import { UserCard } from "~/features/user-card/components/UserCard";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import styles from "../components-showcase.module.css";
 import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";

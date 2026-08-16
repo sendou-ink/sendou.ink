@@ -1,8 +1,8 @@
 import type { Page } from "@playwright/test";
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 
 /** Stage the counterpick picking starts from, leaving the lowest ids to tiebreakers. */
 const FIRST_COUNTERPICK_STAGE_ID = 5;

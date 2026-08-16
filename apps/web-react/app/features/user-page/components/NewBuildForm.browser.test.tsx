@@ -1,8 +1,8 @@
+import type { BuildAbilitiesTupleWithUnknown } from "@sendou/in-game-lists/types";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
 import { NewBuildForm } from "./NewBuildForm";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;

@@ -1,3 +1,4 @@
+import type { RankedModeShort } from "@sendou/in-game-lists/types";
 import { Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +20,6 @@ import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import type { RankedModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";

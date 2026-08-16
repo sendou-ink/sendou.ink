@@ -19,6 +19,15 @@
  * Usage: pnpm scanner:status-audit <events.csv> [--all]
  */
 import { readFileSync } from "node:fs";
+import { modesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { statusSpans } from "../../app/components/PlayerStatusTimeline";
 import { formatTime } from "../../app/features/scanner/components/format";
 import {
@@ -74,15 +83,6 @@ import type {
 	ScannerMatchPlayerStatusSample,
 } from "../../app/features/scanner/core/scanner-match";
 import type { ScannerLobby } from "../../app/features/scanner/scanner-types";
-import { modesShort } from "../../app/modules/in-game-lists/modes";
-import { stageIds } from "../../app/modules/in-game-lists/stage-ids";
-import type {
-	AbilityWithUnknown,
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "../../app/modules/in-game-lists/types";
-import { mainWeaponIds } from "../../app/modules/in-game-lists/weapon-ids";
 
 /** Mirrors PlayerStatusTimeline's MAX_BRIDGE_SECONDS: longer sample gaps render as unobserved. */
 const OBSERVATION_GAP_SECONDS = 15;

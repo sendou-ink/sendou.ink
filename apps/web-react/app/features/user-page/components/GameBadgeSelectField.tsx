@@ -1,10 +1,10 @@
-import { useState } from "react";
-import { useTranslation } from "react-i18next";
-import type { CustomFieldRenderProps } from "~/form/FormField";
 import {
 	GAME_BADGE_IDS,
 	type GameBadgeId,
-} from "~/modules/in-game-lists/game-badge-ids";
+} from "@sendou/in-game-lists/game-badge-ids";
+import { useState } from "react";
+import { useTranslation } from "react-i18next";
+import type { CustomFieldRenderProps } from "~/form/FormField";
 import { gameBadgeUrl } from "~/utils/urls";
 import styles from "./GameBadgeSelectField.module.css";
 

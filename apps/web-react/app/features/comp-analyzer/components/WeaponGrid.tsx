@@ -1,18 +1,18 @@
-import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
-import { Label } from "~/components/Label";
-import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 	weaponCategories,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { useTranslation } from "react-i18next";
+import { Image, WeaponImage } from "~/components/Image";
+import { Label } from "~/components/Label";
+import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import {
 	specialWeaponImageUrl,
 	subWeaponImageUrl,

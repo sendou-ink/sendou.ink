@@ -1,12 +1,12 @@
-import { EMPTY_BUILD } from "~/features/builds/builds-constants";
-import { abilities } from "~/modules/in-game-lists/abilities";
+import { abilities } from "@sendou/in-game-lists/abilities";
 import type {
 	Ability,
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
-} from "~/modules/in-game-lists/types";
-import { isAbility } from "~/modules/in-game-lists/utils";
+} from "@sendou/in-game-lists/types";
+import { isAbility } from "@sendou/in-game-lists/utils";
+import { EMPTY_BUILD } from "~/features/builds/builds-constants";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { analyzerSearchParams } from "./analyzer-search-params";
 import type { SpecialEffectType } from "./analyzer-types";

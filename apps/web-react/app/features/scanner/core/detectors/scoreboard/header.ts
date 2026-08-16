@@ -8,7 +8,7 @@
  * line and snapped against every language's mode × stage combos
  * (core/localized.ts) — reported values are always sendou.ink ids.
  */
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import { getCV, type Mat } from "../../cv";
 import {

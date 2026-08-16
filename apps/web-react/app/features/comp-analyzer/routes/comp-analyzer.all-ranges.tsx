@@ -1,9 +1,9 @@
-import { Main } from "~/components/Main";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import {
 	weaponCategories,
 	weaponIdToType,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { Main } from "~/components/Main";
 import { RangeVisualization } from "../components/RangeVisualization";
 import { SpecialRangeVisualization } from "../components/SpecialRangeVisualization";
 

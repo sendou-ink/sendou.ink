@@ -5,6 +5,19 @@
  */
 
 import type {
+	Ability,
+	BuildAbilitiesTuple,
+	MainWeaponId,
+	ModeShort,
+	RankedModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
+import type {
+	ParticipantResult,
+	Side,
+	StageSettings,
+} from "@sendou/tournament-engine/types";
+import type {
 	ColumnType,
 	GeneratedAlways,
 	Insertable,
@@ -48,11 +61,6 @@ import type {
 	TournamentMapPickingStyle,
 	TournamentStaffRole,
 } from "~/features/tournament/tournament-constants";
-import type {
-	ParticipantResult,
-	Side,
-	StageSettings,
-} from "~/features/tournament-bracket/core/engine/types";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 import type { HideableUserCardStat } from "~/features/user-card/user-card-types";
 import type { StoredWidget } from "~/features/user-page/core/widgets/types";
@@ -60,14 +68,6 @@ import type { BuildSort } from "~/features/user-page/user-page-constants";
 import type { UserReportCategory } from "~/features/user-report/user-report-constants";
 import type { videoMatchTypes } from "~/features/vods/vods-constants";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
-import type {
-	Ability,
-	BuildAbilitiesTuple,
-	MainWeaponId,
-	ModeShort,
-	RankedModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import type { DBTournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import type { JSONColumnTypeNullable } from "~/utils/kysely.server";
 

@@ -2,7 +2,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import type { IngestVodMatchInput } from "../scanner-ingest-vod-schemas";
 
 export interface PrefillVodMatch {

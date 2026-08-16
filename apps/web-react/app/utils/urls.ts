@@ -1,13 +1,3 @@
-import slugify from "slugify";
-import { Config } from "~/config";
-import type { Tables } from "~/db/tables";
-import type { Preference } from "~/db/tables-json";
-import type { AuthErrorCode } from "~/features/auth/core/errors";
-import type {
-	StageBackgroundStyle,
-	StageWaterLevel,
-} from "~/features/map-planner/plans-types";
-import type { TierName } from "~/features/mmr/mmr-constants";
 import type {
 	AbilityWithUnknown,
 	BrandId,
@@ -18,8 +8,18 @@ import type {
 	SpecialWeaponId,
 	StageId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
-import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/types";
+import type { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
+import slugify from "slugify";
+import { Config } from "~/config";
+import type { Tables } from "~/db/tables";
+import type { Preference } from "~/db/tables-json";
+import type { AuthErrorCode } from "~/features/auth/core/errors";
+import type {
+	StageBackgroundStyle,
+	StageWaterLevel,
+} from "~/features/map-planner/plans-types";
+import type { TierName } from "~/features/mmr/mmr-constants";
 
 export const discordAvatarUrl = ({
 	discordId,

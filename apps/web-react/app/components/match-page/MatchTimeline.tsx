@@ -1,3 +1,11 @@
+import { abilities } from "@sendou/in-game-lists/abilities";
+import { shortStageName } from "@sendou/in-game-lists/stage-ids";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import {
 	ArrowRight,
@@ -15,14 +23,6 @@ import type {
 	GroupSkillDifference,
 	UserSkillDifference,
 } from "~/db/tables-json";
-import { abilities } from "~/modules/in-game-lists/abilities";
-import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type {
-	AbilityWithUnknown,
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { abilityImageUrl, navIconUrl } from "~/utils/urls";

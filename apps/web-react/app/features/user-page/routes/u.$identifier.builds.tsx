@@ -1,3 +1,5 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { ArrowDownNarrowWide, Lock, LockOpen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -15,8 +17,6 @@ import {
 	type BuildSort,
 } from "~/features/user-page/user-page-constants";
 import { buildsActionSchema } from "~/features/user-page/user-page-schemas";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { hasPermission } from "~/modules/permissions/utils";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";

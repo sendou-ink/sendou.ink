@@ -1,5 +1,5 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { Tables } from "~/db/tables";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { winnersArrayToWinner } from "../q-match-utils";
 
 type MatchForSummarizing = {

@@ -3,10 +3,10 @@
  * shared by the death card and the scoreboard player popover.
  */
 
+import type { AbilityWithUnknown } from "@sendou/in-game-lists/types";
 import { Button } from "react-aria-components";
 import { Ability } from "~/components/Ability";
 import { SendouPopover } from "~/components/elements/Popover";
-import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import styles from "./AbilityGrid.module.css";
 import eventCardStyles from "./EventCard.module.css";
 

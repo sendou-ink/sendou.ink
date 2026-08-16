@@ -1,12 +1,12 @@
-import type { TournamentStageSettings } from "~/db/tables-json";
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { assertUnreachable } from "~/utils/types";
+import { ENGINE_DEFAULTS } from "../constants";
 import type {
 	BracketData,
 	CreateBracketInput,
 	StageSettings,
 	StageType,
+	TournamentStageSettings,
 } from "../types";
+import { assertUnreachable } from "../utils/types";
 
 /**
  * Resolves the user-selected settings into the engine's internal stage
@@ -38,9 +38,9 @@ export function resolveStageSettings(input: CreateBracketInput): StageSettings {
 		case "swiss": {
 			return {
 				groupCount:
-					settings?.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT,
+					settings?.groupCount ?? ENGINE_DEFAULTS.SWISS_DEFAULT_GROUP_COUNT,
 				roundCount:
-					settings?.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+					settings?.roundCount ?? ENGINE_DEFAULTS.SWISS_DEFAULT_ROUND_COUNT,
 			};
 		}
 		default: {
@@ -57,7 +57,8 @@ export function resolveStageSettings(input: CreateBracketInput): StageSettings {
  */
 export function swissRoundCount(data: BracketData): number {
 	return (
-		data.stage[0]?.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT
+		data.stage[0]?.settings.roundCount ??
+		ENGINE_DEFAULTS.SWISS_DEFAULT_ROUND_COUNT
 	);
 }
 
@@ -72,7 +73,7 @@ export function hasThirdPlaceMatch(args: {
 
 	return (
 		args.settings?.thirdPlaceMatch ??
-		TOURNAMENT.SE_DEFAULT_HAS_THIRD_PLACE_MATCH
+		ENGINE_DEFAULTS.SE_DEFAULT_HAS_THIRD_PLACE_MATCH
 	);
 }
 
@@ -82,7 +83,7 @@ export function roundRobinGroupCount(
 	participantsCount: number,
 ): number {
 	const teamsPerGroup =
-		settings?.teamsPerGroup ?? TOURNAMENT.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
+		settings?.teamsPerGroup ?? ENGINE_DEFAULTS.RR_DEFAULT_TEAM_COUNT_PER_GROUP;
 
 	return Math.ceil(participantsCount / teamsPerGroup);
 }

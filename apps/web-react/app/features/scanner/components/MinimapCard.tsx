@@ -1,9 +1,9 @@
+import type { AbilityWithUnknown } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { ChevronUp } from "lucide-react";
 import type { ReactNode } from "react";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
-import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,

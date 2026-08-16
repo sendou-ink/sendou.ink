@@ -1,4 +1,5 @@
 import cachified from "@epic-web/cachified";
+import { matchEndedEarly } from "@sendou/tournament-engine";
 import type { LoaderFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
@@ -10,7 +11,6 @@ import {
 	isLeagueRoundLocked,
 	resolveLeagueRoundStartDate,
 } from "~/features/tournament/tournament-utils";
-import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import {
 	tournamentFromParams,

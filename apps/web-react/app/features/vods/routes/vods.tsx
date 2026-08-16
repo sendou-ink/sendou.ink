@@ -1,3 +1,6 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -11,9 +14,6 @@ import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";

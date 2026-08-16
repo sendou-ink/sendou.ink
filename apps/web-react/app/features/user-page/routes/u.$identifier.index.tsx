@@ -1,3 +1,4 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import clsx from "clsx";
 import { Pencil as EditIcon, Puzzle as PuzzleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -23,7 +24,6 @@ import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { UserCard } from "~/features/user-card/components/UserCard";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";

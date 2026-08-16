@@ -1,3 +1,4 @@
+import * as Swiss from "@sendou/tournament-engine/swiss/team-status";
 import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
@@ -10,7 +11,6 @@ import { logger } from "../../../../utils/logger";
 import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import type { Bracket, Standing } from "../../core/Bracket";
-import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
 import type { BracketMeta } from "../../core/Tournament";
 import { bracketSchema } from "../../tournament-bracket-schemas";

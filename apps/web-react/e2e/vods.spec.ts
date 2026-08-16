@@ -1,6 +1,6 @@
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { vodVideoPage } from "~/utils/urls";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { NewVodPage } from "./pages/vods/new-vod-page";

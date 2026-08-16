@@ -1,3 +1,4 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import { add } from "date-fns";
 import { z } from "zod";
 import {
@@ -14,7 +15,6 @@ import {
 	weaponPool,
 	weaponSelectOptional,
 } from "~/form/fields";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	dayMonthYear,
 	id,

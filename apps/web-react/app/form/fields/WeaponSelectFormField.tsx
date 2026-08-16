@@ -1,5 +1,5 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { WeaponSelect } from "~/components/WeaponSelect";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { FormFieldProps } from "../types";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./WeaponSelectFormField.module.css";

@@ -1,8 +1,8 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { xRankSchema } from "./schemas";

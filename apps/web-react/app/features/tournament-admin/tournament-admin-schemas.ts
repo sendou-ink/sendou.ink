@@ -1,9 +1,9 @@
+import * as Swiss from "@sendou/tournament-engine/swiss/team-status";
 import { z } from "zod";
 import {
 	TOURNAMENT,
 	TOURNAMENT_STAGE_TYPES,
 } from "~/features/tournament/tournament-constants";
-import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { _action, id, safeJSONParse } from "~/utils/zod";

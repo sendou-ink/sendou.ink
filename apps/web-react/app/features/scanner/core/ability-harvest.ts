@@ -10,7 +10,7 @@
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";

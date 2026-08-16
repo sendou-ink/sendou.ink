@@ -1,3 +1,4 @@
+import { matchEndedEarly } from "@sendou/tournament-engine";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import type { WinLossParticipationArray } from "~/db/tables-json";
@@ -16,7 +17,6 @@ import { roundToNDecimalPlaces } from "~/utils/number";
 import type { Tables } from "../../../db/tables";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
-import { matchEndedEarly } from "./engine";
 import type { ParsedBracket } from "./Progression";
 import * as Progression from "./Progression";
 

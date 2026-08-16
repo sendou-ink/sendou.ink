@@ -1,5 +1,5 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { DEFAULT_LEADERBOARD_MAX_SIZE } from "../leaderboards-constants";
 import {
 	filterByWeaponCategory,

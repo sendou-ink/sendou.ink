@@ -1,7 +1,7 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Ability } from "~/components/Ability";
 import { WeaponImage } from "~/components/Image";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,

@@ -1,10 +1,10 @@
+import * as Engine from "@sendou/tournament-engine";
 import type { ActionFunction } from "react-router";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import * as Engine from "~/features/tournament-bracket/core/engine";
 import { executeBracketOperation } from "~/features/tournament-bracket/core/executeBracketOperation.server";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";

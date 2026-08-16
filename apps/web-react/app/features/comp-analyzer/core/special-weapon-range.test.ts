@@ -1,4 +1,3 @@
-import { describe, expect, test } from "vitest";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -7,7 +6,8 @@ import {
 	specialWeaponIds,
 	TRIZOOKA_ID,
 	WAVE_BREAKER_ID,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { describe, expect, test } from "vitest";
 import { getSpecialWeaponRange } from "./special-weapon-range";
 
 describe("special weapon range", () => {

@@ -1,3 +1,4 @@
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import {
 	eachDayOfInterval,
@@ -17,7 +18,6 @@ import { TierPill } from "~/components/TierPill";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import {
 	GRAPHIC_DATE_FORMAT_OPTIONS,
 	GraphicContainer,

@@ -1,10 +1,10 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { specialWeaponImageUrl, stageBannerImageUrl } from "~/utils/urls";
 import { ModeImage } from "../Image";
 import styles from "./MatchBanner.module.css";

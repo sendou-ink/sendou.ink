@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import type { Ability, ModeShort } from "~/modules/in-game-lists/types";
+import type { Ability, ModeShort } from "@sendou/in-game-lists/types";
 import { weaponBuildPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { BuildCard } from "./build-card";

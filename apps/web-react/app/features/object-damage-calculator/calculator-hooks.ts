@@ -1,4 +1,4 @@
-import { exampleMainWeaponIdWithSpecialWeaponId } from "~/modules/in-game-lists/weapon-ids";
+import { exampleMainWeaponIdWithSpecialWeaponId } from "@sendou/in-game-lists/weapon-ids";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { assertType } from "~/utils/types";
 import type { DAMAGE_TYPE } from "../build-analyzer/analyzer-constants";

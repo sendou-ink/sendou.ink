@@ -1,3 +1,6 @@
+import * as Engine from "@sendou/tournament-engine";
+import { pairUp } from "@sendou/tournament-engine/swiss/pairing";
+import * as TeamStatus from "@sendou/tournament-engine/swiss/team-status";
 import { describe, expect, test } from "vitest";
 import type { TournamentStageSettings } from "~/db/tables-json";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -8,9 +11,6 @@ import {
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
 import invariant from "~/utils/invariant";
 import { unwrap } from "~/utils/result";
-import * as Engine from "./engine";
-import { pairUp } from "./engine/swiss/pairing";
-import * as TeamStatus from "./engine/swiss/team-status";
 
 const Swiss = {
 	...TeamStatus,

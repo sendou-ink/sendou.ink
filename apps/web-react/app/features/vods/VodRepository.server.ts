@@ -1,13 +1,13 @@
-import { sql } from "kysely";
-import * as R from "remeda";
-import { db } from "~/db/sql";
-import type { Tables } from "~/db/tables";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists/types";
-import { weaponIdToArrayWithAlts } from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/types";
+import { weaponIdToArrayWithAlts } from "@sendou/in-game-lists/weapon-ids";
+import { sql } from "kysely";
+import * as R from "remeda";
+import { db } from "~/db/sql";
+import type { Tables } from "~/db/tables";
 import {
 	dateToDatabaseTimestamp,
 	dayMonthYearToDatabaseTimestamp,

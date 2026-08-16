@@ -1,3 +1,5 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort, ModeWithStage } from "@sendou/in-game-lists/types";
 import * as R from "remeda";
 import type { ParsedMemento, UserMapModePreferences } from "~/db/tables-json";
 import * as MapList from "~/features/map-list-generator/core/MapList";
@@ -14,8 +16,6 @@ import type {
 	SQUncensoredGroup,
 } from "~/features/sendouq/core/SendouQ.server";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, ModeWithStage } from "~/modules/in-game-lists/types";
 import type {
 	TournamentMapListMap,
 	TournamentMaplistSource,

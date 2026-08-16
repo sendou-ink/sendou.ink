@@ -4,13 +4,13 @@
  * Ability) — canonical English strings live only inside the OCR snap
  * layer and never leave a detector.
  */
-import { abilities } from "~/modules/in-game-lists/abilities";
+import { abilities } from "@sendou/in-game-lists/abilities";
 import type {
 	Ability,
 	AbilityWithUnknown,
 	MainWeaponId,
-} from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/types";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 
 /** The scoreboard header's lobby tag. PRIVATE marks tournament games. */
 export const SCANNER_LOBBIES = ["X", "SERIES", "OPEN", "PRIVATE"] as const;

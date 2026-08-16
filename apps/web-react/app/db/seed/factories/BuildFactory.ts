@@ -1,5 +1,5 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 import * as SplatoonFaker from "../core/SplatoonFaker";

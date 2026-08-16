@@ -1,3 +1,4 @@
+import { GAME_BADGE_IDS } from "@sendou/in-game-lists/game-badge-ids";
 import { z } from "zod";
 import { ART_SOURCES } from "~/features/art/art-types";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
@@ -13,7 +14,6 @@ import {
 	weaponSelect,
 } from "~/form/fields";
 import type { SelectOption } from "~/form/types";
-import { GAME_BADGE_IDS } from "~/modules/in-game-lists/game-badge-ids";
 import { USER } from "../../user-page-constants";
 
 export const bioSchema = z.object({

@@ -1,3 +1,4 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { Ability } from "~/components/Ability";
 import {
 	ModeImage,
@@ -6,7 +7,6 @@ import {
 	SubWeaponImage,
 	WeaponImage,
 } from "~/components/Image";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TierListItem } from "../tier-list-maker-schemas";
 import styles from "./TierListItemImage.module.css";
 

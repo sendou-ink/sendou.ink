@@ -1,11 +1,11 @@
-import { TOURNAMENT } from "~/features/tournament/tournament-constants";
-import { nullFilledArray } from "~/utils/arrays";
-import invariant from "~/utils/invariant";
+import { ENGINE_DEFAULTS } from "../constants";
 import type {
 	BracketData,
 	MatchData,
 	ResolvedCreateBracketInput,
 } from "../types";
+import { nullFilledArray } from "../utils/arrays";
+import invariant from "../utils/invariant";
 
 /**
  * Creates a Swiss bracket data set: all rounds up front, matches for round 1 only.
@@ -13,9 +13,9 @@ import type {
  */
 export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 	const groupCount =
-		input.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT;
+		input.settings.groupCount ?? ENGINE_DEFAULTS.SWISS_DEFAULT_GROUP_COUNT;
 	const roundCount =
-		input.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT;
+		input.settings.roundCount ?? ENGINE_DEFAULTS.SWISS_DEFAULT_ROUND_COUNT;
 
 	const group = nullFilledArray(groupCount).map((_, i) => ({
 		id: i,

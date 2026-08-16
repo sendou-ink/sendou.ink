@@ -1,3 +1,4 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { TFunction } from "i18next";
 import { Ban, Check, Undo2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -16,7 +17,6 @@ import { useUser } from "~/features/auth/core/user";
 import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	resolveGroupNames,
 	resolveTimelineMaps,

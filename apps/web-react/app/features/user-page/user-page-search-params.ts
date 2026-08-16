@@ -1,3 +1,5 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
 import { ART_SOURCES } from "~/features/art/art-types";
 import { serializedBuildCodec } from "~/features/build-analyzer/analyzer-search-params";
@@ -8,8 +10,6 @@ import {
 	TIER_NUMBERS,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/zod";

@@ -32,7 +32,7 @@
 		"i18n:sync": "pnpm --filter web-react run i18n:sync",
 		"knip": "pnpm --filter web-react run knip",
 		"checks": "pnpm --filter web-react run checks",
-		"manifest:report": "pnpm --filter @sendou-ink/codemods run manifest:report"
+		"manifest:report": "pnpm --filter @sendou/codemods run manifest:report"
 	},
 	"devDependencies": {
 		"@biomejs/biome": "2.5.7"

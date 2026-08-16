@@ -1,14 +1,14 @@
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import { Crosshair } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import { weaponReportDefaultOpenSchema } from "~/features/settings/settings-schemas";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import { abilityImageUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../elements/Button";
 import { Image, StageImage, WeaponImage } from "../Image";

@@ -1,5 +1,5 @@
+import type { StageId } from "@sendou/in-game-lists/types";
 import { StageSelect } from "~/components/StageSelect";
-import type { StageId } from "~/modules/in-game-lists/types";
 import type { FormFieldProps } from "../types";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./StageSelectFormField.module.css";

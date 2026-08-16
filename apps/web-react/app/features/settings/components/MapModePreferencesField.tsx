@@ -1,10 +1,10 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import * as React from "react";
 import { ModeImage } from "~/components/Image";
 import type { Preference, UserMapModePreferences } from "~/db/tables-json";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { ModeMapPoolPicker } from "./ModeMapPoolPicker";
 import { PreferenceRadioGroup } from "./PreferenceRadioGroup";
 

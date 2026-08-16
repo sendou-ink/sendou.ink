@@ -1,4 +1,4 @@
-import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
+import type { MatchData as MatchType } from "@sendou/tournament-engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import styles from "./bracket.module.css";

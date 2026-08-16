@@ -1,8 +1,8 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import type {
 	IngestedScoreboardData,
 	IngestedScoreboardPlayer,
 } from "~/features/scanner-ingest/core/Scoreboards";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { ObjectiveTimelineEvent } from "../ObjectiveTimeline";
 import type { PlayerStatusTimelineSample } from "../PlayerStatusTimeline";
 import type { TimelineMap } from "./MatchTimeline";

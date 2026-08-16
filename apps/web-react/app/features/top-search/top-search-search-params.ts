@@ -1,5 +1,5 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
 import { z } from "zod";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 

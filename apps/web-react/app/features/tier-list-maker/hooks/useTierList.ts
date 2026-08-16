@@ -4,16 +4,16 @@ import type {
 	DragStartEvent,
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
-import * as React from "react";
-import { abilitiesShort } from "~/modules/in-game-lists/abilities";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { abilitiesShort } from "@sendou/in-game-lists/abilities";
+import { modesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
 	weaponIdToType,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import * as React from "react";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { assertUnreachable } from "~/utils/types";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";

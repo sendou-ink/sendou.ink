@@ -108,7 +108,6 @@ export default defineConfig((config) => {
 				"date-fns/locale/pt-BR",
 				"date-fns/locale/ru",
 				"date-fns/locale/zh-CN",
-				"edmonds-blossom-fixed",
 				"fflate",
 				"i18next-browser-languagedetector",
 				"i18next-http-backend",

@@ -1,5 +1,5 @@
+import type { BuildAbilitiesTupleWithUnknown } from "@sendou/in-game-lists/types";
 import { differenceInCalendarDays } from "date-fns";
-import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
 
 export const MAX_BUILD_FILTERS = 6;
 

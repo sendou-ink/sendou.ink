@@ -1,7 +1,7 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { TablesInsertable } from "~/db/tables";
 import * as SplatoonRotationRepository from "~/features/splatoon-rotations/SplatoonRotationRepository.server";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { faker } from "../core/faker";
 
 type Rotation = Omit<TablesInsertable["SplatoonRotation"], "id">;

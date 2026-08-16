@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import type { ModeShort } from "~/modules/in-game-lists/types";
+import type { ModeShort } from "@sendou/in-game-lists/types";
 
 export const SELECTED_MAP_CLASS = /mapButtonGreyedOut/;
 

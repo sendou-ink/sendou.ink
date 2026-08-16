@@ -5,26 +5,22 @@
  * and are imported by `tables.ts` directly.
  */
 
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
+import type { TournamentRoundMaps } from "@sendou/tournament-engine/types";
 import type { DBBoolean } from "~/db/tables";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { CustomThemeVar } from "~/features/theme/theme-constants";
-import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
-import type {
-	ActionType,
-	WhoSide,
-} from "~/features/tournament-bracket/tournament-bracket-constants";
 import type {
 	ObjectPronoun,
 	SubjectPronoun,
 } from "~/features/user-page/user-page-constants";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 
 export type CustomTheme = Omit<Record<CustomThemeVar, number>, "--_chat-h"> & {
 	"--_chat-h": number | null;
@@ -184,39 +180,12 @@ export interface PreparedMaps {
 	eliminationTeamCount?: number;
 }
 
-export interface TournamentRoundMaps {
-	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
-	count: number;
-	type: "BEST_OF" | "PLAY_ALL";
-	pickBan?: PickBan.Type | null;
-	customFlow?: CustomPickBanFlow | null;
-}
-
-export interface CustomPickBanStep {
-	action: ActionType;
-	side?: WhoSide;
-}
-
-export interface CustomPickBanFlow {
-	preSet: CustomPickBanStep[];
-	postGame: CustomPickBanStep[];
-}
-
-// when updating this also update `settingsFromFormValues` in calendar-progression-form.ts
-export interface TournamentStageSettings {
-	// SE
-	thirdPlaceMatch?: boolean;
-	// RR
-	teamsPerGroup?: number;
-	/** (RR only) When true, teams are split into A and B divisions and matches only pair A-vs-B. Only valid on starting brackets. */
-	hasAbDivisions?: boolean;
-	// SWISS
-	groupCount?: number;
-	// SWISS
-	roundCount?: number;
-	/** (Swiss only) Number of wins required for a team to advance early. When set, teams advance at this win count and are eliminated at (roundCount - advanceThreshold + 1) losses. */
-	advanceThreshold?: number;
-}
+export type {
+	CustomPickBanFlow,
+	CustomPickBanStep,
+	TournamentRoundMaps,
+	TournamentStageSettings,
+} from "@sendou/tournament-engine/types";
 
 export interface TournamentAuditLogMetadata {
 	bracketIdx?: number;

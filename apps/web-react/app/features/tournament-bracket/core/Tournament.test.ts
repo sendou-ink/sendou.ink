@@ -1,11 +1,11 @@
-import { describe, expect, test } from "vitest";
+import * as Engine from "@sendou/tournament-engine";
 import type {
 	BracketData,
 	GeneratedRound,
 	MatchData,
-} from "~/features/tournament-bracket/core/engine/types";
+} from "@sendou/tournament-engine/types";
+import { describe, expect, test } from "vitest";
 import { unwrap } from "~/utils/result";
-import * as Engine from "./engine";
 import type * as Progression from "./Progression";
 import { Tournament } from "./Tournament";
 import {

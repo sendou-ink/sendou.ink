@@ -1,8 +1,8 @@
+import { modesShort, rankedModesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { sub } from "date-fns";
 import * as R from "remeda";
 import type { CastedMatchesInfo } from "~/db/tables-json";
-import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { weekNumberToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import type { Tables } from "../../db/tables";

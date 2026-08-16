@@ -1,6 +1,6 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { StageId } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { StageId } from "~/modules/in-game-lists/types";
 import { unwrap } from "~/utils/result";
 import * as MapList from "./MapList";
 import { MapPool } from "./map-pool";

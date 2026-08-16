@@ -7,11 +7,12 @@
  * special ready. The chart's own tooltip is turned off in favor of the
  * readout.
  */
+
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { memo, useRef, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { clamp } from "remeda";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./GameTimeline.module.css";
 import { Image, WeaponImage } from "./Image";

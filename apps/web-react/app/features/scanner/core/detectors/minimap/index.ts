@@ -26,7 +26,7 @@ import type {
 	AbilityWithUnknown,
 	MainWeaponId,
 	StageId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import { toAbilityWithUnknown, toMainWeaponId } from "../../../scanner-types";
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";

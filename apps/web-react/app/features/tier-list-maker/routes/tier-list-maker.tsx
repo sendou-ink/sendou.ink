@@ -9,6 +9,7 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { modesShort } from "@sendou/in-game-lists/modes";
 import clsx from "clsx";
 import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
 import { useState } from "react";
@@ -33,7 +34,6 @@ import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { useHydrated } from "~/hooks/useHydrated";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, TIER_LIST_MAKER_URL } from "~/utils/urls";

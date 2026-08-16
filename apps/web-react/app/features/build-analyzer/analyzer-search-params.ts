@@ -1,6 +1,6 @@
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/zod";

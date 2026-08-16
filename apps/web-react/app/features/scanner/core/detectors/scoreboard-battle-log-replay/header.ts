@@ -8,7 +8,7 @@
  * shape and kept as a raw string; stage and lobby+mode snap to the closed
  * sets shared with the live header.
  */
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
 import type { Roi } from "../../canonical";
 import type { Mat } from "../../cv";

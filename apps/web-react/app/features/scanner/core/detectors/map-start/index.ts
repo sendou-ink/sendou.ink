@@ -14,7 +14,7 @@
  * min channel (drops blue-tinted water gray keeps) under several
  * binarizations, keeping the best-snapping one (see rois.ts).
  */
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import {
 	type GlyphSet,

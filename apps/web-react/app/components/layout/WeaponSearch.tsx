@@ -1,3 +1,10 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { filterWeapon } from "@sendou/in-game-lists/utils";
+import {
+	canonicalWeaponSplId,
+	mainWeaponIds,
+	weaponIdToBaseWeaponId,
+} from "@sendou/in-game-lists/weapon-ids";
 import { clsx } from "clsx";
 import type { Namespace, TFunction } from "i18next";
 import {
@@ -15,13 +22,6 @@ import type * as React from "react";
 import { ListBox, ListBoxItem } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { filterWeapon } from "~/modules/in-game-lists/utils";
-import {
-	canonicalWeaponSplId,
-	mainWeaponIds,
-	weaponIdToBaseWeaponId,
-} from "~/modules/in-game-lists/weapon-ids";
 import {
 	ANALYZER_URL,
 	LFG_PAGE,

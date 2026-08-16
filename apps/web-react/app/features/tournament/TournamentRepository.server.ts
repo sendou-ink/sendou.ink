@@ -1,3 +1,4 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import { sub } from "date-fns";
 import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { ordinal } from "openskill";
@@ -18,7 +19,6 @@ import type {
 	TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import { isSupporter } from "~/modules/permissions/utils";
 import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";

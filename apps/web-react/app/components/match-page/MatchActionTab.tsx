@@ -1,3 +1,5 @@
+import { shortStageName } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Check } from "lucide-react";
 import type * as React from "react";
@@ -5,8 +7,6 @@ import { useState } from "react";
 import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useWebHaptics } from "web-haptics/react";
-import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";

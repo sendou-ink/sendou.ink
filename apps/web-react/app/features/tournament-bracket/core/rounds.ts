@@ -1,5 +1,5 @@
+import type { BracketData } from "@sendou/tournament-engine/types";
 import * as R from "remeda";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { TOURNAMENT } from "../../tournament/tournament-constants";
 
 export function getRounds(args: {

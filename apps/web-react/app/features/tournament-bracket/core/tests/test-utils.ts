@@ -1,5 +1,5 @@
+import type { BracketData } from "@sendou/tournament-engine/types";
 import * as R from "remeda";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type * as Progression from "../Progression";
 import { Tournament } from "../Tournament";
 import type { TournamentData } from "../Tournament.server";

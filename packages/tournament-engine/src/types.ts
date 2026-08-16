@@ -1,8 +1,4 @@
-import type { Tables } from "~/db/tables";
-import type {
-	TournamentRoundMaps,
-	TournamentStageSettings,
-} from "~/db/tables-json";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 
 /**
  * The side of an opponent. Upstream brackets-model also allowed a draw —
@@ -10,7 +6,84 @@ import type {
  */
 export type Side = "opponent1" | "opponent2";
 
-export type StageType = Tables["TournamentStage"]["type"];
+export const TOURNAMENT_STAGE_TYPES = [
+	"single_elimination",
+	"double_elimination",
+	"round_robin",
+	"swiss",
+] as const;
+
+export type StageType = (typeof TOURNAMENT_STAGE_TYPES)[number];
+
+export const PICK_BAN_TYPES = [
+	"COUNTERPICK",
+	"COUNTERPICK_MODE_REPEAT_OK",
+	"BAN_2",
+	"CUSTOM",
+] as const;
+
+export type PickBanType = (typeof PICK_BAN_TYPES)[number];
+
+/** Who picks or bans in a custom pick/ban flow step. */
+export const WHO_SIDES = [
+	"RANDOM",
+	"RANDOM_OTHER",
+	"ALPHA",
+	"BRAVO",
+	"HIGHER_SEED",
+	"LOWER_SEED",
+	"WINNER",
+	"LOSER",
+] as const;
+
+export type WhoSide = (typeof WHO_SIDES)[number];
+
+/** What happens in a custom pick/ban flow step. */
+export const ACTION_TYPES = [
+	"ROLL",
+	"PICK",
+	"PICK_NO_MODE_REPEAT",
+	"BAN",
+	"MODE_PICK",
+	"MODE_BAN",
+] as const;
+
+export type ActionType = (typeof ACTION_TYPES)[number];
+
+export interface CustomPickBanStep {
+	action: ActionType;
+	side?: WhoSide;
+}
+
+export interface CustomPickBanFlow {
+	preSet: CustomPickBanStep[];
+	postGame: CustomPickBanStep[];
+}
+
+/** Shape of the `TournamentRound.maps` JSON column. */
+export interface TournamentRoundMaps {
+	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
+	count: number;
+	type: "BEST_OF" | "PLAY_ALL";
+	pickBan?: PickBanType | null;
+	customFlow?: CustomPickBanFlow | null;
+}
+
+// when updating this also update `settingsFromFormValues` in calendar-progression-form.ts
+export interface TournamentStageSettings {
+	// SE
+	thirdPlaceMatch?: boolean;
+	// RR
+	teamsPerGroup?: number;
+	/** (RR only) When true, teams are split into A and B divisions and matches only pair A-vs-B. Only valid on starting brackets. */
+	hasAbDivisions?: boolean;
+	// SWISS
+	groupCount?: number;
+	// SWISS
+	roundCount?: number;
+	/** (Swiss only) Number of wins required for a team to advance early. When set, teams advance at this win count and are eliminated at (roundCount - advanceThreshold + 1) losses. */
+	advanceThreshold?: number;
+}
 
 /**
  * All the possible types of group in an elimination stage.

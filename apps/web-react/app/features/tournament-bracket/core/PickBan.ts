@@ -1,3 +1,8 @@
+import type {
+	ModeShort,
+	ModeWithStage,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import * as R from "remeda";
 import type { CustomPickBanStep, TournamentRoundMaps } from "~/db/tables-json";
 import type {
@@ -5,24 +10,14 @@ import type {
 	WhoSide,
 } from "~/features/tournament-bracket/tournament-bracket-constants";
 import { isSetOverByResults } from "~/features/tournament-match/tournament-match-utils";
-import type {
-	ModeShort,
-	ModeWithStage,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { assertUnreachable } from "~/utils/types";
 
-export const types = [
-	"COUNTERPICK",
-	"COUNTERPICK_MODE_REPEAT_OK",
-	"BAN_2",
-	"CUSTOM",
-] as const;
-export type Type = (typeof types)[number];
+export type { PickBanType as Type } from "@sendou/tournament-engine/types";
+export { PICK_BAN_TYPES as types } from "@sendou/tournament-engine/types";
 
 export interface PickBanTeam {
 	id: number;

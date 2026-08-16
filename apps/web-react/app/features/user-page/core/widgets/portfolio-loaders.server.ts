@@ -1,3 +1,4 @@
+import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUser } from "~/features/auth/core/user.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
@@ -14,7 +15,6 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
-import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import type { ExtractWidgetSettings } from "./types";
 import { cachedUserSQLeaderboardTopData } from "./utils.server";
 

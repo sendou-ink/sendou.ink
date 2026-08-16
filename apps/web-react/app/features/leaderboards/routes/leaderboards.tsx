@@ -1,3 +1,6 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import clsx from "clsx";
 import { Ban, MoreHorizontal, RotateCcw } from "lucide-react";
 import React from "react";
@@ -25,9 +28,6 @@ import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import type { SkillTierInterval } from "~/features/mmr/tiered.server";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	useSearchParam,

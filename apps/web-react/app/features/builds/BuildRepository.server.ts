@@ -1,14 +1,14 @@
-import { type NotNull, sql, type Transaction } from "kysely";
-import { db } from "~/db/sql";
-import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { modesShort } from "@sendou/in-game-lists/modes";
 import type {
 	Ability,
 	BuildAbilitiesTuple,
 	MainWeaponId,
 	ModeShort,
-} from "~/modules/in-game-lists/types";
-import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/types";
+import { canonicalWeaponSplId } from "@sendou/in-game-lists/weapon-ids";
+import { type NotNull, sql, type Transaction } from "kysely";
+import { db } from "~/db/sql";
+import type { BuildWeapon, DB, TablesInsertable } from "~/db/tables";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { LimitReachedError } from "~/utils/errors";
 import invariant from "~/utils/invariant";

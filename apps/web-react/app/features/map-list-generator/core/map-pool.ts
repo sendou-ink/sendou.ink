@@ -1,6 +1,6 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { Tables } from "~/db/tables";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	mapPoolToSerializedString,
 	serializedStringToMapPool,

@@ -1,12 +1,12 @@
+import * as Engine from "@sendou/tournament-engine";
+import { calculateTeamStatus } from "@sendou/tournament-engine/swiss/team-status";
+import type { BracketData } from "@sendou/tournament-engine/types";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
 import * as Standings from "~/features/tournament/core/Standings";
-import * as Engine from "~/features/tournament-bracket/core/engine";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";
-import { calculateTeamStatus } from "../engine/swiss/team-status";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing, type TeamTrackRecord } from "./Bracket";
 

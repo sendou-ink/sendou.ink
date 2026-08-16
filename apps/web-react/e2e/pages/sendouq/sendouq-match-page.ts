@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
+import type { ModeWithStage } from "@sendou/in-game-lists/types";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
-import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { sendouQMatchPage } from "~/utils/urls";
 import {
 	expect,

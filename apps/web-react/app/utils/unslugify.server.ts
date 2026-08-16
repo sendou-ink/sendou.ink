@@ -2,7 +2,7 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import weaponTranslations from "../../locales/en/weapons.json";
 import { mySlugify } from "./urls";
 

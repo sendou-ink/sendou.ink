@@ -1,5 +1,5 @@
+import type { ModeShort, RankedModeShort } from "@sendou/in-game-lists/types";
 import type { Tables } from "~/db/tables";
-import type { ModeShort, RankedModeShort } from "~/modules/in-game-lists/types";
 import { topSearchSearchParams } from "./top-search-search-params";
 
 export const topSearchPage = (args?: {

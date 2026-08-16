@@ -1,3 +1,5 @@
+import * as Engine from "@sendou/tournament-engine";
+import type { BracketData } from "@sendou/tournament-engine/types";
 import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
@@ -5,8 +7,6 @@ import type { PreparedMaps as PreparedMapsType } from "~/db/tables-json";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { nullFilledArray } from "~/utils/arrays";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import * as Engine from "./engine";
-import type { BracketData } from "./engine/types";
 import * as PreparedMaps from "./PreparedMaps";
 import type * as Progression from "./Progression";
 import { getRounds } from "./rounds";

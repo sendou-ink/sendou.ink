@@ -1,3 +1,13 @@
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
+import {
+	exampleMainWeaponIdWithSpecialWeaponId,
+	mainWeaponIds,
+	specialWeaponIds,
+} from "@sendou/in-game-lists/weapon-ids";
 import { describe, expect, test } from "vitest";
 import type {
 	AbilityPoints,
@@ -5,16 +15,6 @@ import type {
 	DamageType,
 } from "~/features/build-analyzer/analyzer-types";
 import { buildStats } from "~/features/build-analyzer/core/stats";
-import type {
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
-import {
-	exampleMainWeaponIdWithSpecialWeaponId,
-	mainWeaponIds,
-	specialWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
 import { calculateDamage } from "./objectDamage";
 
 function calculate({

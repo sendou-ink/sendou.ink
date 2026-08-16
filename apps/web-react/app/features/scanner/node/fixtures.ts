@@ -12,7 +12,7 @@ import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";
 import type {
 	DetectedEvent,

@@ -1,8 +1,8 @@
+import { stagesObj } from "@sendou/in-game-lists/stage-ids";
+import type { StageId } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { stagesObj } from "~/modules/in-game-lists/stage-ids";
-import type { StageId } from "~/modules/in-game-lists/types";
 import { canUndo, generateNextMap, stats, unionPool } from "./ScrimMapByMap";
 
 type MapRow = Pick<

@@ -1,3 +1,16 @@
+import {
+	BIG_BUBBLER_ID,
+	BOOYAH_BOMB_ID,
+	CRAB_TANK_ID,
+	INK_VAC_ID,
+	SPLASH_WALL_ID,
+	SPRINKLER_ID,
+	SQUID_BEAKON_ID,
+	SUPER_CHUMP_ID,
+	TORPEDO_ID,
+	TRIPLE_SPLASHDOWN_ID,
+	WAVE_BREAKER_ID,
+} from "@sendou/in-game-lists/weapon-ids";
 import clsx from "clsx";
 import React, { type JSX } from "react";
 import { Button } from "react-aria-components";
@@ -12,19 +25,6 @@ import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import type { DamageType } from "~/features/build-analyzer/analyzer-types";
-import {
-	BIG_BUBBLER_ID,
-	BOOYAH_BOMB_ID,
-	CRAB_TANK_ID,
-	INK_VAC_ID,
-	SPLASH_WALL_ID,
-	SPRINKLER_ID,
-	SQUID_BEAKON_ID,
-	SUPER_CHUMP_ID,
-	TORPEDO_ID,
-	TRIPLE_SPLASHDOWN_ID,
-	WAVE_BREAKER_ID,
-} from "~/modules/in-game-lists/weapon-ids";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";

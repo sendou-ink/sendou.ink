@@ -1,9 +1,9 @@
-import type { Tables } from "~/db/tables";
-import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import type {
 	BuildAbilitiesTuple,
 	ModeShort,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import type { Tables } from "~/db/tables";
+import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { AbilityCondition } from "../builds-types";
 

@@ -1,7 +1,7 @@
+import type { ModeShort } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { MousePointerClick } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
 import { ModeImage } from "../Image";

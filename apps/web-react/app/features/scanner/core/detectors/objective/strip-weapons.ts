@@ -20,7 +20,7 @@
  * candidate list per slot. Splatted slots grey the render out and are
  * skipped rather than guessed.
  */
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import { copyRoi } from "../../image";
 import { hueDistance, hueOf } from "../../ink-color";

@@ -1,9 +1,9 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { useState } from "react";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useHydrated } from "~/hooks/useHydrated";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { COMP_ANALYZER_URL, navIconUrl } from "~/utils/urls";
 import { metaTags } from "../../../utils/remix";

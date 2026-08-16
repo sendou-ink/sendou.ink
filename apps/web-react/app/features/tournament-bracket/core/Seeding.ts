@@ -1,4 +1,4 @@
-import { ordering } from "./engine/create/seeding";
+import { ordering } from "@sendou/tournament-engine/create/seeding";
 
 export interface FollowUpBracketSource {
 	/** Standings of the source bracket, best placements first. Tied placements (e.g. the winner of each group) form the tiers that seeding keeps intact. */

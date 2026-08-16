@@ -1,5 +1,5 @@
+import type { StageId } from "@sendou/in-game-lists/types";
 import { afterEach, describe, expect, test, vi } from "vitest";
-import type { StageId } from "~/modules/in-game-lists/types";
 import * as Test from "~/utils/Test";
 import {
 	mapModePreferencesToModeList,

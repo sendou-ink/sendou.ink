@@ -3,8 +3,8 @@ import type {
 	BuildAbilitiesTupleWithUnknown,
 	MainWeaponId,
 	SpecialWeaponId,
-} from "~/modules/in-game-lists/types";
-import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/types";
+import { weaponIdToBaseWeaponId } from "@sendou/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import type { Unpacked } from "~/utils/types";
 import type {

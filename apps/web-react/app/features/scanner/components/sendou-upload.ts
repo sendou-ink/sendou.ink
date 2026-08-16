@@ -12,13 +12,14 @@
  * flagged `modeAssumed` — the fabricated default lives here, not on
  * ScannerMatch.
  */
+
+import type { MainWeaponId, ModeShort } from "@sendou/in-game-lists/types";
 import type {
 	IngestVodMatchInput,
 	IngestVodPrefill,
 } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import { newVodPage } from "~/features/vods/vods-urls";
-import type { MainWeaponId, ModeShort } from "~/modules/in-game-lists/types";
 import type { DetectedEvent } from "../core/detectors/types";
 import { buildScannerMatches } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";

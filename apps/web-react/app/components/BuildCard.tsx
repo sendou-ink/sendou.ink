@@ -1,3 +1,10 @@
+import type {
+	Ability as AbilityType,
+	BuildAbilitiesTuple,
+	GearType,
+	ModeShort,
+} from "@sendou/in-game-lists/types";
+import { canonicalWeaponSplId } from "@sendou/in-game-lists/weapon-ids";
 import clsx from "clsx";
 import {
 	HardDriveDownload,
@@ -18,13 +25,6 @@ import {
 	type BuildGraphicOwner,
 } from "~/features/img-export/components/BuildGraphic";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
-import type {
-	Ability as AbilityType,
-	BuildAbilitiesTuple,
-	GearType,
-	ModeShort,
-} from "~/modules/in-game-lists/types";
-import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { gearTypeToInitial } from "~/utils/strings";
 import {

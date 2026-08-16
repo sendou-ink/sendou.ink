@@ -1,7 +1,6 @@
-import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
-import { weaponAltNames } from "~/modules/in-game-lists/weapon-alt-names";
 import { abilities } from "./abilities";
-import type { Ability } from "./types";
+import type { Ability, AnyWeapon } from "./types";
+import { weaponAltNames } from "./weapon-alt-names";
 
 export function isAbility(value: string): value is Ability {
 	return Boolean(abilities.some((a) => a.name === value));

@@ -1,15 +1,15 @@
-import type { ZodType } from "zod";
-import { z } from "zod";
 import {
 	abilities,
 	type abilitiesShort,
-} from "~/modules/in-game-lists/abilities";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+} from "@sendou/in-game-lists/abilities";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import type { ZodType } from "zod";
+import { z } from "zod";
 import { SHORT_NANOID_LENGTH } from "./id";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";

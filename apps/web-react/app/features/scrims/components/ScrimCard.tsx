@@ -1,3 +1,4 @@
+import type { ModeShort } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { formatDistance } from "date-fns";
 import {
@@ -29,7 +30,6 @@ import {
 	useUserCardData,
 } from "~/features/user-card/components/UserCard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { scrimPage, tournamentRegisterPage } from "~/utils/urls";

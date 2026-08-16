@@ -1,6 +1,6 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
 import type { TournamentRoundMaps } from "~/db/tables-json";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { WhoSide } from "../tournament-bracket-constants";
 import {
 	CUSTOM_FLOW_VALIDATION_ERRORS,

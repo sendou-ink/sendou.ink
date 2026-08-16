@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { registerTeamFormSchema } from "~/features/tournament/tournament-register-schemas";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { tournamentRegisterPage } from "~/utils/urls";
 import {
 	counterpickMap,

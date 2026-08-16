@@ -1,5 +1,5 @@
+import type { BuildAbilitiesTuple } from "@sendou/in-game-lists/types";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";

@@ -1,6 +1,6 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { describe, expect, test } from "vitest";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import * as Matches from "./Matches";
 import {
 	NAMES,

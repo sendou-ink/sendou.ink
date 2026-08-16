@@ -1,3 +1,5 @@
+import { shortStageName } from "@sendou/in-game-lists/stage-ids";
+import type { StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { differenceInMinutes, differenceInSeconds } from "date-fns";
 import * as React from "react";
@@ -11,8 +13,6 @@ import { ModeImage, StageImage } from "~/components/Image";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type { StageId } from "~/modules/in-game-lists/types";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,

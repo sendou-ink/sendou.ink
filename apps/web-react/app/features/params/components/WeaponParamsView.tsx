@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { useTranslation } from "react-i18next";
 import {
 	SendouTab,
@@ -6,7 +7,6 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Main } from "~/components/Main";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { weaponParamsSearchParams } from "../params-search-params";
 import type {

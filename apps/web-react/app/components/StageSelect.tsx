@@ -1,9 +1,9 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { StageId } from "@sendou/in-game-lists/types";
 import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { StageImage } from "~/components/Image";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { StageId } from "~/modules/in-game-lists/types";
 import styles from "./StageSelect.module.css";
 
 interface StageSelectProps<Clearable extends boolean | undefined = undefined> {

@@ -1,6 +1,6 @@
+import type { StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import type * as React from "react";
-import type { StageId } from "~/modules/in-game-lists/types";
 import { stageBannerImageUrl } from "~/utils/urls";
 import styles from "./StageBannerBox.module.css";
 

@@ -1,3 +1,4 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
@@ -10,7 +11,6 @@ import { Section } from "~/components/Section";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl } from "~/utils/urls";
 import { loader } from "../loaders/to.$id.rules.server";

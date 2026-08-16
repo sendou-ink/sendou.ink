@@ -1,10 +1,10 @@
-import * as R from "remeda";
-import type { Tables } from "~/db/tables";
 import type {
 	BracketData,
 	MatchData,
 	RoundData,
-} from "~/features/tournament-bracket/core/engine/types";
+} from "@sendou/tournament-engine/types";
+import * as R from "remeda";
+import type { Tables } from "~/db/tables";
 import invariant from "~/utils/invariant";
 import type { BracketMapCounts } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";

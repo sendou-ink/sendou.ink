@@ -1,7 +1,7 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import { SendouPopover } from "../elements/Popover";
 import { Image, WeaponImage } from "../Image";

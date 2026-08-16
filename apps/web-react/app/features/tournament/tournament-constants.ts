@@ -1,5 +1,8 @@
+import { ENGINE_DEFAULTS } from "@sendou/tournament-engine";
 import { Config } from "~/config";
 import { TEAM } from "../team/team-constants";
+
+export { TOURNAMENT_STAGE_TYPES } from "@sendou/tournament-engine/types";
 
 export const TOURNAMENT = {
 	TEAM_NAME_MAX_LENGTH: TEAM.NAME_MAX_LENGTH,
@@ -14,12 +17,14 @@ export const TOURNAMENT = {
 	BRACKET_NAME_MAX_LENGTH: 32,
 	PLACEMENT_MAX: 100,
 	// just a fallback, normally this should be set by user explicitly
-	RR_DEFAULT_TEAM_COUNT_PER_GROUP: 4,
+	RR_DEFAULT_TEAM_COUNT_PER_GROUP:
+		ENGINE_DEFAULTS.RR_DEFAULT_TEAM_COUNT_PER_GROUP,
 	RR_TEAMS_PER_GROUP_OPTIONS: [3, 4, 5, 6],
 	RR_AB_DIVISIONS_TEAMS_PER_GROUP_OPTIONS: [4, 6, 8, 10, 12],
-	SWISS_DEFAULT_GROUP_COUNT: 1,
-	SWISS_DEFAULT_ROUND_COUNT: 5,
-	SE_DEFAULT_HAS_THIRD_PLACE_MATCH: true,
+	SWISS_DEFAULT_GROUP_COUNT: ENGINE_DEFAULTS.SWISS_DEFAULT_GROUP_COUNT,
+	SWISS_DEFAULT_ROUND_COUNT: ENGINE_DEFAULTS.SWISS_DEFAULT_ROUND_COUNT,
+	SE_DEFAULT_HAS_THIRD_PLACE_MATCH:
+		ENGINE_DEFAULTS.SE_DEFAULT_HAS_THIRD_PLACE_MATCH,
 	MAX_SAVED_COUNT: 20,
 	/** How many days after a tournament ends VOD links are shown on the bracket */
 	VOD_VISIBILITY_DAYS: 7,
@@ -34,13 +39,6 @@ export const TOURNAMENT = {
 		FINALS_THIRD_PLACE_MATCH_UNIFIED: "Finals + 3rd place match",
 	},
 } as const;
-
-export const TOURNAMENT_STAGE_TYPES = [
-	"single_elimination",
-	"double_elimination",
-	"round_robin",
-	"swiss",
-] as const;
 
 // AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
 // could also have the traditional style where TO picks the maps later

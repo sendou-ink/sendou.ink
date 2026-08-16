@@ -1,3 +1,5 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort } from "@sendou/in-game-lists/types";
 import { isWithinInterval, sub } from "date-fns";
 import { redirect } from "react-router";
 import * as R from "remeda";
@@ -10,8 +12,6 @@ import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { SerializeFrom } from "~/utils/remix";

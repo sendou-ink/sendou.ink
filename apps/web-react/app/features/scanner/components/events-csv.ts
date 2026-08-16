@@ -6,7 +6,7 @@
  * into one cell, matching the compact per-event view of the live feed.
  */
 
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,

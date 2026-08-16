@@ -1,9 +1,9 @@
-import { abilities } from "~/modules/in-game-lists/abilities";
+import { abilities } from "@sendou/in-game-lists/abilities";
 import type {
 	AbilityType,
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import { UNKNOWN_SHORT } from "../analyzer-constants";
 
 /**

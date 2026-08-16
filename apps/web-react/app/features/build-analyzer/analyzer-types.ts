@@ -4,7 +4,7 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import type {
 	DAMAGE_TYPE,
 	TENACITY_PLAYER_DEFICITS,
@@ -359,7 +359,4 @@ export interface AnalyzedBuild {
 
 export type SpecialEffectType = (typeof SPECIAL_EFFECTS)[number]["type"];
 
-export type AnyWeapon =
-	| { type: "MAIN"; id: MainWeaponId }
-	| { type: "SUB"; id: SubWeaponId }
-	| { type: "SPECIAL"; id: SpecialWeaponId };
+export type { AnyWeapon } from "@sendou/in-game-lists/types";

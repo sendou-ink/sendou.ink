@@ -1,7 +1,7 @@
+import * as Engine from "@sendou/tournament-engine";
+import { createResolved } from "@sendou/tournament-engine/create";
+import type { BracketData } from "@sendou/tournament-engine/types";
 import { describe, expect, test } from "vitest";
-import * as Engine from "~/features/tournament-bracket/core/engine";
-import { createResolved } from "~/features/tournament-bracket/core/engine/create";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import {
 	mergeStages,
 	progressions,

@@ -1,3 +1,4 @@
+import type { ModeShort } from "@sendou/in-game-lists/types";
 import { subSeconds } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { backdate } from "~/db/seed/core/backdate";
@@ -12,7 +13,6 @@ import {
 	freshUserSkills,
 	refreshUserSkills,
 } from "~/features/mmr/tiered.server";
-import type { ModeShort } from "~/modules/in-game-lists/types";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 

@@ -1,3 +1,4 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
 import { add, sub } from "date-fns";
 import { z } from "zod";
 import {
@@ -17,7 +18,6 @@ import {
 	toggle,
 	tournamentSearchOptional,
 } from "~/form/fields";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import {
 	_action,
 	date,

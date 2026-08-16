@@ -1,0 +1,13 @@
+{
+	"name": "@sendou/in-game-lists",
+	"version": "0.0.0",
+	"private": true,
+	"type": "module",
+	"exports": {
+		"./*": "./src/*.ts"
+	},
+	"devDependencies": {
+		"typescript": "7.0.2",
+		"vitest": "4.1.10"
+	}
+}

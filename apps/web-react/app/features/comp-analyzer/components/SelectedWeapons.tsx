@@ -14,11 +14,11 @@ import {
 	verticalListSortingStrategy,
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Image, WeaponImage } from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	abilityImageUrl,
 	specialWeaponImageUrl,

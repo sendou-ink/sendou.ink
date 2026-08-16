@@ -1,5 +1,5 @@
-import { stagesObj as s, stageIds } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import { stagesObj as s, stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { MapPool } from "../map-list-generator/core/map-pool";
 
 export const BANNED_MAPS: Record<ModeShort, StageId[]> = {

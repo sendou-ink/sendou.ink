@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
@@ -6,7 +7,6 @@ import { Flag } from "~/components/Flag";
 import { SpecialWeaponImage, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { weaponParams } from "~/features/build-analyzer/core/utils";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import styles from "./Graphic.module.css";
 
 export const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {

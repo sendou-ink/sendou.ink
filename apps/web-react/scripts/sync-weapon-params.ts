@@ -5,7 +5,7 @@ import {
 	mainWeaponIds,
 	specialWeaponIds,
 	subWeaponIds,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
 import { logger } from "~/utils/logger";
 import {
 	loadWeaponInfoMain,

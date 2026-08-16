@@ -1,3 +1,4 @@
+import { shortStageName } from "@sendou/in-game-lists/stage-ids";
 import clsx from "clsx";
 import { Check, ClipboardCopy, Copy, SquarePen, Trash } from "lucide-react";
 import * as React from "react";
@@ -14,7 +15,6 @@ import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
 import { newVodPage } from "~/features/vods/vods-urls";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";

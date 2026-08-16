@@ -1,10 +1,10 @@
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
 import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import {
 	languagesUnified,
 	type UnifiedLanguageCode,
 } from "~/modules/i18n/config";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/zod";

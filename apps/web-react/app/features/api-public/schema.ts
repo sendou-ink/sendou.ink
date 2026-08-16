@@ -1,6 +1,6 @@
+import type { BracketData } from "@sendou/tournament-engine/types";
 import type { Pronouns } from "~/db/tables-json";
 import type { TierName } from "~/features/mmr/mmr-constants";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /** GET /api/user/{userId|discordId} */
 

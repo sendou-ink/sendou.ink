@@ -1,12 +1,12 @@
-import { PATCHES } from "~/features/builds/builds-constants";
-import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import {
 	mainWeaponIds,
 	weaponCategories,
 	weaponIdToBaseWeaponId,
 	weaponIdToType,
-} from "~/modules/in-game-lists/weapon-ids";
+} from "@sendou/in-game-lists/weapon-ids";
+import { PATCHES } from "~/features/builds/builds-constants";
+import { DAMAGE_RECEIVERS } from "~/features/object-damage-calculator/calculator-constants";
 import {
 	DAMAGE_MULTIPLIER_PARAM_KEY,
 	INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,

@@ -1,10 +1,10 @@
-import * as R from "remeda";
-import { modesShort } from "~/modules/in-game-lists/modes";
+import { modesShort } from "@sendou/in-game-lists/modes";
 import type {
 	ModeShort,
 	ModeWithStage,
 	StageId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import * as R from "remeda";
 import invariant from "~/utils/invariant";
 import { err, ok, unwrapOr } from "~/utils/result";
 import type { MapPool } from "./map-pool";

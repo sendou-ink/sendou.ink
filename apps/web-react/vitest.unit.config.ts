@@ -3,7 +3,7 @@ import { configDefaults, defineConfig } from "vitest/config";
 export default defineConfig({
 	test: {
 		name: "unit",
-		include: ["**/*.test.{ts,tsx}"],
+		include: ["**/*.test.{ts,tsx}", "../../packages/*/src/**/*.test.{ts,tsx}"],
 		exclude: [
 			...configDefaults.exclude,
 			"e2e/**",

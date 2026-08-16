@@ -1,5 +1,5 @@
+import * as Engine from "@sendou/tournament-engine";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
-import * as Engine from "~/features/tournament-bracket/core/engine";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";

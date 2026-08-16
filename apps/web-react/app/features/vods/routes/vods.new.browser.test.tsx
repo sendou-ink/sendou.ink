@@ -1,3 +1,8 @@
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
@@ -5,11 +10,6 @@ import { render } from "vitest-browser-react";
 import { FormField } from "~/form/FormField";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import { vodFormBaseSchema } from "../vods-schemas";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;

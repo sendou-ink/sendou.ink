@@ -1,3 +1,7 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import * as Engine from "@sendou/tournament-engine";
+import type { BracketData } from "@sendou/tournament-engine/types";
 import clsx from "clsx";
 import {
 	Link as LinkIcon,
@@ -28,17 +32,13 @@ import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import { useTournamentPreparedMaps } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useTournament } from "~/features/tournament/tournament-context";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { assertUnreachable } from "~/utils/types";
 import { SendouButton } from "../../../components/elements/Button";
 import { logger } from "../../../utils/logger";
 import type { Bracket } from "../core/Bracket";
-import * as Engine from "../core/engine";
 import * as PreparedMaps from "../core/PreparedMaps";
 import { getRounds } from "../core/rounds";
 import type { Tournament } from "../core/Tournament";

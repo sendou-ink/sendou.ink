@@ -1,3 +1,6 @@
+import { abilities } from "@sendou/in-game-lists/abilities";
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { Ability as AbilityType } from "@sendou/in-game-lists/types";
 import {
 	Calendar,
 	ChartColumnBig,
@@ -17,9 +20,6 @@ import { ModeImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { abilities } from "~/modules/in-game-lists/abilities";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";

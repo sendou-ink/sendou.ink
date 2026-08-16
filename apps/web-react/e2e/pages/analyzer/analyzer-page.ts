@@ -1,5 +1,5 @@
 import type { Locator, Page } from "@playwright/test";
-import type { Ability } from "~/modules/in-game-lists/types";
+import type { Ability } from "@sendou/in-game-lists/types";
 import { ANALYZER_URL, weaponParamsPage } from "~/utils/urls";
 import { expect, navigate, selectWeapon } from "../../helpers/playwright";
 import { BuildFormPage } from "../builds/build-form-page";

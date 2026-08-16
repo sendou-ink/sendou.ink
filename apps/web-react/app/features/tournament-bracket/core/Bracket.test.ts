@@ -1,9 +1,9 @@
+import * as Engine from "@sendou/tournament-engine";
+import { createResolved } from "@sendou/tournament-engine/create";
+import type { BracketData, MatchData } from "@sendou/tournament-engine/types";
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import invariant from "../../../utils/invariant";
-import * as Engine from "./engine";
-import { createResolved } from "./engine/create";
-import type { BracketData, MatchData } from "./engine/types";
 import { Tournament } from "./Tournament";
 import { PADDLING_POOL_255 } from "./tests/mocks";
 import { LOW_INK_DECEMBER_2024 } from "./tests/mocks-li";

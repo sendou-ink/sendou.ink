@@ -1,3 +1,9 @@
+import type {
+	Ability as AbilityType,
+	BuildAbilitiesTuple,
+	GearType,
+	ModeShort,
+} from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
@@ -9,12 +15,6 @@ import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-poi
 import { getAbilityChunksMapAsArray } from "~/features/build-analyzer/core/abilityChunksCalc";
 import { apFromMap } from "~/features/build-analyzer/core/utils";
 import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
-import type {
-	Ability as AbilityType,
-	BuildAbilitiesTuple,
-	GearType,
-	ModeShort,
-} from "~/modules/in-game-lists/types";
 import { gearImageUrl, navIconUrl, resolveAvatarUrl } from "~/utils/urls";
 import styles from "./BuildGraphic.module.css";
 import {

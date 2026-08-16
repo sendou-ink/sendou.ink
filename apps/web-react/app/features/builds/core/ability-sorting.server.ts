@@ -1,11 +1,8 @@
 import {
 	abilities,
 	mainOnlyAbilitiesShort,
-} from "~/modules/in-game-lists/abilities";
-import type {
-	Ability,
-	BuildAbilitiesTuple,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/abilities";
+import type { Ability, BuildAbilitiesTuple } from "@sendou/in-game-lists/types";
 
 const abilityToIndex = abilities.reduce(
 	(acc, ability, index) => {

@@ -1,3 +1,4 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { damageTypeToWeaponType } from "~/features/build-analyzer/analyzer-constants";
 import type {
 	AbilityPoints,
@@ -8,7 +9,6 @@ import {
 	subWeaponDamageValue,
 } from "~/features/build-analyzer/core/stats";
 import { weaponParams } from "~/features/build-analyzer/core/utils";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	COMBO_DAMAGE_THRESHOLD,
 	LETHAL_DAMAGE,

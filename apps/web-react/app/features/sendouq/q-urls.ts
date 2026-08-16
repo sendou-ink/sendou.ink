@@ -1,4 +1,4 @@
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { SENDOUQ_PAGE } from "~/utils/urls";
 import { qSearchParams, weaponUsageSearchParams } from "./q-search-params";
 

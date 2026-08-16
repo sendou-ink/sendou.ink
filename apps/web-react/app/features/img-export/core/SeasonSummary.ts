@@ -1,10 +1,10 @@
-import * as R from "remeda";
-import * as Seasons from "~/features/mmr/core/Seasons";
 import type {
 	MainWeaponId,
 	ModeShort,
 	StageId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import * as R from "remeda";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import type { Role } from "~/modules/permissions/types";
 
 const BEST_STAGE_MIN_MAPS_NEEDED = 10;

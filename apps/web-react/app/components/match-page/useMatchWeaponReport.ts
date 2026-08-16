@@ -1,6 +1,6 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponReportActionSchema } from "./match-page-schemas";
 import type { WeaponReporterMap, WeaponReporterProps } from "./WeaponReporter";
 

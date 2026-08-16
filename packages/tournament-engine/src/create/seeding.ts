@@ -1,7 +1,7 @@
 // https://web.archive.org/web/20200601102344/https://tl.net/forum/sc2-tournaments/202139-superior-double-elimination-losers-bracket-seeding
 
-import invariant from "~/utils/invariant";
 import type { OrderingMap, Seeding, SeedOrdering } from "../types";
+import invariant from "../utils/invariant";
 
 export const ordering: OrderingMap = {
 	natural: <T>(array: T[]) => [...array],

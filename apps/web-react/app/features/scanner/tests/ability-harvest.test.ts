@@ -9,7 +9,7 @@ import assert from "node:assert/strict";
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import { connectAbilities } from "../core/ability-harvest";
 import {
 	DEATH_EVENT_TYPE,

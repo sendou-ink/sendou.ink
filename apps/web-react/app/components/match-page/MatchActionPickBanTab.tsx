@@ -1,11 +1,11 @@
+import { shortStageName } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
-import { shortStageName } from "~/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { stageImageUrl } from "~/utils/urls";
 import { Divider } from "../Divider";
 import { SendouTabPanel } from "../elements/Tabs";

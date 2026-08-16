@@ -1,3 +1,4 @@
+import { SPLATTERCOLOR_SCREEN_ID } from "@sendou/in-game-lists/weapon-ids";
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
 import { Check, Hourglass, Mic, Volume2, VolumeX } from "lucide-react";
@@ -22,7 +23,6 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { languagesUnified } from "~/modules/i18n/config";
-import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import {

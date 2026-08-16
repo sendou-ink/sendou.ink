@@ -1,11 +1,11 @@
 import { TZDate } from "@date-fns/tz";
+import { gamesShort, versusShort } from "@sendou/in-game-lists/games";
+import { modesShortWithSpecial } from "@sendou/in-game-lists/modes";
 import { isWeekend } from "date-fns";
 import {
 	BEST_TIER_NUMBER,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
-import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
-import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import { assertType } from "~/utils/types";
 import type {
 	CalendarEvent,

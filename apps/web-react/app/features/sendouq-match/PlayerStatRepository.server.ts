@@ -1,3 +1,4 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import {
 	type ExpressionBuilder,
 	type NotNull,
@@ -7,7 +8,6 @@ import {
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	commonUserJsonObject,
 	jsonArrayFrom,

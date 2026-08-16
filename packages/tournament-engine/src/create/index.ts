@@ -1,10 +1,10 @@
-import type { TournamentRoundMaps } from "~/db/tables-json";
 import type {
 	BracketData,
 	CreateBracketInput,
 	ResolvedCreateBracketInput,
 	RoundMapsInput,
 	StageType,
+	TournamentRoundMaps,
 } from "../types";
 import { StageCreator } from "./builder";
 import { createDoubleElimination } from "./double-elimination";

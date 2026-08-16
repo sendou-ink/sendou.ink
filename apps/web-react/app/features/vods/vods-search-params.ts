@@ -1,7 +1,7 @@
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import { mainWeaponIds } from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
 import { ingestVodPrefillSchema } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
-import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { modeShort, numericEnum } from "~/utils/zod";

@@ -1,7 +1,7 @@
+import { abilities } from "@sendou/in-game-lists/abilities";
+import type { BuildAbilitiesTupleWithUnknown } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import * as React from "react";
-import { abilities } from "~/modules/in-game-lists/abilities";
-import type { BuildAbilitiesTupleWithUnknown } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./AbilitiesSelector.module.css";

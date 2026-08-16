@@ -1,6 +1,6 @@
 import assert from "node:assert/strict";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { sendouUpload } from "../components/sendou-upload";
 import type { MinimapData } from "../core/detectors/minimap/index";
 import type { ScoreboardData } from "../core/detectors/scoreboard/index";

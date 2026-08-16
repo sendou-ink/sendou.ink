@@ -1,3 +1,5 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import {
 	MatchActionPickBanTab,
 	type PickBanMapOption,
@@ -7,8 +9,6 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { UndoReportButton } from "./TournamentMatchActionTab";

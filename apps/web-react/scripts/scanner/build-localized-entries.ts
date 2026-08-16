@@ -27,10 +27,10 @@
  */
 import { readdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import { ALL_WEAPON_ENTRIES } from "../../app/features/scanner/core/detectors/death/weapon-names";
 import type { ScannerLobby } from "../../app/features/scanner/scanner-types";
-import { stageIds } from "../../app/modules/in-game-lists/stage-ids";
-import type { ModeShort, StageId } from "../../app/modules/in-game-lists/types";
 import gameMisc from "../../locales/en/game-misc.json";
 
 const SPLAT3_DIR =
@@ -344,7 +344,7 @@ writeFileSync(
  * mapped to the sendou.ink id it means (core/localized.ts derives the
  * flattened match sets detectors snap OCR output against).`,
 	)}
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { ScannerLobby } from "../scanner-types";
 
 export interface LocalizedLobby {

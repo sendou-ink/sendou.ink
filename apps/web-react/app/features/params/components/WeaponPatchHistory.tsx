@@ -1,3 +1,8 @@
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
@@ -17,11 +22,6 @@ import {
 	translateDamageReceiver,
 } from "~/features/object-damage-calculator/calculator-constants";
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
-import type {
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import * as WeaponParams from "../core/WeaponParams";
 import { weaponParamsSearchParams } from "../params-search-params";

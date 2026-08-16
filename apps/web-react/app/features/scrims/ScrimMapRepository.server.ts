@@ -1,8 +1,8 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { databaseTimestampNow } from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
 import * as ScrimMapByMap from "./core/ScrimMapByMap";

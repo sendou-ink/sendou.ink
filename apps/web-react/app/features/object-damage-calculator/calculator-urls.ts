@@ -1,4 +1,4 @@
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { calculatorSearchParams } from "./calculator-search-params";
 
 export const objectDamageCalculatorPage = (weaponId?: MainWeaponId) =>

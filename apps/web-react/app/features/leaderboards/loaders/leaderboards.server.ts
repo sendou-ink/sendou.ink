@@ -1,12 +1,12 @@
+import type {
+	MainWeaponId,
+	RankedModeShort,
+} from "@sendou/in-game-lists/types";
+import type { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import type {
-	MainWeaponId,
-	RankedModeShort,
-} from "~/modules/in-game-lists/types";
-import type { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
 import {
 	cachedFullUserLeaderboard,
 	cachedTeamLeaderboard,

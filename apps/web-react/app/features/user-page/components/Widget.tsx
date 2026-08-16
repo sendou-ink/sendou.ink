@@ -1,3 +1,9 @@
+import type { GameBadgeId } from "@sendou/in-game-lists/game-badge-ids";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { Link2 as LinkIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
@@ -30,12 +36,6 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { usePagination } from "~/hooks/usePagination";
-import type { GameBadgeId } from "~/modules/in-game-lists/game-badge-ids";
-import type {
-	MainWeaponId,
-	ModeShort,
-	StageId,
-} from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";

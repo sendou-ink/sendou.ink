@@ -1,14 +1,14 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import {
+	weaponCategories,
+	weaponIdToType,
+} from "@sendou/in-game-lists/weapon-ids";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link } from "react-router";
 import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	weaponCategories,
-	weaponIdToType,
-} from "~/modules/in-game-lists/weapon-ids";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,

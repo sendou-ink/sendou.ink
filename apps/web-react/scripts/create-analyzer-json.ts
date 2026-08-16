@@ -3,6 +3,16 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
+import {
+	SQUID_BEAKON_ID,
+	subWeaponIds,
+	weaponIdToBaseWeaponId,
+} from "@sendou/in-game-lists/weapon-ids";
 import { z } from "zod";
 import type {
 	BaseWeaponStats,
@@ -11,16 +21,6 @@ import type {
 	SubWeaponParams,
 	WeaponKit,
 } from "~/features/build-analyzer/analyzer-types";
-import type {
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
-import {
-	SQUID_BEAKON_ID,
-	subWeaponIds,
-	weaponIdToBaseWeaponId,
-} from "~/modules/in-game-lists/weapon-ids";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import {

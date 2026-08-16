@@ -1,3 +1,21 @@
+import { abilitiesShort } from "@sendou/in-game-lists/abilities";
+import type {
+	Ability as AbilityType,
+	BuildAbilitiesTupleWithUnknown,
+	MainWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
+import { isAbility } from "@sendou/in-game-lists/utils";
+import {
+	ANGLE_SHOOTER_ID,
+	BIG_BUBBLER_ID,
+	INK_MINE_ID,
+	INK_STORM_ID,
+	KILLER_WAIL_ID,
+	POINT_SENSOR_ID,
+	TORPEDO_ID,
+	TOXIC_MIST_ID,
+} from "@sendou/in-game-lists/weapon-ids";
 import clsx from "clsx";
 import { FlaskConical, SlidersHorizontal } from "lucide-react";
 import * as React from "react";
@@ -26,24 +44,6 @@ import { objectDamageCalculatorPage } from "~/features/object-damage-calculator/
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { userNewBuildPage } from "~/features/user-page/user-page-urls";
 import { useHydrated } from "~/hooks/useHydrated";
-import { abilitiesShort } from "~/modules/in-game-lists/abilities";
-import type {
-	Ability as AbilityType,
-	BuildAbilitiesTupleWithUnknown,
-	MainWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
-import { isAbility } from "~/modules/in-game-lists/utils";
-import {
-	ANGLE_SHOOTER_ID,
-	BIG_BUBBLER_ID,
-	INK_MINE_ID,
-	INK_STORM_ID,
-	KILLER_WAIL_ID,
-	POINT_SENSOR_ID,
-	TORPEDO_ID,
-	TOXIC_MIST_ID,
-} from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";

@@ -1,3 +1,4 @@
+import type { MainWeaponId, StageId } from "@sendou/in-game-lists/types";
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
@@ -19,7 +20,6 @@ import {
 } from "~/form/SendouForm";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";

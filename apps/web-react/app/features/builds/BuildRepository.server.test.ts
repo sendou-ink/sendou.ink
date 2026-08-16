@@ -1,13 +1,13 @@
+import type {
+	BuildAbilitiesTuple,
+	MainWeaponId,
+} from "@sendou/in-game-lists/types";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as XRankPlacementFactory from "~/db/seed/factories/XRankPlacementFactory";
 import { db } from "~/db/sql";
 import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
-import type {
-	BuildAbilitiesTuple,
-	MainWeaponId,
-} from "~/modules/in-game-lists/types";
 import * as BuildRepository from "./BuildRepository.server";
 
 const users = UserFactory.pool();

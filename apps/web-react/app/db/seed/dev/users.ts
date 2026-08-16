@@ -1,3 +1,5 @@
+import { modesShort } from "@sendou/in-game-lists/modes";
+import { stageIds } from "@sendou/in-game-lists/stage-ids";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { ADMIN_DISCORD_ID } from "~/features/admin/admin-constants";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
@@ -5,8 +7,6 @@ import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-
 import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
-import { modesShort } from "~/modules/in-game-lists/modes";
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import {
 	ADMIN_TEST_AVATAR,
 	NZAP_TEST_AVATAR,

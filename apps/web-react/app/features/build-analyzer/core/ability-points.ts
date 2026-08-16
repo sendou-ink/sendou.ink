@@ -1,9 +1,9 @@
-import { abilities } from "~/modules/in-game-lists/abilities";
+import { abilities } from "@sendou/in-game-lists/abilities";
 import type {
 	Ability,
 	AbilityWithUnknown,
 	BuildAbilitiesTupleWithUnknown,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { MAIN_SLOT_AP, SUB_SLOT_AP } from "../analyzer-constants";
 import type { AbilityPoints } from "../analyzer-types";

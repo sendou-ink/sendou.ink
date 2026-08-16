@@ -1,8 +1,8 @@
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import type {
 	ScannerMatch,
 	ScannerMatchPlayer,
 } from "~/features/scanner/core/scanner-match";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
 /** In-game names of the default roster, winners first. */
 export const NAMES = ["w1", "w2", "w3", "w4", "l1", "l2", "l3", "l4"];

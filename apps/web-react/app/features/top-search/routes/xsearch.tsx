@@ -1,3 +1,4 @@
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -14,7 +15,6 @@ import { Image, ModeImage } from "~/components/Image";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { topSearchPage } from "~/features/top-search/top-search-urls";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";

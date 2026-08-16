@@ -1,14 +1,14 @@
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	SubWeaponId,
+} from "@sendou/in-game-lists/types";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { Image, WeaponImage } from "~/components/Image";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
-import type {
-	MainWeaponId,
-	SpecialWeaponId,
-	SubWeaponId,
-} from "~/modules/in-game-lists/types";
 import {
 	abilityImageUrl,
 	specialWeaponImageUrl,

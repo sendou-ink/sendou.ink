@@ -1,9 +1,9 @@
+import type { StageId } from "@sendou/in-game-lists/types";
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as SkillFactory from "~/db/seed/factories/SkillFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
-import type { StageId } from "~/modules/in-game-lists/types";
 import { SENDOUQ_BEST_OF } from "../q-constants";
 import {
 	clearCacheForTesting,

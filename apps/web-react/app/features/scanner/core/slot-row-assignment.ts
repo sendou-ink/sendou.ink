@@ -19,7 +19,7 @@
  * keep their as-drawn relative order, and thin evidence degrades to the
  * as-drawn arrangement rather than a coin flip.
  */
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
 
 /** A slot→row permutation: `perm[slot]` is the scoreboard row the slot feeds. */
 export type SlotRowPermutation = readonly [number, number, number, number];

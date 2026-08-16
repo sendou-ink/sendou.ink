@@ -1,3 +1,4 @@
+import type { MatchStatus } from "@sendou/tournament-engine";
 import { Ban, Lock, LockOpen, RotateCcw, SquarePen } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -17,7 +18,6 @@ import { TAB_KEYS } from "~/components/match-page/MatchTabs";
 import { SubmitButton } from "~/components/SubmitButton";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
-import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";

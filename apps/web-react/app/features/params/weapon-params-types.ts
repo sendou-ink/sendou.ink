@@ -2,7 +2,7 @@ import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
 import type { ParamChangeKind } from "./core/param-directions";
 
 export interface WeaponKitInfo {

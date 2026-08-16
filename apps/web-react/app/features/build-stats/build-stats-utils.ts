@@ -1,5 +1,5 @@
-import { abilities } from "~/modules/in-game-lists/abilities";
-import type { Ability } from "~/modules/in-game-lists/types";
+import { abilities } from "@sendou/in-game-lists/abilities";
+import type { Ability } from "@sendou/in-game-lists/types";
 import invariant from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import { MAX_AP } from "../build-analyzer/analyzer-constants";

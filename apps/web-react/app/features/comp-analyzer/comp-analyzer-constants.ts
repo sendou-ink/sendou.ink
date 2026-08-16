@@ -1,9 +1,9 @@
-import type { DamageType } from "~/features/build-analyzer/analyzer-types";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
-} from "~/modules/in-game-lists/types";
+} from "@sendou/in-game-lists/types";
+import type { DamageType } from "~/features/build-analyzer/analyzer-types";
 
 export const MAX_WEAPONS = 4;
 
