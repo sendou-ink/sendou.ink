@@ -14,6 +14,22 @@
 		<meta name="mobile-web-app-capable" content="yes" />
 		<meta name="theme-color" content="#010115" />
 		%sveltekit.head%
+		<script>
+			(() => {
+				const cl = document.documentElement.classList;
+				if (cl.contains("light") || cl.contains("dark")) return;
+
+				const theme = window.matchMedia("(prefers-color-scheme: light)").matches
+					? "light"
+					: "dark";
+				cl.add(theme);
+
+				const meta = document.querySelector("meta[name=color-scheme]");
+				if (meta) {
+					meta.content = theme === "dark" ? "dark light" : "light dark";
+				}
+			})();
+		</script>
 	</head>
 	<body>
 		%sveltekit.body%
