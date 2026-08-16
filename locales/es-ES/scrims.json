@@ -14,7 +14,7 @@
 	"pickupBy": "Pickup de",
 	"filters.weekdayTimes": "Horarios entre semana",
 	"filters.weekendTimes": "Horarios de fin de semana",
-	"filters.divs": "",
+	"filters.divs": "Divs",
 	"filters.showFiltered": "Mostrar filtrados ({{count}})",
 	"filters.hideFiltered": "Ocultar filtrados ({{count}})",
 	"filters.showPendingRequests": "Mostrar peticiones pendientes ({{count}})",
@@ -32,7 +32,7 @@
 	"acceptModal.title": "¿Aceptar la petición de scrim de {{groupName}} y rechazar las demás (si las hay)?",
 	"acceptModal.prevented": "Pide a la persona que publicó el scrim que acepte esta petición",
 	"acceptModal.confirmFor": "Confirmar para: {{time}}",
-	"autoCancelInfo": "Una vez se reserva una scrim, las publicaciones y solicitudes con una diferencia de ±1 hora que compartan jugadores se eliminan automáticamente para evitar reservas dobles.",
+	"autoCancelInfo": "Una vez se reserva un scrim, las publicaciones y solicitudes con una diferencia de ±1 hora que compartan jugadores se eliminan automáticamente para evitar reservas dobles.",
 	"postModal.footer": "Publicación creada a las {{time}}",
 	"forms.title": "Creando una nueva publicación de scrim",
 	"forms.with.title": "Con",
@@ -40,7 +40,7 @@
 	"forms.with.user": "Usuario {{nth}}",
 	"forms.with.pick-up": "Pick-up",
 	"forms.when.title": "Inicio",
-	"forms.when.explanation": "Déjalo por defecto si quieres buscar una scrim ahora",
+	"forms.when.explanation": "Déjalo por defecto si quieres buscar un scrim ahora",
 	"forms.rangeEnd.title": "Flexibilidad de hora de inicio",
 	"forms.rangeEnd.explanation": "Si se establece, permite peticiones para cualquier hora entre inicio y fin",
 	"forms.rangeEnd.notFlexible": "Sin flexibilidad",
@@ -109,5 +109,8 @@
 	"mapByMap.stats.col.label": "Mapa",
 	"mapByMap.stats.col.wins": "Victorias",
 	"mapByMap.stats.col.losses": "Derrotas",
-	"mapByMap.stats.col.winPct": "% Victorias"
+	"mapByMap.stats.col.winPct": "% Victorias",
+	"filters": {
+		"divs": "Divs"
+	}
 }

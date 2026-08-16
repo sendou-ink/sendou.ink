@@ -157,11 +157,11 @@
 	"bracket.waiting": "El cuadro se mostrará aquí cuando al menos {{count}} equipos se hayan inscrito",
 	"bracket.waiting.checkin": "El cuadro se mostrará aquí cuando al menos {{count}} equipos hayan hecho check-in",
 	"bracket.waiting.advanced": "El cuadro se mostrará aquí cuando al menos {{count}} equipos hayan avanzado",
-	"bracket.sources.header": "",
-	"bracket.sources.top": "",
-	"bracket.sources.placements": "",
-	"bracket.sources.eliminated": "",
-	"bracket.sources.earlyAdvancers": "",
+	"bracket.sources.header": "Equipos uniéndose a este bracket: {{sources}}",
+	"bracket.sources.top": "{{bracket}} (top {{count}})",
+	"bracket.sources.placements": "{{bracket}} (posiciones {{placements}})",
+	"bracket.sources.eliminated": "{{bracket}} (eliminados en las primeras {{count}} rondas)",
+	"bracket.sources.earlyAdvancers": "{{bracket}} (equipos que ganan {{count}} sets)",
 	"bracket.wip": "Este cuadro es temporal y puede cambiar",
 	"bracket.progress.thanksForPlaying": "¡Gracias por participar en {{eventName}}!",
 	"bracket.progress.match": "Oponente actual: {{opponent}}",
@@ -170,7 +170,7 @@
 	"bracket.standings.showLess": "Mostrar menos",
 	"bracket.standings.showMore": "Mostrar más",
 	"match.hosts": "{{teamName}} crea la sala",
-	"match.pass": "Pasar",
+	"match.pass": "Contraseña",
 	"match.pool": "Grupo",
 	"match.score": "{{scoreOne}}-{{scoreTwo}} (Mejor de {{bestOf}})",
 	"match.score.playAll": "{{scoreOne}}-{{scoreTwo}} (Jugar todos los {{bestOf}})",
@@ -244,15 +244,15 @@
 	"progression.error.DUPLICATE_BRACKET_NAME": "Nombre de cuadro duplicado",
 	"progression.error.NAME_MISSING": "Falta el nombre del cuadro",
 	"progression.error.NEGATIVE_PROGRESSION": "La progresión negativa solo es posible en eliminación doble",
-	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "",
+	"progression.error.MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "Una fuente no puede mezclar posiciones que avanzan con equipos eliminados",
 	"progression.error.SWISS_EARLY_ADVANCE_NO_DESTINATION": "El cuadro suizo con avance/eliminación anticipada debe llevar a otro cuadro",
 	"progression.error.AB_DIVISIONS_NOT_ROUND_ROBIN": "Las divisiones A/B solo se pueden activar en brackets de todos contra todos",
 	"progression.error.AB_DIVISIONS_NOT_STARTING": "Las divisiones A/B solo se pueden activar en brackets iniciales",
 	"progression.error.AB_DIVISIONS_ODD_TEAMS_PER_GROUP": "Las divisiones A/B requieren un número par de equipos por grupo",
 	"progression.error.EMPTY_PLACEMENTS_ON_NON_SWISS": "Las posiciones vacías solo son válidas cuando provienen de un bracket suizo con avance anticipado",
-	"progression.error.DUPLICATE_SOURCE_BRACKET": "",
-	"progression.error.CYCLIC_PROGRESSION": "",
-	"progression.error.MERGED_STARTING_BRACKETS": "",
+	"progression.error.DUPLICATE_SOURCE_BRACKET": "El mismo bracket solo puede ser fuente una vez por bracket",
+	"progression.error.CYCLIC_PROGRESSION": "Los brackets no pueden ser fuente entre sí en un ciclo",
+	"progression.error.MERGED_STARTING_BRACKETS": "Los equipos que empezaron en brackets distintos no pueden enfrentarse",
 	"lfg.askCaptainToJoinQueue": "Pide al capitán de tu equipo o a un manager que se una a la cola",
 	"customFlow.beforeSet": "Antes del set",
 	"customFlow.afterMap": "Después del mapa",
@@ -287,5 +287,22 @@
 	"pickBan.banMap": "Banea un mapa",
 	"pickBan.pickMode": "Elige un modo",
 	"pickBan.banMode": "Banea un modo",
-	"pickBan.waitingFor": "Esperando a {{teamName}}"
+	"pickBan.waitingFor": "Esperando a {{teamName}}",
+	"bracket": {
+		"sources": {
+			"header": "Equipos uniéndose a este bracket: {{sources}}",
+			"top": "{{bracket}} (top {{count}})",
+			"placements": "{{bracket}} (posiciones {{placements}})",
+			"eliminated": "{{bracket}} (eliminados en las primeras {{count}} rondas)",
+			"earlyAdvancers": "{{bracket}} (equipos que ganan {{count}} sets)"
+		}
+	},
+	"progression": {
+		"error": {
+			"MIXED_POSITIVE_NEGATIVE_PLACEMENTS": "Una fuente no puede mezclar posiciones que avanzan con equipos eliminados",
+			"DUPLICATE_SOURCE_BRACKET": "El mismo bracket solo puede ser fuente una vez por bracket",
+			"CYCLIC_PROGRESSION": "Los brackets no pueden ser fuente entre sí en un ciclo",
+			"MERGED_STARTING_BRACKETS": "Los equipos que empezaron en brackets distintos no pueden enfrentarse"
+		}
+	}
 }

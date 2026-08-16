@@ -50,7 +50,7 @@ const TRANSLATORS: Array<{
 		language: "es-ES",
 	},
 	{
-		translators: ["Hachi Shibaru", "KaiserOfNone", "Mario64iscool2"],
+		translators: ["Hachi Shibaru", "KaiserOfNone", "Mario64iscool2", "Lasky"],
 		language: "es-US",
 	},
 	{

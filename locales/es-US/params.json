@@ -1,14 +1,14 @@
 {
-	"tab.params": "",
-	"tab.patches": "",
-	"noPatches": "",
-	"patches.showSubSpecial": "",
-	"header.parameter": "",
-	"legend.title": "",
-	"legend.damage": "",
-	"legend.frames": "",
-	"legend.powerUp": "",
-	"compare.action": "",
-	"compare.heading": "",
-	"dataCredit.lean": ""
+	"tab.params": "Parámetros",
+	"tab.patches": "Historial de parches",
+	"noPatches": "Aún no hay cambios de balance registrados para esta arma.",
+	"patches.showSubSpecial": "Mostrar cambios de secundarias y especiales",
+	"header.parameter": "Parámetro",
+	"legend.title": "Notas",
+	"legend.damage": "Los valores de daño se almacenan ×10, por lo que un valor de 450 significa 45.0 de daño.",
+	"legend.frames": "Los tiempos se miden en frames, donde 60 frames = 1 segundo.",
+	"legend.powerUp": "Bajo, Medio y Alto muestran el mismo valor con ninguno, una cantidad moderada y la cantidad máxima de la habilidad de potenciación relevante equipada (Mejora especial para especiales, Mejora secundaria para secundarias).",
+	"compare.action": "Comparar entre armas",
+	"compare.heading": "{{parameter}} entre armas",
+	"dataCredit.lean": "Créditos de datos: Lean"
 }
