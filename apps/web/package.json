@@ -1,0 +1,44 @@
+{
+	"name": "web",
+	"version": "3.0.0",
+	"private": true,
+	"type": "module",
+	"imports": {
+		"#lib/*": "./src/lib/*"
+	},
+	"scripts": {
+		"dev": "pnpm run combine-locales && vite dev",
+		"build": "pnpm run combine-locales && vite build",
+		"build:all-locales": "tsx scripts/build-with-all-locales.ts",
+		"preview": "vite preview",
+		"start": "node build/index.js",
+		"combine-locales": "tsx scripts/combine-locales.ts",
+		"check": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"typecheck": "svelte-kit sync && svelte-check --tsconfig ./tsconfig.json",
+		"test:unit": "vitest run"
+	},
+	"dependencies": {
+		"@epic-web/cachified": "5.6.3",
+		"@sendou/in-game-lists": "workspace:*",
+		"@sendou/utils": "workspace:*",
+		"date-fns": "4.4.0",
+		"kysely": "0.29.0",
+		"lru-cache": "^11.2.1",
+		"remeda": "2.39.0",
+		"sql-formatter": "^15.8.2",
+		"valibot": "^1.4.2"
+	},
+	"devDependencies": {
+		"@inlang/paraglide-js": "^2.24.1",
+		"@sveltejs/adapter-node": "6.0.0-next.10",
+		"@sveltejs/kit": "3.0.0-next.23",
+		"@sveltejs/vite-plugin-svelte": "^7.3.0",
+		"@types/node": "26.1.2",
+		"svelte": "^5.56.9",
+		"svelte-check": "^4.7.6",
+		"tsx": "^4.20.5",
+		"typescript": "~6.0.3",
+		"vite": "^8.2.1",
+		"vitest": "4.1.10"
+	}
+}

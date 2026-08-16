@@ -1,0 +1,6 @@
+.svelte-kit/
+build/
+messages/
+src/lib/paraglide/
+project.inlang/cache/
+project.inlang/settings.json.backup
