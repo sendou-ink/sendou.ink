@@ -22,6 +22,12 @@ importers:
       '@epic-web/cachified':
         specifier: 5.6.3
         version: 5.6.3
+      '@lucide/svelte':
+        specifier: 0.544.0
+        version: 0.544.0(svelte@5.56.9)
+      '@sendou/components':
+        specifier: workspace:*
+        version: link:../../packages/components
       '@sendou/in-game-lists':
         specifier: workspace:*
         version: link:../../packages/in-game-lists
@@ -367,6 +373,15 @@ importers:
       vitest:
         specifier: 4.1.10
         version: 4.1.10(@types/node@26.1.2)(@vitest/browser-playwright@4.1.10)(@vitest/ui@4.1.10)(vite@8.2.1(@types/node@26.1.2)(esbuild@0.28.2)(jiti@2.7.0)(tsx@4.23.12)(yaml@2.9.0))
+
+  packages/components:
+    devDependencies:
+      svelte:
+        specifier: ^5.56.9
+        version: 5.56.9
+      typescript:
+        specifier: ~6.0.3
+        version: 6.0.3
 
   packages/in-game-lists:
     devDependencies:
@@ -1207,6 +1222,11 @@ packages:
 
   '@lix-js/sdk@0.12.2':
     resolution: {integrity: sha512-sKGOPdVKdChS5q60F4VQE4ZTcf0B7ZJM3KGCVQFN2suVNKhHcllbsCiwRYuM5WL7Yu1ql7YexltJ2FCsDqKePg==}
+
+  '@lucide/svelte@0.544.0':
+    resolution: {integrity: sha512-9f9O6uxng2pLB01sxNySHduJN3HTl5p0HDu4H26VR51vhZfiMzyOMe9Mhof3XAk4l813eTtl+/DYRvGyoRR+yw==}
+    peerDependencies:
+      svelte: ^5
 
   '@mjackson/headers@0.10.0':
     resolution: {integrity: sha512-U1Eu1gF979k7ZoIBsJyD+T5l9MjtPONsZfoXfktsQHPJD0s7SokBGx+tLKDLsOY+gzVYAWS0yRFDNY8cgbQzWQ==}
@@ -5903,6 +5923,10 @@ snapshots:
       '@lix-js/sdk-linux-arm64': 0.12.2
       '@lix-js/sdk-linux-x64': 0.12.2
       '@lix-js/sdk-win32-x64': 0.12.2
+
+  '@lucide/svelte@0.544.0(svelte@5.56.9)':
+    dependencies:
+      svelte: 5.56.9
 
   '@mjackson/headers@0.10.0': {}
 
