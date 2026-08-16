@@ -246,6 +246,7 @@ const hasVisibleItems = $derived(items.size > 0);
 
 const uid = $props.id();
 const labelId = $derived(label ? `${uid}-select-label` : undefined);
+const valueId = `${uid}-select-value`;
 </script>
 
 <svelte:window
@@ -265,11 +266,12 @@ const labelId = $derived(label ? `${uid}-select-label` : undefined);
 		aria-haspopup="listbox"
 		aria-expanded={open}
 		aria-label={ariaLabel}
+		aria-labelledby={labelId && !ariaLabel ? `${valueId} ${labelId}` : undefined}
 		data-required={isRequired || undefined}
 		onclick={() => setOpen(!open)}
 		onkeydown={onTriggerKeydown}
 	>
-		<span class="selectValue" data-placeholder={selectedText === undefined ? "true" : undefined}>
+		<span id={valueId} class="selectValue" data-placeholder={selectedText === undefined ? "true" : undefined}>
 			{#if currentKey !== null && valueContent}
 				{@render valueContent(currentKey)}
 			{:else if selectedText !== undefined}

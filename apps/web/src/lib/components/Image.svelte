@@ -34,12 +34,14 @@ let {
 
 <!-- svelte-ignore a11y_no_static_element_interactions, a11y_click_events_have_key_events -->
 <div {title} class={containerClass} style={containerStyle} {onclick}>
+	<!-- dimensions as strings: numbers go through the img.width/height DOM
+	property setters on hydration, which truncate fractional values (27.76 -> 27) -->
 	<img
 		{alt}
 		src="{path}.avif"
 		class={className}
-		width={size ?? width}
-		height={size ?? height}
+		width={(size ?? width)?.toString()}
+		height={(size ?? height)?.toString()}
 		{style}
 		draggable="false"
 		{loading}

@@ -10,6 +10,16 @@ test.describe("Leaderboards", () => {
 		page,
 		factories,
 	}) => {
+		// season 1 renders its first ten entries through the static top-ten
+		// showcase (names come from top-ten.json, not the database), so the
+		// asserted users must rank below ten fillers to appear as normal rows
+		for (let i = 0; i < 10; i++) {
+			const filler = await factories.UserFactory.create();
+			await factories.SkillFactory.create(
+				{ userId: filler.id, mu: 40 - i },
+				{ matchesCount: 10 },
+			);
+		}
 		const better = await factories.UserFactory.create({
 			discordName: "BetterPlayer",
 		});
@@ -17,7 +27,7 @@ test.describe("Leaderboards", () => {
 			discordName: "WorsePlayer",
 		});
 		await factories.SkillFactory.create(
-			{ userId: better.id, mu: 30 },
+			{ userId: better.id, mu: 25 },
 			{ matchesCount: 10 },
 		);
 		await factories.SkillFactory.create(
@@ -52,7 +62,6 @@ test.describe("Leaderboards", () => {
 			weaponSplId: 40,
 		});
 		await factories.XRankPlacementFactory.create({
-			playerUserId: zonesPlayer.id,
 			name: LOW_POWER_NAME,
 			playerSplId: `runner-up-${zonesPlayer.id}`,
 			mode: "SZ",

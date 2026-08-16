@@ -41,9 +41,14 @@ export async function seedMisc({
 	await seedNotifications(users, tournaments);
 	await seedUserReports(users, sendouq);
 
-	await LiveStreamFactory.replaceAll(
-		users.showcaseIds.slice(0, STREAM_COUNT).map((userId) => ({ userId })),
-	);
+	// the differ seeds a world where nobody is live on Twitch: live-stream chrome
+	// (sidebar streams, friend stream activity) depends on the tournament cluster,
+	// which migrates to apps/web in a later wave
+	if (process.env.SEED_QUIET_WORLD !== "true") {
+		await LiveStreamFactory.replaceAll(
+			users.showcaseIds.slice(0, STREAM_COUNT).map((userId) => ({ userId })),
+		);
+	}
 	await SplatoonRotationFactory.replaceAll();
 }
 

@@ -337,6 +337,19 @@ async function capturePage(
 	const page = await context.newPage();
 	const notes: string[] = [];
 
+	if (process.env.DIFFER_DEBUG === "true") {
+		page.on("pageerror", (e) =>
+			// biome-ignore lint/suspicious/noConsole: CLI script output
+			console.error(`[pageerror ${url}]`, String(e).slice(0, 300)),
+		);
+		page.on("requestfailed", (request) => {
+			const failure = request.failure()?.errorText ?? "";
+			if (failure.includes("REFUSED"))
+				// biome-ignore lint/suspicious/noConsole: CLI script output
+				console.error(`[refused] ${request.url().slice(0, 140)}`);
+		});
+	}
+
 	try {
 		await page.setViewportSize({
 			width: viewport.width,
@@ -351,12 +364,36 @@ async function capturePage(
 			.catch(() => {
 				notes.push("page never reported hydration");
 			});
+		// lazy post-hydration data (the notification bell) races the screenshot:
+		// give post-hydration effects a beat to launch their fetches, then wait
+		// for the app to report every in-flight fetch settled
+		await page.waitForTimeout(150);
+		await page
+			.locator('[data-testid="hydrated"][data-router-idle="true"]')
+			.waitFor({ state: "attached", timeout: HYDRATION_TIMEOUT_MS })
+			.catch(() => {
+				notes.push("router never went idle");
+			});
 
 		if ((await page.getByTestId("error-page").count()) > 0) {
 			notes.push("rendered the error page (seed data gap?)");
 		}
 
 		await page.addStyleTag({ content: KILL_ANIMATIONS_CSS });
+		// strip comment nodes and merge the text nodes around them: React SSR
+		// splits text at every interpolation (`2019-<!-- -->2026`), and glyphs
+		// after a text-node boundary rasterize at different subpixel offsets
+		// than the same text in one node, scattering one-shade-off pixels
+		await page.evaluate(() => {
+			const walker = document.createTreeWalker(
+				document.documentElement,
+				NodeFilter.SHOW_COMMENT,
+			);
+			const comments: Node[] = [];
+			while (walker.nextNode()) comments.push(walker.currentNode);
+			for (const comment of comments) comment.parentNode?.removeChild(comment);
+			document.documentElement.normalize();
+		});
 		await page.evaluate(() => document.fonts.ready);
 
 		const screenshot = await settleScreenshot(page, notes);
@@ -604,6 +641,8 @@ function normalizeHead(head: string, origins: string[]): string {
 		const tag = match[0]
 			.replace(/\s+/g, " ")
 			.replace(/\s*\/?>$/, ">")
+			// attribute names are case-insensitive and React emits camelCase (charSet)
+			.replace(/ ([A-Za-z-]+)=/g, (_, name) => ` ${name.toLowerCase()}=`)
 			.trim();
 
 		if (match[1].toLowerCase() === "link") {

@@ -121,8 +121,11 @@ async function waitForServer(baseURL: string, timeout = 60000) {
 
 function killPortListeners(...ports: number[]) {
 	try {
+		// -t must stay separate from -i: a clustered bare `-i` selects every
+		// internet socket on the machine and the kill below would slaughter
+		// unrelated apps (Discord, the terminal running this...)
 		const pids = execSync(
-			`lsof -ti ${ports.map((p) => `-i :${p}`).join(" ")} || true`,
+			`lsof -t ${ports.map((p) => `-iTCP:${p}`).join(" ")} -sTCP:LISTEN || true`,
 			{
 				stdio: "pipe",
 			},

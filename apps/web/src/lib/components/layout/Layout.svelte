@@ -84,6 +84,10 @@ const unseenFriendRequests = $derived(
 
 const isFrontPage = $derived(page.url.pathname === "/");
 
+// xxx: wire to the chat sidebar when the chat rebuild lands (svelte-big-bang
+// phase 3); until then the button renders for layout parity with the React app
+const noopUntilChatRebuild = () => {};
+
 const breadcrumbs = $derived(
 	(page.data as { breadcrumbs?: Breadcrumb[] }).breadcrumbs ?? [],
 );
@@ -422,6 +426,8 @@ function formatRelativeDate(timestamp: number) {
 			showSupport={Boolean(!user?.roles.includes("MINOR_SUPPORT"))}
 			showSearch={Boolean(user)}
 			isLoggedIn={Boolean(user)}
+			onChatToggle={user ? noopUntilChatRebuild : undefined}
+			onChatModalToggle={user ? noopUntilChatRebuild : undefined}
 			chatUnreadCount={0}
 		/>
 		<div id="nprogress-anchor" aria-hidden="true"></div>

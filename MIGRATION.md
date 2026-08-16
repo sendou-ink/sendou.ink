@@ -193,3 +193,11 @@ zod codec.
   a manual `Response` (Kit's `redirect()` only allows 3xx).
 - The differ impersonates with `maxRedirects: 0` so the redirect target may be
   a not-yet-migrated route.
+- Numeric `width`/`height` on `<img>` are set through the DOM property setters
+  on hydration, which truncate fractions (`27.76` → `27`, an 1px layout shift
+  vs React per image). Pass dimension attributes as strings when they can be
+  fractional — `Image.svelte` does this for all its images.
+- SvelteKit 3 + adapter-node derive the CSRF/remote-function self-origin from
+  proxy headers, guessing `https://` bare; e2e builds set
+  `paths.origin` + `csrf.trustedOrigins: ["*"]` (see `vite.config.ts`) or every
+  tooling/e2e form POST is rejected 403.

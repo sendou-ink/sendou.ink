@@ -254,6 +254,11 @@ const isMac = $derived(
 		font-size: var(--font-2xs);
 		background-color: var(--color-bg-higher);
 		font-family: inherit;
+
+		/** needs to go away so we have enough space even with both side panels open */
+		@media screen and (max-width: 1100px) {
+			display: none;
+		}
 	}
 
 	.chatButtonWrapperPersistent {

@@ -20,7 +20,7 @@
 	},
 	"dependencies": {
 		"@epic-web/cachified": "5.6.3",
-		"@lucide/svelte": "0.544.0",
+		"@lucide/svelte": "1.28.0",
 		"@sendou/components": "workspace:*",
 		"@sendou/in-game-lists": "workspace:*",
 		"@sendou/utils": "workspace:*",

@@ -39,6 +39,7 @@ export function prepare(config: RunConfig): Census {
 		run(config, "./node_modules/.bin/vite-node", ["./scripts/seed.ts"], {
 			DB_PATH: SEED_DB,
 			SEED_NOW: String(config.seedNow),
+			SEED_QUIET_WORLD: "true",
 		});
 
 		// one checkpointed file copies cleanly; the servers re-enable WAL themselves

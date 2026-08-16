@@ -51,6 +51,10 @@ The run writes `output/<timestamp>/`:
    serves (`VITE_E2E_TEST_RUN=true` baked in), reused when fresh.
 2. Migrate + seed `db-differ-seed.sqlite3` with the clock frozen at `SEED_NOW`
    (`scripts/seed.ts` installs `installSeedClock`), then copy it for each side.
+   The differ seeds with `SEED_QUIET_WORLD=true`: nobody is live on Twitch, so
+   the sidebar streams chrome (which depends on the not-yet-migrated tournament
+   cluster) renders identically empty on both sides. Drop the flag when the
+   tournament wave migrates.
 3. `scripts/route-census.ts` — walks `app/routes.ts` and resolves every dynamic
    param from the seeded database. Never hand-listed: a new route without a
    resolver is a hard error; a resolver finding no seed data marks the row

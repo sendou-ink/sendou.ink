@@ -76,8 +76,8 @@
 			"status": "pending"
 		},
 		"leaderboards": {
-			"status": "migrated",
-			"notes": "phase 2 vertical slice; verified pending differ + e2e run"
+			"status": "verified",
+			"notes": "phase 2 vertical slice; differ clean (pixel/head/resource/aria) and e2e green against both apps 2026-08-16"
 		},
 		"lfg": {
 			"status": "pending"
@@ -730,7 +730,7 @@
 			"feature": "top-search"
 		},
 		"features/leaderboards/routes/leaderboards.tsx": {
-			"status": "migrated",
+			"status": "verified",
 			"path": "/leaderboards",
 			"feature": "leaderboards",
 			"notes": "ported by hand as the phase 2 golden slice; loader -> getLeaderboards query, action -> skipTeam/unskipTeam commands"

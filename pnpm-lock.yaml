@@ -23,8 +23,8 @@ importers:
         specifier: 5.6.3
         version: 5.6.3
       '@lucide/svelte':
-        specifier: 0.544.0
-        version: 0.544.0(svelte@5.56.9)
+        specifier: 1.28.0
+        version: 1.28.0(svelte@5.56.9)
       '@sendou/components':
         specifier: workspace:*
         version: link:../../packages/components
@@ -1232,8 +1232,8 @@ packages:
   '@lix-js/sdk@0.12.2':
     resolution: {integrity: sha512-sKGOPdVKdChS5q60F4VQE4ZTcf0B7ZJM3KGCVQFN2suVNKhHcllbsCiwRYuM5WL7Yu1ql7YexltJ2FCsDqKePg==}
 
-  '@lucide/svelte@0.544.0':
-    resolution: {integrity: sha512-9f9O6uxng2pLB01sxNySHduJN3HTl5p0HDu4H26VR51vhZfiMzyOMe9Mhof3XAk4l813eTtl+/DYRvGyoRR+yw==}
+  '@lucide/svelte@1.28.0':
+    resolution: {integrity: sha512-C1Ge84KW2z4q44/WDIEo/2KC2jby5u6mSlta7q+p6g7u0ld8sC/w1fMBiSswF+4bxAl9jlzzaVTpp79qqkiy5g==}
     peerDependencies:
       svelte: ^5
 
@@ -5933,7 +5933,7 @@ snapshots:
       '@lix-js/sdk-linux-x64': 0.12.2
       '@lix-js/sdk-win32-x64': 0.12.2
 
-  '@lucide/svelte@0.544.0(svelte@5.56.9)':
+  '@lucide/svelte@1.28.0(svelte@5.56.9)':
     dependencies:
       svelte: 5.56.9
 
