@@ -1,0 +1,1142 @@
+{
+	"features": {
+		"admin": {
+			"status": "pending"
+		},
+		"api": {
+			"status": "pending"
+		},
+		"api-private": {
+			"status": "pending"
+		},
+		"api-public": {
+			"status": "pending"
+		},
+		"art": {
+			"status": "pending"
+		},
+		"articles": {
+			"status": "pending"
+		},
+		"associations": {
+			"status": "pending"
+		},
+		"auth": {
+			"status": "pending"
+		},
+		"badges": {
+			"status": "pending"
+		},
+		"ban": {
+			"status": "pending"
+		},
+		"bracket-test": {
+			"status": "pending"
+		},
+		"build-analyzer": {
+			"status": "pending"
+		},
+		"build-stats": {
+			"status": "pending"
+		},
+		"builds": {
+			"status": "pending"
+		},
+		"calendar": {
+			"status": "pending"
+		},
+		"chat": {
+			"status": "pending"
+		},
+		"comp-analyzer": {
+			"status": "pending"
+		},
+		"components-showcase": {
+			"status": "pending"
+		},
+		"core": {
+			"status": "pending"
+		},
+		"friends": {
+			"status": "pending"
+		},
+		"front-page": {
+			"status": "pending"
+		},
+		"img-export": {
+			"status": "pending"
+		},
+		"img-upload": {
+			"status": "pending"
+		},
+		"info": {
+			"status": "pending"
+		},
+		"layout": {
+			"status": "pending"
+		},
+		"leaderboards": {
+			"status": "pending"
+		},
+		"lfg": {
+			"status": "pending"
+		},
+		"links": {
+			"status": "pending"
+		},
+		"live-streams": {
+			"status": "pending"
+		},
+		"map-list-generator": {
+			"status": "pending"
+		},
+		"map-planner": {
+			"status": "excluded",
+			"notes": "stays React; served from planner.sendou.ink after cutover (plan phase 8)"
+		},
+		"match-page-test": {
+			"status": "pending"
+		},
+		"match-profile": {
+			"status": "pending"
+		},
+		"mmr": {
+			"status": "pending"
+		},
+		"notifications": {
+			"status": "pending"
+		},
+		"object-damage-calculator": {
+			"status": "pending"
+		},
+		"params": {
+			"status": "pending"
+		},
+		"plus-suggestions": {
+			"status": "pending"
+		},
+		"plus-voting": {
+			"status": "pending"
+		},
+		"scanner": {
+			"status": "pending"
+		},
+		"scanner-ingest": {
+			"status": "pending"
+		},
+		"scrims": {
+			"status": "pending"
+		},
+		"search": {
+			"status": "pending"
+		},
+		"sendouq": {
+			"status": "pending"
+		},
+		"sendouq-match": {
+			"status": "pending"
+		},
+		"sendouq-streams": {
+			"status": "pending"
+		},
+		"session-id": {
+			"status": "pending"
+		},
+		"settings": {
+			"status": "pending"
+		},
+		"sidebar": {
+			"status": "pending"
+		},
+		"splatoon-rotations": {
+			"status": "pending"
+		},
+		"team": {
+			"status": "pending"
+		},
+		"theme": {
+			"status": "pending"
+		},
+		"tier-list-maker": {
+			"status": "pending"
+		},
+		"timezone": {
+			"status": "pending"
+		},
+		"top-search": {
+			"status": "pending"
+		},
+		"tournament": {
+			"status": "pending"
+		},
+		"tournament-admin": {
+			"status": "pending"
+		},
+		"tournament-bracket": {
+			"status": "pending"
+		},
+		"tournament-lfg": {
+			"status": "pending"
+		},
+		"tournament-match": {
+			"status": "pending"
+		},
+		"tournament-organization": {
+			"status": "pending"
+		},
+		"tournament-subs": {
+			"status": "pending"
+		},
+		"trophies": {
+			"status": "pending"
+		},
+		"user-card": {
+			"status": "pending"
+		},
+		"user-page": {
+			"status": "pending"
+		},
+		"user-report": {
+			"status": "pending"
+		},
+		"user-search": {
+			"status": "pending"
+		},
+		"vods": {
+			"status": "pending"
+		}
+	},
+	"routes": {
+		"features/front-page/routes/index.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "front-page"
+		},
+		"features/front-page/routes/patrons-list.ts": {
+			"status": "pending",
+			"path": "/patrons-list",
+			"feature": "front-page"
+		},
+		"features/layout/routes/sidenav.ts": {
+			"status": "pending",
+			"path": "/sidenav",
+			"feature": "layout"
+		},
+		"features/notifications/routes/notifications.tsx": {
+			"status": "pending",
+			"path": "/notifications",
+			"feature": "notifications"
+		},
+		"features/notifications/routes/notifications.seen.ts": {
+			"status": "pending",
+			"path": "/notifications/seen",
+			"feature": "notifications"
+		},
+		"features/notifications/routes/notifications.subscribe.ts": {
+			"status": "pending",
+			"path": "/notifications/subscribe",
+			"feature": "notifications"
+		},
+		"features/settings/routes/settings.tsx": {
+			"status": "pending",
+			"path": "/settings",
+			"feature": "settings"
+		},
+		"features/friends/routes/friends.tsx": {
+			"status": "pending",
+			"path": "/friends",
+			"feature": "friends"
+		},
+		"features/user-card/routes/user-card.edit.tsx": {
+			"status": "pending",
+			"path": "/user-card/edit",
+			"feature": "user-card"
+		},
+		"features/user-card/routes/user-card.$id.friendship.ts": {
+			"status": "pending",
+			"path": "/user-card/:id/friendship",
+			"feature": "user-card"
+		},
+		"features/user-card/routes/user-card.$id.note.ts": {
+			"status": "pending",
+			"path": "/user-card/:id/note",
+			"feature": "user-card"
+		},
+		"features/user-report/routes/user-report.$id.ts": {
+			"status": "pending",
+			"path": "/user-report/:id",
+			"feature": "user-report"
+		},
+		"features/calendar/routes/events.tsx": {
+			"status": "pending",
+			"path": "/events",
+			"feature": "calendar"
+		},
+		"features/ban/routes/suspended.tsx": {
+			"status": "pending",
+			"path": "/suspended",
+			"feature": "ban"
+		},
+		"features/user-search/routes/u.tsx": {
+			"status": "pending",
+			"path": "/u",
+			"feature": "user-search"
+		},
+		"features/search/routes/search.ts": {
+			"status": "pending",
+			"path": "/search",
+			"feature": "search"
+		},
+		"features/user-page/routes/u.$identifier.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.index.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.art.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/art",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.edit.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/edit",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.edit-widgets.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/edit-widgets",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.seasons.summary-graphic.ts": {
+			"status": "pending",
+			"path": "/u/:identifier/seasons/summary-graphic",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.seasons.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/seasons",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.seasons.index.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/seasons",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.seasons.stats.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/seasons/stats",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.vods.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/vods",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.builds.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/builds",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.builds.new.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/builds/new",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.results.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/results",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.results.highlights.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/results/highlights",
+			"feature": "user-page"
+		},
+		"features/user-page/routes/u.$identifier.admin.tsx": {
+			"status": "pending",
+			"path": "/u/:identifier/admin",
+			"feature": "user-page"
+		},
+		"features/badges/routes/badges.tsx": {
+			"status": "pending",
+			"path": "/badges",
+			"feature": "badges"
+		},
+		"features/badges/routes/badges.$id.tsx": {
+			"status": "pending",
+			"path": "/badges/:id",
+			"feature": "badges"
+		},
+		"features/badges/routes/badges.$id.edit.tsx": {
+			"status": "pending",
+			"path": "/badges/:id/edit",
+			"feature": "badges"
+		},
+		"features/trophies/routes/trophies.$id.wins.$userId.ts": {
+			"status": "pending",
+			"path": "/trophies/:id/wins/:userId",
+			"feature": "trophies"
+		},
+		"features/trophies/routes/trophies.$id.tournaments.ts": {
+			"status": "pending",
+			"path": "/trophies/:id/tournaments",
+			"feature": "trophies"
+		},
+		"features/trophies/routes/trophies.tsx": {
+			"status": "pending",
+			"path": "/trophies",
+			"feature": "trophies"
+		},
+		"features/trophies/routes/trophies.$id.tsx": {
+			"status": "pending",
+			"path": "/trophies/:id",
+			"feature": "trophies"
+		},
+		"features/trophies/routes/trophies.new.tsx": {
+			"status": "pending",
+			"path": "/trophies/new",
+			"feature": "trophies"
+		},
+		"features/calendar/routes/calendar.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "calendar"
+		},
+		"features/calendar/routes/calendar.new.tsx": {
+			"status": "pending",
+			"path": "/calendar/new",
+			"feature": "calendar"
+		},
+		"features/calendar/routes/calendar.$id.tsx": {
+			"status": "pending",
+			"path": "/calendar/:id",
+			"feature": "calendar"
+		},
+		"features/calendar/routes/calendar.$id.report-winners.tsx": {
+			"status": "pending",
+			"path": "/calendar/:id/report-winners",
+			"feature": "calendar"
+		},
+		"features/calendar/routes/calendar.ics.tsx": {
+			"status": "pending",
+			"path": "/calendar.ics",
+			"feature": "calendar"
+		},
+		"features/map-list-generator/routes/maps.tsx": {
+			"status": "pending",
+			"path": "/maps",
+			"feature": "map-list-generator"
+		},
+		"features/img-upload/routes/upload.admin.tsx": {
+			"status": "pending",
+			"path": "/upload/admin",
+			"feature": "img-upload"
+		},
+		"features/map-planner/routes/plans.tsx": {
+			"status": "excluded",
+			"path": "/plans",
+			"feature": "map-planner",
+			"notes": "stays React; served from planner.sendou.ink after cutover (plan phase 8)"
+		},
+		"features/build-analyzer/routes/analyzer.tsx": {
+			"status": "pending",
+			"path": "/analyzer",
+			"feature": "build-analyzer"
+		},
+		"features/comp-analyzer/routes/comp-analyzer.tsx": {
+			"status": "pending",
+			"path": "/comp-analyzer",
+			"feature": "comp-analyzer"
+		},
+		"features/object-damage-calculator/routes/object-damage-calculator.tsx": {
+			"status": "pending",
+			"path": "/object-damage-calculator",
+			"feature": "object-damage-calculator"
+		},
+		"features/tournament/routes/to.search.ts": {
+			"status": "pending",
+			"path": "/to/search",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.tsx": {
+			"status": "pending",
+			"path": "/to/:id",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.index.ts": {
+			"status": "pending",
+			"path": "/to/:id",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.info.tsx": {
+			"status": "pending",
+			"path": "/to/:id/info",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.register.tsx": {
+			"status": "pending",
+			"path": "/to/:id/register",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.rules.tsx": {
+			"status": "pending",
+			"path": "/to/:id/rules",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.teams.tsx": {
+			"status": "pending",
+			"path": "/to/:id/teams",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.teams.$tid.tsx": {
+			"status": "pending",
+			"path": "/to/:id/teams/:tid",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.join.tsx": {
+			"status": "pending",
+			"path": "/to/:id/join",
+			"feature": "tournament"
+		},
+		"features/tournament-admin/routes/to.$id.admin.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.index.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin._index.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.registration.$tid.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin/registration/:tid?",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.import-teams.ts": {
+			"status": "pending",
+			"path": "/to/:id/admin/import-teams",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.seeds.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin/seeds",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.staff.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin/staff",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.stream.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin/stream",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.brackets.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin/brackets",
+			"feature": "tournament-admin"
+		},
+		"features/tournament-admin/routes/to.$id.admin.audit.tsx": {
+			"status": "pending",
+			"path": "/to/:id/admin/audit",
+			"feature": "tournament-admin"
+		},
+		"features/tournament/routes/to.$id.results.tsx": {
+			"status": "pending",
+			"path": "/to/:id/results",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.teams.$tid.comps.ts": {
+			"status": "pending",
+			"path": "/to/:id/teams/:tid/comps",
+			"feature": "tournament"
+		},
+		"features/tournament/routes/to.$id.streams.tsx": {
+			"status": "pending",
+			"path": "/to/:id/streams",
+			"feature": "tournament"
+		},
+		"features/tournament-lfg/routes/to.$id.looking.tsx": {
+			"status": "pending",
+			"path": "/to/:id/looking",
+			"feature": "tournament-lfg"
+		},
+		"features/tournament-subs/routes/to.$id.subs.tsx": {
+			"status": "pending",
+			"path": "/to/:id/subs",
+			"feature": "tournament-subs"
+		},
+		"features/tournament-bracket/routes/to.$id.divisions.tsx": {
+			"status": "pending",
+			"path": "/to/:id/divisions",
+			"feature": "tournament-bracket"
+		},
+		"features/tournament-bracket/routes/to.$id.brackets.tsx": {
+			"status": "pending",
+			"path": "/to/:id/brackets",
+			"feature": "tournament-bracket"
+		},
+		"features/tournament-bracket/routes/to.$id.brackets.finalize.tsx": {
+			"status": "pending",
+			"path": "/to/:id/brackets/finalize",
+			"feature": "tournament-bracket"
+		},
+		"features/tournament-match/routes/to.$id.matches.$mid.tsx": {
+			"status": "pending",
+			"path": "/to/:id/matches/:mid",
+			"feature": "tournament-match"
+		},
+		"features/tournament/routes/luti.ts": {
+			"status": "pending",
+			"path": "/luti",
+			"feature": "tournament"
+		},
+		"features/tournament-organization/routes/org.new.tsx": {
+			"status": "pending",
+			"path": "/org/new",
+			"feature": "tournament-organization"
+		},
+		"features/tournament-organization/routes/org.$slug.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "tournament-organization"
+		},
+		"features/tournament-organization/routes/org.$slug.edit.tsx": {
+			"status": "pending",
+			"path": "/org/:slug/edit",
+			"feature": "tournament-organization"
+		},
+		"features/tournament-organization/routes/org.$slug.stats.tsx": {
+			"status": "pending",
+			"path": "/org/:slug/stats",
+			"feature": "tournament-organization"
+		},
+		"features/info/routes/faq.tsx": {
+			"status": "pending",
+			"path": "/faq",
+			"feature": "info"
+		},
+		"features/info/routes/welcome.tsx": {
+			"status": "pending",
+			"path": "/welcome",
+			"feature": "info"
+		},
+		"features/info/routes/contributions.tsx": {
+			"status": "pending",
+			"path": "/contributions",
+			"feature": "info"
+		},
+		"features/info/routes/support.tsx": {
+			"status": "pending",
+			"path": "/support",
+			"feature": "info"
+		},
+		"features/team/routes/t.tsx": {
+			"status": "pending",
+			"path": "/t",
+			"feature": "team"
+		},
+		"features/team/routes/t.new.tsx": {
+			"status": "pending",
+			"path": "/t/new",
+			"feature": "team"
+		},
+		"features/team/routes/t.$customUrl.tsx": {
+			"status": "pending",
+			"path": "/t/:customUrl",
+			"feature": "team"
+		},
+		"features/team/routes/t.$customUrl.index.tsx": {
+			"status": "pending",
+			"path": "/t/:customUrl",
+			"feature": "team"
+		},
+		"features/team/routes/t.$customUrl.edit.tsx": {
+			"status": "pending",
+			"path": "/t/:customUrl/edit",
+			"feature": "team"
+		},
+		"features/team/routes/t.$customUrl.roster.tsx": {
+			"status": "pending",
+			"path": "/t/:customUrl/roster",
+			"feature": "team"
+		},
+		"features/team/routes/t.$customUrl.join.tsx": {
+			"status": "pending",
+			"path": "/t/:customUrl/join",
+			"feature": "team"
+		},
+		"features/team/routes/t.$customUrl.results.tsx": {
+			"status": "pending",
+			"path": "/t/:customUrl/results",
+			"feature": "team"
+		},
+		"features/vods/routes/vods.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "vods"
+		},
+		"features/vods/routes/vods.new.tsx": {
+			"status": "pending",
+			"path": "/vods/new",
+			"feature": "vods"
+		},
+		"features/vods/routes/vods.$id.tsx": {
+			"status": "pending",
+			"path": "/vods/:id",
+			"feature": "vods"
+		},
+		"features/builds/routes/builds.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "builds"
+		},
+		"features/builds/routes/builds.$slug.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "builds"
+		},
+		"features/build-stats/routes/builds.$slug.stats.tsx": {
+			"status": "pending",
+			"path": "/builds/:slug/stats",
+			"feature": "build-stats"
+		},
+		"features/build-stats/routes/builds.$slug.popular.tsx": {
+			"status": "pending",
+			"path": "/builds/:slug/popular",
+			"feature": "build-stats"
+		},
+		"features/top-search/routes/xsearch.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "top-search"
+		},
+		"features/top-search/routes/xsearch.player.$id.tsx": {
+			"status": "pending",
+			"path": "/xsearch/player/:id",
+			"feature": "top-search"
+		},
+		"features/leaderboards/routes/leaderboards.tsx": {
+			"status": "pending",
+			"path": "/leaderboards",
+			"feature": "leaderboards"
+		},
+		"features/links/routes/links.tsx": {
+			"status": "pending",
+			"path": "/links",
+			"feature": "links"
+		},
+		"features/art/routes/art.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "art"
+		},
+		"features/art/routes/art.new.tsx": {
+			"status": "pending",
+			"path": "/art/new",
+			"feature": "art"
+		},
+		"features/sendouq/routes/q.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/q.rules.tsx": {
+			"status": "pending",
+			"path": "/q/rules",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/q.info.tsx": {
+			"status": "pending",
+			"path": "/q/info",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/q.looking.tsx": {
+			"status": "pending",
+			"path": "/q/looking",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/q.preparing.tsx": {
+			"status": "pending",
+			"path": "/q/preparing",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/q.ready.tsx": {
+			"status": "pending",
+			"path": "/q/ready",
+			"feature": "sendouq"
+		},
+		"features/sendouq-match/routes/q.match.$id.tsx": {
+			"status": "pending",
+			"path": "/q/match/:id",
+			"feature": "sendouq-match"
+		},
+		"features/match-profile/routes/q.settings.tsx": {
+			"status": "pending",
+			"path": "/q/settings",
+			"feature": "match-profile"
+		},
+		"features/sendouq-streams/routes/q.streams.tsx": {
+			"status": "pending",
+			"path": "/q/streams",
+			"feature": "sendouq-streams"
+		},
+		"features/sendouq/routes/play.ts": {
+			"status": "pending",
+			"path": "/play",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/friends-for-adding.ts": {
+			"status": "pending",
+			"path": "/friends-for-adding",
+			"feature": "sendouq"
+		},
+		"features/sendouq/routes/weapon-usage.ts": {
+			"status": "pending",
+			"path": "/weapon-usage",
+			"feature": "sendouq"
+		},
+		"features/params/routes/params.$slug.tsx": {
+			"status": "pending",
+			"path": "/params/:slug",
+			"feature": "params"
+		},
+		"features/sendouq/routes/tiers.tsx": {
+			"status": "pending",
+			"path": "/tiers",
+			"feature": "sendouq"
+		},
+		"features/tier-list-maker/routes/tier-list-maker.tsx": {
+			"status": "pending",
+			"path": "/tier-list-maker",
+			"feature": "tier-list-maker"
+		},
+		"features/lfg/routes/lfg.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "lfg"
+		},
+		"features/lfg/routes/lfg.new.tsx": {
+			"status": "pending",
+			"path": "/lfg/new",
+			"feature": "lfg"
+		},
+		"features/scrims/routes/scrims.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "scrims"
+		},
+		"features/scrims/routes/scrims.new.tsx": {
+			"status": "pending",
+			"path": "/scrims/new",
+			"feature": "scrims"
+		},
+		"features/scrims/routes/scrims.$id.tsx": {
+			"status": "pending",
+			"path": "/scrims/:id",
+			"feature": "scrims"
+		},
+		"features/associations/routes/associations.tsx": {
+			"status": "pending",
+			"path": "/associations",
+			"feature": "associations"
+		},
+		"features/associations/routes/associations.new.tsx": {
+			"status": "pending",
+			"path": "/associations/new",
+			"feature": "associations"
+		},
+		"features/admin/routes/admin.tsx": {
+			"status": "pending",
+			"path": "/admin",
+			"feature": "admin"
+		},
+		"features/admin/routes/admin.streams.tsx": {
+			"status": "pending",
+			"path": "/admin/streams",
+			"feature": "admin"
+		},
+		"features/chat/routes/api.chat-users.ts": {
+			"status": "pending",
+			"path": "/api/chat-users",
+			"feature": "chat"
+		},
+		"features/layout/routes/api.layout.ts": {
+			"status": "pending",
+			"path": "/api/layout",
+			"feature": "layout"
+		},
+		"features/notifications/routes/api.notifications.ts": {
+			"status": "pending",
+			"path": "/api/notifications",
+			"feature": "notifications"
+		},
+		"features/api/routes/api.tsx": {
+			"status": "pending",
+			"path": "/api",
+			"feature": "api"
+		},
+		"features/articles/routes/a.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "articles"
+		},
+		"features/articles/routes/a.$slug.tsx": {
+			"status": "pending",
+			"path": "/a/:slug",
+			"feature": "articles"
+		},
+		"features/plus-suggestions/routes/plus.tsx": {
+			"status": "pending",
+			"path": "/plus",
+			"feature": "plus-suggestions"
+		},
+		"features/plus-suggestions/routes/plus.index.ts": {
+			"status": "pending",
+			"path": "/plus",
+			"feature": "plus-suggestions"
+		},
+		"features/plus-suggestions/routes/plus.suggestions.tsx": {
+			"status": "pending",
+			"path": "/plus/suggestions",
+			"feature": "plus-suggestions"
+		},
+		"features/plus-suggestions/routes/plus.suggestions.new.tsx": {
+			"status": "pending",
+			"path": "/plus/suggestions/new",
+			"feature": "plus-suggestions"
+		},
+		"features/plus-suggestions/routes/plus.suggestions.comment.$tier.$userId.tsx": {
+			"status": "pending",
+			"path": "/plus/suggestions/comment/:tier/:userId",
+			"feature": "plus-suggestions"
+		},
+		"features/plus-voting/routes/plus.list.ts": {
+			"status": "pending",
+			"path": "/plus/list",
+			"feature": "plus-voting"
+		},
+		"features/plus-voting/routes/plus.voting.tsx": {
+			"status": "pending",
+			"path": "/plus/voting",
+			"feature": "plus-voting"
+		},
+		"features/plus-voting/routes/plus.voting.results.tsx": {
+			"status": "pending",
+			"path": "/plus/voting/results",
+			"feature": "plus-voting"
+		},
+		"features/api-private/routes/end-season.ts": {
+			"status": "pending",
+			"path": "/end-season",
+			"feature": "api-private"
+		},
+		"features/api-private/routes/patrons.ts": {
+			"status": "pending",
+			"path": "/patrons",
+			"feature": "api-private"
+		},
+		"features/api-private/routes/refresh-caches.ts": {
+			"status": "pending",
+			"path": "/refresh-caches",
+			"feature": "api-private"
+		},
+		"features/api-private/routes/run-routine.ts": {
+			"status": "pending",
+			"path": "/run-routine",
+			"feature": "api-private"
+		},
+		"features/api-private/routes/seed.ts": {
+			"status": "pending",
+			"path": "/seed",
+			"feature": "api-private"
+		},
+		"features/api-private/routes/users.ts": {
+			"status": "pending",
+			"path": "/users",
+			"feature": "api-private"
+		},
+		"features/scanner/routes/scanner.tsx": {
+			"status": "pending",
+			"path": "/scanner",
+			"feature": "scanner"
+		},
+		"features/scanner-ingest/routes/scanner-ingest.ts": {
+			"status": "pending",
+			"path": "/ingest",
+			"feature": "scanner-ingest"
+		},
+		"features/api-public/routes/api.layout.tsx": {
+			"status": "pending",
+			"path": "/",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/user.$identifier.ts": {
+			"status": "pending",
+			"path": "/api/user/:identifier",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/user.$identifier.ids.ts": {
+			"status": "pending",
+			"path": "/api/user/:identifier/ids",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/user.$userId.active-match.ts": {
+			"status": "pending",
+			"path": "/api/user/:userId/active-match",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/calendar.$year.$week.ts": {
+			"status": "pending",
+			"path": "/api/calendar/:year/:week",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/sendouq.active-match.$userId.ts": {
+			"status": "pending",
+			"path": "/api/sendouq/active-match/:userId",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/sendouq.match.$matchId.ts": {
+			"status": "pending",
+			"path": "/api/sendouq/match/:matchId",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.teams.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/teams",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.players.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/players",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.casted.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/casted",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.brackets.$bidx.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/brackets/:bidx",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.brackets.$bidx.standings.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/brackets/:bidx/standings",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament-match.$id.ts": {
+			"status": "pending",
+			"path": "/api/tournament-match/:id",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/org.$id.ts": {
+			"status": "pending",
+			"path": "/api/org/:id",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/team.$id.ts": {
+			"status": "pending",
+			"path": "/api/team/:id",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.seeds.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/seeds",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.starting-brackets.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/starting-brackets",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.streams.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/streams",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.teams.upsert.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/teams/upsert",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.teams.$teamId.add-member.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/teams/:teamId/add-member",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.teams.$teamId.remove-member.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/teams/:teamId/remove-member",
+			"feature": "api-public"
+		},
+		"features/api-public/routes/tournament.$id.teams.$teamId.update-member-ign.ts": {
+			"status": "pending",
+			"path": "/api/tournament/:id/teams/:teamId/update-member-ign",
+			"feature": "api-public"
+		},
+		"features/user-page/routes/short.$customUrl.ts": {
+			"status": "pending",
+			"path": "/short/:customUrl",
+			"feature": "user-page"
+		},
+		"features/theme/routes/theme.ts": {
+			"status": "pending",
+			"path": "/theme",
+			"feature": "theme"
+		},
+		"features/auth/routes/auth.ts": {
+			"status": "pending",
+			"path": "/",
+			"feature": "auth"
+		},
+		"features/auth/routes/auth.callback.ts": {
+			"status": "pending",
+			"path": "/auth/callback",
+			"feature": "auth"
+		},
+		"features/auth/routes/auth.create-link.ts": {
+			"status": "pending",
+			"path": "/auth/create-link",
+			"feature": "auth"
+		},
+		"features/auth/routes/auth.login.ts": {
+			"status": "pending",
+			"path": "/auth/login",
+			"feature": "auth"
+		},
+		"features/auth/routes/auth.logout.ts": {
+			"status": "pending",
+			"path": "/auth/logout",
+			"feature": "auth"
+		},
+		"features/auth/routes/auth.impersonate.ts": {
+			"status": "pending",
+			"path": "/auth/impersonate",
+			"feature": "auth"
+		},
+		"features/auth/routes/auth.impersonate.stop.ts": {
+			"status": "pending",
+			"path": "/auth/impersonate/stop",
+			"feature": "auth"
+		}
+	}
+}

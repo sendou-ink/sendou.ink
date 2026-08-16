@@ -1,3 +1,9 @@
+## Monorepo layout
+
+- pnpm workspace (Phase 0 of `svelte-big-bang.md`): the React app lives in `apps/web-react/` — every `app/...`, `e2e/...`, `scripts/...`, `locales/...`, `migrations/...` path below is relative to it
+- `packages/` holds extracted libraries (`@sendou/in-game-lists`, `@sendou/tournament-engine`); never import them via relative paths, always via the package name
+- `tooling/codemods/` has the migration codemods and the `migration-manifest.json` updater; `pnpm run <script>` at the repo root delegates to `apps/web-react`, so root commands keep working as documented
+
 ## General
 
 - only rarely use comments, prefer descriptive variable and function names (leave existing comments as is).
