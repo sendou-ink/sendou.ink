@@ -38,7 +38,10 @@ export const action: ActionFunction = async ({ request }) => {
 	const povUserId = user.id;
 
 	const indexedMatches = data.matches
-		.map((match, requestIndex) => ({ match, requestIndex }))
+		.map((match, requestIndex) => ({
+			match: withoutDisprovenCast(match),
+			requestIndex,
+		}))
 		.filter(({ match }) => match.lobby === null || match.lobby === "PRIVATE");
 	const matches = indexedMatches.map(({ match }) => match);
 	if (matches.length === 0) {
@@ -290,6 +293,17 @@ async function resolveIngestContext({
 /** Matches that could link to a reported game: their winner is known. */
 function countAttachableMatches(matches: ScannerMatch[]): number {
 	return matches.filter((match) => match.winner !== null).length;
+}
+
+/**
+ * A results-screen POV seat disproves the cast flag — casts never see a
+ * results screen — so a misflagged read still resolves through the sender's
+ * own activity.
+ */
+function withoutDisprovenCast(match: ScannerMatch): ScannerMatch {
+	if (!match.cast || match.pov === null) return match;
+
+	return { ...match, cast: false };
 }
 
 /**

@@ -259,6 +259,26 @@ describe("SendouQ flow", () => {
 		]);
 	});
 
+	test("Q11 POV read misflagged as cast: the sender's seat still resolves and links their match", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+
+		// a misread status frame can flag POV footage cast while the results
+		// screen still pins the sender's own seat
+		const res = await ingest(w.povUser, [
+			w.scanned(w.maps[0]!, { cast: true, pov: { team: 0, index: 0 } }),
+		]);
+
+		expect(res.contextResolved).toBe(true);
+		expect(res.linkedGamesCount).toBe(1);
+		expect(res.linkedMatches).toEqual([
+			{ matchIndex: 0, link: { type: "sendouq", groupMatchId: w.match.id } },
+		]);
+		expect((await fetchIngestedMatches())[0]!.groupMatchIdHint).toBe(
+			w.match.id,
+		);
+	});
+
 	test("Q9 live send of an earlier set: queueing again afterwards does not capture the read", async () => {
 		const w = await sendouqWorld({ createdAt: minutesAgo(90) });
 		const maps = await w.conclude(minutesAgo(70));

@@ -726,6 +726,17 @@ test("a pov overlay minimap is not flagged as cast", () => {
 	assert.equal(built[0]!.match.cast, false);
 });
 
+test("a results-screen pov seat vetoes misread cast evidence", () => {
+	const built = buildScannerMatches([
+		mapStart(0),
+		playerStatus(120, { castProven: true }),
+		scoreboard(300),
+	]);
+	const match = built[0]!.match;
+	assert.equal(match.cast, false);
+	assert.deepEqual(match.pov, { team: 0, index: 0 });
+});
+
 test("a lone misread stage neither splits the match nor poisons its stage", () => {
 	const built = buildScannerMatches([
 		minimap(70, { stage: 0 }),
