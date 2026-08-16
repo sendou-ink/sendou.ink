@@ -1,10 +1,10 @@
 <script lang="ts">
-	interface Props {
-		class?: string;
-		testId?: string;
-	}
+interface Props {
+	class?: string;
+	testId?: string;
+}
 
-	let { class: className, testId }: Props = $props();
+let { class: className, testId }: Props = $props();
 </script>
 
 <span class={["dotWrapper", className]} data-testid={testId}>

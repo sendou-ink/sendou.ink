@@ -1,28 +1,28 @@
 <script lang="ts">
-	import { page } from "$app/state";
-	import { Config } from "#lib/config.ts";
-	import { truncateBySentence } from "#lib/utils/strings.ts";
+import { Config } from "#lib/config.ts";
+import { truncateBySentence } from "#lib/utils/strings.ts";
+import { page } from "$app/state";
 
-	interface Props {
-		title: string;
-		ogTitle?: string;
-		description?: string;
-		url?: string;
-		image?: { url: string; dimensions?: { width: number; height: number } };
-	}
+interface Props {
+	title: string;
+	ogTitle?: string;
+	description?: string;
+	url?: string;
+	image?: { url: string; dimensions?: { width: number; height: number } };
+}
 
-	let { title, ogTitle, description, url, image }: Props = $props();
+let { title, ogTitle, description, url, image }: Props = $props();
 
-	const ROOT_URL = "https://sendou.ink";
-	const COMMON_PREVIEW_IMAGE = `${Config.staticAssetsUrl}/img/layout/common-preview.png`;
+const ROOT_URL = "https://sendou.ink";
+const COMMON_PREVIEW_IMAGE = `${Config.staticAssetsUrl}/img/layout/common-preview.png`;
 
-	const fullTitle = $derived(
-		title === "sendou.ink" ? title : `${title} | sendou.ink`,
-	);
-	const truncatedDescription = $derived(
-		description ? truncateBySentence(description, 300) : null,
-	);
-	const ogUrl = $derived(`${ROOT_URL}${url ?? page.url.pathname}`);
+const fullTitle = $derived(
+	title === "sendou.ink" ? title : `${title} | sendou.ink`,
+);
+const truncatedDescription = $derived(
+	description ? truncateBySentence(description, 300) : null,
+);
+const ogUrl = $derived(`${ROOT_URL}${url ?? page.url.pathname}`);
 </script>
 
 <svelte:head>

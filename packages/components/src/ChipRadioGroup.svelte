@@ -1,19 +1,19 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		children: Snippet;
-		orientation?: "horizontal" | "vertical";
-		wrap?: boolean;
-		class?: string;
-	}
+interface Props {
+	children: Snippet;
+	orientation?: "horizontal" | "vertical";
+	wrap?: boolean;
+	class?: string;
+}
 
-	let {
-		children,
-		orientation = "horizontal",
-		wrap = false,
-		class: className,
-	}: Props = $props();
+let {
+	children,
+	orientation = "horizontal",
+	wrap = false,
+	class: className,
+}: Props = $props();
 </script>
 
 <div

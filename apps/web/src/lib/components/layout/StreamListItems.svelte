@@ -1,64 +1,64 @@
 <script lang="ts">
-	import { Bookmark, BookmarkCheck } from "@lucide/svelte";
-	import { isToday, isTomorrow } from "date-fns";
-	import Image from "#lib/components/Image.svelte";
-	import TierPill from "#lib/components/TierPill.svelte";
-	import { getLocale } from "#lib/paraglide/runtime.js";
-	import { m } from "#lib/paraglide/messages.js";
-	import { databaseTimestampToDate } from "#lib/utils/dates.ts";
-	import { formatDistanceToNowLocalized } from "#lib/utils/format-distance.ts";
-	import { navIconUrl } from "#lib/utils/urls.ts";
-	import type { SidebarStream } from "./layout-types.ts";
-	import ListLink from "./ListLink.svelte";
+import { Bookmark, BookmarkCheck } from "@lucide/svelte";
+import { isToday, isTomorrow } from "date-fns";
+import Image from "#lib/components/Image.svelte";
+import TierPill from "#lib/components/TierPill.svelte";
+import { m } from "#lib/paraglide/messages.js";
+import { getLocale } from "#lib/paraglide/runtime.js";
+import { databaseTimestampToDate } from "#lib/utils/dates.ts";
+import { formatDistanceToNowLocalized } from "#lib/utils/format-distance.ts";
+import { navIconUrl } from "#lib/utils/urls.ts";
+import ListLink from "./ListLink.svelte";
+import type { SidebarStream } from "./layout-types.ts";
 
-	interface Props {
-		streams: SidebarStream[];
-		onclick?: () => void;
-		isLoggedIn?: boolean;
-		savedTournamentIds?: number[];
+interface Props {
+	streams: SidebarStream[];
+	onclick?: () => void;
+	isLoggedIn?: boolean;
+	savedTournamentIds?: number[];
+}
+
+let { streams, onclick, isLoggedIn, savedTournamentIds }: Props = $props();
+
+const timeFormatter = $derived(
+	new Intl.DateTimeFormat(getLocale(), {
+		hour: "numeric",
+		minute: "numeric",
+	}),
+);
+const dateTimeFormatter = $derived(
+	new Intl.DateTimeFormat(getLocale(), {
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	}),
+);
+
+function formatRelativeDate(timestamp: number) {
+	const date = new Date(timestamp * 1000);
+	const timeStr = timeFormatter.format(date);
+
+	if (isToday(date) || isTomorrow(date)) {
+		const rtf = new Intl.RelativeTimeFormat(getLocale(), {
+			numeric: "auto",
+		});
+		const dayStr = rtf.format(isToday(date) ? 0 : 1, "day");
+		return `${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)}, ${timeStr}`;
 	}
 
-	let { streams, onclick, isLoggedIn, savedTournamentIds }: Props = $props();
+	return dateTimeFormatter.format(date);
+}
 
-	const timeFormatter = $derived(
-		new Intl.DateTimeFormat(getLocale(), {
-			hour: "numeric",
-			minute: "numeric",
-		}),
-	);
-	const dateTimeFormatter = $derived(
-		new Intl.DateTimeFormat(getLocale(), {
-			month: "numeric",
-			day: "numeric",
-			hour: "numeric",
-			minute: "numeric",
-		}),
-	);
+function isUpcoming(stream: SidebarStream) {
+	return databaseTimestampToDate(stream.startsAt).getTime() > Date.now();
+}
 
-	function formatRelativeDate(timestamp: number) {
-		const date = new Date(timestamp * 1000);
-		const timeStr = timeFormatter.format(date);
-
-		if (isToday(date) || isTomorrow(date)) {
-			const rtf = new Intl.RelativeTimeFormat(getLocale(), {
-				numeric: "auto",
-			});
-			const dayStr = rtf.format(isToday(date) ? 0 : 1, "day");
-			return `${dayStr.charAt(0).toUpperCase() + dayStr.slice(1)}, ${timeStr}`;
-		}
-
-		return dateTimeFormatter.format(date);
-	}
-
-	function isUpcoming(stream: SidebarStream) {
-		return databaseTimestampToDate(stream.startsAt).getTime() > Date.now();
-	}
-
-	function tournamentIdOf(stream: SidebarStream) {
-		return stream.id.startsWith("upcoming-")
-			? Number(stream.id.replace("upcoming-", ""))
-			: null;
-	}
+function tournamentIdOf(stream: SidebarStream) {
+	return stream.id.startsWith("upcoming-")
+		? Number(stream.id.replace("upcoming-", ""))
+		: null;
+}
 </script>
 
 {#each streams as stream, i (stream.id)}

@@ -1,7 +1,4 @@
-import type {
-	MainWeaponId,
-	ModeShort,
-} from "@sendou/in-game-lists/types";
+import type { MainWeaponId, ModeShort } from "@sendou/in-game-lists/types";
 import type {
 	ColumnType,
 	GeneratedAlways,
@@ -9,20 +6,20 @@ import type {
 	JSONColumnType,
 	Selectable,
 } from "kysely";
-import type { AssociationVisibility } from "#lib/features/associations/associations-types.ts";
-import type { Notification as NotificationValue } from "#lib/features/notifications/notifications-types.ts";
-import type {
-	TournamentSettingsLite,
-	TournamentStaffRole,
-	TournamentTierNumber,
-} from "#lib/features/tournament/tournament-types.ts";
 import type {
 	PeakXP,
 	UserPreferences,
 	XRankPlacementRegion,
 } from "#lib/db/tables-json.ts";
-import type { CustomTheme } from "#lib/features/theme/theme-types.ts";
+import type { AssociationVisibility } from "#lib/features/associations/associations-types.ts";
 import type { SkillTeamIdentifier } from "#lib/features/mmr/mmr-utils.ts";
+import type { Notification as NotificationValue } from "#lib/features/notifications/notifications-types.ts";
+import type { CustomTheme } from "#lib/features/theme/theme-types.ts";
+import type {
+	TournamentSettingsLite,
+	TournamentStaffRole,
+	TournamentTierNumber,
+} from "#lib/features/tournament/tournament-types.ts";
 import type { UnifiedLanguageCode } from "#lib/modules/i18n/languages.ts";
 
 /**

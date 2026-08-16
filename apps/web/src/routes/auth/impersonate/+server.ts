@@ -1,5 +1,4 @@
 import { error, redirect } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "#lib/features/admin/dev-controls.server.ts";
 import {
 	AUTH_COOKIE_NAME,
@@ -8,8 +7,14 @@ import {
 	readSessionCookie,
 	writeSessionCookie,
 } from "#lib/features/auth/session.server.ts";
+import type { RequestHandler } from "./$types";
 
-export const POST: RequestHandler = async ({ request, url, cookies, locals }) => {
+export const POST: RequestHandler = async ({
+	request,
+	url,
+	cookies,
+	locals,
+}) => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {
 		const user = locals.user;
 		const canImpersonate =
@@ -27,11 +32,7 @@ export const POST: RequestHandler = async ({ request, url, cookies, locals }) =>
 
 	const session = readSessionCookie(cookies.get(AUTH_COOKIE_NAME)) ?? {};
 	session[IMPERSONATED_SESSION_KEY] = userId;
-	cookies.set(
-		AUTH_COOKIE_NAME,
-		writeSessionCookie(session),
-		authCookieOptions,
-	);
+	cookies.set(AUTH_COOKIE_NAME, writeSessionCookie(session), authCookieOptions);
 
 	const formData = await request.formData().catch(() => null);
 	const returnTo = formData?.get("returnTo");

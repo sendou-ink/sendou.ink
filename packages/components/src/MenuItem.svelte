@@ -1,34 +1,34 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import { getMenuContext } from "./menu-context.ts";
+import type { Snippet } from "svelte";
+import { getMenuContext } from "./menu-context.ts";
 
-	interface Props {
-		onAction?: () => void;
-		href?: string;
-		icon?: Snippet;
-		isActive?: boolean;
-		isDestructive?: boolean;
-		isDisabled?: boolean;
-		children: Snippet;
-	}
+interface Props {
+	onAction?: () => void;
+	href?: string;
+	icon?: Snippet;
+	isActive?: boolean;
+	isDestructive?: boolean;
+	isDisabled?: boolean;
+	children: Snippet;
+}
 
-	let {
-		onAction,
-		href,
-		icon,
-		isActive,
-		isDestructive,
-		isDisabled,
-		children,
-	}: Props = $props();
+let {
+	onAction,
+	href,
+	icon,
+	isActive,
+	isDestructive,
+	isDisabled,
+	children,
+}: Props = $props();
 
-	const menu = getMenuContext();
+const menu = getMenuContext();
 
-	function act() {
-		if (isDisabled) return;
-		menu.close();
-		onAction?.();
-	}
+function act() {
+	if (isDisabled) return;
+	menu.close();
+	onAction?.();
+}
 </script>
 
 {#snippet content()}

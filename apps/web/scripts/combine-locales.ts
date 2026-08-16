@@ -2,7 +2,10 @@ import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 
-const WEB_DIR = path.resolve(path.dirname(fileURLToPath(import.meta.url)), "..");
+const WEB_DIR = path.resolve(
+	path.dirname(fileURLToPath(import.meta.url)),
+	"..",
+);
 const LOCALES_DIR = path.resolve(WEB_DIR, "../web-react/locales");
 const OUTPUT_DIR = path.join(WEB_DIR, "messages");
 

@@ -1,10 +1,10 @@
 <script lang="ts">
-	import { Config } from "#lib/config.ts";
-	import { PWA_SPLASH_SCREENS } from "./pwa-splash-screens.ts";
+import { Config } from "#lib/config.ts";
+import { PWA_SPLASH_SCREENS } from "./pwa-splash-screens.ts";
 
-	const APP_ICON_URL = `${Config.staticAssetsUrl}/img/app-icon.png`;
-	const splashScreenUrl = (fileName: string) =>
-		`${Config.staticAssetsUrl}/img/splash-screens/${fileName}`;
+const APP_ICON_URL = `${Config.staticAssetsUrl}/img/app-icon.png`;
+const splashScreenUrl = (fileName: string) =>
+	`${Config.staticAssetsUrl}/img/splash-screens/${fileName}`;
 </script>
 
 <svelte:head>

@@ -1,45 +1,40 @@
 <script lang="ts">
-	import invariant from "@sendou/utils/invariant";
-	import Flag from "#lib/components/Flag.svelte";
-	import Image from "#lib/components/Image.svelte";
-	import Placement from "#lib/components/Placement.svelte";
-	import { winnersImageUrl } from "#lib/utils/urls.ts";
-	import { topTenPlayerData } from "./leaderboards-utils.ts";
+import invariant from "@sendou/utils/invariant";
+import Flag from "#lib/components/Flag.svelte";
+import Image from "#lib/components/Image.svelte";
+import Placement from "#lib/components/Placement.svelte";
+import { winnersImageUrl } from "#lib/utils/urls.ts";
+import { topTenPlayerData } from "./leaderboards-utils.ts";
 
-	interface Props {
-		power?: number;
-		placement: number;
-		season: number;
-		small?: boolean;
+interface Props {
+	power?: number;
+	placement: number;
+	season: number;
+	small?: boolean;
+}
+
+let { power, placement, season, small = false }: Props = $props();
+
+const data = $derived.by(() => {
+	const player = topTenPlayerData({ season, placement });
+	invariant(player, `No data for season ${season} and placement ${placement}`);
+	return player;
+});
+
+const transformMultiplier = $derived(small ? 1 / 3 : 1);
+
+const containerStyle = $derived.by(() => {
+	const styles: string[] = [];
+	if (data.transforms?.top) {
+		styles.push(`--winner-top: ${data.transforms.top * transformMultiplier}px`);
 	}
-
-	let { power, placement, season, small = false }: Props = $props();
-
-	const data = $derived.by(() => {
-		const player = topTenPlayerData({ season, placement });
-		invariant(
-			player,
-			`No data for season ${season} and placement ${placement}`,
+	if (data.transforms?.left) {
+		styles.push(
+			`--winner-left: ${data.transforms.left * transformMultiplier}px`,
 		);
-		return player;
-	});
-
-	const transformMultiplier = $derived(small ? 1 / 3 : 1);
-
-	const containerStyle = $derived.by(() => {
-		const styles: string[] = [];
-		if (data.transforms?.top) {
-			styles.push(
-				`--winner-top: ${data.transforms.top * transformMultiplier}px`,
-			);
-		}
-		if (data.transforms?.left) {
-			styles.push(
-				`--winner-left: ${data.transforms.left * transformMultiplier}px`,
-			);
-		}
-		return styles.join("; ") || undefined;
-	});
+	}
+	return styles.join("; ") || undefined;
+});
 </script>
 
 <div

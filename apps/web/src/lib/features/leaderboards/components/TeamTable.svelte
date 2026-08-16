@@ -1,35 +1,35 @@
 <script lang="ts">
-	import Avatar from "#lib/components/Avatar.svelte";
-	import InfoPopover from "#lib/components/InfoPopover.svelte";
-	import { hasRole } from "#lib/features/auth/user-state.ts";
-	import * as Seasons from "#lib/features/mmr/Seasons.ts";
-	import { m } from "#lib/paraglide/messages.js";
-	import { teamPage, userPage } from "#lib/utils/urls.ts";
-	import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "../leaderboards-constants.ts";
-	import type { LeaderboardsQueryArgs } from "../leaderboards-schemas.ts";
-	import type { TeamLeaderboardEntry } from "../leaderboards-types.ts";
-	import TeamStaffMenu from "./TeamStaffMenu.svelte";
+import Avatar from "#lib/components/Avatar.svelte";
+import InfoPopover from "#lib/components/InfoPopover.svelte";
+import { hasRole } from "#lib/features/auth/user-state.ts";
+import * as Seasons from "#lib/features/mmr/Seasons.ts";
+import { m } from "#lib/paraglide/messages.js";
+import { teamPage, userPage } from "#lib/utils/urls.ts";
+import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "../leaderboards-constants.ts";
+import type { LeaderboardsQueryArgs } from "../leaderboards-schemas.ts";
+import type { TeamLeaderboardEntry } from "../leaderboards-types.ts";
+import TeamStaffMenu from "./TeamStaffMenu.svelte";
 
-	interface Props {
-		entries: TeamLeaderboardEntry[];
-		season: number;
-		queryArgs: LeaderboardsQueryArgs;
-		showQualificationDividers?: boolean;
-	}
+interface Props {
+	entries: TeamLeaderboardEntry[];
+	season: number;
+	queryArgs: LeaderboardsQueryArgs;
+	showQualificationDividers?: boolean;
+}
 
-	let {
-		entries,
-		season,
-		queryArgs,
-		showQualificationDividers: showQualificationDividersProp,
-	}: Props = $props();
+let {
+	entries,
+	season,
+	queryArgs,
+	showQualificationDividers: showQualificationDividersProp,
+}: Props = $props();
 
-	const isStaff = $derived(hasRole("STAFF"));
-	const showStaffActions = $derived(isStaff && queryArgs.type !== "TEAM-ALL");
-	const isCurrentSeason = $derived(season === Seasons.current()?.nth);
-	const showQualificationDividers = $derived(
-		showQualificationDividersProp && isCurrentSeason && entries.length > 20,
-	);
+const isStaff = $derived(hasRole("STAFF"));
+const showStaffActions = $derived(isStaff && queryArgs.type !== "TEAM-ALL");
+const isCurrentSeason = $derived(season === Seasons.current()?.nth);
+const showQualificationDividers = $derived(
+	showQualificationDividersProp && isCurrentSeason && entries.length > 20,
+);
 </script>
 
 <div class="table">

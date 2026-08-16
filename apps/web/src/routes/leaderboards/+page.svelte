@@ -1,6 +1,6 @@
 <script lang="ts">
-	import MetaTags from "#lib/components/MetaTags.svelte";
-	import Leaderboards from "#lib/features/leaderboards/components/Leaderboards.svelte";
+import MetaTags from "#lib/components/MetaTags.svelte";
+import Leaderboards from "#lib/features/leaderboards/components/Leaderboards.svelte";
 </script>
 
 <MetaTags

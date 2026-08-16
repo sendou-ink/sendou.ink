@@ -8,10 +8,14 @@ import {
 	cachedFullUserLeaderboard,
 	type UserLeaderboardWithAdditionsItem,
 } from "#lib/features/leaderboards/leaderboards-core.server.ts";
-import * as Seasons from "#lib/features/mmr/Seasons.ts";
 import { TIERS, type TierName } from "#lib/features/mmr/mmr-constants.ts";
+import * as Seasons from "#lib/features/mmr/Seasons.ts";
 import { cache, IN_MILLISECONDS, ttl } from "#lib/server/cache.ts";
-import { navIconUrl, SENDOUQ_STREAMS_PAGE, tierImageUrl } from "#lib/utils/urls.ts";
+import {
+	navIconUrl,
+	SENDOUQ_STREAMS_PAGE,
+	tierImageUrl,
+} from "#lib/utils/urls.ts";
 import * as QStreamsRepository from "./QStreamsRepository.server.ts";
 
 const SENDOUQ_STREAMS_KEY = "sendouq-streams";

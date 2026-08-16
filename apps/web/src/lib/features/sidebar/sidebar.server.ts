@@ -29,8 +29,8 @@ import {
 	type LiteGroup,
 } from "#lib/features/sendouq/q-groups.server.ts";
 import { getSendouQSidebarStreams } from "#lib/features/sendouq-streams/streams.server.ts";
-import type { TournamentTierNumber } from "#lib/features/tournament/tournament-types.ts";
 import * as SavedCalendarEventRepository from "#lib/features/tournament/SavedCalendarEventRepository.server.ts";
+import type { TournamentTierNumber } from "#lib/features/tournament/tournament-types.ts";
 import { cache, ttl } from "#lib/server/cache.ts";
 import type { CommonUser } from "#lib/server/kysely.ts";
 import { dateToDatabaseTimestamp } from "#lib/utils/dates.ts";

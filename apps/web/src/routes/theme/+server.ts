@@ -1,10 +1,10 @@
 import { json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
 import {
 	clearTheme,
 	isTheme,
 	setTheme,
 } from "#lib/features/theme/theme.server.ts";
+import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = async ({ request, cookies }) => {
 	const form = new URLSearchParams(await request.text());

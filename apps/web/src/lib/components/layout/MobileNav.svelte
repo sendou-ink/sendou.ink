@@ -1,93 +1,92 @@
 <script lang="ts">
-	import {
-		Calendar,
-		ChevronRight,
-		LogIn,
-		Menu,
-		MessageSquare,
-		Settings,
-		User,
-		Users,
-	} from "@lucide/svelte";
-	import Avatar from "#lib/components/Avatar.svelte";
-	import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
-	import { loggedInUser } from "#lib/features/auth/user-state.ts";
-	import { m } from "#lib/paraglide/messages.js";
-	import {
-		EVENTS_PAGE,
-		FRIENDS_PAGE,
-		SETTINGS_PAGE,
-		userPage,
-	} from "#lib/utils/urls.ts";
-	import EventsList from "./EventsList.svelte";
-	import FriendMenu from "./FriendMenu.svelte";
-	import type { NotificationRow, SidebarData } from "./layout-types.ts";
-	import LogInButtonContainer from "./LogInButtonContainer.svelte";
-	import MobileNavMenuOverlay from "./MobileNavMenuOverlay.svelte";
-	import MobilePanel from "./MobilePanel.svelte";
-	import MobileTab from "./MobileTab.svelte";
+import {
+	Calendar,
+	ChevronRight,
+	LogIn,
+	Menu,
+	MessageSquare,
+	Settings,
+	User,
+	Users,
+} from "@lucide/svelte";
+import Avatar from "#lib/components/Avatar.svelte";
+import { loggedInUser } from "#lib/features/auth/user-state.ts";
+import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
+import { m } from "#lib/paraglide/messages.js";
+import {
+	EVENTS_PAGE,
+	FRIENDS_PAGE,
+	SETTINGS_PAGE,
+	userPage,
+} from "#lib/utils/urls.ts";
+import EventsList from "./EventsList.svelte";
+import FriendMenu from "./FriendMenu.svelte";
+import LogInButtonContainer from "./LogInButtonContainer.svelte";
+import type { NotificationRow, SidebarData } from "./layout-types.ts";
+import MobileNavMenuOverlay from "./MobileNavMenuOverlay.svelte";
+import MobilePanel from "./MobilePanel.svelte";
+import MobileTab from "./MobileTab.svelte";
 
-	type PanelType = "closed" | "menu" | "friends" | "tourneys" | "chat" | "you";
+type PanelType = "closed" | "menu" | "friends" | "tourneys" | "chat" | "you";
 
-	const SENDOUQ_ACTIVITY_LABEL = "SendouQ";
+const SENDOUQ_ACTIVITY_LABEL = "SendouQ";
 
-	interface Props {
-		sidebarData: SidebarData | undefined;
-		notifications?: NotificationRow[];
-		unseenNotificationIds?: number[];
-		showUnseenDot?: boolean;
-	}
+interface Props {
+	sidebarData: SidebarData | undefined;
+	notifications?: NotificationRow[];
+	unseenNotificationIds?: number[];
+	showUnseenDot?: boolean;
+}
 
-	let {
-		sidebarData,
-		notifications,
-		unseenNotificationIds,
-		showUnseenDot = false,
-	}: Props = $props();
+let {
+	sidebarData,
+	notifications,
+	unseenNotificationIds,
+	showUnseenDot = false,
+}: Props = $props();
 
-	let activePanel = $state<PanelType>("closed");
-	let previousPanel: PanelType = "closed";
+let activePanel = $state<PanelType>("closed");
+let previousPanel: PanelType = "closed";
 
-	const user = $derived(loggedInUser());
+const user = $derived(loggedInUser());
 
-	const hasFriendInSendouQ = $derived(
-		sidebarData?.friends.some(
-			(f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL,
-		) ?? false,
-	);
-	const unseenFriendRequests = $derived(
-		sidebarData?.incomingFriendRequestIds.length ?? 0,
-	);
+const hasFriendInSendouQ = $derived(
+	sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
+		false,
+);
+const unseenFriendRequests = $derived(
+	sidebarData?.incomingFriendRequestIds.length ?? 0,
+);
 
-	const skipAnimation = $derived(previousPanel !== "closed");
+const skipAnimation = $derived(previousPanel !== "closed");
 
-	const loggedInTabs: PanelType[] = [
-		"menu",
-		"friends",
-		"tourneys",
-		"chat",
-		"you",
-	];
-	const loggedOutTabs: PanelType[] = ["menu"];
-	const ghostTabs = $derived(user ? loggedInTabs : loggedOutTabs);
+const loggedInTabs: PanelType[] = [
+	"menu",
+	"friends",
+	"tourneys",
+	"chat",
+	"you",
+];
+const loggedOutTabs: PanelType[] = ["menu"];
+const ghostTabs = $derived(user ? loggedInTabs : loggedOutTabs);
 
-	function closePanel() {
-		previousPanel = activePanel;
-		activePanel = "closed";
-	}
+function closePanel() {
+	previousPanel = activePanel;
+	activePanel = "closed";
+}
 
-	function handleTabPress(panel: PanelType) {
-		// TODO(chat rebuild): the chat panel arrives with the scrims slice
-		if (panel === "chat") return;
+function handleTabPress(panel: PanelType) {
+	// TODO(chat rebuild): the chat panel arrives with the scrims slice
+	if (panel === "chat") return;
 
-		previousPanel = activePanel;
-		activePanel = activePanel === panel ? "closed" : panel;
-	}
+	previousPanel = activePanel;
+	activePanel = activePanel === panel ? "closed" : panel;
+}
 
-	function handleGhostTabPress(index: number) {
-		const panel = ghostTabs[index];
-		if (panel) handleTabPress(panel);
-	}
+function handleGhostTabPress(index: number) {
+	const panel = ghostTabs[index];
+	if (panel) handleTabPress(panel);
+}
 </script>
 
 <div class="mobileNav">

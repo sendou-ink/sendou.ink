@@ -1,260 +1,257 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import { setSelectContext } from "./select-context.ts";
+import type { Snippet } from "svelte";
+import { setSelectContext } from "./select-context.ts";
 
-	interface Props {
-		label?: string;
-		placeholder?: string;
-		selectedKey?: string | number | null;
-		defaultSelectedKey?: string | number;
-		onSelectionChange?: (key: string | number | null) => void;
-		onOpenChange?: (isOpen: boolean) => void;
-		clearable?: boolean;
-		isDisabled?: boolean;
-		isRequired?: boolean;
-		testId?: string;
-		"aria-label"?: string;
-		search?: { placeholder?: string };
-		searchValue?: string;
-		noResultsText?: string;
-		clearText?: string;
-		popoverClass?: string;
-		/** Trigger content for the selected item; falls back to the item's registered text value. */
-		valueContent?: Snippet<[string | number]>;
-		children: Snippet;
-	}
+interface Props {
+	label?: string;
+	placeholder?: string;
+	selectedKey?: string | number | null;
+	defaultSelectedKey?: string | number;
+	onSelectionChange?: (key: string | number | null) => void;
+	onOpenChange?: (isOpen: boolean) => void;
+	clearable?: boolean;
+	isDisabled?: boolean;
+	isRequired?: boolean;
+	testId?: string;
+	"aria-label"?: string;
+	search?: { placeholder?: string };
+	searchValue?: string;
+	noResultsText?: string;
+	clearText?: string;
+	popoverClass?: string;
+	/** Trigger content for the selected item; falls back to the item's registered text value. */
+	valueContent?: Snippet<[string | number]>;
+	children: Snippet;
+}
 
-	let {
-		label,
-		placeholder,
-		selectedKey,
-		defaultSelectedKey,
-		onSelectionChange,
-		onOpenChange,
-		clearable = false,
-		isDisabled,
-		isRequired,
-		testId,
-		"aria-label": ariaLabel,
-		search,
-		searchValue = $bindable(""),
-		noResultsText = "No results",
-		clearText = "Clear",
-		popoverClass,
-		valueContent,
-		children,
-	}: Props = $props();
+let {
+	label,
+	placeholder,
+	selectedKey,
+	defaultSelectedKey,
+	onSelectionChange,
+	onOpenChange,
+	clearable = false,
+	isDisabled,
+	isRequired,
+	testId,
+	"aria-label": ariaLabel,
+	search,
+	searchValue = $bindable(""),
+	noResultsText = "No results",
+	clearText = "Clear",
+	popoverClass,
+	valueContent,
+	children,
+}: Props = $props();
 
-	// svelte-ignore state_referenced_locally -- controlled vs. uncontrolled is decided once at mount
-	const isControlled = selectedKey !== undefined;
-	// svelte-ignore state_referenced_locally -- the default seeds the initial value only
-	let uncontrolledKey = $state<string | number | null>(
-		defaultSelectedKey ?? null,
-	);
-	const currentKey = $derived(
-		isControlled ? (selectedKey ?? null) : uncontrolledKey,
-	);
+// svelte-ignore state_referenced_locally -- controlled vs. uncontrolled is decided once at mount
+const isControlled = selectedKey !== undefined;
+// svelte-ignore state_referenced_locally -- the default seeds the initial value only
+let uncontrolledKey = $state<string | number | null>(
+	defaultSelectedKey ?? null,
+);
+const currentKey = $derived(
+	isControlled ? (selectedKey ?? null) : uncontrolledKey,
+);
 
-	let open = $state(false);
-	let focusedKey = $state<string | number | null>(null);
+let open = $state(false);
+let focusedKey = $state<string | number | null>(null);
 
-	interface RegisteredItem {
-		element: HTMLElement;
-		textValue: string;
-		disabled: boolean;
-	}
-	const items = new Map<string | number, RegisteredItem>();
-	let itemsVersion = $state(0);
+interface RegisteredItem {
+	element: HTMLElement;
+	textValue: string;
+	disabled: boolean;
+}
+const items = new Map<string | number, RegisteredItem>();
+let itemsVersion = $state(0);
 
-	let triggerElement = $state<HTMLButtonElement | null>(null);
-	let popoverElement = $state<HTMLDivElement | null>(null);
-	let searchInputElement = $state<HTMLInputElement | null>(null);
+let triggerElement = $state<HTMLButtonElement | null>(null);
+let popoverElement = $state<HTMLDivElement | null>(null);
+let searchInputElement = $state<HTMLInputElement | null>(null);
 
-	const selectedText = $derived.by(() => {
-		itemsVersion;
-		return currentKey !== null
-			? items.get(currentKey)?.textValue
-			: undefined;
-	});
+const selectedText = $derived.by(() => {
+	itemsVersion;
+	return currentKey !== null ? items.get(currentKey)?.textValue : undefined;
+});
 
-	setSelectContext({
-		get selectedKey() {
-			return currentKey;
-		},
-		get focusedKey() {
-			return focusedKey;
-		},
-		registerItem(key, element, options) {
-			items.set(key, { element, ...options });
+setSelectContext({
+	get selectedKey() {
+		return currentKey;
+	},
+	get focusedKey() {
+		return focusedKey;
+	},
+	registerItem(key, element, options) {
+		items.set(key, { element, ...options });
+		itemsVersion++;
+		return () => {
+			items.delete(key);
 			itemsVersion++;
-			return () => {
-				items.delete(key);
-				itemsVersion++;
-			};
-		},
-		select(key) {
-			commitSelection(key);
-		},
-		setFocusedKey(key) {
-			focusedKey = key;
-		},
-	});
+		};
+	},
+	select(key) {
+		commitSelection(key);
+	},
+	setFocusedKey(key) {
+		focusedKey = key;
+	},
+});
 
-	function commitSelection(key: string | number | null) {
-		if (!isControlled) {
-			uncontrolledKey = key;
-		}
-		onSelectionChange?.(key);
+function commitSelection(key: string | number | null) {
+	if (!isControlled) {
+		uncontrolledKey = key;
+	}
+	onSelectionChange?.(key);
+	setOpen(false);
+	triggerElement?.focus();
+}
+
+function setOpen(next: boolean) {
+	if (open === next) return;
+	open = next;
+	onOpenChange?.(next);
+
+	if (next) {
+		popoverElement?.showPopover();
+		positionPopover();
+		focusedKey = currentKey ?? orderedKeys(false)[0] ?? null;
+		requestAnimationFrame(() => {
+			if (search) {
+				searchInputElement?.focus();
+			} else {
+				popoverElement?.focus();
+			}
+			scrollFocusedIntoView();
+		});
+	} else {
+		popoverElement?.hidePopover();
+		searchValue = "";
+		focusedKey = null;
+	}
+}
+
+function positionPopover() {
+	if (!triggerElement || !popoverElement) return;
+
+	const rect = triggerElement.getBoundingClientRect();
+	const popover = popoverElement;
+	popover.style.width = `${rect.width}px`;
+	popover.style.left = `${rect.left}px`;
+
+	const maxHeight = 300;
+	const spaceBelow = window.innerHeight - rect.bottom - 8;
+	if (spaceBelow < 150) {
+		popover.style.top = "auto";
+		popover.style.bottom = `${window.innerHeight - rect.top + 4}px`;
+		popover.style.maxHeight = `${Math.min(maxHeight, rect.top - 8)}px`;
+	} else {
+		popover.style.bottom = "auto";
+		popover.style.top = `${rect.bottom + 4}px`;
+		popover.style.maxHeight = `${Math.min(maxHeight, spaceBelow)}px`;
+	}
+}
+
+function orderedKeys(visibleOnly = true) {
+	void visibleOnly;
+	return [...items.entries()]
+		.filter(([, item]) => !item.disabled)
+		.sort(([, a], [, b]) =>
+			a.element.compareDocumentPosition(b.element) &
+			Node.DOCUMENT_POSITION_FOLLOWING
+				? -1
+				: 1,
+		)
+		.map(([key]) => key);
+}
+
+function moveFocus(direction: "next" | "previous" | "first" | "last") {
+	const keys = orderedKeys();
+	if (keys.length === 0) return;
+
+	const currentIndex = focusedKey === null ? -1 : keys.indexOf(focusedKey);
+	const targetIndex =
+		direction === "first"
+			? 0
+			: direction === "last"
+				? keys.length - 1
+				: direction === "next"
+					? Math.min(currentIndex + 1, keys.length - 1)
+					: Math.max(currentIndex - 1, 0);
+
+	focusedKey = keys[targetIndex];
+	scrollFocusedIntoView();
+}
+
+function scrollFocusedIntoView() {
+	if (focusedKey === null) return;
+	items.get(focusedKey)?.element.scrollIntoView({ block: "nearest" });
+}
+
+function onTriggerKeydown(event: KeyboardEvent) {
+	if (
+		event.key === "ArrowDown" ||
+		event.key === "ArrowUp" ||
+		event.key === "Enter" ||
+		event.key === " "
+	) {
+		event.preventDefault();
+		setOpen(true);
+	}
+}
+
+function onPopoverKeydown(event: KeyboardEvent) {
+	if (event.key === "Escape") {
+		event.preventDefault();
 		setOpen(false);
 		triggerElement?.focus();
+		return;
 	}
-
-	function setOpen(next: boolean) {
-		if (open === next) return;
-		open = next;
-		onOpenChange?.(next);
-
-		if (next) {
-			popoverElement?.showPopover();
-			positionPopover();
-			focusedKey = currentKey ?? orderedKeys(false)[0] ?? null;
-			requestAnimationFrame(() => {
-				if (search) {
-					searchInputElement?.focus();
-				} else {
-					popoverElement?.focus();
-				}
-				scrollFocusedIntoView();
-			});
-		} else {
-			popoverElement?.hidePopover();
-			searchValue = "";
-			focusedKey = null;
-		}
+	if (event.key === "ArrowDown") {
+		event.preventDefault();
+		moveFocus("next");
+		return;
 	}
-
-	function positionPopover() {
-		if (!triggerElement || !popoverElement) return;
-
-		const rect = triggerElement.getBoundingClientRect();
-		const popover = popoverElement;
-		popover.style.width = `${rect.width}px`;
-		popover.style.left = `${rect.left}px`;
-
-		const maxHeight = 300;
-		const spaceBelow = window.innerHeight - rect.bottom - 8;
-		if (spaceBelow < 150) {
-			popover.style.top = "auto";
-			popover.style.bottom = `${window.innerHeight - rect.top + 4}px`;
-			popover.style.maxHeight = `${Math.min(maxHeight, rect.top - 8)}px`;
-		} else {
-			popover.style.bottom = "auto";
-			popover.style.top = `${rect.bottom + 4}px`;
-			popover.style.maxHeight = `${Math.min(maxHeight, spaceBelow)}px`;
+	if (event.key === "ArrowUp") {
+		event.preventDefault();
+		moveFocus("previous");
+		return;
+	}
+	if (event.key === "Home" && !search) {
+		event.preventDefault();
+		moveFocus("first");
+		return;
+	}
+	if (event.key === "End" && !search) {
+		event.preventDefault();
+		moveFocus("last");
+		return;
+	}
+	if (event.key === "Enter") {
+		event.preventDefault();
+		if (focusedKey !== null && !items.get(focusedKey)?.disabled) {
+			commitSelection(focusedKey);
 		}
 	}
+}
 
-	function orderedKeys(visibleOnly = true) {
-		void visibleOnly;
-		return [...items.entries()]
-			.filter(([, item]) => !item.disabled)
-			.sort(([, a], [, b]) =>
-				a.element.compareDocumentPosition(b.element) &
-				Node.DOCUMENT_POSITION_FOLLOWING
-					? -1
-					: 1,
-			)
-			.map(([key]) => key);
+function onPopoverToggle(event: Event) {
+	const toggleEvent = event as ToggleEvent;
+	if (toggleEvent.newState === "closed" && open) {
+		open = false;
+		onOpenChange?.(false);
+		searchValue = "";
+		focusedKey = null;
 	}
+}
 
-	function moveFocus(direction: "next" | "previous" | "first" | "last") {
-		const keys = orderedKeys();
-		if (keys.length === 0) return;
+const hasVisibleItems = $derived.by(() => {
+	itemsVersion;
+	return items.size > 0;
+});
 
-		const currentIndex =
-			focusedKey === null ? -1 : keys.indexOf(focusedKey);
-		const targetIndex =
-			direction === "first"
-				? 0
-				: direction === "last"
-					? keys.length - 1
-					: direction === "next"
-						? Math.min(currentIndex + 1, keys.length - 1)
-						: Math.max(currentIndex - 1, 0);
-
-		focusedKey = keys[targetIndex];
-		scrollFocusedIntoView();
-	}
-
-	function scrollFocusedIntoView() {
-		if (focusedKey === null) return;
-		items.get(focusedKey)?.element.scrollIntoView({ block: "nearest" });
-	}
-
-	function onTriggerKeydown(event: KeyboardEvent) {
-		if (
-			event.key === "ArrowDown" ||
-			event.key === "ArrowUp" ||
-			event.key === "Enter" ||
-			event.key === " "
-		) {
-			event.preventDefault();
-			setOpen(true);
-		}
-	}
-
-	function onPopoverKeydown(event: KeyboardEvent) {
-		if (event.key === "Escape") {
-			event.preventDefault();
-			setOpen(false);
-			triggerElement?.focus();
-			return;
-		}
-		if (event.key === "ArrowDown") {
-			event.preventDefault();
-			moveFocus("next");
-			return;
-		}
-		if (event.key === "ArrowUp") {
-			event.preventDefault();
-			moveFocus("previous");
-			return;
-		}
-		if (event.key === "Home" && !search) {
-			event.preventDefault();
-			moveFocus("first");
-			return;
-		}
-		if (event.key === "End" && !search) {
-			event.preventDefault();
-			moveFocus("last");
-			return;
-		}
-		if (event.key === "Enter") {
-			event.preventDefault();
-			if (focusedKey !== null && !items.get(focusedKey)?.disabled) {
-				commitSelection(focusedKey);
-			}
-		}
-	}
-
-	function onPopoverToggle(event: Event) {
-		const toggleEvent = event as ToggleEvent;
-		if (toggleEvent.newState === "closed" && open) {
-			open = false;
-			onOpenChange?.(false);
-			searchValue = "";
-			focusedKey = null;
-		}
-	}
-
-	const hasVisibleItems = $derived.by(() => {
-		itemsVersion;
-		return items.size > 0;
-	});
-
-	const uid = $props.id();
-	const labelId = $derived(label ? `${uid}-select-label` : undefined);
+const uid = $props.id();
+const labelId = $derived(label ? `${uid}-select-label` : undefined);
 </script>
 
 <svelte:window

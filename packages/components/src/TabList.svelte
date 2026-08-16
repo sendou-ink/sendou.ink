@@ -1,23 +1,18 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import { getTabsContext } from "./tabs-context.ts";
+import type { Snippet } from "svelte";
+import { getTabsContext } from "./tabs-context.ts";
 
-	interface Props {
-		sticky?: boolean;
-		/** Should tabs take 100% width with equal distribution? */
-		fullWidth?: boolean;
-		"aria-label"?: string;
-		children: Snippet;
-	}
+interface Props {
+	sticky?: boolean;
+	/** Should tabs take 100% width with equal distribution? */
+	fullWidth?: boolean;
+	"aria-label"?: string;
+	children: Snippet;
+}
 
-	let {
-		sticky,
-		fullWidth,
-		"aria-label": ariaLabel,
-		children,
-	}: Props = $props();
+let { sticky, fullWidth, "aria-label": ariaLabel, children }: Props = $props();
 
-	const tabs = getTabsContext();
+const tabs = getTabsContext();
 </script>
 
 <div class="tabListContainer scrollbar">

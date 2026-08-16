@@ -1,48 +1,46 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import { getTabsContext } from "./tabs-context.ts";
+import type { Snippet } from "svelte";
+import { getTabsContext } from "./tabs-context.ts";
 
-	interface Props {
-		id: string;
-		icon?: Snippet;
-		number?: number;
-		/** Render a warning-colored alert icon to draw attention to this tab. */
-		alert?: boolean;
-		children?: Snippet;
-	}
+interface Props {
+	id: string;
+	icon?: Snippet;
+	number?: number;
+	/** Render a warning-colored alert icon to draw attention to this tab. */
+	alert?: boolean;
+	children?: Snippet;
+}
 
-	let { id, icon, number, alert, children }: Props = $props();
+let { id, icon, number, alert, children }: Props = $props();
 
-	const tabs = getTabsContext();
+const tabs = getTabsContext();
 
-	const selected = $derived(tabs.selectedKey === id);
+const selected = $derived(tabs.selectedKey === id);
 
-	function onkeydown(event: KeyboardEvent) {
-		const nextKey =
-			tabs.orientation === "vertical" ? "ArrowDown" : "ArrowRight";
-		const previousKey =
-			tabs.orientation === "vertical" ? "ArrowUp" : "ArrowLeft";
+function onkeydown(event: KeyboardEvent) {
+	const nextKey = tabs.orientation === "vertical" ? "ArrowDown" : "ArrowRight";
+	const previousKey = tabs.orientation === "vertical" ? "ArrowUp" : "ArrowLeft";
 
-		const direction =
-			event.key === nextKey
-				? ("next" as const)
-				: event.key === previousKey
-					? ("previous" as const)
-					: event.key === "Home"
-						? ("first" as const)
-						: event.key === "End"
-							? ("last" as const)
-							: null;
+	const direction =
+		event.key === nextKey
+			? ("next" as const)
+			: event.key === previousKey
+				? ("previous" as const)
+				: event.key === "Home"
+					? ("first" as const)
+					: event.key === "End"
+						? ("last" as const)
+						: null;
 
-		if (!direction) return;
+	if (!direction) return;
 
-		event.preventDefault();
-		tabs.moveFocus(id, direction);
-	}
+	event.preventDefault();
+	tabs.moveFocus(id, direction);
+}
 
-	function registerTab(element: HTMLElement) {
-		return tabs.registerTab(id, element);
-	}
+function registerTab(element: HTMLElement) {
+	return tabs.registerTab(id, element);
+}
 </script>
 
 <div

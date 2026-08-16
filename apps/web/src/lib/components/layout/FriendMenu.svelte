@@ -1,55 +1,54 @@
 <script lang="ts" module>
-	type FriendActivityBadge = "MATCH" | "NEXT";
+type FriendActivityBadge = "MATCH" | "NEXT";
 
-	const ACTIVITY_BADGE: Record<FriendActivityType, FriendActivityBadge | null> =
-		{
-			SENDOUQ_MATCH: "MATCH",
-			TOURNAMENT_MATCH: "MATCH",
-			TOURNAMENT_WAITING: "NEXT",
-			SENDOUQ: null,
-			TOURNAMENT_SUB: null,
-		};
+const ACTIVITY_BADGE: Record<FriendActivityType, FriendActivityBadge | null> = {
+	SENDOUQ_MATCH: "MATCH",
+	TOURNAMENT_MATCH: "MATCH",
+	TOURNAMENT_WAITING: "NEXT",
+	SENDOUQ: null,
+	TOURNAMENT_SUB: null,
+};
 
-	function resolveActivity(friend: {
-		activityType: FriendActivityType | null;
-		matchId: number | null;
-		tournamentId: number | null;
-	}) {
-		switch (friend.activityType) {
-			case "SENDOUQ_MATCH":
-				return friend.matchId
-					? ({
-							type: "view-match",
-							url: sendouQMatchPage(friend.matchId),
-						} as const)
-					: null;
-			case "TOURNAMENT_MATCH":
-				return friend.tournamentId && friend.matchId
-					? ({
-							type: "view-match",
-							url: `${tournamentPage(friend.tournamentId)}/matches/${friend.matchId}`,
-						} as const)
-					: null;
-			case "TOURNAMENT_WAITING":
-				return friend.tournamentId
-					? ({
-							type: "view-tournament",
-							url: tournamentPage(friend.tournamentId),
-						} as const)
-					: null;
-			case "SENDOUQ":
-				return { type: "join-sendouq" } as const;
-			case "TOURNAMENT_SUB":
-				return friend.tournamentId
-					? ({
-							type: "view-tournament",
-							url: `${tournamentPage(friend.tournamentId)}/subs`,
-						} as const)
-					: null;
-			default:
-				return null;
-		}
+function resolveActivity(friend: {
+	activityType: FriendActivityType | null;
+	matchId: number | null;
+	tournamentId: number | null;
+}) {
+	switch (friend.activityType) {
+		case "SENDOUQ_MATCH":
+			return friend.matchId
+				? ({
+						type: "view-match",
+						url: sendouQMatchPage(friend.matchId),
+					} as const)
+				: null;
+		case "TOURNAMENT_MATCH":
+			return friend.tournamentId && friend.matchId
+				? ({
+						type: "view-match",
+						url: `${tournamentPage(friend.tournamentId)}/matches/${friend.matchId}`,
+					} as const)
+				: null;
+		case "TOURNAMENT_WAITING":
+			return friend.tournamentId
+				? ({
+						type: "view-tournament",
+						url: tournamentPage(friend.tournamentId),
+					} as const)
+				: null;
+		case "SENDOUQ":
+			return { type: "join-sendouq" } as const;
+		case "TOURNAMENT_SUB":
+			return friend.tournamentId
+				? ({
+						type: "view-tournament",
+						url: `${tournamentPage(friend.tournamentId)}/subs`,
+					} as const)
+				: null;
+		default:
+			return null;
 	}
+}
 </script>
 
 <script lang="ts">

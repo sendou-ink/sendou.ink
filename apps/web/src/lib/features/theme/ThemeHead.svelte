@@ -1,20 +1,20 @@
 <script lang="ts">
-	import type { Theme } from "./theme.server.ts";
+import type { Theme } from "./theme.server.ts";
 
-	interface Props {
-		/** The user's explicitly chosen theme from the theme cookie, `null` when following the system theme. */
-		theme: Theme | null;
-	}
+interface Props {
+	/** The user's explicitly chosen theme from the theme cookie, `null` when following the system theme. */
+	theme: Theme | null;
+}
 
-	let { theme }: Props = $props();
+let { theme }: Props = $props();
 
-	const metaColorScheme = $derived(
-		theme === "light" ? "light dark" : "dark light",
-	);
+const metaColorScheme = $derived(
+	theme === "light" ? "light dark" : "dark light",
+);
 
-	// applied before first paint when no explicit theme is set, so the page
-	// never flashes the wrong theme; the html class is otherwise SSR'd
-	const CLIENT_THEME_SCRIPT = `
+// applied before first paint when no explicit theme is set, so the page
+// never flashes the wrong theme; the html class is otherwise SSR'd
+const CLIENT_THEME_SCRIPT = `
 ;(() => {
   const theme = window.matchMedia("(prefers-color-scheme: light)").matches
     ? 'light'

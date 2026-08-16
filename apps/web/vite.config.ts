@@ -12,7 +12,8 @@ export default defineConfig(({ mode }) => ({
 			project: "./project.inlang",
 			outdir: "./src/lib/paraglide",
 			strategy: ["cookie", "preferredLanguage", "baseLocale"],
-			outputStructure: mode === "production" ? "message-modules" : "locale-modules",
+			outputStructure:
+				mode === "production" ? "message-modules" : "locale-modules",
 		}),
 		sveltekit({
 			adapter: adapter(),

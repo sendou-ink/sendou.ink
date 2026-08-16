@@ -1,6 +1,6 @@
-import { db } from "#lib/server/db/sql.ts";
 import type { ShowcaseCalendarEvent } from "#lib/features/calendar/calendar-types.ts";
 import * as ShowcaseTournaments from "#lib/features/front-page/ShowcaseTournaments.server.ts";
+import { db } from "#lib/server/db/sql.ts";
 
 async function findCalendarEventIdsByUserId(userId: number): Promise<number[]> {
 	const rows = await db

@@ -1,5 +1,5 @@
-import { page } from "$app/state";
 import type { Role } from "#lib/modules/permissions/types.ts";
+import { page } from "$app/state";
 import type { AuthenticatedUser } from "./user-types.ts";
 
 /** The logged in user as serialized to the client by the root layout. */

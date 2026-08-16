@@ -1,30 +1,30 @@
 <script lang="ts" module>
-	let pendingRemoteRequests = $state(0);
-	let fetchPatched = false;
+let pendingRemoteRequests = $state(0);
+let fetchPatched = false;
 
-	// remote function calls go over plain fetch; counting the in-flight ones is
-	// what lets e2e (and the differ) wait for "router idle" after interactions
-	function patchFetchOnce() {
-		if (fetchPatched || typeof window === "undefined") return;
-		fetchPatched = true;
+// remote function calls go over plain fetch; counting the in-flight ones is
+// what lets e2e (and the differ) wait for "router idle" after interactions
+function patchFetchOnce() {
+	if (fetchPatched || typeof window === "undefined") return;
+	fetchPatched = true;
 
-		const originalFetch = window.fetch.bind(window);
-		window.fetch = async (input, init) => {
-			const url =
-				typeof input === "string"
-					? input
-					: input instanceof URL
-						? input.href
-						: input.url;
-			const isAppRequest = url.includes("/_app/") || url.startsWith("/");
-			if (isAppRequest) pendingRemoteRequests++;
-			try {
-				return await originalFetch(input, init);
-			} finally {
-				if (isAppRequest) pendingRemoteRequests--;
-			}
-		};
-	}
+	const originalFetch = window.fetch.bind(window);
+	window.fetch = async (input, init) => {
+		const url =
+			typeof input === "string"
+				? input
+				: input instanceof URL
+					? input.href
+					: input.url;
+		const isAppRequest = url.includes("/_app/") || url.startsWith("/");
+		if (isAppRequest) pendingRemoteRequests++;
+		try {
+			return await originalFetch(input, init);
+		} finally {
+			if (isAppRequest) pendingRemoteRequests--;
+		}
+	};
+}
 </script>
 
 <script lang="ts">

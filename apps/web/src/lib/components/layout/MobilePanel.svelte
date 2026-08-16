@@ -1,27 +1,27 @@
 <script lang="ts">
-	import { X } from "@lucide/svelte";
-	import type { Snippet } from "svelte";
-	import GhostTabBar from "./GhostTabBar.svelte";
+import { X } from "@lucide/svelte";
+import type { Snippet } from "svelte";
+import GhostTabBar from "./GhostTabBar.svelte";
 
-	interface Props {
-		title: string;
-		icon: Snippet;
-		onClose: () => void;
-		children: Snippet;
-		ghostTabCount: number;
-		onGhostTabPress: (index: number) => void;
-		skipAnimation: boolean;
-	}
+interface Props {
+	title: string;
+	icon: Snippet;
+	onClose: () => void;
+	children: Snippet;
+	ghostTabCount: number;
+	onGhostTabPress: (index: number) => void;
+	skipAnimation: boolean;
+}
 
-	let {
-		title,
-		icon,
-		onClose,
-		children,
-		ghostTabCount,
-		onGhostTabPress,
-		skipAnimation,
-	}: Props = $props();
+let {
+	title,
+	icon,
+	onClose,
+	children,
+	ghostTabCount,
+	onGhostTabPress,
+	skipAnimation,
+}: Props = $props();
 </script>
 
 <div class={["panelOverlay", { noAnimation: skipAnimation }]}>

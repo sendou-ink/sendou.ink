@@ -5,7 +5,10 @@ export interface TabsContext {
 	readonly orientation: "horizontal" | "vertical";
 	select: (key: string) => void;
 	registerTab: (key: string, element: HTMLElement) => () => void;
-	moveFocus: (fromKey: string, direction: "next" | "previous" | "first" | "last") => void;
+	moveFocus: (
+		fromKey: string,
+		direction: "next" | "previous" | "first" | "last",
+	) => void;
 }
 
 const KEY = Symbol("tabs");

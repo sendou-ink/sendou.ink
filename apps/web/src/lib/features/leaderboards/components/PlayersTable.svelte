@@ -1,23 +1,23 @@
 <script lang="ts">
-	import Avatar from "#lib/components/Avatar.svelte";
-	import TierImage from "#lib/components/TierImage.svelte";
-	import WeaponImage from "#lib/components/WeaponImage.svelte";
-	import { userSeasonsPage } from "#lib/utils/urls.ts";
-	import type { UserLeaderboardEntry } from "../leaderboards-types.ts";
+import Avatar from "#lib/components/Avatar.svelte";
+import TierImage from "#lib/components/TierImage.svelte";
+import WeaponImage from "#lib/components/WeaponImage.svelte";
+import { userSeasonsPage } from "#lib/utils/urls.ts";
+import type { UserLeaderboardEntry } from "../leaderboards-types.ts";
 
-	interface Props {
-		entries: UserLeaderboardEntry[];
-		season: number;
-		showTiers?: boolean;
-		showingTopTen?: boolean;
-	}
+interface Props {
+	entries: UserLeaderboardEntry[];
+	season: number;
+	showTiers?: boolean;
+	showingTopTen?: boolean;
+}
 
-	let { entries, season, showTiers, showingTopTen }: Props = $props();
+let { entries, season, showTiers, showingTopTen }: Props = $props();
 
-	const shownEntries = $derived(
-		// hide normal rows that are showed in "fancy" top 10 format
-		entries.filter((_, i) => !showingTopTen || i > 9),
-	);
+const shownEntries = $derived(
+	// hide normal rows that are showed in "fancy" top 10 format
+	entries.filter((_, i) => !showingTopTen || i > 9),
+);
 </script>
 
 <div class="table">

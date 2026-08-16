@@ -1,6 +1,11 @@
 import { assertUnreachable } from "@sendou/utils/types";
 import type { NotificationRow } from "#lib/components/layout/layout-types.ts";
-import { FRIENDS_PAGE, SENDOUQ_PAGE, sendouQMatchPage, userPage } from "#lib/utils/urls.ts";
+import {
+	FRIENDS_PAGE,
+	SENDOUQ_PAGE,
+	sendouQMatchPage,
+	userPage,
+} from "#lib/utils/urls.ts";
 import type { Notification } from "./notifications-types.ts";
 
 const NEW_TROPHY_PAGE = "/trophies/new";

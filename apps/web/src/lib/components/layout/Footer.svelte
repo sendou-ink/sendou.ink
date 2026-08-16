@@ -1,37 +1,37 @@
 <script lang="ts">
-	import Image from "#lib/components/Image.svelte";
-	import DiscordIcon from "#lib/components/icons/DiscordIcon.svelte";
-	import GitHubIcon from "#lib/components/icons/GitHubIcon.svelte";
-	import PatreonIcon from "#lib/components/icons/PatreonIcon.svelte";
-	import { m } from "#lib/paraglide/messages.js";
-	import {
-		API_PAGE,
-		CONTRIBUTIONS_PAGE,
-		FAQ_PAGE,
-		NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
-		SENDOU_INK_DISCORD_URL,
-		SENDOU_INK_GITHUB_URL,
-		SENDOU_LOVE_EMOJI_PATH,
-		SUPPORT_PAGE,
-		userPage,
-		WELCOME_PAGE,
-	} from "#lib/utils/urls.ts";
+import Image from "#lib/components/Image.svelte";
+import DiscordIcon from "#lib/components/icons/DiscordIcon.svelte";
+import GitHubIcon from "#lib/components/icons/GitHubIcon.svelte";
+import PatreonIcon from "#lib/components/icons/PatreonIcon.svelte";
+import { m } from "#lib/paraglide/messages.js";
+import {
+	API_PAGE,
+	CONTRIBUTIONS_PAGE,
+	FAQ_PAGE,
+	NINTENDO_COMMUNITY_TOURNAMENTS_GUIDELINES_URL,
+	SENDOU_INK_DISCORD_URL,
+	SENDOU_INK_GITHUB_URL,
+	SENDOU_LOVE_EMOJI_PATH,
+	SUPPORT_PAGE,
+	userPage,
+	WELCOME_PAGE,
+} from "#lib/utils/urls.ts";
 
-	interface Patron {
-		id: number;
-		username: string;
-		discordId: string;
-		customUrl?: string | null;
-	}
+interface Patron {
+	id: number;
+	username: string;
+	discordId: string;
+	customUrl?: string | null;
+}
 
-	interface Props {
-		patrons?: Patron[];
-		gitCommit?: string | null;
-	}
+interface Props {
+	patrons?: Patron[];
+	gitCommit?: string | null;
+}
 
-	let { patrons, gitCommit }: Props = $props();
+let { patrons, gitCommit }: Props = $props();
 
-	const currentYear = new Date().getFullYear();
+const currentYear = new Date().getFullYear();
 </script>
 
 <footer class="footer">

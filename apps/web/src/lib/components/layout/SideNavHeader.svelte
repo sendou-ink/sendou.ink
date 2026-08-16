@@ -1,13 +1,13 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		children: Snippet;
-		icon?: Snippet;
-		action?: Snippet;
-	}
+interface Props {
+	children: Snippet;
+	icon?: Snippet;
+	action?: Snippet;
+}
 
-	let { children, icon, action }: Props = $props();
+let { children, icon, action }: Props = $props();
 </script>
 
 <header data-testid="side-nav-header" class="sideNavHeader">

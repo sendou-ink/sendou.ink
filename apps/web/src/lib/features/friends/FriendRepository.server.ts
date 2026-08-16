@@ -1,6 +1,6 @@
 import { type SelectQueryBuilder, sql } from "kysely";
-import type { DB } from "#lib/server/db/tables.ts";
 import { db } from "#lib/server/db/sql.ts";
+import type { DB } from "#lib/server/db/tables.ts";
 import { commonUserSelect } from "#lib/server/kysely.ts";
 import { dateToDatabaseTimestamp } from "#lib/utils/dates.ts";
 

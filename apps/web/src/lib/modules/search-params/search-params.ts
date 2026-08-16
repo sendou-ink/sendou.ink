@@ -484,16 +484,13 @@ function deriveScalarBase(schema: AnyValiSchema): ScalarBase | null {
 	if (schema.type === "boolean") return "boolean";
 
 	if (schema.type === "picklist" || schema.type === "enum") {
-		return uniformTypeOf(
-			(schema as unknown as { options: unknown[] }).options,
-		);
+		return uniformTypeOf((schema as unknown as { options: unknown[] }).options);
 	}
 	if (schema.type === "literal") {
 		return uniformTypeOf([(schema as unknown as { literal: unknown }).literal]);
 	}
 	if (schema.type === "union") {
-		const options = (schema as unknown as { options: AnyValiSchema[] })
-			.options;
+		const options = (schema as unknown as { options: AnyValiSchema[] }).options;
 		const bases = options.map(deriveScalarBase);
 		if (bases[0] && bases.every((base) => base === bases[0])) {
 			return bases[0];

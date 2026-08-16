@@ -1,33 +1,33 @@
 <script lang="ts">
-	import { Heart, LogIn, MessageSquare, Search } from "@lucide/svelte";
-	import { Button } from "@sendou/components";
-	import { browser } from "$app/env";
-	import { m } from "#lib/paraglide/messages.js";
-	import { SUPPORT_PAGE } from "#lib/utils/urls.ts";
-	import AnythingAdder from "./AnythingAdder.svelte";
-	import LogInButtonContainer from "./LogInButtonContainer.svelte";
+import { Heart, LogIn, MessageSquare, Search } from "@lucide/svelte";
+import { Button } from "@sendou/components";
+import { m } from "#lib/paraglide/messages.js";
+import { SUPPORT_PAGE } from "#lib/utils/urls.ts";
+import { browser } from "$app/env";
+import AnythingAdder from "./AnythingAdder.svelte";
+import LogInButtonContainer from "./LogInButtonContainer.svelte";
 
-	interface Props {
-		showSupport: boolean;
-		showSearch: boolean;
-		isLoggedIn: boolean;
-		onChatToggle?: () => void;
-		onChatModalToggle?: () => void;
-		chatUnreadCount?: number;
-	}
+interface Props {
+	showSupport: boolean;
+	showSearch: boolean;
+	isLoggedIn: boolean;
+	onChatToggle?: () => void;
+	onChatModalToggle?: () => void;
+	chatUnreadCount?: number;
+}
 
-	let {
-		showSupport,
-		showSearch,
-		isLoggedIn,
-		onChatToggle,
-		onChatModalToggle,
-		chatUnreadCount,
-	}: Props = $props();
+let {
+	showSupport,
+	showSearch,
+	isLoggedIn,
+	onChatToggle,
+	onChatModalToggle,
+	chatUnreadCount,
+}: Props = $props();
 
-	const isMac = $derived(
-		browser && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent),
-	);
+const isMac = $derived(
+	browser && /Mac|iPhone|iPad|iPod/.test(navigator.userAgent),
+);
 </script>
 
 <div class="container">

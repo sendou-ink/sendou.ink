@@ -1,23 +1,23 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		children: Snippet;
-		class?: string;
-		footer?: Snippet;
-		top?: Snippet;
-		topCentered?: boolean;
-		collapsed?: boolean;
-	}
+interface Props {
+	children: Snippet;
+	class?: string;
+	footer?: Snippet;
+	top?: Snippet;
+	topCentered?: boolean;
+	collapsed?: boolean;
+}
 
-	let {
-		children,
-		class: className,
-		footer,
-		top,
-		topCentered,
-		collapsed,
-	}: Props = $props();
+let {
+	children,
+	class: className,
+	footer,
+	top,
+	topCentered,
+	collapsed,
+}: Props = $props();
 </script>
 
 <nav

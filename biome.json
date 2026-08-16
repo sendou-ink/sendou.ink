@@ -8,6 +8,8 @@
 			"!apps/web-react/app/db/seed/data/placements.json",
 			"!apps/web-react/app/features/scanner/tests/fixtures",
 			"!apps/web-react/public/scanner/**/*",
+			"!apps/web/**/*",
+			"!packages/components/**/*",
 			"!**/build/**/*",
 			"!**/test-results/**/*",
 			"!**/playwright-report/**/*",

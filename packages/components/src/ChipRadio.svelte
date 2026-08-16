@@ -1,17 +1,17 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		name: string;
-		value: string;
-		checked: boolean;
-		onChange: (value: string) => void;
-		children: Snippet;
-	}
+interface Props {
+	name: string;
+	value: string;
+	checked: boolean;
+	onChange: (value: string) => void;
+	children: Snippet;
+}
 
-	let { name, value, checked, onChange, children }: Props = $props();
+let { name, value, checked, onChange, children }: Props = $props();
 
-	const id = $derived(`chip-radio-${name}-${value}`);
+const id = $derived(`chip-radio-${name}-${value}`);
 </script>
 
 <input

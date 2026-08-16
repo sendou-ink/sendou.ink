@@ -1,20 +1,24 @@
 <script lang="ts">
-	import { Button, Menu, MenuItem } from "@sendou/components";
-	import { Ban, MoreHorizontal, RotateCcw } from "@lucide/svelte";
-	import { getLeaderboards, skipTeam, unskipTeam } from "../leaderboards.remote.ts";
-	import type { LeaderboardsQueryArgs } from "../leaderboards-schemas.ts";
-	import type { TeamLeaderboardEntry } from "../leaderboards-types.ts";
+import { Ban, MoreHorizontal, RotateCcw } from "@lucide/svelte";
+import { Button, Menu, MenuItem } from "@sendou/components";
+import {
+	getLeaderboards,
+	skipTeam,
+	unskipTeam,
+} from "../leaderboards.remote.ts";
+import type { LeaderboardsQueryArgs } from "../leaderboards-schemas.ts";
+import type { TeamLeaderboardEntry } from "../leaderboards-types.ts";
 
-	interface Props {
-		entry: Pick<TeamLeaderboardEntry, "identifier" | "isSkipped">;
-		season: number;
-		/** The query args of the leaderboard the client currently shows, so the mutation can update it single-flight. */
-		queryArgs: LeaderboardsQueryArgs;
-	}
+interface Props {
+	entry: Pick<TeamLeaderboardEntry, "identifier" | "isSkipped">;
+	season: number;
+	/** The query args of the leaderboard the client currently shows, so the mutation can update it single-flight. */
+	queryArgs: LeaderboardsQueryArgs;
+}
 
-	let { entry, season, queryArgs }: Props = $props();
+let { entry, season, queryArgs }: Props = $props();
 
-	const fields = $derived({ season, identifier: entry.identifier });
+const fields = $derived({ season, identifier: entry.identifier });
 </script>
 
 <Menu>

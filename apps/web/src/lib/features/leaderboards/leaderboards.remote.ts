@@ -4,11 +4,12 @@ import type {
 } from "@sendou/in-game-lists/types";
 import type { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import { logger } from "@sendou/utils/logger";
-import { command, query } from "$app/server";
 import { getUser, requireUser } from "#lib/features/auth/user.server.ts";
 import { requireRole } from "#lib/modules/permissions/guards.server.ts";
+import { command, query } from "$app/server";
 import * as Seasons from "../mmr/Seasons.ts";
 import * as LeaderboardRepository from "./LeaderboardRepository.server.ts";
+import { WEAPON_LEADERBOARD_MAX_SIZE } from "./leaderboards-constants.ts";
 import {
 	cachedFullUserLeaderboard,
 	cachedTeamLeaderboard,
@@ -17,7 +18,6 @@ import {
 	ownEntryPeek,
 	shownUserLeaderboard,
 } from "./leaderboards-core.server.ts";
-import { WEAPON_LEADERBOARD_MAX_SIZE } from "./leaderboards-constants.ts";
 import {
 	leaderboardsQuerySchema,
 	teamLeaderboardEntrySchema,
@@ -57,7 +57,8 @@ export const getLeaderboards = query(
 				).slice(0, WEAPON_LEADERBOARD_MAX_SIZE)
 			: userLeaderboard;
 
-		const showOwnEntryPeek = fullUserLeaderboard && !isWeaponLeaderboard && user;
+		const showOwnEntryPeek =
+			fullUserLeaderboard && !isWeaponLeaderboard && user;
 
 		const xpLeaderboard =
 			type === "XP-ALL"

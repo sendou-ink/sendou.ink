@@ -1,51 +1,51 @@
 <script lang="ts" module>
-	import { Config } from "#lib/config.ts";
+import { Config } from "#lib/config.ts";
 
-	const NAV_CATEGORIES = [
-		{
-			name: "play",
-			items: [
-				{ name: "sendouq", url: "q" },
-				{ name: "scrims", url: "scrims" },
-				{ name: "lfg", url: "lfg" },
-				{ name: "calendar", url: "calendar" },
-				{ name: "leaderboards", url: "leaderboards" },
-				...(Config.showLutiNavItem ? [{ name: "luti", url: "luti" }] : []),
-			],
-		},
-		{
-			name: "tools",
-			items: [
-				{ name: "analyzer", url: "analyzer" },
-				{ name: "comp-analyzer", url: "comp-analyzer" },
-				{ name: "object-damage-calculator", url: "object-damage-calculator" },
-				{ name: "plans", url: "plans" },
-				{ name: "maps", url: "maps" },
-				{ name: "tier-list-maker", url: "tier-list-maker" },
-				{ name: "xsearch", url: "xsearch" },
-				{ name: "admin", url: "admin", icon: "settings", staffOnly: true },
-			],
-		},
-		{
-			name: "community",
-			items: [
-				{ name: "builds", url: "builds" },
-				{ name: "art", url: "art" },
-				{ name: "articles", url: "a" },
-				{ name: "vods", url: "vods" },
-				{ name: "trophies", url: "trophies" },
-				{ name: "links", url: "links" },
-				{ name: "plus", url: "plus/suggestions" },
-			],
-		},
-	] as const;
+const NAV_CATEGORIES = [
+	{
+		name: "play",
+		items: [
+			{ name: "sendouq", url: "q" },
+			{ name: "scrims", url: "scrims" },
+			{ name: "lfg", url: "lfg" },
+			{ name: "calendar", url: "calendar" },
+			{ name: "leaderboards", url: "leaderboards" },
+			...(Config.showLutiNavItem ? [{ name: "luti", url: "luti" }] : []),
+		],
+	},
+	{
+		name: "tools",
+		items: [
+			{ name: "analyzer", url: "analyzer" },
+			{ name: "comp-analyzer", url: "comp-analyzer" },
+			{ name: "object-damage-calculator", url: "object-damage-calculator" },
+			{ name: "plans", url: "plans" },
+			{ name: "maps", url: "maps" },
+			{ name: "tier-list-maker", url: "tier-list-maker" },
+			{ name: "xsearch", url: "xsearch" },
+			{ name: "admin", url: "admin", icon: "settings", staffOnly: true },
+		],
+	},
+	{
+		name: "community",
+		items: [
+			{ name: "builds", url: "builds" },
+			{ name: "art", url: "art" },
+			{ name: "articles", url: "a" },
+			{ name: "vods", url: "vods" },
+			{ name: "trophies", url: "trophies" },
+			{ name: "links", url: "links" },
+			{ name: "plus", url: "plus/suggestions" },
+		],
+	},
+] as const;
 
-	interface NavCategoryItem {
-		name: string;
-		url: string;
-		icon?: string;
-		staffOnly?: boolean;
-	}
+interface NavCategoryItem {
+	name: string;
+	url: string;
+	icon?: string;
+	staffOnly?: boolean;
+}
 </script>
 
 <script lang="ts">

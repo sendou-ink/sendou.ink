@@ -1,65 +1,65 @@
 <script lang="ts">
-	import { isToday, isTomorrow } from "date-fns";
-	import { getLocale } from "#lib/paraglide/runtime.js";
-	import { m } from "#lib/paraglide/messages.js";
-	import type { SidebarEvent } from "./layout-types.ts";
-	import ListLink from "./ListLink.svelte";
+import { isToday, isTomorrow } from "date-fns";
+import { m } from "#lib/paraglide/messages.js";
+import { getLocale } from "#lib/paraglide/runtime.js";
+import ListLink from "./ListLink.svelte";
+import type { SidebarEvent } from "./layout-types.ts";
 
-	interface Props {
-		events: SidebarEvent[];
-		onclick?: () => void;
+interface Props {
+	events: SidebarEvent[];
+	onclick?: () => void;
+}
+
+let { events, onclick }: Props = $props();
+
+const dateFormatter = $derived(
+	new Intl.DateTimeFormat(getLocale(), {
+		weekday: "long",
+		month: "numeric",
+		day: "numeric",
+	}),
+);
+const timeFormatter = $derived(
+	new Intl.DateTimeFormat(getLocale(), {
+		hour: "numeric",
+		minute: "2-digit",
+	}),
+);
+
+function formatDayHeader(date: Date) {
+	if (isToday(date) || isTomorrow(date)) {
+		const rtf = new Intl.RelativeTimeFormat(getLocale(), {
+			numeric: "auto",
+		});
+		const str = rtf.format(isToday(date) ? 0 : 1, "day");
+		return str.charAt(0).toUpperCase() + str.slice(1);
 	}
+	return dateFormatter.format(date);
+}
 
-	let { events, onclick }: Props = $props();
-
-	const dateFormatter = $derived(
-		new Intl.DateTimeFormat(getLocale(), {
-			weekday: "long",
-			month: "numeric",
-			day: "numeric",
-		}),
-	);
-	const timeFormatter = $derived(
-		new Intl.DateTimeFormat(getLocale(), {
-			hour: "numeric",
-			minute: "2-digit",
-		}),
-	);
-
-	function formatDayHeader(date: Date) {
-		if (isToday(date) || isTomorrow(date)) {
-			const rtf = new Intl.RelativeTimeFormat(getLocale(), {
-				numeric: "auto",
-			});
-			const str = rtf.format(isToday(date) ? 0 : 1, "day");
-			return str.charAt(0).toUpperCase() + str.slice(1);
-		}
-		return dateFormatter.format(date);
+function eventTitle(event: SidebarEvent) {
+	if (event.scrimStatus === "booked") {
+		return m.front_sideNav_scrimVs({ opponent: event.name });
 	}
-
-	function eventTitle(event: SidebarEvent) {
-		if (event.scrimStatus === "booked") {
-			return m.front_sideNav_scrimVs({ opponent: event.name });
-		}
-		if (event.scrimStatus === "looking") {
-			return m.front_sideNav_lookingForScrim();
-		}
-		if (event.scrimStatus === "requestPending") {
-			return m.front_sideNav_scrimRequestPending();
-		}
-		return event.name;
+	if (event.scrimStatus === "looking") {
+		return m.front_sideNav_lookingForScrim();
 	}
+	if (event.scrimStatus === "requestPending") {
+		return m.front_sideNav_scrimRequestPending();
+	}
+	return event.name;
+}
 
-	const groupedEvents = $derived.by(() => {
-		const groups = new Map<string, SidebarEvent[]>();
-		for (const event of events) {
-			const key = new Date(event.startsAt * 1000).toDateString();
-			const group = groups.get(key) ?? [];
-			group.push(event);
-			groups.set(key, group);
-		}
-		return [...groups.entries()];
-	});
+const groupedEvents = $derived.by(() => {
+	const groups = new Map<string, SidebarEvent[]>();
+	for (const event of events) {
+		const key = new Date(event.startsAt * 1000).toDateString();
+		const group = groups.get(key) ?? [];
+		group.push(event);
+		groups.set(key, group);
+	}
+	return [...groups.entries()];
+});
 </script>
 
 {#if events.length === 0}

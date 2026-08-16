@@ -1,14 +1,14 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		heading: string;
-		headingImg?: Snippet;
-		class?: string;
-		children: Snippet;
-	}
+interface Props {
+	heading: string;
+	headingImg?: Snippet;
+	class?: string;
+	children: Snippet;
+}
 
-	let { heading, headingImg, class: className, children }: Props = $props();
+let { heading, headingImg, class: className, children }: Props = $props();
 </script>
 
 <div role="group" aria-label={heading}>

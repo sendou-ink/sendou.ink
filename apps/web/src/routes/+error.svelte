@@ -1,5 +1,5 @@
 <script lang="ts">
-	import { page } from "$app/state";
+import { page } from "$app/state";
 </script>
 
 <main data-testid="error-page">

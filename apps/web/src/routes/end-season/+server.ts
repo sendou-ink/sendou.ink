@@ -1,7 +1,7 @@
 import { error, json } from "@sveltejs/kit";
-import type { RequestHandler } from "./$types";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "#lib/features/admin/dev-controls.server.ts";
 import * as Seasons from "#lib/features/mmr/Seasons.ts";
+import type { RequestHandler } from "./$types";
 
 export const POST: RequestHandler = () => {
 	if (!DANGEROUS_CAN_ACCESS_DEV_CONTROLS) {

@@ -1,10 +1,10 @@
 import type { Handle } from "@sveltejs/kit/hooks";
-import { userIsBanned } from "#lib/features/ban/banned.server.ts";
 import {
 	AUTH_COOKIE_NAME,
 	readSessionCookie,
 	sessionUserId,
 } from "#lib/features/auth/session.server.ts";
+import { userIsBanned } from "#lib/features/ban/banned.server.ts";
 import { getTheme } from "#lib/features/theme/theme.server.ts";
 import * as UserRepository from "#lib/features/user-page/UserRepository.server.ts";
 import { paraglideMiddleware } from "#lib/paraglide/server.js";

@@ -1,38 +1,38 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import type { HTMLButtonAttributes } from "svelte/elements";
+import type { Snippet } from "svelte";
+import type { HTMLButtonAttributes } from "svelte/elements";
 
-	type ButtonVariant =
-		| "primary"
-		| "success"
-		| "destructive"
-		| "outlined"
-		| "outlined-success"
-		| "outlined-destructive"
-		| "minimal"
-		| "minimal-success"
-		| "minimal-destructive";
+type ButtonVariant =
+	| "primary"
+	| "success"
+	| "destructive"
+	| "outlined"
+	| "outlined-success"
+	| "outlined-destructive"
+	| "minimal"
+	| "minimal-success"
+	| "minimal-destructive";
 
-	interface Props extends HTMLButtonAttributes {
-		variant?: ButtonVariant;
-		size?: "miniscule" | "small" | "medium" | "big";
-		shape?: "circle" | "square";
-		icon?: Snippet;
-		children?: Snippet;
-		testId?: string;
-	}
+interface Props extends HTMLButtonAttributes {
+	variant?: ButtonVariant;
+	size?: "miniscule" | "small" | "medium" | "big";
+	shape?: "circle" | "square";
+	icon?: Snippet;
+	children?: Snippet;
+	testId?: string;
+}
 
-	let {
-		variant,
-		size,
-		shape,
-		icon,
-		children,
-		testId,
-		class: className,
-		type = "button",
-		...rest
-	}: Props = $props();
+let {
+	variant,
+	size,
+	shape,
+	icon,
+	children,
+	testId,
+	class: className,
+	type = "button",
+	...rest
+}: Props = $props();
 </script>
 
 <button

@@ -1,27 +1,27 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import { getSelectContext } from "./select-context.ts";
+import type { Snippet } from "svelte";
+import { getSelectContext } from "./select-context.ts";
 
-	interface Props {
-		id: string | number;
-		textValue: string;
-		isDisabled?: boolean;
-		children: Snippet;
-	}
+interface Props {
+	id: string | number;
+	textValue: string;
+	isDisabled?: boolean;
+	children: Snippet;
+}
 
-	let { id, textValue, isDisabled = false, children }: Props = $props();
+let { id, textValue, isDisabled = false, children }: Props = $props();
 
-	const select = getSelectContext();
+const select = getSelectContext();
 
-	const isSelected = $derived(select.selectedKey === id);
-	const isFocused = $derived(select.focusedKey === id);
+const isSelected = $derived(select.selectedKey === id);
+const isFocused = $derived(select.focusedKey === id);
 
-	function register(element: HTMLElement) {
-		return select.registerItem(id, element, {
-			textValue,
-			disabled: isDisabled,
-		});
-	}
+function register(element: HTMLElement) {
+	return select.registerItem(id, element, {
+		textValue,
+		disabled: isDisabled,
+	});
+}
 </script>
 
 <!-- svelte-ignore a11y_click_events_have_key_events -- keyboard handled by the listbox popover -->

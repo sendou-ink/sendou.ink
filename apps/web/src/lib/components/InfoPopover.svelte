@@ -1,14 +1,14 @@
 <script lang="ts">
-	import { Popover } from "@sendou/components";
-	import type { Snippet } from "svelte";
+import { Popover } from "@sendou/components";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		children: Snippet;
-		tiny?: boolean;
-		class?: string;
-	}
+interface Props {
+	children: Snippet;
+	tiny?: boolean;
+	class?: string;
+}
 
-	let { children, tiny = false, class: className }: Props = $props();
+let { children, tiny = false, class: className }: Props = $props();
 </script>
 
 <Popover>

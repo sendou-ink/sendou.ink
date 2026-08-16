@@ -1,32 +1,32 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import Avatar from "#lib/components/Avatar.svelte";
+import type { Snippet } from "svelte";
+import Avatar from "#lib/components/Avatar.svelte";
 
-	interface Props {
-		children: Snippet;
-		user?: {
-			discordId: string;
-			discordAvatar: string | null;
-			customAvatarUrl?: string | null;
-		};
-		subtitle?: string | null;
-		badge?: string | null;
-		badgeVariant?: "default" | "warning";
-		onclick?: () => void;
-		"aria-expanded"?: boolean;
-		"aria-haspopup"?: "menu" | "dialog";
-	}
+interface Props {
+	children: Snippet;
+	user?: {
+		discordId: string;
+		discordAvatar: string | null;
+		customAvatarUrl?: string | null;
+	};
+	subtitle?: string | null;
+	badge?: string | null;
+	badgeVariant?: "default" | "warning";
+	onclick?: () => void;
+	"aria-expanded"?: boolean;
+	"aria-haspopup"?: "menu" | "dialog";
+}
 
-	let {
-		children,
-		user,
-		subtitle,
-		badge,
-		badgeVariant,
-		onclick,
-		"aria-expanded": ariaExpanded,
-		"aria-haspopup": ariaHaspopup,
-	}: Props = $props();
+let {
+	children,
+	user,
+	subtitle,
+	badge,
+	badgeVariant,
+	onclick,
+	"aria-expanded": ariaExpanded,
+	"aria-haspopup": ariaHaspopup,
+}: Props = $props();
 </script>
 
 <button

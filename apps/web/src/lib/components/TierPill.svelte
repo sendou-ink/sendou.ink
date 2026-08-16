@@ -1,29 +1,29 @@
 <script lang="ts" module>
-	const NUMBER_TO_TIER: Record<number, string> = {
-		1: "X",
-		2: "S+",
-		3: "S",
-		4: "A+",
-		5: "A",
-		6: "B+",
-		7: "B",
-		8: "C+",
-		9: "C",
-	};
+const NUMBER_TO_TIER: Record<number, string> = {
+	1: "X",
+	2: "S+",
+	3: "S",
+	4: "A+",
+	5: "A",
+	6: "B+",
+	7: "B",
+	8: "C+",
+	9: "C",
+};
 
-	const TIER_STYLE_CLASS: Record<number, string> = {
-		1: "tierX",
-		2: "tierSPlus",
-		3: "tierS",
-		4: "tierAPlus",
-		5: "tierA",
-		6: "tierBPlus",
-		7: "tierB",
-		8: "tierCPlus",
-		9: "tierC",
-	};
+const TIER_STYLE_CLASS: Record<number, string> = {
+	1: "tierX",
+	2: "tierSPlus",
+	3: "tierS",
+	4: "tierAPlus",
+	5: "tierA",
+	6: "tierBPlus",
+	7: "tierB",
+	8: "tierCPlus",
+	9: "tierC",
+};
 
-	const POLISHED_TIERS = [1, 2, 3];
+const POLISHED_TIERS = [1, 2, 3];
 </script>
 
 <script lang="ts">

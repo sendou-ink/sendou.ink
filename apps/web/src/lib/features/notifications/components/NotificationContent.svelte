@@ -1,24 +1,24 @@
 <script lang="ts">
-	import { Bell, ChevronRight } from "@lucide/svelte";
-	import type { NotificationRow } from "#lib/components/layout/layout-types.ts";
-	import { m } from "#lib/paraglide/messages.js";
-	import { NOTIFICATIONS_URL } from "#lib/utils/urls.ts";
-	import NotificationItem from "./NotificationItem.svelte";
+import { Bell, ChevronRight } from "@lucide/svelte";
+import type { NotificationRow } from "#lib/components/layout/layout-types.ts";
+import { m } from "#lib/paraglide/messages.js";
+import { NOTIFICATIONS_URL } from "#lib/utils/urls.ts";
+import NotificationItem from "./NotificationItem.svelte";
 
-	const PEEK_COUNT = 6;
+const PEEK_COUNT = 6;
 
-	interface Props {
-		notifications: NotificationRow[];
-		unseenIds: number[];
-		onClose?: () => void;
-	}
+interface Props {
+	notifications: NotificationRow[];
+	unseenIds: number[];
+	onClose?: () => void;
+}
 
-	let { notifications, unseenIds, onClose }: Props = $props();
+let { notifications, unseenIds, onClose }: Props = $props();
 
-	// unseen highlights stay visible while the popover is open even though the
-	// rows get marked seen server-side the moment it opens
-	// svelte-ignore state_referenced_locally -- capturing the initial value is the point
-	const stickyUnseenIds = new Set(unseenIds);
+// unseen highlights stay visible while the popover is open even though the
+// rows get marked seen server-side the moment it opens
+// svelte-ignore state_referenced_locally -- capturing the initial value is the point
+const stickyUnseenIds = new Set(unseenIds);
 </script>
 
 <h2 class="header">

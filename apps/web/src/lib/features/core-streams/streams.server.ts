@@ -1,5 +1,5 @@
-import { cache } from "#lib/server/cache.ts";
 import type { TournamentTierNumber } from "#lib/features/tournament/tournament-types.ts";
+import { cache } from "#lib/server/cache.ts";
 
 export const COMBINED_STREAMS_KEY = "combined-streams";
 

@@ -1,30 +1,30 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import NotificationDot from "#lib/components/NotificationDot.svelte";
+import type { Snippet } from "svelte";
+import NotificationDot from "#lib/components/NotificationDot.svelte";
 
-	interface Props {
-		icon: Snippet;
-		label: string;
-		isActive: boolean;
-		onPress: () => void;
-		showNotificationDot?: boolean;
-		unreadCount?: number;
-		badgeCount?: number;
-		badgeLeft?: boolean;
-	}
+interface Props {
+	icon: Snippet;
+	label: string;
+	isActive: boolean;
+	onPress: () => void;
+	showNotificationDot?: boolean;
+	unreadCount?: number;
+	badgeCount?: number;
+	badgeLeft?: boolean;
+}
 
-	let {
-		icon,
-		label,
-		isActive,
-		onPress,
-		showNotificationDot,
-		unreadCount,
-		badgeCount,
-		badgeLeft,
-	}: Props = $props();
+let {
+	icon,
+	label,
+	isActive,
+	onPress,
+	showNotificationDot,
+	unreadCount,
+	badgeCount,
+	badgeLeft,
+}: Props = $props();
 
-	const count = $derived(unreadCount ?? badgeCount);
+const count = $derived(unreadCount ?? badgeCount);
 </script>
 
 <button type="button" class="tab" data-active={isActive} onclick={onPress}>

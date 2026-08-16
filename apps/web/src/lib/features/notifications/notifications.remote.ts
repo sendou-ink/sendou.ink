@@ -1,5 +1,5 @@
-import { query } from "$app/server";
 import { getUser } from "#lib/features/auth/user.server.ts";
+import { query } from "$app/server";
 import * as NotificationRepository from "./NotificationRepository.server.ts";
 import { NOTIFICATIONS } from "./notifications-constants.ts";
 

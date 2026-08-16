@@ -1,28 +1,28 @@
 <script lang="ts">
-	import type { NotificationRow } from "#lib/components/layout/layout-types.ts";
-	import Image from "#lib/components/Image.svelte";
-	import { dynamicMessage } from "#lib/modules/i18n/messages.ts";
-	import { databaseTimestampToDate } from "#lib/utils/dates.ts";
-	import { formatDistanceToNowLocalized } from "#lib/utils/format-distance.ts";
-	import { navIconUrl } from "#lib/utils/urls.ts";
+import Image from "#lib/components/Image.svelte";
+import type { NotificationRow } from "#lib/components/layout/layout-types.ts";
+import { dynamicMessage } from "#lib/modules/i18n/messages.ts";
+import { databaseTimestampToDate } from "#lib/utils/dates.ts";
+import { formatDistanceToNowLocalized } from "#lib/utils/format-distance.ts";
+import { navIconUrl } from "#lib/utils/urls.ts";
 
-	interface Props {
-		notification: NotificationRow;
-		unseen: boolean;
-		onClose?: () => void;
+interface Props {
+	notification: NotificationRow;
+	unseen: boolean;
+	onClose?: () => void;
+}
+
+let { notification, unseen, onClose }: Props = $props();
+
+const text = $derived.by(() => {
+	let message = dynamicMessage(
+		`common_notifications_text_${notification.type}`,
+	);
+	for (const [key, value] of Object.entries(notification.meta ?? {})) {
+		message = message.replaceAll(`{${key}}`, String(value));
 	}
-
-	let { notification, unseen, onClose }: Props = $props();
-
-	const text = $derived.by(() => {
-		let message = dynamicMessage(
-			`common_notifications_text_${notification.type}`,
-		);
-		for (const [key, value] of Object.entries(notification.meta ?? {})) {
-			message = message.replaceAll(`{${key}}`, String(value));
-		}
-		return message;
-	});
+	return message;
+});
 </script>
 
 <a

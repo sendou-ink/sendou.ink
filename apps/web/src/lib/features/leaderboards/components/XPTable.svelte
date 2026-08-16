@@ -1,14 +1,14 @@
 <script lang="ts">
-	import Avatar from "#lib/components/Avatar.svelte";
-	import WeaponImage from "#lib/components/WeaponImage.svelte";
-	import { topSearchPlayerPage } from "#lib/utils/urls.ts";
-	import type { XPLeaderboardEntry } from "../leaderboards-types.ts";
+import Avatar from "#lib/components/Avatar.svelte";
+import WeaponImage from "#lib/components/WeaponImage.svelte";
+import { topSearchPlayerPage } from "#lib/utils/urls.ts";
+import type { XPLeaderboardEntry } from "../leaderboards-types.ts";
 
-	interface Props {
-		entries: XPLeaderboardEntry[];
-	}
+interface Props {
+	entries: XPLeaderboardEntry[];
+}
 
-	let { entries }: Props = $props();
+let { entries }: Props = $props();
 </script>
 
 <div class="table">

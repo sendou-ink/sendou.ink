@@ -1,5 +1,5 @@
-import type { NotNull } from "kysely";
 import type { Unwrapped } from "@sendou/utils/types";
+import type { NotNull } from "kysely";
 import { db } from "#lib/server/db/sql.ts";
 import {
 	commonUserSelect,

@@ -1,36 +1,36 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import Avatar from "#lib/components/Avatar.svelte";
+import type { Snippet } from "svelte";
+import Avatar from "#lib/components/Avatar.svelte";
 
-	interface Props {
-		children: Snippet;
-		to: string;
-		onclick?: () => void;
-		isActive?: boolean;
-		imageUrl?: string;
-		overlayIconUrl?: string;
-		user?: {
-			discordId: string;
-			discordAvatar: string | null;
-			customAvatarUrl?: string | null;
-		};
-		subtitle?: string | Snippet;
-		badge?: string | Snippet;
-		badgeVariant?: "default" | "warning";
-	}
+interface Props {
+	children: Snippet;
+	to: string;
+	onclick?: () => void;
+	isActive?: boolean;
+	imageUrl?: string;
+	overlayIconUrl?: string;
+	user?: {
+		discordId: string;
+		discordAvatar: string | null;
+		customAvatarUrl?: string | null;
+	};
+	subtitle?: string | Snippet;
+	badge?: string | Snippet;
+	badgeVariant?: "default" | "warning";
+}
 
-	let {
-		children,
-		to,
-		onclick,
-		isActive,
-		imageUrl,
-		overlayIconUrl,
-		user,
-		subtitle,
-		badge,
-		badgeVariant,
-	}: Props = $props();
+let {
+	children,
+	to,
+	onclick,
+	isActive,
+	imageUrl,
+	overlayIconUrl,
+	user,
+	subtitle,
+	badge,
+	badgeVariant,
+}: Props = $props();
 </script>
 
 <a

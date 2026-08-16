@@ -1,24 +1,24 @@
 <script lang="ts">
-	import { Bell, LogIn, Settings } from "@lucide/svelte";
-	import { Popover } from "@sendou/components";
-	import { page } from "$app/state";
-	import Avatar from "#lib/components/Avatar.svelte";
-	import NotificationDot from "#lib/components/NotificationDot.svelte";
-	import { loggedInUser } from "#lib/features/auth/user-state.ts";
-	import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
-	import { m } from "#lib/paraglide/messages.js";
-	import { SETTINGS_PAGE, userPage } from "#lib/utils/urls.ts";
-	import type { NotificationRow } from "./layout-types.ts";
+import { Bell, LogIn, Settings } from "@lucide/svelte";
+import { Popover } from "@sendou/components";
+import Avatar from "#lib/components/Avatar.svelte";
+import NotificationDot from "#lib/components/NotificationDot.svelte";
+import { loggedInUser } from "#lib/features/auth/user-state.ts";
+import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
+import { m } from "#lib/paraglide/messages.js";
+import { SETTINGS_PAGE, userPage } from "#lib/utils/urls.ts";
+import { page } from "$app/state";
+import type { NotificationRow } from "./layout-types.ts";
 
-	interface Props {
-		notifications: NotificationRow[] | null;
-		unseenIds: number[];
-		showUnseenDot: boolean;
-	}
+interface Props {
+	notifications: NotificationRow[] | null;
+	unseenIds: number[];
+	showUnseenDot: boolean;
+}
 
-	let { notifications, unseenIds, showUnseenDot }: Props = $props();
+let { notifications, unseenIds, showUnseenDot }: Props = $props();
 
-	const user = $derived(loggedInUser());
+const user = $derived(loggedInUser());
 </script>
 
 {#if user}

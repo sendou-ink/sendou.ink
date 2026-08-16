@@ -1,10 +1,10 @@
 <script lang="ts">
-	interface Props {
-		tabCount: number;
-		onTabPress: (index: number) => void;
-	}
+interface Props {
+	tabCount: number;
+	onTabPress: (index: number) => void;
+}
 
-	let { tabCount, onTabPress }: Props = $props();
+let { tabCount, onTabPress }: Props = $props();
 </script>
 
 <div class="ghostTabBar" aria-hidden="true">

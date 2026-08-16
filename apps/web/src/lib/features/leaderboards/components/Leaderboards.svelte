@@ -1,76 +1,80 @@
 <script lang="ts">
-	import { rankedModesShort } from "@sendou/in-game-lists/modes";
-	import type { MainWeaponId } from "@sendou/in-game-lists/types";
-	import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
-	import {
-		ChipRadio,
-		ChipRadioGroup,
-		Tab,
-		TabList,
-		TabPanel,
-		Tabs,
-	} from "@sendou/components";
-	import Image from "#lib/components/Image.svelte";
-	import Main from "#lib/components/Main.svelte";
-	import ModeImage from "#lib/components/ModeImage.svelte";
-	import WeaponSelect from "#lib/components/WeaponSelect.svelte";
-	import SeasonSelect from "#lib/features/mmr/SeasonSelect.svelte";
-	import * as Seasons from "#lib/features/mmr/Seasons.ts";
-	import { searchParamsState } from "#lib/modules/search-params/search-params-state.svelte.ts";
-	import { m } from "#lib/paraglide/messages.js";
-	import {
-		modeLongName,
-		weaponCategoryName,
-	} from "#lib/modules/i18n/messages.ts";
-	import { navIconUrl, userSeasonsPage, weaponCategoryUrl } from "#lib/utils/urls.ts";
-	import { leaderboardsSearchParams } from "../leaderboards-search-params.ts";
-	import { seasonHasTopTen } from "../leaderboards-utils.ts";
-	import { getLeaderboards } from "../leaderboards.remote.ts";
-	import OwnEntryPeek from "./OwnEntryPeek.svelte";
-	import PlayersTable from "./PlayersTable.svelte";
-	import TeamTable from "./TeamTable.svelte";
-	import TopTenPlayer from "../TopTenPlayer.svelte";
-	import XPTable from "./XPTable.svelte";
+import {
+	ChipRadio,
+	ChipRadioGroup,
+	Tab,
+	TabList,
+	TabPanel,
+	Tabs,
+} from "@sendou/components";
+import { rankedModesShort } from "@sendou/in-game-lists/modes";
+import type { MainWeaponId } from "@sendou/in-game-lists/types";
+import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
+import Image from "#lib/components/Image.svelte";
+import Main from "#lib/components/Main.svelte";
+import ModeImage from "#lib/components/ModeImage.svelte";
+import WeaponSelect from "#lib/components/WeaponSelect.svelte";
+import SeasonSelect from "#lib/features/mmr/SeasonSelect.svelte";
+import * as Seasons from "#lib/features/mmr/Seasons.ts";
+import {
+	modeLongName,
+	weaponCategoryName,
+} from "#lib/modules/i18n/messages.ts";
+import { searchParamsState } from "#lib/modules/search-params/search-params-state.svelte.ts";
+import { m } from "#lib/paraglide/messages.js";
+import {
+	navIconUrl,
+	userSeasonsPage,
+	weaponCategoryUrl,
+} from "#lib/utils/urls.ts";
+import { getLeaderboards } from "../leaderboards.remote.ts";
+import { leaderboardsSearchParams } from "../leaderboards-search-params.ts";
+import { seasonHasTopTen } from "../leaderboards-utils.ts";
+import TopTenPlayer from "../TopTenPlayer.svelte";
+import OwnEntryPeek from "./OwnEntryPeek.svelte";
+import PlayersTable from "./PlayersTable.svelte";
+import TeamTable from "./TeamTable.svelte";
+import XPTable from "./XPTable.svelte";
 
-	const params = searchParamsState(leaderboardsSearchParams);
+const params = searchParamsState(leaderboardsSearchParams);
 
-	const data = $derived(await getLeaderboards(params.current));
+const data = $derived(await getLeaderboards(params.current));
 
-	const isAllUserLeaderboard = $derived(params.current.type === "USER");
+const isAllUserLeaderboard = $derived(params.current.type === "USER");
 
-	const selectedTab = $derived(
-		params.current.type.startsWith("XP")
-			? "XP"
-			: params.current.type.startsWith("TEAM")
-				? "TEAMS"
-				: "PLAYERS",
-	);
+const selectedTab = $derived(
+	params.current.type.startsWith("XP")
+		? "XP"
+		: params.current.type.startsWith("TEAM")
+			? "TEAMS"
+			: "PLAYERS",
+);
 
-	const showTopTen = $derived(
-		Boolean(
-			seasonHasTopTen(data.season) &&
-				isAllUserLeaderboard &&
-				data.userLeaderboard,
-		),
-	);
+const showTopTen = $derived(
+	Boolean(
+		seasonHasTopTen(data.season) &&
+			isAllUserLeaderboard &&
+			data.userLeaderboard,
+	),
+);
 
-	const renderNoEntries = $derived(
-		(data.userLeaderboard && data.userLeaderboard.length === 0) ||
-			(data.teamLeaderboard && data.teamLeaderboard.length === 0),
-	);
+const renderNoEntries = $derived(
+	(data.userLeaderboard && data.userLeaderboard.length === 0) ||
+		(data.teamLeaderboard && data.teamLeaderboard.length === 0),
+);
 
-	const selectedWeaponId = $derived(
-		params.current.type.startsWith("XP-WEAPON")
-			? (Number(params.current.type.split("-")[2]) as MainWeaponId)
-			: null,
-	);
+const selectedWeaponId = $derived(
+	params.current.type.startsWith("XP-WEAPON")
+		? (Number(params.current.type.split("-")[2]) as MainWeaponId)
+		: null,
+);
 
-	function onTabChange(key: string) {
-		if (key === selectedTab) return;
-		if (key === "PLAYERS") return params.set({ type: "USER" });
-		if (key === "TEAMS") return params.set({ type: "TEAM" });
-		params.set({ type: "XP-ALL", season: null });
-	}
+function onTabChange(key: string) {
+	if (key === selectedTab) return;
+	if (key === "PLAYERS") return params.set({ type: "USER" });
+	if (key === "TEAMS") return params.set({ type: "TEAM" });
+	params.set({ type: "XP-ALL", season: null });
+}
 </script>
 
 <Main halfWidth>

@@ -16,8 +16,8 @@ import {
 	skillCountsAsSeasonSet,
 } from "#lib/server/kysely.ts";
 import { dateToDatabaseTimestamp } from "#lib/utils/dates.ts";
-import * as Seasons from "../mmr/Seasons.ts";
 import { ordinalToSp, type SkillTeamIdentifier } from "../mmr/mmr-utils.ts";
+import * as Seasons from "../mmr/Seasons.ts";
 import {
 	DEFAULT_LEADERBOARD_MAX_SIZE,
 	MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,

@@ -270,7 +270,9 @@ function resolveFirstPlacers(
 	}
 
 	if (tournament.firstPlacers.every((p) => p.div === null)) {
-		return [buildFirstPlacerEntry(tournament.firstPlacers, { withMembers: true })];
+		return [
+			buildFirstPlacerEntry(tournament.firstPlacers, { withMembers: true }),
+		];
 	}
 
 	const byDiv = R.groupBy(tournament.firstPlacers, (p) => p.div ?? "");

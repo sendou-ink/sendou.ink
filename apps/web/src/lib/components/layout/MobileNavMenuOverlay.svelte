@@ -1,59 +1,59 @@
 <script lang="ts">
-	import { Heart, Menu, Share2, Tv, X } from "@lucide/svelte";
-	import { page } from "$app/state";
-	import { browser } from "$app/env";
-	import Image from "#lib/components/Image.svelte";
-	import { loggedInUser } from "#lib/features/auth/user-state.ts";
-	import { canAccessTrophies } from "#lib/features/trophies/trophies-utils.ts";
-	import { dynamicMessage } from "#lib/modules/i18n/messages.ts";
-	import { m } from "#lib/paraglide/messages.js";
-	import {
-		navIconUrl,
-		SENDOU_INK_BASE_URL,
-		SUPPORT_PAGE,
-	} from "#lib/utils/urls.ts";
-	import GhostTabBar from "./GhostTabBar.svelte";
-	import { navItems } from "./nav-items.ts";
-	import type { SidebarStream } from "./layout-types.ts";
-	import StreamListItems from "./StreamListItems.svelte";
+import { Heart, Menu, Share2, Tv, X } from "@lucide/svelte";
+import Image from "#lib/components/Image.svelte";
+import { loggedInUser } from "#lib/features/auth/user-state.ts";
+import { canAccessTrophies } from "#lib/features/trophies/trophies-utils.ts";
+import { dynamicMessage } from "#lib/modules/i18n/messages.ts";
+import { m } from "#lib/paraglide/messages.js";
+import {
+	navIconUrl,
+	SENDOU_INK_BASE_URL,
+	SUPPORT_PAGE,
+} from "#lib/utils/urls.ts";
+import { browser } from "$app/env";
+import { page } from "$app/state";
+import GhostTabBar from "./GhostTabBar.svelte";
+import type { SidebarStream } from "./layout-types.ts";
+import { navItems } from "./nav-items.ts";
+import StreamListItems from "./StreamListItems.svelte";
 
-	interface Props {
-		streams: SidebarStream[];
-		savedTournamentIds?: number[];
-		onClose: () => void;
-		ghostTabCount: number;
-		onGhostTabPress: (index: number) => void;
-		skipAnimation: boolean;
+interface Props {
+	streams: SidebarStream[];
+	savedTournamentIds?: number[];
+	onClose: () => void;
+	ghostTabCount: number;
+	onGhostTabPress: (index: number) => void;
+	skipAnimation: boolean;
+}
+
+let {
+	streams,
+	savedTournamentIds,
+	onClose,
+	ghostTabCount,
+	onGhostTabPress,
+	skipAnimation,
+}: Props = $props();
+
+const user = $derived(loggedInUser());
+
+const visibleNavItems = $derived(
+	navItems.filter(
+		(item) => item.name !== "trophies" || canAccessTrophies(user),
+	),
+);
+
+function pageLabel(name: string) {
+	return dynamicMessage(`common_pages_${name.replaceAll("-", "_")}`);
+}
+
+function share() {
+	if (browser && typeof navigator.share === "function") {
+		void navigator.share({
+			url: `${SENDOU_INK_BASE_URL}${page.url.pathname}${page.url.search}`,
+		});
 	}
-
-	let {
-		streams,
-		savedTournamentIds,
-		onClose,
-		ghostTabCount,
-		onGhostTabPress,
-		skipAnimation,
-	}: Props = $props();
-
-	const user = $derived(loggedInUser());
-
-	const visibleNavItems = $derived(
-		navItems.filter(
-			(item) => item.name !== "trophies" || canAccessTrophies(user),
-		),
-	);
-
-	function pageLabel(name: string) {
-		return dynamicMessage(`common_pages_${name.replaceAll("-", "_")}`);
-	}
-
-	function share() {
-		if (browser && typeof navigator.share === "function") {
-			void navigator.share({
-				url: `${SENDOU_INK_BASE_URL}${page.url.pathname}${page.url.search}`,
-			});
-		}
-	}
+}
 </script>
 
 <div class={["panelOverlay", { noAnimation: skipAnimation }]}>

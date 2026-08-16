@@ -1,18 +1,18 @@
 <script lang="ts">
-	import Avatar from "#lib/components/Avatar.svelte";
-	import TierImage from "#lib/components/TierImage.svelte";
-	import WeaponImage from "#lib/components/WeaponImage.svelte";
-	import { ordinalToSp } from "#lib/features/mmr/mmr-utils.ts";
-	import { userSeasonsPage } from "#lib/utils/urls.ts";
-	import type { OwnEntryPeekData } from "../leaderboards-types.ts";
+import Avatar from "#lib/components/Avatar.svelte";
+import TierImage from "#lib/components/TierImage.svelte";
+import WeaponImage from "#lib/components/WeaponImage.svelte";
+import { ordinalToSp } from "#lib/features/mmr/mmr-utils.ts";
+import { userSeasonsPage } from "#lib/utils/urls.ts";
+import type { OwnEntryPeekData } from "../leaderboards-types.ts";
 
-	interface Props {
-		entry: OwnEntryPeekData["entry"];
-		nextTier: OwnEntryPeekData["nextTier"];
-		season: number;
-	}
+interface Props {
+	entry: OwnEntryPeekData["entry"];
+	nextTier: OwnEntryPeekData["nextTier"];
+	season: number;
+}
 
-	let { entry, nextTier, season }: Props = $props();
+let { entry, nextTier, season }: Props = $props();
 </script>
 
 <div>

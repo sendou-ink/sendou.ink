@@ -123,7 +123,7 @@ function myUnescape(value: string): string {
 	let result = "";
 	let index = 0;
 	while (index < value.length) {
-		let chr = value.charAt(index++);
+		const chr = value.charAt(index++);
 		if (chr === "%") {
 			if (value.charAt(index) === "u") {
 				const part = value.slice(index + 1, index + 5);

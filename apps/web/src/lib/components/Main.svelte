@@ -1,25 +1,25 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
+import type { Snippet } from "svelte";
 
-	interface Props {
-		children: Snippet;
-		class?: string;
-		halfWidth?: boolean;
-		bigger?: boolean;
-		breakoutContainer?: boolean;
-		style?: string;
-		testId?: string;
-	}
+interface Props {
+	children: Snippet;
+	class?: string;
+	halfWidth?: boolean;
+	bigger?: boolean;
+	breakoutContainer?: boolean;
+	style?: string;
+	testId?: string;
+}
 
-	let {
-		children,
-		class: className,
-		halfWidth,
-		bigger,
-		breakoutContainer,
-		style,
-		testId,
-	}: Props = $props();
+let {
+	children,
+	class: className,
+	halfWidth,
+	bigger,
+	breakoutContainer,
+	style,
+	testId,
+}: Props = $props();
 </script>
 
 <main

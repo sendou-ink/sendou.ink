@@ -3,10 +3,10 @@ import type { MainWeaponId } from "@sendou/in-game-lists/types";
 import { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import type { Unwrapped } from "@sendou/utils/types";
 import { cache, IN_MILLISECONDS, ttl } from "#lib/server/cache.ts";
-import * as UserRepository from "../user-page/UserRepository.server.ts";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "../mmr/mmr-constants.ts";
 import * as Seasons from "../mmr/Seasons.ts";
 import { freshUserSkills } from "../mmr/tiered.server.ts";
+import * as UserRepository from "../user-page/UserRepository.server.ts";
 import type {
 	SeasonPopularUsersWeapon,
 	UserSPLeaderboardItem,

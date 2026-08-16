@@ -1,103 +1,101 @@
 <script lang="ts">
-	import type { Snippet } from "svelte";
-	import { setTabsContext } from "./tabs-context.ts";
+import type { Snippet } from "svelte";
+import { setTabsContext } from "./tabs-context.ts";
 
-	interface Props {
-		selectedKey?: string | null;
-		defaultSelectedKey?: string;
-		onSelectionChange?: (key: string) => void;
-		orientation?: "horizontal" | "vertical";
-		/** Should there be padding above the panels. Defaults to true, pass in false if the panel content is managing its own padding. */
-		padded?: boolean;
-		/** Hide tabs if only one tab shown? Defaults to true. */
-		disappearing?: boolean;
-		class?: string;
-		children: Snippet;
+interface Props {
+	selectedKey?: string | null;
+	defaultSelectedKey?: string;
+	onSelectionChange?: (key: string) => void;
+	orientation?: "horizontal" | "vertical";
+	/** Should there be padding above the panels. Defaults to true, pass in false if the panel content is managing its own padding. */
+	padded?: boolean;
+	/** Hide tabs if only one tab shown? Defaults to true. */
+	disappearing?: boolean;
+	class?: string;
+	children: Snippet;
+}
+
+let {
+	selectedKey,
+	defaultSelectedKey,
+	onSelectionChange,
+	orientation = "horizontal",
+	padded = true,
+	disappearing = true,
+	class: className,
+	children,
+}: Props = $props();
+
+// svelte-ignore state_referenced_locally -- controlled vs. uncontrolled is decided once at mount
+const isControlled = selectedKey !== undefined;
+// svelte-ignore state_referenced_locally -- the default seeds the initial value only
+let uncontrolledKey = $state<string | null>(defaultSelectedKey ?? null);
+const currentKey = $derived(
+	isControlled ? (selectedKey ?? null) : uncontrolledKey,
+);
+
+const tabs = new Map<string, HTMLElement>();
+let tabOrder = $state<string[]>([]);
+
+function select(key: string) {
+	if (!isControlled) {
+		uncontrolledKey = key;
 	}
+	onSelectionChange?.(key);
+}
 
-	let {
-		selectedKey,
-		defaultSelectedKey,
-		onSelectionChange,
-		orientation = "horizontal",
-		padded = true,
-		disappearing = true,
-		class: className,
-		children,
-	}: Props = $props();
-
-	// svelte-ignore state_referenced_locally -- controlled vs. uncontrolled is decided once at mount
-	const isControlled = selectedKey !== undefined;
-	// svelte-ignore state_referenced_locally -- the default seeds the initial value only
-	let uncontrolledKey = $state<string | null>(defaultSelectedKey ?? null);
-	const currentKey = $derived(
-		isControlled ? (selectedKey ?? null) : uncontrolledKey,
-	);
-
-	const tabs = new Map<string, HTMLElement>();
-	let tabOrder = $state<string[]>([]);
-
-	function select(key: string) {
-		if (!isControlled) {
-			uncontrolledKey = key;
-		}
-		onSelectionChange?.(key);
+function registerTab(key: string, element: HTMLElement) {
+	tabs.set(key, element);
+	syncOrder();
+	if (!isControlled && uncontrolledKey === null) {
+		uncontrolledKey = key;
 	}
-
-	function registerTab(key: string, element: HTMLElement) {
-		tabs.set(key, element);
+	return () => {
+		tabs.delete(key);
 		syncOrder();
-		if (!isControlled && uncontrolledKey === null) {
-			uncontrolledKey = key;
-		}
-		return () => {
-			tabs.delete(key);
-			syncOrder();
-		};
-	}
+	};
+}
 
-	function syncOrder() {
-		tabOrder = [...tabs.entries()]
-			.sort(([, a], [, b]) =>
-				a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING
-					? -1
-					: 1,
-			)
-			.map(([key]) => key);
-	}
+function syncOrder() {
+	tabOrder = [...tabs.entries()]
+		.sort(([, a], [, b]) =>
+			a.compareDocumentPosition(b) & Node.DOCUMENT_POSITION_FOLLOWING ? -1 : 1,
+		)
+		.map(([key]) => key);
+}
 
-	function moveFocus(
-		fromKey: string,
-		direction: "next" | "previous" | "first" | "last",
-	) {
-		if (tabOrder.length === 0) return;
+function moveFocus(
+	fromKey: string,
+	direction: "next" | "previous" | "first" | "last",
+) {
+	if (tabOrder.length === 0) return;
 
-		const fromIndex = tabOrder.indexOf(fromKey);
-		const targetIndex =
-			direction === "first"
-				? 0
-				: direction === "last"
-					? tabOrder.length - 1
-					: direction === "next"
-						? (fromIndex + 1) % tabOrder.length
-						: (fromIndex - 1 + tabOrder.length) % tabOrder.length;
+	const fromIndex = tabOrder.indexOf(fromKey);
+	const targetIndex =
+		direction === "first"
+			? 0
+			: direction === "last"
+				? tabOrder.length - 1
+				: direction === "next"
+					? (fromIndex + 1) % tabOrder.length
+					: (fromIndex - 1 + tabOrder.length) % tabOrder.length;
 
-		const targetKey = tabOrder[targetIndex];
-		tabs.get(targetKey)?.focus();
-		select(targetKey);
-	}
+	const targetKey = tabOrder[targetIndex];
+	tabs.get(targetKey)?.focus();
+	select(targetKey);
+}
 
-	setTabsContext({
-		get selectedKey() {
-			return currentKey;
-		},
-		get orientation() {
-			return orientation;
-		},
-		select,
-		registerTab,
-		moveFocus,
-	});
+setTabsContext({
+	get selectedKey() {
+		return currentKey;
+	},
+	get orientation() {
+		return orientation;
+	},
+	select,
+	registerTab,
+	moveFocus,
+});
 </script>
 
 <div
