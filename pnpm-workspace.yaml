@@ -1,3 +1,7 @@
+packages:
+  - apps/*
+  - packages/*
+  - tooling/*
 allowBuilds:
   aws-sdk: false
   core-js: false

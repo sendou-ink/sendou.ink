@@ -195,7 +195,7 @@ Bespoke mechanisms hand-built into the React app, each with a decided fate — s
 Pure refactor, zero behavior change, verified by the existing `pnpm run checks` + full e2e suite.
 
 1. pnpm workspace; move the app → `apps/web-react` unchanged.
-2. Extract `packages/tournament-engine` (and any other block whose boundary is already clean) via the `mono-split` codemod; `apps/web-react` consumes it from the workspace — proving the package is real before any Svelte exists.
+2. Extract `packages/tournament-engine` (and any other block whose boundary is already clean, confirm proposed list with user) via the `mono-split` codemod; `apps/web-react` consumes it from the workspace — proving the package is real before any Svelte exists.
 3. Land the manifest + codemod tooling skeleton.
 
 **Exit gate:** e2e suite green, production deploy from the new layout.

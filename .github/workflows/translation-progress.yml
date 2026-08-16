@@ -29,4 +29,4 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           pnpm run check-translation-jsons
-          gh issue edit 1104 --body-file ./translation-progress.md
+          gh issue edit 1104 --body-file ./apps/web-react/translation-progress.md

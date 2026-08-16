@@ -3,15 +3,15 @@
 	"files": {
 		"includes": [
 			"**",
-			"!scripts/dicts/**/*",
-			"!scripts/output/**/*",
-			"!app/db/seed/data/placements.json",
-			"!build/**/*",
-			"!app/features/scanner/tests/fixtures",
-			"!public/scanner/**/*",
-			"!test-results/**/*",
-			"!playwright-report/**/*",
-			"!.react-router/**/*",
+			"!apps/web-react/scripts/dicts/**/*",
+			"!apps/web-react/scripts/output/**/*",
+			"!apps/web-react/app/db/seed/data/placements.json",
+			"!apps/web-react/app/features/scanner/tests/fixtures",
+			"!apps/web-react/public/scanner/**/*",
+			"!**/build/**/*",
+			"!**/test-results/**/*",
+			"!**/playwright-report/**/*",
+			"!**/.react-router/**/*",
 			"!**/*.svg"
 		]
 	},
@@ -76,11 +76,17 @@
 	},
 	"overrides": [
 		{
-			"includes": ["app/**", "!app/modules/search-params/**"],
+			"includes": [
+				"apps/web-react/app/**",
+				"!apps/web-react/app/modules/search-params/**"
+			],
 			"plugins": ["./biome-plugins/no-raw-search-params.grit"]
 		},
 		{
-			"includes": ["app/**", "!app/hooks/useActionSubmit.ts"],
+			"includes": [
+				"apps/web-react/app/**",
+				"!apps/web-react/app/hooks/useActionSubmit.ts"
+			],
 			"plugins": ["./biome-plugins/no-raw-action-forms.grit"]
 		},
 		{
@@ -88,11 +94,14 @@
 			"plugins": ["./biome-plugins/no-raw-db-writes-in-tests.grit"]
 		},
 		{
-			"includes": ["app/db/seed/dev/**", "app/db/seed/index.ts"],
+			"includes": [
+				"apps/web-react/app/db/seed/dev/**",
+				"apps/web-react/app/db/seed/index.ts"
+			],
 			"plugins": ["./biome-plugins/no-raw-db-writes-in-dev-seed.grit"]
 		},
 		{
-			"includes": ["**", "!app/utils/kysely.server.ts"],
+			"includes": ["**", "!apps/web-react/app/utils/kysely.server.ts"],
 			"plugins": ["./biome-plugins/no-kysely-sqlite-helpers.grit"]
 		}
 	]

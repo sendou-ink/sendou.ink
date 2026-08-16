@@ -24,7 +24,7 @@ jobs:
         run: pnpm install --frozen-lockfile
 
       - name: Install Playwright browsers
-        run: pnpm exec playwright install chromium
+        run: pnpm --filter web-react exec playwright install chromium
 
       - name: Formatter/Linter
         run: pnpm run biome:check

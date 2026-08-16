@@ -1,9 +1,9 @@
 node_modules
 package-lock.json
 
-/.cache*
-/build
-/public/build
+.cache*
+apps/web-react/build
+apps/web-react/public/build
 .react-router/
 .env
 translation-progress.md
@@ -16,15 +16,15 @@ dump
 .DS_Store
 .excalidraw
 
-/scripts/output/*
-!/scripts/output/.gitkeep
+apps/web-react/scripts/output/*
+!apps/web-react/scripts/output/.gitkeep
 
-/scripts/dicts/**/*
-/scripts/badge
-/test-results/
-/playwright-report/
-/playwright/.cache/
-/.vitest-attachments
+apps/web-react/scripts/dicts/**/*
+apps/web-react/scripts/badge
+test-results/
+playwright-report/
+playwright/.cache/
+.vitest-attachments
 .vitest-attachments/
 
 # Vitest auto-captured failure screenshots (numbered, without browser info)
@@ -36,7 +36,7 @@ dump
 notepad.txt
 
 # proprietary game fonts for the scanner glyph-atlas builders (scripts/scanner)
-/assets/fonts/
+apps/web-react/assets/fonts/
 
 *.mp4
 *.mkv

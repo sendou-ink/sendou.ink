@@ -19,7 +19,7 @@ const BUILD_INPUTS = [
 	"app",
 	"public",
 	"package.json",
-	"pnpm-lock.yaml",
+	"../../pnpm-lock.yaml",
 	"vite.config.ts",
 	"react-router.config.ts",
 ];
