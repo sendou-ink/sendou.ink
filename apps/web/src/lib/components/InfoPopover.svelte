@@ -16,9 +16,7 @@ let { children, tiny = false, class: className }: Props = $props();
 		<button
 			type="button"
 			class={["trigger", className, { triggerTiny: tiny }]}
-			aria-expanded={triggerProps["aria-expanded"]}
-			aria-haspopup={triggerProps["aria-haspopup"]}
-			onclick={triggerProps.onclick}
+			{...triggerProps}
 		>
 			?
 		</button>

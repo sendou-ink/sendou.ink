@@ -279,6 +279,8 @@ html,
 		var(--layout-main-padding) +
 		env(safe-area-inset-top)
 	);
+	/* Popover auto closes when scrolled above this viewport offset (under the header) */
+	--popover-boundary-top: var(--layout-nav-height);
 
 	/* 
 	Boxes are elements that contain other elements, like cards, containers, and modals

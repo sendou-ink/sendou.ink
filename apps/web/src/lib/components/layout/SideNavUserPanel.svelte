@@ -51,9 +51,7 @@ const user = $derived(loggedInUser());
 								type="button"
 								class="sideNavFooterButton"
 								data-testid="notifications-button"
-								aria-expanded={triggerProps["aria-expanded"]}
-								aria-haspopup={triggerProps["aria-haspopup"]}
-								onclick={triggerProps.onclick}
+								{...triggerProps}
 							>
 								<Bell />
 							</button>
