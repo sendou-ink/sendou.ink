@@ -6,7 +6,7 @@ import type { weaponCategories } from "@sendou/in-game-lists/weapon-ids";
 import { logger } from "@sendou/utils/logger";
 import { getUser, requireUser } from "#lib/features/auth/user.server.ts";
 import { requireRole } from "#lib/modules/permissions/guards.server.ts";
-import { command, query } from "$app/server";
+import { command, query, requested } from "$app/server";
 import * as Seasons from "../mmr/Seasons.ts";
 import * as LeaderboardRepository from "./LeaderboardRepository.server.ts";
 import { WEAPON_LEADERBOARD_MAX_SIZE } from "./leaderboards-constants.ts";
@@ -101,7 +101,7 @@ export const skipTeam = command(
 		);
 
 		clearCachedTeamLeaderboards(season);
-		void getLeaderboards({ type: "TEAM", season }).refresh();
+		await requested(getLeaderboards, 5).refreshAll();
 	},
 );
 
@@ -117,6 +117,6 @@ export const unskipTeam = command(
 		);
 
 		clearCachedTeamLeaderboards(season);
-		void getLeaderboards({ type: "TEAM", season }).refresh();
+		await requested(getLeaderboards, 5).refreshAll();
 	},
 );

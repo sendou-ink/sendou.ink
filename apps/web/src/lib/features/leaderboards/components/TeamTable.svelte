@@ -52,7 +52,7 @@ const showQualificationDividers = $derived(
 			</div>
 		{/snippet}
 		{#snippet staffActions()}
-			<TeamStaffMenu {entry} {season} {queryArgs} />
+			<TeamStaffMenu {entry} {season} />
 		{/snippet}
 		{@render placementRow({
 			rank: entry.placementRank,

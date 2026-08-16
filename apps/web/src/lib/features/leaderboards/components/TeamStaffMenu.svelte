@@ -6,17 +6,14 @@ import {
 	skipTeam,
 	unskipTeam,
 } from "../leaderboards.remote.ts";
-import type { LeaderboardsQueryArgs } from "../leaderboards-schemas.ts";
 import type { TeamLeaderboardEntry } from "../leaderboards-types.ts";
 
 interface Props {
 	entry: Pick<TeamLeaderboardEntry, "identifier" | "isSkipped">;
 	season: number;
-	/** The query args of the leaderboard the client currently shows, so the mutation can update it single-flight. */
-	queryArgs: LeaderboardsQueryArgs;
 }
 
-let { entry, season, queryArgs }: Props = $props();
+let { entry, season }: Props = $props();
 
 const fields = $derived({ season, identifier: entry.identifier });
 </script>
@@ -36,7 +33,7 @@ const fields = $derived({ season, identifier: entry.identifier });
 	{/snippet}
 	{#if entry.isSkipped}
 		<MenuItem
-			onAction={() => unskipTeam(fields).updates(getLeaderboards(queryArgs))}
+			onAction={() => unskipTeam(fields).updates(getLeaderboards)}
 		>
 			{#snippet icon()}<RotateCcw />{/snippet}
 			Unskip
@@ -44,7 +41,7 @@ const fields = $derived({ season, identifier: entry.identifier });
 	{:else}
 		<MenuItem
 			isDestructive
-			onAction={() => skipTeam(fields).updates(getLeaderboards(queryArgs))}
+			onAction={() => skipTeam(fields).updates(getLeaderboards)}
 		>
 			{#snippet icon()}<Ban />{/snippet}
 			Skip
