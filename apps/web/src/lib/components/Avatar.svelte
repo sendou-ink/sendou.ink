@@ -100,7 +100,6 @@ export function generateIdenticon(input: string, size = 128, gridSize = 5) {
 </script>
 
 <script lang="ts">
-	import { browser } from "$app/env";
 	import { BLANK_IMAGE_URL, resolveAvatarUrl } from "#lib/utils/urls.ts";
 
 	interface Props {
@@ -128,6 +127,11 @@ export function generateIdenticon(input: string, size = 128, gridSize = 5) {
 	}: Props = $props();
 
 	let isErrored = $state(false);
+	let isMounted = $state(false);
+
+	$effect(() => {
+		isMounted = true;
+	});
 
 	// an <img> can finish loading (and fail) before hydration attaches onerror, so that
 	// error is missed — re-check on mount and fall back manually so SSR'd avatars still heal
@@ -155,7 +159,7 @@ export function generateIdenticon(input: string, size = 128, gridSize = 5) {
 	const src = $derived(
 		avatarUrl && !isErrored
 			? avatarUrl
-			: browser
+			: isMounted
 				? generateIdenticon(identiconSource, dimensions[size], 7)
 				: BLANK_IMAGE_URL,
 	);
