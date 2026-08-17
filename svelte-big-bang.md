@@ -193,7 +193,7 @@ Decided, and prototyped on the earlier `experimental` branch — we port that se
 
 | Today | After |
 |---|---|
-| `remix-auth` + `remix-auth-oauth2` | **hand-rolled Discord OAuth2** in `hooks.server.ts` — it's one authorization-code flow against one provider; a library earns nothing here. Two route handlers (`/auth` redirect, `/auth/callback` code exchange) plus session validation in the handle hook, reusing the existing `User` table untouched. Because we own the session scheme, **keep the cookie name/format/secret identical to today's → nobody gets logged out at cutover** and no auth schema migration exists at all. |
+| `remix-auth` + `remix-auth-oauth2` | **hand-rolled Discord OAuth2** in `hooks.server.ts` — it's one authorization-code flow against one provider; a library earns nothing here. Two route handlers (`/auth` redirect, `/auth/callback` code exchange) plus session validation in the handle hook, reusing the existing `User` table untouched. Because we own the session scheme, **keep the cookie name/format/secret identical to today's → nobody gets logged out at cutover** and no auth schema migration exists at all. The session/cookie layer and impersonation login shipped with the leaderboards slice; the Discord flow itself lands in Phase 3.5. |
 | i18next + `react-i18next` + `remix-i18next` + `i18next-browser-languagedetector` + `i18next-http-backend` | **Paraglide** (all five i18next packages deleted); locale resolution via paraglide's `['cookie', 'preferredLanguage', 'baseLocale']` strategy, matching today's behavior |
 | node-cron in server process | `adapter-node` with custom server entry |
 | compression patched out of `@react-router/serve` | same policy carries over: **no app-level compression in SvelteKit** — Render (and Cloudflare) compress at the edge. Don't add compression middleware to the custom server, and leave adapter-node's `precompress` off so we're not building/serving `.br`/`.gz` assets nobody needs |
@@ -269,11 +269,26 @@ Deliverable: the **golden read-path pattern** — the first cookbook entries com
 
 ### Phase 3 — Vertical slice 2: `/scrims` (Fable)
 
-The second slice picks a feature with everything the first one didn't have: login required, real mutations, forms, posting/accepting flows. It forces: hand-rolled Discord OAuth (cookie-compatible sessions), `SendouForm.svelte` + the remote-form wrappers (the churn insulation gets proven here), the `ActionButton → command` mapping with **single-flight mutations proven end-to-end** (accept-scrim refreshes exactly the scrim queries server-side, one round trip on a real write path, same as leaderboard skip/unskip), Dialog/Select/Combobox-grade components, and the realtime foundation — the in-process event bus with the notification bell dot as the first `query.live` consumer (scrim offers generate notifications; the 10s-grace-period behavior carries over). `scrims.spec.ts` green + differ clean.
+The second slice picks a feature with everything the first one didn't have: login required, real mutations, forms, posting/accepting flows. Several of its prerequisites already landed with the leaderboards slice and the app shell built around it — Phase 3 consumes these rather than building them:
+
+- **Auth = impersonation only in this phase.** The cookie-compatible session layer exists (`apps/web/src/lib/features/auth/session.server.ts` reads/writes the React app's `__session` cookie byte-for-byte — same name, JSON→base64 encoding and HMAC signature; `getUser`/`requireUser`/`actorId` hang off `locals` in `user.server.ts`), and so does impersonation login: `/auth/impersonate` + `/auth/impersonate/stop` routes wired to the dev login controls in `TopNavMenus.svelte`. All logged-in work in this slice runs through impersonation — which is exactly how e2e specs log in and how local dev works. **Real Discord OAuth is deliberately deferred to Phase 3.5.**
+- **The single-flight mutation shape already has a seed**: `leaderboards.remote.ts` ships `command()`s (`skipTeam`/`unskipTeam` with server-driven refresh) and the sidenav a remote `form()` (`setSidenavCollapsed`). Phase 3 scales the shape from admin one-liners to real multi-field forms and posting/accepting flows.
+- **Native dialog/popover primitives** landed with the layout surfaces, and the notifications feature already has its `getNotifications` query plus bell/`NotificationDot` components in the shell — Phase 3's realtime work upgrades an existing static bell, not a from-scratch one.
+- The scrims feature folder already carries its ported repositories (`ScrimPostRepository.server.ts`, the `Scrim` model, types).
+
+What Phase 3 genuinely forces into existence: `SendouForm.svelte` + the remote-form wrappers (the churn insulation gets proven here), the `ActionButton → command` mapping with **single-flight mutations proven end-to-end on a real write path** (accept-scrim refreshes exactly the scrim queries server-side, one round trip), Combobox/Select-grade form components on top of the native primitives, and the realtime foundation — the in-process event bus with the notification bell dot as the first `query.live` consumer (scrim offers generate notifications; the 10s-grace-period behavior carries over). `scrims.spec.ts` green + differ clean.
 
 > **Chat lands here.** Scrims have chat, so this slice also carries the **chat rebuild** (see the chat section): the `ChatRoom` / `ChatRoomMessage` / `ChatRoomRead` migrations land, and a scrim's chat becomes the first real `query.live` message-stream consumer — proving live streaming through Cloudflare + Render on an actual conversation, server-side membership auth, sqlite-backed unseen markers, and the active → inactive → archived → deleted lifecycle (a scrim chat going inactive after the scrim, then being swept by the deletion routine, exercises the whole arc). Because chat is a redesign rather than a port, its UI is marked expected-different in the differ manifest — the rest of the scrims slice still holds to pixel parity.
 
 Deliverable: the **golden write-path pattern**. Between the two slices, every architectural bet in this plan (remote functions, remote forms, paraglide, scoped styles, `query.live`, the differ) has been exercised on production code.
+
+### Phase 3.5 — Real auth: Discord OAuth (Fable)
+
+Its own phase, on purpose: nothing in Phase 3 — or the fleet after it — needs a real Discord login, because e2e specs and dev workflows authenticate via impersonation. Splitting it out keeps the scrims slice from blocking on OAuth app credentials and redirect-URI setup, and lets the flow be verified against a deployed preview on its own schedule.
+
+The work is the hand-rolled flow from the infra table: two route handlers under `/auth` (redirect to Discord, callback code exchange) plus the login button wiring — session validation already lives in the handle hook, and the cookie scheme is already byte-compatible with the React app (proven by impersonation and logged-in e2e in Phase 3), so this phase adds no session or schema work at all. Nobody gets logged out at cutover.
+
+**Exit gate:** a real Discord login round-trips locally and on a deployed preview, landing in the same session cookie the React app reads.
 
 ### Phase 4 — Foundation completion (Fable)
 
