@@ -46,6 +46,7 @@ let sideNavCollapsed = $state(initialCollapsed);
 let sideNavModalOpen = $state(false);
 const mounted = new IsMounted();
 
+// xxx: query.live
 // the bell data loads lazily like the React app's NotificationsProvider:
 // after hydration, never blocking SSR
 const notificationsQuery = $derived(

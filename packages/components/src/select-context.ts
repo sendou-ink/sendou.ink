@@ -1,4 +1,4 @@
-import { getContext, setContext } from "svelte";
+import { createContext } from "svelte";
 
 export interface SelectContext {
 	readonly selectedKey: string | number | null;
@@ -12,16 +12,5 @@ export interface SelectContext {
 	setFocusedKey: (key: string | number | null) => void;
 }
 
-const KEY = Symbol("select");
-
-export function setSelectContext(context: SelectContext) {
-	setContext(KEY, context);
-}
-
-export function getSelectContext(): SelectContext {
-	const context = getContext<SelectContext>(KEY);
-	if (!context) {
-		throw new Error("Select items must be used inside <Select>");
-	}
-	return context;
-}
+export const [getSelectContext, setSelectContext] =
+	createContext<SelectContext>();

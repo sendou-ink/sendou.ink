@@ -1,4 +1,4 @@
-import { getContext, setContext } from "svelte";
+import { createContext } from "svelte";
 
 export interface TabsContext {
 	readonly selectedKey: string | null;
@@ -11,16 +11,4 @@ export interface TabsContext {
 	) => void;
 }
 
-const KEY = Symbol("tabs");
-
-export function setTabsContext(context: TabsContext) {
-	setContext(KEY, context);
-}
-
-export function getTabsContext(): TabsContext {
-	const context = getContext<TabsContext>(KEY);
-	if (!context) {
-		throw new Error("Tabs components must be used inside <Tabs>");
-	}
-	return context;
-}
+export const [getTabsContext, setTabsContext] = createContext<TabsContext>();
