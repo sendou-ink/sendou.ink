@@ -16,7 +16,7 @@ interface Props {
 	isRequired?: boolean;
 	testId?: string;
 	"aria-label"?: string;
-	search?: { placeholder?: string };
+	search?: { placeholder?: string; testId?: string };
 	searchValue?: string;
 	noResultsText?: string;
 	clearText?: string;
@@ -223,6 +223,23 @@ function onPopoverToggle(event: Event) {
 
 const hasVisibleItems = $derived(items.size > 0);
 
+// while searching, keep an actionable item focused so Enter commits the top
+// result the moment it appears (matching the react-aria autocomplete flow)
+$effect(() => {
+	if (!open || !search || searchValue === "") return;
+
+	const keys = orderedKeys();
+	if (
+		focusedKey !== null &&
+		keys.includes(focusedKey)
+	) {
+		return;
+	}
+	if (keys[0] !== undefined) {
+		focusedKey = keys[0];
+	}
+});
+
 const uid = $props.id();
 const labelId = $derived(label ? `${uid}-select-label` : undefined);
 const valueId = `${uid}-select-value`;
@@ -328,6 +345,7 @@ const anchorName = `--select-anchor-${uid}`;
 					bind:value={searchValue}
 					placeholder={search.placeholder}
 					aria-label="Search"
+					data-testid={search.testId}
 					class="searchInput in-container"
 				/>
 				<button

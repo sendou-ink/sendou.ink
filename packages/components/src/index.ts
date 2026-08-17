@@ -1,7 +1,9 @@
 export { default as Button } from "./Button.svelte";
 export { default as ChipRadio } from "./ChipRadio.svelte";
 export { default as ChipRadioGroup } from "./ChipRadioGroup.svelte";
+export { default as Dialog } from "./Dialog.svelte";
 export { default as Menu } from "./Menu.svelte";
+export { default as Switch } from "./Switch.svelte";
 export { default as MenuItem } from "./MenuItem.svelte";
 export type { MenuTriggerProps } from "./menu-context.ts";
 export { default as Popover } from "./Popover.svelte";

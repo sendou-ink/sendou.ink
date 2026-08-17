@@ -1,0 +1,122 @@
+import type { ModeShort, StageId } from "@sendou/in-game-lists/types";
+import { MapPool } from "@sendou/map-list-generator/map-pool";
+import type { Transaction } from "kysely";
+import { db } from "#lib/server/db/sql.ts";
+import type { DB, TablesInsertable } from "#lib/server/db/tables.ts";
+import { jsonArrayFrom } from "#lib/server/kysely.ts";
+import { databaseTimestampNow } from "#lib/utils/dates.ts";
+import * as ScrimMapRepository from "./ScrimMapRepository.server.ts";
+import type { ScrimSide } from "./scrims-types.ts";
+
+type SubmitMapListArgs = Omit<TablesInsertable["ScrimMapList"], "updatedAt">;
+
+/**
+ * Inserts a map list row for the given side, replacing any existing row for
+ * the same `(scrimPostId, side)` pair, and (atomically) generates and inserts
+ * the next map for the scrim if no unreported map is currently waiting.
+ */
+export async function submitMapListAndGenerateIfNeeded(
+	args: SubmitMapListArgs,
+): Promise<void> {
+	const now = databaseTimestampNow();
+
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("ScrimMapList")
+			.values({
+				scrimPostId: args.scrimPostId,
+				side: args.side,
+				source: args.source,
+				tournamentId: args.tournamentId ?? null,
+				serializedPool: args.serializedPool ?? null,
+				updatedAt: now,
+			})
+			.onConflict((oc) =>
+				oc.columns(["scrimPostId", "side"]).doUpdateSet({
+					source: args.source,
+					tournamentId: args.tournamentId ?? null,
+					serializedPool: args.serializedPool ?? null,
+					updatedAt: now,
+				}),
+			)
+			.execute();
+
+		await ScrimMapRepository.tryGenerateAndInsertNextMap(args.scrimPostId, trx);
+	});
+}
+
+/** Deletes a side's map list, if one exists. */
+export async function deleteMapList(
+	scrimPostId: number,
+	side: ScrimSide,
+): Promise<void> {
+	await db
+		.deleteFrom("ScrimMapList")
+		.where("scrimPostId", "=", scrimPostId)
+		.where("side", "=", side)
+		.execute();
+}
+
+export type ResolvedScrimMapList = {
+	side: ScrimSide;
+	mapList: Array<{ mode: ModeShort; stageId: StageId }>;
+	tournament?: { id: number; name: string };
+	updatedAt: number;
+};
+
+/**
+ * Returns all submitted map lists for the scrim with the pool resolved into
+ * concrete `(mode, stageId)` pairs. Tournament-sourced rows additionally carry
+ * the tournament's id and name for display. Pass a transaction as `trx`
+ * to read within an existing transaction.
+ */
+export async function findMapListsByScrimPostId(
+	scrimPostId: number,
+	trx?: Transaction<DB>,
+): Promise<ResolvedScrimMapList[]> {
+	const executor = trx ?? db;
+
+	const rows = await executor
+		.selectFrom("ScrimMapList")
+		.leftJoin(
+			"CalendarEvent",
+			"ScrimMapList.tournamentId",
+			"CalendarEvent.tournamentId",
+		)
+		.select((eb) => [
+			"ScrimMapList.side",
+			"ScrimMapList.source",
+			"ScrimMapList.tournamentId",
+			"ScrimMapList.serializedPool",
+			"ScrimMapList.updatedAt",
+			eb.ref("CalendarEvent.name").as("tournamentName"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("MapPoolMap")
+					.select(["MapPoolMap.mode", "MapPoolMap.stageId"])
+					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
+			).as("tournamentMapPool"),
+		])
+		.where("ScrimMapList.scrimPostId", "=", scrimPostId)
+		.execute();
+
+	return rows.map((row) => ({
+		side: row.side,
+		mapList: resolveMapList(row),
+		tournament:
+			row.source === "TOURNAMENT" && row.tournamentId !== null
+				? { id: row.tournamentId, name: row.tournamentName ?? "" }
+				: undefined,
+		updatedAt: row.updatedAt,
+	}));
+}
+
+function resolveMapList(row: {
+	source: "TOURNAMENT" | "POOL";
+	serializedPool: string | null;
+	tournamentMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
+}): Array<{ mode: ModeShort; stageId: StageId }> {
+	if (row.source === "TOURNAMENT") return row.tournamentMapPool;
+	if (!row.serializedPool) return [];
+	return new MapPool(row.serializedPool).stageModePairs;
+}

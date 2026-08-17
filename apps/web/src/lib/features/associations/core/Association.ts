@@ -1,0 +1,66 @@
+import { dateToDatabaseTimestamp } from "#lib/utils/dates.ts";
+import type {
+	AssociationIdentifier,
+	AssociationVisibility,
+} from "../associations-types.ts";
+
+export interface IsVisibleArgs {
+	visibility: AssociationVisibility | null;
+	time?: Date;
+	associations: {
+		virtual: Array<string>;
+		actual: Array<{ id: number }>;
+		friendIds?: Array<number>;
+	} | null;
+	contentOwnerUserId?: number;
+}
+
+/** Resolves whether content with the given association visibility is visible to a viewer with the given associations. */
+export function isVisible(args: IsVisibleArgs) {
+	if (!args.visibility) return true;
+
+	const currentVisibility: Array<AssociationIdentifier | null> = [
+		args.visibility.forAssociation,
+	];
+
+	const dbTime = dateToDatabaseTimestamp(args.time ?? new Date());
+	for (const visibility of args.visibility.notFoundInstructions ?? []) {
+		if (dbTime > visibility.at) {
+			currentVisibility.push(visibility.forAssociation);
+		}
+	}
+
+	const isPublic = currentVisibility.includes(null);
+
+	if (isPublic) return true;
+
+	if (
+		currentVisibility.includes("FRIENDS") &&
+		args.contentOwnerUserId &&
+		args.associations?.friendIds?.includes(args.contentOwnerUserId)
+	) {
+		return true;
+	}
+
+	return (
+		args.associations?.actual.some((association) =>
+			currentVisibility.includes(association.id),
+		) ||
+		args.associations?.virtual.some(
+			(association) =>
+				// "FRIENDS" is a sentinel every user has, handled by the friendship check above
+				association !== "FRIENDS" &&
+				currentVisibility.includes(association as AssociationIdentifier),
+		) ||
+		false
+	);
+}
+
+/** Resolves whether content with the given association visibility is visible to everyone (also logged out users). */
+export function isPublic(args: Omit<IsVisibleArgs, "associations">) {
+	return isVisible({
+		associations: null,
+		time: args.time,
+		visibility: args.visibility,
+	});
+}

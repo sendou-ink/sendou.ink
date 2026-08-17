@@ -7,6 +7,7 @@ import NotificationDot from "#lib/components/NotificationDot.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
 import { getPatrons } from "#lib/features/front-page/front-page.remote.ts";
 import { getNotifications } from "#lib/features/notifications/notifications.remote.ts";
+import { UnseenNotificationsDot } from "#lib/features/notifications/notifications-state.svelte.ts";
 import { toNotificationRows } from "#lib/features/notifications/notifications-utils.ts";
 import { setSidenavCollapsed } from "#lib/features/sidenav/sidenav.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
@@ -46,9 +47,8 @@ let sideNavCollapsed = $state(initialCollapsed);
 let sideNavModalOpen = $state(false);
 const mounted = new IsMounted();
 
-// xxx: query.live
-// the bell data loads lazily like the React app's NotificationsProvider:
-// after hydration, never blocking SSR
+// the bell data streams lazily like the React app's NotificationsProvider:
+// after hydration, never blocking SSR; the live query keeps every tab fresh
 const notificationsQuery = $derived(
 	mounted.current && user ? getNotifications() : null,
 );
@@ -63,7 +63,10 @@ const unseenIds = $derived(
 		?.filter((notification) => !notification.seen)
 		.map((notification) => notification.id) ?? [],
 );
-const showUnseenDot = $derived(unseenIds.length > 0);
+const unseenDot = new UnseenNotificationsDot(
+	() => notificationsQuery?.current?.notifications,
+);
+const showUnseenDot = $derived(unseenDot.show);
 
 const patrons = $derived(await getPatrons());
 

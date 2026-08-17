@@ -1,4 +1,8 @@
-import type { MainWeaponId, ModeShort } from "@sendou/in-game-lists/types";
+import type {
+	MainWeaponId,
+	ModeShort,
+	StageId,
+} from "@sendou/in-game-lists/types";
 import type {
 	ColumnType,
 	GeneratedAlways,
@@ -12,14 +16,24 @@ import type {
 	XRankPlacementRegion,
 } from "#lib/db/tables-json.ts";
 import type { AssociationVisibility } from "#lib/features/associations/associations-types.ts";
+import type {
+	ChatMessageContext,
+	ChatSystemMessageType,
+} from "#lib/features/chat/chat-types.ts";
+import type { LFGType } from "#lib/features/lfg/lfg-constants.ts";
 import type { SkillTeamIdentifier } from "#lib/features/mmr/mmr-utils.ts";
 import type { Notification as NotificationValue } from "#lib/features/notifications/notifications-types.ts";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "#lib/features/team/team-constants.ts";
 import type { CustomTheme } from "#lib/features/theme/theme-types.ts";
 import type {
 	TournamentSettingsLite,
 	TournamentStaffRole,
 	TournamentTierNumber,
 } from "#lib/features/tournament/tournament-types.ts";
+import type { HideableUserCardStat } from "#lib/features/user-page/user-card-types.ts";
 import type { UnifiedLanguageCode } from "#lib/modules/i18n/languages.ts";
 
 /**
@@ -46,6 +60,8 @@ export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
 	bannedReason: string | null;
+	/** Shown on user card */
+	shortBio: string | null;
 	country: string | null;
 	customTheme: JSONColumnTypeNullable<CustomTheme>;
 	customUrl: string | null;
@@ -58,6 +74,7 @@ export interface User {
 	username: ColumnType<string, never, never>;
 	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
 	tournamentName: string | null;
+	discordUniqueName: string | null;
 	id: GeneratedAlways<number>;
 	inGameName: string | null;
 	isArtist: Generated<DBBoolean>;
@@ -67,11 +84,36 @@ export interface User {
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	patronTier: number | null;
 	patronStartedAt: number | null;
+	showDiscordUniqueName: Generated<DBBoolean>;
+	noScreen: Generated<DBBoolean>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
 	plusSkippedForSeasonNth: number | null;
 	twitch: string | null;
 	/** User creation date. Can be null because we did not always save this. */
 	createdAt: number | null;
+	/** User card banner default selection, stored as raw text (not JSON): either a hex code (e.g. "#8b0000") or a stage id in string form (e.g. "16"). Note: supporters can also upload banner (stored in UserSubmittedImage, referenced by `bannerImgId` which takes precedence) */
+	bannerPresetImg: string | null;
+	/** Supporter-uploaded user card banner (UserSubmittedImage id). Takes precedence over `bannerPresetImg`. */
+	bannerImgId: number | null;
+	/** Card stat types the user has chosen to hide from their card. */
+	hiddenCardStats: JSONColumnTypeNullable<Array<HideableUserCardStat>>;
+	/** Div in the latest finished LUTI (e.g. "2" or "X"). Must have been in a team that did not drop and the user played at least one match (got result as well) */
+	div: string | null;
+	/** Peak XP as indicated by the user. Should have either `takoroka` or `tentatek` key defined but not both. */
+	unverifiedPeakXP: JSONColumnTypeNullable<PeakXP>;
+	/** Division the user card's XP is taken from. `null` when the user has not picked one, showing their highest XP across both. */
+	xpDivision: XRankPlacementRegion | null;
+}
+
+/** FTS5 trigram index over User's searchable columns (external content table,
+ * kept in sync with triggers). Only meant for reading: filter with
+ * `match` and join `rowid` to `User.id`. */
+export interface UserSearch {
+	rowid: GeneratedAlways<number>;
+	username: GeneratedAlways<string | null>;
+	inGameName: GeneratedAlways<string | null>;
+	discordUniqueName: GeneratedAlways<string | null>;
+	customUrl: GeneratedAlways<string | null>;
 }
 
 export interface PlusTier {
@@ -110,6 +152,10 @@ export interface TeamMember {
 	isManager: Generated<DBBoolean>;
 	/** Always `null` when selected via the `TeamMember` or `TeamMemberWithSecondary` views, which filter these rows out. */
 	leftAt: number | null;
+	role: MemberRole | null;
+	customRole: string | null;
+	/** If customRole is defined, this classifies how the role should be treated */
+	roleType: MemberRoleType | null;
 	/** User-defined ordering of members within a team (ascending) */
 	order: Generated<number>;
 	teamId: number;
@@ -344,6 +390,41 @@ export interface TournamentMatchVod {
 	viewCount: number;
 }
 
+export interface Association {
+	id: GeneratedAlways<number>;
+	name: string;
+	inviteCode: string;
+	createdAt: Generated<number>;
+}
+
+export interface AssociationMember {
+	userId: number;
+	associationId: number;
+	role: "MEMBER" | "ADMIN";
+}
+
+export interface PrivateUserNote {
+	authorId: number;
+	targetId: number;
+	text: string | null;
+	sentiment: "POSITIVE" | "NEUTRAL" | "NEGATIVE";
+	updatedAt: Generated<number>;
+}
+
+export interface LFGPost {
+	id: GeneratedAlways<number>;
+	type: LFGType;
+	text: string;
+	/** e.g. Europe/Helsinki */
+	timezone: string;
+	authorId: number;
+	teamId: number | null;
+	plusTierVisibility: number | null;
+	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
+	updatedAt: Generated<number>;
+	createdAt: Generated<number>;
+}
+
 export interface Friendship {
 	id: GeneratedAlways<number>;
 	userOneId: number;
@@ -438,6 +519,73 @@ export interface ScrimPost {
 	updatedAt: Generated<number>;
 }
 
+export interface ScrimMapList {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	side: "ALPHA" | "BRAVO";
+	source: "TOURNAMENT" | "POOL";
+	tournamentId: number | null;
+	serializedPool: string | null;
+	updatedAt: number;
+}
+
+export interface ScrimMap {
+	id: GeneratedAlways<number>;
+	scrimPostId: number;
+	index: number;
+	mode: ModeShort;
+	stageId: StageId;
+	winnerSide: "ALPHA" | "BRAVO" | null;
+	reportedAt: number | null;
+	reportedByUserId: number | null;
+}
+
+export interface MapPoolMap {
+	calendarEventId: number | null;
+	mode: ModeShort;
+	stageId: StageId;
+	tieBreakerCalendarEventId: number | null;
+	tournamentTeamId: number | null;
+}
+
+export interface ScrimPickupRoster {
+	id: GeneratedAlways<number>;
+	userId: number;
+	usedAt: Generated<number>;
+}
+
+export interface ScrimPickupRosterUser {
+	scrimPickupRosterId: number;
+	userId: number;
+}
+
+export interface ChatRoom {
+	id: GeneratedAlways<number>;
+	/** The scrim post this room belongs to (rooms belong to exactly one owning entity) */
+	scrimPostId: number | null;
+	/** When the room turned inactive; null while active. Archival & deletion derive from this. */
+	inactiveAt: number | null;
+	createdAt: Generated<number>;
+}
+
+export interface ChatRoomMessage {
+	id: GeneratedAlways<number>;
+	chatRoomId: number;
+	/** Author; null for system messages */
+	userId: number | null;
+	/** System message type; null for user messages */
+	type: ChatSystemMessageType | null;
+	contents: string | null;
+	context: JSONColumnTypeNullable<ChatMessageContext>;
+	createdAt: Generated<number>;
+}
+
+export interface ChatRoomRead {
+	chatRoomId: number;
+	userId: number;
+	lastSeenMessageId: number;
+}
+
 export interface ScrimPostUser {
 	scrimPostId: number;
 	userId: number;
@@ -502,8 +650,13 @@ export interface DB {
 	AllTeam: Team;
 	/** Table backing the `TeamMember` & `TeamMemberWithSecondary` views. Includes members who have left and members of deleted teams. */
 	AllTeamMember: TeamMember;
+	Association: Association;
+	AssociationMember: AssociationMember;
 	CalendarEvent: CalendarEvent;
 	CalendarEventDate: CalendarEventDate;
+	ChatRoom: ChatRoom;
+	ChatRoomMessage: ChatRoomMessage;
+	ChatRoomRead: ChatRoomRead;
 	ExternalStream: ExternalStream;
 	FriendRequest: FriendRequest;
 	Friendship: Friendship;
@@ -511,12 +664,19 @@ export interface DB {
 	GroupMatch: GroupMatch;
 	GroupMember: GroupMember;
 	LeaderboardTeamSkip: LeaderboardTeamSkip;
+	LFGPost: LFGPost;
 	LiveStream: LiveStream;
+	MapPoolMap: MapPoolMap;
 	Notification: Notification;
 	NotificationUser: NotificationUser;
 	PlusTier: PlusTier;
+	PrivateUserNote: PrivateUserNote;
 	ReportedWeapon: ReportedWeapon;
 	SavedCalendarEvent: SavedCalendarEvent;
+	ScrimMap: ScrimMap;
+	ScrimMapList: ScrimMapList;
+	ScrimPickupRoster: ScrimPickupRoster;
+	ScrimPickupRosterUser: ScrimPickupRosterUser;
 	ScrimPost: ScrimPost;
 	ScrimPostRequest: ScrimPostRequest;
 	ScrimPostRequestUser: ScrimPostRequestUser;
@@ -544,6 +704,7 @@ export interface DB {
 	UnvalidatedUserSubmittedImage: UnvalidatedUserSubmittedImage;
 	User: User;
 	UserFriendCode: UserFriendCode;
+	UserSearch: UserSearch;
 	UserSubmittedImage: UserSubmittedImage;
 	XRankPlacement: XRankPlacement;
 }

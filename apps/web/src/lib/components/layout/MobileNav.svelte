@@ -13,6 +13,7 @@ import { MediaQuery } from "svelte/reactivity";
 import Avatar from "#lib/components/Avatar.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
 import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
+import { markNotificationsSeen } from "#lib/features/notifications/notifications.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
 import {
 	EVENTS_PAGE,
@@ -93,6 +94,20 @@ function handleTabPress(panel: PanelType) {
 
 	previousPanel = activePanel;
 	activePanel = activePanel === panel ? "closed" : panel;
+
+	// opening the "you" panel shows the notification list, which marks its
+	// notifications seen; the live query streams the updated rows back
+	if (
+		activePanel === "you" &&
+		unseenNotificationIds &&
+		unseenNotificationIds.length > 0
+	) {
+		markNotificationsSeen({ notificationIds: unseenNotificationIds }).catch(
+			() => {
+				// dropping the seen-marking is fine, the dot just stays
+			},
+		);
+	}
 }
 
 function handleGhostTabPress(index: number) {

@@ -1,22 +1,10 @@
 import type { AssociationVisibility } from "#lib/features/associations/associations-types.ts";
 import type { CommonUser } from "#lib/server/kysely.ts";
-
-export const LUTI_DIVS = [
-	"X",
-	"1",
-	"2",
-	"3",
-	"4",
-	"5",
-	"6",
-	"7",
-	"8",
-	"9",
-	"10",
-	"11",
-] as const;
+import type { LUTI_DIVS } from "./scrims-constants.ts";
 
 export type LutiDiv = (typeof LUTI_DIVS)[number];
+
+export type ScrimSide = "ALPHA" | "BRAVO";
 
 export interface ScrimPost {
 	id: number;
@@ -81,4 +69,18 @@ interface ScrimPostTeam {
 	name: string;
 	customUrl: string;
 	avatarUrl: string | null;
+}
+
+export interface TimeRange {
+	start: string;
+	end: string;
+}
+
+export interface ScrimFilters {
+	weekdayTimes: TimeRange | null;
+	weekendTimes: TimeRange | null;
+	divs: {
+		min: LutiDiv | null;
+		max: LutiDiv | null;
+	} | null;
 }

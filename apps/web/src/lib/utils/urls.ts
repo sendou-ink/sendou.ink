@@ -73,6 +73,10 @@ export const userSeasonsPage = ({
 }) =>
 	`${userPage(user)}/seasons${typeof season === "number" ? `?season=${season}` : ""}`;
 
+export const isCustomUrl = (value: string) => {
+	return Number.isNaN(Number(value));
+};
+
 export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 
 export const topSearchPage = () => "/xsearch";

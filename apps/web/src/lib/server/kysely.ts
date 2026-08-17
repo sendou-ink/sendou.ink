@@ -112,6 +112,26 @@ export type CommonUser = Pick<
 	"id" | "username" | "discordId" | "discordAvatar" | "customUrl"
 > & { customAvatarUrl: string | null };
 
+/**
+ * The {@link CommonUser} fields as a plain record of Kysely expressions, for spreading into a
+ * hand-built `jsonBuildObject` alongside extra fields. Prefer {@link commonUserJsonObject} when the
+ * common fields are the whole object.
+ */
+export function commonUserObjectFields(eb: ExpressionBuilder<Tables, "User">) {
+	return {
+		id: eb.ref("User.id"),
+		username: eb.ref("User.username"),
+		discordId: eb.ref("User.discordId"),
+		discordAvatar: eb.ref("User.discordAvatar"),
+		customUrl: eb.ref("User.customUrl"),
+		customAvatarUrl: customAvatarUrl(eb),
+	};
+}
+
+export function commonUserJsonObject(eb: ExpressionBuilder<Tables, "User">) {
+	return jsonBuildObject(commonUserObjectFields(eb));
+}
+
 /** Represents User joined with PlusTier table */
 export type UserWithPlusTier = Tables["User"] & {
 	plusTier: Tables["PlusTier"]["tier"] | null;

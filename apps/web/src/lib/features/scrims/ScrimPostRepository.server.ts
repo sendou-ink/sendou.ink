@@ -1,5 +1,11 @@
+import invariant from "@sendou/utils/invariant";
 import type { Unwrapped } from "@sendou/utils/types";
+import { sub } from "date-fns";
+import type { Insertable } from "kysely";
+import type { AssociationVisibility } from "#lib/features/associations/associations-types.ts";
+import { actorId, actorIdOrNull } from "#lib/features/auth/user.server.ts";
 import { db } from "#lib/server/db/sql.ts";
+import type { Tables, TablesInsertable } from "#lib/server/db/tables.ts";
 import {
 	type CommonUser,
 	commonUserSelect,
@@ -8,9 +14,134 @@ import {
 	jsonBuildObject,
 	tournamentLogoWithDefault,
 } from "#lib/server/kysely.ts";
-import { dateToDatabaseTimestamp } from "#lib/utils/dates.ts";
+import {
+	databaseTimestampNow,
+	dateToDatabaseTimestamp,
+} from "#lib/utils/dates.ts";
+import {
+	ConcurrentModificationError,
+	DuplicateEntryError,
+} from "#lib/utils/errors.ts";
+import { shortNanoid } from "#lib/utils/id.ts";
 import * as Scrim from "./Scrim.ts";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types.ts";
+import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils.ts";
+
+type InsertArgs = Pick<
+	TablesInsertable["ScrimPost"],
+	| "startsAt"
+	| "rangeEndsAt"
+	| "maxDiv"
+	| "minDiv"
+	| "teamId"
+	| "text"
+	| "maps"
+	| "mapsTournamentId"
+> & {
+	/** users related to the post other than the author */
+	users: Array<Pick<Insertable<Tables["ScrimPostUser"]>, "userId" | "isOwner">>;
+	visibility: AssociationVisibility | null;
+	managedByAnyone: boolean;
+	isScheduledForFuture: boolean;
+};
+
+export function insert(args: InsertArgs) {
+	if (args.users.length === 0) {
+		throw new Error("At least one user must be provided");
+	}
+
+	return db.transaction().execute(async (trx) => {
+		const newPost = await trx
+			.insertInto("ScrimPost")
+			.values({
+				startsAt: args.startsAt,
+				rangeEndsAt: args.rangeEndsAt,
+				maxDiv: args.maxDiv,
+				minDiv: args.minDiv,
+				teamId: args.teamId,
+				text: args.text,
+				maps: args.maps,
+				mapsTournamentId: args.mapsTournamentId,
+				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
+				chatCode: shortNanoid(),
+				managedByAnyone: args.managedByAnyone ? 1 : 0,
+				isScheduledForFuture: args.isScheduledForFuture ? 1 : 0,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("ScrimPostUser")
+			.values(args.users.map((user) => ({ ...user, scrimPostId: newPost.id })))
+			.execute();
+
+		return newPost.id;
+	});
+}
+
+type InsertRequestArgs = Pick<
+	Insertable<Tables["ScrimPostRequest"]>,
+	"scrimPostId" | "teamId" | "message" | "startsAt"
+> & {
+	users: Array<
+		Pick<Insertable<Tables["ScrimPostRequestUser"]>, "userId" | "isOwner">
+	>;
+};
+
+/**
+ * Inserts a new request to a scrim post.
+ *
+ * @returns id of the new request
+ * @throws {DuplicateEntryError} If the team already has a request for the post
+ */
+export function insertRequest(args: InsertRequestArgs) {
+	invariant(args.users.length > 0, "At least one user must be provided");
+
+	return db.transaction().execute(async (trx) => {
+		if (typeof args.teamId === "number") {
+			const existingTeamRequest = await trx
+				.selectFrom("ScrimPostRequest")
+				.select("id")
+				.where("scrimPostId", "=", args.scrimPostId)
+				.where("teamId", "=", args.teamId)
+				.executeTakeFirst();
+
+			if (existingTeamRequest) {
+				throw new DuplicateEntryError(
+					"Team already has a request for this scrim post",
+				);
+			}
+		}
+
+		const newRequest = await trx
+			.insertInto("ScrimPostRequest")
+			.values({
+				scrimPostId: args.scrimPostId,
+				teamId: args.teamId,
+				message: args.message,
+				startsAt: args.startsAt,
+			})
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.insertInto("ScrimPostRequestUser")
+			.values(
+				args.users.map((user) => ({
+					isOwner: user.isOwner,
+					userId: user.userId,
+					scrimPostRequestId: newRequest.id,
+				})),
+			)
+			.execute();
+
+		return newRequest.id;
+	});
+}
+
+export function deleteById(scrimPostId: number) {
+	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
+}
 
 const baseFindQuery = db
 	.selectFrom("ScrimPost")
@@ -102,14 +233,17 @@ const baseFindQuery = db
 		).as("requests"),
 	]);
 
-type BaseFindRow = Unwrapped<typeof findManyForRowType>;
+function findMany() {
+	const min = sub(new Date(), { hours: 3 });
 
-function findManyForRowType() {
-	return baseFindQuery.execute();
+	return baseFindQuery
+		.orderBy("startsAt", "asc")
+		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(min))
+		.execute();
 }
 
 const mapDBRowToScrimPost = (
-	row: BaseFindRow & { chatCode?: string },
+	row: Unwrapped<typeof findMany> & { chatCode?: string },
 ): ScrimPost => {
 	const someRequestIsAccepted = row.requests.some(
 		(request) => request.isAccepted,
@@ -159,10 +293,7 @@ const mapDBRowToScrimPost = (
 		isScheduledForFuture: Boolean(row.isScheduledForFuture),
 		divs:
 			typeof row.maxDiv === "number" && typeof row.minDiv === "number"
-				? {
-						max: Scrim.parseLutiDiv(row.maxDiv),
-						min: Scrim.parseLutiDiv(row.minDiv),
-					}
+				? { max: parseLutiDiv(row.maxDiv), min: parseLutiDiv(row.minDiv) }
 				: null,
 		maps: row.maps,
 		mapsTournament: row.mapsTournament.id
@@ -228,6 +359,214 @@ const mapDBRowToScrimPost = (
 		rangeEndsAt: null,
 	};
 };
+
+export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
+	const row = await baseFindQuery
+		.select(["ScrimPost.chatCode"])
+		.where("ScrimPost.id", "=", scrimPostId)
+		.executeTakeFirst();
+
+	if (!row) return null;
+
+	return mapDBRowToScrimPost(row);
+}
+
+export async function findAllRelevant(): Promise<ScrimPost[]> {
+	const userId = actorIdOrNull();
+	const rows = await findMany();
+
+	const mapped = rows
+		.map(mapDBRowToScrimPost)
+		.filter(
+			(post) =>
+				!Scrim.isAccepted(post) ||
+				(userId && Scrim.isParticipating(post, userId)),
+		);
+
+	if (!userId) return mapped.map((post) => ({ ...post, requests: [] }));
+
+	return mapped.map(getPostRequestCensor(userId));
+}
+
+export function acceptRequest(scrimPostRequestId: number) {
+	return db.transaction().execute(async (trx) => {
+		const target = await trx
+			.selectFrom("ScrimPostRequest")
+			.select("scrimPostId")
+			.where("id", "=", scrimPostRequestId)
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.updateTable("ScrimPostRequest")
+			.set({ isAccepted: 1 })
+			.where("id", "=", scrimPostRequestId)
+			.execute();
+
+		const acceptedRequests = await trx
+			.selectFrom("ScrimPostRequest")
+			.select("id")
+			.where("scrimPostId", "=", target.scrimPostId)
+			.where("isAccepted", "=", 1)
+			.execute();
+
+		if (acceptedRequests.length > 1) {
+			throw new ConcurrentModificationError(
+				"Another request for this scrim post was already accepted",
+			);
+		}
+	});
+}
+
+export function deleteRequest(scrimPostRequestId: number) {
+	return db
+		.deleteFrom("ScrimPostRequest")
+		.where("id", "=", scrimPostRequestId)
+		.execute();
+}
+
+export async function cancelScrim(id: number, reason: string) {
+	await db
+		.updateTable("ScrimPost")
+		.set({
+			canceledAt: databaseTimestampNow(),
+			canceledByUserId: actorId(),
+			cancelReason: reason,
+		})
+		.where("id", "=", id)
+		.where("canceledAt", "is", null)
+		.execute();
+}
+
+/**
+ * Finds all accepted scrims scheduled within a specific time range.
+ *
+ * @returns Array of accepted (matched) scrim posts within the time range
+ */
+export async function findAcceptedScrimsBetweenTwoTimestamps({
+	/** The earliest scrim start time to include (inclusive) */
+	startTime,
+	/** The latest scrim start time to include (exclusive) */
+	endTime,
+	/** Exclude scrims created after this timestamp */
+	excludeRecentlyCreated,
+}: {
+	startTime: Date;
+	endTime: Date;
+	excludeRecentlyCreated: Date;
+}) {
+	const rows = await baseFindQuery
+		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(startTime))
+		.where("ScrimPost.startsAt", "<", dateToDatabaseTimestamp(endTime))
+		.where("ScrimPost.canceledAt", "is", null)
+		.where(
+			"ScrimPost.createdAt",
+			"<",
+			dateToDatabaseTimestamp(excludeRecentlyCreated),
+		)
+		.execute();
+
+	return rows.map(mapDBRowToScrimPost).filter((post) => Scrim.isAccepted(post));
+}
+
+/**
+ * Finds pending (unaccepted, uncanceled, future) scrim posts and requests
+ * involving any of the given users whose time overlaps [startTime, endTime].
+ * Used to auto-clean conflicting availability when a scrim is scheduled.
+ *
+ * @returns posts (with their member ids, for notifying) and request ids
+ * (deleted silently) that should be removed
+ */
+export async function findPendingOverlapsForUsers({
+	userIds,
+	startTime,
+	endTime,
+	excludePostId,
+}: {
+	userIds: number[];
+	/** window start, database timestamp (seconds) */
+	startTime: number;
+	/** window end, database timestamp (seconds) */
+	endTime: number;
+	excludePostId: number;
+}): Promise<{
+	posts: Array<{ id: number; startsAt: number; memberIds: number[] }>;
+	requestIds: number[];
+}> {
+	if (userIds.length === 0) {
+		return { posts: [], requestIds: [] };
+	}
+
+	const now = dateToDatabaseTimestamp(new Date());
+
+	const rows = await baseFindQuery
+		.where("ScrimPost.canceledAt", "is", null)
+		.where("ScrimPost.startsAt", ">=", now)
+		.where((eb) =>
+			eb.or([
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostUser")
+						.select("ScrimPostUser.scrimPostId")
+						.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostUser.userId", "in", userIds),
+				),
+				eb.exists(
+					eb
+						.selectFrom("ScrimPostRequest")
+						.innerJoin(
+							"ScrimPostRequestUser",
+							"ScrimPostRequestUser.scrimPostRequestId",
+							"ScrimPostRequest.id",
+						)
+						.select("ScrimPostRequest.scrimPostId")
+						.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+						.where("ScrimPostRequestUser.userId", "in", userIds),
+				),
+			]),
+		)
+		.execute();
+
+	const userIdSet = new Set(userIds);
+
+	const posts: Array<{ id: number; startsAt: number; memberIds: number[] }> =
+		[];
+	const requestIds: number[] = [];
+
+	for (const post of rows
+		.map(mapDBRowToScrimPost)
+		.filter((post) => !Scrim.isAccepted(post))) {
+		if (post.id === excludePostId) continue;
+
+		const postInvolvesUser = post.users.some((u) => userIdSet.has(u.id));
+		const postIntervalOverlaps =
+			post.startsAt <= endTime &&
+			(post.rangeEndsAt ?? post.startsAt) >= startTime;
+		if (postInvolvesUser && postIntervalOverlaps) {
+			posts.push({
+				id: post.id,
+				startsAt: post.startsAt,
+				memberIds: post.users.map((u) => u.id),
+			});
+		}
+
+		for (const request of post.requests) {
+			if (request.isAccepted) continue;
+			const effectiveAt = request.startsAt ?? post.startsAt;
+			const requestInvolvesUser = request.users.some((u) =>
+				userIdSet.has(u.id),
+			);
+			if (
+				requestInvolvesUser &&
+				effectiveAt >= startTime &&
+				effectiveAt <= endTime
+			) {
+				requestIds.push(request.id);
+			}
+		}
+	}
+
+	return { posts, requestIds };
+}
 
 export type SidebarScrim = {
 	id: number;

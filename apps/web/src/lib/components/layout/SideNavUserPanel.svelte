@@ -5,6 +5,7 @@ import Avatar from "#lib/components/Avatar.svelte";
 import NotificationDot from "#lib/components/NotificationDot.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
 import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
+import { markNotificationsSeen } from "#lib/features/notifications/notifications.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
 import { SETTINGS_PAGE, userPage } from "#lib/utils/urls.ts";
 import { page } from "$app/state";
@@ -19,6 +20,22 @@ interface Props {
 let { notifications, unseenIds, showUnseenDot }: Props = $props();
 
 const user = $derived(loggedInUser());
+
+// remounting the content per open re-captures the sticky unseen highlights
+let openCount = $state(0);
+
+function handleOpenChange(isOpen: boolean) {
+	if (!isOpen) return;
+	openCount++;
+
+	// opening the list is what marks its notifications seen; the live query
+	// streams the updated rows back so every tab's dot clears
+	if (unseenIds.length > 0) {
+		markNotificationsSeen({ notificationIds: unseenIds }).catch(() => {
+			// dropping the seen-marking is fine, the dot just stays
+		});
+	}
+}
 </script>
 
 {#if user}
@@ -45,6 +62,7 @@ const user = $derived(loggedInUser());
 						]
 							.filter(Boolean)
 							.join(" ")}
+						onOpenChange={handleOpenChange}
 					>
 						{#snippet trigger(triggerProps)}
 							<button
@@ -56,7 +74,9 @@ const user = $derived(loggedInUser());
 								<Bell />
 							</button>
 						{/snippet}
-						<NotificationContent {notifications} {unseenIds} />
+						{#key openCount}
+							<NotificationContent {notifications} {unseenIds} />
+						{/key}
 					</Popover>
 				</div>
 			{/key}

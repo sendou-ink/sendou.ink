@@ -6,10 +6,11 @@ interface Props {
 	id: string | number;
 	textValue: string;
 	isDisabled?: boolean;
+	testId?: string;
 	children: Snippet;
 }
 
-let { id, textValue, isDisabled = false, children }: Props = $props();
+let { id, textValue, isDisabled = false, testId, children }: Props = $props();
 
 const select = getSelectContext();
 
@@ -32,6 +33,7 @@ function register(element: HTMLElement) {
 	aria-selected={isSelected}
 	aria-disabled={isDisabled || undefined}
 	data-disabled={isDisabled ? "true" : undefined}
+	data-testid={testId}
 	onclick={() => {
 		if (!isDisabled) select.select(id);
 	}}

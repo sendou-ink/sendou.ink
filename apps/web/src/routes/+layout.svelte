@@ -10,6 +10,7 @@ import "nprogress/nprogress.css";
 import NProgress from "nprogress";
 import HydrationTestIndicator from "#lib/components/HydrationTestIndicator.svelte";
 import Layout from "#lib/components/layout/Layout.svelte";
+import UnsavedChangesGuard from "#lib/form/UnsavedChangesGuard.svelte";
 import PwaLinks from "#lib/components/PwaLinks.svelte";
 import ThemeHead from "#lib/features/theme/ThemeHead.svelte";
 import { IS_E2E_TEST_RUN } from "#lib/utils/e2e.ts";
@@ -60,6 +61,8 @@ function stopLoadingIndicator() {
 {#if IS_E2E_TEST_RUN}
 	<HydrationTestIndicator />
 {/if}
+
+<UnsavedChangesGuard />
 
 <Layout>
 	{@render children()}

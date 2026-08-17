@@ -1,5 +1,5 @@
 import type { Unwrapped } from "@sendou/utils/types";
-import type { NotNull } from "kysely";
+import { type NotNull, sql } from "kysely";
 import { db } from "#lib/server/db/sql.ts";
 import {
 	commonUserSelect,
@@ -10,7 +10,10 @@ import {
 	tournamentMembersCount,
 	tournamentTeamsCount,
 } from "#lib/server/kysely.ts";
-import { dateToDatabaseTimestamp } from "#lib/utils/dates.ts";
+import {
+	databaseTimestampNow,
+	dateToDatabaseTimestamp,
+} from "#lib/utils/dates.ts";
 
 export type ForShowcase = Unwrapped<typeof findAllForShowcase>;
 
@@ -149,4 +152,75 @@ export function findRelatedUsersByTournamentIds(tournamentIds: number[]) {
 			teamMembers: NotNull;
 		}>()
 		.execute();
+}
+
+/** How close to its start time a tournament counts as happening right now. */
+const TOURNAMENT_ONGOING_WINDOW_IN_SECONDS = 24 * 60 * 60;
+
+/**
+ * Searches tournaments whose calendar event name contains the query, hidden events excluded.
+ *
+ * Ordered so that the tournaments most likely being looked for come first
+ */
+export async function searchByName({
+	query,
+	limit,
+	minStartTime,
+	maxStartTime,
+}: {
+	query: string;
+	limit: number;
+	minStartTime?: Date;
+	maxStartTime?: Date;
+}) {
+	const now = databaseTimestampNow();
+	const distanceFromNow = sql<number>`abs("CalendarEventDate"."startsAt" - ${now})`;
+	// window function so that the next tournament up is the next one of all the matches,
+	// not only of the ones that happen to fit in the limit
+	const nextUpStartsAt = sql<number>`min(case when "CalendarEventDate"."startsAt" - ${now} >= ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then "CalendarEventDate"."startsAt" end) over ()`;
+
+	let sqlQuery = db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select((eb) => [
+			"Tournament.id",
+			"CalendarEvent.name",
+			"CalendarEventDate.startsAt",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+		])
+		.where("CalendarEvent.name", "like", `%${query}%`)
+		.where("CalendarEvent.hidden", "=", 0)
+		.orderBy(
+			sql`case
+				when ${distanceFromNow} < ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then 0
+				when "CalendarEventDate"."startsAt" = ${nextUpStartsAt} then 1
+				else 2
+			end`,
+		)
+		.orderBy(distanceFromNow)
+		.orderBy("Tournament.id")
+		.limit(limit);
+
+	if (minStartTime) {
+		sqlQuery = sqlQuery.where(
+			"CalendarEventDate.startsAt",
+			">=",
+			dateToDatabaseTimestamp(minStartTime),
+		);
+	}
+
+	if (maxStartTime) {
+		sqlQuery = sqlQuery.where(
+			"CalendarEventDate.startsAt",
+			"<=",
+			dateToDatabaseTimestamp(maxStartTime),
+		);
+	}
+
+	return sqlQuery.execute();
 }

@@ -31,6 +31,9 @@ importers:
       '@sendou/in-game-lists':
         specifier: workspace:*
         version: link:../../packages/in-game-lists
+      '@sendou/map-list-generator':
+        specifier: workspace:*
+        version: link:../../packages/map-list-generator
       '@sendou/utils':
         specifier: workspace:*
         version: link:../../packages/utils
@@ -49,6 +52,9 @@ importers:
       lru-cache:
         specifier: ^11.2.1
         version: 11.5.2
+      nanoid:
+        specifier: 6.0.1
+        version: 6.0.1
       nprogress:
         specifier: ^0.2.0
         version: 0.2.0

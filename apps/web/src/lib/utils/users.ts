@@ -1,6 +1,43 @@
 import { logger } from "@sendou/utils/logger";
+import { isCustomUrl } from "#lib/utils/urls.ts";
 
 const DISCORD_ID_MIN_LENGTH = 17;
+
+const longUrlRegExp = /(https:\/\/)?sendou\.ink\/u\/([^/?#]+)/;
+const shortUrlRegExp = /(https:\/\/)?snd\.ink\/([^/?#]+)/;
+
+/** Resolves a search query into the user identifier it contains (profile URL, discord id or numeric id), or `null` when it is a plain text query. */
+export function queryToUserIdentifier(
+	query: string,
+): { id: number } | { discordId: string } | { customUrl: string } | null {
+	const longUrlMatch = query.match(longUrlRegExp);
+	const shortUrlMatch = query.match(shortUrlRegExp);
+
+	if (longUrlMatch || shortUrlMatch) {
+		const [, , identifier] = (longUrlMatch ?? shortUrlMatch)!;
+
+		if (isCustomUrl(identifier)) {
+			return { customUrl: identifier };
+		}
+
+		if (identifier.length >= DISCORD_ID_MIN_LENGTH) {
+			return { discordId: identifier };
+		}
+
+		return { id: Number(identifier) };
+	}
+
+	// = it's numeric
+	if (!isCustomUrl(query)) {
+		if (query.length >= DISCORD_ID_MIN_LENGTH) {
+			return { discordId: query };
+		}
+
+		return { id: Number(query) };
+	}
+
+	return null;
+}
 
 // snowflake logic from https://github.dev/vegeta897/snow-stamp/blob/main/src/util.js
 const DISCORD_EPOCH = 1420070400000;
