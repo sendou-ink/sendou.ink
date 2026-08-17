@@ -35,3 +35,18 @@ export interface PeakXP {
 	/** Peak XP (Tentatek division) */
 	tentatek: number | null;
 }
+
+export type SubjectPronoun = "he" | "she" | "they" | "it" | "any";
+
+export type ObjectPronoun =
+	| "him"
+	| "her"
+	| "them"
+	| "its"
+	| "all"
+	| SubjectPronoun;
+
+export type Pronouns = {
+	subject: SubjectPronoun;
+	object: ObjectPronoun;
+};

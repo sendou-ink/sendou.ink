@@ -1,3 +1,5 @@
+import type { Pronouns } from "#lib/db/tables-json.ts";
+
 /**
  * System message types rendered inside a chat room. Grows as features that
  * post system messages migrate (sendouq & tournament add theirs later).
@@ -26,6 +28,7 @@ export interface ChatUser {
 	discordAvatar: string | null;
 	customAvatarUrl?: string | null;
 	chatNameHue?: number | null;
+	pronouns?: Pronouns | null;
 	title?: string;
 }
 

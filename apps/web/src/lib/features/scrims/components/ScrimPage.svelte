@@ -1,4 +1,5 @@
 <script lang="ts">
+import { untrack } from "svelte";
 import Main from "#lib/components/Main.svelte";
 import MatchPage from "#lib/components/match-page/MatchPage.svelte";
 import { chatUi } from "#lib/features/chat/chat-state.svelte.ts";
@@ -14,6 +15,7 @@ interface Props {
 
 let { scrimPostId }: Props = $props();
 
+// xxx: ???
 // context must be provided before the first await of an async component; the
 // getter closes over `data` which resolves before anything renders
 setUserCardContext({
@@ -22,15 +24,20 @@ setUserCardContext({
 
 const data = $derived(await getScrim({ scrimPostId }));
 
-// the layout's chat sidebar auto-opens this scrim's room
+// xxx: need a better, generic solution
+// the layout's chat sidebar auto-opens this scrim's room; the chatUi writes
+// are untracked so closing the room (openRoomId back to null) doesn't re-run
+// this effect and force the room open again in an infinite loop
 $effect(() => {
 	const chatRoomId = data.chatRoomId;
 	if (chatRoomId === undefined) return;
 
-	chatUi.routeChatRoomId = chatRoomId;
-	if (chatUi.openRoomId === null) {
-		chatUi.openRoomId = chatRoomId;
-	}
+	untrack(() => {
+		chatUi.routeChatRoomId = chatRoomId;
+		if (chatUi.openRoomId === null) {
+			chatUi.openRoomId = chatRoomId;
+		}
+	});
 
 	return () => {
 		chatUi.routeChatRoomId = null;

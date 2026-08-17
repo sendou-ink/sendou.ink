@@ -154,7 +154,7 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 
 	const users = await db
 		.selectFrom("User")
-		.select((eb) => [...commonUserSelect(eb), userChatNameHue])
+		.select((eb) => [...commonUserSelect(eb), "User.pronouns", userChatNameHue])
 		.where("User.id", "in", userIds)
 		.execute();
 

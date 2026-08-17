@@ -7,7 +7,7 @@
 		"#lib/*": "./src/lib/*"
 	},
 	"scripts": {
-		"dev": "pnpm run combine-locales && vite dev",
+		"dev": "pnpm run combine-locales && cross-env DB_PATH=../web-react/db.sqlite3 vite dev",
 		"dev:prod": "pnpm run combine-locales && cross-env DB_PATH=../web-react/db-prod.sqlite3 VITE_PROD_MODE=true vite dev",
 		"build": "pnpm run combine-locales && vite build",
 		"build:all-locales": "tsx scripts/build-with-all-locales.ts",

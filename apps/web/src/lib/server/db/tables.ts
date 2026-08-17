@@ -12,6 +12,7 @@ import type {
 } from "kysely";
 import type {
 	PeakXP,
+	Pronouns,
 	UserPreferences,
 	XRankPlacementRegion,
 } from "#lib/db/tables-json.ts";
@@ -84,6 +85,7 @@ export interface User {
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
 	patronTier: number | null;
 	patronStartedAt: number | null;
+	pronouns: JSONColumnTypeNullable<Pronouns>;
 	showDiscordUniqueName: Generated<DBBoolean>;
 	noScreen: Generated<DBBoolean>;
 	preferences: JSONColumnTypeNullable<UserPreferences>;
