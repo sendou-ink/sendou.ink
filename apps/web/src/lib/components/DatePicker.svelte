@@ -1,4 +1,5 @@
 <script lang="ts">
+import { Calendar } from "@lucide/svelte";
 import { getLocale } from "#lib/paraglide/runtime.js";
 import FormMessage from "./FormMessage.svelte";
 import Label from "./Label.svelte";
@@ -184,10 +185,9 @@ function segmentValue(type: EditableSegmentType): number | string | null {
 function segmentText(type: EditableSegmentType): string {
 	const segValue = segmentValue(type);
 	if (segValue === null) return PLACEHOLDERS[type];
-	if (type === "dayPeriod") return String(segValue);
-	if (type === "hour") return String(segValue);
+	if (type === "minute") return String(segValue).padStart(2, "0");
 	if (type === "year") return String(segValue).padStart(4, "0");
-	return String(segValue).padStart(2, "0");
+	return String(segValue);
 }
 
 function setSegmentValue(type: EditableSegmentType, next: number | string) {
@@ -535,30 +535,16 @@ const popoverId = `${uid}-calendar-popover`;
 			aria-label="Open calendar"
 			onclick={openCalendar}
 		>
-			<svg
-				class="icon"
-				xmlns="http://www.w3.org/2000/svg"
-				viewBox="0 0 24 24"
-				fill="none"
-				stroke="currentColor"
-				stroke-width="2"
-				stroke-linecap="round"
-				stroke-linejoin="round"
-			>
-				<path d="M8 2v4" />
-				<path d="M16 2v4" />
-				<rect width="18" height="18" x="3" y="4" rx="2" />
-				<path d="M3 10h18" />
-			</svg>
+			<Calendar class="icon" />
 		</button>
 	</div>
 	{#if errorText}
-		<FormMessage type="error" spaced={false} id={errorId}>
+		<FormMessage type="error" id={errorId}>
 			{errorText}
 		</FormMessage>
 	{/if}
 	{#if bottomText}
-		<FormMessage type="info" spaced={false}>{bottomText}</FormMessage>
+		<FormMessage type="info">{bottomText}</FormMessage>
 	{/if}
 	<div
 		bind:this={calendarPopover}
@@ -648,7 +634,6 @@ const popoverId = `${uid}-calendar-popover`;
 	.root {
 		display: flex;
 		flex-direction: column;
-		gap: var(--s-1-5);
 		width: 100%;
 
 		&[data-open] .group {
@@ -674,11 +659,9 @@ const popoverId = `${uid}-calendar-popover`;
 
 	.dateInput {
 		display: flex;
-		font-size: var(--font-sm);
 	}
 
 	.segment {
-		white-space: pre;
 		caret-color: transparent;
 
 		&:not([data-type="literal"]) {
@@ -704,11 +687,9 @@ const popoverId = `${uid}-calendar-popover`;
 		background-color: transparent;
 		border: none;
 		outline: none;
-		cursor: pointer;
-		display: flex;
 	}
 
-	.icon {
+	.button :global(.icon) {
 		color: var(--color-text-high);
 		width: var(--field-size-icon);
 		height: var(--field-size-icon);

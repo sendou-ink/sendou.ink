@@ -186,6 +186,11 @@ const composedAriaLabel = $derived(
 		white-space: nowrap;
 	}
 
+	.root :global(button:disabled .selectValue) {
+		color: var(--color-text-high);
+		font-style: italic;
+	}
+
 	.itemTextsContainer {
 		line-height: 1.1;
 		font-size: var(--font-sm);

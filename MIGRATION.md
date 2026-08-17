@@ -67,26 +67,77 @@ Auth: `requireUser()` / `getUser()` / `actorId()` from
 `#lib/features/auth/user.server.ts` read `event.locals.user`, resolved once per
 request in `hooks.server.ts`. No AsyncLocalStorage.
 
-## Write path (action → command), first shape
+## Write path (action → command), the golden pattern
 
-The full write-path pattern lands with the `/scrims` slice; `/leaderboards`
-established the command shape for fixed-field mutations:
+From the `/scrims` slice (`scrims.remote.ts`):
 
 - Each `_action` branch of a React action union becomes its own `command()`
   with its own valibot schema (the `_action` discriminator disappears).
-- **Server-driven refresh is the default**: the handler calls
-  `getX(args).refresh()` / `.set(result)` for exactly the queries it
-  invalidated.
-- When the server genuinely can't know which query instance the client holds
-  (filter/pagination args — the leaderboards case), the **client** rides the
-  refresh on the mutation round trip instead:
+- **Single-flight refresh**: the client rides the refresh on the mutation round
+  trip by passing the query *function* — `acceptScrimRequest(args)
+  .updates(getScrimPosts)` — and the handler fulfils it with
+  `await requested(getScrimPosts, 5).refreshAll()`. Kit resolves the client's
+  active instances of that query (whatever args they hold), re-runs them
+  server-side, and the fresh data rides back on the command response.
+- Mutations that live queries observe skip `.updates()` entirely: the handler
+  publishes to the event bus (`Events.publish(Events.scrimChannel(id))`) and
+  every subscribed stream — including the actor's own tab — re-yields.
+- React's `errorToast`/`errorToastIfFalsy`/`notFoundIfNullish` port as
+  `#lib/utils/respond.server.ts` (they `error(400/404, message)` the command).
+  Handlers that used `{ fieldErrors }` returns keep them — `SendouForm` shows
+  them under the fields.
+- `requirePermission(obj, permission)` is ported in
+  `#lib/modules/permissions/guards.server.ts`.
 
-```ts
-skipTeam({ season, identifier }).updates(getLeaderboards(queryArgs));
-```
+## SendouForm (schema-driven forms)
 
-Never leave a mutation without one of the two — the refresh-everything default
-must not ship.
+`~/form/` ports as `#lib/form/`: `SendouForm.svelte`, `FormField.svelte`
+(dispatch by schema metadata), `fields.ts` (valibot builders + a WeakMap
+registry replacing zod's `formRegistry`), per-type field components in
+`fields/`. The React data flow is kept — values in `$state`, client-side
+valibot validation with translated `forms:*` message keys, submit sends the
+raw values — but the transport is a remote **command whose arg schema is the
+form schema** (server-side validation for free). Kit's remote `form()` stays
+for simple fixed-field forms (the sidenav pattern); the complex fields (Date
+values, tuple/union shapes) don't fit its FormData-backed field model, and
+these forms were JS-dependent in React too.
+
+- Page wiring: `onSubmit={async (values) => { const r = await
+  createScrimPost(values as v.InferInput<typeof schema>); if (r?.fieldErrors)
+  return r; await goto(...); }}` plus `onSuccess` for closing dialogs.
+- Cross-field `superRefine` → `v.pipe(v.object(...), v.transform(...),
+  v.forward(v.check(...), [path]), ...)`; `.overwrite` → `v.transform` in the
+  same pipe.
+- Fields render through context (`form-context.ts`); custom fields are
+  `<FormField name="x">{#snippet children(props)}...{/snippet}</FormField>`
+  with the same `CustomFieldRenderProps` contract as React.
+- The unsaved-changes guard is `#lib/form/UnsavedChangesGuard.svelte` in the
+  root layout + a `registerDirtyChecker` registry (`beforeNavigate` replaces
+  `useBlocker`; a `willUnload` cancel triggers the native prompt).
+- `DatePicker.svelte` replaces react-aria's DatePicker: contenteditable
+  `spinbutton` segments named `"{segment}, {label}"` (the e2e contract), built
+  from `Intl.DateTimeFormat.formatToParts`. Segment quirks that pixel parity
+  depends on: no `white-space: pre` (flex whitespace collapsing is what glues
+  react-aria's literals), no explicit font-size (inherits like react-aria),
+  month/day/hour unpadded, minute 2-digit.
+
+## Live queries (`query.live`) + the event bus
+
+- `#lib/server/events.ts` is the in-process bus: mutations `publish(channel)`,
+  live-query generators `for await (const _ of Events.subscribe(channel))`
+  re-yield a fresh snapshot per (coalesced) wake-up. Always snapshots, never
+  event logs. A built-in heartbeat keeps proxies from idle-closing streams.
+- Live queries stream over GET + SSE — they never interfere with the e2e
+  helpers' POST waits, and `fetch()` resolving on headers keeps the
+  hydration-indicator busy counter honest.
+- SSR awaits the stream's first value; generators must yield before blocking
+  on the bus.
+- Consumers: `getNotifications` (bell, per-user channel), `getChatRoom`/
+  `getChatRooms` (chat), `getScrim` (both teams' scrim pages update live —
+  replaces skalop's revalidation broadcasts).
+
+Never leave a mutation without a refresh story — the refresh-everything
+default must not ship.
 
 ## Search params
 
@@ -193,6 +244,23 @@ zod codec.
   `IS_E2E_TEST_RUN` only; it counts in-flight remote fetches for the busy
   state.
 
+## Popovers, menus, selects (mount semantics)
+
+react-aria unmounts popover/menu content when closed; the handwritten
+`Popover`/`Menu` components now do the same (`{#if open}` around children).
+This is what keeps strict-mode e2e selectors (and ARIA snapshots) from seeing
+N hidden copies of testids/labels. `Select` keeps its *items* mounted (the
+trigger text comes from item registration) but mounts the search field only
+while open; its listbox is labelled only while open so a closed select exposes
+exactly one element under its label. Search-item locators in the e2e helpers
+filter `{ visible: true }` for the same reason.
+
+Icon-only buttons: React applies the size classes to the icon element itself
+(an 18px icon inside the 20px slot ends up 20×18); the Svelte `Button` wraps
+icons in a span whose `svg { width: 100%; height: auto }` wins on specificity.
+Where parity matters, out-specify it with a tripled class
+(`:global(.x.x.x) { height: 18px; }`) — see `ScrimTeamMembersPopover.svelte`.
+
 ## One-offs ledger (discoveries)
 
 - Kit 3 moved `Handle` to `@sveltejs/kit/hooks` and `getRequestEvent` to
@@ -222,3 +290,34 @@ zod codec.
   back to `.avif` while the oracle baked `.png` from `apps/web-react/.env`
   (broken sidebar event logos). One shared `.env` is the source of truth until
   the cutover; tooling overrides passed via `process.env` still win over it.
+- Kit 3 param matchers are Standard Schemas in a single `src/params.ts`
+  exporting `params = defineParams({ integer: v.pipe(v.string(),
+  v.regex(/^\d+$/)) })` — the `src/params/<name>.ts` convention is gone.
+- Files named `*.remote.server.ts` are treated as remote-function modules by
+  Kit (everything exported must be a remote function) — hence
+  `#lib/utils/respond.server.ts`, not `remote.server.ts`.
+- adapter-node 6 bakes `ORIGIN` (from `paths.origin`) at build time, and a
+  bare request guesses `https://`. One e2e/differ build serves many worker
+  ports, so the tooling spawns `apps/web/scripts/e2e-server.mjs` — a shim that
+  injects `x-forwarded-proto: http` with `PROTOCOL_HEADER` set — and
+  remote-function CSRF (which ignores `csrf.trustedOrigins`) sees the right
+  per-port origin.
+- Context in async components must be set *before* the first `await`
+  (`set_context_after_init` is fatal in prod). Pattern: `setUserCardContext({
+  userCards: () => data.userCards })` above `const data = $derived(await …)` —
+  the getter only runs after the await resolves.
+- Mutating `$state` synchronously inside a `$derived`-triggered fetch is a
+  `state_unsafe_mutation` — the e2e fetch-counter patch defers its counter
+  writes a microtask (`HydrationTestIndicator.svelte`).
+- Routes without their own meta render `<DefaultMetaTags />` — the React root
+  supplies default title/description/og tags to meta-less routes, and the SSR
+  head diff flags their absence.
+- The census walk must use an index entry's own `path` (from `prefix()`);
+  `/scrims` was silently missing from the census before.
+- `RENDER_GIT_COMMIT` comes from `apps/web-react/.env` via `loadEnv` in
+  vite.config (plain `process.env` misses it and the footer loses its Version
+  line — a differ pixel diff).
+- `notify`/`resolveNotifications` port to
+  `#lib/features/notifications/core/`, publishing to per-user bus channels
+  instead of skalop pings; web push is still unported (`xxx:` in
+  `notify.server.ts`).

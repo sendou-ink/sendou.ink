@@ -5,7 +5,11 @@
 // from `x-forwarded-proto` + Host keeps remote-function CSRF checks passing.
 // Run with PROTOCOL_HEADER=x-forwarded-proto (set by the tooling).
 import { createServer } from "node:http";
-import { handler } from "../build/handler.js";
+
+// the build output only exists after `pnpm run build`; the indirection keeps
+// svelte-check from following (and type-checking) the generated chunks
+const buildDir = "../build";
+const { handler } = await import(`${buildDir}/handler.js`);
 
 const port = Number(process.env.PORT ?? 3000);
 

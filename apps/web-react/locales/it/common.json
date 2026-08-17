@@ -372,6 +372,8 @@
 	"chat.newMessages": "Nuovi messaggi",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",
+	"chat.sidebar.inactive": "",
+	"chat.room.scrim": "",
 	"fc.title": "Codice amico",
 	"fc.whereToFind": "",
 	"fc.onceSetStaffOnly": "",

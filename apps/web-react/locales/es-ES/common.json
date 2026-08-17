@@ -372,6 +372,8 @@
 	"chat.newMessages": "Nuevos mensajes",
 	"chat.sidebar.title": "Chat",
 	"chat.sidebar.noActiveChats": "No hay chats activos",
+	"chat.sidebar.inactive": "",
+	"chat.room.scrim": "",
 	"fc.title": "Clave de amigo",
 	"fc.whereToFind": "Encuentra tu clave de amigo en tu Nintendo Switch (2)",
 	"fc.onceSetStaffOnly": "Una vez guardada, solo un miembro del staff puede modificarla.",

@@ -372,6 +372,8 @@
 	"chat.newMessages": "新着メッセージ",
 	"chat.sidebar.title": "チャット",
 	"chat.sidebar.noActiveChats": "使用中のチャットはありません",
+	"chat.sidebar.inactive": "",
+	"chat.room.scrim": "",
 	"fc.title": "フレンドコード",
 	"fc.whereToFind": "フレンドコードは Nintendo Switch から見ることができます",
 	"fc.onceSetStaffOnly": "フレンドコードは一度設定すると、変更できるのはスタッフのみです。",

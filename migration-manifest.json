@@ -46,7 +46,8 @@
 			"status": "pending"
 		},
 		"chat": {
-			"status": "pending"
+			"status": "migrated",
+			"notes": "rebuilt (not ported) on ChatRoom/ChatRoomMessage/ChatRoomRead + query.live per plan; scrim rooms are the first consumer. UI is a redesign so no differ parity gate; sendouq/tournament rooms + SplatNet QR links arrive with their features"
 		},
 		"comp-analyzer": {
 			"status": "pending"
@@ -105,7 +106,8 @@
 			"status": "pending"
 		},
 		"notifications": {
-			"status": "pending"
+			"status": "pending",
+			"notes": "bell peek/live stream/mark-seen/10s grace dot + notify/resolve server core shipped with the scrims slice (notifications e2e green against apps/web); /notifications page, web push and remaining surface still pending"
 		},
 		"object-damage-calculator": {
 			"status": "pending"
@@ -126,7 +128,8 @@
 			"status": "pending"
 		},
 		"scrims": {
-			"status": "pending"
+			"status": "verified",
+			"notes": "phase 3 vertical slice; scrims e2e (9 tests) green against apps/web and differ clean (pixel/head/resource) for /scrims, /scrims/new, /scrims/:id 2026-08-17"
 		},
 		"search": {
 			"status": "pending"

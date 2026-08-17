@@ -1,7 +1,7 @@
 import { paraglideVitePlugin } from "@inlang/paraglide-js";
 import adapter from "@sveltejs/adapter-node";
 import { sveltekit } from "@sveltejs/kit/vite";
-import { defineConfig } from "vite";
+import { defineConfig, loadEnv } from "vite";
 
 const IS_E2E_BUILD = process.env.VITE_E2E_TEST_RUN === "true";
 
@@ -10,7 +10,11 @@ export default defineConfig(({ mode }) => ({
 	// apps/web-react/.env is the single source of truth for them
 	envDir: "../web-react",
 	define: {
-		__GIT_COMMIT__: JSON.stringify(process.env.RENDER_GIT_COMMIT ?? ""),
+		__GIT_COMMIT__: JSON.stringify(
+			process.env.RENDER_GIT_COMMIT ??
+				loadEnv(mode, "../web-react", "").RENDER_GIT_COMMIT ??
+				"",
+		),
 	},
 	plugins: [
 		paraglideVitePlugin({

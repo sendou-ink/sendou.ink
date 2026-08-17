@@ -372,6 +372,8 @@
 	"chat.newMessages": "Nuevo mensajes",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",
+	"chat.sidebar.inactive": "",
+	"chat.room.scrim": "",
 	"fc.title": "Clave de amigo",
 	"fc.whereToFind": "",
 	"fc.onceSetStaffOnly": "",

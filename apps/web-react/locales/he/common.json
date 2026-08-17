@@ -372,6 +372,8 @@
 	"chat.newMessages": "",
 	"chat.sidebar.title": "",
 	"chat.sidebar.noActiveChats": "",
+	"chat.sidebar.inactive": "",
+	"chat.room.scrim": "",
 	"fc.title": "",
 	"fc.whereToFind": "",
 	"fc.onceSetStaffOnly": "",

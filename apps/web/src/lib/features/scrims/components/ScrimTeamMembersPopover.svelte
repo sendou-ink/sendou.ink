@@ -1,6 +1,6 @@
 <script lang="ts">
 import { Users } from "@lucide/svelte";
-import { Popover } from "@sendou/components";
+import { Button, Popover } from "@sendou/components";
 import Avatar from "#lib/components/Avatar.svelte";
 import NoteAvatar from "#lib/components/NoteAvatar.svelte";
 import UserCard from "#lib/features/user-page/components/UserCard.svelte";
@@ -18,9 +18,9 @@ const cards = getUserCardContext();
 
 <Popover>
 	{#snippet trigger(triggerProps)}
-		<button type="button" class="minimalButton" {...triggerProps}>
-			<Users class="usersIcon" />
-		</button>
+		<Button variant="minimal" {...triggerProps}>
+			{#snippet icon()}<Users class="scrimUsersIcon" />{/snippet}
+		</Button>
 	{/snippet}
 	<div class="stack md">
 		{#each users as user (user.id)}
@@ -41,25 +41,9 @@ const cards = getUserCardContext();
 </Popover>
 
 <style>
-	.minimalButton {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 0;
-		color: var(--color-text);
-		border-radius: var(--radius-field);
-
-		&:focus-visible {
-			outline: var(--focus-ring);
-			outline-offset: 1px;
-		}
-	}
-
-	.minimalButton :global(.usersIcon) {
-		width: 18px;
+	/* the React app sizes the icon itself (18px) inside the 20px button icon
+	   slot; the tripled class out-specifies Button's own svg sizing */
+	:global(.scrimUsersIcon.scrimUsersIcon.scrimUsersIcon) {
 		height: 18px;
 	}
 </style>

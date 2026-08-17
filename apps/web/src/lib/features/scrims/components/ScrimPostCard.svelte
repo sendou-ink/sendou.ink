@@ -117,14 +117,13 @@ const timePopoverFooterText = $derived(
 			{#if post.isPrivate}
 				<Popover>
 					{#snippet trigger(triggerProps)}
-						<button
-							type="button"
-							class="iconButton"
-							data-testid="limited-visibility-popover"
+						<Button
+							variant="minimal"
+							testId="limited-visibility-popover"
 							{...triggerProps}
 						>
-							<EyeOff class="usersIcon" />
-						</button>
+							{#snippet icon()}<EyeOff class="scrimUsersIcon" />{/snippet}
+						</Button>
 					{/snippet}
 					{m.scrims_limitedVisibility()}
 				</Popover>
@@ -209,10 +208,10 @@ const timePopoverFooterText = $derived(
 		{@const tournament = post.mapsTournament}
 		<Popover>
 			{#snippet trigger(triggerProps)}
-				<button
-					type="button"
-					class="iconButton tournamentPopoverTrigger"
-					data-testid="tournament-popover-trigger"
+				<Button
+					variant="minimal"
+					class="tournamentPopoverTrigger"
+					testId="tournament-popover-trigger"
 					{...triggerProps}
 				>
 					<Avatar
@@ -220,7 +219,7 @@ const timePopoverFooterText = $derived(
 						url={tournament.avatarUrl ?? undefined}
 						alt={tournament.name}
 					/>
-				</button>
+				</Button>
 			{/snippet}
 			<div class="stack sm text-center">
 				<a
@@ -341,25 +340,9 @@ const timePopoverFooterText = $derived(
 {/snippet}
 
 <style>
-	.iconButton {
-		display: flex;
-		align-items: center;
-		justify-content: center;
-		background: none;
-		border: none;
-		cursor: pointer;
-		padding: 0;
-		color: var(--color-text);
-		border-radius: var(--radius-field);
-
-		&:focus-visible {
-			outline: var(--focus-ring);
-			outline-offset: 1px;
-		}
-	}
-
-	.iconButton :global(.usersIcon) {
-		width: 18px;
+	/* the React app sizes the icon itself (18px) inside the 20px button icon
+	   slot; the tripled class out-specifies Button's own svg sizing */
+	:global(.scrimUsersIcon.scrimUsersIcon.scrimUsersIcon) {
 		height: 18px;
 	}
 
@@ -392,7 +375,7 @@ const timePopoverFooterText = $derived(
 		font-size: var(--font-xs);
 	}
 
-	.tournamentPopoverTrigger {
+	:global(.tournamentPopoverTrigger) {
 		height: auto;
 	}
 

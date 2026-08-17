@@ -186,6 +186,17 @@ const fieldId = $props.id();
 			{selectedKey}
 			onSelectionChange={handleSelectionChange}
 		>
+			{#snippet valueContent(key)}
+				{@const option = options.find((candidate) => candidate.key === key)}
+				{#if option}
+					<div class="option">
+						{option.label}
+						{#if option.users}
+							<span class="optionUsers">{option.users}</span>
+						{/if}
+					</div>
+				{/if}
+			{/snippet}
 			{#each options as option (option.key)}
 				<SelectItem id={option.key} textValue={option.textValue}>
 					<div class="option">

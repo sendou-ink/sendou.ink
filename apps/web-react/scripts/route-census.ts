@@ -92,9 +92,11 @@ async function buildCensus(): Promise<CensusRow[]> {
 
 	const walk = (entries: RouteEntry[], parentPath: string) => {
 		for (const entry of entries) {
-			const fullPath = entry.index
-				? parentPath
-				: joinPaths(parentPath, entry.path);
+			// an index entry inside `prefix()` carries the prefix as its own path
+			const fullPath =
+				entry.path !== undefined
+					? joinPaths(parentPath, entry.path)
+					: parentPath;
 
 			if (entry.children) {
 				walk(entry.children, fullPath);
