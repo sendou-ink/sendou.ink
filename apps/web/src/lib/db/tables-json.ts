@@ -4,11 +4,14 @@
  * so client code can import the types without touching server modules.
  */
 
+import type { ScrimFilters } from "#lib/features/scrims/scrims-types.ts";
+
 export type XRankPlacementRegion = "WEST" | "JPN";
 
 export interface UserPreferences {
 	disableBuildAbilitySorting?: boolean;
 	disallowScrimPickupsFromUntrusted?: boolean;
+	defaultScrimsFilters?: ScrimFilters;
 	/**
 	 * What time format the user prefers?
 	 *

@@ -10,8 +10,11 @@ const messages = m as unknown as Record<
  * keyed by id). Static call sites should always call the typed `m.*` functions
  * directly instead; this exists only for id-indexed message families.
  */
-export function dynamicMessage(key: string): string {
-	return messages[key]?.() ?? key;
+export function dynamicMessage(
+	key: string,
+	inputs?: Record<string, unknown>,
+): string {
+	return messages[key]?.(inputs) ?? key;
 }
 
 /** Localized name of a main weapon. */
@@ -32,6 +35,11 @@ export function specialWeaponName(specialWeaponSplId: number) {
 /** Localized long name of a mode (e.g. "Splat Zones"). */
 export function modeLongName(mode: string) {
 	return dynamicMessage(`game_misc_MODE_LONG_${mode}`);
+}
+
+/** Localized short name of a mode (e.g. "SZ"). */
+export function modeShortName(mode: string) {
+	return dynamicMessage(`game_misc_MODE_SHORT_${mode}`);
 }
 
 /** Localized stage name. */

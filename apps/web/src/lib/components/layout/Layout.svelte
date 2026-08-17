@@ -6,6 +6,9 @@ import Image from "#lib/components/Image.svelte";
 import NotificationDot from "#lib/components/NotificationDot.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
 import { getPatrons } from "#lib/features/front-page/front-page.remote.ts";
+import ChatSidebar from "#lib/features/chat/components/ChatSidebar.svelte";
+import { chatUi } from "#lib/features/chat/chat-state.svelte.ts";
+import { getChatRooms } from "#lib/features/chat/chat.remote.ts";
 import { getNotifications } from "#lib/features/notifications/notifications.remote.ts";
 import { UnseenNotificationsDot } from "#lib/features/notifications/notifications-state.svelte.ts";
 import { toNotificationRows } from "#lib/features/notifications/notifications-utils.ts";
@@ -79,9 +82,18 @@ const unseenFriendRequests = $derived(
 
 const isFrontPage = $derived(page.url.pathname === "/");
 
-// xxx: wire to the chat sidebar when the chat rebuild lands (svelte-big-bang
-// phase 3); until then the button renders for layout parity with the React app
-const noopUntilChatRebuild = () => {};
+// chat data streams lazily after hydration, like the bell
+const chatRoomsQuery = $derived(
+	mounted.current && user ? getChatRooms() : null,
+);
+const chatUnreadCount = $derived(
+	chatRoomsQuery?.current?.rooms.reduce(
+		(total, room) => total + room.unseenCount,
+		0,
+	) ?? 0,
+);
+
+let chatModalOpen = $state(false);
 
 const breadcrumbs = $derived(page.data.breadcrumbs ?? []);
 const currentPageText = $derived(breadcrumbs.at(-1)?.text);
@@ -155,9 +167,10 @@ function handleScroll() {
 	lastScrollY = currentScrollY;
 }
 
-// the tablet-only sidenav modal closes on navigation
+// the tablet-only modals close on navigation
 afterNavigate(() => {
 	sideNavModalOpen = false;
+	chatModalOpen = false;
 });
 
 function showModal(dialog: HTMLDialogElement) {
@@ -419,15 +432,49 @@ function formatRelativeDate(timestamp: number) {
 			showSupport={Boolean(!user?.roles.includes("MINOR_SUPPORT"))}
 			showSearch={Boolean(user)}
 			isLoggedIn={Boolean(user)}
-			onChatToggle={user ? noopUntilChatRebuild : undefined}
-			onChatModalToggle={user ? noopUntilChatRebuild : undefined}
-			chatUnreadCount={0}
+			onChatToggle={user && !chatUi.sidebarOpen
+				? () => chatUi.toggleSidebar()
+				: undefined}
+			onChatModalToggle={user
+				? () => {
+						chatModalOpen = !chatModalOpen;
+					}
+				: undefined}
+			{chatUnreadCount}
 		/>
 		<div id="nprogress-anchor" aria-hidden="true"></div>
 	</header>
 	{@render children()}
 	<Footer {patrons} gitCommit={GIT_COMMIT} />
 </div>
+
+{#if user && chatUi.sidebarOpen}
+	<div class="chatSidebar">
+		<ChatSidebar
+			onClose={() => {
+				chatUi.sidebarOpen = false;
+			}}
+		/>
+	</div>
+{/if}
+
+{#if chatModalOpen}
+	<dialog
+		class="chatSidebarModal"
+		closedby="any"
+		aria-label={m.common_chat_sidebar_title()}
+		onclose={() => {
+			chatModalOpen = false;
+		}}
+		{@attach showModal}
+	>
+		<ChatSidebar
+			onClose={() => {
+				chatModalOpen = false;
+			}}
+		/>
+	</dialog>
+{/if}
 
 {#if sideNavModalOpen}
 	<dialog
@@ -743,6 +790,44 @@ function formatRelativeDate(timestamp: number) {
 
 		@media screen and (min-width: 600px) {
 			display: none;
+		}
+	}
+
+	.chatSidebar {
+		display: none;
+		background-color: var(--color-bg-nav);
+		min-width: var(--layout-sidenav-width);
+		max-width: var(--layout-sidenav-width);
+		border-left: 1.5px solid var(--color-border);
+		position: sticky;
+		top: 0;
+		right: 0;
+		height: 100dvh;
+		flex-direction: column;
+		overflow: hidden;
+
+		@media screen and (min-width: 1000px) {
+			display: flex;
+		}
+	}
+
+	.chatSidebarModal {
+		position: fixed;
+		inset: var(--layout-nav-height) 0 0 auto;
+		margin: 0;
+		border: none;
+		padding: 0;
+		height: calc(100dvh - var(--layout-nav-height));
+		max-height: none;
+		width: var(--layout-sidenav-width);
+		max-width: none;
+		background-color: var(--color-bg-nav);
+		border-left: 1.5px solid var(--color-border);
+
+		&::backdrop {
+			top: var(--layout-nav-height);
+			background-color: rgba(0, 0, 0, 0.4);
+			backdrop-filter: blur(4px);
 		}
 	}
 </style>

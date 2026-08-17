@@ -12,6 +12,7 @@ import {
 import { MediaQuery } from "svelte/reactivity";
 import Avatar from "#lib/components/Avatar.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
+import ChatSidebar from "#lib/features/chat/components/ChatSidebar.svelte";
 import NotificationContent from "#lib/features/notifications/components/NotificationContent.svelte";
 import { markNotificationsSeen } from "#lib/features/notifications/notifications.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
@@ -89,9 +90,6 @@ function closePanel() {
 }
 
 function handleTabPress(panel: PanelType) {
-	// TODO(chat rebuild): the chat panel arrives with the scrims slice
-	if (panel === "chat") return;
-
 	previousPanel = activePanel;
 	activePanel = activePanel === panel ? "closed" : panel;
 
@@ -169,6 +167,21 @@ function handleGhostTabPress(index: number) {
 				{m.common_actions_viewAll()}
 				<ChevronRight size={14} />
 			</a>
+		</MobilePanel>
+	{/if}
+
+	{#if activePanel === "chat" && user}
+		<MobilePanel
+			title={m.front_mobileNav_chat()}
+			onClose={closePanel}
+			ghostTabCount={ghostTabs.length}
+			onGhostTabPress={handleGhostTabPress}
+			{skipAnimation}
+		>
+			{#snippet icon()}<MessageSquare size={18} />{/snippet}
+			<div class="chatPanelBody">
+				<ChatSidebar />
+			</div>
 		</MobilePanel>
 	{/if}
 
@@ -406,5 +419,12 @@ function handleGhostTabPress(index: number) {
 			color: var(--color-text);
 			background-color: var(--color-bg-higher);
 		}
+	}
+
+	.chatPanelBody {
+		height: min(65dvh, 520px);
+		display: flex;
+		flex-direction: column;
+		overflow: hidden;
 	}
 </style>

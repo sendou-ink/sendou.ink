@@ -30,6 +30,8 @@ export const twitchUrl = (accountName: string) =>
 export const tournamentInfoPage = (tournamentId: number) =>
 	`/to/${tournamentId}/info`;
 export const tournamentPage = (tournamentId: number) => `/to/${tournamentId}`;
+export const tournamentRegisterPage = (tournamentId: number) =>
+	`/to/${tournamentId}/register`;
 export const tournamentStreamsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/streams`;
 export const SENDOUQ_STREAMS_PAGE = "/q/streams";
@@ -79,6 +81,21 @@ export const isCustomUrl = (value: string) => {
 
 export const teamPage = (customUrl: string) => `/t/${customUrl}`;
 
+export const scrimsPage = () => "/scrims";
+export const scrimPage = (id: number) => `${scrimsPage()}/${id}`;
+export const newScrimPostPage = () => `${scrimsPage()}/new`;
+export const associationsPage = () => "/associations";
+
+export const LFG_PAGE = "/lfg";
+export const lfgPostPage = (postId: number) =>
+	`${LFG_PAGE}?post=${postId}#${postId}`;
+
+export const USER_CARD_EDIT_PAGE = "/user-card/edit";
+export const userCardEditPage = (args?: { returnTo?: string }) =>
+	args?.returnTo
+		? `${USER_CARD_EDIT_PAGE}?returnTo=${encodeURIComponent(args.returnTo)}`
+		: USER_CARD_EDIT_PAGE;
+
 export const topSearchPage = () => "/xsearch";
 export const topSearchPlayerPage = (playerId: number) =>
 	`${topSearchPage()}/player/${playerId}`;
@@ -101,8 +118,12 @@ export const subWeaponImageUrl = (subWeaponSplId: number) =>
 	`${STATIC_ASSETS_URL}/img/sub-weapons/${subWeaponSplId}`;
 export const specialWeaponImageUrl = (specialWeaponSplId: number) =>
 	`${STATIC_ASSETS_URL}/img/special-weapons/${specialWeaponSplId}`;
+export const brandImageUrl = (brand: string) =>
+	`${STATIC_ASSETS_URL}/img/brands/${brand}`;
 export const stageImageUrl = (stageId: number) =>
 	`${STATIC_ASSETS_URL}/img/stages/${stageId}`;
+export const stageBannerImageUrl = (stageId: number) =>
+	`${STATIC_ASSETS_URL}/img/stage-banners/${stageId}.avif`;
 export const modeImageUrl = (mode: string) =>
 	`${STATIC_ASSETS_URL}/img/modes/${mode}`;
 export const tierImageUrl = (tier: string) =>

@@ -1,6 +1,7 @@
 import { error } from "@sveltejs/kit";
-import { getUser } from "#lib/features/auth/user.server.ts";
-import type { Role } from "./types.ts";
+import { getUser, requireUser } from "#lib/features/auth/user.server.ts";
+import type { EntityWithPermissions, Role } from "./types.ts";
+import { hasPermission } from "./utils.ts";
 
 /** Responds with 403 unless the logged in user has the given role. */
 export function requireRole(role: Role) {
@@ -9,4 +10,18 @@ export function requireRole(role: Role) {
 	if (!user?.roles.includes(role)) {
 		error(403, "Forbidden");
 	}
+}
+
+/** Responds with 403 unless the logged in user has the given permission on the entity. */
+export function requirePermission<
+	T extends EntityWithPermissions,
+	K extends keyof T["permissions"],
+>(obj: T, permission: K) {
+	const user = requireUser();
+
+	if (hasPermission(obj, permission, user)) {
+		return;
+	}
+
+	error(403, "Forbidden");
 }

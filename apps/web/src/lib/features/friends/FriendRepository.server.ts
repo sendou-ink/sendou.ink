@@ -151,3 +151,112 @@ export async function findFriendIds(userId: number): Promise<number[]> {
 
 	return rows.map((row) => row.friendId);
 }
+
+/**
+ * The pending friend request between the two users regardless of direction, or `undefined` when
+ * there is none.
+ */
+export async function findFriendRequestBetween({
+	senderId,
+	receiverId,
+}: {
+	senderId: number;
+	receiverId: number;
+}) {
+	return db
+		.selectFrom("FriendRequest")
+		.select(["FriendRequest.id", "FriendRequest.senderId"])
+		.where((eb) =>
+			eb.or([
+				eb.and([
+					eb("FriendRequest.senderId", "=", senderId),
+					eb("FriendRequest.receiverId", "=", receiverId),
+				]),
+				eb.and([
+					eb("FriendRequest.senderId", "=", receiverId),
+					eb("FriendRequest.receiverId", "=", senderId),
+				]),
+			]),
+		)
+		.executeTakeFirst();
+}
+
+/** Users who are friends with both given users. */
+export async function findMutualFriends({
+	loggedInUserId,
+	targetUserId,
+}: {
+	loggedInUserId: number;
+	targetUserId: number;
+}) {
+	return db
+		.selectFrom("Friendship as f1")
+		.innerJoin("Friendship as f2", (join) =>
+			join.on((eb) =>
+				eb.and([
+					eb(
+						eb
+							.case()
+							.when("f1.userOneId", "=", loggedInUserId)
+							.then(eb.ref("f1.userTwoId"))
+							.else(eb.ref("f1.userOneId"))
+							.end(),
+						"=",
+						eb
+							.case()
+							.when("f2.userOneId", "=", targetUserId)
+							.then(eb.ref("f2.userTwoId"))
+							.else(eb.ref("f2.userOneId"))
+							.end(),
+					),
+				]),
+			),
+		)
+		.innerJoin("User", (join) =>
+			join.on((eb) =>
+				eb(
+					"User.id",
+					"=",
+					eb
+						.case()
+						.when("f1.userOneId", "=", loggedInUserId)
+						.then(eb.ref("f1.userTwoId"))
+						.else(eb.ref("f1.userOneId"))
+						.end(),
+				),
+			),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("f1.userOneId", "=", loggedInUserId),
+				eb("f1.userTwoId", "=", loggedInUserId),
+			]),
+		)
+		.where((eb) =>
+			eb.or([
+				eb("f2.userOneId", "=", targetUserId),
+				eb("f2.userTwoId", "=", targetUserId),
+			]),
+		)
+		.select((eb) => commonUserSelect(eb))
+		.execute();
+}
+
+/** The friendship row between the two users, or `undefined` when they are not friends. */
+export async function findFriendship({
+	userOneId,
+	userTwoId,
+}: {
+	userOneId: number;
+	userTwoId: number;
+}) {
+	const minId = Math.min(userOneId, userTwoId);
+	const maxId = Math.max(userOneId, userTwoId);
+
+	return db
+		.selectFrom("Friendship")
+		.select("Friendship.id")
+		.where("Friendship.userOneId", "=", minId)
+		.where("Friendship.userTwoId", "=", maxId)
+		.executeTakeFirst();
+}

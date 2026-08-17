@@ -9,6 +9,7 @@ interface Props {
 	isActive?: boolean;
 	isDestructive?: boolean;
 	isDisabled?: boolean;
+	testId?: string;
 	children: Snippet;
 }
 
@@ -19,6 +20,7 @@ let {
 	isActive,
 	isDestructive,
 	isDisabled,
+	testId,
 	children,
 }: Props = $props();
 
@@ -45,6 +47,7 @@ function act() {
 		role="menuitem"
 		tabindex="-1"
 		aria-disabled={isDisabled || undefined}
+		data-testid={testId}
 		onclick={() => menu.close()}
 	>
 		{@render content()}
@@ -56,6 +59,7 @@ function act() {
 		role="menuitem"
 		tabindex="-1"
 		aria-disabled={isDisabled || undefined}
+		data-testid={testId}
 		onclick={act}
 	>
 		{@render content()}

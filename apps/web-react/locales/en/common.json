@@ -372,6 +372,8 @@
 	"chat.newMessages": "New messages",
 	"chat.sidebar.title": "Chat",
 	"chat.sidebar.noActiveChats": "No active chats",
+	"chat.sidebar.inactive": "Inactive",
+	"chat.room.scrim": "Scrim",
 	"fc.title": "Friend code",
 	"fc.whereToFind": "Find your friend code on your Nintendo Switch (2)",
 	"fc.onceSetStaffOnly": "Once set, only a member of staff can change it",

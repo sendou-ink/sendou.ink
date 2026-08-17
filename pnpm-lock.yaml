@@ -67,6 +67,9 @@ importers:
       valibot:
         specifier: ^1.4.2
         version: 1.4.2(typescript@6.0.3)
+      web-haptics:
+        specifier: 0.0.6
+        version: 0.0.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(svelte@5.56.9)
     devDependencies:
       '@inlang/paraglide-js':
         specifier: ^2.24.1
