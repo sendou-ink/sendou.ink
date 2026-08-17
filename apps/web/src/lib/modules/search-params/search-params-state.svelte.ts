@@ -9,38 +9,33 @@ import * as SearchParams from "./search-params.ts";
 
 type AnyShape = Record<string, ParamDef<any>>;
 
-interface SetSearchParamsOptions {
-	/** Overrides the write channel derived from the written params' `loader`. */
-	loader?: boolean;
-}
-
 /**
  * Typed search params state for a whole definition.
  *
  * `current` tracks the URL reactively. Writes are merges: params not mentioned
  * are preserved, declared `resets` are applied and values equal to their
- * default are removed from the URL. If any written param is `loader: true` the
- * batch writes through one replace navigation (queries keyed on the parsed
- * values rerun exactly when a decoded value changed), otherwise through a
- * shallow navigation that reruns nothing. A write known not to change query
- * data can force the latter with `{ loader: false }`.
+ * default are removed from the URL. Every write is one shallow replace
+ * navigation — it reruns nothing by itself. Queries are keyed on their
+ * (decoded) args, so a write refetches exactly the queries whose args a
+ * component derives from the changed params.
  */
 export function searchParamsState<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
 ) {
+	// shallow navigations leave page.url stale; their target is page.shallow.url
 	const relevantSearch = $derived(
-		SearchParams.pickRelevantSearch(definition.keys, page.url.search),
+		SearchParams.pickRelevantSearch(
+			definition.keys,
+			(page.shallow?.url ?? page.url).search,
+		),
 	);
 	const values = $derived(
 		definition.parse(new URLSearchParams(relevantSearch)),
 	);
 
-	function set(
-		updates: Partial<SearchParamsValues<Shape>>,
-		opts?: SetSearchParamsOptions,
-	) {
+	function set(updates: Partial<SearchParamsValues<Shape>>) {
 		const current = new URLSearchParams(window.location.search);
-		const { next, navigationNeeded } = SearchParams.applyToSearchParams(
+		const next = SearchParams.applyToSearchParams(
 			definition,
 			current,
 			updates,
@@ -51,11 +46,7 @@ export function searchParamsState<Shape extends AnyShape>(
 
 		const url = `${window.location.pathname}${queryString ? `?${queryString}` : ""}${window.location.hash}`;
 
-		void goto(url, {
-			replace: true,
-			reset: false,
-			shallow: !(opts?.loader ?? navigationNeeded),
-		});
+		void goto(url, { replace: true, reset: false, shallow: true });
 	}
 
 	return {

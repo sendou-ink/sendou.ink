@@ -12,32 +12,26 @@ const testDefinition = SearchParams.define({
 		v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
 		{
 			default: 24,
-			loader: true,
 		},
 	),
 	name: SP.param(v.pipe(v.string(), v.maxLength(20)), {
 		default: "",
-		loader: true,
 	}),
-	enabled: SP.param(v.boolean(), { default: false, loader: false }),
+	enabled: SP.param(v.boolean(), { default: false }),
 	mode: SP.param(v.picklist(["TW", "SZ", "TC"]), {
 		default: "TW",
-		loader: true,
 	}),
 	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
-		loader: true,
 	}),
 	ids: SP.param(v.array(v.pipe(v.number(), v.integer(), v.minValue(1))), {
 		default: [],
-		loader: false,
 	}),
 	filters: SP.json(
 		v.object({ minValue: v.number(), tags: v.array(v.string()) }),
-		{ default: { minValue: 0, tags: [] }, loader: true, resets: ["limit"] },
+		{ default: { minValue: 0, tags: [] }, resets: ["limit"] },
 	),
 	blob: SP.json(v.object({ text: v.string() }), {
 		default: { text: "" },
-		loader: false,
 		compress: true,
 	}),
 });
@@ -121,7 +115,6 @@ describe("SearchParams.define", () => {
 		const definitionWithModes = SearchParams.define({
 			modes: SP.param(v.array(v.picklist(["SZ", "TC", "RM", "CB"])), {
 				default: ["SZ", "TC", "RM", "CB"],
-				loader: false,
 			}),
 		});
 
@@ -152,7 +145,6 @@ describe("SearchParams.define", () => {
 		expect(() =>
 			SP.param(v.object({ a: v.string() }) as any, {
 				default: { a: "" },
-				loader: true,
 			}),
 		).toThrow(/derive/);
 		expect(() =>
@@ -163,25 +155,21 @@ describe("SearchParams.define", () => {
 				) as any,
 				{
 					default: 0,
-					loader: true,
 				},
 			),
 		).toThrow(/derive/);
 		expect(() =>
 			SP.param(v.array(v.array(v.number())) as any, {
 				default: [],
-				loader: true,
 			}),
 		).toThrow(/derive/);
 	});
 
 	test("defaults v.nullable() params to null without declaring it", () => {
 		const omitted = SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
-			loader: true,
 		});
 		const declared = SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
 			default: null,
-			loader: true,
 		});
 
 		expect(omitted.default).toBeNull();
@@ -193,10 +181,10 @@ describe("SearchParams.define", () => {
 
 	test("rejects v.optional() and non-null defaults for v.nullable()", () => {
 		expect(() =>
-			SP.param(v.optional(v.number()) as any, { default: 1, loader: true }),
+			SP.param(v.optional(v.number()) as any, { default: 1 }),
 		).toThrow(/nullable/);
 		expect(() =>
-			SP.param(v.nullable(v.number()), { default: 1 as any, loader: true }),
+			SP.param(v.nullable(v.number()), { default: 1 as any }),
 		).toThrow(/null as its default/);
 	});
 
@@ -210,7 +198,7 @@ describe("SearchParams.define", () => {
 			encode: (date) => date!.toISOString(),
 		};
 		const customDefinition = SearchParams.define({
-			from: SP.custom(isoDate, { default: null, loader: true }),
+			from: SP.custom(isoDate, { default: null }),
 		});
 
 		const value = new Date("2024-05-01T12:00:00.000Z");
@@ -228,7 +216,7 @@ describe("SearchParams.define", () => {
 	test("rejects resets pointing at unknown params", () => {
 		expect(() =>
 			SearchParams.define({
-				a: SP.param(v.number(), { default: 0, loader: true, resets: ["b"] }),
+				a: SP.param(v.number(), { default: 0, resets: ["b"] }),
 			}),
 		).toThrow(/unknown param/);
 	});
@@ -320,7 +308,6 @@ describe("SearchParams.href", () => {
 		const definitionWithDefault = SearchParams.define({
 			modes: SP.param(v.array(v.picklist(["SZ", "TC"])), {
 				default: ["SZ", "TC"],
-				loader: false,
 			}),
 		});
 
@@ -335,7 +322,7 @@ describe("SearchParams.href", () => {
 
 describe("SearchParams.applyToSearchParams", () => {
 	test("preserves params outside the definition", () => {
-		const { next } = SearchParams.applyToSearchParams(
+		const next = SearchParams.applyToSearchParams(
 			testDefinition,
 			new URLSearchParams("unrelated=yes&limit=50"),
 			{ mode: "SZ" },
@@ -347,7 +334,7 @@ describe("SearchParams.applyToSearchParams", () => {
 	});
 
 	test("applies declared resets", () => {
-		const { next } = SearchParams.applyToSearchParams(
+		const next = SearchParams.applyToSearchParams(
 			testDefinition,
 			new URLSearchParams("limit=50&enabled=true"),
 			{ filters: { minValue: 1, tags: [] } },
@@ -358,7 +345,7 @@ describe("SearchParams.applyToSearchParams", () => {
 	});
 
 	test("does not reset a param written in the same batch", () => {
-		const { next } = SearchParams.applyToSearchParams(
+		const next = SearchParams.applyToSearchParams(
 			testDefinition,
 			new URLSearchParams(),
 			{ limit: 50, filters: { minValue: 1, tags: ["a"] } },
@@ -368,27 +355,12 @@ describe("SearchParams.applyToSearchParams", () => {
 	});
 
 	test("removes params written back to their default", () => {
-		const { next } = SearchParams.applyToSearchParams(
+		const next = SearchParams.applyToSearchParams(
 			testDefinition,
 			new URLSearchParams("mode=SZ"),
 			{ mode: "TW" },
 		);
 
 		expect(next.has("mode")).toBe(false);
-	});
-
-	test("needs navigation exactly when a loader: true param is written", () => {
-		expect(
-			SearchParams.applyToSearchParams(testDefinition, new URLSearchParams(), {
-				enabled: true,
-				ids: [1],
-			}).navigationNeeded,
-		).toBe(false);
-		expect(
-			SearchParams.applyToSearchParams(testDefinition, new URLSearchParams(), {
-				enabled: true,
-				mode: "SZ",
-			}).navigationNeeded,
-		).toBe(true);
 	});
 });

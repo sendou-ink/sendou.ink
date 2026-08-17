@@ -6,6 +6,7 @@ import {
 } from "#lib/utils/compression.ts";
 
 // xxx: check location, do we even want "modules" or just packages
+// xxx: remove the migration comment
 
 /**
  * URL search param definitions: one `define()` per route or feature drives
@@ -13,6 +14,9 @@ import {
  * app's module with valibot in place of zod; the `shouldRevalidate` member is
  * gone because remote queries are keyed on their (decoded) args — an URL write
  * that decodes to the same values reuses the cached query instead of refetching.
+ * The React module's per-param `loader` flag is gone for the same reason:
+ * whether a param change refetches is decided by which decoded values the
+ * component wires into query args, so every write is a shallow navigation.
  */
 
 const COMPRESSED_PREFIX = "lz~";
@@ -30,8 +34,6 @@ type EncodeMode = "canonical" | "compact";
 type AnyValiSchema = v.BaseSchema<unknown, unknown, v.BaseIssue<unknown>>;
 
 interface ParamOptionsBase {
-	/** Whether changing this param must rerun the route's queries. `false` params write through shallow navigation only. */
-	loader: boolean;
 	/** Param keys reset to their defaults whenever this param is written. */
 	resets?: string[];
 	/** The param's canonical encoding is the compressed form. Only for params whose values are inherently large. */
@@ -59,7 +61,6 @@ type ResolvedParamOptions<T> = ParamOptionsBase & { default: T };
 
 export interface ParamDef<T> {
 	default: T;
-	loader: boolean;
 	resets: string[];
 	compress: boolean;
 	timeDependent: boolean;
@@ -185,9 +186,8 @@ export function applyToSearchParams<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
 	current: URLSearchParams,
 	updates: Partial<SearchParamsValues<Shape>>,
-): { next: URLSearchParams; navigationNeeded: boolean } {
+): URLSearchParams {
 	const next = new URLSearchParams(current);
-	let navigationNeeded = false;
 
 	const updatedKeys = definition.keys.filter((key) => key in updates);
 
@@ -199,25 +199,17 @@ export function applyToSearchParams<Shape extends AnyShape>(
 	}
 
 	for (const key of updatedKeys) {
-		const def = definition.shape[key];
-		if (def.loader) {
-			navigationNeeded = true;
-		}
-
 		next.delete(key);
-		for (const encoded of encodeParam(def, updates[key])) {
+		for (const encoded of encodeParam(definition.shape[key], updates[key])) {
 			next.append(key, encoded);
 		}
 	}
 
 	for (const resetKey of resetKeys) {
-		if (definition.shape[resetKey].loader && next.has(resetKey)) {
-			navigationNeeded = true;
-		}
 		next.delete(resetKey);
 	}
 
-	return { next, navigationNeeded };
+	return next;
 }
 
 /**
@@ -310,7 +302,7 @@ export const SP = {
 				v.minValue(1),
 				v.maxValue(opts?.max ?? DEFAULT_MAX_PAGE),
 			),
-			{ default: 1, loader: true, resets: opts?.resets },
+			{ default: 1, resets: opts?.resets },
 		);
 	},
 
@@ -377,11 +369,10 @@ function baseDef<T>(
 	opts: ResolvedParamOptions<T>,
 ): Pick<
 	ParamDef<T>,
-	"default" | "loader" | "resets" | "compress" | "timeDependent" | "decodeCache"
+	"default" | "resets" | "compress" | "timeDependent" | "decodeCache"
 > {
 	return {
 		default: opts.default,
-		loader: opts.loader,
 		resets: opts.resets ?? [],
 		compress: opts.compress ?? false,
 		timeDependent: opts.timeDependent ?? false,

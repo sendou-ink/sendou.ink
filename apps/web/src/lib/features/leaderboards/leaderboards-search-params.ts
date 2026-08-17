@@ -6,9 +6,7 @@ import { LEADERBOARD_TYPES } from "./leaderboards-constants.ts";
 export const leaderboardsSearchParams = SearchParams.define({
 	type: SP.param(v.picklist(LEADERBOARD_TYPES), {
 		default: LEADERBOARD_TYPES[0],
-		loader: true,
 	}),
 	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
-		loader: true,
 	}),
 });
