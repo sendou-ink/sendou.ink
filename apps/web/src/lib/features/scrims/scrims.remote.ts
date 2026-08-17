@@ -1,3 +1,4 @@
+import { error } from "@sveltejs/kit";
 import invariant from "@sendou/utils/invariant";
 import { logger } from "@sendou/utils/logger";
 import { assertUnreachable } from "@sendou/utils/types";
@@ -174,11 +175,11 @@ async function scrimSnapshot(scrimPostId: number) {
 	);
 
 	if (!Scrim.isAccepted(post)) {
-		errorToast("Scrim is not accepted");
+		error(404, "Not found");
 	}
 
 	if (!Scrim.isParticipating(post, user.id) && !user.roles.includes("STAFF")) {
-		errorToast("Not a participant of this scrim");
+		error(403, "Forbidden");
 	}
 
 	// visiting the page addresses these notifications
