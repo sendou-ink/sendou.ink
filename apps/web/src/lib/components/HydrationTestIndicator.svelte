@@ -17,11 +17,21 @@ function patchFetchOnce() {
 					? input.href
 					: input.url;
 		const isAppRequest = url.includes("/_app/") || url.startsWith("/");
-		if (isAppRequest) pendingRemoteRequests++;
+		// deferred a microtask: a query created inside a $derived fetches
+		// synchronously, and mutating state mid-derived is an error
+		if (isAppRequest) {
+			queueMicrotask(() => {
+				pendingRemoteRequests++;
+			});
+		}
 		try {
 			return await originalFetch(input, init);
 		} finally {
-			if (isAppRequest) pendingRemoteRequests--;
+			if (isAppRequest) {
+				queueMicrotask(() => {
+					pendingRemoteRequests--;
+				});
+			}
 		}
 	};
 }

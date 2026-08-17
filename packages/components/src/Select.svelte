@@ -323,7 +323,7 @@ const anchorName = `--select-anchor-${uid}`;
 		onkeydown={onPopoverKeydown}
 		tabindex="-1"
 	>
-		{#if search}
+		{#if search && open}
 			<div class="searchField" data-empty={searchValue === "" ? "true" : undefined}>
 				<svg
 					class="icon"
@@ -374,7 +374,13 @@ const anchorName = `--select-anchor-${uid}`;
 				</button>
 			</div>
 		{/if}
-		<div class="listBox scrollbar" role="listbox" aria-labelledby={labelId}>
+		<!-- labelled only while open so a closed select exposes exactly one
+		     element under its label (the trigger) to queries -->
+		<div
+			class="listBox scrollbar"
+			role="listbox"
+			aria-labelledby={open ? labelId : undefined}
+		>
 			{@render children()}
 			{#if !hasVisibleItems}
 				<div class="noResults">{noResultsText}</div>

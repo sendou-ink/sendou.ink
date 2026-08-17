@@ -38,7 +38,7 @@ export async function startServers(
 		const serverProcess = spawn(
 			process.execPath,
 			isSvelteApp
-				? ["./build/index.js"]
+				? ["./scripts/e2e-server.mjs"]
 				: [
 						"./node_modules/@react-router/serve/bin.cjs",
 						"./build/server/index.js",
@@ -55,6 +55,9 @@ export async function startServers(
 					// produced by its seed scripts)
 					DB_PATH: isSvelteApp ? `${config.webReactDir}/${dbFile}` : dbFile,
 					PORT: String(port),
+					// the e2e server shim + this header make adapter-node derive the
+					// per-server http origin (remote-function CSRF compares against it)
+					PROTOCOL_HEADER: "x-forwarded-proto",
 					DISCORD_CLIENT_ID: "123",
 					DISCORD_CLIENT_SECRET: "secret",
 					SESSION_SECRET: "secret",

@@ -128,7 +128,9 @@ const triggerProps: MenuTriggerProps = {
 	onkeydown={onPopoverKeydown}
 >
 	<div class="itemsContainer" role="menu">
-		{@render children()}
+		{#if open}
+			{@render children()}
+		{/if}
 	</div>
 </div>
 

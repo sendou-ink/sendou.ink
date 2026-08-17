@@ -81,7 +81,9 @@ const triggerProps: PopoverTriggerProps = {
 	tabindex="-1"
 	ontoggle={onPopoverToggle}
 >
-	{@render children()}
+	{#if open}
+		{@render children()}
+	{/if}
 </div>
 
 <style>

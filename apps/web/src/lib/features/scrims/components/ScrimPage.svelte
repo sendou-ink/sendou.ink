@@ -14,11 +14,13 @@ interface Props {
 
 let { scrimPostId }: Props = $props();
 
-const data = $derived(await getScrim({ scrimPostId }));
-
+// context must be provided before the first await of an async component; the
+// getter closes over `data` which resolves before anything renders
 setUserCardContext({
 	userCards: () => data.userCards,
 });
+
+const data = $derived(await getScrim({ scrimPostId }));
 
 // the layout's chat sidebar auto-opens this scrim's room
 $effect(() => {

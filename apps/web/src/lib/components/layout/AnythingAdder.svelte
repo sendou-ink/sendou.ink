@@ -54,7 +54,7 @@ const items = $derived.by(() => {
 			</Button>
 		{/snippet}
 		{#each items as item (item.id)}
-			<MenuItem href={item.href}>
+			<MenuItem href={item.href} testId={`menu-item-${item.id}`}>
 				{#snippet icon()}
 					<Image path={navIconUrl(item.icon)} alt="" width={20} height={20} />
 				{/snippet}

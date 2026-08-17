@@ -23,6 +23,12 @@ const user = $derived(loggedInUser());
 
 const params = searchParamsState(scrimsSearchParams);
 
+// context must be provided before the first await of an async component; the
+// getter closes over `data` which resolves before anything renders
+setUserCardContext({
+	userCards: () => data.userCards,
+});
+
 const data = $derived(
 	await getScrimPosts({
 		weekdayTimes: params.current.weekdayTimes,
@@ -31,10 +37,6 @@ const data = $derived(
 		useDefaults: params.current.useDefaults,
 	}),
 );
-
-setUserCardContext({
-	userCards: () => data.userCards,
-});
 
 const autoScrollToPostId = $derived(params.current.pendingRequestPostId);
 

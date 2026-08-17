@@ -178,7 +178,7 @@ async function globalSetup(config: FullConfig) {
 		const serverProcess = spawn(
 			process.execPath,
 			TARGET_APP === "web"
-				? [`${WEB_APP_DIR}/build/index.js`]
+				? [`${WEB_APP_DIR}/scripts/e2e-server.mjs`]
 				: [
 						"./node_modules/@react-router/serve/bin.cjs",
 						"./build/server/index.js",
@@ -191,6 +191,9 @@ async function globalSetup(config: FullConfig) {
 					// factories and migrations run through this app's code)
 					DB_PATH: TARGET_APP === "web" ? `${process.cwd()}/${dbPath}` : dbPath,
 					PORT: String(port),
+					// the e2e server shim + this header make adapter-node derive the
+					// per-worker http origin (remote-function CSRF compares against it)
+					PROTOCOL_HEADER: "x-forwarded-proto",
 					DISCORD_CLIENT_ID: "123",
 					DISCORD_CLIENT_SECRET: "secret",
 					SESSION_SECRET: "secret",

@@ -14,15 +14,12 @@ interface Props {
 
 let { notification, unseen, onClose }: Props = $props();
 
-const text = $derived.by(() => {
-	let message = dynamicMessage(
+const text = $derived(
+	dynamicMessage(
 		`common_notifications_text_${notification.type}`,
-	);
-	for (const [key, value] of Object.entries(notification.meta ?? {})) {
-		message = message.replaceAll(`{${key}}`, String(value));
-	}
-	return message;
-});
+		notification.meta ?? {},
+	),
+);
 </script>
 
 <a

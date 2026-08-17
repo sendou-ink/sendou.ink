@@ -162,7 +162,10 @@ export async function selectUser({
 }) {
 	const comboboxButton = (within ?? page).getByLabel(labelName, { exact });
 	const searchInput = page.getByTestId("user-search-input");
-	const option = page.getByTestId("user-search-item").first();
+	const option = page
+		.getByTestId("user-search-item")
+		.filter({ visible: true })
+		.first();
 
 	await expect(comboboxButton).not.toBeDisabled();
 
@@ -179,7 +182,9 @@ export async function selectTournament({
 	page: Page;
 	query: string;
 }) {
-	const item = page.getByTestId("tournament-search-item");
+	const item = page
+		.getByTestId("tournament-search-item")
+		.filter({ visible: true });
 
 	await page.getByRole("button", { name: /Tournament search/i }).click();
 	await page.getByTestId("tournament-search-input").fill(query);

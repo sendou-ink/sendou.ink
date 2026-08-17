@@ -25,14 +25,11 @@ export default defineConfig(({ mode }) => ({
 			compilerOptions: { experimental: { async: true } },
 			experimental: { remoteFunctions: true },
 			// e2e/differ tooling POSTs (impersonate, theme) carry no Origin header,
-			// and the adapter guesses https:// when no proxy headers are present, so
-			// origin checks can never pass against the http test servers
-			...(IS_E2E_BUILD
-				? {
-						csrf: { trustedOrigins: ["*"] },
-						paths: { origin: process.env.VITE_SITE_DOMAIN },
-					}
-				: {}),
+			// so the form CSRF check can never pass against the http test servers.
+			// The per-server origin itself comes from adapter-node's ORIGIN env var
+			// (one build serves many worker ports) — remote-function CSRF checks
+			// ignore trustedOrigins and compare against that origin.
+			...(IS_E2E_BUILD ? { csrf: { trustedOrigins: ["*"] } } : {}),
 		}),
 	],
 	test: {
