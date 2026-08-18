@@ -22,20 +22,32 @@ const ianaTimezone = z
  * timezone, so it has to be written client-side before the server can know it.
  */
 export function writeViewerTimezoneCookie() {
-	const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-	if (!timezone) return;
+	try {
+		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
+		if (!timezone) return;
 
-	void cookieStore
-		.set({
-			name: COOKIE_NAME,
-			value: timezone,
-			path: "/",
-			expires: Date.now() + TEN_YEARS_IN_MS,
-			sameSite: "lax",
-		})
-		.catch((error) =>
-			logger.error("Failed to store the timezone cookie", error),
-		);
+		if (typeof cookieStore === "undefined") {
+			// biome-ignore lint/suspicious/noDocumentCookie: the Cookie Store API is only available in WebKit from iOS/Safari 18.4; this fallback keeps older iPhones working
+			document.cookie = `${COOKIE_NAME}=${timezone}; path=/; max-age=${
+				TEN_YEARS_IN_MS / 1000
+			}; samesite=lax`;
+			return;
+		}
+
+		void cookieStore
+			.set({
+				name: COOKIE_NAME,
+				value: timezone,
+				path: "/",
+				expires: Date.now() + TEN_YEARS_IN_MS,
+				sameSite: "lax",
+			})
+			.catch((error) =>
+				logger.error("Failed to store the timezone cookie", error),
+			);
+	} catch (error) {
+		logger.error("Failed to store the timezone cookie", error);
+	}
 }
 
 /**
