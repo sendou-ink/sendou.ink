@@ -67,6 +67,54 @@ Auth: `requireUser()` / `getUser()` / `actorId()` from
 `#lib/features/auth/user.server.ts` read `event.locals.user`, resolved once per
 request in `hooks.server.ts`. No AsyncLocalStorage.
 
+## Component-owned data (`query.batch`)
+
+From `UserCard`, for a widget rendered many times per page whose data the React
+loader gathered for it.
+
+**Before** (React Router): every loader that renders user cards collected the
+ids on the page, called `UserCardRepository.findAllByUserIds`, spread
+`{ userCards }` into its data, and a context handed the map down so each card
+could look itself up by id.
+
+**After** (SvelteKit): the component asks for its own row and Kit collapses the
+calls. `query.batch` collects every call made in the same macrotask (the whole
+page, SSR included) into one request and one server invocation, whose callback
+returns a per-argument lookup:
+
+```ts
+// user-card.remote.ts
+export const getUserCard = query.batch(
+	v.object({ userId: id, withFriendCode: v.boolean() }),
+	async (args) => {
+		const { userCards } = await UserCardRepository.findAllByUserIds({
+			userIds: R.unique(args.map((arg) => arg.userId)),
+		});
+
+		return ({ userId }) => userCards.get(userId);
+	},
+);
+```
+
+```svelte
+<!-- UserCard.svelte -->
+const data = $derived(await getUserCard({ userId, withFriendCode }));
+```
+
+Pages then render `<UserCard userId={...}>` and load nothing for it; the widget
+hands its resolved row to its `children` snippet
+(`Snippet<[UserCardData | undefined]>`) for callers that need a piece of it
+outside the popover. Prefer this over threading data (or a context) through
+pages when the same widget appears across many unrelated routes.
+
+Loader-supplied authorization does not survive the move: an argument like
+`withFriendCode` is a *request* the client can forge, so whatever the route
+guard used to prove (participant, staff) the batch callback must re-derive for
+the viewer — here `ScrimPostRepository.findUserIdsSharingAcceptedScrim`.
+
+`query.batch` throws when prerendering; a prerendered route cannot render a
+component that uses one.
+
 ## Write path (action → command), the golden pattern
 
 From the `/scrims` slice (`scrims.remote.ts`):
@@ -303,9 +351,9 @@ Where parity matters, out-specify it with a tripled class
   remote-function CSRF (which ignores `csrf.trustedOrigins`) sees the right
   per-port origin.
 - Context in async components must be set *before* the first `await`
-  (`set_context_after_init` is fatal in prod). Pattern: `setUserCardContext({
-  userCards: () => data.userCards })` above `const data = $derived(await …)` —
-  the getter only runs after the await resolves.
+  (`set_context_after_init` is fatal in prod). Pattern: `setSomeContext({ value:
+  () => data.value })` above `const data = $derived(await …)` — the getter only
+  runs after the await resolves.
 - Mutating `$state` synchronously inside a `$derived`-triggered fetch is a
   `state_unsafe_mutation` — the e2e fetch-counter patch defers its counter
   writes a microtask (`HydrationTestIndicator.svelte`).

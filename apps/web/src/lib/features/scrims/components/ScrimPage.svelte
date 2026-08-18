@@ -3,7 +3,6 @@ import { untrack } from "svelte";
 import Main from "#lib/components/Main.svelte";
 import MatchPage from "#lib/components/match-page/MatchPage.svelte";
 import { chatUi } from "#lib/features/chat/chat-state.svelte.ts";
-import { setUserCardContext } from "#lib/features/user-page/user-card-context.ts";
 import { getScrim } from "../scrims.remote.ts";
 import ScrimMatchBanner from "./ScrimMatchBanner.svelte";
 import ScrimMatchHeader from "./ScrimMatchHeader.svelte";
@@ -14,13 +13,6 @@ interface Props {
 }
 
 let { scrimPostId }: Props = $props();
-
-// xxx: ???
-// context must be provided before the first await of an async component; the
-// getter closes over `data` which resolves before anything renders
-setUserCardContext({
-	userCards: () => data.userCards,
-});
 
 const data = $derived(await getScrim({ scrimPostId }));
 

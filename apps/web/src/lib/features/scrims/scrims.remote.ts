@@ -19,7 +19,6 @@ import { resolveNotifications } from "#lib/features/notifications/core/resolve.s
 import * as SQGroupRepository from "#lib/features/sendouq/SQGroupRepository.server.ts";
 import * as TeamRepository from "#lib/features/team/TeamRepository.server.ts";
 import { getMemberRoleType } from "#lib/features/team/team-utils.ts";
-import * as UserCardRepository from "#lib/features/user-page/UserCardRepository.server.ts";
 import * as UserRepository from "#lib/features/user-page/UserRepository.server.ts";
 import { requirePermission } from "#lib/modules/permissions/guards.server.ts";
 import * as Events from "#lib/server/events.ts";
@@ -114,19 +113,7 @@ export const getScrimPosts = query(
 				}),
 			}));
 
-		const cardUserIds = R.unique(
-			posts.flatMap((post) => [
-				...post.users.map((postUser) => postUser.id),
-				...post.requests.flatMap((request) =>
-					request.users.map((requestUser) => requestUser.id),
-				),
-			]),
-		);
-
 		return {
-			...(await UserCardRepository.findAllByUserIds({
-				userIds: cardUserIds,
-			})),
 			posts: dividePosts(posts, user?.id),
 			teams: user ? await TeamRepository.findAllByMemberUserId(user.id) : [],
 			filters,
@@ -212,10 +199,6 @@ async function scrimSnapshot(scrimPostId: number) {
 	});
 
 	return {
-		...(await UserCardRepository.findAllByUserIds({
-			userIds: participantIds,
-			include: { friendCode: true },
-		})),
 		post,
 		chatRoomId:
 			user.roles.includes("STAFF") || participantIds.includes(user.id)

@@ -6,7 +6,6 @@ import * as R from "remeda";
 import LocaleTime from "#lib/components/LocaleTime.svelte";
 import Main from "#lib/components/Main.svelte";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
-import { setUserCardContext } from "#lib/features/user-page/user-card-context.ts";
 import { searchParamsState } from "#lib/modules/search-params/search-params-state.svelte.ts";
 import { m } from "#lib/paraglide/messages.js";
 import { databaseTimestampToDate } from "#lib/utils/dates.ts";
@@ -22,12 +21,6 @@ import ScrimsFilters from "./ScrimsFilters.svelte";
 const user = $derived(loggedInUser());
 
 const params = searchParamsState(scrimsSearchParams);
-
-// context must be provided before the first await of an async component; the
-// getter closes over `data` which resolves before anything renders
-setUserCardContext({
-	userCards: () => data.userCards,
-});
 
 const data = $derived(
 	await getScrimPosts({

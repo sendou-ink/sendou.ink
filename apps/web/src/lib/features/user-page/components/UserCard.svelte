@@ -23,13 +23,15 @@ import Placement from "#lib/components/Placement.svelte";
 import TierImage from "#lib/components/TierImage.svelte";
 import type { XRankPlacementRegion } from "#lib/db/tables-json.ts";
 import { loggedInUser } from "#lib/features/auth/user-state.ts";
-import { getUserCardContext } from "#lib/features/user-page/user-card-context.ts";
 import type {
 	UserCardData,
 	UserCardFriendship,
 	UserCardStat,
 } from "#lib/features/user-page/user-card-types.ts";
-import { getUserCardFriendship } from "#lib/features/user-page/user-card.remote.ts";
+import {
+	getUserCard,
+	getUserCardFriendship,
+} from "#lib/features/user-page/user-card.remote.ts";
 import { m } from "#lib/paraglide/messages.js";
 import {
 	brandImageUrl,
@@ -54,30 +56,24 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 };
 
 interface Props {
-	userId?: number;
-	data?: UserCardData;
+	userId: number;
+	/** Ask for the user's friend code; the server only sends it to viewers entitled to it. */
+	withFriendCode?: boolean;
 	/** Fetch and show the mutual friends row. Off by default. */
 	withMutualFriends?: boolean;
-	children: Snippet;
+	children: Snippet<[UserCardData | undefined]>;
 }
 
 let {
 	userId,
-	data: dataProp,
+	withFriendCode = false,
 	withMutualFriends = false,
 	children,
 }: Props = $props();
 
-const context = getUserCardContext();
+const data = $derived(await getUserCard({ userId, withFriendCode }));
 
-const data = $derived(
-	dataProp ??
-		(typeof userId === "number"
-			? context?.userCards()?.get(userId)
-			: undefined),
-);
-
-const isOwnCard = $derived(loggedInUser()?.id === data?.id);
+const isOwnCard = $derived(loggedInUser()?.id === userId);
 const returnTo = $derived(`${page.url.pathname}${page.url.search}`);
 
 const stats = $derived(
@@ -101,11 +97,10 @@ function handleOpenChange(nextIsOpen: boolean) {
 	if (!nextIsOpen) return;
 	if (friendshipRequested) return;
 	if (isOwnCard) return;
-	const targetUserId = data?.id;
-	if (typeof targetUserId !== "number") return;
 
+	// xxx: do this properly
 	friendshipRequested = true;
-	getUserCardFriendship({ userId: targetUserId, withMutualFriends })
+	getUserCardFriendship({ userId, withMutualFriends })
 		.then((result) => {
 			friendship = result;
 		})
@@ -167,10 +162,8 @@ function customThemeStyle(customTheme: UserCardData["customTheme"]) {
 
 <!--
 @component
-Click-to-open trigger that shows a popover with the user's card. Card data is resolved by `userId`
-from the {@link UserCardContext} (set by pages whose queries spread `{ userCards }` from
-`UserCardRepository.findAllByUserIds`); pass `data` directly to bypass the lookup. When no card data
-exists for the user, the `children` are rendered plain without a trigger.
+Click-to-open trigger that shows a popover with the user's card. Card data is loaded by the card
+itself through the batched `getUserCard` query.
 
 Viewer-relative friendship data (`isFriend`) is lazy-loaded via the `getUserCardFriendship` remote
 query the first time the card opens. Mutual friends are only fetched and shown when
@@ -303,7 +296,7 @@ both the extra query and the row.
 {/snippet}
 
 {#if !data}
-	{@render children()}
+	{@render children(data)}
 {:else}
 	<Popover
 		{isOpen}
@@ -312,7 +305,7 @@ both the extra query and the row.
 	>
 		{#snippet trigger(triggerProps)}
 			<button type="button" class="trigger" {...triggerProps}>
-				{@render children()}
+				{@render children(data)}
 			</button>
 		{/snippet}
 		<div

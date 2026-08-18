@@ -649,3 +649,71 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 			};
 		});
 }
+
+// xxx: perf test+add to be bench script
+/**
+ * Of `otherUserIds`, the ones who participate in an accepted (and not canceled) scrim that `userId`
+ * also participates in — i.e. the people they are actually scheduled to play with. Used to check
+ * whether a viewer has a reason to be shown someone's friend code.
+ */
+export async function findUserIdsSharingAcceptedScrim({
+	userId,
+	otherUserIds,
+}: {
+	userId: number;
+	otherUserIds: Array<number>;
+}): Promise<Set<number>> {
+	if (otherUserIds.length === 0) return new Set();
+
+	const postIdsOfUser = db
+		.selectFrom("ScrimPostUser")
+		.select("ScrimPostUser.scrimPostId")
+		.where("ScrimPostUser.userId", "=", userId)
+		.union(
+			db
+				.selectFrom("ScrimPostRequest")
+				.innerJoin(
+					"ScrimPostRequestUser",
+					"ScrimPostRequestUser.scrimPostRequestId",
+					"ScrimPostRequest.id",
+				)
+				.select("ScrimPostRequest.scrimPostId")
+				.where("ScrimPostRequest.isAccepted", "=", 1)
+				.where("ScrimPostRequestUser.userId", "=", userId),
+		);
+
+	const rows = await db
+		.selectFrom("ScrimPost")
+		.innerJoin("ScrimPostUser", "ScrimPostUser.scrimPostId", "ScrimPost.id")
+		.innerJoin("ScrimPostRequest", (join) =>
+			join
+				.onRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+				.on("ScrimPostRequest.isAccepted", "=", 1),
+		)
+		.select("ScrimPostUser.userId")
+		.where("ScrimPost.canceledAt", "is", null)
+		.where("ScrimPost.id", "in", postIdsOfUser)
+		.where("ScrimPostUser.userId", "in", otherUserIds)
+		.union((eb) =>
+			eb
+				.selectFrom("ScrimPost")
+				.innerJoin(
+					"ScrimPostRequest",
+					"ScrimPostRequest.scrimPostId",
+					"ScrimPost.id",
+				)
+				.innerJoin(
+					"ScrimPostRequestUser",
+					"ScrimPostRequestUser.scrimPostRequestId",
+					"ScrimPostRequest.id",
+				)
+				.select("ScrimPostRequestUser.userId")
+				.where("ScrimPost.canceledAt", "is", null)
+				.where("ScrimPostRequest.isAccepted", "=", 1)
+				.where("ScrimPost.id", "in", postIdsOfUser)
+				.where("ScrimPostRequestUser.userId", "in", otherUserIds),
+		)
+		.execute();
+
+	return new Set(rows.map((row) => row.userId));
+}

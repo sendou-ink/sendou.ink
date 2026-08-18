@@ -23,7 +23,6 @@ import invariant from "@sendou/utils/invariant";
 import Avatar from "#lib/components/Avatar.svelte";
 import NoteAvatar from "#lib/components/NoteAvatar.svelte";
 import UserCard from "#lib/features/user-page/components/UserCard.svelte";
-import { getUserCardContext } from "#lib/features/user-page/user-card-context.ts";
 import { TAB_KEYS } from "./match-page-constants.ts";
 
 // xxx: the active-roster editing flow (canEditSubbedOut/defaultIsEditing/
@@ -36,8 +35,6 @@ interface Props {
 }
 
 let { teams }: Props = $props();
-
-const userCardContext = getUserCardContext();
 
 function defaultNameOf(team: RosterTabTeam) {
 	invariant(team.defaultName, "team or defaultName must be provided");
@@ -112,21 +109,20 @@ function defaultNameOf(team: RosterTabTeam) {
 {/snippet}
 
 {#snippet rosterMemberLink(member: RosterTabMember)}
-	{@const sentiment = userCardContext
-		?.userCards()
-		?.get(member.id)?.privateNote?.sentiment}
-	<UserCard userId={member.id}>
-		<span class="memberLink">
-			<NoteAvatar {sentiment} size="xs">
-				<Avatar user={member} size="xxs" />
-			</NoteAvatar>
-			<div class="memberNameStack">
-				<span>{member.username}</span>
-				{#if member.inGameName}
-					<span class="memberInGameName">{member.inGameName}</span>
-				{/if}
-			</div>
-		</span>
+	<UserCard userId={member.id} withFriendCode>
+		{#snippet children(card)}
+			<span class="memberLink">
+				<NoteAvatar sentiment={card?.privateNote?.sentiment} size="xs">
+					<Avatar user={member} size="xxs" />
+				</NoteAvatar>
+				<div class="memberNameStack">
+					<span>{member.username}</span>
+					{#if member.inGameName}
+						<span class="memberInGameName">{member.inGameName}</span>
+					{/if}
+				</div>
+			</span>
+		{/snippet}
 	</UserCard>
 {/snippet}
 
