@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { getUser, requireUser } from "#lib/features/auth/user.server.ts";
 import * as Events from "#lib/server/events.ts";
-import { command, query } from "$app/server";
+import { command, getRequestEvent, query } from "$app/server";
 import * as NotificationRepository from "./NotificationRepository.server.ts";
 import { notifyNotificationsChanged } from "./core/notify.server.ts";
 import { NOTIFICATIONS } from "./notifications-constants.ts";
@@ -22,9 +22,9 @@ export const getNotifications = query.live(async function* () {
 
 	yield await peek(user.id);
 
-	for await (const _ of Events.subscribe(
-		Events.notificationsChannel(user.id),
-	)) {
+	for await (const _ of Events.subscribe(Events.notificationsChannel(user.id), {
+		signal: getRequestEvent().request.signal,
+	})) {
 		yield await peek(user.id);
 	}
 });

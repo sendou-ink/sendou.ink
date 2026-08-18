@@ -22,6 +22,25 @@ export function roomLifecycle(
 	return "ARCHIVED";
 }
 
+/**
+ * When the room's lifecycle next advances without anything happening to it, or
+ * null once it is archived (the final state) or has no scheduled inactivity.
+ */
+export function nextLifecycleChangeAt(
+	inactiveAt: number | null,
+	now = new Date(),
+): Date | null {
+	if (inactiveAt === null) return null;
+
+	const inactiveDate = databaseTimestampToDate(inactiveAt);
+	if (now < inactiveDate) return inactiveDate;
+
+	const archivedDate = addHours(inactiveDate, CHAT.INACTIVE_TO_ARCHIVED_HOURS);
+	if (now < archivedDate) return archivedDate;
+
+	return null;
+}
+
 /** Messages can be sent while the room is active or inactive, never archived. */
 export function canSendToRoom(lifecycle: ChatRoomLifecycle) {
 	return lifecycle !== "ARCHIVED";

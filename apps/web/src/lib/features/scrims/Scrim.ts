@@ -1,5 +1,5 @@
 import { logger } from "@sendou/utils/logger";
-import { format, isWeekend } from "date-fns";
+import { addHours, format, isWeekend } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "#lib/server/db/tables.ts";
 import { databaseTimestampToDate } from "#lib/utils/dates.ts";
@@ -168,6 +168,20 @@ export function isTrackingLocked(
 	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
 	now: number = Date.now(),
 ): boolean {
+	const locksAt = trackingLocksAt(maps, mapLists);
+
+	return locksAt !== null && now > locksAt.getTime();
+}
+
+/**
+ * When map-by-map tracking auto-locks given the current activity, or null when
+ * tracking is not active. The moment can be in the past (tracking is locked
+ * already).
+ */
+export function trackingLocksAt(
+	maps: Pick<Tables["ScrimMap"], "reportedAt">[] = [],
+	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
+): Date | null {
 	const latestReported = R.firstBy(
 		maps.filter((m) => m.reportedAt !== null),
 		[(m) => m.reportedAt!, "desc"],
@@ -176,11 +190,12 @@ export function isTrackingLocked(
 
 	const referenceSeconds =
 		latestReported?.reportedAt ?? latestList?.updatedAt ?? null;
-	if (referenceSeconds === null) return false;
+	if (referenceSeconds === null) return null;
 
-	const elapsedHours = (now - referenceSeconds * 1000) / (60 * 60 * 1000);
-
-	return elapsedHours > SCRIM_TRACKING_AUTO_LOCK_HOURS;
+	return addHours(
+		databaseTimestampToDate(referenceSeconds),
+		SCRIM_TRACKING_AUTO_LOCK_HOURS,
+	);
 }
 
 /**

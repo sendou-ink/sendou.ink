@@ -7,9 +7,17 @@
  * Subscribers coalesce: publishes that land while the subscriber is busy
  * producing a snapshot collapse into one pending wake-up, so generators always
  * yield snapshots, never an event log.
+ *
+ * There is deliberately no periodic wake-up: SvelteKit's live-query transport
+ * writes its own `: keep-alive` SSE comment on an idle timer, so a quiet
+ * subscription does not need to build (and throw away) snapshots to hold the
+ * connection open. Snapshots that go stale purely with the passage of time —
+ * a chat room turning archived, scrim tracking auto-locking — instead pass
+ * `wakeAt` and get woken once, at the boundary.
  */
 
-const DEFAULT_HEARTBEAT_MS = 30_000;
+/** Node clamps longer delays to 1ms, which would spin; waking early is harmless. */
+const MAX_TIMEOUT_MS = 2_147_483_647;
 
 type Wake = () => void;
 
@@ -26,14 +34,28 @@ export function publish(channel: string) {
 }
 
 /**
- * Yields once per (coalesced) publish on the channel, and additionally on a
- * heartbeat interval so long-lived streams keep writing through proxies that
- * idle-timeout quiet connections. Unsubscribes when the consumer stops
- * iterating (client disconnect unwinds the generator via `finally`).
+ * Yields once per (coalesced) publish on the channel, until `signal` aborts.
+ *
+ * `signal` is required rather than optional because a generator parked on an
+ * `await` cannot be unwound: `return()` on it is queued until it next reaches a
+ * `yield`, so without the abort waking the sleep, a disconnected client's
+ * subscriber would stay in the channel forever.
+ *
+ * `wakeAt` is consulted before every sleep and may name the moment the
+ * consumer's latest snapshot goes stale on its own, waking it then as well; a
+ * deadline already in the past is ignored, since that transition is part of the
+ * snapshot just produced.
  */
 export async function* subscribe(
 	channel: string,
-	{ heartbeatMs = DEFAULT_HEARTBEAT_MS }: { heartbeatMs?: number } = {},
+	{
+		signal,
+		wakeAt,
+	}: {
+		/** Request abort signal, i.e. `getRequestEvent().request.signal`. */
+		signal: AbortSignal;
+		wakeAt?: () => Date | null;
+	},
 ): AsyncGenerator<void> {
 	let pending = false;
 	let wake: Wake | null = null;
@@ -51,15 +73,24 @@ export async function* subscribe(
 	wakes.add(listener);
 
 	try {
-		while (true) {
+		while (!signal.aborted) {
 			if (!pending) {
+				const staleInMs = msUntilStale(wakeAt?.() ?? null);
+				let timer: ReturnType<typeof setTimeout> | undefined;
+
 				await new Promise<void>((resolve) => {
-					wake = resolve;
-					if (heartbeatMs !== Number.POSITIVE_INFINITY) {
-						setTimeout(resolve, heartbeatMs).unref();
+					wake = () => resolve();
+					signal.addEventListener("abort", wake, { once: true });
+					if (staleInMs !== null) {
+						timer = setTimeout(wake, staleInMs).unref();
 					}
 				});
+
+				clearTimeout(timer);
+				if (wake) signal.removeEventListener("abort", wake);
 				wake = null;
+
+				if (signal.aborted) return;
 			}
 			pending = false;
 			yield;
@@ -70,6 +101,15 @@ export async function* subscribe(
 			channels.delete(channel);
 		}
 	}
+}
+
+function msUntilStale(deadline: Date | null) {
+	if (deadline === null) return null;
+
+	const delay = deadline.getTime() - Date.now();
+	if (delay <= 0) return null;
+
+	return Math.min(delay, MAX_TIMEOUT_MS);
 }
 
 /** Number of active subscribers on a channel (for tests & diagnostics). */

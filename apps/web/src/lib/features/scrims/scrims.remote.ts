@@ -38,7 +38,7 @@ import {
 } from "#lib/utils/respond.server.ts";
 import { id } from "#lib/utils/schemas.ts";
 import { toDBBoolean } from "#lib/utils/sql.ts";
-import { command, query, requested } from "$app/server";
+import { command, getRequestEvent, query, requested } from "$app/server";
 import * as Scrim from "./Scrim.ts";
 import * as ScrimMapByMap from "./ScrimMapByMap.ts";
 import * as ScrimMapListRepository from "./ScrimMapListRepository.server.ts";
@@ -159,10 +159,20 @@ export const getScrimsNewData = query(async () => {
 export const getScrim = query.live(
 	v.object({ scrimPostId: id }),
 	async function* ({ scrimPostId }) {
-		yield await scrimSnapshot(scrimPostId);
+		let snapshot = await scrimSnapshot(scrimPostId);
+		yield snapshot;
 
-		for await (const _ of Events.subscribe(Events.scrimChannel(scrimPostId))) {
-			yield await scrimSnapshot(scrimPostId);
+		for await (const _ of Events.subscribe(Events.scrimChannel(scrimPostId), {
+			signal: getRequestEvent().request.signal,
+			// tracking auto-locking is the one change nobody publishes
+			wakeAt: () =>
+				Scrim.trackingLocksAt(
+					snapshot.mapByMap.maps,
+					snapshot.mapByMap.mapLists,
+				),
+		})) {
+			snapshot = await scrimSnapshot(scrimPostId);
+			yield snapshot;
 		}
 	},
 );

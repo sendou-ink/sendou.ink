@@ -11,6 +11,7 @@ import {
 	participantIdsListFromAccepted,
 	sideDisplayName,
 	sideOfUser,
+	trackingLocksAt,
 } from "./Scrim.ts";
 
 type MockUser = { id: number };
@@ -576,5 +577,38 @@ describe("isTrackingLocked", () => {
 				now,
 			),
 		).toBe(false);
+	});
+});
+
+describe("trackingLocksAt", () => {
+	const ONE_HOUR_MS = 60 * 60 * 1000;
+	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
+
+	test("returns null when no map list submitted yet", () => {
+		expect(trackingLocksAt([], [])).toBeNull();
+	});
+
+	test("returns the auto-lock window past the list submission", () => {
+		const updatedAt = 1_000_000;
+		expect(trackingLocksAt([], [{ updatedAt }])).toEqual(
+			new Date(updatedAt * 1000 + lockWindowMs),
+		);
+	});
+
+	test("counts from the most recent reported map when there is one", () => {
+		const updatedAt = 1_000_000;
+		const reportedAt = updatedAt + 60 * 60;
+		expect(trackingLocksAt([{ reportedAt }], [{ updatedAt }])).toEqual(
+			new Date(reportedAt * 1000 + lockWindowMs),
+		);
+	});
+
+	test("returns a moment in the past once tracking is locked", () => {
+		const updatedAt = dateToDatabaseTimestamp(
+			new Date(Date.now() - lockWindowMs * 2),
+		);
+		expect(trackingLocksAt([], [{ updatedAt }])?.getTime()).toBeLessThan(
+			Date.now(),
+		);
 	});
 });

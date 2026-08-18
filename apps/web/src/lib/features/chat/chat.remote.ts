@@ -1,12 +1,17 @@
 import { error } from "@sveltejs/kit";
+import * as R from "remeda";
 import * as v from "valibot";
 import { getUser, requireUser } from "#lib/features/auth/user.server.ts";
 import * as Events from "#lib/server/events.ts";
 import { id } from "#lib/utils/schemas.ts";
-import { command, query } from "$app/server";
+import { command, getRequestEvent, query } from "$app/server";
 import { CHAT } from "./chat-constants.ts";
 import { publishChatRoom } from "./chat.server.ts";
-import { canSendToRoom, roomLifecycle } from "./chat-utils.ts";
+import {
+	canSendToRoom,
+	nextLifecycleChangeAt,
+	roomLifecycle,
+} from "./chat-utils.ts";
 import * as ChatRepository from "./ChatRepository.server.ts";
 
 /**
@@ -18,16 +23,24 @@ export const getChatRoom = query.live(
 	v.object({ chatRoomId: id }),
 	async function* ({ chatRoomId }) {
 		const user = requireUser();
-		await requireRoomMember(chatRoomId, user);
+		let room = await requireRoomMember(chatRoomId, user);
 
 		yield await roomSnapshot(chatRoomId);
 
 		for await (const _ of Events.subscribe(
 			Events.chatRoomChannel(chatRoomId),
+			{
+				signal: getRequestEvent().request.signal,
+				// the room turning inactive/archived is not published by anyone
+				wakeAt: () => nextLifecycleChangeAt(room.inactiveAt),
+			},
 		)) {
-			if (!(await ChatRepository.findRoomById(chatRoomId))) {
+			const currentRoom = await ChatRepository.findRoomById(chatRoomId);
+			if (!currentRoom) {
 				return;
 			}
+			room = currentRoom;
+
 			yield await roomSnapshot(chatRoomId);
 		}
 	},
@@ -63,14 +76,29 @@ export const getChatRooms = query.live(async function* () {
 		return;
 	}
 
-	yield await roomsSnapshot(user.id);
+	let snapshot = await roomsSnapshot(user.id);
+	yield snapshot;
 
 	for await (const _ of Events.subscribe(
 		Events.chatRoomsOfUserChannel(user.id),
+		{
+			signal: getRequestEvent().request.signal,
+			// rooms turn inactive, then drop off the list once archived, unpublished
+			wakeAt: () => earliestLifecycleChangeAt(snapshot.rooms),
+		},
 	)) {
-		yield await roomsSnapshot(user.id);
+		snapshot = await roomsSnapshot(user.id);
+		yield snapshot;
 	}
 });
+
+function earliestLifecycleChangeAt(rooms: { inactiveAt: number | null }[]) {
+	const changes = rooms
+		.map((room) => nextLifecycleChangeAt(room.inactiveAt))
+		.filter((changeAt) => changeAt !== null);
+
+	return R.firstBy(changes, (changeAt) => changeAt.getTime()) ?? null;
+}
 
 async function roomsSnapshot(userId: number) {
 	const rooms = await ChatRepository.findRoomsOfUser(userId);
