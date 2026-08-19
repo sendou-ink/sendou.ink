@@ -87,8 +87,9 @@ export const { create } = defineFactory({
 	applyOptions: async (tournament, { tier }: Options) => {
 		if (!tier) return;
 
-		await TournamentRepository.updateTournamentTier({
+		await TournamentRepository.upsertDivisionTier({
 			tournamentId: tournament.id,
+			bracketIdx: 0,
 			tier,
 		});
 	},

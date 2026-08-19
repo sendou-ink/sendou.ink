@@ -605,6 +605,19 @@ export interface SavedCalendarEvent {
 	createdAt: Generated<number>;
 }
 
+/**
+ * Tier of one division (= starting bracket) of a tournament, based on the skill of the teams that
+ * checked in to it. Tournaments where every team plays the same bracket have one row (bracket idx 0)
+ * matching `Tournament.tier`, tournaments with many starting brackets one row per division.
+ */
+export interface TournamentDivisionTier {
+	tournamentId: number;
+	/** Idx of the starting bracket in `Tournament.settings.bracketProgression`. */
+	bracketIdx: number;
+	/** Same scale as `Tournament.tier`. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
+	tier: TournamentTierNumber;
+}
+
 export interface TournamentBadgeOwner {
 	badgeId: number;
 	userId: number;
@@ -1363,6 +1376,7 @@ export interface DB {
 	/** VIEW over `AllTeamMember`, same as `TeamMember` but also includes rows where this is the member's secondary (i.e. non-main) team. Insert/update via `AllTeamMember`. */
 	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
+	TournamentDivisionTier: TournamentDivisionTier;
 	TournamentStaff: TournamentStaff;
 	TournamentGroup: TournamentGroup;
 	TournamentLFGLike: TournamentLFGLike;

@@ -1,4 +1,4 @@
-import type { Kysely, Transaction } from "kysely";
+import { type Kysely, sql, type Transaction } from "kysely";
 
 /**
  * Turns leagues into normal tournaments.
@@ -15,6 +15,9 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.addColumn("defaultPlayTime", "integer")
 			.execute();
 
+		await createDivisionTierTable(trx);
+
+		// the divisions carry their own tier over, so they are done before the backfill below
 		for (const season of SEASONS) {
 			await migrateSeason(trx, season);
 		}
@@ -23,6 +26,8 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.alterTable("Tournament")
 			.dropColumn("parentTournamentId")
 			.execute();
+
+		await backfillDivisionTiers(trx);
 	});
 }
 
@@ -142,6 +147,23 @@ async function migrateSeason(trx: Transaction<any>, season: Season) {
 		})
 		.where("id", "=", season.signupTournamentId)
 		.execute();
+
+	// each division keeps the tier it was given as a tournament of its own
+	const tieredDivisions = divisions.filter(
+		(division) => division.tier !== null,
+	);
+	if (tieredDivisions.length > 0) {
+		await trx
+			.insertInto("TournamentDivisionTier")
+			.values(
+				tieredDivisions.map((division) => ({
+					tournamentId: season.signupTournamentId,
+					bracketIdx: division.groupStageIdx,
+					tier: division.tier,
+				})),
+			)
+			.execute();
+	}
 
 	// rosters come from the divisions, where they were kept up to date over the season
 	await trx
@@ -395,3 +417,191 @@ function weekNumberToTimestamp({ week, year }: { week: number; year: number }) {
 
 	return Math.floor(date.getTime() / 1000);
 }
+
+function createDivisionTierTable(trx: Transaction<any>) {
+	return (
+		trx.schema
+			.createTable("TournamentDivisionTier")
+			.addColumn("tournamentId", "integer", (col) =>
+				col.notNull().references("Tournament.id").onDelete("cascade"),
+			)
+			.addColumn("bracketIdx", "integer", (col) => col.notNull())
+			.addColumn("tier", "integer", (col) => col.notNull())
+			.addPrimaryKeyConstraint("tournament_division_tier_pk", [
+				"tournamentId",
+				"bracketIdx",
+			])
+			// every table in this schema is strict
+			.modifyEnd(sql`strict`)
+			.execute()
+	);
+}
+
+/**
+ * Gives every division (= starting bracket) a tier of its own, so that a result of a tournament
+ * with many starting brackets stops showing the tier of its strongest division. Tournaments that
+ * already got their divisions tiered, i.e. the leagues above, are left alone.
+ *
+ * Historical tiers can't be recomputed exactly: `SeedingSkill` only keeps current values and skill
+ * inflates over time, so recomputing a finalized single division tournament lands on its stored tier
+ * only about half of the time and is 1-3 tiers too good otherwise. Every division of one tournament
+ * shares that drift, so they are recomputed as one batch and then shifted to make the first starting
+ * bracket (the one the stored tier was calculated from) land exactly on it. Divisions of tournaments
+ * with no tier are left out, having nothing to anchor to.
+ */
+async function backfillDivisionTiers(trx: Transaction<any>) {
+	const alreadyTiered = new Set(
+		(
+			await trx
+				.selectFrom("TournamentDivisionTier")
+				.select("tournamentId")
+				.distinct()
+				.execute()
+		).map((row: { tournamentId: number }) => row.tournamentId),
+	);
+
+	const tournaments = await trx
+		.selectFrom("Tournament")
+		.select(["id", "settings", "tier"])
+		.where("tier", "is not", null)
+		.execute();
+
+	for (const tournament of tournaments) {
+		if (alreadyTiered.has(tournament.id)) continue;
+
+		const settings = JSON.parse(tournament.settings);
+		const startingBracketIdxs = (settings.bracketProgression as any[])
+			.map((bracket, idx) => ({ bracket, idx }))
+			.filter(({ bracket }) => !bracket.sources)
+			.map(({ idx }) => idx);
+
+		// tournaments where every team plays the same bracket already have an accurate tier
+		if (startingBracketIdxs.length < 2) continue;
+
+		const teams = await teamsWithSeedingSkill(trx, {
+			tournamentId: tournament.id,
+			isRanked: settings.isRanked === true,
+		});
+
+		const tierByBracketIdx = new Map<number, number>();
+		for (const bracketIdx of startingBracketIdxs) {
+			const ofDivision = teams.filter(
+				(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+			);
+			// teams that did not check in do not play the bracket, but tournaments predating
+			// check-in data have none of them
+			const checkedIn = ofDivision.filter((team) => team.checkedIn);
+
+			const tier = tierOfTeams(checkedIn.length > 0 ? checkedIn : ofDivision);
+			if (tier !== null) {
+				tierByBracketIdx.set(bracketIdx, tier);
+			}
+		}
+
+		const anchorTier = tierByBracketIdx.get(startingBracketIdxs[0]);
+		if (anchorTier === undefined) continue;
+
+		const offset = tournament.tier - anchorTier;
+
+		await trx
+			.insertInto("TournamentDivisionTier")
+			.values(
+				[...tierByBracketIdx].map(([bracketIdx, tier]) => ({
+					tournamentId: tournament.id,
+					bracketIdx,
+					tier: clampTier(tier + offset),
+				})),
+			)
+			.execute();
+	}
+}
+
+function teamsWithSeedingSkill(
+	trx: Transaction<any>,
+	{ tournamentId, isRanked }: { tournamentId: number; isRanked: boolean },
+): Promise<
+	Array<{
+		startingBracketIdx: number | null;
+		avgOrdinal: number | null;
+		checkedIn: number;
+	}>
+> {
+	return trx
+		.selectFrom("TournamentTeam")
+		.select((eb) => [
+			"TournamentTeam.startingBracketIdx",
+			eb
+				.selectFrom("TournamentTeamMember")
+				.innerJoin("SeedingSkill", (join) =>
+					join
+						.onRef("SeedingSkill.userId", "=", "TournamentTeamMember.userId")
+						.on("SeedingSkill.type", "=", isRanked ? "RANKED" : "UNRANKED"),
+				)
+				.select(({ fn }) => fn.avg("SeedingSkill.ordinal").as("v"))
+				.whereRef(
+					"TournamentTeamMember.tournamentTeamId",
+					"=",
+					"TournamentTeam.id",
+				)
+				.as("avgOrdinal"),
+			eb
+				.exists(
+					eb
+						.selectFrom("TournamentTeamCheckIn")
+						.select("TournamentTeamCheckIn.tournamentTeamId")
+						.whereRef(
+							"TournamentTeamCheckIn.tournamentTeamId",
+							"=",
+							"TournamentTeam.id",
+						)
+						.where("TournamentTeamCheckIn.isCheckOut", "=", 0),
+				)
+				.as("checkedIn"),
+		])
+		.where("TournamentTeam.tournamentId", "=", tournamentId)
+		.where("TournamentTeam.isPlaceholder", "=", 0)
+		.execute() as any;
+}
+
+// frozen copy of app/features/tournament/core/tiering.ts as of this migration
+const TIER_THRESHOLDS: Array<[tier: number, threshold: number]> = [
+	[1, 32],
+	[2, 29],
+	[3, 26],
+	[4, 24],
+	[5, 21],
+	[6, 15],
+	[7, 10],
+	[8, 5],
+];
+const WORST_TIER = 9;
+const TOP_TEAMS_COUNT = 8;
+const MIN_TEAMS_FOR_TIERING = 8;
+const NO_BONUS_ABOVE = 32;
+const MAX_BONUS_PER_10_TEAMS = 1.5;
+
+function tierOfTeams(teams: Array<{ avgOrdinal: number | null }>) {
+	if (teams.length < MIN_TEAMS_FOR_TIERING) return null;
+
+	const ordinals = teams
+		.map((team) => team.avgOrdinal)
+		.filter((ordinal) => ordinal !== null);
+	if (ordinals.length === 0) return null;
+
+	const topOrdinals = ordinals.sort((a, b) => b - a).slice(0, TOP_TEAMS_COUNT);
+	const rawScore =
+		topOrdinals.reduce((sum, ordinal) => sum + ordinal, 0) / topOrdinals.length;
+
+	const scaleFactor = Math.max(0, (NO_BONUS_ABOVE - rawScore) / NO_BONUS_ABOVE);
+	const teamsAboveMin = Math.max(0, teams.length - MIN_TEAMS_FOR_TIERING);
+	const adjustedScore =
+		rawScore + scaleFactor * MAX_BONUS_PER_10_TEAMS * (teamsAboveMin / 10);
+
+	for (const [tier, threshold] of TIER_THRESHOLDS) {
+		if (adjustedScore >= threshold) return tier;
+	}
+
+	return WORST_TIER;
+}
+
+const clampTier = (tier: number) => Math.min(WORST_TIER, Math.max(1, tier));

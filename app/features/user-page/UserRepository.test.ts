@@ -2,7 +2,10 @@ import { describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as UserRepository from "./UserRepository.server";
 
@@ -287,6 +290,89 @@ describe("UserRepository", () => {
 
 			expect(results).toHaveLength(1);
 			expect(results[0].eventName).toBe("Alpha Invitational");
+		});
+
+		describe("of a tournament with many divisions", () => {
+			const TOP_DIVISION_TIER = 2;
+			const LOW_DIVISION_TIER = 7;
+
+			const seedDivisionedResults = async () => {
+				const [topUser, lowUser, topMate, lowMate] =
+					await UserFactory.createMany(4);
+
+				const { id: tournamentId } = await TournamentFactory.create(
+					{
+						name: "Divisioned Open",
+						authorId: topUser.id,
+						minMembersPerTeam: 1,
+						bracketProgression: [
+							{
+								name: "Top Division",
+								type: "single_elimination",
+								requiresCheckIn: false,
+								settings: { thirdPlaceMatch: false },
+							},
+							{
+								name: "Low Division",
+								type: "single_elimination",
+								requiresCheckIn: false,
+								settings: { thirdPlaceMatch: false },
+							},
+						],
+					},
+					{},
+				);
+
+				const teams = [];
+				for (const user of [topUser, topMate, lowUser, lowMate]) {
+					teams.push(
+						await TournamentTeamFactory.create(
+							{ tournamentId, memberUserIds: [user.id] },
+							{ isCheckedIn: true },
+						),
+					);
+				}
+				await TournamentTeamRepository.updateStartingBrackets(
+					teams.map((team, idx) => ({
+						tournamentTeamId: team.id,
+						startingBracketIdx: idx < 2 ? 0 : 1,
+					})),
+				);
+
+				await TournamentFactory.playOut(tournamentId, "all");
+
+				await TournamentRepository.upsertDivisionTier({
+					tournamentId,
+					bracketIdx: 0,
+					tier: TOP_DIVISION_TIER,
+				});
+				await TournamentRepository.upsertDivisionTier({
+					tournamentId,
+					bracketIdx: 1,
+					tier: LOW_DIVISION_TIER,
+				});
+
+				return { topUserId: topUser.id, lowUserId: lowUser.id };
+			};
+
+			test("reports the tier of the division the result is from", async () => {
+				const { topUserId, lowUserId } = await seedDivisionedResults();
+
+				const [topResult] = await filteredResults(topUserId, {});
+				const [lowResult] = await filteredResults(lowUserId, {});
+
+				expect(topResult.tier).toBe(TOP_DIVISION_TIER);
+				expect(lowResult.tier).toBe(LOW_DIVISION_TIER);
+			});
+
+			test("filters by the tier of the division the result is from", async () => {
+				const { topUserId, lowUserId } = await seedDivisionedResults();
+
+				const topRange = { minTier: 1, maxTier: 3 } as const;
+
+				expect(await filteredResults(topUserId, topRange)).toHaveLength(1);
+				expect(await filteredResults(lowUserId, topRange)).toHaveLength(0);
+			});
 		});
 	});
 

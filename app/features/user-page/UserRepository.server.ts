@@ -1,4 +1,4 @@
-import type { ExpressionBuilder, NotNull } from "kysely";
+import type { ExpressionBuilder, NotNull, SqlBool } from "kysely";
 import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -674,6 +674,11 @@ const baseCalendarEventResultsQuery = (
 	return query;
 };
 
+/** Tier of the division the result was placed in, falling back to the tournament's own tier. */
+const RESULT_TIER = sql<
+	Tables["Tournament"]["tier"]
+>`coalesce("TournamentDivisionTier"."tier", "Tournament"."tier")`;
+
 const baseTournamentResultsQuery = (
 	userId: number,
 	filters: ResultsFilters,
@@ -691,6 +696,17 @@ const baseTournamentResultsQuery = (
 			"TournamentResult.tournamentId",
 		)
 		.innerJoin("Tournament", "Tournament.id", "TournamentResult.tournamentId")
+		.leftJoin("TournamentDivisionTier", (join) =>
+			join
+				.onRef(
+					"TournamentDivisionTier.tournamentId",
+					"=",
+					"TournamentResult.tournamentId",
+				)
+				.on(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				),
+		)
 		.where("TournamentResult.userId", "=", userId);
 
 	if (!includesTournamentResults(filters)) {
@@ -730,8 +746,8 @@ const baseTournamentResultsQuery = (
 
 	if (isTierFiltered(filters)) {
 		query = query
-			.where("Tournament.tier", ">=", filters.minTier ?? BEST_TIER_NUMBER)
-			.where("Tournament.tier", "<=", filters.maxTier ?? WORST_TIER_NUMBER);
+			.where(RESULT_TIER, ">=", filters.minTier ?? BEST_TIER_NUMBER)
+			.where(RESULT_TIER, "<=", filters.maxTier ?? WORST_TIER_NUMBER);
 	}
 
 	if (filters.maxPlacement) {
@@ -836,7 +852,7 @@ export function findResultsByUserId(
 		"TournamentTeam.id as teamId",
 		"TournamentTeam.name as teamName",
 		"TournamentResult.isHighlight",
-		"Tournament.tier",
+		RESULT_TIER.as("tier"),
 		withMaxEventStartTime(eb),
 		jsonArrayFrom(
 			eb

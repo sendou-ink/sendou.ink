@@ -1,5 +1,11 @@
 import { sub } from "date-fns";
-import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
+import {
+	type Insertable,
+	type NotNull,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -1534,11 +1540,12 @@ export function finalize({
 		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 
 		if (trophyReceiver && trophyReceiver.userIds.length > 0) {
-			const tournamentRow = await trx
-				.selectFrom("Tournament")
-				.select("tier")
-				.where("id", "=", tournamentId)
-				.executeTakeFirst();
+			const tier = await trophyTier(trx, {
+				tournamentId,
+				tournamentTeamId: summary.tournamentResults.find((result) =>
+					trophyReceiver.userIds.includes(result.userId),
+				)?.tournamentTeamId,
+			});
 
 			await trx
 				.insertInto("TrophyOwner")
@@ -1547,7 +1554,7 @@ export function finalize({
 						tournamentId,
 						trophyId: trophyReceiver.trophyId,
 						userId,
-						tier: tournamentRow?.tier ?? null,
+						tier,
 					})),
 				)
 				.onConflict((oc) =>
@@ -1726,18 +1733,43 @@ export function updateTeamSeeds({
 	});
 }
 
-export function updateTournamentTier({
+/**
+ * Records the tier of one division (= starting bracket), calculated from the teams that checked in
+ * to it, and updates the tournament's own tier to the best tier of its divisions. Tournaments where
+ * every team plays the same bracket have one division, making the two the same.
+ */
+export async function upsertDivisionTier({
 	tournamentId,
+	bracketIdx,
 	tier,
 }: {
 	tournamentId: number;
+	bracketIdx: number;
 	tier: TournamentTierNumber;
 }) {
-	return db
-		.updateTable("Tournament")
-		.set({ tier })
-		.where("id", "=", tournamentId)
-		.execute();
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("TournamentDivisionTier")
+			.values({ tournamentId, bracketIdx, tier })
+			.onConflict((oc) =>
+				oc.columns(["tournamentId", "bracketIdx"]).doUpdateSet({ tier }),
+			)
+			.execute();
+
+		const best = await trx
+			.selectFrom("TournamentDivisionTier")
+			.select(({ fn }) =>
+				fn.min<TournamentTierNumber>("TournamentDivisionTier.tier").as("tier"),
+			)
+			.where("TournamentDivisionTier.tournamentId", "=", tournamentId)
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.updateTable("Tournament")
+			.set({ tier: best.tier })
+			.where("id", "=", tournamentId)
+			.execute();
+	});
 }
 
 export async function findRunningTournamentIds() {
@@ -1772,4 +1804,42 @@ export async function findRunningTournamentIds() {
 		.execute();
 
 	return rows.map((row) => row.id);
+}
+
+/**
+ * Tier the trophy was won at: the tier of the division the winning team played in, falling back to
+ * the tournament's own tier when the team is not known or its division was never tiered.
+ */
+async function trophyTier(
+	trx: Transaction<DB>,
+	{
+		tournamentId,
+		tournamentTeamId,
+	}: { tournamentId: number; tournamentTeamId?: number },
+) {
+	const divisionTier = tournamentTeamId
+		? await trx
+				.selectFrom("TournamentDivisionTier")
+				.innerJoin(
+					"TournamentTeam",
+					"TournamentTeam.tournamentId",
+					"TournamentDivisionTier.tournamentId",
+				)
+				.select("TournamentDivisionTier.tier")
+				.where("TournamentTeam.id", "=", tournamentTeamId)
+				.where(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				)
+				.executeTakeFirst()
+		: undefined;
+
+	if (divisionTier) return divisionTier.tier;
+
+	const tournament = await trx
+		.selectFrom("Tournament")
+		.select("tier")
+		.where("id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return tournament?.tier ?? null;
 }
