@@ -40,14 +40,12 @@ import * as TournamentMatchVodRepository from "~/features/tournament-bracket/Tou
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
-import {
-	LUTI_NAME_PREFIX,
-	LUTI_ORGANIZATION_ID,
-} from "~/routines/computeLutiDivs";
+import { LUTI_NAME_PREFIX } from "~/routines/computeLutiDivs";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
 

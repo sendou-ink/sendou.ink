@@ -2,14 +2,12 @@ import clsx from "clsx";
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentBracketsPage } from "~/utils/urls";
 import type { BracketMeta } from "../core/Tournament";
-import { loader } from "../loaders/to.$id.divisions.server";
 import styles from "./to.$id.divisions.module.css";
-
-export { loader };
 
 export default function TournamentDivisionsPage() {
 	const tournament = useTournament();
@@ -17,6 +15,14 @@ export default function TournamentDivisionsPage() {
 
 	const ownTeam = tournament.teamMemberOfByUser(user);
 	const ownDivisionIdx = ownTeam ? (ownTeam.startingBracketIdx ?? 0) : null;
+
+	if (!tournament.isLeague) {
+		return (
+			<Redirect
+				to={tournamentBracketsPage({ tournamentId: tournament.ctx.id })}
+			/>
+		);
+	}
 
 	return (
 		<div className={styles.grid}>

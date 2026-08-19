@@ -1,10 +1,10 @@
 import { parseLutiDivFromName } from "../features/scrims/scrims-utils";
 import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
+import { LUTI_ORGANIZATION_ID } from "../features/tournament-organization/tournament-organization-constants";
 import * as UserRepository from "../features/user-page/UserRepository.server";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
-export const LUTI_ORGANIZATION_ID = 19;
 /** Excludes the other leagues of the organization e.g. FLUTI */
 export const LUTI_NAME_PREFIX = "LUTI";
 

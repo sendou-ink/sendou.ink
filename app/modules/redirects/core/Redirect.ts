@@ -1,6 +1,4 @@
-// xxx: to core folder
-
-type Redirect = {
+type RedirectRule = {
 	/** Path to redirect from. A trailing `/*` matches the path and anything below it. */
 	from: string;
 	/**
@@ -16,13 +14,13 @@ const leagueDivisionRedirects = (args: {
 	firstDivisionTournamentId: number;
 	divisionsCount: number;
 	seasonTournamentId: number;
-}): Redirect[] =>
+}): RedirectRule[] =>
 	Array.from({ length: args.divisionsCount }, (_, idx) => ({
 		from: `/to/${args.firstDivisionTournamentId + idx}/*`,
 		to: `/to/${args.seasonTournamentId}/*`,
 	}));
 
-const REDIRECTS: Redirect[] = [
+const REDIRECTS: RedirectRule[] = [
 	// LUTI seasons used to be one tournament per division, now they are one tournament per season
 	...leagueDivisionRedirects({
 		firstDivisionTournamentId: 1241,
@@ -49,9 +47,9 @@ const REDIRECTS: Redirect[] = [
  * The query string and the part of the path matched by a wildcard are preserved.
  *
  * @example
- * resolveRedirect({ pathname: "/to/3325/teams/58397", search: "" }) // "/to/3192/teams/58397"
+ * Redirect.resolve({ pathname: "/to/3325/teams/58397", search: "" }) // "/to/3192/teams/58397"
  */
-export function resolveRedirect(location: {
+export function resolve(location: {
 	pathname: string;
 	search?: string;
 }): string | null {
@@ -73,7 +71,7 @@ function withSearch(target: string, search?: string) {
 		: `${target}${search}`;
 }
 
-function resolvedTarget(redirect: Redirect, pathname: string) {
+function resolvedTarget(redirect: RedirectRule, pathname: string) {
 	if (!redirect.from.endsWith(WILDCARD_SUFFIX)) {
 		return redirect.from === pathname ? redirect.to : null;
 	}

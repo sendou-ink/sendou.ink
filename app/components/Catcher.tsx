@@ -8,7 +8,7 @@ import {
 	useRouteError,
 } from "react-router";
 import { useUser } from "~/features/auth/core/user";
-import { resolveRedirect } from "~/modules/redirects";
+import * as Redirect from "~/modules/redirects/core/Redirect";
 import { getSessionId } from "~/utils/session-id";
 import {
 	ERROR_GIRL_IMAGE_PATH,
@@ -151,7 +151,7 @@ export function Catcher() {
 function PageNotFound() {
 	const location = useLocation();
 	const navigate = useNavigate();
-	const redirectTo = resolveRedirect(location);
+	const redirectTo = Redirect.resolve(location);
 
 	React.useEffect(() => {
 		if (redirectTo) {

@@ -3,6 +3,9 @@ export const TOURNAMENT_SERIES_LEADERBOARD_SIZE = 50;
 
 export const MONTH_PARAM_FORMAT = "yyyy-MM";
 
+/** Id of the "Leagues Under The Ink" (LUTI) organization. */
+export const LUTI_ORGANIZATION_ID = 19;
+
 export const ESTABLISHED_ORG = {
 	MONTHS_CONSIDERED: 6,
 	GAIN_THRESHOLD: 150,

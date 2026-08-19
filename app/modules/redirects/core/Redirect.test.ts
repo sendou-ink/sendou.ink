@@ -1,7 +1,7 @@
 import { describe, expect, test } from "vitest";
-import { resolveRedirect } from "./index";
+import * as Redirect from "./Redirect";
 
-describe("resolveRedirect", () => {
+describe("Redirect.resolve", () => {
 	test.each([
 		{
 			why: "exact match",
@@ -49,24 +49,24 @@ describe("resolveRedirect", () => {
 			expected: null,
 		},
 	])("$why", ({ pathname, expected }) => {
-		expect(resolveRedirect({ pathname })).toBe(expected);
+		expect(Redirect.resolve({ pathname })).toBe(expected);
 	});
 
 	test("keeps the query string", () => {
 		expect(
-			resolveRedirect({ pathname: "/to/3325/brackets", search: "?idx=1" }),
+			Redirect.resolve({ pathname: "/to/3325/brackets", search: "?idx=1" }),
 		).toBe("/to/3192/brackets?idx=1");
 	});
 
 	test("merges the query string into a target that has one", () => {
-		expect(resolveRedirect({ pathname: "/u", search: "?foo=bar" })).toBe(
+		expect(Redirect.resolve({ pathname: "/u", search: "?foo=bar" })).toBe(
 			"/?search=open&type=users&foo=bar",
 		);
 	});
 
 	test("resolved target is not itself redirected", () => {
-		const target = resolveRedirect({ pathname: "/to/3325/teams/58397" });
+		const target = Redirect.resolve({ pathname: "/to/3325/teams/58397" });
 
-		expect(resolveRedirect({ pathname: target! })).toBeNull();
+		expect(Redirect.resolve({ pathname: target! })).toBeNull();
 	});
 });

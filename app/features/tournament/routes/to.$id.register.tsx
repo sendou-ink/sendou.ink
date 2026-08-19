@@ -24,6 +24,7 @@ import {
 } from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { LUTI_ORGANIZATION_ID } from "~/features/tournament-organization/tournament-organization-constants";
 import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -221,8 +222,10 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 					canUnregister={Boolean(ownTeam && !ownTeamCheckedIn)}
 				/>
 			) : null}
-			{/** xxx: make LUTI only */}
-			{tournament.isLeague ? <GoogleFormsLink /> : null}
+			{tournament.isLeague &&
+			tournament.ctx.organization?.id === LUTI_ORGANIZATION_ID ? (
+				<GoogleFormsLink />
+			) : null}
 			{ownTeam && hasFriendCodeSet ? (
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
