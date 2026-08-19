@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -41,7 +41,7 @@ export function adminRegistrationFormSchemaServer({
 			})
 		) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.regTeamNameTaken",
 				path: [data.linkedTeam ? "teamId" : "pickUpName"],
 			});
@@ -49,7 +49,7 @@ export function adminRegistrationFormSchemaServer({
 
 		if (data.members.length > ADMIN_REGISTRATION_MAX_MEMBERS) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.regTooManyMembers",
 				path: ["members"],
 			});
@@ -87,7 +87,7 @@ export function adminRegistrationFormSchemaServer({
 
 				if (invalidMode || status !== "VALID") {
 					ctx.addIssue({
-						code: z.ZodIssueCode.custom,
+						code: v.ZodIssueCode.custom,
 						message: "forms:errors.invalidMapPool",
 						path: ["mapPool"],
 					});
@@ -115,7 +115,7 @@ export function adminRegistrationFormSchemaServer({
 				);
 				if (removingParticipatedPlayer) {
 					ctx.addIssue({
-						code: z.ZodIssueCode.custom,
+						code: v.ZodIssueCode.custom,
 						message: "forms:errors.regCannotRemoveParticipatedPlayer",
 						path: ["members"],
 					});
@@ -127,7 +127,7 @@ export function adminRegistrationFormSchemaServer({
 				data.members.length < tournament.minMembersPerTeam
 			) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regCheckedInBelowMinRoster",
 					path: ["members"],
 				});
@@ -140,7 +140,7 @@ export function adminRegistrationFormSchemaServer({
 			const memberUser = await UserRepository.findLeanById(member.userId);
 			if (!memberUser) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regMemberInvalid",
 					path,
 				});
@@ -149,7 +149,7 @@ export function adminRegistrationFormSchemaServer({
 
 			if (!memberUser.friendCode) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regMemberNoFriendCode",
 					path,
 				});
@@ -161,7 +161,7 @@ export function adminRegistrationFormSchemaServer({
 				!memberUser.inGameName
 			) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regMemberNoInGameName",
 					path,
 				});
@@ -172,7 +172,7 @@ export function adminRegistrationFormSchemaServer({
 
 			if (userIsBanned(member.userId)) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regMemberBanned",
 					path,
 				});
@@ -185,7 +185,7 @@ export function adminRegistrationFormSchemaServer({
 				!tournament.hasStarted
 			) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regMemberOnAnotherTeam",
 					path,
 				});

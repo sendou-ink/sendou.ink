@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { mySlugify } from "~/utils/urls";
 import * as TeamRepository from "./TeamRepository.server";
 import {
@@ -7,7 +7,7 @@ import {
 	updateRosterSchema,
 } from "./team-schemas";
 
-export const createTeamSchemaServer = z.object({
+export const createTeamSchemaServer = v.object({
 	...createTeamSchema.shape,
 	name: createTeamSchema.shape.name.refine(
 		async (name) => {
@@ -20,9 +20,9 @@ export const createTeamSchemaServer = z.object({
 	),
 });
 
-export const teamParamsSchema = z.object({ customUrl: z.string() });
+export const teamParamsSchema = v.object({ customUrl: v.string() });
 
-export const manageRosterSchema = z.union([
+export const manageRosterSchema = v.union([
 	updateRosterSchema,
 	resetInviteLinkSchema,
 ]);

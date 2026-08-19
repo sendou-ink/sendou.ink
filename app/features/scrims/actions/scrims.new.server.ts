@@ -1,6 +1,6 @@
 import { add } from "date-fns";
 import { type ActionFunctionArgs, redirect } from "react-router";
-import type { z } from "zod";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -106,7 +106,7 @@ export const usersListForPost = async ({
 	from,
 	authorId,
 }: {
-	from: z.infer<typeof fromSchema>;
+	from: v.InferOutput<typeof fromSchema>;
 	authorId: number;
 }) => {
 	if (from.mode === "PICKUP") {

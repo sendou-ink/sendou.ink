@@ -1,6 +1,6 @@
 import type { ShouldRevalidateFunction } from "react-router";
 import { isDeepEqual } from "remeda";
-import { z } from "zod";
+import * as v from "valibot";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 
 const COMPRESSED_PREFIX = "lz~";
@@ -267,32 +267,32 @@ export const SP = {
 	 * encodes as param absent, so `default` is omitted for those). Anything else
 	 * is a `define()`-time error — use `SP.json` or `SP.custom` instead.
 	 */
-	param<S extends z.ZodType>(
+	param<S extends v.ZodType>(
 		schema: S,
-		opts: ParamOptions<z.output<S>>,
-	): ParamDef<z.output<S>> {
+		opts: ParamOptions<v.InferOutput<S>>,
+	): ParamDef<v.InferOutput<S>> {
 		const resolved = resolveOptions(opts);
-		let core: z.ZodType = schema;
+		let core: v.ZodType = schema;
 
-		if (core instanceof z.ZodOptional) {
+		if (core instanceof v.ZodOptional) {
 			throw new Error(
 				"Search params use .nullable() instead of .optional() (null encodes as param absent)",
 			);
 		}
-		if (core instanceof z.ZodNullable) {
+		if (core instanceof v.ZodNullable) {
 			if (resolved.default !== null) {
 				throw new Error(
 					"A .nullable() search param must have null as its default, otherwise null and the default could not be told apart in the URL",
 				);
 			}
-			core = core.unwrap() as z.ZodType;
+			core = core.unwrap() as v.ZodType;
 		}
 
-		if (core instanceof z.ZodArray) {
-			const itemBase = deriveScalarBase(core.element as z.ZodType);
+		if (core instanceof v.ZodArray) {
+			const itemBase = deriveScalarBase(core.element as v.ZodType);
 			if (!itemBase) {
 				throw new Error(
-					`Cannot derive an URL encoding for the array item schema of a search param (got ${describeSchema(core.element as z.ZodType)}). Use SP.json or SP.custom.`,
+					`Cannot derive an URL encoding for the array item schema of a search param (got ${describeSchema(core.element as v.ZodType)}). Use SP.json or SP.custom.`,
 				);
 			}
 			return arrayParam(schema, core, itemBase, resolved);
@@ -310,20 +310,21 @@ export const SP = {
 	/** Declares the 1-based `page` param of a paginated route, as `useSearchParamPagination` expects it. */
 	page(opts?: { max?: number; resets?: string[] }): ParamDef<number> {
 		return SP.param(
-			z
-				.number()
-				.int()
-				.min(1)
-				.max(opts?.max ?? DEFAULT_MAX_PAGE),
+			v.pipe(
+                v.number(),
+                v.integer(),
+                v.minValue(1),
+                v.maxValue(opts?.max ?? DEFAULT_MAX_PAGE)
+            ),
 			{ default: 1, loader: true, resets: opts?.resets },
 		);
 	},
 
 	/** Declares a param encoded as `JSON.stringify` in a single value. For objects and whole-array-as-one-param values. */
-	json<S extends z.ZodType>(
+	json<S extends v.ZodType>(
 		schema: S,
-		opts: ParamOptions<z.output<S>>,
-	): ParamDef<z.output<S>> {
+		opts: ParamOptions<v.InferOutput<S>>,
+	): ParamDef<v.InferOutput<S>> {
 		const resolved = resolveOptions(opts);
 
 		return {
@@ -351,7 +352,7 @@ export const SP = {
 	 * `encode` always emits the canonical one.
 	 */
 	custom<Value>(
-		codec: z.ZodType<Value, string | null>,
+		codec: v.ZodType<Value, string | null>,
 		opts: ParamOptions<Value>,
 	): ParamDef<Value> {
 		const resolved = resolveOptions(opts);
@@ -362,11 +363,11 @@ export const SP = {
 				if (values.length === 0) return resolved.default;
 				const plain = unwrapValue(values[0]);
 				if (plain === DECODE_FAILED) return resolved.default;
-				const parsed = z.safeDecode(codec, plain);
+				const parsed = v.safeDecode(codec, plain);
 				return parsed.success ? parsed.data : resolved.default;
 			},
 			encodePlain: (value) => {
-				const encoded = z.safeEncode(codec, value);
+				const encoded = v.safeEncode(codec, value);
 				if (!encoded.success || typeof encoded.data !== "string") {
 					throw new Error(
 						"Encoding a search param value failed; SP.custom codecs must encode every value of their type",
@@ -403,7 +404,7 @@ function baseDef<T>(
 }
 
 function scalarParam<T>(
-	schema: z.ZodType,
+	schema: v.ZodType,
 	base: ScalarBase,
 	opts: ResolvedParamOptions<T>,
 ): ParamDef<T> {
@@ -423,12 +424,12 @@ function scalarParam<T>(
 }
 
 function arrayParam<T>(
-	schema: z.ZodType,
-	arraySchema: z.ZodArray,
+	schema: v.ZodType,
+	arraySchema: v.ZodArray,
 	itemBase: ScalarBase,
 	opts: ResolvedParamOptions<T>,
 ): ParamDef<T> {
-	const itemSchema = arraySchema.element as z.ZodType;
+	const itemSchema = arraySchema.element as v.ZodType;
 
 	return {
 		...baseDef(opts),
@@ -495,19 +496,19 @@ function plainToScalar(
 	return DECODE_FAILED;
 }
 
-function deriveScalarBase(schema: z.ZodType): ScalarBase | null {
-	if (schema instanceof z.ZodString) return "string";
-	if (schema instanceof z.ZodNumber) return "number";
-	if (schema instanceof z.ZodBoolean) return "boolean";
+function deriveScalarBase(schema: v.ZodType): ScalarBase | null {
+	if (schema instanceof v.ZodString) return "string";
+	if (schema instanceof v.ZodNumber) return "number";
+	if (schema instanceof v.ZodBoolean) return "boolean";
 
-	if (schema instanceof z.ZodEnum) {
+	if (schema instanceof v.ZodEnum) {
 		return uniformTypeOf(schema.options);
 	}
-	if (schema instanceof z.ZodLiteral) {
+	if (schema instanceof v.ZodLiteral) {
 		return uniformTypeOf(Array.from(schema.values));
 	}
-	if (schema instanceof z.ZodUnion) {
-		const bases = (schema.options as z.ZodType[]).map(deriveScalarBase);
+	if (schema instanceof v.ZodUnion) {
+		const bases = (schema.options as v.ZodType[]).map(deriveScalarBase);
 		if (bases[0] && bases.every((base) => base === bases[0])) {
 			return bases[0];
 		}
@@ -528,7 +529,7 @@ function uniformTypeOf(values: unknown[]): ScalarBase | null {
 	return null;
 }
 
-function describeSchema(schema: z.ZodType) {
+function describeSchema(schema: v.ZodType) {
 	return schema.constructor.name;
 }
 

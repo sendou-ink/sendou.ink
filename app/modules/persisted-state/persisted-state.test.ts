@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
+import * as v from "valibot";
 import * as PersistedState from "./persisted-state";
 import {
 	assertDecodesToDefault,
@@ -9,28 +9,28 @@ import {
 const numberList = PersistedState.define({
 	key: "test-number-list",
 	storage: "local",
-	schema: z.array(z.number()),
+	schema: v.array(v.number()),
 	default: [],
 });
 
 const searchType = PersistedState.define({
 	key: "test-search-type",
 	storage: "local",
-	schema: z.enum(["weapons", "users"]),
+	schema: v.picklist(["weapons", "users"]),
 	default: "weapons",
 });
 
 const dismissed = PersistedState.define({
 	key: "test-dismissed",
 	storage: "local",
-	schema: z.boolean(),
+	schema: v.boolean(),
 	default: false,
 });
 
 const counts = PersistedState.defineMap({
 	keyPrefix: "test-counts__",
 	storage: "local",
-	schema: z.number(),
+	schema: v.number(),
 	default: 0,
 });
 

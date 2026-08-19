@@ -1,12 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetSendouqMatchResponse, MapListMap } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	matchId: id,
 });
 

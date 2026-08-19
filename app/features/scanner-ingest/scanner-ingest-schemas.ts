@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { scannerMatchSchema } from "~/features/scanner/scanner-schemas";
 
 const MAX_MATCHES_PER_REQUEST = 50;
@@ -9,8 +9,12 @@ const MAX_MATCHES_PER_REQUEST = 50;
  * scanner domain); this module only adds the ingest-specific envelope. The
  * POV user is always the session user, never client-supplied.
  */
-export const ingestBodySchema = z.object({
-	matches: z.array(scannerMatchSchema).min(1).max(MAX_MATCHES_PER_REQUEST),
+export const ingestBodySchema = v.object({
+	matches: v.pipe(
+        v.array(scannerMatchSchema),
+        v.minLength(1),
+        v.maxLength(MAX_MATCHES_PER_REQUEST)
+    ),
 });
 
 /** The sendou.ink match an ingested match's scoreboard was linked to. */

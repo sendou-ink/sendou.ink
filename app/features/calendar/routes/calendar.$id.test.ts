@@ -1,6 +1,6 @@
 import { addDays } from "date-fns";
 import { describe, expect, test } from "vitest";
-import type { z } from "zod";
+import * as v from "valibot";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";

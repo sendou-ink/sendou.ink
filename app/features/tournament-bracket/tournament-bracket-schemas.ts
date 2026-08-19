@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	reportWeaponSchema,
 	undoWeaponReportSchema,
@@ -21,173 +21,164 @@ import { TOURNAMENT } from "../tournament/tournament-constants";
 import * as PickBan from "./core/PickBan";
 import * as PreparedMaps from "./core/PreparedMaps";
 
-const activeRosterPlayerIds = z.preprocess(safeJSONParse, z.array(id));
+const activeRosterPlayerIds = v.preprocess(safeJSONParse, v.array(id));
 
-const bothTeamPlayerIds = z.preprocess(
+const bothTeamPlayerIds = v.preprocess(
 	safeJSONParse,
-	z.tuple([z.array(id), z.array(id)]),
+	v.tuple([v.array(id), v.array(id)]),
 );
 
-const reportedMatchPosition = z.preprocess(
+const reportedMatchPosition = v.preprocess(
 	Number,
-	z
-		.number()
-		.int()
-		.min(0)
-		.max(Math.max(...TOURNAMENT.AVAILABLE_BEST_OF) - 1),
+	v.pipe(
+        v.number(),
+        v.integer(),
+        v.minValue(0),
+        v.maxValue(Math.max(...TOURNAMENT.AVAILABLE_BEST_OF) - 1)
+    ),
 );
 
-const ko = z.preprocess(safeJSONParse, z.boolean().nullish());
-export const matchSchema = z.union([
-	z.object({
+const ko = v.preprocess(safeJSONParse, v.optional(v.nullable(v.boolean())));
+export const matchSchema = v.union([
+	v.object({
 		_action: _action("REPORT_SCORE"),
 		winnerTeamId: id,
 		position: reportedMatchPosition,
 		ko,
 	}),
-	z.object({
+	v.object({
 		_action: _action("SET_ACTIVE_ROSTER"),
 		roster: activeRosterPlayerIds,
 		teamId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("BAN_PICK"),
 		stageId: stageId.optional(),
 		mode: modeShort.optional(),
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNDO_REPORT_SCORE"),
 		position: reportedMatchPosition,
 	}),
-	z.object({
+	v.object({
 		_action: _action("UPDATE_REPORTED_SCORE"),
 		rosters: bothTeamPlayerIds,
 		resultId: id,
 		ko,
 	}),
-	z.object({
+	v.object({
 		_action: _action("REOPEN_MATCH"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("SET_AS_CASTED"),
-		twitchAccount: z.preprocess(
+		twitchAccount: v.preprocess(
 			nullLiteraltoNull,
-			z.string().min(1).max(100).nullable(),
+			v.nullable(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
 		),
 	}),
-	z.object({
+	v.object({
 		_action: _action("LOCK"),
-		twitchAccount: z.string().min(1).max(100),
+		twitchAccount: v.pipe(v.string(), v.minLength(1), v.maxLength(100)),
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNLOCK"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("END_SET"),
-		winnerTeamId: z.preprocess(nullLiteraltoNull, id.nullable()),
+		winnerTeamId: v.preprocess(nullLiteraltoNull, id.nullable()),
 	}),
 	reportWeaponSchema,
 	undoWeaponReportSchema,
 ]);
 
-export const bracketIdx = z.coerce.number().int().min(0).max(100);
+export const bracketIdx = v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0), v.maxValue(100));
 
-const customPickBanStep = z.object({
-	action: z.enum(ACTION_TYPES),
-	side: z.enum(WHO_SIDES).optional(),
+const customPickBanStep = v.object({
+	action: v.picklist(ACTION_TYPES),
+	side: v.optional(v.picklist(WHO_SIDES)),
 });
 
-const customPickBanFlow = z
-	.object({
-		preSet: z.array(customPickBanStep),
-		postGame: z.array(customPickBanStep),
-	})
-	.nullish();
+const customPickBanFlow = v.optional(v.nullable(v.object({
+		preSet: v.array(customPickBanStep),
+		postGame: v.array(customPickBanStep),
+	})));
 
-const tournamentRoundMaps = z.object({
-	roundId: z.number().int().min(0),
-	groupId: z.number().int().min(0),
-	list: z
-		.array(
-			z.object({
-				mode: modeShort,
-				stageId,
-			}),
-		)
-		.nullish(),
+const tournamentRoundMaps = v.object({
+	roundId: v.pipe(v.number(), v.integer(), v.minValue(0)),
+	groupId: v.pipe(v.number(), v.integer(), v.minValue(0)),
+	list: v.optional(v.nullable(v.array(v.object({
+        mode: modeShort,
+        stageId,
+    })))),
 	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
-	type: z.enum(["BEST_OF", "PLAY_ALL"]),
-	pickBan: z.enum(PickBan.types).nullish(),
+	type: v.picklist(["BEST_OF", "PLAY_ALL"]),
+	pickBan: v.optional(v.nullable(v.picklist(PickBan.types))),
 	customFlow: customPickBanFlow,
 });
-export const bracketSchema = z.union([
-	z.object({
+export const bracketSchema = v.union([
+	v.object({
 		_action: _action("START_BRACKET"),
 		bracketIdx,
-		thirdPlaceMatchLinked: z.preprocess(checkboxValueToBoolean, z.boolean()),
-		maps: z.preprocess(safeJSONParse, z.array(tournamentRoundMaps)),
+		thirdPlaceMatchLinked: v.preprocess(checkboxValueToBoolean, v.boolean()),
+		maps: v.preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
 	}),
-	z.object({
+	v.object({
 		_action: _action("PREPARE_MAPS"),
 		bracketIdx,
-		maps: z.preprocess(safeJSONParse, z.array(tournamentRoundMaps)),
-		thirdPlaceMatchLinked: z.preprocess(checkboxValueToBoolean, z.boolean()),
-		eliminationTeamCount: z.coerce
-			.number()
-			.optional()
-			.refine(
-				(val) => !val || PreparedMaps.isValidMaxEliminationTeamCount(val),
-			),
+		maps: v.preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
+		thirdPlaceMatchLinked: v.preprocess(checkboxValueToBoolean, v.boolean()),
+		eliminationTeamCount: v.pipe(
+            v.optional(v.pipe(v.unknown(), v.toNumber())),
+            v.check((val) => !val || PreparedMaps.isValidMaxEliminationTeamCount(val))
+        ),
 	}),
-	z.object({
+	v.object({
 		_action: _action("ADVANCE_BRACKET"),
 		groupId: id,
 		bracketIdx,
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNADVANCE_BRACKET"),
 		groupId: id,
 		roundId: id,
 		bracketIdx,
 	}),
-	z.object({
+	v.object({
 		_action: _action("BRACKET_CHECK_IN"),
 		bracketIdx,
 	}),
-	z.object({
+	v.object({
 		_action: _action("OVERRIDE_BRACKET_PROGRESSION"),
 		tournamentTeamId: id,
 		sourceBracketIdx: bracketIdx,
-		destinationBracketIdx: z.union([bracketIdx, z.literal(-1)]),
+		destinationBracketIdx: v.union([bracketIdx, v.literal(-1)]),
 	}),
 ]);
 
-export const matchPageParamsSchema = z.object({ id, mid: id });
+export const matchPageParamsSchema = v.object({ id, mid: id });
 
-export const tournamentTeamPageParamsSchema = z.object({
+export const tournamentTeamPageParamsSchema = v.object({
 	id,
 	tid: id,
 });
 
-export type TournamentBadgeReceivers = z.infer<typeof badgeReceivers>;
+export type TournamentBadgeReceivers = v.InferOutput<typeof badgeReceivers>;
 
-const badgeReceivers = z.array(
-	z.object({
-		badgeId: id,
-		tournamentTeamId: id,
-		userIds: z.array(id).min(1).max(50),
-	}),
-);
+const badgeReceivers = v.array(v.object({
+    badgeId: id,
+    tournamentTeamId: id,
+    userIds: v.pipe(v.array(id), v.minLength(1), v.maxLength(50)),
+}));
 
-export type TournamentTrophyReceiver = z.infer<typeof trophyReceiver>;
+export type TournamentTrophyReceiver = v.InferOutput<typeof trophyReceiver>;
 
-const trophyReceiver = z.object({
+const trophyReceiver = v.object({
 	trophyId: id,
-	userIds: z.array(id).min(1).max(50),
+	userIds: v.pipe(v.array(id), v.minLength(1), v.maxLength(50)),
 });
 
-export const finalizeTournamentActionSchema = z.object({
+export const finalizeTournamentActionSchema = v.object({
 	_action: _action("FINALIZE_TOURNAMENT"),
-	badgeReceivers: z.preprocess(safeJSONParse, badgeReceivers.nullish()),
-	trophyReceiver: z.preprocess(safeJSONParse, trophyReceiver.nullish()),
+	badgeReceivers: v.preprocess(safeJSONParse, v.optional(v.nullable(badgeReceivers))),
+	trophyReceiver: v.preprocess(safeJSONParse, v.optional(v.nullable(trophyReceiver))),
 });

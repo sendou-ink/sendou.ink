@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { ART_SOURCES } from "~/features/art/art-types";
 import { serializedBuildCodec } from "~/features/build-analyzer/analyzer-search-params";
 import { EMPTY_BUILD } from "~/features/builds/builds-constants";
@@ -21,17 +21,18 @@ import {
 
 const BUILD_FILTER_TABS = ["ALL", "PUBLIC", "PRIVATE"] as const;
 
-const resultYear = z
-	.number()
-	.int()
-	.min(RESULTS_FIRST_YEAR)
-	.refine((year) => year <= new Date().getFullYear());
+const resultYear = v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(RESULTS_FIRST_YEAR),
+    v.check((year) => year <= new Date().getFullYear())
+);
 
-const resultsFilterName = z.string().trim().min(1).max(100).nullable();
+const resultsFilterName = v.nullable(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)));
 
 export const userResultsSearchParams = SearchParams.define({
 	/** Only applies to users who have highlighted results. */
-	highlightsOnly: SP.param(z.boolean(), {
+	highlightsOnly: SP.param(v.boolean(), {
 		default: true,
 		loader: true,
 		resets: ["page"],
@@ -45,7 +46,7 @@ export const userResultsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	mate: SP.param(z.number().int().positive().nullable(), {
+	mate: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
 		loader: true,
 		resets: ["page"],
 	}),
@@ -63,40 +64,41 @@ export const userResultsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	fromYear: SP.param(resultYear.nullable(), {
+	fromYear: SP.param(v.nullable(resultYear), {
 		loader: true,
 		resets: ["page"],
 		timeDependent: true,
 	}),
-	toYear: SP.param(resultYear.nullable(), {
+	toYear: SP.param(v.nullable(resultYear), {
 		loader: true,
 		resets: ["page"],
 		timeDependent: true,
 	}),
-	source: SP.param(z.enum(RESULT_SOURCES), {
+	source: SP.param(v.picklist(RESULT_SOURCES), {
 		default: "ALL",
 		loader: true,
 		resets: ["page"],
 	}),
-	minParticipantCount: SP.param(z.number().int().nonnegative().max(9999), {
+	minParticipantCount: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9999)), {
 		default: 0,
 		loader: true,
 		resets: ["page"],
 	}),
 });
 
-const startedSeason = z
-	.number()
-	.int()
-	.refine((nth) => Seasons.allStarted(new Date()).includes(nth));
+const startedSeason = v.pipe(
+    v.number(),
+    v.integer(),
+    v.check((nth) => Seasons.allStarted(new Date()).includes(nth))
+);
 
 export const userSeasonsSearchParams = SearchParams.define({
 	page: SP.page(),
-	info: SP.param(z.enum(["weapons", "stages", "mates", "enemies"]), {
+	info: SP.param(v.picklist(["weapons", "stages", "mates", "enemies"]), {
 		default: "weapons",
 		loader: true,
 	}),
-	season: SP.param(startedSeason.nullable(), {
+	season: SP.param(v.nullable(startedSeason), {
 		loader: true,
 		resets: ["page"],
 		timeDependent: true,
@@ -104,15 +106,15 @@ export const userSeasonsSearchParams = SearchParams.define({
 });
 
 export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
-	season: SP.param(startedSeason.nullable(), {
+	season: SP.param(v.nullable(startedSeason), {
 		loader: true,
 		timeDependent: true,
 	}),
 });
 
-const buildsWeaponFilterCodec = z.codec(
-	z.string(),
-	z.union([z.enum(BUILD_FILTER_TABS), numericEnum(mainWeaponIds)]),
+const buildsWeaponFilterCodec = v.codec(
+	v.string(),
+	v.union([v.picklist(BUILD_FILTER_TABS), numericEnum(mainWeaponIds)]),
 	{
 		decode: (value, payload) => {
 			if ((BUILD_FILTER_TABS as readonly string[]).includes(value)) {
@@ -127,7 +129,7 @@ const buildsWeaponFilterCodec = z.codec(
 				message: "Invalid builds weapon filter",
 				input: value,
 			});
-			return z.NEVER;
+			return v.NEVER;
 		},
 		encode: (value) => String(value),
 	},
@@ -135,16 +137,16 @@ const buildsWeaponFilterCodec = z.codec(
 
 export const userBuildsSearchParams = SearchParams.define({
 	weapon: SP.custom(buildsWeaponFilterCodec, { default: "ALL", loader: false }),
-	sorting: SP.param(z.boolean(), { default: false, loader: false }),
+	sorting: SP.param(v.boolean(), { default: false, loader: false }),
 });
 
 export const userArtSearchParams = SearchParams.define({
-	source: SP.param(z.enum(ART_SOURCES), { default: "ALL", loader: false }),
-	tag: SP.param(z.string().nullable(), { loader: false }),
+	source: SP.param(v.picklist(ART_SOURCES), { default: "ALL", loader: false }),
+	tag: SP.param(v.nullable(v.string()), { loader: false }),
 });
 
 export const userBuildsNewSearchParams = SearchParams.define({
-	buildId: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	buildId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
 	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), { loader: true }),
 	build: SP.custom(serializedBuildCodec, {
 		default: EMPTY_BUILD,

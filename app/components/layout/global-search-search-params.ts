@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
@@ -14,7 +14,7 @@ export const GLOBAL_SEARCH_TYPES = [
 export type GlobalSearchType = (typeof GLOBAL_SEARCH_TYPES)[number];
 
 export const globalSearchSearchParams = SearchParams.define({
-	search: SP.param(z.enum(["open"]).nullable(), { loader: false }),
-	type: SP.param(z.enum(GLOBAL_SEARCH_TYPES).nullable(), { loader: false }),
+	search: SP.param(v.nullable(v.picklist(["open"])), { loader: false }),
+	type: SP.param(v.nullable(v.picklist(GLOBAL_SEARCH_TYPES)), { loader: false }),
 	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), { loader: false }),
 });

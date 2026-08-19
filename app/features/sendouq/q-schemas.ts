@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { stringConstant, textAreaOptional, textField } from "~/form/fields";
 import {
 	FRIEND_CODE_MAX_LENGTH,
@@ -6,7 +6,7 @@ import {
 	SENDOUQ,
 } from "./q-constants";
 
-export const updateGroupNoteSchema = z.object({
+export const updateGroupNoteSchema = v.object({
 	_action: stringConstant("UPDATE_NOTE"),
 	value: textAreaOptional({
 		label: "labels.note",
@@ -29,7 +29,7 @@ export const friendCodeField = textField({
 	},
 });
 
-export const addFriendCodeSchema = z.object({
+export const addFriendCodeSchema = v.object({
 	_action: stringConstant("ADD_FRIEND_CODE"),
 	friendCode: friendCodeField,
 });

@@ -1,5 +1,5 @@
 import { type FetcherWithComponents, useFetcher } from "react-router";
-import type { z } from "zod";
+import * as v from "valibot";
 import {
 	type ActionsOf,
 	type FieldsOf,
@@ -23,7 +23,7 @@ interface UseActionSubmitOptions {
  * const { submit } = useActionSubmit(deleteFriendSchema);
  * submit("DELETE_FRIEND", { friendshipId });
  */
-export function useActionSubmit<TSchema extends z.ZodTypeAny>(
+export function useActionSubmit<TSchema extends v.ZodTypeAny>(
 	_schema: TSchema,
 	opts?: UseActionSubmitOptions,
 ) {

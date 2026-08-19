@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	mainWeaponIdSchema,
 	modeShortSchema,
@@ -7,9 +7,9 @@ import {
 import { videoMatchTypes } from "~/features/vods/vods-constants";
 
 /** One detected match of a scanner VoD scan, projected from a ScannerMatch (~/features/scanner/components/sendou-upload.ts). */
-const ingestVodMatchSchema = z.object({
+const ingestVodMatchSchema = v.object({
 	/** whole seconds into the video the match starts at */
-	startsAt: z.number().int().min(0),
+	startsAt: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	/** null when no source read it */
 	mode: modeShortSchema.nullable(),
 	/**
@@ -17,11 +17,11 @@ const ingestVodMatchSchema = z.object({
 	 * than a real read. Currently informational only — assumed modes are
 	 * still stored, since casted footage never exposes the mode.
 	 */
-	modeAssumed: z.boolean().optional(),
+	modeAssumed: v.optional(v.boolean()),
 	/** null when no source read it */
 	stage: stageIdSchema.nullable(),
 	/** sendou main-weapon ids; null for a slot that never read */
-	weapons: z.array(mainWeaponIdSchema.nullable()).max(16),
+	weapons: v.pipe(v.array(mainWeaponIdSchema.nullable()), v.maxLength(16)),
 	/**
 	 * the POV player's weapon, prefilling a non-CAST VoD's single weapon
 	 * select. Absent when no scoreboard identified the POV seat (or it read
@@ -38,10 +38,10 @@ const ingestVodMatchSchema = z.object({
  * sent only when the scan auto-detected it (spectator map screens → CAST);
  * absent means the form's default.
  */
-export const ingestVodPrefillSchema = z.object({
-	type: z.enum(videoMatchTypes).optional(),
-	matches: z.array(ingestVodMatchSchema).min(1).max(100),
+export const ingestVodPrefillSchema = v.object({
+	type: v.optional(v.picklist(videoMatchTypes)),
+	matches: v.pipe(v.array(ingestVodMatchSchema), v.minLength(1), v.maxLength(100)),
 });
 
-export type IngestVodMatchInput = z.infer<typeof ingestVodMatchSchema>;
-export type IngestVodPrefill = z.infer<typeof ingestVodPrefillSchema>;
+export type IngestVodMatchInput = v.InferOutput<typeof ingestVodMatchSchema>;
+export type IngestVodPrefill = v.InferOutput<typeof ingestVodPrefillSchema>;

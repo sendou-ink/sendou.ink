@@ -1,14 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
 
-const authorName = z.string().min(1);
+const authorName = v.pipe(v.string(), v.minLength(1));
 
-const author = z.union([
+const author = v.union([
 	authorName,
-	z.object({ name: authorName, link: z.string().url() }),
+	v.object({ name: authorName, link: v.pipe(v.string(), v.url()) }),
 ]);
 
-export const articleDataSchema = z.object({
-	title: z.string().min(1),
-	author: z.union([author, z.array(author)]),
-	date: z.date(),
+export const articleDataSchema = v.object({
+	title: v.pipe(v.string(), v.minLength(1)),
+	author: v.union([author, v.array(author)]),
+	date: v.date(),
 });

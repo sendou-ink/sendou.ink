@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	checkboxGroup,
 	customField,
@@ -24,7 +24,7 @@ import {
 	weaponSelectOptional,
 } from "~/form/fields";
 
-export const formFieldsShowcaseSchema = z.object({
+export const formFieldsShowcaseSchema = v.object({
 	// Text fields
 	requiredText: textField({
 		label: "labels.name",
@@ -162,6 +162,6 @@ export const formFieldsShowcaseSchema = z.object({
 	// Custom field
 	customValue: customField(
 		{ initialValue: "custom initial value" },
-		z.string().optional(),
+		v.optional(v.string()),
 	),
 });

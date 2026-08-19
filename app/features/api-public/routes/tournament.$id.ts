@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "~/db/sql";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { jsonArrayFrom } from "~/utils/kysely.server";
@@ -7,7 +7,7 @@ import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 

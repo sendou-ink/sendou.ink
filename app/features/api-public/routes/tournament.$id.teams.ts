@@ -1,6 +1,6 @@
 import { sql } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "~/db/sql";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -17,7 +17,7 @@ import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import type { GetTournamentTeamsResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 

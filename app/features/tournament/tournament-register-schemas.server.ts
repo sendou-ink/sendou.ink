@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { registerTeamFormSchema } from "./tournament-register-schemas";
@@ -33,7 +33,7 @@ export function registerTeamFormSchemaServer({
 			})
 		) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.regTeamNameTaken",
 				path: [linkedTeamId ? "teamId" : "pickUpName"],
 			});

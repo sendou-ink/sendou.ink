@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
@@ -15,7 +15,7 @@ export type TournamentAdminRegistrationLoaderData = SerializeFrom<
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tid: tournamentTeamId } = parseParams({
 		params,
-		schema: z.object({ tid: id.optional() }),
+		schema: v.object({ tid: id.optional() }),
 	});
 
 	const { tournamentId, user } = await tournamentFromParams(params, {

@@ -1,5 +1,5 @@
 import { add } from "date-fns";
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	array,
 	customField,
@@ -29,31 +29,26 @@ import { extractYoutubeIdFromVideoUrl } from "./vods-utils";
 
 export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
 
-const videoMatchSchema = z.object({
-	startsAt: z.string().regex(HOURS_MINUTES_SECONDS_REGEX, {
-		message: "Invalid time format. Use HH:MM:SS or MM:SS",
-	}),
+const videoMatchSchema = v.object({
+	startsAt: v.pipe(
+        v.string(),
+        v.regex(HOURS_MINUTES_SECONDS_REGEX, "Invalid time format. Use HH:MM:SS or MM:SS")
+    ),
 	stageId: stageId,
 	mode: modeShort,
-	weapons: z.array(weaponSplId),
+	weapons: v.array(weaponSplId),
 });
 
-export const videoSchema = z.preprocess(
+export const videoSchema = v.preprocess(
 	(val: any) => (val.type === "CAST" ? { ...val, pov: undefined } : val),
-	z
-		.object({
-			type: z.enum(videoMatchTypes),
-			eventId: z.number().optional(),
-			youtubeUrl: z.string().refine(
-				(val) => {
-					const id = extractYoutubeIdFromVideoUrl(val);
+	v.pipe(v.object({
+			type: v.picklist(videoMatchTypes),
+			eventId: v.optional(v.number()),
+			youtubeUrl: v.pipe(v.string(), v.check((val) => {
+                const id = extractYoutubeIdFromVideoUrl(val);
 
-					return id !== null;
-				},
-				{
-					message: "Invalid YouTube URL",
-				},
-			),
+                return id !== null;
+            }, "Invalid YouTube URL")),
 			title: nonEmptyString.max(100),
 			date: dayMonthYear.refine(
 				(data) => {
@@ -65,22 +60,19 @@ export const videoSchema = z.preprocess(
 					message: "Date must not be in the future",
 				},
 			),
-			pov: z
-				.union([
-					z.object({
-						type: z.literal("USER"),
+			pov: v.optional(v.union([
+					v.object({
+						type: v.literal("USER"),
 						userId: id,
 					}),
-					z.object({
-						type: z.literal("NAME"),
+					v.object({
+						type: v.literal("NAME"),
 						name: nonEmptyString.max(100),
 					}),
-				])
-				.optional(),
-			teamSize: z.number().int().min(1).max(4).optional(),
-			matches: z.array(videoMatchSchema),
-		})
-		.refine((data) => {
+				])),
+			teamSize: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(4))),
+			matches: v.array(videoMatchSchema),
+		}), v.check((data) => {
 			if (data.type === "CAST") {
 				const teamSize = data.teamSize ?? 4;
 				return data.matches.every(
@@ -89,21 +81,21 @@ export const videoSchema = z.preprocess(
 			}
 
 			return data.matches.every((match) => match.weapons.length === 1);
-		}),
+		})),
 );
 
-const povSchema = z.union([
-	z.object({
-		type: z.literal("USER"),
+const povSchema = v.union([
+	v.object({
+		type: v.literal("USER"),
 		userId: id.optional(),
 	}),
-	z.object({
-		type: z.literal("NAME"),
+	v.object({
+		type: v.literal("NAME"),
 		name: nonEmptyString.max(100),
 	}),
 ]);
 
-const matchFieldsetSchema = z.object({
+const matchFieldsetSchema = v.object({
 	startsAt: textField({
 		label: "labels.vodStartTimestamp",
 		placeholder: "placeholders.vodStartTimestamp",
@@ -138,7 +130,7 @@ const matchFieldsetSchema = z.object({
 	}),
 });
 
-export const vodFormBaseSchema = z.object({
+export const vodFormBaseSchema = v.object({
 	vodToEditId: idConstantOptional(),
 	youtubeUrl: textField({
 		label: "labels.vodYoutubeUrl",
@@ -176,7 +168,7 @@ export const vodFormBaseSchema = z.object({
 	}),
 	pov: customField(
 		{ initialValue: { type: "USER" as const } },
-		povSchema.optional(),
+		v.optional(povSchema),
 	),
 	matches: array({
 		label: "labels.vodMatches",

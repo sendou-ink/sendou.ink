@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as FriendRepository from "./FriendRepository.server";
 import {
@@ -15,7 +15,7 @@ const sendFriendRequestSchemaServer = sendFriendRequestBaseSchema.superRefine(
 
 		if (data.userId === user.id) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.cannotFriendSelf",
 				path: ["userId"],
 			});
@@ -28,7 +28,7 @@ const sendFriendRequestSchemaServer = sendFriendRequestBaseSchema.superRefine(
 		});
 		if (existingFriendship) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.alreadyFriends",
 				path: ["userId"],
 			});
@@ -41,7 +41,7 @@ const sendFriendRequestSchemaServer = sendFriendRequestBaseSchema.superRefine(
 		});
 		if (existingRequest) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.friendRequestExists",
 				path: ["userId"],
 			});
@@ -49,7 +49,7 @@ const sendFriendRequestSchemaServer = sendFriendRequestBaseSchema.superRefine(
 	},
 );
 
-export const friendsActionSchema = z.union([
+export const friendsActionSchema = v.union([
 	sendFriendRequestSchemaServer,
 	cancelFriendRequestSchema,
 	deleteFriendSchema,

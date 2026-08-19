@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	array,
 	customField,
@@ -9,49 +9,43 @@ import {
 import { id } from "~/utils/zod";
 import { CALENDAR_EVENT_RESULT } from "./calendar-constants";
 
-const reportedPlayerSchema = z.discriminatedUnion("type", [
-	z.object({ type: z.literal("USER"), id: id.nullable() }),
-	z.object({
-		type: z.literal("NAME"),
-		name: z
-			.string()
-			.max(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH)
-			.nullable(),
+const reportedPlayerSchema = v.variant("type", [
+	v.object({ type: v.literal("USER"), id: id.nullable() }),
+	v.object({
+		type: v.literal("NAME"),
+		name: v.nullable(
+            v.pipe(v.string(), v.maxLength(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH))
+        ),
 	}),
 ]);
 
-export type ReportedPlayer = z.infer<typeof reportedPlayerSchema>;
+export type ReportedPlayer = v.InferOutput<typeof reportedPlayerSchema>;
 
 export const EMPTY_REPORTED_PLAYER: ReportedPlayer = { type: "USER", id: null };
 
 type StoredReportedPlayer = { userId: number | null; name: string | null };
 
-const reportedPlayersSchema = z
-	.array(reportedPlayerSchema)
-	.max(CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH)
-	.transform((players) =>
-		players.flatMap((player): Array<StoredReportedPlayer> => {
-			if (player.type === "USER") {
-				return player.id === null ? [] : [{ userId: player.id, name: null }];
-			}
+const reportedPlayersSchema = v.pipe(
+    v.array(reportedPlayerSchema),
+    v.maxLength(CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH),
+    v.transform((players) =>
+            players.flatMap((player): Array<StoredReportedPlayer> => {
+                if (player.type === "USER") {
+                    return player.id === null ? [] : [{ userId: player.id, name: null }];
+                }
 
-			return player.name ? [{ userId: null, name: player.name }] : [];
-		}),
-	)
-	.refine((players) => players.length > 0, {
-		message: "forms:errors.emptyTeam",
-	})
-	.refine(
-		(players) => {
-			const userIds = players.flatMap((player) => player.userId ?? []);
+                return player.name ? [{ userId: null, name: player.name }] : [];
+            })),
+    v.check((players) => players.length > 0, "forms:errors.emptyTeam"),
+    v.check((players) => {
+        const userIds = players.flatMap((player) => player.userId ?? []);
 
-			return userIds.length === new Set(userIds).size;
-		},
-		{ message: "forms:errors.duplicatePlayer" },
-	);
+        return userIds.length === new Set(userIds).size;
+    }, "forms:errors.duplicatePlayer")
+);
 
 const reportedTeamFieldset = fieldset({
-	fields: z.object({
+	fields: v.object({
 		teamName: textField({
 			label: "labels.teamName",
 			maxLength: CALENDAR_EVENT_RESULT.MAX_TEAM_NAME_LENGTH,
@@ -71,8 +65,7 @@ const reportedTeamFieldset = fieldset({
 	}),
 });
 
-export const reportWinnersFormSchema = z
-	.object({
+export const reportWinnersFormSchema = v.object({
 		participantCount: numberField({
 			label: "labels.participantCount",
 			maxLength: String(CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT).length,
@@ -83,14 +76,13 @@ export const reportWinnersFormSchema = z
 			max: CALENDAR_EVENT_RESULT.MAX_TEAMS_COUNT,
 			field: reportedTeamFieldset,
 		}),
-	})
-	.superRefine((data, ctx) => {
+	})((data, ctx) => {
 		if (
 			data.participantCount < 1 ||
 			data.participantCount > CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT
 		) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.numberOutOfRange",
 				path: ["participantCount"],
 			});
@@ -102,7 +94,7 @@ export const reportWinnersFormSchema = z
 				team.placement > CALENDAR_EVENT_RESULT.MAX_TEAM_PLACEMENT
 			) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.numberOutOfRange",
 					path: ["teams", index, "placement"],
 				});
@@ -112,7 +104,7 @@ export const reportWinnersFormSchema = z
 		const teamNames = data.teams.map((team) => team.teamName);
 		if (teamNames.length !== new Set(teamNames).size) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.uniqueTeamName",
 				path: ["teams"],
 			});

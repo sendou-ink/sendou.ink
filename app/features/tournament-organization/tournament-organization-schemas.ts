@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	TOURNAMENT_ORGANIZATION,
 	TOURNAMENT_ORGANIZATION_ROLES,
@@ -30,12 +30,11 @@ const orgNameField = textField({
 	},
 });
 
-export const newOrganizationSchema = z.object({
+export const newOrganizationSchema = v.object({
 	name: orgNameField,
 });
 
-export const organizationEditFormSchema = z
-	.object({
+export const organizationEditFormSchema = v.object({
 		name: orgNameField,
 		logo: image({ label: "labels.logo", autoValidate: true }),
 		description: textAreaOptional({
@@ -47,7 +46,7 @@ export const organizationEditFormSchema = z
 			bottomText: "bottomTexts.orgMembersInfo",
 			max: 32,
 			field: fieldset({
-				fields: z.object({
+				fields: v.object({
 					userId: userSearch({ label: "labels.user" }),
 					role: select({
 						label: "labels.orgMemberRole",
@@ -72,7 +71,7 @@ export const organizationEditFormSchema = z
 			label: "labels.orgSeries",
 			max: 10,
 			field: fieldset({
-				fields: z.object({
+				fields: v.object({
 					name: textField({
 						label: "labels.orgSeriesName",
 						minLength: 1,
@@ -87,14 +86,13 @@ export const organizationEditFormSchema = z
 			}),
 		}),
 		badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
-	})
-	.superRefine((data, ctx) => {
+	})((data, ctx) => {
 		const seenUserIds = new Set<number>();
 
 		for (const [index, member] of data.members.entries()) {
 			if (seenUserIds.has(member.userId)) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
+					code: v.ZodIssueCode.custom,
 					message: "forms:errors.duplicateOrgMember",
 					path: ["members", index, "userId"],
 				});
@@ -105,7 +103,7 @@ export const organizationEditFormSchema = z
 		}
 	});
 
-export const banUserActionSchema = z.object({
+export const banUserActionSchema = v.object({
 	_action: stringConstant("BAN_USER"),
 	userId: userSearch({ label: "labels.player" }),
 	privateNote: textAreaOptional({
@@ -121,27 +119,27 @@ export const banUserActionSchema = z.object({
 	}),
 });
 
-const unbanUserActionSchema = z.object({
+const unbanUserActionSchema = v.object({
 	_action: _action("UNBAN_USER"),
 	userId: id,
 });
 
-export const updateIsEstablishedSchema = z.object({
+export const updateIsEstablishedSchema = v.object({
 	_action: stringConstant("UPDATE_IS_ESTABLISHED"),
 	isEstablished: toggle({
 		label: "labels.isEstablished",
 	}),
 });
 
-const deleteOrganizationActionSchema = z.object({
+const deleteOrganizationActionSchema = v.object({
 	_action: _action("DELETE_ORGANIZATION"),
 });
 
-const leaveOrganizationActionSchema = z.object({
+const leaveOrganizationActionSchema = v.object({
 	_action: _action("LEAVE_ORGANIZATION"),
 });
 
-export const orgPageActionSchema = z.union([
+export const orgPageActionSchema = v.union([
 	banUserActionSchema,
 	unbanUserActionSchema,
 	updateIsEstablishedSchema,

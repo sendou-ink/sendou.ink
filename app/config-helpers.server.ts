@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Builds an `Error` with a readable, multi-line message describing every invalid
@@ -7,7 +7,7 @@ import { z } from "zod";
  */
 export function formatEnvErrors(
 	scope: "client" | "server",
-	error: z.ZodError,
+	error: v.ZodError,
 ): Error {
 	const lines = error.issues.map((issue) => {
 		const name = issue.path.join(".") || "(unknown)";
@@ -28,8 +28,9 @@ export function formatEnvErrors(
  */
 export function requiredInProd(isProd: boolean, devFallback: string) {
 	return isProd
-		? z.string({ message: "required in production" }).min(1, {
-				message: "required in production (cannot be empty)",
-			})
-		: z.string().default(devFallback);
+		? v.pipe(
+        v.string("required in production"),
+        v.minLength(1, "required in production (cannot be empty)")
+    )
+		: v.optional(v.string(), devFallback);
 }

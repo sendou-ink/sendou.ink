@@ -1,6 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
@@ -11,9 +11,7 @@ import { CALENDAR_PAGE } from "~/utils/urls";
 import { actualNumber, id } from "~/utils/zod";
 
 export const action: ActionFunction = async ({ params }) => {
-	const parsedParams = z
-		.object({ id: z.preprocess(actualNumber, id) })
-		.parse(params);
+	const parsedParams = v.parse(v.object({ id: v.preprocess(actualNumber, id) }), params);
 	const event = notFoundIfNullish(
 		await CalendarRepository.findById(parsedParams.id),
 	);

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	DAMAGE_TYPE,
 	possibleApValues,
@@ -25,7 +25,7 @@ const DEFAULT_ANY_WEAPON: AnyWeapon = {
 	id: weaponCategories[0].weaponIds[0],
 };
 
-const anyWeapon = z.codec(z.string(), z.custom<AnyWeapon>(), {
+const anyWeapon = v.codec(v.string(), v.custom<AnyWeapon>(() => true), {
 	decode: (value, payload) => {
 		const decoded = decodeAnyWeapon(value);
 		if (!decoded) {
@@ -34,7 +34,7 @@ const anyWeapon = z.codec(z.string(), z.custom<AnyWeapon>(), {
 				message: "Invalid weapon",
 				input: value,
 			});
-			return z.NEVER;
+			return v.NEVER;
 		}
 		return decoded;
 	},
@@ -44,14 +44,15 @@ const anyWeapon = z.codec(z.string(), z.custom<AnyWeapon>(), {
 export const calculatorSearchParams = SearchParams.define({
 	weapon: SP.custom(anyWeapon, { default: DEFAULT_ANY_WEAPON, loader: false }),
 	ap: SP.param(
-		z
-			.number()
-			.int()
-			.refine((value) => possibleApValues().includes(value)),
+		v.pipe(
+            v.number(),
+            v.integer(),
+            v.check((value) => possibleApValues().includes(value))
+        ),
 		{ default: 0, loader: false },
 	),
-	dmg: SP.param(z.enum(DAMAGE_TYPE).nullable(), { loader: false }),
-	multi: SP.param(z.boolean(), { default: true, loader: false }),
+	dmg: SP.param(v.nullable(v.picklist(DAMAGE_TYPE)), { loader: false }),
+	multi: SP.param(v.boolean(), { default: true, loader: false }),
 });
 
 function decodeAnyWeapon(value: string): AnyWeapon | null {

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
 import {
 	nextNonCompletedVoting,
@@ -16,7 +16,7 @@ export const newSuggestionFormSchemaServer =
 
 		if (suggested.plusTier && suggested.plusTier <= targetPlusTier) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.plusAlreadyMember",
 				path: ["userId"],
 			});
@@ -35,7 +35,7 @@ export const newSuggestionFormSchemaServer =
 		);
 		if (alreadySuggested) {
 			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.plusAlreadySuggested",
 				path: ["userId"],
 			});

@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import * as v from "valibot";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
@@ -127,7 +127,7 @@ interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	autoValidate?: boolean;
 }
 
-export interface FormFieldArray<T extends string, S extends z.ZodType>
+export interface FormFieldArray<T extends string, S extends v.ZodType>
 	extends FormFieldBase<T> {
 	min?: number;
 	max: number;
@@ -143,9 +143,9 @@ interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
 	endLabel?: string;
 }
 
-export interface FormFieldFieldset<T extends string, S extends z.ZodRawShape>
+export interface FormFieldFieldset<T extends string, S extends v.ZodRawShape>
 	extends FormFieldBase<T> {
-	fields: z.ZodObject<S>;
+	fields: v.ZodObject<S>;
 }
 
 interface FormFieldUserSearch<T extends string> extends FormFieldBase<T> {
@@ -204,9 +204,9 @@ export type FormField<V extends string = string> =
 	| FormFieldWeaponPool<"weapon-pool">
 	| FormFieldImage<"image">
 	| FormFieldHidden<"hidden">
-	| FormFieldArray<"array", z.ZodType>
+	| FormFieldArray<"array", v.ZodType>
 	| FormFieldTimeRange<"time-range">
-	| FormFieldFieldset<"fieldset", z.ZodRawShape>
+	| FormFieldFieldset<"fieldset", v.ZodRawShape>
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldTeamSearch<"team-search">
@@ -279,7 +279,7 @@ type FormFieldChildrenProps = {
 
 /** Props for a typed FormField based on field name and schema */
 export type TypedFormFieldProps<
-	TSchema extends z.ZodRawShape,
+	TSchema extends v.ZodRawShape,
 	TName extends keyof TSchema & string,
 > = {
 	name: TName;
@@ -317,7 +317,7 @@ export type FlexibleFormFieldProps = {
 };
 
 /** Typed FormField component type for a specific schema */
-export type TypedFormFieldComponent<TSchema extends z.ZodRawShape> = {
+export type TypedFormFieldComponent<TSchema extends v.ZodRawShape> = {
 	<TName extends keyof TSchema & string>(
 		props: TypedFormFieldProps<TSchema, TName>,
 	): React.ReactNode;

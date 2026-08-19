@@ -1,14 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { _action, id, safeJSONParse } from "~/utils/zod";
 
-const validateManySchema = z.object({
+const validateManySchema = v.object({
 	_action: _action("VALIDATE"),
-	imageIds: z.preprocess(safeJSONParse, z.array(id).min(1).max(5)),
+	imageIds: v.preprocess(safeJSONParse, v.pipe(v.array(id), v.minLength(1), v.maxLength(5))),
 });
 
-const rejectSchema = z.object({
+const rejectSchema = v.object({
 	_action: _action("REJECT"),
 	imageId: id,
 });
 
-export const validateImageSchema = z.union([validateManySchema, rejectSchema]);
+export const validateImageSchema = v.union([validateManySchema, rejectSchema]);

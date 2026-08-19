@@ -1,3 +1,4 @@
+/* @valibot-migrate: unable to transform imports from Zod to Valibot: Expected exactly one import statement from "zod" or "zod/v4". */
 import type { ZodType } from "zod";
 import { z } from "zod";
 import {

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	array,
@@ -35,9 +35,9 @@ const calendarEventDateField = datetime({
 	max: calendarEventMaxDate,
 });
 
-export const calendarNewBaseSchema = z.object({
+export const calendarNewBaseSchema = v.object({
 	// discriminates between a calendar event and a tournament; seeded from the loader, no visible control
-	toToolsEnabled: hidden(z.boolean(), false),
+	toToolsEnabled: hidden(v.boolean(), false),
 	eventToEditId: idConstantOptional(),
 	tournamentToCopyId: idConstantOptional(),
 	name: textField({
@@ -123,7 +123,7 @@ export const calendarNewBaseSchema = z.object({
 			{ value: "TO", label: "options.toToolsMode.TO" },
 		],
 	}),
-	pool: customField({ initialValue: "" }, z.string().optional()),
+	pool: customField({ initialValue: "" }, v.optional(v.string())),
 	// the two bracket progression fields are only rendered (and validated) for
 	// tournaments; for calendar events both stay at their empty initial value
 	brackets: bracketsFormField,
@@ -165,14 +165,14 @@ export const calendarNewBaseSchema = z.object({
 
 /** Shared sync cross-field rules, reused by the server schema (see `*.server.ts`). */
 export function calendarNewSyncRefine(
-	data: z.infer<typeof calendarNewBaseSchema>,
-	ctx: z.RefinementCtx,
+	data: v.InferOutput<typeof calendarNewBaseSchema>,
+	ctx: v.RefinementCtx,
 ) {
 	// a calendar event needs at least one date; a tournament needs its single start time
 	if (!data.toToolsEnabled && data.date.length < 1) {
 		ctx.addIssue({
 			path: ["date"],
-			code: z.ZodIssueCode.custom,
+			code: v.ZodIssueCode.custom,
 			message: "forms:errors.required",
 		});
 	}
@@ -180,7 +180,7 @@ export function calendarNewSyncRefine(
 	if (data.toToolsEnabled && !data.startTime) {
 		ctx.addIssue({
 			path: ["startTime"],
-			code: z.ZodIssueCode.custom,
+			code: v.ZodIssueCode.custom,
 			message: "forms:errors.required",
 		});
 	}
@@ -189,7 +189,7 @@ export function calendarNewSyncRefine(
 	if (!data.toToolsEnabled && !data.bracketUrl) {
 		ctx.addIssue({
 			path: ["bracketUrl"],
-			code: z.ZodIssueCode.custom,
+			code: v.ZodIssueCode.custom,
 			message: "forms:errors.bracketUrlRequired",
 		});
 	}
@@ -198,7 +198,7 @@ export function calendarNewSyncRefine(
 		if (data.brackets.length === 0) {
 			ctx.addIssue({
 				path: ["brackets"],
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.bracketProgressionRequired",
 			});
 		} else {
@@ -220,7 +220,7 @@ export function calendarNewSyncRefine(
 		if (!isValid) {
 			ctx.addIssue({
 				path: ["pool"],
-				code: z.ZodIssueCode.custom,
+				code: v.ZodIssueCode.custom,
 				message: "forms:errors.allModePool",
 			});
 		}
@@ -229,7 +229,7 @@ export function calendarNewSyncRefine(
 	if (data.trophyId && data.badges.length > 0) {
 		ctx.addIssue({
 			path: ["badges"],
-			code: z.ZodIssueCode.custom,
+			code: v.ZodIssueCode.custom,
 			message: "forms:errors.trophyWithBadges",
 		});
 	}
@@ -242,7 +242,7 @@ export function calendarNewSyncRefine(
 	) {
 		ctx.addIssue({
 			path: ["maxMembersPerTeam"],
-			code: z.ZodIssueCode.custom,
+			code: v.ZodIssueCode.custom,
 			message: "forms:errors.maxMembersRange",
 		});
 	}

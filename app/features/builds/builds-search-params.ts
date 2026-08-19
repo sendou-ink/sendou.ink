@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 import { modeShort } from "~/utils/zod";
@@ -12,7 +12,7 @@ import {
 } from "./builds-schemas";
 
 export const buildsSearchParams = SearchParams.define({
-	limit: SP.param(z.number().int().min(1).max(BUILDS_PAGE_MAX_BUILDS), {
+	limit: SP.param(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(BUILDS_PAGE_MAX_BUILDS)), {
 		default: BUILDS_PAGE_BATCH_SIZE,
 		loader: true,
 	}),

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	array,
 	customField,
@@ -11,17 +11,12 @@ import { id } from "~/utils/zod";
 import { ART } from "./art-constants";
 import { artImageValue } from "./art-image";
 
-const artTags = z
-	.array(
-		z.object({
-			name: z.string().min(1).max(ART.TAG_MAX_LENGTH).optional(),
-			id: id.optional(),
-		}),
-	)
-	.max(ART.TAGS_MAX_LENGTH);
+const artTags = v.pipe(v.array(v.object({
+    name: v.optional(v.pipe(v.string(), v.minLength(1), v.maxLength(ART.TAG_MAX_LENGTH))),
+    id: id.optional(),
+})), v.maxLength(ART.TAGS_MAX_LENGTH));
 
-export const artFormSchema = z
-	.object({
+export const artFormSchema = v.object({
 		artId: idConstantOptional(),
 		img: customField({ initialValue: null }, artImageValue),
 		description: textAreaOptional({
@@ -39,8 +34,7 @@ export const artFormSchema = z
 			label: "labels.showcase",
 			bottomText: "bottomTexts.showcase",
 		}),
-	})
-	.superRefine((data, ctx) => {
+	})((data, ctx) => {
 		// existing art keeps its image, new art must bring one
 		if (!data.artId && data.img?.type !== "NEW") {
 			ctx.addIssue({

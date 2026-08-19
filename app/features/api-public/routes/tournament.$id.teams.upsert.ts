@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { upsertRegistrationAction } from "~/features/tournament-admin/actions/to.$id.admin.registration.server";
@@ -9,24 +9,19 @@ import { parseBody, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/zod";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 
-const bodySchema = z.object({
+const bodySchema = v.object({
 	tournamentTeamId: id.optional(),
-	name: z.string().max(TOURNAMENT.TEAM_NAME_MAX_LENGTH).optional(),
+	name: v.optional(v.pipe(v.string(), v.maxLength(TOURNAMENT.TEAM_NAME_MAX_LENGTH))),
 	teamId: id.optional(),
 	ownerUserId: id,
-	members: z
-		.array(
-			z.object({
-				userId: id,
-				inGameName: z.string().optional(),
-			}),
-		)
-		.min(1)
-		.max(ADMIN_REGISTRATION_MAX_MEMBERS),
+	members: v.pipe(v.array(v.object({
+        userId: id,
+        inGameName: v.optional(v.string()),
+    })), v.minLength(1), v.maxLength(ADMIN_REGISTRATION_MAX_MEMBERS)),
 });
 
 export const action = async (args: ActionFunctionArgs) => {

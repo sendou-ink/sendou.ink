@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import * as v from "valibot";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import type { StoredWidget } from "./types";
 import {
@@ -160,12 +160,12 @@ export function findWidgetById(widgetId: string) {
 function defineWidget<
 	const Id extends string,
 	const Slot extends "main" | "side",
-	S extends z.ZodObject<z.ZodRawShape>,
+	S extends v.ZodObject<v.ZodRawShape>,
 >(def: {
 	id: Id;
 	slot: Slot;
 	schema: S;
-	defaultSettings: z.infer<S>;
+	defaultSettings: v.InferOutput<S>;
 }): typeof def;
 
 function defineWidget<

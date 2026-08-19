@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { TIERS, type TierName } from "~/features/mmr/mmr-constants";
 import {
 	languagesUnified,
@@ -21,22 +21,22 @@ const FILTER_OPTIONS = { loader: true, resets: ["page", "post"] };
 export const lfgSearchParams = SearchParams.define({
 	page: SP.page({ resets: ["post"] }),
 	/** Post to jump to: the loader serves the page containing it, overriding `page`. */
-	post: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	post: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
 	weapons: SP.param(
-		z.array(numericEnum(mainWeaponIds)).max(LFG.MAX_WEAPON_FILTERS),
+		v.pipe(v.array(numericEnum(mainWeaponIds)), v.maxLength(LFG.MAX_WEAPON_FILTERS)),
 		{ default: [], ...FILTER_OPTIONS },
 	),
-	type: SP.param(z.enum(LFG_TYPES).nullable(), FILTER_OPTIONS),
+	type: SP.param(v.nullable(v.picklist(LFG_TYPES)), FILTER_OPTIONS),
 	timezone: SP.param(
-		z.number().int().min(0).max(12).nullable(),
+		v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(12))),
 		FILTER_OPTIONS,
 	),
-	language: SP.param(z.enum(LANGUAGE_CODES).nullable(), FILTER_OPTIONS),
-	plusTier: SP.param(z.number().int().min(1).max(3).nullable(), FILTER_OPTIONS),
-	minTier: SP.param(z.enum(TIER_NAMES).nullable(), FILTER_OPTIONS),
-	maxTier: SP.param(z.enum(TIER_NAMES).nullable(), FILTER_OPTIONS),
+	language: SP.param(v.nullable(v.picklist(LANGUAGE_CODES)), FILTER_OPTIONS),
+	plusTier: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(3))), FILTER_OPTIONS),
+	minTier: SP.param(v.nullable(v.picklist(TIER_NAMES)), FILTER_OPTIONS),
+	maxTier: SP.param(v.nullable(v.picklist(TIER_NAMES)), FILTER_OPTIONS),
 });
 
 export const lfgNewSearchParams = SearchParams.define({
-	postId: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	postId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
 });

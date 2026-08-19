@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import * as v from "valibot";
 import { getFormFieldMetadata } from "./fields";
 import type { FormField } from "./types";
 
@@ -104,7 +104,7 @@ export function fieldsetDefaults(
 ): Record<string, unknown> {
 	if (fieldsetMeta.type !== "fieldset") return {};
 
-	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
+	const shape = fieldsetMeta.fields.shape as Record<string, v.ZodType>;
 	const result: Record<string, unknown> = {};
 	for (const [key, fieldSchema] of Object.entries(shape)) {
 		const fieldMeta = getFormFieldMetadata(fieldSchema);
@@ -123,7 +123,7 @@ export function fieldsetDefaults(
  * affect submitting a pristine form.
  */
 export function seedArrayItemDefaults(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: v.ZodObject<v.ZodRawShape>,
 	values: Record<string, unknown>,
 	name: string,
 ): Record<string, unknown> {
@@ -147,11 +147,11 @@ export function seedArrayItemDefaults(
 }
 
 export function getNestedSchema(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: v.ZodObject<v.ZodRawShape>,
 	path: string,
-): z.ZodType | undefined {
+): v.ZodType | undefined {
 	const parts = parsePath(path);
-	let current: z.ZodType = schema;
+	let current: v.ZodType = schema;
 
 	for (const part of parts) {
 		const unwrapped = unwrapSchema(current);
@@ -159,7 +159,7 @@ export function getNestedSchema(
 		if (typeof part === "number") {
 			const def = unwrapped._def as {
 				type?: string;
-				element?: z.ZodType;
+				element?: v.ZodType;
 			};
 			if (def.type === "array" && def.element) {
 				current = def.element;
@@ -167,7 +167,7 @@ export function getNestedSchema(
 				return undefined;
 			}
 		} else if ("shape" in unwrapped && unwrapped.shape) {
-			const nextSchema = (unwrapped.shape as Record<string, z.ZodType>)[part];
+			const nextSchema = (unwrapped.shape as Record<string, v.ZodType>)[part];
 			if (!nextSchema) return undefined;
 			current = nextSchema;
 		} else {
@@ -178,7 +178,7 @@ export function getNestedSchema(
 	return current;
 }
 
-function unwrapSchema(schema: z.ZodType): z.ZodType {
+function unwrapSchema(schema: v.ZodType): v.ZodType {
 	const def = schema._def ?? (schema as unknown as { def: unknown }).def;
 	const typeName =
 		(def as { typeName?: string }).typeName ?? (def as { type?: string }).type;
@@ -191,11 +191,11 @@ function unwrapSchema(schema: z.ZodType): z.ZodType {
 		typeName === "optional" ||
 		typeName === "default"
 	) {
-		const inner = (def as unknown as { innerType: z.ZodType }).innerType;
+		const inner = (def as unknown as { innerType: v.ZodType }).innerType;
 		return unwrapSchema(inner);
 	}
 	if (typeName === "ZodEffects" || typeName === "effects") {
-		return unwrapSchema((def as unknown as { schema: z.ZodType }).schema);
+		return unwrapSchema((def as unknown as { schema: v.ZodType }).schema);
 	}
 	return schema;
 }
@@ -205,13 +205,13 @@ export function errorMessageId(fieldId: string) {
 }
 
 export function validateField(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: v.ZodObject<v.ZodRawShape>,
 	name: string,
 	value: unknown,
 ): string | undefined {
 	const fieldSchema = name.includes(".")
 		? getNestedSchema(schema, name)
-		: (schema.shape[name] as z.ZodType | undefined);
+		: (schema.shape[name] as v.ZodType | undefined);
 	if (!fieldSchema) return undefined;
 
 	const result = fieldSchema.safeParse(value);

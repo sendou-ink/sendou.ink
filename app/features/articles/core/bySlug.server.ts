@@ -1,3 +1,4 @@
+/* @valibot-migrate: unable to transform imports from Zod to Valibot: Expected exactly one import specifier from "zod" or "zod/v4". */
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";

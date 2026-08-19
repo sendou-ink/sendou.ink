@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
@@ -112,7 +112,7 @@ function sleep(ms: number) {
 function parsePatronData({
 	data,
 	included,
-}: z.infer<typeof patronResponseSchema>) {
+}: v.InferOutput<typeof patronResponseSchema>) {
 	const patronsWithIds: Array<
 		{
 			patreonId: string;

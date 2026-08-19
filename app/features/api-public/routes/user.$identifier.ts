@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
@@ -11,8 +11,8 @@ import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { badgeUrl } from "~/utils/urls";
 import type { GetUserResponse } from "../schema";
 
-const paramsSchema = z.object({
-	identifier: z.string(),
+const paramsSchema = v.object({
+	identifier: v.string(),
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

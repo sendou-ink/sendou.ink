@@ -1,5 +1,5 @@
 import { type ActionFunction, redirect } from "react-router";
-import type { z } from "zod";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import { parseFormData } from "~/form/parse.server";
@@ -41,7 +41,7 @@ export const action: ActionFunction = async ({ request }) => {
 	throw redirect(vodVideoPage(savedVideo.id));
 };
 
-type VodFormData = z.output<typeof vodFormSchemaServer>;
+type VodFormData = v.InferOutput<typeof vodFormSchemaServer>;
 
 function transformFormDataToVideo(data: VodFormData): VideoBeingAdded {
 	const teamSize = data.teamSize ? Number(data.teamSize) : 4;

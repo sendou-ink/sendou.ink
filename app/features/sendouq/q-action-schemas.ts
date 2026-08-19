@@ -1,66 +1,66 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { _action, deduplicate, id } from "~/utils/zod";
 import { addFriendCodeSchema, updateGroupNoteSchema } from "./q-schemas";
 
-export const frontPageSchema = z.union([
-	z.object({
+export const frontPageSchema = v.union([
+	v.object({
 		_action: _action("JOIN_QUEUE"),
-		direct: z.preprocess(deduplicate, z.literal("true").nullish()),
+		direct: v.preprocess(deduplicate, v.optional(v.nullable(v.literal("true")))),
 	}),
-	z.object({
+	v.object({
 		_action: _action("JOIN_TEAM"),
 	}),
 	addFriendCodeSchema,
 ]);
 
-export const preparingSchema = z.union([
-	z.object({
+export const preparingSchema = v.union([
+	v.object({
 		_action: _action("JOIN_QUEUE"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("ADD_FRIEND"),
 		id,
 	}),
 ]);
 
-export const lookingSchema = z.union([
-	z.object({
+export const lookingSchema = v.union([
+	v.object({
 		_action: _action("LIKE"),
 		targetGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("RECHALLENGE"),
 		targetGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNLIKE"),
 		targetGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("SUGGEST"),
 		targetGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("GROUP_UP"),
 		targetGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("MATCH_UP"),
 		targetGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("LEAVE_GROUP"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("KICK_FROM_GROUP"),
 		userId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("REFRESH_GROUP"),
 	}),
 	updateGroupNoteSchema,
 ]);
 
-export const readySchema = z.object({
+export const readySchema = v.object({
 	_action: _action("CONFIRM_READY"),
 });

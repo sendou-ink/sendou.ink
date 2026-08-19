@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
@@ -10,7 +10,7 @@ const MAX_REPORTED_WEAPONS = 7;
 export const recentlyReportedWeaponsPersisted = PersistedState.define({
 	key: "sq__recently-reported-weapons",
 	storage: "local",
-	schema: z.array(numericEnum(mainWeaponIds)),
+	schema: v.array(numericEnum(mainWeaponIds)),
 	default: [],
 });
 

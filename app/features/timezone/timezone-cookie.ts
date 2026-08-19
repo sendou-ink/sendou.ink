@@ -1,20 +1,17 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { logger } from "~/utils/logger";
 
 const COOKIE_NAME = "timezone";
 const TEN_YEARS_IN_MS = 315_360_000_000;
 
-const ianaTimezone = z
-	.string()
-	.max(100)
-	.refine((value) => {
+const ianaTimezone = v.pipe(v.string(), v.maxLength(100), v.check((value) => {
 		try {
 			new Intl.DateTimeFormat("en-US", { timeZone: value });
 			return true;
 		} catch {
 			return false;
 		}
-	});
+	}));
 
 /**
  * Stores the browser's IANA timezone in a cookie so that the server can read it
@@ -63,7 +60,7 @@ export function viewerTimezoneFromCookieHeader(
 		.find((cookie) => cookie.startsWith(`${COOKIE_NAME}=`))
 		?.slice(COOKIE_NAME.length + 1);
 
-	const parsed = ianaTimezone.safeParse(value);
+	const parsed = v.safeParse(ianaTimezone, value);
 
-	return parsed.success ? parsed.data : null;
+	return parsed.success ? parsed.output : null;
 }

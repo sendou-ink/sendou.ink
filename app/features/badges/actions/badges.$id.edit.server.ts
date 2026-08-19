@@ -1,6 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
 	requirePermission,
@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		request,
 		schema: editBadgeActionSchema,
 	});
-	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
+	const badgeId = v.preprocess(actualNumber, v.number()).parse(params.id);
 	const badge = notFoundIfNullish(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {

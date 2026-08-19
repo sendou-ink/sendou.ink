@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { assertType } from "~/utils/types";
 import {
 	ability,
@@ -10,7 +10,7 @@ import {
 	weaponSplId,
 } from "~/utils/zod";
 
-export const tierListItemTypeSchema = z.enum([
+export const tierListItemTypeSchema = v.picklist([
 	"main-weapon",
 	"sub-weapon",
 	"special-weapon",
@@ -21,59 +21,59 @@ export const tierListItemTypeSchema = z.enum([
 ]);
 assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
 
-const tierListItemSchema = z.union([
-	z.object({
+const tierListItemSchema = v.union([
+	v.object({
 		id: weaponSplId,
-		nth: z.number().optional(),
-		type: z.literal("main-weapon"),
+		nth: v.optional(v.number()),
+		type: v.literal("main-weapon"),
 	}),
-	z.object({
+	v.object({
 		id: subWeaponId,
-		nth: z.number().optional(),
-		type: z.literal("sub-weapon"),
+		nth: v.optional(v.number()),
+		type: v.literal("sub-weapon"),
 	}),
-	z.object({
+	v.object({
 		id: specialWeaponId,
-		nth: z.number().optional(),
-		type: z.literal("special-weapon"),
+		nth: v.optional(v.number()),
+		type: v.literal("special-weapon"),
 	}),
-	z.object({
+	v.object({
 		id: stageId,
-		nth: z.number().optional(),
-		type: z.literal("stage"),
+		nth: v.optional(v.number()),
+		type: v.literal("stage"),
 	}),
-	z.object({
+	v.object({
 		id: modeShort,
-		nth: z.number().optional(),
-		type: z.literal("mode"),
+		nth: v.optional(v.number()),
+		type: v.literal("mode"),
 	}),
-	z.object({
-		id: z.string(),
-		nth: z.number().optional(),
-		type: z.literal("stage-mode"),
+	v.object({
+		id: v.string(),
+		nth: v.optional(v.number()),
+		type: v.literal("stage-mode"),
 	}),
-	z.object({
+	v.object({
 		id: ability,
-		nth: z.number().optional(),
-		type: z.literal("ability"),
+		nth: v.optional(v.number()),
+		type: v.literal("ability"),
 	}),
 ]);
 
-export type TierListItem = z.infer<typeof tierListItemSchema>;
+export type TierListItem = v.InferOutput<typeof tierListItemSchema>;
 
-const tierSchema = z.object({
-	id: z.string(),
-	name: z.string(),
+const tierSchema = v.object({
+	id: v.string(),
+	name: v.string(),
 	color: hexCodeWithoutAlpha,
 });
 
-export type TierListMakerTier = z.infer<typeof tierSchema>;
+export type TierListMakerTier = v.InferOutput<typeof tierSchema>;
 
-type TierListItemSchemaType = z.infer<typeof tierListItemSchema>;
+type TierListItemSchemaType = v.InferOutput<typeof tierListItemSchema>;
 
-export const tierListStateSerializedSchema = z.object({
-	tiers: z.array(tierSchema),
-	tierItems: z.array(z.tuple([z.string(), z.array(tierListItemSchema)])),
+export const tierListStateSerializedSchema = v.object({
+	tiers: v.array(tierSchema),
+	tierItems: v.array(v.tuple([v.string(), v.array(tierListItemSchema)])),
 });
 
 export type TierListState = {

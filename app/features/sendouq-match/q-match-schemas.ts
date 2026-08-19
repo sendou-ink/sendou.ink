@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	reportWeaponSchema,
 	undoWeaponReportSchema,
@@ -18,59 +18,59 @@ const cancelReasonField = textArea({
 	maxLength: SENDOUQ.CANCEL_REASON_MAX_LENGTH,
 });
 
-export const requestCancelSchema = z.object({
+export const requestCancelSchema = v.object({
 	_action: stringConstant("REQUEST_CANCEL"),
 	nominatedUserIds: cancelNominatedUserIdsField,
 	reason: cancelReasonField,
 });
 
-export const acceptCancelSchema = z.object({
+export const acceptCancelSchema = v.object({
 	_action: stringConstant("ACCEPT_CANCEL"),
 	nominatedUserIds: cancelNominatedUserIdsField,
 	reason: cancelReasonField,
 });
 
-export const matchSchema = z.union([
-	z.object({
+export const matchSchema = v.union([
+	v.object({
 		_action: _action("REPORT_SCORE"),
 		winnerId: id,
-		reportedCount: z.coerce.number().int().nonnegative(),
+		reportedCount: v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0)),
 	}),
-	z.object({
+	v.object({
 		_action: _action("LOOK_AGAIN"),
 		previousGroupId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("CAST_CONTINUE_VOTE"),
-		isContinuing: z.preprocess(
+		isContinuing: v.preprocess(
 			(value) =>
 				value === "1" || value === "true"
 					? true
 					: value === "0" || value === "false"
 						? false
 						: value,
-			z.boolean(),
+			v.boolean(),
 		),
 	}),
 	reportWeaponSchema,
-	z.object({
+	v.object({
 		_action: _action("UNDO_MATCH_REPORT"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNDO_MAP_REPORT"),
-		mapIndex: z.coerce.number().int().nonnegative(),
+		mapIndex: v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0)),
 	}),
 	undoWeaponReportSchema,
 	requestCancelSchema,
 	acceptCancelSchema,
-	z.object({
+	v.object({
 		_action: _action("REFUSE_CANCEL"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("ADMIN_CANCEL"),
 	}),
 ]);
 
-export const qMatchPageParamsSchema = z.object({
+export const qMatchPageParamsSchema = v.object({
 	id,
 });

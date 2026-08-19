@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { ingestVodPrefillSchema } from "~/features/scanner-ingest/scanner-ingest-vod-schemas";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
@@ -21,14 +21,14 @@ export const vodsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	type: SP.param(z.enum(videoMatchTypes).nullable(), {
+	type: SP.param(v.nullable(v.picklist(videoMatchTypes)), {
 		loader: true,
 		resets: ["page"],
 	}),
 });
 
 export const vodsNewSearchParams = SearchParams.define({
-	vod: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	vod: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
 	ingest: SP.json(ingestVodPrefillSchema.nullable(), {
 		loader: true,
 		compress: true,
@@ -36,7 +36,7 @@ export const vodsNewSearchParams = SearchParams.define({
 });
 
 export const vodsVodSearchParams = SearchParams.define({
-	start: SP.param(z.number().int().min(0), { default: 0, loader: false }),
+	start: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0)), { default: 0, loader: false }),
 });
 
 export const userVodsSearchParams = SearchParams.define({

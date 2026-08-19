@@ -1,11 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod/v4";
+import * as v from "valibot";
 import { userByIdentifierQuery } from "~/utils/kysely.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import type { GetUserIdsResponse } from "../schema";
 
-const paramsSchema = z.object({
-	identifier: z.string(),
+const paramsSchema = v.object({
+	identifier: v.string(),
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

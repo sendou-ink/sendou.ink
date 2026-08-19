@@ -1,7 +1,7 @@
 import type { Namespace, TFunction } from "i18next";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
-import type { z } from "zod";
+import * as v from "valibot";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
 import type { Ok, Result } from "~/utils/result";
@@ -70,13 +70,13 @@ export function paginate({
  *
  * When using SendouForm, use parseFormData from /app/form/parse.server.ts instead.
  * */
-export async function parseRequestPayload<T extends z.ZodTypeAny>({
+export async function parseRequestPayload<T extends v.ZodTypeAny>({
 	request,
 	schema,
 }: {
 	request: Request;
 	schema: T;
-}): Promise<z.infer<T>> {
+}): Promise<v.InferOutput<T>> {
 	const formDataObj =
 		request.headers.get("Content-Type") === "application/json"
 			? await request.json()
@@ -91,13 +91,13 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 }
 
 /** Parse params with the given schema. Throws HTTP 404 response if fails. */
-export function parseParams<T extends z.ZodTypeAny>({
+export function parseParams<T extends v.ZodTypeAny>({
 	params,
 	schema,
 }: {
 	params: Params<string>;
 	schema: T;
-}): z.infer<T> {
+}): v.InferOutput<T> {
 	const parsed = schema.safeParse(params);
 	if (!parsed.success) {
 		throw new Response(null, { status: 404 });
@@ -107,13 +107,13 @@ export function parseParams<T extends z.ZodTypeAny>({
 }
 
 /** Parse JSON body with the given schema. Throws HTTP 400 response if fails. */
-export async function parseBody<T extends z.ZodTypeAny>({
+export async function parseBody<T extends v.ZodTypeAny>({
 	request,
 	schema,
 }: {
 	request: Request;
 	schema: T;
-}): Promise<z.infer<T>> {
+}): Promise<v.InferOutput<T>> {
 	const parsed = schema.safeParse(await request.json());
 	if (!parsed.success) {
 		throw new Response(null, { status: 400 });

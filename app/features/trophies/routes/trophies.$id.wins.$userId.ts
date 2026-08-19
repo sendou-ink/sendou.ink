@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
-import { z } from "zod";
+import * as v from "valibot";
 import { getUser } from "~/features/auth/core/user.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
@@ -11,7 +11,7 @@ import { canAccessTrophies } from "../trophies-utils";
 
 export type TrophyWinsLoaderData = SerializeFrom<typeof loader>;
 
-const paramsSchema = z.object({ id, userId: id });
+const paramsSchema = v.object({ id, userId: id });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	if (!canAccessTrophies(getUser())) {

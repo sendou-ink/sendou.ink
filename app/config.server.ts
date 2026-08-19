@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { formatEnvErrors, requiredInProd } from "./config-helpers.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
@@ -14,16 +14,13 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 const isProd = process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN;
 
-const schema = z
-	.object({
-		NODE_ENV: z
-			.enum(["development", "production", "test"])
-			.default("development"),
+const schema = v.object({
+		NODE_ENV: v.optional(v.picklist(["development", "production", "test"]), "development"),
 		DB_PATH: requiredInProd(isProd, "db.sqlite3"),
 		SESSION_SECRET: requiredInProd(isProd, "secret"),
 		LOHI_TOKEN: requiredInProd(isProd, "salmon"),
-		SQL_LOG: z.enum(["none", "trunc", "full"]).default("none"),
-		DISABLE_CACHE: z.stringbool().default(false),
+		SQL_LOG: v.optional(v.picklist(["none", "trunc", "full"]), "none"),
+		DISABLE_CACHE: v.stringbool().default(false),
 
 		DISCORD_CLIENT_ID: requiredInProd(isProd, ""),
 		DISCORD_CLIENT_SECRET: requiredInProd(isProd, ""),
@@ -34,21 +31,20 @@ const schema = z
 		STORAGE_REGION: requiredInProd(isProd, "us-east-1"),
 		STORAGE_BUCKET: requiredInProd(isProd, "sendou"),
 
-		SKALOP_SYSTEM_MESSAGE_URL: z.string().optional(),
-		SKALOP_TOKEN: z.string().optional(),
+		SKALOP_SYSTEM_MESSAGE_URL: v.optional(v.string()),
+		SKALOP_TOKEN: v.optional(v.string()),
 
-		TWITCH_CLIENT_ID: z.string().optional(),
-		TWITCH_CLIENT_SECRET: z.string().optional(),
+		TWITCH_CLIENT_ID: v.optional(v.string()),
+		TWITCH_CLIENT_SECRET: v.optional(v.string()),
 
-		PATREON_ACCESS_TOKEN: z.string().optional(),
+		PATREON_ACCESS_TOKEN: v.optional(v.string()),
 
 		// The VAPID public key (VITE_VAPID_PUBLIC_KEY) lives in `~/config` since
 		// it is client-readable; the full three-var coupling is completed by the
 		// runtime check in webPush.server.ts.
-		VAPID_PRIVATE_KEY: z.string().optional(),
-		VAPID_EMAIL: z.string().optional(),
-	})
-	.superRefine((val, ctx) => {
+		VAPID_PRIVATE_KEY: v.optional(v.string()),
+		VAPID_EMAIL: v.optional(v.string()),
+	})((val, ctx) => {
 		requireTogether(ctx, val, "TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET");
 		requireTogether(ctx, val, "VAPID_EMAIL", "VAPID_PRIVATE_KEY");
 	});
@@ -122,7 +118,7 @@ export const ServerConfig = {
 
 /** Adds a validation issue unless `a` and `b` are both set or both unset. */
 function requireTogether(
-	ctx: z.RefinementCtx,
+	ctx: v.RefinementCtx,
 	values: Record<string, unknown>,
 	a: string,
 	b: string,

@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	BEST_TIER_NUMBER,
 	WORST_TIER_NUMBER,
@@ -23,27 +23,36 @@ export const VIEW_FILTERS = [
 ] as const;
 export type ViewFilter = (typeof VIEW_FILTERS)[number];
 
-const tierNumber = z
-	.number()
-	.int()
-	.min(BEST_TIER_NUMBER)
-	.max(WORST_TIER_NUMBER);
+const tierNumber = v.pipe(
+    v.number(),
+    v.integer(),
+    v.minValue(BEST_TIER_NUMBER),
+    v.maxValue(WORST_TIER_NUMBER)
+);
 
 export const calendarSearchParams = SearchParams.define({
 	modes: SP.param(
-		z.array(modeShortWithSpecial).min(1).max(modesShortWithSpecial.length),
+		v.pipe(
+            v.array(modeShortWithSpecial),
+            v.minLength(1),
+            v.maxLength(modesShortWithSpecial.length)
+        ),
 		{ default: [...modesShortWithSpecial], loader: true },
 	),
-	modesExact: SP.param(z.boolean(), { default: false, loader: true }),
-	games: SP.param(z.array(gamesShortSchema).min(1).max(gamesShort.length), {
+	modesExact: SP.param(v.boolean(), { default: false, loader: true }),
+	games: SP.param(v.pipe(v.array(gamesShortSchema), v.minLength(1), v.maxLength(gamesShort.length)), {
 		default: [...gamesShort],
 		loader: true,
 	}),
 	preferredVersus: SP.param(
-		z.array(z.enum(versusShort)).min(1).max(versusShort.length),
+		v.pipe(
+            v.array(v.picklist(versusShort)),
+            v.minLength(1),
+            v.maxLength(versusShort.length)
+        ),
 		{ default: [...versusShort], loader: true },
 	),
-	preferredStartTime: SP.param(z.enum(["ANY", "EU", "NA", "AU"]), {
+	preferredStartTime: SP.param(v.picklist(["ANY", "EU", "NA", "AU"]), {
 		default: "ANY",
 		loader: true,
 	}),
@@ -55,43 +64,43 @@ export const calendarSearchParams = SearchParams.define({
 		default: [],
 		loader: true,
 	}),
-	isSendou: SP.param(z.boolean(), { default: false, loader: true }),
-	isRanked: SP.param(z.boolean(), { default: false, loader: true }),
-	minTeamCount: SP.param(z.number().int().nonnegative(), {
+	isSendou: SP.param(v.boolean(), { default: false, loader: true }),
+	isRanked: SP.param(v.boolean(), { default: false, loader: true }),
+	minTeamCount: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0)), {
 		default: 0,
 		loader: true,
 	}),
 	minTier: SP.param(tierNumber, { default: BEST_TIER_NUMBER, loader: true }),
 	maxTier: SP.param(tierNumber, { default: WORST_TIER_NUMBER, loader: true }),
-	orgsIncluded: SP.param(z.array(z.string().max(100)).max(10), {
+	orgsIncluded: SP.param(v.pipe(v.array(v.pipe(v.string(), v.maxLength(100))), v.maxLength(10)), {
 		default: [],
 		loader: true,
 	}),
-	orgsExcluded: SP.param(z.array(z.string().max(100)).max(10), {
+	orgsExcluded: SP.param(v.pipe(v.array(v.pipe(v.string(), v.maxLength(100))), v.maxLength(10)), {
 		default: [],
 		loader: true,
 	}),
-	authorIdsExcluded: SP.param(z.array(z.number().int().positive()).max(10), {
+	authorIdsExcluded: SP.param(v.pipe(v.array(v.pipe(v.number(), v.integer(), v.gtValue(0))), v.maxLength(10)), {
 		default: [],
 		loader: true,
 	}),
 	/** False once the user has edited the filters, making the URL win over their saved defaults. */
-	useDefaults: SP.param(z.boolean(), { default: true, loader: true }),
+	useDefaults: SP.param(v.boolean(), { default: true, loader: true }),
 	day: SP.param(dayMonthYear.shape.day.nullable(), { loader: true }),
 	month: SP.param(dayMonthYear.shape.month.nullable(), { loader: true }),
 	year: SP.param(dayMonthYear.shape.year.nullable(), { loader: true }),
 });
 
 export const calendarEventsSearchParams = SearchParams.define({
-	view: SP.param(z.enum(VIEW_FILTERS).nullable(), { loader: false }),
+	view: SP.param(v.nullable(v.picklist(VIEW_FILTERS)), { loader: false }),
 });
 
 export const calendarNewSearchParams = SearchParams.define({
-	eventId: SP.param(z.number().int().positive().nullable(), { loader: true }),
-	copyEventId: SP.param(z.number().int().positive().nullable(), {
+	eventId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
+	copyEventId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
 		loader: true,
 	}),
-	tournament: SP.param(z.boolean(), {
+	tournament: SP.param(v.boolean(), {
 		default: false,
 		loader: true,
 	}),

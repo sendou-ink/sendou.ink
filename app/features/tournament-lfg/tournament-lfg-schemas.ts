@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	stringConstant,
 	textAreaOptional,
@@ -12,13 +12,13 @@ const noteFieldSchema = textAreaOptional({
 	maxLength: 160,
 });
 
-export const addSubFormSchema = z.object({
+export const addSubFormSchema = v.object({
 	_action: stringConstant("ADD_SUB"),
 	message: noteFieldSchema,
 });
 
-export const addSubForUserFormSchema = z.object({
-	...addSubFormSchema.shape,
+export const addSubForUserFormSchema = v.object({
+	...addSubFormSchema.entries,
 	_action: stringConstant("ADD_SUB_FOR_USER"),
 	userId: userSearch({ label: "labels.user" }),
 });
@@ -28,55 +28,55 @@ const stayAsSubFieldSchema = toggle({
 	bottomText: "bottomTexts.stayAsSub",
 });
 
-export const joinQueueFormSchema = z.object({
+export const joinQueueFormSchema = v.object({
 	_action: stringConstant("JOIN_QUEUE"),
 	note: noteFieldSchema,
 	stayAsSub: stayAsSubFieldSchema,
 });
 
-export const updateGroupFormSchema = z.object({
+export const updateGroupFormSchema = v.object({
 	_action: stringConstant("UPDATE_GROUP"),
 	note: noteFieldSchema,
 	stayAsSub: stayAsSubFieldSchema,
 });
 
-export const lookingSchema = z.union([
-	z.object({
+export const lookingSchema = v.union([
+	v.object({
 		_action: _action("JOIN_QUEUE"),
 		note: noteFieldSchema.optional(),
 		stayAsSub: stayAsSubFieldSchema.optional(),
 	}),
-	z.object({
+	v.object({
 		_action: _action("LIKE"),
 		targetTeamId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNLIKE"),
 		targetTeamId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("ACCEPT"),
 		targetTeamId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("GIVE_MANAGER"),
 		userId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("REMOVE_MANAGER"),
 		userId: id,
 	}),
 	updateGroupFormSchema,
-	z.object({
+	v.object({
 		_action: _action("LEAVE_GROUP"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("DELETE_GROUP"),
 		userId: id,
 	}),
 	addSubFormSchema,
 	addSubForUserFormSchema,
-	z.object({
+	v.object({
 		_action: _action("DELETE_SUB"),
 		userId: id,
 	}),

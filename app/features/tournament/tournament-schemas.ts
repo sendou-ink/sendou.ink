@@ -1,33 +1,33 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { _action, id, modeShort, safeJSONParse, stageId } from "~/utils/zod";
 
-export const checkInSchema = z.object({
+export const checkInSchema = v.object({
 	_action: _action("CHECK_IN"),
 });
 
-export const updateMapPoolSchema = z.object({
+export const updateMapPoolSchema = v.object({
 	_action: _action("UPDATE_MAP_POOL"),
-	mapPool: z.preprocess(
+	mapPool: v.preprocess(
 		safeJSONParse,
-		z.array(z.object({ stageId, mode: modeShort })),
+		v.array(v.object({ stageId, mode: modeShort })),
 	),
 });
 
-export const addPlayerSchema = z.object({
+export const addPlayerSchema = v.object({
 	_action: _action("ADD_PLAYER"),
 	userId: id,
 });
 
-export const deleteTeamMemberSchema = z.object({
+export const deleteTeamMemberSchema = v.object({
 	_action: _action("DELETE_TEAM_MEMBER"),
 	userId: id,
 });
 
-export const saveTournamentSchema = z.union([
-	z.object({
+export const saveTournamentSchema = v.union([
+	v.object({
 		_action: _action("SAVE_TOURNAMENT"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNSAVE_TOURNAMENT"),
 	}),
 ]);
