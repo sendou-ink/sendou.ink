@@ -1,6 +1,6 @@
 import type * as React from "react";
 import { type FetcherWithComponents, useFetcher } from "react-router";
-import type { z } from "zod";
+import * as v from "valibot";
 import {
 	type ActionsOf,
 	type FieldsOf,
@@ -11,7 +11,7 @@ import { FormWithConfirm } from "./FormWithConfirm";
 import { SubmitButton } from "./SubmitButton";
 
 interface ActionButtonBaseProps<
-	TSchema extends z.ZodTypeAny,
+	TSchema extends v.ZodTypeAny,
 	TAction extends ActionsOf<TSchema>,
 > extends Omit<SendouButtonProps, "type" | "name" | "value" | "form"> {
 	/** Action schema of the route the button submits to. Only used for typing `action` and `fields`. */
@@ -33,7 +33,7 @@ interface ActionButtonBaseProps<
 }
 
 type ActionButtonProps<
-	TSchema extends z.ZodTypeAny,
+	TSchema extends v.ZodTypeAny,
 	TAction extends ActionsOf<TSchema>,
 > = ActionButtonBaseProps<TSchema, TAction> &
 	// biome-ignore lint/complexity/noBannedTypes: {} models "branch with no extra fields"
@@ -55,7 +55,7 @@ type ActionButtonProps<
  * </ActionButton>
  */
 export function ActionButton<
-	TSchema extends z.ZodTypeAny,
+	TSchema extends v.ZodTypeAny,
 	const TAction extends ActionsOf<TSchema>,
 >({
 	schema,

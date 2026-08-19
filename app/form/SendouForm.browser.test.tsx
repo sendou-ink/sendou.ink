@@ -3,7 +3,7 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import { z } from "zod";
+import * as v from "valibot";
 import labelStyles from "~/components/Label.module.css";
 import { FormField } from "./FormField";
 import {
@@ -29,20 +29,20 @@ let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
 
 /** `fieldset` registers its metadata onto the object it is handed, so anything nested needs a fresh one. */
 const singleTextField = () =>
-	z.object({
+	v.object({
 		name: textField({ label: "labels.name", maxLength: 100 }),
 	});
 
 const SINGLE_TEXT_FIELD = singleTextField();
 
-const NESTED_FIELDSET = z.object({
+const NESTED_FIELDSET = v.object({
 	member: fieldset({
 		label: "labels.member",
 		fields: singleTextField(),
 	}),
 });
 
-const FIELDSET_ARRAY = z.object({
+const FIELDSET_ARRAY = v.object({
 	members: array({
 		label: "labels.members",
 		min: 0,
@@ -51,7 +51,7 @@ const FIELDSET_ARRAY = z.object({
 	}),
 });
 
-const TEXT_FIELD_ARRAY = z.object({
+const TEXT_FIELD_ARRAY = v.object({
 	urls: array({
 		label: "labels.urls",
 		min: 0,
@@ -60,11 +60,11 @@ const TEXT_FIELD_ARRAY = z.object({
 	}),
 });
 
-const TOGGLE = z.object({
+const TOGGLE = v.object({
 	noScreen: toggleField({ label: "labels.noScreen" }),
 });
 
-const CHECKBOX_GROUP = z.object({
+const CHECKBOX_GROUP = v.object({
 	modes: checkboxGroup({
 		label: "labels.buildModes",
 		items: [
@@ -75,7 +75,7 @@ const CHECKBOX_GROUP = z.object({
 	}),
 });
 
-const TIME_RANGE = z.object({
+const TIME_RANGE = v.object({
 	times: timeRangeOptional({}),
 });
 
@@ -95,7 +95,7 @@ vi.mock("react-router", async () => {
 });
 
 function renderForm(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: v.ZodObject<v.ZodRawShape>,
 	options?: {
 		defaultValues?: Record<string, unknown>;
 		title?: string;
@@ -111,7 +111,7 @@ function renderForm(
 		mode: options?.mode,
 		children: (
 			<>
-				{Object.keys(schema.shape).map((name) => (
+				{Object.keys(schema.entries).map((name) => (
 					<FormField key={name} name={name} />
 				))}
 			</>
@@ -229,7 +229,7 @@ describe("SendouForm", () => {
 		});
 
 		test("optional text field does not show error when empty", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textFieldOptional({ label: "labels.bio", maxLength: 500 }),
 			});
 
@@ -254,7 +254,7 @@ describe("SendouForm", () => {
 
 	describe("text area", () => {
 		test("renders textarea element", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
 			});
 
@@ -265,7 +265,7 @@ describe("SendouForm", () => {
 		});
 
 		test("displays value counter showing current/max characters", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 100 }),
 			});
 
@@ -275,7 +275,7 @@ describe("SendouForm", () => {
 		});
 
 		test("value counter updates as user types", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 100 }),
 			});
 
@@ -290,7 +290,7 @@ describe("SendouForm", () => {
 		});
 
 		test("value counter shows warning style near max length", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 10 }),
 			});
 
@@ -303,7 +303,7 @@ describe("SendouForm", () => {
 		});
 
 		test("value counter shows error style when over max length", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 5 }),
 			});
 
@@ -316,7 +316,7 @@ describe("SendouForm", () => {
 		});
 
 		test("typing updates value", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
 			});
 
@@ -329,7 +329,7 @@ describe("SendouForm", () => {
 		});
 
 		test("required text area shows error when empty", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				bio: textArea({ label: "labels.bio", maxLength: 500 }),
 			});
 
@@ -345,7 +345,7 @@ describe("SendouForm", () => {
 
 	describe("select field", () => {
 		test("renders with options from schema", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				format: select({
 					label: "labels.clockFormat",
 					items: [
@@ -366,7 +366,7 @@ describe("SendouForm", () => {
 		});
 
 		test("selecting option updates value", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				format: select({
 					label: "labels.clockFormat",
 					items: [
@@ -386,7 +386,7 @@ describe("SendouForm", () => {
 		});
 
 		test("initializes with first option as default", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				format: select({
 					label: "labels.clockFormat",
 					items: [
@@ -405,7 +405,7 @@ describe("SendouForm", () => {
 
 	describe("optional select field", () => {
 		test("allows empty selection", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				format: selectOptional({
 					label: "labels.clockFormat",
 					items: [
@@ -458,7 +458,7 @@ describe("SendouForm", () => {
 
 	describe("radio group field", () => {
 		test("renders radio options", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				vc: radioGroup({
 					label: "labels.voiceChat",
 					items: [
@@ -476,7 +476,7 @@ describe("SendouForm", () => {
 		});
 
 		test("clicking option updates value", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				vc: radioGroup({
 					label: "labels.voiceChat",
 					items: [
@@ -495,7 +495,7 @@ describe("SendouForm", () => {
 		});
 
 		test("initializes with first option selected", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				vc: radioGroup({
 					label: "labels.voiceChat",
 					items: [
@@ -514,7 +514,7 @@ describe("SendouForm", () => {
 
 	describe("checkbox group field", () => {
 		test("renders checkbox options", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				modes: checkboxGroup({
 					label: "labels.buildModes",
 					items: [
@@ -536,7 +536,7 @@ describe("SendouForm", () => {
 		});
 
 		test("checking options updates array value", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				modes: checkboxGroup({
 					label: "labels.buildModes",
 					items: [
@@ -559,7 +559,7 @@ describe("SendouForm", () => {
 		});
 
 		test("unchecking option removes from array", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				modes: checkboxGroup({
 					label: "labels.buildModes",
 					items: [
@@ -615,7 +615,7 @@ describe("SendouForm", () => {
 
 	describe("validation", () => {
 		test("validates multiple fields on submit", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				name: textField({ label: "labels.name", maxLength: 100 }),
 				bio: textArea({ label: "labels.bio", maxLength: 500 }),
 			});
@@ -634,7 +634,7 @@ describe("SendouForm", () => {
 
 	describe("default values", () => {
 		test("initializes multiple fields with default values", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				name: textField({ label: "labels.name", maxLength: 100 }),
 				bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
 			});
@@ -655,7 +655,7 @@ describe("SendouForm", () => {
 		});
 
 		test("falls back to schema initial value when no default provided", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				format: select({
 					label: "labels.clockFormat",
 					items: [
@@ -673,7 +673,7 @@ describe("SendouForm", () => {
 		});
 
 		test("toggle falls back to schema initial value when no default provided", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				noScreen: toggleField({ label: "labels.noScreen", initialValue: true }),
 			});
 
@@ -683,7 +683,7 @@ describe("SendouForm", () => {
 		});
 
 		test("dynamic select falls back to schema initial value when no default provided", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				threshold: selectDynamic({
 					label: "labels.advanceThreshold",
 					initialValue: "4",
@@ -843,10 +843,10 @@ describe("SendouForm", () => {
 		});
 
 		test("renders nested fields inside fieldset", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				member: fieldset({
 					label: "labels.member",
-					fields: z.object({
+					fields: v.object({
 						name: textField({ label: "labels.name", maxLength: 100 }),
 						bio: textAreaOptional({ label: "labels.bio", maxLength: 500 }),
 					}),
@@ -945,7 +945,7 @@ describe("SendouForm", () => {
 		});
 
 		test("disables add button when max items reached", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				urls: array({
 					label: "labels.urls",
 					min: 0,
@@ -1014,7 +1014,7 @@ describe("SendouForm", () => {
 		});
 
 		test("sortable array renders move buttons and reorders items", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				members: array({
 					label: "labels.members",
 					min: 0,
@@ -1064,13 +1064,13 @@ describe("SendouForm", () => {
 		test("removing an added fieldset row returns to a single non-removable row", async () => {
 			// Mirrors the staff form: a select field gives the row a non-empty default
 			// (role), so a freshly added row isn't "blank" yet is still pristine.
-			const schema = z.object({
+			const schema = v.object({
 				staff: array({
 					label: "labels.members",
 					min: 0,
 					max: 10,
 					field: fieldset({
-						fields: z.object({
+						fields: v.object({
 							name: textField({ label: "labels.name", maxLength: 100 }),
 							role: select({
 								label: "labels.staffRole",
@@ -1129,13 +1129,13 @@ describe("SendouForm", () => {
 			// rather than leaving them only displayed as a fallback and failing
 			// validation on submit.
 			const onApply = vi.fn();
-			const schema = z.object({
+			const schema = v.object({
 				staff: array({
 					label: "labels.members",
 					min: 0,
 					max: 10,
 					field: fieldset({
-						fields: z.object({
+						fields: v.object({
 							name: textField({ label: "labels.name", maxLength: 100 }),
 							role: select({
 								label: "labels.staffRole",
@@ -1174,13 +1174,13 @@ describe("SendouForm", () => {
 		});
 
 		test("shows error on specific nested field within array item", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				series: array({
 					label: "labels.orgSeries",
 					min: 1,
 					max: 10,
 					field: fieldset({
-						fields: z.object({
+						fields: v.object({
 							name: textField({ label: "labels.name", maxLength: 100 }),
 							description: textAreaOptional({
 								label: "labels.description",
@@ -1202,7 +1202,7 @@ describe("SendouForm", () => {
 		});
 
 		test("shows 'This field is required' for empty required field in array fieldset", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				series: array({
 					label: "labels.orgSeries",
 					min: 1,
@@ -1225,13 +1225,13 @@ describe("SendouForm", () => {
 		});
 
 		test("setItemField batches multiple field updates correctly", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				members: array({
 					label: "labels.members",
 					min: 1,
 					max: 10,
 					field: fieldset({
-						fields: z.object({
+						fields: v.object({
 							name: textFieldOptional({ label: "labels.name", maxLength: 100 }),
 							bio: textFieldOptional({ label: "labels.bio", maxLength: 100 }),
 						}),
@@ -1256,13 +1256,13 @@ describe("SendouForm", () => {
 
 	describe("array field with custom-rendered items", () => {
 		const memberSchema = () =>
-			z.object({
+			v.object({
 				members: array({
 					label: "labels.members",
 					min: 0,
 					max: 10,
 					field: fieldset({
-						fields: z.object({
+						fields: v.object({
 							name: textField({ label: "labels.name", maxLength: 100 }),
 							role: select({
 								label: "labels.staffRole",
@@ -1527,12 +1527,12 @@ describe("SendouForm", () => {
 				return null;
 			}
 
-			const schema = z.object({
+			const schema = v.object({
 				members: array({
 					label: "labels.members",
 					max: 10,
 					field: fieldset({
-						fields: z.object({
+						fields: v.object({
 							userId: userSearch({ label: "labels.user" }),
 							role: select({
 								label: "labels.orgMemberRole",
@@ -1600,7 +1600,7 @@ describe("SendouForm", () => {
 
 	describe("render isolation", () => {
 		test("typing in one field does not re-render sibling fields", async () => {
-			const schema = z.object({
+			const schema = v.object({
 				name: textField({ label: "labels.name", maxLength: 100 }),
 				bio: textFieldOptional({ label: "labels.bio", maxLength: 100 }),
 			});

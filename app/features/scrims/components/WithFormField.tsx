@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
-import type { z } from "zod";
+import * as v from "valibot";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
@@ -18,7 +18,7 @@ import type { CommonUser } from "~/utils/kysely.server";
 import type { fromSchema } from "../scrims-schemas";
 import styles from "./WithFormField.module.css";
 
-type FromValue = z.infer<typeof fromSchema>;
+type FromValue = v.InferOutput<typeof fromSchema>;
 
 const NEW_PICKUP_KEY = "PICKUP";
 /** Keeps one long username from crowding out the rest of the pick-up */

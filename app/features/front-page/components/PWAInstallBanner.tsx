@@ -1,7 +1,7 @@
 import { Download } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { z } from "zod";
+import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
@@ -20,7 +20,7 @@ const SAFARI_MIN_INSTALL_VERSION = 17;
 const bannerDismissedPersisted = PersistedState.define({
 	key: "pwa-install-banner-dismissed",
 	storage: "local",
-	schema: z.boolean(),
+	schema: v.boolean(),
 	default: false,
 });
 
@@ -166,10 +166,7 @@ function isStandalone() {
 }
 
 function isIos() {
-	return (
-		/iPad|iPhone|iPod/.test(navigator.userAgent) ||
-		(navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1)
-	);
+	return (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1));
 }
 
 function isInstallCapableSafariDesktop() {

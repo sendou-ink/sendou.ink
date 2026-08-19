@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { z } from "zod";
+import * as v from "valibot";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
@@ -69,7 +69,7 @@ interface FormFieldProps {
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;
 	maxCount?: number;
-	field?: z.ZodType;
+	field?: v.ZodType;
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
