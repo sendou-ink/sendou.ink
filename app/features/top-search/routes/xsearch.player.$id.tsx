@@ -6,14 +6,13 @@ import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
-import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
-	navIconUrl,
 	topSearchPage,
 	topSearchPlayerPage,
-	userPage,
-} from "~/utils/urls";
+} from "~/features/top-search/top-search-urls";
+import { metaTags, type SerializeFrom } from "~/utils/remix";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { navIconUrl, userPage } from "~/utils/urls";
 import { action } from "../actions/xsearch.player.$id.server";
 import { HowToLinkPopover } from "../components/HowToLinkPopover";
 import { PlacementsTable } from "../components/Placements";

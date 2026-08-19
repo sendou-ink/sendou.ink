@@ -9,6 +9,7 @@ import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { UserLink } from "~/components/UserLink";
 import { action } from "~/features/associations/actions/associations.server";
+import { associationsPage } from "~/features/associations/associations-urls";
 import {
 	type AssociationsLoaderData,
 	loader,
@@ -17,7 +18,6 @@ import { useUser } from "~/features/auth/core/user";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage } from "~/utils/urls";
 import { associationsPageActionSchema } from "../associations-schemas";
 
 export { action, loader };

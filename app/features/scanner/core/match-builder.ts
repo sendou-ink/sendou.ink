@@ -477,6 +477,14 @@ function toBuiltMatch<E extends DetectedEvent>(
 		minimapTeamColors(minimaps),
 	);
 
+	const pov: ScannerMatch["pov"] =
+		board && board.povIndex !== null
+			? {
+					team: board.povIndex < PLAYERS_PER_TEAM ? 0 : 1,
+					index: board.povIndex % PLAYERS_PER_TEAM,
+				}
+			: null;
+
 	const match: ScannerMatch = {
 		startsAt:
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
@@ -492,25 +500,22 @@ function toBuiltMatch<E extends DetectedEvent>(
 		// layout alone cannot flag a broadcast: S3 first-person POV footage
 		// draws the cast strip geometry, so only actual cast evidence counts —
 		// the spectator map screen, badge-proven strips, or the mirror
-		// arrangement (reachable only through badge/comb proof)
+		// arrangement (reachable only through badge/comb proof). A results
+		// screen that identified the POV seat disproves them all: casts never
+		// see a results screen, so such evidence was misread
 		cast:
-			open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
-			playerStatuses.some(
-				(read) => read.data.castProven || read.data.layout === "cast-mirror",
-			),
+			pov === null &&
+			(open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
+				playerStatuses.some(
+					(read) => read.data.castProven || read.data.layout === "cast-mirror",
+				)),
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
 		teams: board
 			? teamsFromScoreboard(board, deaths)
 			: teamsFromMinimaps(minimaps, deaths),
 		winner: board ? 0 : null,
-		pov:
-			board && board.povIndex !== null
-				? {
-						team: board.povIndex < PLAYERS_PER_TEAM ? 0 : 1,
-						index: board.povIndex % PLAYERS_PER_TEAM,
-					}
-				: null,
+		pov,
 	};
 
 	return { match, sources };

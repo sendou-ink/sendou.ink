@@ -4,8 +4,8 @@ import { useLoaderData, useLocation } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import type { UserMapModePreferences } from "~/db/tables-json";
+import { userCardEditPage } from "~/features/user-card/user-card-urls";
 import { SendouForm } from "~/form/SendouForm";
-import { userCardEditPage } from "~/utils/urls";
 import type { loader } from "../loaders/settings.server";
 import { updateMatchProfileSchema } from "../match-profile-schemas";
 import {

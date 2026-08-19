@@ -100,7 +100,11 @@ same place as an auto margin would but leaves their text room to breathe.
 	gap: var(--s-2);
 }
 
-.box {
+/*
+:where() keeps these base component classes at zero specificity so single-class
+overrides from other module files win regardless of which CSS chunk loads last
+*/
+:where(.box) {
 	padding: var(--s-2) var(--s-3);
 	background-color: var(--graphic-row-bg);
 	border: 1.5px solid var(--graphic-row-border);
@@ -124,7 +128,7 @@ same place as an auto margin would but leaves their text room to breathe.
 	list-style: none;
 }
 
-.teamRow {
+:where(.teamRow) {
 	display: grid;
 	grid-template-columns: 3rem 2.75rem 1fr auto;
 	align-items: center;

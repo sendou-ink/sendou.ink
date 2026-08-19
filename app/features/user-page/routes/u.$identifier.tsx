@@ -10,12 +10,10 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	discordAvatarUrl,
 	userAdminPage,
-	userArtPage,
 	userBuildsPage,
 	userEditProfilePage,
 	userPage,
 	userResultsPage,
-	userSeasonsPage,
 	userVodsPage,
 } from "~/utils/urls";
 import type { UserPageNavItem } from "../components/UserPageIconNav";
@@ -28,6 +26,8 @@ import {
 export { loader };
 
 import "~/features/user-page/user-page.module.css";
+import { userArtPage } from "~/features/art/art-urls";
+import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];

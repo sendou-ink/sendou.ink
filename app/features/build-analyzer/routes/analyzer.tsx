@@ -22,7 +22,9 @@ import { Placeholder } from "~/components/Placeholder";
 import { Table } from "~/components/Table";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { useUser } from "~/features/auth/core/user";
+import { objectDamageCalculatorPage } from "~/features/object-damage-calculator/calculator-urls";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
+import { userNewBuildPage } from "~/features/user-page/user-page-urls";
 import { useHydrated } from "~/hooks/useHydrated";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import type {
@@ -50,10 +52,8 @@ import {
 	ANALYZER_URL,
 	mainWeaponImageUrl,
 	navIconUrl,
-	objectDamageCalculatorPage,
 	specialWeaponImageUrl,
 	subWeaponImageUrl,
-	userNewBuildPage,
 	weaponParamsPage,
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";

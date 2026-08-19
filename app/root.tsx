@@ -58,13 +58,16 @@ import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
-import { DEFAULT_LANGUAGE } from "./modules/i18n/config";
-import { InitialI18nStore } from "./modules/i18n/InitialI18nStore";
+import {
+	ALWAYS_LOADED_NAMESPACES,
+	DEFAULT_LANGUAGE,
+} from "./modules/i18n/config";
 import {
 	getLocale,
 	i18nCookie,
 	i18nMiddleware,
 } from "./modules/i18n/i18next.server";
+import { localePreloadUrls } from "./modules/i18n/locale-preload.server";
 import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
 import { redirectsMiddleware } from "./modules/redirects/redirects-middleware.server";
@@ -135,6 +138,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return data(
 		{
 			locale,
+			i18nPreloadUrls: localePreloadUrls(locale),
 			theme: themeSession.getTheme(),
 			sidenavCollapsed: sidenavSession.getCollapsed(),
 			user: user
@@ -164,7 +168,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["common", "forms", "game-misc", "weapons", "front", "friends"],
+	i18n: [...ALWAYS_LOADED_NAMESPACES],
 };
 
 function Document({
@@ -230,6 +234,15 @@ function Document({
 				<meta name="theme-color" content="#010115" />
 				<Meta />
 				<Links />
+				{data?.i18nPreloadUrls?.map((url) => (
+					<link
+						key={url}
+						rel="preload"
+						as="fetch"
+						crossOrigin="anonymous"
+						href={url}
+					/>
+				))}
 				<ThemeHead />
 				<link rel="manifest" href="/app.webmanifest" />
 				<PWALinks />
@@ -256,7 +269,6 @@ function Document({
 					</SearchParamsProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
-				<InitialI18nStore locale={locale} />
 				<Scripts />
 			</body>
 		</html>

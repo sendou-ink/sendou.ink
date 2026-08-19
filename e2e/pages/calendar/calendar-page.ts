@@ -1,5 +1,5 @@
 import type { Page } from "@playwright/test";
-import { calendarPage } from "~/utils/urls";
+import { calendarPage } from "~/features/calendar/calendar-urls";
 import {
 	expectIsHydrated,
 	navigate,

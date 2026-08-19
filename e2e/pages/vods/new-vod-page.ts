@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { vodFormBaseSchema } from "~/features/vods/vods-schemas";
-import { newVodPage } from "~/utils/urls";
+import { newVodPage } from "~/features/vods/vods-urls";
 import {
 	navigate,
 	selectStage,

@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { add, sub } from "date-fns";
-import React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -11,9 +10,12 @@ import { SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
+import { Pagination } from "~/components/Pagination";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { useUser } from "~/features/auth/core/user";
 import { TIERS } from "~/features/mmr/mmr-constants";
+import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
+import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
@@ -24,14 +26,16 @@ import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lfg.server";
 import { LFGPost } from "../components/LFGPost";
-import { filterPosts } from "../core/filtering";
 import { LFG } from "../lfg-constants";
 import { lfgActionSchema } from "../lfg-schemas";
 import { lfgSearchParams } from "../lfg-search-params";
 import { loader } from "../loaders/lfg.server";
+import type { Route } from "./+types/lfg";
 import styles from "./lfg.module.css";
 
 export { action, loader };
+
+export const middleware: Route.MiddlewareFunction[] = [timezoneMiddleware];
 
 export const handle: SendouRouteHandle = {
 	i18n: ["lfg", "user", "q"],
@@ -53,21 +57,36 @@ export const meta: MetaFunction = (args) => {
 };
 
 export type LFGLoaderData = SerializeFrom<typeof loader>;
-export type LFGLoaderPost = Unpacked<LFGLoaderData["posts"]>;
-export type TiersMap = ReturnType<typeof unserializeTiers>;
-
-const unserializeTiers = (data: SerializeFrom<typeof loader>) =>
-	new Map(data.tiersMap);
 
 export default function LFGPage() {
 	const { t } = useTranslation(["common", "lfg"]);
-	const user = useUser();
 	const data = useLoaderData<typeof loader>();
-	const [filterValues] = useSearchParamsTyped(lfgSearchParams);
 
-	const tiersMap = React.useMemo(() => unserializeTiers(data), [data]);
+	const pagination = useSearchParamPagination({
+		definition: lfgSearchParams,
+		currentPage: data.currentPage,
+		pagesCount: data.pagesCount,
+	});
 
-	const filteredPosts = filterPosts(data.posts, filterValues, tiersMap);
+	return (
+		<Main className="stack xl">
+			<Filters />
+			{data.posts.length > 0 ? (
+				<>
+					<PostsList posts={data.posts} />
+					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
+				</>
+			) : (
+				<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+					{t("lfg:noPosts")}
+				</div>
+			)}
+		</Main>
+	);
+}
+
+function PostsList({ posts }: { posts: LFGLoaderData["posts"] }) {
+	const user = useUser();
 
 	const showExpiryAlert = (post: Unpacked<LFGLoaderData["posts"]>) => {
 		if (post.author.id !== user?.id) return false;
@@ -83,9 +102,8 @@ export default function LFGPage() {
 	};
 
 	return (
-		<Main className="stack xl">
-			<Filters />
-			{filteredPosts.map((post) => (
+		<>
+			{posts.map((post) => (
 				<div
 					key={post.id}
 					id={String(post.id)}
@@ -95,17 +113,13 @@ export default function LFGPage() {
 					<LFGPost post={post} />
 				</div>
 			))}
-			{filteredPosts.length === 0 ? (
-				<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-					{t("lfg:noPosts")}
-				</div>
-			) : null}
-		</Main>
+		</>
 	);
 }
 
 function Filters() {
 	const { t } = useTranslation(["lfg"]);
+	const { viewerTimezone } = useLoaderData<typeof loader>();
 	const [
 		{ weapons, type, timezone, language, plusTier, minTier, maxTier },
 		setParams,
@@ -215,7 +229,12 @@ function Filters() {
 				{
 					key: "timezone",
 					name: t("lfg:filters.Timezone"),
-					formattedValue: timezone !== null ? `±${timezone}h` : null,
+					// the filter is skipped by the loader while the viewer's timezone is
+					// unknown, so showing a value would claim a filtering that is not happening
+					formattedValue:
+						timezone !== null && viewerTimezone !== null
+							? `±${timezone}h`
+							: null,
 					onAdd: () => setParams({ timezone: 3 }),
 					onRemove: () => setParams({ timezone: null }),
 					popover: (

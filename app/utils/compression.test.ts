@@ -8,6 +8,14 @@ describe("compressToBase64 & decompressFromBase64", () => {
 		expect(decompressFromBase64(compressToBase64(value))).toBe(value);
 	});
 
+	test("decompresses raw deflate produced by another implementation", () => {
+		const compressed = "q1bKS8xNVbJSKinKL8ioVNJRyk0tzlCyijbUMdIxjq0FAA==";
+
+		expect(decompressFromBase64(compressed)).toBe(
+			JSON.stringify({ name: "trophy", mesh: [1, 2, 3] }),
+		);
+	});
+
 	test("round-trips unicode content", () => {
 		const value = "tröphy \u{1f3c6} テスト";
 

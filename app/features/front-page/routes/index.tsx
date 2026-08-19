@@ -21,6 +21,7 @@ import { TournamentCard } from "~/features/calendar/components/TournamentCard";
 import { PWAInstallBanner } from "~/features/front-page/components/PWAInstallBanner";
 import { SplatoonRotations } from "~/features/front-page/components/SplatoonRotations";
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
+import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import styles from "~/styles/front.module.css";
@@ -29,7 +30,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	CALENDAR_PAGE,
 	LUTI_PAGE,
-	leaderboardsPage,
 	navIconUrl,
 	SENDOUQ_PAGE,
 	sqHeaderGuyImageUrl,

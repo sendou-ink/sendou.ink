@@ -14,15 +14,15 @@ import { Placement } from "~/components/Placement";
 import { Section } from "~/components/Section";
 import { Table } from "~/components/Table";
 import { UserLink } from "~/components/UserLink";
+import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	CALENDAR_PAGE,
-	calendarEditPage,
 	calendarEventPage,
 	calendarReportWinnersPage,
-	mapsPageWithMapPool,
 	navIconUrl,
 	resolveBaseUrl,
 } from "~/utils/urls";

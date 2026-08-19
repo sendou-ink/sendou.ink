@@ -2,13 +2,13 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import {
 	nextNonCompletedVoting,
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import { parseFormData } from "~/form/parse.server";
 import { badRequestIfFalsy, errorToastIfFalsy } from "~/utils/remix.server";
-import { plusSuggestionPage } from "~/utils/urls";
 import { followUpCommentFormSchema } from "../plus-suggestions-schemas";
 import { canAddCommentToSuggestionBE } from "../plus-suggestions-utils";
 

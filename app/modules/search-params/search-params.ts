@@ -308,14 +308,14 @@ export const SP = {
 	},
 
 	/** Declares the 1-based `page` param of a paginated route, as `useSearchParamPagination` expects it. */
-	page(opts?: { max?: number }): ParamDef<number> {
+	page(opts?: { max?: number; resets?: string[] }): ParamDef<number> {
 		return SP.param(
 			z
 				.number()
 				.int()
 				.min(1)
 				.max(opts?.max ?? DEFAULT_MAX_PAGE),
-			{ default: 1, loader: true },
+			{ default: 1, loader: true, resets: opts?.resets },
 		);
 	},
 

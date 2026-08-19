@@ -13,6 +13,7 @@ import {
 	useCounterPickMapPoolValidationStatus,
 } from "~/features/tournament/components/CounterPickMapPoolPicker";
 import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentAdminImportTeamsPage } from "~/features/tournament-admin/tournament-admin-urls";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import { FormField } from "~/form/FormField";
 import { FormFieldMessages } from "~/form/fields/FormFieldWrapper";
@@ -25,10 +26,7 @@ import type {
 	TournamentSearchFieldOptions,
 	UserSearchFieldOptions,
 } from "~/form/types";
-import {
-	tournamentAdminImportTeamsPage,
-	tournamentAdminPage,
-} from "~/utils/urls";
+import { tournamentAdminPage } from "~/utils/urls";
 import type { TournamentAdminRegistrationLoaderData } from "../loaders/to.$id.admin.registration.$tid.server";
 import {
 	type AdminRegistrationFormValues,

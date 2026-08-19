@@ -1,6 +1,5 @@
 import { PassThrough } from "node:stream";
 import { createReadableStreamFromReadable } from "@react-router/node";
-import * as Sentry from "@sentry/react-router";
 import { isbot } from "isbot";
 import cron from "node-cron";
 import { renderToPipeableStream } from "react-dom/server";
@@ -11,7 +10,6 @@ import {
 	type RouterContextProvider,
 	ServerRouter,
 } from "react-router";
-import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import { getI18nInstance } from "~/modules/i18n/i18next.server";
 import {
@@ -26,8 +24,6 @@ import { logger } from "./utils/logger";
 
 // Reject/cancel all pending promises after 5 seconds
 export const streamTimeout = 5000;
-
-const SENTRY_ENABLED = Config.sentry.enabled;
 
 const dateFnsLocalesLoaded = loadAllDateFnsLocales();
 
@@ -66,7 +62,7 @@ async function handleRequest(
 						}),
 					);
 
-					pipe(SENTRY_ENABLED ? Sentry.getMetaTagTransformer(body) : body);
+					pipe(body);
 				},
 				onShellError(error: unknown) {
 					reject(error);
@@ -124,15 +120,7 @@ process.on("unhandledRejection", (reason: string, p: Promise<any>) => {
 });
 
 // wrapper so we get request id shown in the server logs
-export const handleError: HandleErrorFunction = (error, { request }) => {
-	if (SENTRY_ENABLED && !request.signal.aborted) {
-		Sentry.captureException(error);
-	}
+export const handleError: HandleErrorFunction = (error) => {
 	logger.error(error);
 };
-export default SENTRY_ENABLED
-	? Sentry.wrapSentryHandleRequest(handleRequest)
-	: handleRequest;
-export const instrumentations = SENTRY_ENABLED
-	? [Sentry.createSentryServerInstrumentation()]
-	: [];
+export default handleRequest;

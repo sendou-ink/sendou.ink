@@ -6,12 +6,12 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentData } from "~/features/tournament-bracket/core/Tournament.server";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { requireRole } from "~/modules/permissions/guards.server";
 import { hasPermission } from "~/modules/permissions/utils";
-import { tournamentBracketsPage } from "~/utils/urls";
 import { calendarNewSearchParams } from "../calendar-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {

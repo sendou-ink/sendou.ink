@@ -1,5 +1,6 @@
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
-import { tournamentOrganizationPage, userPage } from "~/utils/urls";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
+import { userPage } from "~/utils/urls";
 import { expect, impersonate, navigate, test } from "./helpers/playwright";
 import { GlobalSearchDialog } from "./pages/search/global-search-dialog";
 

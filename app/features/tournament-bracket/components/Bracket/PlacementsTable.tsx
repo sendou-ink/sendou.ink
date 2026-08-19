@@ -2,14 +2,12 @@ import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import invariant from "~/utils/invariant";
 import { SendouButton } from "../../../../components/elements/Button";
 import { logger } from "../../../../utils/logger";
-import {
-	tournamentBracketsPage,
-	tournamentTeamPage,
-} from "../../../../utils/urls";
+import { tournamentTeamPage } from "../../../../utils/urls";
 import { useUser } from "../../../auth/core/user";
 import type { Bracket, Standing } from "../../core/Bracket";
 import * as Swiss from "../../core/engine/swiss/team-status";

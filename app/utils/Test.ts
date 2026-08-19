@@ -130,11 +130,14 @@ export function wrappedLoader<T>({
 	return async ({
 		user,
 		params = {},
+		url = "/path",
 	}: {
 		user?: TestUser;
 		params?: Params<string>;
+		/** Path with its search params, built with the route's search params definition. */
+		url?: string;
 	} = {}) => {
-		const request = new Request("http://app.com/path", {
+		const request = new Request(new URL(url, "http://app.com"), {
 			method: "GET",
 			headers: [
 				...(await authHeader(user)),

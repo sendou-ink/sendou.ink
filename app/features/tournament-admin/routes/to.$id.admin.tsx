@@ -22,11 +22,11 @@ import { containerClassName } from "~/components/Main";
 import { Redirect } from "~/components/Redirect";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { useUser } from "~/features/auth/core/user";
+import { tournamentEditPage } from "~/features/calendar/calendar-urls";
 import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	calendarEventPage,
 	tournamentAdminPage,
-	tournamentEditPage,
 	tournamentPage,
 } from "~/utils/urls";
 import styles from "./to.$id.admin.module.css";

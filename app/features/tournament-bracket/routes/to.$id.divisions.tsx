@@ -5,7 +5,7 @@ import { Link } from "react-router";
 import { Redirect } from "~/components/Redirect";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { tournamentBracketsPage } from "~/utils/urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import type { BracketMeta } from "../core/Tournament";
 import styles from "./to.$id.divisions.module.css";
 

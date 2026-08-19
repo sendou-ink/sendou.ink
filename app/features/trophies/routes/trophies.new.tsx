@@ -19,6 +19,7 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
+import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
 import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
@@ -30,7 +31,6 @@ import {
 	PICOCAD2_WEB_VIEWER_URL,
 	SENDOU_INK_DISCORD_URL,
 	TROPHIES_PAGE,
-	tournamentOrganizationPage,
 	userPage,
 } from "~/utils/urls";
 import { action } from "../actions/trophies.new.server";

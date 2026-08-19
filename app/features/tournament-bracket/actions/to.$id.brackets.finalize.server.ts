@@ -14,6 +14,7 @@ import {
 	type TournamentBadgeReceivers,
 	type TournamentTrophyReceiver,
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import {
 	validateBadgeReceivers,
 	validateTrophyReceiver,
@@ -26,7 +27,6 @@ import {
 	parseRequestPayload,
 	successToastWithRedirect,
 } from "~/utils/remix.server";
-import { tournamentBracketsPage } from "~/utils/urls";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(

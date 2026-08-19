@@ -20,6 +20,7 @@ import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { useUser } from "~/features/auth/core/user";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
+import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { TrophyDisplay } from "~/features/trophies/components/TrophyDisplay";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -28,13 +29,7 @@ import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { rawSensToString } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
-import {
-	bskyUrl,
-	modeImageUrl,
-	navIconUrl,
-	teamPage,
-	topSearchPlayerPage,
-} from "~/utils/urls";
+import { bskyUrl, modeImageUrl, navIconUrl, teamPage } from "~/utils/urls";
 import { MutualFriends } from "../components/MutualFriends";
 import type { UserPageNavItem } from "../components/UserPageIconNav";
 import { UserPageIconNav } from "../components/UserPageIconNav";

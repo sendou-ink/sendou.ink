@@ -9,6 +9,7 @@ import type { z } from "zod";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
+import { associationsPage } from "~/features/associations/associations-urls";
 import { useUser } from "~/features/auth/core/user";
 import { DualSelectFormField } from "~/form/fields/DualSelectFormField";
 import { TimeRangeFormField } from "~/form/fields/TimeRangeFormField";
@@ -21,7 +22,7 @@ import {
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { associationsPage, navIconUrl, scrimsPage } from "~/utils/urls";
+import { navIconUrl, scrimsPage } from "~/utils/urls";
 import { timeString } from "~/utils/zod";
 import {
 	SendouTab,

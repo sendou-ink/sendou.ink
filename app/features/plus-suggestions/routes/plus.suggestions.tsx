@@ -13,6 +13,7 @@ import { RelativeTime } from "~/components/RelativeTime";
 import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import type * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import { plusSuggestionCommentPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import {
 	isVotingActive,
 	nextNonCompletedVoting,
@@ -26,7 +27,6 @@ import {
 } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
-import { plusSuggestionCommentPage } from "~/utils/urls";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
 import styles from "../plus.module.css";

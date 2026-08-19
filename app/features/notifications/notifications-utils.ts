@@ -1,21 +1,21 @@
+import { userArtPage } from "~/features/art/art-urls";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
+import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
 	FRIENDS_PAGE,
 	NEW_TROPHY_PAGE,
 	PLUS_VOTING_PAGE,
-	plusSuggestionPage,
 	SENDOUQ_PAGE,
 	SENDOUQ_READY_PAGE,
 	scrimPage,
 	scrimsPage,
 	sendouQMatchPage,
-	tournamentBracketsPage,
 	tournamentRegisterPage,
 	tournamentSubsPage,
 	tournamentTeamPage,
 	trophyPage,
-	userArtPage,
 	userEditProfilePage,
 } from "~/utils/urls";
 import type { Notification } from "./notifications-types";

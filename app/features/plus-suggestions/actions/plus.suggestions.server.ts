@@ -1,6 +1,7 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import {
 	isVotingActive,
 	nextNonCompletedVoting,
@@ -11,7 +12,6 @@ import { requirePermission } from "~/modules/permissions/guards.server";
 import invariant from "~/utils/invariant";
 import { badRequestIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
-import { plusSuggestionPage } from "~/utils/urls";
 import { suggestionActionSchema } from "../plus-suggestions-schemas";
 
 export const action: ActionFunction = async ({ request }) => {

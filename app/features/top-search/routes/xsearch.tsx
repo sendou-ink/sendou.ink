@@ -13,11 +13,12 @@ import {
 import { Image, ModeImage } from "~/components/Image";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
+import { topSearchPage } from "~/features/top-search/top-search-urls";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { brandImageUrl, navIconUrl, topSearchPage } from "~/utils/urls";
+import { brandImageUrl, navIconUrl } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.server";
 import { topSearchSearchParams } from "../top-search-search-params";

@@ -8,6 +8,8 @@ import { lfgNewSearchParams, lfgSearchParams } from "./lfg-search-params";
 describe("lfgSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(lfgSearchParams, {
+			page: [1, 2, 9],
+			post: [null, 1, 123],
 			weapons: [[], [0], [0, 10, 4001]],
 			type: [null, "PLAYER_FOR_TEAM", "COACH_FOR_TEAM"],
 			timezone: [null, 0, 3, 12],
@@ -19,6 +21,8 @@ describe("lfgSearchParams", () => {
 	});
 
 	test("decodes garbage to defaults", () => {
+		assertDecodesToDefault(lfgSearchParams, "page", [["0"], ["-1"], ["abc"]]);
+		assertDecodesToDefault(lfgSearchParams, "post", [["abc"], ["0"]]);
 		assertDecodesToDefault(lfgSearchParams, "type", [["NOT_A_TYPE"], [""]]);
 		assertDecodesToDefault(lfgSearchParams, "timezone", [
 			["13"],

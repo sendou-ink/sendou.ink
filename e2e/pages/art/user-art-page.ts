@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import type { Tables } from "~/db/tables";
-import { newArtPage, userArtPage } from "~/utils/urls";
+import { newArtPage, userArtPage } from "~/features/art/art-urls";
 import { navigate } from "../../helpers/playwright";
 
 /** `/u/:id/art` */

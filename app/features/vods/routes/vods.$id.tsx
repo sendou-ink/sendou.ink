@@ -12,6 +12,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { YouTubeEmbed } from "~/components/YouTubeEmbed";
 import { useUser } from "~/features/auth/core/user";
+import { newVodPage } from "~/features/vods/vods-urls";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
@@ -22,7 +23,6 @@ import type { Unpacked } from "~/utils/types";
 import {
 	modeImageUrl,
 	navIconUrl,
-	newVodPage,
 	stageImageUrl,
 	VODS_PAGE,
 	vodVideoPage,

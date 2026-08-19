@@ -1,6 +1,6 @@
 import type { Page } from "@playwright/test";
 import { lfgNewSchema } from "~/features/lfg/lfg-schemas";
-import { lfgNewPostPage } from "~/utils/urls";
+import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
 import { navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 

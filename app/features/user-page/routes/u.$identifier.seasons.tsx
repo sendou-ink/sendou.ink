@@ -32,6 +32,11 @@ import { playerTopTenPlacement } from "~/features/leaderboards/leaderboards-util
 import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
+import {
+	userSeasonSummaryGraphicPage,
+	userSeasonsPage,
+	userSeasonsStatsPage,
+} from "~/features/user-page/user-page-urls";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -40,9 +45,6 @@ import {
 	sendouQMatchPage,
 	TIERS_PAGE,
 	userPage,
-	userSeasonSummaryGraphicPage,
-	userSeasonsPage,
-	userSeasonsStatsPage,
 } from "~/utils/urls";
 import { SubPageHeader } from "../components/SubPageHeader";
 import {
