@@ -105,9 +105,9 @@
 		"remix-i18next": "8.0.0",
 		"slugify": "1.6.9",
 		"swr": "2.5.0",
+		"valibot": "^1.4.2",
 		"web-haptics": "0.0.6",
-		"web-push": "3.6.7",
-		"zod": "4.4.3"
+		"web-push": "3.6.7"
 	},
 	"devDependencies": {
 		"@babel/preset-typescript": "7.29.7",
