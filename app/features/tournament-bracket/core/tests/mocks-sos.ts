@@ -1685,8 +1685,6 @@ export const SWIM_OR_SINK_167 = (
 	],
 	ctx: {
 		id: 672,
-		parentTournamentId: null,
-		parentTournamentName: null,
 		tier: null,
 		tentativeTier: null,
 		eventId: 2425,

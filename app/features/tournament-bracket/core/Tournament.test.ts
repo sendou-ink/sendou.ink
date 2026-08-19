@@ -447,6 +447,54 @@ describe("Adjusting team starting bracket", () => {
 	});
 });
 
+describe("League divisions", () => {
+	const leagueTournament = (isLeague = true) =>
+		testTournament({
+			ctx: {
+				teams: [0, 0, 0, 2].map((startingBracketIdx, i) =>
+					tournamentCtxTeam(i + 1, { startingBracketIdx }),
+				),
+				settings: {
+					isLeague,
+					bracketProgression: progressions.league,
+				},
+			},
+		});
+
+	test("every starting bracket is a division", () => {
+		expect(leagueTournament().leagueDivisions.map((div) => div.idx)).toEqual([
+			0, 2,
+		]);
+	});
+
+	test("has no divisions when not a league", () => {
+		expect(leagueTournament(false).leagueDivisions).toEqual([]);
+	});
+
+	test("playoffs belong to the division they are sourced from", () => {
+		expect(leagueTournament().leagueDivisionOfBracket(3)).toBe(2);
+	});
+
+	test("brackets of a division exclude the other divisions'", () => {
+		expect(
+			leagueTournament()
+				.visibleBracketsMetaOfDivision(2)
+				.map((bracket) => bracket.name),
+		).toEqual(["Division 2", "Division 2 Playoffs"]);
+	});
+
+	test("every bracket is shown when no division is selected", () => {
+		expect(leagueTournament().visibleBracketsMetaOfDivision(null)).toHaveLength(
+			4,
+		);
+	});
+
+	test("teams of a division are the ones starting in it", () => {
+		expect(leagueTournament().teamsCountOfBracket(0)).toBe(3);
+		expect(leagueTournament().teamsCountOfBracket(2)).toBe(1);
+	});
+});
+
 describe("Resolving the team a user is a member of", () => {
 	const USER_ID = 1;
 

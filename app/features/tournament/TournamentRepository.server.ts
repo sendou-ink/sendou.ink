@@ -58,16 +58,6 @@ export async function findById(id: number) {
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
 			sql<boolean>`"Tournament"."rules" is not null`.as("hasRules"),
-			"Tournament.parentTournamentId",
-			eb
-				.selectFrom("CalendarEvent as ParentCalendarEvent")
-				.select("ParentCalendarEvent.name")
-				.whereRef(
-					"ParentCalendarEvent.tournamentId",
-					"=",
-					"Tournament.parentTournamentId",
-				)
-				.as("parentTournamentName"),
 			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEventDate.startsAt",
@@ -703,67 +693,6 @@ export async function findSeedingSnapshotById(tournamentId: number) {
 	return row?.seedingSnapshot ?? null;
 }
 
-export async function hasChildTournaments(parentTournamentId: number) {
-	const row = await db
-		.selectFrom("Tournament")
-		.select("Tournament.id")
-		.where("Tournament.parentTournamentId", "=", parentTournamentId)
-		.limit(1)
-		.executeTakeFirst();
-
-	return Boolean(row);
-}
-
-export async function findChildTournaments(parentTournamentId: number) {
-	const rows = await db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.select((eb) => [
-			"Tournament.id as tournamentId",
-			"CalendarEvent.name",
-			eb
-				.selectFrom("TournamentTeam")
-				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.as("teamsCount"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeam")
-					.innerJoin(
-						"TournamentTeamMember",
-						"TournamentTeamMember.tournamentTeamId",
-						"TournamentTeam.id",
-					)
-					.select(["TournamentTeamMember.userId"])
-					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-					.where("TournamentTeam.isPlaceholder", "=", 0),
-			).as("teamMembers"),
-		])
-		.where("Tournament.parentTournamentId", "=", parentTournamentId)
-		.$narrowType<{ teamsCount: NotNull }>()
-		.execute();
-
-	return rows.map((row) => ({
-		...row,
-		participantUserIds: new Set(row.teamMembers.map((member) => member.userId)),
-	}));
-}
-
-/** Child division tournaments of a league sign-up, with their name and finalized status. */
-export function findChildTournamentsForDivCalc(parentTournamentId: number) {
-	return db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.select([
-			"Tournament.id as tournamentId",
-			"CalendarEvent.name",
-			"Tournament.isFinalized",
-		])
-		.where("Tournament.parentTournamentId", "=", parentTournamentId)
-		.execute();
-}
-
 /**
  * Per-user results of a finalized tournament as persisted at finalization time.
  * Empty for tournaments that have not been finalized.
@@ -783,22 +712,58 @@ export function findResultsByTournamentId(tournamentId: number) {
 }
 
 /**
- * User ids eligible for a LUTI division placement in the given tournament: they have a result, were
- * on a team that did not drop out, and played at least one match.
+ * Participants of the latest finalized league of the given organization, along with the bracket
+ * progression that tells what division (= starting bracket) each of them played in.
+ *
+ * Only participants eligible for a division placement are included: they have a result, were on a
+ * team that did not drop out, and played at least one match. Null if the organization has no
+ * finalized league.
  */
-export function findLeagueDivParticipantUserIds(tournamentId: number) {
-	return db
+export async function findLatestFinalizedLeagueParticipants(args: {
+	organizationId: number;
+	namePrefix: string;
+}) {
+	const league = await db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select(["Tournament.id", "Tournament.settings"])
+		.where("CalendarEvent.organizationId", "=", args.organizationId)
+		.where("CalendarEvent.name", "like", `${args.namePrefix}%`)
+		.where("Tournament.isFinalized", "=", 1)
+		.where(
+			sql<number>`json_extract("Tournament"."settings", '$.isLeague')`,
+			"=",
+			1,
+		)
+		.orderBy("CalendarEventDate.startsAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	if (!league) return null;
+
+	const participants = await db
 		.selectFrom("TournamentResult")
 		.innerJoin(
 			"TournamentTeam",
 			"TournamentTeam.id",
 			"TournamentResult.tournamentTeamId",
 		)
-		.select("TournamentResult.userId")
+		.select(["TournamentResult.userId", "TournamentTeam.startingBracketIdx"])
 		.distinct()
-		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.where("TournamentResult.tournamentId", "=", league.id)
 		.where("TournamentTeam.droppedOut", "=", 0)
 		.execute();
+
+	return {
+		tournamentId: league.id,
+		bracketProgression: league.settings.bracketProgression,
+		participants,
+	};
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {

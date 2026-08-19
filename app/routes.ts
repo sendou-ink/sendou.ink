@@ -71,8 +71,6 @@ export default [
 
 	route("/suspended", "features/ban/routes/suspended.tsx"),
 
-	route("/u", "features/user-search/routes/u.tsx"),
-
 	route("/search", "features/search/routes/search.ts"),
 
 	route("/u/:identifier", "features/user-page/routes/u.$identifier.tsx", [
@@ -216,7 +214,6 @@ export default [
 			"features/tournament-match/routes/to.$id.matches.$mid.tsx",
 		),
 	]),
-	route("luti", "features/tournament/routes/luti.ts"),
 
 	route("/org/new", "features/tournament-organization/routes/org.new.tsx"),
 	...prefix("/org/:slug", [
@@ -233,7 +230,6 @@ export default [
 	route("/contributions", "features/info/routes/contributions.tsx"),
 	route("/support", "features/info/routes/support.tsx"),
 
-	route("/t", "features/team/routes/t.tsx"),
 	route("/t/new", "features/team/routes/t.new.tsx"),
 	route("/t/:customUrl", "features/team/routes/t.$customUrl.tsx", [
 		index("features/team/routes/t.$customUrl.index.tsx"),
@@ -280,10 +276,8 @@ export default [
 		route("preparing", "features/sendouq/routes/q.preparing.tsx"),
 		route("ready", "features/sendouq/routes/q.ready.tsx"),
 		route("match/:id", "features/sendouq-match/routes/q.match.$id.tsx"),
-		route("settings", "features/match-profile/routes/q.settings.tsx"),
 		route("streams", "features/sendouq-streams/routes/q.streams.tsx"),
 	]),
-	route("/play", "features/sendouq/routes/play.ts"),
 
 	route("/friends-for-adding", "features/sendouq/routes/friends-for-adding.ts"),
 
@@ -332,7 +326,6 @@ export default [
 	]),
 
 	route("/plus", "features/plus-suggestions/routes/plus.tsx", [
-		index("features/plus-suggestions/routes/plus.index.ts"),
 		route(
 			"suggestions",
 			"features/plus-suggestions/routes/plus.suggestions.tsx",
@@ -463,4 +456,6 @@ export default [
 		route("impersonate/stop", "features/auth/routes/auth.impersonate.stop.ts"),
 	]),
 	...devOnlyRoutes,
+
+	route("*", "modules/redirects/routes/$.ts"),
 ] satisfies RouteConfig;

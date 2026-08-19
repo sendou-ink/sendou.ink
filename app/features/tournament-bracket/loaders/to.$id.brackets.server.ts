@@ -1,7 +1,8 @@
-import type { LoaderFunctionArgs } from "react-router";
+import { type LoaderFunctionArgs, redirect } from "react-router";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
+import { tournamentDivisionsPage } from "~/utils/urls";
 import type { Bracket } from "../core/Bracket";
 import type { Tournament } from "../core/Tournament";
 import {
@@ -17,6 +18,9 @@ export type TournamentBracketsLoaderData = SerializeFrom<typeof loader>;
  * Match data of the one bracket the view renders, selected by the `idx` search param.
  * The other brackets are represented by the layout's bracket state alone. Of a swiss
  * bracket only the group the view renders, selected by the `group` search param.
+ *
+ * Of a league only the brackets of one division are shown, selected by the `division`
+ * search param. Reaching the page without one lands on the divisions page instead.
  */
 export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const { tournament, user } = await tournamentFromParams(params, {
@@ -25,7 +29,19 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	const searchParams = tournamentBracketsSearchParams.parse(request);
 
-	const bracketIdx = resolveBracketIdx(tournament, searchParams.idx);
+	const divisionIdx = resolveDivisionIdx(tournament, searchParams);
+	const hasDivisionToShow =
+		divisionIdx !== null &&
+		tournament.visibleBracketsMetaOfDivision(divisionIdx).length > 0;
+	if (tournament.isLeague && !hasDivisionToShow) {
+		throw redirect(tournamentDivisionsPage(tournament.ctx.id));
+	}
+
+	const bracketIdx = resolveBracketIdx(
+		tournament,
+		searchParams.idx,
+		divisionIdx,
+	);
 	const bracket = tournament.bracketByIdx(bracketIdx);
 	const groupId = resolveGroupId(bracket, searchParams.group);
 
@@ -41,6 +57,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 
 	return {
 		bracketIdx,
+		divisionIdx,
 		groupId,
 		bracket: bracket
 			? serializeBracket(bracket, {
@@ -61,12 +78,38 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 };
 
 /**
+ * The division to show the brackets of, of a league. Falls back to the division of the selected
+ * bracket, so that a link to one bracket of a division works without naming the division.
+ */
+function resolveDivisionIdx(
+	tournament: Tournament,
+	searchParams: { division: number | null; idx: number | null },
+) {
+	if (!tournament.isLeague) return null;
+
+	const isDivision = tournament.leagueDivisions.some(
+		(division) => division.idx === searchParams.division,
+	);
+	if (isDivision) {
+		return searchParams.division;
+	}
+
+	return searchParams.idx !== null
+		? tournament.leagueDivisionOfBracket(searchParams.idx)
+		: null;
+}
+
+/**
  * The bracket to show, always one of the brackets the view actually renders a tab for. Without
  * a valid `idx` the first bracket, unless it is over and followed by a bracket the tournament
  * actually continues in.
  */
-function resolveBracketIdx(tournament: Tournament, idx: number | null) {
-	const visibleBrackets = tournament.visibleBracketsMeta;
+function resolveBracketIdx(
+	tournament: Tournament,
+	idx: number | null,
+	divisionIdx: number | null,
+) {
+	const visibleBrackets = tournament.visibleBracketsMetaOfDivision(divisionIdx);
 	const isVisible = (idx: number) =>
 		visibleBrackets.some((bracket) => bracket.idx === idx);
 
@@ -74,15 +117,17 @@ function resolveBracketIdx(tournament: Tournament, idx: number | null) {
 		return idx;
 	}
 
-	const brackets = tournament.bracketsMeta;
-	const defaultIdx =
+	const brackets = tournament.bracketsMetaOfDivision(divisionIdx);
+	const defaultBracket =
 		brackets.length <= 1 ||
 		brackets[1].isUnderground ||
 		!brackets[0].everyMatchOver
-			? 0
-			: 1;
+			? brackets[0]
+			: brackets[1];
 
-	return isVisible(defaultIdx) ? defaultIdx : (visibleBrackets[0]?.idx ?? 0);
+	return defaultBracket && isVisible(defaultBracket.idx)
+		? defaultBracket.idx
+		: (visibleBrackets[0]?.idx ?? 0);
 }
 
 function resolveGroupId(bracket: Bracket | null, groupId: number | null) {

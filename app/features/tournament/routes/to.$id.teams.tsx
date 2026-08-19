@@ -1,30 +1,23 @@
 import { useLoaderData } from "react-router";
 import { Pagination } from "~/components/Pagination";
-import { Redirect } from "~/components/Redirect";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import { tournamentDivisionsPage, tournamentTeamPage } from "~/utils/urls";
+import { tournamentTeamPage } from "~/utils/urls";
 import { TeamWithRoster } from "../components/TeamWithRoster";
 import type { TournamentTeamsLoaderData } from "../loaders/to.$id.teams.server";
 import { tournamentTeamsSearchParams } from "../tournament-search-params";
 import { getBracketProgressionLabel } from "../tournament-utils";
-import { useHasChildTournaments } from "./to.$id";
 
 export { loader } from "../loaders/to.$id.teams.server";
 
 export default function TournamentTeamsPage() {
 	const tournament = useTournament();
-	const hasChildTournaments = useHasChildTournaments();
 	const data = useLoaderData<TournamentTeamsLoaderData>();
 	const pagination = useSearchParamPagination({
 		definition: tournamentTeamsSearchParams,
 		currentPage: data.currentPage,
 		pagesCount: data.pagesCount,
 	});
-
-	if (tournament.isLeagueSignup && hasChildTournaments) {
-		return <Redirect to={tournamentDivisionsPage(tournament.ctx.id)} />;
-	}
 
 	const seedInfoByTeamId = teamSeedInfo(tournament);
 

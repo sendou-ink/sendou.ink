@@ -21,19 +21,15 @@ import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-con
 import { useUser } from "~/features/auth/core/user";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
-import {
-	tournamentDivisionsPage,
-	tournamentInfoPage,
-	tournamentRulesPage,
-} from "~/utils/urls";
+import { tournamentInfoPage, tournamentRulesPage } from "~/utils/urls";
 import { tournamentNameParts } from "../tournament-utils";
 import styles from "./TournamentNav.module.css";
 
 type NavItemKey =
 	| "register"
 	| "brackets"
-	| "teams"
 	| "divisions"
+	| "teams"
 	| "streams"
 	| "results"
 	| "rules"
@@ -52,10 +48,10 @@ interface NavItem {
 const PRIORITY_ORDER: NavItemKey[] = [
 	"register",
 	"brackets",
+	"divisions",
 	"teams",
 	"results",
 	"lfg",
-	"divisions",
 	"streams",
 	"rules",
 	"admin",
@@ -64,18 +60,12 @@ const PRIORITY_ORDER: NavItemKey[] = [
 export function TournamentNav({
 	tournament,
 	streamsCount,
-	hasChildTournaments,
 }: {
 	tournament: Tournament;
 	streamsCount: number;
-	hasChildTournaments: boolean;
 }) {
 	const { t } = useTranslation(["tournament"]);
-	const navItems = useNavItems({
-		tournament,
-		streamsCount,
-		hasChildTournaments,
-	});
+	const navItems = useNavItems({ tournament, streamsCount });
 	const { visibleCount, containerRef, measureRef } = useNavOverflow(
 		navItems.length,
 	);
@@ -85,9 +75,7 @@ export function TournamentNav({
 
 	const { name, subtext } = tournamentNameParts(tournament);
 
-	const homeHref = tournament.isLeagueDivision
-		? tournamentInfoPage(tournament.ctx.parentTournamentId!)
-		: tournamentInfoPage(tournament.ctx.id);
+	const homeHref = tournamentInfoPage(tournament.ctx.id);
 
 	return (
 		<nav className={styles.nav} aria-label={t("tournament:nav.label")}>
@@ -152,11 +140,9 @@ export function TournamentNav({
 function useNavItems({
 	tournament,
 	streamsCount,
-	hasChildTournaments,
 }: {
 	tournament: Tournament;
 	streamsCount: number;
-	hasChildTournaments: boolean;
 }): NavItem[] {
 	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
@@ -180,8 +166,16 @@ function useNavItems({
 		};
 	}
 
-	const showBrackets = !tournament.isLeagueSignup;
-	if (showBrackets) {
+	// a league's brackets are reached through its divisions page, one division at a time
+	if (tournament.isLeague) {
+		items.divisions = {
+			key: "divisions",
+			label: t("tournament:nav.divisions"),
+			to: "divisions",
+			icon: <LayoutGrid />,
+			testId: "divisions-tab",
+		};
+	} else {
 		items.brackets = {
 			key: "brackets",
 			label: t("tournament:nav.brackets"),
@@ -191,30 +185,16 @@ function useNavItems({
 		};
 	}
 
-	const showTeams = !(tournament.isLeagueSignup && hasChildTournaments);
-	if (showTeams) {
-		items.teams = {
-			key: "teams",
-			label: t("tournament:nav.teams", {
-				count: tournament.ctx.teams.length,
-			}),
-			to: "teams",
-			icon: <Users />,
-			end: false,
-			testId: "teams-tab",
-		};
-	}
-
-	if (tournament.isLeagueSignup || tournament.isLeagueDivision) {
-		items.divisions = {
-			key: "divisions",
-			label: t("tournament:nav.divisions"),
-			to: tournamentDivisionsPage(
-				tournament.ctx.parentTournamentId ?? tournament.ctx.id,
-			),
-			icon: <LayoutGrid />,
-		};
-	}
+	items.teams = {
+		key: "teams",
+		label: t("tournament:nav.teams", {
+			count: tournament.ctx.teams.length,
+		}),
+		to: "teams",
+		icon: <Users />,
+		end: false,
+		testId: "teams-tab",
+	};
 
 	if (tournament.hasStarted && !tournament.everyBracketOver) {
 		items.streams = {
@@ -249,7 +229,6 @@ function useNavItems({
 	const showLfg =
 		!tournament.isInvitational &&
 		!tournament.everyBracketOver &&
-		!(tournament.isLeagueSignup && !tournament.registrationOpen) &&
 		tournament.lfgEnabled;
 	if (showLfg) {
 		items.lfg = {

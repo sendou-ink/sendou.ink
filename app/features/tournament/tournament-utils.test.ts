@@ -760,22 +760,7 @@ describe("splitTournamentName", () => {
 });
 
 describe("tournamentNameParts", () => {
-	test("uses the parent tournament name and division subtext for a league division", () => {
-		const tournament = testTournament({
-			ctx: {
-				name: "LUTI: Season 17 - Division 1",
-				parentTournamentId: 1,
-				parentTournamentName: "LUTI: Season 17",
-			},
-		});
-
-		expect(tournamentNameParts(tournament)).toEqual({
-			name: "LUTI: Season 17",
-			subtext: "Division 1",
-		});
-	});
-
-	test("falls back to the organization series when not a league division", () => {
+	test("splits the name by the organization series", () => {
 		const tournament = testTournament({
 			ctx: {
 				name: "In The Zone 54",
@@ -863,6 +848,38 @@ describe("bracketProgressionLabel", () => {
 				}),
 			]),
 		).toEqual({ label: "SW → SE", hasUnderground: true });
+	});
+
+	test("describes divisions leading to the same shape once", () => {
+		const division = (idx: number) => [
+			bracket({ type: "round_robin", name: `Division ${idx}` }),
+			bracket({
+				type: "single_elimination",
+				name: `Division ${idx} Playoffs`,
+				sources: [{ bracketIdx: idx * 2, placements: [1, 2] }],
+			}),
+		];
+
+		expect(
+			bracketProgressionLabel([...division(0), ...division(1), ...division(2)]),
+		).toEqual({ label: "RR → SE", hasUnderground: false });
+	});
+
+	test("describes every starting bracket when they lead to different shapes", () => {
+		expect(
+			bracketProgressionLabel([
+				bracket({ type: "round_robin" }),
+				bracket({
+					type: "single_elimination",
+					sources: [{ bracketIdx: 0, placements: [1, 2] }],
+				}),
+				bracket({ type: "swiss" }),
+				bracket({
+					type: "double_elimination",
+					sources: [{ bracketIdx: 2, placements: [1, 2] }],
+				}),
+			]),
+		).toEqual({ label: "RR → SE → SW → DE", hasUnderground: false });
 	});
 
 	test("returns empty label for empty progression", () => {

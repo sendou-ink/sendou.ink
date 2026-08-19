@@ -388,7 +388,7 @@ export abstract class Bracket {
 							...this.settings,
 							hasAbDivisions: false,
 						},
-				independentRounds: this.tournament.isLeagueDivision,
+				independentRounds: this.tournament.isLeague,
 				abDivisions,
 			});
 		}

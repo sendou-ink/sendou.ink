@@ -197,7 +197,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			url: tournamentMatchPage({ tournamentId, matchId }),
 			imageUrl: tournament.ctx.logoUrl,
 			participantUserIds: playerIds,
-			expiresAfter: tournament.isLeagueDivision ? { days: 30 } : { hours: 2 },
+			expiresAfter: tournament.isLeague ? { days: 30 } : { hours: 2 },
 		});
 	}
 
@@ -211,7 +211,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		tournament.ctx.isFinalized && !isSiteStaff && !isTournamentStaff
 			? true
 			: !chatAccessible({
-					expiresAfterDays: tournament.isLeagueDivision ? 30 : 7,
+					expiresAfterDays: tournament.isLeague ? 30 : 7,
 					comparedTo: tournament.ctx.startsAt,
 				});
 

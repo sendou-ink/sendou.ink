@@ -44,6 +44,10 @@ import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
+import {
+	LUTI_NAME_PREFIX,
+	LUTI_ORGANIZATION_ID,
+} from "~/routines/computeLutiDivs";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
 
@@ -1042,34 +1046,16 @@ export function buildCases(fx: Fixtures): {
 			TournamentRepository.findSeedingSnapshotById(tournamentId),
 	);
 	add(
-		"TournamentRepository.hasChildTournaments",
-		fx.parentTournamentId,
-		(parentTournamentId) =>
-			TournamentRepository.hasChildTournaments(parentTournamentId),
-	);
-	add(
-		"TournamentRepository.findChildTournaments",
-		fx.parentTournamentId,
-		(parentTournamentId) =>
-			TournamentRepository.findChildTournaments(parentTournamentId),
-	);
-	add(
-		"TournamentRepository.findChildTournamentsForDivCalc",
-		fx.parentTournamentId,
-		(parentTournamentId) =>
-			TournamentRepository.findChildTournamentsForDivCalc(parentTournamentId),
-	);
-	add(
 		"TournamentRepository.findResultsByTournamentId",
 		fx.heavyResultsTournamentId,
 		(tournamentId) =>
 			TournamentRepository.findResultsByTournamentId(tournamentId),
 	);
-	add(
-		"TournamentRepository.findLeagueDivParticipantUserIds",
-		fx.parentTournamentId,
-		(parentTournamentId) =>
-			TournamentRepository.findLeagueDivParticipantUserIds(parentTournamentId),
+	addStatic("TournamentRepository.findLatestFinalizedLeagueParticipants", () =>
+		TournamentRepository.findLatestFinalizedLeagueParticipants({
+			organizationId: LUTI_ORGANIZATION_ID,
+			namePrefix: LUTI_NAME_PREFIX,
+		}),
 	);
 	add(
 		"TournamentRepository.findTOSetMapPoolById",

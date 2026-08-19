@@ -98,7 +98,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				type: bracket.type,
 				seeding,
 				settings: bracket.settings,
-				independentRounds: tournament.isLeagueDivision,
+				independentRounds: tournament.isLeague,
 				abDivisions,
 				maps,
 			});

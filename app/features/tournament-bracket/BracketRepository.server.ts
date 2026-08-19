@@ -72,6 +72,7 @@ export async function findByTournamentId(
 						"TournamentRound.groupId",
 						"TournamentRound.number",
 						"TournamentRound.maps",
+						"TournamentRound.defaultPlayTime",
 					])
 					.where("TournamentStage.tournamentId", "=", tournamentId)
 					.orderBy("TournamentRound.stageId", "asc")

@@ -407,7 +407,7 @@ function MatchVods({ vods }: MatchVodsProps) {
 function MatchTimer({ match, bracket }: Pick<MatchProps, "match" | "bracket">) {
 	const tournament = useTournament();
 
-	if (tournament.isLeagueDivision) return null;
+	if (tournament.isLeague) return null;
 	if (!match.startedAt) return null;
 
 	const isOver = Boolean(match.winnerSide);

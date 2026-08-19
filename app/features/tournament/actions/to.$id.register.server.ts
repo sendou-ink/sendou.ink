@@ -353,7 +353,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"You cannot unregister after checking in",
 			);
 			errorToastIfFalsy(
-				!tournament.isLeagueSignup || tournament.registrationOpen,
+				!tournament.isLeague || tournament.registrationOpen,
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 

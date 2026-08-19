@@ -30,7 +30,7 @@ export function RoundHeader({
 	roundStartedAt?: number | null;
 	matches?: Array<Unpacked<TournamentData["data"]["match"]>>;
 }) {
-	const leagueRoundStartDate = useLeagueWeekStart(bracketIdx, roundId);
+	const leagueRoundStartDate = useLeagueRoundStartDate(bracketIdx, roundId);
 
 	const countPrefix = maps?.type === "PLAY_ALL" ? "Play all " : "Bo";
 
@@ -141,10 +141,10 @@ function RoundTimer({
 	return <div style={{ color: statusColor }}>{displayText}</div>;
 }
 
-function useLeagueWeekStart(bracketIdx: number, roundId: number) {
+function useLeagueRoundStartDate(bracketIdx: number, roundId: number) {
 	const tournament = useTournament();
 
-	if (bracketIdx !== 0 || !tournament.isLeagueDivision) return null;
+	if (!tournament.isLeague) return null;
 
 	return resolveLeagueRoundStartDate(
 		tournament,

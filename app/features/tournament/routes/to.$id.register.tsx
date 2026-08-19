@@ -221,7 +221,8 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 					canUnregister={Boolean(ownTeam && !ownTeamCheckedIn)}
 				/>
 			) : null}
-			{tournament.isLeagueSignup ? <GoogleFormsLink /> : null}
+			{/** xxx: make LUTI only */}
+			{tournament.isLeague ? <GoogleFormsLink /> : null}
 			{ownTeam && hasFriendCodeSet ? (
 				<>
 					<FillRoster ownTeam={ownTeam} ownTeamCheckedIn={ownTeamCheckedIn} />
@@ -300,13 +301,13 @@ function RegistrationProgress({
 					status: completedIfTruthy(mapPool && mapPool.length > 0),
 				}
 			: null,
-		!tournament.isLeagueSignup
+		!tournament.isLeague
 			? {
 					name: t("tournament:pre.steps.check-in"),
 					status: completedIfTruthy(checkedIn),
 				}
 			: null,
-		tournament.isLeagueSignup
+		tournament.isLeague
 			? {
 					name: "Google Sheet",
 					status: "notice" as const,
@@ -320,7 +321,7 @@ function RegistrationProgress({
 
 	const registrationClosesAtString =
 		registrationClosesFormatter.format(
-			tournament.isLeagueSignup
+			tournament.isLeague
 				? tournament.ctx.startsAt
 				: tournament.registrationClosesAt,
 		) ?? "";
@@ -355,7 +356,7 @@ function RegistrationProgress({
 						);
 					})}
 				</div>
-				{!tournament.isLeagueSignup ? (
+				{!tournament.isLeague ? (
 					<CheckIn
 						canCheckIn={
 							steps.filter((step) => step.status === "incomplete").length === 1
@@ -367,7 +368,7 @@ function RegistrationProgress({
 				) : null}
 			</section>
 			<div className={styles.sectionWarning}>
-				{regClosesBeforeStart || tournament.isLeagueSignup ? (
+				{regClosesBeforeStart || tournament.isLeague ? (
 					<span className="text-warning">
 						Registration closes at {registrationClosesAtString}
 					</span>
@@ -501,7 +502,7 @@ function TeamInfo({
 					1. {t("tournament:pre.info.header")}
 				</h3>
 				{canUnregister &&
-				tournament.isLeagueSignup &&
+				tournament.isLeague &&
 				!tournament.registrationOpen ? (
 					<SendouPopover
 						trigger={

@@ -1,56 +1,62 @@
 import clsx from "clsx";
 import { Users } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
-import type { SerializeFrom } from "~/utils/remix";
-import { tournamentBracketsPage } from "../../../utils/urls";
-
+import { Link } from "react-router";
+import { useUser } from "~/features/auth/core/user";
+import { useTournament } from "~/features/tournament/tournament-context";
+import { tournamentBracketsPage } from "~/utils/urls";
+import type { BracketMeta } from "../core/Tournament";
 import { loader } from "../loaders/to.$id.divisions.server";
 import styles from "./to.$id.divisions.module.css";
 
 export { loader };
 
 export default function TournamentDivisionsPage() {
-	const data = useLoaderData<typeof loader>();
+	const tournament = useTournament();
+	const user = useUser();
 
-	if (data.divisions.length === 0) {
-		return (
-			<div className="text-center text-lg font-semi-bold text-lighter">
-				Divisions have not been released yet, check back later
-			</div>
-		);
-	}
+	const ownTeam = tournament.teamMemberOfByUser(user);
+	const ownDivisionIdx = ownTeam ? (ownTeam.startingBracketIdx ?? 0) : null;
 
 	return (
 		<div className={styles.grid}>
-			{data.divisions.map((div) => (
-				<DivisionLink key={div.tournamentId} div={div} />
+			{tournament.leagueDivisions.map((division) => (
+				<DivisionLink
+					key={division.idx}
+					division={division}
+					isParticipant={ownDivisionIdx === division.idx}
+				/>
 			))}
 		</div>
 	);
 }
 
 function DivisionLink({
-	div,
+	division,
+	isParticipant,
 }: {
-	div: SerializeFrom<typeof loader>["divisions"][number];
+	division: BracketMeta;
+	isParticipant: boolean;
 }) {
-	const data = useLoaderData<typeof loader>();
 	const { t } = useTranslation(["calendar"]);
-	const shortName = div.name.split("-").at(-1);
+	const tournament = useTournament();
 
 	return (
 		<Link
-			to={tournamentBracketsPage({ tournamentId: div.tournamentId })}
-			className={clsx(styles.link, {
-				[styles.participant]: data.divsParticipantOf.includes(div.tournamentId),
+			to={tournamentBracketsPage({
+				tournamentId: tournament.ctx.id,
+				divisionIdx: division.idx,
 			})}
+			className={clsx(styles.link, {
+				[styles.participant]: isParticipant,
+			})}
+			data-testid="division-link"
 		>
-			{shortName}
+			{division.name}
 			<div className={styles.participantCounts}>
 				<Users />{" "}
 				{t("calendar:count.teams", {
-					count: div.teamsCount,
+					count: tournament.teamsCountOfBracket(division.idx),
 				})}
 			</div>
 		</Link>

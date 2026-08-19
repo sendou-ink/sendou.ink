@@ -587,8 +587,6 @@ export interface Tournament {
 	castTwitchAccounts: JSONColumnTypeNullable<string[]>;
 	castedMatchesInfo: JSONColumnTypeNullable<CastedMatchesInfo>;
 	rules: string | null;
-	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
-	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
@@ -711,6 +709,8 @@ export interface TournamentRound {
 	number: number;
 	stageId: number;
 	maps: JSONColumnType<TournamentRoundMaps>;
+	/** Datetime the round is played by default (leagues). Null = no default play time, the round is played whenever. */
+	defaultPlayTime: number | null;
 }
 
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */

@@ -50,12 +50,8 @@ export default function TournamentAdminBracketsPage() {
 					<BracketProgressionEdit />
 				</>
 			) : null}
-			{!tournament.isLeagueSignup ? (
-				<>
-					<Divider smallText>Bracket reset</Divider>
-					<BracketReset />
-				</>
-			) : null}
+			<Divider smallText>Bracket reset</Divider>
+			<BracketReset />
 			{showReopen ? (
 				<>
 					<Divider smallText>Reopen tournament (dev only)</Divider>
