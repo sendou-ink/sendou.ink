@@ -5,7 +5,7 @@ import {
 	textAreaOptional,
 	textField,
 } from "~/form/fields";
-import { _action, id } from "~/utils/zod";
+import { _action, id, superRefine } from "~/utils/zod";
 import { analyzeTrophyModel } from "./core/model-analysis";
 import {
 	TROPHY_DECLINE_REASON_MAX_LENGTH,
@@ -19,28 +19,32 @@ import {
 const trophyModelField = () =>
 	customField(
 		{ initialValue: "" },
-		v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(TROPHY_MODEL_MAX_LENGTH))((model, ctx) => {
+		v.pipe(
+			v.string(),
+			v.trim(),
+			v.minLength(1),
+			v.maxLength(TROPHY_MODEL_MAX_LENGTH),
+			superRefine((model, ctx) => {
 				const analysis = analyzeTrophyModel(model);
 
 				if (!analysis) {
-					ctx.addIssue({ code: "custom", message: "Invalid model state" });
+					ctx.addIssue({ message: "Invalid model state" });
 					return;
 				}
 
 				if (!analysis.cameraTargetCentered) {
 					ctx.addIssue({
-						code: "custom",
 						message: "Camera target X and Z must be 0",
 					});
 				}
 
 				if (!analysis.backgroundIsAlpha) {
 					ctx.addIssue({
-						code: "custom",
 						message: "Background color must be the alpha color",
 					});
 				}
 			}),
+		),
 	);
 
 export const createTrophyFormSchema = v.object({
@@ -89,11 +93,11 @@ export const pendingTrophyActionSchema = v.union([
 		_action: _action("DECLINE"),
 		pendingTrophyId: id,
 		reason: v.pipe(
-            v.string(),
-            v.trim(),
-            v.minLength(TROPHY_DECLINE_REASON_MIN_LENGTH),
-            v.maxLength(TROPHY_DECLINE_REASON_MAX_LENGTH)
-        ),
+			v.string(),
+			v.trim(),
+			v.minLength(TROPHY_DECLINE_REASON_MIN_LENGTH),
+			v.maxLength(TROPHY_DECLINE_REASON_MAX_LENGTH),
+		),
 	}),
 	v.object({
 		_action: _action("APPROVE"),

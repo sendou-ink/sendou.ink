@@ -8,36 +8,62 @@ const BSKY_URL =
 const CHANGE_LOG_ITEMS_MAX = 6;
 
 const postsSchema = v.object({
-	feed: v.array(v.object({
-        post: v.object({
-            uri: v.string(),
-            record: v.object({
-                $type: v.string(),
-                createdAt: v.string(),
-                facets: v.optional(v.nullable(v.array(v.object({
-                    features: v.array(v.object({ $type: v.string(), tag: v.optional(v.nullable(v.string())) })),
-                    index: v.object({ byteEnd: v.number(), byteStart: v.number() }),
-                })))),
-                text: v.string(),
-            }),
-            embed: v.optional(v.nullable(v.object({
-                    $type: v.string(),
-                    images: v.optional(v.nullable(v.array(v.object({
-                        thumb: v.string(),
-                        fullsize: v.string(),
-                        alt: v.string(),
-                        aspectRatio: v.object({
-                            height: v.number(),
-                            width: v.number(),
-                        }),
-                    })))),
-                }))),
-            replyCount: v.number(),
-            repostCount: v.number(),
-            likeCount: v.number(),
-            quoteCount: v.number(),
-        }),
-    })),
+	feed: v.array(
+		v.object({
+			post: v.object({
+				uri: v.string(),
+				record: v.object({
+					$type: v.string(),
+					createdAt: v.string(),
+					facets: v.optional(
+						v.nullable(
+							v.array(
+								v.object({
+									features: v.array(
+										v.object({
+											$type: v.string(),
+											tag: v.optional(v.nullable(v.string())),
+										}),
+									),
+									index: v.object({
+										byteEnd: v.number(),
+										byteStart: v.number(),
+									}),
+								}),
+							),
+						),
+					),
+					text: v.string(),
+				}),
+				embed: v.optional(
+					v.nullable(
+						v.object({
+							$type: v.string(),
+							images: v.optional(
+								v.nullable(
+									v.array(
+										v.object({
+											thumb: v.string(),
+											fullsize: v.string(),
+											alt: v.string(),
+											aspectRatio: v.object({
+												height: v.number(),
+												width: v.number(),
+											}),
+										}),
+									),
+								),
+							),
+						}),
+					),
+				),
+				replyCount: v.number(),
+				repostCount: v.number(),
+				likeCount: v.number(),
+				quoteCount: v.number(),
+			}),
+		}),
+	),
 });
 
 export async function get() {
@@ -95,7 +121,7 @@ async function fetchPosts() {
 function parsePosts(data: unknown) {
 	const result = v.safeParse(postsSchema, data);
 	if (!result.success) {
-		throw new Error(`Failed to parse posts: ${result.issues.message}`);
+		throw new Error(`Failed to parse posts: ${v.summarize(result.issues)}`);
 	}
 
 	return result.output.feed.map((feed) => feed.post);

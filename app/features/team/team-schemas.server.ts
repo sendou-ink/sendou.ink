@@ -7,16 +7,16 @@ import {
 	updateRosterSchema,
 } from "./team-schemas";
 
-export const createTeamSchemaServer = v.object({
-	...createTeamSchema.shape,
-	name: createTeamSchema.shape.name.refine(
-		async (name) => {
+export const createTeamSchemaServer = v.objectAsync({
+	...createTeamSchema.entries,
+	name: v.pipeAsync(
+		createTeamSchema.entries.name,
+		v.checkAsync(async (name) => {
 			const teams = await TeamRepository.findAllUndisbanded();
 			const customUrl = mySlugify(name);
 
 			return !teams.some((team) => team.customUrl === customUrl);
-		},
-		{ message: "forms:errors.duplicateName" },
+		}, "forms:errors.duplicateName"),
 	),
 });
 

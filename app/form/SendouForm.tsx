@@ -12,28 +12,31 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { FormField as FormFieldComponent } from "./FormField";
 import { getFormFieldMetadata } from "./fields";
 import styles from "./SendouForm.module.css";
-import type { TypedFormFieldComponent } from "./types";
+import type { FormObjectSchema, TypedFormFieldComponent } from "./types";
 import { useUnsavedChangesChecker } from "./UnsavedChangesGuard";
 import {
 	buildFieldPath,
 	errorMessageId,
 	getNestedValue,
+	issuePathKeys,
 	seedArrayItemDefaults,
 	setNestedValue,
 	validateField,
 } from "./utils";
 
-type RequiredDefaultKeys<T extends v.ZodRawShape> = {
+type RequiredDefaultKeys<T extends v.ObjectEntries> = {
 	[K in keyof T & string]: T[K] extends { _requiresDefault: true } ? K : never;
 }[keyof T & string];
 
-type HasRequiredDefaults<T extends v.ZodRawShape> =
+type HasRequiredDefaults<T extends v.ObjectEntries> =
 	RequiredDefaultKeys<T> extends never ? false : true;
 
-export interface FormContextValue<T extends v.ZodRawShape = v.ZodRawShape> {
-	schema: v.ZodObject<T>;
-	defaultValues?: Partial<v.InferInput<v.ZodObject<T>>> | null;
-	serverErrors: Partial<Record<keyof v.InferOutput<v.ZodObject<T>>, string>>;
+export interface FormContextValue<T extends v.ObjectEntries = v.ObjectEntries> {
+	schema: FormObjectSchema<T>;
+	defaultValues?: Partial<v.InferInput<v.ObjectSchema<T, undefined>>> | null;
+	serverErrors: Partial<
+		Record<keyof v.InferOutput<v.ObjectSchema<T, undefined>>, string>
+	>;
 	clientErrors: Partial<Record<string, string>>;
 	hasSubmitted: boolean;
 	setClientError: (name: string, error: string | undefined) => void;
@@ -76,15 +79,15 @@ const FormContext = React.createContext<FormFieldContextValue | null>(null);
 
 export const EMPTY_FORM_STORE = createFormStore({}, {});
 
-export interface FormRenderProps<T extends v.ZodRawShape> {
+export interface FormRenderProps<T extends v.ObjectEntries> {
 	FormField: TypedFormFieldComponent<T>;
 }
 
 export type FormMode = "submit" | "autoSubmit" | "client";
 
-type BaseFormProps<T extends v.ZodRawShape> = {
+type BaseFormProps<T extends v.ObjectEntries> = {
 	children: React.ReactNode | ((props: FormRenderProps<T>) => React.ReactNode);
-	schema: v.ZodObject<T>;
+	schema: FormObjectSchema<T>;
 	title?: React.ReactNode;
 	submitButtonText?: React.ReactNode;
 	action?: string;
@@ -127,20 +130,23 @@ type BaseFormProps<T extends v.ZodRawShape> = {
  * - `"client"`: no submit button and no `<form>` element; every change is
  *   passed to `onApply` and field errors are computed already on mount.
  */
-type FormModeProps<T extends v.ZodRawShape> =
+type FormModeProps<T extends v.ObjectEntries> =
 	| {
 			mode?: "submit";
 			/** When set, a valid submit is handed to this callback instead of being sent to the server. */
-			onApply?: (values: v.InferOutput<v.ZodObject<T>>) => void;
+			onApply?: (values: v.InferOutput<v.ObjectSchema<T, undefined>>) => void;
 	  }
 	| { mode: "autoSubmit"; onApply?: never }
-	| { mode: "client"; onApply: (values: v.InferOutput<v.ZodObject<T>>) => void };
+	| {
+			mode: "client";
+			onApply: (values: v.InferOutput<v.ObjectSchema<T, undefined>>) => void;
+	  };
 
-export type FormDefaultValues<T extends v.ZodRawShape> = Partial<
-	v.InferInput<v.ZodObject<T>>
+export type FormDefaultValues<T extends v.ObjectEntries> = Partial<
+	v.InferInput<v.ObjectSchema<T, undefined>>
 >;
 
-type SendouFormProps<T extends v.ZodRawShape> = BaseFormProps<T> &
+type SendouFormProps<T extends v.ObjectEntries> = BaseFormProps<T> &
 	FormModeProps<T> &
 	(HasRequiredDefaults<T> extends true
 		? {
@@ -150,7 +156,7 @@ type SendouFormProps<T extends v.ZodRawShape> = BaseFormProps<T> &
 		: { defaultValues?: FormDefaultValues<T> | null });
 
 interface LatestFormProps {
-	schema: v.ZodObject<v.ZodRawShape>;
+	schema: FormObjectSchema;
 	onApply: ((values: Record<string, unknown>) => void) | undefined;
 	action: string | undefined;
 	revalidateRoot: boolean | undefined;
@@ -159,7 +165,9 @@ interface LatestFormProps {
 	t: (key: string) => string;
 }
 
-export function SendouForm<T extends v.ZodRawShape>(props: SendouFormProps<T>) {
+export function SendouForm<T extends v.ObjectEntries>(
+	props: SendouFormProps<T>,
+) {
 	// Remounting on URL change resets all form state (handles edit → new transitions)
 	const location = useLocation();
 
@@ -171,7 +179,7 @@ export function SendouForm<T extends v.ZodRawShape>(props: SendouFormProps<T>) {
 	);
 }
 
-function SendouFormInner<T extends v.ZodRawShape>({
+function SendouFormInner<T extends v.ObjectEntries>({
 	children,
 	schema,
 	defaultValues,
@@ -211,7 +219,7 @@ function SendouFormInner<T extends v.ZodRawShape>({
 	const store = storeRef.current;
 
 	const latestProps: LatestFormProps = {
-		schema: schema as v.ZodObject<v.ZodRawShape>,
+		schema: schema as FormObjectSchema,
 		onApply: onApply as unknown as LatestFormProps["onApply"],
 		action,
 		revalidateRoot,
@@ -282,7 +290,7 @@ function SendouFormInner<T extends v.ZodRawShape>({
 
 	const contextValue = React.useMemo<FormFieldContextValue>(
 		() => ({
-			schema: schema as v.ZodObject<v.ZodRawShape>,
+			schema: schema as FormObjectSchema,
 			defaultValues: defaultValues as FormFieldContextValue["defaultValues"],
 			serverErrors: visibleServerErrors,
 			hasSubmitted,
@@ -599,17 +607,18 @@ function createFormActions({
  * (array/fieldset children render their own error slots).
  */
 function computeFieldErrors(
-	schema: v.ZodObject<v.ZodRawShape>,
+	schema: FormObjectSchema,
 	values: Record<string, unknown>,
 ): Record<string, string> {
 	const newErrors: Record<string, string> = {};
 
-	const fullValidation = schema.safeParse(values);
+	const fullValidation = v.safeParse(schema, values);
 	if (fullValidation.success) return newErrors;
 
-	for (const issue of fullValidation.error.issues) {
+	for (const issue of fullValidation.issues) {
+		const issuePath = issuePathKeys(issue);
 		const topLevelKey =
-			typeof issue.path[0] === "string" ? issue.path[0] : undefined;
+			typeof issuePath[0] === "string" ? issuePath[0] : undefined;
 		if (topLevelKey && newErrors[topLevelKey] === undefined) {
 			const topLevelError = validateField(
 				schema,
@@ -619,7 +628,7 @@ function computeFieldErrors(
 			if (topLevelError) newErrors[topLevelKey] = topLevelError;
 		}
 
-		const fieldName = buildFieldPath(issue.path);
+		const fieldName = buildFieldPath(issuePath);
 		if (fieldName && newErrors[fieldName] === undefined) {
 			const value = getNestedValue(values, fieldName);
 			newErrors[fieldName] =
@@ -631,25 +640,25 @@ function computeFieldErrors(
 }
 
 function computeTopLevelFieldErrors(
-	schema: v.ZodObject<v.ZodRawShape>,
+	schema: FormObjectSchema,
 	values: Record<string, unknown>,
 ): Record<string, string> {
 	const errors: Record<string, string> = {};
-	for (const key of Object.keys(schema.shape)) {
+	for (const key of Object.keys(schema.entries)) {
 		const error = validateField(schema, key, values[key]);
 		if (error) errors[key] = error;
 	}
 	return errors;
 }
 
-function buildInitialValues<T extends v.ZodRawShape>(
-	schema: v.ZodObject<T>,
-	defaultValues?: Partial<v.InferInput<v.ZodObject<T>>> | null,
+function buildInitialValues<T extends v.ObjectEntries>(
+	schema: FormObjectSchema<T>,
+	defaultValues?: Partial<v.InferInput<v.ObjectSchema<T, undefined>>> | null,
 ): Record<string, unknown> {
 	const result: Record<string, unknown> = {};
 
-	for (const [key, fieldSchema] of Object.entries(schema.shape)) {
-		const formField = getFormFieldMetadata(fieldSchema as v.ZodType);
+	for (const [key, fieldSchema] of Object.entries(schema.entries)) {
+		const formField = getFormFieldMetadata(fieldSchema);
 
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {

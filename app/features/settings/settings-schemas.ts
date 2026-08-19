@@ -4,7 +4,7 @@ import { themeInputSchema } from "~/utils/zod";
 
 export const customThemeSchema = v.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),
-	newValue: hidden(themeInputSchema.nullable(), null),
+	newValue: hidden(v.nullable(themeInputSchema), null),
 	revalidateRoot: v.optional(v.nullable(v.literal(true))),
 });
 

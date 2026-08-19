@@ -14,8 +14,12 @@ export const qLookingSearchParams = SearchParams.define({
 });
 
 export const weaponUsageSearchParams = SearchParams.define({
-	userId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
-	season: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))), { loader: true }),
-	stageId: SP.param(numericEnum(stageIds).nullable(), { loader: true }),
-	modeShort: SP.param(modeShort.nullable(), { loader: true }),
+	userId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: true,
+	}),
+	season: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))), {
+		loader: true,
+	}),
+	stageId: SP.param(v.nullable(numericEnum(stageIds)), { loader: true }),
+	modeShort: SP.param(v.nullable(modeShort), { loader: true }),
 });

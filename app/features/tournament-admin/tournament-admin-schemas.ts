@@ -6,7 +6,13 @@ import {
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { _action, id, safeJSONParse } from "~/utils/zod";
+import {
+	_action,
+	id,
+	preprocess,
+	safeJSONParse,
+	superRefine,
+} from "~/utils/zod";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 
@@ -20,17 +26,19 @@ export function adminStaffFormSchemaServer({
 }: {
 	tournament: Tournament;
 }) {
-	return adminStaffFormSchema.superRefine((data, ctx) => {
-		for (const [index, staffer] of data.staff.entries()) {
-			if (staffer.userId === tournament.ctx.author.id) {
-				ctx.addIssue({
-					code: v.ZodIssueCode.custom,
-					message: "forms:errors.staffCannotBeAuthor",
-					path: ["staff", index, "userId"],
-				});
+	return v.pipe(
+		adminStaffFormSchema,
+		superRefine((data, ctx) => {
+			for (const [index, staffer] of data.staff.entries()) {
+				if (staffer.userId === tournament.ctx.author.id) {
+					ctx.addIssue({
+						message: "forms:errors.staffCannotBeAuthor",
+						path: ["staff", index, "userId"],
+					});
+				}
 			}
-		}
-	});
+		}),
+	);
 }
 
 export const adminTeamsActionSchema = v.union([
@@ -58,44 +66,61 @@ export const adminTeamsActionSchema = v.union([
 	}),
 ]);
 
-const bracketProgressionSchema = v.preprocess(
+const bracketProgressionSchema = preprocess(
 	safeJSONParse,
-	v.pipe(v.array(v.object({
-        type: v.picklist(TOURNAMENT_STAGE_TYPES),
-        name: v.pipe(
-            v.string(),
-            v.minLength(1),
-            v.maxLength(TOURNAMENT.BRACKET_NAME_MAX_LENGTH)
-        ),
-        settings: v.pipe(v.object({
-                thirdPlaceMatch: v.optional(v.boolean()),
-                teamsPerGroup: v.optional(v.pipe(v.number(), v.integer())),
-                hasAbDivisions: v.optional(v.boolean()),
-                groupCount: v.optional(v.pipe(v.number(), v.integer())),
-                roundCount: v.optional(v.pipe(v.number(), v.integer())),
-                advanceThreshold: v.optional(v.pipe(v.number(), v.integer())),
-            }), v.check((settings) => {
-            if (settings.advanceThreshold) {
-                return Swiss.isValidAdvanceThreshold({
-                    roundCount:
-                        settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
-                    advanceThreshold: settings.advanceThreshold,
-                });
-            }
-            return true;
-        }, {
-            message: "Invalid advance threshold for the given round count",
-            path: ["advanceThreshold"],
-        })),
-        requiresCheckIn: v.boolean(),
-        startTime: v.optional(v.number()),
-        sources: v.optional(v.array(v.object({
-            bracketIdx: v.number(),
-            placements: v.array(v.number()),
-            rest: v.optional(v.boolean()),
-        }))),
-    })), v.check((progression) =>
-        Progression.bracketsToValidationError(progression) === null, "Invalid bracket progression")),
+	v.pipe(
+		v.array(
+			v.object({
+				type: v.picklist(TOURNAMENT_STAGE_TYPES),
+				name: v.pipe(
+					v.string(),
+					v.minLength(1),
+					v.maxLength(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+				),
+				settings: v.pipe(
+					v.object({
+						thirdPlaceMatch: v.optional(v.boolean()),
+						teamsPerGroup: v.optional(v.pipe(v.number(), v.integer())),
+						hasAbDivisions: v.optional(v.boolean()),
+						groupCount: v.optional(v.pipe(v.number(), v.integer())),
+						roundCount: v.optional(v.pipe(v.number(), v.integer())),
+						advanceThreshold: v.optional(v.pipe(v.number(), v.integer())),
+					}),
+					superRefine((settings, ctx) => {
+						if (!settings.advanceThreshold) return;
+
+						const isValid = Swiss.isValidAdvanceThreshold({
+							roundCount:
+								settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							advanceThreshold: settings.advanceThreshold,
+						});
+						if (isValid) return;
+
+						ctx.addIssue({
+							message: "Invalid advance threshold for the given round count",
+							path: ["advanceThreshold"],
+						});
+					}),
+				),
+				requiresCheckIn: v.boolean(),
+				startTime: v.optional(v.number()),
+				sources: v.optional(
+					v.array(
+						v.object({
+							bracketIdx: v.number(),
+							placements: v.array(v.number()),
+							rest: v.optional(v.boolean()),
+						}),
+					),
+				),
+			}),
+		),
+		v.check(
+			(progression) =>
+				Progression.bracketsToValidationError(progression) === null,
+			"Invalid bracket progression",
+		),
+	),
 );
 
 export const adminBracketsActionSchema = v.union([
@@ -115,26 +140,30 @@ export const adminBracketsActionSchema = v.union([
 export const adminSeedsActionSchema = v.union([
 	v.object({
 		_action: _action("UPDATE_SEEDS"),
-		seeds: v.preprocess(safeJSONParse, v.array(id)),
+		seeds: preprocess(safeJSONParse, v.array(id)),
 	}),
 	v.object({
 		_action: _action("UPDATE_STARTING_BRACKETS"),
-		startingBrackets: v.preprocess(
+		startingBrackets: preprocess(
 			safeJSONParse,
-			v.array(v.object({
-                tournamentTeamId: id,
-                startingBracketIdx: bracketIdx,
-            })),
+			v.array(
+				v.object({
+					tournamentTeamId: id,
+					startingBracketIdx: bracketIdx,
+				}),
+			),
 		),
 	}),
 	v.object({
 		_action: _action("UPDATE_AB_DIVISIONS"),
-		abDivisions: v.preprocess(
+		abDivisions: preprocess(
 			safeJSONParse,
-			v.array(v.object({
-                tournamentTeamId: id,
-                abDivision: v.union([v.literal(0), v.literal(1), v.null()]),
-            })),
+			v.array(
+				v.object({
+					tournamentTeamId: id,
+					abDivision: v.union([v.literal(0), v.literal(1), v.null()]),
+				}),
+			),
 		),
 	}),
 ]);

@@ -10,10 +10,12 @@ const paramsSchema = v.object({
 });
 
 const bodySchema = v.object({
-	startingBrackets: v.array(v.object({
-        tournamentTeamId: id,
-        startingBracketIdx: v.pipe(v.number(), v.integer(), v.minValue(0)),
-    })),
+	startingBrackets: v.array(
+		v.object({
+			tournamentTeamId: id,
+			startingBracketIdx: v.pipe(v.number(), v.integer(), v.minValue(0)),
+		}),
+	),
 });
 
 export const action = async (args: ActionFunctionArgs) => {

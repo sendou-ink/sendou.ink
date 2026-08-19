@@ -11,7 +11,7 @@ import {
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { SP } from "~/modules/search-params/search-params";
+import { codec, SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/zod";
 import {
 	RESULT_PLACEMENT_FILTERS,
@@ -22,13 +22,15 @@ import {
 const BUILD_FILTER_TABS = ["ALL", "PUBLIC", "PRIVATE"] as const;
 
 const resultYear = v.pipe(
-    v.number(),
-    v.integer(),
-    v.minValue(RESULTS_FIRST_YEAR),
-    v.check((year) => year <= new Date().getFullYear())
+	v.number(),
+	v.integer(),
+	v.minValue(RESULTS_FIRST_YEAR),
+	v.check((year) => year <= new Date().getFullYear()),
 );
 
-const resultsFilterName = v.nullable(v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)));
+const resultsFilterName = v.nullable(
+	v.pipe(v.string(), v.trim(), v.minLength(1), v.maxLength(100)),
+);
 
 export const userResultsSearchParams = SearchParams.define({
 	/** Only applies to users who have highlighted results. */
@@ -60,7 +62,7 @@ export const userResultsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	maxPlacement: SP.param(numericEnum(RESULT_PLACEMENT_FILTERS).nullable(), {
+	maxPlacement: SP.param(v.nullable(numericEnum(RESULT_PLACEMENT_FILTERS)), {
 		loader: true,
 		resets: ["page"],
 	}),
@@ -79,17 +81,20 @@ export const userResultsSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	minParticipantCount: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9999)), {
-		default: 0,
-		loader: true,
-		resets: ["page"],
-	}),
+	minParticipantCount: SP.param(
+		v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(9999)),
+		{
+			default: 0,
+			loader: true,
+			resets: ["page"],
+		},
+	),
 });
 
 const startedSeason = v.pipe(
-    v.number(),
-    v.integer(),
-    v.check((nth) => Seasons.allStarted(new Date()).includes(nth))
+	v.number(),
+	v.integer(),
+	v.check((nth) => Seasons.allStarted(new Date()).includes(nth)),
 );
 
 export const userSeasonsSearchParams = SearchParams.define({
@@ -112,11 +117,10 @@ export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
 	}),
 });
 
-const buildsWeaponFilterCodec = v.codec(
-	v.string(),
+const buildsWeaponFilterCodec = codec(
 	v.union([v.picklist(BUILD_FILTER_TABS), numericEnum(mainWeaponIds)]),
 	{
-		decode: (value, payload) => {
+		decode: (value) => {
 			if ((BUILD_FILTER_TABS as readonly string[]).includes(value)) {
 				return value as (typeof BUILD_FILTER_TABS)[number];
 			}
@@ -124,12 +128,7 @@ const buildsWeaponFilterCodec = v.codec(
 			if ((mainWeaponIds as readonly number[]).includes(weaponId)) {
 				return weaponId as MainWeaponId;
 			}
-			payload.issues.push({
-				code: "custom",
-				message: "Invalid builds weapon filter",
-				input: value,
-			});
-			return v.NEVER;
+			return undefined;
 		},
 		encode: (value) => String(value),
 	},
@@ -146,8 +145,10 @@ export const userArtSearchParams = SearchParams.define({
 });
 
 export const userBuildsNewSearchParams = SearchParams.define({
-	buildId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
-	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), { loader: true }),
+	buildId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: true,
+	}),
+	weapon: SP.param(v.nullable(numericEnum(mainWeaponIds)), { loader: true }),
 	build: SP.custom(serializedBuildCodec, {
 		default: EMPTY_BUILD,
 		loader: true,

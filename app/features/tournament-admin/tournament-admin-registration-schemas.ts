@@ -14,7 +14,7 @@ import {
 	tournamentSearchOptional,
 	userSearch,
 } from "~/form/fields";
-import { modeShort, stageId } from "~/utils/zod";
+import { modeShort, stageId, superRefine } from "~/utils/zod";
 import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
 import { USER } from "../user-page/user-page-constants";
 /**
@@ -44,7 +44,8 @@ const memberFieldset = fieldset({
 	}),
 });
 
-export const adminRegistrationFormSchema = v.object({
+export const adminRegistrationFormSchema = v.pipe(
+	v.object({
 		_action: stringConstant("UPSERT_REGISTRATION"),
 		/** Present when editing an existing registration, absent when adding a new team. */
 		tournamentTeamId: idConstantOptional(),
@@ -69,18 +70,17 @@ export const adminRegistrationFormSchema = v.object({
 			{ initialValue: [] },
 			v.array(v.object({ mode: modeShort, stageId })),
 		),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		if (data.linkedTeam) {
 			if (typeof data.teamId !== "number") {
 				ctx.addIssue({
-					code: v.ZodIssueCode.custom,
 					message: "forms:errors.regLinkedTeamRequired",
 					path: ["teamId"],
 				});
 			}
 		} else if (!data.pickUpName) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.regTeamNameRequired",
 				path: ["pickUpName"],
 			});
@@ -89,7 +89,6 @@ export const adminRegistrationFormSchema = v.object({
 		const memberIds = data.members.map((member) => member.userId);
 		if (memberIds.length !== new Set(memberIds).size) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.usersMustBeUnique",
 				path: ["members"],
 			});
@@ -97,12 +96,12 @@ export const adminRegistrationFormSchema = v.object({
 
 		if (!memberIds.some((memberId) => String(memberId) === data.ownerId)) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.regOwnerMustBeMember",
 				path: ["ownerId"],
 			});
 		}
-	});
+	}),
+);
 
 export type AdminRegistrationFormValues = v.InferInput<
 	typeof adminRegistrationFormSchema
@@ -114,21 +113,23 @@ export type AdminRegistrationFormValues = v.InferInput<
  * client-side only — submitting prefills the registration form rather than
  * hitting the server.
  */
-export const importTeamFormSchema = v.object({
+export const importTeamFormSchema = v.pipe(
+	v.object({
 		sourceTournamentId: tournamentSearchOptional({
 			label: "labels.regImportSourceTournament",
 		}),
 		sourceTournamentTeamId: selectDynamic({
 			label: "labels.regTeam",
 		}),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		if (typeof data.sourceTournamentId !== "number") {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.regImportTournamentRequired",
 				path: ["sourceTournamentId"],
 			});
 		}
-	});
+	}),
+);
 
 export type ImportTeamFormValues = v.InferInput<typeof importTeamFormSchema>;

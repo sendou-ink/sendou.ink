@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
 import * as v from "valibot";
+import { describe, expect, test } from "vitest";
 import { getNestedSchema, getNestedValue, setNestedValue } from "./utils";
 
 describe("getNestedValue", () => {
@@ -62,13 +62,13 @@ describe("getNestedSchema", () => {
 	test("returns schema for simple path", () => {
 		const schema = v.object({ name: v.string() });
 		const result = getNestedSchema(schema, "name");
-		expect(result).toBeInstanceOf(v.ZodString);
+		expect(result?.type).toBe("string");
 	});
 
 	test("returns schema for nested path", () => {
 		const schema = v.object({ config: v.object({ name: v.string() }) });
 		const result = getNestedSchema(schema, "config.name");
-		expect(result).toBeInstanceOf(v.ZodString);
+		expect(result?.type).toBe("string");
 	});
 
 	test("unwraps nullable wrapper", () => {
@@ -76,11 +76,7 @@ describe("getNestedSchema", () => {
 			config: v.nullable(v.object({ name: v.string() })),
 		});
 		const result = getNestedSchema(schema, "config.name");
-		const def = result?._def ?? (result as unknown as { def?: unknown })?.def;
-		const typeName =
-			(def as { typeName?: string })?.typeName ??
-			(def as { type?: string })?.type;
-		expect(typeName).toBe("string");
+		expect(result?.type).toBe("string");
 	});
 
 	test("unwraps optional wrapper", () => {
@@ -88,11 +84,7 @@ describe("getNestedSchema", () => {
 			config: v.optional(v.object({ name: v.string() })),
 		});
 		const result = getNestedSchema(schema, "config.name");
-		const def = result?._def ?? (result as unknown as { def?: unknown })?.def;
-		const typeName =
-			(def as { typeName?: string })?.typeName ??
-			(def as { type?: string })?.type;
-		expect(typeName).toBe("string");
+		expect(result?.type).toBe("string");
 	});
 
 	test("returns undefined for invalid path", () => {
@@ -110,14 +102,18 @@ describe("getNestedSchema", () => {
 			items: v.array(v.object({ name: v.string() })),
 		});
 		const result = getNestedSchema(schema, "items[0].name");
-		expect(result).toBeInstanceOf(v.ZodString);
+		expect(result?.type).toBe("string");
 	});
 
 	test("returns schema for array element path with min/max", () => {
 		const schema = v.object({
-			items: v.pipe(v.array(v.object({ name: v.string() })), v.minLength(1), v.maxLength(10)),
+			items: v.pipe(
+				v.array(v.object({ name: v.string() })),
+				v.minLength(1),
+				v.maxLength(10),
+			),
 		});
 		const result = getNestedSchema(schema, "items[0].name");
-		expect(result).toBeInstanceOf(v.ZodString);
+		expect(result?.type).toBe("string");
 	});
 });

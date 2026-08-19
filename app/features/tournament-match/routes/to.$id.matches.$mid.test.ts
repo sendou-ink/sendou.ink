@@ -7,7 +7,7 @@ vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	setMetadata: vi.fn(),
 }));
 
-import * as v from "valibot";
+import type * as v from "valibot";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -27,7 +27,7 @@ const tournamentMatchAction = wrappedAction<typeof matchSchema>({
 	isJsonSubmission: true,
 });
 const removeMemberApiActionWrapped = wrappedAction<
-	z.ZodType<{ userId: number }>
+	v.GenericSchema<{ userId: number }>
 >({
 	action: removeMemberApiAction,
 	isJsonSubmission: true,

@@ -235,7 +235,7 @@ function useFloatingEmbedWidth(): number | null {
 }
 
 type VodFormFieldComponent = FormRenderProps<
-	typeof vodFormBaseSchema.shape
+	typeof vodFormBaseSchema.entries
 >["FormField"];
 
 function VodFormFields({

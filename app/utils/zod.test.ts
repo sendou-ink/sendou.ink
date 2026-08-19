@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import {
 	actuallyNonEmptyStringOrNull,
@@ -116,64 +117,64 @@ describe("actuallyNonEmptyStringOrNull", () => {
 
 describe("hexCodeWithoutAlpha", () => {
 	test("accepts valid 3 and 6 digit hex colors", () => {
-		expect(hexCodeWithoutAlpha.safeParse("#fff").success).toBe(true);
-		expect(hexCodeWithoutAlpha.safeParse("#FFF").success).toBe(true);
-		expect(hexCodeWithoutAlpha.safeParse("#abc").success).toBe(true);
-		expect(hexCodeWithoutAlpha.safeParse("#ffffff").success).toBe(true);
-		expect(hexCodeWithoutAlpha.safeParse("#a1b2c3").success).toBe(true);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#fff").success).toBe(true);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#FFF").success).toBe(true);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#abc").success).toBe(true);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#ffffff").success).toBe(true);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#a1b2c3").success).toBe(true);
 	});
 
 	test("rejects strings that are not valid hex colors", () => {
-		expect(hexCodeWithoutAlpha.safeParse("#fff99").success).toBe(false);
-		expect(hexCodeWithoutAlpha.safeParse("#abc12").success).toBe(false);
-		expect(hexCodeWithoutAlpha.safeParse("#12345").success).toBe(false);
-		expect(hexCodeWithoutAlpha.safeParse("#ffffff99").success).toBe(false);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#fff99").success).toBe(false);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#abc12").success).toBe(false);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#12345").success).toBe(false);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#ffffff99").success).toBe(false);
 	});
 
 	test("rejects alpha (4 and 8 digit) hex colors", () => {
-		expect(hexCodeWithoutAlpha.safeParse("#ffff").success).toBe(false);
-		expect(hexCodeWithoutAlpha.safeParse("#ffffffff").success).toBe(false);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#ffff").success).toBe(false);
+		expect(v.safeParse(hexCodeWithoutAlpha, "#ffffffff").success).toBe(false);
 	});
 });
 
 describe("timeString", () => {
 	test("accepts valid time in HH:MM format", () => {
-		expect(timeString.safeParse("00:00").success).toBe(true);
-		expect(timeString.safeParse("12:30").success).toBe(true);
-		expect(timeString.safeParse("23:59").success).toBe(true);
+		expect(v.safeParse(timeString, "00:00").success).toBe(true);
+		expect(v.safeParse(timeString, "12:30").success).toBe(true);
+		expect(v.safeParse(timeString, "23:59").success).toBe(true);
 	});
 
 	test("accepts times with leading zeros", () => {
-		expect(timeString.safeParse("01:05").success).toBe(true);
-		expect(timeString.safeParse("09:00").success).toBe(true);
+		expect(v.safeParse(timeString, "01:05").success).toBe(true);
+		expect(v.safeParse(timeString, "09:00").success).toBe(true);
 	});
 
 	test("rejects invalid hour values", () => {
-		expect(timeString.safeParse("24:00").success).toBe(false);
-		expect(timeString.safeParse("25:30").success).toBe(false);
-		expect(timeString.safeParse("99:00").success).toBe(false);
+		expect(v.safeParse(timeString, "24:00").success).toBe(false);
+		expect(v.safeParse(timeString, "25:30").success).toBe(false);
+		expect(v.safeParse(timeString, "99:00").success).toBe(false);
 	});
 
 	test("rejects invalid minute values", () => {
-		expect(timeString.safeParse("12:60").success).toBe(false);
-		expect(timeString.safeParse("12:99").success).toBe(false);
+		expect(v.safeParse(timeString, "12:60").success).toBe(false);
+		expect(v.safeParse(timeString, "12:99").success).toBe(false);
 	});
 
 	test("rejects malformed time strings", () => {
-		expect(timeString.safeParse("1:30").success).toBe(false);
-		expect(timeString.safeParse("12:3").success).toBe(false);
-		expect(timeString.safeParse("12-30").success).toBe(false);
-		expect(timeString.safeParse("1230").success).toBe(false);
-		expect(timeString.safeParse("12:30:00").success).toBe(false);
+		expect(v.safeParse(timeString, "1:30").success).toBe(false);
+		expect(v.safeParse(timeString, "12:3").success).toBe(false);
+		expect(v.safeParse(timeString, "12-30").success).toBe(false);
+		expect(v.safeParse(timeString, "1230").success).toBe(false);
+		expect(v.safeParse(timeString, "12:30:00").success).toBe(false);
 	});
 
 	test("rejects non-string values", () => {
-		expect(timeString.safeParse(1230).success).toBe(false);
-		expect(timeString.safeParse(null).success).toBe(false);
-		expect(timeString.safeParse(undefined).success).toBe(false);
+		expect(v.safeParse(timeString, 1230).success).toBe(false);
+		expect(v.safeParse(timeString, null).success).toBe(false);
+		expect(v.safeParse(timeString, undefined).success).toBe(false);
 	});
 
 	test("rejects empty string", () => {
-		expect(timeString.safeParse("").success).toBe(false);
+		expect(v.safeParse(timeString, "").success).toBe(false);
 	});
 });

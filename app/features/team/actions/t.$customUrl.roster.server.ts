@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import type {
 	MemberRole,
@@ -17,7 +18,7 @@ import { manageRosterSchema, teamParamsSchema } from "../team-schemas.server";
 export const action: ActionFunction = async ({ request, params }) => {
 	const user = requireUser();
 
-	const { customUrl } = teamParamsSchema.parse(params);
+	const { customUrl } = v.parse(teamParamsSchema, params);
 	const team = notFoundIfNullish(
 		await TeamRepository.findByCustomUrl(customUrl),
 	);

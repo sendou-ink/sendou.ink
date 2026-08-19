@@ -24,6 +24,7 @@ import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import {
 	bracketsFormField,
 	progressionFormField,
+	type ValidationCtx,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";
@@ -33,6 +34,20 @@ const calendarEventDateField = datetime({
 	label: "labels.date",
 	min: calendarEventMinDate,
 	max: calendarEventMaxDate,
+});
+
+// extracted so its literal item values don't widen to `string` in the
+// object's inferred value type
+const toToolsModeField = select({
+	label: "labels.mapPickingStyle",
+	items: [
+		{ value: "ALL", label: "options.toToolsMode.ALL" },
+		{ value: "SZ", label: "options.toToolsMode.SZ" },
+		{ value: "TC", label: "options.toToolsMode.TC" },
+		{ value: "RM", label: "options.toToolsMode.RM" },
+		{ value: "CB", label: "options.toToolsMode.CB" },
+		{ value: "TO", label: "options.toToolsMode.TO" },
+	],
 });
 
 export const calendarNewBaseSchema = v.object({
@@ -87,7 +102,7 @@ export const calendarNewBaseSchema = v.object({
 		})),
 	}),
 	badges: badges({ label: "labels.badges", maxCount: 50 }),
-	trophyId: customField({ initialValue: null }, id.nullish()),
+	trophyId: customField({ initialValue: null }, v.nullish(id)),
 	avatarImgId: image({
 		label: "labels.logo",
 		bottomText: "bottomTexts.avatarValidation",
@@ -112,17 +127,7 @@ export const calendarNewBaseSchema = v.object({
 		label: "labels.maxTeamSize",
 		bottomText: "bottomTexts.maxTeamSize",
 	}),
-	toToolsMode: select({
-		label: "labels.mapPickingStyle",
-		items: [
-			{ value: "ALL", label: "options.toToolsMode.ALL" },
-			{ value: "SZ", label: "options.toToolsMode.SZ" },
-			{ value: "TC", label: "options.toToolsMode.TC" },
-			{ value: "RM", label: "options.toToolsMode.RM" },
-			{ value: "CB", label: "options.toToolsMode.CB" },
-			{ value: "TO", label: "options.toToolsMode.TO" },
-		],
-	}),
+	toToolsMode: toToolsModeField,
 	pool: customField({ initialValue: "" }, v.optional(v.string())),
 	// the two bracket progression fields are only rendered (and validated) for
 	// tournaments; for calendar events both stay at their empty initial value
@@ -166,13 +171,12 @@ export const calendarNewBaseSchema = v.object({
 /** Shared sync cross-field rules, reused by the server schema (see `*.server.ts`). */
 export function calendarNewSyncRefine(
 	data: v.InferOutput<typeof calendarNewBaseSchema>,
-	ctx: v.RefinementCtx,
+	ctx: ValidationCtx,
 ) {
 	// a calendar event needs at least one date; a tournament needs its single start time
 	if (!data.toToolsEnabled && data.date.length < 1) {
 		ctx.addIssue({
 			path: ["date"],
-			code: v.ZodIssueCode.custom,
 			message: "forms:errors.required",
 		});
 	}
@@ -180,7 +184,6 @@ export function calendarNewSyncRefine(
 	if (data.toToolsEnabled && !data.startTime) {
 		ctx.addIssue({
 			path: ["startTime"],
-			code: v.ZodIssueCode.custom,
 			message: "forms:errors.required",
 		});
 	}
@@ -189,7 +192,6 @@ export function calendarNewSyncRefine(
 	if (!data.toToolsEnabled && !data.bracketUrl) {
 		ctx.addIssue({
 			path: ["bracketUrl"],
-			code: v.ZodIssueCode.custom,
 			message: "forms:errors.bracketUrlRequired",
 		});
 	}
@@ -198,7 +200,6 @@ export function calendarNewSyncRefine(
 		if (data.brackets.length === 0) {
 			ctx.addIssue({
 				path: ["brackets"],
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.bracketProgressionRequired",
 			});
 		} else {
@@ -220,7 +221,6 @@ export function calendarNewSyncRefine(
 		if (!isValid) {
 			ctx.addIssue({
 				path: ["pool"],
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.allModePool",
 			});
 		}
@@ -229,7 +229,6 @@ export function calendarNewSyncRefine(
 	if (data.trophyId && data.badges.length > 0) {
 		ctx.addIssue({
 			path: ["badges"],
-			code: v.ZodIssueCode.custom,
 			message: "forms:errors.trophyWithBadges",
 		});
 	}
@@ -242,7 +241,6 @@ export function calendarNewSyncRefine(
 	) {
 		ctx.addIssue({
 			path: ["maxMembersPerTeam"],
-			code: v.ZodIssueCode.custom,
 			message: "forms:errors.maxMembersRange",
 		});
 	}

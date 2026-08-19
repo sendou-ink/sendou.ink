@@ -18,7 +18,7 @@ import {
 	userSearch,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
-import { _action, id } from "~/utils/zod";
+import { _action, id, superRefine } from "~/utils/zod";
 
 const orgNameField = textField({
 	label: "labels.name",
@@ -34,7 +34,8 @@ export const newOrganizationSchema = v.object({
 	name: orgNameField,
 });
 
-export const organizationEditFormSchema = v.object({
+export const organizationEditFormSchema = v.pipe(
+	v.object({
 		name: orgNameField,
 		logo: image({ label: "labels.logo", autoValidate: true }),
 		description: textAreaOptional({
@@ -86,13 +87,13 @@ export const organizationEditFormSchema = v.object({
 			}),
 		}),
 		badges: badges({ label: "labels.orgBadges", maxCount: 50 }),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		const seenUserIds = new Set<number>();
 
 		for (const [index, member] of data.members.entries()) {
 			if (seenUserIds.has(member.userId)) {
 				ctx.addIssue({
-					code: v.ZodIssueCode.custom,
 					message: "forms:errors.duplicateOrgMember",
 					path: ["members", index, "userId"],
 				});
@@ -101,7 +102,8 @@ export const organizationEditFormSchema = v.object({
 
 			seenUserIds.add(member.userId);
 		}
-	});
+	}),
+);
 
 export const banUserActionSchema = v.object({
 	_action: stringConstant("BAN_USER"),

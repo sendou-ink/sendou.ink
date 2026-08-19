@@ -1,31 +1,30 @@
 import * as v from "valibot";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { SP } from "~/modules/search-params/search-params";
+import {
+	codec,
+	nullableCodec,
+	SP,
+} from "~/modules/search-params/search-params";
 
-const isoDateCodec = v.codec(v.string(), v.date(), {
-	decode: (value, payload) => {
-		const date = new Date(value);
-		if (Number.isNaN(date.getTime())) {
-			payload.issues.push({
-				code: "custom",
-				message: "Invalid date",
-				input: value,
-			});
-			return v.NEVER;
-		}
-		return date;
-	},
+const isoDateCodec = codec(v.date(), {
+	decode: (value) => new Date(value),
 	encode: (date) => date.toISOString(),
 });
 
 export const tournamentSearchSearchParams = SearchParams.define({
-	q: SP.param(v.pipe(v.string(), v.maxLength(100)), { default: "", loader: true }),
-	limit: SP.param(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(25)), {
-		default: 25,
+	q: SP.param(v.pipe(v.string(), v.maxLength(100)), {
+		default: "",
 		loader: true,
 	}),
-	minStartTime: SP.custom(isoDateCodec.nullable(), { loader: true }),
-	maxStartTime: SP.custom(isoDateCodec.nullable(), { loader: true }),
+	limit: SP.param(
+		v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(25)),
+		{
+			default: 25,
+			loader: true,
+		},
+	),
+	minStartTime: SP.custom(nullableCodec(isoDateCodec), { loader: true }),
+	maxStartTime: SP.custom(nullableCodec(isoDateCodec), { loader: true }),
 });
 
 export const tournamentJoinSearchParams = SearchParams.define({

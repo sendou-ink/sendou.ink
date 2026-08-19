@@ -7,10 +7,10 @@ import * as v from "valibot";
  */
 export function formatEnvErrors(
 	scope: "client" | "server",
-	error: v.ZodError,
+	issues: readonly v.BaseIssue<unknown>[],
 ): Error {
-	const lines = error.issues.map((issue) => {
-		const name = issue.path.join(".") || "(unknown)";
+	const lines = issues.map((issue) => {
+		const name = issue.path?.map((item) => item.key).join(".") || "(unknown)";
 		return `  - ${name}: ${issue.message}`;
 	});
 
@@ -29,8 +29,8 @@ export function formatEnvErrors(
 export function requiredInProd(isProd: boolean, devFallback: string) {
 	return isProd
 		? v.pipe(
-        v.string("required in production"),
-        v.minLength(1, "required in production (cannot be empty)")
-    )
+				v.string("required in production"),
+				v.minLength(1, "required in production (cannot be empty)"),
+			)
 		: v.optional(v.string(), devFallback);
 }

@@ -10,7 +10,7 @@ import { diff } from "~/utils/arrays";
 import { notFoundIfNullish, parseRequestPayload } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
-import { actualNumber } from "~/utils/zod";
+import { actualNumber, preprocess } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
 import { editBadgeActionSchema } from "../badges-schemas";
 
@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		request,
 		schema: editBadgeActionSchema,
 	});
-	const badgeId = v.preprocess(actualNumber, v.number()).parse(params.id);
+	const badgeId = v.parse(preprocess(actualNumber, v.number()), params.id);
 	const badge = notFoundIfNullish(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {

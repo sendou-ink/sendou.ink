@@ -7,11 +7,12 @@ import {
 	weekNumberToDateRange,
 } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
+import { coerceNumber } from "~/utils/zod";
 import type { GetCalendarWeekResponse } from "../schema";
 
 const paramsSchema = v.object({
-	year: v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(2020), v.maxValue(2100)),
-	week: v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(1), v.maxValue(53)),
+	year: v.pipe(coerceNumber(), v.integer(), v.minValue(2020), v.maxValue(2100)),
+	week: v.pipe(coerceNumber(), v.integer(), v.minValue(1), v.maxValue(53)),
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

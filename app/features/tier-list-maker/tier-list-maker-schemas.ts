@@ -19,7 +19,10 @@ export const tierListItemTypeSchema = v.picklist([
 	"stage-mode",
 	"ability",
 ]);
-assertType<z.infer<typeof tierListItemTypeSchema>, TierListItem["type"]>();
+assertType<
+	v.InferOutput<typeof tierListItemTypeSchema>,
+	TierListItem["type"]
+>();
 
 const tierListItemSchema = v.union([
 	v.object({

@@ -18,17 +18,26 @@ export const compAnalyzerSearchParams = SearchParams.define({
 		default: "category",
 		loader: false,
 	}),
-	weapons: SP.param(v.pipe(v.array(numericEnum(mainWeaponIds)), v.maxLength(MAX_WEAPONS)), {
-		default: [],
-		loader: false,
-	}),
+	weapons: SP.param(
+		v.pipe(v.array(numericEnum(mainWeaponIds)), v.maxLength(MAX_WEAPONS)),
+		{
+			default: [],
+			loader: false,
+		},
+	),
 	singleCombos: SP.param(v.boolean(), { default: false, loader: false }),
-	subDef: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(MAX_AP)), {
-		default: 0,
-		loader: false,
-	}),
-	res: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(MAX_AP)), {
-		default: 0,
-		loader: false,
-	}),
+	subDef: SP.param(
+		v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(MAX_AP)),
+		{
+			default: 0,
+			loader: false,
+		},
+	),
+	res: SP.param(
+		v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(MAX_AP)),
+		{
+			default: 0,
+			loader: false,
+		},
+	),
 });

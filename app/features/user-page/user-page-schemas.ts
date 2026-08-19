@@ -37,11 +37,13 @@ import {
 	emptyArrayToNull,
 	headMainSlotAbility,
 	id,
+	preprocess,
 	processMany,
 	removeDuplicates,
 	safeJSONParse,
 	shoesMainSlotAbility,
 	stackableAbility,
+	superRefine,
 } from "~/utils/zod";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
@@ -174,8 +176,12 @@ export const userEditProfileBaseSchema = v.object({
 });
 
 export const editHighlightsActionSchema = v.object({
-	[HIGHLIGHT_CHECKBOX_NAME]: v.optional(v.union([v.array(v.string()), v.string()])),
-	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: v.optional(v.union([v.array(v.string()), v.string()])),
+	[HIGHLIGHT_CHECKBOX_NAME]: v.optional(
+		v.union([v.array(v.string()), v.string()]),
+	),
+	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: v.optional(
+		v.union([v.array(v.string()), v.string()]),
+	),
 });
 
 export const addModNoteSchema = v.object({
@@ -198,7 +204,7 @@ export const adminTabActionSchema = v.union([
 ]);
 
 const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
-	if ("schema" in widget) {
+	if ("schema" in widget && widget.schema) {
 		return v.object({
 			id: v.literal(widget.id),
 			settings: widget.schema,
@@ -212,39 +218,54 @@ const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
 const widgetSettingsSchema = v.union(widgetSettingsSchemas);
 
 export const widgetsEditSchema = v.object({
-	widgets: v.preprocess(
+	widgets: preprocess(
 		safeJSONParse,
 		v.pipe(
-            v.array(widgetSettingsSchema),
-            v.maxLength(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS),
-            v.check((widgets) => {
-                    let mainCount = 0;
-                    let sideCount = 0;
-                    for (const w of widgets) {
-                        const def = findWidgetById(w.id);
-                        if (!def) return false;
-                        if (def.slot === "main") mainCount++;
-                        else sideCount++;
-                    }
-                    return (
-                        mainCount <= USER.MAX_MAIN_WIDGETS &&
-                        sideCount <= USER.MAX_SIDE_WIDGETS
-                    );
-                })
-        ),
+			v.array(widgetSettingsSchema),
+			v.maxLength(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS),
+			v.check((widgets) => {
+				let mainCount = 0;
+				let sideCount = 0;
+				for (const w of widgets) {
+					const def = findWidgetById(w.id);
+					if (!def) return false;
+					if (def.slot === "main") mainCount++;
+					else sideCount++;
+				}
+				return (
+					mainCount <= USER.MAX_MAIN_WIDGETS &&
+					sideCount <= USER.MAX_SIDE_WIDGETS
+				);
+			}),
+		),
 	),
 });
 
-const headGearIdSchema = v.pipe(v.nullable(v.number()), v.check((val) =>
-    val === null || headGearIds.includes(val as (typeof headGearIds)[number])));
+const headGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
+		(val) =>
+			val === null || headGearIds.includes(val as (typeof headGearIds)[number]),
+	),
+);
 
-const clothesGearIdSchema = v.pipe(v.nullable(v.number()), v.check((val) =>
-    val === null ||
-    clothesGearIds.includes(val as (typeof clothesGearIds)[number])));
+const clothesGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
+		(val) =>
+			val === null ||
+			clothesGearIds.includes(val as (typeof clothesGearIds)[number]),
+	),
+);
 
-const shoesGearIdSchema = v.pipe(v.nullable(v.number()), v.check((val) =>
-    val === null ||
-    shoesGearIds.includes(val as (typeof shoesGearIds)[number])));
+const shoesGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
+		(val) =>
+			val === null ||
+			shoesGearIds.includes(val as (typeof shoesGearIds)[number]),
+	),
+);
 
 const abilitiesSchema = v.tuple([
 	v.tuple([
@@ -332,19 +353,23 @@ export const gearAllOrNoneRefine = {
 };
 
 export const newBuildSchema = v.pipe(
-    newBuildBaseSchema,
-    v.check(gearAllOrNoneRefine.fn, gearAllOrNoneRefine.opts)
+	newBuildBaseSchema,
+	superRefine((data, ctx) => {
+		if (gearAllOrNoneRefine.fn(data)) return;
+
+		ctx.addIssue(gearAllOrNoneRefine.opts);
+	}),
 );
 
 export const buildsActionSchema = v.union([
 	v.object({
 		_action: _action("DELETE_BUILD"),
-		buildToDeleteId: v.preprocess(actualNumber, id),
+		buildToDeleteId: preprocess(actualNumber, id),
 	}),
 
 	v.object({
 		_action: _action("UPDATE_SORTING"),
-		buildSorting: v.preprocess(
+		buildSorting: preprocess(
 			processMany(safeJSONParse, removeDuplicates, emptyArrayToNull),
 			v.nullable(v.array(v.picklist(BUILD_SORT_IDENTIFIERS))),
 		),

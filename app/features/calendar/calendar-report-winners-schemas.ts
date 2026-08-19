@@ -6,16 +6,19 @@ import {
 	numberField,
 	textField,
 } from "~/form/fields";
-import { id } from "~/utils/zod";
+import { id, superRefine } from "~/utils/zod";
 import { CALENDAR_EVENT_RESULT } from "./calendar-constants";
 
 const reportedPlayerSchema = v.variant("type", [
-	v.object({ type: v.literal("USER"), id: id.nullable() }),
+	v.object({ type: v.literal("USER"), id: v.nullable(id) }),
 	v.object({
 		type: v.literal("NAME"),
 		name: v.nullable(
-            v.pipe(v.string(), v.maxLength(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH))
-        ),
+			v.pipe(
+				v.string(),
+				v.maxLength(CALENDAR_EVENT_RESULT.MAX_PLAYER_NAME_LENGTH),
+			),
+		),
 	}),
 ]);
 
@@ -26,22 +29,23 @@ export const EMPTY_REPORTED_PLAYER: ReportedPlayer = { type: "USER", id: null };
 type StoredReportedPlayer = { userId: number | null; name: string | null };
 
 const reportedPlayersSchema = v.pipe(
-    v.array(reportedPlayerSchema),
-    v.maxLength(CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH),
-    v.transform((players) =>
-            players.flatMap((player): Array<StoredReportedPlayer> => {
-                if (player.type === "USER") {
-                    return player.id === null ? [] : [{ userId: player.id, name: null }];
-                }
+	v.array(reportedPlayerSchema),
+	v.maxLength(CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH),
+	v.transform((players) =>
+		players.flatMap((player): Array<StoredReportedPlayer> => {
+			if (player.type === "USER") {
+				return player.id === null ? [] : [{ userId: player.id, name: null }];
+			}
 
-                return player.name ? [{ userId: null, name: player.name }] : [];
-            })),
-    v.check((players) => players.length > 0, "forms:errors.emptyTeam"),
-    v.check((players) => {
-        const userIds = players.flatMap((player) => player.userId ?? []);
+			return player.name ? [{ userId: null, name: player.name }] : [];
+		}),
+	),
+	v.check((players) => players.length > 0, "forms:errors.emptyTeam"),
+	v.check((players) => {
+		const userIds = players.flatMap((player) => player.userId ?? []);
 
-        return userIds.length === new Set(userIds).size;
-    }, "forms:errors.duplicatePlayer")
+		return userIds.length === new Set(userIds).size;
+	}, "forms:errors.duplicatePlayer"),
 );
 
 const reportedTeamFieldset = fieldset({
@@ -65,7 +69,8 @@ const reportedTeamFieldset = fieldset({
 	}),
 });
 
-export const reportWinnersFormSchema = v.object({
+export const reportWinnersFormSchema = v.pipe(
+	v.object({
 		participantCount: numberField({
 			label: "labels.participantCount",
 			maxLength: String(CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT).length,
@@ -76,13 +81,13 @@ export const reportWinnersFormSchema = v.object({
 			max: CALENDAR_EVENT_RESULT.MAX_TEAMS_COUNT,
 			field: reportedTeamFieldset,
 		}),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		if (
 			data.participantCount < 1 ||
 			data.participantCount > CALENDAR_EVENT_RESULT.MAX_PARTICIPANTS_COUNT
 		) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.numberOutOfRange",
 				path: ["participantCount"],
 			});
@@ -94,7 +99,6 @@ export const reportWinnersFormSchema = v.object({
 				team.placement > CALENDAR_EVENT_RESULT.MAX_TEAM_PLACEMENT
 			) {
 				ctx.addIssue({
-					code: v.ZodIssueCode.custom,
 					message: "forms:errors.numberOutOfRange",
 					path: ["teams", index, "placement"],
 				});
@@ -104,9 +108,9 @@ export const reportWinnersFormSchema = v.object({
 		const teamNames = data.teams.map((team) => team.teamName);
 		if (teamNames.length !== new Set(teamNames).size) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.uniqueTeamName",
 				path: ["teams"],
 			});
 		}
-	});
+	}),
+);

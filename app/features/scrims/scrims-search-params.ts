@@ -9,7 +9,10 @@ export const scrimsSearchParams = SearchParams.define({
 	divs: SP.custom(divsCodec, { loader: true }),
 	/** False once the user has edited the filters, making the URL win over their saved defaults. */
 	useDefaults: SP.param(v.boolean(), { default: true, loader: true }),
-	pendingRequestPostId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
-		loader: false,
-	}),
+	pendingRequestPostId: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+		{
+			loader: false,
+		},
+	),
 });

@@ -1,9 +1,12 @@
 import * as v from "valibot";
-import { _action, id, safeJSONParse } from "~/utils/zod";
+import { _action, id, preprocess, safeJSONParse } from "~/utils/zod";
 
 const validateManySchema = v.object({
 	_action: _action("VALIDATE"),
-	imageIds: v.preprocess(safeJSONParse, v.pipe(v.array(id), v.minLength(1), v.maxLength(5))),
+	imageIds: preprocess(
+		safeJSONParse,
+		v.pipe(v.array(id), v.minLength(1), v.maxLength(5)),
+	),
 });
 
 const rejectSchema = v.object({

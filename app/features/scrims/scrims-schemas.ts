@@ -18,6 +18,7 @@ import {
 	tournamentSearchOptional,
 } from "~/form/fields";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { codec } from "~/modules/search-params/search-params";
 import {
 	_action,
 	date,
@@ -25,6 +26,8 @@ import {
 	filterOutNullishMembers,
 	id,
 	noDuplicates,
+	preprocess,
+	superRefine,
 	timeString,
 } from "~/utils/zod";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
@@ -36,14 +39,14 @@ const deletePostSchema = v.object({
 	scrimPostId: id,
 });
 
-const fromUsers = v.preprocess(
+const fromUsers = preprocess(
 	filterOutNullishMembers,
 	v.pipe(
-        v.array(id),
-        v.minLength(3, "forms:errors.minUsersExcludingYourself"),
-        v.maxLength(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER),
-        v.check(noDuplicates, "forms:errors.usersMustBeUnique")
-    ),
+		v.array(id),
+		v.minLength(3, "forms:errors.minUsersExcludingYourself"),
+		v.maxLength(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER),
+		v.check((users) => noDuplicates(users), "forms:errors.usersMustBeUnique"),
+	),
 );
 
 export const fromSchema = v.union([
@@ -55,11 +58,16 @@ export const newRequestSchema = v.object({
 	_action: _action("NEW_REQUEST"),
 	scrimPostId: id,
 	from: fromSchema,
-	message: v.preprocess(
-		falsyToNull,
-		v.nullable(v.pipe(v.string(), v.maxLength(SCRIM.REQUEST_MESSAGE_MAX_LENGTH))),
+	message: v.optional(
+		preprocess(
+			falsyToNull,
+			v.nullable(
+				v.pipe(v.string(), v.maxLength(SCRIM.REQUEST_MESSAGE_MAX_LENGTH)),
+			),
+		),
+		null,
 	),
-	at: v.preprocess(date, v.date()).nullish(),
+	at: v.nullish(preprocess(date, v.date())),
 });
 
 const acceptRequestSchema = v.object({
@@ -86,17 +94,20 @@ const timeRangeSchema = v.object({
 	end: timeString,
 });
 
-const divsBaseSchema = v.pipe(v.object({
+const divsBaseSchema = v.pipe(
+	v.object({
 		min: v.nullable(v.picklist(LUTI_DIVS)),
 		max: v.nullable(v.picklist(LUTI_DIVS)),
-	}), v.check((div) => {
-    if (!div) return true;
+	}),
+	v.check((div) => {
+		if (!div) return true;
 
-    if (div.max && !div.min) return false;
-    if (div.min && !div.max) return false;
+		if (div.max && !div.min) return false;
+		if (div.min && !div.max) return false;
 
-    return true;
-}, "forms:errors.divBothOrNeither"));
+		return true;
+	}, "forms:errors.divBothOrNeither"),
+);
 
 export const divsSchema = v.pipe(divsBaseSchema, v.transform(normalizeDivs));
 
@@ -117,12 +128,12 @@ function normalizeDivs<T extends { min: string | null; max: string | null }>(
 }
 
 const scrimsFiltersSchema = v.object({
-	weekdayTimes: v.nullable(timeRangeSchema)(null),
-	weekendTimes: v.nullable(timeRangeSchema)(null),
-	divs: v.nullable(divsSchema)(null),
+	weekdayTimes: v.fallback(v.nullable(timeRangeSchema), null),
+	weekendTimes: v.fallback(v.nullable(timeRangeSchema), null),
+	divs: v.fallback(v.nullable(divsSchema), null),
 });
 
-export const timeRangeCodec = v.codec(v.string(), v.nullable(timeRangeSchema), {
+export const timeRangeCodec = codec(v.nullable(timeRangeSchema), {
 	decode: (encoded) => {
 		if (encoded[5] !== "-") return null;
 
@@ -132,13 +143,14 @@ export const timeRangeCodec = v.codec(v.string(), v.nullable(timeRangeSchema), {
 		timeRange === null ? "" : `${timeRange.start}-${timeRange.end}`,
 });
 
-export const divsCodec = v.codec(v.string(), v.nullable(divsBaseSchema), {
+export const divsCodec = codec(v.nullable(divsBaseSchema), {
 	decode: (encoded) => {
 		const [max, min] = encoded.split("-");
 
-		return normalizeDivs({ max: max ?? null, min: min ?? null }) as v.InferOutput<
-			typeof divsBaseSchema
-		>;
+		return normalizeDivs({
+			max: max ?? null,
+			min: min ?? null,
+		});
 	},
 	encode: (divs) => (divs === null ? "" : `${divs.max}-${divs.min}`),
 });
@@ -176,7 +188,8 @@ export const scrimsActionSchema = v.union([
 	persistScrimFiltersSchema,
 ]);
 
-export const submitMapListFormSchema = v.object({
+export const submitMapListFormSchema = v.pipe(
+	v.object({
 		_action: stringConstant("SUBMIT_MAP_LIST"),
 		source: radioGroupDynamic({
 			label: "labels.scrimMapSource",
@@ -193,29 +206,28 @@ export const submitMapListFormSchema = v.object({
 		tournamentId: tournamentSearchOptional({
 			label: "labels.scrimMapsTournament",
 		}),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		if (!["POOL", "TOURNAMENT", "FROM_POST"].includes(data.source)) {
 			ctx.addIssue({
 				path: ["source"],
 				message: "forms:errors.required",
-				code: v.ZodIssueCode.custom,
 			});
 		}
 		if (data.source === "POOL" && !data.serializedPool) {
 			ctx.addIssue({
 				path: ["serializedPool"],
 				message: "forms:errors.invalidMapPool",
-				code: v.ZodIssueCode.custom,
 			});
 		}
 		if (data.source === "TOURNAMENT" && !data.tournamentId) {
 			ctx.addIssue({
 				path: ["tournamentId"],
 				message: "forms:errors.scrimTournamentRequired",
-				code: v.ZodIssueCode.custom,
 			});
 		}
-	});
+	}),
+);
 
 const removeMapListSchema = v.object({
 	_action: _action("REMOVE_MAP_LIST"),
@@ -300,7 +312,8 @@ const mapsItems = [
 	{ label: "options.scrimMaps.tournament" as const, value: "TOURNAMENT" },
 ] as const;
 
-export const scrimsNewFormSchema = v.object({
+export const scrimsNewFormSchema = v.pipe(
+	v.object({
 		at: datetime({
 			label: "labels.start",
 			bottomText: "bottomTexts.scrimStart",
@@ -321,16 +334,14 @@ export const scrimsNewFormSchema = v.object({
 		notFoundVisibility: customField(
 			{ initialValue: { at: null, forAssociation: "PUBLIC" } },
 			v.object({
-				at: v.preprocess(date, v.date())
-					.nullish()
-					.refine(
-						(date) => {
-							if (!date) return true;
-							if (date < sub(new Date(), { days: 1 })) return false;
-							return true;
-						},
-						{ message: "errors.dateInPast" },
-					),
+				at: v.pipe(
+					v.nullish(preprocess(date, v.date())),
+					v.check((date) => {
+						if (!date) return true;
+						if (date < sub(new Date(), { days: 1 })) return false;
+						return true;
+					}, "errors.dateInPast"),
+				),
 				forAssociation: associationIdentifierSchema,
 			}),
 		),
@@ -351,17 +362,19 @@ export const scrimsNewFormSchema = v.object({
 		mapsTournamentId: tournamentSearchOptional({
 			label: "labels.scrimMapsTournament",
 		}),
-	})((post) =>
+	}),
+	// a tournament pick is only meaningful when maps come from a tournament, so
+	// drop any stale selection instead of erroring on a field that is not rendered
+	v.transform((post) =>
 		post.maps !== "TOURNAMENT" && post.mapsTournamentId
 			? { ...post, mapsTournamentId: null }
 			: post,
-	)
-	.superRefine((post, ctx) => {
+	),
+	superRefine((post, ctx) => {
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
 				message: "forms:errors.tournamentMustBeSelected",
-				code: v.ZodIssueCode.custom,
 			});
 		}
 
@@ -372,7 +385,6 @@ export const scrimsNewFormSchema = v.object({
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.visibilityMustBeDifferent",
-				code: v.ZodIssueCode.custom,
 			});
 		}
 
@@ -380,7 +392,6 @@ export const scrimsNewFormSchema = v.object({
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.visibilityNotAllowedWhenPublic",
-				code: v.ZodIssueCode.custom,
 			});
 		}
 
@@ -388,7 +399,6 @@ export const scrimsNewFormSchema = v.object({
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.dateAfterScrimDate",
-				code: v.ZodIssueCode.custom,
 			});
 		}
 
@@ -396,7 +406,7 @@ export const scrimsNewFormSchema = v.object({
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.canNotSetIfLookingNow",
-				code: v.ZodIssueCode.custom,
 			});
 		}
-	});
+	}),
+);

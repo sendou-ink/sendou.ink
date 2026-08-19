@@ -1,6 +1,6 @@
 import { add } from "date-fns";
 import { type ActionFunctionArgs, redirect } from "react-router";
-import * as v from "valibot";
+import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";

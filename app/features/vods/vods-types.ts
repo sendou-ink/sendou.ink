@@ -1,4 +1,4 @@
-import * as v from "valibot";
+import type * as v from "valibot";
 import type { Tables } from "~/db/tables";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { videoSchema } from "./vods-schemas";

@@ -1,4 +1,5 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
@@ -9,7 +10,7 @@ import { userParamsSchema } from "../user-page-schemas";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const user = requireUser();
-	const { identifier } = userParamsSchema.parse(params);
+	const { identifier } = v.parse(userParamsSchema, params);
 	const userToBeEdited = notFoundIfNullish(
 		await UserRepository.findLayoutDataByIdentifier(identifier),
 	);

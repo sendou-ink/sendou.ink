@@ -17,9 +17,13 @@ export const artSearchParams = SearchParams.define({
 });
 
 export const artGridSearchParams = SearchParams.define({
-	big: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: false }),
+	big: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: false,
+	}),
 });
 
 export const artNewSearchParams = SearchParams.define({
-	art: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
+	art: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: true,
+	}),
 });

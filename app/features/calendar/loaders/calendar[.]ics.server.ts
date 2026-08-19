@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import * as v from "valibot";
 import { safeJSONParse } from "~/utils/zod";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarFiltersSearchParamsSchema } from "../calendar-schemas";
@@ -48,10 +49,11 @@ function resolveFilters(request: Request) {
 	// biome-ignore lint/plugin: legacy param no current route produces
 	const legacyFilters = new URL(request.url).searchParams.get("filters");
 	if (legacyFilters !== null) {
-		const parsed = calendarFiltersSearchParamsSchema.safeParse(
+		const parsed = v.safeParse(
+			calendarFiltersSearchParamsSchema,
 			safeJSONParse(legacyFilters),
 		);
-		if (parsed.success) return parsed.data;
+		if (parsed.success) return parsed.output;
 	}
 
 	return R.pick(calendarSearchParams.parse(request), [

@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import { TOURNAMENT_STAFF_ROLES } from "~/features/tournament/tournament-constants";
 import { array, fieldset, select, textField, userSearch } from "~/form/fields";
+import { superRefine } from "~/utils/zod";
 
 export const adminStreamFormSchema = v.object({
 	castTwitchAccounts: array({
@@ -14,7 +15,8 @@ export const adminStreamFormSchema = v.object({
 	}),
 });
 
-export const adminStaffFormSchema = v.object({
+export const adminStaffFormSchema = v.pipe(
+	v.object({
 		staff: array({
 			bottomText: "bottomTexts.staffRolesInfo",
 			max: 50,
@@ -31,13 +33,14 @@ export const adminStaffFormSchema = v.object({
 				}),
 			}),
 		}),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		const userIds = data.staff.map((staffer) => staffer.userId);
 		if (userIds.length !== new Set(userIds).size) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.usersMustBeUnique",
 				path: ["staff"],
 			});
 		}
-	});
+	}),
+);

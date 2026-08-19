@@ -4,7 +4,7 @@ import {
 	undoWeaponReportSchema,
 } from "~/components/match-page/match-page-schemas";
 import { checkboxGroupDynamic, stringConstant, textArea } from "~/form/fields";
-import { _action, id } from "~/utils/zod";
+import { _action, coerceNumber, id, preprocess } from "~/utils/zod";
 import { SENDOUQ } from "../sendouq/q-constants";
 
 const cancelNominatedUserIdsField = checkboxGroupDynamic({
@@ -34,7 +34,7 @@ export const matchSchema = v.union([
 	v.object({
 		_action: _action("REPORT_SCORE"),
 		winnerId: id,
-		reportedCount: v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0)),
+		reportedCount: v.pipe(coerceNumber(), v.integer(), v.minValue(0)),
 	}),
 	v.object({
 		_action: _action("LOOK_AGAIN"),
@@ -42,7 +42,7 @@ export const matchSchema = v.union([
 	}),
 	v.object({
 		_action: _action("CAST_CONTINUE_VOTE"),
-		isContinuing: v.preprocess(
+		isContinuing: preprocess(
 			(value) =>
 				value === "1" || value === "true"
 					? true
@@ -58,7 +58,7 @@ export const matchSchema = v.union([
 	}),
 	v.object({
 		_action: _action("UNDO_MAP_REPORT"),
-		mapIndex: v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0)),
+		mapIndex: v.pipe(coerceNumber(), v.integer(), v.minValue(0)),
 	}),
 	undoWeaponReportSchema,
 	requestCancelSchema,

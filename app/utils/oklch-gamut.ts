@@ -1,4 +1,4 @@
-import * as v from "valibot";
+import type * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
 import type { themeInputSchema } from "~/utils/zod";
 

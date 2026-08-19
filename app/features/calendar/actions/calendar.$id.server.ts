@@ -8,10 +8,13 @@ import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tou
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
-import { actualNumber, id } from "~/utils/zod";
+import { actualNumber, id, preprocess } from "~/utils/zod";
 
 export const action: ActionFunction = async ({ params }) => {
-	const parsedParams = v.parse(v.object({ id: v.preprocess(actualNumber, id) }), params);
+	const parsedParams = v.parse(
+		v.object({ id: preprocess(actualNumber, id) }),
+		params,
+	);
 	const event = notFoundIfNullish(
 		await CalendarRepository.findById(parsedParams.id),
 	);

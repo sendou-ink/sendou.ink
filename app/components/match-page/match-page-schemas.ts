@@ -1,7 +1,7 @@
 import * as v from "valibot";
-import { _action, weaponSplId } from "~/utils/zod";
+import { _action, coerceNumber, weaponSplId } from "~/utils/zod";
 
-const reportedMapIndex = v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0));
+const reportedMapIndex = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
 
 export const reportWeaponSchema = v.object({
 	_action: _action("REPORT_WEAPON"),

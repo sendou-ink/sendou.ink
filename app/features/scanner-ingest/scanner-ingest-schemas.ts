@@ -11,10 +11,10 @@ const MAX_MATCHES_PER_REQUEST = 50;
  */
 export const ingestBodySchema = v.object({
 	matches: v.pipe(
-        v.array(scannerMatchSchema),
-        v.minLength(1),
-        v.maxLength(MAX_MATCHES_PER_REQUEST)
-    ),
+		v.array(scannerMatchSchema),
+		v.minLength(1),
+		v.maxLength(MAX_MATCHES_PER_REQUEST),
+	),
 });
 
 /** The sendou.ink match an ingested match's scoreboard was linked to. */

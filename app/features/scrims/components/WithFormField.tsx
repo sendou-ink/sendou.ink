@@ -2,7 +2,7 @@ import * as React from "react";
 import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
-import * as v from "valibot";
+import type * as v from "valibot";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";

@@ -1,15 +1,27 @@
 import * as v from "valibot";
-import { _action, id, noDuplicates, safeJSONParse } from "~/utils/zod";
+import {
+	_action,
+	id,
+	noDuplicates,
+	preprocess,
+	safeJSONParse,
+} from "~/utils/zod";
 import { BADGE } from "./badges-constants";
 
 export const editBadgeActionSchema = v.union([
 	v.object({
 		_action: _action("MANAGERS"),
-		managerIds: v.preprocess(safeJSONParse, v.pipe(v.array(id), v.check(noDuplicates))),
+		managerIds: preprocess(
+			safeJSONParse,
+			v.pipe(
+				v.array(id),
+				v.check((managerIds) => noDuplicates(managerIds)),
+			),
+		),
 	}),
 	v.object({
 		_action: _action("OWNERS"),
-		ownerIds: v.preprocess(
+		ownerIds: preprocess(
 			safeJSONParse,
 			v.pipe(v.array(id), v.maxLength(BADGE.OWNERS_MAX_LENGTH)),
 		),

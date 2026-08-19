@@ -1,4 +1,5 @@
 import { cachified } from "@epic-web/cachified";
+import * as v from "valibot";
 import { cache } from "~/utils/cache.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
@@ -138,10 +139,10 @@ async function getStreamsChunk(cursor?: string): Promise<StreamsResponse> {
 		}`,
 	);
 
-	const parsed = streamsSchema.safeParse(await res.json());
+	const parsed = v.safeParse(streamsSchema, await res.json());
 	if (!parsed.success) {
-		throw new Error(parsed.error.message);
+		throw new Error(v.summarize(parsed.issues));
 	}
 
-	return parsed.data;
+	return parsed.output;
 }

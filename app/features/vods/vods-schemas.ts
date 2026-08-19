@@ -20,6 +20,7 @@ import {
 	id,
 	modeShort,
 	nonEmptyString,
+	preprocess,
 	stageId,
 	weaponSplId,
 } from "~/utils/zod";
@@ -31,48 +32,58 @@ export const HOURS_MINUTES_SECONDS_REGEX = /^(\d{1,2}:)?\d{1,2}:\d{2}$/;
 
 const videoMatchSchema = v.object({
 	startsAt: v.pipe(
-        v.string(),
-        v.regex(HOURS_MINUTES_SECONDS_REGEX, "Invalid time format. Use HH:MM:SS or MM:SS")
-    ),
+		v.string(),
+		v.regex(
+			HOURS_MINUTES_SECONDS_REGEX,
+			"Invalid time format. Use HH:MM:SS or MM:SS",
+		),
+	),
 	stageId: stageId,
 	mode: modeShort,
 	weapons: v.array(weaponSplId),
 });
 
-export const videoSchema = v.preprocess(
+export const videoSchema = preprocess(
 	(val: any) => (val.type === "CAST" ? { ...val, pov: undefined } : val),
-	v.pipe(v.object({
+	v.pipe(
+		v.object({
 			type: v.picklist(videoMatchTypes),
 			eventId: v.optional(v.number()),
-			youtubeUrl: v.pipe(v.string(), v.check((val) => {
-                const id = extractYoutubeIdFromVideoUrl(val);
+			youtubeUrl: v.pipe(
+				v.string(),
+				v.check((val) => {
+					const id = extractYoutubeIdFromVideoUrl(val);
 
-                return id !== null;
-            }, "Invalid YouTube URL")),
-			title: nonEmptyString.max(100),
-			date: dayMonthYear.refine(
-				(data) => {
+					return id !== null;
+				}, "Invalid YouTube URL"),
+			),
+			title: v.pipe(nonEmptyString, v.maxLength(100)),
+			date: v.pipe(
+				dayMonthYear,
+				v.check((data) => {
 					const date = dayMonthYearToDate(data);
 
 					return date < add(new Date(), { days: 1 });
-				},
-				{
-					message: "Date must not be in the future",
-				},
+				}, "Date must not be in the future"),
 			),
-			pov: v.optional(v.union([
+			pov: v.optional(
+				v.union([
 					v.object({
 						type: v.literal("USER"),
 						userId: id,
 					}),
 					v.object({
 						type: v.literal("NAME"),
-						name: nonEmptyString.max(100),
+						name: v.pipe(nonEmptyString, v.maxLength(100)),
 					}),
-				])),
-			teamSize: v.optional(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(4))),
+				]),
+			),
+			teamSize: v.optional(
+				v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(4)),
+			),
 			matches: v.array(videoMatchSchema),
-		}), v.check((data) => {
+		}),
+		v.check((data) => {
 			if (data.type === "CAST") {
 				const teamSize = data.teamSize ?? 4;
 				return data.matches.every(
@@ -81,17 +92,18 @@ export const videoSchema = v.preprocess(
 			}
 
 			return data.matches.every((match) => match.weapons.length === 1);
-		})),
+		}),
+	),
 );
 
 const povSchema = v.union([
 	v.object({
 		type: v.literal("USER"),
-		userId: id.optional(),
+		userId: v.optional(id),
 	}),
 	v.object({
 		type: v.literal("NAME"),
-		name: nonEmptyString.max(100),
+		name: v.pipe(nonEmptyString, v.maxLength(100)),
 	}),
 ]);
 

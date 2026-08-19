@@ -1,6 +1,6 @@
 import type { ShouldRevalidateFunction } from "react-router";
-import { describe, expect, test } from "vitest";
 import * as v from "valibot";
+import { describe, expect, test } from "vitest";
 import * as SearchParams from "./search-params";
 import { SP } from "./search-params";
 import {
@@ -9,17 +9,25 @@ import {
 } from "./search-params-test-utils";
 
 const testDefinition = SearchParams.define({
-	limit: SP.param(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)), {
-		default: 24,
+	limit: SP.param(
+		v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
+		{
+			default: 24,
+			loader: true,
+		},
+	),
+	name: SP.param(v.pipe(v.string(), v.maxLength(20)), {
+		default: "",
 		loader: true,
 	}),
-	name: SP.param(v.pipe(v.string(), v.maxLength(20)), { default: "", loader: true }),
 	enabled: SP.param(v.boolean(), { default: false, loader: false }),
 	mode: SP.param(v.picklist(["TW", "SZ", "TC"]), {
 		default: "TW",
 		loader: true,
 	}),
-	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), { loader: true }),
+	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
+		loader: true,
+	}),
 	ids: SP.param(v.array(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
 		default: [],
 		loader: false,
@@ -149,10 +157,16 @@ describe("SearchParams.define", () => {
 			}),
 		).toThrow(/derive/);
 		expect(() =>
-			SP.param(v.pipe(v.string(), v.transform((s) => s.length)) as any, {
-				default: 0,
-				loader: true,
-			}),
+			SP.param(
+				v.pipe(
+					v.string(),
+					v.transform((s) => s.length),
+				) as any,
+				{
+					default: 0,
+					loader: true,
+				},
+			),
 		).toThrow(/derive/);
 		expect(() =>
 			SP.param(v.array(v.array(v.number())) as any, {
@@ -163,7 +177,9 @@ describe("SearchParams.define", () => {
 	});
 
 	test("defaults .nullable() params to null without declaring it", () => {
-		const omitted = SP.param(v.nullable(v.pipe(v.number(), v.integer())), { loader: true });
+		const omitted = SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
+			loader: true,
+		});
 		const declared = SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
 			default: null,
 			loader: true,
@@ -185,24 +201,19 @@ describe("SearchParams.define", () => {
 		).toThrow(/null as its default/);
 	});
 
-	test("supports SP.custom codecs with total decode via issues", () => {
-		const isoDate = v.codec(v.string(), v.date(), {
-			decode: (value, payload) => {
+	test("supports SP.custom codecs with total decode", () => {
+		const isoDate = SearchParams.codec(v.date(), {
+			decode: (value) => {
 				const date = new Date(value);
-				if (Number.isNaN(date.getTime())) {
-					payload.issues.push({
-						code: "custom",
-						message: "invalid date",
-						input: value,
-					});
-					return v.NEVER;
-				}
-				return date;
+				return Number.isNaN(date.getTime()) ? undefined : date;
 			},
 			encode: (date) => date.toISOString(),
 		});
 		const customDefinition = SearchParams.define({
-			from: SP.custom(isoDate.nullable(), { default: null, loader: true }),
+			from: SP.custom(SearchParams.nullableCodec(isoDate), {
+				default: null,
+				loader: true,
+			}),
 		});
 
 		const value = new Date("2024-05-01T12:00:00.000Z");

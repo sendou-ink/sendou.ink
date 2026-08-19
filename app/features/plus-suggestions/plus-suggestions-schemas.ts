@@ -6,7 +6,7 @@ import {
 	textArea,
 	userSearch,
 } from "~/form/fields";
-import { _action, actualNumber } from "~/utils/zod";
+import { _action, actualNumber, preprocess } from "~/utils/zod";
 import { PLUS_TIERS } from "./plus-suggestions-constants";
 
 export const followUpCommentFormSchema = v.object({
@@ -39,17 +39,17 @@ export const suggestionActionSchema = v.union([
 	editSuggestionFormSchema,
 	v.object({
 		_action: _action("DELETE_COMMENT"),
-		suggestionId: v.preprocess(actualNumber, v.number()),
+		suggestionId: preprocess(actualNumber, v.number()),
 	}),
 	v.object({
 		_action: _action("DELETE_SUGGESTION_OF_THEMSELVES"),
-		tier: v.preprocess(
+		tier: preprocess(
 			actualNumber,
 			v.pipe(
-                v.number(),
-                v.minValue(Math.min(...PLUS_TIERS)),
-                v.maxValue(Math.max(...PLUS_TIERS))
-            ),
+				v.number(),
+				v.minValue(Math.min(...PLUS_TIERS)),
+				v.maxValue(Math.max(...PLUS_TIERS)),
+			),
 		),
 	}),
 ]);

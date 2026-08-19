@@ -7,10 +7,11 @@ import {
 	selectDynamicOptional,
 	textArea,
 } from "~/form/fields";
-import { _action, id } from "~/utils/zod";
+import { _action, id, superRefine } from "~/utils/zod";
 import { LFG, TIMEZONES } from "./lfg-constants";
 
-export const lfgNewSchema = v.pipe(v.object({
+export const lfgNewSchema = v.pipe(
+	v.object({
 		postId: idConstantOptional(),
 		type: selectDynamic({ label: "labels.type" }),
 		timezone: selectDynamic({ label: "labels.timezone" }),
@@ -25,13 +26,23 @@ export const lfgNewSchema = v.pipe(v.object({
 			label: "labels.languages",
 			items: LANGUAGE_OPTIONS,
 		}),
-	}), v.check((data) => LFG.types.includes(data.type as (typeof LFG.types)[number]), {
-    message: "Invalid LFG type",
-    path: ["type"],
-}), v.check((data) => TIMEZONES.includes(data.timezone), {
-		message: "Invalid timezone",
-		path: ["timezone"],
-	}));
+	}),
+	superRefine((data, ctx) => {
+		if (!LFG.types.includes(data.type as (typeof LFG.types)[number])) {
+			ctx.addIssue({
+				message: "Invalid LFG type",
+				path: ["type"],
+			});
+		}
+
+		if (!TIMEZONES.includes(data.timezone)) {
+			ctx.addIssue({
+				message: "Invalid timezone",
+				path: ["timezone"],
+			});
+		}
+	}),
+);
 
 export const lfgActionSchema = v.union([
 	v.object({

@@ -1,7 +1,8 @@
-import * as v from "valibot";
+import type * as v from "valibot";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
+import type { AnySyncSchema } from "~/utils/zod";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
 
@@ -127,7 +128,7 @@ interface FormFieldImage<T extends string> extends FormFieldBase<T> {
 	autoValidate?: boolean;
 }
 
-export interface FormFieldArray<T extends string, S extends v.ZodType>
+export interface FormFieldArray<T extends string, S extends AnySyncSchema>
 	extends FormFieldBase<T> {
 	min?: number;
 	max: number;
@@ -143,9 +144,9 @@ interface FormFieldTimeRange<T extends string> extends FormFieldBase<T> {
 	endLabel?: string;
 }
 
-export interface FormFieldFieldset<T extends string, S extends v.ZodRawShape>
+export interface FormFieldFieldset<T extends string, S extends v.ObjectEntries>
 	extends FormFieldBase<T> {
-	fields: v.ZodObject<S>;
+	fields: v.ObjectSchema<S, undefined>;
 }
 
 interface FormFieldUserSearch<T extends string> extends FormFieldBase<T> {
@@ -204,9 +205,9 @@ export type FormField<V extends string = string> =
 	| FormFieldWeaponPool<"weapon-pool">
 	| FormFieldImage<"image">
 	| FormFieldHidden<"hidden">
-	| FormFieldArray<"array", v.ZodType>
+	| FormFieldArray<"array", AnySyncSchema>
 	| FormFieldTimeRange<"time-range">
-	| FormFieldFieldset<"fieldset", v.ZodRawShape>
+	| FormFieldFieldset<"fieldset", v.ObjectEntries>
 	| FormFieldUserSearch<"user-search">
 	| FormFieldTournamentSearch<"tournament-search">
 	| FormFieldTeamSearch<"team-search">
@@ -252,7 +253,7 @@ export type SelectOption = {
 	label: string;
 };
 
-/** Brand type to encode required options directly in Zod schema types */
+/** Brand type to encode required options directly in schema types */
 export type FieldWithOptions<TOptions> = { _requiredOptions: TOptions };
 
 /**
@@ -279,7 +280,7 @@ type FormFieldChildrenProps = {
 
 /** Props for a typed FormField based on field name and schema */
 export type TypedFormFieldProps<
-	TSchema extends v.ZodRawShape,
+	TSchema extends v.ObjectEntries,
 	TName extends keyof TSchema & string,
 > = {
 	name: TName;
@@ -317,7 +318,7 @@ export type FlexibleFormFieldProps = {
 };
 
 /** Typed FormField component type for a specific schema */
-export type TypedFormFieldComponent<TSchema extends v.ZodRawShape> = {
+export type TypedFormFieldComponent<TSchema extends v.ObjectEntries> = {
 	<TName extends keyof TSchema & string>(
 		props: TypedFormFieldProps<TSchema, TName>,
 	): React.ReactNode;
@@ -360,3 +361,12 @@ export type TournamentSearchFieldOptions = {
 	/** Exposes the resolved tournament on selection — the stored form value is only the tournament id. */
 	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };
+
+/**
+ * Object schema of a whole form or a fieldset, whether plain or wrapped in a
+ * pipe (e.g. a cross-field `superRefine`). Value types are inferred from
+ * `entries`, which such a pipe leaves untouched.
+ */
+export type FormObjectSchema<
+	TEntries extends v.ObjectEntries = v.ObjectEntries,
+> = AnySyncSchema & { readonly entries: TEntries };

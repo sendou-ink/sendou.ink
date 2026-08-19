@@ -16,7 +16,12 @@ import {
 	toggle,
 } from "~/form/fields";
 import { mySlugify } from "~/utils/urls";
-import { _action, themeInputSchema } from "~/utils/zod";
+import {
+	_action,
+	preprocess,
+	superRefine,
+	themeInputSchema,
+} from "~/utils/zod";
 import {
 	CUSTOM_ROLE_MAX_LENGTH,
 	TEAM,
@@ -83,9 +88,9 @@ export const editTeamFormSchema = v.object({
 
 export const updateTeamCustomThemeSchema = v.object({
 	_action: _action("UPDATE_CUSTOM_THEME"),
-	newValue: v.preprocess(
+	newValue: preprocess(
 		(val) => (!val || val === "null" ? null : val),
-		themeInputSchema.nullable(),
+		v.nullable(themeInputSchema),
 	),
 });
 
@@ -112,7 +117,8 @@ export const editTeamActionSchema = v.union([
 /** Sentinel `role` value selected to switch a member to a free-text custom role. Never stored. */
 export const CUSTOM_ROLE_VALUE = "CUSTOM";
 
-export const updateRosterSchema = v.object({
+export const updateRosterSchema = v.pipe(
+	v.object({
 		_action: stringConstant("UPDATE_ROSTER"),
 		members: array({
 			max: TEAM.MAX_MEMBER_COUNT,
@@ -149,16 +155,17 @@ export const updateRosterSchema = v.object({
 				}),
 			}),
 		}),
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		for (const [index, member] of data.members.entries()) {
 			const isCustom = member.role === CUSTOM_ROLE_VALUE;
 
 			if (isCustom && !member.customRole) {
 				ctx.addIssue({
-					code: v.ZodIssueCode.custom,
 					path: ["members", index, "customRole"],
 					message: "forms:errors.customRoleRequired",
 				});
 			}
 		}
-	});
+	}),
+);

@@ -5,10 +5,12 @@ import {
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
+import { superRefineAsync } from "~/utils/zod";
 import { newSuggestionFormSchema } from "./plus-suggestions-schemas";
 
-export const newSuggestionFormSchemaServer =
-	newSuggestionFormSchema.superRefine(async (data, ctx) => {
+export const newSuggestionFormSchemaServer = v.pipeAsync(
+	newSuggestionFormSchema,
+	superRefineAsync(async (data, ctx) => {
 		const suggested = await UserRepository.findLeanById(data.userId);
 		if (!suggested) return;
 
@@ -16,7 +18,6 @@ export const newSuggestionFormSchemaServer =
 
 		if (suggested.plusTier && suggested.plusTier <= targetPlusTier) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.plusAlreadyMember",
 				path: ["userId"],
 			});
@@ -35,9 +36,9 @@ export const newSuggestionFormSchemaServer =
 		);
 		if (alreadySuggested) {
 			ctx.addIssue({
-				code: v.ZodIssueCode.custom,
 				message: "forms:errors.plusAlreadySuggested",
 				path: ["userId"],
 			});
 		}
-	});
+	}),
+);

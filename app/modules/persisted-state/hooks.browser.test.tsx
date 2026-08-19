@@ -1,6 +1,6 @@
+import * as v from "valibot";
 import { afterEach, describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import * as v from "valibot";
 import { usePersistedMapState, usePersistedState } from "./hooks";
 import * as PersistedState from "./persisted-state";
 

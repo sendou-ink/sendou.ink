@@ -307,8 +307,8 @@ function TimeRangePopover({
 		}
 
 		if (
-			timeString.safeParse(timeRange.start).success &&
-			timeString.safeParse(timeRange.end).success
+			v.safeParse(timeString, timeRange.start).success &&
+			v.safeParse(timeString, timeRange.end).success
 		) {
 			onChange(timeRange);
 		}

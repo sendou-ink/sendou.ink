@@ -1,4 +1,5 @@
-import * as v from "valibot";
+import type * as v from "valibot";
+import type { AnySchema } from "~/utils/zod";
 import type { allWidgetsFlat } from "./portfolio";
 import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 
@@ -7,7 +8,7 @@ type WidgetUnion = ReturnType<typeof allWidgetsFlat>[number];
 export type WidgetId = WidgetUnion["id"];
 
 type ExtractSchema<W> = W extends { schema: infer S }
-	? S extends v.ZodTypeAny
+	? S extends AnySchema
 		? S
 		: never
 	: never;

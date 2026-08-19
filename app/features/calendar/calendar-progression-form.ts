@@ -15,8 +15,14 @@ import {
 	toggle,
 } from "~/form/fields";
 import { assertUnreachable } from "~/utils/types";
+import { superRefine } from "~/utils/zod";
 
 const SWISS_DEFAULT_ADVANCE_THRESHOLD = 3;
+
+/** Issue collector the cross-field validators report to (see `superRefine`). */
+export interface ValidationCtx {
+	addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
+}
 
 export interface BracketFormValue {
 	name: string;
@@ -164,12 +170,15 @@ export const progressionFormField = array({
 });
 
 /** Standalone schema for forms that edit only the bracket progression (tournament admin page). */
-export const bracketProgressionFormSchema = v.object({
+export const bracketProgressionFormSchema = v.pipe(
+	v.object({
 		brackets: bracketsFormField,
 		progression: progressionFormField,
-	})((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		validateBracketProgressionFormValues(data.brackets, data.progression, ctx);
-	});
+	}),
+);
 
 /** Form field values of a new tournament's single starting bracket. Used to seed form default values. */
 export function defaultBracketsFormValues(): {
@@ -304,7 +313,7 @@ export function sourceBracketHasEarlyAdvance(
 export function validateBracketProgressionFormValues(
 	brackets: BracketFormValue[],
 	progression: ProgressionFormValue[],
-	ctx: v.RefinementCtx,
+	ctx: ValidationCtx,
 ) {
 	for (const [entryIdx, entry] of progression.entries()) {
 		if (entryIdx === 0 || entry.source !== "BRACKET") continue;
@@ -319,7 +328,6 @@ export function validateBracketProgressionFormValues(
 				sourceIdx === entryIdx
 			) {
 				ctx.addIssue({
-					code: v.ZodIssueCode.custom,
 					message: "forms:errors.invalidSourceBracket",
 					path: [
 						"progression",
@@ -341,7 +349,6 @@ export function validateBracketProgressionFormValues(
 
 	for (const path of progressionErrorPaths(validated)) {
 		ctx.addIssue({
-			code: v.ZodIssueCode.custom,
 			message:
 				validated.type === "PLACEMENT_TOO_HIGH"
 					? "forms:errors.placementTooHigh"

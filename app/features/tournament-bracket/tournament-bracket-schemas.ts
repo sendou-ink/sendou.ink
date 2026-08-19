@@ -10,10 +10,12 @@ import {
 import {
 	_action,
 	checkboxValueToBoolean,
+	coerceNumber,
 	id,
 	modeShort,
 	nullLiteraltoNull,
 	numericEnum,
+	preprocess,
 	safeJSONParse,
 	stageId,
 } from "~/utils/zod";
@@ -21,24 +23,25 @@ import { TOURNAMENT } from "../tournament/tournament-constants";
 import * as PickBan from "./core/PickBan";
 import * as PreparedMaps from "./core/PreparedMaps";
 
-const activeRosterPlayerIds = v.preprocess(safeJSONParse, v.array(id));
+const activeRosterPlayerIds = preprocess(safeJSONParse, v.array(id));
 
-const bothTeamPlayerIds = v.preprocess(
+const bothTeamPlayerIds = preprocess(
 	safeJSONParse,
 	v.tuple([v.array(id), v.array(id)]),
 );
 
-const reportedMatchPosition = v.preprocess(
+const reportedMatchPosition = preprocess(
 	Number,
 	v.pipe(
-        v.number(),
-        v.integer(),
-        v.minValue(0),
-        v.maxValue(Math.max(...TOURNAMENT.AVAILABLE_BEST_OF) - 1)
-    ),
+		v.number(),
+		v.integer(),
+		v.minValue(0),
+		v.maxValue(Math.max(...TOURNAMENT.AVAILABLE_BEST_OF) - 1),
+	),
 );
 
-const ko = v.preprocess(safeJSONParse, v.optional(v.nullable(v.boolean())));
+const ko = v.optional(preprocess(safeJSONParse, v.nullish(v.boolean())));
+
 export const matchSchema = v.union([
 	v.object({
 		_action: _action("REPORT_SCORE"),
@@ -53,8 +56,8 @@ export const matchSchema = v.union([
 	}),
 	v.object({
 		_action: _action("BAN_PICK"),
-		stageId: stageId.optional(),
-		mode: modeShort.optional(),
+		stageId: v.optional(stageId),
+		mode: v.optional(modeShort),
 	}),
 	v.object({
 		_action: _action("UNDO_REPORT_SCORE"),
@@ -71,7 +74,7 @@ export const matchSchema = v.union([
 	}),
 	v.object({
 		_action: _action("SET_AS_CASTED"),
-		twitchAccount: v.preprocess(
+		twitchAccount: preprocess(
 			nullLiteraltoNull,
 			v.nullable(v.pipe(v.string(), v.minLength(1), v.maxLength(100))),
 		),
@@ -85,31 +88,46 @@ export const matchSchema = v.union([
 	}),
 	v.object({
 		_action: _action("END_SET"),
-		winnerTeamId: v.preprocess(nullLiteraltoNull, id.nullable()),
+		winnerTeamId: preprocess(nullLiteraltoNull, v.nullable(id)),
 	}),
 	reportWeaponSchema,
 	undoWeaponReportSchema,
 ]);
 
-export const bracketIdx = v.pipe(v.unknown(), v.toNumber(), v.integer(), v.minValue(0), v.maxValue(100));
+export const bracketIdx = v.pipe(
+	coerceNumber(),
+	v.integer(),
+	v.minValue(0),
+	v.maxValue(100),
+);
 
 const customPickBanStep = v.object({
 	action: v.picklist(ACTION_TYPES),
 	side: v.optional(v.picklist(WHO_SIDES)),
 });
 
-const customPickBanFlow = v.optional(v.nullable(v.object({
-		preSet: v.array(customPickBanStep),
-		postGame: v.array(customPickBanStep),
-	})));
+const customPickBanFlow = v.optional(
+	v.nullable(
+		v.object({
+			preSet: v.array(customPickBanStep),
+			postGame: v.array(customPickBanStep),
+		}),
+	),
+);
 
 const tournamentRoundMaps = v.object({
 	roundId: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	groupId: v.pipe(v.number(), v.integer(), v.minValue(0)),
-	list: v.optional(v.nullable(v.array(v.object({
-        mode: modeShort,
-        stageId,
-    })))),
+	list: v.optional(
+		v.nullable(
+			v.array(
+				v.object({
+					mode: modeShort,
+					stageId,
+				}),
+			),
+		),
+	),
 	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: v.picklist(["BEST_OF", "PLAY_ALL"]),
 	pickBan: v.optional(v.nullable(v.picklist(PickBan.types))),
@@ -119,18 +137,26 @@ export const bracketSchema = v.union([
 	v.object({
 		_action: _action("START_BRACKET"),
 		bracketIdx,
-		thirdPlaceMatchLinked: v.preprocess(checkboxValueToBoolean, v.boolean()),
-		maps: v.preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
+		thirdPlaceMatchLinked: v.optional(
+			preprocess(checkboxValueToBoolean, v.boolean()),
+			false,
+		),
+		maps: preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
 	}),
 	v.object({
 		_action: _action("PREPARE_MAPS"),
 		bracketIdx,
-		maps: v.preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
-		thirdPlaceMatchLinked: v.preprocess(checkboxValueToBoolean, v.boolean()),
+		maps: preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
+		thirdPlaceMatchLinked: v.optional(
+			preprocess(checkboxValueToBoolean, v.boolean()),
+			false,
+		),
 		eliminationTeamCount: v.pipe(
-            v.optional(v.pipe(v.unknown(), v.toNumber())),
-            v.check((val) => !val || PreparedMaps.isValidMaxEliminationTeamCount(val))
-        ),
+			v.optional(coerceNumber()),
+			v.check(
+				(val) => !val || PreparedMaps.isValidMaxEliminationTeamCount(val),
+			),
+		),
 	}),
 	v.object({
 		_action: _action("ADVANCE_BRACKET"),
@@ -164,11 +190,13 @@ export const tournamentTeamPageParamsSchema = v.object({
 
 export type TournamentBadgeReceivers = v.InferOutput<typeof badgeReceivers>;
 
-const badgeReceivers = v.array(v.object({
-    badgeId: id,
-    tournamentTeamId: id,
-    userIds: v.pipe(v.array(id), v.minLength(1), v.maxLength(50)),
-}));
+const badgeReceivers = v.array(
+	v.object({
+		badgeId: id,
+		tournamentTeamId: id,
+		userIds: v.pipe(v.array(id), v.minLength(1), v.maxLength(50)),
+	}),
+);
 
 export type TournamentTrophyReceiver = v.InferOutput<typeof trophyReceiver>;
 
@@ -179,6 +207,10 @@ const trophyReceiver = v.object({
 
 export const finalizeTournamentActionSchema = v.object({
 	_action: _action("FINALIZE_TOURNAMENT"),
-	badgeReceivers: v.preprocess(safeJSONParse, v.optional(v.nullable(badgeReceivers))),
-	trophyReceiver: v.preprocess(safeJSONParse, v.optional(v.nullable(trophyReceiver))),
+	badgeReceivers: v.optional(
+		preprocess(safeJSONParse, v.nullish(badgeReceivers)),
+	),
+	trophyReceiver: v.optional(
+		preprocess(safeJSONParse, v.nullish(trophyReceiver)),
+	),
 });

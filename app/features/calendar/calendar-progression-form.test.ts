@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
-import * as v from "valibot";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import {
 	defaultBracketsFormValues,
 	formValuesToInputBrackets,
 	progressionToFormValues,
+	type ValidationCtx,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
 
@@ -67,11 +67,10 @@ function validationIssues(formValues: {
 	brackets: Parameters<typeof validateBracketProgressionFormValues>[0];
 	progression: Parameters<typeof validateBracketProgressionFormValues>[1];
 }) {
-	const issues: v.ZodIssue[] = [];
-	const ctx = {
-		addIssue: (issue: v.ZodIssue) => issues.push(issue),
-		path: [],
-	} as unknown as v.RefinementCtx;
+	const issues: Parameters<ValidationCtx["addIssue"]>[0][] = [];
+	const ctx: ValidationCtx = {
+		addIssue: (issue) => issues.push(issue),
+	};
 
 	validateBracketProgressionFormValues(
 		formValues.brackets,

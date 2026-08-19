@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import { getUser } from "~/features/auth/core/user.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
@@ -9,7 +10,7 @@ import { userParamsSchema } from "../user-page-schemas";
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const loggedInUser = getUser();
 
-	const { identifier } = userParamsSchema.parse(params);
+	const { identifier } = v.parse(userParamsSchema, params);
 	const user = notFoundIfNullish(
 		await UserRepository.findIdByIdentifier(identifier),
 	);

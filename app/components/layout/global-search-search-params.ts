@@ -15,6 +15,8 @@ export type GlobalSearchType = (typeof GLOBAL_SEARCH_TYPES)[number];
 
 export const globalSearchSearchParams = SearchParams.define({
 	search: SP.param(v.nullable(v.picklist(["open"])), { loader: false }),
-	type: SP.param(v.nullable(v.picklist(GLOBAL_SEARCH_TYPES)), { loader: false }),
-	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), { loader: false }),
+	type: SP.param(v.nullable(v.picklist(GLOBAL_SEARCH_TYPES)), {
+		loader: false,
+	}),
+	weapon: SP.param(v.nullable(numericEnum(mainWeaponIds)), { loader: false }),
 });

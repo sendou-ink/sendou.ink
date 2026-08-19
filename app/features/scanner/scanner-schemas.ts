@@ -17,13 +17,13 @@ const detectionText = v.pipe(v.string(), v.maxLength(500));
 
 const scannerLobbySchema = v.picklist(SCANNER_LOBBIES);
 export const modeShortSchema = v.picklist(modesShort);
-export const stageIdSchema = v.literal(stageIds);
-export const mainWeaponIdSchema = v.literal(mainWeaponIds);
+export const stageIdSchema = v.picklist(stageIds);
+export const mainWeaponIdSchema = v.picklist(mainWeaponIds);
 
 const abilityNames = abilities.map((ability) => ability.name) as Ability[];
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
 const scannerAbilitySchema = v.union([
-	v.literal(abilityNames),
+	v.picklist(abilityNames),
 	v.literal("UNKNOWN"),
 ]);
 
@@ -35,10 +35,12 @@ const scannerMatchPlayerSchema = v.object({
 	d: v.nullable(v.number()),
 	s: v.nullable(v.number()),
 	/** [head, clothes, shoes] ability rows harvested from death screens */
-	abilities: v.optional(v.pipe(
-        v.array(v.pipe(v.array(scannerAbilitySchema), v.maxLength(4))),
-        v.maxLength(3)
-    )),
+	abilities: v.optional(
+		v.pipe(
+			v.array(v.pipe(v.array(scannerAbilitySchema), v.maxLength(4))),
+			v.maxLength(3),
+		),
+	),
 });
 
 const scannerMatchTeamSchema = v.object({
@@ -61,9 +63,9 @@ const scannerMatchObjectiveSampleSchema = v.object({
 const scannerMatchObjectiveSchema = v.object({
 	mode: v.literal("SZ"),
 	samples: v.pipe(
-        v.array(scannerMatchObjectiveSampleSchema),
-        v.maxLength(MAX_OBJECTIVE_SAMPLES)
-    ),
+		v.array(scannerMatchObjectiveSampleSchema),
+		v.maxLength(MAX_OBJECTIVE_SAMPLES),
+	),
 });
 
 const playerFlagsSchema = v.tuple([
@@ -82,9 +84,9 @@ const scannerMatchPlayerStatusSampleSchema = v.object({
 
 const scannerMatchPlayerStatusSchema = v.object({
 	samples: v.pipe(
-        v.array(scannerMatchPlayerStatusSampleSchema),
-        v.maxLength(MAX_OBJECTIVE_SAMPLES)
-    ),
+		v.array(scannerMatchPlayerStatusSampleSchema),
+		v.maxLength(MAX_OBJECTIVE_SAMPLES),
+	),
 });
 
 export const scannerMatchSchema = v.object({
@@ -95,16 +97,21 @@ export const scannerMatchSchema = v.object({
 	lobby: v.nullable(scannerLobbySchema),
 	mode: v.nullable(modeShortSchema),
 	stage: v.nullable(stageIdSchema),
-	matchScores: v.nullable(v.tuple([v.nullable(v.number()), v.nullable(v.number())])),
+	matchScores: v.nullable(
+		v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
+	),
 	replayCode: v.nullable(detectionText),
 	cast: v.boolean(),
 	objective: v.nullable(scannerMatchObjectiveSchema),
 	playerStatus: v.nullable(scannerMatchPlayerStatusSchema),
 	teams: v.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
 	winner: v.nullable(teamIndexSchema),
-	pov: v.nullable(v.object(
-        { team: teamIndexSchema, index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(3)) }
-    )),
+	pov: v.nullable(
+		v.object({
+			team: teamIndexSchema,
+			index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(3)),
+		}),
+	),
 });
 
 // ---- compile-time drift protection: schema output <-> core interface ----

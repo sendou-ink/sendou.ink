@@ -31,10 +31,10 @@ export const ART_IMAGE_TOO_LARGE_ERROR = "forms:errors.imageTooLarge";
 
 const artImageDataUrl = (maxBytes: number) =>
 	v.pipe(
-        v.string(),
-        v.maxLength(maxDataUrlLength(maxBytes), ART_IMAGE_TOO_LARGE_ERROR),
-        v.regex(ART_IMAGE_DATA_URL_PREFIX_REGEX)
-    );
+		v.string(),
+		v.maxLength(maxDataUrlLength(maxBytes), ART_IMAGE_TOO_LARGE_ERROR),
+		v.regex(ART_IMAGE_DATA_URL_PREFIX_REGEX),
+	);
 
 /**
  * JSON-serializable value of the art image form field. Art can't use the generic `image()` field:
@@ -43,7 +43,8 @@ const artImageDataUrl = (maxBytes: number) =>
  * uploaded (only the preview url rides along, never bytes) — art images can't be swapped after
  * upload.
  */
-export const artImageValue = v.nullable(v.union([
+export const artImageValue = v.nullable(
+	v.union([
 		v.object({
 			type: v.literal("EXISTING"),
 			url: v.string(),
@@ -53,7 +54,8 @@ export const artImageValue = v.nullable(v.union([
 			dataUrl: artImageDataUrl(ART_IMAGE_MAX_BYTES),
 			thumbnailDataUrl: artImageDataUrl(ART_THUMBNAIL_MAX_BYTES),
 		}),
-	]));
+	]),
+);
 
 export type ArtImageValue = v.InferOutput<typeof artImageValue>;
 

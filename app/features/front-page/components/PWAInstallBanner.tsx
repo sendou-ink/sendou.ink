@@ -166,7 +166,10 @@ function isStandalone() {
 }
 
 function isIos() {
-	return (/iPad|iPhone|iPod/.test(navigator.userAgent) || (navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1));
+	return (
+		/iPad|iPhone|iPod/.test(navigator.userAgent) ||
+		(navigator.userAgent.includes("Mac") && navigator.maxTouchPoints > 1)
+	);
 }
 
 function isInstallCapableSafariDesktop() {

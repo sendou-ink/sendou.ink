@@ -2,23 +2,25 @@ import * as v from "valibot";
 import type { Unpacked } from "~/utils/types";
 
 export const streamsSchema = v.object({
-	data: v.array(v.object({
-        id: v.string(),
-        user_id: v.string(),
-        user_login: v.string(),
-        user_name: v.string(),
-        game_id: v.string(),
-        game_name: v.string(),
-        type: v.string(),
-        title: v.string(),
-        viewer_count: v.number(),
-        started_at: v.string(),
-        language: v.string(),
-        thumbnail_url: v.string(),
-        tag_ids: v.array(v.unknown()),
-        tags: v.optional(v.nullable(v.array(v.string()))),
-        is_mature: v.boolean(),
-    })),
+	data: v.array(
+		v.object({
+			id: v.string(),
+			user_id: v.string(),
+			user_login: v.string(),
+			user_name: v.string(),
+			game_id: v.string(),
+			game_name: v.string(),
+			type: v.string(),
+			title: v.string(),
+			viewer_count: v.number(),
+			started_at: v.string(),
+			language: v.string(),
+			thumbnail_url: v.string(),
+			tag_ids: v.array(v.unknown()),
+			tags: v.optional(v.nullable(v.array(v.string()))),
+			is_mature: v.boolean(),
+		}),
+	),
 	pagination: v.object({ cursor: v.optional(v.nullable(v.string())) }),
 });
 
@@ -29,24 +31,28 @@ export const tokenResponseSchema = v.object({
 });
 
 export const usersSchema = v.object({
-	data: v.array(v.object({
-        id: v.string(),
-        login: v.string(),
-        display_name: v.string(),
-    })),
+	data: v.array(
+		v.object({
+			id: v.string(),
+			login: v.string(),
+			display_name: v.string(),
+		}),
+	),
 });
 
 export const videosSchema = v.object({
-	data: v.array(v.object({
-        id: v.string(),
-        user_id: v.string(),
-        user_login: v.string(),
-        title: v.string(),
-        created_at: v.string(),
-        duration: v.string(),
-        view_count: v.number(),
-        type: v.string(),
-    })),
+	data: v.array(
+		v.object({
+			id: v.string(),
+			user_id: v.string(),
+			user_login: v.string(),
+			title: v.string(),
+			created_at: v.string(),
+			duration: v.string(),
+			view_count: v.number(),
+			type: v.string(),
+		}),
+	),
 	pagination: v.object({ cursor: v.optional(v.nullable(v.string())) }),
 });
 

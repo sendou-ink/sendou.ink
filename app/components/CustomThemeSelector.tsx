@@ -1,6 +1,7 @@
 import { Check, Clipboard, PencilLine } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
 import {
 	CUSTOM_THEME_VARS,
@@ -165,8 +166,8 @@ function themeInputFromString(str: string): ThemeInput | null {
 		raw[key] = num;
 	}
 
-	const parsed = themeInputSchema.safeParse(raw);
-	return parsed.success ? parsed.data : null;
+	const parsed = v.safeParse(themeInputSchema, raw);
+	return parsed.success ? parsed.output : null;
 }
 
 const DEFAULT_THEME_INPUT: ThemeInput = {

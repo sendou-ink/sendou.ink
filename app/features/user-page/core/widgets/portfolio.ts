@@ -1,5 +1,6 @@
-import * as v from "valibot";
+import type * as v from "valibot";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import type { FormObjectSchema } from "~/form/types";
 import type { StoredWidget } from "./types";
 import {
 	artSchema,
@@ -160,7 +161,7 @@ export function findWidgetById(widgetId: string) {
 function defineWidget<
 	const Id extends string,
 	const Slot extends "main" | "side",
-	S extends v.ZodObject<v.ZodRawShape>,
+	S extends FormObjectSchema,
 >(def: {
 	id: Id;
 	slot: Slot;

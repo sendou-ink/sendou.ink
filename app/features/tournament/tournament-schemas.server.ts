@@ -16,7 +16,7 @@ export function registerSchema({
 	tournament: Tournament;
 	ownTeamId?: number;
 }) {
-	return v.union([
+	return v.unionAsync([
 		registerTeamFormSchemaServer({ tournament, ownTeamId }),
 		updateMapPoolSchema,
 		deleteTeamMemberSchema,

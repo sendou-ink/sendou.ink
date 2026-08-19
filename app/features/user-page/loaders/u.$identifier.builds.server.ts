@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import * as v from "valibot";
 import { getUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -12,7 +13,7 @@ export type UserBuildsPageData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const loggedInUser = getUser();
-	const { identifier } = userParamsSchema.parse(params);
+	const { identifier } = v.parse(userParamsSchema, params);
 	const user = notFoundIfNullish(
 		await UserRepository.findBuildFieldsByIdentifier(identifier),
 	);

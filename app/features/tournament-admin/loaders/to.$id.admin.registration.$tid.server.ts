@@ -15,7 +15,7 @@ export type TournamentAdminRegistrationLoaderData = SerializeFrom<
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tid: tournamentTeamId } = parseParams({
 		params,
-		schema: v.object({ tid: id.optional() }),
+		schema: v.object({ tid: v.optional(id) }),
 	});
 
 	const { tournamentId, user } = await tournamentFromParams(params, {

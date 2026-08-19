@@ -9,7 +9,10 @@ export type PlusTierParam = (typeof PLUS_TIER_PARAMS)[number];
 export const plusSuggestionsSearchParams = SearchParams.define({
 	tier: SP.param(v.picklist(PLUS_TIER_PARAMS), { default: "1", loader: true }),
 	alert: SP.param(v.boolean(), { default: false, loader: false }),
-	editingSuggestionId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
-		loader: false,
-	}),
+	editingSuggestionId: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+		{
+			loader: false,
+		},
+	),
 });

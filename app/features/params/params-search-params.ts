@@ -13,6 +13,6 @@ export const weaponParamsSearchParams = SearchParams.define({
 		default: [],
 		loader: false,
 	}),
-	kit: SP.param(numericEnum(mainWeaponIds).nullable(), { loader: false }),
+	kit: SP.param(v.nullable(numericEnum(mainWeaponIds)), { loader: false }),
 	kitExtras: SP.param(v.boolean(), { default: true, loader: false }),
 });

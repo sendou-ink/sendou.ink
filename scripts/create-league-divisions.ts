@@ -1,6 +1,6 @@
 // for testing use the command `pnpm exec vite-node ./scripts/create-league-divisions.ts 6 'https://gist.githubusercontent.com/sendou-ink/38aa4d5d8426035ce178c09598ae627f/raw/17be9bb53a9f017c2097d0624f365d1c5a029f01/league.csv'`
 
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "~/db/sql";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -20,7 +20,10 @@ invariant(
 
 const csvUrl = process.argv[3]?.trim();
 
-invariant(z.string().url().parse(csvUrl), "csv url is required (argument 2)");
+invariant(
+	v.parse(v.pipe(v.string(), v.url()), csvUrl),
+	"csv url is required (argument 2)",
+);
 
 async function main() {
 	const tournament = await tournamentFromDB({
@@ -122,10 +125,10 @@ async function loadCsv() {
 	return response.text();
 }
 
-const csvSchema = z.array(
-	z.object({
-		"Team id": z.coerce.number(),
-		Div: z.string(),
+const csvSchema = v.array(
+	v.object({
+		"Team id": v.pipe(v.unknown(), v.transform(Number), v.number()),
+		Div: v.string(),
 	}),
 );
 
@@ -145,7 +148,7 @@ function parseCsv(csv: string) {
 		);
 	});
 
-	const validated = csvSchema.parse(rows);
+	const validated = v.parse(csvSchema, rows);
 
 	return validated.map((row) => ({
 		id: row["Team id"],

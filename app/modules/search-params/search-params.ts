@@ -3,6 +3,8 @@ import { isDeepEqual } from "remeda";
 import * as v from "valibot";
 import { compressToBase64, decompressFromBase64 } from "~/utils/compression";
 
+type AnySchema = v.GenericSchema<any, any>;
+
 const COMPRESSED_PREFIX = "lz~";
 const ESCAPED_PREFIX = "lz~~";
 const DECODE_CACHE_MAX_SIZE = 300;
@@ -253,6 +255,56 @@ export function pickRelevantSearch(keys: string[], search: string): string {
 	return picked.toString();
 }
 
+/** Bidirectional URL encoding for an `SP.custom` param (replacement for `z.codec`). */
+export interface ParamCodec<Value> {
+	/** Decodes a plain URL value; `undefined` means malformed, resolving the param to its default. */
+	decode: (plain: string) => Value | undefined;
+	/** Encodes a value to its canonical plain URL form. Must succeed for every value of the type. */
+	encode: (value: Value) => string;
+}
+
+/**
+ * Creates a {@link ParamCodec} whose decode result is validated against
+ * `schema`. The `decode` implementation returns `undefined` (or any value the
+ * schema rejects) for malformed input.
+ */
+export function codec<TSchema extends AnySchema>(
+	schema: TSchema,
+	impl: {
+		decode: (encoded: string) => unknown;
+		encode: (value: v.InferOutput<TSchema>) => string;
+	},
+): ParamCodec<v.InferOutput<TSchema>> {
+	return {
+		decode: (encoded) => {
+			const parsed = v.safeParse(schema, impl.decode(encoded));
+			return parsed.success ? parsed.output : undefined;
+		},
+		encode: impl.encode,
+	};
+}
+
+/**
+ * Widens a codec to also accept `null` as its value. `null` must be the
+ * param's default, so it never reaches `encode` (encoding the default omits
+ * the param from the URL).
+ */
+export function nullableCodec<Value>(
+	inner: ParamCodec<Value>,
+): ParamCodec<Value | null> {
+	return {
+		decode: inner.decode,
+		encode: (value) => {
+			if (value === null) {
+				throw new Error(
+					"Cannot encode null; a nullable search param's default is null, which is omitted from the URL",
+				);
+			}
+			return inner.encode(value);
+		},
+	};
+}
+
 /**
  * Param declaration helpers. `SP.param` is the canonical declaration deriving
  * the URL encoding from the value schema; `SP.json` and `SP.custom` are the
@@ -267,35 +319,36 @@ export const SP = {
 	 * encodes as param absent, so `default` is omitted for those). Anything else
 	 * is a `define()`-time error — use `SP.json` or `SP.custom` instead.
 	 */
-	param<S extends v.ZodType>(
+	param<S extends AnySchema>(
 		schema: S,
 		opts: ParamOptions<v.InferOutput<S>>,
 	): ParamDef<v.InferOutput<S>> {
 		const resolved = resolveOptions(opts);
-		let core: v.ZodType = schema;
+		let core: AnySchema = schema;
 
-		if (core instanceof v.ZodOptional) {
+		if (core.type === "optional" || core.type === "nullish") {
 			throw new Error(
-				"Search params use .nullable() instead of .optional() (null encodes as param absent)",
+				"Search params use v.nullable() instead of v.optional() (null encodes as param absent)",
 			);
 		}
-		if (core instanceof v.ZodNullable) {
+		if (core.type === "nullable") {
 			if (resolved.default !== null) {
 				throw new Error(
-					"A .nullable() search param must have null as its default, otherwise null and the default could not be told apart in the URL",
+					"A v.nullable() search param must have null as its default, otherwise null and the default could not be told apart in the URL",
 				);
 			}
-			core = core.unwrap() as v.ZodType;
+			core = (core as unknown as { wrapped: AnySchema }).wrapped;
 		}
 
-		if (core instanceof v.ZodArray) {
-			const itemBase = deriveScalarBase(core.element as v.ZodType);
+		if (core.type === "array") {
+			const itemSchema = (core as unknown as { item: AnySchema }).item;
+			const itemBase = deriveScalarBase(itemSchema);
 			if (!itemBase) {
 				throw new Error(
-					`Cannot derive an URL encoding for the array item schema of a search param (got ${describeSchema(core.element as v.ZodType)}). Use SP.json or SP.custom.`,
+					`Cannot derive an URL encoding for the array item schema of a search param (got ${describeSchema(itemSchema)}). Use SP.json or SP.custom.`,
 				);
 			}
-			return arrayParam(schema, core, itemBase, resolved);
+			return arrayParam(schema, itemSchema, itemBase, resolved);
 		}
 
 		const base = deriveScalarBase(core);
@@ -311,17 +364,17 @@ export const SP = {
 	page(opts?: { max?: number; resets?: string[] }): ParamDef<number> {
 		return SP.param(
 			v.pipe(
-                v.number(),
-                v.integer(),
-                v.minValue(1),
-                v.maxValue(opts?.max ?? DEFAULT_MAX_PAGE)
-            ),
+				v.number(),
+				v.integer(),
+				v.minValue(1),
+				v.maxValue(opts?.max ?? DEFAULT_MAX_PAGE),
+			),
 			{ default: 1, loader: true, resets: opts?.resets },
 		);
 	},
 
 	/** Declares a param encoded as `JSON.stringify` in a single value. For objects and whole-array-as-one-param values. */
-	json<S extends v.ZodType>(
+	json<S extends AnySchema>(
 		schema: S,
 		opts: ParamOptions<v.InferOutput<S>>,
 	): ParamDef<v.InferOutput<S>> {
@@ -339,20 +392,20 @@ export const SP = {
 				} catch {
 					return resolved.default;
 				}
-				const parsed = schema.safeParse(json);
-				return parsed.success ? parsed.data : resolved.default;
+				const parsed = v.safeParse(schema, json);
+				return parsed.success ? parsed.output : resolved.default;
 			},
 			encodePlain: (value) => [JSON.stringify(value)],
 		};
 	},
 
 	/**
-	 * Escape hatch: declares a param from a `z.codec(z.string(), valueSchema, ...)`
+	 * Escape hatch: declares a param from a {@link ParamCodec} (see `codec`)
 	 * passed directly. The codec's `decode` may accept legacy formats while
 	 * `encode` always emits the canonical one.
 	 */
 	custom<Value>(
-		codec: v.ZodType<Value, string | null>,
+		paramCodec: ParamCodec<Value>,
 		opts: ParamOptions<Value>,
 	): ParamDef<Value> {
 		const resolved = resolveOptions(opts);
@@ -363,18 +416,10 @@ export const SP = {
 				if (values.length === 0) return resolved.default;
 				const plain = unwrapValue(values[0]);
 				if (plain === DECODE_FAILED) return resolved.default;
-				const parsed = v.safeDecode(codec, plain);
-				return parsed.success ? parsed.data : resolved.default;
+				const decoded = paramCodec.decode(plain);
+				return decoded === undefined ? resolved.default : decoded;
 			},
-			encodePlain: (value) => {
-				const encoded = v.safeEncode(codec, value);
-				if (!encoded.success || typeof encoded.data !== "string") {
-					throw new Error(
-						"Encoding a search param value failed; SP.custom codecs must encode every value of their type",
-					);
-				}
-				return [encoded.data];
-			},
+			encodePlain: (value) => [paramCodec.encode(value)],
 		};
 	},
 };
@@ -404,7 +449,7 @@ function baseDef<T>(
 }
 
 function scalarParam<T>(
-	schema: v.ZodType,
+	schema: AnySchema,
 	base: ScalarBase,
 	opts: ResolvedParamOptions<T>,
 ): ParamDef<T> {
@@ -416,21 +461,19 @@ function scalarParam<T>(
 			if (plain === DECODE_FAILED) return opts.default;
 			const candidate = plainToScalar(plain, base);
 			if (candidate === DECODE_FAILED) return opts.default;
-			const parsed = schema.safeParse(candidate);
-			return parsed.success ? (parsed.data as T) : opts.default;
+			const parsed = v.safeParse(schema, candidate);
+			return parsed.success ? (parsed.output as T) : opts.default;
 		},
 		encodePlain: (value) => [String(value)],
 	};
 }
 
 function arrayParam<T>(
-	schema: v.ZodType,
-	arraySchema: v.ZodArray,
+	schema: AnySchema,
+	itemSchema: AnySchema,
 	itemBase: ScalarBase,
 	opts: ResolvedParamOptions<T>,
 ): ParamDef<T> {
-	const itemSchema = arraySchema.element as v.ZodType;
-
 	return {
 		...baseDef(opts),
 		decodeValues: (values) => {
@@ -464,12 +507,12 @@ function arrayParam<T>(
 			for (const item of items) {
 				const candidate = plainToScalar(item, itemBase);
 				if (candidate === DECODE_FAILED) continue;
-				const parsed = itemSchema.safeParse(candidate);
-				if (parsed.success) members.push(parsed.data);
+				const parsed = v.safeParse(itemSchema, candidate);
+				if (parsed.success) members.push(parsed.output);
 			}
 
-			const parsed = schema.safeParse(members);
-			return parsed.success ? (parsed.data as T) : opts.default;
+			const parsed = v.safeParse(schema, members);
+			return parsed.success ? (parsed.output as T) : opts.default;
 		},
 		encodePlain: (value) => {
 			const items = value as unknown[];
@@ -496,19 +539,22 @@ function plainToScalar(
 	return DECODE_FAILED;
 }
 
-function deriveScalarBase(schema: v.ZodType): ScalarBase | null {
-	if (schema instanceof v.ZodString) return "string";
-	if (schema instanceof v.ZodNumber) return "number";
-	if (schema instanceof v.ZodBoolean) return "boolean";
+function deriveScalarBase(schema: AnySchema): ScalarBase | null {
+	if (hasNonValidationPipeItems(schema)) return null;
 
-	if (schema instanceof v.ZodEnum) {
-		return uniformTypeOf(schema.options);
+	if (schema.type === "string") return "string";
+	if (schema.type === "number") return "number";
+	if (schema.type === "boolean") return "boolean";
+
+	if (schema.type === "picklist" || schema.type === "enum") {
+		return uniformTypeOf((schema as unknown as { options: unknown[] }).options);
 	}
-	if (schema instanceof v.ZodLiteral) {
-		return uniformTypeOf(Array.from(schema.values));
+	if (schema.type === "literal") {
+		return uniformTypeOf([(schema as unknown as { literal: unknown }).literal]);
 	}
-	if (schema instanceof v.ZodUnion) {
-		const bases = (schema.options as v.ZodType[]).map(deriveScalarBase);
+	if (schema.type === "union") {
+		const options = (schema as unknown as { options: AnySchema[] }).options;
+		const bases = options.map(deriveScalarBase);
 		if (bases[0] && bases.every((base) => base === bases[0])) {
 			return bases[0];
 		}
@@ -516,6 +562,28 @@ function deriveScalarBase(schema: v.ZodType): ScalarBase | null {
 	}
 
 	return null;
+}
+
+/**
+ * A pipe may only add validations, metadata and type-preserving
+ * transformations (e.g. `v.trim()`) on top of its base schema. A custom
+ * transform or a nested schema changes the value's type, so the URL encoding
+ * cannot be derived from the base type.
+ */
+function hasNonValidationPipeItems(schema: AnySchema): boolean {
+	if (!("pipe" in schema)) return false;
+
+	const pipeItems = (
+		schema as unknown as { pipe: Array<{ kind: string; type: string }> }
+	).pipe;
+	return pipeItems
+		.slice(1)
+		.some(
+			(item) =>
+				item.kind === "schema" ||
+				item.type === "transform" ||
+				item.type === "raw_transform",
+		);
 }
 
 function uniformTypeOf(values: unknown[]): ScalarBase | null {
@@ -529,8 +597,8 @@ function uniformTypeOf(values: unknown[]): ScalarBase | null {
 	return null;
 }
 
-function describeSchema(schema: v.ZodType) {
-	return schema.constructor.name;
+function describeSchema(schema: AnySchema) {
+	return schema.type;
 }
 
 function toSearchParams(

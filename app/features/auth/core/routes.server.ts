@@ -12,6 +12,7 @@ import {
 	errorToastRedirect,
 } from "~/utils/remix.server";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
+import type { AnySyncSchema } from "~/utils/zod";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
 	authenticator,
@@ -151,7 +152,7 @@ async function safeReturnTo(request: Request): Promise<string | null> {
 // only light validation here as we generally trust Lohi
 // auth flow params are infrastructure conventions and intentionally do not go
 // through app/modules/search-params/
-function parseSearchParams<T extends v.ZodTypeAny>({
+function parseSearchParams<T extends AnySyncSchema>({
 	request,
 	schema,
 }: {
@@ -161,7 +162,7 @@ function parseSearchParams<T extends v.ZodTypeAny>({
 	const searchParams = Object.fromEntries(new URL(request.url).searchParams);
 
 	try {
-		return schema.parse(searchParams);
+		return v.parse(schema, searchParams);
 	} catch (e) {
 		logger.error("Error parsing search params", e);
 

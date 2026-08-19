@@ -20,7 +20,8 @@ const IMAGE_FIELD_MAX_DATA_URL_LENGTH = 3_000_000;
  * `null` (none / removed), an unchanged `EXISTING` image (only the id reference + a preview url
  * ride in JSON, never bytes), or a newly picked `NEW` image as a base64 webp/png data URL.
  */
-export const imageValue = v.nullable(v.union([
+export const imageValue = v.nullable(
+	v.union([
 		v.object({
 			type: v.literal("EXISTING"),
 			imgId: id,
@@ -29,12 +30,13 @@ export const imageValue = v.nullable(v.union([
 		v.object({
 			type: v.literal("NEW"),
 			dataUrl: v.pipe(
-                v.string(),
-                v.maxLength(IMAGE_FIELD_MAX_DATA_URL_LENGTH),
-                v.regex(IMAGE_FIELD_DATA_URL_PREFIX_REGEX)
-            ),
+				v.string(),
+				v.maxLength(IMAGE_FIELD_MAX_DATA_URL_LENGTH),
+				v.regex(IMAGE_FIELD_DATA_URL_PREFIX_REGEX),
+			),
 		}),
-	]));
+	]),
+);
 
 export type ImageFieldValue = v.InferOutput<typeof imageValue>;
 

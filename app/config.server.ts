@@ -1,6 +1,7 @@
 import * as v from "valibot";
 import { formatEnvErrors, requiredInProd } from "./config-helpers.server";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
+import { superRefine } from "./utils/zod";
 
 /**
  * Server (`process.env`) configuration. Import with
@@ -12,15 +13,36 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
  * production fall back to development defaults outside of production.
  */
 
+const TRUTHY_ENV_VALUES = ["true", "1", "yes", "on"];
+const FALSY_ENV_VALUES = ["false", "0", "no", "off"];
+
 const isProd = process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN;
 
-const schema = v.object({
-		NODE_ENV: v.optional(v.picklist(["development", "production", "test"]), "development"),
+/** Boolean parsed from a string environment variable (replacement for zod's `stringbool`). */
+const stringBoolean = v.pipe(
+	v.string(),
+	v.transform((value) => {
+		const normalized = value.toLowerCase();
+
+		if (TRUTHY_ENV_VALUES.includes(normalized)) return true;
+		if (FALSY_ENV_VALUES.includes(normalized)) return false;
+
+		return undefined;
+	}),
+	v.boolean(),
+);
+
+const schema = v.pipe(
+	v.object({
+		NODE_ENV: v.optional(
+			v.picklist(["development", "production", "test"]),
+			"development",
+		),
 		DB_PATH: requiredInProd(isProd, "db.sqlite3"),
 		SESSION_SECRET: requiredInProd(isProd, "secret"),
 		LOHI_TOKEN: requiredInProd(isProd, "salmon"),
 		SQL_LOG: v.optional(v.picklist(["none", "trunc", "full"]), "none"),
-		DISABLE_CACHE: v.stringbool().default(false),
+		DISABLE_CACHE: v.optional(stringBoolean, "false"),
 
 		DISCORD_CLIENT_ID: requiredInProd(isProd, ""),
 		DISCORD_CLIENT_SECRET: requiredInProd(isProd, ""),
@@ -44,16 +66,18 @@ const schema = v.object({
 		// runtime check in webPush.server.ts.
 		VAPID_PRIVATE_KEY: v.optional(v.string()),
 		VAPID_EMAIL: v.optional(v.string()),
-	})((val, ctx) => {
+	}),
+	superRefine((val, ctx) => {
 		requireTogether(ctx, val, "TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET");
 		requireTogether(ctx, val, "VAPID_EMAIL", "VAPID_PRIVATE_KEY");
-	});
+	}),
+);
 
-const parsed = schema.safeParse(process.env);
+const parsed = v.safeParse(schema, process.env);
 if (!parsed.success) {
-	throw formatEnvErrors("server", parsed.error);
+	throw formatEnvErrors("server", parsed.issues);
 }
-const values = parsed.data;
+const values = parsed.output;
 
 export const ServerConfig = {
 	/**
@@ -118,7 +142,7 @@ export const ServerConfig = {
 
 /** Adds a validation issue unless `a` and `b` are both set or both unset. */
 function requireTogether(
-	ctx: v.RefinementCtx,
+	ctx: { addIssue: (issue: { message: string; path?: PropertyKey[] }) => void },
 	values: Record<string, unknown>,
 	a: string,
 	b: string,
@@ -130,7 +154,6 @@ function requireTogether(
 	const present = aSet ? a : b;
 	const missing = aSet ? b : a;
 	ctx.addIssue({
-		code: "custom",
 		path: [missing],
 		message: `must be set together with ${present}`,
 	});

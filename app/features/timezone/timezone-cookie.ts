@@ -4,14 +4,18 @@ import { logger } from "~/utils/logger";
 const COOKIE_NAME = "timezone";
 const TEN_YEARS_IN_MS = 315_360_000_000;
 
-const ianaTimezone = v.pipe(v.string(), v.maxLength(100), v.check((value) => {
+const ianaTimezone = v.pipe(
+	v.string(),
+	v.maxLength(100),
+	v.check((value) => {
 		try {
 			new Intl.DateTimeFormat("en-US", { timeZone: value });
 			return true;
 		} catch {
 			return false;
 		}
-	}));
+	}),
+);
 
 /**
  * Stores the browser's IANA timezone in a cookie so that the server can read it

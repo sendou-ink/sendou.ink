@@ -1,9 +1,9 @@
 import { type ComponentProps, Profiler } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
+import * as v from "valibot";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import * as v from "valibot";
 import labelStyles from "~/components/Label.module.css";
 import { FormField } from "./FormField";
 import {
@@ -23,7 +23,7 @@ import {
 	userSearch,
 } from "./fields";
 import { SendouForm, useFormFieldContext } from "./SendouForm";
-import type { ArrayItemRenderContext } from "./types";
+import type { ArrayItemRenderContext, FormObjectSchema } from "./types";
 
 let mockFetcherData: { fieldErrors?: Record<string, string> } | undefined;
 
@@ -95,7 +95,7 @@ vi.mock("react-router", async () => {
 });
 
 function renderForm(
-	schema: v.ZodObject<v.ZodRawShape>,
+	schema: FormObjectSchema,
 	options?: {
 		defaultValues?: Record<string, unknown>;
 		title?: string;
@@ -103,7 +103,7 @@ function renderForm(
 		mode?: "autoSubmit";
 	},
 ) {
-	const props: ComponentProps<typeof SendouForm<z.ZodRawShape>> = {
+	const props: ComponentProps<typeof SendouForm<v.ObjectEntries>> = {
 		schema,
 		defaultValues: options?.defaultValues,
 		title: options?.title,
@@ -1548,11 +1548,11 @@ describe("SendouForm", () => {
 
 			const defaultValues = {
 				members: [
-					{ userId: 10, role: "ADMIN" },
-					{ userId: 20, role: "MEMBER" },
-					{ userId: 30, role: "MEMBER" },
-					{ userId: 40, role: "MEMBER" },
-					{ userId: 50, role: "MEMBER" },
+					{ userId: 10, role: "ADMIN" as const },
+					{ userId: 20, role: "MEMBER" as const },
+					{ userId: 30, role: "MEMBER" as const },
+					{ userId: 40, role: "MEMBER" as const },
+					{ userId: 50, role: "MEMBER" as const },
 				],
 			};
 

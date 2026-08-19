@@ -43,8 +43,8 @@ export const updateGroupFormSchema = v.object({
 export const lookingSchema = v.union([
 	v.object({
 		_action: _action("JOIN_QUEUE"),
-		note: noteFieldSchema.optional(),
-		stayAsSub: stayAsSubFieldSchema.optional(),
+		note: v.optional(noteFieldSchema),
+		stayAsSub: v.optional(stayAsSubFieldSchema),
 	}),
 	v.object({
 		_action: _action("LIKE"),

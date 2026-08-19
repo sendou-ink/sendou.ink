@@ -1,6 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
+import * as v from "valibot";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 import { type articleBySlug, normalizeAuthors } from "./bySlug.server";
@@ -20,7 +21,7 @@ export async function mostRecentArticles(count: number) {
 		);
 		const { data } = matter(rawMarkdown);
 
-		const { date, ...restParsed } = articleDataSchema.parse(data);
+		const { date, ...restParsed } = v.parse(articleDataSchema, data);
 		articles.push({
 			date,
 			slug: file.replace(".md", ""),

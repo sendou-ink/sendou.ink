@@ -9,15 +9,15 @@ import { videoMatchTypes } from "./vods-constants";
 
 export const vodsSearchParams = SearchParams.define({
 	page: SP.page(),
-	weapon: SP.param(numericEnum(mainWeaponIds).nullable(), {
+	weapon: SP.param(v.nullable(numericEnum(mainWeaponIds)), {
 		loader: true,
 		resets: ["page"],
 	}),
-	mode: SP.param(modeShort.nullable(), {
+	mode: SP.param(v.nullable(modeShort), {
 		loader: true,
 		resets: ["page"],
 	}),
-	stageId: SP.param(numericEnum(stageIds).nullable(), {
+	stageId: SP.param(v.nullable(numericEnum(stageIds)), {
 		loader: true,
 		resets: ["page"],
 	}),
@@ -28,15 +28,20 @@ export const vodsSearchParams = SearchParams.define({
 });
 
 export const vodsNewSearchParams = SearchParams.define({
-	vod: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), { loader: true }),
-	ingest: SP.json(ingestVodPrefillSchema.nullable(), {
+	vod: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: true,
+	}),
+	ingest: SP.json(v.nullable(ingestVodPrefillSchema), {
 		loader: true,
 		compress: true,
 	}),
 });
 
 export const vodsVodSearchParams = SearchParams.define({
-	start: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0)), { default: 0, loader: false }),
+	start: SP.param(v.pipe(v.number(), v.integer(), v.minValue(0)), {
+		default: 0,
+		loader: false,
+	}),
 });
 
 export const userVodsSearchParams = SearchParams.define({

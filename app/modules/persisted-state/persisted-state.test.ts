@@ -1,5 +1,5 @@
-import { describe, expect, test } from "vitest";
 import * as v from "valibot";
+import { describe, expect, test } from "vitest";
 import * as PersistedState from "./persisted-state";
 import {
 	assertDecodesToDefault,

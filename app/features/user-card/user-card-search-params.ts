@@ -4,10 +4,12 @@ import { SP } from "~/modules/search-params/search-params";
 
 export const userCardEditSearchParams = SearchParams.define({
 	returnTo: SP.param(
-		v.nullable(v.pipe(
-            v.string(),
-            v.check((value) => value.startsWith("/") && !value.startsWith("//"))
-        )),
+		v.nullable(
+			v.pipe(
+				v.string(),
+				v.check((value) => value.startsWith("/") && !value.startsWith("//")),
+			),
+		),
 		{ loader: true },
 	),
 });

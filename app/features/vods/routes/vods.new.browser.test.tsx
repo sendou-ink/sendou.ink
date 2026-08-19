@@ -80,7 +80,7 @@ function renderForm(options?: {
 						schema={vodFormBaseSchema}
 						defaultValues={createDefaultValues(options?.defaultValues)}
 					>
-						{Object.keys(vodFormBaseSchema.shape)
+						{Object.keys(vodFormBaseSchema.entries)
 							.filter((name) => name !== "pov")
 							.map((name) => (
 								<FormField key={name} name={name} />

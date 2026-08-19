@@ -1,11 +1,11 @@
 import * as v from "valibot";
-import { _action, deduplicate, id } from "~/utils/zod";
+import { _action, deduplicate, id, preprocess } from "~/utils/zod";
 import { addFriendCodeSchema, updateGroupNoteSchema } from "./q-schemas";
 
 export const frontPageSchema = v.union([
 	v.object({
 		_action: _action("JOIN_QUEUE"),
-		direct: v.preprocess(deduplicate, v.optional(v.nullable(v.literal("true")))),
+		direct: v.optional(preprocess(deduplicate, v.nullish(v.literal("true")))),
 	}),
 	v.object({
 		_action: _action("JOIN_TEAM"),

@@ -1,6 +1,4 @@
-/* @valibot-migrate: unable to transform imports from Zod to Valibot: Expected exactly one import statement from "zod" or "zod/v4". */
-import type { ZodType } from "zod";
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	abilities,
 	type abilitiesShort,
@@ -15,20 +13,119 @@ import { SHORT_NANOID_LENGTH } from "./id";
 import type { Unpacked } from "./types";
 import { assertType } from "./types";
 
-export const id = z.coerce.number({ message: "Required" }).int().positive();
-export const idObject = z.object({
+/** Any synchronous valibot schema. */
+export type AnySyncSchema = v.GenericSchema<any, any>;
+
+/** Any valibot schema, sync or async (replacement for zod's `ZodTypeAny`). */
+export type AnySchema = AnySyncSchema | v.GenericSchemaAsync<any, any>;
+
+/** Runs `fn` on the raw input before validating it with `schema` (replacement for `z.preprocess`). */
+export function preprocess<TSchema extends AnySyncSchema>(
+	fn: (value: unknown) => unknown,
+	schema: TSchema,
+) {
+	return v.pipe(
+		v.unknown(),
+		v.transform(fn as (value: unknown) => v.InferInput<TSchema>),
+		schema,
+	);
+}
+
+/**
+ * Validation action running `fn` on the parsed value with an `addIssue`
+ * taking plain key paths (replacement for `z.superRefine`).
+ */
+export function superRefine<TValue>(
+	fn: (
+		value: TValue,
+		ctx: {
+			addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
+		},
+	) => void,
+) {
+	return v.rawCheck<TValue>(({ dataset, addIssue }) => {
+		if (!dataset.typed) return;
+		fn(dataset.value, {
+			addIssue: (issue) => {
+				addIssue({
+					message: issue.message,
+					path: issue.path?.length
+						? toIssuePath(dataset.value, issue.path)
+						: undefined,
+				});
+			},
+		});
+	});
+}
+
+/** Async counterpart of {@link superRefine}. */
+export function superRefineAsync<TValue>(
+	fn: (
+		value: TValue,
+		ctx: {
+			addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
+		},
+	) => Promise<void>,
+) {
+	return v.rawCheckAsync<TValue>(async ({ dataset, addIssue }) => {
+		if (!dataset.typed) return;
+		await fn(dataset.value, {
+			addIssue: (issue) => {
+				addIssue({
+					message: issue.message,
+					path: issue.path?.length
+						? toIssuePath(dataset.value, issue.path)
+						: undefined,
+				});
+			},
+		});
+	});
+}
+
+function toIssuePath(
+	root: unknown,
+	keys: PropertyKey[],
+): [v.IssuePathItem, ...v.IssuePathItem[]] {
+	let current: unknown = root;
+	const items = keys.map((key) => {
+		const value = (current as Record<PropertyKey, unknown> | undefined)?.[key];
+		const item = {
+			type: "unknown" as const,
+			origin: "value" as const,
+			input: current,
+			key,
+			value,
+		};
+		current = value;
+		return item;
+	});
+	return items as unknown as [v.IssuePathItem, ...v.IssuePathItem[]];
+}
+
+/** Coerces the input with `Number()` before validating (replacement for `z.coerce.number()`). */
+export function coerceNumber(message?: string) {
+	return v.pipe(v.unknown(), v.transform(Number), v.number(message));
+}
+
+export const id = v.pipe(coerceNumber("Required"), v.integer(), v.minValue(1));
+export const idObject = v.object({
 	id,
 });
 
-export const inviteCode = z.string().length(SHORT_NANOID_LENGTH);
+export const inviteCode = v.pipe(v.string(), v.length(SHORT_NANOID_LENGTH));
 
-export const nonEmptyString = z.string().trim().min(1, {
-	message: "Required",
-});
+export const nonEmptyString = v.pipe(
+	v.string(),
+	v.trim(),
+	v.minLength(1, "Required"),
+);
 
 // matches #RGB and #RRGGBB only (no alpha) https://stackoverflow.com/a/1636354
 const hexCodeWithoutAlphaRegex = /^#(?:[0-9a-fA-F]{3}){1,2}$/;
-export const hexCodeWithoutAlpha = z.string().regex(hexCodeWithoutAlphaRegex);
+export const hexCodeWithoutAlpha = v.pipe(
+	v.string(),
+	v.regex(hexCodeWithoutAlphaRegex),
+);
 
 export const THEME_INPUT_LIMITS = {
 	BASE_HUE_MIN: 0,
@@ -56,130 +153,148 @@ function isValidStep(value: number, min: number, step: number) {
 	return Math.abs(diff - steps * step) < 0.0001;
 }
 
-export const themeInputSchema = z.object({
-	baseHue: z
-		.number()
-		.min(THEME_INPUT_LIMITS.BASE_HUE_MIN)
-		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX),
-	baseChroma: z
-		.number()
-		.min(THEME_INPUT_LIMITS.BASE_CHROMA_MIN)
-		.max(THEME_INPUT_LIMITS.BASE_CHROMA_MAX),
-	accentHue: z
-		.number()
-		.min(THEME_INPUT_LIMITS.ACCENT_HUE_MIN)
-		.max(THEME_INPUT_LIMITS.ACCENT_HUE_MAX),
-	accentChroma: z
-		.number()
-		.min(THEME_INPUT_LIMITS.ACCENT_CHROMA_MIN)
-		.max(THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX),
-	chatHue: z
-		.number()
-		.min(THEME_INPUT_LIMITS.BASE_HUE_MIN)
-		.max(THEME_INPUT_LIMITS.BASE_HUE_MAX)
-		.nullable(),
-	radiusBox: z
-		.number()
-		.int()
-		.min(THEME_INPUT_LIMITS.RADIUS_MIN)
-		.max(THEME_INPUT_LIMITS.RADIUS_MAX),
-	radiusField: z
-		.number()
-		.int()
-		.min(THEME_INPUT_LIMITS.RADIUS_MIN)
-		.max(THEME_INPUT_LIMITS.RADIUS_MAX),
-	radiusSelector: z
-		.number()
-		.int()
-		.min(THEME_INPUT_LIMITS.RADIUS_MIN)
-		.max(THEME_INPUT_LIMITS.RADIUS_MAX),
-	borderWidth: z
-		.number()
-		.min(THEME_INPUT_LIMITS.BORDER_WIDTH_MIN)
-		.max(THEME_INPUT_LIMITS.BORDER_WIDTH_MAX)
-		.refine(
+export const themeInputSchema = v.object({
+	baseHue: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.BASE_HUE_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.BASE_HUE_MAX),
+	),
+	baseChroma: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.BASE_CHROMA_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.BASE_CHROMA_MAX),
+	),
+	accentHue: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.ACCENT_HUE_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.ACCENT_HUE_MAX),
+	),
+	accentChroma: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.ACCENT_CHROMA_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX),
+	),
+	chatHue: v.nullable(
+		v.pipe(
+			v.number(),
+			v.minValue(THEME_INPUT_LIMITS.BASE_HUE_MIN),
+			v.maxValue(THEME_INPUT_LIMITS.BASE_HUE_MAX),
+		),
+	),
+	radiusBox: v.pipe(
+		v.number(),
+		v.integer(),
+		v.minValue(THEME_INPUT_LIMITS.RADIUS_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.RADIUS_MAX),
+	),
+	radiusField: v.pipe(
+		v.number(),
+		v.integer(),
+		v.minValue(THEME_INPUT_LIMITS.RADIUS_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.RADIUS_MAX),
+	),
+	radiusSelector: v.pipe(
+		v.number(),
+		v.integer(),
+		v.minValue(THEME_INPUT_LIMITS.RADIUS_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.RADIUS_MAX),
+	),
+	borderWidth: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.BORDER_WIDTH_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.BORDER_WIDTH_MAX),
+		v.check(
 			(val) =>
 				isValidStep(
 					val,
 					THEME_INPUT_LIMITS.BORDER_WIDTH_MIN,
 					THEME_INPUT_LIMITS.BORDER_WIDTH_STEP,
 				),
-			{ message: "Must be a valid step increment" },
+			"Must be a valid step increment",
 		),
-	sizeField: z
-		.number()
-		.min(THEME_INPUT_LIMITS.SIZE_MIN)
-		.max(THEME_INPUT_LIMITS.SIZE_MAX)
-		.refine(
+	),
+	sizeField: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.SIZE_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.SIZE_MAX),
+		v.check(
 			(val) =>
 				isValidStep(
 					val,
 					THEME_INPUT_LIMITS.SIZE_MIN,
 					THEME_INPUT_LIMITS.SIZE_STEP,
 				),
-			{ message: "Must be a valid step increment" },
+			"Must be a valid step increment",
 		),
-	sizeSelector: z
-		.number()
-		.min(THEME_INPUT_LIMITS.SIZE_MIN)
-		.max(THEME_INPUT_LIMITS.SIZE_MAX)
-		.refine(
+	),
+	sizeSelector: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.SIZE_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.SIZE_MAX),
+		v.check(
 			(val) =>
 				isValidStep(
 					val,
 					THEME_INPUT_LIMITS.SIZE_MIN,
 					THEME_INPUT_LIMITS.SIZE_STEP,
 				),
-			{ message: "Must be a valid step increment" },
+			"Must be a valid step increment",
 		),
-	sizeSpacing: z
-		.number()
-		.min(THEME_INPUT_LIMITS.SIZE_MIN)
-		.max(THEME_INPUT_LIMITS.SIZE_MAX)
-		.refine(
+	),
+	sizeSpacing: v.pipe(
+		v.number(),
+		v.minValue(THEME_INPUT_LIMITS.SIZE_MIN),
+		v.maxValue(THEME_INPUT_LIMITS.SIZE_MAX),
+		v.check(
 			(val) =>
 				isValidStep(
 					val,
 					THEME_INPUT_LIMITS.SIZE_MIN,
 					THEME_INPUT_LIMITS.SIZE_STEP,
 				),
-			{ message: "Must be a valid step increment" },
+			"Must be a valid step increment",
 		),
+	),
 });
 
 const timeStringRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-export const timeString = z.string().regex(timeStringRegex);
+export const timeString = v.pipe(v.string(), v.regex(timeStringRegex));
 
 const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;
-export const headMainSlotAbility = z
-	.string()
-	.refine(
+export const headMainSlotAbility = v.pipe(
+	v.string(),
+	v.check(
 		(val) =>
 			["STACKABLE", "HEAD_MAIN_ONLY"].includes(abilityNameToType(val) as any),
-		{ message: "forms:errors.required" },
-	);
-export const clothesMainSlotAbility = z
-	.string()
-	.refine(
+		"forms:errors.required",
+	),
+);
+export const clothesMainSlotAbility = v.pipe(
+	v.string(),
+	v.check(
 		(val) =>
 			["STACKABLE", "CLOTHES_MAIN_ONLY"].includes(
 				abilityNameToType(val) as any,
 			),
-		{ message: "forms:errors.required" },
-	);
-export const shoesMainSlotAbility = z
-	.string()
-	.refine(
+		"forms:errors.required",
+	),
+);
+export const shoesMainSlotAbility = v.pipe(
+	v.string(),
+	v.check(
 		(val) =>
 			["STACKABLE", "SHOES_MAIN_ONLY"].includes(abilityNameToType(val) as any),
-		{ message: "forms:errors.required" },
-	);
-export const stackableAbility = z
-	.string()
-	.refine((val) => abilityNameToType(val) === "STACKABLE", {
-		message: "forms:errors.required",
-	});
+		"forms:errors.required",
+	),
+);
+export const stackableAbility = v.pipe(
+	v.string(),
+	v.check(
+		(val) => abilityNameToType(val) === "STACKABLE",
+		"forms:errors.required",
+	),
+);
 
 export const normalizeFriendCode = (value: string) => {
 	const onlyNumbers = value.replace(/\D/g, "");
@@ -192,7 +307,7 @@ export const normalizeFriendCode = (value: string) => {
 	return withDashes;
 };
 
-export const ability = z.enum([
+export const ability = v.picklist([
 	"ISM",
 	"ISS",
 	"IRU",
@@ -220,20 +335,17 @@ export const ability = z.enum([
 	"OS",
 	"DR",
 ]);
-// keep in-game-lists and the zod enum in sync
-assertType<z.infer<typeof ability>, Unpacked<typeof abilitiesShort>>();
+// keep in-game-lists and the valibot enum in sync
+assertType<v.InferOutput<typeof ability>, Unpacked<typeof abilitiesShort>>();
 
-export const weaponSplId = z.preprocess(
-	actualNumber,
-	numericEnum(mainWeaponIds),
-);
+export const weaponSplId = preprocess(actualNumber, numericEnum(mainWeaponIds));
 
 export const subWeaponId = numericEnum(subWeaponIds);
 
 export const specialWeaponId = numericEnum(specialWeaponIds);
 
-export const modeShort = z.enum(["TW", "SZ", "TC", "RM", "CB"]);
-export const modeShortWithSpecial = z.enum([
+export const modeShort = v.picklist(["TW", "SZ", "TC", "RM", "CB"]);
+export const modeShortWithSpecial = v.picklist([
 	"TW",
 	"SZ",
 	"TC",
@@ -243,9 +355,9 @@ export const modeShortWithSpecial = z.enum([
 	"TB",
 ]);
 
-export const gamesShortSchema = z.enum(["S1", "S2", "S3"]);
+export const gamesShortSchema = v.picklist(["S1", "S2", "S3"]);
 
-export const stageId = z.preprocess(actualNumber, numericEnum(stageIds));
+export const stageId = preprocess(actualNumber, numericEnum(stageIds));
 
 export function processMany(
 	...processFuncs: Array<(value: unknown) => unknown>
@@ -291,20 +403,19 @@ const EMPTY_CHARACTERS_REGEX = new RegExp(EMPTY_CHARACTERS.join("|"), "g");
 const zalgoRe = /%CC%/;
 export const hasZalgo = (txt: string) => zalgoRe.test(encodeURIComponent(txt));
 
-/** Non-empty string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
+/** Non-empty string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
 export const safeStringSchema = ({ min, max }: { min?: number; max: number }) =>
-	z.preprocess(
+	preprocess(
 		actuallyNonEmptyStringOrNull, // if this returns null, none of the checks below will run because it's not a string
-		z
-			.string()
-			.min(min ?? 0)
-			.max(max)
-			.refine((text) => !hasZalgo(text), {
-				message: "Includes not allowed characters.",
-			}),
+		v.pipe(
+			v.string(),
+			v.minLength(min ?? 0),
+			v.maxLength(max),
+			v.check((text) => !hasZalgo(text), "Includes not allowed characters."),
+		),
 	);
 
-/** Nullable string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
+/** Nullable string that has the given length (max and optionally min). Prevents z͎͗ͣḁ̵̑l̉̃ͦg̐̓̒o͓̔ͥ text as well as filters out characters that have no width. */
 export const safeNullableStringSchema = ({
 	min,
 	max,
@@ -312,23 +423,16 @@ export const safeNullableStringSchema = ({
 	min?: number;
 	max: number;
 }) =>
-	z.preprocess(
+	preprocess(
 		processMany(undefinedToNull, actuallyNonEmptyStringOrNull),
-		z
-			.string()
-			.min(min ?? 0)
-			.max(max)
-			.nullable()
-			.refine(
-				(text) => {
-					if (typeof text !== "string") return true;
+		v.pipe(
+			v.nullable(v.pipe(v.string(), v.minLength(min ?? 0), v.maxLength(max))),
+			v.check((text) => {
+				if (typeof text !== "string") return true;
 
-					return !hasZalgo(text);
-				},
-				{
-					message: "Includes not allowed characters.",
-				},
-			),
+				return !hasZalgo(text);
+			}, "Includes not allowed characters."),
+		),
 	);
 
 /**
@@ -411,7 +515,7 @@ export function checkboxValueToBoolean(value: unknown) {
 }
 
 export const _action = <T extends string>(value: T) =>
-	z.preprocess(deduplicate, z.literal(value));
+	preprocess(deduplicate, v.literal(value));
 
 // Fix bug at least in Safari 15 where SubmitButton value might get sent twice
 export function deduplicate(value: unknown) {
@@ -426,26 +530,24 @@ export function deduplicate(value: unknown) {
 	return value;
 }
 
-// https://github.com/colinhacks/zod/issues/1118#issuecomment-1235065111
+/** Number schema accepting only the given values (replacement for a numeric `z.enum`). */
 export function numericEnum<TValues extends readonly number[]>(
 	values: TValues,
 ) {
-	return z.number().superRefine((val, ctx) => {
-		if (!values.includes(val)) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.invalid_value,
-				input: val,
-				values: [...values],
-				message: `Expected one of: ${values.join(", ")}, received ${val}`,
-			});
-		}
-	}) as ZodType<TValues[number]>;
+	return v.pipe(
+		v.number(),
+		v.check(
+			(val) => values.includes(val),
+			(issue) =>
+				`Expected one of: ${values.join(", ")}, received ${issue.input}`,
+		),
+	) as unknown as v.GenericSchema<number, TValues[number]>;
 }
 
-export const dayMonthYear = z.object({
-	day: z.coerce.number().int().min(1).max(31),
-	month: z.coerce.number().int().min(0).max(11),
-	year: z.coerce.number().int().min(2015).max(2100),
+export const dayMonthYear = v.object({
+	day: v.pipe(coerceNumber(), v.integer(), v.minValue(1), v.maxValue(31)),
+	month: v.pipe(coerceNumber(), v.integer(), v.minValue(0), v.maxValue(11)),
+	year: v.pipe(coerceNumber(), v.integer(), v.minValue(2015), v.maxValue(2100)),
 });
 
-export type DayMonthYear = z.infer<typeof dayMonthYear>;
+export type DayMonthYear = v.InferOutput<typeof dayMonthYear>;

@@ -5,10 +5,13 @@ import {
 	inGameNameIsValid,
 } from "~/features/user-page/in-game-name";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
+import type { AnySyncSchema } from "~/utils/zod";
 import {
+	coerceNumber,
 	date,
 	falsyToNull,
 	id,
+	preprocess,
 	safeNullableStringSchema,
 	safeStringSchema,
 	stageId,
@@ -35,21 +38,26 @@ import type {
 	TrophyOption,
 } from "./types";
 
-export const formRegistry = v.registry<FormField>();
+export const formRegistry = new WeakMap<object, FormField>();
 
 /**
- * Looks up a schemas form field metadata. Needed to bypass the
- * registrys deep generic `get` signature which causes
- * "Type instantiation is excessively deep" errors.
+ * Attaches form field metadata to a schema. Clones the schema first so shared
+ * schema instances (e.g. `id`, `stageId`) each get their own registry entry.
  */
-export function getFormFieldMetadata(schema: v.ZodType): FormField | undefined {
-	const registry = formRegistry as {
-		get(schema: v.ZodType): FormField | undefined;
-	};
-	return registry.get(schema);
+function register<T extends AnySyncSchema>(schema: T, metadata: FormField): T {
+	const clone = { ...schema };
+	formRegistry.set(clone, metadata);
+	return clone;
 }
 
-export type RequiresDefault<T extends v.ZodType> = T & {
+/** Looks up a schema's form field metadata. */
+export function getFormFieldMetadata(
+	schema: AnySyncSchema,
+): FormField | undefined {
+	return formRegistry.get(schema);
+}
+
+export type RequiresDefault<T extends AnySyncSchema> = T & {
 	_requiresDefault: true;
 };
 
@@ -114,9 +122,7 @@ export function image(args: {
 	dimensions?: "logo" | "thick-banner" | { width: number; height: number };
 	autoValidate?: boolean;
 }) {
-	// clone so each field gets its own registry entry (the shared `imageValue`
-	// instance would otherwise have its metadata overwritten by later fields)
-	return imageValue.clone().register(formRegistry, {
+	return register(imageValue, {
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		dimensions: args.dimensions ?? "logo",
@@ -126,12 +132,11 @@ export function image(args: {
 	});
 }
 
-export function customField<T extends v.ZodType>(
+export function customField<T extends AnySyncSchema>(
 	args: Omit<Extract<FormField, { type: "custom" }>, "type">,
 	schema: T,
 ) {
-	// @ts-expect-error Complex generic type with registry
-	return schema.register(formRegistry, {
+	return register(schema, {
 		...args,
 		type: "custom",
 	});
@@ -145,12 +150,18 @@ type TextFieldArgs = WithTypedTranslationKeys<
 >;
 
 export function textFieldOptional(args: TextFieldArgs) {
-	const schema =
-		args.validate === "url"
-			? v.url()
-			: safeNullableStringSchema({ min: args.minLength, max: args.maxLength });
+	// a url field is validated as a plain string, so unlike the other optional
+	// text fields it has no null to fall back to and its key stays required
+	if (args.validate === "url") {
+		return registerTextField(v.pipe(v.string(), v.url()), args, false, false);
+	}
 
-	return registerTextField(schema, args, false);
+	return registerTextField(
+		safeNullableStringSchema({ min: args.minLength, max: args.maxLength }),
+		args,
+		false,
+		true,
+	);
 }
 
 export function textField(args: TextFieldArgs) {
@@ -159,16 +170,17 @@ export function textField(args: TextFieldArgs) {
 			? v.pipe(v.string(), v.url())
 			: safeStringSchema({ min: args.minLength, max: args.maxLength });
 
-	return registerTextField(schema, args, true);
+	return registerTextField(schema, args, true, false);
 }
 
-function registerTextField<T extends v.ZodType<string | null>>(
+function registerTextField<T extends v.GenericSchema<any, string | null>>(
 	schema: T,
 	args: TextFieldArgs,
 	required: boolean,
+	nullable: boolean,
 ): T {
-	const refined = textFieldRefined(schema, args) as v.ZodType<string | null>;
-	return refined.register(formRegistry, {
+	const refined = textFieldRefined(schema, args);
+	return register(nullable ? optionalKey(refined) : refined, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -176,47 +188,48 @@ function registerTextField<T extends v.ZodType<string | null>>(
 		required,
 		type: "text-field",
 		initialValue: "",
-	}) as T;
+	}) as unknown as T;
 }
 
-function textFieldRefined<T extends v.ZodType<string | null>>(
+function textFieldRefined<T extends v.GenericSchema<any, string | null>>(
 	schema: T,
 	args: Omit<
 		Extract<FormField, { type: "text-field" }>,
 		"type" | "initialValue" | "required"
 	>,
-): T {
-	let result = schema as v.ZodType<string | null>;
+): v.GenericSchema<any, string | null> {
+	let result: v.GenericSchema<any, string | null> = schema;
 
 	if (args.regExp) {
-		result = result.refine(
-			(val) => {
+		result = v.pipe(
+			result,
+			v.check((val) => {
 				if (val === null) return true;
 				return args.regExp!.pattern.test(val);
-			},
-			{ message: args.regExp!.message },
+			}, args.regExp!.message),
 		);
 	}
 
 	if (args.validate && typeof args.validate !== "string") {
-		result = result.refine(
-			(val) => {
+		result = v.pipe(
+			result,
+			v.check((val) => {
 				if (val === null) return true;
 				return (args.validate as { func: (value: string) => boolean }).func(
 					val,
 				);
-			},
-			{ message: args.validate!.message },
+			}, args.validate!.message),
 		);
 	}
 
 	if (args.toLowerCase) {
-		result = result.transform(
-			(val) => val?.toLowerCase() ?? null,
-		) as unknown as typeof result;
+		result = v.pipe(
+			result,
+			v.transform((val) => val?.toLowerCase() ?? null),
+		);
 	}
 
-	return result as T;
+	return result;
 }
 
 export function inGameName(
@@ -225,13 +238,17 @@ export function inGameName(
 		bottomText?: FormsTranslationKey;
 	}>,
 ) {
-	const schema = safeNullableStringSchema({
-		max: IN_GAME_NAME_MAX_LENGTH,
-	}).refine((val) => val === null || inGameNameIsValid(val), {
-		message: "forms:errors.profileInGameName",
-	});
+	const schema = v.pipe(
+		safeNullableStringSchema({
+			max: IN_GAME_NAME_MAX_LENGTH,
+		}),
+		v.check(
+			(val) => val === null || inGameNameIsValid(val),
+			"forms:errors.profileInGameName",
+		),
+	);
 
-	return schema.register(formRegistry, {
+	return register(optionalKey(schema), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -257,33 +274,36 @@ type NumberFieldArgs = WithTypedTranslationKeys<
 export function numberField(
 	args: NumberFieldArgs & { min?: number; max?: number },
 ) {
-	let schema = numberSchema();
+	let schema: v.GenericSchema<unknown, number> = numberSchema();
 
 	// an empty field coerces to 0, so `min` is also what makes a required number
 	// field reject being left blank
 	if (typeof args.min === "number") {
-		schema = v.pipe(schema, v.minLength(args.min, "forms:errors.numberOutOfRange"));
+		schema = v.pipe(
+			schema,
+			v.minValue(args.min, "forms:errors.numberOutOfRange"),
+		);
 	}
 	if (typeof args.max === "number") {
-		schema = v.pipe(schema, v.maxLength(args.max, "forms:errors.numberOutOfRange"));
+		schema = v.pipe(
+			schema,
+			v.maxValue(args.max, "forms:errors.numberOutOfRange"),
+		);
 	}
 
-	return schema.register(formRegistry, numberFieldMetadata(args, true));
+	return register(schema, numberFieldMetadata(args, true));
 }
 
 export function numberFieldOptional(args: NumberFieldArgs) {
-	return numberSchema()
-		.optional()
-		.register(formRegistry, numberFieldMetadata(args, false));
+	return register(v.optional(numberSchema()), numberFieldMetadata(args, false));
 }
 
 function numberSchema() {
 	return v.pipe(
-        v.unknown(),
-        v.toNumber(),
-        v.integer("forms:errors.mustBeWholeNumber"),
-        v.minValue(0)
-    );
+		coerceNumber(),
+		v.integer("forms:errors.mustBeWholeNumber"),
+		v.minValue(0),
+	);
 }
 
 function numberFieldMetadata(args: NumberFieldArgs, required: boolean) {
@@ -322,19 +342,19 @@ export function textArea(args: TextAreaArgs) {
 	);
 }
 
-function registerTextArea<T extends v.ZodType<string | null>>(
+function registerTextArea<T extends v.GenericSchema<any, string | null>>(
 	schema: T,
 	args: TextAreaArgs,
 	required: boolean,
 ): T {
-	return (schema as v.ZodType<string | null>).register(formRegistry, {
+	return register((required ? schema : optionalKey(schema)) as T, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		required,
 		type: "text-area",
 		initialValue: "",
-	}) as T;
+	});
 }
 
 export function toggle(
@@ -345,21 +365,42 @@ export function toggle(
 		initialValue?: boolean;
 	},
 ) {
-	return v.optional(v.optional(v.boolean()), false)(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "switch",
-			initialValue: args.initialValue ?? false,
-		});
+	return register(v.optional(v.boolean(), false), {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "switch",
+		initialValue: args.initialValue ?? false,
+	});
 }
+
+/**
+ * Makes a nullable field tolerate a missing key, the way the equivalent zod
+ * schema did: `v.object` requires every key whose entry schema is not itself
+ * optional, and a `preprocess` pipe hides the nullable wrapper behind its own
+ * type. The `null` default is fed through the schema, so an absent field parses
+ * exactly like an explicitly `null` one.
+ */
+function optionalKey<TSchema extends v.GenericSchema<any, any>>(
+	schema: TSchema,
+) {
+	return v.optional(schema, null);
+}
+
+/**
+ * Item value type of a field builder, shielded from inference. Without it,
+ * calling a builder inline inside `v.object({...})` lets valibot's entry
+ * constraint drive `V` from the return position and widen the item literals to
+ * `string`.
+ */
+type ItemValue<V extends string> = NoInfer<V>;
 
 function itemsSchema<V extends string>(items: FormFieldItems<V>) {
 	return v.picklist(items.map((item) => item.value) as [V, ...V[]]);
 }
 
 function clearableItemsSchema<V extends string>(items: FormFieldItems<V>) {
-	return v.preprocess(
+	return preprocess(
 		falsyToNull,
 		v.nullable(v.picklist(items.map((item) => item.value) as [V, ...V[]])),
 	);
@@ -372,8 +413,8 @@ export function selectOptional<V extends string>(
 			V
 		>
 	>,
-) {
-	return clearableItemsSchema(args.items).register(formRegistry, {
+): v.GenericSchema<unknown, ItemValue<V> | null> {
+	return register(optionalKey(clearableItemsSchema(args.items)), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -394,8 +435,8 @@ export function select<V extends string>(
 		/** Value selected when the form has no default value for the field. Defaults to the first item. */
 		initialValue?: V;
 	},
-) {
-	return itemsSchema(args.items).register(formRegistry, {
+): v.GenericSchema<ItemValue<V>, ItemValue<V>> {
+	return register(itemsSchema(args.items), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -417,14 +458,14 @@ export function selectDynamic(
 		initialValue?: string;
 	},
 ) {
-	return v.string()(formRegistry, {
+	return register(v.string(), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "select-dynamic",
 		initialValue: args.initialValue ?? null,
 		clearable: false,
-	}) as unknown as v.ZodType<string> & FieldWithOptions<SelectOption[]>;
+	}) as unknown as v.GenericSchema<string> & FieldWithOptions<SelectOption[]>;
 }
 
 export function selectDynamicOptional(
@@ -435,15 +476,17 @@ export function selectDynamicOptional(
 		>
 	>,
 ) {
-	return v.preprocess(falsyToNull, v.nullable(v.string()))
-		.register(formRegistry, {
+	return register(
+		optionalKey(preprocess(falsyToNull, v.nullable(v.string()))),
+		{
 			...args,
 			label: prefixKey(args.label),
 			bottomText: prefixKey(args.bottomText),
 			type: "select-dynamic",
 			initialValue: null,
 			clearable: true,
-		}) as unknown as v.ZodType<string | null> &
+		},
+	) as unknown as v.GenericSchema<unknown, string | null> &
 		FieldWithOptions<SelectOption[]>;
 }
 
@@ -457,22 +500,30 @@ export function dualSelectOptional<V extends string>(
 			V
 		>
 	>,
-) {
-	let schema = v.optional(v.tuple([
+): v.GenericSchema<
+	unknown,
+	[ItemValue<V> | null, ItemValue<V> | null] | undefined
+> {
+	const base = v.optional(
+		v.tuple([
 			clearableItemsSchema(args.fields[0].items),
 			clearableItemsSchema(args.fields[1].items),
-		]));
+		]),
+	);
 
-	if (args.validate) {
-		schema = v.pipe(schema, v.check((val) => {
-            if (!val) return true;
-            const [first, second] = val;
-            return args.validate!.func([first, second]);
-        }, `forms:${args.validate!.message}`));
-	}
+	const schema: v.GenericSchema<unknown, [V | null, V | null] | undefined> =
+		args.validate
+			? v.pipe(
+					base,
+					v.check((val) => {
+						if (!val) return true;
+						const [first, second] = val;
+						return args.validate!.func([first, second]);
+					}, `forms:${args.validate!.message}`),
+				)
+			: base;
 
-	// @ts-expect-error Complex generic type
-	return schema.register(formRegistry, {
+	return register(schema, {
 		...args,
 		bottomText: prefixKey(args.bottomText),
 		fields: args.fields.map((field) => ({
@@ -483,7 +534,7 @@ export function dualSelectOptional<V extends string>(
 		type: "dual-select",
 		initialValue: [null, null],
 		clearable: true,
-	});
+	} as unknown as FormField);
 }
 
 export function radioGroup<V extends string>(
@@ -493,8 +544,8 @@ export function radioGroup<V extends string>(
 			V
 		>
 	>,
-) {
-	return itemsSchema(args.items).register(formRegistry, {
+): v.GenericSchema<ItemValue<V>, ItemValue<V>> {
+	return register(itemsSchema(args.items), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -512,13 +563,13 @@ export function radioGroupDynamic(
 		>
 	>,
 ) {
-	return v.string()(formRegistry, {
+	return register(v.string(), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "radio-group-dynamic",
 		initialValue: null,
-	}) as unknown as v.ZodType<string> &
+	}) as unknown as v.GenericSchema<string> &
 		FieldWithOptions<FormFieldItemsWithImage<string>>;
 }
 
@@ -530,17 +581,20 @@ export function checkboxGroupDynamic(
 		>
 	>,
 ) {
-	return v.pipe(
-        v.array(v.string()),
-        v.minLength(args.minLength ?? 0, "forms:errors.required"),
-        v.check((val) => val.length === R.unique(val).length)
-    )(formRegistry, {
+	return register(
+		v.pipe(
+			v.array(v.string()),
+			v.minLength(args.minLength ?? 0, "forms:errors.required"),
+			v.check((val) => val.length === R.unique(val).length),
+		),
+		{
 			...args,
 			label: prefixKey(args.label),
 			bottomText: prefixKey(args.bottomText),
 			type: "checkbox-group-dynamic",
 			initialValue: [],
-		}) as unknown as v.ZodType<string[]> &
+		},
+	) as unknown as v.GenericSchema<string[]> &
 		FieldWithOptions<FormFieldItemsWithImage<string>>;
 }
 
@@ -551,17 +605,21 @@ type DateTimeArgs = WithTypedTranslationKeys<
 	maxMessage?: FormsTranslationKey;
 };
 
-function boundedDate(args: DateTimeArgs, schema: v.ZodDate) {
+function boundedDate(args: DateTimeArgs, schema: v.GenericSchema<Date, Date>) {
 	const resolveMin = args.min ?? (() => new Date(Date.UTC(2015, 4, 28)));
 	const resolveMax = args.max ?? (() => new Date(Date.UTC(2030, 4, 28)));
 
-	return v.pipe(schema, v.check(
-        (d) => d >= resolveMin(),
-        `forms:${args.minMessage ?? "errors.dateTooEarly"}`
-    ), v.check(
-        (d) => d <= resolveMax(),
-        `forms:${args.maxMessage ?? "errors.dateTooLate"}`
-    ));
+	return v.pipe(
+		schema,
+		v.check(
+			(d) => d >= resolveMin(),
+			`forms:${args.minMessage ?? "errors.dateTooEarly"}`,
+		),
+		v.check(
+			(d) => d <= resolveMax(),
+			`forms:${args.maxMessage ?? "errors.dateTooLate"}`,
+		),
+	);
 }
 
 function datetimeMetadata(
@@ -578,38 +636,33 @@ function datetimeMetadata(
 }
 
 export function datetime(args: DateTimeArgs) {
-	return v.preprocess(
-			date,
-			boundedDate(args, v.date("forms:errors.required")),
-		)
-		.register(
-			formRegistry,
-			datetimeMetadata(args, { type: "datetime", required: true }),
-		);
+	return register(
+		preprocess(date, boundedDate(args, v.date("forms:errors.required"))),
+		datetimeMetadata(args, { type: "datetime", required: true }),
+	);
 }
 
 export function datetimeOptional(args: DateTimeArgs) {
-	return v.preprocess(date, boundedDate(args, v.date()).nullish())
-		.register(
-			formRegistry,
-			datetimeMetadata(args, { type: "datetime", required: false }),
-		);
+	// the `nullish` wrapper stays outermost so `v.object` still reads the key as
+	// optional (a pipe reports its first item's type, hiding the wrapper)
+	return register(
+		v.nullish(preprocess(date, boundedDate(args, v.date()))),
+		datetimeMetadata(args, { type: "datetime", required: false }),
+	);
 }
 
 export function dayMonthYear(args: DateTimeArgs) {
-	return v.preprocess(
-			date,
-			boundedDate(args, v.date("forms:errors.required")),
-		)
-		.transform((d) => ({
-			day: d.getDate(),
-			month: d.getMonth(),
-			year: d.getFullYear(),
-		}))
-		.register(
-			formRegistry,
-			datetimeMetadata(args, { type: "date", required: true }),
-		);
+	return register(
+		v.pipe(
+			preprocess(date, boundedDate(args, v.date("forms:errors.required"))),
+			v.transform((d) => ({
+				day: d.getDate(),
+				month: d.getMonth(),
+				year: d.getFullYear(),
+			})),
+		),
+		datetimeMetadata(args, { type: "date", required: true }),
+	);
 }
 
 export function checkboxGroup<V extends string>(
@@ -619,19 +672,22 @@ export function checkboxGroup<V extends string>(
 			V
 		>
 	>,
-) {
-	return v.pipe(
-        v.array(itemsSchema(args.items)),
-        v.minLength(args.minLength ?? 0),
-        v.check((val) => val.length === R.unique(val).length)
-    )(formRegistry, {
+): v.GenericSchema<ItemValue<V>[], ItemValue<V>[]> {
+	return register(
+		v.pipe(
+			v.array(itemsSchema(args.items)),
+			v.minLength(args.minLength ?? 0),
+			v.check((val) => val.length === R.unique(val).length),
+		),
+		{
 			...args,
 			label: prefixKey(args.label),
 			bottomText: prefixKey(args.bottomText),
 			items: prefixItems(args.items),
 			type: "checkbox-group",
 			initialValue: [],
-		});
+		},
+	);
 }
 
 export function weaponPool(
@@ -639,25 +695,42 @@ export function weaponPool(
 		Omit<Extract<FormField, { type: "weapon-pool" }>, "type" | "initialValue">
 	>,
 ) {
-	let schema = v.pipe(v.array(v.object({
-        id: weaponSplId,
-        isFavorite: v.boolean(),
-    })), v.minLength(args.minCount ?? 0), v.maxLength(args.maxCount));
+	type WeaponPoolValue = Array<{
+		id: v.InferOutput<typeof weaponSplId>;
+		isFavorite: boolean;
+	}>;
+	let schema: v.GenericSchema<unknown, WeaponPoolValue> = v.pipe(
+		v.array(
+			v.object({
+				id: weaponSplId,
+				isFavorite: v.boolean(),
+			}),
+		),
+		v.minLength(args.minCount ?? 0),
+		v.maxLength(args.maxCount),
+	);
 
 	if (!args.allowDuplicates) {
 		schema = v.pipe(
-            schema,
-            v.check((val) => val.length === R.uniqueBy(val, (item) => item.id).length)
-        );
+			schema,
+			v.check(
+				(val) => val.length === R.uniqueBy(val, (item) => item.id).length,
+			),
+		);
 	}
 
 	if (args.disableAltSkinDuplicates) {
-		schema = v.pipe(schema, v.check((val) =>
-            val.length ===
-            R.uniqueBy(val, (item) => canonicalWeaponSplId(item.id)).length));
+		schema = v.pipe(
+			schema,
+			v.check(
+				(val) =>
+					val.length ===
+					R.uniqueBy(val, (item) => canonicalWeaponSplId(item.id)).length,
+			),
+		);
 	}
 
-	return schema.register(formRegistry, {
+	return register(schema, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -673,17 +746,16 @@ export function weaponPool(
  * Pass `initialValue` to hardcode the starting value. Omitting it makes the
  * field require a matching entry in the form's `defaultValues`.
  */
-export function hidden<T extends v.ZodType>(
+export function hidden<T extends AnySyncSchema>(
 	schema: T,
 	initialValue: v.InferInput<T>,
 ): T;
-export function hidden<T extends v.ZodType>(schema: T): RequiresDefault<T>;
-export function hidden<T extends v.ZodType>(
+export function hidden<T extends AnySyncSchema>(schema: T): RequiresDefault<T>;
+export function hidden<T extends AnySyncSchema>(
 	schema: T,
 	initialValue?: v.InferInput<T>,
 ) {
-	// @ts-expect-error Complex generic type with registry
-	return schema.register(formRegistry, {
+	return register(schema, {
 		type: "hidden",
 		initialValue,
 	}) as never;
@@ -693,34 +765,39 @@ export function stringConstant<T extends string>(value: T) {
 	return hidden(v.literal(value), value);
 }
 
-export function idConstant<T extends number>(value: T): v.ZodLiteral<T>;
-export function idConstant(): RequiresDefault<v.ZodNumber>;
+export function idConstant<T extends number>(
+	value: T,
+): v.LiteralSchema<T, undefined>;
+export function idConstant(): RequiresDefault<v.GenericSchema<unknown, number>>;
 export function idConstant<T extends number>(value?: T) {
 	return (
-		value !== undefined ? hidden(v.literal(value), value) : hidden(id.clone())
+		value !== undefined ? hidden(v.literal(value), value) : hidden(id)
 	) as never;
 }
 
 export function idConstantOptional<T extends number>(value?: T) {
 	return value
 		? hidden(v.optional(v.literal(value)), value)
-		: hidden(id.optional(), undefined);
+		: hidden(v.optional(id), undefined);
 }
 
-export function array<S extends v.ZodType>(
+export function array<S extends AnySyncSchema>(
 	args: WithTypedTranslationKeys<
 		Omit<FormFieldArray<"array", S>, "type" | "initialValue">
 	>,
 ) {
-	const schema = v.pipe(v.array(args.field), v.minLength(args.min ?? 0), v.maxLength(args.max));
-	// @ts-expect-error Complex generic type with registry
-	return schema.register(formRegistry, {
+	const schema = v.pipe(
+		v.array(args.field),
+		v.minLength(args.min ?? 0),
+		v.maxLength(args.max),
+	);
+	return register(schema, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "array",
 		initialValue: [],
-	});
+	} as FormField);
 }
 
 type TimeRangeArgs = WithTypedTranslationKeys<
@@ -734,10 +811,14 @@ type TimeRangeArgs = WithTypedTranslationKeys<
 };
 
 export function timeRangeOptional(args: TimeRangeArgs) {
-	return v.nullable(v.object({
-			start: timeString,
-			end: timeString,
-		}))(formRegistry, {
+	return register(
+		v.nullable(
+			v.object({
+				start: timeString,
+				end: timeString,
+			}),
+		),
+		{
 			...args,
 			label: prefixKey(args.label),
 			bottomText: prefixKey(args.bottomText),
@@ -745,22 +826,22 @@ export function timeRangeOptional(args: TimeRangeArgs) {
 			endLabel: prefixKey(args.endLabel),
 			type: "time-range",
 			initialValue: null,
-		});
+		},
+	);
 }
 
-export function fieldset<S extends v.ZodRawShape>(
+export function fieldset<S extends v.ObjectEntries>(
 	args: WithTypedTranslationKeys<
 		Omit<FormFieldFieldset<"fieldset", S>, "type" | "initialValue" | "fields">
-	> & { fields: v.ZodObject<S> },
-): v.ZodObject<S> {
-	// @ts-expect-error Complex generic type with registry
-	return args.fields.register(formRegistry, {
+	> & { fields: v.ObjectSchema<S, undefined> },
+): v.ObjectSchema<S, undefined> {
+	return register(args.fields, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "fieldset",
 		initialValue: {},
-	}) as v.ZodObject<S>;
+	} as FormField);
 }
 
 type UserSearchArgs = WithTypedTranslationKeys<
@@ -771,11 +852,11 @@ type UserSearchArgs = WithTypedTranslationKeys<
 >;
 
 export function userSearch(args: UserSearchArgs) {
-	return id.clone().register(formRegistry, userSearchMetadata(args, true));
+	return register(id, userSearchMetadata(args, true));
 }
 
 export function userSearchOptional(args: UserSearchArgs) {
-	return id.optional().register(formRegistry, userSearchMetadata(args, false));
+	return register(v.optional(id), userSearchMetadata(args, false));
 }
 
 function userSearchMetadata(args: UserSearchArgs, required: boolean) {
@@ -797,14 +878,14 @@ export function tournamentSearchOptional(
 		>
 	>,
 ) {
-	return v.preprocess(falsyToNull, id.nullable()).register(formRegistry, {
+	return register(optionalKey(preprocess(falsyToNull, v.nullable(id))), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "tournament-search",
 		initialValue: null,
 		required: false,
-	}) as unknown as v.ZodType<number | null> &
+	}) as unknown as v.GenericSchema<unknown, number | null> &
 		FieldWithOptions<TournamentSearchFieldOptions>;
 }
 
@@ -816,14 +897,14 @@ export function teamSearchOptional(
 		>
 	>,
 ) {
-	return v.preprocess(falsyToNull, id.nullable()).register(formRegistry, {
+	return register(optionalKey(preprocess(falsyToNull, v.nullable(id))), {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
 		type: "team-search",
 		initialValue: null,
 		required: false,
-	}) as unknown as v.ZodType<number | null> &
+	}) as unknown as v.GenericSchema<unknown, number | null> &
 		FieldWithOptions<TeamSearchFieldOptions>;
 }
 
@@ -832,13 +913,14 @@ export function badges(
 		Omit<Extract<FormField, { type: "badges" }>, "type" | "initialValue">
 	>,
 ) {
-	return v.pipe(v.array(id), v.maxLength(args.maxCount ?? 50))(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "badges",
-			initialValue: [],
-		}) as v.ZodArray<typeof id> & FieldWithOptions<BadgeOption[]>;
+	return register(v.pipe(v.array(id), v.maxLength(args.maxCount ?? 50)), {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "badges",
+		initialValue: [],
+	}) as unknown as v.GenericSchema<unknown[], number[]> &
+		FieldWithOptions<BadgeOption[]>;
 }
 
 export function trophies(
@@ -846,13 +928,14 @@ export function trophies(
 		Omit<Extract<FormField, { type: "trophies" }>, "type" | "initialValue">
 	>,
 ) {
-	return v.pipe(v.array(id), v.maxLength(args.maxCount ?? 100))(formRegistry, {
-			...args,
-			label: prefixKey(args.label),
-			bottomText: prefixKey(args.bottomText),
-			type: "trophies",
-			initialValue: [],
-		}) as v.ZodArray<typeof id> & FieldWithOptions<TrophyOption[]>;
+	return register(v.pipe(v.array(id), v.maxLength(args.maxCount ?? 100)), {
+		...args,
+		label: prefixKey(args.label),
+		bottomText: prefixKey(args.bottomText),
+		type: "trophies",
+		initialValue: [],
+	}) as unknown as v.GenericSchema<unknown[], number[]> &
+		FieldWithOptions<TrophyOption[]>;
 }
 
 export function stageSelect(
@@ -863,7 +946,7 @@ export function stageSelect(
 		>
 	>,
 ) {
-	return stageId.register(formRegistry, {
+	return register(stageId, {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
@@ -881,13 +964,11 @@ type WeaponSelectArgs = WithTypedTranslationKeys<
 >;
 
 export function weaponSelect(args: WeaponSelectArgs) {
-	return weaponSplId.register(formRegistry, weaponSelectMetadata(args, true));
+	return register(weaponSplId, weaponSelectMetadata(args, true));
 }
 
 export function weaponSelectOptional(args: WeaponSelectArgs) {
-	return weaponSplId
-		.optional()
-		.register(formRegistry, weaponSelectMetadata(args, false));
+	return register(v.optional(weaponSplId), weaponSelectMetadata(args, false));
 }
 
 function weaponSelectMetadata(args: WeaponSelectArgs, required: boolean) {

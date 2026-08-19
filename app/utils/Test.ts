@@ -3,8 +3,8 @@ import type {
 	LoaderFunctionArgs,
 	Params,
 } from "react-router";
+import type * as v from "valibot";
 import { expect } from "vitest";
-import * as v from "valibot";
 import { REGULAR_USER_TEST_ID } from "~/db/seed/constants";
 import { actAs } from "~/db/seed/core/actAs";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -14,6 +14,7 @@ import {
 	getUserFromRequest,
 	userAsyncLocalStorage,
 } from "~/features/auth/core/user-context.server";
+import type { AnySchema } from "~/utils/zod";
 import { logger } from "./logger";
 
 /**
@@ -60,7 +61,7 @@ export function withNoUser<T>(fn: () => T): T {
  *
  * const someAction = wrappedAction<typeof someActionSchema>({ action });
  */
-export function wrappedAction<T extends v.ZodTypeAny>({
+export function wrappedAction<T extends AnySchema>({
 	action,
 	/** Is this action submitted as json (via SendouForm) */
 	isJsonSubmission = false,

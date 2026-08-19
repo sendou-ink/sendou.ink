@@ -16,13 +16,15 @@ const partialDiscordUserSchema = v.object({
 	global_name: v.optional(v.nullable(v.string())),
 	verified: v.optional(v.nullable(v.boolean())),
 });
-const partialDiscordConnectionsSchema = v.array(v.object({
-    visibility: v.number(),
-    verified: v.boolean(),
-    name: v.string(),
-    id: v.string(),
-    type: v.string(),
-}));
+const partialDiscordConnectionsSchema = v.array(
+	v.object({
+		visibility: v.number(),
+		verified: v.boolean(),
+		name: v.string(),
+		id: v.string(),
+		type: v.string(),
+	}),
+);
 const discordUserDetailsSchema = v.tuple([
 	partialDiscordUserSchema,
 	partialDiscordConnectionsSchema,
@@ -34,7 +36,10 @@ const discordRateLimitSchema = v.object({
 export const DiscordStrategy = () => {
 	const jsonIfOk = async (res: Response) => {
 		if (res.status === 429) {
-			const body = v.safeParse(discordRateLimitSchema, await res.clone().json());
+			const body = v.safeParse(
+				discordRateLimitSchema,
+				await res.clone().json(),
+			);
 			const retryAfterSeconds = body.success ? body.output.retry_after : 60;
 			discordApiCooldownUntil = add(new Date(), {
 				seconds: retryAfterSeconds,
@@ -87,8 +92,10 @@ export const DiscordStrategy = () => {
 					tokens.accessToken(),
 				);
 
-				const [user, connections] =
-					v.parse(discordUserDetailsSchema, discordResponses);
+				const [user, connections] = v.parse(
+					discordUserDetailsSchema,
+					discordResponses,
+				);
 
 				const isAlreadyRegistered = Boolean(
 					await UserRepository.findIdByIdentifier(user.id),

@@ -9,14 +9,20 @@ export const tournamentAuditSearchParams = SearchParams.define({
 		loader: true,
 		resets: ["page"],
 	}),
-	auditTeam: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
-		loader: true,
-		resets: ["page"],
-	}),
+	auditTeam: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+		{
+			loader: true,
+			resets: ["page"],
+		},
+	),
 });
 
 export const tournamentImportTeamsSearchParams = SearchParams.define({
-	fromTournamentId: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
-		loader: true,
-	}),
+	fromTournamentId: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+		{
+			loader: true,
+		},
+	),
 });

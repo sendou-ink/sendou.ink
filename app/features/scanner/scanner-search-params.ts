@@ -9,7 +9,9 @@ export type ScannerTab = (typeof SCANNER_TABS)[number];
 export const scannerSearchParams = SearchParams.define({
 	tab: SP.param(v.picklist(SCANNER_TABS), { default: "live", loader: false }),
 	/** Inspect handoff key: the screenshot tab claims this frame on load */
-	inspect: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(100))), { loader: false }),
+	inspect: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(100))), {
+		loader: false,
+	}),
 	/**
 	 * Opt-in scan telemetry: counters are accumulated and the panel is shown
 	 * only when this is set by hand in the URL (no link points at it)

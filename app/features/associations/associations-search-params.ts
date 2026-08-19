@@ -4,7 +4,10 @@ import { SP } from "~/modules/search-params/search-params";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 
 export const associationsSearchParams = SearchParams.define({
-	inviteCode: SP.param(v.nullable(v.pipe(v.string(), v.length(SHORT_NANOID_LENGTH))), {
-		loader: true,
-	}),
+	inviteCode: SP.param(
+		v.nullable(v.pipe(v.string(), v.length(SHORT_NANOID_LENGTH))),
+		{
+			loader: true,
+		},
+	),
 });

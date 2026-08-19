@@ -1,5 +1,5 @@
 import { type ActionFunction, redirect } from "react-router";
-import * as v from "valibot";
+import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
 import { parseFormData } from "~/form/parse.server";

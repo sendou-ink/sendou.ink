@@ -38,10 +38,12 @@ const bankaraNodeSchema = v.object({
 	bankaraMatchSettings: v.nullable(v.array(bankaraMatchSettingSchema)),
 });
 
-const xMatchSettingSchema = v.nullable(v.object({
+const xMatchSettingSchema = v.nullable(
+	v.object({
 		vsStages: v.array(vsStageSchema),
 		vsRule: vsRuleSchema,
-	}));
+	}),
+);
 
 const xNodeSchema = v.object({
 	startTime: v.string(),
@@ -86,7 +88,7 @@ export async function fetchRotations(): Promise<
 
 	const rotations: Omit<TablesInsertable["SplatoonRotation"], "id">[] = [];
 
-	for (const node of parsed.output.bankaraSchedules.nodes) {
+	for (const node of parsed.data.bankaraSchedules.nodes) {
 		if (!node.bankaraMatchSettings) continue;
 
 		for (const setting of node.bankaraMatchSettings) {
@@ -110,7 +112,7 @@ export async function fetchRotations(): Promise<
 		}
 	}
 
-	for (const node of parsed.output.xSchedules.nodes) {
+	for (const node of parsed.data.xSchedules.nodes) {
 		if (!node.xMatchSetting) continue;
 
 		const mode = resolveMode(node.xMatchSetting.vsRule.rule);

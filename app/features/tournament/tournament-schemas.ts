@@ -1,5 +1,12 @@
 import * as v from "valibot";
-import { _action, id, modeShort, safeJSONParse, stageId } from "~/utils/zod";
+import {
+	_action,
+	id,
+	modeShort,
+	preprocess,
+	safeJSONParse,
+	stageId,
+} from "~/utils/zod";
 
 export const checkInSchema = v.object({
 	_action: _action("CHECK_IN"),
@@ -7,7 +14,7 @@ export const checkInSchema = v.object({
 
 export const updateMapPoolSchema = v.object({
 	_action: _action("UPDATE_MAP_POOL"),
-	mapPool: v.preprocess(
+	mapPool: preprocess(
 		safeJSONParse,
 		v.array(v.object({ stageId, mode: modeShort })),
 	),

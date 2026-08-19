@@ -8,5 +8,7 @@ export const leaderboardsSearchParams = SearchParams.define({
 		default: LEADERBOARD_TYPES[0],
 		loader: true,
 	}),
-	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), { loader: true }),
+	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
+		loader: true,
+	}),
 });

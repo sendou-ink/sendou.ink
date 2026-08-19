@@ -44,7 +44,9 @@ export const associationsPageActionSchema = v.union([
 	leaveAssociationSchema,
 ]);
 
-const virtualAssociationIdentifierSchema = v.picklist(ASSOCIATION.VIRTUAL_IDENTIFIERS);
+const virtualAssociationIdentifierSchema = v.picklist(
+	ASSOCIATION.VIRTUAL_IDENTIFIERS,
+);
 
 export const associationIdentifierSchema = v.union([
 	virtualAssociationIdentifierSchema,

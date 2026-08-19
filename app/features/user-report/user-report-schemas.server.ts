@@ -2,21 +2,20 @@ import * as v from "valibot";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { reportUserSchema } from "./user-report-schemas";
 
-export const reportUserSchemaServer = v.object({
-	...reportUserSchema.shape,
-	// cast to the concrete value type: the field's `.nullable()` makes its inferred
-	// type a union that Zod's `.refine` overload can't resolve
-	matchId: (reportUserSchema.shape.matchId as v.ZodType<string | null>)
-		.refine(
-			async (matchId) => {
-				if (!matchId) return true;
+export const reportUserSchemaServer = v.objectAsync({
+	...reportUserSchema.entries,
+	// cast to the concrete value type: the field's nullability makes its inferred
+	// type a union the async pipe can't resolve
+	matchId: v.pipeAsync(
+		reportUserSchema.entries.matchId as v.GenericSchema<unknown, string | null>,
+		v.checkAsync(async (matchId) => {
+			if (!matchId) return true;
 
-				const id = Number(matchId);
-				if (!Number.isInteger(id) || id <= 0) return false;
+			const id = Number(matchId);
+			if (!Number.isInteger(id) || id <= 0) return false;
 
-				return SQMatchRepository.exists(id);
-			},
-			{ message: "forms:errors.matchNotFound" },
-		)
-		.transform((matchId) => (matchId ? Number(matchId) : null)),
+			return SQMatchRepository.exists(id);
+		}, "forms:errors.matchNotFound"),
+		v.transform((matchId) => (matchId ? Number(matchId) : null)),
+	),
 });

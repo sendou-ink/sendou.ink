@@ -14,14 +14,22 @@ const paramsSchema = v.object({
 });
 
 const bodySchema = v.object({
-	tournamentTeamId: id.optional(),
-	name: v.optional(v.pipe(v.string(), v.maxLength(TOURNAMENT.TEAM_NAME_MAX_LENGTH))),
-	teamId: id.optional(),
+	tournamentTeamId: v.optional(id),
+	name: v.optional(
+		v.pipe(v.string(), v.maxLength(TOURNAMENT.TEAM_NAME_MAX_LENGTH)),
+	),
+	teamId: v.optional(id),
 	ownerUserId: id,
-	members: v.pipe(v.array(v.object({
-        userId: id,
-        inGameName: v.optional(v.string()),
-    })), v.minLength(1), v.maxLength(ADMIN_REGISTRATION_MAX_MEMBERS)),
+	members: v.pipe(
+		v.array(
+			v.object({
+				userId: id,
+				inGameName: v.optional(v.string()),
+			}),
+		),
+		v.minLength(1),
+		v.maxLength(ADMIN_REGISTRATION_MAX_MEMBERS),
+	),
 });
 
 export const action = async (args: ActionFunctionArgs) => {

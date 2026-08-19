@@ -22,19 +22,27 @@ export const LANGUAGE_OPTIONS = languagesUnified.map((lang) => ({
 
 const preferenceSchema = v.optional(v.picklist(["AVOID", "PREFER"]));
 
-export const mapModePreferencesValueSchema = v.pipe(v.object({
+export const mapModePreferencesValueSchema = v.pipe(
+	v.object({
 		modes: v.array(v.object({ mode: modeShort, preference: preferenceSchema })),
-		pool: v.array(v.object({
-            stages: v.pipe(v.array(stageId), v.maxLength(AMOUNT_OF_MAPS_IN_POOL_PER_MODE)),
-            mode: modeShort,
-        })),
-	}), v.transform((val) => ({
+		pool: v.array(
+			v.object({
+				stages: v.pipe(
+					v.array(stageId),
+					v.maxLength(AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
+				),
+				mode: modeShort,
+			}),
+		),
+	}),
+	v.transform((val) => ({
 		...val,
 		pool: val.pool.filter((pool) => {
 			const mp = val.modes.find((m) => m.mode === pool.mode);
 			return mp?.preference !== "AVOID";
 		}),
-	})));
+	})),
+);
 
 export const updateMatchProfileSchema = v.object({
 	_action: stringConstant("UPDATE_MATCH_PROFILE"),

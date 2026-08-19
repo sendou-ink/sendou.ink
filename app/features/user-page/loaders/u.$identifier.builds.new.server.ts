@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as v from "valibot";
+import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";

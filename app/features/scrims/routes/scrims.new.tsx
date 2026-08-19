@@ -2,7 +2,7 @@ import type { CalendarDateTime } from "@internationalized/date";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
-import * as v from "valibot";
+import type * as v from "valibot";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { Label } from "~/components/Label";
 import type { CustomFieldRenderProps } from "~/form";

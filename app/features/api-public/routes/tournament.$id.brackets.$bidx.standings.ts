@@ -2,12 +2,12 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { coerceNumber, id } from "~/utils/zod";
 import type { GetTournamentBracketStandingsResponse } from "../schema";
 
 const paramsSchema = v.object({
 	id,
-	bidx: v.pipe(v.unknown(), v.toNumber(), v.integer()),
+	bidx: v.pipe(coerceNumber(), v.integer()),
 });
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {

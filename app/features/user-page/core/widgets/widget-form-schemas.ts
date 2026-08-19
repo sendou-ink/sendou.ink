@@ -12,7 +12,7 @@ import {
 	textField,
 	weaponSelect,
 } from "~/form/fields";
-import type { SelectOption } from "~/form/types";
+import type { FormObjectSchema, SelectOption } from "~/form/types";
 import { GAME_BADGE_IDS } from "~/modules/in-game-lists/game-badge-ids";
 import { USER } from "../../user-page-constants";
 
@@ -127,8 +127,8 @@ export const tierListSchema = v.object({
 });
 
 const gameBadgeId = v.pipe(
-    v.string(),
-    v.check((val) => (GAME_BADGE_IDS as readonly string[]).includes(val))
+	v.string(),
+	v.check((val) => (GAME_BADGE_IDS as readonly string[]).includes(val)),
 );
 
 export const gameBadgesSchema = v.object({
@@ -145,7 +145,7 @@ export const gameBadgesSmallSchema = v.object({
 	),
 });
 
-const WIDGET_FORM_SCHEMAS: Record<string, v.ZodObject<v.ZodRawShape>> = {
+const WIDGET_FORM_SCHEMAS: Record<string, FormObjectSchema> = {
 	bio: bioSchema,
 	"bio-md": bioMdSchema,
 	"x-rank-peaks": xRankPeaksSchema,

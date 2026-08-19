@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { SP } from "~/modules/search-params/search-params";
+import { codec, SP } from "~/modules/search-params/search-params";
 import { modeShort } from "~/utils/zod";
 import { DEFAULT_TIERS } from "./tier-list-maker-constants";
 import {
@@ -15,28 +15,25 @@ const EMPTY_TIER_LIST_STATE: TierListState = {
 	tierItems: new Map(),
 };
 
-const tierListState = v.codec(v.string(), v.custom<TierListState>(() => true), {
-	decode: (value, payload) => {
-		const serialized = parseSerializedJson(value);
-		if (!serialized) {
-			payload.issues.push({
-				code: "custom",
-				message: "Invalid tier list state",
-				input: value,
-			});
-			return v.NEVER;
-		}
-		return {
-			tiers: serialized.tiers,
-			tierItems: new Map(serialized.tierItems),
-		};
+const tierListState = codec(
+	v.custom<TierListState>(() => true),
+	{
+		decode: (value) => {
+			const serialized = parseSerializedJson(value);
+			if (!serialized) return undefined;
+
+			return {
+				tiers: serialized.tiers,
+				tierItems: new Map(serialized.tierItems),
+			};
+		},
+		encode: (state) =>
+			JSON.stringify({
+				tiers: state.tiers,
+				tierItems: Array.from(state.tierItems.entries()),
+			}),
 	},
-	encode: (state) =>
-		JSON.stringify({
-			tiers: state.tiers,
-			tierItems: Array.from(state.tierItems.entries()),
-		}),
-});
+);
 
 export const tierListMakerSearchParams = SearchParams.define({
 	state: SP.custom(tierListState, {
@@ -67,6 +64,6 @@ function parseSerializedJson(value: string) {
 		return null;
 	}
 
-	const parsed = tierListStateSerializedSchema.safeParse(json);
-	return parsed.success ? parsed.data : null;
+	const parsed = v.safeParse(tierListStateSerializedSchema, json);
+	return parsed.success ? parsed.output : null;
 }
