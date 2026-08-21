@@ -1,7 +1,7 @@
 {
 	"metadata": {
-		"generatedAt": "2026-06-15T13:59:10.026Z",
-		"latestVersion": "11.2.0",
+		"generatedAt": "2026-08-21T04:38:57.937Z",
+		"latestVersion": "11.3.0",
 		"versions": [
 			"0.9.9",
 			"1.0.0",
@@ -33,7 +33,8 @@
 			"11.0.0",
 			"11.0.1",
 			"11.1.0",
-			"11.2.0"
+			"11.2.0",
+			"11.3.0"
 		]
 	},
 	"weapons": {
@@ -112,8 +113,10 @@
 				"FreeAirResist": 0.01985,
 				"FreeGravity": 0.0190565,
 				"GoStraightStateEndMaxSpeed": 1,
-				"GoStraightToBrakeStateFrame": 18,
-				"SpawnSpeed": 1
+				"GoStraightToBrakeStateFrame": 16,
+				"SpawnSpeed": 1.125,
+				"GoStraightToBrakeStateFrame@11.2.0": 18,
+				"SpawnSpeed@11.2.0": 1
 			},
 			"UltraShotMoveParam": {
 				"OrbitalRadiusEnd": 1,
@@ -1883,11 +1886,11 @@
 				"DistanceDamage": [
 					{
 						"Damage": 2200,
-						"Distance": 7
+						"Distance": 6.4
 					},
 					{
 						"Damage": 600,
-						"Distance": 10.5
+						"Distance": 9.6
 					}
 				],
 				"KnockBackParam": {
@@ -1922,6 +1925,16 @@
 							"Low": 10,
 							"Mid": 11
 						}
+					}
+				],
+				"DistanceDamage@11.2.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7
+					},
+					{
+						"Damage": 600,
+						"Distance": 10.5
 					}
 				],
 				"DistanceDamage@7.1.0": [
@@ -1960,11 +1973,11 @@
 				"DistanceDamage": [
 					{
 						"Damage": 2200,
-						"Distance": 7
+						"Distance": 6.4
 					},
 					{
 						"Damage": 600,
-						"Distance": 10.5
+						"Distance": 9.6
 					}
 				],
 				"KnockBackParam": {
@@ -2000,6 +2013,16 @@
 						}
 					}
 				],
+				"DistanceDamage@11.2.0": [
+					{
+						"Damage": 2200,
+						"Distance": 7
+					},
+					{
+						"Damage": 600,
+						"Distance": 10.5
+					}
+				],
 				"DistanceDamage@7.1.0": [
 					{
 						"Damage": 2200,
@@ -2031,19 +2054,21 @@
 			"BulletParam": {
 				"HitPoint": 1000,
 				"MoveCollisionHeight": [2, 1.5, 1, 0.5],
-				"MoveDistance": 6,
+				"MoveDistance": 6.54,
 				"MoveFrame": 15,
 				"StartInvincibleFrame": 55,
 				"SuperJumpWaitFrame0": 30,
 				"SuperJumpWaitFrame1": 60,
 				"WaitRiseFrame": 0,
+				"MoveDistance@11.2.0": 6,
 				"StartInvincibleFrame@7.1.0": 65
 			},
 			"spl__WeaponSpPogoParam": {
 				"Rise_Frame": 60,
-				"Rise_NoDamageStartFrame": 60,
+				"Rise_NoDamageStartFrame": 50,
 				"SpecialTotalFrame": 60,
 				"Rise_Frame@7.1.0": 70,
+				"Rise_NoDamageStartFrame@11.2.0": 60,
 				"Rise_NoDamageStartFrame@7.1.0": 70,
 				"SpecialTotalFrame@7.1.0": 70
 			}

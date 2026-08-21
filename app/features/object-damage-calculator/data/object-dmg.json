@@ -4400,7 +4400,7 @@
 		]
 	},
 	"Shooter": {
-		"mainWeaponIds": [400, 401, 40, 41, 42, 45, 47, 46, 100, 101, 60, 61],
+		"mainWeaponIds": [400, 401, 40, 41, 42, 45, 47, 46, 48, 100, 101, 60, 61],
 		"subWeaponIds": [],
 		"specialWeaponIds": [],
 		"rates": [

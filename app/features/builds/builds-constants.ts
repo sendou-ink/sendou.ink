@@ -12,6 +12,7 @@ type Patch = { patch: string; date: string };
  * used by both the builds date filter and the weapon params patch history.
  */
 export const PATCHES: Array<Patch> = [
+	{ patch: "11.3.0", date: "2026-08-19" },
 	{ patch: "11.2.0", date: "2026-06-10" },
 	{ patch: "11.1.0", date: "2026-03-18" },
 	{ patch: "11.0.1", date: "2026-02-10" },

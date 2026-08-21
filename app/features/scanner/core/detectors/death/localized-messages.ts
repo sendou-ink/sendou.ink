@@ -603,6 +603,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "塑料瓶射击枪 复制",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "窄域标记枪",
 			name: "Splash-o-matic",
 		},
@@ -1421,6 +1425,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "PET-Kleckser Replik",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "Fein-Disperser",
 			name: "Splash-o-matic",
 		},
@@ -2221,6 +2229,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 		{
 			text: "Pistola octariana (réplica)",
 			name: "Octo Shot Replica",
+		},
+		{
+			text: "Lanzatintas de plástico (réplica)",
+			name: "Plastic-Bottle Shot Replica",
 		},
 		{
 			text: "Marcador fino",
@@ -3045,6 +3057,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "Liquidateur soda (réplique)",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "Marqueur léger",
 			name: "Splash-o-matic",
 		},
@@ -3859,6 +3875,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "Splasher frizzante replica",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "Marker d'assalto",
 			name: "Splash-o-matic",
 		},
@@ -4639,6 +4659,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 		{
 			text: "Octospetter (replica)",
 			name: "Octo Shot Replica",
+		},
+		{
+			text: "SupersPETter (replica)",
+			name: "Plastic-Bottle Shot Replica",
 		},
 		{
 			text: "Spetterspuit",
@@ -5445,6 +5469,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 		{
 			text: "Осьмострел (клон)",
 			name: "Octo Shot Replica",
+		},
+		{
+			text: "Ботлострел (клон)",
+			name: "Plastic-Bottle Shot Replica",
 		},
 		{
 			text: "Плюхомет",
@@ -6273,6 +6301,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "PETシューター レプリカ",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "シャープマーカー",
 			name: "Splash-o-matic",
 		},
@@ -7097,6 +7129,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 		{
 			text: "옥타 슈터 레플리카",
 			name: "Octo Shot Replica",
+		},
+		{
+			text: "PET 슈터 레플리카",
+			name: "Plastic-Bottle Shot Replica",
 		},
 		{
 			text: "샤프 마커",
@@ -7925,6 +7961,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "寶特瓶射擊槍 複製",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "窄域標記槍",
 			name: "Splash-o-matic",
 		},
@@ -8751,6 +8791,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 			name: "Octo Shot Replica",
 		},
 		{
+			text: "Rociador PET réplica",
+			name: "Plastic-Bottle Shot Replica",
+		},
+		{
 			text: "Plumón",
 			name: "Splash-o-matic",
 		},
@@ -9571,6 +9615,10 @@ export const LOCALIZED_WEAPON_NAMES: Readonly<
 		{
 			text: "Lanceur octaling (réplique)",
 			name: "Octo Shot Replica",
+		},
+		{
+			text: "Liquéficateur liqueur (réplique)",
+			name: "Plastic-Bottle Shot Replica",
 		},
 		{
 			text: "Marqueur léger",

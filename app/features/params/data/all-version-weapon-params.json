@@ -1,7 +1,7 @@
 {
 	"metadata": {
-		"generatedAt": "2026-06-15T13:59:10.026Z",
-		"latestVersion": "11.2.0",
+		"generatedAt": "2026-08-21T04:38:57.937Z",
+		"latestVersion": "11.3.0",
 		"versions": [
 			"0.9.9",
 			"1.0.0",
@@ -33,7 +33,8 @@
 			"11.0.0",
 			"11.0.1",
 			"11.1.0",
-			"11.2.0"
+			"11.2.0",
+			"11.3.0"
 		]
 	},
 	"weapons": {
@@ -536,9 +537,10 @@
 				"DepthScaleMin": 1.31,
 				"DepthScaleMinBreakFree": 1.12,
 				"DistanceMiddle": 1.1,
-				"WidthHalfFar": 2.25,
+				"WidthHalfFar": 2.07,
 				"WidthHalfMiddle": 2.11,
-				"WidthHalfNear": 2.11
+				"WidthHalfNear": 2.11,
+				"WidthHalfFar@11.2.0": 2.25
 			},
 			"SplashPaintParam": {
 				"DepthMaxDropHeight": 3,
@@ -2775,9 +2777,10 @@
 				"Damage": 700,
 				"PaintParam": {
 					"Depth": 1.5,
-					"SpeedMax": 0.152,
+					"SpeedMax": 0.16,
 					"WidthAddWallCut": 0.4,
-					"WidthHalfMax": 2.2
+					"WidthHalfMax": 2.2,
+					"SpeedMax@11.2.0": 0.152
 				},
 				"SideParam": {
 					"CheckLength": 1.3,
@@ -2815,9 +2818,9 @@
 					"DamageRejectRate": 0.5,
 					"DamageRejectStartFrame": 30,
 					"Inside": {
-						"DamageHighDistance": 11.2,
+						"DamageHighDistance": 12.43,
 						"DamageHighValue": 500,
-						"DamageLowDistance": 11.2,
+						"DamageLowDistance": 12.43,
 						"DamageLowValue": 500,
 						"DamageMaxDistance": 4.2,
 						"DamageMaxValue": 1200,
@@ -2826,12 +2829,14 @@
 						"Degree": 5,
 						"DepletionDamageRate": 0.5,
 						"FinalDamageMinValue": 350,
-						"InsideDistanceXZ": 0
+						"InsideDistanceXZ": 0,
+						"DamageHighDistance@11.2.0": 11.2,
+						"DamageLowDistance@11.2.0": 11.2
 					},
 					"Outside": {
-						"DamageHighDistance": 11.2,
+						"DamageHighDistance": 12.43,
 						"DamageHighValue": 500,
-						"DamageLowDistance": 11.2,
+						"DamageLowDistance": 12.43,
 						"DamageLowValue": 500,
 						"DamageMaxDistance": 4.2,
 						"DamageMaxValue": 1200,
@@ -2840,7 +2845,9 @@
 						"DamageRate": 1,
 						"Degree": 20,
 						"DepletionDamageRate": 0.5,
-						"FinalDamageMinValue": 350
+						"FinalDamageMinValue": 350,
+						"DamageHighDistance@11.2.0": 11.2,
+						"DamageLowDistance@11.2.0": 11.2
 					}
 				},
 				"SpawnSplashBetweenLength": 4.2,
@@ -3461,12 +3468,14 @@
 				"InkConsumeMaxPerFrame": 0.001,
 				"InkConsumeMinPerFrame": 0.0002,
 				"InkRecoverStop": 20,
-				"SpeedDash": 0.152,
+				"SpeedDash": 0.16,
 				"SpeedDashTurnBreak": 0.128,
-				"SpeedInkConsumeMax": 0.152,
+				"SpeedInkConsumeMax": 0.16,
 				"SpeedInkConsumeMin": 0.02,
 				"SpeedNormal": 0.128,
-				"DashFrame@3.1.0": 30
+				"DashFrame@3.1.0": 30,
+				"SpeedDash@11.2.0": 0.152,
+				"SpeedInkConsumeMax@11.2.0": 0.152
 			},
 			"WeaponVerticalSwingParam": {
 				"InkConsume": 0.0396,
@@ -10725,9 +10734,11 @@
 			},
 			"MainEffectiveRangeUpParam": {},
 			"MainWeaponSetting": {
-				"Overwrite_ConsumeRt_Main_High": 0.5,
-				"Overwrite_ConsumeRt_Main_Mid": 0.7,
-				"WeaponSpeedType": "Slow"
+				"Overwrite_ConsumeRt_Main_High": -1,
+				"Overwrite_ConsumeRt_Main_Mid": -1,
+				"WeaponSpeedType": "Slow",
+				"Overwrite_ConsumeRt_Main_High@11.2.0": 0.5,
+				"Overwrite_ConsumeRt_Main_Mid@11.2.0": 0.7
 			},
 			"MoveParam": {
 				"DistanceFullCharge": 29.05,
@@ -10830,9 +10841,11 @@
 			},
 			"MainEffectiveRangeUpParam": {},
 			"MainWeaponSetting": {
-				"Overwrite_ConsumeRt_Main_High": 0.5,
-				"Overwrite_ConsumeRt_Main_Mid": 0.7,
-				"WeaponSpeedType": "Slow"
+				"Overwrite_ConsumeRt_Main_High": -1,
+				"Overwrite_ConsumeRt_Main_Mid": -1,
+				"WeaponSpeedType": "Slow",
+				"Overwrite_ConsumeRt_Main_High@11.2.0": 0.5,
+				"Overwrite_ConsumeRt_Main_Mid@11.2.0": 0.7
 			},
 			"MoveParam": {
 				"DistanceFullCharge": 31.05,
@@ -11219,15 +11232,17 @@
 				"ChargeFrameMinCharge": 8,
 				"FreezeFrameFullCharge": 1,
 				"FreezeFrameMinCharge": 1,
-				"InkConsumeFullCharge": 0.35,
-				"InkConsumeMinCharge": 0.0197,
+				"InkConsumeFullCharge": 0.375,
+				"InkConsumeMinCharge": 0.0211,
 				"InkEmptyChargeTimes": 3,
 				"InkRecoverStop": 20,
 				"JumpHeightFullCharge": 0.1,
 				"MoveJumpDownBias": 0.5,
 				"MoveSpeedFullCharge": 0.068,
 				"PostDelayFrame": 15,
+				"InkConsumeFullCharge@11.2.0": 0.35,
 				"InkConsumeFullCharge@3.1.0": 0.4,
+				"InkConsumeMinCharge@11.2.0": 0.0197,
 				"InkConsumeMinCharge@3.1.0": 0.0225,
 				"MoveSpeedFullCharge@3.1.0": 0.06
 			}
@@ -16170,7 +16185,7 @@
 			"WeaponParam": {
 				"FrameOffsetMaxDegree": 1.5,
 				"FrameOffsetMaxMoveLength": 0.5,
-				"InkConsume": 0.06,
+				"InkConsume": 0.057,
 				"InkRecoverStop": 35,
 				"MoveLmtFrame": 30,
 				"MoveSpeed": 0.066,
@@ -16181,7 +16196,8 @@
 					"Frame": 13,
 					"UnitOrderNum": 0
 				},
-				"SwingLiftFrame": 12
+				"SwingLiftFrame": 12,
+				"InkConsume@11.2.0": 0.06
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
 				"GuideYMinusZero": true,
@@ -22272,7 +22288,7 @@
 				"Jump_DegBiasEndFrame": 70,
 				"Jump_DegBiasMax": 0.4,
 				"Jump_DegSwerve": 8,
-				"LapOver_DegSwerve": 3,
+				"LapOver_DegSwerve": 2.7,
 				"LapOver_RepeatFrame": 9,
 				"MoveSpeed": 0.06,
 				"PreDelayFrame_SquidShot": 4,
@@ -22281,7 +22297,8 @@
 				"Stand_DegBiasDecrease": 0.005,
 				"Stand_DegBiasKf": 0.03,
 				"Stand_DegBiasMin": 0.03,
-				"Stand_DegSwerve": 3.2
+				"Stand_DegSwerve": 3.2,
+				"LapOver_DegSwerve@11.2.0": 3
 			},
 			"spl__SpawnBulletAdditionMovePlayerParam": {
 				"ZRate": 2
@@ -23869,7 +23886,9 @@
 				},
 				"SplashPaintParam": {
 					"DepthScaleMax": 2.7,
-					"WidthHalf": 1.48,
+					"WidthHalf": 1.39,
+					"WidthHalfNearest": 1.683,
+					"WidthHalf@11.2.0": 1.48,
 					"WidthHalf@7.2.0": 1.35
 				},
 				"SplashSpawnParam": {
@@ -26002,6 +26021,10 @@
 				}
 			]
 		},
+		"48": {
+			"current": 190,
+			"history": []
+		},
 		"50": {
 			"current": 210,
 			"history": [
@@ -26080,8 +26103,13 @@
 			]
 		},
 		"72": {
-			"current": 190,
-			"history": []
+			"current": 180,
+			"history": [
+				{
+					"version": "11.2.0",
+					"value": 190
+				}
+			]
 		},
 		"80": {
 			"current": 190,
@@ -26884,8 +26912,13 @@
 			"history": []
 		},
 		"4021": {
-			"current": 200,
-			"history": []
+			"current": 190,
+			"history": [
+				{
+					"version": "11.2.0",
+					"value": 200
+				}
+			]
 		},
 		"4022": {
 			"current": 200,
@@ -27141,8 +27174,13 @@
 			]
 		},
 		"7011": {
-			"current": 190,
-			"history": []
+			"current": 200,
+			"history": [
+				{
+					"version": "11.2.0",
+					"value": 190
+				}
+			]
 		},
 		"7012": {
 			"current": 200,
