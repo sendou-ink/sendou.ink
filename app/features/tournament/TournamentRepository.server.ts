@@ -1397,6 +1397,11 @@ export function reopenTournament(tournamentId: number) {
 	});
 }
 
+/** How many rows one multi-row insert of the summary binds at a time. SQLite
+ * rejects any statement binding over 32,766 parameters, a ceiling a big
+ * tournament's deltas cross when inserted as a single statement. */
+const SUMMARY_INSERT_CHUNK_SIZE = 1000;
+
 /**
  * Finalizes a tournament, recording the full summary: skills, seeding skills,
  * map/player result deltas, badge owners and placements. Use
@@ -1469,94 +1474,111 @@ export function finalize({
 			}
 		}
 
-		await trx
-			.insertInto("SkillTeamUser")
-			.values(skillTeamUsers)
-			.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-			.execute();
+		for (const chunk of R.chunk(skillTeamUsers, SUMMARY_INSERT_CHUNK_SIZE)) {
+			await trx
+				.insertInto("SkillTeamUser")
+				.values(chunk)
+				.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
+				.execute();
+		}
 
 		// SeedingSkill has `on conflict replace` set in its migration
-		await trx
-			.insertInto("SeedingSkill")
-			.values(
-				summary.seedingSkills.map((seedingSkill) => ({
-					type: seedingSkill.type,
-					mu: seedingSkill.mu,
-					sigma: seedingSkill.sigma,
-					ordinal: seedingSkill.ordinal,
-					userId: seedingSkill.userId,
-				})),
-			)
-			.execute();
-
-		if (summary.mapResultDeltas.length > 0) {
-			invariant(seasonValue !== null, "Season missing for map result");
+		for (const chunk of R.chunk(
+			summary.seedingSkills,
+			SUMMARY_INSERT_CHUNK_SIZE,
+		)) {
 			await trx
-				.insertInto("MapResult")
+				.insertInto("SeedingSkill")
 				.values(
-					summary.mapResultDeltas.map((mapResultDelta) => ({
-						mode: mapResultDelta.mode,
-						stageId: mapResultDelta.stageId,
-						userId: mapResultDelta.userId,
-						wins: mapResultDelta.wins,
-						losses: mapResultDelta.losses,
-						season: seasonValue,
+					chunk.map((seedingSkill) => ({
+						type: seedingSkill.type,
+						mu: seedingSkill.mu,
+						sigma: seedingSkill.sigma,
+						ordinal: seedingSkill.ordinal,
+						userId: seedingSkill.userId,
 					})),
-				)
-				.onConflict((oc) =>
-					oc
-						.columns(["userId", "stageId", "mode", "season"])
-						.doUpdateSet((eb) => ({
-							wins: eb("MapResult.wins", "+", eb.ref("excluded.wins")),
-							losses: eb("MapResult.losses", "+", eb.ref("excluded.losses")),
-						})),
 				)
 				.execute();
 		}
 
+		if (summary.mapResultDeltas.length > 0) {
+			invariant(seasonValue !== null, "Season missing for map result");
+			for (const chunk of R.chunk(
+				summary.mapResultDeltas,
+				SUMMARY_INSERT_CHUNK_SIZE,
+			)) {
+				await trx
+					.insertInto("MapResult")
+					.values(
+						chunk.map((mapResultDelta) => ({
+							mode: mapResultDelta.mode,
+							stageId: mapResultDelta.stageId,
+							userId: mapResultDelta.userId,
+							wins: mapResultDelta.wins,
+							losses: mapResultDelta.losses,
+							season: seasonValue,
+						})),
+					)
+					.onConflict((oc) =>
+						oc
+							.columns(["userId", "stageId", "mode", "season"])
+							.doUpdateSet((eb) => ({
+								wins: eb("MapResult.wins", "+", eb.ref("excluded.wins")),
+								losses: eb("MapResult.losses", "+", eb.ref("excluded.losses")),
+							})),
+					)
+					.execute();
+			}
+		}
+
 		if (summary.playerResultDeltas.length > 0) {
 			invariant(seasonValue !== null, "Season missing for player result");
-			await trx
-				.insertInto("PlayerResult")
-				.values(
-					summary.playerResultDeltas.map((playerResultDelta) => ({
-						ownerUserId: playerResultDelta.ownerUserId,
-						otherUserId: playerResultDelta.otherUserId,
-						mapWins: playerResultDelta.mapWins,
-						mapLosses: playerResultDelta.mapLosses,
-						setWins: playerResultDelta.setWins,
-						setLosses: playerResultDelta.setLosses,
-						type: playerResultDelta.type,
-						season: seasonValue,
-					})),
-				)
-				.onConflict((oc) =>
-					oc
-						.columns(["ownerUserId", "otherUserId", "type", "season"])
-						.doUpdateSet((eb) => ({
-							mapWins: eb(
-								"PlayerResult.mapWins",
-								"+",
-								eb.ref("excluded.mapWins"),
-							),
-							mapLosses: eb(
-								"PlayerResult.mapLosses",
-								"+",
-								eb.ref("excluded.mapLosses"),
-							),
-							setWins: eb(
-								"PlayerResult.setWins",
-								"+",
-								eb.ref("excluded.setWins"),
-							),
-							setLosses: eb(
-								"PlayerResult.setLosses",
-								"+",
-								eb.ref("excluded.setLosses"),
-							),
+			for (const chunk of R.chunk(
+				summary.playerResultDeltas,
+				SUMMARY_INSERT_CHUNK_SIZE,
+			)) {
+				await trx
+					.insertInto("PlayerResult")
+					.values(
+						chunk.map((playerResultDelta) => ({
+							ownerUserId: playerResultDelta.ownerUserId,
+							otherUserId: playerResultDelta.otherUserId,
+							mapWins: playerResultDelta.mapWins,
+							mapLosses: playerResultDelta.mapLosses,
+							setWins: playerResultDelta.setWins,
+							setLosses: playerResultDelta.setLosses,
+							type: playerResultDelta.type,
+							season: seasonValue,
 						})),
-				)
-				.execute();
+					)
+					.onConflict((oc) =>
+						oc
+							.columns(["ownerUserId", "otherUserId", "type", "season"])
+							.doUpdateSet((eb) => ({
+								mapWins: eb(
+									"PlayerResult.mapWins",
+									"+",
+									eb.ref("excluded.mapWins"),
+								),
+								mapLosses: eb(
+									"PlayerResult.mapLosses",
+									"+",
+									eb.ref("excluded.mapLosses"),
+								),
+								setWins: eb(
+									"PlayerResult.setWins",
+									"+",
+									eb.ref("excluded.setWins"),
+								),
+								setLosses: eb(
+									"PlayerResult.setLosses",
+									"+",
+									eb.ref("excluded.setLosses"),
+								),
+							})),
+					)
+					.execute();
+			}
 		}
 
 		const badgeOwners = badgeReceivers.flatMap((badgeReceiver) =>
@@ -1607,10 +1629,9 @@ export function finalize({
 				div: tournamentResult.div,
 			}));
 
-		await trx
-			.insertInto("TournamentResult")
-			.values(tournamentResults)
-			.execute();
+		for (const chunk of R.chunk(tournamentResults, SUMMARY_INSERT_CHUNK_SIZE)) {
+			await trx.insertInto("TournamentResult").values(chunk).execute();
+		}
 
 		await trx
 			.updateTable("Tournament")

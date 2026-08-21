@@ -6,6 +6,14 @@ import { db } from "~/db/sql";
 import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
 import * as TournamentRepository from "./TournamentRepository.server";
 
+/** SQLite binds at most 32,766 parameters per statement and `PlayerResult` has
+ * eight columns, so one multi-row insert fits this many rows at most. */
+const PLAYER_RESULT_ROWS_PER_STATEMENT = Math.floor(32766 / 8);
+
+/** Enough users that every ordered pair of them, for both types, is over
+ * {@link PLAYER_RESULT_ROWS_PER_STATEMENT}. */
+const USER_COUNT = 46;
+
 const users = UserFactory.pool();
 
 const createTournament = () =>
@@ -35,10 +43,37 @@ const finalizePriorSeason = async (
 	});
 };
 
+/** Every ordered pair of the given users, once as mates and once as enemies. */
+const playerResultDeltasForEveryPair = (
+	userIds: number[],
+): TournamentSummary["playerResultDeltas"] => {
+	const deltas: TournamentSummary["playerResultDeltas"] = [];
+
+	for (const type of ["MATE", "ENEMY"] as const) {
+		for (const ownerUserId of userIds) {
+			for (const otherUserId of userIds) {
+				if (ownerUserId === otherUserId) continue;
+
+				deltas.push({
+					ownerUserId,
+					otherUserId,
+					mapWins: 1,
+					mapLosses: 0,
+					setWins: 1,
+					setLosses: 0,
+					type,
+				});
+			}
+		}
+	}
+
+	return deltas;
+};
+
 describe("TournamentRepository.finalize", () => {
 	beforeEach(async () => {
-		// four users so that the "1-2-3-4" team identifier the tests use names real ones
-		await users.create(4);
+		// the "1-2-3-4" team identifier the tests use needs users 1-4 to be real ones
+		await users.create(USER_COUNT);
 	});
 
 	test("matchesCount on a new season's Skill row does not include prior seasons", async () => {
@@ -208,5 +243,27 @@ describe("TournamentRepository.finalize", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(second.matchesCount).toBe(8);
+	});
+	test("finalizes a tournament with more player result deltas than fit in one insert statement", async () => {
+		const { id: tournamentId } = await createTournament();
+		const playerResultDeltas = playerResultDeltasForEveryPair(users.ids());
+
+		expect(playerResultDeltas.length).toBeGreaterThan(
+			PLAYER_RESULT_ROWS_PER_STATEMENT,
+		);
+
+		await TournamentRepository.finalize({
+			tournamentId,
+			season: 1,
+			summary: { ...emptySummary([]), playerResultDeltas },
+		});
+
+		const inserted = await db
+			.selectFrom("PlayerResult")
+			.select(({ fn }) => fn.countAll<number>().as("count"))
+			.where("season", "=", 1)
+			.executeTakeFirstOrThrow();
+
+		expect(inserted.count).toBe(playerResultDeltas.length);
 	});
 });
