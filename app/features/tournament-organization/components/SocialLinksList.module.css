@@ -1,6 +1,5 @@
 .socialLink {
 	font-size: var(--font-sm);
-	color: var(--text-main);
 	display: flex;
 	gap: var(--s-2);
 	align-items: center;

@@ -35,7 +35,6 @@
 
 .popover {
 	padding: var(--s-1);
-	width: var(--trigger-width);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);

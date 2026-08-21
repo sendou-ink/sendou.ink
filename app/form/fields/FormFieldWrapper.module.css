@@ -3,10 +3,7 @@
 
 	& input:not([type="radio"], [type="checkbox"]),
 	& textarea,
-	& select,
-	& .react-aria-Group,
-	& .react-aria-Select button,
-	& .react-aria-DatePicker {
+	& select {
 		width: 100%;
 	}
 }

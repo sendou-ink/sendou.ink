@@ -94,16 +94,6 @@ below win regardless of which CSS chunk loads last
 	stroke-linejoin: round;
 }
 
-.chartAreaTop {
-	stop-color: var(--graphic-accent);
-	stop-opacity: 0.3;
-}
-
-.chartAreaBottom {
-	stop-color: var(--graphic-accent);
-	stop-opacity: 0;
-}
-
 .chartGridLine {
 	stroke: var(--graphic-row-border);
 	stroke-width: 1;
