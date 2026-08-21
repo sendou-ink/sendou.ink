@@ -21,6 +21,7 @@ import { SyncLiveStreamsRoutine } from "./syncLiveStreams";
 import { SyncSplatoonRotationsRoutine } from "./syncSplatoonRotations";
 import { SyncTournamentVodsRoutine } from "./syncTournamentVods";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
+import { VacuumDatabaseRoutine } from "./vacuumDatabase";
 
 /** List of Routines that should occur hourly at XX:00 */
 export const everyHourAt00 = [
@@ -54,6 +55,9 @@ export const daily = [
 	ComputeLutiDivsRoutine,
 	OptimizeDatabaseRoutine,
 ];
+
+/** List of Routines that should occur weekly */
+export const weekly = [VacuumDatabaseRoutine];
 
 /** List of Routines that should occur every 2 minutes */
 export const everyTwoMinutes = [

@@ -17,6 +17,7 @@ import {
 	everyHourAt00,
 	everyHourAt30,
 	everyTwoMinutes,
+	weekly,
 } from "./routines/list.server";
 import { loadAllDateFnsLocales } from "./utils/dates";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
@@ -107,6 +108,18 @@ if (!global.appStartSignal && ServerConfig.isProduction && !IS_E2E_TEST_RUN) {
 			await routine.run();
 		}
 	});
+
+	// 9:00 AM Finnish time on Wednesdays, a quiet hour picked because vacuuming blocks
+	// writes for longer than the 5s busy_timeout
+	cron.schedule(
+		"0 9 * * 3",
+		async () => {
+			for (const routine of weekly) {
+				await routine.run();
+			}
+		},
+		{ timezone: "Europe/Helsinki" },
+	);
 
 	cron.schedule("*/2 * * * *", async () => {
 		for (const routine of everyTwoMinutes) {

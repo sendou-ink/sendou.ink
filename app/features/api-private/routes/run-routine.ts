@@ -8,13 +8,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	const routineName = (await request.formData()).get("name");
 
-	const { everyHourAt00, everyHourAt30, daily, everyTwoMinutes } = await import(
-		"~/routines/list.server"
-	);
+	const { everyHourAt00, everyHourAt30, daily, weekly, everyTwoMinutes } =
+		await import("~/routines/list.server");
 	const routine = [
 		...everyHourAt00,
 		...everyHourAt30,
 		...daily,
+		...weekly,
 		...everyTwoMinutes,
 	].find((routine) => routine.name === routineName);
 
