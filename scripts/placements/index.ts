@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
@@ -72,7 +73,7 @@ async function processJson(args: {
 	logger.info(`reading in ${url}...`);
 
 	const json = await fetch(url).then((res) => res.json());
-	const validated = xRankSchema.parse(json);
+	const validated = v.parse(xRankSchema, json);
 
 	const array =
 		validated.data.node.xRankingAr ??

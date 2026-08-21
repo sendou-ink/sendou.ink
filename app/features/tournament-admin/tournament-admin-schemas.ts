@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	TOURNAMENT,
 	TOURNAMENT_STAGE_TYPES,
@@ -6,7 +6,13 @@ import {
 import * as Swiss from "~/features/tournament-bracket/core/engine/swiss/team-status";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { _action, id, safeJSONParse } from "~/utils/zod";
+import {
+	_action,
+	id,
+	preprocess,
+	safeJSONParse,
+	superRefine,
+} from "~/utils/schema";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 
@@ -20,135 +26,142 @@ export function adminStaffFormSchemaServer({
 }: {
 	tournament: Tournament;
 }) {
-	return adminStaffFormSchema.superRefine((data, ctx) => {
-		for (const [index, staffer] of data.staff.entries()) {
-			if (staffer.userId === tournament.ctx.author.id) {
-				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
-					message: "forms:errors.staffCannotBeAuthor",
-					path: ["staff", index, "userId"],
-				});
+	return v.pipe(
+		adminStaffFormSchema,
+		superRefine((data, ctx) => {
+			for (const [index, staffer] of data.staff.entries()) {
+				if (staffer.userId === tournament.ctx.author.id) {
+					ctx.addIssue({
+						message: "forms:errors.staffCannotBeAuthor",
+						path: ["staff", index, "userId"],
+					});
+				}
 			}
-		}
-	});
+		}),
+	);
 }
 
-export const adminTeamsActionSchema = z.union([
-	z.object({
+export const adminTeamsActionSchema = v.union([
+	v.object({
 		_action: _action("CHECK_IN"),
 		teamId: id,
 		bracketIdx,
 	}),
-	z.object({
+	v.object({
 		_action: _action("CHECK_OUT"),
 		teamId: id,
 		bracketIdx,
 	}),
-	z.object({
+	v.object({
 		_action: _action("DELETE_TEAM"),
 		teamId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("DROP_TEAM_OUT"),
 		teamId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("UNDO_DROP_TEAM_OUT"),
 		teamId: id,
 	}),
 ]);
 
-const bracketProgressionSchema = z.preprocess(
+const bracketProgressionSchema = preprocess(
 	safeJSONParse,
-	z
-		.array(
-			z.object({
-				type: z.enum(TOURNAMENT_STAGE_TYPES),
-				name: z.string().min(1).max(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
-				settings: z
-					.object({
-						thirdPlaceMatch: z.boolean().optional(),
-						teamsPerGroup: z.number().int().optional(),
-						hasAbDivisions: z.boolean().optional(),
-						groupCount: z.number().int().optional(),
-						roundCount: z.number().int().optional(),
-						advanceThreshold: z.number().int().optional(),
-					})
-					.refine(
-						(settings) => {
-							if (settings.advanceThreshold) {
-								return Swiss.isValidAdvanceThreshold({
-									roundCount:
-										settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
-									advanceThreshold: settings.advanceThreshold,
-								});
-							}
-							return true;
-						},
-						{
+	v.pipe(
+		v.array(
+			v.object({
+				type: v.picklist(TOURNAMENT_STAGE_TYPES),
+				name: v.pipe(
+					v.string(),
+					v.minLength(1),
+					v.maxLength(TOURNAMENT.BRACKET_NAME_MAX_LENGTH),
+				),
+				settings: v.pipe(
+					v.object({
+						thirdPlaceMatch: v.optional(v.boolean()),
+						teamsPerGroup: v.optional(v.pipe(v.number(), v.integer())),
+						hasAbDivisions: v.optional(v.boolean()),
+						groupCount: v.optional(v.pipe(v.number(), v.integer())),
+						roundCount: v.optional(v.pipe(v.number(), v.integer())),
+						advanceThreshold: v.optional(v.pipe(v.number(), v.integer())),
+					}),
+					superRefine((settings, ctx) => {
+						if (!settings.advanceThreshold) return;
+
+						const isValid = Swiss.isValidAdvanceThreshold({
+							roundCount:
+								settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT,
+							advanceThreshold: settings.advanceThreshold,
+						});
+						if (isValid) return;
+
+						ctx.addIssue({
 							message: "Invalid advance threshold for the given round count",
 							path: ["advanceThreshold"],
-						},
-					),
-				requiresCheckIn: z.boolean(),
-				startTime: z.number().optional(),
-				sources: z
-					.array(
-						z.object({
-							bracketIdx: z.number(),
-							placements: z.array(z.number()),
-							rest: z.boolean().optional(),
+						});
+					}),
+				),
+				requiresCheckIn: v.boolean(),
+				startTime: v.optional(v.number()),
+				sources: v.optional(
+					v.array(
+						v.object({
+							bracketIdx: v.number(),
+							placements: v.array(v.number()),
+							rest: v.optional(v.boolean()),
 						}),
-					)
-					.optional(),
+					),
+				),
 			}),
-		)
-		.refine(
+		),
+		v.check(
 			(progression) =>
 				Progression.bracketsToValidationError(progression) === null,
 			"Invalid bracket progression",
 		),
+	),
 );
 
-export const adminBracketsActionSchema = z.union([
-	z.object({
+export const adminBracketsActionSchema = v.union([
+	v.object({
 		_action: _action("RESET_BRACKET"),
 		stageId: id,
 	}),
-	z.object({
+	v.object({
 		_action: _action("UPDATE_TOURNAMENT_PROGRESSION"),
 		bracketProgression: bracketProgressionSchema,
 	}),
-	z.object({
+	v.object({
 		_action: _action("REOPEN_TOURNAMENT"),
 	}),
 ]);
 
-export const adminSeedsActionSchema = z.union([
-	z.object({
+export const adminSeedsActionSchema = v.union([
+	v.object({
 		_action: _action("UPDATE_SEEDS"),
-		seeds: z.preprocess(safeJSONParse, z.array(id)),
+		seeds: preprocess(safeJSONParse, v.array(id)),
 	}),
-	z.object({
+	v.object({
 		_action: _action("UPDATE_STARTING_BRACKETS"),
-		startingBrackets: z.preprocess(
+		startingBrackets: preprocess(
 			safeJSONParse,
-			z.array(
-				z.object({
+			v.array(
+				v.object({
 					tournamentTeamId: id,
 					startingBracketIdx: bracketIdx,
 				}),
 			),
 		),
 	}),
-	z.object({
+	v.object({
 		_action: _action("UPDATE_AB_DIVISIONS"),
-		abDivisions: z.preprocess(
+		abDivisions: preprocess(
 			safeJSONParse,
-			z.array(
-				z.object({
+			v.array(
+				v.object({
 					tournamentTeamId: id,
-					abDivision: z.union([z.literal(0), z.literal(1), z.null()]),
+					abDivision: v.union([v.literal(0), v.literal(1), v.null()]),
 				}),
 			),
 		),

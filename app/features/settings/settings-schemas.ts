@@ -1,14 +1,14 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { hidden, select, stringConstant, toggle } from "~/form/fields";
-import { themeInputSchema } from "~/utils/zod";
+import { themeInputSchema } from "~/utils/schema";
 
-export const customThemeSchema = z.object({
+export const customThemeSchema = v.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),
-	newValue: hidden(themeInputSchema.nullable(), null),
-	revalidateRoot: z.literal(true).nullish(),
+	newValue: hidden(v.nullable(themeInputSchema), null),
+	revalidateRoot: v.optional(v.nullable(v.literal(true))),
 });
 
-export const clockFormatSchema = z.object({
+export const clockFormatSchema = v.object({
 	_action: stringConstant("UPDATE_CLOCK_FORMAT"),
 	newValue: select({
 		label: "labels.clockFormat",
@@ -20,7 +20,7 @@ export const clockFormatSchema = z.object({
 	}),
 });
 
-export const disableBuildAbilitySortingSchema = z.object({
+export const disableBuildAbilitySortingSchema = v.object({
 	_action: stringConstant("UPDATE_DISABLE_BUILD_ABILITY_SORTING"),
 	newValue: toggle({
 		label: "labels.disableBuildAbilitySorting",
@@ -28,7 +28,7 @@ export const disableBuildAbilitySortingSchema = z.object({
 	}),
 });
 
-export const disallowScrimPickupsFromUntrustedSchema = z.object({
+export const disallowScrimPickupsFromUntrustedSchema = v.object({
 	_action: stringConstant("DISALLOW_SCRIM_PICKUPS_FROM_UNTRUSTED"),
 	newValue: toggle({
 		label: "labels.disallowScrimPickupsFromUntrusted",
@@ -36,7 +36,7 @@ export const disallowScrimPickupsFromUntrustedSchema = z.object({
 	}),
 });
 
-export const spoilerFreeModeSchema = z.object({
+export const spoilerFreeModeSchema = v.object({
 	_action: stringConstant("UPDATE_SPOILER_FREE_MODE"),
 	newValue: toggle({
 		label: "labels.spoilerFreeMode",
@@ -44,12 +44,12 @@ export const spoilerFreeModeSchema = z.object({
 	}),
 });
 
-export const weaponReportDefaultOpenSchema = z.object({
+export const weaponReportDefaultOpenSchema = v.object({
 	_action: stringConstant("UPDATE_WEAPON_REPORT_DEFAULT_OPEN"),
-	newValue: z.boolean(),
+	newValue: v.boolean(),
 });
 
-export const settingsEditSchema = z.union([
+export const settingsEditSchema = v.union([
 	customThemeSchema,
 	disableBuildAbilitySortingSchema,
 	disallowScrimPickupsFromUntrustedSchema,

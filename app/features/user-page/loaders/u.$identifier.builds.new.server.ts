@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import type { z } from "zod";
+import type * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
@@ -37,7 +37,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	}
 };
 
-type NewBuildDefaultValues = Partial<z.infer<typeof newBuildBaseSchema>>;
+type NewBuildDefaultValues = Partial<v.InferOutput<typeof newBuildBaseSchema>>;
 
 function resolveDefaultValues(
 	params: SearchParamsValues<typeof userBuildsNewSearchParams.shape>,

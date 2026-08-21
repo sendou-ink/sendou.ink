@@ -1,6 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { notify } from "~/features/notifications/core/notify.server";
 import {
 	requirePermission,
@@ -8,9 +8,9 @@ import {
 } from "~/modules/permissions/guards.server";
 import { diff } from "~/utils/arrays";
 import { notFoundIfNullish, parseRequestPayload } from "~/utils/remix.server";
+import { actualNumber, preprocess } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
-import { actualNumber } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
 import { editBadgeActionSchema } from "../badges-schemas";
 
@@ -19,7 +19,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		request,
 		schema: editBadgeActionSchema,
 	});
-	const badgeId = z.preprocess(actualNumber, z.number()).parse(params.id);
+	const badgeId = v.parse(preprocess(actualNumber, v.number()), params.id);
 	const badge = notFoundIfNullish(await BadgeRepository.findById(badgeId));
 
 	switch (data._action) {

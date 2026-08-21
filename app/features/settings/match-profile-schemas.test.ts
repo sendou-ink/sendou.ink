@@ -1,9 +1,10 @@
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import { mapModePreferencesValueSchema } from "./match-profile-schemas";
 
 describe("mapModePreferencesValueSchema", () => {
 	test("strips pools for avoided modes", () => {
-		const result = mapModePreferencesValueSchema.parse({
+		const result = v.parse(mapModePreferencesValueSchema, {
 			modes: [
 				{ mode: "SZ", preference: "PREFER" },
 				{ mode: "TC", preference: "AVOID" },
@@ -18,7 +19,7 @@ describe("mapModePreferencesValueSchema", () => {
 	});
 
 	test("keeps pools for preferred and neutral modes", () => {
-		const result = mapModePreferencesValueSchema.parse({
+		const result = v.parse(mapModePreferencesValueSchema, {
 			modes: [{ mode: "SZ", preference: "PREFER" }],
 			pool: [
 				{ mode: "SZ", stages: [1] },
@@ -33,7 +34,7 @@ describe("mapModePreferencesValueSchema", () => {
 	});
 
 	test("does not mutate the modes selection", () => {
-		const result = mapModePreferencesValueSchema.parse({
+		const result = v.parse(mapModePreferencesValueSchema, {
 			modes: [{ mode: "TC", preference: "AVOID" }],
 			pool: [{ mode: "TC", stages: [1] }],
 		});

@@ -1,18 +1,19 @@
-import type { z } from "zod";
+import type * as v from "valibot";
+import type { AnySchema } from "./schema";
 
 /** `_action` literals of an action schema (union or single branch). */
-export type ActionsOf<TSchema extends z.ZodTypeAny> =
-	z.infer<TSchema> extends {
+export type ActionsOf<TSchema extends AnySchema> =
+	v.InferOutput<TSchema> extends {
 		_action: infer TAction extends string;
 	}
 		? TAction
 		: never;
 
 /** Non-`_action` fields of the schema branch matching the given action, in parsed types. */
-export type FieldsOf<
-	TSchema extends z.ZodTypeAny,
-	TAction extends string,
-> = Omit<Extract<z.infer<TSchema>, { _action: TAction }>, "_action">;
+export type FieldsOf<TSchema extends AnySchema, TAction extends string> = Omit<
+	Extract<v.InferOutput<TSchema>, { _action: TAction }>,
+	"_action"
+>;
 
 /** Serializes a parsed field value into its form data representation. */
 export function serializeFieldValue(value: unknown) {

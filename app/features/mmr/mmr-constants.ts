@@ -1,3 +1,9 @@
+/** Multiplier turning an openskill ordinal into SP. */
+export const SP_PER_ORDINAL = 15;
+
+/** SP of an ordinal of 0, i.e. the SP a fresh rating starts at. */
+export const SP_BASE = 1000;
+
 export const TIERS = [
 	{
 		name: "LEVIATHAN",

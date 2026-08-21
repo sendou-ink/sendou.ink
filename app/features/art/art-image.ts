@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 
 /**
  * Allowed prefixes for an art data URL. Unlike the generic `image()` form field, art keeps the
@@ -30,10 +30,11 @@ export const ART_FORM_MAX_BODY_BYTES =
 export const ART_IMAGE_TOO_LARGE_ERROR = "forms:errors.imageTooLarge";
 
 const artImageDataUrl = (maxBytes: number) =>
-	z
-		.string()
-		.max(maxDataUrlLength(maxBytes), ART_IMAGE_TOO_LARGE_ERROR)
-		.regex(ART_IMAGE_DATA_URL_PREFIX_REGEX);
+	v.pipe(
+		v.string(),
+		v.maxLength(maxDataUrlLength(maxBytes), ART_IMAGE_TOO_LARGE_ERROR),
+		v.regex(ART_IMAGE_DATA_URL_PREFIX_REGEX),
+	);
 
 /**
  * JSON-serializable value of the art image form field. Art can't use the generic `image()` field:
@@ -42,21 +43,21 @@ const artImageDataUrl = (maxBytes: number) =>
  * uploaded (only the preview url rides along, never bytes) — art images can't be swapped after
  * upload.
  */
-export const artImageValue = z
-	.union([
-		z.object({
-			type: z.literal("EXISTING"),
-			url: z.string(),
+export const artImageValue = v.nullable(
+	v.union([
+		v.object({
+			type: v.literal("EXISTING"),
+			url: v.string(),
 		}),
-		z.object({
-			type: z.literal("NEW"),
+		v.object({
+			type: v.literal("NEW"),
 			dataUrl: artImageDataUrl(ART_IMAGE_MAX_BYTES),
 			thumbnailDataUrl: artImageDataUrl(ART_THUMBNAIL_MAX_BYTES),
 		}),
-	])
-	.nullable();
+	]),
+);
 
-export type ArtImageValue = z.infer<typeof artImageValue>;
+export type ArtImageValue = v.InferOutput<typeof artImageValue>;
 
 /**
  * Does a freshly compressed art image exceed what the schema accepts? Lets the form field reject

@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -22,7 +23,7 @@ export type UserSeasonSummaryGraphicLoaderData = SerializeFrom<typeof loader>;
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const loggedInUser = requireUser();
-	const { identifier } = userParamsSchema.parse(params);
+	const { identifier } = v.parse(userParamsSchema, params);
 	const { season } = userSeasonSummaryGraphicSearchParams.parse(url);
 	if (typeof season !== "number") {
 		throw new Response(null, { status: 400 });

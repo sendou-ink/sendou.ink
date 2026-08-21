@@ -11,6 +11,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
+import { SpDelta } from "~/components/SpDelta";
 import type { ParsedMemento } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
@@ -627,16 +628,9 @@ function MemberSkillDifference({
 	if (skillDifference.calculated) {
 		if (skillDifference.spDiff === 0) return null;
 
-		const symbol =
-			skillDifference.spDiff > 0 ? (
-				<span className="text-success">▲</span>
-			) : (
-				<span className="text-warning">▼</span>
-			);
 		return (
 			<div className={styles.extraInfo}>
-				{symbol}
-				{Math.abs(skillDifference.spDiff)}SP
+				<SpDelta diff={skillDifference.spDiff} />
 			</div>
 		);
 	}

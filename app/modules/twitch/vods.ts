@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import * as v from "valibot";
 import { twitchFetch } from "./fetch";
 import {
 	type RawVideo,
@@ -21,14 +22,14 @@ export async function getUsersByLogin(
 			`https://api.twitch.tv/helix/users?${params}`,
 		);
 
-		const parsed = usersSchema.safeParse(await res.json());
+		const parsed = v.safeParse(usersSchema, await res.json());
 		if (!parsed.success) {
 			throw new Error(
-				`Twitch users schema validation failed: ${parsed.error.message}`,
+				`Twitch users schema validation failed: ${v.summarize(parsed.issues)}`,
 			);
 		}
 
-		results.push(...parsed.data.data);
+		results.push(...parsed.output.data);
 	}
 
 	return results;
@@ -49,17 +50,17 @@ export async function getArchiveVideos(userId: string): Promise<RawVideo[]> {
 
 		const res = await twitchFetch(url.toString());
 
-		const parsed = videosSchema.safeParse(await res.json());
+		const parsed = v.safeParse(videosSchema, await res.json());
 		if (!parsed.success) {
 			throw new Error(
-				`Twitch videos schema validation failed: ${parsed.error.message}`,
+				`Twitch videos schema validation failed: ${v.summarize(parsed.issues)}`,
 			);
 		}
 
-		results.push(...parsed.data.data);
+		results.push(...parsed.output.data);
 
-		if (!parsed.data.pagination.cursor) break;
-		cursor = parsed.data.pagination.cursor;
+		if (!parsed.output.pagination.cursor) break;
+		cursor = parsed.output.pagination.cursor;
 	}
 
 	return results;

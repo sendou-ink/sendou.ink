@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	idConstant,
 	selectDynamic,
@@ -6,10 +6,10 @@ import {
 	textArea,
 	userSearch,
 } from "~/form/fields";
-import { _action, actualNumber } from "~/utils/zod";
+import { _action, actualNumber, preprocess } from "~/utils/schema";
 import { PLUS_TIERS } from "./plus-suggestions-constants";
 
-export const followUpCommentFormSchema = z.object({
+export const followUpCommentFormSchema = v.object({
 	tier: idConstant(),
 	suggestedId: idConstant(),
 	comment: textArea({
@@ -23,32 +23,33 @@ const suggestionTextFormFieldSchema = textArea({
 	maxLength: 500,
 });
 
-export const newSuggestionFormSchema = z.object({
+export const newSuggestionFormSchema = v.object({
 	tier: selectDynamic({ label: "labels.plusTier" }),
 	userId: userSearch({ label: "labels.user" }),
 	comment: suggestionTextFormFieldSchema,
 });
 
-export const editSuggestionFormSchema = z.object({
+export const editSuggestionFormSchema = v.object({
 	_action: stringConstant("EDIT_SUGGESTION"),
 	suggestionId: idConstant(),
 	comment: suggestionTextFormFieldSchema,
 });
 
-export const suggestionActionSchema = z.union([
+export const suggestionActionSchema = v.union([
 	editSuggestionFormSchema,
-	z.object({
+	v.object({
 		_action: _action("DELETE_COMMENT"),
-		suggestionId: z.preprocess(actualNumber, z.number()),
+		suggestionId: preprocess(actualNumber, v.number()),
 	}),
-	z.object({
+	v.object({
 		_action: _action("DELETE_SUGGESTION_OF_THEMSELVES"),
-		tier: z.preprocess(
+		tier: preprocess(
 			actualNumber,
-			z
-				.number()
-				.min(Math.min(...PLUS_TIERS))
-				.max(Math.max(...PLUS_TIERS)),
+			v.pipe(
+				v.number(),
+				v.minValue(Math.min(...PLUS_TIERS)),
+				v.maxValue(Math.max(...PLUS_TIERS)),
+			),
 		),
 	}),
 ]);

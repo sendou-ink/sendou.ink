@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import type * as v from "valibot";
 import type { Tables } from "~/db/tables";
 import type { tags } from "~/features/calendar/calendar-constants";
 import type { calendarFiltersSearchParamsSchema } from "~/features/calendar/calendar-schemas";
@@ -73,4 +73,6 @@ export interface GroupedCalendarEvents {
 	};
 }
 
-export type CalendarFilters = z.infer<typeof calendarFiltersSearchParamsSchema>;
+export type CalendarFilters = v.InferOutput<
+	typeof calendarFiltersSearchParamsSchema
+>;

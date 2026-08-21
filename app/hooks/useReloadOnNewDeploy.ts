@@ -1,12 +1,12 @@
 import * as React from "react";
-import { z } from "zod";
+import * as v from "valibot";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { GIT_COMMIT } from "~/utils/git-commit";
 
 const reloadedForCommitPersisted = PersistedState.define({
 	key: "reloadedForCommit",
 	storage: "session",
-	schema: z.string(),
+	schema: v.string(),
 	default: "",
 });
 

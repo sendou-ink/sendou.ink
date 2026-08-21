@@ -2,8 +2,8 @@ import type { LoaderFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { tournamentPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const params = parseParams({

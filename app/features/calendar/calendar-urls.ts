@@ -1,5 +1,5 @@
+import type { DayMonthYear } from "~/utils/schema";
 import { CALENDAR_PAGE, SENDOU_INK_BASE_URL } from "~/utils/urls";
-import type { DayMonthYear } from "~/utils/zod";
 import {
 	calendarNewSearchParams,
 	calendarSearchParams,

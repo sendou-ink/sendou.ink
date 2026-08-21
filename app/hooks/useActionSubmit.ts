@@ -1,10 +1,10 @@
 import { type FetcherWithComponents, useFetcher } from "react-router";
-import type { z } from "zod";
 import {
 	type ActionsOf,
 	type FieldsOf,
 	serializeFieldValue,
 } from "~/utils/action-schemas";
+import type { AnySchema } from "~/utils/schema";
 
 interface UseActionSubmitOptions {
 	/** Route to submit to. Defaults to the current route. */
@@ -17,13 +17,13 @@ interface UseActionSubmitOptions {
 
 /**
  * Programmatic counterpart of `<ActionButton>`: submits an `_action` mutation
- * from an event handler, type checked against the route's zod action schema.
+ * from an event handler, type checked against the route's action schema.
  *
  * @example
  * const { submit } = useActionSubmit(deleteFriendSchema);
  * submit("DELETE_FRIEND", { friendshipId });
  */
-export function useActionSubmit<TSchema extends z.ZodTypeAny>(
+export function useActionSubmit<TSchema extends AnySchema>(
 	_schema: TSchema,
 	opts?: UseActionSubmitOptions,
 ) {

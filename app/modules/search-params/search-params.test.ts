@@ -1,6 +1,6 @@
 import type { ShouldRevalidateFunction } from "react-router";
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
 import * as SearchParams from "./search-params";
 import { SP } from "./search-params";
 import {
@@ -9,26 +9,34 @@ import {
 } from "./search-params-test-utils";
 
 const testDefinition = SearchParams.define({
-	limit: SP.param(z.number().int().min(1).max(100), {
-		default: 24,
+	limit: SP.param(
+		v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)),
+		{
+			default: 24,
+			loader: true,
+		},
+	),
+	name: SP.param(v.pipe(v.string(), v.maxLength(20)), {
+		default: "",
 		loader: true,
 	}),
-	name: SP.param(z.string().max(20), { default: "", loader: true }),
-	enabled: SP.param(z.boolean(), { default: false, loader: false }),
-	mode: SP.param(z.enum(["TW", "SZ", "TC"]), {
+	enabled: SP.param(v.boolean(), { default: false, loader: false }),
+	mode: SP.param(v.picklist(["TW", "SZ", "TC"]), {
 		default: "TW",
 		loader: true,
 	}),
-	season: SP.param(z.number().int().nullable(), { loader: true }),
-	ids: SP.param(z.array(z.number().int().positive()), {
+	season: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
+		loader: true,
+	}),
+	ids: SP.param(v.array(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
 		default: [],
 		loader: false,
 	}),
 	filters: SP.json(
-		z.object({ minValue: z.number(), tags: z.array(z.string()) }),
+		v.object({ minValue: v.number(), tags: v.array(v.string()) }),
 		{ default: { minValue: 0, tags: [] }, loader: true, resets: ["limit"] },
 	),
-	blob: SP.json(z.object({ text: z.string() }), {
+	blob: SP.json(v.object({ text: v.string() }), {
 		default: { text: "" },
 		loader: false,
 		compress: true,
@@ -112,7 +120,7 @@ describe("SearchParams.define", () => {
 
 	test("decodes legacy JSON-encoded arrays", () => {
 		const definitionWithModes = SearchParams.define({
-			modes: SP.param(z.array(z.enum(["SZ", "TC", "RM", "CB"])), {
+			modes: SP.param(v.array(v.picklist(["SZ", "TC", "RM", "CB"])), {
 				default: ["SZ", "TC", "RM", "CB"],
 				loader: false,
 			}),
@@ -143,19 +151,25 @@ describe("SearchParams.define", () => {
 
 	test("rejects schemas outside the derivation table at define time", () => {
 		expect(() =>
-			SP.param(z.object({ a: z.string() }) as any, {
+			SP.param(v.object({ a: v.string() }) as any, {
 				default: { a: "" },
 				loader: true,
 			}),
 		).toThrow(/derive/);
 		expect(() =>
-			SP.param(z.string().transform((s) => s.length) as any, {
-				default: 0,
-				loader: true,
-			}),
+			SP.param(
+				v.pipe(
+					v.string(),
+					v.transform((s) => s.length),
+				) as any,
+				{
+					default: 0,
+					loader: true,
+				},
+			),
 		).toThrow(/derive/);
 		expect(() =>
-			SP.param(z.array(z.array(z.number())) as any, {
+			SP.param(v.array(v.array(v.number())) as any, {
 				default: [],
 				loader: true,
 			}),
@@ -163,8 +177,10 @@ describe("SearchParams.define", () => {
 	});
 
 	test("defaults .nullable() params to null without declaring it", () => {
-		const omitted = SP.param(z.number().int().nullable(), { loader: true });
-		const declared = SP.param(z.number().int().nullable(), {
+		const omitted = SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
+			loader: true,
+		});
+		const declared = SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
 			default: null,
 			loader: true,
 		});
@@ -178,31 +194,26 @@ describe("SearchParams.define", () => {
 
 	test("rejects .optional() and non-null defaults for .nullable()", () => {
 		expect(() =>
-			SP.param(z.number().optional() as any, { default: 1, loader: true }),
+			SP.param(v.optional(v.number()) as any, { default: 1, loader: true }),
 		).toThrow(/nullable/);
 		expect(() =>
-			SP.param(z.number().nullable(), { default: 1 as any, loader: true }),
+			SP.param(v.nullable(v.number()), { default: 1 as any, loader: true }),
 		).toThrow(/null as its default/);
 	});
 
-	test("supports SP.custom codecs with total decode via issues", () => {
-		const isoDate = z.codec(z.string(), z.date(), {
-			decode: (value, payload) => {
+	test("supports SP.custom codecs with total decode", () => {
+		const isoDate = SearchParams.codec(v.date(), {
+			decode: (value) => {
 				const date = new Date(value);
-				if (Number.isNaN(date.getTime())) {
-					payload.issues.push({
-						code: "custom",
-						message: "invalid date",
-						input: value,
-					});
-					return z.NEVER;
-				}
-				return date;
+				return Number.isNaN(date.getTime()) ? undefined : date;
 			},
 			encode: (date) => date.toISOString(),
 		});
 		const customDefinition = SearchParams.define({
-			from: SP.custom(isoDate.nullable(), { default: null, loader: true }),
+			from: SP.custom(SearchParams.nullableCodec(isoDate), {
+				default: null,
+				loader: true,
+			}),
 		});
 
 		const value = new Date("2024-05-01T12:00:00.000Z");
@@ -220,7 +231,7 @@ describe("SearchParams.define", () => {
 	test("rejects resets pointing at unknown params", () => {
 		expect(() =>
 			SearchParams.define({
-				a: SP.param(z.number(), { default: 0, loader: true, resets: ["b"] }),
+				a: SP.param(v.number(), { default: 0, loader: true, resets: ["b"] }),
 			}),
 		).toThrow(/unknown param/);
 	});
@@ -310,7 +321,7 @@ describe("SearchParams.href", () => {
 
 	test("encodes arrays as repeated keys and empty arrays as one empty value", () => {
 		const definitionWithDefault = SearchParams.define({
-			modes: SP.param(z.array(z.enum(["SZ", "TC"])), {
+			modes: SP.param(v.array(v.picklist(["SZ", "TC"])), {
 				default: ["SZ", "TC"],
 				loader: false,
 			}),

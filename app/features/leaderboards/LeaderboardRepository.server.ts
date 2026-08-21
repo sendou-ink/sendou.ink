@@ -121,9 +121,12 @@ export async function findTeamLeaderboardBySeason({
 	season: number;
 	onlyOneEntryPerUser: boolean;
 }) {
+	// skipping is about the season finale qualification which the all rosters leaderboard is not concerned with
 	const entries = addSkipped({
 		entries: await teamLeaderboardBySeasonQuery(season).execute(),
-		skippedIdentifiers: await findAllTeamSkipIdentifiersBySeason(season),
+		skippedIdentifiers: onlyOneEntryPerUser
+			? await findAllTeamSkipIdentifiersBySeason(season)
+			: new Set<SkillTeamIdentifier>(),
 	});
 	const withNonSqPlayersHandled = onlyOneEntryPerUser
 		? await filterOutNonSqPlayers({ season, entries })

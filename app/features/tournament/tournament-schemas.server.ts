@@ -1,6 +1,6 @@
-import { z } from "zod";
+import * as v from "valibot";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { _action } from "~/utils/zod";
+import { _action } from "~/utils/schema";
 import { registerTeamFormSchemaServer } from "./tournament-register-schemas.server";
 import {
 	addPlayerSchema,
@@ -16,16 +16,16 @@ export function registerSchema({
 	tournament: Tournament;
 	ownTeamId?: number;
 }) {
-	return z.union([
+	return v.unionAsync([
 		registerTeamFormSchemaServer({ tournament, ownTeamId }),
 		updateMapPoolSchema,
 		deleteTeamMemberSchema,
-		z.object({
+		v.object({
 			_action: _action("LEAVE_TEAM"),
 		}),
 		checkInSchema,
 		addPlayerSchema,
-		z.object({
+		v.object({
 			_action: _action("UNREGISTER"),
 		}),
 	]);

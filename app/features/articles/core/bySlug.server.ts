@@ -1,7 +1,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import matter from "gray-matter";
-import { ZodError, type z } from "zod";
+import * as v from "valibot";
 import { ARTICLES_FOLDER_PATH } from "../articles-constants";
 import { articleDataSchema } from "../articles-schemas.server";
 
@@ -18,7 +18,7 @@ export function articleBySlug(slug: string) {
 		);
 		const { content, data } = matter(rawMarkdown);
 
-		const { date, ...restParsed } = articleDataSchema.parse(data);
+		const { date, ...restParsed } = v.parse(articleDataSchema, data);
 
 		return {
 			content,
@@ -29,7 +29,7 @@ export function articleBySlug(slug: string) {
 	} catch (e) {
 		if (!(e instanceof Error)) throw e;
 
-		if (e.message.includes("ENOENT") || e instanceof ZodError) {
+		if (e.message.includes("ENOENT") || e instanceof v.ValiError) {
 			return null;
 		}
 
@@ -38,7 +38,7 @@ export function articleBySlug(slug: string) {
 }
 
 export function normalizeAuthors(
-	authors: z.infer<typeof articleDataSchema>["author"],
+	authors: v.InferOutput<typeof articleDataSchema>["author"],
 ): Array<{ name: string; link: string | null }> {
 	if (Array.isArray(authors)) {
 		return authors.map((author) => {

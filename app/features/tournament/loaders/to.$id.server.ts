@@ -13,7 +13,7 @@ import * as TournamentMatchVodRepository from "~/features/tournament-bracket/Tou
 import { hasPermission } from "~/modules/permissions/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { idObject } from "~/utils/schema";
 import { serializeTournamentLoaderData } from "../core/layout-payload";
 
 export type TournamentLoaderData = {

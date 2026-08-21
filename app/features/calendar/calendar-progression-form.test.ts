@@ -1,6 +1,6 @@
 import { describe, expect, test } from "vitest";
-import type { z } from "zod";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { ValidationCtx } from "~/utils/schema";
 import {
 	defaultBracketsFormValues,
 	formValuesToInputBrackets,
@@ -67,11 +67,10 @@ function validationIssues(formValues: {
 	brackets: Parameters<typeof validateBracketProgressionFormValues>[0];
 	progression: Parameters<typeof validateBracketProgressionFormValues>[1];
 }) {
-	const issues: z.ZodIssue[] = [];
-	const ctx = {
-		addIssue: (issue: z.ZodIssue) => issues.push(issue),
-		path: [],
-	} as unknown as z.RefinementCtx;
+	const issues: Parameters<ValidationCtx["addIssue"]>[0][] = [];
+	const ctx: ValidationCtx = {
+		addIssue: (issue) => issues.push(issue),
+	};
 
 	validateBracketProgressionFormValues(
 		formValues.brackets,

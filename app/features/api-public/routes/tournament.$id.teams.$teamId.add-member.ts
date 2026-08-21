@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
@@ -19,15 +19,15 @@ import {
 	parseBody,
 	parseParams,
 } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 	teamId: id,
 });
 
-const bodySchema = z.object({
+const bodySchema = v.object({
 	userId: id,
 });
 

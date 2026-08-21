@@ -21,9 +21,9 @@ describe("weaponIdToArrayWithAlts", () => {
 	});
 
 	test("handles weapon id with only one alt", () => {
-		const id = 41;
+		const id = 200;
 		const result = weaponIdToArrayWithAlts(id);
-		expect(result).toEqual([41, 46]);
+		expect(result).toEqual([200, 205]);
 	});
 });
 

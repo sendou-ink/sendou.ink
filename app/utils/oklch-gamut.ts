@@ -1,8 +1,8 @@
-import type { z } from "zod";
+import type * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
-import type { themeInputSchema } from "~/utils/zod";
+import type { themeInputSchema } from "~/utils/schema";
 
-export type ThemeInput = z.infer<typeof themeInputSchema>;
+export type ThemeInput = v.InferOutput<typeof themeInputSchema>;
 
 interface Lab {
 	L: number;

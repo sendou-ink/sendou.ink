@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { db } from "~/db/sql";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -10,10 +10,10 @@ import { parseMaplistSource } from "~/modules/tournament-map-list-generator/sour
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetTournamentMatchResponse } from "../schema";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 

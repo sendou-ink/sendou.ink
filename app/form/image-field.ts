@@ -1,5 +1,5 @@
-import { z } from "zod";
-import { id } from "~/utils/zod";
+import * as v from "valibot";
+import { id } from "~/utils/schema";
 
 /**
  * Allowed prefixes for a {@link imageValue} `NEW` data URL. The client compresses to webp,
@@ -20,24 +20,25 @@ const IMAGE_FIELD_MAX_DATA_URL_LENGTH = 3_000_000;
  * `null` (none / removed), an unchanged `EXISTING` image (only the id reference + a preview url
  * ride in JSON, never bytes), or a newly picked `NEW` image as a base64 webp/png data URL.
  */
-export const imageValue = z
-	.union([
-		z.object({
-			type: z.literal("EXISTING"),
+export const imageValue = v.nullable(
+	v.union([
+		v.object({
+			type: v.literal("EXISTING"),
 			imgId: id,
-			url: z.string(),
+			url: v.string(),
 		}),
-		z.object({
-			type: z.literal("NEW"),
-			dataUrl: z
-				.string()
-				.max(IMAGE_FIELD_MAX_DATA_URL_LENGTH)
-				.regex(IMAGE_FIELD_DATA_URL_PREFIX_REGEX),
+		v.object({
+			type: v.literal("NEW"),
+			dataUrl: v.pipe(
+				v.string(),
+				v.maxLength(IMAGE_FIELD_MAX_DATA_URL_LENGTH),
+				v.regex(IMAGE_FIELD_DATA_URL_PREFIX_REGEX),
+			),
 		}),
-	])
-	.nullable();
+	]),
+);
 
-export type ImageFieldValue = z.infer<typeof imageValue>;
+export type ImageFieldValue = v.InferOutput<typeof imageValue>;
 
 /**
  * Builds an `EXISTING` {@link ImageFieldValue} for an edit form's default values, or `null`

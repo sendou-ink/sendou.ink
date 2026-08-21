@@ -1,12 +1,23 @@
 import { startOfYear } from "date-fns";
-import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
+import type {
+	Expression,
+	ExpressionBuilder,
+	NotNull,
+	Transaction,
+} from "kysely";
+import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { ParsedMemento } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { CANCELED_MATCH_SEASON } from "~/features/mmr/mmr-constants";
+import {
+	CANCELED_MATCH_SEASON,
+	SP_BASE,
+	SP_PER_ORDINAL,
+} from "~/features/mmr/mmr-constants";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
 import { mostPopularArrayElement } from "~/utils/arrays";
@@ -220,7 +231,6 @@ const tournamentResultsSubQuery = (
 			"CalendarEventDate.eventId",
 		)
 		.select((eb) => [
-			"TournamentResult.spDiff",
 			"TournamentResult.setResults",
 			"TournamentResult.tournamentId",
 			"TournamentResult.tournamentTeamId",
@@ -297,6 +307,52 @@ export type SeasonTournamentResult = Extract<
 	{ type: "TOURNAMENT_RESULT" }
 >["tournamentResult"];
 
+/** SP of an openskill ordinal, matching `ordinalToSp` down to its rounding. */
+const spOf = (ordinal: Expression<number>) =>
+	sql<number>`round(${ordinal} * ${sql.lit(SP_PER_ORDINAL)} + ${sql.lit(SP_BASE)}, 2)`;
+
+/**
+ * SP of a roster's rating, or `null` while the roster is not yet ranked and so has
+ * no SP to show. Reads `matchesCount` and `ordinal` off the `rosterSkill` selection.
+ */
+const rosterSp = sql<
+	number | null
+>`case when ${sql.ref("rosterSkill.matchesCount")} >= ${sql.lit(MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)}
+		then ${spOf(sql.ref("rosterSkill.ordinal"))}
+	end`;
+
+/**
+ * The SP a rating change was worth, or `null` while the rating is still being calculated
+ * and so has never been shown. Reads the columns
+ * {@link previousRatingColumns} adds, plus `ordinal`, off the named selection.
+ */
+const spDiffOf = (of: "userSkill" | "rosterSkill") =>
+	sql<
+		number | null
+	>`case when ${sql.ref(`${of}.previousMatchesCount`)} >= ${sql.lit(MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)}
+			then round(${spOf(sql.ref(`${of}.ordinal`))} - ${spOf(sql.ref(`${of}.previousOrdinal`))}, 2)
+		end`;
+
+/**
+ * Season's Skill rows partitioned by `partitionBy`, each carrying the rating it replaced.
+ * Rows from SendouQ sets are included and not just the tournament ones the seasons page
+ * shows, because a tournament rating's predecessor is just as often a SendouQ set.
+ */
+const previousRatingColumns = (
+	eb: ExpressionBuilder<DB, "Skill">,
+	partitionBy: "Skill.userId" | "Skill.identifier",
+) =>
+	[
+		eb.fn
+			.agg<number | null>("lag", [eb.ref("Skill.ordinal")])
+			.over((ob) => ob.partitionBy(partitionBy).orderBy("Skill.id"))
+			.as("previousOrdinal"),
+		eb.fn
+			.agg<number | null>("lag", [eb.ref("Skill.matchesCount")])
+			.over((ob) => ob.partitionBy(partitionBy).orderBy("Skill.id"))
+			.as("previousMatchesCount"),
+	] as const;
+
 /**
  * Retrieves results of given user, competitive season & page. Both SendouQ matches and ranked tournaments.
  */
@@ -310,17 +366,77 @@ export async function findSeasonResultsByUserId({
 	page: number;
 }) {
 	const rows = await db
+		.with("userSkill", (db) =>
+			db
+				.selectFrom("Skill")
+				.select((eb) => [
+					"Skill.id",
+					"Skill.ordinal",
+					...previousRatingColumns(eb, "Skill.userId"),
+				])
+				.where("Skill.userId", "=", userId)
+				.where("Skill.season", "=", season),
+		)
+		.with("rosterSkill", (db) =>
+			db
+				.selectFrom("Skill")
+				.innerJoin("SkillTeamUser", "SkillTeamUser.skillId", "Skill.id")
+				.select((eb) => [
+					"Skill.id",
+					"Skill.tournamentId",
+					"Skill.ordinal",
+					"Skill.matchesCount",
+					...previousRatingColumns(eb, "Skill.identifier"),
+				])
+				.where("SkillTeamUser.userId", "=", userId)
+				.where("Skill.season", "=", season),
+		)
+		.with("tournamentRosterSkill", (db) =>
+			db
+				.selectFrom("rosterSkill")
+				.select((eb) => [
+					"rosterSkill.tournamentId",
+					rosterSp.as("teamSp"),
+					spDiffOf("rosterSkill").as("teamSpDiff"),
+					// a user plays for several rosters when their team subbed mid-tournament,
+					// in which case the roster they played the most sets with is theirs.
+					// note the ranking happens over every roster and not only the ranked ones,
+					// so that an unranked roster of theirs still wins and simply shows nothing
+					eb.fn
+						.agg<number>("row_number")
+						.over((ob) =>
+							ob
+								.partitionBy("rosterSkill.tournamentId")
+								.orderBy(
+									sql<number>`${sql.ref("rosterSkill.matchesCount")} - coalesce(${sql.ref("rosterSkill.previousMatchesCount")}, 0)`,
+									"desc",
+								)
+								.orderBy("rosterSkill.id", "desc"),
+						)
+						.as("rosterRank"),
+				])
+				.where("rosterSkill.tournamentId", "is not", null),
+		)
 		.selectFrom("Skill")
+		.innerJoin("userSkill", "userSkill.id", "Skill.id")
+		.leftJoin("tournamentRosterSkill", (join) =>
+			join
+				.onRef("tournamentRosterSkill.tournamentId", "=", "Skill.tournamentId")
+				.on("tournamentRosterSkill.rosterRank", "=", 1),
+		)
 		.select((eb) => [
 			"Skill.id",
 			"Skill.createdAt",
+			spDiffOf("userSkill").as("spDiff"),
+			"tournamentRosterSkill.teamSp",
+			"tournamentRosterSkill.teamSpDiff",
 			jsonObjectFrom(tournamentResultsSubQuery(eb, userId)).as(
 				"tournamentResult",
 			),
 			jsonObjectFrom(groupMatchResultsSubQuery(eb)).as("groupMatch"),
 		])
-		.where("userId", "=", userId)
-		.where("season", "=", season)
+		.where("Skill.userId", "=", userId)
+		.where("Skill.season", "=", season)
 		.where((eb) => skillCountsAsSeasonSet(eb, userId))
 		.limit(MATCHES_PER_SEASONS_PAGE)
 		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
@@ -344,14 +460,19 @@ export async function findSeasonResultsByUserId({
 
 				return {
 					type: "GROUP_MATCH" as const,
-					...R.omit(row, ["groupMatch", "tournamentResult"]),
+					...R.omit(row, [
+						"groupMatch",
+						"tournamentResult",
+						"spDiff",
+						"teamSp",
+						"teamSpDiff",
+					]),
 					// older skills don't have createdAt, so we use groupMatch's createdAt as fallback
 					createdAt: row.createdAt ?? row.groupMatch.createdAt,
 					groupMatch: {
 						...R.omit(row.groupMatch, ["createdAt", "memento", "maps"]),
-						// note there is no corresponding "censoring logic" for tournament result
-						// because for those the sp diff is not inserted in the first place
-						// if it should not be shown to the user
+						// note tournament results are censored the same way, but in SQL,
+						// by the case expression spDiffOf builds
 						spDiff: skillDiff?.calculated ? skillDiff.spDiff : null,
 						groupAlphaMembers: row.groupMatch.groupAlphaMembers.map((m) => ({
 							...m,
@@ -377,10 +498,21 @@ export async function findSeasonResultsByUserId({
 			if (row.tournamentResult) {
 				return {
 					type: "TOURNAMENT_RESULT" as const,
-					...R.omit(row, ["groupMatch", "tournamentResult"]),
+					...R.omit(row, [
+						"groupMatch",
+						"tournamentResult",
+						"spDiff",
+						"teamSp",
+						"teamSpDiff",
+					]),
 					// older skills don't have createdAt, so we use tournament's start time as a fallback
 					createdAt: row.createdAt ?? row.tournamentResult.tournamentStartTime,
-					tournamentResult: row.tournamentResult,
+					tournamentResult: {
+						...row.tournamentResult,
+						spDiff: row.spDiff,
+						teamSp: row.teamSp,
+						teamSpDiff: row.teamSpDiff,
+					},
 				};
 			}
 

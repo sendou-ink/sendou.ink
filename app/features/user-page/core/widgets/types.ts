@@ -1,4 +1,5 @@
-import type { z } from "zod";
+import type * as v from "valibot";
+import type { AnySchema } from "~/utils/schema";
 import type { allWidgetsFlat } from "./portfolio";
 import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 
@@ -7,7 +8,7 @@ type WidgetUnion = ReturnType<typeof allWidgetsFlat>[number];
 export type WidgetId = WidgetUnion["id"];
 
 type ExtractSchema<W> = W extends { schema: infer S }
-	? S extends z.ZodTypeAny
+	? S extends AnySchema
 		? S
 		: never
 	: never;
@@ -17,7 +18,7 @@ export type StoredWidget = {
 		id: K["id"];
 	} & (ExtractSchema<K> extends never
 		? { settings?: never }
-		: { settings: z.infer<ExtractSchema<K>> });
+		: { settings: v.InferOutput<ExtractSchema<K>> });
 }[WidgetUnion["id"]];
 
 type InferLoaderReturn<T> = T extends (...args: any[]) => Promise<infer R>

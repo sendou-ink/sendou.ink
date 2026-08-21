@@ -7,12 +7,12 @@ import {
 } from "openskill";
 import invariant from "~/utils/invariant";
 import type { TierName } from "./mmr-constants";
-import { TIERS } from "./mmr-constants";
+import { SP_BASE, SP_PER_ORDINAL, TIERS } from "./mmr-constants";
 
 const TAU = 0.3;
 
 export function ordinalToSp(ordinal: number) {
-	return toTwoDecimals(ordinal * 15 + 1000);
+	return toTwoDecimals(ordinal * SP_PER_ORDINAL + SP_BASE);
 }
 
 export function ordinalToRoundedSp(ordinal: number) {

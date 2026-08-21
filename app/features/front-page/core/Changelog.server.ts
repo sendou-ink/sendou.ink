@@ -1,5 +1,5 @@
 import { formatDistance } from "date-fns";
-import { z } from "zod";
+import * as v from "valibot";
 import { logger } from "~/utils/logger";
 
 const BSKY_URL =
@@ -7,48 +7,60 @@ const BSKY_URL =
 
 const CHANGE_LOG_ITEMS_MAX = 6;
 
-const postsSchema = z.object({
-	feed: z.array(
-		z.object({
-			post: z.object({
-				uri: z.string(),
-				record: z.object({
-					$type: z.string(),
-					createdAt: z.string(),
-					facets: z
-						.array(
-							z.object({
-								features: z.array(
-									z.object({ $type: z.string(), tag: z.string().nullish() }),
-								),
-								index: z.object({ byteEnd: z.number(), byteStart: z.number() }),
-							}),
-						)
-						.nullish(),
-					text: z.string(),
-				}),
-				embed: z
-					.object({
-						$type: z.string(),
-						images: z
-							.array(
-								z.object({
-									thumb: z.string(),
-									fullsize: z.string(),
-									alt: z.string(),
-									aspectRatio: z.object({
-										height: z.number(),
-										width: z.number(),
+const postsSchema = v.object({
+	feed: v.array(
+		v.object({
+			post: v.object({
+				uri: v.string(),
+				record: v.object({
+					$type: v.string(),
+					createdAt: v.string(),
+					facets: v.optional(
+						v.nullable(
+							v.array(
+								v.object({
+									features: v.array(
+										v.object({
+											$type: v.string(),
+											tag: v.nullish(v.string()),
+										}),
+									),
+									index: v.object({
+										byteEnd: v.number(),
+										byteStart: v.number(),
 									}),
 								}),
-							)
-							.nullish(),
-					})
-					.nullish(),
-				replyCount: z.number(),
-				repostCount: z.number(),
-				likeCount: z.number(),
-				quoteCount: z.number(),
+							),
+						),
+					),
+					text: v.string(),
+				}),
+				embed: v.optional(
+					v.nullable(
+						v.object({
+							$type: v.string(),
+							images: v.optional(
+								v.nullable(
+									v.array(
+										v.object({
+											thumb: v.string(),
+											fullsize: v.string(),
+											alt: v.string(),
+											aspectRatio: v.object({
+												height: v.number(),
+												width: v.number(),
+											}),
+										}),
+									),
+								),
+							),
+						}),
+					),
+				),
+				replyCount: v.number(),
+				repostCount: v.number(),
+				likeCount: v.number(),
+				quoteCount: v.number(),
 			}),
 		}),
 	),
@@ -73,7 +85,7 @@ export async function get() {
 	return result;
 }
 
-type RawPost = z.infer<typeof postsSchema>["feed"][number]["post"];
+type RawPost = v.InferOutput<typeof postsSchema>["feed"][number]["post"];
 
 export interface ChangelogItem {
 	id: string;
@@ -107,12 +119,12 @@ async function fetchPosts() {
 }
 
 function parsePosts(data: unknown) {
-	const result = postsSchema.safeParse(data);
+	const result = v.safeParse(postsSchema, data);
 	if (!result.success) {
-		throw new Error(`Failed to parse posts: ${result.error.message}`);
+		throw new Error(`Failed to parse posts: ${v.summarize(result.issues)}`);
 	}
 
-	return result.data.feed.map((feed) => feed.post);
+	return result.output.feed.map((feed) => feed.post);
 }
 
 function postHasSendouInkTag(post: RawPost) {

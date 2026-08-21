@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { mapModePreferencesValueSchema } from "~/features/settings/match-profile-schemas";
 import {
@@ -15,26 +15,31 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
+import {
+	_action,
+	preprocess,
+	superRefine,
+	themeInputSchema,
+} from "~/utils/schema";
 import { mySlugify } from "~/utils/urls";
-import { _action, themeInputSchema } from "~/utils/zod";
 import {
 	CUSTOM_ROLE_MAX_LENGTH,
 	TEAM,
 	TEAM_MEMBER_ROLES,
 } from "./team-constants";
 
-export const resetInviteLinkSchema = z.object({
+export const resetInviteLinkSchema = v.object({
 	_action: _action("RESET_INVITE_LINK"),
 });
 
-export const teamProfilePageActionSchema = z.union([
-	z.object({
+export const teamProfilePageActionSchema = v.union([
+	v.object({
 		_action: _action("LEAVE_TEAM"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("MAKE_MAIN_TEAM"),
 	}),
-	z.object({
+	v.object({
 		_action: _action("DELETE_TEAM"),
 	}),
 ]);
@@ -45,7 +50,7 @@ const teamNameValidate = {
 	message: "forms:errors.noOnlySpecialCharacters",
 } as const;
 
-export const createTeamSchema = z.object({
+export const createTeamSchema = v.object({
 	name: textField({
 		label: "labels.name",
 		minLength: TEAM.NAME_MIN_LENGTH,
@@ -54,7 +59,7 @@ export const createTeamSchema = z.object({
 	}),
 });
 
-export const editTeamFormSchema = z.object({
+export const editTeamFormSchema = v.object({
 	_action: stringConstant("EDIT"),
 	name: textField({
 		label: "labels.name",
@@ -81,15 +86,15 @@ export const editTeamFormSchema = z.object({
 	banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
 });
 
-export const updateTeamCustomThemeSchema = z.object({
+export const updateTeamCustomThemeSchema = v.object({
 	_action: _action("UPDATE_CUSTOM_THEME"),
-	newValue: z.preprocess(
+	newValue: preprocess(
 		(val) => (!val || val === "null" ? null : val),
-		themeInputSchema.nullable(),
+		v.nullable(themeInputSchema),
 	),
 });
 
-export const updateTeamMapModePreferencesSchema = z.object({
+export const updateTeamMapModePreferencesSchema = v.object({
 	_action: stringConstant("UPDATE_MAP_MODE_PREFERENCES"),
 	mapModePreferences: customField(
 		{ initialValue: { modes: [], pool: [] } satisfies UserMapModePreferences },
@@ -97,12 +102,12 @@ export const updateTeamMapModePreferencesSchema = z.object({
 	),
 });
 
-const removeTeamMapModePreferencesSchema = z.object({
+const removeTeamMapModePreferencesSchema = v.object({
 	_action: _action("REMOVE_MAP_MODE_PREFERENCES"),
 });
 
 /** Every payload the team edit route action accepts, discriminated by `_action`. */
-export const editTeamActionSchema = z.union([
+export const editTeamActionSchema = v.union([
 	editTeamFormSchema,
 	updateTeamCustomThemeSchema,
 	updateTeamMapModePreferencesSchema,
@@ -110,17 +115,17 @@ export const editTeamActionSchema = z.union([
 ]);
 
 /** Sentinel `role` value selected to switch a member to a free-text custom role. Never stored. */
-export const CUSTOM_ROLE_VALUE = "CUSTOM";
+export const CUSTOM_ROLE_VALUE = "CUSTOM" as const;
 
-export const updateRosterSchema = z
-	.object({
+export const updateRosterSchema = v.pipe(
+	v.object({
 		_action: stringConstant("UPDATE_ROSTER"),
 		members: array({
 			max: TEAM.MAX_MEMBER_COUNT,
 			addable: false,
 			sortable: true,
 			field: fieldset({
-				fields: z.object({
+				fields: v.object({
 					userId: idConstant(),
 					role: selectOptional({
 						label: "labels.teamMemberRole",
@@ -150,17 +155,17 @@ export const updateRosterSchema = z
 				}),
 			}),
 		}),
-	})
-	.superRefine((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		for (const [index, member] of data.members.entries()) {
 			const isCustom = member.role === CUSTOM_ROLE_VALUE;
 
 			if (isCustom && !member.customRole) {
 				ctx.addIssue({
-					code: z.ZodIssueCode.custom,
 					path: ["members", index, "customRole"],
 					message: "forms:errors.customRoleRequired",
 				});
 			}
 		}
-	});
+	}),
+);

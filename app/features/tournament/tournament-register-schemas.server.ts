@@ -1,6 +1,7 @@
-import { z } from "zod";
+import * as v from "valibot";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import { superRefineAsync } from "~/utils/schema";
 import { registerTeamFormSchema } from "./tournament-register-schemas";
 import { tournamentTeamNameTaken } from "./tournament-utils.server";
 
@@ -18,25 +19,27 @@ export function registerTeamFormSchemaServer({
 	/** The team the registering user already owns, excluded from the uniqueness check. */
 	ownTeamId?: number;
 }) {
-	return registerTeamFormSchema.superRefine(async (data, ctx) => {
-		const linkedTeamId = data.teamId ? Number(data.teamId) : null;
-		const name = linkedTeamId
-			? (await TeamRepository.findById(linkedTeamId))?.name
-			: data.pickUpName;
-		if (!name) return;
+	return v.pipeAsync(
+		registerTeamFormSchema,
+		superRefineAsync(async (data, ctx) => {
+			const linkedTeamId = data.teamId ? Number(data.teamId) : null;
+			const name = linkedTeamId
+				? (await TeamRepository.findById(linkedTeamId))?.name
+				: data.pickUpName;
+			if (!name) return;
 
-		if (
-			tournamentTeamNameTaken({
-				tournament,
-				name,
-				exceptTournamentTeamId: ownTeamId,
-			})
-		) {
-			ctx.addIssue({
-				code: z.ZodIssueCode.custom,
-				message: "forms:errors.regTeamNameTaken",
-				path: [linkedTeamId ? "teamId" : "pickUpName"],
-			});
-		}
-	});
+			if (
+				tournamentTeamNameTaken({
+					tournament,
+					name,
+					exceptTournamentTeamId: ownTeamId,
+				})
+			) {
+				ctx.addIssue({
+					message: "forms:errors.regTeamNameTaken",
+					path: [linkedTeamId ? "teamId" : "pickUpName"],
+				});
+			}
+		}),
+	);
 }

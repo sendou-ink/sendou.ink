@@ -1,10 +1,11 @@
 import type { Namespace, TFunction } from "i18next";
 import type { Params, UIMatch } from "react-router";
 import { data, redirect } from "react-router";
-import type { z } from "zod";
+import * as v from "valibot";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
 import type { Ok, Result } from "~/utils/result";
+import type { AnySchema, AnySyncSchema } from "~/utils/schema";
 import { logger } from "./logger";
 import { currentRequestPathname } from "./request-context.server";
 
@@ -70,19 +71,19 @@ export function paginate({
  *
  * When using SendouForm, use parseFormData from /app/form/parse.server.ts instead.
  * */
-export async function parseRequestPayload<T extends z.ZodTypeAny>({
+export async function parseRequestPayload<T extends AnySchema>({
 	request,
 	schema,
 }: {
 	request: Request;
 	schema: T;
-}): Promise<z.infer<T>> {
+}): Promise<v.InferOutput<T>> {
 	const formDataObj =
 		request.headers.get("Content-Type") === "application/json"
 			? await request.json()
 			: formDataToObject(await request.formData());
 	try {
-		return await schema.parseAsync(formDataObj);
+		return await v.parseAsync(schema, formDataObj);
 	} catch (e) {
 		logger.error("Error parsing request payload", e);
 
@@ -91,35 +92,35 @@ export async function parseRequestPayload<T extends z.ZodTypeAny>({
 }
 
 /** Parse params with the given schema. Throws HTTP 404 response if fails. */
-export function parseParams<T extends z.ZodTypeAny>({
+export function parseParams<T extends AnySyncSchema>({
 	params,
 	schema,
 }: {
 	params: Params<string>;
 	schema: T;
-}): z.infer<T> {
-	const parsed = schema.safeParse(params);
+}): v.InferOutput<T> {
+	const parsed = v.safeParse(schema, params);
 	if (!parsed.success) {
 		throw new Response(null, { status: 404 });
 	}
 
-	return parsed.data;
+	return parsed.output;
 }
 
 /** Parse JSON body with the given schema. Throws HTTP 400 response if fails. */
-export async function parseBody<T extends z.ZodTypeAny>({
+export async function parseBody<T extends AnySyncSchema>({
 	request,
 	schema,
 }: {
 	request: Request;
 	schema: T;
-}): Promise<z.infer<T>> {
-	const parsed = schema.safeParse(await request.json());
+}): Promise<v.InferOutput<T>> {
+	const parsed = v.safeParse(schema, await request.json());
 	if (!parsed.success) {
 		throw new Response(null, { status: 400 });
 	}
 
-	return parsed.data;
+	return parsed.output;
 }
 
 export function formDataToObject(formData: FormData) {

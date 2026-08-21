@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
@@ -6,6 +7,7 @@ import { Avatar } from "~/components/Avatar";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
+import { SpDelta } from "~/components/SpDelta";
 import type {
 	SeasonGroupMatch,
 	SeasonTournamentResult,
@@ -166,12 +168,7 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 			</Link>
 			{match.spDiff ? (
 				<div className={styles.seasonMatchSubSection}>
-					{match.spDiff > 0 ? (
-						<span className="text-success">▲</span>
-					) : (
-						<span className="text-warning">▼</span>
-					)}
-					{Math.abs(roundToNDecimalPlaces(match.spDiff))}SP
+					<SpDiff spDiff={match.spDiff} />
 				</div>
 			) : null}
 		</div>
@@ -179,12 +176,14 @@ function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
 }
 
 function TournamentResult({ result }: { result: SeasonTournamentResult }) {
+	const hasSubSection = Boolean(result.spDiff) || result.teamSp !== null;
+
 	return (
 		<div data-testid="seasons-tournament-result">
 			<Link
 				to={tournamentTeamPage(result)}
 				className={clsx(styles.seasonMatch, {
-					[styles.seasonMatchWithSubSection]: result.spDiff,
+					[styles.seasonMatchWithSubSection]: hasSubSection,
 				})}
 			>
 				<div className="stack sm font-bold items-center text-lg text-center">
@@ -205,16 +204,29 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					))}
 				</ul>
 			</Link>
-			{result.spDiff ? (
+			{hasSubSection ? (
 				<div className={styles.seasonMatchSubSection}>
-					{result.spDiff > 0 ? (
-						<span className="text-success">▲</span>
-					) : (
-						<span className="text-warning">▼</span>
-					)}
-					{Math.abs(roundToNDecimalPlaces(result.spDiff))}SP
+					{result.spDiff ? <SpDiff spDiff={result.spDiff} /> : null}
+					{result.teamSp !== null ? (
+						<div className="stack horizontal xxs items-center text-lighter">
+							<Users size={14} />
+							{result.teamSpDiff !== null ? (
+								<SpDiff spDiff={result.teamSpDiff} />
+							) : (
+								<>◆ {roundToNDecimalPlaces(result.teamSp)}SP</>
+							)}
+						</div>
+					) : null}
 				</div>
 			) : null}
+		</div>
+	);
+}
+
+function SpDiff({ spDiff }: { spDiff: number }) {
+	return (
+		<div className="stack horizontal xxs items-center">
+			<SpDelta diff={spDiff} />
 		</div>
 	);
 }

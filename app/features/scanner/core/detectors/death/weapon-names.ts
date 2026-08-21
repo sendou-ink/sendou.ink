@@ -32,6 +32,7 @@ const WEAPON_NAMES: ReadonlyMap<string, string> = new Map([
 	["45", "Hero Shot Replica"],
 	["46", "Octo Shot Replica"],
 	["47", "Order Shot Replica"],
+	["48", "Plastic-Bottle Shot Replica"],
 	["50", ".52 Gal"],
 	["51", ".52 Gal Deco"],
 	["60", "N-ZAP '85"],

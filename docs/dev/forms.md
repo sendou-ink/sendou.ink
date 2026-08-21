@@ -1,10 +1,10 @@
 # SendouForm - Schema-Based Form System
 
-This document describes the schema-based form system using `SendouForm`. Forms are defined as Zod schemas that generate both the UI and server-side validation.
+This document describes the schema-based form system using `SendouForm`. Forms are defined as valibot schemas that generate both the UI and server-side validation.
 
 ## Core Concepts
 
-- Forms are defined as Zod schemas using field builders from `~/form/fields`
+- Forms are defined as valibot schemas using field builders from `~/form/fields`
 - The same schema validates both client-side and server-side
 - All translations go in `locales/en/forms.json`
 - `FormField` renders the correct UI based on schema metadata
@@ -14,7 +14,7 @@ This document describes the schema-based form system using `SendouForm`. Forms a
 ### Basic Schema Example
 
 ```ts
-export const myFormSchema = z.object({
+export const myFormSchema = v.object({
   name: textField({
     label: "labels.name",
     maxLength: 100,
@@ -92,7 +92,7 @@ items: [
 Define action discriminators with `stringConstant`:
 
 ```ts
-export const myFormSchema = z.object({
+export const myFormSchema = v.object({
   _action: stringConstant("CREATE_ITEM"),
   name: textField({ label: "labels.name", maxLength: 100 }),
 });
@@ -103,7 +103,7 @@ export const myFormSchema = z.object({
 Use `idConstant` for IDs that need default values:
 
 ```ts
-export const editFormSchema = z.object({
+export const editFormSchema = v.object({
   itemId: idConstant(), // Requires defaultValues
   name: textField({ label: "labels.name", maxLength: 100 }),
 });
@@ -175,12 +175,12 @@ dualSelectOptional({
 ### Arrays and Fieldsets
 
 ```ts
-const itemSchema = z.object({
+const itemSchema = v.object({
   name: textField({ label: "labels.itemName", maxLength: 50 }),
   quantity: numberFieldOptional({ label: "labels.quantity" }),
 });
 
-export const formSchema = z.object({
+export const formSchema = v.object({
   items: array({
     label: "labels.items",
     min: 1,
@@ -192,7 +192,7 @@ export const formSchema = z.object({
 
 ### Union for Shared Field Definitions
 
-Place field inside `z.union([])` to reuse across multiple schemas:
+Place field inside `v.union([])` to reuse across multiple schemas:
 
 ```ts
 const sharedNameField = textField({
@@ -200,18 +200,18 @@ const sharedNameField = textField({
   maxLength: 100,
 });
 
-const createSchema = z.object({
+const createSchema = v.object({
   _action: stringConstant("CREATE"),
   name: sharedNameField,
 });
 
-const editSchema = z.object({
+const editSchema = v.object({
   _action: stringConstant("EDIT"),
   id: idConstant(),
   name: sharedNameField,
 });
 
-export const actionSchema = z.union([createSchema, editSchema]);
+export const actionSchema = v.union([createSchema, editSchema]);
 ```
 
 ## Component Usage
@@ -341,7 +341,7 @@ flow, while keeping `SendouForm`'s single-submit `application/json` model unchan
 ```ts
 import { image } from "~/form/fields";
 
-export const editTeamSchema = z.object({
+export const editTeamSchema = v.object({
   teamId: idConstant(),
   logo: image({ label: "labels.logo" }),                                 // logo (default)
   banner: image({ label: "labels.banner", dimensions: "thick-banner" }),
@@ -411,15 +411,15 @@ Use `customField` for complex UI that doesn't fit standard field types:
 ### Schema
 
 ```ts
-const povSchema = z.union([
-  z.object({ type: z.literal("USER"), userId: id.optional() }),
-  z.object({ type: z.literal("NAME"), name: z.string().max(100) }),
+const povSchema = v.union([
+  v.object({ type: v.literal("USER"), userId: v.optional(id) }),
+  v.object({ type: v.literal("NAME"), name: v.pipe(v.string(), v.maxLength(100)) }),
 ]);
 
-export const formSchema = z.object({
+export const formSchema = v.object({
   pov: customField(
     { initialValue: { type: "USER" as const } },
-    povSchema.optional()
+    v.optional(povSchema)
   ),
 });
 ```
@@ -506,7 +506,7 @@ When you need async validation (database checks, authorization), create a separa
 **Base schema (`feature-schemas.ts`)** - used by both client and server:
 
 ```ts
-import { z } from "zod";
+import * as v from "valibot";
 import { textField, idConstantOptional } from "~/form/fields";
 
 // Shared sync validation that can be extracted for reuse
@@ -524,45 +524,65 @@ function validateGearAllOrNone(data: {
 // Export refine config for reuse in server schema
 export const gearAllOrNoneRefine = {
   fn: validateGearAllOrNone,
-  opts: { message: "forms:errors.gearAllOrNone", path: ["head"] },
+  message: "forms:errors.gearAllOrNone",
+  path: ["head"],
 };
 
 // Base schema with form field builders (for UI generation)
-export const newBuildBaseSchema = z.object({
+export const newBuildBaseSchema = v.object({
   buildToEditId: idConstantOptional(),
   title: textField({ label: "labels.buildTitle", maxLength: 50 }),
   // ... other fields
 });
 
 // Client schema with sync refinements only
-export const newBuildSchema = newBuildBaseSchema.refine(
-  gearAllOrNoneRefine.fn,
-  gearAllOrNoneRefine.opts,
+export const newBuildSchema = v.pipe(
+  newBuildBaseSchema,
+  superRefine((data, ctx) => {
+    if (!gearAllOrNoneRefine.fn(data)) {
+      ctx.addIssue({
+        message: gearAllOrNoneRefine.message,
+        path: gearAllOrNoneRefine.path,
+      });
+    }
+  }),
 );
 ```
 
 **Server schema (`feature-schemas.server.ts`)** - adds async validation:
 
 ```ts
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { superRefine, superRefineAsync } from "~/utils/schema";
 import { gearAllOrNoneRefine, newBuildBaseSchema } from "./feature-schemas";
 
-export const newBuildSchemaServer = newBuildBaseSchema
+export const newBuildSchemaServer = v.pipeAsync(
+  newBuildBaseSchema,
   // Reuse sync refinements from base
-  .refine(gearAllOrNoneRefine.fn, gearAllOrNoneRefine.opts)
+  superRefine((data, ctx) => {
+    if (gearAllOrNoneRefine.fn(data)) return;
+
+    ctx.addIssue({
+      message: gearAllOrNoneRefine.message,
+      path: gearAllOrNoneRefine.path,
+    });
+  }),
   // Add async server-only validation
-  .refine(
-    async (data) => {
-      if (!data.buildToEditId) return true;
+  superRefineAsync(async (data, ctx) => {
+    if (!data.buildToEditId) return;
 
-      const user = requireUser();
-      const ownerId = await BuildRepository.ownerIdById(data.buildToEditId);
+    const user = requireUser();
+    const ownerId = await BuildRepository.ownerIdById(data.buildToEditId);
+    if (ownerId === user.id) return;
 
-      return ownerId === user.id;
-    },
-    { message: "Not a build you own", path: ["buildToEditId"] },
-  );
+    ctx.addIssue({
+      message: "Not a build you own",
+      path: ["buildToEditId"],
+    });
+  }),
+);
 ```
 
 **Action using server schema:**
@@ -594,15 +614,15 @@ Check for duplicates in the database:
 import { createTeamSchema } from "./feature-schemas";
 import * as TeamRepository from "./TeamRepository.server";
 
-export const createTeamSchemaServer = z.object({
-  ...createTeamSchema.shape,
-  name: createTeamSchema.shape.name.refine(
-    async (name) => {
+export const createTeamSchemaServer = v.objectAsync({
+  ...createTeamSchema.entries,
+  name: v.pipeAsync(
+    createTeamSchema.entries.name,
+    v.checkAsync(async (name) => {
       const teams = await TeamRepository.findAllUndisbanded();
       const customUrl = mySlugify(name);
       return !teams.some((team) => team.customUrl === customUrl);
-    },
-    { message: "forms:errors.duplicateName" },
+    }, "forms:errors.duplicateName"),
   ),
 });
 ```
@@ -612,18 +632,17 @@ export const createTeamSchemaServer = z.object({
 For complex validation involving multiple fields:
 
 ```ts
-export const scrimsNewFormSchema = z
-  .object({
+export const scrimsNewFormSchema = v.pipe(
+  v.object({
     at: datetime({ label: "labels.start" }),
     maps: select({ label: "labels.maps", items: mapsItems }),
-    mapsTournamentId: customField({ initialValue: null }, id.nullable()),
-  })
-  .superRefine((data, ctx) => {
+    mapsTournamentId: customField({ initialValue: null }, v.nullable(id)),
+  }),
+  superRefine((data, ctx) => {
     if (data.maps === "TOURNAMENT" && !data.mapsTournamentId) {
       ctx.addIssue({
         path: ["mapsTournamentId"],
         message: "errors.tournamentMustBeSelected",
-        code: z.ZodIssueCode.custom,
       });
     }
 
@@ -631,10 +650,10 @@ export const scrimsNewFormSchema = z
       ctx.addIssue({
         path: ["mapsTournamentId"],
         message: "errors.tournamentOnlyWhenMapsIsTournament",
-        code: z.ZodIssueCode.custom,
       });
     }
-  });
+  }),
+);
 ```
 
 ## Translations
@@ -733,7 +752,7 @@ import {
 ### Schema (`feature-schemas.ts`)
 
 ```ts
-import { z } from "zod";
+import * as v from "valibot";
 import {
   textField,
   textAreaOptional,
@@ -742,7 +761,7 @@ import {
   stringConstant,
 } from "~/form/fields";
 
-export const createItemSchema = z.object({
+export const createItemSchema = v.object({
   _action: stringConstant("CREATE"),
   name: textField({
     label: "labels.itemName",

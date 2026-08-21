@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
-import type { z } from "zod";
+import * as v from "valibot";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
@@ -22,8 +22,8 @@ import {
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { timeString } from "~/utils/schema";
 import { navIconUrl, scrimsPage } from "~/utils/urls";
-import { timeString } from "~/utils/zod";
 import {
 	SendouTab,
 	SendouTabList,
@@ -46,7 +46,7 @@ import { Check, Download, Funnel, Megaphone, Star } from "lucide-react";
 
 import styles from "./scrims.module.css";
 
-export type NewRequestFormFields = z.infer<typeof newRequestSchema>;
+export type NewRequestFormFields = v.InferOutput<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "scrims", "user", "q"],
@@ -307,8 +307,8 @@ function TimeRangePopover({
 		}
 
 		if (
-			timeString.safeParse(timeRange.start).success &&
-			timeString.safeParse(timeRange.end).success
+			v.safeParse(timeString, timeRange.start).success &&
+			v.safeParse(timeString, timeRange.end).success
 		) {
 			onChange(timeRange);
 		}

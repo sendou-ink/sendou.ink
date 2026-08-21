@@ -9,7 +9,7 @@ import { enUS } from "date-fns/locale/en-US";
 import type { MonthYear } from "~/features/plus-voting/core";
 import type { LanguageCode } from "~/modules/i18n/config";
 import { logger } from "./logger";
-import type { DayMonthYear } from "./zod";
+import type { DayMonthYear } from "./schema";
 
 // en-US ships with date-fns core as the default locale, so it costs no extra bytes
 const LOCALE_LOADERS: Record<LanguageCode, () => Promise<Locale>> = {

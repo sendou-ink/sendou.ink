@@ -1,9 +1,9 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { select, textArea, textFieldOptional } from "~/form/fields";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { USER_REPORT } from "./user-report-constants";
 
-export const reportUserSchema = z.object({
+export const reportUserSchema = v.object({
 	category: select({
 		label: "labels.reportCategory",
 		items: [
@@ -28,6 +28,6 @@ export const reportUserSchema = z.object({
 	}),
 });
 
-export const reportUserParamsSchema = z.object({
+export const reportUserParamsSchema = v.object({
 	id,
 });

@@ -19,6 +19,7 @@ import { useState } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
+import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
 import { MainSlotIcon } from "~/components/icons/MainSlot";
@@ -490,7 +491,7 @@ function computeInvalidWidgetIds(
 	for (const widget of widgets) {
 		const schema = getWidgetFormSchema(widget.id);
 		if (!schema) continue;
-		if (!schema.safeParse(widget.settings ?? {}).success) {
+		if (!v.safeParse(schema, widget.settings ?? {}).success) {
 			invalid.add(widget.id);
 		}
 	}

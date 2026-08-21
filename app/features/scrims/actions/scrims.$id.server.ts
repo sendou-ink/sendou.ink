@@ -10,8 +10,8 @@ import {
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import { databaseTimestampToDate } from "../../../utils/dates";
 import { requireUser } from "../../auth/core/user.server";
 import * as Scrim from "../core/Scrim";

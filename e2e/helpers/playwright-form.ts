@@ -2,9 +2,10 @@ import * as fs from "node:fs";
 import * as path from "node:path";
 import { fileURLToPath } from "node:url";
 import { expect, type Page } from "@playwright/test";
-import type { z } from "zod";
+import type * as v from "valibot";
 import { getFormFieldMetadata } from "~/form/fields";
-import type { FormField } from "~/form/types";
+import type { FormField, FormObjectSchema } from "~/form/types";
+import type { AnySyncSchema } from "~/utils/schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -37,23 +38,25 @@ function resolveTranslation(key: string): string {
 	return typeof value === "string" ? value : key;
 }
 
-type Inferred<T extends z.ZodRawShape> = z.infer<z.ZodObject<T>>;
+type Inferred<T extends v.ObjectEntries> = v.InferOutput<
+	v.ObjectSchema<T, undefined>
+>;
 
-type FillableKeys<T extends z.ZodRawShape> = {
+type FillableKeys<T extends v.ObjectEntries> = {
 	[K in keyof Inferred<T>]-?: string extends Inferred<T>[K] ? K : never;
 }[keyof Inferred<T>];
 
-type CheckableKeys<T extends z.ZodRawShape> = {
+type CheckableKeys<T extends v.ObjectEntries> = {
 	[K in keyof Inferred<T>]-?: Inferred<T>[K] extends boolean ? K : never;
 }[keyof Inferred<T>];
 
-type SelectableKeys<T extends z.ZodRawShape> = {
+type SelectableKeys<T extends v.ObjectEntries> = {
 	[K in keyof Inferred<T>]-?: Inferred<T>[K] extends string | null | undefined
 		? K
 		: never;
 }[keyof Inferred<T>];
 
-type FormFieldHelpers<T extends z.ZodRawShape> = {
+type FormFieldHelpers<T extends v.ObjectEntries> = {
 	fill: (name: FillableKeys<T>, value: string) => Promise<void>;
 	check: (name: CheckableKeys<T>) => Promise<void>;
 	uncheck: (name: CheckableKeys<T>) => Promise<void>;
@@ -72,16 +75,16 @@ type FormFieldHelpers<T extends z.ZodRawShape> = {
 	getItemLabel: (name: keyof Inferred<T>, itemValue: string) => string;
 };
 
-export function createFormHelpers<T extends z.ZodRawShape>(
+export function createFormHelpers<T extends v.ObjectEntries>(
 	page: Page,
-	schema: z.ZodObject<T>,
+	schema: FormObjectSchema<T>,
 	options?: { submitTestId?: string },
 ): FormFieldHelpers<T> {
 	const submitTestId = options?.submitTestId ?? "submit-button";
 	const getFieldMetadata = (name: string): FormField | undefined => {
-		const fieldSchema = schema.shape[name];
+		const fieldSchema = schema.entries[name];
 		if (!fieldSchema) return undefined;
-		return getFormFieldMetadata(fieldSchema as z.ZodType);
+		return getFormFieldMetadata(fieldSchema as AnySyncSchema);
 	};
 
 	const getLabel = (name: string): string => {

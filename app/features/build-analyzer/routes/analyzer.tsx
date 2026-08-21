@@ -90,7 +90,7 @@ import { buildStats } from "../core/stats";
 import { buildIsEmpty, damageIsSubWeaponDamage } from "../core/utils";
 import styles from "./analyzer.module.css";
 
-export const CURRENT_PATCH = "11.2";
+export const CURRENT_PATCH = "11.3";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

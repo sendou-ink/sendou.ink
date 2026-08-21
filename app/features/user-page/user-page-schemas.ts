@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { BADGE } from "~/features/badges/badges-constants";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import {
@@ -28,8 +28,6 @@ import {
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
-import { rawSensToString } from "~/utils/strings";
-import { isCustomUrl } from "~/utils/urls";
 import {
 	_action,
 	actualNumber,
@@ -37,12 +35,16 @@ import {
 	emptyArrayToNull,
 	headMainSlotAbility,
 	id,
+	preprocess,
 	processMany,
 	removeDuplicates,
 	safeJSONParse,
 	shoesMainSlotAbility,
 	stackableAbility,
-} from "~/utils/zod";
+	superRefine,
+} from "~/utils/schema";
+import { rawSensToString } from "~/utils/strings";
+import { isCustomUrl } from "~/utils/urls";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
 	BUILD_SORT_IDENTIFIERS,
@@ -51,7 +53,7 @@ import {
 	USER,
 } from "./user-page-constants";
 
-export const userParamsSchema = z.object({ identifier: z.string() });
+export const userParamsSchema = v.object({ identifier: v.string() });
 
 const SENS_ITEMS = [
 	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
@@ -61,7 +63,7 @@ const SENS_ITEMS = [
 	value: String(val),
 }));
 
-export const userEditProfileBaseSchema = z.object({
+export const userEditProfileBaseSchema = v.object({
 	customAvatar: image({
 		label: "labels.profileCustomAvatar",
 		bottomText: "bottomTexts.profileCustomAvatar",
@@ -173,16 +175,16 @@ export const userEditProfileBaseSchema = z.object({
 	}),
 });
 
-export const editHighlightsActionSchema = z.object({
-	[HIGHLIGHT_CHECKBOX_NAME]: z.optional(
-		z.union([z.array(z.string()), z.string()]),
+export const editHighlightsActionSchema = v.object({
+	[HIGHLIGHT_CHECKBOX_NAME]: v.optional(
+		v.union([v.array(v.string()), v.string()]),
 	),
-	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: z.optional(
-		z.union([z.array(z.string()), z.string()]),
+	[HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME]: v.optional(
+		v.union([v.array(v.string()), v.string()]),
 	),
 });
 
-export const addModNoteSchema = z.object({
+export const addModNoteSchema = v.object({
 	_action: stringConstant("ADD_MOD_NOTE"),
 	value: textArea({
 		label: "labels.text",
@@ -191,37 +193,37 @@ export const addModNoteSchema = z.object({
 	}),
 });
 
-const deleteModNoteSchema = z.object({
+const deleteModNoteSchema = v.object({
 	_action: _action("DELETE_MOD_NOTE"),
 	noteId: id,
 });
 
-export const adminTabActionSchema = z.union([
+export const adminTabActionSchema = v.union([
 	addModNoteSchema,
 	deleteModNoteSchema,
 ]);
 
 const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
-	if ("schema" in widget) {
-		return z.object({
-			id: z.literal(widget.id),
+	if ("schema" in widget && widget.schema) {
+		return v.object({
+			id: v.literal(widget.id),
 			settings: widget.schema,
 		});
 	}
-	return z.object({
-		id: z.literal(widget.id),
+	return v.object({
+		id: v.literal(widget.id),
 	});
 });
 
-const widgetSettingsSchema = z.union(widgetSettingsSchemas);
+const widgetSettingsSchema = v.union(widgetSettingsSchemas);
 
-export const widgetsEditSchema = z.object({
-	widgets: z.preprocess(
+export const widgetsEditSchema = v.object({
+	widgets: preprocess(
 		safeJSONParse,
-		z
-			.array(widgetSettingsSchema)
-			.max(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS)
-			.refine((widgets) => {
+		v.pipe(
+			v.array(widgetSettingsSchema),
+			v.maxLength(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS),
+			v.check((widgets) => {
 				let mainCount = 0;
 				let sideCount = 0;
 				for (const w of widgets) {
@@ -235,49 +237,50 @@ export const widgetsEditSchema = z.object({
 					sideCount <= USER.MAX_SIDE_WIDGETS
 				);
 			}),
+		),
 	),
 });
 
-const headGearIdSchema = z
-	.number()
-	.nullable()
-	.refine(
+const headGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
 		(val) =>
 			val === null || headGearIds.includes(val as (typeof headGearIds)[number]),
-	);
+	),
+);
 
-const clothesGearIdSchema = z
-	.number()
-	.nullable()
-	.refine(
+const clothesGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
 		(val) =>
 			val === null ||
 			clothesGearIds.includes(val as (typeof clothesGearIds)[number]),
-	);
+	),
+);
 
-const shoesGearIdSchema = z
-	.number()
-	.nullable()
-	.refine(
+const shoesGearIdSchema = v.pipe(
+	v.nullable(v.number()),
+	v.check(
 		(val) =>
 			val === null ||
 			shoesGearIds.includes(val as (typeof shoesGearIds)[number]),
-	);
+	),
+);
 
-const abilitiesSchema = z.tuple([
-	z.tuple([
+const abilitiesSchema = v.tuple([
+	v.tuple([
 		headMainSlotAbility,
 		stackableAbility,
 		stackableAbility,
 		stackableAbility,
 	]),
-	z.tuple([
+	v.tuple([
 		clothesMainSlotAbility,
 		stackableAbility,
 		stackableAbility,
 		stackableAbility,
 	]),
-	z.tuple([
+	v.tuple([
 		shoesMainSlotAbility,
 		stackableAbility,
 		stackableAbility,
@@ -293,7 +296,7 @@ const modeItems = [
 	{ label: "modes.CB" as const, value: "CB" as const },
 ];
 
-export const newBuildBaseSchema = z.object({
+export const newBuildBaseSchema = v.object({
 	buildToEditId: idConstantOptional(),
 	weapons: weaponPool({
 		label: "labels.buildWeapons",
@@ -349,22 +352,26 @@ export const gearAllOrNoneRefine = {
 	opts: { message: "forms:errors.gearAllOrNone", path: ["head"] },
 };
 
-export const newBuildSchema = newBuildBaseSchema.refine(
-	gearAllOrNoneRefine.fn,
-	gearAllOrNoneRefine.opts,
+export const newBuildSchema = v.pipe(
+	newBuildBaseSchema,
+	superRefine((data, ctx) => {
+		if (gearAllOrNoneRefine.fn(data)) return;
+
+		ctx.addIssue(gearAllOrNoneRefine.opts);
+	}),
 );
 
-export const buildsActionSchema = z.union([
-	z.object({
+export const buildsActionSchema = v.union([
+	v.object({
 		_action: _action("DELETE_BUILD"),
-		buildToDeleteId: z.preprocess(actualNumber, id),
+		buildToDeleteId: preprocess(actualNumber, id),
 	}),
 
-	z.object({
+	v.object({
 		_action: _action("UPDATE_SORTING"),
-		buildSorting: z.preprocess(
+		buildSorting: preprocess(
 			processMany(safeJSONParse, removeDuplicates, emptyArrayToNull),
-			z.array(z.enum(BUILD_SORT_IDENTIFIERS)).nullable(),
+			v.nullable(v.array(v.picklist(BUILD_SORT_IDENTIFIERS))),
 		),
 	}),
 ]);

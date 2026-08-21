@@ -1,16 +1,19 @@
-import { z } from "zod";
+import * as v from "valibot";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
+import { preprocess, safeJSONParse } from "~/utils/schema";
 import { assertType } from "~/utils/types";
-import { safeJSONParse } from "~/utils/zod";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "./plus-voting-constants";
 
-const voteSchema = z.object({
-	votedId: z.number(),
-	score: z.number().refine((val) => [PLUS_DOWNVOTE, PLUS_UPVOTE].includes(val)),
+const voteSchema = v.object({
+	votedId: v.number(),
+	score: v.pipe(
+		v.number(),
+		v.check((val) => [PLUS_DOWNVOTE, PLUS_UPVOTE].includes(val)),
+	),
 });
 
-assertType<z.infer<typeof voteSchema>, PlusVoteFromFE>();
+assertType<v.InferOutput<typeof voteSchema>, PlusVoteFromFE>();
 
-export const votingActionSchema = z.object({
-	votes: z.preprocess(safeJSONParse, z.array(voteSchema)),
+export const votingActionSchema = v.object({
+	votes: preprocess(safeJSONParse, v.array(voteSchema)),
 });

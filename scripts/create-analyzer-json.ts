@@ -3,7 +3,7 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { z } from "zod";
+import * as v from "valibot";
 import type {
 	BaseWeaponStats,
 	MainWeaponParams,
@@ -1043,17 +1043,17 @@ function resolveSpecialWeaponId(weapon: MainWeapon) {
 	return specialWeaponObj.Id as SpecialWeaponId;
 }
 
-const overwriteSchema = z.object({
-	High: z.number().optional(),
-	Mid: z.number().optional(),
-	Low: z.number().optional(),
+const overwriteSchema = v.object({
+	High: v.optional(v.number()),
+	Mid: v.optional(v.number()),
+	Low: v.optional(v.number()),
 });
 
 function resolveOverwrites(params: any) {
 	const result: MainWeaponParams["overwrites"] = {};
 
 	for (const [key, value] of Object.entries(params)) {
-		const parsed = overwriteSchema.safeParse(value);
+		const parsed = v.safeParse(overwriteSchema, value);
 
 		resolveOverwritesWithArbitraryKeys(result, value);
 
@@ -1066,14 +1066,14 @@ function resolveOverwrites(params: any) {
 			const abilityKey = key.split("_").at(-1);
 			invariant(abilityKey, `Could not find ability key for '${key}'`);
 
-			if (!parsed.data.High && !parsed.data.Mid && !parsed.data.Low) {
+			if (!parsed.output.High && !parsed.output.Mid && !parsed.output.Low) {
 				continue;
 			}
 
 			result[abilityKey] = {
-				High: parsed.data.High,
-				Mid: parsed.data.Mid,
-				Low: parsed.data.Low,
+				High: parsed.output.High,
+				Mid: parsed.output.Mid,
+				Low: parsed.output.Low,
 			};
 		}
 	}
