@@ -44,7 +44,7 @@ export default function UserResultsPage() {
 					</LinkButton>
 				</div>
 			) : null}
-			{user ? <ResultsFiltersBar /> : null}
+			<ResultsFiltersBar />
 			{data.results.value.length > 0 ? (
 				<UserResultsTable
 					id="user-results-table"

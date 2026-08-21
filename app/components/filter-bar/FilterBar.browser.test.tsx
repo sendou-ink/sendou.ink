@@ -1,9 +1,17 @@
 import { useState } from "react";
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { SendouButton } from "../elements/Button";
 import { FilterBar } from "./FilterBar";
+
+const useUser = vi.hoisted(() => vi.fn());
+
+vi.mock("~/features/auth/core/user", () => ({ useUser }));
+
+beforeEach(() => {
+	useUser.mockReturnValue({ id: 1 });
+});
 
 const MODES = ["SZ", "TC", "RM"];
 
@@ -178,6 +186,19 @@ describe("FilterBar", () => {
 
 		await expect
 			.element(screen.getByRole("button", { name: /Weapon/ }))
+			.not.toBeInTheDocument();
+	});
+
+	test("renders nothing for a logged out user", async () => {
+		useUser.mockReturnValue(null);
+
+		const screen = await render(<TestFilterBar initialMode="SZ" />);
+
+		await expect
+			.element(screen.getByRole("button", { name: /Mode/ }))
+			.not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole("button", { name: "Filter" }))
 			.not.toBeInTheDocument();
 	});
 

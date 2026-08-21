@@ -35,6 +35,8 @@ test.describe("Calendar", () => {
 			});
 		}
 
+		await impersonate(page, NZAP_TEST_ID);
+
 		const calendar = new CalendarPage(page);
 		await calendar.goto();
 

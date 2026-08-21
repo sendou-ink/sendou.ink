@@ -3,6 +3,7 @@ import { ChevronDown, Plus, RotateCcw, X } from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { useUser } from "~/features/auth/core/user";
 import { SendouButton } from "../elements/Button";
 import { SendouMenu, SendouMenuItem } from "../elements/Menu";
 import { SendouPopover } from "../elements/Popover";
@@ -35,11 +36,14 @@ export function FilterBar({
 	onReset?: () => void;
 	actions?: React.ReactNode;
 }) {
+	const user = useUser();
 	const { t } = useTranslation();
 	const [justAddedKeys, setJustAddedKeys] = React.useState<ReadonlySet<string>>(
 		new Set(),
 	);
 	const [openPillKey, setOpenPillKey] = React.useState<string | null>(null);
+
+	if (!user) return null;
 
 	const isVisible = (pill: FilterBarPill) =>
 		pill.formattedValue !== null || justAddedKeys.has(pill.key);

@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { format } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -96,17 +95,14 @@ export default function ScrimsPage() {
 
 	return (
 		<Main className="stack lg">
-			<div className="stack horizontal sm items-center flex-wrap">
-				<LinkButton
-					size="small"
-					to={associationsPage()}
-					className={clsx({ invisible: !user })}
-					variant="outlined"
-				>
-					{t("scrims:associations.title")}
-				</LinkButton>
-				<Filters />
-			</div>
+			{user ? (
+				<div className="stack horizontal sm items-center flex-wrap">
+					<LinkButton size="small" to={associationsPage()} variant="outlined">
+						{t("scrims:associations.title")}
+					</LinkButton>
+					<Filters />
+				</div>
+			) : null}
 			<SendouTabs
 				key={pendingRequestPostId}
 				defaultSelectedKey={

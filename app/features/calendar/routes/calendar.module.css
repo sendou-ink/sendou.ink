@@ -13,6 +13,10 @@
 	width: 100%;
 	max-width: var(--columns-width);
 	margin-inline: auto;
+
+	&:empty {
+		display: none;
+	}
 }
 
 .buttonsContainer {

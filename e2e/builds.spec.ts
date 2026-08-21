@@ -104,6 +104,8 @@ test.describe("Builds", () => {
 			abilities: ABILITIES_WITHOUT_ISM,
 		});
 
+		await impersonate(page, NZAP_TEST_ID);
+
 		const weaponBuilds = new WeaponBuildsPage(page);
 		await new BuildsPage(page).openWeapon(40);
 
