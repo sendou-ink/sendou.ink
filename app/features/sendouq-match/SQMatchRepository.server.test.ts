@@ -3,6 +3,8 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -11,6 +13,9 @@ import {
 	SENDOUQ_BEST_OF,
 } from "~/features/sendouq/q-constants";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import invariant from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
@@ -653,5 +658,220 @@ describe("findSeasonCanceledMatchesByUserId", () => {
 				username: await usernameOf(setup.bravoMembers[0].id),
 			},
 		]);
+	});
+});
+
+describe("findSeasonResultsByUserId", () => {
+	const SEASON = 0;
+	const RANKED_MATCHES = 7;
+
+	const seasonUsers = UserFactory.pool();
+	const rosterUserIds = () => [1, 2, 3, 4].map((nth) => seasonUsers.id(nth));
+	/** The roster the actor gets when their team subs the 4th member out mid-tournament. */
+	const subbedRosterUserIds = () =>
+		[1, 2, 3, 5].map((nth) => seasonUsers.id(nth));
+	const actorId = () => seasonUsers.id(1);
+
+	beforeEach(async () => {
+		await seasonUsers.create(5);
+	});
+
+	/**
+	 * Finalizes a tournament that moved the actor's rating to `ordinal` and each of
+	 * `rosters` to its `ordinal`, counting the given `matchesCount` of sets towards each.
+	 */
+	const finalizeTournament = async ({
+		ordinal,
+		matchesCount,
+		rosters = [],
+	}: {
+		ordinal: number;
+		matchesCount: number;
+		rosters?: Array<{
+			ordinal: number;
+			matchesCount: number;
+			/** Defaults to {@link rosterUserIds}. */
+			userIds?: number[];
+		}>;
+	}) => {
+		const { id: tournamentId } = await TournamentFactory.create({
+			authorId: actorId(),
+		});
+		const { id: tournamentTeamId } = await TournamentTeamFactory.create({
+			tournamentId,
+			memberUserIds: [actorId()],
+		});
+
+		const skills: TournamentSummary["skills"] = [
+			{
+				userId: actorId(),
+				identifier: null,
+				mu: ordinal,
+				sigma: 0,
+				matchesCount,
+			},
+			...rosters.map((roster) => ({
+				userId: null,
+				identifier: (roster.userIds ?? rosterUserIds()).join(
+					"-",
+				) as `${number}-${number}-${number}-${number}`,
+				mu: roster.ordinal,
+				sigma: 0,
+				matchesCount: roster.matchesCount,
+			})),
+		];
+
+		await TournamentRepository.finalize({
+			tournamentId,
+			season: SEASON,
+			summary: {
+				skills,
+				seedingSkills: [],
+				mapResultDeltas: [],
+				playerResultDeltas: [],
+				tournamentResults: [
+					{
+						userId: actorId(),
+						placement: 1,
+						participantCount: 1,
+						tournamentTeamId,
+						div: null,
+					},
+				],
+				setResults: new Map([[actorId(), ["W"]]]),
+			},
+		});
+
+		return tournamentId;
+	};
+
+	const latestResult = async () => {
+		const rows = await SQMatchRepository.findSeasonResultsByUserId({
+			userId: actorId(),
+			season: SEASON,
+			page: 1,
+		});
+
+		const result = rows[0];
+		invariant(
+			result?.type === "TOURNAMENT_RESULT",
+			"expected a tournament result",
+		);
+
+		return result.tournamentResult;
+	};
+
+	test("leaves out the SP change while the rating is still being calculated", async () => {
+		await finalizeTournament({ ordinal: 1, matchesCount: 1 });
+
+		expect((await latestResult()).spDiff).toBeNull();
+	});
+
+	test("derives the SP change from the rating the tournament replaced", async () => {
+		await finalizeTournament({ ordinal: 1, matchesCount: RANKED_MATCHES });
+		await finalizeTournament({ ordinal: 3, matchesCount: 1 });
+
+		// ordinal 1 -> 3, and an ordinal is worth 15SP
+		expect((await latestResult()).spDiff).toBe(30);
+	});
+
+	test("leaves out the roster's SP until the roster is ranked", async () => {
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES,
+			rosters: [{ ordinal: 1, matchesCount: 1 }],
+		});
+
+		expect((await latestResult()).teamSp).toBeNull();
+	});
+
+	test("shows the roster's SP without a change the tournament it becomes ranked", async () => {
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES,
+			rosters: [{ ordinal: 2, matchesCount: RANKED_MATCHES }],
+		});
+
+		const result = await latestResult();
+		expect(result.teamSp).toBe(1030);
+		expect(result.teamSpDiff).toBeNull();
+	});
+
+	test("derives the roster's SP change once the roster is ranked", async () => {
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES,
+			rosters: [{ ordinal: 2, matchesCount: RANKED_MATCHES }],
+		});
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: 1,
+			rosters: [{ ordinal: 4, matchesCount: 1 }],
+		});
+
+		const result = await latestResult();
+		expect(result.teamSp).toBe(1060);
+		expect(result.teamSpDiff).toBe(30);
+	});
+
+	test("picks the roster the user played the most sets of the tournament with", async () => {
+		// both rosters ranked going in, so only the sets played this tournament decide
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES,
+			rosters: [{ ordinal: 2, matchesCount: RANKED_MATCHES }],
+		});
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES,
+			rosters: [
+				{
+					userIds: subbedRosterUserIds(),
+					ordinal: 4,
+					matchesCount: RANKED_MATCHES,
+				},
+			],
+		});
+
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: 3,
+			rosters: [
+				{ ordinal: 3, matchesCount: 3 },
+				{ userIds: subbedRosterUserIds(), ordinal: 6, matchesCount: 1 },
+			],
+		});
+
+		const result = await latestResult();
+		expect(result.teamSp).toBe(1045);
+		expect(result.teamSpDiff).toBe(15);
+	});
+
+	test("leaves out the roster's SP when the roster the most sets were played with is unranked", async () => {
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES,
+			rosters: [
+				{
+					userIds: subbedRosterUserIds(),
+					ordinal: 2,
+					matchesCount: RANKED_MATCHES,
+				},
+			],
+		});
+
+		await finalizeTournament({
+			ordinal: 1,
+			matchesCount: RANKED_MATCHES - 2,
+			rosters: [
+				// brand new roster, so still unranked despite the majority of the sets
+				{ ordinal: 3, matchesCount: RANKED_MATCHES - 2 },
+				{ userIds: subbedRosterUserIds(), ordinal: 6, matchesCount: 1 },
+			],
+		});
+
+		const result = await latestResult();
+		expect(result.teamSp).toBeNull();
+		expect(result.teamSpDiff).toBeNull();
 	});
 });

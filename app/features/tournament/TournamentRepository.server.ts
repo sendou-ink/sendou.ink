@@ -1604,7 +1604,6 @@ export function finalize({
 				participantCount: tournamentResult.participantCount,
 				tournamentTeamId: tournamentResult.tournamentTeamId,
 				setResults: JSON.stringify(setResults ?? []),
-				spDiff: summary.spDiffs?.get(tournamentResult.userId) ?? null,
 				div: tournamentResult.div,
 			}));
 

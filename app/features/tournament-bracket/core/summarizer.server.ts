@@ -1,10 +1,8 @@
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import type { WinLossParticipationArray } from "~/db/tables-json";
-import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import {
 	identifierToUserIds,
-	ordinalToSp,
 	rate,
 	type SkillTeamIdentifier,
 	userIdsToIdentifier,
@@ -12,7 +10,6 @@ import {
 import { getBracketProgressionLabel } from "~/features/tournament/tournament-utils";
 import type { AllMatchResult } from "~/features/tournament-match/TournamentMatchRepository.server";
 import invariant from "~/utils/invariant";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import type { Tables } from "../../../db/tables";
 import { ensureOneStandingPerUser } from "../tournament-bracket-utils";
 import type { Standing } from "./Bracket";
@@ -30,10 +27,8 @@ export interface TournamentSummary {
 	playerResultDeltas: Omit<Tables["PlayerResult"], "season">[];
 	tournamentResults: Omit<
 		Tables["TournamentResult"],
-		"tournamentId" | "isHighlight" | "spDiff" | "mapResults" | "setResults"
+		"tournamentId" | "isHighlight" | "mapResults" | "setResults"
 	>[];
-	/** Map of user id to diff or null if not ranked event */
-	spDiffs: Map<number, number> | null;
 	/** Map of user id to set results */
 	setResults: Map<number, WinLossParticipationArray>;
 }
@@ -184,9 +179,6 @@ export function tournamentSummary({
 			teams,
 			progression,
 		}),
-		spDiffs: calculateSeasonalStats
-			? spDiffs({ skills, queryCurrentUserRating })
-			: null,
 		setResults: setResults({ results, teams }),
 	};
 }
@@ -671,37 +663,6 @@ function tournamentResults({
 	}
 
 	return result;
-}
-
-function spDiffs({
-	skills,
-	queryCurrentUserRating,
-}: {
-	skills: TournamentSummary["skills"];
-	queryCurrentUserRating: (userId: number) => RatingWithMatchesCount;
-}): TournamentSummary["spDiffs"] {
-	const spDiffs = new Map<number, number>();
-
-	for (const skill of skills) {
-		if (skill.userId === null) continue;
-
-		const oldRating = queryCurrentUserRating(skill.userId);
-
-		// there should be no user visible sp diff if the user has less than
-		// MATCHES_COUNT_NEEDED_FOR_LEADERBOARD matches played before because
-		// the sp is not visible to user before that threshold
-		if (oldRating.matchesCount < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD) {
-			continue;
-		}
-
-		const diff = roundToNDecimalPlaces(
-			ordinalToSp(ordinal(skill)) - ordinalToSp(ordinal(oldRating.rating)),
-		);
-
-		spDiffs.set(skill.userId, diff);
-	}
-
-	return spDiffs;
 }
 
 function setResults({

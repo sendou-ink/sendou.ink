@@ -691,8 +691,6 @@ export interface TournamentResult {
 	 * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
 	 * */
 	setResults: JSONColumnType<WinLossParticipationArray>;
-	/** The SP change in total after the finalization of a ranked tournament. */
-	spDiff: number | null;
 	userId: number;
 	/** Division label for tournaments with multiple starting brackets (e.g., "D1", "D2") */
 	div: string | null;

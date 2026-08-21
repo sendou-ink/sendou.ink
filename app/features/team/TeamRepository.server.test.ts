@@ -40,7 +40,6 @@ describe("findResultsById", () => {
 					tournamentTeamId: tournamentTeam.id,
 					div: null,
 				})),
-				spDiffs: null,
 				setResults: new Map(),
 			},
 		});

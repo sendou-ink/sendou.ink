@@ -24,7 +24,6 @@ import type {
 	StageId,
 } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
-import { roundToNDecimalPlaces } from "~/utils/number";
 import { abilityImageUrl, navIconUrl } from "~/utils/urls";
 import { Ability } from "../Ability";
 import { Avatar } from "../Avatar";
@@ -35,6 +34,7 @@ import { Image, ModeImage, StageImage, WeaponImage } from "../Image";
 import type { ObjectiveTimelineEvent } from "../ObjectiveTimeline";
 import { matchScoresFromObjective } from "../objective-timeline-utils";
 import type { PlayerStatusTimelineSample } from "../PlayerStatusTimeline";
+import { SpDelta } from "../SpDelta";
 import styles from "./MatchTimeline.module.css";
 import { type InferredSubstitution, inferSubstitutions } from "./utils";
 import type { WeaponPoolWeapon } from "./WeaponPool";
@@ -809,19 +809,11 @@ function TimelineSpSection({ spChanges }: { spChanges: TimelineSpChanges }) {
 function SpMemberDetail({ member }: { member: TimelineSpMember }) {
 	if (member.skillDifference.calculated) {
 		const { spDiff, oldSp, newSp } = member.skillDifference;
-		const isPositive = spDiff > 0;
-		const arrow = isPositive ? "▲" : "▼";
 
 		return (
 			<div className={styles.spDetail}>
 				<Avatar user={member.user} size="xxs" />
-				<SpDeltaTrigger
-					arrow={arrow}
-					isPositive={isPositive}
-					value={Math.abs(spDiff)}
-					oldSp={oldSp}
-					newSp={newSp}
-				/>
+				<SpDeltaTrigger diff={spDiff} oldSp={oldSp} newSp={newSp} />
 			</div>
 		);
 	}
@@ -866,22 +858,13 @@ function SpTeamDetail({
 }) {
 	if (skillDifference.calculated) {
 		const { oldSp, newSp } = skillDifference;
-		const diff = roundToNDecimalPlaces(newSp - oldSp);
-		const isPositive = diff > 0;
-		const arrow = isPositive ? "▲" : "▼";
 
 		return (
 			<div className={styles.spDetail}>
 				<div className={styles.spTeamIcon}>
 					<Users size={16} />
 				</div>
-				<SpDeltaTrigger
-					arrow={arrow}
-					isPositive={isPositive}
-					value={Math.abs(diff)}
-					oldSp={oldSp}
-					newSp={newSp}
-				/>
+				<SpDeltaTrigger diff={newSp - oldSp} oldSp={oldSp} newSp={newSp} />
 			</div>
 		);
 	}
@@ -916,25 +899,18 @@ function SpTeamDetail({
 }
 
 function SpDeltaTrigger({
-	arrow,
-	isPositive,
-	value,
+	diff,
 	oldSp,
 	newSp,
 }: {
-	arrow: string;
-	isPositive: boolean;
-	value: number;
+	diff: number;
 	oldSp?: number;
 	newSp?: number;
 }) {
-	const arrowClass = isPositive ? "text-success" : "text-warning";
-
 	if (oldSp === undefined || newSp === undefined) {
 		return (
 			<div className={styles.spDetailContent}>
-				<span className={arrowClass}>{arrow}</span>
-				<span>{value}SP</span>
+				<SpDelta diff={diff} />
 			</div>
 		);
 	}
@@ -943,8 +919,7 @@ function SpDeltaTrigger({
 		<SendouPopover
 			trigger={
 				<SendouButton variant="minimal" className={styles.spDeltaTrigger}>
-					<span className={arrowClass}>{arrow}</span>
-					<span>{value}SP</span>
+					<SpDelta diff={diff} />
 				</SendouButton>
 			}
 		>

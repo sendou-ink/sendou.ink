@@ -19,7 +19,6 @@ const emptySummary = (
 	mapResultDeltas: [],
 	playerResultDeltas: [],
 	tournamentResults: [],
-	spDiffs: null,
 	setResults: new Map(),
 });
 
@@ -144,7 +143,6 @@ describe("TournamentRepository.finalize", () => {
 						div: null,
 					},
 				],
-				spDiffs: null,
 				setResults: new Map([[1, ["W"]]]),
 			},
 		});
