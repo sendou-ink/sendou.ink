@@ -4,8 +4,9 @@ import {
 	IN_GAME_NAME_MAX_LENGTH,
 	inGameNameIsValid,
 } from "~/features/user-page/in-game-name";
+import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
-import type { AnySyncSchema } from "~/utils/zod";
+import type { AnySyncSchema, DayMonthYear } from "~/utils/zod";
 import {
 	coerceNumber,
 	date,
@@ -60,6 +61,9 @@ export function getFormFieldMetadata(
 export type RequiresDefault<T extends AnySyncSchema> = T & {
 	_requiresDefault: true;
 };
+
+// A builder declares on its signature what `defaultValues` must supply for the
+// field and returns `as never`; parsing itself always starts from `unknown`.
 
 type WithTypedTranslationKeys<T> = Omit<
 	T,
@@ -149,11 +153,18 @@ type TextFieldArgs = WithTypedTranslationKeys<
 	>
 >;
 
-export function textFieldOptional(args: TextFieldArgs) {
+export function textFieldOptional(
+	args: TextFieldArgs,
+): v.GenericSchema<string | null, string | null> {
 	// a url field is validated as a plain string, so unlike the other optional
 	// text fields it has no null to fall back to and its key stays required
 	if (args.validate === "url") {
-		return registerTextField(v.pipe(v.string(), v.url()), args, false, false);
+		return registerTextField(
+			v.pipe(v.string(), v.url()),
+			args,
+			false,
+			false,
+		) as never;
 	}
 
 	return registerTextField(
@@ -161,16 +172,16 @@ export function textFieldOptional(args: TextFieldArgs) {
 		args,
 		false,
 		true,
-	);
+	) as never;
 }
 
-export function textField(args: TextFieldArgs) {
+export function textField(args: TextFieldArgs): v.GenericSchema<string> {
 	const schema =
 		args.validate === "url"
 			? v.pipe(v.string(), v.url())
 			: safeStringSchema({ min: args.minLength, max: args.maxLength });
 
-	return registerTextField(schema, args, true, false);
+	return registerTextField(schema, args, true, false) as never;
 }
 
 function registerTextField<T extends v.GenericSchema<any, string | null>>(
@@ -256,7 +267,10 @@ export function inGameName(
 		required: false,
 		type: "in-game-name",
 		initialValue: "",
-	});
+	}) as unknown as v.OptionalSchema<
+		v.GenericSchema<string | null, string | null>,
+		null
+	>;
 }
 
 type NumberFieldArgs = WithTypedTranslationKeys<
@@ -273,8 +287,8 @@ type NumberFieldArgs = WithTypedTranslationKeys<
 
 export function numberField(
 	args: NumberFieldArgs & { min?: number; max?: number },
-) {
-	let schema: v.GenericSchema<unknown, number> = numberSchema();
+): v.GenericSchema<number> {
+	let schema: v.GenericSchema<number> = numberSchema();
 
 	// an empty field coerces to 0, so `min` is also what makes a required number
 	// field reject being left blank
@@ -294,16 +308,18 @@ export function numberField(
 	return register(schema, numberFieldMetadata(args, true));
 }
 
-export function numberFieldOptional(args: NumberFieldArgs) {
+export function numberFieldOptional(
+	args: NumberFieldArgs,
+): v.OptionalSchema<v.GenericSchema<number>, undefined> {
 	return register(v.optional(numberSchema()), numberFieldMetadata(args, false));
 }
 
-function numberSchema() {
+function numberSchema(): v.GenericSchema<number> {
 	return v.pipe(
 		coerceNumber(),
 		v.integer("forms:errors.mustBeWholeNumber"),
 		v.minValue(0),
-	);
+	) as never;
 }
 
 function numberFieldMetadata(args: NumberFieldArgs, required: boolean) {
@@ -326,20 +342,22 @@ type TextAreaArgs = WithTypedTranslationKeys<
 	>
 >;
 
-export function textAreaOptional(args: TextAreaArgs) {
+export function textAreaOptional(
+	args: TextAreaArgs,
+): v.GenericSchema<string | null, string | null> {
 	return registerTextArea(
 		safeNullableStringSchema({ max: args.maxLength }),
 		args,
 		false,
-	);
+	) as never;
 }
 
-export function textArea(args: TextAreaArgs) {
+export function textArea(args: TextAreaArgs): v.GenericSchema<string> {
 	return registerTextArea(
 		safeStringSchema({ max: args.maxLength }),
 		args,
 		true,
-	);
+	) as never;
 }
 
 function registerTextArea<T extends v.GenericSchema<any, string | null>>(
@@ -413,7 +431,7 @@ export function selectOptional<V extends string>(
 			V
 		>
 	>,
-): v.GenericSchema<unknown, ItemValue<V> | null> {
+): v.GenericSchema<ItemValue<V> | null, ItemValue<V> | null> {
 	return register(optionalKey(clearableItemsSchema(args.items)), {
 		...args,
 		label: prefixKey(args.label),
@@ -422,7 +440,7 @@ export function selectOptional<V extends string>(
 		type: "select",
 		initialValue: null,
 		clearable: true,
-	});
+	}) as never;
 }
 
 export function select<V extends string>(
@@ -486,9 +504,15 @@ export function selectDynamicOptional(
 			initialValue: null,
 			clearable: true,
 		},
-	) as unknown as v.GenericSchema<unknown, string | null> &
+	) as unknown as v.GenericSchema<string | null, string | null> &
 		FieldWithOptions<SelectOption[]>;
 }
+
+/** Value schema of a dual select, before the `optional` wrapper is applied. */
+type DualSelectSchema<V extends string> = v.GenericSchema<
+	[unknown, unknown],
+	[V | null, V | null]
+>;
 
 export function dualSelectOptional<V extends string>(
 	args: WithTypedTranslationKeys<
@@ -500,30 +524,25 @@ export function dualSelectOptional<V extends string>(
 			V
 		>
 	>,
-): v.GenericSchema<
-	unknown,
-	[ItemValue<V> | null, ItemValue<V> | null] | undefined
-> {
-	const base = v.optional(
-		v.tuple([
-			clearableItemsSchema(args.fields[0].items),
-			clearableItemsSchema(args.fields[1].items),
-		]),
-	);
+): v.OptionalSchema<DualSelectSchema<ItemValue<V>>, undefined> {
+	// the `optional` wrapper stays outermost so `v.object` still reads the key as
+	// optional (a pipe reports its first item's type, hiding the wrapper)
+	const tuple = v.tuple([
+		clearableItemsSchema(args.fields[0].items),
+		clearableItemsSchema(args.fields[1].items),
+	]);
 
-	const schema: v.GenericSchema<unknown, [V | null, V | null] | undefined> =
-		args.validate
-			? v.pipe(
-					base,
-					v.check((val) => {
-						if (!val) return true;
-						const [first, second] = val;
-						return args.validate!.func([first, second]);
-					}, `forms:${args.validate!.message}`),
-				)
-			: base;
+	const schema: DualSelectSchema<V> = args.validate
+		? v.pipe(
+				tuple,
+				v.check(
+					([first, second]) => args.validate!.func([first, second]),
+					`forms:${args.validate!.message}`,
+				),
+			)
+		: tuple;
 
-	return register(schema, {
+	return register(v.optional(schema), {
 		...args,
 		bottomText: prefixKey(args.bottomText),
 		fields: args.fields.map((field) => ({
@@ -635,23 +654,27 @@ function datetimeMetadata(
 	};
 }
 
-export function datetime(args: DateTimeArgs) {
+export function datetime(args: DateTimeArgs): v.GenericSchema<Date> {
 	return register(
 		preprocess(date, boundedDate(args, v.date("forms:errors.required"))),
 		datetimeMetadata(args, { type: "datetime", required: true }),
-	);
+	) as never;
 }
 
-export function datetimeOptional(args: DateTimeArgs) {
+export function datetimeOptional(
+	args: DateTimeArgs,
+): v.NullishSchema<v.GenericSchema<Date>, undefined> {
 	// the `nullish` wrapper stays outermost so `v.object` still reads the key as
 	// optional (a pipe reports its first item's type, hiding the wrapper)
 	return register(
 		v.nullish(preprocess(date, boundedDate(args, v.date()))),
 		datetimeMetadata(args, { type: "datetime", required: false }),
-	);
+	) as never;
 }
 
-export function dayMonthYear(args: DateTimeArgs) {
+export function dayMonthYear(
+	args: DateTimeArgs,
+): v.GenericSchema<Date, DayMonthYear> {
 	return register(
 		v.pipe(
 			preprocess(date, boundedDate(args, v.date("forms:errors.required"))),
@@ -662,7 +685,7 @@ export function dayMonthYear(args: DateTimeArgs) {
 			})),
 		),
 		datetimeMetadata(args, { type: "date", required: true }),
-	);
+	) as never;
 }
 
 export function checkboxGroup<V extends string>(
@@ -695,11 +718,15 @@ export function weaponPool(
 		Omit<Extract<FormField, { type: "weapon-pool" }>, "type" | "initialValue">
 	>,
 ) {
+	type WeaponPoolInput = Array<{
+		id: v.InferInput<typeof weaponSplId>;
+		isFavorite: boolean;
+	}>;
 	type WeaponPoolValue = Array<{
 		id: v.InferOutput<typeof weaponSplId>;
 		isFavorite: boolean;
 	}>;
-	let schema: v.GenericSchema<unknown, WeaponPoolValue> = v.pipe(
+	let schema: v.GenericSchema<WeaponPoolInput, WeaponPoolValue> = v.pipe(
 		v.array(
 			v.object({
 				id: weaponSplId,
@@ -768,7 +795,7 @@ export function stringConstant<T extends string>(value: T) {
 export function idConstant<T extends number>(
 	value: T,
 ): v.LiteralSchema<T, undefined>;
-export function idConstant(): RequiresDefault<v.GenericSchema<unknown, number>>;
+export function idConstant(): RequiresDefault<v.GenericSchema<number, number>>;
 export function idConstant<T extends number>(value?: T) {
 	return (
 		value !== undefined ? hidden(v.literal(value), value) : hidden(id)
@@ -851,12 +878,14 @@ type UserSearchArgs = WithTypedTranslationKeys<
 	>
 >;
 
-export function userSearch(args: UserSearchArgs) {
-	return register(id, userSearchMetadata(args, true));
+export function userSearch(args: UserSearchArgs): v.GenericSchema<number> {
+	return register(id, userSearchMetadata(args, true)) as never;
 }
 
-export function userSearchOptional(args: UserSearchArgs) {
-	return register(v.optional(id), userSearchMetadata(args, false));
+export function userSearchOptional(
+	args: UserSearchArgs,
+): v.OptionalSchema<v.GenericSchema<number>, undefined> {
+	return register(v.optional(id), userSearchMetadata(args, false)) as never;
 }
 
 function userSearchMetadata(args: UserSearchArgs, required: boolean) {
@@ -885,7 +914,7 @@ export function tournamentSearchOptional(
 		type: "tournament-search",
 		initialValue: null,
 		required: false,
-	}) as unknown as v.GenericSchema<unknown, number | null> &
+	}) as unknown as v.GenericSchema<number | null, number | null> &
 		FieldWithOptions<TournamentSearchFieldOptions>;
 }
 
@@ -904,7 +933,7 @@ export function teamSearchOptional(
 		type: "team-search",
 		initialValue: null,
 		required: false,
-	}) as unknown as v.GenericSchema<unknown, number | null> &
+	}) as unknown as v.GenericSchema<number | null, number | null> &
 		FieldWithOptions<TeamSearchFieldOptions>;
 }
 
@@ -919,7 +948,7 @@ export function badges(
 		bottomText: prefixKey(args.bottomText),
 		type: "badges",
 		initialValue: [],
-	}) as unknown as v.GenericSchema<unknown[], number[]> &
+	}) as unknown as v.GenericSchema<number[], number[]> &
 		FieldWithOptions<BadgeOption[]>;
 }
 
@@ -934,7 +963,7 @@ export function trophies(
 		bottomText: prefixKey(args.bottomText),
 		type: "trophies",
 		initialValue: [],
-	}) as unknown as v.GenericSchema<unknown[], number[]> &
+	}) as unknown as v.GenericSchema<number[], number[]> &
 		FieldWithOptions<TrophyOption[]>;
 }
 
@@ -945,7 +974,7 @@ export function stageSelect(
 			"type" | "initialValue" | "required"
 		>
 	>,
-) {
+): v.GenericSchema<StageId> {
 	return register(stageId, {
 		...args,
 		label: prefixKey(args.label),
@@ -953,7 +982,7 @@ export function stageSelect(
 		type: "stage-select",
 		initialValue: 1,
 		required: true,
-	});
+	}) as never;
 }
 
 type WeaponSelectArgs = WithTypedTranslationKeys<
@@ -963,12 +992,19 @@ type WeaponSelectArgs = WithTypedTranslationKeys<
 	>
 >;
 
-export function weaponSelect(args: WeaponSelectArgs) {
-	return register(weaponSplId, weaponSelectMetadata(args, true));
+export function weaponSelect(
+	args: WeaponSelectArgs,
+): v.GenericSchema<MainWeaponId> {
+	return register(weaponSplId, weaponSelectMetadata(args, true)) as never;
 }
 
-export function weaponSelectOptional(args: WeaponSelectArgs) {
-	return register(v.optional(weaponSplId), weaponSelectMetadata(args, false));
+export function weaponSelectOptional(
+	args: WeaponSelectArgs,
+): v.OptionalSchema<v.GenericSchema<MainWeaponId>, undefined> {
+	return register(
+		v.optional(weaponSplId),
+		weaponSelectMetadata(args, false),
+	) as never;
 }
 
 function weaponSelectMetadata(args: WeaponSelectArgs, required: boolean) {

@@ -115,7 +115,7 @@ export const editTeamActionSchema = v.union([
 ]);
 
 /** Sentinel `role` value selected to switch a member to a free-text custom role. Never stored. */
-export const CUSTOM_ROLE_VALUE = "CUSTOM";
+export const CUSTOM_ROLE_VALUE = "CUSTOM" as const;
 
 export const updateRosterSchema = v.pipe(
 	v.object({
