@@ -277,6 +277,14 @@ describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
 			})
 		).map((entry) => [entry.identifier, entry.placementRank]);
 
+	const allRostersPlacements = async () =>
+		(
+			await LeaderboardRepository.findTeamLeaderboardBySeason({
+				season: SEASON,
+				onlyOneEntryPerUser: false,
+			})
+		).map((entry) => [entry.identifier, entry.placementRank, entry.isSkipped]);
+
 	beforeEach(async () => {
 		await users.create(9);
 		await playSeasonInWith(topRoster());
@@ -297,6 +305,16 @@ describe("LeaderboardRepository.findTeamLeaderboardBySeason", () => {
 			[userIdsToIdentifier(topRoster()), null],
 			[userIdsToIdentifier(sharedPlayersRoster()), 1],
 			[userIdsToIdentifier(beatenRoster()), 2],
+		]);
+	});
+
+	test("places a skipped team normally on the all rosters leaderboard", async () => {
+		await skipTeam(topRoster());
+
+		expect(await allRostersPlacements()).toEqual([
+			[userIdsToIdentifier(topRoster()), 1, false],
+			[userIdsToIdentifier(sharedPlayersRoster()), 2, false],
+			[userIdsToIdentifier(beatenRoster()), 3, false],
 		]);
 	});
 
