@@ -1,7 +1,7 @@
 import clsx from "clsx";
-import * as React from "react";
-import { useDraggable } from "react-use-draggable-scroll";
+import type * as React from "react";
 import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
+import { useDragToScroll } from "~/hooks/useDragToScroll";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import styles from "./bracket.module.css";
@@ -92,12 +92,7 @@ function ScrollableBracketContainer({
 }: {
 	children: React.ReactNode;
 }) {
-	const ref = React.useRef<HTMLDivElement>(
-		null,
-	) as React.MutableRefObject<HTMLDivElement>;
-	const { events } = useDraggable(ref, {
-		applyRubberBandEffect: true,
-	});
+	const ref = useDragToScroll<HTMLDivElement>();
 	usePublishBracketTopOffset(ref);
 
 	return (
@@ -106,7 +101,6 @@ function ScrollableBracketContainer({
 				className={clsx(styles.bracket, styles.scrollingBracket)}
 				data-testid="brackets-viewer"
 				ref={ref}
-				{...events}
 			>
 				{children}
 			</div>

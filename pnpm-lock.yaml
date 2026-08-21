@@ -156,9 +156,6 @@ importers:
       react-router:
         specifier: 8.3.0
         version: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
-      react-use-draggable-scroll:
-        specifier: 0.4.7
-        version: 0.4.7(react@19.2.8)
       remeda:
         specifier: 2.39.0
         version: 2.39.0
@@ -4003,12 +4000,6 @@ packages:
     peerDependenciesMeta:
       '@types/react':
         optional: true
-
-  react-use-draggable-scroll@0.4.7:
-    resolution: {integrity: sha512-6gCxGPO9WV5dIsBaDrgUKBaac8CY07PkygcArfajijYSNDwAq0girDRjaBuF1+lRqQryoLFQfpVaV2u/Yh6CrQ==}
-    engines: {node: '>=10'}
-    peerDependencies:
-      react: '>=16'
 
   react@19.2.8:
     resolution: {integrity: sha512-PWaYA1L/q9u2u7xYQi+Y3L3Yfnie7XyLeaJICV1MGD6LprsBxcAqGjYyr0eY3p+QdsA+x/Irkt4Qif8D63+Sbw==}
@@ -8328,10 +8319,6 @@ snapshots:
       tslib: 2.8.1
     optionalDependencies:
       '@types/react': 19.2.18
-
-  react-use-draggable-scroll@0.4.7(react@19.2.8):
-    dependencies:
-      react: 19.2.8
 
   react@19.2.8: {}
 
