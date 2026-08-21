@@ -27,19 +27,22 @@ const SSR_FORMATTER = {
 export function useDateTimeFormat(options: Intl.DateTimeFormatOptions) {
 	const { language, hourCycle, isLoaded } = useUserIntlPreference();
 
-	const formatter = new Intl.DateTimeFormat(language, {
-		...options,
-		...(options.hour && hourCycle ? { hourCycle } : {}),
-	});
+	// constructing an Intl.DateTimeFormat is expensive, so it is deferred until
+	// a format call actually happens (never on the server) and cached
+	const formatter = () =>
+		cachedDateTimeFormat(language, {
+			...options,
+			...(options.hour && hourCycle ? { hourCycle } : {}),
+		});
 
 	const realFormatter = {
 		format: (date: Date | number) => {
-			return formatter.format(
+			return formatter().format(
 				typeof date === "number" ? databaseTimestampToDate(date) : date,
 			);
 		},
 		formatRange: (from: Date | number, to: Date | number) => {
-			return formatter.formatRange(
+			return formatter().formatRange(
 				typeof from === "number" ? databaseTimestampToDate(from) : from,
 				typeof to === "number" ? databaseTimestampToDate(to) : to,
 			);
@@ -50,4 +53,20 @@ export function useDateTimeFormat(options: Intl.DateTimeFormatOptions) {
 		formatter: isLoaded ? realFormatter : SSR_FORMATTER,
 		isLoaded,
 	};
+}
+
+const dateTimeFormatCache = new Map<string, Intl.DateTimeFormat>();
+
+function cachedDateTimeFormat(
+	language: string,
+	options: Intl.DateTimeFormatOptions,
+) {
+	const key = `${language}\n${JSON.stringify(options)}`;
+	let formatter = dateTimeFormatCache.get(key);
+	if (!formatter) {
+		formatter = new Intl.DateTimeFormat(language, options);
+		dateTimeFormatCache.set(key, formatter);
+	}
+
+	return formatter;
 }

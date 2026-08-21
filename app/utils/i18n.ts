@@ -68,10 +68,7 @@ export function countryCodeToTranslatedName({
 	if (countryCode === "GB-ENG") return "England";
 
 	try {
-		return (
-			new Intl.DisplayNames([language], { type: "region" }).of(countryCode) ??
-			countryCode
-		);
+		return regionDisplayNames(language).of(countryCode) ?? countryCode;
 	} catch (e) {
 		logger.error(
 			`Error getting display name for country code "${countryCode}":`,
@@ -109,6 +106,18 @@ const ORDINAL_SUFFIXES: Record<
 	ru: { other: "^ое" },
 	zh: { other: "名" },
 };
+
+const displayNamesCache = new Map<string, Intl.DisplayNames>();
+
+function regionDisplayNames(language: string): Intl.DisplayNames {
+	let displayNames = displayNamesCache.get(language);
+	if (!displayNames) {
+		displayNames = new Intl.DisplayNames([language], { type: "region" });
+		displayNamesCache.set(language, displayNames);
+	}
+
+	return displayNames;
+}
 
 const pluralRulesCache = new Map<string, Intl.PluralRules>();
 

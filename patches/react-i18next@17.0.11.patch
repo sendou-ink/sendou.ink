@@ -1,0 +1,52 @@
+diff --git a/dist/commonjs/useTranslation.js b/dist/commonjs/useTranslation.js
+index 306d31ce800fa03a636b19ab6995a7b0c2b46a18..ddd9a94793ff3de036b2f61de3ac1c65e7f5e8e5 100644
+--- a/dist/commonjs/useTranslation.js
++++ b/dist/commonjs/useTranslation.js
+@@ -23,6 +23,7 @@ const notReadySnapshot = {
+   ready: false
+ };
+ const dummySubscribe = () => () => {};
++const i18nWrapperCache = new WeakMap();
+ const useTranslation = (ns, props = {}) => {
+   const {
+     i18n: i18nFromProps
+@@ -111,6 +112,13 @@ const useTranslation = (ns, props = {}) => {
+   const wrapperRef = (0, _react.useRef)(null);
+   const wrapperLangRef = (0, _react.useRef)();
+   const createI18nWrapper = original => {
++    const cached = i18nWrapperCache.get(original);
++    if (cached && cached.lang === original?.language) return cached.wrapper;
++    const wrapper = buildI18nWrapper(original);
++    i18nWrapperCache.set(original, { lang: original?.language, wrapper });
++    return wrapper;
++  };
++  const buildI18nWrapper = original => {
+     const descriptors = Object.getOwnPropertyDescriptors(original);
+     if (descriptors.__original) delete descriptors.__original;
+     const wrapper = Object.create(Object.getPrototypeOf(original), descriptors);
+diff --git a/dist/es/useTranslation.js b/dist/es/useTranslation.js
+index 577e0b8219bc437ce01e5141d111a56e003dc51f..6a541a1cfbc3cbd7bcc4d74f63721a1aaf1ca674 100644
+--- a/dist/es/useTranslation.js
++++ b/dist/es/useTranslation.js
+@@ -17,6 +17,7 @@ const notReadySnapshot = {
+   ready: false
+ };
+ const dummySubscribe = () => () => {};
++const i18nWrapperCache = new WeakMap();
+ export const useTranslation = (ns, props = {}) => {
+   const {
+     i18n: i18nFromProps
+@@ -105,6 +106,13 @@ export const useTranslation = (ns, props = {}) => {
+   const wrapperRef = useRef(null);
+   const wrapperLangRef = useRef();
+   const createI18nWrapper = original => {
++    const cached = i18nWrapperCache.get(original);
++    if (cached && cached.lang === original?.language) return cached.wrapper;
++    const wrapper = buildI18nWrapper(original);
++    i18nWrapperCache.set(original, { lang: original?.language, wrapper });
++    return wrapper;
++  };
++  const buildI18nWrapper = original => {
+     const descriptors = Object.getOwnPropertyDescriptors(original);
+     if (descriptors.__original) delete descriptors.__original;
+     const wrapper = Object.create(Object.getPrototypeOf(original), descriptors);

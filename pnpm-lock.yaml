@@ -8,6 +8,7 @@ patchedDependencies:
   '@react-router/serve@8.1.0': 0073d0acad5d92eea7ef30ed24d736df9f4d59e204f8358ecb3b06b9ea9d8738
   '@techstark/opencv-js@5.0.0-release.1': 0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3
   kysely@0.29.0: a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a
+  react-i18next@17.0.11: 1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269
 
 importers:
 
@@ -150,7 +151,7 @@ importers:
         version: 7.2.4(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       react-i18next:
         specifier: 17.0.11
-        version: 17.0.11(i18next@26.3.6(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
+        version: 17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@26.3.6(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2)
       react-router:
         specifier: 8.3.0
         version: 8.3.0(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
@@ -8263,7 +8264,7 @@ snapshots:
       react: 19.2.8
       react-dom: 19.2.8(react@19.2.8)
 
-  react-i18next@17.0.11(i18next@26.3.6(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2):
+  react-i18next@17.0.11(patch_hash=1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269)(i18next@26.3.6(typescript@7.0.2))(react-dom@19.2.8(react@19.2.8))(react@19.2.8)(typescript@7.0.2):
     dependencies:
       '@babel/runtime': 7.29.7
       html-parse-stringify: 4.0.1
