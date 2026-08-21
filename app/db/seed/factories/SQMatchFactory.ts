@@ -8,9 +8,12 @@ import { defineFactory } from "../core/defineFactory";
 import * as SplatoonFaker from "../core/SplatoonFaker";
 import * as SQGroupFactory from "./SQGroupFactory";
 
+/** Tier every seeded group and member is stamped with, so match pages have one to show. */
+const SEEDED_TIER = { name: "GOLD", isPlus: false } as const;
+
 type InsertArgs = Omit<
 	Parameters<typeof SQMatchRepository.insert>[0],
-	"alphaGroupId" | "bravoGroupId"
+	"alphaGroupId" | "bravoGroupId" | "tiers"
 > & {
 	/** Members of the alpha group, the first of them its owner. */
 	alphaUserIds: number[];
@@ -59,7 +62,6 @@ export const { create } = defineFactory({
 			...map,
 			source: "BOTH" as const,
 		})),
-		memento: { users: {}, groups: {}, pools: [] },
 	}),
 	insert: async ({
 		alphaUserIds,
@@ -80,6 +82,20 @@ export const { create } = defineFactory({
 			...args,
 			alphaGroupId: alphaGroup.id,
 			bravoGroupId: bravoGroup.id,
+			tiers: {
+				groups: [
+					{
+						id: alphaGroup.id,
+						tier: SEEDED_TIER,
+						members: memberTiers(alphaUserIds),
+					},
+					{
+						id: bravoGroup.id,
+						tier: SEEDED_TIER,
+						members: memberTiers(bravoUserIds),
+					},
+				],
+			},
 		});
 
 		return { ...match, alphaGroup, bravoGroup };
@@ -118,6 +134,10 @@ export const { create } = defineFactory({
 		}
 	},
 });
+
+function memberTiers(userIds: number[]) {
+	return userIds.map((userId) => ({ userId, tier: SEEDED_TIER }));
+}
 
 /** Concluding stamps the skill rows *now*; move them to when the match was played
  * so the season progression chart spreads over days. */

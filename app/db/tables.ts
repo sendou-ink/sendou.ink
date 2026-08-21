@@ -15,7 +15,6 @@ import type {
 	CastedMatchesInfo,
 	CustomTheme,
 	NotificationSubscription,
-	ParsedMemento,
 	PeakXP,
 	PreparedMaps,
 	Pronouns,
@@ -32,6 +31,7 @@ import type { ApiTokenType } from "~/features/api/api-types";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
+import type { TierName } from "~/features/mmr/mmr-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
 import type { Notification as NotificationValue } from "~/features/notifications/notifications-types";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
@@ -306,6 +306,15 @@ export interface Group {
 	matchmade: Generated<DBBoolean>;
 	status: "PREPARING" | "ACTIVE" | "INACTIVE" | "READY_CHECK";
 	teamId: number | null;
+	/**
+	 * Tier the group held as its match was created, snapshotted because tier thresholds are
+	 * percentiles of the season's live distribution and so shift as the season goes on.
+	 * `null` until the group gets a match, and for matches made before this was recorded.
+	 * The queue shows a live tier instead, so this is only read by the match page.
+	 */
+	tierName: TierName | null;
+	/** Second half of {@link Group.tierName}, meaningless while that is `null`. */
+	tierIsPlus: Generated<DBBoolean>;
 }
 
 export interface GroupLike {
@@ -326,7 +335,6 @@ export interface GroupMatch {
 	confirmedByUserId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
-	memento: JSONColumnTypeNullable<ParsedMemento>;
 	cancelRequestedByUserId: number | null;
 	cancelAcceptedByUserId: number | null;
 	noScreen: Generated<DBBoolean>;
@@ -375,6 +383,14 @@ export interface GroupMember {
 	missedReadyCheckAt: number | null;
 	note: string | null;
 	userId: number;
+	/**
+	 * Tier the member held as their group's match was created, snapshotted for the same
+	 * reason as {@link Group.tierName}. `"CALCULATING"` when they had too few ranked sets
+	 * of the season to have a tier yet, `null` when the group never got a match.
+	 */
+	tierName: TierName | "CALCULATING" | null;
+	/** Second half of {@link GroupMember.tierName}, meaningless unless that names a tier. */
+	tierIsPlus: Generated<DBBoolean>;
 }
 
 /** Both groups' members confirming they are ready to play, before their match is created */

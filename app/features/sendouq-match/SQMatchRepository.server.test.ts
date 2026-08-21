@@ -134,7 +134,7 @@ describe("insert", () => {
 				...map,
 				source: "BOTH" as const,
 			})),
-			memento: { users: {}, groups: {}, pools: [] },
+			tiers: { groups: [] },
 		});
 
 		const likes = await db.selectFrom("GroupLike").selectAll().execute();

@@ -7,7 +7,6 @@
 
 import type { DBBoolean } from "~/db/tables";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
-import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { CustomThemeVar } from "~/features/theme/theme-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
@@ -83,50 +82,6 @@ export interface PeakXP {
 	/** Peak XP (Tentatek division) */
 	tentatek: number | null;
 }
-
-export type UserSkillDifference =
-	| {
-			calculated: true;
-			spDiff: number;
-			oldSp?: number;
-			newSp?: number;
-	  }
-	| CalculatingSkill;
-
-export type GroupSkillDifference =
-	| {
-			calculated: true;
-			oldSp: number;
-			newSp: number;
-	  }
-	| CalculatingSkill;
-
-export type ParsedMemento = {
-	users: Record<
-		number,
-		{
-			skill?: TieredSkill | "CALCULATING";
-			skillDifference?: UserSkillDifference;
-		}
-	>;
-	groups: Record<
-		number,
-		{
-			tier?: TieredSkill["tier"];
-			skillDifference?: GroupSkillDifference;
-		}
-	>;
-	modePreferences?: Partial<
-		Record<ModeShort, Array<{ userId: number; preference?: Preference }>>
-	>;
-	/** mapPreferences of season 2 */
-	mapPreferences?: Array<{ userId: number; preference?: Preference }[]>;
-	pools: Array<{
-		userId: number;
-		pool: UserMapModePreferences["pool"];
-		teamName?: string;
-	}>;
-};
 
 export interface TournamentSettings {
 	bracketProgression: Progression.ParsedBracket[];
@@ -241,11 +196,3 @@ export interface NotificationSubscription {
 		p256dh: string;
 	};
 }
-
-type CalculatingSkill = {
-	calculated: false;
-	matchesCount: number;
-	matchesCountNeeded: number;
-	/** Freshly calculated skill */
-	newSp?: number;
-};

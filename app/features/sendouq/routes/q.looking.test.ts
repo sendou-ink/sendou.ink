@@ -1,4 +1,4 @@
-import { beforeEach, describe, expect, test, vi } from "vitest";
+import { describe, expect, test, vi } from "vitest";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
@@ -11,14 +11,12 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { UserMapModePreferences } from "~/db/tables-json";
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
-import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
-import { withUserId, wrappedAction } from "~/utils/Test";
+import { wrappedAction } from "~/utils/Test";
 import * as ReadyCheck from "../core/ready-check.server";
 import { refreshSendouQInstance } from "../core/SendouQ.server";
 import type { lookingSchema } from "../q-action-schemas";
@@ -69,20 +67,6 @@ const prepareGroups = async () => {
 	return { owner, ownGroup, theirGroup, teammate: ownMembers[0] };
 };
 
-const setMapModePreferences = (
-	userId: number,
-	mapModePreferences: UserMapModePreferences,
-) =>
-	withUserId(userId, () =>
-		MatchProfileRepository.updateOwnMatchProfile({
-			mapModePreferences,
-			vc: "NO",
-			languages: [],
-			weaponPool: [],
-			noScreen: 0,
-		}),
-	);
-
 const lookingAction = wrappedAction<typeof lookingSchema>({
 	action: rawLookingAction,
 });
@@ -101,9 +85,6 @@ const confirmEveryoneReady = async (groupId: number) => {
 		await ReadyCheck.confirm({ readyCheck, userId: nextToConfirm.userId });
 	}
 };
-
-const findMatch = () =>
-	db.selectFrom("GroupMatch").selectAll().executeTakeFirstOrThrow();
 
 describe("SendouQ match creation validation", () => {
 	test("doesn't create a match with a group that hasn't challenged us", async () => {
@@ -160,96 +141,5 @@ describe("SendouQ match creation validation", () => {
 		} finally {
 			vi.useRealTimers();
 		}
-	});
-});
-
-describe("SendouQ match creation", () => {
-	let groups: Awaited<ReturnType<typeof prepareGroups>>;
-
-	const createMatch = async () => {
-		await lookingAction(
-			{
-				_action: "MATCH_UP",
-				targetGroupId: groups.theirGroup.id,
-			},
-			{ user: "admin" },
-		);
-
-		await confirmEveryoneReady(groups.ownGroup.id);
-	};
-
-	beforeEach(async () => {
-		groups = await prepareGroups();
-		await refreshSendouQInstance();
-	});
-
-	test("adds pools to memento", async () => {
-		await createMatch();
-
-		const match = await findMatch();
-		const pools = match.memento?.pools;
-
-		invariant(pools, "pools missing");
-
-		expect(pools.length).toBe(2);
-		expect(pools.some((p) => p.pool[0].stages.includes(1))).toBe(true);
-		expect(pools.some((p) => p.pool[0].stages.includes(19))).toBe(true);
-	});
-
-	test("doesn't add pool where mode is avoided", async () => {
-		await setMapModePreferences(groups.owner.id, {
-			modes: [
-				{ mode: "SZ", preference: "AVOID" },
-				{ mode: "TC", preference: "PREFER" },
-			],
-			pool: [
-				{
-					mode: "TC",
-					stages: [...stageIds]
-						.filter((stageId) => !BANNED_MAPS.TC.includes(stageId))
-						.slice(0, 7),
-				},
-			],
-		});
-
-		await createMatch();
-
-		const match = await findMatch();
-		const pools = match.memento?.pools;
-
-		invariant(pools, "pools missing");
-
-		expect(pools.length).toBe(2);
-		expect(
-			pools
-				.find((p) => p.userId === groups.owner.id)!
-				.pool.every((p) => p.mode !== "SZ"),
-		).toBe(true);
-	});
-
-	test("adds mode preferences to memento", async () => {
-		await createMatch();
-
-		const match = await findMatch();
-
-		const modePreferences = match.memento?.modePreferences;
-
-		expect(modePreferences?.SZ?.length).toBe(2);
-	});
-
-	test("adds mode preferences to memento including neutral", async () => {
-		await setMapModePreferences(groups.teammate.id, {
-			modes: [{ mode: "TC", preference: "PREFER" }],
-			pool: [],
-		});
-
-		await createMatch();
-
-		const match = await findMatch();
-
-		const modePreferences = match.memento?.modePreferences;
-
-		expect(modePreferences?.SZ?.length).toBe(3);
-		expect(modePreferences?.SZ?.some((p) => !p.preference)).toBe(true);
 	});
 });

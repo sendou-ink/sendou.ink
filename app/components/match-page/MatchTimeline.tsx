@@ -14,7 +14,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import type {
 	GroupSkillDifference,
 	UserSkillDifference,
-} from "~/db/tables-json";
+} from "~/features/sendouq-match/core/SkillDifference";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type {

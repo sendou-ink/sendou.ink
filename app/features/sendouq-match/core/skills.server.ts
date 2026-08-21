@@ -1,47 +1,18 @@
-import { ordinal, type Rating } from "openskill";
 import type { Tables } from "~/db/tables";
-import type {
-	GroupSkillDifference,
-	UserSkillDifference,
-} from "~/db/tables-json";
-import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
-import {
-	ordinalToSp,
-	rate,
-	userIdsToIdentifier,
-} from "~/features/mmr/mmr-utils";
+import { rate, userIdsToIdentifier } from "~/features/mmr/mmr-utils";
 import { seasonRatings } from "~/features/mmr/mmr-utils.server";
-import { roundToNDecimalPlaces } from "~/utils/number";
 
-export type MementoSkillDifferences = {
-	users: Record<
-		Tables["User"]["id"],
-		{
-			skillDifference?: UserSkillDifference;
-		}
-	>;
-	groups: Record<
-		Tables["Group"]["id"],
-		{
-			skillDifference?: GroupSkillDifference;
-		}
-	>;
-};
-
+/** New ratings for both a match's players and the two rosters they played it as. */
 export async function calculateMatchSkills({
 	groupMatchId,
 	season,
 	winner,
 	loser,
-	winnerGroupId,
-	loserGroupId,
 }: {
 	groupMatchId: Tables["GroupMatch"]["id"];
 	season: number;
 	winner: Tables["User"]["id"][];
 	loser: Tables["User"]["id"][];
-	winnerGroupId: Tables["Group"]["id"];
-	loserGroupId: Tables["Group"]["id"];
 }) {
 	const newSkills: Array<
 		Pick<
@@ -49,7 +20,6 @@ export async function calculateMatchSkills({
 			"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
 		>
 	> = [];
-	const differences: MementoSkillDifferences = { users: {}, groups: {} };
 
 	const winnerTeamIdentifier = userIdsToIdentifier(winner);
 	const loserTeamIdentifier = userIdsToIdentifier(loser);
@@ -79,14 +49,6 @@ export async function calculateMatchSkills({
 				sigma: winnerTeamNew[index].sigma,
 				userId,
 			});
-
-			differences.users[userId] = {
-				skillDifference: userSkillDifference({
-					oldRating: oldWinnerRatings[index].rating,
-					newRating: winnerTeamNew[index],
-					matchesCount: oldWinnerRatings[index].matchesCount,
-				}),
-			};
 		}
 
 		for (const [index, userId] of loser.entries()) {
@@ -98,14 +60,6 @@ export async function calculateMatchSkills({
 				sigma: loserTeamNew[index].sigma,
 				userId,
 			});
-
-			differences.users[userId] = {
-				skillDifference: userSkillDifference({
-					oldRating: oldLoserRatings[index].rating,
-					newRating: loserTeamNew[index],
-					matchesCount: oldLoserRatings[index].matchesCount,
-				}),
-			};
 		}
 	}
 
@@ -138,85 +92,7 @@ export async function calculateMatchSkills({
 			sigma: loserGroupNew.sigma,
 			userId: null,
 		});
-
-		differences.groups[winnerGroupId] = {
-			skillDifference: groupSkillDifference({
-				oldRating: oldWinnerGroupRating.rating,
-				newRating: winnerGroupNew,
-				matchesCount: oldWinnerGroupRating.matchesCount,
-			}),
-		};
-		differences.groups[loserGroupId] = {
-			skillDifference: groupSkillDifference({
-				oldRating: oldLoserGroupRating.rating,
-				newRating: loserGroupNew,
-				matchesCount: oldLoserGroupRating.matchesCount,
-			}),
-		};
 	}
 
-	return { newSkills, differences };
-}
-
-function userSkillDifference({
-	oldRating,
-	newRating,
-	matchesCount,
-}: {
-	oldRating: Rating;
-	newRating: Rating;
-	matchesCount: number;
-}): UserSkillDifference {
-	const calculated = matchesCount >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD;
-
-	if (calculated) {
-		const oldSp = ordinalToSp(ordinal(oldRating));
-		const newSp = ordinalToSp(ordinal(newRating));
-		return {
-			calculated,
-			spDiff: roundToNDecimalPlaces(newSp - oldSp),
-			oldSp,
-			newSp,
-		};
-	}
-
-	return {
-		calculated,
-		matchesCount: matchesCount + 1,
-		matchesCountNeeded: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
-		newSp:
-			matchesCount + 1 === MATCHES_COUNT_NEEDED_FOR_LEADERBOARD
-				? ordinalToSp(ordinal(newRating))
-				: undefined,
-	};
-}
-
-function groupSkillDifference({
-	oldRating,
-	newRating,
-	matchesCount,
-}: {
-	oldRating: Rating;
-	newRating: Rating;
-	matchesCount: number;
-}): GroupSkillDifference {
-	const calculated = matchesCount >= MATCHES_COUNT_NEEDED_FOR_LEADERBOARD;
-
-	if (calculated) {
-		return {
-			calculated,
-			newSp: ordinalToSp(ordinal(newRating)),
-			oldSp: ordinalToSp(ordinal(oldRating)),
-		};
-	}
-
-	return {
-		calculated,
-		matchesCount: matchesCount + 1,
-		matchesCountNeeded: MATCHES_COUNT_NEEDED_FOR_LEADERBOARD,
-		newSp:
-			matchesCount + 1 === MATCHES_COUNT_NEEDED_FOR_LEADERBOARD
-				? ordinalToSp(ordinal(newRating))
-				: undefined,
-	};
+	return newSkills;
 }

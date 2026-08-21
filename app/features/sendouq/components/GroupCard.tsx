@@ -11,8 +11,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
-import { SpDelta } from "~/components/SpDelta";
-import type { ParsedMemento } from "~/db/tables-json";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
@@ -225,9 +223,6 @@ export function GroupCard({
 						) : null}
 					</div>
 				) : null}
-				{group.skillDifference ? (
-					<GroupSkillDifference skillDifference={group.skillDifference} />
-				) : null}
 				{actionToShow || suggestable || trail ? (
 					<div className="stack xs items-center">
 						<div className="stack sm horizontal items-center justify-center">
@@ -420,9 +415,6 @@ function GroupMember({
 							})}
 						</div>
 					) : null}
-					{member.skillDifference ? (
-						<MemberSkillDifference skillDifference={member.skillDifference} />
-					) : null}
 				</div>
 			)}
 			{!hideNote ? (
@@ -579,76 +571,6 @@ function AddPrivateNoteForm({
 		>
 			{({ FormField }) => <FormField name="value" autoFocus />}
 		</SendouForm>
-	);
-}
-
-function GroupSkillDifference({
-	skillDifference,
-}: {
-	skillDifference: NonNullable<
-		ParsedMemento["groups"][number]["skillDifference"]
-	>;
-}) {
-	const { t } = useTranslation(["q"]);
-
-	if (skillDifference.calculated) {
-		return (
-			<div className="text-center font-semi-bold">
-				{t("q:looking.teamSP")} {skillDifference.oldSp} ➜{" "}
-				{skillDifference.newSp}
-			</div>
-		);
-	}
-
-	if (skillDifference.newSp) {
-		return (
-			<div className="text-center font-semi-bold">
-				{t("q:looking.teamSP.calculated")}: {skillDifference.newSp}
-			</div>
-		);
-	}
-
-	return (
-		<div className="text-center font-semi-bold">
-			{t("q:looking.teamSP.calculating")} ({skillDifference.matchesCount}/
-			{skillDifference.matchesCountNeeded})
-		</div>
-	);
-}
-
-function MemberSkillDifference({
-	skillDifference,
-}: {
-	skillDifference: NonNullable<
-		ParsedMemento["users"][number]["skillDifference"]
-	>;
-}) {
-	const { t } = useTranslation(["q"]);
-
-	if (skillDifference.calculated) {
-		if (skillDifference.spDiff === 0) return null;
-
-		return (
-			<div className={styles.extraInfo}>
-				<SpDelta diff={skillDifference.spDiff} />
-			</div>
-		);
-	}
-
-	if (skillDifference.matchesCount === skillDifference.matchesCountNeeded) {
-		return (
-			<div className={styles.extraInfo}>
-				<span className="text-lighter">{t("q:looking.sp.calculated")}:</span>{" "}
-				{skillDifference.newSp ? <>{skillDifference.newSp}SP</> : null}
-			</div>
-		);
-	}
-
-	return (
-		<div className={styles.extraInfo}>
-			<span className="text-lighter">{t("q:looking.sp.calculating")}</span> (
-			{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded})
-		</div>
 	);
 }
 

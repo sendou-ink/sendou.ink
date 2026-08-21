@@ -2,13 +2,13 @@ import { isWithinInterval, sub } from "date-fns";
 import { redirect } from "react-router";
 import * as R from "remeda";
 import type { DBBoolean } from "~/db/tables";
-import type { ParsedMemento } from "~/db/tables-json";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { defaultOrdinal } from "~/features/mmr/mmr-utils";
 import { type TieredSkill, userSkills } from "~/features/mmr/tiered.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
+import type * as SkillDifference from "~/features/sendouq-match/core/SkillDifference";
 import type * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -86,8 +86,9 @@ class SendouQClass {
 			teamMapModePreferences: undefined,
 			tier: this.#groupTier(group) as TieredSkill["tier"] | null,
 			tierRange: null as TierRange | null,
-			skillDifference:
-				undefined as ParsedMemento["groups"][number]["skillDifference"],
+			skillDifference: undefined as
+				| SkillDifference.GroupSkillDifference
+				| undefined,
 			isReplay: false,
 			members: group.members.map((member) => {
 				const skill = calculatedUserSkills[String(member.id)];
@@ -100,8 +101,9 @@ class SendouQClass {
 					noScreen: undefined,
 					friendCode: null as string | null,
 					inGameName: null as string | null,
-					skillDifference:
-						undefined as ParsedMemento["users"][number]["skillDifference"],
+					skillDifference: undefined as
+						| SkillDifference.UserSkillDifference
+						| undefined,
 				};
 			}),
 		}));
@@ -182,16 +184,16 @@ class SendouQClass {
 			isTeamMember: boolean,
 		) => {
 			return {
-				...group,
+				...R.omit(group, ["tierName", "tierIsPlus"]),
 				chatCode: isTeamMember ? group.chatCode : undefined,
-				tier: match.memento?.groups[group.id]?.tier,
-				skillDifference: match.memento?.groups[group.id]?.skillDifference,
+				tier: SendouQMatch.groupTier(group),
+				skillDifference: match.skillDifferences.groups[group.id],
 				matchmade: Boolean(group.matchmade),
 				members: group.members.map((member) => {
 					return {
-						...member,
-						skill: match.memento?.users[member.id]?.skill,
-						skillDifference: match.memento?.users[member.id]?.skillDifference,
+						...R.omit(member, ["tierName", "tierIsPlus"]),
+						tier: SendouQMatch.memberTier(member),
+						skillDifference: match.skillDifferences.users[member.id],
 						noScreen: undefined,
 						isContinuing:
 							typeof member.isContinuing === "number"
@@ -226,7 +228,7 @@ class SendouQClass {
 						currentMap: currentMapRaw,
 						groupAlpha: alphaCensored,
 						groupBravo: bravoCensored,
-						pools: match.memento?.pools,
+						pools: matchMapPools(match),
 					}),
 				}
 			: undefined;
@@ -510,10 +512,8 @@ class SendouQClass {
 				discordAvatar: string | null;
 			}>;
 		};
-		pools: ParsedMemento["pools"] | undefined;
+		pools: ReturnType<typeof matchMapPools>;
 	}) {
-		if (!pools) return [];
-
 		const pickerGroups = [groupAlpha, groupBravo].filter(
 			(g) => currentMap.source === "BOTH" || String(g.id) === currentMap.source,
 		);
@@ -581,6 +581,31 @@ class SendouQClass {
 		const groupLastAction = databaseTimestampToDate(group.latestActionAt);
 		return groupLastAction >= staleThreshold;
 	}
+}
+
+/**
+ * Map pools of everyone in a match, which its current map's vote count is read from.
+ * A group queuing as a team plays on the team's pool rather than on its members' own,
+ * and modes a pool's owner avoids are no vote of theirs.
+ */
+function matchMapPools(match: DBMatch) {
+	return [match.groupAlpha, match.groupBravo].flatMap((group) =>
+		group.members.flatMap((member) => {
+			const preferences =
+				group.team?.mapModePreferences ?? member.mapModePreferences;
+			if (!preferences) return [];
+
+			const avoidedModes = preferences.modes
+				.filter((mode) => mode.preference === "AVOID")
+				.map((mode) => mode.mode);
+			const pool = preferences.pool.filter(
+				(pool) => !avoidedModes.includes(pool.mode),
+			);
+			if (pool.length === 0) return [];
+
+			return [{ userId: member.id, pool }];
+		}),
+	);
 }
 
 /** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */

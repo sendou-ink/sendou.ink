@@ -1,3 +1,5 @@
+import type { DBBoolean } from "~/db/tables";
+import type { TierName } from "~/features/mmr/mmr-constants";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 
 /**
@@ -54,4 +56,32 @@ export function resolveGroupMemberOf(args: {
 	}
 
 	return null;
+}
+
+/**
+ * Tier a group held when its match started, read off the snapshot taken then rather than
+ * recomputed, because tier thresholds shift as a season's rating distribution does.
+ * `undefined` for matches from before the snapshot was recorded.
+ */
+export function groupTier(group: {
+	tierName: TierName | null;
+	tierIsPlus: DBBoolean;
+}) {
+	if (!group.tierName) return undefined;
+
+	return { name: group.tierName, isPlus: Boolean(group.tierIsPlus) };
+}
+
+/**
+ * Tier a member held when their match started, snapshotted the same way as {@link groupTier}.
+ * `"CALCULATING"` when they had too few ranked sets of the season to have a tier.
+ */
+export function memberTier(member: {
+	tierName: TierName | "CALCULATING" | null;
+	tierIsPlus: DBBoolean;
+}) {
+	if (!member.tierName) return undefined;
+	if (member.tierName === "CALCULATING") return "CALCULATING" as const;
+
+	return { name: member.tierName, isPlus: Boolean(member.tierIsPlus) };
 }

@@ -5,8 +5,8 @@ import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import {
-	createMatchMemento,
 	matchMapList,
+	matchTiers,
 } from "~/features/sendouq-match/core/match.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.server";
@@ -238,11 +238,7 @@ async function createMatch({
 		alphaGroupId: alphaGroup.id,
 		bravoGroupId: bravoGroup.id,
 		mapList,
-		memento: await createMatchMemento({
-			own: { group: alphaGroup, preferences: alphaPreferences },
-			their: { group: bravoGroup, preferences: bravoPreferences },
-			mapList,
-		}),
+		tiers: await matchTiers([alphaGroup, bravoGroup]),
 		readyCheckId: readyCheck.id,
 	});
 

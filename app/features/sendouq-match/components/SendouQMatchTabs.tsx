@@ -164,10 +164,6 @@ function resolveCancelAccepterUsername(match: MatchData) {
 function mapRosterMembers(members: MatchData["groupAlpha"]["members"]) {
 	return members.map((member) => ({
 		...member,
-		tier:
-			member.skill === "CALCULATING"
-				? ("CALCULATING" as const)
-				: member.skill?.tier,
 		weaponPool: member.weapons?.map((w) => w.weaponSplId),
 	}));
 }

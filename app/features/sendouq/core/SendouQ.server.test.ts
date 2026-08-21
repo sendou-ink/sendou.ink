@@ -12,7 +12,9 @@ import {
 	freshUserSkills,
 	refreshUserSkills,
 } from "~/features/mmr/tiered.server";
-import type { ModeShort } from "~/modules/in-game-lists/types";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import invariant from "~/utils/invariant";
 import * as SQGroupRepository from "../SQGroupRepository.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -73,6 +75,22 @@ const preferring = (mode: ModeShort): UserMapModePreferences => ({
 const prefer = (position: number, mode: ModeShort) =>
 	UserFactory.grant(users.id(position), {
 		matchProfile: { mapModePreferences: preferring(mode) },
+	});
+
+/** Gives the user a match profile with a pool of stages for one mode. */
+const pooling = (
+	position: number,
+	mode: ModeShort,
+	stages: StageId[],
+	preference: "PREFER" | "AVOID" = "PREFER",
+) =>
+	UserFactory.grant(users.id(position), {
+		matchProfile: {
+			mapModePreferences: {
+				modes: [{ mode, preference }],
+				pool: [{ mode, stages }],
+			},
+		},
 	});
 
 /** Puts the users in a team whose own preferences prefer one mode. */
@@ -783,7 +801,94 @@ describe("SendouQ", () => {
 			});
 		});
 	});
+
+	describe("mapMatch", () => {
+		beforeEach(async () => {
+			await users.create(8);
+		});
+
+		test("counts players with the current map in their pool as its voters", async () => {
+			await pooling(1, "SZ", [1, 2]);
+			await pooling(5, "SZ", [3]);
+
+			const match = await mapMatchOn({ mode: "SZ", stageId: 1 });
+
+			expect(match.currentMap?.voters.map((voter) => voter.id)).toEqual([
+				users.id(1),
+			]);
+		});
+
+		test("leaves out a pool of a mode its owner avoids", async () => {
+			await pooling(1, "SZ", [1], "AVOID");
+
+			const match = await mapMatchOn({ mode: "SZ", stageId: 1 });
+
+			expect(match.currentMap?.voters).toEqual([]);
+		});
+
+		test("counts a team's group on the team's pool rather than its members' own", async () => {
+			await TeamFactory.create(
+				{ memberUserIds: userIds([1, 2, 3, 4]) },
+				{
+					mapModePreferences: {
+						modes: [{ mode: "SZ", preference: "PREFER" }],
+						pool: [{ mode: "SZ", stages: [1] }],
+					},
+				},
+			);
+			await pooling(1, "SZ", [2]);
+
+			const match = await mapMatchOn({ mode: "SZ", stageId: 1 });
+
+			expect(match.currentMap?.voters.map((voter) => voter.id)).toEqual(
+				userIds([1, 2, 3, 4]),
+			);
+		});
+
+		test("shows what the concluded match did to each player's SP", async () => {
+			for (const position of [1, 2, 3, 4, 5, 6, 7, 8]) {
+				await createSkill(position, 25);
+			}
+			const { id } = await playOutMatchBetween([1, 2, 3, 4], [5, 6, 7, 8]);
+			await refreshSendouQInstance();
+
+			const match = SendouQ.mapMatch((await SQMatchRepository.findById(id))!);
+
+			const winner = match.groupAlpha.members[0].skillDifference;
+			const loser = match.groupBravo.members[0].skillDifference;
+			invariant(winner?.calculated && loser?.calculated, "not calculated");
+
+			expect(winner.spDiff).toBeGreaterThan(0);
+			expect(loser.spDiff).toBeLessThan(0);
+			expect(match.groupAlpha.skillDifference?.calculated).toBe(false);
+		});
+
+		test("shows the tiers snapshotted when the match was made", async () => {
+			const match = await mapMatchOn({ mode: "SZ", stageId: 1 });
+
+			expect(match.groupAlpha.tier).toEqual({ name: "GOLD", isPlus: false });
+			expect(match.groupAlpha.members[0].tier).toEqual({
+				name: "GOLD",
+				isPlus: false,
+			});
+		});
+	});
 });
+
+/** The match page's view of a match played on one known map, its first four users against the rest. */
+const mapMatchOn = async (map: { mode: ModeShort; stageId: StageId }) => {
+	const { id } = await SQMatchFactory.create({
+		alphaUserIds: userIds([1, 2, 3, 4]),
+		bravoUserIds: userIds([5, 6, 7, 8]),
+		mapList: [{ ...map, source: "BOTH" }],
+	});
+	await refreshSendouQInstance();
+
+	const match = await SQMatchRepository.findById(id);
+	invariant(match, "Match not found");
+
+	return SendouQ.mapMatch(match);
+};
 
 /** Leaves both groups inactive with a freshly concluded match between them. */
 const playOutMatchBetween = (

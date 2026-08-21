@@ -2,41 +2,33 @@ import type { Transaction } from "kysely";
 import { ordinal } from "openskill";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
-import type { ParsedMemento } from "~/db/tables-json";
 import {
 	identifierToUserIds,
 	type SkillTeamIdentifier,
 } from "~/features/mmr/mmr-utils";
 import { databaseTimestampNow } from "~/utils/dates";
-import type { MementoSkillDifferences } from "./core/skills.server";
 
-interface InsertMatchSkillsArgs {
-	groupMatchId: number;
-	skills: Pick<
-		Tables["Skill"],
-		"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
-	>[];
-	oldMatchMemento: ParsedMemento | null;
-	differences: MementoSkillDifferences;
-}
+type InsertMatchSkills = Pick<
+	Tables["Skill"],
+	"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
+>[];
 
 /**
- * Inserts the new skill rows resulting from a match, their team memberships and the match's memento
- * updated with the resulting skill differences.
+ * Inserts the new skill rows resulting from a match and their team memberships.
  */
 export async function insertMatchSkills(
-	args: InsertMatchSkillsArgs,
+	skills: InsertMatchSkills,
 	trx?: Transaction<DB>,
 ) {
-	if (trx) return insertMatchSkillsInTransaction(args, trx);
+	if (trx) return insertMatchSkillsInTransaction(skills, trx);
 
 	return db
 		.transaction()
-		.execute((newTrx) => insertMatchSkillsInTransaction(args, newTrx));
+		.execute((newTrx) => insertMatchSkillsInTransaction(skills, newTrx));
 }
 
 async function insertMatchSkillsInTransaction(
-	{ groupMatchId, skills, oldMatchMemento, differences }: InsertMatchSkillsArgs,
+	skills: InsertMatchSkills,
 	executor: Transaction<DB>,
 ) {
 	const createdAt = databaseTimestampNow();
@@ -63,36 +55,6 @@ async function insertMatchSkillsInTransaction(
 		.insertInto("SkillTeamUser")
 		.values(teamUsers)
 		.onConflict((oc) => oc.columns(["skillId", "userId"]).doNothing())
-		.execute();
-
-	if (!oldMatchMemento) return;
-
-	const newMemento: ParsedMemento = {
-		...oldMatchMemento,
-		groups: {},
-		users: {},
-	};
-
-	for (const [key, value] of Object.entries(oldMatchMemento.users)) {
-		newMemento.users[key as unknown as number] = {
-			...value,
-			skillDifference:
-				differences.users[key as unknown as number]?.skillDifference,
-		};
-	}
-
-	for (const [key, value] of Object.entries(oldMatchMemento.groups)) {
-		newMemento.groups[key as unknown as number] = {
-			...value,
-			skillDifference:
-				differences.groups[key as unknown as number]?.skillDifference,
-		};
-	}
-
-	await executor
-		.updateTable("GroupMatch")
-		.set({ memento: JSON.stringify(newMemento) })
-		.where("id", "=", groupMatchId)
 		.execute();
 }
 

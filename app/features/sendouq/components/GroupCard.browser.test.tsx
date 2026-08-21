@@ -2,7 +2,6 @@ import type { ComponentProps } from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import type { GroupSkillDifference } from "~/db/tables-json";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import type {
 	SQGroup,
@@ -317,23 +316,6 @@ describe("GroupCard", () => {
 
 			// REPLAY text is rendered, translations are loaded
 			await expect.element(screen.getByText(/REPLAY/i)).toBeVisible();
-		});
-
-		test("shows group skill difference", async () => {
-			const skillDifference: GroupSkillDifference = {
-				calculated: true,
-				oldSp: 2100,
-				newSp: 2150,
-			};
-
-			const screen = await renderGroupCard({
-				group: createFullGroup({
-					skillDifference,
-				}),
-			});
-
-			await expect.element(screen.getByText(/2100/)).toBeVisible();
-			await expect.element(screen.getByText(/2150/)).toBeVisible();
 		});
 	});
 

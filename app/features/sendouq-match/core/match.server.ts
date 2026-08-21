@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import type { ParsedMemento, UserMapModePreferences } from "~/db/tables-json";
+import type { UserMapModePreferences } from "~/db/tables-json";
 import * as MapList from "~/features/map-list-generator/core/MapList";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
@@ -22,6 +22,7 @@ import type {
 } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 import { averageArray } from "~/utils/number";
+import type { MatchTiers } from "../SQMatchRepository.server";
 
 type WeightsMap = Map<string, number>;
 
@@ -349,104 +350,27 @@ export function compareMatchToReportedScores({
 	return "SAME";
 }
 
-type GroupPreference = {
-	userId: number;
-	preferences: UserMapModePreferences;
-	teamName?: string | null;
-};
-type CreateMatchMementoArgs = {
-	own: {
-		group: SQUncensoredGroup;
-		preferences: GroupPreference[];
-	};
-	their: {
-		group: SQUncensoredGroup;
-		preferences: GroupPreference[];
-	};
-	mapList: TournamentMapListMap[];
-};
-export async function createMatchMemento(
-	args: CreateMatchMementoArgs,
-): Promise<Omit<ParsedMemento, "mapPreferences">> {
-	const skills = await userSkills(Seasons.currentOrPrevious()!.nth);
-
-	const ownWithTier = args.own.group;
-	const theirWithTier = args.their.group;
+/** Tiers of the two groups in a starting match and of their members, taken as it is created. */
+export async function matchTiers(
+	groups: SQUncensoredGroup[],
+): Promise<MatchTiers> {
+	const { userSkills: skills } = await userSkills(
+		Seasons.currentOrPrevious()!.nth,
+	);
 
 	return {
-		modePreferences: modePreferencesMemento(args),
-		pools: poolsMemento(args),
-		users: Object.fromEntries(
-			[...args.own.group.members, ...args.their.group.members].map((member) => {
-				const skill = skills.userSkills[member.id];
+		groups: groups.map((group) => ({
+			id: group.id,
+			tier: group.tier!,
+			members: group.members.map((member) => {
+				const skill = skills[member.id];
 
-				return [
-					member.id,
-					{
-						skill:
-							!skill || skill.approximate ? ("CALCULATING" as const) : skill,
-					},
-				];
+				return {
+					userId: member.id,
+					tier:
+						!skill || skill.approximate ? ("CALCULATING" as const) : skill.tier,
+				};
 			}),
-		),
-		groups: Object.fromEntries(
-			[ownWithTier, theirWithTier].map((group) => [
-				group!.id,
-				{
-					tier: group!.tier!,
-				},
-			]),
-		),
+		})),
 	};
-}
-
-function modePreferencesMemento(args: CreateMatchMementoArgs) {
-	const result: NonNullable<ParsedMemento["modePreferences"]> = {};
-
-	const modesIncluded: ModeShort[] = [];
-
-	for (const { mode } of args.mapList) {
-		if (!modesIncluded.includes(mode)) modesIncluded.push(mode);
-	}
-
-	for (const mode of modesIncluded) {
-		for (const { preferences, userId } of [
-			...args.own.preferences,
-			...args.their.preferences,
-		]) {
-			const hasOnlyNeutral = preferences.modes.every((m) => !m.preference);
-			if (hasOnlyNeutral) continue;
-
-			const found = preferences.modes.find((pref) => pref.mode === mode);
-
-			if (!result[mode]) result[mode] = [];
-
-			result[mode].push({
-				userId,
-				preference: found?.preference,
-			});
-		}
-	}
-
-	return result;
-}
-
-function poolsMemento(args: CreateMatchMementoArgs): ParsedMemento["pools"] {
-	return [...args.own.preferences, ...args.their.preferences].flatMap((p) => {
-		const avoidedModes = p.preferences.modes
-			.filter((m) => m.preference === "AVOID")
-			.map((m) => m.mode);
-
-		const pool = p.preferences.pool.filter(
-			(pool) => !avoidedModes.includes(pool.mode),
-		);
-
-		if (pool.length === 0) return [];
-
-		return {
-			userId: p.userId,
-			pool,
-			...(p.teamName ? { teamName: p.teamName } : {}),
-		};
-	});
 }
