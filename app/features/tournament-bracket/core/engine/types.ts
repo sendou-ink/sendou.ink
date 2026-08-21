@@ -110,6 +110,8 @@ export interface RoundData {
 	groupId: number;
 	number: number;
 	maps?: TournamentRoundMaps | null;
+	/** Datetime the round is played by default (leagues). */
+	defaultPlayTime?: number | null;
 }
 
 export interface MatchResults {

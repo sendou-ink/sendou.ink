@@ -30,7 +30,7 @@ export function getLiveTournamentStreams(): SidebarStream[] {
 	const streams: SidebarStream[] = [];
 
 	for (const tournament of RunningTournaments.all) {
-		if (tournament.isLeagueDivision) continue;
+		if (tournament.isLeague) continue;
 		if (tournament.streams.length === 0) continue;
 
 		streams.push({
@@ -53,7 +53,7 @@ export function getLiveTournamentStreamerTwitchNames(): string[] {
 	const names: string[] = [];
 
 	for (const tournament of RunningTournaments.all) {
-		if (tournament.isLeagueDivision) continue;
+		if (tournament.isLeague) continue;
 
 		for (const stream of tournament.streams) {
 			names.push(stream.twitchUserName.toLowerCase());

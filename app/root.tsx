@@ -70,6 +70,7 @@ import {
 import { localePreloadUrls } from "./modules/i18n/locale-preload.server";
 import { useChangeLanguage } from "./modules/i18n/useChangeLanguage";
 import { isSupporter } from "./modules/permissions/utils";
+import { redirectsMiddleware } from "./modules/redirects/redirects-middleware.server";
 import { SearchParamsProvider } from "./modules/search-params/hooks";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { allI18nNamespaces } from "./utils/i18n";
@@ -78,6 +79,7 @@ import { requestContextMiddleware } from "./utils/request-context-middleware.ser
 import { APP_ICON_URL, pwaSplashScreenImageUrl } from "./utils/urls";
 
 export const middleware: Route.MiddlewareFunction[] = [
+	redirectsMiddleware,
 	requestContextMiddleware,
 	sessionIdMiddleware,
 	userMiddleware,

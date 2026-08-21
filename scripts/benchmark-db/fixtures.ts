@@ -39,7 +39,6 @@ export interface Fixtures {
 	tournamentTeamPair: [number, number] | null;
 	tournamentTeamInviteCode: string | null;
 	recentTournamentIds: number[] | null;
-	parentTournamentId: number | null;
 	heavyTeam: { id: number; customUrl: string; memberUserId: number } | null;
 	heavyCalendarEventId: number | null;
 	resultsEventId: number | null;
@@ -149,7 +148,6 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		tournamentTeamInviteCode:
 			await resolveTournamentTeamInviteCode(heavyTournamentId),
 		recentTournamentIds: await resolveRecentTournamentIds(),
-		parentTournamentId: await resolveParentTournamentId(),
 		heavyTeam: await resolveHeavyTeam(),
 		heavyCalendarEventId: await resolveHeavyCalendarEventId(),
 		resultsEventId: await resolveResultsEventId(),
@@ -533,22 +531,6 @@ async function resolveRecentTournamentIds() {
 		.execute();
 
 	return rows.length > 0 ? rows.map((row) => row.tournamentId) : null;
-}
-
-async function resolveParentTournamentId() {
-	const row = await db
-		.selectFrom("Tournament")
-		.select(({ fn }) => [
-			"parentTournamentId",
-			fn.countAll<number>().as("count"),
-		])
-		.where("parentTournamentId", "is not", null)
-		.groupBy("parentTournamentId")
-		.orderBy("count", "desc")
-		.limit(1)
-		.executeTakeFirst();
-
-	return row?.parentTournamentId ?? null;
 }
 
 async function resolveHeavyTeam() {

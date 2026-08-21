@@ -62,8 +62,6 @@ export const testTournament = ({
 		organization: null,
 		tier: null,
 		tentativeTier: null,
-		parentTournamentId: null,
-		parentTournamentName: null,
 		hasRules: false,
 		logoUrl: "/test.avif",
 		discordUrl: null,
@@ -273,6 +271,40 @@ export const progressions = {
 			sources: [
 				{
 					bracketIdx: 1,
+					placements: [1, 2],
+				},
+			],
+		},
+	],
+	league: [
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Division 1",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Division 1 Playoffs",
+			sources: [
+				{
+					bracketIdx: 0,
+					placements: [1, 2],
+				},
+			],
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "round_robin",
+			name: "Division 2",
+		},
+		{
+			...DEFAULT_PROGRESSION_ARGS,
+			type: "single_elimination",
+			name: "Division 2 Playoffs",
+			sources: [
+				{
+					bracketIdx: 2,
 					placements: [1, 2],
 				},
 			],

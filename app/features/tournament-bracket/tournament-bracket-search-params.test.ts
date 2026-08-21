@@ -10,6 +10,7 @@ describe("tournamentBracketsSearchParams", () => {
 		assertRoundTrips(tournamentBracketsSearchParams, {
 			idx: [0, 3],
 			group: [1, 173],
+			division: [0, 24],
 		});
 	});
 
@@ -20,5 +21,9 @@ describe("tournamentBracketsSearchParams", () => {
 			["1.5"],
 		]);
 		assertDecodesToDefault(tournamentBracketsSearchParams, "group", [["abc"]]);
+		assertDecodesToDefault(tournamentBracketsSearchParams, "division", [
+			["-1"],
+			["abc"],
+		]);
 	});
 });

@@ -306,8 +306,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 		castedMatchesInfo: null,
 		mapPickingStyle: "TO",
 		hasRules: true,
-		parentTournamentId: null,
-		parentTournamentName: null,
 		name: "Zones Weekly 38",
 		startsAt: 1734685200,
 		isFinalized: 0,

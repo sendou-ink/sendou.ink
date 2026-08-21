@@ -11,4 +11,12 @@ export const tournamentBracketsSearchParams = SearchParams.define({
 	group: SP.param(v.nullable(v.pipe(v.number(), v.integer())), {
 		loader: true,
 	}),
+	/** Starting bracket idx of the league division whose brackets are shown. Leagues only. */
+	division: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
+		{
+			loader: true,
+			resets: ["idx", "group"],
+		},
+	),
 });

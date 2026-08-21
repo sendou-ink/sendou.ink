@@ -1,4 +1,4 @@
-import { type Insertable, sql, type Transaction } from "kysely";
+import { type Insertable, type SqlBool, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { CustomTheme, UserMapModePreferences } from "~/db/tables-json";
@@ -264,6 +264,7 @@ export async function findResultsById(teamId: number) {
 					"TournamentResult.tournamentId",
 					"TournamentResult.placement",
 					"TournamentResult.participantCount",
+					"TournamentTeam.startingBracketIdx",
 				])
 				.where("teamId", "=", teamId)
 				.groupBy("TournamentResult.tournamentId"),
@@ -280,6 +281,17 @@ export async function findResultsById(teamId: number) {
 			"CalendarEvent.id",
 		)
 		.innerJoin("Tournament", "Tournament.id", "results.tournamentId")
+		.leftJoin("TournamentDivisionTier", (join) =>
+			join
+				.onRef(
+					"TournamentDivisionTier.tournamentId",
+					"=",
+					"results.tournamentId",
+				)
+				.on(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("results"."startingBracketIdx", 0)`,
+				),
+		)
 		.select((eb) => [
 			"results.placement",
 			"results.tournamentId",
@@ -287,7 +299,11 @@ export async function findResultsById(teamId: number) {
 			"results.tournamentTeamId",
 			"CalendarEvent.name as tournamentName",
 			"CalendarEventDate.startsAt",
-			"Tournament.tier",
+			sql<
+				Tables["Tournament"]["tier"]
+			>`coalesce("TournamentDivisionTier"."tier", "Tournament"."tier")`.as(
+				"tier",
+			),
 			tournamentLogoOrNull(eb).as("logoUrl"),
 			jsonArrayFrom(
 				eb

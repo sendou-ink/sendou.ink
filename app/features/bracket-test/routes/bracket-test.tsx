@@ -72,7 +72,7 @@ export default function BracketTestLayout() {
 		isOrganizer: () => false,
 		streamingParticipantIds: [] as number[],
 		streams: [] as unknown[],
-		isLeagueDivision: false,
+		isLeague: false,
 	};
 
 	const mockBracket = {
@@ -189,7 +189,6 @@ export default function BracketTestLayout() {
 						tournament: mockTournament,
 						bracketExpanded,
 						setBracketExpanded,
-						hasChildTournaments: false,
 						preparedMaps: null,
 						bracket: mockBracket,
 					}}

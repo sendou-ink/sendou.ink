@@ -3,10 +3,12 @@ import * as React from "react";
 import {
 	isRouteErrorResponse,
 	useLocation,
+	useNavigate,
 	useRevalidator,
 	useRouteError,
 } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import * as Redirect from "~/modules/redirects/core/Redirect";
 import { getSessionId } from "~/utils/session-id";
 import {
 	ERROR_GIRL_IMAGE_PATH,
@@ -121,12 +123,7 @@ export function Catcher() {
 				</ErrorMain>
 			);
 		case 404:
-			return (
-				<ErrorMain>
-					<h2>Error {error.status} - Page not found</h2>
-					<GetHelp />
-				</ErrorMain>
-			);
+			return <PageNotFound />;
 		default:
 			return (
 				<ErrorMain>
@@ -145,6 +142,31 @@ export function Catcher() {
 				</ErrorMain>
 			);
 	}
+}
+
+/**
+ * A client side navigation to an URL matching no route never reaches the server, so the
+ * redirects (normally resolved by `redirectsMiddleware`) are checked here as well.
+ */
+function PageNotFound() {
+	const location = useLocation();
+	const navigate = useNavigate();
+	const redirectTo = Redirect.resolve(location);
+
+	React.useEffect(() => {
+		if (redirectTo) {
+			navigate(redirectTo, { replace: true });
+		}
+	}, [redirectTo, navigate]);
+
+	if (redirectTo) return null;
+
+	return (
+		<ErrorMain>
+			<h2>Error 404 - Page not found</h2>
+			<GetHelp />
+		</ErrorMain>
+	);
 }
 
 /** Every branch of the error page, marked so tests can assert one is not shown. */

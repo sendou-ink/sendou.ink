@@ -1,10 +1,7 @@
 import { sub } from "date-fns";
 import type { Tables } from "~/db/tables";
 import type { TournamentStageSettings } from "~/db/tables-json";
-import {
-	LEAGUES,
-	TOURNAMENT,
-} from "~/features/tournament/tournament-constants";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	modesIncluded,
 	sortTeamsBySeeding,
@@ -236,6 +233,83 @@ export class Tournament {
 		return this.bracketsMeta.filter(
 			(bracket) => !this.ctx.isFinalized || !bracket.preview,
 		);
+	}
+
+	/**
+	 * Divisions of a league. Every starting bracket is a division of its own, identified by its
+	 * bracket idx, the brackets it feeds into (its playoffs) belonging to that division as well.
+	 */
+	get leagueDivisions(): BracketMeta[] {
+		if (!this.isLeague) return [];
+
+		return this.bracketsMeta.filter((bracket) => bracket.isStartingBracket);
+	}
+
+	/** Division the given bracket belongs to, or null if the tournament has no divisions. */
+	leagueDivisionOfBracket(bracketIdx: number): number | null {
+		const division = this.leagueDivisions.find((division) =>
+			this.bracketIdxsOfDivision(division.idx).includes(bracketIdx),
+		);
+
+		return division?.idx ?? null;
+	}
+
+	/** {@link bracketsMeta} limited to the brackets of one division, if a division is given. */
+	bracketsMetaOfDivision(divisionIdx: number | null): BracketMeta[] {
+		if (divisionIdx === null) return this.bracketsMeta;
+
+		const bracketIdxs = this.bracketIdxsOfDivision(divisionIdx);
+
+		return this.bracketsMeta.filter((bracket) =>
+			bracketIdxs.includes(bracket.idx),
+		);
+	}
+
+	/** {@link visibleBracketsMeta} limited to the brackets of one division, if a division is given. */
+	visibleBracketsMetaOfDivision(divisionIdx: number | null): BracketMeta[] {
+		const visibleIdxs = new Set(
+			this.visibleBracketsMeta.map((bracket) => bracket.idx),
+		);
+
+		return this.bracketsMetaOfDivision(divisionIdx).filter((bracket) =>
+			visibleIdxs.has(bracket.idx),
+		);
+	}
+
+	private bracketIdxsOfDivision(divisionIdx: number) {
+		return Progression.bracketsReachableFrom(
+			divisionIdx,
+			this.ctx.settings.bracketProgression,
+		);
+	}
+
+	/** Teams that can play in the bracket: its participants plus the ones still pending check-in. */
+	eligibleTeamsCountOfBracket(bracketIdx: number) {
+		const bracket = this.bracketsMeta[bracketIdx];
+
+		if (bracket.sources) {
+			return (
+				(bracket.teamsPendingCheckIn ?? []).length +
+				bracket.participantTournamentTeamIds.length
+			);
+		}
+
+		if (!this.isMultiStartingBracket) {
+			return this.ctx.teams.length;
+		}
+
+		return this.ctx.teams.filter(
+			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+		).length;
+	}
+
+	/** Teams of the bracket: its participants, or every eligible team while it is a preview. */
+	teamsCountOfBracket(bracketIdx: number) {
+		const bracket = this.bracketsMeta[bracketIdx];
+
+		return bracket.preview
+			? this.eligibleTeamsCountOfBracket(bracketIdx)
+			: bracket.participantTournamentTeamIds.length;
 	}
 
 	/** {@link bracketsMeta} in the shape it is shipped in, i.e. only what match data is needed for. */
@@ -910,18 +984,11 @@ export class Tournament {
 	}
 
 	/**
-	 * Is this tournament a league sign-up? League sign-up tournament is a special case which just exists for registration.
-	 * It won't have brackets.
+	 * Is this tournament a league? A league is played over many weeks, each starting bracket
+	 * being a division that teams are placed in by the organizer.
 	 * */
-	get isLeagueSignup() {
-		return Object.values(LEAGUES)
-			.flat()
-			.some((entry) => entry.tournamentId === this.ctx.id);
-	}
-
-	/** Is this tournament a league division? League division is a normal tournament that connects to a league sign-up tournament where teams are sourced from. */
-	get isLeagueDivision() {
-		return Boolean(this.ctx.parentTournamentId);
+	get isLeague() {
+		return this.ctx.settings.isLeague === true;
 	}
 
 	/** Does this tournament have many brackets that act as the first bracket? In this format many bracket progressions advance independently from each other (so not all teams can meet). */

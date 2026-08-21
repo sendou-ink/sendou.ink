@@ -1,6 +1,7 @@
 import {
 	type ExpressionBuilder,
 	type NotNull,
+	type SqlBool,
 	sql,
 	type Transaction,
 } from "kysely";
@@ -373,10 +374,30 @@ export async function findSeasonTournamentRunsByUserId({
 		)
 		.innerJoin("Tournament", "Tournament.id", "Skill.tournamentId")
 		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentResult.tournamentTeamId",
+		)
+		.leftJoin("TournamentDivisionTier", (join) =>
+			join
+				.onRef(
+					"TournamentDivisionTier.tournamentId",
+					"=",
+					"TournamentResult.tournamentId",
+				)
+				.on(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				),
+		)
 		.select((eb) => [
 			"TournamentResult.placement",
 			"TournamentResult.participantCount as teamsCount",
-			"Tournament.tier",
+			sql<
+				Tables["Tournament"]["tier"]
+			>`coalesce("TournamentDivisionTier"."tier", "Tournament"."tier")`.as(
+				"tier",
+			),
 			"CalendarEvent.name",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			eb
@@ -387,12 +408,20 @@ export async function findSeasonTournamentRunsByUserId({
 							"in",
 							eb
 								.selectFrom("TournamentResult as TopEightResult")
+								.innerJoin(
+									"TournamentTeam as TopEightTeam",
+									"TopEightTeam.id",
+									"TopEightResult.tournamentTeamId",
+								)
 								.select("TopEightResult.userId")
 								.whereRef("TopEightResult.tournamentId", "=", "Tournament.id")
 								.where(
 									"TopEightResult.placement",
 									"<=",
 									TOURNAMENT_FIELD_STRENGTH_PLACEMENT,
+								)
+								.where(
+									sql<SqlBool>`coalesce("TopEightTeam"."startingBracketIdx", 0) = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
 								),
 						)
 						.as("TopEightLatestSkill"),

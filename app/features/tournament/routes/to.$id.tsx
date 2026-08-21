@@ -111,11 +111,7 @@ export function TournamentLayout() {
 	}
 	const content = (
 		<>
-			<TournamentNav
-				tournament={tournament}
-				streamsCount={data.streamsCount}
-				hasChildTournaments={data.hasChildTournaments}
-			/>
+			<TournamentNav tournament={tournament} streamsCount={data.streamsCount} />
 			<TournamentProvider tournament={tournament}>
 				<Outlet
 					context={
@@ -123,7 +119,6 @@ export function TournamentLayout() {
 							tournament,
 							bracketExpanded,
 							setBracketExpanded,
-							hasChildTournaments: data.hasChildTournaments,
 							friendCodes: data.friendCodes,
 							preparedMaps: data.preparedMaps,
 							vods: data.vods ?? [],
@@ -147,7 +142,6 @@ type TournamentContext = {
 	tournament: Tournament;
 	bracketExpanded: boolean;
 	setBracketExpanded: (expanded: boolean) => void;
-	hasChildTournaments: boolean;
 	friendCode?: string;
 	friendCodes?: TournamentLoaderData["friendCodes"];
 	preparedMaps: TournamentLoaderData["preparedMaps"];
@@ -159,10 +153,6 @@ export function useBracketExpanded() {
 		useOutletContext<TournamentContext>();
 
 	return { bracketExpanded, setBracketExpanded };
-}
-
-export function useHasChildTournaments() {
-	return useOutletContext<TournamentContext>().hasChildTournaments;
 }
 
 export function useTournamentFriendCodes() {

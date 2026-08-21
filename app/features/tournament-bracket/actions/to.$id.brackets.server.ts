@@ -98,7 +98,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				type: bracket.type,
 				seeding,
 				settings: bracket.settings,
-				independentRounds: tournament.isLeagueDivision,
+				independentRounds: tournament.isLeague,
 				abDivisions,
 				maps,
 			});
@@ -141,7 +141,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 				});
 			}
 
-			if (data.bracketIdx === 0 && seeding.length >= MIN_TEAMS_FOR_TIERING) {
+			const isDivision = Progression.startingBrackets(
+				tournament.ctx.settings.bracketProgression,
+			).includes(data.bracketIdx);
+			if (isDivision && seeding.length >= MIN_TEAMS_FOR_TIERING) {
 				const checkedInTeams = tournament.ctx.teams
 					.filter((team) => seeding.includes(team.id))
 					.map((team) => ({ avgOrdinal: team.avgSeedingSkillOrdinal }));
@@ -152,8 +155,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 				);
 
 				if (tierNumber !== null) {
-					await TournamentRepository.updateTournamentTier({
+					await TournamentRepository.upsertDivisionTier({
 						tournamentId: tournament.ctx.id,
+						bracketIdx: data.bracketIdx,
 						tier: tierNumber,
 					});
 				}

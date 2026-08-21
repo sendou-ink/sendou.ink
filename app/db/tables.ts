@@ -587,8 +587,6 @@ export interface Tournament {
 	castTwitchAccounts: JSONColumnTypeNullable<string[]>;
 	castedMatchesInfo: JSONColumnTypeNullable<CastedMatchesInfo>;
 	rules: string | null;
-	/** Related "parent tournament", the tournament that contains the original sign-ups (for leagues) */
-	parentTournamentId: number | null;
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
@@ -605,6 +603,19 @@ export interface SavedCalendarEvent {
 	userId: number;
 	calendarEventId: number;
 	createdAt: Generated<number>;
+}
+
+/**
+ * Tier of one division (= starting bracket) of a tournament, based on the skill of the teams that
+ * checked in to it. Tournaments where every team plays the same bracket have one row (bracket idx 0)
+ * matching `Tournament.tier`, tournaments with many starting brackets one row per division.
+ */
+export interface TournamentDivisionTier {
+	tournamentId: number;
+	/** Idx of the starting bracket in `Tournament.settings.bracketProgression`. */
+	bracketIdx: number;
+	/** Same scale as `Tournament.tier`. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
+	tier: TournamentTierNumber;
 }
 
 export interface TournamentBadgeOwner {
@@ -709,6 +720,8 @@ export interface TournamentRound {
 	number: number;
 	stageId: number;
 	maps: JSONColumnType<TournamentRoundMaps>;
+	/** Datetime the round is played by default (leagues). Null = no default play time, the round is played whenever. */
+	defaultPlayTime: number | null;
 }
 
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
@@ -1361,6 +1374,7 @@ export interface DB {
 	/** VIEW over `AllTeamMember`, same as `TeamMember` but also includes rows where this is the member's secondary (i.e. non-main) team. Insert/update via `AllTeamMember`. */
 	TeamMemberWithSecondary: TeamMember;
 	Tournament: Tournament;
+	TournamentDivisionTier: TournamentDivisionTier;
 	TournamentStaff: TournamentStaff;
 	TournamentGroup: TournamentGroup;
 	TournamentLFGLike: TournamentLFGLike;

@@ -1,10 +1,12 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
+import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentSummary } from "../tournament-bracket/core/summarizer.server";
 import * as TournamentRepository from "./TournamentRepository.server";
+import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
 /** SQLite binds at most 32,766 parameters per statement and `PlayerResult` has
  * eight columns, so one multi-row insert fits this many rows at most. */
@@ -244,6 +246,7 @@ describe("TournamentRepository.finalize", () => {
 
 		expect(second.matchesCount).toBe(8);
 	});
+
 	test("finalizes a tournament with more player result deltas than fit in one insert statement", async () => {
 		const { id: tournamentId } = await createTournament();
 		const playerResultDeltas = playerResultDeltasForEveryPair(users.ids());
@@ -265,5 +268,81 @@ describe("TournamentRepository.finalize", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(inserted.count).toBe(playerResultDeltas.length);
+	});
+
+	describe("trophy of a tournament with many divisions", () => {
+		const TOP_DIVISION_TIER = 2;
+		const LOW_DIVISION_TIER = 7;
+
+		const finalizeWithTrophyWonBy = async ({
+			startingBracketIdx,
+			divisionTiers = true,
+		}: {
+			startingBracketIdx: number;
+			divisionTiers?: boolean;
+		}) => {
+			const { id: tournamentId } = await TournamentFactory.create(
+				{ authorId: users.id(1) },
+				{ tier: TOP_DIVISION_TIER },
+			);
+			const trophy = await TrophyFactory.create();
+			const { id: tournamentTeamId } = await TournamentTeamFactory.create({
+				tournamentId,
+				memberUserIds: [users.id(1)],
+			});
+
+			await TournamentTeamRepository.updateStartingBrackets([
+				{ tournamentTeamId, startingBracketIdx },
+			]);
+			if (divisionTiers) {
+				await TournamentRepository.upsertDivisionTier({
+					tournamentId,
+					bracketIdx: 1,
+					tier: LOW_DIVISION_TIER,
+				});
+			}
+
+			await TournamentRepository.finalize({
+				tournamentId,
+				season: undefined,
+				summary: {
+					...emptySummary([]),
+					tournamentResults: [
+						{
+							userId: users.id(1),
+							placement: 1,
+							participantCount: 1,
+							tournamentTeamId,
+							div: null,
+						},
+					],
+					setResults: new Map([[users.id(1), ["W"]]]),
+				},
+				trophyReceiver: { trophyId: trophy.id, userIds: [users.id(1)] },
+			});
+
+			const owner = await db
+				.selectFrom("TrophyOwner")
+				.select("tier")
+				.where("tournamentId", "=", tournamentId)
+				.executeTakeFirstOrThrow();
+
+			return owner.tier;
+		};
+
+		test("records the tier of the division it was won in", async () => {
+			expect(await finalizeWithTrophyWonBy({ startingBracketIdx: 1 })).toBe(
+				LOW_DIVISION_TIER,
+			);
+		});
+
+		test("records the tournament's tier when the division has none", async () => {
+			expect(
+				await finalizeWithTrophyWonBy({
+					startingBracketIdx: 1,
+					divisionTiers: false,
+				}),
+			).toBe(TOP_DIVISION_TIER);
+		});
 	});
 });

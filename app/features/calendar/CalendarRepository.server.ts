@@ -439,7 +439,6 @@ type CreateArgs = Pick<
 	avatarFileName?: string;
 	avatarImgId?: number;
 	autoValidateAvatar?: boolean;
-	parentTournamentId?: number;
 };
 export async function insert(args: CreateArgs) {
 	const copiedStaff = args.tournamentToCopyId
@@ -486,7 +485,6 @@ export async function insert(args: CreateArgs) {
 					.values({
 						mapPickingStyle: args.mapPickingStyle,
 						settings: JSON.stringify(settings),
-						parentTournamentId: args.parentTournamentId,
 						rules: args.rules,
 					})
 					.returning("id")
@@ -524,7 +522,7 @@ export async function insert(args: CreateArgs) {
 				bracketUrl: args.bracketUrl,
 				avatarImgId: args.avatarImgId ?? avatarImgId,
 				organizationId: args.organizationId,
-				hidden: args.parentTournamentId || args.isTest || args.isDraft ? 1 : 0,
+				hidden: args.isTest || args.isDraft ? 1 : 0,
 				tournamentId,
 				trophyId: args.trophyId ?? null,
 			})
@@ -603,14 +601,13 @@ export async function update(args: UpdateArgs) {
 			: null;
 
 		if (tournamentId) {
-			const { parentTournamentId, settings: existingSettings } = await trx
+			const { settings: existingSettings } = await trx
 				.selectFrom("Tournament")
-				.select(["parentTournamentId", "settings"])
+				.select(["settings"])
 				.where("id", "=", tournamentId)
 				.executeTakeFirstOrThrow();
 
-			const hidden =
-				existingSettings.isTest || parentTournamentId || args.isDraft ? 1 : 0;
+			const hidden = existingSettings.isTest || args.isDraft ? 1 : 0;
 			await trx
 				.updateTable("CalendarEvent")
 				.set({ hidden })

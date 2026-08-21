@@ -56,7 +56,7 @@ import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
 import * as Progression from "../core/Progression";
-import type { BracketMeta, Tournament } from "../core/Tournament";
+import type { Tournament } from "../core/Tournament";
 import {
 	loader,
 	type TournamentBracketsLoaderData,
@@ -141,8 +141,7 @@ function TournamentBracketsView() {
 	} = useBracketSpoilerCensor();
 
 	const showTeamActionsRow =
-		(!tournament.isLeagueDivision && Boolean(teamProgressStatus)) ||
-		showAddSubsButton;
+		(!tournament.isLeague && Boolean(teamProgressStatus)) || showAddSubsButton;
 	const showSecondaryActionsRow =
 		tournament.canFinalize(user) || censored || canToggle;
 
@@ -218,17 +217,13 @@ function TournamentBracketsView() {
 		});
 	};
 
-	if (tournament.isLeagueSignup) {
-		return null;
-	}
-
 	return (
 		<div>
 			<Outlet context={ctx} />
 			{showTeamActionsRow ? (
 				<div className="stack horizontal mb-4 sm justify-between items-center">
 					{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
-					{!tournament.isLeagueDivision ? (
+					{!tournament.isLeague ? (
 						<TournamentTeamActions status={teamProgressStatus} />
 					) : null}
 					{showAddSubsButton ? <AddSubsPopOver /> : null}
@@ -257,7 +252,10 @@ function TournamentBracketsView() {
 					) : null}
 				</div>
 			) : null}
-			<BracketTabs loadedBracketIdx={data.bracketIdx}>
+			<BracketTabs
+				loadedBracketIdx={data.bracketIdx}
+				divisionIdx={data.divisionIdx}
+			>
 				{bracket ? (
 					<BracketTabContent
 						bracket={bracket}
@@ -295,32 +293,6 @@ function useScrollToMatchOnLoad() {
 			.querySelector(`[data-match-id="${scrollToMatchId}"]`)
 			?.scrollIntoView({ block: "center", inline: "center" });
 	}, [scrollToMatchId]);
-}
-
-function eligibleTeamCountForBracket(
-	tournament: Tournament,
-	bracket: BracketMeta,
-) {
-	if (bracket.sources) {
-		return (
-			(bracket.teamsPendingCheckIn ?? []).length +
-			bracket.participantTournamentTeamIds.length
-		);
-	}
-
-	if (!tournament.isMultiStartingBracket) {
-		return tournament.ctx.teams.length;
-	}
-
-	return tournament.ctx.teams.filter(
-		(team) => (team.startingBracketIdx ?? 0) === bracket.idx,
-	).length;
-}
-
-function bracketTabTeamCount(tournament: Tournament, bracket: BracketMeta) {
-	return bracket.preview
-		? eligibleTeamCountForBracket(tournament, bracket)
-		: bracket.participantTournamentTeamIds.length;
 }
 
 function getAbDivisionsStartError(
@@ -538,19 +510,22 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 /**
  * Bracket switcher. Only the bracket the loader shipped the match data of is rendered;
  * switching navigates so that the newly selected bracket's data gets loaded, the
- * previously loaded bracket staying up until it arrives.
+ * previously loaded bracket staying up until it arrives. Of a league only the brackets
+ * of the division the loader resolved can be switched between.
  */
 function BracketTabs({
 	loadedBracketIdx,
+	divisionIdx,
 	children,
 }: {
 	loadedBracketIdx: number;
+	divisionIdx: number | null;
 	children: React.ReactNode;
 }) {
 	const tournament = useTournament();
 	const [, setIdxParam] = useSearchParam(tournamentBracketsSearchParams, "idx");
 
-	const visibleBrackets = tournament.visibleBracketsMeta;
+	const visibleBrackets = tournament.visibleBracketsMetaOfDivision(divisionIdx);
 
 	const bracketNameForTab = (name: string) => name.replace("bracket", "");
 
@@ -564,7 +539,7 @@ function BracketTabs({
 					<SendouTab
 						key={bracket.name}
 						id={String(bracket.idx)}
-						number={bracketTabTeamCount(tournament, bracket)}
+						number={tournament.teamsCountOfBracket(bracket.idx)}
 					>
 						{bracketNameForTab(bracket.name)}
 					</SendouTab>
@@ -726,10 +701,8 @@ function StartBracketAlert({
 	}
 
 	const abDivisionsStartError = getAbDivisionsStartError(bracket, tournament);
-	const totalTeamsAvailableForTheBracket = eligibleTeamCountForBracket(
-		tournament,
-		tournament.bracketsMeta[bracketIdx],
-	);
+	const totalTeamsAvailableForTheBracket =
+		tournament.eligibleTeamsCountOfBracket(bracketIdx);
 
 	return (
 		<div className="stack items-center mb-4">

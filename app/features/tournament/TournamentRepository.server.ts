@@ -1,5 +1,11 @@
 import { sub } from "date-fns";
-import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
+import {
+	type Insertable,
+	type NotNull,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
 import { ordinal } from "openskill";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -58,16 +64,6 @@ export async function findById(id: number) {
 			"Tournament.castedMatchesInfo",
 			"Tournament.mapPickingStyle",
 			sql<boolean>`"Tournament"."rules" is not null`.as("hasRules"),
-			"Tournament.parentTournamentId",
-			eb
-				.selectFrom("CalendarEvent as ParentCalendarEvent")
-				.select("ParentCalendarEvent.name")
-				.whereRef(
-					"ParentCalendarEvent.tournamentId",
-					"=",
-					"Tournament.parentTournamentId",
-				)
-				.as("parentTournamentName"),
 			"Tournament.tier",
 			"CalendarEvent.name",
 			"CalendarEventDate.startsAt",
@@ -703,67 +699,6 @@ export async function findSeedingSnapshotById(tournamentId: number) {
 	return row?.seedingSnapshot ?? null;
 }
 
-export async function hasChildTournaments(parentTournamentId: number) {
-	const row = await db
-		.selectFrom("Tournament")
-		.select("Tournament.id")
-		.where("Tournament.parentTournamentId", "=", parentTournamentId)
-		.limit(1)
-		.executeTakeFirst();
-
-	return Boolean(row);
-}
-
-export async function findChildTournaments(parentTournamentId: number) {
-	const rows = await db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.select((eb) => [
-			"Tournament.id as tournamentId",
-			"CalendarEvent.name",
-			eb
-				.selectFrom("TournamentTeam")
-				.select(({ fn }) => [fn.countAll<number>().as("teamsCount")])
-				.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-				.where("TournamentTeam.isPlaceholder", "=", 0)
-				.as("teamsCount"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeam")
-					.innerJoin(
-						"TournamentTeamMember",
-						"TournamentTeamMember.tournamentTeamId",
-						"TournamentTeam.id",
-					)
-					.select(["TournamentTeamMember.userId"])
-					.whereRef("TournamentTeam.tournamentId", "=", "Tournament.id")
-					.where("TournamentTeam.isPlaceholder", "=", 0),
-			).as("teamMembers"),
-		])
-		.where("Tournament.parentTournamentId", "=", parentTournamentId)
-		.$narrowType<{ teamsCount: NotNull }>()
-		.execute();
-
-	return rows.map((row) => ({
-		...row,
-		participantUserIds: new Set(row.teamMembers.map((member) => member.userId)),
-	}));
-}
-
-/** Child division tournaments of a league sign-up, with their name and finalized status. */
-export function findChildTournamentsForDivCalc(parentTournamentId: number) {
-	return db
-		.selectFrom("Tournament")
-		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
-		.select([
-			"Tournament.id as tournamentId",
-			"CalendarEvent.name",
-			"Tournament.isFinalized",
-		])
-		.where("Tournament.parentTournamentId", "=", parentTournamentId)
-		.execute();
-}
-
 /**
  * Per-user results of a finalized tournament as persisted at finalization time.
  * Empty for tournaments that have not been finalized.
@@ -783,22 +718,58 @@ export function findResultsByTournamentId(tournamentId: number) {
 }
 
 /**
- * User ids eligible for a LUTI division placement in the given tournament: they have a result, were
- * on a team that did not drop out, and played at least one match.
+ * Participants of the latest finalized league of the given organization, along with the bracket
+ * progression that tells what division (= starting bracket) each of them played in.
+ *
+ * Only participants eligible for a division placement are included: they have a result, were on a
+ * team that did not drop out, and played at least one match. Null if the organization has no
+ * finalized league.
  */
-export function findLeagueDivParticipantUserIds(tournamentId: number) {
-	return db
+export async function findLatestFinalizedLeagueParticipants(args: {
+	organizationId: number;
+	namePrefix: string;
+}) {
+	const league = await db
+		.selectFrom("Tournament")
+		.innerJoin("CalendarEvent", "Tournament.id", "CalendarEvent.tournamentId")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEvent.id",
+			"CalendarEventDate.eventId",
+		)
+		.select(["Tournament.id", "Tournament.settings"])
+		.where("CalendarEvent.organizationId", "=", args.organizationId)
+		.where("CalendarEvent.name", "like", `${args.namePrefix}%`)
+		.where("Tournament.isFinalized", "=", 1)
+		.where(
+			sql<number>`json_extract("Tournament"."settings", '$.isLeague')`,
+			"=",
+			1,
+		)
+		.orderBy("CalendarEventDate.startsAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	if (!league) return null;
+
+	const participants = await db
 		.selectFrom("TournamentResult")
 		.innerJoin(
 			"TournamentTeam",
 			"TournamentTeam.id",
 			"TournamentResult.tournamentTeamId",
 		)
-		.select("TournamentResult.userId")
+		.select(["TournamentResult.userId", "TournamentTeam.startingBracketIdx"])
 		.distinct()
-		.where("TournamentResult.tournamentId", "=", tournamentId)
+		.where("TournamentResult.tournamentId", "=", league.id)
 		.where("TournamentTeam.droppedOut", "=", 0)
 		.execute();
+
+	return {
+		tournamentId: league.id,
+		bracketProgression: league.settings.bracketProgression,
+		participants,
+	};
 }
 
 export async function findTOSetMapPoolById(tournamentId: number) {
@@ -1591,11 +1562,12 @@ export function finalize({
 		await trx.insertInto("TournamentBadgeOwner").values(badgeOwners).execute();
 
 		if (trophyReceiver && trophyReceiver.userIds.length > 0) {
-			const tournamentRow = await trx
-				.selectFrom("Tournament")
-				.select("tier")
-				.where("id", "=", tournamentId)
-				.executeTakeFirst();
+			const tier = await trophyTier(trx, {
+				tournamentId,
+				tournamentTeamId: summary.tournamentResults.find((result) =>
+					trophyReceiver.userIds.includes(result.userId),
+				)?.tournamentTeamId,
+			});
 
 			await trx
 				.insertInto("TrophyOwner")
@@ -1604,7 +1576,7 @@ export function finalize({
 						tournamentId,
 						trophyId: trophyReceiver.trophyId,
 						userId,
-						tier: tournamentRow?.tier ?? null,
+						tier,
 					})),
 				)
 				.onConflict((oc) =>
@@ -1781,18 +1753,43 @@ export function updateTeamSeeds({
 	});
 }
 
-export function updateTournamentTier({
+/**
+ * Records the tier of one division (= starting bracket), calculated from the teams that checked in
+ * to it, and updates the tournament's own tier to the best tier of its divisions. Tournaments where
+ * every team plays the same bracket have one division, making the two the same.
+ */
+export async function upsertDivisionTier({
 	tournamentId,
+	bracketIdx,
 	tier,
 }: {
 	tournamentId: number;
+	bracketIdx: number;
 	tier: TournamentTierNumber;
 }) {
-	return db
-		.updateTable("Tournament")
-		.set({ tier })
-		.where("id", "=", tournamentId)
-		.execute();
+	await db.transaction().execute(async (trx) => {
+		await trx
+			.insertInto("TournamentDivisionTier")
+			.values({ tournamentId, bracketIdx, tier })
+			.onConflict((oc) =>
+				oc.columns(["tournamentId", "bracketIdx"]).doUpdateSet({ tier }),
+			)
+			.execute();
+
+		const best = await trx
+			.selectFrom("TournamentDivisionTier")
+			.select(({ fn }) =>
+				fn.min<TournamentTierNumber>("TournamentDivisionTier.tier").as("tier"),
+			)
+			.where("TournamentDivisionTier.tournamentId", "=", tournamentId)
+			.executeTakeFirstOrThrow();
+
+		await trx
+			.updateTable("Tournament")
+			.set({ tier: best.tier })
+			.where("id", "=", tournamentId)
+			.execute();
+	});
 }
 
 export async function findRunningTournamentIds() {
@@ -1827,4 +1824,42 @@ export async function findRunningTournamentIds() {
 		.execute();
 
 	return rows.map((row) => row.id);
+}
+
+/**
+ * Tier the trophy was won at: the tier of the division the winning team played in, falling back to
+ * the tournament's own tier when the team is not known or its division was never tiered.
+ */
+async function trophyTier(
+	trx: Transaction<DB>,
+	{
+		tournamentId,
+		tournamentTeamId,
+	}: { tournamentId: number; tournamentTeamId?: number },
+) {
+	const divisionTier = tournamentTeamId
+		? await trx
+				.selectFrom("TournamentDivisionTier")
+				.innerJoin(
+					"TournamentTeam",
+					"TournamentTeam.tournamentId",
+					"TournamentDivisionTier.tournamentId",
+				)
+				.select("TournamentDivisionTier.tier")
+				.where("TournamentTeam.id", "=", tournamentTeamId)
+				.where(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				)
+				.executeTakeFirst()
+		: undefined;
+
+	if (divisionTier) return divisionTier.tier;
+
+	const tournament = await trx
+		.selectFrom("Tournament")
+		.select("tier")
+		.where("id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return tournament?.tier ?? null;
 }
