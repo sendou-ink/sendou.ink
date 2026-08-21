@@ -14,7 +14,7 @@ import {
 	tournamentUsername,
 } from "~/utils/kysely.server";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetTournamentTeamsResponse } from "../schema";
 
 const paramsSchema = v.object({

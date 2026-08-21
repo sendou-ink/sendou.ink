@@ -7,7 +7,7 @@ import {
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { numericEnum } from "~/utils/zod";
+import { numericEnum } from "~/utils/schema";
 import { LFG, LFG_TYPES } from "./lfg-constants";
 
 const LANGUAGE_CODES = languagesUnified.map((language) => language.code) as [

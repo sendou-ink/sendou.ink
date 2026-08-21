@@ -1,7 +1,7 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { tournamentSubsPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { id: tournamentId } = parseParams({

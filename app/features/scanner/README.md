@@ -64,7 +64,7 @@ sequenceDiagram
 - `core/` is pure (mats in, events/matches out) and runs in the worker, the
   Screenshot tab, and Node tests. No DOM/browser APIs; Node-only helpers live
   in `node/`. Pure data/type imports from `~/modules` and
-  `~/features/build-analyzer/data` are fine — zod and the app config graph
+  `~/features/build-analyzer/data` are fine — valibot and the app config graph
   are not (schemas live in `scanner-schemas.ts`; core only `import type`s
   the shapes).
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart

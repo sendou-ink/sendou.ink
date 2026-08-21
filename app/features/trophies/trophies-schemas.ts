@@ -5,7 +5,7 @@ import {
 	textAreaOptional,
 	textField,
 } from "~/form/fields";
-import { _action, id, superRefine } from "~/utils/zod";
+import { _action, id, superRefine } from "~/utils/schema";
 import { analyzeTrophyModel } from "./core/model-analysis";
 import {
 	TROPHY_DECLINE_REASON_MAX_LENGTH,

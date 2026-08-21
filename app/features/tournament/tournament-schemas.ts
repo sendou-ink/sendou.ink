@@ -6,7 +6,7 @@ import {
 	preprocess,
 	safeJSONParse,
 	stageId,
-} from "~/utils/zod";
+} from "~/utils/schema";
 
 export const checkInSchema = v.object({
 	_action: _action("CHECK_IN"),

@@ -10,9 +10,9 @@ import {
 	notFoundIfNullish,
 	successToast,
 } from "~/utils/remix.server";
+import { normalizeFriendCode } from "~/utils/schema";
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
-import { normalizeFriendCode } from "~/utils/zod";
 import { adminActionSchema } from "../admin-schemas";
 import {
 	sendUserBannedWebhook,

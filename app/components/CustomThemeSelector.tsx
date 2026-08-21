@@ -14,7 +14,7 @@ import {
 	clampThemeToGamut,
 	type ThemeInput,
 } from "~/utils/oklch-gamut";
-import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/zod";
+import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/schema";
 import styles from "./CustomThemeSelector.module.css";
 import { Divider } from "./Divider";
 import { LinkButton, SendouButton } from "./elements/Button";

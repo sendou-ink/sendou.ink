@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import * as v from "valibot";
-import { safeJSONParse } from "~/utils/zod";
+import { safeJSONParse } from "~/utils/schema";
 import * as CalendarRepository from "../CalendarRepository.server";
 import { calendarFiltersSearchParamsSchema } from "../calendar-schemas";
 import { calendarSearchParams } from "../calendar-search-params";

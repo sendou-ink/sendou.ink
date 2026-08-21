@@ -5,7 +5,7 @@ import {
 	type FieldsOf,
 	serializeFieldValue,
 } from "~/utils/action-schemas";
-import type { AnySchema } from "~/utils/zod";
+import type { AnySchema } from "~/utils/schema";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { SubmitButton } from "./SubmitButton";
@@ -43,7 +43,7 @@ type ActionButtonProps<
 
 /**
  * Button that submits a mutation to a route action as `_action` + hidden fields,
- * type checked against the route's zod action schema.
+ * type checked against the route's action schema.
  *
  * @example
  * <ActionButton

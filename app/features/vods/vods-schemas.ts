@@ -23,7 +23,7 @@ import {
 	preprocess,
 	stageId,
 	weaponSplId,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { dayMonthYearToDate } from "../../utils/dates";
 import { videoMatchTypes } from "./vods-constants";
 import { extractYoutubeIdFromVideoUrl } from "./vods-utils";

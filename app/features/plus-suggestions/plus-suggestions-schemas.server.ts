@@ -5,7 +5,7 @@ import {
 	rangeToMonthYear,
 } from "~/features/plus-voting/core";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { superRefineAsync } from "~/utils/zod";
+import { superRefineAsync } from "~/utils/schema";
 import { newSuggestionFormSchema } from "./plus-suggestions-schemas";
 
 export const newSuggestionFormSchemaServer = v.pipeAsync(

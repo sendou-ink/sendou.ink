@@ -3,7 +3,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
-import { numericEnum } from "~/utils/zod";
+import { numericEnum } from "~/utils/schema";
 import { GLOBAL_SEARCH_TYPES } from "./global-search-search-params";
 
 const MAX_RECENT_WEAPONS = 5;

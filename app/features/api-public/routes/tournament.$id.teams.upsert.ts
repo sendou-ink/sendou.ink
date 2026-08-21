@@ -6,7 +6,7 @@ import { upsertRegistrationAction } from "~/features/tournament-admin/actions/to
 import { ADMIN_REGISTRATION_MAX_MEMBERS } from "~/features/tournament-admin/tournament-admin-registration-schemas";
 import { existingImage } from "~/form/image-field";
 import { parseBody, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
 const paramsSchema = v.object({

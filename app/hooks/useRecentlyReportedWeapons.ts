@@ -3,7 +3,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
-import { numericEnum } from "~/utils/zod";
+import { numericEnum } from "~/utils/schema";
 
 const MAX_REPORTED_WEAPONS = 7;
 

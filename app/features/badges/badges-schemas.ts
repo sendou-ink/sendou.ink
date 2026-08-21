@@ -5,7 +5,7 @@ import {
 	noDuplicates,
 	preprocess,
 	safeJSONParse,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { BADGE } from "./badges-constants";
 
 export const editBadgeActionSchema = v.union([

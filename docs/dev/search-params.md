@@ -38,7 +38,7 @@ Options accepted by every declaration:
 
 ### `SP.param` and the derivation table
 
-`SP.param(valueSchema, opts)` is the canonical declaration. The value schema is plain valibot — all validation lives there, and shared schemas from `app/utils/zod.ts` plug in directly. The URL encoding is derived from the schema's type:
+`SP.param(valueSchema, opts)` is the canonical declaration. The value schema is plain valibot — all validation lives there, and shared schemas from `app/utils/schema.ts` plug in directly. The URL encoding is derived from the schema's type:
 
 | Schema base type | URL encoding |
 | --- | --- |
@@ -57,7 +57,7 @@ Derivation is closed, not best-effort: shapes outside this table (objects, mixed
 | `SP.custom(codec, opts)` | anything — pass a `codec(valueSchema, { decode, encode })` (from the search-params module; `decode` returns `undefined` for malformed input, `nullableCodec` widens with `null`) |
 | `SP.page(opts?)` | the paginated route's `page` param (1-based, `loader: true`, default `1`, `max` overridable) |
 
-Note: schemas built with `preprocess` (like `weaponSplId`, `stageId` in `app/utils/zod.ts`) contain transforms and are rejected — use the inner schema (`numericEnum(mainWeaponIds)`, `numericEnum(stageIds)`) since string→number conversion is the codec's job.
+Note: schemas carrying a transform are rejected — those built with `preprocess` (like `weaponSplId`, `stageId` in `app/utils/schema.ts`) and those built with `coerceNumber` (like `id`). Use the inner schema instead (`numericEnum(mainWeaponIds)`, `numericEnum(stageIds)`, `v.pipe(v.number(), v.integer(), v.minValue(1))`) since string→number conversion is the codec's job.
 
 ### Compression
 

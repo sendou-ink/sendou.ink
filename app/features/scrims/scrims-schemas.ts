@@ -29,7 +29,7 @@ import {
 	preprocess,
 	superRefine,
 	timeString,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 import { parseMapPoolInput } from "./scrims-utils";

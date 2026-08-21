@@ -19,7 +19,7 @@ export const patronResponseSchema = v.object({
 	data: v.array(
 		v.object({
 			attributes: v.object({
-				pledge_relationship_start: v.optional(v.nullable(v.string())),
+				pledge_relationship_start: v.nullish(v.string()),
 			}),
 			id: v.string(),
 			relationships: v.object({
@@ -70,10 +70,10 @@ export const patronResponseSchema = v.object({
 			),
 		),
 	),
-	links: v.optional(v.nullable(v.object({ next: v.string() }))),
+	links: v.nullish(v.object({ next: v.string() })),
 	meta: v.object({
 		pagination: v.object({
-			cursors: v.object({ next: v.optional(v.nullable(v.string())) }),
+			cursors: v.object({ next: v.nullish(v.string()) }),
 			total: v.number(),
 		}),
 	}),

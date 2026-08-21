@@ -14,7 +14,7 @@ import {
 	getUserFromRequest,
 	userAsyncLocalStorage,
 } from "~/features/auth/core/user-context.server";
-import type { AnySchema } from "~/utils/zod";
+import type { AnySchema } from "~/utils/schema";
 import { logger } from "./logger";
 
 /**

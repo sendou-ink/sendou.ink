@@ -7,7 +7,7 @@ import {
 	selectDynamicOptional,
 	textArea,
 } from "~/form/fields";
-import { _action, id, superRefine } from "~/utils/zod";
+import { _action, id, superRefine } from "~/utils/schema";
 import { LFG, TIMEZONES } from "./lfg-constants";
 
 export const lfgNewSchema = v.pipe(

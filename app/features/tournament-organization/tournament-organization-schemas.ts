@@ -17,8 +17,8 @@ import {
 	toggle,
 	userSearch,
 } from "~/form/fields";
+import { _action, id, superRefine } from "~/utils/schema";
 import { mySlugify } from "~/utils/urls";
-import { _action, id, superRefine } from "~/utils/zod";
 
 const orgNameField = textField({
 	label: "labels.name",

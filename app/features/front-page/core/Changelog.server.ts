@@ -22,7 +22,7 @@ const postsSchema = v.object({
 									features: v.array(
 										v.object({
 											$type: v.string(),
-											tag: v.optional(v.nullable(v.string())),
+											tag: v.nullish(v.string()),
 										}),
 									),
 									index: v.object({

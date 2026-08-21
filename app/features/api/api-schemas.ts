@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { _action } from "~/utils/zod";
+import { _action } from "~/utils/schema";
 
 export const apiActionSchema = v.union([
 	v.object({

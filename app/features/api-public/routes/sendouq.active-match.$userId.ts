@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetUsersActiveSendouqMatchResponse } from "../schema";
 
 const paramsSchema = v.object({

@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { superRefineAsync } from "~/utils/zod";
+import { superRefineAsync } from "~/utils/schema";
 import { registerTeamFormSchema } from "./tournament-register-schemas";
 import { tournamentTeamNameTaken } from "./tournament-utils.server";
 

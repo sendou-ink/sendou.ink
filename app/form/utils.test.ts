@@ -1,5 +1,6 @@
 import * as v from "valibot";
 import { describe, expect, test } from "vitest";
+import { preprocess } from "~/utils/schema";
 import { getNestedSchema, getNestedValue, setNestedValue } from "./utils";
 
 describe("getNestedValue", () => {
@@ -114,6 +115,44 @@ describe("getNestedSchema", () => {
 			),
 		});
 		const result = getNestedSchema(schema, "items[0].name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe into a nested object", () => {
+		const schema = v.object({
+			config: preprocess((val) => val, v.object({ name: v.string() })),
+		});
+		const result = getNestedSchema(schema, "config.name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe into a nested array", () => {
+		const schema = v.object({
+			items: preprocess((val) => val, v.array(v.object({ name: v.string() }))),
+		});
+		const result = getNestedSchema(schema, "items[0].name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe inside an array item", () => {
+		const schema = v.object({
+			items: v.array(preprocess((val) => val, v.object({ name: v.string() }))),
+		});
+		const result = getNestedSchema(schema, "items[0].name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe wrapping a validated object", () => {
+		const schema = v.object({
+			config: preprocess(
+				(val) => val,
+				v.pipe(
+					v.object({ name: v.string() }),
+					v.check((val) => val.name.length > 0),
+				),
+			),
+		});
+		const result = getNestedSchema(schema, "config.name");
 		expect(result?.type).toBe("string");
 	});
 });

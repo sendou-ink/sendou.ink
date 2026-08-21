@@ -16,10 +16,10 @@ import { assertType } from "./types";
 /** Any synchronous valibot schema. */
 export type AnySyncSchema = v.GenericSchema<any, any>;
 
-/** Any valibot schema, sync or async (replacement for zod's `ZodTypeAny`). */
+/** Any valibot schema, sync or async. */
 export type AnySchema = AnySyncSchema | v.GenericSchemaAsync<any, any>;
 
-/** Runs `fn` on the raw input before validating it with `schema` (replacement for `z.preprocess`). */
+/** Runs `fn` on the raw input before validating it with `schema`. */
 export function preprocess<TSchema extends AnySyncSchema>(
 	fn: (value: unknown) => unknown,
 	schema: TSchema,
@@ -31,17 +31,17 @@ export function preprocess<TSchema extends AnySyncSchema>(
 	);
 }
 
+/** Issue collector the cross-field validators report to (see {@link superRefine}). */
+export interface ValidationCtx {
+	addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
+}
+
 /**
  * Validation action running `fn` on the parsed value with an `addIssue`
- * taking plain key paths (replacement for `z.superRefine`).
+ * taking plain key paths.
  */
 export function superRefine<TValue>(
-	fn: (
-		value: TValue,
-		ctx: {
-			addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
-		},
-	) => void,
+	fn: (value: TValue, ctx: ValidationCtx) => void,
 ) {
 	return v.rawCheck<TValue>(({ dataset, addIssue }) => {
 		if (!dataset.typed) return;
@@ -60,12 +60,7 @@ export function superRefine<TValue>(
 
 /** Async counterpart of {@link superRefine}. */
 export function superRefineAsync<TValue>(
-	fn: (
-		value: TValue,
-		ctx: {
-			addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
-		},
-	) => Promise<void>,
+	fn: (value: TValue, ctx: ValidationCtx) => Promise<void>,
 ) {
 	return v.rawCheckAsync<TValue>(async ({ dataset, addIssue }) => {
 		if (!dataset.typed) return;
@@ -102,7 +97,7 @@ function toIssuePath(
 	return items as unknown as [v.IssuePathItem, ...v.IssuePathItem[]];
 }
 
-/** Coerces the input with `Number()` before validating (replacement for `z.coerce.number()`). */
+/** Coerces the input with `Number()` before validating. */
 export function coerceNumber(message?: string) {
 	return v.pipe(v.unknown(), v.transform(Number), v.number(message));
 }
@@ -530,7 +525,7 @@ export function deduplicate(value: unknown) {
 	return value;
 }
 
-/** Number schema accepting only the given values (replacement for a numeric `z.enum`). */
+/** Number schema accepting only the given values, the numeric counterpart of `v.picklist`. */
 export function numericEnum<TValues extends readonly number[]>(
 	values: TValues,
 ) {

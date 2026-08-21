@@ -22,9 +22,9 @@ import {
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import type { Unwrapped } from "~/utils/types";
 import { tournamentPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 import type { Bracket } from "./Bracket";
 import { RunningTournaments } from "./RunningTournaments.server";
 import {

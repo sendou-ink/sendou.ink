@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import type { PlusVoteFromFE } from "~/features/plus-voting/core";
+import { preprocess, safeJSONParse } from "~/utils/schema";
 import { assertType } from "~/utils/types";
-import { preprocess, safeJSONParse } from "~/utils/zod";
 import { PLUS_DOWNVOTE, PLUS_UPVOTE } from "./plus-voting-constants";
 
 const voteSchema = v.object({

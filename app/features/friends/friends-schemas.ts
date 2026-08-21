@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { stringConstant, userSearch } from "~/form/fields";
-import { _action, id } from "~/utils/zod";
+import { _action, id } from "~/utils/schema";
 
 export const sendFriendRequestBaseSchema = v.object({
 	_action: stringConstant("SEND_REQUEST"),

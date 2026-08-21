@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { NOTIFICATIONS } from "./notifications-contants";
 
 export const markAsSeenActionSchema = v.object({

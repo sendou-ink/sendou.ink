@@ -4,7 +4,7 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { modeShort, numericEnum } from "~/utils/zod";
+import { modeShort, numericEnum } from "~/utils/schema";
 import { videoMatchTypes } from "./vods-constants";
 
 export const vodsSearchParams = SearchParams.define({

@@ -1,5 +1,5 @@
 import type * as v from "valibot";
-import type { AnySchema } from "./zod";
+import type { AnySchema } from "./schema";
 
 /** `_action` literals of an action schema (union or single branch). */
 export type ActionsOf<TSchema extends AnySchema> =

@@ -4,7 +4,7 @@ import {
 	type FieldsOf,
 	serializeFieldValue,
 } from "~/utils/action-schemas";
-import type { AnySchema } from "~/utils/zod";
+import type { AnySchema } from "~/utils/schema";
 
 interface UseActionSubmitOptions {
 	/** Route to submit to. Defaults to the current route. */
@@ -17,7 +17,7 @@ interface UseActionSubmitOptions {
 
 /**
  * Programmatic counterpart of `<ActionButton>`: submits an `_action` mutation
- * from an event handler, type checked against the route's zod action schema.
+ * from an event handler, type checked against the route's action schema.
  *
  * @example
  * const { submit } = useActionSubmit(deleteFriendSchema);

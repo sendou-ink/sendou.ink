@@ -10,7 +10,7 @@ import { parseMaplistSource } from "~/modules/tournament-map-list-generator/sour
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetTournamentMatchResponse } from "../schema";
 
 const paramsSchema = v.object({

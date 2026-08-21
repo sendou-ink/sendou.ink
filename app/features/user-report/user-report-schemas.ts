@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { select, textArea, textFieldOptional } from "~/form/fields";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { USER_REPORT } from "./user-report-constants";
 
 export const reportUserSchema = v.object({

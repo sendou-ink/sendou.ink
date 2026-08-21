@@ -9,7 +9,7 @@ import {
 	weaponPool,
 } from "~/form/fields";
 import { languagesUnified } from "~/modules/i18n/config";
-import { modeShort, stageId } from "~/utils/zod";
+import { modeShort, stageId } from "~/utils/schema";
 import {
 	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
 	MATCH_PROFILE_WEAPON_POOL_MAX_SIZE,
@@ -35,6 +35,9 @@ export const mapModePreferencesValueSchema = v.pipe(
 			}),
 		),
 	}),
+	// Pools for avoided modes are kept in the client form state so they can be
+	// restored if the user later un-avoids the mode, but they must not be
+	// persisted as active pools. Strip them out before the value reaches the action.
 	v.transform((val) => ({
 		...val,
 		pool: val.pool.filter((pool) => {

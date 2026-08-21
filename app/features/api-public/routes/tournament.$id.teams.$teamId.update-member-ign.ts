@@ -13,7 +13,7 @@ import {
 	parseBody,
 	parseParams,
 } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
 const paramsSchema = v.object({

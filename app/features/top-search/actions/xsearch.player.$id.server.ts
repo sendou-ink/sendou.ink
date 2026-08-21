@@ -9,7 +9,7 @@ import {
 	parseParams,
 	successToast,
 } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { idObject } from "~/utils/schema";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const action = async ({ params }: ActionFunctionArgs) => {

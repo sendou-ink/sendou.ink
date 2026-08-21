@@ -14,7 +14,7 @@ import {
 	tournamentSearchOptional,
 	userSearch,
 } from "~/form/fields";
-import { modeShort, stageId, superRefine } from "~/utils/zod";
+import { modeShort, stageId, superRefine } from "~/utils/schema";
 import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
 import { USER } from "../user-page/user-page-constants";
 /**

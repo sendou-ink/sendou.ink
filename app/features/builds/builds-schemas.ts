@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { isValidDate } from "~/utils/dates";
-import { ability } from "~/utils/zod";
+import { ability } from "~/utils/schema";
 import { MAX_BUILD_FILTERS } from "./builds-constants";
 
 const abilityConditionSchema = v.object({

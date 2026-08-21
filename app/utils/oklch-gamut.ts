@@ -1,6 +1,6 @@
 import type * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
-import type { themeInputSchema } from "~/utils/zod";
+import type { themeInputSchema } from "~/utils/schema";
 
 export type ThemeInput = v.InferOutput<typeof themeInputSchema>;
 

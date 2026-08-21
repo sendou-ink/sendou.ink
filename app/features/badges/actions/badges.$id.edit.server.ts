@@ -8,9 +8,9 @@ import {
 } from "~/modules/permissions/guards.server";
 import { diff } from "~/utils/arrays";
 import { notFoundIfNullish, parseRequestPayload } from "~/utils/remix.server";
+import { actualNumber, preprocess } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import { badgePage } from "~/utils/urls";
-import { actualNumber, preprocess } from "~/utils/zod";
 import * as BadgeRepository from "../BadgeRepository.server";
 import { editBadgeActionSchema } from "../badges-schemas";
 

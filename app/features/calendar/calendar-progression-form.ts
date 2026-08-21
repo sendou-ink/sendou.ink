@@ -14,15 +14,10 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
+import { superRefine, type ValidationCtx } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
-import { superRefine } from "~/utils/zod";
 
 const SWISS_DEFAULT_ADVANCE_THRESHOLD = 3;
-
-/** Issue collector the cross-field validators report to (see `superRefine`). */
-export interface ValidationCtx {
-	addIssue: (issue: { message: string; path?: PropertyKey[] }) => void;
-}
 
 export interface BracketFormValue {
 	name: string;

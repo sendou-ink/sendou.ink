@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { hidden, select, stringConstant, toggle } from "~/form/fields";
-import { themeInputSchema } from "~/utils/zod";
+import { themeInputSchema } from "~/utils/schema";
 
 export const customThemeSchema = v.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),

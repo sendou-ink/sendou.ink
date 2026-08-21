@@ -11,7 +11,7 @@ import {
 	textFieldOptional,
 	userSearch,
 } from "~/form/fields";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { BAN_REASON_MAX_LENGTH } from "./admin-constants";
 
 const userField = userSearch({ label: "labels.user" });

@@ -12,7 +12,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { codec, SP } from "~/modules/search-params/search-params";
-import { numericEnum } from "~/utils/zod";
+import { numericEnum } from "~/utils/schema";
 import {
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,

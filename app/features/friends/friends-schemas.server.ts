@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
-import { superRefineAsync } from "~/utils/zod";
+import { superRefineAsync } from "~/utils/schema";
 import * as FriendRepository from "./FriendRepository.server";
 import {
 	acceptFriendRequestSchema,

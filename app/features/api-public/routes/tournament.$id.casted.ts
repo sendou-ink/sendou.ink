@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { db } from "~/db/sql";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetCastedTournamentMatchesResponse } from "../schema";
 
 const paramsSchema = v.object({

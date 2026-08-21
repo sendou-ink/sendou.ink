@@ -6,7 +6,7 @@ import {
 } from "~/features/user-page/in-game-name";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
-import type { AnySyncSchema, DayMonthYear } from "~/utils/zod";
+import type { AnySyncSchema, DayMonthYear } from "~/utils/schema";
 import {
 	coerceNumber,
 	date,
@@ -18,7 +18,7 @@ import {
 	stageId,
 	timeString,
 	weaponSplId,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { imageValue } from "./image-field";
 import type {
 	BadgeOption,
@@ -393,11 +393,10 @@ export function toggle(
 }
 
 /**
- * Makes a nullable field tolerate a missing key, the way the equivalent zod
- * schema did: `v.object` requires every key whose entry schema is not itself
- * optional, and a `preprocess` pipe hides the nullable wrapper behind its own
- * type. The `null` default is fed through the schema, so an absent field parses
- * exactly like an explicitly `null` one.
+ * Makes a nullable field tolerate a missing key: `v.object` requires every key
+ * whose entry schema is not itself optional, and a `preprocess` pipe hides the
+ * nullable wrapper behind its own type. The `null` default is fed through the
+ * schema, so an absent field parses exactly like an explicitly `null` one.
  */
 function optionalKey<TSchema extends v.GenericSchema<any, any>>(
 	schema: TSchema,

@@ -11,8 +11,8 @@ import {
 	canAccessLohiEndpoint,
 	errorToastRedirect,
 } from "~/utils/remix.server";
+import type { AnySyncSchema } from "~/utils/schema";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
-import type { AnySyncSchema } from "~/utils/zod";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
 	authenticator,

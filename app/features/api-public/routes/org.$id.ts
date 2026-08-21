@@ -6,7 +6,7 @@ import {
 	jsonArrayFrom,
 } from "~/utils/kysely.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetTournamentOrganizationResponse } from "../schema";
 
 const paramsSchema = v.object({

@@ -22,8 +22,8 @@ import {
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { timeString } from "~/utils/schema";
 import { navIconUrl, scrimsPage } from "~/utils/urls";
-import { timeString } from "~/utils/zod";
 import {
 	SendouTab,
 	SendouTabList,

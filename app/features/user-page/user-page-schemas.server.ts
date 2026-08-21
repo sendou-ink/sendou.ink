@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
-import { superRefine, superRefineAsync } from "~/utils/zod";
+import { superRefine, superRefineAsync } from "~/utils/schema";
 import { gearAllOrNoneRefine, newBuildBaseSchema } from "./user-page-schemas";
 
 export const newBuildSchemaServer = v.pipeAsync(

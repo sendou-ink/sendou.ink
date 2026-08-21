@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 
 /**
  * Allowed prefixes for a {@link imageValue} `NEW` data URL. The client compresses to webp,

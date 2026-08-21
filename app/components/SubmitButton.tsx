@@ -1,6 +1,6 @@
 import { type FetcherWithComponents, useNavigation } from "react-router";
 import type { ActionsOf } from "~/utils/action-schemas";
-import type { AnySchema } from "~/utils/zod";
+import type { AnySchema } from "~/utils/schema";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 
 type SubmitButtonProps<TSchema extends AnySchema> = SendouButtonProps & {

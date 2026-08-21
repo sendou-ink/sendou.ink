@@ -17,11 +17,11 @@ export const streamsSchema = v.object({
 			language: v.string(),
 			thumbnail_url: v.string(),
 			tag_ids: v.array(v.unknown()),
-			tags: v.optional(v.nullable(v.array(v.string()))),
+			tags: v.nullish(v.array(v.string())),
 			is_mature: v.boolean(),
 		}),
 	),
-	pagination: v.object({ cursor: v.optional(v.nullable(v.string())) }),
+	pagination: v.object({ cursor: v.nullish(v.string()) }),
 });
 
 export const tokenResponseSchema = v.object({
@@ -53,7 +53,7 @@ export const videosSchema = v.object({
 			type: v.string(),
 		}),
 	),
-	pagination: v.object({ cursor: v.optional(v.nullable(v.string())) }),
+	pagination: v.object({ cursor: v.nullish(v.string()) }),
 });
 
 export type StreamsResponse = v.InferOutput<typeof streamsSchema>;

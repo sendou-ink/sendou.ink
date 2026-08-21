@@ -3,7 +3,7 @@ import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { numericEnum } from "~/utils/zod";
+import { numericEnum } from "~/utils/schema";
 import { MAX_WEAPONS } from "./comp-analyzer-constants";
 import type { CategorizationType } from "./comp-analyzer-types";
 

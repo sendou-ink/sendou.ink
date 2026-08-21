@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { numericEnum } from "~/utils/zod";
+import { numericEnum } from "~/utils/schema";
 
 export const weaponParamsSearchParams = SearchParams.define({
 	tab: SP.param(v.picklist(["params", "patches"]), {

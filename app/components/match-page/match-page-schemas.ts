@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { _action, coerceNumber, weaponSplId } from "~/utils/zod";
+import { _action, coerceNumber, weaponSplId } from "~/utils/schema";
 
 const reportedMapIndex = v.pipe(coerceNumber(), v.integer(), v.minValue(0));
 

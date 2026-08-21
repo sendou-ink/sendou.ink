@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { modeShort } from "~/utils/zod";
+import { modeShort } from "~/utils/schema";
 import {
 	BUILDS_PAGE_BATCH_SIZE,
 	BUILDS_PAGE_MAX_BUILDS,

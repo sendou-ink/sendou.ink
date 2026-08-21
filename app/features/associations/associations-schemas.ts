@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { textField } from "~/form/fields";
-import { _action, id, inviteCode } from "~/utils/zod";
+import { _action, id, inviteCode } from "~/utils/schema";
 import { ASSOCIATION } from "./associations-constants";
 
 export const createNewAssociationSchema = v.object({

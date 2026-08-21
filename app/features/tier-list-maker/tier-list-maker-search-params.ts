@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { codec, SP } from "~/modules/search-params/search-params";
-import { modeShort } from "~/utils/zod";
+import { modeShort } from "~/utils/schema";
 import { DEFAULT_TIERS } from "./tier-list-maker-constants";
 import {
 	type TierListState,

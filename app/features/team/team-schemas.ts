@@ -15,13 +15,13 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
-import { mySlugify } from "~/utils/urls";
 import {
 	_action,
 	preprocess,
 	superRefine,
 	themeInputSchema,
-} from "~/utils/zod";
+} from "~/utils/schema";
+import { mySlugify } from "~/utils/urls";
 import {
 	CUSTOM_ROLE_MAX_LENGTH,
 	TEAM,

@@ -5,7 +5,7 @@ import * as v from "valibot";
 import type { navItems } from "~/components/layout/nav-items";
 import { ServerConfig } from "~/config.server";
 import type { Ok, Result } from "~/utils/result";
-import type { AnySchema, AnySyncSchema } from "~/utils/zod";
+import type { AnySchema, AnySyncSchema } from "~/utils/schema";
 import { logger } from "./logger";
 import { currentRequestPathname } from "./request-context.server";
 

@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { _action, id, preprocess, safeJSONParse } from "~/utils/zod";
+import { _action, id, preprocess, safeJSONParse } from "~/utils/schema";
 
 const validateManySchema = v.object({
 	_action: _action("VALIDATE"),

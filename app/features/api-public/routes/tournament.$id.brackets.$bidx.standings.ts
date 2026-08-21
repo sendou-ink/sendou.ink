@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { coerceNumber, id } from "~/utils/zod";
+import { coerceNumber, id } from "~/utils/schema";
 import type { GetTournamentBracketStandingsResponse } from "../schema";
 
 const paramsSchema = v.object({

@@ -6,7 +6,7 @@ import {
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 
 export type TournamentAdminRegistrationLoaderData = SerializeFrom<
 	typeof loader

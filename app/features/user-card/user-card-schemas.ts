@@ -12,8 +12,8 @@ import {
 	textAreaOptional,
 	toggle,
 } from "~/form/fields";
+import { _action, id } from "~/utils/schema";
 import { preferenceEmojiUrl } from "~/utils/urls";
-import { _action, id } from "~/utils/zod";
 import { PRESET_COLORS } from "../tier-list-maker/tier-list-maker-constants";
 import { USER_CARD } from "./user-card-constants";
 

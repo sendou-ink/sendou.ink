@@ -6,7 +6,7 @@ import {
 	hexCodeWithoutAlpha,
 	normalizeFriendCode,
 	timeString,
-} from "./zod";
+} from "./schema";
 
 describe("normalizeFriendCode", () => {
 	test("returns well formatted friend code as is", () => {

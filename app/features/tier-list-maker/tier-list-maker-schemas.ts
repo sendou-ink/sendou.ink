@@ -1,5 +1,4 @@
 import * as v from "valibot";
-import { assertType } from "~/utils/types";
 import {
 	ability,
 	hexCodeWithoutAlpha,
@@ -8,7 +7,8 @@ import {
 	stageId,
 	subWeaponId,
 	weaponSplId,
-} from "~/utils/zod";
+} from "~/utils/schema";
+import { assertType } from "~/utils/types";
 
 export const tierListItemTypeSchema = v.picklist([
 	"main-weapon",

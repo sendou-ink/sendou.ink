@@ -3,7 +3,7 @@ import * as v from "valibot";
 import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { coerceNumber, id } from "~/utils/zod";
+import { coerceNumber, id } from "~/utils/schema";
 import type { GetTournamentBracketResponse } from "../schema";
 
 const paramsSchema = v.object({

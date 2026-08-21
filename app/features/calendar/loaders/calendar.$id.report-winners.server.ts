@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { idObject } from "~/utils/schema";
 
 export const loader = async (args: LoaderFunctionArgs) => {
 	const params = parseParams({

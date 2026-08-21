@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { _action, id } from "~/utils/zod";
+import { _action, id } from "~/utils/schema";
 
 const deleteArtSchema = v.object({
 	_action: _action("DELETE_ART"),

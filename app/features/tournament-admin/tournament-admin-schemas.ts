@@ -12,7 +12,7 @@ import {
 	preprocess,
 	safeJSONParse,
 	superRefine,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 

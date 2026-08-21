@@ -3,7 +3,7 @@ import * as v from "valibot";
 import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import type { GetUsersActiveMatchResponse } from "../schema";
 
 const paramsSchema = v.object({

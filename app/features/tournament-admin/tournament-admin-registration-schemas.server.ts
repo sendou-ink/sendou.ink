@@ -10,7 +10,7 @@ import {
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { superRefineAsync } from "~/utils/zod";
+import { superRefineAsync } from "~/utils/schema";
 import {
 	ADMIN_REGISTRATION_MAX_MEMBERS,
 	adminRegistrationFormSchema,

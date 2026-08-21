@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { superRefine } from "~/utils/zod";
+import { superRefine } from "~/utils/schema";
 import {
 	calendarNewBaseSchema,
 	calendarNewSyncRefine,

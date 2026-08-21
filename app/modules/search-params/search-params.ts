@@ -255,7 +255,7 @@ export function pickRelevantSearch(keys: string[], search: string): string {
 	return picked.toString();
 }
 
-/** Bidirectional URL encoding for an `SP.custom` param (replacement for `z.codec`). */
+/** Bidirectional URL encoding for an `SP.custom` param. */
 export interface ParamCodec<Value> {
 	/** Decodes a plain URL value; `undefined` means malformed, resolving the param to its default. */
 	decode: (plain: string) => Value | undefined;
@@ -312,7 +312,7 @@ export function nullableCodec<Value>(
  */
 export const SP = {
 	/**
-	 * Declares a param whose URL encoding is derived from the zod value
+	 * Declares a param whose URL encoding is derived from the valibot value
 	 * schema's type tree. Supported shapes: strings, numbers, booleans, string
 	 * and number enums/literals, same-base-type unions, arrays of those
 	 * (encoded as repeated keys) and a top-level `.nullable()` wrapper (`null`

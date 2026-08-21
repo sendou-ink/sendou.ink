@@ -1,10 +1,10 @@
 import { describe, expect, test } from "vitest";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import type { ValidationCtx } from "~/utils/schema";
 import {
 	defaultBracketsFormValues,
 	formValuesToInputBrackets,
 	progressionToFormValues,
-	type ValidationCtx,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
 

@@ -88,7 +88,7 @@ You should aim to colocate code that "changes together" as much as possible. Fea
 - **FeatureRepository.server.ts**: Database queries & mappers (see `repositories.md`)
 - **feature-constants.ts**: Constant values
 - **feature-hooks.ts**: React hooks
-- **feature-schemas.ts**: Zod schemas for validating form values, params, payloads
+- **feature-schemas.ts**: valibot schemas for validating form values, params, payloads
 - **feature-types.ts**: Typescript types
 - **feature-utils.ts**: Utilities too small to make up for their own modules
 - **Component.module.css**: CSS module matching the React file of the same root name
@@ -170,7 +170,7 @@ TODO (after React server actions in use)
 
 ### Forms
 
-Forms are defined as Zod schemas built from the field builders in `~/form/fields` and rendered by `SendouForm`. The same schema validates the submission on the server. See `forms.md` for the full documentation.
+Forms are defined as valibot schemas built from the field builders in `~/form/fields` and rendered by `SendouForm`. The same schema validates the submission on the server. See `forms.md` for the full documentation.
 
 ### Performance
 

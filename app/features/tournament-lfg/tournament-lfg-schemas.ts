@@ -5,7 +5,7 @@ import {
 	toggle,
 	userSearch,
 } from "~/form/fields";
-import { _action, id } from "~/utils/zod";
+import { _action, id } from "~/utils/schema";
 
 const noteFieldSchema = textAreaOptional({
 	label: "labels.note",

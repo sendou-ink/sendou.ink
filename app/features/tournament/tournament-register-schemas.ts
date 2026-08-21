@@ -6,7 +6,7 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
-import { superRefine } from "~/utils/zod";
+import { superRefine } from "~/utils/schema";
 import { TOURNAMENT } from "./tournament-constants";
 
 export const registerTeamFormSchema = v.pipe(

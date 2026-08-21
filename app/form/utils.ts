@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import type { AnySyncSchema } from "~/utils/zod";
+import type { AnySyncSchema } from "~/utils/schema";
 import { getFormFieldMetadata } from "./fields";
 import type { FormField, FormObjectSchema } from "./types";
 

@@ -2,7 +2,7 @@ import type * as v from "valibot";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
 import type { UserSearchResult } from "~/components/elements/UserSearch";
-import type { AnySyncSchema } from "~/utils/zod";
+import type { AnySyncSchema } from "~/utils/schema";
 import type forms from "../../locales/en/forms.json";
 import type { ImageFieldDimensions } from "./image-field";
 

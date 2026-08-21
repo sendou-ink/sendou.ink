@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { action as adminAction } from "~/features/tournament-admin/actions/to.$id.admin.seeds.server";
 import { parseBody, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
 const paramsSchema = v.object({

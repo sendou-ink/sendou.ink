@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { idObject } from "~/utils/schema";
 import * as XRankPlacementRepository from "../XRankPlacementRepository.server";
 
 export const loader = async (args: LoaderFunctionArgs) => {

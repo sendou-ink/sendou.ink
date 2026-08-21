@@ -1,7 +1,7 @@
 import * as v from "valibot";
 import { TOURNAMENT_STAFF_ROLES } from "~/features/tournament/tournament-constants";
 import { array, fieldset, select, textField, userSearch } from "~/form/fields";
-import { superRefine } from "~/utils/zod";
+import { superRefine } from "~/utils/schema";
 
 export const adminStreamFormSchema = v.object({
 	castTwitchAccounts: array({

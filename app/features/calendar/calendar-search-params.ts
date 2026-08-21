@@ -7,7 +7,7 @@ import { gamesShort, versusShort } from "~/modules/in-game-lists/games";
 import { modesShortWithSpecial } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { gamesShortSchema, modeShortWithSpecial } from "~/utils/zod";
+import { gamesShortSchema, modeShortWithSpecial } from "~/utils/schema";
 import { calendarFilterTagsArr } from "./calendar-schemas";
 
 export const VIEW_FILTERS = [

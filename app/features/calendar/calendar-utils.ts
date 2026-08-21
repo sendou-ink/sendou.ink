@@ -1,7 +1,7 @@
 import { addDays, addWeeks, startOfWeek, subWeeks } from "date-fns";
 import { logger } from "~/utils/logger";
+import type { DayMonthYear } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
-import type { DayMonthYear } from "~/utils/zod";
 import {
 	DAYS_SHOWN_AT_A_TIME,
 	type RegClosesAtOption,

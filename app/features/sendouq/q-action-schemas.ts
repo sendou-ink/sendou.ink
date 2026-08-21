@@ -1,5 +1,5 @@
 import * as v from "valibot";
-import { _action, deduplicate, id, preprocess } from "~/utils/zod";
+import { _action, deduplicate, id, preprocess } from "~/utils/schema";
 import { addFriendCodeSchema, updateGroupNoteSchema } from "./q-schemas";
 
 export const frontPageSchema = v.union([

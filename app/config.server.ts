@@ -1,7 +1,7 @@
 import * as v from "valibot";
-import { formatEnvErrors, requiredInProd } from "./config-helpers.server";
+import { envBoolean, formatEnvErrors, requiredInProd } from "./config-helpers";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
-import { superRefine } from "./utils/zod";
+import { superRefine, type ValidationCtx } from "./utils/schema";
 
 /**
  * Server (`process.env`) configuration. Import with
@@ -13,24 +13,7 @@ import { superRefine } from "./utils/zod";
  * production fall back to development defaults outside of production.
  */
 
-const TRUTHY_ENV_VALUES = ["true", "1", "yes", "on"];
-const FALSY_ENV_VALUES = ["false", "0", "no", "off"];
-
 const isProd = process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN;
-
-/** Boolean parsed from a string environment variable (replacement for zod's `stringbool`). */
-const stringBoolean = v.pipe(
-	v.string(),
-	v.transform((value) => {
-		const normalized = value.toLowerCase();
-
-		if (TRUTHY_ENV_VALUES.includes(normalized)) return true;
-		if (FALSY_ENV_VALUES.includes(normalized)) return false;
-
-		return undefined;
-	}),
-	v.boolean(),
-);
 
 const schema = v.pipe(
 	v.object({
@@ -42,7 +25,7 @@ const schema = v.pipe(
 		SESSION_SECRET: requiredInProd(isProd, "secret"),
 		LOHI_TOKEN: requiredInProd(isProd, "salmon"),
 		SQL_LOG: v.optional(v.picklist(["none", "trunc", "full"]), "none"),
-		DISABLE_CACHE: v.optional(stringBoolean, "false"),
+		DISABLE_CACHE: v.optional(envBoolean, "false"),
 
 		DISCORD_CLIENT_ID: requiredInProd(isProd, ""),
 		DISCORD_CLIENT_SECRET: requiredInProd(isProd, ""),
@@ -142,7 +125,7 @@ export const ServerConfig = {
 
 /** Adds a validation issue unless `a` and `b` are both set or both unset. */
 function requireTogether(
-	ctx: { addIssue: (issue: { message: string; path?: PropertyKey[] }) => void },
+	ctx: ValidationCtx,
 	values: Record<string, unknown>,
 	a: string,
 	b: string,

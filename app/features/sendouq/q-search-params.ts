@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
-import { modeShort, numericEnum } from "~/utils/zod";
+import { modeShort, numericEnum } from "~/utils/schema";
 
 export const qSearchParams = SearchParams.define({
 	join: SP.param(v.nullable(v.string()), { loader: true }),

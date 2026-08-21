@@ -7,7 +7,7 @@ import {
 	weekNumberToDateRange,
 } from "~/utils/dates";
 import { parseParams } from "~/utils/remix.server";
-import { coerceNumber } from "~/utils/zod";
+import { coerceNumber } from "~/utils/schema";
 import type { GetCalendarWeekResponse } from "../schema";
 
 const paramsSchema = v.object({

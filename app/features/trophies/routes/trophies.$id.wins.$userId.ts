@@ -5,7 +5,7 @@ import { getUser } from "~/features/auth/core/user.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { canAccessTrophies } from "../trophies-utils";
 

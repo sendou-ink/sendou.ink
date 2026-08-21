@@ -2,7 +2,7 @@ import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { imageFieldValueToImgId } from "~/features/img-upload/image-field.server";
 import { formDataToObject } from "~/utils/remix.server";
-import type { AnySchema } from "~/utils/zod";
+import type { AnySchema } from "~/utils/schema";
 import { formRegistry } from "./fields";
 import type { ImageFieldValue } from "./image-field";
 import { buildFieldPath, issuePathKeys } from "./utils";
@@ -104,14 +104,14 @@ export async function parseFormDataWithImages<T extends AnySchema>({
 }
 
 /**
- * Collects every `image()` field across a schema object or union of objects, along with each
+ * Collects every `image()` field across a schema object or union/variant of objects, along with each
  * field's `autoValidate` flag (whether its uploads bypass the moderator queue).
  */
 function imageFields(
 	schema: AnySchema,
 ): Array<{ key: string; autoValidate: boolean }> {
 	const objects =
-		schema.type === "union"
+		schema.type === "union" || schema.type === "variant"
 			? ((schema as unknown as { options: AnySchema[] }).options.filter(
 					(option) => option.type === "object",
 				) as unknown as Array<{ entries: Record<string, AnySchema> }>)

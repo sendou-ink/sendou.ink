@@ -7,8 +7,8 @@ import * as BracketRepository from "~/features/tournament-bracket/BracketReposit
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
+import { actualNumber, id, preprocess } from "~/utils/schema";
 import { CALENDAR_PAGE } from "~/utils/urls";
-import { actualNumber, id, preprocess } from "~/utils/zod";
 
 export const action: ActionFunction = async ({ params }) => {
 	const parsedParams = v.parse(

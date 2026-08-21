@@ -11,7 +11,7 @@ import {
 	gamesShortSchema,
 	id,
 	modeShortWithSpecial,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { CALENDAR_EVENT } from "./calendar-constants";
 
 const calendarEventTagSchema = v.pipe(

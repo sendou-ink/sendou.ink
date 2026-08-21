@@ -5,7 +5,7 @@ import { expect, type Page } from "@playwright/test";
 import type * as v from "valibot";
 import { getFormFieldMetadata } from "~/form/fields";
 import type { FormField, FormObjectSchema } from "~/form/types";
-import type { AnySyncSchema } from "~/utils/zod";
+import type { AnySyncSchema } from "~/utils/schema";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 

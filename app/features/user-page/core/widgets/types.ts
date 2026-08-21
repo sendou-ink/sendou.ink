@@ -1,5 +1,5 @@
 import type * as v from "valibot";
-import type { AnySchema } from "~/utils/zod";
+import type { AnySchema } from "~/utils/schema";
 import type { allWidgetsFlat } from "./portfolio";
 import type { WIDGET_LOADERS } from "./portfolio-loaders.server";
 

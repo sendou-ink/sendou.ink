@@ -1,10 +1,10 @@
 # SendouForm - Schema-Based Form System
 
-This document describes the schema-based form system using `SendouForm`. Forms are defined as Zod schemas that generate both the UI and server-side validation.
+This document describes the schema-based form system using `SendouForm`. Forms are defined as valibot schemas that generate both the UI and server-side validation.
 
 ## Core Concepts
 
-- Forms are defined as Zod schemas using field builders from `~/form/fields`
+- Forms are defined as valibot schemas using field builders from `~/form/fields`
 - The same schema validates both client-side and server-side
 - All translations go in `locales/en/forms.json`
 - `FormField` renders the correct UI based on schema metadata
@@ -552,25 +552,37 @@ export const newBuildSchema = v.pipe(
 **Server schema (`feature-schemas.server.ts`)** - adds async validation:
 
 ```ts
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
+import { superRefine, superRefineAsync } from "~/utils/schema";
 import { gearAllOrNoneRefine, newBuildBaseSchema } from "./feature-schemas";
 
-export const newBuildSchemaServer = newBuildBaseSchema
+export const newBuildSchemaServer = v.pipeAsync(
+  newBuildBaseSchema,
   // Reuse sync refinements from base
-  .refine(gearAllOrNoneRefine.fn, gearAllOrNoneRefine.opts)
+  superRefine((data, ctx) => {
+    if (gearAllOrNoneRefine.fn(data)) return;
+
+    ctx.addIssue({
+      message: gearAllOrNoneRefine.message,
+      path: gearAllOrNoneRefine.path,
+    });
+  }),
   // Add async server-only validation
-  .refine(
-    async (data) => {
-      if (!data.buildToEditId) return true;
+  superRefineAsync(async (data, ctx) => {
+    if (!data.buildToEditId) return;
 
-      const user = requireUser();
-      const ownerId = await BuildRepository.ownerIdById(data.buildToEditId);
+    const user = requireUser();
+    const ownerId = await BuildRepository.ownerIdById(data.buildToEditId);
+    if (ownerId === user.id) return;
 
-      return ownerId === user.id;
-    },
-    { message: "Not a build you own", path: ["buildToEditId"] },
-  );
+    ctx.addIssue({
+      message: "Not a build you own",
+      path: ["buildToEditId"],
+    });
+  }),
+);
 ```
 
 **Action using server schema:**

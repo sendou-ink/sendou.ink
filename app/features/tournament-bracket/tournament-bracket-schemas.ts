@@ -18,7 +18,7 @@ import {
 	preprocess,
 	safeJSONParse,
 	stageId,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { TOURNAMENT } from "../tournament/tournament-constants";
 import * as PickBan from "./core/PickBan";
 import * as PreparedMaps from "./core/PreparedMaps";
@@ -130,7 +130,7 @@ const tournamentRoundMaps = v.object({
 	),
 	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: v.picklist(["BEST_OF", "PLAY_ALL"]),
-	pickBan: v.optional(v.nullable(v.picklist(PickBan.types))),
+	pickBan: v.nullish(v.picklist(PickBan.types)),
 	customFlow: customPickBanFlow,
 });
 export const bracketSchema = v.union([

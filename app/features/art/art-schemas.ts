@@ -7,7 +7,7 @@ import {
 	toggle,
 	userSearchOptional,
 } from "~/form/fields";
-import { id, superRefine } from "~/utils/zod";
+import { id, superRefine } from "~/utils/schema";
 import { ART } from "./art-constants";
 import { artImageValue } from "./art-image";
 

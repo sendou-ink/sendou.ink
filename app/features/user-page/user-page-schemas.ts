@@ -28,8 +28,6 @@ import {
 	headGearIds,
 	shoesGearIds,
 } from "~/modules/in-game-lists/gear-ids";
-import { rawSensToString } from "~/utils/strings";
-import { isCustomUrl } from "~/utils/urls";
 import {
 	_action,
 	actualNumber,
@@ -44,7 +42,9 @@ import {
 	shoesMainSlotAbility,
 	stackableAbility,
 	superRefine,
-} from "~/utils/zod";
+} from "~/utils/schema";
+import { rawSensToString } from "~/utils/strings";
+import { isCustomUrl } from "~/utils/urls";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
 	BUILD_SORT_IDENTIFIERS,

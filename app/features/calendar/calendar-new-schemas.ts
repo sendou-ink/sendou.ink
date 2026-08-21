@@ -19,12 +19,11 @@ import {
 	toggle,
 } from "~/form/fields";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { id } from "~/utils/zod";
+import { id, type ValidationCtx } from "~/utils/schema";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import {
 	bracketsFormField,
 	progressionFormField,
-	type ValidationCtx,
 	validateBracketProgressionFormValues,
 } from "./calendar-progression-form";
 import { calendarEventMaxDate, calendarEventMinDate } from "./calendar-utils";

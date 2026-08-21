@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
-import { _action, coerceNumber } from "~/utils/zod";
+import { _action, coerceNumber } from "~/utils/schema";
 
 const teamLeaderboardEntry = {
 	season: v.pipe(coerceNumber(), v.integer(), v.minValue(0)),

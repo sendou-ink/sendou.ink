@@ -6,7 +6,7 @@ import {
 	numberField,
 	textField,
 } from "~/form/fields";
-import { id, superRefine } from "~/utils/zod";
+import { id, superRefine } from "~/utils/schema";
 import { CALENDAR_EVENT_RESULT } from "./calendar-constants";
 
 const reportedPlayerSchema = v.variant("type", [

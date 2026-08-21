@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { _action } from "~/utils/zod";
+import { _action } from "~/utils/schema";
 import { registerTeamFormSchemaServer } from "./tournament-register-schemas.server";
 import {
 	addPlayerSchema,

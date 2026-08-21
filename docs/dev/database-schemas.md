@@ -16,7 +16,7 @@ SQLite has no boolean type, so booleans are `0`/`1` integers typed as `DBBoolean
 Converting to one:
 
 - `toDBBoolean(someBoolean)` from `~/utils/sql` — use this instead of `Number(x)` or `x ? 1 : 0` when writing to the DB.
-- `dbBoolean` / `checkboxValueToDbBoolean` from `~/utils/zod` for form and payload schemas.
+- `dbBoolean` / `checkboxValueToDbBoolean` from `~/utils/schema` for form and payload schemas.
 
 Reading is just truthiness (`if (build.isPrivate)`); convert to a real boolean with `Boolean()` when the value crosses into a domain type.
 
