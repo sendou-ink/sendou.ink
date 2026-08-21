@@ -5,5 +5,6 @@ allowBuilds:
 patchedDependencies:
   '@react-router/serve@8.1.0': patches/@react-router__serve@8.1.0.patch
   '@techstark/opencv-js@5.0.0-release.1': patches/@techstark__opencv-js@5.0.0-release.1.patch
+  i18next@26.3.6: patches/i18next@26.3.6.patch
   kysely@0.29.0: patches/kysely@0.29.0.patch
   react-i18next@17.0.11: patches/react-i18next@17.0.11.patch

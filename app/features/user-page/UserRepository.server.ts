@@ -146,16 +146,23 @@ export function findLayoutDataByIdentifier(
 				)
 				.whereRef("VideoMatchPlayer.playerUserId", "=", "User.id")
 				.as("vodsCount"),
+			// authored and tagged art counted via an indexed union: an OR spanning
+			// Art and ArtUserMetadata would make SQLite scan the whole Art table
 			eb
 				.selectFrom("Art")
-				.leftJoin("ArtUserMetadata", "ArtUserMetadata.artId", "Art.id")
 				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")
-				.select(({ fn }) => fn.count<number>("Art.id").distinct().as("count"))
-				.where((innerEb) =>
-					innerEb.or([
-						innerEb("Art.authorId", "=", eb.ref("User.id")),
-						innerEb("ArtUserMetadata.userId", "=", eb.ref("User.id")),
-					]),
+				.select(({ fn }) => fn.countAll<number>().as("count"))
+				.where("Art.id", "in", (innerEb) =>
+					innerEb
+						.selectFrom("Art")
+						.select("Art.id")
+						.whereRef("Art.authorId", "=", "User.id")
+						.union(
+							innerEb
+								.selectFrom("ArtUserMetadata")
+								.select("ArtUserMetadata.artId as id")
+								.whereRef("ArtUserMetadata.userId", "=", "User.id"),
+						),
 				)
 				.as("artCount"),
 		])
