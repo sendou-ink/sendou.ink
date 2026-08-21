@@ -1,14 +1,16 @@
-import type { z } from "zod";
+import * as v from "valibot";
+import type { AnySyncSchema } from "~/utils/schema";
 import { getFormFieldMetadata } from "./fields";
-import type { FormField } from "./types";
+import type { FormField, FormObjectSchema } from "./types";
 
 export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 
 /**
- * Builds a form field name (e.g. `members[0].userId`) from a Zod issue path so
- * that server- and client-side validation errors key fields identically.
+ * Builds a form field name (e.g. `members[0].userId`) from a validation issue
+ * path so that server- and client-side validation errors key fields
+ * identically.
  */
 export function buildFieldPath(path: PropertyKey[]): string | null {
 	if (path.length === 0) return null;
@@ -21,6 +23,11 @@ export function buildFieldPath(path: PropertyKey[]): string | null {
 		})
 		.filter((part) => part !== null)
 		.join("");
+}
+
+/** Path of a valibot issue as plain keys, for {@link buildFieldPath}. */
+export function issuePathKeys(issue: v.BaseIssue<unknown>): PropertyKey[] {
+	return (issue.path ?? []).map((item) => (item as { key: PropertyKey }).key);
 }
 
 export function getNestedValue(
@@ -104,9 +111,9 @@ export function fieldsetDefaults(
 ): Record<string, unknown> {
 	if (fieldsetMeta.type !== "fieldset") return {};
 
-	const shape = fieldsetMeta.fields.shape as Record<string, z.ZodType>;
+	const entries = fieldsetMeta.fields.entries as Record<string, AnySyncSchema>;
 	const result: Record<string, unknown> = {};
-	for (const [key, fieldSchema] of Object.entries(shape)) {
+	for (const [key, fieldSchema] of Object.entries(entries)) {
 		const fieldMeta = getFormFieldMetadata(fieldSchema);
 		if (fieldMeta) result[key] = fieldMeta.initialValue;
 	}
@@ -123,7 +130,7 @@ export function fieldsetDefaults(
  * affect submitting a pristine form.
  */
 export function seedArrayItemDefaults(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: FormObjectSchema,
 	values: Record<string, unknown>,
 	name: string,
 ): Record<string, unknown> {
@@ -147,27 +154,25 @@ export function seedArrayItemDefaults(
 }
 
 export function getNestedSchema(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: FormObjectSchema,
 	path: string,
-): z.ZodType | undefined {
+): AnySyncSchema | undefined {
 	const parts = parsePath(path);
-	let current: z.ZodType = schema;
+	let current: AnySyncSchema = schema;
 
 	for (const part of parts) {
 		const unwrapped = unwrapSchema(current);
 
 		if (typeof part === "number") {
-			const def = unwrapped._def as {
-				type?: string;
-				element?: z.ZodType;
-			};
-			if (def.type === "array" && def.element) {
-				current = def.element;
+			if (unwrapped.type === "array" && "item" in unwrapped) {
+				current = (unwrapped as unknown as { item: AnySyncSchema }).item;
 			} else {
 				return undefined;
 			}
-		} else if ("shape" in unwrapped && unwrapped.shape) {
-			const nextSchema = (unwrapped.shape as Record<string, z.ZodType>)[part];
+		} else if ("entries" in unwrapped) {
+			const nextSchema = (
+				unwrapped as unknown as { entries: Record<string, AnySyncSchema> }
+			).entries[part];
 			if (!nextSchema) return undefined;
 			current = nextSchema;
 		} else {
@@ -178,25 +183,34 @@ export function getNestedSchema(
 	return current;
 }
 
-function unwrapSchema(schema: z.ZodType): z.ZodType {
-	const def = schema._def ?? (schema as unknown as { def: unknown }).def;
-	const typeName =
-		(def as { typeName?: string }).typeName ?? (def as { type?: string }).type;
-
+/**
+ * Unwraps optional/nullable/nullish wrappers and pipes (e.g. `preprocess`)
+ * down to the schema that carries the structural properties (`entries`/`item`).
+ * A pipe over a plain schema needs no unwrapping since it spreads that
+ * schema's own properties.
+ */
+function unwrapSchema(schema: AnySyncSchema): AnySyncSchema {
 	if (
-		typeName === "ZodNullable" ||
-		typeName === "ZodOptional" ||
-		typeName === "ZodDefault" ||
-		typeName === "nullable" ||
-		typeName === "optional" ||
-		typeName === "default"
+		(schema.type === "optional" ||
+			schema.type === "nullable" ||
+			schema.type === "nullish") &&
+		"wrapped" in schema
 	) {
-		const inner = (def as unknown as { innerType: z.ZodType }).innerType;
-		return unwrapSchema(inner);
+		return unwrapSchema(
+			(schema as unknown as { wrapped: AnySyncSchema }).wrapped,
+		);
 	}
-	if (typeName === "ZodEffects" || typeName === "effects") {
-		return unwrapSchema((def as unknown as { schema: z.ZodType }).schema);
+
+	if ("pipe" in schema) {
+		const pipeItems = (schema as unknown as { pipe: Array<{ kind: string }> })
+			.pipe;
+		const schemas = pipeItems.filter((item) => item.kind === "schema");
+		const last = schemas[schemas.length - 1];
+		if (last && last !== pipeItems[0]) {
+			return unwrapSchema(last as unknown as AnySyncSchema);
+		}
 	}
+
 	return schema;
 }
 
@@ -205,16 +219,16 @@ export function errorMessageId(fieldId: string) {
 }
 
 export function validateField(
-	schema: z.ZodObject<z.ZodRawShape>,
+	schema: FormObjectSchema,
 	name: string,
 	value: unknown,
 ): string | undefined {
 	const fieldSchema = name.includes(".")
 		? getNestedSchema(schema, name)
-		: (schema.shape[name] as z.ZodType | undefined);
+		: (schema.entries[name] as AnySyncSchema | undefined);
 	if (!fieldSchema) return undefined;
 
-	const result = fieldSchema.safeParse(value);
+	const result = v.safeParse(fieldSchema, value);
 	if (result.success) return undefined;
 
 	// `array`/`fieldset` fields render each child as its own FormField with its
@@ -226,19 +240,24 @@ export function validateField(
 	const childrenRenderOwnErrors =
 		fieldMeta?.type === "array" || fieldMeta?.type === "fieldset";
 	const issue = childrenRenderOwnErrors
-		? result.error.issues.find((i) => i.path.length === 0)
-		: result.error.issues[0];
+		? result.issues.find((i) => !i.path || i.path.length === 0)
+		: result.issues[0];
 	if (!issue) return undefined;
 
 	const valueIsEmpty = value === null || value === undefined || value === "";
 	if (
 		valueIsEmpty &&
-		(issue.code === "invalid_type" || issue.code === "too_small")
+		(issue.kind === "schema" ||
+			issue.type === "min_length" ||
+			issue.type === "min_value")
 	) {
 		return "forms:errors.required";
 	}
 
-	if (issue.code === "too_small" && issue.minimum === 1) {
+	if (
+		(issue.type === "min_length" || issue.type === "min_value") &&
+		issue.requirement === 1
+	) {
 		return "forms:errors.required";
 	}
 

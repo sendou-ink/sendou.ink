@@ -1,6 +1,6 @@
 import { addDays } from "date-fns";
+import type * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import type { z } from "zod";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -8,7 +8,7 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { wrappedAction } from "~/utils/Test";
 import { action } from "./calendar.$id";
 
-const deleteAction = wrappedAction<z.ZodType<Record<string, never>>>({
+const deleteAction = wrappedAction<v.GenericSchema<Record<string, never>>>({
 	action,
 });
 

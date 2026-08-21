@@ -175,15 +175,15 @@ importers:
       swr:
         specifier: 2.5.0
         version: 2.5.0(react@19.2.8)
+      valibot:
+        specifier: ^1.4.2
+        version: 1.4.2(typescript@7.0.2)
       web-haptics:
         specifier: 0.0.6
         version: 0.0.6(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       web-push:
         specifier: 3.6.7
         version: 3.6.7
-      zod:
-        specifier: 4.4.3
-        version: 4.4.3
     devDependencies:
       '@babel/preset-typescript':
         specifier: 7.29.7

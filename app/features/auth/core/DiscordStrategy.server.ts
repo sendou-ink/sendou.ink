@@ -1,6 +1,6 @@
 import { add } from "date-fns";
 import { OAuth2Strategy } from "remix-auth-oauth2";
-import { z } from "zod";
+import * as v from "valibot";
 import { Config } from "~/config";
 import { ServerConfig } from "~/config.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -8,36 +8,39 @@ import { logger } from "~/utils/logger";
 
 let discordApiCooldownUntil: number | null = null;
 
-const partialDiscordUserSchema = z.object({
-	avatar: z.string().nullish(),
-	discriminator: z.string(),
-	id: z.string(),
-	username: z.string(),
-	global_name: z.string().nullish(),
-	verified: z.boolean().nullish(),
+const partialDiscordUserSchema = v.object({
+	avatar: v.optional(v.nullable(v.string())),
+	discriminator: v.string(),
+	id: v.string(),
+	username: v.string(),
+	global_name: v.optional(v.nullable(v.string())),
+	verified: v.optional(v.nullable(v.boolean())),
 });
-const partialDiscordConnectionsSchema = z.array(
-	z.object({
-		visibility: z.number(),
-		verified: z.boolean(),
-		name: z.string(),
-		id: z.string(),
-		type: z.string(),
+const partialDiscordConnectionsSchema = v.array(
+	v.object({
+		visibility: v.number(),
+		verified: v.boolean(),
+		name: v.string(),
+		id: v.string(),
+		type: v.string(),
 	}),
 );
-const discordUserDetailsSchema = z.tuple([
+const discordUserDetailsSchema = v.tuple([
 	partialDiscordUserSchema,
 	partialDiscordConnectionsSchema,
 ]);
-const discordRateLimitSchema = z.object({
-	retry_after: z.number(),
+const discordRateLimitSchema = v.object({
+	retry_after: v.number(),
 });
 
 export const DiscordStrategy = () => {
 	const jsonIfOk = async (res: Response) => {
 		if (res.status === 429) {
-			const body = discordRateLimitSchema.safeParse(await res.clone().json());
-			const retryAfterSeconds = body.success ? body.data.retry_after : 60;
+			const body = v.safeParse(
+				discordRateLimitSchema,
+				await res.clone().json(),
+			);
+			const retryAfterSeconds = body.success ? body.output.retry_after : 60;
 			discordApiCooldownUntil = add(new Date(), {
 				seconds: retryAfterSeconds,
 			}).getTime();
@@ -89,8 +92,10 @@ export const DiscordStrategy = () => {
 					tokens.accessToken(),
 				);
 
-				const [user, connections] =
-					discordUserDetailsSchema.parse(discordResponses);
+				const [user, connections] = v.parse(
+					discordUserDetailsSchema,
+					discordResponses,
+				);
 
 				const isAlreadyRegistered = Boolean(
 					await UserRepository.findIdByIdentifier(user.id),
@@ -119,7 +124,7 @@ export const DiscordStrategy = () => {
 };
 
 function parseConnections(
-	connections: z.infer<typeof partialDiscordConnectionsSchema>,
+	connections: v.InferOutput<typeof partialDiscordConnectionsSchema>,
 ) {
 	if (!connections) throw new Error("No connections");
 

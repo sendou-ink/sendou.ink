@@ -1,5 +1,6 @@
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
-import { z } from "zod";
+import { preprocess } from "~/utils/schema";
 import { getNestedSchema, getNestedValue, setNestedValue } from "./utils";
 
 describe("getNestedValue", () => {
@@ -60,67 +61,98 @@ describe("setNestedValue", () => {
 
 describe("getNestedSchema", () => {
 	test("returns schema for simple path", () => {
-		const schema = z.object({ name: z.string() });
+		const schema = v.object({ name: v.string() });
 		const result = getNestedSchema(schema, "name");
-		expect(result).toBeInstanceOf(z.ZodString);
+		expect(result?.type).toBe("string");
 	});
 
 	test("returns schema for nested path", () => {
-		const schema = z.object({ config: z.object({ name: z.string() }) });
+		const schema = v.object({ config: v.object({ name: v.string() }) });
 		const result = getNestedSchema(schema, "config.name");
-		expect(result).toBeInstanceOf(z.ZodString);
+		expect(result?.type).toBe("string");
 	});
 
 	test("unwraps nullable wrapper", () => {
-		const schema = z.object({
-			config: z.object({ name: z.string() }).nullable(),
+		const schema = v.object({
+			config: v.nullable(v.object({ name: v.string() })),
 		});
 		const result = getNestedSchema(schema, "config.name");
-		const def = result?._def ?? (result as unknown as { def?: unknown })?.def;
-		const typeName =
-			(def as { typeName?: string })?.typeName ??
-			(def as { type?: string })?.type;
-		expect(typeName).toBe("string");
+		expect(result?.type).toBe("string");
 	});
 
 	test("unwraps optional wrapper", () => {
-		const schema = z.object({
-			config: z.object({ name: z.string() }).optional(),
+		const schema = v.object({
+			config: v.optional(v.object({ name: v.string() })),
 		});
 		const result = getNestedSchema(schema, "config.name");
-		const def = result?._def ?? (result as unknown as { def?: unknown })?.def;
-		const typeName =
-			(def as { typeName?: string })?.typeName ??
-			(def as { type?: string })?.type;
-		expect(typeName).toBe("string");
+		expect(result?.type).toBe("string");
 	});
 
 	test("returns undefined for invalid path", () => {
-		const schema = z.object({ name: z.string() });
+		const schema = v.object({ name: v.string() });
 		expect(getNestedSchema(schema, "missing.path")).toBe(undefined);
 	});
 
 	test("returns undefined when path goes through non-object", () => {
-		const schema = z.object({ name: z.string() });
+		const schema = v.object({ name: v.string() });
 		expect(getNestedSchema(schema, "name.invalid")).toBe(undefined);
 	});
 
 	test("returns schema for array element path", () => {
-		const schema = z.object({
-			items: z.array(z.object({ name: z.string() })),
+		const schema = v.object({
+			items: v.array(v.object({ name: v.string() })),
 		});
 		const result = getNestedSchema(schema, "items[0].name");
-		expect(result).toBeInstanceOf(z.ZodString);
+		expect(result?.type).toBe("string");
 	});
 
 	test("returns schema for array element path with min/max", () => {
-		const schema = z.object({
-			items: z
-				.array(z.object({ name: z.string() }))
-				.min(1)
-				.max(10),
+		const schema = v.object({
+			items: v.pipe(
+				v.array(v.object({ name: v.string() })),
+				v.minLength(1),
+				v.maxLength(10),
+			),
 		});
 		const result = getNestedSchema(schema, "items[0].name");
-		expect(result).toBeInstanceOf(z.ZodString);
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe into a nested object", () => {
+		const schema = v.object({
+			config: preprocess((val) => val, v.object({ name: v.string() })),
+		});
+		const result = getNestedSchema(schema, "config.name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe into a nested array", () => {
+		const schema = v.object({
+			items: preprocess((val) => val, v.array(v.object({ name: v.string() }))),
+		});
+		const result = getNestedSchema(schema, "items[0].name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe inside an array item", () => {
+		const schema = v.object({
+			items: v.array(preprocess((val) => val, v.object({ name: v.string() }))),
+		});
+		const result = getNestedSchema(schema, "items[0].name");
+		expect(result?.type).toBe("string");
+	});
+
+	test("drills through a preprocess pipe wrapping a validated object", () => {
+		const schema = v.object({
+			config: preprocess(
+				(val) => val,
+				v.pipe(
+					v.object({ name: v.string() }),
+					v.check((val) => val.name.length > 0),
+				),
+			),
+		});
+		const result = getNestedSchema(schema, "config.name");
+		expect(result?.type).toBe("string");
 	});
 });

@@ -16,15 +16,15 @@ One definition per route (or feature, when several routes share params), in a sh
 
 ```ts
 // app/features/builds/builds-search-params.ts
-import { z } from "zod";
+import * as v from "valibot";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 
 export const buildsSearchParams = SearchParams.define({
-	limit: SP.param(z.number().int().min(1).max(100), { default: 24, loader: true }),
+	limit: SP.param(v.pipe(v.number(), v.integer(), v.minValue(1), v.maxValue(100)), { default: 24, loader: true }),
 	f: SP.json(buildFiltersSchema, { default: [], resets: ["limit"], loader: true }),
-	focused: SP.param(z.enum(["1", "2", "3"]), { default: "1", loader: false }),
-	tournament: SP.param(z.string().max(100).nullable(), { loader: true }),
+	focused: SP.param(v.picklist(["1", "2", "3"]), { default: "1", loader: false }),
+	tournament: SP.param(v.nullable(v.pipe(v.string(), v.maxLength(100))), { loader: true }),
 });
 ```
 
@@ -38,26 +38,26 @@ Options accepted by every declaration:
 
 ### `SP.param` and the derivation table
 
-`SP.param(valueSchema, opts)` is the canonical declaration. The value schema is plain zod — all validation lives there, and shared schemas from `app/utils/zod.ts` plug in directly. The URL encoding is derived from the schema's type:
+`SP.param(valueSchema, opts)` is the canonical declaration. The value schema is plain valibot — all validation lives there, and shared schemas from `app/utils/schema.ts` plug in directly. The URL encoding is derived from the schema's type:
 
 | Schema base type | URL encoding |
 | --- | --- |
-| `z.string()`, string enums/literals | as-is |
-| `z.number()`, number enums/literals (incl. `numericEnum`) | `String(n)` |
-| `z.boolean()` | `"true"` / `"false"` only |
-| `z.array(item)` | repeated keys (`?id=1&id=2`); invalid members are dropped, not the whole array |
-| `.nullable()` wrapper | unwrapped; `null` encodes as param absent. `default` is omitted (it is always `null`; passing anything else throws). `.optional()` is rejected — `.nullable()` is the project-wide convention |
-| refinements (`.min`, `.max`, `.refine`, …) | validation only; a failing value resolves to the default |
+| `v.string()`, string picklists/literals | as-is |
+| `v.number()`, number enums (incl. `numericEnum`) | `String(n)` |
+| `v.boolean()` | `"true"` / `"false"` only |
+| `v.array(item)` | repeated keys (`?id=1&id=2`); invalid members are dropped, not the whole array |
+| `v.nullable()` wrapper | unwrapped; `null` encodes as param absent. `default` is omitted (it is always `null`; passing anything else throws). `v.optional()` is rejected — `v.nullable()` is the project-wide convention |
+| validations in a pipe (`v.minValue`, `v.maxLength`, `v.check`, …) | validation only; a failing value resolves to the default |
 
-Derivation is closed, not best-effort: shapes outside this table (objects, mixed-type unions, transforms, `z.preprocess`) are a `define()`-time error. Those use the explicit helpers:
+Derivation is closed, not best-effort: shapes outside this table (objects, mixed-type unions, transforms, `preprocess`) are a `define()`-time error. Those use the explicit helpers:
 
 | Helper | Encoding |
 | --- | --- |
 | `SP.json(schema, opts)` | `JSON.stringify` in a single value — for objects and whole-array-as-one-param values |
-| `SP.custom(codec, opts)` | anything — pass a `z.codec(z.string(), valueSchema, { decode, encode })` directly |
+| `SP.custom(codec, opts)` | anything — pass a `codec(valueSchema, { decode, encode })` (from the search-params module; `decode` returns `undefined` for malformed input, `nullableCodec` widens with `null`) |
 | `SP.page(opts?)` | the paginated route's `page` param (1-based, `loader: true`, default `1`, `max` overridable) |
 
-Note: schemas built with `z.preprocess` (like `weaponSplId`, `stageId` in `app/utils/zod.ts`) are pipes and rejected — use the inner schema (`numericEnum(mainWeaponIds)`, `numericEnum(stageIds)`) since string→number conversion is the codec's job.
+Note: schemas carrying a transform are rejected — those built with `preprocess` (like `weaponSplId`, `stageId` in `app/utils/schema.ts`) and those built with `coerceNumber` (like `id`). Use the inner schema instead (`numericEnum(mainWeaponIds)`, `numericEnum(stageIds)`, `v.pipe(v.number(), v.integer(), v.minValue(1))`) since string→number conversion is the codec's job.
 
 ### Compression
 

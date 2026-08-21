@@ -1,4 +1,4 @@
-import type { z } from "zod";
+import * as v from "valibot";
 import { ServerConfig } from "~/config.server";
 import { STAFF_DISCORD_IDS } from "~/features/admin/admin-constants";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
@@ -77,10 +77,10 @@ async function fetchPatronData(urlToFetch: string) {
 				);
 			}
 
-			const parsed = patreonRateLimitSchema.safeParse(await response.json());
+			const parsed = v.safeParse(patreonRateLimitSchema, await response.json());
 			const retryAfterSeconds = Math.min(
 				parsed.success
-					? (parsed.data.errors[0]?.retry_after_seconds ??
+					? (parsed.output.errors[0]?.retry_after_seconds ??
 							DEFAULT_RETRY_AFTER_SECONDS)
 					: DEFAULT_RETRY_AFTER_SECONDS,
 				MAX_RETRY_AFTER_SECONDS,
@@ -99,7 +99,7 @@ async function fetchPatronData(urlToFetch: string) {
 			);
 		}
 
-		return patronResponseSchema.parse(await response.json());
+		return v.parse(patronResponseSchema, await response.json());
 	}
 
 	throw new Error("Unexpected end of fetch retry loop");
@@ -112,7 +112,7 @@ function sleep(ms: number) {
 function parsePatronData({
 	data,
 	included,
-}: z.infer<typeof patronResponseSchema>) {
+}: v.InferOutput<typeof patronResponseSchema>) {
 	const patronsWithIds: Array<
 		{
 			patreonId: string;

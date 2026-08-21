@@ -1,8 +1,8 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import * as SearchParams from "~/modules/search-params/search-params";
-import { SP } from "~/modules/search-params/search-params";
-import { modeShort } from "~/utils/zod";
+import { codec, SP } from "~/modules/search-params/search-params";
+import { modeShort } from "~/utils/schema";
 import { DEFAULT_TIERS } from "./tier-list-maker-constants";
 import {
 	type TierListState,
@@ -15,28 +15,25 @@ const EMPTY_TIER_LIST_STATE: TierListState = {
 	tierItems: new Map(),
 };
 
-const tierListState = z.codec(z.string(), z.custom<TierListState>(), {
-	decode: (value, payload) => {
-		const serialized = parseSerializedJson(value);
-		if (!serialized) {
-			payload.issues.push({
-				code: "custom",
-				message: "Invalid tier list state",
-				input: value,
-			});
-			return z.NEVER;
-		}
-		return {
-			tiers: serialized.tiers,
-			tierItems: new Map(serialized.tierItems),
-		};
+const tierListState = codec(
+	v.custom<TierListState>(() => true),
+	{
+		decode: (value) => {
+			const serialized = parseSerializedJson(value);
+			if (!serialized) return undefined;
+
+			return {
+				tiers: serialized.tiers,
+				tierItems: new Map(serialized.tierItems),
+			};
+		},
+		encode: (state) =>
+			JSON.stringify({
+				tiers: state.tiers,
+				tierItems: Array.from(state.tierItems.entries()),
+			}),
 	},
-	encode: (state) =>
-		JSON.stringify({
-			tiers: state.tiers,
-			tierItems: Array.from(state.tierItems.entries()),
-		}),
-});
+);
 
 export const tierListMakerSearchParams = SearchParams.define({
 	state: SP.custom(tierListState, {
@@ -48,12 +45,12 @@ export const tierListMakerSearchParams = SearchParams.define({
 		default: "main-weapon",
 		loader: false,
 	}),
-	title: SP.param(z.string(), { default: "", loader: false }),
-	showTierHeaders: SP.param(z.boolean(), { default: true, loader: false }),
-	hideAltKits: SP.param(z.boolean(), { default: false, loader: false }),
-	hideAltSkins: SP.param(z.boolean(), { default: false, loader: false }),
-	canAddDuplicates: SP.param(z.boolean(), { default: false, loader: false }),
-	modes: SP.param(z.array(modeShort), {
+	title: SP.param(v.string(), { default: "", loader: false }),
+	showTierHeaders: SP.param(v.boolean(), { default: true, loader: false }),
+	hideAltKits: SP.param(v.boolean(), { default: false, loader: false }),
+	hideAltSkins: SP.param(v.boolean(), { default: false, loader: false }),
+	canAddDuplicates: SP.param(v.boolean(), { default: false, loader: false }),
+	modes: SP.param(v.array(modeShort), {
 		default: [...rankedModesShort],
 		loader: false,
 	}),
@@ -67,6 +64,6 @@ function parseSerializedJson(value: string) {
 		return null;
 	}
 
-	const parsed = tierListStateSerializedSchema.safeParse(json);
-	return parsed.success ? parsed.data : null;
+	const parsed = v.safeParse(tierListStateSerializedSchema, json);
+	return parsed.success ? parsed.output : null;
 }

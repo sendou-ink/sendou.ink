@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import gameMisc from "~/../locales/en/game-misc.json";
 import type { TablesInsertable } from "~/db/tables";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -16,48 +16,48 @@ const RULE_TO_MODE: Record<string, RankedModeShort> = {
 	CLAM: "CB",
 };
 
-const vsStageSchema = z.object({
-	name: z.string(),
-	image: z.object({ url: z.string() }),
+const vsStageSchema = v.object({
+	name: v.string(),
+	image: v.object({ url: v.string() }),
 });
 
-const vsRuleSchema = z.object({
-	name: z.string(),
-	rule: z.string(),
+const vsRuleSchema = v.object({
+	name: v.string(),
+	rule: v.string(),
 });
 
-const bankaraMatchSettingSchema = z.object({
-	vsStages: z.array(vsStageSchema),
+const bankaraMatchSettingSchema = v.object({
+	vsStages: v.array(vsStageSchema),
 	vsRule: vsRuleSchema,
-	bankaraMode: z.enum(["CHALLENGE", "OPEN"]),
+	bankaraMode: v.picklist(["CHALLENGE", "OPEN"]),
 });
 
-const bankaraNodeSchema = z.object({
-	startTime: z.string(),
-	endTime: z.string(),
-	bankaraMatchSettings: z.array(bankaraMatchSettingSchema).nullable(),
+const bankaraNodeSchema = v.object({
+	startTime: v.string(),
+	endTime: v.string(),
+	bankaraMatchSettings: v.nullable(v.array(bankaraMatchSettingSchema)),
 });
 
-const xMatchSettingSchema = z
-	.object({
-		vsStages: z.array(vsStageSchema),
+const xMatchSettingSchema = v.nullable(
+	v.object({
+		vsStages: v.array(vsStageSchema),
 		vsRule: vsRuleSchema,
-	})
-	.nullable();
+	}),
+);
 
-const xNodeSchema = z.object({
-	startTime: z.string(),
-	endTime: z.string(),
+const xNodeSchema = v.object({
+	startTime: v.string(),
+	endTime: v.string(),
 	xMatchSetting: xMatchSettingSchema,
 });
 
-const schedulesSchema = z.object({
-	data: z.object({
-		bankaraSchedules: z.object({
-			nodes: z.array(bankaraNodeSchema),
+const schedulesSchema = v.object({
+	data: v.object({
+		bankaraSchedules: v.object({
+			nodes: v.array(bankaraNodeSchema),
 		}),
-		xSchedules: z.object({
-			nodes: z.array(xNodeSchema),
+		xSchedules: v.object({
+			nodes: v.array(xNodeSchema),
 		}),
 	}),
 });
@@ -84,7 +84,7 @@ export async function fetchRotations(): Promise<
 	}
 
 	const json = await response.json();
-	const parsed = schedulesSchema.parse(json);
+	const parsed = v.parse(schedulesSchema, json);
 
 	const rotations: Omit<TablesInsertable["SplatoonRotation"], "id">[] = [];
 

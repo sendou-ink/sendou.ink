@@ -1,76 +1,76 @@
-import { z } from "zod";
+import * as v from "valibot";
 
-const placements = z.object({
-	edges: z.array(
-		z.object({
-			node: z.object({
-				id: z.string(),
-				name: z.string(),
-				rank: z.number(),
-				rankDiff: z.union([z.string(), z.null()]),
-				xPower: z.number(),
-				weapon: z.object({
-					name: z.string(),
-					image: z.object({ url: z.string() }),
-					id: z.string(),
-					image3d: z.object({ url: z.string() }),
-					image2d: z.object({ url: z.string() }),
-					image3dThumbnail: z.object({ url: z.string() }),
-					image2dThumbnail: z.object({ url: z.string() }),
-					subWeapon: z.object({
-						name: z.string(),
-						image: z.object({ url: z.string() }),
-						id: z.string(),
+const placements = v.object({
+	edges: v.array(
+		v.object({
+			node: v.object({
+				id: v.string(),
+				name: v.string(),
+				rank: v.number(),
+				rankDiff: v.union([v.string(), v.null()]),
+				xPower: v.number(),
+				weapon: v.object({
+					name: v.string(),
+					image: v.object({ url: v.string() }),
+					id: v.string(),
+					image3d: v.object({ url: v.string() }),
+					image2d: v.object({ url: v.string() }),
+					image3dThumbnail: v.object({ url: v.string() }),
+					image2dThumbnail: v.object({ url: v.string() }),
+					subWeapon: v.object({
+						name: v.string(),
+						image: v.object({ url: v.string() }),
+						id: v.string(),
 					}),
-					specialWeapon: z.object({
-						name: z.string(),
-						image: z.object({ url: z.string() }),
-						id: z.string(),
+					specialWeapon: v.object({
+						name: v.string(),
+						image: v.object({ url: v.string() }),
+						id: v.string(),
 					}),
 				}),
-				weaponTop: z.boolean(),
-				__isPlayer: z.string(),
-				byname: z.string(),
-				nameId: z.string(),
-				nameplate: z.object({
-					badges: z.array(
-						z.union([
-							z.object({
-								image: z.object({ url: z.string() }),
-								id: z.string(),
+				weaponTop: v.boolean(),
+				__isPlayer: v.string(),
+				byname: v.string(),
+				nameId: v.string(),
+				nameplate: v.object({
+					badges: v.array(
+						v.union([
+							v.object({
+								image: v.object({ url: v.string() }),
+								id: v.string(),
 							}),
-							z.null(),
+							v.null(),
 						]),
 					),
-					background: z.object({
-						textColor: z.object({
-							a: z.number(),
-							b: z.number(),
-							g: z.number(),
-							r: z.number(),
+					background: v.object({
+						textColor: v.object({
+							a: v.number(),
+							b: v.number(),
+							g: v.number(),
+							r: v.number(),
 						}),
-						image: z.object({ url: z.string() }),
-						id: z.string(),
+						image: v.object({ url: v.string() }),
+						id: v.string(),
 					}),
 				}),
-				__typename: z.string(),
+				__typename: v.string(),
 			}),
-			cursor: z.string(),
+			cursor: v.string(),
 		}),
 	),
-	pageInfo: z.object({ endCursor: z.string(), hasNextPage: z.boolean() }),
+	pageInfo: v.object({ endCursor: v.string(), hasNextPage: v.boolean() }),
 });
 
 // e.g. https://splatoon3.ink/data/xrank/xrank.detail.a-2.clamblitz.json
-export const xRankSchema = z.object({
-	data: z.object({
-		node: z.object({
-			__typename: z.string(),
-			xRankingAr: placements.optional(),
-			xRankingCl: placements.optional(),
-			xRankingLf: placements.optional(),
-			xRankingGl: placements.optional(),
-			id: z.string(),
+export const xRankSchema = v.object({
+	data: v.object({
+		node: v.object({
+			__typename: v.string(),
+			xRankingAr: v.optional(placements),
+			xRankingCl: v.optional(placements),
+			xRankingLf: v.optional(placements),
+			xRankingGl: v.optional(placements),
+			id: v.string(),
 		}),
 	}),
 });

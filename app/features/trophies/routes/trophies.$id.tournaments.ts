@@ -2,7 +2,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { idObject } from "~/utils/schema";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { canAccessTrophies } from "../trophies-utils";
 

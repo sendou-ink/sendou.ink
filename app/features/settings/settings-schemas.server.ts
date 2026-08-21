@@ -1,8 +1,8 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { updateMatchProfileSchema } from "./match-profile-schemas";
 import { settingsEditSchema } from "./settings-schemas";
 
-export const settingsActionSchema = z.union([
+export const settingsActionSchema = v.union([
 	settingsEditSchema,
 	updateMatchProfileSchema,
 ]);

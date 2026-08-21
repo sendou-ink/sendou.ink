@@ -1,15 +1,15 @@
 /**
- * Zod schemas for the scanner domain — the single source of truth shared by
+ * Valibot schemas for the scanner domain — the single source of truth shared by
  * the producer (the scanner match builder/UI in this feature) and the
  * validator (features/scanner-ingest). Every domain field is a sendou.ink id
  * type; the compile-time asserts at the bottom pin each schema to the
  * corresponding core interface so producer and validator cannot drift.
  *
  * The core/worker modules consume only the *types* (type-only imports point
- * the other way), so zod never enters the worker bundle; runtime validation
+ * the other way), so valibot never enters the worker bundle; runtime validation
  * happens at the boundaries (ingest action, prefill loader).
  */
-import { z } from "zod";
+import * as v from "valibot";
 import { abilities } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -24,95 +24,105 @@ import type {
 } from "./core/scanner-match";
 import { SCANNER_LOBBIES } from "./scanner-types";
 
-const detectionText = z.string().max(500);
+const detectionText = v.pipe(v.string(), v.maxLength(500));
 
-const scannerLobbySchema = z.enum(SCANNER_LOBBIES);
-export const modeShortSchema = z.enum(modesShort);
-export const stageIdSchema = z.literal(stageIds);
-export const mainWeaponIdSchema = z.literal(mainWeaponIds);
+const scannerLobbySchema = v.picklist(SCANNER_LOBBIES);
+export const modeShortSchema = v.picklist(modesShort);
+export const stageIdSchema = v.picklist(stageIds);
+export const mainWeaponIdSchema = v.picklist(mainWeaponIds);
 
 const abilityNames = abilities.map((ability) => ability.name) as Ability[];
 /** a sendou ability id, or the detectors' explicit unrecognized marker */
-const scannerAbilitySchema = z.union([
-	z.literal(abilityNames),
-	z.literal("UNKNOWN"),
+const scannerAbilitySchema = v.union([
+	v.picklist(abilityNames),
+	v.literal("UNKNOWN"),
 ]);
 
-const scannerMatchPlayerSchema = z.object({
-	name: detectionText.nullable(),
-	weaponId: mainWeaponIdSchema.nullable(),
-	paint: z.number().nullable(),
-	ka: z.number().nullable(),
-	d: z.number().nullable(),
-	s: z.number().nullable(),
+const scannerMatchPlayerSchema = v.object({
+	name: v.nullable(detectionText),
+	weaponId: v.nullable(mainWeaponIdSchema),
+	paint: v.nullable(v.number()),
+	ka: v.nullable(v.number()),
+	d: v.nullable(v.number()),
+	s: v.nullable(v.number()),
 	/** [head, clothes, shoes] ability rows harvested from death screens */
-	abilities: z.array(z.array(scannerAbilitySchema).max(4)).max(3).optional(),
+	abilities: v.optional(
+		v.pipe(
+			v.array(v.pipe(v.array(scannerAbilitySchema), v.maxLength(4))),
+			v.maxLength(3),
+		),
+	),
 });
 
-const scannerMatchTeamSchema = z.object({
-	players: z.array(scannerMatchPlayerSchema).max(4),
+const scannerMatchTeamSchema = v.object({
+	players: v.pipe(v.array(scannerMatchPlayerSchema), v.maxLength(4)),
 });
 
-const teamIndexSchema = z.union([z.literal(0), z.literal(1)]);
+const teamIndexSchema = v.union([v.literal(0), v.literal(1)]);
 
 /** counters change at most 1/s, so a match yields a few hundred samples */
 const MAX_OBJECTIVE_SAMPLES = 1000;
 
-const scannerMatchObjectiveSampleSchema = z.object({
-	t: z.number().int().min(0),
-	time: z.number().int().min(0).nullable(),
-	score: z.tuple([z.number().nullable(), z.number().nullable()]),
-	penalty: z.tuple([z.number().nullable(), z.number().nullable()]),
-	control: z.tuple([z.boolean(), z.boolean()]),
+const scannerMatchObjectiveSampleSchema = v.object({
+	t: v.pipe(v.number(), v.integer(), v.minValue(0)),
+	time: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
+	score: v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
+	penalty: v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
+	control: v.tuple([v.boolean(), v.boolean()]),
 });
 
-const scannerMatchObjectiveSchema = z.object({
-	mode: z.literal("SZ"),
-	samples: z
-		.array(scannerMatchObjectiveSampleSchema)
-		.max(MAX_OBJECTIVE_SAMPLES),
+const scannerMatchObjectiveSchema = v.object({
+	mode: v.literal("SZ"),
+	samples: v.pipe(
+		v.array(scannerMatchObjectiveSampleSchema),
+		v.maxLength(MAX_OBJECTIVE_SAMPLES),
+	),
 });
 
-const playerFlagsSchema = z.tuple([
-	z.boolean(),
-	z.boolean(),
-	z.boolean(),
-	z.boolean(),
+const playerFlagsSchema = v.tuple([
+	v.boolean(),
+	v.boolean(),
+	v.boolean(),
+	v.boolean(),
 ]);
 
-const scannerMatchPlayerStatusSampleSchema = z.object({
-	t: z.number().int().min(0),
-	time: z.number().int().min(0).nullable(),
-	special: z.tuple([playerFlagsSchema, playerFlagsSchema]),
-	dead: z.tuple([playerFlagsSchema, playerFlagsSchema]),
+const scannerMatchPlayerStatusSampleSchema = v.object({
+	t: v.pipe(v.number(), v.integer(), v.minValue(0)),
+	time: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
+	special: v.tuple([playerFlagsSchema, playerFlagsSchema]),
+	dead: v.tuple([playerFlagsSchema, playerFlagsSchema]),
 });
 
-const scannerMatchPlayerStatusSchema = z.object({
-	samples: z
-		.array(scannerMatchPlayerStatusSampleSchema)
-		.max(MAX_OBJECTIVE_SAMPLES),
+const scannerMatchPlayerStatusSchema = v.object({
+	samples: v.pipe(
+		v.array(scannerMatchPlayerStatusSampleSchema),
+		v.maxLength(MAX_OBJECTIVE_SAMPLES),
+	),
 });
 
-export const scannerMatchSchema = z.object({
-	startsAt: z.number().int().min(0).nullable(),
-	endsAt: z.number().int().min(0).nullable(),
+export const scannerMatchSchema = v.object({
+	startsAt: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
+	endsAt: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	/** wall-clock ms the game was played */
-	playedAt: z.number().int().positive().nullable(),
-	lobby: scannerLobbySchema.nullable(),
-	mode: modeShortSchema.nullable(),
-	stage: stageIdSchema.nullable(),
-	matchScores: z
-		.tuple([z.number().nullable(), z.number().nullable()])
-		.nullable(),
-	replayCode: detectionText.nullable(),
-	cast: z.boolean(),
-	objective: scannerMatchObjectiveSchema.nullable(),
-	playerStatus: scannerMatchPlayerStatusSchema.nullable(),
-	teams: z.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
-	winner: teamIndexSchema.nullable(),
-	pov: z
-		.object({ team: teamIndexSchema, index: z.number().int().min(0).max(3) })
-		.nullable(),
+	playedAt: v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+	lobby: v.nullable(scannerLobbySchema),
+	mode: v.nullable(modeShortSchema),
+	stage: v.nullable(stageIdSchema),
+	matchScores: v.nullable(
+		v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
+	),
+	replayCode: v.nullable(detectionText),
+	cast: v.boolean(),
+	objective: v.nullable(scannerMatchObjectiveSchema),
+	playerStatus: v.nullable(scannerMatchPlayerStatusSchema),
+	teams: v.tuple([scannerMatchTeamSchema, scannerMatchTeamSchema]),
+	winner: v.nullable(teamIndexSchema),
+	pov: v.nullable(
+		v.object({
+			team: teamIndexSchema,
+			index: v.pipe(v.number(), v.integer(), v.minValue(0), v.maxValue(3)),
+		}),
+	),
 });
 
 // ---- compile-time drift protection: schema output <-> core interface ----
@@ -126,22 +136,22 @@ type MutuallyAssignable<A, B> = [A] extends [B]
 // `true satisfies …` fails to compile the moment a schema and its core
 // interface disagree in either direction.
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerMatchPlayerSchema>,
+	v.InferOutput<typeof scannerMatchPlayerSchema>,
 	ScannerMatchPlayer
 >;
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerMatchTeamSchema>,
+	v.InferOutput<typeof scannerMatchTeamSchema>,
 	ScannerMatchTeam
 >;
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerMatchObjectiveSchema>,
+	v.InferOutput<typeof scannerMatchObjectiveSchema>,
 	ScannerMatchObjective
 >;
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerMatchPlayerStatusSchema>,
+	v.InferOutput<typeof scannerMatchPlayerStatusSchema>,
 	ScannerMatchPlayerStatus
 >;
 true satisfies MutuallyAssignable<
-	z.infer<typeof scannerMatchSchema>,
+	v.InferOutput<typeof scannerMatchSchema>,
 	ScannerMatch
 >;

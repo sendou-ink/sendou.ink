@@ -1,4 +1,5 @@
 import { cachified } from "@epic-web/cachified";
+import * as v from "valibot";
 import { cache } from "~/utils/cache.server";
 import { tokenResponseSchema } from "./schemas";
 import { getTwitchEnvVars } from "./utils.server";
@@ -16,12 +17,12 @@ async function getFreshToken() {
 		);
 	}
 
-	const parsed = tokenResponseSchema.safeParse(await res.json());
+	const parsed = v.safeParse(tokenResponseSchema, await res.json());
 	if (!parsed.success) {
 		throw new Error("Token response schema validation failed");
 	}
 
-	return parsed.data.access_token;
+	return parsed.output.access_token;
 }
 
 export function getToken() {

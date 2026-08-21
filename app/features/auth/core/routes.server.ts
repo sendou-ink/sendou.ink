@@ -1,7 +1,7 @@
 import { isbot } from "isbot";
 import type { ActionFunction, LoaderFunction } from "react-router";
 import { redirect } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -11,6 +11,7 @@ import {
 	canAccessLohiEndpoint,
 	errorToastRedirect,
 } from "~/utils/remix.server";
+import type { AnySyncSchema } from "~/utils/schema";
 import { ADMIN_PAGE, authErrorUrl } from "~/utils/urls";
 import * as LogInLinkRepository from "../LogInLinkRepository.server";
 import {
@@ -151,17 +152,17 @@ async function safeReturnTo(request: Request): Promise<string | null> {
 // only light validation here as we generally trust Lohi
 // auth flow params are infrastructure conventions and intentionally do not go
 // through app/modules/search-params/
-function parseSearchParams<T extends z.ZodTypeAny>({
+function parseSearchParams<T extends AnySyncSchema>({
 	request,
 	schema,
 }: {
 	request: Request;
 	schema: T;
-}): z.infer<T> {
+}): v.InferOutput<T> {
 	const searchParams = Object.fromEntries(new URL(request.url).searchParams);
 
 	try {
-		return schema.parse(searchParams);
+		return v.parse(schema, searchParams);
 	} catch (e) {
 		logger.error("Error parsing search params", e);
 
@@ -169,12 +170,12 @@ function parseSearchParams<T extends z.ZodTypeAny>({
 	}
 }
 
-const createLogInLinkActionSchema = z.object({
-	discordId: z.string(),
-	discordAvatar: z.string().nullish(),
-	discordName: z.string(),
-	discordUniqueName: z.string(),
-	updateOnly: z.enum(["true", "false"]),
+const createLogInLinkActionSchema = v.object({
+	discordId: v.string(),
+	discordAvatar: v.optional(v.nullable(v.string())),
+	discordName: v.string(),
+	discordUniqueName: v.string(),
+	updateOnly: v.picklist(["true", "false"]),
 });
 
 export const createLogInLinkAction: ActionFunction = async ({ request }) => {
@@ -203,8 +204,8 @@ export const createLogInLinkAction: ActionFunction = async ({ request }) => {
 	};
 };
 
-const logInViaLinkActionSchema = z.object({
-	code: z.string(),
+const logInViaLinkActionSchema = v.object({
+	code: v.string(),
 });
 
 export const logInViaLinkLoader: LoaderFunction = async ({ request }) => {

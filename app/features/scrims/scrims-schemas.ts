@@ -1,5 +1,5 @@
 import { add, sub } from "date-fns";
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	customField,
 	datetime,
@@ -18,6 +18,7 @@ import {
 	tournamentSearchOptional,
 } from "~/form/fields";
 import { modesShort } from "~/modules/in-game-lists/modes";
+import { codec } from "~/modules/search-params/search-params";
 import {
 	_action,
 	date,
@@ -25,57 +26,61 @@ import {
 	filterOutNullishMembers,
 	id,
 	noDuplicates,
+	preprocess,
+	superRefine,
 	timeString,
-} from "~/utils/zod";
+} from "~/utils/schema";
 import { associationIdentifierSchema } from "../associations/associations-schemas";
 import { LUTI_DIVS, SCRIM } from "./scrims-constants";
 import { parseMapPoolInput } from "./scrims-utils";
 
-const deletePostSchema = z.object({
+const deletePostSchema = v.object({
 	_action: _action("DELETE_POST"),
 	scrimPostId: id,
 });
 
-const fromUsers = z.preprocess(
+const fromUsers = preprocess(
 	filterOutNullishMembers,
-	z
-		.array(id)
-		.min(3, {
-			message: "forms:errors.minUsersExcludingYourself",
-		})
-		.max(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER)
-		.refine(noDuplicates, {
-			message: "forms:errors.usersMustBeUnique",
-		}),
+	v.pipe(
+		v.array(id),
+		v.minLength(3, "forms:errors.minUsersExcludingYourself"),
+		v.maxLength(SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER),
+		v.check((users) => noDuplicates(users), "forms:errors.usersMustBeUnique"),
+	),
 );
 
-export const fromSchema = z.union([
-	z.object({ mode: z.literal("PICKUP"), users: fromUsers }),
-	z.object({ mode: z.literal("TEAM"), teamId: id }),
+export const fromSchema = v.union([
+	v.object({ mode: v.literal("PICKUP"), users: fromUsers }),
+	v.object({ mode: v.literal("TEAM"), teamId: id }),
 ]);
 
-export const newRequestSchema = z.object({
+export const newRequestSchema = v.object({
 	_action: _action("NEW_REQUEST"),
 	scrimPostId: id,
 	from: fromSchema,
-	message: z.preprocess(
-		falsyToNull,
-		z.string().max(SCRIM.REQUEST_MESSAGE_MAX_LENGTH).nullable(),
+	message: v.optional(
+		preprocess(
+			falsyToNull,
+			v.nullable(
+				v.pipe(v.string(), v.maxLength(SCRIM.REQUEST_MESSAGE_MAX_LENGTH)),
+			),
+		),
+		null,
 	),
-	at: z.preprocess(date, z.date()).nullish(),
+	at: v.nullish(preprocess(date, v.date())),
 });
 
-const acceptRequestSchema = z.object({
+const acceptRequestSchema = v.object({
 	_action: _action("ACCEPT_REQUEST"),
 	scrimPostRequestId: id,
 });
 
-const cancelRequestSchema = z.object({
+const cancelRequestSchema = v.object({
 	_action: _action("CANCEL_REQUEST"),
 	scrimPostRequestId: id,
 });
 
-export const cancelScrimFormSchema = z.object({
+export const cancelScrimFormSchema = v.object({
 	_action: stringConstant("CANCEL_SCRIM"),
 	reason: textArea({
 		label: "labels.scrimCancelReason",
@@ -84,31 +89,27 @@ export const cancelScrimFormSchema = z.object({
 	}),
 });
 
-const timeRangeSchema = z.object({
+const timeRangeSchema = v.object({
 	start: timeString,
 	end: timeString,
 });
 
-const divsBaseSchema = z
-	.object({
-		min: z.enum(LUTI_DIVS).nullable(),
-		max: z.enum(LUTI_DIVS).nullable(),
-	})
-	.refine(
-		(div) => {
-			if (!div) return true;
+const divsBaseSchema = v.pipe(
+	v.object({
+		min: v.nullable(v.picklist(LUTI_DIVS)),
+		max: v.nullable(v.picklist(LUTI_DIVS)),
+	}),
+	v.check((div) => {
+		if (!div) return true;
 
-			if (div.max && !div.min) return false;
-			if (div.min && !div.max) return false;
+		if (div.max && !div.min) return false;
+		if (div.min && !div.max) return false;
 
-			return true;
-		},
-		{
-			message: "forms:errors.divBothOrNeither",
-		},
-	);
+		return true;
+	}, "forms:errors.divBothOrNeither"),
+);
 
-export const divsSchema = divsBaseSchema.transform(normalizeDivs);
+export const divsSchema = v.pipe(divsBaseSchema, v.transform(normalizeDivs));
 
 function normalizeDivs<T extends { min: string | null; max: string | null }>(
 	divs: T,
@@ -126,13 +127,13 @@ function normalizeDivs<T extends { min: string | null; max: string | null }>(
 	return divs;
 }
 
-const scrimsFiltersSchema = z.object({
-	weekdayTimes: timeRangeSchema.nullable().catch(null),
-	weekendTimes: timeRangeSchema.nullable().catch(null),
-	divs: divsSchema.nullable().catch(null),
+const scrimsFiltersSchema = v.object({
+	weekdayTimes: v.fallback(v.nullable(timeRangeSchema), null),
+	weekendTimes: v.fallback(v.nullable(timeRangeSchema), null),
+	divs: v.fallback(v.nullable(divsSchema), null),
 });
 
-export const timeRangeCodec = z.codec(z.string(), timeRangeSchema.nullable(), {
+export const timeRangeCodec = codec(v.nullable(timeRangeSchema), {
 	decode: (encoded) => {
 		if (encoded[5] !== "-") return null;
 
@@ -142,13 +143,14 @@ export const timeRangeCodec = z.codec(z.string(), timeRangeSchema.nullable(), {
 		timeRange === null ? "" : `${timeRange.start}-${timeRange.end}`,
 });
 
-export const divsCodec = z.codec(z.string(), divsBaseSchema.nullable(), {
+export const divsCodec = codec(v.nullable(divsBaseSchema), {
 	decode: (encoded) => {
 		const [max, min] = encoded.split("-");
 
-		return normalizeDivs({ max: max ?? null, min: min ?? null }) as z.output<
-			typeof divsBaseSchema
-		>;
+		return normalizeDivs({
+			max: max ?? null,
+			min: min ?? null,
+		});
 	},
 	encode: (divs) => (divs === null ? "" : `${divs.max}-${divs.min}`),
 });
@@ -173,12 +175,12 @@ const divsFormField = dualSelectOptional({
 	},
 });
 
-const persistScrimFiltersSchema = z.object({
+const persistScrimFiltersSchema = v.object({
 	_action: _action("PERSIST_SCRIM_FILTERS"),
 	filters: scrimsFiltersSchema,
 });
 
-export const scrimsActionSchema = z.union([
+export const scrimsActionSchema = v.union([
 	deletePostSchema,
 	newRequestSchema,
 	acceptRequestSchema,
@@ -186,8 +188,8 @@ export const scrimsActionSchema = z.union([
 	persistScrimFiltersSchema,
 ]);
 
-export const submitMapListFormSchema = z
-	.object({
+export const submitMapListFormSchema = v.pipe(
+	v.object({
 		_action: stringConstant("SUBMIT_MAP_LIST"),
 		source: radioGroupDynamic({
 			label: "labels.scrimMapSource",
@@ -204,50 +206,48 @@ export const submitMapListFormSchema = z
 		tournamentId: tournamentSearchOptional({
 			label: "labels.scrimMapsTournament",
 		}),
-	})
-	.superRefine((data, ctx) => {
+	}),
+	superRefine((data, ctx) => {
 		if (!["POOL", "TOURNAMENT", "FROM_POST"].includes(data.source)) {
 			ctx.addIssue({
 				path: ["source"],
 				message: "forms:errors.required",
-				code: z.ZodIssueCode.custom,
 			});
 		}
 		if (data.source === "POOL" && !data.serializedPool) {
 			ctx.addIssue({
 				path: ["serializedPool"],
 				message: "forms:errors.invalidMapPool",
-				code: z.ZodIssueCode.custom,
 			});
 		}
 		if (data.source === "TOURNAMENT" && !data.tournamentId) {
 			ctx.addIssue({
 				path: ["tournamentId"],
 				message: "forms:errors.scrimTournamentRequired",
-				code: z.ZodIssueCode.custom,
 			});
 		}
-	});
+	}),
+);
 
-const removeMapListSchema = z.object({
+const removeMapListSchema = v.object({
 	_action: _action("REMOVE_MAP_LIST"),
 });
 
-const reportMapSchema = z.object({
+const reportMapSchema = v.object({
 	_action: _action("REPORT_MAP"),
 	mapId: id,
-	winnerSide: z.enum(["ALPHA", "BRAVO"]),
+	winnerSide: v.picklist(["ALPHA", "BRAVO"]),
 });
 
-const undoMapSchema = z.object({
+const undoMapSchema = v.object({
 	_action: _action("UNDO_MAP"),
 });
 
-const replayMapSchema = z.object({
+const replayMapSchema = v.object({
 	_action: _action("REPLAY_MAP"),
 });
 
-export const pickMapFormSchema = z.object({
+export const pickMapFormSchema = v.object({
 	_action: stringConstant("PICK_MAP"),
 	mode: select({
 		label: "labels.vodMode",
@@ -259,7 +259,7 @@ export const pickMapFormSchema = z.object({
 	stageId: stageSelect({ label: "labels.vodStage" }),
 });
 
-export const scrimIdActionSchema = z.union([
+export const scrimIdActionSchema = v.union([
 	cancelScrimFormSchema,
 	submitMapListFormSchema,
 	removeMapListSchema,
@@ -280,7 +280,7 @@ export const RANGE_END_OPTIONS = [
 	"+3hours",
 ] as const;
 
-export const scrimRequestFormSchema = z.object({
+export const scrimRequestFormSchema = v.object({
 	_action: stringConstant("NEW_REQUEST"),
 	scrimPostId: idConstant(),
 	from: customField({ initialValue: null }, fromSchema),
@@ -312,8 +312,8 @@ const mapsItems = [
 	{ label: "options.scrimMaps.tournament" as const, value: "TOURNAMENT" },
 ] as const;
 
-export const scrimsNewFormSchema = z
-	.object({
+export const scrimsNewFormSchema = v.pipe(
+	v.object({
 		at: datetime({
 			label: "labels.start",
 			bottomText: "bottomTexts.scrimStart",
@@ -333,18 +333,15 @@ export const scrimsNewFormSchema = z
 		),
 		notFoundVisibility: customField(
 			{ initialValue: { at: null, forAssociation: "PUBLIC" } },
-			z.object({
-				at: z
-					.preprocess(date, z.date())
-					.nullish()
-					.refine(
-						(date) => {
-							if (!date) return true;
-							if (date < sub(new Date(), { days: 1 })) return false;
-							return true;
-						},
-						{ message: "errors.dateInPast" },
-					),
+			v.object({
+				at: v.pipe(
+					v.nullish(preprocess(date, v.date())),
+					v.check((date) => {
+						if (!date) return true;
+						if (date < sub(new Date(), { days: 1 })) return false;
+						return true;
+					}, "errors.dateInPast"),
+				),
 				forAssociation: associationIdentifierSchema,
 			}),
 		),
@@ -365,20 +362,19 @@ export const scrimsNewFormSchema = z
 		mapsTournamentId: tournamentSearchOptional({
 			label: "labels.scrimMapsTournament",
 		}),
-	})
+	}),
 	// a tournament pick is only meaningful when maps come from a tournament, so
 	// drop any stale selection instead of erroring on a field that is not rendered
-	.overwrite((post) =>
+	v.transform((post) =>
 		post.maps !== "TOURNAMENT" && post.mapsTournamentId
 			? { ...post, mapsTournamentId: null }
 			: post,
-	)
-	.superRefine((post, ctx) => {
+	),
+	superRefine((post, ctx) => {
 		if (post.maps === "TOURNAMENT" && !post.mapsTournamentId) {
 			ctx.addIssue({
 				path: ["mapsTournamentId"],
 				message: "forms:errors.tournamentMustBeSelected",
-				code: z.ZodIssueCode.custom,
 			});
 		}
 
@@ -389,7 +385,6 @@ export const scrimsNewFormSchema = z
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.visibilityMustBeDifferent",
-				code: z.ZodIssueCode.custom,
 			});
 		}
 
@@ -397,7 +392,6 @@ export const scrimsNewFormSchema = z
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.visibilityNotAllowedWhenPublic",
-				code: z.ZodIssueCode.custom,
 			});
 		}
 
@@ -405,7 +399,6 @@ export const scrimsNewFormSchema = z
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.dateAfterScrimDate",
-				code: z.ZodIssueCode.custom,
 			});
 		}
 
@@ -413,7 +406,7 @@ export const scrimsNewFormSchema = z
 			ctx.addIssue({
 				path: ["notFoundVisibility"],
 				message: "forms:errors.canNotSetIfLookingNow",
-				code: z.ZodIssueCode.custom,
 			});
 		}
-	});
+	}),
+);

@@ -1,16 +1,16 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { action as adminAction } from "~/features/tournament-admin/actions/to.$id.admin.seeds.server";
 import { parseBody, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 
-const bodySchema = z.object({
-	tournamentTeamIds: z.array(id),
+const bodySchema = v.object({
+	tournamentTeamIds: v.array(id),
 });
 
 export const action = async (args: ActionFunctionArgs) => {

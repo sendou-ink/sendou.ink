@@ -149,7 +149,7 @@ For developers reading the [architecture.md](./docs/dev/architecture.md) file is
 - **UI Library**: React Aria Components
 - **Database**: SQLite3 (via Kysely)
 - **Styling**: CSS Modules
-- **Validation**: Zod
+- **Validation**: Valibot
 - **Internationalization**: i18next
 - **Testing**:
    - End-to-End (E2E): Playwright

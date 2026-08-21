@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import {
 	array,
@@ -19,7 +19,7 @@ import {
 	toggle,
 } from "~/form/fields";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { id } from "~/utils/zod";
+import { id, type ValidationCtx } from "~/utils/schema";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import {
 	bracketsFormField,
@@ -35,9 +35,23 @@ const calendarEventDateField = datetime({
 	max: calendarEventMaxDate,
 });
 
-export const calendarNewBaseSchema = z.object({
+// extracted so its literal item values don't widen to `string` in the
+// object's inferred value type
+const toToolsModeField = select({
+	label: "labels.mapPickingStyle",
+	items: [
+		{ value: "ALL", label: "options.toToolsMode.ALL" },
+		{ value: "SZ", label: "options.toToolsMode.SZ" },
+		{ value: "TC", label: "options.toToolsMode.TC" },
+		{ value: "RM", label: "options.toToolsMode.RM" },
+		{ value: "CB", label: "options.toToolsMode.CB" },
+		{ value: "TO", label: "options.toToolsMode.TO" },
+	],
+});
+
+export const calendarNewBaseSchema = v.object({
 	// discriminates between a calendar event and a tournament; seeded from the loader, no visible control
-	toToolsEnabled: hidden(z.boolean(), false),
+	toToolsEnabled: hidden(v.boolean(), false),
 	eventToEditId: idConstantOptional(),
 	tournamentToCopyId: idConstantOptional(),
 	name: textField({
@@ -87,7 +101,7 @@ export const calendarNewBaseSchema = z.object({
 		})),
 	}),
 	badges: badges({ label: "labels.badges", maxCount: 50 }),
-	trophyId: customField({ initialValue: null }, id.nullish()),
+	trophyId: customField({ initialValue: null }, v.nullish(id)),
 	avatarImgId: image({
 		label: "labels.logo",
 		bottomText: "bottomTexts.avatarValidation",
@@ -112,18 +126,8 @@ export const calendarNewBaseSchema = z.object({
 		label: "labels.maxTeamSize",
 		bottomText: "bottomTexts.maxTeamSize",
 	}),
-	toToolsMode: select({
-		label: "labels.mapPickingStyle",
-		items: [
-			{ value: "ALL", label: "options.toToolsMode.ALL" },
-			{ value: "SZ", label: "options.toToolsMode.SZ" },
-			{ value: "TC", label: "options.toToolsMode.TC" },
-			{ value: "RM", label: "options.toToolsMode.RM" },
-			{ value: "CB", label: "options.toToolsMode.CB" },
-			{ value: "TO", label: "options.toToolsMode.TO" },
-		],
-	}),
-	pool: customField({ initialValue: "" }, z.string().optional()),
+	toToolsMode: toToolsModeField,
+	pool: customField({ initialValue: "" }, v.optional(v.string())),
 	// the two bracket progression fields are only rendered (and validated) for
 	// tournaments; for calendar events both stay at their empty initial value
 	brackets: bracketsFormField,
@@ -165,14 +169,13 @@ export const calendarNewBaseSchema = z.object({
 
 /** Shared sync cross-field rules, reused by the server schema (see `*.server.ts`). */
 export function calendarNewSyncRefine(
-	data: z.infer<typeof calendarNewBaseSchema>,
-	ctx: z.RefinementCtx,
+	data: v.InferOutput<typeof calendarNewBaseSchema>,
+	ctx: ValidationCtx,
 ) {
 	// a calendar event needs at least one date; a tournament needs its single start time
 	if (!data.toToolsEnabled && data.date.length < 1) {
 		ctx.addIssue({
 			path: ["date"],
-			code: z.ZodIssueCode.custom,
 			message: "forms:errors.required",
 		});
 	}
@@ -180,7 +183,6 @@ export function calendarNewSyncRefine(
 	if (data.toToolsEnabled && !data.startTime) {
 		ctx.addIssue({
 			path: ["startTime"],
-			code: z.ZodIssueCode.custom,
 			message: "forms:errors.required",
 		});
 	}
@@ -189,7 +191,6 @@ export function calendarNewSyncRefine(
 	if (!data.toToolsEnabled && !data.bracketUrl) {
 		ctx.addIssue({
 			path: ["bracketUrl"],
-			code: z.ZodIssueCode.custom,
 			message: "forms:errors.bracketUrlRequired",
 		});
 	}
@@ -198,7 +199,6 @@ export function calendarNewSyncRefine(
 		if (data.brackets.length === 0) {
 			ctx.addIssue({
 				path: ["brackets"],
-				code: z.ZodIssueCode.custom,
 				message: "forms:errors.bracketProgressionRequired",
 			});
 		} else {
@@ -220,7 +220,6 @@ export function calendarNewSyncRefine(
 		if (!isValid) {
 			ctx.addIssue({
 				path: ["pool"],
-				code: z.ZodIssueCode.custom,
 				message: "forms:errors.allModePool",
 			});
 		}
@@ -229,7 +228,6 @@ export function calendarNewSyncRefine(
 	if (data.trophyId && data.badges.length > 0) {
 		ctx.addIssue({
 			path: ["badges"],
-			code: z.ZodIssueCode.custom,
 			message: "forms:errors.trophyWithBadges",
 		});
 	}
@@ -242,7 +240,6 @@ export function calendarNewSyncRefine(
 	) {
 		ctx.addIssue({
 			path: ["maxMembersPerTeam"],
-			code: z.ZodIssueCode.custom,
 			message: "forms:errors.maxMembersRange",
 		});
 	}

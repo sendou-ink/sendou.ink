@@ -129,8 +129,8 @@ export default defineConfig((config) => {
 				"remix-i18next",
 				"sql-formatter",
 				"swr/immutable",
+				"valibot",
 				"web-haptics/react",
-				"zod",
 			],
 		},
 	};

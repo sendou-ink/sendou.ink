@@ -1,6 +1,7 @@
 import { add, startOfWeek, sub } from "date-fns";
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
+import * as v from "valibot";
 import type { UserPreferences } from "~/db/tables-json";
 import { getUser } from "~/features/auth/core/user.server";
 import { DAYS_SHOWN_AT_A_TIME } from "~/features/calendar/calendar-constants";
@@ -47,7 +48,8 @@ export const loader = async (args: LoaderFunctionArgs) => {
 		!R.isDeepEqual(
 			filters,
 			user.preferences?.defaultCalendarFilters
-				? calendarFiltersSearchParamsSchema.parse(
+				? v.parse(
+						calendarFiltersSearchParamsSchema,
 						user.preferences.defaultCalendarFilters,
 					)
 				: CalendarEvent.defaultFilters(),
@@ -96,7 +98,8 @@ function resolveFilters(
 
 	if (preferences?.defaultCalendarFilters) {
 		// make sure the saved values still match current reality
-		const parsedDefault = calendarFiltersSearchParamsSchema.parse(
+		const parsedDefault = v.parse(
+			calendarFiltersSearchParamsSchema,
 			preferences.defaultCalendarFilters,
 		);
 

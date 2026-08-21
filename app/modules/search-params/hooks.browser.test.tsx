@@ -1,21 +1,27 @@
 import * as React from "react";
 import { createBrowserRouter, RouterProvider } from "react-router";
+import * as v from "valibot";
 import { afterEach, describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { z } from "zod";
 import { useSearchParam, useSearchParamsTyped } from "./hooks";
 import * as SearchParams from "./search-params";
 import { SP } from "./search-params";
 
 const definition = SearchParams.define({
-	page: SP.param(z.number().int().min(1), { default: 1, loader: true }),
-	filters: SP.json(z.object({ q: z.string() }), {
+	page: SP.param(v.pipe(v.number(), v.integer(), v.minValue(1)), {
+		default: 1,
+		loader: true,
+	}),
+	filters: SP.json(v.object({ q: v.string() }), {
 		default: { q: "" },
 		loader: true,
 		resets: ["page"],
 	}),
-	view: SP.param(z.enum(["list", "grid"]), { default: "list", loader: false }),
-	other: SP.param(z.number(), { default: 0, loader: false }),
+	view: SP.param(v.picklist(["list", "grid"]), {
+		default: "list",
+		loader: false,
+	}),
+	other: SP.param(v.number(), { default: 0, loader: false }),
 });
 
 let loaderCalls = 0;

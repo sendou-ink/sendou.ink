@@ -1,6 +1,6 @@
 import * as React from "react";
-import type { z } from "zod";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type { AnySyncSchema } from "~/utils/schema";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
 import { BadgesFormField } from "./fields/BadgesFormField";
@@ -69,7 +69,7 @@ interface FormFieldProps {
 	/** Focuses the field on mount. Only `text-field` and `text-area` support it. */
 	autoFocus?: boolean;
 	maxCount?: number;
-	field?: z.ZodType;
+	field?: AnySyncSchema;
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
@@ -111,10 +111,10 @@ export function FormField({
 			);
 		}
 
-		const zodObject = context.schema;
+		const objectSchema = context.schema;
 		const result = name.includes(".")
-			? getNestedSchema(zodObject, name)
-			: zodObject.shape[name];
+			? getNestedSchema(objectSchema, name)
+			: objectSchema.entries[name];
 
 		if (!result) {
 			throw new Error(
@@ -441,7 +441,6 @@ export function FormField({
 	}
 
 	if (formField.type === "array") {
-		// @ts-expect-error Type instantiation is excessively deep with complex schemas
 		const innerFieldMeta = formRegistry.get(formField.field) as
 			| FormFieldType
 			| undefined;

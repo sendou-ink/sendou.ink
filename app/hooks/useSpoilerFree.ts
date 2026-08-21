@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { useUser } from "~/features/auth/core/user";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
@@ -6,7 +6,7 @@ import * as PersistedState from "~/modules/persisted-state/persisted-state";
 export const revealedTournamentsPersisted = PersistedState.define({
 	key: "spoilerFreeRevealed",
 	storage: "session",
-	schema: z.array(z.number()),
+	schema: v.array(v.number()),
 	default: [],
 });
 

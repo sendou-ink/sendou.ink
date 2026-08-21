@@ -1,20 +1,20 @@
+import * as v from "valibot";
 import { afterEach, describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
-import { z } from "zod";
 import { usePersistedMapState, usePersistedState } from "./hooks";
 import * as PersistedState from "./persisted-state";
 
 const recentIds = PersistedState.define({
 	key: "test-recent-ids",
 	storage: "local",
-	schema: z.array(z.number()),
+	schema: v.array(v.number()),
 	default: [],
 });
 
 const counts = PersistedState.defineMap({
 	keyPrefix: "test-counts__",
 	storage: "local",
-	schema: z.number(),
+	schema: v.number(),
 	default: 0,
 });
 

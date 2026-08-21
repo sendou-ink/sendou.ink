@@ -6,8 +6,8 @@ import {
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
-import { idObject } from "~/utils/zod";
 import { TOURNAMENT } from "../tournament-constants";
 import { saveTournamentSchema } from "../tournament-schemas";
 

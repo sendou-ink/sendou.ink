@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { idObject } from "~/utils/zod";
+import { idObject } from "~/utils/schema";
 import * as BadgeRepository from "../BadgeRepository.server";
 
 export type BadgeDetailsLoaderData = SerializeFrom<typeof loader>;

@@ -2,7 +2,6 @@ import type { TFunction } from "i18next";
 import { Ban, Check, Undo2, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
-import type { z } from "zod";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouTabPanel } from "~/components/elements/Tabs";
@@ -15,6 +14,7 @@ import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
 import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
+import type { FormObjectSchema } from "~/form/types";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
@@ -190,7 +190,7 @@ function CancelMatchForm({
 		label: () => member.username,
 	}));
 
-	const schema: z.ZodObject<z.ZodRawShape> =
+	const schema: FormObjectSchema =
 		action === "REQUEST_CANCEL" ? requestCancelSchema : acceptCancelSchema;
 
 	return (

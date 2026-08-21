@@ -1,17 +1,17 @@
 import type * as React from "react";
 import { type FetcherWithComponents, useFetcher } from "react-router";
-import type { z } from "zod";
 import {
 	type ActionsOf,
 	type FieldsOf,
 	serializeFieldValue,
 } from "~/utils/action-schemas";
+import type { AnySchema } from "~/utils/schema";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 import { FormWithConfirm } from "./FormWithConfirm";
 import { SubmitButton } from "./SubmitButton";
 
 interface ActionButtonBaseProps<
-	TSchema extends z.ZodTypeAny,
+	TSchema extends AnySchema,
 	TAction extends ActionsOf<TSchema>,
 > extends Omit<SendouButtonProps, "type" | "name" | "value" | "form"> {
 	/** Action schema of the route the button submits to. Only used for typing `action` and `fields`. */
@@ -33,7 +33,7 @@ interface ActionButtonBaseProps<
 }
 
 type ActionButtonProps<
-	TSchema extends z.ZodTypeAny,
+	TSchema extends AnySchema,
 	TAction extends ActionsOf<TSchema>,
 > = ActionButtonBaseProps<TSchema, TAction> &
 	// biome-ignore lint/complexity/noBannedTypes: {} models "branch with no extra fields"
@@ -43,7 +43,7 @@ type ActionButtonProps<
 
 /**
  * Button that submits a mutation to a route action as `_action` + hidden fields,
- * type checked against the route's zod action schema.
+ * type checked against the route's action schema.
  *
  * @example
  * <ActionButton
@@ -55,7 +55,7 @@ type ActionButtonProps<
  * </ActionButton>
  */
 export function ActionButton<
-	TSchema extends z.ZodTypeAny,
+	TSchema extends AnySchema,
 	const TAction extends ActionsOf<TSchema>,
 >({
 	schema,

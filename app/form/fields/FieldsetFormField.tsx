@@ -1,19 +1,19 @@
-import type { z } from "zod";
+import type * as v from "valibot";
 import { FormMessage } from "~/components/FormMessage";
 import { FormField } from "../FormField";
 import type { FormFieldProps } from "../types";
 import { useTranslatedTexts } from "./FormFieldWrapper";
 
-type FieldsetFormFieldProps<S extends z.ZodRawShape> = Omit<
+type FieldsetFormFieldProps<S extends v.ObjectEntries> = Omit<
 	FormFieldProps<"fieldset">,
 	"fields"
 > & {
 	name: string;
-	fields: z.ZodObject<S>;
+	fields: v.ObjectSchema<S, undefined>;
 	disabled?: boolean;
 };
 
-export function FieldsetFormField<S extends z.ZodRawShape>({
+export function FieldsetFormField<S extends v.ObjectEntries>({
 	label,
 	name,
 	bottomText,
@@ -21,7 +21,7 @@ export function FieldsetFormField<S extends z.ZodRawShape>({
 	fields,
 	disabled,
 }: FieldsetFormFieldProps<S>) {
-	const fieldNames = Object.keys(fields.shape);
+	const fieldNames = Object.keys(fields.entries);
 	const { translatedLabel, translatedBottomText, translatedError } =
 		useTranslatedTexts({ label, bottomText, error });
 
@@ -34,7 +34,7 @@ export function FieldsetFormField<S extends z.ZodRawShape>({
 				<FormField
 					key={fieldName}
 					name={`${name}.${fieldName}`}
-					field={fields.shape[fieldName] as z.ZodType}
+					field={fields.entries[fieldName]}
 					disabled={disabled}
 				/>
 			))}

@@ -1,32 +1,35 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { upsertRegistrationAction } from "~/features/tournament-admin/actions/to.$id.admin.registration.server";
 import { ADMIN_REGISTRATION_MAX_MEMBERS } from "~/features/tournament-admin/tournament-admin-registration-schemas";
 import { existingImage } from "~/form/image-field";
 import { parseBody, parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 });
 
-const bodySchema = z.object({
-	tournamentTeamId: id.optional(),
-	name: z.string().max(TOURNAMENT.TEAM_NAME_MAX_LENGTH).optional(),
-	teamId: id.optional(),
+const bodySchema = v.object({
+	tournamentTeamId: v.optional(id),
+	name: v.optional(
+		v.pipe(v.string(), v.maxLength(TOURNAMENT.TEAM_NAME_MAX_LENGTH)),
+	),
+	teamId: v.optional(id),
 	ownerUserId: id,
-	members: z
-		.array(
-			z.object({
+	members: v.pipe(
+		v.array(
+			v.object({
 				userId: id,
-				inGameName: z.string().optional(),
+				inGameName: v.optional(v.string()),
 			}),
-		)
-		.min(1)
-		.max(ADMIN_REGISTRATION_MAX_MEMBERS),
+		),
+		v.minLength(1),
+		v.maxLength(ADMIN_REGISTRATION_MAX_MEMBERS),
+	),
 });
 
 export const action = async (args: ActionFunctionArgs) => {

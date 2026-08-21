@@ -8,7 +8,7 @@ The custom theme system lets Patreon supporters customize the sites colors, bord
 | ------ | --------- |
 | `app/styles/vars.css` | Default CSS custom property values and semantic tokens |
 | `app/utils/oklch-gamut.ts` | Gamut clamping math, lightness values, chroma multipliers |
-| `app/utils/zod.ts` | `themeInputSchema` and `THEME_INPUT_LIMITS` for validation |
+| `app/utils/schema.ts` | `themeInputSchema` and `THEME_INPUT_LIMITS` for validation |
 | `app/db/tables.ts` | `CustomTheme` type and `CUSTOM_THEME_VARS` list |
 | `app/components/CustomThemeSelector.tsx` | UI component, `DEFAULT_THEME_INPUT` |
 | `app/root.tsx` | `useCustomThemeVars()` applies theme to `<html>` element |

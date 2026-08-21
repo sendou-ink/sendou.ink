@@ -1,10 +1,10 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 
-const organizationParamsSchema = z.object({
-	slug: z.string(),
+const organizationParamsSchema = v.object({
+	slug: v.string(),
 });
 
 export async function organizationFromParams(

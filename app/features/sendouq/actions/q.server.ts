@@ -9,13 +9,13 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
+import { normalizeFriendCode } from "~/utils/schema";
 import { assertUnreachable } from "~/utils/types";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_PREPARING_PAGE,
 	SUSPENDED_PAGE,
 } from "~/utils/urls";
-import { normalizeFriendCode } from "~/utils/zod";
 import {
 	refreshSendouQInstance,
 	SendouQ,

@@ -4,8 +4,8 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
+import { idObject } from "~/utils/schema";
 import { calendarEventPage } from "~/utils/urls";
-import { idObject } from "~/utils/zod";
 import { reportWinnersFormSchema } from "../calendar-report-winners-schemas";
 
 export const action: ActionFunction = async (args) => {

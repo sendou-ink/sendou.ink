@@ -1,10 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { imageFieldValueToImgId } from "~/features/img-upload/image-field.server";
 import { formDataToObject } from "~/utils/remix.server";
+import type { AnySchema } from "~/utils/schema";
 import { formRegistry } from "./fields";
 import type { ImageFieldValue } from "./image-field";
-import { buildFieldPath } from "./utils";
+import { buildFieldPath, issuePathKeys } from "./utils";
 
 export type ParseResult<T> =
 	| { success: true; data: T }
@@ -18,13 +19,15 @@ export type ParseResult<T> =
 const DEFAULT_MAX_BODY_BYTES = 8 * 1024 * 1024;
 
 /**
- * Maps a {@link z.ZodError} to field-level errors keyed by form field name
+ * Maps validation issues to field-level errors keyed by form field name
  * (e.g. `members[0].userId`), keeping the first error per field.
  */
-function fieldErrorsFromZodError(error: z.ZodError): Record<string, string> {
+function fieldErrorsFromIssues(
+	issues: v.BaseIssue<unknown>[],
+): Record<string, string> {
 	const fieldErrors: Record<string, string> = {};
-	for (const issue of error.issues) {
-		const path = buildFieldPath(issue.path);
+	for (const issue of issues) {
+		const path = buildFieldPath(issuePathKeys(issue));
 		if (path && !fieldErrors[path]) {
 			fieldErrors[path] = issue.message;
 		}
@@ -34,11 +37,11 @@ function fieldErrorsFromZodError(error: z.ZodError): Record<string, string> {
 }
 
 /**
- * Parses request body against a Zod schema.
+ * Parses request body against a schema.
  * Handles both JSON (SendouForm) and form data (FormWithConfirm) based on Content-Type.
  * Returns parsed data on success, or field-level errors on validation failure.
  */
-export async function parseFormData<T extends z.ZodTypeAny>({
+export async function parseFormData<T extends AnySchema>({
 	request,
 	schema,
 	maxBodyBytes = DEFAULT_MAX_BODY_BYTES,
@@ -47,16 +50,19 @@ export async function parseFormData<T extends z.ZodTypeAny>({
 	schema: T;
 	/** Overrides {@link DEFAULT_MAX_BODY_BYTES} for forms that legitimately submit a bigger body. */
 	maxBodyBytes?: number;
-}): Promise<ParseResult<z.infer<T>>> {
+}): Promise<ParseResult<v.InferOutput<T>>> {
 	const data = await requestBodyToObject(request, maxBodyBytes);
 
-	const result = await schema.safeParseAsync(data);
+	const result = await v.safeParseAsync(schema, data);
 
 	if (result.success) {
-		return { success: true, data: result.data };
+		return { success: true, data: result.output };
 	}
 
-	return { success: false, fieldErrors: fieldErrorsFromZodError(result.error) };
+	return {
+		success: false,
+		fieldErrors: fieldErrorsFromIssues([...result.issues]),
+	};
 }
 
 /** Image field values collapse to their stored id; everything else passes through. */
@@ -71,13 +77,13 @@ type ResolvedImages<T> = T extends unknown
  * may be a single object or a union of objects (e.g. an `_action` discriminated form). The
  * consuming action receives a plain id per image field and only writes it to its own entity.
  */
-export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
+export async function parseFormDataWithImages<T extends AnySchema>({
 	request,
 	schema,
 }: {
 	request: Request;
 	schema: T;
-}): Promise<ParseResult<ResolvedImages<z.infer<T>>>> {
+}): Promise<ParseResult<ResolvedImages<v.InferOutput<T>>>> {
 	const result = await parseFormData({ request, schema });
 	if (!result.success) return result;
 
@@ -94,26 +100,28 @@ export async function parseFormDataWithImages<T extends z.ZodTypeAny>({
 		}
 	}
 
-	return { success: true, data: data as ResolvedImages<z.infer<T>> };
+	return { success: true, data: data as ResolvedImages<v.InferOutput<T>> };
 }
 
 /**
- * Collects every `image()` field across a schema object or union of objects, along with each
+ * Collects every `image()` field across a schema object or union/variant of objects, along with each
  * field's `autoValidate` flag (whether its uploads bypass the moderator queue).
  */
 function imageFields(
-	schema: z.ZodTypeAny,
+	schema: AnySchema,
 ): Array<{ key: string; autoValidate: boolean }> {
 	const objects =
-		schema instanceof z.ZodUnion
-			? (schema.options as z.ZodObject<z.ZodRawShape>[])
-			: schema instanceof z.ZodObject
-				? [schema]
+		schema.type === "union" || schema.type === "variant"
+			? ((schema as unknown as { options: AnySchema[] }).options.filter(
+					(option) => option.type === "object",
+				) as unknown as Array<{ entries: Record<string, AnySchema> }>)
+			: schema.type === "object"
+				? [schema as unknown as { entries: Record<string, AnySchema> }]
 				: [];
 
 	const fields = new Map<string, boolean>();
 	for (const object of objects) {
-		for (const [key, fieldSchema] of Object.entries(object.shape)) {
+		for (const [key, fieldSchema] of Object.entries(object.entries)) {
 			const meta = formRegistry.get(fieldSchema);
 			if (meta?.type === "image") {
 				fields.set(key, meta.autoValidate ?? false);

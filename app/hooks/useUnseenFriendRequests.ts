@@ -1,5 +1,5 @@
 import * as R from "remeda";
-import { z } from "zod";
+import * as v from "valibot";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 
@@ -8,7 +8,7 @@ const MAX_STORED_IDS = 200;
 export const seenFriendRequestsPersisted = PersistedState.define({
 	key: "seen-friend-requests",
 	storage: "local",
-	schema: z.array(z.number()),
+	schema: v.array(v.number()),
 	default: [],
 });
 

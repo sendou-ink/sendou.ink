@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import {
 	checkboxGroup,
@@ -9,7 +9,7 @@ import {
 	weaponPool,
 } from "~/form/fields";
 import { languagesUnified } from "~/modules/i18n/config";
-import { modeShort, stageId } from "~/utils/zod";
+import { modeShort, stageId } from "~/utils/schema";
 import {
 	AMOUNT_OF_MAPS_IN_POOL_PER_MODE,
 	MATCH_PROFILE_WEAPON_POOL_MAX_SIZE,
@@ -20,30 +20,34 @@ export const LANGUAGE_OPTIONS = languagesUnified.map((lang) => ({
 	value: lang.code,
 }));
 
-const preferenceSchema = z.enum(["AVOID", "PREFER"]).optional();
+const preferenceSchema = v.optional(v.picklist(["AVOID", "PREFER"]));
 
-export const mapModePreferencesValueSchema = z
-	.object({
-		modes: z.array(z.object({ mode: modeShort, preference: preferenceSchema })),
-		pool: z.array(
-			z.object({
-				stages: z.array(stageId).max(AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
+export const mapModePreferencesValueSchema = v.pipe(
+	v.object({
+		modes: v.array(v.object({ mode: modeShort, preference: preferenceSchema })),
+		pool: v.array(
+			v.object({
+				stages: v.pipe(
+					v.array(stageId),
+					v.maxLength(AMOUNT_OF_MAPS_IN_POOL_PER_MODE),
+				),
 				mode: modeShort,
 			}),
 		),
-	})
+	}),
 	// Pools for avoided modes are kept in the client form state so they can be
 	// restored if the user later un-avoids the mode, but they must not be
 	// persisted as active pools. Strip them out before the value reaches the action.
-	.transform((val) => ({
+	v.transform((val) => ({
 		...val,
 		pool: val.pool.filter((pool) => {
 			const mp = val.modes.find((m) => m.mode === pool.mode);
 			return mp?.preference !== "AVOID";
 		}),
-	}));
+	})),
+);
 
-export const updateMatchProfileSchema = z.object({
+export const updateMatchProfileSchema = v.object({
 	_action: stringConstant("UPDATE_MATCH_PROFILE"),
 	mapModePreferences: customField(
 		{ initialValue: { modes: [], pool: [] } satisfies UserMapModePreferences },

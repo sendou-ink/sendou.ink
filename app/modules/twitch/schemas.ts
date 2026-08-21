@@ -1,62 +1,62 @@
-import { z } from "zod";
+import * as v from "valibot";
 import type { Unpacked } from "~/utils/types";
 
-export const streamsSchema = z.object({
-	data: z.array(
-		z.object({
-			id: z.string(),
-			user_id: z.string(),
-			user_login: z.string(),
-			user_name: z.string(),
-			game_id: z.string(),
-			game_name: z.string(),
-			type: z.string(),
-			title: z.string(),
-			viewer_count: z.number(),
-			started_at: z.string(),
-			language: z.string(),
-			thumbnail_url: z.string(),
-			tag_ids: z.array(z.unknown()),
-			tags: z.array(z.string()).nullish(),
-			is_mature: z.boolean(),
+export const streamsSchema = v.object({
+	data: v.array(
+		v.object({
+			id: v.string(),
+			user_id: v.string(),
+			user_login: v.string(),
+			user_name: v.string(),
+			game_id: v.string(),
+			game_name: v.string(),
+			type: v.string(),
+			title: v.string(),
+			viewer_count: v.number(),
+			started_at: v.string(),
+			language: v.string(),
+			thumbnail_url: v.string(),
+			tag_ids: v.array(v.unknown()),
+			tags: v.nullish(v.array(v.string())),
+			is_mature: v.boolean(),
 		}),
 	),
-	pagination: z.object({ cursor: z.string().nullish() }),
+	pagination: v.object({ cursor: v.nullish(v.string()) }),
 });
 
-export const tokenResponseSchema = z.object({
-	access_token: z.string(),
-	expires_in: z.number(),
-	token_type: z.string(),
+export const tokenResponseSchema = v.object({
+	access_token: v.string(),
+	expires_in: v.number(),
+	token_type: v.string(),
 });
 
-export const usersSchema = z.object({
-	data: z.array(
-		z.object({
-			id: z.string(),
-			login: z.string(),
-			display_name: z.string(),
+export const usersSchema = v.object({
+	data: v.array(
+		v.object({
+			id: v.string(),
+			login: v.string(),
+			display_name: v.string(),
 		}),
 	),
 });
 
-export const videosSchema = z.object({
-	data: z.array(
-		z.object({
-			id: z.string(),
-			user_id: z.string(),
-			user_login: z.string(),
-			title: z.string(),
-			created_at: z.string(),
-			duration: z.string(),
-			view_count: z.number(),
-			type: z.string(),
+export const videosSchema = v.object({
+	data: v.array(
+		v.object({
+			id: v.string(),
+			user_id: v.string(),
+			user_login: v.string(),
+			title: v.string(),
+			created_at: v.string(),
+			duration: v.string(),
+			view_count: v.number(),
+			type: v.string(),
 		}),
 	),
-	pagination: z.object({ cursor: z.string().nullish() }),
+	pagination: v.object({ cursor: v.nullish(v.string()) }),
 });
 
-export type StreamsResponse = z.infer<typeof streamsSchema>;
-export type RawStream = Unpacked<z.infer<typeof streamsSchema>["data"]>;
-export type UsersResponse = z.infer<typeof usersSchema>;
-export type RawVideo = Unpacked<z.infer<typeof videosSchema>["data"]>;
+export type StreamsResponse = v.InferOutput<typeof streamsSchema>;
+export type RawStream = Unpacked<v.InferOutput<typeof streamsSchema>["data"]>;
+export type UsersResponse = v.InferOutput<typeof usersSchema>;
+export type RawVideo = Unpacked<v.InferOutput<typeof videosSchema>["data"]>;

@@ -6,7 +6,7 @@ import {
 } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { isAdmin, isDev, isStaff } from "~/modules/permissions/utils";
-import { normalizeFriendCode } from "~/utils/zod";
+import { normalizeFriendCode } from "~/utils/schema";
 import { adminSearchParams } from "../admin-search-params";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "../core/dev-controls";
 

@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -14,7 +15,7 @@ export type UserSeasonsSetsLoaderData = NonNullable<
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	requireUser();
-	const { identifier } = userParamsSchema.parse(params);
+	const { identifier } = v.parse(userParamsSchema, params);
 	const { page, season: seasonParam } = userSeasonsSearchParams.parse(url);
 
 	const user = notFoundIfNullish(

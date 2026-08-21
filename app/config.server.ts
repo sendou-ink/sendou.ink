@@ -1,6 +1,7 @@
-import { z } from "zod";
-import { formatEnvErrors, requiredInProd } from "./config-helpers.server";
+import * as v from "valibot";
+import { envBoolean, formatEnvErrors, requiredInProd } from "./config-helpers";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
+import { superRefine, type ValidationCtx } from "./utils/schema";
 
 /**
  * Server (`process.env`) configuration. Import with
@@ -14,16 +15,17 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 const isProd = process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN;
 
-const schema = z
-	.object({
-		NODE_ENV: z
-			.enum(["development", "production", "test"])
-			.default("development"),
+const schema = v.pipe(
+	v.object({
+		NODE_ENV: v.optional(
+			v.picklist(["development", "production", "test"]),
+			"development",
+		),
 		DB_PATH: requiredInProd(isProd, "db.sqlite3"),
 		SESSION_SECRET: requiredInProd(isProd, "secret"),
 		LOHI_TOKEN: requiredInProd(isProd, "salmon"),
-		SQL_LOG: z.enum(["none", "trunc", "full"]).default("none"),
-		DISABLE_CACHE: z.stringbool().default(false),
+		SQL_LOG: v.optional(v.picklist(["none", "trunc", "full"]), "none"),
+		DISABLE_CACHE: v.optional(envBoolean, "false"),
 
 		DISCORD_CLIENT_ID: requiredInProd(isProd, ""),
 		DISCORD_CLIENT_SECRET: requiredInProd(isProd, ""),
@@ -34,30 +36,31 @@ const schema = z
 		STORAGE_REGION: requiredInProd(isProd, "us-east-1"),
 		STORAGE_BUCKET: requiredInProd(isProd, "sendou"),
 
-		SKALOP_SYSTEM_MESSAGE_URL: z.string().optional(),
-		SKALOP_TOKEN: z.string().optional(),
+		SKALOP_SYSTEM_MESSAGE_URL: v.optional(v.string()),
+		SKALOP_TOKEN: v.optional(v.string()),
 
-		TWITCH_CLIENT_ID: z.string().optional(),
-		TWITCH_CLIENT_SECRET: z.string().optional(),
+		TWITCH_CLIENT_ID: v.optional(v.string()),
+		TWITCH_CLIENT_SECRET: v.optional(v.string()),
 
-		PATREON_ACCESS_TOKEN: z.string().optional(),
+		PATREON_ACCESS_TOKEN: v.optional(v.string()),
 
 		// The VAPID public key (VITE_VAPID_PUBLIC_KEY) lives in `~/config` since
 		// it is client-readable; the full three-var coupling is completed by the
 		// runtime check in webPush.server.ts.
-		VAPID_PRIVATE_KEY: z.string().optional(),
-		VAPID_EMAIL: z.string().optional(),
-	})
-	.superRefine((val, ctx) => {
+		VAPID_PRIVATE_KEY: v.optional(v.string()),
+		VAPID_EMAIL: v.optional(v.string()),
+	}),
+	superRefine((val, ctx) => {
 		requireTogether(ctx, val, "TWITCH_CLIENT_ID", "TWITCH_CLIENT_SECRET");
 		requireTogether(ctx, val, "VAPID_EMAIL", "VAPID_PRIVATE_KEY");
-	});
+	}),
+);
 
-const parsed = schema.safeParse(process.env);
+const parsed = v.safeParse(schema, process.env);
 if (!parsed.success) {
-	throw formatEnvErrors("server", parsed.error);
+	throw formatEnvErrors("server", parsed.issues);
 }
-const values = parsed.data;
+const values = parsed.output;
 
 export const ServerConfig = {
 	/**
@@ -122,7 +125,7 @@ export const ServerConfig = {
 
 /** Adds a validation issue unless `a` and `b` are both set or both unset. */
 function requireTogether(
-	ctx: z.RefinementCtx,
+	ctx: ValidationCtx,
 	values: Record<string, unknown>,
 	a: string,
 	b: string,
@@ -134,7 +137,6 @@ function requireTogether(
 	const present = aSet ? a : b;
 	const missing = aSet ? b : a;
 	ctx.addIssue({
-		code: "custom",
 		path: [missing],
 		message: `must be set together with ${present}`,
 	});

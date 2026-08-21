@@ -1,3 +1,4 @@
+import * as v from "valibot";
 import { describe, expect, test } from "vitest";
 import { vodsNewSearchParams } from "~/features/vods/vods-search-params";
 import {
@@ -57,7 +58,7 @@ describe("prefillVodMatches", () => {
 	});
 
 	test("rejects rows that are not sendou ids", () => {
-		const parsed = ingestVodPrefillSchema.safeParse({
+		const parsed = v.safeParse(ingestVodPrefillSchema, {
 			matches: [{ ...testMatch(), stage: "Scorch Gorge" }],
 		});
 		expect(parsed.success).toBe(false);

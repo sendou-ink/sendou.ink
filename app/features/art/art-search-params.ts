@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { SP } from "~/modules/search-params/search-params";
 
@@ -8,18 +8,22 @@ export const ART_TABS = {
 } as const;
 
 export const artSearchParams = SearchParams.define({
-	tag: SP.param(z.string().nullable(), { loader: true }),
-	tab: SP.param(z.enum([ART_TABS.RECENTLY_UPLOADED, ART_TABS.SHOWCASE]), {
+	tag: SP.param(v.nullable(v.string()), { loader: true }),
+	tab: SP.param(v.picklist([ART_TABS.RECENTLY_UPLOADED, ART_TABS.SHOWCASE]), {
 		default: ART_TABS.RECENTLY_UPLOADED,
 		loader: false,
 	}),
-	open: SP.param(z.boolean(), { default: false, loader: false }),
+	open: SP.param(v.boolean(), { default: false, loader: false }),
 });
 
 export const artGridSearchParams = SearchParams.define({
-	big: SP.param(z.number().int().positive().nullable(), { loader: false }),
+	big: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: false,
+	}),
 });
 
 export const artNewSearchParams = SearchParams.define({
-	art: SP.param(z.number().int().positive().nullable(), { loader: true }),
+	art: SP.param(v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))), {
+		loader: true,
+	}),
 });

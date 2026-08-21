@@ -1,5 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -13,17 +13,17 @@ import {
 	parseBody,
 	parseParams,
 } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { wrapActionForApi } from "../api-action-wrapper.server";
 
-const paramsSchema = z.object({
+const paramsSchema = v.object({
 	id,
 	teamId: id,
 });
 
-const bodySchema = z.object({
+const bodySchema = v.object({
 	userId: id,
-	inGameName: z.string().refine(inGameNameIsValid),
+	inGameName: v.pipe(v.string(), v.check(inGameNameIsValid)),
 });
 
 export const action = async (args: ActionFunctionArgs) => {

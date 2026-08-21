@@ -1,4 +1,4 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { friendCodeField } from "~/features/sendouq/q-schemas";
 import {
 	datetime,
@@ -11,16 +11,16 @@ import {
 	textFieldOptional,
 	userSearch,
 } from "~/form/fields";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 import { BAN_REASON_MAX_LENGTH } from "./admin-constants";
 
 const userField = userSearch({ label: "labels.user" });
 
-export const friendCodeSearchSchema = z.object({
+export const friendCodeSearchSchema = v.object({
 	friendCode: friendCodeField,
 });
 
-export const migrateUserSchema = z.object({
+export const migrateUserSchema = v.object({
 	_action: stringConstant("MIGRATE"),
 	oldUser: userSearch({ label: "labels.adminOldUser" }),
 	newUser: userSearch({
@@ -29,39 +29,39 @@ export const migrateUserSchema = z.object({
 	}),
 });
 
-export const linkPlayerSchema = z.object({
+export const linkPlayerSchema = v.object({
 	_action: stringConstant("LINK_PLAYER"),
 	user: userField,
 	playerId: numberField({ label: "labels.adminPlayerId", min: 1 }),
 });
 
-export const giveArtistSchema = z.object({
+export const giveArtistSchema = v.object({
 	_action: stringConstant("ARTIST"),
 	user: userField,
 });
 
-export const giveVideoAdderSchema = z.object({
+export const giveVideoAdderSchema = v.object({
 	_action: stringConstant("VIDEO_ADDER"),
 	user: userField,
 });
 
-export const giveTournamentOrganizerSchema = z.object({
+export const giveTournamentOrganizerSchema = v.object({
 	_action: stringConstant("TOURNAMENT_ORGANIZER"),
 	user: userField,
 });
 
-export const giveApiAccessSchema = z.object({
+export const giveApiAccessSchema = v.object({
 	_action: stringConstant("API_ACCESS"),
 	user: userField,
 });
 
-export const updateFriendCodeSchema = z.object({
+export const updateFriendCodeSchema = v.object({
 	_action: stringConstant("UPDATE_FRIEND_CODE"),
 	user: userField,
 	friendCode: friendCodeField,
 });
 
-export const forcePatronSchema = z.object({
+export const forcePatronSchema = v.object({
 	_action: stringConstant("FORCE_PATRON"),
 	user: userField,
 	patronTier: select({
@@ -75,7 +75,7 @@ export const forcePatronSchema = z.object({
 	patronExpiresAt: datetime({ label: "labels.patronExpiresAt" }),
 });
 
-export const banUserSchema = z.object({
+export const banUserSchema = v.object({
 	_action: stringConstant("BAN_USER"),
 	user: userField,
 	expiresAt: datetimeOptional({
@@ -90,16 +90,16 @@ export const banUserSchema = z.object({
 	}),
 });
 
-export const unbanUserSchema = z.object({
+export const unbanUserSchema = v.object({
 	_action: stringConstant("UNBAN_USER"),
 	user: userField,
 });
 
-export const refreshPlusTiersSchema = z.object({
+export const refreshPlusTiersSchema = v.object({
 	_action: stringConstant("REFRESH"),
 });
 
-export const adminActionSchema = z.union([
+export const adminActionSchema = v.union([
 	migrateUserSchema,
 	linkPlayerSchema,
 	giveArtistSchema,
@@ -113,7 +113,7 @@ export const adminActionSchema = z.union([
 	refreshPlusTiersSchema,
 ]);
 
-export const createExternalStreamSchema = z.object({
+export const createExternalStreamSchema = v.object({
 	_action: stringConstant("CREATE"),
 	name: textField({ label: "labels.name", maxLength: 64 }),
 	url: textField({
@@ -125,12 +125,12 @@ export const createExternalStreamSchema = z.object({
 	startTime: datetime({ label: "labels.startTime" }),
 });
 
-const deleteExternalStreamSchema = z.object({
+const deleteExternalStreamSchema = v.object({
 	_action: stringConstant("DELETE"),
 	id,
 });
 
-export const externalStreamActionSchema = z.union([
+export const externalStreamActionSchema = v.union([
 	createExternalStreamSchema,
 	deleteExternalStreamSchema,
 ]);

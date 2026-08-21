@@ -1,9 +1,9 @@
 import { type FetcherWithComponents, useNavigation } from "react-router";
-import type { z } from "zod";
 import type { ActionsOf } from "~/utils/action-schemas";
+import type { AnySchema } from "~/utils/schema";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 
-type SubmitButtonProps<TSchema extends z.ZodTypeAny> = SendouButtonProps & {
+type SubmitButtonProps<TSchema extends AnySchema> = SendouButtonProps & {
 	/** If the page has multiple forms you can pass in fetcher.state to differentiate when this SubmitButton should be in submitting state */
 	state?: FetcherWithComponents<any>["state"];
 	testId?: string;
@@ -17,7 +17,7 @@ type SubmitButtonProps<TSchema extends z.ZodTypeAny> = SendouButtonProps & {
 		| { schema?: never; _action?: never }
 	);
 
-export function SubmitButton<TSchema extends z.ZodTypeAny>({
+export function SubmitButton<TSchema extends AnySchema>({
 	children,
 	state,
 	schema: _schema,

@@ -1,12 +1,12 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { z } from "zod";
+import * as v from "valibot";
 import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
-import { id } from "~/utils/zod";
+import { id } from "~/utils/schema";
 
 export type TournamentAdminRegistrationLoaderData = SerializeFrom<
 	typeof loader
@@ -15,7 +15,7 @@ export type TournamentAdminRegistrationLoaderData = SerializeFrom<
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tid: tournamentTeamId } = parseParams({
 		params,
-		schema: z.object({ tid: id.optional() }),
+		schema: v.object({ tid: v.optional(id) }),
 	});
 
 	const { tournamentId, user } = await tournamentFromParams(params, {

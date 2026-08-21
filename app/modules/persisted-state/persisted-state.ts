@@ -1,4 +1,5 @@
-import type { z } from "zod";
+import * as v from "valibot";
+import type { AnySyncSchema } from "~/utils/schema";
 
 const readCaches = new WeakMap<
 	object,
@@ -34,12 +35,12 @@ export interface PersistedMapDefinition<T> extends DefinitionBase<T> {
  * Decoding is total: the default resolves for missing or malformed values,
  * legacy plain-string values are accepted where the schema allows them.
  */
-export function define<S extends z.ZodType>(options: {
+export function define<S extends AnySyncSchema>(options: {
 	key: string;
 	storage: StorageKind;
 	schema: S;
-	default: z.output<S>;
-}): PersistedDefinition<z.output<S>> {
+	default: v.InferOutput<S>;
+}): PersistedDefinition<v.InferOutput<S>> {
 	return {
 		key: options.key,
 		storage: options.storage,
@@ -52,12 +53,12 @@ export function define<S extends z.ZodType>(options: {
  * Declares a keyed family of persisted values sharing a storage key prefix,
  * for maps whose entries are written independently (e.g. per chat room).
  */
-export function defineMap<S extends z.ZodType>(options: {
+export function defineMap<S extends AnySyncSchema>(options: {
 	keyPrefix: string;
 	storage: StorageKind;
 	schema: S;
-	default: z.output<S>;
-}): PersistedMapDefinition<z.output<S>> {
+	default: v.InferOutput<S>;
+}): PersistedMapDefinition<v.InferOutput<S>> {
 	return {
 		keyPrefix: options.keyPrefix,
 		storage: options.storage,
@@ -181,14 +182,17 @@ export function prependToRecentList<T>(
 	);
 }
 
-function codec<S extends z.ZodType>(schema: S, defaultValue: z.output<S>) {
+function codec<S extends AnySyncSchema>(
+	schema: S,
+	defaultValue: v.InferOutput<S>,
+) {
 	return {
-		decode: (raw: string | null): z.output<S> => {
+		decode: (raw: string | null): v.InferOutput<S> => {
 			if (raw === null) return defaultValue;
-			const parsed = schema.safeParse(rawToJson(raw));
-			return parsed.success ? parsed.data : defaultValue;
+			const parsed = v.safeParse(schema, rawToJson(raw));
+			return parsed.success ? parsed.output : defaultValue;
 		},
-		encode: (value: z.output<S>) => JSON.stringify(value),
+		encode: (value: v.InferOutput<S>) => JSON.stringify(value),
 	};
 }
 

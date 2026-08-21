@@ -2,7 +2,7 @@ import type { CalendarDateTime } from "@internationalized/date";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
-import type { z } from "zod";
+import type * as v from "valibot";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { Label } from "~/components/Label";
 import type { CustomFieldRenderProps } from "~/form";
@@ -28,7 +28,7 @@ export const handle: SendouRouteHandle = {
 	i18n: "scrims",
 };
 
-type FormFields = z.infer<typeof scrimsNewFormSchema>;
+type FormFields = v.InferOutput<typeof scrimsNewFormSchema>;
 
 const DEFAULT_NOT_FOUND_VISIBILITY = {
 	at: null,

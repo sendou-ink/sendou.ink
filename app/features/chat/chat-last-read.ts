@@ -1,11 +1,11 @@
-import { z } from "zod";
+import * as v from "valibot";
 import { usePersistedMapState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
 
 export const lastReadCountsPersisted = PersistedState.defineMap({
 	keyPrefix: "chat_read__",
 	storage: "local",
-	schema: z.number(),
+	schema: v.number(),
 	default: 0,
 });
 
