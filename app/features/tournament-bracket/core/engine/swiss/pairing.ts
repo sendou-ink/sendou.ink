@@ -16,7 +16,7 @@ import { calculateTeamStatus } from "./team-status";
  * to dwarf every other weight of the whole round, meaning rematches only happen when
  * unavoidable and then as few of them as possible.
  */
-const REMATCH_PENALTY = 1_000_000;
+const REMATCH_PENALTY = 1_000_000_000;
 
 /**
  * Weight added for each team of a pair that has already received a bye, making
@@ -24,9 +24,21 @@ const REMATCH_PENALTY = 1_000_000;
  * so that a matching leaving a bye-less team unpaired always beats one giving a team
  * a second bye: with an odd team count exactly one team is left unpaired, so the
  * matchings differ by exactly one bonus, which is set to dwarf every score-based
- * weight while staying far below REMATCH_PENALTY.
+ * weight (including HIGH_SCORE_PAIRING_BONUS) while staying far below
+ * REMATCH_PENALTY.
  */
-const PRIOR_BYE_PAIRING_BONUS = 10_000;
+const PRIOR_BYE_PAIRING_BONUS = 10_000_000;
+
+/**
+ * Weight added per score point of both teams of a pair. Summed over a full matching
+ * this contributes the bonus times the total score of all paired teams, so with an
+ * odd team count the matching maximizes it by leaving a lowest-score team unpaired —
+ * that team receives the bye. Without this term the bye can drift to a top score
+ * group team whenever the score group size parities make all-within-group pairings
+ * possible only that way. Sized to dwarf the pairing quality weights (< ~100 per
+ * pair) while a full round's worth stays far below PRIOR_BYE_PAIRING_BONUS.
+ */
+const HIGH_SCORE_PAIRING_BONUS = 10_000;
 
 interface GroupArgs {
 	groupId: number;
@@ -294,6 +306,8 @@ function generateWeightedPairs({
 			if (scoreGroupDiff >= 2) {
 				wt -= 10;
 			}
+
+			wt += (curr.score + opp.score) * HIGH_SCORE_PAIRING_BONUS;
 
 			if (curr.receivedBye) {
 				wt += PRIOR_BYE_PAIRING_BONUS;

@@ -19,6 +19,39 @@ export const RUSH_WEEKEND_3 = [
 	{ id: 39814, score: 0, receivedBye: false, avoid: [38337, 39850] },
 ];
 
+// tournament 4224 group A entering round 3: 7 teams at score 2, 16 at score 1, 6 at score 0
+export const LOW_INK_AUGUST_2026_ROUND_3 = [
+	{ id: 83693, score: 2, receivedBye: false, avoid: [85574, 84491] },
+	{ id: 84224, score: 2, receivedBye: false, avoid: [86019, 85541] },
+	{ id: 84735, score: 2, receivedBye: false, avoid: [84239, 83733] },
+	{ id: 85791, score: 2, receivedBye: false, avoid: [85868, 85393] },
+	{ id: 85832, score: 2, receivedBye: false, avoid: [83873, 84857] },
+	{ id: 85909, score: 2, receivedBye: false, avoid: [86038, 86046] },
+	{ id: 85970, score: 2, receivedBye: false, avoid: [85408, 85347] },
+	{ id: 83619, score: 1, receivedBye: false, avoid: [83733, 85775] },
+	{ id: 83733, score: 1, receivedBye: false, avoid: [83619, 84735] },
+	{ id: 84491, score: 1, receivedBye: false, avoid: [84553, 83693] },
+	{ id: 84553, score: 1, receivedBye: false, avoid: [84491, 86019] },
+	{ id: 84857, score: 1, receivedBye: false, avoid: [86067, 85832] },
+	{ id: 85347, score: 1, receivedBye: false, avoid: [85504, 85970] },
+	{ id: 85393, score: 1, receivedBye: false, avoid: [85860, 85791] },
+	{ id: 85408, score: 1, receivedBye: false, avoid: [85970, 85697] },
+	{ id: 85536, score: 1, receivedBye: true, avoid: [86067] },
+	{ id: 85541, score: 1, receivedBye: false, avoid: [85697, 84224] },
+	{ id: 85574, score: 1, receivedBye: false, avoid: [83693, 84239] },
+	{ id: 85860, score: 1, receivedBye: true, avoid: [85393] },
+	{ id: 85868, score: 1, receivedBye: false, avoid: [85791, 85504] },
+	{ id: 86038, score: 1, receivedBye: false, avoid: [85909, 83873] },
+	{ id: 86046, score: 1, receivedBye: false, avoid: [85775, 85909] },
+	{ id: 86067, score: 1, receivedBye: false, avoid: [84857, 85536] },
+	{ id: 83873, score: 0, receivedBye: false, avoid: [85832, 86038] },
+	{ id: 84239, score: 0, receivedBye: false, avoid: [84735, 85574] },
+	{ id: 85504, score: 0, receivedBye: false, avoid: [85347, 85868] },
+	{ id: 85697, score: 0, receivedBye: false, avoid: [85541, 85408] },
+	{ id: 85775, score: 0, receivedBye: false, avoid: [86046, 83619] },
+	{ id: 86019, score: 0, receivedBye: false, avoid: [84224, 84553] },
+];
+
 export const LOW_INK_AUGUST_2025 = [
 	{ id: 40878, score: 2, receivedBye: false, avoid: [39949, 41092] },
 	{ id: 40986, score: 2, receivedBye: false, avoid: [41308, 40796] },

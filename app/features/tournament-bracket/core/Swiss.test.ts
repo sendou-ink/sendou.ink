@@ -3,6 +3,7 @@ import type { TournamentStageSettings } from "~/db/tables-json";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	LOW_INK_AUGUST_2025,
+	LOW_INK_AUGUST_2026_ROUND_3,
 	RUSH_WEEKEND_3,
 } from "~/features/tournament-bracket/core/tests/mocks-swiss";
 import { ZONES_WEEKLY_38 } from "~/features/tournament-bracket/core/tests/mocks-zones-weekly";
@@ -232,7 +233,11 @@ describe("Swiss", () => {
 		});
 	});
 
-	const PAIR_UP_TEST_CASES = [RUSH_WEEKEND_3, LOW_INK_AUGUST_2025];
+	const PAIR_UP_TEST_CASES = [
+		RUSH_WEEKEND_3,
+		LOW_INK_AUGUST_2025,
+		LOW_INK_AUGUST_2026_ROUND_3,
+	];
 
 	describe("pairUp()", () => {
 		test.for(PAIR_UP_TEST_CASES)(
@@ -375,6 +380,23 @@ describe("Swiss", () => {
 			const bye = result.find((match) => match.opponentTwo === null);
 
 			expect(bye?.opponentOne).toBe(2);
+		});
+
+		test("gives the bye to the lowest score group even when byeing a top group team would keep every pairing within its score group", () => {
+			// real state where the top score group had an odd size (7) while the
+			// lower groups were even (16 and 6): byeing an undefeated team lets
+			// every match stay within its score group, which the weights preferred:
+			// live this gave the free win to the 2-0 top seed instead of a 0-2 team
+			const result = Swiss.pairUp(LOW_INK_AUGUST_2026_ROUND_3);
+
+			const bye = result.find((match) => match.opponentTwo === null);
+			invariant(bye, "bye not found");
+
+			const byeTeam = LOW_INK_AUGUST_2026_ROUND_3.find(
+				(team) => team.id === bye.opponentOne,
+			);
+
+			expect(byeTeam?.score).toBe(0);
 		});
 	});
 
