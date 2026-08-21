@@ -67,7 +67,7 @@ Choose whether you want to host a regular 4v4 tournmament or 3v3/2v2/1v1 tournam
 
 ### Max team size
 
-Only shown for 4v4 tournaments. The maximum number of players a team can have on their roster, between 4 and 10 (default 6). The limit does not apply to tournament organizers adding players to a team. For 3v3/2v2/1v1 the roster size is always exactly the team size.
+Only shown for 4v4 tournaments. The maximum number of players a team can have on their roster, between 4 and 10 (default 6). The limit does not apply to tournament organizers adding players to a team, they can add up to 12. For 3v3/2v2/1v1 the roster size is always exactly the team size.
 
 ### Registration closes at
 

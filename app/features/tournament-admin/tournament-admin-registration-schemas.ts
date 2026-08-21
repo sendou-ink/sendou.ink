@@ -20,9 +20,9 @@ import { USER } from "../user-page/user-page-constants";
 /**
  * Roster size cap for organizer-managed registrations. The per-tournament
  * `maxMembersPerTeam` limit intentionally doesn't apply to organizers, so this
- * is just a generous safety ceiling rather than a competitive constraint.
+ * is a safety ceiling rather than a competitive constraint.
  */
-export const ADMIN_REGISTRATION_MAX_MEMBERS = 20;
+export const ADMIN_REGISTRATION_MAX_MEMBERS = 12;
 
 const memberFieldset = fieldset({
 	fields: z.object({
