@@ -218,3 +218,47 @@ export function ListButton({
 export function SideNavFooter({ children }: { children: React.ReactNode }) {
 	return <div className={styles.sideNavFooter}>{children}</div>;
 }
+
+export function NavIconContainer({ children }: { children: React.ReactNode }) {
+	return <div className={styles.iconContainer}>{children}</div>;
+}
+
+export function NavListButton({
+	children,
+	className,
+	onPress,
+}: {
+	children: React.ReactNode;
+	className?: string;
+	onPress: () => void;
+}) {
+	return (
+		<Button className={clsx(styles.listButton, className)} onPress={onPress}>
+			{children}
+		</Button>
+	);
+}
+
+export function NavListImage({ src }: { src: string }) {
+	return <img src={src} alt="" className={styles.listLinkImage} />;
+}
+
+export function NavListTexts({ children }: { children: React.ReactNode }) {
+	return <div className={styles.listLinkContent}>{children}</div>;
+}
+
+export function NavListTitle({
+	children,
+	className,
+}: {
+	children: React.ReactNode;
+	className?: string;
+}) {
+	return (
+		<span className={clsx(styles.listLinkTitle, className)}>{children}</span>
+	);
+}
+
+export function NavListSubtitle({ children }: { children: React.ReactNode }) {
+	return <span className={styles.listLinkSubtitle}>{children}</span>;
+}

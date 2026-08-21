@@ -11,7 +11,12 @@ import {
 	type MinimapTeammate,
 } from "../core/detectors/minimap/index";
 import type { CardSlot } from "../core/detectors/minimap/rois";
-import eventCardStyles from "./EventCard.module.css";
+import {
+	EventCardMeta,
+	EventCardShell,
+	EventCardTeam,
+	EventCardTeams,
+} from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { stageLabel } from "./labels";
@@ -40,12 +45,21 @@ function AbilityRow({
 	);
 }
 
+/** `up` needs no rotation, `self` renders a dot instead of a chevron */
+const SLOT_ROTATION_CLASS: Record<CardSlot, string | undefined> = {
+	up: undefined,
+	down: styles.down,
+	left: styles.left,
+	right: styles.right,
+	self: undefined,
+};
+
 function TeammateMarker({ slot }: { slot: CardSlot }) {
 	if (slot === "self") {
 		return <span className={styles.slotMarker}>●</span>;
 	}
 	return (
-		<span className={clsx(styles.slotMarker, styles[slot])}>
+		<span className={clsx(styles.slotMarker, SLOT_ROTATION_CLASS[slot])}>
 			<ChevronUp strokeWidth={3.5} aria-label={slot} role="img" />
 		</span>
 	);
@@ -109,8 +123,8 @@ export function MinimapCard(props: {
 		props;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className={eventCardStyles.card}>
-			<div className={eventCardStyles.meta}>
+		<EventCardShell>
+			<EventCardMeta>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -125,9 +139,9 @@ export function MinimapCard(props: {
 					onInspect={onInspect}
 					fixture={{ data, type: "Minimap" }}
 				/>
-			</div>
-			<div className={eventCardStyles.teams}>
-				<div className={eventCardStyles.team}>
+			</EventCardMeta>
+			<EventCardTeams>
+				<EventCardTeam>
 					<h3>Team</h3>
 					{data.teammates.map((p) => (
 						<PlayerRow
@@ -136,9 +150,9 @@ export function MinimapCard(props: {
 							player={p}
 						/>
 					))}
-				</div>
+				</EventCardTeam>
 				{data.enemies.length > 0 ? (
-					<div className={eventCardStyles.team}>
+					<EventCardTeam>
 						<h3>Enemies</h3>
 						{data.enemies.map((p, i) => (
 							<PlayerRow
@@ -151,9 +165,9 @@ export function MinimapCard(props: {
 								player={p}
 							/>
 						))}
-					</div>
+					</EventCardTeam>
 				) : null}
-			</div>
-		</div>
+			</EventCardTeams>
+		</EventCardShell>
 	);
 }

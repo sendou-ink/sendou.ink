@@ -4,8 +4,8 @@ import { useBracketExpanded } from "~/features/tournament/routes/to.$id";
 import { useDragToScroll } from "~/hooks/useDragToScroll";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import type { Bracket as BracketType } from "../../core/Bracket";
-import styles from "./bracket.module.css";
 import { EliminationBracketSide } from "./Elimination";
+import styles from "./index.module.css";
 import { RoundRobinBracket } from "./RoundRobin";
 import { SwissBracket } from "./Swiss";
 

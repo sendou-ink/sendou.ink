@@ -9,7 +9,7 @@ import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tour
 import { userPage } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import { useTournamentFriendCodes } from "../routes/to.$id";
-import styles from "../tournament.module.css";
+import styles from "./TeamWithRoster.module.css";
 
 export function TeamWithRoster({
 	team,

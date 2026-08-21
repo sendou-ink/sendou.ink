@@ -4,12 +4,14 @@ import * as React from "react";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { SpecialWeaponImage, WeaponImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
+import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Placement } from "~/components/Placement";
 import { weaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import styles from "./Graphic.module.css";
 
-export const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
+const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 	day: "numeric",
 	month: "long",
 	year: "numeric",
@@ -104,6 +106,48 @@ export function GraphicHeader({
 			{alignTrailingWithTitle ? null : trailingContent}
 		</header>
 	);
+}
+
+/** the graphic's headline text, sized to claim the header row's free space */
+export function GraphicTitle({ children }: { children: React.ReactNode }) {
+	return <span className={styles.headerTitle}>{children}</span>;
+}
+
+export function GraphicDateSubtitle({ date }: { date: number | Date }) {
+	return (
+		<LocaleTime
+			date={date}
+			options={GRAPHIC_DATE_FORMAT_OPTIONS}
+			className={styles.headerSubtitle}
+		/>
+	);
+}
+
+export function GraphicDateRangeSubtitle({
+	from,
+	to,
+}: {
+	from: number | Date;
+	to: number | Date;
+}) {
+	return (
+		<LocaleTimeRange
+			from={from}
+			to={to}
+			options={GRAPHIC_DATE_FORMAT_OPTIONS}
+			className={styles.headerSubtitle}
+		/>
+	);
+}
+
+export function GraphicBoxLabel({
+	className,
+	children,
+}: {
+	className?: string;
+	children: React.ReactNode;
+}) {
+	return <div className={clsx(styles.boxLabel, className)}>{children}</div>;
 }
 
 export function GraphicTeamsList({ children }: { children: React.ReactNode }) {

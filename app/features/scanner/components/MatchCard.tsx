@@ -26,6 +26,14 @@ import styles from "./MatchCard.module.css";
 /** the game score a knockout wins at */
 const KO_MATCH_SCORE = 100;
 
+const SEND_STATE_CLASS: Record<SendStatus["state"], string> = {
+	queued: styles.queued,
+	sending: styles.sending,
+	sent: styles.sent,
+	unlinked: styles.unlinked,
+	failed: styles.failed,
+};
+
 const SEND_CHIP_LABELS: Record<Exclude<SendStatus["state"], "sent">, string> = {
 	queued: "queued",
 	sending: "sending…",
@@ -142,7 +150,7 @@ export function MatchCard({
 
 	const className = clsx(
 		styles.matchCard,
-		send?.state ? styles[send.state] : null,
+		send?.state ? SEND_STATE_CLASS[send.state] : null,
 		{
 			[styles.enter]: enter,
 			[styles.live]: live,
@@ -322,7 +330,7 @@ function StatusChip({
 	if (send) {
 		return (
 			<span
-				className={clsx(styles.chip, styles[send.state])}
+				className={clsx(styles.chip, SEND_STATE_CLASS[send.state])}
 				title={send.error}
 			>
 				{send.state === "queued" || send.state === "sending" ? (

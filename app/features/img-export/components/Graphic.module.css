@@ -100,17 +100,6 @@ same place as an auto margin would but leaves their text room to breathe.
 	gap: var(--s-2);
 }
 
-/*
-:where() keeps these base component classes at zero specificity so single-class
-overrides from other module files win regardless of which CSS chunk loads last
-*/
-:where(.box) {
-	padding: var(--s-2) var(--s-3);
-	background-color: var(--graphic-row-bg);
-	border: 1.5px solid var(--graphic-row-border);
-	border-radius: var(--radius-box);
-}
-
 .boxLabel {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);

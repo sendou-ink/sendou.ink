@@ -1,12 +1,13 @@
-import clsx from "clsx";
 import * as React from "react";
-import { ListBoxItem, type SelectProps } from "react-aria-components";
+import type { SelectProps } from "react-aria-components";
 import { useFetcher } from "react-router";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { Avatar } from "../Avatar";
-import { SearchSelect } from "./SearchSelect";
-import searchSelectStyles from "./SearchSelect.module.css";
-import selectStyles from "./Select.module.css";
+import {
+	SearchSelect,
+	SearchSelectItem,
+	SearchSelectItemAdditionalText,
+} from "./SearchSelect";
 import { useEntitySearch } from "./useEntitySearch";
 
 export type UserSearchResult = Extract<
@@ -119,26 +120,18 @@ function UserItem({ item }: { item: UserSearchResult }) {
 	};
 
 	return (
-		<ListBoxItem
+		<SearchSelectItem
 			id={item.id}
 			textValue={item.name}
-			className={({ isFocused, isSelected }) =>
-				clsx(searchSelectStyles.item, {
-					[selectStyles.itemFocused]: isFocused,
-					[selectStyles.itemSelected]: isSelected,
-				})
-			}
-			data-testid="user-search-item"
+			testId="user-search-item"
+			leading={<Avatar user={item} size="xxs" />}
 		>
-			<Avatar user={item} size="xxs" />
-			<div className={searchSelectStyles.itemTextsContainer}>
-				{item.name}
-				{additionalText() ? (
-					<div className={searchSelectStyles.itemAdditionalText}>
-						{additionalText()}
-					</div>
-				) : null}
-			</div>
-		</ListBoxItem>
+			{item.name}
+			{additionalText() ? (
+				<SearchSelectItemAdditionalText>
+					{additionalText()}
+				</SearchSelectItemAdditionalText>
+			) : null}
+		</SearchSelectItem>
 	);
 }

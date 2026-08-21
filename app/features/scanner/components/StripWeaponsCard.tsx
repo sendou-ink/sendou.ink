@@ -2,7 +2,7 @@ import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "../core/detectors/objective/strip-weapons";
-import styles from "./EventCard.module.css";
+import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";
 import { mainWeaponLabel } from "./labels";
@@ -30,8 +30,8 @@ export function StripWeaponsCard(props: {
 			.join(" | ");
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className={styles.card}>
-			<div className={styles.meta}>
+		<EventCardShell>
+			<EventCardMeta>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -49,7 +49,7 @@ export function StripWeaponsCard(props: {
 					onInspect={onInspect}
 					fixture={{ data, type: STRIP_WEAPONS_EVENT_TYPE }}
 				/>
-			</div>
-		</div>
+			</EventCardMeta>
+		</EventCardShell>
 	);
 }

@@ -1,13 +1,15 @@
-import clsx from "clsx";
 import { sub } from "date-fns";
 import type * as React from "react";
-import { ListBoxItem, type SelectProps } from "react-aria-components";
+import type { SelectProps } from "react-aria-components";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
 import { tournamentSearchSearchParams } from "~/features/tournament/tournament-search-params";
 import { LocaleTime } from "../LocaleTime";
-import { SearchSelect } from "./SearchSelect";
-import searchSelectStyles from "./SearchSelect.module.css";
-import selectStyles from "./Select.module.css";
+import {
+	SearchSelect,
+	SearchSelectItem,
+	SearchSelectItemAdditionalText,
+	SearchSelectItemLogo,
+} from "./SearchSelect";
 import { useEntitySearch } from "./useEntitySearch";
 
 export type TournamentSearchItem = NonNullable<
@@ -90,20 +92,14 @@ function parseTournamentResults(
 
 function TournamentItem({ item }: { item: TournamentSearchItem }) {
 	return (
-		<ListBoxItem
+		<SearchSelectItem
 			id={item.id}
 			textValue={item.name}
-			className={({ isFocused, isSelected }) =>
-				clsx(searchSelectStyles.item, {
-					[selectStyles.itemFocused]: isFocused,
-					[selectStyles.itemSelected]: isSelected,
-				})
-			}
-			data-testid="tournament-search-item"
+			testId="tournament-search-item"
+			leading={<SearchSelectItemLogo src={item.logoUrl} />}
 		>
-			<img src={item.logoUrl} alt="" className={searchSelectStyles.logo} />
-			<div className={searchSelectStyles.itemTextsContainer}>
-				<span>{item.name}</span>
+			<span>{item.name}</span>
+			<SearchSelectItemAdditionalText>
 				<LocaleTime
 					date={item.startsAt}
 					options={{
@@ -112,9 +108,8 @@ function TournamentItem({ item }: { item: TournamentSearchItem }) {
 						year: "numeric",
 					}}
 					inline
-					className={searchSelectStyles.itemAdditionalText}
 				/>
-			</div>
-		</ListBoxItem>
+			</SearchSelectItemAdditionalText>
+		</SearchSelectItem>
 	);
 }

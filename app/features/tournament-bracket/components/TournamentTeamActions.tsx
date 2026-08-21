@@ -18,7 +18,7 @@ import {
 	tournamentMatchPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
-import styles from "../tournament-bracket.module.css";
+import styles from "./TournamentTeamActions.module.css";
 
 export function TournamentTeamActions({
 	status,

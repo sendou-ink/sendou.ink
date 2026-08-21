@@ -5,7 +5,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/t.$customUrl.join.server";
 import { loader } from "../loaders/t.$customUrl.join.server";
-import styles from "../team.module.css";
+import styles from "./t.$customUrl.join.module.css";
 
 export { action, loader };
 

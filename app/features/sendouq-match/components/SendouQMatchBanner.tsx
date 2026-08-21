@@ -2,15 +2,14 @@ import { differenceInMinutes } from "date-fns";
 import { Ban, Vote } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
 	IconBanner,
 	MatchBanner,
 	MatchBannerContainer,
+	MatchBannerInfoBadge,
 	MultiMatchBanner,
 } from "~/components/match-page/MatchBanner";
-import bannerStyles from "~/components/match-page/MatchBanner.module.css";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
@@ -186,9 +185,9 @@ function CurrentMapVotesBadge({
 	return (
 		<SendouPopover
 			trigger={
-				<SendouButton variant="minimal" className={bannerStyles.infoBadge}>
+				<MatchBannerInfoBadge>
 					{voters.length} <Vote />
-				</SendouButton>
+				</MatchBannerInfoBadge>
 			}
 		>
 			<div className="stack sm">

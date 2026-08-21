@@ -30,7 +30,6 @@ import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
 import type { DetectedEvent } from "../core/detectors/types";
-import scannerStyles from "../scanner.module.css";
 import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";
 import { AnalyzerClient } from "../worker/client";
@@ -44,6 +43,7 @@ import {
 	stageLabel,
 	weaponLabel,
 } from "./labels";
+import { ScannerDropzone } from "./ScannerChrome";
 import styles from "./ScreenshotPage.module.css";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
@@ -406,7 +406,6 @@ export function ScreenshotPage() {
 	const [results, setResults] = useState<Record<string, Result>>({});
 	const [busy, setBusy] = useState(false);
 	const busyRef = useRef(false);
-	const [over, setOver] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	useEffect(() => {
@@ -516,23 +515,7 @@ export function ScreenshotPage() {
 
 	return (
 		<div>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
-			<div
-				className={clsx(scannerStyles.dropzone, {
-					[scannerStyles.over]: over,
-				})}
-				onDragOver={(e) => {
-					e.preventDefault();
-					setOver(true);
-				}}
-				onDragLeave={() => setOver(false)}
-				onDrop={(e) => {
-					e.preventDefault();
-					setOver(false);
-					const file = e.dataTransfer.files[0];
-					if (file) void analyze(file);
-				}}
-			>
+			<ScannerDropzone onFile={(file) => void analyze(file)}>
 				Drop a frame (PNG/JPEG) here, or{" "}
 				<label>
 					pick a file
@@ -548,8 +531,8 @@ export function ScreenshotPage() {
 					/>
 				</label>
 				{busy ? " — analyzing…" : null}
-			</div>
-			{error ? <p className={scannerStyles.error}>{error}</p> : null}
+			</ScannerDropzone>
+			{error ? <p className="text-error">{error}</p> : null}
 
 			<div
 				className={styles.frame}
@@ -922,7 +905,7 @@ export function ScreenshotPage() {
 														alt={c.id}
 													/>
 													{c.id}
-													<span className={scannerStyles.score}>
+													<span className="text-xxs text-lighter">
 														{c.score.toFixed(3)}
 													</span>
 												</span>
@@ -932,14 +915,14 @@ export function ScreenshotPage() {
 									<td>
 										<RoiCrop frame={frame} roi={roi.name} />
 										<b>{player?.name || "—"}</b>{" "}
-										<span className={scannerStyles.score}>
+										<span className="text-xxs text-lighter">
 											{dbg?.nameScore.toFixed(3)}
 										</span>
 									</td>
 									<td>
 										<RoiCrop frame={frame} roi={roi.paint} />
 										<b>{player?.paint ?? "—"}</b>{" "}
-										<span className={scannerStyles.score}>
+										<span className="text-xxs text-lighter">
 											{dbg?.paintScore.toFixed(3)}
 										</span>
 									</td>
@@ -949,7 +932,7 @@ export function ScreenshotPage() {
 												<span className={styles.candidate} key={s}>
 													<RoiCrop frame={frame} roi={roi.stats[s]} scale={2} />
 													<b>{[player?.ka, player?.d, player?.s][s] ?? "—"}</b>
-													<span className={scannerStyles.score}>
+													<span className="text-xxs text-lighter">
 														{dbg?.statScores[s].toFixed(2)}
 													</span>
 												</span>

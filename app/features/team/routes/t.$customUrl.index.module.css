@@ -1,0 +1,117 @@
+.actionButtons {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.results {
+	background-color: var(--color-bg-higher);
+	max-width: 32rem;
+	margin: 0 auto;
+	border-radius: var(--radius-box);
+	padding: var(--s-1) var(--s-4);
+	font-weight: var(--weight-bold);
+	font-size: var(--font-sm);
+	display: flex;
+	justify-content: space-between;
+	width: min(100%, 48rem);
+	color: var(--color-text);
+	white-space: nowrap;
+}
+
+.resultsPlacements {
+	list-style: none;
+	display: flex;
+	gap: var(--s-4);
+
+	& > li {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+	}
+}
+
+.member {
+	display: none;
+	flex-direction: column;
+}
+
+.memberSection {
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	padding: var(--s-2) var(--s-4);
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+	display: flex;
+	justify-content: space-between;
+	align-items: center;
+	height: 4.5rem;
+}
+
+.memberAvatarNameContainer {
+	display: flex;
+	align-items: center;
+	gap: var(--s-4);
+	color: var(--color-text);
+	font-weight: var(--weight-bold);
+}
+
+.memberAvatar {
+	background-color: var(--color-bg);
+	padding: var(--s-2);
+	border-radius: var(--radius-avatar);
+}
+
+.memberRole {
+	margin-left: auto;
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+	margin-inline-end: var(--s-3);
+	font-weight: var(--weight-bold);
+}
+
+.memberRoleMobile {
+	color: var(--color-text-high);
+	font-weight: var(--weight-bold);
+}
+
+.memberCardContainer {
+	width: 16rem;
+	margin: 0 auto;
+	display: flex;
+	text-align: center;
+	flex-direction: column;
+}
+
+.memberCard {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-3);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-box);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+}
+
+.memberCardName {
+	font-weight: var(--weight-bold);
+	margin-block-start: var(--s-0-5);
+}
+
+@container (width >= 640px) {
+	.member {
+		display: flex;
+	}
+
+	.memberCardContainer {
+		display: none;
+	}
+
+	.actionButtons {
+		justify-content: flex-end;
+	}
+}

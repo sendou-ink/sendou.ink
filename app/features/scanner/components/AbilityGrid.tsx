@@ -8,7 +8,7 @@ import { Ability } from "~/components/Ability";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import styles from "./AbilityGrid.module.css";
-import eventCardStyles from "./EventCard.module.css";
+import { EventCardPlayerTable } from "./EventCardShell";
 
 const ROW_LABELS = ["head", "clothes", "shoes"] as const;
 
@@ -18,20 +18,18 @@ export function AbilityGrid({
 	abilities: AbilityWithUnknown[][];
 }) {
 	return (
-		<table className={eventCardStyles.players}>
-			<tbody>
-				{abilities.map((row, i) => (
-					<tr key={i}>
-						<td>{ROW_LABELS[i]}</td>
-						{row.map((id, j) => (
-							<td key={j}>
-								<Ability ability={id} size={j === 0 ? "SUBTINY" : "TINY"} />
-							</td>
-						))}
-					</tr>
-				))}
-			</tbody>
-		</table>
+		<EventCardPlayerTable>
+			{abilities.map((row, i) => (
+				<tr key={i}>
+					<td>{ROW_LABELS[i]}</td>
+					{row.map((id, j) => (
+						<td key={j}>
+							<Ability ability={id} size={j === 0 ? "SUBTINY" : "TINY"} />
+						</td>
+					))}
+				</tr>
+			))}
+		</EventCardPlayerTable>
 	);
 }
 

@@ -8,13 +8,13 @@ import * as Engine from "~/features/tournament-bracket/core/engine";
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { Bracket as BracketType } from "../../core/Bracket";
-import styles from "../../tournament-bracket.module.css";
 import { bracketSchema } from "../../tournament-bracket-schemas";
 import { tournamentBracketsSearchParams } from "../../tournament-bracket-search-params";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
+import styles from "./Swiss.module.css";
 import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
 
 export function SwissBracket({

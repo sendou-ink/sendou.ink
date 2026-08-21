@@ -14,7 +14,14 @@ import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
-import sideNavStyles from "../SideNav.module.css";
+import {
+	NavIconContainer,
+	NavListButton,
+	NavListImage,
+	NavListSubtitle,
+	NavListTexts,
+	NavListTitle,
+} from "../SideNav";
 import styles from "./ChatSidebar.module.css";
 
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
@@ -38,9 +45,9 @@ function SidebarHeader({ onClose }: { onClose?: () => void }) {
 
 	return (
 		<div className={styles.sidebarHeader}>
-			<div className={sideNavStyles.iconContainer}>
+			<NavIconContainer>
 				<MessageSquare size={18} />
-			</div>
+			</NavIconContainer>
 			<h2>{t("common:chat.sidebar.title")}</h2>
 			{onClose ? (
 				<Button className={styles.closeButton} onPress={onClose}>
@@ -136,26 +143,18 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 							const unread = chatContext.unreadCounts[room.chatCode] ?? 0;
 
 							return (
-								<Button
+								<NavListButton
 									key={room.chatCode}
 									className={clsx(
-										sideNavStyles.listButton,
 										styles.roomItem,
 										room.isObsolete ? "opaque" : null,
 									)}
 									onPress={() => openRooms([room.chatCode])}
 								>
-									{room.imageUrl ? (
-										<img
-											src={room.imageUrl}
-											alt=""
-											className={sideNavStyles.listLinkImage}
-										/>
-									) : null}
-									<div className={sideNavStyles.listLinkContent}>
-										<span
+									{room.imageUrl ? <NavListImage src={room.imageUrl} /> : null}
+									<NavListTexts>
+										<NavListTitle
 											className={clsx(
-												sideNavStyles.listLinkTitle,
 												styles.roomName,
 												room.isObsolete ? "line-through" : null,
 											)}
@@ -164,11 +163,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 												room.header,
 												(d) => headerFormatter.format(d) ?? "",
 											)}
-										</span>
-										<span className={sideNavStyles.listLinkSubtitle}>
-											{room.subtitle}
-										</span>
-									</div>
+										</NavListTitle>
+										<NavListSubtitle>{room.subtitle}</NavListSubtitle>
+									</NavListTexts>
 									{unread > 0 && !room.isObsolete ? (
 										<span className={styles.unreadBadge}>{unread}</span>
 									) : room.lastMessageTimestamp > 0 ? (
@@ -178,7 +175,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 											)}
 										</span>
 									) : null}
-								</Button>
+								</NavListButton>
 							);
 						})}
 					</>
@@ -210,30 +207,21 @@ function CombinedRoomListItem({
 	);
 
 	return (
-		<Button
-			className={clsx(sideNavStyles.listButton, styles.roomItem)}
-			onPress={onPress}
-		>
-			{primary.imageUrl ? (
-				<img
-					src={primary.imageUrl}
-					alt=""
-					className={sideNavStyles.listLinkImage}
-				/>
-			) : null}
-			<div className={sideNavStyles.listLinkContent}>
-				<span className={clsx(sideNavStyles.listLinkTitle, styles.roomName)}>
+		<NavListButton className={styles.roomItem} onPress={onPress}>
+			{primary.imageUrl ? <NavListImage src={primary.imageUrl} /> : null}
+			<NavListTexts>
+				<NavListTitle className={styles.roomName}>
 					{resolveDatePlaceholders(
 						primary.header,
 						(d) => headerFormatter.format(d) ?? "",
 					)}
-				</span>
-				<span className={sideNavStyles.listLinkSubtitle}>
+				</NavListTitle>
+				<NavListSubtitle>
 					{rooms.map((room) => roomShortLabel(room.header)).join(" · ")}
-				</span>
-			</div>
+				</NavListSubtitle>
+			</NavListTexts>
 			{unread > 0 ? <span className={styles.unreadBadge}>{unread}</span> : null}
-		</Button>
+		</NavListButton>
 	);
 }
 
@@ -302,13 +290,7 @@ function SingleChatView({ onClose }: { onClose?: () => void }) {
 
 	const headerContent = (
 		<>
-			{room?.imageUrl ? (
-				<img
-					src={room.imageUrl}
-					alt=""
-					className={sideNavStyles.listLinkImage}
-				/>
-			) : null}
+			{room?.imageUrl ? <NavListImage src={room.imageUrl} /> : null}
 			<div className={styles.chatHeaderInfo}>
 				<span
 					className={clsx(
@@ -391,13 +373,7 @@ function CombinedChatView({
 	const primary = rooms[0];
 	const headerContent = (
 		<>
-			{primary.imageUrl ? (
-				<img
-					src={primary.imageUrl}
-					alt=""
-					className={sideNavStyles.listLinkImage}
-				/>
-			) : null}
+			{primary.imageUrl ? <NavListImage src={primary.imageUrl} /> : null}
 			<div className={styles.chatHeaderInfo}>
 				<span className={styles.chatHeaderTitle}>
 					{resolveDatePlaceholders(

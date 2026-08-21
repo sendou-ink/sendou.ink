@@ -14,7 +14,7 @@ import * as Swiss from "../../core/engine/swiss/team-status";
 import * as Progression from "../../core/Progression";
 import type { BracketMeta } from "../../core/Tournament";
 import { bracketSchema } from "../../tournament-bracket-schemas";
-import styles from "./bracket.module.css";
+import styles from "./PlacementsTable.module.css";
 
 export function PlacementsTable({
 	groupId,

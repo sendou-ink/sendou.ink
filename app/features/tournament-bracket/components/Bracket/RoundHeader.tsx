@@ -9,7 +9,7 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
 import * as Deadline from "../../core/Deadline";
 import type { TournamentData } from "../../core/Tournament.server";
-import styles from "./bracket.module.css";
+import styles from "./RoundHeader.module.css";
 
 export function RoundHeader({
 	roundId,

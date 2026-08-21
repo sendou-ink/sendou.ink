@@ -1,13 +1,17 @@
-import clsx from "clsx";
 import { Ability } from "~/components/Ability";
-import { WeaponImage } from "~/components/Image";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
 } from "../core/detectors/death/index";
 import styles from "./DeathCard.module.css";
-import eventCardStyles from "./EventCard.module.css";
+import {
+	EventCardMeta,
+	EventCardShell,
+	EventCardTeam,
+	EventCardTeams,
+	EventCardWeaponIcon,
+} from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { weaponLabel } from "./labels";
@@ -28,8 +32,8 @@ export function DeathCard(props: {
 	const weaponName = weaponLabel(data.weaponType, data.weaponId);
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className={eventCardStyles.card}>
-			<div className={eventCardStyles.meta}>
+		<EventCardShell>
+			<EventCardMeta>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -43,16 +47,13 @@ export function DeathCard(props: {
 					onInspect={onInspect}
 					fixture={{ data, type: "Death" }}
 				/>
-			</div>
-			<div className={clsx(eventCardStyles.teams, eventCardStyles.death)}>
-				<div className={eventCardStyles.team}>
+			</EventCardMeta>
+			<EventCardTeams layout="death">
+				<EventCardTeam>
 					<div className={styles.body}>
 						{data.weaponId !== null && data.weaponType === "MAIN" ? (
-							<WeaponImage
+							<EventCardWeaponIcon
 								weaponSplId={data.weaponId as MainWeaponId}
-								variant="build"
-								size={28}
-								className={eventCardStyles.weaponIcon}
 							/>
 						) : null}
 						<div className={styles.info}>
@@ -75,8 +76,8 @@ export function DeathCard(props: {
 							))}
 						</div>
 					</div>
-				</div>
-			</div>
-		</div>
+				</EventCardTeam>
+			</EventCardTeams>
+		</EventCardShell>
 	);
 }

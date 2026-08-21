@@ -1,0 +1,35 @@
+.editUsersList {
+	display: flex;
+	flex-direction: column;
+	padding: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	padding-block-end: var(--s-3);
+
+	& > li {
+		display: flex;
+		align-items: center;
+		justify-content: space-between;
+		list-style: none;
+	}
+}
+
+.editNumberInput {
+	max-width: 5rem;
+}
+
+.editSmallHeader {
+	font-size: var(--font-md);
+}
+
+.editDifferences {
+	padding: 0;
+	font-size: var(--font-xs);
+	list-style: none;
+
+	& > li::before {
+		content: "-";
+		padding-inline-end: 5px;
+	}
+}

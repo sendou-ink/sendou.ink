@@ -1,0 +1,59 @@
+.votingContainer {
+	max-width: 32rem;
+	margin-inline: auto;
+}
+
+.votingUserTrigger {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+.votingVoteButton {
+	width: 4rem;
+}
+
+.votingVoteButtonDownvote {
+	border-color: var(--color-error);
+	color: var(--color-error);
+	outline-color: var(--color-error);
+}
+
+.votingSubmitButton {
+	display: flex;
+	width: 12rem;
+	height: 2.5rem;
+	margin-block-start: var(--s-6);
+	margin-inline: auto;
+}
+
+.votingProgress {
+	width: 100%;
+}
+
+.votingAlert {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	border-radius: var(--radius-box);
+	background-color: var(--color-success-high);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	line-height: 0.75;
+	margin-inline: auto;
+	padding-block: var(--s-1);
+	padding-inline: var(--s-3) var(--s-4);
+
+	& > svg {
+		height: 1.75rem;
+		fill: var(--color-success);
+	}
+}
+
+.votingBioHeader {
+	font-size: var(--font-lg);
+	padding-block-end: var(--s-2);
+}

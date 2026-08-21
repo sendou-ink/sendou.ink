@@ -1,7 +1,10 @@
+import clsx from "clsx";
 import { Bell, ChevronRight } from "lucide-react";
 import * as React from "react";
+import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
+import { SendouPopover } from "~/components/elements/Popover";
 import {
 	NotificationItem,
 	NotificationItemDivider,
@@ -37,6 +40,34 @@ export function useNotifications() {
 	const showUnseenDot = useShowUnseenDot(notifications);
 
 	return { notifications, unseenIds, showUnseenDot };
+}
+
+export function NotificationPopover({
+	notifications,
+	unseenIds,
+	triggerClassName,
+}: {
+	notifications: LoaderNotification[];
+	unseenIds: number[];
+	triggerClassName?: string;
+}) {
+	return (
+		<SendouPopover
+			trigger={
+				<Button className={triggerClassName} data-testid="notifications-button">
+					<Bell />
+				</Button>
+			}
+			popoverClassName={clsx(styles.popoverContainer, {
+				[styles.noNotificationsContainer]: notifications.length === 0,
+			})}
+		>
+			<NotificationContent
+				notifications={notifications}
+				unseenIds={unseenIds}
+			/>
+		</SendouPopover>
+	);
 }
 
 export function NotificationContent({

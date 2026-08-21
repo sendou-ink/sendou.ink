@@ -32,7 +32,6 @@ import invariant from "~/utils/invariant";
 import { editTeamPage, manageTeamRosterPage, userPage } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.index.server";
 import type * as TeamRepository from "../TeamRepository.server";
-import styles from "../team.module.css";
 import { teamProfilePageActionSchema } from "../team-schemas";
 import {
 	getMemberRoleType,
@@ -40,6 +39,7 @@ import {
 	isTeamOwner,
 	resolveNewOwner,
 } from "../team-utils";
+import styles from "./t.$customUrl.index.module.css";
 
 export { action };
 

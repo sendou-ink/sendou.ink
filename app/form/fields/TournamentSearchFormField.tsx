@@ -3,8 +3,11 @@ import {
 	type TournamentSearchItem,
 } from "~/components/elements/TournamentSearch";
 import type { FormFieldProps } from "../types";
-import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
-import styles from "./UserSearchFormField.module.css";
+import {
+	FormFieldMessages,
+	SearchFormFieldWrapper,
+	useTranslatedTexts,
+} from "./FormFieldWrapper";
 
 type TournamentSearchFormFieldProps = FormFieldProps<"tournament-search"> & {
 	value: number | null;
@@ -32,22 +35,20 @@ export function TournamentSearchFormField({
 	});
 
 	return (
-		<div className={styles.root}>
-			<div className="stack xs">
-				<TournamentSearch
-					initialTournamentId={value ?? undefined}
-					pastOnly={pastOnly}
-					onChange={(tournament) => {
-						onChange(tournament?.id ?? null);
-						onTournamentSelected?.(tournament);
-					}}
-					onBlur={() => onBlur?.()}
-					label={translatedLabel}
-					isRequired={required}
-					isDisabled={disabled}
-				/>
-				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
-			</div>
-		</div>
+		<SearchFormFieldWrapper>
+			<TournamentSearch
+				initialTournamentId={value ?? undefined}
+				pastOnly={pastOnly}
+				onChange={(tournament) => {
+					onChange(tournament?.id ?? null);
+					onTournamentSelected?.(tournament);
+				}}
+				onBlur={() => onBlur?.()}
+				label={translatedLabel}
+				isRequired={required}
+				isDisabled={disabled}
+			/>
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+		</SearchFormFieldWrapper>
 	);
 }

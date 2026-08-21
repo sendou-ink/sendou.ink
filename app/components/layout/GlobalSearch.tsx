@@ -6,8 +6,6 @@ import {
 	Button,
 	Dialog,
 	DialogTrigger,
-	ListBox,
-	ListBoxItem,
 	Modal,
 	ModalOverlay,
 	Radio,
@@ -44,6 +42,13 @@ import {
 	GLOBAL_SEARCH_TYPES as SEARCH_TYPES,
 	type GlobalSearchType as SearchType,
 } from "./global-search-search-params";
+import {
+	SearchResultsEmptyState,
+	SearchResultsItem,
+	SearchResultsItemName,
+	SearchResultsItemRow,
+	SearchResultsListBox,
+} from "./SearchResults";
 import {
 	filterWeaponResults,
 	type SelectedWeapon,
@@ -354,44 +359,43 @@ function GlobalSearchContent({
 					listBoxRef={listBoxRef}
 				/>
 			) : (
-				<ListBox
+				<SearchResultsListBox
 					ref={listBoxRef}
-					className={clsx(styles.listBox, "scrollbar")}
+					className="scrollbar"
 					aria-label={t("common:search")}
 					onAction={handleSelect}
 					renderEmptyState={() => {
 						if (!hasQuery) {
 							return (
-								<div className={styles.emptyState}>
+								<SearchResultsEmptyState>
 									{t("common:search.hint")}
-								</div>
+								</SearchResultsEmptyState>
 							);
 						}
 						if (!isCurrentFetch) {
 							return (
-								<div className={styles.emptyState}>
+								<SearchResultsEmptyState>
 									{t("common:search.searching")}
-								</div>
+								</SearchResultsEmptyState>
 							);
 						}
 						return (
-							<div className={styles.emptyState}>
+							<SearchResultsEmptyState>
 								{t("common:search.noResults")}
-							</div>
+							</SearchResultsEmptyState>
 						);
 					}}
 				>
 					{results.map((result) => (
-						<ListBoxItem
+						<SearchResultsItem
 							key={getResultKey(result)}
 							id={getResultKey(result)}
 							href={getResultHref(result)}
-							className={styles.listBoxItem}
 						>
 							<ResultItem result={result} />
-						</ListBoxItem>
+						</SearchResultsItem>
 					))}
-				</ListBox>
+				</SearchResultsListBox>
 			)}
 		</div>
 	);
@@ -432,7 +436,7 @@ function ResultItem({ result }: { result: SearchResult }) {
 	switch (result.type) {
 		case "user":
 			return (
-				<div className={styles.resultItem}>
+				<SearchResultsItemRow>
 					<Avatar
 						user={{
 							discordId: result.discordId,
@@ -441,40 +445,40 @@ function ResultItem({ result }: { result: SearchResult }) {
 						size="xxs"
 					/>
 					<div className={styles.resultTexts}>
-						<span className={styles.resultName}>{result.name}</span>
+						<SearchResultsItemName>{result.name}</SearchResultsItemName>
 						{result.inGameName ? (
 							<span className={styles.resultSecondary}>
 								{result.inGameName}
 							</span>
 						) : null}
 					</div>
-				</div>
+				</SearchResultsItemRow>
 			);
 		case "team":
 			return (
-				<div className={styles.resultItem}>
+				<SearchResultsItemRow>
 					<Avatar
 						url={result.avatarUrl}
 						size="xxs"
 						identiconInput={result.name}
 					/>
-					<span className={styles.resultName}>{result.name}</span>
-				</div>
+					<SearchResultsItemName>{result.name}</SearchResultsItemName>
+				</SearchResultsItemRow>
 			);
 		case "organization":
 			return (
-				<div className={styles.resultItem}>
+				<SearchResultsItemRow>
 					<Avatar
 						url={result.avatarUrl}
 						size="xxs"
 						identiconInput={result.name}
 					/>
-					<span className={styles.resultName}>{result.name}</span>
-				</div>
+					<SearchResultsItemName>{result.name}</SearchResultsItemName>
+				</SearchResultsItemRow>
 			);
 		case "tournament":
 			return (
-				<div className={styles.resultItem}>
+				<SearchResultsItemRow>
 					{result.logoUrl ? (
 						<img
 							src={result.logoUrl}
@@ -485,14 +489,14 @@ function ResultItem({ result }: { result: SearchResult }) {
 						/>
 					) : null}
 					<div className={styles.resultTexts}>
-						<span className={styles.resultName}>{result.name}</span>
+						<SearchResultsItemName>{result.name}</SearchResultsItemName>
 						<LocaleTime
 							date={result.startsAt}
 							options={{ day: "numeric", month: "long", year: "numeric" }}
 							className={styles.resultSecondary}
 						/>
 					</div>
-				</div>
+				</SearchResultsItemRow>
 			);
 	}
 }

@@ -1,9 +1,12 @@
-import clsx from "clsx";
 import * as R from "remeda";
 import { TOURNAMENT } from "../../../tournament/tournament-constants";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { getRounds } from "../../core/rounds";
-import styles from "./bracket.module.css";
+import {
+	BracketColumn,
+	BracketColumnMatches,
+	BracketColumns,
+} from "./BracketColumns";
 import { Match } from "./Match";
 import { RoundHeader } from "./RoundHeader";
 import { useBracketSpoilerCensor } from "./useBracketSpoilerCensor";
@@ -14,7 +17,8 @@ interface EliminationBracketSideProps {
 	isExpanded?: boolean;
 }
 
-// these values must match --match-height and gap in bracket.module.css
+// these values must match --match-height in index.module.css and the match
+// gap in BracketColumns.module.css
 const MATCH_HEIGHT = 55;
 const GAP = 32;
 const MATCH_SPACING = MATCH_HEIGHT + GAP;
@@ -61,10 +65,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 
 	let atLeastOneColumnHidden = false;
 	return (
-		<div
-			className={styles.elimContainer}
-			style={{ "--round-count": rounds.length - hiddenRoundIds.size }}
-		>
+		<BracketColumns roundCount={rounds.length - hiddenRoundIds.size}>
 			{rounds.flatMap((round, roundIdx) => {
 				const bestOf = round.maps?.count;
 
@@ -98,11 +99,7 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 				}
 
 				return (
-					<div
-						key={round.id}
-						className={styles.elimRoundColumn}
-						data-round-id={round.id}
-					>
+					<BracketColumn key={round.id} roundId={round.id}>
 						<RoundHeader
 							roundId={round.id}
 							bracketIdx={props.bracket.idx}
@@ -111,15 +108,14 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 							showInfos={someMatchOngoing}
 							maps={round.maps}
 						/>
-						<div
-							className={clsx(styles.elimRoundMatchesContainer, {
-								[styles.elimRoundMatchesContainerTopBye]:
-									!atLeastOneColumnHidden &&
-									compactedFirstRoundId === null &&
-									(props.type === "winners" || props.type === "single") &&
-									(!props.bracket.data.match[0].opponent1 ||
-										!props.bracket.data.match[0].opponent2),
-							})}
+						<BracketColumnMatches
+							topBye={
+								!atLeastOneColumnHidden &&
+								compactedFirstRoundId === null &&
+								(props.type === "winners" || props.type === "single") &&
+								(!props.bracket.data.match[0].opponent1 ||
+									!props.bracket.data.match[0].opponent2)
+							}
 						>
 							{matches.map((match, matchIdx) => {
 								const lineType = (() => {
@@ -186,11 +182,11 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 									/>
 								);
 							})}
-						</div>
-					</div>
+						</BracketColumnMatches>
+					</BracketColumn>
 				);
 			})}
-		</div>
+		</BracketColumns>
 	);
 }
 

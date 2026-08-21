@@ -117,3 +117,19 @@ export function FormFieldWrapper({
 		</div>
 	);
 }
+
+/**
+ * Wrapper for the entity-search fields (user, team, tournament), which render
+ * their own label through the search component instead of taking one here.
+ */
+export function SearchFormFieldWrapper({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return (
+		<div className={styles.searchRoot}>
+			<div className="stack xs">{children}</div>
+		</div>
+	);
+}

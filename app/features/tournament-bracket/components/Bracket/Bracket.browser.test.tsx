@@ -1,7 +1,6 @@
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import styles from "~/features/tournament-bracket/components/Bracket/bracket.module.css";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { EliminationBracketSide } from "./Elimination";
@@ -898,7 +897,9 @@ describe("Single Elimination Bracket", () => {
 			<EliminationBracketSide bracket={bracket} type="single" isExpanded />,
 		);
 
-		const scores = screen.container.querySelectorAll(`.${styles.matchScore}`);
+		const scores = screen.container.querySelectorAll(
+			'[data-testid="match-score"]',
+		);
 		expect(scores.length).toBeGreaterThan(0);
 	});
 
@@ -955,7 +956,7 @@ describe("Single Elimination Bracket", () => {
 
 		// Should show exactly 2 round columns (Semifinals and Finals)
 		const roundColumns = screen.container.querySelectorAll(
-			`.${styles.elimRoundColumn}`,
+			'[data-testid="round-column"]',
 		);
 		expect(roundColumns.length).toBe(2);
 	});
@@ -985,13 +986,13 @@ describe("Single Elimination Bracket", () => {
 
 		// one slot per round 2 match instead of one per potential round 1 match
 		const firstRoundMatchWrappers = screen.container.querySelectorAll(
-			`[data-round-id="1"] .${styles.matchWrapper}`,
+			'[data-round-id="1"] :is([data-testid="match-wrapper"], [data-testid="match-bye"])',
 		);
 		expect(firstRoundMatchWrappers.length).toBe(2);
 
 		// played match connects to its destination with a straight line
 		const straightLines = screen.container.querySelectorAll(
-			`[data-round-id="1"] .${styles.matchLineStraight}`,
+			'[data-round-id="1"] [data-line-type="straight"]',
 		);
 		expect(straightLines.length).toBeGreaterThan(0);
 
@@ -1008,7 +1009,7 @@ describe("Single Elimination Bracket", () => {
 		);
 
 		const firstRoundMatchWrappers = screen.container.querySelectorAll(
-			`[data-round-id="1"] .${styles.matchWrapper}`,
+			'[data-round-id="1"] :is([data-testid="match-wrapper"], [data-testid="match-bye"])',
 		);
 		expect(firstRoundMatchWrappers.length).toBe(4);
 	});
@@ -1077,7 +1078,7 @@ describe("Double Elimination Bracket", () => {
 
 		// Small 4-team bracket only has Grand Finals (GF prefix), not regular WB rounds
 		const headerBox = screen.container.querySelector(
-			`.${styles.matchHeaderBox}`,
+			'[data-testid="match-header-box"]',
 		);
 		expect(headerBox?.textContent).toContain("GF");
 		expect(headerBox?.textContent).toContain("1.1");
@@ -1143,7 +1144,7 @@ describe("Round Robin Bracket", () => {
 		);
 
 		const tables = screen.container.querySelectorAll(
-			`.${styles.rrPlacementsTable}`,
+			'[data-testid="rr-standings-table"]',
 		);
 		expect(tables.length).toBe(2);
 	});
@@ -1182,7 +1183,9 @@ describe("Swiss Bracket", () => {
 			<SwissBracket bracket={bracket} bracketIdx={0} />,
 		);
 
-		const scores = screen.container.querySelectorAll(`.${styles.matchScore}`);
+		const scores = screen.container.querySelectorAll(
+			'[data-testid="match-score"]',
+		);
 		expect(scores.length).toBeGreaterThan(0);
 	});
 
@@ -1195,7 +1198,7 @@ describe("Swiss Bracket", () => {
 		);
 
 		const table = screen.container.querySelector(
-			`.${styles.rrPlacementsTable}`,
+			'[data-testid="rr-standings-table"]',
 		);
 		expect(table).not.toBeNull();
 	});

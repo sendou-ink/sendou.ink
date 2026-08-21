@@ -1,7 +1,9 @@
 import { useLoaderData, useMatches } from "react-router";
 import { Pagination } from "~/components/Pagination";
-import { VodListing } from "~/features/vods/components/VodListing";
-import styles from "~/features/vods/routes/vods.module.css";
+import {
+	VodListing,
+	VodListingList,
+} from "~/features/vods/components/VodListing";
 import { userVodsSearchParams } from "~/features/vods/vods-search-params";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import invariant from "~/utils/invariant";
@@ -35,11 +37,11 @@ export default function UserVodsPage() {
 				user={layoutData.user}
 				backTo={userPage(layoutData.user)}
 			/>
-			<div className={styles.listingList}>
+			<VodListingList>
 				{data.vods.map((vod) => (
 					<VodListing key={vod.id} vod={vod} showUser={false} />
 				))}
-			</div>
+			</VodListingList>
 			{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 		</div>
 	);

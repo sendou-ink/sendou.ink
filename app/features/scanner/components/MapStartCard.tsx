@@ -2,7 +2,7 @@ import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
-import styles from "./EventCard.module.css";
+import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
 import { modeLabel, stageLabel } from "./labels";
@@ -22,8 +22,8 @@ export function MapStartCard(props: {
 		props;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className={styles.card}>
-			<div className={styles.meta}>
+		<EventCardShell>
+			<EventCardMeta>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -40,7 +40,7 @@ export function MapStartCard(props: {
 					onInspect={onInspect}
 					fixture={{ data, type: "MapStart" }}
 				/>
-			</div>
-		</div>
+			</EventCardMeta>
+		</EventCardShell>
 	);
 }

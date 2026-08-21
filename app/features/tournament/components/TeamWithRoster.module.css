@@ -1,0 +1,117 @@
+.teamWithRoster {
+	display: flex;
+	width: 100%;
+	align-items: center;
+}
+
+.teamWithRosterName {
+	flex: 1;
+	min-width: 0;
+	font-weight: var(--weight-bold);
+	padding-inline-end: var(--s-4);
+	text-align: right;
+}
+
+.teamWithRosterMembers {
+	display: flex;
+	flex: 1;
+	min-width: 0;
+	flex-direction: column;
+	border-inline-start: var(--border-style-accent);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-2);
+	padding-inline-start: var(--s-4);
+	padding-block: var(--s-3);
+}
+
+.teamWithRosterMember {
+	display: grid;
+	gap: var(--s-1-5);
+	grid-template-columns: max-content minmax(0, max-content);
+	align-items: center;
+}
+
+.teamWithRosterMemberInactive {
+	text-decoration: line-through;
+	color: var(--color-text-high);
+	text-decoration-thickness: 2px;
+}
+
+.teamWithRosterMemberAvatarInactive {
+	opacity: 0.4;
+}
+
+.teamWithRosterMapPool {
+	display: grid;
+	grid-template-columns: max-content max-content max-content max-content;
+	border-radius: var(--radius-box);
+	border: var(--border-style-accent);
+	width: max-content;
+	margin: 0 auto;
+	overflow: hidden;
+}
+
+.teamWithRosterMapPool3Columns {
+	grid-template-columns: max-content max-content max-content;
+}
+
+.teamWithRosterMapPoolModeInfo {
+	background-color: var(--color-bg-high);
+	display: flex;
+	font-size: var(--font-2xs);
+	justify-content: center;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: var(--weight-semi);
+	padding-block: var(--s-0-5);
+}
+
+.teamWithRosterSeed {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.teamWithRosterTeamName {
+	word-break: break-word;
+	text-wrap: balance;
+	max-width: 250px;
+	display: block;
+	margin-inline-start: auto;
+}
+
+.teamMemberRow {
+	list-style: none;
+	position: relative;
+}
+
+.teamMemberName {
+	overflow: hidden;
+	color: var(--color-text);
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	display: block;
+	padding-block: 1px;
+}
+
+.teamMemberNameRole {
+	position: absolute;
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+	width: 12px;
+	height: 12px;
+	border-radius: var(--radius-full);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	line-height: 1;
+	display: grid;
+	place-items: center;
+	top: 14px;
+	left: 14px;
+	z-index: 1;
+}
+
+.teamMemberNameRoleSub {
+	background-color: var(--color-warning-high);
+}

@@ -4,7 +4,6 @@ import * as v from "valibot";
 import { beforeEach, describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
-import labelStyles from "~/components/Label.module.css";
 import { FormField } from "./FormField";
 import {
 	array,
@@ -298,8 +297,10 @@ describe("SendouForm", () => {
 				defaultValues: { bio: "123456789" },
 			});
 
-			const counter = screen.container.querySelector(`.${labelStyles.value}`);
-			expect(counter?.classList.contains(labelStyles.valueWarning)).toBe(true);
+			const counter = screen.container.querySelector(
+				'[data-testid="label-value-counter"]',
+			);
+			expect(counter?.getAttribute("data-length-state")).toBe("warning");
 		});
 
 		test("value counter shows error style when over max length", async () => {
@@ -311,8 +312,10 @@ describe("SendouForm", () => {
 				defaultValues: { bio: "123456" },
 			});
 
-			const counter = screen.container.querySelector(`.${labelStyles.value}`);
-			expect(counter?.classList.contains(labelStyles.valueError)).toBe(true);
+			const counter = screen.container.querySelector(
+				'[data-testid="label-value-counter"]',
+			);
+			expect(counter?.getAttribute("data-length-state")).toBe("error");
 		});
 
 		test("typing updates value", async () => {

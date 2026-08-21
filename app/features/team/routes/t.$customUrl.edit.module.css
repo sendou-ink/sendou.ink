@@ -1,0 +1,8 @@
+.formDivider {
+	margin-block: var(--s-6);
+}
+
+.mapPreferencesDivider {
+	margin-block-start: var(--s-6);
+	margin-block-end: var(--s-2);
+}

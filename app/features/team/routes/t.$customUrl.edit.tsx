@@ -20,13 +20,13 @@ import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/t.$customUrl.edit.server";
 import { loader } from "../loaders/t.$customUrl.edit.server";
-import styles from "../team.module.css";
 import {
 	editTeamActionSchema,
 	editTeamFormSchema,
 	updateTeamCustomThemeSchema,
 	updateTeamMapModePreferencesSchema,
 } from "../team-schemas";
+import styles from "./t.$customUrl.edit.module.css";
 
 export { action, loader };
 

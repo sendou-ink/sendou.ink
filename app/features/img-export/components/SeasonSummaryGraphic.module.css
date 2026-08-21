@@ -1,3 +1,14 @@
+/*
+:where() keeps the box base at zero specificity so the single-class variants
+below win regardless of which CSS chunk loads last
+*/
+:where(.box) {
+	padding: var(--s-2) var(--s-3);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+}
+
 .seasonBadge {
 	font-size: var(--font-md);
 	font-weight: var(--weight-extra);

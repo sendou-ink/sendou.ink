@@ -17,7 +17,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
+import { Image, ModeImage, TierImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";
@@ -54,9 +54,15 @@ import { loader } from "../loaders/leaderboards.server";
 
 export { action, loader };
 
+import {
+	RankTable,
+	RankTableInnerRow,
+	RankTableRank,
+	RankTableRow,
+	RankTableWeaponImage,
+} from "~/components/RankTable";
 import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
-import styles from "../../top-search/top-search.module.css";
 import leaderboardsStyles from "./leaderboards.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -351,35 +357,28 @@ function OwnEntryPeek({
 	return (
 		<div>
 			{entry.firstOfTier ? (
-				<div className={styles.tierHeader}>
+				<div className={leaderboardsStyles.tierHeader}>
 					<TierImage tier={entry.firstOfTier} width={32} />
 					{entry.firstOfTier.name}
 					{entry.firstOfTier.isPlus ? "+" : ""}
 				</div>
 			) : null}
 			<div>
-				<Link
+				<RankTableRow
 					to={userSeasonsPage({ user: entry, season: data.season })}
-					className={styles.tableRow}
 				>
-					<div className={styles.tableInnerRow}>
-						<div className={styles.tableRank}>{entry.placementRank}</div>
+					<RankTableInnerRow>
+						<RankTableRank>{entry.placementRank}</RankTableRank>
 						<div>
 							<Avatar size="xxs" user={entry} />
 						</div>
 						{typeof entry.weaponSplId === "number" ? (
-							<WeaponImage
-								className={styles.tableWeapon}
-								variant="build"
-								weaponSplId={entry.weaponSplId}
-								width={32}
-								height={32}
-							/>
+							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 						) : null}
-						<div className={styles.tableName}>{entry.username}</div>
-						<div className={styles.tablePower}>{entry.power}</div>
-					</div>
-				</Link>
+						<div className={leaderboardsStyles.tableName}>{entry.username}</div>
+						<div className={leaderboardsStyles.tablePower}>{entry.power}</div>
+					</RankTableInnerRow>
+				</RankTableRow>
 			</div>
 			{nextTier ? (
 				<div className="text-xs text-lighter ml-auto stack items-end">
@@ -404,7 +403,7 @@ function PlayersTable({
 	const data = useLoaderData<typeof loader>();
 
 	return (
-		<div className={styles.table}>
+		<RankTable>
 			{entries
 				// hide normal rows that are showed in "fancy" top 10 format
 				.filter((_, i) => !showingTopTen || i > 9)
@@ -412,45 +411,40 @@ function PlayersTable({
 					return (
 						<React.Fragment key={entry.entryId}>
 							{entry.firstOfTier && showTiers ? (
-								<div className={styles.tierHeader}>
+								<div className={leaderboardsStyles.tierHeader}>
 									<TierImage tier={entry.firstOfTier} width={32} />
 									{entry.firstOfTier.name}
 									{entry.firstOfTier.isPlus ? "+" : ""}
 								</div>
 							) : null}
-							<Link
+							<RankTableRow
 								to={userSeasonsPage({ user: entry, season: data.season })}
-								className={styles.tableRow}
 							>
-								<div className={styles.tableInnerRow}>
-									<div className={styles.tableRank}>{entry.placementRank}</div>
+								<RankTableInnerRow>
+									<RankTableRank>{entry.placementRank}</RankTableRank>
 									<div>
 										<Avatar size="xxs" user={entry} />
 									</div>
 									{typeof entry.weaponSplId === "number" ? (
-										<WeaponImage
-											className={styles.tableWeapon}
-											variant="build"
-											weaponSplId={entry.weaponSplId}
-											width={32}
-											height={32}
-										/>
+										<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 									) : null}
-									<div className={styles.tableName}>{entry.username}</div>
+									<div className={leaderboardsStyles.tableName}>
+										{entry.username}
+									</div>
 									{entry.pendingPlusTier ? (
 										<div className="text-xs text-theme whitespace-nowrap">
 											➜ +{entry.pendingPlusTier}
 										</div>
 									) : null}
-									<div className={styles.tablePower}>
+									<div className={leaderboardsStyles.tablePower}>
 										{entry.power.toFixed(2)}
 									</div>
-								</div>
-							</Link>
+								</RankTableInnerRow>
+							</RankTableRow>
 						</React.Fragment>
 					);
 				})}
-		</div>
+		</RankTable>
 	);
 }
 
@@ -471,13 +465,13 @@ function TeamTable({
 		_showQualificationDividers && isCurrentSeason && entries.length > 20;
 
 	return (
-		<div className={styles.table}>
+		<RankTable>
 			{entries.map((entry) => {
 				return (
 					<React.Fragment key={entry.entryId}>
-						<div className={styles.tableRow}>
-							<div className={styles.tableInnerRow}>
-								<div className={styles.tableRank}>{entry.placementRank}</div>
+						<RankTableRow>
+							<RankTableInnerRow>
+								<RankTableRank>{entry.placementRank}</RankTableRank>
 								{entry.team?.avatarUrl ? (
 									<Link
 										to={teamPage(entry.team.customUrl)}
@@ -486,7 +480,7 @@ function TeamTable({
 										<Avatar
 											size="xxs"
 											url={entry.team.avatarUrl}
-											className={styles.avatar}
+											className={leaderboardsStyles.avatar}
 										/>
 									</Link>
 								) : null}
@@ -504,27 +498,27 @@ function TeamTable({
 										);
 									})}
 								</div>
-								<div className={styles.tablePower}>
+								<div className={leaderboardsStyles.tablePower}>
 									{entry.power.toFixed(2)}
 								</div>
 								{showStaffActions ? <TeamStaffMenu entry={entry} /> : null}
-							</div>
-						</div>
+							</RankTableInnerRow>
+						</RankTableRow>
 						{entry.placementRank === TEAM_LEADERBOARD_QUALIFYING_COUNT &&
 						showQualificationDividers ? (
-							<div
-								className={`${styles.tableRow} ${styles.tableRowQualification}`}
+							<RankTableRow
+								className={leaderboardsStyles.tableRowQualification}
 							>
 								{t("common:leaderboard.qualification")}
 								<InfoPopover tiny>
 									{t("common:leaderboard.qualification.info")}
 								</InfoPopover>
-							</div>
+							</RankTableRow>
 						) : null}
 					</React.Fragment>
 				);
 			})}
-		</div>
+		</RankTable>
 	);
 }
 
@@ -573,32 +567,27 @@ function TeamStaffMenu({
 
 function XPTable({ entries }: { entries: XPLeaderboardItem[] }) {
 	return (
-		<div className={styles.table}>
+		<RankTable>
 			{entries.map((entry) => {
 				return (
-					<Link
+					<RankTableRow
 						to={topSearchPlayerPage(entry.playerId)}
 						key={entry.entryId}
-						className={styles.tableRow}
 					>
-						<div className={styles.tableInnerRow}>
-							<div className={styles.tableRank}>{entry.placementRank}</div>
+						<RankTableInnerRow>
+							<RankTableRank>{entry.placementRank}</RankTableRank>
 							{entry.discordId ? (
 								<Avatar size="xxs" user={entry as any} />
 							) : null}
-							<WeaponImage
-								className={styles.tableWeapon}
-								variant="build"
-								weaponSplId={entry.weaponSplId}
-								width={32}
-								height={32}
-							/>
+							<RankTableWeaponImage weaponSplId={entry.weaponSplId} />
 							<div>{entry.name}</div>
-							<div className={styles.tablePower}>{entry.power.toFixed(1)}</div>
-						</div>
-					</Link>
+							<div className={leaderboardsStyles.tablePower}>
+								{entry.power.toFixed(1)}
+							</div>
+						</RankTableInnerRow>
+					</RankTableRow>
 				);
 			})}
-		</div>
+		</RankTable>
 	);
 }

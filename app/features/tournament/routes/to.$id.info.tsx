@@ -4,7 +4,6 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { ModeImage } from "~/components/Image";
 import { containerClassName } from "~/components/Main";
-import { Markdown } from "~/components/Markdown";
 import { TierPill } from "~/components/TierPill";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { useTournament } from "~/features/tournament/tournament-context";
@@ -14,6 +13,7 @@ import { removeMarkdown } from "~/utils/strings";
 import { tournamentPage } from "~/utils/urls";
 import { action } from "../actions/to.$id.info.server";
 import { FactCardGrid, type FactCardItem } from "../components/FactCard";
+import { MarkdownSection } from "../components/MarkdownSection";
 import { RegistrationActions } from "../components/RegistrationActions";
 import {
 	TournamentHeader,
@@ -68,9 +68,7 @@ export default function TournamentInfoPage() {
 			</div>
 			<RegistrationActions tournament={tournament} />
 			{data.description ? (
-				<section className={styles.description}>
-					<Markdown>{data.description}</Markdown>
-				</section>
+				<MarkdownSection>{data.description}</MarkdownSection>
 			) : null}
 		</div>
 	);

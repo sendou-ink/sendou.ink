@@ -1,0 +1,155 @@
+.banner {
+	background-image:
+		linear-gradient(
+			to bottom,
+			rgba(255, 255, 255, 0),
+			rgba(255, 255, 255, 0),
+			rgba(0, 0, 0, 0.6)
+		),
+		var(--team-banner-img);
+	background-size: cover;
+	width: 100%;
+	aspect-ratio: 2 / 1;
+	display: grid;
+	grid-template-areas: "flags ." "avatar name";
+	padding: var(--s-5);
+	border-radius: var(--radius-box);
+}
+
+.bannerPlaceholder {
+	height: 6rem;
+	background-color: var(--color-accent-low);
+}
+
+.bannerFlags {
+	grid-area: flags;
+	margin-top: -5px;
+	display: none;
+	column-gap: var(--s-4);
+}
+
+.bannerName {
+	grid-area: name;
+	align-self: flex-end;
+	justify-self: flex-end;
+	font-size: 36px;
+	line-height: 1;
+	font-weight: var(--weight-bold);
+	color: #fff;
+	display: none;
+	align-items: center;
+	gap: var(--s-3);
+	position: relative;
+}
+
+.bskyLink {
+	padding: var(--s-1);
+	border: 1px solid;
+	border-radius: 50%;
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	height: 24.4px;
+	width: 24.4px;
+	display: grid;
+	place-items: center;
+
+	& > svg {
+		width: 0.9rem;
+	}
+
+	& path {
+		fill: #1285fe;
+	}
+}
+
+.bannerAvatar {
+	grid-area: avatar;
+	align-self: flex-end;
+	margin-bottom: -110px;
+
+	& > div {
+		padding: var(--s-2);
+		background-color: var(--color-bg);
+		border-radius: var(--radius-avatar);
+		display: grid;
+		place-items: center;
+		width: 7rem;
+	}
+
+	& img {
+		width: 100%;
+		aspect-ratio: 1 / 1;
+		object-fit: cover;
+		border-radius: var(--radius-avatar);
+	}
+}
+
+.bannerAvatarSpacer {
+	height: 4rem;
+}
+
+.mobileNameCountry {
+	display: flex;
+	font-size: var(--font-xl);
+	align-items: center;
+	font-weight: var(--weight-bold);
+	flex-direction: column;
+}
+
+.mobileTeamName {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.bannerTag {
+	font-size: var(--font-sm);
+	background-color: var(--color-accent-low);
+	color: var(--color-accent);
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--radius-box);
+}
+
+.bannerTagDesktop {
+	position: absolute;
+	bottom: 41px;
+	right: 0;
+	display: none;
+}
+
+.bannerTagMobile {
+	font-size: var(--font-xs);
+	padding: var(--s-0-5) var(--s-1);
+	margin-block: var(--s-1);
+}
+
+@container (width >= 640px) {
+	.bannerFlags {
+		display: flex;
+	}
+
+	.bannerName {
+		display: flex;
+	}
+
+	.bannerTagDesktop {
+		display: initial;
+	}
+
+	.bannerAvatar > div {
+		width: 10rem;
+	}
+
+	.bannerAvatar {
+		margin-left: var(--s-2);
+		margin-bottom: -90px;
+	}
+
+	.mobileNameCountry {
+		display: none;
+	}
+
+	.bannerPlaceholder {
+		height: 12rem;
+	}
+}

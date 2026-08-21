@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import type { Tables } from "~/db/tables";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
@@ -7,7 +6,6 @@ import {
 	getWidgetFormSchema,
 	TIMEZONE_OPTIONS,
 } from "../core/widgets/widget-form-schemas";
-import styles from "../routes/u.$identifier.module.css";
 import { USER } from "../user-page-constants";
 import { GameBadgeSelectField } from "./GameBadgeSelectField";
 
@@ -158,7 +156,6 @@ function SensFields() {
 								e.target.value === "" ? null : Number(e.target.value),
 							)
 						}
-						className={clsx(styles.sensSelect)}
 					>
 						<option value="">{"-"}</option>
 						{SENS_OPTIONS.map((sens) => (
@@ -179,7 +176,6 @@ function SensFields() {
 								e.target.value === "" ? null : Number(e.target.value),
 							)
 						}
-						className={clsx(styles.sensSelect)}
 					>
 						<option value="">{"-"}</option>
 						{SENS_OPTIONS.map((sens) => (

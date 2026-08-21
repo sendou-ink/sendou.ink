@@ -12,7 +12,7 @@ import { loader } from "../loaders/t.$customUrl.server";
 
 export { loader };
 
-import styles from "../team.module.css";
+import styles from "./t.$customUrl.module.css";
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];

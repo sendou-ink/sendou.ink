@@ -24,8 +24,8 @@ import {
 	tournamentTeamPage,
 } from "~/utils/urls";
 import type { TournamentResultsLoaderData } from "../loaders/to.$id.results.server";
-import styles from "../tournament.module.css";
 import { TOURNAMENT } from "../tournament-constants";
+import styles from "./to.$id.results.module.css";
 
 export { loader } from "../loaders/to.$id.results.server";
 

@@ -1,6 +1,0 @@
-.listingList {
-	display: flex;
-	flex-wrap: wrap;
-	gap: var(--s-6);
-	justify-content: center;
-}

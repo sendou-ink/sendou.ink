@@ -1,11 +1,9 @@
 import { Outlet } from "react-router";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl } from "~/utils/urls";
-
-import "../plus.module.css";
-import { plusSuggestionPage } from "~/features/plus-suggestions/plus-suggestions-urls";
 
 export const handle: SendouRouteHandle = {
 	navItemName: "plus",

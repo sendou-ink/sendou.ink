@@ -7,10 +7,9 @@ import { LinkButton } from "~/components/elements/Button";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { badgeUrl, userPage } from "~/utils/urls";
-import styles from "../badges.module.css";
 import { badgeExplanationText } from "../badges-utils";
-
 import { loader } from "../loaders/badges.$id.server";
+import styles from "./badges.$id.module.css";
 
 export { loader };
 

@@ -39,7 +39,6 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
-import scannerStyles from "../scanner.module.css";
 import { scannerSearchParams } from "../scanner-search-params";
 import type { SendStatus } from "../store/events";
 import {
@@ -66,6 +65,14 @@ import { formatTime, useEventDateTimeFormatter } from "./format";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import { playerStatusTeams } from "./player-status-view";
+import {
+	ScannerControls,
+	ScannerDropzone,
+	ScannerFeed,
+	ScannerMenuButton,
+	ScannerSplitLayout,
+	ScannerStatusPill,
+} from "./ScannerChrome";
 import {
 	countIngestableMatches,
 	type SendouUser,
@@ -155,7 +162,6 @@ export function VodPage({
 	const [vods, setVods] = useState<VodSummary[]>([]);
 	const [error, setError] = useState<string | null>(null);
 	const [telemetry, setTelemetry] = useState<ScanTelemetry | null>(null);
-	const [over, setOver] = useState(false);
 	const [eventsOpen, setEventsOpen] = useState(false);
 	const [resultsSend, setResultsSend] = useState<ResultsSend | null>(null);
 
@@ -555,23 +561,7 @@ export function VodPage({
 
 	return (
 		<div>
-			{/* biome-ignore lint/a11y/noStaticElementInteractions: drag-and-drop target; the file input inside is the accessible path */}
-			<div
-				className={clsx(scannerStyles.dropzone, {
-					[scannerStyles.over]: over,
-				})}
-				onDragOver={(e) => {
-					e.preventDefault();
-					setOver(true);
-				}}
-				onDragLeave={() => setOver(false)}
-				onDrop={(e) => {
-					e.preventDefault();
-					setOver(false);
-					const file = e.dataTransfer.files[0];
-					if (file) void scan(file);
-				}}
-			>
+			<ScannerDropzone onFile={(file) => void scan(file)}>
 				Drop a VoD (video file) here, or{" "}
 				<label>
 					pick a file
@@ -586,20 +576,21 @@ export function VodPage({
 						}}
 					/>
 				</label>
-			</div>
-			<div className={scannerStyles.controls}>
+			</ScannerDropzone>
+			<ScannerControls>
 				{showVodView ? (
 					<>
 						<button type="button" onClick={backToList}>
 							← All VoDs
 						</button>
-						<span
-							className={clsx(scannerStyles.status, {
-								[scannerStyles.watching]: status === "scanning",
-								[scannerStyles.detected]: status === "done",
-								[scannerStyles.idle]:
-									status !== "scanning" && status !== "done",
-							})}
+						<ScannerStatusPill
+							variant={
+								status === "scanning"
+									? "watching"
+									: status === "done"
+										? "detected"
+										: "idle"
+							}
 						>
 							{source === "stored" ? "saved" : status}
 							{fileName ? ` · ${fileName}` : null}
@@ -607,9 +598,9 @@ export function VodPage({
 							{gateScore !== null && status === "scanning"
 								? ` · gate ${gateScore.toFixed(2)}`
 								: null}
-						</span>
+						</ScannerStatusPill>
 						{progress ? (
-							<span className={scannerStyles.score}>
+							<span className="text-xxs text-lighter">
 								{formatTime(progress.t)} / {formatTime(progress.duration)}
 								{progress.duration > 0
 									? ` (${Math.round((progress.t / progress.duration) * 100)}%)`
@@ -626,7 +617,7 @@ export function VodPage({
 							</Link>
 						) : null}
 						{upload?.problem ? (
-							<span className={scannerStyles.score}>
+							<span className="text-xxs text-lighter">
 								upload unavailable: {upload.problem}
 							</span>
 						) : null}
@@ -643,8 +634,8 @@ export function VodPage({
 						) : null}
 						{resultsSend ? (
 							<span
-								className={clsx(scannerStyles.score, {
-									[scannerStyles.error]:
+								className={clsx("text-xxs text-lighter", {
+									"text-error":
 										resultsSend.state === "done" && Boolean(resultsSend.error),
 								})}
 							>
@@ -663,22 +654,22 @@ export function VodPage({
 						) : null}
 					</>
 				) : null}
-			</div>
-			{error ? <p className={scannerStyles.error}>{error}</p> : null}
+			</ScannerControls>
+			{error ? <p className="text-error">{error}</p> : null}
 			{showVodView && telemetry ? (
 				<TelemetryPanel telemetry={telemetry} />
 			) : null}
 			{!showVodView ? (
 				<div className={styles.vodList}>
 					{vods.length === 0 ? (
-						<p className={scannerStyles.score}>
+						<p className="text-xxs text-lighter">
 							No saved VoDs yet — scan one and it will show up here.
 						</p>
 					) : null}
 					{vods.map((vod) => (
 						<div key={vod.name} className={styles.vodItem}>
 							<span className={styles.vodName}>{vod.name}</span>
-							<span className={clsx(scannerStyles.score, styles.vodMeta)}>
+							<span className={clsx("text-xxs text-lighter", styles.vodMeta)}>
 								{vod.eventCount} event{vod.eventCount === 1 ? "" : "s"} ·{" "}
 								{formatTime(vod.duration)} · {formatSavedAt(vod.savedAt)}
 							</span>
@@ -702,8 +693,7 @@ export function VodPage({
 					))}
 				</div>
 			) : null}
-			<div
-				className={scannerStyles.liveLayout}
+			<ScannerSplitLayout
 				style={{
 					display: showVodView ? undefined : "none",
 					// a reopened saved VoD has no video to review — give the feed the full width
@@ -713,12 +703,12 @@ export function VodPage({
 				<div style={{ display: source === "scan" ? undefined : "none" }}>
 					<canvas
 						ref={previewRef}
-						className={scannerStyles.preview}
+						className={styles.preview}
 						style={{ display: status === "scanning" ? "block" : "none" }}
 					/>
 					<video
 						ref={videoRef}
-						className={scannerStyles.preview}
+						className={styles.preview}
 						muted
 						playsInline
 						controls
@@ -727,9 +717,9 @@ export function VodPage({
 						}}
 					/>
 				</div>
-				<div className={scannerStyles.feed}>
+				<ScannerFeed>
 					{matches.length === 0 ? (
-						<p className={scannerStyles.score}>
+						<p className="text-xxs text-lighter">
 							{status === "scanning"
 								? "Scanning — matches appear here as scoreboards are detected."
 								: "No matches found in this VoD."}
@@ -820,8 +810,8 @@ export function VodPage({
 									/>
 								))
 						: null}
-				</div>
-			</div>
+				</ScannerFeed>
+			</ScannerSplitLayout>
 		</div>
 	);
 }
@@ -836,13 +826,7 @@ function ExportMenu({
 }) {
 	return (
 		<SendouMenu
-			trigger={
-				<SendouButton
-					icon={<Download />}
-					className={scannerStyles.iconMenu}
-					aria-label="Export"
-				/>
-			}
+			trigger={<ScannerMenuButton icon={<Download />} label="Export" />}
 		>
 			<SendouMenuItem
 				icon={<FileText />}

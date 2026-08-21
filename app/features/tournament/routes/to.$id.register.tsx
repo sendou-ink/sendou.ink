@@ -40,7 +40,6 @@ import {
 import { action } from "../actions/to.$id.register.server";
 import type { TournamentRegisterPageLoader } from "../loaders/to.$id.register.server";
 import { loader } from "../loaders/to.$id.register.server";
-import styles from "../tournament.module.css";
 import {
 	type RegisterTeamFormValues,
 	registerTeamFormSchema,
@@ -51,6 +50,7 @@ import {
 	deleteTeamMemberSchema,
 	updateMapPoolSchema,
 } from "../tournament-schemas";
+import styles from "./to.$id.register.module.css";
 
 export { action, loader };
 
@@ -345,15 +345,13 @@ function RegistrationProgress({
 								{step.name}
 								{step.status === "completed" ? (
 									<Check
-										className={clsx(styles.sectionIcon, "color-success")}
+										className="color-success"
 										data-testid={`checkmark-icon-num-${i + 1}`}
 									/>
 								) : step.status === "notice" ? (
-									<AlertCircle
-										className={clsx(styles.sectionIcon, "color-info")}
-									/>
+									<AlertCircle className="color-info" />
 								) : (
-									<X className={clsx(styles.sectionIcon, "color-error")} />
+									<X className="color-error" />
 								)}
 							</div>
 						);

@@ -2,7 +2,7 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
-import styles from "./EventCard.module.css";
+import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { formatClock, useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
@@ -25,8 +25,8 @@ export function PlayerStatusCard(props: {
 			.join("");
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className={styles.card}>
-			<div className={styles.meta}>
+		<EventCardShell>
+			<EventCardMeta>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -46,7 +46,7 @@ export function PlayerStatusCard(props: {
 					onInspect={onInspect}
 					fixture={{ data, type: PLAYER_STATUS_EVENT_TYPE }}
 				/>
-			</div>
-		</div>
+			</EventCardMeta>
+		</EventCardShell>
 	);
 }

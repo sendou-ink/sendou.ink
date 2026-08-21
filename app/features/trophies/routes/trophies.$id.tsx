@@ -9,7 +9,7 @@ import { TrophyShowcase } from "../components/TrophyShowcase";
 import { TrophyTournamentHistory } from "../components/TrophyTournamentHistory";
 import { loader } from "../loaders/trophies.$id.server";
 import { parseSpecialTrophyCode } from "../trophies-utils";
-import styles from "./trophies.module.css";
+import styles from "./trophies.$id.module.css";
 
 export { loader };
 

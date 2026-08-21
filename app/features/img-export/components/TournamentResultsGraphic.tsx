@@ -1,11 +1,10 @@
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { LocaleTime } from "~/components/LocaleTime";
 import { TierPill } from "~/components/TierPill";
 import { tournamentPage } from "~/utils/urls";
 import {
-	GRAPHIC_DATE_FORMAT_OPTIONS,
 	GraphicContainer,
+	GraphicDateSubtitle,
 	GraphicFooter,
 	GraphicHeader,
 	GraphicPlacementCell,
@@ -13,8 +12,8 @@ import {
 	type GraphicTeam,
 	GraphicTeamRow,
 	GraphicTeamsList,
+	GraphicTitle,
 } from "./Graphic";
-import graphicStyles from "./Graphic.module.css";
 import styles from "./TournamentResultsGraphic.module.css";
 
 export interface TournamentResultsGraphicTeam extends GraphicTeam {
@@ -88,22 +87,16 @@ export function TournamentGraphicHeader({
 			avatarUrl={logoUrl}
 			identiconInput={tournamentName}
 			titleRow={
-				<span className={graphicStyles.headerTitle}>
+				<GraphicTitle>
 					{tournamentName}
 					{typeof tier === "number" ? (
 						<span className={styles.tierPillContainer}>
 							<TierPill tier={tier} withoutAnimation />
 						</span>
 					) : null}
-				</span>
+				</GraphicTitle>
 			}
-			subtitle={
-				<LocaleTime
-					date={startTime}
-					options={GRAPHIC_DATE_FORMAT_OPTIONS}
-					className={graphicStyles.headerSubtitle}
-				/>
-			}
+			subtitle={<GraphicDateSubtitle date={startTime} />}
 			trailing={
 				organization ? (
 					<>

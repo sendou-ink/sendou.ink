@@ -66,3 +66,7 @@ function WeaponsPeek({ weapons }: { weapons: ListVod["weapons"] }) {
 function youtubeIdToThumbnailUrl(youtubeId: string) {
 	return `http://img.youtube.com/vi/${youtubeId}/hqdefault.jpg`;
 }
+
+export function VodListingList({ children }: { children: React.ReactNode }) {
+	return <div className={styles.list}>{children}</div>;
+}

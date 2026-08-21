@@ -1,5 +1,3 @@
-import clsx from "clsx";
-import { WeaponImage } from "~/components/Image";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import type {
 	ScoreboardData,
@@ -7,9 +5,17 @@ import type {
 } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
-import scannerStyles from "../scanner.module.css";
 import { AbilityPopover } from "./AbilityGrid";
-import styles from "./EventCard.module.css";
+import {
+	EventCardMeta,
+	EventCardNumberCell,
+	EventCardPlayerTable,
+	EventCardShell,
+	EventCardTeam,
+	EventCardTeams,
+	EventCardWeaponCell,
+	EventCardWeaponIcon,
+} from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
 import { useEventTimeFormatter } from "./format";
@@ -27,34 +33,27 @@ function PlayerRows({
 	abilities?: PlayerAbilityMap;
 }) {
 	return (
-		<table className={styles.players}>
-			<tbody>
-				{players.map((p, i) => (
-					<tr key={i}>
-						<td>
-							<span className={styles.weaponCell}>
-								{p.weaponId !== null ? (
-									<WeaponImage
-										weaponSplId={p.weaponId}
-										variant="build"
-										size={28}
-										className={styles.weaponIcon}
-									/>
-								) : null}
-								{abilities?.has(offset + i) ? (
-									<AbilityPopover abilities={abilities.get(offset + i)!} />
-								) : null}
-							</span>
-						</td>
-						<td>{p.name || "?"}</td>
-						<td className={styles.num}>{p.paint ?? "?"}p</td>
-						<td className={styles.num}>
-							{p.ka ?? "?"}/{p.d ?? "?"}/{p.s ?? "?"}
-						</td>
-					</tr>
-				))}
-			</tbody>
-		</table>
+		<EventCardPlayerTable>
+			{players.map((p, i) => (
+				<tr key={i}>
+					<td>
+						<EventCardWeaponCell>
+							{p.weaponId !== null ? (
+								<EventCardWeaponIcon weaponSplId={p.weaponId} />
+							) : null}
+							{abilities?.has(offset + i) ? (
+								<AbilityPopover abilities={abilities.get(offset + i)!} />
+							) : null}
+						</EventCardWeaponCell>
+					</td>
+					<td>{p.name || "?"}</td>
+					<EventCardNumberCell>{p.paint ?? "?"}p</EventCardNumberCell>
+					<EventCardNumberCell>
+						{p.ka ?? "?"}/{p.d ?? "?"}/{p.s ?? "?"}
+					</EventCardNumberCell>
+				</tr>
+			))}
+		</EventCardPlayerTable>
 	);
 }
 
@@ -85,8 +84,8 @@ export function ScoreboardCard(props: {
 	const isScoreboardBattleLog = eventType === SCOREBOARD_BATTLE_LOG_EVENT_TYPE;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
-		<div className={styles.card}>
-			<div className={styles.meta}>
+		<EventCardShell>
+			<EventCardMeta>
 				<MetaPills
 					t={t}
 					confidence={confidence}
@@ -112,7 +111,7 @@ export function ScoreboardCard(props: {
 				) : null}
 				{data.timestamp ? <span>{data.timestamp}</span> : null}
 				{data.replayCode ? (
-					<span className={scannerStyles.score}>{data.replayCode}</span>
+					<span className="text-xxs text-lighter">{data.replayCode}</span>
 				) : null}
 				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}
 				<FrameThumb
@@ -121,25 +120,25 @@ export function ScoreboardCard(props: {
 					onInspect={onInspect}
 					fixture={{ data, type: eventType }}
 				/>
-			</div>
-			<div className={styles.teams}>
-				<div className={clsx(styles.team, styles.win)}>
+			</EventCardMeta>
+			<EventCardTeams>
+				<EventCardTeam result="win">
 					<h3>{teamHeading("Victory", data, 0)}</h3>
 					<PlayerRows
 						players={data.players.slice(0, 4)}
 						offset={0}
 						abilities={props.abilities}
 					/>
-				</div>
-				<div className={clsx(styles.team, styles.lose)}>
+				</EventCardTeam>
+				<EventCardTeam result="lose">
 					<h3>{teamHeading("Defeat", data, 1)}</h3>
 					<PlayerRows
 						players={data.players.slice(4, 8)}
 						offset={4}
 						abilities={props.abilities}
 					/>
-				</div>
-			</div>
-		</div>
+				</EventCardTeam>
+			</EventCardTeams>
+		</EventCardShell>
 	);
 }

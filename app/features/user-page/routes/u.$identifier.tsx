@@ -25,7 +25,6 @@ import {
 
 export { loader };
 
-import "~/features/user-page/user-page.module.css";
 import { userArtPage } from "~/features/art/art-urls";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 

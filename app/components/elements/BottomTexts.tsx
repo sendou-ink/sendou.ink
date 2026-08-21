@@ -1,5 +1,4 @@
-import { SendouFieldError } from "~/components/elements/FieldError";
-import { SendouFieldMessage } from "~/components/elements/FieldMessage";
+import { SendouFieldError, SendouFieldMessage } from "~/components/FormMessage";
 
 // TODO: deprecate in favor of FormMessage
 export function SendouBottomTexts({

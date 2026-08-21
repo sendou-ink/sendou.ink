@@ -29,12 +29,12 @@ function Score({
 	const { t } = useTranslation(["q"]);
 
 	return (
-		<div className={styles.values}>
+		<div className="stack horizontal sm font-semi-bold">
 			<div>
 				{score.alpha}-{score.bravo}
 			</div>
 			<div
-				className={styles.sub}
+				className="text-lighter"
 				data-testid={score.isFinal ? "match-final" : undefined}
 			>
 				{score.isFinal

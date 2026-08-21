@@ -1,0 +1,97 @@
+.rrPlacementsTable {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	min-width: max-content;
+	overflow-x: auto;
+	max-width: 600px;
+
+	& thead {
+		color: var(--color-text-high);
+	}
+
+	& th {
+		text-align: left;
+
+		& abbr {
+			padding-inline: var(--s-2);
+		}
+	}
+
+	& td span {
+		padding-inline: var(--s-2);
+	}
+
+	& td a.destinationLink {
+		color: inherit;
+		font-style: inherit;
+		padding-inline: var(--s-2);
+	}
+
+	& td button {
+		height: auto;
+	}
+
+	& td a.teamNameLink {
+		display: inline-block;
+		max-width: 240px;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		white-space: nowrap;
+		vertical-align: middle;
+	}
+
+	& tbody tr:nth-child(odd) {
+		background-color: var(--color-bg-high);
+	}
+
+	& tbody tr:nth-child(even) {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.standingsDividerRow {
+	background-color: transparent !important;
+}
+
+.standingsDivider {
+	padding: 0;
+}
+
+.standingsDividerContent {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+}
+
+.standingsDividerLine {
+	flex: 1;
+	height: 2px;
+	background-color: var(--color-border);
+}
+
+.standingsDividerText {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	white-space: nowrap;
+}
+
+.standingsDividerQualified {
+	& .standingsDividerLine {
+		background-color: var(--color-success);
+	}
+
+	& .standingsDividerText {
+		color: var(--color-success);
+	}
+}
+
+.standingsDividerEliminated {
+	& .standingsDividerLine {
+		background-color: var(--color-error);
+	}
+
+	& .standingsDividerText {
+		color: var(--color-error);
+	}
+}

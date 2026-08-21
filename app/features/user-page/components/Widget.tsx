@@ -802,7 +802,7 @@ function SocialLinksWidget({
 									variant="minimal"
 									className={clsx(
 										styles.socialLinkIconContainer,
-										styles[link.platform],
+										styles.discord,
 									)}
 								>
 									{link.platform === "discord" ? <DiscordIcon /> : null}

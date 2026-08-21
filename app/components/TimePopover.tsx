@@ -1,11 +1,10 @@
 import clsx from "clsx";
 import { Check, Clipboard } from "lucide-react";
 import { useRef, useState } from "react";
-import { Dialog, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { SendouButton } from "./elements/Button";
-import popoverStyles from "./elements/Popover.module.css";
+import { SendouAnchoredPopover } from "./elements/Popover";
 import { LocaleTime } from "./LocaleTime";
 import styles from "./TimePopover.module.css";
 
@@ -52,40 +51,37 @@ export default function TimePopover({
 			>
 				<LocaleTime date={date} options={options} inline />
 			</button>
-			<Popover
+			<SendouAnchoredPopover
 				isOpen={open}
-				className={popoverStyles.content}
 				onOpenChange={setOpen}
 				triggerRef={triggerRef}
 			>
-				<Dialog className={popoverStyles.dialog}>
-					<div className="stack sm">
-						<div className="text-center">
-							<LocaleTime
-								date={date}
-								options={{
-									timeZoneName: "long",
-									hour: "numeric",
-									minute: "numeric",
-								}}
-							/>
-						</div>
-						<SendouButton
-							size="miniscule"
-							variant="minimal"
-							onPress={() => copyToClipboard(`<t:${date.valueOf() / 1000}:F>`)}
-							icon={copySuccess ? <Check /> : <Clipboard />}
-						>
-							{t("common:actions.copyTimestampForDiscord")}
-						</SendouButton>
-						{footerText ? (
-							<div className="text-lighter text-center mt-2 text-xs">
-								{footerText}
-							</div>
-						) : null}
+				<div className="stack sm">
+					<div className="text-center">
+						<LocaleTime
+							date={date}
+							options={{
+								timeZoneName: "long",
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
 					</div>
-				</Dialog>
-			</Popover>
+					<SendouButton
+						size="miniscule"
+						variant="minimal"
+						onPress={() => copyToClipboard(`<t:${date.valueOf() / 1000}:F>`)}
+						icon={copySuccess ? <Check /> : <Clipboard />}
+					>
+						{t("common:actions.copyTimestampForDiscord")}
+					</SendouButton>
+					{footerText ? (
+						<div className="text-lighter text-center mt-2 text-xs">
+							{footerText}
+						</div>
+					) : null}
+				</div>
+			</SendouAnchoredPopover>
 		</div>
 	);
 }

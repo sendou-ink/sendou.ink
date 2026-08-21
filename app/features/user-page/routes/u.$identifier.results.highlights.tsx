@@ -5,7 +5,7 @@ import { SubmitButton } from "~/components/SubmitButton";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { action } from "../actions/u.$identifier.results.highlights.server";
 import { loader } from "../loaders/u.$identifier.results.server";
-import styles from "../user-page.module.css";
+import styles from "./u.$identifier.results.highlights.module.css";
 
 export { action, loader };
 

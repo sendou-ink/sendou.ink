@@ -1,3 +1,55 @@
+/*
+The scanner's outermost box: it names the container the pages' container
+queries key off, and carries the app's own button look. Design tokens come
+from sendou.ink's app/styles/vars.css.
+*/
+
+.app {
+	container: scanner / inline-size;
+
+	/* the app's own buttons, kept at :where() specificity so any component
+	   class overrides it without having to win an ordering race */
+	& :where(button) {
+		display: inline-flex;
+		align-items: center;
+		justify-content: center;
+		gap: var(--s-1-5);
+		border: var(--border-style-accent);
+		border-radius: var(--radius-field);
+		appearance: none;
+		background: var(--color-text-accent);
+		color: var(--color-text-inverse);
+		cursor: pointer;
+		font-family: inherit;
+		font-size: var(--font-xs);
+		font-weight: var(--weight-bold);
+		padding: 0 var(--field-padding);
+		height: var(--field-size-sm);
+		white-space: nowrap;
+		user-select: none;
+
+		& > svg {
+			width: 16px;
+			height: 16px;
+		}
+
+		&:focus-visible {
+			outline: var(--focus-ring);
+			outline-offset: 1px;
+		}
+
+		&:active {
+			transform: translateY(1px);
+		}
+
+		&:disabled {
+			cursor: not-allowed;
+			opacity: 0.5;
+			transform: initial;
+		}
+	}
+}
+
 .topbar {
 	display: flex;
 	align-items: center;

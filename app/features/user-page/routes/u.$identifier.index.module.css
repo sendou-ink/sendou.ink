@@ -1,0 +1,301 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+	width: 100%;
+	max-width: 1200px;
+	margin: 0 auto;
+}
+
+.header {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
+}
+
+.userInfo {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.username {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+	margin: 0;
+}
+
+.subtitle {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.nameGroup {
+	display: flex;
+	flex-direction: column;
+	line-height: 1.25;
+	align-items: center;
+}
+
+.editButtons {
+	display: flex;
+	gap: var(--s-2);
+	margin: 0 auto;
+}
+
+.mobileIconNav {
+	display: block;
+}
+
+.desktopIconNav {
+	display: none;
+}
+
+.sideCarousel {
+	display: flex;
+	overflow-x: auto;
+	gap: var(--s-4);
+	padding-block: var(--s-2);
+	scroll-snap-type: x mandatory;
+
+	& > * {
+		flex: 0 0 280px;
+		scroll-snap-align: start;
+	}
+}
+
+.mainStack {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.grid {
+	display: none;
+}
+
+@container (width >= 720px) {
+	.header {
+		flex-direction: row;
+		flex-wrap: wrap;
+		justify-content: flex-start;
+		align-items: center;
+		padding-block-start: var(--s-6);
+	}
+
+	.nameGroup {
+		align-items: flex-start;
+	}
+
+	.desktopIconNav {
+		display: block;
+		margin-left: auto;
+	}
+
+	.mobileIconNav {
+		display: none;
+	}
+
+	.mainStack {
+		display: none;
+	}
+
+	.sideCarousel {
+		display: none;
+	}
+
+	.editButtons {
+		margin: initial;
+	}
+
+	.grid {
+		display: grid;
+		grid-template-columns: minmax(0, 2fr) minmax(0, 1fr);
+		gap: var(--s-8);
+		align-items: start;
+	}
+
+	.main {
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-6);
+	}
+
+	.side {
+		position: sticky;
+		top: 50px;
+		display: flex;
+		flex-direction: column;
+		gap: var(--s-6);
+		align-self: start;
+	}
+}
+
+.oldPageContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+.avatarContainer {
+	display: grid;
+	justify-content: center;
+	column-gap: var(--s-3);
+	grid-template-areas: "avatar name" "avatar team" "avatar ." "avatar ." "socials .";
+}
+
+.avatar {
+	min-width: 125px;
+	grid-area: avatar;
+}
+
+.team {
+	display: flex;
+	font-weight: var(--weight-bold);
+	color: var(--color-text);
+	gap: var(--s-1-5);
+	grid-area: team;
+	align-items: center;
+}
+
+.name {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	grid-area: name;
+	overflow-wrap: anywhere;
+	gap: var(--s-3);
+}
+
+.socials {
+	display: flex;
+	justify-content: center;
+	gap: var(--s-1-5);
+	grid-area: socials;
+	padding-block-start: var(--s-3);
+}
+
+.socialLink {
+	padding: var(--s-1);
+	border: 1px solid;
+	border-radius: 50%;
+}
+
+.extraInfoHeading {
+	& > svg {
+		width: 0.8rem;
+	}
+}
+
+.socialLink {
+	& > svg {
+		width: 0.9rem;
+	}
+}
+
+.socialLinkYoutube {
+	border-color: #f00;
+	background-color: #ff00002f;
+
+	& > svg {
+		fill: #f00;
+	}
+}
+
+.socialLinkTwitch {
+	border-color: #9146ff;
+	background-color: #9146ff2f;
+
+	& > svg {
+		fill: #9146ff;
+	}
+}
+
+.socialLinkBattlefy {
+	border-color: #de4c5e;
+	background-color: #de4c5e2f;
+
+	& > svg {
+		fill: #de4c5e;
+	}
+}
+
+.socialLinkBsky {
+	border-color: #1285fe;
+	background-color: #1285fe2f;
+	display: grid;
+	place-items: center;
+
+	& path {
+		fill: #1285fe;
+	}
+}
+
+.extraInfos {
+	display: flex;
+	max-width: 24rem;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	margin-inline: auto;
+}
+
+.extraInfo {
+	padding: var(--s-1) var(--s-1-5);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	font-size: var(--font-2xs);
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.extraInfoHeading {
+	color: var(--color-text-accent);
+	font-weight: var(--weight-bold);
+}
+
+.weapon {
+	padding: var(--s-2);
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+}
+
+.placements {
+	display: flex;
+	flex-wrap: wrap;
+	padding: var(--s-4);
+	border-radius: var(--radius-box);
+	margin: 0 auto;
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+	gap: var(--s-6);
+	transition: 0.1s ease-in-out background-color;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.placementsMode {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	gap: var(--s-1-5);
+}
+
+@container (width >= 480px) {
+	.placements {
+		gap: var(--s-10);
+	}
+
+	.placementsMode {
+		font-size: var(--font-sm);
+	}
+}

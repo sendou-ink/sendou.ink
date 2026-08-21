@@ -12,7 +12,7 @@ import {
 } from "react-aria-components";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 
-import buttonStyles from "./Button.module.css";
+import { ButtonLook } from "./Button";
 import styles from "./Tabs.module.css";
 
 interface SendouTabsProps extends TabsProps {
@@ -103,14 +103,14 @@ export function SendouTab({
 }: SendouTabProps) {
 	return (
 		<Tab className={styles.tabContainer} {...rest}>
-			<div className={clsx(buttonStyles.button, styles.tabButton)}>
+			<ButtonLook className={styles.tabButton}>
 				{icon}
 				{children}
 				{typeof number === "number" && number !== 0 && (
 					<span className={styles.tabNumber}>{number}</span>
 				)}
 				{alert ? <TriangleAlert className={styles.tabAlert} /> : null}
-			</div>
+			</ButtonLook>
 		</Tab>
 	);
 }

@@ -1,7 +1,5 @@
-import clsx from "clsx";
 import { Camera, Ellipsis, FileText, Send, Trash2 } from "lucide-react";
 import { useCallback, useEffect, useRef, useState } from "react";
-import { SendouButton } from "~/components/elements/Button";
 import { SendouMenu, SendouMenuItem } from "~/components/elements/Menu";
 import { GameTimeline } from "~/components/GameTimeline";
 import {
@@ -28,7 +26,6 @@ import {
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import { TimelineBuilder } from "../core/timeline/index";
-import scannerStyles from "../scanner.module.css";
 import {
 	clearEvents,
 	deleteEvents,
@@ -48,6 +45,13 @@ import styles from "./LivePage.module.css";
 import { MatchCard } from "./MatchCard";
 import { MatchLobbyTabs } from "./MatchLobbyTabs";
 import { playerStatusTeams } from "./player-status-view";
+import {
+	ScannerControls,
+	ScannerFeed,
+	ScannerMenuButton,
+	ScannerSplitLayout,
+	ScannerStatusPill,
+} from "./ScannerChrome";
 import {
 	aggregateSendStatus,
 	matchContaining,
@@ -310,7 +314,7 @@ export function LivePage({
 
 	return (
 		<div>
-			<div className={scannerStyles.controls}>
+			<ScannerControls>
 				{!running ? (
 					<>
 						<button
@@ -324,7 +328,7 @@ export function LivePage({
 						</button>
 						<button
 							type="button"
-							className={scannerStyles.outlined}
+							className={styles.outlined}
 							onClick={() => void start(false)}
 						>
 							Start capture (no sending)
@@ -337,7 +341,7 @@ export function LivePage({
 						</button>
 						<button
 							type="button"
-							className={scannerStyles.outlined}
+							className={styles.outlined}
 							disabled={!sendouUser}
 							title={sendouUser ? undefined : "Log in on sendou.ink first"}
 							onClick={() => {
@@ -362,21 +366,22 @@ export function LivePage({
 						</option>
 					))}
 				</select>
-				<span
-					className={clsx(scannerStyles.status, {
-						[scannerStyles.detected]: status === "detected",
-						[scannerStyles.watching]: status === "watching",
-						[scannerStyles.idle]:
-							status !== "detected" && status !== "watching",
-					})}
+				<ScannerStatusPill
+					variant={
+						status === "detected"
+							? "detected"
+							: status === "watching"
+								? "watching"
+								: "idle"
+					}
 				>
 					{status}
 					{gateScore !== null ? ` · gate ${gateScore.toFixed(2)}` : null}
-				</span>
+				</ScannerStatusPill>
 				{liveSend ? (
-					<span className={clsx(scannerStyles.status, scannerStyles.watching)}>
+					<ScannerStatusPill variant="watching">
 						sending matches live
-					</span>
+					</ScannerStatusPill>
 				) : null}
 				<LiveMenu
 					canSaveFixture={running}
@@ -401,21 +406,14 @@ export function LivePage({
 						void clearEvents().then(refreshFeed);
 					}}
 				/>
-			</div>
-			{error ? <p className={scannerStyles.error}>{error}</p> : null}
-			{sendouError ? (
-				<p className={scannerStyles.error}>{sendouError}</p>
-			) : null}
-			<div className={scannerStyles.liveLayout}>
-				<video
-					ref={videoRef}
-					className={scannerStyles.preview}
-					muted
-					playsInline
-				/>
-				<div className={scannerStyles.feed}>
+			</ScannerControls>
+			{error ? <p className="text-error">{error}</p> : null}
+			{sendouError ? <p className="text-error">{sendouError}</p> : null}
+			<ScannerSplitLayout>
+				<video ref={videoRef} className={styles.preview} muted playsInline />
+				<ScannerFeed>
 					{feed.length === 0 ? (
-						<p className={scannerStyles.score}>No detections yet.</p>
+						<p className="text-xxs text-lighter">No detections yet.</p>
 					) : null}
 					<MatchLobbyTabs
 						matches={builtMatches}
@@ -513,8 +511,8 @@ export function LivePage({
 								/>
 							))
 						: null}
-				</div>
-			</div>
+				</ScannerFeed>
+			</ScannerSplitLayout>
 		</div>
 	);
 }
@@ -539,13 +537,7 @@ function LiveMenu({
 }) {
 	return (
 		<SendouMenu
-			trigger={
-				<SendouButton
-					icon={<Ellipsis />}
-					className={scannerStyles.iconMenu}
-					aria-label="More actions"
-				/>
-			}
+			trigger={<ScannerMenuButton icon={<Ellipsis />} label="More actions" />}
 		>
 			<SendouMenuItem
 				icon={<Camera />}

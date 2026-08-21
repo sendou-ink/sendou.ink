@@ -9,7 +9,7 @@ import { MAX_AP } from "../analyzer-constants";
 import type { FullInkTankOption, SpecialWeaponParams } from "../analyzer-types";
 import { fullInkTankOptions } from "../core/stats";
 import { mainWeaponParams, weaponParams } from "../core/utils";
-import styles from "../routes/analyzer.module.css";
+import styles from "./PerInkTankGrid.module.css";
 
 interface PerInkTankGridProps {
 	weaponSplId: MainWeaponId;

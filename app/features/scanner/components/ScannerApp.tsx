@@ -3,7 +3,6 @@ import { Link } from "react-router";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
-import scannerStyles from "../scanner.module.css";
 import {
 	SCANNER_TABS,
 	type ScannerTab,
@@ -38,7 +37,7 @@ export function ScannerApp() {
 		);
 
 	return (
-		<div className={scannerStyles.app}>
+		<div className={styles.app}>
 			<header className={styles.topbar}>
 				<nav>
 					{SCANNER_TABS.map((tabOption) => (

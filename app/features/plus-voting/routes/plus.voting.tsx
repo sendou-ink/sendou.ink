@@ -6,18 +6,17 @@ import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { RelativeTime } from "~/components/RelativeTime";
-import styles from "~/features/plus-suggestions/plus.module.css";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { metaTags } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
-
 import { action } from "../actions/plus.voting.server";
 import {
 	loader,
 	type PlusVotingLoaderData,
 } from "../loaders/plus.voting.server";
+import styles from "./plus.voting.module.css";
 
 export { action, loader };
 

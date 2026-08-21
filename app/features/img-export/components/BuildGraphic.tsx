@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Ability } from "~/components/Ability";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
-import { LocaleTime } from "~/components/LocaleTime";
 import type { Tables } from "~/db/tables";
 import type { AbilityPoints } from "~/features/build-analyzer/analyzer-types";
 import { buildToAbilityPoints } from "~/features/build-analyzer/core/ability-points";
@@ -18,11 +17,11 @@ import type {
 import { gearImageUrl, navIconUrl, resolveAvatarUrl } from "~/utils/urls";
 import styles from "./BuildGraphic.module.css";
 import {
-	GRAPHIC_DATE_FORMAT_OPTIONS,
 	GraphicContainer,
+	GraphicDateSubtitle,
 	GraphicHeader,
+	GraphicTitle,
 } from "./Graphic";
-import graphicStyles from "./Graphic.module.css";
 
 const BUILD_GRAPHIC_WIDTH = 380;
 
@@ -81,20 +80,14 @@ export function BuildGraphic({
 				})}
 				identiconInput={owner.discordId}
 				titleRow={
-					<span className={graphicStyles.headerTitle}>
+					<GraphicTitle>
 						{owner.username}
 						{owner.plusTier ? (
 							<span className={styles.plusTier}> +{owner.plusTier}</span>
 						) : null}
-					</span>
+					</GraphicTitle>
 				}
-				subtitle={
-					<LocaleTime
-						date={build.updatedAt}
-						options={GRAPHIC_DATE_FORMAT_OPTIONS}
-						className={graphicStyles.headerSubtitle}
-					/>
-				}
+				subtitle={<GraphicDateSubtitle date={build.updatedAt} />}
 				trailing={
 					build.modes && build.modes.length > 0
 						? build.modes.map((mode) => (

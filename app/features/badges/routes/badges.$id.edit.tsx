@@ -9,10 +9,10 @@ import { UserSearch } from "~/components/elements/UserSearch";
 import type { Tables } from "~/db/tables";
 import { useHasPermission, useHasRole } from "~/modules/permissions/hooks";
 import { action } from "../actions/badges.$id.edit.server";
-import styles from "../badges.module.css";
 import { editBadgeActionSchema } from "../badges-schemas";
 import type { BadgeDetailsLoaderData } from "../loaders/badges.$id.server";
 import type { BadgeDetailsContext } from "./badges.$id";
+import styles from "./badges.$id.edit.module.css";
 
 export { action };
 

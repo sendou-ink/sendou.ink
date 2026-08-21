@@ -1,0 +1,60 @@
+.sectionHeader {
+	font-size: var(--font-sm);
+}
+
+.section {
+	background-color: var(--color-bg-high);
+	margin-inline: -12px;
+	padding: var(--s-4) var(--s-3);
+}
+
+.sectionInputContainer {
+	width: 16rem;
+}
+
+.sectionWarning {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	text-align: center;
+	color: var(--color-text-high);
+}
+
+.rosterGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, 110px);
+	gap: var(--s-4);
+	margin-block-start: var(--s-2);
+	width: 100%;
+	justify-content: center;
+}
+
+.rosterGridMemberName {
+	max-width: 110px;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.missingPlayer {
+	width: 62px;
+	height: 62px;
+	font-size: 32px;
+	border-radius: 100%;
+	border: var(--border-style-accent);
+	color: var(--color-text-accent);
+	display: grid;
+	place-items: center;
+	margin: 0 auto;
+}
+
+.missingPlayerOptional {
+	border: 2px dashed var(--color-text-accent);
+	color: var(--color-text-accent);
+}
+
+@container (width >= 640px) {
+	.section {
+		margin: 0;
+		border-radius: var(--radius-box);
+	}
+}

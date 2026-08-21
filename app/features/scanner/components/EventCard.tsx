@@ -102,6 +102,15 @@ export function EventCard(props: {
 	);
 }
 
+/** `unlinked` has no strip styling of its own */
+const SEND_STATE_CLASS: Record<SendStatus["state"], string | undefined> = {
+	queued: styles.queued,
+	sending: styles.sending,
+	sent: styles.sent,
+	unlinked: undefined,
+	failed: styles.failed,
+};
+
 const SEND_LABELS: Record<SendStatus["state"], string> = {
 	queued: "queued",
 	sending: "sending…",
@@ -120,7 +129,9 @@ function SendStrip({
 	const state = send?.state;
 	const formatSentAt = useEventTimeFormatter();
 	return (
-		<div className={clsx(styles.sendStrip, state ? styles[state] : null)}>
+		<div
+			className={clsx(styles.sendStrip, state ? SEND_STATE_CLASS[state] : null)}
+		>
 			<span>
 				sendou.ink: {state ? SEND_LABELS[state] : "not sent"}
 				{state === "sent" && send ? ` ${formatSentAt(send.at)}` : null}

@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { ArrowDown } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
@@ -6,6 +5,7 @@ import * as R from "remeda";
 import { LocaleTime } from "~/components/LocaleTime";
 import { tournamentTeamPage } from "~/utils/urls";
 import {
+	GraphicBoxLabel,
 	GraphicContainer,
 	GraphicPlacementCell,
 	GraphicScore,
@@ -17,7 +17,6 @@ import {
 	GraphicTeamsList,
 	GraphicWonLost,
 } from "./Graphic";
-import graphicStyles from "./Graphic.module.css";
 import {
 	TournamentGraphicFooter,
 	TournamentGraphicHeader,
@@ -152,13 +151,11 @@ export function TournamentRunGraphic({
 								team={match.opponent}
 								leading={
 									<div className={styles.matchLeading}>
-										<div
-											className={clsx(graphicStyles.boxLabel, styles.roundName)}
-										>
+										<GraphicBoxLabel className={styles.roundName}>
 											{roundNameLines(match.roundName).map((line) => (
 												<div key={line}>{line}</div>
 											))}
-										</div>
+										</GraphicBoxLabel>
 										<GraphicScore
 											ownScore={match.ownScore}
 											opponentScore={match.opponentScore}

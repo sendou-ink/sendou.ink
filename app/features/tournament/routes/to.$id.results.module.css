@@ -1,0 +1,54 @@
+.standingsMatchResultSquare {
+	width: 28px;
+	height: 28px;
+	display: grid;
+	place-items: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	border: 3px solid var(--color-accent);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+}
+
+.standingsMatchResultSquareWin {
+	border-color: var(--color-success);
+}
+
+.standingsMatchResultSquareLoss {
+	border-color: var(--color-error);
+}
+
+.standingsRowAlt > td {
+	background-color: var(--color-bg-high);
+}
+
+.standingsTeamName {
+	min-width: 125px;
+	display: flex;
+	gap: var(--s-1-5);
+	align-items: center;
+	color: var(--color-text);
+}
+
+.standingsTeamNameText {
+	max-width: 16ch;
+	overflow: hidden;
+	display: -webkit-box;
+	-webkit-line-clamp: 2;
+	line-clamp: 2;
+	-webkit-box-orient: vertical;
+	word-break: break-word;
+}
+
+.standingsDivider {
+	width: 5px;
+	background-color: var(--color-border-high);
+	border-radius: var(--radius-box);
+}
+
+.spoilerRevealContainer {
+	display: flex;
+	justify-content: center;
+	align-items: center;
+	padding: var(--s-12) 0;
+}

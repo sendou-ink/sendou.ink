@@ -63,10 +63,10 @@ import { action } from "../actions/org.$slug.server";
 import { EventCalendar } from "../components/EventCalendar";
 import { SocialLinksList } from "../components/SocialLinksList";
 import { loader } from "../loaders/org.$slug.server";
-import styles from "../tournament-organization.module.css";
 import { TOURNAMENT_SERIES_EVENTS_PER_PAGE } from "../tournament-organization-constants";
 import { updateIsEstablishedSchema } from "../tournament-organization-schemas";
 import { tournamentOrganizationSearchParams } from "../tournament-organization-search-params";
+import styles from "./org.$slug.module.css";
 
 export { action, loader };
 

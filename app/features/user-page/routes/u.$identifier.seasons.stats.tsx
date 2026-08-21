@@ -25,8 +25,8 @@ import {
 	type UserSeasonsStatsLoaderData,
 } from "../loaders/u.$identifier.seasons.stats.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import styles from "../user-page.module.css";
 import { userSeasonsSearchParams } from "../user-page-search-params";
+import styles from "./u.$identifier.seasons.stats.module.css";
 
 export { loader };
 

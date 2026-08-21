@@ -3,7 +3,7 @@ import { Link } from "lucide-react";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { TwitchIcon } from "~/components/icons/Twitch";
 import { YouTubeIcon } from "~/components/icons/YouTube";
-import styles from "../tournament-organization.module.css";
+import styles from "./SocialLinksList.module.css";
 
 export function SocialLinksList({ links }: { links: string[] }) {
 	return (

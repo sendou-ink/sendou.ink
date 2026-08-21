@@ -1,6 +1,5 @@
 import { useTranslation } from "react-i18next";
 import { useHydrated } from "~/hooks/useHydrated";
-import styles from "./MatchBannerTopRow.module.css";
 
 const MAX_MINUTES = 60;
 
@@ -35,8 +34,11 @@ export function MatchBannerTimer({ time }: MatchBannerTimerProps) {
 			: minuteFormatter.format(minutes);
 
 	return (
-		<div className={styles.values} data-testid="match-timer">
-			<time dateTime={dateTime(time.currentMinutes)} className={styles.sub}>
+		<div
+			className="stack horizontal sm font-semi-bold"
+			data-testid="match-timer"
+		>
+			<time dateTime={dateTime(time.currentMinutes)} className="text-lighter">
 				{displayValue(time.currentMinutes)}
 			</time>
 			<time dateTime={dateTime(time.totalMinutes)}>

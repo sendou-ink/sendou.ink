@@ -16,7 +16,7 @@ import { type BadgesLoaderData, loader } from "../loaders/badges.server";
 
 export { loader };
 
-import styles from "../badges.module.css";
+import styles from "./badges.module.css";
 
 export const handle: SendouRouteHandle = {
 	i18n: "badges",
@@ -75,11 +75,7 @@ export default function BadgesPageLayout() {
 						<Divider smallText>{t("badges:own.divider")}</Divider>
 						<div className={styles.smallBadges}>
 							{ownBadges.map((badge) => (
-								<NavLink
-									className={styles.navLink}
-									key={badge.id}
-									to={String(badge.id)}
-								>
+								<NavLink key={badge.id} to={String(badge.id)}>
 									<Badge badge={badge} size={64} isAnimated={false} />
 								</NavLink>
 							))}
@@ -93,11 +89,7 @@ export default function BadgesPageLayout() {
 								<Divider smallText>{t("badges:other.divider")}</Divider>
 							) : null}
 							{otherBadges.map((badge) => (
-								<NavLink
-									className={styles.navLink}
-									key={badge.id}
-									to={String(badge.id)}
-								>
+								<NavLink key={badge.id} to={String(badge.id)}>
 									<Badge badge={badge} size={64} isAnimated={false} />
 								</NavLink>
 							))}

@@ -74,7 +74,7 @@ export const handle: SendouRouteHandle = {
 };
 
 import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
-import styles from "../tournament-bracket.module.css";
+import styles from "./to.$id.brackets.module.css";
 
 export default function TournamentBracketsPage() {
 	const data = useLoaderData<TournamentBracketsLoaderData>();
@@ -709,7 +709,6 @@ function StartBracketAlert({
 			<div className="stack sm items-center">
 				<Alert
 					variation="INFO"
-					alertClassName={styles.startBracketAlert}
 					textClassName="stack horizontal md items-center"
 				>
 					{bracket.participantTournamentTeamIds.length}/

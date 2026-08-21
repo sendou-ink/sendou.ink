@@ -53,8 +53,8 @@ import {
 } from "../loaders/u.$identifier.seasons.server";
 import type { UserSeasonSummaryGraphicLoaderData } from "../loaders/u.$identifier.seasons.summary-graphic.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import styles from "../user-page.module.css";
 import { userSeasonsSearchParams } from "../user-page-search-params";
+import styles from "./u.$identifier.seasons.module.css";
 
 export { loader };
 

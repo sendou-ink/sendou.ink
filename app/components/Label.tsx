@@ -33,7 +33,14 @@ export function Label({
 				{children} {required && <span className="text-error">*</span>}
 			</label>
 			{valueLimits ? (
-				<div className={clsx(styles.value, lengthWarning(valueLimits))}>
+				<div
+					className={clsx(styles.value, {
+						[styles.valueError]: lengthState(valueLimits) === "error",
+						[styles.valueWarning]: lengthState(valueLimits) === "warning",
+					})}
+					data-testid="label-value-counter"
+					data-length-state={lengthState(valueLimits)}
+				>
 					{valueLimits.current}/{valueLimits.max}
 				</div>
 			) : null}
@@ -41,9 +48,9 @@ export function Label({
 	);
 }
 
-function lengthWarning(valueLimits: NonNullable<LabelProps["valueLimits"]>) {
-	if (valueLimits.current > valueLimits.max) return styles.valueError;
-	if (valueLimits.current / valueLimits.max >= 0.9) return styles.valueWarning;
+function lengthState(valueLimits: NonNullable<LabelProps["valueLimits"]>) {
+	if (valueLimits.current > valueLimits.max) return "error";
+	if (valueLimits.current / valueLimits.max >= 0.9) return "warning";
 
-	return;
+	return undefined;
 }

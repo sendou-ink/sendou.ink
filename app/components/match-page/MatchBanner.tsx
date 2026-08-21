@@ -214,3 +214,19 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 		</SendouPopover>
 	);
 }
+
+/**
+ * Trigger for the small popovers hung off a banner's info row, e.g. who voted
+ * for the map or which team picked it.
+ */
+export function MatchBannerInfoBadge({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return (
+		<SendouButton variant="minimal" className={styles.infoBadge}>
+			{children}
+		</SendouButton>
+	);
+}

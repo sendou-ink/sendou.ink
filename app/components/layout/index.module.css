@@ -334,3 +334,72 @@
 		z-index: 20;
 	}
 }
+
+.sideNavFooterUser {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	color: var(--color-text);
+	text-decoration: none;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	border-radius: var(--radius-field);
+	padding: var(--s-1);
+	margin-left: calc(-1 * var(--s-1));
+	flex: 1;
+	min-width: 0;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.sideNavFooterUsername {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.sideNavFooterActions {
+	display: flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	margin-left: auto;
+}
+
+.sideNavFooterButton {
+	display: grid;
+	place-items: center;
+	background-color: transparent;
+	width: var(--field-size-sm);
+	height: var(--field-size-sm);
+	padding: 0;
+	border: none;
+	border-radius: var(--radius-field);
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	&:hover {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+
+	& svg {
+		width: 18px;
+		height: 18px;
+	}
+}
+
+.sideNavFooterNotification {
+	position: relative;
+}
+
+.sideNavFooterUnseenDot {
+	--dot-top: 2px;
+	--dot-right: 2px;
+}

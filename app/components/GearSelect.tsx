@@ -14,7 +14,7 @@ import {
 import type { GearType } from "~/modules/in-game-lists/types";
 import { brandImageUrl, gearImageUrl } from "~/utils/urls";
 
-import styles from "./WeaponSelect.module.css";
+import styles from "./GearSelect.module.css";
 
 interface GearSelectProps<Clearable extends boolean | undefined = undefined> {
 	label?: string;

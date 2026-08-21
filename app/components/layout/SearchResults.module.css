@@ -1,0 +1,48 @@
+.listBox {
+	max-height: 325px;
+	overflow-y: auto;
+	padding: var(--s-2);
+	outline: none;
+}
+
+.listBoxItem {
+	display: block;
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--radius-field);
+	cursor: pointer;
+	font-size: var(--font-sm);
+	outline: none;
+	color: inherit;
+	text-decoration: none;
+
+	&[data-hovered] {
+		background-color: var(--color-bg-high);
+	}
+
+	&[data-focused] {
+		background-color: var(--color-bg-high);
+	}
+
+	&[data-selected] {
+		background-color: var(--color-accent-low);
+	}
+}
+
+.resultItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.resultName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.emptyState {
+	padding: var(--s-8);
+	text-align: center;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+}

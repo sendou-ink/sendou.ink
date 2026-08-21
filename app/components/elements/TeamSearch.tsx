@@ -1,10 +1,11 @@
-import clsx from "clsx";
 import type * as React from "react";
-import { ListBoxItem, type SelectProps } from "react-aria-components";
+import type { SelectProps } from "react-aria-components";
 import type { SearchLoaderData } from "~/features/search/routes/search";
-import { SearchSelect } from "./SearchSelect";
-import searchSelectStyles from "./SearchSelect.module.css";
-import selectStyles from "./Select.module.css";
+import {
+	SearchSelect,
+	SearchSelectItem,
+	SearchSelectItemLogo,
+} from "./SearchSelect";
 import teamSearchStyles from "./TeamSearch.module.css";
 import { useEntitySearch } from "./useEntitySearch";
 
@@ -73,25 +74,19 @@ function parseTeamResults(
 
 function TeamItem({ item }: { item: TeamSearchResult }) {
 	return (
-		<ListBoxItem
+		<SearchSelectItem
 			id={item.id}
 			textValue={item.name}
-			className={({ isFocused, isSelected }) =>
-				clsx(searchSelectStyles.item, {
-					[selectStyles.itemFocused]: isFocused,
-					[selectStyles.itemSelected]: isSelected,
-				})
+			testId="team-search-item"
+			leading={
+				item.avatarUrl ? (
+					<SearchSelectItemLogo src={item.avatarUrl} />
+				) : (
+					<div className={teamSearchStyles.logoPlaceholder} />
+				)
 			}
-			data-testid="team-search-item"
 		>
-			{item.avatarUrl ? (
-				<img src={item.avatarUrl} alt="" className={searchSelectStyles.logo} />
-			) : (
-				<div className={teamSearchStyles.logoPlaceholder} />
-			)}
-			<div className={searchSelectStyles.itemTextsContainer}>
-				<span>{item.name}</span>
-			</div>
-		</ListBoxItem>
+			<span>{item.name}</span>
+		</SearchSelectItem>
 	);
 }

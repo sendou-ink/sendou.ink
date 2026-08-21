@@ -33,7 +33,6 @@ import { userBuildsSearchParams } from "../user-page-search-params";
 
 export { action, loader };
 
-import userStyles from "../user-page.module.css";
 import styles from "./u.$identifier.builds.module.css";
 
 export const handle: SendouRouteHandle = {
@@ -151,7 +150,7 @@ function BuildsFilters({
 				onPress={() => setWeaponFilter("ALL")}
 				variant={weaponFilter === "ALL" ? undefined : "outlined"}
 				size="small"
-				className={userStyles.buildFilterButton}
+				className={styles.buildFilterButton}
 			>
 				{t("builds:stats.all")} ({data.builds.length})
 			</SendouButton>
@@ -161,7 +160,7 @@ function BuildsFilters({
 						onPress={() => setWeaponFilter("PUBLIC")}
 						variant={weaponFilter === "PUBLIC" ? undefined : "outlined"}
 						size="small"
-						className={userStyles.buildFilterButton}
+						className={styles.buildFilterButton}
 						icon={<LockOpen />}
 					>
 						{t("builds:stats.public")} ({publicBuildsCount})
@@ -170,7 +169,7 @@ function BuildsFilters({
 						onPress={() => setWeaponFilter("PRIVATE")}
 						variant={weaponFilter === "PRIVATE" ? undefined : "outlined"}
 						size="small"
-						className={userStyles.buildFilterButton}
+						className={styles.buildFilterButton}
 						icon={<Lock />}
 					>
 						{t("builds:stats.private")} ({privateBuildsCount})
@@ -350,7 +349,7 @@ function WeaponFilterMenu({
 				<SendouButton
 					variant={typeof weaponFilter === "number" ? undefined : "outlined"}
 					size="small"
-					className={userStyles.buildFilterButton}
+					className={styles.buildFilterButton}
 				>
 					<Image
 						path={weaponCategoryUrl("SHOOTERS")}

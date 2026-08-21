@@ -1,24 +1,23 @@
-import clsx from "clsx";
-import { ChevronsUpDown, Search, X } from "lucide-react";
 import type * as React from "react";
 import {
 	Autocomplete,
-	Button,
-	Input,
 	type Key,
-	ListBox,
 	ListBoxItem,
-	Popover,
-	SearchField,
-	Select,
 	type SelectProps,
 	SelectValue,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouLabel } from "~/components/elements/Label";
-import searchSelectStyles from "./SearchSelect.module.css";
-import selectStyles from "./Select.module.css";
+import styles from "./SearchSelect.module.css";
+import {
+	SelectShell,
+	SelectShellItem,
+	SelectShellListBox,
+	SelectShellPopover,
+	SelectShellSearchField,
+	SelectShellTrigger,
+} from "./SelectShell";
 import type { EntitySearch } from "./useEntitySearch";
 
 const PLACEHOLDER_TEXTS = {
@@ -80,7 +79,7 @@ export function SearchSelect<
 	...rest
 }: SearchSelectProps<TItem, T>) {
 	return (
-		<Select
+		<SelectShell
 			name={name}
 			placeholder=""
 			selectedKey={search.selectedKey}
@@ -89,42 +88,26 @@ export function SearchSelect<
 					search.onSelectionChange(Number(key));
 				}
 			}}
-			className={selectStyles.select}
 			aria-label={ariaLabel}
 			{...rest}
 		>
 			{label ? (
 				<SendouLabel required={rest.isRequired}>{label}</SendouLabel>
 			) : null}
-			<Button className={selectStyles.button} ref={buttonRef}>
-				<SelectValue className={searchSelectStyles.selectValue} />
-				<span aria-hidden="true">
-					<ChevronsUpDown className={selectStyles.icon} />
-				</span>
-			</Button>
+			<SelectShellTrigger ref={buttonRef}>
+				<SelectValue className={styles.selectValue} />
+			</SelectShellTrigger>
 			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
-			<Popover
-				className={clsx(selectStyles.popover, searchSelectStyles.popover)}
-			>
+			<SelectShellPopover className={styles.popover}>
 				<Autocomplete
 					inputValue={search.filterText}
 					onInputChange={search.setFilterText}
 				>
-					<SearchField
-						aria-label="Search"
-						autoFocus
-						className={selectStyles.searchField}
-					>
-						<Search aria-hidden className={selectStyles.icon} />
-						<Input
-							className={clsx(inputClassName, selectStyles.searchInput)}
-							data-testid={inputTestId}
-						/>
-						<Button className={selectStyles.searchClearButton}>
-							<X className={selectStyles.icon} />
-						</Button>
-					</SearchField>
-					<ListBox items={search.items} className={selectStyles.listBox}>
+					<SelectShellSearchField
+						inputClassName={inputClassName}
+						inputTestId={inputTestId}
+					/>
+					<SelectShellListBox items={search.items}>
 						{(item) =>
 							typeof item.id === "string" ? (
 								<PlaceholderItem id={item.id} i18nKey={i18nKey} />
@@ -132,10 +115,10 @@ export function SearchSelect<
 								renderItem(item as TItem)
 							)
 						}
-					</ListBox>
+					</SelectShellListBox>
 				</Autocomplete>
-			</Popover>
-		</Select>
+			</SelectShellPopover>
+		</SelectShell>
 	);
 }
 
@@ -154,11 +137,54 @@ function PlaceholderItem({
 		<ListBoxItem
 			textValue="PLACEHOLDER"
 			isDisabled
-			className={searchSelectStyles.placeholder}
+			className={styles.placeholder}
 		>
 			{id === "PLACEHOLDER"
 				? t(PLACEHOLDER_TEXTS[i18nKey].placeholder)
 				: t(PLACEHOLDER_TEXTS[i18nKey].noResults)}
 		</ListBoxItem>
 	);
+}
+
+/**
+ * One result inside a `SearchSelect`'s list: an optional leading avatar or
+ * logo, then the texts. `SearchSelectItemAdditionalText` renders the muted
+ * second line, which is hidden while the item is shown in the trigger.
+ */
+export function SearchSelectItem({
+	id,
+	textValue,
+	testId,
+	leading,
+	children,
+}: {
+	id: number;
+	textValue: string;
+	testId: string;
+	leading?: React.ReactNode;
+	children: React.ReactNode;
+}) {
+	return (
+		<SelectShellItem
+			id={id}
+			textValue={textValue}
+			className={styles.item}
+			data-testid={testId}
+		>
+			{leading}
+			<div className={styles.itemTextsContainer}>{children}</div>
+		</SelectShellItem>
+	);
+}
+
+export function SearchSelectItemLogo({ src }: { src: string }) {
+	return <img src={src} alt="" className={styles.logo} />;
+}
+
+export function SearchSelectItemAdditionalText({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return <div className={styles.itemAdditionalText}>{children}</div>;
 }

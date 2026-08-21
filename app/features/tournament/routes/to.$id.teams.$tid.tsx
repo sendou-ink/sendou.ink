@@ -27,7 +27,7 @@ import {
 	loader,
 	type TournamentTeamLoaderData,
 } from "../loaders/to.$id.teams.$tid.server";
-import styles from "../tournament.module.css";
+import styles from "./to.$id.teams.$tid.module.css";
 
 export { loader };
 

@@ -1,7 +1,10 @@
 import { UserSearch } from "~/components/elements/UserSearch";
 import type { FormFieldProps, UserSearchFieldOptions } from "../types";
-import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
-import styles from "./UserSearchFormField.module.css";
+import {
+	FormFieldMessages,
+	SearchFormFieldWrapper,
+	useTranslatedTexts,
+} from "./FormFieldWrapper";
 
 type UserSearchFormFieldProps = FormFieldProps<"user-search"> &
 	UserSearchFieldOptions & {
@@ -27,21 +30,19 @@ export function UserSearchFormField({
 	});
 
 	return (
-		<div className={styles.root}>
-			<div className="stack xs">
-				<UserSearch
-					initialUserId={value ?? undefined}
-					onChange={(user) => {
-						onChange(user?.id ?? null);
-						onUserSelected?.(user);
-					}}
-					onBlur={() => onBlur?.()}
-					label={translatedLabel}
-					isRequired={required}
-					isDisabled={disabled}
-				/>
-				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
-			</div>
-		</div>
+		<SearchFormFieldWrapper>
+			<UserSearch
+				initialUserId={value ?? undefined}
+				onChange={(user) => {
+					onChange(user?.id ?? null);
+					onUserSelected?.(user);
+				}}
+				onBlur={() => onBlur?.()}
+				label={translatedLabel}
+				isRequired={required}
+				isDisabled={disabled}
+			/>
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+		</SearchFormFieldWrapper>
 	);
 }

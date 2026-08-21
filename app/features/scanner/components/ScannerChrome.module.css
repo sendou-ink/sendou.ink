@@ -1,60 +1,3 @@
-/*
-Chrome shared by the scanner's pages and cards. Everything is scoped under
-`.app`, whose container name the pages' container queries key off; design
-tokens come from sendou.ink's app/styles/vars.css.
-*/
-
-.app {
-	container: scanner / inline-size;
-
-	/* the app's own buttons, kept at :where() specificity so any component
-	   class overrides it without having to win an ordering race */
-	& :where(button) {
-		display: inline-flex;
-		align-items: center;
-		justify-content: center;
-		gap: var(--s-1-5);
-		border: var(--border-style-accent);
-		border-radius: var(--radius-field);
-		appearance: none;
-		background: var(--color-text-accent);
-		color: var(--color-text-inverse);
-		cursor: pointer;
-		font-family: inherit;
-		font-size: var(--font-xs);
-		font-weight: var(--weight-bold);
-		padding: 0 var(--field-padding);
-		height: var(--field-size-sm);
-		white-space: nowrap;
-		user-select: none;
-
-		& > svg {
-			width: 16px;
-			height: 16px;
-		}
-
-		&:focus-visible {
-			outline: var(--focus-ring);
-			outline-offset: 1px;
-		}
-
-		&:active {
-			transform: translateY(1px);
-		}
-
-		&:disabled {
-			cursor: not-allowed;
-			opacity: 0.5;
-			transform: initial;
-		}
-	}
-}
-
-button.outlined {
-	background: transparent;
-	color: var(--color-text-accent);
-}
-
 /* secondary actions live behind this icon-only trigger, pushed to the row's end.
    Sized explicitly: it is a SendouButton, which brings a competing base look */
 button.iconMenu {
@@ -124,13 +67,6 @@ button.iconMenu {
 	background: var(--color-success-low);
 }
 
-@keyframes scanner-pulse {
-	50% {
-		opacity: 0.25;
-		transform: scale(0.8);
-	}
-}
-
 .liveLayout {
 	display: grid;
 	grid-template-columns: minmax(320px, 640px) minmax(0, 1fr);
@@ -138,26 +74,10 @@ button.iconMenu {
 	align-items: start;
 }
 
-.preview {
-	width: 100%;
-	background: #000;
-	border-radius: var(--radius-box);
-	border: var(--border-width) solid var(--color-bg-high);
-}
-
 .feed {
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-3);
-}
-
-.score {
-	color: var(--color-text-high);
-	font-size: var(--font-2xs);
-}
-
-.error {
-	color: var(--color-error);
 }
 
 .dropzone {
@@ -201,16 +121,17 @@ button.iconMenu {
 	.liveLayout {
 		grid-template-columns: minmax(0, 1fr);
 	}
-
-	/* stacked, the preview would otherwise push the feed off the screen */
-	.preview {
-		max-height: 45vh;
-		object-fit: contain;
-	}
 }
 
 @media (prefers-reduced-motion: reduce) {
 	.watching::before {
 		animation: none;
+	}
+}
+
+@keyframes scanner-pulse {
+	50% {
+		opacity: 0.25;
+		transform: scale(0.8);
 	}
 }

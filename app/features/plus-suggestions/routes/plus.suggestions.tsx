@@ -29,7 +29,6 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
-import styles from "../plus.module.css";
 import type { PlusTier } from "../plus-suggestions-constants";
 import { editSuggestionFormSchema } from "../plus-suggestions-schemas";
 import {
@@ -41,6 +40,7 @@ import {
 	canAddCommentToSuggestionFE,
 	canSuggestNewUser,
 } from "../plus-suggestions-utils";
+import styles from "./plus.suggestions.module.css";
 
 export { action, loader };
 

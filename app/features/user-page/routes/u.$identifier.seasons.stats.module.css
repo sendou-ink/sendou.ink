@@ -1,0 +1,89 @@
+.seasonWeaponContainer {
+	display: flex;
+	align-items: center;
+	font-size: var(--font-sm);
+	flex-direction: column;
+	font-weight: var(--weight-bold);
+	position: relative;
+	width: 60px;
+}
+
+.seasonWeaponBorderOuter {
+	--degree: 80deg;
+	--smoothing: 0.5deg;
+	--color: var(--color-text-accent);
+
+	display: block;
+	content: "";
+	height: 60px;
+	width: 60px;
+	border-radius: 50%;
+	background: conic-gradient(
+		var(--color) var(--degree),
+		transparent calc(var(--degree) + var(--smoothing)) 100%
+	);
+	position: absolute;
+}
+
+.seasonWeaponBorderOuterStatic {
+	height: 60px;
+	width: 60px;
+	background-color: var(--color-bg-high);
+	position: absolute;
+	border-radius: 50%;
+}
+
+.seasonWeaponBorderInner {
+	height: 84%;
+	width: 84%;
+	top: 8%;
+	left: 8%;
+	position: relative;
+	border-radius: 50%;
+	background: var(--color-bg);
+	display: grid;
+	place-items: center;
+}
+
+.seasonWeaponCount {
+	margin-top: 62px;
+}
+
+.seasonPlayerName {
+	width: 64px;
+	font-size: var(--font-xs);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	text-align: center;
+	font-weight: var(--weight-semi);
+}
+
+.seasonInfoContainer {
+	background-color: var(--color-bg-high);
+	padding: var(--s-3) var(--s-2);
+	border-radius: var(--radius-box);
+}
+
+.seasonWeaponUsageContainer {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	width: 300px;
+	min-height: 175px;
+}
+
+.seasonWeaponUsageWeaponsContainer {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	justify-content: center;
+	max-height: 300px;
+	overflow-y: auto;
+}
+
+.seasonWeaponUsageWeapon {
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+	padding: var(--s-1-5);
+}

@@ -18,11 +18,10 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, VODS_PAGE } from "~/utils/urls";
-import { VodListing } from "../components/VodListing";
+import { VodListing, VodListingList } from "../components/VodListing";
 import { loader } from "../loaders/vods.server";
 import { videoMatchTypes } from "../vods-constants";
 import { vodsSearchParams } from "../vods-search-params";
-import styles from "./vods.module.css";
 
 export { loader };
 
@@ -60,11 +59,11 @@ export default function VodsSearchPage() {
 			<Filters />
 			{data.vods.length > 0 ? (
 				<>
-					<div className={styles.listingList}>
+					<VodListingList>
 						{data.vods.map((vod) => (
 							<VodListing key={vod.id} vod={vod} />
 						))}
-					</div>
+					</VodListingList>
 					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			) : (

@@ -5,7 +5,7 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import { tournamentRegisterPage } from "~/utils/urls";
 import { TournamentStream } from "../components/TournamentStream";
 import type { TournamentStreamsLoaderData } from "../loaders/to.$id.streams.server";
-import styles from "../tournament.module.css";
+import styles from "./to.$id.streams.module.css";
 
 export { loader } from "../loaders/to.$id.streams.server";
 

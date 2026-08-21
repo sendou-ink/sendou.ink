@@ -1,0 +1,25 @@
+.quickAction {
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+	border: 2px solid var(--color-bg-higher);
+	padding-block: var(--s-1-5);
+	padding-inline: var(--s-3);
+	font-weight: var(--weight-bold);
+	align-items: center;
+}
+
+.quickActionSpaced {
+	display: flex;
+	gap: var(--s-1-5);
+}
+
+.quickActionVerySpaced {
+	display: flex;
+	gap: var(--s-3);
+}
+
+.quickActionCheckmark {
+	color: var(--color-success);
+}

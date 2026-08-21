@@ -11,12 +11,12 @@ import { UserLink } from "~/components/UserLink";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { calendarEventPage, tournamentTeamPage } from "~/utils/urls";
 import type { UserResultsLoaderData } from "../loaders/u.$identifier.results.server";
-import styles from "../user-page.module.css";
 import {
 	HIGHLIGHT_CHECKBOX_NAME,
 	HIGHLIGHT_TOURNAMENT_CHECKBOX_NAME,
 } from "../user-page-constants";
 import { ParticipationPill } from "./ParticipationPill";
+import styles from "./UserResultsTable.module.css";
 
 export type UserResultsTableProps = {
 	results: UserResultsLoaderData["results"]["value"];

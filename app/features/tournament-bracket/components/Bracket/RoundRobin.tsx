@@ -1,7 +1,11 @@
 import type { MatchData as MatchType } from "~/features/tournament-bracket/core/engine/types";
 import type { Bracket as BracketType } from "../../core/Bracket";
 import { groupNumberToLetters } from "../../tournament-bracket-utils";
-import styles from "./bracket.module.css";
+import {
+	BracketColumn,
+	BracketColumnMatches,
+	BracketColumns,
+} from "./BracketColumns";
 import { Match } from "./Match";
 import { PlacementsTable } from "./PlacementsTable";
 import { RoundHeader } from "./RoundHeader";
@@ -29,10 +33,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 				return (
 					<div key={groupName} className="stack lg ml-6">
 						<h2 className="text-lg">{groupName}</h2>
-						<div
-							className={styles.elimContainer}
-							style={{ "--round-count": rounds.length }}
-						>
+						<BracketColumns roundCount={rounds.length}>
 							{rounds.flatMap((round) => {
 								const bestOf = round.maps?.count;
 
@@ -46,7 +47,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 								);
 
 								return (
-									<div key={round.id} className={styles.elimRoundColumn}>
+									<BracketColumn key={round.id}>
 										<RoundHeader
 											roundId={round.id}
 											bracketIdx={bracket.idx}
@@ -55,7 +56,7 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 											showInfos={someMatchOngoing}
 											maps={round.maps}
 										/>
-										<div className={styles.elimRoundMatchesContainer}>
+										<BracketColumnMatches>
 											{matches.map((match) => {
 												if (!match.opponent1 || !match.opponent2) {
 													return null;
@@ -80,11 +81,11 @@ export function RoundRobinBracket({ bracket }: { bracket: BracketType }) {
 													/>
 												);
 											})}
-										</div>
-									</div>
+										</BracketColumnMatches>
+									</BracketColumn>
 								);
 							})}
-						</div>
+						</BracketColumns>
 						{censored ? null : (
 							<PlacementsTable
 								bracket={bracket}

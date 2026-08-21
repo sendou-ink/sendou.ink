@@ -5,7 +5,7 @@ import { useTournament } from "~/features/tournament/tournament-context";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { twitchUrl } from "~/utils/urls";
-import styles from "../tournament.module.css";
+import styles from "./TournamentStream.module.css";
 
 export function TournamentStream({
 	stream,

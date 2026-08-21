@@ -1,11 +1,12 @@
-import clsx from "clsx";
 import * as React from "react";
-import { ListBoxItem, type SelectProps } from "react-aria-components";
+import type { SelectProps } from "react-aria-components";
 import { useFetcher } from "react-router";
 import type { SearchLoaderData } from "~/features/search/routes/search";
-import { SearchSelect } from "./SearchSelect";
-import searchSelectStyles from "./SearchSelect.module.css";
-import selectStyles from "./Select.module.css";
+import {
+	SearchSelect,
+	SearchSelectItem,
+	SearchSelectItemAdditionalText,
+} from "./SearchSelect";
 import { useEntitySearch } from "./useEntitySearch";
 
 export type OrganizationSearchResult = Extract<
@@ -100,23 +101,15 @@ function useInitialOrganization(initialOrganizationId?: number) {
 
 function OrganizationItem({ item }: { item: OrganizationSearchResult }) {
 	return (
-		<ListBoxItem
+		<SearchSelectItem
 			id={item.id}
 			textValue={item.name}
-			className={({ isFocused, isSelected }) =>
-				clsx(searchSelectStyles.item, {
-					[selectStyles.itemFocused]: isFocused,
-					[selectStyles.itemSelected]: isSelected,
-				})
-			}
-			data-testid="organization-search-item"
+			testId="organization-search-item"
 		>
-			<div className={searchSelectStyles.itemTextsContainer}>
-				{item.name}
-				<div className={searchSelectStyles.itemAdditionalText}>
-					/{item.slug}
-				</div>
-			</div>
-		</ListBoxItem>
+			{item.name}
+			<SearchSelectItemAdditionalText>
+				/{item.slug}
+			</SearchSelectItemAdditionalText>
+		</SearchSelectItem>
 	);
 }

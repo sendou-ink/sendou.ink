@@ -11,8 +11,8 @@ import { ResultsFiltersBar } from "../components/ResultsFiltersBar";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import styles from "../user-page.module.css";
 import { userResultsSearchParams } from "../user-page-search-params";
+import styles from "./u.$identifier.results.module.css";
 
 export { loader };
 

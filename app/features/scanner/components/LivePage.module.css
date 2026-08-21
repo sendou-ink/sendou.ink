@@ -32,3 +32,23 @@
 		opacity: 0.5;
 	}
 }
+
+.preview {
+	width: 100%;
+	background: #000;
+	border-radius: var(--radius-box);
+	border: var(--border-width) solid var(--color-bg-high);
+}
+
+@container scanner (width < 700px) {
+	/* stacked, the preview would otherwise push the feed off the screen */
+	.preview {
+		max-height: 45vh;
+		object-fit: contain;
+	}
+}
+
+button.outlined {
+	background: transparent;
+	color: var(--color-text-accent);
+}

@@ -16,8 +16,8 @@ import {
 } from "~/utils/urls";
 import { action } from "../actions/to.$id.join.server";
 import { loader } from "../loaders/to.$id.join.server";
-import styles from "../tournament.module.css";
 import { validateCanJoinTeam } from "../tournament-utils";
+import styles from "./to.$id.join.module.css";
 
 export { action, loader };
 

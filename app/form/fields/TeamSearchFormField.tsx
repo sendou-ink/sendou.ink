@@ -1,7 +1,10 @@
 import { TeamSearch } from "~/components/elements/TeamSearch";
 import type { FormFieldProps, TeamSearchFieldOptions } from "../types";
-import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
-import styles from "./UserSearchFormField.module.css";
+import {
+	FormFieldMessages,
+	SearchFormFieldWrapper,
+	useTranslatedTexts,
+} from "./FormFieldWrapper";
 
 type TeamSearchFormFieldProps = FormFieldProps<"team-search"> &
 	TeamSearchFieldOptions & {
@@ -26,21 +29,19 @@ export function TeamSearchFormField({
 	});
 
 	return (
-		<div className={styles.root}>
-			<div className="stack xs">
-				<TeamSearch
-					initialTeam={initialTeam}
-					onChange={(team) => {
-						onChange(team?.id ?? null);
-						onTeamSelected?.(team);
-					}}
-					onBlur={() => onBlur?.()}
-					label={translatedLabel}
-					isRequired={required}
-					isDisabled={disabled}
-				/>
-				<FormFieldMessages name={name} error={error} bottomText={bottomText} />
-			</div>
-		</div>
+		<SearchFormFieldWrapper>
+			<TeamSearch
+				initialTeam={initialTeam}
+				onChange={(team) => {
+					onChange(team?.id ?? null);
+					onTeamSelected?.(team);
+				}}
+				onBlur={() => onBlur?.()}
+				label={translatedLabel}
+				isRequired={required}
+				isDisabled={disabled}
+			/>
+			<FormFieldMessages name={name} error={error} bottomText={bottomText} />
+		</SearchFormFieldWrapper>
 	);
 }

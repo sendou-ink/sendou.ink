@@ -1,0 +1,14 @@
+.miniAlert {
+	background-color: var(--color-info-low);
+	font-size: var(--font-2xs);
+	border-radius: var(--radius-box);
+	padding: var(--s-1) var(--s-2);
+}
+
+.compactifyButton {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	border-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-box);
+}

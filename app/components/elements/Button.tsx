@@ -138,7 +138,8 @@ function buttonClassName({
 	const variantToClassname = (variant: ButtonVariant) => {
 		switch (variant) {
 			case "primary":
-				return styles.primary;
+				// the base look, no extra class needed
+				return null;
 			case "success":
 				return styles.success;
 			case "destructive":
@@ -187,4 +188,18 @@ function iconClassName(
 		[styles.buttonIconMiniscule]: size === "miniscule",
 		[styles.buttonIconBig]: size === "big",
 	});
+}
+
+/**
+ * Renders the button look on a plain element, for when the interactive element
+ * is elsewhere, e.g. the box inside a tab.
+ */
+export function ButtonLook({
+	className,
+	children,
+}: {
+	className?: string;
+	children: React.ReactNode;
+}) {
+	return <div className={clsx(styles.button, className)}>{children}</div>;
 }

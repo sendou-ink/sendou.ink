@@ -6,8 +6,8 @@ import { useHydrated } from "~/hooks/useHydrated";
 import { databaseTimestampToDate, nullPaddedDatesOfMonth } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import type { loader } from "../loaders/org.$slug.server";
-import styles from "../tournament-organization.module.css";
 import { tournamentOrganizationSearchParams } from "../tournament-organization-search-params";
+import styles from "./EventCalendar.module.css";
 
 interface EventCalendarProps {
 	month: number;

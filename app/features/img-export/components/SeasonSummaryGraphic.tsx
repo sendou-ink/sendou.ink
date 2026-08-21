@@ -11,7 +11,6 @@ import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { TierImage, WeaponImage } from "~/components/Image";
-import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import { TierPill } from "~/components/TierPill";
 import type { TierName } from "~/features/mmr/mmr-constants";
@@ -19,8 +18,9 @@ import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import {
-	GRAPHIC_DATE_FORMAT_OPTIONS,
+	GraphicBoxLabel,
 	GraphicContainer,
+	GraphicDateRangeSubtitle,
 	GraphicFooter,
 	GraphicHeader,
 	GraphicPlacementCell,
@@ -32,9 +32,9 @@ import {
 	GraphicSiteUrl,
 	GraphicStat,
 	GraphicStatsRow,
+	GraphicTitle,
 	GraphicWonLost,
 } from "./Graphic";
-import graphicStyles from "./Graphic.module.css";
 import styles from "./SeasonSummaryGraphic.module.css";
 
 const CHART_WIDTH = 672;
@@ -160,15 +160,13 @@ export function SeasonSummaryGraphic({
 						{user.countryCode ? (
 							<Flag countryCode={user.countryCode} tiny />
 						) : null}
-						<span className={graphicStyles.headerTitle}>{user.name}</span>
+						<GraphicTitle>{user.name}</GraphicTitle>
 					</>
 				}
 				subtitle={
-					<LocaleTimeRange
+					<GraphicDateRangeSubtitle
 						from={seasonDateRange.starts}
 						to={seasonDateRange.ends}
-						options={GRAPHIC_DATE_FORMAT_OPTIONS}
-						className={graphicStyles.headerSubtitle}
 					/>
 				}
 				trailing={
@@ -177,7 +175,7 @@ export function SeasonSummaryGraphic({
 					</div>
 				}
 			/>
-			<div className={clsx(graphicStyles.box, styles.hero)}>
+			<SummaryBox className={styles.hero}>
 				<TierImage tier={tier} width={92} />
 				<div>
 					<div className={styles.heroTierName}>
@@ -194,14 +192,14 @@ export function SeasonSummaryGraphic({
 				{typeof soloRank === "number" ? (
 					<div className={styles.rankBlock}>
 						<div className={styles.rankValue}>#{soloRank}</div>
-						<div className={graphicStyles.boxLabel}>
+						<GraphicBoxLabel>
 							{t("user:seasons.summary.soloRank")}
-						</div>
+						</GraphicBoxLabel>
 					</div>
 				) : null}
-			</div>
+			</SummaryBox>
 			{teamRank ? (
-				<div className={clsx(graphicStyles.box, styles.teamRankRow)}>
+				<SummaryBox className={styles.teamRankRow}>
 					{teamRank.team ? (
 						<Avatar
 							url={teamRank.team.logoUrl}
@@ -236,12 +234,12 @@ export function SeasonSummaryGraphic({
 					{typeof teamRank.rank === "number" ? (
 						<div className={styles.rankBlock}>
 							<div className={styles.rankValue}>#{teamRank.rank}</div>
-							<div className={graphicStyles.boxLabel}>
+							<GraphicBoxLabel>
 								{t("user:seasons.summary.teamRank")}
-							</div>
+							</GraphicBoxLabel>
 						</div>
 					) : null}
-				</div>
+				</SummaryBox>
 			) : null}
 			<GraphicStatsRow>
 				<GraphicStat label={t("user:seasons.summary.sets")}>
@@ -260,18 +258,18 @@ export function SeasonSummaryGraphic({
 				</GraphicStat>
 			</GraphicStatsRow>
 			{spProgression.length >= CHART_POINTS_NEEDED ? (
-				<div className={graphicStyles.box}>
+				<SummaryBox>
 					<SpChart points={spProgression} />
-				</div>
+				</SummaryBox>
 			) : null}
 			{bestStage ? (
 				<StageBannerBox
 					stageId={bestStage.stageId}
-					className={clsx(graphicStyles.box, styles.bestStageRow)}
+					className={clsx(styles.box, styles.bestStageRow)}
 				>
-					<div className={graphicStyles.boxLabel}>
+					<GraphicBoxLabel>
 						{t("user:seasons.summary.bestStage")}
-					</div>
+					</GraphicBoxLabel>
 					<div className={styles.bestStageName}>
 						{t(`game-misc:STAGE_${bestStage.stageId}`)}{" "}
 						<span className={styles.bestStageWinrate}>
@@ -281,22 +279,22 @@ export function SeasonSummaryGraphic({
 				</StageBannerBox>
 			) : null}
 			<div className={styles.middleGrid}>
-				<div className={clsx(graphicStyles.box, styles.activityBox)}>
-					<div className={graphicStyles.boxLabel}>
+				<SummaryBox className={styles.activityBox}>
+					<GraphicBoxLabel>
 						{t("user:seasons.summary.activity")}
-					</div>
+					</GraphicBoxLabel>
 					<ActivityCalendar
 						seasonDateRange={seasonDateRange}
 						activeDays={activeDays}
 					/>
 					<ActivityLegend />
-				</div>
+				</SummaryBox>
 				<div className={styles.sideStack}>
 					{topWeapons.length > 0 ? (
-						<div className={graphicStyles.box}>
-							<div className={graphicStyles.boxLabel}>
+						<SummaryBox>
+							<GraphicBoxLabel>
 								{t("user:seasons.summary.topWeapons")}
-							</div>
+							</GraphicBoxLabel>
 							<div className={styles.weaponsRow}>
 								{topWeapons.map((weapon) => (
 									<div key={weapon.weaponSplId} className={styles.weaponUsage}>
@@ -305,23 +303,23 @@ export function SeasonSummaryGraphic({
 											variant="badge"
 											size={52}
 										/>
-										<div className={graphicStyles.boxLabel}>
+										<GraphicBoxLabel>
 											{Math.round(weapon.usagePercentage)}%
-										</div>
+										</GraphicBoxLabel>
 									</div>
 								))}
 							</div>
-						</div>
+						</SummaryBox>
 					) : null}
 					{shownMates.length > 0 ? (
-						<div
-							className={clsx(graphicStyles.box, {
+						<SummaryBox
+							className={clsx({
 								[styles.matesBoxExpanded]: topWeapons.length === 0,
 							})}
 						>
-							<div className={graphicStyles.boxLabel}>
+							<GraphicBoxLabel>
 								{t("user:seasons.summary.topMates")}
-							</div>
+							</GraphicBoxLabel>
 							<div className={styles.matesList}>
 								{shownMates.map((mate) => (
 									<div key={mate.player.name} className={styles.mateRow}>
@@ -339,17 +337,15 @@ export function SeasonSummaryGraphic({
 												{mate.player.name}
 											</span>
 										</div>
-										<div
-											className={clsx(graphicStyles.boxLabel, styles.mateSets)}
-										>
+										<GraphicBoxLabel className={styles.mateSets}>
 											{t("user:seasons.summary.count.sets", {
 												count: mate.setsCount,
 											})}
-										</div>
+										</GraphicBoxLabel>
 									</div>
 								))}
 							</div>
-						</div>
+						</SummaryBox>
 					) : null}
 				</div>
 			</div>
@@ -362,18 +358,16 @@ export function SeasonSummaryGraphic({
 						{bestSets.map((set, index) => (
 							<li
 								key={`${index}-${set.context}`}
-								className={clsx(graphicStyles.box, styles.bestSetRow)}
+								className={clsx(styles.box, styles.bestSetRow)}
 							>
 								<GraphicScore
 									ownScore={set.ownScore}
 									opponentScore={set.opponentScore}
 								/>
 								<div className={styles.setInfo}>
-									<div
-										className={clsx(graphicStyles.boxLabel, styles.setContext)}
-									>
+									<GraphicBoxLabel className={styles.setContext}>
 										{set.context}
-									</div>
+									</GraphicBoxLabel>
 									<div
 										className={clsx(
 											styles.playersInline,
@@ -389,9 +383,9 @@ export function SeasonSummaryGraphic({
 									<div className={styles.setSpValue}>
 										{set.opponentSp.toFixed(1)}
 									</div>
-									<div className={graphicStyles.boxLabel}>
+									<GraphicBoxLabel>
 										{t("user:seasons.summary.opponentSp")}
-									</div>
+									</GraphicBoxLabel>
 								</div>
 							</li>
 						))}
@@ -403,7 +397,7 @@ export function SeasonSummaryGraphic({
 					<GraphicSectionDivider>
 						{t("user:seasons.summary.bestTournament")}
 					</GraphicSectionDivider>
-					<div className={clsx(graphicStyles.box, styles.tournamentRow)}>
+					<SummaryBox className={styles.tournamentRow}>
 						<GraphicPlacementCell placement={bestTournament.placement} />
 						<Avatar
 							url={bestTournament.logoUrl}
@@ -422,7 +416,7 @@ export function SeasonSummaryGraphic({
 						{typeof bestTournament.tier === "number" ? (
 							<TierPill tier={bestTournament.tier} withoutAnimation />
 						) : null}
-					</div>
+					</SummaryBox>
 				</>
 			) : null}
 			{qrCodeUrl ? null : (
@@ -573,7 +567,7 @@ function ActivityLegend() {
 	const { t } = useTranslation(["user"]);
 
 	return (
-		<div className={clsx(styles.calendarLegend, graphicStyles.boxLabel)}>
+		<GraphicBoxLabel className={styles.calendarLegend}>
 			<div className={styles.calendarLegendItem}>
 				<div className={clsx(styles.calendarCell, styles.calendarSq)} />
 				SendouQ
@@ -586,7 +580,7 @@ function ActivityLegend() {
 				<div className={clsx(styles.calendarCell, styles.calendarBoth)} />
 				{t("user:seasons.summary.activity.both")}
 			</div>
-		</div>
+		</GraphicBoxLabel>
 	);
 }
 
@@ -601,4 +595,14 @@ function activityClass(activity?: SeasonSummaryGraphicActivity) {
 		case "both":
 			return styles.calendarBoth;
 	}
+}
+
+function SummaryBox({
+	className,
+	children,
+}: {
+	className?: string;
+	children: React.ReactNode;
+}) {
+	return <div className={clsx(styles.box, className)}>{children}</div>;
 }
