@@ -1,5 +1,12 @@
 import type { Tables } from "~/db/tables";
 
+export type ChatRoomType =
+	| "SQ_GROUP"
+	| "SQ_MATCH"
+	| "TOURNAMENT_MATCH"
+	| "TOURNAMENT_TEAM"
+	| "SCRIM";
+
 export type SystemMessageType =
 	| "NEW_GROUP"
 	| "USER_LEFT"

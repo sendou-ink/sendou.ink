@@ -30,6 +30,10 @@ import type {
 import type { ApiTokenType } from "~/features/api/api-types";
 import type { AssociationVisibility } from "~/features/associations/associations-types";
 import type { CalendarEventTag } from "~/features/calendar/calendar-types";
+import type {
+	ChatRoomType,
+	PersistedSystemMessageType,
+} from "~/features/chat/chat-types";
 import type { LFGType } from "~/features/lfg/lfg-constants";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
@@ -296,8 +300,39 @@ export interface CalendarEventResultTeam {
 	placement: number;
 }
 
+export interface ChatRoom {
+	/** Set by a routine ~a month after `expiresAt`; messages are kept but access narrows to staff and tournament organizers. */
+	closedAt: number | null;
+	createdAt: Generated<number>;
+	expiresAt: number;
+	id: GeneratedAlways<number>;
+	type: ChatRoomType;
+}
+
+export interface ChatMessage {
+	/** The sender, or for a system message the actor it describes. `null` only when that account has since been deleted. */
+	authorUserId: number | null;
+	/** `null` for system messages, whose text is rendered client-side from {@link ChatMessage.type}. */
+	contents: string | null;
+	createdAt: Generated<number>;
+	id: GeneratedAlways<number>;
+	/** Client-generated nanoid, unique so a retried send can't double-insert. */
+	publicId: string;
+	roomId: number;
+	/** `null` = a regular user message. */
+	type: PersistedSystemMessageType | null;
+}
+
+export interface ChatMessageReadIndicator {
+	/** Id of the newest message the user has seen in the room; upserts keep the MAX. */
+	lastSeenMessageId: number;
+	roomId: number;
+	userId: number;
+}
+
 export interface Group {
 	chatCode: string | null;
+	chatRoomId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
 	inviteCode: string;
@@ -331,6 +366,7 @@ export interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
 	chatCode: string | null;
+	chatRoomId: number | null;
 	confirmedAt: number | null;
 	confirmedByUserId: number | null;
 	createdAt: Generated<number>;
@@ -663,6 +699,7 @@ export interface TournamentGroup {
 
 export interface TournamentMatch {
 	chatCode: string | null;
+	chatRoomId: number | null;
 	groupId: number;
 	id: GeneratedAlways<number>;
 	number: number;
@@ -781,6 +818,7 @@ export interface TournamentTeam {
 	isPlaceholder: Generated<DBBoolean>;
 	lfgNote: string | null;
 	chatCode: Generated<string | null>;
+	chatRoomId: number | null;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
 	abDivision: number | null;
 	/** The team's {@link TournamentTeamHistory} row, created lazily on its first audited event. */
@@ -1185,7 +1223,8 @@ export interface ScrimPost {
 	/** Any additional info */
 	text: string | null;
 	/** The key to access the scrim chat, used after scrim is scheduled with another team */
-	chatCode: string;
+	chatCode: string; // xxx: remember to drop all chat codes
+	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;
 	/** Indicates if anyone in the post can manage it */
@@ -1352,6 +1391,9 @@ export interface DB {
 	CalendarEventDate: CalendarEventDate;
 	CalendarEventResultPlayer: CalendarEventResultPlayer;
 	CalendarEventResultTeam: CalendarEventResultTeam;
+	ChatMessage: ChatMessage;
+	ChatMessageReadIndicator: ChatMessageReadIndicator;
+	ChatRoom: ChatRoom;
 	ExternalStream: ExternalStream;
 	Group: Group;
 	GroupLike: GroupLike;
