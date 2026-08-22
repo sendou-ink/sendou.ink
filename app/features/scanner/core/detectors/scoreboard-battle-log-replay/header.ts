@@ -57,6 +57,16 @@ const TAG_DARK_MAX_LIFTED = 120;
 const TIMESTAMP_RE =
 	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d)\s*(.*)$/;
 
+/**
+ * The date-to-time gap can also collapse entirely ("22/8/202620:37"), tried
+ * only after the spaced form fails. The date's last component is lazy so the
+ * time match decides where the fused run splits ("2026/3/720:28" is 7 +
+ * 20:28, not 7202 + 0:28), and the time drops the spurious-gap tolerance —
+ * with it, a lazy match could steal the year's last digit instead.
+ */
+const TIMESTAMP_FUSED_RE =
+	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4}?)(\d{1,2}:\d\d)\s*(.*)$/;
+
 interface TopBandParse {
 	reading: string;
 	timestamp: string | null;
@@ -90,7 +100,8 @@ function parseTopBand(reading: string): TopBandParse {
 		.replace(/[Il|]/g, "1")
 		.replace(/[Oo]/g, "0")
 		.replace(/S/g, "5");
-	const m = TIMESTAMP_RE.exec(normalized);
+	const m =
+		TIMESTAMP_RE.exec(normalized) ?? TIMESTAMP_FUSED_RE.exec(normalized);
 	const stageReading = m
 		? reading.slice(reading.length - m[3]!.length)
 		: reading;

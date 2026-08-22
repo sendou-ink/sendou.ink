@@ -1,0 +1,80 @@
+{
+  "event": "ScoreboardBattleLog",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 6,
+    "timestamp": "22/8/2026 20:37",
+    "matchScores": [
+      100,
+      0
+    ],
+    "players": [
+      {
+        "name": "Madman46i",
+        "weaponId": 7031,
+        "paint": 1190,
+        "ka": 14,
+        "d": 4,
+        "s": 4
+      },
+      {
+        "name": "MegGriffin",
+        "weaponId": 2070,
+        "paint": 1391,
+        "ka": 13,
+        "d": 1,
+        "s": 4
+      },
+      {
+        "name": "タマモクロス",
+        "weaponId": 3012,
+        "paint": 748,
+        "ka": 11,
+        "d": 5,
+        "s": 3
+      },
+      {
+        "name": "Luis CI",
+        "weaponId": 210,
+        "paint": 718,
+        "ka": 9,
+        "d": 5,
+        "s": 2
+      },
+      {
+        "name": "± Acing",
+        "weaponId": 201,
+        "paint": 771,
+        "ka": 8,
+        "d": 9,
+        "s": 3
+      },
+      {
+        "name": "Sendou",
+        "weaponId": 60,
+        "paint": 1411,
+        "ka": 4,
+        "d": 5,
+        "s": 6
+      },
+      {
+        "name": "okokok",
+        "weaponId": 40,
+        "paint": 1286,
+        "ka": 4,
+        "d": 3,
+        "s": 9
+      },
+      {
+        "name": "Tipo",
+        "weaponId": 251,
+        "paint": 655,
+        "ka": 5,
+        "d": 9,
+        "s": 3
+      }
+    ],
+    "stageLabel": "Museum d'Alfonsino"
+  }
+}
