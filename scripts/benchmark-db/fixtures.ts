@@ -41,6 +41,8 @@ export interface Fixtures {
 	recentTournamentIds: number[] | null;
 	heavyTeam: { id: number; customUrl: string; memberUserId: number } | null;
 	heavyCalendarEventId: number | null;
+	/** Chat room with the most messages. Null until the prod copy has post-migration chat data. */
+	heavyChatRoomId: number | null;
 	resultsEventId: number | null;
 	calendarAuthorId: number | null;
 	calendarWindow: { startTime: Date; endTime: Date } | null;
@@ -150,6 +152,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		recentTournamentIds: await resolveRecentTournamentIds(),
 		heavyTeam: await resolveHeavyTeam(),
 		heavyCalendarEventId: await resolveHeavyCalendarEventId(),
+		heavyChatRoomId: await resolveHeavyChatRoomId(),
 		resultsEventId: await resolveResultsEventId(),
 		calendarAuthorId: await resolveCalendarAuthorId(),
 		calendarWindow: await resolveCalendarWindow(),
@@ -593,6 +596,18 @@ async function resolveCalendarAuthorId() {
 		.executeTakeFirst();
 
 	return row?.authorId ?? null;
+}
+
+async function resolveHeavyChatRoomId() {
+	const row = await db
+		.selectFrom("ChatMessage")
+		.select(({ fn }) => ["roomId", fn.countAll<number>().as("count")])
+		.groupBy("roomId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.roomId ?? null;
 }
 
 async function resolveCalendarWindow() {

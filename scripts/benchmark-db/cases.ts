@@ -7,6 +7,7 @@ import * as LogInLinkRepository from "~/features/auth/LogInLinkRepository.server
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -230,6 +231,11 @@ export function buildCases(fx: Fixtures): {
 		"CalendarRepository.findTopThreeResultsByEventIds",
 		fx.resultsEventId,
 		(eventId) => CalendarRepository.findTopThreeResultsByEventIds([eventId]),
+	);
+
+	// ChatRepository
+	add("ChatRepository.findAllMessagesByRoomId", fx.heavyChatRoomId, (roomId) =>
+		ChatRepository.findAllMessagesByRoomId(roomId),
 	);
 
 	// FriendRepository
