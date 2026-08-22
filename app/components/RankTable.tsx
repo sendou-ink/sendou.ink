@@ -16,25 +16,32 @@ export function RankTable({ children }: { children: React.ReactNode }) {
 
 export function RankTableRow({
 	to,
-	className,
 	testId,
 	children,
 }: {
 	/** when given the row is a link to the entry's own page */
 	to?: string;
-	className?: string;
 	testId?: string;
 	children: React.ReactNode;
 }) {
 	if (!to) {
-		return <div className={clsx(styles.row, className)}>{children}</div>;
+		return <div className={styles.row}>{children}</div>;
 	}
 
 	return (
-		<Link to={to} className={clsx(styles.row, className)} data-testid={testId}>
+		<Link to={to} className={styles.row} data-testid={testId}>
 			{children}
 		</Link>
 	);
+}
+
+/** Row that separates the rows above and below it, e.g. to mark a cutoff point */
+export function RankTableDividerRow({
+	children,
+}: {
+	children: React.ReactNode;
+}) {
+	return <div className={clsx(styles.row, styles.dividerRow)}>{children}</div>;
 }
 
 export function RankTableInnerRow({ children }: { children: React.ReactNode }) {

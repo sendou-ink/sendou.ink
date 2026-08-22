@@ -56,6 +56,7 @@ export { action, loader };
 
 import {
 	RankTable,
+	RankTableDividerRow,
 	RankTableInnerRow,
 	RankTableRank,
 	RankTableRow,
@@ -506,14 +507,12 @@ function TeamTable({
 						</RankTableRow>
 						{entry.placementRank === TEAM_LEADERBOARD_QUALIFYING_COUNT &&
 						showQualificationDividers ? (
-							<RankTableRow
-								className={leaderboardsStyles.tableRowQualification}
-							>
+							<RankTableDividerRow>
 								{t("common:leaderboard.qualification")}
 								<InfoPopover tiny>
 									{t("common:leaderboard.qualification.info")}
 								</InfoPopover>
-							</RankTableRow>
+							</RankTableDividerRow>
 						) : null}
 					</React.Fragment>
 				);

@@ -27,7 +27,7 @@
 }
 
 .searchInput {
-	height: 40px !important;
+	height: 40px;
 	margin: 0 auto;
 	font-size: var(--font-lg);
 }

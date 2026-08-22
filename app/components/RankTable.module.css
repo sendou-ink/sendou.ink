@@ -34,6 +34,13 @@
 	}
 }
 
+.dividerRow {
+	justify-content: center;
+	gap: var(--s-2);
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-xs);
+}
+
 a.row:hover {
 	background-color: var(--color-bg-higher);
 }

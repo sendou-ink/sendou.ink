@@ -61,6 +61,7 @@
 - for simple styling, prefer [utility classes](./app/styles/utils.css) over creating a new class
 - use CSS nesting with the `&` selector to group related selectors (pseudo-classes, pseudo-elements, child selectors, attribute selectors) under their parent instead of repeating the parent selector
 - prefer container queries over media queries
+- every CSS module is wrapped in a cascade layer by its path (`vite.config.ts`): `app/components/elements/**` → `elements`, `app/components/*.module.css` → `components`, everything else → `features`. A higher layer always beats a lower one, so a feature can override a shared component's class no matter what order the chunks load in — never reach for `!important` or a specificity hack to win that fight. Two modules in the *same* layer fall back to load order, so a variant of a component's own class (e.g. a divider row of a table) belongs in that component's module, not the caller's.
 
 ## SQL
 

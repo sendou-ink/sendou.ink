@@ -21,15 +21,6 @@
 	color: var(--color-text-high);
 }
 
-.tableRowQualification {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	justify-content: center;
-	background-color: var(--color-bg-higher);
-	display: flex;
-	gap: var(--s-2);
-}
-
 .tablePower {
 	margin-inline-start: auto;
 }
