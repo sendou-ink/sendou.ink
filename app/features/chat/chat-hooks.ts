@@ -1,17 +1,22 @@
 import * as React from "react";
 import { useRevalidator } from "react-router";
+import type { EventsReadyState } from "~/features/events/events-client";
+import {
+	useEventsReadyState,
+	useEventsTopic,
+	useServerEventListener,
+} from "~/features/events/events-hooks";
 import { useUser } from "../auth/core/user";
-import type { ChatContextValue } from "./chat-provider-types";
 import type { ChatMessage } from "./chat-types";
+import { playMessageSound } from "./chat-utils";
 import { scheduleBroadcastRevalidation } from "./revalidation-scope";
-import { useChatContext } from "./useChatContext";
 
 // increasing this = scrolling happens even when scrolled more upwards
 const THRESHOLD = 100;
 // how long the tab must have been hidden for returning to it to be worth a catch-up
 const CATCH_UP_HIDDEN_MS = 20 * 1000;
-// how often to catch up while the websocket is down and no broadcast can arrive
-const WS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
+// how often to catch up while the event stream is down and no broadcast can arrive
+const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 // how long after wheel/touch/keyboard input a scroll event still counts as user-initiated
 const USER_SCROLL_INTENT_MS = 150;
 
@@ -153,40 +158,28 @@ export function useChatAutoScroll(
 }
 
 /**
- * Subscribes the page to a Skalop topic over the shared chat WebSocket so that
- * `revalidateOnly` broadcasts to the topic trigger a data loader revalidation.
+ * Subscribes the page to a server event topic over the shared SSE connection so
+ * that `revalidate` broadcasts to the topic trigger a data loader revalidation.
  * Topics are lightweight: no metadata, no participants, no history — purely a
  * fan-out channel. Pass `connected=false` to opt out (e.g. once a tournament
  * has been finalized and no further updates are expected).
  */
 export function useWebsocketRevalidation(topic: string, connected = true) {
-	const chat = useChatContext();
-	const subscribeTopic = chat?.subscribeTopic;
-	const unsubscribeTopic = chat?.unsubscribeTopic;
-	const readyState = chat?.readyState;
-
 	useLiveRevalidation(connected);
-
-	React.useEffect(() => {
-		if (!connected || readyState !== "CONNECTED") return;
-		if (!subscribeTopic || !unsubscribeTopic) return;
-
-		subscribeTopic(topic);
-		return () => unsubscribeTopic(topic);
-	}, [topic, connected, readyState, subscribeTopic, unsubscribeTopic]);
+	useEventsTopic(topic, connected);
 }
 
 export function useLiveRevalidation(enabled = true) {
-	const chat = useChatContext();
+	const user = useUser();
+	const readyState = useEventsReadyState();
 	const { revalidate } = useRevalidator();
 
-	// a logged out visitor has no websocket to miss broadcasts from in the first place,
-	// and revalidating for them would only add load
-	const active = enabled && chat !== null;
-	const readyState = chat?.readyState ?? "CLOSED";
+	// a logged out visitor has no event stream to miss broadcasts from in the first
+	// place, and revalidating for them would only add load
+	const active = enabled && user != null;
 
 	// goes through the broadcast scheduler so a catch-up shares its jitter (many clients
-	// return to a page at once after a skalop deploy) and absorption into a broadcast
+	// reconnect at once after a server deploy) and absorption into a broadcast
 	// that is already scheduled
 	const catchUp = React.useEffectEvent(() => {
 		scheduleBroadcastRevalidation(revalidate, undefined);
@@ -206,7 +199,7 @@ export function useLiveRevalidation(enabled = true) {
 				return;
 			}
 
-			// a quick tab away can not have missed anything the socket would not
+			// a quick tab away can not have missed anything the stream would not
 			// still deliver, and revalidating for it would be pure server load
 			if (hiddenAt !== null && Date.now() - hiddenAt >= CATCH_UP_HIDDEN_MS) {
 				catchUp();
@@ -222,17 +215,38 @@ export function useLiveRevalidation(enabled = true) {
 	React.useEffect(() => {
 		if (!active || readyState === "CONNECTED") return;
 
-		const interval = setInterval(catchUp, WS_DOWN_CATCH_UP_MS);
+		const interval = setInterval(catchUp, EVENTS_DOWN_CATCH_UP_MS);
 		return () => clearInterval(interval);
 	}, [active, readyState]);
 }
 
 /**
- * Calls `onReconnect` every time the websocket comes back up, skipping the initial
- * connect: only what happened while the socket was down needs catching up on.
+ * Handles `revalidate` events arriving over the shared SSE connection: plays the
+ * sound the event carries and schedules a loader revalidation, skipping the
+ * actor's own broadcasts (their form submission already reran the loaders).
+ */
+export function useServerRevalidationEvents(userId: number) {
+	const { revalidate } = useRevalidator();
+
+	useServerEventListener((event) => {
+		if (event.kind !== "revalidate") return;
+
+		playMessageSound(event.type);
+
+		if (event.authorUserId === userId) return;
+
+		// jittered so a broadcast fanning out to a whole room does not make
+		// every subscribed client refetch in the same instant
+		scheduleBroadcastRevalidation(revalidate, event.scope);
+	});
+}
+
+/**
+ * Calls `onReconnect` every time the event stream comes back up, skipping the
+ * initial connect: only what happened while the stream was down needs catching up on.
  */
 export function useRefreshOnReconnect(
-	readyState: ChatContextValue["readyState"],
+	readyState: EventsReadyState,
 	onReconnect: () => void,
 ) {
 	const handleReconnect = React.useEffectEvent(onReconnect);
