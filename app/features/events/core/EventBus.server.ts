@@ -15,6 +15,11 @@ export type ServerEvent =
 	| { kind: "notificationsChanged" }
 	| { kind: "roomsChanged" };
 
+/** Channel delivering events addressed to the user across all of their connections. */
+export function userChannel(userId: number): string {
+	return `user__${userId}`;
+}
+
 interface Subscriber {
 	queue: ServerEvent[];
 	wake: (() => void) | null;

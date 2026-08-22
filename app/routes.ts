@@ -48,6 +48,12 @@ export default [
 
 	route("/sidenav", "features/layout/routes/sidenav.ts"),
 
+	route("/sse", "features/events/routes/sse.ts"),
+	route(
+		"/sse/:connectionId/topics",
+		"features/events/routes/sse.$connectionId.topics.ts",
+	),
+
 	route("/notifications", "features/notifications/routes/notifications.tsx"),
 	route(
 		"/notifications/seen",
