@@ -226,6 +226,11 @@ export function buildCases(fx: Fixtures): {
 	add("CalendarRepository.findResultsByEventId", fx.resultsEventId, (eventId) =>
 		CalendarRepository.findResultsByEventId(eventId),
 	);
+	add(
+		"CalendarRepository.findTopThreeResultsByEventIds",
+		fx.resultsEventId,
+		(eventId) => CalendarRepository.findTopThreeResultsByEventIds([eventId]),
+	);
 
 	// FriendRepository
 	add("FriendRepository.findByUserIdWithActivity", fx.heavyFriendPair, (pair) =>
@@ -1091,10 +1096,10 @@ export function buildCases(fx: Fixtures): {
 		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),
 	);
 	add(
-		"TournamentRepository.findTopThreeResultsByTournamentId",
+		"TournamentRepository.findTopThreeResultsByTournamentIds",
 		fx.heavyTournamentId,
 		(tournamentId) =>
-			TournamentRepository.findTopThreeResultsByTournamentId(tournamentId),
+			TournamentRepository.findTopThreeResultsByTournamentIds([tournamentId]),
 	);
 	add(
 		"TournamentRepository.findFriendCodesByTournamentId",

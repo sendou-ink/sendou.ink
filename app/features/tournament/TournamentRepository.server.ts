@@ -982,22 +982,22 @@ export function findAllBetweenTwoTimestamps({
 		.execute();
 }
 
-export function findTopThreeResultsByTournamentId(tournamentId: number) {
+/** Podium placements of the given tournaments, one row per placed player. */
+export async function findTopThreeResultsByTournamentIds(
+	tournamentIds: number[],
+) {
+	if (tournamentIds.length === 0) return [];
+
 	return db
 		.selectFrom("TournamentResult")
-		.select(({ eb }) => [
+		.innerJoin("User", "User.id", "TournamentResult.userId")
+		.select((eb) => [
 			"TournamentResult.placement",
 			"TournamentResult.tournamentTeamId",
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.select((eb) => commonUserSelect(eb))
-					.whereRef("User.id", "=", "TournamentResult.userId"),
-			).as("user"),
+			...commonUserSelect(eb),
 		])
-		.where("tournamentId", "=", tournamentId)
+		.where("TournamentResult.tournamentId", "in", tournamentIds)
 		.where("TournamentResult.placement", "<=", 3)
-		.$narrowType<{ user: NotNull }>()
 		.execute();
 }
 

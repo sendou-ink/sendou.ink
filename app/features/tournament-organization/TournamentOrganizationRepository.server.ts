@@ -333,7 +333,6 @@ const mapEvent = <
 	T extends {
 		tournamentId: number | null;
 		logoUrl: string;
-		name: string;
 	},
 >(
 	event: T,
@@ -420,6 +419,11 @@ export async function findPaginatedEventsBySeries({
 	return events.map(mapEvent);
 }
 
+/**
+ * Every event of the series, newest first. Selects only what the leaderboard and the series header
+ * need - the winners of {@link findPaginatedEventsBySeries} are far too costly across a whole
+ * series.
+ */
 export async function findAllEventsBySeries({
 	organizationId,
 	substringMatches,
@@ -427,10 +431,31 @@ export async function findAllEventsBySeries({
 	organizationId: number;
 	substringMatches: string[];
 }) {
-	const events = await findSeriesEventsBaseQuery({
-		organizationId,
-		substringMatches,
-	}).execute();
+	const events = await db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select(({ eb }) => [
+			"CalendarEvent.id as eventId",
+			"CalendarEvent.tournamentId",
+			eb.fn.min("CalendarEventDate.startsAt").as("startsAt"),
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+		])
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.where("CalendarEvent.hidden", "=", 0)
+		.where((eb) =>
+			eb.or(
+				substringMatches.map((match) =>
+					eb("CalendarEvent.name", "like", `%${match}%`),
+				),
+			),
+		)
+		.groupBy("CalendarEvent.id")
+		.orderBy("CalendarEventDate.startsAt", "desc")
+		.execute();
 
 	return events.map(mapEvent);
 }

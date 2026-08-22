@@ -401,6 +401,31 @@ export async function findResultsByEventId(eventId: number) {
 		.execute();
 }
 
+/**
+ * Players of the podium teams of the given events, one row per player. Players reported as plain
+ * text rather than linked to an account have a `null` id.
+ */
+export async function findTopThreeResultsByEventIds(eventIds: number[]) {
+	if (eventIds.length === 0) return [];
+
+	return db
+		.selectFrom("CalendarEventResultTeam")
+		.innerJoin(
+			"CalendarEventResultPlayer",
+			"CalendarEventResultPlayer.teamId",
+			"CalendarEventResultTeam.id",
+		)
+		.leftJoin("User", "User.id", "CalendarEventResultPlayer.userId")
+		.select((eb) => [
+			"CalendarEventResultTeam.id as teamId",
+			"CalendarEventResultTeam.placement",
+			...commonUserSelect(eb),
+		])
+		.where("CalendarEventResultTeam.eventId", "in", eventIds)
+		.where("CalendarEventResultTeam.placement", "<=", 3)
+		.execute();
+}
+
 type CreateArgs = Pick<
 	Tables["CalendarEvent"],
 	| "name"
