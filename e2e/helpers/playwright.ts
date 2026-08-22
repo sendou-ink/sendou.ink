@@ -492,3 +492,23 @@ export async function clickNavTab(page: Page, testId: string) {
 	}
 	await visibleTab.click();
 }
+
+/** The IANA timezone of the machine running the tests, the one fixture times should be computed in. */
+export const MACHINE_TIMEZONE =
+	Intl.DateTimeFormat().resolvedOptions().timeZone;
+
+/**
+ * Writes the timezone cookie the browser would after hydration, so that the
+ * very first document request already renders in the machine's timezone the
+ * test computed its fixture times in.
+ */
+export function setTimezoneCookie(page: Page) {
+	return page.context().addCookies([
+		{
+			name: "timezone",
+			value: MACHINE_TIMEZONE,
+			domain: "localhost",
+			path: "/",
+		},
+	]);
+}

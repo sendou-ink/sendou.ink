@@ -81,6 +81,56 @@ describe("Availability.dateInTimezone", () => {
 	});
 });
 
+describe("Availability.dayMinutesToTimestamp", () => {
+	test("matches localToTimestamp for a same-day time", () => {
+		expect(
+			Availability.dayMinutesToTimestamp({
+				date: "2026-08-25",
+				minutes: 18 * 60 + 30,
+				timezone: HELSINKI,
+			}),
+		).toBe(at("2026-08-25", "18:30"));
+	});
+
+	test("rolls minutes past 1440 into the next day", () => {
+		expect(
+			Availability.dayMinutesToTimestamp({
+				date: "2026-08-25",
+				minutes: 26 * 60,
+				timezone: HELSINKI,
+			}),
+		).toBe(at("2026-08-26", "02:00"));
+	});
+
+	test.each([
+		{
+			why: "spring",
+			date: "2026-03-28",
+			minutes: 28 * 60,
+			expectedDate: "2026-03-29",
+			expectedTime: "04:00",
+		},
+		{
+			why: "autumn",
+			date: "2026-10-24",
+			minutes: 26 * 60,
+			expectedDate: "2026-10-25",
+			expectedTime: "02:00",
+		},
+	])(
+		"rolls through the $why DST transition like a hand-entered time",
+		({ date, minutes, expectedDate, expectedTime }) => {
+			expect(
+				Availability.dayMinutesToTimestamp({
+					date,
+					minutes,
+					timezone: HELSINKI,
+				}),
+			).toBe(at(expectedDate, expectedTime));
+		},
+	);
+});
+
 describe("Availability.overlaps", () => {
 	test.each([
 		{

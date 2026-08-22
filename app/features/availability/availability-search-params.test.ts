@@ -1,10 +1,10 @@
 import { describe, test } from "vitest";
 import { assertRoundTrips } from "~/modules/search-params/search-params-test-utils";
-import { teamScheduleSearchParams } from "./availability-search-params";
+import { scheduleWeekSearchParams } from "./availability-search-params";
 
-describe("teamScheduleSearchParams", () => {
+describe("scheduleWeekSearchParams", () => {
 	test("round-trips", () => {
-		assertRoundTrips(teamScheduleSearchParams, {
+		assertRoundTrips(scheduleWeekSearchParams, {
 			week: ["current", "next"],
 		});
 	});

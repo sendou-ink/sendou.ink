@@ -16,6 +16,26 @@ export default defineConfig((config) => {
 		},
 		plugins: [
 			{
+				// Vite dev serves everything with no-cache, so the browser revalidates
+				// the woff2 on every font re-resolution — any <head> mutation (e.g. an
+				// intent-prefetch link mounting) then flashes fallback fonts across the
+				// whole page while the 304 round-trips. Fonts effectively never change,
+				// so dev caches them hard, matching how the production build serves them.
+				name: "cache-fonts-in-dev",
+				apply: "serve",
+				configureServer(server) {
+					server.middlewares.use((req, res, next) => {
+						if (req.url?.includes("/fonts/") && req.url.includes(".woff2")) {
+							res.setHeader(
+								"Cache-Control",
+								"public, max-age=31536000, immutable",
+							);
+						}
+						next();
+					});
+				},
+			},
+			{
 				// Wraps CSS modules in a @layer so utility classes always win and, more
 				// generally, so that the more specific of two modules styling the same
 				// element wins no matter what order Vite happens to emit the chunks in:

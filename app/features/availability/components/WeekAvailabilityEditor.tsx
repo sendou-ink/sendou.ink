@@ -368,31 +368,51 @@ export function WeekAvailabilityEditor({
 		setOpenDayAddRow(addRow);
 	};
 
+	const applyDayDraft = (date: string, draft: DayDraft) => {
+		onChange(
+			value.map((day) =>
+				day.date === date
+					? {
+							...day,
+							ranges: Availability.mergedDayRanges(
+								draft.ranges
+									.filter((range) => range.start && range.end)
+									.map((range) =>
+										Availability.dayRangeFromTimes(range.start, range.end),
+									),
+							),
+							note: draft.note.trim(),
+						}
+					: day,
+			),
+		);
+	};
+
 	const closeDayEditor = () => {
 		const draft = dayDraftRef.current;
 
 		if (draft && openDayDate) {
-			onChange(
-				value.map((day) =>
-					day.date === openDayDate
-						? {
-								...day,
-								ranges: Availability.mergedDayRanges(
-									draft.ranges
-										.filter((range) => range.start && range.end)
-										.map((range) =>
-											Availability.dayRangeFromTimes(range.start, range.end),
-										),
-								),
-								note: draft.note.trim(),
-							}
-						: day,
-				),
-			);
+			applyDayDraft(openDayDate, draft);
 		}
 
 		dayDraftRef.current = null;
 		setOpenDayDate(null);
+	};
+
+	// deleting commits right away so the bar disappears as the button is
+	// pressed; once no ranges are left the popover has nothing to edit and
+	// closes too
+	const handleRangeDelete = (draft: DayDraft) => {
+		if (!openDayDate) return;
+
+		applyDayDraft(openDayDate, draft);
+
+		if (draft.ranges.every((range) => !range.start || !range.end)) {
+			dayDraftRef.current = null;
+			setOpenDayDate(null);
+		} else {
+			dayDraftRef.current = draft;
+		}
 	};
 
 	const handleBarClick = (
@@ -426,7 +446,12 @@ export function WeekAvailabilityEditor({
 			gesture && gesture.type !== "fill" && gesture.dayIndex === dayIndex
 				? gesture
 				: null;
-		const liveRange = dayGesture?.range ?? null;
+		// a plain click on a bar starts a move gesture too; the live time label
+		// only belongs to an actual drag, not to the click opening the popover
+		const liveRange =
+			dayGesture?.type === "move" && !dayGesture.moved
+				? null
+				: (dayGesture?.range ?? null);
 		const fillPreview =
 			gesture?.type === "fill" &&
 			gesture.dayIndex !== dayIndex &&
@@ -485,6 +510,7 @@ export function WeekAvailabilityEditor({
 								key={`${range.start}-${range.end}`}
 								className={styles.bar}
 								style={barStyle(shown)}
+								data-testid="availability-bar"
 								aria-label={`${t("schedule:editor.editDay", {
 									day: dayLabelText(day),
 								})} (${rangeText(day.date, range)})`}
@@ -548,6 +574,7 @@ export function WeekAvailabilityEditor({
 				<button
 					type="button"
 					className={styles.editButton}
+					data-testid={`availability-day-edit-${dayIndex}`}
 					aria-label={t("schedule:editor.editDay", { day: dayLabelText(day) })}
 					onClick={(event) => openDayEditor(day.date, event.currentTarget)}
 				>
@@ -673,6 +700,7 @@ export function WeekAvailabilityEditor({
 						onDraftChange={(draft) => {
 							dayDraftRef.current = draft;
 						}}
+						onRangeDelete={handleRangeDelete}
 					/>
 				</SendouAnchoredPopover>
 			) : null}
@@ -685,12 +713,15 @@ function DayEditor({
 	dayLabel,
 	startWithNewRow,
 	onDraftChange,
+	onRangeDelete,
 }: {
 	day: AvailabilityEditorDay;
 	dayLabel: string;
 	/** Opens with an empty row already appended, for an "add time" entry point. */
 	startWithNewRow: boolean;
 	onDraftChange: (draft: DayDraft) => void;
+	/** Called with the remaining draft after a range row is deleted — deletes commit instantly instead of waiting for the popover to close. */
+	onRangeDelete: (draft: DayDraft) => void;
 }) {
 	const { t } = useTranslation(["schedule", "common", "forms"]);
 	const noteId = React.useId();
@@ -744,12 +775,11 @@ function DayEditor({
 						variant="minimal-destructive"
 						size="small"
 						aria-label={t("common:actions.delete")}
-						onPress={() =>
-							update(
-								ranges.filter((other) => other.id !== range.id),
-								note,
-							)
-						}
+						onPress={() => {
+							const remaining = ranges.filter((other) => other.id !== range.id);
+							update(remaining, note);
+							onRangeDelete({ ranges: remaining, note });
+						}}
 					/>
 				</div>
 			))}

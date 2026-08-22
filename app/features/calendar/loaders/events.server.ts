@@ -1,4 +1,5 @@
 import { requireUser } from "~/features/auth/core/user.server";
+import { myScheduleData } from "~/features/availability/core/MySchedule.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import {
@@ -19,12 +20,14 @@ export const loader = async () => {
 		savedTournaments,
 		upcomingTournaments,
 		userOrganizations,
+		mySchedule,
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
 		SavedCalendarEventRepository.findAllUpcomingByUserId(user.id),
 		ShowcaseTournaments.upcomingTournaments(),
 		TournamentOrganizationRepository.findByUserId(user.id),
+		myScheduleData(user.id),
 	]);
 
 	const registered = tournamentsData.participatingFor
@@ -54,5 +57,5 @@ export const loader = async () => {
 		.map(tournamentToSidebarEvent)
 		.sort((a, b) => a.startsAt - b.startsAt);
 
-	return { registered, hosting, scrims, saved, organization };
+	return { registered, hosting, scrims, saved, organization, mySchedule };
 };

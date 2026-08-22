@@ -20,10 +20,25 @@ export class EventsPage {
 		this.page = page;
 		this.main = page.locator("main");
 		this.locators = {
-			title: page.getByRole("heading", { name: "My Events" }),
+			title: page.getByRole("heading", { name: "My events" }),
 			viewTabs: this.main.getByRole("navigation"),
 			emptyCategoryText: page.getByText("No events in this category"),
+			mySchedule: page.getByTestId("my-schedule"),
+			availabilityBars: page.getByTestId("availability-bar"),
+			saveWeekButton: page.getByTestId("save-week-button"),
+			copyLastWeekButton: page.getByTestId("copy-last-week-button"),
+			dayEditorPopover: page.getByRole("dialog"),
 		};
+	}
+
+	/** The "• not filled" marker on a week toggle chip. */
+	weekNotFilledMarker(week: "current" | "next") {
+		return this.page.getByTestId(`week-not-filled-${week}`);
+	}
+
+	/** The pencil button opening the day editor popover of a day track. */
+	dayEditButton(dayIndex: number) {
+		return this.page.getByTestId(`availability-day-edit-${dayIndex}`);
 	}
 
 	async goto() {

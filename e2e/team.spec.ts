@@ -1,4 +1,3 @@
-import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import * as Availability from "~/features/availability/core/Availability";
@@ -7,7 +6,9 @@ import {
 	expect,
 	impersonate,
 	isNotVisible,
+	MACHINE_TIMEZONE,
 	navigate,
+	setTimezoneCookie,
 	test,
 } from "./helpers/playwright";
 import { AnythingAdder } from "./pages/layout/anything-adder";
@@ -26,7 +27,6 @@ const TOURNAMENT_NAME = "In The Zone 30";
 const WEDNESDAY = 2;
 const THURSDAY = 3;
 const DAY_SECONDS = 24 * 60 * 60;
-const MACHINE_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
@@ -530,20 +530,4 @@ function daySlot(dayIndex: number, start: string, end: string) {
 			timezone: MACHINE_TIMEZONE,
 		}),
 	};
-}
-
-/**
- * Writes the timezone cookie the browser would after hydration, so that the
- * very first document request already renders in the machine's timezone the
- * test computed its fixture times in.
- */
-function setTimezoneCookie(page: Page) {
-	return page.context().addCookies([
-		{
-			name: "timezone",
-			value: MACHINE_TIMEZONE,
-			domain: "localhost",
-			path: "/",
-		},
-	]);
 }

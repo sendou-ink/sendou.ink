@@ -4,6 +4,9 @@ import { EmptyState } from "~/components/EmptyState";
 import { EventsList } from "~/components/EventsList";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { action } from "~/features/availability/actions/events.server";
+import { MySchedule } from "~/features/availability/components/MySchedule";
+import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -14,9 +17,14 @@ import {
 	type ViewFilter,
 } from "../calendar-search-params";
 import type { EventsLoaderData } from "../loaders/events.server";
+import { loader } from "../loaders/events.server";
+
+export { action, loader };
+
+import type { Route } from "./+types/events";
 import styles from "./events.module.css";
 
-export { loader } from "../loaders/events.server";
+export const middleware: Route.MiddlewareFunction[] = [timezoneMiddleware];
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -27,7 +35,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["calendar"],
+	i18n: ["calendar", "schedule"],
 };
 
 export default function EventsPage() {
@@ -52,36 +60,43 @@ export default function EventsPage() {
 	const hasNoEventsAtAll = VIEW_FILTERS.every((key) => data[key].length === 0);
 
 	return (
-		<Main halfWidth>
-			<div className={styles.eventsListHeader}>
-				<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
-				{hasNoEventsAtAll ? null : (
-					<SubNav secondary className={styles.subNav}>
-						{VIEW_FILTERS.map((value) => (
-							<SubNavLink
-								key={value}
-								to={calendarEventsSearchParams.href("", { view: value })}
-								secondary
-								controlled
-								active={filter === value}
-								defaultShouldRevalidate={false}
-							>
-								{viewLabels[value]}
-							</SubNavLink>
-						))}
-					</SubNav>
+		<Main className="stack lg">
+			<MySchedule data={data.mySchedule} />
+			<div>
+				<div className={styles.eventsListHeader}>
+					<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
+					{hasNoEventsAtAll ? null : (
+						<SubNav secondary className={styles.subNav}>
+							{VIEW_FILTERS.map((value) => (
+								<SubNavLink
+									key={value}
+									to={calendarEventsSearchParams.href("", { view: value })}
+									secondary
+									controlled
+									active={filter === value}
+									defaultShouldRevalidate={false}
+								>
+									{viewLabels[value]}
+								</SubNavLink>
+							))}
+						</SubNav>
+					)}
+				</div>
+				{hasNoEventsAtAll ? (
+					<EmptyState navItem="calendar">
+						{t("calendar:events.emptyAll")}{" "}
+						<Link to={CALENDAR_PAGE}>
+							{t("calendar:events.findOnCalendar")}
+						</Link>
+					</EmptyState>
+				) : shownEvents.length === 0 ? (
+					<EmptyState navItem="calendar">
+						{t("calendar:events.empty")}
+					</EmptyState>
+				) : (
+					<EventsList events={shownEvents} />
 				)}
 			</div>
-			{hasNoEventsAtAll ? (
-				<EmptyState navItem="calendar">
-					{t("calendar:events.emptyAll")}{" "}
-					<Link to={CALENDAR_PAGE}>{t("calendar:events.findOnCalendar")}</Link>
-				</EmptyState>
-			) : shownEvents.length === 0 ? (
-				<EmptyState navItem="calendar">{t("calendar:events.empty")}</EmptyState>
-			) : (
-				<EventsList events={shownEvents} />
-			)}
 		</Main>
 	);
 }

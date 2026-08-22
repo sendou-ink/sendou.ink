@@ -74,6 +74,34 @@ export function localToTimestamp({
 }
 
 /**
+ * Database timestamp of the given minutes from midnight of `date` in
+ * `timezone`, the clock representation the schedule editor uses. Minutes past
+ * 1440 roll into the next day, so the end of a range crossing midnight
+ * converts like any other. On a DST transition day the clock simply rolls
+ * through the change, same as entering the time by hand would.
+ */
+export function dayMinutesToTimestamp({
+	date,
+	minutes,
+	timezone,
+}: {
+	date: string;
+	minutes: number;
+	timezone: string;
+}) {
+	const [year, month, day] = date.split("-").map(Number);
+
+	invariant(
+		[year, month, day, minutes].every((part) => Number.isFinite(part)),
+		`Malformed local time: ${date} +${minutes}min`,
+	);
+
+	return dateToDatabaseTimestamp(
+		new TZDate(year, month - 1, day, 0, minutes, 0, timezone),
+	);
+}
+
+/**
  * `YYYY-MM-DD` of the timestamp in `timezone`. What day a slot belongs to
  * depends on who is looking at it, so the day of a slot is always resolved from
  * its timestamp rather than from the day its author entered it on.

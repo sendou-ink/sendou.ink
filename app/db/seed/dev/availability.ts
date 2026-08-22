@@ -169,7 +169,9 @@ export async function seedAvailability({
 		{
 			userId: teams.allianceRogue.subUserId,
 			timezone: "Europe/Helsinki",
-			weekly: [[], [["18:00", "22:00"]], [["18:00", "22:00"]], [], [], [], []],
+			// Wednesday ends exactly at midnight, the shape the drag editor
+			// produces when a bar is pulled to the 00:00 tick
+			weekly: [[], [["18:00", "22:00"]], [["18:00", "00:00"]], [], [], [], []],
 			fillsNextWeek: true,
 		},
 		{

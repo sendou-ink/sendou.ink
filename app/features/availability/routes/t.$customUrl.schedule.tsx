@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { isSameDay } from "date-fns";
 import { Flag } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
@@ -15,9 +16,10 @@ import { getMemberRoleType } from "~/features/team/team-utils";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { teamScheduleSearchParams } from "../availability-search-params";
+import { scheduleWeekSearchParams } from "../availability-search-params";
 import type { TeamScheduleLoaderData } from "../loaders/t.$customUrl.schedule.server";
 import { loader } from "../loaders/t.$customUrl.schedule.server";
 
@@ -56,7 +58,7 @@ export default function TeamSchedulePage() {
 
 function ScheduleWeeks({ weeks }: { weeks: Array<WeekData> }) {
 	const { t } = useTranslation(["schedule"]);
-	const [{ week }, setParams] = useSearchParamsTyped(teamScheduleSearchParams);
+	const [{ week }, setParams] = useSearchParamsTyped(scheduleWeekSearchParams);
 	const { formatter: headingFormatter } = useDateTimeFormat({
 		month: "short",
 		day: "numeric",
@@ -198,6 +200,17 @@ function ScheduleCell({
 
 	const note = row.notes.find((note) => note.dayIndex === dayIndex);
 
+	// formatRange expands to full dates when the ends fall on different
+	// calendar days, so a range crossing (or ending exactly at) midnight
+	// formats its ends separately to stay times-only
+	const rangeText = (range: MemberWeekRow["days"][number][number]) =>
+		isSameDay(
+			databaseTimestampToDate(range.startsAt),
+			databaseTimestampToDate(range.endsAt),
+		)
+			? timeFormatter.formatRange(range.startsAt, range.endsAt)
+			: `${timeFormatter.format(range.startsAt)} – ${timeFormatter.format(range.endsAt)}`;
+
 	return (
 		<td
 			className={styles.cell}
@@ -225,7 +238,7 @@ function ScheduleCell({
 							className={styles.range}
 							data-testid="schedule-range"
 						>
-							{timeFormatter.formatRange(range.startsAt, range.endsAt)}
+							{rangeText(range)}
 						</div>
 					))
 				)}

@@ -15,8 +15,6 @@ import type { PlayableWindowTier, TimeRange } from "../availability-types";
 import * as Availability from "../core/Availability";
 
 const DAY_SECONDS = 24 * 60 * 60;
-/** A member's reported week belongs to a viewer week when their starts are closer than this — timezones set them apart by hours, never by days. */
-const WEEK_MATCH_MAX_DISTANCE_SECONDS = 3.5 * DAY_SECONDS;
 
 export type TeamScheduleLoaderData = SerializeFrom<typeof loader>;
 
@@ -168,7 +166,7 @@ function memberWeekRow({
 	const matchingWeek = memberWeeks.find(
 		(week) =>
 			Math.abs(week.weekStartsAt - range.startsAt) <
-			WEEK_MATCH_MAX_DISTANCE_SECONDS,
+			AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
 	);
 
 	if (!matchingWeek) {

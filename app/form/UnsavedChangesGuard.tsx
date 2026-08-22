@@ -1,10 +1,21 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useBlocker } from "react-router";
+import { type Location, useBlocker } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 
-const dirtyCheckers = new Set<() => boolean>();
+/**
+ * Reports whether the registering component has unsaved changes. For an in-app
+ * navigation the blocked locations are passed, so a checker whose state
+ * survives same-route navigations can ignore those; a full page unload passes
+ * nothing and every dirty checker should warn.
+ */
+type UnsavedChangesChecker = (navigation?: {
+	currentLocation: Location;
+	nextLocation: Location;
+}) => boolean;
+
+const dirtyCheckers = new Set<UnsavedChangesChecker>();
 
 /**
  * Confirms navigating away when any mounted form has unsaved changes.
@@ -19,7 +30,7 @@ export function UnsavedChangesGuard() {
 		({ currentLocation, nextLocation }) =>
 			(currentLocation.pathname !== nextLocation.pathname ||
 				currentLocation.search !== nextLocation.search) &&
-			hasUnsavedChanges(),
+			hasUnsavedChanges({ currentLocation, nextLocation }),
 	);
 
 	React.useEffect(() => {
@@ -65,10 +76,11 @@ export function UnsavedChangesGuard() {
  * form state without re-registering on every render.
  */
 export function useUnsavedChangesChecker(
-	checkerRef: React.RefObject<() => boolean>,
+	checkerRef: React.RefObject<UnsavedChangesChecker>,
 ) {
 	React.useEffect(() => {
-		const checker = () => checkerRef.current();
+		const checker: UnsavedChangesChecker = (navigation) =>
+			checkerRef.current(navigation);
 		dirtyCheckers.add(checker);
 		return () => {
 			dirtyCheckers.delete(checker);
@@ -76,9 +88,9 @@ export function useUnsavedChangesChecker(
 	}, [checkerRef]);
 }
 
-function hasUnsavedChanges() {
+function hasUnsavedChanges(navigation?: Parameters<UnsavedChangesChecker>[0]) {
 	for (const checker of dirtyCheckers) {
-		if (checker()) return true;
+		if (checker(navigation)) return true;
 	}
 	return false;
 }

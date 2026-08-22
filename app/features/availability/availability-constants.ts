@@ -10,6 +10,8 @@ export const AVAILABILITY = {
 	WEEK_HORIZON: 2,
 	/** Weeks whose end is further in the past than this are deleted. */
 	RETENTION_MONTHS: 3,
+	/** A reported week belongs to a viewer week when their starts are closer than this — timezones set them apart by hours, never by days. */
+	WEEK_MATCH_MAX_DISTANCE_SECONDS: 3.5 * 24 * 60 * 60,
 	/** Left edge of the editor's clock window (14:00) — evenings are when people play. */
 	TRACK_START_MINUTES: 14 * 60,
 	/** Left edge of the clock window with the earlier-hours expander open (06:00). */
