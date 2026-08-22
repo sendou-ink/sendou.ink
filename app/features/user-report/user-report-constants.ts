@@ -3,6 +3,13 @@ export const USER_REPORT = {
 	MATCH_ID_MAX_LENGTH: 10,
 };
 
+/**
+ * Category offered in the report dialog but never stored: nicknames are not set on
+ * sendou.ink, so picking it points the user to Splatoon 3 / Discord instead of
+ * letting them send a report.
+ */
+export const INAPPROPRIATE_NICKNAME_CATEGORY = "INAPPROPRIATE_NICKNAME";
+
 export const USER_REPORT_CATEGORIES = [
 	"INAPPROPRIATE_CONTENT",
 	"ALTING",

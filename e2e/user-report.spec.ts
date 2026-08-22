@@ -51,6 +51,28 @@ test.describe("User report", () => {
 		await expect(adminPage.text(description)).toBeVisible();
 	});
 
+	test("points elsewhere instead of reporting an inappropriate nickname", async ({
+		page,
+		factories,
+	}) => {
+		const reporter = await factories.UserFactory.create();
+		await factories.LFGPostFactory.create({ authorId: NZAP_TEST_ID });
+
+		await impersonate(page, reporter.id);
+
+		const lfg = new LFGPage(page);
+		await lfg.goto();
+		const card = await lfg.openUserCard("N-ZAP");
+		const reportDialog = await card.openReportDialog();
+
+		await expect(reportDialog.locators.submitButton).toBeVisible();
+
+		await reportDialog.form.select("category", "INAPPROPRIATE_NICKNAME");
+
+		await expect(reportDialog.locators.nicknameInstructions).toBeVisible();
+		await expect(reportDialog.locators.submitButton).not.toBeVisible();
+	});
+
 	test("prefills the match id when reporting from a match page", async ({
 		page,
 		factories,

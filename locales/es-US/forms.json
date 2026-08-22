@@ -218,6 +218,7 @@
 	"labels.reportCategory": "Categoría",
 	"labels.reportMatchId": "ID de la partida",
 	"options.userReportCategory.INAPPROPRIATE_CONTENT": "Contenido inapropiado",
+	"options.userReportCategory.INAPPROPRIATE_NICKNAME": "",
 	"options.userReportCategory.ALTING": "Multicuentas",
 	"options.userReportCategory.HARASSMENT": "Acoso",
 	"options.userReportCategory.CHEATING": "Trampas",

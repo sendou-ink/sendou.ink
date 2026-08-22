@@ -218,6 +218,7 @@
 	"labels.reportCategory": "Category",
 	"labels.reportMatchId": "Match ID",
 	"options.userReportCategory.INAPPROPRIATE_CONTENT": "Inappropriate content",
+	"options.userReportCategory.INAPPROPRIATE_NICKNAME": "Inappropriate nickname (Splatoon/Discord)",
 	"options.userReportCategory.ALTING": "Alting",
 	"options.userReportCategory.HARASSMENT": "Harassment",
 	"options.userReportCategory.CHEATING": "Cheating",

@@ -79,6 +79,9 @@ const FormContext = React.createContext<FormFieldContextValue | null>(null);
 
 export const EMPTY_FORM_STORE = createFormStore({}, {});
 
+const SUBMIT_ROW_CLASS_NAME =
+	"mt-4 stack horizontal md mx-auto justify-center items-center";
+
 export interface FormRenderProps<T extends v.ObjectEntries> {
 	FormField: TypedFormFieldComponent<T>;
 }
@@ -113,6 +116,13 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	 */
 	readOnly?: boolean;
 	secondarySubmit?: React.ReactNode;
+	/**
+	 * Hides the submit button while the current values match, for forms with a
+	 * branch that has nothing to submit (e.g. a choice that only shows guidance).
+	 */
+	hideSubmitButtonWhen?: (
+		values: Partial<v.InferInput<v.ObjectSchema<T, undefined>>>,
+	) => boolean;
 	/**
 	 * Called once after a server submission completes successfully (the action
 	 * returned without field errors). Useful for collapsing an inline edit form
@@ -196,6 +206,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	mode = "submit",
 	onApply,
 	secondarySubmit,
+	hideSubmitButtonWhen,
 	onSuccess,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
@@ -330,7 +341,11 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			{resolvedChildren}
 			{mode !== "submit" || readOnly ? null : (
-				<div className="mt-4 stack horizontal md mx-auto justify-center items-center">
+				<SubmitRow
+					hideWhen={
+						hideSubmitButtonWhen as ((values: unknown) => boolean) | undefined
+					}
+				>
 					<SubmitButton
 						testId={submitButtonTestId}
 						state={fetcher.state}
@@ -340,7 +355,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 						{submitButtonText ?? t("submit")}
 					</SubmitButton>
 					{secondarySubmit}
-				</div>
+				</SubmitRow>
 			)}
 			{fallbackError ? (
 				<div className="mt-4 mx-auto" data-testid="fallback-form-error">
@@ -370,6 +385,45 @@ function SendouFormInner<T extends v.ObjectEntries>({
 			)}
 		</FormContext.Provider>
 	);
+}
+
+function SubmitRow({
+	hideWhen,
+	children,
+}: {
+	hideWhen: ((values: unknown) => boolean) | undefined;
+	children: React.ReactNode;
+}) {
+	return hideWhen ? (
+		<ConditionalSubmitRow hideWhen={hideWhen}>{children}</ConditionalSubmitRow>
+	) : (
+		<div className={SUBMIT_ROW_CLASS_NAME}>{children}</div>
+	);
+}
+
+/**
+ * Split out of {@link SubmitRow} so that only forms that opt in subscribe to the
+ * form's values (and re-render on every edit).
+ */
+function ConditionalSubmitRow({
+	hideWhen,
+	children,
+}: {
+	hideWhen: (values: unknown) => boolean;
+	children: React.ReactNode;
+}) {
+	const context = React.useContext(FormContext);
+	const store = context?.store ?? EMPTY_FORM_STORE;
+	const getValues = () => store.values;
+	const values = React.useSyncExternalStore(
+		store.subscribe,
+		getValues,
+		getValues,
+	);
+
+	if (hideWhen(values)) return null;
+
+	return <div className={SUBMIT_ROW_CLASS_NAME}>{children}</div>;
 }
 
 function createFormStore(

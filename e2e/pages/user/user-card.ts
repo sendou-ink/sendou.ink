@@ -66,6 +66,8 @@ class ReportUserDialog {
 		this.locators = {
 			matchIdInput: page.getByLabel("Match ID"),
 			sentToast: page.getByText("Report sent to the staff"),
+			submitButton: page.getByTestId("submit-button"),
+			nicknameInstructions: page.getByTestId("nickname-report-instructions"),
 		};
 	}
 
