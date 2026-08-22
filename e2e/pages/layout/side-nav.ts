@@ -19,6 +19,10 @@ export class SideNav {
 		this.page = page;
 		this.root = page.locator("nav[class*='sideNav']:visible");
 		this.locators = {
+			logInButton: this.root.getByRole("button", {
+				name: "Log in via Discord",
+			}),
+			footerUsername: this.root.locator("[class*='sideNavFooterUsername']"),
 			collapseButton: page.getByTestId("sidenav-collapse-button"),
 			modalTrigger: page.getByTestId("sidenav-modal-trigger"),
 			unseenRequestsBadge: page.getByRole("status", {

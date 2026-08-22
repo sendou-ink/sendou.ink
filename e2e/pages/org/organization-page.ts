@@ -13,6 +13,7 @@ import {
 } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { OrganizationEditPage } from "./organization-edit-page";
+import { OrganizationStatsPage } from "./organization-stats-page";
 
 export class OrganizationPage {
 	private readonly page: Page;
@@ -24,6 +25,7 @@ export class OrganizationPage {
 		this.isEstablishedForm = createFormHelpers(page, updateIsEstablishedSchema);
 		this.locators = {
 			editButton: page.getByTestId("edit-org-button"),
+			statsButton: page.getByTestId("org-stats-button"),
 			bannedUsersTab: page.getByTestId("banned-users-tab"),
 			adminTab: page.getByRole("tab", { name: "Admin" }),
 			newBanButton: page.getByRole("button", { name: "New ban" }),
@@ -42,6 +44,11 @@ export class OrganizationPage {
 	async openEdit() {
 		await this.locators.editButton.click();
 		return new OrganizationEditPage(this.page);
+	}
+
+	async openStats() {
+		await this.locators.statsButton.click();
+		return new OrganizationStatsPage(this.page);
 	}
 
 	/** Established organizations can add tournaments and their admins can edit them. */

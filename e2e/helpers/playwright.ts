@@ -187,6 +187,30 @@ export async function selectTournament({
 	await item.first().click();
 }
 
+/** Fills a React Aria datetime field's segments, targeting them by the field's label. */
+export async function fillDateTimeField({
+	scope,
+	label,
+	date,
+}: {
+	scope: Locator;
+	label: string;
+	date: Date;
+}) {
+	const fillSegment = (segment: string, value: string) =>
+		scope
+			.getByRole("spinbutton", { name: new RegExp(`^${segment}, ${label}`) })
+			.fill(value);
+
+	const hours = date.getHours();
+	await fillSegment("year", String(date.getFullYear()));
+	await fillSegment("month", String(date.getMonth() + 1));
+	await fillSegment("day", String(date.getDate()));
+	await fillSegment("hour", String(hours % 12 || 12));
+	await fillSegment("minute", String(date.getMinutes()).padStart(2, "0"));
+	await fillSegment("AM/PM", hours >= 12 ? "PM" : "AM");
+}
+
 /** page.goto that waits for the page to be hydrated before proceeding */
 export async function navigate({ page, url }: { page: Page; url: string }) {
 	await flushIfDirty(page);
@@ -221,6 +245,24 @@ export async function endSeason(page: Page) {
 	if (!response?.ok()) {
 		throw new Error(
 			`Ending the season failed with status ${response?.status()}`,
+		);
+	}
+}
+
+/**
+ * Makes the worker's server resolve Plus Server voting as active, so tests can
+ * cover the voting window. Undone before the next test starts.
+ */
+export async function setPlusVotingActive(page: Page, active: boolean) {
+	const response = await retryPost(
+		page,
+		"setPlusVotingActive",
+		"/set-plus-voting-active",
+		{ form: { active: String(active) } },
+	);
+	if (!response?.ok()) {
+		throw new Error(
+			`Setting plus voting active failed with status ${response?.status()}`,
 		);
 	}
 }

@@ -21,6 +21,14 @@ export class TournamentPage {
 		await navigate({ page: this.page, url: tournamentPage(tournamentId) });
 	}
 
+	heading(name: string) {
+		return this.page.getByRole("heading", { level: 1, name });
+	}
+
+	nameHeading(name: string) {
+		return this.page.getByRole("heading", { level: 1, name });
+	}
+
 	async register() {
 		await this.locators.registerCta.click();
 		return new TournamentRegisterPage(this.page);

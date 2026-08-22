@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { vodVideoPage } from "~/utils/urls";
-import { navigate } from "../../helpers/playwright";
+import { modalClickConfirmButton, navigate } from "../../helpers/playwright";
 import { NewVodPage } from "./new-vod-page";
 
 /** `/vods/:id` */
@@ -16,6 +16,10 @@ export class VodPage {
 			copyTimestampsButton: this.page.getByTestId("copy-timestamps-button"),
 			timestamps: this.page.getByRole("dialog").getByRole("textbox"),
 			editButton: this.page.getByTestId("edit-vod-button"),
+			deleteButton: this.page.getByRole("button", {
+				name: "Delete",
+				exact: true,
+			}),
 		};
 	}
 
@@ -39,5 +43,11 @@ export class VodPage {
 	async openEdit() {
 		await this.locators.editButton.click();
 		return new NewVodPage(this.page);
+	}
+
+	/** Lands on the deleter's own vods page. */
+	async delete() {
+		await this.locators.deleteButton.click();
+		await modalClickConfirmButton(this.page);
 	}
 }

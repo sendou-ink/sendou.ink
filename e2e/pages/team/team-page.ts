@@ -6,6 +6,7 @@ import {
 	waitForPOSTResponse,
 } from "../../helpers/playwright";
 import { TeamEditPage } from "./team-edit-page";
+import { TeamResultsPage } from "./team-results-page";
 import { TeamRosterPage } from "./team-roster-page";
 
 export class TeamPage {
@@ -26,6 +27,7 @@ export class TeamPage {
 			deleteTeamButton: page.getByTestId("delete-team-button"),
 			otherRolesTab: page.getByRole("tab", { name: /Other/ }),
 			confirmDialog: page.getByRole("dialog"),
+			resultsBannerLink: page.getByRole("link", { name: /View \d+ results/ }),
 		};
 	}
 
@@ -53,6 +55,11 @@ export class TeamPage {
 	async openEdit() {
 		await this.locators.editTeamButton.click();
 		return new TeamEditPage(this.page);
+	}
+
+	async openResults() {
+		await this.locators.resultsBannerLink.click();
+		return new TeamResultsPage(this.page);
 	}
 
 	async openActionsMenu() {

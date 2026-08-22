@@ -108,7 +108,7 @@ test.describe("VoDs page", () => {
 		}
 	});
 
-	test("edits vod", async ({ page, factories }) => {
+	test("edits and deletes vod", async ({ page, factories }) => {
 		const existingVod = await factories.VodFactory.create({
 			submitterUserId: ADMIN_ID,
 			pov: { type: "USER", userId: ADMIN_ID },
@@ -135,6 +135,15 @@ test.describe("VoDs page", () => {
 
 		await expect(page).toHaveURL(vodVideoPage(existingVod.id));
 		await expect(vod.weaponImage(LUNA_BLASTER)).toBeVisible();
+
+		await vod.delete();
+
+		await expect(page).toHaveURL(/\/u\/.+\/vods/);
+
+		const vods = new VodsPage(page);
+		await vods.goto();
+
+		await expect(vods.locators.noVodsText).toBeVisible();
 	});
 
 	test("operates vod filters", async ({ page, factories }) => {

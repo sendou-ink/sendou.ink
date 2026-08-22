@@ -1,6 +1,7 @@
 import type { Locator, Page } from "@playwright/test";
 import { ADMIN_PAGE } from "~/utils/urls";
 import {
+	fillDateTimeField,
 	navigate,
 	selectUser,
 	waitForPOSTResponse,
@@ -64,23 +65,11 @@ export class AdminBanPage {
 	}
 
 	private async fillExpiresAt(expiresAt: Date) {
-		const fillSegment = (segment: string, value: string) =>
-			this.locators.banForm
-				.getByRole("spinbutton", {
-					name: new RegExp(`^${segment}, Ban expiration date`),
-				})
-				.fill(value);
-
-		const hours = expiresAt.getHours();
-		await fillSegment("year", String(expiresAt.getFullYear()));
-		await fillSegment("month", String(expiresAt.getMonth() + 1));
-		await fillSegment("day", String(expiresAt.getDate()));
-		await fillSegment("hour", String(hours % 12 || 12));
-		await fillSegment(
-			"minute",
-			String(expiresAt.getMinutes()).padStart(2, "0"),
-		);
-		await fillSegment("AM/PM", hours >= 12 ? "PM" : "AM");
+		await fillDateTimeField({
+			scope: this.locators.banForm,
+			label: "Ban expiration date",
+			date: expiresAt,
+		});
 	}
 
 	private async save(form: Locator) {

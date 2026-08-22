@@ -19,6 +19,7 @@ import { UserPage } from "./pages/user/user-page";
 const TEAM_NAME = "Alliance Rogue";
 const SECONDARY_TEAM_NAME = "Team Olive";
 const ROSTER_SIZE = 4;
+const TOURNAMENT_NAME = "In The Zone 30";
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
@@ -190,6 +191,62 @@ test.describe("Team page", () => {
 
 		// the new order is persisted
 		await expect(firstRow.locators.username).toHaveText(secondName);
+	});
+
+	test("shows a finalized tournament placement on the results page", async ({
+		page,
+		factories,
+	}) => {
+		const teammates = await factories.UserFactory.createMany(ROSTER_SIZE - 1);
+		const memberUserIds = [
+			ADMIN_ID,
+			...teammates.map((teammate) => teammate.id),
+		];
+		const { id: teamId, customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds,
+		});
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			name: TOURNAMENT_NAME,
+		});
+		const linkedTournamentTeam = await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds,
+				team: { name: TEAM_NAME, prefersNotToHost: 0, teamId },
+			},
+			{ isCheckedIn: true },
+		);
+		const opponents = await factories.UserFactory.createMany(ROSTER_SIZE);
+		await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: opponents.map((opponent) => opponent.id),
+			},
+			{ isCheckedIn: true },
+		);
+		const matches = await factories.TournamentFactory.playOut(
+			tournament.id,
+			"all",
+		);
+
+		await impersonate(page, ADMIN_ID);
+
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
+
+		const results = await team.openResults();
+		await expect(page).toHaveURL(/\/results/);
+
+		const wonTheFinal = matches.some(
+			(match) => match.winnerTeamId === linkedTournamentTeam.id,
+		);
+		await expect(results.resultRow(TOURNAMENT_NAME)).toContainText("/ 2");
+		await expect(
+			results.placement(TOURNAMENT_NAME, wonTheFinal ? "1st" : "2nd"),
+		).toBeVisible();
 	});
 
 	test("deletes team", async ({ page, factories }) => {

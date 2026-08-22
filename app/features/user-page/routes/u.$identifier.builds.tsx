@@ -279,6 +279,7 @@ function ChangeSortingDialog({
 											icon={<Trash />}
 											variant="minimal-destructive"
 											onPress={deleteLastSorting}
+											data-testid="delete-sorting-button"
 										/>
 									) : null}
 								</div>

@@ -5,6 +5,7 @@ import { serializeLutiDiv } from "~/features/scrims/scrims-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { toDBBoolean } from "~/utils/sql";
+import { scrimPage } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -157,6 +158,7 @@ test.describe("Scrims", () => {
 	test("accepts a request", async ({ page, factories }) => {
 		const post = await createPostWithRequest(factories, {
 			ownerUserId: ADMIN_ID,
+			requesterUserId: NZAP_TEST_ID,
 		});
 		await factories.NotificationFactory.create({
 			notification: {
@@ -190,6 +192,15 @@ test.describe("Scrims", () => {
 		const scrim = await scrims.openFirstBookedScrim();
 
 		await expect(scrim.locators.subtitle).toBeVisible();
+
+		// the requester got notified of the scheduled scrim, linking to its page
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: "/" });
+
+		await notifications.open();
+		await notifications.openNotification("New scrim scheduled vs.");
+
+		await expect(page).toHaveURL(scrimPage(post.id));
 	});
 
 	test("auto-cancels overlapping pending scrims when a scrim is booked", async ({
@@ -301,6 +312,15 @@ test.describe("Scrims", () => {
 		// back as the author, who sees the post and the request details
 		await impersonate(page, ADMIN_ID);
 		await scrims.goto();
+
+		const notifications = new NotificationPopover(page);
+		await notifications.open();
+
+		await expect(
+			notifications.notification("N-ZAP requested a scrim"),
+		).toBeVisible();
+
+		await notifications.close();
 
 		await expect(scrims.post("+2h")).toBeVisible();
 		await expect(scrims.locators.tournamentPopover).toBeVisible();

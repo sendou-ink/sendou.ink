@@ -1,6 +1,7 @@
-import { addHours } from "date-fns";
+import { addHours, subMonths } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { ESTABLISHED_ORG } from "~/features/tournament-organization/tournament-organization-constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	expect,
@@ -169,6 +170,59 @@ test.describe("Tournament Organization", () => {
 
 		await expect(organization.locators.bannedUsersTable).toContainText(
 			"Permanent",
+		);
+	});
+
+	test("shows org admin the stats counting a played tournament's participants", async ({
+		page,
+		factories,
+	}) => {
+		const PLAYER_COUNT = 8;
+
+		const org = await factories.TournamentOrganizationFactory.create({
+			ownerId: ADMIN_ID,
+			name: ORGANIZATION_NAME,
+		});
+
+		const players = await factories.UserFactory.createMany(PLAYER_COUNT - 1);
+		const playerIds = [ADMIN_ID, ...players.map((player) => player.id)];
+		const teamRosters = [playerIds.slice(0, 4), playerIds.slice(4, 8)];
+
+		// only full months before the current one count towards the stats
+		const lastMonth = subMonths(new Date(), 1);
+		await factories.TournamentFactory.createPlayed(
+			{
+				authorId: ADMIN_ID,
+				name: TOURNAMENT_NAME,
+				organizationId: org.id,
+				startTimes: [dateToDatabaseTimestamp(lastMonth)],
+			},
+			{ teamRosters },
+		);
+
+		const organization = new OrganizationPage(page);
+
+		// a non-member sees no stats button
+		await impersonate(page, NZAP_TEST_ID);
+		await organization.goto(org.slug);
+		await isNotVisible(organization.locators.statsButton);
+
+		await impersonate(page, ADMIN_ID);
+		await organization.goto(org.slug);
+		const stats = await organization.openStats();
+
+		const expectedAverage = (
+			PLAYER_COUNT / ESTABLISHED_ORG.MONTHS_CONSIDERED
+		).toFixed(1);
+		await expect(stats.locators.establishedStatus).toContainText(
+			expectedAverage,
+		);
+		await expect(stats.locators.establishedStatus).toContainText(
+			`/ ${ESTABLISHED_ORG.GAIN_THRESHOLD}`,
+		);
+		await expect(stats.monthRow(lastMonth)).toHaveAttribute(
+			"aria-valuenow",
+			String(PLAYER_COUNT),
 		);
 	});
 

@@ -353,6 +353,10 @@ export default [
 	route("/refresh-caches", "features/api-private/routes/refresh-caches.ts"),
 	route("/run-routine", "features/api-private/routes/run-routine.ts"),
 	route("/seed", "features/api-private/routes/seed.ts"),
+	route(
+		"/set-plus-voting-active",
+		"features/api-private/routes/set-plus-voting-active.ts",
+	),
 	route("/users", "features/api-private/routes/users.ts"),
 
 	route("/scanner", "features/scanner/routes/scanner.tsx"),

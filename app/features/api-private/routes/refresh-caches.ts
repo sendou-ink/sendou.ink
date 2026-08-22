@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { DANGEROUS_CAN_ACCESS_DEV_CONTROLS } from "~/features/admin/core/dev-controls";
 import * as Seasons from "~/features/mmr/core/Seasons";
+import { DANGEROUS_setVotingActiveOverride } from "~/features/plus-voting/core/voting-time";
 import { refreshCaches } from "../core/refresh-caches.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
@@ -12,6 +13,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	// leave what the running test set up alone
 	if (await wantsDevOverridesReset(request)) {
 		Seasons.DANGEROUS_setSeasonEndedOverride(false);
+		DANGEROUS_setVotingActiveOverride(false);
 	}
 
 	await refreshCaches();

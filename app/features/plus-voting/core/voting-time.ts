@@ -70,7 +70,20 @@ export function isVotingOpen() {
 	return VOTING_ALWAYS_OPEN || isVotingActive();
 }
 
+let votingActiveOverride = false;
+
+/**
+ * Tests only: makes {@link isVotingActive} (and thus {@link isVotingOpen}) resolve to
+ * true as if a voting window was ongoing, so tests can cover voting without a real
+ * window having to be open.
+ */
+export function DANGEROUS_setVotingActiveOverride(votingActive: boolean) {
+	votingActiveOverride = votingActive;
+}
+
 export function isVotingActive() {
+	if (votingActiveOverride) return true;
+
 	const now = new Date();
 
 	for (const season of Seasons.list) {

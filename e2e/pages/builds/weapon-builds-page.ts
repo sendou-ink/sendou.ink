@@ -12,6 +12,8 @@ export class WeaponBuildsPage {
 		this.page = page;
 		this.locators = {
 			buildCards: page.getByTestId("build-card"),
+			abilityStatsLink: page.getByRole("link", { name: /Ability stats/ }),
+			popularBuildsLink: page.getByRole("link", { name: /Popular builds/ }),
 			addFilterButton: page.getByTestId("add-filter-button"),
 			comparisonSelect: page.getByTestId("comparison-select"),
 			dateSelect: page.getByTestId("date-select"),

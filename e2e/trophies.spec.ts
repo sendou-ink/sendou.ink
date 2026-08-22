@@ -6,7 +6,13 @@ import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { TROPHIES_PAGE } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
-import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
+import {
+	expect,
+	impersonate,
+	isNotVisible,
+	navigate,
+	test,
+} from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
 import { NewTrophyPage } from "./pages/trophies/new-trophy-page";
 import { TrophiesPage } from "./pages/trophies/trophies-page";
@@ -206,6 +212,16 @@ test.describe("Trophies", () => {
 		await expect(reviewed.row(declinedName)).toBeVisible();
 		await expect(
 			reviewed.row(declinedName).getByText("Declined by Sendou"),
+		).toBeVisible();
+
+		// declining notified the submitter
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: "/" });
+
+		await notifications.open();
+
+		await expect(
+			notifications.notification(`Your trophy ${declinedName} was declined`),
 		).toBeVisible();
 	});
 });

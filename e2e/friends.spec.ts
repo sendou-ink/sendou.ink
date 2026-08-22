@@ -28,6 +28,14 @@ test.describe("Friends", () => {
 		// having been opened
 		await expect(notifications.locators.bellDot).toBeHidden();
 
+		await notifications.open();
+
+		await expect(
+			notifications.notification("Sendou sent you a friend request"),
+		).toBeVisible();
+
+		await notifications.close();
+
 		await friends.friend("Sendou").deleteFriend();
 
 		await expect(friends.locators.noFriendsText).toBeVisible();

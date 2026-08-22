@@ -1,7 +1,15 @@
 import type { Page } from "@playwright/test";
+import {
+	type BuildSort,
+	DEFAULT_BUILD_SORT,
+} from "~/features/user-page/user-page-constants";
 import invariant from "~/utils/invariant";
 import { userBuildsPage } from "~/utils/urls";
-import { navigate } from "../../helpers/playwright";
+import {
+	modalClickConfirmButton,
+	navigate,
+	submit,
+} from "../../helpers/playwright";
 import { BuildCard } from "./build-card";
 import { BuildFormPage } from "./build-form-page";
 
@@ -16,6 +24,7 @@ export class UserBuildsPage {
 			changeSortingButton: page.getByTestId("change-sorting-button"),
 			buildCards: page.getByTestId("build-card"),
 			editBuildLinks: page.getByTestId("edit-build"),
+			deleteBuildButtons: page.getByTestId("delete-build"),
 		};
 	}
 
@@ -40,5 +49,23 @@ export class UserBuildsPage {
 	async editBuild(nth: number) {
 		await this.locators.editBuildLinks.nth(nth).click();
 		return new BuildFormPage(this.page);
+	}
+
+	/** Replaces the default sorts with the single given sort via the sorting dialog. */
+	async changeSortingTo(sort: BuildSort) {
+		await this.locators.changeSortingButton.click();
+
+		const dialog = this.page.getByRole("dialog");
+		for (let i = 0; i < DEFAULT_BUILD_SORT.length; i++) {
+			await dialog.getByTestId("delete-sorting-button").click();
+		}
+		await dialog.getByRole("combobox").selectOption(sort);
+
+		await submit(this.page);
+	}
+
+	async deleteBuild(nth: number) {
+		await this.locators.deleteBuildButtons.nth(nth).click();
+		await modalClickConfirmButton(this.page);
 	}
 }

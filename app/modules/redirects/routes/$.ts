@@ -8,3 +8,9 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 
 	throw new Response(null, { status: 404 });
 };
+
+/** Never renders (the loader always redirects or throws) but makes this a page
+ * route, so the 404 shows the error page instead of a bare empty response. */
+export default function CatchAllPage() {
+	return null;
+}

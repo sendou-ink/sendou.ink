@@ -40,29 +40,59 @@ export async function loadFactories(parallelIndex: number) {
 		CalendarEventFactory: await import(
 			"~/db/seed/factories/CalendarEventFactory"
 		),
+		CalendarEventResultFactory: await import(
+			"~/db/seed/factories/CalendarEventResultFactory"
+		),
 		FriendRequestFactory: await import(
 			"~/db/seed/factories/FriendRequestFactory"
 		),
 		FriendshipFactory: await import("~/db/seed/factories/FriendshipFactory"),
+		GroupMatchContinueVoteFactory: await import(
+			"~/db/seed/factories/GroupMatchContinueVoteFactory"
+		),
+		ImageFactory: await import("~/db/seed/factories/ImageFactory"),
 		LFGPostFactory: await import("~/db/seed/factories/LFGPostFactory"),
 		LiveStreamFactory: await import("~/db/seed/factories/LiveStreamFactory"),
+		LogInLinkFactory: await import("~/db/seed/factories/LogInLinkFactory"),
 		NotificationFactory: await import(
 			"~/db/seed/factories/NotificationFactory"
+		),
+		PlusSuggestionFactory: await import(
+			"~/db/seed/factories/PlusSuggestionFactory"
+		),
+		PlusVoteFactory: await import("~/db/seed/factories/PlusVoteFactory"),
+		ResultHighlightFactory: await import(
+			"~/db/seed/factories/ResultHighlightFactory"
 		),
 		SavedCalendarEventFactory: await import(
 			"~/db/seed/factories/SavedCalendarEventFactory"
 		),
 		ScrimPostFactory: await import("~/db/seed/factories/ScrimPostFactory"),
 		SkillFactory: await import("~/db/seed/factories/SkillFactory"),
+		SplatoonRotationFactory: await import(
+			"~/db/seed/factories/SplatoonRotationFactory"
+		),
 		SQGroupFactory: await import("~/db/seed/factories/SQGroupFactory"),
 		SQMatchFactory: await import("~/db/seed/factories/SQMatchFactory"),
 		SQReadyCheckFactory: await import(
 			"~/db/seed/factories/SQReadyCheckFactory"
 		),
+		SQReportedWeaponFactory: await import(
+			"~/db/seed/factories/SQReportedWeaponFactory"
+		),
 		TeamFactory: await import("~/db/seed/factories/TeamFactory"),
 		TournamentFactory: await import("~/db/seed/factories/TournamentFactory"),
+		TournamentLFGTeamFactory: await import(
+			"~/db/seed/factories/TournamentLFGTeamFactory"
+		),
 		TournamentOrganizationFactory: await import(
 			"~/db/seed/factories/TournamentOrganizationFactory"
+		),
+		TournamentReportedWeaponFactory: await import(
+			"~/db/seed/factories/TournamentReportedWeaponFactory"
+		),
+		TournamentStreamerFactory: await import(
+			"~/db/seed/factories/TournamentStreamerFactory"
 		),
 		TournamentTeamFactory: await import(
 			"~/db/seed/factories/TournamentTeamFactory"

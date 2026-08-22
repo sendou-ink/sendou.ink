@@ -1,4 +1,6 @@
+import { sql } from "kysely";
 import * as R from "remeda";
+import { db } from "~/db/sql";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as Standings from "~/features/tournament/core/Standings";
@@ -55,6 +57,8 @@ type InsertArgs = Omit<
 type Options = {
 	/** Confirmed tier, as starting the first bracket computes one. */
 	tier?: TournamentTierNumber;
+	/** Marks the tournament a league. Leagues have no creation UI, the flag is set straight in the db. */
+	isLeague?: boolean;
 };
 
 /** Brackets to play out fully: one by its idx in the progression, several, or
@@ -84,7 +88,17 @@ export const { create } = defineFactory({
 
 		return { id: tournamentId, eventId };
 	},
-	applyOptions: async (tournament, { tier }: Options) => {
+	applyOptions: async (tournament, { tier, isLeague }: Options) => {
+		if (isLeague) {
+			await db
+				.updateTable("Tournament")
+				.set({
+					settings: sql<string>`json_set(settings, '$.isLeague', json('true'))`,
+				})
+				.where("id", "=", tournament.id)
+				.execute();
+		}
+
 		if (!tier) return;
 
 		await TournamentRepository.upsertDivisionTier({

@@ -61,6 +61,17 @@ test.describe("Tournament", () => {
 		await register.saveCounterpickMaps();
 
 		await expect(register.stepCheckmark(3)).toBeVisible();
+
+		// adding to the roster notified the added member
+		await impersonate(page, friends[0].id);
+		await navigate({ page, url: "/" });
+
+		const notifications = new NotificationPopover(page);
+		await notifications.open();
+
+		await expect(
+			notifications.notification(`Added to a team (${TEAM_NAME})`),
+		).toBeVisible();
 	});
 
 	test("checks in and appears on the bracket", async ({ page, factories }) => {

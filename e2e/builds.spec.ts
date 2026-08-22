@@ -2,9 +2,11 @@ import { subDays } from "date-fns";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
-import { expect, impersonate, test } from "./helpers/playwright";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { BuildFormPage } from "./pages/builds/build-form-page";
+import { BuildStatsPage } from "./pages/builds/build-stats-page";
 import { BuildsPage } from "./pages/builds/builds-page";
+import { PopularBuildsPage } from "./pages/builds/popular-builds-page";
 import { UserBuildsPage } from "./pages/builds/user-builds-page";
 import { WeaponBuildsPage } from "./pages/builds/weapon-builds-page";
 
@@ -18,6 +20,19 @@ const ABILITIES_WITHOUT_ISM: BuildAbilitiesTuple = [
 	["SSU", "SSU", "SSU", "SSU"],
 	["RSU", "RSU", "RSU", "RSU"],
 	["QR", "QR", "QR", "QR"],
+];
+
+// per build: CB 10 AP, ISM 9 AP, SSU 19 AP, RSU 19 AP
+const STATS_ABILITIES: BuildAbilitiesTuple = [
+	["CB", "ISM", "ISM", "ISM"],
+	["SSU", "SSU", "SSU", "SSU"],
+	["RSU", "RSU", "RSU", "RSU"],
+];
+
+const OTHER_WEAPON_ABILITIES: BuildAbilitiesTuple = [
+	["QR", "QR", "QR", "QR"],
+	["QSJ", "QSJ", "QSJ", "QSJ"],
+	["SS", "SS", "SS", "SS"],
 ];
 
 test.describe("Builds", () => {
@@ -130,5 +145,95 @@ test.describe("Builds", () => {
 		await expect(weaponBuilds.locators.dateInput).toBeVisible();
 		// no change in count since all builds in test data are new
 		await expect(weaponBuilds.locators.buildCards).toHaveCount(5);
+	});
+
+	test("aggregates builds into ability stats and popular builds", async ({
+		page,
+		factories,
+	}) => {
+		await factories.BuildFactory.createMany(3, {
+			ownerId: ADMIN_ID,
+			weaponSplIds: [40],
+			abilities: STATS_ABILITIES,
+		});
+		await factories.BuildFactory.create({
+			ownerId: NZAP_TEST_ID,
+			weaponSplIds: [40],
+			abilities: STATS_ABILITIES,
+		});
+		// a build for another weapon so site-wide stats differ from the weapon's
+		await factories.BuildFactory.create({
+			ownerId: NZAP_TEST_ID,
+			weaponSplIds: [10],
+			abilities: OTHER_WEAPON_ABILITIES,
+		});
+
+		const weaponBuilds = new WeaponBuildsPage(page);
+		await new BuildsPage(page).openWeapon(40);
+		await expect(weaponBuilds.locators.buildCards).toHaveCount(4);
+
+		await weaponBuilds.locators.abilityStatsLink.click();
+
+		const buildStats = new BuildStatsPage(page);
+		await expect(buildStats.buildsCountTitle(4, "Splattershot")).toBeVisible();
+		// SSU and RSU weapon averages
+		await expect(buildStats.apAverage(19)).toHaveCount(2);
+		// ISM weapon average
+		await expect(buildStats.apAverage(9)).toHaveCount(1);
+		// CB is in every Splattershot build but in 4 of the 5 builds site-wide
+		await expect(buildStats.abilityPercentage(100)).toHaveCount(1);
+		await expect(buildStats.abilityPercentage(80)).toHaveCount(1);
+
+		const popularBuilds = new PopularBuildsPage(page);
+		await popularBuilds.goto("splattershot");
+
+		// admin's identical builds count once, N-ZAP's brings the signature to ×2
+		await expect(popularBuilds.placement(1)).toBeVisible();
+		await expect(popularBuilds.buildCount(2)).toBeVisible();
+		await expect(popularBuilds.ability("CB")).toBeVisible();
+		await expect(popularBuilds.abilityPoints(19)).toHaveCount(2);
+		await expect(popularBuilds.abilityPoints(9)).toHaveCount(1);
+		await isNotVisible(popularBuilds.placement(2));
+	});
+
+	test("edits build title, changes sorting and deletes a build", async ({
+		page,
+		factories,
+	}) => {
+		const olderBuild = await factories.BuildFactory.create({
+			ownerId: ADMIN_ID,
+			title: "Alpha Build",
+		});
+		await factories.BuildFactory.create({
+			ownerId: ADMIN_ID,
+			title: "Mid Build",
+		});
+		await factories.backdate("Build", olderBuild.id, {
+			updatedAt: subDays(new Date(), 1),
+		});
+
+		await impersonate(page);
+
+		const userBuilds = new UserBuildsPage(page);
+		await userBuilds.goto(ADMIN_DISCORD_ID);
+
+		await expect(userBuilds.buildCard(0).title).toContainText("Mid Build");
+
+		const buildForm = await userBuilds.editBuild(0);
+		await buildForm.form.fill("title", "Zulu Build");
+		await buildForm.form.submit();
+
+		await expect(userBuilds.buildCard(0).title).toContainText("Zulu Build");
+		await expect(userBuilds.buildCard(1).title).toContainText("Alpha Build");
+
+		await userBuilds.changeSortingTo("ALPHABETICAL_TITLE");
+
+		await expect(userBuilds.buildCard(0).title).toContainText("Alpha Build");
+		await expect(userBuilds.buildCard(1).title).toContainText("Zulu Build");
+
+		await userBuilds.deleteBuild(0);
+
+		await expect(userBuilds.locators.buildCards).toHaveCount(1);
+		await expect(userBuilds.buildCard(0).title).toContainText("Zulu Build");
 	});
 });

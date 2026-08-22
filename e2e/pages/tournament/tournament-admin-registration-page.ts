@@ -103,6 +103,13 @@ export class TournamentAdminRegistrationPage {
 		await this.locators.importTeamButton.click();
 	}
 
+	/** The roster member select showing the given user, once their name has resolved. */
+	memberWithName(name: string) {
+		return this.page
+			.getByRole("button", { name: "User search" })
+			.filter({ hasText: name });
+	}
+
 	/** Picks the source tournament; its team `<select>` populates asynchronously
 	 * from the import loader and auto-selects the first team. */
 	async importFirstTeamFrom(tournamentQuery: string) {

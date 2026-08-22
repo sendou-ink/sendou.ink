@@ -17,6 +17,7 @@ import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentSubsPage } from "./pages/tournament/tournament-subs-page";
 import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
+import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 
 const ROSTER_SIZE = 4;
 const CAPTAIN_DISCORD_ID = "1234567890123456789";
@@ -104,7 +105,7 @@ test.describe("Tournament admin team management", () => {
 		await expect(audit.eventCell("Team registered")).toBeVisible();
 	});
 
-	test("imports a roster from another tournament into the registration form", async ({
+	test("imports a roster from another tournament and registers it", async ({
 		page,
 		factories,
 	}) => {
@@ -116,7 +117,14 @@ test.describe("Tournament admin team management", () => {
 			authorId: NZAP_TEST_ID,
 			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 2))],
 		});
-		const importedRoster = await factories.UserFactory.createMany(ROSTER_SIZE);
+		const importedRosterNames = Array.from(
+			{ length: ROSTER_SIZE },
+			(_, i) => `Imported Player ${i + 1}`,
+		);
+		const importedRoster = await factories.UserFactory.createMany(
+			ROSTER_SIZE,
+			(i) => ({ discordName: importedRosterNames[i] }),
+		);
 		await factories.TournamentTeamFactory.create({
 			tournamentId: pastTournament.id,
 			team: pickUpTeam("Imported Legends"),
@@ -134,11 +142,27 @@ test.describe("Tournament admin team management", () => {
 
 		await registration.importFirstTeamFrom("Paddling Pool");
 
-		// the dialog closes and the imported roster's name prefills the form
+		// the dialog closes and the imported roster prefills the form
 		await expect(registration.locators.importDialogHeading).toHaveCount(0);
 		await expect(registration.locators.teamNameInput).toHaveValue(
 			"Imported Legends",
 		);
+		for (const name of importedRosterNames) {
+			await expect(registration.memberWithName(name)).toBeVisible();
+		}
+
+		await registration.save();
+
+		const admin = new TournamentAdminPage(page);
+		await expect(admin.teamName("Imported Legends")).toBeVisible();
+
+		// the imported team registered with its full roster
+		const teamsPage = new TournamentTeamsPage(page);
+		await teamsPage.goto(tournament.id);
+		await expect(teamsPage.teamNamed("Imported Legends")).toBeVisible();
+		for (const name of importedRosterNames) {
+			await expect(teamsPage.memberNamed(name)).toBeVisible();
+		}
 	});
 
 	test("sets the counterpick map pool of a team that has none, rejects an incomplete edit to it and then edits it", async ({

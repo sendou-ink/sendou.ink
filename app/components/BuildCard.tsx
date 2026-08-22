@@ -244,6 +244,7 @@ export function BuildCard({
 								className={styles.smallText}
 								variant="minimal-destructive"
 								type="submit"
+								testId="delete-build"
 							/>
 						</FormWithConfirm>
 					</>

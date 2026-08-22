@@ -1,6 +1,7 @@
 import type { Page } from "@playwright/test";
 import { userResultsPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
+import { UserResultsHighlightsPage } from "./user-results-highlights-page";
 
 /** `/u/:identifier/results` */
 export class UserResultsPage {
@@ -12,6 +13,9 @@ export class UserResultsPage {
 		this.locators = {
 			tournamentNameCells: page.getByTestId("tournament-name-cell"),
 			matesButtons: page.getByTestId("mates-button"),
+			chooseHighlightsButton: page.getByRole("link", {
+				name: "Choose highlights",
+			}),
 		};
 	}
 
@@ -21,6 +25,16 @@ export class UserResultsPage {
 
 	tournamentName(name: string) {
 		return this.locators.tournamentNameCells.getByText(name);
+	}
+
+	/** A calendar event result's link to the event. */
+	eventName(name: string) {
+		return this.page.getByRole("link", { name });
+	}
+
+	async openChooseHighlights() {
+		await this.locators.chooseHighlightsButton.click();
+		return new UserResultsHighlightsPage(this.page);
 	}
 
 	async openMates(nth: number) {

@@ -1,5 +1,9 @@
 import type { Page } from "@playwright/test";
-import { calendarPage } from "~/features/calendar/calendar-urls";
+import {
+	calendarIcalFeed,
+	calendarPage,
+} from "~/features/calendar/calendar-urls";
+import type { DayMonthYear } from "~/utils/schema";
 import {
 	expectIsHydrated,
 	navigate,
@@ -27,8 +31,9 @@ export class CalendarPage {
 		};
 	}
 
-	async goto() {
-		await navigate({ page: this.page, url: calendarPage() });
+	/** Given a date, opens the calendar at that week instead of the current one. */
+	async goto(dayMonthYear?: DayMonthYear) {
+		await navigate({ page: this.page, url: calendarPage({ dayMonthYear }) });
 	}
 
 	tournamentCard(name: string) {
@@ -89,6 +94,13 @@ export class CalendarPage {
 	/** Shows or hides the events the current filters hide, of the first time slot. */
 	async toggleHiddenEvents() {
 		await this.locators.hiddenEventsButtons.first().click();
+	}
+
+	/** Fetches the iCal feed directly, the way a subscribed calendar app does. */
+	async fetchICalFeed() {
+		const url = new URL(calendarIcalFeed());
+		const response = await this.page.request.get(url.pathname + url.search);
+		return { status: response.status(), body: await response.text() };
 	}
 
 	async navigatePrevious() {

@@ -32,6 +32,9 @@ export class MobileNav {
 			streamsHeading: page.locator("h3").filter({ hasText: "Streams" }),
 			viewAllLink: page.getByRole("link", { name: "View all", exact: true }),
 			youPanelUsername: page.locator("[class*='youPanelUsername']"),
+			youPanelSettingsLink: this.openPanelDialog.getByRole("link", {
+				name: "Settings",
+			}),
 			friendItems: this.openPanelDialog.locator("button[class*='listButton']"),
 		};
 	}

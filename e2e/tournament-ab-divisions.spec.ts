@@ -2,14 +2,14 @@ import { subMinutes } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { expect, impersonate, test } from "./helpers/playwright";
-import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
+import { TournamentDivisionsPage } from "./pages/tournament/tournament-divisions-page";
 import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
 
 const TEAMS_PER_DIVISION = 6;
 const ROSTER_SIZE = 4;
 
 test.describe("Tournament A/B divisions", () => {
-	test("assigns 6A/6B, starts bracket, renders 36 matches across 6 rounds and two standings tables", async ({
+	test("assigns 6A/6B, lists the division on the divisions page, starts bracket, renders 36 matches across 6 rounds and two standings tables", async ({
 		page,
 		factories,
 	}) => {
@@ -19,19 +19,22 @@ test.describe("Tournament A/B divisions", () => {
 		const players = await factories.UserFactory.createMany(
 			teamCount * ROSTER_SIZE,
 		);
-		const tournament = await factories.TournamentFactory.create({
-			authorId: NZAP_TEST_ID,
-			startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
-			mapPickingStyle: "AUTO_ALL",
-			bracketProgression: [
-				{
-					type: "round_robin",
-					name: "Groups stage",
-					requiresCheckIn: false,
-					settings: { hasAbDivisions: true, teamsPerGroup: teamCount },
-				},
-			],
-		});
+		const tournament = await factories.TournamentFactory.create(
+			{
+				authorId: NZAP_TEST_ID,
+				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
+				mapPickingStyle: "AUTO_ALL",
+				bracketProgression: [
+					{
+						type: "round_robin",
+						name: "Groups stage",
+						requiresCheckIn: false,
+						settings: { hasAbDivisions: true, teamsPerGroup: teamCount },
+					},
+				],
+			},
+			{ isLeague: true },
+		);
 		for (let i = 0; i < teamCount; i++) {
 			await factories.TournamentTeamFactory.create(
 				{
@@ -62,8 +65,16 @@ test.describe("Tournament A/B divisions", () => {
 
 		await seeds.saveAbDivisions();
 
-		const brackets = new TournamentBracketsPage(page);
-		await brackets.goto(tournament.id);
+		// a league's brackets are reached through its divisions page
+		const divisions = new TournamentDivisionsPage(page);
+		await divisions.goto(tournament.id);
+
+		await expect(divisions.locators.divisionLinks).toHaveCount(1);
+		await expect(divisions.divisionLink("Groups stage")).toContainText(
+			`${teamCount} teams`,
+		);
+
+		const brackets = await divisions.openDivision("Groups stage");
 		await brackets.finalize();
 
 		await expect(brackets.locators.bracketsViewer).toBeVisible();

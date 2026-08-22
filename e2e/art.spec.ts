@@ -1,7 +1,8 @@
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
-import { expect, impersonate, test } from "./helpers/playwright";
+import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { NewArtPage } from "./pages/art/new-art-page";
 import { UserArtPage } from "./pages/art/user-art-page";
 import { ImageValidationPage } from "./pages/img-upload/image-validation-page";
@@ -52,12 +53,16 @@ test.describe("Art", () => {
 		expect(box!.height).toBeGreaterThan(0);
 	});
 
-	test("edits already uploaded art keeping its image", async ({
+	test("edits own art, unlinks from art made of them and deletes own art", async ({
 		page,
 		factories,
 	}) => {
 		await factories.UserFactory.grant(NZAP_TEST_ID, { roles: ["ARTIST"] });
 		const art = await factories.ArtFactory.create({ authorId: NZAP_TEST_ID });
+		await factories.ArtFactory.create({
+			authorId: ADMIN_ID,
+			linkedUsers: [NZAP_TEST_ID],
+		});
 
 		await impersonate(page, NZAP_TEST_ID);
 
@@ -80,5 +85,18 @@ test.describe("Art", () => {
 		// the saved description is loaded back into the form for editing
 		await newArt.goto(art.id);
 		await expect(newArt.locators.descriptionInput).toHaveValue("Squid drawing");
+
+		// both their own art and the art they are tagged in show on their page
+		await userArt.goto(NZAP_TEST_DISCORD_ID);
+		await expect(userArt.locators.images).toHaveCount(2);
+
+		await userArt.unlinkFromArt();
+
+		await expect(userArt.locators.images).toHaveCount(1);
+		await isNotVisible(userArt.locators.unlinkButton);
+
+		await userArt.deleteArt();
+
+		await expect(userArt.locators.images).toHaveCount(0);
 	});
 });

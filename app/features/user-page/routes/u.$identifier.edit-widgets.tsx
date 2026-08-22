@@ -269,6 +269,7 @@ function AvailableWidgetsList({
 											variant="outlined"
 											onPress={() => onAddWidget(widget.id)}
 											isDisabled={isSelected || isMaxReached}
+											testId={`add-widget-${widget.id}`}
 										>
 											{t("user:widgets.add")}
 										</SendouButton>

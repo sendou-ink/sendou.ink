@@ -205,7 +205,12 @@ function ImagePreview({
 							["_action", "DELETE_ART"],
 						]}
 					>
-						<SendouButton icon={<Trash />} variant="destructive" size="small" />
+						<SendouButton
+							icon={<Trash />}
+							variant="destructive"
+							size="small"
+							testId="delete-art-button"
+						/>
 					</FormWithConfirm>
 				</div>
 			</div>
@@ -262,6 +267,7 @@ function ImagePreview({
 								icon={<Unlink />}
 								variant="destructive"
 								size="small"
+								testId="unlink-art-button"
 							/>
 						</FormWithConfirm>
 					) : null}
