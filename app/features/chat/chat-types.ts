@@ -20,6 +20,34 @@ export type SystemMessageContext = {
 	name: string;
 };
 
+export type PersistedSystemMessageType = Extract<
+	SystemMessageType,
+	| "SCORE_REPORTED"
+	| "SCORE_CONFIRMED"
+	| "CANCEL_REPORTED"
+	| "CANCEL_CONFIRMED"
+	| "CANCEL_REFUSED"
+	| "USER_LEFT"
+	| "MAP_REPLAYED"
+	| "MAP_PICKED"
+>;
+
+export type SoundOnlySystemMessageType = Extract<
+	SystemMessageType,
+	"NEW_GROUP" | "MATCH_STARTED" | "READY_CHECK_STARTED" | "LIKE_RECEIVED"
+>;
+
+export interface ChatMessageWithAuthor {
+	id: number;
+	roomId: number;
+	authorUserId: number | null;
+	type: PersistedSystemMessageType | null;
+	contents: string | null;
+	publicId: string;
+	createdAt: number;
+	author: ChatUser | null;
+}
+
 export type RevalidateScope = "MATCH_RESULTS";
 export interface ChatMessage {
 	id: string;
