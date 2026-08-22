@@ -1,3 +1,5 @@
+// keeps `beforeinstallprompt` firing (Chrome installability still requires a fetch
+// handler); Chrome 115+ detects it as no-op and skips the worker on navigation
 self.addEventListener("fetch", () => {
 	return;
 });
