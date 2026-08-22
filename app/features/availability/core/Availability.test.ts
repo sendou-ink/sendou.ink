@@ -172,6 +172,60 @@ describe("Availability.subtract", () => {
 	});
 });
 
+describe("Availability.clip", () => {
+	test("cuts the ends reaching outside the window", () => {
+		expect(
+			Availability.clip(
+				[range("2026-08-30", "22:00", "02:00", "2026-08-31")],
+				range("2026-08-24", "00:00", "00:00", "2026-08-31"),
+			),
+		).toEqual([range("2026-08-30", "22:00", "00:00", "2026-08-31")]);
+	});
+
+	test("drops a range entirely outside the window", () => {
+		expect(
+			Availability.clip(
+				[range("2026-08-31", "18:00", "22:00")],
+				range("2026-08-24", "00:00", "00:00", "2026-08-31"),
+			),
+		).toEqual([]);
+	});
+
+	test("keeps a range inside the window as is", () => {
+		expect(
+			Availability.clip(
+				[range("2026-08-26", "18:00", "22:00")],
+				range("2026-08-24", "00:00", "00:00", "2026-08-31"),
+			),
+		).toEqual([range("2026-08-26", "18:00", "22:00")]);
+	});
+});
+
+describe("Availability.isoWeekNumber", () => {
+	test.each([
+		{ why: "a midweek day", date: "2026-08-26", timezone: HELSINKI, week: 35 },
+		{
+			why: "a new year week counted to the old year",
+			date: "2027-01-01",
+			timezone: HELSINKI,
+			week: 53,
+		},
+	])("resolves $why to week $week", ({ date, timezone, week }) => {
+		expect(
+			Availability.isoWeekNumber(at(date, "12:00", timezone), timezone),
+		).toBe(week);
+	});
+
+	test("resolves an instant near midnight by the timezone's local day", () => {
+		const sundayLateHelsinki = at("2026-08-30", "23:30");
+
+		expect(Availability.isoWeekNumber(sundayLateHelsinki, HELSINKI)).toBe(35);
+		expect(Availability.isoWeekNumber(sundayLateHelsinki, LOS_ANGELES)).toBe(
+			35,
+		);
+	});
+});
+
 describe("Availability.playableWindows", () => {
 	const members = (
 		ranges: Array<Array<[start: string, end: string, endDate?: string]>>,

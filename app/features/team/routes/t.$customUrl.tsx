@@ -4,7 +4,7 @@ import { Outlet, useLoaderData } from "react-router";
 import * as R from "remeda";
 import { Flag } from "~/components/Flag";
 import { BskyIcon } from "~/components/icons/Bsky";
-import { Main } from "~/components/Main";
+import { containerClassName, Main } from "~/components/Main";
 import { metaTags, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { bskyUrl, navIconUrl, TEAM_SEARCH_PAGE, teamPage } from "~/utils/urls";
@@ -56,13 +56,17 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TeamPage() {
+	// breakout container so the schedule tab's table can size against the full
+	// content area; the wrapper keeps every page at the normal width
 	return (
-		<Main className="stack sm">
-			<div className="stack sm">
-				<TeamBanner />
+		<Main breakoutContainer>
+			<div className={clsx(containerClassName("normal"), "stack sm")}>
+				<div className="stack sm">
+					<TeamBanner />
+				</div>
+				<MobileTeamNameCountry />
+				<Outlet />
 			</div>
-			<MobileTeamNameCountry />
-			<Outlet />
 		</Main>
 	);
 }

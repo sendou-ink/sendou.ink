@@ -5,5 +5,15 @@
 	"editor.later": "",
 	"editor.note": "",
 	"editor.timesInYourTimezone": "",
-	"editor.visibility": ""
+	"editor.visibility": "",
+	"team.canPlay": "",
+	"team.currentWeek": "",
+	"team.hidden": "",
+	"team.nextWeek": "",
+	"team.noSchedule": "",
+	"team.notAvailable": "",
+	"team.noWindows": "",
+	"team.visibility": "",
+	"team.weekHeading": "",
+	"team.withSub": ""
 }

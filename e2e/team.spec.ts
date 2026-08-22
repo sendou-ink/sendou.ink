@@ -1,5 +1,7 @@
+import type { Page } from "@playwright/test";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import * as Availability from "~/features/availability/core/Availability";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -14,12 +16,17 @@ import { JoinTeamPage } from "./pages/team/join-team-page";
 import { NewTeamPage } from "./pages/team/new-team-page";
 import { TeamEditPage } from "./pages/team/team-edit-page";
 import { TeamPage } from "./pages/team/team-page";
+import { TeamSchedulePage } from "./pages/team/team-schedule-page";
 import { UserPage } from "./pages/user/user-page";
 
 const TEAM_NAME = "Alliance Rogue";
 const SECONDARY_TEAM_NAME = "Team Olive";
 const ROSTER_SIZE = 4;
 const TOURNAMENT_NAME = "In The Zone 30";
+const WEDNESDAY = 2;
+const THURSDAY = 3;
+const DAY_SECONDS = 24 * 60 * 60;
+const MACHINE_TIMEZONE = Intl.DateTimeFormat().resolvedOptions().timeZone;
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
@@ -406,4 +413,137 @@ async function createFullTeam(factories: Factories) {
 		name: TEAM_NAME,
 		memberUserIds: [ADMIN_ID, ...members.map((member) => member.id)],
 	});
+}
+
+test.describe("Team schedule", () => {
+	test("member sees the grid states and playable windows", async ({
+		page,
+		factories,
+	}) => {
+		const noScheduleMember = await factories.UserFactory.create();
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID, NZAP_TEST_ID, noScheduleMember.id],
+		});
+
+		const { startsAt } = currentWeek();
+		await factories.AvailabilityWeekFactory.create({
+			userId: ADMIN_ID,
+			weekStartsAt: startsAt,
+			timezone: MACHINE_TIMEZONE,
+			// the small-hours slot guards day bucketing: on machines off UTC it
+			// falls on another UTC day, so it moves columns if the server ignores
+			// the viewer's timezone
+			slots: [
+				daySlot(WEDNESDAY, "18:00", "22:00"),
+				daySlot(THURSDAY, "00:30", "02:00"),
+			],
+			dayNotes: [
+				{ date: currentWeekDates()[WEDNESDAY], text: "Leaving early" },
+			],
+		});
+		await factories.AvailabilityWeekFactory.create({
+			userId: NZAP_TEST_ID,
+			weekStartsAt: startsAt,
+			timezone: MACHINE_TIMEZONE,
+			slots: [daySlot(WEDNESDAY, "19:00", "23:00")],
+		});
+
+		await impersonate(page, ADMIN_ID);
+		await setTimezoneCookie(page);
+
+		const team = new TeamPage(page);
+		await team.goto(customUrl);
+
+		const schedule = await team.openSchedule();
+		await expect(schedule.locators.grid).toBeVisible();
+
+		await expect(schedule.cellRange(ADMIN_ID, WEDNESDAY)).toBeVisible();
+		await expect(schedule.cellRange(ADMIN_ID, THURSDAY)).toBeVisible();
+		await expect(schedule.cell(ADMIN_ID, 0)).toHaveText("—");
+		await expect(schedule.cell(noScheduleMember.id, 0)).toHaveText("?");
+		await expect(schedule.locators.notes).toContainText("Leaving early");
+
+		// two members share Wed 19-22 while the third has no schedule, so the
+		// only playable window is the one-short tier
+		await expect(schedule.locators.windows).toHaveText(/Wed/);
+		await expect(schedule.dayDot(WEDNESDAY)).toBeVisible();
+		await isNotVisible(schedule.dayDot(0));
+	});
+
+	test("hides the schedule from non-members, a friend of a member included", async ({
+		page,
+		factories,
+	}) => {
+		const friend = await factories.UserFactory.create();
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID],
+		});
+		await factories.FriendshipFactory.create({
+			userOneId: ADMIN_ID,
+			userTwoId: friend.id,
+		});
+		await factories.AvailabilityWeekFactory.create({
+			userId: ADMIN_ID,
+			weekStartsAt: currentWeek().startsAt,
+			timezone: MACHINE_TIMEZONE,
+			slots: [daySlot(WEDNESDAY, "18:00", "22:00")],
+		});
+
+		await impersonate(page, friend.id);
+
+		const schedule = new TeamSchedulePage(page);
+		await schedule.goto(customUrl);
+		await expect(schedule.locators.hiddenMessage).toBeVisible();
+		await isNotVisible(schedule.locators.grid);
+	});
+});
+
+function currentWeek() {
+	return Availability.weekRange(new Date(), MACHINE_TIMEZONE);
+}
+
+function currentWeekDates() {
+	const { startsAt } = currentWeek();
+
+	return Array.from({ length: 7 }, (_, dayIndex) =>
+		Availability.dateInTimezone(
+			startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
+			MACHINE_TIMEZONE,
+		),
+	);
+}
+
+function daySlot(dayIndex: number, start: string, end: string) {
+	const dates = currentWeekDates();
+
+	return {
+		startsAt: Availability.localToTimestamp({
+			date: dates[dayIndex],
+			time: start,
+			timezone: MACHINE_TIMEZONE,
+		}),
+		endsAt: Availability.localToTimestamp({
+			date: dates[dayIndex],
+			time: end,
+			timezone: MACHINE_TIMEZONE,
+		}),
+	};
+}
+
+/**
+ * Writes the timezone cookie the browser would after hydration, so that the
+ * very first document request already renders in the machine's timezone the
+ * test computed its fixture times in.
+ */
+function setTimezoneCookie(page: Page) {
+	return page.context().addCookies([
+		{
+			name: "timezone",
+			value: MACHINE_TIMEZONE,
+			domain: "localhost",
+			path: "/",
+		},
+	]);
 }

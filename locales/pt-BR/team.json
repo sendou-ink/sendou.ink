@@ -14,6 +14,7 @@
 	"actionButtons.leaveTeam.confirm": "Sair",
 	"actionButtons.editTeam": "Editar Time",
 	"actionButtons.manageRoster": "",
+	"actionButtons.schedule": "",
 	"actionButtons.deleteTeam": "Apagar Time",
 	"actionButtons.deleteTeam.profilePicture": "",
 	"actionButtons.deleteTeam.banner": "",

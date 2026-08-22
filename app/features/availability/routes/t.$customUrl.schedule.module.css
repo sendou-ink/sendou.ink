@@ -1,0 +1,169 @@
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.heading {
+	font-size: var(--font-md);
+	color: var(--color-text);
+}
+
+/* Lets the grid size against the full content area instead of the page width
+   (the team layout renders its <main> in breakout mode), capped at the wide
+   page width and centered back under the normal-width column. */
+.gridScroll {
+	overflow-x: auto;
+
+	:global([data-main-breakout]) & {
+		width: min(100cqw, 72rem);
+		margin-inline: calc(50% - min(50cqw, 36rem));
+	}
+}
+
+.grid {
+	width: 100%;
+	border-collapse: collapse;
+	font-size: var(--font-xs);
+
+	& th,
+	& td {
+		padding: var(--s-1-5) var(--s-2);
+		text-align: left;
+		vertical-align: top;
+		white-space: nowrap;
+	}
+
+	/* the member column centers between the row lines while the day cells stay
+	   a top-aligned list */
+	& tbody th[scope="row"] {
+		vertical-align: middle;
+	}
+
+	& tbody tr {
+		border-top: var(--border-style);
+	}
+}
+
+.dayHeader {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.memberCell {
+	position: sticky;
+	left: 0;
+	background-color: var(--color-bg);
+	font-weight: var(--weight-semi);
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+
+	/* block-level so the link centers by the cell's vertical-align alone,
+	   without the descender gap an inline box leaves under the baseline */
+	& .memberLink {
+		display: flex;
+	}
+}
+
+.cellContent {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.range {
+	white-space: nowrap;
+}
+
+.unknown,
+.unavailable {
+	color: var(--color-text-high);
+}
+
+.noteFlag {
+	color: var(--color-text-accent);
+}
+
+.summary {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+}
+
+.summaryRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: baseline;
+	gap: var(--s-1-5);
+}
+
+.summaryLabel {
+	font-weight: var(--weight-semi);
+}
+
+.tierDot {
+	display: inline-block;
+	vertical-align: middle;
+	align-self: center;
+	flex-shrink: 0;
+	width: 0.6rem;
+	height: 0.6rem;
+	border-radius: 50%;
+	background-color: var(--color-success-low);
+	border: 1px solid var(--color-success);
+
+	&.tierDotFull {
+		background-color: var(--color-success);
+	}
+}
+
+.dayDot {
+	margin-inline-end: var(--s-1);
+}
+
+.windowList {
+	display: inline-flex;
+	flex-wrap: wrap;
+	gap: var(--s-1) var(--s-2);
+}
+
+.window {
+	white-space: nowrap;
+}
+
+.notes {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: 0;
+	list-style: none;
+	font-size: var(--font-xs);
+}
+
+.note {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-1-5);
+
+	& .noteFlag {
+		align-self: center;
+		flex-shrink: 0;
+	}
+}
+
+.noteDay,
+.noteAuthor {
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	white-space: nowrap;
+}
+
+.footer {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}

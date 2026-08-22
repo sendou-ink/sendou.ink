@@ -5,5 +5,15 @@
 	"editor.later": "Later",
 	"editor.note": "Note",
 	"editor.timesInYourTimezone": "Times in your time zone",
-	"editor.visibility": "Visible to your teammates and friends"
+	"editor.visibility": "Visible to your teammates and friends",
+	"team.canPlay": "Team can play ({{players}}+)",
+	"team.currentWeek": "This week",
+	"team.hidden": "Only team members can see the team schedule",
+	"team.nextWeek": "Next week",
+	"team.noSchedule": "No schedule",
+	"team.notAvailable": "Not available",
+	"team.noWindows": "No shared free time",
+	"team.visibility": "Visible to team members only",
+	"team.weekHeading": "Week {{week}}",
+	"team.withSub": "With a sub ({{players}})"
 }

@@ -14,6 +14,7 @@
 	"actionButtons.leaveTeam.confirm": "Покинуть",
 	"actionButtons.editTeam": "Редактировать команду",
 	"actionButtons.manageRoster": "",
+	"actionButtons.schedule": "",
 	"actionButtons.deleteTeam": "Удалить команду",
 	"actionButtons.deleteTeam.profilePicture": "",
 	"actionButtons.deleteTeam.banner": "",

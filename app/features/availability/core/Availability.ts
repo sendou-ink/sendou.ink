@@ -1,5 +1,5 @@
 import { TZDate } from "@date-fns/tz";
-import { addWeeks, format, startOfWeek } from "date-fns";
+import { addWeeks, format, getISOWeek, startOfWeek } from "date-fns";
 import * as R from "remeda";
 import {
 	databaseTimestampToJavascriptTimestamp,
@@ -39,6 +39,11 @@ export function weekRange(date: Date, timezone: string): TimeRange {
 		startsAt: dateToDatabaseTimestamp(start),
 		endsAt: dateToDatabaseTimestamp(addWeeks(start, 1)),
 	};
+}
+
+/** ISO week number of the week the timestamp falls in, as seen in `timezone`. */
+export function isoWeekNumber(timestamp: number, timezone: string) {
+	return getISOWeek(inTimezone(timestamp, timezone));
 }
 
 /**
@@ -142,6 +147,22 @@ export function subtract(
 	}
 
 	return remaining;
+}
+
+/**
+ * The parts of the ranges that fall inside `window`, sorted and merged. Used to
+ * keep one week's view from picking up windows that belong to the next.
+ */
+export function clip(
+	ranges: Array<TimeRange>,
+	window: TimeRange,
+): Array<TimeRange> {
+	return normalize(ranges).flatMap((range) => {
+		const startsAt = Math.max(range.startsAt, window.startsAt);
+		const endsAt = Math.min(range.endsAt, window.endsAt);
+
+		return endsAt > startsAt ? [{ startsAt, endsAt }] : [];
+	});
 }
 
 /**

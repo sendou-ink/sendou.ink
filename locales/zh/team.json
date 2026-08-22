@@ -14,6 +14,7 @@
 	"actionButtons.leaveTeam.confirm": "退出",
 	"actionButtons.editTeam": "编辑队伍",
 	"actionButtons.manageRoster": "管理队员",
+	"actionButtons.schedule": "",
 	"actionButtons.deleteTeam": "删除队伍",
 	"actionButtons.deleteTeam.profilePicture": "移除队徽",
 	"actionButtons.deleteTeam.banner": "移除横幅",

@@ -1,4 +1,5 @@
 import {
+	CalendarDays,
 	LogOut,
 	Menu,
 	SquarePen,
@@ -108,7 +109,6 @@ export default function TeamIndexPage() {
 
 function ActionButtons() {
 	const { t } = useTranslation(["team"]);
-	const user = useUser();
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.loaderData as TeamLoaderData;
@@ -116,12 +116,18 @@ function ActionButtons() {
 	const canManageRoster = useHasPermission(team, "MANAGE_ROSTER");
 	const canEditTeam = useHasPermission(team, "EDIT");
 
-	if (!isTeamMember({ user, team }) && !canManageRoster && !canEditTeam) {
-		return null;
-	}
-
 	return (
 		<div className={styles.actionButtons}>
+			<LinkButton
+				size="small"
+				to="schedule"
+				variant="outlined"
+				prefetch="intent"
+				icon={<CalendarDays />}
+				testId="team-schedule-button"
+			>
+				{t("team:actionButtons.schedule")}
+			</LinkButton>
 			{canManageRoster ? (
 				<LinkButton
 					size="small"
