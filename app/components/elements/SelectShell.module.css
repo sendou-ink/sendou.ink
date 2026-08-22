@@ -35,6 +35,8 @@
 
 .popover {
 	padding: var(--s-1);
+	/* set by React Aria's Popover at runtime, matching the trigger's width */
+	width: var(--trigger-width);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
