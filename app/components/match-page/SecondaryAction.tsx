@@ -51,6 +51,7 @@ export function SecondaryAction({
 					size="small"
 					icon={collapsedIcon}
 					onPress={() => onOpenChange(true)}
+					testId="expand-secondary-action-button"
 				>
 					{collapsedLabel}
 				</SendouButton>
@@ -68,6 +69,7 @@ export function SecondaryAction({
 					onPress={() => onOpenChange(false)}
 					className={styles.collapseButton}
 					aria-label={expandedAriaLabel ?? collapsedLabel}
+					testId="collapse-secondary-action-button"
 				/>
 			) : null}
 			{children}

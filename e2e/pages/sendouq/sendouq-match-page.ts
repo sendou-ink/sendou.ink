@@ -34,9 +34,7 @@ export class SendouQMatchPage {
 				.getByRole("button", { name: "Submit", exact: true })
 				.last(),
 			undoReportButton: page.getByRole("button", { name: "Undo report" }),
-			reportWeaponsButton: page.getByRole("button", {
-				name: "Report used weapons",
-			}),
+			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),
 			undoWeaponButton: page.getByRole("button", { name: "Undo weapon" }),
 			confirmScoreButton: page.getByRole("button", { name: "Confirm score" }),
 			requestCancelButton: page.getByRole("button", { name: "Request cancel" }),
@@ -136,7 +134,13 @@ export class SendouQMatchPage {
 	}
 
 	async reportWeapon(name: string) {
-		await this.locators.reportWeaponsButton.click();
+		// The reporter is already expanded when the viewer's preference says so,
+		// and clicking then would collapse it instead.
+		if (await this.locators.reportWeaponsButton.isVisible()) {
+			await waitForPOSTResponse(this.page, async () => {
+				await this.locators.reportWeaponsButton.click();
+			});
+		}
 		await selectWeapon({ page: this.page, name });
 		await waitForPOSTResponse(this.page, async () => {
 			await this.locators.submitWeaponButton.click();

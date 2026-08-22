@@ -53,9 +53,7 @@ export class TournamentMatchPage {
 			pickAMapText: page.getByText(/Pick a map/),
 			actionPanel: page.getByRole("tabpanel", { name: TAB_LABELS.action }),
 			rostersPanel: page.getByRole("tabpanel", { name: TAB_LABELS.rosters }),
-			reportWeaponsButton: page.getByRole("button", {
-				name: "Report used weapons",
-			}),
+			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),
 			// the weapon reporter's own submit, which has no test id of its own
 			submitWeaponButton: page
 				.getByRole("button", { name: "Submit", exact: true })
@@ -192,11 +190,16 @@ export class TournamentMatchPage {
 	}
 
 	/** The weapon reporter sits collapsed behind a button unless the viewer's
-	 * preference has it open — expanding an already open one is a no-op. */
+	 * preference has it open — expanding an already open one is a no-op.
+	 * Expanding persists that preference, and the action tab remounts on every
+	 * score change, so the POST is awaited to keep a remount from reading a
+	 * stale preference and collapsing the reporter again. */
 	async expandWeaponReporter() {
 		await expect(this.locators.actionPanel).toBeVisible();
 		if (await this.locators.reportWeaponsButton.isVisible()) {
-			await this.locators.reportWeaponsButton.click();
+			await waitForPOSTResponse(this.page, async () => {
+				await this.locators.reportWeaponsButton.click();
+			});
 		}
 	}
 
