@@ -71,7 +71,7 @@ if (unfinalizedTournaments.length > 0) {
 		`Unfinalized ranked tournaments (${unfinalizedTournaments.length}):`,
 	);
 	for (const tournament of unfinalizedTournaments) {
-		const date = new Date(tournament.startTime * 1000).toISOString();
+		const date = new Date(tournament.startsAt * 1000).toISOString();
 		logger.info(`  - ID ${tournament.id}: "${tournament.name}" (${date})`);
 	}
 } else {

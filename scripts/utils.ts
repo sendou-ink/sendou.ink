@@ -1,17 +1,15 @@
 import fs from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import type euEn from "./dicts/splat3/data/language/EUen.json";
-// The splat3 dump exposes a `latest` symlink to the newest version folder, so these loaders never
-// need to hard-code a version.
-import type gearInfoClothes from "./dicts/splat3/data/mush/latest/GearInfoClothes.json";
-import type gearInfoHead from "./dicts/splat3/data/mush/latest/GearInfoHead.json";
-import type gearInfoShoes from "./dicts/splat3/data/mush/latest/GearInfoShoes.json";
-import type weaponInfoMain from "./dicts/splat3/data/mush/latest/WeaponInfoMain.json";
-import type weaponInfoSpecial from "./dicts/splat3/data/mush/latest/WeaponInfoSpecial.json";
-import type weaponInfoSub from "./dicts/splat3/data/mush/latest/WeaponInfoSub.json";
-import type splPlayer from "./dicts/splat3/data/parameter/latest/misc/SplPlayer.game__GameParameterTable.json";
-import type damageRateInfo from "./dicts/splat3/data/parameter/latest/misc/spl__DamageRateInfoConfig.pp__CombinationDataTableData.json";
+import type {
+	DamageRateInfoConfig,
+	GearInfoEntry,
+	LangDict,
+	SplPlayerParams,
+	WeaponInfoMainEntry,
+	WeaponInfoSpecialEntry,
+	WeaponInfoSubEntry,
+} from "./splat3-types";
 
 const __filename = fileURLToPath(import.meta.url);
 const __dirname = path.dirname(__filename);
@@ -41,7 +39,7 @@ export const LANG_JSONS_TO_CREATE = [
 ];
 
 export async function loadLangDicts() {
-	const result: Array<[langCode: string, translations: typeof euEn]> = [];
+	const result: Array<[langCode: string, translations: LangDict]> = [];
 
 	const files = await fs.promises.readdir(LANG_DICTS_PATH);
 	for (const file of files) {
@@ -71,23 +69,23 @@ export function weaponParamsDir() {
 }
 
 export const loadWeaponInfoMain = () =>
-	loadLatestMushJson<typeof weaponInfoMain>("WeaponInfoMain");
+	loadLatestMushJson<WeaponInfoMainEntry[]>("WeaponInfoMain");
 export const loadWeaponInfoSub = () =>
-	loadLatestMushJson<typeof weaponInfoSub>("WeaponInfoSub");
+	loadLatestMushJson<WeaponInfoSubEntry[]>("WeaponInfoSub");
 export const loadWeaponInfoSpecial = () =>
-	loadLatestMushJson<typeof weaponInfoSpecial>("WeaponInfoSpecial");
+	loadLatestMushJson<WeaponInfoSpecialEntry[]>("WeaponInfoSpecial");
 export const loadGearInfoClothes = () =>
-	loadLatestMushJson<typeof gearInfoClothes>("GearInfoClothes");
+	loadLatestMushJson<GearInfoEntry[]>("GearInfoClothes");
 export const loadGearInfoHead = () =>
-	loadLatestMushJson<typeof gearInfoHead>("GearInfoHead");
+	loadLatestMushJson<GearInfoEntry[]>("GearInfoHead");
 export const loadGearInfoShoes = () =>
-	loadLatestMushJson<typeof gearInfoShoes>("GearInfoShoes");
+	loadLatestMushJson<GearInfoEntry[]>("GearInfoShoes");
 export const loadSplPlayerParams = () =>
-	loadLatestParameterMiscJson<typeof splPlayer>(
+	loadLatestParameterMiscJson<SplPlayerParams>(
 		"SplPlayer.game__GameParameterTable",
 	);
 export const loadDamageRateInfo = () =>
-	loadLatestParameterMiscJson<typeof damageRateInfo>(
+	loadLatestParameterMiscJson<DamageRateInfoConfig>(
 		"spl__DamageRateInfoConfig.pp__CombinationDataTableData",
 	);
 

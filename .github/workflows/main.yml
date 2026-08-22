@@ -30,6 +30,8 @@ jobs:
         run: pnpm run biome:check
       - name: Typecheck
         run: pnpm run typecheck
+      - name: Typecheck scripts
+        run: pnpm run typecheck:scripts
       - name: Unit tests
         run: pnpm run test:unit:browser
       - name: Knip unused check

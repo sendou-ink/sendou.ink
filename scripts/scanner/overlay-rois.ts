@@ -128,7 +128,8 @@ if (detector === "scoreboard") {
 		rect(frame, minimap.enemyCrossRoi(cy), [255, 0, 255]);
 	}
 	for (const roi of [
-		minimap.GATE_CLOSE_BRIGHT,
+		...minimap.GATE_CLOSE_X_BRIGHT,
+		...minimap.GATE_CLOSE_X_DARK,
 		minimap.GATE_SPAWN_BRIGHT,
 		...minimap.GATE_CLOSE_DARK_PROBES,
 		...minimap.GATE_SPAWN_DARK_PROBES,

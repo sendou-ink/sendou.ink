@@ -19,7 +19,10 @@
  * Usage: pnpm scanner:status-audit <events.csv> [--all]
  */
 import { readFileSync } from "node:fs";
-import { statusSpans } from "../../app/components/PlayerStatusTimeline";
+import {
+	type PlayerStatusTimelineSample,
+	statusSpans,
+} from "../../app/components/PlayerStatusTimeline";
 import { formatTime } from "../../app/features/scanner/components/format";
 import {
 	lobbyLabel,
@@ -284,6 +287,9 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 		special: [a.special, b.special],
 		dead: [a.dead, b.dead],
 		layout: layout as PlayerStatusLayout,
+		// the CSV carries no camera-badge evidence, so cast orientation
+		// degrades to the `cast-mirror` layout fallback
+		castProven: false,
 	};
 }
 
@@ -457,9 +463,12 @@ interface FixtureCandidate {
 	reads: number[];
 }
 
-interface StatusSpan {
+interface TimeWindow {
 	start: number;
 	end: number;
+}
+
+interface StatusSpan extends TimeWindow {
 	/** sample timestamps that read the flag true inside the span */
 	confirmingReads: number[];
 	/**
@@ -484,7 +493,7 @@ interface SlotAnalysis {
 
 function annotatedSpans(
 	samples: readonly ScannerMatchPlayerStatusSample[],
-	flagOf: (sample: ScannerMatchPlayerStatusSample) => boolean,
+	flagOf: (sample: PlayerStatusTimelineSample) => boolean,
 ): StatusSpan[] {
 	return statusSpans(samples, flagOf).map((span) => {
 		const confirmingReads = samples
@@ -552,8 +561,8 @@ function analyzeSlot(
 
 function observationGaps(
 	samples: readonly ScannerMatchPlayerStatusSample[],
-): StatusSpan[] {
-	const gaps: StatusSpan[] = [];
+): TimeWindow[] {
+	const gaps: TimeWindow[] = [];
 	for (let i = 1; i < samples.length; i++) {
 		const dt = samples[i]!.t - samples[i - 1]!.t;
 		if (dt > OBSERVATION_GAP_SECONDS) {

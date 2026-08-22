@@ -1133,9 +1133,12 @@ export function buildCases(fx: Fixtures): {
 	);
 	add(
 		"TournamentTeamRepository.findRecentlyPlayedMapsByIds",
-		fx.tournamentTeamPair,
-		(teamIds) =>
-			TournamentTeamRepository.findRecentlyPlayedMapsByIds({ teamIds }),
+		both(fx.tournamentTeamPair, fx.heavyTournamentMatchId),
+		([teamIds, excludeMatchId]) =>
+			TournamentTeamRepository.findRecentlyPlayedMapsByIds({
+				teamIds,
+				excludeMatchId,
+			}),
 	);
 	add(
 		"TournamentTeamRepository.findMapPoolsByTeamIds",

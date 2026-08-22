@@ -30,10 +30,7 @@ for (const p of placements) {
 
 async function loadTournament() {
 	try {
-		return await tournamentFromDB({
-			user: undefined,
-			tournamentId,
-		});
+		return await tournamentFromDB(tournamentId);
 	} catch {
 		throw new Error(`Tournament with id ${tournamentId} not found`);
 	}

@@ -41,6 +41,7 @@ Note: it only works with Node 16.
 ## Doing monthly update
 
 1. Drop the whole [splat3 repository](https://github.com/Leanny/splat3) into `/scripts/dicts/splat3` (pull before).
+1. If the dump's shape changed, update `/scripts/splat3-types.ts` to match (the dump is gitignored, so these types are hand-maintained rather than inferred from the JSON).
 1. Update all `CURRENT_SEASON` constants
 1. Update `CURRENT_PATCH` constants
 1. Update `PATCHES` constant with the late patch + remove the oldest
