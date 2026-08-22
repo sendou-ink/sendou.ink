@@ -3,6 +3,7 @@ import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -99,7 +100,9 @@ export const action = async (args: ActionFunctionArgs) => {
 		});
 
 		if (previousTeamPickupChat) {
-			ChatSystemMessage.removeRoom(previousTeamPickupChat.chatCode);
+			ChatSystemMessage.removeRoom(
+				EventBus.chatRoomChannel(previousTeamPickupChat.chatRoomId),
+			);
 		}
 
 		ShowcaseTournaments.addToCached({

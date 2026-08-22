@@ -64,6 +64,36 @@ export function insertRoom(
 		.executeTakeFirstOrThrow();
 }
 
+/** Extends a room's lifetime, e.g. when a successor group carries its chat over. */
+export async function updateRoomExpiresAt(
+	args: { roomId: number; expiresAt: Date },
+	trx?: Transaction<DB>,
+) {
+	const executor = trx ?? db;
+
+	await executor
+		.updateTable("ChatRoom")
+		.set({ expiresAt: dateToDatabaseTimestamp(args.expiresAt) })
+		.where("ChatRoom.id", "=", args.roomId)
+		.execute();
+}
+
+/** Deletes rooms and their messages. Called in the owning entity's delete transaction. */
+export async function deleteRoomsByIds(
+	roomIds: Array<number | null>,
+	trx?: Transaction<DB>,
+) {
+	const idsToDelete = roomIds.filter((id) => id !== null);
+	if (idsToDelete.length === 0) return;
+
+	const executor = trx ?? db;
+
+	await executor
+		.deleteFrom("ChatRoom")
+		.where("ChatRoom.id", "in", idsToDelete)
+		.execute();
+}
+
 type InsertMessageArgs = Pick<
 	TablesInsertable["ChatMessage"],
 	"roomId" | "publicId"

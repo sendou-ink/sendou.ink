@@ -1,8 +1,9 @@
+import { addDays } from "date-fns";
 import { sql as kyselySql, type RawBuilder, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
-import { shortNanoid } from "~/utils/id";
 import { jsonArrayFrom } from "~/utils/kysely.server";
 import { matchStatuses } from "./core/engine/status";
 import type {
@@ -11,6 +12,8 @@ import type {
 	GeneratedRound,
 	ParticipantResult,
 } from "./core/engine/types";
+
+const CHAT_ROOM_LIFESPAN_DAYS = 7;
 
 /**
  * Loads the full BracketData for a tournament (all stages). Includes the
@@ -204,6 +207,15 @@ export function insertBracket(args: {
 
 		const statuses = matchStatuses(args.bracket);
 
+		// only matches that can already be played get a chat room; the rest get
+		// theirs as they start (see syncStartedAt)
+		const chatRoomIdByMatchId = new Map<number, number>();
+		for (const match of args.bracket.match) {
+			if (statuses.get(match.id) === "STARTED") {
+				chatRoomIdByMatchId.set(match.id, await insertMatchChatRoom(trx));
+			}
+		}
+
 		await trx
 			.insertInto("TournamentMatch")
 			.values(
@@ -215,7 +227,7 @@ export function insertBracket(args: {
 					opponentOne: serializeOpponent(match.opponent1),
 					opponentTwo: serializeOpponent(match.opponent2),
 					winnerSide: match.winnerSide,
-					chatCode: shortNanoid(),
+					chatRoomId: chatRoomIdByMatchId.get(match.id) ?? null,
 					startedAt:
 						statuses.get(match.id) === "STARTED"
 							? databaseTimestampNow()
@@ -290,6 +302,21 @@ async function syncStartedAt(
 			.set({ startedAt: databaseTimestampNow() })
 			.where("id", "in", startedMatchIds)
 			.execute();
+
+		// a match reverted to pending keeps its room, so only fill the gaps
+		const roomlessMatches = await trx
+			.selectFrom("TournamentMatch")
+			.select(["TournamentMatch.id"])
+			.where("TournamentMatch.id", "in", startedMatchIds)
+			.where("TournamentMatch.chatRoomId", "is", null)
+			.execute();
+		for (const match of roomlessMatches) {
+			await trx
+				.updateTable("TournamentMatch")
+				.set({ chatRoomId: await insertMatchChatRoom(trx) })
+				.where("TournamentMatch.id", "=", match.id)
+				.execute();
+		}
 	}
 
 	if (pendingMatchIds.length > 0) {
@@ -315,10 +342,19 @@ export async function insertRoundMatches(
 
 	const executor = trx ?? db;
 
+	const chatRoomIds: Array<number | null> = [];
+	for (const match of args.round.matches) {
+		chatRoomIds.push(
+			match.opponent1?.id && match.opponent2?.id
+				? await insertMatchChatRoom(trx)
+				: null,
+		);
+	}
+
 	await executor
 		.insertInto("TournamentMatch")
 		.values(
-			args.round.matches.map((match) => ({
+			args.round.matches.map((match, i) => ({
 				stageId: args.stageId,
 				groupId: args.round.groupId,
 				roundId: args.round.roundId,
@@ -326,7 +362,7 @@ export async function insertRoundMatches(
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
 				winnerSide: null,
-				chatCode: shortNanoid(),
+				chatRoomId: chatRoomIds[i],
 				// swiss rounds are only generated once they can be played
 				startedAt:
 					match.opponent1?.id && match.opponent2?.id
@@ -342,16 +378,39 @@ export async function deleteRoundMatches(args: {
 	groupId: number;
 	roundId: number;
 }): Promise<void> {
-	await db
-		.deleteFrom("TournamentMatch")
-		.where("groupId", "=", args.groupId)
-		.where("roundId", "=", args.roundId)
-		.execute();
+	await db.transaction().execute(async (trx) => {
+		const matches = await trx
+			.selectFrom("TournamentMatch")
+			.select(["TournamentMatch.chatRoomId"])
+			.where("groupId", "=", args.groupId)
+			.where("roundId", "=", args.roundId)
+			.execute();
+		await ChatRepository.deleteRoomsByIds(
+			matches.map((match) => match.chatRoomId),
+			trx,
+		);
+
+		await trx
+			.deleteFrom("TournamentMatch")
+			.where("groupId", "=", args.groupId)
+			.where("roundId", "=", args.roundId)
+			.execute();
+	});
 }
 
 /** Deletes the whole stage subtree (matches, rounds, groups, stage). */
 export function resetBracket(tournamentStageId: number) {
 	return db.transaction().execute(async (trx) => {
+		const matches = await trx
+			.selectFrom("TournamentMatch")
+			.select(["TournamentMatch.chatRoomId"])
+			.where("stageId", "=", tournamentStageId)
+			.execute();
+		await ChatRepository.deleteRoomsByIds(
+			matches.map((match) => match.chatRoomId),
+			trx,
+		);
+
 		await trx
 			.deleteFrom("TournamentMatch")
 			.where("stageId", "=", tournamentStageId)
@@ -380,6 +439,17 @@ function serializeOpponent(opponent: ParticipantResult | null): string | null {
 
 	const { totalKos, ...persisted } = opponent;
 	return JSON.stringify(persisted);
+}
+
+async function insertMatchChatRoom(trx?: Transaction<DB>) {
+	const room = await ChatRepository.insertRoom(
+		{
+			type: "TOURNAMENT_MATCH",
+			expiresAt: addDays(new Date(), CHAT_ROOM_LIFESPAN_DAYS),
+		},
+		trx,
+	);
+	return room.id;
 }
 
 /**

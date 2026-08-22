@@ -4,6 +4,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -54,14 +55,14 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				await validateCanJoinQ(user);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.insert({
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insert({
 					status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 					userId: user.id,
 				});
 
-				if (chatCodeToRevalidate) {
+				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: chatCodeToRevalidate,
+						room: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
 						revalidateOnly: true,
 					});
 				}
@@ -95,14 +96,14 @@ export const action: ActionFunction = async ({ request, url }) => {
 					"Invite code doesn't match any active team",
 				);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
 					groupInvitedTo.id,
 					{ userId: user.id },
 				);
 
-				if (chatCodeToRevalidate) {
+				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: chatCodeToRevalidate,
+						room: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
 						revalidateOnly: true,
 					});
 				}
@@ -110,9 +111,9 @@ export const action: ActionFunction = async ({ request, url }) => {
 				await refreshSendouQInstance();
 
 				const joinedGroup = SendouQ.findOwnGroup(user.id);
-				if (joinedGroup?.chatCode) {
+				if (joinedGroup?.chatRoomId) {
 					setGroupChatMetadata({
-						chatCode: joinedGroup.chatCode,
+						chatRoomId: joinedGroup.chatRoomId,
 						members: joinedGroup.members,
 					});
 				}

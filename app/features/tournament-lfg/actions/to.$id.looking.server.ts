@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
@@ -16,7 +17,10 @@ import { assertUnreachable } from "~/utils/types";
 import * as TournamentLFGRepository from "../TournamentLFGRepository.server";
 import { lookingSchema } from "../tournament-lfg-schemas";
 import { survivingTeamId } from "../tournament-lfg-utils";
-import { setPickupChatMetadata } from "../tournament-lfg-utils.server";
+import {
+	pickupChatRoomExpiresAt,
+	setPickupChatMetadata,
+} from "../tournament-lfg-utils.server";
 
 export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -80,7 +84,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					team.memberUserIds.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
 				);
-				const pickup = await TournamentLFGRepository.startLooking(team.id);
+				const pickup = await TournamentLFGRepository.startLooking({
+					teamId: team.id,
+					chatRoomExpiresAt: pickupChatRoomExpiresAt(tournament.ctx.startsAt),
+				});
 				if (pickup) {
 					setPickupChatMetadata({
 						team: pickup,
@@ -194,12 +201,15 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				survivingTeamId: surviving,
 				otherTeamId: otherGroup.id,
 				maxGroupSize: tournament.maxMembersPerTeam,
+				chatRoomExpiresAt: pickupChatRoomExpiresAt(tournament.ctx.startsAt),
 			});
 
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
-			if (mergeResult.removedChatCode) {
-				ChatSystemMessage.removeRoom(mergeResult.removedChatCode);
+			if (mergeResult.removedChatRoomId) {
+				ChatSystemMessage.removeRoom(
+					EventBus.chatRoomChannel(mergeResult.removedChatRoomId),
+				);
 			}
 
 			if (mergeResult.survivor) {

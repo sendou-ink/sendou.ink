@@ -11,6 +11,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { TournamentSettings } from "~/db/tables-json";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import {
@@ -863,6 +864,28 @@ export function deleteById({
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
 		if (tournamentId) {
+			const teamChatRooms = await trx
+				.selectFrom("TournamentTeam")
+				.select("TournamentTeam.chatRoomId")
+				.where("TournamentTeam.tournamentId", "=", tournamentId)
+				.where("TournamentTeam.chatRoomId", "is not", null)
+				.execute();
+			const matchChatRooms = await trx
+				.selectFrom("TournamentMatch")
+				.innerJoin(
+					"TournamentStage",
+					"TournamentStage.id",
+					"TournamentMatch.stageId",
+				)
+				.select("TournamentMatch.chatRoomId")
+				.where("TournamentStage.tournamentId", "=", tournamentId)
+				.where("TournamentMatch.chatRoomId", "is not", null)
+				.execute();
+			await ChatRepository.deleteRoomsByIds(
+				[...teamChatRooms, ...matchChatRooms].map((room) => room.chatRoomId),
+				trx,
+			);
+
 			await trx
 				.deleteFrom("Tournament")
 				.where("id", "=", tournamentId)

@@ -1,13 +1,17 @@
-import { sub } from "date-fns";
+import { addHours, sub } from "date-fns";
 import type { Insertable } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
+import {
+	databaseTimestampNow,
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import {
 	ConcurrentModificationError,
 	DuplicateEntryError,
 } from "~/utils/errors";
-import { shortNanoid } from "~/utils/id";
 import {
 	type CommonUser,
 	commonUserSelect,
@@ -23,6 +27,8 @@ import type { AssociationVisibility } from "../associations/associations-types";
 import * as Scrim from "./core/Scrim";
 import type { ScrimPost, ScrimPostUser } from "./scrims-types";
 import { getPostRequestCensor, parseLutiDiv } from "./scrims-utils";
+
+const CHAT_ROOM_LIFESPAN_HOURS = 24;
 
 type InsertArgs = Pick<
 	TablesInsertable["ScrimPost"],
@@ -60,7 +66,6 @@ export function insert(args: InsertArgs) {
 				maps: args.maps,
 				mapsTournamentId: args.mapsTournamentId,
 				visibility: args.visibility ? JSON.stringify(args.visibility) : null,
-				chatCode: shortNanoid(),
 				managedByAnyone: args.managedByAnyone ? 1 : 0,
 				isScheduledForFuture: args.isScheduledForFuture ? 1 : 0,
 			})
@@ -137,7 +142,16 @@ export function insertRequest(args: InsertRequestArgs) {
 }
 
 export function deleteById(scrimPostId: number) {
-	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
+	return db.transaction().execute(async (trx) => {
+		const post = await trx
+			.selectFrom("ScrimPost")
+			.select("ScrimPost.chatRoomId")
+			.where("id", "=", scrimPostId)
+			.executeTakeFirst();
+		await ChatRepository.deleteRoomsByIds([post?.chatRoomId ?? null], trx);
+
+		await trx.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
+	});
 }
 
 const baseFindQuery = db
@@ -240,7 +254,7 @@ function findMany() {
 }
 
 const mapDBRowToScrimPost = (
-	row: Unwrapped<typeof findMany> & { chatCode?: string },
+	row: Unwrapped<typeof findMany> & { chatRoomId?: number | null },
 ): ScrimPost => {
 	const someRequestIsAccepted = row.requests.some(
 		(request) => request.isAccepted,
@@ -300,7 +314,7 @@ const mapDBRowToScrimPost = (
 					avatarUrl: row.mapsTournament.avatarUrl,
 				}
 			: null,
-		chatCode: row.chatCode ?? null,
+		chatRoomId: row.chatRoomId ?? null,
 		team: row.team.name
 			? {
 					name: row.team.name,
@@ -359,7 +373,7 @@ const mapDBRowToScrimPost = (
 
 export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
 	const row = await baseFindQuery
-		.select(["ScrimPost.chatCode"])
+		.select(["ScrimPost.chatRoomId"])
 		.where("ScrimPost.id", "=", scrimPostId)
 		.executeTakeFirst();
 
@@ -410,6 +424,36 @@ export function acceptRequest(scrimPostRequestId: number) {
 			throw new ConcurrentModificationError(
 				"Another request for this scrim post was already accepted",
 			);
+		}
+
+		// the scrim is now scheduled, so its chat becomes available
+		const request = await trx
+			.selectFrom("ScrimPostRequest")
+			.select("ScrimPostRequest.startsAt")
+			.where("id", "=", scrimPostRequestId)
+			.executeTakeFirstOrThrow();
+		const post = await trx
+			.selectFrom("ScrimPost")
+			.select(["ScrimPost.chatRoomId", "ScrimPost.startsAt"])
+			.where("ScrimPost.id", "=", target.scrimPostId)
+			.executeTakeFirstOrThrow();
+
+		if (post.chatRoomId === null) {
+			const scrimStartsAt = databaseTimestampToDate(
+				request.startsAt ?? post.startsAt,
+			);
+			const chatRoom = await ChatRepository.insertRoom(
+				{
+					type: "SCRIM",
+					expiresAt: addHours(scrimStartsAt, CHAT_ROOM_LIFESPAN_HOURS),
+				},
+				trx,
+			);
+			await trx
+				.updateTable("ScrimPost")
+				.set({ chatRoomId: chatRoom.id })
+				.where("ScrimPost.id", "=", target.scrimPostId)
+				.execute();
 		}
 	});
 }

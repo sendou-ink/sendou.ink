@@ -6,6 +6,7 @@ import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { datePlaceholder } from "~/features/chat/chat-utils";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -180,9 +181,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 
 			const fullPost = await ScrimPostRepository.findById(post.id);
-			if (fullPost?.chatCode) {
+			if (fullPost?.chatRoomId) {
 				ChatSystemMessage.setMetadata({
-					chatCode: fullPost.chatCode,
+					chatCode: EventBus.chatRoomChannel(fullPost.chatRoomId),
 					header: datePlaceholder(
 						databaseTimestampToDate(request.startsAt ?? post.startsAt),
 					),

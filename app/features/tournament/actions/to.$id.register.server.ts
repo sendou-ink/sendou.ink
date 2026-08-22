@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -363,7 +364,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await TournamentTeamRepository.deleteById(ownTeam.id);
 
 			if (pickupChatTeam) {
-				ChatSystemMessage.removeRoom(pickupChatTeam.chatCode);
+				ChatSystemMessage.removeRoom(
+					EventBus.chatRoomChannel(pickupChatTeam.chatRoomId),
+				);
 			}
 
 			for (const userId of ownTeam.memberUserIds) {

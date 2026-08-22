@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
@@ -60,14 +61,14 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					"User you are trying to add has no friend code set",
 				);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
 					ownGroup.id,
 					{ userId: data.id },
 				);
 
-				if (chatCodeToRevalidate) {
+				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: chatCodeToRevalidate,
+						room: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
 						revalidateOnly: true,
 					});
 				}
@@ -75,9 +76,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await refreshSendouQInstance();
 
 				const updatedGroup = SendouQ.findOwnGroup(user.id);
-				if (updatedGroup?.chatCode) {
+				if (updatedGroup?.chatRoomId) {
 					setGroupChatMetadata({
-						chatCode: updatedGroup.chatCode,
+						chatRoomId: updatedGroup.chatRoomId,
 						members: updatedGroup.members,
 					});
 				}

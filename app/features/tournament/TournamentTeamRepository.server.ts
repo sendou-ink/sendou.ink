@@ -3,6 +3,7 @@ import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { flatZip } from "~/utils/arrays";
@@ -757,6 +758,7 @@ export function join({
 				},
 				trx,
 			);
+			await deleteTeamChatRoom(previousTeamIdToDelete, trx);
 			await trx
 				.deleteFrom("TournamentTeam")
 				.where("TournamentTeam.id", "=", previousTeamIdToDelete)
@@ -810,6 +812,8 @@ export function deleteById(tournamentTeamId: number) {
 			.deleteFrom("MapPoolMap")
 			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
 			.execute();
+
+		await deleteTeamChatRoom(tournamentTeamId, trx);
 
 		await trx
 			.deleteFrom("TournamentTeam")
@@ -994,4 +998,17 @@ export async function findRecentlyPlayedMapsByIds({
 	]);
 
 	return flatZip(teamOneMaps, teamTwoMaps);
+}
+
+async function deleteTeamChatRoom(
+	tournamentTeamId: number,
+	trx: Transaction<DB>,
+) {
+	const team = await trx
+		.selectFrom("TournamentTeam")
+		.select("TournamentTeam.chatRoomId")
+		.where("TournamentTeam.id", "=", tournamentTeamId)
+		.executeTakeFirst();
+
+	await ChatRepository.deleteRoomsByIds([team?.chatRoomId ?? null], trx);
 }

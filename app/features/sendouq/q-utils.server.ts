@@ -1,4 +1,5 @@
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
@@ -38,11 +39,11 @@ export function clearSeasonSkillsCache() {
 }
 
 export function setGroupChatMetadata(group: {
-	chatCode: string;
+	chatRoomId: number;
 	members: { id: number }[];
 }) {
 	ChatSystemMessage.setMetadata({
-		chatCode: group.chatCode,
+		chatCode: EventBus.chatRoomChannel(group.chatRoomId),
 		header: `Group (${group.members.length}/4)`,
 		subtitle: "SendouQ",
 		url: SENDOUQ_LOOKING_PAGE,
@@ -54,11 +55,11 @@ export function setGroupChatMetadata(group: {
 
 export function setMatchChatMetadata(match: {
 	id: number;
-	chatCode: string;
+	chatRoomId: number;
 	participantUserIds: number[];
 }) {
 	ChatSystemMessage.setMetadata({
-		chatCode: match.chatCode,
+		chatCode: EventBus.chatRoomChannel(match.chatRoomId),
 		header: `Match #${match.id}`,
 		subtitle: "SendouQ",
 		url: sendouQMatchPage(match.id),

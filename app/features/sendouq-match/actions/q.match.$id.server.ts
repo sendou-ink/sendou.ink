@@ -3,6 +3,7 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import {
@@ -97,16 +98,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					if (result.status === "MATCH_FINALIZED") {
 						ChatSystemMessage.send({
-							room: match.chatCode,
+							room: EventBus.chatRoomChannel(match.chatRoomId),
 							type: "SCORE_CONFIRMED",
 							context: { name: user.username },
 						});
 					} else {
 						ChatSystemMessage.send({
-							room: match.chatCode,
+							room: EventBus.chatRoomChannel(match.chatRoomId),
 							revalidateOnly: true,
 						});
 					}
@@ -152,17 +153,17 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				// the successor group reuses the chat code, extend the room's expiry
-				if (previousGroup.chatCode) {
+				// the successor group carries the chat room over, extend its expiry
+				if (previousGroup.chatRoomId) {
 					setGroupChatMetadata({
-						chatCode: previousGroup.chatCode,
+						chatRoomId: previousGroup.chatRoomId,
 						members: previousGroup.members,
 					});
 				}
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -240,11 +241,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 					await refreshSendouQInstance();
 
-					// the successor group reuses the chat code; sync the room to the
-					// continuing members and extend its expiry
-					if (viewerGroup.chatCode && survivors.length > 0) {
+					// the successor group carries the chat room over; sync the room to
+					// the continuing members and extend its expiry
+					if (viewerGroup.chatRoomId && survivors.length > 0) {
 						setGroupChatMetadata({
-							chatCode: viewerGroup.chatCode,
+							chatRoomId: viewerGroup.chatRoomId,
 							members: survivors,
 						});
 					}
@@ -257,9 +258,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					});
 				}
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -299,9 +300,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -323,9 +324,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -347,9 +348,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return null;
 				}
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						type: "CANCEL_REPORTED",
 						context: { name: user.username },
 					});
@@ -378,9 +379,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await notifyStaffOfCanceledMatch(match);
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						type: "CANCEL_CONFIRMED",
 						context: { name: user.username },
 					});
@@ -408,9 +409,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -433,9 +434,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					return errorToast("Cannot refuse own cancel request");
 				}
 
-				if (match.chatCode) {
+				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: match.chatCode,
+						room: EventBus.chatRoomChannel(match.chatRoomId),
 						type: "CANCEL_REFUSED",
 						context: { name: user.username },
 					});

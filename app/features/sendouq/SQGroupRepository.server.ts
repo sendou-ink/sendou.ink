@@ -1,4 +1,4 @@
-import { sub } from "date-fns";
+import { addHours, sub } from "date-fns";
 import {
 	type ExpressionBuilder,
 	type NotNull,
@@ -9,6 +9,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { UserMapModePreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import {
@@ -21,6 +22,8 @@ import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { userIsBanned } from "../ban/core/banned.server";
 import { FULL_GROUP_SIZE } from "./q-constants";
 import { SendouQError } from "./q-utils.server";
+
+const CHAT_ROOM_LIFESPAN_HOURS = 12;
 
 export async function findMapModePreferencesByGroupId(groupId: number) {
 	const group = await db
@@ -74,7 +77,7 @@ export async function findCurrentGroups() {
 			)
 			.select(({ eb }) => [
 				"Group.id",
-				"Group.chatCode",
+				"Group.chatRoomId",
 				"Group.inviteCode",
 				"Group.latestActionAt",
 				"Group.status",
@@ -112,11 +115,19 @@ type CreateGroupArgs = {
 };
 export async function insert(args: CreateGroupArgs) {
 	return db.transaction().execute(async (trx) => {
+		const chatRoom = await ChatRepository.insertRoom(
+			{
+				type: "SQ_GROUP",
+				expiresAt: addHours(new Date(), CHAT_ROOM_LIFESPAN_HOURS),
+			},
+			trx,
+		);
+
 		const createdGroup = await trx
 			.insertInto("Group")
 			.values({
 				inviteCode: shortNanoid(),
-				chatCode: shortNanoid(),
+				chatRoomId: chatRoom.id,
 				status: args.status,
 			})
 			.returning("id")
@@ -134,12 +145,12 @@ export async function insert(args: CreateGroupArgs) {
 			throw new SendouQError("Group has a member in multiple groups");
 		}
 
-		const chatCodeToRevalidate = await recordImplicitRejoinNoVote(
+		const chatRoomIdToRevalidate = await recordImplicitRejoinNoVote(
 			args.userId,
 			trx,
 		);
 
-		return { id: createdGroup.id, chatCodeToRevalidate };
+		return { id: createdGroup.id, chatRoomIdToRevalidate };
 	});
 }
 
@@ -154,20 +165,48 @@ export async function insertFromPrevious(
 	const status = args.status ?? "PREPARING";
 
 	return db.transaction().execute(async (trx) => {
+		const previousGroup = await trx
+			.selectFrom("Group")
+			.select(["Group.chatRoomId", "Group.matchmade"])
+			.where("Group.id", "=", args.previousGroupId)
+			.executeTakeFirstOrThrow();
+
+		// the successor group carries the previous group's chat over; the room's
+		// unique owner index requires the previous group to release it first
+		let chatRoomId = previousGroup.chatRoomId;
+		if (chatRoomId !== null) {
+			await trx
+				.updateTable("Group")
+				.set({ chatRoomId: null })
+				.where("Group.id", "=", args.previousGroupId)
+				.execute();
+			await ChatRepository.updateRoomExpiresAt(
+				{
+					roomId: chatRoomId,
+					expiresAt: addHours(new Date(), CHAT_ROOM_LIFESPAN_HOURS),
+				},
+				trx,
+			);
+		} else {
+			chatRoomId = (
+				await ChatRepository.insertRoom(
+					{
+						type: "SQ_GROUP",
+						expiresAt: addHours(new Date(), CHAT_ROOM_LIFESPAN_HOURS),
+					},
+					trx,
+				)
+			).id;
+		}
+
 		const createdGroup = await trx
 			.insertInto("Group")
-			.columns(["chatCode", "inviteCode", "status", "matchmade"])
-			.expression((eb) =>
-				eb
-					.selectFrom("Group")
-					.select((eb) => [
-						"Group.chatCode",
-						eb.val(shortNanoid()).as("inviteCode"),
-						eb.val(status).as("status"),
-						"Group.matchmade",
-					])
-					.where("Group.id", "=", args.previousGroupId),
-			)
+			.values({
+				chatRoomId,
+				inviteCode: shortNanoid(),
+				status,
+				matchmade: previousGroup.matchmade,
+			})
 			.returning("id")
 			.executeTakeFirstOrThrow();
 
@@ -281,10 +320,24 @@ export function morphGroups({
 	otherGroupId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		// reset chat code so previous messages are not visible, and mark as matchmade
+		const oldChatRooms = await trx
+			.selectFrom("Group")
+			.select(["Group.chatRoomId"])
+			.where("Group.id", "in", [survivingGroupId, otherGroupId])
+			.execute();
+
+		// fresh chat room so neither group's previous messages are visible, and
+		// mark as matchmade
+		const chatRoom = await ChatRepository.insertRoom(
+			{
+				type: "SQ_GROUP",
+				expiresAt: addHours(new Date(), CHAT_ROOM_LIFESPAN_HOURS),
+			},
+			trx,
+		);
 		await trx
 			.updateTable("Group")
-			.set({ chatCode: shortNanoid(), matchmade: 1 })
+			.set({ chatRoomId: chatRoom.id, matchmade: 1 })
 			.where("Group.id", "=", survivingGroupId)
 			.execute();
 
@@ -297,6 +350,11 @@ export function morphGroups({
 		await syncTeamId(survivingGroupId, trx);
 		await deleteLikesAndSuggestionsByGroupId(survivingGroupId, trx);
 		await refreshGroup(survivingGroupId, trx);
+
+		await ChatRepository.deleteRoomsByIds(
+			oldChatRooms.map((room) => room.chatRoomId),
+			trx,
+		);
 
 		await trx
 			.deleteFrom("Group")
@@ -348,7 +406,7 @@ export async function insertMember(
 	groupId: number,
 	{ userId }: { userId: number },
 ) {
-	const chatCodeToRevalidate = await db.transaction().execute(async (trx) => {
+	const chatRoomIdToRevalidate = await db.transaction().execute(async (trx) => {
 		await trx
 			.insertInto("GroupMember")
 			.values({
@@ -369,7 +427,7 @@ export async function insertMember(
 		return recordImplicitRejoinNoVote(userId, trx);
 	});
 
-	return { chatCodeToRevalidate };
+	return { chatRoomIdToRevalidate };
 }
 
 export async function findAllLikesByGroupId(groupId: number) {
@@ -577,7 +635,10 @@ export async function closeExpiredContinueVotes() {
 					.onRef("GroupMatchContinueVote.groupId", "=", "Group.id")
 					.onRef("GroupMatchContinueVote.userId", "=", "GroupMember.userId"),
 			)
-			.select(["Group.id as groupId", "GroupMatch.chatCode as matchChatCode"])
+			.select([
+				"Group.id as groupId",
+				"GroupMatch.chatRoomId as matchChatRoomId",
+			])
 			.where("Group.matchmade", "=", 1)
 			.where("GroupMatch.confirmedAt", "is not", null)
 			.where("GroupMatch.confirmedAt", "<", cutoff)
@@ -585,9 +646,9 @@ export async function closeExpiredContinueVotes() {
 			.groupBy("Group.id")
 			.execute();
 
-		const chatCodesToRevalidate = eligibleGroups
-			.map((group) => group.matchChatCode)
-			.filter((chatCode) => chatCode !== null);
+		const chatRoomIdsToRevalidate = eligibleGroups
+			.map((group) => group.matchChatRoomId)
+			.filter((chatRoomId) => chatRoomId !== null);
 
 		if (eligibleGroups.length > 0) {
 			const members = await trx
@@ -616,7 +677,7 @@ export async function closeExpiredContinueVotes() {
 		}
 
 		return {
-			chatCodesToRevalidate,
+			chatRoomIdsToRevalidate,
 			numAffectedGroups: eligibleGroups.length,
 		};
 	});
@@ -768,7 +829,7 @@ export function leaveGroup(userId: number) {
 		const userGroup = await trx
 			.selectFrom("GroupMember")
 			.innerJoin("Group", "Group.id", "GroupMember.groupId")
-			.select(["Group.id"])
+			.select(["Group.id", "Group.chatRoomId"])
 			.where("userId", "=", userId)
 			.where("Group.status", "!=", "INACTIVE")
 			.executeTakeFirstOrThrow();
@@ -814,6 +875,7 @@ export function leaveGroup(userId: number) {
 			.executeTakeFirst();
 
 		if (!remainingMember) {
+			await ChatRepository.deleteRoomsByIds([userGroup.chatRoomId], trx);
 			await trx.deleteFrom("Group").where("id", "=", userGroup.id).execute();
 			return { abortedReadyCheckGroupIds };
 		}
@@ -1124,7 +1186,7 @@ async function deleteReadyCheckInTrx(
 async function recordImplicitRejoinNoVote(
 	userId: number,
 	trx: Transaction<DB>,
-): Promise<string | null> {
+): Promise<number | null> {
 	const candidate = await trx
 		.selectFrom("GroupMember")
 		.innerJoin("Group", "Group.id", "GroupMember.groupId")
@@ -1138,7 +1200,7 @@ async function recordImplicitRejoinNoVote(
 		)
 		.select((eb) => [
 			"Group.id as groupId",
-			"GroupMatch.chatCode as matchChatCode",
+			"GroupMatch.chatRoomId as matchChatRoomId",
 			hasVotedNo(eb, userId).as("alreadySettled"),
 		])
 		.where("GroupMember.userId", "=", userId)
@@ -1168,7 +1230,7 @@ async function recordImplicitRejoinNoVote(
 		)
 		.execute();
 
-	return candidate.matchChatCode;
+	return candidate.matchChatRoomId;
 }
 
 /** Matches the `Group` rows the given user has already voted against continuing with. */

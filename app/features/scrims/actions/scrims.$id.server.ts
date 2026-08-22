@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { parseFormData } from "~/form/parse.server";
@@ -235,9 +236,9 @@ async function loadMapByMapContext({
 function broadcastRevalidate(
 	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>,
 ) {
-	if (!post.chatCode) return;
+	if (!post.chatRoomId) return;
 	ChatSystemMessage.send({
-		room: post.chatCode,
+		room: EventBus.chatRoomChannel(post.chatRoomId),
 		revalidateOnly: true,
 	});
 }
@@ -251,9 +252,9 @@ function broadcastMapChange({
 	type: "MAP_REPLAYED" | "MAP_PICKED";
 	user: ReturnType<typeof requireUser>;
 }) {
-	if (!post.chatCode) return;
+	if (!post.chatRoomId) return;
 	ChatSystemMessage.send({
-		room: post.chatCode,
+		room: EventBus.chatRoomChannel(post.chatRoomId),
 		type,
 		context: { name: user.username },
 	});

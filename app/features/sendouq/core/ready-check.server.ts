@@ -26,7 +26,7 @@ export type ReadyCheck = NonNullable<
 
 type ReadyCheckGroup = {
 	id: number;
-	chatCode: string | null;
+	chatRoomId: number | null;
 	members: Array<{ id: number }>;
 };
 
@@ -67,9 +67,9 @@ export async function start({
 
 	// extend the group chat rooms' expiry so they last through the match
 	for (const group of [ownGroup, theirGroup]) {
-		if (group.chatCode) {
+		if (group.chatRoomId) {
 			setGroupChatMetadata({
-				chatCode: group.chatCode,
+				chatRoomId: group.chatRoomId,
 				members: group.members,
 			});
 		}
@@ -245,10 +245,10 @@ async function createMatch({
 	await refreshSendouQInstance();
 	refreshStreamsCache();
 
-	if (createdMatch.chatCode) {
+	if (createdMatch.chatRoomId) {
 		setMatchChatMetadata({
 			id: createdMatch.id,
-			chatCode: createdMatch.chatCode,
+			chatRoomId: createdMatch.chatRoomId,
 			participantUserIds: readyCheck.members.map((member) => member.userId),
 		});
 	}
