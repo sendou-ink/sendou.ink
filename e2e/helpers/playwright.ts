@@ -223,13 +223,20 @@ export async function navigate({ page, url }: { page: Page; url: string }) {
 		// Extract just the path and search params, let Playwright use the correct baseURL
 		targetUrl = urlObj.pathname + urlObj.search;
 	}
-	await page.goto(targetUrl);
+	// domcontentloaded instead of the default load event: module scripts have
+	// executed by then, and the hydration wait below covers the rest — no need
+	// to also wait for images and other subresources
+	await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
 	await expectIsHydrated(page);
 }
 
 /** Waits and expects the page to be hydrated (click handlers etc. ready for testing) */
 export async function expectIsHydrated(page: Page) {
-	await expect(page.getByTestId("hydrated")).toHaveCount(1);
+	// waitFor reacts within a frame of the marker appearing, where the expect
+	// poll would wait out its current back-off interval first
+	await page
+		.getByTestId("hydrated")
+		.waitFor({ state: "attached", timeout: 5_000 });
 }
 
 export function impersonate(page: Page, userId = ADMIN_ID) {
@@ -296,7 +303,14 @@ async function retryPost(
 
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		try {
-			return await page.request.post(url, { timeout: 7_500, ...options });
+			// maxRedirects 0: impersonate answers with a redirect to the admin
+			// page, and following it would server-render a page nobody reads —
+			// the Set-Cookie lands in the context jar either way
+			return await page.request.post(url, {
+				timeout: 7_500,
+				maxRedirects: 0,
+				...options,
+			});
 		} catch (error) {
 			if (attempt === MAX_ATTEMPTS) throw error;
 		}
@@ -319,7 +333,9 @@ export async function submit(page: Page, target?: string | Locator) {
 
 	// Toast flash params are stripped right after via a replace navigation
 	// (without revalidation); wait for it so it can't abort a later click.
-	await expect(page).not.toHaveURL(/__(?:success|error)=/);
+	await page.waitForURL((url) => !/__(?:success|error)=/.test(url.href), {
+		timeout: 5_000,
+	});
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
@@ -361,10 +377,9 @@ async function expectRouterIdle(page: Page) {
 	// A submit's redirect plus the target page's loaders can exceed the default
 	// expect timeout when the full suite is loading all workers.
 	try {
-		await expect(page.getByTestId("hydrated")).toHaveAttribute(
-			"data-router-idle",
-			"true",
-			{ timeout: 15_000 },
+		await page.waitForSelector(
+			'[data-testid="hydrated"][data-router-idle="true"]',
+			{ state: "attached", timeout: 15_000 },
 		);
 	} catch (error) {
 		// data-router-busy names what is still in flight, which the attribute

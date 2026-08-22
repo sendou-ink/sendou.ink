@@ -43,7 +43,13 @@ const config: PlaywrightTestConfig = {
 		/* Base URL will be set per-worker by the fixture */
 		baseURL: "http://localhost:6173",
 
-		trace: "retain-on-failure",
+		// DOM snapshots are the expensive part of tracing (~17% of total test
+		// time); failures still retain screenshots, network and action logs
+		trace: { mode: "retain-on-failure", snapshots: false },
+
+		// the app registers a push-notification service worker on every load;
+		// tests never use it and each fresh context would install it again
+		serviceWorkers: "block",
 
 		permissions: ["clipboard-read", "clipboard-write"],
 	},

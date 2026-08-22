@@ -76,10 +76,11 @@ E2E_DEBUG=true E2E_WORKERS=1 pnpm exec playwright test e2e/<failing-test>.spec.t
 This shows stdout/stderr from the test server, which is hidden by default.
 
 ### Step 4: Examine trace artifacts
-Playwright is configured with `trace: "retain-on-failure"`. After a failure, check `test-results/<test-folder>/error-context.md` for the page's accessibility snapshot at failure time, or view the trace:
+Playwright is configured with `trace: { mode: "retain-on-failure", snapshots: false }` — failure traces carry screenshots, network and action logs but no DOM snapshots (recording those cost ~17% of total suite time). After a failure, check `test-results/<test-folder>/error-context.md` for the page's accessibility snapshot at failure time, or view the trace:
 ```bash
 pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
 ```
+When a failure needs full DOM snapshots to understand, re-run just that test with `--trace retain-on-failure` (the CLI flag records complete traces).
 
 ### Re-render races
 Skalop (websocket) is fully disconnected in e2e — the build has an empty `VITE_SKALOP_WS_URL` and worker servers get empty `SKALOP_SYSTEM_MESSAGE_URL`/`SKALOP_TOKEN` (see `e2e/global-setup.ts`), so cross-worker websocket crosstalk cannot cause flakes. Google Fonts are also blocked at the context level so font swaps never reflow the page mid-test. Re-renders from the test's own action revalidations can still swallow a React Aria press (press start registers, press end never fires — no POST); `waitForPOSTResponse` retries for this, so route flows through it rather than adding sleeps. When e2e tests for chat/websocket features are added, skalop needs a per-worker instance or stub with a runtime-derived WS URL.
