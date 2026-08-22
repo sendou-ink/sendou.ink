@@ -4,7 +4,11 @@
  * each frame yields one result per due detector, then a "done" carrying the
  * scheduler's calm signal and telemetry) or one in-flight chunk scan (the
  * worker decodes and analyzes a VoD time slice by itself, streaming results
- * and progress until "chunkDone").
+ * and progress until "chunkDone"). `frameQueueLimit` opts a client into
+ * buffering frames that arrive while a frame is in flight instead of
+ * dropping them — live capture uses it so a slow parse streak (a browsed
+ * battle log entry) can't swallow the footage sampled meanwhile; timestamps
+ * ride with the frames, so late analysis still lands events at capture time.
  */
 import { Config } from "../../../config";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
@@ -35,6 +39,11 @@ interface PendingChunk {
 	onProgress?: ChunkProgressHandler;
 }
 
+interface QueuedFrame {
+	bitmap: ImageBitmap | VideoFrame;
+	t: number;
+}
+
 export class AnalyzerClient {
 	#worker: Worker;
 	#ready = false;
@@ -46,6 +55,8 @@ export class AnalyzerClient {
 	#rejectReady: ((error: Error) => void) | undefined;
 	#idleWaiters: (() => void)[] = [];
 	#chunk: PendingChunk | null = null;
+	#frameQueue: QueuedFrame[] = [];
+	readonly #frameQueueLimit: number;
 
 	constructor(
 		onResult: ResultHandler,
@@ -55,8 +66,11 @@ export class AnalyzerClient {
 		options: {
 			suppressSteadyFrames?: boolean;
 			collectTelemetry?: boolean;
+			/** max frames buffered while a frame is in flight (0 = drop them) */
+			frameQueueLimit?: number;
 		} = {},
 	) {
+		this.#frameQueueLimit = options.frameQueueLimit ?? 0;
 		this.#onResult = onResult;
 		this.#onError = onError;
 		this.#onDone = onDone;
@@ -127,9 +141,21 @@ export class AnalyzerClient {
 		}
 	}
 
-	/** Returns false (and closes the bitmap) if the worker is still busy. */
+	/**
+	 * Analyze a frame now, or — with `frameQueueLimit` set — buffer it until
+	 * the in-flight frame settles (past the limit the oldest buffered frame
+	 * is dropped). Returns false (and closes the bitmap) only when the frame
+	 * was dropped outright.
+	 */
 	analyze(bitmap: ImageBitmap | VideoFrame, t: number): boolean {
 		if (this.busy) {
+			if (this.#frameQueueLimit > 0 && this.#ready) {
+				this.#frameQueue.push({ bitmap, t });
+				if (this.#frameQueue.length > this.#frameQueueLimit) {
+					this.#frameQueue.shift()?.bitmap.close();
+				}
+				return true;
+			}
 			bitmap.close();
 			return false;
 		}
@@ -163,10 +189,19 @@ export class AnalyzerClient {
 	}
 
 	dispose(): void {
+		this.#closeQueuedFrames();
 		this.#worker.terminate();
 	}
 
 	#settle(): void {
+		const next = this.#frameQueue.shift();
+		if (next) {
+			this.#worker.postMessage(
+				{ kind: "frame", bitmap: next.bitmap, t: next.t },
+				[next.bitmap],
+			);
+			return;
+		}
 		this.#busy = false;
 		const waiters = this.#idleWaiters;
 		this.#idleWaiters = [];
@@ -177,10 +212,18 @@ export class AnalyzerClient {
 		// an error before "ready" means init failed — reject whenReady() so
 		// callers don't hang on a client that will never become usable
 		if (!this.#ready) this.#rejectReady?.(new Error(message));
+		// don't drain buffered frames into a worker that may be dead — losing
+		// them matches what the drop-on-busy path would have done anyway
+		this.#closeQueuedFrames();
 		const chunk = this.#chunk;
 		this.#chunk = null;
 		this.#settle();
 		if (chunk) chunk.reject(new Error(message));
 		else this.#onError(message);
+	}
+
+	#closeQueuedFrames(): void {
+		for (const { bitmap } of this.#frameQueue) bitmap.close();
+		this.#frameQueue = [];
 	}
 }

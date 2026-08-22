@@ -65,6 +65,14 @@ import { thumbnailFromBlob } from "./thumbnail";
 const SAMPLE_FPS = 2;
 
 /**
+ * A battle-log parse streak can occupy the worker for seconds; buffering the
+ * frames sampled meanwhile (analyzed late, VoD-style) keeps quickly browsed
+ * entries from being missed. 24 frames = ~12s of backlog before the oldest
+ * frame is dropped.
+ */
+const FRAME_QUEUE_LIMIT = 24;
+
+/**
  * How often a running capture rechecks whether a match sendou.ink could not
  * link yet is due for another attempt (the backoff itself lives in
  * sendou-ingest.ts).
@@ -264,6 +272,8 @@ export function LivePage({
 					setError(message);
 					setStatus("error");
 				},
+				undefined,
+				{ frameQueueLimit: FRAME_QUEUE_LIMIT },
 			);
 			await clientRef.current.whenReady();
 
