@@ -62,6 +62,40 @@ export function findAllWeeksByUserIds({
 		.execute();
 }
 
+/**
+ * Team events of every team the given users are members of (secondary teams
+ * included) that overlap the given window, one row per member.
+ */
+export function findAllTeamEventsByUserIds({
+	userIds,
+	startsAt,
+	endsAt,
+}: {
+	userIds: Array<number>;
+	startsAt: number;
+	endsAt: number;
+}) {
+	if (userIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("TeamEvent")
+		.innerJoin(
+			"TeamMemberWithSecondary",
+			"TeamMemberWithSecondary.teamId",
+			"TeamEvent.teamId",
+		)
+		.select([
+			"TeamMemberWithSecondary.userId",
+			"TeamEvent.name",
+			"TeamEvent.startsAt",
+			"TeamEvent.endsAt",
+		])
+		.where("TeamMemberWithSecondary.userId", "in", userIds)
+		.where("TeamEvent.startsAt", "<", endsAt)
+		.where("TeamEvent.endsAt", ">", startsAt)
+		.execute();
+}
+
 interface UpsertOwnWeekArgs {
 	weekStartsAt: number;
 	timezone: string;

@@ -11,8 +11,13 @@ import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish } from "~/utils/remix.server";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
-import type { PlayableWindowTier, TimeRange } from "../availability-types";
+import type {
+	BusyBlock,
+	PlayableWindowTier,
+	TimeRange,
+} from "../availability-types";
 import * as Availability from "../core/Availability";
+import * as Commitments from "../core/Commitments.server";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -35,14 +40,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const timezone = getViewerTimezone() ?? "UTC";
 	const now = new Date();
 
-	const reportedWeeks = await AvailabilityRepository.findAllWeeksByUserIds({
-		userIds: members.map((member) => member.id),
+	const horizon = {
 		startsAt: Availability.weekRange(now, timezone).startsAt,
 		endsAt: Availability.weekRange(
 			addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
 			timezone,
 		).endsAt,
-	});
+	};
+	const [reportedWeeks, busyByUserId] = await Promise.all([
+		AvailabilityRepository.findAllWeeksByUserIds({
+			userIds: members.map((member) => member.id),
+			...horizon,
+		}),
+		Commitments.busyBlocksByUserIds({
+			userIds: members.map((member) => member.id),
+			...horizon,
+		}),
+	]);
 
 	const playerIds = members
 		.filter((member) => getMemberRoleType(member) !== "OTHER")
@@ -56,6 +70,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				memberIds: members.map((member) => member.id),
 				playerIds,
 				reportedWeeks,
+				busyByUserId,
 			}),
 		),
 	};
@@ -71,12 +86,14 @@ function weekView({
 	memberIds,
 	playerIds,
 	reportedWeeks,
+	busyByUserId,
 }: {
 	range: TimeRange;
 	timezone: string;
 	memberIds: Array<number>;
 	playerIds: Array<number>;
 	reportedWeeks: Array<ReportedWeek>;
+	busyByUserId: Map<number, Array<BusyBlock>>;
 }) {
 	const minPlayers = Math.min(
 		AVAILABILITY.DEFAULT_MIN_PLAYERS,
@@ -86,11 +103,14 @@ function weekView({
 	const windows = Availability.playableWindows({
 		members: playerIds.map((userId) => ({
 			userId,
-			ranges: Availability.clip(
-				reportedWeeks
-					.filter((week) => week.userId === userId)
-					.flatMap((week) => week.slots),
-				range,
+			ranges: Availability.subtract(
+				Availability.clip(
+					reportedWeeks
+						.filter((week) => week.userId === userId)
+						.flatMap((week) => week.slots),
+					range,
+				),
+				busyByUserId.get(userId) ?? [],
 			),
 		})),
 		minPlayers,
@@ -108,7 +128,14 @@ function weekView({
 	});
 
 	const members = memberIds.map((userId) =>
-		memberWeekRow({ userId, days, timezone, reportedWeeks, range }),
+		memberWeekRow({
+			userId,
+			days,
+			timezone,
+			reportedWeeks,
+			range,
+			busy: busyByUserId.get(userId) ?? [],
+		}),
 	);
 
 	return {
@@ -155,13 +182,21 @@ function memberWeekRow({
 	timezone,
 	reportedWeeks,
 	range,
+	busy,
 }: {
 	userId: number;
 	days: Array<{ date: string; noonAt: number }>;
 	timezone: string;
 	reportedWeeks: Array<ReportedWeek>;
 	range: TimeRange;
+	busy: Array<BusyBlock>;
 }) {
+	const busyOfDay = (day: { date: string }) =>
+		busy.filter(
+			(block) =>
+				Availability.dateInTimezone(block.startsAt, timezone) === day.date,
+		);
+
 	const memberWeeks = reportedWeeks.filter((week) => week.userId === userId);
 	const matchingWeek = memberWeeks.find(
 		(week) =>
@@ -173,24 +208,33 @@ function memberWeekRow({
 		return {
 			userId,
 			reported: false,
-			days: days.map(() => []) as Array<Array<TimeRange>>,
+			days: days.map((day) => ({
+				ranges: [] as Array<TimeRange>,
+				busy: busyOfDay(day),
+			})),
 			notes: [] as Array<{ dayIndex: number; text: string }>,
 		};
 	}
 
 	// slots are placed on the viewer-local day they start on, wherever their
-	// author's week put them — the adjacent weeks' spillover included
-	const slots = memberWeeks.flatMap((week) => week.slots);
+	// author's week put them — the adjacent weeks' spillover included. What a
+	// commitment takes back is cut out first: the grid shows when the member
+	// is actually free.
+	const slots = Availability.subtract(
+		memberWeeks.flatMap((week) => week.slots),
+		busy,
+	);
 
 	return {
 		userId,
 		reported: true,
-		days: days.map((day) =>
-			slots.filter(
+		days: days.map((day) => ({
+			ranges: slots.filter(
 				(slot) =>
 					Availability.dateInTimezone(slot.startsAt, timezone) === day.date,
 			),
-		),
+			busy: busyOfDay(day),
+		})),
 		notes: memberWeeks.flatMap((week) =>
 			week.dayNotes.flatMap((note) => {
 				const noteDate = Availability.dateInTimezone(

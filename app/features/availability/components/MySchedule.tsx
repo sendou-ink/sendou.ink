@@ -134,6 +134,11 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 			<WeekAvailabilityEditor
 				key={data.weeks[weekIndex].weekStartsAt}
 				value={shownDays}
+				commitments={data.commitments.map((commitment) => ({
+					date: commitment.date,
+					range: commitment.range,
+					name: commitment.name ?? t("schedule:commitment.scrim"),
+				}))}
 				onChange={(value) =>
 					setWeeks(
 						weeks.map((days, index) => (index === weekIndex ? value : days)),

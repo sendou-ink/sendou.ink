@@ -49,3 +49,13 @@ export interface EditorCommitment {
 	range: DayTimeRange;
 	name: string;
 }
+
+/**
+ * A span a commitment makes the user busy for, overriding whatever
+ * availability they reported. `name` is what the user is at (e.g. the
+ * tournament's name); `null` when the type alone says it (a scrim).
+ */
+export interface BusyBlock extends TimeRange {
+	type: "tournament" | "scrim" | "teamEvent";
+	name: string | null;
+}

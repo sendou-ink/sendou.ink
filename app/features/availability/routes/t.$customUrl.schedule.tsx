@@ -131,11 +131,11 @@ function ScheduleGrid({ week }: { week: WeekData }) {
 			<th scope="row" className={styles.memberCell}>
 				<UserLink user={row.member} className={styles.memberLink} />
 			</th>
-			{row.days.map((ranges, dayIndex) => (
+			{row.days.map((day, dayIndex) => (
 				<ScheduleCell
 					key={week.days[dayIndex].date}
 					row={row}
-					ranges={ranges}
+					day={day}
 					dayIndex={dayIndex}
 				/>
 			))}
@@ -185,11 +185,11 @@ function ScheduleGrid({ week }: { week: WeekData }) {
 
 function ScheduleCell({
 	row,
-	ranges,
+	day,
 	dayIndex,
 }: {
 	row: MemberWeekRow;
-	ranges: MemberWeekRow["days"][number];
+	day: MemberWeekRow["days"][number];
 	dayIndex: number;
 }) {
 	const { t } = useTranslation(["schedule"]);
@@ -203,13 +203,16 @@ function ScheduleCell({
 	// formatRange expands to full dates when the ends fall on different
 	// calendar days, so a range crossing (or ending exactly at) midnight
 	// formats its ends separately to stay times-only
-	const rangeText = (range: MemberWeekRow["days"][number][number]) =>
+	const rangeText = (range: { startsAt: number; endsAt: number }) =>
 		isSameDay(
 			databaseTimestampToDate(range.startsAt),
 			databaseTimestampToDate(range.endsAt),
 		)
 			? timeFormatter.formatRange(range.startsAt, range.endsAt)
 			: `${timeFormatter.format(range.startsAt)} – ${timeFormatter.format(range.endsAt)}`;
+
+	const busyName = (block: MemberWeekRow["days"][number]["busy"][number]) =>
+		block.name ?? t("schedule:commitment.scrim");
 
 	return (
 		<td
@@ -224,7 +227,7 @@ function ScheduleCell({
 					>
 						?
 					</span>
-				) : ranges.length === 0 ? (
+				) : day.ranges.length === 0 && day.busy.length === 0 ? (
 					<span
 						className={styles.unavailable}
 						title={t("schedule:team.notAvailable")}
@@ -232,7 +235,7 @@ function ScheduleCell({
 						—
 					</span>
 				) : (
-					ranges.map((range) => (
+					day.ranges.map((range) => (
 						<div
 							key={range.startsAt}
 							className={styles.range}
@@ -242,6 +245,16 @@ function ScheduleCell({
 						</div>
 					))
 				)}
+				{day.busy.map((block) => (
+					<div
+						key={block.startsAt}
+						className={styles.busy}
+						title={`${rangeText(block)} · ${busyName(block)}`}
+						data-testid="schedule-busy"
+					>
+						<span className={styles.busyName}>{busyName(block)}</span>
+					</div>
+				))}
 				{note ? (
 					<span title={note.text}>
 						<Flag className={styles.noteFlag} size={12} aria-hidden />

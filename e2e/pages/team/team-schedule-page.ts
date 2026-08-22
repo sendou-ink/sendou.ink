@@ -32,6 +32,10 @@ export class TeamSchedulePage {
 		return this.cell(userId, dayIndex).getByTestId("schedule-range");
 	}
 
+	cellBusy(userId: number, dayIndex: number) {
+		return this.cell(userId, dayIndex).getByTestId("schedule-busy");
+	}
+
 	dayDot(dayIndex: number) {
 		return this.page.getByTestId(`schedule-day-dot-${dayIndex}`);
 	}

@@ -120,6 +120,44 @@ test.describe("My schedule", () => {
 		await isNotVisible(events.weekNotFilledMarker("current"));
 	});
 
+	test("shows a commitment as a locked block on the editor", async ({
+		page,
+		factories,
+	}) => {
+		const currentWeek = Availability.weekRange(new Date(), MACHINE_TIMEZONE);
+		const wednesday = Availability.dateInTimezone(
+			currentWeek.startsAt + WEDNESDAY * DAY_SECONDS + DAY_SECONDS / 2,
+			MACHINE_TIMEZONE,
+		);
+		const team = await factories.TeamFactory.create({
+			memberUserIds: [ADMIN_ID],
+		});
+		await factories.TeamEventFactory.create({
+			teamId: team.id,
+			authorId: ADMIN_ID,
+			name: "VoD review",
+			startsAt: Availability.localToTimestamp({
+				date: wednesday,
+				time: "20:00",
+				timezone: MACHINE_TIMEZONE,
+			}),
+			endsAt: Availability.localToTimestamp({
+				date: wednesday,
+				time: "21:30",
+				timezone: MACHINE_TIMEZONE,
+			}),
+		});
+
+		await impersonate(page, ADMIN_ID);
+		await setTimezoneCookie(page);
+
+		const events = new EventsPage(page);
+		await events.goto();
+
+		await expect(events.locators.commitments.first()).toBeVisible();
+		await expect(events.locators.commitments.first()).toHaveText("VoD review");
+	});
+
 	test("copies last week's ranges into the current week", async ({
 		page,
 		factories,

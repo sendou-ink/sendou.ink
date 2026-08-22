@@ -1,5 +1,5 @@
 import { addHours, sub } from "date-fns";
-import type { Insertable, NotNull } from "kysely";
+import { type Insertable, type NotNull, sql } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
@@ -564,6 +564,58 @@ export async function findAcceptedScrimsBetweenTwoTimestamps({
 		.execute();
 
 	return rows.map(mapDBRowToScrimPost).filter((post) => Scrim.isAccepted(post));
+}
+
+/**
+ * Finds the accepted (booked), uncanceled scrims of the given users whose
+ * resolved start time — the accepted request's chosen time for a range post,
+ * the post's own otherwise — falls within the given window. Used to resolve
+ * availability commitments.
+ *
+ * @returns one row per participating user per scrim
+ */
+export async function findAllAcceptedByUserIds({
+	userIds,
+	startsAt,
+	endsAt,
+}: {
+	userIds: Array<number>;
+	startsAt: number;
+	endsAt: number;
+}) {
+	if (userIds.length === 0) return [];
+
+	const resolvedStartsAt = sql<number>`coalesce("ScrimPostRequest"."startsAt", "ScrimPost"."startsAt")`;
+
+	const acceptedInWindow = db
+		.selectFrom("ScrimPost")
+		.innerJoin("ScrimPostRequest", (join) =>
+			join
+				.onRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+				.on("ScrimPostRequest.isAccepted", "=", 1),
+		)
+		.where("ScrimPost.canceledAt", "is", null)
+		.where(resolvedStartsAt, ">=", startsAt)
+		.where(resolvedStartsAt, "<=", endsAt);
+
+	const [postSideUsers, requestSideUsers] = await Promise.all([
+		acceptedInWindow
+			.innerJoin("ScrimPostUser", "ScrimPostUser.scrimPostId", "ScrimPost.id")
+			.select(["ScrimPostUser.userId", resolvedStartsAt.as("startsAt")])
+			.where("ScrimPostUser.userId", "in", userIds)
+			.execute(),
+		acceptedInWindow
+			.innerJoin(
+				"ScrimPostRequestUser",
+				"ScrimPostRequestUser.scrimPostRequestId",
+				"ScrimPostRequest.id",
+			)
+			.select(["ScrimPostRequestUser.userId", resolvedStartsAt.as("startsAt")])
+			.where("ScrimPostRequestUser.userId", "in", userIds)
+			.execute(),
+	]);
+
+	return [...postSideUsers, ...requestSideUsers];
 }
 
 /**

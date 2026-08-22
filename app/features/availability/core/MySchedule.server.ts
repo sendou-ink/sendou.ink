@@ -6,6 +6,7 @@ import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
 import type { DayTimeRange, TimeRange } from "../availability-types";
 import * as Availability from "./Availability";
+import * as Commitments from "./Commitments.server";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -24,14 +25,22 @@ export async function myScheduleData(userId: number) {
 	const now = new Date();
 
 	const lastWeekRange = Availability.weekRange(subWeeks(now, 1), timezone);
-	const reportedWeeks = await AvailabilityRepository.findAllWeeksByUserIds({
-		userIds: [userId],
-		startsAt: lastWeekRange.startsAt,
-		endsAt: Availability.weekRange(
-			addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
-			timezone,
-		).endsAt,
-	});
+	const horizonEndsAt = Availability.weekRange(
+		addWeeks(now, AVAILABILITY.WEEK_HORIZON - 1),
+		timezone,
+	).endsAt;
+	const [reportedWeeks, busyBlocks] = await Promise.all([
+		AvailabilityRepository.findAllWeeksByUserIds({
+			userIds: [userId],
+			startsAt: lastWeekRange.startsAt,
+			endsAt: horizonEndsAt,
+		}),
+		Commitments.busyBlocksByUserIds({
+			userIds: [userId],
+			startsAt: Availability.weekRange(now, timezone).startsAt,
+			endsAt: horizonEndsAt,
+		}),
+	]);
 
 	const weeks = R.range(0, AVAILABILITY.WEEK_HORIZON).map((weekOffset) =>
 		editorWeek({
@@ -52,6 +61,12 @@ export async function myScheduleData(userId: number) {
 		lastWeekRanges: lastWeek.submitted
 			? lastWeek.days.map((day) => day.ranges)
 			: null,
+		commitments: (busyBlocks.get(userId) ?? []).map((block) => ({
+			date: Availability.dateInTimezone(block.startsAt, timezone),
+			range: slotToDayRange(block, timezone),
+			type: block.type,
+			name: block.name,
+		})),
 	};
 }
 

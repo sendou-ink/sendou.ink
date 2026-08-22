@@ -10,6 +10,8 @@ export const AVAILABILITY = {
 	WEEK_HORIZON: 2,
 	/** Weeks whose end is further in the past than this are deleted. */
 	RETENTION_MONTHS: 3,
+	/** Assumed length of an accepted scrim when it blocks availability — the actual end is not in the data model. */
+	SCRIM_COMMITMENT_SECONDS: 2 * 60 * 60,
 	/** A reported week belongs to a viewer week when their starts are closer than this — timezones set them apart by hours, never by days. */
 	WEEK_MATCH_MAX_DISTANCE_SECONDS: 3.5 * 24 * 60 * 60,
 	/** Left edge of the editor's clock window (14:00) — evenings are when people play. */

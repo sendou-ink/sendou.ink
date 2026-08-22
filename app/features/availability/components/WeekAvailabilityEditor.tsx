@@ -494,6 +494,7 @@ export function WeekAvailabilityEditor({
 							className={styles.commitment}
 							style={barStyle(commitment.range)}
 							title={commitment.name}
+							data-testid="availability-commitment"
 						>
 							<span className={styles.commitmentName}>{commitment.name}</span>
 						</div>

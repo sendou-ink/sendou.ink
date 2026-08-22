@@ -421,7 +421,7 @@ test.describe("Team schedule", () => {
 		factories,
 	}) => {
 		const noScheduleMember = await factories.UserFactory.create();
-		const { customUrl } = await factories.TeamFactory.create({
+		const { id: teamId, customUrl } = await factories.TeamFactory.create({
 			name: TEAM_NAME,
 			memberUserIds: [ADMIN_ID, NZAP_TEST_ID, noScheduleMember.id],
 		});
@@ -448,6 +448,14 @@ test.describe("Team schedule", () => {
 			timezone: MACHINE_TIMEZONE,
 			slots: [daySlot(WEDNESDAY, "19:00", "23:00")],
 		});
+		// a commitment late in the shared Wednesday evening: renders as a busy
+		// block and trims effective availability without removing the window
+		await factories.TeamEventFactory.create({
+			teamId,
+			authorId: ADMIN_ID,
+			name: "VoD review",
+			...daySlot(WEDNESDAY, "22:00", "23:30"),
+		});
 
 		await impersonate(page, ADMIN_ID);
 		await setTimezoneCookie(page);
@@ -462,6 +470,9 @@ test.describe("Team schedule", () => {
 		await expect(schedule.cellRange(ADMIN_ID, THURSDAY)).toBeVisible();
 		await expect(schedule.cell(ADMIN_ID, 0)).toHaveText("—");
 		await expect(schedule.cell(noScheduleMember.id, 0)).toHaveText("?");
+		await expect(schedule.cellBusy(NZAP_TEST_ID, WEDNESDAY)).toHaveText(
+			"VoD review",
+		);
 		await expect(schedule.locators.notes).toContainText("Leaving early");
 
 		// two members share Wed 19-22 while the third has no schedule, so the

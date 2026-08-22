@@ -25,6 +25,7 @@ export class EventsPage {
 			emptyCategoryText: page.getByText("No events in this category"),
 			mySchedule: page.getByTestId("my-schedule"),
 			availabilityBars: page.getByTestId("availability-bar"),
+			commitments: page.getByTestId("availability-commitment"),
 			saveWeekButton: page.getByTestId("save-week-button"),
 			copyLastWeekButton: page.getByTestId("copy-last-week-button"),
 			dayEditorPopover: page.getByRole("dialog"),
