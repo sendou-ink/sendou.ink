@@ -8,10 +8,13 @@ import {
 	useRevalidator,
 } from "react-router";
 import { Config } from "~/config";
+import { useEventsConnection } from "~/features/events/events-hooks";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { logger } from "~/utils/logger";
-import { soundPath } from "~/utils/urls";
-import { useRefreshOnReconnect } from "./chat-hooks";
+import {
+	useRefreshOnReconnect,
+	useServerRevalidationEvents,
+} from "./chat-hooks";
 import { useLastReadCounts, writeLastReadCount } from "./chat-last-read";
 import type {
 	RoomInfo,
@@ -20,7 +23,7 @@ import type {
 } from "./chat-provider-types";
 import { chatUsersSearchParams } from "./chat-search-params";
 import type { ChatMessage, ChatUser } from "./chat-types";
-import { messageTypeToSound, soundEnabled, soundVolume } from "./chat-utils";
+import { playMessageSound } from "./chat-utils";
 import { scheduleBroadcastRevalidation } from "./revalidation-scope";
 import { ChatContext } from "./useChatContext";
 
@@ -103,6 +106,9 @@ function ChatProviderInner({
 }) {
 	const { revalidate } = useRevalidator();
 
+	useEventsConnection(true);
+	useServerRevalidationEvents(userId);
+
 	const [isLoading, setIsLoading] = React.useState(true);
 	const [rooms, setRooms] = React.useState<RoomInfo[]>([]);
 	const [messagesByRoom, setMessagesByRoom] = React.useState<
@@ -120,7 +126,6 @@ function ChatProviderInner({
 		{},
 	);
 	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
-	const [notificationsVersion, setNotificationsVersion] = React.useState(0);
 
 	const ws = React.useRef<WebSocket>(undefined);
 
@@ -193,13 +198,6 @@ function ChatProviderInner({
 			return;
 		}
 
-		// Notifications changed server-side; handled before the fallthrough below
-		// so a contentless ping is never treated as a chat message
-		if (parsed.event === "NOTIFICATIONS_CHANGED") {
-			setNotificationsVersion((version) => version + 1);
-			return;
-		}
-
 		// CHAT_HISTORY response (also returned by SUBSCRIBE with metadata)
 		if (parsed.event === "CHAT_HISTORY" && Array.isArray(parsed.messages)) {
 			logger.debug(
@@ -255,31 +253,13 @@ function ChatProviderInner({
 			"system:",
 			isSystemMessage,
 		);
-		if (isSystemMessage || messageArr[0].revalidateOnly) {
-			// The actor that triggered this revalidate is the current user — their
-			// own form submission already reran loaders, so skip the duplicate fetch.
-			const isOwnRevalidate =
-				messageArr[0].revalidateOnly && messageArr[0].authorUserId === userId;
-			if (!isOwnRevalidate) {
-				// jittered so a broadcast fanning out to a whole room does not make
-				// every subscribed client refetch in the same instant
-				scheduleBroadcastRevalidation(
-					revalidate,
-					messageArr[0].revalidateScope,
-				);
-			}
+		if (isSystemMessage) {
+			// jittered so a broadcast fanning out to a whole room does not make
+			// every subscribed client refetch in the same instant
+			scheduleBroadcastRevalidation(revalidate, messageArr[0].revalidateScope);
 		}
 
-		const sound = messageTypeToSound(messageArr[0].type);
-		if (sound && soundEnabled(sound)) {
-			const audio = new Audio(soundPath(sound));
-			audio.volume = soundVolume() / 100;
-			void audio
-				.play()
-				.catch((err) => logger.error(`Couldn't play sound: ${err}`));
-		}
-
-		if (messageArr[0].revalidateOnly) return;
+		playMessageSound(messageArr[0].type);
 
 		for (const msg of messageArr) {
 			const roomCode = msg.room;
@@ -405,16 +385,6 @@ function ChatProviderInner({
 		ws.current?.send(JSON.stringify({ event: "UNSUBSCRIBE", chatCode }));
 	}, []);
 
-	const subscribeTopic = React.useCallback((topic: string) => {
-		logger.debug("WS SUBSCRIBE_TOPIC:", topic);
-		ws.current?.send(JSON.stringify({ event: "SUBSCRIBE_TOPIC", topic }));
-	}, []);
-
-	const unsubscribeTopic = React.useCallback((topic: string) => {
-		logger.debug("WS UNSUBSCRIBE_TOPIC:", topic);
-		ws.current?.send(JSON.stringify({ event: "UNSUBSCRIBE_TOPIC", topic }));
-	}, []);
-
 	const requestHistory = React.useCallback((chatCode: string) => {
 		logger.debug("WS CHAT_HISTORY:", chatCode);
 		ws.current?.send(JSON.stringify({ event: "CHAT_HISTORY", chatCode }));
@@ -489,14 +459,11 @@ function ChatProviderInner({
 			send,
 			subscribe,
 			unsubscribe,
-			subscribeTopic,
-			unsubscribeTopic,
 			requestHistory,
 			markAsRead,
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
-			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			setChatOpen,
@@ -513,14 +480,11 @@ function ChatProviderInner({
 			send,
 			subscribe,
 			unsubscribe,
-			subscribeTopic,
-			unsubscribeTopic,
 			requestHistory,
 			markAsRead,
 			unreadCounts,
 			totalUnreadCount,
 			readyState,
-			notificationsVersion,
 			chatUsers,
 			chatOpen,
 			activeRooms,

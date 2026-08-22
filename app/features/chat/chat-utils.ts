@@ -1,4 +1,6 @@
 import { differenceInDays } from "date-fns";
+import { logger } from "~/utils/logger";
+import { soundPath } from "~/utils/urls";
 import type { ChatMessage } from "./chat-types";
 
 const STAFF_EXTRA_DAYS = 7;
@@ -50,6 +52,15 @@ export function soundEnabled(soundCode: string) {
 	const soundEnabled = localStorage.getItem(localStorageKey);
 
 	return !soundEnabled || soundEnabled === "true";
+}
+
+export function playMessageSound(type: ChatMessage["type"]) {
+	const sound = messageTypeToSound(type);
+	if (!sound || !soundEnabled(sound)) return;
+
+	const audio = new Audio(soundPath(sound));
+	audio.volume = soundVolume() / 100;
+	void audio.play().catch((err) => logger.error(`Couldn't play sound: ${err}`));
 }
 
 export function soundVolume() {

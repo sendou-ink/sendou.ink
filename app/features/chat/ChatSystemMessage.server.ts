@@ -2,11 +2,16 @@ import { add } from "date-fns";
 import { nanoid } from "nanoid";
 import { ServerConfig } from "~/config.server";
 import { actorIdOrNullSafe } from "~/features/auth/core/user.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
-import type { ChatMessage } from "./chat-types";
+import type {
+	ChatMessage,
+	SoundOnlySystemMessageType,
+	SystemMessageType,
+} from "./chat-types";
 import { createRevalidateBroadcastThrottle } from "./revalidate-broadcast-throttle";
 
 const SKALOP_TOKEN_HEADER_NAME = "Skalop-Token";
@@ -58,19 +63,14 @@ const REVALIDATE_BROADCAST_THROTTLE_WINDOW_MS = 2_000;
 
 const revalidateThrottle = createRevalidateBroadcastThrottle({
 	windowMs: REVALIDATE_BROADCAST_THROTTLE_WINDOW_MS,
-	sendLeading: (msg) => postMessages([toFullMessage(msg)]),
+	sendLeading: (msg) => publishRevalidate(msg),
 	// no author on purpose: the trailing broadcast covers many actors' changes,
 	// so no client may skip it as a duplicate of their own submission
 	sendTrailing: (msg) =>
-		postMessages([
-			{
-				id: nanoid(),
-				timestamp: Date.now(),
-				room: msg.room,
-				revalidateOnly: true,
-				revalidateScope: msg.revalidateScope,
-			},
-		]),
+		EventBus.publish([msg.room], {
+			kind: "revalidate",
+			scope: msg.revalidateScope,
+		}),
 });
 
 export const send: ChatSystemMessageService["send"] = (partialMsg) => {
@@ -82,6 +82,8 @@ export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 	for (const msg of msgArr) {
 		if (revalidateThrottle.throttles(msg)) {
 			revalidateThrottle.handle(msg);
+		} else if (msg.revalidateOnly) {
+			publishRevalidate(msg);
 		} else {
 			immediate.push(msg);
 		}
@@ -90,6 +92,29 @@ export const send: ChatSystemMessageService["send"] = (partialMsg) => {
 
 	return postMessages(immediate.map(toFullMessage));
 };
+
+function publishRevalidate(msg: PartialChatMessage) {
+	EventBus.publish([msg.room], {
+		kind: "revalidate",
+		scope: msg.revalidateScope,
+		authorUserId: msg.authorUserId ?? actorIdOrNullSafe() ?? undefined,
+		type: soundOnlyType(msg.type),
+	});
+}
+
+function soundOnlyType(
+	type: SystemMessageType | undefined,
+): SoundOnlySystemMessageType | undefined {
+	if (
+		type === "NEW_GROUP" ||
+		type === "MATCH_STARTED" ||
+		type === "READY_CHECK_STARTED" ||
+		type === "LIKE_RECEIVED"
+	) {
+		return type;
+	}
+	return undefined;
+}
 
 function toFullMessage(partialMsg: PartialChatMessage): ChatMessage {
 	return {
@@ -119,25 +144,17 @@ function postMessages(fullMessages: ChatMessage[]) {
 }
 
 /**
- * Tells skalop to send a contentless "your notifications changed" ping to the
- * users' websocket connections, prompting their clients to refetch. Fire and
- * forget like the other system messages; a lost ping only delays the refetch.
+ * Publishes a contentless "your notifications changed" event to the users'
+ * event streams, prompting their clients to refetch. Fire and forget like the
+ * other system messages; a missed event only delays the refetch.
  */
 export function notifyNotificationsChanged(userIds: number[]) {
 	if (systemMessagesDisabled) return;
 	if (userIds.length === 0) return;
 
-	return void fetch(ServerConfig.skalop.systemMessageUrl!, {
-		method: "POST",
-		body: JSON.stringify({
-			action: "notifyUsers",
-			userIds,
-		}),
-		headers: [
-			[SKALOP_TOKEN_HEADER_NAME, ServerConfig.skalop.token!],
-			["Content-Type", "application/json"],
-		],
-	}).catch(logSkalpError("notifyUsers"));
+	EventBus.publish(userIds.map(EventBus.userChannel), {
+		kind: "notificationsChanged",
+	});
 }
 
 export function removeRoom(chatCode: string) {

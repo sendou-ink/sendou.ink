@@ -1,7 +1,10 @@
 import * as React from "react";
 import { useFetchers, useLocation, useNavigation } from "react-router";
 import { useRefreshOnReconnect } from "~/features/chat/chat-hooks";
-import { useChatContext } from "~/features/chat/useChatContext";
+import {
+	useEventsReadyState,
+	useServerEventListener,
+} from "~/features/events/events-hooks";
 import { useBackgroundResource } from "~/hooks/useBackgroundResource";
 import type { SerializeFrom } from "~/utils/remix";
 import { NOTIFICATIONS_DATA_ROUTE } from "~/utils/urls";
@@ -11,7 +14,7 @@ import type { loader } from "./routes/api.notifications";
 /** Spreads out the refetches when a notification fans out to many users at once. */
 const PING_REFRESH_JITTER_MS = 3_000;
 
-const WS_DOWN_POLL_MS = 2 * 60 * 1000;
+const EVENTS_DOWN_POLL_MS = 2 * 60 * 1000;
 
 export type NotificationsData = SerializeFrom<typeof loader>["notifications"];
 
@@ -28,11 +31,11 @@ const NotificationsContext = React.createContext<NotificationsContextValue>({
 /**
  * Serves the notification peek (bell popover + unseen dot) and keeps it fresh
  * push-first: an initial fetch after mount (deliberately not part of any
- * loader, so notifications never delay a page), then a refetch whenever skalop
- * pings over the chat websocket that the user's notifications changed
- * server-side (new notification, marked seen, resolved by an action
- * elsewhere). Polling and refetch-on-activity heuristics only kick in as a
- * fallback while the websocket is down.
+ * loader, so notifications never delay a page), then a refetch whenever the
+ * server publishes over the shared SSE connection that the user's
+ * notifications changed server-side (new notification, marked seen, resolved
+ * by an action elsewhere). Polling and refetch-on-activity heuristics only
+ * kick in as a fallback while the event stream is down.
  */
 export function NotificationsProvider({
 	user,
@@ -44,11 +47,10 @@ export function NotificationsProvider({
 	const { data, refresh } = useBackgroundResource<SerializeFrom<typeof loader>>(
 		NOTIFICATIONS_DATA_ROUTE,
 	);
-	const chat = useChatContext();
+	const readyState = useEventsReadyState();
 
 	const loggedIn = Boolean(user);
-	const readyState = chat?.readyState ?? "CLOSED";
-	const wsDown = loggedIn && readyState !== "CONNECTED";
+	const eventsDown = loggedIn && readyState !== "CONNECTED";
 
 	React.useEffect(() => {
 		if (!loggedIn) return;
@@ -57,15 +59,24 @@ export function NotificationsProvider({
 		void resyncPushSubscription();
 	}, [loggedIn, refresh]);
 
-	useRefreshOnPing({ version: chat?.notificationsVersion ?? 0, refresh });
+	// bumps every time the server publishes that the user's notifications
+	// changed; the event carries no data on purpose, watchers refetch
+	const [pingVersion, setPingVersion] = React.useState(0);
+	useServerEventListener((event) => {
+		if (event.kind === "notificationsChanged") {
+			setPingVersion((version) => version + 1);
+		}
+	});
+
+	useRefreshOnPing({ version: pingVersion, refresh });
 	useRefreshOnReconnect(readyState, refresh);
 	useRefreshOnVisible({ enabled: loggedIn, refresh });
-	useFallbackPoll({ enabled: wsDown, refresh });
+	useFallbackPoll({ enabled: eventsDown, refresh });
 
 	const notifications = data?.notifications;
 
 	useFallbackRefreshOnPotentialResolution({
-		enabled: wsDown,
+		enabled: eventsDown,
 		notifications,
 		refresh,
 	});
@@ -138,13 +149,13 @@ function useFallbackPoll({
 	React.useEffect(() => {
 		if (!enabled) return;
 
-		const interval = setInterval(refresh, WS_DOWN_POLL_MS);
+		const interval = setInterval(refresh, EVENTS_DOWN_POLL_MS);
 		return () => clearInterval(interval);
 	}, [enabled, refresh]);
 }
 
 /**
- * Without the websocket there is no ping when something the user did resolves
+ * Without the event stream there is no ping when something the user did resolves
  * an unseen notification, so fall back to refetching after anything that may
  * have: a navigation (loaders mark notifications seen when the user views the
  * page a notification points at) or a settled action submission (actions mark
