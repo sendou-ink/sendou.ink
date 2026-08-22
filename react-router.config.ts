@@ -1,8 +1,9 @@
 import type { Config } from "@react-router/dev/config";
 
 export default {
-	// Fog of war: inlines only the matched routes' manifest (~13KB) instead of the
-	// full-route-tree manifest asset (~400KB at the time of writing) every page load
-	routeDiscovery: { mode: "lazy" },
+	// Upfront cost vs. lazy loading trade-off
+	// also lazy loading causes more load on the server
+	// this matches old Remix v2 behavior
+	routeDiscovery: { mode: "initial" },
 	splitRouteModules: true,
 } satisfies Config;
