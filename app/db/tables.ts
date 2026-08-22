@@ -1345,6 +1345,45 @@ export interface SplatoonRotation {
 	endsAt: number;
 }
 
+/** One week of availability a user reported. The row existing means the week was submitted, which is what tells "unavailable all week" (submitted, no slots) apart from "unknown" (no row). */
+export interface AvailabilityWeek {
+	id: GeneratedAlways<number>;
+	userId: number;
+	/** Monday 00:00 of the week, in `timezone` */
+	weekStartsAt: number;
+	/** IANA timezone the week was reported in, which the day notes' dates are relative to */
+	timezone: string;
+	createdAt: Generated<number>;
+	updatedAt: Generated<number>;
+}
+
+/** A range the user is available for. Absolute, so a range crossing midnight is one row like any other. */
+export interface AvailabilitySlot {
+	id: GeneratedAlways<number>;
+	availabilityWeekId: number;
+	startsAt: number;
+	endsAt: number;
+}
+
+export interface AvailabilityDayNote {
+	availabilityWeekId: number;
+	/** YYYY-MM-DD, in the week's `timezone` */
+	date: string;
+	text: string;
+}
+
+/** Something the team does together that is not a tournament or a scrim, e.g. a VoD review. Blocks the members' availability. */
+export interface TeamEvent {
+	id: GeneratedAlways<number>;
+	teamId: number;
+	/** User who created the event */
+	authorId: number;
+	name: string;
+	startsAt: number;
+	endsAt: number;
+	createdAt: Generated<number>;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
@@ -1495,4 +1534,8 @@ export interface DB {
 	NotificationUserSubscription: NotificationUserSubscription;
 	SavedCalendarEvent: SavedCalendarEvent;
 	SplatoonRotation: SplatoonRotation;
+	AvailabilityWeek: AvailabilityWeek;
+	AvailabilitySlot: AvailabilitySlot;
+	AvailabilityDayNote: AvailabilityDayNote;
+	TeamEvent: TeamEvent;
 }

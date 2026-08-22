@@ -24,7 +24,14 @@ import type { SeededUsers } from "./users";
 
 const NZAP_PLAYER_SPL_ID = "qx6imlx72tfeqrhqfnmm";
 const FRIEND_COUNT = 8;
+/** Friends of the admin, none of them a teammate, so that friends-only surfaces have something to show. */
+const ADMIN_FRIEND_COUNT = 3;
 const STREAM_COUNT = 20;
+
+export type SeededMisc = {
+	/** The admin's friends, who are none of them their teammate. */
+	adminFriendIds: number[];
+};
 
 export async function seedMisc({
 	users,
@@ -34,7 +41,7 @@ export async function seedMisc({
 	users: SeededUsers;
 	sendouq: SeededSendouQ;
 	tournaments: SeededTournaments;
-}) {
+}): Promise<SeededMisc> {
 	await seedXRankPlacements(users);
 	await seedArts(users);
 	await seedFriends(users);
@@ -45,6 +52,8 @@ export async function seedMisc({
 		users.showcaseIds.slice(0, STREAM_COUNT).map((userId) => ({ userId })),
 	);
 	await SplatoonRotationFactory.replaceAll();
+
+	return { adminFriendIds: adminFriendIds(users) };
 }
 
 async function seedXRankPlacements(users: SeededUsers) {
@@ -123,6 +132,21 @@ async function seedFriends(users: SeededUsers) {
 		senderId: users.showcaseIds[FRIEND_COUNT],
 		receiverId: users.nzapId,
 	});
+
+	for (const friendId of adminFriendIds(users)) {
+		await FriendshipFactory.create({
+			userOneId: users.adminId,
+			userTwoId: friendId,
+		});
+	}
+}
+
+/** Showcase users befriending the admin, taken from past the ones N-ZAP's friendships and friend request use. */
+function adminFriendIds(users: SeededUsers) {
+	return users.showcaseIds.slice(
+		FRIEND_COUNT + 1,
+		FRIEND_COUNT + 1 + ADMIN_FRIEND_COUNT,
+	);
 }
 
 async function seedNotifications(

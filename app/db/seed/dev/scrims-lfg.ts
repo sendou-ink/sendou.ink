@@ -8,14 +8,24 @@ import * as ScrimPostFactory from "../factories/ScrimPostFactory";
 import type { SeededTeams } from "./teams";
 import type { SeededUsers } from "./users";
 
+export type SeededScrims = {
+	/** The booked scrim of the admin's and N-ZAP's rosters, a commitment their availability has to give way to. */
+	accepted: { startsAt: number; userIds: number[] };
+};
+
 const SCRIM_POST_COUNT = 20;
 const LFG_POST_COUNT = 9;
 const ASSOCIATION_COUNT = 3;
 
-export async function seedScrimsAndLFG(users: SeededUsers, teams: SeededTeams) {
-	await seedScrimPosts(users, teams);
+export async function seedScrimsAndLFG(
+	users: SeededUsers,
+	teams: SeededTeams,
+): Promise<SeededScrims> {
+	const accepted = await seedScrimPosts(users, teams);
 	await seedLFGPosts(users, teams);
 	await seedAssociations(users);
+
+	return { accepted };
 }
 
 async function seedScrimPosts(users: SeededUsers, teams: SeededTeams) {
@@ -32,20 +42,26 @@ async function seedScrimPosts(users: SeededUsers, teams: SeededTeams) {
 	};
 
 	// an accepted scrim between the admin's and N-ZAP's rosters
+	const acceptedStartsAt = dateToDatabaseTimestamp(
+		add(new Date(), { hours: 2 }),
+	);
+	const acceptedPostUsers = [
+		{ userId: users.adminId, isOwner: 1 as const },
+		...takeUsers(3),
+	];
+	const acceptedRequestUsers = [
+		{ userId: users.nzapId, isOwner: 1 as const },
+		...takeUsers(3),
+	];
 	await ScrimPostFactory.create(
 		{
-			startsAt: dateToDatabaseTimestamp(add(new Date(), { hours: 2 })),
+			startsAt: acceptedStartsAt,
 			isScheduledForFuture: true,
 			managedByAnyone: true,
-			users: [{ userId: users.adminId, isOwner: 1 }, ...takeUsers(3)],
+			users: acceptedPostUsers,
 		},
 		{
-			requests: [
-				{
-					users: [{ userId: users.nzapId, isOwner: 1 }, ...takeUsers(3)],
-					isAccepted: true,
-				},
-			],
+			requests: [{ users: acceptedRequestUsers, isAccepted: true }],
 		},
 	);
 
@@ -81,6 +97,13 @@ async function seedScrimPosts(users: SeededUsers, teams: SeededTeams) {
 			},
 		);
 	}
+
+	return {
+		startsAt: acceptedStartsAt,
+		userIds: [...acceptedPostUsers, ...acceptedRequestUsers].map(
+			(user) => user.userId,
+		),
+	};
 }
 
 async function seedLFGPosts(users: SeededUsers, teams: SeededTeams) {

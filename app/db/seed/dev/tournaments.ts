@@ -121,7 +121,13 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 
 export type SeededTournaments = {
 	/** The one with registration still open, which the notifications are about. */
-	regOpen: { id: number; name: string };
+	regOpen: {
+		id: number;
+		name: string;
+		startsAt: number;
+		/** The roster the admin registered on. */
+		memberUserIds: number[];
+	};
 	/** Teams N-ZAP played on in the tournaments that were played to the end. */
 	nzapTeamIds: number[];
 };
@@ -177,13 +183,14 @@ async function seedInTheZone({
 	trophies,
 }: Ctx & { trophies: SeededTrophies }) {
 	const name = nameFor("In The Zone");
+	const startsAt = dateToDatabaseTimestamp(daysFromNow(2));
 
 	const tournament = await TournamentFactory.create({
 		name,
 		authorId: users.adminId,
 		organizationId: organizations[0]?.id,
 		avatarFileName: "in-the-zone.png",
-		startTimes: [dateToDatabaseTimestamp(daysFromNow(2))],
+		startTimes: [startsAt],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
 		bracketProgression: DOUBLE_ELIMINATION,
@@ -210,7 +217,12 @@ async function seedInTheZone({
 
 	await seedTournamentExtras(tournament.id, users);
 
-	return { id: tournament.id, name };
+	return {
+		id: tournament.id,
+		name,
+		startsAt,
+		memberUserIds: teamRosters[0].memberUserIds,
+	};
 }
 
 /** #2 double elim with an underground bracket, AUTO_SZ, ranked — bracket started,
