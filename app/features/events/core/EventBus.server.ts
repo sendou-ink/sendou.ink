@@ -1,19 +1,6 @@
-import type {
-	ChatMessageWithAuthor,
-	RevalidateScope,
-	SoundOnlySystemMessageType,
-} from "~/features/chat/chat-types";
+import type { ServerEvent } from "../events-types";
 
-export type ServerEvent =
-	| { kind: "chatMessage"; roomId: number; message: ChatMessageWithAuthor }
-	| {
-			kind: "revalidate";
-			scope?: RevalidateScope;
-			authorUserId?: number;
-			type?: SoundOnlySystemMessageType;
-	  }
-	| { kind: "notificationsChanged" }
-	| { kind: "roomsChanged" };
+export type { ServerEvent };
 
 /** Channel delivering events addressed to the user across all of their connections. */
 export function userChannel(userId: number): string {
