@@ -331,11 +331,15 @@ export async function submit(page: Page, target?: string | Locator) {
 		await button.click();
 	});
 
-	// Toast flash params are stripped right after via a replace navigation
-	// (without revalidation); wait for it so it can't abort a later click.
-	await page.waitForURL((url) => !/__(?:success|error)=/.test(url.href), {
-		timeout: 5_000,
-	});
+	// An action's toast redirect adds flash params that a replace navigation
+	// strips right after (without revalidation), remounting every form on the
+	// page twice. Waiting on the rendered search rather than the browser's URL
+	// covers the commit those remounts land in, which trails the history entry
+	// — otherwise the second remount tears down whatever the test opens next.
+	await page.waitForSelector(
+		'[data-testid="hydrated"]:not([data-location-search*="__success"]):not([data-location-search*="__error"])',
+		{ state: "attached", timeout: 5_000 },
+	);
 }
 
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
@@ -343,6 +347,22 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 
 	const MAX_ATTEMPTS = 3;
 	const PER_ATTEMPT_TIMEOUT = 10_000;
+
+	// The busy marker only appears once React commits the submission, which on a
+	// loaded machine lands well after the POST left the browser. Watching for it
+	// from before the click keeps the idle of the *previous* render from being
+	// read as the action having settled below.
+	const routerWentBusy = page
+		.waitForFunction(
+			() =>
+				document
+					.querySelector('[data-testid="hydrated"]')
+					?.getAttribute("data-router-idle") !== "true",
+			undefined,
+			{ timeout: PER_ATTEMPT_TIMEOUT },
+		)
+		// a POST that no fetcher or navigation drives never turns the router busy
+		.catch(() => {});
 
 	// React Aria buttons fire their handler on press end. Occasionally a click
 	// registers the press start (the button goes `:active`) but the press never
@@ -367,6 +387,7 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	// The POST's revalidation (and any redirect it drives) is still in flight;
 	// an interaction landing mid-flight aborts it, and routes that opt out of
 	// revalidation on navigation (e.g. to.$id) then keep the stale data.
+	await routerWentBusy;
 	await expectRouterIdle(page);
 
 	return response!;

@@ -22,6 +22,7 @@ import {
 	useFetchers,
 	useHref,
 	useLoaderData,
+	useLocation,
 	useMatches,
 	useNavigate,
 	useNavigation,
@@ -445,6 +446,7 @@ function HydrationTestIndicator() {
 	const navigation = useNavigation();
 	const revalidator = useRevalidator();
 	const fetchers = useFetchers();
+	const location = useLocation();
 
 	if (!isHydrated) return null;
 
@@ -469,6 +471,10 @@ function HydrationTestIndicator() {
 			data-testid="hydrated"
 			data-router-idle={routerIdle ? "true" : undefined}
 			data-router-busy={routerIdle ? undefined : busy.join(" | ")}
+			// the rendered search, trailing the browser's own by a commit: only
+			// once the toast params are gone from here have the forms keyed on
+			// the location (see SendouForm) finished remounting
+			data-location-search={location.search}
 		/>
 	);
 }
