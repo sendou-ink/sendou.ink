@@ -24,7 +24,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const data = await parseRequestPayload({ request, schema: topicsSchema });
 
 	for (const topic of data.topics) {
-		if (!TopicAccess.canSubscribe(user.id, topic)) {
+		if (!(await TopicAccess.canSubscribe(user.id, topic))) {
 			throw new Response(null, { status: 403 });
 		}
 	}

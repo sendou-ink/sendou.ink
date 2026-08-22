@@ -8,6 +8,7 @@ import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
+import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -236,6 +237,14 @@ export function buildCases(fx: Fixtures): {
 	// ChatRepository
 	add("ChatRepository.findAllMessagesByRoomId", fx.heavyChatRoomId, (roomId) =>
 		ChatRepository.findAllMessagesByRoomId(roomId),
+	);
+
+	// ChatRoomResolver
+	add("ChatRoomResolver.resolve", fx.heavyChatRoomId, (roomId) =>
+		ChatRoomResolver.resolve([roomId]),
+	);
+	add("ChatRoomResolver.findAllByUserId", fx.heavyUser, (user) =>
+		ChatRoomResolver.findAllByUserId(user.id),
 	);
 
 	// FriendRepository
