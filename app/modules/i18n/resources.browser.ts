@@ -15,6 +15,7 @@ import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
 import params from "../../../locales/en/params.json";
 import q from "../../../locales/en/q.json";
+import schedule from "../../../locales/en/schedule.json";
 import scrims from "../../../locales/en/scrims.json";
 import settings from "../../../locales/en/settings.json";
 import team from "../../../locales/en/team.json";
@@ -44,6 +45,7 @@ export const resources = {
 		org,
 		params,
 		q,
+		schedule,
 		scrims,
 		settings,
 		team,

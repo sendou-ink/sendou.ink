@@ -361,3 +361,186 @@ describe("Availability.snapMinutes", () => {
 		expect(Availability.snapMinutes(minutes)).toBe(expected);
 	});
 });
+
+const TRACK = { trackStart: 14 * 60, trackEnd: 26 * 60 };
+const minuteRange = (start: number, end: number) => ({ start, end });
+
+describe("Availability.timeToMinutes", () => {
+	test.each([
+		["00:00", 0],
+		["09:30", 570],
+		["23:59", 1439],
+	])("resolves %s to %i minutes", (time, expected) => {
+		expect(Availability.timeToMinutes(time)).toBe(expected);
+	});
+
+	test("throws on a malformed time", () => {
+		expect(() => Availability.timeToMinutes("half past six")).toThrow();
+	});
+});
+
+describe("Availability.minutesToTime", () => {
+	test.each([
+		{ why: "midnight", minutes: 0, expected: "00:00" },
+		{ why: "an evening time", minutes: 1380, expected: "23:00" },
+		{ why: "a time past midnight", minutes: 1560, expected: "02:00" },
+	])("prints $why as $expected", ({ minutes, expected }) => {
+		expect(Availability.minutesToTime(minutes)).toBe(expected);
+	});
+});
+
+describe("Availability.dayRangeFromTimes", () => {
+	test("keeps a same-day range as entered", () => {
+		expect(Availability.dayRangeFromTimes("18:00", "22:00")).toEqual(
+			minuteRange(1080, 1320),
+		);
+	});
+
+	test("pushes an end earlier than the start past midnight", () => {
+		expect(Availability.dayRangeFromTimes("22:00", "02:00")).toEqual(
+			minuteRange(1320, 1560),
+		);
+	});
+
+	test("treats an end equal to the start as an empty range", () => {
+		const result = Availability.dayRangeFromTimes("18:00", "18:00");
+
+		expect(Availability.mergedDayRanges([result])).toEqual([]);
+	});
+});
+
+describe("Availability.mergedDayRanges", () => {
+	test("merges overlapping and touching ranges", () => {
+		expect(
+			Availability.mergedDayRanges([
+				minuteRange(1200, 1320),
+				minuteRange(1080, 1230),
+				minuteRange(1320, 1380),
+			]),
+		).toEqual([minuteRange(1080, 1380)]);
+	});
+
+	test("keeps separated ranges apart and drops empty ones", () => {
+		expect(
+			Availability.mergedDayRanges([
+				minuteRange(1260, 1380),
+				minuteRange(1080, 1140),
+				minuteRange(600, 600),
+			]),
+		).toEqual([minuteRange(1080, 1140), minuteRange(1260, 1380)]);
+	});
+});
+
+describe("Availability.paintedRange", () => {
+	test("snaps both ends and orders a backwards drag", () => {
+		expect(
+			Availability.paintedRange({
+				anchor: 1307,
+				cursor: 1114,
+				walls: [],
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1110, 1320));
+	});
+
+	test("grows a plain press to one step", () => {
+		expect(
+			Availability.paintedRange({
+				anchor: 1085,
+				cursor: 1085,
+				walls: [],
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1080, 1110));
+	});
+
+	test("extends across a wall", () => {
+		expect(
+			Availability.paintedRange({
+				anchor: 1080,
+				cursor: 1440,
+				walls: [minuteRange(1200, 1290)],
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1080, 1440));
+	});
+
+	test("returns null when the anchor is inside a wall", () => {
+		expect(
+			Availability.paintedRange({
+				anchor: 1230,
+				cursor: 1440,
+				walls: [minuteRange(1200, 1290)],
+				...TRACK,
+			}),
+		).toBeNull();
+	});
+
+	test("stays inside the track", () => {
+		expect(
+			Availability.paintedRange({
+				anchor: 1500,
+				cursor: 2000,
+				walls: [],
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1500, 1560));
+	});
+});
+
+describe("Availability.movedRange", () => {
+	test("snaps the move to the entry step", () => {
+		expect(
+			Availability.movedRange({
+				range: minuteRange(1080, 1200),
+				delta: 44,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1110, 1230));
+	});
+
+	test("stops at the track edges", () => {
+		expect(
+			Availability.movedRange({
+				range: minuteRange(1080, 1200),
+				delta: -1000,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(840, 960));
+	});
+});
+
+describe("Availability.resizedRange", () => {
+	test("keeps at least one step when dragged past the other edge", () => {
+		expect(
+			Availability.resizedRange({
+				range: minuteRange(1080, 1200),
+				edge: "end",
+				cursor: 900,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1080, 1110));
+	});
+
+	test("stops the dragged edge at the track edges", () => {
+		expect(
+			Availability.resizedRange({
+				range: minuteRange(1320, 1440),
+				edge: "start",
+				cursor: 500,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(840, 1440));
+	});
+
+	test("snaps the dragged edge", () => {
+		expect(
+			Availability.resizedRange({
+				range: minuteRange(1080, 1200),
+				edge: "end",
+				cursor: 1307,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1080, 1320));
+	});
+});

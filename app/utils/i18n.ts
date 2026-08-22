@@ -19,6 +19,7 @@ const ALL_NAMESPACES = [
 	"user",
 	"weapons",
 	"scrims",
+	"schedule",
 	"tournament",
 	"team",
 	"tier-list-maker",

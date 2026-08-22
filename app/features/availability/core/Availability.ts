@@ -8,6 +8,7 @@ import {
 import invariant from "~/utils/invariant";
 import { AVAILABILITY } from "../availability-constants";
 import type {
+	DayTimeRange,
 	MemberAvailability,
 	PlayableWindow,
 	TimeRange,
@@ -276,3 +277,171 @@ function inTimezone(timestamp: number, timezone: string) {
 		timezone,
 	);
 }
+
+/** Minutes from midnight of a `HH:mm` time string. */
+export function timeToMinutes(time: string) {
+	const [hours, minutes] = time.split(":").map(Number);
+
+	invariant(
+		Number.isFinite(hours) && Number.isFinite(minutes),
+		`Malformed time: ${time}`,
+	);
+
+	return hours * 60 + minutes;
+}
+
+/**
+ * `HH:mm` on the clock at the given minutes from midnight. Minutes past 24h
+ * wrap around, so the end of a range crossing midnight prints as e.g. `02:00`.
+ */
+export function minutesToTime(minutes: number) {
+	const onClock = ((minutes % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
+
+	return `${String(Math.floor(onClock / 60)).padStart(2, "0")}:${String(
+		onClock % 60,
+	).padStart(2, "0")}`;
+}
+
+/**
+ * Editor day range of the given start and end times. An end earlier than the
+ * start means the range crosses midnight; an end equal to the start is an
+ * empty range (dropped by {@link mergedDayRanges}).
+ */
+export function dayRangeFromTimes(start: string, end: string): DayTimeRange {
+	const startMinutes = timeToMinutes(start);
+	const endMinutes = timeToMinutes(end);
+
+	return {
+		start: startMinutes,
+		end: endMinutes >= startMinutes ? endMinutes : endMinutes + DAY_MINUTES,
+	};
+}
+
+/**
+ * The ranges of one day track sorted and merged so that no two of them overlap
+ * or touch. Empty ranges are dropped.
+ */
+export function mergedDayRanges(
+	ranges: Array<DayTimeRange>,
+): Array<DayTimeRange> {
+	return normalize(ranges.map(toTimeRange)).map(toDayRange);
+}
+
+interface TrackWindowArgs {
+	/** Left edge of the visible clock window, minutes from midnight. */
+	trackStart: number;
+	/** Right edge of the visible clock window, minutes from midnight. */
+	trackEnd: number;
+}
+
+/**
+ * Range painted by dragging on an empty part of a day track from `anchor` to
+ * `cursor` (both minutes from midnight): ends snapped to the entry step, at
+ * least one step long and kept inside the track. Painting cannot start on a
+ * wall (a commitment) but may extend across one — null when the anchor is
+ * inside a wall.
+ */
+export function paintedRange({
+	anchor,
+	cursor,
+	walls,
+	trackStart,
+	trackEnd,
+}: TrackWindowArgs & {
+	anchor: number;
+	cursor: number;
+	/** Blocks a paint cannot start on, i.e. the day's commitments. */
+	walls: Array<DayTimeRange>;
+}): DayTimeRange | null {
+	if (insideWall(anchor, walls)) return null;
+
+	const track = { start: trackStart, end: trackEnd };
+	const from = clampMinutes(snapMinutes(anchor), track);
+	const to = clampMinutes(snapMinutes(cursor), track);
+
+	let start = Math.min(from, to);
+	let end = Math.max(from, to);
+
+	if (end - start < AVAILABILITY.SLOT_STEP_MINUTES) {
+		end = Math.min(start + AVAILABILITY.SLOT_STEP_MINUTES, trackEnd);
+		start = end - AVAILABILITY.SLOT_STEP_MINUTES;
+	}
+
+	return { start, end };
+}
+
+/**
+ * `range` moved by `delta` minutes: the move is snapped to the entry step and
+ * stopped at the track edges.
+ */
+export function movedRange({
+	range,
+	delta,
+	trackStart,
+	trackEnd,
+}: TrackWindowArgs & {
+	range: DayTimeRange;
+	delta: number;
+}): DayTimeRange {
+	const length = range.end - range.start;
+	if (trackEnd - trackStart < length) return range;
+
+	const start = R.clamp(range.start + snapMinutes(delta), {
+		min: trackStart,
+		max: trackEnd - length,
+	});
+
+	return { start, end: start + length };
+}
+
+/**
+ * `range` with one edge dragged to `cursor`: snapped to the entry step, kept
+ * at least one step long and stopped at the track edges.
+ */
+export function resizedRange({
+	range,
+	edge,
+	cursor,
+	trackStart,
+	trackEnd,
+}: TrackWindowArgs & {
+	range: DayTimeRange;
+	edge: "start" | "end";
+	cursor: number;
+}): DayTimeRange {
+	if (edge === "start") {
+		const start = R.clamp(snapMinutes(cursor), {
+			min: trackStart,
+			max: range.end - AVAILABILITY.SLOT_STEP_MINUTES,
+		});
+
+		return { start, end: range.end };
+	}
+
+	const end = R.clamp(snapMinutes(cursor), {
+		min: range.start + AVAILABILITY.SLOT_STEP_MINUTES,
+		max: trackEnd,
+	});
+
+	return { start: range.start, end };
+}
+
+const DAY_MINUTES = 24 * 60;
+
+const toTimeRange = (range: DayTimeRange): TimeRange => ({
+	startsAt: range.start,
+	endsAt: range.end,
+});
+
+const toDayRange = (range: TimeRange): DayTimeRange => ({
+	start: range.startsAt,
+	end: range.endsAt,
+});
+
+const clampMinutes = (minutes: number, range: DayTimeRange) =>
+	R.clamp(minutes, { min: range.start, max: range.end });
+
+const insideWall = (point: number, walls: Array<DayTimeRange>) =>
+	mergedDayRanges(walls).some(
+		(wall) => wall.start <= point && point < wall.end,
+	);

@@ -22,3 +22,30 @@ export interface PlayableWindow extends TimeRange {
 	/** Members free for the whole window, in the order they were given. */
 	userIds: Array<number>;
 }
+
+/**
+ * A span within one day of the schedule editor, in minutes from that day's
+ * midnight. `end` may pass 1440 for a range crossing midnight.
+ */
+export interface DayTimeRange {
+	start: number;
+	end: number;
+}
+
+/** One day of the schedule editor: the ranges painted on its track plus its note. */
+export interface AvailabilityEditorDay {
+	/** `YYYY-MM-DD` in the editing user's timezone */
+	date: string;
+	ranges: Array<DayTimeRange>;
+	note: string;
+}
+
+/** The schedule editor's value: the seven days of one week, Monday first. */
+export type AvailabilityEditorWeek = Array<AvailabilityEditorDay>;
+
+/** A commitment shown on the editor as a locked block that cannot be painted over. */
+export interface EditorCommitment {
+	date: string;
+	range: DayTimeRange;
+	name: string;
+}

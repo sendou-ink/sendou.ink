@@ -35,3 +35,7 @@
 .trophyExampleLarge {
 	width: 200px;
 }
+
+.scheduleNarrow {
+	max-width: 360px;
+}
