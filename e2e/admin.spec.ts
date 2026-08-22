@@ -35,7 +35,7 @@ const FRIEND_CODE = "0123-4567-8901";
 const LINKED_PLAYER_ID = 1;
 
 test.describe("Admin panel", () => {
-	test("grants roles, friend code, API access and patron status to a user", async ({
+	test("grants roles, friend code and API access to a user", async ({
 		page,
 		factories,
 	}) => {
@@ -45,13 +45,10 @@ test.describe("Admin panel", () => {
 		});
 
 		const api = new ApiPage(page);
-		const topRightButtons = new TopRightButtons(page);
 
 		await impersonate(page, target.id);
 		await api.goto();
 		await expect(api.locators.noAccessMessage).toBeVisible();
-		await navigate({ page, url: "/" });
-		await expect(topRightButtons.locators.supportLink).toBeVisible();
 
 		await impersonate(page, ADMIN_ID);
 		const adminActions = new AdminActionsPage(page);
@@ -81,13 +78,25 @@ test.describe("Admin panel", () => {
 		await isNotVisible(api.locators.noAccessMessage);
 		const token = await api.generateToken("read");
 		expect(token.length).toBeGreaterThan(0);
+	});
 
-		// not a tournament organizer yet
+	test("grants tournament organizer role and patron status to a user", async ({
+		page,
+		factories,
+	}) => {
+		const target = await factories.UserFactory.create(ROLE_TARGET);
+
 		const newOrganization = new NewOrganizationPage(page);
+		const topRightButtons = new TopRightButtons(page);
+
+		await impersonate(page, target.id);
 		await newOrganization.goto();
 		await expect(newOrganization.locators.noPermissionsAlert).toBeVisible();
+		await navigate({ page, url: "/" });
+		await expect(topRightButtons.locators.supportLink).toBeVisible();
 
 		await impersonate(page, ADMIN_ID);
+		const adminActions = new AdminActionsPage(page);
 		await adminActions.goto();
 		await adminActions.giveTournamentOrganizer(ROLE_TARGET.discordName);
 		// tier one so the tournament organizer grant above stays the only source of that role

@@ -21,6 +21,17 @@ try {
 }
 export const E2E_BASE_PORT = Number(process.env.PORT || 5173) + 500;
 
+interface RouterProbe {
+	wentBusy: boolean;
+	observer: MutationObserver;
+}
+
+declare global {
+	interface Window {
+		__routerProbe?: RouterProbe;
+	}
+}
+
 export const MOBILE_VIEWPORT = { width: 375, height: 667 };
 export const TABLET_VIEWPORT = { width: 768, height: 1024 };
 
@@ -348,21 +359,7 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	const MAX_ATTEMPTS = 3;
 	const PER_ATTEMPT_TIMEOUT = 10_000;
 
-	// The busy marker only appears once React commits the submission, which on a
-	// loaded machine lands well after the POST left the browser. Watching for it
-	// from before the click keeps the idle of the *previous* render from being
-	// read as the action having settled below.
-	const routerWentBusy = page
-		.waitForFunction(
-			() =>
-				document
-					.querySelector('[data-testid="hydrated"]')
-					?.getAttribute("data-router-idle") !== "true",
-			undefined,
-			{ timeout: PER_ATTEMPT_TIMEOUT },
-		)
-		// a POST that no fetcher or navigation drives never turns the router busy
-		.catch(() => {});
+	await armRouterProbe(page);
 
 	// React Aria buttons fire their handler on press end. Occasionally a click
 	// registers the press start (the button goes `:active`) but the press never
@@ -384,13 +381,63 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 		}
 	}
 
+	// React commits the submission before the POST leaves the browser, but on a
+	// loaded machine it can lag behind the response; without waiting for it the
+	// idle of the *previous* render reads as the action having settled.
+	if (!(await routerWentBusy(page))) {
+		await page
+			.waitForFunction(
+				() => window.__routerProbe?.wentBusy !== false,
+				undefined,
+				{
+					timeout: 2_000,
+					polling: 50,
+				},
+			)
+			// a POST that no fetcher or navigation drives never turns the router busy
+			.catch(() => {});
+	}
+
 	// The POST's revalidation (and any redirect it drives) is still in flight;
 	// an interaction landing mid-flight aborts it, and routes that opt out of
 	// revalidation on navigation (e.g. to.$id) then keep the stale data.
-	await routerWentBusy;
 	await expectRouterIdle(page);
 
 	return response!;
+}
+
+/**
+ * Starts recording whether the router turns busy. A fast action holds the busy
+ * marker for a frame or two, which a polled wait misses outright; the flag a
+ * `MutationObserver` sets survives the marker flipping back.
+ */
+async function armRouterProbe(page: Page) {
+	await page.evaluate(() => {
+		window.__routerProbe?.observer.disconnect();
+
+		const marker = document.querySelector('[data-testid="hydrated"]');
+		if (!marker) return;
+
+		const probe: RouterProbe = {
+			wentBusy: false,
+			observer: new MutationObserver(() => {
+				if (marker.getAttribute("data-router-idle") !== "true") {
+					probe.wentBusy = true;
+				}
+			}),
+		};
+		probe.observer.observe(marker, {
+			attributes: true,
+			attributeFilter: ["data-router-idle"],
+		});
+
+		window.__routerProbe = probe;
+	});
+}
+
+/** A missing probe means a document navigation wiped it, which only a busy router does. */
+function routerWentBusy(page: Page) {
+	return page.evaluate(() => window.__routerProbe?.wentBusy !== false);
 }
 
 /** Waits until no navigation, revalidation or fetcher is in flight. */
