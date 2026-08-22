@@ -95,6 +95,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.on("Group")
 			.column("chatRoomId")
 			.unique()
+			.where(sql.ref("chatRoomId"), "is not", null)
 			.execute();
 
 		await trx.schema
@@ -102,6 +103,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.on("GroupMatch")
 			.column("chatRoomId")
 			.unique()
+			.where(sql.ref("chatRoomId"), "is not", null)
 			.execute();
 
 		await trx.schema
@@ -109,6 +111,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.on("TournamentMatch")
 			.column("chatRoomId")
 			.unique()
+			.where(sql.ref("chatRoomId"), "is not", null)
 			.execute();
 
 		await trx.schema
@@ -116,6 +119,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.on("TournamentTeam")
 			.column("chatRoomId")
 			.unique()
+			.where(sql.ref("chatRoomId"), "is not", null)
 			.execute();
 
 		await trx.schema
@@ -123,6 +127,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.on("ScrimPost")
 			.column("chatRoomId")
 			.unique()
+			.where(sql.ref("chatRoomId"), "is not", null)
 			.execute();
 	});
 }
