@@ -1,4 +1,4 @@
-import { startOfYear } from "date-fns";
+import { addHours, startOfYear } from "date-fns";
 import type {
 	Expression,
 	ExpressionBuilder,
@@ -10,6 +10,7 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import {
@@ -26,7 +27,6 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
-import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
 import {
 	commonUserSelect,
@@ -55,6 +55,8 @@ import * as MatchSkillRepository from "./MatchSkillRepository.server";
 import * as PlayerStatRepository from "./PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "./ReportedWeaponRepository.server";
 
+const CHAT_ROOM_LIFESPAN_HOURS = 24;
+
 /** Whether a GroupMatch with the given id exists. */
 export async function exists(id: number) {
 	const row = await db
@@ -74,7 +76,7 @@ export async function findById(id: number) {
 			"GroupMatch.createdAt",
 			"GroupMatch.confirmedAt",
 			"GroupMatch.confirmedByUserId",
-			"GroupMatch.chatCode",
+			"GroupMatch.chatRoomId",
 			"GroupMatch.cancelRequestedByUserId",
 			"GroupMatch.cancelAcceptedByUserId",
 			"GroupMatch.noScreen",
@@ -209,7 +211,7 @@ function groupWithTeamAndMembers(
 			.selectFrom("Group")
 			.select(({ eb }) => [
 				"Group.id",
-				"Group.chatCode",
+				"Group.chatRoomId",
 				"Group.matchmade",
 				"Group.tierName",
 				"Group.tierIsPlus",
@@ -803,12 +805,20 @@ export function insert({
 			.where("User.noScreen", "=", 1)
 			.executeTakeFirst();
 
+		const chatRoom = await ChatRepository.insertRoom(
+			{
+				type: "SQ_MATCH",
+				expiresAt: addHours(new Date(), CHAT_ROOM_LIFESPAN_HOURS),
+			},
+			trx,
+		);
+
 		const match = await trx
 			.insertInto("GroupMatch")
 			.values({
 				alphaGroupId,
 				bravoGroupId,
-				chatCode: shortNanoid(),
+				chatRoomId: chatRoom.id,
 				noScreen: memberPreferringNoScreen ? 1 : 0,
 			})
 			.returningAll()
@@ -1573,7 +1583,7 @@ function findLockState(matchId: number, trx: Transaction<DB>) {
 export function findUnfinishedMatchesCreatedBefore(cutoff: Date) {
 	return db
 		.selectFrom("GroupMatch")
-		.select(["GroupMatch.id", "GroupMatch.chatCode"])
+		.select(["GroupMatch.id", "GroupMatch.chatRoomId"])
 		.where("GroupMatch.confirmedAt", "is", null)
 		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(cutoff))
 		.where(({ not, exists, selectFrom }) =>

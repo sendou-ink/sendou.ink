@@ -39,7 +39,7 @@ export async function findMatchById(id: number) {
 			"TournamentMatch.opponentOne",
 			"TournamentMatch.opponentTwo",
 			"TournamentMatch.winnerSide",
-			"TournamentMatch.chatCode",
+			"TournamentMatch.chatRoomId",
 			"TournamentMatch.startedAt",
 			"Tournament.mapPickingStyle",
 			"TournamentRound.id as roundId",

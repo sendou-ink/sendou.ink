@@ -95,6 +95,19 @@ const playOutMatch = async (setup: Awaited<ReturnType<typeof setupMatch>>) => {
 };
 
 describe("insert", () => {
+	test("creates an SQ_MATCH chat room owned by the match", async () => {
+		const { match } = await setupMatch();
+
+		expect(match.chatRoomId).toEqual(expect.any(Number));
+
+		const room = await db
+			.selectFrom("ChatRoom")
+			.selectAll()
+			.where("id", "=", match.chatRoomId!)
+			.executeTakeFirstOrThrow();
+		expect(room.type).toBe("SQ_MATCH");
+	});
+
 	test("deletes the matched groups' pending likes and suggestions", async () => {
 		const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2 + 1);
 		const alphaMembers = users.slice(0, FULL_GROUP_SIZE);

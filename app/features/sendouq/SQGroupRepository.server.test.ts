@@ -31,7 +31,7 @@ const setupConcludedMatch = async (
 	return {
 		alphaGroupId: match.alphaGroup.id,
 		bravoGroupId: match.bravoGroup.id,
-		matchChatCode: match.chatCode,
+		matchChatRoomId: match.chatRoomId,
 		alphaMembers,
 	};
 };
@@ -52,6 +52,18 @@ const setupTeam = async () => {
 	return { team, members };
 };
 
+const groupChatRoomId = async (groupId: number) => {
+	const group = await db
+		.selectFrom("Group")
+		.select("Group.chatRoomId")
+		.where("Group.id", "=", groupId)
+		.executeTakeFirstOrThrow();
+
+	return group.chatRoomId;
+};
+
+const allChatRooms = () => db.selectFrom("ChatRoom").selectAll().execute();
+
 const teamIdOfGroup = async (groupId: number) => {
 	const group = await db
 		.selectFrom("Group")
@@ -63,8 +75,24 @@ const teamIdOfGroup = async (groupId: number) => {
 };
 
 describe("insert", () => {
+	test("creates an SQ_GROUP chat room owned by the group", async () => {
+		const user = await UserFactory.create();
+
+		const result = await SQGroupRepository.insert({
+			status: "PREPARING",
+			userId: user.id,
+		});
+
+		const chatRoomId = await groupChatRoomId(result.id);
+		expect(chatRoomId).toEqual(expect.any(Number));
+
+		const rooms = await allChatRooms();
+		expect(rooms).toHaveLength(1);
+		expect(rooms[0].type).toBe("SQ_GROUP");
+	});
+
 	test("records implicit no-vote on previous matchmade group when user creates a new group", async () => {
-		const { alphaGroupId, alphaMembers, matchChatCode } =
+		const { alphaGroupId, alphaMembers, matchChatRoomId } =
 			await setupConcludedMatch();
 
 		const votesBefore = await fetchVotes(alphaGroupId);
@@ -79,11 +107,11 @@ describe("insert", () => {
 		expect(votes).toHaveLength(1);
 		expect(votes[0].userId).toBe(alphaMembers[0].id);
 		expect(votes[0].isContinuing).toBe(false);
-		expect(result.chatCodeToRevalidate).toBe(matchChatCode);
+		expect(result.chatRoomIdToRevalidate).toBe(matchChatRoomId);
 	});
 
 	test("overrides the user's own yes vote on the previous match", async () => {
-		const { alphaGroupId, alphaMembers, matchChatCode } =
+		const { alphaGroupId, alphaMembers, matchChatRoomId } =
 			await setupConcludedMatch();
 
 		await castYesVote(alphaMembers[0].id, alphaGroupId);
@@ -98,7 +126,7 @@ describe("insert", () => {
 		const votes = await fetchVotes(alphaGroupId);
 		expect(votes).toHaveLength(1);
 		expect(votes[0].isContinuing).toBe(false);
-		expect(result.chatCodeToRevalidate).toBe(matchChatCode);
+		expect(result.chatRoomIdToRevalidate).toBe(matchChatRoomId);
 	});
 
 	test("clears other members' yes votes on the previous group when recording implicit no", async () => {
@@ -123,7 +151,7 @@ describe("insert", () => {
 	test("records the implicit no-vote on the newest matchmade group of many", async () => {
 		const { alphaGroupId: olderGroupId, alphaMembers } =
 			await setupConcludedMatch();
-		const { alphaGroupId: newerGroupId, matchChatCode } =
+		const { alphaGroupId: newerGroupId, matchChatRoomId } =
 			await setupConcludedMatch(alphaMembers);
 		const olderVotesBefore = await fetchVotes(olderGroupId);
 
@@ -138,7 +166,7 @@ describe("insert", () => {
 		expect(votes).toHaveLength(1);
 		expect(votes[0].userId).toBe(alphaMembers[0].id);
 		expect(votes[0].isContinuing).toBe(false);
-		expect(result.chatCodeToRevalidate).toBe(matchChatCode);
+		expect(result.chatRoomIdToRevalidate).toBe(matchChatRoomId);
 	});
 
 	test("leaves the previous group's votes alone on a later, unrelated queue action", async () => {
@@ -165,7 +193,7 @@ describe("insert", () => {
 		expect(votes.filter((vote) => vote.isContinuing)).toHaveLength(
 			FULL_GROUP_SIZE - 1,
 		);
-		expect(result.chatCodeToRevalidate).toBeNull();
+		expect(result.chatRoomIdToRevalidate).toBeNull();
 	});
 
 	test("does not record any vote when user has no previous matchmade group", async () => {
@@ -180,13 +208,13 @@ describe("insert", () => {
 			result.id,
 		]);
 		expect(allVotes).toHaveLength(0);
-		expect(result.chatCodeToRevalidate).toBeNull();
+		expect(result.chatRoomIdToRevalidate).toBeNull();
 	});
 });
 
 describe("insertMember", () => {
 	test("records implicit no-vote on previous matchmade group when user joins another group", async () => {
-		const { alphaGroupId, alphaMembers, matchChatCode } =
+		const { alphaGroupId, alphaMembers, matchChatRoomId } =
 			await setupConcludedMatch();
 		const newOwner = await UserFactory.create();
 
@@ -195,7 +223,7 @@ describe("insertMember", () => {
 			memberUserIds: [newOwner.id],
 		});
 
-		const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
+		const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
 			newGroup.id,
 			{ userId: alphaMembers[0].id },
 		);
@@ -204,7 +232,7 @@ describe("insertMember", () => {
 		expect(votes).toHaveLength(1);
 		expect(votes[0].userId).toBe(alphaMembers[0].id);
 		expect(votes[0].isContinuing).toBe(false);
-		expect(chatCodeToRevalidate).toBe(matchChatCode);
+		expect(chatRoomIdToRevalidate).toBe(matchChatRoomId);
 	});
 });
 
@@ -307,5 +335,61 @@ describe("syncTeamId", () => {
 		});
 
 		expect(await teamIdOfGroup(newGroup.id)).toBeNull();
+	});
+});
+
+describe("insertFromPrevious", () => {
+	test("moves the previous group's chat room to the successor", async () => {
+		const { alphaGroupId, alphaMembers } = await setupConcludedMatch();
+		const previousChatRoomId = await groupChatRoomId(alphaGroupId);
+
+		const successor = await SQGroupRepository.insertFromPrevious({
+			previousGroupId: alphaGroupId,
+			memberUserIds: alphaMembers.map((member) => member.id),
+		});
+
+		expect(await groupChatRoomId(successor.id)).toBe(previousChatRoomId);
+		expect(await groupChatRoomId(alphaGroupId)).toBeNull();
+	});
+});
+
+describe("morphGroups", () => {
+	test("gives the survivor a fresh chat room and deletes both old rooms", async () => {
+		const [userOne, userTwo] = await UserFactory.createMany(2);
+		const survivingGroup = await SQGroupFactory.create({
+			memberUserIds: [userOne.id],
+		});
+		const otherGroup = await SQGroupFactory.create({
+			memberUserIds: [userTwo.id],
+		});
+		const oldChatRoomId = await groupChatRoomId(survivingGroup.id);
+
+		await SQGroupRepository.morphGroups({
+			survivingGroupId: survivingGroup.id,
+			otherGroupId: otherGroup.id,
+		});
+
+		const survivorChatRoomId = await groupChatRoomId(survivingGroup.id);
+		expect(survivorChatRoomId).not.toBe(oldChatRoomId);
+
+		const rooms = await allChatRooms();
+		expect(rooms.map((room) => room.id)).toEqual([survivorChatRoomId]);
+	});
+});
+
+describe("leaveGroup", () => {
+	test("deletes the group and its chat room when the last member leaves", async () => {
+		const user = await UserFactory.create();
+		const group = await SQGroupFactory.create({ memberUserIds: [user.id] });
+
+		await SQGroupRepository.leaveGroup(user.id);
+
+		const groupRow = await db
+			.selectFrom("Group")
+			.selectAll()
+			.where("id", "=", group.id)
+			.executeTakeFirst();
+		expect(groupRow).toBeUndefined();
+		expect(await allChatRooms()).toHaveLength(0);
 	});
 });

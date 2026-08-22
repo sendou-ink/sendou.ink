@@ -2,8 +2,7 @@ import { type Kysely, sql } from "kysely";
 
 /**
  * Chat rooms, messages and read indicators move from Redis to SQLite. Owner tables get a
- * `chatRoomId` FK; their `chatCode` columns are dropped later on this branch once the app
- * code no longer reads them.
+ * `chatRoomId` FK replacing their `chatCode` columns.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	await db.transaction().execute(async (trx) => {
@@ -87,6 +86,8 @@ export async function up(db: Kysely<any>): Promise<void> {
 					col.references("ChatRoom.id").onDelete("set null"),
 				)
 				.execute();
+
+			await trx.schema.alterTable(table).dropColumn("chatCode").execute();
 		}
 
 		await trx.schema

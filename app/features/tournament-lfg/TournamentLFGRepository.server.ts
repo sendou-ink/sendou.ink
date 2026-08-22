@@ -2,6 +2,7 @@ import type { ExpressionBuilder, Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
@@ -13,15 +14,18 @@ import {
 import { errorIsSqliteForeignKeyConstraintFailure } from "~/utils/sql";
 import { randomTeamName } from "~/utils/team-name";
 
-export function startLooking(teamId: number) {
+export function startLooking(args: {
+	teamId: number;
+	chatRoomExpiresAt: Date;
+}) {
 	return db.transaction().execute(async (trx) => {
 		await trx
 			.updateTable("TournamentTeam")
 			.set({ isLooking: 1 })
-			.where("id", "=", teamId)
+			.where("id", "=", args.teamId)
 			.execute();
 
-		return ensurePickupChatCode(teamId, trx);
+		return ensurePickupChatRoom(args.teamId, args.chatRoomExpiresAt, trx);
 	});
 }
 
@@ -119,15 +123,17 @@ export function mergeTeams({
 	survivingTeamId,
 	otherTeamId,
 	maxGroupSize,
+	chatRoomExpiresAt,
 }: {
 	survivingTeamId: number;
 	otherTeamId: number;
 	maxGroupSize: number;
+	chatRoomExpiresAt: Date;
 }) {
 	return db.transaction().execute(async (trx) => {
 		const otherTeam = await trx
 			.selectFrom("TournamentTeam")
-			.select("chatCode")
+			.select("chatRoomId")
 			.where("id", "=", otherTeamId)
 			.executeTakeFirst();
 
@@ -153,6 +159,8 @@ export function mergeTeams({
 
 		await deleteLikesByTeamId(survivingTeamId, trx);
 
+		await ChatRepository.deleteRoomsByIds([otherTeam?.chatRoomId ?? null], trx);
+
 		await trx
 			.deleteFrom("TournamentTeam")
 			.where("TournamentTeam.id", "=", otherTeamId)
@@ -174,11 +182,15 @@ export function mergeTeams({
 			.where("id", "=", survivingTeamId)
 			.execute();
 
-		const survivor = await ensurePickupChatCode(survivingTeamId, trx);
+		const survivor = await ensurePickupChatRoom(
+			survivingTeamId,
+			chatRoomExpiresAt,
+			trx,
+		);
 
 		return {
 			survivor,
-			removedChatCode: otherTeam?.chatCode ?? null,
+			removedChatRoomId: otherTeam?.chatRoomId ?? null,
 		};
 	});
 }
@@ -310,6 +322,7 @@ export function leaveLfg({
 			.select([
 				"TournamentTeamMember.tournamentTeamId",
 				"TournamentTeam.isPlaceholder",
+				"TournamentTeam.chatRoomId",
 			])
 			.where("TournamentTeamMember.userId", "=", userId)
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
@@ -333,6 +346,8 @@ export function leaveLfg({
 			return;
 		}
 
+		await ChatRepository.deleteRoomsByIds([userTeam.chatRoomId], trx);
+
 		await trx
 			.deleteFrom("TournamentTeam")
 			.where("id", "=", userTeam.tournamentTeamId)
@@ -346,11 +361,11 @@ export async function findPickupChatTeamById(
 ): Promise<PickupChatTeam | null> {
 	const team = await db
 		.selectFrom("TournamentTeam")
-		.select(["name", "chatCode"])
+		.select(["name", "chatRoomId"])
 		.where("id", "=", teamId)
 		.executeTakeFirst();
 
-	if (!team?.chatCode) return null;
+	if (team?.chatRoomId == null) return null;
 
 	const members = await db
 		.selectFrom("TournamentTeamMember")
@@ -359,7 +374,7 @@ export async function findPickupChatTeamById(
 		.execute();
 
 	return {
-		chatCode: team.chatCode,
+		chatRoomId: team.chatRoomId,
 		name: team.name,
 		memberUserIds: members.map((m) => m.userId),
 	};
@@ -421,18 +436,19 @@ async function getMemberCount(
 }
 
 export type PickupChatTeam = {
-	chatCode: string;
+	chatRoomId: number;
 	name: string;
 	memberUserIds: number[];
 };
 
-async function ensurePickupChatCode(
+async function ensurePickupChatRoom(
 	teamId: number,
+	chatRoomExpiresAt: Date,
 	trx: Transaction<DB>,
 ): Promise<PickupChatTeam | null> {
 	const team = await trx
 		.selectFrom("TournamentTeam")
-		.select(["name", "chatCode"])
+		.select(["name", "chatRoomId"])
 		.where("id", "=", teamId)
 		.executeTakeFirstOrThrow();
 
@@ -444,18 +460,23 @@ async function ensurePickupChatCode(
 
 	if (members.length < 2) return null;
 
-	let chatCode = team.chatCode;
-	if (!chatCode) {
-		chatCode = shortNanoid();
+	let chatRoomId = team.chatRoomId;
+	if (chatRoomId == null) {
+		chatRoomId = (
+			await ChatRepository.insertRoom(
+				{ type: "TOURNAMENT_TEAM", expiresAt: chatRoomExpiresAt },
+				trx,
+			)
+		).id;
 		await trx
 			.updateTable("TournamentTeam")
-			.set({ chatCode })
+			.set({ chatRoomId })
 			.where("id", "=", teamId)
 			.execute();
 	}
 
 	return {
-		chatCode,
+		chatRoomId,
 		name: team.name,
 		memberUserIds: members.map((m) => m.userId),
 	};

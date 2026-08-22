@@ -7,6 +7,11 @@ export function userChannel(userId: number): string {
 	return `user__${userId}`;
 }
 
+/** Channel delivering a chat room's events to its viewers. */
+export function chatRoomChannel(roomId: number): string {
+	return `chat-room__${roomId}`;
+}
+
 interface Subscriber {
 	queue: ServerEvent[];
 	wake: (() => void) | null;

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DuplicateEntryError } from "~/utils/errors";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
@@ -322,5 +323,90 @@ describe("insertRequest", () => {
 
 		const otherPost = await ScrimPostRepository.findById(otherPostId);
 		expect(otherPost!.requests).toHaveLength(1);
+	});
+});
+
+describe("acceptRequest", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	const setupPostWithRequest = async ({
+		requestStartsAt,
+	}: {
+		requestStartsAt?: Date;
+	} = {}) => {
+		const { id: postId } = await ScrimPostFactory.create({
+			startsAt: dbTs(BOOKED_AT),
+			users: [{ userId: users.id(1), isOwner: 1 }],
+		});
+		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
+		const requestId = await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: team.id,
+			message: null,
+			startsAt: requestStartsAt ? dbTs(requestStartsAt) : null,
+			users: [{ userId: users.id(2), isOwner: 1 }],
+		});
+
+		return { postId, requestId };
+	};
+
+	const roomOfPost = async (postId: number) => {
+		const post = await ScrimPostRepository.findById(postId);
+		return db
+			.selectFrom("ChatRoom")
+			.selectAll()
+			.where("id", "=", post!.chatRoomId!)
+			.executeTakeFirstOrThrow();
+	};
+
+	test("creates a SCRIM chat room expiring a day after the scrim's start time", async () => {
+		const { postId, requestId } = await setupPostWithRequest();
+
+		await ScrimPostRepository.acceptRequest(requestId);
+
+		const room = await roomOfPost(postId);
+		expect(room.type).toBe("SCRIM");
+		expect(room.expiresAt).toBe(dbTs(BOOKED_AT) + 24 * 60 * 60);
+	});
+
+	test("room expiry follows the accepted request's start time when it has one", async () => {
+		const requestStartsAt = add(BOOKED_AT, { hours: 5 });
+		const { postId, requestId } = await setupPostWithRequest({
+			requestStartsAt,
+		});
+
+		await ScrimPostRepository.acceptRequest(requestId);
+
+		const room = await roomOfPost(postId);
+		expect(room.expiresAt).toBe(dbTs(requestStartsAt) + 24 * 60 * 60);
+	});
+});
+
+describe("deleteById", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("deletes the scrim's chat room with the post", async () => {
+		const { id: postId } = await ScrimPostFactory.create({
+			startsAt: dbTs(BOOKED_AT),
+			users: [{ userId: users.id(1), isOwner: 1 }],
+		});
+		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
+		const requestId = await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: team.id,
+			message: null,
+			startsAt: null,
+			users: [{ userId: users.id(2), isOwner: 1 }],
+		});
+		await ScrimPostRepository.acceptRequest(requestId);
+
+		await ScrimPostRepository.deleteById(postId);
+
+		const rooms = await db.selectFrom("ChatRoom").selectAll().execute();
+		expect(rooms).toHaveLength(0);
 	});
 });

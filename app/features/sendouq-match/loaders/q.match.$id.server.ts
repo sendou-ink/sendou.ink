@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -65,13 +66,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			});
 			if (!accessible) return null;
 
-			if (!isParticipant) return match.chatCode ?? null;
+			if (!isParticipant) {
+				return match.chatRoomId
+					? EventBus.chatRoomChannel(match.chatRoomId)
+					: null;
+			}
 
 			const codes = [
-				match.chatCode,
-				match.groupAlpha.chatCode,
-				match.groupBravo.chatCode,
-			].filter((c): c is string => Boolean(c));
+				match.chatRoomId,
+				match.groupAlpha.chatRoomId,
+				match.groupBravo.chatRoomId,
+			]
+				.filter((id): id is number => typeof id === "number")
+				.map(EventBus.chatRoomChannel);
 
 			if (codes.length === 0) return null;
 			if (codes.length === 1) return codes[0];

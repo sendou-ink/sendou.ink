@@ -2,6 +2,7 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { parseFormData } from "~/form/parse.server";
@@ -146,18 +147,22 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				if (ourGroup.chatCode) {
-					ChatSystemMessage.removeRoom(ourGroup.chatCode);
+				if (ourGroup.chatRoomId) {
+					ChatSystemMessage.removeRoom(
+						EventBus.chatRoomChannel(ourGroup.chatRoomId),
+					);
 				}
-				if (theirGroup.chatCode) {
-					ChatSystemMessage.removeRoom(theirGroup.chatCode);
+				if (theirGroup.chatRoomId) {
+					ChatSystemMessage.removeRoom(
+						EventBus.chatRoomChannel(theirGroup.chatRoomId),
+					);
 				}
 
 				const survivingGroup =
 					SendouQ.findUncensoredGroupById(survivingGroupId);
-				if (survivingGroup?.chatCode) {
+				if (survivingGroup?.chatRoomId) {
 					setGroupChatMetadata({
-						chatCode: survivingGroup.chatCode,
+						chatRoomId: survivingGroup.chatRoomId,
 						members: survivingGroup.members,
 					});
 				}
@@ -205,14 +210,14 @@ export const action: ActionFunction = async ({ request }) => {
 				}
 
 				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
-				if (remainingGroup?.chatCode) {
+				if (remainingGroup?.chatRoomId) {
 					ChatSystemMessage.send({
-						room: remainingGroup.chatCode,
+						room: EventBus.chatRoomChannel(remainingGroup.chatRoomId),
 						type: "USER_LEFT",
 						context: { name: user.username },
 					});
 					setGroupChatMetadata({
-						chatCode: remainingGroup.chatCode,
+						chatRoomId: remainingGroup.chatRoomId,
 						members: remainingGroup.members,
 					});
 				}
@@ -241,14 +246,14 @@ export const action: ActionFunction = async ({ request }) => {
 				await refreshSendouQInstance();
 
 				const groupAfterKick = SendouQ.findUncensoredGroupById(currentGroup.id);
-				if (groupAfterKick?.chatCode && kickedMember) {
+				if (groupAfterKick?.chatRoomId && kickedMember) {
 					ChatSystemMessage.send({
-						room: groupAfterKick.chatCode,
+						room: EventBus.chatRoomChannel(groupAfterKick.chatRoomId),
 						type: "USER_LEFT",
 						context: { name: kickedMember.username },
 					});
 					setGroupChatMetadata({
-						chatCode: groupAfterKick.chatCode,
+						chatRoomId: groupAfterKick.chatRoomId,
 						members: groupAfterKick.members,
 					});
 				}

@@ -331,7 +331,6 @@ export interface ChatMessageReadIndicator {
 }
 
 export interface Group {
-	chatCode: string | null;
 	chatRoomId: number | null;
 	createdAt: Generated<number>;
 	id: GeneratedAlways<number>;
@@ -365,7 +364,6 @@ export interface GroupLike {
 export interface GroupMatch {
 	alphaGroupId: number;
 	bravoGroupId: number;
-	chatCode: string | null;
 	chatRoomId: number | null;
 	confirmedAt: number | null;
 	confirmedByUserId: number | null;
@@ -698,7 +696,6 @@ export interface TournamentGroup {
 }
 
 export interface TournamentMatch {
-	chatCode: string | null;
 	chatRoomId: number | null;
 	groupId: number;
 	id: GeneratedAlways<number>;
@@ -817,7 +814,6 @@ export interface TournamentTeam {
 	isLooking: Generated<DBBoolean>;
 	isPlaceholder: Generated<DBBoolean>;
 	lfgNote: string | null;
-	chatCode: Generated<string | null>;
 	chatRoomId: number | null;
 	/** A/B division assignment for bipartite round robin brackets. `0` = A, `1` = B, `null` = unassigned. */
 	abDivision: number | null;
@@ -1222,8 +1218,6 @@ export interface ScrimPost {
 	visibility: JSONColumnTypeNullable<AssociationVisibility>;
 	/** Any additional info */
 	text: string | null;
-	/** The key to access the scrim chat, used after scrim is scheduled with another team */
-	chatCode: string; // xxx: remember to drop all chat codes
 	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;

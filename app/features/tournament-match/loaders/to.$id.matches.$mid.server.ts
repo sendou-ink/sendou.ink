@@ -2,6 +2,7 @@ import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { chatAccessible } from "~/features/chat/chat-utils";
+import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -165,7 +166,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const status = tournament.matchStatusById(matchId);
 
 	if (
-		match.chatCode &&
+		match.chatRoomId &&
 		!matchIsOver &&
 		match.opponentOne?.id &&
 		match.opponentTwo?.id &&
@@ -191,7 +192,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		const matchContext = tournament.matchContextNamesById(matchId);
 
 		ChatSystemMessage.setMetadata({
-			chatCode: match.chatCode,
+			chatCode: EventBus.chatRoomChannel(match.chatRoomId),
 			header: matchContext.roundName ?? `Match #${matchId}`,
 			subtitle: tournament.ctx.name,
 			url: tournamentMatchPage({ tournamentId, matchId }),
@@ -216,7 +217,9 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				});
 
 	const visibleChatCode =
-		hasPermsToSeeChat && !chatCodeExpired ? match.chatCode : undefined;
+		hasPermsToSeeChat && !chatCodeExpired && match.chatRoomId
+			? EventBus.chatRoomChannel(match.chatRoomId)
+			: undefined;
 
 	const isParticipant = match.players.some((p) => p.id === user?.id);
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, match.roundId);
@@ -248,7 +251,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match: {
 			...match,
 			status,
-			chatCode: hasPermsToSeeChat ? match.chatCode : undefined,
+			chatRoomId: hasPermsToSeeChat ? match.chatRoomId : undefined,
 		},
 		results,
 		reportedWeapons,
