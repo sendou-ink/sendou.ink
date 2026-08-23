@@ -360,6 +360,7 @@
 	"xsearch.link.noScreenshots": "No se puede tener en cuenta la solicitud sin un enlace a la página de jugador. No hace falta adjuntar capturas a menos que se pidan.",
 	"build.private": "Privado",
 	"or": "O",
+	"inviteLink": "",
 	"yes": "Sí",
 	"no": "No",
 	"leaderboard.tabs.players": "",

@@ -1,23 +1,33 @@
 import clsx from "clsx";
-import { AlertCircle, Check, Clipboard, X } from "lucide-react";
+import { AlertCircle, Check, UserRound, X } from "lucide-react";
 import * as React from "react";
+import { Text } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
-import { Avatar } from "~/components/Avatar";
-import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
-import { Label } from "~/components/Label";
+import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
-import { RegistrationAvailabilityPanel } from "~/features/availability/components/RegistrationAvailabilityPanel";
+import {
+	AvailabilityMemberRow,
+	type AvailabilityPanelEntry,
+	AvailabilityRowDetail,
+	type AvailabilityRowStatus,
+	AvailabilityStatusDots,
+	AvailabilitySummary,
+	AvailabilityWindowText,
+	availabilityRowStatus,
+	RegistrationAvailabilityPanel,
+} from "~/features/availability/components/RegistrationAvailabilityPanel";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import {
 	type CounterPickMapPool,
@@ -33,7 +43,6 @@ import { FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
-import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -51,13 +60,21 @@ import {
 import {
 	addPlayerSchema,
 	checkInSchema,
-	deleteTeamMemberSchema,
 	updateMapPoolSchema,
 } from "../tournament-schemas";
 import type { Route } from "./+types/to.$id.register";
 import styles from "./to.$id.register.module.css";
 
 export { action, loader };
+
+const QUICK_ADD_STATUS_ORDER: Record<AvailabilityRowStatus, number> = {
+	available: 0,
+	partial: 1,
+	unknown: 2,
+	hidden: 3,
+	busy: 4,
+	unavailable: 5,
+};
 
 export const middleware: Route.MiddlewareFunction[] = [timezoneMiddleware];
 
@@ -224,7 +241,6 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 					)}
 				/>
 			) : null}
-			{ownTeam ? <TournamentRosterAvailability ownTeam={ownTeam} /> : null}
 			{tournament.isLeague &&
 			tournament.ctx.organization?.id === LUTI_ORGANIZATION_ID ? (
 				<GoogleFormsLink />
@@ -259,7 +275,6 @@ function ReadOnlyRegistrationForms() {
 				members={team.members}
 			/>
 			<TeamInfo ownTeam={team} canUnregister={false} readOnly />
-			<TournamentRosterAvailability ownTeam={team} />
 			<FillRoster ownTeam={team} ownTeamCheckedIn={checkedIn} readOnly />
 			{tournament.teamsPrePickMaps ? (
 				<TeamCounterPickMapPoolPicker readOnly mapPool={team.mapPool ?? []} />
@@ -544,7 +559,7 @@ function TeamInfo({
 				<SendouForm
 					schema={registerTeamFormSchema}
 					defaultValues={defaultValues}
-					className="stack md items-center"
+					className={clsx("stack md", styles.sectionForm)}
 					submitButtonText={t("common:actions.save")}
 					submitButtonTestId="save-team-button"
 					readOnly={readOnly}
@@ -564,12 +579,8 @@ function RegisterTeamFields({ readOnly = false }: { readOnly?: boolean }) {
 	if (readOnly) {
 		return (
 			<>
-				<div className={styles.sectionInputContainer}>
-					<FormField name="pickUpName" />
-				</div>
-				<div className={styles.sectionInputContainer}>
-					<FormField name="logo" />
-				</div>
+				<FormField name="pickUpName" />
+				<FormField name="logo" />
 				<FormField name="prefersNotToHost" />
 			</>
 		);
@@ -577,31 +588,42 @@ function RegisterTeamFields({ readOnly = false }: { readOnly?: boolean }) {
 
 	const isLinked = Boolean(values.teamId);
 
-	const teamOptions = (data?.teams ?? []).map((team) => ({
-		value: String(team.id),
-		label: team.name,
-	}));
+	const entryByUserId = availabilityEntryByUserId(data);
+
+	const teamOptions = (data?.teams ?? []).map((team) => {
+		const statuses = (
+			entryByUserId
+				? teamMemberStatuses({ data, teamId: team.id, entryByUserId })
+				: []
+		).filter((status) => status === "available" || status === "partial");
+
+		return {
+			value: String(team.id),
+			label: team.name,
+			description:
+				statuses.length > 0 ? (
+					<span className={styles.teamOptionAvailability}>
+						<AvailabilityStatusDots statuses={statuses} />
+						<AvailabilitySummary statuses={statuses} />
+					</span>
+				) : undefined,
+		};
+	});
 	const showTeamSelect = teamOptions.length > 0 && tournament.registrationOpen;
 
 	return (
 		<>
 			{showTeamSelect ? (
-				<div className={styles.sectionInputContainer}>
-					<FormField name="teamId" options={teamOptions} />
-				</div>
+				<FormField name="teamId" options={teamOptions} />
 			) : null}
 			{!data?.ownTeam ? <SelectedTeamAvailability /> : null}
 			{!isLinked ? (
 				<>
-					<div className={styles.sectionInputContainer}>
-						<FormField
-							name="pickUpName"
-							disabled={!tournament.registrationOpen}
-						/>
-					</div>
-					<div className={styles.sectionInputContainer}>
-						<FormField name="logo" />
-					</div>
+					<FormField
+						name="pickUpName"
+						disabled={!tournament.registrationOpen}
+					/>
+					<FormField name="logo" />
 				</>
 			) : null}
 			<FormField name="prefersNotToHost" />
@@ -667,8 +689,11 @@ function FillRoster({
 }) {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const tournament = useTournament();
-	const { copyToClipboard, copySuccess } = useCopyToClipboard();
-	const { t } = useTranslation(["common", "tournament"]);
+	const { t } = useTranslation(["common", "tournament", "schedule"]);
+	const { formatter: dateFormatter } = useDateTimeFormat({
+		month: "long",
+		day: "numeric",
+	});
 
 	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
 		tournamentId: tournament.ctx.id,
@@ -687,16 +712,19 @@ function FillRoster({
 		0,
 	);
 
-	const showDeleteMemberSection =
+	const canRemoveMembers =
 		!readOnly &&
 		!tournament.isInvitational &&
 		((!ownTeamCheckedIn && ownTeamMembers.length > 1) ||
 			(ownTeamCheckedIn &&
 				ownTeamMembers.length > tournament.minMembersPerTeam));
 
-	const playersAvailableToDirectlyAdd = (() => {
+	const quickAddPlayers = (() => {
 		if (readOnly) return [];
-		return (data?.friendPlayers?.friends ?? []).filter((user) => {
+		return R.uniqueBy(
+			data?.friendPlayers?.friends ?? [],
+			(friend) => friend.id,
+		).filter((user) => {
 			const isNotInTeam = tournament.ctx.teams.every(
 				(team) => !team.memberUserIds.includes(user.id),
 			);
@@ -711,89 +739,105 @@ function FillRoster({
 	const teamIsFull = ownTeamMembers.length >= tournament.maxMembersPerTeam;
 	const canAddMembers = !teamIsFull && tournament.registrationOpen && !readOnly;
 
+	const availability = data?.availability;
+	const entryByUserId = availabilityEntryByUserId(data);
+	const requireInGameNames = tournament.ctx.settings.requireInGameNames;
+
 	return (
 		<div>
-			<h3 className={styles.sectionHeader}>
-				2. {t("tournament:pre.roster.header")}
-			</h3>
-			<section className={clsx(styles.section, "stack lg items-center")}>
-				{playersAvailableToDirectlyAdd.length > 0 && canAddMembers ? (
-					<>
-						<DirectlyAddPlayerSelect
-							players={playersAvailableToDirectlyAdd}
-							teams={data!.friendPlayers?.teams ?? []}
-						/>
-						<Divider className="text-uppercase">{t("common:or")}</Divider>
-					</>
+			<div className="stack xs horizontal justify-between items-end flex-wrap">
+				<h3 className={styles.sectionHeader}>
+					2. {t("tournament:pre.roster.header")}
+				</h3>
+				{availability?.window ? (
+					<AvailabilityWindowText window={availability.window} />
 				) : null}
-				{canAddMembers ? (
-					<div className="stack md items-center">
-						<div className="text-center text-sm">
-							{t("tournament:actions.shareLink", { inviteLink })}
-						</div>
-						<div>
-							<SendouButton
-								size="small"
-								icon={copySuccess ? <Check /> : <Clipboard />}
-								onPress={() => copyToClipboard(inviteLink)}
-								variant="outlined"
-							>
-								{t("common:actions.copyToClipboard")}
-							</SendouButton>
-						</div>
+			</div>
+			<section className={clsx(styles.section, "stack sm")}>
+				{availability?.beyondHorizon ? (
+					<div className={styles.rosterMutedNote}>
+						{t("schedule:registration.beyondHorizon", {
+							date: dateFormatter.format(availability.beyondHorizon.opensAt),
+						})}
 					</div>
 				) : null}
-				<div className={styles.rosterGrid}>
-					{ownTeamMembers.map((member, i) => {
-						return (
-							<div
-								key={member.userId}
-								className="stack sm items-center text-sm"
-								data-testid={`member-num-${i + 1}`}
-							>
-								<Avatar size="xsm" user={member} />
-								{tournament.ctx.settings.requireInGameNames ? (
-									<div className={styles.rosterGridMemberName}>
-										<div className="text-center">
-											{member.inGameName ?? member.username}
-										</div>
-										{member.inGameName ? (
-											<div className="text-lighter text-xs font-bold text-center">
-												{member.username}
-											</div>
-										) : null}
-									</div>
-								) : (
-									<div className={styles.rosterGridMemberName}>
-										{member.username}
-									</div>
-								)}
-							</div>
-						);
-					})}
-					{new Array(missingMembers).fill(null).map((_, i) => {
-						return (
-							<div key={i} className={styles.missingPlayer}>
-								?
-							</div>
-						);
-					})}
-					{new Array(optionalMembers).fill(null).map((_, i) => {
-						return (
-							<div
-								key={i}
+				<ul className={styles.rosterRows}>
+					{ownTeamMembers.map((member, i) => (
+						<AvailabilityMemberRow
+							key={member.userId}
+							user={{
+								id: member.userId,
+								username: member.username,
+								discordId: member.discordId,
+								discordAvatar: member.discordAvatar,
+								customAvatarUrl: member.customAvatarUrl,
+							}}
+							entry={entryByUserId?.get(member.userId)}
+							showAvailability={Boolean(entryByUserId)}
+							primaryName={
+								requireInGameNames
+									? (member.inGameName ?? member.username)
+									: member.username
+							}
+							secondaryName={
+								requireInGameNames && member.inGameName
+									? member.username
+									: undefined
+							}
+							nameTestId={`member-num-${i + 1}`}
+							trailing={
+								canRemoveMembers && member.role !== "OWNER" ? (
+									<RemoveMemberButton member={member} />
+								) : null
+							}
+						/>
+					))}
+					{Array.from({ length: missingMembers }).map((_, i) => (
+						<li key={`required-${i}`} className={styles.emptySlotRow}>
+							<span className={styles.emptySlotCircle}>
+								<UserRound size={14} strokeWidth={3} />
+							</span>
+							{t("tournament:pre.roster.emptySlot")}
+						</li>
+					))}
+					{Array.from({ length: optionalMembers }).map((_, i) => (
+						<li
+							key={`optional-${i}`}
+							className={clsx(styles.emptySlotRow, styles.emptySlotRowOptional)}
+						>
+							<span
 								className={clsx(
-									styles.missingPlayer,
-									styles.missingPlayerOptional,
+									styles.emptySlotCircle,
+									styles.emptySlotCircleOptional,
 								)}
 							>
-								?
-							</div>
-						);
-					})}
-				</div>
-				{showDeleteMemberSection ? (
-					<DeleteMember members={ownTeamMembers} />
+								<UserRound size={14} strokeWidth={3} />
+							</span>
+							{t("tournament:pre.roster.emptySlot.optional")}
+						</li>
+					))}
+				</ul>
+				{entryByUserId ? (
+					<AvailabilitySummary
+						statuses={ownTeamMembers.map((member) =>
+							availabilityRowStatus(entryByUserId.get(member.userId)),
+						)}
+					/>
+				) : null}
+				{canAddMembers ? (
+					<div className={clsx(styles.addMembers, "stack md")}>
+						<h4 className={styles.addMembersHeading}>
+							{t("tournament:pre.roster.addMembers")}
+						</h4>
+						{quickAddPlayers.length > 0 ? (
+							<QuickAddPlayers
+								key={quickAddPlayers.map((player) => player.id).join(",")}
+								players={quickAddPlayers}
+								entryByUserId={entryByUserId}
+							/>
+						) : null}
+						<InviteLinkInput link={inviteLink} />
+					</div>
 				) : null}
 			</section>
 			{tournament.ctx.settings.requireInGameNames ? (
@@ -816,111 +860,119 @@ function FillRoster({
 	);
 }
 
-function DirectlyAddPlayerSelect({
+function QuickAddPlayers({
 	players,
-	teams,
+	entryByUserId,
 }: {
-	players: { id: number; username: string; teamId?: number }[];
-	teams: { id: number; name: string }[];
+	players: Array<{ id: number; username: string }>;
+	entryByUserId: Map<number, AvailabilityPanelEntry> | null;
 }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const fetcher = useFetcher();
-	const id = React.useId();
 
-	const othersOptions = players
-		.filter((player) => !player.teamId)
-		.map((player) => {
-			return (
-				<option key={player.id} value={player.id}>
-					{player.username}
-				</option>
-			);
-		});
+	const sortedPlayers = entryByUserId
+		? R.sortBy(
+				players,
+				(player) =>
+					QUICK_ADD_STATUS_ORDER[
+						availabilityRowStatus(entryByUserId.get(player.id))
+					],
+			)
+		: players;
 
+	const [selectedUserId, setSelectedUserId] = React.useState<number | null>(
+		sortedPlayers[0]?.id ?? null,
+	);
+
+	// xxx: split team, pickup. quick button to add all player roles for team
 	return (
-		<fetcher.Form method="post" className="stack horizontal sm items-end">
-			<div>
-				<Label htmlFor={id}>
-					{t("tournament:pre.roster.addFriend.header")}
-				</Label>
-				<select id={id} name="userId">
-					{teams.map((team) => {
-						return (
-							<optgroup label={team.name} key={team.id}>
-								{players
-									.filter((player) => player.teamId === team.id)
-									.map((player) => {
-										return (
-											<option key={player.id} value={player.id}>
-												{player.username}
-											</option>
-										);
-									})}
-							</optgroup>
-						);
-					})}
-					{teams && teams.length > 0 ? (
-						<optgroup label={t("tournament:pre.roster.addFriend.others")}>
-							{othersOptions}
-						</optgroup>
-					) : (
-						othersOptions
+		<fetcher.Form method="post">
+			<div className={styles.quickAddRow}>
+				<SendouSelect
+					label={t("tournament:pre.roster.quickAdd")}
+					items={sortedPlayers}
+					selectedKey={selectedUserId}
+					onSelectionChange={(key) => setSelectedUserId(key as number | null)}
+					estimatedRowHeight={entryByUserId ? 52 : undefined}
+					className={styles.quickAddSelect}
+					data-testid="quick-add-select"
+				>
+					{(player) => (
+						<SendouSelectItem
+							id={player.id}
+							textValue={player.username}
+							data-testid={`availability-row-${player.id}`}
+							data-status={
+								entryByUserId
+									? availabilityRowStatus(entryByUserId.get(player.id))
+									: undefined
+							}
+						>
+							{entryByUserId ? (
+								<span className={styles.quickAddItem}>
+									<Text slot="label">{player.username}</Text>
+									<Text slot="description">
+										<span className={styles.quickAddItemAvailability}>
+											<AvailabilityStatusDots
+												statuses={[
+													availabilityRowStatus(entryByUserId.get(player.id)),
+												]}
+											/>
+											<AvailabilityRowDetail
+												entry={entryByUserId.get(player.id)}
+											/>
+										</span>
+									</Text>
+								</span>
+							) : (
+								player.username
+							)}
+						</SendouSelectItem>
 					)}
-				</select>
+				</SendouSelect>
+				{selectedUserId ? (
+					<input type="hidden" name="userId" value={selectedUserId} />
+				) : null}
+				<SubmitButton
+					schema={addPlayerSchema}
+					_action="ADD_PLAYER"
+					state={fetcher.state}
+					testId="add-player-button"
+					isDisabled={!selectedUserId}
+				>
+					{t("common:actions.add")}
+				</SubmitButton>
 			</div>
-			<SubmitButton
-				schema={addPlayerSchema}
-				_action="ADD_PLAYER"
-				state={fetcher.state}
-				testId="add-player-button"
-			>
-				{t("common:actions.add")}
-			</SubmitButton>
 		</fetcher.Form>
 	);
 }
 
-function DeleteMember({ members }: { members: TournamentTeamFull["members"] }) {
+function RemoveMemberButton({
+	member,
+}: {
+	member: TournamentTeamFull["members"][number];
+}) {
 	const { t } = useTranslation(["tournament", "common"]);
-	const id = React.useId();
-	const fetcher = useFetcher();
-	const [expanded, setExpanded] = React.useState(false);
 
-	if (!expanded) {
-		return (
+	return (
+		<FormWithConfirm
+			dialogHeading={t("tournament:pre.roster.remove.confirm", {
+				name: member.username,
+			})}
+			submitButtonText={t("common:actions.remove")}
+			fields={[
+				["_action", "DELETE_TEAM_MEMBER"],
+				["userId", member.userId],
+			]}
+		>
 			<SendouButton
 				size="small"
 				variant="minimal-destructive"
-				onPress={() => setExpanded(true)}
-			>
-				{t("tournament:pre.roster.delete.button")}
-			</SendouButton>
-		);
-	}
-
-	return (
-		<fetcher.Form method="post">
-			<Label htmlFor={id}>{t("tournament:pre.roster.delete.header")}</Label>
-			<div className="stack md horizontal">
-				<select name="userId" id={id}>
-					{members
-						.filter((member) => member.role !== "OWNER")
-						.map((member) => (
-							<option key={member.userId} value={member.userId}>
-								{member.username}
-							</option>
-						))}
-				</select>
-				<SubmitButton
-					state={fetcher.state}
-					schema={deleteTeamMemberSchema}
-					_action="DELETE_TEAM_MEMBER"
-					variant="minimal-destructive"
-				>
-					{t("common:actions.delete")}
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+				icon={<X />}
+				aria-label={t("common:actions.remove")}
+				testId={`remove-member-${member.userId}`}
+			/>
+		</FormWithConfirm>
 	);
 }
 
@@ -976,51 +1028,26 @@ function TeamCounterPickMapPoolPicker({
 	);
 }
 
-function TournamentRosterAvailability({
-	ownTeam,
-}: {
-	ownTeam: TournamentTeamFull;
-}) {
+function SelectedTeamAvailability() {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const tournament = useTournament();
+	const user = useUser();
+	const { values } = useFormFieldContext();
 
 	const availability = data?.availability;
 	if (!availability) return null;
 
-	const roster = ownTeam.members.map((member) => ({
-		id: member.userId,
-		username: member.username,
-		discordId: member.discordId,
-		discordAvatar: member.discordAvatar,
-		customAvatarUrl: member.customAvatarUrl,
-	}));
-
-	return (
-		<RegistrationAvailabilityPanel
-			availability={availability}
-			roster={roster}
-			subCandidates={subCandidates({
-				data,
-				tournament,
-				rosterUserIds: roster.map((user) => user.id),
-			})}
-		/>
-	);
-}
-
-function SelectedTeamAvailability() {
-	const data = useLoaderData<TournamentRegisterPageLoader>();
-	const tournament = useTournament();
-	const { values } = useFormFieldContext();
-
-	const availability = data?.availability;
 	const teamId = values.teamId ? Number(values.teamId) : null;
-	if (!availability || !teamId) return null;
 
-	const roster = (data?.friendPlayers?.friends ?? [])
-		.filter((friend) => friend.teamId === teamId)
-		.map(panelUser);
-	if (roster.length === 0) return null;
+	// with a team selected the panel shows its full roster; signing up as a
+	// pickup it instead lists everyone the viewer could recruit (teammates and
+	// friends), which the panel keeps to those actually free during the event
+	const roster = teamId
+		? (data?.friendPlayers?.friends ?? [])
+				.filter((friend) => friend.teamId === teamId)
+				.map(panelUser)
+		: [];
+	if (teamId && roster.length === 0) return null;
 
 	return (
 		<RegistrationAvailabilityPanel
@@ -1029,7 +1056,11 @@ function SelectedTeamAvailability() {
 			subCandidates={subCandidates({
 				data,
 				tournament,
-				rosterUserIds: roster.map((user) => user.id),
+				rosterUserIds: teamId
+					? roster.map((rosterUser) => rosterUser.id)
+					: user
+						? [user.id]
+						: [],
 			})}
 		/>
 	);
@@ -1049,6 +1080,29 @@ function panelUser(user: {
 		discordAvatar: user.discordAvatar,
 		customAvatarUrl: user.customAvatarUrl,
 	};
+}
+
+function availabilityEntryByUserId(
+	data: ReturnType<typeof useLoaderData<TournamentRegisterPageLoader>>,
+) {
+	const availability = data?.availability;
+	if (!availability || availability.beyondHorizon) return null;
+
+	return new Map(availability.entries.map((entry) => [entry.userId, entry]));
+}
+
+function teamMemberStatuses({
+	data,
+	teamId,
+	entryByUserId,
+}: {
+	data: ReturnType<typeof useLoaderData<TournamentRegisterPageLoader>>;
+	teamId: number;
+	entryByUserId: Map<number, AvailabilityPanelEntry>;
+}): Array<AvailabilityRowStatus> {
+	return (data?.friendPlayers?.friends ?? [])
+		.filter((friend) => friend.teamId === teamId)
+		.map((friend) => availabilityRowStatus(entryByUserId.get(friend.id)));
 }
 
 function subCandidates({

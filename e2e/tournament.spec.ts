@@ -81,13 +81,13 @@ test.describe("Tournament", () => {
 		page,
 		factories,
 	}) => {
-		const [partialMember, unknownMember, stranger, friend] =
-			await factories.UserFactory.createMany(4);
+		const [captain, partialMember, unknownMember, stranger, friend] =
+			await factories.UserFactory.createMany(5);
 		await factories.TeamFactory.create({
-			memberUserIds: [ADMIN_ID, partialMember.id, unknownMember.id],
+			memberUserIds: [captain.id, partialMember.id, unknownMember.id],
 		});
 		await factories.FriendshipFactory.create({
-			userOneId: ADMIN_ID,
+			userOneId: captain.id,
 			userTwoId: friend.id,
 		});
 
@@ -99,7 +99,7 @@ test.describe("Tournament", () => {
 		await factories.TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [
-				ADMIN_ID,
+				captain.id,
 				partialMember.id,
 				unknownMember.id,
 				stranger.id,
@@ -114,7 +114,7 @@ test.describe("Tournament", () => {
 			startsAt: dateToDatabaseTimestamp(startsAt),
 			endsAt: dateToDatabaseTimestamp(addHours(startsAt, 5)),
 		};
-		for (const userId of [ADMIN_ID, friend.id]) {
+		for (const userId of [captain.id, friend.id]) {
 			await factories.AvailabilityWeekFactory.create({
 				userId,
 				weekStartsAt,
@@ -134,14 +134,13 @@ test.describe("Tournament", () => {
 			],
 		});
 
-		await impersonate(page);
+		await impersonate(page, captain.id);
 		await setTimezoneCookie(page);
 		const register = new TournamentRegisterPage(page);
 		await register.goto(tournament.id);
 
-		const row = (userId: number) =>
-			page.getByTestId(`availability-row-${userId}`);
-		await expect(row(ADMIN_ID)).toHaveAttribute("data-status", "available");
+		const row = (userId: number) => register.availabilityRow(userId);
+		await expect(row(captain.id)).toHaveAttribute("data-status", "available");
 		await expect(row(partialMember.id)).toHaveAttribute(
 			"data-status",
 			"partial",
@@ -153,7 +152,8 @@ test.describe("Tournament", () => {
 		// on the tournament roster without being a teammate or a friend, so
 		// their schedule is not the viewer's to see
 		await expect(row(stranger.id)).toHaveAttribute("data-status", "hidden");
-		// the friend with an overlapping submitted range lands in the sub row
+		// the friend with an overlapping submitted range is offered in quick add
+		await register.openQuickAdd();
 		await expect(row(friend.id)).toHaveAttribute("data-status", "available");
 	});
 

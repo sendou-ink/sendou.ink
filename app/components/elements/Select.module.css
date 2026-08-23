@@ -9,6 +9,11 @@
 	&[data-placeholder] {
 		color: var(--color-text-high);
 	}
+
+	/* two-line items render only their label line inside the trigger */
+	& [slot="description"] {
+		display: none;
+	}
 }
 
 .item {

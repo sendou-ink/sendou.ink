@@ -116,7 +116,7 @@ export function SelectShellItem({
 		<ListBoxItem
 			{...rest}
 			className={({ isFocused, isSelected }) =>
-				clsx(className, {
+				clsx(className, styles.item, {
 					[styles.itemFocused]: isFocused,
 					[styles.itemSelected]: isSelected,
 				})

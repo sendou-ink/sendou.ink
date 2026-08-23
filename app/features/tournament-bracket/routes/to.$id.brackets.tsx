@@ -1,7 +1,6 @@
 import { sub } from "date-fns";
 import {
 	Check,
-	Clipboard,
 	Eye,
 	EyeOff,
 	Map as MapIcon,
@@ -29,6 +28,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
@@ -37,7 +37,6 @@ import {
 	TournamentProvider,
 	useTournament,
 } from "~/features/tournament/tournament-context";
-import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -438,7 +437,6 @@ function MapPreparer({
 
 function AddSubsPopOver() {
 	const { t } = useTranslation(["common", "tournament"]);
-	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 	const tournament = useTournament();
 	const user = useUser();
 	const data = useLoaderData<TournamentBracketsLoaderData>();
@@ -465,19 +463,7 @@ function AddSubsPopOver() {
 			{subsAvailableToAdd > 0 ? (
 				<>
 					<Divider className="my-2" />
-					<div>{t("tournament:actions.shareLink", { inviteLink })}</div>
-					<div className="mt-2 flex justify-center">
-						<SendouButton
-							size="small"
-							icon={copySuccess ? <Check /> : <Clipboard />}
-							onPress={() => copyToClipboard(inviteLink)}
-							variant="minimal"
-							className="tiny"
-							data-testid="copy-invite-link-button"
-						>
-							{t("common:actions.copyToClipboard")}
-						</SendouButton>
-					</div>
+					<InviteLinkInput link={inviteLink} />
 				</>
 			) : null}
 		</SubsPopover>

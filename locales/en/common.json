@@ -360,6 +360,7 @@
 	"xsearch.link.noScreenshots": "Without a link to the player page the request can not be considered. Screenshots are not necessary unless asked for.",
 	"build.private": "Private",
 	"or": "Or",
+	"inviteLink": "Invite link",
 	"yes": "Yes",
 	"no": "No",
 	"leaderboard.tabs.players": "Players",

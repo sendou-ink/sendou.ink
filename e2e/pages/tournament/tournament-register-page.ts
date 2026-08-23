@@ -47,6 +47,15 @@ export class TournamentRegisterPage {
 		return this.page.getByTestId(`member-num-${number}`);
 	}
 
+	availabilityRow(userId: number) {
+		return this.page.getByTestId(`availability-row-${userId}`);
+	}
+
+	/** Opens the quick add dropdown so its player rows render. */
+	async openQuickAdd() {
+		await this.page.getByTestId("quick-add-select").getByRole("button").click();
+	}
+
 	stepCheckmark(number: number) {
 		return this.page.getByTestId(`checkmark-icon-num-${number}`);
 	}
