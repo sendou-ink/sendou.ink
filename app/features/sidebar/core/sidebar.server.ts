@@ -3,6 +3,7 @@ import { addDays } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
+import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
@@ -36,6 +37,7 @@ import {
 	BLANK_IMAGE_URL,
 	discordAvatarUrl,
 	navIconUrl,
+	teamSchedulePage,
 	twitchUrl,
 	userPage,
 } from "~/utils/urls";
@@ -49,7 +51,7 @@ export type SidebarEvent = {
 	/** Whose avatar the event shows instead of a logo of its own. */
 	user: CommonUser | null;
 	startsAt: number;
-	type: "tournament" | "scrim";
+	type: "tournament" | "scrim" | "teamEvent";
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
 
@@ -86,6 +88,7 @@ export async function resolveSidebarData(userId: number | null) {
 		};
 	}
 
+	// xxx: at what point we should just collapse to one query? measure
 	const [
 		tournamentsData,
 		scrimsData,
@@ -93,6 +96,7 @@ export async function resolveSidebarData(userId: number | null) {
 		savedTournaments,
 		incomingFriendRequestIds,
 		streamedSendouQMatches,
+		teamEvents,
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
@@ -100,6 +104,7 @@ export async function resolveSidebarData(userId: number | null) {
 		SavedCalendarEventRepository.findAllUpcomingByUserId(userId),
 		FriendRepository.findPendingReceivedRequestIds(userId),
 		resolveSendouQMatchStreams(),
+		findUpcomingTeamEvents(userId),
 	]);
 
 	const seenTournamentIds = new Set<number>();
@@ -123,7 +128,16 @@ export async function resolveSidebarData(userId: number | null) {
 
 	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
-	const events = [...tournamentEvents, ...savedEvents, ...scrimEvents]
+	const teamEventEvents: SidebarEvent[] = teamEvents.map(
+		teamEventToSidebarEvent,
+	);
+
+	const events = [
+		...tournamentEvents,
+		...savedEvents,
+		...scrimEvents,
+		...teamEventEvents,
+	]
 		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
@@ -413,6 +427,39 @@ export function tournamentToSidebarEvent(
 		user: null,
 		startsAt: t.startsAt,
 		type: "tournament" as const,
+	};
+}
+
+const TEAM_EVENT_WINDOW_DAYS = 14;
+
+/** Team events shown on the sidebar and the personal calendar page: ongoing ones and those starting within the next two weeks. */
+export function findUpcomingTeamEvents(userId: number) {
+	const now = new Date();
+
+	return AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+		userId,
+		startsAt: dateToDatabaseTimestamp(now),
+		endsAt: dateToDatabaseTimestamp(addDays(now, TEAM_EVENT_WINDOW_DAYS)),
+	});
+}
+
+type UpcomingTeamEvent = Awaited<
+	ReturnType<typeof AvailabilityRepository.findAllUpcomingTeamEventsByUserId>
+>[number];
+
+const TEAM_ICON_URL = `${navIconUrl("t")}.avif`;
+
+export function teamEventToSidebarEvent(
+	event: UpcomingTeamEvent,
+): SidebarEvent {
+	return {
+		id: event.id,
+		name: event.name,
+		url: teamSchedulePage(event.teamCustomUrl),
+		logoUrl: event.teamAvatarUrl ?? TEAM_ICON_URL,
+		user: null,
+		startsAt: event.startsAt,
+		type: "teamEvent" as const,
 	};
 }
 

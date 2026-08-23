@@ -51,6 +51,7 @@ export default function EventsPage() {
 		registered: `${t("calendar:events.view.registered")} (${data.registered.length})`,
 		hosting: `${t("calendar:events.view.hosting")} (${data.hosting.length})`,
 		scrims: `${t("calendar:events.view.scrims")} (${data.scrims.length})`,
+		team: `${t("calendar:events.view.team")} (${data.team.length})`,
 		saved: `${t("calendar:events.view.saved")} (${data.saved.length})`,
 		organization: `${t("calendar:events.view.organization")} (${data.organization.length})`,
 	};

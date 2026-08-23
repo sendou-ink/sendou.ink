@@ -1,29 +1,41 @@
 import clsx from "clsx";
 import { isSameDay } from "date-fns";
-import { Flag } from "lucide-react";
+import { Flag, Plus, Trash } from "lucide-react";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
 import * as R from "remeda";
+import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
+import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
+import { SendouDialog } from "~/components/elements/Dialog";
+import { FormMessage } from "~/components/FormMessage";
 import { UserLink } from "~/components/UserLink";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { getMemberRoleType } from "~/features/team/team-utils";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
+import { SendouForm } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { action } from "../actions/t.$customUrl.schedule.server";
+import {
+	addTeamEventSchema,
+	teamScheduleActionSchema,
+} from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
 import type { TeamScheduleLoaderData } from "../loaders/t.$customUrl.schedule.server";
 import { loader } from "../loaders/t.$customUrl.schedule.server";
 
-export { loader };
+export { action, loader };
 
 import type { Route } from "./+types/t.$customUrl.schedule";
 import styles from "./t.$customUrl.schedule.module.css";
@@ -95,13 +107,10 @@ function ScheduleWeeks({ weeks }: { weeks: Array<WeekData> }) {
 					</SendouChipRadio>
 				</SendouChipRadioGroup>
 			</div>
+			<TeamEvents week={shownWeek} />
 			<ScheduleGrid week={shownWeek} />
 			<PlayableWindowsSummary week={shownWeek} />
 			<WeekNotes week={shownWeek} />
-			<p className={styles.footer}>
-				{t("schedule:editor.timesInYourTimezone")} ·{" "}
-				{t("schedule:team.visibility")}
-			</p>
 		</div>
 	);
 }
@@ -357,10 +366,120 @@ function WeekNotes({ week }: { week: WeekData }) {
 	);
 }
 
-function useTeamMembers() {
+function TeamEvents({ week }: { week: WeekData }) {
+	const { t } = useTranslation(["schedule"]);
+	const team = useTeam();
+	const canEdit = useHasPermission(team, "EDIT");
+	const [addDialogOpen, setAddDialogOpen] = React.useState(false);
+	const { formatter: dayFormatter } = useDateTimeFormat({
+		weekday: "short",
+		day: "numeric",
+	});
+	const { formatter: timeFormatter } = useDateTimeFormat({
+		hour: "numeric",
+		minute: "2-digit",
+	});
+
+	if (week.teamEvents.length === 0 && !canEdit) return null;
+
+	return (
+		<div className={styles.events} data-testid="schedule-events">
+			<div className={styles.eventsHeader}>
+				<h3 className={styles.eventsHeading}>{t("schedule:events.title")}</h3>
+				{canEdit ? (
+					<SendouButton
+						size="small"
+						variant="outlined"
+						icon={<Plus />}
+						onPress={() => setAddDialogOpen(true)}
+						data-testid="add-team-event-button"
+					>
+						{t("schedule:events.add")}
+					</SendouButton>
+				) : null}
+			</div>
+			{week.teamEvents.length === 0 ? (
+				<div className="text-lighter text-xs">{t("schedule:events.none")}</div>
+			) : (
+				<ul className={styles.eventsList}>
+					{week.teamEvents.map((event) => (
+						<li
+							key={event.id}
+							className={styles.event}
+							data-testid="schedule-team-event"
+						>
+							<span className={styles.eventDay}>
+								{dayFormatter.format(databaseTimestampToDate(event.startsAt))}
+							</span>
+							<span className={styles.eventTime}>
+								{isSameDay(
+									databaseTimestampToDate(event.startsAt),
+									databaseTimestampToDate(event.endsAt),
+								)
+									? timeFormatter.formatRange(
+											databaseTimestampToDate(event.startsAt),
+											databaseTimestampToDate(event.endsAt),
+										)
+									: `${timeFormatter.format(databaseTimestampToDate(event.startsAt))} – ${timeFormatter.format(databaseTimestampToDate(event.endsAt))}`}
+							</span>
+							<span className={styles.eventName}>{event.name}</span>
+							{canEdit ? (
+								<ActionButton
+									schema={teamScheduleActionSchema}
+									action="DELETE_EVENT"
+									fields={{ eventId: event.id }}
+									variant="minimal-destructive"
+									size="miniscule"
+									icon={<Trash />}
+									aria-label={t("schedule:events.delete")}
+									testId={`delete-team-event-${event.id}`}
+									confirm={{
+										dialogHeading: t("schedule:events.deleteConfirm", {
+											name: event.name,
+										}),
+									}}
+								/>
+							) : null}
+						</li>
+					))}
+				</ul>
+			)}
+			{addDialogOpen ? (
+				<AddTeamEventDialog close={() => setAddDialogOpen(false)} />
+			) : null}
+		</div>
+	);
+}
+
+function AddTeamEventDialog({ close }: { close: () => void }) {
+	const { t } = useTranslation(["schedule"]);
+
+	return (
+		<SendouDialog heading={t("schedule:events.addDialogTitle")} onClose={close}>
+			<SendouForm schema={addTeamEventSchema} onSuccess={close}>
+				{({ FormField }) => (
+					<>
+						<FormField name="name" />
+						<FormField name="startsAt" />
+						<FormField name="duration" />
+						<FormMessage type="info">
+							{t("schedule:events.membersWillSee")}
+						</FormMessage>
+					</>
+				)}
+			</SendouForm>
+		</SendouDialog>
+	);
+}
+
+function useTeam() {
 	const [, parentRoute] = useMatches();
 	invariant(parentRoute);
 	const layoutData = parentRoute.loaderData as TeamLoaderData;
 
-	return layoutData.team.members;
+	return layoutData.team;
+}
+
+function useTeamMembers() {
+	return useTeam().members;
 }

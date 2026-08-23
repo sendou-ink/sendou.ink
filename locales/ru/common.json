@@ -108,6 +108,8 @@
 	"notifications.text.TO_LIKE_RECEIVED": "",
 	"notifications.title.TO_LIKE_ACCEPTED": "",
 	"notifications.text.TO_LIKE_ACCEPTED": "",
+	"notifications.title.TEAM_EVENT_ADDED": "",
+	"notifications.text.TEAM_EVENT_ADDED": "",
 	"auth.errors.aborted": "Вход отменён",
 	"auth.errors.failed": "Ошибка входа",
 	"auth.errors.discordPermissions": "Для вашего профиля на sendou.ink странице нужен доступ к вашему имени, аватару и привязанным аккаунтам соц. сетей в Discord.",

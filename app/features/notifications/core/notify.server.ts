@@ -39,6 +39,7 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	SCRIM_AUTO_DELETED: "normal",
 	COMMISSIONS_CLOSED: "normal",
 	FRIEND_REQUEST_RECEIVED: "normal",
+	TEAM_EVENT_ADDED: "normal",
 };
 
 /** How long a push notification is held back before sending. Anything marking the notification as seen during this window (the user addressing what it is about, opening the notification list, `defaultSeenUserIds`) cancels the push for that user. */

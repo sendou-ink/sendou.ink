@@ -108,6 +108,8 @@
 	"notifications.text.TO_LIKE_RECEIVED": "",
 	"notifications.title.TO_LIKE_ACCEPTED": "",
 	"notifications.text.TO_LIKE_ACCEPTED": "",
+	"notifications.title.TEAM_EVENT_ADDED": "",
+	"notifications.text.TEAM_EVENT_ADDED": "",
 	"auth.errors.aborted": "Logowanie przerwane",
 	"auth.errors.failed": "Logowanie nieudane",
 	"auth.errors.discordPermissions": "Do twojego profilu sendou.ink, ta strona potrzebuje dostęp do twojej nazwy, avataru i połączeń konta Discord.",

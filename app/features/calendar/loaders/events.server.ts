@@ -3,7 +3,9 @@ import { myScheduleData } from "~/features/availability/core/MySchedule.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import {
+	findUpcomingTeamEvents,
 	scrimToSidebarEvent,
+	teamEventToSidebarEvent,
 	tournamentToSidebarEvent,
 } from "~/features/sidebar/core/sidebar.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
@@ -14,6 +16,7 @@ export type EventsLoaderData = typeof loader;
 export const loader = async () => {
 	const user = requireUser();
 
+	// xxx: when collapse to one query?
 	const [
 		tournamentsData,
 		scrimsData,
@@ -21,6 +24,7 @@ export const loader = async () => {
 		upcomingTournaments,
 		userOrganizations,
 		mySchedule,
+		teamEvents,
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
 		ScrimPostRepository.findUserScrims(user.id),
@@ -28,6 +32,7 @@ export const loader = async () => {
 		ShowcaseTournaments.upcomingTournaments(),
 		TournamentOrganizationRepository.findByUserId(user.id),
 		myScheduleData(user.id),
+		findUpcomingTeamEvents(user.id),
 	]);
 
 	const registered = tournamentsData.participatingFor
@@ -41,6 +46,8 @@ export const loader = async () => {
 	const scrims = scrimsData
 		.map(scrimToSidebarEvent)
 		.sort((a, b) => a.startsAt - b.startsAt);
+
+	const team = teamEvents.map(teamEventToSidebarEvent);
 
 	const saved = savedTournaments
 		.map(tournamentToSidebarEvent)
@@ -57,5 +64,5 @@ export const loader = async () => {
 		.map(tournamentToSidebarEvent)
 		.sort((a, b) => a.startsAt - b.startsAt);
 
-	return { registered, hosting, scrims, saved, organization, mySchedule };
+	return { registered, hosting, scrims, team, saved, organization, mySchedule };
 };

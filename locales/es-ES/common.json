@@ -108,6 +108,8 @@
 	"notifications.text.TO_LIKE_RECEIVED": "{{likerUsername}} ha invitado a tu grupo en {{tournamentName}}",
 	"notifications.title.TO_LIKE_ACCEPTED": "Invitación de grupo aceptada",
 	"notifications.text.TO_LIKE_ACCEPTED": "{{accepterUsername}} ha aceptado tu invitación de grupo en {{tournamentName}}",
+	"notifications.title.TEAM_EVENT_ADDED": "",
+	"notifications.text.TEAM_EVENT_ADDED": "",
 	"auth.errors.aborted": "Inicio de Sesión Cancelado",
 	"auth.errors.failed": "Error al Iniciar Sesión",
 	"auth.errors.discordPermissions": "Para tu perfil de sendou.ink, el sitio necesita acceso al nombre, avatar y conexiones sociales de tu perfil de Discord.",

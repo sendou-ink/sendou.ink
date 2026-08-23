@@ -2,7 +2,10 @@ import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import { databaseTimestampNow } from "~/utils/dates";
-import { jsonArrayFrom } from "~/utils/kysely.server";
+import {
+	concatUserSubmittedImagePrefix,
+	jsonArrayFrom,
+} from "~/utils/kysely.server";
 import type { TimeRange } from "./availability-types";
 
 /** Longest a week can be, a DST week included. Weeks are indexed by their start, so finding the ones overlapping a window means looking this far back. */
@@ -94,6 +97,80 @@ export function findAllTeamEventsByUserIds({
 		.where("TeamEvent.startsAt", "<", endsAt)
 		.where("TeamEvent.endsAt", ">", startsAt)
 		.execute();
+}
+
+/** Team events of one team overlapping the given window. */
+export function findTeamEventsByTeamId({
+	teamId,
+	startsAt,
+	endsAt,
+}: {
+	teamId: number;
+	startsAt: number;
+	endsAt: number;
+}) {
+	return db
+		.selectFrom("TeamEvent")
+		.select([
+			"TeamEvent.id",
+			"TeamEvent.name",
+			"TeamEvent.startsAt",
+			"TeamEvent.endsAt",
+		])
+		.where("TeamEvent.teamId", "=", teamId)
+		.where("TeamEvent.startsAt", "<", endsAt)
+		.where("TeamEvent.endsAt", ">", startsAt)
+		.orderBy("TeamEvent.startsAt", "asc")
+		.execute();
+}
+
+/**
+ * Ongoing and upcoming team events of every team the given user is a member of
+ * (secondary teams included), starting within the given window, with the
+ * owning team attached. For the user's personal calendar surfaces.
+ */
+export function findAllUpcomingTeamEventsByUserId({
+	userId,
+	startsAt,
+	endsAt,
+}: {
+	userId: number;
+	startsAt: number;
+	endsAt: number;
+}) {
+	return db
+		.selectFrom("TeamEvent")
+		.innerJoin(
+			"TeamMemberWithSecondary",
+			"TeamMemberWithSecondary.teamId",
+			"TeamEvent.teamId",
+		)
+		.innerJoin("Team", "Team.id", "TeamEvent.teamId")
+		.leftJoin("UserSubmittedImage", "Team.avatarImgId", "UserSubmittedImage.id")
+		.select((eb) => [
+			"TeamEvent.id",
+			"TeamEvent.name",
+			"TeamEvent.startsAt",
+			"TeamEvent.endsAt",
+			"Team.name as teamName",
+			"Team.customUrl as teamCustomUrl",
+			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
+				"teamAvatarUrl",
+			),
+		])
+		.where("TeamMemberWithSecondary.userId", "=", userId)
+		.where("TeamEvent.endsAt", ">", startsAt)
+		.where("TeamEvent.startsAt", "<", endsAt)
+		.orderBy("TeamEvent.startsAt", "asc")
+		.execute();
+}
+
+export function findTeamEventById(id: number) {
+	return db
+		.selectFrom("TeamEvent")
+		.select(["TeamEvent.id", "TeamEvent.teamId"])
+		.where("TeamEvent.id", "=", id)
+		.executeTakeFirst();
 }
 
 interface UpsertOwnWeekArgs {
@@ -197,4 +274,8 @@ export async function insertTeamEvent(
 		.executeTakeFirstOrThrow();
 
 	return event.id;
+}
+
+export function deleteTeamEvent(id: number) {
+	return db.deleteFrom("TeamEvent").where("TeamEvent.id", "=", id).execute();
 }

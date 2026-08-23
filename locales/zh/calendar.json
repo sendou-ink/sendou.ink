@@ -81,6 +81,7 @@
 	"events.view.registered": "已报名",
 	"events.view.hosting": "我主办的",
 	"events.view.scrims": "对抗战",
+	"events.view.team": "",
 	"events.view.saved": "已保存",
 	"events.view.organization": "组织",
 	"events.empty": "该分类下暂无赛事。",

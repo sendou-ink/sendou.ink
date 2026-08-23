@@ -106,6 +106,14 @@ export type Notification =
 				tournamentName: string;
 				accepterUsername: string;
 			}
+	  >
+	| NotificationItem<
+			"TEAM_EVENT_ADDED",
+			{
+				eventName: string;
+				teamName: string;
+				teamCustomUrl: string;
+			}
 	  >;
 
 type NotificationItem<

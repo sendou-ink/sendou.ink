@@ -14,6 +14,12 @@ export class TeamSchedulePage {
 			hiddenMessage: page.getByTestId("schedule-hidden"),
 			windows: page.getByTestId("schedule-window"),
 			notes: page.getByTestId("schedule-note"),
+			teamEvents: page.getByTestId("schedule-team-event"),
+			addEventButton: page.getByTestId("add-team-event-button"),
+			// the chip radio input is visually hidden, so the label is what clicks
+			nextWeekToggle: page.locator(
+				'label[for="chip-radio-schedule-week-next"]',
+			),
 		};
 	}
 

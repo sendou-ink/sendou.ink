@@ -189,6 +189,14 @@ async function seedNotifications(
 		},
 		{ type: "SQ_ADDED_TO_GROUP", meta: { adderUsername: "N-ZAP" } },
 		{ type: "SQ_NEW_MATCH", meta: { matchId: 100 } },
+		{
+			type: "TEAM_EVENT_ADDED",
+			meta: {
+				eventName: "VoD review vs. FTWin",
+				teamName: "Alliance Rogue",
+				teamCustomUrl: "alliance-rogue",
+			},
+		},
 		{ type: "PLUS_VOTING_STARTED", meta: { seasonNth: 1 } },
 		{
 			type: "TO_CHECK_IN_OPENED",

@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import * as v from "valibot";
 import { getUser } from "~/features/auth/core/user.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { teamParamsSchema } from "~/features/team/team-schemas.server";
 import { getMemberRoleType, isTeamMember } from "~/features/team/team-utils";
@@ -30,9 +31,16 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await TeamRepository.findByCustomUrl(customUrl),
 	);
 
-	if (!isTeamMember({ team, user: getUser() })) {
+	const user = getUser();
+	if (!user || !isTeamMember({ team, user })) {
 		return { weeks: null };
 	}
+
+	await resolveNotifications({
+		userIds: [user.id],
+		type: "TEAM_EVENT_ADDED",
+		meta: { teamCustomUrl: team.customUrl },
+	});
 
 	const members = team.members.filter(
 		(member) => member.role !== "CHEERLEADER",
@@ -47,13 +55,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			timezone,
 		).endsAt,
 	};
-	const [reportedWeeks, busyByUserId] = await Promise.all([
+	const [reportedWeeks, busyByUserId, teamEvents] = await Promise.all([
 		AvailabilityRepository.findAllWeeksByUserIds({
 			userIds: members.map((member) => member.id),
 			...horizon,
 		}),
 		Commitments.busyBlocksByUserIds({
 			userIds: members.map((member) => member.id),
+			...horizon,
+		}),
+		AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
 			...horizon,
 		}),
 	]);
@@ -71,10 +83,15 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				playerIds,
 				reportedWeeks,
 				busyByUserId,
+				teamEvents,
 			}),
 		),
 	};
 };
+
+type TeamEventRow = Awaited<
+	ReturnType<typeof AvailabilityRepository.findTeamEventsByTeamId>
+>[number];
 
 type ReportedWeek = Awaited<
 	ReturnType<typeof AvailabilityRepository.findAllWeeksByUserIds>
@@ -87,6 +104,7 @@ function weekView({
 	playerIds,
 	reportedWeeks,
 	busyByUserId,
+	teamEvents,
 }: {
 	range: TimeRange;
 	timezone: string;
@@ -94,6 +112,7 @@ function weekView({
 	playerIds: Array<number>;
 	reportedWeeks: Array<ReportedWeek>;
 	busyByUserId: Map<number, Array<BusyBlock>>;
+	teamEvents: Array<TeamEventRow>;
 }) {
 	const minPlayers = Math.min(
 		AVAILABILITY.DEFAULT_MIN_PLAYERS,
@@ -148,6 +167,10 @@ function weekView({
 		members,
 		windows,
 		minPlayers,
+		teamEvents: teamEvents.filter(
+			(event) =>
+				event.startsAt >= range.startsAt && event.startsAt < range.endsAt,
+		),
 	};
 }
 

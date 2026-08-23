@@ -12,6 +12,13 @@
 	"editor.title": "",
 	"editor.timesInYourTimezone": "",
 	"editor.visibility": "",
+	"events.title": "",
+	"events.add": "",
+	"events.addDialogTitle": "",
+	"events.membersWillSee": "",
+	"events.none": "",
+	"events.delete": "",
+	"events.deleteConfirm": "",
 	"team.canPlay": "",
 	"team.currentWeek": "",
 	"team.hidden": "",
@@ -19,7 +26,6 @@
 	"team.noSchedule": "",
 	"team.notAvailable": "",
 	"team.noWindows": "",
-	"team.visibility": "",
 	"team.weekHeading": "",
 	"team.withSub": ""
 }

@@ -108,6 +108,8 @@
 	"notifications.text.TO_LIKE_RECEIVED": "{{likerUsername}} invited your group in {{tournamentName}}",
 	"notifications.title.TO_LIKE_ACCEPTED": "Group Invitation Accepted",
 	"notifications.text.TO_LIKE_ACCEPTED": "{{accepterUsername}} accepted your group invitation in {{tournamentName}}",
+	"notifications.title.TEAM_EVENT_ADDED": "New Team Event",
+	"notifications.text.TEAM_EVENT_ADDED": "{{teamName}} has a new event: {{eventName}}",
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",

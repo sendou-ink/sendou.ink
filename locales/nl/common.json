@@ -108,6 +108,8 @@
 	"notifications.text.TO_LIKE_RECEIVED": "",
 	"notifications.title.TO_LIKE_ACCEPTED": "",
 	"notifications.text.TO_LIKE_ACCEPTED": "",
+	"notifications.title.TEAM_EVENT_ADDED": "",
+	"notifications.text.TEAM_EVENT_ADDED": "",
 	"auth.errors.aborted": "",
 	"auth.errors.failed": "",
 	"auth.errors.discordPermissions": "",

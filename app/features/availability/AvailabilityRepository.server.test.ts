@@ -1,6 +1,8 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import { actAs } from "~/db/seed/core/actAs";
 import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFactory";
+import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
+import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as AvailabilityRepository from "./AvailabilityRepository.server";
 import * as Availability from "./core/Availability";
@@ -190,5 +192,148 @@ describe("AvailabilityRepository.deleteWeeksStartedBefore", () => {
 				endsAt: at("2026-09-07", "00:00"),
 			}),
 		).toHaveLength(1);
+	});
+});
+
+describe("AvailabilityRepository.findTeamEventsByTeamId", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("finds only the team's events overlapping the window", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1)],
+		});
+		const otherTeam = await TeamFactory.create({
+			name: "Bravo",
+			memberUserIds: [users.id(2)],
+		});
+
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:30"),
+		});
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Next week meeting",
+			startsAt: at("2026-09-01", "19:00"),
+			endsAt: at("2026-09-01", "20:00"),
+		});
+		await TeamEventFactory.create({
+			teamId: otherTeam.id,
+			authorId: users.id(2),
+			name: "Bravo scrim block",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+		});
+
+		const events = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+
+		expect(events).toHaveLength(1);
+		expect(events[0].name).toBe("VoD review");
+	});
+});
+
+describe("AvailabilityRepository.findAllUpcomingTeamEventsByUserId", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("finds the events of every team the user is a member of, with the owning team attached", async () => {
+		const ownTeam = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1)],
+		});
+		const otherTeam = await TeamFactory.create({
+			name: "Bravo",
+			memberUserIds: [users.id(2)],
+		});
+
+		await TeamEventFactory.create({
+			teamId: ownTeam.id,
+			authorId: users.id(1),
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:30"),
+		});
+		await TeamEventFactory.create({
+			teamId: otherTeam.id,
+			authorId: users.id(2),
+			name: "Bravo meeting",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+		});
+
+		const events =
+			await AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+				userId: users.id(1),
+				...WINDOW,
+			});
+
+		expect(events).toHaveLength(1);
+		expect(events[0]).toMatchObject({
+			name: "VoD review",
+			teamName: "Alpha",
+			teamCustomUrl: "alpha",
+		});
+	});
+
+	test("leaves out events that ended before the window", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1)],
+		});
+
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Past event",
+			startsAt: at("2026-08-17", "20:00"),
+			endsAt: at("2026-08-17", "21:00"),
+		});
+
+		expect(
+			await AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+				userId: users.id(1),
+				...WINDOW,
+			}),
+		).toEqual([]);
+	});
+});
+
+describe("AvailabilityRepository.deleteTeamEvent", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("deletes the event", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1)],
+		});
+		const event = await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:30"),
+		});
+
+		await AvailabilityRepository.deleteTeamEvent(event.id);
+
+		expect(
+			await AvailabilityRepository.findTeamEventsByTeamId({
+				teamId: team.id,
+				...WINDOW,
+			}),
+		).toEqual([]);
 	});
 });

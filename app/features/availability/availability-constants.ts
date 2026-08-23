@@ -6,6 +6,7 @@ export const AVAILABILITY = {
 	/** Shorter overlaps are not worth reporting as a playable window. */
 	MIN_WINDOW_MINUTES: 60,
 	DAY_NOTE_MAX_LENGTH: 100,
+	TEAM_EVENT_NAME_MAX_LENGTH: 100,
 	/** Weeks that can be filled in: the current one and the next. */
 	WEEK_HORIZON: 2,
 	/** Weeks whose end is further in the past than this are deleted. */

@@ -1,5 +1,7 @@
+import { addWeeks } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { addTeamEventSchema } from "~/features/availability/availability-schemas";
 import * as Availability from "~/features/availability/core/Availability";
 import type { Factories } from "./helpers/factories";
 import {
@@ -11,6 +13,7 @@ import {
 	setTimezoneCookie,
 	test,
 } from "./helpers/playwright";
+import { createFormHelpers } from "./helpers/playwright-form";
 import { AnythingAdder } from "./pages/layout/anything-adder";
 import { SELECTED_MAP_CLASS } from "./pages/settings/map-mode-preferences-field";
 import { JoinTeamPage } from "./pages/team/join-team-page";
@@ -480,6 +483,8 @@ test.describe("Team schedule", () => {
 		await expect(schedule.locators.windows).toHaveText(/Wed/);
 		await expect(schedule.dayDot(WEDNESDAY)).toBeVisible();
 		await isNotVisible(schedule.dayDot(0));
+
+		await expect(schedule.locators.teamEvents).toContainText("VoD review");
 	});
 
 	test("hides the schedule from non-members, a friend of a member included", async ({
@@ -509,6 +514,48 @@ test.describe("Team schedule", () => {
 		await expect(schedule.locators.hiddenMessage).toBeVisible();
 		await isNotVisible(schedule.locators.grid);
 	});
+
+	test("owner adds and deletes a team event, a regular member only sees it", async ({
+		page,
+		factories,
+	}) => {
+		const { customUrl } = await factories.TeamFactory.create({
+			name: TEAM_NAME,
+			memberUserIds: [ADMIN_ID, NZAP_TEST_ID],
+		});
+
+		await impersonate(page, ADMIN_ID);
+		await setTimezoneCookie(page);
+
+		const schedule = new TeamSchedulePage(page);
+		await schedule.goto(customUrl);
+
+		await schedule.locators.addEventButton.click();
+		const form = createFormHelpers(page, addTeamEventSchema);
+		await form.fill("name", "VoD review vs. FTWin");
+		await form.setDateTime("startsAt", nextWeekTime(WEDNESDAY, "20:00"));
+		await form.select("duration", "90");
+		await form.submit();
+
+		await schedule.locators.nextWeekToggle.click();
+		await expect(schedule.locators.teamEvents).toContainText(
+			"VoD review vs. FTWin",
+		);
+
+		await impersonate(page, NZAP_TEST_ID);
+		await schedule.goto(customUrl);
+		await schedule.locators.nextWeekToggle.click();
+		await expect(schedule.locators.teamEvents).toBeVisible();
+		await isNotVisible(schedule.locators.addEventButton);
+		await isNotVisible(page.getByTestId(/delete-team-event/));
+
+		await impersonate(page, ADMIN_ID);
+		await schedule.goto(customUrl);
+		await schedule.locators.nextWeekToggle.click();
+		await page.getByTestId(/delete-team-event/).click();
+		await page.getByTestId("confirm-button").click();
+		await isNotVisible(schedule.locators.teamEvents);
+	});
 });
 
 function currentWeek() {
@@ -523,6 +570,23 @@ function currentWeekDates() {
 			startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
 			MACHINE_TIMEZONE,
 		),
+	);
+}
+
+/** Wall-clock time on a day of next week, always ahead of "now" so the add-event form accepts it. */
+function nextWeekTime(dayIndex: number, time: string) {
+	const { startsAt } = Availability.weekRange(
+		addWeeks(new Date(), 1),
+		MACHINE_TIMEZONE,
+	);
+	const date = Availability.dateInTimezone(
+		startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
+		MACHINE_TIMEZONE,
+	);
+
+	return new Date(
+		Availability.localToTimestamp({ date, time, timezone: MACHINE_TIMEZONE }) *
+			1000,
 	);
 }
 
