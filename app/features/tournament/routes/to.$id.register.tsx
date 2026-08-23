@@ -1155,7 +1155,6 @@ function TeamCounterPickMapPoolPicker({
 function SelectedTeamAvailability() {
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const tournament = useTournament();
-	const user = useUser();
 	const { values } = useFormFieldContext();
 
 	const availability = data?.availability;
@@ -1163,29 +1162,41 @@ function SelectedTeamAvailability() {
 
 	const teamId = values.teamId ? Number(values.teamId) : null;
 
-	// with a team selected the panel shows its full roster; signing up as a
-	// pickup it instead lists everyone the viewer could recruit (teammates and
-	// friends), which the panel keeps to those actually free during the event
+	const inTournament = (userId: number) =>
+		tournament.ctx.teams.some((team) => team.memberUserIds.includes(userId));
+
+	const entryByUserId = availabilityEntryByUserId(data);
+	const isFree = (userId: number) => {
+		const status = availabilityRowStatus(entryByUserId?.get(userId));
+		return status === "available" || status === "partial";
+	};
+
+	// with a team selected the panel shows its full roster, every status
+	// included; signing up as a pickup it instead lists everyone the viewer
+	// could recruit (all their teams' members and friends) in one list, kept
+	// to those actually free during the event
 	const roster = teamId
 		? (data?.friendPlayers?.friends ?? [])
 				.filter((friend) => friend.teamId === teamId)
 				.map(panelUser)
-		: [];
-	if (teamId && roster.length === 0) return null;
+		: R.uniqueBy(data?.friendPlayers?.friends ?? [], (friend) => friend.id)
+				.filter((friend) => !inTournament(friend.id) && isFree(friend.id))
+				.map(panelUser);
+	if (roster.length === 0 && !availability.beyondHorizon) return null;
 
 	return (
 		<RegistrationAvailabilityPanel
 			availability={availability}
 			roster={roster}
-			subCandidates={subCandidates({
-				data,
-				tournament,
-				rosterUserIds: teamId
-					? roster.map((rosterUser) => rosterUser.id)
-					: user
-						? [user.id]
-						: [],
-			})}
+			subCandidates={
+				teamId
+					? subCandidates({
+							data,
+							tournament,
+							rosterUserIds: roster.map((rosterUser) => rosterUser.id),
+						})
+					: []
+			}
 		/>
 	);
 }
