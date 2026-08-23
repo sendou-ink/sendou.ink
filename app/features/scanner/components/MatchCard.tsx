@@ -205,24 +205,38 @@ function Score({
 			</span>
 		);
 	}
-	const [alpha, bravo] = match.matchScores;
 	const objectiveScores = matchScoresFromObjective(
 		match.objective?.samples ?? [],
 	);
+	const [left, right] = displayOrder(match);
 
-	// scoreboard-sourced matches list the winners first
-	const winnerKnown = match.winner !== null;
 	return (
 		<div className={styles.matchScore}>
-			<span className={winnerKnown ? styles.win : undefined}>
-				{scoreLabel(alpha, objectiveScores[0])}
+			<span className={winnerClass(match, left)}>
+				{scoreLabel(match.matchScores[left], objectiveScores[left])}
 			</span>
 			<span> – </span>
-			<span className={winnerKnown ? styles.lose : undefined}>
-				{scoreLabel(bravo, objectiveScores[1])}
+			<span className={winnerClass(match, right)}>
+				{scoreLabel(match.matchScores[right], objectiveScores[right])}
 			</span>
 		</div>
 	);
+}
+
+/**
+ * `teams` order is winner-first on a scoreboard-closed match, so it flips
+ * between the games of one feed. The card instead keeps the scan's own
+ * side (alpha) left and the enemy (bravo) right for every match, so the
+ * scores and weapons of consecutive games line up; footage with no POV
+ * seat read (casts) keeps `teams` order.
+ */
+function displayOrder(match: ScannerMatch): [0 | 1, 0 | 1] {
+	return match.pov?.team === 1 ? [1, 0] : [0, 1];
+}
+
+function winnerClass(match: ScannerMatch, team: 0 | 1): string | undefined {
+	if (match.winner === null) return undefined;
+	return match.winner === team ? styles.win : styles.lose;
 }
 
 /**
@@ -259,17 +273,18 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 				pov: match.pov?.team === team && match.pov.index === index,
 			}))
 			.filter((weapon): weapon is TeamWeapon => weapon.weaponId !== null);
-	const alpha = weaponsOf(0);
-	const bravo = weaponsOf(1);
-	if (alpha.length + bravo.length === 0) return null;
+	const [left, right] = displayOrder(match);
+	const leftWeapons = weaponsOf(left);
+	const rightWeapons = weaponsOf(right);
+	if (leftWeapons.length + rightWeapons.length === 0) return null;
 
 	return (
 		<div className={styles.weapons}>
-			{alpha.length > 0 ? <WeaponRow weapons={alpha} /> : null}
-			{alpha.length > 0 && bravo.length > 0 ? (
+			{leftWeapons.length > 0 ? <WeaponRow weapons={leftWeapons} /> : null}
+			{leftWeapons.length > 0 && rightWeapons.length > 0 ? (
 				<span className={styles.vs}>vs</span>
 			) : null}
-			{bravo.length > 0 ? <WeaponRow weapons={bravo} /> : null}
+			{rightWeapons.length > 0 ? <WeaponRow weapons={rightWeapons} /> : null}
 		</div>
 	);
 }
