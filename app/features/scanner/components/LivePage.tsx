@@ -65,10 +65,13 @@ import { thumbnailFromBlob } from "./thumbnail";
 const SAMPLE_FPS = 2;
 
 /**
- * A battle-log parse streak can occupy the worker for seconds; buffering the
- * frames sampled meanwhile (analyzed late, VoD-style) keeps quickly browsed
- * entries from being missed. 24 frames = ~12s of backlog before the oldest
- * frame is dropped.
+ * A slow parse (a browsed battle-log entry, a CJK splash-tag name) can
+ * occupy the worker for seconds to tens of seconds; buffering the frames
+ * sampled meanwhile (analyzed late, VoD-style) keeps what happened during
+ * the stall from being missed. 24 frames hold ~12s at full density; past
+ * that the backlog is decimated toward even spacing over the whole stall
+ * (worker/frame-queue.ts) instead of dropping its oldest frames, so a
+ * results screen mid-stall survives as a few frames.
  */
 const FRAME_QUEUE_LIMIT = 24;
 

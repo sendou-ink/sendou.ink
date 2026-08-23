@@ -12,6 +12,7 @@
  */
 import { Config } from "../../../config";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
+import { frameEvictionIndex } from "./frame-queue";
 import type { WorkerResponse } from "./protocol";
 
 export type ResultHandler = (
@@ -143,16 +144,19 @@ export class AnalyzerClient {
 
 	/**
 	 * Analyze a frame now, or — with `frameQueueLimit` set — buffer it until
-	 * the in-flight frame settles (past the limit the oldest buffered frame
-	 * is dropped). Returns false (and closes the bitmap) only when the frame
-	 * was dropped outright.
+	 * the in-flight frame settles (past the limit the backlog is decimated:
+	 * see frame-queue.ts). Returns false (and closes the bitmap) only when
+	 * the frame was dropped outright.
 	 */
 	analyze(bitmap: ImageBitmap | VideoFrame, t: number): boolean {
 		if (this.busy) {
 			if (this.#frameQueueLimit > 0 && this.#ready) {
 				this.#frameQueue.push({ bitmap, t });
 				if (this.#frameQueue.length > this.#frameQueueLimit) {
-					this.#frameQueue.shift()?.bitmap.close();
+					const victim = frameEvictionIndex(
+						this.#frameQueue.map((frame) => frame.t),
+					);
+					this.#frameQueue.splice(victim, 1)[0]?.bitmap.close();
 				}
 				return true;
 			}

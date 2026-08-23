@@ -154,7 +154,12 @@ sequenceDiagram
   are in each detector's module
   header; accuracy-critical matching internals in `core/glyphs.ts` and
   `core/detectors/scoreboard/weapons.ts` — read those before touching
-  recognition code.
+  recognition code. Parse cost matters live (a stalled worker drops
+  frames): a CJK splash-tag name once cost tens of seconds per death
+  parse, which is why the death detector memoizes tag reads on a
+  downscaled tag signature (same killer recurs pixel-identical) and
+  `classifySegment` prescreens oversized eligibility lists at half scale
+  — both tuned so `scanner:report` stays bit-identical.
 - Scheduling (`core/detectors/scheduler.ts`): the per-session
   DetectorScheduler decides which detectors see a frame. Failing gates are
   re-checked every `searchIntervalS` (0.25s — produced VoDs cut screens to
@@ -173,6 +178,11 @@ sequenceDiagram
   collection and the panel stays hidden. A match's objective reads render
   as one step-line timeline
   (`~/components/ObjectiveTimeline.tsx`, shared with the match page).
+  The Live tab buffers frames sampled while the worker is busy; past the
+  buffer limit the backlog is decimated toward even time-spacing
+  (`worker/frame-queue.ts`) rather than truncated oldest-first, so a
+  parse stall can no longer swallow a results screen whole (the exact
+  failure that cost a live match its scoreboard on 2026-08-22).
 - VoD scans (`components/VodPage.tsx`): on the WebCodecs path each worker
   demuxes + decodes its own contiguous slice (mediabunny in the worker — no
   frames cross the main thread). When the scheduler reports calm (no gate

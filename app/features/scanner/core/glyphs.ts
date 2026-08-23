@@ -45,6 +45,8 @@ interface Glyph {
 	ink: number;
 	/** exact fixture crop vs font-rendered approximation */
 	source: "fixture" | "font";
+	/** lazily-built PRESCREEN_SCALE thumbnail for the eligibility prescreen */
+	small?: Mat;
 }
 
 export interface GlyphSet {
@@ -297,6 +299,30 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
  */
 const FIXTURE_TIEBREAK = 0.02;
 
+/**
+ * A CJK-charset segment leaves thousands of templates eligible with barely
+ * differing bounds (similar ink coverage and heights across the charset),
+ * so the bound-sorted early break never fires and every template pays a
+ * full matchTemplate — tens of seconds per segment. Above this eligibility
+ * count a half-scale NCC pass ranks the templates first (matchTemplate
+ * work scales with region area × template area, so ~16x cheaper) and only
+ * glyphs whose estimated score lands within PRESCREEN_MARGIN of the
+ * front-runner advance to full matching. The margin absorbs the low-res
+ * estimate's error and sits far beyond FIXTURE_TIEBREAK, so the tie-break
+ * pool survives; the estimate only prunes, never scores. Tuning is
+ * accuracy-first, verified against the full scanner:report — at these
+ * values the report is bit-identical to no-prescreen while a JP
+ * splash-tag read drops from ~21s to ~1.3s. Quarter scale is too coarse
+ * (20px glyphs land at ~5px where the NCC ranking turns to noise), a
+ * tighter margin loses real reads ('R' at 0.12, and stragglers survive
+ * past 0.22), and the keep cap is only a runaway backstop — capping at
+ * 256 cut true glyphs that sat within the margin.
+ */
+const PRESCREEN_MIN_ELIGIBLE = 200;
+const PRESCREEN_SCALE = 0.5;
+const PRESCREEN_MARGIN = 0.3;
+const PRESCREEN_MAX_KEEP = 1024;
+
 function classifySegment(
 	masked: Mat,
 	seg: SegmentInfo,
@@ -336,14 +362,7 @@ function classifySegment(
 	// matching runs. Matching in descending-bound order lets the loop stop as
 	// soon as no remaining glyph could come within FIXTURE_TIEBREAK of the
 	// best — those can neither win nor take part in the fixture tie-break.
-	const eligible: {
-		glyph: Glyph;
-		tRows: number;
-		tCols: number;
-		r: number;
-		hr: number;
-		bound: number;
-	}[] = [];
+	const eligible: EligibleGlyph[] = [];
 	for (const glyph of set.glyphs) {
 		const t = glyph.mat;
 		const tRows = t.rows;
@@ -392,8 +411,25 @@ function classifySegment(
 	// so the loop can stop as soon as either answer is certain: no remaining
 	// bound reaches the floor, or a computed score already cleared it.
 	const probeMode = scoreFloor !== Number.NEGATIVE_INFINITY;
+	// a probe prunes against its own floor instead of the front-runner: its
+	// usual answer is "no glyph clears the floor", which otherwise costs a
+	// full match of every template whose loose bound exceeds it
+	const contenders =
+		eligible.length >= PRESCREEN_MIN_ELIGIBLE
+			? prescreen(
+					region,
+					eligible,
+					{
+						x0,
+						segX0: seg.x0,
+						segX1: seg.x1,
+						minOverlap,
+					},
+					probeMode ? scoreFloor : null,
+				)
+			: eligible;
 	let bestScore = scoreFloor;
-	for (const { glyph, tRows, tCols, r, hr, bound } of eligible) {
+	for (const { glyph, tRows, tCols, r, hr, bound } of contenders) {
 		if (bound < bestScore - FIXTURE_TIEBREAK) break;
 		if (probeMode && (bound <= scoreFloor || bestScore > scoreFloor)) break;
 		cv.matchTemplate(region, glyph.mat, result, cv.TM_CCOEFF_NORMED);
@@ -447,6 +483,131 @@ function classifySegment(
 		}
 	}
 	return candidates.slice(0, 5);
+}
+
+interface EligibleGlyph {
+	glyph: Glyph;
+	tRows: number;
+	tCols: number;
+	r: number;
+	hr: number;
+	bound: number;
+}
+
+/** Low-res ranking pass over an oversized eligibility list; see the
+ * PRESCREEN_* constants for why and how survivors are chosen. `geometry`
+ * carries the caller's placement window in full-res coordinates: without
+ * the same min-overlap restriction the estimates suffer exactly the
+ * failure the full loop guards against — a template scoring on the
+ * neighboring glyph inside the pad — which inflates the front-runner and
+ * prunes the true glyph. */
+function prescreen(
+	region: Mat,
+	eligible: EligibleGlyph[],
+	geometry: { x0: number; segX0: number; segX1: number; minOverlap: number },
+	/** probe mode: prune against this floor instead of the front-runner */
+	probeFloor: number | null = null,
+): EligibleGlyph[] {
+	const cv = getCV();
+	const smallRegion = new cv.Mat();
+	cv.resize(
+		region,
+		smallRegion,
+		scaledSize(region.cols, region.rows),
+		0,
+		0,
+		cv.INTER_AREA,
+	);
+	const x0 = geometry.x0 * PRESCREEN_SCALE;
+	const segX0 = geometry.segX0 * PRESCREEN_SCALE;
+	const segX1 = geometry.segX1 * PRESCREEN_SCALE;
+	// the slack pixel keeps quantized low-res placements from cutting a
+	// boundary placement the full-res window allows
+	const minOverlap = geometry.minOverlap * PRESCREEN_SCALE - 1;
+	const result = new cv.Mat();
+	// entries the low-res pass cannot estimate (template degenerate or no
+	// valid placement after scaling) are force-kept — but must stay out of
+	// the front-runner max, or their untightened bound (≈1) inflates the
+	// floor and prunes every genuinely estimated glyph
+	const kept: EligibleGlyph[] = [];
+	const scored: { entry: EligibleGlyph; est: number }[] = [];
+	for (const entry of eligible) {
+		const small = smallGlyph(entry.glyph);
+		if (
+			small.rows < 2 ||
+			small.cols < 2 ||
+			small.rows > smallRegion.rows ||
+			small.cols > smallRegion.cols
+		) {
+			kept.push(entry);
+			continue;
+		}
+		cv.matchTemplate(smallRegion, small, result, cv.TM_CCOEFF_NORMED);
+		const rCols = smallRegion.cols - small.cols + 1;
+		const rRows = smallRegion.rows - small.rows + 1;
+		const overlapAt = (rx: number) =>
+			Math.min(x0 + rx + small.cols, segX1) - Math.max(x0 + rx, segX0);
+		let lo = 0;
+		while (lo < rCols && overlapAt(lo) < minOverlap) lo++;
+		let hi = rCols - 1;
+		while (hi >= lo && overlapAt(hi) < minOverlap) hi--;
+		if (hi < lo) {
+			kept.push(entry);
+			continue;
+		}
+		let maxVal = Number.NEGATIVE_INFINITY;
+		const scores = result.data32F;
+		for (let ry = 0, rowBase = 0; ry < rRows; ry++, rowBase += rCols) {
+			for (let rx = lo; rx <= hi; rx++) {
+				const v = scores[rowBase + rx]!;
+				if (v > maxVal) maxVal = v;
+			}
+		}
+		scored.push({ entry, est: maxVal * entry.bound });
+	}
+	result.delete();
+	smallRegion.delete();
+	scored.sort((a, b) => b.est - a.est);
+	if (scored.length > 0) {
+		const floor =
+			probeFloor !== null
+				? probeFloor - PRESCREEN_MARGIN
+				: scored[0]!.est - PRESCREEN_MARGIN;
+		let taken = 0;
+		for (const { entry, est } of scored) {
+			if (est < floor || taken >= PRESCREEN_MAX_KEEP) break;
+			kept.push(entry);
+			taken++;
+		}
+	}
+	// the main matching loop's early break assumes descending bounds
+	kept.sort((a, b) => b.bound - a.bound);
+	return kept;
+}
+
+function smallGlyph(glyph: Glyph): Mat {
+	if (!glyph.small) {
+		const cv = getCV();
+		const small = new cv.Mat();
+		cv.resize(
+			glyph.mat,
+			small,
+			scaledSize(glyph.mat.cols, glyph.mat.rows),
+			0,
+			0,
+			cv.INTER_AREA,
+		);
+		glyph.small = small;
+	}
+	return glyph.small;
+}
+
+function scaledSize(cols: number, rows: number) {
+	const cv = getCV();
+	return new cv.Size(
+		Math.max(1, Math.round(cols * PRESCREEN_SCALE)),
+		Math.max(1, Math.round(rows * PRESCREEN_SCALE)),
+	);
 }
 
 interface ClassifiedSegment {

@@ -141,6 +141,31 @@ const TAG_NAME_REFINE_MIN_INK = 200;
 const TAG_SPLIT_MIN_FRACTION = 0.15;
 const TAG_SPLIT_MIN_CHANNEL_DISTANCE = 40;
 
+/**
+ * The splash-tag read dominates parse cost — a CJK name OCRs against the
+ * full name atlas for tens of seconds, 90%+ of a slow death parse — and
+ * the same killer's tag recurs pixel-identical, both across the frames of
+ * one death's parse streak and across their later kills. Reads are
+ * memoized on a small downscaled signature of the leveled tag band:
+ * VoD-measured mean abs diffs are ≤1 between reads of one killer's tag
+ * (even across different deaths) and ≥95 between different killers, so
+ * the threshold has a wide margin on both sides.
+ */
+const TAG_MEMO_WIDTH = 48;
+const TAG_MEMO_HEIGHT = 12;
+const TAG_MEMO_MAX_MEAN_DIFF = 12;
+const TAG_MEMO_MAX_ENTRIES = 16;
+/** A failed read is not worth pinning onto every later frame of its tag. */
+const TAG_MEMO_MIN_CONFIDENCE = 0.5;
+
+interface TagNameRead {
+	name: string | null;
+	confidence: number;
+	raw: string;
+	background: [number, number, number] | null;
+	textColor: [number, number, number] | null;
+}
+
 interface WeaponCandidate {
 	/** the full weapon line as this template renders it, e.g. "Durch Klecksroller" */
 	text: string;
@@ -272,6 +297,45 @@ export function createDeathDetector(
 		const inner = copyRoi(rotated, TAG_NAME_INNER);
 		rotated.delete();
 		return inner;
+	}
+
+	const tagMemo: { signature: Uint8Array; read: TagNameRead }[] = [];
+
+	function tagSignature(inner: Mat): Uint8Array {
+		const small = new cv.Mat();
+		cv.resize(
+			inner,
+			small,
+			new cv.Size(TAG_MEMO_WIDTH, TAG_MEMO_HEIGHT),
+			0,
+			0,
+			cv.INTER_AREA,
+		);
+		const signature = new Uint8Array(small.data);
+		small.delete();
+		return signature;
+	}
+
+	/** Memoized read for a matching tag, freshened to the list's end. */
+	function tagMemoLookup(signature: Uint8Array): TagNameRead | null {
+		for (let i = 0; i < tagMemo.length; i++) {
+			const entry = tagMemo[i]!;
+			let sum = 0;
+			for (let k = 0; k < signature.length; k++) {
+				sum += Math.abs(signature[k]! - entry.signature[k]!);
+			}
+			if (sum / signature.length <= TAG_MEMO_MAX_MEAN_DIFF) {
+				tagMemo.splice(i, 1);
+				tagMemo.push(entry);
+				return entry.read;
+			}
+		}
+		return null;
+	}
+
+	function tagMemoStore(signature: Uint8Array, read: TagNameRead): void {
+		tagMemo.push({ signature, read });
+		if (tagMemo.length > TAG_MEMO_MAX_ENTRIES) tagMemo.shift();
 	}
 
 	/** Per-channel median color of `inner`, over pixels where mask(i) holds. */
@@ -678,12 +742,16 @@ export function createDeathDetector(
 		let nameRaw = "";
 		let tagBackground: [number, number, number] | null = null;
 		let tagTextColor: [number, number, number] | null = null;
+		let nameMemoHit = false;
 		if (tagNameGlyphs) {
 			const spaceGap = Math.max(
 				7,
 				Math.round(tagNameGlyphs.medianWidth * 0.55),
 			);
 			const inner = levelTagInner(rgb);
+			const signature = tagSignature(inner);
+			const memoized = tagMemoLookup(signature);
+			nameMemoHit = memoized !== null;
 			const readWithBackground = (
 				backgrounds: readonly [number, number, number][],
 			) => {
@@ -718,52 +786,66 @@ export function createDeathDetector(
 				return { parsed, background: backgrounds[0]!, textColor };
 			};
 
-			const median = medianColor(inner);
-			const dominants = dominantColors(inner, 2);
-			const dominant = dominants[0]!.color;
-			const candidates: [number, number, number][][] = [[median]];
-			if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
-				candidates.push([dominant]);
-			const second = dominants[1];
-			if (
-				second &&
-				second.fraction >= TAG_SPLIT_MIN_FRACTION &&
-				second.color.some(
-					(c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
-				)
-			) {
-				candidates.push([dominant, second.color]);
-			}
-			// an empty read never beats one with glyphs (an estimate landing on
-			// the text color blanks the band, and recognizeText scores a
-			// segment-less band confidence 1); near-tied confidences resolve to
-			// the longer read, since confidence is the *min* char score and
-			// erasing most of the name can still read the survivors immaculately
-			const NEAR_TIE = 0.03;
-			const beats = (
-				a: { parsed: { name: string; confidence: number } },
-				b: typeof a,
-			) => {
-				const aRead = a.parsed.name.length > 0 ? 1 : 0;
-				const bRead = b.parsed.name.length > 0 ? 1 : 0;
-				if (aRead !== bRead) return aRead - bRead;
-				if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
-					return a.parsed.name.length - b.parsed.name.length;
+			let read = memoized;
+			if (read === null) {
+				const median = medianColor(inner);
+				const dominants = dominantColors(inner, 2);
+				const dominant = dominants[0]!.color;
+				const candidates: [number, number, number][][] = [[median]];
+				if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
+					candidates.push([dominant]);
+				const second = dominants[1];
+				if (
+					second &&
+					second.fraction >= TAG_SPLIT_MIN_FRACTION &&
+					second.color.some(
+						(c, i) =>
+							Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
+					)
+				) {
+					candidates.push([dominant, second.color]);
 				}
-				return a.parsed.confidence - b.parsed.confidence;
-			};
-			let best = readWithBackground(candidates[0]!);
-			for (const backgrounds of candidates.slice(1)) {
-				const alt = readWithBackground(backgrounds);
-				if (beats(alt, best) > 0) best = alt;
+				// an empty read never beats one with glyphs (an estimate landing on
+				// the text color blanks the band, and recognizeText scores a
+				// segment-less band confidence 1); near-tied confidences resolve to
+				// the longer read, since confidence is the *min* char score and
+				// erasing most of the name can still read the survivors immaculately
+				const NEAR_TIE = 0.03;
+				const beats = (
+					a: { parsed: { name: string; confidence: number } },
+					b: typeof a,
+				) => {
+					const aRead = a.parsed.name.length > 0 ? 1 : 0;
+					const bRead = b.parsed.name.length > 0 ? 1 : 0;
+					if (aRead !== bRead) return aRead - bRead;
+					if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
+						return a.parsed.name.length - b.parsed.name.length;
+					}
+					return a.parsed.confidence - b.parsed.confidence;
+				};
+				let best = readWithBackground(candidates[0]!);
+				for (const backgrounds of candidates.slice(1)) {
+					const alt = readWithBackground(backgrounds);
+					if (beats(alt, best) > 0) best = alt;
+				}
+				read = {
+					name: best.parsed.name.length > 0 ? best.parsed.name : null,
+					confidence: best.parsed.confidence,
+					raw: best.parsed.raw.text,
+					background: best.background,
+					textColor: best.textColor,
+				};
+				if (read.confidence >= TAG_MEMO_MIN_CONFIDENCE && read.name !== null) {
+					tagMemoStore(signature, read);
+				}
 			}
 			inner.delete();
 
-			tagBackground = best.background;
-			tagTextColor = best.textColor;
-			nameRaw = best.parsed.raw.text;
-			if (best.parsed.name.length > 0) name = best.parsed.name;
-			nameConfidence = best.parsed.confidence;
+			tagBackground = read.background;
+			tagTextColor = read.textColor;
+			nameRaw = read.raw;
+			name = read.name;
+			nameConfidence = read.confidence;
 			confidences.push(nameConfidence);
 		}
 
@@ -806,6 +888,7 @@ export function createDeathDetector(
 					),
 					nameRaw,
 					nameScore: nameConfidence,
+					nameMemoHit,
 					tagBackground,
 					tagTextColor,
 				},
@@ -818,8 +901,10 @@ export function createDeathDetector(
 	// Death merge window, so every parse it skips would merge anyway.
 	// sufficientConfidence sits just under the measured clean-read floor
 	// (fixtures 0.750-0.825, confirmed scan events 0.751+); the refine and
-	// stagnation overrides cap what a ~1.4s parse can cost when a dirty
-	// read never reaches it
+	// stagnation overrides cap what a parse can cost when a dirty read
+	// never reaches it, and the tag memo keeps the streak's repeat parses
+	// off the expensive name read (a first-sight CJK name runs tens of
+	// seconds; repeats must not)
 	return {
 		id: "death",
 		refineIntervalS: 0.5,
