@@ -1,5 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as EventBus from "~/features/events/core/EventBus.server";
+import { abortSubscriptions, flushEvents, subscribeTo } from "./tests/fixtures";
 
 process.env.SKALOP_SYSTEM_MESSAGE_URL = "http://skalop.test";
 process.env.SKALOP_TOKEN = "test-token";
@@ -10,8 +11,6 @@ const fetchMock = vi.fn(
 	async (_input: unknown, _init?: { body?: string }) => new Response(null),
 );
 
-const abortControllers: AbortController[] = [];
-
 beforeEach(() => {
 	vi.stubGlobal("fetch", fetchMock);
 });
@@ -19,29 +18,8 @@ beforeEach(() => {
 afterEach(() => {
 	vi.unstubAllGlobals();
 	fetchMock.mockClear();
-	for (const controller of abortControllers) {
-		controller.abort();
-	}
-	abortControllers.length = 0;
+	abortSubscriptions();
 });
-
-function subscribeTo(channel: string) {
-	const controller = new AbortController();
-	abortControllers.push(controller);
-
-	const received: EventBus.ServerEvent[] = [];
-	void (async () => {
-		for await (const event of EventBus.subscribe(
-			[channel],
-			controller.signal,
-		)) {
-			received.push(event);
-		}
-	})();
-	return received;
-}
-
-const flush = () => new Promise<void>((resolve) => setTimeout(resolve));
 
 describe("ChatSystemMessage.send", () => {
 	test("publishes a revalidate broadcast to its topic channel", async () => {
@@ -53,7 +31,7 @@ describe("ChatSystemMessage.send", () => {
 			revalidateScope: "MATCH_RESULTS",
 			authorUserId: 5,
 		});
-		await flush();
+		await flushEvents();
 
 		expect(received).toEqual([
 			{ kind: "revalidate", scope: "MATCH_RESULTS", authorUserId: 5 },
@@ -76,7 +54,7 @@ describe("ChatSystemMessage.send", () => {
 			revalidateOnly: true,
 			authorUserId: 5,
 		});
-		await flush();
+		await flushEvents();
 
 		expect(received).toEqual([
 			{ kind: "revalidate", authorUserId: 5, type: "READY_CHECK_STARTED" },
@@ -92,7 +70,7 @@ describe("ChatSystemMessage.send", () => {
 			type: "TOURNAMENT_UPDATED",
 			revalidateOnly: true,
 		});
-		await flush();
+		await flushEvents();
 
 		expect(received).toEqual([{ kind: "revalidate" }]);
 	});
@@ -102,7 +80,7 @@ describe("ChatSystemMessage.send", () => {
 
 		ChatSystemMessage.send({ room: "tournament__104", revalidateOnly: true });
 		ChatSystemMessage.send({ room: "tournament__104", revalidateOnly: true });
-		await flush();
+		await flushEvents();
 
 		expect(received).toHaveLength(1);
 	});
@@ -115,7 +93,7 @@ describe("ChatSystemMessage.send", () => {
 			type: "USER_LEFT",
 			context: { name: "Sendou" },
 		});
-		await flush();
+		await flushEvents();
 
 		expect(received).toEqual([]);
 		expect(fetchMock).toHaveBeenCalledTimes(1);
@@ -131,7 +109,7 @@ describe("ChatSystemMessage.notifyNotificationsChanged", () => {
 		const bravo = subscribeTo(EventBus.userChannel(2));
 
 		ChatSystemMessage.notifyNotificationsChanged([1, 2]);
-		await flush();
+		await flushEvents();
 
 		expect(alpha).toEqual([{ kind: "notificationsChanged" }]);
 		expect(bravo).toEqual([{ kind: "notificationsChanged" }]);

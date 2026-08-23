@@ -43,6 +43,8 @@ export interface Fixtures {
 	heavyCalendarEventId: number | null;
 	/** Chat room with the most messages. Null until the prod copy has post-migration chat data. */
 	heavyChatRoomId: number | null;
+	/** Newest chat message. Null until the prod copy has post-migration chat data. */
+	heavyChatMessageId: number | null;
 	resultsEventId: number | null;
 	calendarAuthorId: number | null;
 	calendarWindow: { startTime: Date; endTime: Date } | null;
@@ -153,6 +155,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		heavyTeam: await resolveHeavyTeam(),
 		heavyCalendarEventId: await resolveHeavyCalendarEventId(),
 		heavyChatRoomId: await resolveHeavyChatRoomId(),
+		heavyChatMessageId: await resolveHeavyChatMessageId(),
 		resultsEventId: await resolveResultsEventId(),
 		calendarAuthorId: await resolveCalendarAuthorId(),
 		calendarWindow: await resolveCalendarWindow(),
@@ -608,6 +611,15 @@ async function resolveHeavyChatRoomId() {
 		.executeTakeFirst();
 
 	return row?.roomId ?? null;
+}
+
+async function resolveHeavyChatMessageId() {
+	const row = await db
+		.selectFrom("ChatMessage")
+		.select(({ fn }) => fn.max("ChatMessage.id").as("id"))
+		.executeTakeFirst();
+
+	return row?.id ?? null;
 }
 
 async function resolveCalendarWindow() {

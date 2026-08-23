@@ -2,7 +2,6 @@ import { addHours } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
-import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
@@ -13,6 +12,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
+import { setupSqMatch } from "./tests/fixtures";
 
 const users = UserFactory.pool();
 
@@ -23,15 +23,6 @@ const outsiderId = () => users.id(11);
 beforeEach(async () => {
 	await users.create(12);
 });
-
-const setupSqMatch = async () => {
-	const alphaUserIds = [users.id(2), users.id(3), users.id(4), users.id(5)];
-	const bravoUserIds = [users.id(6), users.id(7), users.id(8), users.id(9)];
-
-	const match = await SQMatchFactory.create({ alphaUserIds, bravoUserIds });
-
-	return { match, alphaUserIds, bravoUserIds };
-};
 
 const setupStartedTournamentMatch = async () => {
 	const authorId = users.id(2);
@@ -126,7 +117,7 @@ describe("ChatRoomResolver.resolve", () => {
 	});
 
 	test("resolves an SQ_MATCH room to both groups' members", async () => {
-		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch();
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
 
 		const [room] = await ChatRoomResolver.resolve([match.chatRoomId!]);
 
@@ -220,7 +211,7 @@ describe("ChatRoomResolver.resolve", () => {
 
 describe("ChatRoomResolver.findAllByUserId", () => {
 	test("returns the member's own group and match rooms of an SQ match", async () => {
-		const { match, alphaUserIds } = await setupSqMatch();
+		const { match, alphaUserIds } = await setupSqMatch(users);
 
 		const rooms = await ChatRoomResolver.findAllByUserId(alphaUserIds[0]);
 
@@ -256,7 +247,7 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 	});
 
 	test("returns nothing for a non-participant", async () => {
-		await setupSqMatch();
+		await setupSqMatch(users);
 		await setupAcceptedScrim();
 
 		expect(await ChatRoomResolver.findAllByUserId(outsiderId())).toEqual([]);
@@ -274,7 +265,7 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 
 describe("ChatRoomResolver.canObserve", () => {
 	test("site staff can observe both group chats of an SQ match", async () => {
-		const { match } = await setupSqMatch();
+		const { match } = await setupSqMatch(users);
 
 		const rooms = await ChatRoomResolver.resolve([
 			match.chatRoomId!,
@@ -290,7 +281,7 @@ describe("ChatRoomResolver.canObserve", () => {
 	});
 
 	test("a participant of one group cannot view the other group's chat", async () => {
-		const { match, alphaUserIds } = await setupSqMatch();
+		const { match, alphaUserIds } = await setupSqMatch(users);
 
 		const [bravoRoom] = await ChatRoomResolver.resolve([
 			await groupChatRoomId(match.bravoGroup.id),

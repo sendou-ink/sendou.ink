@@ -1,4 +1,4 @@
-import type { Transaction } from "kysely";
+import type { ExpressionBuilder, Transaction } from "kysely";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
@@ -20,31 +20,22 @@ export async function findAllMessagesByRoomId(
 ) {
 	const rows = await db
 		.selectFrom("ChatMessage")
-		.select((eb) => [
-			"ChatMessage.id",
-			"ChatMessage.roomId",
-			"ChatMessage.authorUserId",
-			"ChatMessage.type",
-			"ChatMessage.contents",
-			"ChatMessage.publicId",
-			"ChatMessage.createdAt",
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.select((userEb) => [
-						...commonUserSelect(userEb),
-						"User.pronouns",
-						userChatNameHue,
-					])
-					.whereRef("User.id", "=", "ChatMessage.authorUserId"),
-			).as("author"),
-		])
+		.select(messageWithAuthorSelect)
 		.where("ChatMessage.roomId", "=", roomId)
 		.orderBy("ChatMessage.id", "desc")
 		.limit(limit)
 		.execute();
 
 	return rows.reverse();
+}
+
+/** Returns a message with its author resolved live. */
+export function findMessageById(messageId: number) {
+	return db
+		.selectFrom("ChatMessage")
+		.select(messageWithAuthorSelect)
+		.where("ChatMessage.id", "=", messageId)
+		.executeTakeFirst();
 }
 
 /** Inserts a chat room, returning the row. Called in the owning entity's insert transaction. */
@@ -153,6 +144,36 @@ export async function upsertReadIndicator(
 		.execute();
 }
 
+/** Unread message counts per room: how many messages are newer than the user's read indicator. Rooms with nothing unread are left out. */
+export async function findUnreadCountsByRoomIds(
+	userId: number,
+	roomIds: number[],
+): Promise<Array<{ roomId: number; unreadCount: number }>> {
+	if (roomIds.length === 0) return [];
+
+	return db
+		.selectFrom("ChatMessage")
+		.leftJoin("ChatMessageReadIndicator", (join) =>
+			join
+				.onRef("ChatMessageReadIndicator.roomId", "=", "ChatMessage.roomId")
+				.on("ChatMessageReadIndicator.userId", "=", userId),
+		)
+		.select(({ fn }) => [
+			"ChatMessage.roomId",
+			fn.countAll<number>().as("unreadCount"),
+		])
+		.where("ChatMessage.roomId", "in", roomIds)
+		.where(({ eb, fn, val }) =>
+			eb(
+				"ChatMessage.id",
+				">",
+				fn.coalesce("ChatMessageReadIndicator.lastSeenMessageId", val(0)),
+			),
+		)
+		.groupBy("ChatMessage.roomId")
+		.execute();
+}
+
 /** Closes rooms whose expiry is before `expiredBefore`, returning how many. Messages are kept; access narrows. */
 export async function closeExpiredRooms(expiredBefore: Date) {
 	const result = await db
@@ -163,4 +184,26 @@ export async function closeExpiredRooms(expiredBefore: Date) {
 		.executeTakeFirst();
 
 	return Number(result.numUpdatedRows);
+}
+
+function messageWithAuthorSelect(eb: ExpressionBuilder<DB, "ChatMessage">) {
+	return [
+		"ChatMessage.id",
+		"ChatMessage.roomId",
+		"ChatMessage.authorUserId",
+		"ChatMessage.type",
+		"ChatMessage.contents",
+		"ChatMessage.publicId",
+		"ChatMessage.createdAt",
+		jsonObjectFrom(
+			eb
+				.selectFrom("User")
+				.select((userEb) => [
+					...commonUserSelect(userEb),
+					"User.pronouns",
+					userChatNameHue,
+				])
+				.whereRef("User.id", "=", "ChatMessage.authorUserId"),
+		).as("author"),
+	] as const;
 }
