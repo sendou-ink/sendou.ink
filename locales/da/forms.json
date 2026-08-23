@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Våbenpulje",
+	"placeholders.chatMessage": "",
 	"placeholders.weaponPoolFull": "",
 	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "",

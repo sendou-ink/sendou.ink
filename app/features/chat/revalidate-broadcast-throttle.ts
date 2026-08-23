@@ -1,15 +1,17 @@
-import type { ChatMessage } from "./chat-types";
+import type { RevalidateScope, SystemMessageType } from "./chat-types";
 import { messageTypeToSound } from "./chat-utils";
 
-type ThrottleableMessage = Pick<
-	ChatMessage,
-	"room" | "type" | "revalidateOnly" | "revalidateScope"
->;
+interface ThrottleableMessage {
+	room: string;
+	type?: SystemMessageType;
+	revalidateOnly?: boolean;
+	revalidateScope?: RevalidateScope;
+}
 
 interface ThrottleEntry {
 	lastSentAt: number;
 	trailing: {
-		scope: ChatMessage["revalidateScope"];
+		scope: RevalidateScope | undefined;
 		timer: ReturnType<typeof setTimeout>;
 	} | null;
 }
@@ -46,7 +48,7 @@ export function createRevalidateBroadcastThrottle({
 	/** Delivers the coalesced trailing broadcast of a window. */
 	sendTrailing: (msg: {
 		room: string;
-		revalidateScope: ChatMessage["revalidateScope"];
+		revalidateScope: RevalidateScope | undefined;
 	}) => void;
 }) {
 	const entries = new Map<string, ThrottleEntry>();
@@ -65,7 +67,9 @@ export function createRevalidateBroadcastThrottle({
 		 * Whether the throttle applies to the message: a revalidation broadcast carrying
 		 * no sound. Real chat messages always pass through untouched.
 		 */
-		throttles(msg: Pick<ChatMessage, "type" | "revalidateOnly">): boolean {
+		throttles(
+			msg: Pick<ThrottleableMessage, "type" | "revalidateOnly">,
+		): boolean {
 			return Boolean(msg.revalidateOnly) && !messageTypeToSound(msg.type);
 		},
 		handle(msg: ThrottleableMessage): void {

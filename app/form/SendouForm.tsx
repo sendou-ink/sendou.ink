@@ -129,6 +129,16 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	 * back to a read-only view.
 	 */
 	onSuccess?: () => void;
+	/**
+	 * Hides the built-in submit button, for forms that render their own submit
+	 * control inside `children` (e.g. the chat composer's send button).
+	 */
+	hideSubmitButton?: boolean;
+	/**
+	 * When false, navigating away with unsaved edits is not blocked. For forms
+	 * whose value is ephemeral by nature, like a chat message draft.
+	 */
+	guardUnsavedChanges?: boolean;
 };
 
 /**
@@ -208,6 +218,8 @@ function SendouFormInner<T extends v.ObjectEntries>({
 	secondarySubmit,
 	hideSubmitButtonWhen,
 	onSuccess,
+	hideSubmitButton = false,
+	guardUnsavedChanges = true,
 }: SendouFormProps<T>) {
 	const { t } = useTranslation(["forms"]);
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
@@ -283,7 +295,11 @@ function SendouFormInner<T extends v.ObjectEntries>({
 
 	const hasUnsavedChangesRef = React.useRef<() => boolean>(() => false);
 	hasUnsavedChangesRef.current = () =>
-		mode === "submit" && !readOnly && store.dirty && fetcher.state === "idle";
+		guardUnsavedChanges &&
+		mode === "submit" &&
+		!readOnly &&
+		store.dirty &&
+		fetcher.state === "idle";
 	useUnsavedChangesChecker(hasUnsavedChangesRef);
 
 	const previousFetcherStateRef = React.useRef(fetcher.state);
@@ -340,7 +356,7 @@ function SendouFormInner<T extends v.ObjectEntries>({
 		<>
 			{title ? <h2 className={styles.title}>{title}</h2> : null}
 			{resolvedChildren}
-			{mode !== "submit" || readOnly ? null : (
+			{mode !== "submit" || readOnly || hideSubmitButton ? null : (
 				<SubmitRow
 					hideWhen={
 						hideSubmitButtonWhen as ((values: unknown) => boolean) | undefined

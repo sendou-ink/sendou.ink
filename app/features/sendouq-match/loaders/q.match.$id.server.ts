@@ -1,7 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
-import { chatAccessible } from "~/features/chat/chat-utils";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -9,7 +7,6 @@ import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
-import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
@@ -56,33 +53,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		reportedWeapons,
 		ingestedScoreboards,
 		isOffSeason: Seasons.current() === null,
-		chatCode: (() => {
-			if (!(isStaff || isParticipant)) return null;
+		chatRoomIds: (() => {
+			// observers (staff) get room access through the moderation view instead
+			if (!user || !isParticipant) return [];
 
-			const accessible = chatAccessible({
-				isStaff,
-				expiresAfterDays: 1,
-				comparedTo: databaseTimestampToDate(matchUnmapped.createdAt),
-			});
-			if (!accessible) return null;
+			const ownGroup = matchUnmapped.groupAlpha.members.some(
+				(member) => member.id === user.id,
+			)
+				? match.groupAlpha
+				: match.groupBravo;
 
-			if (!isParticipant) {
-				return match.chatRoomId
-					? EventBus.chatRoomChannel(match.chatRoomId)
-					: null;
-			}
-
-			const codes = [
-				match.chatRoomId,
-				match.groupAlpha.chatRoomId,
-				match.groupBravo.chatRoomId,
-			]
-				.filter((id): id is number => typeof id === "number")
-				.map(EventBus.chatRoomChannel);
-
-			if (codes.length === 0) return null;
-			if (codes.length === 1) return codes[0];
-			return codes;
+			return [match.chatRoomId, ownGroup.chatRoomId].filter(
+				(id): id is number => typeof id === "number",
+			);
 		})(),
 	};
 };

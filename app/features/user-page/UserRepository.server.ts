@@ -31,7 +31,7 @@ import {
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
-import type { ChatUser } from "../chat/chat-types";
+import type { ChatMessageAuthor } from "../chat/chat-types";
 import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
@@ -539,7 +539,7 @@ export async function findChatUsersByUserIds(userIds: number[]) {
 		.where("User.id", "in", userIds)
 		.execute();
 
-	const result: Record<number, ChatUser> = {};
+	const result: Record<number, ChatMessageAuthor> = {};
 
 	for (const user of users) {
 		result[user.id] = user;

@@ -1,10 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { chatAccessible } from "~/features/chat/chat-utils";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { notFoundIfNullish } from "../../../utils/remix.server";
 import {
 	type AuthenticatedUser,
@@ -55,16 +52,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			include: { friendCode: true },
 		})),
 		post,
-		chatCode:
-			(user.roles.includes("STAFF") || participantIds.includes(user.id)) &&
-			post.chatRoomId !== null &&
-			chatAccessible({
-				isStaff: user.roles.includes("STAFF"),
-				expiresAfterDays: 1,
-				comparedTo: databaseTimestampToDate(Scrim.getStartTime(post)),
-			})
-				? EventBus.chatRoomChannel(post.chatRoomId)
-				: undefined,
+		chatRoomIds:
+			participantIds.includes(user.id) && post.chatRoomId !== null
+				? [post.chatRoomId]
+				: [],
 		anyUserPrefersNoScreen,
 		mapByMap,
 	};

@@ -1,16 +1,7 @@
 import type { ServerEvent } from "../events-types";
 
+export { chatRoomChannel, userChannel } from "../events-types";
 export type { ServerEvent };
-
-/** Channel delivering events addressed to the user across all of their connections. */
-export function userChannel(userId: number): string {
-	return `user__${userId}`;
-}
-
-/** Channel delivering a chat room's events to its viewers. */
-export function chatRoomChannel(roomId: number): string {
-	return `chat-room__${roomId}`;
-}
 
 interface Subscriber {
 	queue: ServerEvent[];

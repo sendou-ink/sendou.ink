@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Используемое оружие",
+	"placeholders.chatMessage": "Нажмите enter, чтобы отправить",
 	"placeholders.weaponPoolFull": "",
 	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "",

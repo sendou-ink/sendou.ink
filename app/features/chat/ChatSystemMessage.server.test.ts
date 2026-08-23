@@ -165,3 +165,16 @@ describe("ChatSystemMessage.notifyNotificationsChanged", () => {
 		expect(bravo).toEqual([{ kind: "notificationsChanged" }]);
 	});
 });
+
+describe("ChatSystemMessage.notifyRoomsChanged", () => {
+	test("publishes to each user's channel", async () => {
+		const alpha = subscribeTo(EventBus.userChannel(1));
+		const bravo = subscribeTo(EventBus.userChannel(2));
+
+		ChatSystemMessage.notifyRoomsChanged([1, 2]);
+		await flushEvents();
+
+		expect(alpha).toEqual([{ kind: "roomsChanged" }]);
+		expect(bravo).toEqual([{ kind: "roomsChanged" }]);
+	});
+});

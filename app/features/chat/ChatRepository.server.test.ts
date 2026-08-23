@@ -151,15 +151,15 @@ describe("ChatRepository.findMessageById", () => {
 	});
 });
 
-describe("ChatRepository.findUnreadCountsByRoomIds", () => {
+describe("ChatRepository.findMessageStatsByRoomIds", () => {
 	test("counts messages newer than the user's read indicator per room", async () => {
 		const room = await ChatRoomFactory.create();
 		const otherRoom = await ChatRoomFactory.create();
-		const [first] = await ChatMessageFactory.createMany(3, {
+		const [first, , third] = await ChatMessageFactory.createMany(3, {
 			roomId: room.id,
 			authorUserId: users.id(2),
 		});
-		await ChatMessageFactory.create({
+		const otherRoomMessage = await ChatMessageFactory.create({
 			roomId: otherRoom.id,
 			authorUserId: users.id(2),
 		});
@@ -169,18 +169,28 @@ describe("ChatRepository.findUnreadCountsByRoomIds", () => {
 			lastSeenMessageId: first.id,
 		});
 
-		const counts = await ChatRepository.findUnreadCountsByRoomIds(users.id(1), [
+		const stats = await ChatRepository.findMessageStatsByRoomIds(users.id(1), [
 			room.id,
 			otherRoom.id,
 		]);
 
-		expect(counts.sort((a, b) => a.roomId - b.roomId)).toEqual([
-			{ roomId: room.id, unreadCount: 2 },
-			{ roomId: otherRoom.id, unreadCount: 1 },
+		expect(stats.sort((a, b) => a.roomId - b.roomId)).toEqual([
+			{
+				roomId: room.id,
+				unreadCount: 2,
+				latestMessageId: third.id,
+				latestMessageCreatedAt: third.createdAt,
+			},
+			{
+				roomId: otherRoom.id,
+				unreadCount: 1,
+				latestMessageId: otherRoomMessage.id,
+				latestMessageCreatedAt: otherRoomMessage.createdAt,
+			},
 		]);
 	});
 
-	test("leaves out rooms with nothing unread", async () => {
+	test("returns a zero unread count once everything is read", async () => {
 		const room = await ChatRoomFactory.create();
 		const message = await ChatMessageFactory.create({
 			roomId: room.id,
@@ -193,13 +203,28 @@ describe("ChatRepository.findUnreadCountsByRoomIds", () => {
 		});
 
 		expect(
-			await ChatRepository.findUnreadCountsByRoomIds(users.id(1), [room.id]),
+			await ChatRepository.findMessageStatsByRoomIds(users.id(1), [room.id]),
+		).toEqual([
+			{
+				roomId: room.id,
+				unreadCount: 0,
+				latestMessageId: message.id,
+				latestMessageCreatedAt: message.createdAt,
+			},
+		]);
+	});
+
+	test("leaves out rooms with no messages", async () => {
+		const room = await ChatRoomFactory.create();
+
+		expect(
+			await ChatRepository.findMessageStatsByRoomIds(users.id(1), [room.id]),
 		).toEqual([]);
 	});
 
 	test("returns an empty array for no room ids", async () => {
 		expect(
-			await ChatRepository.findUnreadCountsByRoomIds(users.id(1), []),
+			await ChatRepository.findMessageStatsByRoomIds(users.id(1), []),
 		).toEqual([]);
 	});
 });

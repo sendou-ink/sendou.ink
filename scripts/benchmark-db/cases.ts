@@ -242,10 +242,10 @@ export function buildCases(fx: Fixtures): {
 		ChatRepository.findMessageById(messageId),
 	);
 	add(
-		"ChatRepository.findUnreadCountsByRoomIds",
+		"ChatRepository.findMessageStatsByRoomIds",
 		both(fx.heavyUser, fx.heavyChatRoomId),
 		([user, roomId]) =>
-			ChatRepository.findUnreadCountsByRoomIds(user.id, [roomId]),
+			ChatRepository.findMessageStatsByRoomIds(user.id, [roomId]),
 	);
 
 	// ChatRoomResolver

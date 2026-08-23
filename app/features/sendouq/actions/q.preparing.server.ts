@@ -83,6 +83,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					});
 				}
 
+				ChatSystemMessage.notifyRoomsChanged(
+					updatedGroup
+						? updatedGroup.members.map((member) => member.id)
+						: [data.id],
+				);
+
 				ChatSystemMessage.send({
 					room: sqGroupWebsocketRoom(ownGroup.id),
 					revalidateOnly: true,

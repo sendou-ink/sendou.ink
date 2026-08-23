@@ -171,6 +171,13 @@ export const action: ActionFunction = async ({ request }) => {
 					});
 				}
 
+				// both old rooms died and a fresh merged room was created
+				ChatSystemMessage.notifyRoomsChanged(
+					[...ourGroup.members, ...theirGroup.members].map(
+						(member) => member.id,
+					),
+				);
+
 				broadcastLookingUpdate();
 
 				break;
@@ -226,6 +233,10 @@ export const action: ActionFunction = async ({ request }) => {
 					});
 				}
 
+				ChatSystemMessage.notifyRoomsChanged(
+					currentGroup.members.map((member) => member.id),
+				);
+
 				broadcastLookingUpdate();
 
 				throw redirect(SENDOUQ_PAGE);
@@ -261,6 +272,10 @@ export const action: ActionFunction = async ({ request }) => {
 						members: groupAfterKick.members,
 					});
 				}
+
+				ChatSystemMessage.notifyRoomsChanged(
+					currentGroup.members.map((member) => member.id),
+				);
 
 				broadcastLookingUpdate();
 

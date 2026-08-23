@@ -7,7 +7,7 @@ import {
 	useServerEventListener,
 } from "~/features/events/events-hooks";
 import { useUser } from "../auth/core/user";
-import type { ChatMessage } from "./chat-types";
+import type { ClientChatMessage } from "./chat-types";
 import { playMessageSound } from "./chat-utils";
 import { scheduleBroadcastRevalidation } from "./revalidation-scope";
 
@@ -21,7 +21,7 @@ const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 const USER_SCROLL_INTENT_MS = 150;
 
 export function useChatAutoScroll(
-	messages: ChatMessage[],
+	messages: ClientChatMessage[],
 	ref: React.RefObject<HTMLElement | null>,
 ) {
 	const user = useUser();
@@ -132,18 +132,19 @@ export function useChatAutoScroll(
 	}, [ref, hasMessages]);
 
 	const latestMessage = messages.at(-1);
-	const latestMessageId = latestMessage?.id;
-	const latestMessageIsOwn = user != null && latestMessage?.userId === user.id;
+	const latestMessagePublicId = latestMessage?.publicId;
+	const latestMessageIsOwn =
+		user != null && latestMessage?.authorUserId === user.id;
 
 	React.useEffect(() => {
-		if (!latestMessageId) return;
+		if (!latestMessagePublicId) return;
 
 		if (latestMessageIsOwn || pinnedToBottomRef.current) {
 			scrollToBottom();
 		} else {
 			setUnseenMessages(true);
 		}
-	}, [latestMessageId, latestMessageIsOwn, scrollToBottom]);
+	}, [latestMessagePublicId, latestMessageIsOwn, scrollToBottom]);
 
 	const reset = () => {
 		pinnedToBottomRef.current = true;

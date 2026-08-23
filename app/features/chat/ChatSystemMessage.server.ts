@@ -9,8 +9,8 @@ import { logger } from "~/utils/logger";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type {
-	ChatMessage,
 	PersistedSystemMessageType,
+	RevalidateScope,
 	SoundOnlySystemMessageType,
 	SystemMessageType,
 } from "./chat-types";
@@ -33,10 +33,12 @@ function logSkalpError(action: string) {
 	};
 }
 
-type RevalidateBroadcast = Pick<
-	ChatMessage,
-	"room" | "revalidateScope" | "authorUserId"
-> & {
+type RevalidateBroadcast = {
+	/** Channel of the room whose pages should refetch, see `EventBus.chatRoomChannel`. */
+	room: string;
+	/** Actor whose own broadcast clients skip (their submission already reran the loaders). */
+	authorUserId?: number;
+	revalidateScope?: RevalidateScope;
 	revalidateOnly: true;
 	type?: SoundOnlySystemMessageType;
 };
@@ -125,9 +127,12 @@ async function persistAndPublish(args: {
 	});
 }
 
-function publishRevalidate(
-	msg: Pick<ChatMessage, "room" | "revalidateScope" | "authorUserId" | "type">,
-) {
+function publishRevalidate(msg: {
+	room: string;
+	revalidateScope?: RevalidateScope;
+	authorUserId?: number;
+	type?: SystemMessageType;
+}) {
 	EventBus.publish([msg.room], {
 		kind: "revalidate",
 		scope: msg.revalidateScope,
@@ -161,6 +166,21 @@ export function notifyNotificationsChanged(userIds: number[]) {
 
 	EventBus.publish(userIds.map(EventBus.userChannel), {
 		kind: "notificationsChanged",
+	});
+}
+
+/**
+ * Publishes a "your chat room set changed" event to the users' event streams
+ * after a membership change (leave, kick, group merge, added member). Clients
+ * refetch their room list and drop rooms — including any locally held history —
+ * they no longer have access to.
+ */
+export function notifyRoomsChanged(userIds: number[]) {
+	if (systemMessagesDisabled) return;
+	if (userIds.length === 0) return;
+
+	EventBus.publish(userIds.map(EventBus.userChannel), {
+		kind: "roomsChanged",
 	});
 }
 

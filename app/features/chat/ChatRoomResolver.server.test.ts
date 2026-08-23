@@ -8,6 +8,7 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as ChatRepository from "./ChatRepository.server";
@@ -114,6 +115,20 @@ describe("ChatRoomResolver.resolve", () => {
 		expect(room.participantUserIds.sort()).toEqual(memberUserIds.sort());
 		expect(room.url).toBe("/q/looking");
 		expect(room.observerUserIds).toEqual([]);
+		expect(room.inactive).toBe(false);
+	});
+
+	test("marks a dead group's room inactive", async () => {
+		const group = await SQGroupFactory.create({
+			memberUserIds: [users.id(2), users.id(3)],
+		});
+		await SQGroupRepository.setAsInactive(group.id);
+
+		const [room] = await ChatRoomResolver.resolve([
+			await groupChatRoomId(group.id),
+		]);
+
+		expect(room.inactive).toBe(true);
 	});
 
 	test("resolves an SQ_MATCH room to both groups' members", async () => {
@@ -329,6 +344,7 @@ describe("ChatRoomResolver.canPost", () => {
 		observerUserIds: [],
 		expiresAt: dateToDatabaseTimestamp(addHours(new Date(), 1)),
 		closedAt: null,
+		inactive: false,
 		...overrides,
 	});
 

@@ -70,6 +70,27 @@
 	padding: var(--s-2);
 }
 
+.inactiveToggle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	margin-block-start: var(--s-2);
+	padding: var(--s-1) var(--s-2);
+	background: none;
+	border: none;
+	cursor: pointer;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	text-transform: uppercase;
+	letter-spacing: 0.04em;
+	color: var(--color-text-high);
+	border-radius: var(--radius-field);
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
 .roomName {
 	font-weight: var(--weight-semi);
 }
@@ -251,33 +272,18 @@
 		padding-inline: var(--s-2);
 	}
 
-	/* form: stick to bottom, inline layout */
+	/* form: stick to bottom */
 	& form {
-		display: flex;
-		align-items: center;
-		gap: var(--s-1);
 		padding: var(--s-1-5);
-		border-top: 1.5px solid var(--color-border);
 		margin-top: 0;
 		flex-shrink: 0;
 	}
 
 	& form input {
-		flex: 1;
+		width: 100%;
 	}
 
-	/* bottomRow: hide connected text, inline send button */
-	& form > div {
-		display: contents;
-	}
-
-	& form > div > div {
-		display: none;
-	}
-
-	/* replace "Send" text with send-horizontal icon */
 	& form button {
-		font-size: 0;
 		width: 32px;
 		height: 32px;
 		padding: 0;

@@ -1,7 +1,6 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { chatAccessible } from "~/features/chat/chat-utils";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -202,24 +201,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		});
 	}
 
-	const hasPermsToSeeChat =
-		tournament.isOrganizerOrStreamer(user) ||
-		match.players.some((p) => p.id === user?.id);
-
 	const isSiteStaff = user?.roles.includes("STAFF") ?? false;
 	const isTournamentStaff = tournament.isOrganizer(user);
-	const chatCodeExpired =
-		tournament.ctx.isFinalized && !isSiteStaff && !isTournamentStaff
-			? true
-			: !chatAccessible({
-					expiresAfterDays: tournament.isLeague ? 30 : 7,
-					comparedTo: tournament.ctx.startsAt,
-				});
-
-	const visibleChatCode =
-		hasPermsToSeeChat && !chatCodeExpired && match.chatRoomId
-			? EventBus.chatRoomChannel(match.chatRoomId)
-			: undefined;
 
 	const isParticipant = match.players.some((p) => p.id === user?.id);
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, match.roundId);
@@ -251,7 +234,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match: {
 			...match,
 			status,
-			chatRoomId: hasPermsToSeeChat ? match.chatRoomId : undefined,
+			chatRoomId: undefined,
 		},
 		results,
 		reportedWeapons,
@@ -266,7 +249,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		chatCode: visibleChatCode,
+		// observers (TO/streamer/staff) get room access through the moderation view instead
+		chatRoomIds: isParticipant && match.chatRoomId ? [match.chatRoomId] : [],
 		canJoin,
 		// the views can't derive these themselves, the layout ships no bracket match data
 		bracketContext: {

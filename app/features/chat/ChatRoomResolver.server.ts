@@ -34,6 +34,8 @@ export interface ResolvedRoom {
 	observerUserIds: number[];
 	expiresAt: number;
 	closedAt: number | null;
+	/** Whether the owner's activity has concluded (e.g. the match was finalized). */
+	inactive: boolean;
 }
 
 type ChatRoomRow = Tables["ChatRoom"];
@@ -244,6 +246,7 @@ async function resolveSqGroupRooms(
 		.selectFrom("Group")
 		.select((eb) => [
 			"Group.chatRoomId",
+			"Group.status",
 			jsonArrayFrom(
 				eb
 					.selectFrom("GroupMember")
@@ -264,6 +267,8 @@ async function resolveSqGroupRooms(
 		imageUrl: null,
 		participantUserIds: owner.members.map((member) => member.userId),
 		observerUserIds: [],
+		// derived live instead of a persisted flag: a dead group can never chat again
+		inactive: owner.status === "INACTIVE",
 	}));
 }
 
@@ -524,7 +529,8 @@ function joinOwners<T extends { chatRoomId: number | null }>(
 		| "imageUrl"
 		| "participantUserIds"
 		| "observerUserIds"
-	>,
+	> &
+		Partial<Pick<ResolvedRoom, "inactive">>,
 ): ResolvedRoom[] {
 	const ownerByRoomId = new Map(
 		owners.map((owner) => [owner.chatRoomId, owner]),
@@ -539,6 +545,7 @@ function joinOwners<T extends { chatRoomId: number | null }>(
 			type: room.type,
 			expiresAt: room.expiresAt,
 			closedAt: room.closedAt,
+			inactive: Boolean(room.inactive),
 			...build(owner),
 		};
 	});

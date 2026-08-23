@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "מאגר נשקים",
+	"placeholders.chatMessage": "",
 	"placeholders.weaponPoolFull": "",
 	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "",

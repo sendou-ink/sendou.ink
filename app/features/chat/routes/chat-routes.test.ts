@@ -182,6 +182,24 @@ describe("chat rooms loader", () => {
 		expect(matchRoom?.participantUserIds).toHaveLength(8);
 	});
 
+	test("exposes the room's inactive flag and latest message stats", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+		const message = await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
+			publicId: "oooooooooo",
+			contents: "hello",
+		});
+		await ChatRepository.updateRoomsInactive([match.chatRoomId], true);
+
+		const data = await loadRooms(bravoUserIds[0]);
+		const matchRoom = data.rooms.find((room) => room.id === match.chatRoomId);
+
+		expect(matchRoom).toMatchObject({
+			inactive: true,
+			latestMessageId: message.id,
+			latestMessageAt: message.createdAt,
+		});
+	});
+
 	test("does not count the sender's own message as unread on their other devices", async () => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 		await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {

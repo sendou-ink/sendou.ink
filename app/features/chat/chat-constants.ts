@@ -1,5 +1,19 @@
 export const MESSAGE_MAX_LENGTH = 200;
 
+export const CHAT_ROOMS_DATA_ROUTE = "/api/chat/rooms";
+
+export function chatRoomMessagesDataRoute(roomId: number) {
+	return `/api/chat/rooms/${roomId}/messages`;
+}
+
+export function chatSendMessageRoute(roomId: number) {
+	return `/chat/${roomId}/messages`;
+}
+
+export function chatMarkReadRoute(roomId: number) {
+	return `/chat/${roomId}/read`;
+}
+
 const SPLATNET_ROOM_HOST = "s.nintendo.com";
 const SPLATNET_ROOM_PATH_PATTERN = /^\/[A-Za-z0-9/_-]+$/;
 const SPLATNET_ROOM_CANDIDATE_PATTERN = /https:\/\/s\.nintendo\.com\/\S+/g;

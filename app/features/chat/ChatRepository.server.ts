@@ -163,11 +163,18 @@ export async function upsertReadIndicator(
 		.execute();
 }
 
-/** Unread message counts per room: how many messages are newer than the user's read indicator. Rooms with nothing unread are left out. */
-export async function findUnreadCountsByRoomIds(
+/** Per-room message stats for the user: unread count (messages newer than their read indicator) and the latest message. Rooms with no messages are left out. */
+export async function findMessageStatsByRoomIds(
 	userId: number,
 	roomIds: number[],
-): Promise<Array<{ roomId: number; unreadCount: number }>> {
+): Promise<
+	Array<{
+		roomId: number;
+		unreadCount: number;
+		latestMessageId: number;
+		latestMessageCreatedAt: number;
+	}>
+> {
 	if (roomIds.length === 0) return [];
 
 	return db
@@ -177,18 +184,26 @@ export async function findUnreadCountsByRoomIds(
 				.onRef("ChatMessageReadIndicator.roomId", "=", "ChatMessage.roomId")
 				.on("ChatMessageReadIndicator.userId", "=", userId),
 		)
-		.select(({ fn }) => [
+		.select(({ eb, fn, val }) => [
 			"ChatMessage.roomId",
-			fn.countAll<number>().as("unreadCount"),
+			fn
+				.sum<number>(
+					eb
+						.case()
+						.when(
+							"ChatMessage.id",
+							">",
+							fn.coalesce("ChatMessageReadIndicator.lastSeenMessageId", val(0)),
+						)
+						.then(1)
+						.else(0)
+						.end(),
+				)
+				.as("unreadCount"),
+			fn.max<number>("ChatMessage.id").as("latestMessageId"),
+			fn.max<number>("ChatMessage.createdAt").as("latestMessageCreatedAt"),
 		])
 		.where("ChatMessage.roomId", "in", roomIds)
-		.where(({ eb, fn, val }) =>
-			eb(
-				"ChatMessage.id",
-				">",
-				fn.coalesce("ChatMessageReadIndicator.lastSeenMessageId", val(0)),
-			),
-		)
 		.groupBy("ChatMessage.roomId")
 		.execute();
 }

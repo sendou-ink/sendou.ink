@@ -250,6 +250,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						});
 					}
 
+					// non-continuing members lose the group room
+					ChatSystemMessage.notifyRoomsChanged(
+						viewerGroup.members.map((member) => member.id),
+					);
+
 					// The continuing group re-enters the looking pool, so refresh
 					// every looking client.
 					ChatSystemMessage.send({

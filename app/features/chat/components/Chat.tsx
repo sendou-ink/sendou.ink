@@ -4,20 +4,29 @@ import { SendHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
 import {
-	Button,
 	ListBox,
 	ListBoxItem,
 	ListLayout,
 	Virtualizer,
 } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { useLocation } from "react-router";
+import { useEventsReadyState } from "~/features/events/events-hooks";
+import {
+	type FormRenderProps,
+	SendouForm,
+	useFormValue,
+} from "~/form/SendouForm";
+import { databaseTimestampToDate } from "~/utils/dates";
+import { shortNanoid } from "~/utils/id";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
 import { SubmitButton } from "../../../components/SubmitButton";
 import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
-import { findRoomLinks, MESSAGE_MAX_LENGTH } from "../chat-constants";
+import { findRoomLinks } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
-import type { ChatMessage, ChatProps, ChatUser } from "../chat-types";
+import { sendChatMessageSchema } from "../chat-schemas";
+import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
 import styles from "./Chat.module.css";
 
 const MESSAGE_GAP = 8;
@@ -27,89 +36,63 @@ const VIRTUALIZER_LAYOUT_OPTIONS = {
 	estimatedRowSize: ESTIMATED_MESSAGE_HEIGHT,
 };
 
-export interface ChatAdapter {
-	messages: ChatMessage[];
-	send: (contents: string) => void;
-	currentRoom: string | undefined;
-	setCurrentRoom: (room: string) => void;
-	readyState: "CONNECTING" | "CONNECTED" | "CLOSED";
-	unseenMessages: Map<string, number>;
+export interface ChatProps {
+	messages: ClientChatMessage[];
+	/** Hands a validated composer send to the chat client (optimistic append + POST). */
+	onSend: (message: { publicId: string; contents: string }) => void;
+	/** Role labels (e.g. "TO") shown next to the author, keyed by user id. */
+	labelByUserId?: Record<number, string>;
+	className?: string;
+	messagesContainerClassName?: string;
+	/** Renders the room read-only, e.g. once it has expired. */
+	disabled?: boolean;
 }
 
+// xxx: message to inactive chat? how does it show
+
 export function Chat({
-	users,
-	rooms,
+	messages,
+	onSend,
+	labelByUserId,
 	className,
 	messagesContainerClassName,
-	hidden = false,
-	chat,
 	disabled,
-	missingUserName,
-}: Omit<ChatProps, "onNewMessage" | "revalidates"> & {
-	chat: ChatAdapter;
-}) {
+}: ChatProps) {
 	const { t } = useTranslation(["common"]);
 	const messagesContainerRef = React.useRef<HTMLDivElement>(null);
-	const inputRef = React.useRef<HTMLInputElement>(null);
-	const {
-		send,
+
+	const { unseenMessagesInTheRoom, scrollToBottom } = useChatAutoScroll(
 		messages,
-		currentRoom,
-		setCurrentRoom,
-		readyState,
-		unseenMessages,
-	} = chat;
-
-	const handleSubmit = React.useCallback(
-		(e: React.FormEvent<HTMLFormElement>) => {
-			e.preventDefault();
-
-			// can't send empty messages
-			if (inputRef.current!.value.trim().length === 0) {
-				return;
-			}
-
-			send(inputRef.current!.value);
-			inputRef.current!.value = "";
-		},
-		[send],
+		messagesContainerRef,
 	);
 
-	const { unseenMessagesInTheRoom, scrollToBottom, resetScroller } =
-		useChatAutoScroll(messages, messagesContainerRef);
-
-	const sendingMessagesDisabled = disabled || readyState !== "CONNECTED";
-
-	const systemMessageText = (msg: ChatMessage) => {
-		const name = () => {
-			if (!msg.context) return "";
-			return msg.context.name;
-		};
+	const systemMessageText = (msg: ClientChatMessage) => {
+		const name = msg.author?.username ?? "";
 
 		switch (msg.type) {
 			case "SCORE_REPORTED": {
-				return t("common:chat.systemMsg.scoreReported", { name: name() });
+				return t("common:chat.systemMsg.scoreReported", { name });
 			}
 			case "SCORE_CONFIRMED": {
-				return t("common:chat.systemMsg.scoreConfirmed", { name: name() });
+				return t("common:chat.systemMsg.scoreConfirmed", { name });
 			}
 			case "CANCEL_REPORTED": {
-				return t("common:chat.systemMsg.cancelReported", { name: name() });
+				return t("common:chat.systemMsg.cancelReported", { name });
 			}
 			case "CANCEL_CONFIRMED": {
-				return t("common:chat.systemMsg.cancelConfirmed", { name: name() });
+				return t("common:chat.systemMsg.cancelConfirmed", { name });
 			}
 			case "CANCEL_REFUSED": {
-				return t("common:chat.systemMsg.cancelRefused", { name: name() });
+				return t("common:chat.systemMsg.cancelRefused", { name });
 			}
 			case "USER_LEFT": {
-				return t("common:chat.systemMsg.userLeft", { name: name() });
+				return t("common:chat.systemMsg.userLeft", { name });
 			}
 			case "MAP_REPLAYED": {
-				return t("common:chat.systemMsg.mapReplayed", { name: name() });
+				return t("common:chat.systemMsg.mapReplayed", { name });
 			}
 			case "MAP_PICKED": {
-				return t("common:chat.systemMsg.mapPicked", { name: name() });
+				return t("common:chat.systemMsg.mapPicked", { name });
 			}
 			default: {
 				return null;
@@ -117,45 +100,8 @@ export function Chat({
 		}
 	};
 
-	const renderableMessages = messages.filter((msg) => {
-		if (systemMessageText(msg)) return true;
-
-		const user = msg.userId ? users[msg.userId] : null;
-		return Boolean(user) || Boolean(missingUserName);
-	});
-
 	return (
-		<section className={clsx(styles.container, className, { hidden })}>
-			{rooms.length > 1 ? (
-				<div className="stack horizontal">
-					{rooms.map((room) => {
-						const unseen = unseenMessages.get(room.code);
-
-						return (
-							<Button
-								key={room.code}
-								className={clsx(styles.roomButton, {
-									[styles.roomButtonCurrent]: currentRoom === room.code,
-								})}
-								onPress={() => {
-									setCurrentRoom(room.code);
-									resetScroller();
-								}}
-							>
-								<span className={clsx(styles.roomButtonUnseen, "invisible")} />
-								{room.label}
-								{unseen ? (
-									<span className={styles.roomButtonUnseen}>{unseen}</span>
-								) : (
-									<span
-										className={clsx(styles.roomButtonUnseen, "invisible")}
-									/>
-								)}
-							</Button>
-						);
-					})}
-				</div>
-			) : null}
+		<section className={clsx(styles.container, className)}>
 			<div className={styles.inputContainer}>
 				<Virtualizer
 					layout={ListLayout}
@@ -165,7 +111,7 @@ export function Chat({
 						ref={messagesContainerRef}
 						aria-label="Chat messages"
 						selectionMode="none"
-						items={renderableMessages}
+						items={messages}
 						className={clsx(
 							styles.messages,
 							"scrollbar",
@@ -178,13 +124,14 @@ export function Chat({
 								return <SystemMessage message={msg} text={systemMessage} />;
 							}
 
-							const user = msg.userId ? users[msg.userId] : null;
-
 							return (
 								<Message
-									user={user}
-									missingUserName={missingUserName}
 									message={msg}
+									label={
+										msg.authorUserId != null
+											? labelByUserId?.[msg.authorUserId]
+											: undefined
+									}
 								/>
 							);
 						}}
@@ -203,68 +150,133 @@ export function Chat({
 						{t("common:chat.expired")}
 					</div>
 				) : (
-					<form onSubmit={handleSubmit} className="mt-4">
-						<input
-							className="w-full text-xs"
-							ref={inputRef}
-							placeholder={t("common:chat.input.placeholder")}
-							disabled={sendingMessagesDisabled}
-							maxLength={MESSAGE_MAX_LENGTH}
-						/>{" "}
-						<div className={styles.bottomRow}>
-							{readyState === "CONNECTED" || readyState === "CONNECTING" ? (
-								<div className="text-xxs font-semi-bold text-lighter">
-									{t(
-										readyState === "CONNECTED"
-											? "common:chat.connected"
-											: "common:chat.connecting",
-									)}
-								</div>
-							) : (
-								<div className="text-xxs font-semi-bold text-warning">
-									{t("common:chat.disconnected")}
-								</div>
-							)}
-							<SubmitButton
-								className={styles.sendButton}
-								size="small"
-								isDisabled={sendingMessagesDisabled}
-								aria-label={t("common:chat.send")}
-								icon={<SendHorizontal size={16} />}
-								testId="chat-submit-button"
-							/>
-						</div>
-					</form>
+					<Composer onSend={onSend} />
 				)}
 			</div>
 		</section>
 	);
 }
 
-function Message({
-	user,
-	message,
-	missingUserName,
+function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
+	const { t } = useTranslation(["common"]);
+	const { pathname } = useLocation();
+	const readyState = useEventsReadyState();
+	const [publicId, setPublicId] = React.useState(() => shortNanoid());
+	const [hasSent, setHasSent] = React.useState(false);
+
+	// don't let a send's autofocus carry over to an unrelated page
+	React.useEffect(() => {
+		setHasSent(false);
+	}, [pathname]);
+
+	const sendingDisabled = readyState !== "CONNECTED";
+
+	return (
+		<SendouForm
+			key={publicId}
+			schema={sendChatMessageSchema}
+			defaultValues={{ publicId }}
+			className={styles.composer}
+			hideSubmitButton
+			guardUnsavedChanges={false}
+			// `onApply` bypasses the router: chat-client POSTs the message itself,
+			// so sending never revalidates the page's loaders
+			onApply={(values) => {
+				onSend(values);
+				setPublicId(shortNanoid());
+				setHasSent(true);
+			}}
+		>
+			{({ FormField }) => (
+				<>
+					{readyState !== "CONNECTED" ? (
+						<div
+							className={clsx(
+								"text-xxs font-semi-bold",
+								readyState === "CONNECTING" ? "text-lighter" : "text-warning",
+							)}
+						>
+							{t(
+								readyState === "CONNECTING"
+									? "common:chat.connecting"
+									: "common:chat.disconnected",
+							)}
+						</div>
+					) : null}
+					<ComposerRow
+						FormField={FormField}
+						sendingDisabled={sendingDisabled}
+						hasSent={hasSent}
+					/>
+				</>
+			)}
+		</SendouForm>
+	);
+}
+
+function ComposerRow({
+	FormField,
+	sendingDisabled,
+	hasSent,
 }: {
-	user?: ChatUser | null;
-	message: ChatMessage;
-	missingUserName?: string;
+	FormField: FormRenderProps<typeof sendChatMessageSchema.entries>["FormField"];
+	sendingDisabled: boolean;
+	hasSent: boolean;
 }) {
+	const { t } = useTranslation(["common"]);
+	const contents = useFormValue("contents");
+	const isEmpty = typeof contents !== "string" || contents.trim().length === 0;
+
+	return (
+		<div
+			className={styles.composerRow}
+			// an empty send is a no-op, not a validation error
+			onKeyDownCapture={(event) => {
+				if (event.key === "Enter" && isEmpty) {
+					event.preventDefault();
+				}
+			}}
+		>
+			<FormField
+				name="contents"
+				disabled={sendingDisabled}
+				autoFocus={hasSent}
+			/>
+			<SubmitButton
+				className={styles.sendButton}
+				size="small"
+				isDisabled={sendingDisabled || isEmpty}
+				aria-label={t("common:chat.send")}
+				icon={<SendHorizontal size={16} />}
+				testId="chat-submit-button"
+			/>
+		</div>
+	);
+}
+
+function Message({
+	message,
+	label,
+}: {
+	message: ClientChatMessage;
+	label?: string;
+}) {
+	const author = message.author;
+
 	return (
 		<ListBoxItem
+			id={message.publicId}
 			className={styles.message}
-			textValue={message.contents ?? user?.username ?? missingUserName ?? ""}
+			textValue={message.contents ?? author?.username ?? "???"}
 		>
-			{user ? (
+			{author ? (
 				<div
 					className={clsx(styles.avatarWrapper, {
-						[styles.avatarWrapperStaff]: user.title,
+						[styles.avatarWrapperStaff]: label,
 					})}
 				>
-					<Avatar user={user} size="xs" />
-					{user.title ? (
-						<span className={styles.avatarBadge}>{user.title}</span>
-					) : null}
+					<Avatar user={author} size="xs" />
+					{label ? <span className={styles.avatarBadge}>{label}</span> : null}
 				</div>
 			) : null}
 			<div>
@@ -272,18 +284,16 @@ function Message({
 					<div
 						className={styles.messageUser}
 						style={
-							user?.chatNameHue ? { "--chat-hue": user.chatNameHue } : undefined
+							author?.chatNameHue
+								? { "--chat-hue": author.chatNameHue }
+								: undefined
 						}
 					>
-						{user?.username ?? missingUserName}
+						{author?.username ?? "???"}
 					</div>
-					{user?.pronouns ? (
-						<span className={styles.pronounsTag}>
-							{user.pronouns.subject}/{user.pronouns.object}
-						</span>
-					) : null}
+					<PronounsTag author={author} />
 					{!message.pending ? (
-						<MessageTimestamp timestamp={message.timestamp} />
+						<MessageTimestamp createdAt={message.createdAt} />
 					) : null}
 				</div>
 				<div
@@ -300,18 +310,32 @@ function Message({
 	);
 }
 
+function PronounsTag({ author }: { author: ChatMessageAuthor | null }) {
+	if (!author?.pronouns) return null;
+
+	return (
+		<span className={styles.pronounsTag}>
+			{author.pronouns.subject}/{author.pronouns.object}
+		</span>
+	);
+}
+
 function SystemMessage({
 	message,
 	text,
 }: {
-	message: ChatMessage;
+	message: ClientChatMessage;
 	text: string;
 }) {
 	return (
-		<ListBoxItem className={styles.message} textValue={text}>
+		<ListBoxItem
+			id={message.publicId}
+			className={styles.message}
+			textValue={text}
+		>
 			<div>
 				<div className="stack horizontal sm">
-					<MessageTimestamp timestamp={message.timestamp} />
+					<MessageTimestamp createdAt={message.createdAt} />
 				</div>
 				<div
 					className={clsx(
@@ -361,7 +385,7 @@ function MessageContents({ text }: { text: string }) {
 	return <>{parts}</>;
 }
 
-function MessageTimestamp({ timestamp }: { timestamp: number }) {
+function MessageTimestamp({ createdAt }: { createdAt: number }) {
 	const { formatter: dateTimeFormatter } = useDateTimeFormat({
 		day: "numeric",
 		month: "numeric",
@@ -372,13 +396,14 @@ function MessageTimestamp({ timestamp }: { timestamp: number }) {
 		hour: "numeric",
 		minute: "numeric",
 	});
-	const moreThanDayAgo = sub(new Date(), { days: 1 }) > new Date(timestamp);
+	const date = databaseTimestampToDate(createdAt);
+	const moreThanDayAgo = sub(new Date(), { days: 1 }) > date;
 
 	return (
 		<time className={styles.messageTime}>
 			{moreThanDayAgo
-				? dateTimeFormatter.format(new Date(timestamp))
-				: timeFormatter.format(new Date(timestamp))}
+				? dateTimeFormatter.format(date)
+				: timeFormatter.format(date)}
 		</time>
 	);
 }

@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "El nombre no puede ser solo caracteres especiales",
 	"errors.customRoleRequired": "Introduce un nombre para el rol personalizado",
 	"labels.weaponPool": "Grupo de armas",
+	"placeholders.chatMessage": "Presionar 'enter' para enviar",
 	"placeholders.weaponPoolFull": "Selección llena - elimina un arma para añadir más",
 	"placeholders.vodStartTimestamp": "10:22",
 	"labels.voiceChat": "Puede usar chat de voz",

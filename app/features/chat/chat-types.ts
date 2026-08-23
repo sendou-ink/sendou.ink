@@ -23,10 +23,6 @@ export type SystemMessageType =
 	| "MAP_REPLAYED"
 	| "MAP_PICKED";
 
-export type SystemMessageContext = {
-	name: string;
-};
-
 export type PersistedSystemMessageType = Extract<
 	SystemMessageType,
 	| "SCORE_REPORTED"
@@ -44,6 +40,18 @@ export type SoundOnlySystemMessageType = Extract<
 	"NEW_GROUP" | "MATCH_STARTED" | "READY_CHECK_STARTED" | "LIKE_RECEIVED"
 >;
 
+// xxx: extend CommonUser
+export interface ChatMessageAuthor {
+	id: number;
+	username: string;
+	discordId: string;
+	discordAvatar: string | null;
+	customUrl: string | null;
+	customAvatarUrl: string | null;
+	pronouns: Tables["User"]["pronouns"];
+	chatNameHue: string | null;
+}
+
 export interface ChatMessageWithAuthor {
 	id: number;
 	roomId: number;
@@ -51,43 +59,33 @@ export interface ChatMessageWithAuthor {
 	type: PersistedSystemMessageType | null;
 	contents: string | null;
 	publicId: string;
+	/** databaseTimestamp */
 	createdAt: number;
-	author: ChatUser | null;
+	author: ChatMessageAuthor | null;
 }
 
-export type RevalidateScope = "MATCH_RESULTS";
-export interface ChatMessage {
-	id: string;
-	type?: SystemMessageType;
-	contents?: string;
-	context?: SystemMessageContext;
-	/** If true, the purpose of this message is just to run the data loaders again meaning the logic related to showing a new chat message is skipped. Defaults to false.  */
-	revalidateOnly?: boolean;
-	/** Narrows what data a `revalidateOnly` message may have changed so that routes whose data is unaffected can skip revalidating. Unset means anything may have changed. */
-	revalidateScope?: RevalidateScope;
-	/** User id of the actor that triggered this message. Used to skip own-author revalidates so we don't double-fetch loaders right after a form submission. */
-	authorUserId?: number;
-	userId?: number;
-	timestamp: number;
-	room: string;
+/** A message as held client-side: a persisted row, or an optimistic send awaiting its echo. */
+export interface ClientChatMessage extends ChatMessageWithAuthor {
 	pending?: boolean;
 }
 
-export type ChatUser = Pick<
-	Tables["User"],
-	"username" | "discordId" | "discordAvatar" | "pronouns"
-> & {
-	customAvatarUrl: string | null;
-	chatNameHue: string | null;
-	title?: string;
-};
-
-export interface ChatProps {
-	users: Record<number, ChatUser>;
-	rooms: { label: string; code: string }[];
-	className?: string;
-	messagesContainerClassName?: string;
-	hidden?: boolean;
-	disabled?: boolean;
-	missingUserName?: string;
+/** One room of the user's room list as served by `GET /api/chat/rooms`. */
+export interface ChatRoomListItem {
+	id: number;
+	type: ChatRoomType;
+	/** Interpolation values for the client-localized room title, keyed per room type. */
+	titleParams: Record<string, string>;
+	url: string;
+	imageUrl: string | null;
+	participantUserIds: number[];
+	/** databaseTimestamp */
+	expiresAt: number;
+	/** Whether the owner's activity has concluded (e.g. the match was finalized). */
+	inactive: boolean;
+	unreadCount: number;
+	latestMessageId: number | null;
+	/** databaseTimestamp */
+	latestMessageAt: number | null;
 }
+
+export type RevalidateScope = "MATCH_RESULTS";

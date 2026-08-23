@@ -1,40 +1,12 @@
-import { differenceInDays } from "date-fns";
 import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
-import type { ChatMessage } from "./chat-types";
-
-const STAFF_EXTRA_DAYS = 7;
-
-/** Should a chat room be still accessible via chat code. */
-export function chatAccessible(args: {
-	/** Is the user site staff? Allows them to see the chat code for extra days. */
-	isStaff?: boolean;
-	expiresAfterDays: number;
-	comparedTo: Date;
-}): boolean {
-	const extraDays = args.isStaff ? STAFF_EXTRA_DAYS : 0;
-	return (
-		differenceInDays(new Date(), args.comparedTo) <
-		args.expiresAfterDays + extraDays
-	);
-}
-
-const DATE_PLACEHOLDER_PATTERN = /\{\{date:(\d+)\}\}/g;
+import type { SystemMessageType } from "./chat-types";
 
 export function datePlaceholder(date: Date): string {
 	return `{{date:${date.getTime()}}}`;
 }
 
-export function resolveDatePlaceholders(
-	text: string,
-	format: (date: Date) => string,
-): string {
-	return text.replace(DATE_PLACEHOLDER_PATTERN, (_match, ts) =>
-		format(new Date(Number(ts))),
-	);
-}
-
-export function messageTypeToSound(type: ChatMessage["type"]) {
+export function messageTypeToSound(type: SystemMessageType | undefined) {
 	if (type === "LIKE_RECEIVED") return "sq_like";
 	if (type === "MATCH_STARTED") return "sq_match";
 	if (type === "READY_CHECK_STARTED") return "sq_ready-check";
@@ -54,7 +26,7 @@ export function soundEnabled(soundCode: string) {
 	return !soundEnabled || soundEnabled === "true";
 }
 
-export function playMessageSound(type: ChatMessage["type"]) {
+export function playMessageSound(type: SystemMessageType | undefined) {
 	const sound = messageTypeToSound(type);
 	if (!sound || !soundEnabled(sound)) return;
 
