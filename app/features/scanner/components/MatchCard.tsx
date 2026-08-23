@@ -9,15 +9,19 @@ import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
+import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { ModeImage, WeaponImage } from "~/components/Image";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+} from "~/modules/in-game-lists/types";
 import { sendouQMatchPage, tournamentMatchPage } from "~/utils/urls";
 import type { IngestSkipReason } from "../core/match-builder";
-import type { ScannerMatch } from "../core/scanner-match";
+import type { ScannerMatch, ScannerMatchPlayer } from "../core/scanner-match";
 import type { SendStatus } from "../store/events";
 import { formatTime, useEventTimeFormatter } from "./format";
 import { lobbyLabel, modeLabel, stageLabel } from "./labels";
@@ -25,6 +29,20 @@ import styles from "./MatchCard.module.css";
 
 /** the game score a knockout wins at */
 const KO_MATCH_SCORE = 100;
+
+/** one per gear slot: [head, clothes, shoes], the arc's left-to-right order */
+const UNKNOWN_MAIN_ABILITIES: AbilityWithUnknown[] = [
+	"UNKNOWN",
+	"UNKNOWN",
+	"UNKNOWN",
+];
+
+/**
+ * Where each main sits on the half-moon under the weapon. A positive CSS
+ * rotation swings the arc's downward offset to the *left*, so the angles
+ * descend to read head, clothes, shoes left to right.
+ */
+const ABILITY_ARC_ANGLES = ["44deg", "0deg", "-44deg"];
 
 const SEND_STATE_CLASS: Record<SendStatus["state"], string> = {
 	queued: styles.queued,
@@ -263,6 +281,8 @@ interface TeamWeapon {
 	weaponId: MainWeaponId;
 	/** the scan's own player — highlighted among the eight */
 	pov: boolean;
+	/** head/clothes/shoes mains; null when no death screen revealed the build */
+	mainAbilities: AbilityWithUnknown[] | null;
 }
 
 function TeamWeapons({ match }: { match: ScannerMatch }) {
@@ -271,36 +291,102 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 			.map((player, index) => ({
 				weaponId: player.weaponId,
 				pov: match.pov?.team === team && match.pov.index === index,
+				mainAbilities: mainAbilities(player),
 			}))
 			.filter((weapon): weapon is TeamWeapon => weapon.weaponId !== null);
 	const [left, right] = displayOrder(match);
 	const leftWeapons = weaponsOf(left);
 	const rightWeapons = weaponsOf(right);
 	if (leftWeapons.length + rightWeapons.length === 0) return null;
+	// one read build is enough to show the arcs; the rest fall back to unknowns
+	const withAbilities = [...leftWeapons, ...rightWeapons].some(
+		(weapon) => weapon.mainAbilities !== null,
+	);
 
 	return (
-		<div className={styles.weapons}>
-			{leftWeapons.length > 0 ? <WeaponRow weapons={leftWeapons} /> : null}
+		<div
+			className={clsx(styles.weapons, {
+				[styles.withAbilities]: withAbilities,
+			})}
+		>
+			{leftWeapons.length > 0 ? (
+				<WeaponRow weapons={leftWeapons} withAbilities={withAbilities} />
+			) : null}
 			{leftWeapons.length > 0 && rightWeapons.length > 0 ? (
 				<span className={styles.vs}>vs</span>
 			) : null}
-			{rightWeapons.length > 0 ? <WeaponRow weapons={rightWeapons} /> : null}
+			{rightWeapons.length > 0 ? (
+				<WeaponRow weapons={rightWeapons} withAbilities={withAbilities} />
+			) : null}
 		</div>
 	);
 }
 
+/**
+ * The three gear mains of a build, or null when the scan read none of them —
+ * a partially read build keeps its unknown slots.
+ */
+function mainAbilities(
+	player: ScannerMatchPlayer,
+): AbilityWithUnknown[] | null {
+	const mains = UNKNOWN_MAIN_ABILITIES.map(
+		(unknown, slot) => player.abilities?.[slot]?.[0] ?? unknown,
+	);
+	return mains.some((ability) => ability !== "UNKNOWN") ? mains : null;
+}
+
 /** One team's weapons, kept together when the card is too narrow for both. */
-function WeaponRow({ weapons }: { weapons: TeamWeapon[] }) {
+function WeaponRow({
+	weapons,
+	withAbilities,
+}: {
+	weapons: TeamWeapon[];
+	withAbilities: boolean;
+}) {
 	return (
 		<div className={styles.weaponRow}>
 			{weapons.map((weapon, i) => (
-				<WeaponImage
+				<div
 					key={i}
-					weaponSplId={weapon.weaponId}
-					variant="build"
-					size={22}
-					className={clsx(styles.weapon, { [styles.pov]: weapon.pov })}
-				/>
+					className={clsx(styles.weaponSlot, {
+						[styles.withAbilities]: withAbilities,
+					})}
+				>
+					<WeaponImage
+						weaponSplId={weapon.weaponId}
+						variant="build"
+						size={28}
+						className={clsx(styles.weapon, { [styles.pov]: weapon.pov })}
+					/>
+					{withAbilities ? (
+						<AbilityArc
+							abilities={weapon.mainAbilities ?? UNKNOWN_MAIN_ABILITIES}
+						/>
+					) : null}
+				</div>
+			))}
+		</div>
+	);
+}
+
+/** Gear mains laid out as a half-moon hugging the weapon's lower edge. */
+function AbilityArc({ abilities }: { abilities: AbilityWithUnknown[] }) {
+	return (
+		<div className={styles.abilityArc}>
+			{abilities.map((ability, i) => (
+				<span
+					key={i}
+					className={styles.arcSlot}
+					style={
+						{ "--arc-angle": ABILITY_ARC_ANGLES[i] } as React.CSSProperties
+					}
+				>
+					<Ability
+						ability={ability}
+						size="TINY"
+						className={styles.arcAbility}
+					/>
+				</span>
 			))}
 		</div>
 	);

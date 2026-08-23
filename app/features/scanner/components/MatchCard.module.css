@@ -153,19 +153,69 @@
 		color: var(--color-text-high);
 		margin: 0 5px;
 	}
+
+	/* stay level with the weapons, which the arcs pushed up */
+	&.withAbilities .vs {
+		margin-block-end: 18px;
+	}
 }
 
 /* a team is one wrapping unit: the eight never break up mid-team */
 .weaponRow {
 	display: flex;
 	align-items: center;
-	gap: var(--s-0-5);
+	gap: var(--s-1-5);
+}
+
+.weaponSlot {
+	--arc-ability-size: 20px;
+	--arc-radius: 27px;
+	/* how far under the weapon the arc's lowest point reaches */
+	--arc-overhang: 18px;
+
+	position: relative;
+	display: flex;
+	flex-shrink: 0;
+
+	/* room for the ability arc hanging under and beside the weapon */
+	&.withAbilities {
+		margin-inline: var(--s-2);
+		margin-block-end: var(--arc-overhang);
+	}
+}
+
+/* zero-sized anchor at the weapon's centre, the arc's origin */
+.abilityArc {
+	position: absolute;
+	inset-block-start: 50%;
+	inset-inline-start: 50%;
+}
+
+.arcSlot {
+	position: absolute;
+	inset-block-start: 0;
+	inset-inline-start: 0;
+	margin: calc(var(--arc-ability-size) / -2);
+	/* out along the arc, then back upright */
+	transform: rotate(var(--arc-angle)) translateY(var(--arc-radius))
+		rotate(calc(-1 * var(--arc-angle)));
+}
+
+.arcAbility {
+	width: var(--arc-ability-size);
+	height: var(--arc-ability-size);
+
+	& img {
+		display: block;
+		width: 100%;
+		height: 100%;
+	}
 }
 
 .weapon {
 	flex-shrink: 0;
-	width: 32px;
-	height: 32px;
+	width: 38px;
+	height: 38px;
 	vertical-align: middle;
 	background: var(--color-bg-badge);
 	border-radius: var(--radius-full);
@@ -368,7 +418,7 @@ button.expand {
 	.weapons {
 		flex-direction: column;
 		align-items: flex-start;
-		row-gap: var(--s-1);
+		row-gap: var(--s-3);
 
 		& .vs {
 			display: none;

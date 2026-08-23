@@ -2,7 +2,8 @@
  * Unit tests for connectAbilities: deaths are attributed to the next
  * scoreboard event and matched to a player row by name/weapon, with
  * ambiguous matches (two players on the same weapon, misread name)
- * left unattributed.
+ * left unattributed. harvestCardMains puts minimap cards through the same
+ * matching, merging their gear mains across the match's frames.
  */
 
 import assert from "node:assert/strict";
@@ -10,7 +11,11 @@ import type {
 	AbilityWithUnknown,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
-import { connectAbilities } from "../core/ability-harvest";
+import {
+	connectAbilities,
+	type GearMains,
+	harvestCardMains,
+} from "../core/ability-harvest";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
@@ -130,4 +135,39 @@ test("unsorted input is handled and trailing deaths are dropped", () => {
 	assert.ok(abilities);
 	assert.deepEqual(abilities.get(7), GRID_B);
 	assert.equal(abilities.size, 1);
+});
+
+function card(
+	name: string | null,
+	weaponId: MainWeaponId | null,
+	abilities: GearMains,
+) {
+	return { name, weaponId, abilities };
+}
+
+test("cards match rows by name and weapon like deaths do", () => {
+	const mains = harvestCardMains(PLAYERS, [
+		card("Bravo", 50, ["ISM", "RSU", "SSU"]), // name+weapon → 1, not the 50 at 3
+		card(null, 70, ["QR", "QSJ", "IRU"]), // unique weapon, nameless enemy card → 4
+		card("garbled", 50, ["LDE", "LDE", "LDE"]), // ambiguous weapon → dropped
+	]);
+	assert.deepEqual(mains.get(1), ["ISM", "RSU", "SSU"]);
+	assert.deepEqual(mains.get(4), ["QR", "QSJ", "IRU"]);
+	assert.equal(mains.size, 2);
+});
+
+test("each gear slot keeps the first identified badge across frames", () => {
+	const mains = harvestCardMains(PLAYERS, [
+		card("Alpha", 40, [null, "UNKNOWN", "SSU"]),
+		card("Alpha", 40, ["ISM", "RSU", "QR"]),
+	]);
+	assert.deepEqual(mains.get(0), ["ISM", "RSU", "SSU"]);
+});
+
+test("cards that identified no badge at all are left out", () => {
+	const mains = harvestCardMains(PLAYERS, [
+		card("Alpha", 40, []),
+		card("Echo", 70, [null, null, null]),
+	]);
+	assert.equal(mains.size, 0);
 });

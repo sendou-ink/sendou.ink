@@ -22,7 +22,10 @@ export interface ScannerMatchPlayer {
 	ka: number | null;
 	d: number | null;
 	s: number | null;
-	/** [head, clothes, shoes] ability rows harvested from death screens */
+	/**
+	 * [head, clothes, shoes] ability rows: death screens read whole rows
+	 * (main and subs), minimap cards their mains alone
+	 */
 	abilities?: AbilityWithUnknown[][];
 }
 

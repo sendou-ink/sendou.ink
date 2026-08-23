@@ -10,8 +10,16 @@
  * `ingestSkipReasons` filters those. Deaths are harvested onto player rows
  * as enemy builds (ability-harvest.ts).
  */
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
-import { harvestAbilities } from "./ability-harvest";
+import type {
+	AbilityWithUnknown,
+	MainWeaponId,
+	StageId,
+} from "~/modules/in-game-lists/types";
+import {
+	type GearMains,
+	harvestAbilities,
+	harvestCardMains,
+} from "./ability-harvest";
 import { DEATH_EVENT_TYPE, type DeathData } from "./detectors/death/index";
 import {
 	MAP_START_EVENT_TYPE,
@@ -509,7 +517,7 @@ function toBuiltMatch<E extends DetectedEvent>(
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
 		teams: board
-			? teamsFromScoreboard(board, deaths)
+			? teamsFromScoreboard(board, deaths, minimaps, progress.minimapEnemySide)
 			: teamsFromMinimaps(minimaps, deaths),
 		winner: board ? 0 : null,
 		pov,
@@ -577,6 +585,8 @@ function buildProgress(
 ): {
 	objective: ScannerMatchObjective | null;
 	playerStatus: ScannerMatchPlayerStatus | null;
+	/** the `teams` side the minimap's enemy column is; null with no scoreboard */
+	minimapEnemySide: 0 | 1 | null;
 } {
 	const dominant = dominantAnchorOf([...objectives, ...playerStatuses]);
 	const live = withoutReplayReads(objectives, dominant);
@@ -663,7 +673,11 @@ function buildProgress(
 					),
 				};
 
-	return { objective, playerStatus };
+	return {
+		objective,
+		playerStatus,
+		minimapEnemySide: board ? (minimapSwapped ? 0 : 1) : null,
+	};
 }
 
 /** The slot→row permutations of a scoreboard-closed match, per source. */
@@ -1247,10 +1261,16 @@ function playedAt(
 function teamsFromScoreboard(
 	board: ScoreboardData,
 	deaths: readonly DeathData[],
+	minimaps: readonly MinimapData[],
+	minimapEnemySide: 0 | 1 | null,
 ): [ScannerMatchTeam, ScannerMatchTeam] {
 	const abilities = harvestAbilities(board.players, deaths);
+	const cardMains =
+		minimapEnemySide !== null
+			? minimapMainsByRow(board, minimaps, minimapEnemySide)
+			: new Map<number, GearMains>();
 	const players = board.players.map((player, i): ScannerMatchPlayer => {
-		const build = abilities.get(i);
+		const build = mergeBuild(abilities.get(i), cardMains.get(i));
 		return {
 			name: player.name.trim() || null,
 			weaponId: player.weaponId,
@@ -1294,7 +1314,7 @@ function teamsFromMinimaps(
 
 /** For each slot index, the first frame's non-null read of each field. */
 function mergeSlots(
-	frames: Array<Array<{ name: string | null; weaponId: MainWeaponId | null }>>,
+	frames: Array<Array<MinimapCardRead>>,
 ): ScannerMatchPlayer[] {
 	const width = Math.max(0, ...frames.map((frame) => frame.length));
 	const out: ScannerMatchPlayer[] = [];
@@ -1302,6 +1322,7 @@ function mergeSlots(
 		const reads = frames
 			.map((frame) => frame[i])
 			.filter((read) => read !== undefined);
+		const mains = mergeMains(reads.map((read) => read.abilities));
 		out.push({
 			name:
 				reads
@@ -1313,7 +1334,85 @@ function mergeSlots(
 			ka: null,
 			d: null,
 			s: null,
+			...(mains ? { abilities: mainsAsRows(mains) } : null),
 		});
 	}
 	return out;
+}
+
+/** the gear slots a build has, in card/death-screen order */
+const GEAR_SLOTS = [0, 1, 2];
+
+interface MinimapCardRead {
+	name: string | null;
+	weaponId: MainWeaponId | null;
+	abilities: GearMains;
+}
+
+/**
+ * Gear mains per scoreboard row, harvested from the match's minimap cards.
+ * A card's drawn position is no seat — a frame leaves absent and
+ * evidence-less cards out of its columns — so cards identify their row by
+ * name and weapon instead, within their own column's side (own/enemy is
+ * camera-stable, unlike the HUD plates).
+ */
+function minimapMainsByRow(
+	board: ScoreboardData,
+	minimaps: readonly MinimapData[],
+	enemySide: 0 | 1,
+): Map<number, GearMains> {
+	const cards: [MinimapCardRead[], MinimapCardRead[]] = [[], []];
+	for (const frame of minimaps) {
+		cards[enemySide].push(...frame.enemies);
+		cards[enemySide === 0 ? 1 : 0].push(...frame.teammates);
+	}
+	const mains = new Map<number, GearMains>();
+	for (const side of [0, 1] as const) {
+		const rows = board.players.slice(
+			side * PLAYERS_PER_TEAM,
+			(side + 1) * PLAYERS_PER_TEAM,
+		);
+		for (const [row, build] of harvestCardMains(rows, cards[side])) {
+			mains.set(side * PLAYERS_PER_TEAM + row, build);
+		}
+	}
+	return mains;
+}
+
+/**
+ * The gear mains a set of card reads agree on: badges come and go with
+ * cross-outs and camo surfaces, so each slot takes its first identified
+ * read. Null when no read identified any of the three.
+ */
+function mergeMains(reads: readonly GearMains[]): GearMains | null {
+	const mains = GEAR_SLOTS.map((slot) => {
+		const read = reads
+			.map((abilities) => abilities[slot] ?? null)
+			.filter((ability) => ability !== null);
+		return read.find((ability) => ability !== "UNKNOWN") ?? read[0] ?? null;
+	});
+	return mains.some((ability) => ability !== null) ? mains : null;
+}
+
+/** Minimap cards show no sub slots, so each gear row holds its main alone. */
+function mainsAsRows(mains: GearMains): AbilityWithUnknown[][] {
+	return mains.map((main) => [main ?? "UNKNOWN"]);
+}
+
+/**
+ * One player's gear rows: death screens read whole rows (main and subs),
+ * minimap cards only mains — so a death row stands and the cards fill in
+ * the mains it left unread.
+ */
+function mergeBuild(
+	death: AbilityWithUnknown[][] | undefined,
+	mains: GearMains | undefined,
+): AbilityWithUnknown[][] | undefined {
+	if (!mains) return death;
+	if (!death) return mainsAsRows(mains);
+	return GEAR_SLOTS.map((slot) => {
+		const row = death[slot] ?? [];
+		if (row.length > 0 && row[0] !== "UNKNOWN") return row;
+		return [mains[slot] ?? row[0] ?? "UNKNOWN", ...row.slice(1)];
+	});
 }

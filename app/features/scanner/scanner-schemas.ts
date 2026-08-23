@@ -45,7 +45,7 @@ const scannerMatchPlayerSchema = v.object({
 	ka: v.nullable(v.number()),
 	d: v.nullable(v.number()),
 	s: v.nullable(v.number()),
-	/** [head, clothes, shoes] ability rows harvested from death screens */
+	/** [head, clothes, shoes] ability rows; a row may hold its main alone */
 	abilities: v.optional(
 		v.pipe(
 			v.array(v.pipe(v.array(scannerAbilitySchema), v.maxLength(4))),
