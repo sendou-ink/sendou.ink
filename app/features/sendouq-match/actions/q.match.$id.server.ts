@@ -100,10 +100,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					if (result.status === "MATCH_FINALIZED") {
-						ChatSystemMessage.send({
-							room: EventBus.chatRoomChannel(match.chatRoomId),
+						ChatSystemMessage.sendPersisted({
+							roomId: match.chatRoomId,
 							type: "SCORE_CONFIRMED",
-							context: { name: user.username },
+							authorUserId: user.id,
 						});
 					} else {
 						ChatSystemMessage.send({
@@ -349,10 +349,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				if (match.chatRoomId) {
-					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
 						type: "CANCEL_REPORTED",
-						context: { name: user.username },
+						authorUserId: user.id,
 					});
 				}
 
@@ -380,10 +380,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				await notifyStaffOfCanceledMatch(match);
 
 				if (match.chatRoomId) {
-					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
 						type: "CANCEL_CONFIRMED",
-						context: { name: user.username },
+						authorUserId: user.id,
 					});
 				}
 
@@ -435,10 +435,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				if (match.chatRoomId) {
-					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
 						type: "CANCEL_REFUSED",
-						context: { name: user.username },
+						authorUserId: user.id,
 					});
 				}
 

@@ -1,23 +1,26 @@
-import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as EventBus from "~/features/events/core/EventBus.server";
-import { abortSubscriptions, flushEvents, subscribeTo } from "./tests/fixtures";
+import * as ChatRepository from "./ChatRepository.server";
+import {
+	abortSubscriptions,
+	flushEvents,
+	setupSqMatch,
+	subscribeTo,
+} from "./tests/fixtures";
 
 process.env.SKALOP_SYSTEM_MESSAGE_URL = "http://skalop.test";
 process.env.SKALOP_TOKEN = "test-token";
 
 const ChatSystemMessage = await import("./ChatSystemMessage.server");
 
-const fetchMock = vi.fn(
-	async (_input: unknown, _init?: { body?: string }) => new Response(null),
-);
+const users = UserFactory.pool();
 
-beforeEach(() => {
-	vi.stubGlobal("fetch", fetchMock);
+beforeEach(async () => {
+	await users.create(9);
 });
 
 afterEach(() => {
-	vi.unstubAllGlobals();
-	fetchMock.mockClear();
 	abortSubscriptions();
 });
 
@@ -36,7 +39,6 @@ describe("ChatSystemMessage.send", () => {
 		expect(received).toEqual([
 			{ kind: "revalidate", scope: "MATCH_RESULTS", authorUserId: 5 },
 		]);
-		expect(fetchMock).not.toHaveBeenCalled();
 	});
 
 	test("keeps a sound-carrying type on the broadcast, bypassing the throttle", async () => {
@@ -62,19 +64,6 @@ describe("ChatSystemMessage.send", () => {
 		]);
 	});
 
-	test("drops a soundless system message type from the broadcast", async () => {
-		const received = subscribeTo("tournament__103");
-
-		ChatSystemMessage.send({
-			room: "tournament__103",
-			type: "TOURNAMENT_UPDATED",
-			revalidateOnly: true,
-		});
-		await flushEvents();
-
-		expect(received).toEqual([{ kind: "revalidate" }]);
-	});
-
 	test("throttles rapid soundless broadcasts to the same topic", async () => {
 		const received = subscribeTo("tournament__104");
 
@@ -84,22 +73,83 @@ describe("ChatSystemMessage.send", () => {
 
 		expect(received).toHaveLength(1);
 	});
+});
 
-	test("sends real chat messages to skalop, not the event bus", async () => {
-		const received = subscribeTo("someChatCode123");
+describe("ChatSystemMessage.sendPersisted", () => {
+	test("persists the message as a chat line of the room", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
 
-		ChatSystemMessage.send({
-			room: "someChatCode123",
+		await ChatSystemMessage.sendPersisted({
+			roomId: match.chatRoomId!,
+			type: "SCORE_CONFIRMED",
+			authorUserId: alphaUserIds[0],
+		});
+
+		const messages = await ChatRepository.findAllMessagesByRoomId(
+			match.chatRoomId!,
+		);
+		expect(messages).toHaveLength(1);
+		expect(messages[0].type).toBe("SCORE_CONFIRMED");
+		expect(messages[0].authorUserId).toBe(alphaUserIds[0]);
+		expect(messages[0].contents).toBeNull();
+	});
+
+	test("publishes the message to participant user channels and the room channel", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+		const bravoReceived = subscribeTo(EventBus.userChannel(bravoUserIds[0]));
+		const roomReceived = subscribeTo(
+			EventBus.chatRoomChannel(match.chatRoomId!),
+		);
+
+		await ChatSystemMessage.sendPersisted({
+			roomId: match.chatRoomId!,
+			type: "CANCEL_REPORTED",
+			authorUserId: alphaUserIds[0],
+		});
+		await flushEvents();
+
+		expect(bravoReceived).toEqual([
+			expect.objectContaining({
+				kind: "chatMessage",
+				roomId: match.chatRoomId,
+				message: expect.objectContaining({ type: "CANCEL_REPORTED" }),
+			}),
+		]);
+		expect(roomReceived[0]).toEqual(
+			expect.objectContaining({ kind: "chatMessage" }),
+		);
+	});
+
+	test("publishes a revalidate broadcast to the room channel so subscribed pages refetch", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+		const roomReceived = subscribeTo(
+			EventBus.chatRoomChannel(match.chatRoomId!),
+		);
+
+		await ChatSystemMessage.sendPersisted({
+			roomId: match.chatRoomId!,
+			type: "CANCEL_CONFIRMED",
+			authorUserId: alphaUserIds[0],
+		});
+		await flushEvents();
+
+		expect(roomReceived).toEqual([
+			expect.objectContaining({ kind: "chatMessage" }),
+			{ kind: "revalidate" },
+		]);
+	});
+
+	test("does nothing for a room that no longer resolves", async () => {
+		const received = subscribeTo(EventBus.chatRoomChannel(9999));
+
+		await ChatSystemMessage.sendPersisted({
+			roomId: 9999,
 			type: "USER_LEFT",
-			context: { name: "Sendou" },
+			authorUserId: users.id(2),
 		});
 		await flushEvents();
 
 		expect(received).toEqual([]);
-		expect(fetchMock).toHaveBeenCalledTimes(1);
-		const body = JSON.parse(fetchMock.mock.calls[0][1]!.body!);
-		expect(body.action).toBe("sendMessage");
-		expect(body.messages[0].room).toBe("someChatCode123");
 	});
 });
 
@@ -113,6 +163,5 @@ describe("ChatSystemMessage.notifyNotificationsChanged", () => {
 
 		expect(alpha).toEqual([{ kind: "notificationsChanged" }]);
 		expect(bravo).toEqual([{ kind: "notificationsChanged" }]);
-		expect(fetchMock).not.toHaveBeenCalled();
 	});
 });

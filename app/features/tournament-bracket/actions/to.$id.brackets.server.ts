@@ -337,7 +337,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 		ChatSystemMessage.send([
 			{
 				room: tournamentWebsocketRoom(tournament.ctx.id),
-				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
 			},
 		]);

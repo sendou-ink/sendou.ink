@@ -215,10 +215,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
 				if (remainingGroup?.chatRoomId) {
-					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(remainingGroup.chatRoomId),
+					ChatSystemMessage.sendPersisted({
+						roomId: remainingGroup.chatRoomId,
 						type: "USER_LEFT",
-						context: { name: user.username },
+						authorUserId: user.id,
 					});
 					setGroupChatMetadata({
 						chatRoomId: remainingGroup.chatRoomId,
@@ -251,10 +251,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 				const groupAfterKick = SendouQ.findUncensoredGroupById(currentGroup.id);
 				if (groupAfterKick?.chatRoomId && kickedMember) {
-					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(groupAfterKick.chatRoomId),
+					ChatSystemMessage.sendPersisted({
+						roomId: groupAfterKick.chatRoomId,
 						type: "USER_LEFT",
-						context: { name: kickedMember.username },
+						authorUserId: kickedMember.id,
 					});
 					setGroupChatMetadata({
 						chatRoomId: groupAfterKick.chatRoomId,

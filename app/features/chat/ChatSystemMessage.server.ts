@@ -1,5 +1,4 @@
 import { add } from "date-fns";
-import { nanoid } from "nanoid";
 import { ServerConfig } from "~/config.server";
 import { actorIdOrNullSafe } from "~/features/auth/core/user.server";
 import * as EventBus from "~/features/events/core/EventBus.server";
@@ -7,8 +6,11 @@ import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
+import * as ChatRepository from "./ChatRepository.server";
+import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type {
 	ChatMessage,
+	PersistedSystemMessageType,
 	SoundOnlySystemMessageType,
 	SystemMessageType,
 } from "./chat-types";
@@ -31,18 +33,13 @@ function logSkalpError(action: string) {
 	};
 }
 
-type PartialChatMessage = Pick<
+type RevalidateBroadcast = Pick<
 	ChatMessage,
-	| "type"
-	| "context"
-	| "room"
-	| "revalidateOnly"
-	| "revalidateScope"
-	| "authorUserId"
->;
-interface ChatSystemMessageService {
-	send: (msg: PartialChatMessage | PartialChatMessage[]) => undefined;
-}
+	"room" | "revalidateScope" | "authorUserId"
+> & {
+	revalidateOnly: true;
+	type?: SoundOnlySystemMessageType;
+};
 
 let systemMessagesDisabled = false;
 
@@ -73,27 +70,64 @@ const revalidateThrottle = createRevalidateBroadcastThrottle({
 		}),
 });
 
-export const send: ChatSystemMessageService["send"] = (partialMsg) => {
+export function send(broadcast: RevalidateBroadcast | RevalidateBroadcast[]) {
 	if (systemMessagesDisabled) return;
 
-	const msgArr = Array.isArray(partialMsg) ? partialMsg : [partialMsg];
-
-	const immediate: PartialChatMessage[] = [];
-	for (const msg of msgArr) {
+	for (const msg of Array.isArray(broadcast) ? broadcast : [broadcast]) {
 		if (revalidateThrottle.throttles(msg)) {
 			revalidateThrottle.handle(msg);
-		} else if (msg.revalidateOnly) {
-			publishRevalidate(msg);
 		} else {
-			immediate.push(msg);
+			publishRevalidate(msg);
 		}
 	}
-	if (immediate.length === 0) return;
+}
 
-	return postMessages(immediate.map(toFullMessage));
-};
+/**
+ * Persists a system message (e.g. a reported score) as a chat line of the room
+ * and publishes it, plus a revalidate broadcast so subscribed pages refetch.
+ * Fire and forget like {@link send}: failures are logged, never thrown.
+ */
+export function sendPersisted(args: {
+	roomId: number;
+	type: PersistedSystemMessageType;
+	/** The user the message describes, e.g. who left the group. */
+	authorUserId: number;
+}): Promise<void> {
+	if (systemMessagesDisabled) return Promise.resolve();
 
-function publishRevalidate(msg: PartialChatMessage) {
+	return persistAndPublish(args).catch((err) =>
+		logger.error(`Persisting system message "${args.type}" failed:`, err),
+	);
+}
+
+async function persistAndPublish(args: {
+	roomId: number;
+	type: PersistedSystemMessageType;
+	authorUserId: number;
+}) {
+	const room = (await ChatRoomResolver.resolve([args.roomId]))[0];
+	if (!room) return;
+
+	const inserted = await ChatRepository.insertSystemMessage(args);
+	const message = await ChatRepository.findMessageById(inserted.id);
+	invariant(message, "inserted system message not found");
+
+	EventBus.publish(
+		[
+			...room.participantUserIds.map(EventBus.userChannel),
+			EventBus.chatRoomChannel(args.roomId),
+		],
+		{ kind: "chatMessage", roomId: args.roomId, message },
+	);
+	EventBus.publish([EventBus.chatRoomChannel(args.roomId)], {
+		kind: "revalidate",
+		authorUserId: actorIdOrNullSafe() ?? undefined,
+	});
+}
+
+function publishRevalidate(
+	msg: Pick<ChatMessage, "room" | "revalidateScope" | "authorUserId" | "type">,
+) {
 	EventBus.publish([msg.room], {
 		kind: "revalidate",
 		scope: msg.revalidateScope,
@@ -114,33 +148,6 @@ function soundOnlyType(
 		return type;
 	}
 	return undefined;
-}
-
-function toFullMessage(partialMsg: PartialChatMessage): ChatMessage {
-	return {
-		id: nanoid(),
-		timestamp: Date.now(),
-		room: partialMsg.room,
-		context: partialMsg.context,
-		type: partialMsg.type,
-		revalidateOnly: partialMsg.revalidateOnly,
-		revalidateScope: partialMsg.revalidateScope,
-		authorUserId: partialMsg.authorUserId ?? actorIdOrNullSafe() ?? undefined,
-	};
-}
-
-function postMessages(fullMessages: ChatMessage[]) {
-	return void fetch(ServerConfig.skalop.systemMessageUrl!, {
-		method: "POST",
-		body: JSON.stringify({
-			action: "sendMessage",
-			messages: fullMessages,
-		}),
-		headers: [
-			[SKALOP_TOKEN_HEADER_NAME, ServerConfig.skalop.token!],
-			["Content-Type", "application/json"],
-		],
-	}).catch(logSkalpError("sendMessage"));
 }
 
 /**

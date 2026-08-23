@@ -702,13 +702,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 		ChatSystemMessage.send([
 			{
 				room: tournamentMatchWebsocketRoom(matchId),
-				type: "TOURNAMENT_MATCH_UPDATED",
 				revalidateOnly: true,
 				revalidateScope,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
 				room: tournamentMatchWebsocketRoom(id),
-				type: "TOURNAMENT_MATCH_UPDATED" as const,
 				revalidateOnly: true as const,
 				revalidateScope,
 			})),
@@ -720,7 +718,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				room: onlyMatchResultsChanged
 					? matchResultsRoom(tournament, match)
 					: tournamentWebsocketRoom(tournament.ctx.id),
-				type: "TOURNAMENT_UPDATED",
 				revalidateOnly: true,
 				revalidateScope,
 			},

@@ -226,12 +226,10 @@ function sendDroppedMatchChatMessages({
 	ChatSystemMessage.send([
 		...endedMatchIds.map((matchId) => ({
 			room: tournamentMatchWebsocketRoom(matchId),
-			type: "TOURNAMENT_MATCH_UPDATED" as const,
 			revalidateOnly: true as const,
 		})),
 		{
 			room: tournamentWebsocketRoom(tournamentId),
-			type: "TOURNAMENT_UPDATED" as const,
 			revalidateOnly: true as const,
 		},
 	]);

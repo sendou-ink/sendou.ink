@@ -253,9 +253,9 @@ function broadcastMapChange({
 	user: ReturnType<typeof requireUser>;
 }) {
 	if (!post.chatRoomId) return;
-	ChatSystemMessage.send({
-		room: EventBus.chatRoomChannel(post.chatRoomId),
+	ChatSystemMessage.sendPersisted({
+		roomId: post.chatRoomId,
 		type,
-		context: { name: user.username },
+		authorUserId: user.id,
 	});
 }

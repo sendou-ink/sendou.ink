@@ -34,7 +34,7 @@ export async function cancelActiveGroupLikes(userId: number) {
 	ChatSystemMessage.send([
 		...[...affectedGroupIds, ownGroup.id].map((groupId) => ({
 			room: sqGroupWebsocketRoom(groupId),
-			revalidateOnly: true,
+			revalidateOnly: true as const,
 		})),
 		{
 			room: SENDOUQ_LOOKING_ROOM,
