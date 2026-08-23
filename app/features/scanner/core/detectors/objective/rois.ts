@@ -156,6 +156,10 @@ export const CONTROL_PLATE_MIN_SATURATION = 60;
 // within a few px of the POV right column, so a mirrored frame scores
 // deceptively well as POV; the mirror's own geometry must be a scored
 // candidate (and badge-probed) or the left column misreads ready/dead.
+// S3 POV footage can draw the badge-less mirror arrangement in steady
+// state too (the whole 2026-08-22 Sendou POV VoD, both alive and
+// death-cam frames — vs the 2026-08-11 POV VoD's plain cast geometry), so
+// mirror is also a fresh badge-less pick (STATUS_FRESH_MIRROR_*).
 //
 // Broadcasts can hide the camera badges while keeping the cast icon
 // geometry (attested in the AREA CUP VoD), so badge absence alone cannot
@@ -245,9 +249,13 @@ export const STATUS_PALE_MAX_SPREAD = 70;
 
 /**
  * Splatted: body ink under the floor (attested dead <=0.20 vs alive
- * >=0.26 with the current body box) with two guards: shoulder glow keeps
- * the bright ready wash out (glow >=0.40 vs dead <=0.03), body pale keeps
- * the wash's dim pulse trough out (pale >=0.27 vs dead <=0.07).
+ * >=0.26 with the current body box) with the body-pale guard keeping the
+ * wash out across its whole pulse cycle (wash pale >=0.22 vs dead <=0.15 —
+ * the 0.15 is a dead icon under the 2026-08-22 VoD's skylight backdrop).
+ * POV reads add the shoulder-glow guard against the bright team-color
+ * ready flash (glow >=0.40 vs dead <=0.03); on the cast family the same
+ * probe reads backdrop leaking past a shrunken X's shoulder at 0.26-0.35,
+ * over any usable ceiling, so there only the body classes decide.
  */
 export const STATUS_DEAD_MAX_BODY_INK = 0.23;
 export const STATUS_DEAD_MAX_SHOULDER_GLOW = 0.2;
@@ -286,6 +294,18 @@ export const STATUS_READY_CLEAN_WASH_MAX_BODY_INK = 0.3;
 export const STATUS_READY_INKY_WASH_MIN_BODY_PALE = 0.35;
 
 /**
+ * Cast-family ready reads also need a minimally pale body: the wash
+ * surface always paints the body probe pale (every attested cast wash
+ * reads >=0.22, bright phase and trough alike), while a splatted icon
+ * with a bright backdrop leaking over its shoulder shows none (leaks on
+ * the 2026-08-22 POV VoD's skylight/glass backdrops lit the shoulder
+ * 0.26-0.35 past the ready floor over grey X bodies reading pale <=0.15).
+ * The washed-ink guards cannot catch this — a dead body is ink-poor by
+ * nature. POV ready icons light in team color, so pov reads skip it.
+ */
+export const STATUS_READY_MIN_WASH_BODY_PALE = 0.2;
+
+/**
  * Layout scoring (see player-status.ts): per-slot decisiveness is the
  * body-ink distance from the dead threshold, capped so one saturated slot
  * cannot carry a misaligned geometry. The sticky margin is what the
@@ -307,6 +327,24 @@ export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
  */
 export const STATUS_FRESH_CAST_MIN_DECISIVENESS = 0.21;
 export const STATUS_FRESH_POV_MIN_LEAD = 0.05;
+
+/**
+ * Fresh badge-less MIRROR pick (see pickLayout): S3 POV footage can draw
+ * the badge-less mirror arrangement in steady state (attested across the
+ * 2026-08-22 Sendou POV VoD — icon centers measured on the mirror pitches
+ * within ~10px), and its pale backdrops drown the slot comb (gaps read as
+ * iconness), so the comb-decisive gate cannot claim these frames. Instead
+ * a fresh mirror pick needs the LEFT column — the only column where the
+ * mirror and its POV false friend differ — to win decisively: attested
+ * true mirror frames lead the rival left decisiveness by >=0.046 while
+ * every attested cast/pov frame that also wins the overall score leads by
+ * <=0.001. One false friend survives that cut (the S2 POV fixture, left
+ * lead 0.052 from boxes landing on featureless backdrop) but its left
+ * comb is strong at the rival pitch (pov 0.326 / cast 0.325 vs <=0.220 on
+ * every attested mirror frame), so a readable rival left comb vetoes.
+ */
+export const STATUS_FRESH_MIRROR_MIN_LEFT_LEAD = 0.025;
+export const STATUS_FRESH_MIRROR_RIVAL_COMB_VETO = 0.3;
 
 /**
  * Slot-comb contrast (see combContrast in player-status.ts): mean iconness

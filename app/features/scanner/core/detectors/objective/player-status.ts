@@ -41,6 +41,8 @@ import {
 	STATUS_DPAD_PROBES,
 	STATUS_DPAD_PROBES_MIRROR,
 	STATUS_FRESH_CAST_MIN_DECISIVENESS,
+	STATUS_FRESH_MIRROR_MIN_LEFT_LEAD,
+	STATUS_FRESH_MIRROR_RIVAL_COMB_VETO,
 	STATUS_FRESH_POV_MIN_LEAD,
 	STATUS_GLOW_MAX_SPREAD,
 	STATUS_GLOW_MIN_VALUE,
@@ -55,6 +57,7 @@ import {
 	STATUS_READY_CLEAN_WASH_MAX_BODY_INK,
 	STATUS_READY_INKY_WASH_MIN_BODY_PALE,
 	STATUS_READY_MIN_BODY_PALE,
+	STATUS_READY_MIN_WASH_BODY_PALE,
 	STATUS_READY_MIN_SHOULDER_GLOW,
 	STATUS_READY_WASH_MAX_BODY_INK,
 	STATUS_SHOULDER_BOX_CAST,
@@ -229,9 +232,11 @@ const ALL_LAYOUTS: readonly PlayerStatusLayout[] = [
  * decisiveness cannot tell those two apart — and a wrong POV pick on cast
  * footage self-heals (the next badge frame proves the arrangement) while a
  * wrong mirror pick on POV footage never would (POV shows no badges). So
- * the mirror is only reachable via badges or from an established cast
- * layout (the specced POV switching teams mid-game, attested in the AREA
- * CUP VoD's badge-less overhead stretches).
+ * on score alone the mirror is only reachable via badges or from an
+ * established cast layout (the specced POV switching teams mid-game,
+ * attested in the AREA CUP VoD's badge-less overhead stretches); a fresh
+ * history-less frame may still open on mirror through the left-column
+ * gate (see pickLayout).
  */
 const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
 	{
@@ -253,7 +258,7 @@ const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
  * established layout, and SCORED_FLIPS keeps the POV/mirror false friends
  * from ever trading places without badge proof.
  *
- * Two decisions decisiveness cannot make on its own:
+ * Three decisions decisiveness cannot make on its own:
  * - The badge-less MIRROR arrangement (attested in the sendou-triton VoD)
  *   scores below cast even on true mirror frames, so a decisive slot-comb
  *   win (see combContrast) overrides everything but badges — comb evidence
@@ -262,6 +267,12 @@ const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
  * - A history-less pov-vs-cast near-tie (busy backdrops mis-rank cast
  *   footage): the fresh pick stays cast unless cast reads under the floor
  *   or pov leads decisively (STATUS_FRESH_* in rois.ts).
+ * - Steady-state badge-less mirror POV footage over pale backdrops (the
+ *   2026-08-22 Sendou POV VoD) drowns the comb — gaps read as iconness —
+ *   so a fresh mirror pick may also come from the left column, the only
+ *   one where mirror and POV differ, winning the per-side decisiveness
+ *   outright, with a readable rival left comb as the veto
+ *   (STATUS_FRESH_MIRROR_* in rois.ts).
  */
 function pickLayout(
 	frame: Mat,
@@ -274,10 +285,25 @@ function pickLayout(
 		return { layout: "cast", scores: null };
 	if (badgesVisible(frame, STATUS_DPAD_PROBES_MIRROR))
 		return { layout: "cast-mirror", scores: null };
+	const sideScores = Object.fromEntries(
+		ALL_LAYOUTS.map((layout) => [
+			layout,
+			readSlots(frame, layout).map(sideDecisiveness) as [number, number],
+		]),
+	) as Record<PlayerStatusLayout, [number, number]>;
 	const scores = Object.fromEntries(
-		ALL_LAYOUTS.map((layout) => [layout, layoutDecisiveness(frame, layout)]),
+		ALL_LAYOUTS.map((layout) => [
+			layout,
+			(sideScores[layout][0] + sideScores[layout][1]) / 2,
+		]),
 	) as Record<PlayerStatusLayout, number>;
-	const combs = combScores(frame);
+	const sideCombs = combScores(frame);
+	const combs = Object.fromEntries(
+		ALL_LAYOUTS.map((layout) => [
+			layout,
+			sideCombs[layout][0] + sideCombs[layout][1],
+		]),
+	) as Record<PlayerStatusLayout, number>;
 	if (
 		combs["cast-mirror"] >= STATUS_MIRROR_COMB_MIN &&
 		combs["cast-mirror"] >= combs.cast + STATUS_MIRROR_COMB_LEAD &&
@@ -312,6 +338,17 @@ function pickLayout(
 		};
 	}
 	if (
+		scores["cast-mirror"] > scores.pov &&
+		scores["cast-mirror"] > scores.cast &&
+		sideScores["cast-mirror"][0] >=
+			Math.max(sideScores.pov[0], sideScores.cast[0]) +
+				STATUS_FRESH_MIRROR_MIN_LEFT_LEAD &&
+		Math.max(sideCombs.pov[0], sideCombs.cast[0]) <
+			STATUS_FRESH_MIRROR_RIVAL_COMB_VETO
+	) {
+		return { layout: "cast-mirror", scores };
+	}
+	if (
 		scores.cast >= STATUS_FRESH_CAST_MIN_DECISIVENESS &&
 		scores.pov < scores.cast + STATUS_FRESH_POV_MIN_LEAD
 	) {
@@ -320,8 +357,7 @@ function pickLayout(
 	return { layout: scores.pov >= scores.cast ? "pov" : "cast", scores };
 }
 
-function layoutDecisiveness(frame: Mat, layout: PlayerStatusLayout): number {
-	const reads = readSlots(frame, layout).flat();
+function sideDecisiveness(reads: SlotRead[]): number {
 	return (
 		reads.reduce(
 			(sum, read) =>
@@ -345,6 +381,11 @@ function layoutDecisiveness(frame: Mat, layout: PlayerStatusLayout): number {
  * guards) — and the wash glow is pale, so only the
  * unsaturated glow fraction counts (a saturated bright leak, like sky over
  * a dead icon's shoulder, is not a wash — see STATUS_GLOW_MAX_SPREAD).
+ * A pale backdrop can still light a DEAD icon's shoulder past the ready
+ * floor (the grey X passes every ink guard), so cast-family ready reads
+ * additionally need the wash's pale body — and for the same reason the
+ * dead read there ignores the shoulder and trusts the body classes alone
+ * (see STATUS_READY_MIN_WASH_BODY_PALE / STATUS_DEAD_MAX_SHOULDER_GLOW).
  */
 function classifySlot(
 	bodyInk: number,
@@ -356,7 +397,7 @@ function classifySlot(
 	const washGlow = layout === "pov" ? shoulderGlow : shoulderPaleGlow;
 	const dead =
 		bodyInk <= STATUS_DEAD_MAX_BODY_INK &&
-		washGlow <= STATUS_DEAD_MAX_SHOULDER_GLOW &&
+		(layout !== "pov" || washGlow <= STATUS_DEAD_MAX_SHOULDER_GLOW) &&
 		bodyPale <= STATUS_DEAD_MAX_BODY_PALE;
 	const washedBody =
 		bodyInk <= STATUS_READY_CLEAN_WASH_MAX_BODY_INK ||
@@ -366,7 +407,8 @@ function classifySlot(
 		!dead &&
 		(washGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
 			bodyPale >= STATUS_READY_MIN_BODY_PALE) &&
-		(layout === "pov" || washedBody);
+		(layout === "pov" ||
+			(washedBody && bodyPale >= STATUS_READY_MIN_WASH_BODY_PALE));
 	const confidence = dead
 		? Math.min(
 				1,
@@ -430,16 +472,19 @@ function classFractions(
 }
 
 /**
- * Slot-comb contrast per layout: mean iconness (ink-or-pale column
- * fraction over the strip's body band) at the layout's slot centers minus
- * the mean at its between-slot gap midpoints, maximized over a small
+ * Slot-comb contrast per layout and side: mean iconness (ink-or-pale
+ * column fraction over the strip's body band) at the layout's slot centers
+ * minus the mean at its between-slot gap midpoints, maximized over a small
  * global shift. Icon bodies concentrate iconness at true centers while the
  * V-notches between kites drop it, so a rigid comb at the wrong pitch
  * cannot score all four slots at once — positional evidence orthogonal to
  * body decisiveness, strong enough to prove the badge-less mirror
- * arrangement (see STATUS_MIRROR_COMB_* in rois.ts).
+ * arrangement (see STATUS_MIRROR_COMB_* in rois.ts) and to veto the
+ * false-friend fresh mirror pick off its left half.
  */
-function combScores(frame: Mat): Record<PlayerStatusLayout, number> {
+function combScores(
+	frame: Mat,
+): Record<PlayerStatusLayout, [number, number]> {
 	const profiles = STATUS_COMB_SIDE_SPANS.map(([x0, x1]) =>
 		iconnessProfile(frame, x0, x1),
 	);
@@ -452,18 +497,15 @@ function combScores(frame: Mat): Record<PlayerStatusLayout, number> {
 	return Object.fromEntries(
 		ALL_LAYOUTS.map((layout) => [
 			layout,
-			centersOf(layout).reduce(
-				(sum, sideCenters, side) =>
-					sum +
-					combContrast(
-						profiles[side]!,
-						STATUS_COMB_SIDE_SPANS[side]![0],
-						sideCenters,
-					),
-				0,
-			),
+			centersOf(layout).map((sideCenters, side) =>
+				combContrast(
+					profiles[side]!,
+					STATUS_COMB_SIDE_SPANS[side]![0],
+					sideCenters,
+				),
+			) as [number, number],
 		]),
-	) as Record<PlayerStatusLayout, number>;
+	) as Record<PlayerStatusLayout, [number, number]>;
 }
 
 function iconnessProfile(frame: Mat, x0: number, x1: number): number[] {
