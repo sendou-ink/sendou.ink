@@ -170,6 +170,37 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		expect(await blocksOf(outsiderId())).toBeUndefined();
 	});
 
+	test("excludeTournamentId leaves that tournament's registration out, others stay", async () => {
+		const excluded = await TournamentFactory.create({
+			authorId: organizerId(),
+			startTimes: [WEEK_STARTS_AT + 3 * DAY],
+		});
+		await TournamentTeamFactory.create({
+			tournamentId: excluded.id,
+			memberUserIds: [memberId()],
+		});
+		const other = await TournamentFactory.create({
+			authorId: organizerId(),
+			name: "Elsewhere Open",
+			startTimes: [WEEK_STARTS_AT + 4 * DAY],
+			bracketProgression: DOUBLE_ELIMINATION,
+		});
+		await TournamentTeamFactory.create({
+			tournamentId: other.id,
+			memberUserIds: [memberId()],
+		});
+
+		const blocks = (
+			await Commitments.busyBlocksByUserIds({
+				userIds: [memberId()],
+				...WINDOW,
+				excludeTournamentId: excluded.id,
+			})
+		).get(memberId());
+
+		expect(blocks?.map((block) => block.name)).toEqual(["Elsewhere Open"]);
+	});
+
 	test("test and league tournaments are not blocks", async () => {
 		const testTournament = await TournamentFactory.create({
 			authorId: organizerId(),

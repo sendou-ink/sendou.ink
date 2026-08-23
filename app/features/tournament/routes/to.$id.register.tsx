@@ -3,6 +3,7 @@ import { AlertCircle, Check, Clipboard, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
+import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
@@ -16,6 +17,8 @@ import { containerClassName } from "~/components/Main";
 import { SubmitButton } from "~/components/SubmitButton";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
+import { RegistrationAvailabilityPanel } from "~/features/availability/components/RegistrationAvailabilityPanel";
+import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import {
 	type CounterPickMapPool,
 	CounterPickMapPoolPicker,
@@ -32,6 +35,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHydrated } from "~/hooks/useHydrated";
+import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LOG_IN_URL,
 	SENDOU_INK_BASE_URL,
@@ -50,9 +54,16 @@ import {
 	deleteTeamMemberSchema,
 	updateMapPoolSchema,
 } from "../tournament-schemas";
+import type { Route } from "./+types/to.$id.register";
 import styles from "./to.$id.register.module.css";
 
 export { action, loader };
+
+export const middleware: Route.MiddlewareFunction[] = [timezoneMiddleware];
+
+export const handle: SendouRouteHandle = {
+	i18n: ["schedule"],
+};
 
 export default function TournamentRegisterPage() {
 	const user = useUser();
@@ -213,6 +224,7 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 					)}
 				/>
 			) : null}
+			{ownTeam ? <TournamentRosterAvailability ownTeam={ownTeam} /> : null}
 			{tournament.isLeague &&
 			tournament.ctx.organization?.id === LUTI_ORGANIZATION_ID ? (
 				<GoogleFormsLink />
@@ -247,6 +259,7 @@ function ReadOnlyRegistrationForms() {
 				members={team.members}
 			/>
 			<TeamInfo ownTeam={team} canUnregister={false} readOnly />
+			<TournamentRosterAvailability ownTeam={team} />
 			<FillRoster ownTeam={team} ownTeamCheckedIn={checkedIn} readOnly />
 			{tournament.teamsPrePickMaps ? (
 				<TeamCounterPickMapPoolPicker readOnly mapPool={team.mapPool ?? []} />
@@ -577,6 +590,7 @@ function RegisterTeamFields({ readOnly = false }: { readOnly?: boolean }) {
 					<FormField name="teamId" options={teamOptions} />
 				</div>
 			) : null}
+			{!data?.ownTeam ? <SelectedTeamAvailability /> : null}
 			{!isLinked ? (
 				<>
 					<div className={styles.sectionInputContainer}>
@@ -960,4 +974,99 @@ function TeamCounterPickMapPoolPicker({
 			</section>
 		</div>
 	);
+}
+
+function TournamentRosterAvailability({
+	ownTeam,
+}: {
+	ownTeam: TournamentTeamFull;
+}) {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const tournament = useTournament();
+
+	const availability = data?.availability;
+	if (!availability) return null;
+
+	const roster = ownTeam.members.map((member) => ({
+		id: member.userId,
+		username: member.username,
+		discordId: member.discordId,
+		discordAvatar: member.discordAvatar,
+		customAvatarUrl: member.customAvatarUrl,
+	}));
+
+	return (
+		<RegistrationAvailabilityPanel
+			availability={availability}
+			roster={roster}
+			subCandidates={subCandidates({
+				data,
+				tournament,
+				rosterUserIds: roster.map((user) => user.id),
+			})}
+		/>
+	);
+}
+
+function SelectedTeamAvailability() {
+	const data = useLoaderData<TournamentRegisterPageLoader>();
+	const tournament = useTournament();
+	const { values } = useFormFieldContext();
+
+	const availability = data?.availability;
+	const teamId = values.teamId ? Number(values.teamId) : null;
+	if (!availability || !teamId) return null;
+
+	const roster = (data?.friendPlayers?.friends ?? [])
+		.filter((friend) => friend.teamId === teamId)
+		.map(panelUser);
+	if (roster.length === 0) return null;
+
+	return (
+		<RegistrationAvailabilityPanel
+			availability={availability}
+			roster={roster}
+			subCandidates={subCandidates({
+				data,
+				tournament,
+				rosterUserIds: roster.map((user) => user.id),
+			})}
+		/>
+	);
+}
+
+function panelUser(user: {
+	id: number;
+	username: string;
+	discordId: string;
+	discordAvatar: string | null;
+	customAvatarUrl?: string | null;
+}) {
+	return {
+		id: user.id,
+		username: user.username,
+		discordId: user.discordId,
+		discordAvatar: user.discordAvatar,
+		customAvatarUrl: user.customAvatarUrl,
+	};
+}
+
+function subCandidates({
+	data,
+	tournament,
+	rosterUserIds,
+}: {
+	data: ReturnType<typeof useLoaderData<TournamentRegisterPageLoader>>;
+	tournament: ReturnType<typeof useTournament>;
+	rosterUserIds: number[];
+}) {
+	const inTournament = (userId: number) =>
+		tournament.ctx.teams.some((team) => team.memberUserIds.includes(userId));
+
+	return R.uniqueBy(data?.friendPlayers?.friends ?? [], (friend) => friend.id)
+		.filter(
+			(friend) =>
+				!rosterUserIds.includes(friend.id) && !inTournament(friend.id),
+		)
+		.map(panelUser);
 }

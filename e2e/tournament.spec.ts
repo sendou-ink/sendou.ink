@@ -1,11 +1,14 @@
 import { addHours, addMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import * as Availability from "~/features/availability/core/Availability";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	expect,
 	impersonate,
 	isNotVisible,
+	MACHINE_TIMEZONE,
 	navigate,
+	setTimezoneCookie,
 	test,
 } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
@@ -72,6 +75,86 @@ test.describe("Tournament", () => {
 		await expect(
 			notifications.notification(`Added to a team (${TEAM_NAME})`),
 		).toBeVisible();
+	});
+
+	test("shows the roster's availability for the event window", async ({
+		page,
+		factories,
+	}) => {
+		const [partialMember, unknownMember, stranger, friend] =
+			await factories.UserFactory.createMany(4);
+		await factories.TeamFactory.create({
+			memberUserIds: [ADMIN_ID, partialMember.id, unknownMember.id],
+		});
+		await factories.FriendshipFactory.create({
+			userOneId: ADMIN_ID,
+			userTwoId: friend.id,
+		});
+
+		const startsAt = addHours(new Date(), 2);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(startsAt)],
+		});
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [
+				ADMIN_ID,
+				partialMember.id,
+				unknownMember.id,
+				stranger.id,
+			],
+		});
+
+		const { startsAt: weekStartsAt } = Availability.weekRange(
+			startsAt,
+			MACHINE_TIMEZONE,
+		);
+		const coveringSlot = {
+			startsAt: dateToDatabaseTimestamp(startsAt),
+			endsAt: dateToDatabaseTimestamp(addHours(startsAt, 5)),
+		};
+		for (const userId of [ADMIN_ID, friend.id]) {
+			await factories.AvailabilityWeekFactory.create({
+				userId,
+				weekStartsAt,
+				timezone: MACHINE_TIMEZONE,
+				slots: [coveringSlot],
+			});
+		}
+		await factories.AvailabilityWeekFactory.create({
+			userId: partialMember.id,
+			weekStartsAt,
+			timezone: MACHINE_TIMEZONE,
+			slots: [
+				{
+					startsAt: dateToDatabaseTimestamp(addHours(startsAt, 1)),
+					endsAt: coveringSlot.endsAt,
+				},
+			],
+		});
+
+		await impersonate(page);
+		await setTimezoneCookie(page);
+		const register = new TournamentRegisterPage(page);
+		await register.goto(tournament.id);
+
+		const row = (userId: number) =>
+			page.getByTestId(`availability-row-${userId}`);
+		await expect(row(ADMIN_ID)).toHaveAttribute("data-status", "available");
+		await expect(row(partialMember.id)).toHaveAttribute(
+			"data-status",
+			"partial",
+		);
+		await expect(row(unknownMember.id)).toHaveAttribute(
+			"data-status",
+			"unknown",
+		);
+		// on the tournament roster without being a teammate or a friend, so
+		// their schedule is not the viewer's to see
+		await expect(row(stranger.id)).toHaveAttribute("data-status", "hidden");
+		// the friend with an overlapping submitted range lands in the sub row
+		await expect(row(friend.id)).toHaveAttribute("data-status", "available");
 	});
 
 	test("checks in and appears on the bracket", async ({ page, factories }) => {

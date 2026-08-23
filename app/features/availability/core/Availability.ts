@@ -8,10 +8,12 @@ import {
 import invariant from "~/utils/invariant";
 import { AVAILABILITY } from "../availability-constants";
 import type {
+	BusyBlock,
 	DayTimeRange,
 	MemberAvailability,
 	PlayableWindow,
 	TimeRange,
+	WindowAvailability,
 } from "../availability-types";
 
 const MINUTE_IN_SECONDS = 60;
@@ -191,6 +193,46 @@ export function clip(
 
 		return endsAt > startsAt ? [{ startsAt, endsAt }] : [];
 	});
+}
+
+/**
+ * How one person's schedule relates to an event's window. A busy block
+ * overlapping the window wins over anything reported — the person is committed
+ * elsewhere, whether or not their schedule is known. Otherwise the reported
+ * slots either cover the window (`available`, with the overlapping ranges as
+ * reported), cover part of it (`partial`, with the overlap clipped to the
+ * window so it reads as "which part"), miss it entirely (`unavailable`) or do
+ * not exist (`unknown`).
+ */
+export function availabilityInWindow({
+	reported,
+	slots,
+	busy,
+	window,
+}: {
+	reported: boolean;
+	slots: Array<TimeRange>;
+	busy: Array<BusyBlock>;
+	window: TimeRange;
+}): WindowAvailability {
+	const block = busy.find((candidate) => overlaps(candidate, window));
+	if (block) return { status: "busy", block };
+
+	if (!reported) return { status: "unknown" };
+
+	const overlapping = normalize(slots).filter((range) =>
+		overlaps(range, window),
+	);
+	if (overlapping.length === 0) return { status: "unavailable" };
+
+	const covers = overlapping.some(
+		(range) =>
+			range.startsAt <= window.startsAt && range.endsAt >= window.endsAt,
+	);
+
+	return covers
+		? { status: "available", ranges: overlapping }
+		: { status: "partial", ranges: clip(overlapping, window) };
 }
 
 /**

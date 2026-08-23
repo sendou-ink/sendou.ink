@@ -995,16 +995,20 @@ async function findTeamRecentMaps(
  * teams and hidden events (test and draft tournaments) are excluded. Used to
  * resolve availability commitments, so alongside the event's name and start
  * the rows carry what estimating the tournament's duration needs: the
- * settings and how many teams have registered so far.
+ * settings and how many teams have registered so far. `excludeTournamentId`
+ * leaves one tournament's own registrations out, for surfaces asking "busy
+ * elsewhere" while looking at that tournament.
  */
 export function findAllRegistrationsByUserIds({
 	userIds,
 	startsAt,
 	endsAt,
+	excludeTournamentId,
 }: {
 	userIds: Array<number>;
 	startsAt: number;
 	endsAt: number;
+	excludeTournamentId?: number;
 }) {
 	if (userIds.length === 0) return Promise.resolve([]);
 
@@ -1040,6 +1044,9 @@ export function findAllRegistrationsByUserIds({
 		.where("CalendarEvent.hidden", "=", 0)
 		.where("CalendarEventDate.startsAt", ">=", startsAt)
 		.where("CalendarEventDate.startsAt", "<=", endsAt)
+		.$if(typeof excludeTournamentId === "number", (qb) =>
+			qb.where("Tournament.id", "!=", excludeTournamentId!),
+		)
 		.execute();
 }
 

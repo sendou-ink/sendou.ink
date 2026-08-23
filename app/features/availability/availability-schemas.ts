@@ -76,7 +76,7 @@ export const addTeamEventSchema = v.object({
 	}),
 });
 
-export const deleteTeamEventSchema = v.object({
+const deleteTeamEventSchema = v.object({
 	_action: _action("DELETE_EVENT"),
 	eventId: id,
 });

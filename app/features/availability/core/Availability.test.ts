@@ -251,6 +251,150 @@ describe("Availability.clip", () => {
 	});
 });
 
+describe("Availability.availabilityInWindow", () => {
+	const window = range("2026-08-30", "18:00", "22:00");
+	const busyBlock = (r: { startsAt: number; endsAt: number }) => ({
+		...r,
+		type: "tournament" as const,
+		name: "In The Zone 42",
+	});
+
+	test("a slot covering the whole window is available, ranges as reported", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "17:00", "23:00")],
+				busy: [],
+				window,
+			}),
+		).toEqual({
+			status: "available",
+			ranges: [range("2026-08-30", "17:00", "23:00")],
+		});
+	});
+
+	test("a slot covering part of the window is partial, ranges clipped to it", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "19:00", "23:00")],
+				busy: [],
+				window,
+			}),
+		).toEqual({
+			status: "partial",
+			ranges: [range("2026-08-30", "19:00", "22:00")],
+		});
+	});
+
+	test("split slots leaving a gap inside the window are partial even when they span it", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [
+					range("2026-08-30", "17:00", "19:00"),
+					range("2026-08-30", "20:00", "23:00"),
+				],
+				busy: [],
+				window,
+			}),
+		).toEqual({
+			status: "partial",
+			ranges: [
+				range("2026-08-30", "18:00", "19:00"),
+				range("2026-08-30", "20:00", "22:00"),
+			],
+		});
+	});
+
+	test("a reported week without overlap is unavailable", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "12:00", "17:00")],
+				busy: [],
+				window,
+			}),
+		).toEqual({ status: "unavailable" });
+	});
+
+	test("a slot only touching the window start is unavailable", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "12:00", "18:00")],
+				busy: [],
+				window,
+			}),
+		).toEqual({ status: "unavailable" });
+	});
+
+	test("no reported week is unknown", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: false,
+				slots: [],
+				busy: [],
+				window,
+			}),
+		).toEqual({ status: "unknown" });
+	});
+
+	test("a busy block overlapping the window wins over reported availability", () => {
+		const block = busyBlock(range("2026-08-30", "19:00", "21:00"));
+
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "17:00", "23:00")],
+				busy: [block],
+				window,
+			}),
+		).toEqual({ status: "busy", block });
+	});
+
+	test("a busy block wins even when nothing was reported", () => {
+		const block = busyBlock(range("2026-08-30", "18:00", "22:00"));
+
+		expect(
+			Availability.availabilityInWindow({
+				reported: false,
+				slots: [],
+				busy: [block],
+				window,
+			}),
+		).toEqual({ status: "busy", block });
+	});
+
+	test("a busy block outside the window changes nothing", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "17:00", "23:00")],
+				busy: [busyBlock(range("2026-08-29", "18:00", "22:00"))],
+				window,
+			}),
+		).toEqual({
+			status: "available",
+			ranges: [range("2026-08-30", "17:00", "23:00")],
+		});
+	});
+
+	test("a cross-midnight slot covers a window reaching past midnight", () => {
+		expect(
+			Availability.availabilityInWindow({
+				reported: true,
+				slots: [range("2026-08-30", "20:00", "02:30", "2026-08-31")],
+				busy: [],
+				window: range("2026-08-30", "22:00", "02:00", "2026-08-31"),
+			}),
+		).toEqual({
+			status: "available",
+			ranges: [range("2026-08-30", "20:00", "02:30", "2026-08-31")],
+		});
+	});
+});
+
 describe("Availability.isoWeekNumber", () => {
 	test.each([
 		{ why: "a midweek day", date: "2026-08-26", timezone: HELSINKI, week: 35 },

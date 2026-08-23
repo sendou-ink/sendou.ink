@@ -16,16 +16,19 @@ import * as TournamentDuration from "./TournamentDuration";
  * {@link TournamentDuration.estimateSeconds}), accepted scrims (start + an
  * assumed length) and team events (their actual span). League registrations
  * are not blocks — a league runs over weeks and its matches are scheduled
- * separately.
+ * separately. `excludeTournamentId` leaves that tournament's registrations
+ * out, for surfaces asking "busy elsewhere" while looking at that tournament.
  */
 export async function busyBlocksByUserIds({
 	userIds,
 	startsAt,
 	endsAt,
+	excludeTournamentId,
 }: {
 	userIds: Array<number>;
 	startsAt: number;
 	endsAt: number;
+	excludeTournamentId?: number;
 }): Promise<Map<number, Array<BusyBlock>>> {
 	if (userIds.length === 0) return new Map();
 
@@ -34,6 +37,7 @@ export async function busyBlocksByUserIds({
 			userIds,
 			startsAt: startsAt - TournamentDuration.MAX_ESTIMATE_SECONDS,
 			endsAt,
+			excludeTournamentId,
 		}),
 		ScrimPostRepository.findAllAcceptedByUserIds({
 			userIds,

@@ -59,3 +59,18 @@ export interface BusyBlock extends TimeRange {
 	type: "tournament" | "scrim" | "teamEvent";
 	name: string | null;
 }
+
+/**
+ * How one person's schedule relates to an event's window:
+ * - `available` — reported availability covers the whole window
+ * - `partial` — covers part of it; `ranges` show which part
+ * - `unavailable` — a week was reported, none of it overlaps the window
+ * - `busy` — a commitment elsewhere overlaps the window, overriding whatever
+ *   was reported
+ * - `unknown` — no reported week covers the window
+ */
+export type WindowAvailability =
+	| { status: "available" | "partial"; ranges: Array<TimeRange> }
+	| { status: "busy"; block: BusyBlock }
+	| { status: "unavailable" }
+	| { status: "unknown" };
