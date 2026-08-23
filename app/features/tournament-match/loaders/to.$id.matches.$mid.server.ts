@@ -249,8 +249,12 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		// observers (TO/streamer/staff) get room access through the moderation view instead
-		chatRoomIds: isParticipant && match.chatRoomId ? [match.chatRoomId] : [],
+		// observers (TO/streamer/site staff) chat alongside the participants
+		chatRoomIds:
+			match.chatRoomId &&
+			(isParticipant || isSiteStaff || tournament.isOrganizerOrStreamer(user))
+				? [match.chatRoomId]
+				: [],
 		canJoin,
 		// the views can't derive these themselves, the layout ships no bracket match data
 		bracketContext: {

@@ -161,16 +161,23 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
 		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
 
+	const routeRooms = routeRoomIds
+		.map((roomId) => chatContext.roomForId(roomId))
+		.filter((r): r is ChatRoomListItem => Boolean(r));
+
 	// Rooms the active route groups together collapse into a single combined
 	// list entry that opens the stacked split view.
-	const combinedRooms =
-		routeRoomIds.length > 1
-			? routeRoomIds
-					.map((roomId) => chatContext.rooms.find((r) => r.id === roomId))
-					.filter((r): r is ChatRoomListItem => Boolean(r))
-			: [];
+	const combinedRooms = routeRooms.length > 1 ? routeRooms : [];
 	const isCombined = combinedRooms.length > 1;
 	const combinedRoomIds = new Set(combinedRooms.map((r) => r.id));
+
+	// an observer's route room lives outside the user's own list; surface it on top
+	const observedRouteRoom =
+		!isCombined &&
+		routeRooms.length === 1 &&
+		chatContext.rooms.every((room) => room.id !== routeRooms[0].id)
+			? routeRooms[0]
+			: null;
 
 	const standaloneRooms = chatContext.rooms.filter(
 		(room) => !combinedRoomIds.has(room.id),
@@ -190,7 +197,8 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		chatContext.setActiveRoomIds(roomIds);
 	};
 
-	const hasAnyRoom = isCombined || standaloneRooms.length > 0;
+	const hasAnyRoom =
+		isCombined || observedRouteRoom !== null || standaloneRooms.length > 0;
 
 	return (
 		<div className={styles.sidebar}>
@@ -206,6 +214,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 							<CombinedRoomListItem
 								rooms={combinedRooms}
 								onPress={() => openRooms(combinedRooms.map((room) => room.id))}
+							/>
+						) : null}
+						{observedRouteRoom ? (
+							<RoomListItem
+								room={observedRouteRoom}
+								onPress={() => openRooms([observedRouteRoom.id])}
 							/>
 						) : null}
 						{activeRooms.map((room) => (
@@ -319,7 +333,7 @@ function ChatView({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 
 	const activeRooms = chatContext.activeRoomIds
-		.map((roomId) => chatContext.rooms.find((r) => r.id === roomId))
+		.map((roomId) => chatContext.roomForId(roomId))
 		.filter((r): r is ChatRoomListItem => Boolean(r));
 
 	if (activeRooms.length > 1) {

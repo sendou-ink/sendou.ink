@@ -225,12 +225,23 @@ export function canView(room: ResolvedRoom, userId: number): boolean {
 	return room.participantUserIds.includes(userId) || canObserve(room, userId);
 }
 
-/** Whether the user may post to the room: participants only, while the room is unexpired and unclosed. */
+/** Room types whose observers may also post: the shared spaces where a TO or staff member talks to the players. Group and team chats stay read-only — a private team space is only ever read for moderation. */
+const OBSERVER_POSTABLE_ROOM_TYPES: ChatRoomType[] = [
+	"SQ_MATCH",
+	"TOURNAMENT_MATCH",
+	"SCRIM",
+];
+
+/** Whether the user may post to the room while it is unexpired and unclosed: participants always, observers in the shared room types. */
 export function canPost(room: ResolvedRoom, userId: number): boolean {
 	if (room.closedAt !== null) return false;
 	if (room.expiresAt <= databaseTimestampNow()) return false;
 
-	return room.participantUserIds.includes(userId);
+	if (room.participantUserIds.includes(userId)) return true;
+
+	return (
+		OBSERVER_POSTABLE_ROOM_TYPES.includes(room.type) && canObserve(room, userId)
+	);
 }
 
 function opponentTeamId(column: "opponentOne" | "opponentTwo") {

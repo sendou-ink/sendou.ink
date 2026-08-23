@@ -13,6 +13,7 @@ import {
 	subscribeTo,
 } from "../tests/fixtures";
 import { loader as roomsLoader } from "./api.chat.rooms";
+import { loader as roomLoader } from "./api.chat.rooms.$id";
 import { loader as messagesLoader } from "./api.chat.rooms.$id.messages";
 import { action as sendAction } from "./chat.$roomId.messages";
 import { action as readAction } from "./chat.$roomId.read";
@@ -101,20 +102,28 @@ describe("chat messages action", () => {
 		expect(result).toHaveProperty("fieldErrors");
 	});
 
-	test.each([
-		{ why: "a non-participant", userId: () => outsiderId() },
-		{ why: "a site staff observer", userId: () => adminId() },
-	])("403s $why", async ({ userId }) => {
+	test("403s a non-participant", async () => {
 		const { match } = await setupSqMatch(users);
 
 		expect(
 			await statusOf(
-				sendMessage(userId(), match.chatRoomId!, {
+				sendMessage(outsiderId(), match.chatRoomId!, {
 					publicId: "eeeeeeeeee",
 					contents: "hello",
 				}),
 			),
 		).toBe(403);
+	});
+
+	test("site staff observer can post into the match chat", async () => {
+		const { match } = await setupSqMatch(users);
+
+		const message = await sendMessageOk(adminId(), match.chatRoomId!, {
+			publicId: "ssssssssss",
+			contents: "staff here",
+		});
+
+		expect(message.authorUserId).toBe(adminId());
 	});
 
 	test("403s a participant once the room has expired", async () => {
@@ -284,6 +293,49 @@ describe("chat room messages loader", () => {
 	});
 });
 
+describe("chat room loader", () => {
+	test("returns the room's info to a staff observer outside the room list", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+		const message = await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
+			publicId: "rrrrrrrrrr",
+			contents: "hello",
+		});
+
+		const data = await loadRoom(adminId(), match.chatRoomId!);
+
+		expect(data.room).toMatchObject({
+			id: match.chatRoomId,
+			type: "SQ_MATCH",
+			latestMessageId: message.id,
+		});
+		expect(data.room.participantUserIds).toHaveLength(8);
+	});
+
+	test("403s a non-participant", async () => {
+		const { match } = await setupSqMatch(users);
+
+		expect(await statusOf(loadRoom(outsiderId(), match.chatRoomId!))).toBe(403);
+	});
+
+	test("participant loses the room once it is closed, site staff keeps it", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+		await ChatRepository.updateRoomExpiresAt({
+			roomId: match.chatRoomId!,
+			expiresAt: subHours(new Date(), 1),
+		});
+		await ChatRepository.closeExpiredRooms(new Date());
+
+		expect(await statusOf(loadRoom(alphaUserIds[0], match.chatRoomId!))).toBe(
+			403,
+		);
+		expect(await statusOf(loadRoom(adminId(), match.chatRoomId!))).toBe(200);
+	});
+
+	test("404s an unknown room", async () => {
+		expect(await statusOf(loadRoom(adminId(), 424242))).toBe(404);
+	});
+});
+
 function sendMessage(
 	userId: number,
 	roomId: number,
@@ -339,6 +391,20 @@ function markRead(userId: number, roomId: number, lastSeenMessageId: number) {
 
 function loadRooms(userId: number) {
 	return withUserId(userId, () => roomsLoader());
+}
+
+function loadRoom(userId: number, roomId: number) {
+	const request = new Request(`http://app.com/api/chat/rooms/${roomId}`);
+
+	return withUserId(userId, () =>
+		roomLoader({
+			request,
+			params: { id: String(roomId) },
+			context: {} as any,
+			pattern: "",
+			url: new URL(request.url),
+		} as LoaderFunctionArgs),
+	);
 }
 
 function loadMessages(userId: number, roomId: number) {

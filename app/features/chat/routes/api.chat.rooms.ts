@@ -19,22 +19,32 @@ export const loader = async (): Promise<{ rooms: ChatRoomListItem[] }> => {
 	const statsByRoomId = new Map(messageStats.map((row) => [row.roomId, row]));
 
 	return {
-		rooms: rooms.map((room) => {
-			const stats = statsByRoomId.get(room.roomId);
-
-			return {
-				id: room.roomId,
-				type: room.type,
-				titleParams: room.titleParams,
-				url: room.url,
-				imageUrl: room.imageUrl,
-				participantUserIds: room.participantUserIds,
-				expiresAt: room.expiresAt,
-				inactive: room.inactive,
-				unreadCount: stats?.unreadCount ?? 0,
-				latestMessageId: stats?.latestMessageId ?? null,
-				latestMessageAt: stats?.latestMessageCreatedAt ?? null,
-			};
-		}),
+		rooms: rooms.map((room) =>
+			roomListItem(room, statsByRoomId.get(room.roomId)),
+		),
 	};
 };
+
+/** Shapes a resolved room into the list item the chat client consumes. */
+export function roomListItem(
+	room: ChatRoomResolver.ResolvedRoom,
+	stats:
+		| Awaited<
+				ReturnType<typeof ChatRepository.findMessageStatsByRoomIds>
+		  >[number]
+		| undefined,
+): ChatRoomListItem {
+	return {
+		id: room.roomId,
+		type: room.type,
+		titleParams: room.titleParams,
+		url: room.url,
+		imageUrl: room.imageUrl,
+		participantUserIds: room.participantUserIds,
+		expiresAt: room.expiresAt,
+		inactive: room.inactive,
+		unreadCount: stats?.unreadCount ?? 0,
+		latestMessageId: stats?.latestMessageId ?? null,
+		latestMessageAt: stats?.latestMessageCreatedAt ?? null,
+	};
+}

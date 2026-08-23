@@ -57,6 +57,7 @@ function message(
 function createHarness({
 	rooms = [room()],
 	messages = [] as ChatMessageWithAuthor[],
+	extraRoom = null as ChatRoomListItem | null,
 	// in-flight forever by default; tests exercising the response path override it
 	postMessage = vi.fn(
 		() => new Promise<{ message: ChatMessageWithAuthor } | null>(() => {}),
@@ -65,11 +66,15 @@ function createHarness({
 	let eventListener: ((event: ServerEvent) => void) | null = null;
 
 	const fetchRooms = vi.fn(async () => ({ rooms }));
+	const fetchRoom = vi.fn(async (roomId: number) =>
+		extraRoom && extraRoom.id === roomId ? { room: extraRoom } : null,
+	);
 	const fetchMessages = vi.fn(async (_roomId: number) => ({ messages }));
 	const postRead = vi.fn(async () => {});
 
 	const client = createChatClient({
 		fetchRooms,
+		fetchRoom,
 		fetchMessages,
 		postMessage,
 		postRead,
@@ -85,6 +90,7 @@ function createHarness({
 	return {
 		client,
 		fetchRooms,
+		fetchRoom,
 		fetchMessages,
 		postMessage,
 		postRead,
@@ -318,6 +324,124 @@ describe("createChatClient", () => {
 
 		expect(harness.fetchRooms).toHaveBeenCalledTimes(2);
 		expect(client.getSnapshot().roomsLoaded).toBe(true);
+	});
+
+	test("further messages for a room that stayed unknown after the refetch do not refetch again", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+
+		// an observed room (moderation view) is never in the user's room list
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 999,
+			message: message({ id: 5, roomId: 999 }),
+		});
+		await flush();
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 999,
+			message: message({ id: 6, roomId: 999 }),
+		});
+		await flush();
+
+		expect(harness.fetchRooms).toHaveBeenCalledTimes(2);
+		expect(client.getSnapshot().rooms).toHaveLength(1);
+	});
+
+	test("a room that arrived in the list refetches again if it later goes unknown", async () => {
+		const harness = createHarness();
+		await startedClient(harness);
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 2,
+			message: message({ id: 5, roomId: 2 }),
+		});
+		await flush();
+		expect(harness.fetchRooms).toHaveBeenCalledTimes(2);
+
+		// the refetch now knows the room...
+		harness.fetchRooms.mockResolvedValue({ rooms: [room({ id: 2 })] });
+		harness.emit({ kind: "roomsChanged" });
+		await flush();
+
+		// ...and once it drops out again, a message for it refetches once more
+		harness.fetchRooms.mockResolvedValue({ rooms: [room({ id: 1 })] });
+		harness.emit({ kind: "roomsChanged" });
+		await flush();
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 2,
+			message: message({ id: 6, roomId: 2 }),
+		});
+		await flush();
+
+		expect(harness.fetchRooms).toHaveBeenCalledTimes(5);
+	});
+
+	test("ensureRoomKnown fetches an observed room into the extra rooms", async () => {
+		const observed = room({ id: 50, url: "/to/2/matches/2" });
+		const harness = createHarness({ extraRoom: observed });
+		const client = await startedClient(harness);
+
+		client.ensureRoomKnown(50);
+		await flush();
+		client.ensureRoomKnown(50);
+		await flush();
+
+		expect(harness.fetchRoom).toHaveBeenCalledTimes(1);
+		expect(client.getSnapshot().extraRooms.get(50)).toMatchObject({ id: 50 });
+		expect(client.getSnapshot().rooms).toHaveLength(1);
+	});
+
+	test("ensureRoomKnown is a no-op for a room already in the user's list", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+
+		client.ensureRoomKnown(1);
+		await flush();
+
+		expect(harness.fetchRoom).not.toHaveBeenCalled();
+	});
+
+	test("a message to an observed extra room appends without counting unread or refetching the list", async () => {
+		const observed = room({ id: 50 });
+		const harness = createHarness({ extraRoom: observed });
+		const client = await startedClient(harness);
+		client.ensureRoomKnown(50);
+		await flush();
+		client.ensureMessagesLoaded(50);
+		await flush();
+
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 50,
+			message: message({ id: 5, roomId: 50 }),
+		});
+		await flush();
+
+		expect(client.getSnapshot().messagesByRoomId.get(50)).toHaveLength(1);
+		expect(client.getSnapshot().totalUnreadCount).toBe(0);
+		expect(client.getSnapshot().extraRooms.get(50)?.latestMessageId).toBe(5);
+		expect(harness.fetchRooms).toHaveBeenCalledTimes(1);
+	});
+
+	test("a rooms refetch keeps the held history of an observed extra room", async () => {
+		const observed = room({ id: 50 });
+		const harness = createHarness({
+			extraRoom: observed,
+			messages: [message({ id: 1, roomId: 50 })],
+		});
+		const client = await startedClient(harness);
+		client.ensureRoomKnown(50);
+		await flush();
+		client.ensureMessagesLoaded(50);
+		await flush();
+
+		harness.emit({ kind: "roomsChanged" });
+		await flush();
+
+		expect(client.getSnapshot().messagesByRoomId.has(50)).toBe(true);
 	});
 
 	test("a roomsChanged event refetches the room list", async () => {

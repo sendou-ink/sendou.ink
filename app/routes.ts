@@ -335,6 +335,7 @@ export default [
 	route("/admin/streams", "features/admin/routes/admin.streams.tsx"),
 	route("/api/chat-users", "features/chat/routes/api.chat-users.ts"),
 	route("/api/chat/rooms", "features/chat/routes/api.chat.rooms.ts"),
+	route("/api/chat/rooms/:id", "features/chat/routes/api.chat.rooms.$id.ts"),
 	route(
 		"/api/chat/rooms/:id/messages",
 		"features/chat/routes/api.chat.rooms.$id.messages.ts",

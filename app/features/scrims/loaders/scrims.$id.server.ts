@@ -52,8 +52,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			include: { friendCode: true },
 		})),
 		post,
+		// staff observers chat alongside the participants
 		chatRoomIds:
-			participantIds.includes(user.id) && post.chatRoomId !== null
+			post.chatRoomId !== null &&
+			(participantIds.includes(user.id) || user.roles.includes("STAFF"))
 				? [post.chatRoomId]
 				: [],
 		anyUserPrefersNoScreen,

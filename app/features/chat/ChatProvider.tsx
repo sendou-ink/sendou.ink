@@ -22,6 +22,7 @@ const EMPTY_MESSAGES: ClientChatMessage[] = [];
 const SERVER_SNAPSHOT: ChatSnapshot = {
 	roomsLoaded: false,
 	rooms: [],
+	extraRooms: new Map(),
 	totalUnreadCount: 0,
 	messagesByRoomId: new Map(),
 };
@@ -117,12 +118,23 @@ function ChatProviderInner({
 		[activeRoomIds, rooms.length, rooms[0]?.id],
 	);
 
+	// route sync opens its own rooms directly: going through `setChatOpen` would
+	// read the previous render's empty `activeRoomIds` and auto-pick the user's
+	// only listed room over the route's rooms
+	const openChatForRooms = React.useCallback((roomIds: number[]) => {
+		setActiveRoomIds(roomIds);
+		_setChatOpen(true);
+		for (const roomId of roomIds) {
+			chatClient.markRead(roomId);
+		}
+	}, []);
+
 	useChatRouteSync({
 		userId: user.id,
 		roomsLoaded: snapshot.roomsLoaded,
 		rooms,
 		setActiveRoomIds,
-		setChatOpen,
+		openChatForRooms,
 	});
 
 	const sendMessage = React.useCallback(
@@ -149,10 +161,18 @@ function ChatProviderInner({
 		[snapshot.messagesByRoomId],
 	);
 
+	const roomForId = React.useCallback(
+		(roomId: number) =>
+			snapshot.rooms.find((room) => room.id === roomId) ??
+			snapshot.extraRooms.get(roomId),
+		[snapshot.rooms, snapshot.extraRooms],
+	);
+
 	const contextValue = React.useMemo<ChatContextValue>(
 		() => ({
 			roomsLoaded: snapshot.roomsLoaded,
 			rooms,
+			roomForId,
 			messagesForRoom,
 			ensureMessagesLoaded: chatClient.ensureMessagesLoaded,
 			sendMessage,
@@ -170,6 +190,7 @@ function ChatProviderInner({
 			snapshot.roomsLoaded,
 			snapshot.totalUnreadCount,
 			rooms,
+			roomForId,
 			messagesForRoom,
 			sendMessage,
 			chatOpen,
@@ -190,13 +211,13 @@ function useChatRouteSync({
 	roomsLoaded,
 	rooms,
 	setActiveRoomIds,
-	setChatOpen,
+	openChatForRooms,
 }: {
 	userId: number;
 	roomsLoaded: boolean;
 	rooms: ChatRoomListItem[];
 	setActiveRoomIds: (roomIds: number[]) => void;
-	setChatOpen: (open: boolean) => void;
+	openChatForRooms: (roomIds: number[]) => void;
 }) {
 	const routeRoomIdsKey = useCurrentRouteChatRoomIds().join(",");
 	const { pathname } = useLocation();
@@ -232,9 +253,14 @@ function useChatRouteSync({
 
 			if (!routeRoomIdsChanged) return;
 
-			// the loader can know about a just-created room before the room list does
-			if (routeRoomIds.some((id) => rooms.every((room) => room.id !== id))) {
-				void chatClient.refreshRooms();
+			// the loader can know about a just-created room before the room list
+			// does; an observer's room is never in the list at all, so its info is
+			// fetched separately into the extra rooms
+			for (const roomId of routeRoomIds) {
+				if (rooms.every((room) => room.id !== roomId)) {
+					void chatClient.refreshRooms();
+					chatClient.ensureRoomKnown(roomId);
+				}
 			}
 
 			setActiveRoomIds(routeRoomIds);
@@ -242,10 +268,7 @@ function useChatRouteSync({
 				chatClient.ensureMessagesLoaded(roomId);
 			}
 			if (layoutSize === "desktop") {
-				setChatOpen(true);
-				for (const roomId of routeRoomIds) {
-					chatClient.markRead(roomId);
-				}
+				openChatForRooms(routeRoomIds);
 			}
 			return;
 		}
@@ -265,8 +288,7 @@ function useChatRouteSync({
 		setActiveRoomIds([matchedRoom.id]);
 		chatClient.ensureMessagesLoaded(matchedRoom.id);
 		if (layoutSize === "desktop") {
-			setChatOpen(true);
-			chatClient.markRead(matchedRoom.id);
+			openChatForRooms([matchedRoom.id]);
 		}
 	}, [
 		roomsLoaded,
@@ -275,7 +297,7 @@ function useChatRouteSync({
 		rooms,
 		userId,
 		setActiveRoomIds,
-		setChatOpen,
+		openChatForRooms,
 		layoutSize,
 	]);
 }

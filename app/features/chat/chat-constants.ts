@@ -2,6 +2,10 @@ export const MESSAGE_MAX_LENGTH = 200;
 
 export const CHAT_ROOMS_DATA_ROUTE = "/api/chat/rooms";
 
+export function chatRoomDataRoute(roomId: number) {
+	return `/api/chat/rooms/${roomId}`;
+}
+
 export function chatRoomMessagesDataRoute(roomId: number) {
 	return `/api/chat/rooms/${roomId}/messages`;
 }

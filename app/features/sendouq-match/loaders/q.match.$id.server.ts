@@ -54,18 +54,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		ingestedScoreboards,
 		isOffSeason: Seasons.current() === null,
 		chatRoomIds: (() => {
-			// observers (staff) get room access through the moderation view instead
-			if (!user || !isParticipant) return [];
+			if (!user) return [];
 
-			const ownGroup = matchUnmapped.groupAlpha.members.some(
-				(member) => member.id === user.id,
-			)
-				? match.groupAlpha
-				: match.groupBravo;
+			if (isParticipant) {
+				const ownGroup = matchUnmapped.groupAlpha.members.some(
+					(member) => member.id === user.id,
+				)
+					? match.groupAlpha
+					: match.groupBravo;
 
-			return [match.chatRoomId, ownGroup.chatRoomId].filter(
-				(id): id is number => typeof id === "number",
-			);
+				return [match.chatRoomId, ownGroup.chatRoomId].filter(
+					(id): id is number => typeof id === "number",
+				);
+			}
+
+			// staff observers chat alongside the participants in the match room
+			if (isStaff && typeof matchUnmapped.chatRoomId === "number") {
+				return [matchUnmapped.chatRoomId];
+			}
+
+			return [];
 		})(),
 	};
 };

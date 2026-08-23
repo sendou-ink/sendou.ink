@@ -305,14 +305,14 @@ describe("ChatRoomResolver.canObserve", () => {
 		expect(ChatRoomResolver.canView(bravoRoom, alphaUserIds[0])).toBe(false);
 	});
 
-	test("tournament organizer observes but does not post", async () => {
+	test("tournament organizer observes and may post into the match chat", async () => {
 		const { chatRoomId, authorId } = await setupStartedTournamentMatch();
 
 		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
 
 		expect(ChatRoomResolver.canObserve(room, authorId)).toBe(true);
 		expect(ChatRoomResolver.canView(room, authorId)).toBe(true);
-		expect(ChatRoomResolver.canPost(room, authorId)).toBe(false);
+		expect(ChatRoomResolver.canPost(room, authorId)).toBe(true);
 	});
 });
 
@@ -373,6 +373,33 @@ describe("ChatRoomResolver.canPost", () => {
 			why: "closed room",
 			room: baseRoom({ closedAt: 1 }),
 			userId: 100,
+			allowed: false,
+		},
+		{
+			why: "observer of an open match room",
+			room: baseRoom({ observerUserIds: [101] }),
+			userId: 101,
+			allowed: true,
+		},
+		{
+			why: "observer of an expired match room",
+			room: baseRoom({
+				observerUserIds: [101],
+				expiresAt: dateToDatabaseTimestamp(addHours(new Date(), -1)),
+			}),
+			userId: 101,
+			allowed: false,
+		},
+		{
+			why: "observer of a group chat (private team space)",
+			room: baseRoom({ type: "SQ_GROUP", observerUserIds: [101] }),
+			userId: 101,
+			allowed: false,
+		},
+		{
+			why: "observer of a team pickup chat (private team space)",
+			room: baseRoom({ type: "TOURNAMENT_TEAM", observerUserIds: [101] }),
+			userId: 101,
 			allowed: false,
 		},
 	])("$why -> $allowed", ({ room, userId, allowed }) => {
