@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "Статистика свойств",
 	"linkButton.popularBuilds": "Популярные сборки",
 	"noPopularBuilds": "На данный момент для этого оружия нет популярных сборок.",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "Пустой слот",
 	"filters.abilities": "",
 	"filters.mode": "",

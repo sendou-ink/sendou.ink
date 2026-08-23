@@ -5,6 +5,7 @@ import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import {
 	SendouChipRadio,
@@ -206,11 +207,11 @@ export default function LeaderboardsPage() {
 			{data.xpLeaderboard ? <XPTable entries={data.xpLeaderboard} /> : null}
 
 			{renderNoEntries ? (
-				<div className="text-center text-lg text-lighter">
+				<EmptyState navItem="leaderboards">
 					{data.userLeaderboard
 						? t("common:leaderboard.noPlayers")
 						: t("common:leaderboard.noTeams")}
-				</div>
+				</EmptyState>
 			) : null}
 
 			{!data.xpLeaderboard && data.season === Seasons.current()?.nth ? (

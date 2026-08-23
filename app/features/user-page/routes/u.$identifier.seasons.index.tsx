@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { EmptyState } from "~/components/EmptyState";
 import { WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
@@ -36,11 +37,7 @@ export default function UserSeasonsSets() {
 	if (!data) return null;
 
 	if (data.results.value.length === 0) {
-		return (
-			<div className="text-lg text-lighter font-semi-bold text-center mt-2">
-				{t("user:seasons.noQ")}
-			</div>
-		);
+		return <EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>;
 	}
 
 	return <Results results={data.results} />;

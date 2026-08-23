@@ -2,6 +2,7 @@ import { User } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { UserLink } from "~/components/UserLink";
@@ -44,9 +45,11 @@ export default function SendouQStreamsPage() {
 
 	if (data.streams.length === 0) {
 		return (
-			<Main className="text-lighter text-lg font-bold text-center">
-				{t("q:streams.noStreams")}
-				{ownStreamNote}
+			<Main>
+				<EmptyState navItem="sendouq">
+					{t("q:streams.noStreams")}
+					{ownStreamNote}
+				</EmptyState>
 			</Main>
 		);
 	}

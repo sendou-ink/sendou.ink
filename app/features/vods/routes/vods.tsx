@@ -1,6 +1,7 @@
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
 import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
@@ -67,7 +68,7 @@ export default function VodsSearchPage() {
 					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			) : (
-				<div className="text-lg text-lighter">{t("vods:noVods")}</div>
+				<EmptyState navItem="vods">{t("vods:noVods")}</EmptyState>
 			)}
 		</Main>
 	);

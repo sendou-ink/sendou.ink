@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -131,9 +132,9 @@ export default function ArtPage() {
 				</SendouTabPanel>
 				<SendouTabPanel id={ART_TABS.SHOWCASE}>
 					{filteredTag && showcaseArts.length === 0 ? (
-						<div className="no-results mt-4">
+						<EmptyState navItem="art">
 							{t("art:noArtForTag", { tag: filteredTag })}
-						</div>
+						</EmptyState>
 					) : (
 						<ArtGrid arts={showcaseArts} />
 					)}

@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "ギア統計",
 	"linkButton.popularBuilds": "人気のあるギア構成",
 	"noPopularBuilds": "現在、このブキに対する人気のギア構成はないようです。",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "空欄",
 	"filters.abilities": "",
 	"filters.mode": "",

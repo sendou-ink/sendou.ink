@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "Estatísticas de habilidade",
 	"linkButton.popularBuilds": "Builds populares",
 	"noPopularBuilds": "Parece que não existem builds populares para essa arma nesse momento.",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "Espaço (Slot) de habilidade vazio",
 	"filters.abilities": "",
 	"filters.mode": "",

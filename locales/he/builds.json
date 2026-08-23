@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "נתונים סטטיסטיים על היכולות",
 	"linkButton.popularBuilds": "ערכות פופולריות",
 	"noPopularBuilds": "נראה שאין ערכות פופולריות לנשק זה כרגע.",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "תא עם יכולת ריקה",
 	"filters.abilities": "",
 	"filters.mode": "",

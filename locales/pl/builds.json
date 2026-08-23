@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "",
 	"linkButton.popularBuilds": "",
 	"noPopularBuilds": "",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "",
 	"filters.abilities": "",
 	"filters.mode": "",

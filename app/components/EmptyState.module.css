@@ -1,0 +1,27 @@
+.container {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-4);
+	padding-block: var(--s-10);
+}
+
+.iconContainer {
+	pointer-events: none;
+}
+
+.icon {
+	width: 6rem;
+	height: 6rem;
+	opacity: 0.35;
+	filter: saturate(0.6);
+}
+
+.text {
+	max-width: 24rem;
+	color: var(--color-text-high);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-semi);
+	text-align: center;
+	text-wrap: balance;
+}

@@ -11,6 +11,7 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import { Ability } from "~/components/Ability";
 import { BuildCard } from "~/components/BuildCard";
+import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { ModeImage } from "~/components/Image";
@@ -113,6 +114,9 @@ export default function WeaponsBuildsPage() {
 			date,
 		});
 
+	const hasFilters =
+		abilityConditions.length > 0 || mode !== null || date !== null;
+
 	return (
 		<Main className="stack lg">
 			<div className={styles.buildsButtons}>
@@ -136,7 +140,15 @@ export default function WeaponsBuildsPage() {
 					</LinkButton>
 				</div>
 			</div>
-			<BuildCards data={data} />
+			{data.builds.length > 0 ? (
+				<BuildCards data={data} />
+			) : (
+				<EmptyState navItem="builds">
+					{hasFilters
+						? t("builds:noBuildsMatchingFilters")
+						: t("builds:noBuildsForWeapon")}
+				</EmptyState>
+			)}
 			{data.limit < BUILDS_PAGE_MAX_BUILDS && data.hasMoreBuilds ? (
 				<LinkButton
 					className="m-0-auto"

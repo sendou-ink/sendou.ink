@@ -1,5 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData } from "react-router";
+import { EmptyState } from "~/components/EmptyState";
 import { EventsList } from "~/components/EventsList";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
@@ -63,12 +64,12 @@ export default function EventsPage() {
 				)}
 			</div>
 			{hasNoEventsAtAll ? (
-				<p className="no-results mt-4">
+				<EmptyState navItem="calendar">
 					{t("calendar:events.emptyAll")}{" "}
 					<Link to={CALENDAR_PAGE}>{t("calendar:events.findOnCalendar")}</Link>
-				</p>
+				</EmptyState>
 			) : shownEvents.length === 0 ? (
-				<p className="no-results mt-4">{t("calendar:events.empty")}</p>
+				<EmptyState navItem="calendar">{t("calendar:events.empty")}</EmptyState>
 			) : (
 				<EventsList events={shownEvents} />
 			)}

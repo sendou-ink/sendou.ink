@@ -6,6 +6,7 @@ import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
+import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { WeaponImage } from "~/components/Image";
@@ -77,9 +78,7 @@ export default function LFGPage() {
 					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 				</>
 			) : (
-				<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-					{t("lfg:noPosts")}
-				</div>
+				<EmptyState navItem="lfg">{t("lfg:noPosts")}</EmptyState>
 			)}
 		</Main>
 	);

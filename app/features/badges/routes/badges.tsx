@@ -5,6 +5,7 @@ import type { MetaFunction } from "react-router";
 import { NavLink, Outlet, useLoaderData } from "react-router";
 import { Badge } from "~/components/Badge";
 import { Divider } from "~/components/Divider";
+import { EmptyState } from "~/components/EmptyState";
 import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
@@ -96,9 +97,7 @@ export default function BadgesPageLayout() {
 						</div>
 					</div>
 				) : (
-					<div className="text-lg font-bold my-24">
-						{t("badges:noBadgesFound")}
-					</div>
+					<EmptyState navItem="badges">{t("badges:noBadgesFound")}</EmptyState>
 				)}
 			</div>
 			<div className={styles.generalInfoTexts}>

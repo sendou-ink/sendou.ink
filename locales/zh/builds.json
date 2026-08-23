@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "装备能力数据",
 	"linkButton.popularBuilds": "热门配装",
 	"noPopularBuilds": "目前尚无该武器的热门配装。",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "空能力槽",
 	"filters.abilities": "",
 	"filters.mode": "",

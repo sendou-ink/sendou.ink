@@ -11,6 +11,7 @@ import {
 	useMatches,
 } from "react-router";
 import Chart from "~/components/Chart";
+import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -86,9 +87,7 @@ export default function UserSeasonsLayout() {
 					user={layoutData.user}
 					backTo={userPage(layoutData.user)}
 				/>
-				<div className="text-lg text-lighter font-semi-bold text-center mt-2">
-					{t("user:seasons.noSeasons")}
-				</div>
+				<EmptyState navItem="sendouq">{t("user:seasons.noSeasons")}</EmptyState>
 			</div>
 		);
 	}

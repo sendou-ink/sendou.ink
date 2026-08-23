@@ -24,6 +24,8 @@
 	"linkButton.abilityStats": "Egenskabsstatistikker",
 	"linkButton.popularBuilds": "Populære sæt",
 	"noPopularBuilds": "Der er på nuværende tidspunkt ingen populære sæt for det valgte våben.",
+	"noBuildsForWeapon": "",
+	"noBuildsMatchingFilters": "",
 	"emptyAbilitySlot": "Tomt egenskabsfelt",
 	"filters.abilities": "",
 	"filters.mode": "",

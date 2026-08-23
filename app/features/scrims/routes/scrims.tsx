@@ -5,6 +5,7 @@ import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
 import * as R from "remeda";
 import * as v from "valibot";
+import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
@@ -153,27 +154,25 @@ export default function ScrimsPage() {
 							autoScrollToPostId={autoScrollToPostId}
 						/>
 					) : (
-						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+						<EmptyState navItem="scrims">
 							{t("scrims:noneAvailable")}
-						</div>
+						</EmptyState>
 					)}
 				</SendouTabPanel>
 				<SendouTabPanel id="owned">
 					{data.posts.owned.length > 0 ? (
 						<ScrimsDaySeparatedOwnedCards posts={data.posts.owned} />
 					) : (
-						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
-							{t("scrims:noOwnedPosts")}
-						</div>
+						<EmptyState navItem="scrims">{t("scrims:noOwnedPosts")}</EmptyState>
 					)}
 				</SendouTabPanel>
 				<SendouTabPanel id="booked">
 					{data.posts.booked.length > 0 ? (
 						<ScrimsDaySeparatedBookedCards posts={data.posts.booked} />
 					) : (
-						<div className="text-lighter text-lg font-semi-bold text-center mt-6">
+						<EmptyState navItem="scrims">
 							{t("scrims:noBookedScrims")}
-						</div>
+						</EmptyState>
 					)}
 				</SendouTabPanel>
 			</SendouTabs>

@@ -6,6 +6,7 @@ import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
+import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -256,9 +257,7 @@ function SubsView({
 			{data.subs.length > 0 ? (
 				data.subs.map((sub) => <SubCard key={sub.userId} sub={sub} />)
 			) : (
-				<div className="text-center text-lg font-semi-bold text-lighter">
-					{t("tournament:subs.noPosts")}
-				</div>
+				<EmptyState navItem="lfg">{t("tournament:subs.noPosts")}</EmptyState>
 			)}
 		</div>
 	);
