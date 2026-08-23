@@ -726,10 +726,29 @@ test("a pov overlay minimap is not flagged as cast", () => {
 	assert.equal(built[0]!.match.cast, false);
 });
 
+test("a narrow-left strip layout alone is not flagged as cast", () => {
+	const built = buildScannerMatches([
+		minimap(70, { spectator: false }),
+		playerStatus(75, { layout: "narrow-left" }),
+		playerStatus(76, { layout: "narrow-left" }),
+		minimap(120, { spectator: false }),
+	]);
+	assert.equal(built[0]!.match.cast, false);
+});
+
+test("a badge-proven strip read flags the match as cast", () => {
+	const built = buildScannerMatches([
+		minimap(70, { spectator: false }),
+		playerStatus(75, { layout: "narrow-left", cast: true }),
+		minimap(120, { spectator: false }),
+	]);
+	assert.equal(built[0]!.match.cast, true);
+});
+
 test("a results-screen pov seat vetoes misread cast evidence", () => {
 	const built = buildScannerMatches([
 		mapStart(0),
-		playerStatus(120, { castProven: true }),
+		playerStatus(120, { cast: true }),
 		scoreboard(300),
 	]);
 	const match = built[0]!.match;
@@ -863,11 +882,11 @@ function playerStatus(
 		time = (300 - Math.round(t)) as number | null,
 		special = ALL_FALSE,
 		dead = ALL_FALSE,
-		layout = "pov" as PlayerStatusData["layout"],
-		castProven = false,
+		layout = "even" as PlayerStatusData["layout"],
+		cast = null as true | null,
 	} = {},
 ): DetectedEvent {
-	const data: PlayerStatusData = { time, special, dead, layout, castProven };
+	const data: PlayerStatusData = { time, special, dead, layout, cast };
 	return { type: "PlayerStatus", t, confidence: 0.9, data };
 }
 
@@ -878,7 +897,7 @@ function stripWeaponsEvent(
 ): DetectedEvent {
 	const data: StripWeaponsData = {
 		time,
-		layout: "cast",
+		layout: "narrow-right",
 		slots: slots.map((side) =>
 			side.map((weaponId) =>
 				weaponId === null ? null : [{ weaponId, score }],
@@ -944,7 +963,7 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 				[true, false, false, false],
 				[false, false, false, false],
 			],
-			layout: "cast",
+			layout: "narrow-right",
 		}),
 		// the caster specs a purple player: sides swap
 		objective(120, {
@@ -956,7 +975,7 @@ test("status reads inherit the nearest counter read's cast orientation", () => {
 				[true, false, false, false],
 				[false, false, false, false],
 			],
-			layout: "cast",
+			layout: "narrow-right",
 		}),
 		minimap(180),
 	]);

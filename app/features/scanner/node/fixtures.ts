@@ -114,7 +114,9 @@ interface ExpectedScoreboard {
 		/** PlayerStatus only: splatted per slot, [left team, right team] */
 		dead?: [boolean[], boolean[]];
 		/** PlayerStatus + StripWeapons: which icon-strip geometry the frame shows */
-		layout?: "pov" | "cast" | "cast-mirror";
+		layout?: "even" | "narrow-right" | "narrow-left";
+		/** PlayerStatus only: white camera badges proved a casted spectator HUD */
+		cast?: true | null;
 		/**
 		 * StripWeapons only: the true weapon per slot, [left team, right
 		 * team], null = slot skipped (splatted icon). weaponLabels is

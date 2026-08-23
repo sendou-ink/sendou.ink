@@ -28,9 +28,9 @@ import { matchWeapon, type WeaponTemplate } from "../scoreboard/weapons";
 import type { DetectedEvent } from "../types";
 import type { PlayerStatusData, PlayerStatusLayout } from "./player-status";
 import {
-	STATUS_SLOT_CENTERS_CAST,
-	STATUS_SLOT_CENTERS_CAST_MIRROR,
-	STATUS_SLOT_CENTERS_POV,
+	STATUS_SLOT_CENTERS_EVEN,
+	STATUS_SLOT_CENTERS_NARROW_LEFT,
+	STATUS_SLOT_CENTERS_NARROW_RIGHT,
 	STRIP_WEAPON_BOX,
 	STRIP_WEAPON_INK_THRESHOLD,
 	STRIP_WEAPON_KNOCKOUT_MIN_SPREAD,
@@ -100,11 +100,11 @@ export function parseStripWeapons(
 function slotCenters(
 	layout: PlayerStatusLayout,
 ): readonly [readonly number[], readonly number[]] {
-	return layout === "pov"
-		? STATUS_SLOT_CENTERS_POV
-		: layout === "cast"
-			? STATUS_SLOT_CENTERS_CAST
-			: STATUS_SLOT_CENTERS_CAST_MIRROR;
+	return layout === "even"
+		? STATUS_SLOT_CENTERS_EVEN
+		: layout === "narrow-right"
+			? STATUS_SLOT_CENTERS_NARROW_RIGHT
+			: STATUS_SLOT_CENTERS_NARROW_LEFT;
 }
 
 function matchSlot(

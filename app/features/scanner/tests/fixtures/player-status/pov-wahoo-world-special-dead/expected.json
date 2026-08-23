@@ -1,7 +1,7 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "pov",
+		"layout": "even",
 		"time": 23,
 		"special": [
 			[true, false, false, false],

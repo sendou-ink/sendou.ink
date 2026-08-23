@@ -1,7 +1,7 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "cast-mirror",
+		"layout": "narrow-left",
 		"time": 246,
 		"special": [
 			[

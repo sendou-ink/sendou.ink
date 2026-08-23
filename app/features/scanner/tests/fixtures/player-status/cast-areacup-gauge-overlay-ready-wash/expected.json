@@ -1,15 +1,36 @@
 {
 	"event": "PlayerStatus",
 	"data": {
-		"layout": "cast",
+		"layout": "narrow-right",
+		"cast": true,
 		"time": 253,
 		"special": [
-			[false, false, false, false],
-			[false, false, false, true]
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				false,
+				false,
+				false,
+				true
+			]
 		],
 		"dead": [
-			[false, false, false, false],
-			[true, false, true, false]
+			[
+				false,
+				false,
+				false,
+				false
+			],
+			[
+				true,
+				false,
+				true,
+				false
+			]
 		]
 	},
 	"options": {

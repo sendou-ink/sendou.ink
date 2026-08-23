@@ -79,6 +79,14 @@ for (const fixture of fixtures) {
 		);
 
 		await t.test(
+			"cast",
+			{ skip: expected.cast === undefined || skip(fixture, "cast") },
+			() => {
+				assert.equal(event.data.cast, expected.cast);
+			},
+		);
+
+		await t.test(
 			"time",
 			{ skip: expected.time === undefined || skip(fixture, "time") },
 			() => {

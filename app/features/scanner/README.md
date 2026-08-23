@@ -90,16 +90,19 @@ sequenceDiagram
   only the SZ member so far). The objective parse also emits a second
   event type per read: `PlayerStatus`
   (`core/detectors/objective/player-status.ts`), per-player special/dead
-  flags off the icon strip flanking the timer (POV and casted spectator
-  geometries; D-pad camera badges prove the cast layout, but broadcasts
-  can hide them while keeping cast geometry, so a badge-less frame scores
-  both geometries on how decisively the bodies read and sticks with the
-  established layout unless the other wins clearly — the special-ready
-  wash also pulses, so its dim trough is told apart from a splat by its
-  pale body, and a cast-layout ready read must also see a washed
-  (ink-poor) body: pale backdrop or the lead banner leaking past an icon
-  edge fakes the shoulder glow on the overhead map view's badge-less
-  strip), with
+  flags off the icon strip flanking the timer (three geometries named by
+  which side sits at the packed pitch — `even`, `narrow-right`,
+  `narrow-left` — that are pure geometry, never footage type: S3 POV
+  footage draws both narrow arrangements too, so only the D-pad camera
+  badges prove a broadcast, reported as the read's `cast: true | null`;
+  broadcasts can hide the badges while keeping their geometry, so a
+  badge-less frame scores the geometries on how decisively the bodies
+  read and sticks with the established layout unless another wins
+  clearly — the special-ready wash also pulses, so its dim trough is told
+  apart from a splat by its pale body, and a narrow-layout ready read
+  must also see a washed (ink-poor) body: pale backdrop or the lead
+  banner leaking past an icon edge fakes the shoulder glow on the
+  overhead map view's badge-less strip), with
   the same `time` value so the two reads pair downstream; its fixtures
   live under `tests/fixtures/player-status/`. Within a side the strip's
   slot order is the lobby seating, while the results scoreboard re-sorts
@@ -244,6 +247,13 @@ detector's suite sweeps them. Every live misread should become a fixture —
 the live app's "Save fixture" button exports the byte-exact analyzed frame
 plus a prefilled `expected.json`. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as
-definitive over any matcher output.** Fixtures are committed as plain blobs
+definitive over any matcher output.** The dev-only Fixtures tab
+(`/scanner?tab=fixtures`) renders every fixture's frame beside its
+`expected.json` for that ground-truth review — player-status and
+strip-weapons cases get per-slot icon crops with the expected label under
+each icon, and Inspect re-analyzes any frame in the Screenshot tab. The `q`
+param narrows by case-name substring (comma = OR) and lives in the URL, so
+finished labeling work can be handed over as a reviewable link, e.g.
+`/scanner?tab=fixtures&q=gauge-overlay,ready-trough`. Fixtures are committed as plain blobs
 (no LFS for now); keep additions deliberate — fixture IO is isolated in
 `node/fixtures.ts` if a retreat to LFS/an external corpus is needed.

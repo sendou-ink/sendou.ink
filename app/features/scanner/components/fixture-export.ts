@@ -169,6 +169,7 @@ function buildExpectedJson(
 				event: eventType,
 				data: {
 					layout: status.layout,
+					cast: status.cast,
 					time: status.time,
 					special: status.special,
 					dead: status.dead,

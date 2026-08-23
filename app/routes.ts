@@ -30,6 +30,10 @@ const devOnlyRoutes =
 					"/match-page-test",
 					"features/match-page-test/routes/match-page-test.tsx",
 				),
+				route(
+					"/scanner/fixtures/:detector?/:caseName?",
+					"features/scanner/routes/scanner.fixtures.ts",
+				),
 			] satisfies RouteConfig)
 		: [];
 

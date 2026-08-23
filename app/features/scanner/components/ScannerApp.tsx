@@ -8,6 +8,7 @@ import {
 	type ScannerTab,
 	scannerSearchParams,
 } from "../scanner-search-params";
+import { FixturesPage } from "./FixturesPage";
 import { LivePage } from "./LivePage";
 import styles from "./ScannerApp.module.css";
 import { ScreenshotPage } from "./ScreenshotPage";
@@ -18,7 +19,14 @@ const TAB_LABELS: Record<ScannerTab, string> = {
 	live: "Live",
 	screenshot: "Screenshot",
 	vod: "VoD",
+	fixtures: "Fixtures",
 };
+
+// the fixtures tab reads the corpus off disk, which only a dev checkout has
+const visibleTabs =
+	process.env.NODE_ENV === "development"
+		? SCANNER_TABS
+		: SCANNER_TABS.filter((tab) => tab !== "fixtures");
 
 export function ScannerApp() {
 	const [tab] = useSearchParam(scannerSearchParams, "tab");
@@ -32,6 +40,8 @@ export function ScannerApp() {
 			<ScreenshotPage />
 		) : tab === "vod" ? (
 			<VodPage sendouUser={sendouUser} />
+		) : tab === "fixtures" && process.env.NODE_ENV === "development" ? (
+			<FixturesPage />
 		) : (
 			<LivePage sendouUser={sendouUser} />
 		);
@@ -40,7 +50,7 @@ export function ScannerApp() {
 		<div className={styles.app}>
 			<header className={styles.topbar}>
 				<nav>
-					{SCANNER_TABS.map((tabOption) => (
+					{visibleTabs.map((tabOption) => (
 						<Link
 							key={tabOption}
 							to={scannerSearchParams.href(SCANNER_PAGE, { tab: tabOption })}

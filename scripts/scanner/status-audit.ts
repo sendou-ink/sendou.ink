@@ -269,7 +269,7 @@ function parseClock(m: string, s: string): number {
 
 function parsePlayerStatusCell(cell: string): PlayerStatusData {
 	const match = cell.match(
-		/^(?:(\d+):(\d{2}) · )?([✕★·]{4}) vs ([✕★·]{4}) \((pov|cast|cast-mirror)\)$/u,
+		/^(?:(\d+):(\d{2}) · )?([✕★·]{4}) vs ([✕★·]{4}) \((even|narrow-right|narrow-left)\)$/u,
 	);
 	if (!match) throw new Error(`bad PlayerStatus cell: ${cell}`);
 	const [, m, s, left, right, layout] = match;
@@ -287,9 +287,8 @@ function parsePlayerStatusCell(cell: string): PlayerStatusData {
 		special: [a.special, b.special],
 		dead: [a.dead, b.dead],
 		layout: layout as PlayerStatusLayout,
-		// the CSV carries no camera-badge evidence, so cast orientation
-		// degrades to the `cast-mirror` layout fallback
-		castProven: false,
+		// the CSV carries no camera-badge evidence
+		cast: null,
 	};
 }
 
@@ -313,7 +312,7 @@ function parseObjectiveCell(cell: string): ObjectiveData {
 
 function parseStripWeaponsCell(cell: string): StripWeaponsData {
 	const match = cell.match(
-		/^(?:(\d+):(\d{2}) · )?(.*) vs (.*) \((pov|cast|cast-mirror)\)$/u,
+		/^(?:(\d+):(\d{2}) · )?(.*) vs (.*) \((even|narrow-right|narrow-left)\)$/u,
 	);
 	if (!match) throw new Error(`bad StripWeapons cell: ${cell}`);
 	const [, m, s, left, right, layout] = match;

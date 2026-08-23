@@ -8,7 +8,8 @@ import { scannerSearchParams } from "./scanner-search-params";
 describe("scannerSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(scannerSearchParams, {
-			tab: ["live", "screenshot", "vod"],
+			tab: ["live", "screenshot", "vod", "fixtures"],
+			q: ["", "gauge-overlay", "player-status/cast,ready-trough"],
 			inspect: ["1723456789012-abc123", null],
 			telemetry: [true, false],
 		});

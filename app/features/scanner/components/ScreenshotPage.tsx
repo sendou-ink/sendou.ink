@@ -49,7 +49,7 @@ import styles from "./ScreenshotPage.module.css";
 type Result = Extract<WorkerResponse, { kind: "result" }>;
 
 /** Draw a ROI crop from the normalized frame, scaled up. */
-function RoiCrop(props: {
+export function RoiCrop(props: {
 	frame: HTMLCanvasElement;
 	roi: Roi;
 	scale?: number;
@@ -189,7 +189,7 @@ function playerFlags(p: { dead: boolean; specialReady: boolean }) {
 	return `${p.dead ? " ✗" : ""}${p.specialReady ? " ★" : ""}`;
 }
 
-function formatTimer(time: number | null) {
+export function formatTimer(time: number | null) {
 	if (time === null) return "?:??";
 	return `${Math.floor(time / 60)}:${String(time % 60).padStart(2, "0")}`;
 }
@@ -233,11 +233,11 @@ function gateSummary(result: Result): string | null {
 /** Band covering one side's player-status icon strip, for the crop view. */
 function statusStripRoi(layout: PlayerStatusLayout, side: 0 | 1): Roi {
 	const centers =
-		layout === "pov"
-			? objective.STATUS_SLOT_CENTERS_POV[side]
-			: layout === "cast"
-				? objective.STATUS_SLOT_CENTERS_CAST[side]
-				: objective.STATUS_SLOT_CENTERS_CAST_MIRROR[side];
+		layout === "even"
+			? objective.STATUS_SLOT_CENTERS_EVEN[side]
+			: layout === "narrow-right"
+				? objective.STATUS_SLOT_CENTERS_NARROW_RIGHT[side]
+				: objective.STATUS_SLOT_CENTERS_NARROW_LEFT[side];
 	const first = centers[0]!;
 	const last = centers[centers.length - 1]!;
 	return { x: first - 55, y: 25, w: last - first + 110, h: 115 };
@@ -275,13 +275,13 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		}
 		for (const [centers, box, color] of [
 			[
-				objective.STATUS_SLOT_CENTERS_POV,
-				objective.STATUS_BODY_BOX_POV,
+				objective.STATUS_SLOT_CENTERS_EVEN,
+				objective.STATUS_BODY_BOX_EVEN,
 				"#60a5fa",
 			],
 			[
-				objective.STATUS_SLOT_CENTERS_CAST,
-				objective.STATUS_BODY_BOX_CAST,
+				objective.STATUS_SLOT_CENTERS_NARROW_RIGHT,
+				objective.STATUS_BODY_BOX_NARROW,
 				"#e879f9",
 			],
 		] as const) {

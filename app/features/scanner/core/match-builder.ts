@@ -498,17 +498,14 @@ function toBuiltMatch<E extends DetectedEvent>(
 			: null,
 		replayCode: timestamped?.replayCode ?? null,
 		// layout alone cannot flag a broadcast: S3 first-person POV footage
-		// draws the cast strip geometry, so only actual cast evidence counts —
-		// the spectator map screen, badge-proven strips, or the mirror
-		// arrangement (reachable only through badge/comb proof). A results
+		// draws both narrow strip geometries, so only actual cast evidence
+		// counts — the spectator map screen or badge-proven strips. A results
 		// screen that identified the POV seat disproves them all: casts never
 		// see a results screen, so such evidence was misread
 		cast:
 			pov === null &&
 			(open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
-				playerStatuses.some(
-					(read) => read.data.castProven || read.data.layout === "cast-mirror",
-				)),
+				playerStatuses.some((read) => read.data.cast)),
 		objective: progress.objective,
 		playerStatus: progress.playerStatus,
 		teams: board
