@@ -248,6 +248,28 @@ describe("ChatRepository.upsertReadIndicator", () => {
 	});
 });
 
+describe("ChatRepository.updateRoomsInactive", () => {
+	test("marks the given rooms inactive and back active", async () => {
+		const room = await ChatRoomFactory.create();
+		const otherRoom = await ChatRoomFactory.create();
+
+		await ChatRepository.updateRoomsInactive([room.id], true);
+
+		expect((await roomById(room.id)).inactive).toBe(1);
+		expect((await roomById(otherRoom.id)).inactive).toBe(0);
+
+		await ChatRepository.updateRoomsInactive([room.id], false);
+
+		expect((await roomById(room.id)).inactive).toBe(0);
+	});
+
+	test("ignores null room ids", async () => {
+		await expect(
+			ChatRepository.updateRoomsInactive([null, null], true),
+		).resolves.toBeUndefined();
+	});
+});
+
 describe("ChatRepository.closeExpiredRooms", () => {
 	test("closes only rooms expired before the cutoff", async () => {
 		const expiredRoom = await ChatRoomFactory.create({

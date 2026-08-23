@@ -11,6 +11,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.addColumn("id", "integer", (col) => col.primaryKey())
 			.addColumn("type", "text", (col) => col.notNull())
 			.addColumn("expiresAt", "integer", (col) => col.notNull())
+			.addColumn("inactive", "integer", (col) => col.notNull().defaultTo(0))
 			.addColumn("closedAt", "integer")
 			.addColumn("createdAt", "integer", (col) =>
 				col.notNull().defaultTo(sql`(strftime('%s', 'now'))`),

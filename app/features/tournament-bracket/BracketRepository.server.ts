@@ -263,6 +263,7 @@ export async function applyMatchChanges(
 	}
 
 	await syncStartedAt(args.previousData, args.result.data, trx);
+	await syncChatRoomInactive(args.previousData, args.result.data, trx);
 }
 
 /**
@@ -327,6 +328,55 @@ async function syncStartedAt(
 			.where("id", "in", pendingMatchIds)
 			.execute();
 	}
+}
+
+/**
+ * A match completing marks its chat room inactive; a completed match losing its
+ * winner again (reopen, undone final game) marks the room back active.
+ */
+async function syncChatRoomInactive(
+	previousData: BracketData,
+	data: BracketData,
+	trx: Transaction<DB>,
+): Promise<void> {
+	const previousStatuses = matchStatuses(previousData);
+	const statuses = matchStatuses(data);
+
+	const wasCompleted = (matchId: number) =>
+		previousStatuses.get(matchId) === "COMPLETED";
+	const isCompleted = (matchId: number) =>
+		statuses.get(matchId) === "COMPLETED";
+
+	const completedMatchIds = data.match
+		.filter((match) => !wasCompleted(match.id) && isCompleted(match.id))
+		.map((match) => match.id);
+	const reopenedMatchIds = data.match
+		.filter((match) => wasCompleted(match.id) && !isCompleted(match.id))
+		.map((match) => match.id);
+
+	await updateMatchChatRoomsInactive(completedMatchIds, true, trx);
+	await updateMatchChatRoomsInactive(reopenedMatchIds, false, trx);
+}
+
+async function updateMatchChatRoomsInactive(
+	matchIds: number[],
+	inactive: boolean,
+	trx: Transaction<DB>,
+) {
+	if (matchIds.length === 0) return;
+
+	const matches = await trx
+		.selectFrom("TournamentMatch")
+		.select(["TournamentMatch.chatRoomId"])
+		.where("TournamentMatch.id", "in", matchIds)
+		.where("TournamentMatch.chatRoomId", "is not", null)
+		.execute();
+
+	await ChatRepository.updateRoomsInactive(
+		matches.map((match) => match.chatRoomId),
+		inactive,
+		trx,
+	);
 }
 
 /** INSERTs a generated round's matches (swiss advance). */

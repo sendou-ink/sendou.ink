@@ -945,14 +945,14 @@ async function validateCreatedMatch(
 	}
 }
 
-export function lockMatchWithoutSkillChange(
-	groupMatchId: number,
+export async function lockMatchWithoutSkillChange(
+	match: { id: number; chatRoomId: number | null },
 	trx?: Transaction<DB>,
 ) {
-	return (trx ?? db)
+	await (trx ?? db)
 		.insertInto("Skill")
 		.values({
-			groupMatchId,
+			groupMatchId: match.id,
 			identifier: null,
 			mu: -1,
 			season: CANCELED_MATCH_SEASON,
@@ -962,6 +962,7 @@ export function lockMatchWithoutSkillChange(
 			matchesCount: 0,
 		})
 		.execute();
+	await ChatRepository.updateRoomsInactive([match.chatRoomId], true, trx);
 }
 
 export type CancelMatchResult =
@@ -998,7 +999,7 @@ export async function cancelMatch({
 				.execute();
 			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
-			await lockMatchWithoutSkillChange(match.id, trx);
+			await lockMatchWithoutSkillChange(match, trx);
 			await trx
 				.updateTable("GroupMatch")
 				.set({ cancelRequestedByUserId: null })
@@ -1058,7 +1059,7 @@ export async function cancelMatch({
 
 	await db.transaction().execute(async (trx) => {
 		await SQGroupRepository.setAsInactive(reporterGroupId, trx);
-		await lockMatchWithoutSkillChange(match.id, trx);
+		await lockMatchWithoutSkillChange(match, trx);
 	});
 	return { status: "CANCEL_CONFIRMED", shouldRefreshCaches: true };
 }
@@ -1167,7 +1168,7 @@ export async function acceptCancelMatch({
 
 		await SQGroupRepository.setAsInactive(requesterGroupId, trx);
 		await SQGroupRepository.setAsInactive(accepterGroupId, trx);
-		await lockMatchWithoutSkillChange(match.id, trx);
+		await lockMatchWithoutSkillChange(match, trx);
 		await trx
 			.updateTable("GroupMatch")
 			.set({ cancelAcceptedByUserId: acceptedByUserId })
@@ -1535,6 +1536,7 @@ async function finalizeMatch({
 		if (isLocked || confirmedAt) return false;
 
 		if (preFinalize) await preFinalize(trx);
+		await ChatRepository.updateRoomsInactive([match.chatRoomId], true, trx);
 		await trx
 			.updateTable("GroupMatch")
 			.set({
@@ -1629,7 +1631,7 @@ export async function resolveUnfinishedMatch(
 				.execute();
 			await SQGroupRepository.setAsInactive(match.groupAlpha.id, trx);
 			await SQGroupRepository.setAsInactive(match.groupBravo.id, trx);
-			await lockMatchWithoutSkillChange(match.id, trx);
+			await lockMatchWithoutSkillChange(match, trx);
 			await trx
 				.updateTable("GroupMatch")
 				.set({ cancelRequestedByUserId: null })

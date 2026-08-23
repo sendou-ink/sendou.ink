@@ -306,6 +306,8 @@ export interface ChatRoom {
 	createdAt: Generated<number>;
 	expiresAt: number;
 	id: GeneratedAlways<number>;
+	/** The owner's activity has concluded, e.g. the set the room was for was finalized or canceled. Reverted if a tournament match is reopened. */
+	inactive: Generated<DBBoolean>;
 	type: ChatRoomType;
 }
 

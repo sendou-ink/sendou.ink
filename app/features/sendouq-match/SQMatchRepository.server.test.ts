@@ -66,6 +66,14 @@ const fetchSkills = async (matchId: number) => {
 		.execute();
 };
 
+const fetchChatRoom = async (chatRoomId: number) => {
+	return db
+		.selectFrom("ChatRoom")
+		.selectAll()
+		.where("id", "=", chatRoomId)
+		.executeTakeFirstOrThrow();
+};
+
 /** Reports every map as won by alpha and has bravo confirm the score. */
 const playOutMatch = async (setup: Awaited<ReturnType<typeof setupMatch>>) => {
 	let reportedCount = 0;
@@ -165,7 +173,7 @@ describe("lockMatchWithoutSkillChange", () => {
 	test("inserts dummy skill to lock match", async () => {
 		const { match } = await setupMatch();
 
-		await SQMatchRepository.lockMatchWithoutSkillChange(match.id);
+		await SQMatchRepository.lockMatchWithoutSkillChange(match);
 
 		const skills = await fetchSkills(match.id);
 		expect(skills).toHaveLength(1);
@@ -174,6 +182,14 @@ describe("lockMatchWithoutSkillChange", () => {
 		expect(skills[0].sigma).toBe(-1);
 		expect(skills[0].ordinal).toBe(-1);
 		expect(skills[0].userId).toBeNull();
+	});
+
+	test("marks the chat room inactive", async () => {
+		const { match } = await setupMatch();
+
+		await SQMatchRepository.lockMatchWithoutSkillChange(match);
+
+		expect((await fetchChatRoom(match.chatRoomId!)).inactive).toBe(1);
 	});
 });
 
@@ -477,6 +493,39 @@ describe("finalizeMatch", () => {
 		expect(playerResults.map((result) => result.season)).toEqual(
 			playerResults.map(() => matchSeason.nth),
 		);
+	});
+
+	test("marks the chat room inactive only once the score is confirmed", async () => {
+		const setup = await setupMatch();
+
+		let reportedCount = 0;
+		let result = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.alphaMembers[0].id,
+			reportedCount,
+		});
+		while (result.status === "MAP_REPORTED") {
+			reportedCount++;
+			result = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.alphaMembers[0].id,
+				reportedCount,
+			});
+		}
+		expect(result.status).toBe("MATCH_REPORTED");
+		expect((await fetchChatRoom(setup.match.chatRoomId!)).inactive).toBe(0);
+
+		const confirmation = await SQMatchRepository.reportMapWinner({
+			matchId: setup.match.id,
+			winnerId: setup.alphaGroupId,
+			reportedByUserId: setup.bravoMembers[0].id,
+			reportedCount: reportedCount + 1,
+		});
+		expect(confirmation.status).toBe("MATCH_FINALIZED");
+
+		expect((await fetchChatRoom(setup.match.chatRoomId!)).inactive).toBe(1);
 	});
 
 	// Demonstrates a bug: reportMapWinner checks the match lock on a snapshot read

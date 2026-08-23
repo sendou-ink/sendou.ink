@@ -9,6 +9,7 @@ import {
 	jsonObjectFrom,
 	userChatNameHue,
 } from "~/utils/kysely.server";
+import { toDBBoolean } from "~/utils/sql";
 import type { PersistedSystemMessageType } from "./chat-types";
 
 const MESSAGES_DEFAULT_LIMIT = 500;
@@ -66,6 +67,24 @@ export async function updateRoomExpiresAt(
 		.updateTable("ChatRoom")
 		.set({ expiresAt: dateToDatabaseTimestamp(args.expiresAt) })
 		.where("ChatRoom.id", "=", args.roomId)
+		.execute();
+}
+
+/** Marks rooms' owner activity as concluded, or active again (a reopened tournament match). */
+export async function updateRoomsInactive(
+	roomIds: Array<number | null>,
+	inactive: boolean,
+	trx?: Transaction<DB>,
+) {
+	const idsToUpdate = roomIds.filter((id) => id !== null);
+	if (idsToUpdate.length === 0) return;
+
+	const executor = trx ?? db;
+
+	await executor
+		.updateTable("ChatRoom")
+		.set({ inactive: toDBBoolean(inactive) })
+		.where("ChatRoom.id", "in", idsToUpdate)
 		.execute();
 }
 
