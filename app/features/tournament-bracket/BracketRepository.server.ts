@@ -207,6 +207,7 @@ export function insertBracket(args: {
 
 		const statuses = matchStatuses(args.bracket);
 
+		// xxx: check if this is true
 		// only matches that can already be played get a chat room; the rest get
 		// theirs as they start (see syncStartedAt)
 		const chatRoomIdByMatchId = new Map<number, number>();

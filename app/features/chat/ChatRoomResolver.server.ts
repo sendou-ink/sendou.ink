@@ -16,6 +16,8 @@ import {
 } from "~/utils/urls";
 import type { ChatRoomType } from "./chat-types";
 
+// xxx: direct DB calls here, should not be a thing, the logic also seems quite heavy, needed?
+
 export interface ResolvedRoom {
 	roomId: number;
 	type: ChatRoomType;
