@@ -8,7 +8,7 @@ import { parseFormData } from "~/form/parse.server";
 import { errorToastIfFalsy } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_PAGE, SENDOUQ_READY_PAGE } from "~/utils/urls";
-import { canSuggest, groupAfterMorph } from "../core/groups";
+import { canSuggest, groupAfterMorph, isInLookingPool } from "../core/groups";
 import * as ReadyCheck from "../core/ready-check.server";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { lookingSchema } from "../q-action-schemas";
@@ -37,6 +37,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const currentGroup = SendouQ.findOwnGroup(user.id);
 	if (!currentGroup) return null;
+
+	if (data._action !== "LEAVE_GROUP" && !isInLookingPool(currentGroup)) {
+		return null;
+	}
 
 	const broadcastLookingUpdate = () =>
 		ChatSystemMessage.send({

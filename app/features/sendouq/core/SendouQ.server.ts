@@ -25,6 +25,7 @@ import {
 import { FULL_GROUP_SIZE } from "../q-constants";
 import type { TierRange } from "../q-types";
 import { getTierIndex } from "../q-utils.server";
+import { isInLookingPool } from "./groups";
 import { tierDifferenceToRangeOrExact } from "./groups.server";
 import * as ReadyCheck from "./ready-check.server";
 
@@ -567,8 +568,7 @@ class SendouQClass {
 		ownGroupId?: number;
 		currentMemberCountOptions?: number[];
 	}) {
-		if (group.status !== "ACTIVE") return false;
-		if (group.matchId) return false;
+		if (!isInLookingPool(group)) return false;
 		if (group.id === ownGroupId) return false;
 		if (
 			currentMemberCountOptions &&

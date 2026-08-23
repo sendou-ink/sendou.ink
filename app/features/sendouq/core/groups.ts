@@ -1,3 +1,4 @@
+import type { Tables } from "~/db/tables";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { GroupExpiryStatus } from "../q-types";
 import type { SQGroup } from "./SendouQ.server";
@@ -30,6 +31,13 @@ export function groupAfterMorph({
 	}
 
 	return ourGroup;
+}
+
+export function isInLookingPool(group: {
+	status: Tables["Group"]["status"];
+	matchId: number | null;
+}) {
+	return group.status === "ACTIVE" && !group.matchId;
 }
 
 /**
