@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { AlertCircle, Check, UserRound, X } from "lucide-react";
+import { AlertCircle, Check, UserRound, UsersRound, X } from "lucide-react";
 import * as React from "react";
 import { Text } from "react-aria-components";
 import { useTranslation } from "react-i18next";
@@ -9,7 +9,11 @@ import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import {
+	SendouSelect,
+	SendouSelectItem,
+	SendouSelectItemSection,
+} from "~/components/elements/Select";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { InviteLinkInput } from "~/components/InviteLinkInput";
@@ -28,6 +32,11 @@ import {
 	availabilityRowStatus,
 	RegistrationAvailabilityPanel,
 } from "~/features/availability/components/RegistrationAvailabilityPanel";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
+import { getMemberRoleType } from "~/features/team/team-utils";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import {
 	type CounterPickMapPool,
@@ -59,6 +68,7 @@ import {
 } from "../tournament-register-schemas";
 import {
 	addPlayerSchema,
+	addTeamPlayersSchema,
 	checkInSchema,
 	updateMapPoolSchema,
 } from "../tournament-schemas";
@@ -75,6 +85,14 @@ const QUICK_ADD_STATUS_ORDER: Record<AvailabilityRowStatus, number> = {
 	busy: 4,
 	unavailable: 5,
 };
+
+interface QuickAddPlayer {
+	id: number;
+	username: string;
+	teamId: number | null;
+	role: MemberRole | null;
+	roleType: MemberRoleType | null;
+}
 
 export const middleware: Route.MiddlewareFunction[] = [timezoneMiddleware];
 
@@ -833,6 +851,8 @@ function FillRoster({
 							<QuickAddPlayers
 								key={quickAddPlayers.map((player) => player.id).join(",")}
 								players={quickAddPlayers}
+								teams={data?.friendPlayers?.teams ?? []}
+								spotsLeft={tournament.maxMembersPerTeam - ownTeamMembers.length}
 								entryByUserId={entryByUserId}
 							/>
 						) : null}
@@ -862,88 +882,192 @@ function FillRoster({
 
 function QuickAddPlayers({
 	players,
+	teams,
+	spotsLeft,
 	entryByUserId,
 }: {
-	players: Array<{ id: number; username: string }>;
+	players: Array<QuickAddPlayer>;
+	teams: Array<{ id: number; name: string }>;
+	spotsLeft: number;
 	entryByUserId: Map<number, AvailabilityPanelEntry> | null;
 }) {
 	const { t } = useTranslation(["tournament", "common"]);
 	const fetcher = useFetcher();
 
-	const sortedPlayers = entryByUserId
-		? R.sortBy(
-				players,
-				(player) =>
-					QUICK_ADD_STATUS_ORDER[
-						availabilityRowStatus(entryByUserId.get(player.id))
-					],
-			)
-		: players;
+	const sortByAvailability = (toSort: Array<QuickAddPlayer>) =>
+		entryByUserId
+			? R.sortBy(
+					toSort,
+					(player) =>
+						QUICK_ADD_STATUS_ORDER[
+							availabilityRowStatus(entryByUserId.get(player.id))
+						],
+				)
+			: toSort;
 
-	const [selectedUserId, setSelectedUserId] = React.useState<number | null>(
-		sortedPlayers[0]?.id ?? null,
+	const teamGroups = teams
+		.map((team) => ({
+			team,
+			players: sortByAvailability(
+				players.filter((player) => player.teamId === team.id),
+			),
+		}))
+		.filter((group) => group.players.length > 0);
+
+	const pickupPlayers = sortByAvailability(
+		players.filter((player) => !player.teamId),
 	);
 
-	// xxx: split team, pickup. quick button to add all player roles for team
+	const sections = [
+		...teamGroups.map((group) => ({
+			key: `team-${group.team.id}`,
+			heading: group.team.name,
+			players: group.players,
+		})),
+		...(pickupPlayers.length > 0
+			? [
+					{
+						key: "pickup",
+						heading: t("tournament:pre.roster.quickAdd.pickup"),
+						players: pickupPlayers,
+					},
+				]
+			: []),
+	];
+
+	const [selectedUserId, setSelectedUserId] = React.useState<number | null>(
+		sections[0]?.players[0]?.id ?? null,
+	);
+
+	const addAllByTeam = teamGroups
+		.map((group) => ({
+			team: group.team,
+			// in the loader's order so the list matches what the action adds when clamped
+			playersToAdd: players
+				.filter(
+					(player) =>
+						player.teamId === group.team.id &&
+						getMemberRoleType(player) !== "OTHER",
+				)
+				.slice(0, spotsLeft),
+		}))
+		.filter((entry) => entry.playersToAdd.length > 0);
+
+	const renderPlayerItem = (player: QuickAddPlayer) => (
+		<SendouSelectItem
+			key={player.id}
+			id={player.id}
+			textValue={player.username}
+			data-testid={`availability-row-${player.id}`}
+			data-status={
+				entryByUserId
+					? availabilityRowStatus(entryByUserId.get(player.id))
+					: undefined
+			}
+		>
+			{entryByUserId ? (
+				<span className={styles.quickAddItem}>
+					<Text slot="label">{player.username}</Text>
+					<Text slot="description">
+						<span className={styles.quickAddItemAvailability}>
+							<AvailabilityStatusDots
+								statuses={[availabilityRowStatus(entryByUserId.get(player.id))]}
+							/>
+							<AvailabilityRowDetail entry={entryByUserId.get(player.id)} />
+						</span>
+					</Text>
+				</span>
+			) : (
+				player.username
+			)}
+		</SendouSelectItem>
+	);
+
 	return (
-		<fetcher.Form method="post">
-			<div className={styles.quickAddRow}>
-				<SendouSelect
-					label={t("tournament:pre.roster.quickAdd")}
-					items={sortedPlayers}
-					selectedKey={selectedUserId}
-					onSelectionChange={(key) => setSelectedUserId(key as number | null)}
-					estimatedRowHeight={entryByUserId ? 52 : undefined}
-					className={styles.quickAddSelect}
-					data-testid="quick-add-select"
-				>
-					{(player) => (
-						<SendouSelectItem
-							id={player.id}
-							textValue={player.username}
-							data-testid={`availability-row-${player.id}`}
-							data-status={
-								entryByUserId
-									? availabilityRowStatus(entryByUserId.get(player.id))
-									: undefined
+		<div className="stack sm">
+			<fetcher.Form method="post">
+				<div className={styles.quickAddRow}>
+					{teamGroups.length > 0 ? (
+						<SendouSelect
+							label={t("tournament:pre.roster.quickAdd")}
+							items={sections}
+							selectedKey={selectedUserId}
+							onSelectionChange={(key) =>
+								setSelectedUserId(key as number | null)
 							}
+							estimatedRowHeight={entryByUserId ? 52 : undefined}
+							className={styles.quickAddSelect}
+							data-testid="quick-add-select"
 						>
-							{entryByUserId ? (
-								<span className={styles.quickAddItem}>
-									<Text slot="label">{player.username}</Text>
-									<Text slot="description">
-										<span className={styles.quickAddItemAvailability}>
-											<AvailabilityStatusDots
-												statuses={[
-													availabilityRowStatus(entryByUserId.get(player.id)),
-												]}
-											/>
-											<AvailabilityRowDetail
-												entry={entryByUserId.get(player.id)}
-											/>
-										</span>
-									</Text>
-								</span>
-							) : (
-								player.username
+							{(section) => (
+								<SendouSelectItemSection
+									key={section.key}
+									heading={section.heading}
+								>
+									{section.players.map(renderPlayerItem)}
+								</SendouSelectItemSection>
 							)}
-						</SendouSelectItem>
+						</SendouSelect>
+					) : (
+						<SendouSelect
+							label={t("tournament:pre.roster.quickAdd")}
+							items={pickupPlayers}
+							selectedKey={selectedUserId}
+							onSelectionChange={(key) =>
+								setSelectedUserId(key as number | null)
+							}
+							estimatedRowHeight={entryByUserId ? 52 : undefined}
+							className={styles.quickAddSelect}
+							data-testid="quick-add-select"
+						>
+							{renderPlayerItem}
+						</SendouSelect>
 					)}
-				</SendouSelect>
-				{selectedUserId ? (
-					<input type="hidden" name="userId" value={selectedUserId} />
-				) : null}
-				<SubmitButton
-					schema={addPlayerSchema}
-					_action="ADD_PLAYER"
-					state={fetcher.state}
-					testId="add-player-button"
-					isDisabled={!selectedUserId}
-				>
-					{t("common:actions.add")}
-				</SubmitButton>
-			</div>
-		</fetcher.Form>
+					{selectedUserId ? (
+						<input type="hidden" name="userId" value={selectedUserId} />
+					) : null}
+					<SubmitButton
+						schema={addPlayerSchema}
+						_action="ADD_PLAYER"
+						state={fetcher.state}
+						testId="add-player-button"
+						isDisabled={!selectedUserId}
+					>
+						{t("common:actions.add")}
+					</SubmitButton>
+				</div>
+			</fetcher.Form>
+			{addAllByTeam.length > 0 ? (
+				<div className={styles.quickAddAllRow}>
+					{addAllByTeam.map(({ team, playersToAdd }) => (
+						<ActionButton
+							key={team.id}
+							schema={addTeamPlayersSchema}
+							action="ADD_TEAM_PLAYERS"
+							fields={{ teamId: team.id }}
+							size="small"
+							variant="outlined"
+							icon={<UsersRound />}
+							testId={`add-team-players-button-${team.id}`}
+							confirm={{
+								dialogHeading: t(
+									"tournament:pre.roster.quickAdd.addAll.confirm",
+									{ team: team.name },
+								),
+								description: playersToAdd
+									.map((player) => player.username)
+									.join(", "),
+								submitButtonText: t("common:actions.add"),
+							}}
+						>
+							{t("tournament:pre.roster.quickAdd.addAll", {
+								team: team.name,
+							})}
+						</ActionButton>
+					))}
+				</div>
+			) : null}
+		</div>
 	);
 }
 

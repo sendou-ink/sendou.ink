@@ -77,6 +77,51 @@ test.describe("Tournament", () => {
 		).toBeVisible();
 	});
 
+	test("quick adds all of the team's players at once", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, slayer, support, coach] =
+			await factories.UserFactory.createMany(4);
+		const team = await factories.TeamFactory.create(
+			{ memberUserIds: [captain.id, slayer.id, support.id, coach.id] },
+			{
+				roles: {
+					[slayer.id]: "SLAYER",
+					[support.id]: "SUPPORT",
+					[coach.id]: "COACH",
+				},
+			},
+		);
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+
+		await impersonate(page, captain.id);
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+		await expect(register.member(1)).toBeVisible();
+
+		// teammates are offered in the quick add, grouped under the team
+		await register.openQuickAdd();
+		await expect(register.availabilityRow(slayer.id)).toBeVisible();
+		await expect(register.availabilityRow(coach.id)).toBeVisible();
+		await page.keyboard.press("Escape");
+
+		await register.addAllTeamPlayers(team.id);
+
+		await expect(register.member(2)).toBeVisible();
+		await expect(register.member(3)).toBeVisible();
+		// the coach is not part of the competitive lineup
+		await isNotVisible(register.member(4));
+	});
+
 	test("shows the roster's availability for the event window", async ({
 		page,
 		factories,

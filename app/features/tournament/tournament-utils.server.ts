@@ -15,17 +15,25 @@ export async function requireNotBannedByOrganization({
 	user: { id: number };
 	message?: string;
 }) {
-	if (!tournament.ctx.organization) return;
-
-	const isBanned =
-		await TournamentOrganizationRepository.isUserBannedByOrganization({
-			organizationId: tournament.ctx.organization.id,
-			userId: user.id,
-		});
-
-	if (isBanned) {
+	if (await isBannedByOrganization({ tournament, userId: user.id })) {
 		errorToast(message);
 	}
+}
+
+/** Whether the user is banned by the organization hosting the tournament (`false` if the tournament has no organization). */
+export async function isBannedByOrganization({
+	tournament,
+	userId,
+}: {
+	tournament: Tournament;
+	userId: number;
+}) {
+	if (!tournament.ctx.organization) return false;
+
+	return TournamentOrganizationRepository.isUserBannedByOrganization({
+		organizationId: tournament.ctx.organization.id,
+		userId,
+	});
 }
 
 /**
@@ -57,15 +65,23 @@ export async function requireSendouQParticipationIfNeeded({
 	tournament: Tournament;
 	userId: number;
 }) {
-	if (!tournament.ctx.settings.requireSendouQParticipation) return;
-
-	const hasEnough =
-		await LeaderboardRepository.hasEnoughSqMatchesByUserId(userId);
-
 	errorToastIfFalsy(
-		hasEnough,
+		await fulfillsSendouQParticipation({ tournament, userId }),
 		`Must have played ${MATCHES_COUNT_NEEDED_FOR_LEADERBOARD} SendouQ matches this season to join`,
 	);
+}
+
+/** Whether the user fulfills the tournament's SendouQ participation requirement (`true` if the tournament has none). */
+export async function fulfillsSendouQParticipation({
+	tournament,
+	userId,
+}: {
+	tournament: Tournament;
+	userId: number;
+}) {
+	if (!tournament.ctx.settings.requireSendouQParticipation) return true;
+
+	return LeaderboardRepository.hasEnoughSqMatchesByUserId(userId);
 }
 
 /**

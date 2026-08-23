@@ -6,8 +6,10 @@ import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import { getMemberRoleType } from "~/features/team/team-utils";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
@@ -25,6 +27,8 @@ import {
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import {
+	fulfillsSendouQParticipation,
+	isBannedByOrganization,
 	requireNotBannedByOrganization,
 	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
@@ -304,45 +308,74 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			ChatSystemMessage.notifyRoomsChanged([
-				...(await TournamentLFGRepository.leaveLfg({
-					userId: data.userId,
-					tournamentId,
-				})),
-				...(await TournamentTeamRepository.join({
-					userId: data.userId,
-					newTeamId: ownTeam.id,
-				})),
-			]);
-
-			await SavedCalendarEventRepository.unsaveByUserId({
-				userId: data.userId,
+			await addPlayerToOwnTeam({
+				tournament,
 				tournamentId,
-			});
-
-			ShowcaseTournaments.addToCached({
-				tournamentId,
-				type: "participant",
+				ownTeam,
+				adder: user,
 				userId: data.userId,
 			});
+
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
-			if (!tournament.isTest && !tournament.isDraft) {
-				notify({
-					userIds: [data.userId],
-					notification: {
-						type: "TO_ADDED_TO_TEAM",
-						meta: {
-							adderUsername: user.username,
-							tournamentId,
-							teamName: ownTeam.name,
-							tournamentName: tournament.ctx.name,
-							tournamentTeamId: ownTeam.id,
-						},
-						pictureUrl: tournament.ctx.logoUrl,
-					},
+			break;
+		}
+		case "ADD_TEAM_PLAYERS": {
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
+
+			const friendPlayers = await SQGroupRepository.findFriendsAndTeammates(
+				user.id,
+			);
+			errorToastIfFalsy(
+				friendPlayers.teams.some((team) => team.id === data.teamId),
+				"Team id does not match any of the teams you are in",
+			);
+
+			const candidates = friendPlayers.friends.filter(
+				(friendPlayer) =>
+					friendPlayer.teamId === data.teamId &&
+					getMemberRoleType(friendPlayer) !== "OTHER" &&
+					tournament.ctx.teams.every(
+						(team) => !team.memberUserIds.includes(friendPlayer.id),
+					) &&
+					(!tournament.ctx.settings.requireInGameNames ||
+						friendPlayer.inGameName),
+			);
+			errorToastIfFalsy(candidates.length > 0, "No players to add");
+
+			const spotsLeft =
+				tournament.maxMembersPerTeam - ownTeam.memberUserIds.length;
+
+			let addedCount = 0;
+			for (const candidate of candidates) {
+				if (addedCount >= spotsLeft) break;
+
+				const eligible =
+					(await UserRepository.findLeanById(candidate.id))?.friendCode &&
+					!(await isBannedByOrganization({
+						tournament,
+						userId: candidate.id,
+					})) &&
+					(await fulfillsSendouQParticipation({
+						tournament,
+						userId: candidate.id,
+					}));
+				if (!eligible) continue;
+
+				await addPlayerToOwnTeam({
+					tournament,
+					tournamentId,
+					ownTeam,
+					adder: user,
+					userId: candidate.id,
 				});
+				addedCount++;
 			}
+
+			errorToastIfFalsy(addedCount > 0, "No players could be added");
+
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			break;
 		}
@@ -385,3 +418,56 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return null;
 };
+
+async function addPlayerToOwnTeam({
+	tournament,
+	tournamentId,
+	ownTeam,
+	adder,
+	userId,
+}: {
+	tournament: Tournament;
+	tournamentId: number;
+	ownTeam: { id: number; name: string };
+	adder: { username: string };
+	userId: number;
+}) {
+	ChatSystemMessage.notifyRoomsChanged([
+		...(await TournamentLFGRepository.leaveLfg({
+			userId,
+			tournamentId,
+		})),
+		...(await TournamentTeamRepository.join({
+			userId,
+			newTeamId: ownTeam.id,
+		})),
+	]);
+
+	await SavedCalendarEventRepository.unsaveByUserId({
+		userId,
+		tournamentId,
+	});
+
+	ShowcaseTournaments.addToCached({
+		tournamentId,
+		type: "participant",
+		userId,
+	});
+
+	if (!tournament.isTest && !tournament.isDraft) {
+		notify({
+			userIds: [userId],
+			notification: {
+				type: "TO_ADDED_TO_TEAM",
+				meta: {
+					adderUsername: adder.username,
+					tournamentId,
+					teamName: ownTeam.name,
+					tournamentName: tournament.ctx.name,
+					tournamentTeamId: ownTeam.id,
+				},
+				pictureUrl: tournament.ctx.logoUrl,
+			},
+		});
+	}
+}

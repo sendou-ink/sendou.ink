@@ -6,7 +6,11 @@ import {
 	counterpickMap,
 	pickCounterpickMaps,
 } from "../../helpers/counterpick-map-pool";
-import { navigate, submit } from "../../helpers/playwright";
+import {
+	modalClickConfirmButton,
+	navigate,
+	submit,
+} from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { TournamentNav } from "./tournament-nav";
 
@@ -66,6 +70,12 @@ export class TournamentRegisterPage {
 
 	addPlayer() {
 		return submit(this.page, "add-player-button");
+	}
+
+	/** Adds every player-role member of the sendou.ink team via the quick add all button, confirming the dialog. */
+	async addAllTeamPlayers(teamId: number) {
+		await this.page.getByTestId(`add-team-players-button-${teamId}`).click();
+		await modalClickConfirmButton(this.page);
 	}
 
 	/** Picks the required amount of counterpick maps for every mode, skipping banned ones. */
