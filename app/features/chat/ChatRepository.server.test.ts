@@ -2,8 +2,10 @@ import { addDays, subDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as ChatMessageFactory from "~/db/seed/factories/ChatMessageFactory";
 import * as ChatRoomFactory from "~/db/seed/factories/ChatRoomFactory";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import invariant from "~/utils/invariant";
 import * as ChatRepository from "./ChatRepository.server";
 
 const users = UserFactory.pool();
@@ -324,6 +326,41 @@ describe("ChatRepository.closeExpiredRooms", () => {
 		expect(closedAgainCount).toBe(0);
 	});
 });
+
+describe("ChatRepository.deleteOrphanedRooms", () => {
+	test("deletes a room no owner points at", async () => {
+		const orphanedRoom = await ChatRoomFactory.create();
+
+		const deletedCount = await ChatRepository.deleteOrphanedRooms();
+
+		expect(deletedCount).toBe(1);
+		await expect(roomById(orphanedRoom.id)).rejects.toThrow();
+	});
+
+	test("keeps a room its owner still points at", async () => {
+		const group = await SQGroupFactory.create({
+			memberUserIds: [users.id(1)],
+		});
+		const chatRoomId = await groupChatRoomId(group.id);
+
+		const deletedCount = await ChatRepository.deleteOrphanedRooms();
+
+		expect(deletedCount).toBe(0);
+		expect((await roomById(chatRoomId)).id).toBe(chatRoomId);
+	});
+});
+
+const groupChatRoomId = async (groupId: number) => {
+	const group = await db
+		.selectFrom("Group")
+		.select("Group.chatRoomId")
+		.where("Group.id", "=", groupId)
+		.executeTakeFirstOrThrow();
+
+	invariant(group.chatRoomId, "Group has no chat room");
+
+	return group.chatRoomId;
+};
 
 const readIndicator = (userId: number, roomId: number) =>
 	db

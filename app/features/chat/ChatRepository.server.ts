@@ -220,6 +220,45 @@ export async function closeExpiredRooms(expiredBefore: Date) {
 	return Number(result.numUpdatedRows);
 }
 
+/** Deletes rooms no owner row points at any more, returning how many. Backstop for owner deletes that missed their room. */
+export async function deleteOrphanedRooms() {
+	const result = await db
+		.deleteFrom("ChatRoom")
+		.where((eb) =>
+			eb.and([
+				noOwner(eb, "Group"),
+				noOwner(eb, "GroupMatch"),
+				noOwner(eb, "TournamentMatch"),
+				noOwner(eb, "TournamentTeam"),
+				noOwner(eb, "ScrimPost"),
+			]),
+		)
+		.executeTakeFirst();
+
+	return Number(result.numDeletedRows);
+}
+
+type ChatRoomOwnerTable =
+	| "Group"
+	| "GroupMatch"
+	| "TournamentMatch"
+	| "TournamentTeam"
+	| "ScrimPost";
+
+function noOwner(
+	eb: ExpressionBuilder<DB, "ChatRoom">,
+	table: ChatRoomOwnerTable,
+) {
+	return eb.not(
+		eb.exists(
+			eb
+				.selectFrom(table)
+				.select(sql<number>`1`.as("one"))
+				.whereRef(`${table}.chatRoomId`, "=", "ChatRoom.id"),
+		),
+	);
+}
+
 function messageWithAuthorSelect(eb: ExpressionBuilder<DB, "ChatMessage">) {
 	return [
 		"ChatMessage.id",
