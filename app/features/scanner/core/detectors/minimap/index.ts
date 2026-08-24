@@ -769,16 +769,21 @@ export function createMinimapDetector(
 		];
 	}
 
-	// sufficientConfidence sits just under the measured clean-read floor
-	// (fixtures 0.746-0.800; confirmed scan events reach down to 0.699, and
-	// those below the floor fall back to stagnation). The refine override
-	// matters here because a map-open's confidence keeps fluctuating upward,
-	// resetting the stagnation counter — without it a ~0.9s parse runs at
-	// the dense cadence for the whole map-open
+	// sufficientConfidence sits just under the lowest confirmed scan read
+	// (fixtures 0.746-0.800; confirmed scan events reach down to 0.699), so
+	// nearly every real overlay suppresses after one parse. Reads below it
+	// would fall back to stagnation, but a map-open's confidence keeps
+	// fluctuating upward, resetting the stagnation counter — on the live
+	// capture that ran the ~4s browser parse over and over until the worker
+	// starved the frame queue and whole match stretches were never analyzed
+	// (2026-08-23 Mincemeat: the last 95s of counter reads lost). The rearm
+	// cooldown covers the overlay's flicker the same way death's does: a
+	// gate blink otherwise clears the suppression and re-runs the parse.
 	return {
 		id: "minimap",
 		refineIntervalS: 0.4,
-		sufficientConfidence: 0.73,
+		sufficientConfidence: 0.69,
+		rearmCooldownS: 5,
 		gate,
 		parse,
 	};

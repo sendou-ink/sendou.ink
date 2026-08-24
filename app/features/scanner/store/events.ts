@@ -4,14 +4,29 @@
  * per event for the feed; the full-res analyzed PNG lives in the separate
  * `frames` store under the same id (loaded on demand via loadEventFrame),
  * so listing the feed never deserializes megabytes of blobs. The store is
- * capped: saving past MAX_EVENTS evicts the oldest events and their frames.
+ * capped: saving past MAX_EVENTS evicts the oldest events and their frames,
+ * and past MAX_FRAMES the oldest frames alone (the events stay, marked
+ * frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
 import { db, EVENTS_STORE, FRAMES_STORE, tx } from "./db";
 
-/** Oldest events (and their frames) are evicted past this count. */
-const MAX_EVENTS = 1000;
+/**
+ * Oldest events are evicted past this count. Counter/status reads land ~2.2
+ * events a second of match time, so a cap must hold a whole session — at
+ * 1000 the store rolled over in ~8 minutes and evicted matches before they
+ * were ever sent (2026-08-23: Mahi-Mahi reached sendou.ink with no data).
+ * Events are small; the full-res frames are capped separately below.
+ */
+const MAX_EVENTS = 10_000;
+
+/**
+ * Oldest full-res frame PNGs (~1-2MB each) are evicted past this count,
+ * independently of their events — the event keeps its thumbnail and data,
+ * only "Save fixture" loses the byte-exact frame.
+ */
+const MAX_FRAMES = 200;
 
 /** Where an event stands with sendou.ink /ingest; absent = never attempted. */
 export interface SendStatus {
@@ -99,6 +114,27 @@ function evictOldest(events: IDBObjectStore, frames: IDBObjectStore): void {
 			if (!c || excess <= 0) return;
 			frames.delete(c.primaryKey);
 			c.delete();
+			excess--;
+			if (excess > 0) c.continue();
+		};
+	};
+	const frameCount = frames.count();
+	frameCount.onsuccess = () => {
+		let excess = frameCount.result - MAX_FRAMES;
+		if (excess <= 0) return;
+		const cursor = frames.openKeyCursor(); // ascending id = oldest first
+		cursor.onsuccess = () => {
+			const c = cursor.result;
+			if (!c || excess <= 0) return;
+			const id = c.primaryKey;
+			frames.delete(id);
+			const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
+			get.onsuccess = () => {
+				const record = get.result;
+				if (!record?.hasFrame) return;
+				record.hasFrame = false;
+				events.put(record);
+			};
 			excess--;
 			if (excess > 0) c.continue();
 		};
