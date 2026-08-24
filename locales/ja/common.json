@@ -88,6 +88,8 @@
 	"notifications.text.TAGGED_TO_ART": "{{adderUsername}}がイラストにあなたをタグ付けしました",
 	"notifications.title.SEASON_STARTED": "新シーズン開幕",
 	"notifications.text.SEASON_STARTED": "SendouQシーズン{{seasonNth}}が始まりました",
+	"notifications.title.SEASON_ENDED": "",
+	"notifications.text.SEASON_ENDED": "",
 	"notifications.title.SCRIM_NEW_REQUEST": "対抗戦申し込み",
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}}が対抗戦を申し込みました",
 	"notifications.title.SCRIM_SCHEDULED": "対抗戦が見つかりました",

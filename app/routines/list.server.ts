@@ -13,6 +13,7 @@ import { ExpireReadyChecksRoutine } from "./expireReadyChecks";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
+import { NotifySeasonEndRoutine } from "./notifySeasonEnd";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
 import { OptimizeDatabaseRoutine } from "./optimizeDatabase";
 import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
@@ -45,6 +46,7 @@ export const everyHourAt30 = [
 
 /** List of Routines that should occur daily */
 export const daily = [
+	NotifySeasonEndRoutine,
 	DeleteObsoleteMatchVodsRoutine,
 	DeleteOldNotificationsRoutine,
 	DeleteOldPendingFriendRequestsRoutine,

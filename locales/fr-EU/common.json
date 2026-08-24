@@ -88,6 +88,8 @@
 	"notifications.text.TAGGED_TO_ART": "Vous avez été taguer par {{adderUsername}} dans une œuvre",
 	"notifications.title.SEASON_STARTED": "Nouvelle saison ouvert !",
 	"notifications.text.SEASON_STARTED": "SendouQ réouvre pour la saison {{seasonNth}}",
+	"notifications.title.SEASON_ENDED": "",
+	"notifications.text.SEASON_ENDED": "",
 	"notifications.title.SCRIM_NEW_REQUEST": "Nouvelle Demande De Scrim",
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} vous demande de scrim",
 	"notifications.title.SCRIM_SCHEDULED": "Scrim Programmé",

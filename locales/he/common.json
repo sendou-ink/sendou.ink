@@ -88,6 +88,8 @@
 	"notifications.text.TAGGED_TO_ART": "",
 	"notifications.title.SEASON_STARTED": "",
 	"notifications.text.SEASON_STARTED": "",
+	"notifications.title.SEASON_ENDED": "",
+	"notifications.text.SEASON_ENDED": "",
 	"notifications.title.SCRIM_NEW_REQUEST": "",
 	"notifications.text.SCRIM_NEW_REQUEST": "",
 	"notifications.title.SCRIM_SCHEDULED": "",

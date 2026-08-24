@@ -88,6 +88,8 @@
 	"notifications.text.TAGGED_TO_ART": "{{adderUsername}} 在作品中标记了您",
 	"notifications.title.SEASON_STARTED": "新赛季已开始",
 	"notifications.text.SEASON_STARTED": "SendouQ 第 {{seasonNth}} 赛季现已重新开启",
+	"notifications.title.SEASON_ENDED": "",
+	"notifications.text.SEASON_ENDED": "",
 	"notifications.title.SCRIM_NEW_REQUEST": "收到新对抗战请求",
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} 向您发起了对抗战请求",
 	"notifications.title.SCRIM_SCHEDULED": "对抗战已安排到日程",

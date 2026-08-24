@@ -88,6 +88,8 @@
 	"notifications.text.TAGGED_TO_ART": "Вы были отмечены в арте пользователя {{adderUsername}}",
 	"notifications.title.SEASON_STARTED": "Новый Сезон Стартовал",
 	"notifications.text.SEASON_STARTED": "SendouQ снова открыт в сезон {{seasonNth}}",
+	"notifications.title.SEASON_ENDED": "",
+	"notifications.text.SEASON_ENDED": "",
 	"notifications.title.SCRIM_NEW_REQUEST": "Новый Скрим Запрос",
 	"notifications.text.SCRIM_NEW_REQUEST": "{{fromUsername}} запросил скрим",
 	"notifications.title.SCRIM_SCHEDULED": "Скрим Запланирован",

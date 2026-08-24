@@ -88,6 +88,8 @@
 	"notifications.text.TAGGED_TO_ART": "Taggato/a in un art di {{adderUsername}}",
 	"notifications.title.SEASON_STARTED": "Nuova stagione iniziata",
 	"notifications.text.SEASON_STARTED": "SendouQ è di nuovo aperto per la stagione {{seasonNth}}",
+	"notifications.title.SEASON_ENDED": "",
+	"notifications.text.SEASON_ENDED": "",
 	"notifications.title.SCRIM_NEW_REQUEST": "",
 	"notifications.text.SCRIM_NEW_REQUEST": "",
 	"notifications.title.SCRIM_SCHEDULED": "",

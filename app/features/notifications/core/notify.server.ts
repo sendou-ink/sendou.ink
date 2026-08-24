@@ -4,7 +4,7 @@ import { type Urgency, WebPushError } from "web-push";
 import type { NotificationSubscription } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
-import { APP_ICON_URL } from "~/utils/urls";
+import { APP_ICON_URL, type UserLinkArgs } from "~/utils/urls";
 import { getFixedTForLanguage } from "../../../modules/i18n/i18next.server";
 import { logger } from "../../../utils/logger";
 import * as NotificationRepository from "../NotificationRepository.server";
@@ -31,6 +31,7 @@ const NOTIFICATION_URGENCY: Record<Notification["type"], Urgency> = {
 	PLUS_SUGGESTION_ADDED: "normal",
 	TAGGED_TO_ART: "normal",
 	SEASON_STARTED: "normal",
+	SEASON_ENDED: "normal",
 	SCRIM_NEW_REQUEST: "high",
 	SCRIM_SCHEDULED: "high",
 	SCRIM_CANCELED: "high",
@@ -134,12 +135,13 @@ async function sendPushNotificationsToUnseen({
 	const limit = pLimit(50);
 
 	await Promise.all(
-		subscriptions.map(({ id, subscription }) =>
+		subscriptions.map(({ id, subscription, discordId, customUrl }) =>
 			limit(() =>
 				sendPushNotification({
 					subscription,
 					subscriptionId: id,
 					notification,
+					recipient: { discordId, customUrl },
 					t,
 				}),
 			),
@@ -191,17 +193,19 @@ async function sendPushNotification({
 	subscription,
 	subscriptionId,
 	notification,
+	recipient,
 	t,
 }: {
 	subscription: NotificationSubscription;
 	subscriptionId: number;
 	notification: Notification;
+	recipient: UserLinkArgs;
 	t: TFunction<["common"], undefined>;
 }) {
 	try {
 		await webPush.sendNotification(
 			subscription,
-			JSON.stringify(pushNotificationOptions(notification, t)),
+			JSON.stringify(pushNotificationOptions(notification, recipient, t)),
 			{ urgency: NOTIFICATION_URGENCY[notification.type] },
 		);
 	} catch (err) {
@@ -218,6 +222,7 @@ async function sendPushNotification({
 
 function pushNotificationOptions(
 	notification: Notification,
+	recipient: UserLinkArgs,
 	t: TFunction<["common"], undefined>,
 ): Parameters<ServiceWorkerRegistration["showNotification"]>[1] & {
 	title: string;
@@ -229,6 +234,6 @@ function pushNotificationOptions(
 			notificationMeta(notification),
 		),
 		icon: notification.pictureUrl ?? APP_ICON_URL,
-		data: { url: notificationLink(notification) },
+		data: { url: notificationLink(notification, recipient) },
 	};
 }

@@ -40,6 +40,7 @@ const RESOLUTION_TRIGGERS = {
 	PLUS_SUGGESTION_ADDED: "visits the suggestions page of the tier",
 	TAGGED_TO_ART: null,
 	SEASON_STARTED: null,
+	SEASON_ENDED: null,
 	SCRIM_NEW_REQUEST:
 		"a request for the post is accepted (settling the post), the request is canceled by its sender, or the post is deleted",
 	SCRIM_SCHEDULED: "visits the scrim's page, or the scrim gets canceled",

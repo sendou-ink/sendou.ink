@@ -3,6 +3,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Image } from "~/components/Image";
 import type { LoaderNotification } from "~/components/layout/NotificationPopover";
+import { useUser } from "~/features/auth/core/user";
 import {
 	notificationLink,
 	notificationMeta,
@@ -24,10 +25,11 @@ export function NotificationItem({
 	onClose?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
+	const user = useUser();
 
 	return (
 		<Link
-			to={notificationLink(notification)}
+			to={notificationLink(notification, user)}
 			className={styles.item}
 			data-testid="notification-item"
 			onClick={onClose}

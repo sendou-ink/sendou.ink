@@ -134,6 +134,7 @@ async function seedNotifications(
 	const notifications: Notification[] = [
 		{ type: "PLUS_SUGGESTION_ADDED", meta: { tier: 1 } },
 		{ type: "SEASON_STARTED", meta: { seasonNth: 1 } },
+		{ type: "SEASON_ENDED", meta: { seasonNth: 0 } },
 		{
 			type: "TO_ADDED_TO_TEAM",
 			meta: {

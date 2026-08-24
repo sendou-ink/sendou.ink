@@ -195,9 +195,12 @@ export function findUnseenSubscriptionsByNotificationId(
 			"NotificationUserSubscription.userId",
 			"NotificationUser.userId",
 		)
+		.innerJoin("User", "User.id", "NotificationUser.userId")
 		.select([
 			"NotificationUserSubscription.id",
 			"NotificationUserSubscription.subscription",
+			"User.discordId",
+			"User.customUrl",
 		])
 		.where("NotificationUser.notificationId", "=", notificationId)
 		.where("NotificationUser.seen", "=", 0)

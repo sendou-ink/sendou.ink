@@ -71,6 +71,7 @@ export type Notification =
 			{ adderUsername: string; adderDiscordId: string; artId: number }
 	  >
 	| NotificationItem<"SEASON_STARTED", { seasonNth: number }>
+	| NotificationItem<"SEASON_ENDED", { seasonNth: number }>
 	| NotificationItem<
 			"SCRIM_NEW_REQUEST",
 			{ fromUserId: number; fromUsername: string; scrimPostId: number }
