@@ -21,6 +21,7 @@ import {
 	SENDOUQ_LOOKING_ROOM,
 	sqGroupWebsocketRoom,
 } from "../q-constants";
+import { pinClockInsideSeason } from "../tests/season-clock";
 import * as ReadyCheck from "./ready-check.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -86,6 +87,8 @@ const confirmEveryoneReady = async (groupId: number) => {
 };
 
 describe("SendouQ ready check", () => {
+	pinClockInsideSeason();
+
 	let groups: Awaited<ReturnType<typeof setupMatchedUpGroups>>;
 
 	beforeEach(async () => {
