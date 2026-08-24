@@ -10,11 +10,8 @@ import {
 	refreshSendouQInstance,
 	SendouQ,
 } from "~/features/sendouq/core/SendouQ.server";
-import { SENDOUQ_LOOKING_ROOM } from "~/features/sendouq/q-constants";
-import {
-	SendouQError,
-	setGroupChatMetadata,
-} from "~/features/sendouq/q-utils.server";
+import { SENDOUQ_LOOKING_CHANNEL } from "~/features/sendouq/q-constants";
+import { SendouQError } from "~/features/sendouq/q-utils.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as GroupMatchContinueVoteRepository from "~/features/sendouq-match/GroupMatchContinueVoteRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
@@ -107,7 +104,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						});
 					} else {
 						ChatSystemMessage.send({
-							room: EventBus.chatRoomChannel(match.chatRoomId),
+							channel: EventBus.chatRoomChannel(match.chatRoomId),
 							revalidateOnly: true,
 						});
 					}
@@ -153,24 +150,16 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				// the successor group carries the chat room over, extend its expiry
-				if (previousGroup.chatRoomId) {
-					setGroupChatMetadata({
-						chatRoomId: previousGroup.chatRoomId,
-						members: previousGroup.members,
-					});
-				}
-
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
 
 				// The group re-enters the looking pool, so refresh every looking client.
 				ChatSystemMessage.send({
-					room: SENDOUQ_LOOKING_ROOM,
+					channel: SENDOUQ_LOOKING_CHANNEL,
 					revalidateOnly: true,
 				});
 
@@ -241,15 +230,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 					await refreshSendouQInstance();
 
-					// the successor group carries the chat room over; sync the room to
-					// the continuing members and extend its expiry
-					if (viewerGroup.chatRoomId && survivors.length > 0) {
-						setGroupChatMetadata({
-							chatRoomId: viewerGroup.chatRoomId,
-							members: survivors,
-						});
-					}
-
 					// non-continuing members lose the group room
 					ChatSystemMessage.notifyRoomsChanged(
 						viewerGroup.members.map((member) => member.id),
@@ -258,14 +238,14 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					// The continuing group re-enters the looking pool, so refresh
 					// every looking client.
 					ChatSystemMessage.send({
-						room: SENDOUQ_LOOKING_ROOM,
+						channel: SENDOUQ_LOOKING_CHANNEL,
 						revalidateOnly: true,
 					});
 				}
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -307,7 +287,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -331,7 +311,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}
@@ -416,7 +396,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: EventBus.chatRoomChannel(match.chatRoomId),
 						revalidateOnly: true,
 					});
 				}

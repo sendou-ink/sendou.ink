@@ -1264,9 +1264,6 @@ export function buildCases(fx: Fixtures): {
 	addStatic("UserRepository.findAllPlusServerMembers", () =>
 		UserRepository.findAllPlusServerMembers(),
 	);
-	add("UserRepository.findChatUsersByUserIds", fx.manyUserIds, (userIds) =>
-		UserRepository.findChatUsersByUserIds(userIds),
-	);
 	add("UserRepository.findResultsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findResultsByUserId(user.id, {}),
 	);

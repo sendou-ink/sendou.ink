@@ -12,8 +12,8 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-action-schemas";
-import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
+import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
+import { SendouQError } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -38,7 +38,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await refreshSendouQInstance();
 
 				ChatSystemMessage.send({
-					room: SENDOUQ_LOOKING_ROOM,
+					channel: SENDOUQ_LOOKING_CHANNEL,
 					revalidateOnly: true,
 				});
 
@@ -68,7 +68,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
+						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
 						revalidateOnly: true,
 					});
 				}
@@ -76,12 +76,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				await refreshSendouQInstance();
 
 				const updatedGroup = SendouQ.findOwnGroup(user.id);
-				if (updatedGroup?.chatRoomId) {
-					setGroupChatMetadata({
-						chatRoomId: updatedGroup.chatRoomId,
-						members: updatedGroup.members,
-					});
-				}
 
 				ChatSystemMessage.notifyRoomsChanged(
 					updatedGroup
@@ -90,7 +84,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				);
 
 				ChatSystemMessage.send({
-					room: sqGroupWebsocketRoom(ownGroup.id),
+					channel: sqGroupChannel(ownGroup.id),
 					revalidateOnly: true,
 				});
 

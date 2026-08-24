@@ -30,7 +30,7 @@ import {
 	tournamentFromParams,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas";
-import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
+import { tournamentChannel } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -336,7 +336,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([
 			{
-				room: tournamentWebsocketRoom(tournament.ctx.id),
+				channel: tournamentChannel(tournament.ctx.id),
 				revalidateOnly: true,
 			},
 		]);

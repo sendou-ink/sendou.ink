@@ -119,7 +119,6 @@ export default defineConfig((config) => {
 				"mediabunny",
 				"nanoid",
 				"openskill",
-				"partysocket",
 				"picocad2-web",
 				"qrcode.react",
 				"react-chartjs-2",

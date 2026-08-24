@@ -12,7 +12,7 @@ export const CloseExpiredContinueVotesRoutine = new Routine({
 
 		for (const roomId of new Set(chatRoomIdsToRevalidate)) {
 			ChatSystemMessage.send({
-				room: EventBus.chatRoomChannel(roomId),
+				channel: EventBus.chatRoomChannel(roomId),
 				revalidateOnly: true,
 			});
 		}

@@ -1,6 +1,4 @@
 import type { ActionFunction } from "react-router";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -9,13 +7,11 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
@@ -170,11 +166,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			await syncPickupChatMetadata({
-				teamId: ownTeam.id,
-				tournament: pickupChatTournament(tournament),
-			});
 			break;
 		}
 		case "LEAVE_TEAM": {
@@ -209,11 +200,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: user.id,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			await syncPickupChatMetadata({
-				teamId: teamMemberOf.id,
-				tournament: pickupChatTournament(tournament),
-			});
 
 			break;
 		}
@@ -323,11 +309,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
-			await syncPickupChatMetadata({
-				teamId: ownTeam.id,
-				tournament: pickupChatTournament(tournament),
-			});
-
 			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
 					userIds: [data.userId],
@@ -358,16 +339,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
-			const pickupChatTeam =
-				await TournamentLFGRepository.findPickupChatTeamById(ownTeam.id);
-
 			await TournamentTeamRepository.deleteById(ownTeam.id);
-
-			if (pickupChatTeam) {
-				ChatSystemMessage.removeRoom(
-					EventBus.chatRoomChannel(pickupChatTeam.chatRoomId),
-				);
-			}
 
 			for (const userId of ownTeam.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
@@ -389,12 +361,3 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return null;
 };
-
-function pickupChatTournament(tournament: Tournament) {
-	return {
-		id: tournament.ctx.id,
-		name: tournament.ctx.name,
-		logoUrl: tournament.ctx.logoUrl,
-		startTime: tournament.ctx.startsAt,
-	};
-}

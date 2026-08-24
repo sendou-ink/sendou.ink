@@ -2,10 +2,6 @@ import { logger } from "~/utils/logger";
 import { soundPath } from "~/utils/urls";
 import type { SystemMessageType } from "./chat-types";
 
-export function datePlaceholder(date: Date): string {
-	return `{{date:${date.getTime()}}}`;
-}
-
 export function messageTypeToSound(type: SystemMessageType | undefined) {
 	if (type === "LIKE_RECEIVED") return "sq_like";
 	if (type === "MATCH_STARTED") return "sq_match";

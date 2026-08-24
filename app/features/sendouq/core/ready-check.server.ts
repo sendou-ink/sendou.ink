@@ -13,11 +13,10 @@ import { refreshStreamsCache } from "~/features/sendouq-streams/core/streams.ser
 import { databaseTimestampToDate } from "~/utils/dates";
 import {
 	SENDOUQ,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
 } from "../q-constants";
 import { resolveFutureMatchModes } from "../q-utils";
-import { setGroupChatMetadata, setMatchChatMetadata } from "../q-utils.server";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
 export type ReadyCheck = NonNullable<
@@ -65,32 +64,22 @@ export async function start({
 
 	await refreshSendouQInstance();
 
-	// extend the group chat rooms' expiry so they last through the match
-	for (const group of [ownGroup, theirGroup]) {
-		if (group.chatRoomId) {
-			setGroupChatMetadata({
-				chatRoomId: group.chatRoomId,
-				members: group.members,
-			});
-		}
-	}
-
 	// Both groups revalidate (→ sent to the ready check by their looking loader)
 	// and play the ready check sound. Sent to the groups' topics so it reaches
 	// every member reliably, not just live chat participants.
 	ChatSystemMessage.send([
 		{
-			room: sqGroupWebsocketRoom(ownGroup.id),
+			channel: sqGroupChannel(ownGroup.id),
 			type: "READY_CHECK_STARTED",
 			revalidateOnly: true,
 		},
 		{
-			room: sqGroupWebsocketRoom(theirGroup.id),
+			channel: sqGroupChannel(theirGroup.id),
 			type: "READY_CHECK_STARTED",
 			revalidateOnly: true,
 		},
 		{
-			room: SENDOUQ_LOOKING_ROOM,
+			channel: SENDOUQ_LOOKING_CHANNEL,
 			revalidateOnly: true,
 		},
 	]);
@@ -199,7 +188,7 @@ async function endReadyCheck(
 	revalidateGroups(readyCheck);
 	// both groups return to the looking pool, so its shape changed for everyone
 	ChatSystemMessage.send({
-		room: SENDOUQ_LOOKING_ROOM,
+		channel: SENDOUQ_LOOKING_CHANNEL,
 		revalidateOnly: true,
 	});
 }
@@ -245,27 +234,19 @@ async function createMatch({
 	await refreshSendouQInstance();
 	refreshStreamsCache();
 
-	if (createdMatch.chatRoomId) {
-		setMatchChatMetadata({
-			id: createdMatch.id,
-			chatRoomId: createdMatch.chatRoomId,
-			participantUserIds: readyCheck.members.map((member) => member.userId),
-		});
-	}
-
 	ChatSystemMessage.send([
 		{
-			room: sqGroupWebsocketRoom(readyCheck.alphaGroupId),
+			channel: sqGroupChannel(readyCheck.alphaGroupId),
 			type: "MATCH_STARTED",
 			revalidateOnly: true,
 		},
 		{
-			room: sqGroupWebsocketRoom(readyCheck.bravoGroupId),
+			channel: sqGroupChannel(readyCheck.bravoGroupId),
 			type: "MATCH_STARTED",
 			revalidateOnly: true,
 		},
 		{
-			room: SENDOUQ_LOOKING_ROOM,
+			channel: SENDOUQ_LOOKING_CHANNEL,
 			revalidateOnly: true,
 		},
 	]);
@@ -296,11 +277,11 @@ function revalidateGroups(readyCheck: {
 }) {
 	ChatSystemMessage.send([
 		{
-			room: sqGroupWebsocketRoom(readyCheck.alphaGroupId),
+			channel: sqGroupChannel(readyCheck.alphaGroupId),
 			revalidateOnly: true,
 		},
 		{
-			room: sqGroupWebsocketRoom(readyCheck.bravoGroupId),
+			channel: sqGroupChannel(readyCheck.bravoGroupId),
 			revalidateOnly: true,
 		},
 	]);

@@ -23,14 +23,10 @@ import {
 	sqRedirectIfNeeded,
 } from "../core/SendouQ.server";
 import { frontPageSchema } from "../q-action-schemas";
-import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
+import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
 import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
-import {
-	SendouQError,
-	seasonInitialSkillsExist,
-	setGroupChatMetadata,
-} from "../q-utils.server";
+import { SendouQError, seasonInitialSkillsExist } from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
@@ -62,7 +58,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
+						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
 						revalidateOnly: true,
 					});
 				}
@@ -73,7 +69,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 				// refresh every looking client. (A PREPARING group isn't in the pool.)
 				if (data.direct === "true") {
 					ChatSystemMessage.send({
-						room: SENDOUQ_LOOKING_ROOM,
+						channel: SENDOUQ_LOOKING_CHANNEL,
 						revalidateOnly: true,
 					});
 				}
@@ -103,26 +99,18 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
+						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
 						revalidateOnly: true,
 					});
 				}
 
 				await refreshSendouQInstance();
 
-				const joinedGroup = SendouQ.findOwnGroup(user.id);
-				if (joinedGroup?.chatRoomId) {
-					setGroupChatMetadata({
-						chatRoomId: joinedGroup.chatRoomId,
-						members: joinedGroup.members,
-					});
-				}
-
 				if (groupInvitedTo.status === "PREPARING") {
 					// A preparing group isn't in the pool, so notify just its existing
 					// members (on the preparing page) via the group topic.
 					ChatSystemMessage.send({
-						room: sqGroupWebsocketRoom(groupInvitedTo.id),
+						channel: sqGroupChannel(groupInvitedTo.id),
 						revalidateOnly: true,
 					});
 				} else {
@@ -130,7 +118,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 					// pool, so refresh every looking client — which already includes the
 					// group's own existing members.
 					ChatSystemMessage.send({
-						room: SENDOUQ_LOOKING_ROOM,
+						channel: SENDOUQ_LOOKING_CHANNEL,
 						revalidateOnly: true,
 					});
 				}

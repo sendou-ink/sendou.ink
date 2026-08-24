@@ -4,8 +4,6 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
-	removeRoom: vi.fn(),
-	setMetadata: vi.fn(),
 }));
 
 import * as GroupMatchContinueVoteFactory from "~/db/seed/factories/GroupMatchContinueVoteFactory";

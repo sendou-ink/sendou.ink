@@ -1,13 +1,6 @@
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import { TIERS } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
-import {
-	navIconUrl,
-	SENDOUQ_LOOKING_PAGE,
-	sendouQMatchPage,
-} from "~/utils/urls";
 
 /** Error class for SendouQ (expected) errors */
 export class SendouQError extends Error {
@@ -36,37 +29,6 @@ export async function seasonInitialSkillsExist(season: number) {
 /** Clears the in-process cache backing `seasonInitialSkillsExist`. */
 export function clearSeasonSkillsCache() {
 	seasonsKnownToHaveSkills.clear();
-}
-
-export function setGroupChatMetadata(group: {
-	chatRoomId: number;
-	members: { id: number }[];
-}) {
-	ChatSystemMessage.setMetadata({
-		chatCode: EventBus.chatRoomChannel(group.chatRoomId),
-		header: `Group (${group.members.length}/4)`,
-		subtitle: "SendouQ",
-		url: SENDOUQ_LOOKING_PAGE,
-		imageUrl: `${navIconUrl("sendouq")}.avif`,
-		participantUserIds: group.members.map((m) => m.id),
-		expiresAfter: { hours: 2 },
-	});
-}
-
-export function setMatchChatMetadata(match: {
-	id: number;
-	chatRoomId: number;
-	participantUserIds: number[];
-}) {
-	ChatSystemMessage.setMetadata({
-		chatCode: EventBus.chatRoomChannel(match.chatRoomId),
-		header: `Match #${match.id}`,
-		subtitle: "SendouQ",
-		url: sendouQMatchPage(match.id),
-		imageUrl: `${navIconUrl("sendouq")}.avif`,
-		participantUserIds: match.participantUserIds,
-		expiresAfter: { hours: 2 },
-	});
 }
 
 const allTiersOrdered = TIERS.flatMap((t) => [

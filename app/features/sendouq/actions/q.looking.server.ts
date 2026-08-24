@@ -2,7 +2,6 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { parseFormData } from "~/form/parse.server";
@@ -15,10 +14,10 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { lookingSchema } from "../q-action-schemas";
 import {
 	FULL_GROUP_SIZE,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
 } from "../q-constants";
-import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
+import { SendouQError } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -45,19 +44,19 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const broadcastLookingUpdate = () =>
 		ChatSystemMessage.send({
-			room: SENDOUQ_LOOKING_ROOM,
+			channel: SENDOUQ_LOOKING_CHANNEL,
 			revalidateOnly: true,
 		});
 
 	const revalidateGroupTopic = (groupId: number) =>
 		ChatSystemMessage.send({
-			room: sqGroupWebsocketRoom(groupId),
+			channel: sqGroupChannel(groupId),
 			revalidateOnly: true,
 		});
 
 	const notifyLikeReceived = (groupId: number) =>
 		ChatSystemMessage.send({
-			room: sqGroupWebsocketRoom(groupId),
+			channel: sqGroupChannel(groupId),
 			type: "LIKE_RECEIVED",
 			revalidateOnly: true,
 		});
@@ -151,26 +150,6 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				if (ourGroup.chatRoomId) {
-					ChatSystemMessage.removeRoom(
-						EventBus.chatRoomChannel(ourGroup.chatRoomId),
-					);
-				}
-				if (theirGroup.chatRoomId) {
-					ChatSystemMessage.removeRoom(
-						EventBus.chatRoomChannel(theirGroup.chatRoomId),
-					);
-				}
-
-				const survivingGroup =
-					SendouQ.findUncensoredGroupById(survivingGroupId);
-				if (survivingGroup?.chatRoomId) {
-					setGroupChatMetadata({
-						chatRoomId: survivingGroup.chatRoomId,
-						members: survivingGroup.members,
-					});
-				}
-
 				// both old rooms died and a fresh merged room was created
 				ChatSystemMessage.notifyRoomsChanged(
 					[...ourGroup.members, ...theirGroup.members].map(
@@ -227,10 +206,6 @@ export const action: ActionFunction = async ({ request }) => {
 						type: "USER_LEFT",
 						authorUserId: user.id,
 					});
-					setGroupChatMetadata({
-						chatRoomId: remainingGroup.chatRoomId,
-						members: remainingGroup.members,
-					});
 				}
 
 				ChatSystemMessage.notifyRoomsChanged(
@@ -266,10 +241,6 @@ export const action: ActionFunction = async ({ request }) => {
 						roomId: groupAfterKick.chatRoomId,
 						type: "USER_LEFT",
 						authorUserId: kickedMember.id,
-					});
-					setGroupChatMetadata({
-						chatRoomId: groupAfterKick.chatRoomId,
-						members: groupAfterKick.members,
 					});
 				}
 

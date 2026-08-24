@@ -31,7 +31,7 @@ import {
 } from "~/components/elements/Tabs";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	TournamentProvider,
@@ -63,8 +63,8 @@ import {
 } from "../loaders/to.$id.brackets.server";
 import { tournamentBracketsSearchParams } from "../tournament-bracket-search-params";
 import {
-	tournamentBracketWebsocketRoom,
-	tournamentWebsocketRoom,
+	tournamentBracketChannel,
+	tournamentChannel,
 } from "../tournament-bracket-utils";
 
 export { action, loader };
@@ -110,14 +110,14 @@ function TournamentBracketsView() {
 
 	const bracket = tournament.bracketByIdx(data.bracketIdx);
 
-	useWebsocketRevalidation(
-		tournamentWebsocketRoom(tournament.ctx.id),
+	useTopicRevalidation(
+		tournamentChannel(tournament.ctx.id),
 		!tournament.ctx.isFinalized,
 	);
 	// results of the loaded bracket (and group) broadcast to their own room, so that
 	// another bracket's or group's live scores do not make this view refetch
-	useWebsocketRevalidation(
-		tournamentBracketWebsocketRoom({
+	useTopicRevalidation(
+		tournamentBracketChannel({
 			tournamentId: tournament.ctx.id,
 			bracketIdx: data.bracketIdx,
 			groupId: data.groupId,

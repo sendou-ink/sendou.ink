@@ -165,7 +165,7 @@ export function useChatAutoScroll(
  * fan-out channel. Pass `connected=false` to opt out (e.g. once a tournament
  * has been finalized and no further updates are expected).
  */
-export function useWebsocketRevalidation(topic: string, connected = true) {
+export function useTopicRevalidation(topic: string, connected = true) {
 	useLiveRevalidation(connected);
 	useEventsTopic(topic, connected);
 }

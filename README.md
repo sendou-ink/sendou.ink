@@ -106,7 +106,7 @@ Static assets (weapon, gear and stage images, badges, sounds, etc.) are not stor
 
 #### Docker
 
-Optionally, if you want to develop image upload, real-time features or chat, you can use Docker to spin up the Skalop service and Minio for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:
+Optionally, if you want to develop image upload, you can use Docker to spin up Minio for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:
 
 ```
 docker compose up -d

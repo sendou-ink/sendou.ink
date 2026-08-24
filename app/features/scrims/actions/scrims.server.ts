@@ -4,9 +4,6 @@ import { redirect } from "react-router";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { datePlaceholder } from "~/features/chat/chat-utils";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -24,7 +21,7 @@ import { logger } from "~/utils/logger";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
-import { navIconUrl, scrimPage, scrimsPage } from "~/utils/urls";
+import { scrimsPage } from "~/utils/urls";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { SCRIM } from "../scrims-constants";
@@ -181,24 +178,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 
 			const fullPost = await ScrimPostRepository.findById(post.id);
-			if (fullPost?.chatRoomId) {
-				ChatSystemMessage.setMetadata({
-					chatCode: EventBus.chatRoomChannel(fullPost.chatRoomId),
-					header: datePlaceholder(
-						databaseTimestampToDate(request.startsAt ?? post.startsAt),
-					),
-					subtitle: "Scrim",
-					url: scrimPage(post.id),
-					imageUrl: `${navIconUrl("scrims")}.avif`,
-					participantUserIds: Scrim.participantIdsListFromAccepted(fullPost),
-					expiresAt: add(
-						databaseTimestampToDate(request.startsAt ?? post.startsAt),
-						{
-							hours: 3,
-						},
-					),
-				});
-			}
 
 			const postTeamName = Scrim.sideDisplayName(post);
 			const requestTeamName = Scrim.sideDisplayName(request);

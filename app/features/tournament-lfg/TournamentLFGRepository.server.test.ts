@@ -5,7 +5,6 @@ import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeam
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 
@@ -22,6 +21,16 @@ const startLooking = (teamId: number) =>
 		teamId,
 		chatRoomExpiresAt: addDays(new Date(), 7),
 	});
+
+const chatRoomIdOf = async (teamId: number) => {
+	const row = await db
+		.selectFrom("TournamentTeam")
+		.select("chatRoomId")
+		.where("id", "=", teamId)
+		.executeTakeFirstOrThrow();
+
+	return row.chatRoomId;
+};
 
 const mergeTeams = (args: {
 	survivingTeamId: number;
@@ -235,46 +244,29 @@ describe("startLooking", () => {
 			memberUserIds: [users.id(1), users.id(2)],
 		});
 
-		const pickup = await startLooking(team.id);
+		await startLooking(team.id);
 
-		expect(pickup).not.toBeNull();
-		expect(pickup?.chatRoomId).toEqual(expect.any(Number));
-		expect(pickup?.memberUserIds.sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
-		);
-
-		const row = await db
-			.selectFrom("TournamentTeam")
-			.select("chatRoomId")
-			.where("id", "=", team.id)
-			.executeTakeFirstOrThrow();
-		expect(row.chatRoomId).toBe(pickup?.chatRoomId);
+		const chatRoomId = await chatRoomIdOf(team.id);
+		expect(chatRoomId).toEqual(expect.any(Number));
 
 		const room = await db
 			.selectFrom("ChatRoom")
 			.selectAll()
-			.where("id", "=", pickup!.chatRoomId)
+			.where("id", "=", chatRoomId!)
 			.executeTakeFirstOrThrow();
 		expect(room.type).toBe("TOURNAMENT_TEAM");
 	});
 
-	test("returns null when team has only 1 member", async () => {
+	test("creates no chat room when team has only 1 member", async () => {
 		const tournament = await createTournament();
 		const team = await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [users.id(1)],
 		});
 
-		const pickup = await startLooking(team.id);
+		await startLooking(team.id);
 
-		expect(pickup).toBeNull();
-
-		const row = await db
-			.selectFrom("TournamentTeam")
-			.select("chatRoomId")
-			.where("id", "=", team.id)
-			.executeTakeFirstOrThrow();
-		expect(row.chatRoomId).toBeNull();
+		expect(await chatRoomIdOf(team.id)).toBeNull();
 	});
 
 	test("reuses the existing chat room if already set", async () => {
@@ -284,10 +276,11 @@ describe("startLooking", () => {
 			memberUserIds: [users.id(1), users.id(2)],
 		});
 
-		const first = await startLooking(team.id);
-		const second = await startLooking(team.id);
+		await startLooking(team.id);
+		const first = await chatRoomIdOf(team.id);
+		await startLooking(team.id);
 
-		expect(second?.chatRoomId).toBe(first?.chatRoomId);
+		expect(await chatRoomIdOf(team.id)).toBe(first);
 	});
 });
 
@@ -374,49 +367,35 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		const result = await mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
 		});
 
-		expect(result.survivor).not.toBeNull();
-		expect(result.survivor?.chatRoomId).toEqual(expect.any(Number));
-		expect(result.survivor?.memberUserIds.sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
-		);
-		expect(result.removedChatRoomId).toBeNull();
-
-		const row = await db
-			.selectFrom("TournamentTeam")
-			.select("chatRoomId")
-			.where("id", "=", team1.id)
-			.executeTakeFirstOrThrow();
-		expect(row.chatRoomId).toBe(result.survivor?.chatRoomId);
+		expect(await chatRoomIdOf(team1.id)).toEqual(expect.any(Number));
 	});
 
-	test("deletes the other team's chat room and returns its id", async () => {
+	test("deletes the other team's chat room", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [users.id(2), users.id(3)],
 		});
-		const otherPickup = await startLooking(team2.id);
+		await startLooking(team2.id);
 
-		const result = await mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
 		});
 
-		expect(result.removedChatRoomId).toBe(otherPickup?.chatRoomId);
-
 		// the loser's room is gone; only the survivor's (possibly reusing the
 		// freed rowid) remains
 		const rooms = await db.selectFrom("ChatRoom").select("id").execute();
 		expect(rooms).toHaveLength(1);
-		expect(rooms[0].id).toBe(result.survivor?.chatRoomId);
+		expect(rooms[0].id).toBe(await chatRoomIdOf(team1.id));
 	});
 
 	test("clears likes on surviving team after merge", async () => {
@@ -632,55 +611,6 @@ describe("leaveLfg", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(teamRow.isLooking).toBe(0);
-	});
-});
-
-describe("findPickupChatTeamById", () => {
-	beforeEach(async () => {
-		await users.create(3);
-	});
-
-	test("returns null when team has no chat room", async () => {
-		const tournament = await createTournament();
-		const team = await TournamentTeamFactory.create({
-			tournamentId: tournament.id,
-			memberUserIds: [users.id(1), users.id(2)],
-		});
-
-		expect(
-			await TournamentLFGRepository.findPickupChatTeamById(team.id),
-		).toBeNull();
-	});
-
-	test("returns null when team does not exist", async () => {
-		expect(
-			await TournamentLFGRepository.findPickupChatTeamById(999),
-		).toBeNull();
-	});
-
-	test("returns current members after a roster change", async () => {
-		const tournament = await createTournament();
-		const team = await TournamentTeamFactory.create({
-			tournamentId: tournament.id,
-			memberUserIds: [users.id(1), users.id(2), users.id(3)],
-		});
-		const pickup = await startLooking(team.id);
-
-		await withUserId(users.id(3), () =>
-			TournamentTeamRepository.leave({
-				teamId: team.id,
-				userId: users.id(3),
-			}),
-		);
-
-		const chatTeam = await TournamentLFGRepository.findPickupChatTeamById(
-			team.id,
-		);
-
-		expect(chatTeam?.chatRoomId).toBe(pickup?.chatRoomId);
-		expect(chatTeam?.memberUserIds.sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
-		);
 	});
 });
 

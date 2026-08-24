@@ -1,7 +1,5 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -17,7 +15,6 @@ import {
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
-import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
@@ -26,7 +23,6 @@ import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
@@ -163,43 +159,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		: false;
 
 	const status = tournament.matchStatusById(matchId);
-
-	if (
-		match.chatRoomId &&
-		!matchIsOver &&
-		match.opponentOne?.id &&
-		match.opponentTwo?.id &&
-		status !== "PENDING"
-	) {
-		// only add global chat for active roster (or all if not yet set i.e. first match)
-		// if roster changed mid-set the subs can still see the chat on the match page
-		const teamAlpha = tournament.teamById(match.opponentOne.id)!;
-		const teamAlphaActiveRoster =
-			tournamentTeamToActiveRosterUserIds(
-				teamAlpha,
-				tournament.minMembersPerTeam,
-			) ?? teamAlpha.memberUserIds;
-		const teamBravo = tournament.teamById(match.opponentTwo.id)!;
-		const teamBravoActiveRoster =
-			tournamentTeamToActiveRosterUserIds(
-				teamBravo,
-				tournament.minMembersPerTeam,
-			) ?? teamBravo.memberUserIds;
-
-		const playerIds = [...teamAlphaActiveRoster, ...teamBravoActiveRoster];
-
-		const matchContext = tournament.matchContextNamesById(matchId);
-
-		ChatSystemMessage.setMetadata({
-			chatCode: EventBus.chatRoomChannel(match.chatRoomId),
-			header: matchContext.roundName ?? `Match #${matchId}`,
-			subtitle: tournament.ctx.name,
-			url: tournamentMatchPage({ tournamentId, matchId }),
-			imageUrl: tournament.ctx.logoUrl,
-			participantUserIds: playerIds,
-			expiresAfter: tournament.isLeague ? { days: 30 } : { hours: 2 },
-		});
-	}
 
 	const isSiteStaff = user?.roles.includes("STAFF") ?? false;
 	const isTournamentStaff = tournament.isOrganizer(user);

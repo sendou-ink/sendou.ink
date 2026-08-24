@@ -2,17 +2,13 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ChatRepository from "./ChatRepository.server";
+import * as ChatSystemMessage from "./ChatSystemMessage.server";
 import {
 	abortSubscriptions,
 	flushEvents,
 	setupSqMatch,
 	subscribeTo,
 } from "./tests/fixtures";
-
-process.env.SKALOP_SYSTEM_MESSAGE_URL = "http://skalop.test";
-process.env.SKALOP_TOKEN = "test-token";
-
-const ChatSystemMessage = await import("./ChatSystemMessage.server");
 
 const users = UserFactory.pool();
 
@@ -29,7 +25,7 @@ describe("ChatSystemMessage.send", () => {
 		const received = subscribeTo("tournament__101");
 
 		ChatSystemMessage.send({
-			room: "tournament__101",
+			channel: "tournament__101",
 			revalidateOnly: true,
 			revalidateScope: "MATCH_RESULTS",
 			authorUserId: 5,
@@ -45,13 +41,13 @@ describe("ChatSystemMessage.send", () => {
 		const received = subscribeTo("sq-group__102");
 
 		ChatSystemMessage.send({
-			room: "sq-group__102",
+			channel: "sq-group__102",
 			type: "READY_CHECK_STARTED",
 			revalidateOnly: true,
 			authorUserId: 5,
 		});
 		ChatSystemMessage.send({
-			room: "sq-group__102",
+			channel: "sq-group__102",
 			type: "READY_CHECK_STARTED",
 			revalidateOnly: true,
 			authorUserId: 5,
@@ -67,8 +63,14 @@ describe("ChatSystemMessage.send", () => {
 	test("throttles rapid soundless broadcasts to the same topic", async () => {
 		const received = subscribeTo("tournament__104");
 
-		ChatSystemMessage.send({ room: "tournament__104", revalidateOnly: true });
-		ChatSystemMessage.send({ room: "tournament__104", revalidateOnly: true });
+		ChatSystemMessage.send({
+			channel: "tournament__104",
+			revalidateOnly: true,
+		});
+		ChatSystemMessage.send({
+			channel: "tournament__104",
+			revalidateOnly: true,
+		});
 		await flushEvents();
 
 		expect(received).toHaveLength(1);

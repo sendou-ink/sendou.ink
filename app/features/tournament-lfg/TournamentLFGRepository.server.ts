@@ -25,7 +25,7 @@ export function startLooking(args: {
 			.where("id", "=", args.teamId)
 			.execute();
 
-		return ensurePickupChatRoom(args.teamId, args.chatRoomExpiresAt, trx);
+		await ensurePickupChatRoom(args.teamId, args.chatRoomExpiresAt, trx);
 	});
 }
 
@@ -182,16 +182,7 @@ export function mergeTeams({
 			.where("id", "=", survivingTeamId)
 			.execute();
 
-		const survivor = await ensurePickupChatRoom(
-			survivingTeamId,
-			chatRoomExpiresAt,
-			trx,
-		);
-
-		return {
-			survivor,
-			removedChatRoomId: otherTeam?.chatRoomId ?? null,
-		};
+		await ensurePickupChatRoom(survivingTeamId, chatRoomExpiresAt, trx);
 	});
 }
 
@@ -355,31 +346,6 @@ export function leaveLfg({
 	});
 }
 
-/** Finds the data needed to update a team's pickup chat, or `null` if the team has no chat. */
-export async function findPickupChatTeamById(
-	teamId: number,
-): Promise<PickupChatTeam | null> {
-	const team = await db
-		.selectFrom("TournamentTeam")
-		.select(["name", "chatRoomId"])
-		.where("id", "=", teamId)
-		.executeTakeFirst();
-
-	if (team?.chatRoomId == null) return null;
-
-	const members = await db
-		.selectFrom("TournamentTeamMember")
-		.select("userId")
-		.where("tournamentTeamId", "=", teamId)
-		.execute();
-
-	return {
-		chatRoomId: team.chatRoomId,
-		name: team.name,
-		memberUserIds: members.map((m) => m.userId),
-	};
-}
-
 export async function findAllSubsByTournamentId(tournamentId: number) {
 	const rows = await db
 		.selectFrom("TournamentTeamMember")
@@ -435,49 +401,30 @@ async function getMemberCount(
 	return members.length;
 }
 
-export type PickupChatTeam = {
-	chatRoomId: number;
-	name: string;
-	memberUserIds: number[];
-};
-
 async function ensurePickupChatRoom(
 	teamId: number,
 	chatRoomExpiresAt: Date,
 	trx: Transaction<DB>,
-): Promise<PickupChatTeam | null> {
+) {
 	const team = await trx
 		.selectFrom("TournamentTeam")
-		.select(["name", "chatRoomId"])
+		.select("chatRoomId")
 		.where("id", "=", teamId)
 		.executeTakeFirstOrThrow();
 
-	const members = await trx
-		.selectFrom("TournamentTeamMember")
-		.select("userId")
-		.where("tournamentTeamId", "=", teamId)
+	if (team.chatRoomId !== null) return;
+
+	const memberCount = await getMemberCount(teamId, trx);
+	if (memberCount < 2) return;
+
+	const room = await ChatRepository.insertRoom(
+		{ type: "TOURNAMENT_TEAM", expiresAt: chatRoomExpiresAt },
+		trx,
+	);
+
+	await trx
+		.updateTable("TournamentTeam")
+		.set({ chatRoomId: room.id })
+		.where("id", "=", teamId)
 		.execute();
-
-	if (members.length < 2) return null;
-
-	let chatRoomId = team.chatRoomId;
-	if (chatRoomId == null) {
-		chatRoomId = (
-			await ChatRepository.insertRoom(
-				{ type: "TOURNAMENT_TEAM", expiresAt: chatRoomExpiresAt },
-				trx,
-			)
-		).id;
-		await trx
-			.updateTable("TournamentTeam")
-			.set({ chatRoomId })
-			.where("id", "=", teamId)
-			.execute();
-	}
-
-	return {
-		chatRoomId,
-		name: team.name,
-		memberUserIds: members.map((m) => m.userId),
-	};
 }

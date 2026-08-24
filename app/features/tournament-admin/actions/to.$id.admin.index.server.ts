@@ -2,7 +2,6 @@ import type { ActionFunction } from "react-router";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -14,9 +13,8 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
@@ -100,16 +98,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			const pickupChatTeam =
-				await TournamentLFGRepository.findPickupChatTeamById(team.id);
-
 			await TournamentTeamRepository.deleteById(team.id);
-
-			if (pickupChatTeam) {
-				ChatSystemMessage.removeRoom(
-					EventBus.chatRoomChannel(pickupChatTeam.chatRoomId),
-				);
-			}
 
 			for (const userId of team.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
@@ -225,11 +214,11 @@ function sendDroppedMatchChatMessages({
 
 	ChatSystemMessage.send([
 		...endedMatchIds.map((matchId) => ({
-			room: tournamentMatchWebsocketRoom(matchId),
+			channel: tournamentMatchChannel(matchId),
 			revalidateOnly: true as const,
 		})),
 		{
-			room: tournamentWebsocketRoom(tournamentId),
+			channel: tournamentChannel(tournamentId),
 			revalidateOnly: true as const,
 		},
 	]);

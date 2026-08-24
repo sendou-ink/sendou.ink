@@ -3,8 +3,8 @@ import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import {
 	FULL_GROUP_SIZE,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
 } from "../q-constants";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
@@ -33,11 +33,11 @@ export async function cancelActiveGroupLikes(userId: number) {
 
 	ChatSystemMessage.send([
 		...[...affectedGroupIds, ownGroup.id].map((groupId) => ({
-			room: sqGroupWebsocketRoom(groupId),
+			channel: sqGroupChannel(groupId),
 			revalidateOnly: true as const,
 		})),
 		{
-			room: SENDOUQ_LOOKING_ROOM,
+			channel: SENDOUQ_LOOKING_CHANNEL,
 			revalidateOnly: true,
 		},
 	]);

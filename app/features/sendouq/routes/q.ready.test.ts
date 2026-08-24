@@ -4,8 +4,6 @@ import { afterEach, describe, expect, test, vi } from "vitest";
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
-	removeRoom: vi.fn(),
-	setMetadata: vi.fn(),
 }));
 
 import { backdate } from "~/db/seed/core/backdate";

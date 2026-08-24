@@ -17,7 +17,7 @@ import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -42,8 +42,8 @@ import { lookingSchema } from "../q-action-schemas";
 import {
 	FULL_GROUP_SIZE,
 	IS_Q_LOOKING_MOBILE_BREAKPOINT,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
 } from "../q-constants";
 import { qLookingSearchParams } from "../q-search-params";
 
@@ -89,11 +89,11 @@ function QLookingPage() {
 
 	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
 	// broadcast to this shared room so every looking client revalidates.
-	useWebsocketRevalidation(SENDOUQ_LOOKING_ROOM);
+	useTopicRevalidation(SENDOUQ_LOOKING_CHANNEL);
 	// Group-specific updates (e.g. a received like) are pushed to the group's own
 	// dedicated topic.
-	useWebsocketRevalidation(
-		data.ownGroup ? sqGroupWebsocketRoom(data.ownGroup.id) : "",
+	useTopicRevalidation(
+		data.ownGroup ? sqGroupChannel(data.ownGroup.id) : "",
 		Boolean(data.ownGroup),
 	);
 

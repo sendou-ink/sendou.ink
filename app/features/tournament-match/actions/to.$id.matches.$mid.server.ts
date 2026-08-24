@@ -20,8 +20,8 @@ import {
 } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import {
 	showsOneGroupAtATime,
-	tournamentBracketWebsocketRoom,
-	tournamentWebsocketRoom,
+	tournamentBracketChannel,
+	tournamentChannel,
 } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -40,7 +40,7 @@ import { executeRoll } from "../core/executeRoll.server";
 import { resolveMatchMapList } from "../core/mapList.server";
 import { reportScore } from "../core/reportScore.server";
 import type { FindMatchById } from "../TournamentMatchRepository.server";
-import { tournamentMatchWebsocketRoom } from "../tournament-match-utils";
+import { tournamentMatchChannel } from "../tournament-match-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -701,12 +701,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 		ChatSystemMessage.send([
 			{
-				room: tournamentMatchWebsocketRoom(matchId),
+				channel: tournamentMatchChannel(matchId),
 				revalidateOnly: true,
 				revalidateScope,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
-				room: tournamentMatchWebsocketRoom(id),
+				channel: tournamentMatchChannel(id),
 				revalidateOnly: true as const,
 				revalidateScope,
 			})),
@@ -715,9 +715,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([
 			{
-				room: onlyMatchResultsChanged
+				channel: onlyMatchResultsChanged
 					? matchResultsRoom(tournament, match)
-					: tournamentWebsocketRoom(tournament.ctx.id),
+					: tournamentChannel(tournament.ctx.id),
 				revalidateOnly: true,
 				revalidateScope,
 			},
@@ -740,12 +740,12 @@ function matchResultsRoom(
 
 	if (typeof bracketIdx !== "number") {
 		logger.error("matchResultsRoom: Bracket not found");
-		return tournamentWebsocketRoom(tournament.ctx.id);
+		return tournamentChannel(tournament.ctx.id);
 	}
 
 	const { type } = tournament.ctx.settings.bracketProgression[bracketIdx];
 
-	return tournamentBracketWebsocketRoom({
+	return tournamentBracketChannel({
 		tournamentId: tournament.ctx.id,
 		bracketIdx,
 		groupId: showsOneGroupAtATime(type) ? match.groupId : null,
