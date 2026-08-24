@@ -64,3 +64,26 @@ describe("findResultsById", () => {
 		expect(results[0].subs).toHaveLength(0);
 	});
 });
+
+describe("findAllByMemberUserId", () => {
+	test("returns the main team first", async () => {
+		const user = await UserFactory.create();
+		await TeamFactory.create({
+			name: "Secondary team",
+			isMainTeam: false,
+			memberUserIds: [user.id],
+		});
+		await TeamFactory.create({
+			name: "Main team",
+			isMainTeam: true,
+			memberUserIds: [user.id],
+		});
+
+		const teams = await TeamRepository.findAllByMemberUserId(user.id);
+
+		expect(teams.map((team) => team.name)).toEqual([
+			"Main team",
+			"Secondary team",
+		]);
+	});
+});

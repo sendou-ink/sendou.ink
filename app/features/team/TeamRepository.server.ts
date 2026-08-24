@@ -378,6 +378,7 @@ export async function findAllByMemberUserId(
 			).as("members"),
 		])
 		.where("userId", "=", userId)
+		.orderBy("TeamMemberWithSecondary.isMainTeam", "desc")
 		.execute();
 }
 

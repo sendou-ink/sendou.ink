@@ -39,6 +39,9 @@ export default function NewScrimPage() {
 	const { t } = useTranslation(["scrims"]);
 	const data = useLoaderData<typeof loader>();
 
+	const defaultTeam =
+		data.teams.find((team) => team.isMainTeam) ?? data.teams[0];
+
 	return (
 		<Main>
 			<SendouForm
@@ -50,15 +53,14 @@ export default function NewScrimPage() {
 					rangeEnd: null,
 					baseVisibility: "PUBLIC",
 					notFoundVisibility: DEFAULT_NOT_FOUND_VISIBILITY,
-					from:
-						data.teams.length > 0
-							? { mode: "TEAM", teamId: data.teams[0].id }
-							: {
-									mode: "PICKUP",
-									users: nullFilledArray(
-										SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
-									) as unknown as number[],
-								},
+					from: defaultTeam
+						? { mode: "TEAM", teamId: defaultTeam.id }
+						: {
+								mode: "PICKUP",
+								users: nullFilledArray(
+									SCRIM.MAX_PICKUP_SIZE_EXCLUDING_OWNER,
+								) as unknown as number[],
+							},
 					managedByAnyone: true,
 					maps: "NO_PREFERENCE",
 					mapsTournamentId: null,
