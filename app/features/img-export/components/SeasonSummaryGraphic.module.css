@@ -151,17 +151,54 @@ below win regardless of which CSS chunk loads last
 }
 
 .calendar {
-	display: grid;
-	grid-auto-flow: column;
-	grid-template-rows: repeat(7, auto);
+	--calendar-cell-size: 18px;
+	--calendar-gap: 4px;
+
+	display: flex;
+	align-items: flex-end;
 	justify-content: center;
-	gap: 4px;
-	margin-top: var(--s-4);
+	gap: var(--calendar-gap);
+	margin-top: var(--s-2-5);
+}
+
+.calendarWeekdays {
+	display: flex;
+	flex-direction: column;
+	gap: var(--calendar-gap);
+	margin-inline-end: var(--s-1-5);
+}
+
+.calendarWeekday {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	height: var(--calendar-cell-size);
+}
+
+.calendarMonth {
+	display: flex;
+	flex-direction: column;
+	gap: var(--calendar-gap);
+}
+
+.calendarMonthName {
+	text-align: center;
+}
+
+.calendarWeeks {
+	display: flex;
+	gap: var(--calendar-gap);
+}
+
+.calendarWeek {
+	display: flex;
+	flex-direction: column;
+	gap: var(--calendar-gap);
 }
 
 .calendarCell {
-	width: 18px;
-	height: 18px;
+	width: var(--calendar-cell-size, 18px);
+	height: var(--calendar-cell-size, 18px);
 	border-radius: 3px;
 	background-color: var(--activity-none);
 

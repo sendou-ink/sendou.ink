@@ -8,6 +8,7 @@ import {
 } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { TierImage, WeaponImage } from "~/components/Image";
@@ -43,6 +44,11 @@ const CHART_MARGIN = { top: 26, right: 14, bottom: 22, left: 14 };
 const CHART_POINTS_NEEDED = 2;
 const CHART_PEAK_LABEL_CLAMP = 48;
 const TOP_MATES_COUNT = 3;
+const CALENDAR_WEEK_LENGTH = 7;
+/** Thursday, the day that decides which month a week column belongs to */
+const CALENDAR_WEEK_MONTH_DAY_INDEX = 3;
+/** Monday and Friday, the only rows the calendar names */
+const CALENDAR_NAMED_WEEKDAY_INDICES = [0, 4];
 /** Without weapons the teammates box is alone next to the activity calendar, so it has room for more */
 const TOP_MATES_COUNT_WITHOUT_WEAPONS = 6;
 
@@ -533,34 +539,117 @@ function ActivityCalendar({
 	seasonDateRange: { starts: Date; ends: Date };
 	activeDays: Array<{ date: string; activity: SeasonSummaryGraphicActivity }>;
 }) {
+	const { formatter } = useDateTimeFormat({ month: "long" });
+
 	const activityByDay = new Map(
 		activeDays.map((day) => [day.date, day.activity]),
 	);
 	const seasonFirstDay = startOfDay(seasonDateRange.starts);
-	const days = eachDayOfInterval({
-		start: startOfWeek(seasonFirstDay, { weekStartsOn: 1 }),
-		end: seasonDateRange.ends,
+	const weeks = seasonWeeks({
+		seasonFirstDay,
+		seasonLastDay: seasonDateRange.ends,
 	});
+	const months = calendarMonths(weeks);
 
 	return (
 		<div className={styles.calendar}>
-			{days.map((day) => {
-				const key = format(day, "yyyy-MM-dd");
-				const beforeSeason = day.getTime() < seasonFirstDay.getTime();
+			<CalendarWeekdays firstWeek={weeks[0]} />
+			{months.map((month) => (
+				<div key={month.key} className={styles.calendarMonth}>
+					<GraphicBoxLabel className={styles.calendarMonthName}>
+						{formatter.format(month.month)}
+					</GraphicBoxLabel>
+					<div className={styles.calendarWeeks}>
+						{month.weeks.map((week) => (
+							<div
+								key={format(week[0], "yyyy-MM-dd")}
+								className={styles.calendarWeek}
+							>
+								{week.map((day) => {
+									const key = format(day, "yyyy-MM-dd");
+									const beforeSeason = day.getTime() < seasonFirstDay.getTime();
 
-				return (
-					<div
-						key={key}
-						className={clsx(
-							styles.calendarCell,
-							activityClass(activityByDay.get(key)),
-							{ [styles.calendarCellHidden]: beforeSeason },
-						)}
-					/>
-				);
-			})}
+									return (
+										<div
+											key={key}
+											className={clsx(
+												styles.calendarCell,
+												activityClass(activityByDay.get(key)),
+												{ [styles.calendarCellHidden]: beforeSeason },
+											)}
+										/>
+									);
+								})}
+							</div>
+						))}
+					</div>
+				</div>
+			))}
 		</div>
 	);
+}
+
+function CalendarWeekdays({ firstWeek }: { firstWeek: Date[] }) {
+	const { formatter } = useDateTimeFormat({ weekday: "short" });
+
+	return (
+		<GraphicBoxLabel className={styles.calendarWeekdays}>
+			{firstWeek.map((day, dayIndex) => (
+				<div key={format(day, "yyyy-MM-dd")} className={styles.calendarWeekday}>
+					{CALENDAR_NAMED_WEEKDAY_INDICES.includes(dayIndex)
+						? formatter.format(day)
+						: null}
+				</div>
+			))}
+		</GraphicBoxLabel>
+	);
+}
+
+/**
+ * The season's Monday to Sunday week columns. A season ending mid-week (its last hours can fall on the
+ * next day depending on the time zone) would leave a ragged column, so an incomplete last week is left out.
+ */
+function seasonWeeks({
+	seasonFirstDay,
+	seasonLastDay,
+}: {
+	seasonFirstDay: Date;
+	seasonLastDay: Date;
+}): Date[][] {
+	const weeks: Date[][] = R.chunk(
+		eachDayOfInterval({
+			start: startOfWeek(seasonFirstDay, { weekStartsOn: 1 }),
+			end: seasonLastDay,
+		}),
+		CALENDAR_WEEK_LENGTH,
+	);
+
+	const lastWeek = weeks[weeks.length - 1];
+	if (weeks.length > 1 && lastWeek.length < CALENDAR_WEEK_LENGTH) {
+		weeks.pop();
+	}
+
+	return weeks;
+}
+
+/** Groups the week columns under the month that holds most of the week */
+function calendarMonths(weeks: Date[][]) {
+	const months: Array<{ key: string; month: Date; weeks: Date[][] }> = [];
+
+	for (const week of weeks) {
+		const monthDay =
+			week[CALENDAR_WEEK_MONTH_DAY_INDEX] ?? week[week.length - 1];
+		const key = format(monthDay, "yyyy-MM");
+		const latestMonth = months[months.length - 1];
+
+		if (latestMonth?.key === key) {
+			latestMonth.weeks.push(week);
+		} else {
+			months.push({ key, month: monthDay, weeks: [week] });
+		}
+	}
+
+	return months;
 }
 
 function ActivityLegend() {
