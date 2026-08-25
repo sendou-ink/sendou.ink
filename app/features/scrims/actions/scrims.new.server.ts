@@ -9,19 +9,19 @@ import { dateToDatabaseTimestamp } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import { errorToast, errorToastIfFalsy } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
-import { assertUnreachable } from "~/utils/types";
 import { scrimsPage } from "~/utils/urls";
 import * as SQGroupRepository from "../../sendouq/SQGroupRepository.server";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import { getMemberRoleType } from "../../team/team-utils";
 import * as ScrimPickupRosterRepository from "../ScrimPickupRosterRepository.server";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
-import { LUTI_DIVS, SCRIM } from "../scrims-constants";
 import {
-	type fromSchema,
-	type RANGE_END_OPTIONS,
-	scrimsNewFormSchema,
-} from "../scrims-schemas";
+	LUTI_DIVS,
+	RANGE_END_MINUTES,
+	type RangeEndOption,
+	SCRIM,
+} from "../scrims-constants";
+import { type fromSchema, scrimsNewFormSchema } from "../scrims-schemas";
 import type { LutiDiv } from "../scrims-types";
 import { serializeLutiDiv } from "../scrims-utils";
 
@@ -193,25 +193,9 @@ async function validatePickupAllUnbanned(userIds: number[]) {
 
 function resolveRangeEndToDate(
 	startDate: Date,
-	rangeEnd: (typeof RANGE_END_OPTIONS)[number],
+	rangeEnd: RangeEndOption,
 ): Date {
-	switch (rangeEnd) {
-		case "+30min":
-			return add(startDate, { minutes: 30 });
-		case "+1hour":
-			return add(startDate, { hours: 1 });
-		case "+1.5hours":
-			return add(startDate, { hours: 1, minutes: 30 });
-		case "+2hours":
-			return add(startDate, { hours: 2 });
-		case "+2.5hours":
-			return add(startDate, { hours: 2, minutes: 30 });
-		case "+3hours":
-			return add(startDate, { hours: 3 });
-		default: {
-			assertUnreachable(rangeEnd);
-		}
-	}
+	return add(startDate, { minutes: RANGE_END_MINUTES[rangeEnd] });
 }
 
 function resolveDivs(

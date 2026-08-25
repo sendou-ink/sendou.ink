@@ -1,9 +1,22 @@
 import { format, isWeekend } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
+import { AVAILABILITY } from "~/features/availability/availability-constants";
+import type {
+	MemberAvailability,
+	PlayableWindowTier,
+	TimeRange,
+} from "~/features/availability/availability-types";
+import * as Availability from "~/features/availability/core/Availability";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { LUTI_DIVS, SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
+import {
+	LUTI_DIVS,
+	RANGE_END_MINUTES,
+	type RangeEndOption,
+	SCRIM,
+	SCRIM_TRACKING_AUTO_LOCK_HOURS,
+} from "../scrims-constants";
 import type { ScrimFilters, ScrimPost, ScrimSide } from "../scrims-types";
 
 /** Returns true if the original poster has accepted any of the requests. */
@@ -214,6 +227,55 @@ export function lastReportedMap<
 	);
 }
 
+export interface PickableSlot extends TimeRange {
+	tier: PlayableWindowTier;
+	/** Members free for the whole slot. */
+	userIds: Array<number>;
+	/** The part of the slot the whole team is free for, when that is only part of it. */
+	fullSpan: TimeRange | null;
+	/** What picking the slot fills the post's start and start-time flexibility with. */
+	pick: { startsAt: number; rangeEnd: RangeEndOption | null };
+}
+
+/**
+ * The roster's shared free time as the slots a scrim post can be picked from:
+ * maximal spans where the team is at most one player short, the `ONE_SHORT`
+ * ones being the "grab a sub" case.
+ * be given.
+ */
+export function pickableSlots({
+	members,
+	minPlayers,
+}: {
+	members: Array<MemberAvailability>;
+	minPlayers: number;
+}): Array<PickableSlot> {
+	const spansFreeFor = (playerCount: number) =>
+		Availability.playableWindows({
+			members,
+			minPlayers: playerCount,
+		}).filter((window) => window.tier === "FULL");
+
+	const fullSpans = spansFreeFor(minPlayers);
+
+	return spansFreeFor(Math.max(1, minPlayers - 1)).map((slot) => {
+		const fullSpan = fullSpans.find(
+			(span) => span.startsAt >= slot.startsAt && span.endsAt <= slot.endsAt,
+		);
+		const wholeSlotIsFull =
+			fullSpan?.startsAt === slot.startsAt && fullSpan?.endsAt === slot.endsAt;
+
+		return {
+			startsAt: slot.startsAt,
+			endsAt: slot.endsAt,
+			userIds: slot.userIds,
+			tier: wholeSlotIsFull ? "FULL" : "ONE_SHORT",
+			fullSpan: wholeSlotIsFull ? null : (fullSpan ?? null),
+			pick: startPick({ slot, at: fullSpan?.startsAt ?? slot.startsAt }),
+		};
+	});
+}
+
 /** Splits a "HH:mm" time range into segments, breaking a range that crosses midnight (e.g. 23:00 -> 01:00) into two. */
 function timeRangeToSegments(start: string, end: string) {
 	return end < start
@@ -222,4 +284,27 @@ function timeRangeToSegments(start: string, end: string) {
 				{ start: "00:00", end },
 			]
 		: [{ start, end }];
+}
+
+function startPick({ slot, at }: { slot: TimeRange; at: number }) {
+	const lastStartsAt = slot.endsAt - AVAILABILITY.MIN_WINDOW_MINUTES * 60;
+	const startsAt = R.clamp(at, {
+		min: slot.startsAt,
+		max: Math.max(slot.startsAt, lastStartsAt),
+	});
+	const flexMinutes =
+		Math.min(lastStartsAt - startsAt, SCRIM.MAX_TIME_RANGE_MS / 1000) / 60;
+
+	return { startsAt, rangeEnd: longestRangeEndWithin(flexMinutes) };
+}
+
+function longestRangeEndWithin(minutes: number): RangeEndOption | null {
+	const fitting = R.entries(RANGE_END_MINUTES).filter(
+		([, optionMinutes]) => optionMinutes <= minutes,
+	);
+
+	return (
+		R.firstBy(fitting, [([, optionMinutes]) => optionMinutes, "desc"])?.[0] ??
+		null
+	);
 }

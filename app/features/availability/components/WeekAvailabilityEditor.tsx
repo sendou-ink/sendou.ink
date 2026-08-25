@@ -1,12 +1,5 @@
 import clsx from "clsx";
-import {
-	ChevronLeft,
-	ChevronRight,
-	Flag,
-	Plus,
-	SquarePen,
-	Trash,
-} from "lucide-react";
+import { Flag, Plus, SquarePen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -23,10 +16,16 @@ import type {
 	EditorCommitment,
 } from "../availability-types";
 import * as Availability from "../core/Availability";
+import {
+	ClockAxis,
+	TrackCommitment,
+	TrackTicks,
+	useClockWindow,
+} from "./ScheduleTracks";
+import trackStyles from "./ScheduleTracks.module.css";
 import styles from "./WeekAvailabilityEditor.module.css";
 
 const MOVE_THRESHOLD_PX = 4;
-const AXIS_LABEL_EVERY_HOURS = 2;
 
 type Gesture =
 	| {
@@ -90,16 +89,15 @@ export function WeekAvailabilityEditor({
 		weekday: "short",
 		day: "numeric",
 	});
-	const { formatter: hourFormatter } = useDateTimeFormat({ hour: "numeric" });
 	const { formatter: timeFormatter } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "2-digit",
 	});
 
+	const clockWindow = useClockWindow();
+	const { trackStart, trackEnd, pct, barStyle } = clockWindow;
 	const [gesture, setGesture] = React.useState<Gesture | null>(null);
 	const gestureRef = React.useRef<Gesture | null>(null);
-	const [earlierShown, setEarlierShown] = React.useState(false);
-	const [laterShown, setLaterShown] = React.useState(false);
 	const [openDayDate, setOpenDayDate] = React.useState<string | null>(null);
 	const [openDayAddRow, setOpenDayAddRow] = React.useState(false);
 	const popoverAnchorRef = React.useRef<HTMLElement | null>(null);
@@ -107,27 +105,10 @@ export function WeekAvailabilityEditor({
 	const trackRefs = React.useRef<Array<HTMLDivElement | null>>([]);
 	const suppressClickRef = React.useRef(false);
 
-	const trackStart = earlierShown
-		? AVAILABILITY.TRACK_EARLIER_START_MINUTES
-		: AVAILABILITY.TRACK_START_MINUTES;
-	const trackEnd = laterShown
-		? AVAILABILITY.TRACK_LATER_END_MINUTES
-		: AVAILABILITY.TRACK_END_MINUTES;
-
 	const wallsOf = (date: string) =>
 		commitments
 			.filter((commitment) => commitment.date === date)
 			.map((commitment) => commitment.range);
-
-	const pct = (minutes: number) =>
-		((Math.min(Math.max(minutes, trackStart), trackEnd) - trackStart) /
-			(trackEnd - trackStart)) *
-		100;
-
-	const barStyle = (range: DayTimeRange) => ({
-		left: `${pct(range.start)}%`,
-		width: `${pct(range.end) - pct(range.start)}%`,
-	});
 
 	const dateAt = (date: string, minutes: number) => {
 		const [year, month, day] = date.split("-").map(Number);
@@ -427,15 +408,6 @@ export function WeekAvailabilityEditor({
 		openDayEditor(date, event.currentTarget);
 	};
 
-	const axisHours: Array<number> = [];
-	for (
-		let hour = trackStart / 60;
-		hour <= trackEnd / 60;
-		hour += AXIS_LABEL_EVERY_HOURS
-	) {
-		axisHours.push(hour);
-	}
-
 	const openDay = value.find((day) => day.date === openDayDate);
 
 	const dayRow = (day: AvailabilityEditorDay, dayIndex: number) => {
@@ -461,43 +433,30 @@ export function WeekAvailabilityEditor({
 
 		return (
 			<React.Fragment key={day.date}>
-				<div className={styles.dayLabel}>
+				<div className={trackStyles.dayLabel}>
 					{dayLabelText(day)}
 					{day.note ? (
-						<Flag className={styles.noteFlag} size={12} aria-hidden />
+						<Flag className={trackStyles.noteFlag} size={12} aria-hidden />
 					) : null}
 				</div>
 				<div
 					ref={(element) => {
 						trackRefs.current[dayIndex] = element;
 					}}
-					className={styles.track}
+					className={clsx(trackStyles.track, styles.paintable)}
 					onPointerDown={handleTrackPointerDown(dayIndex)}
 					onPointerMove={handleGestureMove}
 					onPointerUp={handleGestureEnd}
 					onPointerCancel={handleGestureCancel}
 				>
-					{axisHours
-						.filter((hour) => hour * 60 > trackStart && hour * 60 < trackEnd)
-						.map((hour) => (
-							<div
-								key={hour}
-								className={clsx(styles.tick, {
-									[styles.tickMidnight]: hour === 24,
-								})}
-								style={{ left: `${pct(hour * 60)}%` }}
-							/>
-						))}
+					<TrackTicks clockWindow={clockWindow} />
 					{dayCommitments.map((commitment) => (
-						<div
+						<TrackCommitment
 							key={`${commitment.range.start}-${commitment.name}`}
-							className={styles.commitment}
-							style={barStyle(commitment.range)}
-							title={commitment.name}
-							data-testid="availability-commitment"
-						>
-							<span className={styles.commitmentName}>{commitment.name}</span>
-						</div>
+							clockWindow={clockWindow}
+							range={commitment.range}
+							name={commitment.name}
+						/>
 					))}
 					{day.ranges.map((range) => {
 						const isDragged =
@@ -586,50 +545,16 @@ export function WeekAvailabilityEditor({
 	};
 
 	return (
-		<div className={styles.container}>
+		<div className={trackStyles.container}>
 			<div className={styles.editor}>
-				<div className={styles.tracks}>
-					<button
-						type="button"
-						className={clsx(styles.axisToggle, styles.axisLead)}
-						onClick={() => setEarlierShown(!earlierShown)}
-					>
-						{earlierShown ? (
-							<ChevronRight size={12} aria-hidden />
-						) : (
-							<ChevronLeft size={12} aria-hidden />
-						)}
-						{t("schedule:editor.earlier")}
-					</button>
-					<div className={styles.axis}>
-						{axisHours.map((hour) => (
-							<span
-								key={hour}
-								className={clsx(styles.axisLabel, {
-									[styles.axisLabelFirst]: hour * 60 === trackStart,
-									[styles.axisLabelLast]: hour * 60 === trackEnd,
-								})}
-								style={{ left: `${pct(hour * 60)}%` }}
-							>
-								{hourFormatter.format(dateAt(value[0].date, hour * 60))}
-							</span>
-						))}
-					</div>
-					<button
-						type="button"
-						className={clsx(styles.axisToggle, styles.axisTrail)}
-						onClick={() => setLaterShown(!laterShown)}
-					>
-						{t("schedule:editor.later")}
-						{laterShown ? (
-							<ChevronLeft size={12} aria-hidden />
-						) : (
-							<ChevronRight size={12} aria-hidden />
-						)}
-					</button>
+				<div className={trackStyles.tracks}>
+					<ClockAxis
+						clockWindow={clockWindow}
+						dayStartsAt={dateAt(value[0].date, 0)}
+					/>
 					{value.map((day, dayIndex) => dayRow(day, dayIndex))}
 				</div>
-				<div className={styles.list}>
+				<div className={trackStyles.list}>
 					{value.map((day) => {
 						const dayCommitments = commitments.filter(
 							(commitment) => commitment.date === day.date,
@@ -654,7 +579,7 @@ export function WeekAvailabilityEditor({
 									{dayCommitments.map((commitment) => (
 										<span
 											key={`${commitment.range.start}-${commitment.name}`}
-											className={styles.commitmentChip}
+											className={trackStyles.commitmentChip}
 										>
 											{commitment.name} ·{" "}
 											{rangeText(day.date, commitment.range)}
@@ -673,7 +598,11 @@ export function WeekAvailabilityEditor({
 								</div>
 								{day.note ? (
 									<div className={styles.listNote}>
-										<Flag size={12} aria-hidden className={styles.noteFlag} />
+										<Flag
+											size={12}
+											aria-hidden
+											className={trackStyles.noteFlag}
+										/>
 										{day.note}
 									</div>
 								) : null}

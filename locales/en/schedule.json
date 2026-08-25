@@ -36,5 +36,11 @@
 	"team.notAvailable": "Not available",
 	"team.noWindows": "No shared free time",
 	"team.weekHeading": "Week {{week}}",
-	"team.withSub": "With a sub ({{players}})"
+	"team.withSub": "With a sub ({{players}})",
+	"picker.title": "Pick a start from your schedule",
+	"picker.free": "{{amount}} free",
+	"picker.noSchedule": "No schedule this week: {{users}}",
+	"picker.andOthers": "{{amount}} more",
+	"picker.legend.full": "{{players}}+ free",
+	"picker.legend.oneShort": "{{players}} free (sub?)"
 }

@@ -6,9 +6,12 @@ import {
 	applyFilters,
 	isTrackingLocked,
 	participantIdsListFromAccepted,
+	pickableSlots,
 	sideDisplayName,
 	sideOfUser,
 } from "./Scrim";
+
+const HOUR = 60 * 60;
 
 type MockUser = { id: number };
 type MockRequest = { isAccepted: boolean; users: MockUser[] };
@@ -605,5 +608,88 @@ describe("isTrackingLocked", () => {
 		expect(
 			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
 		).toBe(false);
+	});
+});
+
+const freeFrom = (userId: number, startsAt: number, endsAt: number) => ({
+	userId,
+	ranges: [{ startsAt, endsAt }],
+});
+
+describe("pickableSlots", () => {
+	const evening = (hours: number) => hours * HOUR;
+
+	test("starts a slot the whole team is free for at its own start", () => {
+		const members = [1, 2, 3, 4].map((userId) =>
+			freeFrom(userId, evening(18), evening(23)),
+		);
+
+		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([
+			{
+				startsAt: evening(18),
+				endsAt: evening(23),
+				userIds: [1, 2, 3, 4],
+				tier: "FULL",
+				fullSpan: null,
+				pick: { startsAt: evening(18), rangeEnd: "+3hours" },
+			},
+		]);
+	});
+
+	test("starts a mixed slot where the whole team becomes free", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(23)),
+			freeFrom(2, evening(18), evening(23)),
+			freeFrom(3, evening(18), evening(23)),
+			freeFrom(4, evening(20), evening(23)),
+		];
+
+		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([
+			{
+				startsAt: evening(18),
+				endsAt: evening(23),
+				userIds: [1, 2, 3],
+				tier: "ONE_SHORT",
+				fullSpan: {
+					startsAt: evening(20),
+					endsAt: evening(23),
+					tier: "FULL",
+					userIds: [1, 2, 3, 4],
+				},
+				pick: { startsAt: evening(20), rangeEnd: "+2hours" },
+			},
+		]);
+	});
+
+	test("leaves an hour of the slot to play, capped at the longest flexibility", () => {
+		const twoHours = [1, 2, 3, 4].map((userId) =>
+			freeFrom(userId, evening(18), evening(20)),
+		);
+
+		expect(pickableSlots({ members: twoHours, minPlayers: 4 })[0].pick).toEqual(
+			{ startsAt: evening(18), rangeEnd: "+1hour" },
+		);
+	});
+
+	test("gives an hour long slot no flexibility at all", () => {
+		const oneHour = [1, 2, 3, 4].map((userId) =>
+			freeFrom(userId, evening(18), evening(19)),
+		);
+
+		expect(pickableSlots({ members: oneHour, minPlayers: 4 })[0].pick).toEqual({
+			startsAt: evening(18),
+			rangeEnd: null,
+		});
+	});
+
+	test("has no slots when the team is more than one player short", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(21)),
+			freeFrom(2, evening(18), evening(21)),
+			freeFrom(3, evening(21), evening(23)),
+			freeFrom(4, evening(21), evening(23)),
+		];
+
+		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([]);
 	});
 });

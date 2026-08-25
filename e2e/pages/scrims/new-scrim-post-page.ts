@@ -12,10 +12,21 @@ import { createFormHelpers } from "../../helpers/playwright-form";
 export class NewScrimPostPage {
 	private readonly page: Page;
 	readonly form;
+	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
 		this.form = createFormHelpers(page, scrimsNewFormSchema);
+		this.locators = {
+			schedulePicker: page.getByTestId("scrim-schedule-picker"),
+			scheduleSlots: page.getByTestId("scrim-schedule-slot"),
+			scheduleUnknown: page.getByTestId("scrim-schedule-unknown"),
+			flexibility: page.getByLabel("Start time flexibility"),
+			// the chip radio input is visually hidden, so the label is what clicks
+			nextWeekToggle: page.locator(
+				'label[for="chip-radio-scrim-schedule-week-next"]',
+			),
+		};
 	}
 
 	async goto() {
@@ -50,6 +61,13 @@ export class NewScrimPostPage {
 	/** The user field of the pick-up member, counting the author as the first one. */
 	pickupUser(nth: number) {
 		return this.page.getByLabel(`User ${nth}`);
+	}
+
+	/** One segment of the Start date picker, e.g. `"hour"` or `"day"`. */
+	startSegment(segmentName: string) {
+		return this.page.getByRole("spinbutton", {
+			name: new RegExp(`^${segmentName}, Start`),
+		});
 	}
 
 	/** Limits who sees the post to one of the author's associations. */

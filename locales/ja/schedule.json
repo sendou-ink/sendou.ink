@@ -36,5 +36,11 @@
 	"team.notAvailable": "",
 	"team.noWindows": "",
 	"team.weekHeading": "",
-	"team.withSub": ""
+	"team.withSub": "",
+	"picker.title": "",
+	"picker.free": "",
+	"picker.noSchedule": "",
+	"picker.andOthers": "",
+	"picker.legend.full": "",
+	"picker.legend.oneShort": ""
 }

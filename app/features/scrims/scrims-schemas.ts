@@ -271,15 +271,6 @@ export const scrimIdActionSchema = v.union([
 
 const MAX_SCRIM_POST_TEXT_LENGTH = 500;
 
-export const RANGE_END_OPTIONS = [
-	"+30min",
-	"+1hour",
-	"+1.5hours",
-	"+2hours",
-	"+2.5hours",
-	"+3hours",
-] as const;
-
 export const scrimRequestFormSchema = v.object({
 	_action: stringConstant("NEW_REQUEST"),
 	scrimPostId: idConstant(),

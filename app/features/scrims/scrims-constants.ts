@@ -13,6 +13,18 @@ export const LUTI_DIVS = [
 	"11",
 ] as const;
 
+/** Start-time flexibility a scrim post can be given, as minutes added to its start. */
+export const RANGE_END_MINUTES = {
+	"+30min": 30,
+	"+1hour": 60,
+	"+1.5hours": 90,
+	"+2hours": 120,
+	"+2.5hours": 150,
+	"+3hours": 180,
+} as const;
+
+export type RangeEndOption = keyof typeof RANGE_END_MINUTES;
+
 export const SCRIM = {
 	MAX_PICKUP_SIZE_EXCLUDING_OWNER: 5,
 	MAX_SAVED_PICKUP_ROSTERS: 5,

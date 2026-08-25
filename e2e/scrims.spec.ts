@@ -1,6 +1,14 @@
-import { addDays, addHours, setHours, setMinutes, startOfHour } from "date-fns";
+import {
+	addDays,
+	addHours,
+	addWeeks,
+	setHours,
+	setMinutes,
+	startOfHour,
+} from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import * as Availability from "~/features/availability/core/Availability";
 import { serializeLutiDiv } from "~/features/scrims/scrims-utils";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
@@ -11,7 +19,9 @@ import {
 	expect,
 	impersonate,
 	isNotVisible,
+	MACHINE_TIMEZONE,
 	navigate,
+	setTimezoneCookie,
 	test,
 } from "./helpers/playwright";
 import { AnythingAdder } from "./pages/layout/anything-adder";
@@ -25,6 +35,8 @@ const TOURNAMENT_NAME = "Swim or Sink";
 const ASSOCIATION_NAME = "Inkling Alliance";
 const PICKUP_NAMES = ["Pickup One", "Pickup Two", "Pickup Three"];
 const GROUP_SIZE = 4;
+const DAY_SECONDS = 24 * 60 * 60;
+const WEDNESDAY = 2;
 const TOURNAMENT_MAP_POOL: Array<{ mode: ModeShort; stageId: StageId }> = [
 	{ mode: "SZ", stageId: 1 },
 	{ mode: "TC", stageId: 2 },
@@ -442,12 +454,71 @@ function createNamedUsers(factories: Factories, names: string[]) {
 	}));
 }
 
+test.describe("Scrim schedule picker", () => {
+	test("picks a start and its flexibility from the roster's shared free time", async ({
+		page,
+		factories,
+	}) => {
+		const { memberUserIds } = await createTeamFor(factories, NZAP_TEST_ID);
+		const evening = nextWeekSlot(WEDNESDAY, "18:00", "23:00");
+
+		for (const userId of memberUserIds.slice(0, memberUserIds.length - 1)) {
+			await factories.AvailabilityWeekFactory.create({
+				userId,
+				weekStartsAt: nextWeek().startsAt,
+				timezone: MACHINE_TIMEZONE,
+				slots: [evening],
+			});
+		}
+
+		await impersonate(page, NZAP_TEST_ID);
+		await setTimezoneCookie(page);
+
+		const newPost = new NewScrimPostPage(page);
+		await newPost.goto();
+		await newPost.locators.nextWeekToggle.click();
+
+		// the roster's last member never filled the week in, so the shared
+		// evening is one player short of a full team
+		await expect(newPost.locators.scheduleUnknown).toBeVisible();
+		const slot = newPost.locators.scheduleSlots;
+		await expect(slot).toHaveCount(1);
+		await expect(slot).toHaveAttribute("data-tier", "ONE_SHORT");
+
+		await slot.click();
+
+		// 18:00, with the flexibility that still leaves an hour of the window
+		// to play whichever start is settled on, capped at the longest option
+		await expect(newPost.startSegment("hour")).toHaveText("6");
+		await expect(newPost.startSegment("minute")).toHaveText("00");
+		await expect(newPost.startSegment("AM/PM")).toHaveText("PM");
+		await expect(newPost.locators.flexibility).toHaveValue("+3hours");
+		await expect(slot).toHaveAttribute("data-picked", "true");
+	});
+});
+
 async function createTeamFor(factories: Factories, userId: number) {
 	const teammates = await factories.UserFactory.createMany(GROUP_SIZE - 1);
 
 	return factories.TeamFactory.create({
 		memberUserIds: [userId, ...teammates.map((user) => user.id)],
 	});
+}
+
+function nextWeek() {
+	return Availability.weekRange(addWeeks(new Date(), 1), MACHINE_TIMEZONE);
+}
+
+/** Wall-clock range on a day of next week, so it is always ahead of "now". */
+function nextWeekSlot(dayIndex: number, start: string, end: string) {
+	const date = Availability.dateInTimezone(
+		nextWeek().startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
+		MACHINE_TIMEZONE,
+	);
+	const at = (time: string) =>
+		Availability.localToTimestamp({ date, time, timezone: MACHINE_TIMEZONE });
+
+	return { startsAt: at(start), endsAt: at(end) };
 }
 
 /** A pick-up sized group of users, `userId` its owner if one is given. */
