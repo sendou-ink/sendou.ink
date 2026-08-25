@@ -6,8 +6,15 @@ import type {
 	MemberAvailability,
 	PlayableWindowTier,
 	TimeRange,
+	WindowAvailabilityEntry,
+	WindowSchedule,
 } from "~/features/availability/availability-types";
 import * as Availability from "~/features/availability/core/Availability";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
+import { getMemberRoleType } from "~/features/team/team-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import {
@@ -274,6 +281,86 @@ export function pickableSlots({
 			pick: startPick({ slot, at: fullSpan?.startsAt ?? slot.startsAt }),
 		};
 	});
+}
+
+/**
+ * The members a scrim is played with: the team's players, or its whole roster
+ * when there are not enough players on it to field a team.
+ */
+export function teamPlayers<
+	T extends { role: MemberRole | null; roleType: MemberRoleType | null },
+>(members: Array<T>): Array<T> {
+	const players = members.filter(
+		(member) => getMemberRoleType(member) !== "OTHER",
+	);
+
+	return players.length >= SCRIM.MIN_MEMBERS_PER_TEAM ? players : members;
+}
+
+export interface RosterFit {
+	/** The start the fit is measured at, the best one of those offered. */
+	startsAt: number;
+	/** The scrim played from that start, its length assumed. */
+	window: TimeRange;
+	entries: Array<WindowAvailabilityEntry>;
+	/** How many of the roster are free for the whole window. */
+	availableCount: number;
+}
+
+/**
+ * How well a roster fits a scrim post: the start among `starts` the most of
+ * them are free for, and how each member relates to a scrim played from it.
+ * Ties go to the earliest start.
+ *
+ * Null when nobody on the roster filled in the week the post falls in — a fit
+ * nothing is known about is not worth showing.
+ */
+export function rosterFit({
+	starts,
+	members,
+}: {
+	starts: Array<number>;
+	members: Array<WindowSchedule>;
+}): RosterFit | null {
+	if (members.length === 0 || members.every((member) => !member.reported)) {
+		return null;
+	}
+
+	const fits = starts.map((startsAt) => fitAt({ startsAt, members }));
+
+	return R.firstBy(fits, [(fit) => fit.availableCount, "desc"]) ?? null;
+}
+
+function fitAt({
+	startsAt,
+	members,
+}: {
+	startsAt: number;
+	members: Array<WindowSchedule>;
+}): RosterFit {
+	const window = {
+		startsAt,
+		endsAt: startsAt + AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
+	};
+
+	const entries = members.map((member) => ({
+		userId: member.userId,
+		availability: Availability.availabilityInWindow({
+			reported: member.reported,
+			slots: member.ranges,
+			busy: member.busy,
+			window,
+		}),
+	}));
+
+	return {
+		startsAt,
+		window,
+		entries,
+		availableCount: entries.filter(
+			(entry) => entry.availability.status === "available",
+		).length,
+	};
 }
 
 /** Splits a "HH:mm" time range into segments, breaking a range that crosses midnight (e.g. 23:00 -> 01:00) into two. */

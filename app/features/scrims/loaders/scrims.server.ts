@@ -3,12 +3,15 @@ import * as R from "remeda";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { getUser } from "~/features/auth/core/user.server";
+import * as RosterSchedule from "~/features/availability/core/RosterSchedule.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as TeamRepository from "../../team/TeamRepository.server";
 import * as Scrim from "../core/Scrim";
 import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import { scrimsSearchParams } from "../scrims-search-params";
-import { dividePosts } from "../scrims-utils";
+import type { ScrimPost } from "../scrims-types";
+import { dividePosts, postSpan } from "../scrims-utils";
 
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = getUser();
@@ -55,12 +58,19 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 		]),
 	);
 
+	const dividedPosts = dividePosts(posts, user?.id);
+	const teams = user ? await TeamRepository.findAllByMemberUserId(user.id) : [];
+
 	return {
 		...(await UserCardRepository.findAllByUserIds({
 			userIds: cardUserIds,
 		})),
-		posts: dividePosts(posts, user?.id),
-		teams: user ? await TeamRepository.findAllByMemberUserId(user.id) : [],
+		posts: dividedPosts,
+		teams,
+		availability: await rosterAvailability({
+			posts: dividedPosts.neutral,
+			teams,
+		}),
 		filters,
 		canSaveAsDefault:
 			user != null &&
@@ -70,3 +80,35 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 			),
 	};
 };
+
+/**
+ * How the viewer's teams relate to the posts they could request: the material
+ * the fit indicators on the post cards and in the request dialog are resolved
+ * from, one entry per post.
+ */
+async function rosterAvailability({
+	posts,
+	teams,
+}: {
+	posts: Array<ScrimPost>;
+	teams: Awaited<ReturnType<typeof TeamRepository.findAllByMemberUserId>>;
+}) {
+	const userIds = R.unique(
+		teams.flatMap((team) =>
+			Scrim.teamPlayers(team.members).map((member) => member.id),
+		),
+	);
+	const now = dateToDatabaseTimestamp(new Date());
+
+	return {
+		/** Server clock, so that the shown fit does not change on hydration. */
+		now,
+		windows: await RosterSchedule.windowSchedules({
+			windows: posts.map((post) => ({
+				id: post.id,
+				...postSpan({ post, now }),
+			})),
+			userIds,
+		}),
+	};
+}

@@ -7,8 +7,10 @@ import {
 	isTrackingLocked,
 	participantIdsListFromAccepted,
 	pickableSlots,
+	rosterFit,
 	sideDisplayName,
 	sideOfUser,
+	teamPlayers,
 } from "./Scrim";
 
 const HOUR = 60 * 60;
@@ -691,5 +693,112 @@ describe("pickableSlots", () => {
 		];
 
 		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([]);
+	});
+});
+
+describe("teamPlayers", () => {
+	const player = { id: 1, role: "FRONTLINE" as const, roleType: null };
+	const coach = { id: 2, role: "COACH" as const, roleType: null };
+
+	test("leaves the non-players out", () => {
+		const members = [
+			player,
+			{ ...coach, id: 3 },
+			...[4, 5, 6].map((id) => ({ ...player, id })),
+		];
+
+		expect(teamPlayers(members).map((member) => member.id)).toEqual([
+			1, 4, 5, 6,
+		]);
+	});
+
+	test("keeps everyone when the players alone could not field a team", () => {
+		const members = [player, { ...player, id: 2 }, { ...player, id: 3 }, coach];
+
+		expect(teamPlayers(members)).toHaveLength(4);
+	});
+});
+
+describe("rosterFit", () => {
+	const evening = (hours: number) => hours * HOUR;
+	const free = (userId: number, startsAt: number, endsAt: number) => ({
+		userId,
+		reported: true,
+		ranges: [{ startsAt, endsAt }],
+		busy: [],
+	});
+
+	test("measures the fit at the start the most of the roster is free for", () => {
+		const members = [
+			free(1, evening(18), evening(23)),
+			free(2, evening(18), evening(23)),
+			free(3, evening(18), evening(23)),
+			free(4, evening(20), evening(23)),
+		];
+
+		const fit = rosterFit({
+			starts: [evening(18), evening(19), evening(20)],
+			members,
+		});
+
+		expect(fit?.startsAt).toBe(evening(20));
+		expect(fit?.availableCount).toBe(4);
+		expect(fit?.window).toEqual({
+			startsAt: evening(20),
+			endsAt: evening(22),
+		});
+	});
+
+	test("gives the earliest of equally good starts", () => {
+		const members = [1, 2, 3, 4].map((userId) =>
+			free(userId, evening(18), evening(23)),
+		);
+
+		expect(
+			rosterFit({ starts: [evening(18), evening(19)], members })?.startsAt,
+		).toBe(evening(18));
+	});
+
+	test("leaves a member free for only part of the scrim out of the count", () => {
+		const members = [
+			free(1, evening(18), evening(23)),
+			free(2, evening(18), evening(19)),
+		];
+
+		const fit = rosterFit({ starts: [evening(18)], members });
+
+		expect(fit?.availableCount).toBe(1);
+		expect(fit?.entries[1].availability.status).toBe("partial");
+	});
+
+	test("reports a member committed elsewhere as busy", () => {
+		const members = [
+			{
+				...free(1, evening(18), evening(23)),
+				busy: [
+					{
+						startsAt: evening(19),
+						endsAt: evening(21),
+						type: "tournament" as const,
+						name: "ITZ",
+					},
+				],
+			},
+		];
+
+		expect(
+			rosterFit({ starts: [evening(18)], members })?.entries[0].availability
+				.status,
+		).toBe("busy");
+	});
+
+	test("returns null when nobody filled in the week", () => {
+		const members = [1, 2].map((userId) => ({
+			...free(userId, evening(18), evening(23)),
+			reported: false,
+			ranges: [],
+		}));
+
+		expect(rosterFit({ starts: [evening(18)], members })).toBeNull();
 	});
 });

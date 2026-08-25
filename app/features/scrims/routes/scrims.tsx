@@ -49,7 +49,7 @@ import styles from "./scrims.module.css";
 export type NewRequestFormFields = v.InferOutput<typeof newRequestSchema>;
 
 export const handle: SendouRouteHandle = {
-	i18n: ["calendar", "scrims", "user", "q"],
+	i18n: ["calendar", "schedule", "scrims", "user", "q"],
 	breadcrumb: () => ({
 		imgPath: navIconUrl("scrims"),
 		href: scrimsPage(),

@@ -20,7 +20,6 @@ import {
 import trackStyles from "~/features/availability/components/ScheduleTracks.module.css";
 import * as Availability from "~/features/availability/core/Availability";
 import type { RosterScheduleData } from "~/features/availability/core/RosterSchedule.server";
-import { getMemberRoleType } from "~/features/team/team-utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import {
 	databaseTimestampToDate,
@@ -382,13 +381,10 @@ function rosterUserIds({
 	const team = teams.find((team) => team.id === from.teamId);
 	if (!team) return [];
 
-	const players = team.members.filter(
-		(member) => getMemberRoleType(member) !== "OTHER",
-	);
-	const members =
-		players.length >= SCRIM.MIN_MEMBERS_PER_TEAM ? players : team.members;
-
-	return R.unique([viewerId, ...members.map((member) => member.id)]);
+	return R.unique([
+		viewerId,
+		...Scrim.teamPlayers(team.members).map((member) => member.id),
+	]);
 }
 
 function slotsOfDay({

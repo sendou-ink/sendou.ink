@@ -42,5 +42,6 @@
 	"picker.noSchedule": "No schedule this week: {{users}}",
 	"picker.andOthers": "{{amount}} more",
 	"picker.legend.full": "{{players}}+ free",
-	"picker.legend.oneShort": "{{players}} free (sub?)"
+	"picker.legend.oneShort": "{{players}} free (sub?)",
+	"scrims.availableOfRoster": "{{amount}}/{{total}} available"
 }

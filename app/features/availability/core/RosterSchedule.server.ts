@@ -1,10 +1,13 @@
 import { addWeeks } from "date-fns";
 import * as R from "remeda";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
-import type { TimeRange } from "../availability-types";
+import type { TimeRange, WindowSchedule } from "../availability-types";
 import * as Availability from "./Availability";
 import * as Commitments from "./Commitments.server";
 
@@ -114,4 +117,75 @@ function weekView({ range, timezone }: { range: TimeRange; timezone: string }) {
 			};
 		}),
 	};
+}
+
+/**
+ * What the given users' schedules say about each of the given windows: what
+ * they reported inside it, the commitments overriding that and whether they
+ * filled in the week it falls in at all.
+ *
+ * The windows are resolved in one go so that a page showing many of them (the
+ * scrim browsing page's fit indicators) reads the schedules once. Windows past
+ * the reportable horizon are left out — nothing could be known about them.
+ */
+export async function windowSchedules({
+	windows,
+	userIds,
+}: {
+	windows: Array<TimeRange & { id: number }>;
+	userIds: Array<number>;
+}) {
+	// the horizon's last week starts at the current week's start at the latest,
+	// so nothing inside it reaches this far
+	const horizonEndsAt = dateToDatabaseTimestamp(
+		addWeeks(new Date(), AVAILABILITY.WEEK_HORIZON),
+	);
+	const withinHorizon = windows.filter(
+		(window) => window.startsAt < horizonEndsAt,
+	);
+
+	if (withinHorizon.length === 0 || userIds.length === 0) return [];
+
+	const range = {
+		startsAt: Math.min(...withinHorizon.map((window) => window.startsAt)),
+		endsAt: Math.max(...withinHorizon.map((window) => window.endsAt)),
+	};
+
+	const [reportedWeeks, busyByUserId] = await Promise.all([
+		AvailabilityRepository.findAllWeeksByUserIds({ userIds, ...range }),
+		Commitments.busyBlocksByUserIds({ userIds, ...range }),
+	]);
+
+	return withinHorizon.map((window) => ({
+		id: window.id,
+		members: userIds.map((userId): WindowSchedule => {
+			const memberWeeks = reportedWeeks.filter(
+				(week) => week.userId === userId,
+			);
+			const busy = (busyByUserId.get(userId) ?? []).filter((block) =>
+				Availability.overlaps(block, window),
+			);
+
+			return {
+				userId,
+				// which week a window falls in is a question about the member's own
+				// clock, the same one they filled the week in on
+				reported: memberWeeks.some(
+					(week) =>
+						Availability.weekStartsAt(
+							databaseTimestampToDate(window.startsAt),
+							week.timezone,
+						) === week.weekStartsAt,
+				),
+				ranges: Availability.clip(
+					Availability.subtract(
+						memberWeeks.flatMap((week) => week.slots),
+						busy,
+					),
+					window,
+				),
+				busy,
+			};
+		}),
+	}));
 }

@@ -74,3 +74,31 @@ export type WindowAvailability =
 	| { status: "busy"; block: BusyBlock }
 	| { status: "unavailable" }
 	| { status: "unknown" };
+
+/**
+ * How one person's schedule relates to a window, as the surfaces showing a
+ * roster's fit render it. `notes` is left out by the surfaces that have no day
+ * notes at hand.
+ */
+export interface WindowAvailabilityEntry {
+	userId: number;
+	availability: WindowAvailability;
+	notes?: Array<string>;
+}
+
+/**
+ * What is known about one person inside a window: the material
+ * `Availability.availabilityInWindow` resolves a status from. Sent to the
+ * browser as is by the surfaces that ask about many windows at once, so that
+ * narrowing one down (picking a start inside a post's flexibility) needs no
+ * further round trip.
+ */
+export interface WindowSchedule {
+	userId: number;
+	/** Whether they filled in the week the window falls in. */
+	reported: boolean;
+	/** Their effective availability inside the window. */
+	ranges: Array<TimeRange>;
+	/** Their commitments overlapping the window. */
+	busy: Array<BusyBlock>;
+}

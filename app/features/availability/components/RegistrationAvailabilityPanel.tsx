@@ -14,7 +14,7 @@ import { Avatar } from "~/components/Avatar";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
-import type { TimeRange } from "../availability-types";
+import type { TimeRange, WindowAvailabilityEntry } from "../availability-types";
 import type { RegistrationAvailability } from "../core/RegistrationAvailability.server";
 import styles from "./RegistrationAvailabilityPanel.module.css";
 
@@ -27,9 +27,7 @@ export interface AvailabilityPanelUser {
 }
 
 export type AvailabilityPanelData = SerializeFrom<RegistrationAvailability>;
-export type AvailabilityPanelEntry = NonNullable<
-	AvailabilityPanelData["entries"]
->[number];
+export type AvailabilityPanelEntry = WindowAvailabilityEntry;
 
 export type AvailabilityRowStatus =
 	| AvailabilityPanelEntry["availability"]["status"]
@@ -187,7 +185,7 @@ export function AvailabilityMemberRow({
 			</span>
 			{showAvailability ? <AvailabilityRowDetail entry={entry} /> : null}
 			{showAvailability
-				? entry?.notes.map((note) => (
+				? entry?.notes?.map((note) => (
 						<span key={note} className={styles.note}>
 							<Flag size={12} className={styles.noteFlag} /> {note}
 						</span>

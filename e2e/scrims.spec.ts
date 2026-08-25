@@ -497,6 +497,62 @@ test.describe("Scrim schedule picker", () => {
 	});
 });
 
+test.describe("Scrim fit indicator", () => {
+	test("shows how much of the viewer's roster could play a post", async ({
+		page,
+		factories,
+	}) => {
+		const { memberUserIds } = await createTeamFor(factories, NZAP_TEST_ID);
+		const evening = nextWeekSlot(WEDNESDAY, "18:00", "23:00");
+		const withoutSchedule = memberUserIds[memberUserIds.length - 1];
+
+		for (const userId of memberUserIds.filter(
+			(userId) => userId !== withoutSchedule,
+		)) {
+			await factories.AvailabilityWeekFactory.create({
+				userId,
+				weekStartsAt: nextWeek().startsAt,
+				timezone: MACHINE_TIMEZONE,
+				slots: [evening],
+			});
+		}
+
+		await factories.ScrimPostFactory.create({
+			users: await createGroup(factories),
+			startsAt: evening.startsAt,
+			isScheduledForFuture: true,
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+
+		const scrims = new ScrimsPage(page);
+		await scrims.goto();
+		await scrims.openTab("available");
+
+		await expect(scrims.locators.fitIndicator).toContainText("3/4 available");
+
+		await scrims.locators.fitIndicator.click();
+
+		await expect(scrims.availabilityRow(NZAP_TEST_ID)).toHaveAttribute(
+			"data-status",
+			"available",
+		);
+		await expect(scrims.availabilityRow(withoutSchedule)).toHaveAttribute(
+			"data-status",
+			"unknown",
+		);
+
+		await page.keyboard.press("Escape");
+		await scrims.requestFirst();
+
+		// the same breakdown, for the slot the request would be made for
+		await expect(scrims.availabilityRow(NZAP_TEST_ID)).toHaveAttribute(
+			"data-status",
+			"available",
+		);
+	});
+});
+
 async function createTeamFor(factories: Factories, userId: number) {
 	const teammates = await factories.UserFactory.createMany(GROUP_SIZE - 1);
 

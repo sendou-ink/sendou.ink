@@ -3,6 +3,7 @@ import * as AvailabilityWeekFactory from "~/db/seed/factories/AvailabilityWeekFa
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { AVAILABILITY } from "../availability-constants";
 import * as Availability from "./Availability";
 import * as RosterSchedule from "./RosterSchedule.server";
 
@@ -89,5 +90,102 @@ describe("RosterSchedule.rosterScheduleData", () => {
 			reportedWeekStarts: [],
 			ranges: [],
 		});
+	});
+});
+
+describe("RosterSchedule.windowSchedules", () => {
+	const window = (id: number, from: number, to: number) => ({
+		id,
+		startsAt: currentWeekStartsAt() + from * HOUR,
+		endsAt: currentWeekStartsAt() + to * HOUR,
+	});
+
+	const schedulesOf = async (
+		windows: Array<ReturnType<typeof window>>,
+		userIds: Array<number> = [memberId()],
+	) => RosterSchedule.windowSchedules({ windows, userIds });
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("reports what the member has free inside the window", async () => {
+		await AvailabilityWeekFactory.create({
+			userId: memberId(),
+			weekStartsAt: currentWeekStartsAt(),
+			timezone: TIMEZONE,
+			slots: [
+				{
+					startsAt: currentWeekStartsAt() + 18 * HOUR,
+					endsAt: currentWeekStartsAt() + 22 * HOUR,
+				},
+			],
+		});
+
+		const [schedules] = await schedulesOf([window(1, 20, 23)]);
+
+		expect(schedules.members).toEqual([
+			{
+				userId: memberId(),
+				reported: true,
+				ranges: [
+					{
+						startsAt: currentWeekStartsAt() + 20 * HOUR,
+						endsAt: currentWeekStartsAt() + 22 * HOUR,
+					},
+				],
+				busy: [],
+			},
+		]);
+	});
+
+	test("cuts a commitment out of the availability and reports it", async () => {
+		await AvailabilityWeekFactory.create({
+			userId: memberId(),
+			weekStartsAt: currentWeekStartsAt(),
+			timezone: TIMEZONE,
+			slots: [
+				{
+					startsAt: currentWeekStartsAt() + 18 * HOUR,
+					endsAt: currentWeekStartsAt() + 22 * HOUR,
+				},
+			],
+		});
+		const team = await TeamFactory.create({
+			memberUserIds: [memberId(), teammateId()],
+		});
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: memberId(),
+			name: "VoD review",
+			startsAt: currentWeekStartsAt() + 19 * HOUR,
+			endsAt: currentWeekStartsAt() + 20 * HOUR,
+		});
+
+		const [schedules] = await schedulesOf([window(1, 18, 22)]);
+
+		expect(schedules.members[0].ranges).toEqual([
+			{
+				startsAt: currentWeekStartsAt() + 18 * HOUR,
+				endsAt: currentWeekStartsAt() + 19 * HOUR,
+			},
+			{
+				startsAt: currentWeekStartsAt() + 20 * HOUR,
+				endsAt: currentWeekStartsAt() + 22 * HOUR,
+			},
+		]);
+		expect(schedules.members[0].busy).toHaveLength(1);
+	});
+
+	test("marks a week the member never filled in as not reported", async () => {
+		const [schedules] = await schedulesOf([window(1, 18, 20)]);
+
+		expect(schedules.members[0].reported).toBe(false);
+	});
+
+	test("leaves out a window past the reportable horizon", async () => {
+		const beyond = 24 * 7 * (AVAILABILITY.WEEK_HORIZON + 1);
+
+		expect(await schedulesOf([window(1, beyond, beyond + 2)])).toEqual([]);
 	});
 });
