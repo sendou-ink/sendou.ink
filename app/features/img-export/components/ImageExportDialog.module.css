@@ -11,6 +11,14 @@
 	gap: var(--s-3) var(--s-4);
 }
 
+.actions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2);
+}
+
 .scroller {
 	max-width: 100%;
 	overflow-x: auto;

@@ -12,6 +12,41 @@ export function useCopyToClipboard(): {
 	copySuccess: boolean;
 	reset: () => void;
 } {
+	const { copySuccess, flashCopySuccess, reset } = useCopySuccessFlash();
+
+	const copyToClipboard = (value: string) => {
+		if (!value) return;
+
+		navigator.clipboard.writeText(value).then(flashCopySuccess, () => {});
+	};
+
+	return { copyToClipboard, copySuccess, reset };
+}
+
+/**
+ * Copies a .png image to the clipboard, exposing `copySuccess` like {@link useCopyToClipboard}.
+ * The image is taken as a promise rather than a blob because Safari only allows the write while
+ * the click that started it is still being handled, so awaiting the image first would break it.
+ */
+export function useCopyPngToClipboard(): {
+	copyPngToClipboard: (png: Promise<Blob>) => Promise<void>;
+	copySuccess: boolean;
+} {
+	const { copySuccess, flashCopySuccess } = useCopySuccessFlash();
+
+	const copyPngToClipboard = async (png: Promise<Blob>) => {
+		try {
+			await navigator.clipboard.write([
+				new ClipboardItem({ "image/png": png }),
+			]);
+			flashCopySuccess();
+		} catch {}
+	};
+
+	return { copyPngToClipboard, copySuccess };
+}
+
+function useCopySuccessFlash() {
 	const [copySuccess, setCopySuccess] = React.useState(false);
 
 	React.useEffect(() => {
@@ -24,16 +59,9 @@ export function useCopyToClipboard(): {
 		return () => clearTimeout(timeout);
 	}, [copySuccess]);
 
-	const copyToClipboard = (value: string) => {
-		if (!value) return;
-
-		navigator.clipboard.writeText(value).then(
-			() => setCopySuccess(true),
-			() => {},
-		);
+	return {
+		copySuccess,
+		flashCopySuccess: () => setCopySuccess(true),
+		reset: () => setCopySuccess(false),
 	};
-
-	const reset = () => setCopySuccess(false);
-
-	return { copyToClipboard, copySuccess, reset };
 }
