@@ -1,6 +1,7 @@
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { userAsyncLocalStorage } from "~/features/auth/core/user-context.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
+import { TEAM_LEADERBOARD_QUALIFYING_COUNT } from "~/features/leaderboards/leaderboards-constants";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
@@ -9,24 +10,14 @@ import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 
 const tournamentIdArg = process.argv[2]?.trim();
-const placementsArg = process.argv[3]?.trim();
 
 invariant(tournamentIdArg, "tournamentId is required (argument 1)");
-invariant(placementsArg, "placements are required (argument 2), e.g. 1,2,3");
 
 const tournamentId = Number(tournamentIdArg);
 invariant(
 	Number.isInteger(tournamentId) && tournamentId > 0,
 	"tournamentId must be a positive integer",
 );
-
-const placements = placementsArg.split(",").map((p) => Number(p.trim()));
-for (const p of placements) {
-	invariant(
-		Number.isInteger(p) && p > 0,
-		`each placement must be a positive integer, got: ${p}`,
-	);
-}
 
 async function loadTournament() {
 	try {
@@ -52,11 +43,15 @@ async function main() {
 		onlyOneEntryPerUser: true,
 	});
 
-	const entries = placements.map((placement) => {
-		const entry = leaderboard.find((e) => e.placementRank === placement);
-		invariant(entry, `No leaderboard entry found for placement #${placement}`);
-		return entry;
-	});
+	const entries = leaderboard.filter(
+		(entry) =>
+			entry.placementRank !== null &&
+			entry.placementRank <= TEAM_LEADERBOARD_QUALIFYING_COUNT,
+	);
+	invariant(
+		entries.length === TEAM_LEADERBOARD_QUALIFYING_COUNT,
+		`Expected ${TEAM_LEADERBOARD_QUALIFYING_COUNT} qualifying teams on season ${season.nth} leaderboard, got ${entries.length}`,
+	);
 
 	const existingTeamNames = new Set(tournament.ctx.teams.map((t) => t.name));
 
