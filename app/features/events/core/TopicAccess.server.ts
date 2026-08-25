@@ -1,4 +1,5 @@
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
+import { hasPermission } from "~/modules/permissions/utils";
 
 const PUBLIC_TOPICS = new Set(["sq-looking"]);
 const PUBLIC_TOPIC_PREFIXES = ["tournament__", "match__", "sq-group__"];
@@ -20,7 +21,7 @@ export async function canSubscribe(
 		const [room] = await ChatRoomResolver.resolve([roomId]);
 		if (!room) return false;
 
-		return ChatRoomResolver.canView(room, userId);
+		return hasPermission(room, "VIEW", { id: userId });
 	}
 
 	return false;

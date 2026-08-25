@@ -1,5 +1,5 @@
 import { addHours, sub } from "date-fns";
-import type { Insertable } from "kysely";
+import type { Insertable, NotNull } from "kysely";
 import type { Tables, TablesInsertable } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
@@ -370,6 +370,48 @@ const mapDBRowToScrimPost = (
 		rangeEndsAt: null,
 	};
 };
+
+/** Posts owning the given chat rooms, with the users of the post and of its accepted request. */
+export async function findAllByChatRoomIds(chatRoomIds: number[]) {
+	if (chatRoomIds.length === 0) return [];
+
+	return db
+		.selectFrom("ScrimPost")
+		.select((eb) => [
+			"ScrimPost.id",
+			"ScrimPost.chatRoomId",
+			"ScrimPost.startsAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("ScrimPostUser")
+					.select("ScrimPostUser.userId")
+					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
+			).as("postUsers"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("ScrimPostRequestUser")
+					.innerJoin(
+						"ScrimPostRequest",
+						"ScrimPostRequest.id",
+						"ScrimPostRequestUser.scrimPostRequestId",
+					)
+					.select("ScrimPostRequestUser.userId")
+					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+					.where("ScrimPostRequest.isAccepted", "=", 1),
+			).as("acceptedRequestUsers"),
+			eb
+				.selectFrom("ScrimPostRequest")
+				.select("ScrimPostRequest.startsAt")
+				.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+				.where("ScrimPostRequest.isAccepted", "=", 1)
+				.limit(1)
+				.$asScalar()
+				.as("acceptedRequestStartsAt"),
+		])
+		.where("ScrimPost.chatRoomId", "in", chatRoomIds)
+		.$narrowType<{ chatRoomId: NotNull }>()
+		.execute();
+}
 
 export async function findById(scrimPostId: number): Promise<ScrimPost | null> {
 	const row = await baseFindQuery

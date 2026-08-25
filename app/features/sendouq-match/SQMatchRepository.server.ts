@@ -68,6 +68,40 @@ export async function exists(id: number) {
 	return Boolean(row);
 }
 
+/** Matches owning the given chat rooms, with both groups' members' user ids. */
+export async function findAllByChatRoomIds(chatRoomIds: number[]) {
+	if (chatRoomIds.length === 0) return [];
+
+	return db
+		.selectFrom("GroupMatch")
+		.select((eb) => [
+			"GroupMatch.id",
+			"GroupMatch.chatRoomId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where((inner) =>
+						inner.or([
+							inner(
+								"GroupMember.groupId",
+								"=",
+								inner.ref("GroupMatch.alphaGroupId"),
+							),
+							inner(
+								"GroupMember.groupId",
+								"=",
+								inner.ref("GroupMatch.bravoGroupId"),
+							),
+						]),
+					),
+			).as("members"),
+		])
+		.where("GroupMatch.chatRoomId", "in", chatRoomIds)
+		.$narrowType<{ chatRoomId: NotNull }>()
+		.execute();
+}
+
 export async function findById(id: number) {
 	const result = await db
 		.selectFrom("GroupMatch")

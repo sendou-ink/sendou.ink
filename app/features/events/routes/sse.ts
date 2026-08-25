@@ -4,7 +4,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import * as EventBus from "../core/EventBus.server";
 import * as SseConnections from "../core/SseConnections.server";
 
-const HEARTBEAT_INTERVAL_MS = 25_000;
+export const HEARTBEAT_INTERVAL_MS = 25_000;
 
 export const loader = ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();

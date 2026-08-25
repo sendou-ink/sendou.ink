@@ -1,10 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import {
-	forbidden,
-	notFoundIfNullish,
-	parseParams,
-} from "~/utils/remix.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { idObject } from "~/utils/schema";
 import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
@@ -22,13 +19,11 @@ export const loader = async ({
 	const { id: roomId } = parseParams({ params, schema: idObject });
 
 	const room = notFoundIfNullish((await ChatRoomResolver.resolve([roomId]))[0]);
-	if (!ChatRoomResolver.canView(room, user.id)) {
-		forbidden();
-	}
+	requirePermission(room, "VIEW");
 
 	const [stats] = await ChatRepository.findMessageStatsByRoomIds(user.id, [
 		roomId,
 	]);
 
-	return { room: roomListItem(room, stats, user.id) };
+	return { room: roomListItem(room, stats, user) };
 };

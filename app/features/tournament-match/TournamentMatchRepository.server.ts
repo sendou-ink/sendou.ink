@@ -1,11 +1,15 @@
-import { type Insertable, sql, type Transaction } from "kysely";
+import { type Insertable, type NotNull, sql, type Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import type { Side } from "~/features/tournament-bracket/core/engine/types";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
-import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
+import {
+	commonUserSelect,
+	jsonArrayFrom,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import type { Unwrapped } from "~/utils/types";
 
@@ -17,6 +21,36 @@ const opponentOneScore = sql<
 const opponentTwoScore = sql<
 	number | null
 >`"TournamentMatch"."opponentTwo" ->> '$.score'`;
+
+/** Matches owning the given chat rooms, with the tournament they belong to. */
+export async function findAllByChatRoomIds(chatRoomIds: number[]) {
+	if (chatRoomIds.length === 0) return [];
+
+	return db
+		.selectFrom("TournamentMatch")
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentStage.tournamentId",
+		)
+		.select((eb) => [
+			"TournamentMatch.id",
+			"TournamentMatch.chatRoomId",
+			"TournamentMatch.opponentOne",
+			"TournamentMatch.opponentTwo",
+			"TournamentStage.tournamentId",
+			"CalendarEvent.name as tournamentName",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+		])
+		.where("TournamentMatch.chatRoomId", "in", chatRoomIds)
+		.$narrowType<{ chatRoomId: NotNull }>()
+		.execute();
+}
 
 export type FindMatchById = NonNullable<Unwrapped<typeof findMatchById>>;
 export async function findMatchById(id: number) {

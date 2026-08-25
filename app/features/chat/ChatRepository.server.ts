@@ -1,5 +1,6 @@
 import type { ExpressionBuilder, Transaction } from "kysely";
 import { sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
@@ -13,6 +14,142 @@ import { toDBBoolean } from "~/utils/sql";
 import type { PersistedSystemMessageType } from "./chat-types";
 
 const MESSAGES_DEFAULT_LIMIT = 500;
+
+/** Chat rooms by id. */
+export async function findAllRoomsByIds(roomIds: number[]) {
+	if (roomIds.length === 0) return [];
+
+	return db
+		.selectFrom("ChatRoom")
+		.selectAll()
+		.where("ChatRoom.id", "in", roomIds)
+		.execute();
+}
+
+/**
+ * Ids of the rooms the user currently participates in (unexpired and unclosed).
+ * Room-first per the resolver spike: drives from the open room set and probes
+ * membership through the owner tables' indexes, never searching on the JSON
+ * opponent ids.
+ */
+export async function findAllOpenRoomIdsByUserId(
+	userId: number,
+): Promise<number[]> {
+	const now = databaseTimestampNow();
+
+	const openRooms = () =>
+		db
+			.selectFrom("ChatRoom")
+			.select("ChatRoom.id")
+			.where("ChatRoom.expiresAt", ">", now)
+			.where("ChatRoom.closedAt", "is", null);
+
+	const rooms = await Promise.all([
+		openRooms()
+			.innerJoin("Group", "Group.chatRoomId", "ChatRoom.id")
+			.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("GroupMember")
+						.select("GroupMember.userId")
+						.whereRef("GroupMember.groupId", "=", "Group.id")
+						.where("GroupMember.userId", "=", userId),
+				),
+			)
+			.execute(),
+		openRooms()
+			.innerJoin("GroupMatch", "GroupMatch.chatRoomId", "ChatRoom.id")
+			.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("GroupMember")
+						.select("GroupMember.userId")
+						.where("GroupMember.userId", "=", userId)
+						.where((eb) =>
+							eb.or([
+								eb(
+									"GroupMember.groupId",
+									"=",
+									eb.ref("GroupMatch.alphaGroupId"),
+								),
+								eb(
+									"GroupMember.groupId",
+									"=",
+									eb.ref("GroupMatch.bravoGroupId"),
+								),
+							]),
+						),
+				),
+			)
+			.execute(),
+		openRooms()
+			.innerJoin("TournamentMatch", "TournamentMatch.chatRoomId", "ChatRoom.id")
+			.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("TournamentTeamMember")
+						.select("TournamentTeamMember.userId")
+						.where("TournamentTeamMember.userId", "=", userId)
+						.where((eb) =>
+							eb.or([
+								eb(
+									"TournamentTeamMember.tournamentTeamId",
+									"=",
+									opponentTeamId("opponentOne"),
+								),
+								eb(
+									"TournamentTeamMember.tournamentTeamId",
+									"=",
+									opponentTeamId("opponentTwo"),
+								),
+							]),
+						),
+				),
+			)
+			.execute(),
+		openRooms()
+			.innerJoin("TournamentTeam", "TournamentTeam.chatRoomId", "ChatRoom.id")
+			.where(({ exists, selectFrom }) =>
+				exists(
+					selectFrom("TournamentTeamMember")
+						.select("TournamentTeamMember.userId")
+						.whereRef(
+							"TournamentTeamMember.tournamentTeamId",
+							"=",
+							"TournamentTeam.id",
+						)
+						.where("TournamentTeamMember.userId", "=", userId),
+				),
+			)
+			.execute(),
+		openRooms()
+			.innerJoin("ScrimPost", "ScrimPost.chatRoomId", "ChatRoom.id")
+			.where((eb) =>
+				eb.or([
+					eb.exists(
+						eb
+							.selectFrom("ScrimPostUser")
+							.select("ScrimPostUser.userId")
+							.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
+							.where("ScrimPostUser.userId", "=", userId),
+					),
+					eb.exists(
+						eb
+							.selectFrom("ScrimPostRequestUser")
+							.innerJoin(
+								"ScrimPostRequest",
+								"ScrimPostRequest.id",
+								"ScrimPostRequestUser.scrimPostRequestId",
+							)
+							.select("ScrimPostRequestUser.userId")
+							.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
+							.where("ScrimPostRequest.isAccepted", "=", 1)
+							.where("ScrimPostRequestUser.userId", "=", userId),
+					),
+				]),
+			)
+			.execute(),
+	]);
+
+	return rooms.flat().map((room) => room.id);
+}
 
 /** Returns the latest `limit` messages of a room, oldest first, authors resolved live. */
 export async function findAllMessagesByRoomId(
@@ -39,6 +176,51 @@ export function findMessageById(messageId: number) {
 		.executeTakeFirst();
 }
 
+/** Per-room message stats for the user: unread count (messages newer than their read indicator) and the latest message. Rooms with no messages are left out. */
+export async function findMessageStatsByRoomIds(
+	userId: number,
+	roomIds: number[],
+): Promise<
+	Array<{
+		roomId: number;
+		unreadCount: number;
+		latestMessageId: number;
+		latestMessageCreatedAt: number;
+	}>
+> {
+	if (roomIds.length === 0) return [];
+
+	return db
+		.selectFrom("ChatMessage")
+		.leftJoin("ChatMessageReadIndicator", (join) =>
+			join
+				.onRef("ChatMessageReadIndicator.roomId", "=", "ChatMessage.roomId")
+				.on("ChatMessageReadIndicator.userId", "=", userId),
+		)
+		.select(({ eb, fn, val }) => [
+			"ChatMessage.roomId",
+			fn
+				.sum<number>(
+					eb
+						.case()
+						.when(
+							"ChatMessage.id",
+							">",
+							fn.coalesce("ChatMessageReadIndicator.lastSeenMessageId", val(0)),
+						)
+						.then(1)
+						.else(0)
+						.end(),
+				)
+				.as("unreadCount"),
+			fn.max<number>("ChatMessage.id").as("latestMessageId"),
+			fn.max<number>("ChatMessage.createdAt").as("latestMessageCreatedAt"),
+		])
+		.where("ChatMessage.roomId", "in", roomIds)
+		.groupBy("ChatMessage.roomId")
+		.execute();
+}
+
 /** Inserts a chat room, returning the row. Called in the owning entity's insert transaction. */
 export function insertRoom(
 	args: { type: Tables["ChatRoom"]["type"]; expiresAt: Date },
@@ -54,6 +236,35 @@ export function insertRoom(
 		})
 		.returningAll()
 		.executeTakeFirstOrThrow();
+}
+
+/** Inserts `count` chat rooms of one type, returning their ids in insertion order. Called in the owning entity's insert transaction. */
+export async function insertRooms(
+	args: {
+		type: Tables["ChatRoom"]["type"];
+		expiresAt: Date;
+		count: number;
+	},
+	trx?: Transaction<DB>,
+): Promise<number[]> {
+	if (args.count === 0) return [];
+
+	const executor = trx ?? db;
+
+	const inserted = await executor
+		.insertInto("ChatRoom")
+		.values(
+			R.range(0, args.count).map(() => ({
+				type: args.type,
+				expiresAt: dateToDatabaseTimestamp(args.expiresAt),
+			})),
+		)
+		.returning("id")
+		.execute();
+
+	// the rows are identical, so sorting the ids is enough to line them up with
+	// the callers' insertion order (RETURNING makes no ordering promise)
+	return inserted.map((room) => room.id).sort((a, b) => a - b);
 }
 
 /** Extends a room's lifetime, e.g. when a successor group carries its chat over. */
@@ -163,51 +374,6 @@ export async function upsertReadIndicator(
 		.execute();
 }
 
-/** Per-room message stats for the user: unread count (messages newer than their read indicator) and the latest message. Rooms with no messages are left out. */
-export async function findMessageStatsByRoomIds(
-	userId: number,
-	roomIds: number[],
-): Promise<
-	Array<{
-		roomId: number;
-		unreadCount: number;
-		latestMessageId: number;
-		latestMessageCreatedAt: number;
-	}>
-> {
-	if (roomIds.length === 0) return [];
-
-	return db
-		.selectFrom("ChatMessage")
-		.leftJoin("ChatMessageReadIndicator", (join) =>
-			join
-				.onRef("ChatMessageReadIndicator.roomId", "=", "ChatMessage.roomId")
-				.on("ChatMessageReadIndicator.userId", "=", userId),
-		)
-		.select(({ eb, fn, val }) => [
-			"ChatMessage.roomId",
-			fn
-				.sum<number>(
-					eb
-						.case()
-						.when(
-							"ChatMessage.id",
-							">",
-							fn.coalesce("ChatMessageReadIndicator.lastSeenMessageId", val(0)),
-						)
-						.then(1)
-						.else(0)
-						.end(),
-				)
-				.as("unreadCount"),
-			fn.max<number>("ChatMessage.id").as("latestMessageId"),
-			fn.max<number>("ChatMessage.createdAt").as("latestMessageCreatedAt"),
-		])
-		.where("ChatMessage.roomId", "in", roomIds)
-		.groupBy("ChatMessage.roomId")
-		.execute();
-}
-
 /** Closes rooms whose expiry is before `expiredBefore`, returning how many. Messages are kept; access narrows. */
 export async function closeExpiredRooms(expiredBefore: Date) {
 	const result = await db
@@ -257,6 +423,10 @@ function noOwner(
 				.whereRef(`${table}.chatRoomId`, "=", "ChatRoom.id"),
 		),
 	);
+}
+
+function opponentTeamId(column: "opponentOne" | "opponentTwo") {
+	return sql<number>`${sql.ref(`TournamentMatch.${column}`)} ->> '$.id'`;
 }
 
 function messageWithAuthorSelect(eb: ExpressionBuilder<DB, "ChatMessage">) {

@@ -21,7 +21,7 @@ export const loader = async (): Promise<{ rooms: ChatRoomListItem[] }> => {
 
 	return {
 		rooms: rooms.map((room) =>
-			roomListItem(room, statsByRoomId.get(room.roomId), user.id),
+			roomListItem(room, statsByRoomId.get(room.roomId), user),
 		),
 	};
 };

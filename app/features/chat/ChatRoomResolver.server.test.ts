@@ -10,6 +10,7 @@ import { db } from "~/db/sql";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
@@ -114,7 +115,8 @@ describe("ChatRoomResolver.resolve", () => {
 		expect(room.type).toBe("SQ_GROUP");
 		expect(room.participantUserIds.sort()).toEqual(memberUserIds.sort());
 		expect(room.url).toBe("/q/looking");
-		expect(room.observerUserIds).toEqual([]);
+		// a group chat resolves no observers of its own, site staff aside
+		expect(hasPermission(room, "OBSERVE", { id: outsiderId() })).toBe(false);
 		expect(room.inactive).toBe(false);
 	});
 
@@ -161,7 +163,7 @@ describe("ChatRoomResolver.resolve", () => {
 		);
 		expect(room.titleParams.matchId).toBe(String(matchId));
 		expect(room.titleParams.tournamentName).toEqual(expect.any(String));
-		expect(room.observerUserIds).toContain(authorId);
+		expect(room.permissions.OBSERVE).toContain(authorId);
 	});
 
 	test("TOURNAMENT_MATCH observers include tournament staff organizers and streamers", async () => {
@@ -173,7 +175,7 @@ describe("ChatRoomResolver.resolve", () => {
 
 		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
 
-		expect(room.observerUserIds).toContain(users.id(12));
+		expect(room.permissions.OBSERVE).toContain(users.id(12));
 	});
 
 	test("resolves a TOURNAMENT_TEAM room to the pickup team's members", async () => {
@@ -192,7 +194,7 @@ describe("ChatRoomResolver.resolve", () => {
 		expect(room.type).toBe("TOURNAMENT_TEAM");
 		expect(room.participantUserIds.sort()).toEqual(memberUserIds.sort());
 		expect(room.titleParams.teamName).toEqual(expect.any(String));
-		expect(room.observerUserIds).toContain(authorId);
+		expect(room.permissions.OBSERVE).toContain(authorId);
 	});
 
 	test("resolves a SCRIM room to the post's users plus the accepted request's users", async () => {
@@ -278,8 +280,8 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 	});
 });
 
-describe("ChatRoomResolver.canObserve", () => {
-	test("site staff can observe both group chats of an SQ match", async () => {
+describe("ChatRoomResolver.resolve permissions", () => {
+	test("site staff observe both group chats of an SQ match", async () => {
 		const { match } = await setupSqMatch(users);
 
 		const rooms = await ChatRoomResolver.resolve([
@@ -290,8 +292,8 @@ describe("ChatRoomResolver.canObserve", () => {
 
 		expect(rooms).toHaveLength(3);
 		for (const room of rooms) {
-			expect(ChatRoomResolver.canObserve(room, adminId())).toBe(true);
-			expect(ChatRoomResolver.canObserve(room, outsiderId())).toBe(false);
+			expect(hasPermission(room, "OBSERVE", { id: adminId() })).toBe(true);
+			expect(hasPermission(room, "OBSERVE", { id: outsiderId() })).toBe(false);
 		}
 	});
 
@@ -302,7 +304,9 @@ describe("ChatRoomResolver.canObserve", () => {
 			await groupChatRoomId(match.bravoGroup.id),
 		]);
 
-		expect(ChatRoomResolver.canView(bravoRoom, alphaUserIds[0])).toBe(false);
+		expect(hasPermission(bravoRoom, "VIEW", { id: alphaUserIds[0] })).toBe(
+			false,
+		);
 	});
 
 	test("tournament organizer observes and may post into the match chat", async () => {
@@ -310,13 +314,11 @@ describe("ChatRoomResolver.canObserve", () => {
 
 		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
 
-		expect(ChatRoomResolver.canObserve(room, authorId)).toBe(true);
-		expect(ChatRoomResolver.canView(room, authorId)).toBe(true);
-		expect(ChatRoomResolver.canPost(room, authorId)).toBe(true);
+		expect(hasPermission(room, "OBSERVE", { id: authorId })).toBe(true);
+		expect(hasPermission(room, "VIEW", { id: authorId })).toBe(true);
+		expect(hasPermission(room, "POST", { id: authorId })).toBe(true);
 	});
-});
 
-describe("ChatRoomResolver.canView", () => {
 	test("participants lose view once the room closes; observers keep it", async () => {
 		const { chatRoomId, authorId, teamAlphaUserIds } =
 			await setupStartedTournamentMatch();
@@ -325,85 +327,102 @@ describe("ChatRoomResolver.canView", () => {
 		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
 
 		expect(room.closedAt).not.toBeNull();
-		expect(ChatRoomResolver.canView(room, teamAlphaUserIds[0])).toBe(false);
-		expect(ChatRoomResolver.canView(room, authorId)).toBe(true);
-		expect(ChatRoomResolver.canView(room, adminId())).toBe(true);
+		expect(hasPermission(room, "VIEW", { id: teamAlphaUserIds[0] })).toBe(
+			false,
+		);
+		expect(hasPermission(room, "VIEW", { id: authorId })).toBe(true);
+		expect(hasPermission(room, "VIEW", { id: adminId() })).toBe(true);
 	});
 });
 
-describe("ChatRoomResolver.canPost", () => {
-	const baseRoom = (
-		overrides: Partial<ChatRoomResolver.ResolvedRoom>,
-	): ChatRoomResolver.ResolvedRoom => ({
-		roomId: 1,
-		type: "SQ_MATCH",
-		titleParams: {},
-		url: "/",
-		imageUrl: null,
-		participantUserIds: [100],
-		observerUserIds: [],
+describe("ChatRoomResolver.permissionsOf", () => {
+	const openRoom = {
+		type: "SQ_MATCH" as const,
 		expiresAt: dateToDatabaseTimestamp(addHours(new Date(), 1)),
 		closedAt: null,
-		inactive: false,
-		...overrides,
-	});
+	};
+	const expiredRoom = {
+		...openRoom,
+		expiresAt: dateToDatabaseTimestamp(addHours(new Date(), -1)),
+	};
 
 	test.each([
 		{
 			why: "participant of an open room",
-			room: baseRoom({}),
+			args: { room: openRoom, participantUserIds: [100], observerUserIds: [] },
 			userId: 100,
 			allowed: true,
 		},
 		{
 			why: "non-participant",
-			room: baseRoom({}),
+			args: { room: openRoom, participantUserIds: [100], observerUserIds: [] },
 			userId: 101,
 			allowed: false,
 		},
 		{
 			why: "expired room",
-			room: baseRoom({
-				expiresAt: dateToDatabaseTimestamp(addHours(new Date(), -1)),
-			}),
+			args: {
+				room: expiredRoom,
+				participantUserIds: [100],
+				observerUserIds: [],
+			},
 			userId: 100,
 			allowed: false,
 		},
 		{
 			why: "closed room",
-			room: baseRoom({ closedAt: 1 }),
+			args: {
+				room: { ...openRoom, closedAt: 1 },
+				participantUserIds: [100],
+				observerUserIds: [],
+			},
 			userId: 100,
 			allowed: false,
 		},
 		{
 			why: "observer of an open match room",
-			room: baseRoom({ observerUserIds: [101] }),
+			args: {
+				room: openRoom,
+				participantUserIds: [100],
+				observerUserIds: [101],
+			},
 			userId: 101,
 			allowed: true,
 		},
 		{
 			why: "observer of an expired match room",
-			room: baseRoom({
+			args: {
+				room: expiredRoom,
+				participantUserIds: [100],
 				observerUserIds: [101],
-				expiresAt: dateToDatabaseTimestamp(addHours(new Date(), -1)),
-			}),
+			},
 			userId: 101,
 			allowed: false,
 		},
 		{
 			why: "observer of a group chat (private team space)",
-			room: baseRoom({ type: "SQ_GROUP", observerUserIds: [101] }),
+			args: {
+				room: { ...openRoom, type: "SQ_GROUP" as const },
+				participantUserIds: [100],
+				observerUserIds: [101],
+			},
 			userId: 101,
 			allowed: false,
 		},
 		{
 			why: "observer of a team pickup chat (private team space)",
-			room: baseRoom({ type: "TOURNAMENT_TEAM", observerUserIds: [101] }),
+			args: {
+				room: { ...openRoom, type: "TOURNAMENT_TEAM" as const },
+				participantUserIds: [100],
+				observerUserIds: [101],
+			},
 			userId: 101,
 			allowed: false,
 		},
-	])("$why -> $allowed", ({ room, userId, allowed }) => {
-		expect(ChatRoomResolver.canPost(room, userId)).toBe(allowed);
+	])("POST: $why -> $allowed", ({ args, userId, allowed }) => {
+		expect(ChatRoomResolver.permissionsOf(args).POST.includes(userId)).toBe(
+			allowed,
+		);
 	});
 });
 

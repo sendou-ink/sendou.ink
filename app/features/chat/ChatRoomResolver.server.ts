@@ -1,12 +1,13 @@
-import { sql } from "kysely";
-import { db } from "~/db/sql";
+import * as R from "remeda";
 import type { Tables } from "~/db/tables";
-import { isAdmin, isStaff } from "~/modules/permissions/utils";
+import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
+import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
+import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
+import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { databaseTimestampNow } from "~/utils/dates";
-import {
-	jsonArrayFrom,
-	tournamentLogoWithDefault,
-} from "~/utils/kysely.server";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	scrimPage,
@@ -14,9 +15,18 @@ import {
 	tournamentMatchPage,
 	tournamentSubsPage,
 } from "~/utils/urls";
+import * as ChatRepository from "./ChatRepository.server";
 import type { ChatRoomType } from "./chat-types";
 
-// xxx: direct DB calls here, should not be a thing, the logic also seems quite heavy, needed?
+/** Room types whose observers may also post: the shared spaces where a TO or staff member talks to the players. Group and team chats stay read-only — a private team space is only ever read for moderation. */
+const OBSERVER_POSTABLE_ROOM_TYPES: ChatRoomType[] = [
+	"SQ_MATCH",
+	"TOURNAMENT_MATCH",
+	"SCRIM",
+];
+
+/** Site staff read every room for moderation; the admin account holds the staff role too. */
+const SITE_MODERATOR_IDS = [ADMIN_ID, ...STAFF_IDS];
 
 export interface ResolvedRoom {
 	roomId: number;
@@ -27,11 +37,16 @@ export interface ResolvedRoom {
 	imageUrl: string | null;
 	participantUserIds: number[];
 	/**
-	 * Read-only observers resolved from the owning entity (tournament organizers and
-	 * streamers). Site ADMIN/STAFF observe through the role axis instead, see
-	 * {@link canObserve}.
+	 * - `VIEW`: reading the room. After `closedAt` only observers keep it.
+	 * - `POST`: sending a message, while the room is unexpired and unclosed.
+	 * - `OBSERVE`: read-only access resolved from the owning entity (tournament
+	 *   organizers and streamers), plus site staff who observe every room.
 	 */
-	observerUserIds: number[];
+	permissions: {
+		VIEW: number[];
+		POST: number[];
+		OBSERVE: number[];
+	};
 	expiresAt: number;
 	closedAt: number | null;
 	/** Whether the owner's activity has concluded (e.g. the match was finalized). */
@@ -47,11 +62,7 @@ type ChatRoomRow = Tables["ChatRoom"];
 export async function resolve(roomIds: number[]): Promise<ResolvedRoom[]> {
 	if (roomIds.length === 0) return [];
 
-	const rooms = await db
-		.selectFrom("ChatRoom")
-		.selectAll()
-		.where("ChatRoom.id", "in", roomIds)
-		.execute();
+	const rooms = await ChatRepository.findAllRoomsByIds(roomIds);
 
 	const byType = (type: ChatRoomType) =>
 		rooms.filter((room) => room.type === type);
@@ -69,139 +80,11 @@ export async function resolve(roomIds: number[]): Promise<ResolvedRoom[]> {
 	return resolved.sort((a, b) => a.roomId - b.roomId);
 }
 
-/**
- * Rooms the user currently participates in (unexpired and unclosed). Room-first per
- * the resolver spike: drives from the open room set and probes membership through
- * the owner tables' indexes, never searching on the JSON opponent ids.
- */
+/** Rooms the user currently participates in (unexpired and unclosed). */
 export async function findAllByUserId(userId: number): Promise<ResolvedRoom[]> {
-	const now = databaseTimestampNow();
+	const roomIds = await ChatRepository.findAllOpenRoomIdsByUserId(userId);
 
-	const openRooms = () =>
-		db
-			.selectFrom("ChatRoom")
-			.select("ChatRoom.id")
-			.where("ChatRoom.expiresAt", ">", now)
-			.where("ChatRoom.closedAt", "is", null);
-
-	const [groupRooms, matchRooms, tournamentMatchRooms, teamRooms, scrimRooms] =
-		await Promise.all([
-			openRooms()
-				.innerJoin("Group", "Group.chatRoomId", "ChatRoom.id")
-				.where(({ exists, selectFrom }) =>
-					exists(
-						selectFrom("GroupMember")
-							.select("GroupMember.userId")
-							.whereRef("GroupMember.groupId", "=", "Group.id")
-							.where("GroupMember.userId", "=", userId),
-					),
-				)
-				.execute(),
-			openRooms()
-				.innerJoin("GroupMatch", "GroupMatch.chatRoomId", "ChatRoom.id")
-				.where(({ exists, selectFrom }) =>
-					exists(
-						selectFrom("GroupMember")
-							.select("GroupMember.userId")
-							.where("GroupMember.userId", "=", userId)
-							.where((eb) =>
-								eb.or([
-									eb(
-										"GroupMember.groupId",
-										"=",
-										eb.ref("GroupMatch.alphaGroupId"),
-									),
-									eb(
-										"GroupMember.groupId",
-										"=",
-										eb.ref("GroupMatch.bravoGroupId"),
-									),
-								]),
-							),
-					),
-				)
-				.execute(),
-			openRooms()
-				.innerJoin(
-					"TournamentMatch",
-					"TournamentMatch.chatRoomId",
-					"ChatRoom.id",
-				)
-				.where(({ exists, selectFrom }) =>
-					exists(
-						selectFrom("TournamentTeamMember")
-							.select("TournamentTeamMember.userId")
-							.where("TournamentTeamMember.userId", "=", userId)
-							.where((eb) =>
-								eb.or([
-									eb(
-										"TournamentTeamMember.tournamentTeamId",
-										"=",
-										opponentTeamId("opponentOne"),
-									),
-									eb(
-										"TournamentTeamMember.tournamentTeamId",
-										"=",
-										opponentTeamId("opponentTwo"),
-									),
-								]),
-							),
-					),
-				)
-				.execute(),
-			openRooms()
-				.innerJoin("TournamentTeam", "TournamentTeam.chatRoomId", "ChatRoom.id")
-				.where(({ exists, selectFrom }) =>
-					exists(
-						selectFrom("TournamentTeamMember")
-							.select("TournamentTeamMember.userId")
-							.whereRef(
-								"TournamentTeamMember.tournamentTeamId",
-								"=",
-								"TournamentTeam.id",
-							)
-							.where("TournamentTeamMember.userId", "=", userId),
-					),
-				)
-				.execute(),
-			openRooms()
-				.innerJoin("ScrimPost", "ScrimPost.chatRoomId", "ChatRoom.id")
-				.where((eb) =>
-					eb.or([
-						eb.exists(
-							eb
-								.selectFrom("ScrimPostUser")
-								.select("ScrimPostUser.userId")
-								.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
-								.where("ScrimPostUser.userId", "=", userId),
-						),
-						eb.exists(
-							eb
-								.selectFrom("ScrimPostRequestUser")
-								.innerJoin(
-									"ScrimPostRequest",
-									"ScrimPostRequest.id",
-									"ScrimPostRequestUser.scrimPostRequestId",
-								)
-								.select("ScrimPostRequestUser.userId")
-								.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-								.where("ScrimPostRequest.isAccepted", "=", 1)
-								.where("ScrimPostRequestUser.userId", "=", userId),
-						),
-					]),
-				)
-				.execute(),
-		]);
-
-	const resolved = await resolve(
-		[
-			...groupRooms,
-			...matchRooms,
-			...tournamentMatchRooms,
-			...teamRooms,
-			...scrimRooms,
-		].map((room) => room.id),
-	);
+	const resolved = await resolve(roomIds);
 
 	// a solo group has no conversation to show yet
 	return resolved.filter(
@@ -209,68 +92,14 @@ export async function findAllByUserId(userId: number): Promise<ResolvedRoom[]> {
 	);
 }
 
-/** Whether the user has read-only observer access to the room: site ADMIN/STAFF, or an observer resolved from the owning entity. */
-export function canObserve(room: ResolvedRoom, userId: number): boolean {
-	return (
-		isAdmin({ id: userId }) ||
-		isStaff({ id: userId }) ||
-		room.observerUserIds.includes(userId)
-	);
-}
-
-/** Whether the user may read the room. After `closedAt` only observers retain access. */
-export function canView(room: ResolvedRoom, userId: number): boolean {
-	if (room.closedAt !== null) return canObserve(room, userId);
-
-	return room.participantUserIds.includes(userId) || canObserve(room, userId);
-}
-
-/** Room types whose observers may also post: the shared spaces where a TO or staff member talks to the players. Group and team chats stay read-only — a private team space is only ever read for moderation. */
-const OBSERVER_POSTABLE_ROOM_TYPES: ChatRoomType[] = [
-	"SQ_MATCH",
-	"TOURNAMENT_MATCH",
-	"SCRIM",
-];
-
-/** Whether the user may post to the room while it is unexpired and unclosed: participants always, observers in the shared room types. */
-export function canPost(room: ResolvedRoom, userId: number): boolean {
-	if (room.closedAt !== null) return false;
-	if (room.expiresAt <= databaseTimestampNow()) return false;
-
-	if (room.participantUserIds.includes(userId)) return true;
-
-	return (
-		OBSERVER_POSTABLE_ROOM_TYPES.includes(room.type) && canObserve(room, userId)
-	);
-}
-
-function opponentTeamId(column: "opponentOne" | "opponentTwo") {
-	return sql<number>`${sql.ref(`TournamentMatch.${column}`)} ->> '$.id'`;
-}
-
 async function resolveSqGroupRooms(
 	rooms: ChatRoomRow[],
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await db
-		.selectFrom("Group")
-		.select((eb) => [
-			"Group.chatRoomId",
-			"Group.status",
-			jsonArrayFrom(
-				eb
-					.selectFrom("GroupMember")
-					.select("GroupMember.userId")
-					.whereRef("GroupMember.groupId", "=", "Group.id"),
-			).as("members"),
-		])
-		.where(
-			"Group.chatRoomId",
-			"in",
-			rooms.map((room) => room.id),
-		)
-		.execute();
+	const owners = await SQGroupRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: {},
@@ -288,37 +117,9 @@ async function resolveSqMatchRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await db
-		.selectFrom("GroupMatch")
-		.select((eb) => [
-			"GroupMatch.id",
-			"GroupMatch.chatRoomId",
-			jsonArrayFrom(
-				eb
-					.selectFrom("GroupMember")
-					.select("GroupMember.userId")
-					.where((inner) =>
-						inner.or([
-							inner(
-								"GroupMember.groupId",
-								"=",
-								inner.ref("GroupMatch.alphaGroupId"),
-							),
-							inner(
-								"GroupMember.groupId",
-								"=",
-								inner.ref("GroupMatch.bravoGroupId"),
-							),
-						]),
-					),
-			).as("members"),
-		])
-		.where(
-			"GroupMatch.chatRoomId",
-			"in",
-			rooms.map((room) => room.id),
-		)
-		.execute();
+	const owners = await SQMatchRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: { matchId: String(owner.id) },
@@ -334,59 +135,24 @@ async function resolveTournamentMatchRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await db
-		.selectFrom("TournamentMatch")
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.id",
-			"TournamentMatch.stageId",
-		)
-		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentStage.tournamentId",
-		)
-		.select((eb) => [
-			"TournamentMatch.id",
-			"TournamentMatch.chatRoomId",
-			"TournamentMatch.opponentOne",
-			"TournamentMatch.opponentTwo",
-			"TournamentStage.tournamentId",
-			"CalendarEvent.name as tournamentName",
-			tournamentLogoWithDefault(eb).as("logoUrl"),
-		])
-		.where(
-			"TournamentMatch.chatRoomId",
-			"in",
-			rooms.map((room) => room.id),
-		)
-		.execute();
+	const owners = await TournamentMatchRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
 
 	// the opponent team ids come from the already-fetched match rows; they are
 	// never used as search predicates (see the resolver SQL spike)
-	const teamIds = [
-		...new Set(
-			owners.flatMap((owner) =>
-				[owner.opponentOne?.id, owner.opponentTwo?.id].filter(
-					(id): id is number => typeof id === "number",
-				),
+	const teamIds = R.unique(
+		owners.flatMap((owner) =>
+			[owner.opponentOne?.id, owner.opponentTwo?.id].filter(
+				(id): id is number => typeof id === "number",
 			),
 		),
-	];
-	const members =
-		teamIds.length > 0
-			? await db
-					.selectFrom("TournamentTeamMember")
-					.select([
-						"TournamentTeamMember.tournamentTeamId",
-						"TournamentTeamMember.userId",
-					])
-					.where("TournamentTeamMember.tournamentTeamId", "in", teamIds)
-					.execute()
-			: [];
-
-	const observers = await observersByTournamentId([
-		...new Set(owners.map((owner) => owner.tournamentId)),
+	);
+	const [members, organizers] = await Promise.all([
+		TournamentTeamRepository.findAllMembersByTeamIds(teamIds),
+		TournamentRepository.findOrganizerPermissionsByTournamentIds(
+			R.unique(owners.map((owner) => owner.tournamentId)),
+		),
 	]);
 
 	return joinOwners(rooms, owners, (owner) => {
@@ -394,7 +160,6 @@ async function resolveTournamentMatchRooms(
 			owner.opponentOne?.id,
 			owner.opponentTwo?.id,
 		].filter((id): id is number => typeof id === "number");
-		const tournamentObservers = observers.get(owner.tournamentId);
 
 		return {
 			titleParams: {
@@ -409,10 +174,8 @@ async function resolveTournamentMatchRooms(
 			participantUserIds: members
 				.filter((member) => opponentTeamIds.includes(member.tournamentTeamId))
 				.map((member) => member.userId),
-			observerUserIds: [
-				...(tournamentObservers?.organizerIds ?? []),
-				...(tournamentObservers?.streamerIds ?? []),
-			],
+			// streamers cast the matches, so they observe them as well
+			observerUserIds: organizers.get(owner.tournamentId)?.MANAGE_MATCHES ?? [],
 		};
 	});
 }
@@ -422,40 +185,14 @@ async function resolveTournamentTeamRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await db
-		.selectFrom("TournamentTeam")
-		.innerJoin(
-			"CalendarEvent",
-			"CalendarEvent.tournamentId",
-			"TournamentTeam.tournamentId",
-		)
-		.select((eb) => [
-			"TournamentTeam.chatRoomId",
-			"TournamentTeam.name",
-			"TournamentTeam.tournamentId",
-			"CalendarEvent.name as tournamentName",
-			tournamentLogoWithDefault(eb).as("logoUrl"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("TournamentTeamMember")
-					.select("TournamentTeamMember.userId")
-					.whereRef(
-						"TournamentTeamMember.tournamentTeamId",
-						"=",
-						"TournamentTeam.id",
-					),
-			).as("members"),
-		])
-		.where(
-			"TournamentTeam.chatRoomId",
-			"in",
-			rooms.map((room) => room.id),
-		)
-		.execute();
+	const owners = await TournamentTeamRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
 
-	const observers = await observersByTournamentId([
-		...new Set(owners.map((owner) => owner.tournamentId)),
-	]);
+	const organizers =
+		await TournamentRepository.findOrganizerPermissionsByTournamentIds(
+			R.unique(owners.map((owner) => owner.tournamentId)),
+		);
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: {
@@ -465,7 +202,7 @@ async function resolveTournamentTeamRooms(
 		url: tournamentSubsPage(owner.tournamentId),
 		imageUrl: owner.logoUrl,
 		participantUserIds: owner.members.map((member) => member.userId),
-		observerUserIds: observers.get(owner.tournamentId)?.organizerIds ?? [],
+		observerUserIds: organizers.get(owner.tournamentId)?.ORGANIZE ?? [],
 	}));
 }
 
@@ -474,45 +211,9 @@ async function resolveScrimRooms(
 ): Promise<ResolvedRoom[]> {
 	if (rooms.length === 0) return [];
 
-	const owners = await db
-		.selectFrom("ScrimPost")
-		.select((eb) => [
-			"ScrimPost.id",
-			"ScrimPost.chatRoomId",
-			"ScrimPost.startsAt",
-			jsonArrayFrom(
-				eb
-					.selectFrom("ScrimPostUser")
-					.select("ScrimPostUser.userId")
-					.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id"),
-			).as("postUsers"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("ScrimPostRequestUser")
-					.innerJoin(
-						"ScrimPostRequest",
-						"ScrimPostRequest.id",
-						"ScrimPostRequestUser.scrimPostRequestId",
-					)
-					.select("ScrimPostRequestUser.userId")
-					.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-					.where("ScrimPostRequest.isAccepted", "=", 1),
-			).as("acceptedRequestUsers"),
-			eb
-				.selectFrom("ScrimPostRequest")
-				.select("ScrimPostRequest.startsAt")
-				.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-				.where("ScrimPostRequest.isAccepted", "=", 1)
-				.limit(1)
-				.$asScalar()
-				.as("acceptedRequestStartsAt"),
-		])
-		.where(
-			"ScrimPost.chatRoomId",
-			"in",
-			rooms.map((room) => room.id),
-		)
-		.execute();
+	const owners = await ScrimPostRepository.findAllByChatRoomIds(
+		rooms.map((room) => room.id),
+	);
 
 	return joinOwners(rooms, owners, (owner) => ({
 		titleParams: {
@@ -528,20 +229,16 @@ async function resolveScrimRooms(
 	}));
 }
 
-function joinOwners<T extends { chatRoomId: number | null }>(
+function joinOwners<T extends { chatRoomId: number }>(
 	rooms: ChatRoomRow[],
 	owners: T[],
-	build: (
-		owner: T,
-	) => Pick<
+	build: (owner: T) => Pick<
 		ResolvedRoom,
-		| "titleParams"
-		| "url"
-		| "imageUrl"
-		| "participantUserIds"
-		| "observerUserIds"
-	> &
-		Partial<Pick<ResolvedRoom, "inactive">>,
+		"titleParams" | "url" | "imageUrl"
+	> & {
+		participantUserIds: number[];
+		observerUserIds: number[];
+	} & Partial<Pick<ResolvedRoom, "inactive">>,
 ): ResolvedRoom[] {
 	const ownerByRoomId = new Map(
 		owners.map((owner) => [owner.chatRoomId, owner]),
@@ -551,108 +248,46 @@ function joinOwners<T extends { chatRoomId: number | null }>(
 		const owner = ownerByRoomId.get(room.id);
 		if (!owner) return [];
 
+		const { observerUserIds, ...built } = build(owner);
+
 		return {
 			roomId: room.id,
 			type: room.type,
 			expiresAt: room.expiresAt,
 			closedAt: room.closedAt,
 			inactive: Boolean(room.inactive),
-			...build(owner),
+			...built,
+			permissions: permissionsOf({
+				room,
+				participantUserIds: built.participantUserIds,
+				observerUserIds,
+			}),
 		};
 	});
 }
 
-type TournamentObservers = {
-	organizerIds: number[];
-	streamerIds: number[];
-};
+/** Who may view, post to and observe a room, given the participants and observers its owner resolved to. */
+export function permissionsOf(args: {
+	room: Pick<ChatRoomRow, "type" | "expiresAt" | "closedAt">;
+	participantUserIds: number[];
+	observerUserIds: number[];
+}): ResolvedRoom["permissions"] {
+	const closed = args.room.closedAt !== null;
+	const expired = args.room.expiresAt <= databaseTimestampNow();
+	const OBSERVE = R.unique([...args.observerUserIds, ...SITE_MODERATOR_IDS]);
+	const observersMayPost = OBSERVER_POSTABLE_ROOM_TYPES.includes(
+		args.room.type,
+	);
 
-async function observersByTournamentId(
-	tournamentIds: number[],
-): Promise<Map<number, TournamentObservers>> {
-	const result = new Map<number, TournamentObservers>();
-	if (tournamentIds.length === 0) return result;
-
-	const observersOf = (tournamentId: number) => {
-		let observers = result.get(tournamentId);
-		if (!observers) {
-			observers = { organizerIds: [], streamerIds: [] };
-			result.set(tournamentId, observers);
-		}
-		return observers;
+	return {
+		VIEW: closed ? OBSERVE : R.unique([...args.participantUserIds, ...OBSERVE]),
+		POST:
+			closed || expired
+				? []
+				: R.unique([
+						...args.participantUserIds,
+						...(observersMayPost ? OBSERVE : []),
+					]),
+		OBSERVE,
 	};
-
-	const events = await db
-		.selectFrom("CalendarEvent")
-		.select([
-			"CalendarEvent.tournamentId",
-			"CalendarEvent.authorId",
-			"CalendarEvent.organizationId",
-		])
-		.where("CalendarEvent.tournamentId", "in", tournamentIds)
-		.execute();
-	const staff = await db
-		.selectFrom("TournamentStaff")
-		.select([
-			"TournamentStaff.tournamentId",
-			"TournamentStaff.userId",
-			"TournamentStaff.role",
-		])
-		.where("TournamentStaff.tournamentId", "in", tournamentIds)
-		.execute();
-
-	const organizationIds = [
-		...new Set(
-			events
-				.map((event) => event.organizationId)
-				.filter((id): id is number => id !== null),
-		),
-	];
-	const organizationMembers =
-		organizationIds.length > 0
-			? await db
-					.selectFrom("TournamentOrganizationMember")
-					.select([
-						"TournamentOrganizationMember.organizationId",
-						"TournamentOrganizationMember.userId",
-						"TournamentOrganizationMember.role",
-					])
-					.where(
-						"TournamentOrganizationMember.organizationId",
-						"in",
-						organizationIds,
-					)
-					.where("TournamentOrganizationMember.role", "in", [
-						"ADMIN",
-						"ORGANIZER",
-						"STREAMER",
-					])
-					.execute()
-			: [];
-
-	for (const event of events) {
-		if (event.tournamentId === null) continue;
-		const observers = observersOf(event.tournamentId);
-		observers.organizerIds.push(event.authorId);
-
-		for (const member of organizationMembers) {
-			if (member.organizationId !== event.organizationId) continue;
-			if (member.role === "STREAMER") {
-				observers.streamerIds.push(member.userId);
-			} else {
-				observers.organizerIds.push(member.userId);
-			}
-		}
-	}
-
-	for (const staffMember of staff) {
-		const observers = observersOf(staffMember.tournamentId);
-		if (staffMember.role === "STREAMER") {
-			observers.streamerIds.push(staffMember.userId);
-		} else {
-			observers.organizerIds.push(staffMember.userId);
-		}
-	}
-
-	return result;
 }

@@ -3,10 +3,10 @@ import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import invariant from "~/utils/invariant";
 import {
 	badRequestIfFalsy,
-	forbidden,
 	notFoundIfNullish,
 	parseParams,
 } from "~/utils/remix.server";
@@ -22,9 +22,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { roomId } = parseParams({ params, schema: paramsSchema });
 
 	const room = notFoundIfNullish((await ChatRoomResolver.resolve([roomId]))[0]);
-	if (!ChatRoomResolver.canPost(room, user.id)) {
-		forbidden();
-	}
+	requirePermission(room, "POST");
 
 	const result = await parseFormData({
 		request,

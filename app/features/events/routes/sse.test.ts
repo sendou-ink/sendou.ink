@@ -2,7 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { withUserId } from "~/utils/Test";
 import * as EventBus from "../core/EventBus.server";
-import { loader } from "./sse";
+import { HEARTBEAT_INTERVAL_MS, loader } from "./sse";
 import { action } from "./sse.$connectionId.topics";
 
 const openedStreams: Array<() => void> = [];
@@ -59,6 +59,36 @@ describe("sse loader", () => {
 		expect(await putTopicsStatus(11, hello.connectionId, ["sq-looking"])).toBe(
 			404,
 		);
+	});
+});
+
+describe("sse heartbeat", () => {
+	afterEach(() => {
+		vi.useRealTimers();
+	});
+
+	test("writes a comment frame every interval", async () => {
+		vi.useFakeTimers();
+		const stream = openStream(11);
+		await stream.nextChunk();
+
+		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS);
+
+		expect(await stream.nextChunk()).toBe(": heartbeat\n\n");
+	});
+
+	test("clears the interval when the connection closes", async () => {
+		vi.useFakeTimers();
+		const idleTimerCount = vi.getTimerCount();
+		const stream = openStream(11);
+		await stream.nextChunk();
+		expect(vi.getTimerCount()).toBe(idleTimerCount + 1);
+
+		stream.abort();
+		await vi.advanceTimersByTimeAsync(HEARTBEAT_INTERVAL_MS * 2);
+
+		expect(vi.getTimerCount()).toBe(idleTimerCount);
+		await expect(stream.ended()).resolves.toBe(true);
 	});
 });
 
@@ -202,6 +232,15 @@ function openStream(userId: number) {
 			}
 
 			return pendingEvents.shift();
+		},
+		/** Raw stream text of the next chunk, comment frames included. */
+		nextChunk: async () => {
+			const result = await reader.read();
+			if (result.done) {
+				throw new Error("stream ended while waiting for a chunk");
+			}
+
+			return decoder.decode(result.value, { stream: true });
 		},
 		ended: async () => {
 			const result = await reader.read();

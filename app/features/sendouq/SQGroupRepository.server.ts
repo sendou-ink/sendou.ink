@@ -60,6 +60,27 @@ export async function findMapModePreferencesByGroupId(groupId: number) {
 		.execute();
 }
 
+/** Groups owning the given chat rooms, with their members' user ids. */
+export async function findAllByChatRoomIds(chatRoomIds: number[]) {
+	if (chatRoomIds.length === 0) return [];
+
+	return db
+		.selectFrom("Group")
+		.select((eb) => [
+			"Group.chatRoomId",
+			"Group.status",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.whereRef("GroupMember.groupId", "=", "Group.id"),
+			).as("members"),
+		])
+		.where("Group.chatRoomId", "in", chatRoomIds)
+		.$narrowType<{ chatRoomId: NotNull }>()
+		.execute();
+}
+
 export async function findCurrentGroups() {
 	return (
 		db

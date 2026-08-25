@@ -210,12 +210,16 @@ export function insertBracket(args: {
 		// xxx: check if this is true
 		// only matches that can already be played get a chat room; the rest get
 		// theirs as they start (see syncStartedAt)
-		const chatRoomIdByMatchId = new Map<number, number>();
-		for (const match of args.bracket.match) {
-			if (statuses.get(match.id) === "STARTED") {
-				chatRoomIdByMatchId.set(match.id, await insertMatchChatRoom(trx));
-			}
-		}
+		const startedMatches = args.bracket.match.filter(
+			(match) => statuses.get(match.id) === "STARTED",
+		);
+		const startedChatRoomIds = await insertMatchChatRooms(
+			startedMatches.length,
+			trx,
+		);
+		const chatRoomIdByMatchId = new Map(
+			startedMatches.map((match, i) => [match.id, startedChatRoomIds[i]]),
+		);
 
 		await trx
 			.insertInto("TournamentMatch")
@@ -312,10 +316,11 @@ async function syncStartedAt(
 			.where("TournamentMatch.id", "in", startedMatchIds)
 			.where("TournamentMatch.chatRoomId", "is", null)
 			.execute();
-		for (const match of roomlessMatches) {
+		const chatRoomIds = await insertMatchChatRooms(roomlessMatches.length, trx);
+		for (const [i, match] of roomlessMatches.entries()) {
 			await trx
 				.updateTable("TournamentMatch")
-				.set({ chatRoomId: await insertMatchChatRoom(trx) })
+				.set({ chatRoomId: chatRoomIds[i] })
 				.where("TournamentMatch.id", "=", match.id)
 				.execute();
 		}
@@ -391,21 +396,22 @@ export async function insertRoundMatches(
 		throw new Error("No matches to insert");
 	}
 
-	const executor = trx ?? db;
-
-	const chatRoomIds: Array<number | null> = [];
-	for (const match of args.round.matches) {
-		chatRoomIds.push(
-			match.opponent1?.id && match.opponent2?.id
-				? await insertMatchChatRoom(trx)
-				: null,
-		);
+	if (!trx) {
+		return db
+			.transaction()
+			.execute((newTrx) => insertRoundMatches(args, newTrx));
 	}
 
-	await executor
+	const playableMatches = args.round.matches.filter(hasBothOpponents);
+	const chatRoomIds = await insertMatchChatRooms(playableMatches.length, trx);
+	const chatRoomIdByMatch = new Map(
+		playableMatches.map((match, i) => [match, chatRoomIds[i]]),
+	);
+
+	await trx
 		.insertInto("TournamentMatch")
 		.values(
-			args.round.matches.map((match, i) => ({
+			args.round.matches.map((match) => ({
 				stageId: args.stageId,
 				groupId: args.round.groupId,
 				roundId: args.round.roundId,
@@ -413,12 +419,9 @@ export async function insertRoundMatches(
 				opponentOne: serializeOpponent(match.opponent1),
 				opponentTwo: serializeOpponent(match.opponent2),
 				winnerSide: null,
-				chatRoomId: chatRoomIds[i],
+				chatRoomId: chatRoomIdByMatch.get(match) ?? null,
 				// swiss rounds are only generated once they can be played
-				startedAt:
-					match.opponent1?.id && match.opponent2?.id
-						? databaseTimestampNow()
-						: null,
+				startedAt: hasBothOpponents(match) ? databaseTimestampNow() : null,
 			})),
 		)
 		.execute();
@@ -492,15 +495,19 @@ function serializeOpponent(opponent: ParticipantResult | null): string | null {
 	return JSON.stringify(persisted);
 }
 
-async function insertMatchChatRoom(trx?: Transaction<DB>) {
-	const room = await ChatRepository.insertRoom(
+function insertMatchChatRooms(count: number, trx: Transaction<DB>) {
+	return ChatRepository.insertRooms(
 		{
 			type: "TOURNAMENT_MATCH",
 			expiresAt: addDays(new Date(), CHAT_ROOM_LIFESPAN_DAYS),
+			count,
 		},
 		trx,
 	);
-	return room.id;
+}
+
+function hasBothOpponents(match: GeneratedRound["matches"][number]) {
+	return Boolean(match.opponent1?.id && match.opponent2?.id);
 }
 
 /**

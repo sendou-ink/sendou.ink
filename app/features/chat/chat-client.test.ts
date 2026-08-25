@@ -170,6 +170,34 @@ describe("createChatClient", () => {
 		expect(snapshot.totalUnreadCount).toBe(1);
 	});
 
+	test("a message pushed while the history fetch is in flight survives it landing", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+
+		const history = [message({ id: 1 })];
+		let landFetch = () => {};
+		harness.fetchMessages.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					landFetch = () => resolve({ messages: history });
+				}),
+		);
+
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		const incoming = message({ id: 5, authorUserId: 2 });
+		harness.emit({ kind: "chatMessage", roomId: 1, message: incoming });
+
+		landFetch();
+		await flush();
+
+		expect(client.getSnapshot().messagesByRoomId.get(1)).toEqual([
+			...history,
+			incoming,
+		]);
+	});
+
 	test("the user's own message from another device never counts as unread", async () => {
 		const harness = createHarness();
 		const client = await startedClient(harness);

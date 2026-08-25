@@ -92,6 +92,11 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	const loadingMessageRoomIds = new Set<number>();
 	/** Unknown rooms a refetch was already tried for: messages of a room the user merely observes (moderation view) must not refetch the list over and over. */
 	const refetchedUnknownRoomIds = new Set<number>();
+	/** Messages that arrived while a room's first history fetch was in flight; merged in when it lands. */
+	const arrivedWhileLoadingByRoomId = new Map<
+		number,
+		ChatMessageWithAuthor[]
+	>();
 	/** Newest message id already marked read locally per room, so refetches can't resurrect stale unread counts. */
 	const locallyReadByRoomId = new Map<number, number>();
 	const readTimers = new Map<number, ReturnType<typeof setTimeout>>();
@@ -124,7 +129,15 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	/** Inserts a persisted message into a loaded history, replacing a pending send or older copy with the same `publicId`. */
 	const insertPersisted = (message: ChatMessageWithAuthor) => {
 		const existing = messagesByRoomId.get(message.roomId);
-		if (!existing) return;
+		if (!existing) {
+			if (loadingMessageRoomIds.has(message.roomId)) {
+				arrivedWhileLoadingByRoomId.set(message.roomId, [
+					...(arrivedWhileLoadingByRoomId.get(message.roomId) ?? []),
+					message,
+				]);
+			}
+			return;
+		}
 
 		const replaceIndex = existing.findIndex(
 			(candidate) => candidate.publicId === message.publicId,
@@ -305,6 +318,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		for (const roomId of lostRoomIds) {
 			messagesByRoomId.delete(roomId);
 			locallyReadByRoomId.delete(roomId);
+			arrivedWhileLoadingByRoomId.delete(roomId);
 			const timer = readTimers.get(roomId);
 			if (timer) {
 				clearTimeout(timer);
@@ -341,15 +355,16 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			const data = await deps.fetchMessages(roomId);
 			if (!data) return;
 
-			// keep optimistic sends that were appended while the fetch was in flight
-			const pending = (messagesByRoomId.get(roomId) ?? []).filter(
-				(message) =>
-					message.pending &&
-					!data.messages.some(
-						(fetched) => fetched.publicId === message.publicId,
-					),
+			// keep everything appended while the fetch was in flight that its
+			// snapshot predates: optimistic sends, and messages pushed over SSE
+			const fetchedPublicIds = new Set(
+				data.messages.map((message) => message.publicId),
 			);
-			setMessages(roomId, [...data.messages, ...pending]);
+			const missedByFetch = [
+				...(messagesByRoomId.get(roomId) ?? []),
+				...(arrivedWhileLoadingByRoomId.get(roomId) ?? []),
+			].filter((message) => !fetchedPublicIds.has(message.publicId));
+			setMessages(roomId, sortedMessages([...data.messages, ...missedByFetch]));
 			notify();
 
 			if (viewedRoomIds.has(roomId)) {
@@ -359,6 +374,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			logger.error("Fetching chat messages failed", error);
 		} finally {
 			loadingMessageRoomIds.delete(roomId);
+			arrivedWhileLoadingByRoomId.delete(roomId);
 		}
 	};
 
@@ -385,6 +401,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			locallyReadByRoomId.clear();
 			loadingExtraRoomIds.clear();
 			refetchedUnknownRoomIds.clear();
+			arrivedWhileLoadingByRoomId.clear();
 			notify();
 		},
 		getSnapshot: () => {

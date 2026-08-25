@@ -1,8 +1,8 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import {
-	forbidden,
 	notFoundIfNullish,
 	parseBody,
 	parseParams,
@@ -20,9 +20,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const data = await parseBody({ request, schema: bodySchema });
 
 	const room = notFoundIfNullish((await ChatRoomResolver.resolve([roomId]))[0]);
-	if (!ChatRoomResolver.canView(room, user.id)) {
-		forbidden();
-	}
+	requirePermission(room, "VIEW");
 
 	await ChatRepository.upsertReadIndicator({
 		userId: user.id,

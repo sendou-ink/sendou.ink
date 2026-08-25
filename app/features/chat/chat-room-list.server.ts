@@ -1,5 +1,6 @@
+import { hasPermission } from "~/modules/permissions/utils";
 import type * as ChatRepository from "./ChatRepository.server";
-import * as ChatRoomResolver from "./ChatRoomResolver.server";
+import type * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type { ChatRoomListItem } from "./chat-types";
 
 type MessageStats = Awaited<
@@ -10,7 +11,7 @@ type MessageStats = Awaited<
 export function roomListItem(
 	room: ChatRoomResolver.ResolvedRoom,
 	stats: MessageStats | undefined,
-	userId: number,
+	user: { id: number },
 ): ChatRoomListItem {
 	return {
 		id: room.roomId,
@@ -21,7 +22,7 @@ export function roomListItem(
 		participantUserIds: room.participantUserIds,
 		expiresAt: room.expiresAt,
 		inactive: room.inactive,
-		canPost: ChatRoomResolver.canPost(room, userId),
+		canPost: hasPermission(room, "POST", user),
 		unreadCount: stats?.unreadCount ?? 0,
 		latestMessageId: stats?.latestMessageId ?? null,
 		latestMessageAt: stats?.latestMessageCreatedAt ?? null,
