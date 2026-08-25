@@ -16,8 +16,10 @@ const SUB_WITH_ABILITY_DOUBLER_REQUIRED_ABILITY_CHUNKS_COUNT = 3;
 
 export const ABILITIES_WITHOUT_CHUNKS = new Set(["UNKNOWN", "AD"]);
 
-// From a given build, create a map of <Ability, number>, then return it as an Array after sorting by value, descending.
-//    The data structure describes the number of Ability chunks required for any given build.
+/**
+ * Ability chunks required to make the given build, as [ability, count] entries
+ * sorted by count descending.
+ */
 export function getAbilityChunksMapAsArray(
 	build: BuildAbilitiesTupleWithUnknown,
 ) {

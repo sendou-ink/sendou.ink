@@ -21,9 +21,8 @@ if (ServerConfig.isTest) {
 }
 
 sql.exec("PRAGMA journal_mode = WAL");
-// The synchronous=NORMAL setting provides the best balance between performance and safety for most applications running in WAL mode.
-// You lose durability across power lose with synchronous NORMAL in WAL mode, but that is not important for most applications.
-// Transactions are still atomic, consistent, and isolated, which are the most important characteristics in most use cases.
+// In WAL mode synchronous=NORMAL only risks durability across a power loss,
+// transactions stay atomic, consistent and isolated
 // Source: https://sqlite.org/pragma.html
 sql.exec("PRAGMA synchronous = NORMAL");
 sql.exec("PRAGMA foreign_keys = ON");
@@ -130,12 +129,8 @@ function logQuery(event: LogEvent) {
 function logError(event: LogEvent) {
 	if (
 		event.level === "error" &&
-		// it seems that this error happens everytime something goes wrong inside transaction
-		// my guess is that the transaction is already implicitly rolled back in the case of error
-		// but kysely also does it explicitly -> fails because there is no transaction to rollback.
-		// this `logError` function at least makes it so that due to that the error doesn't get logged
-		// but of course the best solution would also avoid useless rollbacks, something for the future
-		// btw this particular check is here just to avoid the double "no transaction is active" log
+		// an error inside a transaction rolls it back implicitly, so kysely's explicit
+		// rollback then fails -> skip that follow-up error to avoid a double log
 		!(event.error as any).message.includes("no transaction is active")
 	) {
 		logger.error(event.error);

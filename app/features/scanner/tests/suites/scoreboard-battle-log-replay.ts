@@ -8,8 +8,7 @@
  * Replay parses are expensive (eight 68px weapon rows plus the Rowdy-face
  * code line), so the suite is sharded across processes:
  * tests/scoreboard-battle-log-replay.<n>.test.ts each run one shard. Every
- * fixture group is dealt round-robin, so
- * `node --test tests/scoreboard-battle-log-replay.*.test.ts` still covers
+ * fixture group is dealt round-robin, so the shards together still cover
  * exactly what the old single file did.
  */
 

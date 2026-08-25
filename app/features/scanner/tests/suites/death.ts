@@ -7,8 +7,8 @@
  * Death parses are the most expensive in the repo (four burst-line reads
  * plus up to six splash-tag name passes each), so the suite is sharded
  * across processes: tests/death.<n>.test.ts each run one shard. Every
- * fixture group is dealt round-robin, so `node --test tests/death.*.test.ts`
- * still covers exactly what the old single file did.
+ * fixture group is dealt round-robin, so the shards together still cover
+ * exactly what the old single file did.
  */
 
 import assert from "node:assert/strict";

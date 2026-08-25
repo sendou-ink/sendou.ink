@@ -112,7 +112,7 @@ export type TournamentTeamMemberProgressStatus = NonNullable<
 	ReturnType<Tournament["teamMemberOfProgressStatus"]>
 >;
 
-/** Extends and providers utility functions on top of the bracket-manager library. Updating data after the bracket has started is responsibility of bracket-manager. */
+/** Utility functions on top of the tournament's data. Updating the bracket data after the bracket has started is the responsibility of the bracket engine (`core/engine`). */
 export class Tournament {
 	ctx;
 	/** See {@link TournamentArgs.participatedUsers}, null when this view did not get them. */
@@ -1369,7 +1369,7 @@ export class Tournament {
 
 		const anotherMatchBlocking = this.followingMatches(matchId).some(
 			(match) =>
-				// in swiss matches are generated round by round and the existance
+				// in swiss matches are generated round by round and the existence
 				// of a following match in itself is blocking even if they didn't start yet
 				bracket.type === "swiss" ||
 				// match is not in progress in un-swiss bracket, ok to reopen

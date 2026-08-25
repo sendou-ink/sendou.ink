@@ -28,7 +28,7 @@ export interface GetUserResponse {
 	country: string | null;
 	socials: {
 		twitch: string | null;
-		// @deprecated
+		/** @deprecated */
 		twitter: null;
 		battlefy: string | null;
 		bsky: string | null;
@@ -281,16 +281,12 @@ export type GetTournamentPlayersResponse = Array<{
 /** GET /api/tournament/{tournamentId}/casted */
 
 export interface GetCastedTournamentMatchesResponse {
-	/*
-	 * Matches that are currently being played and casted. Note: at the moment only one match can be casted at a time but this is an array for future proofing.
-	 */
+	/** Matches that are currently being played and casted. One per casting channel. */
 	current: Array<{
 		matchId: number;
 		channel: TournamentCastChannel;
 	}>;
-	/*
-	 * Matches that are locked to be casted.
-	 */
+	/** Matches that are locked to be casted. */
 	future: Array<{
 		matchId: number;
 		channel: TournamentCastChannel;

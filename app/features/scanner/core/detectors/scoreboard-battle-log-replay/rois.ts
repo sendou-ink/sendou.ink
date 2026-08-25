@@ -1,7 +1,7 @@
 /**
  * ALL scoreboard-battle-log-replay ROI coordinates, in canonical 1920x1080
  * space. Calibrated against scoreboard-battle-log-replay/private-battle-
- * splat-zones-hagglefish via tools/overlay-rois.ts and column-projection
+ * splat-zones-hagglefish via scripts/scanner/overlay-rois.ts and column-projection
  * measurement.
  *
  * The replay-browser detail screen shows two team panels SIDE BY SIDE

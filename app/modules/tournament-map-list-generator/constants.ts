@@ -9,7 +9,7 @@ export const sourceTypes = [
 	"ROLL",
 ] as const;
 
-// this is only used as a fallback, in the case that map list generation has a bug
+/** Only used as a fallback, in the case that map list generation has a bug */
 export const DEFAULT_MAP_POOL = new MapPool([
 	{ mode: "SZ", stageId: 6 },
 	{ mode: "SZ", stageId: 8 },

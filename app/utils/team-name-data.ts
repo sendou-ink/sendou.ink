@@ -1,5 +1,5 @@
-// Auto-generated team name data from adj.json and sub.json
-// Regenerate with: pnpm exec vite-node scripts/generate-team-names.ts
+// Word lists for random team names. The generator script is not part of the repo,
+// so new words are added here directly.
 
 export const ADJECTIVES = [
 	"Inkless",

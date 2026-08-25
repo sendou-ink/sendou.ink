@@ -1,7 +1,7 @@
 /**
  * ALL scoreboard-own ROI coordinates, in canonical 1920x1080 space.
  * Calibrated against scoreboard-own/private-battle-splat-zones-museum via
- * tools/dump-crops.ts and column/row projection measurement.
+ * scripts/scanner/dump-crops.ts and column/row projection measurement.
  *
  * The personal results screen ("your results") shows the same header tags
  * as the live scoreboard (same positions, reuses its bands) over a dark

@@ -39,9 +39,8 @@ export function queryToUserIdentifier(
 // snowflake logic from https://github.dev/vegeta897/snow-stamp/blob/main/src/util.js
 const DISCORD_EPOCH = 1420070400000;
 
-// Converts a snowflake ID string into a JS Date object using the provided epoch (in ms), or Discord's epoch if not provided
+/** Converts a Discord snowflake ID into the Date it was created at */
 export function convertSnowflakeToDate(snowflake: string) {
-	// Convert snowflake to BigInt to extract timestamp bits
 	// https://discord.com/developers/docs/reference#snowflakes
 	const milliseconds = BigInt(snowflake) >> 22n;
 	return new Date(Number(milliseconds) + DISCORD_EPOCH);

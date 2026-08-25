@@ -1,6 +1,6 @@
 /**
  * ALL death-screen ROI coordinates, in canonical 1920x1080 space.
- * Calibrated against the death/ fixtures via tools/dump-crops.ts,
+ * Calibrated against the death/ fixtures via scripts/scanner/dump-crops.ts,
  * HoughCircles measurement, and bright-row profiling.
  *
  * The death cam overlays three fixed elements on live gameplay: a dark

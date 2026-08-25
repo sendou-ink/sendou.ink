@@ -3,9 +3,11 @@ import { databaseTimestampToDate } from "~/utils/dates";
 import type { GroupExpiryStatus } from "../q-types";
 import type { SQGroup } from "./SendouQ.server";
 
-// logic is that team who is bigger decides the settings
-// but if groups are the same size then the one who liked
-// is basically consenting that other team's setting are used
+/**
+ * Which group's settings the two groups keep when they morph into one. The bigger
+ * group decides, and if they are the same size the group who liked consents to the
+ * other group's settings.
+ */
 export function groupAfterMorph({
 	ourGroup,
 	theirGroup,

@@ -11,7 +11,7 @@
  * frame that was analyzed.
  *
  * Completed scans are persisted to IndexedDB keyed by file name
- * (src/store/vods.ts); the default view lists them for reinspection.
+ * (store/vods.ts); the default view lists them for reinspection.
  */
 import clsx from "clsx";
 import { Download, FileText, Send, Trash2, Video } from "lucide-react";

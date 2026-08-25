@@ -5,7 +5,6 @@ import { ordering } from "./seeding";
  * Makes a list of rounds containing the matches of a round-robin group.
  *
  * @param participants The participants to distribute.
- * @param mode The round-robin mode.
  */
 export function makeRoundRobinMatches<T>(participants: T[]): [T, T][][] {
 	const n = participants.length;

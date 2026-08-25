@@ -216,7 +216,7 @@ export function dateToYYYYMMDD(date: Date) {
 	return date.toISOString().split("T")[0];
 }
 
-// same as datesOfMonth but contains null at the start to start with monday
+/** Same as datesOfMonth but padded with nulls at the start so the month starts on a Monday */
 export function nullPaddedDatesOfMonth({ month, year }: MonthYear) {
 	const dates = datesOfMonth({ month, year });
 	const firstDay = dates[0].getUTCDay();

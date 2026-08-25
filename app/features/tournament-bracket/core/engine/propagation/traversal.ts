@@ -19,7 +19,7 @@ interface RoundPositionalInfo {
 
 /**
  * Resolves the matches following another match and applies result propagation
- * to them. Port of the old base/getter.ts + base/updater.ts, mutating the rows
+ * to them. Port of the old brackets-manager getter + updater, mutating the rows
  * of a Store instead of writing to storage.
  */
 export class Propagator {
@@ -30,7 +30,7 @@ export class Propagator {
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Updater (base/updater.ts)                                           */
+	/* Updater                                                            */
 	/* ------------------------------------------------------------------ */
 
 	/**
@@ -241,7 +241,7 @@ export class Propagator {
 	}
 
 	/* ------------------------------------------------------------------ */
-	/* Getter (base/getter.ts)                                             */
+	/* Getter                                                             */
 	/* ------------------------------------------------------------------ */
 
 	/**

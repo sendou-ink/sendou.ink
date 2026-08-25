@@ -38,7 +38,7 @@ export interface BaseWeaponStats {
 	DamageParam_ValueDirect?: number;
 	DamageParam_ValueDirectMax?: number;
 	DamageParam_ValueDirectMin?: number;
-	// Dread Wringer
+	/** Dread Wringer */
 	DamageParam_Secondary_ValueDirectMax?: number;
 	DamageParam_Secondary_ValueDirectMin?: number;
 	DamageParam_SplatanaVerticalDirect?: number;
@@ -98,7 +98,7 @@ export interface BaseWeaponStats {
 	InkConsume_WeaponShelterShotgunParam?: number;
 	/** How much ink a dualie dodge roll consumes? */
 	InkConsume_SideStepParam?: number;
-	/** How much ink a fully charger Splatana shot consumes? */
+	/** How much ink a fully charged Splatana shot consumes? */
 	InkConsumeFullCharge_ChargeParam?: number;
 	//InkConsumeMidCharge_ChargeParam?: number;
 	// SpeedInkConsumeMax_WeaponRollParam?: number;

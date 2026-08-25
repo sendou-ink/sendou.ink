@@ -133,14 +133,13 @@ export default function Planner() {
 		}) => {
 			if (!editor) return;
 
-			// tldraw creator:
-			// "So image shapes in tldraw work like this: we add an asset to the app.assets table, then we reference that asset in the shape object itself.
-			// This lets us have multiple copies of an image on the canvas without having all of those take up memory individually"
+			// tldraw image shapes reference an asset by id, so many copies of the
+			// same image on the canvas only take up memory once
 			const assetId: TLAssetId = AssetRecordType.createId();
 
 			const srcWithOutline = imgOutlined ? `${src}?outline=red` : src;
 
-			// idk if this is the best solution, but it was the example given and it seems to cope well with lots of shapes at once
+			// follows tldraw's own example, copes well with lots of shapes at once
 			const imageAsset: TLImageAsset = {
 				id: assetId,
 				type: "image",
@@ -450,7 +449,7 @@ export default function Planner() {
 	);
 }
 
-// Formats the style panel so it can have classnames, this is needed so it can be moved below the header bar which blocks clicks (idk why this is different to the old version)
+// Wraps the style panel so it can be styled to sit below the header bar, which otherwise blocks clicks on it
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
 		<div className={props.isMobile ? undefined : styles.stylePanel}>

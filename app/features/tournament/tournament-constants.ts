@@ -41,8 +41,11 @@ export const TOURNAMENT_STAGE_TYPES = [
 	"swiss",
 ] as const;
 
-// AUTO = style where teams pick their map pool ahead of time and the map lists are automatically made for each round
-// could also have the traditional style where TO picks the maps later
+/**
+ * AUTO = teams pick their map pool ahead of time and the map lists are made
+ * automatically for each round. TO = the traditional style where the TO picks
+ * the maps.
+ */
 export type TournamentMapPickingStyle =
 	| "TO"
 	| "AUTO_ALL"

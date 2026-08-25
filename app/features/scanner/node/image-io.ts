@@ -1,5 +1,5 @@
 /**
- * Node-only image decode/encode (@napi-rs/canvas). Never imported from src/core.
+ * Node-only image decode/encode (@napi-rs/canvas). Never imported from core/.
  *
  * Decoding goes through a canvas, whose backing store is alpha-premultiplied;
  * RGB at partial-alpha pixels can shift by ±1. Everything we read is either

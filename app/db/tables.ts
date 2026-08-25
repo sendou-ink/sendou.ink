@@ -670,7 +670,7 @@ export interface TournamentMatch {
 	opponentTwo: JSONColumnTypeNullable<ParticipantResult>;
 	roundId: number;
 	stageId: number;
-	// set when the match becomes playable i.e. its status is "STARTED"
+	/** Set when the match becomes playable i.e. its status is "STARTED" */
 	startedAt: number | null;
 	/** The side that won the set. `null` while the match has no winner. */
 	winnerSide: Side | null;
@@ -807,7 +807,7 @@ export interface TournamentTeamMember {
 	isSub: Generated<DBBoolean>;
 	/** Set when the member was added to the roster by the tournament organizer instead of joining on their own. */
 	isOrganizerAdded: Generated<DBBoolean>;
-	// denormalized from TournamentTeam.isLooking
+	/** Denormalized from TournamentTeam.isLooking */
 	isLooking: Generated<DBBoolean>;
 }
 

@@ -71,7 +71,7 @@ export function tournamentTeamToActiveRosterUserIds(
 	return null;
 }
 
-// deal with user getting added to multiple teams by the TO
+/** Deals with a user getting added to multiple teams by the TO */
 export function ensureOneStandingPerUser(standings: Standing[]) {
 	const userIds = new Set<number>();
 

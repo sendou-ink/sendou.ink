@@ -30,7 +30,7 @@ export function parseSpecialTrophyCode(
 	return null;
 }
 
-// Feature flag
+/** Feature flag */
 export function canAccessTrophies(user?: { roles: Array<Role> } | null) {
 	if (TROPHIES_RELEASED) return true;
 	if (!user) return false;

@@ -19,7 +19,7 @@ export const RUSH_WEEKEND_3 = [
 	{ id: 39814, score: 0, receivedBye: false, avoid: [38337, 39850] },
 ];
 
-// tournament 4224 group A entering round 3: 7 teams at score 2, 16 at score 1, 6 at score 0
+/** Tournament 4224 group A entering round 3: 7 teams at score 2, 16 at score 1, 6 at score 0 */
 export const LOW_INK_AUGUST_2026_ROUND_3 = [
 	{ id: 83693, score: 2, receivedBye: false, avoid: [85574, 84491] },
 	{ id: 84224, score: 2, receivedBye: false, avoid: [86019, 85541] },

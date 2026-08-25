@@ -512,7 +512,7 @@ export function checkboxValueToBoolean(value: unknown) {
 export const _action = <T extends string>(value: T) =>
 	preprocess(deduplicate, v.literal(value));
 
-// Fix bug at least in Safari 15 where SubmitButton value might get sent twice
+/** Works around a bug at least in Safari 15 where a SubmitButton value might get sent twice */
 export function deduplicate(value: unknown) {
 	if (Array.isArray(value)) {
 		const [one, two, ...rest] = value;

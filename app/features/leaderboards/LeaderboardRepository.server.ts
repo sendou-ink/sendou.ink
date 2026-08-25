@@ -315,10 +315,9 @@ function xpLeaderboardQuery(where?: {
 	mode?: RankedModeShort;
 	weaponSplId?: MainWeaponId;
 }) {
-	// walks placements from the highest power down (power-descending indexes
-	// keeping only each player's best placement, so it can
-	// stop at the 500th distinct player instead of aggregating every player's
-	// max power first
+	// walks placements from the highest power down (power-descending indexes),
+	// keeping only each player's best placement, so it can stop at the 500th
+	// distinct player instead of aggregating every player's max power first
 	return db
 		.selectFrom((eb) => {
 			let placements = eb

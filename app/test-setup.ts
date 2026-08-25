@@ -11,9 +11,8 @@ afterEach(async () => {
 	await dbReset();
 });
 
-// after updating some packages got
-// Error: Cannot find module '/Users/kalle/Documents/personal/repos/sendou.ink/node_modules/@aws-sdk/core/dist-es/submodules/client/index' imported from
-// this is a workaround for that, if sometime in future unit tests pass without these then this can be deleted
+// mocking the AWS SDK avoids a "Cannot find module '@aws-sdk/core/dist-es/submodules/client/index'"
+// error in unit tests, can be deleted if they pass without these
 
 vi.mock("@aws-sdk/client-s3", () => ({
 	S3: vi.fn(() => ({})),

@@ -1,7 +1,7 @@
 /**
  * ALL scoreboard ROI coordinates, in canonical 1920x1080 space.
  * Calibrated against scoreboard/xbattle-splat-zones-ko via
- * tools/overlay-rois.ts and column-projection measurement.
+ * scripts/scanner/overlay-rois.ts and column-projection measurement.
  *
  * The results-screen scoreboard is a fixed-layout panel on the right side:
  * two team boxes (top = winner, bottom = loser), 4 dark "pill" rows each,

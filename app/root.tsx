@@ -375,10 +375,6 @@ function useCustomThemeVars() {
 }
 
 export default function App() {
-	// prop drilling data instead of using useLoaderData in the child components directly because
-	// useLoaderData can't be used in CatchBoundary and layout is rendered in it as well
-	//
-	// Update 14.10.23: not sure if this still applies as the CatchBoundary is gone
 	const data = useLoaderData<RootLoaderData>();
 
 	// Move overflow:hidden from html to body to allow position: sticky and position: fixed

@@ -29,7 +29,7 @@ export type CustomTheme = Omit<Record<CustomThemeVar, number>, "--_chat-h"> & {
 	"--_chat-h": number | null;
 };
 
-// missing means "neutral"
+/** Missing means "neutral" */
 export type Preference = "AVOID" | "PREFER";
 
 export interface UserMapModePreferences {
@@ -159,7 +159,7 @@ export interface CustomPickBanFlow {
 	postGame: CustomPickBanStep[];
 }
 
-// when updating this also update `settingsFromFormValues` in calendar-progression-form.ts
+/** When updating this also update `settingsFromFormValues` in calendar-progression-form.ts */
 export interface TournamentStageSettings {
 	// SE
 	thirdPlaceMatch?: boolean;

@@ -1,6 +1,6 @@
 /**
  * ALL minimap ROI coordinates, in canonical 1920x1080 space. Calibrated
- * against the minimap/ fixtures via tools/dump-crops.ts plus template
+ * against the minimap/ fixtures via scripts/scanner/dump-crops.ts plus template
  * relocation sweeps (badges sit on an exact 48px pitch, pinning origins).
  *
  * The in-match map overlay (X) draws over gaussian-blurred gameplay: four

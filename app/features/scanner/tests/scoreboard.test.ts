@@ -3,7 +3,7 @@
  * compare per field, so a failure names the exact field and row with the
  * raw match score (threshold problems must look different from ROI problems).
  *
- * Target one case: node --test --test-name-pattern="xbattle" 'tests/**'
+ * Target one case: pnpm test:scanner -t "xbattle"
  */
 
 import assert from "node:assert/strict";
