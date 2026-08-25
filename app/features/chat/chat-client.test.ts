@@ -30,6 +30,7 @@ function room(overrides: Partial<ChatRoomListItem> = {}): ChatRoomListItem {
 		participantUserIds: [1, 2],
 		expiresAt: 2_000_000_000,
 		inactive: false,
+		canPost: true,
 		unreadCount: 0,
 		latestMessageId: null,
 		latestMessageAt: null,
@@ -392,6 +393,18 @@ describe("createChatClient", () => {
 		expect(harness.fetchRoom).toHaveBeenCalledTimes(1);
 		expect(client.getSnapshot().extraRooms.get(50)).toMatchObject({ id: 50 });
 		expect(client.getSnapshot().rooms).toHaveLength(1);
+	});
+
+	test("an observed room starts with no unread of its own", async () => {
+		const observed = room({ id: 50, unreadCount: 12 });
+		const harness = createHarness({ extraRoom: observed });
+		const client = await startedClient(harness);
+
+		client.ensureRoomKnown(50);
+		await flush();
+
+		expect(client.getSnapshot().extraRooms.get(50)?.unreadCount).toBe(0);
+		expect(client.getSnapshot().totalUnreadCount).toBe(0);
 	});
 
 	test("ensureRoomKnown is a no-op for a room already in the user's list", async () => {

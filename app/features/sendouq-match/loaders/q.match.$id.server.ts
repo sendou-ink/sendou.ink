@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
+import type { ReadOnlyChatRoom } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -75,6 +76,22 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 			return [];
 		})(),
+		// the group chats stay private team spaces: staff only ever reads them
+		readOnlyChatRooms:
+			isStaff && !isParticipant
+				? [
+						{
+							roomId: matchUnmapped.groupAlpha.chatRoomId,
+							label: "Group Alpha",
+						},
+						{
+							roomId: matchUnmapped.groupBravo.chatRoomId,
+							label: "Group Bravo",
+						},
+					].filter(
+						(room): room is ReadOnlyChatRoom => typeof room.roomId === "number",
+					)
+				: [],
 	};
 };
 

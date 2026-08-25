@@ -14,7 +14,11 @@ import {
 	useServerRevalidationEvents,
 } from "./chat-hooks";
 import type { ChatContextValue } from "./chat-provider-types";
-import type { ChatRoomListItem, ClientChatMessage } from "./chat-types";
+import type {
+	ChatRoomListItem,
+	ClientChatMessage,
+	ReadOnlyChatRoom,
+} from "./chat-types";
 import { ChatContext } from "./useChatContext";
 
 const EMPTY_MESSAGES: ClientChatMessage[] = [];
@@ -220,6 +224,9 @@ function useChatRouteSync({
 	openChatForRooms: (roomIds: number[]) => void;
 }) {
 	const routeRoomIdsKey = useCurrentRouteChatRoomIds().join(",");
+	const readOnlyRoomIdsKey = useCurrentRouteReadOnlyChatRooms()
+		.map((room) => room.roomId)
+		.join(",");
 	const { pathname } = useLocation();
 	const layoutSize = useLayoutSize();
 	const previousRouteRoomIdsKeyRef = React.useRef<string | null>(null);
@@ -228,23 +235,32 @@ function useChatRouteSync({
 	// revalidate broadcasts for the page's rooms (e.g. a score report on the
 	// match the user is viewing) arrive on the rooms' topic channels
 	React.useEffect(() => {
-		const roomIds = routeRoomIdsKey ? routeRoomIdsKey.split(",") : [];
+		const roomIds = [
+			...roomIdsFromKey(routeRoomIdsKey),
+			...roomIdsFromKey(readOnlyRoomIdsKey),
+		];
 		const unsubscribes = roomIds.map((roomId) =>
-			eventsClient.subscribeTopic(chatRoomChannel(Number(roomId))),
+			eventsClient.subscribeTopic(chatRoomChannel(roomId)),
 		);
 		return () => {
 			for (const unsubscribe of unsubscribes) {
 				unsubscribe();
 			}
 		};
-	}, [routeRoomIdsKey]);
+	}, [routeRoomIdsKey, readOnlyRoomIdsKey]);
+
+	// read-only rooms are listed in the sidebar for the observer to open themselves,
+	// so they are only made known, never opened
+	React.useEffect(() => {
+		for (const roomId of roomIdsFromKey(readOnlyRoomIdsKey)) {
+			chatClient.ensureRoomKnown(roomId);
+		}
+	}, [readOnlyRoomIdsKey]);
 
 	React.useEffect(() => {
 		if (!roomsLoaded) return;
 
-		const routeRoomIds = routeRoomIdsKey
-			? routeRoomIdsKey.split(",").map(Number)
-			: [];
+		const routeRoomIds = roomIdsFromKey(routeRoomIdsKey);
 
 		if (routeRoomIds.length > 0) {
 			const routeRoomIdsChanged =
@@ -321,4 +337,31 @@ export function useCurrentRouteChatRoomIds(): number[] {
 	}
 
 	return [];
+}
+
+/**
+ * Chat rooms the current route surfaces in the sidebar list without opening
+ * them, from its loader's `readOnlyChatRooms` (a staff member reading the group
+ * chats of a SendouQ match they are not in).
+ */
+export function useCurrentRouteReadOnlyChatRooms(): ReadOnlyChatRoom[] {
+	const matches = useMatches();
+
+	for (const match of matches) {
+		const matchData = match.loaderData as
+			| { readOnlyChatRooms?: ReadOnlyChatRoom[] }
+			| undefined;
+		if (
+			matchData?.readOnlyChatRooms &&
+			matchData.readOnlyChatRooms.length > 0
+		) {
+			return matchData.readOnlyChatRooms;
+		}
+	}
+
+	return [];
+}
+
+function roomIdsFromKey(key: string) {
+	return key ? key.split(",").map(Number) : [];
 }

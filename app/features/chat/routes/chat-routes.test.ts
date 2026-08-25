@@ -209,6 +209,15 @@ describe("chat rooms loader", () => {
 		});
 	});
 
+	test("marks a participant's own room postable", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+
+		const data = await loadRooms(alphaUserIds[0]);
+		const matchRoom = data.rooms.find((room) => room.id === match.chatRoomId);
+
+		expect(matchRoom?.canPost).toBe(true);
+	});
+
 	test("does not count the sender's own message as unread on their other devices", async () => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 		await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
@@ -317,6 +326,17 @@ describe("chat room loader", () => {
 		expect(await statusOf(loadRoom(outsiderId(), match.chatRoomId!))).toBe(403);
 	});
 
+	test("a staff observer may post in the match room but only read a group room", async () => {
+		const { match } = await setupSqMatch(users);
+		const groupRoomId = await groupChatRoomId(match.alphaGroup.id);
+
+		const matchRoom = await loadRoom(adminId(), match.chatRoomId!);
+		const groupRoom = await loadRoom(adminId(), groupRoomId!);
+
+		expect(matchRoom.room.canPost).toBe(true);
+		expect(groupRoom.room.canPost).toBe(false);
+	});
+
 	test("participant loses the room once it is closed, site staff keeps it", async () => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 		await ChatRepository.updateRoomExpiresAt({
@@ -335,6 +355,15 @@ describe("chat room loader", () => {
 		expect(await statusOf(loadRoom(adminId(), 424242))).toBe(404);
 	});
 });
+
+function groupChatRoomId(groupId: number) {
+	return db
+		.selectFrom("Group")
+		.select("Group.chatRoomId")
+		.where("Group.id", "=", groupId)
+		.executeTakeFirstOrThrow()
+		.then((group) => group.chatRoomId);
+}
 
 function sendMessage(
 	userId: number,

@@ -11,7 +11,10 @@ import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { useCurrentRouteChatRoomIds } from "~/features/chat/ChatProvider";
+import {
+	useCurrentRouteChatRoomIds,
+	useCurrentRouteReadOnlyChatRooms,
+} from "~/features/chat/ChatProvider";
 import type { ChatContextValue } from "~/features/chat/chat-provider-types";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
@@ -157,6 +160,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const [showInactive, setShowInactive] = React.useState(false);
 
 	const routeRoomIds = useCurrentRouteChatRoomIds();
+	const routeReadOnlyRooms = useCurrentRouteReadOnlyChatRooms();
 
 	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
 		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
@@ -179,6 +183,15 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 			? routeRooms[0]
 			: null;
 
+	// rooms the route lets the viewer read but not write (staff reading the group
+	// chats of a match), each opened on its own
+	const readOnlyRooms = routeReadOnlyRooms.flatMap((entry) => {
+		const room = chatContext.roomForId(entry.roomId);
+		if (!room || chatContext.rooms.some((own) => own.id === room.id)) return [];
+
+		return [{ room, label: entry.label }];
+	});
+
 	const standaloneRooms = chatContext.rooms.filter(
 		(room) => !combinedRoomIds.has(room.id),
 	);
@@ -198,7 +211,10 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	};
 
 	const hasAnyRoom =
-		isCombined || observedRouteRoom !== null || standaloneRooms.length > 0;
+		isCombined ||
+		observedRouteRoom !== null ||
+		readOnlyRooms.length > 0 ||
+		standaloneRooms.length > 0;
 
 	return (
 		<div className={styles.sidebar}>
@@ -222,6 +238,14 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 								onPress={() => openRooms([observedRouteRoom.id])}
 							/>
 						) : null}
+						{readOnlyRooms.map(({ room, label }) => (
+							<RoomListItem
+								key={room.id}
+								room={room}
+								subtitle={label}
+								onPress={() => openRooms([room.id])}
+							/>
+						))}
 						{activeRooms.map((room) => (
 							<RoomListItem
 								key={room.id}
@@ -264,10 +288,13 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 function RoomListItem({
 	room,
 	inactive = false,
+	subtitle: subtitleOverride,
 	onPress,
 }: {
 	room: ChatRoomListItem;
 	inactive?: boolean;
+	/** Names the room in place of its own subtitle, where that can't tell it apart. */
+	subtitle?: string;
 	onPress: () => void;
 }) {
 	const roomDisplay = useRoomDisplay();
@@ -276,7 +303,8 @@ function RoomListItem({
 		minute: "numeric",
 	});
 
-	const { title, subtitle, imageUrl } = roomDisplay(room);
+	const { title, subtitle: roomSubtitle, imageUrl } = roomDisplay(room);
+	const subtitle = subtitleOverride ?? roomSubtitle;
 
 	return (
 		<NavListButton
@@ -353,12 +381,16 @@ function SingleChatView({
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
 	const roomDisplay = useRoomDisplay();
+	const readOnlyLabel = useCurrentRouteReadOnlyChatRooms().find(
+		(entry) => entry.roomId === room?.id,
+	)?.label;
 
 	const otherRoomsUnreadCount = chatContext.rooms
 		.filter((candidate) => candidate.id !== room?.id)
 		.reduce((sum, candidate) => sum + candidate.unreadCount, 0);
 
 	const display = room ? roomDisplay(room) : null;
+	const subtitle = readOnlyLabel ?? display?.subtitle;
 
 	const headerContent = (
 		<>
@@ -367,8 +399,8 @@ function SingleChatView({
 				<span className={styles.chatHeaderTitle}>
 					{display?.title ?? t("common:chat.sidebar.title")}
 				</span>
-				{display?.subtitle ? (
-					<span className={styles.chatHeaderSubtitle}>{display.subtitle}</span>
+				{subtitle ? (
+					<span className={styles.chatHeaderSubtitle}>{subtitle}</span>
 				) : null}
 			</div>
 		</>
@@ -510,12 +542,15 @@ function SplitPanel({
 function RoomChat({ room }: { room: ChatRoomListItem }) {
 	const chatContext = useChatContext()!;
 
+	const expired = room.expiresAt <= dateToDatabaseTimestamp(new Date());
+
 	return (
 		<Chat
 			messages={chatContext.messagesForRoom(room.id)}
 			onSend={(message) => chatContext.sendMessage(room.id, message)}
 			labelByUserId={nonParticipantLabels(chatContext, room)}
-			disabled={room.expiresAt <= dateToDatabaseTimestamp(new Date())}
+			disabled={expired}
+			readOnly={!expired && !room.canPost}
 		/>
 	);
 }

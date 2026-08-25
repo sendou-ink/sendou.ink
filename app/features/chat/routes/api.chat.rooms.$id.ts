@@ -30,5 +30,5 @@ export const loader = async ({
 		roomId,
 	]);
 
-	return { room: roomListItem(room, stats) };
+	return { room: roomListItem(room, stats, user.id) };
 };

@@ -20,7 +20,7 @@ export const loader = async (): Promise<{ rooms: ChatRoomListItem[] }> => {
 
 	return {
 		rooms: rooms.map((room) =>
-			roomListItem(room, statsByRoomId.get(room.roomId)),
+			roomListItem(room, statsByRoomId.get(room.roomId), user.id),
 		),
 	};
 };
@@ -33,6 +33,7 @@ export function roomListItem(
 				ReturnType<typeof ChatRepository.findMessageStatsByRoomIds>
 		  >[number]
 		| undefined,
+	userId: number,
 ): ChatRoomListItem {
 	return {
 		id: room.roomId,
@@ -43,6 +44,7 @@ export function roomListItem(
 		participantUserIds: room.participantUserIds,
 		expiresAt: room.expiresAt,
 		inactive: room.inactive,
+		canPost: ChatRoomResolver.canPost(room, userId),
 		unreadCount: stats?.unreadCount ?? 0,
 		latestMessageId: stats?.latestMessageId ?? null,
 		latestMessageAt: stats?.latestMessageCreatedAt ?? null,

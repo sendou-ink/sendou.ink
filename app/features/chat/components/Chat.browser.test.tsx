@@ -36,14 +36,17 @@ function createMessage(
 	};
 }
 
-function renderChat(messages: ClientChatMessage[]) {
+function renderChat(
+	messages: ClientChatMessage[],
+	props: Partial<React.ComponentProps<typeof Chat>> = {},
+) {
 	const router = createMemoryRouter(
 		[
 			{
 				path: "/",
 				element: (
 					<div style={{ width: 400 }}>
-						<Chat messages={messages} onSend={() => {}} />
+						<Chat messages={messages} onSend={() => {}} {...props} />
 					</div>
 				),
 			},
@@ -146,6 +149,13 @@ describe("Chat", () => {
 		await expect
 			.element(screen.getByText("Bob left the group"))
 			.toBeInTheDocument();
+	});
+
+	test("renders no composer for a viewer who may only read the room", async () => {
+		const screen = await renderChat([createMessage()], { readOnly: true });
+
+		await expect.element(screen.getByText("Read-only")).toBeInTheDocument();
+		expect(screen.getByRole("textbox").elements()).toHaveLength(0);
 	});
 
 	test("renders a deleted account's message with a fallback name", async () => {

@@ -44,8 +44,10 @@ export interface ChatProps {
 	labelByUserId?: Record<number, string>;
 	className?: string;
 	messagesContainerClassName?: string;
-	/** Renders the room read-only, e.g. once it has expired. */
+	/** Renders the room read-only with an expiry note, e.g. once it has expired. */
 	disabled?: boolean;
+	/** Renders the room read-only for a viewer who may never post in it (staff reading a private room). */
+	readOnly?: boolean;
 }
 
 // xxx: message to inactive chat? how does it show
@@ -57,6 +59,7 @@ export function Chat({
 	className,
 	messagesContainerClassName,
 	disabled,
+	readOnly,
 }: ChatProps) {
 	const { t } = useTranslation(["common"]);
 	const messagesContainerRef = React.useRef<HTMLDivElement>(null);
@@ -145,7 +148,10 @@ export function Chat({
 						{t("common:chat.newMessages")}
 					</SendouButton>
 				) : null}
-				{disabled ? (
+				{readOnly ? (
+					// only observers ever see this, so it stays English
+					<div className="text-xs text-lighter text-center my-4">Read-only</div>
+				) : disabled ? (
 					<div className="text-xs text-lighter text-center my-4">
 						{t("common:chat.expired")}
 					</div>

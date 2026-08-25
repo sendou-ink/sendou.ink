@@ -322,7 +322,9 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			// the room may have entered the user's own list while the fetch was in flight
 			if (!data || roomById(roomId)) return;
 
-			setExtraRoom(data.room);
+			// an observed room never accrues unread, so it must not start out with the
+			// server's count of everything said in it before the observer showed up
+			setExtraRoom({ ...data.room, unreadCount: 0 });
 			notify();
 		} catch (error) {
 			logger.error("Fetching chat room info failed", error);

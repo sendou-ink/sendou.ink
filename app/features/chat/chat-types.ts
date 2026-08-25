@@ -80,10 +80,19 @@ export interface ChatRoomListItem {
 	expiresAt: number;
 	/** Whether the owner's activity has concluded (e.g. the match was finalized). */
 	inactive: boolean;
+	/** Whether the viewer may post: false for an observer reading a private room, and once the room has expired or closed. */
+	canPost: boolean;
 	unreadCount: number;
 	latestMessageId: number | null;
 	/** databaseTimestamp */
 	latestMessageAt: number | null;
+}
+
+/** A room a route surfaces in the sidebar list without opening it, for a viewer who only reads it (staff reading a private group chat). */
+export interface ReadOnlyChatRoom {
+	roomId: number;
+	/** Names the room in the sidebar, where its own title can't tell it apart (the two group chats of one match). */
+	label: string;
 }
 
 export type RevalidateScope = "MATCH_RESULTS";
