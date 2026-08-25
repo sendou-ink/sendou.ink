@@ -8,8 +8,8 @@ import {
 import { idObject } from "~/utils/schema";
 import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
+import { roomListItem } from "../chat-room-list.server";
 import type { ChatRoomListItem } from "../chat-types";
-import { roomListItem } from "./api.chat.rooms";
 
 /**
  * One room's list item for a viewer the room list does not cover: an observer

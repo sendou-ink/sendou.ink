@@ -43,6 +43,11 @@ export class MobileNav {
 		return this.page.getByRole("button", { name: TAB_NAMES[panel] });
 	}
 
+	/** The count a tab is badged with, e.g. the chat's unread messages. */
+	tabBadge(panel: Panel) {
+		return this.tab(panel).locator("[class*='tabBadge']");
+	}
+
 	async openPanel(panel: Panel) {
 		await this.tab(panel).click();
 	}

@@ -3,7 +3,11 @@ import {
 	SENDOUQ_LOOKING_PAGE,
 	SENDOUQ_LOOKING_PREVIEW_PAGE,
 } from "~/utils/urls";
-import { navigate, submit } from "../../helpers/playwright";
+import {
+	modalClickConfirmButton,
+	navigate,
+	submit,
+} from "../../helpers/playwright";
 import { GroupCard } from "./group-card";
 
 export class SendouQLookingPage {
@@ -17,6 +21,7 @@ export class SendouQLookingPage {
 			undoButtons: page.getByRole("button", { name: "Undo" }),
 			actionButtons: page.getByTestId("group-card-action-button"),
 			suggestButtons: page.getByTestId("group-card-suggest-button"),
+			leaveGroupButton: page.getByRole("button", { name: "Leave group" }),
 		};
 	}
 
@@ -36,6 +41,12 @@ export class SendouQLookingPage {
 
 	groupCard(nth: number) {
 		return new GroupCard(this.locators.groupCards.nth(nth));
+	}
+
+	/** Leaves the group the way a member does, confirming the dialog. Ends up on /q. */
+	async leaveGroup() {
+		await this.locators.leaveGroupButton.click();
+		await modalClickConfirmButton(this.page);
 	}
 
 	/**
