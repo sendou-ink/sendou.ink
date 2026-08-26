@@ -1,4 +1,5 @@
 import type { Tables } from "~/db/tables";
+import type { CommonUser } from "~/utils/kysely.server";
 import type { SOUND_BY_SYSTEM_MESSAGE_TYPE } from "./chat-constants";
 
 export type ChatRoomType =
@@ -39,14 +40,7 @@ export type SoundOnlySystemMessageType = Extract<
 	keyof typeof SOUND_BY_SYSTEM_MESSAGE_TYPE
 >;
 
-// xxx: extend CommonUser
-export interface ChatMessageAuthor {
-	id: number;
-	username: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customUrl: string | null;
-	customAvatarUrl: string | null;
+export interface ChatMessageAuthor extends CommonUser {
 	pronouns: Tables["User"]["pronouns"];
 	chatNameHue: string | null;
 }
