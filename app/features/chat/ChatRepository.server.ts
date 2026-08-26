@@ -1,4 +1,5 @@
-import type { ExpressionBuilder, Transaction } from "kysely";
+import { subHours } from "date-fns";
+import type { ExpressionBuilder, SqlBool, Transaction } from "kysely";
 import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -11,9 +12,18 @@ import {
 	userChatNameHue,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
-import type { PersistedSystemMessageType } from "./chat-types";
+import type { ChatRoomType, PersistedSystemMessageType } from "./chat-types";
 
 const MESSAGES_DEFAULT_LIMIT = 500;
+
+/**
+ * How far back the room list looks for the user's SendouQ memberships. An
+ * unmatched group goes inactive an hour after its last action and a match room
+ * lives a day, so no open SQ room hangs off a membership older than this. The
+ * bound is what keeps a veteran's thousands of past groups out of the lookup —
+ * raise it rather than let a room quietly stop showing up.
+ */
+const SQ_MEMBERSHIP_LOOKBACK_HOURS = 72;
 
 /** Chat rooms by id. */
 export async function findAllRoomsByIds(roomIds: number[]) {
@@ -28,127 +38,111 @@ export async function findAllRoomsByIds(roomIds: number[]) {
 
 /**
  * Ids of the rooms the user currently participates in (unexpired and unclosed).
- * Room-first per the resolver spike: drives from the open room set and probes
- * membership through the owner tables' indexes, never searching on the JSON
- * opponent ids.
+ * Membership-first: every branch starts from the user's own membership rows and
+ * probes forward to the room, so the cost tracks how much the user takes part in
+ * rather than how many rooms the site has open. Driving from the open room set
+ * instead costs the same for every user, participant or not, and grows with the
+ * site. The SendouQ branches narrow that further to
+ * {@link SQ_MEMBERSHIP_LOOKBACK_HOURS}, past which no room can still be open.
  */
 export async function findAllOpenRoomIdsByUserId(
 	userId: number,
 ): Promise<number[]> {
 	const now = databaseTimestampNow();
+	const openRoom = (chatRoomIdColumn: string) =>
+		isOpenRoom(chatRoomIdColumn, now);
+	const joinedSince = dateToDatabaseTimestamp(
+		subHours(new Date(), SQ_MEMBERSHIP_LOOKBACK_HOURS),
+	);
 
-	const openRooms = () =>
-		db
-			.selectFrom("ChatRoom")
-			.select("ChatRoom.id")
-			.where("ChatRoom.expiresAt", ">", now)
-			.where("ChatRoom.closedAt", "is", null);
+	// the opponent ids live in JSON, and only literal team ids get the two
+	// expression indexes over them picked, so they are fetched first
+	const tournamentTeamIds = (
+		await db
+			.selectFrom("TournamentTeamMember")
+			.select("TournamentTeamMember.tournamentTeamId")
+			.where("TournamentTeamMember.userId", "=", userId)
+			.execute()
+	).map((row) => row.tournamentTeamId);
 
 	const rooms = await Promise.all([
-		openRooms()
-			.innerJoin("Group", "Group.chatRoomId", "ChatRoom.id")
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("GroupMember")
-						.select("GroupMember.userId")
-						.whereRef("GroupMember.groupId", "=", "Group.id")
-						.where("GroupMember.userId", "=", userId),
-				),
-			)
+		db
+			.selectFrom("GroupMember")
+			.innerJoin("Group", "Group.id", "GroupMember.groupId")
+			.select("Group.chatRoomId as id")
+			.where("GroupMember.userId", "=", userId)
+			.where("GroupMember.createdAt", ">", joinedSince)
+			.where(openRoom("Group.chatRoomId"))
 			.execute(),
-		openRooms()
-			.innerJoin("GroupMatch", "GroupMatch.chatRoomId", "ChatRoom.id")
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("GroupMember")
-						.select("GroupMember.userId")
-						.where("GroupMember.userId", "=", userId)
-						.where((eb) =>
-							eb.or([
-								eb(
-									"GroupMember.groupId",
-									"=",
-									eb.ref("GroupMatch.alphaGroupId"),
-								),
-								eb(
-									"GroupMember.groupId",
-									"=",
-									eb.ref("GroupMatch.bravoGroupId"),
-								),
-							]),
-						),
-				),
-			)
+		// a side per query so both group id indexes are used, which an `or` denies
+		db
+			.selectFrom("GroupMember")
+			.innerJoin("GroupMatch", "GroupMatch.alphaGroupId", "GroupMember.groupId")
+			.select("GroupMatch.chatRoomId as id")
+			.where("GroupMember.userId", "=", userId)
+			.where("GroupMember.createdAt", ">", joinedSince)
+			.where(openRoom("GroupMatch.chatRoomId"))
 			.execute(),
-		openRooms()
-			.innerJoin("TournamentMatch", "TournamentMatch.chatRoomId", "ChatRoom.id")
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("TournamentTeamMember")
-						.select("TournamentTeamMember.userId")
-						.where("TournamentTeamMember.userId", "=", userId)
-						.where((eb) =>
-							eb.or([
-								eb(
-									"TournamentTeamMember.tournamentTeamId",
-									"=",
-									opponentTeamId("opponentOne"),
-								),
-								eb(
-									"TournamentTeamMember.tournamentTeamId",
-									"=",
-									opponentTeamId("opponentTwo"),
-								),
-							]),
-						),
-				),
-			)
+		db
+			.selectFrom("GroupMember")
+			.innerJoin("GroupMatch", "GroupMatch.bravoGroupId", "GroupMember.groupId")
+			.select("GroupMatch.chatRoomId as id")
+			.where("GroupMember.userId", "=", userId)
+			.where("GroupMember.createdAt", ">", joinedSince)
+			.where(openRoom("GroupMatch.chatRoomId"))
 			.execute(),
-		openRooms()
-			.innerJoin("TournamentTeam", "TournamentTeam.chatRoomId", "ChatRoom.id")
-			.where(({ exists, selectFrom }) =>
-				exists(
-					selectFrom("TournamentTeamMember")
-						.select("TournamentTeamMember.userId")
-						.whereRef(
-							"TournamentTeamMember.tournamentTeamId",
-							"=",
-							"TournamentTeam.id",
-						)
-						.where("TournamentTeamMember.userId", "=", userId),
-				),
+		tournamentTeamIds.length === 0
+			? []
+			: db
+					.selectFrom("TournamentMatch")
+					.select("TournamentMatch.chatRoomId as id")
+					.where((eb) =>
+						eb.or([
+							eb(opponentTeamId("opponentOne"), "in", tournamentTeamIds),
+							eb(opponentTeamId("opponentTwo"), "in", tournamentTeamIds),
+						]),
+					)
+					.where(openRoom("TournamentMatch.chatRoomId"))
+					.execute(),
+		db
+			.selectFrom("TournamentTeamMember")
+			.innerJoin(
+				"TournamentTeam",
+				"TournamentTeam.id",
+				"TournamentTeamMember.tournamentTeamId",
 			)
+			.select("TournamentTeam.chatRoomId as id")
+			.where("TournamentTeamMember.userId", "=", userId)
+			.where(openRoom("TournamentTeam.chatRoomId"))
 			.execute(),
-		openRooms()
-			.innerJoin("ScrimPost", "ScrimPost.chatRoomId", "ChatRoom.id")
-			.where((eb) =>
-				eb.or([
-					eb.exists(
-						eb
-							.selectFrom("ScrimPostUser")
-							.select("ScrimPostUser.userId")
-							.whereRef("ScrimPostUser.scrimPostId", "=", "ScrimPost.id")
-							.where("ScrimPostUser.userId", "=", userId),
-					),
-					eb.exists(
-						eb
-							.selectFrom("ScrimPostRequestUser")
-							.innerJoin(
-								"ScrimPostRequest",
-								"ScrimPostRequest.id",
-								"ScrimPostRequestUser.scrimPostRequestId",
-							)
-							.select("ScrimPostRequestUser.userId")
-							.whereRef("ScrimPostRequest.scrimPostId", "=", "ScrimPost.id")
-							.where("ScrimPostRequest.isAccepted", "=", 1)
-							.where("ScrimPostRequestUser.userId", "=", userId),
-					),
-				]),
+		db
+			.selectFrom("ScrimPostUser")
+			.innerJoin("ScrimPost", "ScrimPost.id", "ScrimPostUser.scrimPostId")
+			.select("ScrimPost.chatRoomId as id")
+			.where("ScrimPostUser.userId", "=", userId)
+			.where(openRoom("ScrimPost.chatRoomId"))
+			.execute(),
+		db
+			.selectFrom("ScrimPostRequestUser")
+			.innerJoin(
+				"ScrimPostRequest",
+				"ScrimPostRequest.id",
+				"ScrimPostRequestUser.scrimPostRequestId",
 			)
+			.innerJoin("ScrimPost", "ScrimPost.id", "ScrimPostRequest.scrimPostId")
+			.select("ScrimPost.chatRoomId as id")
+			.where("ScrimPostRequestUser.userId", "=", userId)
+			.where("ScrimPostRequest.isAccepted", "=", 1)
+			.where(openRoom("ScrimPost.chatRoomId"))
 			.execute(),
 	]);
 
-	return rooms.flat().map((room) => room.id);
+	return R.unique(
+		rooms
+			.flat()
+			.map((room) => room.id)
+			.filter((id) => id !== null),
+	);
 }
 
 /** Returns the latest `limit` messages of a room, oldest first, authors resolved live. */
@@ -386,18 +380,20 @@ export async function closeExpiredRooms(expiredBefore: Date) {
 	return Number(result.numUpdatedRows);
 }
 
-/** Deletes rooms no owner row points at any more, returning how many. Backstop for owner deletes that missed their room. */
+/**
+ * Deletes rooms no owner row points at any more, returning how many. Backstop
+ * for owner deletes that missed their room. A room's type names the one table
+ * that can own it, so each room is checked against that table alone.
+ */
 export async function deleteOrphanedRooms() {
 	const result = await db
 		.deleteFrom("ChatRoom")
 		.where((eb) =>
-			eb.and([
-				noOwner(eb, "Group"),
-				noOwner(eb, "GroupMatch"),
-				noOwner(eb, "TournamentMatch"),
-				noOwner(eb, "TournamentTeam"),
-				noOwner(eb, "ScrimPost"),
-			]),
+			eb.or(
+				R.entries(OWNER_TABLE_BY_ROOM_TYPE).map(([type, table]) =>
+					eb.and([eb("ChatRoom.type", "=", type), noOwner(eb, table)]),
+				),
+			),
 		)
 		.executeTakeFirst();
 
@@ -411,6 +407,15 @@ type ChatRoomOwnerTable =
 	| "TournamentTeam"
 	| "ScrimPost";
 
+/** The one table that can own a room of each type. */
+const OWNER_TABLE_BY_ROOM_TYPE = {
+	SQ_GROUP: "Group",
+	SQ_MATCH: "GroupMatch",
+	TOURNAMENT_MATCH: "TournamentMatch",
+	TOURNAMENT_TEAM: "TournamentTeam",
+	SCRIM: "ScrimPost",
+} as const satisfies Record<ChatRoomType, ChatRoomOwnerTable>;
+
 function noOwner(
 	eb: ExpressionBuilder<DB, "ChatRoom">,
 	table: ChatRoomOwnerTable,
@@ -423,6 +428,16 @@ function noOwner(
 				.whereRef(`${table}.chatRoomId`, "=", "ChatRoom.id"),
 		),
 	);
+}
+
+/** Whether the owner row's room is one the user can still be in: unexpired and unclosed. */
+function isOpenRoom(chatRoomIdColumn: string, now: number) {
+	return sql<SqlBool>`exists (
+		select 1 from "ChatRoom"
+		where "ChatRoom"."id" = ${sql.ref(chatRoomIdColumn)}
+			and "ChatRoom"."expiresAt" > ${now}
+			and "ChatRoom"."closedAt" is null
+	)`;
 }
 
 function opponentTeamId(column: "opponentOne" | "opponentTwo") {

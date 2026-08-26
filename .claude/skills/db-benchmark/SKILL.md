@@ -14,6 +14,7 @@ The DB benchmark (`pnpm bench:db`) times repository READ functions against `db-p
 | `scripts/benchmark-db.ts` | Harness: CLI, timing loop, stats, output. Rarely needs changes. |
 | `scripts/benchmark-db/cases.ts` | Case registry, grouped by repository file. **New cases go here.** |
 | `scripts/benchmark-db/fixtures.ts` | Resolves worst-case arguments (heavy rows) from the DB. New argument kinds go here. |
+| `scripts/seed-chat.ts` | Fills the production copy with chat data, which it ships without (`pnpm run bench:db:seed-chat`). Run once before the chat cases mean anything. |
 
 ## Adding a case
 

@@ -328,8 +328,15 @@ describe("ChatRepository.closeExpiredRooms", () => {
 });
 
 describe("ChatRepository.deleteOrphanedRooms", () => {
-	test("deletes a room no owner points at", async () => {
-		const orphanedRoom = await ChatRoomFactory.create();
+	// each type is checked against its own owner table alone, so every one needs covering
+	test.each([
+		"SQ_GROUP",
+		"SQ_MATCH",
+		"TOURNAMENT_MATCH",
+		"TOURNAMENT_TEAM",
+		"SCRIM",
+	] as const)("deletes an orphaned %s room", async (type) => {
+		const orphanedRoom = await ChatRoomFactory.create({ type });
 
 		const deletedCount = await ChatRepository.deleteOrphanedRooms();
 

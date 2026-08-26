@@ -1,4 +1,4 @@
-import { addHours } from "date-fns";
+import { addHours, subHours } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
@@ -259,6 +259,20 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 		await setupAcceptedScrim();
 
 		expect(await ChatRoomResolver.findAllByUserId(outsiderId())).toEqual([]);
+	});
+
+	test("leaves out expired rooms", async () => {
+		const { match, alphaUserIds } = await setupSqMatch(users);
+		await ChatRepository.updateRoomExpiresAt({
+			roomId: match.chatRoomId!,
+			expiresAt: subHours(new Date(), 1),
+		});
+
+		const rooms = await ChatRoomResolver.findAllByUserId(alphaUserIds[0]);
+
+		expect(rooms.map((room) => room.roomId)).toEqual([
+			await groupChatRoomId(match.alphaGroup.id),
+		]);
 	});
 
 	test("leaves out closed rooms", async () => {

@@ -130,5 +130,21 @@ export async function up(db: Kysely<any>): Promise<void> {
 			.unique()
 			.where(sql.ref("chatRoomId"), "is not", null)
 			.execute();
+
+		// the room list looks a user's scrims up by their id, which the
+		// (scrimPostId, userId) unique constraint can not serve
+		await trx.schema
+			.createIndex("scrim_post_user_user_id")
+			.on("ScrimPostUser")
+			.column("userId")
+			.execute();
+
+		// the room list only wants the memberships recent enough to still have an
+		// open room, which the (userId, groupId) unique constraint can not bound
+		await trx.schema
+			.createIndex("group_member_user_id_created_at")
+			.on("GroupMember")
+			.columns(["userId", "createdAt"])
+			.execute();
 	});
 }
