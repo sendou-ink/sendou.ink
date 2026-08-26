@@ -76,6 +76,8 @@ export interface ChatRoomListItem {
 	url: string;
 	imageUrl: string | null;
 	participantUserIds: number[];
+	/** Role labels (e.g. "TO", "Stream") shown next to non-participant authors, keyed by user id. */
+	labelByUserId: Record<number, string>;
 	/** databaseTimestamp */
 	expiresAt: number;
 	/** Whether the owner's activity has concluded (e.g. the match was finalized). */

@@ -71,10 +71,6 @@ function ChatProviderInner({
 
 	const [chatOpen, _setChatOpen] = React.useState(false);
 	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>([]);
-	const [chatLabels, setChatLabels] = React.useState<Record<number, string>>(
-		{},
-	);
-	const clearChatLabels = React.useCallback(() => setChatLabels({}), []);
 
 	// messages arriving to a room on screen are read immediately instead of counting unread
 	React.useEffect(() => {
@@ -185,9 +181,6 @@ function ChatProviderInner({
 			setChatOpen,
 			activeRoomIds,
 			setActiveRoomIds,
-			chatLabels,
-			setChatLabels,
-			clearChatLabels,
 		}),
 		[
 			snapshot.roomsLoaded,
@@ -199,8 +192,6 @@ function ChatProviderInner({
 			chatOpen,
 			setChatOpen,
 			activeRoomIds,
-			chatLabels,
-			clearChatLabels,
 		],
 	);
 

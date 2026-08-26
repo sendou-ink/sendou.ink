@@ -4,6 +4,7 @@ import { ADMIN_ID, STAFF_IDS } from "~/features/admin/admin-constants";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import type { organizerPermissions } from "~/features/tournament/core/permissions";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
@@ -36,6 +37,8 @@ export interface ResolvedRoom {
 	url: string;
 	imageUrl: string | null;
 	participantUserIds: number[];
+	/** Role labels (e.g. "TO", "Stream") shown next to non-participant authors, keyed by user id. */
+	labelByUserId: Record<number, string>;
 	/**
 	 * - `VIEW`: reading the room. After `closedAt` only observers keep it.
 	 * - `POST`: sending a message, while the room is unexpired and unclosed.
@@ -160,6 +163,7 @@ async function resolveTournamentMatchRooms(
 			owner.opponentOne?.id,
 			owner.opponentTwo?.id,
 		].filter((id): id is number => typeof id === "number");
+		const permissions = organizers.get(owner.tournamentId);
 
 		return {
 			titleParams: {
@@ -175,7 +179,8 @@ async function resolveTournamentMatchRooms(
 				.filter((member) => opponentTeamIds.includes(member.tournamentTeamId))
 				.map((member) => member.userId),
 			// streamers cast the matches, so they observe them as well
-			observerUserIds: organizers.get(owner.tournamentId)?.MANAGE_MATCHES ?? [],
+			observerUserIds: permissions?.MANAGE_MATCHES ?? [],
+			labelByUserId: organizerLabels(permissions),
 		};
 	});
 }
@@ -203,6 +208,7 @@ async function resolveTournamentTeamRooms(
 		imageUrl: owner.logoUrl,
 		participantUserIds: owner.members.map((member) => member.userId),
 		observerUserIds: organizers.get(owner.tournamentId)?.ORGANIZE ?? [],
+		labelByUserId: organizerLabels(organizers.get(owner.tournamentId)),
 	}));
 }
 
@@ -238,7 +244,7 @@ function joinOwners<T extends { chatRoomId: number }>(
 	> & {
 		participantUserIds: number[];
 		observerUserIds: number[];
-	} & Partial<Pick<ResolvedRoom, "inactive">>,
+	} & Partial<Pick<ResolvedRoom, "inactive" | "labelByUserId">>,
 ): ResolvedRoom[] {
 	const ownerByRoomId = new Map(
 		owners.map((owner) => [owner.chatRoomId, owner]),
@@ -248,7 +254,7 @@ function joinOwners<T extends { chatRoomId: number }>(
 		const owner = ownerByRoomId.get(room.id);
 		if (!owner) return [];
 
-		const { observerUserIds, ...built } = build(owner);
+		const { observerUserIds, labelByUserId, ...built } = build(owner);
 
 		return {
 			roomId: room.id,
@@ -257,6 +263,10 @@ function joinOwners<T extends { chatRoomId: number }>(
 			closedAt: room.closedAt,
 			inactive: Boolean(room.inactive),
 			...built,
+			labelByUserId: nonParticipantLabels(
+				labelByUserId ?? {},
+				built.participantUserIds,
+			),
 			permissions: permissionsOf({
 				room,
 				participantUserIds: built.participantUserIds,
@@ -264,6 +274,39 @@ function joinOwners<T extends { chatRoomId: number }>(
 			}),
 		};
 	});
+}
+
+/** Labels the tournament's organizers "TO" and its streamers "Stream". */
+function organizerLabels(
+	permissions?: Pick<
+		ReturnType<typeof organizerPermissions>,
+		"ORGANIZE" | "MANAGE_MATCHES"
+	>,
+) {
+	const labelByUserId: Record<number, string> = {};
+	if (!permissions) return labelByUserId;
+
+	// MANAGE_MATCHES holds the organizers too, so the "TO" pass overwrites theirs
+	for (const userId of permissions.MANAGE_MATCHES) {
+		labelByUserId[userId] = "Stream";
+	}
+	for (const userId of permissions.ORGANIZE) {
+		labelByUserId[userId] = "TO";
+	}
+
+	return labelByUserId;
+}
+
+/** Role labels apply to non-participant authors only (e.g. a TO posting into a match chat). */
+function nonParticipantLabels(
+	labelByUserId: Record<number, string>,
+	participantUserIds: number[],
+) {
+	const participantIds = new Set(participantUserIds);
+
+	return R.omitBy(labelByUserId, (_label, userId) =>
+		participantIds.has(Number(userId)),
+	);
 }
 
 /** Who may view, post to and observe a room, given the participants and observers its owner resolved to. */

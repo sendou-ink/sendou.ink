@@ -28,6 +28,7 @@ function room(overrides: Partial<ChatRoomListItem> = {}): ChatRoomListItem {
 		url: "/q/match/17",
 		imageUrl: null,
 		participantUserIds: [1, 2],
+		labelByUserId: {},
 		expiresAt: 2_000_000_000,
 		inactive: false,
 		canPost: true,

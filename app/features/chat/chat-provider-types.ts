@@ -25,8 +25,4 @@ export interface ChatContextValue {
 	 */
 	activeRoomIds: number[];
 	setActiveRoomIds: (roomIds: number[]) => void;
-	/** Role labels (e.g. "TO", "Caster") shown next to non-participant authors, keyed by user id. */
-	chatLabels: Record<number, string>;
-	setChatLabels: (labels: Record<number, string>) => void;
-	clearChatLabels: () => void;
 }

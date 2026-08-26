@@ -15,7 +15,6 @@ import {
 	useCurrentRouteChatRoomIds,
 	useCurrentRouteReadOnlyChatRooms,
 } from "~/features/chat/ChatProvider";
-import type { ChatContextValue } from "~/features/chat/chat-provider-types";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import { useChatContext } from "~/features/chat/useChatContext";
@@ -548,24 +547,9 @@ function RoomChat({ room }: { room: ChatRoomListItem }) {
 		<Chat
 			messages={chatContext.messagesForRoom(room.id)}
 			onSend={(message) => chatContext.sendMessage(room.id, message)}
-			labelByUserId={nonParticipantLabels(chatContext, room)}
+			labelByUserId={room.labelByUserId}
 			disabled={expired}
 			readOnly={!expired && !room.canPost}
 		/>
 	);
-}
-
-/** Role labels apply to non-participant authors only (e.g. a TO posting into a match chat). */
-function nonParticipantLabels(
-	chatContext: ChatContextValue,
-	room: ChatRoomListItem,
-) {
-	const participantIds = new Set(room.participantUserIds);
-	const labels: Record<number, string> = {};
-	for (const [userIdStr, label] of Object.entries(chatContext.chatLabels)) {
-		const userId = Number(userIdStr);
-		if (participantIds.has(userId)) continue;
-		labels[userId] = label;
-	}
-	return labels;
 }

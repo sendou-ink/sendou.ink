@@ -20,6 +20,7 @@ export function roomListItem(
 		url: room.url,
 		imageUrl: room.imageUrl,
 		participantUserIds: room.participantUserIds,
+		labelByUserId: room.labelByUserId,
 		expiresAt: room.expiresAt,
 		inactive: room.inactive,
 		canPost: hasPermission(room, "POST", user),

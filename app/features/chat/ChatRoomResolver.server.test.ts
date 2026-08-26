@@ -280,6 +280,49 @@ describe("ChatRoomResolver.findAllByUserId", () => {
 	});
 });
 
+describe("ChatRoomResolver.resolve labels", () => {
+	test("labels the tournament's organizers TO and its streamers Stream", async () => {
+		const { tournament, chatRoomId, authorId } =
+			await setupStartedTournamentMatch();
+		await TournamentRepository.setStaff({
+			tournamentId: tournament.id,
+			staff: [
+				{ userId: users.id(11), role: "ORGANIZER" },
+				{ userId: users.id(12), role: "STREAMER" },
+			],
+		});
+
+		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+
+		expect(room.labelByUserId).toEqual({
+			[authorId]: "TO",
+			[users.id(11)]: "TO",
+			[users.id(12)]: "Stream",
+		});
+	});
+
+	test("leaves out an organizer playing in the room's own match", async () => {
+		const { tournament, chatRoomId, teamAlphaUserIds } =
+			await setupStartedTournamentMatch();
+		await TournamentRepository.setStaff({
+			tournamentId: tournament.id,
+			staff: [{ userId: teamAlphaUserIds[0], role: "ORGANIZER" }],
+		});
+
+		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+
+		expect(room.labelByUserId[teamAlphaUserIds[0]]).toBeUndefined();
+	});
+
+	test("labels no one in a room with no tournament behind it", async () => {
+		const { chatRoomId } = await setupAcceptedScrim();
+
+		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+
+		expect(room.labelByUserId).toEqual({});
+	});
+});
+
 describe("ChatRoomResolver.resolve permissions", () => {
 	test("site staff observe both group chats of an SQ match", async () => {
 		const { match } = await setupSqMatch(users);
