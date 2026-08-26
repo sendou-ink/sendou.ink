@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
-import { useChatContext } from "~/features/chat/useChatContext";
+import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";

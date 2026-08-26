@@ -10,13 +10,11 @@ import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { LoggedInUser } from "~/root";
 import { type ChatSnapshot, chatClient } from "./chat-client";
 import { useServerRevalidationEvents } from "./chat-hooks";
-import type { ChatContextValue } from "./chat-provider-types";
 import type {
 	ChatRoomListItem,
 	ClientChatMessage,
 	ReadOnlyChatRoom,
 } from "./chat-types";
-import { ChatContext } from "./useChatContext";
 
 const EMPTY_MESSAGES: ClientChatMessage[] = [];
 
@@ -28,6 +26,39 @@ const SERVER_SNAPSHOT: ChatSnapshot = {
 	messagesByRoomId: new Map(),
 };
 const getServerSnapshot = () => SERVER_SNAPSHOT;
+
+interface ChatContextValue {
+	/** False until the first rooms fetch has landed. */
+	roomsLoaded: boolean;
+	rooms: ChatRoomListItem[];
+	/** Looks a room up from the list or the route-opened observed rooms (observer access). */
+	roomForId: (roomId: number) => ChatRoomListItem | undefined;
+	messagesForRoom: (roomId: number) => ClientChatMessage[];
+	/** Fetches the room's history unless it is already loaded or loading. */
+	ensureMessagesLoaded: (roomId: number) => void;
+	/** Sends the message outside the router (no revalidation), rendering it optimistically until the echo or POST response confirms it. */
+	sendMessage: (
+		roomId: number,
+		message: { publicId: string; contents: string },
+	) => void;
+	markAsRead: (roomId: number) => void;
+	totalUnreadCount: number;
+	chatOpen: boolean;
+	setChatOpen: (open: boolean) => void;
+	/**
+	 * Rooms the user is currently viewing. Empty means none are open, one
+	 * renders a single chat, more than one renders the split view. The first room
+	 * is the primary one (shown on top / given the larger share in split view).
+	 */
+	activeRoomIds: number[];
+	setActiveRoomIds: (roomIds: number[]) => void;
+}
+
+const ChatContext = React.createContext<ChatContextValue | null>(null);
+
+export function useChatContext(): ChatContextValue | null {
+	return React.useContext(ChatContext);
+}
 
 export function ChatProvider({
 	user,
@@ -69,7 +100,7 @@ function ChatProviderInner({
 		onCatchUp: () => chatClient.catchUp(),
 	});
 
-	const [chatOpen, _setChatOpen] = React.useState(false);
+	const [chatOpen, setChatOpenState] = React.useState(false);
 	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>([]);
 
 	// messages arriving to a room on screen are read immediately instead of counting unread
@@ -99,99 +130,63 @@ function ChatProviderInner({
 		}
 	}, [snapshot.roomsLoaded, rooms, activeRoomIds]);
 
-	const setChatOpen = React.useCallback(
-		(open: boolean) => {
-			_setChatOpen(open);
-			if (!open) return;
+	const setChatOpen = (open: boolean) => {
+		setChatOpenState(open);
+		if (!open) return;
 
-			if (activeRoomIds.length > 0) {
-				for (const roomId of activeRoomIds) {
-					chatClient.markRead(roomId);
-				}
-			} else if (rooms.length === 1) {
-				setActiveRoomIds([rooms[0].id]);
-				chatClient.ensureMessagesLoaded(rooms[0].id);
-				chatClient.markRead(rooms[0].id);
+		if (activeRoomIds.length > 0) {
+			for (const roomId of activeRoomIds) {
+				chatClient.markRead(roomId);
 			}
-		},
-		[activeRoomIds, rooms.length, rooms[0]?.id],
-	);
-
-	// route sync opens its own rooms directly: going through `setChatOpen` would
-	// read the previous render's empty `activeRoomIds` and auto-pick the user's
-	// only listed room over the route's rooms
-	const openChatForRooms = React.useCallback((roomIds: number[]) => {
-		setActiveRoomIds(roomIds);
-		_setChatOpen(true);
-		for (const roomId of roomIds) {
-			chatClient.markRead(roomId);
+		} else if (rooms.length === 1) {
+			setActiveRoomIds([rooms[0].id]);
+			chatClient.ensureMessagesLoaded(rooms[0].id);
+			chatClient.markRead(rooms[0].id);
 		}
-	}, []);
+	};
 
 	useChatRouteSync({
 		userId: user.id,
 		roomsLoaded: snapshot.roomsLoaded,
 		rooms,
 		setActiveRoomIds,
-		openChatForRooms,
+		setChatOpenState,
 	});
 
-	const sendMessage = React.useCallback(
-		(roomId: number, message: { publicId: string; contents: string }) => {
-			chatClient.send(roomId, {
-				...message,
-				author: {
-					id: user.id,
-					username: user.username,
-					discordId: user.discordId,
-					discordAvatar: user.discordAvatar,
-					customUrl: user.customUrl ?? null,
-					customAvatarUrl: user.customAvatarUrl ?? null,
-					pronouns: null,
-					chatNameHue: null,
-				},
-			});
-		},
-		[user],
-	);
+	const sendMessage = (
+		roomId: number,
+		message: { publicId: string; contents: string },
+	) => {
+		chatClient.send(roomId, {
+			...message,
+			author: {
+				id: user.id,
+				username: user.username,
+				discordId: user.discordId,
+				discordAvatar: user.discordAvatar,
+				customUrl: user.customUrl ?? null,
+				customAvatarUrl: user.customAvatarUrl ?? null,
+				pronouns: null,
+				chatNameHue: null,
+			},
+		});
+	};
 
-	const messagesForRoom = React.useCallback(
-		(roomId: number) => snapshot.messagesByRoomId.get(roomId) ?? EMPTY_MESSAGES,
-		[snapshot.messagesByRoomId],
-	);
-
-	const roomForId = React.useCallback(
-		(roomId: number) => snapshot.roomsById.get(roomId),
-		[snapshot.roomsById],
-	);
-
-	const contextValue = React.useMemo<ChatContextValue>(
-		() => ({
-			roomsLoaded: snapshot.roomsLoaded,
-			rooms,
-			roomForId,
-			messagesForRoom,
-			ensureMessagesLoaded: chatClient.ensureMessagesLoaded,
-			sendMessage,
-			markAsRead: chatClient.markRead,
-			totalUnreadCount: snapshot.totalUnreadCount,
-			chatOpen,
-			setChatOpen,
-			activeRoomIds,
-			setActiveRoomIds,
-		}),
-		[
-			snapshot.roomsLoaded,
-			snapshot.totalUnreadCount,
-			rooms,
-			roomForId,
-			messagesForRoom,
-			sendMessage,
-			chatOpen,
-			setChatOpen,
-			activeRoomIds,
-		],
-	);
+	const contextValue: ChatContextValue = {
+		roomsLoaded: snapshot.roomsLoaded,
+		rooms,
+		roomForId: (roomId) => snapshot.roomsById.get(roomId),
+		messagesForRoom: (roomId) =>
+			snapshot.messagesByRoomId.get(roomId) ?? EMPTY_MESSAGES,
+		ensureMessagesLoaded: chatClient.ensureMessagesLoaded,
+		sendMessage,
+		markAsRead: chatClient.markRead,
+		totalUnreadCount: snapshot.totalUnreadCount,
+		chatOpen,
+		setChatOpen,
+		activeRoomIds,
+		setActiveRoomIds,
+	};
 
 	return (
 		<ChatContext.Provider value={contextValue}>{children}</ChatContext.Provider>
@@ -203,13 +198,13 @@ function useChatRouteSync({
 	roomsLoaded,
 	rooms,
 	setActiveRoomIds,
-	openChatForRooms,
+	setChatOpenState,
 }: {
 	userId: number;
 	roomsLoaded: boolean;
 	rooms: ChatRoomListItem[];
 	setActiveRoomIds: (roomIds: number[]) => void;
-	openChatForRooms: (roomIds: number[]) => void;
+	setChatOpenState: (open: boolean) => void;
 }) {
 	const routeRoomIdsKey = useCurrentRouteChatRoomIds().join(",");
 	const readOnlyRoomIdsKey = useCurrentRouteReadOnlyChatRooms()
@@ -247,6 +242,17 @@ function useChatRouteSync({
 
 	React.useEffect(() => {
 		if (!roomsLoaded) return;
+
+		// route sync opens its own rooms directly: going through the context's
+		// `setChatOpen` would read the previous render's empty `activeRoomIds` and
+		// auto-pick the user's only listed room over the route's rooms
+		const openChatForRooms = (roomIds: number[]) => {
+			setActiveRoomIds(roomIds);
+			setChatOpenState(true);
+			for (const roomId of roomIds) {
+				chatClient.markRead(roomId);
+			}
+		};
 
 		const routeRoomIds = roomIdsFromKey(routeRoomIdsKey);
 
@@ -301,7 +307,7 @@ function useChatRouteSync({
 		rooms,
 		userId,
 		setActiveRoomIds,
-		openChatForRooms,
+		setChatOpenState,
 		layoutSize,
 	]);
 }

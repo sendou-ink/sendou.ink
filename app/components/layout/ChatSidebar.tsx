@@ -12,12 +12,12 @@ import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import {
+	useChatContext,
 	useCurrentRouteChatRoomIds,
 	useCurrentRouteReadOnlyChatRooms,
 } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
-import { useChatContext } from "~/features/chat/useChatContext";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import {
