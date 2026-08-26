@@ -702,12 +702,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 		ChatSystemMessage.send([
 			{
 				channel: tournamentMatchChannel(matchId),
-				revalidateOnly: true,
 				revalidateScope,
 			},
 			...otherMatchIdsToRevalidate.map((id) => ({
 				channel: tournamentMatchChannel(id),
-				revalidateOnly: true as const,
 				revalidateScope,
 			})),
 		]);
@@ -718,7 +716,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 				channel: onlyMatchResultsChanged
 					? matchResultsRoom(tournament, match)
 					: tournamentChannel(tournament.ctx.id),
-				revalidateOnly: true,
 				revalidateScope,
 			},
 		]);

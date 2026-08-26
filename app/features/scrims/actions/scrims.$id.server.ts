@@ -239,7 +239,6 @@ function broadcastRevalidate(
 	if (!post.chatRoomId) return;
 	ChatSystemMessage.send({
 		channel: EventBus.chatRoomChannel(post.chatRoomId),
-		revalidateOnly: true,
 	});
 }
 

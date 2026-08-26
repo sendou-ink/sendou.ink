@@ -215,11 +215,7 @@ function sendDroppedMatchChatMessages({
 	ChatSystemMessage.send([
 		...endedMatchIds.map((matchId) => ({
 			channel: tournamentMatchChannel(matchId),
-			revalidateOnly: true as const,
 		})),
-		{
-			channel: tournamentChannel(tournamentId),
-			revalidateOnly: true as const,
-		},
+		{ channel: tournamentChannel(tournamentId) },
 	]);
 }

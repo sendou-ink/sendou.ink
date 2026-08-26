@@ -105,7 +105,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					} else {
 						ChatSystemMessage.send({
 							channel: EventBus.chatRoomChannel(match.chatRoomId),
-							revalidateOnly: true,
 						});
 					}
 				}
@@ -153,15 +152,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(match.chatRoomId),
-						revalidateOnly: true,
 					});
 				}
 
 				// The group re-enters the looking pool, so refresh every looking client.
-				ChatSystemMessage.send({
-					channel: SENDOUQ_LOOKING_CHANNEL,
-					revalidateOnly: true,
-				});
+				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 				break;
 			}
@@ -237,16 +232,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 					// The continuing group re-enters the looking pool, so refresh
 					// every looking client.
-					ChatSystemMessage.send({
-						channel: SENDOUQ_LOOKING_CHANNEL,
-						revalidateOnly: true,
-					});
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(match.chatRoomId),
-						revalidateOnly: true,
 					});
 				}
 
@@ -288,7 +279,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(match.chatRoomId),
-						revalidateOnly: true,
 					});
 				}
 
@@ -312,7 +302,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(match.chatRoomId),
-						revalidateOnly: true,
 					});
 				}
 
@@ -397,7 +386,6 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(match.chatRoomId),
-						revalidateOnly: true,
 					});
 				}
 

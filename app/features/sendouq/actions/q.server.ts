@@ -59,7 +59,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
-						revalidateOnly: true,
 					});
 				}
 
@@ -68,10 +67,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 				// Joining directly creates an ACTIVE group that enters the pool, so
 				// refresh every looking client. (A PREPARING group isn't in the pool.)
 				if (data.direct === "true") {
-					ChatSystemMessage.send({
-						channel: SENDOUQ_LOOKING_CHANNEL,
-						revalidateOnly: true,
-					});
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
 
 				return redirect(
@@ -100,7 +96,6 @@ export const action: ActionFunction = async ({ request, url }) => {
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
-						revalidateOnly: true,
 					});
 				}
 
@@ -111,16 +106,12 @@ export const action: ActionFunction = async ({ request, url }) => {
 					// members (on the preparing page) via the group topic.
 					ChatSystemMessage.send({
 						channel: sqGroupChannel(groupInvitedTo.id),
-						revalidateOnly: true,
 					});
 				} else {
 					// Joining an active group changes its size/suitability for the whole
 					// pool, so refresh every looking client — which already includes the
 					// group's own existing members.
-					ChatSystemMessage.send({
-						channel: SENDOUQ_LOOKING_CHANNEL,
-						revalidateOnly: true,
-					});
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
 
 				return redirect(

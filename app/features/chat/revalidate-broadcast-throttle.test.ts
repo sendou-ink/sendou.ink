@@ -26,39 +26,25 @@ describe("createRevalidateBroadcastThrottle", () => {
 		vi.useRealTimers();
 	});
 
-	test("throttles revalidation broadcasts but not chat messages", () => {
-		const { throttle } = setup();
-
-		expect(throttle.throttles({ revalidateOnly: true })).toBe(true);
-		expect(throttle.throttles({})).toBe(false);
-	});
-
 	test("does not throttle broadcasts whose sound must not be dropped", () => {
 		const { throttle } = setup();
 
-		expect(
-			throttle.throttles({ revalidateOnly: true, type: "MATCH_STARTED" }),
-		).toBe(false);
-		expect(
-			throttle.throttles({ revalidateOnly: true, type: "READY_CHECK_STARTED" }),
-		).toBe(false);
+		expect(throttle.throttles({ type: "MATCH_STARTED" })).toBe(false);
+		expect(throttle.throttles({ type: "READY_CHECK_STARTED" })).toBe(false);
 	});
 
-	test("throttles broadcasts whose type plays no sound", () => {
+	test("throttles broadcasts that play no sound", () => {
 		const { throttle } = setup();
 
-		expect(
-			throttle.throttles({ revalidateOnly: true, type: "SCORE_CONFIRMED" }),
-		).toBe(true);
-		expect(
-			throttle.throttles({ revalidateOnly: true, type: "MAP_REPLAYED" }),
-		).toBe(true);
+		expect(throttle.throttles({})).toBe(true);
+		expect(throttle.throttles({ type: "SCORE_CONFIRMED" })).toBe(true);
+		expect(throttle.throttles({ type: "MAP_REPLAYED" })).toBe(true);
 	});
 
 	test("first broadcast of a window is delivered immediately", () => {
 		const { throttle, sendLeading, sendTrailing } = setup();
 
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 
 		expect(sendLeading).toHaveBeenCalledTimes(1);
 		expect(sendTrailing).not.toHaveBeenCalled();
@@ -67,11 +53,11 @@ describe("createRevalidateBroadcastThrottle", () => {
 	test("broadcasts within the window coalesce into one trailing broadcast", () => {
 		const { throttle, sendLeading, sendTrailing } = setup();
 
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 		vi.advanceTimersByTime(500);
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
+		throttle.handle({ channel: "sq-looking" });
+		throttle.handle({ channel: "sq-looking" });
 
 		expect(sendLeading).toHaveBeenCalledTimes(1);
 		expect(sendTrailing).not.toHaveBeenCalled();
@@ -87,9 +73,9 @@ describe("createRevalidateBroadcastThrottle", () => {
 	test("a broadcast after the window opens a fresh window and sends immediately", () => {
 		const { throttle, sendLeading, sendTrailing } = setup();
 
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 		vi.advanceTimersByTime(WINDOW_MS);
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 
 		expect(sendLeading).toHaveBeenCalledTimes(2);
 		expect(sendTrailing).not.toHaveBeenCalled();
@@ -98,8 +84,8 @@ describe("createRevalidateBroadcastThrottle", () => {
 	test("rooms are throttled independently", () => {
 		const { throttle, sendLeading } = setup();
 
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
-		throttle.handle({ channel: "tournament-1", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
+		throttle.handle({ channel: "tournament-1" });
 
 		expect(sendLeading).toHaveBeenCalledTimes(2);
 	});
@@ -107,15 +93,13 @@ describe("createRevalidateBroadcastThrottle", () => {
 	test("coalesced broadcasts of one scope keep it, differing scopes widen to unset", () => {
 		const { throttle, sendTrailing } = setup();
 
-		throttle.handle({ channel: "tournament-1", revalidateOnly: true });
+		throttle.handle({ channel: "tournament-1" });
 		throttle.handle({
 			channel: "tournament-1",
-			revalidateOnly: true,
 			revalidateScope: "MATCH_RESULTS",
 		});
 		throttle.handle({
 			channel: "tournament-1",
-			revalidateOnly: true,
 			revalidateScope: "MATCH_RESULTS",
 		});
 		vi.advanceTimersByTime(WINDOW_MS);
@@ -124,13 +108,12 @@ describe("createRevalidateBroadcastThrottle", () => {
 			revalidateScope: "MATCH_RESULTS",
 		});
 
-		throttle.handle({ channel: "tournament-1", revalidateOnly: true });
+		throttle.handle({ channel: "tournament-1" });
 		throttle.handle({
 			channel: "tournament-1",
-			revalidateOnly: true,
 			revalidateScope: "MATCH_RESULTS",
 		});
-		throttle.handle({ channel: "tournament-1", revalidateOnly: true });
+		throttle.handle({ channel: "tournament-1" });
 		vi.advanceTimersByTime(WINDOW_MS);
 		expect(sendTrailing).toHaveBeenLastCalledWith({
 			channel: "tournament-1",
@@ -143,16 +126,16 @@ describe("createRevalidateBroadcastThrottle", () => {
 		const startedAt = Date.now();
 
 		for (let i = 0; i <= MAX_ENTRIES; i++) {
-			throttle.handle({ channel: `tournament-${i}`, revalidateOnly: true });
+			throttle.handle({ channel: `tournament-${i}` });
 		}
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
+		throttle.handle({ channel: "sq-looking" });
 		sendLeading.mockClear();
 
 		// every room is idle by now, but the trailing broadcast is late rather than sent
 		// (its timer would have run at the window's end on a server that was not busy)
 		vi.setSystemTime(startedAt + WINDOW_MS + 1_000);
-		throttle.handle({ channel: "tournament-late", revalidateOnly: true });
+		throttle.handle({ channel: "tournament-late" });
 		expect(sendLeading).toHaveBeenCalledTimes(1);
 
 		vi.advanceTimersByTime(WINDOW_MS);
@@ -166,15 +149,15 @@ describe("createRevalidateBroadcastThrottle", () => {
 	test("the trailing broadcast starts a new window", () => {
 		const { throttle, sendLeading, sendTrailing } = setup();
 
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 		vi.advanceTimersByTime(1_000);
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 		vi.advanceTimersByTime(1_000);
 		expect(sendTrailing).toHaveBeenCalledTimes(1);
 
 		// still within the trailing broadcast's window: coalesces again
 		vi.advanceTimersByTime(500);
-		throttle.handle({ channel: "sq-looking", revalidateOnly: true });
+		throttle.handle({ channel: "sq-looking" });
 		expect(sendLeading).toHaveBeenCalledTimes(1);
 
 		vi.advanceTimersByTime(WINDOW_MS);

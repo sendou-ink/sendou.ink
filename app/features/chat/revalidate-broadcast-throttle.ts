@@ -4,7 +4,6 @@ import { messageTypeToSound } from "./chat-utils";
 interface ThrottleableMessage {
 	channel: string;
 	type?: SystemMessageType;
-	revalidateOnly?: boolean;
 	revalidateScope?: RevalidateScope;
 }
 
@@ -20,7 +19,7 @@ interface ThrottleEntry {
 export const MAX_ENTRIES = 5_000;
 
 /**
- * Rate limits `revalidateOnly` broadcasts per channel so that a burst of them
+ * Rate limits revalidation broadcasts per channel so that a burst of them
  * (e.g. every player of a forming SendouQ match confirming within seconds, or every
  * reported game of a live tournament) fans out to the channel's subscribers at most
  * twice per window instead of once per event — each fan-out makes every subscribed
@@ -63,14 +62,9 @@ export function createRevalidateBroadcastThrottle({
 	};
 
 	return {
-		/**
-		 * Whether the throttle applies to the message: a revalidation broadcast carrying
-		 * no sound. Real chat messages always pass through untouched.
-		 */
-		throttles(
-			msg: Pick<ThrottleableMessage, "type" | "revalidateOnly">,
-		): boolean {
-			return Boolean(msg.revalidateOnly) && !messageTypeToSound(msg.type);
+		/** Whether the message is throttled; ones carrying a sound are not. */
+		throttles(msg: Pick<ThrottleableMessage, "type">): boolean {
+			return !messageTypeToSound(msg.type);
 		},
 		handle(msg: ThrottleableMessage): void {
 			const now = Date.now();

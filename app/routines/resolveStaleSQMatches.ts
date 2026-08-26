@@ -34,7 +34,6 @@ export const ResolveStaleSQMatchesRoutine = new Routine({
 			if (staleMatch.chatRoomId) {
 				ChatSystemMessage.send({
 					channel: EventBus.chatRoomChannel(staleMatch.chatRoomId),
-					revalidateOnly: true,
 				});
 			}
 		}

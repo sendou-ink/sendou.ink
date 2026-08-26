@@ -334,12 +334,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	clearTournamentDataCache(tournamentId);
 
 	if (emitTournamentUpdate) {
-		ChatSystemMessage.send([
-			{
-				channel: tournamentChannel(tournament.ctx.id),
-				revalidateOnly: true,
-			},
-		]);
+		ChatSystemMessage.send([{ channel: tournamentChannel(tournament.ctx.id) }]);
 	}
 
 	return null;

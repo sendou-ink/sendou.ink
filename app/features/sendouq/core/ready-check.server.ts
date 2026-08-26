@@ -71,17 +71,12 @@ export async function start({
 		{
 			channel: sqGroupChannel(ownGroup.id),
 			type: "READY_CHECK_STARTED",
-			revalidateOnly: true,
 		},
 		{
 			channel: sqGroupChannel(theirGroup.id),
 			type: "READY_CHECK_STARTED",
-			revalidateOnly: true,
 		},
-		{
-			channel: SENDOUQ_LOOKING_CHANNEL,
-			revalidateOnly: true,
-		},
+		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);
 
 	notify({
@@ -187,10 +182,7 @@ async function endReadyCheck(
 
 	revalidateGroups(readyCheck);
 	// both groups return to the looking pool, so its shape changed for everyone
-	ChatSystemMessage.send({
-		channel: SENDOUQ_LOOKING_CHANNEL,
-		revalidateOnly: true,
-	});
+	ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 }
 
 async function createMatch({
@@ -238,17 +230,12 @@ async function createMatch({
 		{
 			channel: sqGroupChannel(readyCheck.alphaGroupId),
 			type: "MATCH_STARTED",
-			revalidateOnly: true,
 		},
 		{
 			channel: sqGroupChannel(readyCheck.bravoGroupId),
 			type: "MATCH_STARTED",
-			revalidateOnly: true,
 		},
-		{
-			channel: SENDOUQ_LOOKING_CHANNEL,
-			revalidateOnly: true,
-		},
+		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);
 
 	notify({
@@ -276,13 +263,7 @@ function revalidateGroups(readyCheck: {
 	bravoGroupId: number;
 }) {
 	ChatSystemMessage.send([
-		{
-			channel: sqGroupChannel(readyCheck.alphaGroupId),
-			revalidateOnly: true,
-		},
-		{
-			channel: sqGroupChannel(readyCheck.bravoGroupId),
-			revalidateOnly: true,
-		},
+		{ channel: sqGroupChannel(readyCheck.alphaGroupId) },
+		{ channel: sqGroupChannel(readyCheck.bravoGroupId) },
 	]);
 }

@@ -26,7 +26,6 @@ describe("ChatSystemMessage.send", () => {
 
 		ChatSystemMessage.send({
 			channel: "tournament__101",
-			revalidateOnly: true,
 			revalidateScope: "MATCH_RESULTS",
 			authorUserId: 5,
 		});
@@ -43,13 +42,11 @@ describe("ChatSystemMessage.send", () => {
 		ChatSystemMessage.send({
 			channel: "sq-group__102",
 			type: "READY_CHECK_STARTED",
-			revalidateOnly: true,
 			authorUserId: 5,
 		});
 		ChatSystemMessage.send({
 			channel: "sq-group__102",
 			type: "READY_CHECK_STARTED",
-			revalidateOnly: true,
 			authorUserId: 5,
 		});
 		await flushEvents();
@@ -65,11 +62,9 @@ describe("ChatSystemMessage.send", () => {
 
 		ChatSystemMessage.send({
 			channel: "tournament__104",
-			revalidateOnly: true,
 		});
 		ChatSystemMessage.send({
 			channel: "tournament__104",
-			revalidateOnly: true,
 		});
 		await flushEvents();
 

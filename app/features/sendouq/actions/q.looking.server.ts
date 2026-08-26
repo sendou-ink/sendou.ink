@@ -43,22 +43,15 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	const broadcastLookingUpdate = () =>
-		ChatSystemMessage.send({
-			channel: SENDOUQ_LOOKING_CHANNEL,
-			revalidateOnly: true,
-		});
+		ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 	const revalidateGroupTopic = (groupId: number) =>
-		ChatSystemMessage.send({
-			channel: sqGroupChannel(groupId),
-			revalidateOnly: true,
-		});
+		ChatSystemMessage.send({ channel: sqGroupChannel(groupId) });
 
 	const notifyLikeReceived = (groupId: number) =>
 		ChatSystemMessage.send({
 			channel: sqGroupChannel(groupId),
 			type: "LIKE_RECEIVED",
-			revalidateOnly: true,
 		});
 
 	try {

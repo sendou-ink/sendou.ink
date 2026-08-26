@@ -11,10 +11,7 @@ export const CloseExpiredContinueVotesRoutine = new Routine({
 			await SQGroupRepository.closeExpiredContinueVotes();
 
 		for (const roomId of new Set(chatRoomIdsToRevalidate)) {
-			ChatSystemMessage.send({
-				channel: EventBus.chatRoomChannel(roomId),
-				revalidateOnly: true,
-			});
+			ChatSystemMessage.send({ channel: EventBus.chatRoomChannel(roomId) });
 		}
 
 		logger.info(`Closed continue votes for ${numAffectedGroups} group(s)`);

@@ -37,10 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.send({
-					channel: SENDOUQ_LOOKING_CHANNEL,
-					revalidateOnly: true,
-				});
+				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 				return redirect(SENDOUQ_LOOKING_PAGE);
 			}
@@ -69,7 +66,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
 						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
-						revalidateOnly: true,
 					});
 				}
 
@@ -83,10 +79,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						: [data.id],
 				);
 
-				ChatSystemMessage.send({
-					channel: sqGroupChannel(ownGroup.id),
-					revalidateOnly: true,
-				});
+				ChatSystemMessage.send({ channel: sqGroupChannel(ownGroup.id) });
 
 				notify({
 					userIds: [data.id],

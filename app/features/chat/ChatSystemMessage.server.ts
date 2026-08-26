@@ -18,7 +18,6 @@ type RevalidateBroadcast = {
 	/** Actor whose own broadcast clients skip (their submission already reran the loaders). */
 	authorUserId?: number;
 	revalidateScope?: RevalidateScope;
-	revalidateOnly: true;
 	type?: SoundOnlySystemMessageType;
 };
 
