@@ -268,7 +268,7 @@
 	"bottomTexts.profileCustomUrl": "",
 	"bottomTexts.profileInGameName": "",
 	"bottomTexts.profileBattlefy": "",
-	"bottomTexts.profileShowDiscordUniqueName": "Show your unique Discord name ({{discordUniqueName}}) publicly?",
+	"bottomTexts.profileShowDiscordUniqueName": "",
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "Prix, disponibilités et tout autres info nécéssaires",
 	"bottomTexts.profileNewProfileEnabled": "",

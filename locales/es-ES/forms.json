@@ -268,7 +268,7 @@
 	"bottomTexts.profileCustomUrl": "Para los mecenas (Supporter y superior) hay un enlace corto disponible. Ej. en lugar de sendou.ink/u/sendou, se puede usar snd.ink/sendou.",
 	"bottomTexts.profileInGameName": "Formato: Nombre#disc (ej. Jugador#1234)",
 	"bottomTexts.profileBattlefy": "Se usa para el seed y la verificación en algunos torneos",
-	"bottomTexts.profileShowDiscordUniqueName": "¿Mostrar tu nombre de Discord ({{discordUniqueName}}) públicamente?",
+	"bottomTexts.profileShowDiscordUniqueName": "¿Mostrar tu nombre de Discord públicamente?",
 	"bottomTexts.profileCommissionsOpen": "Las comisiones se cierran automáticamente después de un mes",
 	"bottomTexts.profileCommissionText": "Precio, espacios abiertos, o cualquier otra información sobre tus comisiones.",
 	"bottomTexts.profileNewProfileEnabled": "Habilitar la nueva página de perfil basada en widgets (solo para supporter)",

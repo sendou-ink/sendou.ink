@@ -268,7 +268,7 @@
 	"bottomTexts.profileCustomUrl": "",
 	"bottomTexts.profileInGameName": "",
 	"bottomTexts.profileBattlefy": "",
-	"bottomTexts.profileShowDiscordUniqueName": "להראות את שם ה-Discord היחודי שלכם ({{discordUniqueName}}) בפומבי?",
+	"bottomTexts.profileShowDiscordUniqueName": "להראות את שם ה-Discord היחודי שלכם בפומבי?",
 	"bottomTexts.profileCommissionsOpen": "",
 	"bottomTexts.profileCommissionText": "מחיר, כמות בקשות או מידע אחר שקשור לבקשות אלכם",
 	"bottomTexts.profileNewProfileEnabled": "",
