@@ -250,7 +250,7 @@ export function buildCases(fx: Fixtures): {
 
 	// ChatRoomResolver
 	add("ChatRoomResolver.resolve", fx.heavyChatRoomId, (roomId) =>
-		ChatRoomResolver.resolve([roomId]),
+		ChatRoomResolver.resolve(roomId),
 	);
 	add("ChatRoomResolver.findAllByUserId", fx.heavyUser, (user) =>
 		ChatRoomResolver.findAllByUserId(user.id),

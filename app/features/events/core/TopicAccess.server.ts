@@ -18,7 +18,7 @@ export async function canSubscribe(
 		const roomId = Number(topic.slice(CHAT_ROOM_TOPIC_PREFIX.length));
 		if (!Number.isInteger(roomId) || roomId <= 0) return false;
 
-		const [room] = await ChatRoomResolver.resolve([roomId]);
+		const room = await ChatRoomResolver.resolve(roomId);
 		if (!room) return false;
 
 		return hasPermission(room, "VIEW", { id: userId });

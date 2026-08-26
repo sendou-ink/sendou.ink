@@ -66,7 +66,7 @@ async function persistAndPublish(args: {
 	type: PersistedSystemMessageType;
 	authorUserId: number;
 }) {
-	const room = (await ChatRoomResolver.resolve([args.roomId]))[0];
+	const room = await ChatRoomResolver.resolve(args.roomId);
 	if (!room) return;
 
 	const inserted = await ChatRepository.insertSystemMessage(args);

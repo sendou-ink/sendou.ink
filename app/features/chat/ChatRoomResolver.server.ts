@@ -8,7 +8,9 @@ import type { organizerPermissions } from "~/features/tournament/core/permission
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
 import { databaseTimestampNow } from "~/utils/dates";
+import { notFoundIfNullish } from "~/utils/remix.server";
 import {
 	SENDOUQ_LOOKING_PAGE,
 	scrimPage,
@@ -59,10 +61,43 @@ export interface ResolvedRoom {
 type ChatRoomRow = Tables["ChatRoom"];
 
 /**
- * Resolves rooms' participants, titles and access live from their owning entities.
- * Rooms whose owner row is gone resolve to nothing.
+ * Resolves a room's participants, title and access live from its owning entity.
+ * A room whose owner row is gone resolves to `null`.
  */
-export async function resolve(roomIds: number[]): Promise<ResolvedRoom[]> {
+export async function resolve(roomId: number): Promise<ResolvedRoom | null> {
+	const [room] = await resolveAll([roomId]);
+
+	return room ?? null;
+}
+
+/**
+ * Resolves a room for the current user.
+ *
+ * @throws {Response} 404 if the room does not resolve, 403 without the permission.
+ */
+export async function requireRoom(
+	roomId: number,
+	permission: keyof ResolvedRoom["permissions"],
+): Promise<ResolvedRoom> {
+	const room = notFoundIfNullish(await resolve(roomId));
+	requirePermission(room, permission);
+
+	return room;
+}
+
+/** Rooms the user currently participates in (unexpired and unclosed). */
+export async function findAllByUserId(userId: number): Promise<ResolvedRoom[]> {
+	const roomIds = await ChatRepository.findAllOpenRoomIdsByUserId(userId);
+
+	const resolved = await resolveAll(roomIds);
+
+	// a solo group has no conversation to show yet
+	return resolved.filter(
+		(room) => room.type !== "SQ_GROUP" || room.participantUserIds.length >= 2,
+	);
+}
+
+async function resolveAll(roomIds: number[]): Promise<ResolvedRoom[]> {
 	if (roomIds.length === 0) return [];
 
 	const rooms = await ChatRepository.findAllRoomsByIds(roomIds);
@@ -81,18 +116,6 @@ export async function resolve(roomIds: number[]): Promise<ResolvedRoom[]> {
 	).flat();
 
 	return resolved.sort((a, b) => a.roomId - b.roomId);
-}
-
-/** Rooms the user currently participates in (unexpired and unclosed). */
-export async function findAllByUserId(userId: number): Promise<ResolvedRoom[]> {
-	const roomIds = await ChatRepository.findAllOpenRoomIdsByUserId(userId);
-
-	const resolved = await resolve(roomIds);
-
-	// a solo group has no conversation to show yet
-	return resolved.filter(
-		(room) => room.type !== "SQ_GROUP" || room.participantUserIds.length >= 2,
-	);
 }
 
 async function resolveSqGroupRooms(

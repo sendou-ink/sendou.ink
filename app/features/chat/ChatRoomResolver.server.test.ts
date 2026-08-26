@@ -12,6 +12,7 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { hasPermission } from "~/modules/permissions/utils";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import invariant from "~/utils/invariant";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import { setupSqMatch } from "./tests/fixtures";
@@ -108,9 +109,7 @@ describe("ChatRoomResolver.resolve", () => {
 		const memberUserIds = [users.id(2), users.id(3)];
 		const group = await SQGroupFactory.create({ memberUserIds });
 
-		const [room] = await ChatRoomResolver.resolve([
-			await groupChatRoomId(group.id),
-		]);
+		const room = await resolveOrThrow(await groupChatRoomId(group.id));
 
 		expect(room.type).toBe("SQ_GROUP");
 		expect(room.participantUserIds.sort()).toEqual(memberUserIds.sort());
@@ -126,9 +125,7 @@ describe("ChatRoomResolver.resolve", () => {
 		});
 		await SQGroupRepository.setAsInactive(group.id);
 
-		const [room] = await ChatRoomResolver.resolve([
-			await groupChatRoomId(group.id),
-		]);
+		const room = await resolveOrThrow(await groupChatRoomId(group.id));
 
 		expect(room.inactive).toBe(true);
 	});
@@ -136,7 +133,7 @@ describe("ChatRoomResolver.resolve", () => {
 	test("resolves an SQ_MATCH room to both groups' members", async () => {
 		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
 
-		const [room] = await ChatRoomResolver.resolve([match.chatRoomId!]);
+		const room = await resolveOrThrow(match.chatRoomId!);
 
 		expect(room.type).toBe("SQ_MATCH");
 		expect(room.participantUserIds.sort()).toEqual(
@@ -155,7 +152,7 @@ describe("ChatRoomResolver.resolve", () => {
 			teamBravoUserIds,
 		} = await setupStartedTournamentMatch();
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.type).toBe("TOURNAMENT_MATCH");
 		expect(room.participantUserIds.sort()).toEqual(
@@ -173,7 +170,7 @@ describe("ChatRoomResolver.resolve", () => {
 			staff: [{ userId: users.id(12), role: "STREAMER" }],
 		});
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.permissions.OBSERVE).toContain(users.id(12));
 	});
@@ -187,9 +184,7 @@ describe("ChatRoomResolver.resolve", () => {
 			{ isLooking: true },
 		);
 
-		const [room] = await ChatRoomResolver.resolve([
-			await teamChatRoomId(team.id),
-		]);
+		const room = await resolveOrThrow(await teamChatRoomId(team.id));
 
 		expect(room.type).toBe("TOURNAMENT_TEAM");
 		expect(room.participantUserIds.sort()).toEqual(memberUserIds.sort());
@@ -201,7 +196,7 @@ describe("ChatRoomResolver.resolve", () => {
 		const { chatRoomId, postUserIds, requestUserIds, startsAt } =
 			await setupAcceptedScrim();
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.type).toBe("SCRIM");
 		expect(room.participantUserIds.sort()).toEqual(
@@ -218,11 +213,7 @@ describe("ChatRoomResolver.resolve", () => {
 		// the room; simulate by resolving an id the reaper would clean up
 		await ScrimPostRepository.deleteById(postId);
 
-		expect(await ChatRoomResolver.resolve([chatRoomId])).toEqual([]);
-	});
-
-	test("returns an empty array for no room ids", async () => {
-		expect(await ChatRoomResolver.resolve([])).toEqual([]);
+		expect(await ChatRoomResolver.resolve(chatRoomId)).toBeNull();
 	});
 });
 
@@ -292,7 +283,7 @@ describe("ChatRoomResolver.resolve labels", () => {
 			],
 		});
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.labelByUserId).toEqual({
 			[authorId]: "TO",
@@ -309,7 +300,7 @@ describe("ChatRoomResolver.resolve labels", () => {
 			staff: [{ userId: teamAlphaUserIds[0], role: "ORGANIZER" }],
 		});
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.labelByUserId[teamAlphaUserIds[0]]).toBeUndefined();
 	});
@@ -317,7 +308,7 @@ describe("ChatRoomResolver.resolve labels", () => {
 	test("labels no one in a room with no tournament behind it", async () => {
 		const { chatRoomId } = await setupAcceptedScrim();
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.labelByUserId).toEqual({});
 	});
@@ -327,13 +318,14 @@ describe("ChatRoomResolver.resolve permissions", () => {
 	test("site staff observe both group chats of an SQ match", async () => {
 		const { match } = await setupSqMatch(users);
 
-		const rooms = await ChatRoomResolver.resolve([
-			match.chatRoomId!,
-			await groupChatRoomId(match.alphaGroup.id),
-			await groupChatRoomId(match.bravoGroup.id),
-		]);
+		const rooms = await Promise.all(
+			[
+				match.chatRoomId!,
+				await groupChatRoomId(match.alphaGroup.id),
+				await groupChatRoomId(match.bravoGroup.id),
+			].map(resolveOrThrow),
+		);
 
-		expect(rooms).toHaveLength(3);
 		for (const room of rooms) {
 			expect(hasPermission(room, "OBSERVE", { id: adminId() })).toBe(true);
 			expect(hasPermission(room, "OBSERVE", { id: outsiderId() })).toBe(false);
@@ -343,9 +335,9 @@ describe("ChatRoomResolver.resolve permissions", () => {
 	test("a participant of one group cannot view the other group's chat", async () => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
 
-		const [bravoRoom] = await ChatRoomResolver.resolve([
+		const bravoRoom = await resolveOrThrow(
 			await groupChatRoomId(match.bravoGroup.id),
-		]);
+		);
 
 		expect(hasPermission(bravoRoom, "VIEW", { id: alphaUserIds[0] })).toBe(
 			false,
@@ -355,7 +347,7 @@ describe("ChatRoomResolver.resolve permissions", () => {
 	test("tournament organizer observes and may post into the match chat", async () => {
 		const { chatRoomId, authorId } = await setupStartedTournamentMatch();
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(hasPermission(room, "OBSERVE", { id: authorId })).toBe(true);
 		expect(hasPermission(room, "VIEW", { id: authorId })).toBe(true);
@@ -367,7 +359,7 @@ describe("ChatRoomResolver.resolve permissions", () => {
 			await setupStartedTournamentMatch();
 		await ChatRepository.closeExpiredRooms(addHours(new Date(), 100_000));
 
-		const [room] = await ChatRoomResolver.resolve([chatRoomId]);
+		const room = await resolveOrThrow(chatRoomId);
 
 		expect(room.closedAt).not.toBeNull();
 		expect(hasPermission(room, "VIEW", { id: teamAlphaUserIds[0] })).toBe(
@@ -468,6 +460,13 @@ describe("ChatRoomResolver.permissionsOf", () => {
 		);
 	});
 });
+
+const resolveOrThrow = async (roomId: number) => {
+	const room = await ChatRoomResolver.resolve(roomId);
+	invariant(room, `room ${roomId} did not resolve`);
+
+	return room;
+};
 
 const groupChatRoomId = async (groupId: number) => {
 	const group = await db

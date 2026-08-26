@@ -1,12 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
-import { requirePermission } from "~/modules/permissions/guards.server";
-import {
-	notFoundIfNullish,
-	parseBody,
-	parseParams,
-} from "~/utils/remix.server";
+import { parseBody, parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
 import * as ChatRepository from "../ChatRepository.server";
 import * as ChatRoomResolver from "../ChatRoomResolver.server";
@@ -19,8 +14,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	const { roomId } = parseParams({ params, schema: paramsSchema });
 	const data = await parseBody({ request, schema: bodySchema });
 
-	const room = notFoundIfNullish((await ChatRoomResolver.resolve([roomId]))[0]);
-	requirePermission(room, "VIEW");
+	await ChatRoomResolver.requireRoom(roomId, "VIEW");
 
 	await ChatRepository.upsertReadIndicator({
 		userId: user.id,
