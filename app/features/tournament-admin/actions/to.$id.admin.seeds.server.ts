@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	requireTournamentOrganizer,
@@ -30,6 +31,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "UPDATE_SEEDS": {
 			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
+			validateTeamsOfTournament(tournament, data.seeds);
 
 			await TournamentRepository.updateTeamSeeds({
 				tournamentId,
@@ -54,6 +56,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 				),
 				"Invalid starting bracket idx",
 			);
+			validateTeamsOfTournament(
+				tournament,
+				data.startingBrackets.map((t) => t.tournamentTeamId),
+			);
 
 			await TournamentTeamRepository.updateStartingBrackets(
 				data.startingBrackets,
@@ -73,10 +79,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"No starting bracket has A/B divisions enabled",
 			);
 
-			const validTeamIds = new Set(tournament.ctx.teams.map((t) => t.id));
-			errorToastIfFalsy(
-				data.abDivisions.every((t) => validTeamIds.has(t.tournamentTeamId)),
-				"Invalid tournament team id",
+			validateTeamsOfTournament(
+				tournament,
+				data.abDivisions.map((t) => t.tournamentTeamId),
 			);
 
 			await TournamentTeamRepository.updateAbDivisions(data.abDivisions);
@@ -93,3 +98,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return successToast(message);
 };
+
+function validateTeamsOfTournament(
+	tournament: Tournament,
+	tournamentTeamIds: number[],
+) {
+	const validTeamIds = new Set(tournament.ctx.teams.map((t) => t.id));
+
+	errorToastIfFalsy(
+		tournamentTeamIds.every((id) => validTeamIds.has(id)),
+		"Invalid tournament team id",
+	);
+}
