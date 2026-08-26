@@ -97,11 +97,6 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	const loadingMessageRoomIds = new Set<number>();
 	/** Unknown rooms a refetch was already tried for: messages of a room the user merely observes (moderation view) must not refetch the list over and over. */
 	const refetchedUnknownRoomIds = new Set<number>();
-	/** Messages that arrived while a room's first history fetch was in flight; merged in when it lands. */
-	const arrivedWhileLoadingByRoomId = new Map<
-		number,
-		ChatMessageWithAuthor[]
-	>();
 	/** Newest message id already marked read locally per room, so refetches can't resurrect stale unread counts. */
 	const locallyReadByRoomId = new Map<number, number>();
 	const readTimers = new Map<number, ReturnType<typeof setTimeout>>();
@@ -134,15 +129,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	/** Inserts a persisted message into a loaded history, replacing a pending send or older copy with the same `publicId`. */
 	const insertPersisted = (message: ChatMessageWithAuthor) => {
 		const existing = messagesByRoomId.get(message.roomId);
-		if (!existing) {
-			if (loadingMessageRoomIds.has(message.roomId)) {
-				arrivedWhileLoadingByRoomId.set(message.roomId, [
-					...(arrivedWhileLoadingByRoomId.get(message.roomId) ?? []),
-					message,
-				]);
-			}
-			return;
-		}
+		if (!existing) return;
 
 		const replaceIndex = existing.findIndex(
 			(candidate) => candidate.publicId === message.publicId,
@@ -302,7 +289,6 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		for (const roomId of lostRoomIds) {
 			messagesByRoomId.delete(roomId);
 			locallyReadByRoomId.delete(roomId);
-			arrivedWhileLoadingByRoomId.delete(roomId);
 			const timer = readTimers.get(roomId);
 			if (timer) {
 				clearTimeout(timer);
@@ -341,20 +327,27 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	const loadMessages = async (roomId: number) => {
 		if (loadingMessageRoomIds.has(roomId)) return;
 		loadingMessageRoomIds.add(roomId);
+		// an entry from the start makes the history the one place messages pushed
+		// mid-fetch land in
+		if (!messagesByRoomId.has(roomId)) {
+			setMessages(roomId, []);
+		}
 
 		try {
 			const data = await deps.fetchMessages(roomId);
-			if (!data) return;
+			if (!data) {
+				dropEmptyHistory(roomId);
+				return;
+			}
 
 			// keep everything appended while the fetch was in flight that its
 			// snapshot predates: optimistic sends, and messages pushed over SSE
 			const fetchedPublicIds = new Set(
 				data.messages.map((message) => message.publicId),
 			);
-			const missedByFetch = [
-				...(messagesByRoomId.get(roomId) ?? []),
-				...(arrivedWhileLoadingByRoomId.get(roomId) ?? []),
-			].filter((message) => !fetchedPublicIds.has(message.publicId));
+			const missedByFetch = (messagesByRoomId.get(roomId) ?? []).filter(
+				(message) => !fetchedPublicIds.has(message.publicId),
+			);
 			setMessages(roomId, sortedMessages([...data.messages, ...missedByFetch]));
 			notify();
 
@@ -363,10 +356,17 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			}
 		} catch (error) {
 			logger.error("Fetching chat messages failed", error);
+			dropEmptyHistory(roomId);
 		} finally {
 			loadingMessageRoomIds.delete(roomId);
-			arrivedWhileLoadingByRoomId.delete(roomId);
 		}
+	};
+
+	/** A failed fetch must not leave behind an empty history that reads as loaded. */
+	const dropEmptyHistory = (roomId: number) => {
+		if (messagesByRoomId.get(roomId)?.length !== 0) return;
+		messagesByRoomId = new Map(messagesByRoomId);
+		messagesByRoomId.delete(roomId);
 	};
 
 	return {
@@ -391,7 +391,6 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			locallyReadByRoomId.clear();
 			loadingObservedRoomIds.clear();
 			refetchedUnknownRoomIds.clear();
-			arrivedWhileLoadingByRoomId.clear();
 			notify();
 		},
 		getSnapshot: () => {

@@ -71,7 +71,11 @@ function createHarness({
 	const fetchRoom = vi.fn(async (roomId: number) =>
 		observedRoom && observedRoom.id === roomId ? { room: observedRoom } : null,
 	);
-	const fetchMessages = vi.fn(async (_roomId: number) => ({ messages }));
+	const fetchMessages = vi.fn(
+		async (
+			_roomId: number,
+		): Promise<{ messages: ChatMessageWithAuthor[] } | null> => ({ messages }),
+	);
 	const postRead = vi.fn(async () => {});
 
 	const client = createChatClient({
@@ -197,6 +201,23 @@ describe("createChatClient", () => {
 			...history,
 			incoming,
 		]);
+	});
+
+	test("a failed history fetch leaves the room retryable", async () => {
+		const harness = createHarness({ messages: [message({ id: 1 })] });
+		const client = await startedClient(harness);
+
+		harness.fetchMessages.mockResolvedValueOnce(null);
+
+		client.ensureMessagesLoaded(1);
+		await flush();
+		expect(client.getSnapshot().messagesByRoomId.has(1)).toBe(false);
+
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		expect(harness.fetchMessages).toHaveBeenCalledTimes(2);
+		expect(client.getSnapshot().messagesByRoomId.get(1)).toHaveLength(1);
 	});
 
 	test("the user's own message from another device never counts as unread", async () => {
