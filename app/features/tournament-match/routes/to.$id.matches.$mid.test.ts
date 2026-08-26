@@ -206,6 +206,17 @@ describe("Tournament match page", () => {
 			assertResponseErrored(res, "Invalid roster");
 		});
 
+		test("returns error if submitted active roster has the same player twice", async () => {
+			const res = await setActiveRosterAction(teamOne.id, [
+				organizerId,
+				organizerId,
+				organizerId,
+				organizerId,
+			]);
+
+			assertResponseErrored(res);
+		});
+
 		test("returns error if submitted active roster is not of correct length", async () => {
 			const res = await setActiveRosterAction(
 				teamOne.id,

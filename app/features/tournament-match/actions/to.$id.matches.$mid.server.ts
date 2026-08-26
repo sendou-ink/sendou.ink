@@ -33,6 +33,7 @@ import {
 	parseParams,
 	parseRequestPayload,
 } from "~/utils/remix.server";
+import { noDuplicates } from "~/utils/schema";
 import { errorIsSqliteUniqueConstraintFailure } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { executeRoll } from "../core/executeRoll.server";
@@ -139,7 +140,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const team = tournament.teamById(data.teamId)!;
 			errorToastIfFalsy(
-				data.roster.every((userId) => team.memberUserIds.includes(userId)),
+				noDuplicates(data.roster) &&
+					data.roster.every((userId) => team.memberUserIds.includes(userId)),
 				"Invalid roster",
 			);
 
