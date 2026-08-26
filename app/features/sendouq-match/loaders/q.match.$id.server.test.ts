@@ -44,14 +44,16 @@ describe("q match loader", () => {
 
 		const data = await loadAs(staffId(), match.id);
 
-		expect(data.chatRoomIds).toEqual([match.chatRoomId]);
-		expect(data.readOnlyChatRooms).toEqual([
+		expect(data.chatRooms).toEqual([
+			{ roomId: match.chatRoomId, autoOpen: true },
 			{
 				roomId: await groupChatRoomId(match.alphaGroup.id),
+				autoOpen: false,
 				label: "Group Alpha",
 			},
 			{
 				roomId: await groupChatRoomId(match.bravoGroup.id),
+				autoOpen: false,
 				label: "Group Bravo",
 			},
 		]);
@@ -62,11 +64,13 @@ describe("q match loader", () => {
 
 		const data = await loadAs(alphaUserIds()[0], match.id);
 
-		expect(data.chatRoomIds).toEqual([
-			match.chatRoomId,
-			await groupChatRoomId(match.alphaGroup.id),
+		expect(data.chatRooms).toEqual([
+			{ roomId: match.chatRoomId, autoOpen: true },
+			{
+				roomId: await groupChatRoomId(match.alphaGroup.id),
+				autoOpen: true,
+			},
 		]);
-		expect(data.readOnlyChatRooms).toEqual([]);
 	});
 
 	test("gives an outsider no chat rooms at all", async () => {
@@ -74,7 +78,6 @@ describe("q match loader", () => {
 
 		const data = await loadAs(outsiderId(), match.id);
 
-		expect(data.chatRoomIds).toEqual([]);
-		expect(data.readOnlyChatRooms).toEqual([]);
+		expect(data.chatRooms).toEqual([]);
 	});
 });

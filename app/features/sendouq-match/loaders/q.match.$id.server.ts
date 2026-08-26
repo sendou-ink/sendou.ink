@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
-import type { ReadOnlyChatRoom } from "~/features/chat/chat-types";
+import type { RouteChatRoom } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -54,7 +54,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		reportedWeapons,
 		ingestedScoreboards,
 		isOffSeason: Seasons.current() === null,
-		chatRoomIds: (() => {
+		chatRooms: ((): RouteChatRoom[] => {
 			if (!user) return [];
 
 			if (isParticipant) {
@@ -64,34 +64,31 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					? match.groupAlpha
 					: match.groupBravo;
 
-				return [match.chatRoomId, ownGroup.chatRoomId].filter(
-					(id): id is number => typeof id === "number",
-				);
+				return [match.chatRoomId, ownGroup.chatRoomId]
+					.filter((id): id is number => typeof id === "number")
+					.map((roomId) => ({ roomId, autoOpen: true }));
 			}
 
-			// staff observers chat alongside the participants in the match room
-			if (isStaff && typeof matchUnmapped.chatRoomId === "number") {
-				return [matchUnmapped.chatRoomId];
-			}
+			if (!isStaff) return [];
 
-			return [];
+			return [
+				// staff observers chat alongside the participants in the match room
+				{ roomId: matchUnmapped.chatRoomId, autoOpen: true },
+				// the group chats stay private team spaces: staff only ever reads them
+				{
+					roomId: matchUnmapped.groupAlpha.chatRoomId,
+					autoOpen: false,
+					label: "Group Alpha",
+				},
+				{
+					roomId: matchUnmapped.groupBravo.chatRoomId,
+					autoOpen: false,
+					label: "Group Bravo",
+				},
+			].filter(
+				(room): room is RouteChatRoom => typeof room.roomId === "number",
+			);
 		})(),
-		// the group chats stay private team spaces: staff only ever reads them
-		readOnlyChatRooms:
-			isStaff && !isParticipant
-				? [
-						{
-							roomId: matchUnmapped.groupAlpha.chatRoomId,
-							label: "Group Alpha",
-						},
-						{
-							roomId: matchUnmapped.groupBravo.chatRoomId,
-							label: "Group Bravo",
-						},
-					].filter(
-						(room): room is ReadOnlyChatRoom => typeof room.roomId === "number",
-					)
-				: [],
 	};
 };
 

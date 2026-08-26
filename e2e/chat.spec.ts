@@ -158,7 +158,7 @@ test.describe("Chat", () => {
 			const readPosted = phone.page.waitForResponse(
 				(response) =>
 					response.request().method() === "POST" &&
-					/\/chat\/\d+\/read$/.test(new URL(response.url()).pathname),
+					/\/chat\/rooms\/\d+\/read$/.test(new URL(response.url()).pathname),
 			);
 			await phoneChat.open();
 			await phoneChat.openRoom(matchRoom);
@@ -299,7 +299,12 @@ test.describe("Chat", () => {
 
 		await impersonate(page, alpha[0].id);
 		await new SendouQMatchPage(page).goto(match.id);
-		await new ChatSidebar(page).chat().send("before the room closed");
+		const participantChat = new ChatSidebar(page);
+		await participantChat.chat().send("before the room closed");
+		// the message has to land before the room closes under it
+		await expect(participantChat.chat().locators.pendingMessages).toHaveCount(
+			0,
+		);
 
 		await factories.backdate("ChatRoom", match.chatRoomId, {
 			expiresAt: sub(new Date(), { months: 2 }),

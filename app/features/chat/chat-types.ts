@@ -90,11 +90,13 @@ export interface ChatRoomListItem {
 	latestMessageAt: number | null;
 }
 
-/** A room a route surfaces in the sidebar list without opening it, for a viewer who only reads it (staff reading a private group chat). */
-export interface ReadOnlyChatRoom {
+/** A room the current route surfaces to the viewer, from its loader's `chatRooms`. */
+export interface RouteChatRoom {
 	roomId: number;
+	/** Whether the room opens for the viewer on arrival, rather than only being listed in the sidebar (staff reading a private group chat). */
+	autoOpen: boolean;
 	/** Names the room in the sidebar, where its own title can't tell it apart (the two group chats of one match). */
-	label: string;
+	label?: string;
 }
 
 export type RevalidateScope = "MATCH_RESULTS";

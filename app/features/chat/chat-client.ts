@@ -59,7 +59,7 @@ export interface ChatClient {
 	/** Subscribes to snapshot changes, for `useSyncExternalStore`. Returns an unsubscribe function. */
 	subscribe: (listener: () => void) => () => void;
 	refreshRooms: () => Promise<void>;
-	/** Fetches a room's info as an observed room when the user's own room list does not carry it (observer access via a route's `chatRoomIds`). */
+	/** Fetches a room's info as an observed room when the user's own room list does not carry it (observer access via a route's `chatRooms`). */
 	ensureRoomKnown: (roomId: number) => void;
 	/** Fetches the room's history unless it is already loaded or loading. */
 	ensureMessagesLoaded: (roomId: number) => void;

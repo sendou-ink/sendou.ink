@@ -13,7 +13,7 @@ import { useServerRevalidationEvents } from "./chat-hooks";
 import type {
 	ChatRoomListItem,
 	ClientChatMessage,
-	ReadOnlyChatRoom,
+	RouteChatRoom,
 } from "./chat-types";
 
 const EMPTY_MESSAGES: ClientChatMessage[] = [];
@@ -206,8 +206,12 @@ function useChatRouteSync({
 	setActiveRoomIds: (roomIds: number[]) => void;
 	setChatOpenState: (open: boolean) => void;
 }) {
-	const routeRoomIdsKey = useCurrentRouteChatRoomIds().join(",");
-	const readOnlyRoomIdsKey = useCurrentRouteReadOnlyChatRooms()
+	const routeRooms = useCurrentRouteChatRooms();
+	// keys rather than the arrays themselves: a route revalidation hands over
+	// equal-but-new loader data that must not re-run the effects
+	const routeRoomIdsKey = routeRooms.map((room) => room.roomId).join(",");
+	const autoOpenRoomIdsKey = routeRooms
+		.filter((room) => room.autoOpen)
 		.map((room) => room.roomId)
 		.join(",");
 	const { pathname } = useLocation();
@@ -218,11 +222,7 @@ function useChatRouteSync({
 	// revalidate broadcasts for the page's rooms (e.g. a score report on the
 	// match the user is viewing) arrive on the rooms' topic channels
 	React.useEffect(() => {
-		const roomIds = [
-			...roomIdsFromKey(routeRoomIdsKey),
-			...roomIdsFromKey(readOnlyRoomIdsKey),
-		];
-		const unsubscribes = roomIds.map((roomId) =>
+		const unsubscribes = roomIdsFromKey(routeRoomIdsKey).map((roomId) =>
 			eventsClient.subscribeTopic(chatRoomChannel(roomId)),
 		);
 		return () => {
@@ -230,15 +230,7 @@ function useChatRouteSync({
 				unsubscribe();
 			}
 		};
-	}, [routeRoomIdsKey, readOnlyRoomIdsKey]);
-
-	// read-only rooms are listed in the sidebar for the observer to open themselves,
-	// so they are only made known, never opened
-	React.useEffect(() => {
-		for (const roomId of roomIdsFromKey(readOnlyRoomIdsKey)) {
-			chatClient.ensureRoomKnown(roomId);
-		}
-	}, [readOnlyRoomIdsKey]);
+	}, [routeRoomIdsKey]);
 
 	React.useEffect(() => {
 		if (!roomsLoaded) return;
@@ -254,36 +246,37 @@ function useChatRouteSync({
 			}
 		};
 
-		const routeRoomIds = roomIdsFromKey(routeRoomIdsKey);
+		const autoOpenRoomIds = roomIdsFromKey(autoOpenRoomIdsKey);
+		const routeRoomIdsChanged =
+			previousRouteRoomIdsKeyRef.current !== routeRoomIdsKey;
+		previousRouteRoomIdsKeyRef.current = routeRoomIdsKey;
 
-		if (routeRoomIds.length > 0) {
-			const routeRoomIdsChanged =
-				previousRouteRoomIdsKeyRef.current !== routeRoomIdsKey;
-			previousRouteRoomIdsKeyRef.current = routeRoomIdsKey;
-
-			if (!routeRoomIdsChanged) return;
-
+		if (routeRoomIdsChanged) {
 			// the loader can know about a just-created room before the room list
 			// does; an observer's room is never in the list at all, so its info is
 			// fetched separately as an observed room
-			for (const roomId of routeRoomIds) {
-				if (rooms.every((room) => room.id !== roomId)) {
-					void chatClient.refreshRooms();
-					chatClient.ensureRoomKnown(roomId);
-				}
-			}
+			for (const roomId of roomIdsFromKey(routeRoomIdsKey)) {
+				if (rooms.some((room) => room.id === roomId)) continue;
 
-			setActiveRoomIds(routeRoomIds);
-			for (const roomId of routeRoomIds) {
+				if (autoOpenRoomIds.includes(roomId)) {
+					void chatClient.refreshRooms();
+				}
+				chatClient.ensureRoomKnown(roomId);
+			}
+		}
+
+		if (autoOpenRoomIds.length > 0) {
+			if (!routeRoomIdsChanged) return;
+
+			setActiveRoomIds(autoOpenRoomIds);
+			for (const roomId of autoOpenRoomIds) {
 				chatClient.ensureMessagesLoaded(roomId);
 			}
 			if (layoutSize === "desktop") {
-				openChatForRooms(routeRoomIds);
+				openChatForRooms(autoOpenRoomIds);
 			}
 			return;
 		}
-
-		previousRouteRoomIdsKeyRef.current = null;
 
 		const pathnameChanged = previousPathnameRef.current !== pathname;
 		previousPathnameRef.current = pathname;
@@ -303,6 +296,7 @@ function useChatRouteSync({
 	}, [
 		roomsLoaded,
 		routeRoomIdsKey,
+		autoOpenRoomIdsKey,
 		pathname,
 		rooms,
 		userId,
@@ -313,43 +307,22 @@ function useChatRouteSync({
 }
 
 /**
- * Chat rooms the current route wants visible, from its loader's `chatRoomIds`.
- * A route may expose several (e.g. a SendouQ match exposes the match chat
- * alongside the user's own group chat) which are then shown as a single
- * combined split view.
+ * Chat rooms the current route surfaces, from its loader's `chatRooms`. The
+ * `autoOpen` ones are opened for the viewer (a route may expose several, e.g. a
+ * SendouQ match exposes the match chat alongside the user's own group chat,
+ * which are then shown as a single combined split view); the rest are only
+ * listed in the sidebar for the viewer to open themselves (a staff member
+ * reading the group chats of a SendouQ match they are not in).
  */
-export function useCurrentRouteChatRoomIds(): number[] {
+export function useCurrentRouteChatRooms(): RouteChatRoom[] {
 	const matches = useMatches();
 
 	for (const match of matches) {
 		const matchData = match.loaderData as
-			| { chatRoomIds?: number[] }
+			| { chatRooms?: RouteChatRoom[] }
 			| undefined;
-		if (matchData?.chatRoomIds && matchData.chatRoomIds.length > 0) {
-			return matchData.chatRoomIds;
-		}
-	}
-
-	return [];
-}
-
-/**
- * Chat rooms the current route surfaces in the sidebar list without opening
- * them, from its loader's `readOnlyChatRooms` (a staff member reading the group
- * chats of a SendouQ match they are not in).
- */
-export function useCurrentRouteReadOnlyChatRooms(): ReadOnlyChatRoom[] {
-	const matches = useMatches();
-
-	for (const match of matches) {
-		const matchData = match.loaderData as
-			| { readOnlyChatRooms?: ReadOnlyChatRoom[] }
-			| undefined;
-		if (
-			matchData?.readOnlyChatRooms &&
-			matchData.readOnlyChatRooms.length > 0
-		) {
-			return matchData.readOnlyChatRooms;
+		if (matchData?.chatRooms && matchData.chatRooms.length > 0) {
+			return matchData.chatRooms;
 		}
 	}
 

@@ -13,8 +13,7 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import {
 	useChatContext,
-	useCurrentRouteChatRoomIds,
-	useCurrentRouteReadOnlyChatRooms,
+	useCurrentRouteChatRooms,
 } from "~/features/chat/ChatProvider";
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
@@ -158,38 +157,27 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 	const [showInactive, setShowInactive] = React.useState(false);
 
-	const routeRoomIds = useCurrentRouteChatRoomIds();
-	const routeReadOnlyRooms = useCurrentRouteReadOnlyChatRooms();
-
 	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
 		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
 
-	const routeRooms = routeRoomIds
-		.map((roomId) => chatContext.roomForId(roomId))
-		.filter((r): r is ChatRoomListItem => Boolean(r));
-
-	// Rooms the active route groups together collapse into a single combined
-	// list entry that opens the stacked split view.
-	const combinedRooms = routeRooms.length > 1 ? routeRooms : [];
-	const isCombined = combinedRooms.length > 1;
-	const combinedRoomIds = new Set(combinedRooms.map((r) => r.id));
-
-	// an observer's route room lives outside the user's own list; surface it on top
-	const observedRouteRoom =
-		!isCombined &&
-		routeRooms.length === 1 &&
-		chatContext.rooms.every((room) => room.id !== routeRooms[0].id)
-			? routeRooms[0]
-			: null;
-
-	// rooms the route lets the viewer read but not write (staff reading the group
-	// chats of a match), each opened on its own
-	const readOnlyRooms = routeReadOnlyRooms.flatMap((entry) => {
+	const routeRooms = useCurrentRouteChatRooms().flatMap((entry) => {
 		const room = chatContext.roomForId(entry.roomId);
-		if (!room || chatContext.rooms.some((own) => own.id === room.id)) return [];
-
-		return [{ room, label: entry.label }];
+		return room ? [{ ...entry, room }] : [];
 	});
+
+	// Rooms the active route opens together collapse into a single combined list
+	// entry that opens the stacked split view.
+	const autoOpenRooms = routeRooms.filter((entry) => entry.autoOpen);
+	const combinedRooms = autoOpenRooms.length > 1 ? autoOpenRooms : [];
+	const combinedRoomIds = new Set(combinedRooms.map((entry) => entry.room.id));
+
+	// route rooms outside the user's own list (an observer's match chat, the
+	// group chats a staff member may read) are surfaced on top of it
+	const pinnedRooms = routeRooms.filter(
+		(entry) =>
+			!combinedRoomIds.has(entry.room.id) &&
+			chatContext.rooms.every((own) => own.id !== entry.room.id),
+	);
 
 	const standaloneRooms = chatContext.rooms.filter(
 		(room) => !combinedRoomIds.has(room.id),
@@ -210,9 +198,8 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	};
 
 	const hasAnyRoom =
-		isCombined ||
-		observedRouteRoom !== null ||
-		readOnlyRooms.length > 0 ||
+		combinedRooms.length > 0 ||
+		pinnedRooms.length > 0 ||
 		standaloneRooms.length > 0;
 
 	return (
@@ -225,19 +212,15 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 					</div>
 				) : (
 					<>
-						{isCombined ? (
+						{combinedRooms.length > 0 ? (
 							<CombinedRoomListItem
-								rooms={combinedRooms}
-								onPress={() => openRooms(combinedRooms.map((room) => room.id))}
+								rooms={combinedRooms.map((entry) => entry.room)}
+								onPress={() =>
+									openRooms(combinedRooms.map((entry) => entry.room.id))
+								}
 							/>
 						) : null}
-						{observedRouteRoom ? (
-							<RoomListItem
-								room={observedRouteRoom}
-								onPress={() => openRooms([observedRouteRoom.id])}
-							/>
-						) : null}
-						{readOnlyRooms.map(({ room, label }) => (
+						{pinnedRooms.map(({ room, label }) => (
 							<RoomListItem
 								key={room.id}
 								room={room}
@@ -380,7 +363,7 @@ function SingleChatView({
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
 	const roomDisplay = useRoomDisplay();
-	const readOnlyLabel = useCurrentRouteReadOnlyChatRooms().find(
+	const routeLabel = useCurrentRouteChatRooms().find(
 		(entry) => entry.roomId === room?.id,
 	)?.label;
 
@@ -389,7 +372,7 @@ function SingleChatView({
 		.reduce((sum, candidate) => sum + candidate.unreadCount, 0);
 
 	const display = room ? roomDisplay(room) : null;
-	const subtitle = readOnlyLabel ?? display?.subtitle;
+	const subtitle = routeLabel ?? display?.subtitle;
 
 	const headerContent = (
 		<>

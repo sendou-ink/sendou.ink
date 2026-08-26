@@ -224,14 +224,14 @@ There is a single `ChatProvider` mounted near the root, glue over the framework-
 Two things drive which rooms the client cares about:
 
 1) **The user's own rooms.** `GET /api/chat/rooms` returns every room the user participates in, resolved from the owning entity (SendouQ group/match, tournament match/team, scrim). These show up in the chat list regardless of which page the user is on.
-2) **Route-exposed `chatRoomIds`.** A loader can expose `chatRoomIds: number[]` in its returned data. The provider reads this out of `useMatches()` and opens those rooms for the duration of the route being active — used for rooms the user is viewing but is not a participant of (e.g. a tournament match chat viewed by a TO).
+2) **Route-exposed `chatRooms`.** A loader can expose `chatRooms: RouteChatRoom[]` in its returned data. The provider reads this out of `useMatches()` and surfaces those rooms for the duration of the route being active — used for rooms the user is viewing but is not a participant of (e.g. a tournament match chat viewed by a TO). An `autoOpen` room is opened for the viewer, the rest are only listed in the chat sidebar (e.g. the private group chats of a SendouQ match, which staff may read but not post in).
 
 Example loader:
 
 ```ts
 return {
     // ...other loader data
-    chatRoomIds: [match.chatRoomId],
+    chatRooms: [{ roomId: match.chatRoomId, autoOpen: true }],
 };
 ```
 
