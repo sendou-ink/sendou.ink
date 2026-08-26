@@ -1,7 +1,7 @@
 import * as React from "react";
 import { useFetchers, useLocation, useNavigation } from "react-router";
-import { useRefreshOnReconnect } from "~/features/chat/chat-hooks";
 import {
+	useEventStreamCatchUp,
 	useEventsReadyState,
 	useServerEventListener,
 } from "~/features/events/events-hooks";
@@ -10,11 +10,6 @@ import type { SerializeFrom } from "~/utils/remix";
 import { NOTIFICATIONS_DATA_ROUTE } from "~/utils/urls";
 import { resyncPushSubscription } from "./core/pushSubscription";
 import type { loader } from "./routes/api.notifications";
-
-/** Spreads out the refetches when a notification fans out to many users at once. */
-const PING_REFRESH_JITTER_MS = 3_000;
-
-const EVENTS_DOWN_POLL_MS = 2 * 60 * 1000;
 
 export type NotificationsData = SerializeFrom<typeof loader>["notifications"];
 
@@ -59,19 +54,18 @@ export function NotificationsProvider({
 		void resyncPushSubscription();
 	}, [loggedIn, refresh]);
 
-	// bumps every time the server publishes that the user's notifications
-	// changed; the event carries no data on purpose, watchers refetch
-	const [pingVersion, setPingVersion] = React.useState(0);
-	useServerEventListener((event) => {
-		if (event.kind === "notificationsChanged") {
-			setPingVersion((version) => version + 1);
-		}
+	const catchUp = useEventStreamCatchUp({
+		enabled: loggedIn,
+		onCatchUp: refresh,
 	});
 
-	useRefreshOnPing({ version: pingVersion, refresh });
-	useRefreshOnReconnect(readyState, refresh);
-	useRefreshOnVisible({ enabled: loggedIn, refresh });
-	useFallbackPoll({ enabled: eventsDown, refresh });
+	// the event carries no data on purpose: it only says that the user's
+	// notifications changed server-side
+	useServerEventListener((event) => {
+		if (event.kind === "notificationsChanged") {
+			catchUp();
+		}
+	});
 
 	const notifications = data?.notifications;
 
@@ -96,62 +90,6 @@ export function NotificationsProvider({
 /** The user's notification peek; `notifications` is `undefined` until the first fetch lands. */
 export function useNotificationsData() {
 	return React.useContext(NotificationsContext);
-}
-
-function useRefreshOnPing({
-	version,
-	refresh,
-}: {
-	version: number;
-	refresh: () => void;
-}) {
-	React.useEffect(() => {
-		if (version === 0) return;
-
-		// jittered so a notification sent to a whole tournament's worth of users
-		// does not make every connected client refetch in the same instant; a
-		// follow-up ping inside the window replaces the pending refetch
-		const timeout = setTimeout(refresh, Math.random() * PING_REFRESH_JITTER_MS);
-		return () => clearTimeout(timeout);
-	}, [version, refresh]);
-}
-
-/** Refetches when the tab becomes visible again (e.g. waking from sleep). */
-function useRefreshOnVisible({
-	enabled,
-	refresh,
-}: {
-	enabled: boolean;
-	refresh: () => void;
-}) {
-	React.useEffect(() => {
-		if (!enabled) return;
-
-		const handleVisibilityChange = () => {
-			if (document.visibilityState === "visible") {
-				refresh();
-			}
-		};
-
-		document.addEventListener("visibilitychange", handleVisibilityChange);
-		return () =>
-			document.removeEventListener("visibilitychange", handleVisibilityChange);
-	}, [enabled, refresh]);
-}
-
-function useFallbackPoll({
-	enabled,
-	refresh,
-}: {
-	enabled: boolean;
-	refresh: () => void;
-}) {
-	React.useEffect(() => {
-		if (!enabled) return;
-
-		const interval = setInterval(refresh, EVENTS_DOWN_POLL_MS);
-		return () => clearInterval(interval);
-	}, [enabled, refresh]);
 }
 
 /**

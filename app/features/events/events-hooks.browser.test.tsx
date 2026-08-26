@@ -2,6 +2,7 @@ import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { eventsClient } from "./events-client";
 import {
+	useEventStreamCatchUp,
 	useEventsConnection,
 	useEventsReadyState,
 	useEventsTopic,
@@ -139,5 +140,167 @@ describe("useServerEventListener", () => {
 		source.emit({ kind: "roomsChanged" });
 
 		await vi.waitFor(() => expect(events).toEqual([{ kind: "roomsChanged" }]));
+	});
+});
+
+const CATCH_UP_HIDDEN_MS = 20 * 1000;
+const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
+const CATCH_UP_MAX_JITTER_MS = 3_000;
+
+let catchUps = 0;
+let triggerCatchUp: () => void = () => {};
+
+function CatchUpHarness({ enabled }: { enabled: boolean }) {
+	useEventsConnection(true);
+	triggerCatchUp = useEventStreamCatchUp({
+		enabled,
+		onCatchUp: () => {
+			catchUps++;
+		},
+	});
+
+	return null;
+}
+
+/**
+ * Runs the fake clock forward and lets React paint what the fired timers
+ * changed. React schedules its render through a MessageChannel, which fake
+ * timers do not control, so a message of our own posted afterwards is what
+ * tells us the render already happened.
+ */
+const advanceTimers = async (ms = 0) => {
+	await vi.advanceTimersByTimeAsync(ms);
+
+	return new Promise<void>((resolve) => {
+		const channel = new MessageChannel();
+		channel.port1.onmessage = () => resolve();
+		channel.port2.postMessage(null);
+	});
+};
+
+const setVisibility = (state: DocumentVisibilityState) => {
+	Object.defineProperty(document, "visibilityState", {
+		configurable: true,
+		get: () => state,
+	});
+	document.dispatchEvent(new Event("visibilitychange"));
+};
+
+describe("useEventStreamCatchUp", () => {
+	const mountConnecting = async (enabled = true) => {
+		await render(<CatchUpHarness enabled={enabled} />);
+		await advanceTimers();
+	};
+
+	const helloArrives = async () => {
+		FakeEventSource.instances.at(-1)?.emit({
+			kind: "hello",
+			connectionId: "c1",
+		});
+		await advanceTimers();
+	};
+
+	const streamDrops = async () => {
+		FakeEventSource.instances.at(-1)?.emitError();
+		await advanceTimers();
+	};
+
+	beforeEach(() => {
+		catchUps = 0;
+		vi.useFakeTimers();
+	});
+
+	afterEach(() => {
+		vi.useRealTimers();
+		setVisibility("visible");
+	});
+
+	test("does not catch up on the first connect", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(0);
+	});
+
+	test("catches up once the event stream comes back up", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		await streamDrops();
+		await helloArrives();
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("catches up when returning to a tab that was hidden for a while", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		setVisibility("hidden");
+		await advanceTimers(CATCH_UP_HIDDEN_MS);
+		setVisibility("visible");
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("does not catch up after a brief tab away", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		setVisibility("hidden");
+		await advanceTimers(CATCH_UP_HIDDEN_MS / 2);
+		setVisibility("visible");
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(0);
+	});
+
+	test("catches up on an interval while the event stream is down", async () => {
+		await mountConnecting();
+
+		await advanceTimers(EVENTS_DOWN_CATCH_UP_MS + CATCH_UP_MAX_JITTER_MS);
+		expect(catchUps).toBe(1);
+
+		await advanceTimers(EVENTS_DOWN_CATCH_UP_MS + CATCH_UP_MAX_JITTER_MS);
+		expect(catchUps).toBe(2);
+	});
+
+	test("does not poll while the event stream is up", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		await advanceTimers(EVENTS_DOWN_CATCH_UP_MS * 3);
+
+		expect(catchUps).toBe(0);
+	});
+
+	test("absorbs catch-ups triggered while one is already scheduled", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		triggerCatchUp();
+		triggerCatchUp();
+		triggerCatchUp();
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("does nothing at all when disabled", async () => {
+		await mountConnecting(false);
+		await helloArrives();
+
+		await streamDrops();
+		await helloArrives();
+		setVisibility("hidden");
+		await advanceTimers(EVENTS_DOWN_CATCH_UP_MS * 3);
+		setVisibility("visible");
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(0);
 	});
 });

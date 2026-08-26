@@ -2,17 +2,14 @@ import * as React from "react";
 import { useLocation, useMatches } from "react-router";
 import { eventsClient } from "~/features/events/events-client";
 import {
+	useEventStreamCatchUp,
 	useEventsConnection,
-	useEventsReadyState,
 } from "~/features/events/events-hooks";
 import { chatRoomChannel } from "~/features/events/events-types";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import type { LoggedInUser } from "~/root";
 import { type ChatSnapshot, chatClient } from "./chat-client";
-import {
-	useRefreshOnReconnect,
-	useServerRevalidationEvents,
-} from "./chat-hooks";
+import { useServerRevalidationEvents } from "./chat-hooks";
 import type { ChatContextValue } from "./chat-provider-types";
 import type {
 	ChatRoomListItem,
@@ -67,8 +64,10 @@ function ChatProviderInner({
 		return () => chatClient.stop();
 	}, [user.id]);
 
-	const readyState = useEventsReadyState();
-	useRefreshOnReconnect(readyState, () => chatClient.catchUp());
+	useEventStreamCatchUp({
+		enabled: true,
+		onCatchUp: () => chatClient.catchUp(),
+	});
 
 	const [chatOpen, _setChatOpen] = React.useState(false);
 	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>([]);

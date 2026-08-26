@@ -21,6 +21,8 @@ export function revalidateWithScope(
 	revalidate: () => Promise<void>,
 	scope: RevalidateScope | undefined,
 ) {
+	forgetStalePendingRevalidations();
+
 	if (!scope) {
 		activeScope = null;
 	} else if (pendingRevalidations === 0) {
@@ -67,7 +69,6 @@ export function scheduleBroadcastRevalidation(
 	scheduledBroadcast = pending;
 	setTimeout(() => {
 		scheduledBroadcast = null;
-		forgetStalePendingRevalidations();
 		revalidateWithScope(revalidate, pending.scope ?? undefined);
 	}, Math.random() * BROADCAST_REVALIDATE_MAX_JITTER_MS);
 }

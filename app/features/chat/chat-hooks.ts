@@ -1,22 +1,20 @@
 import * as React from "react";
 import { useRevalidator } from "react-router";
-import type { EventsReadyState } from "~/features/events/events-client";
 import {
-	useEventsReadyState,
+	useEventStreamCatchUp,
 	useEventsTopic,
 	useServerEventListener,
 } from "~/features/events/events-hooks";
 import { useUser } from "../auth/core/user";
 import type { ClientChatMessage } from "./chat-types";
 import { playMessageSound } from "./chat-utils";
-import { scheduleBroadcastRevalidation } from "./revalidation-scope";
+import {
+	revalidateWithScope,
+	scheduleBroadcastRevalidation,
+} from "./revalidation-scope";
 
 // increasing this = scrolling happens even when scrolled more upwards
 const THRESHOLD = 100;
-// how long the tab must have been hidden for returning to it to be worth a catch-up
-const CATCH_UP_HIDDEN_MS = 20 * 1000;
-// how often to catch up while the event stream is down and no broadcast can arrive
-const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 // how long after wheel/touch/keyboard input a scroll event still counts as user-initiated
 const USER_SCROLL_INTENT_MS = 150;
 
@@ -172,53 +170,16 @@ export function useTopicRevalidation(topic: string, connected = true) {
 
 export function useLiveRevalidation(enabled = true) {
 	const user = useUser();
-	const readyState = useEventsReadyState();
 	const { revalidate } = useRevalidator();
 
-	// a logged out visitor has no event stream to miss broadcasts from in the first
-	// place, and revalidating for them would only add load
-	const active = enabled && user != null;
-
-	// goes through the broadcast scheduler so a catch-up shares its jitter (many clients
-	// reconnect at once after a server deploy) and absorption into a broadcast
-	// that is already scheduled
-	const catchUp = React.useEffectEvent(() => {
-		scheduleBroadcastRevalidation(revalidate, undefined);
+	useEventStreamCatchUp({
+		// a logged out visitor has no event stream to miss broadcasts from in the first
+		// place, and revalidating for them would only add load
+		enabled: enabled && user != null,
+		// the catch-up itself is already jittered, so it does not go through the
+		// broadcast scheduler on top of that
+		onCatchUp: () => revalidateWithScope(revalidate, undefined),
 	});
-
-	// while inactive nothing can be missed, so the connect that follows counts as the first
-	useRefreshOnReconnect(active ? readyState : "CLOSED", catchUp);
-
-	React.useEffect(() => {
-		if (!active) return;
-
-		let hiddenAt: number | null = null;
-
-		const handleVisibilityChange = () => {
-			if (document.visibilityState !== "visible") {
-				hiddenAt = Date.now();
-				return;
-			}
-
-			// a quick tab away can not have missed anything the stream would not
-			// still deliver, and revalidating for it would be pure server load
-			if (hiddenAt !== null && Date.now() - hiddenAt >= CATCH_UP_HIDDEN_MS) {
-				catchUp();
-			}
-			hiddenAt = null;
-		};
-
-		document.addEventListener("visibilitychange", handleVisibilityChange);
-		return () =>
-			document.removeEventListener("visibilitychange", handleVisibilityChange);
-	}, [active]);
-
-	React.useEffect(() => {
-		if (!active || readyState === "CONNECTED") return;
-
-		const interval = setInterval(catchUp, EVENTS_DOWN_CATCH_UP_MS);
-		return () => clearInterval(interval);
-	}, [active, readyState]);
 }
 
 /**
@@ -240,27 +201,4 @@ export function useServerRevalidationEvents(userId: number) {
 		// every subscribed client refetch in the same instant
 		scheduleBroadcastRevalidation(revalidate, event.scope);
 	});
-}
-
-/**
- * Calls `onReconnect` every time the event stream comes back up, skipping the
- * initial connect: only what happened while the stream was down needs catching up on.
- */
-export function useRefreshOnReconnect(
-	readyState: EventsReadyState,
-	onReconnect: () => void,
-) {
-	const handleReconnect = React.useEffectEvent(onReconnect);
-	const hasConnectedRef = React.useRef(false);
-
-	React.useEffect(() => {
-		if (readyState !== "CONNECTED") return;
-
-		if (!hasConnectedRef.current) {
-			hasConnectedRef.current = true;
-			return;
-		}
-
-		handleReconnect();
-	}, [readyState]);
 }
