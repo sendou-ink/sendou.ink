@@ -13,6 +13,7 @@ const devOnlyRoutes =
 					"/admin/generate-images",
 					"features/admin/routes/generate-images.tsx",
 				),
+				route("/admin/og-images", "features/admin/routes/og-images.tsx"),
 				route(
 					"/components",
 					"features/components-showcase/routes/components.tsx",
