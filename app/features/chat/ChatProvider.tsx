@@ -23,7 +23,7 @@ const EMPTY_MESSAGES: ClientChatMessage[] = [];
 const SERVER_SNAPSHOT: ChatSnapshot = {
 	roomsLoaded: false,
 	rooms: [],
-	extraRooms: new Map(),
+	roomsById: new Map(),
 	totalUnreadCount: 0,
 	messagesByRoomId: new Map(),
 };
@@ -161,10 +161,8 @@ function ChatProviderInner({
 	);
 
 	const roomForId = React.useCallback(
-		(roomId: number) =>
-			snapshot.rooms.find((room) => room.id === roomId) ??
-			snapshot.extraRooms.get(roomId),
-		[snapshot.rooms, snapshot.extraRooms],
+		(roomId: number) => snapshot.roomsById.get(roomId),
+		[snapshot.roomsById],
 	);
 
 	const contextValue = React.useMemo<ChatContextValue>(
@@ -261,7 +259,7 @@ function useChatRouteSync({
 
 			// the loader can know about a just-created room before the room list
 			// does; an observer's room is never in the list at all, so its info is
-			// fetched separately into the extra rooms
+			// fetched separately as an observed room
 			for (const roomId of routeRoomIds) {
 				if (rooms.every((room) => room.id !== roomId)) {
 					void chatClient.refreshRooms();

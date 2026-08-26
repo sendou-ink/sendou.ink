@@ -36,12 +36,16 @@ interface ChatClientDeps {
 	readDebounceMs?: number;
 }
 
+/** A known room, flagged when it is only observed: route-opened outside the user's own list (an observer on a match page), never unread, kept across list refetches. */
+type TrackedRoom = ChatRoomListItem & { observed: boolean };
+
 export interface ChatSnapshot {
 	/** False until the first rooms fetch has landed. */
 	roomsLoaded: boolean;
+	/** The user's own rooms in list order; observed rooms are not among them. */
 	rooms: ChatRoomListItem[];
-	/** Route-opened rooms outside the user's own list (an observer on a match page); excluded from the unread total. */
-	extraRooms: ReadonlyMap<number, ChatRoomListItem>;
+	/** Every known room by id: the user's own plus the route-opened observed ones. */
+	roomsById: ReadonlyMap<number, ChatRoomListItem>;
 	totalUnreadCount: number;
 	/** Loaded histories, oldest first, optimistic pending sends last. Absent key = history not fetched yet. */
 	messagesByRoomId: ReadonlyMap<number, ClientChatMessage[]>;
@@ -56,7 +60,7 @@ export interface ChatClient {
 	/** Subscribes to snapshot changes, for `useSyncExternalStore`. Returns an unsubscribe function. */
 	subscribe: (listener: () => void) => () => void;
 	refreshRooms: () => Promise<void>;
-	/** Fetches a room's info into `extraRooms` when the user's own room list does not carry it (observer access via a route's `chatRoomIds`). */
+	/** Fetches a room's info as an observed room when the user's own room list does not carry it (observer access via a route's `chatRoomIds`). */
 	ensureRoomKnown: (roomId: number) => void;
 	/** Fetches the room's history unless it is already loaded or loading. */
 	ensureMessagesLoaded: (roomId: number) => void;
@@ -80,13 +84,14 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	let ownUserId: number | null = null;
 	let removeEventListener: (() => void) | null = null;
 	let roomsLoaded = false;
-	let rooms: ChatRoomListItem[] = [];
-	let extraRooms = new Map<number, ChatRoomListItem>();
+	let roomsById = new Map<number, TrackedRoom>();
+	/** `roomsById` without the observed rooms, kept in sync by `replaceRooms`. */
+	let listedRooms: ChatRoomListItem[] = [];
 	let messagesByRoomId = new Map<number, ClientChatMessage[]>();
 	let viewedRoomIds = new Set<number>();
 	let snapshot: ChatSnapshot | null = null;
 
-	const loadingExtraRoomIds = new Set<number>();
+	const loadingObservedRoomIds = new Set<number>();
 
 	let roomsRefreshInflight: Promise<void> | null = null;
 	const loadingMessageRoomIds = new Set<number>();
@@ -108,22 +113,22 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		}
 	};
 
-	const roomById = (roomId: number) => rooms.find((room) => room.id === roomId);
+	const roomById = (roomId: number) => roomsById.get(roomId);
 
-	const setRoom = (roomId: number, patch: Partial<ChatRoomListItem>) => {
-		rooms = rooms.map((room) =>
-			room.id === roomId ? { ...room, ...patch } : room,
-		);
+	const replaceRooms = (next: Map<number, TrackedRoom>) => {
+		roomsById = next;
+		listedRooms = [...next.values()].filter((room) => !room.observed);
+	};
+
+	const setRoom = (roomId: number, patch: Partial<TrackedRoom>) => {
+		const room = roomsById.get(roomId);
+		if (!room) return;
+		replaceRooms(new Map(roomsById).set(roomId, { ...room, ...patch }));
 	};
 
 	const setMessages = (roomId: number, messages: ClientChatMessage[]) => {
 		messagesByRoomId = new Map(messagesByRoomId);
 		messagesByRoomId.set(roomId, messages);
-	};
-
-	const setExtraRoom = (room: ChatRoomListItem) => {
-		extraRooms = new Map(extraRooms);
-		extraRooms.set(room.id, room);
 	};
 
 	/** Inserts a persisted message into a loaded history, replacing a pending send or older copy with the same `publicId`. */
@@ -194,8 +199,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 
 	const handleIncomingMessage = (message: ChatMessageWithAuthor) => {
 		const room = roomById(message.roomId);
-		const extraRoom = extraRooms.get(message.roomId);
-		if (!room && !extraRoom) {
+		if (!room) {
 			// e.g. a first message right after a room was created; the refetched
 			// list includes the new room and its unread count
 			if (roomsLoaded && !refetchedUnknownRoomIds.has(message.roomId)) {
@@ -207,27 +211,16 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 
 		insertPersisted(message);
 
-		if (room) {
-			const isOwn = message.authorUserId === ownUserId;
-			const patch: Partial<ChatRoomListItem> = {
-				latestMessageId: Math.max(room.latestMessageId ?? 0, message.id),
-				latestMessageAt: Math.max(room.latestMessageAt ?? 0, message.createdAt),
-			};
-			if (!isOwn && !viewedRoomIds.has(message.roomId)) {
-				patch.unreadCount = room.unreadCount + 1;
-			}
-			setRoom(message.roomId, patch);
-		} else if (extraRoom) {
-			// observed rooms never count unread — the observer opted in by viewing
-			setExtraRoom({
-				...extraRoom,
-				latestMessageId: Math.max(extraRoom.latestMessageId ?? 0, message.id),
-				latestMessageAt: Math.max(
-					extraRoom.latestMessageAt ?? 0,
-					message.createdAt,
-				),
-			});
+		const isOwn = message.authorUserId === ownUserId;
+		const patch: Partial<TrackedRoom> = {
+			latestMessageId: Math.max(room.latestMessageId ?? 0, message.id),
+			latestMessageAt: Math.max(room.latestMessageAt ?? 0, message.createdAt),
+		};
+		// observed rooms never count unread — the observer opted in by viewing
+		if (!room.observed && !isOwn && !viewedRoomIds.has(message.roomId)) {
+			patch.unreadCount = room.unreadCount + 1;
 		}
+		setRoom(message.roomId, patch);
 		notify();
 
 		if (viewedRoomIds.has(message.roomId)) {
@@ -237,7 +230,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		// a system message accompanies an owner state change (a confirmed score
 		// concludes the match, a leaver shrinks the roster) — refetch so inactive
 		// flags and titles track it
-		if (room && message.type !== null) {
+		if (!room.observed && message.type !== null) {
 			void refreshRooms();
 		}
 	};
@@ -258,38 +251,33 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 				const data = await deps.fetchRooms();
 				if (!data) return;
 
-				// a room that arrived in the list is no longer unknown; a later
-				// recreation under the same owner may need a refetch again
+				const next = new Map<number, TrackedRoom>();
 				for (const room of data.rooms) {
+					// a room that arrived in the list is no longer unknown; a later
+					// recreation under the same owner may need a refetch again
 					refetchedUnknownRoomIds.delete(room.id);
-				}
 
-				// the list version wins over a held extra copy
-				if (
-					[...extraRooms.keys()].some((id) =>
-						data.rooms.some((room) => room.id === id),
-					)
-				) {
-					extraRooms = new Map(
-						[...extraRooms].filter(
-							([id]) => !data.rooms.some((room) => room.id === id),
-						),
-					);
-				}
-
-				rooms = data.rooms.map((room) => {
-					const readUpTo = locallyReadByRoomId.get(room.id) ?? 0;
 					// a locally-read room stays read even when the server response
 					// raced the debounced read POST
-					if (
-						room.unreadCount > 0 &&
-						room.latestMessageId !== null &&
-						readUpTo >= room.latestMessageId
-					) {
-						return { ...room, unreadCount: 0 };
+					const readUpTo = locallyReadByRoomId.get(room.id) ?? 0;
+					const locallyRead =
+						room.latestMessageId !== null && readUpTo >= room.latestMessageId;
+
+					next.set(room.id, {
+						...room,
+						unreadCount: locallyRead ? 0 : room.unreadCount,
+						observed: false,
+					});
+				}
+
+				// the list version wins over a held observed copy
+				for (const [roomId, room] of roomsById) {
+					if (room.observed && !next.has(roomId)) {
+						next.set(roomId, room);
 					}
-					return room;
-				});
+				}
+
+				replaceRooms(next);
 				pruneLostRooms();
 				roomsLoaded = true;
 				notify();
@@ -303,14 +291,10 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		return roomsRefreshInflight;
 	};
 
-	/** A held history whose room is no longer in the list belongs to a room the user lost access to (e.g. left the group); drop the local copy. Observed extra rooms are exempt — they are never in the list. */
+	/** A held history whose room is no longer known belongs to a room the user lost access to (e.g. left the group); drop the local copy. */
 	const pruneLostRooms = () => {
-		const keptRoomIds = new Set([
-			...rooms.map((room) => room.id),
-			...extraRooms.keys(),
-		]);
 		const lostRoomIds = [...messagesByRoomId.keys()].filter(
-			(roomId) => !keptRoomIds.has(roomId),
+			(roomId) => !roomsById.has(roomId),
 		);
 		if (lostRoomIds.length === 0) return;
 
@@ -327,23 +311,30 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		}
 	};
 
-	const loadExtraRoom = async (roomId: number) => {
-		if (loadingExtraRoomIds.has(roomId)) return;
-		loadingExtraRoomIds.add(roomId);
+	const loadObservedRoom = async (roomId: number) => {
+		if (loadingObservedRoomIds.has(roomId)) return;
+		loadingObservedRoomIds.add(roomId);
 
 		try {
 			const data = await deps.fetchRoom(roomId);
+			const known = roomById(roomId);
 			// the room may have entered the user's own list while the fetch was in flight
-			if (!data || roomById(roomId)) return;
+			if (!data || (known && !known.observed)) return;
 
 			// an observed room never accrues unread, so it must not start out with the
 			// server's count of everything said in it before the observer showed up
-			setExtraRoom({ ...data.room, unreadCount: 0 });
+			replaceRooms(
+				new Map(roomsById).set(roomId, {
+					...data.room,
+					unreadCount: 0,
+					observed: true,
+				}),
+			);
 			notify();
 		} catch (error) {
 			logger.error("Fetching chat room info failed", error);
 		} finally {
-			loadingExtraRoomIds.delete(roomId);
+			loadingObservedRoomIds.delete(roomId);
 		}
 	};
 
@@ -394,12 +385,11 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			}
 			ownUserId = null;
 			roomsLoaded = false;
-			rooms = [];
-			extraRooms = new Map();
+			replaceRooms(new Map());
 			messagesByRoomId = new Map();
 			viewedRoomIds = new Set();
 			locallyReadByRoomId.clear();
-			loadingExtraRoomIds.clear();
+			loadingObservedRoomIds.clear();
 			refetchedUnknownRoomIds.clear();
 			arrivedWhileLoadingByRoomId.clear();
 			notify();
@@ -407,9 +397,9 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		getSnapshot: () => {
 			snapshot ??= {
 				roomsLoaded,
-				rooms,
-				extraRooms,
-				totalUnreadCount: rooms.reduce(
+				rooms: listedRooms,
+				roomsById,
+				totalUnreadCount: listedRooms.reduce(
 					(sum, room) => sum + room.unreadCount,
 					0,
 				),
@@ -423,8 +413,8 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		},
 		refreshRooms,
 		ensureRoomKnown: (roomId) => {
-			if (roomById(roomId) || extraRooms.has(roomId)) return;
-			void loadExtraRoom(roomId);
+			if (roomsById.has(roomId)) return;
+			void loadObservedRoom(roomId);
 		},
 		ensureMessagesLoaded: (roomId) => {
 			if (messagesByRoomId.has(roomId)) return;
@@ -432,8 +422,10 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		},
 		catchUp: () => {
 			void refreshRooms();
-			for (const roomId of extraRooms.keys()) {
-				void loadExtraRoom(roomId);
+			for (const [roomId, room] of roomsById) {
+				if (room.observed) {
+					void loadObservedRoom(roomId);
+				}
 			}
 			for (const roomId of messagesByRoomId.keys()) {
 				void loadMessages(roomId);

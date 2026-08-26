@@ -59,7 +59,7 @@ function message(
 function createHarness({
 	rooms = [room()],
 	messages = [] as ChatMessageWithAuthor[],
-	extraRoom = null as ChatRoomListItem | null,
+	observedRoom = null as ChatRoomListItem | null,
 	// in-flight forever by default; tests exercising the response path override it
 	postMessage = vi.fn(
 		() => new Promise<{ message: ChatMessageWithAuthor } | null>(() => {}),
@@ -69,7 +69,7 @@ function createHarness({
 
 	const fetchRooms = vi.fn(async () => ({ rooms }));
 	const fetchRoom = vi.fn(async (roomId: number) =>
-		extraRoom && extraRoom.id === roomId ? { room: extraRoom } : null,
+		observedRoom && observedRoom.id === roomId ? { room: observedRoom } : null,
 	);
 	const fetchMessages = vi.fn(async (_roomId: number) => ({ messages }));
 	const postRead = vi.fn(async () => {});
@@ -409,9 +409,9 @@ describe("createChatClient", () => {
 		expect(harness.fetchRooms).toHaveBeenCalledTimes(5);
 	});
 
-	test("ensureRoomKnown fetches an observed room into the extra rooms", async () => {
+	test("ensureRoomKnown fetches an observed room outside the user's list", async () => {
 		const observed = room({ id: 50, url: "/to/2/matches/2" });
-		const harness = createHarness({ extraRoom: observed });
+		const harness = createHarness({ observedRoom: observed });
 		const client = await startedClient(harness);
 
 		client.ensureRoomKnown(50);
@@ -420,19 +420,19 @@ describe("createChatClient", () => {
 		await flush();
 
 		expect(harness.fetchRoom).toHaveBeenCalledTimes(1);
-		expect(client.getSnapshot().extraRooms.get(50)).toMatchObject({ id: 50 });
+		expect(client.getSnapshot().roomsById.get(50)).toMatchObject({ id: 50 });
 		expect(client.getSnapshot().rooms).toHaveLength(1);
 	});
 
 	test("an observed room starts with no unread of its own", async () => {
 		const observed = room({ id: 50, unreadCount: 12 });
-		const harness = createHarness({ extraRoom: observed });
+		const harness = createHarness({ observedRoom: observed });
 		const client = await startedClient(harness);
 
 		client.ensureRoomKnown(50);
 		await flush();
 
-		expect(client.getSnapshot().extraRooms.get(50)?.unreadCount).toBe(0);
+		expect(client.getSnapshot().roomsById.get(50)?.unreadCount).toBe(0);
 		expect(client.getSnapshot().totalUnreadCount).toBe(0);
 	});
 
@@ -446,9 +446,9 @@ describe("createChatClient", () => {
 		expect(harness.fetchRoom).not.toHaveBeenCalled();
 	});
 
-	test("a message to an observed extra room appends without counting unread or refetching the list", async () => {
+	test("a message to an observed room appends without counting unread or refetching the list", async () => {
 		const observed = room({ id: 50 });
-		const harness = createHarness({ extraRoom: observed });
+		const harness = createHarness({ observedRoom: observed });
 		const client = await startedClient(harness);
 		client.ensureRoomKnown(50);
 		await flush();
@@ -464,14 +464,14 @@ describe("createChatClient", () => {
 
 		expect(client.getSnapshot().messagesByRoomId.get(50)).toHaveLength(1);
 		expect(client.getSnapshot().totalUnreadCount).toBe(0);
-		expect(client.getSnapshot().extraRooms.get(50)?.latestMessageId).toBe(5);
+		expect(client.getSnapshot().roomsById.get(50)?.latestMessageId).toBe(5);
 		expect(harness.fetchRooms).toHaveBeenCalledTimes(1);
 	});
 
-	test("a rooms refetch keeps the held history of an observed extra room", async () => {
+	test("a rooms refetch keeps the held history of an observed room", async () => {
 		const observed = room({ id: 50 });
 		const harness = createHarness({
-			extraRoom: observed,
+			observedRoom: observed,
 			messages: [message({ id: 1, roomId: 50 })],
 		});
 		const client = await startedClient(harness);
@@ -484,6 +484,24 @@ describe("createChatClient", () => {
 		await flush();
 
 		expect(client.getSnapshot().messagesByRoomId.has(50)).toBe(true);
+	});
+
+	test("an observed room the user's list later carries is superseded by the list version", async () => {
+		const observed = room({ id: 50 });
+		const harness = createHarness({ observedRoom: observed });
+		const client = await startedClient(harness);
+		client.ensureRoomKnown(50);
+		await flush();
+		expect(client.getSnapshot().rooms).toHaveLength(1);
+
+		harness.fetchRooms.mockResolvedValue({
+			rooms: [room({ id: 1 }), room({ id: 50, unreadCount: 3 })],
+		});
+		harness.emit({ kind: "roomsChanged" });
+		await flush();
+
+		expect(client.getSnapshot().rooms.map((each) => each.id)).toEqual([1, 50]);
+		expect(client.getSnapshot().totalUnreadCount).toBe(3);
 	});
 
 	test("a roomsChanged event refetches the room list", async () => {

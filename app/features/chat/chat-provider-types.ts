@@ -4,7 +4,7 @@ export interface ChatContextValue {
 	/** False until the first rooms fetch has landed. */
 	roomsLoaded: boolean;
 	rooms: ChatRoomListItem[];
-	/** Looks a room up from the list or the route-opened extra rooms (observer access). */
+	/** Looks a room up from the list or the route-opened observed rooms (observer access). */
 	roomForId: (roomId: number) => ChatRoomListItem | undefined;
 	messagesForRoom: (roomId: number) => ClientChatMessage[];
 	/** Fetches the room's history unless it is already loaded or loading. */
