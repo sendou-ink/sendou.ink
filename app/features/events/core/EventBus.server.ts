@@ -1,8 +1,5 @@
 import type { ServerEvent } from "../events-types";
 
-export { chatRoomChannel, userChannel } from "../events-types";
-export type { ServerEvent };
-
 interface Subscriber {
 	queue: ServerEvent[];
 	wake: (() => void) | null;

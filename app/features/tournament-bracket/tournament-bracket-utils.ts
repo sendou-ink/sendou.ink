@@ -1,4 +1,5 @@
 import type { Tables } from "~/db/tables";
+import { CHANNEL_PREFIX } from "~/features/events/events-types";
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
@@ -7,7 +8,7 @@ import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 
 export const tournamentChannel = (tournamentId: number) =>
-	`tournament__${tournamentId}`;
+	`${CHANNEL_PREFIX.tournament}${tournamentId}`;
 
 /**
  * Channel of the slice of the brackets page one bracket's (for the types viewed one group at

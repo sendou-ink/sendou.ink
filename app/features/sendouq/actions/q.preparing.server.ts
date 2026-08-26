@@ -2,7 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
@@ -65,7 +65,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
 

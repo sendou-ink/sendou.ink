@@ -1,6 +1,6 @@
 import { sub } from "date-fns";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
@@ -33,7 +33,7 @@ export const ResolveStaleSQMatchesRoutine = new Routine({
 
 			if (staleMatch.chatRoomId) {
 				ChatSystemMessage.send({
-					channel: EventBus.chatRoomChannel(staleMatch.chatRoomId),
+					channel: chatRoomChannel(staleMatch.chatRoomId),
 				});
 			}
 		}

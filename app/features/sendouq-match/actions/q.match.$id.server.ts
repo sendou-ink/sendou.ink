@@ -3,7 +3,7 @@ import * as R from "remeda";
 import { db } from "~/db/sql";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import {
@@ -104,7 +104,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						});
 					} else {
 						ChatSystemMessage.send({
-							channel: EventBus.chatRoomChannel(match.chatRoomId),
+							channel: chatRoomChannel(match.chatRoomId),
 						});
 					}
 				}
@@ -151,7 +151,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: chatRoomChannel(match.chatRoomId),
 					});
 				}
 
@@ -237,7 +237,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: chatRoomChannel(match.chatRoomId),
 					});
 				}
 
@@ -278,7 +278,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: chatRoomChannel(match.chatRoomId),
 					});
 				}
 
@@ -301,7 +301,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: chatRoomChannel(match.chatRoomId),
 					});
 				}
 
@@ -385,7 +385,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(match.chatRoomId),
+						channel: chatRoomChannel(match.chatRoomId),
 					});
 				}
 

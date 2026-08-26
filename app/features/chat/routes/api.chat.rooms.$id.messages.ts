@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel, userChannel } from "~/features/events/events-types";
 import { parseFormData } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
 import { badRequestIfFalsy, parseParams } from "~/utils/remix.server";
@@ -58,10 +59,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 	invariant(message, "inserted chat message not found");
 
 	EventBus.publish(
-		[
-			...room.participantUserIds.map(EventBus.userChannel),
-			EventBus.chatRoomChannel(roomId),
-		],
+		[...room.participantUserIds.map(userChannel), chatRoomChannel(roomId)],
 		{ kind: "chatMessage", roomId, message },
 	);
 

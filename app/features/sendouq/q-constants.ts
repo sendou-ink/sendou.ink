@@ -1,3 +1,5 @@
+import { CHANNEL_PREFIX } from "~/features/events/events-types";
+
 export const SENDOUQ = {
 	SZ_MAP_COUNT: 6,
 	OTHER_MODE_MAP_COUNT: 3,
@@ -28,7 +30,8 @@ export const SENDOUQ_LOOKING_CHANNEL = "sq-looking";
  * Event bus channel for revalidation messages targeted at a single group (e.g. a
  * received like)
  * */
-export const sqGroupChannel = (groupId: number) => `sq-group__${groupId}`;
+export const sqGroupChannel = (groupId: number) =>
+	`${CHANNEL_PREFIX.sqGroup}${groupId}`;
 
 export const USER_SKILLS_CACHE_KEY = "user-skills";
 

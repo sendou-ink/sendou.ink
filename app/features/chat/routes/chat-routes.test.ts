@@ -3,7 +3,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel, userChannel } from "~/features/events/events-types";
 import { withUserId } from "~/utils/Test";
 import * as ChatRepository from "../ChatRepository.server";
 import {
@@ -51,10 +51,8 @@ describe("chat messages action", () => {
 
 	test("publishes the message to participant user channels and the room channel", async () => {
 		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
-		const bravoReceived = subscribeTo(EventBus.userChannel(bravoUserIds[0]));
-		const roomReceived = subscribeTo(
-			EventBus.chatRoomChannel(match.chatRoomId!),
-		);
+		const bravoReceived = subscribeTo(userChannel(bravoUserIds[0]));
+		const roomReceived = subscribeTo(chatRoomChannel(match.chatRoomId!));
 
 		const message = await sendMessageOk(alphaUserIds[0], match.chatRoomId!, {
 			publicId: "bbbbbbbbbb",

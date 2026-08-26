@@ -2,6 +2,7 @@ import type { ActionFunctionArgs, LoaderFunctionArgs } from "react-router";
 import { afterEach, describe, expect, test, vi } from "vitest";
 import { withUserId } from "~/utils/Test";
 import * as EventBus from "../core/EventBus.server";
+import { userChannel } from "../events-types";
 import { HEARTBEAT_INTERVAL_MS, loader } from "./sse";
 import { action } from "./sse.$connectionId.topics";
 
@@ -27,7 +28,7 @@ describe("sse loader", () => {
 		const stream = openStream(11);
 		await stream.nextEvent();
 
-		EventBus.publish([EventBus.userChannel(11)], {
+		EventBus.publish([userChannel(11)], {
 			kind: "notificationsChanged",
 		});
 
@@ -38,10 +39,10 @@ describe("sse loader", () => {
 		const stream = openStream(11);
 		await stream.nextEvent();
 
-		EventBus.publish([EventBus.userChannel(12)], {
+		EventBus.publish([userChannel(12)], {
 			kind: "notificationsChanged",
 		});
-		EventBus.publish([EventBus.userChannel(11)], { kind: "roomsChanged" });
+		EventBus.publish([userChannel(11)], { kind: "roomsChanged" });
 
 		expect(await stream.nextEvent()).toEqual({ kind: "roomsChanged" });
 	});
@@ -53,7 +54,7 @@ describe("sse loader", () => {
 		stream.abort();
 
 		await vi.waitFor(() => {
-			expect(EventBus.subscriberCount(EventBus.userChannel(11))).toBe(0);
+			expect(EventBus.subscriberCount(userChannel(11))).toBe(0);
 		});
 		await expect(stream.ended()).resolves.toBe(true);
 		expect(await putTopicsStatus(11, hello.connectionId, ["sq-looking"])).toBe(

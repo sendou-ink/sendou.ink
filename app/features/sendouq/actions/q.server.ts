@@ -4,7 +4,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -58,7 +58,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
 
@@ -95,7 +95,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						channel: EventBus.chatRoomChannel(chatRoomIdToRevalidate),
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
 

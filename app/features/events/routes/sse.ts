@@ -3,6 +3,7 @@ import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as EventBus from "../core/EventBus.server";
 import * as SseConnections from "../core/SseConnections.server";
+import { userChannel } from "../events-types";
 
 export const HEARTBEAT_INTERVAL_MS = 25_000;
 
@@ -64,7 +65,7 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 			const pump = async () => {
 				while (!closed) {
 					resubscribe = new AbortController();
-					const channels = [EventBus.userChannel(user.id), ...topics];
+					const channels = [userChannel(user.id), ...topics];
 					for await (const event of EventBus.subscribe(
 						channels,
 						resubscribe.signal,

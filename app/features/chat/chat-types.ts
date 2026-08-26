@@ -1,4 +1,5 @@
 import type { Tables } from "~/db/tables";
+import type { SOUND_BY_SYSTEM_MESSAGE_TYPE } from "./chat-constants";
 
 export type ChatRoomType =
 	| "SQ_GROUP"
@@ -35,7 +36,7 @@ export type PersistedSystemMessageType = Extract<
 
 export type SoundOnlySystemMessageType = Extract<
 	SystemMessageType,
-	"NEW_GROUP" | "MATCH_STARTED" | "READY_CHECK_STARTED" | "LIKE_RECEIVED"
+	keyof typeof SOUND_BY_SYSTEM_MESSAGE_TYPE
 >;
 
 // xxx: extend CommonUser

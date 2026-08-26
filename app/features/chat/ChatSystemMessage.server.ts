@@ -1,5 +1,6 @@
 import { actorIdOrNullSafe } from "~/features/auth/core/user.server";
 import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel, userChannel } from "~/features/events/events-types";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import * as ChatRepository from "./ChatRepository.server";
@@ -10,10 +11,11 @@ import type {
 	SoundOnlySystemMessageType,
 	SystemMessageType,
 } from "./chat-types";
+import { soundOnlyType } from "./chat-utils";
 import { createRevalidateBroadcastThrottle } from "./revalidate-broadcast-throttle";
 
 type RevalidateBroadcast = {
-	/** Channel whose subscribed pages should refetch, see `EventBus.chatRoomChannel`. */
+	/** Channel whose subscribed pages should refetch, see `chatRoomChannel`. */
 	channel: string;
 	/** Actor whose own broadcast clients skip (their submission already reran the loaders). */
 	authorUserId?: number;
@@ -74,13 +76,10 @@ async function persistAndPublish(args: {
 	invariant(message, "inserted system message not found");
 
 	EventBus.publish(
-		[
-			...room.participantUserIds.map(EventBus.userChannel),
-			EventBus.chatRoomChannel(args.roomId),
-		],
+		[...room.participantUserIds.map(userChannel), chatRoomChannel(args.roomId)],
 		{ kind: "chatMessage", roomId: args.roomId, message },
 	);
-	EventBus.publish([EventBus.chatRoomChannel(args.roomId)], {
+	EventBus.publish([chatRoomChannel(args.roomId)], {
 		kind: "revalidate",
 		authorUserId: actorIdOrNullSafe() ?? undefined,
 	});
@@ -100,20 +99,6 @@ function publishRevalidate(msg: {
 	});
 }
 
-function soundOnlyType(
-	type: SystemMessageType | undefined,
-): SoundOnlySystemMessageType | undefined {
-	if (
-		type === "NEW_GROUP" ||
-		type === "MATCH_STARTED" ||
-		type === "READY_CHECK_STARTED" ||
-		type === "LIKE_RECEIVED"
-	) {
-		return type;
-	}
-	return undefined;
-}
-
 /**
  * Publishes a contentless "your notifications changed" event to the users'
  * event streams, prompting their clients to refetch. Fire and forget like the
@@ -122,7 +107,7 @@ function soundOnlyType(
 export function notifyNotificationsChanged(userIds: number[]) {
 	if (userIds.length === 0) return;
 
-	EventBus.publish(userIds.map(EventBus.userChannel), {
+	EventBus.publish(userIds.map(userChannel), {
 		kind: "notificationsChanged",
 	});
 }
@@ -136,7 +121,7 @@ export function notifyNotificationsChanged(userIds: number[]) {
 export function notifyRoomsChanged(userIds: number[]) {
 	if (userIds.length === 0) return;
 
-	EventBus.publish(userIds.map(EventBus.userChannel), {
+	EventBus.publish(userIds.map(userChannel), {
 		kind: "roomsChanged",
 	});
 }

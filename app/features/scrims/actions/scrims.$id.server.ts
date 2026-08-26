@@ -1,6 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { parseFormData } from "~/form/parse.server";
@@ -238,7 +238,7 @@ function broadcastRevalidate(
 ) {
 	if (!post.chatRoomId) return;
 	ChatSystemMessage.send({
-		channel: EventBus.chatRoomChannel(post.chatRoomId),
+		channel: chatRoomChannel(post.chatRoomId),
 	});
 }
 

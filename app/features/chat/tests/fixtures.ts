@@ -1,6 +1,7 @@
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import type * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as EventBus from "~/features/events/core/EventBus.server";
+import type { ServerEvent } from "~/features/events/events-types";
 
 /** SendouQ match between pool users 2-5 (alpha) and 6-9 (bravo), the owner of the chat rooms the tests exercise. */
 export async function setupSqMatch(users: ReturnType<typeof UserFactory.pool>) {
@@ -19,7 +20,7 @@ export function subscribeTo(channel: string) {
 	const controller = new AbortController();
 	abortControllers.push(controller);
 
-	const received: EventBus.ServerEvent[] = [];
+	const received: ServerEvent[] = [];
 	void (async () => {
 		for await (const event of EventBus.subscribe(
 			[channel],

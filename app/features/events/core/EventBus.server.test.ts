@@ -1,7 +1,8 @@
 import { describe, expect, test } from "vitest";
+import type { ServerEvent } from "../events-types";
 import * as EventBus from "./EventBus.server";
 
-const chatMessageEvent = (contents: string): EventBus.ServerEvent => ({
+const chatMessageEvent = (contents: string): ServerEvent => ({
 	kind: "chatMessage",
 	roomId: 1,
 	message: {
@@ -16,8 +17,8 @@ const chatMessageEvent = (contents: string): EventBus.ServerEvent => ({
 	},
 });
 
-function collect(iterable: AsyncIterable<EventBus.ServerEvent>) {
-	const received: EventBus.ServerEvent[] = [];
+function collect(iterable: AsyncIterable<ServerEvent>) {
+	const received: ServerEvent[] = [];
 	const done = (async () => {
 		for await (const event of iterable) {
 			received.push(event);

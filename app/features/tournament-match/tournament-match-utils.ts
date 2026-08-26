@@ -1,13 +1,15 @@
 import type { TFunction } from "i18next";
 import * as R from "remeda";
 import type { TournamentRoundMaps } from "~/db/tables-json";
+import { CHANNEL_PREFIX } from "~/features/events/events-types";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { TournamentDataTeam } from "~/features/tournament-bracket/core/Tournament.server";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { logger } from "~/utils/logger";
 
-export const tournamentMatchChannel = (matchId: number) => `match__${matchId}`;
+export const tournamentMatchChannel = (matchId: number) =>
+	`${CHANNEL_PREFIX.tournamentMatch}${matchId}`;
 
 export function resolveHostingTeam(
 	teams: [TournamentDataTeam, TournamentDataTeam],

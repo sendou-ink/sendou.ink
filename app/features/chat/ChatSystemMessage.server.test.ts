@@ -1,6 +1,6 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import * as EventBus from "~/features/events/core/EventBus.server";
+import { chatRoomChannel, userChannel } from "~/features/events/events-types";
 import * as ChatRepository from "./ChatRepository.server";
 import * as ChatSystemMessage from "./ChatSystemMessage.server";
 import {
@@ -93,10 +93,8 @@ describe("ChatSystemMessage.sendPersisted", () => {
 
 	test("publishes the message to participant user channels and the room channel", async () => {
 		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
-		const bravoReceived = subscribeTo(EventBus.userChannel(bravoUserIds[0]));
-		const roomReceived = subscribeTo(
-			EventBus.chatRoomChannel(match.chatRoomId!),
-		);
+		const bravoReceived = subscribeTo(userChannel(bravoUserIds[0]));
+		const roomReceived = subscribeTo(chatRoomChannel(match.chatRoomId!));
 
 		await ChatSystemMessage.sendPersisted({
 			roomId: match.chatRoomId!,
@@ -119,9 +117,7 @@ describe("ChatSystemMessage.sendPersisted", () => {
 
 	test("publishes a revalidate broadcast to the room channel so subscribed pages refetch", async () => {
 		const { match, alphaUserIds } = await setupSqMatch(users);
-		const roomReceived = subscribeTo(
-			EventBus.chatRoomChannel(match.chatRoomId!),
-		);
+		const roomReceived = subscribeTo(chatRoomChannel(match.chatRoomId!));
 
 		await ChatSystemMessage.sendPersisted({
 			roomId: match.chatRoomId!,
@@ -137,7 +133,7 @@ describe("ChatSystemMessage.sendPersisted", () => {
 	});
 
 	test("does nothing for a room that no longer resolves", async () => {
-		const received = subscribeTo(EventBus.chatRoomChannel(9999));
+		const received = subscribeTo(chatRoomChannel(9999));
 
 		await ChatSystemMessage.sendPersisted({
 			roomId: 9999,
@@ -152,8 +148,8 @@ describe("ChatSystemMessage.sendPersisted", () => {
 
 describe("ChatSystemMessage.notifyNotificationsChanged", () => {
 	test("publishes to each user's channel", async () => {
-		const alpha = subscribeTo(EventBus.userChannel(1));
-		const bravo = subscribeTo(EventBus.userChannel(2));
+		const alpha = subscribeTo(userChannel(1));
+		const bravo = subscribeTo(userChannel(2));
 
 		ChatSystemMessage.notifyNotificationsChanged([1, 2]);
 		await flushEvents();
@@ -165,8 +161,8 @@ describe("ChatSystemMessage.notifyNotificationsChanged", () => {
 
 describe("ChatSystemMessage.notifyRoomsChanged", () => {
 	test("publishes to each user's channel", async () => {
-		const alpha = subscribeTo(EventBus.userChannel(1));
-		const bravo = subscribeTo(EventBus.userChannel(2));
+		const alpha = subscribeTo(userChannel(1));
+		const bravo = subscribeTo(userChannel(2));
 
 		ChatSystemMessage.notifyRoomsChanged([1, 2]);
 		await flushEvents();
