@@ -234,15 +234,7 @@ function ComposerRow({
 	const isEmpty = typeof contents !== "string" || contents.trim().length === 0;
 
 	return (
-		<div
-			className={styles.composerRow}
-			// an empty send is a no-op, not a validation error
-			onKeyDownCapture={(event) => {
-				if (event.key === "Enter" && isEmpty) {
-					event.preventDefault();
-				}
-			}}
-		>
+		<div className={styles.composerRow}>
 			<FormField
 				name="contents"
 				disabled={sendingDisabled}

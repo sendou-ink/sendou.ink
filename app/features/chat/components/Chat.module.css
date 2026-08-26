@@ -138,6 +138,11 @@
 	align-items: center;
 	gap: var(--s-1);
 
+	/* an empty composer is a no-op, so its "required" error is only noise */
+	& [id$="-error"] {
+		display: none;
+	}
+
 	/* the contents field wrapper takes the row's free space */
 	& > div:first-child {
 		flex: 1;
