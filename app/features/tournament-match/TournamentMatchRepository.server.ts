@@ -431,6 +431,10 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 		)
 		.select(({ eb }) => [
 			"TournamentMatch.id as tournamentMatchId",
+			"TournamentMatch.winnerSide",
+			sql<Side>`iif(${opponentOneId} = ${tournamentTeamId}, 'opponent1', 'opponent2')`.as(
+				"teamSide",
+			),
 			opponentOneScore.as("opponentOneScore"),
 			opponentTwoScore.as("opponentTwoScore"),
 			"otherTeam.name as otherTeamName",

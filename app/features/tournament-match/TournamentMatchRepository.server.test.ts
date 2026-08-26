@@ -66,4 +66,23 @@ describe("findByTournamentTeamId", () => {
 			finalMatch.id,
 		]);
 	});
+
+	test("resolves which side of the match the team is on", async () => {
+		const tournament = await TournamentFactory.createPlayed(
+			{ authorId: users.id(1), minMembersPerTeam: 1 },
+			{ teamRosters: [[users.id(1)], [users.id(2)]] },
+		);
+		const match = tournament.matches[0];
+
+		const [winnerSet] = await TournamentMatchRepository.findByTournamentTeamId(
+			match.winnerTeamId,
+		);
+		const [loserSet] = await TournamentMatchRepository.findByTournamentTeamId(
+			match.loserTeamId,
+		);
+
+		expect(winnerSet.teamSide).toBe(winnerSet.winnerSide);
+		expect(loserSet.teamSide).not.toBe(loserSet.winnerSide);
+		expect(winnerSet.teamSide).not.toBe(loserSet.teamSide);
+	});
 });
