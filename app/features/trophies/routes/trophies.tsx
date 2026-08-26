@@ -12,7 +12,7 @@ import { Input } from "~/components/Input";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { BADGES_PAGE, navIconUrl, TROPHIES_PAGE } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, ogPageImage } from "../../../utils/remix";
 import {
 	Trophy,
 	TrophyContextProvider,
@@ -41,6 +41,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Trophies",
 		ogTitle: "Splatoon trophies for tournaments",
+		image: ogPageImage("trophies"),
 		location: args.location,
 		description:
 			"A full list of all trophies that can be won in Splatoon tournaments.",

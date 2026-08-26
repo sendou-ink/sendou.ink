@@ -16,7 +16,7 @@ import { Main } from "~/components/Main";
 import { topSearchPage } from "~/features/top-search/top-search-urls";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { brandImageUrl, navIconUrl } from "~/utils/urls";
 import { PlacementsTable } from "../components/Placements";
@@ -45,6 +45,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 X Battle Top 500 results browser",
 		description:
 			"Splatoon 3 X Battle results for the top 500 players for all the finished seasons in both Tentatek and Takoroka divisions.",
+		image: ogPageImage("xsearch"),
 		location: args.location,
 	});
 };

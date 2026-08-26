@@ -1,6 +1,6 @@
 import { ChevronLeft } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
 import { WeaponImage } from "~/components/Image";
@@ -13,6 +13,7 @@ import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import type { SelectOption } from "~/form/types";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LFG_PAGE, navIconUrl, userEditProfilePage } from "~/utils/urls";
 import { action } from "../actions/lfg.new.server";
@@ -21,6 +22,14 @@ import { lfgNewSchema } from "../lfg-schemas";
 import { loader } from "../loaders/lfg.new.server";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "New LFG post",
+		image: ogPageImage("lfg"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["lfg"],

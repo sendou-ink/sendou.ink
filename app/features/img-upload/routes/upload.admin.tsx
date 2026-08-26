@@ -1,14 +1,21 @@
 import { Trash } from "lucide-react";
 import * as React from "react";
-import { Link, useLoaderData } from "react-router";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
-
+import { metaTags } from "~/utils/remix";
 import { action } from "../actions/upload.admin.server";
 import { loader } from "../loaders/upload.admin.server";
 import { validateImageSchema } from "../upload-schemas";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Image upload",
+		location: args.location,
+	});
+};
 
 export default function ImageUploadAdminPage() {
 	return (

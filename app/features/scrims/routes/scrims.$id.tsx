@@ -1,5 +1,7 @@
+import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { MatchPage } from "~/components/match-page/MatchPage";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, scrimsPage } from "../../../utils/urls";
 import { action } from "../actions/scrims.$id.server";
@@ -9,6 +11,14 @@ import { ScrimMatchTabs } from "../components/ScrimMatchTabs";
 import { loader } from "../loaders/scrims.$id.server";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Scrim",
+		image: ogPageImage("scrims"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["scrims", "q", "user"],

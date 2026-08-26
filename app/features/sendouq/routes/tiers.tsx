@@ -9,7 +9,7 @@ import {
 	USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN,
 } from "~/features/mmr/mmr-constants";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
 import { loader } from "../loaders/tiers.server";
@@ -21,6 +21,7 @@ export const meta: MetaFunction = (args) => {
 		title: "SendouQ - Tiers",
 		description:
 			"Information about the tiers in SendouQ. From Leviathan+ to Iron.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

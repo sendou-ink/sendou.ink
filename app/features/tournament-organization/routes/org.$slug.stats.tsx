@@ -2,10 +2,11 @@ import clsx from "clsx";
 import { parse } from "date-fns";
 import { ProgressBar } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
 import { Section } from "~/components/Section";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { loader } from "../loaders/org.$slug.stats.server";
 import {
@@ -15,6 +16,13 @@ import {
 import styles from "./org.$slug.stats.module.css";
 
 export { loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Organization stats",
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["org"],

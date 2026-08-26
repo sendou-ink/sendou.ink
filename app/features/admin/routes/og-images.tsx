@@ -2,9 +2,8 @@ import clsx from "clsx";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
 import { Image } from "~/components/Image";
-import { navItems } from "~/components/layout/nav-items";
 import { Main } from "~/components/Main";
-import { navIconUrl } from "~/utils/urls";
+import { navIconUrl, OG_IMAGE_PAGES, type OgImagePage } from "~/utils/urls";
 import styles from "./og-images.module.css";
 
 // this page is not accessible in production, used to preview per page OG images
@@ -16,8 +15,8 @@ type IconColor = "pink" | "cyan" | "green";
  * picked to match the two most used ink colors of that page's nav icon.
  */
 const PAGE_COLORS: Record<
-	string,
-	{ accent: IconColor; second: IconColor } | undefined
+	OgImagePage,
+	{ accent: IconColor; second: IconColor }
 > = {
 	settings: { accent: "pink", second: "cyan" },
 	sendouq: { accent: "green", second: "pink" },
@@ -41,12 +40,6 @@ const PAGE_COLORS: Record<
 	maps: { accent: "green", second: "pink" },
 };
 
-const FALLBACK_COLORS = { accent: "pink", second: "cyan" } as const;
-
-const OG_EXCLUDED_ITEMS = new Set(["luti"]);
-
-const OG_PAGES = navItems.filter((item) => !OG_EXCLUDED_ITEMS.has(item.name));
-
 export default function OgImages() {
 	const { t } = useTranslation(["common"]);
 
@@ -62,7 +55,7 @@ export default function OgImages() {
 				Default (front page & pages without their own)
 			</Divider>
 			<div className={styles.grid}>
-				<PreviewCard label="Marquee Rows">
+				<PreviewCard label="default.png">
 					<MarqueeRowsOg />
 				</PreviewCard>
 			</div>
@@ -70,12 +63,9 @@ export default function OgImages() {
 				Pages
 			</Divider>
 			<div className={styles.grid}>
-				{OG_PAGES.map((item) => (
-					<PreviewCard key={item.name} label={`/${item.url}`}>
-						<PageOg
-							page={item.name}
-							title={t(`common:pages.${item.name}` as any)}
-						/>
+				{OG_IMAGE_PAGES.map((page) => (
+					<PreviewCard key={page} label={`${page}.png`}>
+						<PageOg page={page} title={t(`common:pages.${page}` as any)} />
 					</PreviewCard>
 				))}
 			</div>
@@ -103,14 +93,14 @@ function MarqueeRowsOg() {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<Canvas>
+		<Canvas name="default">
 			<div className={styles.rowsBlock}>
 				{[0, 1, 2, 3].map((row) => (
 					<div key={row} className={styles.rowsRow}>
-						{OG_PAGES.slice(row * 5, row * 5 + 5).map((item) => (
+						{OG_IMAGE_PAGES.slice(row * 5, row * 5 + 5).map((page) => (
 							<Image
-								key={item.name}
-								path={navIconUrl(item.name)}
+								key={page}
+								path={navIconUrl(page)}
 								alt=""
 								width={150}
 								height={150}
@@ -131,11 +121,16 @@ function MarqueeRowsOg() {
 	);
 }
 
-function PageOg({ page, title }: { page: string; title: string }) {
-	const { accent, second } = PAGE_COLORS[page] ?? FALLBACK_COLORS;
+function PageOg({ page, title }: { page: OgImagePage; title: string }) {
+	const { accent, second } = PAGE_COLORS[page];
 
 	return (
-		<Canvas className={styles.pageCanvas} accent={accent} second={second}>
+		<Canvas
+			name={page}
+			className={styles.pageCanvas}
+			accent={accent}
+			second={second}
+		>
 			<div className={styles.iconArea}>
 				<div className={styles.ring} />
 				<Image
@@ -162,11 +157,14 @@ function PageOg({ page, title }: { page: string; title: string }) {
 }
 
 function Canvas({
+	name,
 	className,
 	accent,
 	second,
 	children,
 }: {
+	/** File name the generator script writes this canvas to. */
+	name: string;
 	className?: string;
 	accent?: IconColor;
 	second?: IconColor;
@@ -177,6 +175,7 @@ function Canvas({
 			className={clsx(styles.canvas, className)}
 			data-theme="dark"
 			data-default-theme
+			data-og-name={name}
 			data-accent={accent}
 			data-second={second}
 		>

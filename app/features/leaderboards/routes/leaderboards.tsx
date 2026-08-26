@@ -34,7 +34,7 @@ import {
 	useSearchParam,
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
@@ -86,6 +86,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon leaderboards",
 		description:
 			"Leaderboards of top Splatoon players ranked by their X Battle placements as well as tournament and SendouQ results. Categories per weapon and mode.",
+		image: ogPageImage("leaderboards"),
 		location: args.location,
 	});
 };

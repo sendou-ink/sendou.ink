@@ -34,7 +34,7 @@ import { useUser } from "~/features/auth/core/user";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { useHydrated } from "~/hooks/useHydrated";
 import { modesShort } from "~/modules/in-game-lists/modes";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, TIER_LIST_MAKER_URL } from "~/utils/urls";
 import { ItemDragPreview } from "../components/ItemDragPreview";
@@ -58,6 +58,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 tier list maker",
 		description:
 			"Generate Splatoon tier lists featuring main weapons, sub weapons, special weapons or stages.",
+		image: ogPageImage("tier-list-maker"),
 		location: args.location,
 	});
 };

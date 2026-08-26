@@ -3,7 +3,7 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import { userPage } from "~/utils/urls";
 import { TrophyShowcase } from "../components/TrophyShowcase";
 import { TrophyTournamentHistory } from "../components/TrophyTournamentHistory";
@@ -27,6 +27,7 @@ export const meta: MetaFunction = (args) => {
 		title: data.trophy.name,
 		ogTitle: `${data.trophy.name} (Splatoon trophy)`,
 		description: `See who owns the ${data.trophy.name} trophy on sendou.ink. Awarded ${ownerCount} time${ownerCount === 1 ? "" : "s"} so far.`,
+		image: ogPageImage("trophies"),
 		location: args.location,
 	});
 };

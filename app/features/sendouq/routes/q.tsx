@@ -19,7 +19,7 @@ import type * as Seasons from "~/features/mmr/core/Seasons";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	LEADERBOARDS_PAGE,
@@ -59,6 +59,7 @@ export const meta: MetaFunction = (args) => {
 		title: "SendouQ",
 		description:
 			"Splatoon 3 competitive ladder. Join by yourself or with your team and play ranked matches.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

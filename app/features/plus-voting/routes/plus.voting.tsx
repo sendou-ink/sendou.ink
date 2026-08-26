@@ -8,7 +8,7 @@ import { SendouButton } from "~/components/elements/Button";
 import { RelativeTime } from "~/components/RelativeTime";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { UserCard } from "~/features/user-card/components/UserCard";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import { assertUnreachable } from "~/utils/types";
 import { PlusSuggestionComments } from "../../plus-suggestions/routes/plus.suggestions";
 import { action } from "../actions/plus.voting.server";
@@ -23,6 +23,7 @@ export { action, loader };
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Plus Server Voting",
+		image: ogPageImage("plus"),
 		location: args.location,
 	});
 };

@@ -1,7 +1,7 @@
 import type { CalendarDateTime } from "@internationalized/date";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import type * as v from "valibot";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { Label } from "~/components/Label";
@@ -12,6 +12,7 @@ import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { nullFilledArray } from "~/utils/arrays";
 import { dateToDateValue } from "~/utils/dates";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
@@ -23,6 +24,14 @@ import { scrimsNewFormSchema } from "../scrims-schemas";
 import styles from "./scrims.new.module.css";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "New scrim post",
+		image: ogPageImage("scrims"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",

@@ -23,7 +23,7 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import type { Ability as AbilityType } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dateToYYYYMMDD, isValidDate } from "~/utils/dates";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	BUILDS_PAGE,
@@ -57,6 +57,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		title: `${args.loaderData.weaponName} builds`,
 		ogTitle: `${args.loaderData.weaponName} Splatoon 3 builds`,
 		description: `Collection of ${args.loaderData.weaponName} builds from the top competitive players. Find the best combination of abilities and level up your gameplay.`,
+		image: ogPageImage("builds"),
 		location: args.location,
 	});
 };

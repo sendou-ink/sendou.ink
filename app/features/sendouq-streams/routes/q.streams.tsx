@@ -10,7 +10,7 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { useHydrated } from "~/hooks/useHydrated";
 import { twitchThumbnailUrlToSrc } from "~/modules/twitch/utils";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FAQ_PAGE, sendouQMatchPage, twitchUrl } from "~/utils/urls";
 
@@ -28,6 +28,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Streams",
 		description: "Streams of SendouQ matches in progress.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

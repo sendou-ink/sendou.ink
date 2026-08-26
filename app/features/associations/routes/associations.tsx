@@ -1,7 +1,7 @@
 import { Check, Clipboard, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Outlet, useLoaderData } from "react-router";
+import { type MetaFunction, Outlet, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
@@ -17,10 +17,18 @@ import {
 import { useUser } from "~/features/auth/core/user";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { associationsPageActionSchema } from "../associations-schemas";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Associations",
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: "scrims",

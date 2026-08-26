@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { useEffect, useState } from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
@@ -21,6 +21,7 @@ import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useRecentlyReportedWeapons } from "~/hooks/useRecentlyReportedWeapons";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { Alert } from "../../../components/Alert";
 import { action } from "../actions/vods.new.server";
@@ -30,6 +31,14 @@ import { extractYoutubeIdFromVideoUrl } from "../vods-utils";
 import styles from "./vods.new.module.css";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "New VOD",
+		image: ogPageImage("vods"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["vods", "calendar"],

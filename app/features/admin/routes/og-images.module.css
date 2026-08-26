@@ -122,7 +122,7 @@ for previewing, so the same styles can render the actual image.
 
 .title {
 	font-size: 103px;
-	font-weight: 800;
+	font-weight: var(--weight-extra);
 	letter-spacing: -0.02em;
 	line-height: 1.05;
 	text-wrap: balance;
@@ -139,7 +139,7 @@ for previewing, so the same styles can render the actual image.
 .wordmark {
 	margin-bottom: 18px;
 	font-size: 30px;
-	font-weight: 700;
+	font-weight: var(--weight-extra);
 	letter-spacing: 0.22em;
 	text-transform: uppercase;
 	color: var(--color-text-high);
@@ -184,7 +184,7 @@ for previewing, so the same styles can render the actual image.
 
 .brandName {
 	font-size: 108px;
-	font-weight: 800;
+	font-weight: var(--weight-extra);
 	letter-spacing: -0.03em;
 	line-height: 1;
 	white-space: nowrap;
@@ -197,7 +197,7 @@ for previewing, so the same styles can render the actual image.
 .brandTagline {
 	margin-top: 20px;
 	font-size: 34px;
-	font-weight: 600;
+	font-weight: var(--weight-bold);
 	letter-spacing: 0.16em;
 	text-transform: uppercase;
 	color: var(--color-text-high);

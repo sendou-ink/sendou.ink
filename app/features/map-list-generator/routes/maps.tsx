@@ -13,7 +13,7 @@ import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeWithStage } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import invariant from "~/utils/invariant";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ipLabsMaps, MAPS_URL, navIconUrl } from "~/utils/urls";
 import * as MapList from "../core/MapList";
@@ -30,6 +30,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 map list generator",
 		description:
 			"Generate a map list based on maps you choose or a tournament's map pool.",
+		image: ogPageImage("maps"),
 		location: args.location,
 	});
 };

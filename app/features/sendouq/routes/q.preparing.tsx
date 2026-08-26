@@ -4,7 +4,7 @@ import { useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SENDOUQ_PREPARING_PAGE } from "~/utils/urls";
 import { action } from "../actions/q.preparing.server";
@@ -31,6 +31,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Preparing Group",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

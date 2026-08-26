@@ -26,7 +26,11 @@ import {
 	navIconUrl,
 	resolveBaseUrl,
 } from "~/utils/urls";
-import { metaTags, type SerializeFrom } from "../../../utils/remix";
+import {
+	metaTags,
+	ogPageImage,
+	type SerializeFrom,
+} from "../../../utils/remix";
 import { action } from "../actions/calendar.$id.server";
 import styles from "../calendar-event.module.css";
 import { Tags } from "../components/Tags";
@@ -41,6 +45,7 @@ export const meta: MetaFunction = (args) => {
 
 	return metaTags({
 		title: data.event.name,
+		image: ogPageImage("calendar"),
 		location: args.location,
 		description:
 			data.event.description ??

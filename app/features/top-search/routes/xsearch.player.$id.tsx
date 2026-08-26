@@ -10,7 +10,7 @@ import {
 	topSearchPage,
 	topSearchPlayerPage,
 } from "~/features/top-search/top-search-urls";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, userPage } from "~/utils/urls";
 import { action } from "../actions/xsearch.player.$id.server";
@@ -54,6 +54,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 	return metaTags({
 		title: `${args.loaderData.names.primary} X Battle Top 500 Placements`,
 		description: `Splatoon 3 X Battle results for the player ${args.loaderData.names.primary}${aliasesStr}`,
+		image: ogPageImage("xsearch"),
 		location: args.location,
 	});
 };
