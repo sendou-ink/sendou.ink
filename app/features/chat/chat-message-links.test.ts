@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { findRoomLinks, isSplatnetRoomUrl } from "./chat-constants";
+import { findRoomLinks, isSplatnetRoomUrl } from "./chat-message-links";
 
 describe("isSplatnetRoomUrl", () => {
 	test.each([

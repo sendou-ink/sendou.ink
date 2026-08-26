@@ -54,12 +54,6 @@ export default [
 		"features/events/routes/sse.$connectionId.topics.ts",
 	),
 
-	route(
-		"/chat/:roomId/messages",
-		"features/chat/routes/chat.$roomId.messages.ts",
-	),
-	route("/chat/:roomId/read", "features/chat/routes/chat.$roomId.read.ts"),
-
 	route("/notifications", "features/notifications/routes/notifications.tsx"),
 	route(
 		"/notifications/seen",
@@ -338,6 +332,10 @@ export default [
 	route(
 		"/api/chat/rooms/:id/messages",
 		"features/chat/routes/api.chat.rooms.$id.messages.ts",
+	),
+	route(
+		"/api/chat/rooms/:id/read",
+		"features/chat/routes/api.chat.rooms.$id.read.ts",
 	),
 	route("/api/layout", "features/layout/routes/api.layout.ts"),
 	route(

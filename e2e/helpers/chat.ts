@@ -1,9 +1,6 @@
 import type { Browser, Page } from "@playwright/test";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import {
-	CHAT_ROOMS_DATA_ROUTE,
-	chatRoomMessagesDataRoute,
-} from "~/features/chat/chat-constants";
+import { CHAT_ROOMS_DATA_ROUTE, chatRoomMessagesRoute } from "~/utils/urls";
 import { expect, impersonate } from "./playwright";
 
 /**
@@ -43,7 +40,7 @@ export async function fetchChatRooms(page: Page) {
 
 /** Status of reading a room's history directly, where a denial has no UI of its own. */
 export async function chatHistoryStatus(page: Page, roomId: number) {
-	const response = await page.request.get(chatRoomMessagesDataRoute(roomId));
+	const response = await page.request.get(chatRoomMessagesRoute(roomId));
 
 	return response.status();
 }

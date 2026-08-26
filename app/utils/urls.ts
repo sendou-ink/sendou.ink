@@ -208,6 +208,14 @@ export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 export const NOTIFICATIONS_SUBSCRIBE_ROUTE = "/notifications/subscribe";
 export const NOTIFICATIONS_DATA_ROUTE = "/api/notifications";
 
+export const CHAT_ROOMS_DATA_ROUTE = "/api/chat/rooms";
+export const chatRoomDataRoute = (roomId: number) =>
+	`${CHAT_ROOMS_DATA_ROUTE}/${roomId}`;
+export const chatRoomMessagesRoute = (roomId: number) =>
+	`${chatRoomDataRoute(roomId)}/messages`;
+export const chatRoomReadRoute = (roomId: number) =>
+	`${chatRoomDataRoute(roomId)}/read`;
+
 export const userCardFriendshipPage = (userId: number) =>
 	`/user-card/${userId}/friendship`;
 

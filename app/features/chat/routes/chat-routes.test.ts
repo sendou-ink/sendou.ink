@@ -14,9 +14,11 @@ import {
 } from "../tests/fixtures";
 import { loader as roomsLoader } from "./api.chat.rooms";
 import { loader as roomLoader } from "./api.chat.rooms.$id";
-import { loader as messagesLoader } from "./api.chat.rooms.$id.messages";
-import { action as sendAction } from "./chat.$roomId.messages";
-import { action as readAction } from "./chat.$roomId.read";
+import {
+	loader as messagesLoader,
+	action as sendAction,
+} from "./api.chat.rooms.$id.messages";
+import { action as readAction } from "./api.chat.rooms.$id.read";
 
 const users = UserFactory.pool();
 
@@ -370,16 +372,19 @@ function sendMessage(
 	roomId: number,
 	body: Record<string, unknown>,
 ) {
-	const request = new Request(`http://app.com/chat/${roomId}/messages`, {
-		method: "POST",
-		body: JSON.stringify(body),
-		headers: [["Content-Type", "application/json"]],
-	});
+	const request = new Request(
+		`http://app.com/api/chat/rooms/${roomId}/messages`,
+		{
+			method: "POST",
+			body: JSON.stringify(body),
+			headers: [["Content-Type", "application/json"]],
+		},
+	);
 
 	return withUserId(userId, () =>
 		sendAction({
 			request,
-			params: { roomId: String(roomId) },
+			params: { id: String(roomId) },
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),
@@ -401,7 +406,7 @@ async function sendMessageOk(
 }
 
 function markRead(userId: number, roomId: number, lastSeenMessageId: number) {
-	const request = new Request(`http://app.com/chat/${roomId}/read`, {
+	const request = new Request(`http://app.com/api/chat/rooms/${roomId}/read`, {
 		method: "POST",
 		body: JSON.stringify({ lastSeenMessageId }),
 		headers: [["Content-Type", "application/json"]],
@@ -410,7 +415,7 @@ function markRead(userId: number, roomId: number, lastSeenMessageId: number) {
 	return withUserId(userId, () =>
 		readAction({
 			request,
-			params: { roomId: String(roomId) },
+			params: { id: String(roomId) },
 			context: {} as any,
 			pattern: "",
 			url: new URL(request.url),

@@ -1,14 +1,13 @@
 import type { ServerEvent } from "~/features/events/events-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { eventsClient } from "../events/events-client";
 import {
 	CHAT_ROOMS_DATA_ROUTE,
-	chatMarkReadRoute,
 	chatRoomDataRoute,
-	chatRoomMessagesDataRoute,
-	chatSendMessageRoute,
-} from "./chat-constants";
+	chatRoomMessagesRoute,
+	chatRoomReadRoute,
+} from "~/utils/urls";
+import { eventsClient } from "../events/events-client";
 import type {
 	ChatMessageAuthor,
 	ChatMessageWithAuthor,
@@ -520,9 +519,9 @@ const fetchJson = async <T>(url: string): Promise<T | null> => {
 export const chatClient = createChatClient({
 	fetchRooms: () => fetchJson(CHAT_ROOMS_DATA_ROUTE),
 	fetchRoom: (roomId) => fetchJson(chatRoomDataRoute(roomId)),
-	fetchMessages: (roomId) => fetchJson(chatRoomMessagesDataRoute(roomId)),
+	fetchMessages: (roomId) => fetchJson(chatRoomMessagesRoute(roomId)),
 	postMessage: async (roomId, message) => {
-		const response = await fetch(chatSendMessageRoute(roomId), {
+		const response = await fetch(chatRoomMessagesRoute(roomId), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify(message),
@@ -538,7 +537,7 @@ export const chatClient = createChatClient({
 		return data.message ? { message: data.message } : null;
 	},
 	postRead: async (roomId, lastSeenMessageId) => {
-		await fetch(chatMarkReadRoute(roomId), {
+		await fetch(chatRoomReadRoute(roomId), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ lastSeenMessageId }),
