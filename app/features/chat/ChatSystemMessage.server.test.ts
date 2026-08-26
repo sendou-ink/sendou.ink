@@ -1,14 +1,14 @@
 import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { chatRoomChannel, userChannel } from "~/features/events/events-types";
-import * as ChatRepository from "./ChatRepository.server";
-import * as ChatSystemMessage from "./ChatSystemMessage.server";
 import {
 	abortSubscriptions,
 	flushEvents,
-	setupSqMatch,
 	subscribeTo,
-} from "./tests/fixtures";
+} from "~/features/events/tests/fixtures";
+import * as ChatRepository from "./ChatRepository.server";
+import * as ChatSystemMessage from "./ChatSystemMessage.server";
+import { setupSqMatch } from "./tests/fixtures";
 
 const users = UserFactory.pool();
 
@@ -169,5 +169,28 @@ describe("ChatSystemMessage.notifyRoomsChanged", () => {
 
 		expect(alpha).toEqual([{ kind: "roomsChanged" }]);
 		expect(bravo).toEqual([{ kind: "roomsChanged" }]);
+	});
+});
+
+describe("ChatSystemMessage.notifyRoomsChangedByRoomIds", () => {
+	test("publishes to the channel of every participant of the rooms", async () => {
+		const { match, alphaUserIds, bravoUserIds } = await setupSqMatch(users);
+		const alpha = subscribeTo(userChannel(alphaUserIds[0]));
+		const bravo = subscribeTo(userChannel(bravoUserIds[0]));
+
+		await ChatSystemMessage.notifyRoomsChangedByRoomIds([match.chatRoomId!]);
+		await flushEvents();
+
+		expect(alpha).toEqual([{ kind: "roomsChanged" }]);
+		expect(bravo).toEqual([{ kind: "roomsChanged" }]);
+	});
+
+	test("publishes nothing for a room that no longer resolves", async () => {
+		const received = subscribeTo(userChannel(users.id(2)));
+
+		await ChatSystemMessage.notifyRoomsChangedByRoomIds([9999]);
+		await flushEvents();
+
+		expect(received).toEqual([]);
 	});
 });

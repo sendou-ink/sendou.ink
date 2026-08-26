@@ -387,6 +387,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.send({
 						channel: chatRoomChannel(match.chatRoomId),
 					});
+					// no system message accompanies a staff cancel, so the rooms it
+					// just made inactive are announced on their own
+					ChatSystemMessage.notifyRoomsChangedByRoomIds([match.chatRoomId]);
 				}
 
 				break;

@@ -175,23 +175,28 @@ async function dropTeamOut({
 		});
 	}
 
-	const endedMatchIds = await db.transaction().execute(async (trx) => {
-		const bracketData = await BracketRepository.findByTournamentId(
-			tournament.ctx.id,
-			trx,
-		);
-		const droppedResult = endDroppedTeamMatches({
-			tournament,
-			data: bracketData,
-			droppedTeamId: teamId,
-		});
-		await BracketRepository.applyMatchChanges(
-			{ previousData: bracketData, result: droppedResult },
-			trx,
-		);
+	const { endedMatchIds, changedChatRoomIds } = await db
+		.transaction()
+		.execute(async (trx) => {
+			const bracketData = await BracketRepository.findByTournamentId(
+				tournament.ctx.id,
+				trx,
+			);
+			const droppedResult = endDroppedTeamMatches({
+				tournament,
+				data: bracketData,
+				droppedTeamId: teamId,
+			});
+			const changedChatRoomIds = await BracketRepository.applyMatchChanges(
+				{ previousData: bracketData, result: droppedResult },
+				trx,
+			);
 
-		return droppedResult.endedMatchIds;
-	});
+			return { endedMatchIds: droppedResult.endedMatchIds, changedChatRoomIds };
+		});
+
+	// after the commit so the refetch it prompts can not read the pre-commit state
+	ChatSystemMessage.notifyRoomsChangedByRoomIds(changedChatRoomIds);
 
 	await TournamentTeamRepository.dropOut({
 		tournamentTeamId: teamId,

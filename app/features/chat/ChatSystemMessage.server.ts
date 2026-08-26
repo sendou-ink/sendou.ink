@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { actorIdOrNullSafe } from "~/features/auth/core/user.server";
 import * as EventBus from "~/features/events/core/EventBus.server";
 import { chatRoomChannel, userChannel } from "~/features/events/events-types";
@@ -124,4 +125,27 @@ export function notifyRoomsChanged(userIds: number[]) {
 	EventBus.publish(userIds.map(userChannel), {
 		kind: "roomsChanged",
 	});
+}
+
+/**
+ * Same, for a change to the rooms themselves rather than to who is in them: the
+ * participants are resolved from the rooms. Sent when a room's inactive flag
+ * flips with its owner's state (e.g. its match completing), which the room list
+ * would otherwise only pick up on the next page load. Fire and forget like
+ * {@link send}: failures are logged, never thrown.
+ */
+export function notifyRoomsChangedByRoomIds(roomIds: number[]): Promise<void> {
+	return notifyParticipantsOfRoomsChanged(roomIds).catch((err) =>
+		logger.error("Notifying participants of changed chat rooms failed:", err),
+	);
+}
+
+async function notifyParticipantsOfRoomsChanged(roomIds: number[]) {
+	if (roomIds.length === 0) return;
+
+	const rooms = await ChatRoomResolver.resolveAll(roomIds);
+
+	notifyRoomsChanged(
+		R.unique(rooms.flatMap((room) => room.participantUserIds)),
+	);
 }

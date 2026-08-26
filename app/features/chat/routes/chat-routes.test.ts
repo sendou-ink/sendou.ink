@@ -4,14 +4,14 @@ import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { chatRoomChannel, userChannel } from "~/features/events/events-types";
-import { withUserId } from "~/utils/Test";
-import * as ChatRepository from "../ChatRepository.server";
 import {
 	abortSubscriptions,
 	flushEvents,
-	setupSqMatch,
 	subscribeTo,
-} from "../tests/fixtures";
+} from "~/features/events/tests/fixtures";
+import { withUserId } from "~/utils/Test";
+import * as ChatRepository from "../ChatRepository.server";
+import { setupSqMatch } from "../tests/fixtures";
 import { loader as roomsLoader } from "./api.chat.rooms";
 import { loader as roomLoader } from "./api.chat.rooms.$id";
 import {

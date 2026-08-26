@@ -50,8 +50,6 @@ export interface ChatProps {
 	readOnly?: boolean;
 }
 
-// xxx: message to inactive chat? how does it show
-
 export function Chat({
 	messages,
 	onSend,

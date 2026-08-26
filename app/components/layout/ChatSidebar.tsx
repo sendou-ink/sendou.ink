@@ -182,11 +182,12 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const standaloneRooms = chatContext.rooms.filter(
 		(room) => !combinedRoomIds.has(room.id),
 	);
+	// an inactive room that got a new message surfaces in the normal list until read
 	const activeRooms = standaloneRooms
-		.filter((room) => !roomIsInactive(room))
+		.filter((room) => !roomIsInactive(room) || room.unreadCount > 0)
 		.sort(byRecency);
 	const inactiveRooms = standaloneRooms
-		.filter((room) => roomIsInactive(room))
+		.filter((room) => roomIsInactive(room) && room.unreadCount === 0)
 		.sort(byRecency);
 
 	const openRooms = (roomIds: number[]) => {

@@ -97,7 +97,8 @@ export async function findAllByUserId(userId: number): Promise<ResolvedRoom[]> {
 	);
 }
 
-async function resolveAll(roomIds: number[]): Promise<ResolvedRoom[]> {
+/** Resolves many rooms at once; a room whose owner row is gone is left out. */
+export async function resolveAll(roomIds: number[]): Promise<ResolvedRoom[]> {
 	if (roomIds.length === 0) return [];
 
 	const rooms = await ChatRepository.findAllRoomsByIds(roomIds);

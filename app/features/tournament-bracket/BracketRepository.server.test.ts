@@ -1,8 +1,13 @@
-import { beforeEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import { userChannel } from "~/features/events/events-types";
+import {
+	abortSubscriptions,
+	subscribeTo,
+} from "~/features/events/tests/fixtures";
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
@@ -18,6 +23,10 @@ const users = UserFactory.pool();
 
 beforeEach(async () => {
 	await users.create(9);
+});
+
+afterEach(() => {
+	abortSubscriptions();
 });
 
 const setupStartedMatch = async () => {
@@ -95,6 +104,17 @@ describe("BracketRepository.applyMatchChanges", () => {
 		await playOutMatch(setup);
 
 		expect((await roomById(setup.chatRoomId)).inactive).toBe(1);
+	});
+
+	test("tells the match's participants their room list changed", async () => {
+		const setup = await setupStartedMatch();
+		const received = subscribeTo(userChannel(users.id(2)));
+
+		await playOutMatch(setup);
+
+		await vi.waitFor(() =>
+			expect(received).toEqual([{ kind: "roomsChanged" }]),
+		);
 	});
 
 	test("reopening a completed match marks its chat room back active", async () => {

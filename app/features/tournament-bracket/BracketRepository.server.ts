@@ -1,5 +1,10 @@
 import { addDays } from "date-fns";
-import { sql as kyselySql, type RawBuilder, type Transaction } from "kysely";
+import {
+	sql as kyselySql,
+	type NotNull,
+	type RawBuilder,
+	type Transaction,
+} from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
@@ -249,11 +254,14 @@ export function insertBracket(args: {
  * UPDATEs the opponents of the changed matches and keeps startedAt in sync with
  * the statuses that the new state implies. Called inside the caller's
  * transaction with the bracket data the operation was computed from.
+ *
+ * @returns ids of the chat rooms whose inactive flag was rewritten, for the
+ * caller to notify their participants of once the transaction has committed
  */
 export async function applyMatchChanges(
 	args: { previousData: BracketData; result: EngineResult },
 	trx: Transaction<DB>,
-): Promise<void> {
+): Promise<number[]> {
 	for (const match of args.result.changedMatches) {
 		await trx
 			.updateTable("TournamentMatch")
@@ -267,7 +275,8 @@ export async function applyMatchChanges(
 	}
 
 	await syncStartedAt(args.previousData, args.result.data, trx);
-	await syncChatRoomInactive(args.previousData, args.result.data, trx);
+
+	return syncChatRoomInactive(args.previousData, args.result.data, trx);
 }
 
 /**
@@ -338,12 +347,14 @@ async function syncStartedAt(
 /**
  * A match completing marks its chat room inactive; a completed match losing its
  * winner again (reopen, undone final game) marks the room back active.
+ *
+ * @returns ids of the rewritten chat rooms
  */
 async function syncChatRoomInactive(
 	previousData: BracketData,
 	data: BracketData,
 	trx: Transaction<DB>,
-): Promise<void> {
+): Promise<number[]> {
 	const previousStatuses = matchStatuses(previousData);
 	const statuses = matchStatuses(data);
 
@@ -359,29 +370,31 @@ async function syncChatRoomInactive(
 		.filter((match) => wasCompleted(match.id) && !isCompleted(match.id))
 		.map((match) => match.id);
 
-	await updateMatchChatRoomsInactive(completedMatchIds, true, trx);
-	await updateMatchChatRoomsInactive(reopenedMatchIds, false, trx);
+	return [
+		...(await updateMatchChatRoomsInactive(completedMatchIds, true, trx)),
+		...(await updateMatchChatRoomsInactive(reopenedMatchIds, false, trx)),
+	];
 }
 
 async function updateMatchChatRoomsInactive(
 	matchIds: number[],
 	inactive: boolean,
 	trx: Transaction<DB>,
-) {
-	if (matchIds.length === 0) return;
+): Promise<number[]> {
+	if (matchIds.length === 0) return [];
 
 	const matches = await trx
 		.selectFrom("TournamentMatch")
 		.select(["TournamentMatch.chatRoomId"])
 		.where("TournamentMatch.id", "in", matchIds)
 		.where("TournamentMatch.chatRoomId", "is not", null)
+		.$narrowType<{ chatRoomId: NotNull }>()
 		.execute();
 
-	await ChatRepository.updateRoomsInactive(
-		matches.map((match) => match.chatRoomId),
-		inactive,
-		trx,
-	);
+	const chatRoomIds = matches.map((match) => match.chatRoomId);
+	await ChatRepository.updateRoomsInactive(chatRoomIds, inactive, trx);
+
+	return chatRoomIds;
 }
 
 /** INSERTs a generated round's matches (swiss advance). */
