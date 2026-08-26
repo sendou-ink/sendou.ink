@@ -4,6 +4,7 @@ import {
 	cutToNDecimalPlaces,
 	roundToNDecimalPlaces,
 	safeNumberParse,
+	winPercentage,
 } from "./number";
 
 describe("roundToNDecimalPlaces()", () => {
@@ -73,5 +74,20 @@ describe("safeNumberParse()", () => {
 		[null, null],
 	])("parses %j as %j", (input, expected) => {
 		expect(safeNumberParse(input)).toBe(expected);
+	});
+});
+
+describe("winPercentage()", () => {
+	test.each([
+		[3, 1, 75],
+		[1, 1, 50],
+		[0, 4, 0],
+		[4, 0, 100],
+	])("%d wins and %d losses is %d%%", (wins, losses, expected) => {
+		expect(winPercentage(wins, losses)).toBe(expected);
+	});
+
+	test("returns null when no games were played", () => {
+		expect(winPercentage(0, 0)).toBeNull();
 	});
 });

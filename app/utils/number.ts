@@ -78,3 +78,20 @@ export function safeNumberParse(value: string | null) {
 	const result = Number(trimmed);
 	return Number.isNaN(result) ? null : result;
 }
+
+/**
+ * Share of games won as a percentage, or `null` when no games were played.
+ * Callers decide how to round it and what to show in place of a missing rate.
+ *
+ * @example
+ * ```typescript
+ * winPercentage(3, 1); // returns 75
+ * winPercentage(0, 0); // returns null
+ * ```
+ */
+export function winPercentage(wins: number, losses: number) {
+	const played = wins + losses;
+	if (played === 0) return null;
+
+	return (wins / played) * 100;
+}

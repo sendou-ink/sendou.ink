@@ -18,7 +18,7 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import invariant from "~/utils/invariant";
-import { cutToNDecimalPlaces } from "~/utils/number";
+import { cutToNDecimalPlaces, winPercentage } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	loader,
@@ -277,12 +277,10 @@ function Players({
 	return (
 		<div className="stack md horizontal justify-center flex-wrap">
 			{players.map((player) => {
-				const setWinRate = Math.round(
-					(player.setWins / (player.setWins + player.setLosses)) * 100,
-				);
-				const mapWinRate = Math.round(
-					(player.mapWins / (player.mapWins + player.mapLosses)) * 100,
-				);
+				// a player only met on maps of a set someone else's team was fielded
+				// for has no set record to show a win rate of
+				const setWinRate = winPercentage(player.setWins, player.setLosses);
+				const mapWinRate = winPercentage(player.mapWins, player.mapLosses);
 				return (
 					<div key={player.user.id} className="stack">
 						<Link
@@ -294,11 +292,18 @@ function Players({
 						</Link>
 						<div
 							className={clsx("text-xs font-bold", {
-								"text-success": setWinRate >= 50,
-								"text-warning": setWinRate < 50,
+								"text-success":
+									typeof setWinRate === "number" && setWinRate >= 50,
+								"text-warning":
+									typeof setWinRate === "number" && setWinRate < 50,
 							})}
 						>
-							{setWinRate}% ({mapWinRate}%)
+							{typeof setWinRate === "number"
+								? `${Math.round(setWinRate)}% `
+								: null}
+							{typeof mapWinRate === "number"
+								? `(${Math.round(mapWinRate)}%)`
+								: null}
 						</div>
 						<div className="text-xs">
 							{player.setWins} ({player.mapWins}) {t("user:seasons.win.short")}
