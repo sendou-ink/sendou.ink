@@ -19,6 +19,9 @@ import type {
 } from "./core/engine/types";
 
 const CHAT_ROOM_LIFESPAN_DAYS = 7;
+// a league round can be scheduled weeks out, and its rooms are all created when
+// the bracket is inserted (see insertBracket)
+const LEAGUE_CHAT_ROOM_LIFESPAN_DAYS = 30;
 
 /**
  * Loads the full BracketData for a tournament (all stages). Includes the
@@ -153,6 +156,8 @@ export function insertBracket(args: {
 	tournamentId: number;
 	name: string;
 	bracket: BracketData;
+	/** League rounds are all playable from the start, so their chat rooms live longer. */
+	isLeague: boolean;
 }): Promise<{ stageId: number }> {
 	const stageInput = args.bracket.stage[0];
 	if (!stageInput) throw new Error("Bracket has no stage");
@@ -212,14 +217,14 @@ export function insertBracket(args: {
 
 		const statuses = matchStatuses(args.bracket);
 
-		// xxx: check if this is true
 		// only matches that can already be played get a chat room; the rest get
-		// theirs as they start (see syncStartedAt)
+		// theirs as they start (see syncStartedAt). A league's rounds are
+		// independent, so every one of its matches is playable right away
 		const startedMatches = args.bracket.match.filter(
 			(match) => statuses.get(match.id) === "STARTED",
 		);
 		const startedChatRoomIds = await insertMatchChatRooms(
-			startedMatches.length,
+			{ count: startedMatches.length, isLeague: args.isLeague },
 			trx,
 		);
 		const chatRoomIdByMatchId = new Map(
@@ -259,7 +264,12 @@ export function insertBracket(args: {
  * caller to notify their participants of once the transaction has committed
  */
 export async function applyMatchChanges(
-	args: { previousData: BracketData; result: EngineResult },
+	args: {
+		previousData: BracketData;
+		result: EngineResult;
+		/** League rounds are all playable from the start, so their chat rooms live longer. */
+		isLeague: boolean;
+	},
 	trx: Transaction<DB>,
 ): Promise<number[]> {
 	for (const match of args.result.changedMatches) {
@@ -274,7 +284,14 @@ export async function applyMatchChanges(
 			.execute();
 	}
 
-	await syncStartedAt(args.previousData, args.result.data, trx);
+	await syncStartedAt(
+		{
+			previousData: args.previousData,
+			data: args.result.data,
+			isLeague: args.isLeague,
+		},
+		trx,
+	);
 
 	return syncChatRoomInactive(args.previousData, args.result.data, trx);
 }
@@ -286,10 +303,10 @@ export async function applyMatchChanges(
  * timestamp they got, and one that goes back to pending loses it.
  */
 async function syncStartedAt(
-	previousData: BracketData,
-	data: BracketData,
+	args: { previousData: BracketData; data: BracketData; isLeague: boolean },
 	trx: Transaction<DB>,
 ): Promise<void> {
+	const { previousData, data } = args;
 	const previousStatuses = matchStatuses(previousData);
 	const statuses = matchStatuses(data);
 
@@ -325,7 +342,10 @@ async function syncStartedAt(
 			.where("TournamentMatch.id", "in", startedMatchIds)
 			.where("TournamentMatch.chatRoomId", "is", null)
 			.execute();
-		const chatRoomIds = await insertMatchChatRooms(roomlessMatches.length, trx);
+		const chatRoomIds = await insertMatchChatRooms(
+			{ count: roomlessMatches.length, isLeague: args.isLeague },
+			trx,
+		);
 		for (const [i, match] of roomlessMatches.entries()) {
 			await trx
 				.updateTable("TournamentMatch")
@@ -402,6 +422,8 @@ export async function insertRoundMatches(
 	args: {
 		stageId: number;
 		round: GeneratedRound;
+		/** League rounds are all playable from the start, so their chat rooms live longer. */
+		isLeague: boolean;
 	},
 	trx?: Transaction<DB>,
 ): Promise<void> {
@@ -416,7 +438,10 @@ export async function insertRoundMatches(
 	}
 
 	const playableMatches = args.round.matches.filter(hasBothOpponents);
-	const chatRoomIds = await insertMatchChatRooms(playableMatches.length, trx);
+	const chatRoomIds = await insertMatchChatRooms(
+		{ count: playableMatches.length, isLeague: args.isLeague },
+		trx,
+	);
 	const chatRoomIdByMatch = new Map(
 		playableMatches.map((match, i) => [match, chatRoomIds[i]]),
 	);
@@ -508,12 +533,20 @@ function serializeOpponent(opponent: ParticipantResult | null): string | null {
 	return JSON.stringify(persisted);
 }
 
-function insertMatchChatRooms(count: number, trx: Transaction<DB>) {
+function insertMatchChatRooms(
+	args: { count: number; isLeague: boolean },
+	trx: Transaction<DB>,
+) {
 	return ChatRepository.insertRooms(
 		{
 			type: "TOURNAMENT_MATCH",
-			expiresAt: addDays(new Date(), CHAT_ROOM_LIFESPAN_DAYS),
-			count,
+			expiresAt: addDays(
+				new Date(),
+				args.isLeague
+					? LEAGUE_CHAT_ROOM_LIFESPAN_DAYS
+					: CHAT_ROOM_LIFESPAN_DAYS,
+			),
+			count: args.count,
 		},
 		trx,
 	);

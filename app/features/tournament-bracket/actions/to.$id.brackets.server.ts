@@ -107,6 +107,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournamentId,
 				name: bracket.name,
 				bracket: createdBracket,
+				isLeague: tournament.isLeague,
 			});
 
 			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them
@@ -247,6 +248,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await BracketRepository.insertRoundMatches({
 				stageId,
 				round: round.value,
+				isLeague: tournament.isLeague,
 			});
 
 			emitTournamentUpdate = true;

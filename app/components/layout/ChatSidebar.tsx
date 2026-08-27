@@ -417,7 +417,8 @@ function SingleChatView({
 				) : null}
 			</div>
 			<div className={styles.chatContainer}>
-				{room ? <RoomChat room={room} /> : null}
+				{/* keyed so switching rooms starts the scroller and its unseen state over */}
+				{room ? <RoomChat key={room.id} room={room} /> : null}
 			</div>
 		</div>
 	);

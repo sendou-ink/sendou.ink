@@ -252,7 +252,7 @@
 	"card.report.header": "Report {{name}}",
 	"card.report.falseReportsWarning": "Abuse of the reporting system including making false reports can lead to the suspension of your account.",
 	"card.report.nickname.explanation": "Please report them on the corresponding platform:",
-	"card.report.nickname.inGame": "Splatoon 3 in-game name: report the player in-game using Splatoon 3's own reporting feature (Battle Logs).",
+	"card.report.nickname.inGame": "Splatoon 3 in-game name: report the player using Splatoon 3's own reporting feature (Battle Logs).",
 	"card.report.nickname.discord": "Discord username/avatar: report the account to Discord.",
 	"card.privateNote": "Private note",
 	"card.xp": "XP",

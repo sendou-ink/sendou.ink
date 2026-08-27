@@ -38,6 +38,11 @@ const revalidateThrottle = createRevalidateBroadcastThrottle({
 		}),
 });
 
+/**
+ * Publishes a contentless revalidate broadcast to the channel(s), prompting the
+ * subscribed pages to refetch. Throttled per channel for the noisy kinds, see
+ * {@link createRevalidateBroadcastThrottle}.
+ */
 export function send(broadcast: RevalidateBroadcast | RevalidateBroadcast[]) {
 	for (const msg of Array.isArray(broadcast) ? broadcast : [broadcast]) {
 		if (revalidateThrottle.throttles(msg)) {
@@ -122,7 +127,7 @@ export function notifyNotificationsChanged(userIds: number[]) {
 export function notifyRoomsChanged(userIds: number[]) {
 	if (userIds.length === 0) return;
 
-	EventBus.publish(userIds.map(userChannel), {
+	EventBus.publish(R.unique(userIds).map(userChannel), {
 		kind: "roomsChanged",
 	});
 }
@@ -145,7 +150,5 @@ async function notifyParticipantsOfRoomsChanged(roomIds: number[]) {
 
 	const rooms = await ChatRoomResolver.resolveAll(roomIds);
 
-	notifyRoomsChanged(
-		R.unique(rooms.flatMap((room) => room.participantUserIds)),
-	);
+	notifyRoomsChanged(rooms.flatMap((room) => room.participantUserIds));
 }

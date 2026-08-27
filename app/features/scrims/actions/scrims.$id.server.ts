@@ -54,6 +54,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			await ScrimPostRepository.cancelScrim(id, data.reason);
 
+			if (post.chatRoomId) {
+				ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
+			}
+
 			const acceptedRequest = post.requests.find((r) => r.isAccepted);
 			if (acceptedRequest) {
 				const postTeamName = Scrim.sideDisplayName(post);

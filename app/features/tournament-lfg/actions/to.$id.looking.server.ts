@@ -1,4 +1,5 @@
 import type { ActionFunctionArgs } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
@@ -79,10 +80,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					team.memberUserIds.length < tournament.maxMembersPerTeam,
 					"Team is already at max capacity",
 				);
-				await TournamentLFGRepository.startLooking({
+				const roomsChangedUserIds = await TournamentLFGRepository.startLooking({
 					teamId: team.id,
 					chatRoomExpiresAt: pickupChatRoomExpiresAt(tournament.ctx.startsAt),
 				});
+				ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);
 			} else {
 				await TournamentLFGRepository.insertPlaceholderTeam({
 					tournamentId,
@@ -181,12 +183,13 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 			const otherGroup = surviving === ownGroup.id ? theirGroup : ownGroup;
 
-			await TournamentLFGRepository.mergeTeams({
+			const roomsChangedUserIds = await TournamentLFGRepository.mergeTeams({
 				survivingTeamId: surviving,
 				otherTeamId: otherGroup.id,
 				maxGroupSize: tournament.maxMembersPerTeam,
 				chatRoomExpiresAt: pickupChatRoomExpiresAt(tournament.ctx.startsAt),
 			});
+			ChatSystemMessage.notifyRoomsChanged(roomsChangedUserIds);
 
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
@@ -252,10 +255,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LEAVE_GROUP": {
-			await TournamentLFGRepository.leaveLfg({
-				userId: user.id,
-				tournamentId,
-			});
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentLFGRepository.leaveLfg({
+					userId: user.id,
+					tournamentId,
+				}),
+			);
 
 			break;
 		}
@@ -266,10 +271,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"Only tournament organizers can remove other groups",
 			);
 
-			await TournamentLFGRepository.leaveLfg({
-				userId: data.userId,
-				tournamentId,
-			});
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentLFGRepository.leaveLfg({
+					userId: data.userId,
+					tournamentId,
+				}),
+			);
 
 			break;
 		}
@@ -346,10 +353,12 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				"You can only delete your own sub post",
 			);
 
-			await TournamentLFGRepository.leaveLfg({
-				userId: data.userId,
-				tournamentId,
-			});
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentLFGRepository.leaveLfg({
+					userId: data.userId,
+					tournamentId,
+				}),
+			);
 
 			break;
 		}

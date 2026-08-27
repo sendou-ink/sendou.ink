@@ -1,5 +1,6 @@
 import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
@@ -71,11 +72,16 @@ export const action: ActionFunction = async ({ params, url }) => {
 		"No friend code",
 	);
 
-	await TournamentLFGRepository.leaveLfg({ userId: user.id, tournamentId });
-	await TournamentTeamRepository.join({
-		userId: user.id,
-		newTeamId: teamToJoin.id,
-	});
+	ChatSystemMessage.notifyRoomsChanged([
+		...(await TournamentLFGRepository.leaveLfg({
+			userId: user.id,
+			tournamentId,
+		})),
+		...(await TournamentTeamRepository.join({
+			userId: user.id,
+			newTeamId: teamToJoin.id,
+		})),
+	]);
 
 	ShowcaseTournaments.addToCached({
 		tournamentId,

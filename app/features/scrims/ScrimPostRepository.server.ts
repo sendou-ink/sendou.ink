@@ -507,17 +507,32 @@ export function deleteRequest(scrimPostRequestId: number) {
 		.execute();
 }
 
-export async function cancelScrim(id: number, reason: string) {
-	await db
-		.updateTable("ScrimPost")
-		.set({
-			canceledAt: databaseTimestampNow(),
-			canceledByUserId: actorId(),
-			cancelReason: reason,
-		})
-		.where("id", "=", id)
-		.where("canceledAt", "is", null)
-		.execute();
+export function cancelScrim(id: number, reason: string) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("ScrimPost")
+			.set({
+				canceledAt: databaseTimestampNow(),
+				canceledByUserId: actorId(),
+				cancelReason: reason,
+			})
+			.where("id", "=", id)
+			.where("canceledAt", "is", null)
+			.execute();
+
+		const post = await trx
+			.selectFrom("ScrimPost")
+			.select("ScrimPost.chatRoomId")
+			.where("ScrimPost.id", "=", id)
+			.executeTakeFirst();
+
+		// the scrim is not happening anymore, so its chat belongs with the past ones
+		await ChatRepository.updateRoomsInactive(
+			[post?.chatRoomId ?? null],
+			true,
+			trx,
+		);
+	});
 }
 
 /**

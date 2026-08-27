@@ -228,6 +228,7 @@ export async function startBracket(
 			...createInput,
 			maps: roundMapsFor(Engine.create(createInput), bracket.type, maps),
 		}),
+		isLeague: tournament.isLeague,
 	});
 
 	await persistSeeds(tournament);
@@ -348,6 +349,7 @@ async function generateNextSwissRound(
 		await BracketRepository.insertRoundMatches({
 			stageId,
 			round: round.value,
+			isLeague: tournament.isLeague,
 		});
 		generated = true;
 	}

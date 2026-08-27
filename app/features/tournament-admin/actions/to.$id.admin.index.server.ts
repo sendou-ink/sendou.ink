@@ -98,7 +98,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			await TournamentTeamRepository.deleteById(team.id);
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentTeamRepository.deleteById(team.id),
+			);
 
 			for (const userId of team.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
@@ -188,7 +190,11 @@ async function dropTeamOut({
 				droppedTeamId: teamId,
 			});
 			const changedChatRoomIds = await BracketRepository.applyMatchChanges(
-				{ previousData: bracketData, result: droppedResult },
+				{
+					previousData: bracketData,
+					result: droppedResult,
+					isLeague: tournament.isLeague,
+				},
 				trx,
 			);
 

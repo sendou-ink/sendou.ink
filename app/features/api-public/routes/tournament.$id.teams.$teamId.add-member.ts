@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
 import { userIsBanned } from "~/features/ban/core/banned.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
@@ -71,7 +72,7 @@ export const action = async (args: ActionFunctionArgs) => {
 			"User has no in-game name set",
 		);
 
-		await TournamentLFGRepository.leaveLfg({
+		const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
 			userId,
 			tournamentId,
 		});
@@ -83,12 +84,14 @@ export const action = async (args: ActionFunctionArgs) => {
 			tournament.hasStarted
 				? previousTeam.id
 				: undefined;
-		await TournamentTeamRepository.join({
+		const joinedUserIds = await TournamentTeamRepository.join({
 			userId,
 			newTeamId: team.id,
 			previousTeamIdToDelete,
 			isOrganizerAdded: true,
 		});
+
+		ChatSystemMessage.notifyRoomsChanged([...leftLfgUserIds, ...joinedUserIds]);
 
 		ShowcaseTournaments.addToCached({
 			tournamentId,

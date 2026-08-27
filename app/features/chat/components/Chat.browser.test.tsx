@@ -158,6 +158,22 @@ describe("Chat", () => {
 		expect(screen.getByRole("textbox").elements()).toHaveLength(0);
 	});
 
+	test("renders a splatnet room link with its QR code", async () => {
+		const url = "https://s.nintendo.com/av5ja/lobby";
+		const screen = await renderChat([
+			createMessage({ contents: `join here ${url} thanks` }),
+		]);
+
+		const link = screen.getByRole("link", { name: url });
+		await expect.element(link).toHaveAttribute("href", url);
+		await expect.element(link).toHaveAttribute("target", "_blank");
+		await expect.element(link).toHaveAttribute("rel", "noopener noreferrer");
+		await expect.element(screen.getByRole("img")).toBeInTheDocument();
+		expect(screen.getByRole("option").element().textContent).toContain(
+			"join here",
+		);
+	});
+
 	test("renders a deleted account's message with a fallback name", async () => {
 		const screen = await renderChat([
 			createMessage({ authorUserId: null, author: null, contents: "Ghost" }),

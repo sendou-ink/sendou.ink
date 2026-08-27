@@ -6,6 +6,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { DuplicateEntryError } from "~/utils/errors";
+import { withUserId } from "~/utils/Test";
 import * as ScrimPostRepository from "./ScrimPostRepository.server";
 
 const users = UserFactory.pool();
@@ -408,5 +409,37 @@ describe("deleteById", () => {
 
 		const rooms = await db.selectFrom("ChatRoom").selectAll().execute();
 		expect(rooms).toHaveLength(0);
+	});
+});
+
+describe("cancelScrim", () => {
+	beforeEach(async () => {
+		await users.create(3);
+	});
+
+	test("marks the scrim's chat room inactive", async () => {
+		const { id: postId } = await ScrimPostFactory.create({
+			startsAt: dbTs(BOOKED_AT),
+			users: [{ userId: users.id(1), isOwner: 1 }],
+		});
+		const team = await TeamFactory.create({ memberUserIds: [users.id(2)] });
+		const requestId = await ScrimPostRepository.insertRequest({
+			scrimPostId: postId,
+			teamId: team.id,
+			message: null,
+			startsAt: null,
+			users: [{ userId: users.id(2), isOwner: 1 }],
+		});
+		await ScrimPostRepository.acceptRequest(requestId);
+
+		await withUserId(users.id(1), () =>
+			ScrimPostRepository.cancelScrim(postId, "Can't make it"),
+		);
+
+		const room = await db
+			.selectFrom("ChatRoom")
+			.selectAll()
+			.executeTakeFirstOrThrow();
+		expect(room.inactive).toBe(1);
 	});
 });

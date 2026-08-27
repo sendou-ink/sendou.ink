@@ -318,6 +318,47 @@ describe("TournamentTeamRepository", () => {
 		});
 	});
 
+	describe("deleteById", () => {
+		test("returns the members who lost the team's chat room", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const team = await TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					memberUserIds: [ownerId(), memberId()],
+					team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+				},
+				{ isLooking: true },
+			);
+
+			const roomsChangedUserIds = await withUserId(organizerId(), () =>
+				TournamentTeamRepository.deleteById(team.id),
+			);
+
+			expect(roomsChangedUserIds.sort()).toEqual(
+				[ownerId(), memberId()].sort(),
+			);
+		});
+
+		test("returns nobody when the team had no chat room", async () => {
+			const tournament = await TournamentFactory.create({
+				authorId: organizerId(),
+			});
+			const team = await TournamentTeamFactory.create({
+				tournamentId: tournament.id,
+				memberUserIds: [ownerId()],
+				team: { name: "Team Olive", prefersNotToHost: 0, teamId: null },
+			});
+
+			expect(
+				await withUserId(organizerId(), () =>
+					TournamentTeamRepository.deleteById(team.id),
+				),
+			).toEqual([]);
+		});
+	});
+
 	describe("findRecentlyPlayedMapsByIds", () => {
 		test("leaves out the games of the match the maps are resolved for", async () => {
 			// the map list of an in-progress set is regenerated whenever its cache entry

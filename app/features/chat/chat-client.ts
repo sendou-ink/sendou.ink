@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import type { ServerEvent } from "~/features/events/events-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
@@ -501,8 +502,10 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 
 /** Persisted messages by id ascending, optimistic pending sends after them in send order. */
 function sortedMessages(messages: ClientChatMessage[]): ClientChatMessage[] {
-	const persisted = messages.filter((message) => !message.pending);
-	const pending = messages.filter((message) => message.pending);
+	const [persisted, pending] = R.partition(
+		messages,
+		(message) => !message.pending,
+	);
 	persisted.sort((a, b) => a.id - b.id);
 	return [...persisted, ...pending];
 }

@@ -32,9 +32,20 @@ export function soundEnabled(soundCode: string) {
 
 export function playMessageSound(type: SystemMessageType | undefined) {
 	const sound = messageTypeToSound(type);
-	if (!sound || !soundEnabled(sound)) return;
+	if (!sound) return;
 
-	const audio = new Audio(soundPath(sound));
+	playSound(sound);
+}
+
+export function playSound(soundCode: string) {
+	if (!soundEnabled(soundCode)) return;
+
+	playSoundIgnoringSetting(soundCode);
+}
+
+/** Plays regardless of the user's setting for the sound, for previewing e.g. the volume. */
+export function playSoundIgnoringSetting(soundCode: string) {
+	const audio = new Audio(soundPath(soundCode));
 	audio.volume = soundVolume() / 100;
 	void audio.play().catch((err) => logger.error(`Couldn't play sound: ${err}`));
 }

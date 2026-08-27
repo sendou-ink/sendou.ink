@@ -1,4 +1,5 @@
 import type { ActionFunction } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -111,10 +112,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 					"Registration is closed",
 				);
 
-				await TournamentLFGRepository.leaveLfg({
-					userId: user.id,
-					tournamentId,
-				});
+				ChatSystemMessage.notifyRoomsChanged(
+					await TournamentLFGRepository.leaveLfg({
+						userId: user.id,
+						tournamentId,
+					}),
+				);
 				await TournamentTeamRepository.insert({
 					team: {
 						name,
@@ -288,14 +291,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			await TournamentLFGRepository.leaveLfg({
-				userId: data.userId,
-				tournamentId,
-			});
-			await TournamentTeamRepository.join({
-				userId: data.userId,
-				newTeamId: ownTeam.id,
-			});
+			ChatSystemMessage.notifyRoomsChanged([
+				...(await TournamentLFGRepository.leaveLfg({
+					userId: data.userId,
+					tournamentId,
+				})),
+				...(await TournamentTeamRepository.join({
+					userId: data.userId,
+					newTeamId: ownTeam.id,
+				})),
+			]);
 
 			await SavedCalendarEventRepository.unsaveByUserId({
 				userId: data.userId,
@@ -339,7 +344,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
-			await TournamentTeamRepository.deleteById(ownTeam.id);
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentTeamRepository.deleteById(ownTeam.id),
+			);
 
 			for (const userId of ownTeam.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({

@@ -7,17 +7,13 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
-import { soundEnabled, soundVolume } from "~/features/chat/chat-utils";
+import { playSound } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { checkInSchema } from "~/features/tournament/tournament-schemas";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
 import { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { logger } from "~/utils/logger";
-import {
-	soundPath,
-	tournamentMatchPage,
-	tournamentRegisterPage,
-} from "~/utils/urls";
+import { tournamentMatchPage, tournamentRegisterPage } from "~/utils/urls";
 import styles from "./TournamentTeamActions.module.css";
 
 export function TournamentTeamActions({
@@ -222,15 +218,7 @@ function useMatchReadySound(statusType?: string) {
 
 	React.useEffect(() => {
 		if (statusType === "MATCH" && isWaiting.current) {
-			const sound = "tournament_match";
-
-			if (soundEnabled(sound)) {
-				const audio = new Audio(soundPath(sound));
-				audio.volume = soundVolume() / 100;
-				void audio
-					.play()
-					.catch((e) => logger.error(`Couldn't play sound: ${e}`));
-			}
+			playSound("tournament_match");
 		}
 
 		isWaiting.current = !statusType || statusType?.startsWith("WAITING_");

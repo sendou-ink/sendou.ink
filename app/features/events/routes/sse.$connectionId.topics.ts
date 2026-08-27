@@ -23,10 +23,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 	const data = await parseRequestPayload({ request, schema: topicsSchema });
 
-	for (const topic of data.topics) {
-		if (!(await TopicAccess.canSubscribe(user.id, topic))) {
-			throw new Response(null, { status: 403 });
-		}
+	if (!(await TopicAccess.canSubscribeToAll(user.id, data.topics))) {
+		throw new Response(null, { status: 403 });
 	}
 
 	const replaced = SseConnections.replaceTopics(

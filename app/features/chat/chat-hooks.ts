@@ -144,14 +144,8 @@ export function useChatAutoScroll(
 		}
 	}, [latestMessagePublicId, latestMessageIsOwn, scrollToBottom]);
 
-	const reset = () => {
-		pinnedToBottomRef.current = true;
-		setUnseenMessages(false);
-	};
-
 	return {
 		unseenMessagesInTheRoom: unseenMessages,
-		resetScroller: reset,
 		scrollToBottom,
 	};
 }

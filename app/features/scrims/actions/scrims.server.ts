@@ -4,6 +4,7 @@ import { redirect } from "react-router";
 import * as AssociationsRepository from "~/features/associations/AssociationRepository.server";
 import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -201,6 +202,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			});
 
 			if (fullPost) {
+				// accepting the request is what creates the scrim's chat room
+				ChatSystemMessage.notifyRoomsChanged(
+					Scrim.participantIdsListFromAccepted(fullPost),
+				);
+
 				try {
 					const bookedAt = databaseTimestampToDate(
 						Scrim.getStartTime(fullPost),

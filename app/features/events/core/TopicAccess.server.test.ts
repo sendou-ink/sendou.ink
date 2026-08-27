@@ -11,7 +11,7 @@ const adminId = () => users.id(1);
 const memberId = () => users.id(2);
 const outsiderId = () => users.id(4);
 
-describe("TopicAccess.canSubscribe", () => {
+describe("TopicAccess.canSubscribeToAll", () => {
 	test.each([
 		{ topic: "sq-looking", allowed: true },
 		{ topic: "tournament__5", allowed: true },
@@ -22,7 +22,7 @@ describe("TopicAccess.canSubscribe", () => {
 		{ topic: "chat-room__999", allowed: false },
 		{ topic: "unknown-topic", allowed: false },
 	])("$topic -> $allowed", async ({ topic, allowed }) => {
-		expect(await TopicAccess.canSubscribe(1, topic)).toBe(allowed);
+		expect(await TopicAccess.canSubscribeToAll(1, [topic])).toBe(allowed);
 	});
 
 	describe("chat room topics", () => {
@@ -46,19 +46,37 @@ describe("TopicAccess.canSubscribe", () => {
 		test("participants may subscribe to their room", async () => {
 			const topic = await setupGroupRoom();
 
-			expect(await TopicAccess.canSubscribe(memberId(), topic)).toBe(true);
+			expect(await TopicAccess.canSubscribeToAll(memberId(), [topic])).toBe(
+				true,
+			);
 		});
 
 		test("site staff may subscribe as observers", async () => {
 			const topic = await setupGroupRoom();
 
-			expect(await TopicAccess.canSubscribe(adminId(), topic)).toBe(true);
+			expect(await TopicAccess.canSubscribeToAll(adminId(), [topic])).toBe(
+				true,
+			);
 		});
 
 		test("other users may not subscribe", async () => {
 			const topic = await setupGroupRoom();
 
-			expect(await TopicAccess.canSubscribe(outsiderId(), topic)).toBe(false);
+			expect(await TopicAccess.canSubscribeToAll(outsiderId(), [topic])).toBe(
+				false,
+			);
+		});
+
+		test("one forbidden topic denies the whole batch", async () => {
+			const topic = await setupGroupRoom();
+
+			expect(
+				await TopicAccess.canSubscribeToAll(memberId(), [
+					topic,
+					"tournament__5",
+					"chat-room__999",
+				]),
+			).toBe(false);
 		});
 	});
 });

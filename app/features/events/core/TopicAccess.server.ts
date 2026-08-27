@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
 import { SENDOUQ_LOOKING_CHANNEL } from "~/features/sendouq/q-constants";
 import { hasPermission } from "~/modules/permissions/utils";
@@ -10,24 +11,47 @@ const PUBLIC_TOPIC_PREFIXES = [
 	CHANNEL_PREFIX.sqGroup,
 ];
 
-/** Whether the user may subscribe their SSE connection to the topic. The `user__` channel is never client-controllable. */
-export async function canSubscribe(
+/** Whether the user may subscribe their SSE connection to every one of the topics. The `user__` channel is never client-controllable. */
+export async function canSubscribeToAll(
 	userId: number,
-	topic: string,
+	topics: string[],
 ): Promise<boolean> {
-	if (PUBLIC_TOPICS.has(topic)) return true;
-	if (PUBLIC_TOPIC_PREFIXES.some((prefix) => topic.startsWith(prefix))) {
-		return true;
-	}
-	if (topic.startsWith(CHANNEL_PREFIX.chatRoom)) {
-		const roomId = Number(topic.slice(CHANNEL_PREFIX.chatRoom.length));
-		if (!Number.isInteger(roomId) || roomId <= 0) return false;
+	const roomIds: number[] = [];
 
-		const room = await ChatRoomResolver.resolve(roomId);
-		if (!room) return false;
+	for (const topic of topics) {
+		if (isPublicTopic(topic)) continue;
 
-		return hasPermission(room, "VIEW", { id: userId });
+		const roomId = chatRoomTopicToRoomId(topic);
+		if (roomId === null) return false;
+
+		roomIds.push(roomId);
 	}
 
-	return false;
+	if (roomIds.length === 0) return true;
+
+	const rooms = await ChatRoomResolver.resolveAll(R.unique(roomIds));
+	const roomById = new Map(rooms.map((room) => [room.roomId, room]));
+
+	return roomIds.every((roomId) => {
+		const room = roomById.get(roomId);
+
+		return room ? hasPermission(room, "VIEW", { id: userId }) : false;
+	});
+}
+
+function isPublicTopic(topic: string) {
+	return (
+		PUBLIC_TOPICS.has(topic) ||
+		PUBLIC_TOPIC_PREFIXES.some((prefix) => topic.startsWith(prefix))
+	);
+}
+
+/** Room id of a `chatRoom__` topic, null for any other or malformed topic. */
+function chatRoomTopicToRoomId(topic: string) {
+	if (!topic.startsWith(CHANNEL_PREFIX.chatRoom)) return null;
+
+	const roomId = Number(topic.slice(CHANNEL_PREFIX.chatRoom.length));
+	if (!Number.isInteger(roomId) || roomId <= 0) return null;
+
+	return roomId;
 }

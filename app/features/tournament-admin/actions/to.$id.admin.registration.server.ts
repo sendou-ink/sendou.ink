@@ -3,6 +3,7 @@ import {
 	type ActionFunctionArgs,
 	redirect,
 } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -132,10 +133,12 @@ export const upsertRegistrationAction = async (
 	}
 
 	for (const addId of membersToAdd) {
-		await TournamentLFGRepository.leaveLfg({
-			userId: addId,
-			tournamentId,
-		});
+		ChatSystemMessage.notifyRoomsChanged(
+			await TournamentLFGRepository.leaveLfg({
+				userId: addId,
+				tournamentId,
+			}),
+		);
 		ShowcaseTournaments.addToCached({
 			tournamentId,
 			type: "participant",

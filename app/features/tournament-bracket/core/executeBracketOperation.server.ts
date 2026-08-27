@@ -60,7 +60,11 @@ export async function executeBracketOperation<T extends Engine.EngineResult>({
 		}
 
 		changedChatRoomIds = await BracketRepository.applyMatchChanges(
-			{ previousData: bracketData, result: applied },
+			{
+				previousData: bracketData,
+				result: applied,
+				isLeague: tournament.isLeague,
+			},
 			trx,
 		);
 		await inTransaction?.(result, trx);

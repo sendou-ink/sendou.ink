@@ -244,7 +244,11 @@ describe("startLooking", () => {
 			memberUserIds: [users.id(1), users.id(2)],
 		});
 
-		await startLooking(team.id);
+		const roomsChangedUserIds = await startLooking(team.id);
+
+		expect(roomsChangedUserIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
 
 		const chatRoomId = await chatRoomIdOf(team.id);
 		expect(chatRoomId).toEqual(expect.any(Number));
@@ -264,8 +268,7 @@ describe("startLooking", () => {
 			memberUserIds: [users.id(1)],
 		});
 
-		await startLooking(team.id);
-
+		expect(await startLooking(team.id)).toEqual([]);
 		expect(await chatRoomIdOf(team.id)).toBeNull();
 	});
 
@@ -374,6 +377,22 @@ describe("mergeTeams", () => {
 		});
 
 		expect(await chatRoomIdOf(team1.id)).toEqual(expect.any(Number));
+	});
+
+	test("returns every member of the merged team", async () => {
+		const tournament = await createTournament();
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await createPlaceholder(tournament.id, users.id(2));
+
+		const roomsChangedUserIds = await mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 4,
+		});
+
+		expect(roomsChangedUserIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
 	});
 
 	test("deletes the other team's chat room", async () => {
