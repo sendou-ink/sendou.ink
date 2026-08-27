@@ -1,0 +1,37 @@
+.container {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	border-bottom: 1.5px solid var(--color-border);
+}
+
+/** Flush against the events header, bleeding past the sidebar's own padding. */
+.sidebar {
+	margin-block-start: calc(-1 * var(--s-2));
+	margin-inline: calc(-1 * var(--s-1-5));
+}
+
+/** Same, for the mobile events panel. */
+.panel {
+	margin-block-start: calc(-1 * var(--s-2));
+	margin-inline: calc(-1 * var(--s-2));
+}
+
+.link {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-accent);
+
+	&:hover {
+		text-decoration: underline;
+	}
+}
+
+.dismissButton {
+	margin-inline-start: auto;
+	color: var(--color-text-high);
+}

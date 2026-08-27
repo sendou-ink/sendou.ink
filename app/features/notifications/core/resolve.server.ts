@@ -51,6 +51,7 @@ const RESOLUTION_TRIGGERS = {
 	FRIEND_REQUEST_RECEIVED:
 		"accepts or declines the request, or the sender cancels it",
 	TEAM_EVENT_ADDED: "visits the team's schedule page",
+	SCHEDULE_TEAM_REMINDER: "saves any week of their own schedule",
 } as const satisfies Record<Notification["type"], string | null>;
 
 type ResolvableNotificationType = {

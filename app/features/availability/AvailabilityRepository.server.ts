@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
@@ -6,6 +7,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 } from "~/utils/kysely.server";
+import { AVAILABILITY } from "./availability-constants";
 import type { TimeRange } from "./availability-types";
 
 /** Longest a week can be, a DST week included. Weeks are indexed by their start, so finding the ones overlapping a window means looking this far back. */
@@ -63,6 +65,80 @@ export function findAllWeeksByUserIds({
 		.where("AvailabilityWeek.weekStartsAt", "<", endsAt)
 		.where("AvailabilityWeek.weekStartsAt", ">", startsAt - WEEK_MAX_SECONDS)
 		.execute();
+}
+
+/**
+ * Whether the user has reported the week starting at `weekStartsAt`. The week
+ * is theirs to place, so a start within {@link AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS}
+ * of the asked one is the same week seen from another timezone.
+ */
+export async function hasReportedWeek({
+	userId,
+	weekStartsAt,
+}: {
+	userId: number;
+	weekStartsAt: number;
+}) {
+	const week = await db
+		.selectFrom("AvailabilityWeek")
+		.select("AvailabilityWeek.id")
+		.where("AvailabilityWeek.userId", "=", userId)
+		.where(
+			"AvailabilityWeek.weekStartsAt",
+			">",
+			weekStartsAt - AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+		)
+		.where(
+			"AvailabilityWeek.weekStartsAt",
+			"<",
+			weekStartsAt + AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+		)
+		.executeTakeFirst();
+
+	return Boolean(week);
+}
+
+/**
+ * Ids of the users who have not reported the week starting at `weekStartsAt`
+ * while at least one of their teammates has — the reminder is only worth
+ * sending when somebody else on the team already moved.
+ */
+export async function findWeekReminderUserIds(weekStartsAt: number) {
+	const memberships = await db
+		.selectFrom("TeamMemberWithSecondary")
+		.leftJoin("AvailabilityWeek", (join) =>
+			join
+				.onRef("AvailabilityWeek.userId", "=", "TeamMemberWithSecondary.userId")
+				.on(
+					"AvailabilityWeek.weekStartsAt",
+					">",
+					weekStartsAt - AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+				)
+				.on(
+					"AvailabilityWeek.weekStartsAt",
+					"<",
+					weekStartsAt + AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+				),
+		)
+		.select([
+			"TeamMemberWithSecondary.userId",
+			"TeamMemberWithSecondary.teamId",
+			"AvailabilityWeek.id as reportedWeekId",
+		])
+		.execute();
+
+	const userIds = new Set<number>();
+	for (const team of Object.values(
+		R.groupBy(memberships, (membership) => membership.teamId),
+	)) {
+		if (!team.some((member) => member.reportedWeekId !== null)) continue;
+
+		for (const member of team) {
+			if (member.reportedWeekId === null) userIds.add(member.userId);
+		}
+	}
+
+	return Array.from(userIds);
 }
 
 /**
@@ -256,7 +332,7 @@ export function deleteWeeksStartedBefore(weekStartsAt: number) {
 	return db
 		.deleteFrom("AvailabilityWeek")
 		.where("AvailabilityWeek.weekStartsAt", "<", weekStartsAt)
-		.execute();
+		.executeTakeFirstOrThrow();
 }
 
 /**

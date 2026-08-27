@@ -110,6 +110,8 @@
 	"notifications.text.TO_LIKE_ACCEPTED": "",
 	"notifications.title.TEAM_EVENT_ADDED": "",
 	"notifications.text.TEAM_EVENT_ADDED": "",
+	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
 	"auth.errors.aborted": "Einloggen abgebrochen",
 	"auth.errors.failed": "Einloggen fehlgeschlagen",
 	"auth.errors.discordPermissions": "Für dein sendou.ink-Profil benötigt die Seite Zugriff auf den Namen, Avatar und verbundene Social-Media-Accounts in deinem Discord-Profil.",

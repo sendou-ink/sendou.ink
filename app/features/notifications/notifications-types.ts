@@ -114,7 +114,8 @@ export type Notification =
 				teamName: string;
 				teamCustomUrl: string;
 			}
-	  >;
+	  >
+	| NotificationItem<"SCHEDULE_TEAM_REMINDER">;
 
 type NotificationItem<
 	T extends string,

@@ -110,6 +110,8 @@
 	"notifications.text.TO_LIKE_ACCEPTED": "",
 	"notifications.title.TEAM_EVENT_ADDED": "",
 	"notifications.text.TEAM_EVENT_ADDED": "",
+	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
 	"auth.errors.aborted": "로그인 중단됨",
 	"auth.errors.failed": "로그인 실패",
 	"auth.errors.discordPermissions": "sendou.ink 프로필을 위해 디스코드 프로필의 이름, 아바타와 연락처에 대한 접근이 필요합니다.",

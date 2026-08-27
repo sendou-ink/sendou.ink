@@ -110,6 +110,8 @@
 	"notifications.text.TO_LIKE_ACCEPTED": "{{accepterUsername}} accepted your group invitation in {{tournamentName}}",
 	"notifications.title.TEAM_EVENT_ADDED": "New Team Event",
 	"notifications.text.TEAM_EVENT_ADDED": "{{teamName}} has a new event: {{eventName}}",
+	"notifications.title.SCHEDULE_TEAM_REMINDER": "Availability Missing",
+	"notifications.text.SCHEDULE_TEAM_REMINDER": "Your teammates are waiting for you to fill your availability for the week",
 	"auth.errors.aborted": "Login Aborted",
 	"auth.errors.failed": "Login Failed",
 	"auth.errors.discordPermissions": "For your sendou.ink profile, the site needs access to your Discord profile's name, avatar and social connections.",

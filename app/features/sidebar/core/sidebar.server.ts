@@ -1,9 +1,12 @@
 import { cachified } from "@epic-web/cachified";
-import { addDays } from "date-fns";
+import { addDays, addWeeks } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
+import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
+import { AVAILABILITY } from "~/features/availability/availability-constants";
+import * as Availability from "~/features/availability/core/Availability";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
@@ -28,6 +31,7 @@ import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server"
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { scrimsSearchParams } from "~/features/scrims/scrims-search-params";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
+import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
@@ -77,7 +81,9 @@ const UPCOMING_TOURNAMENT_WINDOW_DAYS = 3;
 const SENDOUQ_QUOTA = 2;
 const TOURNAMENT_SUB_QUOTA = 2;
 
-export async function resolveSidebarData(userId: number | null) {
+export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
+	const userId = user?.id ?? null;
+
 	if (!userId) {
 		return {
 			events: [] as SidebarEvent[],
@@ -85,6 +91,7 @@ export async function resolveSidebarData(userId: number | null) {
 			streams: await combinedStreamsCached(),
 			savedTournamentIds: [] as number[],
 			incomingFriendRequestIds: [] as number[],
+			scheduleNudge: false,
 		};
 	}
 
@@ -97,6 +104,7 @@ export async function resolveSidebarData(userId: number | null) {
 		incomingFriendRequestIds,
 		streamedSendouQMatches,
 		teamEvents,
+		scheduleNudge,
 	] = await Promise.all([
 		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
 		ScrimPostRepository.findUserScrims(userId),
@@ -105,6 +113,7 @@ export async function resolveSidebarData(userId: number | null) {
 		FriendRepository.findPendingReceivedRequestIds(userId),
 		resolveSendouQMatchStreams(),
 		findUpcomingTeamEvents(userId),
+		showScheduleNudge(user),
 	]);
 
 	const seenTournamentIds = new Set<number>();
@@ -151,7 +160,37 @@ export async function resolveSidebarData(userId: number | null) {
 		streams: await combinedStreamsCached(),
 		savedTournamentIds,
 		incomingFriendRequestIds,
+		scheduleNudge,
 	};
+}
+
+/**
+ * Whether to prompt the user to report next week: they are on its last day, it
+ * is still empty, and they have not waved the prompt away for this week.
+ */
+async function showScheduleNudge(user: AuthenticatedUser | undefined) {
+	if (!user) return false;
+
+	const timezone = getViewerTimezone() ?? "UTC";
+	const now = new Date();
+
+	if (!Availability.isLastDayOfWeek(now, timezone)) return false;
+
+	const weekStartsAt = Availability.weekStartsAt(addWeeks(now, 1), timezone);
+	const dismissedAt = user.preferences?.scheduleNudgeDismissedWeekStartsAt;
+
+	if (
+		dismissedAt !== undefined &&
+		Math.abs(dismissedAt - weekStartsAt) <
+			AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS
+	) {
+		return false;
+	}
+
+	return !(await AvailabilityRepository.hasReportedWeek({
+		userId: user.id,
+		weekStartsAt,
+	}));
 }
 
 function combinedStreamsCached(): Promise<SidebarStream[]> {

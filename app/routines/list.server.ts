@@ -3,6 +3,7 @@ import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 import { ComputeLutiDivsRoutine } from "./computeLutiDivs";
 import { DeleteObsoleteMatchVodsRoutine } from "./deleteObsoleteMatchVods";
+import { DeleteOldAvailabilityRoutine } from "./deleteOldAvailability";
 import { DeleteOldExternalStreamsRoutine } from "./deleteOldExternalStreams";
 import { DeleteOldNotificationsRoutine } from "./deleteOldNotifications";
 import { DeleteOldPendingFriendRequestsRoutine } from "./deleteOldPendingFriendRequests";
@@ -13,6 +14,7 @@ import { EvictStaleRunningTournamentsRoutine } from "./evictStaleRunningTourname
 import { ExpireReadyChecksRoutine } from "./expireReadyChecks";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
+import { NotifyScheduleTeamReminderRoutine } from "./notifyScheduleTeamReminder";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
 import { NotifySeasonEndRoutine } from "./notifySeasonEnd";
 import { NotifySeasonStartRoutine } from "./notifySeasonStart";
@@ -53,6 +55,8 @@ export const daily = [
 	DeleteOldPendingFriendRequestsRoutine,
 	DeleteOldTournamentAuditLogsRoutine,
 	DeleteOldScrimPickupRostersRoutine,
+	DeleteOldAvailabilityRoutine,
+	NotifyScheduleTeamReminderRoutine,
 	CloseExpiredCommissionsRoutine,
 	CloseExpiredChatRoomsRoutine,
 	DeleteOrphanArtTagsRoutine,

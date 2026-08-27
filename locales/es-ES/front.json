@@ -28,6 +28,8 @@
 	"sideNav.scrimVs": "vs. {{opponent}}",
 	"sideNav.lookingForScrim": "Buscando scrim",
 	"sideNav.scrimRequestPending": "Solicitud pendiente",
+	"sideNav.scheduleNudge": "",
+	"sideNav.scheduleNudge.dismiss": "",
 	"mobileNav.menu": "Menú",
 	"mobileNav.friends": "Amigos",
 	"mobileNav.you": "Tú",

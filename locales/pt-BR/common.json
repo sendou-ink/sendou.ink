@@ -110,6 +110,8 @@
 	"notifications.text.TO_LIKE_ACCEPTED": "",
 	"notifications.title.TEAM_EVENT_ADDED": "",
 	"notifications.text.TEAM_EVENT_ADDED": "",
+	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
 	"auth.errors.aborted": "Login Abortado",
 	"auth.errors.failed": "Login Falhou",
 	"auth.errors.discordPermissions": "Para o seu perfil do sendou.ink, o site precisa de acesso ao nome do perfil do seu Discord, incluindo também o avatar e conexões sociais.",

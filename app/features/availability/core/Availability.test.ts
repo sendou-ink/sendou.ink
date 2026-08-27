@@ -420,6 +420,47 @@ describe("Availability.isoWeekNumber", () => {
 	});
 });
 
+describe("Availability.isFirstDayOfWeek", () => {
+	test.each([
+		{ why: "a Monday", date: "2026-08-24", is: true },
+		{ why: "a Sunday", date: "2026-08-30", is: false },
+		{ why: "a Wednesday", date: "2026-08-26", is: false },
+	])("resolves $why to $is", ({ date, is }) => {
+		expect(
+			Availability.isFirstDayOfWeek(
+				new Date(at(date, "12:00") * 1000),
+				HELSINKI,
+			),
+		).toBe(is);
+	});
+});
+
+describe("Availability.isLastDayOfWeek", () => {
+	test.each([
+		{ why: "a Sunday", date: "2026-08-30", is: true },
+		{ why: "a Monday", date: "2026-08-24", is: false },
+		{ why: "a Saturday", date: "2026-08-29", is: false },
+	])("resolves $why to $is", ({ date, is }) => {
+		expect(
+			Availability.isLastDayOfWeek(
+				new Date(at(date, "12:00") * 1000),
+				HELSINKI,
+			),
+		).toBe(is);
+	});
+
+	test("resolves an instant by the timezone's local day", () => {
+		const mondayEarlyHelsinki = new Date(at("2026-08-31", "01:00") * 1000);
+
+		expect(Availability.isLastDayOfWeek(mondayEarlyHelsinki, HELSINKI)).toBe(
+			false,
+		);
+		expect(Availability.isLastDayOfWeek(mondayEarlyHelsinki, LOS_ANGELES)).toBe(
+			true,
+		);
+	});
+});
+
 describe("Availability.playableWindows", () => {
 	const members = (
 		ranges: Array<Array<[start: string, end: string, endDate?: string]>>,

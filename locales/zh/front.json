@@ -28,6 +28,8 @@
 	"sideNav.scrimVs": "对战 {{opponent}}",
 	"sideNav.lookingForScrim": "寻找对抗战",
 	"sideNav.scrimRequestPending": "请求待处理",
+	"sideNav.scheduleNudge": "",
+	"sideNav.scheduleNudge.dismiss": "",
 	"mobileNav.menu": "菜单",
 	"mobileNav.friends": "好友",
 	"mobileNav.you": "你",

@@ -110,6 +110,8 @@
 	"notifications.text.TO_LIKE_ACCEPTED": "{{accepterUsername}} 在赛事【{{tournamentName}}】中接受了您的小组邀请",
 	"notifications.title.TEAM_EVENT_ADDED": "",
 	"notifications.text.TEAM_EVENT_ADDED": "",
+	"notifications.title.SCHEDULE_TEAM_REMINDER": "",
+	"notifications.text.SCHEDULE_TEAM_REMINDER": "",
 	"auth.errors.aborted": "登录中止",
 	"auth.errors.failed": "登录失败",
 	"auth.errors.discordPermissions": "为了完善您的sendou.ink个人资料，网站需要获取您的 Discord 名字、头像和社交链接。",

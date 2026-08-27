@@ -44,6 +44,16 @@ export const saveWeekSchema = v.object({
 	days: v.pipe(v.array(editorDaySchema), v.length(7)),
 });
 
+export const dismissScheduleNudgeSchema = v.object({
+	_action: _action("DISMISS_SCHEDULE_NUDGE"),
+	revalidateRoot: v.optional(v.nullable(v.literal(true))),
+});
+
+export const eventsActionSchema = v.union([
+	saveWeekSchema,
+	dismissScheduleNudgeSchema,
+]);
+
 const teamEventDurationItems = [
 	{ label: "options.duration.30m" as const, value: "30" },
 	{ label: "options.duration.1h" as const, value: "60" },

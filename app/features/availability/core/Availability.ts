@@ -1,5 +1,12 @@
 import { TZDate } from "@date-fns/tz";
-import { addWeeks, format, getISOWeek, startOfWeek } from "date-fns";
+import {
+	addWeeks,
+	format,
+	getISOWeek,
+	isMonday,
+	isSunday,
+	startOfWeek,
+} from "date-fns";
 import * as R from "remeda";
 import {
 	databaseTimestampToJavascriptTimestamp,
@@ -41,6 +48,16 @@ export function weekRange(date: Date, timezone: string): TimeRange {
 		startsAt: dateToDatabaseTimestamp(start),
 		endsAt: dateToDatabaseTimestamp(addWeeks(start, 1)),
 	};
+}
+
+/** Whether `date` falls on the first day of its week (Monday), as the week is seen in `timezone`. */
+export function isFirstDayOfWeek(date: Date, timezone: string) {
+	return isMonday(new TZDate(date.getTime(), timezone));
+}
+
+/** Whether `date` falls on the last day of its week (Sunday), as the week is seen in `timezone`. */
+export function isLastDayOfWeek(date: Date, timezone: string) {
+	return isSunday(new TZDate(date.getTime(), timezone));
 }
 
 /** ISO week number of the week the timestamp falls in, as seen in `timezone`. */

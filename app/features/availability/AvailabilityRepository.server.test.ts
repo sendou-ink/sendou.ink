@@ -195,6 +195,102 @@ describe("AvailabilityRepository.deleteWeeksStartedBefore", () => {
 	});
 });
 
+describe("AvailabilityRepository.hasReportedWeek", () => {
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("finds the week even when it was reported in another timezone", async () => {
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: Availability.weekStartsAt(
+				new Date(WEEK_STARTS_AT * 1000 + 3 * 24 * 60 * 60 * 1000),
+				"Asia/Tokyo",
+			),
+			timezone: "Asia/Tokyo",
+		});
+
+		expect(
+			await AvailabilityRepository.hasReportedWeek({
+				userId: users.id(1),
+				weekStartsAt: WEEK_STARTS_AT,
+			}),
+		).toBe(true);
+	});
+
+	test("does not confuse a neighbouring week for the asked one", async () => {
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: NEXT_WEEK_STARTS_AT,
+		});
+
+		expect(
+			await AvailabilityRepository.hasReportedWeek({
+				userId: users.id(1),
+				weekStartsAt: WEEK_STARTS_AT,
+			}),
+		).toBe(false);
+	});
+});
+
+describe("AvailabilityRepository.findWeekReminderUserIds", () => {
+	beforeEach(async () => {
+		await users.create(4);
+	});
+
+	const reminderUserIds = () =>
+		AvailabilityRepository.findWeekReminderUserIds(WEEK_STARTS_AT);
+
+	test("reminds the members whose teammate reported the week", async () => {
+		await TeamFactory.create({
+			memberUserIds: [users.id(1), users.id(2), users.id(3)],
+		});
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: WEEK_STARTS_AT,
+		});
+
+		expect(await reminderUserIds()).toEqual([users.id(2), users.id(3)]);
+	});
+
+	test("reminds nobody on a team where nobody reported the week", async () => {
+		await TeamFactory.create({ memberUserIds: [users.id(1), users.id(2)] });
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: NEXT_WEEK_STARTS_AT,
+		});
+
+		expect(await reminderUserIds()).toEqual([]);
+	});
+
+	test("reminds a user once even when several of their teams qualify", async () => {
+		await TeamFactory.create({ memberUserIds: [users.id(1), users.id(3)] });
+		await TeamFactory.create({
+			memberUserIds: [users.id(2), users.id(3)],
+			isMainTeam: false,
+		});
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: WEEK_STARTS_AT,
+		});
+		await AvailabilityWeekFactory.create({
+			userId: users.id(2),
+			weekStartsAt: WEEK_STARTS_AT,
+		});
+
+		expect(await reminderUserIds()).toEqual([users.id(3)]);
+	});
+
+	test("leaves users without a team out", async () => {
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: WEEK_STARTS_AT,
+		});
+
+		expect(await reminderUserIds()).toEqual([]);
+	});
+});
+
 describe("AvailabilityRepository.findTeamEventsByTeamId", () => {
 	beforeEach(async () => {
 		await users.create(2);

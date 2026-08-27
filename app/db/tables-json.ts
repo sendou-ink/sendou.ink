@@ -67,6 +67,8 @@ export interface UserPreferences {
 	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
 	spoilerFreeMode?: boolean;
 	weaponReportDefaultOpen?: boolean;
+	/** Start of the week the schedule sidebar nudge was last dismissed for, so it stays gone until the horizon rolls over. */
+	scheduleNudgeDismissedWeekStartsAt?: number;
 }
 
 export type Pronouns = {

@@ -56,6 +56,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
@@ -87,6 +88,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	sessionIdMiddleware,
 	userMiddleware,
 	i18nMiddleware,
+	timezoneMiddleware,
 ];
 
 import "~/styles/fonts.css";
