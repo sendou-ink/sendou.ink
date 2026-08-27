@@ -6,7 +6,7 @@ import { useHydrated } from "~/hooks/useHydrated";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { COMP_ANALYZER_URL, navIconUrl } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, ogPageImage } from "../../../utils/remix";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import { useCategorization, useSelectedWeapons } from "../comp-analyzer-hooks";
 import { DamageComboList } from "../components/DamageComboBar";
@@ -19,6 +19,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Composition Analyzer",
 		ogTitle: "Splatoon 3 composition analyzer",
+		image: ogPageImage("comp-analyzer"),
 		location: args.location,
 		description:
 			"Analyze team compositions and discover damage combo synergies between weapons in Splatoon 3.",

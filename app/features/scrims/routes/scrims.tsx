@@ -20,7 +20,7 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { timeString } from "~/utils/schema";
 import { navIconUrl, scrimsPage } from "~/utils/urls";
@@ -63,6 +63,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		ogTitle: "Splatoon scrim finder",
 		description:
 			"Schedule scrims against competitive teams. Make your own post or browse available scrims.",
+		image: ogPageImage("scrims"),
 		location: args.location,
 	});
 };

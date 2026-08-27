@@ -21,7 +21,7 @@ import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { LFG_PAGE, navIconUrl } from "~/utils/urls";
@@ -53,6 +53,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon LFG (looking for players, teams & coaches)",
 		description:
 			"Find people to play Splatoon with. Create a post or browse existing ones. For looking players, teams, scrim partners and coaches alike.",
+		image: ogPageImage("lfg"),
 		location: args.location,
 	});
 };

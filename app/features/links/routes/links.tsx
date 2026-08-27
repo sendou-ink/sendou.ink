@@ -2,7 +2,7 @@ import type { MetaFunction } from "react-router";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { YouTubeIcon } from "~/components/icons/YouTube";
 import { Main } from "~/components/Main";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LINKS_PAGE, navIconUrl } from "~/utils/urls";
 import links from "../links.json";
@@ -22,6 +22,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon link collection",
 		description:
 			"Collection of useful Splatoon guides, Discord servers and other resources.",
+		image: ogPageImage("links"),
 		location: args.location,
 	});
 };

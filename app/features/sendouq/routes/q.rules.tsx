@@ -1,11 +1,12 @@
 import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Rules",
 		description: "Rules everyone participating in SendouQ has to follow.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

@@ -11,7 +11,7 @@ import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { LOG_OUT_URL, navIconUrl, SETTINGS_PAGE } from "~/utils/urls";
 import { SendouButton } from "../../../components/elements/Button";
@@ -47,6 +47,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Settings",
+		image: ogPageImage("settings"),
 		location: args.location,
 	});
 };

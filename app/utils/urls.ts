@@ -148,7 +148,43 @@ export const PLUS_VOTING_PAGE = "/plus/voting";
 const STATIC_ASSETS_URL = Config.staticAssetsUrl;
 
 export const BLANK_IMAGE_URL = `${STATIC_ASSETS_URL}/img/blank.gif`;
-export const COMMON_PREVIEW_IMAGE = `${STATIC_ASSETS_URL}/img/layout/common-preview.png`;
+
+/**
+ * Pages that have an OG image of their own, matching their nav item name.
+ * Rendered by the `/admin/og-images` page.
+ */
+export const OG_IMAGE_PAGES = [
+	"settings",
+	"sendouq",
+	"analyzer",
+	"comp-analyzer",
+	"builds",
+	"object-damage-calculator",
+	"leaderboards",
+	"scrims",
+	"lfg",
+	"plans",
+	"trophies",
+	"calendar",
+	"plus",
+	"xsearch",
+	"articles",
+	"vods",
+	"art",
+	"tier-list-maker",
+	"links",
+	"maps",
+] as const;
+
+export type OgImagePage = (typeof OG_IMAGE_PAGES)[number];
+
+/** Preview image shown when a page is shared on Discord, Bluesky etc. */
+export const ogImageUrl = (page: OgImagePage | "default") =>
+	`${STATIC_ASSETS_URL}/img/og/${page}.png`;
+
+/** Preview image of the front page, also used by pages without one of their own. */
+export const DEFAULT_OG_IMAGE = ogImageUrl("default");
+
 export const ERROR_GIRL_IMAGE_PATH = `${STATIC_ASSETS_URL}/img/layout/error-girl`;
 export const SENDOU_LOVE_EMOJI_PATH = `${STATIC_ASSETS_URL}/img/layout/sendou_love`;
 export const FIRST_PLACEMENT_ICON_PATH = `${STATIC_ASSETS_URL}/svg/placements/first.svg`;

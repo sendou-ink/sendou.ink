@@ -46,6 +46,7 @@
 		"checks:scanner": "pnpm checks && pnpm test:scanner",
 		"seed": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/seed.ts",
 		"setup": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/setup.ts",
+		"og:generate": "node scripts/generate-og-images.ts",
 		"notification:test": "cross-env DB_PATH=db.sqlite3 vite-node ./scripts/send-test-notification.ts",
 		"i18n:sync": "node scripts/collapse-single-plural-keys.ts && i18next-locales-sync -e true -p en -s da de es-ES es-US fr-CA fr-EU he it ja ko nl pl pt-BR ru zh -l locales && pnpm run biome:fix",
 		"knip": "knip"

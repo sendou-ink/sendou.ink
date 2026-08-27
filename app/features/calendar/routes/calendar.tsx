@@ -28,7 +28,7 @@ import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { dayMonthYearToDateValue } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { DayMonthYear } from "~/utils/schema";
 import { CALENDAR_PAGE, navIconUrl } from "~/utils/urls";
@@ -47,6 +47,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Calendar",
 		ogTitle: "Splatoon competitive event calendar",
+		image: ogPageImage("calendar"),
 		location: args.location,
 		description:
 			"Browser Splatoon competitive tournaments and events both local and online. Events for players of all skill levels from newcomer to pro.",

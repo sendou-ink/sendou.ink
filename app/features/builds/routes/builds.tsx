@@ -18,7 +18,7 @@ import {
 	weaponBuildPage,
 	weaponCategoryUrl,
 } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, ogPageImage } from "../../../utils/remix";
 
 import styles from "./builds.module.css";
 
@@ -28,6 +28,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 builds for all weapons",
 		description:
 			"View Splatoon 3 builds for all weapons by the best players. Includes collection of user submitted builds and an aggregation of ability stats.",
+		image: ogPageImage("builds"),
 		location: args.location,
 	});
 };

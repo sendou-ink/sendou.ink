@@ -64,6 +64,16 @@ Notes:
 3) Update the typings in `app/db/tables.ts`
 4) Run `pnpm run migrate up` to apply your migration (the unit test database `db-test.sqlite3` is created and migrated automatically when unit tests run)
 
+## Update the OG images
+
+OG images are the preview images shown when a page is shared on Discord, Bluesky etc. Every page listed in `OG_IMAGE_PAGES` (`app/utils/urls.ts`) has one of its own, the rest fall back to `default.png`.
+
+1) Preview and tweak them on the `/admin/og-images` page (dev only). They are regular React components rendered at the real 1200x630 size.
+2) With the dev server running, `pnpm run og:generate` screenshots each of them into the [assets repo](https://github.com/sendou-ink/assets) at `assets/img/og/`, expected to be a sibling folder of this one (pass a folder as an argument to write elsewhere).
+3) Commit and push the images in the assets repo. They are live once its deploy workflow has run.
+
+New pages need to be added to `OG_IMAGE_PAGES` and to `PAGE_COLORS` on the preview page. Routes opt in via `image: ogPageImage("<page>")` given to `metaTags`.
+
 ## Add a new translation string
 
 1) Decide on where the translation should go. Either `common.json` which is available in every route by default or a feature specific one such as `builds.json`

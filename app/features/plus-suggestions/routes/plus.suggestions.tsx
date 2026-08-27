@@ -26,7 +26,7 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import { action } from "../actions/plus.suggestions.server";
 import { loader } from "../loaders/plus.suggestions.server";
 import type { PlusTier } from "../plus-suggestions-constants";
@@ -50,6 +50,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Plus Server suggestions",
 		description:
 			"This season's suggestions to the Plus Server (+1, +2 and +3).",
+		image: ogPageImage("plus"),
 		location: args.location,
 	});
 };

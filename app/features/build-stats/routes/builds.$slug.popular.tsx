@@ -12,7 +12,11 @@ import {
 	outlinedMainWeaponImageUrl,
 	weaponBuildPage,
 } from "~/utils/urls";
-import { metaTags, type SerializeFrom } from "../../../utils/remix";
+import {
+	metaTags,
+	ogPageImage,
+	type SerializeFrom,
+} from "../../../utils/remix";
 
 import { loader } from "../loaders/builds.$slug.popular.server";
 
@@ -25,6 +29,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		title: `${args.loaderData.weaponName} popular builds`,
 		ogTitle: `${args.loaderData.weaponName} Splatoon 3 popular builds`,
 		description: `List of most popular ability combinations for ${args.loaderData.weaponName}.`,
+		image: ogPageImage("builds"),
 		location: args.location,
 	});
 };

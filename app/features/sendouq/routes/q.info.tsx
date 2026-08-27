@@ -5,7 +5,7 @@ import { Image } from "~/components/Image";
 import { Main } from "~/components/Main";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import {
 	CALENDAR_PAGE,
 	FAQ_PAGE,
@@ -21,6 +21,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Info",
 		description: "SendouQ guide and information.",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

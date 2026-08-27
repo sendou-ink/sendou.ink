@@ -5,7 +5,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { ARTICLES_MAIN_PAGE, articlePage, navIconUrl } from "~/utils/urls";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, ogPageImage } from "../../../utils/remix";
 import { loader } from "../loaders/a.server";
 import styles from "./a.module.css";
 
@@ -25,6 +25,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon articles",
 		description:
 			"Articles about the competitive side of Splatoon. Written by various community members.",
+		image: ogPageImage("articles"),
 		location: args.location,
 	});
 };

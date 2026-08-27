@@ -17,7 +17,7 @@ import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import {
@@ -70,6 +70,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		title: args.loaderData.vod.title,
 		description:
 			"Splatoon 3 VoD with timestamps to check out specific weapons as well as map and mode combinations.",
+		image: ogPageImage("vods"),
 		location: args.location,
 	});
 };

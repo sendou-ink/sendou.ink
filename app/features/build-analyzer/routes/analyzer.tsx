@@ -58,7 +58,7 @@ import {
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { SendouPopover } from "../../../components/elements/Popover";
-import { metaTags } from "../../../utils/remix";
+import { metaTags, ogPageImage } from "../../../utils/remix";
 import {
 	damageTypeToWeaponType,
 	MAX_AP,
@@ -96,6 +96,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Build Analyzer",
 		ogTitle: "Splatoon 3 build analyzer/simulator",
+		image: ogPageImage("analyzer"),
 		location: args.location,
 		description:
 			"Analyze and compare Splatoon 3 builds. Find out what exactly each combination of abilities does.",

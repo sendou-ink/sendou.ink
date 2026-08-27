@@ -2,7 +2,7 @@ import clsx from "clsx";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData } from "react-router";
 import { LocaleTime } from "~/components/LocaleTime";
-import { metaTags, type SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage, type SerializeFrom } from "~/utils/remix";
 import { PLUS_SERVER_DISCORD_URL, userPage } from "~/utils/urls";
 
 import { loader } from "../loaders/plus.voting.results.server";
@@ -16,6 +16,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Plus Server voting results",
 		description:
 			"Plus Server (+1, +2 and +3) voting results for the latest season.",
+		image: ogPageImage("plus"),
 		location: args.location,
 	});
 };

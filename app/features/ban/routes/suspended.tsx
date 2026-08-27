@@ -1,11 +1,18 @@
-import { useLoaderData } from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Main } from "~/components/Main";
 import { databaseTimestampToDate } from "~/utils/dates";
-
+import { metaTags } from "~/utils/remix";
 import { loader } from "../loaders/suspended.server";
 
 export { loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Account suspended",
+		location: args.location,
+	});
+};
 
 export default function SuspendedPage() {
 	const data = useLoaderData<typeof loader>();

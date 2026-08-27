@@ -16,7 +16,7 @@ import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, VODS_PAGE } from "~/utils/urls";
 import { VodListing, VodListingList } from "../components/VodListing";
@@ -41,6 +41,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 		ogTitle: "Splatoon 3 VODs (gameplay footage search)",
 		description:
 			"Search for Splatoon 3 VODs (gameplay footage) by mode, stage and/or weapon.",
+		image: ogPageImage("vods"),
 		location: args.location,
 	});
 };

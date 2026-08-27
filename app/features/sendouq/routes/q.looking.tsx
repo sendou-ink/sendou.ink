@@ -23,7 +23,7 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	MATCH_PROFILE_PAGE,
@@ -63,6 +63,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Matchmaking",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

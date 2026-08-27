@@ -1,10 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { EmptyState } from "~/components/EmptyState";
 import { EventsList } from "~/components/EventsList";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { useSearchParam } from "~/modules/search-params/hooks";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CALENDAR_PAGE } from "~/utils/urls";
 import {
@@ -16,6 +17,14 @@ import type { EventsLoaderData } from "../loaders/events.server";
 import styles from "./events.module.css";
 
 export { loader } from "../loaders/events.server";
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Events",
+		image: ogPageImage("calendar"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar"],

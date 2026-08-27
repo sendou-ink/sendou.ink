@@ -10,7 +10,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, SENDOUQ_READY_PAGE } from "~/utils/urls";
 import { action } from "../actions/q.ready.server";
@@ -36,6 +36,7 @@ export const handle: SendouRouteHandle = {
 export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "SendouQ - Ready Check",
+		image: ogPageImage("sendouq"),
 		location: args.location,
 	});
 };

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData } from "react-router";
+import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -9,6 +9,7 @@ import { SubNav, SubNavLink } from "~/components/SubNav";
 import { SendouForm } from "~/form/SendouForm";
 import { markFriendRequestsSeen } from "~/hooks/useUnseenFriendRequests";
 import { useSearchParam } from "~/modules/search-params/hooks";
+import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FriendMenu } from "../components/FriendMenu";
 import {
@@ -29,6 +30,13 @@ export { action } from "../actions/friends.server";
 export { loader } from "../loaders/friends.server";
 
 export const shouldRevalidate = friendsSearchParams.shouldRevalidate;
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Friends",
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: ["friends"],

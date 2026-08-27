@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData } from "react-router";
+import { type MetaFunction, useLoaderData } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
@@ -12,6 +12,7 @@ import { SendouForm } from "~/form/SendouForm";
 import type { ArrayItemRenderContext } from "~/form/types";
 import { errorMessageId } from "~/form/utils";
 import type { SerializeFrom } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { Unpacked } from "~/utils/types";
 import { action } from "../actions/calendar.$id.report-winners.server";
@@ -24,6 +25,14 @@ import {
 import { loader } from "../loaders/calendar.$id.report-winners.server";
 
 export { action, loader };
+
+export const meta: MetaFunction = (args) => {
+	return metaTags({
+		title: "Report winners",
+		image: ogPageImage("calendar"),
+		location: args.location,
+	});
+};
 
 export const handle: SendouRouteHandle = {
 	i18n: "calendar",

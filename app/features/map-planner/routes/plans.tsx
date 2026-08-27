@@ -2,7 +2,7 @@ import { lazy } from "react";
 import type { MetaFunction } from "react-router";
 import { Placeholder } from "~/components/Placeholder";
 import { useHydrated } from "~/hooks/useHydrated";
-import { metaTags } from "~/utils/remix";
+import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, PLANNER_URL } from "~/utils/urls";
 
@@ -14,6 +14,7 @@ export const meta: MetaFunction = (args) => {
 		ogTitle: "Splatoon 3 Map planner",
 		description:
 			"Make perfect Splatoon 3 battle plans by drawing on maps and adding weapon images",
+		image: ogPageImage("plans"),
 		location: args.location,
 	});
 };
