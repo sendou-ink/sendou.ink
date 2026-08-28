@@ -22,6 +22,7 @@ const SERVER_SNAPSHOT: ChatSnapshot = {
 	roomsLoaded: false,
 	rooms: [],
 	roomsById: new Map(),
+	observedRoomIds: new Set(),
 	totalUnreadCount: 0,
 	messagesByRoomId: new Map(),
 };
@@ -149,6 +150,7 @@ function ChatProviderInner({
 		userId: user.id,
 		roomsLoaded: snapshot.roomsLoaded,
 		rooms,
+		observedRoomIds: snapshot.observedRoomIds,
 		setActiveRoomIds,
 		setChatOpenState,
 	});
@@ -197,13 +199,15 @@ function useChatRouteSync({
 	userId,
 	roomsLoaded,
 	rooms,
+	observedRoomIds,
 	setActiveRoomIds,
 	setChatOpenState,
 }: {
 	userId: number;
 	roomsLoaded: boolean;
 	rooms: ChatRoomListItem[];
-	setActiveRoomIds: (roomIds: number[]) => void;
+	observedRoomIds: ReadonlySet<number>;
+	setActiveRoomIds: React.Dispatch<React.SetStateAction<number[]>>;
 	setChatOpenState: (open: boolean) => void;
 }) {
 	const routeRooms = useCurrentRouteChatRooms();
@@ -252,6 +256,17 @@ function useChatRouteSync({
 		previousRouteRoomIdsKeyRef.current = routeRoomIdsKey;
 
 		if (routeRoomIdsChanged) {
+			// an observed room is only reachable from the route that surfaced it (an
+			// admin reading a chat they are not in), so leaving that route closes it
+			// and returns to the room list
+			const routeRoomIds = new Set(roomIdsFromKey(routeRoomIdsKey));
+			setActiveRoomIds((openRoomIds) => {
+				const kept = openRoomIds.filter(
+					(roomId) => routeRoomIds.has(roomId) || !observedRoomIds.has(roomId),
+				);
+				return kept.length === openRoomIds.length ? openRoomIds : kept;
+			});
+
 			// the loader can know about a just-created room before the room list
 			// does; an observer's room is never in the list at all, so its info is
 			// fetched separately as an observed room
@@ -299,6 +314,7 @@ function useChatRouteSync({
 		autoOpenRoomIdsKey,
 		pathname,
 		rooms,
+		observedRoomIds,
 		userId,
 		setActiveRoomIds,
 		setChatOpenState,

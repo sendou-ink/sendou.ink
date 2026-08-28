@@ -25,6 +25,7 @@ export class SideNav {
 			footerUsername: this.root.locator("[class*='sideNavFooterUsername']"),
 			collapseButton: page.getByTestId("sidenav-collapse-button"),
 			modalTrigger: page.getByTestId("sidenav-modal-trigger"),
+			siteLogoLink: this.root.locator("a[class*='siteLogo']"),
 			unseenRequestsBadge: page.getByRole("status", {
 				name: /unseen friend request/,
 			}),
@@ -33,6 +34,11 @@ export class SideNav {
 			listItems: this.root.locator("a[class*='listLink']"),
 			friendItems: this.root.locator("button[class*='listButton']"),
 		};
+	}
+
+	/** Follows the site logo to the front page, without a full page load. */
+	async goHome() {
+		await this.locators.siteLogoLink.click();
 	}
 
 	/** Where the unseen friend requests badge moves to while the sidebar is collapsed. */

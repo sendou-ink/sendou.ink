@@ -377,6 +377,83 @@ describe("createChatClient", () => {
 		expect(client.getSnapshot().roomsLoaded).toBe(true);
 	});
 
+	test("a message arriving mid-refetch survives the refetch's older snapshot", async () => {
+		const harness = createHarness({
+			rooms: [room({ id: 1, latestMessageId: 10 })],
+		});
+		const client = await startedClient(harness);
+
+		let landRefetch = () => {};
+		harness.fetchRooms.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					landRefetch = () =>
+						resolve({ rooms: [room({ id: 1, latestMessageId: 10 })] });
+				}),
+		);
+
+		harness.emit({ kind: "roomsChanged" });
+		await flush();
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 11 }),
+		});
+		await flush();
+		landRefetch();
+		await flush();
+
+		expect(client.getSnapshot().totalUnreadCount).toBe(1);
+	});
+
+	test("a refetch asked for while one is in flight fetches again after it", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+
+		let landRefetch = () => {};
+		harness.fetchRooms.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					landRefetch = () => resolve({ rooms: [room()] });
+				}),
+		);
+
+		void client.refreshRooms();
+		void client.refreshRooms();
+		landRefetch();
+		await flush();
+
+		expect(harness.fetchRooms).toHaveBeenCalledTimes(3);
+	});
+
+	test("a message arriving before the first rooms fetch lands brings its room in", async () => {
+		const harness = createHarness({ rooms: [] });
+		let landFirstFetch = () => {};
+		harness.fetchRooms.mockImplementationOnce(
+			() =>
+				new Promise((resolve) => {
+					landFirstFetch = () => resolve({ rooms: [] });
+				}),
+		);
+
+		harness.client.start(1);
+		await flush();
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 2,
+			message: message({ id: 5, roomId: 2 }),
+		});
+		await flush();
+
+		harness.fetchRooms.mockResolvedValue({
+			rooms: [room({ id: 2, unreadCount: 1, latestMessageId: 5 })],
+		});
+		landFirstFetch();
+		await flush();
+
+		expect(harness.client.getSnapshot().totalUnreadCount).toBe(1);
+	});
+
 	test("further messages for a room that stayed unknown after the refetch do not refetch again", async () => {
 		const harness = createHarness();
 		const client = await startedClient(harness);
@@ -443,6 +520,7 @@ describe("createChatClient", () => {
 		expect(harness.fetchRoom).toHaveBeenCalledTimes(1);
 		expect(client.getSnapshot().roomsById.get(50)).toMatchObject({ id: 50 });
 		expect(client.getSnapshot().rooms).toHaveLength(1);
+		expect([...client.getSnapshot().observedRoomIds]).toEqual([50]);
 	});
 
 	test("an observed room starts with no unread of its own", async () => {
@@ -523,6 +601,7 @@ describe("createChatClient", () => {
 
 		expect(client.getSnapshot().rooms.map((each) => each.id)).toEqual([1, 50]);
 		expect(client.getSnapshot().totalUnreadCount).toBe(3);
+		expect(client.getSnapshot().observedRoomIds.size).toBe(0);
 	});
 
 	test("a roomsChanged event refetches the room list", async () => {

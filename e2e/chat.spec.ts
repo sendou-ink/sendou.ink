@@ -21,6 +21,7 @@ import { createInProgressMatch } from "./helpers/tournament";
 import { FrontPage } from "./pages/front-page/front-page";
 import { ChatSidebar } from "./pages/layout/chat-sidebar";
 import { MobileNav } from "./pages/layout/mobile-nav";
+import { SideNav } from "./pages/layout/side-nav";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
@@ -243,6 +244,13 @@ test.describe("Chat", () => {
 			await expect(staffChat.chat().locators.readOnlyNote).toBeVisible();
 			await expect(staffChat.chat().locators.composer).toHaveCount(0);
 
+			// an observed room is only theirs to read on the page that surfaced it:
+			// leaving it closes the chat and returns them to their own room list
+			await new SideNav(observer.page).goHome();
+
+			await expect(staffChat.locators.openChats).toHaveCount(0);
+			await expect(staffChat.locators.emptyState).toBeVisible();
+
 			// the group chats are the staff member's to read, nobody else's
 			await participantChat.backToRoomList();
 			await expect(participantChat.locators.roomRows).toHaveCount(1);
@@ -323,6 +331,34 @@ test.describe("Chat", () => {
 				staffChat.chat().message("before the room closed"),
 			).toBeVisible();
 			await expect(staffChat.chat().locators.composer).toHaveCount(0);
+		} finally {
+			await observer.close();
+		}
+	});
+
+	test("An observer's message counts as unread away from the room's page", async ({
+		page,
+		browser,
+		workerBaseURL,
+		factories,
+	}) => {
+		const { match, alpha } = await createMatch(factories);
+		const staff = await factories.UserFactory.createStaff();
+
+		// away from the match page, with the chat closed: only the toggle's badge
+		// tells the participant that anything was said
+		await impersonate(page, alpha[0].id);
+		await new FrontPage(page).goto();
+
+		const chat = new ChatSidebar(page);
+		await expect(chat.locators.toggleButton).toBeVisible();
+
+		const observer = await openSecondUser(browser, workerBaseURL, staff.id);
+		try {
+			await new SendouQMatchPage(observer.page).goto(match.id);
+			await new ChatSidebar(observer.page).chat().send("staff ping");
+
+			await expect(chat.locators.toggleUnreadBadge).toHaveText("1");
 		} finally {
 			await observer.close();
 		}

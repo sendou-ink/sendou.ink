@@ -46,6 +46,8 @@ export interface ChatSnapshot {
 	rooms: ChatRoomListItem[];
 	/** Every known room by id: the user's own plus the route-opened observed ones. */
 	roomsById: ReadonlyMap<number, ChatRoomListItem>;
+	/** Ids of the observed rooms: known only because a route surfaced them, never part of the user's own list. */
+	observedRoomIds: ReadonlySet<number>;
 	totalUnreadCount: number;
 	/** Loaded histories, oldest first, optimistic pending sends last. Absent key = history not fetched yet. */
 	messagesByRoomId: ReadonlyMap<number, ClientChatMessage[]>;
@@ -87,6 +89,8 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	let roomsById = new Map<number, TrackedRoom>();
 	/** `roomsById` without the observed rooms, kept in sync by `replaceRooms`. */
 	let listedRooms: ChatRoomListItem[] = [];
+	/** The ids of the observed rooms in `roomsById`, kept in sync by `replaceRooms`. */
+	let observedRoomIds = new Set<number>();
 	let messagesByRoomId = new Map<number, ClientChatMessage[]>();
 	let viewedRoomIds = new Set<number>();
 	let snapshot: ChatSnapshot | null = null;
@@ -94,6 +98,8 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	const loadingObservedRoomIds = new Set<number>();
 
 	let roomsRefreshInflight: Promise<void> | null = null;
+	/** Whether a refresh was asked for while one was in flight, to be run after it. */
+	let roomsRefreshQueued = false;
 	const loadingMessageRoomIds = new Set<number>();
 	/** Unknown rooms a refetch was already tried for: messages of a room the user merely observes (moderation view) must not refetch the list over and over. */
 	const refetchedUnknownRoomIds = new Set<number>();
@@ -113,6 +119,9 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 	const replaceRooms = (next: Map<number, TrackedRoom>) => {
 		roomsById = next;
 		listedRooms = [...next.values()].filter((room) => !room.observed);
+		observedRoomIds = new Set(
+			[...next.values()].filter((room) => room.observed).map((room) => room.id),
+		);
 	};
 
 	const setRoom = (roomId: number, patch: Partial<TrackedRoom>) => {
@@ -189,7 +198,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		if (!room) {
 			// e.g. a first message right after a room was created; the refetched
 			// list includes the new room and its unread count
-			if (roomsLoaded && !refetchedUnknownRoomIds.has(message.roomId)) {
+			if (!refetchedUnknownRoomIds.has(message.roomId)) {
 				refetchedUnknownRoomIds.add(message.roomId);
 				void refreshRooms();
 			}
@@ -230,8 +239,13 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		}
 	};
 
-	const refreshRooms = () => {
-		if (roomsRefreshInflight) return roomsRefreshInflight;
+	const refreshRooms = (): Promise<void> => {
+		// the fetch already in flight may have been sent before whatever prompted
+		// this call happened, so its response can not answer for it
+		if (roomsRefreshInflight) {
+			roomsRefreshQueued = true;
+			return roomsRefreshInflight;
+		}
 
 		roomsRefreshInflight = (async () => {
 			try {
@@ -244,15 +258,25 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 					// recreation under the same owner may need a refetch again
 					refetchedUnknownRoomIds.delete(room.id);
 
+					// a message that arrived while the fetch was in flight is missing
+					// from its snapshot: the held room is the newer one
+					const known = roomsById.get(room.id);
+					const outrunByPush =
+						known !== undefined &&
+						(known.latestMessageId ?? 0) > (room.latestMessageId ?? 0);
+					const newer = outrunByPush ? known : room;
+
 					// a locally-read room stays read even when the server response
 					// raced the debounced read POST
 					const readUpTo = locallyReadByRoomId.get(room.id) ?? 0;
 					const locallyRead =
-						room.latestMessageId !== null && readUpTo >= room.latestMessageId;
+						newer.latestMessageId !== null && readUpTo >= newer.latestMessageId;
 
 					next.set(room.id, {
 						...room,
-						unreadCount: locallyRead ? 0 : room.unreadCount,
+						latestMessageId: newer.latestMessageId,
+						latestMessageAt: newer.latestMessageAt,
+						unreadCount: locallyRead ? 0 : newer.unreadCount,
 						observed: false,
 					});
 				}
@@ -272,6 +296,10 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 				logger.error("Fetching chat rooms failed", error);
 			} finally {
 				roomsRefreshInflight = null;
+				if (roomsRefreshQueued) {
+					roomsRefreshQueued = false;
+					void refreshRooms();
+				}
 			}
 		})();
 
@@ -385,6 +413,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			}
 			ownUserId = null;
 			roomsLoaded = false;
+			roomsRefreshQueued = false;
 			replaceRooms(new Map());
 			messagesByRoomId = new Map();
 			viewedRoomIds = new Set();
@@ -398,6 +427,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 				roomsLoaded,
 				rooms: listedRooms,
 				roomsById,
+				observedRoomIds,
 				totalUnreadCount: listedRooms.reduce(
 					(sum, room) => sum + room.unreadCount,
 					0,
