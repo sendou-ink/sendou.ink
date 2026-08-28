@@ -157,23 +157,33 @@ export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
 /**
  * Returns true when map-by-map tracking is locked: the auto-lock window has
  * elapsed since the last activity (most recent reported map, falling back to
- * the most recently updated submitted map list). Returns false when no map
- * list has been submitted yet (tracking is not active).
+ * the most recently updated submitted map list). Activity happening before the
+ * scrim starts does not begin the window, it only starts running once the
+ * scrim is under way. Returns false when no map list has been submitted yet
+ * (tracking is not active).
  */
-export function isTrackingLocked(
-	maps: Pick<Tables["ScrimMap"], "reportedAt">[] = [],
-	mapLists: Pick<Tables["ScrimMapList"], "updatedAt">[] = [],
-	now: number = Date.now(),
-): boolean {
+export function isTrackingLocked({
+	startTime,
+	maps = [],
+	mapLists = [],
+	now = Date.now(),
+}: {
+	startTime: number;
+	maps?: Pick<Tables["ScrimMap"], "reportedAt">[];
+	mapLists?: Pick<Tables["ScrimMapList"], "updatedAt">[];
+	now?: number;
+}): boolean {
 	const latestReported = R.firstBy(
 		maps.filter((m) => m.reportedAt !== null),
 		[(m) => m.reportedAt!, "desc"],
 	);
 	const latestList = R.firstBy(mapLists, [(l) => l.updatedAt, "desc"]);
 
-	const referenceSeconds =
+	const latestActivitySeconds =
 		latestReported?.reportedAt ?? latestList?.updatedAt ?? null;
-	if (referenceSeconds === null) return false;
+	if (latestActivitySeconds === null) return false;
+
+	const referenceSeconds = Math.max(latestActivitySeconds, startTime);
 
 	const elapsedHours = (now - referenceSeconds * 1000) / (60 * 60 * 1000);
 

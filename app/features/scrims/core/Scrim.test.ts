@@ -532,46 +532,78 @@ describe("sideOfUser", () => {
 describe("isTrackingLocked", () => {
 	const ONE_HOUR_MS = 60 * 60 * 1000;
 	const lockWindowMs = SCRIM_TRACKING_AUTO_LOCK_HOURS * ONE_HOUR_MS;
+	const now = 1_000_000_000;
+	const secondsAgo = (ms: number) => (now - ms) / 1000;
 
 	test("returns false when no map list submitted yet", () => {
-		expect(isTrackingLocked([], [], Date.now())).toBe(false);
+		expect(isTrackingLocked({ startTime: secondsAgo(ONE_HOUR_MS), now })).toBe(
+			false,
+		);
 	});
 
 	test("returns false just inside the auto-lock window from list submission", () => {
-		const now = 1_000_000_000;
-		const updatedAt = (now - (lockWindowMs - ONE_HOUR_MS)) / 1000;
-		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(false);
+		const startTime = secondsAgo(lockWindowMs);
+		const updatedAt = secondsAgo(lockWindowMs - ONE_HOUR_MS);
+		expect(
+			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
+		).toBe(false);
 	});
 
 	test("returns true just past the auto-lock window from list submission", () => {
-		const now = 1_000_000_000;
-		const updatedAt = (now - (lockWindowMs + ONE_HOUR_MS)) / 1000;
-		expect(isTrackingLocked([], [{ updatedAt }], now)).toBe(true);
+		const startTime = secondsAgo(lockWindowMs * 2);
+		const updatedAt = secondsAgo(lockWindowMs + ONE_HOUR_MS);
+		expect(
+			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
+		).toBe(true);
 	});
 
 	test("uses the most recent reported map as the reference point", () => {
-		const now = 1_000_000_000;
-		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
-		const recentMapSeconds = (now - ONE_HOUR_MS) / 1000;
+		const startTime = secondsAgo(lockWindowMs * 2);
 		expect(
-			isTrackingLocked(
-				[{ reportedAt: recentMapSeconds }],
-				[{ updatedAt: oldUpdatedAt }],
+			isTrackingLocked({
+				startTime,
+				maps: [{ reportedAt: secondsAgo(ONE_HOUR_MS) }],
+				mapLists: [{ updatedAt: secondsAgo(lockWindowMs * 2) }],
 				now,
-			),
+			}),
 		).toBe(false);
 	});
 
 	test("uses the most recent list update when there are no reported maps", () => {
-		const now = 1_000_000_000;
-		const oldUpdatedAt = (now - lockWindowMs * 2) / 1000;
-		const recentUpdatedAt = (now - ONE_HOUR_MS) / 1000;
+		const startTime = secondsAgo(lockWindowMs * 2);
 		expect(
-			isTrackingLocked(
-				[],
-				[{ updatedAt: oldUpdatedAt }, { updatedAt: recentUpdatedAt }],
+			isTrackingLocked({
+				startTime,
+				mapLists: [
+					{ updatedAt: secondsAgo(lockWindowMs * 2) },
+					{ updatedAt: secondsAgo(ONE_HOUR_MS) },
+				],
 				now,
-			),
+			}),
+		).toBe(false);
+	});
+
+	test("returns false when the map list was submitted long before a scrim that just started", () => {
+		const startTime = secondsAgo(ONE_HOUR_MS);
+		const updatedAt = secondsAgo(lockWindowMs * 10);
+		expect(
+			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
+		).toBe(false);
+	});
+
+	test("returns true once the auto-lock window has elapsed since the start time", () => {
+		const startTime = secondsAgo(lockWindowMs + ONE_HOUR_MS);
+		const updatedAt = secondsAgo(lockWindowMs * 10);
+		expect(
+			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
+		).toBe(true);
+	});
+
+	test("returns false for a scrim that has not started yet", () => {
+		const startTime = (now + lockWindowMs) / 1000;
+		const updatedAt = secondsAgo(lockWindowMs * 10);
+		expect(
+			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
 		).toBe(false);
 	});
 });

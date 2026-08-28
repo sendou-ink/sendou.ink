@@ -83,7 +83,11 @@ async function resolveMapByMap({
 	const pool = mapLists.length > 0 ? ScrimMapByMap.unionPool(mapLists) : null;
 	const currentMap = maps.find((m) => m.reportedAt === null) ?? null;
 	const viewerSide = Scrim.sideOfUser(post, user.id);
-	const locked = Scrim.isTrackingLocked(maps, mapLists);
+	const locked = Scrim.isTrackingLocked({
+		startTime: Scrim.getStartTime(post),
+		maps,
+		mapLists,
+	});
 
 	const ownList = viewerSide
 		? mapLists.find((l) => l.side === viewerSide)

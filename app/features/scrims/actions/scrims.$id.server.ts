@@ -219,7 +219,13 @@ async function loadMapByMapContext({
 		ScrimMapListRepository.findMapListsByScrimPostId(post.id),
 	]);
 
-	if (Scrim.isTrackingLocked(maps, mapLists)) {
+	if (
+		Scrim.isTrackingLocked({
+			startTime: Scrim.getStartTime(post),
+			maps,
+			mapLists,
+		})
+	) {
 		errorToast("Tracking is locked");
 	}
 
