@@ -371,6 +371,9 @@ test.describe("SendouQ", () => {
 		page,
 		factories,
 	}) => {
+		// every one of the eight members logs in and confirms on their own
+		test.slow();
+
 		const challengers = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
 		const accepters = await factories.UserFactory.createMany(FULL_GROUP_SIZE);
 		const challengerGroup = await factories.SQGroupFactory.create({

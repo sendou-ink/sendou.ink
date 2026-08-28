@@ -361,7 +361,21 @@ test.describe("Chat", () => {
 				new ChatSidebar(other.page).chat().message(/confirmed score/),
 			).toBeVisible();
 
-			// concluding the match ended both groups and the match room with them
+			// concluding the match ended both groups and the match room with them,
+			// but its unread system message keeps it listed until it is read
+			await expect(
+				alphaChat.roomRowUnreadBadge(`Match #${match.id}`),
+			).toHaveText("1");
+			await expect(alphaChat.locators.inactiveToggle).toHaveText(
+				/Inactive \(1\)/,
+			);
+
+			await alphaChat.openRoom(`Match #${match.id}`);
+
+			await expect(alphaChat.chat().message(/confirmed score/)).toBeVisible();
+
+			await alphaChat.backToRoomList();
+
 			await expect(alphaChat.locators.roomRows).toHaveCount(0);
 			await expect(alphaChat.locators.inactiveToggle).toHaveText(
 				/Inactive \(2\)/,
