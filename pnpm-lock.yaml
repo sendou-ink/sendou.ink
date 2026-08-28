@@ -39,9 +39,6 @@ importers:
       '@epic-web/cachified':
         specifier: 5.6.3
         version: 5.6.3
-      '@faker-js/faker':
-        specifier: 10.6.0
-        version: 10.6.0
       '@internationalized/date':
         specifier: 3.12.3
         version: 3.12.3
@@ -190,6 +187,9 @@ importers:
       '@biomejs/biome':
         specifier: 2.5.9
         version: 2.5.9
+      '@faker-js/faker':
+        specifier: 10.6.0
+        version: 10.6.0
       '@napi-rs/canvas':
         specifier: 1.0.7
         version: 1.0.7

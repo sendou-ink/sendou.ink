@@ -60,7 +60,6 @@
 		"@dnd-kit/sortable": "10.0.0",
 		"@dnd-kit/utilities": "3.2.2",
 		"@epic-web/cachified": "5.6.3",
-		"@faker-js/faker": "10.6.0",
 		"@internationalized/date": "3.12.3",
 		"@react-router/node": "8.3.0",
 		"@react-router/serve": "8.1.0",
@@ -112,6 +111,7 @@
 	"devDependencies": {
 		"@babel/preset-typescript": "7.29.7",
 		"@biomejs/biome": "2.5.9",
+		"@faker-js/faker": "10.6.0",
 		"@napi-rs/canvas": "1.0.7",
 		"@playwright/test": "1.62.1",
 		"@react-router/dev": "8.3.0",
