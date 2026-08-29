@@ -20,6 +20,7 @@ import {
 	type TLShapeId,
 	type TLUiStylePanelProps,
 	Tldraw,
+	type TldrawOptions,
 } from "@tldraw/tldraw";
 import clsx from "clsx";
 import {
@@ -72,6 +73,10 @@ const BACKGROUND_HEIGHT = 634;
 const GAME_UNITS_TO_PX: Record<"MINI" | "OVER", number> = {
 	MINI: 4.4,
 	OVER: 8.4,
+};
+// the menu panel that normally holds undo & redo is hidden, so they are moved to the toolbar
+const TLDRAW_OPTIONS: Partial<TldrawOptions> = {
+	actionShortcutsLocation: "toolbar",
 };
 const MAIN_WEAPON_URL_PATTERN = /main-weapons-outlined\/(\d+)/;
 const SPECIAL_WEAPON_URL_PATTERN = /special-weapons\/(\d+)/;
@@ -360,7 +365,6 @@ export default function Planner() {
 		Minimap: null,
 		NavigationPanel: null,
 		PageMenu: null,
-		QuickActions: null,
 		SharePanel: null,
 		StylePanel: CustomStylePanel,
 		TopPanel: null,
@@ -431,7 +435,11 @@ export default function Planner() {
 				</button>
 			</div>
 			<div style={{ position: "fixed", inset: 0 }}>
-				<Tldraw onMount={handleMount} components={tldrawComponents} />
+				<Tldraw
+					onMount={handleMount}
+					components={tldrawComponents}
+					options={TLDRAW_OPTIONS}
+				/>
 			</div>
 			<DragOverlay dropAnimation={null} modifiers={[snapCenterToCursor]}>
 				{activeDragItem ? (

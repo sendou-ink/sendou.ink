@@ -79,6 +79,13 @@ body:has(.planner) header {
 	border: var(--border-style);
 }
 
+/* the undo/redo row tucks under the toolbar, so it shares its look sans bottom border */
+.tlui-toolbar__extras__controls {
+	border: var(--border-style);
+	border-bottom: none;
+	background-color: var(--color-panel);
+}
+
 .tlui-style-panel {
 	margin-top: 0 !important;
 }
