@@ -79,6 +79,8 @@ import { isRevalidation, metaTags, type SerializeFrom } from "./utils/remix";
 import { requestContextMiddleware } from "./utils/request-context-middleware.server";
 import { APP_ICON_URL, pwaSplashScreenImageUrl } from "./utils/urls";
 
+const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
+
 export const middleware: Route.MiddlewareFunction[] = [
 	redirectsMiddleware,
 	requestContextMiddleware,
@@ -339,7 +341,21 @@ function useLoadingIndicator() {
 
 function usePreloadTranslation() {
 	React.useEffect(() => {
-		void generalI18next.loadNamespaces(allI18nNamespaces());
+		const loadAll = () =>
+			void generalI18next.loadNamespaces(allI18nNamespaces());
+
+		if (typeof window.requestIdleCallback !== "function") {
+			const timeoutId = window.setTimeout(
+				loadAll,
+				PRELOAD_TRANSLATION_TIMEOUT_MS,
+			);
+			return () => window.clearTimeout(timeoutId);
+		}
+
+		const idleId = window.requestIdleCallback(loadAll, {
+			timeout: PRELOAD_TRANSLATION_TIMEOUT_MS,
+		});
+		return () => window.cancelIdleCallback(idleId);
 	}, []);
 }
 
