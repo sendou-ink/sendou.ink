@@ -1,5 +1,12 @@
+import clsx from "clsx";
 import { Braces, CircleHelp, Hand, Heart, HeartHandshake } from "lucide-react";
-import type { ReactNode } from "react";
+import {
+	type ReactNode,
+	type RefObject,
+	useEffect,
+	useRef,
+	useState,
+} from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import * as R from "remeda";
@@ -55,6 +62,7 @@ import { PatreonIcon } from "../icons/Patreon";
 import styles from "./Footer.module.css";
 
 const MARQUEE_ROWS_COUNT = 3;
+const MARQUEE_MOUNT_MARGIN = "400px";
 
 const SITEMAP_COLUMNS = [
 	{
@@ -275,22 +283,34 @@ export function Footer() {
 type Patron = NonNullable<ReturnType<typeof usePatrons>["patrons"]>[number];
 
 function PatronMarquee() {
+	const ref = useRef<HTMLDivElement>(null);
+	const hasScrolledIntoView = useHasScrolledIntoView(ref);
+
+	return (
+		<div
+			ref={ref}
+			className={clsx(styles.marquee, {
+				[styles.marqueePlaceholder]: !hasScrolledIntoView,
+			})}
+		>
+			{hasScrolledIntoView ? <PatronMarqueeRows /> : null}
+		</div>
+	);
+}
+
+function PatronMarqueeRows() {
 	const { patrons } = usePatrons();
 
 	if (!patrons || patrons.length === 0) return null;
 
 	const rows = R.chunk(patrons, Math.ceil(patrons.length / MARQUEE_ROWS_COUNT));
 
-	return (
-		<div className={styles.marquee}>
-			{rows.map((row) => (
-				<div key={row[0].id} className={styles.marqueeRow}>
-					<PatronChips patrons={row} />
-					<PatronChips patrons={row} ariaHidden />
-				</div>
-			))}
+	return rows.map((row) => (
+		<div key={row[0].id} className={styles.marqueeRow}>
+			<PatronChips patrons={row} />
+			<PatronChips patrons={row} ariaHidden />
 		</div>
-	);
+	));
 }
 
 function PatronChips({
@@ -355,6 +375,30 @@ function FooterCard({
 			{content}
 		</Link>
 	);
+}
+
+function useHasScrolledIntoView(ref: RefObject<HTMLElement | null>) {
+	const [hasScrolledIntoView, setHasScrolledIntoView] = useState(false);
+
+	useEffect(() => {
+		const element = ref.current;
+		if (!element) return;
+
+		const observer = new IntersectionObserver(
+			(entries) => {
+				if (!entries.some((entry) => entry.isIntersecting)) return;
+
+				setHasScrolledIntoView(true);
+				observer.disconnect();
+			},
+			{ rootMargin: MARQUEE_MOUNT_MARGIN },
+		);
+		observer.observe(element);
+
+		return () => observer.disconnect();
+	}, [ref]);
+
+	return hasScrolledIntoView;
 }
 
 function customThemeChipStyle(

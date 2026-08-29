@@ -48,6 +48,15 @@
 	}
 }
 
+.marqueePlaceholder {
+	min-height: calc(
+		3 *
+		(var(--font-xs) * var(--line-height) + var(--s-1) * 2) +
+		var(--s-2) *
+		2
+	);
+}
+
 .marqueeRow {
 	display: flex;
 	gap: var(--s-2);
