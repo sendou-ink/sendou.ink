@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Seleção de armas",
+	"placeholders.chatMessage": "Aperte enter para enviar",
 	"placeholders.weaponPoolFull": "",
 	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "",

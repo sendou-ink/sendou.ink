@@ -83,7 +83,7 @@ pnpm exec playwright show-trace test-results/<test-folder>/trace.zip
 When a failure needs full DOM snapshots to understand, re-run just that test with `--trace retain-on-failure` (the CLI flag records complete traces).
 
 ### Re-render races
-Skalop (websocket) is fully disconnected in e2e — the build has an empty `VITE_SKALOP_WS_URL` and worker servers get empty `SKALOP_SYSTEM_MESSAGE_URL`/`SKALOP_TOKEN` (see `e2e/global-setup.ts`), so cross-worker websocket crosstalk cannot cause flakes. Google Fonts are also blocked at the context level so font swaps never reflow the page mid-test. Re-renders from the test's own action revalidations can still swallow a React Aria press (press start registers, press end never fires — no POST); `waitForPOSTResponse` retries for this, so route flows through it rather than adding sleeps. When e2e tests for chat/websocket features are added, skalop needs a per-worker instance or stub with a runtime-derived WS URL.
+Live events run on an in-process event bus per worker server (SSE, see `app/features/events`), so cross-worker crosstalk cannot cause flakes. Google Fonts are also blocked at the context level so font swaps never reflow the page mid-test. Re-renders from the test's own action revalidations can still swallow a React Aria press (press start registers, press end never fires — no POST); `waitForPOSTResponse` retries for this, so route flows through it rather than adding sleeps.
 
 ## Test pattern reference
 

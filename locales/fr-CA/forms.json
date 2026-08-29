@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "",
 	"errors.customRoleRequired": "",
 	"labels.weaponPool": "Armes jouées",
+	"placeholders.chatMessage": "",
 	"placeholders.weaponPoolFull": "",
 	"placeholders.vodStartTimestamp": "",
 	"labels.voiceChat": "",

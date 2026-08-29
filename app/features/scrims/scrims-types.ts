@@ -27,7 +27,7 @@ export interface ScrimPost {
 	} | null;
 	team: ScrimPostTeam | null;
 	users: Array<ScrimPostUser>;
-	chatCode: string | null;
+	chatRoomId: number | null;
 	requests: Array<ScrimPostRequest>;
 	/** Is the post visible to the user because of their association membership? */
 	isPrivate?: boolean;

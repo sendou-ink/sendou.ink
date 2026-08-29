@@ -36,9 +36,6 @@ const schema = v.pipe(
 		STORAGE_REGION: requiredInProd(isProd, "us-east-1"),
 		STORAGE_BUCKET: requiredInProd(isProd, "sendou"),
 
-		SKALOP_SYSTEM_MESSAGE_URL: v.optional(v.string()),
-		SKALOP_TOKEN: v.optional(v.string()),
-
 		TWITCH_CLIENT_ID: v.optional(v.string()),
 		TWITCH_CLIENT_SECRET: v.optional(v.string()),
 
@@ -97,12 +94,6 @@ export const ServerConfig = {
 		secret: values.STORAGE_SECRET,
 		region: values.STORAGE_REGION,
 		bucket: values.STORAGE_BUCKET,
-	},
-
-	/** Skalop (chat) server configuration. Optional — chat features no-op when unset. */
-	skalop: {
-		systemMessageUrl: values.SKALOP_SYSTEM_MESSAGE_URL,
-		token: values.SKALOP_TOKEN,
 	},
 
 	/** Twitch integration credentials. Optional — streams are hidden when unset. */

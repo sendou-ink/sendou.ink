@@ -1,6 +1,7 @@
 import type { Transaction } from "kysely";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as BracketRepository from "../BracketRepository.server";
 import type * as Engine from "./engine";
@@ -28,6 +29,7 @@ export async function executeBracketOperation<T extends Engine.EngineResult>({
 }): Promise<{ result: T; endedMatchIds: number[] }> {
 	let result!: T;
 	let endedMatchIds: number[] = [];
+	let changedChatRoomIds: number[] = [];
 
 	await db.transaction().execute(async (trx) => {
 		const bracketData = await BracketRepository.findByTournamentId(
@@ -57,12 +59,19 @@ export async function executeBracketOperation<T extends Engine.EngineResult>({
 			};
 		}
 
-		await BracketRepository.applyMatchChanges(
-			{ previousData: bracketData, result: applied },
+		changedChatRoomIds = await BracketRepository.applyMatchChanges(
+			{
+				previousData: bracketData,
+				result: applied,
+				isLeague: tournament.isLeague,
+			},
 			trx,
 		);
 		await inTransaction?.(result, trx);
 	});
+
+	// after the commit so the refetch it prompts can not read the pre-commit state
+	ChatSystemMessage.notifyRoomsChangedByRoomIds(changedChatRoomIds);
 
 	return { result, endedMatchIds };
 }

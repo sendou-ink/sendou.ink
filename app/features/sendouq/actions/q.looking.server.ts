@@ -14,10 +14,10 @@ import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { lookingSchema } from "../q-action-schemas";
 import {
 	FULL_GROUP_SIZE,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
 } from "../q-constants";
-import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
+import { SendouQError } from "../q-utils.server";
 
 // this function doesn't throw normally because we are assuming
 // if there is a validation error the user saw stale data
@@ -43,22 +43,15 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	const broadcastLookingUpdate = () =>
-		ChatSystemMessage.send({
-			room: SENDOUQ_LOOKING_ROOM,
-			revalidateOnly: true,
-		});
+		ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 	const revalidateGroupTopic = (groupId: number) =>
-		ChatSystemMessage.send({
-			room: sqGroupWebsocketRoom(groupId),
-			revalidateOnly: true,
-		});
+		ChatSystemMessage.send({ channel: sqGroupChannel(groupId) });
 
 	const notifyLikeReceived = (groupId: number) =>
 		ChatSystemMessage.send({
-			room: sqGroupWebsocketRoom(groupId),
+			channel: sqGroupChannel(groupId),
 			type: "LIKE_RECEIVED",
-			revalidateOnly: true,
 		});
 
 	try {
@@ -150,21 +143,12 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
-				if (ourGroup.chatCode) {
-					ChatSystemMessage.removeRoom(ourGroup.chatCode);
-				}
-				if (theirGroup.chatCode) {
-					ChatSystemMessage.removeRoom(theirGroup.chatCode);
-				}
-
-				const survivingGroup =
-					SendouQ.findUncensoredGroupById(survivingGroupId);
-				if (survivingGroup?.chatCode) {
-					setGroupChatMetadata({
-						chatCode: survivingGroup.chatCode,
-						members: survivingGroup.members,
-					});
-				}
+				// both old rooms died and a fresh merged room was created
+				ChatSystemMessage.notifyRoomsChanged(
+					[...ourGroup.members, ...theirGroup.members].map(
+						(member) => member.id,
+					),
+				);
 
 				broadcastLookingUpdate();
 
@@ -209,17 +193,17 @@ export const action: ActionFunction = async ({ request }) => {
 				}
 
 				const remainingGroup = SendouQ.findUncensoredGroupById(currentGroup.id);
-				if (remainingGroup?.chatCode) {
-					ChatSystemMessage.send({
-						room: remainingGroup.chatCode,
+				if (remainingGroup?.chatRoomId) {
+					ChatSystemMessage.sendPersisted({
+						roomId: remainingGroup.chatRoomId,
 						type: "USER_LEFT",
-						context: { name: user.username },
-					});
-					setGroupChatMetadata({
-						chatCode: remainingGroup.chatCode,
-						members: remainingGroup.members,
+						authorUserId: user.id,
 					});
 				}
+
+				ChatSystemMessage.notifyRoomsChanged(
+					currentGroup.members.map((member) => member.id),
+				);
 
 				broadcastLookingUpdate();
 
@@ -245,17 +229,17 @@ export const action: ActionFunction = async ({ request }) => {
 				await refreshSendouQInstance();
 
 				const groupAfterKick = SendouQ.findUncensoredGroupById(currentGroup.id);
-				if (groupAfterKick?.chatCode && kickedMember) {
-					ChatSystemMessage.send({
-						room: groupAfterKick.chatCode,
+				if (groupAfterKick?.chatRoomId && kickedMember) {
+					ChatSystemMessage.sendPersisted({
+						roomId: groupAfterKick.chatRoomId,
 						type: "USER_LEFT",
-						context: { name: kickedMember.username },
-					});
-					setGroupChatMetadata({
-						chatCode: groupAfterKick.chatCode,
-						members: groupAfterKick.members,
+						authorUserId: kickedMember.id,
 					});
 				}
+
+				ChatSystemMessage.notifyRoomsChanged(
+					currentGroup.members.map((member) => member.id),
+				);
 
 				broadcastLookingUpdate();
 

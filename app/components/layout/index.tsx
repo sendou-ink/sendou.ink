@@ -21,7 +21,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
-import { useChatContext } from "~/features/chat/useChatContext";
+import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -146,6 +146,23 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 	return [collapsed, setCollapsedAndPersist] as const;
 }
 
+/**
+ * Open state of a modal that only the tablet layout has, remembering the pathname it was
+ * opened on so that leaving that layout or navigating elsewhere closes it on its own.
+ */
+function useTabletModal(isTabletLayout: boolean) {
+	const location = useLocation();
+	const [openedOnPathname, setOpenedOnPathname] = React.useState<string | null>(
+		null,
+	);
+
+	const isOpen = isTabletLayout && openedOnPathname === location.pathname;
+	const setIsOpen = (open: boolean) =>
+		setOpenedOnPathname(open ? location.pathname : null);
+
+	return [isOpen, setIsOpen] as const;
+}
+
 function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 	const [navOffset, setNavOffset] = React.useState(0);
 	const lastScrollY = React.useRef(0);
@@ -228,10 +245,12 @@ export function Layout({
 	const [sideNavCollapsed, setSideNavCollapsed] = useSideNavCollapsed(
 		data?.sidenavCollapsed ?? false,
 	);
-	const [sideNavModalOpen, setSideNavModalOpen] = React.useState(false);
-	const [chatSidebarModalOpen, setChatSidebarModalOpen] = React.useState(false);
-
 	const layoutSize = useLayoutSize();
+	const isTabletLayout = layoutSize === "tablet";
+	const [sideNavModalOpen, setSideNavModalOpen] =
+		useTabletModal(isTabletLayout);
+	const [chatSidebarModalOpen, setChatSidebarModalOpen] =
+		useTabletModal(isTabletLayout);
 	useVisualViewportHeight();
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
@@ -248,26 +267,6 @@ export function Layout({
 	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 	const headerRef = React.useRef<HTMLElement>(null);
 	const navOffset = useNavOffset(headerRef);
-
-	// modals only exist in the tablet layout, close them when resizing out of
-	// it or navigating to another page (setChatOpen is left as is on purpose,
-	// it belongs to a parent component and thus cannot be set during render)
-	const prevLayoutSize = React.useRef(layoutSize);
-	const prevPathname = React.useRef(location.pathname);
-	const leftTabletLayout =
-		prevLayoutSize.current === "tablet" && layoutSize !== "tablet";
-	const pathnameChanged = prevPathname.current !== location.pathname;
-	prevLayoutSize.current = layoutSize;
-	prevPathname.current = location.pathname;
-
-	if (leftTabletLayout || pathnameChanged) {
-		if (sideNavModalOpen) {
-			setSideNavModalOpen(false);
-		}
-		if (chatSidebarModalOpen) {
-			setChatSidebarModalOpen(false);
-		}
-	}
 
 	const user = useUser();
 	const { showUnseenDot } = useNotifications();

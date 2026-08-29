@@ -3,8 +3,7 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
-	removeRoom: vi.fn(),
-	setMetadata: vi.fn(),
+	notifyRoomsChangedByRoomIds: vi.fn(),
 }));
 
 import { actAs } from "~/db/seed/core/actAs";

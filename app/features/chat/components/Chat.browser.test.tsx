@@ -2,60 +2,51 @@ import * as React from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
-import type { ChatMessage, ChatUser } from "../chat-types";
-import { Chat, type ChatAdapter } from "./Chat";
+import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
+import { Chat } from "./Chat";
 
 vi.mock("~/features/auth/core/user", () => ({
 	useUser: () => null,
 }));
 
-const USERS: Record<number, ChatUser> = {
-	1: {
-		username: "Alice",
-		discordId: "1",
-		discordAvatar: null,
-		pronouns: null,
-		customAvatarUrl: null,
-		chatNameHue: null,
-	},
+const ALICE: ChatMessageAuthor = {
+	id: 1,
+	username: "Alice",
+	discordId: "1",
+	discordAvatar: null,
+	customUrl: null,
+	customAvatarUrl: null,
+	pronouns: null,
+	chatNameHue: null,
 };
 
-function createMessage(overrides: Partial<ChatMessage> = {}): ChatMessage {
+function createMessage(
+	overrides: Partial<ClientChatMessage> = {},
+): ClientChatMessage {
 	return {
-		id: "1",
-		userId: 1,
+		id: 1,
+		roomId: 1,
+		authorUserId: 1,
+		type: null,
 		contents: "Hello world",
-		timestamp: 1700000000000,
-		room: "room",
+		publicId: "publicid-1",
+		createdAt: 1700000000,
+		author: ALICE,
 		...overrides,
 	};
 }
 
 function renderChat(
-	messages: ChatMessage[],
-	props?: { missingUserName?: string },
+	messages: ClientChatMessage[],
+	props: Partial<React.ComponentProps<typeof Chat>> = {},
 ) {
-	const chat: ChatAdapter = {
-		messages,
-		send: () => {},
-		currentRoom: "room",
-		setCurrentRoom: () => {},
-		readyState: "CONNECTED",
-		unseenMessages: new Map(),
-	};
-
 	const router = createMemoryRouter(
 		[
 			{
 				path: "/",
 				element: (
 					<div style={{ width: 400 }}>
-						<Chat
-							users={USERS}
-							rooms={[]}
-							chat={chat}
-							missingUserName={props?.missingUserName}
-						/>
+						<Chat messages={messages} onSend={() => {}} {...props} />
 					</div>
 				),
 			},
@@ -66,27 +57,18 @@ function renderChat(
 	return render(<RouterProvider router={router} />);
 }
 
-async function renderChatWithControls(initialMessages: ChatMessage[]) {
+async function renderChatWithControls(initialMessages: ClientChatMessage[]) {
 	const controls = {
-		addMessage: (_msg: ChatMessage) => {},
+		addMessage: (_msg: ClientChatMessage) => {},
 	};
 
 	function ChatHarness() {
 		const [messages, setMessages] = React.useState(initialMessages);
 		controls.addMessage = (msg) => setMessages((prev) => [...prev, msg]);
 
-		const chat: ChatAdapter = {
-			messages,
-			send: () => {},
-			currentRoom: "room",
-			setCurrentRoom: () => {},
-			readyState: "CONNECTED",
-			unseenMessages: new Map(),
-		};
-
 		return (
 			<div style={{ width: 400 }}>
-				<Chat users={USERS} rooms={[]} chat={chat} />
+				<Chat messages={messages} onSend={() => {}} />
 			</div>
 		);
 	}
@@ -100,7 +82,11 @@ async function renderChatWithControls(initialMessages: ChatMessage[]) {
 
 function manyMessages(count: number) {
 	return Array.from({ length: count }, (_, i) =>
-		createMessage({ id: String(i + 1), contents: `Message ${i + 1}` }),
+		createMessage({
+			id: i + 1,
+			publicId: `publicid-${i + 1}`,
+			contents: `Message ${i + 1}`,
+		}),
 	);
 }
 
@@ -111,8 +97,16 @@ function isScrolledToBottom(element: HTMLElement) {
 describe("Chat", () => {
 	test("renders messages inside a virtualized listbox", async () => {
 		const screen = await renderChat([
-			createMessage({ id: "1", contents: "First message" }),
-			createMessage({ id: "2", contents: "Second message" }),
+			createMessage({
+				id: 1,
+				publicId: "publicid-1",
+				contents: "First message",
+			}),
+			createMessage({
+				id: 2,
+				publicId: "publicid-2",
+				contents: "Second message",
+			}),
 		]);
 
 		await expect.element(screen.getByRole("listbox")).toBeInTheDocument();
@@ -124,11 +118,7 @@ describe("Chat", () => {
 	});
 
 	test("virtualizes a long list into a scrollable region taller than its viewport", async () => {
-		const screen = await renderChat(
-			Array.from({ length: 100 }, (_, i) =>
-				createMessage({ id: String(i + 1), contents: `Message ${i + 1}` }),
-			),
-		);
+		const screen = await renderChat(manyMessages(100));
 
 		const listbox = screen.getByRole("listbox").element() as HTMLElement;
 		await expect.element(screen.getByRole("listbox")).toBeInTheDocument();
@@ -147,14 +137,12 @@ describe("Chat", () => {
 		);
 	});
 
-	test("renders system messages", async () => {
+	test("renders system messages with the author interpolated", async () => {
 		const screen = await renderChat([
 			createMessage({
-				id: "1",
 				type: "USER_LEFT",
-				contents: undefined,
-				userId: undefined,
-				context: { name: "Bob" },
+				contents: null,
+				author: { ...ALICE, username: "Bob" },
 			}),
 		]);
 
@@ -163,23 +151,36 @@ describe("Chat", () => {
 			.toBeInTheDocument();
 	});
 
-	test("skips messages with an unknown user when no fallback name is given", async () => {
-		const screen = await renderChat([
-			createMessage({ id: "1", userId: 999, contents: "Ghost message" }),
-		]);
+	test("renders no composer for a viewer who may only read the room", async () => {
+		const screen = await renderChat([createMessage()], { readOnly: true });
 
-		await expect.element(screen.getByRole("listbox")).toBeInTheDocument();
-		expect(screen.getByRole("option").elements()).toHaveLength(0);
+		await expect.element(screen.getByText("Read-only")).toBeInTheDocument();
+		expect(screen.getByRole("textbox").elements()).toHaveLength(0);
 	});
 
-	test("renders messages with an unknown user using the fallback name", async () => {
-		const screen = await renderChat(
-			[createMessage({ id: "1", userId: 999, contents: "Ghost message" })],
-			{ missingUserName: "Unknown" },
-		);
+	test("renders a splatnet room link with its QR code", async () => {
+		const url = "https://s.nintendo.com/av5ja/lobby";
+		const screen = await renderChat([
+			createMessage({ contents: `join here ${url} thanks` }),
+		]);
 
-		await expect.element(screen.getByText("Ghost message")).toBeInTheDocument();
-		await expect.element(screen.getByText("Unknown")).toBeInTheDocument();
+		const link = screen.getByRole("link", { name: url });
+		await expect.element(link).toHaveAttribute("href", url);
+		await expect.element(link).toHaveAttribute("target", "_blank");
+		await expect.element(link).toHaveAttribute("rel", "noopener noreferrer");
+		await expect.element(screen.getByRole("img")).toBeInTheDocument();
+		expect(screen.getByRole("option").element().textContent).toContain(
+			"join here",
+		);
+	});
+
+	test("renders a deleted account's message with a fallback name", async () => {
+		const screen = await renderChat([
+			createMessage({ authorUserId: null, author: null, contents: "Ghost" }),
+		]);
+
+		await expect.element(screen.getByText("Ghost")).toBeInTheDocument();
+		await expect.element(screen.getByText("???")).toBeInTheDocument();
 	});
 
 	test("scrolls to the bottom on initial load", async () => {
@@ -205,7 +206,8 @@ describe("Chat", () => {
 
 		controls.addMessage(
 			createMessage({
-				id: "new",
+				id: 51,
+				publicId: "publicid-new",
 				contents:
 					"A brand new message that is long enough to wrap onto multiple lines in the chat window",
 			}),
@@ -235,7 +237,13 @@ describe("Chat", () => {
 			expect(element.scrollTop).toBe(0);
 		});
 
-		controls.addMessage(createMessage({ id: "new", contents: "While away" }));
+		controls.addMessage(
+			createMessage({
+				id: 51,
+				publicId: "publicid-new",
+				contents: "While away",
+			}),
+		);
 
 		await expect.element(screen.getByText("New messages")).toBeInTheDocument();
 		expect(isScrolledToBottom(element)).toBe(false);
@@ -266,7 +274,13 @@ describe("Chat", () => {
 
 		await new Promise((resolve) => setTimeout(resolve, 300));
 
-		controls.addMessage(createMessage({ id: "new", contents: "While away" }));
+		controls.addMessage(
+			createMessage({
+				id: 51,
+				publicId: "publicid-new",
+				contents: "While away",
+			}),
+		);
 
 		await expect.element(screen.getByText("New messages")).toBeInTheDocument();
 		await new Promise((resolve) => setTimeout(resolve, 300));

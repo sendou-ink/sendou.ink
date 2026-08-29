@@ -11,8 +11,10 @@ const RESOLVED_CHANGELOG_DIR = path.resolve(CHANGELOG_FOLDER_PATH);
 
 const BULLET_LINE_PATTERN = /^[-*]\s+/;
 
+const navItemSchema = v.picklist(OG_IMAGE_PAGES);
+
 const frontmatterSchema = v.object({
-	navItem: v.optional(v.picklist(OG_IMAGE_PAGES)),
+	navItem: v.optional(v.union([navItemSchema, v.array(navItemSchema)])),
 	type: v.picklist(["feature", "bug"] as const),
 });
 
@@ -73,7 +75,22 @@ function parseEntryFile(fileName: string): ChangelogGraphicEntry {
 
 	const { headline, bullets } = parseBody(content, fileName);
 
-	return { ...frontmatter, headline, bullets };
+	return {
+		navItems: navItemsOf(frontmatter.navItem),
+		type: frontmatter.type,
+		headline,
+		bullets,
+	};
+}
+
+function navItemsOf(
+	navItem: v.InferOutput<typeof frontmatterSchema>["navItem"],
+) {
+	if (!navItem) return undefined;
+
+	const navItems = Array.isArray(navItem) ? navItem : [navItem];
+
+	return navItems.length > 0 ? navItems : undefined;
 }
 
 function parseBody(content: string, fileName: string) {

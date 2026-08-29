@@ -1,44 +1,22 @@
-import { differenceInDays } from "date-fns";
-import type { ChatMessage } from "./chat-types";
+import { logger } from "~/utils/logger";
+import { soundPath } from "~/utils/urls";
+import { SOUND_BY_SYSTEM_MESSAGE_TYPE } from "./chat-constants";
+import type {
+	SoundOnlySystemMessageType,
+	SystemMessageType,
+} from "./chat-types";
 
-const STAFF_EXTRA_DAYS = 7;
+export function messageTypeToSound(type: SystemMessageType | undefined) {
+	const soundOnly = soundOnlyType(type);
 
-/** Should a chat room be still accessible via chat code. */
-export function chatAccessible(args: {
-	/** Is the user site staff? Allows them to see the chat code for extra days. */
-	isStaff?: boolean;
-	expiresAfterDays: number;
-	comparedTo: Date;
-}): boolean {
-	const extraDays = args.isStaff ? STAFF_EXTRA_DAYS : 0;
-	return (
-		differenceInDays(new Date(), args.comparedTo) <
-		args.expiresAfterDays + extraDays
-	);
+	return soundOnly ? SOUND_BY_SYSTEM_MESSAGE_TYPE[soundOnly] : null;
 }
 
-const DATE_PLACEHOLDER_PATTERN = /\{\{date:(\d+)\}\}/g;
-
-export function datePlaceholder(date: Date): string {
-	return `{{date:${date.getTime()}}}`;
-}
-
-export function resolveDatePlaceholders(
-	text: string,
-	format: (date: Date) => string,
-): string {
-	return text.replace(DATE_PLACEHOLDER_PATTERN, (_match, ts) =>
-		format(new Date(Number(ts))),
-	);
-}
-
-export function messageTypeToSound(type: ChatMessage["type"]) {
-	if (type === "LIKE_RECEIVED") return "sq_like";
-	if (type === "MATCH_STARTED") return "sq_match";
-	if (type === "READY_CHECK_STARTED") return "sq_ready-check";
-	if (type === "NEW_GROUP") return "sq_new-group";
-
-	return null;
+/** The type if its broadcast plays a sound, otherwise undefined. */
+export function soundOnlyType(
+	type: SystemMessageType | undefined,
+): SoundOnlySystemMessageType | undefined {
+	return type && playsSound(type) ? type : undefined;
 }
 
 export function soundCodeToLocalStorageKey(soundCode: string) {
@@ -52,8 +30,34 @@ export function soundEnabled(soundCode: string) {
 	return !soundEnabled || soundEnabled === "true";
 }
 
+export function playMessageSound(type: SystemMessageType | undefined) {
+	const sound = messageTypeToSound(type);
+	if (!sound) return;
+
+	playSound(sound);
+}
+
+export function playSound(soundCode: string) {
+	if (!soundEnabled(soundCode)) return;
+
+	playSoundIgnoringSetting(soundCode);
+}
+
+/** Plays regardless of the user's setting for the sound, for previewing e.g. the volume. */
+export function playSoundIgnoringSetting(soundCode: string) {
+	const audio = new Audio(soundPath(soundCode));
+	audio.volume = soundVolume() / 100;
+	void audio.play().catch((err) => logger.error(`Couldn't play sound: ${err}`));
+}
+
 export function soundVolume() {
 	const volume = localStorage.getItem("settings__sound-volume");
 
 	return volume ? Number.parseFloat(volume) : 100;
+}
+
+function playsSound(
+	type: SystemMessageType,
+): type is SoundOnlySystemMessageType {
+	return type in SOUND_BY_SYSTEM_MESSAGE_TYPE;
 }

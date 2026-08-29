@@ -268,9 +268,6 @@ function MatchRow({
 	const displayedName =
 		spoilerCensor === "full" ? "???" : (team?.name ?? "???");
 
-	// xxx: used to have a title tooltip listing the team's members, removed when rosters
-	// left the tournament layout data. Check later if it can be brought back e.g. by
-	// loading the roster on demand when hovering
 	return (
 		<div
 			className={clsx("stack horizontal", { "text-lighter": isLoser })}

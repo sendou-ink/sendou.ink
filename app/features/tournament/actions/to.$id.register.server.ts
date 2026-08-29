@@ -8,13 +8,11 @@ import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server"
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
@@ -114,10 +112,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 					"Registration is closed",
 				);
 
-				await TournamentLFGRepository.leaveLfg({
-					userId: user.id,
-					tournamentId,
-				});
+				ChatSystemMessage.notifyRoomsChanged(
+					await TournamentLFGRepository.leaveLfg({
+						userId: user.id,
+						tournamentId,
+					}),
+				);
 				await TournamentTeamRepository.insert({
 					team: {
 						name,
@@ -169,11 +169,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			await syncPickupChatMetadata({
-				teamId: ownTeam.id,
-				tournament: pickupChatTournament(tournament),
-			});
 			break;
 		}
 		case "LEAVE_TEAM": {
@@ -208,11 +203,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: user.id,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			await syncPickupChatMetadata({
-				teamId: teamMemberOf.id,
-				tournament: pickupChatTournament(tournament),
-			});
 
 			break;
 		}
@@ -301,14 +291,16 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			await TournamentLFGRepository.leaveLfg({
-				userId: data.userId,
-				tournamentId,
-			});
-			await TournamentTeamRepository.join({
-				userId: data.userId,
-				newTeamId: ownTeam.id,
-			});
+			ChatSystemMessage.notifyRoomsChanged([
+				...(await TournamentLFGRepository.leaveLfg({
+					userId: data.userId,
+					tournamentId,
+				})),
+				...(await TournamentTeamRepository.join({
+					userId: data.userId,
+					newTeamId: ownTeam.id,
+				})),
+			]);
 
 			await SavedCalendarEventRepository.unsaveByUserId({
 				userId: data.userId,
@@ -321,11 +313,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-			await syncPickupChatMetadata({
-				teamId: ownTeam.id,
-				tournament: pickupChatTournament(tournament),
-			});
 
 			if (!tournament.isTest && !tournament.isDraft) {
 				notify({
@@ -357,14 +344,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				"Unregistering from leagues is not possible after registration has closed",
 			);
 
-			const pickupChatTeam =
-				await TournamentLFGRepository.findPickupChatTeamById(ownTeam.id);
-
-			await TournamentTeamRepository.deleteById(ownTeam.id);
-
-			if (pickupChatTeam) {
-				ChatSystemMessage.removeRoom(pickupChatTeam.chatCode);
-			}
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentTeamRepository.deleteById(ownTeam.id),
+			);
 
 			for (const userId of ownTeam.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
@@ -386,12 +368,3 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return null;
 };
-
-function pickupChatTournament(tournament: Tournament) {
-	return {
-		id: tournament.ctx.id,
-		name: tournament.ctx.name,
-		logoUrl: tournament.ctx.logoUrl,
-		startTime: tournament.ctx.startsAt,
-	};
-}

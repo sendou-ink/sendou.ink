@@ -14,8 +14,8 @@ import styles from "./ChangelogGraphic.module.css";
 const GRAPHIC_WIDTH = 560;
 
 export interface ChangelogGraphicEntry {
-	/** Nav icon shown next to the entry; omitted = sendou.ink logo */
-	navItem?: OgImagePage;
+	/** Nav icons shown next to the entry; omitted = sendou.ink logo */
+	navItems?: OgImagePage[];
 	type: "feature" | "bug";
 	headline: string;
 	bullets?: string[];
@@ -59,7 +59,7 @@ export function ChangelogGraphic({
 					))}
 					{shortFeatures.map((entry) => (
 						<div key={entry.headline} className={styles.shortFeature}>
-							<EntryIcon entry={entry} size={28} />
+							<EntryIcons entry={entry} size={28} />
 							{entry.headline}
 						</div>
 					))}
@@ -68,7 +68,7 @@ export function ChangelogGraphic({
 							<GraphicSectionDivider>Fixes</GraphicSectionDivider>
 							{fixes.map((entry) => (
 								<div key={entry.headline} className={styles.fix}>
-									<EntryIcon entry={entry} size={22} />
+									<EntryIcons entry={entry} size={22} />
 									{entry.headline}
 								</div>
 							))}
@@ -84,7 +84,7 @@ function LongFeature({ entry }: { entry: ChangelogGraphicEntry }) {
 	return (
 		<section className={styles.longFeature}>
 			<div className={styles.longFeatureHeader}>
-				<EntryIcon entry={entry} size={36} />
+				<EntryIcons entry={entry} size={36} />
 				<h2 className={styles.longFeatureHeadline}>{entry.headline}</h2>
 			</div>
 			<ul className={styles.bullets}>
@@ -96,25 +96,30 @@ function LongFeature({ entry }: { entry: ChangelogGraphicEntry }) {
 	);
 }
 
-function EntryIcon({
+function EntryIcons({
 	entry,
 	size,
 }: {
 	entry: ChangelogGraphicEntry;
 	size: number;
 }) {
-	if (!entry.navItem) {
+	if (!entry.navItems) {
 		return <SiteLogoMark style={{ fontSize: size / 2.25 }} />;
 	}
 
 	return (
-		<Image
-			path={navIconUrl(entry.navItem)}
-			alt=""
-			size={size}
-			containerClassName={styles.entryIcon}
-			loading="eager"
-		/>
+		<div className={styles.entryIcons}>
+			{entry.navItems.map((navItem) => (
+				<Image
+					key={navItem}
+					path={navIconUrl(navItem)}
+					alt=""
+					size={size}
+					containerClassName={styles.entryIcon}
+					loading="eager"
+				/>
+			))}
+		</div>
 	);
 }
 

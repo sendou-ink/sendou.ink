@@ -1,5 +1,6 @@
 import type { ActionFunctionArgs } from "react-router";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { parseFormData } from "~/form/parse.server";
@@ -52,6 +53,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			}
 
 			await ScrimPostRepository.cancelScrim(id, data.reason);
+
+			if (post.chatRoomId) {
+				ChatSystemMessage.notifyRoomsChangedByRoomIds([post.chatRoomId]);
+			}
 
 			const acceptedRequest = post.requests.find((r) => r.isAccepted);
 			if (acceptedRequest) {
@@ -235,10 +240,9 @@ async function loadMapByMapContext({
 function broadcastRevalidate(
 	post: NonNullable<Awaited<ReturnType<typeof ScrimPostRepository.findById>>>,
 ) {
-	if (!post.chatCode) return;
+	if (!post.chatRoomId) return;
 	ChatSystemMessage.send({
-		room: post.chatCode,
-		revalidateOnly: true,
+		channel: chatRoomChannel(post.chatRoomId),
 	});
 }
 
@@ -251,10 +255,10 @@ function broadcastMapChange({
 	type: "MAP_REPLAYED" | "MAP_PICKED";
 	user: ReturnType<typeof requireUser>;
 }) {
-	if (!post.chatCode) return;
-	ChatSystemMessage.send({
-		room: post.chatCode,
+	if (!post.chatRoomId) return;
+	ChatSystemMessage.sendPersisted({
+		roomId: post.chatRoomId,
 		type,
-		context: { name: user.username },
+		authorUserId: user.id,
 	});
 }

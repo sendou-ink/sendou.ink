@@ -1,5 +1,6 @@
 import { sub } from "date-fns";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { refreshUserSkills } from "~/features/mmr/tiered.server";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
@@ -30,10 +31,9 @@ export const ResolveStaleSQMatchesRoutine = new Routine({
 			if (result.status === "CANCELED") canceledCount++;
 			if (result.status === "CONFIRMED") confirmedCount++;
 
-			if (staleMatch.chatCode) {
+			if (staleMatch.chatRoomId) {
 				ChatSystemMessage.send({
-					room: staleMatch.chatCode,
-					revalidateOnly: true,
+					channel: chatRoomChannel(staleMatch.chatRoomId),
 				});
 			}
 		}

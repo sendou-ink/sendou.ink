@@ -15,9 +15,9 @@ export function useMarkNotificationsAsSeen(unseenIds: number[]) {
 		// get submitted when the fetcher returns to idle
 		if (fetcher.state !== "idle") return;
 
-		// the action's skalop ping also triggers a refetch, but only for clients
-		// with a live websocket; refetching here keeps the dot clearing promptly
-		// for the tab that did the marking either way
+		// the action's notificationsChanged event also triggers a refetch, but only
+		// for clients with a live event stream; refetching here keeps the dot
+		// clearing promptly for the tab that did the marking either way
 		if (refreshPendingRef.current) {
 			refreshPendingRef.current = false;
 			refresh();

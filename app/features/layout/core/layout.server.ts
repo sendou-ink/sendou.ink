@@ -6,8 +6,8 @@ import { GIT_COMMIT } from "~/utils/git-commit";
  * The parts of the app shell that go stale on their own while a page sits open.
  * Served both by the root loader and by the resource route `LayoutDataProvider`
  * polls, so the two payloads can't drift apart. Notifications are not part of
- * this: they live in their own resource route refetched when skalop pings that
- * they changed (see `NotificationsProvider`).
+ * this: they live in their own resource route refetched when the server
+ * publishes that they changed (see `NotificationsProvider`).
  */
 export async function resolveLayoutData(user: AuthenticatedUser | undefined) {
 	return {

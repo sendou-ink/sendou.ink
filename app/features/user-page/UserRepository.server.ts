@@ -26,12 +26,10 @@ import {
 	jsonArrayFrom,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
-	userChatNameHue,
 	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
-import type { ChatUser } from "../chat/chat-types";
 import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import { findWidgetById } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
@@ -530,22 +528,6 @@ export async function existingUserIds(userIds: Array<number>) {
 		.execute();
 
 	return rows.map((row) => row.id);
-}
-
-export async function findChatUsersByUserIds(userIds: number[]) {
-	const users = await db
-		.selectFrom("User")
-		.select((eb) => [...commonUserSelect(eb), "User.pronouns", userChatNameHue])
-		.where("User.id", "in", userIds)
-		.execute();
-
-	const result: Record<number, ChatUser> = {};
-
-	for (const user of users) {
-		result[user.id] = user;
-	}
-
-	return result;
 }
 
 export interface ResultsFilters {

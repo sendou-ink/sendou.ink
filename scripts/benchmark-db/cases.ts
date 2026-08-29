@@ -7,6 +7,8 @@ import * as LogInLinkRepository from "~/features/auth/LogInLinkRepository.server
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
+import * as ChatRoomResolver from "~/features/chat/ChatRoomResolver.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
@@ -230,6 +232,50 @@ export function buildCases(fx: Fixtures): {
 		"CalendarRepository.findTopThreeResultsByEventIds",
 		fx.resultsEventId,
 		(eventId) => CalendarRepository.findTopThreeResultsByEventIds([eventId]),
+	);
+
+	// ChatRepository
+	add("ChatRepository.findAllRoomsByIds", fx.heavyChatUsers, (chatUsers) =>
+		ChatRepository.findAllRoomsByIds(chatUsers.busiest.openRoomIds),
+	);
+	add(
+		"ChatRepository.findAllOpenRoomIdsByUserId.busiest",
+		fx.heavyChatUsers,
+		(chatUsers) =>
+			ChatRepository.findAllOpenRoomIdsByUserId(chatUsers.busiest.id),
+	);
+	add(
+		"ChatRepository.findAllOpenRoomIdsByUserId.mostConnected",
+		fx.heavyChatUsers,
+		(chatUsers) =>
+			ChatRepository.findAllOpenRoomIdsByUserId(chatUsers.mostConnectedId),
+	);
+	add("ChatRepository.findAllMessagesByRoomId", fx.heavyChatRoomId, (roomId) =>
+		ChatRepository.findAllMessagesByRoomId(roomId),
+	);
+	add("ChatRepository.findMessageById", fx.heavyChatMessageId, (messageId) =>
+		ChatRepository.findMessageById(messageId),
+	);
+	add(
+		"ChatRepository.findMessageStatsByRoomIds",
+		fx.heavyChatUsers,
+		(chatUsers) =>
+			ChatRepository.findMessageStatsByRoomIds(
+				chatUsers.busiest.id,
+				chatUsers.busiest.openRoomIds,
+			),
+	);
+
+	// ChatRoomResolver
+	// a tournament match room is the costliest to resolve: its owner join carries
+	// the team members and the tournament's organizer permissions on top
+	add(
+		"ChatRoomResolver.resolve",
+		fx.openChatRoomIdsByType?.TOURNAMENT_MATCH ?? null,
+		(roomIds) => ChatRoomResolver.resolve(roomIds[0]),
+	);
+	add("ChatRoomResolver.findAllByUserId", fx.heavyChatUsers, (chatUsers) =>
+		ChatRoomResolver.findAllByUserId(chatUsers.busiest.id),
 	);
 
 	// FriendRepository
@@ -544,6 +590,11 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// ScrimPostRepository
+	add(
+		"ScrimPostRepository.findAllByChatRoomIds",
+		fx.openChatRoomIdsByType?.SCRIM ?? null,
+		(roomIds) => ScrimPostRepository.findAllByChatRoomIds(roomIds),
+	);
 	add("ScrimPostRepository.findById", fx.heavyScrimPostId, (scrimPostId) =>
 		ScrimPostRepository.findById(scrimPostId),
 	);
@@ -637,6 +688,11 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// SQMatchRepository
+	add(
+		"SQMatchRepository.findAllByChatRoomIds",
+		fx.openChatRoomIdsByType?.SQ_MATCH ?? null,
+		(roomIds) => SQMatchRepository.findAllByChatRoomIds(roomIds),
+	);
 	add("SQMatchRepository.findById", fx.heavyGroupMatchId, (matchId) =>
 		SQMatchRepository.findById(matchId),
 	);
@@ -680,6 +736,11 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// SQGroupRepository
+	add(
+		"SQGroupRepository.findAllByChatRoomIds",
+		fx.openChatRoomIdsByType?.SQ_GROUP ?? null,
+		(roomIds) => SQGroupRepository.findAllByChatRoomIds(roomIds),
+	);
 	add(
 		"SQGroupRepository.findMapModePreferencesByGroupId",
 		fx.heavyGroupIds,
@@ -848,6 +909,11 @@ export function buildCases(fx: Fixtures): {
 
 	// TournamentMatchRepository
 	add(
+		"TournamentMatchRepository.findAllByChatRoomIds",
+		fx.openChatRoomIdsByType?.TOURNAMENT_MATCH ?? null,
+		(roomIds) => TournamentMatchRepository.findAllByChatRoomIds(roomIds),
+	);
+	add(
 		"TournamentMatchRepository.findMatchById",
 		fx.heavyTournamentMatchId,
 		(matchId) => TournamentMatchRepository.findMatchById(matchId),
@@ -1011,6 +1077,14 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// TournamentRepository
+	add(
+		"TournamentRepository.findOrganizerPermissionsByTournamentIds",
+		fx.recentTournamentIds,
+		(tournamentIds) =>
+			TournamentRepository.findOrganizerPermissionsByTournamentIds(
+				tournamentIds,
+			),
+	);
 	add("TournamentRepository.findById", fx.heavyTournamentId, (tournamentId) =>
 		TournamentRepository.findById(tournamentId),
 	);
@@ -1120,6 +1194,16 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// TournamentTeamRepository
+	add(
+		"TournamentTeamRepository.findAllByChatRoomIds",
+		fx.openChatRoomIdsByType?.TOURNAMENT_TEAM ?? null,
+		(roomIds) => TournamentTeamRepository.findAllByChatRoomIds(roomIds),
+	);
+	add(
+		"TournamentTeamRepository.findAllMembersByTeamIds",
+		fx.manyTournamentTeamIds,
+		(teamIds) => TournamentTeamRepository.findAllMembersByTeamIds(teamIds),
+	);
 	add(
 		"TournamentTeamRepository.findByInviteCode",
 		fx.tournamentTeamInviteCode,
@@ -1239,9 +1323,6 @@ export function buildCases(fx: Fixtures): {
 	);
 	addStatic("UserRepository.findAllPlusServerMembers", () =>
 		UserRepository.findAllPlusServerMembers(),
-	);
-	add("UserRepository.findChatUsersByUserIds", fx.manyUserIds, (userIds) =>
-		UserRepository.findChatUsersByUserIds(userIds),
 	);
 	add("UserRepository.findResultsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findResultsByUserId(user.id, {}),

@@ -1,10 +1,10 @@
+import { addDays } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { withUserId } from "~/utils/Test";
 import * as TournamentLFGRepository from "./TournamentLFGRepository.server";
 
@@ -15,6 +15,32 @@ const createTournament = () =>
 
 const createPlaceholder = (tournamentId: number, userId: number) =>
 	TournamentLFGTeamFactory.create({ tournamentId, userId });
+
+const startLooking = (teamId: number) =>
+	TournamentLFGRepository.startLooking({
+		teamId,
+		chatRoomExpiresAt: addDays(new Date(), 7),
+	});
+
+const chatRoomIdOf = async (teamId: number) => {
+	const row = await db
+		.selectFrom("TournamentTeam")
+		.select("chatRoomId")
+		.where("id", "=", teamId)
+		.executeTakeFirstOrThrow();
+
+	return row.chatRoomId;
+};
+
+const mergeTeams = (args: {
+	survivingTeamId: number;
+	otherTeamId: number;
+	maxGroupSize: number;
+}) =>
+	TournamentLFGRepository.mergeTeams({
+		...args,
+		chatRoomExpiresAt: addDays(new Date(), 7),
+	});
 
 describe("insertPlaceholderTeam", () => {
 	beforeEach(async () => {
@@ -211,66 +237,53 @@ describe("startLooking", () => {
 		await users.create(3);
 	});
 
-	test("generates chatCode for a 2+ member team", async () => {
+	test("creates a chat room for a 2+ member team", async () => {
 		const tournament = await createTournament();
 		const team = await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [users.id(1), users.id(2)],
 		});
 
-		const pickup = await TournamentLFGRepository.startLooking(team.id);
+		const roomsChangedUserIds = await startLooking(team.id);
 
-		expect(pickup).not.toBeNull();
-		expect(pickup?.chatCode).toMatch(/.+/);
-		expect(pickup?.memberUserIds.sort()).toEqual(
+		expect(roomsChangedUserIds.sort()).toEqual(
 			[users.id(1), users.id(2)].sort(),
 		);
 
-		const row = await db
-			.selectFrom("TournamentTeam")
-			.select("chatCode")
-			.where("id", "=", team.id)
+		const chatRoomId = await chatRoomIdOf(team.id);
+		expect(chatRoomId).toEqual(expect.any(Number));
+
+		const room = await db
+			.selectFrom("ChatRoom")
+			.selectAll()
+			.where("id", "=", chatRoomId!)
 			.executeTakeFirstOrThrow();
-		expect(row.chatCode).toBe(pickup?.chatCode);
+		expect(room.type).toBe("TOURNAMENT_TEAM");
 	});
 
-	test("returns null when team has only 1 member", async () => {
+	test("creates no chat room when team has only 1 member", async () => {
 		const tournament = await createTournament();
 		const team = await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [users.id(1)],
 		});
 
-		const pickup = await TournamentLFGRepository.startLooking(team.id);
-
-		expect(pickup).toBeNull();
-
-		const row = await db
-			.selectFrom("TournamentTeam")
-			.select("chatCode")
-			.where("id", "=", team.id)
-			.executeTakeFirstOrThrow();
-		expect(row.chatCode).toBeNull();
+		expect(await startLooking(team.id)).toEqual([]);
+		expect(await chatRoomIdOf(team.id)).toBeNull();
 	});
 
-	test("reuses existing chatCode if already set", async () => {
+	test("reuses the existing chat room if already set", async () => {
 		const tournament = await createTournament();
 		const team = await TournamentTeamFactory.create({
 			tournamentId: tournament.id,
 			memberUserIds: [users.id(1), users.id(2)],
 		});
-		// the only production write of the column is `startLooking` itself, which
-		// invents a random code
-		// biome-ignore lint/plugin: no production write sets a known chatCode
-		await db
-			.updateTable("TournamentTeam")
-			.set({ chatCode: "existing-code" })
-			.where("id", "=", team.id)
-			.execute();
 
-		const pickup = await TournamentLFGRepository.startLooking(team.id);
+		await startLooking(team.id);
+		const first = await chatRoomIdOf(team.id);
+		await startLooking(team.id);
 
-		expect(pickup?.chatCode).toBe("existing-code");
+		expect(await chatRoomIdOf(team.id)).toBe(first);
 	});
 });
 
@@ -284,7 +297,7 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		await TournamentLFGRepository.mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
@@ -305,7 +318,7 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		await TournamentLFGRepository.mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
@@ -326,7 +339,7 @@ describe("mergeTeams", () => {
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
 		await expect(
-			TournamentLFGRepository.mergeTeams({
+			mergeTeams({
 				survivingTeamId: team1.id,
 				otherTeamId: team2.id,
 				maxGroupSize: 1,
@@ -339,7 +352,7 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		await TournamentLFGRepository.mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 2,
@@ -352,51 +365,56 @@ describe("mergeTeams", () => {
 		expect(groups).toHaveLength(0);
 	});
 
-	test("survivor gets a chatCode when merged size is 2+", async () => {
+	test("survivor gets a chat room when merged size is 2+", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		const result = await TournamentLFGRepository.mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
 		});
 
-		expect(result.survivor).not.toBeNull();
-		expect(result.survivor?.chatCode).toMatch(/.+/);
-		expect(result.survivor?.memberUserIds.sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
-		);
-		expect(result.removedChatCode).toBeNull();
-
-		const row = await db
-			.selectFrom("TournamentTeam")
-			.select("chatCode")
-			.where("id", "=", team1.id)
-			.executeTakeFirstOrThrow();
-		expect(row.chatCode).toBe(result.survivor?.chatCode);
+		expect(await chatRoomIdOf(team1.id)).toEqual(expect.any(Number));
 	});
 
-	test("returns removedChatCode when other team had a chatCode", async () => {
+	test("returns every member of the merged team", async () => {
 		const tournament = await createTournament();
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		// biome-ignore lint/plugin: as above, a known chatCode has no production write
-		await db
-			.updateTable("TournamentTeam")
-			.set({ chatCode: "other-code" })
-			.where("id", "=", team2.id)
-			.execute();
-
-		const result = await TournamentLFGRepository.mergeTeams({
+		const roomsChangedUserIds = await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
 		});
 
-		expect(result.removedChatCode).toBe("other-code");
+		expect(roomsChangedUserIds.sort()).toEqual(
+			[users.id(1), users.id(2)].sort(),
+		);
+	});
+
+	test("deletes the other team's chat room", async () => {
+		const tournament = await createTournament();
+		const team1 = await createPlaceholder(tournament.id, users.id(1));
+		const team2 = await TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [users.id(2), users.id(3)],
+		});
+		await startLooking(team2.id);
+
+		await mergeTeams({
+			survivingTeamId: team1.id,
+			otherTeamId: team2.id,
+			maxGroupSize: 4,
+		});
+
+		// the loser's room is gone; only the survivor's (possibly reusing the
+		// freed rowid) remains
+		const rooms = await db.selectFrom("ChatRoom").select("id").execute();
+		expect(rooms).toHaveLength(1);
+		expect(rooms[0].id).toBe(await chatRoomIdOf(team1.id));
 	});
 
 	test("clears likes on surviving team after merge", async () => {
@@ -414,7 +432,7 @@ describe("mergeTeams", () => {
 			targetTeamId: team1.id,
 		});
 
-		await TournamentLFGRepository.mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
@@ -441,7 +459,7 @@ describe("mergeTeams", () => {
 			.where("userId", "=", users.id(2))
 			.execute();
 
-		await TournamentLFGRepository.mergeTeams({
+		await mergeTeams({
 			survivingTeamId: team1.id,
 			otherTeamId: team2.id,
 			maxGroupSize: 4,
@@ -612,55 +630,6 @@ describe("leaveLfg", () => {
 			.executeTakeFirstOrThrow();
 
 		expect(teamRow.isLooking).toBe(0);
-	});
-});
-
-describe("findPickupChatTeamById", () => {
-	beforeEach(async () => {
-		await users.create(3);
-	});
-
-	test("returns null when team has no chatCode", async () => {
-		const tournament = await createTournament();
-		const team = await TournamentTeamFactory.create({
-			tournamentId: tournament.id,
-			memberUserIds: [users.id(1), users.id(2)],
-		});
-
-		expect(
-			await TournamentLFGRepository.findPickupChatTeamById(team.id),
-		).toBeNull();
-	});
-
-	test("returns null when team does not exist", async () => {
-		expect(
-			await TournamentLFGRepository.findPickupChatTeamById(999),
-		).toBeNull();
-	});
-
-	test("returns current members after a roster change", async () => {
-		const tournament = await createTournament();
-		const team = await TournamentTeamFactory.create({
-			tournamentId: tournament.id,
-			memberUserIds: [users.id(1), users.id(2), users.id(3)],
-		});
-		const pickup = await TournamentLFGRepository.startLooking(team.id);
-
-		await withUserId(users.id(3), () =>
-			TournamentTeamRepository.leave({
-				teamId: team.id,
-				userId: users.id(3),
-			}),
-		);
-
-		const chatTeam = await TournamentLFGRepository.findPickupChatTeamById(
-			team.id,
-		);
-
-		expect(chatTeam?.chatCode).toBe(pickup?.chatCode);
-		expect(chatTeam?.memberUserIds.sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
-		);
 	});
 });
 

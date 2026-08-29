@@ -10,7 +10,6 @@ Here is how the application architecture looks like in production.
 graph TD
     subgraph Render
         A[sendou.ink Server] -->|Reads/Writes| B[SQLite3 Database]
-        A -->|HTTP Requests| E[Skalop WebSocket Server]
         D[Lohi Discord Bot] -->|HTTP Requests| A
     end
 
@@ -18,9 +17,8 @@ graph TD
         C[S3-Compatible Image Hosting]
     end
 
-    F[User] -->|HTTP & WS| G[Cloudflare]
-    G -->|HTTP| A
-    G -->|WebSocket| E
+    F[User] -->|HTTP & SSE| G[Cloudflare]
+    G -->|HTTP & SSE| A
 
     A -->|S3 Upload| C
     F -->|Views images| C
@@ -29,7 +27,6 @@ graph TD
 
 List of the dependencies in production:
 
-- [Skalop](https://github.com/sendou-ink/skalop) - WebSocket server
 - [Lohi](https://github.com/sendou-ink/lohi) - Discord bot for profile updates, log-in links etc.
 - [Leanny/splat3](https://github.com/Leanny/splat3) - In-game data (manual update) 
 - [splatoon3.ink](https://github.com/misenhower/splatoon3.ink) - Rotation schedules (hourly routine) & X Rank placement data (manual update)
@@ -207,13 +204,14 @@ Cron jobs to perform actions on the server at certain intervals. To add a new on
 
 ### Real time
 
-Webhooks via the Skalop service (see logic in the Chat module). In short an action file can send an update via the `ChatSystemMessage` module:
+An in-process event bus (`app/features/events`) fans events out to the browser over a single Server-Sent Events connection per user (`/sse`). Every connection is subscribed to the user's own channel; further topics are subscribed by the client via `PUT /sse/:connectionId/topics`.
+
+A page opts into revalidation on a topic with `useTopicRevalidation`, and an action file publishes to that topic via the `ChatSystemMessage` module:
 
 ```ts
 ChatSystemMessage.send([
     {
-        room: `tournament__${tournament.id}`,
-        type: "TOURNAMENT_UPDATED",
+        channel: tournamentChannel(tournament.id),
         revalidateOnly: true,
     },
 ]);
@@ -221,19 +219,19 @@ ChatSystemMessage.send([
 
 #### Global chat
 
-There is a single `ChatProvider` mounted near the root that owns the WebSocket connection for the whole app.
+There is a single `ChatProvider` mounted near the root, glue over the framework-agnostic `chat-client` which shares the app's SSE connection.
 
-Two things drive which rooms the provider cares about:
+Two things drive which rooms the client cares about:
 
-1) **Server-managed participant rooms.** Rooms where the user is a `participantUserId` in the room metadata are pushed to the client by Skalop automatically on connect (and via `ROOM_JOINED` / `ROOM_REMOVED` events). These are the rooms that show up in the chat list regardless of which page the user is on (e.g. a SendouQ group chat, a tournament match chat).
-2) **Route-exposed `chatCode`.** A loader can expose a `chatCode` (string or `string[]`) in its returned data. The provider reads this out of `useMatches()` and subscribes to that room for the duration of the route being active — used for rooms the user is viewing but not necessarily a participant of (e.g. a tournament match chat viewed by a TO).
+1) **The user's own rooms.** `GET /api/chat/rooms` returns every room the user participates in, resolved from the owning entity (SendouQ group/match, tournament match/team, scrim). These show up in the chat list regardless of which page the user is on.
+2) **Route-exposed `chatRooms`.** A loader can expose `chatRooms: RouteChatRoom[]` in its returned data. The provider reads this out of `useMatches()` and surfaces those rooms for the duration of the route being active — used for rooms the user is viewing but is not a participant of (e.g. a tournament match chat viewed by a TO). An `autoOpen` room is opened for the viewer, the rest are only listed in the chat sidebar (e.g. the private group chats of a SendouQ match, which staff may read but not post in).
 
 Example loader:
 
 ```ts
 return {
     // ...other loader data
-    chatCode: match.chatCode,
+    chatRooms: [{ roomId: match.chatRoomId, autoOpen: true }],
 };
 ```
 

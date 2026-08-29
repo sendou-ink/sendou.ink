@@ -1,7 +1,6 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
-import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
-import { chatAccessible } from "~/features/chat/chat-utils";
+import type { RouteChatRoom } from "~/features/chat/chat-types";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -17,7 +16,6 @@ import {
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
-import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
@@ -26,7 +24,6 @@ import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
-import { tournamentMatchPage } from "~/utils/urls";
 import { executeRoll } from "../core/executeRoll.server";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
@@ -164,59 +161,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const status = tournament.matchStatusById(matchId);
 
-	if (
-		match.chatCode &&
-		!matchIsOver &&
-		match.opponentOne?.id &&
-		match.opponentTwo?.id &&
-		status !== "PENDING"
-	) {
-		// only add global chat for active roster (or all if not yet set i.e. first match)
-		// if roster changed mid-set the subs can still see the chat on the match page
-		const teamAlpha = tournament.teamById(match.opponentOne.id)!;
-		const teamAlphaActiveRoster =
-			tournamentTeamToActiveRosterUserIds(
-				teamAlpha,
-				tournament.minMembersPerTeam,
-			) ?? teamAlpha.memberUserIds;
-		const teamBravo = tournament.teamById(match.opponentTwo.id)!;
-		const teamBravoActiveRoster =
-			tournamentTeamToActiveRosterUserIds(
-				teamBravo,
-				tournament.minMembersPerTeam,
-			) ?? teamBravo.memberUserIds;
-
-		const playerIds = [...teamAlphaActiveRoster, ...teamBravoActiveRoster];
-
-		const matchContext = tournament.matchContextNamesById(matchId);
-
-		ChatSystemMessage.setMetadata({
-			chatCode: match.chatCode,
-			header: matchContext.roundName ?? `Match #${matchId}`,
-			subtitle: tournament.ctx.name,
-			url: tournamentMatchPage({ tournamentId, matchId }),
-			imageUrl: tournament.ctx.logoUrl,
-			participantUserIds: playerIds,
-			expiresAfter: tournament.isLeague ? { days: 30 } : { hours: 2 },
-		});
-	}
-
-	const hasPermsToSeeChat =
-		tournament.isOrganizerOrStreamer(user) ||
-		match.players.some((p) => p.id === user?.id);
-
 	const isSiteStaff = user?.roles.includes("STAFF") ?? false;
 	const isTournamentStaff = tournament.isOrganizer(user);
-	const chatCodeExpired =
-		tournament.ctx.isFinalized && !isSiteStaff && !isTournamentStaff
-			? true
-			: !chatAccessible({
-					expiresAfterDays: tournament.isLeague ? 30 : 7,
-					comparedTo: tournament.ctx.startsAt,
-				});
-
-	const visibleChatCode =
-		hasPermsToSeeChat && !chatCodeExpired ? match.chatCode : undefined;
 
 	const isParticipant = match.players.some((p) => p.id === user?.id);
 	const leagueRoundLocked = isLeagueRoundLocked(tournament, match.roundId);
@@ -248,7 +194,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		match: {
 			...match,
 			status,
-			chatCode: hasPermsToSeeChat ? match.chatCode : undefined,
+			chatRoomId: undefined,
 		},
 		results,
 		reportedWeapons,
@@ -263,7 +209,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		matchIsOver,
 		endedEarly,
 		noScreen,
-		chatCode: visibleChatCode,
+		// observers (TO/streamer/site staff) chat alongside the participants
+		chatRooms: (match.chatRoomId &&
+		(isParticipant || isSiteStaff || tournament.isOrganizerOrStreamer(user))
+			? [{ roomId: match.chatRoomId, autoOpen: true }]
+			: []) satisfies RouteChatRoom[],
 		canJoin,
 		// the views can't derive these themselves, the layout ships no bracket match data
 		bracketContext: {

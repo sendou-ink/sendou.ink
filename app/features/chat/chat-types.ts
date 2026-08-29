@@ -1,4 +1,13 @@
 import type { Tables } from "~/db/tables";
+import type { CommonUser } from "~/utils/kysely.server";
+import type { SOUND_BY_SYSTEM_MESSAGE_TYPE } from "./chat-constants";
+
+export type ChatRoomType =
+	| "SQ_GROUP"
+	| "SQ_MATCH"
+	| "TOURNAMENT_MATCH"
+	| "TOURNAMENT_TEAM"
+	| "SCRIM";
 
 export type SystemMessageType =
 	| "NEW_GROUP"
@@ -11,48 +20,78 @@ export type SystemMessageType =
 	| "CANCEL_REPORTED"
 	| "CANCEL_CONFIRMED"
 	| "CANCEL_REFUSED"
-	| "TOURNAMENT_UPDATED"
-	| "TOURNAMENT_MATCH_UPDATED"
 	| "MAP_REPLAYED"
 	| "MAP_PICKED";
 
-export type SystemMessageContext = {
-	name: string;
-};
+export type PersistedSystemMessageType = Extract<
+	SystemMessageType,
+	| "SCORE_REPORTED"
+	| "SCORE_CONFIRMED"
+	| "CANCEL_REPORTED"
+	| "CANCEL_CONFIRMED"
+	| "CANCEL_REFUSED"
+	| "USER_LEFT"
+	| "MAP_REPLAYED"
+	| "MAP_PICKED"
+>;
 
-export type RevalidateScope = "MATCH_RESULTS";
-export interface ChatMessage {
-	id: string;
-	type?: SystemMessageType;
-	contents?: string;
-	context?: SystemMessageContext;
-	/** If true, the purpose of this message is just to run the data loaders again meaning the logic related to showing a new chat message is skipped. Defaults to false.  */
-	revalidateOnly?: boolean;
-	/** Narrows what data a `revalidateOnly` message may have changed so that routes whose data is unaffected can skip revalidating. Unset means anything may have changed. */
-	revalidateScope?: RevalidateScope;
-	/** User id of the actor that triggered this message. Used to skip own-author revalidates so we don't double-fetch loaders right after a form submission. */
-	authorUserId?: number;
-	userId?: number;
-	timestamp: number;
-	room: string;
+export type SoundOnlySystemMessageType = Extract<
+	SystemMessageType,
+	keyof typeof SOUND_BY_SYSTEM_MESSAGE_TYPE
+>;
+
+export interface ChatMessageAuthor extends CommonUser {
+	pronouns: Tables["User"]["pronouns"];
+	chatNameHue: string | null;
+}
+
+export interface ChatMessageWithAuthor {
+	id: number;
+	roomId: number;
+	authorUserId: number | null;
+	type: PersistedSystemMessageType | null;
+	contents: string | null;
+	publicId: string;
+	/** databaseTimestamp */
+	createdAt: number;
+	author: ChatMessageAuthor | null;
+}
+
+/** A message as held client-side: a persisted row, or an optimistic send awaiting its echo. */
+export interface ClientChatMessage extends ChatMessageWithAuthor {
 	pending?: boolean;
 }
 
-export type ChatUser = Pick<
-	Tables["User"],
-	"username" | "discordId" | "discordAvatar" | "pronouns"
-> & {
-	customAvatarUrl: string | null;
-	chatNameHue: string | null;
-	title?: string;
-};
-
-export interface ChatProps {
-	users: Record<number, ChatUser>;
-	rooms: { label: string; code: string }[];
-	className?: string;
-	messagesContainerClassName?: string;
-	hidden?: boolean;
-	disabled?: boolean;
-	missingUserName?: string;
+/** One room of the user's room list as served by `GET /api/chat/rooms`. */
+export interface ChatRoomListItem {
+	id: number;
+	type: ChatRoomType;
+	/** Interpolation values for the client-localized room title, keyed per room type. */
+	titleParams: Record<string, string>;
+	url: string;
+	imageUrl: string | null;
+	participantUserIds: number[];
+	/** Role labels (e.g. "TO", "Stream") shown next to non-participant authors, keyed by user id. */
+	labelByUserId: Record<number, string>;
+	/** databaseTimestamp */
+	expiresAt: number;
+	/** Whether the owner's activity has concluded (e.g. the match was finalized). */
+	inactive: boolean;
+	/** Whether the viewer may post: false for an observer reading a private room, and once the room has expired or closed. */
+	canPost: boolean;
+	unreadCount: number;
+	latestMessageId: number | null;
+	/** databaseTimestamp */
+	latestMessageAt: number | null;
 }
+
+/** A room the current route surfaces to the viewer, from its loader's `chatRooms`. */
+export interface RouteChatRoom {
+	roomId: number;
+	/** Whether the room opens for the viewer on arrival, rather than only being listed in the sidebar (staff reading a private group chat). */
+	autoOpen: boolean;
+	/** Names the room in the sidebar, where its own title can't tell it apart (the two group chats of one match). */
+	label?: string;
+}
+
+export type RevalidateScope = "MATCH_RESULTS";

@@ -1,7 +1,7 @@
 import { useLoaderData } from "react-router";
 import { containerClassName } from "~/components/Main";
 import { MatchPage } from "~/components/match-page/MatchPage";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/to.$id.matches.$mid.server";
@@ -10,7 +10,7 @@ import { TournamentMatchHeader } from "../components/TournamentMatchHeader";
 import { TournamentMatchTabs } from "../components/TournamentMatchTabs";
 import { loader } from "../loaders/to.$id.matches.$mid.server";
 import { MatchPageProvider } from "../match-page-context";
-import { tournamentMatchWebsocketRoom } from "../tournament-match-utils";
+import { tournamentMatchChannel } from "../tournament-match-utils";
 
 export { action, loader };
 
@@ -22,8 +22,8 @@ export default function TournamentMatchPage() {
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 
-	useWebsocketRevalidation(
-		tournamentMatchWebsocketRoom(data.match.id),
+	useTopicRevalidation(
+		tournamentMatchChannel(data.match.id),
 		!tournament.ctx.isFinalized,
 	);
 

@@ -7,7 +7,7 @@ import { useLoaderData, useRevalidator } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Main } from "~/components/Main";
 import { useUser } from "~/features/auth/core/user";
-import { useWebsocketRevalidation } from "~/features/chat/chat-hooks";
+import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { metaTags, ogPageImage } from "~/utils/remix";
@@ -18,7 +18,7 @@ import { GroupCard, HiddenGroupCard } from "../components/GroupCard";
 import { GroupLeaver } from "../components/GroupLeaver";
 import { loader } from "../loaders/q.ready.server";
 import { readySchema } from "../q-action-schemas";
-import { sqGroupWebsocketRoom } from "../q-constants";
+import { sqGroupChannel } from "../q-constants";
 
 export { action, loader };
 
@@ -46,7 +46,7 @@ export default function QReadyPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 
-	useWebsocketRevalidation(sqGroupWebsocketRoom(data.group.id));
+	useTopicRevalidation(sqGroupChannel(data.group.id));
 
 	const ownIsReady = user ? data.readyUserIds.includes(user.id) : false;
 

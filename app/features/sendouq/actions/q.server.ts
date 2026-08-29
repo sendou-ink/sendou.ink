@@ -4,6 +4,7 @@ import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import { requireUser } from "~/features/auth/core/user.server";
 import { refreshBannedCache } from "~/features/ban/core/banned.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -22,14 +23,10 @@ import {
 	sqRedirectIfNeeded,
 } from "../core/SendouQ.server";
 import { frontPageSchema } from "../q-action-schemas";
-import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
+import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
 import { qSearchParams } from "../q-search-params";
 import { userCanJoinQueueAt } from "../q-utils";
-import {
-	SendouQError,
-	seasonInitialSkillsExist,
-	setGroupChatMetadata,
-} from "../q-utils.server";
+import { SendouQError, seasonInitialSkillsExist } from "../q-utils.server";
 
 export const action: ActionFunction = async ({ request, url }) => {
 	const user = requireUser();
@@ -54,15 +51,14 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				await validateCanJoinQ(user);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.insert({
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insert({
 					status: data.direct === "true" ? "ACTIVE" : "PREPARING",
 					userId: user.id,
 				});
 
-				if (chatCodeToRevalidate) {
+				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: chatCodeToRevalidate,
-						revalidateOnly: true,
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
 
@@ -71,10 +67,7 @@ export const action: ActionFunction = async ({ request, url }) => {
 				// Joining directly creates an ACTIVE group that enters the pool, so
 				// refresh every looking client. (A PREPARING group isn't in the pool.)
 				if (data.direct === "true") {
-					ChatSystemMessage.send({
-						room: SENDOUQ_LOOKING_ROOM,
-						revalidateOnly: true,
-					});
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
 
 				return redirect(
@@ -95,43 +88,30 @@ export const action: ActionFunction = async ({ request, url }) => {
 					"Invite code doesn't match any active team",
 				);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
 					groupInvitedTo.id,
 					{ userId: user.id },
 				);
 
-				if (chatCodeToRevalidate) {
+				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: chatCodeToRevalidate,
-						revalidateOnly: true,
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
 
 				await refreshSendouQInstance();
 
-				const joinedGroup = SendouQ.findOwnGroup(user.id);
-				if (joinedGroup?.chatCode) {
-					setGroupChatMetadata({
-						chatCode: joinedGroup.chatCode,
-						members: joinedGroup.members,
-					});
-				}
-
 				if (groupInvitedTo.status === "PREPARING") {
 					// A preparing group isn't in the pool, so notify just its existing
 					// members (on the preparing page) via the group topic.
 					ChatSystemMessage.send({
-						room: sqGroupWebsocketRoom(groupInvitedTo.id),
-						revalidateOnly: true,
+						channel: sqGroupChannel(groupInvitedTo.id),
 					});
 				} else {
 					// Joining an active group changes its size/suitability for the whole
 					// pool, so refresh every looking client — which already includes the
 					// group's own existing members.
-					ChatSystemMessage.send({
-						room: SENDOUQ_LOOKING_ROOM,
-						revalidateOnly: true,
-					});
+					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
 
 				return redirect(

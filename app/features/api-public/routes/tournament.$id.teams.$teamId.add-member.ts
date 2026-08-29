@@ -12,7 +12,6 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import {
 	errorToastIfFalsy,
@@ -73,7 +72,7 @@ export const action = async (args: ActionFunctionArgs) => {
 			"User has no in-game name set",
 		);
 
-		await TournamentLFGRepository.leaveLfg({
+		const leftLfgUserIds = await TournamentLFGRepository.leaveLfg({
 			userId,
 			tournamentId,
 		});
@@ -85,22 +84,14 @@ export const action = async (args: ActionFunctionArgs) => {
 			tournament.hasStarted
 				? previousTeam.id
 				: undefined;
-		const previousTeamPickupChat = previousTeamIdToDelete
-			? await TournamentLFGRepository.findPickupChatTeamById(
-					previousTeamIdToDelete,
-				)
-			: null;
-
-		await TournamentTeamRepository.join({
+		const joinedUserIds = await TournamentTeamRepository.join({
 			userId,
 			newTeamId: team.id,
 			previousTeamIdToDelete,
 			isOrganizerAdded: true,
 		});
 
-		if (previousTeamPickupChat) {
-			ChatSystemMessage.removeRoom(previousTeamPickupChat.chatCode);
-		}
+		ChatSystemMessage.notifyRoomsChanged([...leftLfgUserIds, ...joinedUserIds]);
 
 		ShowcaseTournaments.addToCached({
 			tournamentId,
@@ -108,16 +99,6 @@ export const action = async (args: ActionFunctionArgs) => {
 			userId,
 		});
 		await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
-
-		await syncPickupChatMetadata({
-			teamId: team.id,
-			tournament: {
-				id: tournamentId,
-				name: tournament.ctx.name,
-				logoUrl: tournament.ctx.logoUrl,
-				startTime: tournament.ctx.startsAt,
-			},
-		});
 
 		if (!tournament.isTest && !tournament.isDraft) {
 			notify({

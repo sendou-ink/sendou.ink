@@ -4,8 +4,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
-	removeRoom: vi.fn(),
-	setMetadata: vi.fn(),
 }));
 
 import { backdate } from "~/db/seed/core/backdate";
@@ -18,8 +16,8 @@ import invariant from "~/utils/invariant";
 import {
 	FULL_GROUP_SIZE,
 	SENDOUQ,
-	SENDOUQ_LOOKING_ROOM,
-	sqGroupWebsocketRoom,
+	SENDOUQ_LOOKING_CHANNEL,
+	sqGroupChannel,
 } from "../q-constants";
 import { pinClockInsideSeason } from "../tests/season-clock";
 import * as ReadyCheck from "./ready-check.server";
@@ -64,12 +62,12 @@ const findGroupStatus = async (groupId: number) => {
 const findMatch = () =>
 	db.selectFrom("GroupMatch").selectAll().executeTakeFirst();
 
-/** Rooms every system message sent so far was broadcast to, in order. */
-const broadcastedRooms = () =>
+/** Channels every system message sent so far was broadcast to, in order. */
+const broadcastedChannels = () =>
 	vi
 		.mocked(ChatSystemMessage.send)
 		.mock.calls.flatMap(([msg]) => (Array.isArray(msg) ? msg : [msg]))
-		.map((msg) => msg.room);
+		.map((msg) => msg.channel);
 
 /** Confirms every member of both groups as ready, which is what creates the match. */
 const confirmEveryoneReady = async (groupId: number) => {
@@ -203,14 +201,14 @@ describe("SendouQ ready check", () => {
 		await ReadyCheck.confirm({ readyCheck, userId: groups.ownMembers[1].id });
 
 		// the looking pool is unchanged while the ready check runs, so it is left alone
-		expect(broadcastedRooms()).toEqual([
-			sqGroupWebsocketRoom(groups.ownGroup.id),
-			sqGroupWebsocketRoom(groups.theirGroup.id),
+		expect(broadcastedChannels()).toEqual([
+			sqGroupChannel(groups.ownGroup.id),
+			sqGroupChannel(groups.theirGroup.id),
 		]);
 
 		await ReadyCheck.expire(readyCheck);
 
-		expect(broadcastedRooms()).toContain(SENDOUQ_LOOKING_ROOM);
+		expect(broadcastedChannels()).toContain(SENDOUQ_LOOKING_CHANNEL);
 	});
 
 	test("expiring sends both groups back to looking and marks who missed it", async () => {

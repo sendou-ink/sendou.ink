@@ -33,7 +33,7 @@ const OUT_DIR = fileURLToPath(new URL("./output", import.meta.url));
 const DEVICE_SCALE_FACTOR = 2;
 
 interface ChangelogEntry {
-	navItem?: keyof typeof DISCORD_EMOJI_NAMES;
+	navItems?: (keyof typeof DISCORD_EMOJI_NAMES)[];
 	type: "feature" | "bug";
 	headline: string;
 	bullets?: string[];
@@ -149,7 +149,7 @@ function altText(entries: ChangelogEntry[], date: Date) {
 	return joinSections(sections);
 }
 
-/** The update as a Discord post, leading every entry with the server emoji of its nav item. */
+/** The update as a Discord post, leading every entry with the server emoji of its nav items. */
 function discordText(entries: ChangelogEntry[], date: Date) {
 	const { featured, oneLiners, fixes } = groupEntries(entries);
 
@@ -200,7 +200,11 @@ function bulletLines(entry: ChangelogEntry) {
 }
 
 function emoji(entry: ChangelogEntry) {
-	return `:${entry.navItem ? DISCORD_EMOJI_NAMES[entry.navItem] : DISCORD_FALLBACK_EMOJI_NAME}:`;
+	if (!entry.navItems) return `:${DISCORD_FALLBACK_EMOJI_NAME}:`;
+
+	return entry.navItems
+		.map((navItem) => `:${DISCORD_EMOJI_NAMES[navItem]}:`)
+		.join("");
 }
 
 function joinSections(sections: string[]) {

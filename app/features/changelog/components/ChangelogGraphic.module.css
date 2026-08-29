@@ -49,6 +49,12 @@ avatar slot down to the entry icons */
 	text-wrap: pretty;
 }
 
+.entryIcons {
+	display: flex;
+	flex: none;
+	gap: var(--s-1);
+}
+
 .entryIcon {
 	flex: none;
 	display: flex;

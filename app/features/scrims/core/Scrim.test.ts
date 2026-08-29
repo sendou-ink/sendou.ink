@@ -122,7 +122,7 @@ describe("applyFilters", () => {
 			canceled: null,
 			createdAt: databaseTimestampNow(),
 			visibility: null,
-			chatCode: null,
+			chatRoomId: null,
 			text: "",
 			maps: null,
 			isScheduledForFuture: false,

@@ -3,6 +3,7 @@ import {
 	type ActionFunctionArgs,
 	redirect,
 } from "react-router";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -14,7 +15,6 @@ import {
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { syncPickupChatMetadata } from "~/features/tournament-lfg/tournament-lfg-utils.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
@@ -133,10 +133,12 @@ export const upsertRegistrationAction = async (
 	}
 
 	for (const addId of membersToAdd) {
-		await TournamentLFGRepository.leaveLfg({
-			userId: addId,
-			tournamentId,
-		});
+		ChatSystemMessage.notifyRoomsChanged(
+			await TournamentLFGRepository.leaveLfg({
+				userId: addId,
+				tournamentId,
+			}),
+		);
 		ShowcaseTournaments.addToCached({
 			tournamentId,
 			type: "participant",
@@ -148,18 +150,6 @@ export const upsertRegistrationAction = async (
 			tournamentId,
 			type: "participant",
 			userId: removeId,
-		});
-	}
-
-	if (team && (membersToAdd.length > 0 || membersToRemove.length > 0)) {
-		await syncPickupChatMetadata({
-			teamId: team.id,
-			tournament: {
-				id: tournamentId,
-				name: tournament.ctx.name,
-				logoUrl: tournament.ctx.logoUrl,
-				startTime: tournament.ctx.startsAt,
-			},
 		});
 	}
 

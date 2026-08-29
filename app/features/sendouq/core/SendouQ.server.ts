@@ -186,7 +186,7 @@ class SendouQClass {
 		) => {
 			return {
 				...R.omit(group, ["tierName", "tierIsPlus"]),
-				chatCode: isTeamMember ? group.chatCode : undefined,
+				chatRoomId: isTeamMember ? group.chatRoomId : undefined,
 				tier: SendouQMatch.groupTier(group),
 				skillDifference: match.skillDifferences.groups[group.id],
 				matchmade: Boolean(group.matchmade),
@@ -236,7 +236,7 @@ class SendouQClass {
 
 		return {
 			...match,
-			chatCode: isMatchInsider ? match.chatCode : undefined,
+			chatRoomId: isMatchInsider ? match.chatRoomId : undefined,
 			noScreen: Boolean(match.noScreen),
 			currentMap,
 			groupAlpha: alphaCensored,
@@ -374,12 +374,12 @@ class SendouQClass {
 
 	#censorGroup<T extends (typeof this.groups)[number]>(
 		group: T,
-	): Omit<T, "inviteCode" | "chatCode" | "members"> & {
+	): Omit<T, "inviteCode" | "chatRoomId" | "members"> & {
 		members: T["members"] | undefined;
 	} {
 		const {
 			inviteCode: _inviteCode,
-			chatCode: _chatCode,
+			chatRoomId: _chatRoomId,
 			members,
 			...baseGroup
 		} = group;

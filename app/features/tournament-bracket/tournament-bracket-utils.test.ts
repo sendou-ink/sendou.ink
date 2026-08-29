@@ -1,8 +1,8 @@
 import { describe, expect, test } from "vitest";
 import {
 	groupNumberToLetters,
-	tournamentBracketWebsocketRoom,
-	tournamentWebsocketRoom,
+	tournamentBracketChannel,
+	tournamentChannel,
 	validateBadgeReceivers,
 } from "./tournament-bracket-utils";
 
@@ -24,21 +24,21 @@ describe("groupNumberToLetters()", () => {
 	}
 });
 
-describe("tournamentBracketWebsocketRoom()", () => {
-	const room = (bracketIdx: number, groupId: number | null) =>
-		tournamentBracketWebsocketRoom({ tournamentId: 1, bracketIdx, groupId });
+describe("tournamentBracketChannel()", () => {
+	const channel = (bracketIdx: number, groupId: number | null) =>
+		tournamentBracketChannel({ tournamentId: 1, bracketIdx, groupId });
 
-	test("is nested under the tournament's own room", () => {
-		expect(room(0, null).startsWith(tournamentWebsocketRoom(1))).toBe(true);
+	test("is nested under the tournament's own channel", () => {
+		expect(channel(0, null).startsWith(tournamentChannel(1))).toBe(true);
 	});
 
 	test("differs per bracket", () => {
-		expect(room(0, null)).not.toBe(room(1, null));
+		expect(channel(0, null)).not.toBe(channel(1, null));
 	});
 
 	test("differs per group when the bracket is viewed one group at a time", () => {
-		expect(room(0, 10)).not.toBe(room(0, 11));
-		expect(room(0, 10)).not.toBe(room(0, null));
+		expect(channel(0, 10)).not.toBe(channel(0, 11));
+		expect(channel(0, 10)).not.toBe(channel(0, null));
 	});
 });
 

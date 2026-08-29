@@ -2,6 +2,7 @@ import type { ActionFunctionArgs } from "react-router";
 import { redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
+import { chatRoomChannel } from "~/features/events/events-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { notify } from "~/features/notifications/core/notify.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
@@ -11,8 +12,8 @@ import { assertUnreachable } from "~/utils/types";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { refreshSendouQInstance, SendouQ } from "../core/SendouQ.server";
 import { preparingSchema } from "../q-action-schemas";
-import { SENDOUQ_LOOKING_ROOM, sqGroupWebsocketRoom } from "../q-constants";
-import { SendouQError, setGroupChatMetadata } from "../q-utils.server";
+import { SENDOUQ_LOOKING_CHANNEL, sqGroupChannel } from "../q-constants";
+import { SendouQError } from "../q-utils.server";
 
 export type SendouQPreparingAction = typeof action;
 
@@ -36,10 +37,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.send({
-					room: SENDOUQ_LOOKING_ROOM,
-					revalidateOnly: true,
-				});
+				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 				return redirect(SENDOUQ_LOOKING_PAGE);
 			}
@@ -60,32 +58,28 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					"User you are trying to add has no friend code set",
 				);
 
-				const { chatCodeToRevalidate } = await SQGroupRepository.insertMember(
+				const { chatRoomIdToRevalidate } = await SQGroupRepository.insertMember(
 					ownGroup.id,
 					{ userId: data.id },
 				);
 
-				if (chatCodeToRevalidate) {
+				if (chatRoomIdToRevalidate) {
 					ChatSystemMessage.send({
-						room: chatCodeToRevalidate,
-						revalidateOnly: true,
+						channel: chatRoomChannel(chatRoomIdToRevalidate),
 					});
 				}
 
 				await refreshSendouQInstance();
 
 				const updatedGroup = SendouQ.findOwnGroup(user.id);
-				if (updatedGroup?.chatCode) {
-					setGroupChatMetadata({
-						chatCode: updatedGroup.chatCode,
-						members: updatedGroup.members,
-					});
-				}
 
-				ChatSystemMessage.send({
-					room: sqGroupWebsocketRoom(ownGroup.id),
-					revalidateOnly: true,
-				});
+				ChatSystemMessage.notifyRoomsChanged(
+					updatedGroup
+						? updatedGroup.members.map((member) => member.id)
+						: [data.id],
+				);
+
+				ChatSystemMessage.send({ channel: sqGroupChannel(ownGroup.id) });
 
 				notify({
 					userIds: [data.id],

@@ -2176,17 +2176,22 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 
 const CHANGELOG_GRAPHIC_ENTRIES_SMALL: ChangelogGraphicEntry[] = [
 	{
-		navItem: "plans",
+		navItems: ["plans"],
 		type: "feature",
 		headline: "Map planner plans persist across sessions",
 	},
 	{
-		navItem: "calendar",
+		navItems: ["calendar", "scrims", "sendouq"],
+		type: "feature",
+		headline: "Chat read indicators sync across your devices",
+	},
+	{
+		navItems: ["calendar"],
 		type: "feature",
 		headline: "Calendar scroll snapping on mobile",
 	},
 	{
-		navItem: "builds",
+		navItems: ["builds"],
 		type: "bug",
 		headline: "Fixed build filters resetting when navigating back",
 	},
@@ -2194,7 +2199,7 @@ const CHANGELOG_GRAPHIC_ENTRIES_SMALL: ChangelogGraphicEntry[] = [
 
 const CHANGELOG_GRAPHIC_ENTRIES_LARGE: ChangelogGraphicEntry[] = [
 	{
-		navItem: "plans",
+		navItems: ["plans"],
 		type: "feature",
 		headline: "Map planner rework",
 		bullets: [
@@ -2205,21 +2210,22 @@ const CHANGELOG_GRAPHIC_ENTRIES_LARGE: ChangelogGraphicEntry[] = [
 		],
 	},
 	{
-		navItem: "sendouq",
+		navItems: ["calendar", "scrims", "sendouq"],
 		type: "feature",
-		headline: "SendouQ match improvements",
+		headline: "Chat improvements",
 		bullets: [
 			"Stacked chat sidebar shows all your rooms",
-			"Post-match screen shows SP changes",
+			"Read indicators sync across your devices",
+			"Ended chats collapse into an Inactive section",
 		],
 	},
 	{
-		navItem: "calendar",
+		navItems: ["calendar"],
 		type: "feature",
 		headline: "Calendar scroll snapping on mobile",
 	},
 	{
-		navItem: "leaderboards",
+		navItems: ["leaderboards"],
 		type: "feature",
 		headline: "Team leaderboard now shows team logos",
 	},
@@ -2228,27 +2234,27 @@ const CHANGELOG_GRAPHIC_ENTRIES_LARGE: ChangelogGraphicEntry[] = [
 		headline: "Faster page loads across the site",
 	},
 	{
-		navItem: "builds",
+		navItems: ["builds"],
 		type: "bug",
 		headline: "Fixed build filters resetting when navigating back",
 	},
 	{
-		navItem: "sendouq",
+		navItems: ["scrims", "sendouq"],
 		type: "bug",
 		headline: "Fixed chat messages sometimes arriving out of order",
 	},
 	{
-		navItem: "calendar",
+		navItems: ["calendar"],
 		type: "bug",
 		headline: "Fixed event times showing in the wrong timezone",
 	},
 	{
-		navItem: "vods",
+		navItems: ["vods"],
 		type: "feature",
 		headline: "VoDs can be filtered by tournament",
 	},
 	{
-		navItem: "lfg",
+		navItems: ["lfg"],
 		type: "bug",
 		headline: "Fixed expired LFG posts appearing in search results",
 	},
@@ -2260,7 +2266,7 @@ function ChangelogGraphicSection({ id }: { id: string }) {
 			<SectionTitle id={id}>Changelog Graphic</SectionTitle>
 
 			<div className="stack md">
-				<ComponentRow label="Small update (3 entries)">
+				<ComponentRow label="Small update (4 entries)">
 					<ChangelogGraphic
 						date={new Date(2026, 7, 29)}
 						entries={CHANGELOG_GRAPHIC_ENTRIES_SMALL}

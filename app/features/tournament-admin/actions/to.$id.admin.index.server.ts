@@ -13,9 +13,8 @@ import {
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
-import { tournamentWebsocketRoom } from "~/features/tournament-bracket/tournament-bracket-utils";
-import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
-import { tournamentMatchWebsocketRoom } from "~/features/tournament-match/tournament-match-utils";
+import { tournamentChannel } from "~/features/tournament-bracket/tournament-bracket-utils";
+import { tournamentMatchChannel } from "~/features/tournament-match/tournament-match-utils";
 import invariant from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
@@ -99,14 +98,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 			errorToastIfFalsy(team, "Invalid team id");
 			errorToastIfFalsy(!tournament.hasStarted, "Tournament has started");
 
-			const pickupChatTeam =
-				await TournamentLFGRepository.findPickupChatTeamById(team.id);
-
-			await TournamentTeamRepository.deleteById(team.id);
-
-			if (pickupChatTeam) {
-				ChatSystemMessage.removeRoom(pickupChatTeam.chatCode);
-			}
+			ChatSystemMessage.notifyRoomsChanged(
+				await TournamentTeamRepository.deleteById(team.id),
+			);
 
 			for (const userId of team.memberUserIds) {
 				ShowcaseTournaments.removeFromCached({
@@ -183,23 +177,32 @@ async function dropTeamOut({
 		});
 	}
 
-	const endedMatchIds = await db.transaction().execute(async (trx) => {
-		const bracketData = await BracketRepository.findByTournamentId(
-			tournament.ctx.id,
-			trx,
-		);
-		const droppedResult = endDroppedTeamMatches({
-			tournament,
-			data: bracketData,
-			droppedTeamId: teamId,
-		});
-		await BracketRepository.applyMatchChanges(
-			{ previousData: bracketData, result: droppedResult },
-			trx,
-		);
+	const { endedMatchIds, changedChatRoomIds } = await db
+		.transaction()
+		.execute(async (trx) => {
+			const bracketData = await BracketRepository.findByTournamentId(
+				tournament.ctx.id,
+				trx,
+			);
+			const droppedResult = endDroppedTeamMatches({
+				tournament,
+				data: bracketData,
+				droppedTeamId: teamId,
+			});
+			const changedChatRoomIds = await BracketRepository.applyMatchChanges(
+				{
+					previousData: bracketData,
+					result: droppedResult,
+					isLeague: tournament.isLeague,
+				},
+				trx,
+			);
 
-		return droppedResult.endedMatchIds;
-	});
+			return { endedMatchIds: droppedResult.endedMatchIds, changedChatRoomIds };
+		});
+
+	// after the commit so the refetch it prompts can not read the pre-commit state
+	ChatSystemMessage.notifyRoomsChangedByRoomIds(changedChatRoomIds);
 
 	await TournamentTeamRepository.dropOut({
 		tournamentTeamId: teamId,
@@ -222,14 +225,8 @@ function sendDroppedMatchChatMessages({
 
 	ChatSystemMessage.send([
 		...endedMatchIds.map((matchId) => ({
-			room: tournamentMatchWebsocketRoom(matchId),
-			type: "TOURNAMENT_MATCH_UPDATED" as const,
-			revalidateOnly: true as const,
+			channel: tournamentMatchChannel(matchId),
 		})),
-		{
-			room: tournamentWebsocketRoom(tournamentId),
-			type: "TOURNAMENT_UPDATED" as const,
-			revalidateOnly: true as const,
-		},
+		{ channel: tournamentChannel(tournamentId) },
 	]);
 }

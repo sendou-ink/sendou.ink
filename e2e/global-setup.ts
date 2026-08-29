@@ -130,7 +130,6 @@ function isBuildFresh(): boolean {
 	try {
 		const marker = JSON.parse(fs.readFileSync(BUILD_MARKER_FILE, "utf8"));
 		if (marker.siteDomain !== `http://localhost:${E2E_BASE_PORT}`) return false;
-		if (marker.skalopWsUrl !== "") return false;
 	} catch {
 		return false;
 	}
@@ -176,19 +175,12 @@ async function globalSetup(config: FullConfig) {
 				...process.env,
 				VITE_E2E_TEST_RUN: "true",
 				VITE_SITE_DOMAIN: `http://localhost:${E2E_BASE_PORT}`,
-				// Skalop is disconnected in e2e: all workers sharing one instance
-				// cross-talk (identical seeded row ids -> colliding room names ->
-				// spurious revalidations). When e2e tests for chat etc. are added
-				// this needs an actual solution: one skalop (or stub) per worker
-				// with a runtime-derived ws URL, since this build is shared.
-				VITE_SKALOP_WS_URL: "",
 			},
 		});
 		fs.writeFileSync(
 			BUILD_MARKER_FILE,
 			JSON.stringify({
 				siteDomain: `http://localhost:${E2E_BASE_PORT}`,
-				skalopWsUrl: "",
 			}),
 		);
 	}
@@ -239,9 +231,6 @@ async function globalSetup(config: FullConfig) {
 					STORAGE_SECRET: "minio-password",
 					STORAGE_REGION: "us-east-1",
 					STORAGE_BUCKET,
-					// no system messages to a shared skalop instance (see build env above)
-					SKALOP_SYSTEM_MESSAGE_URL: "",
-					SKALOP_TOKEN: "",
 					// creds from .env must not reach test servers (SyncLiveStreams would
 					// hit the real Twitch API and overwrite factory-seeded streams)
 					TWITCH_CLIENT_ID: "",

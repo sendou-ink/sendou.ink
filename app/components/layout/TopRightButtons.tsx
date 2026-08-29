@@ -111,6 +111,7 @@ function ChatButton({
 				icon={<MessageSquare />}
 				variant={variant}
 				onPress={onPress}
+				testId="chat-toggle-button"
 			/>
 			{unreadCount ? (
 				<span className={styles.chatUnreadBadge}>{unreadCount}</span>

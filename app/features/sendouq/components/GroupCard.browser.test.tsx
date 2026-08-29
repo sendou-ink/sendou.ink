@@ -113,7 +113,7 @@ function createOwnGroup(
 		noScreen: false,
 		modePreferences: [],
 		teamMapModePreferences: undefined,
-		chatCode: null,
+		chatRoomId: null,
 		status: "ACTIVE",
 		matchId: null,
 		inviteCode: "test123",

@@ -30,7 +30,7 @@ import {
 	tournamentFromParams,
 } from "../core/Tournament.server";
 import { bracketSchema } from "../tournament-bracket-schemas";
-import { tournamentWebsocketRoom } from "../tournament-bracket-utils";
+import { tournamentChannel } from "../tournament-bracket-utils";
 
 export const action: ActionFunction = async ({ params, request }) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -107,6 +107,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				tournamentId,
 				name: bracket.name,
 				bracket: createdBracket,
+				isLeague: tournament.isLeague,
 			});
 
 			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them
@@ -247,6 +248,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await BracketRepository.insertRoundMatches({
 				stageId,
 				round: round.value,
+				isLeague: tournament.isLeague,
 			});
 
 			emitTournamentUpdate = true;
@@ -334,13 +336,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	clearTournamentDataCache(tournamentId);
 
 	if (emitTournamentUpdate) {
-		ChatSystemMessage.send([
-			{
-				room: tournamentWebsocketRoom(tournament.ctx.id),
-				type: "TOURNAMENT_UPDATED",
-				revalidateOnly: true,
-			},
-		]);
+		ChatSystemMessage.send([{ channel: tournamentChannel(tournament.ctx.id) }]);
 	}
 
 	return null;

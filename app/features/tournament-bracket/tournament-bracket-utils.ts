@@ -1,4 +1,5 @@
 import type { Tables } from "~/db/tables";
+import { CHANNEL_PREFIX } from "~/features/events/events-types";
 import type {
 	TournamentBadgeReceivers,
 	TournamentTrophyReceiver,
@@ -6,16 +7,16 @@ import type {
 import type { TournamentLoaderData } from "../tournament/loaders/to.$id.server";
 import type { Standing } from "./core/Bracket";
 
-export const tournamentWebsocketRoom = (tournamentId: number) =>
-	`tournament__${tournamentId}`;
+export const tournamentChannel = (tournamentId: number) =>
+	`${CHANNEL_PREFIX.tournament}${tournamentId}`;
 
 /**
- * Room of the slice of the brackets page one bracket's (for the types viewed one group at
+ * Channel of the slice of the brackets page one bracket's (for the types viewed one group at
  * a time, one group's) match data is rendered in. Broadcasts that can only have changed
- * that match data go here rather than to the whole tournament's room, so that the viewers
+ * that match data go here rather than to the whole tournament's channel, so that the viewers
  * of the other brackets and groups do not refetch.
  */
-export const tournamentBracketWebsocketRoom = ({
+export const tournamentBracketChannel = ({
 	tournamentId,
 	bracketIdx,
 	groupId,
@@ -25,7 +26,7 @@ export const tournamentBracketWebsocketRoom = ({
 	/** Only set for the bracket types {@link showsOneGroupAtATime}. */
 	groupId: number | null;
 }) =>
-	`${tournamentWebsocketRoom(tournamentId)}__bracket__${bracketIdx}${
+	`${tournamentChannel(tournamentId)}__bracket__${bracketIdx}${
 		groupId !== null ? `__group__${groupId}` : ""
 	}`;
 

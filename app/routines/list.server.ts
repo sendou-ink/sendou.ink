@@ -1,3 +1,4 @@
+import { CloseExpiredChatRoomsRoutine } from "./closeExpiredChatRooms";
 import { CloseExpiredCommissionsRoutine } from "./closeExpiredCommissions";
 import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 import { ComputeLutiDivsRoutine } from "./computeLutiDivs";
@@ -53,6 +54,7 @@ export const daily = [
 	DeleteOldTournamentAuditLogsRoutine,
 	DeleteOldScrimPickupRostersRoutine,
 	CloseExpiredCommissionsRoutine,
+	CloseExpiredChatRoomsRoutine,
 	DeleteOrphanArtTagsRoutine,
 	ComputeLutiDivsRoutine,
 	OptimizeDatabaseRoutine,

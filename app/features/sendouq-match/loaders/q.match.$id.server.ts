@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
-import { chatAccessible } from "~/features/chat/chat-utils";
+import type { RouteChatRoom } from "~/features/chat/chat-types";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -8,7 +8,6 @@ import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
-import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { qMatchPageParamsSchema } from "../q-match-schemas";
@@ -55,27 +54,40 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		reportedWeapons,
 		ingestedScoreboards,
 		isOffSeason: Seasons.current() === null,
-		chatCode: (() => {
-			if (!(isStaff || isParticipant)) return null;
+		chatRooms: ((): RouteChatRoom[] => {
+			if (!user) return [];
 
-			const accessible = chatAccessible({
-				isStaff,
-				expiresAfterDays: 1,
-				comparedTo: databaseTimestampToDate(matchUnmapped.createdAt),
-			});
-			if (!accessible) return null;
+			if (isParticipant) {
+				const ownGroup = matchUnmapped.groupAlpha.members.some(
+					(member) => member.id === user.id,
+				)
+					? match.groupAlpha
+					: match.groupBravo;
 
-			if (!isParticipant) return match.chatCode ?? null;
+				return [match.chatRoomId, ownGroup.chatRoomId]
+					.filter((id): id is number => typeof id === "number")
+					.map((roomId) => ({ roomId, autoOpen: true }));
+			}
 
-			const codes = [
-				match.chatCode,
-				match.groupAlpha.chatCode,
-				match.groupBravo.chatCode,
-			].filter((c): c is string => Boolean(c));
+			if (!isStaff) return [];
 
-			if (codes.length === 0) return null;
-			if (codes.length === 1) return codes[0];
-			return codes;
+			return [
+				// staff observers chat alongside the participants in the match room
+				{ roomId: matchUnmapped.chatRoomId, autoOpen: true },
+				// the group chats stay private team spaces: staff only ever reads them
+				{
+					roomId: matchUnmapped.groupAlpha.chatRoomId,
+					autoOpen: false,
+					label: "Group Alpha",
+				},
+				{
+					roomId: matchUnmapped.groupBravo.chatRoomId,
+					autoOpen: false,
+					label: "Group Bravo",
+				},
+			].filter(
+				(room): room is RouteChatRoom => typeof room.roomId === "number",
+			);
 		})(),
 	};
 };

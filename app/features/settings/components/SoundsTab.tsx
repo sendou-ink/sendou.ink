@@ -2,11 +2,12 @@ import { Volume2 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import {
+	playSoundIgnoringSetting,
 	soundCodeToLocalStorageKey,
+	soundEnabled,
 	soundVolume,
 } from "~/features/chat/chat-utils";
 import { useHydrated } from "~/hooks/useHydrated";
-import { soundPath } from "~/utils/urls";
 import styles from "./SoundsTab.module.css";
 
 export function SoundsTab() {
@@ -34,20 +35,16 @@ function SoundCheckboxes() {
 		},
 	];
 
-	const currentValue = (code: string) =>
-		!localStorage.getItem(soundCodeToLocalStorageKey(code)) ||
-		localStorage.getItem(soundCodeToLocalStorageKey(code)) === "true";
-
 	const [soundValues, setSoundValues] = React.useState(
 		Object.fromEntries(
-			sounds.map((sound) => [sound.code, currentValue(sound.code)]),
+			sounds.map((sound) => [sound.code, soundEnabled(sound.code)]),
 		),
 	);
 
 	const toggleSound = (code: string) => {
 		localStorage.setItem(
 			soundCodeToLocalStorageKey(code),
-			String(!currentValue(code)),
+			String(!soundEnabled(code)),
 		);
 		setSoundValues((prev) => ({
 			...prev,
@@ -85,11 +82,7 @@ function SoundSlider() {
 		);
 	};
 
-	const playSound = () => {
-		const audio = new Audio(soundPath("sq_like"));
-		audio.volume = soundVolume() / 100;
-		void audio.play();
-	};
+	const previewVolume = () => playSoundIgnoringSetting("sq_like");
 
 	return (
 		<div className="stack horizontal xs items-center">
@@ -99,8 +92,8 @@ function SoundSlider() {
 				type="range"
 				value={volume}
 				onChange={changeVolume}
-				onTouchEnd={playSound}
-				onMouseUp={playSound}
+				onTouchEnd={previewVolume}
+				onMouseUp={previewVolume}
 			/>
 		</div>
 	);

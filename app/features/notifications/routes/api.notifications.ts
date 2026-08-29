@@ -4,7 +4,7 @@ import { NOTIFICATIONS } from "../notifications-contants";
 
 /**
  * The notification peek shown in the bell popover. Fetched by
- * `NotificationsProvider` whenever skalop pings that the user's notifications
+ * `NotificationsProvider` whenever an event announces that the user's notifications
  * changed, instead of being polled with the rest of the app shell data.
  */
 export const loader = async () => {

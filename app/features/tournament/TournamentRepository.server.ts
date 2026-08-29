@@ -17,6 +17,7 @@ import type {
 } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
 import { identifierToUserIds } from "~/features/mmr/mmr-utils";
+import { organizerPermissions } from "~/features/tournament/core/permissions";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import type {
@@ -307,10 +308,8 @@ export async function findById(id: number) {
 
 /**
  * Who may act on the tournament, following the convention in docs/dev/permissions.md.
+ * `ADMIN`, `ORGANIZE` and `MANAGE_MATCHES` come from {@link organizerPermissions}.
  *
- * - `ADMIN`: full control of the tournament
- * - `ORGANIZE`: running the tournament
- * - `MANAGE_MATCHES`: casting, locking and admining individual matches
  * - `EDIT_EVENT_INFO`: editing the calendar event the tournament belongs to. Organization
  *   admins only qualify when the organization is established or they may add tournaments
  *   of their own anyway.
@@ -338,27 +337,16 @@ function permissionsOf(tournament: {
 		organizationMembers
 			.filter((member) => roles.includes(member.role))
 			.map((member) => member.userId);
-	const staffWithRole = (roles: Array<TournamentStaffRole>) =>
-		tournament.staff
-			.filter((staff) => roles.includes(staff.role))
-			.map((staff) => staff.id);
-
-	const ADMIN = R.unique([tournament.author.id, ...membersWithRole(["ADMIN"])]);
-	const ORGANIZE = R.unique([
-		...ADMIN,
-		...membersWithRole(["ORGANIZER"]),
-		...staffWithRole(["ORGANIZER"]),
-	]);
-	const MANAGE_MATCHES = R.unique([
-		...ORGANIZE,
-		...membersWithRole(["STREAMER"]),
-		...staffWithRole(["STREAMER"]),
-	]);
 
 	return {
-		ADMIN,
-		ORGANIZE,
-		MANAGE_MATCHES,
+		...organizerPermissions({
+			authorId: tournament.author.id,
+			organizationMembers,
+			staff: tournament.staff.map((staff) => ({
+				userId: staff.id,
+				role: staff.role,
+			})),
+		}),
 		EDIT_EVENT_INFO: R.unique([
 			tournament.author.id,
 			...organizationMembers
@@ -978,6 +966,77 @@ export function findAllBetweenTwoTimestamps({
 		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
 		.where("CalendarEvent.hidden", "=", 0)
 		.execute();
+}
+
+/**
+ * `ORGANIZE` and `MANAGE_MATCHES` holders per tournament, keyed by tournament id.
+ * For callers that need the ids of many tournaments' organizers without loading
+ * the tournaments themselves.
+ */
+export async function findOrganizerPermissionsByTournamentIds(
+	tournamentIds: number[],
+) {
+	const result = new Map<number, ReturnType<typeof organizerPermissions>>();
+	if (tournamentIds.length === 0) return result;
+
+	const [events, staff] = await Promise.all([
+		db
+			.selectFrom("CalendarEvent")
+			.select([
+				"CalendarEvent.tournamentId",
+				"CalendarEvent.authorId",
+				"CalendarEvent.organizationId",
+			])
+			.where("CalendarEvent.tournamentId", "in", tournamentIds)
+			.$narrowType<{ tournamentId: NotNull }>()
+			.execute(),
+		db
+			.selectFrom("TournamentStaff")
+			.select([
+				"TournamentStaff.tournamentId",
+				"TournamentStaff.userId",
+				"TournamentStaff.role",
+			])
+			.where("TournamentStaff.tournamentId", "in", tournamentIds)
+			.execute(),
+	]);
+
+	const organizationIds = R.unique(
+		events.map((event) => event.organizationId).filter((id) => id !== null),
+	);
+	const organizationMembers =
+		organizationIds.length > 0
+			? await db
+					.selectFrom("TournamentOrganizationMember")
+					.select([
+						"TournamentOrganizationMember.organizationId",
+						"TournamentOrganizationMember.userId",
+						"TournamentOrganizationMember.role",
+					])
+					.where(
+						"TournamentOrganizationMember.organizationId",
+						"in",
+						organizationIds,
+					)
+					.execute()
+			: [];
+
+	for (const event of events) {
+		result.set(
+			event.tournamentId,
+			organizerPermissions({
+				authorId: event.authorId,
+				organizationMembers: organizationMembers.filter(
+					(member) => member.organizationId === event.organizationId,
+				),
+				staff: staff.filter(
+					(staffMember) => staffMember.tournamentId === event.tournamentId,
+				),
+			}),
+		);
+	}
+
+	return result;
 }
 
 /** Podium placements of the given tournaments, one row per placed player. */

@@ -1,19 +1,29 @@
 import clsx from "clsx";
-import { ArrowLeft, MessageSquare, X } from "lucide-react";
+import type { TFunction } from "i18next";
+import {
+	ArrowLeft,
+	ChevronDown,
+	ChevronRight,
+	MessageSquare,
+	X,
+} from "lucide-react";
 import * as React from "react";
 import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
-import { useCurrentRouteChatCodes } from "~/features/chat/ChatProvider";
-import type {
-	ChatContextValue,
-	RoomInfo,
-} from "~/features/chat/chat-provider-types";
-import { resolveDatePlaceholders } from "~/features/chat/chat-utils";
+import {
+	useChatContext,
+	useCurrentRouteChatRooms,
+} from "~/features/chat/ChatProvider";
+import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
-import { useChatContext } from "~/features/chat/useChatContext";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
+import { navIconUrl } from "~/utils/urls";
 import {
 	NavIconContainer,
 	NavListButton,
@@ -29,15 +39,86 @@ export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 
 	if (!chatContext) return null;
 
-	if (chatContext.activeRooms.length > 0) {
+	if (chatContext.activeRoomIds.length > 0) {
 		return <ChatView onClose={onClose} />;
 	}
 
-	if (chatContext.isLoading) {
+	if (!chatContext.roomsLoaded) {
 		return <LoadingState onClose={onClose} />;
 	}
 
 	return <RoomList onClose={onClose} />;
+}
+
+interface RoomDisplay {
+	title: string;
+	subtitle: string;
+	imageUrl: string;
+}
+
+function useRoomDisplay() {
+	const { t } = useTranslation(["common"]);
+	const { formatter: dateFormatter } = useDateTimeFormat({
+		month: "numeric",
+		day: "numeric",
+		hour: "numeric",
+		minute: "numeric",
+	});
+
+	return (room: ChatRoomListItem): RoomDisplay => {
+		switch (room.type) {
+			case "SQ_GROUP": {
+				return {
+					title: t("common:chat.room.group", {
+						members: room.participantUserIds.length,
+					}),
+					subtitle: "SendouQ",
+					imageUrl: `${navIconUrl("sendouq")}.avif`,
+				};
+			}
+			case "SQ_MATCH": {
+				return {
+					title: t("common:chat.room.match", { id: room.titleParams.matchId }),
+					subtitle: "SendouQ",
+					imageUrl: `${navIconUrl("sendouq")}.avif`,
+				};
+			}
+			case "TOURNAMENT_MATCH": {
+				return {
+					title: t("common:chat.room.match", { id: room.titleParams.matchId }),
+					subtitle: room.titleParams.tournamentName,
+					imageUrl: room.imageUrl ?? `${navIconUrl("medal")}.avif`,
+				};
+			}
+			case "TOURNAMENT_TEAM": {
+				return {
+					title: room.titleParams.teamName,
+					subtitle: room.titleParams.tournamentName,
+					imageUrl: room.imageUrl ?? `${navIconUrl("medal")}.avif`,
+				};
+			}
+			case "SCRIM": {
+				return {
+					title: dateFormatter.format(
+						databaseTimestampToDate(Number(room.titleParams.startsAt)),
+					),
+					subtitle: t("common:chat.room.scrim"),
+					imageUrl: `${navIconUrl("scrims")}.avif`,
+				};
+			}
+		}
+	};
+}
+
+/** Concise label for split view headers, e.g. "Match" / "Group". */
+function roomShortLabel(room: ChatRoomListItem, t: TFunction<["common"]>) {
+	return room.type === "SQ_GROUP"
+		? t("common:chat.room.groupShort")
+		: t("common:chat.room.matchShort");
+}
+
+function roomIsInactive(room: ChatRoomListItem) {
+	return room.inactive || room.expiresAt <= dateToDatabaseTimestamp(new Date());
 }
 
 function SidebarHeader({ onClose }: { onClose?: () => void }) {
@@ -74,110 +155,112 @@ function LoadingState({ onClose }: { onClose?: () => void }) {
 function RoomList({ onClose }: { onClose?: () => void }) {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
-	const { formatter: headerFormatter } = useDateTimeFormat({
-		month: "numeric",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
+	const [showInactive, setShowInactive] = React.useState(false);
+
+	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
+		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
+
+	const routeRooms = useCurrentRouteChatRooms().flatMap((entry) => {
+		const room = chatContext.roomForId(entry.roomId);
+		return room ? [{ ...entry, room }] : [];
 	});
-	const { formatter: timestampFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "numeric",
-	});
 
-	const routeChatCodes = useCurrentRouteChatCodes();
+	// Rooms the active route opens together collapse into a single combined list
+	// entry that opens the stacked split view.
+	const autoOpenRooms = routeRooms.filter((entry) => entry.autoOpen);
+	const combinedRooms = autoOpenRooms.length > 1 ? autoOpenRooms : [];
+	const combinedRoomIds = new Set(combinedRooms.map((entry) => entry.room.id));
 
-	const visibleRooms = chatContext.rooms
-		.filter(
-			(room) =>
-				room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode),
-		)
-		.sort((a, b) => {
-			if (a.isObsolete !== b.isObsolete) return a.isObsolete ? 1 : -1;
-			const aRecency = a.lastMessageTimestamp || a.createdAt;
-			const bRecency = b.lastMessageTimestamp || b.createdAt;
-			return bRecency - aRecency;
-		});
+	// route rooms outside the user's own list (an observer's match chat, the
+	// group chats a staff member may read) are surfaced on top of it
+	const pinnedRooms = routeRooms.filter(
+		(entry) =>
+			!combinedRoomIds.has(entry.room.id) &&
+			chatContext.rooms.every((own) => own.id !== entry.room.id),
+	);
 
-	// Rooms the active route groups together collapse into a single combined
-	// list entry that opens the stacked/tabbed view.
-	const combinedRooms =
-		routeChatCodes.length > 1
-			? routeChatCodes
-					.map((code) => visibleRooms.find((r) => r.chatCode === code))
-					.filter((r): r is RoomInfo => Boolean(r))
-			: [];
-	const isCombined = combinedRooms.length > 1;
-	const combinedChatCodes = new Set(combinedRooms.map((r) => r.chatCode));
-	const standaloneRooms = isCombined
-		? visibleRooms.filter((room) => !combinedChatCodes.has(room.chatCode))
-		: visibleRooms;
+	const standaloneRooms = chatContext.rooms.filter(
+		(room) => !combinedRoomIds.has(room.id),
+	);
+	// an inactive room that got a new message surfaces in the normal list until read
+	const activeRooms = standaloneRooms
+		.filter((room) => !roomIsInactive(room) || room.unreadCount > 0)
+		.sort(byRecency);
+	const inactiveRooms = standaloneRooms
+		.filter((room) => roomIsInactive(room) && room.unreadCount === 0)
+		.sort(byRecency);
 
-	const openRooms = (chatCodes: string[]) => {
-		for (const chatCode of chatCodes) {
-			chatContext.requestHistory(chatCode);
-			chatContext.markAsRead(chatCode);
+	const openRooms = (roomIds: number[]) => {
+		for (const roomId of roomIds) {
+			chatContext.ensureMessagesLoaded(roomId);
+			chatContext.markAsRead(roomId);
 		}
-		chatContext.setActiveRooms(chatCodes);
+		chatContext.setActiveRoomIds(roomIds);
 	};
+
+	const hasAnyRoom =
+		combinedRooms.length > 0 ||
+		pinnedRooms.length > 0 ||
+		standaloneRooms.length > 0;
 
 	return (
 		<div className={styles.sidebar}>
 			<SidebarHeader onClose={onClose} />
 			<div className={styles.roomList}>
-				{!isCombined && standaloneRooms.length === 0 ? (
+				{!hasAnyRoom ? (
 					<div className={styles.emptyState}>
 						{t("common:chat.sidebar.noActiveChats")}
 					</div>
 				) : (
 					<>
-						{isCombined ? (
+						{combinedRooms.length > 0 ? (
 							<CombinedRoomListItem
-								rooms={combinedRooms}
+								rooms={combinedRooms.map((entry) => entry.room)}
 								onPress={() =>
-									openRooms(combinedRooms.map((room) => room.chatCode))
+									openRooms(combinedRooms.map((entry) => entry.room.id))
 								}
 							/>
 						) : null}
-						{standaloneRooms.map((room) => {
-							const unread = chatContext.unreadCounts[room.chatCode] ?? 0;
-
-							return (
-								<NavListButton
-									key={room.chatCode}
-									className={clsx(
-										styles.roomItem,
-										room.isObsolete ? "opaque" : null,
-									)}
-									onPress={() => openRooms([room.chatCode])}
+						{pinnedRooms.map(({ room, label }) => (
+							<RoomListItem
+								key={room.id}
+								room={room}
+								subtitle={label}
+								onPress={() => openRooms([room.id])}
+							/>
+						))}
+						{activeRooms.map((room) => (
+							<RoomListItem
+								key={room.id}
+								room={room}
+								onPress={() => openRooms([room.id])}
+							/>
+						))}
+						{inactiveRooms.length > 0 ? (
+							<>
+								<Button
+									className={styles.inactiveToggle}
+									onPress={() => setShowInactive((shown) => !shown)}
 								>
-									{room.imageUrl ? <NavListImage src={room.imageUrl} /> : null}
-									<NavListTexts>
-										<NavListTitle
-											className={clsx(
-												styles.roomName,
-												room.isObsolete ? "line-through" : null,
-											)}
-										>
-											{resolveDatePlaceholders(
-												room.header,
-												(d) => headerFormatter.format(d) ?? "",
-											)}
-										</NavListTitle>
-										<NavListSubtitle>{room.subtitle}</NavListSubtitle>
-									</NavListTexts>
-									{unread > 0 && !room.isObsolete ? (
-										<span className={styles.unreadBadge}>{unread}</span>
-									) : room.lastMessageTimestamp > 0 ? (
-										<span className={styles.roomTimestamp}>
-											{timestampFormatter.format(
-												new Date(room.lastMessageTimestamp),
-											)}
-										</span>
-									) : null}
-								</NavListButton>
-							);
-						})}
+									{showInactive ? (
+										<ChevronDown size={14} />
+									) : (
+										<ChevronRight size={14} />
+									)}
+									{t("common:chat.sidebar.inactive")} ({inactiveRooms.length})
+								</Button>
+								{showInactive
+									? inactiveRooms.map((room) => (
+											<RoomListItem
+												key={room.id}
+												room={room}
+												inactive
+												onPress={() => openRooms([room.id])}
+											/>
+										))
+									: null}
+							</>
+						) : null}
 					</>
 				)}
 			</div>
@@ -185,39 +268,71 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	);
 }
 
-function CombinedRoomListItem({
-	rooms,
+function RoomListItem({
+	room,
+	inactive = false,
+	subtitle: subtitleOverride,
 	onPress,
 }: {
-	rooms: RoomInfo[];
+	room: ChatRoomListItem;
+	inactive?: boolean;
+	/** Names the room in place of its own subtitle, where that can't tell it apart. */
+	subtitle?: string;
 	onPress: () => void;
 }) {
-	const chatContext = useChatContext()!;
-	const { formatter: headerFormatter } = useDateTimeFormat({
-		month: "numeric",
-		day: "numeric",
+	const roomDisplay = useRoomDisplay();
+	const { formatter: timestampFormatter } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "numeric",
 	});
 
-	const primary = rooms[0];
-	const unread = rooms.reduce(
-		(sum, room) => sum + (chatContext.unreadCounts[room.chatCode] ?? 0),
-		0,
+	const { title, subtitle: roomSubtitle, imageUrl } = roomDisplay(room);
+	const subtitle = subtitleOverride ?? roomSubtitle;
+
+	return (
+		<NavListButton
+			className={clsx(styles.roomItem, inactive ? "opaque" : null)}
+			onPress={onPress}
+		>
+			<NavListImage src={imageUrl} />
+			<NavListTexts>
+				<NavListTitle className={styles.roomName}>{title}</NavListTitle>
+				<NavListSubtitle>{subtitle}</NavListSubtitle>
+			</NavListTexts>
+			{room.unreadCount > 0 ? (
+				<span className={styles.unreadBadge}>{room.unreadCount}</span>
+			) : room.latestMessageAt !== null ? (
+				<span className={styles.roomTimestamp}>
+					{timestampFormatter.format(
+						databaseTimestampToDate(room.latestMessageAt),
+					)}
+				</span>
+			) : null}
+		</NavListButton>
 	);
+}
+
+function CombinedRoomListItem({
+	rooms,
+	onPress,
+}: {
+	rooms: ChatRoomListItem[];
+	onPress: () => void;
+}) {
+	const { t } = useTranslation(["common"]);
+	const roomDisplay = useRoomDisplay();
+
+	const primary = rooms[0];
+	const { title, imageUrl } = roomDisplay(primary);
+	const unread = rooms.reduce((sum, room) => sum + room.unreadCount, 0);
 
 	return (
 		<NavListButton className={styles.roomItem} onPress={onPress}>
-			{primary.imageUrl ? <NavListImage src={primary.imageUrl} /> : null}
+			<NavListImage src={imageUrl} />
 			<NavListTexts>
-				<NavListTitle className={styles.roomName}>
-					{resolveDatePlaceholders(
-						primary.header,
-						(d) => headerFormatter.format(d) ?? "",
-					)}
-				</NavListTitle>
+				<NavListTitle className={styles.roomName}>{title}</NavListTitle>
 				<NavListSubtitle>
-					{rooms.map((room) => roomShortLabel(room.header)).join(" · ")}
+					{rooms.map((room) => roomShortLabel(room, t)).join(" · ")}
 				</NavListSubtitle>
 			</NavListTexts>
 			{unread > 0 ? <span className={styles.unreadBadge}>{unread}</span> : null}
@@ -228,83 +343,47 @@ function CombinedRoomListItem({
 function ChatView({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext()!;
 
-	const activeRooms = chatContext.activeRooms
-		.map((code) => chatContext.rooms.find((r) => r.chatCode === code))
-		.filter((r): r is RoomInfo => Boolean(r));
+	const activeRooms = chatContext.activeRoomIds
+		.map((roomId) => chatContext.roomForId(roomId))
+		.filter((r): r is ChatRoomListItem => Boolean(r));
 
 	if (activeRooms.length > 1) {
 		return <CombinedChatView rooms={activeRooms} onClose={onClose} />;
 	}
 
-	return <SingleChatView onClose={onClose} />;
+	return <SingleChatView room={activeRooms[0]} onClose={onClose} />;
 }
 
-function SingleChatView({ onClose }: { onClose?: () => void }) {
+function SingleChatView({
+	room,
+	onClose,
+}: {
+	room: ChatRoomListItem | undefined;
+	onClose?: () => void;
+}) {
 	const { t } = useTranslation(["common"]);
 	const chatContext = useChatContext()!;
-	const activeRoom = chatContext.activeRooms[0];
-	const { formatter: headerFormatter } = useDateTimeFormat({
-		month: "numeric",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	});
+	const roomDisplay = useRoomDisplay();
+	const routeLabel = useCurrentRouteChatRooms().find(
+		(entry) => entry.roomId === room?.id,
+	)?.label;
 
-	const routeChatCodes = useCurrentRouteChatCodes();
-
-	// Mirror the room list's badge visibility (RoomList): only rooms that are
-	// visible (non-expired or in route) and not obsolete contribute, so the
-	// back-arrow total can't outrun what the list can actually show.
 	const otherRoomsUnreadCount = chatContext.rooms
-		.filter(
-			(room) =>
-				room.chatCode !== activeRoom &&
-				!room.isObsolete &&
-				(room.expiresAt > Date.now() || routeChatCodes.includes(room.chatCode)),
-		)
-		.reduce(
-			(sum, room) => sum + (chatContext.unreadCounts[room.chatCode] ?? 0),
-			0,
-		);
+		.filter((candidate) => candidate.id !== room?.id)
+		.reduce((sum, candidate) => sum + candidate.unreadCount, 0);
 
-	const room = chatContext.rooms.find((r) => r.chatCode === activeRoom);
-	const roomExpired = Boolean(room?.expiresAt && room.expiresAt < Date.now());
-	const messages = chatContext.messagesForRoom(activeRoom);
-
-	const usersWithLabels = roomUsersWithLabels(chatContext, room);
-
-	const chatAdapter = {
-		messages,
-		send: (contents: string) => {
-			chatContext.send(activeRoom, contents);
-		},
-		currentRoom: activeRoom,
-		setCurrentRoom: () => {},
-		readyState: chatContext.readyState,
-		unseenMessages: new Map<string, number>(),
-	};
-
-	const handleBack = () => {
-		chatContext.setActiveRooms([]);
-	};
+	const display = room ? roomDisplay(room) : null;
+	const subtitle = routeLabel ?? display?.subtitle;
 
 	const headerContent = (
 		<>
-			{room?.imageUrl ? <NavListImage src={room.imageUrl} /> : null}
+			{display ? <NavListImage src={display.imageUrl} /> : null}
 			<div className={styles.chatHeaderInfo}>
-				<span
-					className={clsx(
-						styles.chatHeaderTitle,
-						room?.isObsolete ? "line-through" : null,
-					)}
-				>
-					{resolveDatePlaceholders(
-						room?.header ?? t("common:chat.sidebar.title"),
-						(d) => headerFormatter.format(d) ?? "",
-					)}
+				<span className={styles.chatHeaderTitle}>
+					{display?.title ?? t("common:chat.sidebar.title")}
 				</span>
-				{room?.subtitle ? (
-					<span className={styles.chatHeaderSubtitle}>{room.subtitle}</span>
+				{subtitle ? (
+					<span className={styles.chatHeaderSubtitle}>{subtitle}</span>
 				) : null}
 			</div>
 		</>
@@ -313,7 +392,10 @@ function SingleChatView({ onClose }: { onClose?: () => void }) {
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.chatHeader}>
-				<Button className={styles.backButton} onPress={handleBack}>
+				<Button
+					className={styles.backButton}
+					onPress={() => chatContext.setActiveRoomIds([])}
+				>
 					<ArrowLeft size={18} />
 					{otherRoomsUnreadCount > 0 ? (
 						<span className={styles.backButtonBadge}>
@@ -335,17 +417,8 @@ function SingleChatView({ onClose }: { onClose?: () => void }) {
 				) : null}
 			</div>
 			<div className={styles.chatContainer}>
-				<Chat
-					users={usersWithLabels}
-					rooms={[
-						{
-							label: room?.header ?? "Chat",
-							code: activeRoom,
-						},
-					]}
-					chat={chatAdapter}
-					disabled={roomExpired}
-				/>
+				{/* keyed so switching rooms starts the scroller and its unseen state over */}
+				{room ? <RoomChat key={room.id} room={room} /> : null}
 			</div>
 		</div>
 	);
@@ -355,43 +428,46 @@ function CombinedChatView({
 	rooms,
 	onClose,
 }: {
-	rooms: RoomInfo[];
+	rooms: ChatRoomListItem[];
 	onClose?: () => void;
 }) {
 	const chatContext = useChatContext()!;
-	const { formatter: headerFormatter } = useDateTimeFormat({
-		month: "numeric",
-		day: "numeric",
-		hour: "numeric",
-		minute: "numeric",
-	});
-
-	const handleBack = () => {
-		chatContext.setActiveRooms([]);
-	};
+	const roomDisplay = useRoomDisplay();
+	const isMobile = useLayoutSize() === "mobile";
 
 	const primary = rooms[0];
+	const display = roomDisplay(primary);
 	const headerContent = (
 		<>
-			{primary.imageUrl ? <NavListImage src={primary.imageUrl} /> : null}
+			<NavListImage src={display.imageUrl} />
 			<div className={styles.chatHeaderInfo}>
-				<span className={styles.chatHeaderTitle}>
-					{resolveDatePlaceholders(
-						primary.header,
-						(d) => headerFormatter.format(d) ?? "",
-					)}
-				</span>
-				{primary.subtitle ? (
-					<span className={styles.chatHeaderSubtitle}>{primary.subtitle}</span>
+				<span className={styles.chatHeaderTitle}>{display.title}</span>
+				{display.subtitle ? (
+					<span className={styles.chatHeaderSubtitle}>{display.subtitle}</span>
 				) : null}
 			</div>
 		</>
 	);
 
+	// Primary (match) sits on top, flush below the main header which already names
+	// it, so its sub-header is hidden. Desktop splits evenly; mobile gives the
+	// match chat the larger 3/5 share (group chat 2/5).
+	const panels = [
+		{ room: primary, grow: isMobile ? 3 : 1, showHeader: false },
+		...rooms.slice(1).map((room) => ({
+			room,
+			grow: isMobile ? 2 : 1,
+			showHeader: true,
+		})),
+	];
+
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.chatHeader}>
-				<Button className={styles.backButton} onPress={handleBack}>
+				<Button
+					className={styles.backButton}
+					onPress={() => chatContext.setActiveRoomIds([])}
+				>
 					<ArrowLeft size={18} />
 				</Button>
 				{primary.url ? (
@@ -407,49 +483,16 @@ function CombinedChatView({
 					</Button>
 				) : null}
 			</div>
-			<SplitPanels rooms={rooms} />
-		</div>
-	);
-}
-
-function SplitPanels({ rooms }: { rooms: RoomInfo[] }) {
-	const chatContext = useChatContext()!;
-	const isMobile = useLayoutSize() === "mobile";
-
-	// Both panels are on screen at once, so keep them all marked read while open,
-	// re-running whenever any room's message count changes.
-	const countsKey = rooms
-		.map((r) => `${r.chatCode}:${r.totalMessageCount}`)
-		.join(",");
-	React.useEffect(() => {
-		for (const entry of countsKey.split(",")) {
-			chatContext.markAsRead(entry.split(":")[0]);
-		}
-	}, [countsKey, chatContext.markAsRead]);
-
-	const [primary, ...rest] = rooms;
-	// Primary (match) sits on top, flush below the main header which already names
-	// it, so its sub-header is hidden. Desktop splits evenly; mobile gives the
-	// match chat the larger 3/5 share (group chat 2/5).
-	const panels = [
-		{ room: primary, grow: isMobile ? 3 : 1, showHeader: false },
-		...rest.map((room) => ({
-			room,
-			grow: isMobile ? 2 : 1,
-			showHeader: true,
-		})),
-	];
-
-	return (
-		<div className={styles.splitView}>
-			{panels.map(({ room, grow, showHeader }) => (
-				<SplitPanel
-					key={room.chatCode}
-					room={room}
-					grow={grow}
-					showHeader={showHeader}
-				/>
-			))}
+			<div className={styles.splitView}>
+				{panels.map(({ room, grow, showHeader }) => (
+					<SplitPanel
+						key={room.id}
+						room={room}
+						grow={grow}
+						showHeader={showHeader}
+					/>
+				))}
+			</div>
 		</div>
 	);
 }
@@ -459,19 +502,19 @@ function SplitPanel({
 	grow,
 	showHeader,
 }: {
-	room: RoomInfo;
+	room: ChatRoomListItem;
 	grow: number;
 	showHeader: boolean;
 }) {
+	const { t } = useTranslation(["common"]);
+
 	return (
 		<div
 			className={styles.splitPanel}
 			style={{ "--split-grow": grow } as React.CSSProperties}
 		>
 			{showHeader ? (
-				<div className={styles.splitPanelHeader}>
-					{roomShortLabel(room.header)}
-				</div>
+				<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
 			) : null}
 			<div className={styles.chatContainer}>
 				<RoomChat room={room} />
@@ -480,52 +523,18 @@ function SplitPanel({
 	);
 }
 
-function RoomChat({ room }: { room: RoomInfo }) {
+function RoomChat({ room }: { room: ChatRoomListItem }) {
 	const chatContext = useChatContext()!;
-	const roomExpired = Boolean(room.expiresAt && room.expiresAt < Date.now());
-	const usersWithLabels = roomUsersWithLabels(chatContext, room);
 
-	const chatAdapter = {
-		messages: chatContext.messagesForRoom(room.chatCode),
-		send: (contents: string) => {
-			chatContext.send(room.chatCode, contents);
-		},
-		currentRoom: room.chatCode,
-		setCurrentRoom: () => {},
-		readyState: chatContext.readyState,
-		unseenMessages: new Map<string, number>(),
-	};
+	const expired = room.expiresAt <= dateToDatabaseTimestamp(new Date());
 
 	return (
 		<Chat
-			users={usersWithLabels}
-			rooms={[{ label: room.header, code: room.chatCode }]}
-			chat={chatAdapter}
-			disabled={roomExpired}
+			messages={chatContext.messagesForRoom(room.id)}
+			onSend={(message) => chatContext.sendMessage(room.id, message)}
+			labelByUserId={room.labelByUserId}
+			disabled={expired}
+			readOnly={!expired && !room.canPost}
 		/>
 	);
-}
-
-function roomUsersWithLabels(
-	chatContext: ChatContextValue,
-	room: RoomInfo | undefined,
-) {
-	const participantIds = new Set(room?.participantUserIds ?? []);
-	const usersWithLabels = { ...chatContext.chatUsers };
-	for (const [userIdStr, label] of Object.entries(chatContext.chatLabels)) {
-		const userId = Number(userIdStr);
-		if (participantIds.has(userId)) continue;
-		const existing = usersWithLabels[userId];
-		if (existing) {
-			usersWithLabels[userId] = { ...existing, title: label };
-		}
-	}
-	return usersWithLabels;
-}
-
-/** Concise label for tabs/split headers, e.g. "Match #123" -> "Match". */
-function roomShortLabel(header: string): string {
-	const trimmed = header.trim();
-	if (!trimmed) return "Chat";
-	return trimmed.split(/[\s(#]/)[0] || trimmed;
 }

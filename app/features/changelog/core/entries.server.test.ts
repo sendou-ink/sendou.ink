@@ -11,4 +11,12 @@ describe("Entries.allEntries", () => {
 			expect(entry.headline).not.toBe("");
 		}
 	});
+
+	test("reads entries that list many nav items", () => {
+		const entries = Entries.allEntries();
+
+		expect(
+			entries.some((entry) => (entry.navItems?.length ?? 0) > 1),
+		).toBeTruthy();
+	});
 });

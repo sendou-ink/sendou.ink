@@ -78,7 +78,7 @@ New pages need to be added to `OG_IMAGE_PAGES` and to `PAGE_COLORS` on the previ
 
 The image posted on social media on update day is built from the entry files in `changelog/`.
 
-1) Every commit with a user facing change adds one `changelog/YYYY-MM-DD-<slug>.md` per change. Frontmatter is `navItem` (optional, must be one of `OG_IMAGE_PAGES`, omitted = sendou.ink logo) and `type` (`feature` or `bug`). The body is a one line headline, optionally followed by a markdown bullet list for a bigger release. Entries are never deleted, they are the update history.
+1) Every commit with a user facing change adds one `changelog/YYYY-MM-DD-<slug>.md` per change. Frontmatter is `navItem` (optional, one of `OG_IMAGE_PAGES` or a list of them such as `navItem: [calendar, scrims]`, omitted = sendou.ink logo) and `type` (`feature` or `bug`). The body is a one line headline, optionally followed by a markdown bullet list for a bigger release. Entries are never deleted, they are the update history.
 2) Preview and tweak the graphic on the `/admin/changelog-image` page (dev only). Without a `?since=<sha>` it renders every entry ever committed.
 3) With the dev server running, `pnpm run changelog:image <sha-of-previous-update-commit>` writes `scripts/output/update-<date>.png` from the entries added since that commit, copies the image to the clipboard.
 

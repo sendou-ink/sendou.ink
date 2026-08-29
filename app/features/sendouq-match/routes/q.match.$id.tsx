@@ -44,7 +44,7 @@ export default function SendouQMatchPage() {
 	const data = useLoaderData<typeof loader>();
 
 	// the page's updates are broadcast to its chat room, subscribed to by the chat
-	// provider via the loader's chatCode rather than by a topic of our own
+	// provider via the loader's chatRooms rather than by a topic of our own
 	useLiveRevalidation();
 
 	return (

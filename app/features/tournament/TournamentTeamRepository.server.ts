@@ -3,14 +3,66 @@ import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { flatZip } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import invariant from "~/utils/invariant";
+import {
+	jsonArrayFrom,
+	tournamentLogoWithDefault,
+} from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import * as TournamentAuditLogRepository from "./TournamentAuditLogRepository.server";
+
+/** Teams owning the given chat rooms, with their members' user ids and the tournament they belong to. */
+export async function findAllByChatRoomIds(chatRoomIds: number[]) {
+	if (chatRoomIds.length === 0) return [];
+
+	return db
+		.selectFrom("TournamentTeam")
+		.innerJoin(
+			"CalendarEvent",
+			"CalendarEvent.tournamentId",
+			"TournamentTeam.tournamentId",
+		)
+		.select((eb) => [
+			"TournamentTeam.chatRoomId",
+			"TournamentTeam.name",
+			"TournamentTeam.tournamentId",
+			"CalendarEvent.name as tournamentName",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentTeamMember")
+					.select("TournamentTeamMember.userId")
+					.whereRef(
+						"TournamentTeamMember.tournamentTeamId",
+						"=",
+						"TournamentTeam.id",
+					),
+			).as("members"),
+		])
+		.where("TournamentTeam.chatRoomId", "in", chatRoomIds)
+		.$narrowType<{ chatRoomId: NotNull }>()
+		.execute();
+}
+
+/** Members of the given teams, one row per member. */
+export async function findAllMembersByTeamIds(tournamentTeamIds: number[]) {
+	if (tournamentTeamIds.length === 0) return [];
+
+	return db
+		.selectFrom("TournamentTeamMember")
+		.select([
+			"TournamentTeamMember.tournamentTeamId",
+			"TournamentTeamMember.userId",
+		])
+		.where("TournamentTeamMember.tournamentTeamId", "in", tournamentTeamIds)
+		.execute();
+}
 
 export function setActiveRoster({
 	teamId,
@@ -734,6 +786,7 @@ export function undoDropOut(tournamentTeamId: number) {
 	});
 }
 
+/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
 export function join({
 	previousTeamIdToDelete,
 	newTeamId,
@@ -747,8 +800,10 @@ export function join({
 	userId: number;
 	/** Was the user added to the team by the tournament organizer instead of joining on their own? */
 	isOrganizerAdded?: boolean;
-}) {
+}): Promise<number[]> {
 	return db.transaction().execute(async (trx) => {
+		const roomsChangedUserIds: number[] = [];
+
 		if (previousTeamIdToDelete) {
 			await TournamentAuditLogRepository.insert(
 				{
@@ -757,19 +812,25 @@ export function join({
 				},
 				trx,
 			);
+			roomsChangedUserIds.push(
+				...(await deleteTeamChatRoom(previousTeamIdToDelete, trx)),
+			);
 			await trx
 				.deleteFrom("TournamentTeam")
 				.where("TournamentTeam.id", "=", previousTeamIdToDelete)
 				.execute();
 		}
 
-		const tournamentId = (
-			await trx
-				.selectFrom("TournamentTeam")
-				.select("TournamentTeam.tournamentId")
-				.where("TournamentTeam.id", "=", newTeamId)
-				.executeTakeFirstOrThrow()
-		).tournamentId;
+		const newTeam = await trx
+			.selectFrom("TournamentTeam")
+			.select(["TournamentTeam.tournamentId", "TournamentTeam.chatRoomId"])
+			.where("TournamentTeam.id", "=", newTeamId)
+			.executeTakeFirstOrThrow();
+		const tournamentId = newTeam.tournamentId;
+
+		if (newTeam.chatRoomId !== null) {
+			roomsChangedUserIds.push(userId);
+		}
 
 		const inGameName = await resolveInGameName({ tournamentId, userId }, trx);
 		const isSub = (await registrationClosedNow(trx, tournamentId)) ? 1 : 0;
@@ -793,10 +854,13 @@ export function join({
 			},
 			trx,
 		);
+
+		return roomsChangedUserIds;
 	});
 }
 
-export function deleteById(tournamentTeamId: number) {
+/** @returns user ids whose chat room set changed, for `notifyRoomsChanged`. */
+export function deleteById(tournamentTeamId: number): Promise<number[]> {
 	return db.transaction().execute(async (trx) => {
 		await TournamentAuditLogRepository.insert(
 			{
@@ -811,10 +875,14 @@ export function deleteById(tournamentTeamId: number) {
 			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
 			.execute();
 
+		const roomsChangedUserIds = await deleteTeamChatRoom(tournamentTeamId, trx);
+
 		await trx
 			.deleteFrom("TournamentTeam")
 			.where("TournamentTeam.id", "=", tournamentTeamId)
 			.execute();
+
+		return roomsChangedUserIds;
 	});
 }
 
@@ -994,4 +1062,28 @@ export async function findRecentlyPlayedMapsByIds({
 	]);
 
 	return flatZip(teamOneMaps, teamTwoMaps);
+}
+
+/** @returns the members who lost the room, empty when the team had none. */
+async function deleteTeamChatRoom(
+	tournamentTeamId: number,
+	trx: Transaction<DB>,
+): Promise<number[]> {
+	const team = await trx
+		.selectFrom("TournamentTeam")
+		.select("TournamentTeam.chatRoomId")
+		.where("TournamentTeam.id", "=", tournamentTeamId)
+		.executeTakeFirst();
+
+	if (!team?.chatRoomId) return [];
+
+	const members = await trx
+		.selectFrom("TournamentTeamMember")
+		.select("TournamentTeamMember.userId")
+		.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
+		.execute();
+
+	await ChatRepository.deleteRoomsByIds([team.chatRoomId], trx);
+
+	return members.map((member) => member.userId);
 }

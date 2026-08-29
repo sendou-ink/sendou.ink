@@ -73,6 +73,7 @@
 	"errors.noOnlySpecialCharacters": "Name can't be only special characters",
 	"errors.customRoleRequired": "Enter a name for the custom role",
 	"labels.weaponPool": "Weapon pool",
+	"placeholders.chatMessage": "Press enter to send",
 	"placeholders.weaponPoolFull": "Pool full - remove a weapon to add more",
 	"placeholders.vodStartTimestamp": "10:22",
 	"labels.voiceChat": "Can voice chat",

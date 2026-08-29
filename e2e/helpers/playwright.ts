@@ -369,7 +369,7 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	let response: Response | undefined;
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		const responsePromise = page.waitForResponse(
-			(res) => res.request().method() === "POST",
+			(res) => res.request().method() === "POST" && isDataRequest(res.url()),
 			{ timeout: PER_ATTEMPT_TIMEOUT },
 		);
 		await cb();
@@ -404,6 +404,10 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	await expectRouterIdle(page);
 
 	return response!;
+}
+
+function isDataRequest(url: string) {
+	return new URL(url).pathname.endsWith(".data");
 }
 
 /**

@@ -4,7 +4,7 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 /**
  * Client (`VITE_*`) configuration. Import with `import { Config } from "~/config"`
- * and read values like `Config.siteDomain` or `Config.skalop.wsUrl`.
+ * and read values like `Config.siteDomain` or `Config.staticAssetsUrl`.
  *
  * Values are validated once when this module is first imported, surfacing a
  * single clear error for any misconfigured variable. Variables required in
@@ -41,7 +41,6 @@ const schema = v.object({
 
 	VITE_LEAGUE_GOOGLE_FORM_URL: v.optional(v.string()),
 	VITE_SHOW_BANNER_FOR_SEASON: v.optional(v.string()),
-	VITE_SKALOP_WS_URL: v.optional(v.string()),
 
 	// The VAPID private key and email live in `~/config.server` since they are
 	// server-only; the full three-var coupling is completed by the runtime check
@@ -73,10 +72,6 @@ export const Config = {
 	leagueGoogleFormUrl: values.VITE_LEAGUE_GOOGLE_FORM_URL,
 	/** Season identifier to show the registration banner for, if any. */
 	showBannerForSeason: values.VITE_SHOW_BANNER_FOR_SEASON,
-	/** Skalop (chat) client configuration. */
-	skalop: {
-		wsUrl: values.VITE_SKALOP_WS_URL,
-	},
 	/** Web push (VAPID) client configuration. */
 	vapid: {
 		publicKey: values.VITE_VAPID_PUBLIC_KEY,
