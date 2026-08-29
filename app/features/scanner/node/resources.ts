@@ -2,7 +2,7 @@
  * Node IO for ScoreboardResources: reads the scanner asset sets from the local
  * sendou-ink/assets checkout (tests and atlas builders never touch the
  * CDN). Game icons come from the checkout's shared `img/**` tree, the
- * scanner-specific atlases from `scanner/v1/**`. What the bundle contains — every
+ * scanner-specific atlases from its `scanner/v1/**`. What the bundle contains — every
  * key, template option set, and atlas name — lives in core/resources.ts,
  * shared with the worker's HTTP loader.
  */

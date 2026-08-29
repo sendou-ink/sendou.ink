@@ -206,22 +206,26 @@ in the **sendou-ink/assets repo** under `assets/img/**` (`.avif`; ids from
 `~/modules/in-game-lists`, plus the scanner-only `UNKNOWN` ability badge —
 `toAbilityWithUnknown` narrows template ids back to sendou ids).
 Scanner-specific sets — glyph atlases and the planner signature atlas — live
-here under `public/scanner/v1/**` (override with `SCANNER_ASSETS_DIR`; the
-version segment bumps on breaking atlas-format changes). xxx: the atlases are
-in `public/` only while the feature is in development — move them to the
-assets repo (and the worker back to the CDN base) later.
+in the same repo under `assets/scanner/v1/**` (override the local path with
+`SCANNER_ASSETS_DIR`). These are the only assets that mutate at a fixed URL —
+nothing sets Cache-Control on the Space, and each atlas's `.png` and `.json`
+cache independently, so a regen that moves glyph boxes must bump the version
+segment. Otherwise a client can pair a fresh image with a stale meta and
+silently read garbage (old dirs are deleted from the Space by the sync's
+`--delete-removed`).
 
-- Browser/worker: icons from `Config.staticAssetsUrl` at `img/**` (base URL
-  rides the worker init message; the DO Space needs CORS for GET from
-  sendou.ink + localhost); atlases same-origin from `/scanner/v1/**`. Local
-  dev against fresh icon regens:
+- Browser/worker: everything from `Config.staticAssetsUrl` — icons at
+  `img/**`, atlases at `scanner/v1/**` (base URL rides the worker init
+  message; the DO Space needs CORS for GET from sendou.ink + localhost).
+  Local dev against fresh regens:
   `npx serve /Users/kalle/Developer/assets/assets -l 9100 --cors` and
   `VITE_STATIC_ASSETS_URL=http://localhost:9100` in `.env`.
-- Node (tests/scripts): atlases from `public/scanner/v1`, icons from the
-  `../assets` checkout, never the CDN. AVIF decodes through `sharp`
-  (`node/image-io.ts`) — `@napi-rs/canvas` mis-decodes AVIF partial-alpha.
-- Atlas regens overwrite `public/scanner/v1` in place and ship with the app
-  build.
+- Node (tests/scripts): both sets from the sibling `../assets` checkout,
+  never the CDN. AVIF decodes through `sharp` (`node/image-io.ts`) —
+  `@napi-rs/canvas` mis-decodes AVIF partial-alpha.
+- Atlas regens overwrite the checkout's `assets/scanner/v1` in place, so
+  shipping one means pushing the assets repo (its deploy workflow mirrors
+  `assets/` to the Space).
 
 Fonts are proprietary and gitignored: `BlitzMain.otf`, `BlitzBold.otf`,
 `FOT-RowdyStd-EB.otf`, `FOT-KurokaneStd-EB.otf` in `assets/fonts/` (repo

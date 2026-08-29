@@ -9,7 +9,7 @@
  * fonts, preserving these fixture-tagged glyphs.
  *
  * Usage: pnpm scanner:bootstrap-atlas
- * Writes public/assets/glyphs/scoreboard-{names,paint-digits,stat-digits}.{png,json}
+ * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-{names,paint-digits,stat-digits}.{png,json}
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

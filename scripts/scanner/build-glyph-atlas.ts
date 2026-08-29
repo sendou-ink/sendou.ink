@@ -16,7 +16,7 @@
  * the fallback when the fonts are unavailable.
  *
  * Usage: pnpm scanner:build-glyph-atlas
- * Writes public/assets/glyphs/scoreboard-*.{png,json}
+ * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-*.{png,json}
  */
 import { existsSync, mkdirSync, readFileSync, writeFileSync } from "node:fs";
 import { join } from "node:path";

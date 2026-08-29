@@ -1,12 +1,12 @@
 /**
  * Worker/browser IO for ScoreboardResources: fetches over HTTP. Game icons
  * come from the CDN's shared `img/<dir>/<id>.avif` sets the rest of the app
- * already uses; the scanner-specific atlases (glyphs, planner signatures) are
- * served same-origin from this repo's `public/scanner/v1/**`. What the bundle
- * contains — every key, template option set, and atlas name — lives in
- * core/resources.ts, shared with the Node loader. The base URL arrives via
- * the worker init message (see worker/protocol.ts) so this module never
- * imports the app config.
+ * already uses; the scanner-specific atlases (glyphs, planner signatures) come
+ * from the same CDN under `scanner/v1/**`. What the bundle contains — every
+ * key, template option set, and atlas name — lives in core/resources.ts,
+ * shared with the Node loader. The base URL arrives via the worker init
+ * message (see worker/protocol.ts) so this module never imports the app
+ * config.
  */
 
 import {
@@ -19,13 +19,11 @@ import { type AtlasMeta, type GlyphSet, loadGlyphSet } from "../core/glyphs";
 import type { FrameData } from "../core/image";
 import { assembleScoreboardResources } from "../core/resources";
 
-/** Scanner parser atlases; the version segment guards against CDN cache skew —
- * bump it together with breaking atlas format changes (must match the
- * Node-side SCANNER_ASSETS_DIR default in node/assets-dir.ts).
- * xxx: temporarily served same-origin from this repo's public/ while the
- * feature is in development; move to the assets repo CDN
- * (`${base}/scanner/v1`) later */
-const ATLAS_BASE = "/scanner/v1";
+/** Scanner parser atlases, relative to the CDN base; the version segment
+ * guards against cache skew — bump it together with breaking atlas format
+ * changes (must match the Node-side SCANNER_ASSETS_DIR default in
+ * node/assets-dir.ts). */
+const ATLAS_PATH = "scanner/v1";
 
 async function fetchImage(url: string): Promise<FrameData> {
 	const res = await fetch(url);
@@ -85,7 +83,7 @@ export function fetchScoreboardResources(
 ): Promise<ScoreboardResources> {
 	return assembleScoreboardResources({
 		readIcon: (dir, id) => fetchImage(`${base}/img/${dir}/${id}.avif`),
-		loadAtlas: makeFetchAtlas(ATLAS_BASE),
-		loadPlannerStages: makeFetchPlannerStages(ATLAS_BASE),
+		loadAtlas: makeFetchAtlas(`${base}/${ATLAS_PATH}`),
+		loadPlannerStages: makeFetchPlannerStages(`${base}/${ATLAS_PATH}`),
 	});
 }
