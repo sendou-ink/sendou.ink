@@ -9,7 +9,7 @@ import {
 	resolveImageFieldDimensions,
 } from "../image-field";
 import type { FormFieldProps } from "../types";
-import { FormFieldWrapper } from "./FormFieldWrapper";
+import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./ImageFormField.module.css";
 
 type ImageFormFieldProps = Omit<FormFieldProps<"image">, "onBlur"> & {
@@ -30,8 +30,21 @@ export function ImageFormField({
 	disabled,
 }: ImageFormFieldProps) {
 	const id = React.useId();
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "forms"]);
 	const resolvedDimensions = resolveImageFieldDimensions(dimensions);
+
+	const { translatedBottomText } = useTranslatedTexts({
+		bottomText:
+			bottomText ??
+			(autoValidate ? undefined : "forms:bottomTexts.imageModeration"),
+	});
+	const bottomTexts = [
+		t("forms:bottomTexts.imageDimensions", {
+			width: resolvedDimensions.width,
+			height: resolvedDimensions.height,
+		}),
+		translatedBottomText,
+	].filter(Boolean);
 
 	const previewUrl =
 		value?.type === "EXISTING"
@@ -74,10 +87,7 @@ export function ImageFormField({
 			name={name}
 			label={label}
 			error={error}
-			bottomText={
-				bottomText ??
-				(autoValidate ? undefined : "forms:bottomTexts.imageModeration")
-			}
+			bottomText={bottomTexts.join(" ")}
 		>
 			<div className="stack sm items-start">
 				{previewUrl ? (

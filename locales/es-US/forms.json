@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "No permitir invitaciones de usuarios no verificados",
 	"labels.noScreen": "[Accesibilidad] Evitar Muro marmoleado",
 	"labels.spoilerFreeMode": "Modo sin spoilers",
+	"bottomTexts.imageDimensions": "",
 	"bottomTexts.imageModeration": "A menos que seas Supporter, las imágenes nuevas subidas solo se muestran públicamente cuando las haya revisado un moderador.",
 	"bottomTexts.name": "Nota que si cambias el nombre de tu equipo, el nombre y la URL estarán libres para que otro equipo los tome",
 	"bottomTexts.tag": "Normalmente se usa antes del nombre en el juego para indicar pertenencia a un equipo (ej. [TAG] NombreJugador)",

@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "",
 	"labels.noScreen": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageDimensions": "",
 	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "Note: Hvis du ændrer dit holds navn, så kan andre hold overtage det tidligere holdnavn og URL-adresse.",
 	"bottomTexts.tag": "",

@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "",
 	"labels.noScreen": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageDimensions": "",
 	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "Veuillez noter que si vous changer le nom de l'équipe, quelqu'un d'autre pourra s'emparer de l'ancien nom et URL",
 	"bottomTexts.tag": "",

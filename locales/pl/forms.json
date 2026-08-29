@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "",
 	"labels.noScreen": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageDimensions": "",
 	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "Uwaga: Jeśli zmienisz imię drużyny, ktoś inny może użyć twoje stare imię i URL",
 	"bottomTexts.tag": "",

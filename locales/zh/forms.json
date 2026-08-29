@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "对抗战：禁止非好友将我加入临时队伍",
 	"labels.noScreen": "【无障碍】避开含有“浮墨幕墙”的比赛",
 	"labels.spoilerFreeMode": "隐藏赛事结果模式",
+	"bottomTexts.imageDimensions": "",
 	"bottomTexts.imageModeration": "除非您是赞助者，否则新上传的图片只有在管理员审核通过后才会公开显示。",
 	"bottomTexts.name": "请注意，如果您修改了您的队伍名称，其他队伍将可以使用该名称和 URL。",
 	"bottomTexts.tag": "通常添加在游戏内昵称前，以表明所属队伍（例如：[TAG] 玩家名）。",

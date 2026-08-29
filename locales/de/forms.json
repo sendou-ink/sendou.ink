@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "",
 	"labels.noScreen": "",
 	"labels.spoilerFreeMode": "",
+	"bottomTexts.imageDimensions": "",
 	"bottomTexts.imageModeration": "",
 	"bottomTexts.name": "Hinweis: Wenn du den Namen deines Teams änderst, können andere Teams den Namen und und die URL für sich beanspruchen.",
 	"bottomTexts.tag": "",

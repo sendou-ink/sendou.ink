@@ -31,6 +31,7 @@
 	"labels.disallowScrimPickupsFromUntrusted": "Disallow scrim pickups from non-friends",
 	"labels.noScreen": "[Accessibility] Avoid Splattercolor Screen",
 	"labels.spoilerFreeMode": "Spoiler-free mode",
+	"bottomTexts.imageDimensions": "Recommended image size: at least {{width}}x{{height}} pixels.",
 	"bottomTexts.imageModeration": "Unless you're a Supporter, newly uploaded images are shown publicly only after a moderator has checked them.",
 	"bottomTexts.name": "Note that if you change your team's name then someone else can claim the name and URL for their team",
 	"bottomTexts.tag": "Typically used before in-game name to indicate membership of a team (e.g. [TAG] PlayerName)",
