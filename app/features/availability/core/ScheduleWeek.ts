@@ -1,5 +1,4 @@
 import * as R from "remeda";
-import { AVAILABILITY } from "../availability-constants";
 import type { BusyBlock, TimeRange } from "../availability-types";
 import * as Availability from "./Availability";
 
@@ -78,10 +77,8 @@ export function memberRow({
 		);
 
 	const memberWeeks = reportedWeeks.filter((week) => week.userId === userId);
-	const matchingWeek = memberWeeks.find(
-		(week) =>
-			Math.abs(week.weekStartsAt - range.startsAt) <
-			AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+	const matchingWeek = memberWeeks.find((week) =>
+		Availability.isSameWeek(week.weekStartsAt, range.startsAt),
 	);
 
 	if (!matchingWeek) {
@@ -113,14 +110,11 @@ export function memberRow({
 		})),
 		notes: memberWeeks.flatMap((week) =>
 			week.dayNotes.flatMap((note) => {
-				const noteDate = Availability.dateInTimezone(
-					Availability.localToTimestamp({
-						date: note.date,
-						time: "12:00",
-						timezone: week.timezone,
-					}),
-					timezone,
-				);
+				const noteDate = Availability.dateAcrossTimezones({
+					date: note.date,
+					from: week.timezone,
+					to: timezone,
+				});
 				const dayIndex = days.findIndex((day) => day.date === noteDate);
 
 				return dayIndex === -1 ? [] : [{ dayIndex, text: note.text }];

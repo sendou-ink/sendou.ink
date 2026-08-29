@@ -987,42 +987,24 @@ function QuickAddPlayers({
 		<div className="stack sm">
 			<fetcher.Form method="post">
 				<div className={styles.quickAddRow}>
-					{teamGroups.length > 0 ? (
-						<SendouSelect
-							label={t("tournament:pre.roster.quickAdd")}
-							items={sections}
-							selectedKey={selectedUserId}
-							onSelectionChange={(key) =>
-								setSelectedUserId(key as number | null)
-							}
-							estimatedRowHeight={entryByUserId ? 52 : undefined}
-							className={styles.quickAddSelect}
-							data-testid="quick-add-select"
-						>
-							{(section) => (
-								<SendouSelectItemSection
-									key={section.key}
-									heading={section.heading}
-								>
-									{section.players.map(renderPlayerItem)}
-								</SendouSelectItemSection>
-							)}
-						</SendouSelect>
-					) : (
-						<SendouSelect
-							label={t("tournament:pre.roster.quickAdd")}
-							items={pickupPlayers}
-							selectedKey={selectedUserId}
-							onSelectionChange={(key) =>
-								setSelectedUserId(key as number | null)
-							}
-							estimatedRowHeight={entryByUserId ? 52 : undefined}
-							className={styles.quickAddSelect}
-							data-testid="quick-add-select"
-						>
-							{renderPlayerItem}
-						</SendouSelect>
-					)}
+					<SendouSelect
+						label={t("tournament:pre.roster.quickAdd")}
+						items={sections}
+						selectedKey={selectedUserId}
+						onSelectionChange={(key) => setSelectedUserId(key as number | null)}
+						estimatedRowHeight={entryByUserId ? 52 : undefined}
+						className={styles.quickAddSelect}
+						data-testid="quick-add-select"
+					>
+						{(section) => (
+							<SendouSelectItemSection
+								key={section.key}
+								heading={section.heading}
+							>
+								{section.players.map(renderPlayerItem)}
+							</SendouSelectItemSection>
+						)}
+					</SendouSelect>
 					{selectedUserId ? (
 						<input type="hidden" name="userId" value={selectedUserId} />
 					) : null}
@@ -1176,12 +1158,13 @@ function SelectedTeamAvailability() {
 	// could recruit (all their teams' members and friends) in one list, kept
 	// to those actually free during the event
 	const roster = teamId
-		? (data?.friendPlayers?.friends ?? [])
-				.filter((friend) => friend.teamId === teamId)
-				.map(panelUser)
-		: R.uniqueBy(data?.friendPlayers?.friends ?? [], (friend) => friend.id)
-				.filter((friend) => !inTournament(friend.id) && isFree(friend.id))
-				.map(panelUser);
+		? (data?.friendPlayers?.friends ?? []).filter(
+				(friend) => friend.teamId === teamId,
+			)
+		: R.uniqueBy(
+				data?.friendPlayers?.friends ?? [],
+				(friend) => friend.id,
+			).filter((friend) => !inTournament(friend.id) && isFree(friend.id));
 	if (roster.length === 0 && !availability.beyondHorizon) return null;
 
 	return (
@@ -1199,22 +1182,6 @@ function SelectedTeamAvailability() {
 			}
 		/>
 	);
-}
-
-function panelUser(user: {
-	id: number;
-	username: string;
-	discordId: string;
-	discordAvatar: string | null;
-	customAvatarUrl?: string | null;
-}) {
-	return {
-		id: user.id,
-		username: user.username,
-		discordId: user.discordId,
-		discordAvatar: user.discordAvatar,
-		customAvatarUrl: user.customAvatarUrl,
-	};
 }
 
 function availabilityEntryByUserId(
@@ -1252,10 +1219,10 @@ function subCandidates({
 	const inTournament = (userId: number) =>
 		tournament.ctx.teams.some((team) => team.memberUserIds.includes(userId));
 
-	return R.uniqueBy(data?.friendPlayers?.friends ?? [], (friend) => friend.id)
-		.filter(
-			(friend) =>
-				!rosterUserIds.includes(friend.id) && !inTournament(friend.id),
-		)
-		.map(panelUser);
+	return R.uniqueBy(
+		data?.friendPlayers?.friends ?? [],
+		(friend) => friend.id,
+	).filter(
+		(friend) => !rosterUserIds.includes(friend.id) && !inTournament(friend.id),
+	);
 }

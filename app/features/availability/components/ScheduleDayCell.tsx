@@ -78,7 +78,7 @@ export function ScheduleDayCell({
  * ends fall on different calendar days, so a range crossing (or ending exactly
  * at) midnight formats its ends separately.
  */
-function useRangeText() {
+export function useRangeText() {
 	const { formatter } = useDateTimeFormat({
 		hour: "numeric",
 		minute: "2-digit",

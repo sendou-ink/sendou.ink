@@ -19,8 +19,14 @@ interface EstimatedTournament {
  * or blocking out a tournament's window goes through this so the two agree.
  */
 export async function estimatedEndsAt(tournament: EstimatedTournament) {
-	const expectedTeamCount = await SeriesTeamCount.lookup();
+	return estimatedEndsAtWith(tournament, await SeriesTeamCount.lookup());
+}
 
+/** {@link estimatedEndsAt} for callers estimating many tournaments off one resolved lookup. */
+export function estimatedEndsAtWith(
+	tournament: EstimatedTournament,
+	expectedTeamCount: (tournament: EstimatedTournament) => number,
+) {
 	return (
 		tournament.startsAt +
 		TournamentDuration.estimateSeconds({

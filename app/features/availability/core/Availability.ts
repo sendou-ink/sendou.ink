@@ -66,6 +66,18 @@ export function isoWeekNumber(timestamp: number, timezone: string) {
 }
 
 /**
+ * Whether a week reported to start at `weekStartsAt` is the week starting at
+ * `rangeStartsAt`: the two starts are closer than timezones can set them
+ * apart (hours, never days).
+ */
+export function isSameWeek(weekStartsAt: number, rangeStartsAt: number) {
+	return (
+		Math.abs(weekStartsAt - rangeStartsAt) <
+		AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS
+	);
+}
+
+/**
  * Database timestamp of the given wall clock time in `timezone`. `date` is
  * `YYYY-MM-DD` and `time` is `HH:mm`, the shapes the availability tables and
  * form fields use.
@@ -132,6 +144,26 @@ export function dateInTimezone(timestamp: number, timezone: string) {
 /** `HH:mm` of the timestamp in `timezone`. */
 export function timeInTimezone(timestamp: number, timezone: string) {
 	return format(inTimezone(timestamp, timezone), "HH:mm");
+}
+
+/**
+ * `YYYY-MM-DD` in the `to` timezone of a day saved as a date in the `from`
+ * timezone, mapped through that day's noon in case the viewer has since
+ * moved. How day notes find their viewer-local day.
+ */
+export function dateAcrossTimezones({
+	date,
+	from,
+	to,
+}: {
+	date: string;
+	from: string;
+	to: string;
+}) {
+	return dateInTimezone(
+		localToTimestamp({ date, time: "12:00", timezone: from }),
+		to,
+	);
 }
 
 /** Whether the two ranges share any time at all. Ranges that merely touch do not overlap. */

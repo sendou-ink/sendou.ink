@@ -7,6 +7,7 @@ import { AVAILABILITY } from "../availability-constants";
 import type { BusyBlock } from "../availability-types";
 import * as Availability from "./Availability";
 import * as TournamentDuration from "./TournamentDuration";
+import { estimatedEndsAtWith } from "./TournamentDuration.server";
 
 /**
  * The busy blocks of the given users within the given window, keyed by user
@@ -63,15 +64,16 @@ export async function busyBlocksByUserIds({
 				type: "tournament" as const,
 				name: registration.name,
 				startsAt: registration.startsAt,
-				endsAt:
-					registration.startsAt +
-					TournamentDuration.estimateSeconds({
+				endsAt: estimatedEndsAtWith(
+					{
+						...registration,
 						minMembersPerTeam: registration.settings.minMembersPerTeam ?? 4,
 						bracketTypes: registration.settings.bracketProgression.map(
 							(bracket) => bracket.type,
 						),
-						teamCount: expectedTeamCount(registration),
-					}),
+					},
+					expectedTeamCount,
+				),
 			})),
 		...scrims.map((scrim) => ({
 			userId: scrim.userId,

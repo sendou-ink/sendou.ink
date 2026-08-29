@@ -7,8 +7,7 @@ import { AVAILABILITY } from "../availability-constants";
 import type { DayTimeRange, TimeRange } from "../availability-types";
 import * as Availability from "./Availability";
 import * as Commitments from "./Commitments.server";
-
-const DAY_SECONDS = 24 * 60 * 60;
+import * as ScheduleWeek from "./ScheduleWeek";
 
 export type MyScheduleData = SerializeFrom<
 	Awaited<ReturnType<typeof myScheduleData>>
@@ -83,38 +82,26 @@ function editorWeek({
 	timezone: string;
 	reportedWeeks: Array<ReportedWeek>;
 }) {
-	const matchingWeek = reportedWeeks.find(
-		(week) =>
-			Math.abs(week.weekStartsAt - range.startsAt) <
-			AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+	const matchingWeek = reportedWeeks.find((week) =>
+		Availability.isSameWeek(week.weekStartsAt, range.startsAt),
 	);
 
-	const days = R.range(0, 7).map((dayIndex) => {
-		const date = Availability.dateInTimezone(
-			range.startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-			timezone,
-		);
-
-		return {
-			date,
-			ranges: Availability.mergedDayRanges(
-				(matchingWeek?.slots ?? [])
-					.filter(
-						(slot) =>
-							Availability.dateInTimezone(slot.startsAt, timezone) === date,
-					)
-					.map((slot) => slotToDayRange(slot, timezone)),
-			),
-			note: matchingWeek ? noteOfDay(matchingWeek, date, timezone) : "",
-		};
-	});
+	const days = ScheduleWeek.days(range, timezone).map(({ date }) => ({
+		date,
+		ranges: Availability.mergedDayRanges(
+			(matchingWeek?.slots ?? [])
+				.filter(
+					(slot) =>
+						Availability.dateInTimezone(slot.startsAt, timezone) === date,
+				)
+				.map((slot) => slotToDayRange(slot, timezone)),
+		),
+		note: matchingWeek ? noteOfDay(matchingWeek, date, timezone) : "",
+	}));
 
 	return {
 		weekStartsAt: range.startsAt,
-		weekNumber: Availability.isoWeekNumber(
-			range.startsAt + DAY_SECONDS / 2,
-			timezone,
-		),
+		weekNumber: ScheduleWeek.weekNumber(range, timezone),
 		submitted: Boolean(matchingWeek),
 		days,
 	};
@@ -128,19 +115,15 @@ function slotToDayRange(slot: TimeRange, timezone: string): DayTimeRange {
 	return { start, end: start + Math.round((slot.endsAt - slot.startsAt) / 60) };
 }
 
-/** Notes were saved with dates of the week's stored timezone, so they map through that day's noon in case the viewer has since moved. */
 function noteOfDay(week: ReportedWeek, date: string, timezone: string) {
 	return (
 		week.dayNotes.find(
 			(note) =>
-				Availability.dateInTimezone(
-					Availability.localToTimestamp({
-						date: note.date,
-						time: "12:00",
-						timezone: week.timezone,
-					}),
-					timezone,
-				) === date,
+				Availability.dateAcrossTimezones({
+					date: note.date,
+					from: week.timezone,
+					to: timezone,
+				}) === date,
 		)?.text ?? ""
 	);
 }

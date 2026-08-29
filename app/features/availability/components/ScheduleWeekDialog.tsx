@@ -1,8 +1,4 @@
 import { useTranslation } from "react-i18next";
-import {
-	SendouChipRadio,
-	SendouChipRadioGroup,
-} from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
@@ -10,6 +6,7 @@ import { scheduleWeekSearchParams } from "../availability-search-params";
 import type { ScheduleWeekView } from "../availability-types";
 import { ScheduleDayCell } from "./ScheduleDayCell";
 import styles from "./ScheduleWeekDialog.module.css";
+import { WeekToggle } from "./WeekToggle";
 
 /**
  * One person's reportable weeks as a read-only day-by-day list of the time
@@ -49,24 +46,11 @@ export function ScheduleWeekDialog({
 							shownWeek.days[6].noonAt,
 						)}
 					</span>
-					<SendouChipRadioGroup>
-						<SendouChipRadio
-							name="friend-schedule-week"
-							value="current"
-							checked={week === "current"}
-							onChange={() => setParams({ week: "current" })}
-						>
-							{t("schedule:team.currentWeek")}
-						</SendouChipRadio>
-						<SendouChipRadio
-							name="friend-schedule-week"
-							value="next"
-							checked={week === "next"}
-							onChange={() => setParams({ week: "next" })}
-						>
-							{t("schedule:team.nextWeek")}
-						</SendouChipRadio>
-					</SendouChipRadioGroup>
+					<WeekToggle
+						name="friend-schedule-week"
+						value={week}
+						onChange={(value) => setParams({ week: value })}
+					/>
 				</div>
 				{shownWeek.reported ? (
 					<WeekDays week={shownWeek} />

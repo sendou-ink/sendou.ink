@@ -5,7 +5,6 @@ import * as R from "remeda";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
 import type { AuthenticatedUser } from "~/features/auth/core/user.server";
 import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
-import { AVAILABILITY } from "~/features/availability/availability-constants";
 import * as Availability from "~/features/availability/core/Availability";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
@@ -181,8 +180,7 @@ async function showScheduleNudge(user: AuthenticatedUser | undefined) {
 
 	if (
 		dismissedAt !== undefined &&
-		Math.abs(dismissedAt - weekStartsAt) <
-			AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS
+		Availability.isSameWeek(dismissedAt, weekStartsAt)
 	) {
 		return false;
 	}

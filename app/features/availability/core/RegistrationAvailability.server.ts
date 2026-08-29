@@ -94,14 +94,11 @@ export async function registrationAvailability({
 				week.dayNotes
 					.filter((note) =>
 						windowDates.includes(
-							Availability.dateInTimezone(
-								Availability.localToTimestamp({
-									date: note.date,
-									time: "12:00",
-									timezone: week.timezone,
-								}),
-								timezone,
-							),
+							Availability.dateAcrossTimezones({
+								date: note.date,
+								from: week.timezone,
+								to: timezone,
+							}),
 						),
 					)
 					.map((note) => note.text),

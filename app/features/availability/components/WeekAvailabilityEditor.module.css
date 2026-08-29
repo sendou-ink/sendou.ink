@@ -133,47 +133,6 @@
 	color: var(--color-text-high);
 }
 
-.listDay {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-1-5);
-	padding-block: var(--s-2);
-	border-bottom: 1px solid var(--color-bg-higher);
-
-	&:last-child {
-		border-bottom: none;
-	}
-}
-
-.listDayHeader {
-	display: flex;
-	align-items: center;
-	gap: var(--s-1);
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-}
-
-.listDayBody {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: center;
-	gap: var(--s-1-5);
-}
-
-.timeChip {
-	padding: var(--s-0-5) var(--s-2);
-	background-color: var(--color-success-low);
-	border: 1px solid var(--color-success);
-	border-radius: var(--radius-full);
-	font-size: var(--font-xs);
-	color: var(--color-text);
-	cursor: pointer;
-
-	&:focus-visible {
-		outline: var(--focus-ring);
-	}
-}
-
 .addChip {
 	display: inline-flex;
 	align-items: center;

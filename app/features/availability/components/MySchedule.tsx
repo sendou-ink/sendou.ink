@@ -3,10 +3,6 @@ import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
-import {
-	SendouChipRadio,
-	SendouChipRadioGroup,
-} from "~/components/elements/ChipRadio";
 import { toastQueue } from "~/components/elements/Toast";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -18,8 +14,7 @@ import type { AvailabilityEditorWeek } from "../availability-types";
 import type { MyScheduleData } from "../core/MySchedule.server";
 import styles from "./MySchedule.module.css";
 import { WeekAvailabilityEditor } from "./WeekAvailabilityEditor";
-
-const WEEK_VALUES = ["current", "next"] as const;
+import { WeekToggle } from "./WeekToggle";
 
 /**
  * The "My schedule" section of the events page: the schedule editor with a
@@ -95,31 +90,21 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 		<section className="stack sm" data-testid="my-schedule">
 			<div className={styles.header}>
 				<h2 className="text-lg mx-2">{t("schedule:editor.title")}</h2>
-				<SendouChipRadioGroup>
-					{WEEK_VALUES.map((value, index) => (
-						<SendouChipRadio
-							key={value}
-							name="my-schedule-week"
-							value={value}
-							checked={weekIndex === index}
-							onChange={() => setParams({ week: value })}
-						>
-							<span>
-								{index === 0
-									? t("schedule:team.currentWeek")
-									: t("schedule:team.nextWeek")}
-								{!data.weeks[index].submitted ? (
-									<span
-										className={styles.notFilled}
-										data-testid={`week-not-filled-${value}`}
-									>
-										• {t("schedule:editor.notFilled")}
-									</span>
-								) : null}
+				<WeekToggle
+					name="my-schedule-week"
+					value={week}
+					onChange={(value) => setParams({ week: value })}
+					renderExtra={(value) =>
+						!data.weeks[value === "next" ? 1 : 0].submitted ? (
+							<span
+								className={styles.notFilled}
+								data-testid={`week-not-filled-${value}`}
+							>
+								• {t("schedule:editor.notFilled")}
 							</span>
-						</SendouChipRadio>
-					))}
-				</SendouChipRadioGroup>
+						) : null
+					}
+				/>
 			</div>
 			<h3 className={styles.weekHeading}>
 				{t("schedule:team.weekHeading", {

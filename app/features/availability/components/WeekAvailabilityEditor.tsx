@@ -561,14 +561,16 @@ export function WeekAvailabilityEditor({
 						);
 
 						return (
-							<div key={day.date} className={styles.listDay}>
-								<div className={styles.listDayHeader}>{dayLabelText(day)}</div>
-								<div className={styles.listDayBody}>
+							<div key={day.date} className={trackStyles.listDay}>
+								<div className={trackStyles.listDayHeader}>
+									{dayLabelText(day)}
+								</div>
+								<div className={trackStyles.listDayBody}>
 									{day.ranges.map((range) => (
 										<button
 											type="button"
 											key={`${range.start}-${range.end}`}
-											className={styles.timeChip}
+											className={trackStyles.timeChip}
 											onClick={(event) =>
 												openDayEditor(day.date, event.currentTarget)
 											}

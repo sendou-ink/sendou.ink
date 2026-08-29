@@ -2,10 +2,6 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
-import {
-	SendouChipRadio,
-	SendouChipRadioGroup,
-} from "~/components/elements/ChipRadio";
 import { useUser } from "~/features/auth/core/user";
 import type {
 	DayTimeRange,
@@ -18,6 +14,7 @@ import {
 	useClockWindow,
 } from "~/features/availability/components/ScheduleTracks";
 import trackStyles from "~/features/availability/components/ScheduleTracks.module.css";
+import { WeekToggle } from "~/features/availability/components/WeekToggle";
 import * as Availability from "~/features/availability/core/Availability";
 import type { RosterScheduleData } from "~/features/availability/core/RosterSchedule.server";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -147,23 +144,17 @@ function RosterTimeline({
 	});
 
 	const nameById = new Map(names.map((member) => [member.id, member.username]));
-	const freeNames = (userIds: Array<number>) =>
-		userIds
-			.flatMap((userId) => {
-				const username = nameById.get(userId);
+	const namesOf = (userIds: Array<number>) =>
+		userIds.flatMap((userId) => {
+			const username = nameById.get(userId);
 
-				return username ? [username] : [];
-			})
-			.join(", ");
+			return username ? [username] : [];
+		});
 	const unknownUserIds = roster.filter(
 		(userId) =>
 			!memberById.get(userId)?.reportedWeekStarts.includes(week.startsAt),
 	);
-	const unknownNamed = unknownUserIds.flatMap((userId) => {
-		const username = nameById.get(userId);
-
-		return username ? [username] : [];
-	});
+	const unknownNamed = namesOf(unknownUserIds);
 	const unknownUnnamed = unknownUserIds.length - unknownNamed.length;
 
 	const pickedAt = at ? dateToDatabaseTimestamp(at) : null;
@@ -193,7 +184,7 @@ function RosterTimeline({
 							label={`${rangeText(slot)} · ${t("schedule:picker.free", {
 								amount: slot.userIds.length,
 							})}`}
-							members={freeNames(slot.userIds)}
+							members={namesOf(slot.userIds).join(", ")}
 							isPicked={slot.pick.startsAt === pickedAt}
 							onPick={() => pick(slot)}
 						/>
@@ -209,24 +200,11 @@ function RosterTimeline({
 		<section className={styles.picker} data-testid="scrim-schedule-picker">
 			<div className={styles.header}>
 				<h3 className={styles.heading}>{t("schedule:picker.title")}</h3>
-				<SendouChipRadioGroup>
-					<SendouChipRadio
-						name="scrim-schedule-week"
-						value="current"
-						checked={weekIndex === 0}
-						onChange={() => setWeekIndex(0)}
-					>
-						{t("schedule:team.currentWeek")}
-					</SendouChipRadio>
-					<SendouChipRadio
-						name="scrim-schedule-week"
-						value="next"
-						checked={weekIndex === 1}
-						onChange={() => setWeekIndex(1)}
-					>
-						{t("schedule:team.nextWeek")}
-					</SendouChipRadio>
-				</SendouChipRadioGroup>
+				<WeekToggle
+					name="scrim-schedule-week"
+					value={weekIndex === 0 ? "current" : "next"}
+					onChange={(value) => setWeekIndex(value === "next" ? 1 : 0)}
+				/>
 			</div>
 			<div className={trackStyles.container}>
 				<div className={trackStyles.tracks}>
@@ -239,23 +217,23 @@ function RosterTimeline({
 				<div className={trackStyles.list}>
 					{dayRows.map(({ day, slots: daySlots }) => {
 						return (
-							<div key={day.startsAt} className={styles.listDay}>
-								<div className={styles.listDayHeader}>
+							<div key={day.startsAt} className={trackStyles.listDay}>
+								<div className={trackStyles.listDayHeader}>
 									{dayFormatter.format(day.noonAt)}
 								</div>
 								{daySlots.length === 0 ? (
 									<span className="text-lighter text-xs">—</span>
 								) : (
-									<div className={styles.listDayBody}>
+									<div className={trackStyles.listDayBody}>
 										{daySlots.map((slot) => (
 											<button
 												key={slot.startsAt}
 												type="button"
-												className={clsx(styles.slotChip, {
+												className={clsx(trackStyles.timeChip, styles.slotChip, {
 													[styles.oneShort]: slot.tier === "ONE_SHORT",
 													[styles.picked]: slot.pick.startsAt === pickedAt,
 												})}
-												title={freeNames(slot.userIds)}
+												title={namesOf(slot.userIds).join(", ")}
 												onClick={() => pick(slot)}
 											>
 												{rangeText(slot)} ·{" "}
@@ -304,14 +282,12 @@ function SlotBar({
 	isPicked: boolean;
 	onPick: () => void;
 }) {
-	const visibleStart = Math.max(slot.range.start, clockWindow.trackStart);
-	const visibleEnd = Math.min(slot.range.end, clockWindow.trackEnd);
-	if (visibleEnd <= visibleStart) return null;
+	const barStart = clockWindow.pct(slot.range.start);
+	const barEnd = clockWindow.pct(slot.range.end);
+	if (barEnd <= barStart) return null;
 
 	const withinBar = (minutes: number) =>
-		((Math.min(Math.max(minutes, visibleStart), visibleEnd) - visibleStart) /
-			(visibleEnd - visibleStart)) *
-		100;
+		((clockWindow.pct(minutes) - barStart) / (barEnd - barStart)) * 100;
 	return (
 		<button
 			type="button"
@@ -319,7 +295,7 @@ function SlotBar({
 				[styles.oneShort]: slot.tier === "ONE_SHORT",
 				[styles.picked]: isPicked,
 			})}
-			style={clockWindow.barStyle({ start: visibleStart, end: visibleEnd })}
+			style={clockWindow.barStyle(slot.range)}
 			title={members ? `${label} · ${members}` : label}
 			aria-label={label}
 			data-testid="scrim-schedule-slot"

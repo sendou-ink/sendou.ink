@@ -124,7 +124,11 @@ export function ScrimAvailabilityRows({ fit }: { fit: ScrimRosterFit }) {
 					/>
 				))}
 			</ul>
-			<AvailabilitySummary statuses={rosterStatuses(fit)} />
+			<AvailabilitySummary
+				statuses={fit.roster.map((member) =>
+					availabilityRowStatus(entryByUserId.get(member.id)),
+				)}
+			/>
 		</div>
 	);
 }

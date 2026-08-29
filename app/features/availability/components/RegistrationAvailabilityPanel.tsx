@@ -12,11 +12,11 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { databaseTimestampToDate } from "~/utils/dates";
 import type { SerializeFrom } from "~/utils/remix";
 import type { TimeRange, WindowAvailabilityEntry } from "../availability-types";
 import type { RegistrationAvailability } from "../core/RegistrationAvailability.server";
 import styles from "./RegistrationAvailabilityPanel.module.css";
+import { useRangeText } from "./ScheduleDayCell";
 
 export interface AvailabilityPanelUser {
 	id: number;
@@ -33,15 +33,6 @@ export type AvailabilityRowStatus =
 	| AvailabilityPanelEntry["availability"]["status"]
 	/** On the roster, but their schedule is not visible to the viewer (neither a teammate nor a friend). */
 	| "hidden";
-
-const STATUS_ORDER: Array<AvailabilityRowStatus> = [
-	"available",
-	"partial",
-	"unavailable",
-	"busy",
-	"unknown",
-	"hidden",
-];
 
 /**
  * The tournament registration page's availability panel: how each member of
@@ -88,6 +79,18 @@ export function RegistrationAvailabilityPanel({
 
 	if (roster.length === 0 && freeSubs.length === 0) return null;
 
+	const freeSubRows = (
+		<ul className={styles.rows}>
+			{freeSubs.map((user) => (
+				<AvailabilityMemberRow
+					key={user.id}
+					user={user}
+					entry={entryByUserId.get(user.id)}
+				/>
+			))}
+		</ul>
+	);
+
 	return (
 		<section className={styles.panel}>
 			<h4 className={styles.heading}>
@@ -118,26 +121,10 @@ export function RegistrationAvailabilityPanel({
 						<h5 className={styles.subsHeading}>
 							{t("schedule:registration.friends")}
 						</h5>
-						<ul className={styles.rows}>
-							{freeSubs.map((user) => (
-								<AvailabilityMemberRow
-									key={user.id}
-									user={user}
-									entry={entryByUserId.get(user.id)}
-								/>
-							))}
-						</ul>
+						{freeSubRows}
 					</div>
 				) : (
-					<ul className={styles.rows}>
-						{freeSubs.map((user) => (
-							<AvailabilityMemberRow
-								key={user.id}
-								user={user}
-								entry={entryByUserId.get(user.id)}
-							/>
-						))}
-					</ul>
+					freeSubRows
 				)
 			) : null}
 		</section>
@@ -311,9 +298,10 @@ export function AvailabilityStatusDots({
 }: {
 	statuses: Array<AvailabilityRowStatus>;
 }) {
-	const shown = statuses
-		.filter((status) => status === "available" || status === "partial")
-		.sort((a, b) => STATUS_ORDER.indexOf(a) - STATUS_ORDER.indexOf(b));
+	const shown = [
+		...statuses.filter((status) => status === "available"),
+		...statuses.filter((status) => status === "partial"),
+	];
 	if (shown.length === 0) return null;
 
 	return (
@@ -326,19 +314,7 @@ export function AvailabilityStatusDots({
 }
 
 function RangesText({ ranges }: { ranges: Array<TimeRange> }) {
-	const { formatter: timeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "2-digit",
-	});
-
-	// formatRange expands to full dates when the ends fall on different
-	// calendar days, so a range crossing midnight formats its ends separately
-	// to stay times-only
-	const rangeText = (range: TimeRange) =>
-		databaseTimestampToDate(range.startsAt).getDate() ===
-		databaseTimestampToDate(range.endsAt).getDate()
-			? timeFormatter.formatRange(range.startsAt, range.endsAt)
-			: `${timeFormatter.format(range.startsAt)} – ${timeFormatter.format(range.endsAt)}`;
+	const rangeText = useRangeText();
 
 	return (
 		<span className={styles.ranges}>{ranges.map(rangeText).join(" · ")}</span>

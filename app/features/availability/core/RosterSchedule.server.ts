@@ -10,6 +10,7 @@ import { AVAILABILITY } from "../availability-constants";
 import type { TimeRange, WindowSchedule } from "../availability-types";
 import * as Availability from "./Availability";
 import * as Commitments from "./Commitments.server";
+import * as ScheduleWeek from "./ScheduleWeek";
 
 const DAY_SECONDS = 24 * 60 * 60;
 
@@ -68,10 +69,8 @@ export async function rosterScheduleData({
 				userId,
 				reportedWeekStarts: weeks
 					.filter((week) =>
-						memberWeeks.some(
-							(memberWeek) =>
-								Math.abs(memberWeek.weekStartsAt - week.startsAt) <
-								AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+						memberWeeks.some((memberWeek) =>
+							Availability.isSameWeek(memberWeek.weekStartsAt, week.startsAt),
 						),
 					)
 					.map((week) => week.startsAt),
@@ -88,14 +87,12 @@ export async function rosterScheduleData({
 }
 
 function weekView({ range, timezone }: { range: TimeRange; timezone: string }) {
+	const dates = ScheduleWeek.days(range, timezone);
 	const dayStartsAt = (dayIndex: number) =>
 		dayIndex === 7
 			? range.endsAt
 			: Availability.localToTimestamp({
-					date: Availability.dateInTimezone(
-						range.startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-						timezone,
-					),
+					date: dates[dayIndex].date,
 					time: "00:00",
 					timezone,
 				});
@@ -103,10 +100,7 @@ function weekView({ range, timezone }: { range: TimeRange; timezone: string }) {
 	return {
 		startsAt: range.startsAt,
 		endsAt: range.endsAt,
-		weekNumber: Availability.isoWeekNumber(
-			range.startsAt + DAY_SECONDS / 2,
-			timezone,
-		),
+		weekNumber: ScheduleWeek.weekNumber(range, timezone),
 		days: R.range(0, 7).map((dayIndex) => {
 			const startsAt = dayStartsAt(dayIndex);
 
