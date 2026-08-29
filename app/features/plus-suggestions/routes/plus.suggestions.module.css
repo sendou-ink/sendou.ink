@@ -49,10 +49,22 @@
 	gap: var(--s-2);
 }
 
+.suggestedUserHeading {
+	min-width: 0;
+}
+
 .suggestedUserTrigger {
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+	min-width: 0;
+	max-width: 100%;
+}
+
+.suggestedUsername {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .comment {
@@ -64,6 +76,7 @@
 .commentButton {
 	max-width: 12rem;
 	margin-inline-start: auto;
+	flex-shrink: 0;
 }
 
 .viewCommentsAction {

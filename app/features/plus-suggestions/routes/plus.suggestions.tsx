@@ -198,11 +198,13 @@ function SuggestedUser({
 	return (
 		<div className="stack md">
 			<div className={styles.suggestedUserInfo}>
-				<h2>
+				<h2 className={styles.suggestedUserHeading}>
 					<UserCard userId={suggestion.suggested.id}>
 						<span className={styles.suggestedUserTrigger}>
 							<Avatar user={suggestion.suggested} size="md" />
-							{suggestion.suggested.username}
+							<span className={styles.suggestedUsername}>
+								{suggestion.suggested.username}
+							</span>
 						</span>
 					</UserCard>
 				</h2>
