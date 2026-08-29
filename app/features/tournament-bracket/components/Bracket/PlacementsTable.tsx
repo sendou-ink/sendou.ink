@@ -442,7 +442,6 @@ function EditableDestination({
 							bracketIdx: overridenDestination.idx,
 						})}
 						className={styles.destinationLink}
-						defaultShouldRevalidate={false}
 					>
 						→ {overridenDestination.name}
 					</Link>
@@ -459,7 +458,6 @@ function EditableDestination({
 							bracketIdx: destination.idx,
 						})}
 						className={styles.destinationLink}
-						defaultShouldRevalidate={false}
 					>
 						→ {destination.name}
 					</Link>
