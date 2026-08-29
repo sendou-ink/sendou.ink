@@ -28,6 +28,8 @@ export class TournamentRegisterPage {
 				"Registration for this tournament has closed",
 			),
 			leaveTeamButton: page.getByRole("button", { name: "Leave the team" }),
+			deleteMemberButton: page.getByRole("button", { name: "Delete member" }),
+			unregisterButton: page.getByRole("button", { name: "Unregister" }),
 			organizerAddedLeaveExplanation: page.getByText(
 				"You were added to the team by the organizer. Contact the TO to leave the team.",
 			),

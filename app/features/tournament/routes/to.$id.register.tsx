@@ -180,19 +180,12 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
 	const hasFriendCodeSet = Boolean(user?.friendCode);
 
-	if (!user && !tournament.isInvitational) {
+	if (!user) {
 		return <PleaseLogIn />;
 	}
 
-	const showRegistrationProgress = () => {
-		if (ownTeam) return true;
-
-		return !tournament.isInvitational;
-	};
-
 	const showRegisterNewTeam = () => {
 		if (ownTeam) return true;
-		if (tournament.isInvitational) return false;
 		if (!tournament.registrationOpen) return false;
 
 		return !tournament.regularCheckInHasEnded;
@@ -202,24 +195,19 @@ function RegistrationForms({ readOnly = false }: { readOnly?: boolean }) {
 		<div className="stack lg">
 			{showRegisterNewTeam() ? <FriendCode /> : null}
 			{hasFriendCodeSet ? (
-				showRegistrationProgress() ? (
-					<RegistrationProgress
-						checkedIn={ownTeamCheckedIn}
-						name={ownTeam?.name}
-						mapPool={data?.mapPool ?? undefined}
-						members={ownTeam?.members}
-					/>
-				) : (
-					<Alert>
-						This tournament is invitational. Tournament organizer adds all
-						teams.
-					</Alert>
-				)
+				<RegistrationProgress
+					checkedIn={ownTeamCheckedIn}
+					name={ownTeam?.name}
+					mapPool={data?.mapPool ?? undefined}
+					members={ownTeam?.members}
+				/>
 			) : null}
 			{showRegisterNewTeam() && hasFriendCodeSet ? (
 				<TeamInfo
 					ownTeam={ownTeam}
-					canUnregister={Boolean(ownTeam && !ownTeamCheckedIn)}
+					canUnregister={Boolean(
+						ownTeam && !ownTeamCheckedIn && !tournament.isInvitational,
+					)}
 				/>
 			) : null}
 			{tournament.isLeague &&
@@ -682,6 +670,7 @@ function FillRoster({
 
 	const showDeleteMemberSection =
 		!readOnly &&
+		!tournament.isInvitational &&
 		((!ownTeamCheckedIn && ownTeamMembers.length > 1) ||
 			(ownTeamCheckedIn &&
 				ownTeamMembers.length > tournament.minMembersPerTeam));

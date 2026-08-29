@@ -85,6 +85,13 @@ test.describe("Invitational tournament", () => {
 		await expect(
 			register.locators.organizerAddedLeaveExplanation,
 		).toBeVisible();
+
+		// nor can the captain kick them, the organizer owns the roster
+		await impersonate(page, captain.id);
+		await register.goto(tournament.id);
+		await expect(register.member(2)).toBeVisible();
+		await expect(register.locators.deleteMemberButton).toHaveCount(0);
+		await expect(register.locators.unregisterButton).toHaveCount(0);
 	});
 });
 

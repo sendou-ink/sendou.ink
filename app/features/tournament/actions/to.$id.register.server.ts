@@ -145,6 +145,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "DELETE_TEAM_MEMBER": {
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
+				!tournament.isInvitational,
+				"The organizer manages the roster of an invitational team",
+			);
+			errorToastIfFalsy(
 				ownTeam.memberUserIds.includes(data.userId),
 				"User is not in your team",
 			);
@@ -344,6 +348,10 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "UNREGISTER": {
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(
+				!tournament.isInvitational,
+				"The organizer manages the roster of an invitational team",
+			);
 			errorToastIfFalsy(
 				!ownTeamCheckedIn,
 				"You cannot unregister after checking in",
