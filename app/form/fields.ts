@@ -3,6 +3,7 @@ import * as v from "valibot";
 import {
 	IN_GAME_NAME_MAX_LENGTH,
 	inGameNameIsValid,
+	normalizeInGameName,
 } from "~/features/user-page/in-game-name";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
@@ -253,6 +254,7 @@ export function inGameName(
 		safeNullableStringSchema({
 			max: IN_GAME_NAME_MAX_LENGTH,
 		}),
+		v.transform((val) => (val === null ? null : normalizeInGameName(val))),
 		v.check(
 			(val) => val === null || inGameNameIsValid(val),
 			"forms:errors.profileInGameName",

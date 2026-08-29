@@ -58,7 +58,7 @@ export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 	characters: ReadonlyArray<string>;
 }>;
 
-const SPECIAL_CHARACTERS = IN_GAME_NAME_CHARACTER_CATEGORIES.flatMap(
+const PICKER_CHARACTERS = IN_GAME_NAME_CHARACTER_CATEGORIES.flatMap(
 	(category) => category.characters,
 );
 
@@ -69,8 +69,25 @@ const ASCII_CHARACTERS = range(0x20, 0x7e).filter(
 
 const ALLOWED_CHARACTERS = new Set<string>([
 	...ASCII_CHARACTERS,
-	...SPECIAL_CHARACTERS,
+	...PICKER_CHARACTERS,
 ]);
+
+/**
+ * Letters of every script a Nintendo Switch keyboard can produce. Notably this
+ * includes kanji/hanzi and hangul, which are too numerous to enumerate in the
+ * character picker but are perfectly valid to paste in.
+ */
+const ALLOWED_SCRIPTS_REGEXP =
+	/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Hangul}]$/u;
+
+/** Punctuation & symbol code point ranges not covered by any of the scripts above. */
+const ALLOWED_CODE_POINT_RANGES = [
+	[0x3000, 0x303f], // CJK symbols and punctuation
+	[0x3099, 0x309c], // Kana voiced sound marks
+	[0x30fb, 0x30fc], // Katakana middle dot & prolonged sound mark
+	[0xff01, 0xff60], // Fullwidth forms
+	[0xffe0, 0xffe6], // Fullwidth signs
+] as const;
 
 const IN_GAME_NAME_REGEXP = new RegExp(
 	`^(.+)#([0-9a-z]{${IN_GAME_NAME.DISCRIMINATOR_MIN_LENGTH},${IN_GAME_NAME.DISCRIMINATOR_MAX_LENGTH}})$`,
@@ -82,14 +99,18 @@ export function inGameNameLength(value: string): number {
 	return [...value].length;
 }
 
+/** Normalizes the in-game name and drops every character the game does not allow. */
 export function sanitizeInGameName(value: string): string {
-	return [...value.normalize("NFC")]
-		.filter((character) => ALLOWED_CHARACTERS.has(character))
-		.join("");
+	return [...normalizeInGameName(value)].filter(characterIsAllowed).join("");
+}
+
+/** Unicode normalization applied to in-game names before they are validated or stored. */
+export function normalizeInGameName(value: string): string {
+	return value.normalize("NFC");
 }
 
 export function inGameNameIsValid(value: string): boolean {
-	const match = IN_GAME_NAME_REGEXP.exec(value);
+	const match = IN_GAME_NAME_REGEXP.exec(normalizeInGameName(value));
 	if (!match) return false;
 
 	const nameCharacters = [...match[1]];
@@ -100,7 +121,17 @@ export function inGameNameIsValid(value: string): boolean {
 		return false;
 	}
 
-	return nameCharacters.every((character) => ALLOWED_CHARACTERS.has(character));
+	return nameCharacters.every(characterIsAllowed);
+}
+
+function characterIsAllowed(character: string): boolean {
+	if (ALLOWED_CHARACTERS.has(character)) return true;
+	if (ALLOWED_SCRIPTS_REGEXP.test(character)) return true;
+
+	const codePoint = character.codePointAt(0)!;
+	return ALLOWED_CODE_POINT_RANGES.some(
+		([from, to]) => codePoint >= from && codePoint <= to,
+	);
 }
 
 function range(from: number, to: number): string[] {

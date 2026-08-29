@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { inGameNameIsValid } from "./in-game-name";
+import { inGameNameIsValid, sanitizeInGameName } from "./in-game-name";
 
 describe("inGameNameIsValid", () => {
 	test("passes valid in-game names", () => {
@@ -31,6 +31,14 @@ describe("inGameNameIsValid", () => {
 			"〆〇〃#1234",
 			"※Test#1234",
 			"○☆Mikurby#2897",
+			"仝#1234",
+			"三#1234",
+			"日本語#1234",
+			"名前テスト1234#ab12c",
+			"한국어#1234",
+			"中文名#1234",
+			"Ｔｅｓｔ！#1234",
+			"Cafe\u0301#1234",
 		];
 
 		for (const name of validNames) {
@@ -48,9 +56,7 @@ describe("inGameNameIsValid", () => {
 			"Sendou#ABCD",
 			"12345678901#1234",
 			"𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔𝓔#1234",
-			"名前テスト1234#ab12c",
 			"☆CR☆Sh𝓔𝓔p!#1234",
-			"日本語#1234",
 		];
 
 		for (const name of invalidNames) {
@@ -70,5 +76,17 @@ describe("inGameNameIsValid", () => {
 		for (const name of invalidNames) {
 			expect(inGameNameIsValid(name), `expected "${name}" to fail`).toBe(false);
 		}
+	});
+});
+
+describe("sanitizeInGameName", () => {
+	test.each([
+		["仝#1234", "仝#1234", "kanji outside the character picker"],
+		["三三三#1234", "三三三#1234", "pasted kanji"],
+		["한국어#1234", "한국어#1234", "hangul"],
+		["Cafe\u0301#1234", "Café#1234", "decomposed accents are composed"],
+		["100%#1234", "100#1234", "characters the game does not allow"],
+	])("%s -> %s (%s)", (input, expected) => {
+		expect(sanitizeInGameName(input)).toBe(expected);
 	});
 });
