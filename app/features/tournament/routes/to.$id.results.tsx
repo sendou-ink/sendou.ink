@@ -37,7 +37,7 @@ type ResultsStanding =
 		: never;
 
 export default function TournamentResultsPage() {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "tournament"]);
 	const { standings: standingsResult } =
 		useLoaderData<TournamentResultsLoaderData>();
 	const tournament = useTournament();
@@ -67,7 +67,7 @@ export default function TournamentResultsPage() {
 		if (standingsResult.standings.length === 0) {
 			return (
 				<div className="text-center text-lg font-semi-bold text-lighter">
-					No team finished yet, check back later
+					{t("tournament:results.empty")}
 				</div>
 			);
 		}
@@ -92,7 +92,7 @@ export default function TournamentResultsPage() {
 				<SendouTabPanel key={div} id={div}>
 					{standings.length === 0 ? (
 						<div className="text-center text-lg font-semi-bold text-lighter">
-							No team finished yet, check back later
+							{t("tournament:results.empty")}
 						</div>
 					) : (
 						<ResultsTable standings={standings} />
@@ -104,6 +104,7 @@ export default function TournamentResultsPage() {
 }
 
 function ResultsTable({ standings }: { standings: ResultsStanding[] }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
 	let lastRenderedPlacement = 0;
@@ -113,28 +114,28 @@ function ResultsTable({ standings }: { standings: ResultsStanding[] }) {
 		<Table noRowHover>
 			<thead>
 				<tr>
-					<th>Standing</th>
-					<th>Team</th>
-					<th>Roster</th>
-					<th>Seed</th>
+					<th>{t("tournament:results.column.standing")}</th>
+					<th>{t("tournament:team.label")}</th>
+					<th>{t("tournament:results.column.roster")}</th>
+					<th>{t("tournament:team.seed")}</th>
 					{tournament.ctx.isFinalized ? (
 						<th
 							className="stack horizontal sm items-center"
 							data-testid="spr-header"
 						>
-							SPR{" "}
+							{t("tournament:results.column.spr")}{" "}
 							<InfoPopover tiny>
 								<a
 									href={SPR_INFO_URL}
 									target="_blank"
 									rel="noopener noreferrer"
 								>
-									Seed Performance Rating
+									{t("tournament:results.spr.full")}
 								</a>
 							</InfoPopover>
 						</th>
 					) : null}
-					<th>Matches</th>
+					<th>{t("tournament:results.column.matches")}</th>
 				</tr>
 			</thead>
 			<tbody>

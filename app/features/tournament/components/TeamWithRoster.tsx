@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { ModeImage, StageImage } from "~/components/Image";
@@ -26,6 +27,7 @@ export function TeamWithRoster({
 	teamPageUrl?: string;
 	activePlayers?: Tables["User"]["id"][];
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 	const tournament = useTournament();
 	const friendCodes = useTournamentFriendCodes();
@@ -72,13 +74,15 @@ export function TeamWithRoster({
 						return (
 							<li key={member.userId} className={styles.teamMemberRow}>
 								{member.role === "OWNER" ? (
-									<span className={`${styles.teamMemberNameRole}`}>C</span>
+									<span className={`${styles.teamMemberNameRole}`}>
+										{t("tournament:roster.role.captain.short")}
+									</span>
 								) : null}
 								{member.isSub && member.role !== "OWNER" ? (
 									<span
 										className={`${styles.teamMemberNameRole} ${styles.teamMemberNameRoleSub}`}
 									>
-										S
+										{t("tournament:roster.role.sub.short")}
 									</span>
 								) : null}
 								<div
@@ -122,13 +126,12 @@ export function TeamWithRoster({
 }
 
 function FreshAccountEmoji({ discordId }: { discordId: string }) {
+	const { t } = useTranslation(["tournament"]);
+
 	if (!accountCreatedInTheLastSixMonths(discordId)) return null;
 
 	return (
-		<span
-			className="text-md mr-2"
-			title="Discord account created in the last 6 months"
-		>
+		<span className="text-md mr-2" title={t("tournament:roster.freshAccount")}>
 			👶
 		</span>
 	);

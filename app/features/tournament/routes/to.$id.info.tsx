@@ -103,7 +103,9 @@ function useFacts(
 				<>
 					{bracketProgression.label}
 					{bracketProgression.hasUnderground ? (
-						<span className={styles.underground}>+ UG</span>
+						<span className={styles.underground}>
+							{t("tournament:fact.bracket.underground")}
+						</span>
 					) : null}
 				</>
 			),

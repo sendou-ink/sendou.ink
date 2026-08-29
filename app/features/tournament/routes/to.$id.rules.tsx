@@ -57,21 +57,24 @@ function CounterPickMapPool() {
 }
 
 function TiebreakerMapPool() {
-	const { t } = useTranslation(["game-misc"]);
+	const { t } = useTranslation(["tournament", "game-misc"]);
 	const tournament = useTournament();
 
 	if (tournament.ctx.tieBreakerMapPool.length === 0) return null;
 
 	return (
 		<div className="text-sm text-lighter text-semi-bold">
-			Tiebreaker map pool:{" "}
-			{tournament.ctx.tieBreakerMapPool
-				.sort((a, b) => modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode))
-				.map(
-					(map) =>
-						`${t(`game-misc:MODE_SHORT_${map.mode}`)} ${t(`game-misc:STAGE_${map.stageId}`)}`,
-				)
-				.join(", ")}
+			{t("tournament:rules.tiebreakerMapPool", {
+				maps: tournament.ctx.tieBreakerMapPool
+					.sort(
+						(a, b) => modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode),
+					)
+					.map(
+						(map) =>
+							`${t(`game-misc:MODE_SHORT_${map.mode}`)} ${t(`game-misc:STAGE_${map.stageId}`)}`,
+					)
+					.join(", "),
+			})}
 		</div>
 	);
 }

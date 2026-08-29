@@ -50,6 +50,7 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 };
 
 export default function TournamentTeamPage() {
+	const { t } = useTranslation(["tournament"]);
 	const data = useLoaderData<typeof loader>();
 	const tournament = useTournament();
 	const teamIndex = tournament.ctx.teams.findIndex(
@@ -70,7 +71,7 @@ export default function TournamentTeamPage() {
 						to={teamPage(team.team.customUrl)}
 						className="text-xxs text-center"
 					>
-						Team page
+						{t("tournament:team.teamPage")}
 					</Link>
 				) : null}
 			</div>
@@ -370,7 +371,9 @@ function SetInfo({
 				</div>
 			</div>
 			<div className={styles.teamSetOpponent}>
-				<div className={styles.teamSetOpponentVs}>vs.</div>
+				<div className={styles.teamSetOpponentVs}>
+					{t("tournament:team.vs")}
+				</div>
 				<Link
 					to={tournamentTeamPage({
 						tournamentTeamId: set.opponent.id,

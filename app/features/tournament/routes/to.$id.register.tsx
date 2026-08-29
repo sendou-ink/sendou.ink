@@ -87,9 +87,9 @@ export default function TournamentRegisterPage() {
 				<div>
 					<Alert variation="WARNING">
 						<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
-							This tournament requires you to have an in-game name set{" "}
+							{t("tournament:ign.required")}{" "}
 							<LinkButton to={userEditProfilePage(user)} size="small">
-								Edit profile
+								{t("tournament:ign.editProfile")}
 							</LinkButton>
 						</div>
 					</Alert>
@@ -102,6 +102,7 @@ export default function TournamentRegisterPage() {
 }
 
 function LeaveTeamControl() {
+	const { t } = useTranslation(["tournament", "common"]);
 	const data = useLoaderData<TournamentRegisterPageLoader>();
 	const user = useUser();
 	const tournament = useTournament();
@@ -123,31 +124,33 @@ function LeaveTeamControl() {
 			<SendouPopover
 				trigger={
 					<SendouButton className="small-text" variant="minimal-destructive">
-						Leave the team
+						{t("tournament:pre.leave.button")}
 					</SendouButton>
 				}
 			>
 				{organizerAdded
-					? "You were added to the team by the organizer. Contact the TO to leave the team."
+					? t("tournament:pre.leave.cant.organizerAdded")
 					: checkedIn
-						? "Your team has checked in. Contact the TO to leave the team."
-						: "Registration has closed. Contact the TO to leave the team."}
+						? t("tournament:pre.leave.cant.checkedIn")
+						: t("tournament:pre.leave.cant.registrationClosed")}
 			</SendouPopover>
 		);
 	}
 
 	return (
 		<FormWithConfirm
-			dialogHeading={`Leave "${teamMemberOf.name}"?`}
+			dialogHeading={t("tournament:pre.leave.confirm", {
+				teamName: teamMemberOf.name,
+			})}
 			fields={[["_action", "LEAVE_TEAM"]]}
-			submitButtonText="Leave"
+			submitButtonText={t("common:actions.leave")}
 		>
 			<SendouButton
 				className="small-text"
 				variant="minimal-destructive"
 				type="submit"
 			>
-				Leave the team
+				{t("tournament:pre.leave.button")}
 			</SendouButton>
 		</FormWithConfirm>
 	);
@@ -300,7 +303,7 @@ function RegistrationProgress({
 			: null,
 		tournament.isLeague
 			? {
-					name: "Google Sheet",
+					name: t("tournament:pre.steps.googleSheet"),
 					status: "notice" as const,
 				}
 			: null,
@@ -359,7 +362,9 @@ function RegistrationProgress({
 			<div className={styles.sectionWarning}>
 				{regClosesBeforeStart || tournament.isLeague ? (
 					<span className="text-warning">
-						Registration closes at {registrationClosesAtString}
+						{t("tournament:pre.registrationClosesAt", {
+							time: registrationClosesAtString,
+						})}
 					</span>
 				) : (
 					t("tournament:pre.footer")
@@ -504,8 +509,7 @@ function TeamInfo({
 							</SendouButton>
 						}
 					>
-						Unregistration from a league after the registration has ended is
-						handled by the organizers
+						{t("tournament:pre.info.unregister.league")}
 					</SendouPopover>
 				) : canUnregister ? (
 					<FormWithConfirm
@@ -592,6 +596,7 @@ function RegisterTeamFields({ readOnly = false }: { readOnly?: boolean }) {
 }
 
 function FriendCode() {
+	const { t } = useTranslation(["tournament"]);
 	const user = useUser();
 
 	if (!user?.friendCode) {
@@ -599,8 +604,7 @@ function FriendCode() {
 			<div className="stack items-center">
 				<FriendCodePopover size="small" />
 				<div className={clsx(styles.sectionWarning, "mt-2")}>
-					To play tournaments on sendou.ink you'll need to register your friend
-					code.
+					{t("tournament:pre.friendCode.needed")}
 				</div>
 			</div>
 		);
@@ -614,10 +618,12 @@ function FriendCode() {
 }
 
 function GoogleFormsLink() {
+	const { t } = useTranslation(["tournament"]);
+
 	return (
 		<div>
 			<h3 className={styles.sectionHeader}>
-				Additional Requirement: Google Form
+				{t("tournament:pre.googleForm.header")}
 			</h3>
 			<section className={clsx(styles.section, "stack lg items-center")}>
 				<a
@@ -626,12 +632,11 @@ function GoogleFormsLink() {
 					target="_blank"
 					rel="noopener noreferrer"
 				>
-					Answer survey hosted on Google Forms
+					{t("tournament:pre.googleForm.link")}
 				</a>
 			</section>
 			<div className={styles.sectionWarning}>
-				Answer to additional question about your team's preferred match time and
-				info to help with seeding
+				{t("tournament:pre.googleForm.footer")}
 			</div>
 		</div>
 	);
@@ -779,9 +784,7 @@ function FillRoster({
 			</section>
 			{tournament.ctx.settings.requireInGameNames ? (
 				<div className={clsx(styles.sectionWarning, "text-warning")}>
-					Note that you are expected to use the in-game names as listed above.
-					Playing in the event with a different name or using the alias feature
-					might result in disqualification.
+					{t("tournament:pre.roster.ignWarning")}
 				</div>
 			) : (
 				<div className={styles.sectionWarning}>
@@ -843,7 +846,9 @@ function DirectlyAddPlayerSelect({
 						);
 					})}
 					{teams && teams.length > 0 ? (
-						<optgroup label="Others">{othersOptions}</optgroup>
+						<optgroup label={t("tournament:pre.roster.addFriend.others")}>
+							{othersOptions}
+						</optgroup>
 					) : (
 						othersOptions
 					)}

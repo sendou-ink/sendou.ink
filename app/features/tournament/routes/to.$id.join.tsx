@@ -66,9 +66,9 @@ export default function JoinTeamPage() {
 		return (
 			<Alert variation="WARNING" alertClassName="w-max">
 				<div className="stack horizontal sm items-center flex-wrap justify-center text-center">
-					This tournament requires you to have an in-game name set{" "}
+					{t("tournament:ign.required")}{" "}
 					<LinkButton to={userEditProfilePage(user)} size="small">
-						Edit profile
+						{t("tournament:ign.editProfile")}
 					</LinkButton>
 				</div>
 			</Alert>
@@ -112,7 +112,9 @@ export default function JoinTeamPage() {
 				<div className="text-lighter text-center font-semi-bold text-sm">
 					<FriendCodeInput friendCode={user?.friendCode} />
 					{user?.inGameName ? (
-						<div className="font-bold">IGN {user.inGameName}</div>
+						<div className="font-bold">
+							{t("tournament:join.ign", { inGameName: user.inGameName })}
+						</div>
 					) : null}
 				</div>
 			) : null}
@@ -124,7 +126,7 @@ export default function JoinTeamPage() {
 						</SubmitButton>
 						{!user?.friendCode ? (
 							<div className="text-warning">
-								Save friend code before joining the team
+								{t("tournament:join.noFriendCode")}
 							</div>
 						) : (
 							<div className="text-lighter text-xs text-center">

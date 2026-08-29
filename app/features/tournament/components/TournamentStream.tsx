@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import { User } from "lucide-react";
+import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -14,6 +15,7 @@ export function TournamentStream({
 	stream: Tournament["streams"][number];
 	withThumbnail?: boolean;
 }) {
+	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();
 
 	return (
@@ -50,7 +52,8 @@ export function TournamentStream({
 				) : (
 					<div className={styles.streamUserContainer}>
 						<Avatar size="xxs" url={tournament.ctx.logoUrl} />
-						Cast <span className="text-lighter">{stream.twitchUserName}</span>
+						{t("tournament:streams.cast")}{" "}
+						<span className="text-lighter">{stream.twitchUserName}</span>
 					</div>
 				)}
 				<div className={styles.streamViewerCount}>
@@ -65,7 +68,7 @@ export function TournamentStream({
 					rel="noreferrer"
 					className="text-xxs text-semi-bold text-center"
 				>
-					Watch now
+					{t("tournament:streams.watchNow")}
 				</a>
 			) : null}
 		</div>
