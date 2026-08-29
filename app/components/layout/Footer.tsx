@@ -4,9 +4,9 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import * as R from "remeda";
 import { Config } from "~/config";
-import { useUser } from "~/features/auth/core/user";
 import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import { usePatrons } from "~/hooks/swr";
+import { useHasRole } from "~/modules/permissions/hooks";
 import { GIT_COMMIT } from "~/utils/git-commit";
 import {
 	ANALYZER_URL,
@@ -135,10 +135,9 @@ const SITEMAP_COLUMNS = [
 
 export function Footer() {
 	const { t } = useTranslation(["common", "front"]);
-	const user = useUser();
+	const isPatron = useHasRole("MINOR_SUPPORT");
 
-	const showPrivacySettings =
-		Config.fuseEnabled && !user?.roles.includes("MINOR_SUPPORT");
+	const showPrivacySettings = Config.fuseEnabled && !isPatron;
 
 	const currentYear = new Date().getFullYear();
 
@@ -196,15 +195,17 @@ export function Footer() {
 				</p>
 			</div>
 			<PatronMarquee />
-			<LinkButton
-				to={SUPPORT_PAGE}
-				size="small"
-				variant="primary"
-				icon={<Heart fill="currentColor" />}
-				className={styles.cta}
-			>
-				{t("common:footer.support")}
-			</LinkButton>
+			{isPatron ? null : (
+				<LinkButton
+					to={SUPPORT_PAGE}
+					size="small"
+					variant="primary"
+					icon={<Heart fill="currentColor" />}
+					className={styles.cta}
+				>
+					{t("common:footer.support")}
+				</LinkButton>
+			)}
 			<div className={styles.sitemap}>
 				{SITEMAP_COLUMNS.map((column) => (
 					<nav
