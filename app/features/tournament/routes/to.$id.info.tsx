@@ -58,7 +58,7 @@ export default function TournamentInfoPage() {
 
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
-			<TournamentHeader tournament={tournament} />
+			<TournamentHeader tournament={tournament} estimatedEndsAt={data.endsAt} />
 			<div className="stack md">
 				<FactCardGrid facts={facts} />
 				<TournamentHeaderActions

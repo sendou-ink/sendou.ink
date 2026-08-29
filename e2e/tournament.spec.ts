@@ -1,7 +1,10 @@
 import { addHours, addMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as Availability from "~/features/availability/core/Availability";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import {
 	expect,
 	impersonate,
@@ -21,6 +24,7 @@ import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 const TEAM_NAME = "Chimera";
 const ROSTER_SIZE = 4;
 const SEEDED_TEAM_COUNT = 8;
+const HOUR_SECONDS = 60 * 60;
 
 /** Views of a tournament whose loaders each ship some of its teams' data. */
 const TOURNAMENT_TEAM_VIEWS = ["teams", "results", "brackets", "admin/seeds"];
@@ -75,6 +79,26 @@ test.describe("Tournament", () => {
 		await expect(
 			notifications.notification(`Added to a team (${TEAM_NAME})`),
 		).toBeVisible();
+	});
+
+	test("shows the estimated end time next to the start time", async ({
+		page,
+		factories,
+	}) => {
+		const startsAt = dateToDatabaseTimestamp(addHours(new Date(), 2));
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [startsAt],
+		});
+
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		// a lone single elimination bracket is the estimator's two hour case
+		await expect(tournamentPage.locators.estimatedEnd).toHaveAttribute(
+			"datetime",
+			databaseTimestampToDate(startsAt + 2 * HOUR_SECONDS).toISOString(),
+		);
 	});
 
 	test("quick adds all of the team's players at once", async ({

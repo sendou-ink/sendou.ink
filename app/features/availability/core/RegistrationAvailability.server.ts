@@ -6,7 +6,7 @@ import { AVAILABILITY } from "../availability-constants";
 import type { TimeRange } from "../availability-types";
 import * as Availability from "./Availability";
 import * as Commitments from "./Commitments.server";
-import * as TournamentDuration from "./TournamentDuration";
+import { estimatedEndsAt } from "./TournamentDuration.server";
 
 export type RegistrationAvailability = Awaited<
 	ReturnType<typeof registrationAvailability>
@@ -14,7 +14,7 @@ export type RegistrationAvailability = Awaited<
 
 /**
  * Availability of the given users for a tournament's estimated window
- * (start + {@link TournamentDuration.estimateSeconds}), for the registration
+ * (start to {@link estimatedEndsAt}), for the registration
  * page's availability panel. The tournament's own registrations do not count
  * as being busy — the panel asks whether people can play this very event.
  *
@@ -30,6 +30,8 @@ export async function registrationAvailability({
 }: {
 	tournament: {
 		id: number;
+		name: string;
+		organizationId: number | null;
 		startsAt: number;
 		minMembersPerTeam: number;
 		bracketTypes: Array<Tables["TournamentStage"]["type"]>;
@@ -56,13 +58,7 @@ export async function registrationAvailability({
 
 	const window: TimeRange = {
 		startsAt: tournament.startsAt,
-		endsAt:
-			tournament.startsAt +
-			TournamentDuration.estimateSeconds({
-				minMembersPerTeam: tournament.minMembersPerTeam,
-				bracketTypes: tournament.bracketTypes,
-				teamCount: tournament.teamCount,
-			}),
+		endsAt: await estimatedEndsAt(tournament),
 	};
 
 	const [weeks, busyByUserId] = await Promise.all([

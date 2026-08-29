@@ -75,6 +75,8 @@ function rosterAvailability({
 	return RegistrationAvailability.registrationAvailability({
 		tournament: {
 			id: tournament.ctx.id,
+			name: tournament.ctx.name,
+			organizationId: tournament.ctx.organization?.id ?? null,
 			startsAt,
 			minMembersPerTeam: tournament.minMembersPerTeam,
 			bracketTypes: tournament.ctx.settings.bracketProgression.map(

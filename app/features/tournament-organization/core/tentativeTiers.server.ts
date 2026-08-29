@@ -8,8 +8,7 @@ interface SeriesMatch {
 }
 
 async function loadCache(): Promise<Map<number, SeriesMatch[]>> {
-	const rows =
-		await TournamentOrganizationRepository.findAllSeriesWithTierHistory();
+	const rows = await TournamentOrganizationRepository.findAllSeries();
 
 	const result = new Map<number, SeriesMatch[]>();
 	for (const row of rows) {

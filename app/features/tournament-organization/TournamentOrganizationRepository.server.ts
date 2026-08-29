@@ -1,5 +1,5 @@
 import { isFuture } from "date-fns";
-import { type ExpressionBuilder, sql } from "kysely";
+import { type ExpressionBuilder, type NotNull, sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
@@ -371,6 +371,61 @@ export async function findEventsByMonth({
 		.execute();
 
 	return events.map(mapEvent);
+}
+
+/** Every tournament series of every organization. */
+export function findAllSeries() {
+	return db
+		.selectFrom("TournamentOrganizationSeries")
+		.select([
+			"TournamentOrganizationSeries.organizationId",
+			"TournamentOrganizationSeries.substringMatches",
+			"TournamentOrganizationSeries.tierHistory",
+		])
+		.execute();
+}
+
+/**
+ * How many teams each organization's already started tournaments drew within the
+ * given window, oldest first. Counts what the tournament's own page shows:
+ * placeholder teams excluded, dropped out ones included.
+ */
+export function findAllOrganizedTournamentTeamCounts({
+	startedAfter,
+}: {
+	startedAfter: number;
+}) {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select((eb) => [
+			"CalendarEvent.name",
+			"CalendarEvent.organizationId",
+			eb.fn.min("CalendarEventDate.startsAt").as("startsAt"),
+			eb
+				.selectFrom("TournamentTeam")
+				.select(({ fn }) => fn.countAll<number>().as("count"))
+				.whereRef(
+					"TournamentTeam.tournamentId",
+					"=",
+					"CalendarEvent.tournamentId",
+				)
+				.where("TournamentTeam.isPlaceholder", "=", 0)
+				.as("teamCount"),
+		])
+		.$narrowType<{ organizationId: NotNull; teamCount: NotNull }>()
+		.where("CalendarEvent.organizationId", "is not", null)
+		.where("CalendarEvent.tournamentId", "is not", null)
+		.where("CalendarEvent.hidden", "=", 0)
+		.where("CalendarEventDate.startsAt", ">=", startedAfter)
+		.where("CalendarEventDate.startsAt", "<=", databaseTimestampNow())
+		.groupBy("CalendarEvent.id")
+		.orderBy("startsAt", "asc")
+		.execute();
 }
 
 export function findAllUnfinalizedEvents(organizationId: number) {
@@ -882,13 +937,6 @@ export function deleteById(organizationId: number) {
 	return db
 		.deleteFrom("TournamentOrganization")
 		.where("id", "=", organizationId)
-		.execute();
-}
-
-export function findAllSeriesWithTierHistory() {
-	return db
-		.selectFrom("TournamentOrganizationSeries")
-		.select(["organizationId", "substringMatches", "tierHistory"])
 		.execute();
 }
 

@@ -1,7 +1,8 @@
 ## General
 
 - only rarely use comments, prefer descriptive variable and function names (leave existing comments as is).
-- if you encounter an existing TODO comment assume it is there for a reason and do not remove it
+- if you encounter an existing TODO or xxx comment assume it is there for a reason and do not remove it unless you specifically addressed what the comment is about
+- when a comment is needed, brevity is the key, less is more
 - task is not considered completely until `pnpm run checks` passes
 - normal file structure has constants at the top immediately followed by the main function body of the file. Helpers are used to structure the code and they are at the bottom of the file (main implementation first, at the top of the file)
 - note: any formatting issue (such as tabs vs. spaces) can be resolved by running the `pnpm run biome:fix` command

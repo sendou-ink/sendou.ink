@@ -6,6 +6,7 @@ import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/elements/Button";
 import { DiscordIcon } from "~/components/icons/Discord";
+import { LocaleTime } from "~/components/LocaleTime";
 import { ShareUrlButton } from "~/components/ShareUrlButton";
 import TimePopover from "~/components/TimePopover";
 import { UserLink } from "~/components/UserLink";
@@ -18,7 +19,14 @@ import { saveTournamentSchema } from "../tournament-schemas";
 import { tournamentNameParts } from "../tournament-utils";
 import styles from "./TournamentHeader.module.css";
 
-export function TournamentHeader({ tournament }: { tournament: Tournament }) {
+export function TournamentHeader({
+	tournament,
+	estimatedEndsAt,
+}: {
+	tournament: Tournament;
+	/** `null` when the tournament has no estimate. */
+	estimatedEndsAt: number | null;
+}) {
 	const { name, subtext } = tournamentNameParts(tournament);
 
 	const startTimes = R.uniqueBy(
@@ -53,18 +61,31 @@ export function TournamentHeader({ tournament }: { tournament: Tournament }) {
 			</div>
 			<div className={styles.dates}>
 				{startTimes.map((date) => (
-					<TimePopover
-						key={date.getTime()}
-						date={date}
-						options={{
-							weekday: "long",
-							day: "numeric",
-							month: "long",
-							year: date.getFullYear() !== currentYear ? "numeric" : undefined,
-							hour: "numeric",
-							minute: "numeric",
-						}}
-					/>
+					<div key={date.getTime()} className={styles.date}>
+						<TimePopover
+							date={date}
+							options={{
+								weekday: "long",
+								day: "numeric",
+								month: "long",
+								year:
+									date.getFullYear() !== currentYear ? "numeric" : undefined,
+								hour: "numeric",
+								minute: "numeric",
+							}}
+						/>
+						{estimatedEndsAt ? (
+							<span className={styles.estimatedEnd}>
+								~
+								<LocaleTime
+									date={estimatedEndsAt}
+									options={{ hour: "numeric", minute: "numeric" }}
+									data-testid="estimated-end"
+									inline
+								/>
+							</span>
+						) : null}
+					</div>
 				))}
 			</div>
 		</header>

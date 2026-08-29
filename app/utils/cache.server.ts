@@ -10,7 +10,7 @@ declare global {
 // biome-ignore lint/suspicious/noAssignInExpressions: trick to only create one
 export const cache = (global.__lruCache = global.__lruCache
 	? global.__lruCache
-	: new LRUCache<string, CacheEntry<unknown>>({ max: 5000 }));
+	: new LRUCache<string, CacheEntry<unknown>>({ max: 6000 }));
 
 export const ttl = (ms: number) => (ServerConfig.disableCache ? 0 : ms);
 

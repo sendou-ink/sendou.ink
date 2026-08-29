@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
 import type { BusyBlock } from "../availability-types";
@@ -32,24 +33,27 @@ export async function busyBlocksByUserIds({
 }): Promise<Map<number, Array<BusyBlock>>> {
 	if (userIds.length === 0) return new Map();
 
-	const [registrations, scrims, teamEvents] = await Promise.all([
-		TournamentTeamRepository.findAllRegistrationsByUserIds({
-			userIds,
-			startsAt: startsAt - TournamentDuration.MAX_ESTIMATE_SECONDS,
-			endsAt,
-			excludeTournamentId,
-		}),
-		ScrimPostRepository.findAllAcceptedByUserIds({
-			userIds,
-			startsAt: startsAt - AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
-			endsAt,
-		}),
-		AvailabilityRepository.findAllTeamEventsByUserIds({
-			userIds,
-			startsAt,
-			endsAt,
-		}),
-	]);
+	// xxx: when promise.all not the play
+	const [registrations, scrims, teamEvents, expectedTeamCount] =
+		await Promise.all([
+			TournamentTeamRepository.findAllRegistrationsByUserIds({
+				userIds,
+				startsAt: startsAt - TournamentDuration.MAX_ESTIMATE_SECONDS,
+				endsAt,
+				excludeTournamentId,
+			}),
+			ScrimPostRepository.findAllAcceptedByUserIds({
+				userIds,
+				startsAt: startsAt - AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
+				endsAt,
+			}),
+			AvailabilityRepository.findAllTeamEventsByUserIds({
+				userIds,
+				startsAt,
+				endsAt,
+			}),
+			SeriesTeamCount.lookup(),
+		]);
 
 	const blocks: Array<BusyBlock & { userId: number }> = [
 		...registrations
@@ -66,7 +70,7 @@ export async function busyBlocksByUserIds({
 						bracketTypes: registration.settings.bracketProgression.map(
 							(bracket) => bracket.type,
 						),
-						teamCount: registration.teamCount,
+						teamCount: expectedTeamCount(registration),
 					}),
 			})),
 		...scrims.map((scrim) => ({

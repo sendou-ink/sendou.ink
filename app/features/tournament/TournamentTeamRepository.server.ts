@@ -1029,6 +1029,7 @@ export function findAllRegistrationsByUserIds({
 		.select((eb) => [
 			"TournamentTeamMember.userId",
 			"CalendarEvent.name",
+			"CalendarEvent.organizationId",
 			"CalendarEventDate.startsAt",
 			"Tournament.settings",
 			eb

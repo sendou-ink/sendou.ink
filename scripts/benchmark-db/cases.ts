@@ -1,3 +1,4 @@
+import { subDays } from "date-fns";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
@@ -1028,9 +1029,15 @@ export function buildCases(fx: Fixtures): {
 				org.memberUserId,
 			),
 	);
+	addStatic("TournamentOrganizationRepository.findAllSeries", () =>
+		TournamentOrganizationRepository.findAllSeries(),
+	);
 	addStatic(
-		"TournamentOrganizationRepository.findAllSeriesWithTierHistory",
-		() => TournamentOrganizationRepository.findAllSeriesWithTierHistory(),
+		"TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts",
+		() =>
+			TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts({
+				startedAfter: dateToDatabaseTimestamp(subDays(new Date(), 90)),
+			}),
 	);
 
 	// SavedCalendarEventRepository
