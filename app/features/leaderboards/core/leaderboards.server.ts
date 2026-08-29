@@ -6,7 +6,7 @@ import type {
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { USER_LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN } from "~/features/mmr/mmr-constants";
-import { freshUserSkills } from "~/features/mmr/tiered.server";
+import { userSkills } from "~/features/mmr/tiered.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponCategories } from "~/modules/in-game-lists/weapon-ids";
@@ -90,7 +90,7 @@ async function addTiers<T extends UserSPLeaderboardItem>(
 	entries: T[],
 	season: number,
 ) {
-	const tiers = await freshUserSkills(season);
+	const tiers = await userSkills(season);
 
 	const encounteredTiers = new Set<string>();
 	return entries.map((entry, i) => {
@@ -217,7 +217,7 @@ export async function ownEntryPeek({
 
 	const withTier = (await addTiers([found], season))[0];
 
-	const { intervals } = await freshUserSkills(season);
+	const { intervals } = await userSkills(season);
 
 	const currentTierIndex = intervals.findIndex(
 		(interval) =>
