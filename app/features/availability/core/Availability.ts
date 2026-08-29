@@ -24,6 +24,7 @@ import type {
 } from "../availability-types";
 
 const MINUTE_IN_SECONDS = 60;
+const DAY_MINUTES = 24 * 60;
 
 /**
  * Database timestamp of the Monday 00:00 that starts the week `date` falls in,
@@ -565,8 +566,6 @@ export function resizedRange({
 
 	return { start: range.start, end };
 }
-
-const DAY_MINUTES = 24 * 60;
 
 const toTimeRange = (range: DayTimeRange): TimeRange => ({
 	startsAt: range.start,

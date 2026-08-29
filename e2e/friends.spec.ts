@@ -1,6 +1,7 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import * as Availability from "~/features/availability/core/Availability";
+import { weekDates, weekRange } from "./helpers/availability";
 import {
 	expect,
 	impersonate,
@@ -18,7 +19,6 @@ import { FriendsPage } from "./pages/friends/friends-page";
 import { NotificationPopover } from "./pages/layout/notification-popover";
 
 const WEDNESDAY = 2;
-const DAY_SECONDS = 24 * 60 * 60;
 
 test.describe("Friends", () => {
 	test("send friend request, accept it, then delete friend", async ({
@@ -75,7 +75,7 @@ test.describe("Friends", () => {
 
 		await factories.AvailabilityWeekFactory.create({
 			userId: scheduled.id,
-			weekStartsAt: currentWeek().startsAt,
+			weekStartsAt: weekRange().startsAt,
 			timezone: MACHINE_TIMEZONE,
 			slots: [daySlot(WEDNESDAY, "18:00", "22:00")],
 		});
@@ -116,23 +116,8 @@ test.describe("Friends", () => {
 	});
 });
 
-function currentWeek() {
-	return Availability.weekRange(new Date(), MACHINE_TIMEZONE);
-}
-
-function currentWeekDates() {
-	const { startsAt } = currentWeek();
-
-	return Array.from({ length: 7 }, (_, dayIndex) =>
-		Availability.dateInTimezone(
-			startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-			MACHINE_TIMEZONE,
-		),
-	);
-}
-
 function daySlot(dayIndex: number, start: string, end: string) {
-	const date = currentWeekDates()[dayIndex];
+	const date = weekDates()[dayIndex];
 
 	return {
 		startsAt: Availability.localToTimestamp({

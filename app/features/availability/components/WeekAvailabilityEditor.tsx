@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { Flag, Plus, SquarePen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
+import * as R from "remeda";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouAnchoredPopover } from "~/components/elements/Popover";
 import { Input } from "~/components/Input";
@@ -79,10 +80,13 @@ export function WeekAvailabilityEditor({
 	value,
 	onChange,
 	commitments = [],
+	onPendingDraftChange,
 }: {
 	value: AvailabilityEditorWeek;
 	onChange: (value: AvailabilityEditorWeek) => void;
 	commitments?: Array<EditorCommitment>;
+	/** Reports edits typed in the day popover but not yet committed into `value`, which an unsaved changes guard would otherwise miss. */
+	onPendingDraftChange?: (hasPendingDraft: boolean) => void;
 }) {
 	const { t } = useTranslation(["schedule", "common"]);
 	const { formatter: dayFormatter } = useDateTimeFormat({
@@ -345,28 +349,26 @@ export function WeekAvailabilityEditor({
 	const openDayEditor = (date: string, anchor: HTMLElement, addRow = false) => {
 		popoverAnchorRef.current = anchor;
 		dayDraftRef.current = null;
+		onPendingDraftChange?.(false);
 		setOpenDayDate(date);
 		setOpenDayAddRow(addRow);
 	};
 
+	const dayFromDraft = (day: AvailabilityEditorDay, draft: DayDraft) => ({
+		...day,
+		ranges: Availability.mergedDayRanges(
+			draft.ranges
+				.filter((range) => range.start && range.end)
+				.map((range) => Availability.dayRangeFromTimes(range.start, range.end)),
+		),
+		note: draft.note.trim(),
+	});
+
 	const applyDayDraft = (date: string, draft: DayDraft) => {
 		onChange(
-			value.map((day) =>
-				day.date === date
-					? {
-							...day,
-							ranges: Availability.mergedDayRanges(
-								draft.ranges
-									.filter((range) => range.start && range.end)
-									.map((range) =>
-										Availability.dayRangeFromTimes(range.start, range.end),
-									),
-							),
-							note: draft.note.trim(),
-						}
-					: day,
-			),
+			value.map((day) => (day.date === date ? dayFromDraft(day, draft) : day)),
 		);
+		onPendingDraftChange?.(false);
 	};
 
 	const closeDayEditor = () => {
@@ -377,6 +379,7 @@ export function WeekAvailabilityEditor({
 		}
 
 		dayDraftRef.current = null;
+		onPendingDraftChange?.(false);
 		setOpenDayDate(null);
 	};
 
@@ -631,6 +634,9 @@ export function WeekAvailabilityEditor({
 						startWithNewRow={openDayAddRow}
 						onDraftChange={(draft) => {
 							dayDraftRef.current = draft;
+							onPendingDraftChange?.(
+								!R.isDeepEqual(dayFromDraft(openDay, draft), openDay),
+							);
 						}}
 						onRangeDelete={handleRangeDelete}
 					/>

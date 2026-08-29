@@ -8,10 +8,6 @@ import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
-import {
-	SendouChipRadio,
-	SendouChipRadioGroup,
-} from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { UserLink } from "~/components/UserLink";
@@ -33,6 +29,7 @@ import {
 } from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
 import { ScheduleDayCell } from "../components/ScheduleDayCell";
+import { WeekToggle } from "../components/WeekToggle";
 import type { TeamScheduleLoaderData } from "../loaders/t.$customUrl.schedule.server";
 import { loader } from "../loaders/t.$customUrl.schedule.server";
 
@@ -89,24 +86,11 @@ function ScheduleWeeks({ weeks }: { weeks: Array<WeekData> }) {
 						shownWeek.days[6].noonAt,
 					)}
 				</h2>
-				<SendouChipRadioGroup>
-					<SendouChipRadio
-						name="schedule-week"
-						value="current"
-						checked={week === "current"}
-						onChange={() => setParams({ week: "current" })}
-					>
-						{t("schedule:team.currentWeek")}
-					</SendouChipRadio>
-					<SendouChipRadio
-						name="schedule-week"
-						value="next"
-						checked={week === "next"}
-						onChange={() => setParams({ week: "next" })}
-					>
-						{t("schedule:team.nextWeek")}
-					</SendouChipRadio>
-				</SendouChipRadioGroup>
+				<WeekToggle
+					name="schedule-week"
+					value={week}
+					onChange={(value) => setParams({ week: value })}
+				/>
 			</div>
 			<TeamEvents week={shownWeek} />
 			<ScheduleGrid week={shownWeek} />

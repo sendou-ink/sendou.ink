@@ -3,6 +3,7 @@ import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import { addTeamEventSchema } from "~/features/availability/availability-schemas";
 import * as Availability from "~/features/availability/core/Availability";
+import { weekDates, weekRange } from "./helpers/availability";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -29,7 +30,6 @@ const ROSTER_SIZE = 4;
 const TOURNAMENT_NAME = "In The Zone 30";
 const WEDNESDAY = 2;
 const THURSDAY = 3;
-const DAY_SECONDS = 24 * 60 * 60;
 
 test.describe("New team creation", () => {
 	test("creates new team", async ({ page }) => {
@@ -429,7 +429,7 @@ test.describe("Team schedule", () => {
 			memberUserIds: [ADMIN_ID, NZAP_TEST_ID, noScheduleMember.id],
 		});
 
-		const { startsAt } = currentWeek();
+		const { startsAt } = weekRange();
 		await factories.AvailabilityWeekFactory.create({
 			userId: ADMIN_ID,
 			weekStartsAt: startsAt,
@@ -441,9 +441,7 @@ test.describe("Team schedule", () => {
 				daySlot(WEDNESDAY, "18:00", "22:00"),
 				daySlot(THURSDAY, "00:30", "02:00"),
 			],
-			dayNotes: [
-				{ date: currentWeekDates()[WEDNESDAY], text: "Leaving early" },
-			],
+			dayNotes: [{ date: weekDates()[WEDNESDAY], text: "Leaving early" }],
 		});
 		await factories.AvailabilityWeekFactory.create({
 			userId: NZAP_TEST_ID,
@@ -502,7 +500,7 @@ test.describe("Team schedule", () => {
 		});
 		await factories.AvailabilityWeekFactory.create({
 			userId: ADMIN_ID,
-			weekStartsAt: currentWeek().startsAt,
+			weekStartsAt: weekRange().startsAt,
 			timezone: MACHINE_TIMEZONE,
 			slots: [daySlot(WEDNESDAY, "18:00", "22:00")],
 		});
@@ -558,31 +556,9 @@ test.describe("Team schedule", () => {
 	});
 });
 
-function currentWeek() {
-	return Availability.weekRange(new Date(), MACHINE_TIMEZONE);
-}
-
-function currentWeekDates() {
-	const { startsAt } = currentWeek();
-
-	return Array.from({ length: 7 }, (_, dayIndex) =>
-		Availability.dateInTimezone(
-			startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-			MACHINE_TIMEZONE,
-		),
-	);
-}
-
 /** Wall-clock time on a day of next week, always ahead of "now" so the add-event form accepts it. */
 function nextWeekTime(dayIndex: number, time: string) {
-	const { startsAt } = Availability.weekRange(
-		addWeeks(new Date(), 1),
-		MACHINE_TIMEZONE,
-	);
-	const date = Availability.dateInTimezone(
-		startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2,
-		MACHINE_TIMEZONE,
-	);
+	const date = weekDates(addWeeks(new Date(), 1))[dayIndex];
 
 	return new Date(
 		Availability.localToTimestamp({ date, time, timezone: MACHINE_TIMEZONE }) *
@@ -591,7 +567,7 @@ function nextWeekTime(dayIndex: number, time: string) {
 }
 
 function daySlot(dayIndex: number, start: string, end: string) {
-	const dates = currentWeekDates();
+	const dates = weekDates();
 
 	return {
 		startsAt: Availability.localToTimestamp({

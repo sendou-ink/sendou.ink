@@ -248,7 +248,6 @@ export interface PickableSlot extends TimeRange {
  * The roster's shared free time as the slots a scrim post can be picked from:
  * maximal spans where the team is at most one player short, the `ONE_SHORT`
  * ones being the "grab a sub" case.
- * be given.
  */
 export function pickableSlots({
 	members,

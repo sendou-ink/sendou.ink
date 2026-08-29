@@ -1,4 +1,5 @@
 import type { ActionFunction } from "react-router";
+import * as R from "remeda";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -18,7 +19,7 @@ import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLF
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { registerSchema } from "../tournament-schemas.server";
@@ -348,20 +349,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 				tournament.maxMembersPerTeam - ownTeam.memberUserIds.length;
 
 			let addedCount = 0;
+			const skippedReasons: Array<IneligibleReason> = [];
 			for (const candidate of candidates) {
 				if (addedCount >= spotsLeft) break;
 
-				const eligible =
-					(await UserRepository.findLeanById(candidate.id))?.friendCode &&
-					!(await isBannedByOrganization({
-						tournament,
-						userId: candidate.id,
-					})) &&
-					(await fulfillsSendouQParticipation({
-						tournament,
-						userId: candidate.id,
-					}));
-				if (!eligible) continue;
+				const reason = await ineligibleReason({
+					tournament,
+					userId: candidate.id,
+				});
+				if (reason) {
+					skippedReasons.push(reason);
+					continue;
+				}
 
 				await addPlayerToOwnTeam({
 					tournament,
@@ -373,9 +372,18 @@ export const action: ActionFunction = async ({ request, params }) => {
 				addedCount++;
 			}
 
-			errorToastIfFalsy(addedCount > 0, "No players could be added");
+			errorToastIfFalsy(
+				addedCount > 0,
+				`No players could be added. ${skippedSummary(skippedReasons)}`.trim(),
+			);
 
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			if (skippedReasons.length > 0) {
+				return successToast(
+					`Added ${addedCount} player(s). ${skippedSummary(skippedReasons)}`,
+				);
+			}
 
 			break;
 		}
@@ -418,6 +426,43 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return null;
 };
+
+type IneligibleReason =
+	| "no friend code"
+	| "banned by the organization"
+	| "not enough SendouQ participation";
+
+/** Why the "add all" bulk add has to pass a candidate over, or `null` if they can be added. */
+async function ineligibleReason({
+	tournament,
+	userId,
+}: {
+	tournament: Tournament;
+	userId: number;
+}): Promise<IneligibleReason | null> {
+	if (!(await UserRepository.findLeanById(userId))?.friendCode) {
+		return "no friend code";
+	}
+	if (await isBannedByOrganization({ tournament, userId })) {
+		return "banned by the organization";
+	}
+	if (!(await fulfillsSendouQParticipation({ tournament, userId }))) {
+		return "not enough SendouQ participation";
+	}
+
+	return null;
+}
+
+// names are left out on purpose: the message travels in a redirect's query string
+function skippedSummary(reasons: Array<IneligibleReason>) {
+	if (reasons.length === 0) return "";
+
+	const counts = R.countBy(reasons, (reason) => reason);
+
+	return `Skipped ${reasons.length} player(s): ${Object.entries(counts)
+		.map(([reason, count]) => `${reason} (${count})`)
+		.join(", ")}`;
+}
 
 async function addPlayerToOwnTeam({
 	tournament,

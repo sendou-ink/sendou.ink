@@ -35,10 +35,12 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 		day: "numeric",
 	});
 
-	// dirty = the editor differs from what the loader last saw; a successful
-	// save revalidates the loader, which makes this read clean again. Edits
-	// survive same-route navigations (the view tabs), so only a pathname
-	// change or a full unload warns.
+	// dirty = the editor differs from what the loader last saw, or the day
+	// popover holds edits it has not committed yet; a successful save
+	// revalidates the loader, which makes this read clean again. Edits survive
+	// same-route navigations (the view tabs), so only a pathname change or a
+	// full unload warns.
+	const hasPendingDraftRef = React.useRef(false);
 	const hasUnsavedChangesRef = React.useRef<
 		Parameters<typeof useUnsavedChangesChecker>[0]["current"]
 	>(() => false);
@@ -47,10 +49,11 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 		(!navigation ||
 			navigation.currentLocation.pathname !==
 				navigation.nextLocation.pathname) &&
-		!R.isDeepEqual(
-			weeks,
-			data.weeks.map((editorWeek) => editorWeek.days),
-		);
+		(hasPendingDraftRef.current ||
+			!R.isDeepEqual(
+				weeks,
+				data.weeks.map((editorWeek) => editorWeek.days),
+			));
 	useUnsavedChangesChecker(hasUnsavedChangesRef);
 
 	const weekIndex = week === "next" ? 1 : 0;
@@ -129,6 +132,9 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 						weeks.map((days, index) => (index === weekIndex ? value : days)),
 					)
 				}
+				onPendingDraftChange={(hasPendingDraft) => {
+					hasPendingDraftRef.current = hasPendingDraft;
+				}}
 			/>
 			<div className={styles.actions}>
 				<SendouButton

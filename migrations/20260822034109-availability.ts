@@ -65,7 +65,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			// the event belongs to the team, so it outlives its author's account,
 			// the way every other authored row of the schema does
 			.addColumn("authorId", "integer", (col) =>
-				col.notNull().references("User.id").onDelete("restrict"),
+				col.references("User.id").onDelete("set null"),
 			)
 			.addColumn("name", "text", (col) => col.notNull())
 			.addColumn("startsAt", "integer", (col) => col.notNull())

@@ -1376,8 +1376,8 @@ export interface AvailabilityDayNote {
 export interface TeamEvent {
 	id: GeneratedAlways<number>;
 	teamId: number;
-	/** User who created the event */
-	authorId: number;
+	/** User who created the event. Null if their account has since been deleted. */
+	authorId: number | null;
 	name: string;
 	startsAt: number;
 	endsAt: number;
