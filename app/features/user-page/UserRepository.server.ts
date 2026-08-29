@@ -499,7 +499,15 @@ export function findModInfoById(id: number) {
 export function findAllPatrons() {
 	return db
 		.selectFrom("User")
-		.select(["User.id", "User.discordId", "User.username", "User.patronTier"])
+		.select([
+			"User.id",
+			"User.discordId",
+			"User.username",
+			"User.patronTier",
+			asJson(
+				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+			).as("customTheme"),
+		])
 		.where("User.patronTier", "is not", null)
 		.orderBy("User.patronTier", "desc")
 		.orderBy("User.patronStartedAt", "asc")

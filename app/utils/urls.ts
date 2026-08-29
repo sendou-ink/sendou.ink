@@ -125,6 +125,9 @@ export const COMP_ANALYZER_URL = "/comp-analyzer";
 export const OBJECT_DAMAGE_CALCULATOR_URL = "/object-damage-calculator";
 export const SCANNER_PAGE = "/scanner";
 export const VODS_PAGE = "/vods";
+export const ART_PAGE = "/art";
+export const XSEARCH_PAGE = "/xsearch";
+export const ASSOCIATIONS_PAGE = "/associations";
 export const LEADERBOARDS_PAGE = "/leaderboards";
 export const LINKS_PAGE = "/links";
 export const SENDOUQ_PAGE = "/q";
@@ -144,6 +147,8 @@ export const FRIENDS_PAGE = "/friends";
 export const SETTINGS_PAGE = "/settings";
 export const LUTI_PAGE = "/luti";
 export const PLUS_VOTING_PAGE = "/plus/voting";
+export const PLUS_VOTING_RESULTS_PAGE = "/plus/voting/results";
+export const PLUS_SUGGESTIONS_PAGE = "/plus/suggestions";
 
 const STATIC_ASSETS_URL = Config.staticAssetsUrl;
 
