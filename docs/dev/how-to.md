@@ -80,7 +80,7 @@ The image posted on social media on update day is built from the entry files in 
 
 1) Every commit with a user facing change adds one `changelog/YYYY-MM-DD-<slug>.md` per change. Frontmatter is `navItem` (optional, must be one of `OG_IMAGE_PAGES`, omitted = sendou.ink logo) and `type` (`feature` or `bug`). The body is a one line headline, optionally followed by a markdown bullet list for a bigger release. Entries are never deleted, they are the update history.
 2) Preview and tweak the graphic on the `/admin/changelog-image` page (dev only). Without a `?since=<sha>` it renders every entry ever committed.
-3) With the dev server running, `pnpm run changelog:image <sha-of-previous-update-commit>` writes `scripts/output/update-<date>.png` from the entries added since that commit.
+3) With the dev server running, `pnpm run changelog:image <sha-of-previous-update-commit>` writes `scripts/output/update-<date>.png` from the entries added since that commit, copies the image to the clipboard.
 
 ## Add a new translation string
 

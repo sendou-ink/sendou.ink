@@ -1,15 +1,21 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 
-// screenshots the canvas of the /admin/changelog-image page into a shareable PNG,
-// see docs/dev/how-to.md
+// screenshots the canvas of the /admin/changelog-image page into a shareable PNG
+// and writes the same update as text, both as Bluesky alt text and as a Discord
+// post, see docs/dev/how-to.md
 
 import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { promisify } from "node:util";
-import { chromium } from "@playwright/test";
+import { chromium, type Page } from "@playwright/test";
+import { format } from "date-fns";
 import sharp from "sharp";
+import {
+	DISCORD_EMOJI_NAMES,
+	DISCORD_FALLBACK_EMOJI_NAME,
+} from "../app/features/changelog/changelog-constants.ts";
 
 const execFileAsync = promisify(execFile);
 
@@ -25,6 +31,13 @@ const OUT_DIR = fileURLToPath(new URL("./output", import.meta.url));
 
 /** Doubles the canvas' CSS pixels so the posted image stays sharp. */
 const DEVICE_SCALE_FACTOR = 2;
+
+interface ChangelogEntry {
+	navItem?: keyof typeof DISCORD_EMOJI_NAMES;
+	type: "feature" | "bug";
+	headline: string;
+	bullets?: string[];
+}
 
 async function main() {
 	const since = process.argv[2];
@@ -53,12 +66,8 @@ async function main() {
 		throw new Error(`No changelog canvas found at ${CHANGELOG_IMAGE_PAGE_URL}`);
 	}
 
-	const entryCount = Number(
-		await page
-			.locator("[data-changelog-entry-count]")
-			.getAttribute("data-changelog-entry-count"),
-	);
-	if (entryCount === 0) {
+	const entries = await parseEntries(page);
+	if (entries.length === 0) {
 		throw new Error(
 			`No changelog entries were added between ${since} and HEAD. Note that only committed entries count.`,
 		);
@@ -74,20 +83,128 @@ async function main() {
 
 	const screenshot = await canvas.screenshot({ type: "png" });
 
-	const filePath = path.join(OUT_DIR, `update-${dateStamp()}.png`);
-	await sharp(screenshot)
-		.png({ compressionLevel: 9, effort: 10 })
-		.toFile(filePath);
-
 	await browser.close();
 
-	const { size } = await fs.stat(filePath);
-	console.log(`${filePath} (${Math.round(size / 1024)} kB)`);
+	const date = new Date();
+	const fileNameBase = `update-${format(date, "yyyy-MM-dd")}`;
 
-	const copied = await copyToClipboard(filePath);
+	const imagePath = path.join(OUT_DIR, `${fileNameBase}.png`);
+	await sharp(screenshot)
+		.png({ compressionLevel: 9, effort: 10 })
+		.toFile(imagePath);
+
+	const { size } = await fs.stat(imagePath);
+	console.log(`${imagePath} (${Math.round(size / 1024)} kB)`);
 	console.log(
-		copied ? "Copied to the clipboard" : "Could not copy to the clipboard",
+		(await copyToClipboard(imagePath))
+			? "Image copied to the clipboard"
+			: "Could not copy the image to the clipboard",
 	);
+
+	const versions = [
+		{ label: "Alt text", suffix: "alt", text: altText(entries, date) },
+		{ label: "Discord", suffix: "discord", text: discordText(entries, date) },
+	];
+
+	for (const version of versions) {
+		const textPath = path.join(
+			OUT_DIR,
+			`${fileNameBase}-${version.suffix}.txt`,
+		);
+		await fs.writeFile(textPath, version.text, "utf8");
+
+		console.log(`\n--- ${version.label} (${textPath}) ---\n`);
+		console.log(version.text);
+	}
+}
+
+async function parseEntries(page: Page): Promise<ChangelogEntry[]> {
+	const json = await page
+		.locator("[data-changelog-entries]")
+		.getAttribute("data-changelog-entries");
+
+	return json ? JSON.parse(json) : [];
+}
+
+/** Plain prose for the image's alt text, where markup and emoji only get in the way. */
+function altText(entries: ChangelogEntry[], date: Date) {
+	const { featured, oneLiners, fixes } = groupEntries(entries);
+
+	const sections = [heading(date)];
+
+	for (const entry of featured) {
+		sections.push([entry.headline, ...bulletLines(entry)].join("\n"));
+	}
+
+	for (const entry of oneLiners) {
+		sections.push(entry.headline);
+	}
+
+	if (fixes.length > 0) {
+		sections.push(
+			["Fixes", ...fixes.map((entry) => `- ${entry.headline}`)].join("\n"),
+		);
+	}
+
+	return joinSections(sections);
+}
+
+/** The update as a Discord post, leading every entry with the server emoji of its nav item. */
+function discordText(entries: ChangelogEntry[], date: Date) {
+	const { featured, oneLiners, fixes } = groupEntries(entries);
+
+	const sections = [`**${heading(date)}**`];
+
+	for (const entry of featured) {
+		sections.push(
+			[`${emoji(entry)} **${entry.headline}**`, ...bulletLines(entry)].join(
+				"\n",
+			),
+		);
+	}
+
+	if (oneLiners.length > 0) {
+		sections.push(
+			oneLiners.map((entry) => `${emoji(entry)} ${entry.headline}`).join("\n"),
+		);
+	}
+
+	if (fixes.length > 0) {
+		sections.push(
+			[
+				"**Fixes**",
+				...fixes.map((entry) => `${emoji(entry)} ${entry.headline}`),
+			].join("\n"),
+		);
+	}
+
+	return joinSections(sections);
+}
+
+function groupEntries(entries: ChangelogEntry[]) {
+	const features = entries.filter((entry) => entry.type === "feature");
+
+	return {
+		featured: features.filter((entry) => entry.bullets?.length),
+		oneLiners: features.filter((entry) => !entry.bullets?.length),
+		fixes: entries.filter((entry) => entry.type === "bug"),
+	};
+}
+
+function heading(date: Date) {
+	return `sendou.ink update - ${format(date, "MMMM do yyyy")}`;
+}
+
+function bulletLines(entry: ChangelogEntry) {
+	return (entry.bullets ?? []).map((bullet) => `- ${bullet}`);
+}
+
+function emoji(entry: ChangelogEntry) {
+	return `:${entry.navItem ? DISCORD_EMOJI_NAMES[entry.navItem] : DISCORD_FALLBACK_EMOJI_NAME}:`;
+}
+
+function joinSections(sections: string[]) {
+	return `${sections.join("\n\n")}\n`;
 }
 
 /** Puts the PNG itself (not its path) on the clipboard, ready to paste into a post. */
@@ -103,10 +220,6 @@ async function copyToClipboard(filePath: string) {
 	} catch {
 		return false;
 	}
-}
-
-function dateStamp() {
-	return new Date().toISOString().slice(0, 10);
 }
 
 main().catch((error) => {

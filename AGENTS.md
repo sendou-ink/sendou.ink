@@ -96,6 +96,27 @@
 - when using namespace e.g. `const { t } = useTranslation("settings"]);` it needs to be defined in the `handle` for that route e.g. `export const handle: SendouRouteHandle = { i18n: ["settings"], ... }`. Certain namespaces are always included and you don't have to worry about those: "common", "forms", "game-misc", "weapons", "front", "friends"
 - if changing translation key names make sure to port over any already translated values for non-english languages if the english language is unchanged
 
+## Changelog
+
+- every user facing change needs a changelog entry, added in the same commit as the change itself. One file per change, a commit can add several. Purely internal work (refactors, dependency bumps, dev tooling, tests) gets none
+- entries live at `changelog/YYYY-MM-DD-<slug>.md` and are never deleted, they are the update history
+- frontmatter is `type` (`feature` or `bug`) and optionally `navItem`, which must be one of `OG_IMAGE_PAGES` (`app/utils/urls.ts`) and picks the icon shown next to the entry. Omitted = the sendou.ink logo. A change to a page with no nav item of its own is filed under the closest existing one
+- the body is either short (a one line headline) or long (headline followed by a markdown bullet list, for a big feature release)
+- write them for users and not developers: what changed for them, not how it was implemented
+
+```md
+---
+navItem: plans
+type: feature
+---
+Map planner improvements
+
+- Plans are saved and restored when you come back to the page
+- Undo & redo are back, now in the toolbar
+```
+
+- on update day these become the image posted on social media, see [how-to.md](./docs/dev/how-to.md)
+
 ## Commits
 
 - do not mention claude or claude code
