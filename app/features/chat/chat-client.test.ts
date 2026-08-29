@@ -672,6 +672,22 @@ describe("createChatClient", () => {
 		expect(harness.postRead).toHaveBeenCalledWith(1, 8);
 	});
 
+	test("flushReads posts the debounced read indicators right away", async () => {
+		const harness = createHarness({
+			rooms: [room({ unreadCount: 2, latestMessageId: 8, latestMessageAt: 1 })],
+		});
+		const client = await startedClient(harness);
+
+		client.markRead(1);
+		client.flushReads();
+
+		expect(harness.postRead).toHaveBeenCalledWith(1, 8);
+
+		// the debounce it flushed has nothing left to post
+		await flushReadDebounce();
+		expect(harness.postRead).toHaveBeenCalledTimes(1);
+	});
+
 	test("a rooms refetch cannot resurrect the unread count of a locally read room", async () => {
 		const harness = createHarness({
 			rooms: [room({ unreadCount: 2, latestMessageId: 8, latestMessageAt: 1 })],

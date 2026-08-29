@@ -78,6 +78,8 @@ export interface ChatClient {
 	) => void;
 	/** Zeroes the room's unread count and debounces the read-indicator POST. */
 	markRead: (roomId: number) => void;
+	/** Posts every debounced read indicator right away, for a page that is going away. */
+	flushReads: () => void;
 	/** Rooms the user has on screen right now: incoming messages there are read immediately instead of counting unread. */
 	setViewedRoomIds: (roomIds: number[]) => void;
 }
@@ -169,6 +171,12 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		deps.postRead(roomId, lastSeenMessageId).catch((error) => {
 			logger.error("Posting chat read indicator failed", error);
 		});
+	};
+
+	const flushReads = () => {
+		for (const roomId of readTimers.keys()) {
+			flushRead(roomId);
+		}
 	};
 
 	const markRead = (roomId: number) => {
@@ -411,9 +419,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		stop: () => {
 			removeEventListener?.();
 			removeEventListener = null;
-			for (const roomId of readTimers.keys()) {
-				flushRead(roomId);
-			}
+			flushReads();
 			ownUserId = null;
 			roomsLoaded = false;
 			roomsRefreshQueued = false;
@@ -523,6 +529,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 				});
 		},
 		markRead,
+		flushReads,
 		setViewedRoomIds: (roomIds) => {
 			const previous = viewedRoomIds;
 			viewedRoomIds = new Set(roomIds);
@@ -579,11 +586,14 @@ export const chatClient = createChatClient({
 			message: "Message could not be sent",
 			variant: "error",
 		}),
+	// keepalive: the flush on the way out of a page happens as the document is
+	// unloading, where an ordinary fetch is cancelled before it is sent
 	postRead: async (roomId, lastSeenMessageId) => {
 		await fetch(chatRoomReadRoute(roomId), {
 			method: "POST",
 			headers: { "Content-Type": "application/json" },
 			body: JSON.stringify({ lastSeenMessageId }),
+			keepalive: true,
 		});
 	},
 	addServerEventListener: (listener) => eventsClient.addEventListener(listener),

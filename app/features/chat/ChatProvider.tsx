@@ -96,6 +96,23 @@ function ChatProviderInner({
 		return () => chatClient.stop();
 	}, [user.id]);
 
+	// a page being left never reaches `stop()`, so the debounced read indicators
+	// are posted while the document is still there to post them
+	React.useEffect(() => {
+		const flushReadsWhenHidden = () => {
+			if (document.visibilityState === "visible") return;
+
+			chatClient.flushReads();
+		};
+
+		window.addEventListener("pagehide", chatClient.flushReads);
+		document.addEventListener("visibilitychange", flushReadsWhenHidden);
+		return () => {
+			window.removeEventListener("pagehide", chatClient.flushReads);
+			document.removeEventListener("visibilitychange", flushReadsWhenHidden);
+		};
+	}, []);
+
 	useEventStreamCatchUp({
 		enabled: true,
 		onCatchUp: () => chatClient.catchUp(),

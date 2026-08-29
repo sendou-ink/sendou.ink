@@ -235,15 +235,23 @@ test.describe("Chat", () => {
 			await expect(phoneChat.locators.toggleUnreadBadge).toHaveText("1");
 			await expect(laptopChat.locators.toggleUnreadBadge).toHaveText("1");
 
-			// the read indicator is posted debounced, and is what the other device reads
-			const readPosted = phone.page.waitForResponse(
-				(response) =>
-					response.request().method() === "POST" &&
-					/\/chat\/rooms\/\d+\/read$/.test(new URL(response.url()).pathname),
-			);
+			const readPosts: string[] = [];
+			phone.page.on("request", (request) => {
+				if (
+					request.method() === "POST" &&
+					/\/chat\/rooms\/\d+\/read$/.test(new URL(request.url()).pathname)
+				) {
+					readPosts.push(request.url());
+				}
+			});
+
 			await phoneChat.open();
 			await phoneChat.openRoom(matchRoom);
-			await readPosted;
+
+			// the read indicator is posted debounced, so leaving the page this
+			// soon after reading only tells the server if the unload flushes it
+			expect(readPosts).toHaveLength(0);
+			await new FrontPage(phone.page).goto();
 
 			await new FrontPage(laptop.page).goto();
 			await laptopChat.open();
