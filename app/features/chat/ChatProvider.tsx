@@ -1,5 +1,6 @@
 import * as React from "react";
 import { useLocation, useMatches } from "react-router";
+import { preloadChatSidebar } from "~/components/layout/LazyChatSidebar";
 import { eventsClient } from "~/features/events/events-client";
 import {
 	useEventStreamCatchUp,
@@ -120,6 +121,16 @@ function ChatProviderInner({
 
 	const [chatOpen, setChatOpenState] = React.useState(false);
 	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>([]);
+
+	// the sidebar chunk is fetched as soon as there is something to open it for,
+	// so that opening chat never waits on a download
+	const hasRoomToOpen =
+		snapshot.rooms.length > 0 || activeRoomIds.length > 0 || chatOpen;
+	React.useEffect(() => {
+		if (!hasRoomToOpen) return;
+
+		preloadChatSidebar();
+	}, [hasRoomToOpen]);
 
 	// messages arriving to a room on screen are read immediately instead of counting unread
 	React.useEffect(() => {
