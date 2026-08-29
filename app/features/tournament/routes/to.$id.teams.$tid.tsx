@@ -10,7 +10,10 @@ import { Placement } from "~/components/Placement";
 import { UserLink } from "~/components/UserLink";
 import { useUser } from "~/features/auth/core/user";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
-import { TournamentRunGraphic } from "~/features/img-export/components/TournamentRunGraphic";
+import {
+	TournamentRunGraphic,
+	type TournamentRunGraphicSeriesWin,
+} from "~/features/img-export/components/TournamentRunGraphic";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
@@ -192,6 +195,15 @@ function RunImageExport() {
 		]),
 	);
 
+	const seriesWins = seriesWinsForGraphic({
+		placement: data.placement,
+		previousWins: fetcher.data?.previousSeriesWins,
+		currentWin: {
+			name: tournament.ctx.name,
+			startTime: tournament.ctx.startsAt,
+		},
+	});
+
 	const activePlayers = data.activePlayers ?? [];
 	const ownPlayers =
 		activePlayers.length > 0
@@ -251,7 +263,6 @@ function RunImageExport() {
 			filename={`tournament-${tournament.ctx.id}-run`}
 		>
 			{fetcher.data ? (
-				// xxx: pass seriesWins so 1st place finishes show the series titles row
 				<TournamentRunGraphic
 					tournamentId={tournament.ctx.id}
 					tournamentTeamId={data.tournamentTeamId}
@@ -272,6 +283,7 @@ function RunImageExport() {
 					matches={matches}
 					teamsCount={tournament.ctx.teams.length}
 					playersCount={data.participatedUsersCount}
+					seriesWins={seriesWins}
 				/>
 			) : null}
 		</ImageExportDialog>
@@ -397,4 +409,23 @@ function SetInfo({
 			</div>
 		</div>
 	);
+}
+
+/** The current win is part of the count, but only shown when the team has no earlier title. */
+function seriesWinsForGraphic({
+	placement,
+	previousWins,
+	currentWin,
+}: {
+	placement?: number;
+	previousWins?: TournamentRunGraphicSeriesWin[] | null;
+	currentWin: TournamentRunGraphicSeriesWin;
+}) {
+	if (placement !== 1 || !previousWins) return;
+
+	return {
+		totalCount: previousWins.length + 1,
+		first: previousWins[0] ?? currentWin,
+		latest: previousWins.length > 1 ? previousWins.at(-1) : undefined,
+	};
 }

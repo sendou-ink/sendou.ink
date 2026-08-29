@@ -6,6 +6,8 @@ import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeap
 import { tournamentDataCached } from "~/features/tournament-bracket/core/Tournament.server";
 import { tournamentTeamPageParamsSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import * as Series from "~/features/tournament-organization/core/Series";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import type { SerializeFrom } from "~/utils/remix";
 import { forbidden, parseParams } from "~/utils/remix.server";
@@ -97,9 +99,46 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		ownComp: fullCompOnly(RunComps.buildComp(ownObservations)),
 		opponentComps,
+		previousSeriesWins: await previousSeriesWins({
+			organizationId: tournament.ctx.organization?.id,
+			tournamentName: tournament.ctx.name,
+			tournamentId,
+			userId: user.id,
+		}),
 	};
 
 	function fullCompOnly(comp: MainWeaponId[]) {
 		return comp.length >= minMembersPerTeam ? comp : [];
 	}
 };
+
+/** Wins of the user in the series this tournament belongs to, `null` if it belongs to none. */
+async function previousSeriesWins({
+	organizationId,
+	tournamentName,
+	tournamentId,
+	userId,
+}: {
+	organizationId?: number;
+	tournamentName: string;
+	tournamentId: number;
+	userId: number;
+}) {
+	if (!organizationId) return null;
+
+	const series = Series.findByEventName({
+		series:
+			await TournamentOrganizationRepository.findAllSeriesByOrganizationId(
+				organizationId,
+			),
+		eventName: tournamentName,
+	});
+	if (!series) return null;
+
+	return TournamentOrganizationRepository.findAllSeriesWinsByUserId({
+		organizationId,
+		substringMatches: series.substringMatches,
+		userId,
+		excludeTournamentId: tournamentId,
+	});
+}

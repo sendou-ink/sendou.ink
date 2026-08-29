@@ -1,8 +1,13 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
+import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import * as TournamentOrganizationRepository from "./TournamentOrganizationRepository.server";
 import { seedOrgEventWithParticipants } from "./test-utils";
 
@@ -209,5 +214,203 @@ describe("countActiveParticipants", () => {
 		});
 
 		expect(await countForOrg(org.id)).toBe(0);
+	});
+});
+
+describe("findAllSeriesWinsByUserId", () => {
+	const FIRST_EVENT_STARTED_AT = 1_700_000_000;
+	const DAY_IN_SECONDS = 60 * 60 * 24;
+
+	const winnerId = () => users.id(1);
+	const loserId = () => users.id(2);
+
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	const seedPlayedEvent = async ({
+		organizationId,
+		name,
+		startTime,
+		winnerUserId = winnerId(),
+	}: {
+		organizationId: number;
+		name: string;
+		startTime: number;
+		winnerUserId?: number;
+	}) => {
+		const loserUserId = winnerUserId === winnerId() ? loserId() : winnerId();
+
+		const { id } = await TournamentFactory.createPlayed(
+			{
+				authorId: winnerUserId,
+				organizationId,
+				name,
+				startTimes: [startTime],
+				minMembersPerTeam: 1,
+			},
+			{ teamRosters: [[winnerUserId], [loserUserId]], playedOut: "all" },
+		);
+
+		return id;
+	};
+
+	const winsInSeries = ({
+		organizationId,
+		excludeTournamentId = 0,
+	}: {
+		organizationId: number;
+		excludeTournamentId?: number;
+	}) =>
+		TournamentOrganizationRepository.findAllSeriesWinsByUserId({
+			organizationId,
+			substringMatches: ["Low Ink"],
+			userId: winnerId(),
+			excludeTournamentId,
+		});
+
+	test("returns the events of the series won by the user, oldest first", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		await seedPlayedEvent({
+			organizationId: org.id,
+			name: "Low Ink February",
+			startTime: FIRST_EVENT_STARTED_AT + DAY_IN_SECONDS,
+		});
+		await seedPlayedEvent({
+			organizationId: org.id,
+			name: "Low Ink January",
+			startTime: FIRST_EVENT_STARTED_AT,
+		});
+
+		const wins = await winsInSeries({ organizationId: org.id });
+
+		expect(wins.map((win) => win.name)).toEqual([
+			"Low Ink January",
+			"Low Ink February",
+		]);
+		expect(wins[0].startTime).toEqual(
+			databaseTimestampToDate(FIRST_EVENT_STARTED_AT),
+		);
+	});
+
+	const seedReportedEvent = async ({
+		organizationId,
+		name,
+		startTime,
+		winnerUserId = winnerId(),
+	}: {
+		organizationId: number;
+		name: string;
+		startTime: number;
+		winnerUserId?: number;
+	}) => {
+		const event = await CalendarEventFactory.create({
+			authorId: winnerUserId,
+			organizationId,
+			name,
+			startTimes: [startTime],
+		});
+
+		await CalendarEventResultFactory.create({
+			eventId: event.id,
+			participantCount: 2,
+			results: [
+				{
+					teamName: "Winners",
+					placement: 1,
+					players: [{ userId: winnerUserId, name: null }],
+				},
+			],
+		});
+	};
+
+	test("includes events whose results were reported by hand", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		await seedReportedEvent({
+			organizationId: org.id,
+			name: "Low Ink January",
+			startTime: FIRST_EVENT_STARTED_AT,
+		});
+		await seedReportedEvent({
+			organizationId: org.id,
+			name: "Low Ink February",
+			startTime: FIRST_EVENT_STARTED_AT + DAY_IN_SECONDS,
+			winnerUserId: loserId(),
+		});
+
+		const wins = await winsInSeries({ organizationId: org.id });
+
+		expect(wins.map((win) => win.name)).toEqual(["Low Ink January"]);
+	});
+
+	test("excludes events of the organization outside the series", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		await seedPlayedEvent({
+			organizationId: org.id,
+			name: "Paddling Pool",
+			startTime: FIRST_EVENT_STARTED_AT,
+		});
+
+		expect(await winsInSeries({ organizationId: org.id })).toHaveLength(0);
+	});
+
+	test("excludes events of another organization", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+		const otherOrg = await TournamentOrganizationFactory.create({
+			ownerId: users.id(2),
+		});
+
+		await seedPlayedEvent({
+			organizationId: otherOrg.id,
+			name: "Low Ink January",
+			startTime: FIRST_EVENT_STARTED_AT,
+		});
+
+		expect(await winsInSeries({ organizationId: org.id })).toHaveLength(0);
+	});
+
+	test("excludes events the user did not win", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		await seedPlayedEvent({
+			organizationId: org.id,
+			name: "Low Ink January",
+			startTime: FIRST_EVENT_STARTED_AT,
+			winnerUserId: loserId(),
+		});
+
+		expect(await winsInSeries({ organizationId: org.id })).toHaveLength(0);
+	});
+
+	test("excludes the tournament the wins are looked up for", async () => {
+		const org = await TournamentOrganizationFactory.create({
+			ownerId: users.id(1),
+		});
+
+		const tournamentId = await seedPlayedEvent({
+			organizationId: org.id,
+			name: "Low Ink January",
+			startTime: FIRST_EVENT_STARTED_AT,
+		});
+
+		expect(
+			await winsInSeries({
+				organizationId: org.id,
+				excludeTournamentId: tournamentId,
+			}),
+		).toHaveLength(0);
 	});
 });

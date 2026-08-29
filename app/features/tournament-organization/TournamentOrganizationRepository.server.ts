@@ -1,7 +1,8 @@
 import { isFuture } from "date-fns";
-import { sql } from "kysely";
+import { type ExpressionBuilder, sql } from "kysely";
+import * as R from "remeda";
 import { db } from "~/db/sql";
-import type { Tables, TablesInsertable } from "~/db/tables";
+import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
 import {
 	TIER_HISTORY_LENGTH,
@@ -458,6 +459,107 @@ export async function findAllEventsBySeries({
 		.execute();
 
 	return events.map(mapEvent);
+}
+
+export function findAllSeriesByOrganizationId(organizationId: number) {
+	return db
+		.selectFrom("TournamentOrganizationSeries")
+		.select([
+			"TournamentOrganizationSeries.id",
+			"TournamentOrganizationSeries.name",
+			"TournamentOrganizationSeries.substringMatches",
+		])
+		.where("TournamentOrganizationSeries.organizationId", "=", organizationId)
+		.execute();
+}
+
+/**
+ * Events of the series that the user won, oldest first. Both tournaments hosted on the site
+ * and events whose results were reported by hand count. Only finalized tournaments have
+ * results, so an event that is still ongoing is never included.
+ */
+export async function findAllSeriesWinsByUserId({
+	organizationId,
+	substringMatches,
+	userId,
+	excludeTournamentId,
+}: {
+	organizationId: number;
+	substringMatches: string[];
+	userId: number;
+	excludeTournamentId: number;
+}) {
+	const isEventOfTheSeries = (eb: ExpressionBuilder<DB, "CalendarEvent">) =>
+		eb.and([
+			eb("CalendarEvent.organizationId", "=", organizationId),
+			eb("CalendarEvent.hidden", "=", 0),
+			eb.or(
+				substringMatches.map((match) =>
+					eb("CalendarEvent.name", "like", `%${match}%`),
+				),
+			),
+		]);
+
+	const [tournamentWins, reportedWins] = await Promise.all([
+		db
+			.selectFrom("TournamentResult")
+			.innerJoin(
+				"CalendarEvent",
+				"CalendarEvent.tournamentId",
+				"TournamentResult.tournamentId",
+			)
+			.innerJoin(
+				"CalendarEventDate",
+				"CalendarEventDate.eventId",
+				"CalendarEvent.id",
+			)
+			.select(({ fn }) => [
+				"CalendarEvent.name",
+				fn.min("CalendarEventDate.startsAt").as("startsAt"),
+			])
+			.where("TournamentResult.userId", "=", userId)
+			.where("TournamentResult.placement", "=", 1)
+			.where("TournamentResult.tournamentId", "!=", excludeTournamentId)
+			.where(isEventOfTheSeries)
+			.groupBy("CalendarEvent.id")
+			.execute(),
+		db
+			.selectFrom("CalendarEventResultPlayer")
+			.innerJoin(
+				"CalendarEventResultTeam",
+				"CalendarEventResultTeam.id",
+				"CalendarEventResultPlayer.teamId",
+			)
+			.innerJoin(
+				"CalendarEvent",
+				"CalendarEvent.id",
+				"CalendarEventResultTeam.eventId",
+			)
+			.innerJoin(
+				"CalendarEventDate",
+				"CalendarEventDate.eventId",
+				"CalendarEvent.id",
+			)
+			.select(({ fn }) => [
+				"CalendarEvent.name",
+				fn.min("CalendarEventDate.startsAt").as("startsAt"),
+			])
+			.where("CalendarEventResultPlayer.userId", "=", userId)
+			.where("CalendarEventResultTeam.placement", "=", 1)
+			// a tournament of the site reports its own results, counted above
+			.where("CalendarEvent.tournamentId", "is", null)
+			.where(isEventOfTheSeries)
+			.groupBy("CalendarEvent.id")
+			.execute(),
+	]);
+
+	return R.sortBy(
+		[...tournamentWins, ...reportedWins].map((win) => ({
+			name: win.name,
+			startTime: databaseTimestampToDate(win.startsAt),
+		})),
+		(win) => win.startTime.getTime(),
+	);
 }
 
 /**

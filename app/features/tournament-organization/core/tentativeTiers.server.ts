@@ -1,5 +1,6 @@
 import { calculateTentativeTier } from "~/features/tournament/core/tiering";
 import * as TournamentOrganizationRepository from "../TournamentOrganizationRepository.server";
+import * as Series from "./Series";
 
 interface SeriesMatch {
 	substringMatches: string[];
@@ -36,10 +37,10 @@ export function getTentativeTier(
 	const seriesList = cache.get(orgId);
 	if (!seriesList) return null;
 
-	const nameLower = tournamentName.toLowerCase();
-	const match = seriesList.find((s) =>
-		s.substringMatches.some((m) => nameLower.includes(m.toLowerCase())),
-	);
+	const match = Series.findByEventName({
+		series: seriesList,
+		eventName: tournamentName,
+	});
 
 	return match?.tentativeTier ?? null;
 }
