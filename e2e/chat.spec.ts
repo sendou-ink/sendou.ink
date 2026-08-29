@@ -91,6 +91,54 @@ test.describe("Chat", () => {
 		await expect(chat.message("msg-four")).toBeVisible();
 	});
 
+	test("A message sent before the event stream connected still arrives", async ({
+		page,
+		browser,
+		workerBaseURL,
+		factories,
+	}) => {
+		const { match, alpha, bravo } = await createMatch(factories);
+
+		await impersonate(page, alpha[0].id);
+		// the stream cannot be established while `blocked` holds, so the page loads
+		// with its chat open but nothing listening behind it
+		let blocked = true;
+		await page.route(/\/sse$/, (route) =>
+			blocked ? route.abort() : route.fallback(),
+		);
+		await new SendouQMatchPage(page).goto(match.id);
+
+		const chat = new ChatSidebar(page).chat();
+		// the composer being disabled is the page telling us it has no stream
+		await expect(chat.locators.composer).toBeDisabled();
+
+		const other = await openSecondUser(browser, workerBaseURL, bravo[0].id);
+		try {
+			await new SendouQMatchPage(other.page).goto(match.id);
+			const theirChat = new ChatSidebar(other.page).chat();
+
+			await theirChat.send("sent before you connected");
+			await expect(theirChat.locators.pendingMessages).toHaveCount(0);
+
+			await expect(chat.message("sent before you connected")).toHaveCount(0);
+
+			blocked = false;
+
+			// the stream comes up and the gap it left behind is caught up on
+			await expect(chat.locators.composer).toBeEnabled({ timeout: 15_000 });
+			await expect(chat.message("sent before you connected")).toBeVisible({
+				timeout: 10_000,
+			});
+
+			// and it keeps delivering live from there on
+			await theirChat.send("sent after you connected");
+
+			await expect(chat.message("sent after you connected")).toBeVisible();
+		} finally {
+			await other.close();
+		}
+	});
+
 	test("Split view: a participant gets the match and their own group chat, never the opponent's", async ({
 		page,
 		factories,

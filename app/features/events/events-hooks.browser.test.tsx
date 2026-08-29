@@ -146,6 +146,7 @@ describe("useServerEventListener", () => {
 const CATCH_UP_HIDDEN_MS = 20 * 1000;
 const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 const CATCH_UP_MAX_JITTER_MS = 3_000;
+const LATE_FIRST_CONNECT_MS = 2_000;
 
 let catchUps = 0;
 let triggerCatchUp: () => void = () => {};
@@ -188,8 +189,10 @@ const setVisibility = (state: DocumentVisibilityState) => {
 
 describe("useEventStreamCatchUp", () => {
 	const mountConnecting = async (enabled = true) => {
-		await render(<CatchUpHarness enabled={enabled} />);
+		const screen = await render(<CatchUpHarness enabled={enabled} />);
 		await advanceTimers();
+
+		return screen;
 	};
 
 	const helloArrives = async () => {
@@ -219,6 +222,28 @@ describe("useEventStreamCatchUp", () => {
 		await mountConnecting();
 		await helloArrives();
 
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(0);
+	});
+
+	test("catches up on a first connect page load did not wait for", async () => {
+		await mountConnecting();
+
+		await advanceTimers(LATE_FIRST_CONNECT_MS);
+		await helloArrives();
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("does not catch up on the first connect after being enabled", async () => {
+		const screen = await mountConnecting(false);
+
+		await advanceTimers(LATE_FIRST_CONNECT_MS);
+		await screen.rerender(<CatchUpHarness enabled={true} />);
+		await advanceTimers();
+		await helloArrives();
 		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
 
 		expect(catchUps).toBe(0);

@@ -11,6 +11,9 @@ const CATCH_UP_HIDDEN_MS = 20 * 1000;
 const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 // spreads out the catch-ups of the many clients that reconnect at once after a deploy
 const CATCH_UP_MAX_JITTER_MS = 3_000;
+// a first connect slower than this did not happen as part of page load, so what was
+// published between the two can only be caught up on
+const LATE_FIRST_CONNECT_MS = 2_000;
 
 /** Keeps the shared SSE connection open while mounted and enabled. */
 export function useEventsConnection(enabled: boolean) {
@@ -88,8 +91,7 @@ export function useEventStreamCatchUp({
 		[],
 	);
 
-	// while disabled nothing can be missed, so the connect that follows counts as the first
-	useCatchUpOnReconnect(enabled ? readyState : "CLOSED", catchUp);
+	useCatchUpOnConnect(enabled, readyState, catchUp);
 
 	React.useEffect(() => {
 		if (!enabled) return;
@@ -126,25 +128,41 @@ export function useEventStreamCatchUp({
 }
 
 /**
- * Calls `onReconnect` every time the event stream comes back up, skipping the
- * initial connect: only what happened while the stream was down needs catching up on.
+ * Calls `onConnect` every time the event stream comes up, skipping a first connect
+ * that page load itself waited for: only what happened while nothing was listening
+ * needs catching up on. A first connect that took longer than that left a window
+ * whose events reach the page no other way.
  */
-function useCatchUpOnReconnect(
+function useCatchUpOnConnect(
+	enabled: boolean,
 	readyState: EventsReadyState,
-	onReconnect: () => void,
+	onConnect: () => void,
 ) {
 	const hasConnectedRef = React.useRef(false);
+	const listeningSinceRef = React.useRef<number | null>(null);
 
 	React.useEffect(() => {
+		// while disabled nothing can be missed, so the wait for the connect that
+		// follows starts over from the moment listening resumes
+		if (!enabled) {
+			listeningSinceRef.current = null;
+			return;
+		}
+		listeningSinceRef.current ??= Date.now();
+
 		if (readyState !== "CONNECTED") return;
 
-		if (!hasConnectedRef.current) {
-			hasConnectedRef.current = true;
+		const isFirstConnect = !hasConnectedRef.current;
+		hasConnectedRef.current = true;
+		if (
+			isFirstConnect &&
+			Date.now() - listeningSinceRef.current < LATE_FIRST_CONNECT_MS
+		) {
 			return;
 		}
 
-		onReconnect();
-	}, [readyState, onReconnect]);
+		onConnect();
+	}, [enabled, readyState, onConnect]);
 }
 
 const getServerReadyState = (): EventsReadyState => "CLOSED";
