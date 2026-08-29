@@ -1,6 +1,7 @@
 import type { Tables } from "~/db/tables";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import { faker } from "../core/faker";
+import { linkTwitch } from "./UserFactory";
 
 type Stream = Omit<Tables["LiveStream"], "id">;
 
@@ -9,9 +10,20 @@ type StreamOverrides = Partial<Stream> & Pick<Stream, "userId">;
 /**
  * Replaces the live streams with one per entry, the same write the twitch poller
  * does. A later call replaces the earlier's streams, so seed them all at once.
+ *
+ * A stream credited to a user also links its Twitch account to them, as the poller
+ * only credits a stream to the user who has that account on their profile.
  */
-export function replaceAll(streams: StreamOverrides[]) {
-	return LiveStreamRepository.replaceAll(streams.map(fillStream));
+export async function replaceAll(streams: StreamOverrides[]) {
+	const filledStreams = streams.map(fillStream);
+
+	for (const stream of filledStreams) {
+		if (typeof stream.userId !== "number") continue;
+
+		await linkTwitch(stream.userId, stream.twitch);
+	}
+
+	await LiveStreamRepository.replaceAll(filledStreams);
 }
 
 function fillStream(overrides: StreamOverrides): Stream {

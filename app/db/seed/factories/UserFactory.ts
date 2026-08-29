@@ -187,6 +187,25 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 	};
 }
 
+/** Links the Twitch account to the user, the way logging in with the account
+ * connected on Discord does. */
+export async function linkTwitch(userId: number, twitch: string | null) {
+	const user = await db
+		.selectFrom("User")
+		.select([
+			"discordId",
+			"discordName",
+			"discordAvatar",
+			"discordUniqueName",
+			"youtubeId",
+			"bsky",
+		])
+		.where("id", "=", userId)
+		.executeTakeFirstOrThrow();
+
+	await UserRepository.upsert({ ...user, twitch });
+}
+
 /** Pronouns as the profile page saves them: the subject and object forms as one
  * JSON object, not the `he/him` string they are displayed as. */
 export function fakePronouns() {
