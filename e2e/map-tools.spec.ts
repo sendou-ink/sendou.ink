@@ -1,4 +1,4 @@
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
+import { stageIds, stagesObj } from "~/modules/in-game-lists/stage-ids";
 import { expect, expectNoErrorPage, test } from "./helpers/playwright";
 import { MapListGeneratorPage } from "./pages/maps/map-list-generator-page";
 import { MapPlannerPage } from "./pages/plans/map-planner-page";
@@ -57,5 +57,26 @@ test.describe("Map Planner", () => {
 		await planner.openWeaponCategory("Shooters");
 		await planner.dragWeaponToCanvas("Splattershot");
 		await expect(planner.locators.imageShapes).toHaveCount(2);
+	});
+
+	test("restores the plan and the selected stage after a reload", async ({
+		page,
+	}) => {
+		const planner = new MapPlannerPage(page);
+		await planner.goto();
+
+		await planner.setBackground("Museum d'Alfonsino");
+		await expect(page).toHaveURL(/stage=/);
+
+		await planner.openWeaponCategory("Shooters");
+		await planner.dragWeaponToCanvas("Splattershot");
+		await expect(planner.locators.imageShapes).toHaveCount(2);
+
+		await planner.reloadWithPersistedPlan(2);
+
+		await expect(planner.locators.imageShapes).toHaveCount(2);
+		await expect(planner.locators.stageSelect).toHaveValue(
+			String(stagesObj.MUSEUM_D_ALFONSINO),
+		);
 	});
 });

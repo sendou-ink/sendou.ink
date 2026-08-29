@@ -1,6 +1,10 @@
 import type { Page } from "@playwright/test";
+import { PLANNER_PERSISTENCE_KEY } from "~/features/map-planner/plans-constants";
 import { PLANNER_URL } from "~/utils/urls";
-import { expect, navigate } from "../../helpers/playwright";
+import { expect, expectIsHydrated, navigate } from "../../helpers/playwright";
+
+const TLDRAW_DB_NAME = `TLDRAW_DOCUMENT_v2${PLANNER_PERSISTENCE_KEY}`;
+const TLDRAW_RECORDS_STORE = "records";
 
 export class MapPlannerPage {
 	private readonly page: Page;
@@ -26,6 +30,60 @@ export class MapPlannerPage {
 	async setBackground(stageName: string) {
 		await this.locators.stageSelect.selectOption({ label: stageName });
 		await this.locators.setBackgroundButton.click();
+	}
+
+	/** Reloads once the plan reached IndexedDB, tldraw throttling its writes. */
+	async reloadWithPersistedPlan(expectedImageShapeCount: number) {
+		await expect
+			.poll(
+				() =>
+					this.page.evaluate(
+						({ dbName, storeName }) =>
+							new Promise<number>((resolve) => {
+								const openRequest = indexedDB.open(dbName);
+								openRequest.onerror = () => resolve(0);
+								openRequest.onsuccess = () => {
+									const db = openRequest.result;
+									if (!db.objectStoreNames.contains(storeName)) {
+										db.close();
+										resolve(0);
+										return;
+									}
+
+									const getAllRequest = db
+										.transaction(storeName)
+										.objectStore(storeName)
+										.getAll();
+									getAllRequest.onerror = () => {
+										db.close();
+										resolve(0);
+									};
+									getAllRequest.onsuccess = () => {
+										db.close();
+										resolve(
+											(
+												getAllRequest.result as {
+													typeName?: string;
+													type?: string;
+												}[]
+											).filter(
+												(record) =>
+													record.typeName === "shape" &&
+													record.type === "image",
+											).length,
+										);
+									};
+								};
+							}),
+						{ dbName: TLDRAW_DB_NAME, storeName: TLDRAW_RECORDS_STORE },
+					),
+				{ timeout: 15_000 },
+			)
+			.toBe(expectedImageShapeCount);
+
+		await this.page.reload();
+		await expectIsHydrated(this.page);
+		await expect(this.locators.canvas).toBeVisible();
 	}
 
 	async openWeaponCategory(categoryName: string) {

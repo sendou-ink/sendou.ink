@@ -52,6 +52,10 @@ import {
 	subWeaponIds,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
+import {
+	useSearchParam,
+	useSearchParamsTyped,
+} from "~/modules/search-params/hooks";
 import { logger } from "~/utils/logger";
 import {
 	mainWeaponImageUrl,
@@ -64,6 +68,12 @@ import {
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
 import { Image } from "../../../components/Image";
+import {
+	PLANNER_BACKGROUND_STYLES,
+	PLANNER_PERSISTENCE_KEY,
+	STAGE_WATER_LEVELS,
+} from "../plans-constants";
+import { plansSearchParams } from "../plans-search-params";
 import type { StageWaterLevel } from "../plans-types";
 import styles from "./Planner.module.css";
 
@@ -88,12 +98,21 @@ export default function Planner() {
 	const isWide = i18n.language.startsWith("fr");
 
 	const [editor, setEditor] = React.useState<Editor | null>(null);
-	const [imgOutlined, setImgOutlined] = React.useState(false);
-	const [topCollapsed, setTopCollapsed] = React.useState(false);
-	const [weaponsCollapsed, setWeaponsCollapsed] = React.useState(false);
-	const [rangesVisible, setRangesVisible] = React.useState(false);
-	const [backgroundStyle, setBackgroundStyle] = React.useState<"MINI" | "OVER">(
-		"MINI",
+	const [imgOutlined, setImgOutlined] = useSearchParam(
+		plansSearchParams,
+		"outlined",
+	);
+	const [topCollapsed, setTopCollapsed] = useSearchParam(
+		plansSearchParams,
+		"hideTop",
+	);
+	const [weaponsCollapsed, setWeaponsCollapsed] = useSearchParam(
+		plansSearchParams,
+		"hideWeapons",
+	);
+	const [rangesVisible, setRangesVisible] = useSearchParam(
+		plansSearchParams,
+		"ranges",
 	);
 	const rangeCleanupRef = React.useRef<(() => void) | null>(null);
 	const [activeDragItem, setActiveDragItem] = React.useState<{
@@ -111,6 +130,93 @@ export default function Planner() {
 		}),
 	);
 
+	const showRanges = React.useCallback((editorToUse: Editor) => {
+		const gameUnitsToPx = GAME_UNITS_TO_PX[canvasBackgroundStyle(editorToUse)];
+		removeRangeCircles(editorToUse);
+		for (const shape of editorToUse.getCurrentPageShapes()) {
+			createRangeCircleForShape(editorToUse, shape, gameUnitsToPx);
+		}
+
+		const unsubCreate = editorToUse.sideEffects.registerAfterCreateHandler(
+			"shape",
+			(shape) => {
+				if (shape.meta.isRangeCircle) return;
+				createRangeCircleForShape(editorToUse, shape, gameUnitsToPx);
+			},
+		);
+
+		const unsubChange = editorToUse.sideEffects.registerAfterChangeHandler(
+			"shape",
+			(_prev, next) => {
+				if (next.meta.isRangeCircle) return;
+
+				const rangeCircles = editorToUse
+					.getCurrentPageShapes()
+					.filter(
+						(s) =>
+							s.meta.isRangeCircle === true && s.meta.weaponShapeId === next.id,
+					);
+				if (rangeCircles.length === 0) return;
+
+				const centerX = next.x + (next.props as { w: number }).w / 2;
+				const centerY = next.y + (next.props as { h: number }).h / 2;
+
+				for (const rangeCircle of rangeCircles) {
+					const radiusPx = (rangeCircle.props as { w: number }).w / 2;
+					editorToUse.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						isLocked: false,
+					});
+					editorToUse.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						x: centerX - radiusPx,
+						y: centerY - radiusPx,
+						isLocked: true,
+					});
+				}
+			},
+		);
+
+		const unsubDelete = editorToUse.sideEffects.registerAfterDeleteHandler(
+			"shape",
+			(shape) => {
+				if (shape.meta.isRangeCircle) return;
+
+				const rangeCircles = editorToUse
+					.getCurrentPageShapes()
+					.filter(
+						(s) =>
+							s.meta.isRangeCircle === true &&
+							s.meta.weaponShapeId === shape.id,
+					);
+				if (rangeCircles.length === 0) return;
+
+				for (const rangeCircle of rangeCircles) {
+					editorToUse.updateShape({
+						id: rangeCircle.id,
+						type: rangeCircle.type,
+						isLocked: false,
+					});
+				}
+				editorToUse.deleteShapes(rangeCircles);
+			},
+		);
+
+		rangeCleanupRef.current = () => {
+			unsubCreate();
+			unsubChange();
+			unsubDelete();
+		};
+	}, []);
+
+	const hideRanges = React.useCallback((editorToUse: Editor) => {
+		rangeCleanupRef.current?.();
+		rangeCleanupRef.current = null;
+		removeRangeCircles(editorToUse);
+	}, []);
+
 	const handleMount = React.useCallback(
 		(mountedEditor: Editor) => {
 			setEditor(mountedEditor);
@@ -118,8 +224,20 @@ export default function Planner() {
 				locale: ourLanguageToTldrawLanguage(i18n.language),
 				colorScheme: htmlThemeClass === "dark" ? "dark" : "light",
 			});
+
+			// a restored plan can hold range circles that no side effect handler is watching anymore
+			mountedEditor.run(
+				() => {
+					if (rangesVisible) {
+						showRanges(mountedEditor);
+					} else {
+						removeRangeCircles(mountedEditor);
+					}
+				},
+				{ history: "ignore" },
+			);
 		},
-		[i18n, htmlThemeClass],
+		[i18n, htmlThemeClass, rangesVisible, showRanges],
 	);
 
 	const handleAddImage = React.useCallback(
@@ -128,12 +246,14 @@ export default function Planner() {
 			size,
 			isLocked,
 			point,
+			meta,
 			cb,
 		}: {
 			src: string;
 			size: number[];
 			isLocked: boolean;
 			point: number[];
+			meta?: { backgroundStyle?: "MINI" | "OVER" };
 			cb?: () => void;
 		}) => {
 			if (!editor) return;
@@ -170,6 +290,7 @@ export default function Planner() {
 				y: point[1],
 				isLocked: isLocked,
 				id: shapeId,
+				meta: meta ?? {},
 				props: {
 					assetId: assetId,
 					w: size[0],
@@ -229,92 +350,11 @@ export default function Planner() {
 		if (!editor) return;
 
 		if (rangesVisible) {
-			rangeCleanupRef.current?.();
-			rangeCleanupRef.current = null;
-			removeRangeCircles(editor);
-			setRangesVisible(false);
+			hideRanges(editor);
 		} else {
-			const gameUnitsToPx = GAME_UNITS_TO_PX[backgroundStyle];
-			removeRangeCircles(editor);
-			for (const shape of editor.getCurrentPageShapes()) {
-				createRangeCircleForShape(editor, shape, gameUnitsToPx);
-			}
-
-			const unsubCreate = editor.sideEffects.registerAfterCreateHandler(
-				"shape",
-				(shape) => {
-					if (shape.meta.isRangeCircle) return;
-					createRangeCircleForShape(editor, shape, gameUnitsToPx);
-				},
-			);
-
-			const unsubChange = editor.sideEffects.registerAfterChangeHandler(
-				"shape",
-				(_prev, next) => {
-					if (next.meta.isRangeCircle) return;
-
-					const rangeCircles = editor
-						.getCurrentPageShapes()
-						.filter(
-							(s) =>
-								s.meta.isRangeCircle === true &&
-								s.meta.weaponShapeId === next.id,
-						);
-					if (rangeCircles.length === 0) return;
-
-					const centerX = next.x + (next.props as { w: number }).w / 2;
-					const centerY = next.y + (next.props as { h: number }).h / 2;
-
-					for (const rangeCircle of rangeCircles) {
-						const radiusPx = (rangeCircle.props as { w: number }).w / 2;
-						editor.updateShape({
-							id: rangeCircle.id,
-							type: rangeCircle.type,
-							isLocked: false,
-						});
-						editor.updateShape({
-							id: rangeCircle.id,
-							type: rangeCircle.type,
-							x: centerX - radiusPx,
-							y: centerY - radiusPx,
-							isLocked: true,
-						});
-					}
-				},
-			);
-
-			const unsubDelete = editor.sideEffects.registerAfterDeleteHandler(
-				"shape",
-				(shape) => {
-					if (shape.meta.isRangeCircle) return;
-
-					const rangeCircles = editor
-						.getCurrentPageShapes()
-						.filter(
-							(s) =>
-								s.meta.isRangeCircle === true &&
-								s.meta.weaponShapeId === shape.id,
-						);
-					if (rangeCircles.length === 0) return;
-
-					for (const rangeCircle of rangeCircles) {
-						editor.updateShape({
-							id: rangeCircle.id,
-							type: rangeCircle.type,
-							isLocked: false,
-						});
-					}
-					editor.deleteShapes(rangeCircles);
-				},
-			);
-
-			rangeCleanupRef.current = () => {
-				unsubCreate();
-				unsubChange();
-				unsubDelete();
-			};
-			setRangesVisible(true);
+			showRanges(editor);
 		}
+		setRangesVisible(!rangesVisible);
 	};
 
 	const handleAddBackgroundImage = React.useCallback(
@@ -328,6 +368,9 @@ export default function Planner() {
 
 			editor.mark("pre-background-change");
 
+			hideRanges(editor);
+			setRangesVisible(false);
+
 			const shapes = editor.getCurrentPageShapes();
 			// i dont think locked shapes can be deleted
 			for (const value of shapes) {
@@ -340,15 +383,12 @@ export default function Planner() {
 				size: [BACKGROUND_WIDTH, BACKGROUND_HEIGHT],
 				isLocked: true,
 				point: [0, 0],
+				meta: { backgroundStyle: urlArgs.style },
 			});
 
 			editor.zoomToFit();
-			rangeCleanupRef.current?.();
-			rangeCleanupRef.current = null;
-			setRangesVisible(false);
-			setBackgroundStyle(urlArgs.style);
 		},
-		[editor, handleAddImage],
+		[editor, handleAddImage, hideRanges, setRangesVisible],
 	);
 
 	// removes all tldraw ui that isnt needed
@@ -436,6 +476,7 @@ export default function Planner() {
 			</div>
 			<div style={{ position: "fixed", inset: 0 }}>
 				<Tldraw
+					persistenceKey={PLANNER_PERSISTENCE_KEY}
 					onMount={handleMount}
 					components={tldrawComponents}
 					options={TLDRAW_OPTIONS}
@@ -685,18 +726,16 @@ function StageBackgroundSelector({
 	}) => void;
 }) {
 	const { t } = useTranslation(["game-misc", "common"]);
-	const [stageId, setStageId] = React.useState<StageId>(stageIds[0]);
-	const [mode, setMode] = React.useState<ModeShort>("SZ");
-	const [backgroundStyle, setBackgroundStyle] = React.useState<"MINI" | "OVER">(
-		"MINI",
-	);
-	const [waterLevel, setWaterLevel] = React.useState<StageWaterLevel>("up");
+	const [
+		{ stage: stageId, mode, style: backgroundStyle, water: waterLevel },
+		setParams,
+	] = useSearchParamsTyped(plansSearchParams);
 
 	const handleStageIdChange = (stageId: StageId) => {
-		setStageId(stageId);
-		if (stageId !== stagesObj.MAHI_MAHI_RESORT) {
-			setWaterLevel("up");
-		}
+		setParams({
+			stage: stageId,
+			water: stageId === stagesObj.MAHI_MAHI_RESORT ? waterLevel : "up",
+		});
 	};
 
 	return (
@@ -720,7 +759,7 @@ function StageBackgroundSelector({
 			<select
 				className="w-max"
 				value={mode}
-				onChange={(e) => setMode(e.target.value as ModeShort)}
+				onChange={(e) => setParams({ mode: e.target.value as ModeShort })}
 			>
 				{modesShort.map((mode) => {
 					return (
@@ -733,9 +772,11 @@ function StageBackgroundSelector({
 			<select
 				className="w-max"
 				value={backgroundStyle}
-				onChange={(e) => setBackgroundStyle(e.target.value as "MINI" | "OVER")}
+				onChange={(e) =>
+					setParams({ style: e.target.value as "MINI" | "OVER" })
+				}
 			>
-				{(["MINI", "OVER"] as const).map((style) => {
+				{PLANNER_BACKGROUND_STYLES.map((style) => {
 					return (
 						<option key={style} value={style}>
 							{t(`common:plans.bgStyle.${style}`)}
@@ -747,9 +788,11 @@ function StageBackgroundSelector({
 				<select
 					className="w-max"
 					value={waterLevel}
-					onChange={(e) => setWaterLevel(e.target.value as StageWaterLevel)}
+					onChange={(e) =>
+						setParams({ water: e.target.value as StageWaterLevel })
+					}
 				>
-					{(["up", "down"] as const).map((level) => {
+					{STAGE_WATER_LEVELS.map((level) => {
 						return (
 							<option key={level} value={level}>
 								{t(`common:plans.waterLevel.${level}`)}
@@ -919,6 +962,15 @@ function createCircle(
 		},
 		meta: { isRangeCircle: true, weaponShapeId },
 	});
+}
+
+function canvasBackgroundStyle(editor: Editor): "MINI" | "OVER" {
+	for (const shape of editor.getCurrentPageShapes()) {
+		const style = shape.meta.backgroundStyle;
+		if (style === "MINI" || style === "OVER") return style;
+	}
+
+	return "MINI";
 }
 
 function removeRangeCircles(editor: Editor) {
