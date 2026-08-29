@@ -5,6 +5,8 @@ import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import invariant from "~/utils/invariant";
 import { getBracketProgressionLabel } from "../tournament-utils";
 
+const MATCH_SIDES = ["opponent1", "opponent2"] as const;
+
 export type TournamentStandingsResult =
 	| { type: "single"; standings: Standing[] }
 	| {
@@ -52,87 +54,98 @@ export function reNumberPlacements<T extends { placement: number }>(
 	});
 }
 
-/** Calculates SPR (Seed Performance Rating) - see https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf */
-export function calculateSPR({
-	standings,
-	teamId,
-}: {
-	standings: Standing[];
-	teamId: number;
-}) {
-	const uniquePlacements = R.unique(
-		standings.map((standing) => standing.placement),
-	).sort((a, b) => a - b);
-
-	const teamStanding = standings.find(
-		(standing) => standing.team.id === teamId,
+/**
+ * SPR (Seed Performance Rating) of every team in the standings, keyed by tournament team id.
+ * See https://web.archive.org/web/20250513034545/https://www.pgstats.com/articles/introducing-spr-and-uf
+ */
+export function sprByTeamId(standings: Standing[]): Map<number, number> {
+	const indexByPlacement = new Map(
+		R.unique(standings.map((standing) => standing.placement))
+			.sort((a, b) => a - b)
+			.map((placement, index) => [placement, index]),
 	);
-	// defensive check to avoid crashing
-	if (!teamStanding) {
-		return 0;
+
+	const result = new Map<number, number>();
+
+	for (const standing of standings) {
+		const expectedPlacement =
+			standings[(standing.team.seed ?? 0) - 1]?.placement;
+		const expectedIndex = expectedPlacement
+			? indexByPlacement.get(expectedPlacement)
+			: undefined;
+		const actualIndex = indexByPlacement.get(standing.placement);
+
+		// defensive check to avoid crashing
+		if (typeof expectedIndex !== "number" || typeof actualIndex !== "number") {
+			result.set(standing.team.id, 0);
+			continue;
+		}
+
+		result.set(standing.team.id, expectedIndex - actualIndex);
 	}
 
-	const expectedPlacement =
-		standings[(teamStanding.team.seed ?? 0) - 1]?.placement;
-	// defensive check to avoid crashing
-	if (!expectedPlacement) {
-		return 0;
-	}
-
-	const teamPlacement = teamStanding.placement;
-	const actualIndex = uniquePlacements.indexOf(teamPlacement);
-	const expectedIndex = uniquePlacements.indexOf(expectedPlacement);
-
-	return expectedIndex - actualIndex;
+	return result;
 }
 
-/** Every match the team played, in the order they were played in */
-export function matchesPlayed({
-	tournament,
-	teamId,
-}: {
-	tournament: Tournament;
-	teamId: number;
-}) {
+export type MatchPlayed = {
+	id: number;
+	vsSeed: number;
+	result: "win" | "loss";
+	bracketIdx: number;
+};
+
+/**
+ * Every match each team played, in the order they were played in, keyed by tournament team id.
+ * Teams that played no match are absent from the map.
+ */
+export function matchesPlayedByTeamId(
+	tournament: Tournament,
+): Map<number, MatchPlayed[]> {
 	const bracketsInPlayedOrder = R.sortBy(
 		tournament.brackets,
 		(bracket) => bracket.createdAt ?? Number.POSITIVE_INFINITY,
 		(bracket) => bracket.idx,
 	);
 
-	const matches = bracketsInPlayedOrder.flatMap((bracket) =>
-		bracket.data.match
-			.filter(
-				(match) =>
-					match.opponent1 &&
-					match.opponent2 &&
-					(match.opponent1?.id === teamId || match.opponent2?.id === teamId) &&
-					match.winnerSide,
-			)
-			.map((match) => ({
-				...match,
-				bracketIdx: bracket.idx,
-			})),
-	);
+	const seeds = new Map<number, number>();
+	const seedOf = (teamId: number) => {
+		const cached = seeds.get(teamId);
+		if (typeof cached === "number") return cached;
 
-	return matches.map((match) => {
-		const opponentId = (
-			match.opponent1?.id === teamId ? match.opponent2?.id : match.opponent1?.id
-		)!;
-		const team = tournament.teamById(opponentId);
+		// defensive fallback
+		const seed = tournament.teamById(teamId)?.seed ?? 0;
+		seeds.set(teamId, seed);
 
-		const teamSide = match.opponent1?.id === teamId ? "opponent1" : "opponent2";
-		const result: "win" | "loss" =
-			match.winnerSide === teamSide ? "win" : "loss";
+		return seed;
+	};
 
-		return {
-			id: match.id,
-			// defensive fallback
-			vsSeed: team?.seed ?? 0,
-			result,
-			bracketIdx: match.bracketIdx,
-		};
-	});
+	const result = new Map<number, MatchPlayed[]>();
+
+	for (const bracket of bracketsInPlayedOrder) {
+		for (const match of bracket.data.match) {
+			if (!match.winnerSide) continue;
+
+			for (const side of MATCH_SIDES) {
+				const teamId = match[side]?.id;
+				const opponentId =
+					match[side === "opponent1" ? "opponent2" : "opponent1"]?.id;
+				if (typeof teamId !== "number" || typeof opponentId !== "number") {
+					continue;
+				}
+
+				const played = result.get(teamId) ?? [];
+				played.push({
+					id: match.id,
+					vsSeed: seedOf(opponentId),
+					result: match.winnerSide === side ? "win" : "loss",
+					bracketIdx: bracket.idx,
+				});
+				result.set(teamId, played);
+			}
+		}
+	}
+
+	return result;
 }
 
 type PersistedResultRow = {

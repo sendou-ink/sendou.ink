@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { Standing } from "~/features/tournament-bracket/core/Bracket";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import { createResolved } from "~/features/tournament-bracket/core/engine/create";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
@@ -10,8 +11,9 @@ import {
 } from "~/features/tournament-bracket/core/tests/test-utils";
 import invariant from "~/utils/invariant";
 import {
-	matchesPlayed,
+	matchesPlayedByTeamId,
 	reNumberPlacements,
+	sprByTeamId,
 	tournamentStandings,
 } from "./Standings";
 
@@ -230,11 +232,67 @@ describe("reNumberPlacements", () => {
 	});
 });
 
-describe("matchesPlayed", () => {
+describe("sprByTeamId", () => {
+	test("gives every team an SPR of 0 when they all place exactly as seeded", () => {
+		const result = sprByTeamId(
+			standings([
+				{ id: 1, seed: 1, placement: 1 },
+				{ id: 2, seed: 2, placement: 2 },
+				{ id: 3, seed: 3, placement: 3 },
+				{ id: 4, seed: 4, placement: 4 },
+			]),
+		);
+
+		expect([...result.values()]).toEqual([0, 0, 0, 0]);
+	});
+
+	test("rewards a team for every placement it beat its seed by", () => {
+		const result = sprByTeamId(
+			standings([
+				{ id: 4, seed: 4, placement: 1 },
+				{ id: 1, seed: 1, placement: 2 },
+				{ id: 2, seed: 2, placement: 3 },
+				{ id: 3, seed: 3, placement: 4 },
+			]),
+		);
+
+		expect(result.get(4)).toBe(3);
+		expect(result.get(1)).toBe(-1);
+		expect(result.get(2)).toBe(-1);
+		expect(result.get(3)).toBe(-1);
+	});
+
+	test("counts tied placements as one step", () => {
+		const result = sprByTeamId(
+			standings([
+				{ id: 3, seed: 3, placement: 1 },
+				{ id: 1, seed: 1, placement: 2 },
+				{ id: 2, seed: 2, placement: 3 },
+				{ id: 4, seed: 4, placement: 3 },
+			]),
+		);
+
+		expect(result.get(3)).toBe(2);
+		expect(result.get(4)).toBe(0);
+	});
+
+	test("returns 0 for a team whose seed is outside the standings", () => {
+		const result = sprByTeamId(
+			standings([
+				{ id: 1, seed: 1, placement: 1 },
+				{ id: 2, seed: 9, placement: 2 },
+			]),
+		);
+
+		expect(result.get(2)).toBe(0);
+	});
+});
+
+describe("matchesPlayedByTeamId", () => {
 	test("tags each match with the bracket index it was actually played in", () => {
 		const tournament = roundRobinToSingleEliminationTournament();
 
-		const matches = matchesPlayed({ tournament, teamId: 1 });
+		const matches = matchesPlayedByTeamId(tournament).get(1) ?? [];
 
 		// team 1 plays 3 round robin matches (bracket idx 0)
 		// and 1 single elimination match (bracket idx 1)
@@ -248,7 +306,7 @@ describe("matchesPlayed", () => {
 	test("includes matches of brackets that are not part of the standings, in the order they were played", () => {
 		const tournament = roundRobinWithRedemptionTournament();
 
-		const matches = matchesPlayed({ tournament, teamId: 4 });
+		const matches = matchesPlayedByTeamId(tournament).get(4) ?? [];
 
 		// 3 round robin matches, the redemption bracket match and the final stage match
 		expect(matches.map((match) => match.bracketIdx)).toEqual([0, 0, 0, 2, 1]);
@@ -620,4 +678,13 @@ function playOut(
 	}
 
 	return played;
+}
+
+function standings(
+	teams: Array<{ id: number; seed: number; placement: number }>,
+): Standing[] {
+	return teams.map(({ id, seed, placement }) => ({
+		team: tournamentCtxTeam(id, { seed }),
+		placement,
+	}));
 }

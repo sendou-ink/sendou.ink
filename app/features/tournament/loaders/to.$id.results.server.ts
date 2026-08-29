@@ -28,20 +28,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		]),
 	);
 
-	const toRow = (standings: Standing[]) => (standing: Standing) => ({
-		placement: standing.placement,
-		spr: Standings.calculateSPR({ standings, teamId: standing.team.id }),
-		team: {
-			id: standing.team.id,
-			name: standing.team.name,
-			seed: standing.team.seed,
-			logoUrl: standing.team.logoUrl,
-		},
-		roster: (rosterByTeamId.get(standing.team.id) ?? []).filter((member) =>
-			standing.team.memberUserIds.includes(member.userId),
-		),
-		matches: Standings.matchesPlayed({ tournament, teamId: standing.team.id }),
-	});
+	const matchesByTeamId = Standings.matchesPlayedByTeamId(tournament);
+
+	const toRows = (standings: Standing[]) => {
+		const sprByTeamId = Standings.sprByTeamId(standings);
+
+		return standings.map((standing) => ({
+			placement: standing.placement,
+			spr: sprByTeamId.get(standing.team.id) ?? 0,
+			team: {
+				id: standing.team.id,
+				name: standing.team.name,
+				seed: standing.team.seed,
+				logoUrl: standing.team.logoUrl,
+			},
+			roster: (rosterByTeamId.get(standing.team.id) ?? []).filter((member) =>
+				standing.team.memberUserIds.includes(member.userId),
+			),
+			matches: matchesByTeamId.get(standing.team.id) ?? [],
+		}));
+	};
 
 	const persistedStandings = tournament.ctx.isFinalized
 		? Standings.standingsFromPersistedResults({
@@ -58,13 +64,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			result.type === "single"
 				? {
 						type: "single" as const,
-						standings: result.standings.map(toRow(result.standings)),
+						standings: toRows(result.standings),
 					}
 				: {
 						type: "multi" as const,
 						standings: result.standings.map(({ div, standings }) => ({
 							div,
-							standings: standings.map(toRow(standings)),
+							standings: toRows(standings),
 						})),
 					},
 	};
