@@ -25,6 +25,7 @@ import { MobileNav } from "./pages/layout/mobile-nav";
 import { SideNav } from "./pages/layout/side-nav";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
 import { SendouQMatchPage } from "./pages/sendouq/sendouq-match-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
 
 test.describe("Chat", () => {
@@ -380,6 +381,56 @@ test.describe("Chat", () => {
 			await expect(participantChat.chat().authorLabel("TO")).toBeVisible();
 		} finally {
 			await organizer.close();
+		}
+	});
+
+	test("An observer coming back to a match chat sees what was said while they were away", async ({
+		page,
+		browser,
+		workerBaseURL,
+		factories,
+	}) => {
+		const { tournament, matchId } = await createInProgressMatch(factories, {
+			name: "Chat Cup",
+			friendId: NZAP_TEST_ID,
+		});
+
+		const participant = await openSecondUser(
+			browser,
+			workerBaseURL,
+			NZAP_TEST_ID,
+		);
+		try {
+			await new TournamentMatchPage(participant.page).goto({
+				tournamentId: tournament.id,
+				matchId,
+			});
+			const participantChat = new ChatSidebar(participant.page).chat();
+
+			// the tournament's author, and so an observer of the match chat
+			await impersonate(page);
+			const brackets = new TournamentBracketsPage(page);
+			await brackets.goto(tournament.id);
+
+			const matchPage = await brackets.openMatch(matchId);
+			const chat = new ChatSidebar(page);
+
+			await expect(chat.locators.openChats).toHaveCount(1);
+
+			// an observer is only pushed the room's messages while on the page that
+			// surfaced it, so what is said from here on never reaches their history
+			await matchPage.backToBracket();
+
+			await participantChat.send("said while you were on the bracket");
+			await expect(participantChat.locators.pendingMessages).toHaveCount(0);
+
+			await brackets.openMatch(matchId);
+
+			await expect(
+				chat.chat().message("said while you were on the bracket"),
+			).toBeVisible();
+		} finally {
+			await participant.close();
 		}
 	});
 

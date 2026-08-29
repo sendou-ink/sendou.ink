@@ -67,7 +67,7 @@ export interface ChatClient {
 	refreshRooms: () => Promise<void>;
 	/** Fetches a room's info as an observed room when the user's own room list does not carry it (observer access via a route's `chatRooms`). */
 	ensureRoomKnown: (roomId: number) => void;
-	/** Fetches the room's history unless it is already loaded or loading. */
+	/** Fetches the room's history unless it is already loaded or loading. An observed room's held history is refetched instead of trusted: messages only reach an observer while the route surfacing the room keeps its subscription. */
 	ensureMessagesLoaded: (roomId: number) => void;
 	/** Reconnect catch-up: refetches the room list and every loaded history. */
 	catchUp: () => void;
@@ -455,7 +455,8 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			void loadObservedRoom(roomId);
 		},
 		ensureMessagesLoaded: (roomId) => {
-			if (messagesByRoomId.has(roomId)) return;
+			const canHaveMissedMessages = roomById(roomId)?.observed ?? false;
+			if (messagesByRoomId.has(roomId) && !canHaveMissedMessages) return;
 			void loadMessages(roomId);
 		},
 		catchUp: () => {

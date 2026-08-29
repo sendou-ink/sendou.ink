@@ -590,6 +590,32 @@ describe("createChatClient", () => {
 		expect(client.getSnapshot().messagesByRoomId.has(50)).toBe(true);
 	});
 
+	test("reopening an observed room refetches its history", async () => {
+		const observed = room({ id: 50 });
+		const harness = createHarness({
+			observedRoom: observed,
+			messages: [message({ id: 1, roomId: 50 })],
+		});
+		const client = await startedClient(harness);
+		client.ensureRoomKnown(50);
+		await flush();
+		client.ensureMessagesLoaded(50);
+		await flush();
+
+		harness.fetchMessages.mockResolvedValue({
+			messages: [
+				message({ id: 1, roomId: 50 }),
+				message({ id: 2, roomId: 50 }),
+			],
+		});
+		client.ensureMessagesLoaded(50);
+		await flush();
+
+		// nothing was pushed to the observer while the room's page was not open
+		expect(harness.fetchMessages).toHaveBeenCalledTimes(2);
+		expect(client.getSnapshot().messagesByRoomId.get(50)).toHaveLength(2);
+	});
+
 	test("an observed room the user's list later carries is superseded by the list version", async () => {
 		const observed = room({ id: 50 });
 		const harness = createHarness({ observedRoom: observed });
