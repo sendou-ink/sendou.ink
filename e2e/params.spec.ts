@@ -30,7 +30,7 @@ test.describe("Weapon parameters", () => {
 		await expect(page).toHaveURL(/hidden=\d/);
 
 		// Refresh keeps the hidden selection
-		await page.reload();
+		await weaponParams.reload();
 		await expect(page).toHaveURL(/hidden=\d/);
 		await expect(showAllWeaponsButton).toBeVisible();
 		await expect(weaponHeaders).toHaveCount(initialColumnCount - 1);
@@ -84,7 +84,7 @@ test.describe("Weapon parameters", () => {
 		await expect(page).toHaveURL(/tab=patches/);
 
 		// Refresh keeps the selected tab
-		await page.reload();
+		await weaponParams.reload();
 		await expect(page).toHaveURL(/tab=patches/);
 		await expect(patchHistoryTab).toHaveAttribute("aria-selected", "true");
 
@@ -96,7 +96,7 @@ test.describe("Weapon parameters", () => {
 		await weaponParams.toggleSubAndSpecialChanges();
 		await expect(page).toHaveURL(/kitExtras=false/);
 
-		await page.reload();
+		await weaponParams.reload();
 		await expect(page).toHaveURL(/kitExtras=false/);
 		await expect(subAndSpecialChangesSwitch).not.toBeChecked();
 	});

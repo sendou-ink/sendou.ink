@@ -1,6 +1,6 @@
 import type { Locator, Page } from "@playwright/test";
 import { weaponParamsPage } from "~/utils/urls";
-import { navigate } from "../../helpers/playwright";
+import { expectIsHydrated, navigate } from "../../helpers/playwright";
 
 export class WeaponParamsPage {
 	private readonly page: Page;
@@ -28,6 +28,12 @@ export class WeaponParamsPage {
 
 	async goto(weaponSlug: string) {
 		await navigate({ page: this.page, url: weaponParamsPage(weaponSlug) });
+	}
+
+	/** The table's filters and tab live in the url, so a reload restores them. */
+	async reload() {
+		await this.page.reload();
+		await expectIsHydrated(this.page);
 	}
 
 	historyRow(nth: number) {
