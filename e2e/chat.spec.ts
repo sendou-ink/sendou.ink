@@ -7,6 +7,7 @@ import {
 	chatHistoryStatus,
 	fetchChatRooms,
 	openSecondUser,
+	slowMessageSends,
 } from "./helpers/chat";
 import type { Factories } from "./helpers/factories";
 import {
@@ -57,6 +58,37 @@ test.describe("Chat", () => {
 		} finally {
 			await other.close();
 		}
+	});
+
+	test("Sends still in flight when the next one is fired all land", async ({
+		page,
+		factories,
+	}) => {
+		const { match, alpha } = await createMatch(factories);
+
+		await impersonate(page, alpha[0].id);
+		await new SendouQMatchPage(page).goto(match.id);
+		// long enough that every send below is still unacknowledged when the next fires
+		await slowMessageSends(page, 1000);
+
+		const chat = new ChatSidebar(page).chat();
+		const sent = ["msg-one", "msg-two", "msg-three"];
+
+		for (const contents of sent) {
+			await chat.send(contents);
+		}
+
+		await expect(chat.locators.pendingMessages).toHaveCount(0);
+		await expect(chat.locators.messages).toHaveCount(sent.length);
+		for (const contents of sent) {
+			await expect(chat.message(contents)).toBeVisible();
+		}
+		await expect(page.getByText("Error happened")).toHaveCount(0);
+
+		// the list still takes a send, rather than being wedged by the earlier ones
+		await chat.send("msg-four");
+
+		await expect(chat.message("msg-four")).toBeVisible();
 	});
 
 	test("Split view: a participant gets the match and their own group chat, never the opponent's", async ({

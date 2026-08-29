@@ -120,13 +120,22 @@ export function Chat({
 						)}
 					>
 						{(msg) => {
+							// react-aria keys the row by the rendered element's own `id`, and
+							// every pending send shares `message.id`
 							const systemMessage = systemMessageText(msg);
 							if (systemMessage) {
-								return <SystemMessage message={msg} text={systemMessage} />;
+								return (
+									<SystemMessage
+										id={msg.publicId}
+										message={msg}
+										text={systemMessage}
+									/>
+								);
 							}
 
 							return (
 								<Message
+									id={msg.publicId}
 									message={msg}
 									label={
 										msg.authorUserId != null
@@ -251,9 +260,11 @@ function ComposerRow({
 }
 
 function Message({
+	id,
 	message,
 	label,
 }: {
+	id: string;
 	message: ClientChatMessage;
 	label?: string;
 }) {
@@ -261,7 +272,7 @@ function Message({
 
 	return (
 		<ListBoxItem
-			id={message.publicId}
+			id={id}
 			className={styles.message}
 			textValue={message.contents ?? author?.username ?? "???"}
 		>
@@ -317,18 +328,16 @@ function PronounsTag({ author }: { author: ChatMessageAuthor | null }) {
 }
 
 function SystemMessage({
+	id,
 	message,
 	text,
 }: {
+	id: string;
 	message: ClientChatMessage;
 	text: string;
 }) {
 	return (
-		<ListBoxItem
-			id={message.publicId}
-			className={styles.message}
-			textValue={text}
-		>
+		<ListBoxItem id={id} className={styles.message} textValue={text}>
 			<div>
 				<div className="stack horizontal sm">
 					<MessageTimestamp createdAt={message.createdAt} />

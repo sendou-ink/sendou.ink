@@ -44,3 +44,12 @@ export async function chatHistoryStatus(page: Page, roomId: number) {
 
 	return response.status();
 }
+
+/** Holds every chat message POST back for `ms`, the way a slow connection does. */
+export async function slowMessageSends(page: Page, ms: number) {
+	await page.route(`${CHAT_ROOMS_DATA_ROUTE}/*/messages`, async (route) => {
+		if (route.request().method() !== "POST") return route.fallback();
+		await new Promise((resolve) => setTimeout(resolve, ms));
+		await route.continue();
+	});
+}
