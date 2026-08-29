@@ -29,3 +29,19 @@
 	gap: var(--s-2);
 	margin-block-end: var(--s-2);
 }
+
+.friendRow {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	align-items: end;
+	gap: var(--s-1-5);
+}
+
+.scheduleSlot {
+	display: flex;
+	width: 18px;
+	margin-block-end: var(--s-1);
+	& > button {
+		height: auto;
+	}
+}

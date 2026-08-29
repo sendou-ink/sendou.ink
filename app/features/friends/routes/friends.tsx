@@ -1,11 +1,14 @@
+import { CalendarDays } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
+import { SendouButton } from "~/components/elements/Button";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
+import { ScheduleWeekDialog } from "~/features/availability/components/ScheduleWeekDialog";
 import { SendouForm } from "~/form/SendouForm";
 import { markFriendRequestsSeen } from "~/hooks/useUnseenFriendRequests";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -39,7 +42,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["friends"],
+	i18n: ["friends", "schedule"],
 };
 
 export default function FriendsPage() {
@@ -221,7 +224,7 @@ function FriendsListSection() {
 				) : (
 					<div className="stack xs">
 						{shownItems.map((item) => (
-							<FriendMenu key={item.id} name={item.username} {...item} />
+							<FriendRow key={item.id} item={item} />
 						))}
 					</div>
 				)}
@@ -229,6 +232,58 @@ function FriendsListSection() {
 		</section>
 	);
 }
+
+function FriendRow({ item }: { item: ShownItem }) {
+	return (
+		<div className={styles.friendRow} data-testid={`friend-row-${item.id}`}>
+			<FriendMenu name={item.username} {...item} />
+			<div className={styles.scheduleSlot}>
+				{item.schedule ? (
+					<ScheduleButton
+						userId={item.id}
+						username={item.username}
+						weeks={item.schedule}
+					/>
+				) : null}
+			</div>
+		</div>
+	);
+}
+
+function ScheduleButton({
+	userId,
+	username,
+	weeks,
+}: {
+	userId: number;
+	username: string;
+	weeks: NonNullable<ShownItem["schedule"]>;
+}) {
+	const { t } = useTranslation(["schedule"]);
+	const [dialogOpen, setDialogOpen] = React.useState(false);
+
+	return (
+		<>
+			<SendouButton
+				variant="minimal"
+				size="small"
+				icon={<CalendarDays size={18} />}
+				aria-label={t("schedule:friends.availabilityOf", { name: username })}
+				testId={`friend-schedule-button-${userId}`}
+				onPress={() => setDialogOpen(true)}
+			/>
+			{dialogOpen ? (
+				<ScheduleWeekDialog
+					username={username}
+					weeks={weeks}
+					onClose={() => setDialogOpen(false)}
+				/>
+			) : null}
+		</>
+	);
+}
+
+type ShownItem = ReturnType<typeof resolveShownItems>[number];
 
 function resolveShownItems(
 	filter: ViewFilter,
@@ -243,9 +298,10 @@ function resolveShownItems(
 		...data.teamMembers.filter((tm) => !friendIds.has(tm.id)),
 	];
 
-	return combined.sort((a, b) => {
-		const aActive = a.subtitle ? 1 : 0;
-		const bActive = b.subtitle ? 1 : 0;
-		return bActive - aActive;
-	});
+	// same order the loader sorted each group in: active first, then the ones
+	// who shared a schedule
+	const sortValue = (item: (typeof combined)[number]) =>
+		(item.subtitle ? 2 : 0) + (item.schedule ? 1 : 0);
+
+	return combined.sort((a, b) => sortValue(b) - sortValue(a));
 }

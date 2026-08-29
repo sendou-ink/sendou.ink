@@ -32,6 +32,7 @@ import {
 	teamScheduleActionSchema,
 } from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
+import { ScheduleDayCell } from "../components/ScheduleDayCell";
 import type { TeamScheduleLoaderData } from "../loaders/t.$customUrl.schedule.server";
 import { loader } from "../loaders/t.$customUrl.schedule.server";
 
@@ -176,11 +177,7 @@ function ScheduleGrid({ week }: { week: WeekData }) {
 					{playerRows.map(renderRow)}
 					{otherRows.length > 0 ? (
 						<tr>
-							<th
-								scope="colgroup"
-								colSpan={8}
-								className={styles.sectionDivider}
-							>
+							<th scope="colgroup" colSpan={8}>
 								{t("team:roster.sections.other")}
 							</th>
 						</tr>
@@ -201,75 +198,16 @@ function ScheduleCell({
 	day: MemberWeekRow["days"][number];
 	dayIndex: number;
 }) {
-	const { t } = useTranslation(["schedule"]);
-	const { formatter: timeFormatter } = useDateTimeFormat({
-		hour: "numeric",
-		minute: "2-digit",
-	});
-
 	const note = row.notes.find((note) => note.dayIndex === dayIndex);
 
-	// formatRange expands to full dates when the ends fall on different
-	// calendar days, so a range crossing (or ending exactly at) midnight
-	// formats its ends separately to stay times-only
-	const rangeText = (range: { startsAt: number; endsAt: number }) =>
-		isSameDay(
-			databaseTimestampToDate(range.startsAt),
-			databaseTimestampToDate(range.endsAt),
-		)
-			? timeFormatter.formatRange(range.startsAt, range.endsAt)
-			: `${timeFormatter.format(range.startsAt)} – ${timeFormatter.format(range.endsAt)}`;
-
-	const busyName = (block: MemberWeekRow["days"][number]["busy"][number]) =>
-		block.name ?? t("schedule:commitment.scrim");
-
 	return (
-		<td
-			className={styles.cell}
-			data-testid={`schedule-cell-${row.userId}-${dayIndex}`}
-		>
-			<div className={styles.cellContent}>
-				{!row.reported ? (
-					<span
-						className={styles.unknown}
-						title={t("schedule:team.noSchedule")}
-					>
-						?
-					</span>
-				) : day.ranges.length === 0 && day.busy.length === 0 ? (
-					<span
-						className={styles.unavailable}
-						title={t("schedule:team.notAvailable")}
-					>
-						—
-					</span>
-				) : (
-					day.ranges.map((range) => (
-						<div
-							key={range.startsAt}
-							className={styles.range}
-							data-testid="schedule-range"
-						>
-							{rangeText(range)}
-						</div>
-					))
-				)}
-				{day.busy.map((block) => (
-					<div
-						key={block.startsAt}
-						className={styles.busy}
-						title={`${rangeText(block)} · ${busyName(block)}`}
-						data-testid="schedule-busy"
-					>
-						<span className={styles.busyName}>{busyName(block)}</span>
-					</div>
-				))}
-				{note ? (
-					<span title={note.text}>
-						<Flag className={styles.noteFlag} size={12} aria-hidden />
-					</span>
-				) : null}
-			</div>
+		<td data-testid={`schedule-cell-${row.userId}-${dayIndex}`}>
+			<ScheduleDayCell
+				reported={row.reported}
+				ranges={day.ranges}
+				busy={day.busy}
+				note={note?.text}
+			/>
 		</td>
 	);
 }

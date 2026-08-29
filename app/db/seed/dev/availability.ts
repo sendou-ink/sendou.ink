@@ -188,7 +188,9 @@ export async function seedAvailability({
 			],
 			fillsNextWeek: true,
 		},
-		...misc.adminFriendIds.map((userId, index) => ({
+		// the last of the admin's friends reports nothing, so the friends page has
+		// a row with no schedule to sort below the ones that have one
+		...misc.adminFriendIds.slice(0, -1).map((userId, index) => ({
 			userId,
 			timezone: "Europe/Helsinki",
 			weekly: EVENINGS,

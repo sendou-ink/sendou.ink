@@ -22,6 +22,13 @@ export class FriendsPage {
 			acceptButton: this.page.getByRole("button", { name: "Accept" }),
 			cancelRequestButton: this.page.getByRole("button", { name: "Cancel" }),
 			noFriendsText: this.page.getByText("No friends yet"),
+			scheduleDays: this.page.getByTestId("schedule-week-days"),
+			scheduleRanges: this.page.getByTestId("schedule-range"),
+			noScheduleText: this.page.getByTestId("schedule-no-week"),
+			// the chip radio input is visually hidden, so the label is what clicks
+			nextWeekToggle: this.page.locator(
+				'label[for="chip-radio-friend-schedule-week-next"]',
+			),
 		};
 	}
 
@@ -51,6 +58,19 @@ export class FriendsPage {
 
 	friend(name: string) {
 		return new FriendMenu(this.page, name);
+	}
+
+	row(userId: number) {
+		return this.page.getByTestId(`friend-row-${userId}`);
+	}
+
+	scheduleButton(userId: number) {
+		return this.page.getByTestId(`friend-schedule-button-${userId}`);
+	}
+
+	/** One day row of the open week modal, Monday being 0. */
+	day(dayIndex: number) {
+		return this.locators.scheduleDays.getByRole("listitem").nth(dayIndex);
 	}
 }
 

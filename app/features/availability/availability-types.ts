@@ -102,3 +102,17 @@ export interface WindowSchedule {
 	/** Their commitments overlapping the window. */
 	busy: Array<BusyBlock>;
 }
+
+/**
+ * One person's week as the read-only week views render it: the seven days in
+ * the viewer's timezone with the time they are effectively free to play. What
+ * a commitment takes back is already cut out — the view answers "when can they
+ * play", not "what are they doing".
+ */
+export interface ScheduleWeekView {
+	week: "current" | "next";
+	weekNumber: number;
+	/** Whether they filled the week in at all. */
+	reported: boolean;
+	days: Array<{ noonAt: number; ranges: Array<TimeRange> }>;
+}

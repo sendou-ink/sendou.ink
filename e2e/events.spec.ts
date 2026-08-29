@@ -97,7 +97,7 @@ test.describe("My schedule", () => {
 		await expect(page).toHaveURL(/\/events/);
 
 		await events.locators.saveWeekButton.click();
-		await expect(page.getByText("Schedule saved")).toBeAttached();
+		await expect(page.getByText("Availability saved")).toBeAttached();
 
 		await events.goto();
 		await expect(events.locators.availabilityBars).toHaveCount(1);
@@ -112,7 +112,7 @@ test.describe("My schedule", () => {
 		await isNotVisible(events.locators.dayEditorPopover);
 		await isNotVisible(events.locators.availabilityBars);
 		await events.locators.saveWeekButton.click();
-		await expect(page.getByText("Schedule saved")).toBeAttached();
+		await expect(page.getByText("Availability saved")).toBeAttached();
 
 		// an empty submitted week is "unavailable all week", not missing
 		await events.goto();
@@ -201,6 +201,6 @@ test.describe("My schedule", () => {
 		await expect(events.locators.availabilityBars).toHaveCount(1);
 
 		await events.locators.saveWeekButton.click();
-		await expect(page.getByText("Schedule saved")).toBeAttached();
+		await expect(page.getByText("Availability saved")).toBeAttached();
 	});
 });

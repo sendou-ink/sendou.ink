@@ -19,8 +19,7 @@ import type {
 } from "../availability-types";
 import * as Availability from "../core/Availability";
 import * as Commitments from "../core/Commitments.server";
-
-const DAY_SECONDS = 24 * 60 * 60;
+import * as ScheduleWeek from "../core/ScheduleWeek";
 
 export type TeamScheduleLoaderData = SerializeFrom<typeof loader>;
 
@@ -93,10 +92,6 @@ type TeamEventRow = Awaited<
 	ReturnType<typeof AvailabilityRepository.findTeamEventsByTeamId>
 >[number];
 
-type ReportedWeek = Awaited<
-	ReturnType<typeof AvailabilityRepository.findAllWeeksByUserIds>
->[number];
-
 function weekView({
 	range,
 	timezone,
@@ -110,7 +105,7 @@ function weekView({
 	timezone: string;
 	memberIds: Array<number>;
 	playerIds: Array<number>;
-	reportedWeeks: Array<ReportedWeek>;
+	reportedWeeks: Array<ScheduleWeek.ReportedWeek>;
 	busyByUserId: Map<number, Array<BusyBlock>>;
 	teamEvents: Array<TeamEventRow>;
 }) {
@@ -135,19 +130,13 @@ function weekView({
 		minPlayers,
 	}).map((window) => R.omit(window, ["userIds"]));
 
-	const days = R.range(0, 7).map((dayIndex) => {
-		const noonAt = range.startsAt + dayIndex * DAY_SECONDS + DAY_SECONDS / 2;
-		const date = Availability.dateInTimezone(noonAt, timezone);
-
-		return {
-			date,
-			noonAt,
-			windowTier: bestWindowTierOfDay({ date, windows, timezone }),
-		};
-	});
+	const days = ScheduleWeek.days(range, timezone).map((day) => ({
+		...day,
+		windowTier: bestWindowTierOfDay({ date: day.date, windows, timezone }),
+	}));
 
 	const members = memberIds.map((userId) =>
-		memberWeekRow({
+		ScheduleWeek.memberRow({
 			userId,
 			days,
 			timezone,
@@ -159,10 +148,7 @@ function weekView({
 
 	return {
 		startsAt: range.startsAt,
-		weekNumber: Availability.isoWeekNumber(
-			range.startsAt + DAY_SECONDS / 2,
-			timezone,
-		),
+		weekNumber: ScheduleWeek.weekNumber(range, timezone),
 		days,
 		members,
 		windows,
@@ -197,81 +183,4 @@ function bestWindowTierOfDay({
 	if (tiers.includes("FULL")) return "FULL";
 	if (tiers.includes("ONE_SHORT")) return "ONE_SHORT";
 	return null;
-}
-
-function memberWeekRow({
-	userId,
-	days,
-	timezone,
-	reportedWeeks,
-	range,
-	busy,
-}: {
-	userId: number;
-	days: Array<{ date: string; noonAt: number }>;
-	timezone: string;
-	reportedWeeks: Array<ReportedWeek>;
-	range: TimeRange;
-	busy: Array<BusyBlock>;
-}) {
-	const busyOfDay = (day: { date: string }) =>
-		busy.filter(
-			(block) =>
-				Availability.dateInTimezone(block.startsAt, timezone) === day.date,
-		);
-
-	const memberWeeks = reportedWeeks.filter((week) => week.userId === userId);
-	const matchingWeek = memberWeeks.find(
-		(week) =>
-			Math.abs(week.weekStartsAt - range.startsAt) <
-			AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
-	);
-
-	if (!matchingWeek) {
-		return {
-			userId,
-			reported: false,
-			days: days.map((day) => ({
-				ranges: [] as Array<TimeRange>,
-				busy: busyOfDay(day),
-			})),
-			notes: [] as Array<{ dayIndex: number; text: string }>,
-		};
-	}
-
-	// slots are placed on the viewer-local day they start on, wherever their
-	// author's week put them — the adjacent weeks' spillover included. What a
-	// commitment takes back is cut out first: the grid shows when the member
-	// is actually free.
-	const slots = Availability.subtract(
-		memberWeeks.flatMap((week) => week.slots),
-		busy,
-	);
-
-	return {
-		userId,
-		reported: true,
-		days: days.map((day) => ({
-			ranges: slots.filter(
-				(slot) =>
-					Availability.dateInTimezone(slot.startsAt, timezone) === day.date,
-			),
-			busy: busyOfDay(day),
-		})),
-		notes: memberWeeks.flatMap((week) =>
-			week.dayNotes.flatMap((note) => {
-				const noteDate = Availability.dateInTimezone(
-					Availability.localToTimestamp({
-						date: note.date,
-						time: "12:00",
-						timezone: week.timezone,
-					}),
-					timezone,
-				);
-				const dayIndex = days.findIndex((day) => day.date === noteDate);
-
-				return dayIndex === -1 ? [] : [{ dayIndex, text: note.text }];
-			}),
-		),
-	};
 }

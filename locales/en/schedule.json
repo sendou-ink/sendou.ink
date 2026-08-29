@@ -19,6 +19,7 @@
 	"events.none": "No events this week",
 	"events.delete": "Delete event",
 	"events.deleteConfirm": "Delete the event {{name}}?",
+	"friends.availabilityOf": "{{name}}'s availability",
 	"registration.title": "Availability",
 	"registration.estimated": "estimated",
 	"registration.notVisible": "Schedule not shared with you",
