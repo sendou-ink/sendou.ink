@@ -270,14 +270,23 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
 			errorToastIfFalsy(
+				ownTeam.memberUserIds.length < tournament.maxMembersPerTeam,
+				"Team is already at max capacity",
+			);
+			errorToastIfFalsy(
 				(await SQGroupRepository.findFriendsAndTeammates(user.id)).friends.some(
 					(friendPlayer) => friendPlayer.id === data.userId,
 				),
 				"Not a friend",
 			);
+			const userToAdd = await UserRepository.findLeanById(data.userId);
 			errorToastIfFalsy(
-				(await UserRepository.findLeanById(data.userId))?.friendCode,
+				userToAdd?.friendCode,
 				"User you are trying to add has no friend code set",
+			);
+			errorToastIfFalsy(
+				!tournament.ctx.settings.requireInGameNames || userToAdd.inGameName,
+				"User you are trying to add has no in-game name set",
 			);
 			errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
 
