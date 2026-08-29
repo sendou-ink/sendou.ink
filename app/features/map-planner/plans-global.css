@@ -47,9 +47,10 @@ div {
 	box-shadow: none !important;
 }
 
-/* Hacky selector to hide sidebar and top nav */
+/* Hacky selector to hide sidebar, top nav and footer */
 body:has(.planner) nav,
-body:has(.planner) header {
+body:has(.planner) header,
+body:has(.planner) footer {
 	display: none !important;
 }
 
