@@ -77,6 +77,7 @@ function createHarness({
 		): Promise<{ messages: ChatMessageWithAuthor[] } | null> => ({ messages }),
 	);
 	const postRead = vi.fn(async () => {});
+	const onSendFailed = vi.fn();
 
 	const client = createChatClient({
 		fetchRooms,
@@ -84,6 +85,7 @@ function createHarness({
 		fetchMessages,
 		postMessage,
 		postRead,
+		onSendFailed,
 		addServerEventListener: (listener) => {
 			eventListener = listener;
 			return () => {
@@ -100,6 +102,7 @@ function createHarness({
 		fetchMessages,
 		postMessage,
 		postRead,
+		onSendFailed,
 		emit: (event: ServerEvent) => eventListener?.(event),
 		isListening: () => eventListener !== null,
 	};
@@ -321,6 +324,7 @@ describe("createChatClient", () => {
 		await flush();
 
 		expect(client.getSnapshot().messagesByRoomId.get(1)).toHaveLength(0);
+		expect(harness.onSendFailed).toHaveBeenCalledTimes(1);
 	});
 
 	test("a send whose POST throws is removed like a failed one", async () => {
@@ -341,6 +345,7 @@ describe("createChatClient", () => {
 		await flush();
 
 		expect(client.getSnapshot().messagesByRoomId.get(1)).toHaveLength(0);
+		expect(harness.onSendFailed).toHaveBeenCalledTimes(1);
 	});
 
 	test("optimistic sends appended while the history fetch is in flight are kept", async () => {

@@ -1,4 +1,5 @@
 import * as R from "remeda";
+import { toastQueue } from "~/components/elements/Toast";
 import type { ServerEvent } from "~/features/events/events-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
@@ -30,6 +31,8 @@ interface ChatClientDeps {
 		message: { publicId: string; contents: string },
 	) => Promise<{ message: ChatMessageWithAuthor } | null>;
 	postRead: (roomId: number, lastSeenMessageId: number) => Promise<void>;
+	/** Called when a send did not reach the server, to tell the user their message was not delivered. */
+	onSendFailed: () => void;
 	addServerEventListener: (
 		listener: (event: ServerEvent) => void,
 	) => () => void;
@@ -68,7 +71,7 @@ export interface ChatClient {
 	ensureMessagesLoaded: (roomId: number) => void;
 	/** Reconnect catch-up: refetches the room list and every loaded history. */
 	catchUp: () => void;
-	/** Appends an optimistic pending message and POSTs the send; the pending row is replaced by the SSE echo or the POST response (whichever lands first), and removed if the send fails. */
+	/** Appends an optimistic pending message and POSTs the send; the pending row is replaced by the SSE echo or the POST response (whichever lands first), and removed with an error notice if the send fails. */
 	send: (
 		roomId: number,
 		message: { publicId: string; contents: string; author: ChatMessageAuthor },
@@ -505,6 +508,8 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 						return;
 					}
 
+					deps.onSendFailed();
+
 					// a failed send stuck at pending forever would read as delivered
 					const messages = messagesByRoomId.get(roomId);
 					if (!messages) return;
@@ -569,6 +574,11 @@ export const chatClient = createChatClient({
 		};
 		return data.message ? { message: data.message } : null;
 	},
+	onSendFailed: () =>
+		toastQueue.add({
+			message: "Message could not be sent",
+			variant: "error",
+		}),
 	postRead: async (roomId, lastSeenMessageId) => {
 		await fetch(chatRoomReadRoute(roomId), {
 			method: "POST",
