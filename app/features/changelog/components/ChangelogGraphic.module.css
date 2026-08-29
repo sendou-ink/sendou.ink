@@ -43,6 +43,10 @@ avatar slot down to the entry icons */
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
+	/* the shared graphic keeps text on one line for the in-app export, this one is
+	screenshotted by a real browser and its entries are whole sentences */
+	white-space: normal;
+	text-wrap: pretty;
 }
 
 .entryIcon {

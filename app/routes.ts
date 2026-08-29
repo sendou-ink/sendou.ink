@@ -15,6 +15,10 @@ const devOnlyRoutes =
 				),
 				route("/admin/og-images", "features/admin/routes/og-images.tsx"),
 				route(
+					"/admin/changelog-image",
+					"features/changelog/routes/changelog-image.tsx",
+				),
+				route(
 					"/components",
 					"features/components-showcase/routes/components.tsx",
 				),
