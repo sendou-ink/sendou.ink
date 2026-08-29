@@ -17,7 +17,11 @@ import type {
 } from "~/features/user-page/user-page-constants";
 import { userRoles } from "~/modules/permissions/mapper.server";
 import { isSupporter } from "~/modules/permissions/utils";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampNow,
+	dateToDatabaseTimestamp,
+	dateToYYYYMMDD,
+} from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import {
 	asJson,
@@ -30,6 +34,7 @@ import {
 	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
+import { seededRandom } from "~/utils/random";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import { findWidgetById } from "./core/widgets/portfolio";
@@ -515,7 +520,7 @@ export function findAllPatrons() {
 		.execute();
 }
 
-/** Patrons for the footer marquee. Slimmed to the fields the chip renders: no `patronTier` and only the custom theme vars the chip's colors resolve from. */
+/** Patrons for the footer marquee, in an order that is shuffled anew each UTC day. Slimmed to the fields the chip renders: no `patronTier` and only the custom theme vars the chip's colors resolve from. */
 export async function findAllPatronsForFooter() {
 	const rows = await db
 		.selectFrom("User")
@@ -528,16 +533,19 @@ export async function findAllPatronsForFooter() {
 			).as("customTheme"),
 		])
 		.where("User.patronTier", "is not", null)
-		.orderBy("User.patronTier", "desc")
-		.orderBy("User.patronStartedAt", "asc")
+		.orderBy("User.id", "asc")
 		.execute();
 
-	return rows.map((row) => ({
+	const patrons = rows.map((row) => ({
 		...row,
 		customTheme: row.customTheme
 			? R.pick(row.customTheme, PATRON_CHIP_THEME_VARS)
 			: null,
 	}));
+
+	const { seededShuffle } = seededRandom(dateToYYYYMMDD(new Date()));
+
+	return seededShuffle(patrons);
 }
 
 export function findAllPlusServerMembers() {

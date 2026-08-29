@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory";
 import * as CalendarEventResultFactory from "~/db/seed/factories/CalendarEventResultFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -513,4 +513,47 @@ describe("UserRepository", () => {
 			expect(user?.roles).toContain("API_ACCESSER");
 		});
 	});
+
+	describe("UserRepository.findAllPatronsForFooter", () => {
+		const patrons = UserFactory.pool();
+
+		beforeEach(async () => {
+			await patrons.create(15, null, { patronTier: 1 });
+		});
+
+		afterEach(() => {
+			vi.useRealTimers();
+		});
+
+		test("returns the same order twice on the same UTC day", async () => {
+			vi.useFakeTimers({ toFake: ["Date"] });
+			vi.setSystemTime(new Date("2026-08-29T01:00:00Z"));
+
+			const first = await UserRepository.findAllPatronsForFooter();
+
+			vi.setSystemTime(new Date("2026-08-29T23:00:00Z"));
+
+			const second = await UserRepository.findAllPatronsForFooter();
+
+			expect(ids(first)).toEqual(ids(second));
+		});
+
+		test("shuffles into a new order when the UTC day changes", async () => {
+			vi.useFakeTimers({ toFake: ["Date"] });
+			vi.setSystemTime(new Date("2026-08-29T23:00:00Z"));
+
+			const today = await UserRepository.findAllPatronsForFooter();
+
+			vi.setSystemTime(new Date("2026-08-30T01:00:00Z"));
+
+			const tomorrow = await UserRepository.findAllPatronsForFooter();
+
+			expect(ids(today)).not.toEqual(ids(tomorrow));
+			expect(ids(today).sort()).toEqual(ids(tomorrow).sort());
+		});
+	});
 });
+
+function ids(patrons: Array<{ id: number }>) {
+	return patrons.map((patron) => patron.id);
+}
