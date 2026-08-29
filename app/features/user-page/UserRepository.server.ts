@@ -5,6 +5,7 @@ import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import type { CustomTheme, UserPreferences } from "~/db/tables-json";
 import { actorId } from "~/features/auth/core/user.server";
+import { PATRON_CHIP_THEME_VARS } from "~/features/theme/theme-constants";
 import {
 	BEST_TIER_NUMBER,
 	type TournamentTierNumber,
@@ -512,6 +513,31 @@ export function findAllPatrons() {
 		.orderBy("User.patronTier", "desc")
 		.orderBy("User.patronStartedAt", "asc")
 		.execute();
+}
+
+/** Patrons for the footer marquee. Slimmed to the fields the chip renders: no `patronTier` and only the custom theme vars the chip's colors resolve from. */
+export async function findAllPatronsForFooter() {
+	const rows = await db
+		.selectFrom("User")
+		.select([
+			"User.id",
+			"User.discordId",
+			"User.username",
+			asJson(
+				sql<CustomTheme | null>`IIF(COALESCE("User"."patronTier", 0) >= 2, "User"."customTheme", null)`,
+			).as("customTheme"),
+		])
+		.where("User.patronTier", "is not", null)
+		.orderBy("User.patronTier", "desc")
+		.orderBy("User.patronStartedAt", "asc")
+		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		customTheme: row.customTheme
+			? R.pick(row.customTheme, PATRON_CHIP_THEME_VARS)
+			: null,
+	}));
 }
 
 export function findAllPlusServerMembers() {

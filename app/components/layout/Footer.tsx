@@ -404,11 +404,5 @@ function useHasScrolledIntoView(ref: RefObject<HTMLElement | null>) {
 function customThemeChipStyle(
 	customTheme: Patron["customTheme"],
 ): React.CSSProperties {
-	if (!customTheme) return {};
-
-	return R.pickBy(
-		customTheme,
-		(value, key) =>
-			value !== null && !key.includes("--_size") && !key.includes("--_border"),
-	) as React.CSSProperties;
+	return (customTheme ?? {}) as React.CSSProperties;
 }

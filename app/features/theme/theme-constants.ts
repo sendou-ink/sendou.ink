@@ -34,3 +34,13 @@ export const CUSTOM_THEME_VARS = [
 ] as const;
 
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
+
+/** Subset of {@link CUSTOM_THEME_VARS} the patron chip in the footer resolves its background and text color from. */
+export const PATRON_CHIP_THEME_VARS = [
+	"--_base-h",
+	"--_base-c-2",
+	"--_base-c-5",
+	"--_acc-h",
+	"--_acc-c-2",
+	"--_acc-c-4",
+] as const satisfies ReadonlyArray<CustomThemeVar>;
