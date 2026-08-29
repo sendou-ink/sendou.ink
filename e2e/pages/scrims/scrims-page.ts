@@ -28,7 +28,9 @@ export class ScrimsPage {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			associationsLink: page.getByRole("link", { name: "Associations" }),
+			associationsLink: page
+				.getByRole("main")
+				.getByRole("link", { name: "Associations" }),
 			requestButtons: page.getByTestId("request-scrim-button"),
 			viewRequestButtons: page.getByTestId("view-request-button"),
 			acceptRequestButtons: page.getByTestId("confirm-modal-trigger-button"),
