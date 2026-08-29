@@ -1,6 +1,6 @@
 import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { commonUserSelect, jsonObjectFrom } from "~/utils/kysely.server";
+import { commonUserObjectFields, jsonBuildObject } from "~/utils/kysely.server";
 import type { Unwrapped } from "~/utils/types";
 
 export type ActiveMatchPlayersItem = Unwrapped<
@@ -20,19 +20,18 @@ export function findAllActiveMatchPlayers() {
 			),
 		)
 		.innerJoin("GroupMember", "GroupMember.groupId", "Group.id")
-		.innerJoin("LiveStream", "LiveStream.userId", "GroupMember.userId")
-		.select(({ eb }) => [
+		.innerJoin("User", "User.id", "GroupMember.userId")
+		.innerJoin("LiveStream", "LiveStream.twitch", "User.twitch")
+		.select((eb) => [
 			"GroupMatch.id as groupMatchId",
 			"GroupMatch.createdAt as groupMatchCreatedAt",
 			"LiveStream.twitch as streamTwitch",
 			"LiveStream.viewerCount as streamViewerCount",
 			"LiveStream.thumbnailUrl as streamThumbnailUrl",
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.select((eb) => [...commonUserSelect(eb), "User.twitch"])
-					.whereRef("GroupMember.userId", "=", "User.id"),
-			).as("user"),
+			jsonBuildObject({
+				...commonUserObjectFields(eb),
+				twitch: eb.ref("User.twitch"),
+			}).as("user"),
 		])
 		.where("Group.status", "=", "ACTIVE")
 		.where("GroupMatch.createdAt", ">", dateToDatabaseTimestamp(oneHourAgo))

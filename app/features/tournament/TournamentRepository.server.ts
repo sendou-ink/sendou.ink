@@ -419,26 +419,25 @@ function latestTeamIdByDuplicatedUserId(
 
 /**
  * Live streams of the tournament: streams of checked-in participants and the streams
- * of the tournament's cast Twitch accounts. Kept out of {@link findById} so the
- * frequently changing stream data does not live in the cached tournament context.
+ * of the tournament's cast Twitch accounts.
  */
 export async function findStreamsByTournamentId(tournamentId: number) {
 	const [participantStreams, castStreams] = await Promise.all([
 		db
 			.selectFrom("LiveStream")
+			.innerJoin("User", "User.twitch", "LiveStream.twitch")
 			.innerJoin(
 				"TournamentTeamMember",
 				"TournamentTeamMember.userId",
-				"LiveStream.userId",
+				"User.id",
 			)
 			.innerJoin(
 				"TournamentTeam",
 				"TournamentTeam.id",
 				"TournamentTeamMember.tournamentTeamId",
 			)
-			.innerJoin("User", "User.id", "LiveStream.userId")
 			.select((eb) => [
-				"LiveStream.userId",
+				"User.id as userId",
 				"LiveStream.twitch",
 				"LiveStream.viewerCount",
 				"LiveStream.thumbnailUrl",
@@ -447,7 +446,6 @@ export async function findStreamsByTournamentId(tournamentId: number) {
 			])
 			.where("TournamentTeam.tournamentId", "=", tournamentId)
 			.where("TournamentTeam.isPlaceholder", "=", 0)
-			.where("LiveStream.twitch", "is not", null)
 			.where(({ exists, selectFrom }) =>
 				exists(
 					selectFrom("TournamentTeamCheckIn")
@@ -459,8 +457,8 @@ export async function findStreamsByTournamentId(tournamentId: number) {
 						),
 				),
 			)
-			.groupBy("LiveStream.userId")
-			.$narrowType<{ userId: NotNull; twitch: NotNull }>()
+			.groupBy("LiveStream.twitch")
+			.$narrowType<{ twitch: NotNull }>()
 			.execute(),
 		db
 			.selectFrom("LiveStream")

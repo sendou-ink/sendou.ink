@@ -24,22 +24,24 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				jsonArrayFrom(
 					db
 						.selectFrom("LiveStream")
-						.leftJoin(
+						.innerJoin("User", "User.twitch", "LiveStream.twitch")
+						.innerJoin(
 							"TournamentTeamMember",
 							"TournamentTeamMember.userId",
-							"LiveStream.userId",
+							"User.id",
 						)
-						.leftJoin(
+						.innerJoin(
 							"TournamentTeam",
 							"TournamentTeam.id",
 							"TournamentTeamMember.tournamentTeamId",
 						)
 						.select([
-							"LiveStream.userId",
+							"User.id as userId",
 							"LiveStream.twitch",
 							"LiveStream.viewerCount",
 						])
-						.where("TournamentTeam.tournamentId", "=", id),
+						.where("TournamentTeam.tournamentId", "=", id)
+						.groupBy("LiveStream.twitch"),
 				).as("playerStreams"),
 				jsonArrayFrom(
 					db

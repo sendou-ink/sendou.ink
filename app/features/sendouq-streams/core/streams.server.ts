@@ -82,7 +82,7 @@ function streamedMatches({
 		}
 
 		const leaderboardEntry = leaderboard.find(
-			(entry) => entry.id === player.user?.id,
+			(entry) => entry.id === player.user.id,
 		);
 
 		return {
@@ -96,8 +96,8 @@ function streamedMatches({
 				createdAt: player.groupMatchCreatedAt,
 			},
 			user: {
-				...player.user!,
-				twitch: player.user!.twitch!,
+				...player.user,
+				twitch: player.user.twitch!,
 			},
 			weaponSplId: leaderboardEntry?.weaponSplId,
 			tier: leaderboardEntry?.tier,

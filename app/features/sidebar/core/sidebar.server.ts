@@ -200,15 +200,16 @@ async function combinedStreams(): Promise<SidebarStream[]> {
 		ranked.push({ stream: sidebarStream, score });
 	}
 
-	const xRankByUser = new Map<number, (typeof xRankRows)[number]>();
+	const xRankByStream = new Map<string, (typeof xRankRows)[number]>();
 	for (const row of xRankRows) {
-		const existing = xRankByUser.get(row.id);
+		const key = row.twitchUsername?.toLowerCase() ?? `user-${row.id}`;
+		const existing = xRankByStream.get(key);
 		if (!existing || (row.peakXp ?? 0) > (existing.peakXp ?? 0)) {
-			xRankByUser.set(row.id, row);
+			xRankByStream.set(key, row);
 		}
 	}
 
-	for (const row of xRankByUser.values()) {
+	for (const row of xRankByStream.values()) {
 		if (userIsBanned(row.id)) continue;
 
 		if (
