@@ -205,19 +205,10 @@ function TournamentShowcase() {
 }
 
 function ResultHighlights() {
-	const { t } = useTranslation(["front", "common"]);
 	const data = useLoaderData<typeof loader>();
 
-	// should not happen
-	if (
-		!data.leaderboards.team.length ||
-		!data.leaderboards.user.length ||
-		!data.tournaments.results.length
-	) {
-		return null;
-	}
-
-	const season = Seasons.currentOrPrevious()!;
+	const hasLeaderboards =
+		data.leaderboards.user.length > 0 && data.leaderboards.team.length > 0;
 
 	return (
 		<>
@@ -229,49 +220,71 @@ function ResultHighlights() {
 				)}
 			>
 				<SeasonCard />
-				<div className="stack sm text-center">
-					<h2 className={styles.resultHighlightsTitle}>
-						{t("front:leaderboards.topPlayers")}
-					</h2>
-					<Leaderboard
-						entries={data.leaderboards.user}
-						fullLeaderboardUrl={leaderboardsPage({
-							season: season.nth,
-							type: "USER",
-						})}
-					/>
-				</div>
-				<div className="stack sm text-center">
-					<h2 className={styles.resultHighlightsTitle}>
-						{t("front:leaderboards.topTeams")}
-					</h2>
-					<Leaderboard
-						entries={data.leaderboards.team}
-						fullLeaderboardUrl={leaderboardsPage({
-							season: season.nth,
-							type: "TEAM",
-						})}
-					/>
-				</div>
+				{hasLeaderboards ? <Leaderboards /> : null}
 			</div>
-			<div className={clsx(styles.resultHighlights, "scrollbar")}>
-				<div className="stack sm text-center">
-					<h2
-						className={clsx(
-							styles.resultHighlightsTitle,
-							styles.resultHighlightsTitleTournaments,
-						)}
-					>
-						{t("front:showcase.results")}
-					</h2>
-					<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
-						{data.tournaments.results.map((tournament) => (
-							<TournamentCard key={tournament.id} tournament={tournament} />
-						))}
-					</div>
-				</div>
+			{data.tournaments.results.length > 0 ? <TournamentResults /> : null}
+		</>
+	);
+}
+
+function Leaderboards() {
+	const { t } = useTranslation(["front"]);
+	const data = useLoaderData<typeof loader>();
+
+	const season = Seasons.currentOrPrevious()!;
+
+	return (
+		<>
+			<div className="stack sm text-center">
+				<h2 className={styles.resultHighlightsTitle}>
+					{t("front:leaderboards.topPlayers")}
+				</h2>
+				<Leaderboard
+					entries={data.leaderboards.user}
+					fullLeaderboardUrl={leaderboardsPage({
+						season: season.nth,
+						type: "USER",
+					})}
+				/>
+			</div>
+			<div className="stack sm text-center">
+				<h2 className={styles.resultHighlightsTitle}>
+					{t("front:leaderboards.topTeams")}
+				</h2>
+				<Leaderboard
+					entries={data.leaderboards.team}
+					fullLeaderboardUrl={leaderboardsPage({
+						season: season.nth,
+						type: "TEAM",
+					})}
+				/>
 			</div>
 		</>
+	);
+}
+
+function TournamentResults() {
+	const { t } = useTranslation(["front"]);
+	const data = useLoaderData<typeof loader>();
+
+	return (
+		<div className={clsx(styles.resultHighlights, "scrollbar")}>
+			<div className="stack sm text-center">
+				<h2
+					className={clsx(
+						styles.resultHighlightsTitle,
+						styles.resultHighlightsTitleTournaments,
+					)}
+				>
+					{t("front:showcase.results")}
+				</h2>
+				<div className={clsx(styles.tournamentCardsSpacer, "scrollbar")}>
+					{data.tournaments.results.map((tournament) => (
+						<TournamentCard key={tournament.id} tournament={tournament} />
+					))}
+				</div>
+			</div>
+		</div>
 	);
 }
 

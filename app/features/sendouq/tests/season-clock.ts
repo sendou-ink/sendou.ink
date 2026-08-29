@@ -2,11 +2,21 @@ import { afterAll, beforeAll, vi } from "vitest";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import invariant from "~/utils/invariant";
 
-const lastSeason = Seasons.list[Seasons.list.length - 1];
-invariant(lastSeason, "Expected at least one season");
+const startedSeasons = Seasons.list.filter(
+	(season) => season.starts.getTime() <= Date.now(),
+);
+const latestStartedSeason = startedSeasons[startedSeasons.length - 1];
+invariant(latestStartedSeason, "Expected at least one started season");
 
+// the database stamps its own rows with the real "now", so a pinned time in the
+// future would make every one of them look long expired
 const insideASeason = new Date(
-	(lastSeason.starts.getTime() + lastSeason.ends.getTime()) / 2,
+	Math.min(
+		(latestStartedSeason.starts.getTime() +
+			latestStartedSeason.ends.getTime()) /
+			2,
+		Date.now(),
+	),
 );
 
 /**

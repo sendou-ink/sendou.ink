@@ -74,8 +74,8 @@
 
 .seasonBannerImg {
 	position: absolute;
-	width: 109px;
-	right: -5px;
+	width: 84px;
+	right: 4px;
 	bottom: 0;
 }
 
@@ -180,6 +180,12 @@
 .resultHighlightsTop {
 	--card-width: 100%;
 	overflow-x: auto;
+
+	/* on a season's first day the leaderboards are still empty, leaving the card
+	   alone in the row with nothing beside it to stretch against */
+	& > .seasonCardDesktopOnly:only-child {
+		max-width: 25%;
+	}
 }
 
 .resultHighlightsTitle {
@@ -193,6 +199,11 @@
 
 .seasonCard {
 	--l: 50%;
+
+	/* see .resultHighlightsTop: alone in the row it collapses to its text */
+	.seasonCardDesktopOnly:only-child & {
+		min-height: 250px;
+	}
 
 	min-width: var(--card-width);
 	max-width: var(--card-width);
@@ -232,7 +243,7 @@
 
 .seasonCardImg {
 	position: absolute;
-	width: 175px;
+	width: 150px;
 	bottom: 0;
 	right: 10px;
 }
