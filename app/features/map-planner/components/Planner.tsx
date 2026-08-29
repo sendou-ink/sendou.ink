@@ -618,7 +618,9 @@ function WeaponImageSelector() {
 								height={24}
 								alt={t(`common:weapon.category.${category.name}`)}
 							/>
-							{t(`common:weapon.category.${category.name}`)}
+							<span className={styles.weaponsSummaryText}>
+								{t(`common:weapon.category.${category.name}`)}
+							</span>
 						</summary>
 						<div className={styles.weaponsContainer}>
 							{category.weaponIds.map((weaponId) => {
@@ -642,7 +644,9 @@ function WeaponImageSelector() {
 			<details>
 				<summary className={styles.weaponsSummary}>
 					<Image path={subWeaponImageUrl(0)} width={24} height={24} alt="" />
-					{t("common:weapon.category.subs")}
+					<span className={styles.weaponsSummaryText}>
+						{t("common:weapon.category.subs")}
+					</span>
 				</summary>
 				<div className={styles.weaponsContainer}>
 					{subWeaponIds.map((subWeaponId) => {
@@ -669,7 +673,9 @@ function WeaponImageSelector() {
 						height={24}
 						alt=""
 					/>
-					{t("common:weapon.category.specials")}
+					<span className={styles.weaponsSummaryText}>
+						{t("common:weapon.category.specials")}
+					</span>
 				</summary>
 				<div className={styles.weaponsContainer}>
 					{specialWeaponIds.map((specialWeaponId) => {
@@ -691,7 +697,9 @@ function WeaponImageSelector() {
 			<details>
 				<summary className={styles.weaponsSummary}>
 					<Image path={modeImageUrl("RM")} width={24} height={24} alt="" />
-					{t("common:plans.adder.objective")}
+					<span className={styles.weaponsSummaryText}>
+						{t("common:plans.adder.objective")}
+					</span>
 				</summary>
 				<div className={styles.weaponsContainer}>
 					{(["TC", "RM", "CB"] as const).map((mode) => {

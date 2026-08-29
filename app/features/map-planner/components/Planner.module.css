@@ -141,6 +141,16 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+
+	& img {
+		flex-shrink: 0;
+	}
+}
+
+.weaponsSummaryText {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
 }
 
 .weaponsContainer {
