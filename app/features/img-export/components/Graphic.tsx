@@ -71,31 +71,35 @@ export function GraphicContainer({
 export function GraphicHeader({
 	avatarUrl,
 	identiconInput,
+	leading,
 	titleRow,
 	subtitle,
 	trailing,
 	alignTrailingWithTitle = false,
 }: {
-	avatarUrl?: string;
-	identiconInput: string;
 	titleRow: React.ReactNode;
 	subtitle: React.ReactNode;
 	trailing?: React.ReactNode;
 	/** Line the trailing content up with the title instead of centering it against the title and subtitle together */
 	alignTrailingWithTitle?: boolean;
-}) {
+} & (
+	| { avatarUrl?: string; identiconInput: string; leading?: never }
+	| { leading: React.ReactNode; avatarUrl?: never; identiconInput?: never }
+)) {
 	const trailingContent = trailing ? (
 		<div className={styles.headerTrailing}>{trailing}</div>
 	) : null;
 
 	return (
 		<header className={styles.header}>
-			<Avatar
-				url={avatarUrl}
-				identiconInput={identiconInput}
-				size="sm"
-				alt=""
-			/>
+			{leading ?? (
+				<Avatar
+					url={avatarUrl}
+					identiconInput={identiconInput ?? ""}
+					size="sm"
+					alt=""
+				/>
+			)}
 			<div className={styles.headerText}>
 				<div className={styles.headerTitleRow}>
 					{titleRow}

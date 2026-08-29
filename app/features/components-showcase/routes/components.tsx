@@ -53,6 +53,10 @@ import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import {
+	ChangelogGraphic,
+	type ChangelogGraphicEntry,
+} from "~/features/changelog/components/ChangelogGraphic";
+import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,
 	type SeasonSummaryGraphicBestSet,
@@ -123,6 +127,11 @@ export const SECTIONS = [
 		title: "Season Summary Graphic",
 		id: "season-summary-graphic",
 		component: SeasonSummaryGraphicSection,
+	},
+	{
+		title: "Changelog Graphic",
+		id: "changelog-graphic",
+		component: ChangelogGraphicSection,
 	},
 	{
 		title: "Form Messages",
@@ -2158,6 +2167,110 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 							ends: new Date("2026-05-17T20:59:59.999Z"),
 						}}
 						stats={SEASON_SUMMARY_STATS}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const CHANGELOG_GRAPHIC_ENTRIES_SMALL: ChangelogGraphicEntry[] = [
+	{
+		navItem: "plans",
+		type: "feature",
+		headline: "Map planner plans persist across sessions",
+	},
+	{
+		navItem: "calendar",
+		type: "feature",
+		headline: "Calendar scroll snapping on mobile",
+	},
+	{
+		navItem: "builds",
+		type: "bug",
+		headline: "Fixed build filters resetting when navigating back",
+	},
+];
+
+const CHANGELOG_GRAPHIC_ENTRIES_LARGE: ChangelogGraphicEntry[] = [
+	{
+		navItem: "plans",
+		type: "feature",
+		headline: "Map planner rework",
+		bullets: [
+			"Undo & redo support",
+			"Plans persist across sessions",
+			"New drawing tools including shapes and text",
+			"Weapon images can be flipped",
+		],
+	},
+	{
+		navItem: "sendouq",
+		type: "feature",
+		headline: "SendouQ match improvements",
+		bullets: [
+			"Stacked chat sidebar shows all your rooms",
+			"Post-match screen shows SP changes",
+		],
+	},
+	{
+		navItem: "calendar",
+		type: "feature",
+		headline: "Calendar scroll snapping on mobile",
+	},
+	{
+		navItem: "leaderboards",
+		type: "feature",
+		headline: "Team leaderboard now shows team logos",
+	},
+	{
+		type: "feature",
+		headline: "Faster page loads across the site",
+	},
+	{
+		navItem: "builds",
+		type: "bug",
+		headline: "Fixed build filters resetting when navigating back",
+	},
+	{
+		navItem: "sendouq",
+		type: "bug",
+		headline: "Fixed chat messages sometimes arriving out of order",
+	},
+	{
+		navItem: "calendar",
+		type: "bug",
+		headline: "Fixed event times showing in the wrong timezone",
+	},
+	{
+		navItem: "vods",
+		type: "feature",
+		headline: "VoDs can be filtered by tournament",
+	},
+	{
+		navItem: "lfg",
+		type: "bug",
+		headline: "Fixed expired LFG posts appearing in search results",
+	},
+];
+
+function ChangelogGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Changelog Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Small update (3 entries)">
+					<ChangelogGraphic
+						date={new Date(2026, 7, 29)}
+						entries={CHANGELOG_GRAPHIC_ENTRIES_SMALL}
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="Big update (10 entries)">
+					<ChangelogGraphic
+						date={new Date(2026, 7, 29)}
+						entries={CHANGELOG_GRAPHIC_ENTRIES_LARGE}
 					/>
 				</ComponentRow>
 			</div>
