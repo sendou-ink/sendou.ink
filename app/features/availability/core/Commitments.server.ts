@@ -34,27 +34,24 @@ export async function busyBlocksByUserIds({
 }): Promise<Map<number, Array<BusyBlock>>> {
 	if (userIds.length === 0) return new Map();
 
-	// xxx: when promise.all not the play
-	const [registrations, scrims, teamEvents, expectedTeamCount] =
-		await Promise.all([
-			TournamentTeamRepository.findAllRegistrationsByUserIds({
-				userIds,
-				startsAt: startsAt - TournamentDuration.MAX_ESTIMATE_SECONDS,
-				endsAt,
-				excludeTournamentId,
-			}),
-			ScrimPostRepository.findAllAcceptedByUserIds({
-				userIds,
-				startsAt: startsAt - AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
-				endsAt,
-			}),
-			AvailabilityRepository.findAllTeamEventsByUserIds({
-				userIds,
-				startsAt,
-				endsAt,
-			}),
-			SeriesTeamCount.lookup(),
-		]);
+	const registrations =
+		await TournamentTeamRepository.findAllRegistrationsByUserIds({
+			userIds,
+			startsAt: startsAt - TournamentDuration.MAX_ESTIMATE_SECONDS,
+			endsAt,
+			excludeTournamentId,
+		});
+	const scrims = await ScrimPostRepository.findAllAcceptedByUserIds({
+		userIds,
+		startsAt: startsAt - AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
+		endsAt,
+	});
+	const teamEvents = await AvailabilityRepository.findAllTeamEventsByUserIds({
+		userIds,
+		startsAt,
+		endsAt,
+	});
+	const expectedTeamCount = await SeriesTeamCount.lookup();
 
 	const blocks: Array<BusyBlock & { userId: number }> = [
 		...registrations

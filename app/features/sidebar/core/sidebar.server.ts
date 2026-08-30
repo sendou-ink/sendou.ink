@@ -94,26 +94,18 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 		};
 	}
 
-	// xxx: at what point we should just collapse to one query? measure
-	const [
-		tournamentsData,
-		scrimsData,
-		friendsWithActivity,
-		savedTournaments,
-		incomingFriendRequestIds,
-		streamedSendouQMatches,
-		teamEvents,
-		scheduleNudge,
-	] = await Promise.all([
-		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
-		ScrimPostRepository.findUserScrims(userId),
-		FriendRepository.findByUserIdWithActivity(userId),
-		SavedCalendarEventRepository.findAllUpcomingByUserId(userId),
-		FriendRepository.findPendingReceivedRequestIds(userId),
-		resolveSendouQMatchStreams(),
-		findUpcomingTeamEvents(userId),
-		showScheduleNudge(user),
-	]);
+	const tournamentsData =
+		await ShowcaseTournaments.categorizedTournamentsByUserId(userId);
+	const scrimsData = await ScrimPostRepository.findUserScrims(userId);
+	const friendsWithActivity =
+		await FriendRepository.findByUserIdWithActivity(userId);
+	const savedTournaments =
+		await SavedCalendarEventRepository.findAllUpcomingByUserId(userId);
+	const incomingFriendRequestIds =
+		await FriendRepository.findPendingReceivedRequestIds(userId);
+	const streamedSendouQMatches = await resolveSendouQMatchStreams();
+	const teamEvents = await findUpcomingTeamEvents(userId);
+	const scheduleNudge = await showScheduleNudge(user);
 
 	const seenTournamentIds = new Set<number>();
 	const tournamentEvents: SidebarEvent[] = [

@@ -16,24 +16,17 @@ export type EventsLoaderData = typeof loader;
 export const loader = async () => {
 	const user = requireUser();
 
-	// xxx: when collapse to one query?
-	const [
-		tournamentsData,
-		scrimsData,
-		savedTournaments,
-		upcomingTournaments,
-		userOrganizations,
-		mySchedule,
-		teamEvents,
-	] = await Promise.all([
-		ShowcaseTournaments.categorizedTournamentsByUserId(user.id),
-		ScrimPostRepository.findUserScrims(user.id),
-		SavedCalendarEventRepository.findAllUpcomingByUserId(user.id),
-		ShowcaseTournaments.upcomingTournaments(),
-		TournamentOrganizationRepository.findByUserId(user.id),
-		myScheduleData(user.id),
-		findUpcomingTeamEvents(user.id),
-	]);
+	const tournamentsData =
+		await ShowcaseTournaments.categorizedTournamentsByUserId(user.id);
+	const scrimsData = await ScrimPostRepository.findUserScrims(user.id);
+	const savedTournaments =
+		await SavedCalendarEventRepository.findAllUpcomingByUserId(user.id);
+	const upcomingTournaments = await ShowcaseTournaments.upcomingTournaments();
+	const userOrganizations = await TournamentOrganizationRepository.findByUserId(
+		user.id,
+	);
+	const mySchedule = await myScheduleData(user.id);
+	const teamEvents = await findUpcomingTeamEvents(user.id);
 
 	const registered = tournamentsData.participatingFor
 		.map(tournamentToSidebarEvent)
