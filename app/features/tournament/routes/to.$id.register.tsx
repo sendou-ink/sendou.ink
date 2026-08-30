@@ -1040,6 +1040,7 @@ function QuickAddPlayers({
 									.map((player) => player.username)
 									.join(", "),
 								submitButtonText: t("common:actions.add"),
+								submitButtonVariant: "primary",
 							}}
 						>
 							{t("tournament:pre.roster.quickAdd.addAll", {
