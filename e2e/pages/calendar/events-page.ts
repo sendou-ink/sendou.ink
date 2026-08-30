@@ -42,6 +42,40 @@ export class EventsPage {
 		return this.page.getByTestId(`availability-day-edit-${dayIndex}`);
 	}
 
+	/**
+	 * Paints a range on a day track by dragging across it, `from` and `to` being
+	 * fractions of the track's width. Past 1 the drag runs beyond the hours the
+	 * track shows.
+	 */
+	async paintAvailability(dayIndex: number, from: number, to: number) {
+		const track = this.page.getByTestId(`availability-track-${dayIndex}`);
+		const box = await track.boundingBox();
+		if (!box) {
+			throw new Error("Missing bounding box for the day track");
+		}
+
+		const y = box.y + box.height / 2;
+		await this.page.mouse.move(box.x + box.width * from, y);
+		await this.page.mouse.down();
+		await this.page.mouse.move(box.x + box.width * to, y, { steps: 10 });
+		await this.page.mouse.up();
+	}
+
+	/** Drags an availability bar sideways by `deltaX` pixels, moving the whole range. */
+	async dragAvailabilityBar(bar: Locator, deltaX: number) {
+		const box = await bar.boundingBox();
+		if (!box) {
+			throw new Error("Missing bounding box for the availability bar");
+		}
+
+		const x = box.x + box.width / 2;
+		const y = box.y + box.height / 2;
+		await this.page.mouse.move(x, y);
+		await this.page.mouse.down();
+		await this.page.mouse.move(x + deltaX, y, { steps: 10 });
+		await this.page.mouse.up();
+	}
+
 	async goto() {
 		await navigate({ page: this.page, url: EVENTS_PAGE });
 	}

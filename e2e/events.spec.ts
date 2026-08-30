@@ -158,6 +158,44 @@ test.describe("My schedule", () => {
 		await expect(events.locators.commitments.first()).toHaveText("VoD review");
 	});
 
+	test("paints a range reaching past the hours the tracks show", async ({
+		page,
+	}) => {
+		await impersonate(page, ADMIN_ID);
+		await setTimezoneCookie(page);
+
+		const events = new EventsPage(page);
+		await events.goto();
+
+		// the tracks end at 2 AM until they are expanded; the paint runs past
+		// their right edge and the window widens to fit what it produced
+		await events.paintAvailability(WEDNESDAY, 0.5, 1.25);
+
+		await expect(events.locators.availabilityBars).toHaveAttribute(
+			"title",
+			"8:00 PM – 5:00 AM",
+		);
+	});
+
+	test("opens the day editor on the click following a drag", async ({
+		page,
+	}) => {
+		await impersonate(page, ADMIN_ID);
+		await setTimezoneCookie(page);
+
+		const events = new EventsPage(page);
+		await events.goto();
+
+		await events.paintAvailability(WEDNESDAY, 0.3, 0.5);
+		// the drag ends with a click of its own, which must not open the popover
+		// without swallowing the click that comes after it either
+		await events.dragAvailabilityBar(events.locators.availabilityBars, 60);
+		await isNotVisible(events.locators.dayEditorPopover);
+
+		await events.locators.availabilityBars.click();
+		await expect(events.locators.dayEditorPopover).toBeVisible();
+	});
+
 	test("copies last week's ranges into the current week", async ({
 		page,
 		factories,

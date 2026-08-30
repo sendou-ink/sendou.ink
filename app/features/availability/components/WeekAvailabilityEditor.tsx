@@ -105,6 +105,10 @@ export function WeekAvailabilityEditor({
 		],
 	});
 	const { trackStart, trackEnd, pct, barStyle } = clockWindow;
+	const gestureWindow = {
+		trackStart: Math.min(trackStart, AVAILABILITY.TRACK_EARLIER_START_MINUTES),
+		trackEnd: Math.max(trackEnd, AVAILABILITY.TRACK_LATER_END_MINUTES),
+	};
 	const [gesture, setGesture] = React.useState<Gesture | null>(null);
 	const gestureRef = React.useRef<Gesture | null>(null);
 	const [openDayDate, setOpenDayDate] = React.useState<string | null>(null);
@@ -112,7 +116,7 @@ export function WeekAvailabilityEditor({
 	const popoverAnchorRef = React.useRef<HTMLElement | null>(null);
 	const dayDraftRef = React.useRef<DayDraft | null>(null);
 	const trackRefs = React.useRef<Array<HTMLDivElement | null>>([]);
-	const suppressClickRef = React.useRef(false);
+	const pressPointRef = React.useRef<{ x: number; y: number } | null>(null);
 
 	const wallsOf = (date: string) =>
 		commitments
@@ -136,12 +140,12 @@ export function WeekAvailabilityEditor({
 		if (!track) return trackStart;
 
 		const rect = track.getBoundingClientRect();
-		const fraction = Math.min(
-			Math.max((clientX - rect.left) / rect.width, 0),
-			1,
-		);
+		const fraction = (clientX - rect.left) / rect.width;
 
-		return trackStart + fraction * (trackEnd - trackStart);
+		return R.clamp(trackStart + fraction * (trackEnd - trackStart), {
+			min: gestureWindow.trackStart,
+			max: gestureWindow.trackEnd,
+		});
 	};
 
 	const pxToMinutes = (dayIndex: number, px: number) => {
@@ -176,8 +180,6 @@ export function WeekAvailabilityEditor({
 		setGesture(next);
 	};
 
-	const trackArgs = { trackStart, trackEnd };
-
 	const replaceDayRanges = (dayIndex: number, ranges: Array<DayTimeRange>) => {
 		onChange(
 			value.map((day, index) =>
@@ -209,6 +211,7 @@ export function WeekAvailabilityEditor({
 
 			event.stopPropagation();
 			event.currentTarget.setPointerCapture(event.pointerId);
+			pressPointRef.current = { x: event.clientX, y: event.clientY };
 			applyGesture({
 				type: "move",
 				dayIndex,
@@ -227,6 +230,7 @@ export function WeekAvailabilityEditor({
 
 			event.stopPropagation();
 			event.currentTarget.setPointerCapture(event.pointerId);
+			pressPointRef.current = { x: event.clientX, y: event.clientY };
 			applyGesture({ type: "resize", dayIndex, original: range, edge, range });
 		};
 
@@ -238,6 +242,7 @@ export function WeekAvailabilityEditor({
 
 			event.stopPropagation();
 			event.currentTarget.setPointerCapture(event.pointerId);
+			pressPointRef.current = { x: event.clientX, y: event.clientY };
 			applyGesture({ type: "fill", dayIndex, range, targetDayIndex: dayIndex });
 		};
 
@@ -253,7 +258,7 @@ export function WeekAvailabilityEditor({
 						anchor: current.anchor,
 						cursor: minutesAt(current.dayIndex, event.clientX),
 						walls: wallsOf(value[current.dayIndex].date),
-						...trackArgs,
+						...gestureWindow,
 					}),
 				});
 				break;
@@ -273,7 +278,7 @@ export function WeekAvailabilityEditor({
 							current.dayIndex,
 							event.clientX - current.startClientX,
 						),
-						...trackArgs,
+						...gestureWindow,
 					}),
 				});
 				break;
@@ -285,7 +290,7 @@ export function WeekAvailabilityEditor({
 						range: current.original,
 						edge: current.edge,
 						cursor: minutesAt(current.dayIndex, event.clientX),
-						...trackArgs,
+						...gestureWindow,
 					}),
 				});
 				break;
@@ -314,7 +319,6 @@ export function WeekAvailabilityEditor({
 			(current.type === "move" && current.moved) ||
 			current.type === "resize"
 		) {
-			suppressClickRef.current = true;
 			replaceDayRanges(
 				current.dayIndex,
 				Availability.mergedDayRanges([
@@ -325,7 +329,6 @@ export function WeekAvailabilityEditor({
 				]),
 			);
 		} else if (current.type === "fill") {
-			suppressClickRef.current = true;
 			onChange(
 				value.map((day, index) => {
 					if (
@@ -408,8 +411,15 @@ export function WeekAvailabilityEditor({
 		date: string,
 		event: React.MouseEvent<HTMLElement>,
 	) => {
-		if (suppressClickRef.current) {
-			suppressClickRef.current = false;
+		const pressedAt = pressPointRef.current;
+		pressPointRef.current = null;
+
+		if (
+			pressedAt &&
+			event.detail > 0 &&
+			Math.hypot(event.clientX - pressedAt.x, event.clientY - pressedAt.y) >
+				MOVE_THRESHOLD_PX
+		) {
 			return;
 		}
 
@@ -452,6 +462,7 @@ export function WeekAvailabilityEditor({
 						trackRefs.current[dayIndex] = element;
 					}}
 					className={clsx(trackStyles.track, styles.paintable)}
+					data-testid={`availability-track-${dayIndex}`}
 					onPointerDown={handleTrackPointerDown(dayIndex)}
 					onPointerMove={handleGestureMove}
 					onPointerUp={handleGestureEnd}
