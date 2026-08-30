@@ -192,7 +192,11 @@ function StageByModeGrid({
 	return (
 		<>
 			{modesInOrder.map((mode) => (
-				<div key={mode} className={styles.modeGroup}>
+				<div
+					key={mode}
+					className={styles.modeGroup}
+					data-testid="pick-ban-mode-group"
+				>
 					<Divider className={styles.divider}>
 						<ModeImage mode={mode} size={32} />
 					</Divider>

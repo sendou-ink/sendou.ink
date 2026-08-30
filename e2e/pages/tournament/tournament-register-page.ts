@@ -37,6 +37,10 @@ export class TournamentRegisterPage {
 			organizerAddedLeaveExplanation: page.getByText(
 				"You were added to the team by the organizer. Contact the TO to leave the team.",
 			),
+			addPlayerButton: page.getByTestId("add-player-button"),
+			copyInviteLinkButton: page.getByRole("button", {
+				name: "Copy to clipboard",
+			}),
 		};
 	}
 
@@ -58,6 +62,11 @@ export class TournamentRegisterPage {
 	/** Opens the quick add dropdown so its player rows render. */
 	async openQuickAdd() {
 		await this.page.getByTestId("quick-add-select").getByRole("button").click();
+	}
+
+	/** The roster footer of a format too small to have subs, e.g. "2v2". */
+	noSubsFooter(format: string) {
+		return this.page.getByText(`Format is ${format}. No subs allowed.`);
 	}
 
 	stepCheckmark(number: number) {

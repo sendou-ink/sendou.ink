@@ -51,6 +51,8 @@ export class TournamentMatchPage {
 			banAMapText: page.getByText(/Ban a map/),
 			lastBanText: page.getByText(/Ban a map \(2\/2\)/),
 			pickAMapText: page.getByText(/Pick a map/),
+			// counterpick options are grouped by mode, one group per mode still available
+			pickBanModeGroups: page.getByTestId("pick-ban-mode-group"),
 			actionPanel: page.getByRole("tabpanel", { name: TAB_LABELS.action }),
 			rostersPanel: page.getByRole("tabpanel", { name: TAB_LABELS.rosters }),
 			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),

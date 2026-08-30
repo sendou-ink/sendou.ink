@@ -226,6 +226,62 @@ test.describe("Tournament", () => {
 		await expect(row(friend.id)).toHaveAttribute("data-status", "available");
 	});
 
+	test("registers a two player roster for a 2v2 tournament that takes no third member", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, ...friends] = await factories.UserFactory.createMany(3);
+		for (const friend of friends) {
+			await factories.FriendshipFactory.create({
+				userOneId: captain.id,
+				userTwoId: friend.id,
+			});
+		}
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			// check-in opens an hour before the tournament starts
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+			minMembersPerTeam: 2,
+		});
+		// the bracket preview needs an opponent to have anything to show
+		const opponents = await factories.UserFactory.createMany(2);
+		await factories.TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				team: pickUpTeam("Opponent"),
+				memberUserIds: opponents.map((user) => user.id),
+			},
+			{ isCheckedIn: true },
+		);
+
+		await impersonate(page, captain.id);
+
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+
+		await expect(register.member(1)).toBeVisible();
+		await expect(register.noSubsFooter("2v2")).toBeVisible();
+
+		await register.addPlayer();
+		await expect(register.member(2)).toBeVisible();
+
+		// a 2v2 roster is full at two: no room for the second friend or anyone
+		// coming in through the invite link
+		await isNotVisible(register.locators.addPlayerButton);
+		await isNotVisible(register.locators.copyInviteLinkButton);
+
+		await register.checkIn();
+
+		const brackets = await register.openBrackets();
+		await expect(brackets.teamName(TEAM_NAME).first()).toBeVisible();
+	});
+
 	test("checks in and appears on the bracket", async ({ page, factories }) => {
 		const tournament = await factories.TournamentFactory.create({
 			authorId: ADMIN_ID,
