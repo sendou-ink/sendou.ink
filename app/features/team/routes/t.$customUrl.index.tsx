@@ -1,4 +1,5 @@
 import {
+	CalendarDays,
 	LogOut,
 	Menu,
 	SquarePen,
@@ -115,13 +116,26 @@ function ActionButtons() {
 	const team = layoutData.team;
 	const canManageRoster = useHasPermission(team, "MANAGE_ROSTER");
 	const canEditTeam = useHasPermission(team, "EDIT");
+	const isMember = isTeamMember({ user, team });
 
-	if (!isTeamMember({ user, team }) && !canManageRoster && !canEditTeam) {
+	if (!isMember && !canManageRoster && !canEditTeam) {
 		return null;
 	}
 
 	return (
 		<div className={styles.actionButtons}>
+			{isMember ? (
+				<LinkButton
+					size="small"
+					to="schedule"
+					variant="outlined"
+					prefetch="intent"
+					icon={<CalendarDays />}
+					testId="team-schedule-button"
+				>
+					{t("team:actionButtons.schedule")}
+				</LinkButton>
+			) : null}
 			{canManageRoster ? (
 				<LinkButton
 					size="small"

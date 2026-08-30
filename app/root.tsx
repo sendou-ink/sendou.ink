@@ -56,6 +56,7 @@ import {
 	useTheme,
 } from "./features/theme/core/provider";
 import { getThemeSession } from "./features/theme/core/theme-session.server";
+import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
 import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
@@ -87,6 +88,7 @@ export const middleware: Route.MiddlewareFunction[] = [
 	sessionIdMiddleware,
 	userMiddleware,
 	i18nMiddleware,
+	timezoneMiddleware,
 ];
 
 import "~/styles/fonts.css";
@@ -101,6 +103,16 @@ import "nprogress/nprogress.css";
 // module scope (not in an effect) so the very first navigation's NProgress.start
 // already targets the header instead of briefly rendering over the sidebar.
 NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
+
+type DevFaviconColors = { fill: string; stroke: string };
+
+// tints the favicon per local dev instance so the browser tabs of parallel
+// worktrees are told apart, matching each one's VS Code (Peacock) colors
+const DEV_FAVICON_COLORS: Record<string, DevFaviconColors | undefined> = {
+	yellow: { fill: "#eae4c8", stroke: "#dcd2a3" },
+	pink: { fill: "#eac8dd", stroke: "#dca3c6" },
+	cyan: { fill: "#c8e3ea", stroke: "#a3d0dc" },
+};
 
 export const shouldRevalidate: ShouldRevalidateFunction = (args) => {
 	if (isMatchResultsScopedRevalidation(args)) return false;
@@ -162,6 +174,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 					}
 				: undefined,
 			customTheme: isSupporter(user) ? user?.customTheme : undefined,
+			devFaviconColors: devFaviconColors(request),
 			...layoutData,
 		},
 		{
@@ -247,6 +260,9 @@ function Document({
 					/>
 				))}
 				<ThemeHead />
+				{data?.devFaviconColors ? (
+					<DevFavicon colors={data.devFaviconColors} />
+				) : null}
 				<link rel="manifest" href="/app.webmanifest" />
 				<PWALinks />
 				<Fonts />
@@ -487,6 +503,26 @@ function HydrationTestIndicator() {
 			// once the toast params are gone from here have the forms keyed on
 			// the location (see SendouForm) finished remounting
 			data-location-search={location.search}
+		/>
+	);
+}
+
+function devFaviconColors(request: Request) {
+	if (process.env.NODE_ENV !== "development") return;
+
+	const [subdomain] = new URL(request.url).hostname.split(".");
+
+	return DEV_FAVICON_COLORS[subdomain];
+}
+
+function DevFavicon({ colors }: { colors: DevFaviconColors }) {
+	const svg = `<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32"><rect x="2" y="2" width="28" height="28" rx="8" fill="${colors.fill}" stroke="${colors.stroke}" stroke-width="4" /></svg>`;
+
+	return (
+		<link
+			rel="icon"
+			type="image/svg+xml"
+			href={`data:image/svg+xml,${encodeURIComponent(svg)}`}
 		/>
 	);
 }

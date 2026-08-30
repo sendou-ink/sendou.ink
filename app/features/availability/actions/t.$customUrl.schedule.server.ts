@@ -1,0 +1,82 @@
+import type { ActionFunction } from "react-router";
+import * as v from "valibot";
+import { requireUser } from "~/features/auth/core/user.server";
+import { notify } from "~/features/notifications/core/notify.server";
+import * as TeamRepository from "~/features/team/TeamRepository.server";
+import { teamParamsSchema } from "~/features/team/team-schemas.server";
+import { parseFormData } from "~/form/parse.server";
+import { requirePermission } from "~/modules/permissions/guards.server";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
+import { assertUnreachable } from "~/utils/types";
+import * as AvailabilityRepository from "../AvailabilityRepository.server";
+import { teamScheduleActionSchema } from "../availability-schemas";
+
+export const action: ActionFunction = async ({ request, params }) => {
+	const user = requireUser();
+	const { customUrl } = v.parse(teamParamsSchema, params);
+
+	const team = notFoundIfNullish(
+		await TeamRepository.findByCustomUrl(customUrl),
+	);
+
+	requirePermission(team, "EDIT");
+
+	const result = await parseFormData({
+		request,
+		schema: teamScheduleActionSchema,
+	});
+
+	if (!result.success) {
+		return { fieldErrors: result.fieldErrors };
+	}
+
+	const data = result.data;
+
+	switch (data._action) {
+		case "ADD_EVENT": {
+			const startsAt = dateToDatabaseTimestamp(data.startsAt);
+
+			await AvailabilityRepository.insertTeamEvent({
+				teamId: team.id,
+				name: data.name,
+				startsAt,
+				endsAt: startsAt + Number(data.duration) * 60,
+			});
+
+			await notify({
+				userIds: team.members
+					.filter(
+						(member) => member.id !== user.id && member.role !== "CHEERLEADER",
+					)
+					.map((member) => member.id),
+				notification: {
+					type: "TEAM_EVENT_ADDED",
+					meta: {
+						eventName: data.name,
+						teamName: team.name,
+						teamCustomUrl: team.customUrl,
+					},
+					pictureUrl: team.avatarUrl ?? undefined,
+				},
+			});
+
+			return null;
+		}
+		case "DELETE_EVENT": {
+			const event = notFoundIfNullish(
+				await AvailabilityRepository.findTeamEventById(data.eventId),
+			);
+			errorToastIfFalsy(
+				event.teamId === team.id,
+				"Event does not belong to the team",
+			);
+
+			await AvailabilityRepository.deleteTeamEvent(event.id);
+
+			return null;
+		}
+		default:
+			assertUnreachable(data);
+	}
+};

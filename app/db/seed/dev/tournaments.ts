@@ -121,7 +121,13 @@ const SWISS_TO_SINGLE_ELIMINATION: Progression = [
 
 export type SeededTournaments = {
 	/** The one with registration still open, which the notifications are about. */
-	regOpen: { id: number; name: string };
+	regOpen: {
+		id: number;
+		name: string;
+		startsAt: number;
+		/** The roster the admin registered on. */
+		memberUserIds: number[];
+	};
 	/** Teams N-ZAP played on in the tournaments that were played to the end. */
 	nzapTeamIds: number[];
 };
@@ -145,6 +151,7 @@ export async function seedTournaments({
 		users,
 		organizations,
 		rosters,
+		teams,
 		trophies,
 	});
 	await seedPaddlingPool({ users, organizations, rosters });
@@ -169,21 +176,25 @@ type Ctx = {
 };
 
 /** #1 double elim, TO maps — reg open and a couple of days out, so it has both
- * registered teams (some of them still short of a full roster) and LFG teams. */
+ * registered teams (some of them still short of a full roster) and LFG teams.
+ * The admin registers with Alliance Rogue on a roster whose availability mixes
+ * every state the registration page's panel can show. */
 async function seedInTheZone({
 	users,
 	organizations,
 	rosters,
+	teams,
 	trophies,
-}: Ctx & { trophies: SeededTrophies }) {
+}: Ctx & { teams: SeededTeams; trophies: SeededTrophies }) {
 	const name = nameFor("In The Zone");
+	const startsAt = dateToDatabaseTimestamp(daysFromNow(2));
 
 	const tournament = await TournamentFactory.create({
 		name,
 		authorId: users.adminId,
 		organizationId: organizations[0]?.id,
 		avatarFileName: "in-the-zone.png",
-		startTimes: [dateToDatabaseTimestamp(daysFromNow(2))],
+		startTimes: [startsAt],
 		mapPickingStyle: "TO",
 		mapPoolMaps: toSetMapPool(),
 		bracketProgression: DOUBLE_ELIMINATION,
@@ -191,10 +202,28 @@ async function seedInTheZone({
 		trophyId: trophies.ids[0],
 	});
 
+	// availability panel states, in roster order: the admin and multiRange are
+	// fully available, weekend is free only from an hour in, unavailable
+	// submitted an empty week and the captain (N-ZAP) reports nothing at all
+	const [, multiRangeId, , unavailableId, weekendId] =
+		teams.allianceRogue.playerUserIds;
+	const allianceRogueRoster: Roster = {
+		teamId: teams.allianceRogueId,
+		name: teams.squads.find((squad) => squad.teamId === teams.allianceRogueId)!
+			.name,
+		memberUserIds: [
+			users.adminId,
+			multiRangeId,
+			weekendId,
+			unavailableId,
+			users.nzapId,
+		],
+	};
+
 	const teamRosters = rosters.take({
 		teamCount: 10,
 		teamSize: 4,
-		pinned: [{ teamIdx: 0, userId: users.adminId }],
+		preset: [allianceRogueRoster],
 	});
 
 	for (const [i, roster] of teamRosters.entries()) {
@@ -210,7 +239,12 @@ async function seedInTheZone({
 
 	await seedTournamentExtras(tournament.id, users);
 
-	return { id: tournament.id, name };
+	return {
+		id: tournament.id,
+		name,
+		startsAt,
+		memberUserIds: teamRosters[0].memberUserIds,
+	};
 }
 
 /** #2 double elim with an underground bracket, AUTO_SZ, ranked — bracket started,
@@ -417,7 +451,9 @@ async function seedTournamentExtras(tournamentId: number, users: SeededUsers) {
 		await TournamentStreamerFactory.create({ tournamentId, twitchAccount });
 	}
 
-	const lfgUserIds = [users.nzapId, ...users.showcaseIds.slice(90, 95)];
+	// N-ZAP used to be the demo LFG poster, but he registers with Alliance
+	// Rogue now — a player cannot both be on a team and look for one
+	const lfgUserIds = users.showcaseIds.slice(90, 96);
 
 	const lfgTeamIds: number[] = [];
 	for (const [i, userId] of lfgUserIds.entries()) {
@@ -474,17 +510,24 @@ function rosterBuilder(users: SeededUsers, teams: SeededTeams) {
 		/** Rosters for one tournament: some of the site's teams registering as
 		 * themselves, core players spread over the rest, and the remaining seats drawn
 		 * without replacement within the tournament. A `pinned` user is added to a
-		 * roster of their own as its owner, and kept out of everybody else's. */
+		 * roster of their own as its owner, and kept out of everybody else's. A
+		 * `preset` roster takes the first team slots exactly as given, its members
+		 * kept out of every other roster. */
 		take({
 			teamCount,
 			teamSize,
 			pinned = [],
+			preset = [],
 		}: {
 			teamCount: number;
 			teamSize: number;
 			pinned?: Array<{ teamIdx: number; userId: number }>;
+			preset?: Roster[];
 		}): Roster[] {
-			const pinnedUserIds = new Set(pinned.map((pin) => pin.userId));
+			const pinnedUserIds = new Set([
+				...pinned.map((pin) => pin.userId),
+				...preset.flatMap((roster) => roster.memberUserIds),
+			]);
 			const registering = faker.helpers
 				.shuffle(
 					teams.squads.filter((squad) =>
@@ -494,7 +537,10 @@ function rosterBuilder(users: SeededUsers, teams: SeededTeams) {
 				.slice(0, Math.round(teamCount * REGISTERED_TEAM_SHARE));
 
 			// a tournament can not have two teams of the same name
-			const takenNames = new Set(registering.map((squad) => squad.name));
+			const takenNames = new Set([
+				...registering.map((squad) => squad.name),
+				...preset.map((roster) => roster.name),
+			]);
 
 			const takenUserIds = new Set([
 				...pinnedUserIds,
@@ -505,13 +551,16 @@ function rosterBuilder(users: SeededUsers, teams: SeededTeams) {
 			const shuffled = faker.helpers.shuffle(pool.filter(isFree));
 			const freeCorePlayers = corePlayers.filter(isFree);
 
-			// the teams of the site take the first team slots a pin does not want
+			// the teams of the site take the first team slots a preset or a pin
+			// does not want
 			const pinnedIdxs = new Set(pinned.map((pin) => pin.teamIdx));
 			const registeringIdxs = Array.from({ length: teamCount }, (_, i) => i)
-				.filter((i) => !pinnedIdxs.has(i))
+				.filter((i) => !pinnedIdxs.has(i) && i >= preset.length)
 				.slice(0, registering.length);
 
 			return Array.from({ length: teamCount }, (_, i) => {
+				if (i < preset.length) return preset[i];
+
 				const registeringIdx = registeringIdxs.indexOf(i);
 				if (registeringIdx !== -1) {
 					const squad = registering[registeringIdx];

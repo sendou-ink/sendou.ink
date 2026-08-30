@@ -1,0 +1,181 @@
+.paintable {
+	cursor: crosshair;
+}
+
+.editor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.bar {
+	container: bar / inline-size;
+	position: absolute;
+	top: 3px;
+	bottom: 3px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: 0;
+	background-color: var(--color-success-low);
+	border: 1px solid var(--color-success);
+	border-radius: var(--radius-field);
+	cursor: grab;
+	z-index: 1;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}
+
+.barPreview {
+	border-style: dashed;
+	opacity: 0.7;
+	pointer-events: none;
+}
+
+.barTimes,
+.barTimesShort {
+	display: none;
+	max-width: 100%;
+	padding-inline: var(--s-1);
+	font-size: var(--font-3xs);
+	color: var(--color-text);
+	white-space: nowrap;
+	overflow: hidden;
+	pointer-events: none;
+}
+
+@container bar (min-width: 3rem) {
+	.barTimesShort {
+		display: block;
+	}
+}
+
+@container bar (min-width: 7.5rem) {
+	.barTimes {
+		display: block;
+	}
+
+	.barTimesShort {
+		display: none;
+	}
+}
+
+.handle {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 8px;
+	cursor: ew-resize;
+
+	&.handleStart {
+		left: -2px;
+	}
+
+	&.handleEnd {
+		right: -2px;
+	}
+}
+
+.fillHandle {
+	position: absolute;
+	right: 8px;
+	bottom: -5px;
+	width: 10px;
+	height: 10px;
+	background-color: var(--color-success);
+	border: 2px solid var(--color-bg);
+	border-radius: var(--radius-full);
+	cursor: ns-resize;
+	opacity: 0;
+
+	.bar:hover &,
+	.bar:focus-visible & {
+		opacity: 1;
+	}
+}
+
+.liveLabel {
+	position: absolute;
+	bottom: calc(100% + 4px);
+	z-index: 3;
+	padding: 0 var(--s-1-5);
+	background-color: var(--color-bg-higher);
+	border-radius: var(--radius-field);
+	font-size: var(--font-2xs);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.editButton {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	padding: var(--s-1);
+	background: none;
+	border: none;
+	border-radius: var(--radius-field);
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	&:hover {
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}
+
+.footer {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.addChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-0-5);
+	padding: var(--s-0-5) var(--s-1);
+	background: none;
+	border: none;
+	border-radius: var(--radius-full);
+	font-size: var(--font-xs);
+	color: var(--color-text-accent);
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}
+
+.listNote {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.dayEditor {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	min-width: 240px;
+}
+
+.dayEditorTitle {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.dayEditorRange {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+}
+
+.dayEditorAdd {
+	align-self: start;
+}

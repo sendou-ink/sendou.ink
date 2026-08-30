@@ -1,0 +1,44 @@
+.content {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+}
+
+.range {
+	white-space: nowrap;
+}
+
+.unknown,
+.unavailable {
+	color: var(--color-text-high);
+}
+
+.busy {
+	display: flex;
+	align-items: center;
+	max-width: 10rem;
+	padding: var(--s-0-5) var(--s-1-5);
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--color-bg-higher) 0 5px,
+		transparent 5px 10px
+	);
+	border-radius: var(--radius-full);
+	align-self: flex-start;
+
+	& .busyName {
+		max-width: 100%;
+		padding-inline: var(--s-1);
+		font-size: var(--font-3xs);
+		color: var(--color-text-high);
+		white-space: nowrap;
+		overflow: hidden;
+		text-overflow: ellipsis;
+		background-color: var(--color-bg);
+		border-radius: var(--radius-full);
+	}
+}
+
+.noteFlag {
+	color: var(--color-text-accent);
+}

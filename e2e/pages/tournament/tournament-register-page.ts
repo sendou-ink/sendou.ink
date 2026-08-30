@@ -6,7 +6,11 @@ import {
 	counterpickMap,
 	pickCounterpickMaps,
 } from "../../helpers/counterpick-map-pool";
-import { navigate, submit } from "../../helpers/playwright";
+import {
+	modalClickConfirmButton,
+	navigate,
+	submit,
+} from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 import { TournamentNav } from "./tournament-nav";
 
@@ -51,6 +55,15 @@ export class TournamentRegisterPage {
 		return this.page.getByTestId(`member-num-${number}`);
 	}
 
+	availabilityRow(userId: number) {
+		return this.page.getByTestId(`availability-row-${userId}`);
+	}
+
+	/** Opens the quick add dropdown so its player rows render. */
+	async openQuickAdd() {
+		await this.page.getByTestId("quick-add-select").getByRole("button").click();
+	}
+
 	/** The roster footer of a format too small to have subs, e.g. "2v2". */
 	noSubsFooter(format: string) {
 		return this.page.getByText(`Format is ${format}. No subs allowed.`);
@@ -66,6 +79,12 @@ export class TournamentRegisterPage {
 
 	addPlayer() {
 		return submit(this.page, "add-player-button");
+	}
+
+	/** Adds every player-role member of the sendou.ink team via the quick add all button, confirming the dialog. */
+	async addAllTeamPlayers(teamId: number) {
+		await this.page.getByTestId(`add-team-players-button-${teamId}`).click();
+		await modalClickConfirmButton(this.page);
 	}
 
 	/** Picks the required amount of counterpick maps for every mode, skipping banned ones. */

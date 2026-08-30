@@ -1,9 +1,11 @@
+import { subDays } from "date-fns";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
 import * as ArtRepository from "~/features/art/ArtRepository.server";
 import * as AssociationRepository from "~/features/associations/AssociationRepository.server";
 import * as LogInLinkRepository from "~/features/auth/LogInLinkRepository.server";
+import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
 import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
@@ -156,6 +158,66 @@ export function buildCases(fx: Fixtures): {
 	// LogInLinkRepository
 	add("LogInLinkRepository.findValidByCode", fx.logInLinkCode, (code) =>
 		LogInLinkRepository.findValidByCode(code),
+	);
+
+	// AvailabilityRepository
+	add(
+		"AvailabilityRepository.findAllWeeksByUserIds",
+		both(fx.manyUserIds, fx.availabilityWindow),
+		([userIds, window]) =>
+			AvailabilityRepository.findAllWeeksByUserIds({
+				userIds,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add(
+		"AvailabilityRepository.hasReportedWeek",
+		both(fx.heavyUser, fx.availabilityWindow),
+		([user, window]) =>
+			AvailabilityRepository.hasReportedWeek({
+				userId: user.id,
+				weekStartsAt: window.weekStartsAt,
+			}),
+	);
+	add(
+		"AvailabilityRepository.findWeekReminderUserIds",
+		fx.availabilityWindow,
+		(window) =>
+			AvailabilityRepository.findWeekReminderUserIds(window.weekStartsAt),
+	);
+	add(
+		"AvailabilityRepository.findAllTeamEventsByUserIds",
+		both(fx.manyUserIds, fx.availabilityWindow),
+		([userIds, window]) =>
+			AvailabilityRepository.findAllTeamEventsByUserIds({
+				userIds,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add(
+		"AvailabilityRepository.findTeamEventsByTeamId",
+		both(fx.heavyTeam, fx.availabilityWindow),
+		([team, window]) =>
+			AvailabilityRepository.findTeamEventsByTeamId({
+				teamId: team.id,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add(
+		"AvailabilityRepository.findAllUpcomingTeamEventsByUserId",
+		both(fx.heavyTeam, fx.availabilityWindow),
+		([team, window]) =>
+			AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+				userId: team.memberUserId,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add("AvailabilityRepository.findTeamEventById", fx.teamEventId, (id) =>
+		AvailabilityRepository.findTeamEventById(id),
 	);
 
 	// BadgeRepository
@@ -625,6 +687,16 @@ export function buildCases(fx: Fixtures): {
 	add("ScrimPostRepository.findUserScrims", fx.scrimUserIds, (userIds) =>
 		ScrimPostRepository.findUserScrims(userIds[0]),
 	);
+	add(
+		"ScrimPostRepository.findAllAcceptedByUserIds",
+		both(fx.scrimUserIds, fx.scrimWindow),
+		([userIds, window]) =>
+			ScrimPostRepository.findAllAcceptedByUserIds({
+				userIds,
+				startsAt: dateToDatabaseTimestamp(window.startTime),
+				endsAt: dateToDatabaseTimestamp(window.endTime),
+			}),
+	);
 
 	// GroupMatchContinueVoteRepository
 	add(
@@ -1028,9 +1100,15 @@ export function buildCases(fx: Fixtures): {
 				org.memberUserId,
 			),
 	);
+	addStatic("TournamentOrganizationRepository.findAllSeries", () =>
+		TournamentOrganizationRepository.findAllSeries(),
+	);
 	addStatic(
-		"TournamentOrganizationRepository.findAllSeriesWithTierHistory",
-		() => TournamentOrganizationRepository.findAllSeriesWithTierHistory(),
+		"TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts",
+		() =>
+			TournamentOrganizationRepository.findAllOrganizedTournamentTeamCounts({
+				startedAfter: dateToDatabaseTimestamp(subDays(new Date(), 90)),
+			}),
 	);
 
 	// SavedCalendarEventRepository
@@ -1228,6 +1306,16 @@ export function buildCases(fx: Fixtures): {
 		"TournamentTeamRepository.findMapPoolsByTeamIds",
 		fx.tournamentTeamPair,
 		(teamIds) => TournamentTeamRepository.findMapPoolsByTeamIds(teamIds),
+	);
+	add(
+		"TournamentTeamRepository.findAllRegistrationsByUserIds",
+		both(fx.manyUserIds, fx.availabilityWindow),
+		([userIds, window]) =>
+			TournamentTeamRepository.findAllRegistrationsByUserIds({
+				userIds,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
 	);
 	add(
 		"TournamentTeamRepository.isOrganizerAddedMember",

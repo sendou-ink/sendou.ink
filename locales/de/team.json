@@ -14,6 +14,7 @@
 	"actionButtons.leaveTeam.confirm": "Verlassen",
 	"actionButtons.editTeam": "Team bearbeiten",
 	"actionButtons.manageRoster": "",
+	"actionButtons.schedule": "",
 	"actionButtons.deleteTeam": "Team löschen",
 	"actionButtons.deleteTeam.profilePicture": "",
 	"actionButtons.deleteTeam.banner": "",

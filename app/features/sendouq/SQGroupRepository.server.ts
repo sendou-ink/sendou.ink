@@ -535,6 +535,8 @@ export async function findFriendsAndTeammates(userId: number) {
 			...commonUserSelect(eb),
 			"User.inGameName",
 			"TeamMemberWithSecondary.teamId",
+			"TeamMemberWithSecondary.role",
+			"TeamMemberWithSecondary.roleType",
 		])
 		.where(
 			"TeamMemberWithSecondary.teamId",
@@ -562,6 +564,8 @@ export async function findFriendsAndTeammates(userId: number) {
 					...commonUserSelect(eb),
 					"User.inGameName",
 					sql<any>`null`.as("teamId"),
+					sql<Tables["TeamMember"]["role"]>`null`.as("role"),
+					sql<Tables["TeamMember"]["roleType"]>`null`.as("roleType"),
 				]),
 		)
 		.execute();

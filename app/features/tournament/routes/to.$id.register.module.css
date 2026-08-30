@@ -8,8 +8,10 @@
 	padding: var(--s-4) var(--s-3);
 }
 
-.sectionInputContainer {
-	width: 16rem;
+.sectionForm {
+	width: 100%;
+	max-width: 26rem;
+	margin-inline: auto;
 }
 
 .sectionWarning {
@@ -19,42 +21,110 @@
 	color: var(--color-text-high);
 }
 
-.rosterGrid {
-	display: grid;
-	grid-template-columns: repeat(auto-fill, 110px);
-	gap: var(--s-4);
-	margin-block-start: var(--s-2);
-	width: 100%;
-	justify-content: center;
+.teamOptionAvailability {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-weight: var(--weight-body);
 }
 
-.rosterGridMemberName {
-	max-width: 110px;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
+.rosterMutedNote {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
 }
 
-.missingPlayer {
-	width: 62px;
-	height: 62px;
-	font-size: 32px;
-	border-radius: 100%;
-	border: var(--border-style-accent);
+.rosterRows {
+	list-style: none;
+	margin: 0;
+	padding: 0;
+	display: flex;
+	flex-direction: column;
+
+	& > li {
+		padding-block: var(--s-2);
+
+		& + li {
+			border-top: 1px solid var(--color-border);
+		}
+	}
+}
+
+.emptySlotRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
 	color: var(--color-text-accent);
+}
+
+.emptySlotRowOptional {
+	color: var(--color-text-high);
+}
+
+.emptySlotCircle {
+	width: 24px;
+	height: 24px;
+	flex-shrink: 0;
 	display: grid;
 	place-items: center;
-	margin: 0 auto;
+	border-radius: var(--radius-full);
+	border: var(--border-style-accent);
+	color: var(--color-text-accent);
 }
 
-.missingPlayerOptional {
-	border: 2px dashed var(--color-text-accent);
-	color: var(--color-text-accent);
+.emptySlotCircleOptional {
+	border: var(--border-width) dashed var(--color-text-accent);
+}
+
+.addMembers {
+	border-top: 1px solid var(--color-border);
+	padding-top: var(--s-3);
+}
+
+.addMembersHeading {
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+}
+
+.quickAddRow {
+	display: flex;
+	align-items: flex-end;
+	gap: var(--s-2);
+}
+
+.quickAddSelect {
+	flex: 1;
+	min-width: 0;
+}
+
+.quickAddAllRow {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+}
+
+.quickAddItem {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	min-width: 0;
+}
+
+.quickAddItemAvailability {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-body);
 }
 
 @container (width >= 640px) {
 	.section {
 		margin: 0;
 		border-radius: var(--radius-box);
+		padding: var(--s-6) var(--s-5);
 	}
 }

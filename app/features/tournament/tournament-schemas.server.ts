@@ -4,6 +4,7 @@ import { _action } from "~/utils/schema";
 import { registerTeamFormSchemaServer } from "./tournament-register-schemas.server";
 import {
 	addPlayerSchema,
+	addTeamPlayersSchema,
 	checkInSchema,
 	deleteTeamMemberSchema,
 	updateMapPoolSchema,
@@ -25,6 +26,7 @@ export function registerSchema({
 		}),
 		checkInSchema,
 		addPlayerSchema,
+		addTeamPlayersSchema,
 		v.object({
 			_action: _action("UNREGISTER"),
 		}),

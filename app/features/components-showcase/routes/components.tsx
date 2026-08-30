@@ -52,6 +52,11 @@ import { SubNav, SubNavLink } from "~/components/SubNav";
 import { Table } from "~/components/Table";
 import { TierPill } from "~/components/TierPill";
 import { WeaponSelect } from "~/components/WeaponSelect";
+import type {
+	AvailabilityEditorWeek,
+	EditorCommitment,
+} from "~/features/availability/availability-types";
+import { WeekAvailabilityEditor } from "~/features/availability/components/WeekAvailabilityEditor";
 import {
 	ChangelogGraphic,
 	type ChangelogGraphicEntry,
@@ -85,7 +90,7 @@ import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q", "calendar", "tournament"],
+	i18n: ["user", "q", "calendar", "tournament", "schedule"],
 };
 
 export const SECTIONS = [
@@ -153,6 +158,7 @@ export const SECTIONS = [
 	{ title: "Tier Pills", id: "tier-pills", component: TierPillSection },
 	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
 	{ title: "Form Fields", id: "form-fields", component: FormFieldsSection },
+	{ title: "Schedule", id: "schedule", component: ScheduleSection },
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
 ] as const;
 
@@ -3008,6 +3014,85 @@ function FormFieldsSection({ id }: { id: string }) {
 					</div>
 				)}
 			</SendouForm>
+		</Section>
+	);
+}
+
+const SCHEDULE_EXAMPLE_WEEK: AvailabilityEditorWeek = [
+	{ date: "2026-08-24", ranges: [{ start: 18 * 60, end: 22 * 60 }], note: "" },
+	{ date: "2026-08-25", ranges: [], note: "" },
+	{
+		date: "2026-08-26",
+		ranges: [{ start: 19 * 60, end: 23 * 60 }],
+		note: "Have to stop earlier, work trip next morning",
+	},
+	{ date: "2026-08-27", ranges: [{ start: 18 * 60, end: 22 * 60 }], note: "" },
+	{ date: "2026-08-28", ranges: [], note: "" },
+	{ date: "2026-08-29", ranges: [{ start: 12 * 60, end: 26 * 60 }], note: "" },
+	{ date: "2026-08-30", ranges: [{ start: 18 * 60, end: 22 * 60 }], note: "" },
+];
+
+const SCHEDULE_EXAMPLE_COMMITMENTS: Array<EditorCommitment> = [
+	{
+		date: "2026-08-26",
+		range: { start: 20 * 60, end: 21 * 60 + 30 },
+		name: "VoD review vs. FTWin",
+	},
+	{
+		date: "2026-08-30",
+		range: { start: 12 * 60, end: 18 * 60 },
+		name: "In The Zone 42",
+	},
+];
+
+function ScheduleSection({ id }: { id: string }) {
+	const [week, setWeek] = useState(SCHEDULE_EXAMPLE_WEEK);
+	const rangeCount = week.reduce((acc, day) => acc + day.ranges.length, 0);
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Schedule</SectionTitle>
+
+			<div className="stack md">
+				<div className="stack sm">
+					<div className={styles.componentLabel}>Week availability editor</div>
+					<WeekAvailabilityEditor
+						value={week}
+						onChange={setWeek}
+						commitments={SCHEDULE_EXAMPLE_COMMITMENTS}
+					/>
+					<div className="stack horizontal sm">
+						<SendouButton
+							variant="outlined"
+							size="small"
+							onPress={() => setWeek(SCHEDULE_EXAMPLE_WEEK)}
+						>
+							Reset
+						</SendouButton>
+						<SendouButton
+							size="small"
+							onPress={() =>
+								toastQueue.add({
+									message: `Saved week with ${rangeCount} time ranges`,
+									variant: "success",
+								})
+							}
+						>
+							Save week
+						</SendouButton>
+					</div>
+				</div>
+
+				<ComponentRow label="Narrow container (mobile layout, shares state with the editor above)">
+					<div className={styles.scheduleNarrow}>
+						<WeekAvailabilityEditor
+							value={week}
+							onChange={setWeek}
+							commitments={SCHEDULE_EXAMPLE_COMMITMENTS}
+						/>
+					</div>
+				</ComponentRow>
+			</div>
 		</Section>
 	);
 }

@@ -1,0 +1,27 @@
+.header {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+.weekHeading {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	margin-inline: var(--s-2);
+}
+
+.notFilled {
+	color: inherit;
+	opacity: 0.7;
+	font-size: var(--font-2xs);
+	margin-inline-start: var(--s-1);
+}
+
+.actions {
+	display: flex;
+	justify-content: space-between;
+	gap: var(--s-2);
+}

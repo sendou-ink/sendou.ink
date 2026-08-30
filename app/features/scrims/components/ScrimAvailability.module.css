@@ -1,0 +1,53 @@
+.stripe {
+	width: 100%;
+	height: auto;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1) var(--s-4);
+	margin-block-start: auto;
+	border-block-start: var(--border-style);
+	border-radius: 0;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.stripeTeam {
+	color: var(--color-text-high);
+	text-transform: uppercase;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.stripeCount {
+	margin-inline-start: auto;
+	color: var(--color-text);
+	white-space: nowrap;
+}
+
+.popover {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	max-width: 20rem;
+}
+
+.rowsSection {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2-5);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}

@@ -8,6 +8,7 @@ import {
 import { TeamEditPage } from "./team-edit-page";
 import { TeamResultsPage } from "./team-results-page";
 import { TeamRosterPage } from "./team-roster-page";
+import { TeamSchedulePage } from "./team-schedule-page";
 
 export class TeamPage {
 	private readonly page: Page;
@@ -25,6 +26,7 @@ export class TeamPage {
 			makeMainTeamButton: page.getByTestId("make-main-team-button"),
 			leaveTeamButton: page.getByTestId("leave-team-button"),
 			deleteTeamButton: page.getByTestId("delete-team-button"),
+			scheduleButton: page.getByTestId("team-schedule-button"),
 			otherRolesTab: page.getByRole("tab", { name: /Other/ }),
 			confirmDialog: page.getByRole("dialog"),
 			resultsBannerLink: page.getByRole("link", { name: /View \d+ results/ }),
@@ -60,6 +62,11 @@ export class TeamPage {
 	async openResults() {
 		await this.locators.resultsBannerLink.click();
 		return new TeamResultsPage(this.page);
+	}
+
+	async openSchedule() {
+		await this.locators.scheduleButton.click();
+		return new TeamSchedulePage(this.page);
 	}
 
 	async openActionsMenu() {

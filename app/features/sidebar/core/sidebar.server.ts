@@ -1,8 +1,11 @@
 import { cachified } from "@epic-web/cachified";
-import { addDays } from "date-fns";
+import { addDays, addWeeks } from "date-fns";
 import { href } from "react-router";
 import * as R from "remeda";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
+import type { AuthenticatedUser } from "~/features/auth/core/user.server";
+import * as AvailabilityRepository from "~/features/availability/AvailabilityRepository.server";
+import * as Availability from "~/features/availability/core/Availability";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import type { ShowcaseCalendarEvent } from "~/features/calendar/calendar-types";
 import {
@@ -27,6 +30,7 @@ import type { SidebarScrim } from "~/features/scrims/ScrimPostRepository.server"
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import { scrimsSearchParams } from "~/features/scrims/scrims-search-params";
 import { getSendouQSidebarStreams } from "~/features/sendouq-streams/core/streams.server";
+import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import { cache, ttl } from "~/utils/cache.server";
@@ -36,6 +40,7 @@ import {
 	BLANK_IMAGE_URL,
 	discordAvatarUrl,
 	navIconUrl,
+	teamSchedulePage,
 	twitchUrl,
 	userPage,
 } from "~/utils/urls";
@@ -49,7 +54,7 @@ export type SidebarEvent = {
 	/** Whose avatar the event shows instead of a logo of its own. */
 	user: CommonUser | null;
 	startsAt: number;
-	type: "tournament" | "scrim";
+	type: "tournament" | "scrim" | "teamEvent";
 	scrimStatus?: "booked" | "looking" | "requestPending";
 };
 
@@ -75,7 +80,9 @@ const UPCOMING_TOURNAMENT_WINDOW_DAYS = 3;
 const SENDOUQ_QUOTA = 2;
 const TOURNAMENT_SUB_QUOTA = 2;
 
-export async function resolveSidebarData(userId: number | null) {
+export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
+	const userId = user?.id ?? null;
+
 	if (!userId) {
 		return {
 			events: [] as SidebarEvent[],
@@ -83,24 +90,22 @@ export async function resolveSidebarData(userId: number | null) {
 			streams: await combinedStreamsCached(),
 			savedTournamentIds: [] as number[],
 			incomingFriendRequestIds: [] as number[],
+			scheduleNudge: false,
 		};
 	}
 
-	const [
-		tournamentsData,
-		scrimsData,
-		friendsWithActivity,
-		savedTournaments,
-		incomingFriendRequestIds,
-		streamedSendouQMatches,
-	] = await Promise.all([
-		ShowcaseTournaments.categorizedTournamentsByUserId(userId),
-		ScrimPostRepository.findUserScrims(userId),
-		FriendRepository.findByUserIdWithActivity(userId),
-		SavedCalendarEventRepository.findAllUpcomingByUserId(userId),
-		FriendRepository.findPendingReceivedRequestIds(userId),
-		resolveSendouQMatchStreams(),
-	]);
+	const tournamentsData =
+		await ShowcaseTournaments.categorizedTournamentsByUserId(userId);
+	const scrimsData = await ScrimPostRepository.findUserScrims(userId);
+	const friendsWithActivity =
+		await FriendRepository.findByUserIdWithActivity(userId);
+	const savedTournaments =
+		await SavedCalendarEventRepository.findAllUpcomingByUserId(userId);
+	const incomingFriendRequestIds =
+		await FriendRepository.findPendingReceivedRequestIds(userId);
+	const streamedSendouQMatches = await resolveSendouQMatchStreams();
+	const teamEvents = await findUpcomingTeamEvents(userId);
+	const scheduleNudge = await showScheduleNudge(user);
 
 	const seenTournamentIds = new Set<number>();
 	const tournamentEvents: SidebarEvent[] = [
@@ -123,7 +128,16 @@ export async function resolveSidebarData(userId: number | null) {
 
 	const scrimEvents: SidebarEvent[] = scrimsData.map(scrimToSidebarEvent);
 
-	const events = [...tournamentEvents, ...savedEvents, ...scrimEvents]
+	const teamEventEvents: SidebarEvent[] = teamEvents.map(
+		teamEventToSidebarEvent,
+	);
+
+	const events = [
+		...tournamentEvents,
+		...savedEvents,
+		...scrimEvents,
+		...teamEventEvents,
+	]
 		.sort((a, b) => a.startsAt - b.startsAt)
 		.slice(0, MAX_EVENTS_VISIBLE);
 
@@ -137,7 +151,36 @@ export async function resolveSidebarData(userId: number | null) {
 		streams: await combinedStreamsCached(),
 		savedTournamentIds,
 		incomingFriendRequestIds,
+		scheduleNudge,
 	};
+}
+
+/**
+ * Whether to prompt the user to report next week: they are on its last day, it
+ * is still empty, and they have not waved the prompt away for this week.
+ */
+async function showScheduleNudge(user: AuthenticatedUser | undefined) {
+	if (!user) return false;
+
+	const timezone = getViewerTimezone() ?? "UTC";
+	const now = new Date();
+
+	if (!Availability.isLastDayOfWeek(now, timezone)) return false;
+
+	const weekStartsAt = Availability.weekStartsAt(addWeeks(now, 1), timezone);
+	const dismissedAt = user.preferences?.scheduleNudgeDismissedWeekStartsAt;
+
+	if (
+		dismissedAt !== undefined &&
+		Availability.isSameWeek(dismissedAt, weekStartsAt)
+	) {
+		return false;
+	}
+
+	return !(await AvailabilityRepository.hasReportedWeek({
+		userId: user.id,
+		weekStartsAt,
+	}));
 }
 
 function combinedStreamsCached(): Promise<SidebarStream[]> {
@@ -413,6 +456,39 @@ export function tournamentToSidebarEvent(
 		user: null,
 		startsAt: t.startsAt,
 		type: "tournament" as const,
+	};
+}
+
+const TEAM_EVENT_WINDOW_DAYS = 14;
+
+/** Team events shown on the sidebar and the personal calendar page: ongoing ones and those starting within the next two weeks. */
+export function findUpcomingTeamEvents(userId: number) {
+	const now = new Date();
+
+	return AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+		userId,
+		startsAt: dateToDatabaseTimestamp(now),
+		endsAt: dateToDatabaseTimestamp(addDays(now, TEAM_EVENT_WINDOW_DAYS)),
+	});
+}
+
+type UpcomingTeamEvent = Awaited<
+	ReturnType<typeof AvailabilityRepository.findAllUpcomingTeamEventsByUserId>
+>[number];
+
+const TEAM_ICON_URL = `${navIconUrl("t")}.avif`;
+
+export function teamEventToSidebarEvent(
+	event: UpcomingTeamEvent,
+): SidebarEvent {
+	return {
+		id: event.id,
+		name: event.name,
+		url: teamSchedulePage(event.teamCustomUrl),
+		logoUrl: event.teamAvatarUrl ?? TEAM_ICON_URL,
+		user: null,
+		startsAt: event.startsAt,
+		type: "teamEvent" as const,
 	};
 }
 

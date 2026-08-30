@@ -1,10 +1,13 @@
 import { describe, expect, test } from "vitest";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	formatFlexTimeDisplay,
 	generateTimeOptions,
 	parseLutiDivFromName,
 	parseMapPoolInput,
+	postSpan,
+	requestStarts,
 } from "./scrims-utils";
 
 describe("parseLutiDivFromName", () => {
@@ -321,5 +324,54 @@ describe("parseMapPoolInput", () => {
 		expect(parseMapPoolInput(`foo=bar&pool=${VALID_POOL}`)?.serialized).toBe(
 			VALID_POOL,
 		);
+	});
+});
+
+describe("requestStarts", () => {
+	const at = (time: string) =>
+		dateToDatabaseTimestamp(new Date(`2025-01-15T${time}:00`));
+	const post = { startsAt: at("19:00"), rangeEndsAt: at("20:30") };
+
+	test("offers every half hour of the post's flexibility", () => {
+		expect(requestStarts({ post, now: at("12:00") })).toEqual([
+			at("19:00"),
+			at("19:30"),
+			at("20:00"),
+			at("20:30"),
+		]);
+	});
+
+	test("drops the starts already gone by", () => {
+		expect(requestStarts({ post, now: at("19:45") })).toEqual([
+			at("20:00"),
+			at("20:30"),
+		]);
+	});
+
+	test("offers now for a post with no flexibility", () => {
+		expect(
+			requestStarts({
+				post: { startsAt: at("18:00"), rangeEndsAt: null },
+				now: at("19:00"),
+			}),
+		).toEqual([at("19:00")]);
+	});
+
+	test("offers now once the whole flexibility has passed", () => {
+		expect(requestStarts({ post, now: at("21:00") })).toEqual([at("21:00")]);
+	});
+});
+
+describe("postSpan", () => {
+	const at = (time: string) =>
+		dateToDatabaseTimestamp(new Date(`2025-01-15T${time}:00`));
+
+	test("reaches from the earliest start to the end of a scrim from the latest", () => {
+		expect(
+			postSpan({
+				post: { startsAt: at("19:00"), rangeEndsAt: at("20:30") },
+				now: at("12:00"),
+			}),
+		).toEqual({ startsAt: at("19:00"), endsAt: at("22:00") });
 	});
 });

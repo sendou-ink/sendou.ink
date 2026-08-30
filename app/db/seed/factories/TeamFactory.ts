@@ -1,6 +1,6 @@
 import type { UserMapModePreferences } from "~/db/tables-json";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
-import { TEAM } from "~/features/team/team-constants";
+import { type MemberRole, TEAM } from "~/features/team/team-constants";
 import invariant from "~/utils/invariant";
 import { actAs } from "../core/actAs";
 import { defineFactory } from "../core/defineFactory";
@@ -21,6 +21,8 @@ type Options = {
 	avatarUrl?: string;
 	/** SendouQ map & mode preferences, saved as the team edit page saves them. */
 	mapModePreferences?: UserMapModePreferences;
+	/** Roles of the members, keyed by user id, saved as the roster page saves them. Members left out keep none. */
+	roles?: Record<number, MemberRole>;
 };
 
 /**
@@ -53,8 +55,23 @@ export const { create } = defineFactory({
 	},
 	applyOptions: async (
 		team,
-		{ hasAvatar, avatarUrl, mapModePreferences }: Options,
+		{ hasAvatar, avatarUrl, mapModePreferences, roles }: Options,
 	) => {
+		if (roles) {
+			await TeamRepository.updateRoster({
+				teamId: team.id,
+				members: team.memberUserIds.map((userId, index) => ({
+					userId,
+					role: roles[userId] ?? null,
+					customRole: null,
+					roleType: null,
+					isManager: false,
+					order: index,
+				})),
+				kickedUserIds: [],
+			});
+		}
+
 		if (mapModePreferences) {
 			await TeamRepository.updateMapModePreferences({
 				id: team.id,

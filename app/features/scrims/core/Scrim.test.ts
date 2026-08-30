@@ -6,9 +6,14 @@ import {
 	applyFilters,
 	isTrackingLocked,
 	participantIdsListFromAccepted,
+	pickableSlots,
+	rosterFit,
 	sideDisplayName,
 	sideOfUser,
+	teamPlayers,
 } from "./Scrim";
+
+const HOUR = 60 * 60;
 
 type MockUser = { id: number };
 type MockRequest = { isAccepted: boolean; users: MockUser[] };
@@ -605,5 +610,220 @@ describe("isTrackingLocked", () => {
 		expect(
 			isTrackingLocked({ startTime, mapLists: [{ updatedAt }], now }),
 		).toBe(false);
+	});
+});
+
+const freeFrom = (userId: number, startsAt: number, endsAt: number) => ({
+	userId,
+	ranges: [{ startsAt, endsAt }],
+});
+
+describe("pickableSlots", () => {
+	const evening = (hours: number) => hours * HOUR;
+
+	test("starts a slot the whole team is free for at its own start", () => {
+		const members = [1, 2, 3, 4].map((userId) =>
+			freeFrom(userId, evening(18), evening(23)),
+		);
+
+		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([
+			{
+				startsAt: evening(18),
+				endsAt: evening(23),
+				userIds: [1, 2, 3, 4],
+				tier: "FULL",
+				fullSpan: null,
+				pick: { startsAt: evening(18), rangeEnd: "+3hours" },
+			},
+		]);
+	});
+
+	test("starts a mixed slot where the whole team becomes free", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(23)),
+			freeFrom(2, evening(18), evening(23)),
+			freeFrom(3, evening(18), evening(23)),
+			freeFrom(4, evening(20), evening(23)),
+		];
+
+		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([
+			{
+				startsAt: evening(18),
+				endsAt: evening(23),
+				userIds: [1, 2, 3],
+				tier: "ONE_SHORT",
+				fullSpan: {
+					startsAt: evening(20),
+					endsAt: evening(23),
+					tier: "FULL",
+					userIds: [1, 2, 3, 4],
+				},
+				pick: { startsAt: evening(20), rangeEnd: "+2hours" },
+			},
+		]);
+	});
+
+	test("leaves an hour of the slot to play, capped at the longest flexibility", () => {
+		const twoHours = [1, 2, 3, 4].map((userId) =>
+			freeFrom(userId, evening(18), evening(20)),
+		);
+
+		expect(pickableSlots({ members: twoHours, minPlayers: 4 })[0].pick).toEqual(
+			{ startsAt: evening(18), rangeEnd: "+1hour" },
+		);
+	});
+
+	test("gives an hour long slot no flexibility at all", () => {
+		const oneHour = [1, 2, 3, 4].map((userId) =>
+			freeFrom(userId, evening(18), evening(19)),
+		);
+
+		expect(pickableSlots({ members: oneHour, minPlayers: 4 })[0].pick).toEqual({
+			startsAt: evening(18),
+			rangeEnd: null,
+		});
+	});
+
+	test("shows the longest whole-team span when the slot contains several", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(23)),
+			freeFrom(2, evening(18), evening(23)),
+			freeFrom(3, evening(18), evening(23)),
+			{
+				userId: 4,
+				ranges: [
+					{ startsAt: evening(18), endsAt: evening(19) },
+					{ startsAt: evening(20), endsAt: evening(23) },
+				],
+			},
+		];
+
+		const [slot] = pickableSlots({ members, minPlayers: 4 });
+
+		expect(slot.fullSpan).toEqual({
+			startsAt: evening(20),
+			endsAt: evening(23),
+			tier: "FULL",
+			userIds: [1, 2, 3, 4],
+		});
+		expect(slot.pick.startsAt).toBe(evening(20));
+	});
+
+	test("has no slots when the team is more than one player short", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(21)),
+			freeFrom(2, evening(18), evening(21)),
+			freeFrom(3, evening(21), evening(23)),
+			freeFrom(4, evening(21), evening(23)),
+		];
+
+		expect(pickableSlots({ members, minPlayers: 4 })).toEqual([]);
+	});
+});
+
+describe("teamPlayers", () => {
+	const player = { id: 1, role: "FRONTLINE" as const, roleType: null };
+	const coach = { id: 2, role: "COACH" as const, roleType: null };
+
+	test("leaves the non-players out", () => {
+		const members = [
+			player,
+			{ ...coach, id: 3 },
+			...[4, 5, 6].map((id) => ({ ...player, id })),
+		];
+
+		expect(teamPlayers(members).map((member) => member.id)).toEqual([
+			1, 4, 5, 6,
+		]);
+	});
+
+	test("keeps everyone when the players alone could not field a team", () => {
+		const members = [player, { ...player, id: 2 }, { ...player, id: 3 }, coach];
+
+		expect(teamPlayers(members)).toHaveLength(4);
+	});
+});
+
+describe("rosterFit", () => {
+	const evening = (hours: number) => hours * HOUR;
+	const free = (userId: number, startsAt: number, endsAt: number) => ({
+		userId,
+		reported: true,
+		ranges: [{ startsAt, endsAt }],
+		busy: [],
+	});
+
+	test("measures the fit at the start the most of the roster is free for", () => {
+		const members = [
+			free(1, evening(18), evening(23)),
+			free(2, evening(18), evening(23)),
+			free(3, evening(18), evening(23)),
+			free(4, evening(20), evening(23)),
+		];
+
+		const fit = rosterFit({
+			starts: [evening(18), evening(19), evening(20)],
+			members,
+		});
+
+		expect(fit?.startsAt).toBe(evening(20));
+		expect(fit?.availableCount).toBe(4);
+		expect(fit?.window).toEqual({
+			startsAt: evening(20),
+			endsAt: evening(21.5),
+		});
+	});
+
+	test("gives the earliest of equally good starts", () => {
+		const members = [1, 2, 3, 4].map((userId) =>
+			free(userId, evening(18), evening(23)),
+		);
+
+		expect(
+			rosterFit({ starts: [evening(18), evening(19)], members })?.startsAt,
+		).toBe(evening(18));
+	});
+
+	test("leaves a member free for only part of the scrim out of the count", () => {
+		const members = [
+			free(1, evening(18), evening(23)),
+			free(2, evening(18), evening(18.5)),
+		];
+
+		const fit = rosterFit({ starts: [evening(18)], members });
+
+		expect(fit?.availableCount).toBe(1);
+		expect(fit?.entries[1].availability.status).toBe("partial");
+	});
+
+	test("reports a member committed elsewhere as busy", () => {
+		const members = [
+			{
+				...free(1, evening(18), evening(23)),
+				busy: [
+					{
+						startsAt: evening(19),
+						endsAt: evening(21),
+						type: "tournament" as const,
+						name: "ITZ",
+					},
+				],
+			},
+		];
+
+		expect(
+			rosterFit({ starts: [evening(19)], members })?.entries[0].availability
+				.status,
+		).toBe("busy");
+	});
+
+	test("returns null when nobody filled in the week", () => {
+		const members = [1, 2].map((userId) => ({
+			...free(userId, evening(18), evening(23)),
+			reported: false,
+			ranges: [],
+		}));
+
+		expect(rosterFit({ starts: [evening(18)], members })).toBeNull();
 	});
 });

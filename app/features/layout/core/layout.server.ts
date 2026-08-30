@@ -12,7 +12,7 @@ import { GIT_COMMIT } from "~/utils/git-commit";
 export async function resolveLayoutData(user: AuthenticatedUser | undefined) {
 	return {
 		loggedInUserId: user?.id ?? null,
-		sidebar: await resolveSidebarData(user?.id ?? null),
+		sidebar: await resolveSidebarData(user),
 		buildCommit: GIT_COMMIT,
 	};
 }

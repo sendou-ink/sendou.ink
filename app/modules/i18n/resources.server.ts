@@ -16,6 +16,7 @@ import lfgDa from "../../../locales/da/lfg.json";
 import orgDa from "../../../locales/da/org.json";
 import paramsDa from "../../../locales/da/params.json";
 import qDa from "../../../locales/da/q.json";
+import scheduleDa from "../../../locales/da/schedule.json";
 import scrimsDa from "../../../locales/da/scrims.json";
 import settingsDa from "../../../locales/da/settings.json";
 import teamDa from "../../../locales/da/team.json";
@@ -44,6 +45,7 @@ import lfgDe from "../../../locales/de/lfg.json";
 import orgDe from "../../../locales/de/org.json";
 import paramsDe from "../../../locales/de/params.json";
 import qDe from "../../../locales/de/q.json";
+import scheduleDe from "../../../locales/de/schedule.json";
 import scrimsDe from "../../../locales/de/scrims.json";
 import settingsDe from "../../../locales/de/settings.json";
 import teamDe from "../../../locales/de/team.json";
@@ -72,6 +74,7 @@ import lfg from "../../../locales/en/lfg.json";
 import org from "../../../locales/en/org.json";
 import params from "../../../locales/en/params.json";
 import q from "../../../locales/en/q.json";
+import scheduleEn from "../../../locales/en/schedule.json";
 import scrimsEn from "../../../locales/en/scrims.json";
 import settings from "../../../locales/en/settings.json";
 import team from "../../../locales/en/team.json";
@@ -100,6 +103,7 @@ import lfgEsEs from "../../../locales/es-ES/lfg.json";
 import orgEsEs from "../../../locales/es-ES/org.json";
 import paramsEsEs from "../../../locales/es-ES/params.json";
 import qEsEs from "../../../locales/es-ES/q.json";
+import scheduleEsEs from "../../../locales/es-ES/schedule.json";
 import scrimsEsEs from "../../../locales/es-ES/scrims.json";
 import settingsEsEs from "../../../locales/es-ES/settings.json";
 import teamEsEs from "../../../locales/es-ES/team.json";
@@ -128,6 +132,7 @@ import lfgEsUs from "../../../locales/es-US/lfg.json";
 import orgEsUs from "../../../locales/es-US/org.json";
 import paramsEsUs from "../../../locales/es-US/params.json";
 import qEsUs from "../../../locales/es-US/q.json";
+import scheduleEsUs from "../../../locales/es-US/schedule.json";
 import scrimsEsUs from "../../../locales/es-US/scrims.json";
 import settingsEsUs from "../../../locales/es-US/settings.json";
 import teamEsUs from "../../../locales/es-US/team.json";
@@ -156,6 +161,7 @@ import lfgFrCa from "../../../locales/fr-CA/lfg.json";
 import orgFrCa from "../../../locales/fr-CA/org.json";
 import paramsFrCa from "../../../locales/fr-CA/params.json";
 import qFrCa from "../../../locales/fr-CA/q.json";
+import scheduleFrCa from "../../../locales/fr-CA/schedule.json";
 import scrimsFrCa from "../../../locales/fr-CA/scrims.json";
 import settingsFrCa from "../../../locales/fr-CA/settings.json";
 import teamFrCa from "../../../locales/fr-CA/team.json";
@@ -184,6 +190,7 @@ import lfgFrEu from "../../../locales/fr-EU/lfg.json";
 import orgFrEu from "../../../locales/fr-EU/org.json";
 import paramsFrEu from "../../../locales/fr-EU/params.json";
 import qFrEu from "../../../locales/fr-EU/q.json";
+import scheduleFrEu from "../../../locales/fr-EU/schedule.json";
 import scrimsFrEu from "../../../locales/fr-EU/scrims.json";
 import settingsFrEu from "../../../locales/fr-EU/settings.json";
 import teamFrEu from "../../../locales/fr-EU/team.json";
@@ -212,6 +219,7 @@ import lfgHe from "../../../locales/he/lfg.json";
 import orgHe from "../../../locales/he/org.json";
 import paramsHe from "../../../locales/he/params.json";
 import qHe from "../../../locales/he/q.json";
+import scheduleHe from "../../../locales/he/schedule.json";
 import scrimsHe from "../../../locales/he/scrims.json";
 import settingsHe from "../../../locales/he/settings.json";
 import teamHe from "../../../locales/he/team.json";
@@ -240,6 +248,7 @@ import lfgIt from "../../../locales/it/lfg.json";
 import orgIt from "../../../locales/it/org.json";
 import paramsIt from "../../../locales/it/params.json";
 import qIt from "../../../locales/it/q.json";
+import scheduleIt from "../../../locales/it/schedule.json";
 import scrimsIt from "../../../locales/it/scrims.json";
 import settingsIt from "../../../locales/it/settings.json";
 import teamIt from "../../../locales/it/team.json";
@@ -268,6 +277,7 @@ import lfgJa from "../../../locales/ja/lfg.json";
 import orgJa from "../../../locales/ja/org.json";
 import paramsJa from "../../../locales/ja/params.json";
 import qJa from "../../../locales/ja/q.json";
+import scheduleJa from "../../../locales/ja/schedule.json";
 import scrimsJa from "../../../locales/ja/scrims.json";
 import settingsJa from "../../../locales/ja/settings.json";
 import teamJa from "../../../locales/ja/team.json";
@@ -296,6 +306,7 @@ import lfgKo from "../../../locales/ko/lfg.json";
 import orgKo from "../../../locales/ko/org.json";
 import paramsKo from "../../../locales/ko/params.json";
 import qKo from "../../../locales/ko/q.json";
+import scheduleKo from "../../../locales/ko/schedule.json";
 import scrimsKo from "../../../locales/ko/scrims.json";
 import settingsKo from "../../../locales/ko/settings.json";
 import teamKo from "../../../locales/ko/team.json";
@@ -324,6 +335,7 @@ import lfgNl from "../../../locales/nl/lfg.json";
 import orgNl from "../../../locales/nl/org.json";
 import paramsNl from "../../../locales/nl/params.json";
 import qNl from "../../../locales/nl/q.json";
+import scheduleNl from "../../../locales/nl/schedule.json";
 import scrimsNl from "../../../locales/nl/scrims.json";
 import settingsNl from "../../../locales/nl/settings.json";
 import teamNl from "../../../locales/nl/team.json";
@@ -352,6 +364,7 @@ import lfgPl from "../../../locales/pl/lfg.json";
 import orgPl from "../../../locales/pl/org.json";
 import paramsPl from "../../../locales/pl/params.json";
 import qPl from "../../../locales/pl/q.json";
+import schedulePl from "../../../locales/pl/schedule.json";
 import scrimsPl from "../../../locales/pl/scrims.json";
 import settingsPl from "../../../locales/pl/settings.json";
 import teamPl from "../../../locales/pl/team.json";
@@ -380,6 +393,7 @@ import lfgPtBr from "../../../locales/pt-BR/lfg.json";
 import orgPtBr from "../../../locales/pt-BR/org.json";
 import paramsPtBr from "../../../locales/pt-BR/params.json";
 import qPtBr from "../../../locales/pt-BR/q.json";
+import schedulePtBr from "../../../locales/pt-BR/schedule.json";
 import scrimsPtBr from "../../../locales/pt-BR/scrims.json";
 import settingsPtBr from "../../../locales/pt-BR/settings.json";
 import teamPtBr from "../../../locales/pt-BR/team.json";
@@ -408,6 +422,7 @@ import lfgRu from "../../../locales/ru/lfg.json";
 import orgRu from "../../../locales/ru/org.json";
 import paramsRu from "../../../locales/ru/params.json";
 import qRu from "../../../locales/ru/q.json";
+import scheduleRu from "../../../locales/ru/schedule.json";
 import scrimsRu from "../../../locales/ru/scrims.json";
 import settingsRu from "../../../locales/ru/settings.json";
 import teamRu from "../../../locales/ru/team.json";
@@ -436,6 +451,7 @@ import lfgZh from "../../../locales/zh/lfg.json";
 import orgZh from "../../../locales/zh/org.json";
 import paramsZh from "../../../locales/zh/params.json";
 import qZh from "../../../locales/zh/q.json";
+import scheduleZh from "../../../locales/zh/schedule.json";
 import scrimsZh from "../../../locales/zh/scrims.json";
 import settingsZh from "../../../locales/zh/settings.json";
 import teamZh from "../../../locales/zh/team.json";
@@ -454,6 +470,7 @@ export const resources = {
 		forms: formsEsUs,
 		friends: friendsEsUs,
 		weapons: weaponsEsUs,
+		schedule: scheduleEsUs,
 		scrims: scrimsEsUs,
 		settings: settingsEsUs,
 		common: commonEsUs,
@@ -484,6 +501,7 @@ export const resources = {
 		forms: forms,
 		friends: friends,
 		weapons: weapons,
+		schedule: scheduleEn,
 		scrims: scrimsEn,
 		settings: settings,
 		common: common,
@@ -514,6 +532,7 @@ export const resources = {
 		forms: formsKo,
 		friends: friendsKo,
 		weapons: weaponsKo,
+		schedule: scheduleKo,
 		scrims: scrimsKo,
 		settings: settingsKo,
 		common: commonKo,
@@ -544,6 +563,7 @@ export const resources = {
 		forms: formsDe,
 		friends: friendsDe,
 		weapons: weaponsDe,
+		schedule: scheduleDe,
 		scrims: scrimsDe,
 		settings: settingsDe,
 		common: commonDe,
@@ -574,6 +594,7 @@ export const resources = {
 		forms: formsNl,
 		friends: friendsNl,
 		weapons: weaponsNl,
+		schedule: scheduleNl,
 		scrims: scrimsNl,
 		settings: settingsNl,
 		common: commonNl,
@@ -604,6 +625,7 @@ export const resources = {
 		forms: formsPtBr,
 		friends: friendsPtBr,
 		weapons: weaponsPtBr,
+		schedule: schedulePtBr,
 		scrims: scrimsPtBr,
 		settings: settingsPtBr,
 		common: commonPtBr,
@@ -634,6 +656,7 @@ export const resources = {
 		forms: formsZh,
 		friends: friendsZh,
 		weapons: weaponsZh,
+		schedule: scheduleZh,
 		scrims: scrimsZh,
 		settings: settingsZh,
 		common: commonZh,
@@ -664,6 +687,7 @@ export const resources = {
 		forms: formsFrCa,
 		friends: friendsFrCa,
 		weapons: weaponsFrCa,
+		schedule: scheduleFrCa,
 		scrims: scrimsFrCa,
 		settings: settingsFrCa,
 		common: commonFrCa,
@@ -694,6 +718,7 @@ export const resources = {
 		forms: formsRu,
 		friends: friendsRu,
 		weapons: weaponsRu,
+		schedule: scheduleRu,
 		scrims: scrimsRu,
 		settings: settingsRu,
 		common: commonRu,
@@ -724,6 +749,7 @@ export const resources = {
 		forms: formsIt,
 		friends: friendsIt,
 		weapons: weaponsIt,
+		schedule: scheduleIt,
 		scrims: scrimsIt,
 		settings: settingsIt,
 		common: commonIt,
@@ -754,6 +780,7 @@ export const resources = {
 		forms: formsJa,
 		friends: friendsJa,
 		weapons: weaponsJa,
+		schedule: scheduleJa,
 		scrims: scrimsJa,
 		settings: settingsJa,
 		common: commonJa,
@@ -784,6 +811,7 @@ export const resources = {
 		forms: formsDa,
 		friends: friendsDa,
 		weapons: weaponsDa,
+		schedule: scheduleDa,
 		scrims: scrimsDa,
 		settings: settingsDa,
 		common: commonDa,
@@ -814,6 +842,7 @@ export const resources = {
 		forms: formsEsEs,
 		friends: friendsEsEs,
 		weapons: weaponsEsEs,
+		schedule: scheduleEsEs,
 		scrims: scrimsEsEs,
 		settings: settingsEsEs,
 		common: commonEsEs,
@@ -844,6 +873,7 @@ export const resources = {
 		forms: formsHe,
 		friends: friendsHe,
 		weapons: weaponsHe,
+		schedule: scheduleHe,
 		scrims: scrimsHe,
 		settings: settingsHe,
 		common: commonHe,
@@ -874,6 +904,7 @@ export const resources = {
 		forms: formsFrEu,
 		friends: friendsFrEu,
 		weapons: weaponsFrEu,
+		schedule: scheduleFrEu,
 		scrims: scrimsFrEu,
 		settings: settingsFrEu,
 		common: commonFrEu,
@@ -904,6 +935,7 @@ export const resources = {
 		forms: formsPl,
 		friends: friendsPl,
 		weapons: weaponsPl,
+		schedule: schedulePl,
 		scrims: scrimsPl,
 		settings: settingsPl,
 		common: commonPl,

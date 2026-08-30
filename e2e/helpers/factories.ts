@@ -35,6 +35,9 @@ export async function loadFactories(parallelIndex: number) {
 		ApiTokenFactory: await import("~/db/seed/factories/ApiTokenFactory"),
 		ArtFactory: await import("~/db/seed/factories/ArtFactory"),
 		AssociationFactory: await import("~/db/seed/factories/AssociationFactory"),
+		AvailabilityWeekFactory: await import(
+			"~/db/seed/factories/AvailabilityWeekFactory"
+		),
 		BadgeFactory: await import("~/db/seed/factories/BadgeFactory"),
 		BuildFactory: await import("~/db/seed/factories/BuildFactory"),
 		CalendarEventFactory: await import(
@@ -80,6 +83,7 @@ export async function loadFactories(parallelIndex: number) {
 		SQReportedWeaponFactory: await import(
 			"~/db/seed/factories/SQReportedWeaponFactory"
 		),
+		TeamEventFactory: await import("~/db/seed/factories/TeamEventFactory"),
 		TeamFactory: await import("~/db/seed/factories/TeamFactory"),
 		TournamentFactory: await import("~/db/seed/factories/TournamentFactory"),
 		TournamentLFGTeamFactory: await import(

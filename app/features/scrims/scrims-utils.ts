@@ -1,7 +1,12 @@
 import { differenceInMinutes } from "date-fns";
 import * as R from "remeda";
+import { AVAILABILITY } from "~/features/availability/availability-constants";
+import type { TimeRange } from "~/features/availability/availability-types";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { databaseTimestampToDate } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import * as Scrim from "./core/Scrim";
 import { LUTI_DIVS } from "./scrims-constants";
 import type { LutiDiv, ScrimPost } from "./scrims-types";
@@ -73,6 +78,50 @@ export const serializeLutiDiv = (div: LutiDiv): number => {
 
 	return Number(div);
 };
+
+/**
+ * The starts a request for the post can still be made for: its start, the half
+ * hours inside its start-time flexibility and the end of that flexibility,
+ * with the ones already past dropped. A post with no flexibility left offers
+ * `now` — "looking now" is what it means.
+ */
+export function requestStarts({
+	post,
+	now,
+}: {
+	post: Pick<ScrimPost, "startsAt" | "rangeEndsAt">;
+	now: number;
+}): Array<number> {
+	const starts = post.rangeEndsAt
+		? generateTimeOptions(
+				databaseTimestampToDate(post.startsAt),
+				databaseTimestampToDate(post.rangeEndsAt),
+			).map((timestamp) => dateToDatabaseTimestamp(new Date(timestamp)))
+		: [post.startsAt];
+
+	const upcoming = starts.filter((startsAt) => startsAt >= now);
+
+	return upcoming.length > 0 ? upcoming : [now];
+}
+
+/**
+ * The whole span the post's scrim could take up: from the earliest start still
+ * on offer to the end of a scrim played from the latest one.
+ */
+export function postSpan({
+	post,
+	now,
+}: {
+	post: Pick<ScrimPost, "startsAt" | "rangeEndsAt">;
+	now: number;
+}): TimeRange {
+	const starts = requestStarts({ post, now });
+
+	return {
+		startsAt: starts[0],
+		endsAt: starts[starts.length - 1] + AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
+	};
+}
 
 export function generateTimeOptions(startDate: Date, endDate: Date): number[] {
 	const timestamps = new Set<number>();

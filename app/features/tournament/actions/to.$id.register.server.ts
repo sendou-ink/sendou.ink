@@ -1,4 +1,5 @@
 import type { ActionFunction } from "react-router";
+import * as R from "remeda";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -6,8 +7,10 @@ import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import { getMemberRoleType } from "~/features/team/team-utils";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
 	tournamentFromParams,
@@ -16,7 +19,7 @@ import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLF
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { logger } from "~/utils/logger";
-import { errorToastIfFalsy } from "~/utils/remix.server";
+import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
 import { registerSchema } from "../tournament-schemas.server";
@@ -25,6 +28,8 @@ import {
 	validateCounterPickMapPool,
 } from "../tournament-utils";
 import {
+	fulfillsSendouQParticipation,
+	isBannedByOrganization,
 	requireNotBannedByOrganization,
 	requireSendouQParticipationIfNeeded,
 } from "../tournament-utils.server";
@@ -304,44 +309,83 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 
-			ChatSystemMessage.notifyRoomsChanged([
-				...(await TournamentLFGRepository.leaveLfg({
-					userId: data.userId,
-					tournamentId,
-				})),
-				...(await TournamentTeamRepository.join({
-					userId: data.userId,
-					newTeamId: ownTeam.id,
-				})),
-			]);
-
-			await SavedCalendarEventRepository.unsaveByUserId({
-				userId: data.userId,
+			await addPlayerToOwnTeam({
+				tournament,
 				tournamentId,
-			});
-
-			ShowcaseTournaments.addToCached({
-				tournamentId,
-				type: "participant",
+				ownTeam,
+				adder: user,
 				userId: data.userId,
 			});
+
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
-			if (!tournament.isTest && !tournament.isDraft) {
-				notify({
-					userIds: [data.userId],
-					notification: {
-						type: "TO_ADDED_TO_TEAM",
-						meta: {
-							adderUsername: user.username,
-							tournamentId,
-							teamName: ownTeam.name,
-							tournamentName: tournament.ctx.name,
-							tournamentTeamId: ownTeam.id,
-						},
-						pictureUrl: tournament.ctx.logoUrl,
-					},
+			break;
+		}
+		case "ADD_TEAM_PLAYERS": {
+			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			errorToastIfFalsy(tournament.registrationOpen, "Registration is closed");
+
+			const friendPlayers = await SQGroupRepository.findFriendsAndTeammates(
+				user.id,
+			);
+			errorToastIfFalsy(
+				friendPlayers.teams.some((team) => team.id === data.teamId),
+				"Team id does not match any of the teams you are in",
+			);
+
+			const candidates = friendPlayers.friends.filter(
+				(friendPlayer) =>
+					friendPlayer.teamId === data.teamId &&
+					getMemberRoleType(friendPlayer) !== "OTHER" &&
+					tournament.ctx.teams.every(
+						(team) => !team.memberUserIds.includes(friendPlayer.id),
+					) &&
+					(!tournament.ctx.settings.requireInGameNames ||
+						friendPlayer.inGameName),
+			);
+			errorToastIfFalsy(candidates.length > 0, "No players to add");
+
+			const spotsLeft =
+				tournament.maxMembersPerTeam - ownTeam.memberUserIds.length;
+			errorToastIfFalsy(spotsLeft > 0, "Team is already at max capacity");
+
+			let addedCount = 0;
+			const skippedReasons: Array<IneligibleReason> = [];
+			for (const candidate of candidates) {
+				if (addedCount >= spotsLeft) break;
+
+				const reason = await ineligibleReason({
+					tournament,
+					userId: candidate.id,
 				});
+				if (reason) {
+					skippedReasons.push(reason);
+					continue;
+				}
+
+				await addPlayerToOwnTeam({
+					tournament,
+					tournamentId,
+					ownTeam,
+					adder: user,
+					userId: candidate.id,
+				});
+				addedCount++;
+			}
+
+			errorToastIfFalsy(
+				addedCount > 0,
+				`No players could be added. ${skippedSummary(skippedReasons)}`.trim(),
+			);
+
+			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			if (skippedReasons.length > 0) {
+				clearTournamentDataCache(tournamentId);
+
+				return successToast(
+					`Added ${addedCount} player(s). ${skippedSummary(skippedReasons)}`,
+				);
 			}
 
 			break;
@@ -385,3 +429,93 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	return null;
 };
+
+type IneligibleReason =
+	| "no friend code"
+	| "banned by the organization"
+	| "not enough SendouQ participation";
+
+/** Why the "add all" bulk add has to pass a candidate over, or `null` if they can be added. */
+async function ineligibleReason({
+	tournament,
+	userId,
+}: {
+	tournament: Tournament;
+	userId: number;
+}): Promise<IneligibleReason | null> {
+	if (!(await UserRepository.findLeanById(userId))?.friendCode) {
+		return "no friend code";
+	}
+	if (await isBannedByOrganization({ tournament, userId })) {
+		return "banned by the organization";
+	}
+	if (!(await fulfillsSendouQParticipation({ tournament, userId }))) {
+		return "not enough SendouQ participation";
+	}
+
+	return null;
+}
+
+// names are left out on purpose: the message travels in a redirect's query string
+function skippedSummary(reasons: Array<IneligibleReason>) {
+	if (reasons.length === 0) return "";
+
+	const counts = R.countBy(reasons, (reason) => reason);
+
+	return `Skipped ${reasons.length} player(s): ${Object.entries(counts)
+		.map(([reason, count]) => `${reason} (${count})`)
+		.join(", ")}`;
+}
+
+async function addPlayerToOwnTeam({
+	tournament,
+	tournamentId,
+	ownTeam,
+	adder,
+	userId,
+}: {
+	tournament: Tournament;
+	tournamentId: number;
+	ownTeam: { id: number; name: string };
+	adder: { username: string };
+	userId: number;
+}) {
+	ChatSystemMessage.notifyRoomsChanged([
+		...(await TournamentLFGRepository.leaveLfg({
+			userId,
+			tournamentId,
+		})),
+		...(await TournamentTeamRepository.join({
+			userId,
+			newTeamId: ownTeam.id,
+		})),
+	]);
+
+	await SavedCalendarEventRepository.unsaveByUserId({
+		userId,
+		tournamentId,
+	});
+
+	ShowcaseTournaments.addToCached({
+		tournamentId,
+		type: "participant",
+		userId,
+	});
+
+	if (!tournament.isTest && !tournament.isDraft) {
+		notify({
+			userIds: [userId],
+			notification: {
+				type: "TO_ADDED_TO_TEAM",
+				meta: {
+					adderUsername: adder.username,
+					tournamentId,
+					teamName: ownTeam.name,
+					tournamentName: tournament.ctx.name,
+					tournamentTeamId: ownTeam.id,
+				},
+				pictureUrl: tournament.ctx.logoUrl,
+			},
+		});
+	}
+}

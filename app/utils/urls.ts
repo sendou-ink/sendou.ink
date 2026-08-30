@@ -259,6 +259,8 @@ export const editTeamPage = (customUrl: string) =>
 	`${teamPage(customUrl)}/edit`;
 export const manageTeamRosterPage = (customUrl: string) =>
 	`${teamPage(customUrl)}/roster`;
+export const teamSchedulePage = (customUrl: string) =>
+	`${teamPage(customUrl)}/schedule`;
 
 export const authErrorUrl = (errorCode: AuthErrorCode) =>
 	`/?authError=${errorCode}`;

@@ -85,6 +85,7 @@
 	"events.view.registered": "Registrado",
 	"events.view.hosting": "Organizando",
 	"events.view.scrims": "Scrims",
+	"events.view.team": "",
 	"events.view.saved": "Guardados",
 	"events.view.organization": "Organización",
 	"events.empty": "No hay eventos en esta categoría",

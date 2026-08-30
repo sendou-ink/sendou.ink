@@ -1,11 +1,17 @@
 import { addHours, addMinutes } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import * as Availability from "~/features/availability/core/Availability";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import {
 	expect,
 	impersonate,
 	isNotVisible,
+	MACHINE_TIMEZONE,
 	navigate,
+	setTimezoneCookie,
 	test,
 } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
@@ -18,6 +24,7 @@ import { TournamentTeamsPage } from "./pages/tournament/tournament-teams-page";
 const TEAM_NAME = "Chimera";
 const ROSTER_SIZE = 4;
 const SEEDED_TEAM_COUNT = 8;
+const HOUR_SECONDS = 60 * 60;
 
 /** Views of a tournament whose loaders each ship some of its teams' data. */
 const TOURNAMENT_TEAM_VIEWS = ["teams", "results", "brackets", "admin/seeds"];
@@ -72,6 +79,151 @@ test.describe("Tournament", () => {
 		await expect(
 			notifications.notification(`Added to a team (${TEAM_NAME})`),
 		).toBeVisible();
+	});
+
+	test("shows the estimated end time next to the start time", async ({
+		page,
+		factories,
+	}) => {
+		const startsAt = dateToDatabaseTimestamp(addHours(new Date(), 2));
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [startsAt],
+		});
+
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		// a lone single elimination bracket is the estimator's two hour case
+		await expect(tournamentPage.locators.estimatedEnd).toHaveAttribute(
+			"datetime",
+			databaseTimestampToDate(startsAt + 2 * HOUR_SECONDS).toISOString(),
+		);
+	});
+
+	test("quick adds all of the team's players at once", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, slayer, support, coach] =
+			await factories.UserFactory.createMany(4);
+		const team = await factories.TeamFactory.create(
+			{ memberUserIds: [captain.id, slayer.id, support.id, coach.id] },
+			{
+				roles: {
+					[slayer.id]: "SLAYER",
+					[support.id]: "SUPPORT",
+					[coach.id]: "COACH",
+				},
+			},
+		);
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
+		});
+
+		await impersonate(page, captain.id);
+		const tournamentPage = new TournamentPage(page);
+		await tournamentPage.goto(tournament.id);
+
+		const register = await tournamentPage.register();
+		await register.form.fill("pickUpName", TEAM_NAME);
+		await register.form.submit();
+		await expect(register.member(1)).toBeVisible();
+
+		// teammates are offered in the quick add, grouped under the team
+		await register.openQuickAdd();
+		await expect(register.availabilityRow(slayer.id)).toBeVisible();
+		await expect(register.availabilityRow(coach.id)).toBeVisible();
+		await page.keyboard.press("Escape");
+
+		await register.addAllTeamPlayers(team.id);
+
+		await expect(register.member(2)).toBeVisible();
+		await expect(register.member(3)).toBeVisible();
+		// the coach is not part of the competitive lineup
+		await isNotVisible(register.member(4));
+	});
+
+	test("shows the roster's availability for the event window", async ({
+		page,
+		factories,
+	}) => {
+		const [captain, partialMember, unknownMember, stranger, friend] =
+			await factories.UserFactory.createMany(5);
+		await factories.TeamFactory.create({
+			memberUserIds: [captain.id, partialMember.id, unknownMember.id],
+		});
+		await factories.FriendshipFactory.create({
+			userOneId: captain.id,
+			userTwoId: friend.id,
+		});
+
+		const startsAt = addHours(new Date(), 2);
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: [dateToDatabaseTimestamp(startsAt)],
+		});
+		await factories.TournamentTeamFactory.create({
+			tournamentId: tournament.id,
+			memberUserIds: [
+				captain.id,
+				partialMember.id,
+				unknownMember.id,
+				stranger.id,
+			],
+		});
+
+		const { startsAt: weekStartsAt } = Availability.weekRange(
+			startsAt,
+			MACHINE_TIMEZONE,
+		);
+		const coveringSlot = {
+			startsAt: dateToDatabaseTimestamp(startsAt),
+			endsAt: dateToDatabaseTimestamp(addHours(startsAt, 5)),
+		};
+		for (const userId of [captain.id, friend.id]) {
+			await factories.AvailabilityWeekFactory.create({
+				userId,
+				weekStartsAt,
+				timezone: MACHINE_TIMEZONE,
+				slots: [coveringSlot],
+			});
+		}
+		await factories.AvailabilityWeekFactory.create({
+			userId: partialMember.id,
+			weekStartsAt,
+			timezone: MACHINE_TIMEZONE,
+			slots: [
+				{
+					startsAt: dateToDatabaseTimestamp(addHours(startsAt, 1)),
+					endsAt: coveringSlot.endsAt,
+				},
+			],
+		});
+
+		await impersonate(page, captain.id);
+		await setTimezoneCookie(page);
+		const register = new TournamentRegisterPage(page);
+		await register.goto(tournament.id);
+
+		const row = (userId: number) => register.availabilityRow(userId);
+		await expect(row(captain.id)).toHaveAttribute("data-status", "available");
+		await expect(row(partialMember.id)).toHaveAttribute(
+			"data-status",
+			"partial",
+		);
+		await expect(row(unknownMember.id)).toHaveAttribute(
+			"data-status",
+			"unknown",
+		);
+		// on the tournament roster without being a teammate or a friend, so
+		// their schedule is not the viewer's to see
+		await expect(row(stranger.id)).toHaveAttribute("data-status", "hidden");
+		// the friend with an overlapping submitted range is offered in quick add
+		await register.openQuickAdd();
+		await expect(row(friend.id)).toHaveAttribute("data-status", "available");
 	});
 
 	test("registers a two player roster for a 2v2 tournament that takes no third member", async ({

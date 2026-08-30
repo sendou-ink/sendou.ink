@@ -17,6 +17,7 @@ import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router";
 import { useUser } from "~/features/auth/core/user";
+import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge";
 import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
@@ -127,6 +128,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 			{activePanel === "tourneys" ? (
 				<TourneysPanel
 					events={sidebarData?.events ?? []}
+					showScheduleNudge={sidebarData?.scheduleNudge ?? false}
 					onClose={closePanel}
 					onTabPress={handleTabPress}
 					isLoggedIn={Boolean(user)}
@@ -503,12 +505,14 @@ function FriendsPanel({
 
 function TourneysPanel({
 	events,
+	showScheduleNudge,
 	onClose,
 	onTabPress,
 	isLoggedIn,
 	skipAnimation,
 }: {
 	events: NonNullable<SidebarData>["events"];
+	showScheduleNudge: boolean;
 	onClose: () => void;
 	onTabPress: (panel: PanelType) => void;
 	isLoggedIn: boolean;
@@ -525,6 +529,7 @@ function TourneysPanel({
 			isLoggedIn={isLoggedIn}
 			skipAnimation={skipAnimation}
 		>
+			{showScheduleNudge ? <ScheduleNudge panel onNavigate={onClose} /> : null}
 			<EventsList events={events} onClick={onClose} />
 			<Link
 				to={EVENTS_PAGE}

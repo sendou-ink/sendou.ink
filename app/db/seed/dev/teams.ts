@@ -8,6 +8,12 @@ const SECONDARY_TEAM_COUNT = 10;
 
 export type SeededTeams = {
 	allianceRogueId: number;
+	/** Alliance Rogue's roster by the part each member plays. The admin and N-ZAP are both on it, so that logging in as either shows a team with a full roster. */
+	allianceRogue: {
+		playerUserIds: number[];
+		subUserId: number;
+		coachUserId: number;
+	};
 	ids: number[];
 	/** Four members of a shared team, e.g. a lineup for the SQ team leaderboard. */
 	squads: Array<{ teamId: number; name: string; memberUserIds: number[] }>;
@@ -23,12 +29,26 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 		return members;
 	};
 
+	const allianceRoguePlayers = [users.nzapId, ...takeMembers(4), users.adminId];
+	const [allianceRogueSubId, allianceRogueCoachId] = takeMembers(2);
 	const allianceRogue = await TeamFactory.create(
 		{
 			name: "Alliance Rogue",
-			memberUserIds: [users.nzapId, ...takeMembers(4)],
+			memberUserIds: [
+				...allianceRoguePlayers,
+				allianceRogueSubId,
+				allianceRogueCoachId,
+			],
 		},
-		{ avatarUrl: "alliance-rogue.png" },
+		{
+			avatarUrl: "alliance-rogue.png",
+			roles: {
+				[users.nzapId]: "CAPTAIN",
+				[users.adminId]: "FLEX",
+				[allianceRogueSubId]: "SUB",
+				[allianceRogueCoachId]: "COACH",
+			},
+		},
 	);
 
 	const ids: number[] = [allianceRogue.id];
@@ -77,5 +97,14 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 		ids.push(team.id);
 	}
 
-	return { allianceRogueId: allianceRogue.id, ids, squads };
+	return {
+		allianceRogueId: allianceRogue.id,
+		allianceRogue: {
+			playerUserIds: allianceRoguePlayers,
+			subUserId: allianceRogueSubId,
+			coachUserId: allianceRogueCoachId,
+		},
+		ids,
+		squads,
+	};
 }

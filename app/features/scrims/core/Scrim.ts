@@ -1,9 +1,29 @@
 import { format, isWeekend } from "date-fns";
 import * as R from "remeda";
 import type { Tables } from "~/db/tables";
+import { AVAILABILITY } from "~/features/availability/availability-constants";
+import type {
+	MemberAvailability,
+	PlayableWindowTier,
+	TimeRange,
+	WindowAvailabilityEntry,
+	WindowSchedule,
+} from "~/features/availability/availability-types";
+import * as Availability from "~/features/availability/core/Availability";
+import type {
+	MemberRole,
+	MemberRoleType,
+} from "~/features/team/team-constants";
+import { getMemberRoleType } from "~/features/team/team-utils";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { logger } from "~/utils/logger";
-import { LUTI_DIVS, SCRIM_TRACKING_AUTO_LOCK_HOURS } from "../scrims-constants";
+import {
+	LUTI_DIVS,
+	RANGE_END_MINUTES,
+	type RangeEndOption,
+	SCRIM,
+	SCRIM_TRACKING_AUTO_LOCK_HOURS,
+} from "../scrims-constants";
 import type { ScrimFilters, ScrimPost, ScrimSide } from "../scrims-types";
 
 /** Returns true if the original poster has accepted any of the requests. */
@@ -214,6 +234,138 @@ export function lastReportedMap<
 	);
 }
 
+export interface PickableSlot extends TimeRange {
+	tier: PlayableWindowTier;
+	/** Members free for the whole slot. */
+	userIds: Array<number>;
+	/** The part of the slot the whole team is free for, when that is only part of it. */
+	fullSpan: TimeRange | null;
+	/** What picking the slot fills the post's start and start-time flexibility with. */
+	pick: { startsAt: number; rangeEnd: RangeEndOption | null };
+}
+
+/**
+ * The roster's shared free time as the slots a scrim post can be picked from:
+ * maximal spans where the team is at most one player short, the `ONE_SHORT`
+ * ones being the "grab a sub" case.
+ */
+export function pickableSlots({
+	members,
+	minPlayers,
+}: {
+	members: Array<MemberAvailability>;
+	minPlayers: number;
+}): Array<PickableSlot> {
+	const spansFreeFor = (playerCount: number) =>
+		Availability.playableWindows({
+			members,
+			minPlayers: playerCount,
+		}).filter((window) => window.tier === "FULL");
+
+	const fullSpans = spansFreeFor(minPlayers);
+
+	return spansFreeFor(Math.max(1, minPlayers - 1)).map((slot) => {
+		// the longest one: a slot can contain several whole-team spans
+		const fullSpan = R.firstBy(
+			fullSpans.filter(
+				(span) => span.startsAt >= slot.startsAt && span.endsAt <= slot.endsAt,
+			),
+			[(span) => span.endsAt - span.startsAt, "desc"],
+		);
+		const wholeSlotIsFull =
+			fullSpan?.startsAt === slot.startsAt && fullSpan?.endsAt === slot.endsAt;
+
+		return {
+			startsAt: slot.startsAt,
+			endsAt: slot.endsAt,
+			userIds: slot.userIds,
+			tier: wholeSlotIsFull ? "FULL" : "ONE_SHORT",
+			fullSpan: wholeSlotIsFull ? null : (fullSpan ?? null),
+			pick: startPick({ slot, at: fullSpan?.startsAt ?? slot.startsAt }),
+		};
+	});
+}
+
+/**
+ * The members a scrim is played with: the team's players, or its whole roster
+ * when there are not enough players on it to field a team.
+ */
+export function teamPlayers<
+	T extends { role: MemberRole | null; roleType: MemberRoleType | null },
+>(members: Array<T>): Array<T> {
+	const players = members.filter(
+		(member) => getMemberRoleType(member) !== "OTHER",
+	);
+
+	return players.length >= SCRIM.MIN_MEMBERS_PER_TEAM ? players : members;
+}
+
+export interface RosterFit {
+	/** The start the fit is measured at, the best one of those offered. */
+	startsAt: number;
+	/** The scrim played from that start, its length assumed. */
+	window: TimeRange;
+	entries: Array<WindowAvailabilityEntry>;
+	/** How many of the roster are free for the whole window. */
+	availableCount: number;
+}
+
+/**
+ * How well a roster fits a scrim post: the start among `starts` the most of
+ * them are free for, and how each member relates to a scrim played from it.
+ * Ties go to the earliest start.
+ *
+ * Null when nobody on the roster filled in the week the post falls in — a fit
+ * nothing is known about is not worth showing.
+ */
+export function rosterFit({
+	starts,
+	members,
+}: {
+	starts: Array<number>;
+	members: Array<WindowSchedule>;
+}): RosterFit | null {
+	if (members.length === 0 || members.every((member) => !member.reported)) {
+		return null;
+	}
+
+	const fits = starts.map((startsAt) => fitAt({ startsAt, members }));
+
+	return R.firstBy(fits, [(fit) => fit.availableCount, "desc"]) ?? null;
+}
+
+function fitAt({
+	startsAt,
+	members,
+}: {
+	startsAt: number;
+	members: Array<WindowSchedule>;
+}): RosterFit {
+	const window = {
+		startsAt,
+		endsAt: startsAt + AVAILABILITY.SCRIM_COMMITMENT_SECONDS,
+	};
+
+	const entries = members.map((member) => ({
+		userId: member.userId,
+		availability: Availability.availabilityInWindow({
+			reported: member.reported,
+			slots: member.ranges,
+			busy: member.busy,
+			window,
+		}),
+	}));
+
+	return {
+		startsAt,
+		window,
+		entries,
+		availableCount: entries.filter(
+			(entry) => entry.availability.status === "available",
+		).length,
+	};
+}
+
 /** Splits a "HH:mm" time range into segments, breaking a range that crosses midnight (e.g. 23:00 -> 01:00) into two. */
 function timeRangeToSegments(start: string, end: string) {
 	return end < start
@@ -222,4 +374,27 @@ function timeRangeToSegments(start: string, end: string) {
 				{ start: "00:00", end },
 			]
 		: [{ start, end }];
+}
+
+function startPick({ slot, at }: { slot: TimeRange; at: number }) {
+	const lastStartsAt = slot.endsAt - AVAILABILITY.MIN_WINDOW_MINUTES * 60;
+	const startsAt = R.clamp(at, {
+		min: slot.startsAt,
+		max: Math.max(slot.startsAt, lastStartsAt),
+	});
+	const flexMinutes =
+		Math.min(lastStartsAt - startsAt, SCRIM.MAX_TIME_RANGE_MS / 1000) / 60;
+
+	return { startsAt, rangeEnd: longestRangeEndWithin(flexMinutes) };
+}
+
+function longestRangeEndWithin(minutes: number): RangeEndOption | null {
+	const fitting = R.entries(RANGE_END_MINUTES).filter(
+		([, optionMinutes]) => optionMinutes <= minutes,
+	);
+
+	return (
+		R.firstBy(fitting, [([, optionMinutes]) => optionMinutes, "desc"])?.[0] ??
+		null
+	);
 }

@@ -93,6 +93,19 @@
 	color: var(--color-text-high);
 }
 
+.date {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.estimatedEnd {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-weight: var(--weight-normal);
+}
+
 .actions {
 	display: flex;
 	gap: var(--s-2);

@@ -1,0 +1,128 @@
+/* The tracks need more room than the form column gives them, so the picker
+   sizes against the whole page container and centers back under the column. */
+.picker {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	width: min(100cqw, 48rem);
+	margin-inline: calc(50% - min(50cqw, 24rem));
+}
+
+.header {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.heading {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.slotBar {
+	container: bar / inline-size;
+	position: absolute;
+	top: 3px;
+	bottom: 3px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	padding: 0;
+	background-color: var(--color-success);
+	border: 1px solid var(--color-success);
+	border-radius: var(--radius-field);
+	cursor: pointer;
+	z-index: 1;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+
+	&.oneShort {
+		background-color: var(--color-success-low);
+	}
+
+	&.picked {
+		box-shadow:
+			0 0 0 2px var(--color-bg),
+			0 0 0 4px var(--color-text);
+	}
+}
+
+/* inside a slot the team is only partly complete for, the part it is: where picking it starts */
+.slotFull {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	background-color: var(--color-success);
+	pointer-events: none;
+}
+
+/* the pill keeps the times legible whichever tier's green is under them */
+.slotLabel {
+	display: none;
+	max-width: 100%;
+	padding-inline: var(--s-1);
+	background-color: var(--color-bg);
+	border-radius: var(--radius-full);
+	font-size: var(--font-3xs);
+	color: var(--color-text);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	pointer-events: none;
+	z-index: 1;
+}
+
+@container bar (min-width: 9rem) {
+	.slotLabel {
+		display: block;
+	}
+}
+
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-3);
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+}
+
+.legendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.slotSwatch {
+	width: 14px;
+	height: 10px;
+	background-color: var(--color-success);
+	border: 1px solid var(--color-success);
+	border-radius: var(--radius-field);
+
+	&.oneShort {
+		background-color: var(--color-success-low);
+	}
+}
+
+.unknown {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.slotChip {
+	&.oneShort {
+		border-style: dashed;
+		opacity: 0.85;
+	}
+
+	&.picked {
+		box-shadow:
+			0 0 0 2px var(--color-bg),
+			0 0 0 4px var(--color-text);
+	}
+}

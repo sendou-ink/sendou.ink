@@ -17,6 +17,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
 import { Main } from "../../../components/Main";
 import { action } from "../actions/scrims.new.server";
+import { ScrimSchedulePicker } from "../components/ScrimSchedulePicker";
 import { WithFormField } from "../components/WithFormField";
 import { loader, type ScrimsNewLoaderData } from "../loaders/scrims.new.server";
 import { SCRIM } from "../scrims-constants";
@@ -34,7 +35,7 @@ export const meta: MetaFunction = (args) => {
 };
 
 export const handle: SendouRouteHandle = {
-	i18n: "scrims",
+	i18n: ["scrims", "schedule"],
 };
 
 type FormFields = v.InferOutput<typeof scrimsNewFormSchema>;
@@ -87,6 +88,8 @@ export default function NewScrimPage() {
 							)}
 						</FormField>
 
+						<SchedulePicker />
+
 						<FormField name="at" />
 						<FormField name="rangeEnd" />
 
@@ -114,6 +117,28 @@ export default function NewScrimPage() {
 				)}
 			</SendouForm>
 		</Main>
+	);
+}
+
+function SchedulePicker() {
+	const data = useLoaderData<typeof loader>();
+	const { values, setValue } = useFormFieldContext();
+
+	const from = values.from as FormFields["from"] | null;
+	if (!from) return null;
+
+	return (
+		<ScrimSchedulePicker
+			schedule={data.schedule}
+			scheduleUsers={data.scheduleUsers}
+			teams={data.teams}
+			from={from}
+			at={values.at as Date | undefined}
+			onPick={({ at, rangeEnd }) => {
+				setValue("at", at);
+				setValue("rangeEnd", rangeEnd);
+			}}
+		/>
 	);
 }
 

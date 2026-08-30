@@ -14,6 +14,7 @@ export class TournamentPage {
 		this.nav = new TournamentNav(page);
 		this.locators = {
 			registerCta: page.getByTestId("register-cta"),
+			estimatedEnd: page.getByTestId("estimated-end"),
 		};
 	}
 

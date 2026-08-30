@@ -1,0 +1,202 @@
+.container {
+	container: tracks / inline-size;
+}
+
+.tracks {
+	display: none;
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+}
+
+@container tracks (min-width: 40rem) {
+	.tracks {
+		display: grid;
+		grid-template-columns: max-content minmax(0, 1fr) max-content;
+		column-gap: var(--s-3);
+		row-gap: var(--s-2);
+		align-items: center;
+	}
+
+	.list {
+		display: none;
+	}
+}
+
+.axisToggle {
+	display: flex;
+	align-items: center;
+	gap: 2px;
+	align-self: end;
+	padding: 0;
+	background: none;
+	border: none;
+	font-size: var(--font-3xs);
+	line-height: 1rem;
+	color: var(--color-text-high);
+	white-space: nowrap;
+	cursor: pointer;
+
+	&:hover {
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+
+	&.axisLead {
+		justify-self: start;
+	}
+
+	&.axisTrail {
+		justify-self: end;
+	}
+}
+
+.axis {
+	position: relative;
+	height: 1rem;
+	align-self: end;
+
+	& .axisLabel {
+		position: absolute;
+		top: 0;
+		transform: translateX(-50%);
+		font-size: var(--font-3xs);
+		line-height: 1rem;
+		color: var(--color-text-high);
+		white-space: nowrap;
+
+		&.axisLabelFirst {
+			transform: translateX(0);
+		}
+
+		&.axisLabelLast {
+			transform: translateX(-100%);
+		}
+	}
+}
+
+.dayLabel {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+}
+
+.noteFlag {
+	color: var(--color-text-accent);
+	flex-shrink: 0;
+}
+
+.track {
+	position: relative;
+	height: 32px;
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-field);
+	touch-action: none;
+	user-select: none;
+}
+
+.tick {
+	position: absolute;
+	top: 0;
+	bottom: 0;
+	width: 1px;
+	background-color: var(--color-bg-higher);
+	pointer-events: none;
+
+	&.tickMidnight {
+		background-color: var(--color-border);
+	}
+}
+
+.commitment {
+	position: absolute;
+	top: 3px;
+	bottom: 3px;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	overflow: hidden;
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--color-bg-higher) 0 5px,
+		transparent 5px 10px
+	);
+	border: 1px dashed var(--color-border-high);
+	border-radius: var(--radius-field);
+	pointer-events: none;
+	z-index: 2;
+}
+
+.commitmentName {
+	max-width: 100%;
+	padding-inline: var(--s-1);
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	background-color: var(--color-bg);
+	border-radius: var(--radius-full);
+}
+
+.commitmentChip {
+	padding: var(--s-0-5) var(--s-2);
+	background: repeating-linear-gradient(
+		-45deg,
+		var(--color-bg-higher) 0 5px,
+		transparent 5px 10px
+	);
+	border: 1px dashed var(--color-border-high);
+	border-radius: var(--radius-full);
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.listDay {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	padding-block: var(--s-2);
+	border-bottom: 1px solid var(--color-bg-higher);
+
+	&:last-child {
+		border-bottom: none;
+	}
+}
+
+.listDayHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.listDayBody {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-1-5);
+}
+
+.timeChip {
+	padding: var(--s-0-5) var(--s-2);
+	background-color: var(--color-success-low);
+	border: 1px solid var(--color-success);
+	border-radius: var(--radius-full);
+	font-size: var(--font-xs);
+	color: var(--color-text);
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
+}

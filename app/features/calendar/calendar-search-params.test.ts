@@ -78,7 +78,15 @@ describe("calendarSearchParams", () => {
 describe("calendarEventsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(calendarEventsSearchParams, {
-			view: [null, "registered", "hosting", "scrims", "saved", "organization"],
+			view: [
+				null,
+				"registered",
+				"hosting",
+				"scrims",
+				"team",
+				"saved",
+				"organization",
+			],
 		});
 	});
 

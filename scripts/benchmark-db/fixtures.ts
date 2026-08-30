@@ -1,7 +1,8 @@
-import { sub } from "date-fns";
+import { addWeeks, sub } from "date-fns";
 import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
+import * as Availability from "~/features/availability/core/Availability";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { ChatRoomType } from "~/features/chat/chat-types";
 import type { SkillTeamIdentifier } from "~/features/mmr/mmr-utils";
@@ -60,6 +61,13 @@ export interface Fixtures {
 	calendarAuthorId: number | null;
 	calendarWindow: { startTime: Date; endTime: Date } | null;
 	scrimWindow: { startTime: Date; endTime: Date } | null;
+	/** The horizon availability reads cover: the current week's start, and the current-plus-next week as a range. */
+	availabilityWindow: {
+		weekStartsAt: number;
+		startsAt: number;
+		endsAt: number;
+	} | null;
+	teamEventId: number | null;
 	heavyScrimPostId: number | null;
 	scrimUserIds: number[] | null;
 	heavyOrg: {
@@ -174,6 +182,8 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		calendarAuthorId: await resolveCalendarAuthorId(),
 		calendarWindow: await resolveCalendarWindow(),
 		scrimWindow: await resolveScrimWindow(),
+		availabilityWindow: resolveAvailabilityWindow(),
+		teamEventId: await resolveTeamEventId(),
 		heavyScrimPostId,
 		scrimUserIds: await resolveScrimUserIds(heavyScrimPostId, heavyUser),
 		heavyOrg: await resolveHeavyOrg(),
@@ -1421,6 +1431,27 @@ async function resolveScannerIngestSendouq() {
 		atMs: latestMatch.createdAt * 1000,
 		sinceTimestamp: latestMatch.createdAt - SCANNER_INGEST_SINCE_WINDOW_SECONDS,
 	};
+}
+
+function resolveAvailabilityWindow() {
+	const current = Availability.weekRange(new Date(), "UTC");
+
+	return {
+		weekStartsAt: current.startsAt,
+		startsAt: current.startsAt,
+		endsAt: Availability.weekRange(addWeeks(new Date(), 1), "UTC").endsAt,
+	};
+}
+
+async function resolveTeamEventId() {
+	const row = await db
+		.selectFrom("TeamEvent")
+		.select("id")
+		.orderBy("startsAt", "desc")
+		.limit(1)
+		.executeTakeFirst();
+
+	return row?.id ?? null;
 }
 
 async function resolveCastedTournamentId() {

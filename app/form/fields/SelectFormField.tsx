@@ -1,4 +1,5 @@
 import * as React from "react";
+import { Text } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import type { FormFieldItems, FormFieldProps } from "../types";
@@ -9,6 +10,8 @@ import {
 	useTranslatedTexts,
 } from "./FormFieldWrapper";
 import styles from "./SelectFormField.module.css";
+
+const TWO_LINE_ROW_HEIGHT = 52;
 
 type SelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"select">,
@@ -56,12 +59,17 @@ export function SelectFormField<V extends string>({
 		return {
 			value: item.value,
 			resolvedLabel,
+			description: item.description,
 		};
 	});
 
-	if (searchable) {
+	const hasDescriptions = itemsWithResolvedLabels.some(
+		(item) => item.description,
+	);
+
+	if (searchable || hasDescriptions) {
 		return (
-			<SearchableSelect
+			<CustomSelect
 				name={name}
 				label={label}
 				bottomText={bottomText}
@@ -72,7 +80,7 @@ export function SelectFormField<V extends string>({
 				onBlur={onBlur}
 				clearable={clearable}
 				disabled={disabled}
-				searchPlaceholder={t("common:actions.search")}
+				searchPlaceholder={searchable ? t("common:actions.search") : undefined}
 			/>
 		);
 	}
@@ -113,7 +121,7 @@ export function SelectFormField<V extends string>({
 	);
 }
 
-function SearchableSelect<V extends string>({
+function CustomSelect<V extends string>({
 	name,
 	label,
 	bottomText,
@@ -130,39 +138,68 @@ function SearchableSelect<V extends string>({
 	label?: string;
 	bottomText?: string;
 	error?: string;
-	items: Array<{ value: V; resolvedLabel: string }>;
+	items: Array<{
+		value: V;
+		resolvedLabel: string;
+		description?: React.ReactNode;
+	}>;
 	value: V | null;
 	onChange: (value: V | null) => void;
 	onBlur?: () => void;
 	clearable?: boolean;
 	disabled?: boolean;
-	searchPlaceholder: string;
+	searchPlaceholder?: string;
 }) {
 	const { translatedLabel } = useTranslatedTexts({ label });
 
-	const selectItems = items.map((item) => ({
-		id: item.value,
-		textValue: item.resolvedLabel,
-	}));
+	const hasDescriptions = items.some((item) => item.description);
+
+	// the Autocomplete wrapper of searchable selects drops falsy keys, so only
+	// plain selects render the clear choice as a list item like the native
+	// select's "—" option; searchable ones keep the clear button
+	const hasEmptyItem = Boolean(clearable && !searchPlaceholder);
+
+	const selectItems = [
+		...(hasEmptyItem
+			? [{ id: "", textValue: "—", description: undefined }]
+			: []),
+		...items.map((item) => ({
+			id: item.value as string,
+			textValue: item.resolvedLabel,
+			description: item.description,
+		})),
+	];
 
 	return (
 		<div className={styles.searchable}>
 			<SendouSelect
 				label={translatedLabel}
-				selectedKey={value}
+				selectedKey={value ?? (hasEmptyItem ? "" : null)}
 				onSelectionChange={(key) => {
 					const newValue = key === "" ? null : (key as V);
 					onChange(newValue);
 					onBlur?.();
 				}}
 				items={selectItems}
-				search={{ placeholder: searchPlaceholder }}
-				clearable={clearable}
+				search={
+					searchPlaceholder ? { placeholder: searchPlaceholder } : undefined
+				}
+				clearable={clearable && !hasEmptyItem}
 				isDisabled={disabled}
+				estimatedRowHeight={hasDescriptions ? TWO_LINE_ROW_HEIGHT : undefined}
 			>
 				{(item) => (
 					<SendouSelectItem id={item.id} textValue={item.textValue}>
-						{item.textValue}
+						{item.description ? (
+							<span className={styles.twoLineItem}>
+								<Text slot="label">{item.textValue}</Text>
+								<Text slot="description" className={styles.itemDescription}>
+									{item.description}
+								</Text>
+							</span>
+						) : (
+							item.textValue
+						)}
 					</SendouSelectItem>
 				)}
 			</SendouSelect>

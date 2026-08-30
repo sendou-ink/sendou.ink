@@ -42,6 +42,7 @@ export class ScrimsPage {
 			limitedVisibilityPopover: page.getByTestId("limited-visibility-popover"),
 			tournamentPopover: page.getByTestId("tournament-popover-trigger"),
 			canceledLabel: page.getByText("Canceled"),
+			fitIndicator: page.getByTestId("scrim-fit-indicator"),
 			divsFilterPill: page.getByTestId("divs-filter"),
 			addFilterButton: page.getByTestId("add-filter-button"),
 			saveFiltersAsDefaultButton: page.getByTestId(
@@ -94,6 +95,11 @@ export class ScrimsPage {
 
 		await this.locators.addFilterButton.click();
 		await this.page.getByTestId("menu-item-divs-filter").click();
+	}
+
+	/** One roster member's row of the fit indicator's popover, its status in `data-status`. */
+	availabilityRow(userId: number) {
+		return this.page.getByTestId(`availability-row-${userId}`);
 	}
 
 	async openTab(tab: Tab) {

@@ -12,6 +12,7 @@
 	gap: var(--s-1-5);
 	width: 100%;
 	cursor: pointer;
+	text-align: start;
 
 	&[data-focus-visible],
 	&[aria-expanded="true"] {
@@ -44,11 +45,19 @@
 
 	display: flex;
 	flex-direction: column;
+
+	/* virtualized lists size from their container, so the popover cannot size from content */
+	min-width: var(--trigger-width);
 }
 
 .listBox {
 	overflow: auto;
 	flex: 1;
+}
+
+.item {
+	cursor: pointer;
+	outline: none;
 }
 
 .itemFocused {

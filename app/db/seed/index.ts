@@ -3,6 +3,7 @@ import { clearAllTournamentDataCache } from "~/features/tournament-bracket/core/
 import { withoutInfoLogs } from "~/utils/logger";
 import { resetFactories } from "./core/defineFactory";
 import { resetFaker } from "./core/faker";
+import { seedAvailability } from "./dev/availability";
 import { seedBadges } from "./dev/badges";
 import { seedBuilds } from "./dev/builds";
 import { seedCalendarEvents } from "./dev/calendar";
@@ -41,10 +42,13 @@ export async function seed() {
 	const sendouq = await runModule(() => seedSendouQ(users, teams));
 	await runModule(() => seedPlus(users));
 	await runModule(() => seedBuilds(users));
-	await runModule(() => seedScrimsAndLFG(users, teams));
+	const scrims = await runModule(() => seedScrimsAndLFG(users, teams));
 	await runModule(() => seedVods(users));
-	await runModule(() => seedMisc({ users, sendouq, tournaments }));
+	const misc = await runModule(() => seedMisc({ users, sendouq, tournaments }));
 	await runModule(() => seedSpecialTrophies());
+	await runModule(() =>
+		seedAvailability({ users, teams, tournaments, scrims, misc }),
+	);
 
 	clearAllTournamentDataCache();
 }

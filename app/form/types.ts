@@ -1,3 +1,4 @@
+import type * as React from "react";
 import type * as v from "valibot";
 import type { TeamSearchResult } from "~/components/elements/TeamSearch";
 import type { TournamentSearchItem } from "~/components/elements/TournamentSearch";
@@ -59,6 +60,8 @@ interface FormFieldInGameName<T extends string> extends FormFieldBase<T> {
 interface FormFieldItem<V extends string> {
 	label: string | number | ((lang: string) => string);
 	value: V;
+	/** Second line rendered under the label in the dropdown. Any item having one switches the field to the custom select. */
+	description?: React.ReactNode;
 }
 
 interface FormFieldItemWithImage<V extends string> extends FormFieldItem<V> {
@@ -251,6 +254,8 @@ export type TrophyOption = {
 export type SelectOption = {
 	value: string;
 	label: string;
+	/** Second line rendered under the label in the dropdown. Any option having one switches the field to the custom select. */
+	description?: React.ReactNode;
 };
 
 /** Brand type to encode required options directly in schema types */

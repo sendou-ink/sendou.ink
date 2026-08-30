@@ -14,6 +14,7 @@ export const VIEW_FILTERS = [
 	"registered",
 	"hosting",
 	"scrims",
+	"team",
 	"saved",
 	"organization",
 ] as const;

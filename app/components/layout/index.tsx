@@ -21,6 +21,7 @@ import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { Config } from "~/config";
 import { useUser } from "~/features/auth/core/user";
+import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge";
 import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
@@ -277,6 +278,7 @@ export function Layout({
 		sidebarData?.incomingFriendRequestIds ?? [],
 	);
 	const streams = sidebarData?.streams ?? [];
+	const showScheduleNudge = sidebarData?.scheduleNudge ?? false;
 
 	const isFrontPage = location.pathname === "/";
 
@@ -306,6 +308,7 @@ export function Layout({
 			>
 				{t("front:sideNav.myCalendar")}
 			</SideNavHeader>
+			{showScheduleNudge ? <ScheduleNudge /> : null}
 			{events.length > 0 ? (
 				events.map((event) => (
 					<ListLink

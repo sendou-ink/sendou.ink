@@ -37,6 +37,7 @@ import { scrimsActionSchema } from "../scrims-schemas";
 import { scrimsSearchParams } from "../scrims-search-params";
 import type { ScrimPost, ScrimPostRequest } from "../scrims-types";
 import { formatFlexTimeDisplay } from "../scrims-utils";
+import { ScrimFitStripe } from "./ScrimAvailability";
 import styles from "./ScrimCard.module.css";
 import { ScrimRequestModal } from "./ScrimRequestModal";
 
@@ -141,6 +142,10 @@ export function ScrimPostCard({
 			</div>
 
 			{post.text ? <ScrimExpandableText text={post.text} /> : null}
+
+			{action === "REQUEST" || action === "VIEW_REQUEST" ? (
+				<ScrimFitStripe post={post} />
+			) : null}
 
 			<div
 				className={clsx(styles.footer, isFilteredOut && styles.filteredFooter)}

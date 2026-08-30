@@ -5,6 +5,7 @@ import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { assertUnreachable } from "~/utils/types";
 import {
 	badgePage,
+	EVENTS_PAGE,
 	FRIENDS_PAGE,
 	NEW_TROPHY_PAGE,
 	PLUS_VOTING_PAGE,
@@ -13,6 +14,7 @@ import {
 	scrimPage,
 	scrimsPage,
 	sendouQMatchPage,
+	teamSchedulePage,
 	tournamentRegisterPage,
 	tournamentSubsPage,
 	tournamentTeamPage,
@@ -62,6 +64,10 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 			return "scrims";
 		case "FRIEND_REQUEST_RECEIVED":
 			return "sendou_love";
+		case "TEAM_EVENT_ADDED":
+			return "t";
+		case "SCHEDULE_TEAM_REMINDER":
+			return "calendar";
 		default:
 			assertUnreachable(type);
 	}
@@ -136,6 +142,12 @@ export const notificationLink = (
 		case "TO_LIKE_RECEIVED":
 		case "TO_LIKE_ACCEPTED": {
 			return tournamentSubsPage(notification.meta.tournamentId);
+		}
+		case "TEAM_EVENT_ADDED": {
+			return teamSchedulePage(notification.meta.teamCustomUrl);
+		}
+		case "SCHEDULE_TEAM_REMINDER": {
+			return EVENTS_PAGE;
 		}
 		default:
 			assertUnreachable(notification);

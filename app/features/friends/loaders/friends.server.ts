@@ -1,5 +1,7 @@
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as FriendSchedule from "~/features/availability/core/FriendSchedule.server";
+import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import { userPage } from "~/utils/urls";
 import * as FriendRepository from "../FriendRepository.server";
 import { friendActivitySortValue } from "../friends-constants";
@@ -13,19 +15,23 @@ export type FriendsLoaderData = typeof loader;
 export const loader = async () => {
 	const user = requireUser();
 
-	const [
-		friendsWithActivity,
-		pendingRequests,
-		incomingRequests,
-		streamedSendouQMatches,
-	] = await Promise.all([
-		FriendRepository.findByUserIdWithActivity(user.id),
-		FriendRepository.findPendingSentRequests(user.id),
-		FriendRepository.findPendingReceivedRequests(user.id),
-		resolveSendouQMatchStreams(),
-	]);
-
+	const friendsWithActivity = await FriendRepository.findByUserIdWithActivity(
+		user.id,
+	);
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
+
+	const [pendingRequests, incomingRequests, streamedSendouQMatches, schedules] =
+		await Promise.all([
+			FriendRepository.findPendingSentRequests(user.id),
+			FriendRepository.findPendingReceivedRequests(user.id),
+			resolveSendouQMatchStreams(),
+			// everyone listed is a friend or a teammate, which is what makes their
+			// schedule theirs to see
+			FriendSchedule.findByUserIds({
+				userIds: unique.map((f) => f.id),
+				timezone: getViewerTimezone() ?? "UTC",
+			}),
+		]);
 
 	const friends = R.sortBy(
 		unique
@@ -58,9 +64,11 @@ export const loader = async () => {
 					tournamentId: activity.tournamentId ?? friend.tournamentId,
 					streamUrl: activity.streamUrl,
 					friendshipCreatedAt: friend.friendshipCreatedAt,
+					schedule: schedules.get(friend.id) ?? null,
 				};
 			}),
 		[(friend) => friendActivitySortValue(friend.activityType), "desc"],
+		[(friend) => (friend.schedule ? 1 : 0), "desc"],
 		[(friend) => friend.friendshipCreatedAt ?? 0, "desc"],
 	);
 
@@ -93,9 +101,11 @@ export const loader = async () => {
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? tm.tournamentId,
 					streamUrl: activity.streamUrl,
+					schedule: schedules.get(tm.id) ?? null,
 				};
 			}),
 		[(tm) => friendActivitySortValue(tm.activityType), "desc"],
+		[(tm) => (tm.schedule ? 1 : 0), "desc"],
 	);
 
 	return {

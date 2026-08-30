@@ -989,6 +989,68 @@ async function findTeamRecentMaps(
 		.execute();
 }
 
+/**
+ * Tournament registrations of the given users whose event start falls within
+ * the given window, one row per registered member per event date. Dropped-out
+ * teams and hidden events (test and draft tournaments) are excluded. Used to
+ * resolve availability commitments, so alongside the event's name and start
+ * the rows carry what estimating the tournament's duration needs: the
+ * settings and how many teams have registered so far. `excludeTournamentId`
+ * leaves one tournament's own registrations out, for surfaces asking "busy
+ * elsewhere" while looking at that tournament.
+ */
+export function findAllRegistrationsByUserIds({
+	userIds,
+	startsAt,
+	endsAt,
+	excludeTournamentId,
+}: {
+	userIds: Array<number>;
+	startsAt: number;
+	endsAt: number;
+	excludeTournamentId?: number;
+}) {
+	if (userIds.length === 0) return Promise.resolve([]);
+
+	return db
+		.selectFrom("TournamentTeamMember")
+		.innerJoin(
+			"TournamentTeam",
+			"TournamentTeam.id",
+			"TournamentTeamMember.tournamentTeamId",
+		)
+		.innerJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
+		.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+		.innerJoin(
+			"CalendarEventDate",
+			"CalendarEventDate.eventId",
+			"CalendarEvent.id",
+		)
+		.select((eb) => [
+			"TournamentTeamMember.userId",
+			"CalendarEvent.name",
+			"CalendarEvent.organizationId",
+			"CalendarEventDate.startsAt",
+			"Tournament.settings",
+			eb
+				.selectFrom("TournamentTeam as RegisteredTeam")
+				.select(({ fn }) => fn.countAll<number>().as("count"))
+				.whereRef("RegisteredTeam.tournamentId", "=", "Tournament.id")
+				.where("RegisteredTeam.isPlaceholder", "=", 0)
+				.as("teamCount"),
+		])
+		.$narrowType<{ teamCount: NotNull }>()
+		.where("TournamentTeamMember.userId", "in", userIds)
+		.where("TournamentTeam.droppedOut", "=", 0)
+		.where("CalendarEvent.hidden", "=", 0)
+		.where("CalendarEventDate.startsAt", ">=", startsAt)
+		.where("CalendarEventDate.startsAt", "<=", endsAt)
+		.$if(typeof excludeTournamentId === "number", (qb) =>
+			qb.where("Tournament.id", "!=", excludeTournamentId!),
+		)
+		.execute();
+}
+
 /** Invite code of one team, the secret the tournament layout data does not carry. */
 export async function findInviteCodeById(tournamentTeamId: number) {
 	const row = await db

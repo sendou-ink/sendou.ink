@@ -25,6 +25,11 @@ export const addPlayerSchema = v.object({
 	userId: id,
 });
 
+export const addTeamPlayersSchema = v.object({
+	_action: _action("ADD_TEAM_PLAYERS"),
+	teamId: id,
+});
+
 export const deleteTeamMemberSchema = v.object({
 	_action: _action("DELETE_TEAM_MEMBER"),
 	userId: id,
