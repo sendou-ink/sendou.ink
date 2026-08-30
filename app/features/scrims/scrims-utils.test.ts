@@ -372,6 +372,6 @@ describe("postSpan", () => {
 				post: { startsAt: at("19:00"), rangeEndsAt: at("20:30") },
 				now: at("12:00"),
 			}),
-		).toEqual({ startsAt: at("19:00"), endsAt: at("22:30") });
+		).toEqual({ startsAt: at("19:00"), endsAt: at("22:00") });
 	});
 });

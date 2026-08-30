@@ -745,7 +745,7 @@ describe("rosterFit", () => {
 		expect(fit?.availableCount).toBe(4);
 		expect(fit?.window).toEqual({
 			startsAt: evening(20),
-			endsAt: evening(22),
+			endsAt: evening(21.5),
 		});
 	});
 
@@ -762,7 +762,7 @@ describe("rosterFit", () => {
 	test("leaves a member free for only part of the scrim out of the count", () => {
 		const members = [
 			free(1, evening(18), evening(23)),
-			free(2, evening(18), evening(19)),
+			free(2, evening(18), evening(18.5)),
 		];
 
 		const fit = rosterFit({ starts: [evening(18)], members });
@@ -787,7 +787,7 @@ describe("rosterFit", () => {
 		];
 
 		expect(
-			rosterFit({ starts: [evening(18)], members })?.entries[0].availability
+			rosterFit({ starts: [evening(19)], members })?.entries[0].availability
 				.status,
 		).toBe("busy");
 	});

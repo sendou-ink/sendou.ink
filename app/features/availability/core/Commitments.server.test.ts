@@ -100,7 +100,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 					type: "scrim",
 					name: null,
 					startsAt: WEEK_STARTS_AT + 2 * DAY,
-					endsAt: WEEK_STARTS_AT + 2 * DAY + 2 * HOUR,
+					endsAt: WEEK_STARTS_AT + 2 * DAY + 1.5 * HOUR,
 				},
 			]);
 		}
@@ -142,7 +142,7 @@ describe("Commitments.busyBlocksByUserIds", () => {
 				type: "scrim",
 				name: null,
 				startsAt: WEEK_STARTS_AT + DAY + HOUR,
-				endsAt: WEEK_STARTS_AT + DAY + 3 * HOUR,
+				endsAt: WEEK_STARTS_AT + DAY + 2.5 * HOUR,
 			},
 		]);
 	});
