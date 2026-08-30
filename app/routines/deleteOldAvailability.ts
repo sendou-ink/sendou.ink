@@ -22,6 +22,15 @@ export const DeleteOldAvailabilityRoutine = new Routine({
 				dateToDatabaseTimestamp(cutOff),
 			);
 
-		logger.info(`Deleted ${numDeletedRows} old availability weeks`);
+		const { numDeletedRows: deletedTeamEvents } =
+			await AvailabilityRepository.deleteTeamEventsEndedBefore(
+				dateToDatabaseTimestamp(
+					subMonths(new Date(), AVAILABILITY.RETENTION_MONTHS),
+				),
+			);
+
+		logger.info(
+			`Deleted ${numDeletedRows} old availability weeks and ${deletedTeamEvents} old team events`,
+		);
 	},
 });

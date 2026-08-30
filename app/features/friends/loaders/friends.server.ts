@@ -15,26 +15,23 @@ export type FriendsLoaderData = typeof loader;
 export const loader = async () => {
 	const user = requireUser();
 
-	const [
-		friendsWithActivity,
-		pendingRequests,
-		incomingRequests,
-		streamedSendouQMatches,
-	] = await Promise.all([
-		FriendRepository.findByUserIdWithActivity(user.id),
-		FriendRepository.findPendingSentRequests(user.id),
-		FriendRepository.findPendingReceivedRequests(user.id),
-		resolveSendouQMatchStreams(),
-	]);
-
+	const friendsWithActivity = await FriendRepository.findByUserIdWithActivity(
+		user.id,
+	);
 	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
 
-	// everyone listed is a friend or a teammate, which is what makes their
-	// schedule theirs to see
-	const schedules = await FriendSchedule.findByUserIds({
-		userIds: unique.map((f) => f.id),
-		timezone: getViewerTimezone() ?? "UTC",
-	});
+	const [pendingRequests, incomingRequests, streamedSendouQMatches, schedules] =
+		await Promise.all([
+			FriendRepository.findPendingSentRequests(user.id),
+			FriendRepository.findPendingReceivedRequests(user.id),
+			resolveSendouQMatchStreams(),
+			// everyone listed is a friend or a teammate, which is what makes their
+			// schedule theirs to see
+			FriendSchedule.findByUserIds({
+				userIds: unique.map((f) => f.id),
+				timezone: getViewerTimezone() ?? "UTC",
+			}),
+		]);
 
 	const friends = R.sortBy(
 		unique

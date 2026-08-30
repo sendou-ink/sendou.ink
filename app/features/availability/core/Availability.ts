@@ -476,11 +476,19 @@ interface TrackWindowArgs {
 }
 
 /**
+ * Latest minute a range may start on: the last step before midnight. A range
+ * belongs to the day it starts on, so a start past midnight would silently be
+ * another day's range — the track's post-midnight zone only extends ends.
+ */
+const MAX_RANGE_START = DAY_MINUTES - AVAILABILITY.SLOT_STEP_MINUTES;
+
+/**
  * Range painted by dragging on an empty part of a day track from `anchor` to
  * `cursor` (both minutes from midnight): ends snapped to the entry step, at
- * least one step long and kept inside the track. Painting cannot start on a
- * wall (a commitment) but may extend across one — null when the anchor is
- * inside a wall.
+ * least one step long and kept inside the track. The start is kept before
+ * midnight — a paint anchored past it grows leftwards from the day's last
+ * step. Painting cannot start on a wall (a commitment) but may extend across
+ * one — null when the anchor is inside a wall.
  */
 export function paintedRange({
 	anchor,
@@ -508,12 +516,17 @@ export function paintedRange({
 		start = end - AVAILABILITY.SLOT_STEP_MINUTES;
 	}
 
+	if (start > MAX_RANGE_START) {
+		start = MAX_RANGE_START;
+		end = Math.max(end, start + AVAILABILITY.SLOT_STEP_MINUTES);
+	}
+
 	return { start, end };
 }
 
 /**
  * `range` moved by `delta` minutes: the move is snapped to the entry step and
- * stopped at the track edges.
+ * stopped at the track edges, with the start kept before midnight.
  */
 export function movedRange({
 	range,
@@ -529,7 +542,7 @@ export function movedRange({
 
 	const start = R.clamp(range.start + snapMinutes(delta), {
 		min: trackStart,
-		max: trackEnd - length,
+		max: Math.min(trackEnd - length, MAX_RANGE_START),
 	});
 
 	return { start, end: start + length };
@@ -537,7 +550,8 @@ export function movedRange({
 
 /**
  * `range` with one edge dragged to `cursor`: snapped to the entry step, kept
- * at least one step long and stopped at the track edges.
+ * at least one step long and stopped at the track edges, with the start kept
+ * before midnight.
  */
 export function resizedRange({
 	range,
@@ -553,7 +567,10 @@ export function resizedRange({
 	if (edge === "start") {
 		const start = R.clamp(snapMinutes(cursor), {
 			min: trackStart,
-			max: range.end - AVAILABILITY.SLOT_STEP_MINUTES,
+			max: Math.min(
+				range.end - AVAILABILITY.SLOT_STEP_MINUTES,
+				MAX_RANGE_START,
+			),
 		});
 
 		return { start, end: range.end };

@@ -765,7 +765,7 @@ describe("Availability.paintedRange", () => {
 		).toBeNull();
 	});
 
-	test("stays inside the track", () => {
+	test("stays inside the track and starts before midnight", () => {
 		expect(
 			Availability.paintedRange({
 				anchor: 1500,
@@ -773,7 +773,18 @@ describe("Availability.paintedRange", () => {
 				walls: [],
 				...TRACK,
 			}),
-		).toEqual(minuteRange(1500, 1560));
+		).toEqual(minuteRange(1410, 1560));
+	});
+
+	test("a paint anchored past midnight grows from the day's last step", () => {
+		expect(
+			Availability.paintedRange({
+				anchor: 1470,
+				cursor: 1470,
+				walls: [],
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1410, 1500));
 	});
 });
 
@@ -796,6 +807,16 @@ describe("Availability.movedRange", () => {
 				...TRACK,
 			}),
 		).toEqual(minuteRange(840, 960));
+	});
+
+	test("stops the start before midnight", () => {
+		expect(
+			Availability.movedRange({
+				range: minuteRange(1350, 1380),
+				delta: 120,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1410, 1440));
 	});
 });
 
@@ -831,5 +852,16 @@ describe("Availability.resizedRange", () => {
 				...TRACK,
 			}),
 		).toEqual(minuteRange(1080, 1320));
+	});
+
+	test("stops the start edge before midnight", () => {
+		expect(
+			Availability.resizedRange({
+				range: minuteRange(1380, 1560),
+				edge: "start",
+				cursor: 1500,
+				...TRACK,
+			}),
+		).toEqual(minuteRange(1410, 1560));
 	});
 });

@@ -46,7 +46,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await notify({
 				userIds: team.members
-					.filter((member) => member.id !== user.id)
+					.filter(
+						(member) => member.id !== user.id && member.role !== "CHEERLEADER",
+					)
 					.map((member) => member.id),
 				notification: {
 					type: "TEAM_EVENT_ADDED",

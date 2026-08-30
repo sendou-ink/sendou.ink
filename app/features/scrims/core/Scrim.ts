@@ -265,8 +265,12 @@ export function pickableSlots({
 	const fullSpans = spansFreeFor(minPlayers);
 
 	return spansFreeFor(Math.max(1, minPlayers - 1)).map((slot) => {
-		const fullSpan = fullSpans.find(
-			(span) => span.startsAt >= slot.startsAt && span.endsAt <= slot.endsAt,
+		// the longest one: a slot can contain several whole-team spans
+		const fullSpan = R.firstBy(
+			fullSpans.filter(
+				(span) => span.startsAt >= slot.startsAt && span.endsAt <= slot.endsAt,
+			),
+			[(span) => span.endsAt - span.startsAt, "desc"],
 		);
 		const wholeSlotIsFull =
 			fullSpan?.startsAt === slot.startsAt && fullSpan?.endsAt === slot.endsAt;

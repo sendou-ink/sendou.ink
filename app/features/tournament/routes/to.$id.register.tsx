@@ -739,10 +739,7 @@ function FillRoster({
 
 	const quickAddPlayers = (() => {
 		if (readOnly) return [];
-		return R.uniqueBy(
-			data?.friendPlayers?.friends ?? [],
-			(friend) => friend.id,
-		).filter((user) => {
+		return (data?.friendPlayers?.friends ?? []).filter((user) => {
 			const isNotInTeam = tournament.ctx.teams.every(
 				(team) => !team.memberUserIds.includes(user.id),
 			);
@@ -905,17 +902,19 @@ function QuickAddPlayers({
 				)
 			: toSort;
 
+	const uniquePlayers = R.uniqueBy(players, (player) => player.id);
+
 	const teamGroups = teams
 		.map((team) => ({
 			team,
 			players: sortByAvailability(
-				players.filter((player) => player.teamId === team.id),
+				uniquePlayers.filter((player) => player.teamId === team.id),
 			),
 		}))
 		.filter((group) => group.players.length > 0);
 
 	const pickupPlayers = sortByAvailability(
-		players.filter((player) => !player.teamId),
+		uniquePlayers.filter((player) => !player.teamId),
 	);
 
 	const sections = [
@@ -939,15 +938,14 @@ function QuickAddPlayers({
 		sections[0]?.players[0]?.id ?? null,
 	);
 
-	const addAllByTeam = teamGroups
-		.map((group) => ({
-			team: group.team,
+	const addAllByTeam = teams
+		.map((team) => ({
+			team,
 			// in the loader's order so the list matches what the action adds when clamped
 			playersToAdd: players
 				.filter(
 					(player) =>
-						player.teamId === group.team.id &&
-						getMemberRoleType(player) !== "OTHER",
+						player.teamId === team.id && getMemberRoleType(player) !== "OTHER",
 				)
 				.slice(0, spotsLeft),
 		}))

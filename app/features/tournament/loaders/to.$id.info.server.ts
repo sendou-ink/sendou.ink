@@ -5,6 +5,7 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentFromParams } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { logger } from "~/utils/logger";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -16,7 +17,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const [description, endsAt] = await Promise.all([
 		TournamentRepository.findDescriptionById(tournamentId),
-		estimatedEnd(tournament),
+		estimatedEnd(tournament)?.catch((error) => {
+			logger.error("Failed to estimate the tournament's end", error);
+			return null;
+		}) ?? null,
 	]);
 
 	if (!user) {
@@ -34,6 +38,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 };
 
 function estimatedEnd(tournament: Tournament) {
+	if (tournament.isLeague) return null;
+	if (tournament.ctx.startsAt <= new Date()) return null;
 	const isMultiSession = tournament.ctx.settings.bracketProgression.some(
 		(bracket) => bracket.startTime,
 	);

@@ -55,19 +55,22 @@ export const action: ActionFunction = async ({ request }) => {
 			await AvailabilityRepository.upsertOwnWeek({
 				weekStartsAt,
 				timezone,
-				slots: data.days.flatMap((day) =>
-					day.ranges.map((range) => ({
-						startsAt: Availability.dayMinutesToTimestamp({
-							date: day.date,
-							minutes: range.start,
-							timezone,
-						}),
-						endsAt: Availability.dayMinutesToTimestamp({
-							date: day.date,
-							minutes: range.end,
-							timezone,
-						}),
-					})),
+				// normalized so ranges overlapping across midnight land as one slot
+				slots: Availability.normalize(
+					data.days.flatMap((day) =>
+						day.ranges.map((range) => ({
+							startsAt: Availability.dayMinutesToTimestamp({
+								date: day.date,
+								minutes: range.start,
+								timezone,
+							}),
+							endsAt: Availability.dayMinutesToTimestamp({
+								date: day.date,
+								minutes: range.end,
+								timezone,
+							}),
+						})),
+					),
 				),
 				dayNotes: data.days.flatMap((day) =>
 					day.note ? [{ date: day.date, text: day.note }] : [],

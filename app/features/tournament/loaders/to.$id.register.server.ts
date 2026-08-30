@@ -11,6 +11,7 @@ import {
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { logger } from "~/utils/logger";
 
 export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const { tournament, tournamentId, user } = await tournamentFromParams(
@@ -23,11 +24,17 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const friendPlayers = await SQGroupRepository.findFriendsAndTeammates(
 		user.id,
 	);
-	const availability = await rosterAvailability({
-		tournament,
-		userId: user.id,
-		friendIds: friendPlayers.friends.map((friend) => friend.id),
-	});
+	const [availability, teams] = await Promise.all([
+		rosterAvailability({
+			tournament,
+			userId: user.id,
+			friendIds: friendPlayers.friends.map((friend) => friend.id),
+		})?.catch((error) => {
+			logger.error("Failed to resolve registration availability", error);
+			return null;
+		}) ?? null,
+		TeamRepository.findAllMemberOfByUserId(user.id),
+	]);
 
 	if (!teamMemberOf) {
 		return {
@@ -35,7 +42,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			mapPool: null,
 			friendPlayers,
 			availability,
-			teams: await TeamRepository.findAllMemberOfByUserId(user.id),
+			teams,
 			isSaved: await SavedCalendarEventRepository.isSaved({
 				userId: user.id,
 				tournamentId,
@@ -53,7 +60,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		mapPool: ownTeam?.mapPool ?? null,
 		friendPlayers,
 		availability,
-		teams: await TeamRepository.findAllMemberOfByUserId(user.id),
+		teams,
 		isSaved: false,
 	};
 };

@@ -98,7 +98,12 @@ export function WeekAvailabilityEditor({
 		minute: "2-digit",
 	});
 
-	const clockWindow = useClockWindow();
+	const clockWindow = useClockWindow({
+		expandTo: [
+			...value.flatMap((day) => day.ranges),
+			...commitments.map((commitment) => commitment.range),
+		],
+	});
 	const { trackStart, trackEnd, pct, barStyle } = clockWindow;
 	const [gesture, setGesture] = React.useState<Gesture | null>(null);
 	const gestureRef = React.useRef<Gesture | null>(null);
@@ -453,9 +458,9 @@ export function WeekAvailabilityEditor({
 					onPointerCancel={handleGestureCancel}
 				>
 					<TrackTicks clockWindow={clockWindow} />
-					{dayCommitments.map((commitment) => (
+					{dayCommitments.map((commitment, index) => (
 						<TrackCommitment
-							key={`${commitment.range.start}-${commitment.name}`}
+							key={index}
 							clockWindow={clockWindow}
 							range={commitment.range}
 							name={commitment.name}
@@ -581,11 +586,8 @@ export function WeekAvailabilityEditor({
 											{rangeText(day.date, range)}
 										</button>
 									))}
-									{dayCommitments.map((commitment) => (
-										<span
-											key={`${commitment.range.start}-${commitment.name}`}
-											className={trackStyles.commitmentChip}
-										>
+									{dayCommitments.map((commitment, index) => (
+										<span key={index} className={trackStyles.commitmentChip}>
 											{commitment.name} ·{" "}
 											{rangeText(day.date, commitment.range)}
 										</span>
@@ -627,6 +629,9 @@ export function WeekAvailabilityEditor({
 						if (!isOpen) closeDayEditor();
 					}}
 					triggerRef={popoverAnchorRef}
+					aria-label={t("schedule:editor.editDay", {
+						day: dayLabelText(openDay),
+					})}
 				>
 					<DayEditor
 						day={openDay}

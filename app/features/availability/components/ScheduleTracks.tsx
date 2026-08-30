@@ -26,16 +26,34 @@ export type ClockWindow = ReturnType<typeof useClockWindow>;
  */
 export function useClockWindow({
 	fitTo,
+	expandTo,
 }: {
 	/** Everything drawn on the tracks, in minutes from their own day's midnight. */
 	fitTo?: Array<DayTimeRange>;
+	/**
+	 * Content the window must reach even when it falls outside the default
+	 * hours (a time typed by hand, a week saved in another timezone), for
+	 * views that keep the default window otherwise — the editor.
+	 */
+	expandTo?: Array<DayTimeRange>;
 } = {}) {
 	const [earlierShown, setEarlierShown] = React.useState(false);
 	const [laterShown, setLaterShown] = React.useState(false);
 
 	const fitted = fittedWindow(fitTo);
-	const defaultStart = fitted?.start ?? AVAILABILITY.TRACK_START_MINUTES;
-	const defaultEnd = fitted?.end ?? AVAILABILITY.TRACK_END_MINUTES;
+	const expanded = fittedWindow(expandTo);
+	const defaultStart =
+		fitted?.start ??
+		Math.min(
+			expanded?.start ?? Number.POSITIVE_INFINITY,
+			AVAILABILITY.TRACK_START_MINUTES,
+		);
+	const defaultEnd =
+		fitted?.end ??
+		Math.max(
+			expanded?.end ?? Number.NEGATIVE_INFINITY,
+			AVAILABILITY.TRACK_END_MINUTES,
+		);
 
 	const trackStart = earlierShown
 		? Math.min(AVAILABILITY.TRACK_EARLIER_START_MINUTES, defaultStart)

@@ -172,8 +172,8 @@ export function AvailabilityMemberRow({
 			</span>
 			{showAvailability ? <AvailabilityRowDetail entry={entry} /> : null}
 			{showAvailability
-				? entry?.notes?.map((note) => (
-						<span key={note} className={styles.note}>
+				? entry?.notes?.map((note, index) => (
+						<span key={index} className={styles.note}>
 							<Flag size={12} className={styles.noteFlag} /> {note}
 						</span>
 					))

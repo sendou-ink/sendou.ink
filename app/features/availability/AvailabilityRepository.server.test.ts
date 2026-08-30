@@ -112,6 +112,51 @@ describe("AvailabilityRepository.upsertOwnWeek", () => {
 		expect(weeks[0].slots).toEqual([]);
 	});
 
+	test("replaces the same week reported earlier from another timezone instead of duplicating it", async () => {
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: WEEK_STARTS_AT,
+			timezone: TIMEZONE,
+			slots: [
+				{
+					startsAt: at("2026-08-24", "18:00"),
+					endsAt: at("2026-08-24", "22:00"),
+				},
+			],
+		});
+
+		const newYorkWeekStartsAt = Availability.localToTimestamp({
+			date: "2026-08-24",
+			time: "00:00",
+			timezone: "America/New_York",
+		});
+		await actAs(users.id(1), () =>
+			AvailabilityRepository.upsertOwnWeek({
+				weekStartsAt: newYorkWeekStartsAt,
+				timezone: "America/New_York",
+				slots: [
+					{
+						startsAt: at("2026-08-26", "19:00"),
+						endsAt: at("2026-08-26", "21:00"),
+					},
+				],
+				dayNotes: [],
+			}),
+		);
+
+		const weeks = await weeksOf(users.id(1));
+
+		expect(weeks).toHaveLength(1);
+		expect(weeks[0].weekStartsAt).toBe(newYorkWeekStartsAt);
+		expect(weeks[0].timezone).toBe("America/New_York");
+		expect(weeks[0].slots).toEqual([
+			{
+				startsAt: at("2026-08-26", "19:00"),
+				endsAt: at("2026-08-26", "21:00"),
+			},
+		]);
+	});
+
 	test("saves each user's week of their own", async () => {
 		await AvailabilityWeekFactory.create({
 			userId: users.id(1),
@@ -288,6 +333,19 @@ describe("AvailabilityRepository.findWeekReminderUserIds", () => {
 		});
 
 		expect(await reminderUserIds()).toEqual([]);
+	});
+
+	test("leaves cheerleaders out, the schedule surfaces do not show them", async () => {
+		await TeamFactory.create(
+			{ memberUserIds: [users.id(1), users.id(2), users.id(3)] },
+			{ roles: { [users.id(3)]: "CHEERLEADER" } },
+		);
+		await AvailabilityWeekFactory.create({
+			userId: users.id(1),
+			weekStartsAt: WEEK_STARTS_AT,
+		});
+
+		expect(await reminderUserIds()).toEqual([users.id(2)]);
 	});
 });
 

@@ -5,6 +5,7 @@ import { EventsList } from "~/components/EventsList";
 import { Main } from "~/components/Main";
 import { SubNav, SubNavLink } from "~/components/SubNav";
 import { action } from "~/features/availability/actions/events.server";
+import { scheduleWeekSearchParams } from "~/features/availability/availability-search-params";
 import { MySchedule } from "~/features/availability/components/MySchedule";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -42,6 +43,7 @@ export default function EventsPage() {
 	const { t } = useTranslation(["calendar"]);
 	const data = useLoaderData<EventsLoaderData>();
 	const [viewParam] = useSearchParam(calendarEventsSearchParams, "view");
+	const [week] = useSearchParam(scheduleWeekSearchParams, "week");
 
 	const defaultFilter =
 		VIEW_FILTERS.find((key) => data[key].length > 0) ?? "registered";
@@ -62,7 +64,12 @@ export default function EventsPage() {
 
 	return (
 		<Main className="stack lg">
-			<MySchedule data={data.mySchedule} />
+			{/* keyed on the week so a revalidation across Monday midnight resets
+			    the editor instead of leaving it holding the rolled-over week */}
+			<MySchedule
+				key={data.mySchedule.weeks[0].weekStartsAt}
+				data={data.mySchedule}
+			/>
 			<div>
 				<div className={styles.eventsListHeader}>
 					<h2 className="text-lg mx-2">{t("calendar:events.title")}</h2>
@@ -71,7 +78,10 @@ export default function EventsPage() {
 							{VIEW_FILTERS.map((value) => (
 								<SubNavLink
 									key={value}
-									to={calendarEventsSearchParams.href("", { view: value })}
+									to={scheduleWeekSearchParams.href(
+										calendarEventsSearchParams.href("", { view: value }),
+										{ week },
+									)}
 									secondary
 									controlled
 									active={filter === value}

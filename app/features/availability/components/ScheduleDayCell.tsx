@@ -54,9 +54,9 @@ export function ScheduleDayCell({
 					</div>
 				))
 			)}
-			{busy.map((block) => (
+			{busy.map((block, index) => (
 				<div
-					key={block.startsAt}
+					key={index}
 					className={styles.busy}
 					title={`${rangeText(block)} · ${busyName(block)}`}
 					data-testid="schedule-busy"

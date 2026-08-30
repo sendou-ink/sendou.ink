@@ -684,6 +684,31 @@ describe("pickableSlots", () => {
 		});
 	});
 
+	test("shows the longest whole-team span when the slot contains several", () => {
+		const members = [
+			freeFrom(1, evening(18), evening(23)),
+			freeFrom(2, evening(18), evening(23)),
+			freeFrom(3, evening(18), evening(23)),
+			{
+				userId: 4,
+				ranges: [
+					{ startsAt: evening(18), endsAt: evening(19) },
+					{ startsAt: evening(20), endsAt: evening(23) },
+				],
+			},
+		];
+
+		const [slot] = pickableSlots({ members, minPlayers: 4 });
+
+		expect(slot.fullSpan).toEqual({
+			startsAt: evening(20),
+			endsAt: evening(23),
+			tier: "FULL",
+			userIds: [1, 2, 3, 4],
+		});
+		expect(slot.pick.startsAt).toBe(evening(20));
+	});
+
 	test("has no slots when the team is more than one player short", () => {
 		const members = [
 			freeFrom(1, evening(18), evening(21)),

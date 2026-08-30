@@ -101,11 +101,18 @@ export async function hasReportedWeek({
 /**
  * Ids of the users who have not reported the week starting at `weekStartsAt`
  * while at least one of their teammates has — the reminder is only worth
- * sending when somebody else on the team already moved.
+ * sending when somebody else on the team already moved. Cheerleaders are left
+ * out, the schedule surfaces do not show them.
  */
 export async function findWeekReminderUserIds(weekStartsAt: number) {
 	const memberships = await db
 		.selectFrom("TeamMemberWithSecondary")
+		.where((eb) =>
+			eb.or([
+				eb("TeamMemberWithSecondary.role", "is", null),
+				eb("TeamMemberWithSecondary.role", "!=", "CHEERLEADER"),
+			]),
+		)
 		.leftJoin("AvailabilityWeek", (join) =>
 			join
 				.onRef("AvailabilityWeek.userId", "=", "TeamMemberWithSecondary.userId")
@@ -261,7 +268,9 @@ interface UpsertOwnWeekArgs {
 /**
  * Saves the acting user's availability for one week, replacing whatever they
  * had reported for it. The week is saved as a whole, so slots and day notes
- * left out are removed.
+ * left out are removed. A week reported earlier from another timezone (its
+ * start hours apart, never days) is the same week and gets replaced, not
+ * duplicated.
  *
  * @returns id of the week
  */
@@ -269,21 +278,42 @@ export function upsertOwnWeek(args: UpsertOwnWeekArgs) {
 	const userId = actorId();
 
 	return db.transaction().execute(async (trx) => {
-		const week = await trx
-			.insertInto("AvailabilityWeek")
-			.values({
-				userId,
-				weekStartsAt: args.weekStartsAt,
-				timezone: args.timezone,
-			})
-			.onConflict((oc) =>
-				oc.columns(["userId", "weekStartsAt"]).doUpdateSet({
-					timezone: args.timezone,
-					updatedAt: databaseTimestampNow(),
-				}),
+		const existing = await trx
+			.selectFrom("AvailabilityWeek")
+			.select("AvailabilityWeek.id")
+			.where("AvailabilityWeek.userId", "=", userId)
+			.where(
+				"AvailabilityWeek.weekStartsAt",
+				">",
+				args.weekStartsAt - AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
 			)
-			.returning("id")
-			.executeTakeFirstOrThrow();
+			.where(
+				"AvailabilityWeek.weekStartsAt",
+				"<",
+				args.weekStartsAt + AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS,
+			)
+			.executeTakeFirst();
+
+		const week = existing
+			? await trx
+					.updateTable("AvailabilityWeek")
+					.set({
+						weekStartsAt: args.weekStartsAt,
+						timezone: args.timezone,
+						updatedAt: databaseTimestampNow(),
+					})
+					.where("AvailabilityWeek.id", "=", existing.id)
+					.returning("id")
+					.executeTakeFirstOrThrow()
+			: await trx
+					.insertInto("AvailabilityWeek")
+					.values({
+						userId,
+						weekStartsAt: args.weekStartsAt,
+						timezone: args.timezone,
+					})
+					.returning("id")
+					.executeTakeFirstOrThrow();
 
 		await trx
 			.deleteFrom("AvailabilitySlot")
@@ -332,6 +362,14 @@ export function deleteWeeksStartedBefore(weekStartsAt: number) {
 	return db
 		.deleteFrom("AvailabilityWeek")
 		.where("AvailabilityWeek.weekStartsAt", "<", weekStartsAt)
+		.executeTakeFirstOrThrow();
+}
+
+/** Deletes team events that ended before the given timestamp. */
+export function deleteTeamEventsEndedBefore(endsAt: number) {
+	return db
+		.deleteFrom("TeamEvent")
+		.where("TeamEvent.endsAt", "<", endsAt)
 		.executeTakeFirstOrThrow();
 }
 

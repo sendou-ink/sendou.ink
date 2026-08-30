@@ -58,11 +58,13 @@ export function SendouAnchoredPopover({
 	isOpen,
 	onOpenChange,
 	triggerRef,
+	"aria-label": ariaLabel,
 }: {
 	children: React.ReactNode;
 	isOpen: boolean;
 	onOpenChange: (isOpen: boolean) => void;
 	triggerRef: React.RefObject<HTMLElement | null>;
+	"aria-label"?: string;
 }) {
 	return (
 		<Popover
@@ -71,7 +73,9 @@ export function SendouAnchoredPopover({
 			onOpenChange={onOpenChange}
 			triggerRef={triggerRef}
 		>
-			<Dialog className={styles.dialog}>{children}</Dialog>
+			<Dialog className={styles.dialog} aria-label={ariaLabel}>
+				{children}
+			</Dialog>
 		</Popover>
 	);
 }

@@ -34,15 +34,25 @@ export function ScrimRequestModal({
 		minute: "numeric",
 	});
 
-	const timeOptions = post.rangeEndsAt
+	// only the starts still on offer: the server clips the roster schedules to
+	// them, and defaulting to a time already past would show the whole roster
+	// as unavailable. Once every start has passed the full list stays on offer.
+	const allTimeOptions = post.rangeEndsAt
 		? generateTimeOptions(
 				databaseTimestampToDate(post.startsAt),
 				databaseTimestampToDate(post.rangeEndsAt),
-			).map((timestamp) => ({
-				value: String(timestamp),
-				label: timeFormatter.format(new Date(timestamp)) ?? "",
-			}))
+			)
 		: [];
+	const upcomingTimeOptions = allTimeOptions.filter(
+		(timestamp) =>
+			dateToDatabaseTimestamp(new Date(timestamp)) >= data.availability.now,
+	);
+	const timeOptions = (
+		upcomingTimeOptions.length > 0 ? upcomingTimeOptions : allTimeOptions
+	).map((timestamp) => ({
+		value: String(timestamp),
+		label: timeFormatter.format(new Date(timestamp)) ?? "",
+	}));
 
 	return (
 		<SendouDialog heading={t("scrims:requestModal.title")} onClose={close}>

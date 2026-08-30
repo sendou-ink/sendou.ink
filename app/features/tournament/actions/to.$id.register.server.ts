@@ -347,6 +347,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			const spotsLeft =
 				tournament.maxMembersPerTeam - ownTeam.memberUserIds.length;
+			errorToastIfFalsy(spotsLeft > 0, "Team is already at max capacity");
 
 			let addedCount = 0;
 			const skippedReasons: Array<IneligibleReason> = [];
@@ -380,6 +381,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			if (skippedReasons.length > 0) {
+				clearTournamentDataCache(tournamentId);
+
 				return successToast(
 					`Added ${addedCount} player(s). ${skippedSummary(skippedReasons)}`,
 				);
