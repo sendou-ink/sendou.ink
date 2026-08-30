@@ -64,7 +64,9 @@ export class MobileNav {
 	}
 
 	async closePanel() {
-		await this.page.locator("button:has(svg.lucide-x)").first().click();
+		await this.openPanelDialog
+			.locator("button[class*='panelCloseButton']")
+			.click();
 	}
 
 	menuLink(name: string) {
