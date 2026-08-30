@@ -33,6 +33,10 @@ export class TournamentRegisterPage {
 			organizerAddedLeaveExplanation: page.getByText(
 				"You were added to the team by the organizer. Contact the TO to leave the team.",
 			),
+			addPlayerButton: page.getByTestId("add-player-button"),
+			copyInviteLinkButton: page.getByRole("button", {
+				name: "Copy to clipboard",
+			}),
 		};
 	}
 
@@ -45,6 +49,11 @@ export class TournamentRegisterPage {
 
 	member(number: number) {
 		return this.page.getByTestId(`member-num-${number}`);
+	}
+
+	/** The roster footer of a format too small to have subs, e.g. "2v2". */
+	noSubsFooter(format: string) {
+		return this.page.getByText(`Format is ${format}. No subs allowed.`);
 	}
 
 	stepCheckmark(number: number) {

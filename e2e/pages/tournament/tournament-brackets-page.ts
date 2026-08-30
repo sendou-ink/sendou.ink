@@ -62,6 +62,11 @@ export class TournamentBracketsPage {
 		return this.page.getByText(`Round ${roundNumber}`, { exact: true });
 	}
 
+	/** A round column's header by its name, e.g. "Grand Finals". */
+	roundHeader(name: string) {
+		return this.locators.bracketsViewer.getByText(name, { exact: true });
+	}
+
 	match(matchId: number) {
 		return this.page.locator(`[data-match-id="${matchId}"]`);
 	}
@@ -195,11 +200,18 @@ class BracketMapListDialog {
 			),
 			linkFinalsButton: page.getByTestId("link-finals-3rd-place-match-button"),
 			beforeSetText: page.getByText("Before set"),
+			pickBanToggles: page.getByTitle("Toggle counterpick/ban"),
 		};
 	}
 
 	async setPickBan(value: string) {
 		await this.locators.pickBanSelect.selectOption(value);
+	}
+
+	/** Turns pick/ban on. Round robin and swiss share one setting across every
+	 * round, so any round's toggle switches the whole bracket. */
+	async togglePickBan() {
+		await this.locators.pickBanToggles.first().click();
 	}
 
 	async setCountType(value: string) {

@@ -456,11 +456,27 @@ export function BracketMapListDialog({
 													newPickBanStyle === "COUNTERPICK_MODE_REPEAT_OK") ||
 												(pickBanStyle === "COUNTERPICK_MODE_REPEAT_OK" &&
 													newPickBanStyle === "COUNTERPICK");
-											const shouldSkipRegenerateMaps =
-												noPickBanSetBeforeOrAfter ||
-												switchedFromCounterpickToAnother;
 
-											if (!shouldSkipRegenerateMaps) {
+											// both counterpick styles generate the same map list, so the
+											// TO's maps are kept — but the rounds still have to carry the
+											// new style, as that is what gets submitted
+											if (switchedFromCounterpickToAnother) {
+												setMaps(
+													new Map(
+														Array.from(maps.entries()).map(
+															([roundId, round]) => [
+																roundId,
+																round.pickBan
+																	? { ...round, pickBan: newPickBanStyle }
+																	: round,
+															],
+														),
+													),
+												);
+												return;
+											}
+
+											if (!noPickBanSetBeforeOrAfter) {
 												setMaps(
 													generateTournamentRoundMaplist({
 														mapCounts,

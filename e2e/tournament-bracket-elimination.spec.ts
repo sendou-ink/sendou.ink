@@ -1,5 +1,6 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
 	createTeams,
@@ -97,6 +98,56 @@ test.describe("Tournament bracket elimination", () => {
 		await expect(
 			brackets.participantInRound(DE_LOSERS_ROUND_ID, teams[0].id),
 		).toBeVisible();
+	});
+
+	test("losers bracket team winning grand finals forces a bracket reset", async ({
+		page,
+		factories,
+	}) => {
+		test.slow();
+
+		const tournament = await factories.TournamentFactory.create({
+			authorId: ADMIN_ID,
+			startTimes: startedTournamentTimes(),
+			bracketProgression: DOUBLE_ELIMINATION,
+		});
+		await createTeams(factories, tournament.id, teamSeeds(4));
+		const [wbSemiOne, wbSemiTwo, wbFinal, lbSemi, lbFinal, grandFinals, reset] =
+			await factories.TournamentFactory.startBracket(tournament.id);
+
+		await impersonate(page);
+
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+
+		// every match up to grand finals is swept by whichever team is on the alpha
+		// side, leaving the winners bracket team facing the team it beat in the
+		// winners final
+		for (const { id } of [wbSemiOne, wbSemiTwo, wbFinal, lbSemi, lbFinal]) {
+			const match = await brackets.openMatch(id);
+			await match.openTab("action");
+			await match.reportResult({ mapsToReport: 2 });
+			await match.backToBracket();
+		}
+
+		// the losers bracket team (bravo side of grand finals) takes the first set,
+		// which is only enough to even out the sets lost
+		let match = await brackets.openMatch(grandFinals.id);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2, winner: 2 });
+		await match.backToBracket();
+
+		await expect(
+			brackets.roundHeader(TOURNAMENT.ROUND_NAMES.BRACKET_RESET),
+		).toBeVisible();
+		await isNotVisible(brackets.locators.finalizeTournamentButton);
+
+		match = await brackets.openMatch(reset.id);
+		await match.openTab("action");
+		await match.reportResult({ mapsToReport: 2 });
+		await match.backToBracket();
+
+		await expect(brackets.locators.finalizeTournamentButton).toBeVisible();
 	});
 
 	test("completes and finalizes a small tournament with badge assigning", async ({
