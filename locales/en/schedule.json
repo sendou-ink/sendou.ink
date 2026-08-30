@@ -22,7 +22,6 @@
 	"friends.availabilityOf": "{{name}}'s availability",
 	"registration.title": "Availability",
 	"registration.estimated": "estimated",
-	"registration.notVisible": "Schedule not shared with you",
 	"registration.friends": "Friends",
 	"registration.beyondHorizon": "Schedules for that week open on {{date}}",
 	"registration.summary.available": "{{amount}} available",

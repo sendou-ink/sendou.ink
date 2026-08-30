@@ -201,13 +201,8 @@ export function AvailabilityRowDetail({
 }) {
 	const { t } = useTranslation(["schedule"]);
 
-	// xxx: is this what we want?
 	if (!entry) {
-		return (
-			<span className={styles.detailText}>
-				{t("schedule:registration.notVisible")}
-			</span>
-		);
+		return null;
 	}
 
 	const availability = entry.availability;
