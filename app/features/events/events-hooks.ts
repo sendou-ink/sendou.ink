@@ -5,8 +5,11 @@ import {
 } from "~/features/events/events-client";
 import type { ServerEvent } from "~/features/events/events-types";
 
-// how long the tab must have been hidden for returning to it to be worth a catch-up
-const CATCH_UP_HIDDEN_MS = 20 * 1000;
+// how long the page must have been away for coming back to it to be worth a catch-up
+const CATCH_UP_AWAY_MS = 20 * 1000;
+// how often the page marks itself as running in the foreground; the gap left in these
+// ticks is what an absence is measured by, so it bounds how much of one goes unnoticed
+const FOREGROUND_TICK_MS = 5 * 1000;
 // how often to catch up while the event stream is down and nothing can arrive over it
 const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 // spreads out the catch-ups of the many clients that reconnect at once after a deploy
@@ -52,7 +55,7 @@ export function useEventsTopic(topic: string, enabled = true) {
 
 /**
  * Calls `onCatchUp` whenever events may have been missed: the stream came back up, the
- * tab was returned to after being hidden long enough, or the stream is down and nothing
+ * page was returned to after being away long enough, or the stream is down and nothing
  * can arrive over it at all. Returns the same trigger for callers that have a reason of
  * their own to catch up.
  *
@@ -96,25 +99,7 @@ export function useEventStreamCatchUp({
 	React.useEffect(() => {
 		if (!enabled) return;
 
-		let hiddenAt: number | null = null;
-
-		const handleVisibilityChange = () => {
-			if (document.visibilityState !== "visible") {
-				hiddenAt = Date.now();
-				return;
-			}
-
-			// a quick tab away can not have missed anything the stream would not
-			// still deliver, and catching up for it would be pure server load
-			if (hiddenAt !== null && Date.now() - hiddenAt >= CATCH_UP_HIDDEN_MS) {
-				catchUp();
-			}
-			hiddenAt = null;
-		};
-
-		document.addEventListener("visibilitychange", handleVisibilityChange);
-		return () =>
-			document.removeEventListener("visibilitychange", handleVisibilityChange);
+		return subscribeToPageReturn(catchUp);
 	}, [enabled, catchUp]);
 
 	React.useEffect(() => {
@@ -163,6 +148,55 @@ function useCatchUpOnConnect(
 
 		onConnect();
 	}, [enabled, readyState, onConnect]);
+}
+
+const returnListeners = new Set<() => void>();
+let foregroundTicker: ReturnType<typeof setInterval> | null = null;
+let lastForegroundTickAt = 0;
+
+/**
+ * Notifies every listener when the page comes back from being away long enough that the
+ * event stream can not be trusted to have delivered everything: a backgrounded tab, an
+ * app the phone suspended, a sleeping device. Returns an unsubscribe function.
+ *
+ * Time away is the gap between the ticks of a heartbeat that only runs while the page is
+ * in the foreground, since a suspended page is never handed the transition to hidden that
+ * a return would otherwise be measured against.
+ */
+function subscribeToPageReturn(listener: () => void) {
+	returnListeners.add(listener);
+	if (returnListeners.size === 1) {
+		lastForegroundTickAt = Date.now();
+		foregroundTicker = setInterval(noticeReturn, FOREGROUND_TICK_MS);
+		document.addEventListener("visibilitychange", noticeReturn);
+		// bfcache restores resume the page without a visibility change of their own
+		window.addEventListener("pageshow", noticeReturn);
+	}
+
+	return () => {
+		returnListeners.delete(listener);
+		if (returnListeners.size > 0) return;
+
+		if (foregroundTicker !== null) clearInterval(foregroundTicker);
+		foregroundTicker = null;
+		document.removeEventListener("visibilitychange", noticeReturn);
+		window.removeEventListener("pageshow", noticeReturn);
+	};
+}
+
+function noticeReturn() {
+	if (document.visibilityState !== "visible") return;
+
+	const awayFor = Date.now() - lastForegroundTickAt;
+	lastForegroundTickAt = Date.now();
+
+	// a quick tab away can not have missed anything the stream would not still
+	// deliver, and catching up for it would be pure server load
+	if (awayFor < CATCH_UP_AWAY_MS) return;
+
+	for (const listener of returnListeners) {
+		listener();
+	}
 }
 
 const getServerReadyState = (): EventsReadyState => "CLOSED";

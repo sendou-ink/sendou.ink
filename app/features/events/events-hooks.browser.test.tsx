@@ -143,7 +143,8 @@ describe("useServerEventListener", () => {
 	});
 });
 
-const CATCH_UP_HIDDEN_MS = 20 * 1000;
+const CATCH_UP_AWAY_MS = 20 * 1000;
+const FOREGROUND_TICK_MS = 5 * 1000;
 const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 const CATCH_UP_MAX_JITTER_MS = 3_000;
 const LATE_FIRST_CONNECT_MS = 2_000;
@@ -177,6 +178,12 @@ const advanceTimers = async (ms = 0) => {
 		channel.port1.onmessage = () => resolve();
 		channel.port2.postMessage(null);
 	});
+};
+
+/** Time passing without the page running, the way a suspended or asleep device does. */
+const sleepingDevice = async (ms: number) => {
+	vi.setSystemTime(Date.now() + ms);
+	await advanceTimers();
 };
 
 const setVisibility = (state: DocumentVisibilityState) => {
@@ -265,7 +272,7 @@ describe("useEventStreamCatchUp", () => {
 		await helloArrives();
 
 		setVisibility("hidden");
-		await advanceTimers(CATCH_UP_HIDDEN_MS);
+		await advanceTimers(CATCH_UP_AWAY_MS);
 		setVisibility("visible");
 		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
 
@@ -277,9 +284,40 @@ describe("useEventStreamCatchUp", () => {
 		await helloArrives();
 
 		setVisibility("hidden");
-		await advanceTimers(CATCH_UP_HIDDEN_MS / 2);
+		await advanceTimers(CATCH_UP_AWAY_MS / 2);
 		setVisibility("visible");
 		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(0);
+	});
+
+	test("catches up when an app the phone suspended announces it is back", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		// suspending stops the page without handing it the hidden transition first
+		await sleepingDevice(CATCH_UP_AWAY_MS);
+		setVisibility("visible");
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("catches up when the page resumes without announcing it at all", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		await sleepingDevice(CATCH_UP_AWAY_MS);
+		await advanceTimers(FOREGROUND_TICK_MS + CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("does not catch up while merely sitting in the foreground", async () => {
+		await mountConnecting();
+		await helloArrives();
+
+		await advanceTimers(CATCH_UP_AWAY_MS * 5);
 
 		expect(catchUps).toBe(0);
 	});

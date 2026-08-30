@@ -1,6 +1,10 @@
+import type { Page } from "@playwright/test";
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
+import { openSecondUser } from "./helpers/chat";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import {
+	createInProgressMatch,
 	createTeams,
 	startedTournamentTimes,
 	teamSeeds,
@@ -191,4 +195,58 @@ test.describe("Tournament bracket", () => {
 		// Match is now finalized (no longer ongoing) → "Final" appears in banner
 		await expect(match.locators.finalBanner).toBeVisible();
 	});
+
+	test("shows a result reported while the app was suspended", async ({
+		page,
+		browser,
+		workerBaseURL,
+		factories,
+	}) => {
+		test.slow();
+		const { tournament, matchId } = await createInProgressMatch(factories, {
+			name: "Backgrounded Cup",
+			friendId: NZAP_TEST_ID,
+		});
+
+		// the event stream a suspended app comes back to: still connected as far as
+		// the page knows, but no longer subscribed to anything, so the broadcast of
+		// the result below never reaches it
+		await page.route(/\/sse\/[^/]+\/topics$/, (route) => route.abort());
+
+		await impersonate(page, NZAP_TEST_ID);
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
+
+		await expect(brackets.matchScores(matchId)).toHaveText(["0", "0"]);
+
+		const organizer = await openSecondUser(browser, workerBaseURL);
+		try {
+			const matchPage = new TournamentMatchPage(organizer.page);
+			await matchPage.goto({ tournamentId: tournament.id, matchId });
+			await matchPage.openTab("action");
+			await matchPage.reportResult({ mapsToReport: 1, setEnds: false });
+
+			// the page missed it, the same way a phone with its screen off does
+			await expect(brackets.matchScores(matchId)).toHaveText(["0", "0"]);
+
+			await deviceAsleep(page, "10:00");
+
+			await expect(brackets.matchScores(matchId)).toHaveText(["1", "0"], {
+				timeout: 15_000,
+			});
+		} finally {
+			await organizer.close();
+		}
+	});
 });
+
+/**
+ * The device sleeping for the given time: the page's clock jumps forward without it
+ * having run, the way a phone suspending a PWA leaves it — no transition to hidden
+ * on the way out, and no announcement of the return either.
+ */
+async function deviceAsleep(page: Page, duration: string) {
+	await page.clock.install();
+	await page.clock.fastForward(duration);
+	await page.clock.resume();
+}

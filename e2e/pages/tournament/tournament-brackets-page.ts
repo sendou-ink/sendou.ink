@@ -66,6 +66,11 @@ export class TournamentBracketsPage {
 		return this.page.locator(`[data-match-id="${matchId}"]`);
 	}
 
+	/** Both sides' scores of the match, top to bottom. */
+	matchScores(matchId: number) {
+		return this.match(matchId).getByTestId("match-score");
+	}
+
 	/** The match's countdown timer, a sibling of the match link. */
 	matchTimer(matchId: number) {
 		return this.match(matchId).locator("..").getByTestId("bracket-match-timer");
