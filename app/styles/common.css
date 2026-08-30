@@ -657,3 +657,14 @@
 		) !important;
 	}
 }
+
+.publift-widget-sticky_footer-container:not(.closed) {
+	border-top: 1.5px solid var(--color-border);
+}
+
+.publift-widget-sticky_footer-container:not(.closed)
+	.publift-widget-sticky_footer-container-background {
+	background-color: color-mix(in oklab, var(--color-bg-nav) 30%, transparent);
+	backdrop-filter: blur(6px);
+	opacity: 1;
+}
