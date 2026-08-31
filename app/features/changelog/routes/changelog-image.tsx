@@ -20,7 +20,10 @@ export default function ChangelogImagePage() {
 					only show the entries added after that commit.
 				</div>
 			</div>
-			<div data-changelog-entries={JSON.stringify(data.entries)}>
+			<div
+				data-changelog-entries={JSON.stringify(data.entries)}
+				data-changelog-head={data.headSha}
+			>
 				<ChangelogGraphic date={new Date()} entries={data.entries} />
 			</div>
 		</Main>

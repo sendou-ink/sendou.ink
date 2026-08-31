@@ -6,6 +6,7 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 	const { since } = changelogSearchParams.parse(request);
 
 	return {
+		headSha: Entries.headSha(),
 		entries: since ? Entries.entriesSince(since) : Entries.allEntries(),
 	};
 };

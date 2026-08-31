@@ -66,6 +66,8 @@ async function main() {
 		throw new Error(`No changelog canvas found at ${CHANGELOG_IMAGE_PAGE_URL}`);
 	}
 
+	await assertSameCheckout(page);
+
 	const entries = await parseEntries(page);
 	if (entries.length === 0) {
 		throw new Error(
@@ -115,6 +117,27 @@ async function main() {
 
 		console.log(`\n--- ${version.label} (${textPath}) ---\n`);
 		console.log(version.text);
+	}
+}
+
+/**
+ * The screenshotted page is whatever dev server holds the port, which can be another
+ * checkout of the repo whose entries are not the ones being shipped.
+ */
+async function assertSameCheckout(page: Page) {
+	const marker = page.locator("[data-changelog-head]");
+	const pageHead =
+		(await marker.count()) > 0
+			? await marker.getAttribute("data-changelog-head")
+			: null;
+	const localHead = (
+		await execFileAsync("git", ["rev-parse", "HEAD"])
+	).stdout.trim();
+
+	if (pageHead !== localHead) {
+		throw new Error(
+			`The server at ${CHANGELOG_IMAGE_PAGE_URL} is a different checkout of the repo: its HEAD is ${pageHead ?? "unknown"}, this one is at ${localHead}. Start a dev server from this folder and run again.`,
+		);
 	}
 }
 

@@ -55,6 +55,16 @@ export function allEntries(): ChangelogGraphicEntry[] {
 		.map(parseEntryFile);
 }
 
+/**
+ * Sha of the commit the entries are read from, letting a caller check it is
+ * talking to a server running the same checkout it is.
+ */
+export function headSha(): string {
+	return execFileSync("git", ["rev-parse", "HEAD"], {
+		encoding: "utf8",
+	}).trim();
+}
+
 function parseEntryFile(fileName: string): ChangelogGraphicEntry {
 	const rawMarkdown = fs.readFileSync(
 		path.join(RESOLVED_CHANGELOG_DIR, fileName),
