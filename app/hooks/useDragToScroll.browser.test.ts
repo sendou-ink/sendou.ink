@@ -10,11 +10,20 @@ afterEach(() => {
 	cleanupFns = [];
 });
 
-function setUpScrollableElement() {
+function setUpScrollableElement({ scrollSnap = false } = {}) {
 	const element = document.createElement("div");
 	element.style.width = "100px";
 	element.style.height = "100px";
 	element.style.overflow = "scroll";
+
+	if (scrollSnap) {
+		const snapStyle = document.createElement("style");
+		snapStyle.textContent =
+			".test-scroll-snap { scroll-snap-type: x mandatory; }";
+		document.head.appendChild(snapStyle);
+		element.classList.add("test-scroll-snap");
+		cleanupFns.push(() => snapStyle.remove());
+	}
 
 	const child = document.createElement("div");
 	child.style.width = "1000px";
@@ -137,5 +146,74 @@ describe("dragToScroll", () => {
 		mouseUp();
 
 		expect(element.scrollLeft).toBe(0);
+	});
+	test("suppresses scroll snap while dragging a snap container", () => {
+		const { element } = setUpScrollableElement({ scrollSnap: true });
+
+		mouseDownOn(element, 50, 50);
+		mouseMoveTo(20, 50);
+
+		expect(getComputedStyle(element).scrollSnapType).toBe("none");
+		mouseUp();
+	});
+
+	test("restores scroll snap smoothly after a drag without momentum", () => {
+		const { element } = setUpScrollableElement({ scrollSnap: true });
+
+		mouseDownOn(element, 50, 50);
+		mouseMoveTo(45, 50);
+		mouseUp();
+
+		expect(getComputedStyle(element).scrollSnapType).toBe("x mandatory");
+		expect(element.style.scrollBehavior).toBe("smooth");
+
+		element.dispatchEvent(new Event("scrollend"));
+		expect(element.style.scrollBehavior).toBe("");
+	});
+
+	test("restores scroll snap after momentum scrolling ends", async () => {
+		const { element } = setUpScrollableElement({ scrollSnap: true });
+
+		mouseDownOn(element, 90, 50);
+		mouseMoveTo(82, 50);
+		mouseMoveTo(74, 50);
+		mouseUp();
+
+		expect(getComputedStyle(element).scrollSnapType).toBe("none");
+
+		await vi.waitFor(
+			() => {
+				expect(getComputedStyle(element).scrollSnapType).toBe("x mandatory");
+			},
+			{ timeout: 3000 },
+		);
+	});
+
+	test("clears the smooth scroll-behavior via the fallback timeout when no scrollend fires", () => {
+		vi.useFakeTimers();
+		try {
+			const { element } = setUpScrollableElement({ scrollSnap: true });
+
+			mouseDownOn(element, 50, 50);
+			mouseMoveTo(45, 50);
+			mouseUp();
+			expect(element.style.scrollBehavior).toBe("smooth");
+
+			vi.advanceTimersByTime(750);
+			expect(element.style.scrollBehavior).toBe("");
+		} finally {
+			vi.useRealTimers();
+		}
+	});
+
+	test("clears snap suppression on cleanup mid-drag", () => {
+		const { element, detach } = setUpScrollableElement({ scrollSnap: true });
+
+		mouseDownOn(element, 50, 50);
+		mouseMoveTo(20, 50);
+		detach();
+
+		expect(getComputedStyle(element).scrollSnapType).toBe("x mandatory");
+		expect(element.style.scrollBehavior).toBe("");
 	});
 });

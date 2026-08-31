@@ -107,6 +107,7 @@
 	justify-content: safe center;
 	overflow-x: auto;
 	scroll-snap-type: x mandatory;
+	user-select: none;
 
 	& > * {
 		scroll-snap-align: start;

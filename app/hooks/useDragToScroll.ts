@@ -5,6 +5,7 @@ const MOMENTUM_DECAY_PER_FRAME = 0.95;
 const MOMENTUM_MIN_SPEED_PX_PER_MS = 0.05;
 const MOMENTUM_FRAME_MS = 1000 / 60;
 const VELOCITY_IDLE_TIMEOUT_MS = 100;
+const SNAP_RESTORE_SMOOTH_TIMEOUT_MS = 750;
 
 /**
  * Makes an element with overflowing content scrollable by dragging with the
@@ -31,7 +32,10 @@ export function useDragToScroll<
  * Framework-agnostic on purpose (usable as a Svelte attachment as is).
  */
 export function dragToScroll(element: HTMLElement): () => void {
+	const hasScrollSnap = getComputedStyle(element).scrollSnapType !== "none";
 	let grabbingCursorStyle: HTMLStyleElement | null = null;
+	let isSnapSuppressed = false;
+	let snapRestoreTimeout = 0;
 	let isMouseDown = false;
 	let isDragging = false;
 	let suppressNextClick = false;
@@ -43,6 +47,35 @@ export function dragToScroll(element: HTMLElement): () => void {
 	let velocityX = 0;
 	let velocityY = 0;
 	let momentumFrame = 0;
+
+	const clearSmoothSnapRestore = () => {
+		window.clearTimeout(snapRestoreTimeout);
+		element.removeEventListener("scrollend", clearSmoothSnapRestore);
+		element.style.scrollBehavior = "";
+	};
+
+	// mandatory scroll snap re-snaps on every programmatic scrollLeft/scrollTop
+	// write, so it has to be off for the duration of the drag
+	const suppressScrollSnap = () => {
+		if (!hasScrollSnap || isSnapSuppressed) return;
+
+		isSnapSuppressed = true;
+		clearSmoothSnapRestore();
+		element.style.scrollSnapType = "none";
+	};
+
+	const restoreScrollSnap = () => {
+		if (!isSnapSuppressed) return;
+
+		isSnapSuppressed = false;
+		element.style.scrollBehavior = "smooth";
+		element.style.scrollSnapType = "";
+		element.addEventListener("scrollend", clearSmoothSnapRestore);
+		snapRestoreTimeout = window.setTimeout(
+			clearSmoothSnapRestore,
+			SNAP_RESTORE_SMOOTH_TIMEOUT_MS,
+		);
+	};
 
 	const onMouseDown = (event: MouseEvent) => {
 		suppressNextClick = false;
@@ -66,6 +99,7 @@ export function dragToScroll(element: HTMLElement): () => void {
 		event.preventDefault();
 
 		grabbingCursorStyle ??= createGrabbingCursorStyle();
+		suppressScrollSnap();
 
 		const now = performance.now();
 		const elapsedMs = Math.max(now - lastMoveAt, 1);
@@ -104,6 +138,8 @@ export function dragToScroll(element: HTMLElement): () => void {
 		if (isDragging && !idledSinceLastMove) {
 			previousFrameAt = performance.now();
 			momentumFrame = requestAnimationFrame(momentumScrollStep);
+		} else {
+			restoreScrollSnap();
 		}
 		isDragging = false;
 	};
@@ -132,6 +168,8 @@ export function dragToScroll(element: HTMLElement): () => void {
 			Math.abs(velocityY) > MOMENTUM_MIN_SPEED_PX_PER_MS
 		) {
 			momentumFrame = requestAnimationFrame(momentumScrollStep);
+		} else {
+			restoreScrollSnap();
 		}
 	};
 
@@ -147,6 +185,8 @@ export function dragToScroll(element: HTMLElement): () => void {
 		window.removeEventListener("mouseup", onMouseUp);
 		cancelAnimationFrame(momentumFrame);
 		grabbingCursorStyle?.remove();
+		clearSmoothSnapRestore();
+		element.style.scrollSnapType = "";
 	};
 }
 
