@@ -416,6 +416,27 @@
 		opacity: 0;
 	}
 
+	/* Safari has no picker indicator reserving room for the icon above,
+	so reserve it with padding instead (-webkit-hyphens = Safari only) */
+	@supports (-webkit-hyphens: none) {
+		input[type="date"],
+		input[type="datetime-local"],
+		input[type="month"],
+		input[type="time"],
+		input[type="week"] {
+			padding-right: calc(
+				var(--field-size-icon) +
+				var(--field-padding) +
+				var(--s-2)
+			);
+		}
+	}
+
+	/* iOS centers the value inside date/time inputs */
+	input::-webkit-date-and-time-value {
+		text-align: left;
+	}
+
 	@-moz-document url-prefix() {
 		[type="date"],
 		[type="datetime-local"],
