@@ -16,11 +16,11 @@ importers:
   .:
     dependencies:
       '@aws-sdk/client-s3':
-        specifier: 3.1114.0
-        version: 3.1114.0
+        specifier: 3.1116.0
+        version: 3.1116.0
       '@aws-sdk/lib-storage':
-        specifier: 3.1114.0
-        version: 3.1114.0(@aws-sdk/client-s3@3.1114.0)
+        specifier: 3.1116.0
+        version: 3.1116.0(@aws-sdk/client-s3@3.1116.0)
       '@date-fns/tz':
         specifier: 1.5.0
         version: 1.5.0
@@ -55,8 +55,8 @@ importers:
         specifier: 3.12.1
         version: 3.12.1(@types/react-dom@19.2.4(@types/react@19.2.18))(@types/react@19.2.18)(react-dom@19.2.8(react@19.2.8))(react@19.2.8)
       '@zumer/snapdom':
-        specifier: 2.24.3
-        version: 2.24.3
+        specifier: 2.24.7
+        version: 2.24.7
       chart.js:
         specifier: 4.5.1
         version: 4.5.1
@@ -103,8 +103,8 @@ importers:
         specifier: 9.10.2
         version: 9.10.2(react@19.2.8)
       mediabunny:
-        specifier: 1.55.1
-        version: 1.55.1
+        specifier: 1.55.2
+        version: 1.55.2
       nanoid:
         specifier: 6.0.1
         version: 6.0.1
@@ -263,8 +263,8 @@ packages:
     resolution: {integrity: sha512-Dtu0gr4dnATZAPwEYbpCsG+MpLM7OAliy2gTepEFQwl1vZ6DL3QMH2FveMa3HLvPsOdhJsPRB3KtxVhph9T75A==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/client-s3@3.1114.0':
-    resolution: {integrity: sha512-ZeAgOtB+CXFaWXph98U7a/XrBlVx1lQ2rCJRWLxLmAaQ9k5lht6DWfwnEcVjdzduK/ySao1tCjq0fBAScGqjAg==}
+  '@aws-sdk/client-s3@3.1116.0':
+    resolution: {integrity: sha512-UKRl9qSVW0rZpvSOauQNpYAy8+ONBAVYnpfKVtCyOF+FZVT1tl6MunYuHvuarCrroD2/YJs+tHTALYNgAlec3Q==}
     engines: {node: '>=20.0.0'}
 
   '@aws-sdk/core@3.977.9':
@@ -303,11 +303,11 @@ packages:
     resolution: {integrity: sha512-d3AGyVu759PGr35mEB2s22xxlNEA5rpdxtSPJthfPFJvoQ8dt357iVPECqWfUxXp1toJAvKmbtcIYVGigaGsCA==}
     engines: {node: '>=20.0.0'}
 
-  '@aws-sdk/lib-storage@3.1114.0':
-    resolution: {integrity: sha512-eMLPc9M4SrPGiFQDhKXqlFUsT4Ry8eyP6wXvJW5tZAiOsZU7kI+LPoFo37MbZeTvnb2zthl1E35F4MIZ+5GS3Q==}
+  '@aws-sdk/lib-storage@3.1116.0':
+    resolution: {integrity: sha512-40z1NyzCbRX9bD6g3dJ6E4WDbYPDod6XHTIbNZPnGDYMYH2TPIj6LyRZ94fWPKGYnJpO0Q0Uhi2lSnn2E7PIdg==}
     engines: {node: '>=20.0.0'}
     peerDependencies:
-      '@aws-sdk/client-s3': ^3.1114.0
+      '@aws-sdk/client-s3': ^3.1116.0
 
   '@aws-sdk/middleware-sdk-s3@3.972.75':
     resolution: {integrity: sha512-wMIsNumRVKaNMKhvU/s9VrdEwE8S6gSzXp4RygFG5BEMnGkkXf8cjh8zf7cKJBpUDpqTWqwbz5isEgp9rH6Lng==}
@@ -2864,8 +2864,8 @@ packages:
   '@vitest/utils@4.1.11':
     resolution: {integrity: sha512-zTCVGpyFsGWBhllOyKlTw/vnr6D9qxsfSDyfbyZmTyjHw5N/VuvzHpHoQjm2ZJzn4RJgx5w4r7V0er69CmLgPQ==}
 
-  '@zumer/snapdom@2.24.3':
-    resolution: {integrity: sha512-LDbpPO0JtRQRev+IwcVRFOYb+5hu7jm3i8ej3two8TglKVZTsMU2PA7YBn2nuOP8LPwcHwscRcsqLksP+ytsDQ==}
+  '@zumer/snapdom@2.24.7':
+    resolution: {integrity: sha512-RKWP/NoxU5zXO1O1QaIerdb8HYLDrQPSU9G9UMk9XDSevsXwIydDYFnJukrp0BqrckQT+Hbspxx2WERXIF2i9w==}
 
   accepts@2.0.0:
     resolution: {integrity: sha512-5cvg6CtKwfgdmVqY1WIiXKc3Q1bkRqGLi+2W/6ao+6Y7gu/RCwRuAhGEzh5B4KlszSuTLgZYuqFqo5bImjNKng==}
@@ -3599,8 +3599,8 @@ packages:
     resolution: {integrity: sha512-aisnrDP4GNe06UcKFnV5bfMNPBUw4jsLGaWwWfnH3v02GnBuXX2MCVn5RbrWo0j3pczUilYblq7fQ7Nw2t5XKw==}
     engines: {node: '>= 0.8'}
 
-  mediabunny@1.55.1:
-    resolution: {integrity: sha512-JDdTEUOw9g6Ey8eWc2Ei63GmRGtGTJoE56SE7CHikwzS8i9xpsWcve4bEiUw47d4j49L3r7MXDFsH/5oZIhjBw==}
+  mediabunny@1.55.2:
+    resolution: {integrity: sha512-EEx4O6qYddAdCyWPMZNDwI7uc5hewNHrPAf9jLcVhIbXoPsiqNQ+D9i1pfadmGkjN2V318jSrZljkpoziYm6Lg==}
 
   merge-descriptors@2.0.0:
     resolution: {integrity: sha512-Snk314V5ayFLhp3fkUREub6WtjBfPdCPY1Ln8/8munuLuiYhsABgBVWsozAG+MWMbVEvcdcpbi9R7ww22l9Q3g==}
@@ -4554,7 +4554,7 @@ snapshots:
       '@smithy/types': 4.17.2
       tslib: 2.8.1
 
-  '@aws-sdk/client-s3@3.1114.0':
+  '@aws-sdk/client-s3@3.1116.0':
     dependencies:
       '@aws-sdk/checksums': 3.1000.29
       '@aws-sdk/core': 3.977.9
@@ -4663,9 +4663,9 @@ snapshots:
       '@smithy/types': 4.17.2
       tslib: 2.8.1
 
-  '@aws-sdk/lib-storage@3.1114.0(@aws-sdk/client-s3@3.1114.0)':
+  '@aws-sdk/lib-storage@3.1116.0(@aws-sdk/client-s3@3.1116.0)':
     dependencies:
-      '@aws-sdk/client-s3': 3.1114.0
+      '@aws-sdk/client-s3': 3.1116.0
       '@smithy/core': 3.33.3
       '@smithy/types': 4.17.2
       buffer: 5.6.0
@@ -7203,7 +7203,7 @@ snapshots:
       convert-source-map: 2.0.0
       tinyrainbow: 3.1.1
 
-  '@zumer/snapdom@2.24.3': {}
+  '@zumer/snapdom@2.24.7': {}
 
   accepts@2.0.0:
     dependencies:
@@ -7864,7 +7864,7 @@ snapshots:
 
   media-typer@1.1.0: {}
 
-  mediabunny@1.55.1:
+  mediabunny@1.55.2:
     dependencies:
       '@types/dom-mediacapture-transform': 0.1.12
       '@types/dom-webcodecs': 0.1.13
