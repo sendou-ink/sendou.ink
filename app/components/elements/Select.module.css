@@ -95,8 +95,8 @@
 		display: flex;
 	}
 
-	/* the listbox popover holds focus while a non-search select is open */
-	&:focus {
+	/* the listbox holds focus while a non-search select is open */
+	&:has(> .listBox:focus) {
 		outline: var(--focus-ring);
 	}
 }
@@ -104,6 +104,7 @@
 .listBox {
 	overflow: auto;
 	flex: 1;
+	outline: none;
 }
 
 .section:not(:has([role="option"])) {

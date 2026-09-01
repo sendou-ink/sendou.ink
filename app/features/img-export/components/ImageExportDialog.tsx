@@ -74,6 +74,7 @@ export function ImageExportDialog({
 			heading={heading}
 			showCloseButton
 			className={styles.dialog}
+			lazy
 		>
 			<ImageExportDialogContent {...contentProps} />
 		</SendouDialog>

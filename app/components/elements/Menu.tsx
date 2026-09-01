@@ -200,8 +200,11 @@ export function SendouMenuItem(props: SendouMenuItemProps) {
 		</>
 	);
 
-	const act = () => {
-		if (props.isDisabled) return;
+	const act = (event: React.MouseEvent) => {
+		if (props.isDisabled) {
+			event.preventDefault();
+			return;
+		}
 		menu.close();
 		props.onAction?.();
 	};

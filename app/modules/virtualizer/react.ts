@@ -1,6 +1,8 @@
 import * as React from "react";
 import { VirtualizerCore } from "./core";
 
+type MeasureRef = (element: HTMLElement | null) => (() => void) | undefined;
+
 /**
  * Thin React adapter for `VirtualizerCore`: subscribes to the scroll
  * container's scroll and resize, measures rows through `measureElement` ref
@@ -62,18 +64,44 @@ export function useVirtualizer({
 		};
 	}, [scrollRef]);
 
-	const measureElement = (index: number) => (element: HTMLElement | null) => {
-		if (!element) return;
+	const indexByElementRef = React.useRef(new WeakMap<Element, number>());
+	const resizeObserverRef = React.useRef<ResizeObserver | null>(null);
+	const resizeObserver = () => {
+		resizeObserverRef.current ??= new ResizeObserver((entries) => {
+			let changed = false;
+			for (const entry of entries) {
+				const index = indexByElementRef.current.get(entry.target);
+				if (index === undefined) continue;
+				const size = (entry.target as HTMLElement).offsetHeight;
+				if (core.measure(index, size)) changed = true;
+			}
+			if (changed) rerender();
+		});
+		return resizeObserverRef.current;
+	};
+	React.useEffect(() => () => resizeObserverRef.current?.disconnect(), []);
 
-		const measure = () => {
+	// stable per index so React does not detach and re-observe every row on
+	// each scroll-driven render
+	const measureCallbacksRef = React.useRef(new Map<number, MeasureRef>());
+	const measureElement = (index: number): MeasureRef => {
+		const cached = measureCallbacksRef.current.get(index);
+		if (cached) return cached;
+
+		const callback: MeasureRef = (element) => {
+			if (!element) return;
+			indexByElementRef.current.set(element, index);
 			if (core.measure(index, element.offsetHeight)) {
 				rerender();
 			}
+			resizeObserver().observe(element);
+			return () => {
+				resizeObserver().unobserve(element);
+				indexByElementRef.current.delete(element);
+			};
 		};
-		measure();
-		const observer = new ResizeObserver(measure);
-		observer.observe(element);
-		return () => observer.disconnect();
+		measureCallbacksRef.current.set(index, callback);
+		return callback;
 	};
 
 	const { scrollTop, height } = viewportRef.current;

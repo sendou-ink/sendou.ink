@@ -279,6 +279,8 @@ html,
 		var(--layout-main-padding) +
 		env(safe-area-inset-top)
 	);
+	/* anchored popovers close once scrolling pushes them under the sticky header */
+	--popover-boundary-top: var(--layout-nav-height);
 
 	/* 
 	Boxes are elements that contain other elements, like cards, containers, and modals
@@ -310,4 +312,20 @@ html,
 	--radius-avatar: var(--radius-full);
 
 	--label-margin: var(--s-1);
+}
+
+/* registered so scripts read it as a resolved length even when it is a calc() */
+@property --popover-boundary-top {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 0px;
+}
+
+@media screen and (display-mode: standalone) {
+	html {
+		--popover-boundary-top: calc(
+			var(--layout-nav-height) +
+			env(safe-area-inset-top)
+		);
+	}
 }

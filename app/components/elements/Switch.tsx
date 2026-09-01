@@ -1,4 +1,4 @@
-import * as React from "react";
+import type * as React from "react";
 import styles from "./Switch.module.css";
 
 interface SendouSwitchProps {
@@ -22,16 +22,8 @@ export function SendouSwitch({
 	"data-testid": testId,
 	children,
 }: SendouSwitchProps) {
-	const [focusVisible, setFocusVisible] = React.useState(false);
-
 	return (
-		<label
-			className={styles.root}
-			data-selected={isSelected || undefined}
-			data-disabled={isDisabled || undefined}
-			data-focus-visible={focusVisible || undefined}
-			data-testid={testId}
-		>
+		<label className={styles.root} data-testid={testId}>
 			<input
 				id={id}
 				type="checkbox"
@@ -43,10 +35,6 @@ export function SendouSwitch({
 				disabled={isDisabled}
 				aria-label={ariaLabel}
 				onChange={(event) => onChange?.(event.currentTarget.checked)}
-				onFocus={(event) =>
-					setFocusVisible(event.currentTarget.matches(":focus-visible"))
-				}
-				onBlur={() => setFocusVisible(false)}
 			/>
 			<div className={styles.indicator} />
 			{children}

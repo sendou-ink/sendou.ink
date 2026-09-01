@@ -337,12 +337,13 @@ async function retryPost(
 }
 
 /** Clicks a submit button and waits for the POST it fires. Takes a locator when
- * the test id alone is ambiguous, e.g. one button per card on a list page. */
+ * the test id alone is ambiguous, e.g. one button per card on a list page.
+ * Buttons inside closed dialogs (rendered but hidden) are skipped. */
 export async function submit(page: Page, target?: string | Locator) {
 	const button =
 		typeof target === "object"
 			? target
-			: page.getByTestId(target ?? "submit-button");
+			: page.getByTestId(target ?? "submit-button").filter({ visible: true });
 
 	await waitForPOSTResponse(page, async () => {
 		await button.click();

@@ -40,7 +40,7 @@ export class UserEditProfilePage {
 
 	async selectCountry(name: string) {
 		await this.page.getByLabel("Country").click();
-		await this.page.getByRole("searchbox", { name: "Search" }).fill(name);
+		await this.page.getByRole("combobox", { name: "Search" }).fill(name);
 		await this.page.getByRole("option", { name }).click();
 	}
 

@@ -116,6 +116,7 @@ export function SendouSelect<T extends object>({
 	const { t } = useTranslation(["common"]);
 	const uid = useAnchorSafeId();
 	const popoverId = `${uid}-select-popover`;
+	const listboxId = `${uid}-select-listbox`;
 	const anchorName = `--select-anchor-${uid}`;
 	const labelId = label ? `${uid}-select-label` : undefined;
 	const valueId = `${uid}-select-value`;
@@ -159,6 +160,7 @@ export function SendouSelect<T extends object>({
 
 	const triggerElementRef = React.useRef<HTMLButtonElement | null>(null);
 	const popoverRef = React.useRef<HTMLDivElement | null>(null);
+	const listboxRef = React.useRef<HTMLDivElement | null>(null);
 	const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
@@ -272,7 +274,7 @@ export function SendouSelect<T extends object>({
 				if (search) {
 					searchInputRef.current?.focus();
 				} else {
-					popoverRef.current?.focus();
+					listboxRef.current?.focus();
 				}
 				scrollIntoView(initialFocused);
 			});
@@ -324,6 +326,8 @@ export function SendouSelect<T extends object>({
 
 	const selectedEntry =
 		currentKey !== null ? contentByKeyRef.current.get(currentKey) : undefined;
+	const activeDescendant =
+		open && focusedKey !== null ? registry.optionIdFor(focusedKey) : undefined;
 
 	const renderedChildren =
 		typeof children === "function"
@@ -435,7 +439,12 @@ export function SendouSelect<T extends object>({
 							value={searchValue}
 							onChange={(event) => setSearchValue(event.target.value)}
 							placeholder={search.placeholder}
+							role="combobox"
 							aria-label="Search"
+							aria-controls={listboxId}
+							aria-expanded={open}
+							aria-autocomplete="list"
+							aria-activedescendant={activeDescendant}
 							data-testid={search.testId}
 							className={clsx(
 								search.inputClassName ?? "in-container",
@@ -459,9 +468,13 @@ export function SendouSelect<T extends object>({
 				{/* labelled only while open so a closed select exposes exactly one
 				    element under its label (the trigger) to queries */}
 				<div
+					ref={listboxRef}
+					id={listboxId}
 					className={clsx(styles.listBox, "scrollbar")}
 					role="listbox"
+					tabIndex={-1}
 					aria-labelledby={open ? labelId : undefined}
+					aria-activedescendant={activeDescendant}
 				>
 					<SelectRegistryContext value={registry}>
 						<SelectStateContext

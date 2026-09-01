@@ -49,7 +49,7 @@ describe("SendouSelect", () => {
 		const screen = await render(<GroupedSelect search={{}} />);
 
 		await screen.getByRole("button").click();
-		await screen.getByRole("searchbox").fill("Season 1");
+		await screen.getByRole("combobox").fill("Season 1");
 
 		await expect
 			.element(screen.getByRole("option", { name: "Season 1" }))

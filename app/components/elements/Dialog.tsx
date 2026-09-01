@@ -3,8 +3,22 @@ import { X } from "lucide-react";
 import * as React from "react";
 import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
 import styles from "./Dialog.module.css";
+
+interface DialogElementProps {
+	id?: string;
+	className?: string;
+	isDismissable?: boolean;
+	onClose?: () => void;
+	"aria-label"?: string;
+	"aria-labelledby"?: string;
+	children: React.ReactNode;
+	ref?: React.Ref<HTMLDialogElement>;
+}
 
 /**
  * Unstyled native `<dialog>` shell: shows itself modally on mount, closes on
@@ -15,29 +29,13 @@ import styles from "./Dialog.module.css";
  * another form without nesting the `<form>` elements. Renders nothing on the
  * server.
  */
-export function SendouModal({
-	className,
-	isDismissable,
-	onClose,
-	"aria-label": ariaLabel,
-	"aria-labelledby": ariaLabelledby,
-	children,
-	ref,
-}: {
-	className?: string;
-	isDismissable?: boolean;
-	onClose?: () => void;
-	"aria-label"?: string;
-	"aria-labelledby"?: string;
-	children: React.ReactNode;
-	ref?: React.Ref<HTMLDialogElement>;
-}) {
+export function SendouModal({ ref, ...rest }: DialogElementProps) {
 	const [mounted, setMounted] = React.useState(false);
 	React.useEffect(() => setMounted(true), []);
 	if (!mounted) return null;
 
 	return createPortal(
-		<dialog
+		<DialogElement
 			ref={(dialog) => {
 				if (typeof ref === "function") {
 					ref(dialog);
@@ -48,37 +46,66 @@ export function SendouModal({
 					dialog.showModal();
 				}
 			}}
+			{...rest}
+		/>,
+		document.body,
+	);
+}
+
+function DialogElement({
+	id,
+	className,
+	isDismissable,
+	onClose,
+	"aria-label": ariaLabel,
+	"aria-labelledby": ariaLabelledby,
+	children,
+	ref,
+}: DialogElementProps) {
+	return (
+		<dialog
+			ref={ref}
+			id={id}
 			className={className}
 			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
 			closedby={isDismissable ? "any" : "closerequest"}
 			onClose={onClose}
-			onClick={
-				isDismissable
-					? (event) => {
-							// Safari is missing `closedby`, close on backdrop clicks manually
-							if (event.target !== event.currentTarget) return;
-							const rect = event.currentTarget.getBoundingClientRect();
-							const outside =
-								event.clientX < rect.left ||
-								event.clientX > rect.right ||
-								event.clientY < rect.top ||
-								event.clientY > rect.bottom;
-							if (outside) {
-								event.currentTarget.close();
-							}
-						}
-					: undefined
-			}
+			onClick={isDismissable ? closeOnBackdropClick : undefined}
 		>
 			{children}
-		</dialog>,
-		document.body,
+		</dialog>
 	);
 }
 
+// Safari is missing `closedby`, close on backdrop clicks manually
+function closeOnBackdropClick(event: React.MouseEvent<HTMLDialogElement>) {
+	if (event.target !== event.currentTarget) return;
+	const rect = event.currentTarget.getBoundingClientRect();
+	const outside =
+		event.clientX < rect.left ||
+		event.clientX > rect.right ||
+		event.clientY < rect.top ||
+		event.clientY > rect.bottom;
+	if (outside) {
+		event.currentTarget.close();
+	}
+}
+
+/** Invoker commands open and close the dialog natively; this guards the JS fallback for browsers without them. */
+function supportsInvokerCommands() {
+	return "commandForElement" in HTMLButtonElement.prototype;
+}
+
 interface SendouDialogProps {
-	trigger?: React.ReactElement<{ onPress?: () => void }>;
+	/**
+	 * Button-like element that opens the dialog through `commandfor`. With a
+	 * trigger the dialog is rendered in place, closed, so it opens even before
+	 * hydration. Its content is remounted on every close.
+	 */
+	trigger?: React.ReactElement<
+		Pick<SendouButtonProps, "onPress" | "commandfor" | "command">
+	>;
 	children?: React.ReactNode;
 	heading?: string;
 	showHeading?: boolean;
@@ -95,6 +122,11 @@ interface SendouDialogProps {
 	isFullScreen?: boolean;
 	/** If true, shows the close button even if onClose is not provided */
 	showCloseButton?: boolean;
+	/**
+	 * Trigger mode: mount the content only while open, for content that is
+	 * expensive or does work on mount. Costs the pre-hydration open.
+	 */
+	lazy?: boolean;
 }
 
 /**
@@ -127,75 +159,120 @@ interface SendouDialogProps {
  */
 export function SendouDialog({
 	trigger,
+	lazy,
 	children,
 	...rest
 }: SendouDialogProps) {
-	const [triggerOpen, setTriggerOpen] = React.useState(false);
-
-	if (!trigger) {
-		const props =
-			typeof rest.isOpen === "boolean" ? rest : { ...rest, isOpen: true };
-		return <DialogModal {...props}>{children}</DialogModal>;
+	if (trigger) {
+		return (
+			<TriggeredDialog trigger={trigger} lazy={lazy} {...rest}>
+				{children}
+			</TriggeredDialog>
+		);
 	}
+
+	const props =
+		typeof rest.isOpen === "boolean" ? rest : { ...rest, isOpen: true };
+	return <PortaledDialog {...props}>{children}</PortaledDialog>;
+}
+
+type DialogChromeProps = Pick<
+	SendouDialogProps,
+	| "heading"
+	| "showHeading"
+	| "className"
+	| "showCloseButton"
+	| "isDismissable"
+	| "isFullScreen"
+	| "onClose"
+	| "onCloseTo"
+	| "aria-label"
+>;
+
+function TriggeredDialog({
+	trigger,
+	lazy,
+	children,
+	...chrome
+}: DialogChromeProps & {
+	trigger: NonNullable<SendouDialogProps["trigger"]>;
+	lazy?: boolean;
+	children?: React.ReactNode;
+}) {
+	const navigate = useNavigate();
+	const dialogId = React.useId();
+	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	const [open, setOpen] = React.useState(false);
+	const [contentKey, remountContent] = React.useReducer(
+		(key: number) => key + 1,
+		0,
+	);
+
+	const handleClosed = () => {
+		remountContent();
+		if (chrome.onCloseTo) {
+			navigate(chrome.onCloseTo);
+		} else {
+			chrome.onClose?.();
+		}
+	};
+
+	// React wires `onToggle` on a hydrated <dialog> only when it is also a
+	// popover, so the open state listens natively (and seeds from a dialog
+	// opened before hydration)
+	const trackOpenState = (dialog: HTMLDialogElement) => {
+		const onToggle = (event: Event) =>
+			setOpen((event as ToggleEvent).newState === "open");
+		dialog.addEventListener("toggle", onToggle);
+		if (dialog.open) setOpen(true);
+		return () => dialog.removeEventListener("toggle", onToggle);
+	};
 
 	return (
 		<>
 			{React.cloneElement(trigger, {
-				onPress: () => {
-					trigger.props.onPress?.();
-					setTriggerOpen(true);
+				commandfor: dialogId,
+				command: "show-modal",
+				onPress: (event) => {
+					trigger.props.onPress?.(event);
+					if (!supportsInvokerCommands()) {
+						dialogRef.current?.showModal();
+					}
 				},
 			})}
-			{triggerOpen ? (
-				<DialogModal {...rest} isOpen onDismiss={() => setTriggerOpen(false)}>
-					{children}
-				</DialogModal>
-			) : null}
+			<DialogElement
+				ref={(dialog) => {
+					dialogRef.current = dialog;
+					return dialog && lazy ? trackOpenState(dialog) : undefined;
+				}}
+				id={dialogId}
+				{...dialogElementProps(chrome, dialogId, handleClosed)}
+			>
+				<DialogChrome key={contentKey} {...chrome} dialogId={dialogId}>
+					{lazy && !open ? null : children}
+				</DialogChrome>
+			</DialogElement>
 		</>
 	);
 }
 
-function DialogModal({
+function PortaledDialog({
 	children,
-	heading,
-	showHeading = true,
-	className,
-	showCloseButton: showCloseButtonProp,
 	isOpen,
-	isDismissable,
-	isFullScreen,
 	onOpenChange,
-	onClose: onCloseProp,
-	onCloseTo,
-	onDismiss,
-	"aria-label": ariaLabel,
-}: Omit<SendouDialogProps, "trigger"> & {
-	/** Trigger-managed mode: unrenders the dialog on close. */
-	onDismiss?: () => void;
-}) {
+	...chrome
+}: DialogChromeProps &
+	Pick<SendouDialogProps, "isOpen" | "onOpenChange" | "children">) {
 	const navigate = useNavigate();
-	const dialogRef = React.useRef<HTMLDialogElement>(null);
-	const headingId = React.useId();
-
-	const showCloseButton = showCloseButtonProp || onCloseProp || onCloseTo;
+	const dialogId = React.useId();
 
 	const handleClosed = () => {
-		if (onDismiss) {
-			onDismiss();
-			if (onCloseTo) {
-				navigate(onCloseTo);
-			} else {
-				onCloseProp?.();
-			}
-			return;
-		}
-
 		if (onOpenChange) {
 			onOpenChange(false);
-		} else if (onCloseTo) {
-			navigate(onCloseTo);
+		} else if (chrome.onCloseTo) {
+			navigate(chrome.onCloseTo);
 		} else {
-			onCloseProp?.();
+			chrome.onClose?.();
 		}
 	};
 
@@ -203,39 +280,84 @@ function DialogModal({
 
 	return (
 		<SendouModal
-			ref={dialogRef}
-			className={clsx(className, styles.modal, "scrollbar", {
-				[styles.fullScreenModal]: isFullScreen,
-			})}
-			aria-label={ariaLabel}
-			aria-labelledby={!ariaLabel && heading ? headingId : undefined}
-			isDismissable={isDismissable}
-			onClose={handleClosed}
+			id={dialogId}
+			{...dialogElementProps(chrome, dialogId, handleClosed)}
 		>
-			{showHeading ? (
-				<div
-					className={clsx(styles.headingContainer, {
-						[styles.noHeading]: !heading,
-					})}
-				>
-					{heading ? (
-						<h2 id={headingId} className={styles.heading}>
-							{heading}
-						</h2>
-					) : null}
-					{showCloseButton ? (
-						<SendouButton
-							icon={<X />}
-							shape="circle"
-							variant="minimal-destructive"
-							className="ml-auto"
-							aria-label="Close"
-							onPress={() => dialogRef.current?.close()}
-						/>
-					) : null}
-				</div>
-			) : null}
-			{children}
+			<DialogChrome {...chrome} dialogId={dialogId}>
+				{children}
+			</DialogChrome>
 		</SendouModal>
+	);
+}
+
+function dialogElementProps(
+	{
+		className,
+		isFullScreen,
+		isDismissable,
+		heading,
+		"aria-label": ariaLabel,
+	}: DialogChromeProps,
+	dialogId: string,
+	onClose: () => void,
+) {
+	return {
+		className: clsx(className, styles.modal, "scrollbar", {
+			[styles.fullScreenModal]: isFullScreen,
+		}),
+		isDismissable,
+		onClose,
+		"aria-label": ariaLabel,
+		"aria-labelledby":
+			!ariaLabel && heading ? headingIdFor(dialogId) : undefined,
+	};
+}
+
+function headingIdFor(dialogId: string) {
+	return `${dialogId}-heading`;
+}
+
+function DialogChrome({
+	dialogId,
+	heading,
+	showHeading = true,
+	showCloseButton,
+	onClose,
+	onCloseTo,
+	children,
+}: DialogChromeProps & { dialogId: string; children: React.ReactNode }) {
+	if (!showHeading) return children;
+
+	return (
+		<>
+			<div
+				className={clsx(styles.headingContainer, {
+					[styles.noHeading]: !heading,
+				})}
+			>
+				{heading ? (
+					<h2 id={headingIdFor(dialogId)} className={styles.heading}>
+						{heading}
+					</h2>
+				) : null}
+				{showCloseButton || onClose || onCloseTo ? (
+					<SendouButton
+						icon={<X />}
+						shape="circle"
+						variant="minimal-destructive"
+						className="ml-auto"
+						aria-label="Close"
+						commandfor={dialogId}
+						command="close"
+						onPress={(event) => {
+							if (!supportsInvokerCommands()) {
+								event.currentTarget.closest("dialog")?.close();
+							}
+						}}
+					/>
+				) : null}
+			</div>
+			{children}
+		</>
 	);
 }
