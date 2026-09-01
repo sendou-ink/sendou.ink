@@ -516,15 +516,21 @@ export async function findAllEventsBySeries({
 	return events.map(mapEvent);
 }
 
-export function findAllSeriesByOrganizationId(organizationId: number) {
+/** Series belonging to any of the given organizations. */
+export async function findAllSeriesByOrganizationIds(
+	organizationIds: number[],
+) {
+	if (organizationIds.length === 0) return [];
+
 	return db
 		.selectFrom("TournamentOrganizationSeries")
 		.select([
 			"TournamentOrganizationSeries.id",
 			"TournamentOrganizationSeries.name",
+			"TournamentOrganizationSeries.organizationId",
 			"TournamentOrganizationSeries.substringMatches",
 		])
-		.where("TournamentOrganizationSeries.organizationId", "=", organizationId)
+		.where("TournamentOrganizationSeries.organizationId", "in", organizationIds)
 		.execute();
 }
 

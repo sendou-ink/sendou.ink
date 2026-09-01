@@ -128,7 +128,9 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		eventToCopy,
 		recentTournaments:
 			canAddTournaments && !eventToEdit
-				? await CalendarRepository.findRecentTournamentsByAuthorId(user.id)
+				? await CalendarRepository.findRecentTournamentsByOrganizerUserId(
+						user.id,
+					)
 				: undefined,
 		organizations,
 		trophies,

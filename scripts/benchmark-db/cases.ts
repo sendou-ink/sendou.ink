@@ -283,9 +283,10 @@ export function buildCases(fx: Fixtures): {
 		}),
 	);
 	add(
-		"CalendarRepository.findRecentTournamentsByAuthorId",
+		"CalendarRepository.findRecentTournamentsByOrganizerUserId",
 		fx.calendarAuthorId,
-		(authorId) => CalendarRepository.findRecentTournamentsByAuthorId(authorId),
+		(authorId) =>
+			CalendarRepository.findRecentTournamentsByOrganizerUserId(authorId),
 	);
 	add("CalendarRepository.findResultsByEventId", fx.resultsEventId, (eventId) =>
 		CalendarRepository.findResultsByEventId(eventId),

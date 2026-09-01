@@ -128,9 +128,9 @@ async function previousSeriesWins({
 
 	const series = Series.findByEventName({
 		series:
-			await TournamentOrganizationRepository.findAllSeriesByOrganizationId(
+			await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
 				organizationId,
-			),
+			]),
 		eventName: tournamentName,
 	});
 	if (!series) return null;

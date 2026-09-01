@@ -13,7 +13,9 @@ import type { TournamentSettings } from "~/db/tables-json";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
 import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import * as Series from "~/features/tournament-organization/core/Series";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import {
 	databaseTimestampNow,
 	databaseTimestampToDate,
@@ -38,6 +40,8 @@ import {
 } from "../tournament/tournament-utils";
 import type { CalendarEvent } from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
+
+const RECENT_TOURNAMENTS_SHOWN = 10;
 
 function hasBadge(eb: ExpressionBuilder<DB, "CalendarEventDate">) {
 	return eb
@@ -355,8 +359,14 @@ export async function findById(
 	};
 }
 
-export async function findRecentTournamentsByAuthorId(authorId: number) {
-	return db
+/**
+ * Tournaments from the past year organized by the user (as the author, via an
+ * organization ADMIN/ORGANIZER role or as tournament staff ORGANIZER), newest first.
+ * Only the latest event of each tournament series is included, unless there are fewer
+ * series than spots to show, in which case the next newest events fill the rest.
+ */
+export async function findRecentTournamentsByOrganizerUserId(userId: number) {
+	const tournaments = await db
 		.selectFrom("CalendarEvent")
 		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
 		.innerJoin(
@@ -364,15 +374,82 @@ export async function findRecentTournamentsByAuthorId(authorId: number) {
 			"CalendarEvent.id",
 			"CalendarEventDate.eventId",
 		)
-		.select([
+		.select(({ fn }) => [
 			"CalendarEvent.id",
 			"CalendarEvent.name",
-			"CalendarEventDate.startsAt",
+			"CalendarEvent.organizationId",
+			fn.min("CalendarEventDate.startsAt").as("startsAt"),
 		])
-		.where("CalendarEvent.authorId", "=", authorId)
-		.orderBy("CalendarEvent.id", "desc")
-		.limit(10)
+		.where((eb) =>
+			eb.or([
+				eb("CalendarEvent.authorId", "=", userId),
+				eb.exists(
+					eb
+						.selectFrom("TournamentOrganizationMember")
+						.select("TournamentOrganizationMember.userId")
+						.whereRef(
+							"TournamentOrganizationMember.organizationId",
+							"=",
+							"CalendarEvent.organizationId",
+						)
+						.where("TournamentOrganizationMember.userId", "=", userId)
+						.where("TournamentOrganizationMember.role", "in", [
+							"ADMIN",
+							"ORGANIZER",
+						]),
+				),
+				eb.exists(
+					eb
+						.selectFrom("TournamentStaff")
+						.select("TournamentStaff.userId")
+						.whereRef(
+							"TournamentStaff.tournamentId",
+							"=",
+							"CalendarEvent.tournamentId",
+						)
+						.where("TournamentStaff.userId", "=", userId)
+						.where("TournamentStaff.role", "=", "ORGANIZER"),
+				),
+			]),
+		)
+		.where(
+			"CalendarEventDate.startsAt",
+			">=",
+			dateToDatabaseTimestamp(sub(new Date(), { years: 1 })),
+		)
+		.groupBy("CalendarEvent.id")
+		.orderBy("startsAt", "desc")
 		.execute();
+
+	const series =
+		await TournamentOrganizationRepository.findAllSeriesByOrganizationIds(
+			R.unique(
+				tournaments
+					.map((tournament) => tournament.organizationId)
+					.filter((organizationId) => organizationId !== null),
+			),
+		);
+
+	const latestOfEachSeries = R.uniqueBy(tournaments, (tournament) => {
+		const tournamentSeries = Series.findByEventName({
+			series: series.filter(
+				(oneSeries) => oneSeries.organizationId === tournament.organizationId,
+			),
+			eventName: tournament.name,
+		});
+
+		return tournamentSeries
+			? `series-${tournamentSeries.id}`
+			: `event-${tournament.id}`;
+	});
+
+	return R.sortBy(
+		R.take(
+			R.unique([...latestOfEachSeries, ...tournaments]),
+			RECENT_TOURNAMENTS_SHOWN,
+		),
+		[(tournament) => tournament.startsAt, "desc"],
+	);
 }
 
 export async function findResultsByEventId(eventId: number) {
