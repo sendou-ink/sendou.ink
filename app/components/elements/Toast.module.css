@@ -1,11 +1,20 @@
 .toastRegion {
 	flex-direction: column;
 	gap: 8px;
-	display: flex;
 	position: fixed;
+	inset: unset;
 	top: calc(var(--layout-nav-height) + var(--s-2));
 	right: 10px;
-	z-index: 10;
+	margin: 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	overflow: visible;
+	outline: none;
+
+	&:popover-open {
+		display: flex;
+	}
 }
 
 .toast {

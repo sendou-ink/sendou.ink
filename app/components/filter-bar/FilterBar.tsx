@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { ChevronDown, Plus, RotateCcw, X } from "lucide-react";
 import * as React from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useUser } from "~/features/auth/core/user";
 import { SendouButton } from "../elements/Button";
@@ -120,7 +119,8 @@ function FilterPill({
 				onOpenChange={onOpenChange}
 				popoverClassName={clsx(styles.popover, pill.popoverClassName)}
 				trigger={
-					<Button
+					<button
+						type="button"
 						className={styles.trigger}
 						data-active={pill.formattedValue !== null}
 						data-testid={pill.testId}
@@ -133,20 +133,21 @@ function FilterPill({
 							<span className={styles.value}>{pill.formattedValue}</span>
 						) : null}
 						<ChevronDown className={styles.chevron} />
-					</Button>
+					</button>
 				}
 			>
 				{pill.popover}
 			</SendouPopover>
 			{onRemove ? (
-				<Button
+				<button
+					type="button"
 					className={styles.removeButton}
 					aria-label={`Remove ${pill.name} filter`}
-					onPress={onRemove}
+					onClick={onRemove}
 					data-testid={pill.testId ? `${pill.testId}-remove` : undefined}
 				>
 					<X />
-				</Button>
+				</button>
 			) : null}
 		</div>
 	);
@@ -162,26 +163,30 @@ function AddFilterMenu({
 	const { t } = useTranslation();
 
 	return (
-		<SendouMenu
-			trigger={
-				<div className={styles.pill}>
-					<Button className={styles.trigger} data-testid="add-filter-button">
+		<div className={styles.pill}>
+			<SendouMenu
+				trigger={
+					<button
+						type="button"
+						className={styles.trigger}
+						data-testid="add-filter-button"
+					>
 						<Plus className={styles.plus} />
 						<span>{t("filterBar.addFilter")}</span>
-					</Button>
-				</div>
-			}
-		>
-			{pills.map((pill) => (
-				<SendouMenuItem
-					key={pill.key}
-					icon={pill.icon}
-					onAction={() => onAdd(pill)}
-					data-testid={pill.testId ? `menu-item-${pill.testId}` : undefined}
-				>
-					{pill.name}
-				</SendouMenuItem>
-			))}
-		</SendouMenu>
+					</button>
+				}
+			>
+				{pills.map((pill) => (
+					<SendouMenuItem
+						key={pill.key}
+						icon={pill.icon}
+						onAction={() => onAdd(pill)}
+						data-testid={pill.testId ? `menu-item-${pill.testId}` : undefined}
+					>
+						{pill.name}
+					</SendouMenuItem>
+				))}
+			</SendouMenu>
+		</div>
 	);
 }

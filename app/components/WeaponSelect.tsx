@@ -1,8 +1,8 @@
 import type { TFunction } from "i18next";
 import * as React from "react";
-import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import {
+	type SelectKey,
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
@@ -90,7 +90,7 @@ export function WeaponSelect<
 	});
 	const filter = useWeaponFilter();
 
-	const handleOnChange = (key: Key | null) => {
+	const handleOnChange = (key: SelectKey | null) => {
 		if (!isControlled) {
 			setLastUncontrolledKey(key === null ? null : String(key));
 		}
@@ -123,7 +123,7 @@ export function WeaponSelect<
 			onOpenChange={setIsOpen}
 			selectedKey={isControlled ? keyify(value) : undefined}
 			defaultSelectedKey={
-				isControlled ? undefined : (keyify(initialValue) as Key)
+				isControlled ? undefined : (keyify(initialValue) as SelectKey)
 			}
 			onSelectionChange={handleOnChange}
 			clearable={clearable}
@@ -254,8 +254,8 @@ function useWeaponItems({
 	const { t } = useTranslation(["common"]);
 
 	// While closed only the selected item is needed (the trigger's value
-	// display); react-aria renders every item passed to it into a hidden
-	// collection even when the popover is closed.
+	// display); the select renders every item passed to it into the closed
+	// popover's DOM.
 	if (!isOpen) {
 		return {
 			items: collapseToSelectedItem(items, selectedKey),

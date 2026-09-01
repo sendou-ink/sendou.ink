@@ -169,3 +169,14 @@
 		transform: translate(-50%, -50%);
 	}
 }
+
+.messagesSizer {
+	position: relative;
+}
+
+.messageRow {
+	position: absolute;
+	top: 0;
+	left: 0;
+	right: 0;
+}

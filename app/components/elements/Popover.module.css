@@ -1,7 +1,18 @@
+.triggerContainer {
+	display: contents;
+
+	> * {
+		anchor-name: var(--popover-anchor);
+	}
+}
+
 .content {
+	position: fixed;
+	position-area: block-end;
+	position-try-fallbacks: flip-block;
+	justify-self: anchor-center;
+	margin: var(--s-2);
 	max-width: min(20rem, calc(100vw - var(--s-4)));
-	/* react-aria clamps the popover's max-height/width to the available viewport
-	   space; scroll the overflow instead of letting it spill past the border */
 	overflow: auto;
 	padding: var(--s-2);
 	border: var(--border-style);
@@ -10,8 +21,27 @@
 	font-weight: var(--weight-semi);
 	white-space: pre-wrap;
 	background-color: var(--color-bg);
-}
-
-.dialog {
+	color: var(--color-text);
 	outline: none;
+
+	&[data-placement="top"] {
+		position-area: block-start;
+	}
+
+	&[data-placement="bottom start"] {
+		position-area: block-end span-inline-end;
+		justify-self: unset;
+	}
+
+	&[data-placement="bottom end"] {
+		position-area: block-end span-inline-start;
+		justify-self: unset;
+	}
+
+	&[data-placement="right"] {
+		position-area: inline-end;
+		position-try-fallbacks: flip-inline;
+		justify-self: unset;
+		align-self: anchor-center;
+	}
 }

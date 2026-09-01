@@ -1,15 +1,33 @@
+.triggerContainer {
+	display: contents;
+
+	> * {
+		anchor-name: var(--menu-anchor);
+	}
+}
+
 .popover {
+	position: fixed;
+	position-area: block-end span-inline-start;
+	position-try-fallbacks: flip-block;
+	margin: var(--s-2) 0;
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	border: var(--border-style);
 	width: max-content;
+	max-width: calc(100vw - var(--s-4));
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	padding: var(--s-2);
+	color: var(--color-text);
+
+	&[data-placement="bottom start"] {
+		position-area: block-end span-inline-end;
+	}
 }
 
-.popoverOpensLeft {
-	right: 0;
+.opensLeft {
+	position-area: block-end span-inline-end;
 }
 
 .scrolling {
@@ -45,7 +63,8 @@
 	transition: background-color 0.15s;
 	cursor: pointer;
 
-	&[data-focused] {
+	&:hover,
+	&:focus {
 		background-color: var(--color-bg-higher);
 	}
 }
@@ -53,11 +72,6 @@
 .itemDisabled {
 	color: var(--color-text-high);
 	cursor: not-allowed;
-}
-
-.itemSelected {
-	background-color: var(--color-text-accent);
-	font-weight: var(--weight-extra);
 }
 
 .itemActive {
@@ -70,6 +84,12 @@
 
 .itemIcon {
 	width: 18px;
+	display: inline-flex;
+
+	& svg {
+		width: 100%;
+		height: auto;
+	}
 }
 
 .itemImg {

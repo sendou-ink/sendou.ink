@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import type * as React from "react";
-import { Button } from "react-aria-components";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
@@ -202,7 +201,7 @@ export function ListButton({
 	badgeVariant?: "default" | "warning";
 }) {
 	return (
-		<Button className={styles.listButton}>
+		<button type="button" className={styles.listButton}>
 			<ListItemContent
 				user={user}
 				subtitle={subtitle}
@@ -211,7 +210,7 @@ export function ListButton({
 			>
 				{children}
 			</ListItemContent>
-		</Button>
+		</button>
 	);
 }
 
@@ -233,9 +232,13 @@ export function NavListButton({
 	onPress: () => void;
 }) {
 	return (
-		<Button className={clsx(styles.listButton, className)} onPress={onPress}>
+		<button
+			type="button"
+			className={clsx(styles.listButton, className)}
+			onClick={onPress}
+		>
 			{children}
-		</Button>
+		</button>
 	);
 }
 

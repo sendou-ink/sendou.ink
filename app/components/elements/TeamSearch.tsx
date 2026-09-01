@@ -1,5 +1,4 @@
 import type * as React from "react";
-import type { SelectProps } from "react-aria-components";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import {
 	SearchSelect,
@@ -14,8 +13,12 @@ export type TeamSearchResult = Extract<
 	{ type: "team" }
 >;
 
-interface TeamSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children" | "onChange"> {
+interface TeamSearchProps {
+	isRequired?: boolean;
+	isDisabled?: boolean;
+	className?: string;
+	onBlur?: () => void;
+	"data-testid"?: string;
 	name?: string;
 	label?: string;
 	bottomText?: string;
@@ -26,7 +29,7 @@ interface TeamSearchProps<T extends object>
 	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export function TeamSearch<T extends object>({
+export function TeamSearch({
 	name,
 	label,
 	bottomText,
@@ -35,7 +38,7 @@ export function TeamSearch<T extends object>({
 	onChange,
 	ref,
 	...rest
-}: TeamSearchProps<T>) {
+}: TeamSearchProps) {
 	const search = useEntitySearch<TeamSearchResult>({
 		buildUrl: (query) => `/search?q=${query}&type=teams&limit=6`,
 		parseResults: parseTeamResults,

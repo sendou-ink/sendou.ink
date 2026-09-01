@@ -1,6 +1,9 @@
-import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import {
+	type SelectKey,
+	SendouSelect,
+	SendouSelectItem,
+} from "~/components/elements/Select";
 import { StageImage } from "~/components/Image";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { StageId } from "~/modules/in-game-lists/types";
@@ -34,7 +37,7 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 
 	const isControlled = value !== undefined;
 
-	const handleOnChange = (key: Key | null) => {
+	const handleOnChange = (key: SelectKey | null) => {
 		if (key === null) return onChange?.(null as any);
 		onChange?.(Number(key) as any);
 	};
@@ -51,7 +54,9 @@ export function StageSelect<Clearable extends boolean | undefined = undefined>({
 				placeholder: t("common:forms.stageSearch.search.placeholder"),
 			}}
 			selectedKey={isControlled ? value : undefined}
-			defaultSelectedKey={isControlled ? undefined : (initialValue as Key)}
+			defaultSelectedKey={
+				isControlled ? undefined : (initialValue as SelectKey)
+			}
 			onSelectionChange={handleOnChange}
 			clearable={clearable}
 			data-testid={testId}

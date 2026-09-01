@@ -10,12 +10,6 @@ import {
 	Users,
 } from "lucide-react";
 import * as React from "react";
-import {
-	Dialog,
-	DialogTrigger,
-	Modal,
-	ModalOverlay,
-} from "react-aria-components";
 import { Flipped, Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
@@ -43,6 +37,7 @@ import {
 } from "~/utils/urls";
 import { Avatar, generateIdenticon } from "../Avatar";
 import { SendouButton } from "../elements/Button";
+import { SendouModal } from "../elements/Dialog";
 import { FuseZone } from "../fuse/Fuse";
 import { Image } from "../Image";
 import { MobileNav } from "../MobileNav";
@@ -412,46 +407,39 @@ export function Layout({
 					<Link to="/" className={clsx(styles.siteLogo, styles.mobileLogo)}>
 						<SiteLogoContent />
 					</Link>
-					<DialogTrigger
-						isOpen={sideNavModalOpen}
-						onOpenChange={setSideNavModalOpen}
-					>
-						<SideNavCollapseButton
-							className={styles.sideNavModalTrigger}
-							showNotificationDot={!sideNavModalOpen && showUnseenDot}
-							badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
-							testId="sidenav-modal-trigger"
-						/>
-						<ModalOverlay className={styles.sideNavModalOverlay} isDismissable>
-							<Modal className={styles.sideNavModal}>
-								<Dialog className={styles.sideNavModalDialog}>
-									<SideNav
-										className={styles.sideNavInModal}
-										footer={sideNavFooterContent}
-										top={<SiteTitle />}
-										topCentered={isFrontPage}
-									>
-										{sideNavChildren}
-									</SideNav>
-								</Dialog>
-							</Modal>
-						</ModalOverlay>
-					</DialogTrigger>
-					<ModalOverlay
-						className={styles.chatSidebarModalOverlay}
-						isDismissable
-						isOpen={chatSidebarModalOpen}
-						onOpenChange={setChatSidebarModalOpenAndSync}
-					>
-						<Modal className={styles.chatSidebarModal}>
-							<Dialog
-								className={styles.chatSidebarModalDialog}
-								aria-label={t("common:chat.sidebar.title")}
+					<SideNavCollapseButton
+						onToggle={() => setSideNavModalOpen(true)}
+						className={styles.sideNavModalTrigger}
+						showNotificationDot={!sideNavModalOpen && showUnseenDot}
+						badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
+						testId="sidenav-modal-trigger"
+					/>
+					{sideNavModalOpen ? (
+						<SendouModal
+							className={styles.sideNavModal}
+							isDismissable
+							onClose={() => setSideNavModalOpen(false)}
+						>
+							<SideNav
+								className={styles.sideNavInModal}
+								footer={sideNavFooterContent}
+								top={<SiteTitle />}
+								topCentered={isFrontPage}
 							>
-								<LazyChatSidebar />
-							</Dialog>
-						</Modal>
-					</ModalOverlay>
+								{sideNavChildren}
+							</SideNav>
+						</SendouModal>
+					) : null}
+					{chatSidebarModalOpen ? (
+						<SendouModal
+							className={styles.chatSidebarModal}
+							isDismissable
+							aria-label={t("common:chat.sidebar.title")}
+							onClose={() => setChatSidebarModalOpenAndSync(false)}
+						>
+							<LazyChatSidebar />
+						</SendouModal>
+					) : null}
 					<SideNavCollapseButton
 						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
 						className={styles.sideNavCollapseButton}

@@ -51,7 +51,7 @@
 		color: var(--color-text);
 	}
 
-	&[data-focus-visible] .tabButton {
+	&:focus-visible .tabButton {
 		color: var(--color-text-accent) !important;
 		outline: none;
 	}
@@ -81,11 +81,11 @@
 }
 
 .disappearing {
-	&:has(.tabList > div:only-child) {
+	&:has(.tabList > :only-child) {
 		gap: 0;
 	}
 
-	& .tabList:has(> div:only-child) {
+	& .tabList:has(> :only-child) {
 		display: none;
 	}
 }

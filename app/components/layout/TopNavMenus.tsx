@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { useState } from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLocation } from "react-router";
 import { Config } from "~/config";
@@ -95,12 +94,13 @@ function DevMenu() {
 		<div className={styles.menuWrapper}>
 			<SendouPopover
 				trigger={
-					<Button
+					<button
+						type="button"
 						className={styles.menuButton}
-						onHoverStart={() => setIsPreviewSuppressed(false)}
+						onPointerEnter={() => setIsPreviewSuppressed(false)}
 					>
 						Dev
-					</Button>
+					</button>
 				}
 				popoverClassName={styles.menuPopover}
 				placement="bottom start"
@@ -215,12 +215,13 @@ function CategoryMenu({
 		<div className={styles.menuWrapper}>
 			<SendouPopover
 				trigger={
-					<Button
+					<button
+						type="button"
 						className={styles.menuButton}
-						onHoverStart={() => setIsPreviewSuppressed(false)}
+						onPointerEnter={() => setIsPreviewSuppressed(false)}
 					>
 						{t(`front:nav.${category.name}`)}
-					</Button>
+					</button>
 				}
 				popoverClassName={styles.menuPopover}
 				placement="bottom start"

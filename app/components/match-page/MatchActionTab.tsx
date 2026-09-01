@@ -2,7 +2,6 @@ import clsx from "clsx";
 import { Check } from "lucide-react";
 import type * as React from "react";
 import { useState } from "react";
-import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useWebHaptics } from "web-haptics/react";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
@@ -10,6 +9,7 @@ import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
 import { Avatar } from "../Avatar";
 import { SendouButton } from "../elements/Button";
+import { SendouRadio, SendouRadioGroup } from "../elements/Radio";
 import { SendouTabPanel } from "../elements/Tabs";
 import { ModeImage, StageImage } from "../Image";
 import styles from "./MatchActionTab.module.css";
@@ -98,7 +98,7 @@ export function MatchActionTab({
 						<div className={styles.actionButtons}>{actionButtons}</div>
 					) : null}
 
-					<RadioGroup
+					<SendouRadioGroup
 						value={winnerId !== null ? String(winnerId) : null}
 						onChange={(value) => {
 							const selectedId = Number(value);
@@ -147,7 +147,7 @@ export function MatchActionTab({
 							className={clsx(styles.bravo)}
 							testId="winner-radio-2"
 						/>
-					</RadioGroup>
+					</SendouRadioGroup>
 
 					{withKo ? (
 						<div className={styles.ko}>
@@ -272,7 +272,7 @@ function TeamRadioOption({
 	const isLongName = team.name.length > LONG_TEAM_NAME_THRESHOLD;
 
 	return (
-		<Radio
+		<SendouRadio
 			value={String(team.id)}
 			aria-label={team.name}
 			className={clsx(styles.teamRadioContainer, className)}
@@ -318,6 +318,6 @@ function TeamRadioOption({
 					</span>
 				</span>
 			)}
-		</Radio>
+		</SendouRadio>
 	);
 }

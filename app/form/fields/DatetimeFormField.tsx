@@ -1,6 +1,4 @@
-import type { CalendarDate, CalendarDateTime } from "@internationalized/date";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
-import { dateToCalendarDate, dateToDateValue } from "~/utils/dates";
 import type { FormFieldProps } from "../types";
 import { errorMessageId } from "../utils";
 import { FormFieldWrapper, useTranslatedTexts } from "./FormFieldWrapper";
@@ -30,25 +28,8 @@ export function DatetimeFormField({
 	const { translatedLabel, translatedError, translatedBottomText } =
 		useTranslatedTexts({ label, error, bottomText });
 
-	const handleChange = (val: CalendarDateTime | CalendarDate | null) => {
-		if (val) {
-			if (granularity === "day") {
-				onChange(new Date(val.year, val.month - 1, val.day));
-			} else {
-				const dateTimeVal = val as CalendarDateTime;
-				onChange(
-					new Date(
-						dateTimeVal.year,
-						dateTimeVal.month - 1,
-						dateTimeVal.day,
-						dateTimeVal.hour,
-						dateTimeVal.minute,
-					),
-				);
-			}
-		} else {
-			onChange(undefined);
-		}
+	const handleChange = (val: Date | null) => {
+		onChange(val ?? undefined);
 	};
 
 	return (
@@ -61,13 +42,7 @@ export function DatetimeFormField({
 				bottomText={translatedBottomText}
 				isRequired={required}
 				isDisabled={disabled}
-				value={
-					value
-						? granularity === "day"
-							? dateToCalendarDate(value)
-							: dateToDateValue(value)
-						: null
-				}
+				value={value ?? null}
 				onChange={handleChange}
 				onBlur={() => onBlur?.()}
 			/>

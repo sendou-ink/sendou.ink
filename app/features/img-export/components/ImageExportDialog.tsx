@@ -46,7 +46,7 @@ const THEME_SELECTIONS = [
 
 interface ImageExportDialogProps {
 	/** Button that opens the dialog, e.g. a `SendouButton` (its own `onPress` also runs, useful for lazy loading the graphic's data) */
-	trigger: React.ReactNode;
+	trigger: React.ReactElement<{ onPress?: () => void }>;
 	heading: string;
 	/** Name of the downloaded file without the extension */
 	filename: string;

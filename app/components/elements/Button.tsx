@@ -1,10 +1,6 @@
 import clsx from "clsx";
 import type { JSX } from "react";
 import * as React from "react";
-import {
-	Button as ReactAriaButton,
-	type ButtonProps as ReactAriaButtonProps,
-} from "react-aria-components";
 import { Link, type LinkProps } from "react-router";
 import { assertUnreachable } from "~/utils/types";
 import styles from "./Button.module.css";
@@ -21,14 +17,20 @@ type ButtonVariant =
 	| "minimal-destructive";
 
 export interface SendouButtonProps
-	extends Omit<ReactAriaButtonProps, "onClick" | "className"> {
-	className?: string;
+	extends Omit<
+		React.ComponentPropsWithRef<"button">,
+		"onClick" | "disabled" | "children"
+	> {
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
 	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 	testId?: string;
+	onPress?: (event: React.MouseEvent<HTMLButtonElement>) => void;
+	isDisabled?: boolean;
+	/** Keeps the button focusable but blocks presses, for in-flight submissions. */
+	isPending?: boolean;
 }
 
 export function SendouButton({
@@ -39,12 +41,27 @@ export function SendouButton({
 	className,
 	icon,
 	testId,
+	onPress,
+	isDisabled,
+	isPending,
+	type = "button",
 	...rest
 }: SendouButtonProps) {
 	return (
-		<ReactAriaButton
+		<button
 			data-testid={testId}
+			type={type}
 			{...rest}
+			disabled={isDisabled}
+			aria-disabled={isPending || undefined}
+			data-pending={isPending || undefined}
+			onClick={(event) => {
+				if (isPending) {
+					event.preventDefault();
+					return;
+				}
+				onPress?.(event);
+			}}
 			className={buttonClassName({ className, variant, size, shape })}
 		>
 			{icon &&
@@ -52,7 +69,7 @@ export function SendouButton({
 					className: iconClassName(icon.props.className, children, size),
 				})}
 			{children}
-		</ReactAriaButton>
+		</button>
 	);
 }
 

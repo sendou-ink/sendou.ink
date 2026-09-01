@@ -70,19 +70,6 @@
 	font-size: var(--font-xs);
 }
 
-.panelOverlay {
-	position: fixed;
-	inset: 0;
-	bottom: var(--layout-nav-height);
-	z-index: 18;
-	background-color: rgba(0, 0, 0, 0.25);
-	backdrop-filter: blur(10px);
-
-	&[data-entering] {
-		animation: fade-in 200ms ease-out;
-	}
-}
-
 @keyframes fade-in {
 	from {
 		opacity: 0;
@@ -94,19 +81,30 @@
 
 .panel {
 	position: fixed;
-	bottom: 0;
-	left: 0;
-	right: 0;
+	inset: auto 0 0 0;
+	margin: 0;
+	padding: 0;
+	border: none;
+	width: 100%;
+	max-width: none;
+	max-height: none;
 	height: 85%;
 	background-color: var(--color-bg);
+	color: var(--color-text);
 	border-radius: var(--radius-box) var(--radius-box) 0 0;
 	overflow: hidden;
 	display: flex;
 	flex-direction: column;
 	padding-block-end: env(safe-area-inset-bottom);
+	outline: none;
+	animation: slide-up 200ms ease-out;
 
-	&[data-entering] {
-		animation: slide-up 200ms ease-out;
+	&::backdrop {
+		inset: 0;
+		bottom: var(--layout-nav-height);
+		background-color: rgba(0, 0, 0, 0.25);
+		backdrop-filter: blur(10px);
+		animation: fade-in 200ms ease-out;
 	}
 }
 
@@ -157,14 +155,23 @@
 .menuOverlay {
 	position: fixed;
 	inset: 0;
-	z-index: 20;
+	margin: 0;
+	padding: 0;
+	border: none;
+	width: 100%;
+	max-width: none;
+	height: 100%;
+	max-height: none;
 	background-color: var(--color-bg);
+	color: var(--color-text);
 	overflow-y: auto;
 	display: flex;
 	flex-direction: column;
+	outline: none;
+	animation: fade-in 200ms ease-out;
 
-	&[data-entering] {
-		animation: fade-in 200ms ease-out;
+	&::backdrop {
+		background: none;
 	}
 }
 
@@ -361,7 +368,9 @@
 }
 
 .noAnimation {
-	&[data-entering] {
+	animation: none;
+
+	&::backdrop {
 		animation: none;
 	}
 }

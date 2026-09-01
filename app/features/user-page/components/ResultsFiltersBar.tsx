@@ -1,8 +1,11 @@
 import * as React from "react";
-import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import {
+	type SelectKey,
+	SendouSelect,
+	SendouSelectItem,
+} from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { UserSearch } from "~/components/elements/UserSearch";
 import type { FilterBarPill } from "~/components/filter-bar/FilterBar";
@@ -388,7 +391,8 @@ const selectableYears = () => {
 	return result;
 };
 
-const toTierNumber = (key: Key | null) => Number(key) as TournamentTierNumber;
+const toTierNumber = (key: SelectKey | null) =>
+	Number(key) as TournamentTierNumber;
 
 const isDefaultFilters = (
 	filters: Record<keyof typeof DEFAULT_FILTERS, unknown>,

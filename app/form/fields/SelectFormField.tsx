@@ -1,5 +1,4 @@
 import * as React from "react";
-import { Text } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import type { FormFieldItems, FormFieldProps } from "../types";
@@ -10,8 +9,6 @@ import {
 	useTranslatedTexts,
 } from "./FormFieldWrapper";
 import styles from "./SelectFormField.module.css";
-
-const TWO_LINE_ROW_HEIGHT = 52;
 
 type SelectFormFieldProps<V extends string> = Omit<
 	FormFieldProps<"select">,
@@ -152,8 +149,6 @@ function CustomSelect<V extends string>({
 }) {
 	const { translatedLabel } = useTranslatedTexts({ label });
 
-	const hasDescriptions = items.some((item) => item.description);
-
 	// the Autocomplete wrapper of searchable selects drops falsy keys, so only
 	// plain selects render the clear choice as a list item like the native
 	// select's "—" option; searchable ones keep the clear button
@@ -186,16 +181,15 @@ function CustomSelect<V extends string>({
 				}
 				clearable={clearable && !hasEmptyItem}
 				isDisabled={disabled}
-				estimatedRowHeight={hasDescriptions ? TWO_LINE_ROW_HEIGHT : undefined}
 			>
 				{(item) => (
 					<SendouSelectItem id={item.id} textValue={item.textValue}>
 						{item.description ? (
 							<span className={styles.twoLineItem}>
-								<Text slot="label">{item.textValue}</Text>
-								<Text slot="description" className={styles.itemDescription}>
+								<span slot="label">{item.textValue}</span>
+								<span slot="description" className={styles.itemDescription}>
 									{item.description}
-								</Text>
+								</span>
 							</span>
 						) : (
 							item.textValue

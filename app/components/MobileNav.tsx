@@ -13,7 +13,6 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import { Dialog, Modal, ModalOverlay } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link, useLocation } from "react-router";
 import { useUser } from "~/features/auth/core/user";
@@ -37,6 +36,7 @@ import {
 import { Avatar } from "./Avatar";
 import { EventsList } from "./EventsList";
 import { LinkButton } from "./elements/Button";
+import { SendouModal } from "./elements/Dialog";
 import { Image } from "./Image";
 import { LazyChatSidebar } from "./layout/LazyChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
@@ -303,33 +303,26 @@ function MobilePanel({
 	skipAnimation: boolean;
 }) {
 	return (
-		<ModalOverlay
-			className={clsx(styles.panelOverlay, skipAnimation && styles.noAnimation)}
-			isOpen
-			isDismissable={false}
+		<SendouModal
+			className={clsx(styles.panel, skipAnimation && styles.noAnimation)}
+			onClose={onClose}
 		>
-			<Modal
-				className={clsx(styles.panel, skipAnimation && styles.noAnimation)}
-			>
-				<Dialog className={styles.panelDialog}>
-					<header className={styles.panelHeader}>
-						<div className={styles.panelIconContainer}>{icon}</div>
-						<h2 className={styles.panelTitle}>{title}</h2>
-						<button
-							type="button"
-							className={styles.panelCloseButton}
-							onClick={onClose}
-						>
-							<X size={18} />
-						</button>
-					</header>
-					<div className={clsx(styles.panelContent, "scrollbar")}>
-						{children}
-					</div>
-					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
-				</Dialog>
-			</Modal>
-		</ModalOverlay>
+			<div className={styles.panelDialog}>
+				<header className={styles.panelHeader}>
+					<div className={styles.panelIconContainer}>{icon}</div>
+					<h2 className={styles.panelTitle}>{title}</h2>
+					<button
+						type="button"
+						className={styles.panelCloseButton}
+						onClick={onClose}
+					>
+						<X size={18} />
+					</button>
+				</header>
+				<div className={clsx(styles.panelContent, "scrollbar")}>{children}</div>
+				<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
+			</div>
+		</SendouModal>
 	);
 }
 
@@ -353,105 +346,98 @@ function MenuOverlay({
 	const location = useLocation();
 
 	return (
-		<ModalOverlay
-			className={clsx(styles.panelOverlay, skipAnimation && styles.noAnimation)}
-			isOpen
-			isDismissable={false}
+		<SendouModal
+			className={clsx(
+				styles.menuOverlay,
+				"scrollbar",
+				skipAnimation && styles.noAnimation,
+			)}
+			onClose={onClose}
 		>
-			<Modal
-				className={clsx(
-					styles.menuOverlay,
-					"scrollbar",
-					skipAnimation && styles.noAnimation,
-				)}
-			>
-				<Dialog className={styles.panelDialog}>
+			<div className={styles.panelDialog}>
+				<header className={styles.menuHeader}>
+					<div className={styles.panelIconContainer}>
+						<Menu size={18} />
+					</div>
+					<h2 className={styles.panelTitle}>{t("front:mobileNav.menu")}</h2>
+					<div className={styles.menuHeaderActions}>
+						{!user?.roles.includes("MINOR_SUPPORT") ? (
+							<LinkButton
+								to={SUPPORT_PAGE}
+								size="small"
+								icon={<Heart />}
+								variant="outlined"
+							>
+								{t("common:pages.support")}
+							</LinkButton>
+						) : null}
+						<ShareUrlButton
+							variant="minimal"
+							shape="square"
+							url={`${SENDOU_INK_BASE_URL}${location.pathname}${location.search}`}
+						/>
+						<button
+							type="button"
+							className={styles.panelCloseButton}
+							onClick={onClose}
+						>
+							<X size={18} />
+						</button>
+					</div>
+				</header>
+
+				<nav aria-label={t("front:mobileNav.menu")}>
+					<ul className={styles.navGrid}>
+						{navItems
+							.filter(
+								(item) => item.name !== "trophies" || canAccessTrophies(user),
+							)
+							.map((item) => (
+								<li key={item.name}>
+									<Link
+										to={`/${item.url}`}
+										className={styles.navItem}
+										onClick={onClose}
+									>
+										<div className={styles.navItemImage}>
+											<Image
+												path={navIconUrl(item.name)}
+												height={32}
+												width={32}
+												alt=""
+											/>
+										</div>
+										<span>{t(`common:pages.${item.name}` as any)}</span>
+									</Link>
+								</li>
+							))}
+					</ul>
+				</nav>
+
+				<section>
 					<header className={styles.menuHeader}>
 						<div className={styles.panelIconContainer}>
-							<Menu size={18} />
+							<Tv size={18} />
 						</div>
-						<h2 className={styles.panelTitle}>{t("front:mobileNav.menu")}</h2>
-						<div className={styles.menuHeaderActions}>
-							{!user?.roles.includes("MINOR_SUPPORT") ? (
-								<LinkButton
-									to={SUPPORT_PAGE}
-									size="small"
-									icon={<Heart />}
-									variant="outlined"
-								>
-									{t("common:pages.support")}
-								</LinkButton>
-							) : null}
-							<ShareUrlButton
-								variant="minimal"
-								shape="square"
-								url={`${SENDOU_INK_BASE_URL}${location.pathname}${location.search}`}
-							/>
-							<button
-								type="button"
-								className={styles.panelCloseButton}
-								onClick={onClose}
-							>
-								<X size={18} />
-							</button>
-						</div>
+						<h3 className={styles.panelTitle}>{t("front:sideNav.streams")}</h3>
 					</header>
-
-					<nav aria-label={t("front:mobileNav.menu")}>
-						<ul className={styles.navGrid}>
-							{navItems
-								.filter(
-									(item) => item.name !== "trophies" || canAccessTrophies(user),
-								)
-								.map((item) => (
-									<li key={item.name}>
-										<Link
-											to={`/${item.url}`}
-											className={styles.navItem}
-											onClick={onClose}
-										>
-											<div className={styles.navItemImage}>
-												<Image
-													path={navIconUrl(item.name)}
-													height={32}
-													width={32}
-													alt=""
-												/>
-											</div>
-											<span>{t(`common:pages.${item.name}` as any)}</span>
-										</Link>
-									</li>
-								))}
-						</ul>
-					</nav>
-
-					<section>
-						<header className={styles.menuHeader}>
-							<div className={styles.panelIconContainer}>
-								<Tv size={18} />
-							</div>
-							<h3 className={styles.panelTitle}>
-								{t("front:sideNav.streams")}
-							</h3>
-						</header>
-						{streams.length === 0 ? (
-							<div className={styles.sideNavEmpty}>
-								{t("front:sideNav.noStreams")}
-							</div>
-						) : null}
-						<ul className={styles.streamsList}>
-							<StreamListItems
-								streams={streams}
-								onClick={onClose}
-								isLoggedIn={Boolean(user)}
-								savedTournamentIds={savedTournamentIds}
-							/>
-						</ul>
-					</section>
-					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
-				</Dialog>
-			</Modal>
-		</ModalOverlay>
+					{streams.length === 0 ? (
+						<div className={styles.sideNavEmpty}>
+							{t("front:sideNav.noStreams")}
+						</div>
+					) : null}
+					<ul className={styles.streamsList}>
+						<StreamListItems
+							streams={streams}
+							onClick={onClose}
+							isLoggedIn={Boolean(user)}
+							savedTournamentIds={savedTournamentIds}
+						/>
+					</ul>
+				</section>
+				<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
+			</div>
+		</SendouModal>
 	);
 }
 
@@ -613,23 +599,15 @@ function ChatPanel({
 	skipAnimation: boolean;
 }) {
 	return (
-		<ModalOverlay
-			className={clsx(styles.panelOverlay, skipAnimation && styles.noAnimation)}
-			isOpen
-			isDismissable={false}
+		<SendouModal
+			className={clsx(styles.menuOverlay, skipAnimation && styles.noAnimation)}
+			onClose={onClose}
 		>
-			<Modal
-				className={clsx(
-					styles.menuOverlay,
-					skipAnimation && styles.noAnimation,
-				)}
-			>
-				<Dialog className={styles.panelDialog}>
-					<LazyChatSidebar onClose={onClose} />
-					<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
-				</Dialog>
-			</Modal>
-		</ModalOverlay>
+			<div className={styles.panelDialog}>
+				<LazyChatSidebar onClose={onClose} />
+				<GhostTabBar onTabPress={onTabPress} isLoggedIn={isLoggedIn} />
+			</div>
+		</SendouModal>
 	);
 }
 

@@ -1,4 +1,3 @@
-import { parseDate } from "@internationalized/date";
 import clsx from "clsx";
 import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
@@ -538,7 +537,6 @@ function SelectSection({ id }: { id: string }) {
 					<SendouSelect
 						items={SELECT_ITEMS}
 						label="Select with description"
-						description="This is a helpful description"
 						placeholder="Select..."
 					>
 						{(item) => (
@@ -2361,9 +2359,9 @@ function SubNavSection({ id }: { id: string }) {
 }
 
 function DatePickerSection({ id }: { id: string }) {
-	const [calendarValue, setCalendarValue] = useState(parseDate("2024-12-27"));
-	const [datePickerValue, setDatePickerValue] = useState(
-		parseDate("2024-12-27"),
+	const [calendarValue, setCalendarValue] = useState(new Date(2024, 11, 27));
+	const [datePickerValue, setDatePickerValue] = useState<Date | null>(
+		new Date(2024, 11, 27),
 	);
 
 	const handleCalendarChange = (value: typeof calendarValue | null) => {

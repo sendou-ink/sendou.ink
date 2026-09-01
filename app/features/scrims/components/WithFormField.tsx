@@ -1,9 +1,12 @@
 import * as React from "react";
-import type { Key } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
 import type * as v from "valibot";
-import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
+import {
+	type SelectKey,
+	SendouSelect,
+	SendouSelectItem,
+} from "~/components/elements/Select";
 import { UserSearch } from "~/components/elements/UserSearch";
 import { FormMessage } from "~/components/FormMessage";
 import { useUser } from "~/features/auth/core/user";
@@ -24,7 +27,6 @@ const NEW_PICKUP_KEY = "PICKUP";
 /** Keeps one long username from crowding out the rest of the pick-up */
 const MAX_PICKUP_USERNAME_LENGTH = 12;
 /** Fits an option showing a pick-up and its members on two lines */
-const OPTION_HEIGHT = 46;
 
 interface PickupRoster {
 	id: number;
@@ -111,7 +113,7 @@ export function WithFormField({
 		}),
 	];
 
-	const handleSelectionChange = (key: Key | null) => {
+	const handleSelectionChange = (key: SelectKey | null) => {
 		const option = options.find((option) => option.key === key);
 		if (!option) return;
 
@@ -157,7 +159,6 @@ export function WithFormField({
 				items={options}
 				selectedKey={selectedKey()}
 				onSelectionChange={handleSelectionChange}
-				estimatedRowHeight={OPTION_HEIGHT}
 			>
 				{(option) => (
 					<SendouSelectItem id={option.key} textValue={option.textValue}>

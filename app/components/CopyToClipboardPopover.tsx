@@ -7,7 +7,7 @@ import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 
 interface CopyToClipboardPopoverProps {
 	url: string;
-	trigger: React.ReactNode;
+	trigger: React.ReactElement<Record<string, unknown>>;
 }
 
 export function CopyToClipboardPopover({

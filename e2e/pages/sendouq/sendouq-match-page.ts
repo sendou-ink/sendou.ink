@@ -210,7 +210,7 @@ export class SendouQMatchPage {
 		// `data-selected="true"` here. Clicking too early hits the about-to-unmount
 		// label and the selection is lost on remount.
 		await expect(this.locators.selectedWinner).toHaveCount(0);
-		// react-aria's Radio renders a hidden input behind a span overlay; click the
+		// the radio renders a hidden input behind a span overlay; click the
 		// wrapping label so the press handler fires and updates winnerId. The press
 		// occasionally registers a press-start without a press-end (same React Aria
 		// nondeterminism as in waitForPOSTResponse), so the selection silently drops

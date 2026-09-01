@@ -1,6 +1,5 @@
 import { sub } from "date-fns";
 import type * as React from "react";
-import type { SelectProps } from "react-aria-components";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
 import { tournamentSearchSearchParams } from "~/features/tournament/tournament-search-params";
 import { LocaleTime } from "../LocaleTime";
@@ -16,8 +15,12 @@ export type TournamentSearchItem = NonNullable<
 	Extract<TournamentSearchLoaderData, { tournaments: unknown }>
 >["tournaments"][number];
 
-interface TournamentSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children" | "onChange"> {
+interface TournamentSearchProps {
+	isRequired?: boolean;
+	isDisabled?: boolean;
+	className?: string;
+	onBlur?: () => void;
+	"data-testid"?: string;
 	name?: string;
 	label?: string;
 	bottomText?: string;
@@ -33,7 +36,7 @@ interface TournamentSearchProps<T extends object>
 	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export function TournamentSearch<T extends object>({
+export function TournamentSearch({
 	name,
 	label,
 	bottomText,
@@ -43,7 +46,7 @@ export function TournamentSearch<T extends object>({
 	onChange,
 	ref,
 	...rest
-}: TournamentSearchProps<T>) {
+}: TournamentSearchProps) {
 	const search = useEntitySearch<TournamentSearchItem>({
 		buildUrl: (query) =>
 			pastOnly

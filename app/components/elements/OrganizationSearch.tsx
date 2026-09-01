@@ -1,5 +1,4 @@
 import * as React from "react";
-import type { SelectProps } from "react-aria-components";
 import { useFetcher } from "react-router";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import {
@@ -14,30 +13,31 @@ export type OrganizationSearchResult = Extract<
 	{ type: "organization" }
 >;
 
-interface OrganizationSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children" | "onChange"> {
+interface OrganizationSearchProps {
+	isRequired?: boolean;
+	isDisabled?: boolean;
+	className?: string;
+	onBlur?: () => void;
+	"data-testid"?: string;
 	name?: string;
 	label?: string;
 	bottomText?: string;
 	errorText?: string;
 	initialOrganizationId?: number;
 	onChange?: (organization: OrganizationSearchResult | null) => void;
+	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export const OrganizationSearch = React.forwardRef(function OrganizationSearch<
-	T extends object,
->(
-	{
-		name,
-		label,
-		bottomText,
-		errorText,
-		initialOrganizationId,
-		onChange,
-		...rest
-	}: OrganizationSearchProps<T>,
-	ref?: React.Ref<HTMLButtonElement>,
-) {
+export function OrganizationSearch({
+	name,
+	label,
+	bottomText,
+	errorText,
+	initialOrganizationId,
+	onChange,
+	ref,
+	...rest
+}: OrganizationSearchProps) {
 	const initialOrganization = useInitialOrganization(initialOrganizationId);
 
 	const search = useEntitySearch<OrganizationSearchResult>({
@@ -64,7 +64,7 @@ export const OrganizationSearch = React.forwardRef(function OrganizationSearch<
 			renderItem={(item) => <OrganizationItem item={item} />}
 		/>
 	);
-});
+}
 
 function parseOrganizationResults(
 	data: unknown,

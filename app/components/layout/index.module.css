@@ -141,9 +141,14 @@
 		height: calc(var(--layout-nav-height) + env(safe-area-inset-top));
 	}
 
-	.sideNavModalOverlay,
-	.chatSidebarModalOverlay {
+	.sideNavModal,
+	.chatSidebarModal {
 		top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+		height: calc(100% - var(--layout-nav-height) - env(safe-area-inset-top));
+
+		&::backdrop {
+			top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+		}
 	}
 }
 
@@ -246,24 +251,27 @@
 	}
 }
 
-.sideNavModalOverlay {
+.sideNavModal {
 	position: fixed;
 	inset: 0;
 	top: var(--layout-nav-height);
-	background-color: rgba(0, 0, 0, 0.4);
-	backdrop-filter: blur(4px);
-	z-index: 20;
-}
-
-.sideNavModal {
-	height: 100%;
+	margin: 0;
+	padding: 0;
+	max-width: none;
+	max-height: none;
+	height: calc(100% - var(--layout-nav-height));
 	width: var(--layout-sidenav-width);
+	border: none;
 	border-right: 1.5px solid var(--color-border);
-}
-
-.sideNavModalDialog {
+	background-color: var(--color-bg-nav);
+	color: var(--color-text);
 	outline: none;
-	height: 100%;
+
+	&::backdrop {
+		background-color: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(4px);
+		top: var(--layout-nav-height);
+	}
 }
 
 .sideNavInModal.sideNavInModal {
@@ -307,26 +315,28 @@
 	}
 }
 
-.chatSidebarModalOverlay {
+.chatSidebarModal {
 	position: fixed;
 	inset: 0;
 	top: var(--layout-nav-height);
-	background-color: rgba(0, 0, 0, 0.4);
-	backdrop-filter: blur(4px);
-	z-index: 20;
-}
-
-.chatSidebarModal {
-	height: 100%;
-	width: var(--layout-sidenav-width);
+	margin: 0;
 	margin-left: auto;
+	padding: 0;
+	max-width: none;
+	max-height: none;
+	height: calc(100% - var(--layout-nav-height));
+	width: var(--layout-sidenav-width);
+	border: none;
 	border-left: 1.5px solid var(--color-border);
 	background-color: var(--color-bg-nav);
-}
-
-.chatSidebarModalDialog {
+	color: var(--color-text);
 	outline: none;
-	height: 100%;
+
+	&::backdrop {
+		background-color: rgba(0, 0, 0, 0.4);
+		backdrop-filter: blur(4px);
+		top: var(--layout-nav-height);
+	}
 }
 
 @media screen and (min-width: 1475px) {

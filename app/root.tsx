@@ -3,14 +3,9 @@ import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
 import { useEffect } from "react";
-import { I18nProvider, RouterProvider } from "react-aria-components";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
-import type {
-	LoaderFunctionArgs,
-	MetaFunction,
-	NavigateOptions,
-} from "react-router";
+import type { LoaderFunctionArgs, MetaFunction } from "react-router";
 import {
 	data,
 	Links,
@@ -20,7 +15,6 @@ import {
 	ScrollRestoration,
 	type ShouldRevalidateFunction,
 	useFetchers,
-	useHref,
 	useLoaderData,
 	useLocation,
 	useMatches,
@@ -58,7 +52,6 @@ import {
 import { getThemeSession } from "./features/theme/core/theme-session.server";
 import { timezoneMiddleware } from "./features/timezone/timezone-middleware.server";
 import { UnsavedChangesGuard } from "./form/UnsavedChangesGuard";
-import { useUserIntlPreference } from "./hooks/intl/useUserIntlPreference";
 import { useHydrated } from "./hooks/useHydrated";
 import {
 	ALWAYS_LOADED_NAMESPACES,
@@ -196,8 +189,6 @@ function Document({
 }) {
 	const { htmlThemeClass } = useTheme();
 	const { i18n } = useTranslation();
-	const { language } = useUserIntlPreference();
-	const navigate = useNavigate();
 	const locale = data?.locale ?? DEFAULT_LANGUAGE;
 	const customThemeStyle = useCustomThemeVars();
 
@@ -271,20 +262,16 @@ function Document({
 				{IS_E2E_TEST_RUN && <HydrationTestIndicator />}
 				<React.StrictMode>
 					<SearchParamsProvider>
-						<RouterProvider navigate={navigate} useHref={useExternalAwareHref}>
-							<I18nProvider locale={language}>
-								<SendouToastRegion />
-								<UnsavedChangesGuard />
-								<MyFuse data={data} />
-								<ChatProvider user={data?.user}>
-									<NotificationsProvider user={data?.user}>
-										<LayoutDataProvider data={data}>
-											<Layout data={data}>{children}</Layout>
-										</LayoutDataProvider>
-									</NotificationsProvider>
-								</ChatProvider>
-							</I18nProvider>
-						</RouterProvider>
+						<SendouToastRegion />
+						<UnsavedChangesGuard />
+						<MyFuse data={data} />
+						<ChatProvider user={data?.user}>
+							<NotificationsProvider user={data?.user}>
+								<LayoutDataProvider data={data}>
+									<Layout data={data}>{children}</Layout>
+								</LayoutDataProvider>
+							</NotificationsProvider>
+						</ChatProvider>
 					</SearchParamsProvider>
 				</React.StrictMode>
 				<ScrollRestoration />
@@ -292,19 +279,6 @@ function Document({
 			</body>
 		</html>
 	);
-}
-
-const ABSOLUTE_URL_REGEX = /^[a-z][a-z\d+\-.]*:/i;
-
-/**
- * Href every React Aria link (menu items, buttons, tabs) is rendered with.
- * `useHref` resolves its argument against the current route, which would turn an
- * absolute URL such as a Twitch link into a path of our own.
- */
-function useExternalAwareHref(href: string) {
-	const resolved = useHref(href);
-
-	return ABSOLUTE_URL_REGEX.test(href) ? href : resolved;
 }
 
 function useTriggerToasts() {
@@ -373,12 +347,6 @@ function usePreloadTranslation() {
 		});
 		return () => window.cancelIdleCallback(idleId);
 	}, []);
-}
-
-declare module "react-aria-components" {
-	interface RouterConfig {
-		routerOptions: NavigateOptions;
-	}
 }
 
 function useCustomThemeVars() {

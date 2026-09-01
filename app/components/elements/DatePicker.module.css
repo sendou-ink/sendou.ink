@@ -1,3 +1,9 @@
+.root {
+	display: flex;
+	flex-direction: column;
+	width: 100%;
+}
+
 .group {
 	height: var(--field-size);
 	padding: 0 var(--field-padding);
@@ -11,13 +17,16 @@
 	gap: var(--s-1-5);
 	width: 100%;
 	cursor: pointer;
-}
 
-.root {
-	&[data-open] .group {
+	&:focus-within {
 		border-color: transparent;
 		outline: var(--focus-ring);
 	}
+}
+
+.root[data-open] .group {
+	border-color: transparent;
+	outline: var(--focus-ring);
 }
 
 .dateInput {
@@ -25,12 +34,19 @@
 }
 
 .segment {
+	caret-color: transparent;
+
 	&:not([data-type="literal"]) {
 		padding: 0 var(--s-0-5);
 		border-radius: 5px;
 	}
 
-	&:focus-visible {
+	&[data-placeholder] {
+		color: var(--color-text-high);
+	}
+
+	&:focus-visible,
+	&:focus {
 		background-color: var(--color-bg-high);
 		color: var(--color-text-accent);
 		outline: none;
@@ -43,10 +59,22 @@
 	background-color: transparent;
 	border: none;
 	outline: none;
+	cursor: pointer;
 }
 
 .icon {
 	color: var(--color-text-high);
 	width: var(--field-size-icon);
 	height: var(--field-size-icon);
+}
+
+.calendarPopover {
+	position: fixed;
+	position-area: block-end span-inline-end;
+	position-try-fallbacks: flip-block;
+	margin: var(--s-1) 0;
+	padding: 0;
+	border: none;
+	background: transparent;
+	overflow: visible;
 }

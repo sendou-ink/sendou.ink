@@ -8,7 +8,6 @@ import {
 	X,
 } from "lucide-react";
 import * as React from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import {
@@ -131,9 +130,9 @@ function SidebarHeader({ onClose }: { onClose?: () => void }) {
 			</NavIconContainer>
 			<h2>{t("common:chat.sidebar.title")}</h2>
 			{onClose ? (
-				<Button className={styles.closeButton} onPress={onClose}>
+				<button type="button" className={styles.closeButton} onClick={onClose}>
 					<X size={18} />
-				</Button>
+				</button>
 			) : null}
 		</div>
 	);
@@ -238,9 +237,10 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 						))}
 						{inactiveRooms.length > 0 ? (
 							<>
-								<Button
+								<button
+									type="button"
 									className={styles.inactiveToggle}
-									onPress={() => setShowInactive((shown) => !shown)}
+									onClick={() => setShowInactive((shown) => !shown)}
 								>
 									{showInactive ? (
 										<ChevronDown size={14} />
@@ -248,7 +248,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 										<ChevronRight size={14} />
 									)}
 									{t("common:chat.sidebar.inactive")} ({inactiveRooms.length})
-								</Button>
+								</button>
 								{showInactive
 									? inactiveRooms.map((room) => (
 											<RoomListItem
@@ -392,9 +392,10 @@ function SingleChatView({
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.chatHeader}>
-				<Button
+				<button
+					type="button"
 					className={styles.backButton}
-					onPress={() => chatContext.setActiveRoomIds([])}
+					onClick={() => chatContext.setActiveRoomIds([])}
 				>
 					<ArrowLeft size={18} />
 					{otherRoomsUnreadCount > 0 ? (
@@ -402,7 +403,7 @@ function SingleChatView({
 							{otherRoomsUnreadCount}
 						</span>
 					) : null}
-				</Button>
+				</button>
 				{room?.url ? (
 					<Link to={room.url} className={styles.chatHeaderLink}>
 						{headerContent}
@@ -411,9 +412,13 @@ function SingleChatView({
 					<div className={styles.chatHeaderLink}>{headerContent}</div>
 				)}
 				{onClose ? (
-					<Button className={styles.closeButton} onPress={onClose}>
+					<button
+						type="button"
+						className={styles.closeButton}
+						onClick={onClose}
+					>
 						<X size={18} />
-					</Button>
+					</button>
 				) : null}
 			</div>
 			<div className={styles.chatContainer}>
@@ -464,12 +469,13 @@ function CombinedChatView({
 	return (
 		<div className={styles.sidebar}>
 			<div className={styles.chatHeader}>
-				<Button
+				<button
+					type="button"
 					className={styles.backButton}
-					onPress={() => chatContext.setActiveRoomIds([])}
+					onClick={() => chatContext.setActiveRoomIds([])}
 				>
 					<ArrowLeft size={18} />
-				</Button>
+				</button>
 				{primary.url ? (
 					<Link to={primary.url} className={styles.chatHeaderLink}>
 						{headerContent}
@@ -478,9 +484,13 @@ function CombinedChatView({
 					<div className={styles.chatHeaderLink}>{headerContent}</div>
 				)}
 				{onClose ? (
-					<Button className={styles.closeButton} onPress={onClose}>
+					<button
+						type="button"
+						className={styles.closeButton}
+						onClick={onClose}
+					>
 						<X size={18} />
-					</Button>
+					</button>
 				) : null}
 			</div>
 			<div className={styles.splitView}>

@@ -1,3 +1,49 @@
+.select {
+	width: 100%;
+	position: relative;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+}
+
+.label {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	margin: 0;
+	display: block;
+	text-box: trim-start cap alphabetic;
+}
+
+.button {
+	height: var(--field-size);
+	padding: 0 var(--field-padding);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	outline: none;
+
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-1-5);
+	width: 100%;
+	cursor: pointer;
+	text-align: start;
+
+	&:focus-visible,
+	&[aria-expanded="true"] {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+
+	&:disabled {
+		pointer-events: none;
+		cursor: not-allowed;
+		opacity: 0.5;
+		outline: none;
+	}
+}
+
 .selectValue {
 	font-size: var(--font-sm);
 	overflow: hidden;
@@ -5,6 +51,8 @@
 	white-space: nowrap;
 	min-width: 0;
 	color: var(--color-text);
+	display: flex;
+	align-items: center;
 
 	&[data-placeholder] {
 		color: var(--color-text-high);
@@ -16,6 +64,44 @@
 	}
 }
 
+.icon {
+	min-width: 18px;
+	max-width: 18px;
+	color: var(--color-text-high);
+}
+
+.popover {
+	position: fixed;
+	position-area: block-end;
+	position-try-fallbacks: flip-block;
+	width: anchor-size(width);
+	min-width: anchor-size(width);
+	max-height: 300px;
+	margin: var(--s-1) 0;
+	padding: var(--s-1);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	outline: none;
+	color: var(--color-text);
+
+	display: none;
+	flex-direction: column;
+
+	&:popover-open {
+		display: flex;
+	}
+}
+
+.listBox {
+	overflow: auto;
+	flex: 1;
+}
+
+.section:not(:has([role="option"])) {
+	display: none;
+}
+
 .item {
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
@@ -24,13 +110,76 @@
 	white-space: nowrap;
 	text-overflow: ellipsis;
 	overflow: hidden;
+	cursor: pointer;
+	outline: none;
 
 	&[data-disabled] {
+		color: var(--color-text-high);
+		cursor: not-allowed;
+	}
+}
+
+.itemFocused {
+	background-color: var(--color-bg-high);
+	color: var(--color-text);
+}
+
+.itemSelected {
+	color: var(--color-text-accent);
+	font-weight: var(--weight-bold);
+}
+
+.searchField {
+	position: relative;
+	display: flex;
+	gap: var(--s-2);
+
+	border-bottom: 1px solid var(--color-border);
+	border-radius: 0;
+	accent-color: var(--color-accent);
+	color: var(--color-text);
+	outline: none;
+	padding: var(--s-1-5) var(--s-1-5) calc(var(--s-0-5) + var(--s-2))
+		var(--s-1-5);
+	margin-block-end: var(--s-1-5);
+}
+
+.searchInput {
+	all: unset;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	letter-spacing: 0.5px;
+	flex: 1;
+	min-width: 0;
+	padding-inline-end: calc(18px + var(--s-2));
+
+	&::-webkit-search-cancel-button {
+		display: none;
+	}
+
+	&::placeholder {
 		color: var(--color-text-high);
 	}
 }
 
+.searchClearButton {
+	position: absolute;
+	right: var(--s-2);
+	top: 50%;
+	transform: translateY(-50%);
+	background-color: transparent;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	color: var(--color-text-high);
+}
+
+.searchField[data-empty] .searchClearButton {
+	visibility: hidden;
+}
+
 .noResults {
+	display: none;
 	font-size: var(--font-md);
 	font-weight: var(--weight-bold);
 	text-align: center;
@@ -38,12 +187,8 @@
 	color: var(--color-text-high);
 }
 
-.label {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-bold);
-	margin: 0;
+.listBox:not(:has([role="option"])) .noResults {
 	display: block;
-	text-box: trim-start cap alphabetic;
 }
 
 .clearButton {

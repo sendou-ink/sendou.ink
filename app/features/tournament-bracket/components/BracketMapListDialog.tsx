@@ -8,7 +8,6 @@ import {
 	Unlink,
 } from "lucide-react";
 import * as React from "react";
-import { useFilter } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, Link, useFetcher } from "react-router";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -16,6 +15,7 @@ import {
 	SendouSelect,
 	SendouSelectItem,
 	SendouSelectItemSection,
+	searchContains,
 } from "~/components/elements/Select";
 import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
@@ -1108,7 +1108,6 @@ function MapListRow({
 	onMapChange: (map: NonNullable<TournamentRoundMaps["list"]>[number]) => void;
 }) {
 	const { t } = useTranslation(["common", "game-misc"]);
-	const { contains } = useFilter({ sensitivity: "base" });
 	const tournament = useTournament();
 
 	const items = modesShort.flatMap((mode) => {
@@ -1156,7 +1155,7 @@ function MapListRow({
 					placeholder: t("common:forms.stageSearch.search.placeholder"),
 				}}
 				filter={(textValue, inputValue) =>
-					mapSearchFilter(textValue, inputValue, contains)
+					mapSearchFilter(textValue, inputValue, searchContains)
 				}
 				className={styles.mapRowSelect}
 				popoverClassName={styles.mapRowSelectPopover}

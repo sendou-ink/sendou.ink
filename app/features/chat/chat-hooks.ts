@@ -60,7 +60,7 @@ export function useChatAutoScroll(
 				messagesContainer.scrollTop + messagesContainer.clientHeight >=
 				messagesContainer.scrollHeight - THRESHOLD;
 
-			// react-aria's Virtualizer resets the scroll position to the top
+			// a virtualizer relayout can reset the scroll position to the top
 			// whenever the message collection changes; undo those resets so
 			// they neither unpin the auto scroll nor yank the user out of the
 			// history they were reading

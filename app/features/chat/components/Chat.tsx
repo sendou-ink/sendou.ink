@@ -3,12 +3,6 @@ import { sub } from "date-fns";
 import { SendHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
-import {
-	ListBox,
-	ListBoxItem,
-	ListLayout,
-	Virtualizer,
-} from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useLocation } from "react-router";
 import { useEventsReadyState } from "~/features/events/events-hooks";
@@ -17,6 +11,7 @@ import {
 	SendouForm,
 	useFormValue,
 } from "~/form/SendouForm";
+import { useVirtualizer } from "~/modules/virtualizer/react";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { Avatar } from "../../../components/Avatar";
@@ -31,10 +26,6 @@ import styles from "./Chat.module.css";
 
 const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
-const VIRTUALIZER_LAYOUT_OPTIONS = {
-	gap: MESSAGE_GAP,
-	estimatedRowSize: ESTIMATED_MESSAGE_HEIGHT,
-};
 
 export interface ChatProps {
 	messages: ClientChatMessage[];
@@ -101,52 +92,59 @@ export function Chat({
 		}
 	};
 
+	const virtualizer = useVirtualizer({
+		count: messages.length,
+		scrollRef: messagesContainerRef,
+		estimatedSize: ESTIMATED_MESSAGE_HEIGHT,
+		gap: MESSAGE_GAP,
+	});
+
 	return (
 		<section className={clsx(styles.container, className)}>
 			<div className={styles.inputContainer}>
-				<Virtualizer
-					layout={ListLayout}
-					layoutOptions={VIRTUALIZER_LAYOUT_OPTIONS}
+				<div
+					ref={messagesContainerRef}
+					role="log"
+					aria-label="Chat messages"
+					className={clsx(
+						styles.messages,
+						"scrollbar",
+						messagesContainerClassName,
+					)}
 				>
-					<ListBox
-						ref={messagesContainerRef}
-						aria-label="Chat messages"
-						selectionMode="none"
-						items={messages}
-						className={clsx(
-							styles.messages,
-							"scrollbar",
-							messagesContainerClassName,
-						)}
+					<div
+						className={styles.messagesSizer}
+						style={{ height: virtualizer.totalSize }}
 					>
-						{(msg) => {
-							// react-aria keys the row by the rendered element's own `id`, and
-							// every pending send shares `message.id`
+						{virtualizer.items.map(({ index, start }) => {
+							const msg = messages[index];
 							const systemMessage = systemMessageText(msg);
-							if (systemMessage) {
-								return (
-									<SystemMessage
-										id={msg.publicId}
-										message={msg}
-										text={systemMessage}
-									/>
-								);
-							}
 
 							return (
-								<Message
-									id={msg.publicId}
-									message={msg}
-									label={
-										msg.authorUserId != null
-											? labelByUserId?.[msg.authorUserId]
-											: undefined
-									}
-								/>
+								<div
+									key={msg.publicId}
+									ref={virtualizer.measureElement(index)}
+									className={styles.messageRow}
+									data-testid="chat-message-row"
+									style={{ transform: `translateY(${start}px)` }}
+								>
+									{systemMessage ? (
+										<SystemMessage message={msg} text={systemMessage} />
+									) : (
+										<Message
+											message={msg}
+											label={
+												msg.authorUserId != null
+													? labelByUserId?.[msg.authorUserId]
+													: undefined
+											}
+										/>
+									)}
+								</div>
 							);
-						}}
-					</ListBox>
-				</Virtualizer>
+						})}
+					</div>
+				</div>
 				{unseenMessagesInTheRoom ? (
 					<SendouButton
 						className={styles.unseenMessages}
@@ -260,22 +258,16 @@ function ComposerRow({
 }
 
 function Message({
-	id,
 	message,
 	label,
 }: {
-	id: string;
 	message: ClientChatMessage;
 	label?: string;
 }) {
 	const author = message.author;
 
 	return (
-		<ListBoxItem
-			id={id}
-			className={styles.message}
-			textValue={message.contents ?? author?.username ?? "???"}
-		>
+		<div className={styles.message}>
 			{author ? (
 				<div
 					className={clsx(styles.avatarWrapper, {
@@ -313,7 +305,7 @@ function Message({
 					) : null}
 				</div>
 			</div>
-		</ListBoxItem>
+		</div>
 	);
 }
 
@@ -328,16 +320,14 @@ function PronounsTag({ author }: { author: ChatMessageAuthor | null }) {
 }
 
 function SystemMessage({
-	id,
 	message,
 	text,
 }: {
-	id: string;
 	message: ClientChatMessage;
 	text: string;
 }) {
 	return (
-		<ListBoxItem id={id} className={styles.message} textValue={text}>
+		<div className={styles.message}>
 			<div>
 				<div className="stack horizontal sm">
 					<MessageTimestamp createdAt={message.createdAt} />
@@ -351,7 +341,7 @@ function SystemMessage({
 					{text}
 				</div>
 			</div>
-		</ListBoxItem>
+		</div>
 	);
 }
 
