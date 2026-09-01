@@ -132,7 +132,7 @@ export async function selectWeapon({
 	await page.getByTestId(testId).click();
 	await page.getByPlaceholder("Search weapons...").fill(name);
 	await page
-		.getByRole("listbox", { name: "Suggestions" })
+		.getByRole("listbox")
 		.getByTestId(`weapon-select-option-${name}`)
 		.click();
 }

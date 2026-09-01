@@ -119,6 +119,9 @@ export function SendouSelect<T extends object>({
 	const anchorName = `--select-anchor-${uid}`;
 	const labelId = label ? `${uid}-select-label` : undefined;
 	const valueId = `${uid}-select-value`;
+	const triggerId = `${uid}-select-trigger`;
+	const hiddenAriaLabelId =
+		label && ariaLabel ? `${uid}-select-aria-label` : undefined;
 
 	const [isControlled] = React.useState(selectedKey !== undefined);
 	const [uncontrolledKey, setUncontrolledKey] =
@@ -140,7 +143,10 @@ export function SendouSelect<T extends object>({
 
 	const [open, setOpenState] = React.useState(false);
 	const [focusedKey, setFocusedKey] = React.useState<SelectKey | null>(null);
-	const [, bumpRegistration] = React.useReducer((count) => count + 1, 0);
+	const [registrationVersion, bumpRegistration] = React.useReducer(
+		(count) => count + 1,
+		0,
+	);
 
 	const itemsMapRef = React.useRef(new Map<SelectKey, RegisteredItem>());
 	/** Persists past unregistration so the trigger can render a filtered-out selection. */
@@ -314,7 +320,7 @@ export function SendouSelect<T extends object>({
 		if (keys[0] !== undefined) {
 			setFocusedKey(keys[0]);
 		}
-	}, [searchValue, open, search]);
+	}, [searchValue, open, search, registrationVersion]);
 
 	const selectedEntry =
 		currentKey !== null ? contentByKeyRef.current.get(currentKey) : undefined;
@@ -325,15 +331,34 @@ export function SendouSelect<T extends object>({
 			: children;
 
 	return (
-		<div className={clsx(className, styles.select)} data-testid={testId}>
+		// biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the select
+		<div
+			className={clsx(className, styles.select)}
+			data-testid={testId}
+			onBlur={(event) => {
+				if (
+					event.relatedTarget instanceof Node &&
+					event.currentTarget.contains(event.relatedTarget)
+				) {
+					return;
+				}
+				onBlur?.();
+			}}
+		>
 			{label ? (
-				<span className={styles.label} id={labelId}>
+				<label className={styles.label} id={labelId} htmlFor={triggerId}>
 					{label}
 					{labelRequired ? <span className="text-error"> *</span> : null}
+				</label>
+			) : null}
+			{hiddenAriaLabelId ? (
+				<span id={hiddenAriaLabelId} hidden>
+					{ariaLabel}
 				</span>
 			) : null}
 			<button
 				type="button"
+				id={triggerId}
 				className={styles.button}
 				ref={(element) => {
 					triggerElementRef.current = element;
@@ -346,15 +371,18 @@ export function SendouSelect<T extends object>({
 				disabled={isDisabled}
 				aria-haspopup="listbox"
 				aria-expanded={open}
-				aria-label={ariaLabel}
+				aria-label={label ? undefined : ariaLabel}
 				aria-labelledby={
-					labelId && !ariaLabel ? `${valueId} ${labelId}` : undefined
+					labelId
+						? hiddenAriaLabelId
+							? `${labelId} ${hiddenAriaLabelId} ${valueId}`
+							: `${valueId} ${labelId}`
+						: undefined
 				}
 				data-required={isRequired || undefined}
 				popoverTarget={popoverId}
 				style={{ anchorName } as React.CSSProperties}
 				onKeyDown={onTriggerKeyDown}
-				onBlur={onBlur}
 			>
 				<span
 					id={valueId}

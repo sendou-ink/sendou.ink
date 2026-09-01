@@ -131,7 +131,10 @@ export function SendouDialog({
 	return (
 		<>
 			{React.cloneElement(trigger, {
-				onPress: () => setTriggerOpen(true),
+				onPress: () => {
+					trigger.props.onPress?.();
+					setTriggerOpen(true);
+				},
 			})}
 			{triggerOpen ? (
 				<DialogModal {...rest} isOpen onDismiss={() => setTriggerOpen(false)}>

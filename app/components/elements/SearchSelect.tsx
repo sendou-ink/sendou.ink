@@ -81,7 +81,7 @@ export function SearchSelect<TItem extends { id: number; name: string }>({
 					search.onSelectionChange(Number(key));
 				}
 			}}
-			aria-label={label ? undefined : ariaLabel}
+			aria-label={ariaLabel}
 			searchInputValue={search.filterText}
 			onSearchInputChange={search.setFilterText}
 			search={{ testId: inputTestId, inputClassName: inputClassName ?? "" }}

@@ -219,7 +219,7 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 				await page.getByTestId("weapon-select").click();
 				await page.getByPlaceholder("Search weapons...").fill(weaponName);
 				await page
-					.getByRole("listbox", { name: "Suggestions" })
+					.getByRole("listbox")
 					.getByTestId(`weapon-select-option-${weaponName}`)
 					.click();
 			}

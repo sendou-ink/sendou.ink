@@ -191,6 +191,7 @@ export function ListButton({
 	subtitle,
 	badge,
 	badgeVariant,
+	...rest
 }: {
 	children: React.ReactNode;
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
@@ -199,9 +200,9 @@ export function ListButton({
 	subtitle?: string | null;
 	badge?: string | null;
 	badgeVariant?: "default" | "warning";
-}) {
+} & Omit<React.ComponentPropsWithoutRef<"button">, "children">) {
 	return (
-		<button type="button" className={styles.listButton}>
+		<button type="button" className={styles.listButton} {...rest}>
 			<ListItemContent
 				user={user}
 				subtitle={subtitle}

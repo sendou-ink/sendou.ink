@@ -84,7 +84,7 @@ class ChatRoom {
 	constructor(root: Locator) {
 		this.root = root;
 		this.locators = {
-			messages: root.getByRole("option"),
+			messages: root.getByTestId("chat-message-row"),
 			/** Sent messages still waiting for the echo or the POST response. */
 			pendingMessages: root.locator("[class*='messageContentsPending']"),
 			composer: root.getByPlaceholder("Press enter to send"),

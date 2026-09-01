@@ -6,7 +6,10 @@
 
 import clsx from "clsx";
 import * as React from "react";
-import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
 import styles from "./ScannerChrome.module.css";
 
 export function ScannerControls({ children }: { children: React.ReactNode }) {
@@ -54,12 +57,18 @@ export function ScannerFeed({ children }: { children: React.ReactNode }) {
 export function ScannerMenuButton({
 	icon,
 	label,
+	...rest
 }: {
 	icon: React.JSX.Element;
 	label: string;
-}) {
+} & SendouButtonProps) {
 	return (
-		<SendouButton icon={icon} className={styles.iconMenu} aria-label={label} />
+		<SendouButton
+			icon={icon}
+			className={styles.iconMenu}
+			aria-label={label}
+			{...rest}
+		/>
 	);
 }
 

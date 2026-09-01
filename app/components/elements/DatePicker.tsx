@@ -240,21 +240,19 @@ export function SendouDatePicker({
 		}
 	};
 
-	const handleBeforeInput = (
-		type: EditableSegmentType,
-		event: React.FormEvent,
-	) => {
+	// a native listener: React's synthetic onBeforeInput misses `insertText`
+	// edits coming from execCommand (e.g. automated fills)
+	const handleBeforeInput = (type: EditableSegmentType, event: InputEvent) => {
 		event.preventDefault();
-		const inputEvent = event.nativeEvent as InputEvent;
 
-		if (inputEvent.inputType === "insertText" && inputEvent.data) {
-			for (const char of inputEvent.data) {
+		if (event.inputType === "insertText" && event.data) {
+			for (const char of event.data) {
 				handleChar(type, char);
 			}
 			return;
 		}
 
-		if (inputEvent.inputType.startsWith("delete")) {
+		if (event.inputType.startsWith("delete")) {
 			clearSegmentValue(type);
 		}
 	};
@@ -468,12 +466,22 @@ function EditableSegment({
 	text: string;
 	isPlaceholder: boolean;
 	aria: { now?: number; text: string; min: number; max: number };
-	onBeforeInput: (type: EditableSegmentType, event: React.FormEvent) => void;
+	onBeforeInput: (type: EditableSegmentType, event: InputEvent) => void;
 	onKeyDown: (type: EditableSegmentType, event: React.KeyboardEvent) => void;
 	onFocusChange: () => void;
 }) {
+	const beforeInputRef = React.useRef<(event: InputEvent) => void>(null);
+	beforeInputRef.current = (event) => onBeforeInput(type, event);
+
 	return (
 		<div
+			ref={(element) => {
+				if (!element) return;
+				const listener = (event: Event) =>
+					beforeInputRef.current?.(event as InputEvent);
+				element.addEventListener("beforeinput", listener);
+				return () => element.removeEventListener("beforeinput", listener);
+			}}
 			className={styles.segment}
 			id={id}
 			role="spinbutton"
@@ -491,7 +499,6 @@ function EditableSegment({
 			aria-valuetext={aria.text}
 			aria-valuemin={aria.min}
 			aria-valuemax={aria.max}
-			onBeforeInput={(event) => onBeforeInput(type, event)}
 			onKeyDown={(event) => onKeyDown(type, event)}
 			onFocus={onFocusChange}
 			onBlur={onFocusChange}

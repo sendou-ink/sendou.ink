@@ -34,7 +34,7 @@ export class BuildFormPage {
 		await this.gearSelect(type).click();
 		await this.page.getByPlaceholder("Search gear...").fill(name);
 		await this.page
-			.getByRole("listbox", { name: "Suggestions" })
+			.getByRole("listbox")
 			.getByTestId(`gear-select-option-${name}`)
 			.click();
 	}
