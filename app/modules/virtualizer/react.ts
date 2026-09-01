@@ -1,5 +1,5 @@
 import * as React from "react";
-import { VirtualizerCore } from "./core";
+import { type VirtualItem, VirtualizerCore } from "./core";
 
 type MeasureRef = (element: HTMLElement | null) => (() => void) | undefined;
 
@@ -32,11 +32,14 @@ export function useVirtualizer({
 
 	const [, rerender] = React.useReducer((tick) => tick + 1, 0);
 	const viewportRef = React.useRef({ scrollTop: 0, height: 0 });
+	const renderedWindowRef = React.useRef({ first: -1, last: -1, totalSize: 0 });
 
 	React.useEffect(() => {
 		const container = scrollRef.current;
 		if (!container) return;
 
+		// scrolling re-renders only when a row enters or leaves the window, not
+		// on every scrolled pixel
 		const syncViewport = () => {
 			const next = {
 				scrollTop: container.scrollTop,
@@ -50,6 +53,16 @@ export function useVirtualizer({
 				return;
 			}
 			viewportRef.current = next;
+
+			const nextWindow = windowOf(core.range(next.scrollTop, next.height));
+			const rendered = renderedWindowRef.current;
+			if (
+				nextWindow.first === rendered.first &&
+				nextWindow.last === rendered.last &&
+				core.totalSize() === rendered.totalSize
+			) {
+				return;
+			}
 			rerender();
 		};
 
@@ -84,6 +97,9 @@ export function useVirtualizer({
 	// stable per index so React does not detach and re-observe every row on
 	// each scroll-driven render
 	const measureCallbacksRef = React.useRef(new Map<number, MeasureRef>());
+	for (const index of measureCallbacksRef.current.keys()) {
+		if (index >= count) measureCallbacksRef.current.delete(index);
+	}
 	const measureElement = (index: number): MeasureRef => {
 		const cached = measureCallbacksRef.current.get(index);
 		if (cached) return cached;
@@ -105,10 +121,20 @@ export function useVirtualizer({
 	};
 
 	const { scrollTop, height } = viewportRef.current;
+	const totalSize = core.totalSize();
+	const items = core.range(scrollTop, height);
+	renderedWindowRef.current = { ...windowOf(items), totalSize };
 
 	return {
-		totalSize: core.totalSize(),
-		items: core.range(scrollTop, height),
+		totalSize,
+		items,
 		measureElement,
+	};
+}
+
+function windowOf(items: VirtualItem[]) {
+	return {
+		first: items[0]?.index ?? -1,
+		last: items.at(-1)?.index ?? -1,
 	};
 }

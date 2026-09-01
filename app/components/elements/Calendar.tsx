@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
+import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import styles from "./Calendar.module.css";
 
 export interface SendouCalendarProps {
@@ -20,7 +20,13 @@ export function SendouCalendar({
 	weekSelection,
 	firstDayOfWeek = "sun",
 }: SendouCalendarProps) {
-	const { i18n } = useTranslation();
+	const { formatter: headingFormatter } = useDateTimeFormat({
+		month: "long",
+		year: "numeric",
+	});
+	const { formatter: weekdayFormatter } = useDateTimeFormat({
+		weekday: "narrow",
+	});
 
 	const anchor = value ?? new Date();
 	const [viewYear, setViewYear] = React.useState(anchor.getFullYear());
@@ -32,14 +38,7 @@ export function SendouCalendar({
 		setViewMonth(next.getMonth());
 	};
 
-	const heading = new Intl.DateTimeFormat(i18n.language, {
-		month: "long",
-		year: "numeric",
-	}).format(new Date(viewYear, viewMonth, 1));
-
-	const weekdayFormatter = new Intl.DateTimeFormat(i18n.language, {
-		weekday: "narrow",
-	});
+	const heading = headingFormatter.format(new Date(viewYear, viewMonth, 1));
 	// 2023-01-01 was a Sunday
 	const firstWeekdayOffset = firstDayOfWeek === "mon" ? 2 : 1;
 	const weekdayNames = Array.from({ length: 7 }, (_, i) =>

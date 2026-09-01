@@ -18,9 +18,18 @@ const SECTIONS = [
 	},
 ];
 
-function GroupedSelect(props: { search?: { placeholder?: string } }) {
+function GroupedSelect(props: {
+	search?: { placeholder?: string };
+	selectedKey?: number;
+}) {
 	return (
-		<SendouSelect label="Season" items={SECTIONS} search={props.search}>
+		<SendouSelect
+			label="Season"
+			items={SECTIONS}
+			search={props.search}
+			selectedKey={props.selectedKey}
+			placeholder="Pick a season"
+		>
 			{({ heading, items, key }: (typeof SECTIONS)[number]) => (
 				<SendouSelectItemSection heading={heading} key={key}>
 					{items.map((item) => (
@@ -57,5 +66,46 @@ describe("SendouSelect", () => {
 		await expect
 			.element(screen.getByRole("option", { name: "Season 2" }))
 			.not.toBeInTheDocument();
+	});
+
+	test("shows the empty state when nothing matches the search", async () => {
+		const screen = await render(<GroupedSelect search={{}} />);
+
+		await screen.getByRole("button").click();
+		await screen.getByRole("combobox").fill("nope");
+
+		await expect.element(screen.getByText("No results")).toBeVisible();
+		await expect
+			.element(screen.getByRole("group", { name: "2023" }))
+			.not.toBeInTheDocument();
+	});
+
+	test("mounts only the selected option while closed", async () => {
+		const screen = await render(<GroupedSelect selectedKey={1} />);
+
+		const options = () =>
+			screen.container.querySelectorAll('[role="option"]').length;
+		expect(options()).toBe(1);
+		await expect
+			.element(screen.getByRole("button"))
+			.toHaveTextContent("Season 1");
+
+		await screen.getByRole("button").click();
+		await expect
+			.element(screen.getByRole("option", { name: "Season 2" }))
+			.toBeVisible();
+		expect(options()).toBe(3);
+	});
+
+	test("hovering an option moves the active descendant to it", async () => {
+		const screen = await render(<GroupedSelect />);
+
+		await screen.getByRole("button").click();
+		const option = screen.getByRole("option", { name: "Season 0" });
+		await option.hover();
+
+		await expect
+			.element(screen.getByRole("listbox"))
+			.toHaveAttribute("aria-activedescendant", (await option.element()).id);
 	});
 });

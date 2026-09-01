@@ -107,10 +107,6 @@
 	outline: none;
 }
 
-.section:not(:has([role="option"])) {
-	display: none;
-}
-
 .item {
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
@@ -188,16 +184,11 @@
 }
 
 .noResults {
-	display: none;
 	font-size: var(--font-md);
 	font-weight: var(--weight-bold);
 	text-align: center;
 	padding-block: var(--s-8);
 	color: var(--color-text-high);
-}
-
-.listBox:not(:has([role="option"])) .noResults {
-	display: block;
 }
 
 .clearButton {

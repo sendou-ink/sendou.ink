@@ -19,6 +19,9 @@ export interface VirtualItem {
  * heights: rows start at an estimated size and refine as they report
  * measurements. The UI layer owns scrolling and rendering; this class only
  * answers "how tall is the content" and "which rows are visible".
+ *
+ * Row offsets are cached as prefix sums, recomputed from the first row whose
+ * size changed, so offsets are O(1) and the visible range a binary search.
  */
 export class VirtualizerCore {
 	private count: number;
@@ -26,6 +29,9 @@ export class VirtualizerCore {
 	private gap: number;
 	private overscan: number;
 	private measuredSizes = new Map<number, number>();
+	private offsets: number[] = [];
+	/** Entries of `offsets` before this index are up to date. */
+	private validOffsets = 0;
 
 	constructor(options: VirtualizerOptions) {
 		this.count = options.count;
@@ -40,6 +46,8 @@ export class VirtualizerCore {
 			for (const index of this.measuredSizes.keys()) {
 				if (index >= count) this.measuredSizes.delete(index);
 			}
+			this.offsets.length = count;
+			this.validOffsets = Math.min(this.validOffsets, count);
 		}
 		this.count = count;
 	}
@@ -48,6 +56,7 @@ export class VirtualizerCore {
 	measure(index: number, size: number) {
 		if (this.measuredSizes.get(index) === size) return false;
 		this.measuredSizes.set(index, size);
+		this.validOffsets = Math.min(this.validOffsets, index + 1);
 		return true;
 	}
 
@@ -56,11 +65,8 @@ export class VirtualizerCore {
 	}
 
 	startOf(index: number) {
-		let start = 0;
-		for (let i = 0; i < index; i++) {
-			start += this.sizeOf(i) + this.gap;
-		}
-		return start;
+		this.computeOffsetsThrough(index);
+		return this.offsets[index];
 	}
 
 	totalSize() {
@@ -70,31 +76,47 @@ export class VirtualizerCore {
 
 	/** The rows overlapping the viewport, plus overscan on both sides. */
 	range(scrollTop: number, viewportSize: number): VirtualItem[] {
-		const items: VirtualItem[] = [];
-		let start = 0;
-		let firstVisible = -1;
-		let lastVisible = -1;
+		if (this.count === 0) return [];
+		this.computeOffsetsThrough(this.count - 1);
 
-		const starts: number[] = [];
-		for (let i = 0; i < this.count; i++) {
-			starts.push(start);
-			const end = start + this.sizeOf(i);
-			if (end >= scrollTop && firstVisible === -1) {
-				firstVisible = i;
-			}
-			if (start <= scrollTop + viewportSize) {
-				lastVisible = i;
-			}
-			start = end + this.gap;
-		}
-
-		if (firstVisible === -1) return items;
+		const firstVisible = this.lowerBound(
+			(index) => this.offsets[index] + this.sizeOf(index) >= scrollTop,
+		);
+		if (firstVisible === this.count) return [];
+		const lastVisible =
+			this.lowerBound(
+				(index) => this.offsets[index] > scrollTop + viewportSize,
+			) - 1;
 
 		const from = Math.max(0, firstVisible - this.overscan);
 		const to = Math.min(this.count - 1, lastVisible + this.overscan);
+		const items: VirtualItem[] = [];
 		for (let i = from; i <= to; i++) {
-			items.push({ index: i, start: starts[i] });
+			items.push({ index: i, start: this.offsets[i] });
 		}
 		return items;
+	}
+
+	private computeOffsetsThrough(index: number) {
+		for (let i = this.validOffsets; i <= index; i++) {
+			this.offsets[i] =
+				i === 0 ? 0 : this.offsets[i - 1] + this.sizeOf(i - 1) + this.gap;
+		}
+		this.validOffsets = Math.max(this.validOffsets, index + 1);
+	}
+
+	/** First index for which `holds` is true (`count` when none); `holds` must be false-then-true over the rows. */
+	private lowerBound(holds: (index: number) => boolean) {
+		let low = 0;
+		let high = this.count;
+		while (low < high) {
+			const middle = (low + high) >>> 1;
+			if (holds(middle)) {
+				high = middle;
+			} else {
+				low = middle + 1;
+			}
+		}
+		return low;
 	}
 }

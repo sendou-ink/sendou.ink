@@ -69,14 +69,7 @@ export function WeaponSelect<
 	placeholder,
 }: WeaponSelectProps<Clearable, IncludeSubSpecial>) {
 	const { t } = useTranslation(["common"]);
-	const selectedWeaponId: MainWeaponId | null =
-		typeof value === "number"
-			? (value as MainWeaponId)
-			: value && typeof value === "object" && value.type === "MAIN"
-				? (value.id as MainWeaponId)
-				: null;
 	const isControlled = value !== undefined;
-	const [isOpen, setIsOpen] = React.useState(false);
 	const [lastUncontrolledKey, setLastUncontrolledKey] = React.useState<
 		string | null
 	>(() => keyify(initialValue) ?? null);
@@ -84,8 +77,6 @@ export function WeaponSelect<
 	const { items, filterValue, setFilterValue } = useWeaponItems({
 		includeSubSpecial,
 		quickSelectWeaponsIds,
-		selectedWeaponId,
-		isOpen,
 		selectedKey,
 	});
 	const filter = useWeaponFilter();
@@ -120,7 +111,6 @@ export function WeaponSelect<
 			}}
 			searchInputValue={filterValue}
 			onSearchInputChange={setFilterValue}
-			onOpenChange={setIsOpen}
 			selectedKey={isControlled ? keyify(value) : undefined}
 			defaultSelectedKey={
 				isControlled ? undefined : (keyify(initialValue) as SelectKey)
@@ -239,38 +229,26 @@ function buildWeaponNameToWeaponMap(t: TFunction<["weapons"]>) {
 function useWeaponItems({
 	includeSubSpecial,
 	quickSelectWeaponsIds,
-	selectedWeaponId,
-	isOpen,
 	selectedKey,
 }: {
 	includeSubSpecial: boolean | undefined;
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
-	selectedWeaponId?: MainWeaponId | null;
-	isOpen: boolean;
 	selectedKey: string | null | undefined;
 }) {
 	const items = useAllWeaponCategories(includeSubSpecial);
 	const [filterValue, setFilterValue] = React.useState("");
 	const { t } = useTranslation(["common"]);
 
-	// While closed only the selected item is needed (the trigger's value
-	// display); the select renders every item passed to it into the closed
-	// popover's DOM.
-	if (!isOpen) {
-		return {
-			items: collapseToSelectedItem(items, selectedKey),
-			filterValue,
-			setFilterValue,
-		};
-	}
-
 	const showQuickSelectWeapons =
 		filterValue === "" && quickSelectWeaponsIds?.length;
 
 	if (showQuickSelectWeapons) {
 		const weaponIdsToInclude = new Set(quickSelectWeaponsIds);
-		if (typeof selectedWeaponId === "number") {
-			weaponIdsToInclude.add(selectedWeaponId);
+		// the selected weapon stays in the list so the trigger can show it
+		if (selectedKey?.startsWith("MAIN_")) {
+			weaponIdsToInclude.add(
+				Number(selectedKey.slice("MAIN_".length)) as MainWeaponId,
+			);
 		}
 
 		const quickSelectCategory = {
@@ -396,31 +374,4 @@ function keyify(value?: MainWeaponId | AnyWeapon | null) {
 	if (!value) return value;
 
 	return `${value.type}_${value.id}`;
-}
-
-function collapseToSelectedItem<
-	Category extends { items: Array<{ weapon: { anyWeaponId: string } }> },
->(categories: Category[], selectedKey: string | null | undefined): Category[] {
-	// react-stately refuses to open a select whose collection is empty, so even
-	// with nothing selected the closed collection keeps one item around.
-	const fallbackItems = () => {
-		const firstCategory = categories[0];
-		if (!firstCategory) return [];
-		return [
-			{ ...firstCategory, items: firstCategory.items.slice(0, 1) } as Category,
-		];
-	};
-
-	if (!selectedKey) return fallbackItems();
-
-	for (const category of categories) {
-		const selectedItem = category.items.find(
-			(item) => item.weapon.anyWeaponId === selectedKey,
-		);
-		if (selectedItem) {
-			return [{ ...category, items: [selectedItem] } as Category];
-		}
-	}
-
-	return fallbackItems();
 }
