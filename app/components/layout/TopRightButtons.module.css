@@ -2,6 +2,7 @@
 	display: flex;
 	gap: var(--s-4);
 	margin-left: auto;
+	min-width: 0;
 }
 
 .supportWrapper {
@@ -19,7 +20,7 @@
 }
 
 @media screen and (min-width: 600px) {
-	@container (max-width: 600px) {
+	@container (max-width: 700px) {
 		.supportWrapper {
 			display: none;
 		}
@@ -29,25 +30,56 @@
 		}
 	}
 
-	@container (max-width: 475px) {
+	@container (max-width: 920px) {
+		.withStatus .supportWrapper {
+			display: none;
+		}
+
+		.withStatus .supportWrapperCompact {
+			display: block;
+		}
+	}
+
+	@container (max-width: 640px) {
 		.addNewWrapper {
 			display: none;
 		}
 
 		.addNewWrapperCompact {
 			display: block;
-		}
-
-		.searchAndAddContainer {
-			grid-template-columns: 2fr 1fr;
+			flex: 1 1 0;
 		}
 	}
 }
 
 .searchAndAddContainer {
-	display: grid;
-	grid-template-columns: 2fr max-content;
+	display: flex;
 	gap: var(--s-2);
+	min-width: 0;
+}
+
+.searchWrapper {
+	flex: 2 1 0;
+}
+
+.addNewWrapper {
+	flex: none;
+}
+
+.withStatus {
+	@container (max-width: 920px) {
+		& .searchWrapper {
+			flex: none;
+		}
+
+		& .addNewWrapper {
+			display: none;
+		}
+
+		& .addNewWrapperCompact {
+			display: block;
+		}
+	}
 }
 
 .searchWrapper > button,
@@ -99,7 +131,11 @@
 }
 
 @media screen and (max-width: 1000px) {
-	.searchAndAddContainer {
-		grid-template-columns: 1fr 1fr;
+	.searchWrapper {
+		flex-grow: 1;
+	}
+
+	.addNewWrapper {
+		flex: 1 1 0;
 	}
 }

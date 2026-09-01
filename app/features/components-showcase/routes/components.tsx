@@ -62,6 +62,10 @@ import {
 	type ChangelogGraphicEntry,
 } from "~/features/changelog/components/ChangelogGraphic";
 import {
+	type GlobalStatus,
+	useGlobalStatus,
+} from "~/features/global-status/GlobalStatusProvider";
+import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,
 	type SeasonSummaryGraphicBestSet,
@@ -85,6 +89,12 @@ import type { CustomFieldRenderProps } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import {
+	SENDOUQ_LOOKING_PAGE,
+	SENDOUQ_PREPARING_PAGE,
+	sendouQMatchPage,
+	tournamentPage,
+} from "~/utils/urls";
 import styles from "../components-showcase.module.css";
 import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
@@ -159,6 +169,11 @@ export const SECTIONS = [
 	{ title: "Game Selects", id: "game-selects", component: GameSelectSection },
 	{ title: "Form Fields", id: "form-fields", component: FormFieldsSection },
 	{ title: "Schedule", id: "schedule", component: ScheduleSection },
+	{
+		title: "Global Status Indicator",
+		id: "global-status-indicator",
+		component: GlobalStatusIndicatorSection,
+	},
 	{ title: "Miscellaneous", id: "miscellaneous", component: MiscSection },
 ] as const;
 
@@ -3091,6 +3106,135 @@ function ScheduleSection({ id }: { id: string }) {
 							commitments={SCHEDULE_EXAMPLE_COMMITMENTS}
 						/>
 					</div>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+// Paddling Pool 51's logo from the dev seed; only resolves in dev
+const SEED_TOURNAMENT_LOGO_URL =
+	"http://127.0.0.1:9000/sendou/paddling-pool.png";
+
+const GLOBAL_STATUS_EXAMPLES: Array<{
+	id: string;
+	name: string;
+	status: GlobalStatus;
+}> = [
+	{
+		id: "sq-preparing",
+		name: "SendouQ: Preparing",
+		status: { state: "SQ_PREPARING", url: SENDOUQ_PREPARING_PAGE },
+	},
+	{
+		id: "sq-queued-likes-seen",
+		name: "SendouQ: In queue (likes seen)",
+		status: {
+			state: "SQ_QUEUED",
+			url: SENDOUQ_LOOKING_PAGE,
+			count: 3,
+			groupSize: { members: 2, max: 4 },
+		},
+	},
+	{
+		id: "sq-queued-new-likes",
+		name: "SendouQ: In queue (new likes)",
+		status: {
+			state: "SQ_QUEUED",
+			url: SENDOUQ_LOOKING_PAGE,
+			count: 5,
+			countNeedsAction: true,
+			groupSize: { members: 2, max: 4 },
+		},
+	},
+	{
+		id: "sq-ready-check",
+		name: "SendouQ: Ready check",
+		status: { state: "SQ_READY_CHECK", url: SENDOUQ_LOOKING_PAGE },
+	},
+	{
+		id: "sq-match",
+		name: "SendouQ: In match",
+		status: { state: "SQ_MATCH", url: sendouQMatchPage(123) },
+	},
+	{
+		id: "sq-awaiting-report",
+		name: "SendouQ: Report score",
+		status: { state: "SQ_AWAITING_REPORT", url: sendouQMatchPage(123) },
+	},
+	{
+		id: "to-checkin",
+		name: "Tournament: Check in",
+		status: {
+			state: "TO_CHECKIN",
+			url: tournamentPage(1),
+			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+		},
+	},
+	{
+		id: "to-match",
+		name: "Tournament: In match",
+		status: {
+			state: "TO_MATCH",
+			url: tournamentPage(1),
+			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+		},
+	},
+	{
+		id: "to-waiting-for-match",
+		name: "Tournament: Waiting for match",
+		status: {
+			state: "TO_WAITING_FOR_MATCH",
+			url: tournamentPage(1),
+			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+		},
+	},
+	{
+		id: "to-waiting-for-cast",
+		name: "Tournament: Waiting for cast",
+		status: {
+			state: "TO_WAITING_FOR_CAST",
+			url: tournamentPage(1),
+			logoUrl: SEED_TOURNAMENT_LOGO_URL,
+		},
+	},
+];
+
+const GLOBAL_STATUS_SELECT_ITEMS = [
+	{ id: "none", name: "None" },
+	...GLOBAL_STATUS_EXAMPLES.map(({ id, name }) => ({ id, name })),
+];
+
+function GlobalStatusIndicatorSection({ id }: { id: string }) {
+	const { status, setStatus } = useGlobalStatus();
+
+	const selectedId =
+		GLOBAL_STATUS_EXAMPLES.find((example) => example.status === status)?.id ??
+		"none";
+
+	return (
+		<Section>
+			<SectionTitle id={id}>Global Status Indicator</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Status (shown next to the search & add new buttons in the header)">
+					<SendouSelect
+						items={GLOBAL_STATUS_SELECT_ITEMS}
+						label="Status"
+						selectedKey={selectedId}
+						onSelectionChange={(key) =>
+							setStatus(
+								GLOBAL_STATUS_EXAMPLES.find((example) => example.id === key)
+									?.status ?? null,
+							)
+						}
+					>
+						{(item) => (
+							<SendouSelectItem key={item.id} id={item.id}>
+								{item.name}
+							</SendouSelectItem>
+						)}
+					</SendouSelect>
 				</ComponentRow>
 			</div>
 		</Section>

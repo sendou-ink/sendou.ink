@@ -125,8 +125,10 @@ export function GlobalSearch() {
 		<DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
 			<Button className={styles.searchButton}>
 				<Search className={styles.searchIcon} />
-				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
-				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
+				<span className={styles.searchLabel}>
+					<span className={styles.searchPlaceholder}>{t("common:search")}</span>
+					<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
+				</span>
 			</Button>
 			<ModalOverlay className={styles.overlay} isDismissable>
 				<Modal className={styles.modal}>

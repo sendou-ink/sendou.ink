@@ -22,6 +22,26 @@
 	}
 }
 
+.searchLabel {
+	display: flex;
+	flex-grow: 1;
+	align-items: center;
+	gap: var(--s-2);
+	white-space: nowrap;
+}
+
+@container (max-width: 920px) {
+	[data-with-status] .searchLabel {
+		display: none;
+	}
+
+	[data-with-status] .searchButton {
+		aspect-ratio: 1 / 1;
+		justify-content: center;
+		padding: 0;
+	}
+}
+
 .searchIcon {
 	width: 16px;
 	height: 16px;
