@@ -407,8 +407,23 @@ function parseJsonValue(value: string): unknown {
 		return value;
 	}
 
-	sanitizeParsedJson(parsed);
+	if (mayPrototypePollute(value)) {
+		sanitizeParsedJson(parsed);
+	}
 	return parsed;
+}
+
+/**
+ * Whether the raw document could hold a `__proto__` or `constructor` key. Skips the
+ * recursive walk for the vast majority of documents; a `\u` escape can spell either
+ * name in a way the substring checks would miss, so those take the walk too.
+ */
+function mayPrototypePollute(value: string) {
+	return (
+		value.includes("__proto__") ||
+		value.includes("constructor") ||
+		value.includes("\\u")
+	);
 }
 
 /** Strips `__proto__` and `constructor.prototype` so the parsed document can not prototype-pollute downstream merges. */

@@ -323,26 +323,16 @@ export async function findAllResultsByTournamentId(
 					.select("TournamentTeamMember.userId")
 					.whereRef("TournamentTeamMember.tournamentTeamId", "=", "Team2.id"),
 			).as("opponentTwoMembers"),
+			// participants are fetched flat below: nesting them in here made SQLite build
+			// and re-parse a JSON document per game for tens of thousands of rows
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentMatchGameResult")
-					.select(({ eb: innerEb }) => [
+					.select([
+						"TournamentMatchGameResult.id",
 						"TournamentMatchGameResult.stageId",
 						"TournamentMatchGameResult.mode",
 						"TournamentMatchGameResult.winnerTeamId",
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("TournamentMatchGameResultParticipant")
-								.select([
-									"TournamentMatchGameResultParticipant.tournamentTeamId",
-									"TournamentMatchGameResultParticipant.userId",
-								])
-								.whereRef(
-									"TournamentMatchGameResultParticipant.matchGameResultId",
-									"=",
-									"TournamentMatchGameResult.id",
-								),
-						).as("participants"),
 					])
 					.whereRef(
 						"TournamentMatchGameResult.matchId",
@@ -357,6 +347,9 @@ export async function findAllResultsByTournamentId(
 		// strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
 		.orderBy("TournamentMatch.id", "asc")
 		.execute();
+
+	const participantsByGameResultId =
+		await findFinishedMatchParticipantsByTournamentId(tournamentId);
 
 	return rows.map((row) => {
 		const opponentOne: AllMatchResultOpponent = {
@@ -381,16 +374,18 @@ export async function findAllResultsByTournamentId(
 			opponentTwo,
 			winnerSide: row.winnerSide,
 			roundMaps: row.roundMaps,
-			maps: row.maps.map((map) => {
-				invariant(map.participants.length > 0, "No participants found");
+			maps: row.maps.map(({ id, ...map }) => {
+				const participants = participantsByGameResultId.get(id) ?? [];
+
+				invariant(participants.length > 0, "No participants found");
 				invariant(
-					map.participants.every(
+					participants.every(
 						(participant) => typeof participant.tournamentTeamId === "number",
 					),
 					"Some participants have no team id",
 				);
 				invariant(
-					map.participants.every(
+					participants.every(
 						(participant) =>
 							participant.tournamentTeamId === row.opponentOneId ||
 							participant.tournamentTeamId === row.opponentTwoId,
@@ -398,10 +393,56 @@ export async function findAllResultsByTournamentId(
 					"Some participants have an invalid team id",
 				);
 
-				return map;
+				return { ...map, participants };
 			}),
 		};
 	});
+}
+
+/** Participants of every game of the tournament's finished matches, keyed by game result id. */
+async function findFinishedMatchParticipantsByTournamentId(
+	tournamentId: number,
+) {
+	const rows = await db
+		.selectFrom("TournamentMatchGameResultParticipant")
+		.innerJoin(
+			"TournamentMatchGameResult",
+			"TournamentMatchGameResult.id",
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+		)
+		.innerJoin(
+			"TournamentMatch",
+			"TournamentMatch.id",
+			"TournamentMatchGameResult.matchId",
+		)
+		.innerJoin(
+			"TournamentStage",
+			"TournamentStage.id",
+			"TournamentMatch.stageId",
+		)
+		.select([
+			"TournamentMatchGameResultParticipant.matchGameResultId",
+			"TournamentMatchGameResultParticipant.tournamentTeamId",
+			"TournamentMatchGameResultParticipant.userId",
+		])
+		.where("TournamentStage.tournamentId", "=", tournamentId)
+		.where("TournamentMatch.winnerSide", "is not", null)
+		.execute();
+
+	const result = new Map<
+		number,
+		AllMatchResult["maps"][number]["participants"]
+	>();
+	for (const { matchGameResultId, ...participant } of rows) {
+		const participants = result.get(matchGameResultId);
+		if (participants) {
+			participants.push(participant);
+		} else {
+			result.set(matchGameResultId, [participant]);
+		}
+	}
+
+	return result;
 }
 
 export async function findUserParticipationByTournamentId(

@@ -21,10 +21,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const data = result.data;
 
-	const teams = await TeamRepository.findAllUndisbanded();
-
-	const currentTeamCount = teams.filter((team) =>
-		team.members.some((m) => m.id === user.id),
+	const currentTeamCount = (
+		await TeamRepository.findAllMemberOfByUserId(user.id)
 	).length;
 	const maxTeamCount = user.roles.includes("SUPPORTER")
 		? TEAM.MAX_TEAM_COUNT_PATRON

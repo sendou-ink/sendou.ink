@@ -25,13 +25,9 @@ export async function findCurrentUserSkills({
 	if (userIds.length === 0) return new Map<number, CurrentSkill>();
 
 	const rows = await db
-		.selectFrom(
-			latestSkillsOfSeason(season, "userId")
-				.where("userId", "in", userIds)
-				.as("latest"),
-		)
+		.selectFrom("Skill")
 		.select(["mu", "sigma", "matchesCount", "userId"])
-		.where("rn", "=", 1)
+		.where("Skill.id", "in", latestSkillIdsOfSeason(season, "userId", userIds))
 		.execute();
 
 	return new Map<number, CurrentSkill>(
@@ -54,13 +50,13 @@ export async function findCurrentTeamSkills({
 		return new Map<SkillTeamIdentifier, CurrentSkill>();
 
 	const rows = await db
-		.selectFrom(
-			latestSkillsOfSeason(season, "identifier")
-				.where("identifier", "in", identifiers)
-				.as("latest"),
-		)
+		.selectFrom("Skill")
 		.select(["mu", "sigma", "matchesCount", "identifier"])
-		.where("rn", "=", 1)
+		.where(
+			"Skill.id",
+			"in",
+			latestSkillIdsOfSeason(season, "identifier", identifiers),
+		)
 		.execute();
 
 	return new Map<SkillTeamIdentifier, CurrentSkill>(
@@ -197,27 +193,21 @@ export async function findSeasonActiveDaysByUserId({
 }
 
 /**
- * Season's Skill rows tagged with a `rn` of 1 for the latest row of each partition.
- * Callers narrow the partitions before selecting, and keep only `rn = 1`.
+ * Ids of the season's latest Skill row of each given user or team. A grouped `max(id)`
+ * over the `(season, userId/identifier)` index is a plain index range per value, where
+ * a `row_number()` window would materialize and sort every row of those users first.
  */
-function latestSkillsOfSeason(
+function latestSkillIdsOfSeason(
 	season: number,
-	partitionBy: "userId" | "identifier",
+	by: "userId" | "identifier",
+	values: Array<number> | Array<SkillTeamIdentifier>,
 ) {
 	return db
 		.selectFrom("Skill")
-		.select((eb) => [
-			"mu",
-			"sigma",
-			"matchesCount",
-			"userId",
-			"identifier",
-			eb.fn
-				.agg<number>("row_number")
-				.over((ob) => ob.partitionBy(partitionBy).orderBy("id", "desc"))
-				.as("rn"),
-		])
-		.where("season", "=", season);
+		.select(({ fn }) => fn.max("Skill.id").as("latestId"))
+		.where("Skill.season", "=", season)
+		.where((eb) => eb(`Skill.${by}`, "in", values))
+		.groupBy(`Skill.${by}`);
 }
 
 /**

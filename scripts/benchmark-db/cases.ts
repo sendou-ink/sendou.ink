@@ -864,9 +864,6 @@ export function buildCases(fx: Fixtures): {
 	);
 
 	// TeamRepository
-	addStatic("TeamRepository.findAllUndisbanded", () =>
-		TeamRepository.findAllUndisbanded(),
-	);
 	addStatic("TeamRepository.searchByName", () =>
 		TeamRepository.searchByName(SEARCH_QUERY),
 	);

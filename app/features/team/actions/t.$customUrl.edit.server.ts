@@ -66,12 +66,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 		}
 		case "EDIT": {
 			const newCustomUrl = mySlugify(data.name);
-			const teams = await TeamRepository.findAllUndisbanded();
-			const duplicateTeam = teams.find(
-				(t) => t.customUrl === newCustomUrl && t.customUrl !== team.customUrl,
-			);
+			const duplicateTeam = await TeamRepository.findByCustomUrl(newCustomUrl);
 
-			if (duplicateTeam) {
+			if (duplicateTeam && duplicateTeam.id !== team.id) {
 				return { fieldErrors: { name: "forms:errors.duplicateName" } };
 			}
 

@@ -142,24 +142,18 @@ export async function tournamentActivityAt({
 			"TournamentTeam.id",
 			"TournamentTeamMember.tournamentTeamId",
 		)
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.tournamentId",
-			"TournamentTeam.tournamentId",
-		)
-		.innerJoin(
-			"TournamentMatch",
-			"TournamentMatch.stageId",
-			"TournamentStage.id",
+		// the opponent ids already tie a match to its team; without the stage
+		// detour the `startedAt` index narrows the matches before the join
+		.innerJoin("TournamentMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb(opponentOneId, "=", eb.ref("TournamentTeam.id")),
+					eb(opponentTwoId, "=", eb.ref("TournamentTeam.id")),
+				]),
+			),
 		)
 		.select(["TournamentTeam.tournamentId", "TournamentMatch.id as matchId"])
 		.where("TournamentTeamMember.userId", "=", userId)
-		.where((eb) =>
-			eb.or([
-				eb(opponentOneId, "=", eb.ref("TournamentTeam.id")),
-				eb(opponentTwoId, "=", eb.ref("TournamentTeam.id")),
-			]),
-		)
 		.where(
 			"TournamentMatch.startedAt",
 			"<=",

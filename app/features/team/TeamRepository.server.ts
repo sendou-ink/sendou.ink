@@ -20,33 +20,6 @@ import {
 import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 
-export function findAllUndisbanded() {
-	return db
-		.selectFrom("Team")
-		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
-		.select(({ eb }) => [
-			"Team.customUrl",
-			"Team.name",
-			"Team.tag",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"avatarUrl",
-			),
-			jsonArrayFrom(
-				eb
-					// AllTeamMember directly instead of the TeamMemberWithSecondary view:
-					// the view's team-existence check is redundant when joining to Team
-					.selectFrom("AllTeamMember")
-					.innerJoin("User", "User.id", "AllTeamMember.userId")
-					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-					.select(["User.id", "User.username", "PlusTier.tier as plusTier"])
-					.whereRef("AllTeamMember.teamId", "=", "Team.id")
-					.where("AllTeamMember.leftAt", "is", null)
-					.orderBy("AllTeamMember.order", "asc"),
-			).as("members"),
-		])
-		.execute();
-}
-
 export function searchByName({
 	query,
 	limit,
