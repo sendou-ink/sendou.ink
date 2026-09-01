@@ -73,6 +73,7 @@ export function SendouRadio({
 		<label
 			className={className}
 			data-testid={testId}
+			data-selected={isSelected ? "true" : undefined}
 			onPointerEnter={() => setHovered(true)}
 			onPointerLeave={() => setHovered(false)}
 		>

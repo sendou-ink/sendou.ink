@@ -41,8 +41,8 @@
 .fullScreenModal {
 	width: 100%;
 	min-width: 100%;
-	min-height: 100%;
-	max-height: none;
+	height: 100dvh;
+	max-height: 100dvh;
 	border-radius: 0;
 	margin: 0;
 	padding-block-start: calc(env(safe-area-inset-top) + var(--s-6));

@@ -205,7 +205,10 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 			// role + non-exact name: the trigger's accessible name is e.g. "User search User *"
 			const comboboxButton = page.getByRole("button", { name: label });
 			const searchInput = page.getByTestId("user-search-input");
-			const option = page.getByTestId("user-search-item").first();
+			const option = page
+				.getByRole("listbox")
+				.getByTestId("user-search-item")
+				.first();
 
 			await expect(comboboxButton).not.toBeDisabled();
 			await comboboxButton.click();

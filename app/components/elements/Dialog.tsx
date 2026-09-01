@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import * as React from "react";
+import { createPortal } from "react-dom";
 import { useNavigate } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import styles from "./Dialog.module.css";
@@ -9,6 +10,10 @@ import styles from "./Dialog.module.css";
  * Unstyled native `<dialog>` shell: shows itself modally on mount, closes on
  * Escape (and outside clicks when `isDismissable`) and reports every close
  * through `onClose`. The caller owns visibility by mounting/unmounting it.
+ *
+ * Portaled to `<body>` so a dialog holding a form can be rendered from inside
+ * another form without nesting the `<form>` elements. Renders nothing on the
+ * server.
  */
 export function SendouModal({
 	className,
@@ -27,7 +32,11 @@ export function SendouModal({
 	children: React.ReactNode;
 	ref?: React.Ref<HTMLDialogElement>;
 }) {
-	return (
+	const [mounted, setMounted] = React.useState(false);
+	React.useEffect(() => setMounted(true), []);
+	if (!mounted) return null;
+
+	return createPortal(
 		<dialog
 			ref={(dialog) => {
 				if (typeof ref === "function") {
@@ -63,7 +72,8 @@ export function SendouModal({
 			}
 		>
 			{children}
-		</dialog>
+		</dialog>,
+		document.body,
 	);
 }
 
