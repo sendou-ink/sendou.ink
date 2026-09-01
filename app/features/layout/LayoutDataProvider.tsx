@@ -12,6 +12,7 @@ interface LayoutData {
 	/** `null` when the server has no session, `undefined` when it has not said. */
 	loggedInUserId?: number | null;
 	sidebar?: RootLoaderData["sidebar"];
+	globalStatus?: RootLoaderData["globalStatus"];
 	buildCommit?: string;
 }
 

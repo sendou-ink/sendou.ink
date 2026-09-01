@@ -37,4 +37,12 @@ export async function cancelActiveGroupLikes(userId: number) {
 		})),
 		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);
+	ChatSystemMessage.notifyStatusChanged(
+		[...affectedGroupIds, ownGroup.id].flatMap(
+			(groupId) =>
+				SendouQ.findUncensoredGroupById(groupId)?.members.map(
+					(member) => member.id,
+				) ?? [],
+		),
+	);
 }

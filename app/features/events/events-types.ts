@@ -32,4 +32,5 @@ export type ServerEvent =
 			type?: SoundOnlySystemMessageType;
 	  }
 	| { kind: "notificationsChanged" }
-	| { kind: "roomsChanged" };
+	| { kind: "roomsChanged" }
+	| { kind: "statusChanged" };

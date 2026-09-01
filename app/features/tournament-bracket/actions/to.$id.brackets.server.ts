@@ -40,6 +40,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	const data = await parseRequestPayload({ request, schema: bracketSchema });
 
 	let emitTournamentUpdate = false;
+	let statusChangedUserIds: number[] = [];
 
 	switch (data._action) {
 		case "START_BRACKET": {
@@ -189,6 +190,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await tournamentFromDB(tournamentId);
 
 			emitTournamentUpdate = true;
+			statusChangedUserIds = seeding.flatMap(
+				(tournamentTeamId) =>
+					tournament.teamById(tournamentTeamId)!.memberUserIds,
+			);
 
 			break;
 		}
@@ -252,6 +257,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitTournamentUpdate = true;
+			statusChangedUserIds = bracket.participantTournamentTeamIds.flatMap(
+				(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
+			);
 
 			break;
 		}
@@ -272,6 +280,9 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitTournamentUpdate = true;
+			statusChangedUserIds = bracket.participantTournamentTeamIds.flatMap(
+				(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
+			);
 
 			break;
 		}
@@ -296,6 +307,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			logger.info(
 				`Checking in (bracket success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournament.ctx.id} - bracket idx: ${data.bracketIdx}`,
 			);
+
+			statusChangedUserIds = teamMemberOf.memberUserIds;
 			break;
 		}
 		case "OVERRIDE_BRACKET_PROGRESSION": {
@@ -334,6 +347,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
+
+	if (statusChangedUserIds.length > 0) {
+		// re-hydrate so the status refetch this prompts reads post-change state
+		await tournamentFromDB(tournamentId);
+		ChatSystemMessage.notifyStatusChanged(statusChangedUserIds);
+	}
 
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([{ channel: tournamentChannel(tournament.ctx.id) }]);

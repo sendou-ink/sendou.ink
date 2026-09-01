@@ -512,7 +512,17 @@ function mostRecentStartTime(tournament: Tournament) {
 		.filter((b) => b.startTime)
 		.map((b) => databaseTimestampToDate(b.startTime!));
 
-	const allStartTimes = [tournament.ctx.startsAt, ...bracketStartTimes];
+	// a bracket actually starting keeps the tournament live even when it was
+	// never scheduled, or the schedule has long slipped
+	const actualBracketStartTimes = tournament.brackets
+		.filter((bracket) => !bracket.preview && bracket.createdAt)
+		.map((bracket) => databaseTimestampToDate(bracket.createdAt!));
+
+	const allStartTimes = [
+		tournament.ctx.startsAt,
+		...bracketStartTimes,
+		...actualBracketStartTimes,
+	];
 
 	return allStartTimes
 		.filter((t) => t <= new Date())

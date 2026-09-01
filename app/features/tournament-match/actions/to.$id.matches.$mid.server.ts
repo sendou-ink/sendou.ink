@@ -97,6 +97,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	// broadcast receivers skip revalidating the tournament layout and root loaders
 	let onlyMatchResultsChanged = false;
 	let setIsOver = false;
+	let emitStatusUpdate = false;
 	let endedDroppedMatchIds: number[] = [];
 	let followingMatchIds: number[] = [];
 
@@ -516,6 +517,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+			emitStatusUpdate = true;
 
 			break;
 		}
@@ -562,6 +564,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitMatchUpdate = true;
+			emitStatusUpdate = true;
 
 			break;
 		}
@@ -577,6 +580,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitMatchUpdate = true;
+			emitStatusUpdate = true;
 
 			break;
 		}
@@ -681,13 +685,29 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	// update RunningTournaments to make sure sidebar is not showing stale matches at the end
 	// of the tournament in case the TO is not finalizing the tournament right away
-	if (setIsOver) {
+	if (setIsOver || emitStatusUpdate) {
 		const refreshedTournament = await tournamentFromDB(tournamentId);
-		// the teams that just advanced now populate following matches, so their
-		// "waiting for teams" pages need to revalidate too
-		followingMatchIds = refreshedTournament
-			.followingMatches(match.id)
-			.map((followingMatch) => followingMatch.id);
+		const followingMatches = refreshedTournament.followingMatches(match.id);
+
+		if (setIsOver) {
+			// the teams that just advanced now populate following matches, so their
+			// "waiting for teams" pages need to revalidate too
+			followingMatchIds = followingMatches.map(
+				(followingMatch) => followingMatch.id,
+			);
+		}
+
+		ChatSystemMessage.notifyStatusChanged([
+			...match.players.map((player) => player.id),
+			...followingMatches.flatMap((followingMatch) =>
+				[followingMatch.opponent1?.id, followingMatch.opponent2?.id].flatMap(
+					(teamId) =>
+						typeof teamId === "number"
+							? (refreshedTournament.teamById(teamId)?.memberUserIds ?? [])
+							: [],
+				),
+			),
+		]);
 	}
 
 	const revalidateScope = onlyMatchResultsChanged

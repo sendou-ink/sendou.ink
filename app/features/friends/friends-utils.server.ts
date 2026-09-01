@@ -1,12 +1,7 @@
-import { groupExpiryStatus } from "~/features/sendouq/core/groups";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
-import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
-import type {
-	Tournament,
-	TournamentTeamMemberProgressStatus,
-} from "~/features/tournament-bracket/core/Tournament";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
+import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import { twitchUrl } from "~/utils/urls";
 import {
 	type FriendActivityType,
@@ -22,21 +17,6 @@ export interface FriendActivity {
 	/** Set when the friend's current match can be watched, making the activity show up as "LIVE". */
 	streamUrl: string | null;
 }
-
-const TOURNAMENT_STATUS_IS_IN_PROGRESS: Record<
-	TournamentTeamMemberProgressStatus["type"],
-	boolean
-> = {
-	MATCH: true,
-	WAITING_FOR_MATCH: true,
-	WAITING_FOR_CAST: true,
-	WAITING_FOR_ROUND: true,
-	WAITING_FOR_GROUPS: true,
-	// to counter 2 day tournaments showing as in progress in between
-	WAITING_FOR_BRACKET: false,
-	CHECKIN: false,
-	THANKS_FOR_PLAYING: false,
-};
 
 /**
  * Twitch account streaming each ongoing SendouQ match, keyed by match id. Resolved
@@ -75,7 +55,8 @@ export function resolveFriendActivity({
 	tournamentMinTeamSize: number | null;
 	sendouQMatchStreams: ReadonlyMap<number, string>;
 }): FriendActivity {
-	const ownGroup = SendouQ.findOwnGroup(friendId);
+	const activity = UserActivity.resolve(friendId);
+	const ownGroup = activity.sendouq?.group;
 
 	if (ownGroup?.matchId) {
 		const twitchAccount = sendouQMatchStreams.get(ownGroup.matchId);
@@ -90,13 +71,13 @@ export function resolveFriendActivity({
 		};
 	}
 
-	const tournamentActivity = resolveTournamentActivity(friendId);
+	const tournamentActivity = resolveTournamentActivity(activity, friendId);
 	if (tournamentActivity) return tournamentActivity;
 
 	if (
 		ownGroup &&
 		ownGroup.members.length < FULL_GROUP_SIZE &&
-		groupExpiryStatus(ownGroup.latestActionAt) !== "EXPIRED"
+		!activity.sendouq?.expired
 	) {
 		return {
 			type: "SENDOUQ",
@@ -129,10 +110,17 @@ export function resolveFriendActivity({
 	};
 }
 
-function resolveTournamentActivity(friendId: number): FriendActivity | null {
-	for (const tournament of RunningTournaments.all) {
-		const status = tournament.teamMemberOfProgressStatus({ id: friendId });
-		if (!status || !TOURNAMENT_STATUS_IS_IN_PROGRESS[status.type]) continue;
+function resolveTournamentActivity(
+	activity: UserActivity.UserActivity,
+	friendId: number,
+): FriendActivity | null {
+	for (const { tournament, status } of activity.tournaments) {
+		if (
+			status.type === "CHECKIN" ||
+			!UserActivity.TOURNAMENT_STATUS_IS_IN_PROGRESS[status.type]
+		) {
+			continue;
+		}
 
 		const isInMatch = status.type === "MATCH";
 

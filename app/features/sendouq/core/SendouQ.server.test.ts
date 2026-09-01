@@ -108,6 +108,36 @@ const createSkill = (position: number, mu: number) =>
 	);
 
 describe("SendouQ", () => {
+	describe("likesReceivedCount", () => {
+		beforeEach(async () => {
+			await users.create(8);
+		});
+
+		test("returns 0 for a group nobody has liked", async () => {
+			const groupId = await createGroup([1]);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.likesReceivedCount(groupId)).toBe(0);
+		});
+
+		test("counts likes received, not given", async () => {
+			const likerGroup = await SQGroupFactory.create({
+				memberUserIds: userIds([5]),
+			});
+			const secondLikerGroup = await SQGroupFactory.create({
+				memberUserIds: userIds([6]),
+			});
+			const target = await SQGroupFactory.create(
+				{ memberUserIds: userIds([1, 2]) },
+				{ likedByGroupIds: [likerGroup.id, secondLikerGroup.id] },
+			);
+			await refreshSendouQInstance();
+
+			expect(SendouQ.likesReceivedCount(target.id)).toBe(2);
+			expect(SendouQ.likesReceivedCount(likerGroup.id)).toBe(0);
+		});
+	});
+
 	describe("currentViewByUserId", () => {
 		beforeEach(async () => {
 			await users.create(8);

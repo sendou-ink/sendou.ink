@@ -280,7 +280,7 @@ function Document({
 								<ChatProvider user={data?.user}>
 									<NotificationsProvider user={data?.user}>
 										<LayoutDataProvider data={data}>
-											<GlobalStatusProvider>
+											<GlobalStatusProvider user={data?.user}>
 												<Layout data={data}>{children}</Layout>
 											</GlobalStatusProvider>
 										</LayoutDataProvider>

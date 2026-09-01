@@ -37,6 +37,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
+				ChatSystemMessage.notifyStatusChanged(
+					ownGroup.members.map((member) => member.id),
+				);
 				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 				return redirect(SENDOUQ_LOOKING_PAGE);
@@ -74,6 +77,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				const updatedGroup = SendouQ.findOwnGroup(user.id);
 
 				ChatSystemMessage.notifyRoomsChanged(
+					updatedGroup
+						? updatedGroup.members.map((member) => member.id)
+						: [data.id],
+				);
+				// xxx: do we have a better architecture e.g. sub/pub than to spam this everywhere?
+				ChatSystemMessage.notifyStatusChanged(
 					updatedGroup
 						? updatedGroup.members.map((member) => member.id)
 						: [data.id],

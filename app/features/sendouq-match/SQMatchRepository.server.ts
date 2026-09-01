@@ -102,6 +102,38 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 		.execute();
 }
 
+// xxx: overkill? or just one status for both
+/** Just enough of a match to tell playing / awaiting score confirmation / over apart, for the header status. */
+export async function findScoreStateById(id: number) {
+	return db
+		.selectFrom("GroupMatch")
+		.select(({ exists, selectFrom, eb }) => [
+			"GroupMatch.alphaGroupId",
+			"GroupMatch.bravoGroupId",
+
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", id),
+			).as("isLocked"),
+			exists(
+				selectFrom("Skill")
+					.select("Skill.id")
+					.where("Skill.groupMatchId", "=", id)
+					.where("Skill.season", "=", CANCELED_MATCH_SEASON),
+			).as("isCanceled"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMatchMap")
+					.select("GroupMatchMap.winnerGroupId")
+					.where("GroupMatchMap.matchId", "=", id)
+					.orderBy("GroupMatchMap.index", "asc"),
+			).as("mapList"),
+		])
+		.where("GroupMatch.id", "=", id)
+		.executeTakeFirst();
+}
+
 export async function findById(id: number) {
 	const result = await db
 		.selectFrom("GroupMatch")
@@ -1619,7 +1651,21 @@ function findLockState(matchId: number, trx: Transaction<DB>) {
 export function findUnfinishedMatchesCreatedBefore(cutoff: Date) {
 	return db
 		.selectFrom("GroupMatch")
-		.select(["GroupMatch.id", "GroupMatch.chatRoomId"])
+		.select(({ eb }) => [
+			"GroupMatch.id",
+			"GroupMatch.chatRoomId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where((wb) =>
+						wb.or([
+							wb("GroupMember.groupId", "=", wb.ref("GroupMatch.alphaGroupId")),
+							wb("GroupMember.groupId", "=", wb.ref("GroupMatch.bravoGroupId")),
+						]),
+					),
+			).as("members"),
+		])
 		.where("GroupMatch.confirmedAt", "is", null)
 		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(cutoff))
 		.where(({ not, exists, selectFrom }) =>

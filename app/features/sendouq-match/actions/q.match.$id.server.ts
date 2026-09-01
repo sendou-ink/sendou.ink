@@ -95,6 +95,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQMatch.allMembers(match).map((m) => m.id),
+				);
+
 				if (match.chatRoomId) {
 					if (result.status === "MATCH_FINALIZED") {
 						ChatSystemMessage.sendPersisted({
@@ -157,6 +161,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				// The group re-enters the looking pool, so refresh every looking client.
 				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
+
+				ChatSystemMessage.notifyStatusChanged(
+					previousGroup.members.map((m) => m.id),
+				);
 
 				break;
 			}
@@ -229,6 +237,9 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					ChatSystemMessage.notifyRoomsChanged(
 						viewerGroup.members.map((member) => member.id),
 					);
+					ChatSystemMessage.notifyStatusChanged(
+						viewerGroup.members.map((member) => member.id),
+					);
 
 					// The continuing group re-enters the looking pool, so refresh
 					// every looking client.
@@ -276,6 +287,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQMatch.allMembers(match).map((m) => m.id),
+				);
+
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
 						channel: chatRoomChannel(match.chatRoomId),
@@ -298,6 +313,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				await refreshSendouQInstance();
+
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQMatch.allMembers(match).map((m) => m.id),
+				);
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
@@ -362,6 +381,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				await refreshSendouQInstance();
+
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQMatch.allMembers(match).map((m) => m.id),
+				);
 				break;
 			}
 			case "ADMIN_CANCEL": {
@@ -382,6 +405,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 				}
 
 				await refreshSendouQInstance();
+
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQMatch.allMembers(match).map((m) => m.id),
+				);
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({

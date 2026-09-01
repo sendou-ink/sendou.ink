@@ -24,6 +24,7 @@ import { useUser } from "~/features/auth/core/user";
 import { ScheduleNudge } from "~/features/availability/components/ScheduleNudge";
 import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
+import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -174,6 +175,13 @@ function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 
 	const scrollAccumulator = React.useRef(0);
 
+	// stable so the effect revealing the nav on a status change can depend on it
+	const revealNav = React.useCallback(() => {
+		setNavOffset(0);
+		scrollAccumulator.current = 0;
+		lastScrollY.current = window.scrollY;
+	}, []);
+
 	React.useEffect(() => {
 		const handleScroll = () => {
 			if (window.innerWidth >= MOBILE_BREAKPOINT) {
@@ -232,7 +240,24 @@ function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 		};
 	}, [headerRef]);
 
-	return navOffset;
+	return { navOffset, revealNav };
+}
+
+/**
+ * Pops the scrolled-away mobile header back out when the global status
+ * changes, so the change is seen the moment it happens.
+ */
+function useRevealNavOnStatusChange(revealNav: () => void) {
+	const { status } = useGlobalStatus();
+	const statusKey = status ? `${status.state}:${status.count ?? ""}` : null;
+	const prevKeyRef = React.useRef(statusKey);
+
+	React.useEffect(() => {
+		if (prevKeyRef.current === statusKey) return;
+
+		prevKeyRef.current = statusKey;
+		revealNav();
+	}, [statusKey, revealNav]);
 }
 
 export function Layout({
@@ -267,7 +292,8 @@ export function Layout({
 	const location = useLocation();
 	const [authError] = useSearchParam(authErrorSearchParams, "authError");
 	const headerRef = React.useRef<HTMLElement>(null);
-	const navOffset = useNavOffset(headerRef);
+	const { navOffset, revealNav } = useNavOffset(headerRef);
+	useRevealNavOnStatusChange(revealNav);
 
 	const user = useUser();
 	const { showUnseenDot } = useNotifications();

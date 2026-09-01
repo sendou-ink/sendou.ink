@@ -343,6 +343,7 @@ export default [
 		"/api/notifications",
 		"features/notifications/routes/api.notifications.ts",
 	),
+	route("/api/status", "features/global-status/routes/api.status.ts"),
 	route("/api", "features/api/routes/api.tsx"),
 
 	...prefix("/a", [

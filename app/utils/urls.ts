@@ -212,6 +212,7 @@ export const NOTIFICATIONS_URL = "/notifications";
 export const NOTIFICATIONS_MARK_AS_SEEN_ROUTE = "/notifications/seen";
 export const NOTIFICATIONS_SUBSCRIBE_ROUTE = "/notifications/subscribe";
 export const NOTIFICATIONS_DATA_ROUTE = "/api/notifications";
+export const STATUS_DATA_ROUTE = "/api/status";
 
 export const CHAT_ROOMS_DATA_ROUTE = "/api/chat/rooms";
 export const chatRoomDataRoute = (roomId: number) =>

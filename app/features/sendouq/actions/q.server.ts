@@ -64,6 +64,8 @@ export const action: ActionFunction = async ({ request, url }) => {
 
 				await refreshSendouQInstance();
 
+				ChatSystemMessage.notifyStatusChanged([user.id]);
+
 				// Joining directly creates an ACTIVE group that enters the pool, so
 				// refresh every looking client. (A PREPARING group isn't in the pool.)
 				if (data.direct === "true") {
@@ -100,6 +102,12 @@ export const action: ActionFunction = async ({ request, url }) => {
 				}
 
 				await refreshSendouQInstance();
+
+				ChatSystemMessage.notifyStatusChanged(
+					SendouQ.findUncensoredGroupById(groupInvitedTo.id)?.members.map(
+						(member) => member.id,
+					) ?? [user.id],
+				);
 
 				if (groupInvitedTo.status === "PREPARING") {
 					// A preparing group isn't in the pool, so notify just its existing

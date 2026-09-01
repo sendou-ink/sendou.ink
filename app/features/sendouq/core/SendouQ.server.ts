@@ -61,6 +61,7 @@ class SendouQClass {
 	#isAccurateTiers;
 	#userSkills;
 	#intervals;
+	#receivedLikeCounts;
 	/** Array of user IDs currently in the queue */
 	usersInQueue;
 
@@ -72,7 +73,9 @@ class SendouQClass {
 			userSkills: calculatedUserSkills,
 			isAccurateTiers,
 		}: Awaited<ReturnType<typeof userSkills>>,
+		receivedLikeCounts: Map<number, number>,
 	) {
+		this.#receivedLikeCounts = receivedLikeCounts;
 		this.#recentMatches = recentMatches;
 		this.#isAccurateTiers = isAccurateTiers;
 		this.#userSkills = calculatedUserSkills;
@@ -135,6 +138,11 @@ class SendouQClass {
 		return this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
+	}
+
+	/** Pending likes/challenges the group has received, 0 when none. */
+	likesReceivedCount(groupId: number) {
+		return this.#receivedLikeCounts.get(groupId) ?? 0;
 	}
 
 	/**
@@ -622,13 +630,16 @@ export async function refreshSendouQInstance() {
 async function freshSendouQInstance() {
 	const season = Seasons.currentOrPrevious();
 
-	const [groups, recentMatches, skills] = await Promise.all([
-		SQGroupRepository.findCurrentGroups(),
-		SQGroupRepository.findRecentlyFinishedMatches(),
-		userSkills(season!.nth),
-	]);
+	const [groups, recentMatches, skills, receivedLikeCounts] = await Promise.all(
+		[
+			SQGroupRepository.findCurrentGroups(),
+			SQGroupRepository.findRecentlyFinishedMatches(),
+			userSkills(season!.nth),
+			SQGroupRepository.findCurrentReceivedLikeCounts(),
+		],
+	);
 
-	return new SendouQClass(groups, recentMatches, skills);
+	return new SendouQClass(groups, recentMatches, skills, receivedLikeCounts);
 }
 
 /** User needs to be on certain page depending on their SendouQ group status. This functions throws a `Redirect` if they are trying to load the wrong page. */

@@ -18,6 +18,7 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
+import { useMarkSqLikesSeen } from "~/features/global-status/global-status-likes-seen";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -86,6 +87,8 @@ function QLookingPage() {
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const [joining] = useSearchParam(qLookingSearchParams, "joining");
+
+	useMarkSqLikesSeen(data.ownGroup?.id, data.likes.received.length);
 
 	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
 	// broadcast to this shared room so every looking client revalidates.

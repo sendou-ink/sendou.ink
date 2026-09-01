@@ -119,6 +119,19 @@ export function notifyNotificationsChanged(userIds: number[]) {
 }
 
 /**
+ * Publishes a contentless "your header status changed" event to the users'
+ * event streams, prompting their clients to refetch the global status. Fire
+ * and forget; a missed event only delays the refetch until the next catch-up.
+ */
+export function notifyStatusChanged(userIds: number[]) {
+	if (userIds.length === 0) return;
+
+	EventBus.publish(R.unique(userIds).map(userChannel), {
+		kind: "statusChanged",
+	});
+}
+
+/**
  * Publishes a "your chat room set changed" event to the users' event streams
  * after a membership change (leave, kick, group merge, added member). Clients
  * refetch their room list and drop rooms — including any locally held history —

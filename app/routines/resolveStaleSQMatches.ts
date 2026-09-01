@@ -22,6 +22,7 @@ export const ResolveStaleSQMatchesRoutine = new Routine({
 
 		let canceledCount = 0;
 		let confirmedCount = 0;
+		const resolvedParticipantIds: number[] = [];
 		for (const staleMatch of staleMatches) {
 			const result = await SQMatchRepository.resolveUnfinishedMatch(
 				staleMatch.id,
@@ -30,6 +31,10 @@ export const ResolveStaleSQMatchesRoutine = new Routine({
 
 			if (result.status === "CANCELED") canceledCount++;
 			if (result.status === "CONFIRMED") confirmedCount++;
+
+			resolvedParticipantIds.push(
+				...staleMatch.members.map((member) => member.userId),
+			);
 
 			if (staleMatch.chatRoomId) {
 				ChatSystemMessage.send({
@@ -51,6 +56,8 @@ export const ResolveStaleSQMatchesRoutine = new Routine({
 		}
 
 		await refreshSendouQInstance();
+
+		ChatSystemMessage.notifyStatusChanged(resolvedParticipantIds);
 
 		logger.info(
 			`Resolved stale SendouQ matches: ${canceledCount} canceled, ${confirmedCount} auto-confirmed`,

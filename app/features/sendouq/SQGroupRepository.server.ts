@@ -451,6 +451,22 @@ export async function insertMember(
 	return { chatRoomIdToRevalidate };
 }
 
+/** Count of pending likes each non-inactive group has received, keyed by group id. */
+export async function findCurrentReceivedLikeCounts() {
+	const rows = await db
+		.selectFrom("GroupLike")
+		.innerJoin("Group", "Group.id", "GroupLike.targetGroupId")
+		.select((eb) => [
+			"GroupLike.targetGroupId",
+			eb.fn.countAll<number>().as("count"),
+		])
+		.where("Group.status", "!=", "INACTIVE")
+		.groupBy("GroupLike.targetGroupId")
+		.execute();
+
+	return new Map(rows.map((row) => [row.targetGroupId, row.count]));
+}
+
 export async function findAllLikesByGroupId(groupId: number) {
 	const rows = await db
 		.selectFrom("GroupLike")
