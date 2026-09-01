@@ -28,9 +28,7 @@ export function EventsList({
 
 	if (events.length === 0) {
 		return (
-			<div className="text-lighter text-sm p-2">
-				{t("front:sideNav.noEvents")}
-			</div>
+			<div className={styles.emptyState}>{t("front:sideNav.noEvents")}</div>
 		);
 	}
 
