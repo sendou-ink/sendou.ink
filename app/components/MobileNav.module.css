@@ -81,14 +81,14 @@
 
 .panel {
 	position: fixed;
-	inset: auto 0 0 0;
+	inset: auto 0 var(--layout-nav-height) 0;
 	margin: 0;
 	padding: 0;
 	border: none;
 	width: 100%;
 	max-width: none;
 	max-height: none;
-	height: 85%;
+	height: calc((100% - var(--layout-nav-height)) * 0.85);
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	border-radius: var(--radius-box) var(--radius-box) 0 0;
@@ -154,13 +154,13 @@
 
 .menuOverlay {
 	position: fixed;
-	inset: 0;
+	inset: 0 0 var(--layout-nav-height) 0;
 	margin: 0;
 	padding: 0;
 	border: none;
 	width: 100%;
 	max-width: none;
-	height: 100%;
+	height: calc(100% - var(--layout-nav-height));
 	max-height: none;
 	background-color: var(--color-bg);
 	color: var(--color-text);
@@ -377,7 +377,7 @@
 
 .ghostTabBar {
 	position: fixed;
-	bottom: calc(0px - var(--layout-nav-height));
+	bottom: 0;
 	left: 0;
 	right: 0;
 	height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));

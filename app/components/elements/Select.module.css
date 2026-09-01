@@ -76,8 +76,11 @@
 	position-try-fallbacks: flip-block;
 	width: anchor-size(width);
 	min-width: anchor-size(width);
-	max-height: 300px;
-	margin: var(--s-1) 0;
+	/* fill the space the position-area leaves (its containing block), like the
+	   old JS positioning did; the 200px floor forces a flip to the roomier side
+	   instead of squeezing against the viewport edge */
+	max-height: max(200px, calc(100% - 12px));
+	margin: var(--s-2) 0;
 	padding: var(--s-1);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
@@ -90,6 +93,11 @@
 
 	&:popover-open {
 		display: flex;
+	}
+
+	/* the listbox popover holds focus while a non-search select is open */
+	&:focus {
+		outline: var(--focus-ring);
 	}
 }
 

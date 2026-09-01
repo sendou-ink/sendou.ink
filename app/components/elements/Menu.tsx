@@ -46,7 +46,7 @@ export function SendouMenu({
 		setOpen(next);
 
 		if (next) {
-			requestAnimationFrame(() => focusItem(popoverRef.current, "first"));
+			requestAnimationFrame(() => popoverRef.current?.focus());
 		}
 	};
 
@@ -88,6 +88,7 @@ export function SendouMenu({
 				ref={popoverRef}
 				id={popoverId}
 				popover="auto"
+				tabIndex={-1}
 				className={clsx(styles.popover, "scrollbar", popoverClassName, {
 					[styles.scrolling]: scrolling,
 					[styles.opensLeft]: opensLeft,

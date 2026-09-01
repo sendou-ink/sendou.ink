@@ -2386,6 +2386,7 @@ function DatePickerSection({ id }: { id: string }) {
 
 				<ComponentRow label="DatePicker">
 					<SendouDatePicker
+						granularity="day"
 						label="Select Date"
 						value={datePickerValue}
 						onChange={handleDatePickerChange}
@@ -2394,6 +2395,7 @@ function DatePickerSection({ id }: { id: string }) {
 
 				<ComponentRow label="DatePicker with Bottom Text">
 					<SendouDatePicker
+						granularity="day"
 						label="Event Date"
 						value={datePickerValue}
 						onChange={handleDatePickerChange}
@@ -2403,6 +2405,7 @@ function DatePickerSection({ id }: { id: string }) {
 
 				<ComponentRow label="DatePicker Required">
 					<SendouDatePicker
+						granularity="day"
 						label="Required Date"
 						value={datePickerValue}
 						onChange={handleDatePickerChange}

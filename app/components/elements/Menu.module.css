@@ -8,9 +8,10 @@
 
 .popover {
 	position: fixed;
-	position-area: block-end span-inline-start;
+	position-area: block-end span-inline-end;
 	position-try-fallbacks: flip-block;
 	margin: var(--s-2) 0;
+	outline: none;
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	border: var(--border-style);
@@ -21,13 +22,14 @@
 	padding: var(--s-2);
 	color: var(--color-text);
 
-	&[data-placement="bottom start"] {
-		position-area: block-end span-inline-end;
+	&[data-placement="bottom end"],
+	&[data-placement="bottom right"] {
+		position-area: block-end span-inline-start;
 	}
 }
 
 .opensLeft {
-	position-area: block-end span-inline-end;
+	position-area: block-end span-inline-start;
 }
 
 .scrolling {
@@ -84,11 +86,9 @@
 
 .itemIcon {
 	width: 18px;
-	display: inline-flex;
 
 	& svg {
 		width: 100%;
-		height: auto;
 	}
 }
 

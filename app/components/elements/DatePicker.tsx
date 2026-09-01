@@ -339,10 +339,6 @@ export function SendouDatePicker({
 		};
 	};
 
-	const openCalendar = () => {
-		calendarPopoverRef.current?.showPopover();
-	};
-
 	const pickCalendarDay = (date: Date) => {
 		const updates: Partial<Parts> = {
 			year: date.getFullYear(),
@@ -418,7 +414,6 @@ export function SendouDatePicker({
 					popoverTarget={popoverId}
 					disabled={isDisabled}
 					aria-label="Open calendar"
-					onClick={openCalendar}
 				>
 					<Calendar className={styles.icon} />
 				</button>

@@ -266,7 +266,7 @@ export function SendouSelect<T extends object>({
 		onOpenChange?.(next);
 
 		if (next) {
-			const initialFocused = currentKey ?? orderedKeys()[0] ?? null;
+			const initialFocused = currentKey;
 			setFocusedKey(initialFocused);
 			requestAnimationFrame(() => {
 				if (search) {
