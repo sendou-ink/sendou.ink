@@ -1,7 +1,15 @@
-import { add, sub } from "date-fns";
+import { add, addWeeks, startOfWeek, sub } from "date-fns";
 import * as v from "valibot";
-import { datetime, select, stringConstant, textField } from "~/form/fields";
-import { _action, id } from "~/utils/schema";
+import {
+	checkboxGroupDynamic,
+	datetime,
+	idConstant,
+	radioGroup,
+	select,
+	stringConstant,
+	textField,
+} from "~/form/fields";
+import { _action, id, superRefine, type ValidationCtx } from "~/utils/schema";
 import { AVAILABILITY } from "./availability-constants";
 
 const DAY_MINUTES = 24 * 60;
@@ -66,8 +74,7 @@ const teamEventDurationItems = [
 	{ label: "options.duration.6h" as const, value: "360" },
 ] as const;
 
-export const addTeamEventSchema = v.object({
-	_action: stringConstant("ADD_EVENT"),
+const teamEventFields = {
 	name: textField({
 		label: "labels.name",
 		maxLength: AVAILABILITY.TEAM_EVENT_NAME_MAX_LENGTH,
@@ -75,7 +82,16 @@ export const addTeamEventSchema = v.object({
 	startsAt: datetime({
 		label: "labels.start",
 		min: () => sub(new Date(), { hours: 1 }),
-		max: () => add(new Date(), { months: 2 }),
+		// end of the next week, the furthest the schedule shows; the hours are
+		// slack for server-side validation running in another timezone than the
+		// viewer's week
+		max: () =>
+			add(
+				startOfWeek(addWeeks(new Date(), AVAILABILITY.WEEK_HORIZON), {
+					weekStartsOn: 1,
+				}),
+				{ hours: 14 },
+			),
 		minMessage: "errors.dateInPast",
 		maxMessage: "errors.dateTooFarAway",
 	}),
@@ -84,7 +100,49 @@ export const addTeamEventSchema = v.object({
 		items: [...teamEventDurationItems],
 		initialValue: "60",
 	}),
-});
+	participants: radioGroup({
+		label: "labels.participants",
+		items: [
+			{ label: "options.participants.all", value: "ALL" },
+			{ label: "options.participants.selected", value: "SELECTED" },
+		],
+	}),
+	participantUserIds: checkboxGroupDynamic({
+		label: "labels.members",
+	}),
+};
+
+const validateSelectedParticipants = (
+	data: { participants: "ALL" | "SELECTED"; participantUserIds: Array<string> },
+	ctx: ValidationCtx,
+) => {
+	if (
+		data.participants === "SELECTED" &&
+		data.participantUserIds.length === 0
+	) {
+		ctx.addIssue({
+			path: ["participantUserIds"],
+			message: "forms:errors.required",
+		});
+	}
+};
+
+export const addTeamEventSchema = v.pipe(
+	v.object({
+		_action: stringConstant("ADD_EVENT"),
+		...teamEventFields,
+	}),
+	superRefine((data, ctx) => validateSelectedParticipants(data, ctx)),
+);
+
+export const editTeamEventSchema = v.pipe(
+	v.object({
+		_action: stringConstant("EDIT_EVENT"),
+		eventId: idConstant(),
+		...teamEventFields,
+	}),
+	superRefine((data, ctx) => validateSelectedParticipants(data, ctx)),
+);
 
 const deleteTeamEventSchema = v.object({
 	_action: _action("DELETE_EVENT"),
@@ -93,5 +151,6 @@ const deleteTeamEventSchema = v.object({
 
 export const teamScheduleActionSchema = v.union([
 	addTeamEventSchema,
+	editTeamEventSchema,
 	deleteTeamEventSchema,
 ]);

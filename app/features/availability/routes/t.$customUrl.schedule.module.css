@@ -194,3 +194,9 @@
 	text-overflow: ellipsis;
 	white-space: nowrap;
 }
+
+.eventParticipants {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}

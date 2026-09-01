@@ -394,6 +394,82 @@ describe("AvailabilityRepository.findTeamEventsByTeamId", () => {
 		expect(events).toHaveLength(1);
 		expect(events[0].name).toBe("VoD review");
 	});
+
+	test("returns the participants of an event limited to selected members, empty for a whole-team event", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Whole team",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+		});
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Selected only",
+			startsAt: at("2026-08-26", "20:00"),
+			endsAt: at("2026-08-26", "21:00"),
+			participantUserIds: [users.id(2)],
+		});
+
+		const events = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+
+		expect(events).toHaveLength(2);
+		expect(events[0].participants).toEqual([]);
+		expect(events[1].participants).toEqual([{ userId: users.id(2) }]);
+	});
+});
+
+describe("AvailabilityRepository.findAllTeamEventsByUserIds", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("an event limited to selected members produces rows only for them", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Whole team",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+		});
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Selected only",
+			startsAt: at("2026-08-26", "20:00"),
+			endsAt: at("2026-08-26", "21:00"),
+			participantUserIds: [users.id(2)],
+		});
+
+		const events = await AvailabilityRepository.findAllTeamEventsByUserIds({
+			userIds: [users.id(1), users.id(2)],
+			...WINDOW,
+		});
+
+		expect(
+			events.filter((event) => event.userId === users.id(1)).map((e) => e.name),
+		).toEqual(["Whole team"]);
+		expect(
+			events
+				.filter((event) => event.userId === users.id(2))
+				.map((e) => e.name)
+				.sort(),
+		).toEqual(["Selected only", "Whole team"]);
+	});
 });
 
 describe("AvailabilityRepository.findAllUpcomingTeamEventsByUserId", () => {
@@ -460,6 +536,104 @@ describe("AvailabilityRepository.findAllUpcomingTeamEventsByUserId", () => {
 				...WINDOW,
 			}),
 		).toEqual([]);
+	});
+
+	test("leaves out an event limited to selected members the user is not one of", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+
+		await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "Selected only",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+			participantUserIds: [users.id(2)],
+		});
+
+		expect(
+			await AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+				userId: users.id(1),
+				...WINDOW,
+			}),
+		).toEqual([]);
+		expect(
+			await AvailabilityRepository.findAllUpcomingTeamEventsByUserId({
+				userId: users.id(2),
+				...WINDOW,
+			}),
+		).toHaveLength(1);
+	});
+});
+
+describe("AvailabilityRepository.updateTeamEvent", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	test("updates the event and replaces its participant limitation", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+		const event = await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+		});
+
+		await AvailabilityRepository.updateTeamEvent({
+			id: event.id,
+			name: "Scrim review",
+			startsAt: at("2026-08-26", "19:00"),
+			endsAt: at("2026-08-26", "20:30"),
+			participantUserIds: [users.id(2)],
+		});
+
+		const [updated] = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+
+		expect(updated).toMatchObject({
+			name: "Scrim review",
+			startsAt: at("2026-08-26", "19:00"),
+			endsAt: at("2026-08-26", "20:30"),
+			participants: [{ userId: users.id(2) }],
+		});
+	});
+
+	test("clears the participant limitation when updated back to the whole team", async () => {
+		const team = await TeamFactory.create({
+			name: "Alpha",
+			memberUserIds: [users.id(1), users.id(2)],
+		});
+		const event = await TeamEventFactory.create({
+			teamId: team.id,
+			authorId: users.id(1),
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+			participantUserIds: [users.id(2)],
+		});
+
+		await AvailabilityRepository.updateTeamEvent({
+			id: event.id,
+			name: "VoD review",
+			startsAt: at("2026-08-25", "20:00"),
+			endsAt: at("2026-08-25", "21:00"),
+		});
+
+		const [updated] = await AvailabilityRepository.findTeamEventsByTeamId({
+			teamId: team.id,
+			...WINDOW,
+		});
+
+		expect(updated.participants).toEqual([]);
 	});
 });
 

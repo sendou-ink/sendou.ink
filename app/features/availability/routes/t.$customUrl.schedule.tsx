@@ -1,10 +1,11 @@
 import clsx from "clsx";
 import { isSameDay } from "date-fns";
-import { Flag, Plus, Trash } from "lucide-react";
+import { Flag, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
 import * as R from "remeda";
+import type * as v from "valibot";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
 import { SendouButton } from "~/components/elements/Button";
@@ -15,7 +16,8 @@ import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
 import type { TeamLoaderData } from "~/features/team/loaders/t.$customUrl.server";
 import { getMemberRoleType } from "~/features/team/team-utils";
 import { timezoneMiddleware } from "~/features/timezone/timezone-middleware.server";
-import { SendouForm } from "~/form/SendouForm";
+import { FormField } from "~/form/FormField";
+import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
@@ -25,6 +27,7 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/t.$customUrl.schedule.server";
 import {
 	addTeamEventSchema,
+	editTeamEventSchema,
 	teamScheduleActionSchema,
 } from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
@@ -45,6 +48,8 @@ export const handle: SendouRouteHandle = {
 };
 
 type WeekData = NonNullable<TeamScheduleLoaderData["weeks"]>[number];
+type TeamEventData = WeekData["teamEvents"][number];
+type TeamEventDuration = v.InferOutput<typeof editTeamEventSchema>["duration"];
 type MemberWeekRow = WeekData["members"][number];
 type TeamMember = TeamLoaderData["team"]["members"][number];
 
@@ -291,8 +296,12 @@ function WeekNotes({ week }: { week: WeekData }) {
 function TeamEvents({ week }: { week: WeekData }) {
 	const { t } = useTranslation(["schedule"]);
 	const team = useTeam();
+	const members = useTeamMembers();
 	const canEdit = useHasPermission(team, "EDIT");
 	const [addDialogOpen, setAddDialogOpen] = React.useState(false);
+	const [editedEvent, setEditedEvent] = React.useState<TeamEventData | null>(
+		null,
+	);
 	const { formatter: dayFormatter } = useDateTimeFormat({
 		weekday: "short",
 		day: "numeric",
@@ -301,6 +310,19 @@ function TeamEvents({ week }: { week: WeekData }) {
 		hour: "numeric",
 		minute: "2-digit",
 	});
+
+	const participantNames = (event: TeamEventData) =>
+		event.participants
+			.map(
+				(participant) =>
+					members.find((member) => member.id === participant.userId)?.username,
+			)
+			.filter(R.isDefined)
+			.join(", ");
+
+	// an event that already started can no longer pass the form's start time validation
+	const canEditEvent = (event: TeamEventData) =>
+		canEdit && databaseTimestampToDate(event.startsAt) > new Date();
 
 	if (week.teamEvents.length === 0 && !canEdit) return null;
 
@@ -345,6 +367,26 @@ function TeamEvents({ week }: { week: WeekData }) {
 									: `${timeFormatter.format(databaseTimestampToDate(event.startsAt))} – ${timeFormatter.format(databaseTimestampToDate(event.endsAt))}`}
 							</span>
 							<span className={styles.eventName}>{event.name}</span>
+							{event.participants.length > 0 ? (
+								<span
+									className={clsx(
+										styles.eventParticipants,
+										"text-lighter text-xs",
+									)}
+								>
+									{participantNames(event)}
+								</span>
+							) : null}
+							{canEditEvent(event) ? (
+								<SendouButton
+									variant="minimal"
+									size="miniscule"
+									icon={<Pencil />}
+									onPress={() => setEditedEvent(event)}
+									aria-label={t("schedule:events.edit")}
+									data-testid={`edit-team-event-${event.id}`}
+								/>
+							) : null}
 							{canEdit ? (
 								<ActionButton
 									schema={teamScheduleActionSchema}
@@ -369,6 +411,12 @@ function TeamEvents({ week }: { week: WeekData }) {
 			{addDialogOpen ? (
 				<AddTeamEventDialog close={() => setAddDialogOpen(false)} />
 			) : null}
+			{editedEvent ? (
+				<EditTeamEventDialog
+					event={editedEvent}
+					close={() => setEditedEvent(null)}
+				/>
+			) : null}
 		</div>
 	);
 }
@@ -379,18 +427,81 @@ function AddTeamEventDialog({ close }: { close: () => void }) {
 	return (
 		<SendouDialog heading={t("schedule:events.addDialogTitle")} onClose={close}>
 			<SendouForm schema={addTeamEventSchema} onSuccess={close}>
-				{({ FormField }) => (
-					<>
-						<FormField name="name" />
-						<FormField name="startsAt" />
-						<FormField name="duration" />
-						<FormMessage type="info">
-							{t("schedule:events.membersWillSee")}
-						</FormMessage>
-					</>
-				)}
+				<TeamEventFormFields />
 			</SendouForm>
 		</SendouDialog>
+	);
+}
+
+function EditTeamEventDialog({
+	event,
+	close,
+}: {
+	event: TeamEventData;
+	close: () => void;
+}) {
+	const { t } = useTranslation(["schedule"]);
+
+	return (
+		<SendouDialog
+			heading={t("schedule:events.editDialogTitle")}
+			onClose={close}
+		>
+			<SendouForm
+				schema={editTeamEventSchema}
+				onSuccess={close}
+				defaultValues={{
+					eventId: event.id,
+					name: event.name,
+					startsAt: databaseTimestampToDate(event.startsAt),
+					duration: String(
+						(event.endsAt - event.startsAt) / 60,
+					) as TeamEventDuration,
+					participants: event.participants.length > 0 ? "SELECTED" : "ALL",
+					participantUserIds: event.participants.map((participant) =>
+						String(participant.userId),
+					),
+				}}
+			>
+				<TeamEventFormFields />
+			</SendouForm>
+		</SendouDialog>
+	);
+}
+
+function TeamEventFormFields() {
+	const { t } = useTranslation(["schedule"]);
+
+	return (
+		<>
+			<FormField name="name" />
+			<FormField name="startsAt" />
+			<FormField name="duration" />
+			<FormField name="participants" />
+			<ParticipantUserIdsFormField />
+			<FormMessage type="info">
+				{t("schedule:events.membersWillSee")}
+			</FormMessage>
+		</>
+	);
+}
+
+function ParticipantUserIdsFormField() {
+	const { values } = useFormFieldContext();
+	const members = useTeamMembers();
+
+	if (values.participants !== "SELECTED") return null;
+
+	return (
+		<FormField
+			name="participantUserIds"
+			options={members
+				.filter((member) => member.role !== "CHEERLEADER")
+				.map((member) => ({
+					value: String(member.id),
+					label: () => member.username,
+				}))}
+		/>
 	);
 }
 

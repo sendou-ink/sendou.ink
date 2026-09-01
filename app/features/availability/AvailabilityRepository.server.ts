@@ -150,7 +150,8 @@ export async function findWeekReminderUserIds(weekStartsAt: number) {
 
 /**
  * Team events of every team the given users are members of (secondary teams
- * included) that overlap the given window, one row per member.
+ * included) that overlap the given window, one row per member. Events limited
+ * to selected participants only produce rows for those participants.
  */
 export function findAllTeamEventsByUserIds({
 	userIds,
@@ -179,10 +180,27 @@ export function findAllTeamEventsByUserIds({
 		.where("TeamMemberWithSecondary.userId", "in", userIds)
 		.where("TeamEvent.startsAt", "<", endsAt)
 		.where("TeamEvent.endsAt", ">", startsAt)
+		.where((eb) => {
+			const participants = eb
+				.selectFrom("TeamEventMember")
+				.select("TeamEventMember.userId")
+				.whereRef("TeamEventMember.teamEventId", "=", "TeamEvent.id");
+
+			return eb.or([
+				eb.not(eb.exists(participants)),
+				eb.exists(
+					participants.whereRef(
+						"TeamEventMember.userId",
+						"=",
+						"TeamMemberWithSecondary.userId",
+					),
+				),
+			]);
+		})
 		.execute();
 }
 
-/** Team events of one team overlapping the given window. */
+/** Team events of one team overlapping the given window, with the participant user ids of events limited to selected members (empty = the whole team). */
 export function findTeamEventsByTeamId({
 	teamId,
 	startsAt,
@@ -194,11 +212,18 @@ export function findTeamEventsByTeamId({
 }) {
 	return db
 		.selectFrom("TeamEvent")
-		.select([
+		.select((eb) => [
 			"TeamEvent.id",
 			"TeamEvent.name",
 			"TeamEvent.startsAt",
 			"TeamEvent.endsAt",
+			jsonArrayFrom(
+				eb
+					.selectFrom("TeamEventMember")
+					.select("TeamEventMember.userId")
+					.whereRef("TeamEventMember.teamEventId", "=", "TeamEvent.id")
+					.orderBy("TeamEventMember.userId", "asc"),
+			).as("participants"),
 		])
 		.where("TeamEvent.teamId", "=", teamId)
 		.where("TeamEvent.startsAt", "<", endsAt)
@@ -210,7 +235,8 @@ export function findTeamEventsByTeamId({
 /**
  * Ongoing and upcoming team events of every team the given user is a member of
  * (secondary teams included), starting within the given window, with the
- * owning team attached. For the user's personal calendar surfaces.
+ * owning team attached. Events limited to selected participants show up only
+ * for those participants. For the user's personal calendar surfaces.
  */
 export function findAllUpcomingTeamEventsByUserId({
 	userId,
@@ -244,6 +270,17 @@ export function findAllUpcomingTeamEventsByUserId({
 		.where("TeamMemberWithSecondary.userId", "=", userId)
 		.where("TeamEvent.endsAt", ">", startsAt)
 		.where("TeamEvent.startsAt", "<", endsAt)
+		.where((eb) => {
+			const participants = eb
+				.selectFrom("TeamEventMember")
+				.select("TeamEventMember.userId")
+				.whereRef("TeamEventMember.teamEventId", "=", "TeamEvent.id");
+
+			return eb.or([
+				eb.not(eb.exists(participants)),
+				eb.exists(participants.where("TeamEventMember.userId", "=", userId)),
+			]);
+		})
 		.orderBy("TeamEvent.startsAt", "asc")
 		.execute();
 }
@@ -374,20 +411,75 @@ export function deleteTeamEventsEndedBefore(endsAt: number) {
 }
 
 /**
- * Adds an event the whole team takes part in. Author is the acting user.
+ * Adds a team event. Author is the acting user. Without `participantUserIds`
+ * the whole team takes part; with them only the given members do.
  *
  * @returns id of the new event
  */
-export async function insertTeamEvent(
-	args: Omit<TablesInsertable["TeamEvent"], "authorId">,
-) {
-	const event = await db
-		.insertInto("TeamEvent")
-		.values({ ...args, authorId: actorId() })
-		.returning("id")
-		.executeTakeFirstOrThrow();
+export function insertTeamEvent({
+	participantUserIds,
+	...args
+}: Omit<TablesInsertable["TeamEvent"], "authorId"> & {
+	participantUserIds?: Array<number>;
+}) {
+	const authorId = actorId();
 
-	return event.id;
+	return db.transaction().execute(async (trx) => {
+		const event = await trx
+			.insertInto("TeamEvent")
+			.values({ ...args, authorId })
+			.returning("id")
+			.executeTakeFirstOrThrow();
+
+		if (participantUserIds && participantUserIds.length > 0) {
+			await trx
+				.insertInto("TeamEventMember")
+				.values(
+					participantUserIds.map((userId) => ({
+						teamEventId: event.id,
+						userId,
+					})),
+				)
+				.execute();
+		}
+
+		return event.id;
+	});
+}
+
+/** Updates a team event, replacing its participant limitation (none = the whole team takes part). */
+export function updateTeamEvent({
+	id,
+	participantUserIds,
+	...args
+}: {
+	id: number;
+	name: string;
+	startsAt: number;
+	endsAt: number;
+	participantUserIds?: Array<number>;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.updateTable("TeamEvent")
+			.set(args)
+			.where("TeamEvent.id", "=", id)
+			.execute();
+
+		await trx
+			.deleteFrom("TeamEventMember")
+			.where("TeamEventMember.teamEventId", "=", id)
+			.execute();
+
+		if (participantUserIds && participantUserIds.length > 0) {
+			await trx
+				.insertInto("TeamEventMember")
+				.values(
+					participantUserIds.map((userId) => ({ teamEventId: id, userId })),
+				)
+				.execute();
+		}
+	});
 }
 
 export function deleteTeamEvent(id: number) {

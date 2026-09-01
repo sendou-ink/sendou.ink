@@ -1384,6 +1384,12 @@ export interface TeamEvent {
 	createdAt: Generated<number>;
 }
 
+/** Participant of a team event limited to selected members. No rows for an event = the whole team takes part. */
+export interface TeamEventMember {
+	teamEventId: number;
+	userId: number;
+}
+
 export type Tables = { [P in keyof DB]: Selectable<DB[P]> };
 export type TablesInsertable = { [P in keyof DB]: Insertable<DB[P]> };
 
@@ -1538,4 +1544,5 @@ export interface DB {
 	AvailabilitySlot: AvailabilitySlot;
 	AvailabilityDayNote: AvailabilityDayNote;
 	TeamEvent: TeamEvent;
+	TeamEventMember: TeamEventMember;
 }

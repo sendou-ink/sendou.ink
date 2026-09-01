@@ -1,7 +1,10 @@
 import { addWeeks } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
-import { addTeamEventSchema } from "~/features/availability/availability-schemas";
+import {
+	addTeamEventSchema,
+	editTeamEventSchema,
+} from "~/features/availability/availability-schemas";
 import * as Availability from "~/features/availability/core/Availability";
 import { weekDates, weekRange } from "./helpers/availability";
 import type { Factories } from "./helpers/factories";
@@ -513,7 +516,7 @@ test.describe("Team schedule", () => {
 		await isNotVisible(schedule.locators.grid);
 	});
 
-	test("owner adds and deletes a team event, a regular member only sees it", async ({
+	test("owner adds, edits and deletes a team event, a regular member only sees it", async ({
 		page,
 		factories,
 	}) => {
@@ -539,6 +542,18 @@ test.describe("Team schedule", () => {
 		await expect(schedule.locators.teamEvents).toContainText(
 			"VoD review vs. FTWin",
 		);
+
+		await page.getByTestId(/edit-team-event/).click();
+		const editForm = createFormHelpers(page, editTeamEventSchema);
+		await editForm.fill("name", "Strategy meeting");
+		await editForm.checkItems("participants", ["SELECTED"]);
+		await page.getByLabel("N-ZAP", { exact: true }).click();
+		await editForm.submit();
+
+		await expect(schedule.locators.teamEvents).toContainText(
+			"Strategy meeting",
+		);
+		await expect(schedule.locators.teamEvents).toContainText("N-ZAP");
 
 		await impersonate(page, NZAP_TEST_ID);
 		await schedule.goto(customUrl);

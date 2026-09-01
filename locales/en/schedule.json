@@ -17,6 +17,8 @@
 	"events.addDialogTitle": "Add team event",
 	"events.membersWillSee": "Members will see this on their calendar.",
 	"events.none": "No events this week",
+	"events.edit": "Edit event",
+	"events.editDialogTitle": "Edit team event",
 	"events.delete": "Delete event",
 	"events.deleteConfirm": "Delete the event {{name}}?",
 	"friends.availabilityOf": "{{name}}'s availability",
