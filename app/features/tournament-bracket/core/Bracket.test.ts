@@ -1478,6 +1478,69 @@ describe("swiss between rounds", () => {
 	});
 });
 
+describe("single elimination sourcing - placements are tiers", () => {
+	const TEAM_IDS = Array.from({ length: 16 }, (_, index) => index + 1);
+
+	const SE_TO_TOP_4 = [
+		{
+			type: "single_elimination" as const,
+			name: "Main Bracket",
+			requiresCheckIn: false,
+			settings: { thirdPlaceMatch: false },
+		},
+		{
+			type: "single_elimination" as const,
+			name: "Top 4",
+			requiresCheckIn: false,
+			settings: { thirdPlaceMatch: false },
+			sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
+		},
+	];
+
+	/** Plays the bracket out in match order, the lower team id always winning, stopping after `maxMatches`. */
+	const playOut = (maxMatches: number) => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: TEAM_IDS,
+			settings: { consolationFinal: false },
+		});
+
+		for (let played = 0; played < maxMatches; played++) {
+			const [pending] = readyMatches(data, () => true);
+			if (!pending) break;
+
+			data = reportLowerIdWinner(data, pending.id);
+		}
+
+		return data;
+	};
+
+	const top4Seeding = (data: BracketData) =>
+		testTournament({
+			ctx: {
+				settings: { bracketProgression: SE_TO_TOP_4 },
+				teams: TEAM_IDS.map((id) => tournamentCtxTeam(id, { seed: id })),
+			},
+			data,
+		})
+			.bracketByIdx(1)!
+			.seeding!.toSorted((a, b) => a - b);
+
+	test("sources only the semifinal losers while the final is unplayed", () => {
+		const beforeFinal = playOut(14);
+
+		expect(top4Seeding(beforeFinal)).toEqual([3, 4]);
+	});
+
+	// without a third place match the placements are 1, 2, 3, 3, 5, 5, 5, 5, 9...
+	// so placements 1-4 are the four best tiers: the quarterfinal losers advance as the fourth
+	test("sources the 1st, the 2nd, both 3rd and all four 5th placed teams for placements 1-4 once the final is played", () => {
+		const afterFinal = playOut(15);
+
+		expect(top4Seeding(afterFinal)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
+	});
+});
+
 function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
 	const match = matchById(data, matchId);
 	const opponent1Lower = match.opponent1!.id! < match.opponent2!.id!;
