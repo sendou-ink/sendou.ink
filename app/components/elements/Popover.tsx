@@ -16,6 +16,15 @@ export function useAnchorSafeId() {
 }
 
 /**
+ * `toggle` does not bubble natively but React propagates it anyway, so an
+ * overlay nested inside another (a select in a popover, a menu in a dialog)
+ * would otherwise open and close its ancestor along with itself.
+ */
+export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
+	return event.target === event.currentTarget;
+}
+
+/**
  * A reusable popover component that wraps around a trigger element (SendouButton).
  * Renders through the native popover API with CSS anchor positioning.
  * Supports controlled and uncontrolled open states.
@@ -74,6 +83,8 @@ export function SendouPopover({
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
+		if (!isOwnToggle(event)) return;
+
 		const next = event.newState === "open";
 		if (next !== open) {
 			setOpen(next);
@@ -156,6 +167,8 @@ export function SendouAnchoredPopover({
 	useCloseOnScrollClip(isOpen, popoverRef, () => onOpenChange(false));
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
+		if (!isOwnToggle(event)) return;
+
 		const next = event.newState === "open";
 		if (next !== isOpen) {
 			onOpenChange(next);

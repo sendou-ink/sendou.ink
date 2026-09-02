@@ -5,7 +5,7 @@ import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
 import { Image } from "../Image";
-import { useAnchorSafeId } from "./Popover";
+import { isOwnToggle, useAnchorSafeId } from "./Popover";
 import { useCloseOnScrollClip } from "./popover-scroll-close";
 import styles from "./Select.module.css";
 
@@ -317,6 +317,8 @@ export function SendouSelect<T extends object>({
 	};
 
 	const onPopoverToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
+		if (!isOwnToggle(event)) return;
+
 		const next = event.newState === "open";
 		if (next === open) return;
 		setOpenState(next);

@@ -3,7 +3,7 @@ import * as React from "react";
 import { Link } from "react-router";
 import { Image } from "../Image";
 import styles from "./Menu.module.css";
-import { useAnchorSafeId } from "./Popover";
+import { isOwnToggle, useAnchorSafeId } from "./Popover";
 import { useCloseOnScrollClip } from "./popover-scroll-close";
 
 type MenuPlacement = "bottom start" | "bottom end" | "bottom right";
@@ -41,6 +41,8 @@ export function SendouMenu({
 	);
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
+		if (!isOwnToggle(event)) return;
+
 		const next = event.newState === "open";
 		if (next === open) return;
 		setOpen(next);
