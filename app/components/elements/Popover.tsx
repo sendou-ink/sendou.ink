@@ -29,6 +29,9 @@ export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
  * Renders through the native popover API with CSS anchor positioning.
  * Supports controlled and uncontrolled open states.
  *
+ * With `eager` the content is rendered while closed too, so the popover opens
+ * with its content before hydration (and without JavaScript altogether).
+ *
  * @example
  * ```tsx
  * <SendouPopover
@@ -45,6 +48,7 @@ export function SendouPopover({
 	placement,
 	onOpenChange,
 	isOpen,
+	eager,
 }: {
 	children: React.ReactNode;
 	trigger: React.ReactElement<Record<string, unknown>>;
@@ -52,6 +56,7 @@ export function SendouPopover({
 	placement?: PopoverPlacement;
 	onOpenChange?: (isOpen: boolean) => void;
 	isOpen?: boolean;
+	eager?: boolean;
 }) {
 	const uid = useAnchorSafeId();
 	const popoverId = `${uid}-popover`;
@@ -69,13 +74,26 @@ export function SendouPopover({
 		}
 		onOpenChange?.(next);
 	};
+	const setOpenRef = React.useRef(setOpen);
+	setOpenRef.current = setOpen;
 
+	const hasSyncedRef = React.useRef(false);
 	React.useEffect(() => {
 		const popover = popoverRef.current;
 		if (!popover) return;
-		if (open && !popover.matches(":popover-open")) {
+		const domOpen = popover.matches(":popover-open");
+		const isFirstSync = !hasSyncedRef.current;
+		hasSyncedRef.current = true;
+
+		if (domOpen === open) return;
+		// opened before hydration: adopt it rather than closing it under the user
+		if (isFirstSync && domOpen) {
+			setOpenRef.current(true);
+			return;
+		}
+		if (open) {
 			popover.showPopover();
-		} else if (!open && popover.matches(":popover-open")) {
+		} else {
 			popover.hidePopover();
 		}
 	}, [open]);
@@ -116,7 +134,7 @@ export function SendouPopover({
 				data-placement={placement}
 				onToggle={onToggle}
 			>
-				{open ? children : null}
+				{open || eager ? children : null}
 			</div>
 		</>
 	);

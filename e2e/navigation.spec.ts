@@ -12,6 +12,18 @@ import { MobileNav } from "./pages/layout/mobile-nav";
 import { TopNavMenus } from "./pages/layout/top-nav-menus";
 
 test.describe("Navigation", () => {
+	navigationTests();
+});
+
+// the navigation shell is native popovers and links, so it works before
+// hydration too, or with scripts turned off altogether
+test.describe("Navigation without JavaScript", () => {
+	test.use({ javaScriptEnabled: false });
+
+	navigationTests();
+});
+
+function navigationTests() {
 	test("desktop navigation", async ({ page }) => {
 		await impersonate(page, NZAP_TEST_ID);
 		await navigate({ page, url: "/" });
@@ -54,7 +66,7 @@ test.describe("Navigation", () => {
 		await expect(mobileNav.locators.youPanelUsername).toBeVisible();
 
 		await mobileNav.closePanel();
-		await expect(mobileNav.locators.youPanelUsername).toHaveCount(0);
+		await expect(mobileNav.locators.youPanelUsername).not.toBeVisible();
 
 		await mobileNav.openPanel("menu");
 		await mobileNav.menuLink("SendouQ").click();
@@ -74,4 +86,4 @@ test.describe("Navigation", () => {
 
 		await expect(new MobileNav(page).tab("menu")).not.toBeVisible();
 	});
-});
+}

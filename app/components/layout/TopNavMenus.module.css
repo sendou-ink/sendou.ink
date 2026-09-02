@@ -100,6 +100,11 @@
 		transition-delay: 0s;
 	}
 
+	/* a menu opened before hydration has no state to unmount the preview */
+	.menuWrapper:has(:popover-open) & {
+		display: none;
+	}
+
 	.container:hover .menuWrapper:not(:hover) & {
 		display: none;
 	}

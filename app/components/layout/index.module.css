@@ -141,7 +141,6 @@
 		height: calc(var(--layout-nav-height) + env(safe-area-inset-top));
 	}
 
-	.sideNavModal,
 	.chatSidebarModal {
 		top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
 		height: calc(100% - var(--layout-nav-height) - env(safe-area-inset-top));
@@ -208,6 +207,10 @@
 	}
 }
 
+.sideNavCollapseForm {
+	display: contents;
+}
+
 .sideNavCollapseButtonContainer {
 	display: none;
 	position: relative;
@@ -251,36 +254,50 @@
 	}
 }
 
-.sideNavModal {
-	position: fixed;
-	inset: 0;
-	top: var(--layout-nav-height);
+/*
+The sidebar doubles as the tablet drawer: it is a popover, hidden on tablet
+until its header button opens it into the top layer. On desktop it is just
+shown, so the popover's user agent styles are reset here.
+*/
+.sideNavDrawer {
 	margin: 0;
 	padding: 0;
-	max-width: none;
-	max-height: none;
-	height: calc(100% - var(--layout-nav-height));
-	width: var(--layout-sidenav-width);
-	border: none;
-	border-right: 1.5px solid var(--color-border);
-	background-color: var(--color-bg-nav);
-	color: var(--color-text);
+	inset-block-end: auto;
+	inset-inline-end: auto;
+	width: auto;
+	border-block: 0;
+	border-inline-start: 0;
+	color: inherit;
 	outline: none;
 
-	&::backdrop {
-		background-color: rgba(0, 0, 0, 0.4);
-		backdrop-filter: blur(4px);
-		top: var(--layout-nav-height);
-	}
-}
+	@media screen and (min-width: 600px) and (max-width: 999px) {
+		&:popover-open {
+			display: flex;
+			position: fixed;
+			top: var(--layout-nav-height);
+			left: 0;
+			height: calc(100% - var(--layout-nav-height));
 
-.sideNavInModal.sideNavInModal {
-	display: flex;
-	position: static;
-	height: 100%;
-	min-width: unset;
-	max-width: unset;
-	border-right: none;
+			&::backdrop {
+				background-color: rgba(0, 0, 0, 0.4);
+				backdrop-filter: blur(4px);
+				top: var(--layout-nav-height);
+			}
+
+			@media screen and (display-mode: standalone) {
+				top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+				height: calc(
+					100% -
+					var(--layout-nav-height) -
+					env(safe-area-inset-top)
+				);
+
+				&::backdrop {
+					top: calc(var(--layout-nav-height) + env(safe-area-inset-top));
+				}
+			}
+		}
+	}
 }
 
 .mobileLogo {

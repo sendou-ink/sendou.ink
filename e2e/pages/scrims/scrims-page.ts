@@ -41,7 +41,7 @@ export class ScrimsPage {
 			contactLinks: page.getByRole("link", { name: "Contact" }),
 			limitedVisibilityPopover: page.getByTestId("limited-visibility-popover"),
 			tournamentPopover: page.getByTestId("tournament-popover-trigger"),
-			canceledLabel: page.getByText("Canceled"),
+			canceledLabel: page.getByText("Canceled", { exact: true }),
 			fitIndicator: page.getByTestId("scrim-fit-indicator"),
 			divsFilterPill: page.getByTestId("divs-filter"),
 			addFilterButton: page.getByTestId("add-filter-button"),

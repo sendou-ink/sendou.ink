@@ -14,10 +14,6 @@
 	display: none;
 }
 
-.addNewWrapperCompact {
-	display: none;
-}
-
 @media screen and (min-width: 600px) {
 	@container (max-width: 600px) {
 		.supportWrapper {
@@ -30,14 +26,6 @@
 	}
 
 	@container (max-width: 475px) {
-		.addNewWrapper {
-			display: none;
-		}
-
-		.addNewWrapperCompact {
-			display: block;
-		}
-
 		.searchAndAddContainer {
 			grid-template-columns: 2fr 1fr;
 		}
@@ -50,8 +38,7 @@
 	gap: var(--s-2);
 }
 
-.searchWrapper > button,
-.addNewWrapper > button {
+.searchWrapper > button {
 	width: 100%;
 }
 

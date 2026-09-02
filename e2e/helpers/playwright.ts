@@ -246,7 +246,14 @@ export async function navigate({ page, url }: { page: Page; url: string }) {
 	// executed by then, and the hydration wait below covers the rest — no need
 	// to also wait for images and other subresources
 	await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
-	await expectIsHydrated(page);
+	if (await scriptsRan(page)) {
+		await expectIsHydrated(page);
+	}
+}
+
+/** Whether the page's scripts execute, which a `javaScriptEnabled: false` test has turned off. */
+function scriptsRan(page: Page) {
+	return page.evaluate(() => "__reactRouterContext" in window);
 }
 
 /** Waits and expects the page to be hydrated (click handlers etc. ready for testing) */

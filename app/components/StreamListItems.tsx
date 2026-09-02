@@ -16,12 +16,10 @@ import { TierPill } from "./TierPill";
 
 export function StreamListItems({
 	streams,
-	onClick,
 	isLoggedIn,
 	savedTournamentIds,
 }: {
 	streams: SidebarStream[];
-	onClick?: () => void;
 	isLoggedIn?: boolean;
 	savedTournamentIds?: number[];
 }) {
@@ -126,7 +124,6 @@ export function StreamListItems({
 								)
 							}
 							badgeVariant={!isUpcoming ? "warning" : undefined}
-							onClick={onClick}
 						>
 							{stream.name}
 						</ListLink>

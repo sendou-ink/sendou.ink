@@ -18,11 +18,9 @@ import styles from "./ScheduleNudge.module.css";
  */
 export function ScheduleNudge({
 	panel,
-	onNavigate,
 }: {
 	/** Bleeds past the mobile events panel's padding rather than the sidebar's. */
 	panel?: boolean;
-	onNavigate?: () => void;
 }) {
 	const { t } = useTranslation(["front"]);
 	const [dismissed, setDismissed] = React.useState(false);
@@ -45,7 +43,6 @@ export function ScheduleNudge({
 			<Link
 				to={scheduleWeekSearchParams.href(EVENTS_PAGE, { week: "next" })}
 				className={styles.link}
-				onClick={onNavigate}
 			>
 				<CalendarPlus size={14} />
 				{t("front:sideNav.scheduleNudge")}

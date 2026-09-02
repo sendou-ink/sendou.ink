@@ -1,6 +1,7 @@
 import { Share2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
+import { useHydrated } from "~/hooks/useHydrated";
 import { CopyToClipboardPopover } from "./CopyToClipboardPopover";
 
 export function ShareUrlButton({
@@ -8,9 +9,10 @@ export function ShareUrlButton({
 	...buttonProps
 }: { url: string } & React.ComponentProps<typeof SendouButton>) {
 	const { t } = useTranslation(["common"]);
+	const isHydrated = useHydrated();
 
-	const canNativeShare =
-		typeof navigator !== "undefined" && typeof navigator.share === "function";
+	// decided after hydration so the server and the first client render agree
+	const canNativeShare = isHydrated && typeof navigator.share === "function";
 
 	if (canNativeShare) {
 		return (

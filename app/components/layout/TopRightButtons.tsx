@@ -57,12 +57,7 @@ export function TopRightButtons({
 								<GlobalSearch />
 							</div>
 						) : null}
-						<div className={styles.addNewWrapper}>
-							<AnythingAdder />
-						</div>
-						<div className={styles.addNewWrapperCompact}>
-							<AnythingAdder compact />
-						</div>
+						<AnythingAdder />
 					</div>
 					{onChatToggle ? (
 						<div className={styles.chatButtonWrapperPersistent}>

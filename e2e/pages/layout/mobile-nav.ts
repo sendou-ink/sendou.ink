@@ -11,13 +11,12 @@ const TAB_NAMES: Record<Panel, string> = {
 	you: "You",
 };
 
-const PANELS: Panel[] = ["menu", "friends", "tourneys", "chat", "you"];
-
 /**
  * The bottom tab bar and its panels, rendered in place of the side nav on mobile.
  *
  * The panels show the same rows as the side nav does, and its accessors find them
- * the same way — scoped to the panel that is open.
+ * the same way — scoped to the panel that is open. Every panel is in the DOM,
+ * closed, so a closed one is hidden rather than gone.
  */
 export class MobileNav {
 	private readonly page: Page;
@@ -28,7 +27,7 @@ export class MobileNav {
 		this.page = page;
 		this.openPanelDialog = page.locator("[class*='panelDialog']:visible");
 		this.locators = {
-			menuPanel: page.getByLabel("Menu", { exact: true }),
+			menuPanel: page.getByRole("dialog", { name: "Menu", exact: true }),
 			streamsHeading: page.locator("h3").filter({ hasText: "Streams" }),
 			viewAllLink: page.getByRole("link", { name: "View all", exact: true }),
 			youPanelUsername: page.locator("[class*='youPanelUsername']"),
@@ -52,18 +51,19 @@ export class MobileNav {
 		await this.tab(panel).click();
 	}
 
-	/**
-	 * Switches between panels the way the tab bar does while a panel is open. Its
-	 * tabs are then covered by invisible overlays, which only a dispatched event reaches.
-	 */
+	/** Switches to another panel while one is open; the tab bar stays usable under the panels. */
 	async switchPanel(panel: Panel) {
-		await this.page
-			.locator("[class*='ghostTab']:not([class*='ghostTabBar'])")
-			.nth(PANELS.indexOf(panel))
-			.dispatchEvent("click");
+		await this.tab(panel).click();
 	}
 
 	async closePanel() {
+		// with scripts off Playwright never sees a still sliding-in panel settle,
+		// so its animation is waited out first
+		await this.page.evaluate(() =>
+			Promise.all(
+				document.getAnimations().map((animation) => animation.finished),
+			),
+		);
 		await this.openPanelDialog
 			.locator("button[class*='panelCloseButton']")
 			.click();

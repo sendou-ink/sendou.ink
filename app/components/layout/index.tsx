@@ -20,6 +20,7 @@ import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
@@ -36,8 +37,9 @@ import {
 	userPage,
 } from "~/utils/urls";
 import { Avatar, generateIdenticon } from "../Avatar";
-import { SendouButton } from "../elements/Button";
+import { SendouButton, type SendouButtonProps } from "../elements/Button";
 import { SendouModal } from "../elements/Dialog";
+import { isOwnToggle } from "../elements/Popover";
 import { FuseZone } from "../fuse/Fuse";
 import { Image } from "../Image";
 import { MobileNav } from "../MobileNav";
@@ -54,6 +56,7 @@ import { TopNavMenus } from "./TopNavMenus";
 import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
+const SIDENAV_ACTION = "/sidenav";
 
 // lazy loaded so the rarely needed auth error dialog stays out of the eager
 // bundle loaded on every page
@@ -135,7 +138,7 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 		setCollapsed(value);
 		fetcher.submit(
 			{ collapsed: String(value) },
-			{ method: "POST", action: "/sidenav" },
+			{ method: "POST", action: SIDENAV_ACTION },
 		);
 	};
 
@@ -243,8 +246,10 @@ export function Layout({
 	);
 	const layoutSize = useLayoutSize();
 	const isTabletLayout = layoutSize === "tablet";
-	const [sideNavModalOpen, setSideNavModalOpen] =
-		useTabletModal(isTabletLayout);
+	const sideNavId = React.useId();
+	const sideNavRef = React.useRef<HTMLElement>(null);
+	const [sideNavDrawerOpen, setSideNavDrawerOpen] = React.useState(false);
+	useClosePopoversOnNavigation(sideNavRef);
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] =
 		useTabletModal(isTabletLayout);
 	useVisualViewportHeight();
@@ -387,7 +392,20 @@ export function Layout({
 	return (
 		<>
 			<SideNav
-				className={showLeaderboard ? styles.sidebarFuseSpace : undefined}
+				ref={sideNavRef}
+				id={sideNavId}
+				popover="auto"
+				tabIndex={-1}
+				onToggle={(event) => {
+					if (!isOwnToggle(event)) return;
+					const open = event.newState === "open";
+					setSideNavDrawerOpen(open);
+					if (open) event.currentTarget.focus();
+				}}
+				className={clsx(
+					styles.sideNavDrawer,
+					showLeaderboard && styles.sidebarFuseSpace,
+				)}
 				collapsed={sideNavCollapsed}
 				footer={sideNavFooterContent}
 				top={<SiteTitle />}
@@ -408,28 +426,12 @@ export function Layout({
 						<SiteLogoContent />
 					</Link>
 					<SideNavCollapseButton
-						onToggle={() => setSideNavModalOpen(true)}
+						popoverTarget={sideNavId}
 						className={styles.sideNavModalTrigger}
-						showNotificationDot={!sideNavModalOpen && showUnseenDot}
-						badgeCount={!sideNavModalOpen ? unseenFriendRequests : 0}
+						showNotificationDot={!sideNavDrawerOpen && showUnseenDot}
+						badgeCount={!sideNavDrawerOpen ? unseenFriendRequests : 0}
 						testId="sidenav-modal-trigger"
 					/>
-					{sideNavModalOpen ? (
-						<SendouModal
-							className={styles.sideNavModal}
-							isDismissable
-							onClose={() => setSideNavModalOpen(false)}
-						>
-							<SideNav
-								className={styles.sideNavInModal}
-								footer={sideNavFooterContent}
-								top={<SiteTitle />}
-								topCentered={isFrontPage}
-							>
-								{sideNavChildren}
-							</SideNav>
-						</SendouModal>
-					) : null}
 					{chatSidebarModalOpen ? (
 						<SendouModal
 							className={styles.chatSidebarModal}
@@ -440,13 +442,33 @@ export function Layout({
 							<LazyChatSidebar />
 						</SendouModal>
 					) : null}
-					<SideNavCollapseButton
-						onToggle={() => setSideNavCollapsed(!sideNavCollapsed)}
-						className={styles.sideNavCollapseButton}
-						showNotificationDot={sideNavCollapsed && showUnseenDot}
-						badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
-						testId="sidenav-collapse-button"
-					/>
+					<form
+						method="post"
+						action={SIDENAV_ACTION}
+						className={styles.sideNavCollapseForm}
+						onSubmit={(event) => {
+							event.preventDefault();
+							setSideNavCollapsed(!sideNavCollapsed);
+						}}
+					>
+						<input
+							type="hidden"
+							name="collapsed"
+							value={String(!sideNavCollapsed)}
+						/>
+						<input
+							type="hidden"
+							name="returnTo"
+							value={`${location.pathname}${location.search}`}
+						/>
+						<SideNavCollapseButton
+							type="submit"
+							className={styles.sideNavCollapseButton}
+							showNotificationDot={sideNavCollapsed && showUnseenDot}
+							badgeCount={sideNavCollapsed ? unseenFriendRequests : 0}
+							testId="sidenav-collapse-button"
+						/>
+					</form>
 					<TopNavMenus />
 					<TopRightButtons
 						showSupport={Boolean(
@@ -564,18 +586,17 @@ function SiteLogoContent() {
 }
 
 function SideNavCollapseButton({
-	onToggle,
 	className,
 	showNotificationDot,
 	badgeCount,
 	testId,
+	...buttonProps
 }: {
-	onToggle?: () => void;
 	className?: string;
 	showNotificationDot?: boolean;
 	badgeCount?: number;
 	testId?: string;
-}) {
+} & Pick<SendouButtonProps, "type" | "popoverTarget">) {
 	const { t } = useTranslation(["friends"]);
 
 	return (
@@ -586,7 +607,7 @@ function SideNavCollapseButton({
 				size="small"
 				shape="square"
 				icon={<PanelLeft />}
-				onPress={onToggle}
+				{...buttonProps}
 			/>
 			{showNotificationDot ? <NotificationDot /> : null}
 			{badgeCount ? (

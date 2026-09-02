@@ -79,6 +79,13 @@
 	}
 }
 
+.panelDialog {
+	outline: none;
+	display: flex;
+	flex-direction: column;
+	height: 100%;
+}
+
 .panel {
 	position: fixed;
 	inset: auto 0 var(--layout-nav-height) 0;
@@ -89,15 +96,24 @@
 	max-width: none;
 	max-height: none;
 	height: calc((100% - var(--layout-nav-height)) * 0.85);
-	background-color: var(--color-bg);
+	background: none;
 	color: var(--color-text);
-	border-radius: var(--radius-box) var(--radius-box) 0 0;
 	overflow: hidden;
-	display: flex;
 	flex-direction: column;
-	padding-block-end: env(safe-area-inset-bottom);
 	outline: none;
-	animation: slide-up 200ms ease-out;
+
+	/* a display on the class itself would show the closed panels too */
+	&:popover-open {
+		display: flex;
+	}
+
+	/* the box sits above the tab bar and clips, so the sliding content comes up from behind the bar */
+	& > .panelDialog {
+		background-color: var(--color-bg);
+		border-radius: var(--radius-box) var(--radius-box) 0 0;
+		padding-block-end: env(safe-area-inset-bottom);
+		animation: slide-up 200ms ease-out;
+	}
 
 	&::backdrop {
 		inset: 0;
@@ -145,13 +161,6 @@
 	flex-direction: column;
 }
 
-.panelDialog {
-	outline: none;
-	display: flex;
-	flex-direction: column;
-	height: 100%;
-}
-
 .menuOverlay {
 	position: fixed;
 	inset: 0 0 var(--layout-nav-height) 0;
@@ -165,10 +174,13 @@
 	background-color: var(--color-bg);
 	color: var(--color-text);
 	overflow-y: auto;
-	display: flex;
 	flex-direction: column;
 	outline: none;
 	animation: fade-in 200ms ease-out;
+
+	&:popover-open {
+		display: flex;
+	}
 
 	&::backdrop {
 		background: none;
@@ -370,30 +382,8 @@
 .noAnimation {
 	animation: none;
 
+	& > .panelDialog,
 	&::backdrop {
 		animation: none;
 	}
-}
-
-.ghostTabBar {
-	position: fixed;
-	bottom: 0;
-	left: 0;
-	right: 0;
-	height: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
-	padding-bottom: env(safe-area-inset-bottom);
-	display: flex;
-	justify-content: space-around;
-	align-items: center;
-	z-index: 100;
-}
-
-.ghostTab {
-	height: 100%;
-	flex: 1;
-	background: none;
-	border: none;
-	cursor: pointer;
-	opacity: 0;
-	padding: 0;
 }

@@ -3,7 +3,7 @@ import type { TFunction } from "i18next";
 import { Search } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouModal } from "~/components/elements/Dialog";
 import { SendouRadio, SendouRadioGroup } from "~/components/elements/Radio";
@@ -116,15 +116,15 @@ export function GlobalSearch() {
 
 	return (
 		<>
-			<button
-				type="button"
+			<Link
+				to={globalSearchSearchParams.href("", { search: "open" })}
+				preventScrollReset
 				className={styles.searchButton}
-				onClick={() => handleOpenChange(true)}
 			>
 				<Search className={styles.searchIcon} />
 				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
 				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
-			</button>
+			</Link>
 			{isOpen ? (
 				<SendouModal
 					className={styles.modal}

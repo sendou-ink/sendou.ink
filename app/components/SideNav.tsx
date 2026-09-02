@@ -14,6 +14,7 @@ export function SideNav({
 	top,
 	topCentered,
 	collapsed,
+	...rest
 }: {
 	children: React.ReactNode;
 	className?: string;
@@ -21,12 +22,13 @@ export function SideNav({
 	top?: React.ReactNode;
 	topCentered?: boolean;
 	collapsed?: boolean;
-}) {
+} & Omit<React.ComponentPropsWithRef<"nav">, "children" | "className">) {
 	return (
 		<nav
 			className={clsx(styles.sideNav, className, {
 				[styles.sideNavCollapsed]: collapsed,
 			})}
+			{...rest}
 		>
 			<div
 				className={clsx(styles.sideNavTop, {
@@ -141,7 +143,6 @@ function ListItemContent({
 export function ListLink({
 	children,
 	to,
-	onClick,
 	isActive,
 	imageUrl,
 	overlayIconUrl,
@@ -152,7 +153,6 @@ export function ListLink({
 }: {
 	children: React.ReactNode;
 	to: string;
-	onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 	isActive?: boolean;
 	imageUrl?: string;
 	overlayIconUrl?: string;
@@ -167,7 +167,6 @@ export function ListLink({
 		<Link
 			to={to}
 			className={styles.listLink}
-			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
 		>
 			<ListItemContent

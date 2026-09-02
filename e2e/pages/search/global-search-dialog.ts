@@ -15,7 +15,8 @@ export class GlobalSearchDialog {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			openButton: page.getByRole("button", { name: /Search/ }),
+			// "Top Search" links exist too
+			openButton: page.getByRole("link", { name: /^Search/ }),
 			dialog: page.getByRole("dialog", { name: "Search" }),
 			input: page.getByPlaceholder("Search..."),
 		};

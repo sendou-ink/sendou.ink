@@ -1,8 +1,8 @@
 import * as React from "react";
 import { useWindowSize } from "./useWindowSize";
 
-const MOBILE_BREAKPOINT = 600;
-const DESKTOP_BREAKPOINT = 1000;
+export const MOBILE_BREAKPOINT = 600;
+export const DESKTOP_BREAKPOINT = 1000;
 
 type LayoutSize = "mobile" | "tablet" | "desktop";
 

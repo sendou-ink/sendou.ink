@@ -10,12 +10,20 @@ export class NotificationPopover {
 		this.page = page;
 		this.locators = {
 			openButton: this.page.getByTestId("notifications-button"),
-			items: this.page.getByTestId("notification-item"),
-			seeAllLink: this.page.getByTestId("notifications-see-all-button"),
+			// the list is rendered while closed too (and once more in the closed
+			// mobile "You" panel), so only what shows counts
+			items: this.page
+				.getByTestId("notification-item")
+				.filter({ visible: true }),
+			seeAllLink: this.page
+				.getByTestId("notifications-see-all-button")
+				.filter({ visible: true }),
 			/** Shown on the bell while unseen notifications exist. */
 			bellDot: this.page.getByTestId("notifications-bell-dot"),
 			/** Per notification, marking it as one the user has not read yet. */
-			unseenDots: this.page.getByTestId("notification-unseen-dot"),
+			unseenDots: this.page
+				.getByTestId("notification-unseen-dot")
+				.filter({ visible: true }),
 		};
 	}
 

@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
-import { data } from "react-router";
+import { data, redirect } from "react-router";
 import { getSidenavSession } from "~/features/layout/core/sidenav-session.server";
+import { safeReturnTo } from "~/utils/remix.server";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
 	const sidenavSession = await getSidenavSession(request);
@@ -9,10 +10,13 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	sidenavSession.setCollapsed(collapsed);
 
-	return data(
-		{ success: true },
-		{
-			headers: { "Set-Cookie": await sidenavSession.commit() },
-		},
-	);
+	const headers = { "Set-Cookie": await sidenavSession.commit() };
+
+	// a document form post (no JavaScript) has nowhere to show the data
+	const returnTo = safeReturnTo(formData.get("returnTo"));
+	if (returnTo) {
+		return redirect(returnTo, { headers });
+	}
+
+	return data({ success: true }, { headers });
 };

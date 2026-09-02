@@ -15,6 +15,8 @@ interface SendouMenuProps {
 	children: React.ReactNode;
 	popoverClassName?: string;
 	placement?: MenuPlacement;
+	/** Render the items while closed too, so the menu works before hydration (and without JavaScript). */
+	eager?: boolean;
 }
 
 const MenuContext = React.createContext<{ close: () => void }>({
@@ -28,6 +30,7 @@ export function SendouMenu({
 	scrolling,
 	placement,
 	popoverClassName,
+	eager,
 }: SendouMenuProps) {
 	const uid = useAnchorSafeId();
 	const popoverId = `${uid}-menu`;
@@ -35,6 +38,11 @@ export function SendouMenu({
 
 	const [open, setOpen] = React.useState(false);
 	const popoverRef = React.useRef<HTMLDivElement>(null);
+
+	// an eager menu can be open before hydration, its toggle event long gone
+	React.useEffect(() => {
+		if (popoverRef.current?.matches(":popover-open")) setOpen(true);
+	}, []);
 
 	useCloseOnScrollClip(open, popoverRef, () =>
 		popoverRef.current?.hidePopover(),
@@ -101,7 +109,7 @@ export function SendouMenu({
 				onKeyDown={onKeyDown}
 			>
 				<div className={styles.itemsContainer} role="menu">
-					{open ? (
+					{open || eager ? (
 						<MenuContext
 							value={{ close: () => popoverRef.current?.hidePopover() }}
 						>
