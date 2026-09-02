@@ -1,11 +1,4 @@
-/**
- * Asserts that a code path is unreachable by accepting a value of type `never`.
- * This function is useful for exhaustive checks in switch statements or discriminated unions.
- * If called, it throws an error with a message containing the unexpected value.
- *
- * @param x - The value that should never occur (of type `never`).
- * @throws {Error} Throws an error indicating an unexpected value was encountered.
- */
+/** Exhaustiveness check for switches / discriminated unions; throws if reached. */
 export function assertUnreachable(x: never): never {
 	throw new Error(
 		`Didn't expect to get here. Unexpected value: ${JSON.stringify(x)}`,

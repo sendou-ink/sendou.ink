@@ -33,9 +33,7 @@ async function fromLeaderboard(
 	if (currSeason) {
 		const range = seasonToVotingRange(currSeason);
 
-		// we are in the period of a season where the season's voting
-		// has ended but we don't yet have the latest leaderboard results
-		// -> last season's results are no longer valid
+		// voting has ended but the latest leaderboard isn't in yet, so last season's results are stale
 		if (range.endDate < now) return [];
 	}
 

@@ -240,7 +240,6 @@ describe("Tournament map list generator", () => {
 		expect(mapList.length).toBe(5);
 
 		for (let i = 0; i < mapList.length - 1; i++) {
-			// map belongs to team 2 map list
 			const map = mapList[i];
 			expect(map).toBeTruthy();
 
@@ -465,7 +464,6 @@ describe("Tournament map list generator", () => {
 
 	// paddling pool 264
 	test("handles 100% overlap in one mode and none in others", () => {
-		// should not throw
 		generateMaps({
 			count: 5,
 			followModeOrder: false,

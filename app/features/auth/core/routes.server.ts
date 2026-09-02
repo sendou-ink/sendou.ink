@@ -26,7 +26,6 @@ import { getUser } from "./user.server";
 export const callbackLoader: LoaderFunction = async ({ request, url }) => {
 	// biome-ignore lint/plugin: OAuth callback param, its name and values defined by the provider
 	if (url.searchParams.get("error") === "access_denied") {
-		// The user denied the authentication request
 		// https://www.oauth.com/oauth2-servers/server-side-apps/possible-errors/
 
 		throw redirect(authErrorUrl("aborted"));
@@ -145,13 +144,9 @@ async function safeReturnTo(request: Request): Promise<string | null> {
 	return value;
 }
 
-// below is alternative log-in flow that is operated via the Lohi Discord bot
-// this is intended primarily as a workaround when website is having problems communicating
-// with the Discord due to rate limits or other reasons
-
-// only light validation here as we generally trust Lohi
-// auth flow params are infrastructure conventions and intentionally do not go
-// through app/modules/search-params/
+// alternative log-in flow via the Lohi Discord bot, a workaround for when the site can't reach
+// Discord (rate limits etc.). Only light validation as we trust Lohi; these params are
+// infrastructure conventions and intentionally bypass app/modules/search-params/
 function parseSearchParams<T extends AnySyncSchema>({
 	request,
 	schema,

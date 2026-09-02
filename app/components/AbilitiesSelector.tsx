@@ -176,28 +176,21 @@ function addAbility({
 	) as BuildAbilitiesTupleWithUnknown;
 
 	if (atRowIndex !== undefined && atAbilityIndex !== undefined) {
-		// Attempt to place the ability at a specific slot since we
-		// were given an atRowIndex and atAbilityIndex
 		if (canPlaceAbilityAtSlot(atRowIndex, atAbilityIndex, ability)) {
-			// Assign this ability to the slot
 			abilitiesClone[atRowIndex][atAbilityIndex] = ability.name;
 		}
 	} else {
-		// Loop through all slots and attempt to place this ability
-		// in the first empty one
+		// place in the first empty valid slot
 		for (const [rowIndex, row] of abilitiesClone.entries()) {
 			for (const [abilityIndex, oldAbility] of row.entries()) {
 				if (oldAbility !== "UNKNOWN") {
-					// Skip any filled slots in this loop until we arrive at an empty one.
 					continue;
 				}
 
 				if (!canPlaceAbilityAtSlot(rowIndex, abilityIndex, ability)) {
-					// This ability isn't valid for this slot
 					continue;
 				}
 
-				// Assign this ability to the slot
 				abilitiesClone[rowIndex][abilityIndex] = ability.name;
 
 				return abilitiesClone;
@@ -205,6 +198,5 @@ function addAbility({
 		}
 	}
 
-	// no-op if no available slots
 	return abilitiesClone;
 }

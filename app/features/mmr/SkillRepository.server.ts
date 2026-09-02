@@ -11,10 +11,7 @@ export type CurrentSkill = Pick<
 	"mu" | "sigma" | "matchesCount"
 >;
 
-/**
- * Season's latest skill of each given user, keyed by user id. Users without a skill
- * row that season are absent from the map.
- */
+/** Season's latest skill of each user, keyed by user id; users without one are absent. */
 export async function findCurrentUserSkills({
 	season,
 	userIds,
@@ -35,10 +32,7 @@ export async function findCurrentUserSkills({
 	);
 }
 
-/**
- * Season's latest skill of each given team, keyed by team identifier. Teams without a
- * skill row that season are absent from the map.
- */
+/** Season's latest skill of each team, keyed by identifier; teams without one are absent. */
 export async function findCurrentTeamSkills({
 	season,
 	identifiers,
@@ -64,9 +58,7 @@ export async function findCurrentTeamSkills({
 	);
 }
 
-/**
- * Ordinals of the season's latest skill of every user who has one, best first.
- */
+/** Ordinals of the season's latest skill of every user who has one, best first. */
 export async function findOrderedUserOrdinalsBySeason(season: number) {
 	return db
 		.selectFrom(latestSkillPerSeason({ season, by: "userId" }).as("latest"))
@@ -75,9 +67,7 @@ export async function findOrderedUserOrdinalsBySeason(season: number) {
 		.execute();
 }
 
-/**
- * Whether the season has any Skill rows.
- */
+/** Whether the season has any Skill rows. */
 export async function existsBySeason(season: number) {
 	const row = await db
 		.selectFrom("Skill")
@@ -89,10 +79,7 @@ export async function existsBySeason(season: number) {
 	return Boolean(row);
 }
 
-/**
- * Seeding skills of the given users for one seeding type, keyed by user id. Users without
- * a seeding skill of that type are absent from the map.
- */
+/** Seeding skills of the users for one seeding type, keyed by user id; users without one are absent. */
 export async function findSeedingSkills({
 	type,
 	userIds,
@@ -114,9 +101,7 @@ export async function findSeedingSkills({
 	return new Map<number, SeedingSkill>(rows.map((row) => [row.userId, row]));
 }
 
-/**
- * Adds a user's starting skill of a season.
- */
+/** Adds a user's starting skill of a season. */
 export async function addInitialSkill(
 	{
 		mu,
@@ -160,10 +145,7 @@ export async function findSeasonProgressionByUserId({
 		.execute();
 }
 
-/**
- * Days of the season the user played at least one set on, with whether they
- * played SendouQ, tournaments or both that day. Dates in `yyyy-MM-dd` format.
- */
+/** Days (`yyyy-MM-dd`) of the season the user played a set on, with whether it was SendouQ, tournaments or both. */
 export async function findSeasonActiveDaysByUserId({
 	userId,
 	season,
@@ -192,11 +174,7 @@ export async function findSeasonActiveDaysByUserId({
 	}));
 }
 
-/**
- * Ids of the season's latest Skill row of each given user or team. A grouped `max(id)`
- * over the `(season, userId/identifier)` index is a plain index range per value, where
- * a `row_number()` window would materialize and sort every row of those users first.
- */
+/** Ids of the season's latest Skill row per user or team. A grouped `max(id)` is an index range per value; a `row_number()` window would materialize and sort every row first. */
 function latestSkillIdsOfSeason(
 	season: number,
 	by: "userId" | "identifier",
@@ -210,11 +188,7 @@ function latestSkillIdsOfSeason(
 		.groupBy(`Skill.${by}`);
 }
 
-/**
- * User's Skill rows of a season that came from a set played, grouped by the day
- * it was played on (`yyyy-MM-dd`) in ascending order. Callers select what they
- * want aggregated per day.
- */
+/** User's Skill rows of a season from played sets, grouped by day (`yyyy-MM-dd`) ascending; callers select what to aggregate per day. */
 function seasonSkillsByDayQuery({
 	userId,
 	season,

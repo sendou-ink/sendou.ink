@@ -313,9 +313,7 @@ function groupWithTeamAndMembers(
 	);
 }
 
-/**
- * Retrieves the pages count of results for a specific user and season. Counting both SendouQ matches and ranked tournaments.
- */
+/** Page count of a user's season results, counting both SendouQ matches and ranked tournaments. */
 export async function countSeasonResultPagesByUserId({
 	userId,
 	season,
@@ -441,9 +439,8 @@ const rosterSp = sql<
 	end`;
 
 /**
- * The SP a rating change was worth, or `null` while the rating is still being calculated
- * and so has never been shown. Reads the columns
- * {@link previousRatingColumns} adds, plus `ordinal`, off the named selection.
+ * The SP a rating change was worth, or `null` while the rating is still being calculated and so
+ * has never been shown. Reads the columns {@link previousRatingColumns} adds, plus `ordinal`.
  */
 const spDiffOf = (of: "userSkill" | "rosterSkill") =>
 	sql<
@@ -453,9 +450,8 @@ const spDiffOf = (of: "userSkill" | "rosterSkill") =>
 		end`;
 
 /**
- * Season's Skill rows partitioned by `partitionBy`, each carrying the rating it replaced.
- * Rows from SendouQ sets are included and not just the tournament ones the seasons page
- * shows, because a tournament rating's predecessor is just as often a SendouQ set.
+ * Season's Skill rows partitioned by `partitionBy`, each carrying the rating it replaced. SendouQ
+ * rows are included too, since a tournament rating's predecessor is just as often a SendouQ set.
  */
 const previousRatingColumns = (
 	eb: ExpressionBuilder<DB, "Skill">,
@@ -472,9 +468,7 @@ const previousRatingColumns = (
 			.as("previousMatchesCount"),
 	] as const;
 
-/**
- * Retrieves results of given user, competitive season & page. Both SendouQ matches and ranked tournaments.
- */
+/** A page of a user's season results, both SendouQ matches and ranked tournaments. */
 export async function findSeasonResultsByUserId({
 	userId,
 	season,
@@ -796,11 +790,7 @@ export async function findCancelNominationCountsByUserIds({
 	});
 }
 
-/**
- * Creates a match between two groups. Every match made in the app comes from a
- * ready check, which is resolved as part of the same transaction; only seeds and
- * tests, which have no check to resolve, leave `readyCheckId` out.
- */
+/** Creates a match between two groups, resolving its ready check in the same transaction; only seeds and tests leave `readyCheckId` out. */
 export function insert({
 	alphaGroupId,
 	bravoGroupId,
@@ -912,11 +902,7 @@ export interface MatchTiers {
 	}>;
 }
 
-/**
- * Records the tiers on the groups and members themselves, so that the match page keeps showing
- * what was held when it was played. Recomputing could not: tier thresholds are percentiles of
- * the season's live distribution and so shift as the season goes on.
- */
+/** Snapshots tiers on the groups and members: thresholds are percentiles of the live distribution, so recomputing later would show different tiers. */
 async function snapshotTiers(tiers: MatchTiers, trx: Transaction<DB>) {
 	for (const group of tiers.groups) {
 		await trx
@@ -1639,11 +1625,7 @@ export type ResolveUnfinishedMatchResult =
 	| { status: "CONFIRMED" }
 	| { status: "ALREADY_LOCKED" };
 
-/**
- * Resolves a match the teams never finished: cancels it if the score is not
- * decisive, otherwise confirms the one team's report on the other's behalf.
- * Leaves `confirmedByUserId` empty as no user acted.
- */
+/** Resolves a never-finished match: cancels when the score is not decisive, else confirms the one report on the other team's behalf. `confirmedByUserId` stays empty. */
 export async function resolveUnfinishedMatch(
 	matchId: number,
 ): Promise<ResolveUnfinishedMatchResult> {

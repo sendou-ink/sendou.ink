@@ -10,11 +10,7 @@ import {
 
 const FIRST_TIED_RANK = DEFAULT_LEADERBOARD_MAX_SIZE - 2;
 
-/**
- * Leaderboard where five players are tied in SP across the shown-size cutoff:
- * indices 497–501 (0-based) all share placementRank 498, like players who
- * finished the season having played every match in the same stack do.
- */
+/** Leaderboard with five players tied across the shown-size cutoff: indices 497–501 share placementRank 498, like a stack that played every match together. */
 const leaderboardWithTieAcrossCutoff = () =>
 	Array.from({ length: DEFAULT_LEADERBOARD_MAX_SIZE + 2 }, (_, i) => {
 		const placementRank = i >= FIRST_TIED_RANK - 1 ? FIRST_TIED_RANK : i + 1;

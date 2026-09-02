@@ -49,10 +49,7 @@ export class SendouQLookingPage {
 		await modalClickConfirmButton(this.page);
 	}
 
-	/**
-	 * Presses the action another group's card offers: challenging or inviting it,
-	 * accepting what it offered, or undoing either.
-	 */
+	/** Presses the action another group's card offers: challenge, invite, accept what it offered, or undo either. */
 	async pressGroupAction() {
 		await submit(this.page, "group-card-action-button");
 	}

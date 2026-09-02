@@ -1,14 +1,12 @@
 /**
  * Main-thread wrapper around the AnalyzerWorker: init handshake, then either
- * one in-flight frame at a time (live capture / screenshot / seek fallback —
- * each frame yields one result per due detector, then a "done" carrying the
- * scheduler's calm signal and telemetry) or one in-flight chunk scan (the
- * worker decodes and analyzes a VoD time slice by itself, streaming results
- * and progress until "chunkDone"). `frameQueueLimit` opts a client into
- * buffering frames that arrive while a frame is in flight instead of
- * dropping them — live capture uses it so a slow parse streak (a browsed
- * battle log entry) can't swallow the footage sampled meanwhile; timestamps
- * ride with the frames, so late analysis still lands events at capture time.
+ * one in-flight frame at a time (live / screenshot / seek fallback — each
+ * frame yields one result per due detector, then a "done" carrying the calm
+ * signal and telemetry) or one in-flight chunk scan (the worker decodes and
+ * analyzes a VoD slice itself, streaming until "chunkDone"). `frameQueueLimit`
+ * buffers frames arriving while one is in flight instead of dropping them —
+ * live capture uses it so a slow parse streak can't swallow the footage
+ * sampled meanwhile; timestamps ride with the frames.
  */
 import { Config } from "../../../config";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
@@ -28,8 +26,7 @@ export type DoneHandler = (t: number, info: DoneInfo) => void;
 export type ChunkProgress = Extract<WorkerResponse, { kind: "chunkProgress" }>;
 export type ChunkProgressHandler = (progress: ChunkProgress) => void;
 
-/** each chunk-scanning worker decodes and analyzes on its own; leave a core
- * for the main thread and one for the browser's media stack */
+/** Each chunk worker decodes and analyzes on its own; leave a core for the main thread and one for the media stack. */
 export function defaultScanWorkerCount(): number {
 	return Math.min(4, Math.max(1, (navigator.hardwareConcurrency || 4) - 2));
 }
@@ -110,9 +107,8 @@ export class AnalyzerClient {
 				this.#fail(msg.message);
 			}
 		};
-		// A throw outside the worker's own try/catch posts neither "error" nor
-		// "done"; without these handlers `busy` would stay true forever and the
-		// sampler / VoD scan would silently freeze.
+		// A throw outside the worker's own try/catch posts neither "error" nor "done";
+		// without these handlers `busy` would stay true and the scan silently freeze.
 		this.#worker.onerror = (e: ErrorEvent) => {
 			this.#fail(`worker error: ${e.message || String(e)}`);
 		};
@@ -143,10 +139,9 @@ export class AnalyzerClient {
 	}
 
 	/**
-	 * Analyze a frame now, or — with `frameQueueLimit` set — buffer it until
-	 * the in-flight frame settles (past the limit the backlog is decimated:
-	 * see frame-queue.ts). Returns false (and closes the bitmap) only when
-	 * the frame was dropped outright.
+	 * Analyzes a frame now, or with `frameQueueLimit` buffers it until the
+	 * in-flight frame settles (past the limit the backlog is decimated, see
+	 * frame-queue.ts). False (and the bitmap closed) only when dropped outright.
 	 */
 	analyze(bitmap: ImageBitmap | VideoFrame, t: number): boolean {
 		if (this.busy) {
@@ -169,9 +164,8 @@ export class AnalyzerClient {
 	}
 
 	/**
-	 * Scan [tStart, tEnd) of `file` inside the worker. Results stream to the
-	 * shared result handler; resolves with the chunk's telemetry once done
-	 * (an aborted chunk resolves too — abort is not an error).
+	 * Scans [tStart, tEnd) of `file` inside the worker; results stream to the
+	 * shared handler, resolves with the chunk's telemetry (an abort resolves too).
 	 */
 	scanChunk(
 		request: { file: File; chunkIndex: number; tStart: number; tEnd: number },

@@ -1,9 +1,7 @@
 /**
- * Fixture discovery and detector execution for tests and tools.
- *
- * A fixture is a directory under app/features/scanner/tests/fixtures/<detector>/<case-name>/ containing
- * frame.png or frame.jpg (raw capture, any resolution — normalization happens
- * inside the pipeline under test) and expected.json.
+ * Fixture discovery and detector execution for tests and tools. A fixture is a
+ * directory under tests/fixtures/<detector>/<case-name>/ holding frame.png or
+ * frame.jpg (raw capture, any resolution) and expected.json.
  */
 import { existsSync, readdirSync, readFileSync } from "node:fs";
 import { join } from "node:path";
@@ -90,9 +88,8 @@ interface ExpectedScoreboard {
 		/** index of the yellow POV-arrow row in `players`; null = no arrow */
 		povIndex?: number | null;
 		/**
-		 * Death: killer's weapon id and kind (ids are unique per kind).
-		 * ScoreboardOwn: the player's own main weapon (weaponType unused).
-		 * weaponLabel is informational for the human corrector.
+		 * Death: killer's weapon id and kind (ids are unique per kind). ScoreboardOwn:
+		 * the player's own main (weaponType unused). weaponLabel is informational.
 		 */
 		weaponLabel?: string;
 		weaponId?: number | null;
@@ -117,11 +114,7 @@ interface ExpectedScoreboard {
 		layout?: "even" | "narrow-right" | "narrow-left";
 		/** PlayerStatus only: white camera badges proved a casted spectator HUD */
 		cast?: true | null;
-		/**
-		 * StripWeapons only: the true weapon per slot, [left team, right
-		 * team], null = slot skipped (splatted icon). weaponLabels is
-		 * informational for the human corrector.
-		 */
+		/** StripWeapons only: true weapon per slot, [left team, right team], null = splatted slot skipped */
 		weapons?: [(MainWeaponId | null)[], (MainWeaponId | null)[]];
 		weaponLabels?: [(string | null)[], (string | null)[]];
 		/** Minimap only: casted 8-player spectator map screen (not parsed yet) */

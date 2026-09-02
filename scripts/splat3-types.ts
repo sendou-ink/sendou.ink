@@ -1,12 +1,7 @@
 /**
- * Hand-maintained types for the [Leanny/splat3](https://github.com/Leanny/splat3) game data dump.
- *
- * The dump itself is not checked in (see `.gitignore`), so these types are declared here rather
- * than inferred from the JSON files. That keeps `pnpm run typecheck:scripts` passing whether or
- * not the dump is currently sitting in `scripts/dicts/splat3`.
- *
- * Only the fields the scripts actually read are declared for the deeply nested parameter dumps.
- * When a monthly update changes the dump's shape, update these types alongside the scripts.
+ * Hand-maintained types for the [Leanny/splat3](https://github.com/Leanny/splat3) game data dump,
+ * declared rather than inferred so `pnpm run typecheck:scripts` passes without the gitignored dump in
+ * `scripts/dicts/splat3`. Only the fields the scripts read are declared; update alongside the scripts.
  */
 
 /** `data/language/<Lang>.json` — message category -> message key -> localized (URI encoded) text. */

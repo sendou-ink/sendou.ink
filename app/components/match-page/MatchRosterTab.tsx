@@ -37,10 +37,10 @@ interface RosterTabTeam {
 	};
 	defaultName?: string;
 	members: Array<RosterTabMember>;
-	/** Sub user ids i.e. those who are not the current active roster */
+	/** users not in the current active roster */
 	subbedOut?: Array<number>;
 	tier?: { name: TierName; isPlus: boolean };
-	/** Tournament seed of the team (tournament only). */
+	/** tournament only */
 	seed?: number | null;
 }
 

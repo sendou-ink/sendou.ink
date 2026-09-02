@@ -1,7 +1,4 @@
-/**
- * Rows of ranked entries (rank, avatar, weapon, name, power) as rendered by the
- * leaderboards and the X Rank top search pages.
- */
+/** Rows of ranked entries (rank, avatar, weapon, name, power) for the leaderboards and X Rank top search pages. */
 
 import clsx from "clsx";
 import type * as React from "react";

@@ -37,8 +37,7 @@ async function main() {
 	});
 
 	await page.goto(OG_IMAGES_PAGE_URL, { waitUntil: "networkidle" });
-	// the page previews the canvases scaled down and inside the site layout, the
-	// one being captured is blown up to full size and lifted on top of everything
+	// the page previews the canvases scaled down; the captured one is blown up to full size on top of everything
 	await page.addStyleTag({
 		content: `
 			* { --og-scale: 1 !important }

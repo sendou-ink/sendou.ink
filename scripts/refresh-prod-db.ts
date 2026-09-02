@@ -18,22 +18,18 @@ function main() {
 		process.exit(1);
 	}
 
-	// delete db-prod.sqlite3-shm file if exists
 	if (fs.existsSync(dbProdShmPath)) {
 		fs.unlinkSync(dbProdShmPath);
 	}
 
-	// delete db-prod.sqlite3-wal file if exists
 	if (fs.existsSync(dbProdWalPath)) {
 		fs.unlinkSync(dbProdWalPath);
 	}
 
-	// delete db-prod.sqlite3 if exists
 	if (fs.existsSync(dbProdPath)) {
 		fs.unlinkSync(dbProdPath);
 	}
 
-	// copy db-copy.sqlite3 to db-prod.sqlite3
 	fs.copyFileSync(dbCopyPath, dbProdPath);
 }
 

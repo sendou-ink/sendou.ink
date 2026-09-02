@@ -123,7 +123,7 @@ export const usersListForPost = async ({
 		(member) => getMemberRoleType(member) !== "OTHER",
 	);
 
-	// handle case when all users are from excluded roles
+	// falls back to everyone when too few members have a playing role
 	const result = (
 		filteredMembers.length >= SCRIM.MIN_MEMBERS_PER_TEAM
 			? filteredMembers
@@ -134,7 +134,7 @@ export const usersListForPost = async ({
 		errorToast("Your team does not have enough members (4) to scrim");
 	}
 
-	// ensure author is included in the list even if they match the ignore condition
+	// the author is included even with an excluded role
 	return result.includes(authorId) ? result : [authorId, ...result];
 };
 

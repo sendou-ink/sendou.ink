@@ -8,12 +8,10 @@ import type { TournamentSummary } from "../tournament-bracket/core/summarizer.se
 import * as TournamentRepository from "./TournamentRepository.server";
 import * as TournamentTeamRepository from "./TournamentTeamRepository.server";
 
-/** SQLite binds at most 32,766 parameters per statement and `PlayerResult` has
- * eight columns, so one multi-row insert fits this many rows at most. */
+/** SQLite binds at most 32,766 parameters per statement and `PlayerResult` has eight columns. */
 const PLAYER_RESULT_ROWS_PER_STATEMENT = Math.floor(32766 / 8);
 
-/** Enough users that every ordered pair of them, for both types, is over
- * {@link PLAYER_RESULT_ROWS_PER_STATEMENT}. */
+/** Enough that every ordered pair, for both types, is over {@link PLAYER_RESULT_ROWS_PER_STATEMENT}. */
 const USER_COUNT = 46;
 
 const users = UserFactory.pool();

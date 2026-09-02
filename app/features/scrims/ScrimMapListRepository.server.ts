@@ -10,11 +10,7 @@ import type { ScrimSide } from "./scrims-types";
 
 type SubmitMapListArgs = Omit<TablesInsertable["ScrimMapList"], "updatedAt">;
 
-/**
- * Inserts a map list row for the given side, replacing any existing row for
- * the same `(scrimPostId, side)` pair, and (atomically) generates and inserts
- * the next map for the scrim if no unreported map is currently waiting.
- */
+/** Upserts the side's map list row and, atomically, inserts the scrim's next map if no unreported one is waiting. */
 export async function submitMapListAndGenerateIfNeeded(
 	args: SubmitMapListArgs,
 ): Promise<void> {
@@ -64,12 +60,7 @@ export type ResolvedScrimMapList = {
 	updatedAt: number;
 };
 
-/**
- * Returns all submitted map lists for the scrim with the pool resolved into
- * concrete `(mode, stageId)` pairs. Tournament-sourced rows additionally carry
- * the tournament's id and name for display. Pass a transaction as `trx`
- * to read within an existing transaction.
- */
+/** The scrim's submitted map lists with pools resolved to `(mode, stageId)` pairs; tournament-sourced rows carry the tournament's id and name. */
 export async function findMapListsByScrimPostId(
 	scrimPostId: number,
 	trx?: Transaction<DB>,

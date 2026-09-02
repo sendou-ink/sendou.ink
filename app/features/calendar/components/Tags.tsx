@@ -17,10 +17,10 @@ export function Tags({
 	tags: Array<CalendarEventTag>;
 	small?: boolean;
 	centered?: boolean;
-	/** How many tags to show at most, rest are collapsed into a "+N" indicator. If undefined all tags are shown. */
+	/** Rest are collapsed into a "+N" indicator; undefined shows all. */
 	maxVisible?: number;
 
-	/** Called when tag delete button clicked. If undefined delete buttons won't be shown. */
+	/** Undefined hides the delete buttons. */
 	onDelete?: (tag: CalendarEventTag) => void;
 }) {
 	const { t } = useTranslation();

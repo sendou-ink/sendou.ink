@@ -45,9 +45,9 @@ export interface SendouSelectProps<T extends object>
 		placeholder?: string;
 	};
 	popoverClassName?: string;
-	/** Value of the search input, used for controlled components */
+	/** controlled search input value */
 	searchInputValue?: string;
-	/** Callback for when the search input value changes. When defined `items` has to be filtered on the caller side (automatic filtering in component disabled). */
+	/** When defined, the caller filters `items` (automatic filtering disabled). */
 	onSearchInputChange?: (value: string) => void;
 	clearable?: boolean;
 	filter?: AutocompleteProps<object>["filter"];
@@ -55,20 +55,7 @@ export interface SendouSelectProps<T extends object>
 	estimatedRowHeight?: number;
 }
 
-/**
- * A customizable select component with optional search functionality. Virtualizes the list of items for performance.
- *
- * @example
- * ```tsx
- * <SendouSelect items={items} search={{ placeholder: "Search for items..." }}>
- *   {({ key, ...item }) => (
- *     <SendouSelectItem key={key} {...item}>
- *       {item.name}
- *     </SendouSelectItem>
- *   )}
- * </SendouSelect>
- * ```
- */
+/** Select with optional search; virtualizes the item list. */
 export function SendouSelect<T extends object>({
 	label,
 	description,
@@ -121,9 +108,8 @@ export function SendouSelect<T extends object>({
 		</Virtualizer>
 	);
 
-	// The Autocomplete wrapper filters the collection, but its filtering drops
-	// items with a falsy key (e.g. `0`). When there is nothing to filter we skip
-	// it entirely so such items always render.
+	// the Autocomplete wrapper's filtering drops items with a falsy key (e.g. `0`),
+	// so it is skipped entirely when there is nothing to filter
 	const filterable = !!search || isControlled || !!filter;
 
 	return (

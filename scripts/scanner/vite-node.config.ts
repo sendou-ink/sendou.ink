@@ -1,9 +1,8 @@
 /**
- * Config for running the scanner scripts with vite-node. Deliberately minimal:
- * the root vite.config.ts pre-bundles @techstark/opencv-js for the browser
- * worker, and vite-node would resolve that browser prebundle (which
- * crashes on __dirname in Node). Without the include, vite-node
- * externalizes the dep to a plain require of the (patched) CJS bundle.
+ * vite-node config for the scanner scripts. The root vite.config.ts
+ * pre-bundles @techstark/opencv-js for the browser worker, and vite-node would
+ * resolve that prebundle (which crashes on __dirname in Node); without the
+ * include it externalizes the dep to a plain require of the patched CJS bundle.
  */
 import { defineConfig } from "vite";
 

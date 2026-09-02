@@ -200,7 +200,6 @@ describe("GroupCard", () => {
 				}),
 			});
 
-			// Tier info is shown in a popover button, check it renders
 			await expect
 				.element(screen.getByTestId("sendouq-group-card-member"))
 				.toBeVisible();
@@ -220,7 +219,6 @@ describe("GroupCard", () => {
 				}),
 			});
 
-			// Weapons are rendered as img elements
 			const images = screen.container.querySelectorAll("img");
 			expect(images.length).toBeGreaterThan(0);
 		});
@@ -314,7 +312,6 @@ describe("GroupCard", () => {
 				}),
 			});
 
-			// REPLAY text is rendered, translations are loaded
 			await expect.element(screen.getByText(/REPLAY/i)).toBeVisible();
 		});
 	});
@@ -330,7 +327,6 @@ describe("GroupCard", () => {
 				displayOnly: false,
 			});
 
-			// Actual translated text is "Invite"
 			await expect.element(screen.getByText("Invite")).toBeVisible();
 		});
 
@@ -344,7 +340,6 @@ describe("GroupCard", () => {
 				displayOnly: false,
 			});
 
-			// Actual translated text is "Challenge"
 			await expect.element(screen.getByText("Challenge")).toBeVisible();
 		});
 
@@ -358,7 +353,6 @@ describe("GroupCard", () => {
 				displayOnly: false,
 			});
 
-			// Actual translated text is "Start match"
 			await expect.element(screen.getByText("Start match")).toBeVisible();
 		});
 	});
@@ -427,7 +421,6 @@ describe("GroupCard", () => {
 			await expect
 				.element(screen.getByTestId("sendouq-group-card-member"))
 				.toBeVisible();
-			// VC button should not be visible, only member info
 		});
 
 		test("hides weapons when hideWeapons=1", async () => {

@@ -1,7 +1,4 @@
-/*
-:where() keeps the box base at zero specificity so the single-class variants
-below win regardless of which CSS chunk loads last
-*/
+/* zero specificity so the single-class variants below always win */
 :where(.box) {
 	padding: var(--s-2) var(--s-3);
 	background-color: var(--graphic-row-bg);

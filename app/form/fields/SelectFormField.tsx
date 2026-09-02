@@ -154,9 +154,7 @@ function CustomSelect<V extends string>({
 
 	const hasDescriptions = items.some((item) => item.description);
 
-	// the Autocomplete wrapper of searchable selects drops falsy keys, so only
-	// plain selects render the clear choice as a list item like the native
-	// select's "—" option; searchable ones keep the clear button
+	// searchable selects' Autocomplete drops falsy keys, so only plain selects get a "—" clear item
 	const hasEmptyItem = Boolean(clearable && !searchPlaceholder);
 
 	const selectItems = [

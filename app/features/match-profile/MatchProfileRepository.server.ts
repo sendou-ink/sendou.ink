@@ -92,10 +92,7 @@ export async function updateOwnMatchProfile({
 	return { mapModePreferencesChanged, noScreenChanged };
 }
 
-/**
- * Preserves existing preferences for modes not included in the new submission.
- * So if they later want to play this mode again, the system remembers their maps.
- */
+/** Keeps preferences of modes left out of the submission, so their maps are remembered when the mode is played again. */
 export function mergeExcludedModePreferences(
 	newPool: UserMapModePreferences["pool"],
 	currentPool: UserMapModePreferences["pool"] | undefined,

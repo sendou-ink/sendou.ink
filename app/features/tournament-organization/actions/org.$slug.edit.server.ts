@@ -52,11 +52,10 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		badges: data.badges,
 	});
 
-	// in case members changed...
-	// 1) clear the participation info map (front page)
+	// members may have changed: clear the participation info map (front page)
 	ShowcaseTournaments.clearParticipationInfoMap();
 
-	// 2) clear tournament data caches (so permission changes are shown immediately)
+	// and tournament data caches so permission changes show immediately
 	for (const tournament of await TournamentOrganizationRepository.findAllUnfinalizedEvents(
 		organization.id,
 	)) {

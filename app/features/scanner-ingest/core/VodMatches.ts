@@ -14,11 +14,7 @@ export interface PrefillVodMatch {
 	povWeapon: MainWeaponId | null;
 }
 
-/**
- * Turns the per-match rows a scanner VoD scan sends into prefill data for the
- * /vods/new form. The rows already carry sendou ids (validated by
- * ingestVodPrefillSchema); this only renames fields into the form's shape.
- */
+/** Turns a scanner VoD scan's per-match rows (sendou ids, validated by ingestVodPrefillSchema) into /vods/new prefill data; only renames fields. */
 export function prefillVodMatches(
 	matches: IngestVodMatchInput[],
 ): PrefillVodMatch[] {

@@ -9,12 +9,7 @@ type InsertArgs = Parameters<
 	userId: number;
 };
 
-/**
- * Creates the votes a SendouQ group casts on carrying on with the same teammates
- * after a match. A vote against clears the group's votes in favour, since those
- * were for carrying on at a size the group no longer has — the repository's own
- * doing, which is why the votes go through it in the order they were cast.
- */
+/** Votes on carrying on after a match. A vote against clears the votes in favour, so they go through the repository in cast order. */
 export const { create } = defineFactory({
 	defaults: () => ({ isContinuing: true }),
 	insert: ({ userId, ...args }: InsertArgs) =>

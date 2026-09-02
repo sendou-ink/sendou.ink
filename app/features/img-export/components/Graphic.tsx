@@ -17,10 +17,7 @@ const GRAPHIC_DATE_FORMAT_OPTIONS: Intl.DateTimeFormatOptions = {
 	year: "numeric",
 };
 
-/**
- * Sizes that keep the code at roughly two pixels per module. The lengths are the byte
- * capacities of the QR versions used at the default "L" error correction level.
- */
+/** ~2px per module; the lengths are byte capacities of the QR versions at "L" error correction. */
 const QR_CODE_SIZE_BREAKPOINTS = [
 	{ maxUrlLength: 106, size: 56 },
 	{ maxUrlLength: 271, size: 84 },
@@ -29,7 +26,7 @@ const QR_CODE_SIZE_BREAKPOINTS = [
 
 const QR_CODE_SIZE_MAX = 144;
 
-/** Full URL the graphic's QR code should link to, provided by `ImageExportDialog` (null = no QR code) */
+/** URL the QR code links to, provided by `ImageExportDialog` (null = no QR code) */
 export const GraphicQrCodeContext = React.createContext<string | null>(null);
 
 export interface GraphicPlayer {
@@ -80,7 +77,7 @@ export function GraphicHeader({
 	titleRow: React.ReactNode;
 	subtitle: React.ReactNode;
 	trailing?: React.ReactNode;
-	/** Line the trailing content up with the title instead of centering it against the title and subtitle together */
+	/** Align the trailing content with the title instead of the title + subtitle block */
 	alignTrailingWithTitle?: boolean;
 } & (
 	| { avatarUrl?: string; identiconInput: string; leading?: never }
@@ -112,7 +109,6 @@ export function GraphicHeader({
 	);
 }
 
-/** the graphic's headline text, sized to claim the header row's free space */
 export function GraphicTitle({ children }: { children: React.ReactNode }) {
 	return <span className={styles.headerTitle}>{children}</span>;
 }
@@ -220,10 +216,7 @@ export function GraphicTeamRow({
 	);
 }
 
-/**
- * A chip is sized by its content, and the image export freezes each element's width. Inline
- * elements are exempt from that, so the chip must stay a `span` or its name gets clipped.
- */
+/** Must stay a `span`: the export freezes block widths and would clip the content-sized name. */
 export function GraphicPlayerChip({ player }: { player: GraphicPlayer }) {
 	return (
 		<span className={styles.player}>

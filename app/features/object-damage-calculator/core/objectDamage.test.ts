@@ -54,8 +54,7 @@ function calculate({
 }
 
 describe("calculateDamage()", () => {
-	// the function throws if weapon resolves to more than one set of damage rates
-	// so this test goes through all of them to make sure they all work
+	// the function throws if a weapon resolves to more than one set of damage rates
 	test("Every weapon can calculate damage", () => {
 		for (const mainWeaponId of mainWeaponIds) {
 			const analyzed = buildStats({
@@ -164,7 +163,7 @@ describe("calculateDamage()", () => {
 		[5010, "NORMAL_MAX", 34, 31],
 		// Tenta Brella
 		[6010, "NORMAL_MAX", 4, 4],
-		// // Tri-Stringer
+		// Tri-Stringer
 		[7010, "NORMAL_MAX", 3, 3],
 		// REEF-LUX
 		[7020, "NORMAL_MIN", 8, 7],

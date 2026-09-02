@@ -1,7 +1,5 @@
-// calculates org stats for the last 6 finished months
-// used to decide which orgs are considered "established"
-// you need at least 150 average monthly active players to be considered established
-// if you drop below 100 you lose it
+// org stats for the last 6 finished months, deciding which orgs are "established":
+// 150 average monthly active players to gain it, dropping below 100 loses it
 
 import { db } from "~/db/sql";
 import { logger } from "~/utils/logger";

@@ -7,10 +7,7 @@ import type {
 	ResolvedCreateBracketInput,
 } from "../types";
 
-/**
- * Creates a Swiss bracket data set: all rounds up front, matches for round 1 only.
- * Ported from the old core/Swiss.ts create()/firstRoundMatches().
- */
+/** All rounds up front, matches for round 1 only. */
 export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 	const groupCount =
 		input.settings.groupCount ?? TOURNAMENT.SWISS_DEFAULT_GROUP_COUNT;
@@ -59,10 +56,7 @@ function firstRoundMatches({
 	groupCount: number;
 	roundCount: number;
 }): MatchData[] {
-	// split the teams to one or more groups. For example with 16 teams and 3 groups this would result in
-	// group 1: 1, 4, 7, 10, 13, 16
-	// group 2: 2, 5, 8, 11, 14
-	// group 3: 3, 6, 9, 12, 15
+	// e.g. 16 teams and 3 groups: 1, 4, 7, 10, 13, 16 / 2, 5, 8, 11, 14 / 3, 6, 9, 12, 15
 	const groups = splitToGroups();
 
 	const result: MatchData[] = [];
@@ -81,14 +75,8 @@ function firstRoundMatches({
 			"firstRoundMatches: halfs not equal",
 		);
 
-		// first round every team plays the matching team "on the opposite side"
-		// so for example with 8 teams match ups look like this:
-		// seed 1 vs. seed 5
-		// seed 2 vs. seed 6
-		// seed 3 vs. seed 7
-		// seed 4 vs. seed 8
-		// ---
-		// this way each match has "equal distance"
+		// every team plays the matching team "on the opposite side" so each match has "equal distance",
+		// e.g. 8 teams: 1 vs. 5, 2 vs. 6, 3 vs. 7, 4 vs. 8
 		const roundId = groupIdx * roundCount;
 		for (let i = 0; i < upperHalf.length; i++) {
 			const upper = upperHalf[i];

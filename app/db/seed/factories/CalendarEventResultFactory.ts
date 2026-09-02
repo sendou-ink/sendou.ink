@@ -2,13 +2,7 @@ import * as CalendarRepository from "~/features/calendar/CalendarRepository.serv
 import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 
-/**
- * Creates reported results for a non-tournament calendar event, the way the event's
- * organizer reports them. `results` decides the placements and who played.
- *
- * Returns the result teams as they were created, so that a caller can pick one of
- * them (a result to highlight, say) by who played on it.
- */
+/** Results of a non-tournament event as the organizer reports them. Returns the result teams as created. */
 export const { create } = defineFactory({
 	defaults: () => ({
 		participantCount: faker.number.int({ min: 10, max: 250 }),

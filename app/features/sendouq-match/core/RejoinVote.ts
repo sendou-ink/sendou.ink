@@ -9,11 +9,7 @@ export interface RejoinVote {
 
 const MIN_CONTINUING_GROUP_SIZE = 2;
 
-/**
- * Resolves the overall vote state. ONGOING until every member of a full group
- * has cast a vote, then RESOLVED with the ids of those who chose to continue,
- * or FAILED if too few want to continue to form a viable group.
- */
+/** ONGOING until every member of a full group has voted, then RESOLVED with the ids continuing, or FAILED if too few to form a viable group. */
 export function result(votes: RejoinVote[]) {
 	if (votes.length !== FULL_GROUP_SIZE) {
 		return { type: "ONGOING" as const };
@@ -33,18 +29,12 @@ export function result(votes: RejoinVote[]) {
 	};
 }
 
-/**
- * Returns the given user's vote (true/false), or null if they have not voted.
- */
+/** The user's vote, or null if they have not voted. */
 export function userContinueStatus(votes: RejoinVote[], userId: number) {
 	return votes.find((vote) => vote.userId === userId)?.isContinuing ?? null;
 }
 
-/**
- * Whether the given user is still eligible to cast `isContinuing` as their vote.
- * A first vote is always allowed while the vote is ongoing, and a yes vote can
- * still be changed to a no; a no vote is final.
- */
+/** Whether the user may still cast `isContinuing`: a first vote while ongoing, or changing a yes to a no; a no is final. */
 export function canCastVote(
 	votes: RejoinVote[],
 	userId: number,
@@ -58,10 +48,7 @@ export function canCastVote(
 	return currentVote && !isContinuing;
 }
 
-/**
- * Collects the votes cast within the viewing user's own group. Returns null if
- * the user is not a member of either side of the match.
- */
+/** Votes cast within the viewer's own group, or null if they are in neither side of the match. */
 export function extractOwnGroupVotesFromSendouqMatch(
 	match: Pick<SQMatch, "groupAlpha" | "groupBravo">,
 	userId: number,
@@ -90,10 +77,7 @@ export function extractOwnGroupVotesFromSendouqMatch(
 	);
 }
 
-/**
- * Returns the group member ids that remain after removing anyone who voted
- * against continuing.
- */
+/** Group member ids minus anyone who voted against continuing. */
 export function currentUserIds(
 	votes: RejoinVote[],
 	groupMemberIds: number[],

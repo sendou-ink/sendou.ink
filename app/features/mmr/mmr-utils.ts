@@ -29,11 +29,9 @@ export function rate(teams: Team[], secondaryTeams?: [[Rating], [Rating]]) {
 	return openskillRate(teams, { tau: TAU, limitSigma: true });
 }
 
-// when ranking teams we rate the team against the actual team rating that it played against
-// as well as against the average ratings of the players on the team
-// then they get the bigger boost of the two (if won) or the smaller penalty of the two (if lost)
-// this is to avoid situations where teams might unexpectedly lose a huge amount of points
-// due to other team score not being accurate (not enough games played) to their perceived skill level
+// a team is rated against both the opposing team's rating and its players' average rating,
+// taking the bigger boost (won) or smaller penalty (lost), so an inaccurate team rating
+// (too few games) can't cost a huge amount of points
 function rateConservative(
 	teams: Team[],
 	secondaryTeams: [[Rating], [Rating]],

@@ -26,10 +26,7 @@ interface FormFieldText<T extends string> extends FormFieldBase<T> {
 	minLength?: number;
 	maxLength: number;
 	toLowerCase?: boolean;
-	/**
-	 * Normalizes what the user types before it is stored, e.g. reducing a pasted
-	 * full URL down to the part the field actually holds.
-	 */
+	/** Normalizes input before storing, e.g. reducing a pasted full URL to the part the field holds. */
 	transformValue?: (value: string) => string;
 	leftAddon?: string;
 	placeholder?: string;
@@ -115,11 +112,10 @@ export interface FormFieldDatetime<T extends string> extends FormFieldBase<T> {
 interface FormFieldWeaponPool<T extends string> extends FormFieldBase<T> {
 	minCount?: number;
 	maxCount: number;
-	/** Does the weapon pool have an ordering? If true, the order is fixed and cannot be changed by the user (order ASC by weapon id) */
+	/** Fixes the order to weapon id ASC instead of user-sortable */
 	disableSorting?: boolean;
-	/** Can user favorite weapons in the pool? If disabled, all weapons have isFavorite: false */
+	/** If set, all weapons have isFavorite: false */
 	disableFavorites?: boolean;
-	/** Allow duplicate weapon IDs in the pool */
 	allowDuplicates?: boolean;
 	/** Treat alt-skin variants of an already-picked weapon as duplicates (e.g. picking Splattershot also disables Hero Shot Replica) */
 	disableAltSkinDuplicates?: boolean;
@@ -261,10 +257,7 @@ export type SelectOption = {
 /** Brand type to encode required options directly in schema types */
 export type FieldWithOptions<TOptions> = { _requiredOptions: TOptions };
 
-/**
- * Custom render props for FormField children.
- * Generic type parameter allows for type-safe value handling when the type is known.
- */
+/** Render props for FormField children */
 export type CustomFieldRenderProps<TValue = unknown> = {
 	name: string;
 	error: string | undefined;
@@ -283,7 +276,6 @@ type FormFieldChildrenProps = {
 	disabled?: boolean;
 };
 
-/** Props for a typed FormField based on field name and schema */
 export type TypedFormFieldProps<
 	TSchema extends v.ObjectEntries,
 	TName extends keyof TSchema & string,
@@ -303,10 +295,9 @@ export type TypedFormFieldProps<
 	? { options: TOptions }
 	: { options?: never });
 
-/** Nested path pattern for array/object traversal */
 type NestedPath = `${string}.${string}` | `${string}[${string}`;
 
-/** Props for FormField with flexible (string) name - used for nested paths like `${itemName}.field` */
+/** FormField props with a free-form name, for nested paths like `${itemName}.field` */
 export type FlexibleFormFieldProps = {
 	name: NestedPath;
 	label?: string;
@@ -322,7 +313,6 @@ export type FlexibleFormFieldProps = {
 	options?: unknown;
 };
 
-/** Typed FormField component type for a specific schema */
 export type TypedFormFieldComponent<TSchema extends v.ObjectEntries> = {
 	<TName extends keyof TSchema & string>(
 		props: TypedFormFieldProps<TSchema, TName>,
@@ -331,35 +321,20 @@ export type TypedFormFieldComponent<TSchema extends v.ObjectEntries> = {
 };
 
 /**
- * Runtime config consumed only by the `team-search` field. Passed via the
- * `options` prop (the same channel `badges`/`select-dynamic` use), so it stays
- * scoped to this field type instead of polluting every `FormField`.
- *
- * `initialTeam` carries the selected team's display data (name, avatar) for the
- * edit/prefill case — that metadata is not part of the stored form value (a
- * plain team id), so it cannot come from `defaultValues`.
+ * `options` prop config of the `team-search` field. `initialTeam` carries the prefilled team's display
+ * data (name, avatar), which the stored value (a plain team id) lacks.
  */
 export type TeamSearchFieldOptions = {
 	onTeamSelected?: (team: TeamSearchResult | null) => void;
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 };
 
-/**
- * Runtime config consumed only by the `user-search` field, passed via the
- * `options` prop (the same channel `team-search` uses).
- *
- * `onUserSelected` exposes the resolved user (with its username) on selection —
- * the stored form value is only the user id, so callers that need to display the
- * picked user's name elsewhere capture it here.
- */
+/** `options` prop config of the `user-search` field. `onUserSelected` exposes the resolved user; the stored value is only the id. */
 export type UserSearchFieldOptions = {
 	onUserSelected?: (user: UserSearchResult | null) => void;
 };
 
-/**
- * Runtime config consumed only by the `tournament-search` field, passed via the
- * `options` prop (the same channel `team-search` uses).
- */
+/** `options` prop config of the `tournament-search` field. */
 export type TournamentSearchFieldOptions = {
 	/** Restrict results to tournaments that have already started (finished/past). */
 	pastOnly?: boolean;
@@ -367,11 +342,7 @@ export type TournamentSearchFieldOptions = {
 	onTournamentSelected?: (tournament: TournamentSearchItem | null) => void;
 };
 
-/**
- * Object schema of a whole form or a fieldset, whether plain or wrapped in a
- * pipe (e.g. a cross-field `superRefine`). Value types are inferred from
- * `entries`, which such a pipe leaves untouched.
- */
+/** Object schema of a form or fieldset, plain or wrapped in a pipe (e.g. a cross-field `superRefine`). */
 export type FormObjectSchema<
 	TEntries extends v.ObjectEntries = v.ObjectEntries,
 > = AnySyncSchema & { readonly entries: TEntries };

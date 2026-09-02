@@ -22,10 +22,7 @@ type MapListGenerationError =
 	| "MAPS_FOR_MODES_NOT_INCLUDED"
 	| "DUPLICATE_MAPS_IN_MAP_POOL";
 
-/**
- * Generates a map list balanced between the two teams' map pools. If generation fails
- * due to the recently played maps consideration, retries once without it.
- */
+/** Map list balanced between both teams' pools. Retries once without the recently played maps consideration if it fails. */
 export function generateBalancedMapList(
 	input: TournamentMaplistInput,
 ): Result<Array<TournamentMapListMap>, MapListGenerationError> {
@@ -55,8 +52,7 @@ function generateWithInput(
 	if (validationError) return err(validationError);
 
 	const { seededShuffle } = seededRandom(input.seed);
-	// trying the least recently played maps first lets the search find a good
-	// enough list before the recursion depth cap is hit
+	// least recently played first so a good enough list is found before the recursion depth cap
 	const stages = seededShuffle(resolveCommonStages()).sort(
 		(a, b) => recencyPenalty(a) - recencyPenalty(b),
 	);
@@ -92,8 +88,7 @@ function generateWithInput(
 						source: "TIEBREAKER" as const,
 					}));
 
-		// tiebreaker/fallback lists at the last slot get their own key range so
-		// their indices don't collide with the picked indices of the main list
+		// tiebreaker/fallback lists get their own key range so indices don't collide with the main list
 		const usedStageKeyOffset = stageList === stages ? 0 : stages.length;
 
 		for (const [i, stage] of stageList.entries()) {
@@ -114,8 +109,7 @@ function generateWithInput(
 
 	const searchExhausted = backtrack();
 
-	// a complete list found before the depth cap was hit is still valid,
-	// only its optimality is unproven
+	// a list found before the depth cap is valid, only its optimality is unproven
 	if (bestMapList.maps) return ok(bestMapList.maps);
 	if (!searchExhausted) return err("MAX_RECURSION_DEPTH_EXCEEDED");
 
@@ -163,8 +157,7 @@ function generateWithInput(
 			input.teams[0].maps.stages.length === 0 ||
 			input.teams[1].maps.stages.length === 0
 		) {
-			// let's set it up for later that if one team doesn't have stages set
-			// we can make a maplist consisting of only stages from the team that did submit
+			// if one team didn't submit, the list can consist of only the other team's stages
 			for (const stageObj of result) {
 				stageObj.score = 0;
 			}
@@ -271,9 +264,7 @@ function generateWithInput(
 		"score" | "stageId" | "mode" | "source"
 	>;
 
-	// adding rules here can achieve to things
-	// 1) adjust what kind of map list is generated
-	// 2) optimize the algorithm my eliminating subtrees from consideration
+	// rules here both shape the generated list and prune subtrees from the search
 	function stageIsOk(stage: StageValidatorInput, index: number) {
 		if (usedStages.has(index)) return false;
 		if (mapListAlreadyFull()) return false;
@@ -349,15 +340,8 @@ function generateWithInput(
 
 	// don't allow making two picks from one team in row
 	function isMakingThingsUnfair(stage: StageValidatorInput) {
-		// allow to handle edge case where both teams have 100% overlap in one mode
-		// but not others in Bo5 for example could make impossible to make map because e.g.
-		// 1) overlap
-		// 2) team 1 pick
-		// 3) team 2 pick
-		// 4) team 1 pick
-		// 5) TIEBREAKER <- system has to allow
-		// ---
-		// but later we will with score make sure that we exhaust better options too
+		// e.g. Bo5 with 100% overlap in one mode only: overlap, T1, T2, T1, TIEBREAKER must be allowed;
+		// scoring still prefers better options
 		if (stage.source === "TIEBREAKER") return false;
 
 		const score = mapList.reduce((acc, cur) => acc + cur.score, 0);
@@ -404,11 +388,10 @@ function generateWithInput(
 				),
 		);
 
-		// there was at least one possible common map
-		// to pick as tiebreaker but it (or they) got picked too early
+		// a common map for the tiebreaker existed but got picked too early
 		return (
 			commonMaps.length > 0 &&
-			// handles special case where both teams have the same maps in their pool
+			// both teams having identical pools
 			commonMaps.length !== input.teams[0].maps.stageModePairs.length &&
 			newCommonMaps.length === 0 &&
 			newMapList.length !== input.count

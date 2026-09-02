@@ -8,11 +8,7 @@ import invariant from "~/utils/invariant";
 import { MAIN_SLOT_AP, SUB_SLOT_AP } from "../analyzer-constants";
 import type { AbilityPoints } from "../analyzer-types";
 
-/**
- * Sums a build's stackable ability points per ability, accounting for
- * Ability Doubler doubling the sub slots of its row. Main-only abilities are
- * left out as they have no ability point value.
- */
+/** AP per stackable ability, Ability Doubler doubling its row's subs. Main-only abilities are left out. */
 export function buildToAbilityPoints(build: BuildAbilitiesTupleWithUnknown) {
 	const result: AbilityPoints = new Map();
 
@@ -37,7 +33,7 @@ export function buildToAbilityPoints(build: BuildAbilitiesTupleWithUnknown) {
 	return result;
 }
 
-/** Whether the ability stacks in sub slots as ability points (e.g. ISM) as opposed to a main-only ability (e.g. SJ). */
+/** Stacks as AP (e.g. ISM), as opposed to a main-only ability (e.g. SJ). */
 export function isStackableAbility(
 	ability: AbilityWithUnknown,
 ): ability is Ability {
@@ -48,7 +44,7 @@ export function isStackableAbility(
 	return abilityObj.type === "STACKABLE";
 }
 
-/** Whether the ability only exists in the main slot of one gear type (e.g. SJ). */
+/** Only exists in the main slot of one gear type (e.g. SJ). */
 export function isMainOnlyAbility(
 	ability: AbilityWithUnknown,
 ): ability is Ability {

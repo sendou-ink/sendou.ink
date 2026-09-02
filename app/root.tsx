@@ -99,9 +99,8 @@ import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
 
-// Anchor the loading bar to the header so it sits between the sidebars. Set at
-// module scope (not in an effect) so the very first navigation's NProgress.start
-// already targets the header instead of briefly rendering over the sidebar.
+// anchors the loading bar to the header (between the sidebars); at module scope so
+// even the very first navigation's NProgress.start doesn't render over the sidebar
 NProgress.configure({ parent: `#${NPROGRESS_ANCHOR_ID}` });
 
 type DevFaviconColors = { fill: string; stroke: string };
@@ -296,11 +295,7 @@ function Document({
 
 const ABSOLUTE_URL_REGEX = /^[a-z][a-z\d+\-.]*:/i;
 
-/**
- * Href every React Aria link (menu items, buttons, tabs) is rendered with.
- * `useHref` resolves its argument against the current route, which would turn an
- * absolute URL such as a Twitch link into a path of our own.
- */
+/** Href for React Aria links: `useHref` would resolve an absolute URL like a Twitch link into a path of our own. */
 function useExternalAwareHref(href: string) {
 	const resolved = useHref(href);
 
@@ -499,9 +494,8 @@ function HydrationTestIndicator() {
 			data-testid="hydrated"
 			data-router-idle={routerIdle ? "true" : undefined}
 			data-router-busy={routerIdle ? undefined : busy.join(" | ")}
-			// the rendered search, trailing the browser's own by a commit: only
-			// once the toast params are gone from here have the forms keyed on
-			// the location (see SendouForm) finished remounting
+			// the rendered search trails the browser's by a commit: once the toast params are
+			// gone from here the forms keyed on the location (see SendouForm) have remounted
 			data-location-search={location.search}
 		/>
 	);

@@ -18,10 +18,8 @@ function getServerSnapshot() {
 }
 
 /**
- * Resolves CSS custom properties to their computed values (e.g. for canvas
- * rendering which can't consume CSS variables directly), re-resolving when the
- * theme class on the root element changes. All values are empty strings during
- * server-side rendering and the initial hydration render.
+ * Computed values of CSS custom properties (e.g. for canvas), re-resolved when the root theme class
+ * changes. Empty strings on the server and the hydration render.
  */
 export function useThemeColors<K extends string>(
 	cssVariables: Record<K, string>,

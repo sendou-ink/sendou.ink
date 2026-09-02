@@ -8,10 +8,7 @@ type InsertArgs = {
 	tournamentId: number;
 };
 
-/**
- * Saves a tournament for a user, the way the star on its page does. Only a
- * tournament can be saved, a calendar event without one having nothing to save.
- */
+/** Like the star on a tournament page. Only tournaments can be saved. */
 export const { create } = defineFactory({
 	insert: async ({ userId, tournamentId }: InsertArgs) => {
 		await actAs(userId, () =>

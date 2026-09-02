@@ -12,14 +12,7 @@ export const seenFriendRequestsPersisted = PersistedState.define({
 	default: [],
 });
 
-/**
- * Returns the count of incoming friend requests that the user has not yet seen.
- *
- * "Seen" requests are tracked per-device in local storage (the dedicated /friends
- * page remains the authoritative view). The count updates when requests are marked
- * as seen via {@link markFriendRequestsSeen} in the same tab, or when local storage
- * changes in another tab.
- */
+/** Incoming requests not yet seen; "seen" is tracked per device in local storage via {@link markFriendRequestsSeen}. */
 export function useUnseenFriendRequests(incomingRequestIds: number[]): number {
 	const [seenIdsList] = usePersistedState(seenFriendRequestsPersisted);
 
@@ -29,12 +22,8 @@ export function useUnseenFriendRequests(incomingRequestIds: number[]): number {
 }
 
 /**
- * Records the given incoming friend request ids as seen, clearing the unseen badge.
- *
- * Ids are merged into the existing seen set rather than replacing it, so that
- * acting on a request (e.g. declining it) doesn't make an already-seen request
- * count as unseen again while other consumers still have a stale list. Only the
- * most recent ids are kept to keep the stored set from growing without bound.
+ * Merged into the seen set rather than replacing it, so acting on a request doesn't make an already-seen
+ * one unseen for consumers with a stale list. Only the most recent ids are kept.
  */
 export function markFriendRequestsSeen(ids: number[]) {
 	const merged = R.unique([

@@ -133,10 +133,7 @@ const ORGANIZATION_STAFF_ROLES: ReadonlyArray<
 	Tables["TournamentOrganizationMember"]["role"]
 > = TOURNAMENT_ORGANIZATION_ROLES.filter((role) => role !== "MEMBER");
 
-/**
- * Users who already have staff permissions implicitly (the tournament author
- * and organization staff) shown for info only - they can't be edited or removed.
- */
+/** The author and organization staff, info only as their permissions are implicit. */
 function ImplicitStaffRows() {
 	const { t } = useTranslation(["tournament"]);
 	const tournament = useTournament();

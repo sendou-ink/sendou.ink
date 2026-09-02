@@ -1,7 +1,4 @@
-/**
- * Prop derivation for rendering a ScannerMatch's status samples with the
- * shared <PlayerStatusTimeline />, used by the Live and VoD tabs.
- */
+/** Prop derivation for rendering a ScannerMatch's status samples with the shared <PlayerStatusTimeline />. */
 import type { PlayerStatusTimelineTeam } from "~/components/PlayerStatusTimeline";
 import type { ScannerMatch } from "../core/scanner-match";
 

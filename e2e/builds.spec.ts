@@ -127,7 +127,7 @@ test.describe("Builds", () => {
 		await weaponBuilds.addFilter("ability");
 		await weaponBuilds.locators.comparisonSelect.selectOption("AT_MOST");
 
-		// are all builds with ISM are hidden?
+		// every build with ISM is hidden
 		await expect(weaponBuilds.ability("ISM")).toHaveCount(1);
 
 		await weaponBuilds.deleteFilter("ability");

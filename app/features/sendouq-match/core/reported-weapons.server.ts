@@ -18,7 +18,6 @@ export function mergeReportedWeapons({
 }): ReportedWeapon[] {
 	let result: ReportedWeaponForMerging[] = [];
 
-	// make corrections to the old weapons
 	for (const oldWeapon of oldWeapons) {
 		const replacement = newWeapons.find(
 			(newWeapon) =>
@@ -34,7 +33,6 @@ export function mergeReportedWeapons({
 		}
 	}
 
-	// add new weapons that were not reported in the old list
 	for (const newWeapon of newWeapons) {
 		if (
 			!result.some(
@@ -48,7 +46,7 @@ export function mergeReportedWeapons({
 		}
 	}
 
-	// if the score got adjusted we need to get rid of the extra reported weapons
+	// an adjusted score leaves extra reported weapons behind
 	if (newReportedMapsCount) {
 		result = result.filter((wpn) => wpn.mapIndex < newReportedMapsCount);
 	}

@@ -159,8 +159,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 			errorToastIfFalsy(data.userId !== user.id, "Can't kick yourself");
 
-			// making sure they aren't unfilling one checking in condition i.e. having full roster
-			// and then having members kicked without it affecting the checking in status
+			// a full roster is a check-in condition, so kicking below it after checking in is not allowed
 			errorToastIfFalsy(
 				!ownTeamCheckedIn ||
 					ownTeam.memberUserIds.length > tournament.minMembersPerTeam,

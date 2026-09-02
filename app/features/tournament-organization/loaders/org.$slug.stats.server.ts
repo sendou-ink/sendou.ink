@@ -40,8 +40,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 	};
 }
 
-/** The `count` most recent full months
- * (excluding the current month), most recent first. */
+/** The `count` most recent full months (excluding the current), most recent first. */
 function recentFullMonths(count: number) {
 	const months: Date[] = [];
 	const thisMonthStart = startOfMonth(new Date());

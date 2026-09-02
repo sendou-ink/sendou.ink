@@ -1,16 +1,11 @@
 /**
- * "Upload to sendou.ink" link for a fully processed VoD: the detected events
- * are built into ScannerMatches (core/match-builder.ts), projected onto the
- * slim per-match rows the `ingest` search param of sendou.ink's /vods/new
- * form carries (an `SP.json` param the search-params module compresses),
- * which prefills a new VoD from them (the user adds the YouTube
- * URL/title/date and fixes any misreads before submitting).
- *
- * The VoD type is auto-detected: footage containing the casted 8-player
- * spectator map screen is a CAST VoD; anything else leaves the form's default
- * type untouched. A match without a mode read prefills the form's SZ default,
- * flagged `modeAssumed` — the fabricated default lives here, not on
- * ScannerMatch.
+ * "Upload to sendou.ink" link for a fully processed VoD: the events are built
+ * into ScannerMatches and projected onto the slim per-match rows the `ingest`
+ * search param of /vods/new carries (an `SP.json` param), which prefills a
+ * new VoD (the user adds URL/title/date and fixes misreads). Footage with the
+ * casted 8-player spectator map screen is a CAST VoD; anything else keeps the
+ * form's default type. A match without a mode read prefills the SZ default,
+ * flagged `modeAssumed` — the fabricated default lives here, not on ScannerMatch.
  */
 import type {
 	IngestVodMatchInput,
@@ -24,10 +19,9 @@ import { buildScannerMatches } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
 
 /**
- * GET query params ride the request line, and servers/proxies commonly cap
- * that around 8-16 KB. A VoD long enough to blow past this needs a POST
- * flow, which /vods/new doesn't offer yet — surface that instead of
- * emitting a URL the server would reject with an opaque error.
+ * Servers/proxies commonly cap the request line around 8-16 KB; a VoD long
+ * enough to blow past this needs a POST flow /vods/new doesn't offer yet, so
+ * surface that instead of emitting a URL the server rejects opaquely.
  */
 const MAX_URL_LENGTH = 8000;
 

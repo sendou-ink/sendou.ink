@@ -18,11 +18,7 @@ type Options = {
 	likedByGroupIds?: number[];
 };
 
-/**
- * Creates SendouQ groups. The first of `memberUserIds` is the creator, whose
- * membership the repository creates with the group; the rest join it the way they do
- * in production. Invite and chat codes are the repository's own.
- */
+/** First of `memberUserIds` is the creator, the rest join like in production. */
 export const { create } = defineFactory({
 	defaults: () => ({
 		status: "ACTIVE" as const,
@@ -58,8 +54,7 @@ export const { create } = defineFactory({
 		}
 
 		if (isMatchmade) {
-			// written directly because the only production write of the column is
-			// `morphGroups`, which needs two separate groups to merge into one
+			// written directly: the only production write is `morphGroups`, which needs two groups to merge
 			await db
 				.updateTable("Group")
 				.set({ matchmade: 1 })

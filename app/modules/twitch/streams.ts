@@ -6,77 +6,12 @@ import { logger } from "~/utils/logger";
 import { twitchFetch } from "./fetch";
 import { type RawStream, type StreamsResponse, streamsSchema } from "./schemas";
 
-// const STREAMS_MOCK = [
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_777_jared-{width}x{height}.jpg",
-//     twitchUserName: "777_jared",
-//     viewerCount: 129,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_ano_rta-{width}x{height}.jpg",
-//     twitchUserName: "ano_rta",
-//     viewerCount: 50,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_mikashita0104-{width}x{height}.jpg",
-//     twitchUserName: "mikashita0104",
-//     viewerCount: 49,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_veenam-{width}x{height}.jpg",
-//     twitchUserName: "veenam",
-//     viewerCount: 42,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_minijutopia-{width}x{height}.jpg",
-//     twitchUserName: "minijutopia",
-//     viewerCount: 25,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_liligravybread-{width}x{height}.jpg",
-//     twitchUserName: "liligravybread",
-//     viewerCount: 25,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_ajx_live-{width}x{height}.jpg",
-//     twitchUserName: "ajx_live",
-//     viewerCount: 19,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_yuzuki729-{width}x{height}.jpg",
-//     twitchUserName: "yuzuki729",
-//     viewerCount: 18,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_noname_nosplat-{width}x{height}.jpg",
-//     twitchUserName: "noname_nosplat",
-//     viewerCount: 14,
-//   },
-//   {
-//     thumbnailUrl:
-//       "https://static-cdn.jtvnw.net/previews-ttv/live_user_dosankoneet-{width}x{height}.jpg",
-//     twitchUserName: "dosankoneet",
-//     viewerCount: 13,
-//   },
-// ];
-
 export async function getStreams() {
 	try {
 		const result = await cachified({
 			key: "twitch-streams",
 			cache,
-			// 2 minutes
 			ttl: 1000 * 60 * 2,
-			// 10 minutes
 			staleWhileRevalidate: 1000 * 60 * 5 * 2,
 			async getFreshValue() {
 				return (await getAllStreams())
@@ -115,7 +50,6 @@ async function getAllStreams() {
 		const { data, pagination } = await getStreamsChunk(cursor);
 
 		result.push(
-			// filter to ensure each streamer appears only once
 			...data.filter(
 				(stream) =>
 					!result.some(

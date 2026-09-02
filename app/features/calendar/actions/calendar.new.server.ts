@@ -164,7 +164,6 @@ export const action: ActionFunction = async ({ request }) => {
 				commonArgs.isDraft = false;
 			}
 		} else {
-			// editing regular calendar event
 			requirePermission(eventToEdit, "EDIT");
 		}
 
@@ -218,7 +217,7 @@ export const action: ActionFunction = async ({ request }) => {
 	throw redirect(calendarEventPage(createdEventId));
 };
 
-/** Resolves the validated bracket progression from the `brackets` + `progression` form fields (already validated by the schema's refine). */
+/** Bracket progression from the `brackets` + `progression` fields, already validated by the schema's refine. */
 function bracketProgressionFromFormData(data: {
 	toToolsEnabled: boolean;
 	brackets: Parameters<typeof formValuesToInputBrackets>[0];
@@ -233,7 +232,7 @@ function bracketProgressionFromFormData(data: {
 	return Progression.isBrackets(validated) ? validated : null;
 }
 
-/** Checks user has permissions to create a tournament in this organization */
+/** The user may create a tournament in this organization. */
 async function validateOrganization({
 	userId,
 	organizationId,

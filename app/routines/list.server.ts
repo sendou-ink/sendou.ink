@@ -27,7 +27,7 @@ import { SyncTournamentVodsRoutine } from "./syncTournamentVods";
 import { UpdatePatreonDataRoutine } from "./updatePatreonData";
 import { VacuumDatabaseRoutine } from "./vacuumDatabase";
 
-/** List of Routines that should occur hourly at XX:00 */
+/** hourly at XX:00 */
 export const everyHourAt00 = [
 	NotifySeasonStartRoutine,
 	NotifyPlusServerVotingRoutine,
@@ -37,7 +37,7 @@ export const everyHourAt00 = [
 	SyncTournamentVodsRoutine,
 ];
 
-/** List of Routines that should occur hourly at XX:30 */
+/** hourly at XX:30 */
 export const everyHourAt30 = [
 	SetOldGroupsAsInactiveRoutine,
 	UpdatePatreonDataRoutine,
@@ -47,7 +47,6 @@ export const everyHourAt30 = [
 	ResolveStaleSQMatchesRoutine,
 ];
 
-/** List of Routines that should occur daily */
 export const daily = [
 	NotifySeasonEndRoutine,
 	DeleteObsoleteMatchVodsRoutine,
@@ -64,10 +63,8 @@ export const daily = [
 	OptimizeDatabaseRoutine,
 ];
 
-/** List of Routines that should occur weekly */
 export const weekly = [VacuumDatabaseRoutine];
 
-/** List of Routines that should occur every 2 minutes */
 export const everyTwoMinutes = [
 	SyncLiveStreamsRoutine,
 	ExpireReadyChecksRoutine,

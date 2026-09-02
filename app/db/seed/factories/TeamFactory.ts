@@ -25,12 +25,7 @@ type Options = {
 	roles?: Record<number, MemberRole>;
 };
 
-/**
- * Creates teams. The first of `memberUserIds` is the owner, whose membership the
- * repository creates with the team; the rest join it the way they do in production,
- * within the team count a non-patron is allowed. Custom url and invite code are the
- * repository's own, the custom url following from the name.
- */
+/** First of `memberUserIds` is the owner, the rest join like in production (within the non-patron team limit). */
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({
 		name: `Team ${seq}`,
@@ -88,8 +83,7 @@ export const { create } = defineFactory({
 			{ isValidated: true },
 		);
 
-		// the team edit page saves the whole profile at once; everything besides the
-		// name is still empty on a team the repository has only just inserted
+		// the team edit page saves the whole profile at once; the rest is still empty on a fresh insert
 		await TeamRepository.update({
 			id: team.id,
 			name: team.name,

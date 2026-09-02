@@ -8,8 +8,7 @@ type InsertRequestArgs = Parameters<
 
 type Request = Pick<InsertRequestArgs, "users"> &
 	Partial<Pick<InsertRequestArgs, "startsAt">> & {
-		/** Books the scrim, the way accepting a request does in production. Only one
-		 * request of a post may be accepted. */
+		/** Books the scrim. Only one request of a post may be accepted. */
 		isAccepted?: boolean;
 	};
 
@@ -18,10 +17,7 @@ type Options = {
 	requests?: Array<Request>;
 };
 
-/**
- * Creates scrim posts. `users` is the side offering the scrim, one of them its owner.
- * The requests made to the post, and which of them booked it, are `options`.
- */
+/** `users` is the side offering the scrim, one of them its owner. Requests to the post are `options`. */
 export const { create } = defineFactory({
 	defaults: () => ({
 		startsAt: databaseTimestampNow(),

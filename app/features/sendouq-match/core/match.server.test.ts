@@ -245,8 +245,7 @@ describe("matchMapList()", () => {
 
 		vi.mocked(getDefaultMapWeights).mockResolvedValue(mockDefaults);
 
-		// Both teams have empty preferences (no map pools set)
-		// This forces the system to rely entirely on defaults
+		// empty preferences force the system to rely entirely on defaults
 		const emptyPreferences = {
 			modes: [{ mode: "SZ" as const, preference: "PREFER" as const }],
 			pool: [],
@@ -272,11 +271,9 @@ describe("matchMapList()", () => {
 	});
 
 	test("user selected maps should be preferred over default maps even with small pool", async () => {
-		// User selected stages - just 7 stages per mode (less than half of 25)
-		// Note: stages 1 (EELTAIL_ALLEY) and 9 (STURGEON_SHIPYARD) are banned for SZ
+		// 7 stages per mode (less than half of 25); stages 1 (EELTAIL_ALLEY) and 9 (STURGEON_SHIPYARD) are banned for SZ
 		const userSelectedStageIds: StageId[] = [0, 2, 3, 4, 5, 6, 7];
 
-		// Default stages include many more maps that users did NOT select
 		const defaultStageIds: StageId[] = [
 			8, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20,
 		];
@@ -288,7 +285,6 @@ describe("matchMapList()", () => {
 
 		vi.mocked(getDefaultMapWeights).mockResolvedValue(mockDefaults);
 
-		// Both teams have selected the same 5 stages
 		const teamPreferences = {
 			modes: [{ mode: "SZ" as const, preference: "PREFER" as const }],
 			pool: [
@@ -323,7 +319,6 @@ describe("matchMapList()", () => {
 
 		const szMaps = result.filter((m) => m.mode === "SZ");
 
-		// All selected maps should come from user preferences, not defaults
 		for (const map of szMaps) {
 			expect(userSelectedStageIds).toContain(map.stageId);
 		}

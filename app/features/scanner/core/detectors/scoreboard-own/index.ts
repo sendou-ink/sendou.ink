@@ -1,14 +1,9 @@
 /**
- * ScoreboardOwnDetector: parses the personal results screen (the "your
- * results" view after a match) — lobby/mode/stage from the header tags
- * (identical to the live scoreboard header, parsing is shared), the
- * player's main weapon from the weapon card's title tag, and the own gear
- * abilities from the three gear cards' badge strips.
- *
- * The weapon arrives as text: the title is OCR'd with the death-weapon
- * atlas (the only atlas carrying the weapon-name charset) rescaled to this
- * screen's title size, then snapped against every language's main-weapon
- * names at once and reported under its canonical English name.
+ * ScoreboardOwnDetector: parses the personal results screen — header tags
+ * (shared with the live scoreboard), the main weapon from the weapon card's
+ * title (OCR'd with the death-weapon atlas, the only one with that charset,
+ * snapped against every language's names) and own gear abilities from the
+ * three gear cards' badge strips.
  */
 
 import type {
@@ -56,10 +51,7 @@ export interface ScoreboardOwnData {
 	stage: StageId | null;
 	/** the player's main weapon; null if unreadable */
 	weaponId: MainWeaponId | null;
-	/**
-	 * own gear abilities, [head, clothes, shoes] rows of
-	 * [main, sub, sub, sub] ability ids
-	 */
+	/** [head, clothes, shoes] rows of [main, sub, sub, sub] */
 	abilities: AbilityWithUnknown[][];
 }
 
@@ -73,11 +65,7 @@ interface WeaponCandidate {
 	entry: WeaponEntry;
 }
 
-/**
- * Every string the weapon card title can show: all languages' localized
- * main-weapon names plus the canonical English names (localized-messages
- * omits names identical to English).
- */
+/** Every string the title can show: all localized main-weapon names plus canonical English. */
 let weaponCandidates: WeaponCandidate[] | null = null;
 function mainWeaponCandidates(): WeaponCandidate[] {
 	if (weaponCandidates) return weaponCandidates;
@@ -162,12 +150,9 @@ export function createScoreboardOwnDetector(
 			confidences.push(header.confidence);
 		}
 
-		// Weapon card title, snapped to the main-weapon closed set. The band is
-		// recognized whole, NOT via readTagBand: the tag is fixed-width (the
-		// band lies entirely inside it, there is nothing to trim away), and the
-		// extent trim actively harms it — long names render horizontally
-		// condensed, whose dense antialiased columns fail the dark-or-bright
-		// tag-column test and truncate the read mid-name.
+		// weapon card title, recognized whole and NOT via readTagBand: the tag is
+		// fixed-width, and long names render condensed, whose dense antialiased
+		// columns fail the tag-column test and truncate the read mid-name
 		let weapon: string | null = null;
 		let weaponId: MainWeaponId | null = null;
 		let weaponScore = 0;
@@ -256,9 +241,8 @@ export function createScoreboardOwnDetector(
 		];
 	}
 
-	// just under the measured clean-read floor (fixtures 0.562-0.669,
-	// confirmed scan events 0.612-0.635 — this screen's ability-grid scores
-	// keep the mean low even on perfect reads)
+	// just under the clean-read floor (fixtures 0.562-0.669, scan events
+	// 0.612-0.635; the ability-grid scores keep the mean low even on perfect reads)
 	return {
 		id: "scoreboard-own",
 		sufficientConfidence: 0.55,

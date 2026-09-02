@@ -7,15 +7,10 @@ import { Routine } from "./routine.server";
 const BYTES_IN_MB = 1024 * 1024;
 
 /**
- * Rewrites the database file so the space that deletes and dropped columns leave behind as
- * partially filled pages is given back to the disk. Ordinary traffic frees very little of it,
- * the freelist stays in the single digit megabytes, so what this actually collects is the
- * fragmentation left by migrations that drop a wide column or a large index.
- *
- * Readers are unaffected because WAL serves them the pre-vacuum snapshot, but writers block
- * for the whole rewrite and `busy_timeout` is 5s, which the rewrite outlasts. It is scheduled
- * for a quiet hour for that reason, and the write errors it can cause there are the reason it
- * is weekly rather than daily.
+ * Rewrites the database file to reclaim fragmentation, mostly from migrations that drop a wide
+ * column or a large index (ordinary traffic keeps the freelist in single digit MB). Readers keep
+ * the pre-vacuum WAL snapshot but writers block for the whole rewrite, longer than the 5s
+ * `busy_timeout`, hence a quiet hour and weekly rather than daily.
  */
 export const VacuumDatabaseRoutine = new Routine({
 	name: "VacuumDatabase",

@@ -172,8 +172,7 @@ export class SingleEliminationBracket extends Bracket {
 			return this.sourceByStandings(placements, rest === true);
 		}
 
-		// third place match lives in a separate (higher) group; the winners
-		// group teams get eliminated from is the lowest group id
+		// third place match lives in a separate (higher) group, the lowest group id is the winners group
 		const mainGroupId = Math.min(...this.data.group.map((group) => group.id));
 
 		const orderedRoundsIds = this.data.round
@@ -220,11 +219,7 @@ export class SingleEliminationBracket extends Bracket {
 	}
 }
 
-/**
- * A third place match with only one opponent is decided by a BYE: the semifinal
- * on the other side was itself won against a BYE, so it produced no loser and
- * the lone semifinal loser takes third place without playing.
- */
+/** The other semifinal was won against a BYE and produced no loser, so the lone semifinal loser takes third without playing. */
 function winnerOfThirdPlaceMatch(match: MatchData | undefined) {
 	if (!match) return undefined;
 

@@ -18,11 +18,7 @@ export type SetNextOpponent = (
 	currentSide?: Side,
 ) => void;
 
-/**
- * Returns the winner side or `null` if no winner.
- *
- * @param match A match's results.
- */
+/** Winner side or `null` if no winner. */
 export function getMatchResult(match: MatchResults): Side | null {
 	if (!isMatchCompleted(match)) return null;
 
@@ -35,30 +31,20 @@ export function getMatchResult(match: MatchResults): Side | null {
 	return null;
 }
 
-/**
- * Gets the other side of a match.
- *
- * @param side The side that we don't want.
- */
+/** The other side of a match. */
 export function getOtherSide(side: Side): Side {
 	return side === "opponent1" ? "opponent2" : "opponent1";
 }
 
-/**
- * Indicates whether a match has at least one BYE or not.
- *
- * @param match A match's results.
- */
+/** Whether a match has at least one BYE. */
 export function hasBye(match: MatchResults): boolean {
 	return match.opponent1 === null || match.opponent2 === null;
 }
 
 /**
- * Updates a match results based on an input.
+ * Updates a match's results in place.
  *
- * @param stored A reference to what will be updated in the storage.
  * @param scores Games won by each side. `undefined` keeps them, `null` clears them.
- * @param winnerSide The resolved winner of the set, if any.
  * @returns `true` if the match was completed or un-completed by the update.
  */
 export function setMatchResults(
@@ -83,21 +69,12 @@ export function setMatchResults(
 	return false;
 }
 
-/**
- * Clears the winner of a match, marking it as not completed.
- *
- * @param stored A reference to what will be updated in the storage.
- */
+/** Clears the winner of a match, marking it as not completed. */
 export function clearWinner(stored: MatchResults): void {
 	stored.winnerSide = null;
 }
 
-/**
- * Completes a match that is decided by a BYE, marking the side that has an
- * opponent as the winner. Does nothing to a match that is not decided by a BYE.
- *
- * @param match A reference to what will be updated in the storage.
- */
+/** Marks the side with an opponent as the winner of a match decided by a BYE, otherwise no-op. */
 export function resolveByeWinner(match: MatchResults): void {
 	if (match.winnerSide) return;
 	if (!isMatchByeCompleted(match)) return;
@@ -109,14 +86,7 @@ export function resolveByeWinner(match: MatchResults): void {
 	}
 }
 
-/**
- * Gets the side the winner of the current match will go to in the next match.
- *
- * @param matchNumber Number of the current match.
- * @param roundNumber Number of the current round.
- * @param roundCount Count of rounds.
- * @param matchLocation Location of the current match.
- */
+/** Side the winner of the current match will go to in the next match. */
 export function getNextSide(
 	matchNumber: number,
 	roundNumber: number,
@@ -134,13 +104,7 @@ export function getNextSide(
 	return getSide(matchNumber);
 }
 
-/**
- * Gets the side the winner of the current match in loser bracket will go in the next match.
- *
- * @param matchNumber Number of the match.
- * @param nextMatch The next match.
- * @param roundNumber Number of the current round.
- */
+/** Side the loser of the current winner bracket match will go to in the loser bracket match. */
 export function getNextSideLoserBracket(
 	matchNumber: number,
 	nextMatch: MatchData,
@@ -155,14 +119,7 @@ export function getNextSideLoserBracket(
 	return "opponent2";
 }
 
-/**
- * Sets an opponent in the next match he has to go.
- *
- * @param nextMatch A match which follows the current one.
- * @param nextSide The side the opponent will be on in the next match.
- * @param match The current match.
- * @param currentSide The side the opponent is currently on.
- */
+/** Moves the opponent at `currentSide` of `match` to `nextSide` of `nextMatch`. */
 export function setNextOpponent(
 	nextMatch: MatchData,
 	nextSide: Side,
@@ -171,35 +128,23 @@ export function setNextOpponent(
 ): void {
 	nextMatch[nextSide] = match![currentSide!] && {
 		// Keep BYE.
-		id: getOpponentId(match!, currentSide!), // This implementation of SetNextOpponent always has those arguments.
-		position: nextMatch[nextSide]?.position, // Keep position.
+		id: getOpponentId(match!, currentSide!),
+		position: nextMatch[nextSide]?.position,
 	};
 	nextMatch.winnerSide = null; // A match whose opponents changed can't keep its winner.
 }
 
-/**
- * Resets an opponent in the match following the current one.
- *
- * @param nextMatch A match which follows the current one.
- * @param nextSide The side the opponent will be on in the next match.
- */
+/** Resets an opponent in the match following the current one. */
 export function resetNextOpponent(nextMatch: MatchData, nextSide: Side): void {
 	nextMatch[nextSide] = nextMatch[nextSide] && {
 		// Keep BYE.
 		id: null,
-		position: nextMatch[nextSide]?.position, // Keep position.
+		position: nextMatch[nextSide]?.position,
 	};
 	nextMatch.winnerSide = null; // A match whose opponents changed can't keep its winner.
 }
 
-/**
- * Returns the real (because of loser ordering) number of a match in a loser bracket.
- *
- * @param participantCount The number of participants in a stage.
- * @param roundNumber Number of the round.
- * @param matchNumber Number of the match.
- * @param method The method used for the round.
- */
+/** Real number (after loser ordering) of a match in a loser bracket. */
 export function findLoserMatchNumber(
 	participantCount: number,
 	roundNumber: number,
@@ -217,12 +162,7 @@ export function findLoserMatchNumber(
 	return matchNumberLB;
 }
 
-/**
- * Returns the ordering method of a round of a loser bracket.
- *
- * @param participantCount The number of participants in the stage.
- * @param roundNumber Number of the round.
- */
+/** Ordering method of a loser bracket round. */
 export function getLoserOrdering(
 	participantCount: number,
 	roundNumber: number,
@@ -230,39 +170,22 @@ export function getLoserOrdering(
 	return defaultMinorOrdering[participantCount]?.[Math.floor(roundNumber / 2)];
 }
 
-/**
- * Returns the match number of the corresponding match in the next round by dividing by two.
- *
- * @param matchNumber The current match number.
- */
+/** Match number of the corresponding match in the next round. */
 export function getDiagonalMatchNumber(matchNumber: number): number {
 	return Math.ceil(matchNumber / 2);
 }
 
-/**
- * Checks if a stage is a round-robin stage.
- *
- * @param stage The stage to check.
- */
+/** Whether a stage is round robin. */
 export function isRoundRobin(stage: StageData): boolean {
 	return stage.type === "round_robin";
 }
 
-/**
- * Checks if a stage is a swiss stage.
- *
- * @param stage The stage to check.
- */
+/** Whether a stage is swiss. */
 export function isSwiss(stage: StageData): boolean {
 	return stage.type === "swiss";
 }
 
-/**
- * Returns the type of group the match is located into.
- *
- * @param stageType Type of the stage.
- * @param groupNumber Number of the group.
- */
+/** Type of group a match is located in. */
 export function getMatchLocation(
 	stageType: StageType,
 	groupNumber: number,
@@ -276,21 +199,11 @@ export function getMatchLocation(
 	return "single_bracket";
 }
 
-/**
- * Gets the side where the winner of the given match will go in the next match.
- *
- * @param matchNumber Number of the match.
- */
 function getSide(matchNumber: number): Side {
 	return matchNumber % 2 === 1 ? "opponent1" : "opponent2";
 }
 
-/**
- * Updates the scores of a match.
- *
- * @param stored A reference to what will be updated in the storage.
- * @param scores Games won by each side. `undefined` keeps them, `null` clears them.
- */
+/** `undefined` scores keep the current ones, `null` clears them. */
 function setScores(
 	stored: MatchResults,
 	scores: MatchResultsInput["scores"],
@@ -301,23 +214,11 @@ function setScores(
 	if (stored.opponent2) stored.opponent2.score = scores?.[1];
 }
 
-/**
- * Gets the id of the opponent at the given side of the given match.
- *
- * @param match The match to get the opponent from.
- * @param side The side where to get the opponent from.
- */
 function getOpponentId(match: MatchResults, side: Side): number | null {
 	const opponent = match[side];
 	return opponent?.id ?? null;
 }
 
-/**
- * Returns the count of matches in a round of a loser bracket.
- *
- * @param participantCount The number of participants in a stage.
- * @param roundNumber Number of the round.
- */
 function getLoserRoundMatchCount(
 	participantCount: number,
 	roundNumber: number,
@@ -328,12 +229,6 @@ function getLoserRoundMatchCount(
 	return matchCount;
 }
 
-/**
- * Returns the count of losers in a round of a loser bracket.
- *
- * @param participantCount The number of participants in a stage.
- * @param roundNumber Number of the round.
- */
 function getLoserRoundLoserCount(
 	participantCount: number,
 	roundNumber: number,
@@ -346,34 +241,16 @@ function getLoserRoundLoserCount(
 	return matchCount; // One per match for LB minor rounds.
 }
 
-/**
- * Checks if a group is a winner bracket.
- *
- * It's not always the opposite of `isLoserBracket()`: it could be the only bracket of a single elimination stage.
- *
- * @param stageType Type of the stage.
- * @param groupNumber Number of the group.
- */
+/** Not the opposite of `isLoserBracket()`: the only bracket of single elimination is neither. */
 function isWinnerBracket(stageType: StageType, groupNumber: number): boolean {
 	return stageType === "double_elimination" && groupNumber === 1;
 }
 
-/**
- * Checks if a group is a loser bracket.
- *
- * @param stageType Type of the stage.
- * @param groupNumber Number of the group.
- */
 function isLoserBracket(stageType: StageType, groupNumber: number): boolean {
 	return stageType === "double_elimination" && groupNumber === 2;
 }
 
-/**
- * Checks if a group is a final group (consolation final or grand final).
- *
- * @param stageType Type of the stage.
- * @param groupNumber Number of the group.
- */
+/** Consolation final or grand final. */
 function isFinalGroup(stageType: StageType, groupNumber: number): boolean {
 	return (
 		(stageType === "single_elimination" && groupNumber === 2) ||

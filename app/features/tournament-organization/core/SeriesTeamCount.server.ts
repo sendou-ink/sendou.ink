@@ -23,11 +23,7 @@ interface SeriesTeamCounts {
 	teamCounts: Array<number>;
 }
 
-/**
- * Resolves the team count a tournament is *expected* to draw: its registered
- * count raised to the median of the last {@link EDITIONS_CONSIDERED} editions of
- * its series, never lowered.
- */
+/** Team count a tournament is *expected* to draw: registered count raised (never lowered) to the median of the last {@link EDITIONS_CONSIDERED} editions. */
 export async function lookup() {
 	const seriesByOrganizationId = await cachedSeriesTeamCounts();
 

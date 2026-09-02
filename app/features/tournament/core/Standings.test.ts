@@ -89,8 +89,7 @@ describe("tournamentStandings", () => {
 		const result = tournamentStandings(tournament);
 
 		invariant(result.type === "single");
-		// teams 5-8 all lost the quarterfinals so they are tied in the main bracket,
-		// the underground bracket (won by 8, then 7, 6, 5) decides their order
+		// teams 5-8 are tied as quarterfinal losers, the underground bracket (won by 8, then 7, 6, 5) orders them
 		expect(result.standings.map((s) => s.team.id)).toEqual([
 			1, 2, 3, 4, 8, 7, 6, 5,
 		]);
@@ -116,8 +115,7 @@ describe("tournamentStandings", () => {
 	});
 
 	test("does not break ties with an underground bracket that is still in progress", () => {
-		// only the semi-finals of the underground bracket have been played so the two teams
-		// still alive there have no placement yet
+		// only the underground semi-finals were played, the two teams still alive have no placement yet
 		const tournament = singleEliminationWithUndergroundTournament({
 			undergroundConsolationFinal: false,
 			undergroundMatchesPlayed: 2,
@@ -126,8 +124,7 @@ describe("tournamentStandings", () => {
 		const result = tournamentStandings(tournament);
 
 		invariant(result.type === "single");
-		// teams 5-8 keep the order & tied placement they have in the main bracket,
-		// the teams eliminated from the underground bracket are not sorted above those still in it
+		// teams 5-8 keep their main bracket tie: eliminated underground teams don't sort above those still in it
 		expect(result.standings.map((s) => s.team.id)).toEqual([
 			1, 2, 3, 4, 8, 5, 7, 6,
 		]);
@@ -142,8 +139,7 @@ describe("tournamentStandings", () => {
 		const result = tournamentStandings(tournament);
 
 		invariant(result.type === "single");
-		// team 3 lost the redemption bracket, which it reached by placing 3rd in the groups,
-		// so it is above the teams that placed 5th-8th there and went to the consolation bracket
+		// team 3 lost redemption (reached by placing 3rd in groups), so it is above the 5th-8th consolation teams
 		expect(result.standings.map((s) => s.team.id)).toEqual([
 			1, 2, 4, 3, 5, 6, 7, 8,
 		]);
@@ -294,8 +290,7 @@ describe("matchesPlayedByTeamId", () => {
 
 		const matches = matchesPlayedByTeamId(tournament).get(1) ?? [];
 
-		// team 1 plays 3 round robin matches (bracket idx 0)
-		// and 1 single elimination match (bracket idx 1)
+		// team 1 plays 3 round robin matches (bracket idx 0) and 1 single elimination match (bracket idx 1)
 		const roundRobinMatches = matches.filter((m) => m.bracketIdx === 0);
 		const singleEliminationMatches = matches.filter((m) => m.bracketIdx === 1);
 

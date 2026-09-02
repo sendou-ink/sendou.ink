@@ -1,15 +1,9 @@
 /**
- * ALL scoreboard-battle-log-replay ROI coordinates, in canonical 1920x1080
- * space. Calibrated against scoreboard-battle-log-replay/private-battle-
- * splat-zones-hagglefish via scripts/scanner/overlay-rois.ts and column-projection
- * measurement.
- *
- * The replay-browser detail screen shows two team panels SIDE BY SIDE
- * (right = left shifted by PANEL_DX), four gray pill rows each — mid-gray
- * (~61) with darker gaps (~23), unlike the live scoreboard's near-black
- * pills (~12). Below the panels: replay owner line + bright green replay
- * code; above: two "Score:" banners and the stage-photo header (line 1 =
- * timestamp + stage, line 2 = lobby + mode).
+ * Replay-browser ROIs in canonical 1920x1080 space, calibrated against the
+ * private-battle-splat-zones-hagglefish fixture. Two team panels SIDE BY SIDE
+ * (right = left + PANEL_DX), four mid-gray pill rows each (~61, gaps ~23; the
+ * live scoreboard's pills are ~12). Below: green replay code; above: two
+ * "Score:" banners and the header (timestamp + stage / lobby + mode).
  */
 import type { Roi } from "../../canonical";
 
@@ -22,65 +16,45 @@ export const PANEL_DX = 676;
 /** dx per panel: [left (index 0), right (index 1)]. */
 export const PANEL_XS = [0, PANEL_DX] as const;
 
-/**
- * Weapon icon search region — full pill height so the largest template
- * (64; icons render ~60-64px) fits with slide room (matchTemplate skips
- * taller templates).
- */
+/** Full pill height so the largest template (64; icons ~60-64px) fits with slide room. */
 export function weaponRoi(cy: number, dx: number): Roi {
 	return { x: 522 + dx, y: cy - 34, w: 96, h: 68 };
 }
 
 /**
- * Special-weapon icon on a black disc above the third stat counter (~25x29
- * art at x 1109-1134, y cy-29..cy). Only read to break near-tied weapon
- * matches with different specials; box stays inside the disc since the
- * mid-gray pill around it sits above matchSpecial's ink threshold.
+ * Special icon on a black disc above the third stat (~25x29 at x 1109-1134),
+ * only read to break near-tied weapons. Box stays inside the disc: the mid-gray
+ * pill sits above matchSpecial's ink threshold.
  */
 export function specialIconRoi(cy: number, dx: number): Roi {
 	return { x: 1104 + dx, y: cy - 32, w: 38, h: 33 };
 }
 
-/**
- * Player name text region (white, left-aligned; descenders reach cy+18).
- * Long names run into the paint column; parse paint first and trim at its
- * leftmost digit. Kept narrower than the first glyph to dodge weapon-icon bleed.
- */
+/** Name text (descenders reach cy+18); long names run into the paint column, trim at its leftmost digit. */
 export function nameRoi(cy: number, dx: number): Roi {
 	return { x: 620 + dx, y: cy - 16, w: 226, h: 37 };
 }
 
 /**
- * Paint digits, LEFT-aligned from x~843 (~18px pitch); the trailing "p"
- * moves with digit count, so short (3-digit) paints put it inside this
- * region — parseNumber's digit-only charset drops it.
+ * Paint digits, LEFT-aligned from x~843; the trailing "p" lands inside on 3-digit paints
+ * (digit-only charset drops it).
  */
 export function paintRoi(cy: number, dx: number): Roi {
 	return { x: 821 + dx, y: cy - 15, w: 88, h: 34 };
 }
 
-/**
- * Gate anchor over the "p" after the paint number. Since it's left-aligned,
- * "p" position tracks digit count (x 898-907 after 3 digits, 915-924
- * after 4) — the probe spans both.
- */
+/** Gate anchor over the paint "p", spanning both positions (x 898-907 after 3 digits, 915-924 after 4). */
 export function paintSuffixRoi(cy: number, dx: number): Roi {
 	return { x: 896 + dx, y: cy - 13, w: 31, h: 26 };
 }
 
-/**
- * Stat counter digits (zero-padded, "x" prefix excluded), cy+4..cy+23 —
- * the top edge must stay below the stat icons, which bleed ink above it.
- */
+/** Stat digits ("x" prefix excluded); top edge must stay below the stat icons' ink bleed. */
 export function statRoi(cy: number, dx: number, index: 0 | 1 | 2): Roi {
 	const x = [1000, 1057, 1114][index]!;
 	return { x: x + dx, y: cy + 3, w: 36, h: 24 };
 }
 
-/**
- * POV arrow: smaller replay-browser arrow on the pill's left edge (x
- * 487-530). Right edge stays short of the weapon-icon region (x 522+).
- */
+/** POV arrow on the pill's left edge (x 487-530), short of the weapon region (x 522+). */
 export function povArrowRoi(cy: number, dx: number): Roi {
 	return { x: 480 + dx, y: cy - 32, w: 54, h: 56 };
 }
@@ -101,23 +75,12 @@ export const MATCH_SCORE_ROIS: readonly [Roi, Roi] = [
 	{ x: 1620, y: 340, w: 130, h: 56 },
 ];
 
-/**
- * Header bands on the stage-photo banner: line 1 timestamp + stage tag,
- * line 2 lobby + mode. Tags size to their text; the header parser trims
- * each band to the tag extent.
- */
+/** Header bands: line 1 timestamp + stage, line 2 lobby + mode; the parser trims each to the tag extent. */
 export const HEADER_TOP_BAND: Roi = { x: 500, y: 68, w: 560, h: 46 };
-/**
- * Wide lobby tags push the mode tag right ("Anarchy Battle (Open)" +
- * "Rainmaker" ends x~1134), so the band runs past the longest observed pair.
- */
+/** Runs past the longest observed pair ("Anarchy Battle (Open)" + "Rainmaker" ends x~1134). */
 export const HEADER_BOTTOM_BAND: Roi = { x: 500, y: 124, w: 700, h: 58 };
 
-/**
- * Bright green replay code line ("XXXX-XXXX-XXXX-XXXX"), left-aligned
- * after the magnifier icon. Width tracks the glyphs, so a wide-letter
- * code can run past x=913 — box extends into the background to fit it.
- */
+/** Green replay code, left-aligned after the magnifier; a wide-letter code can run past x=913. */
 export const REPLAY_CODE_ROI: Roi = { x: 574, y: 960, w: 400, h: 38 };
 
 /** Gate probe: flat pill background strip between paint "p" and first stat "x" — mid-gray here, not near-black. */
@@ -138,7 +101,10 @@ export const GATE_FLAT_MAX_MEAN = 78;
 export const GATE_GAP_MAX_MEAN = 40;
 /** The paint "p" suffix region must contain bright pixels. */
 export const GATE_TEXT_MIN_MAX = 180;
-/** Replay-code color probe: fraction of REPLAY_CODE_ROI pixels that are green-ish (high G, low B) — unique to this screen. */
+/**
+ * Replay-code color probe: fraction of REPLAY_CODE_ROI pixels that are green-ish (high G, low B) —
+ * unique to this screen.
+ */
 export const GATE_CODE_GREEN_MIN = 140;
 export const GATE_CODE_BLUE_MAX = 90;
 export const GATE_CODE_MIN_FRACTION = 0.03;

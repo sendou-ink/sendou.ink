@@ -1,10 +1,8 @@
 /**
- * Cross-tab frame handoff for the Inspect action: the source tab stashes the
- * frame under a fresh key and opens the screenshot page in a new browser tab
- * with ?inspect=<key>. The write races the new tab's load, so claiming polls
- * briefly before giving up. Claimed records are deleted; unclaimed leftovers
- * (blocked popup, tab closed mid-load) are swept by key age on the next
- * handoff.
+ * Cross-tab frame handoff for Inspect: the source tab stashes the frame under
+ * a fresh key and opens the screenshot page with ?inspect=<key>. The write
+ * races the new tab's load, so claiming polls briefly. Claimed records are
+ * deleted; unclaimed leftovers (blocked popup) are swept by key age next time.
  */
 
 import { INSPECT_FRAMES_STORE, tx } from "./db";

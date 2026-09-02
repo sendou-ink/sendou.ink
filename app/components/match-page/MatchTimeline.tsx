@@ -82,17 +82,17 @@ export interface TimelineMap {
 	};
 	/** Whether the game ended in a knockout. Undefined if not collected. */
 	ko?: boolean;
-	/** Side that picked this map (counterpick / postGame map PICK). Renders a click indicator next to that side's WIN/LOSS label. */
+	/** Side that picked this map (counterpick / postGame map PICK), shown as a click indicator. */
 	pickedBy?: MatchSide;
-	/** Ingested end-of-game scoreboard rendered as an expandable stats section below the map row. */
+	/** Ingested end-of-game scoreboard, an expandable stats section below the map row. */
 	scoreboard?: {
 		/** [alpha, bravo] on the ingested 0-100 scale (100 = knockout) */
 		scores: [number | null, number | null];
 		alpha: TimelineScoreboardPlayer[];
 		bravo: TimelineScoreboardPlayer[];
-		/** Objective-counter reads ([alpha, bravo] values) charted above the stats tables. */
+		/** [alpha, bravo] objective-counter reads charted above the stats tables */
 		objective?: ObjectiveTimelineEvent[];
-		/** Per-player splat/special bands ([alpha, bravo]) charted above the objective chart. */
+		/** [alpha, bravo] per-player splat/special bands charted above the objective chart */
 		playerStatus?: PlayerStatusTimelineSample[];
 	};
 }
@@ -126,15 +126,13 @@ export interface MatchTimelineProps {
 	score?: { alpha: number; bravo: number };
 	maps: TimelineMap[];
 	spChanges?: TimelineSpChanges;
-	/** When true, render only the team + score header (no per-map rows or SP section). */
+	/** only the team + score header, no per-map rows or SP section */
 	compact?: boolean;
-	/** When true, the match is still in progress; renders a small LIVE label under the score. */
+	/** renders a LIVE label under the score */
 	isOngoing?: boolean;
 	/**
-	 * Pick/ban events keyed by the slot they precede. Length = `maps.length + 1`.
-	 * Bucket `i` renders above map row `i`; the trailing bucket renders after the
-	 * last map row (covers events made after the latest result, or the
-	 * pick/ban-only state with no maps reported yet).
+	 * Pick/ban events keyed by the slot they precede, length `maps.length + 1`. Bucket `i` renders
+	 * above map row `i`; the trailing bucket after the last row (events after the latest result).
 	 */
 	pickBanRowsBySlot?: TimelinePickBanEvent[][];
 }
@@ -375,11 +373,7 @@ interface SideScore {
 	fromObjective: boolean;
 }
 
-/**
- * A knockout's loser is reported with no score of its own, so the count it
- * took is only known from the objective counter — prefer that read over a
- * scoreless 0, and mark it as the video-sourced value it is.
- */
+/** A knockout's loser has no reported score, so prefer the objective counter read over a scoreless 0. */
 function resolveSideScore(
 	scoreboardScore?: number | null,
 	objectiveScore?: number | null,

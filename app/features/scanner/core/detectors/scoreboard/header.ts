@@ -1,12 +1,8 @@
 /**
- * Header parsing: lobby type ("X Battle"), mode ("Splat Zones") and stage
- * ("Scorch Gorge") from the black tags above the team boxes.
- *
- * Tags auto-size to their text, so the stage's x position depends on mode
- * length. Each band is trimmed to the tag extent (near-black bg + white
- * text; the map thumbnail around it is mid-brightness), then OCR'd as one
- * line and snapped against every language's mode × stage combos
- * (core/localized.ts) — reported values are always sendou.ink ids.
+ * Header parsing: lobby, mode and stage from the black tags above the team
+ * boxes. Tags auto-size, so each band is trimmed to the tag extent (near-black
+ * bg + white text vs the mid-brightness thumbnail), OCR'd as one line and
+ * snapped against every language's mode × stage combos (core/localized.ts).
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
@@ -46,10 +42,8 @@ const TAG_BRIGHT_MIN = 165;
 const TAG_GAP_TOLERANCE = 6;
 
 /**
- * Trim a band crop to the black-tag extent: the longest run of tag columns
- * starting within `maxLeadIn` of the left edge (a dark photo edge can fake
- * a short run before the real tag), each run extended right until the tag
- * ends. Returns a zero-width range when no tag is present at all.
+ * Longest run of tag columns starting within `maxLeadIn` of the left edge (a
+ * dark photo edge can fake a short run first); zero-width when no tag.
  */
 function tagExtent(
 	crop: Mat,
@@ -94,31 +88,17 @@ function tagExtent(
 
 export interface TagBandOptions extends RecognizeOptions {
 	/**
-	 * Dark ceiling for the tag-extent trim. Lifted-blacks captures (720p
-	 * streams upscaled and re-encoded) raise the tag background above the
-	 * default, truncating the trim to a sliver — callers whose closed-set
-	 * snap fails retry with a lifted ceiling.
+	 * dark ceiling for the extent trim; lifted-blacks captures truncate the trim to a sliver, so
+	 * callers retry with a lifted one
 	 */
 	tagDarkMax?: number;
-	/**
-	 * Non-tag columns tolerated before the tag begins. The battle log tags
-	 * are not left-anchored (a leading rank icon shifts line 1 per lobby
-	 * type), so its bands start on the stage photo and scan for the tag.
-	 */
+	/** non-tag columns tolerated before the tag; battle log tags are not left-anchored (a rank icon shifts line 1) */
 	tagLeadInMax?: number;
-	/**
-	 * Tag-like row fraction a column must reach. The battle log tags are
-	 * subtly tilted, so a horizontal band always catches a few photo rows
-	 * above or below the box — those bands pass a looser fraction.
-	 */
+	/** tag-like row fraction a column must reach; battle log tags are tilted so their bands catch photo rows */
 	tagColumnFraction?: number;
 }
 
-/**
- * OCR one header band: trim the crop to the black-tag extent, then
- * recognize it as a single line. Shared with the scoreboard-battle-log-replay
- * header, whose tags have the same style at different positions/sizes.
- */
+/** OCR one header band: trim to the black-tag extent, recognize as a single line. */
 export function readTagBand(
 	gray: Mat,
 	band: { x: number; y: number; w: number; h: number },

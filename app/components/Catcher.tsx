@@ -29,7 +29,7 @@ export function Catcher() {
 		window.scrollTo(0, 0);
 	}, []);
 
-	// refresh user data to make sure it's up to date (e.g. cookie might have been removed, let's show the prompt to log back in)
+	// refresh user data so e.g. a removed cookie shows the prompt to log back in
 	const hasRevalidated = React.useRef(false);
 	React.useEffect(() => {
 		if (!isRouteErrorResponse(error) || error.status !== 401) return;
@@ -144,10 +144,7 @@ export function Catcher() {
 	}
 }
 
-/**
- * A client side navigation to an URL matching no route never reaches the server, so the
- * redirects (normally resolved by `redirectsMiddleware`) are checked here as well.
- */
+/** Client side navigation to an unmatched URL never reaches the server, so `redirectsMiddleware`'s redirects are checked here too. */
 function PageNotFound() {
 	const location = useLocation();
 	const navigate = useNavigate();

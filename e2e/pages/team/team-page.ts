@@ -80,10 +80,7 @@ export class TeamPage {
 		);
 	}
 
-	/**
-	 * Opens the leave confirmation dialog, which names the new owner if the
-	 * leaver owns the team. Requires the actions menu to be open.
-	 */
+	/** Opens the leave confirmation dialog, naming the new owner if the leaver owns the team. Requires the actions menu to be open. */
 	async startLeaving() {
 		await this.locators.leaveTeamButton.click();
 	}

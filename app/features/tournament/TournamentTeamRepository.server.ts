@@ -141,13 +141,8 @@ export function updateMemberInGameName({
 	});
 }
 
-/**
- * Updates the in-game name of a tournament team member for tournaments that have not started yet.
- *
- * @returns A promise that resolves to an array of tournament IDs where the user's in-game name was updated.
- */
+/** Updates the acting user's in-game name in tournaments not yet started, returning the ids of those tournaments. */
 export async function updateOwnMemberInGameNameForNonStarted(
-	/** The new in-game name to be set for the acting user. */
 	inGameName: string,
 ): Promise<number[]> {
 	const userId = actorId();
@@ -157,13 +152,13 @@ export async function updateOwnMemberInGameNameForNonStarted(
 		.updateTable("TournamentTeamMember")
 		.set({ inGameName })
 		.where("TournamentTeamMember.userId", "=", userId)
-		// after they have checked in no longer can update their IGN from here
+		// IGN can't be updated from here after check-in
 		.where(
 			"TournamentTeamMember.tournamentTeamId",
 			"in",
 			tournamentTeams.map((t) => t.tournamentTeamId),
 		)
-		// if the tournament doesn't have the setting to require IGN, ignore
+		// null when the tournament doesn't require IGN
 		.where("TournamentTeamMember.inGameName", "is not", null)
 		.execute();
 
@@ -261,16 +256,11 @@ export function insert({
 }
 
 /**
- * Creates a new registration or applies a full-state edit to an existing one in a
- * single transaction: team name, linked sendou.ink team, owner assignment/transfer,
- * member adds/removes, in-game name updates, tournament name updates and the
- * counterpick map pool. Pass `tournamentTeamId` to edit an existing team, or omit it
- * to create a new one (all members are then "added" and `ownerUserId` becomes the
- * owner). The caller is responsible for validating the derived ops and for any side
- * effects (cache updates, notifications) outside the transaction.
- *
- * Returns the tournament name changes that were actually applied (submitted values
- * equal to the user's current one are no-ops), for the caller to log.
+ * Creates a registration or applies a full-state edit to an existing one (`tournamentTeamId`)
+ * in one transaction: name, linked team, owner, members, in-game names, tournament names and
+ * counterpick map pool. The caller validates the ops and handles side effects (caches,
+ * notifications). Returns the tournament name changes actually applied (values equal to the
+ * current one are no-ops), for the caller to log.
  */
 export function upsertRegistration({
 	tournamentTeamId,
@@ -505,11 +495,7 @@ export function upsertRegistration({
 	});
 }
 
-/**
- * Whether the tournament's registration is closed at the current moment, based on
- * the organizer-set `regClosesAt` if present, otherwise the tournament start time.
- * Members added while registration is closed are persisted as subs.
- */
+/** Registration is closed after `regClosesAt`, or the start time without it. Members added after that are subs. */
 async function registrationClosedNow(
 	trx: Transaction<DB>,
 	tournamentId: number,
@@ -644,11 +630,7 @@ export function updateAbDivisions(
 	});
 }
 
-/**
- * Checks in a tournament team. Clears any existing check-out records before inserting the check-in.
- * When called without `bracketIdx`, checks in for the whole tournament.
- * When called with `bracketIdx`, checks in for a specific bracket (e.g. after progression).
- */
+/** Checks a team in to the whole tournament, or to one bracket with `bracketIdx`. Clears existing check-outs first. */
 export function checkIn(
 	tournamentTeamId: number,
 	options?: { bracketIdx?: number },
@@ -796,9 +778,8 @@ export function join({
 	/** Team to delete as the user joins, e.g. a solo team they leave behind. */
 	previousTeamIdToDelete?: number;
 	newTeamId: number;
-	/** The user joining the team. */
 	userId: number;
-	/** Was the user added to the team by the tournament organizer instead of joining on their own? */
+	/** Added by the organizer rather than joining on their own. */
 	isOrganizerAdded?: boolean;
 }): Promise<number[]> {
 	return db.transaction().execute(async (trx) => {
@@ -886,7 +867,7 @@ export function deleteById(tournamentTeamId: number): Promise<number[]> {
 	});
 }
 
-/** Was the user's membership in the given team added by the tournament organizer instead of the user joining on their own? */
+/** Whether the organizer added the user to the team rather than the user joining on their own. */
 export async function isOrganizerAddedMember({
 	tournamentTeamId,
 	userId,
@@ -904,14 +885,7 @@ export async function isOrganizerAddedMember({
 	return Boolean(member?.isOrganizerAdded);
 }
 
-export function leave({
-	teamId,
-	userId,
-}: {
-	teamId: number;
-	/** The member leaving the team. */
-	userId: number;
-}) {
+export function leave({ teamId, userId }: { teamId: number; userId: number }) {
 	return db.transaction().execute(async (trx) => {
 		await TournamentAuditLogRepository.insert(
 			{
@@ -990,14 +964,10 @@ async function findTeamRecentMaps(
 }
 
 /**
- * Tournament registrations of the given users whose event start falls within
- * the given window, one row per registered member per event date. Dropped-out
- * teams and hidden events (test and draft tournaments) are excluded. Used to
- * resolve availability commitments, so alongside the event's name and start
- * the rows carry what estimating the tournament's duration needs: the
- * settings and how many teams have registered so far. `excludeTournamentId`
- * leaves one tournament's own registrations out, for surfaces asking "busy
- * elsewhere" while looking at that tournament.
+ * Registrations of the given users starting within the window, one row per member per event
+ * date; dropped-out teams and hidden events excluded. Rows also carry what estimating the
+ * tournament's duration needs (settings, registered team count) for availability commitments.
+ * `excludeTournamentId` leaves one tournament out, for "busy elsewhere" views of that tournament.
  */
 export function findAllRegistrationsByUserIds({
 	userIds,
@@ -1106,16 +1076,10 @@ export async function findRecentlyPlayedMapsByIds({
 	excludeMatchId,
 	limit = 5,
 }: {
-	/** Team IDs to retrieve recent maps for */
 	teamIds: [number, number];
-	/** Match whose own games are left out, being the match the maps are resolved for.
-	 * Without it a set's map list changes under the teams mid-set, as the games they
-	 * already played would count as recently played when it is regenerated. */
+	/** The match the maps are resolved for, left out so its own played games don't change the map list mid-set. */
 	excludeMatchId: number;
-	/** Limit of recent maps to retrieve per team
-	 *
-	 * @default 5
-	 */
+	/** Recent maps per team, default 5. */
 	limit?: number;
 }): Promise<Array<{ mode: ModeShort; stageId: StageId }>> {
 	const [teamOneMaps, teamTwoMaps] = await Promise.all([

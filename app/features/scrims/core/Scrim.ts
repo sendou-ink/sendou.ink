@@ -44,9 +44,7 @@ export function resolvePoolCode(postId: number) {
 	return `SC${(postId % 9) + 1}`;
 }
 
-/**
- * Returns an array of participant IDs from the given post object that is accepted (scrim page exists).
- */
+/** Participant ids of an accepted post (one whose scrim page exists). */
 export function participantIdsListFromAccepted(post: ScrimPost) {
 	const acceptedRequest = post.requests.find((r) => r.isAccepted);
 
@@ -61,20 +59,13 @@ export function participantIdsListFromAccepted(post: ScrimPost) {
 		.concat(acceptedRequest?.users.map((u) => u.id) ?? []);
 }
 
-/**
- * Returns the actual start time of the scrim.
- * When the post has a time range (rangeEndsAt is set), returns the accepted request's specific time if available.
- * Otherwise returns the post's start time.
- */
+/** The scrim's actual start: the accepted request's time when the post has a range (rangeEndsAt set), else the post's start. */
 export function getStartTime(post: ScrimPost): number {
 	const acceptedRequest = post.requests.find((r) => r.isAccepted);
 	return acceptedRequest?.startsAt ?? post.startsAt;
 }
 
-/**
- * Returns a display name for a scrim side: the team name when set,
- * otherwise "{ownerUsername}'s pickup".
- */
+/** Display name of a scrim side: the team name, else "{ownerUsername}'s pickup". */
 export function sideDisplayName(side: {
 	team: { name: string } | null;
 	users: Array<{ username: string; isOwner: boolean }>;
@@ -158,13 +149,7 @@ export function filtersAreDefault(filters: ScrimFilters): boolean {
 	return R.isShallowEqual(filters, defaultFilters());
 }
 
-/**
- * Returns the side ("ALPHA" or "BRAVO") the user belongs to in the scrim, or
- * null when the user is not part of the accepted pairing.
- *
- * The post's own users list is treated as the ALPHA side; the accepted
- * request's users list is treated as the BRAVO side.
- */
+/** The user's side in the scrim (post's users are ALPHA, accepted request's are BRAVO), or null when not in the accepted pairing. */
 export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
 	if (post.users.some((u) => u.id === userId)) return "ALPHA";
 
@@ -175,12 +160,9 @@ export function sideOfUser(post: ScrimPost, userId: number): ScrimSide | null {
 }
 
 /**
- * Returns true when map-by-map tracking is locked: the auto-lock window has
- * elapsed since the last activity (most recent reported map, falling back to
- * the most recently updated submitted map list). Activity happening before the
- * scrim starts does not begin the window, it only starts running once the
- * scrim is under way. Returns false when no map list has been submitted yet
- * (tracking is not active).
+ * Whether map-by-map tracking is locked: the auto-lock window has elapsed since the last activity
+ * (latest reported map, else latest submitted map list). The window only starts running once the
+ * scrim is under way. False when no map list has been submitted yet.
  */
 export function isTrackingLocked({
 	startTime,
@@ -210,10 +192,7 @@ export function isTrackingLocked({
 	return elapsedHours > SCRIM_TRACKING_AUTO_LOCK_HOURS;
 }
 
-/**
- * Returns the next 0-based map index to be inserted given a list of existing
- * maps. Existing maps need not be in any particular order.
- */
+/** The next 0-based map index to insert; existing maps need not be ordered. */
 export function nextMapIndex(
 	maps: Pick<Tables["ScrimMap"], "index">[],
 ): number {
@@ -221,10 +200,7 @@ export function nextMapIndex(
 	return latest ? latest.index + 1 : 0;
 }
 
-/**
- * Returns the most recently reported map (by `index`), or undefined if no map
- * has been reported yet.
- */
+/** The most recently reported map (by `index`), or undefined if none. */
 export function lastReportedMap<
 	T extends Pick<Tables["ScrimMap"], "index" | "reportedAt">,
 >(maps: T[]): T | undefined {
@@ -244,11 +220,7 @@ export interface PickableSlot extends TimeRange {
 	pick: { startsAt: number; rangeEnd: RangeEndOption | null };
 }
 
-/**
- * The roster's shared free time as the slots a scrim post can be picked from:
- * maximal spans where the team is at most one player short, the `ONE_SHORT`
- * ones being the "grab a sub" case.
- */
+/** The roster's shared free time as pickable slots: maximal spans where the team is at most one player short (`ONE_SHORT` = "grab a sub"). */
 export function pickableSlots({
 	members,
 	minPlayers,
@@ -286,10 +258,7 @@ export function pickableSlots({
 	});
 }
 
-/**
- * The members a scrim is played with: the team's players, or its whole roster
- * when there are not enough players on it to field a team.
- */
+/** The members a scrim is played with: the team's players, or the whole roster when too few players to field a team. */
 export function teamPlayers<
 	T extends { role: MemberRole | null; roleType: MemberRoleType | null },
 >(members: Array<T>): Array<T> {
@@ -311,12 +280,8 @@ export interface RosterFit {
 }
 
 /**
- * How well a roster fits a scrim post: the start among `starts` the most of
- * them are free for, and how each member relates to a scrim played from it.
- * Ties go to the earliest start.
- *
- * Null when nobody on the roster filled in the week the post falls in — a fit
- * nothing is known about is not worth showing.
+ * How well a roster fits a post: the start among `starts` most of them are free for (ties to the
+ * earliest) and how each member relates to it. Null when nobody filled in the post's week.
  */
 export function rosterFit({
 	starts,

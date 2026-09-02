@@ -1,11 +1,8 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Accuracy report across all fixtures — separate from pass/fail testing.
- * Runs each detector over its own fixture directory and prints aggregate
- * per-field accuracy plus character error rate (CER) for names, the metric
- * that drives glyph atlas expansion.
- *
- * Usage: pnpm scanner:report
+ * Accuracy report across all fixtures, separate from pass/fail testing:
+ * aggregate per-field accuracy plus character error rate (CER) for names,
+ * the metric that drives glyph atlas expansion. Usage: pnpm scanner:report
  */
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import {

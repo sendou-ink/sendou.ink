@@ -1,11 +1,9 @@
 /**
- * Persistence for completed VoD scans, keyed by the VoD's file name so a
- * scanned video can be reinspected later without re-decoding it. The
- * summary lives in `vods`; the detections live in `vod-events` under a
- * `vod` index, and their full-res analyzed PNGs in `vod-frames` under the
- * event id (loaded on demand via loadVodEventFrame), so listing VoDs and
- * their events stays cheap. Re-scanning the same file name overwrites the
- * previous save.
+ * Persistence for completed VoD scans, keyed by file name so a video can be
+ * reinspected without re-decoding. The summary lives in `vods`, detections in
+ * `vod-events` under a `vod` index, full-res PNGs in `vod-frames` under the
+ * event id (loadVodEventFrame), so listing stays cheap. Re-scanning the same
+ * file name overwrites the previous save.
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import { db, tx, VOD_EVENTS_STORE, VOD_FRAMES_STORE, VODS_STORE } from "./db";
@@ -104,9 +102,8 @@ export async function saveVod(
 }
 
 /**
- * Records how a VoD's "Send results" went, so reopening the scan reports
- * what was sent instead of showing every match as never sent. Re-scanning
- * the file starts over: `saveVod` writes a summary without one.
+ * Records how a VoD's "Send results" went, so reopening the scan reports what
+ * was sent. Re-scanning starts over: `saveVod` writes a summary without one.
  */
 export async function saveVodResultsSend(
 	name: string,

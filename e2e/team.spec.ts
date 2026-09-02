@@ -133,7 +133,6 @@ test.describe("Team page", () => {
 		const team = new TeamPage(page);
 		await team.goto(customUrl);
 
-		// Owner is Sendou
 		await expect(team.ownerBadge(ADMIN_ID)).toBeVisible();
 
 		const roster = await team.openManageRoster();
@@ -191,7 +190,6 @@ test.describe("Team page", () => {
 		await expect(firstRow.locators.moveUpButton).toBeDisabled();
 		await expect(lastRow.locators.moveDownButton).toBeDisabled();
 
-		// move the first member down one slot
 		await firstRow.moveDown();
 
 		await expect(firstRow.locators.username).toHaveText(secondName);
@@ -202,7 +200,6 @@ test.describe("Team page", () => {
 		await team.goto(customUrl);
 		await team.openManageRoster();
 
-		// the new order is persisted
 		await expect(firstRow.locators.username).toHaveText(secondName);
 	});
 

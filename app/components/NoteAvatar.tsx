@@ -25,13 +25,9 @@ const SIZE_CLASS = {
 } as const;
 
 /**
- * Wraps an avatar (or any node) and overlays a sentiment badge on the bottom-left corner when
- * `sentiment` is set: POSITIVE → green check, NEGATIVE → red cross, NEUTRAL → grey dash. Renders the
- * children without a badge when `sentiment` is `null`/`undefined`. `size` scales the badge to match
- * the wrapped avatar (`xs` for tiny avatars, `sm` for small avatars, `md` for large ones).
- *
- * `onClick` makes the whole wrapper (avatar and badge) clickable. It is kept out of the tab order, so
- * only use it as a shortcut to an action that is also available elsewhere.
+ * Overlays a sentiment badge (check / cross / dash) on the bottom-left of the wrapped avatar;
+ * `size` matches the avatar. `onClick` is kept out of the tab order, so only use it as a shortcut
+ * to an action also available elsewhere.
  */
 export function NoteAvatar({
 	sentiment,

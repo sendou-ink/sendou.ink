@@ -21,24 +21,19 @@ export function requireUser(): AuthenticatedUser {
 	return user;
 }
 
-/** Id of the acting user, from request context. Throws an Error if there is no
- *  authenticated user (e.g. called outside a request) — repositories rely on a
- *  bouncer having already enforced auth, so absence here is a bug, not a 401. */
+/** Throws without an authenticated user: a bouncer should have enforced auth, so absence is a bug, not a 401. */
 export function actorId(): number {
 	const id = actorIdOrNull();
 	if (id === null) throw new Error("No acting user in context");
 	return id;
 }
 
-/** Id of the acting user, or null when unauthenticated. Use for reads that
- *  also serve anonymous visitors, where the actor only scopes the result. */
+/** For reads that also serve anonymous visitors, where the actor only scopes the result. */
 export function actorIdOrNull(): number | null {
 	return getUser()?.id ?? null;
 }
 
-/** Id of the acting user, or null when there is no actor *or* no request
- *  context at all (e.g. cron routines). Never throws, unlike actorIdOrNull —
- *  use for ambient side effects that may also run outside of a request. */
+/** Null also when there is no request context at all (e.g. cron routines); never throws. */
 export function actorIdOrNullSafe(): number | null {
 	return userAsyncLocalStorage.getStore()?.user?.id ?? null;
 }

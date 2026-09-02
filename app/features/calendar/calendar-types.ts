@@ -11,12 +11,12 @@ interface CommonEvent {
 	id: number;
 	name: string;
 	teamsCount: number;
-	/** How many players in total are rostered in the counted teams */
+	/** Players rostered in the counted teams in total */
 	membersCount: number;
 	minMembersPerTeam: number;
 	logoUrl: string | null;
 	url: string;
-	/** Is the tournament ranked? If null, tournament is not hosted on sendou.ink */
+	/** Null when not hosted on sendou.ink */
 	isRanked: boolean | null;
 	/** Tournament tier (1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C). Null if not tiered. */
 	tier: number | null;
@@ -27,7 +27,6 @@ interface CommonEvent {
 		name: string;
 		slug: string;
 	} | null;
-	/** User id of the author of the event */
 	authorId: number;
 }
 
@@ -36,7 +35,7 @@ export interface CalendarEvent extends CommonEvent {
 	at: number;
 	type: "calendar";
 	tags: Array<CalendarEventTag>;
-	/** Used for comparison, teams count where it is taken in account whether the tournament is 4v4, 3v3, 2v2 or 1v1 */
+	/** Team count weighted by team size (4v4, 3v3, 2v2, 1v1), for comparison */
 	normalizedTeamCount: number;
 	/** For multi-day tournaments, which day of the event is this */
 	day?: number;
@@ -49,7 +48,6 @@ export interface CalendarEvent extends CommonEvent {
 export interface ShowcaseCalendarEvent extends CommonEvent {
 	type: "showcase";
 	startsAt: number;
-	/** Id of the organization the event belongs to, if any */
 	organizationId: number | null;
 	/** Tournament is hidden from the public (test tournament) */
 	hidden: boolean;

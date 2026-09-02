@@ -20,9 +20,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	switch (data._action) {
 		case "DELETE_ART": {
-			// this actually doesn't delete the image itself from the static hosting
-			// but the idea is that storage is cheap anyway and if needed later
-			// then we can have a routine that checks all the images still current and nukes the rest
+			// the image stays on static hosting; storage is cheap and a cleanup routine can come later
 			const artToDelete = badRequestIfFalsy(
 				await ArtRepository.findById(data.id),
 			);

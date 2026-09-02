@@ -1,7 +1,4 @@
-/**
- * Tournament tier calculation based on top teams' average SeedingSkill ordinal.
- * Lower tier number = better tier (like placements).
- */
+/** Tier from the top teams' average SeedingSkill ordinal. Lower tier number = better (like placements). */
 
 export const TIER_THRESHOLDS = {
 	X: 32,

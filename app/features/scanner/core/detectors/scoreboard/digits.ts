@@ -1,6 +1,4 @@
-/**
- * Number field parsing on top of glyph recognition.
- */
+/** Number field parsing on top of glyph recognition. */
 import type { Mat } from "../../cv";
 import {
 	type GlyphSet,
@@ -17,11 +15,7 @@ export interface ParsedNumber {
 	raw: RecognizedText;
 }
 
-/**
- * Digits share a cap line; a lowercase suffix ("p") starts at x-height,
- * ~7px lower at the sizes we parse. A trailing char whose ink top sits at
- * least this far below the other chars' top line is the suffix, not a digit.
- */
+/** A lowercase "p" suffix starts ~7px below the digits' cap line; a trailing char this far down is the suffix. */
 const LOWERED_TRAILING_MIN_PX = 5;
 
 export function parseNumber(
@@ -34,9 +28,7 @@ export function parseNumber(
 		minCharScore: 0.3,
 		binThreshold: options.binThreshold,
 	});
-	// The replay paint column is left-aligned, so its "p" suffix moves with
-	// the digit count and can land inside the ROI, where the digit-only
-	// charset misreads it (a "6"). The geometry still tells it apart.
+	// the replay paint's "p" suffix can land inside the ROI and misread as a "6"
 	let chars = raw.chars;
 	if (options.dropLoweredTrailing && chars.length > 1) {
 		const capY0 = Math.min(...chars.slice(0, -1).map((c) => c.y0));

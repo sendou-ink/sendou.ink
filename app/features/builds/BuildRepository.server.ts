@@ -180,8 +180,7 @@ export async function findOwnerIdById(buildId: number) {
 export async function findAllAbilityPointAverages(
 	weaponSplId?: MainWeaponId | null,
 ) {
-	// Sum tables only contain rows for public builds,
-	// so the queries below need no private filter and no `Build` join.
+	// sum tables only hold public builds, so no private filter or `Build` join is needed
 	if (typeof weaponSplId === "number") {
 		return db
 			.selectFrom("BuildWeaponAbility")
@@ -213,11 +212,9 @@ export async function findAllAbilityPointAverages(
 export async function findAllPopularAbilitiesByWeaponId(
 	weaponSplId: MainWeaponId,
 ) {
-	// One signature per user — otherwise a user with several builds for the
-	// same weapon (e.g. three different Slosher loadouts) would inflate three
-	// different signature buckets. The CTE picks each user's most recently
-	// updated public build for the weapon via SQLite's MAX() + bare columns
-	// rule (https://www.sqlite.org/lang_select.html#bareagg).
+	// one signature per user so several builds for the same weapon don't inflate several buckets;
+	// the CTE picks the most recently updated one via SQLite's MAX() + bare columns rule
+	// (https://www.sqlite.org/lang_select.html#bareagg)
 	return db
 		.with("UserSignature", (cte) =>
 			cte
@@ -304,9 +301,7 @@ export async function findAllByWeaponId(
 	return rows.map((row) => buildRowToResult(row, shouldSortAbilities));
 }
 
-/** Recomputes `BuildWeapon.sortValue` for every (build, weapon) from scratch
- * (plus tier + per-weapon top500). When `userId` is provided, only the builds
- * owned by that user are recomputed. */
+/** Recomputes `BuildWeapon.sortValue` (plus tier + per-weapon top500), for one user's builds if given. */
 export async function recalculateAllSortValues(
 	userId?: number,
 	trx?: Transaction<DB>,
@@ -319,8 +314,6 @@ export async function recalculateAllSortValues(
 		.transaction()
 		.execute((newTrx) => recalculateSortValues(newTrx, userId));
 }
-
-// ---
 
 async function recalculateSortValues(trx: Transaction<DB>, userId?: number) {
 	// Pass 1: tier*2 + 1 for public, NULL for private.
@@ -529,9 +522,8 @@ async function insertBuildChildren(
 		)
 		.execute();
 
-	// Private builds are excluded from the sum tables so the stats queries can
-	// run as pure covering-index scans. Visibility flips are handled implicitly
-	// by `update`'s delete-then-reinsert.
+	// private builds are excluded so the stats queries are pure covering-index scans;
+	// visibility flips are handled by `update`'s delete-then-reinsert
 	if (args.isPrivate) return;
 
 	await trx

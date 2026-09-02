@@ -3,10 +3,7 @@ import { base, en, Faker } from "@faker-js/faker";
 const FAKER_SEED = 5800;
 const MAX_UNIQUE_ATTEMPTS = 100;
 
-/**
- * Faker instance dedicated to seeding. Deliberately not the global singleton, so
- * that app code or a test drawing from `faker` cannot shift what the seed produces.
- */
+/** Not the global singleton, so app code or a test drawing from `faker` can't shift what the seed produces. */
 export const faker = new Faker({ locale: [en, base] });
 faker.seed(FAKER_SEED);
 
@@ -25,11 +22,7 @@ export function createSeededFaker(
 	return instance;
 }
 
-/**
- * Draws from `generate` until it produces a value that has not been drawn before,
- * for values that should look real but still be unique (e.g. a Discord name).
- * Values with a unique constraint should be derived from the factory's `seq` instead.
- */
+/** Draws from `generate` until unique (e.g. a Discord name). Unique-constrained values should derive from `seq` instead. */
 export function unique<T>(generate: () => T): T {
 	for (let attempt = 0; attempt < MAX_UNIQUE_ATTEMPTS; attempt++) {
 		const value = generate();

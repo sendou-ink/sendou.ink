@@ -14,9 +14,7 @@ type ScrimMapRow = Pick<
 	"index" | "mode" | "stageId" | "winnerSide" | "reportedAt"
 >;
 
-/**
- * Merges the submitted map lists into a single deduplicated MapPool.
- */
+/** Merges the submitted map lists into one deduplicated MapPool. */
 export function unionPool(lists: ResolvedMapListRow[]): MapPool {
 	const buckets: Record<ModeShort, Set<StageId>> = {
 		TW: new Set(),
@@ -43,10 +41,7 @@ export function unionPool(lists: ResolvedMapListRow[]): MapPool {
 	return new MapPool(merged);
 }
 
-/**
- * Generates the next single map for the scrim, keeping the pool's mode order
- * stable across calls and avoiding already-played `(mode, stage)` pairs.
- */
+/** The scrim's next map, keeping the pool's mode order stable across calls and avoiding played `(mode, stage)` pairs. */
 export function generateNextMap(args: {
 	pool: MapPool;
 	history: Pick<Tables["ScrimMap"], "mode" | "stageId">[];
@@ -70,10 +65,7 @@ export function generateNextMap(args: {
 	return { mode: result[0].mode, stageId: result[0].stageId };
 }
 
-/**
- * Returns true when the given map is the most recently reported one and is
- * therefore eligible to be undone.
- */
+/** Whether the map is the most recently reported one, and so can be undone. */
 export function canUndo(
 	map: ScrimMapRow | undefined,
 	history: ScrimMapRow[],
@@ -100,11 +92,7 @@ export type Stats = {
 	byStageMode: StatsRow[];
 };
 
-/**
- * Aggregates per-mode, per-stage, and per-(stage, mode) win/loss counts from
- * the viewer's perspective. Maps outside `restrictToPool` (when provided) are
- * skipped, as are unreported maps. Empty rows are filtered out.
- */
+/** Per-mode, per-stage and per-(stage, mode) win/loss counts from the viewer's perspective; unreported maps and ones outside `restrictToPool` are skipped, empty rows dropped. */
 export function stats(
 	maps: ScrimMapRow[],
 	viewerSide: "ALPHA" | "BRAVO",

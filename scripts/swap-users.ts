@@ -10,7 +10,6 @@ invariant(discordId !== discordId2, "discord ids must be different");
 
 const tempDiscordId = "temp-discord-id";
 
-// swap user discordIds
 await db.transaction().execute(async (trx) => {
 	const swap = (from: string, to: string) =>
 		trx

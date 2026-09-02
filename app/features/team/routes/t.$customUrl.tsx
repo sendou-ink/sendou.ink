@@ -56,8 +56,7 @@ export const handle: SendouRouteHandle = {
 };
 
 export default function TeamPage() {
-	// breakout container so the schedule tab's table can size against the full
-	// content area; the wrapper keeps every page at the normal width
+	// breakout container so the schedule tab's table can use the full content area
 	return (
 		<Main breakoutContainer>
 			<div className={clsx(containerClassName("normal"), "stack sm")}>

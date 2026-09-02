@@ -1,11 +1,8 @@
 /**
- * Flattened localized match sets derived from the generated
- * localized-entries.ts: detectors snap OCR output against every language's
- * strings at once and report the sendou.ink id, so ingestion works no
- * matter which language the player runs the game in. Combos (mode+stage,
- * lobby+mode) stay within one language — on-screen text never mixes
- * languages — which keeps the cross product from inventing pairings no UI
- * would show.
+ * Flattened localized match sets from the generated localized-entries.ts:
+ * detectors snap OCR output against every language's strings at once and
+ * report the sendou.ink id. Combos (mode+stage, lobby+mode) stay within one
+ * language — on-screen text never mixes languages.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../scanner-types";

@@ -1,31 +1,19 @@
 import type { DamageReceiver } from "~/features/object-damage-calculator/calculator-types";
 
-/**
- * Sentinel `category` used for the special points entry in patch change data, since special
- * points are not a regular weapon parameter. The matching `key` is also this value.
- */
+/** Sentinel `category` (and `key`) of special points patch changes, which are not a regular param. */
 export const SPECIAL_POINTS_PARAM_KEY = "__specialPoints__";
 
-/**
- * Sentinel `category` used for damage multiplier (damage rate vs objects) entries in patch
- * change data. The `key` of such a change holds the damage receiver target instead.
- */
+/** Sentinel `category` of damage multiplier (rate vs objects) patch changes; `key` holds the receiver target. */
 export const DAMAGE_MULTIPLIER_PARAM_KEY = "__damageMultiplier__";
 
 /**
- * Sentinel `category` used for incoming damage multiplier entries in patch change data: a change
- * to some *other* weapon's damage rate against the page's sub or special weapon (which is itself a
- * damageable object). The `key` holds the damage receiver target, and `attackers` holds the
- * weapons whose rate changed.
+ * Sentinel `category` of incoming damage multiplier patch changes (another weapon's rate against the
+ * page's damageable sub/special); `key` holds the receiver target, `attackers` the weapons.
  */
 export const INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY =
 	"__incomingDamageMultiplier__";
 
-/**
- * Maps a sub or special weapon to the object {@link DAMAGE_RECEIVERS} target(s) that represent it,
- * so the patch history can surface changes to other weapons' damage rates *against* the kit's sub
- * or special. Only weapons that exist as a damageable object are listed.
- */
+/** Sub/special weapon → the {@link DAMAGE_RECEIVERS} target(s) representing it. Only damageable weapons are listed. */
 export const INCOMING_DAMAGE_RECEIVERS: Record<
 	"sub" | "special",
 	Record<number, readonly DamageReceiver[]>

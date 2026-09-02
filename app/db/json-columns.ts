@@ -1,9 +1,6 @@
 /**
- * Every "Table.column" whose text content is a JSON document. The node-sqlite
- * dialect parses only these columns (plus computed expression columns) when
- * reading rows; all other text columns stay plain strings even if a user typed
- * something JSON-shaped into them. Kept in sync with the JSONColumnType
- * declarations of tables.ts by json-columns.test.ts.
+ * Every "Table.column" the dialect parses as JSON; other text stays a plain string even if JSON-shaped.
+ * Kept in sync with the JSONColumnType declarations of tables.ts by json-columns.test.ts.
  */
 export const JSON_COLUMNS: ReadonlySet<string> = new Set([
 	"AllTeam.customTheme",

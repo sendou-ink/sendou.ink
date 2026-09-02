@@ -1,19 +1,15 @@
 import * as React from "react";
 
 /**
- * Keeps an app shell resource route's JSON fresh, outside the router. A
- * `useFetcher` load that is still in flight when a navigation starts is folded
- * into that navigation and has to settle before it completes (React Router
- * reruns cancelled fetcher loads without consulting `shouldRevalidate`), so a
- * refresh that only feeds the app shell would hold up every page change it
- * happens to overlap with.
+ * Keeps an app shell resource route's JSON fresh outside the router: an in-flight `useFetcher` load is folded
+ * into a starting navigation and must settle first, so it would hold up every page change it overlaps.
  */
 export function useBackgroundResource<T>(url: string) {
 	const [data, setData] = React.useState<T>();
 	const [isLoading, setIsLoading] = React.useState(false);
 	const latestRequestRef = React.useRef(0);
 
-	// stable so effects that refresh after a mutation don't re-run every render
+	// stable so effects refreshing after a mutation don't re-run every render
 	const refresh = React.useCallback(async () => {
 		const requestId = ++latestRequestRef.current;
 		setIsLoading(true);

@@ -316,7 +316,6 @@ function GroupCardContainer({
 	layout: "mobile" | "desktop";
 	children: React.ReactNode;
 }) {
-	// we don't want it to animate
 	if (isOwnGroup) return <>{children}</>;
 
 	return <Flipped flipId={`${layout}-${groupId}`}>{children}</Flipped>;
@@ -655,9 +654,8 @@ function VoiceChatInfo({
 
 	const color = () => {
 		const languagesMatch =
-			// small hack to show green for yourself always to avoid confusion
-			// might show red because root loaders don't reload
-			// till there is a full page refresh
+			// always green for yourself: root loaders don't reload until a full
+			// page refresh, so it could otherwise show red
 			member.id === user?.id ||
 			member.languages?.some((l) => user?.languages.includes(l));
 

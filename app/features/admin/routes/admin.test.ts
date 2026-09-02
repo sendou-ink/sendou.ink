@@ -20,8 +20,7 @@ const adminAction = wrappedAction<typeof adminActionSchema>({
 
 const users = UserFactory.pool();
 
-// account migration is asserted through Discord ids, so the tests give the users
-// one they can name
+// account migration is asserted through Discord ids
 const createUsers = (count = 2) =>
 	users.create(count, (index) => ({ discordId: String(index) }));
 

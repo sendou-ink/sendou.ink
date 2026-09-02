@@ -53,8 +53,7 @@ describe("org stats loader", () => {
 			params: { slug: org.slug },
 		});
 
-		// system time is Jan 2026 -> most recent finished month is Dec 2025,
-		// and the current (ongoing) month is not included
+		// system time is Jan 2026: the most recent finished month is Dec 2025, the ongoing month is not included
 		expect(data.monthlyStats.map((m) => m.month)).toEqual([
 			"2025-12",
 			"2025-11",

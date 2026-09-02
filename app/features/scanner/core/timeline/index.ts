@@ -1,7 +1,6 @@
 /**
- * TimelineBuilder: minimal event stream cleanup for the POC.
- * Same-type events within a merge window collapse into one, keeping the
- * highest-confidence version; events below a confidence floor are dropped.
+ * TimelineBuilder: same-type events within a merge window collapse into one
+ * (highest confidence kept); events below a confidence floor are dropped.
  */
 
 import {
@@ -26,43 +25,30 @@ import { sameScoreboardMatch } from "./same-scoreboard";
 export interface TimelineOptions {
 	/** same-type events closer than this (seconds) merge */
 	mergeWindow: number;
-	/**
-	 * per-type mergeWindow overrides: repeatable events need a window shorter
-	 * than the minimum spacing between two real occurrences
-	 */
+	/** per-type overrides: repeatable events need a window shorter than the spacing between two real occurrences */
 	mergeWindowByType: Record<string, number>;
 	/**
-	 * per-type content guard: same-type events inside the window merge only
-	 * when this returns true for their data — screens whose distinct real
-	 * occurrences can appear seconds apart (replay browsing) need content,
-	 * not time, to tell them apart. Absent = merge on time alone.
+	 * per-type content guard: same-type events inside the window merge only when
+	 * this returns true for their data — screens whose distinct occurrences can
+	 * appear seconds apart (replay browsing) need content, not time, to split.
 	 */
 	sameEventDataByType: Record<string, (a: unknown, b: unknown) => boolean>;
 	/** events below this confidence are dropped */
 	minConfidence: number;
-	/**
-	 * per-type confidence floor overrides: evidence-carrying events whose
-	 * scores live on a different scale than parse confidences (raw NCC
-	 * peaks) opt out of the shared floor
-	 */
+	/** per-type floor overrides: evidence events scored on a different scale (raw NCC peaks) opt out of the shared floor */
 	minConfidenceByType: Record<string, number>;
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 	mergeWindow: 30,
-	// the death screen shows for ~5s and respawn takes ~8.5s, so repeat frames
-	// of one death land within the window while consecutive deaths are outside;
-	// players flick the map open for 1-3s and each open is a fresh sample
-	// (slots read differently across opens), so minimap frames merge only
-	// within one open — and a dead/special flip caught mid-open stays its
-	// own event via the content guard
-	// objective counter reads repeat every check second; the content guard
-	// below keeps every actual change while the window collapses static
-	// stretches into one event per state. Player statuses can revisit an
-	// exact prior state no sooner than a respawn takes (~9s), so their
-	// window must stay under that
-	// strip weapon evidence is sampled every ~5s and consecutive samples are
-	// distinct evidence — only same-frame re-reads should collapse
+	// Death: the overlay shows ~5s and respawn takes ~8.5s, so repeat frames of
+	// one death land inside while consecutive deaths fall outside. Minimap:
+	// players flick the map open for 1-3s and each open is a fresh sample, so
+	// frames merge only within one open (a mid-open dead/special flip stays its
+	// own event via the content guard). Objective: reads repeat every second; the
+	// content guard keeps every change while static stretches collapse.
+	// PlayerStatus: a state can recur no sooner than a respawn (~9s), so the
+	// window stays under that. StripWeapons: sampled every ~5s, each distinct evidence
 	mergeWindowByType: {
 		Death: 8,
 		[MINIMAP_EVENT_TYPE]: 5,

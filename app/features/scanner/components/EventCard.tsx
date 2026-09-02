@@ -1,10 +1,9 @@
 /**
- * Single dispatch point from a detected event to its card component, shared
- * by the live feed and the VoD feed. Frames are loaded lazily through
- * `getFrame` (IndexedDB keeps them out of the listed records); the Inspect
- * action (open the frame in the screenshot page in a new browser tab, so
- * the running scan is left undisturbed) is derived from it here so pages
- * don't duplicate the wiring.
+ * Single dispatch point from a detected event to its card, shared by the live
+ * and VoD feeds. Frames load lazily through `getFrame` (IndexedDB keeps them
+ * out of the listed records); the Inspect action (open the frame in the
+ * screenshot page in a new tab, leaving the running scan undisturbed) is
+ * derived from it here.
  */
 
 import clsx from "clsx";

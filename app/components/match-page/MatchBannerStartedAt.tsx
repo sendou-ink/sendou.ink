@@ -13,7 +13,7 @@ const CLASS_NAME = "text-lighter font-semi-bold";
 
 interface MatchBannerStartedAtProps {
 	time: Date;
-	/** When given, the time the match ended, shown as a range together with the start time */
+	/** shown as a range together with the start time */
 	endTime?: Date | null;
 }
 

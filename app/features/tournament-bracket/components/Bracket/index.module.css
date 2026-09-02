@@ -19,11 +19,9 @@
 	overflow: scroll;
 	user-select: none;
 
-	/* Inside a breakout wrapper (see `mainBreakout`) grow only as wide as the
-	   bracket actually needs: never narrower than the normal page width, never
-	   wider than the content area (then it scrolls), centered either way.
-	   Height fills down to the bottom of the viewport using the top offset
-	   published by JS (`--bracket-fill-top`), floored so it never collapses. */
+	/* In a breakout wrapper (see `mainBreakout`): as wide as needed between the normal page width and
+	   the content area (then it scrolls), centered. Height fills down to the viewport bottom using the
+	   JS-published `--bracket-fill-top`, floored so it never collapses. */
 	:global([data-main-breakout]) & {
 		width: fit-content;
 		min-width: min(72rem, 100%);
@@ -49,9 +47,7 @@
 	}
 }
 
-/* Lets the bracket size against the full content area instead of the page
-   width. cqw resolves to <main>, which spans the content area in breakout
-   mode (its own padding keeps the bracket off the edges). */
+/* Sizes against the full content area: cqw resolves to <main>, which spans it in breakout mode. */
 .breakoutWrapper {
 	:global([data-main-breakout]) & {
 		width: 100cqw;

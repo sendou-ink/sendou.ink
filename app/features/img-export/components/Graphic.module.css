@@ -28,10 +28,7 @@
 	border-radius: var(--radius-box);
 }
 
-/*
-Zero-specificity theme scoping so that a forced [data-theme] wrapper always
-beats the html class regardless of which one is in effect
-*/
+/* zero specificity so a forced [data-theme] wrapper always beats the html class */
 :global(:where(html.light)) .container,
 :global(:where([data-theme="light"])) .container {
 	--graphic-first: oklch(58% 0.12 85);
@@ -51,11 +48,7 @@ beats the html class regardless of which one is in effect
 	gap: var(--s-3);
 }
 
-/*
-The image export freezes each element's width, so a shrink-to-fit box would clip its own
-text. Both sides of the header grow into the free space instead, which keeps them at the
-same place as an auto margin would but leaves their text room to breathe.
-*/
+/* the export freezes widths, so both header sides grow into the free space instead of shrink-to-fit */
 .headerText {
 	flex: 1 1 auto;
 	min-width: 0;
@@ -72,9 +65,8 @@ same place as an auto margin would but leaves their text room to breathe.
 }
 
 .headerTitle {
-	/* the export freezes this box at its exact text width, so it has to claim the row's free
-	space rather than shrink-wrap, or a glyph the raster measures wider gets ellipsised away.
-	Basis stays auto so the title still contributes its text to the row's intrinsic width */
+	/* claims the row's free space or a glyph the raster measures wider gets ellipsised;
+	auto basis so the title still contributes to the row's intrinsic width */
 	flex: 1 1 auto;
 	min-width: 0;
 	overflow: hidden;
@@ -210,8 +202,7 @@ same place as an auto margin would but leaves their text room to breathe.
 	color: var(--graphic-text-dim);
 }
 
-/* no ellipsis: the chips wrap and a username is capped well below the row width, so truncating
-here only ever fired on the frozen-width rounding described above */
+/* no ellipsis: chips wrap and usernames are capped, so truncation only fired on frozen-width rounding */
 .playerName {
 	white-space: nowrap;
 }

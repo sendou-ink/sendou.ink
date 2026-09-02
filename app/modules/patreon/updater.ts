@@ -31,7 +31,7 @@ export async function updatePatreonData(): Promise<void> {
 		noDiscordConnected.push(...parsed.noDiscordConnection);
 		noDataIds.push(...parsed.noDataIds);
 
-		// TS freaks out if we don't keep nextUrlToFetchWith string so that's why this weird thing here
+		// kept a string for TS's sake
 		nextUrlToFetchWith = patronData.links?.next ?? "";
 	}
 

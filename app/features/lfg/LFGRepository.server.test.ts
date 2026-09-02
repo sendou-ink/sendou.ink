@@ -20,9 +20,8 @@ describe("LFGRepository.findAllPosts plus-tier visibility", () => {
 		});
 		expect(whileMember.map((post) => post.id)).toContain(postId);
 
-		// next monthly voting drops the author from the plus server: plusTier -> null.
-		// Their own post must remain visible to them, otherwise DELETE_POST / BUMP_POST
-		// (which resolve the post through findAllPosts) 404 and it can never be taken down.
+		// monthly voting drops the author from the plus server (plusTier -> null); their own post
+		// must stay visible or DELETE_POST / BUMP_POST (resolved through findAllPosts) 404 forever
 		const afterDrop = await LFGRepository.findAllPosts({
 			id: author.id,
 			plusTier: null,

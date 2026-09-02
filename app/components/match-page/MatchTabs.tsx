@@ -11,7 +11,7 @@ type MatchTabsKey = (typeof TAB_KEYS)[keyof typeof TAB_KEYS];
 interface MatchTabsProps {
 	children: React.ReactNode;
 	tabs: Array<MatchTabsKey>;
-	/** Tabs that should show a warning-colored alert icon to draw attention. */
+	/** tabs showing a warning-colored alert icon */
 	alertTabs?: Array<MatchTabsKey>;
 }
 

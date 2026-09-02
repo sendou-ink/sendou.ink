@@ -15,8 +15,7 @@ describe("winCounts", () => {
 	});
 
 	test("counts a set the team won on the bracket but lost on maps as a win", () => {
-		// e.g. a set the opponent forfeited after winning games, awarded 2-1 by the
-		// organizer — the bracket, and so the set score, says the team won it
+		// e.g. the opponent forfeited after winning games and the organizer awarded it 2-1
 		const result = winCounts([
 			{
 				tournamentMatchId: 1,
@@ -123,8 +122,7 @@ describe("tournamentTeamSets", () => {
 	});
 
 	test("takes the set result from the bracket winner even when the maps disagree", () => {
-		// organizer overrode the winner after the games were reported, so the team
-		// won the set on the bracket while losing 1-2 on the maps
+		// organizer overrode the winner after reports: won on the bracket, lost 1-2 on the maps
 		const [set] = tournamentTeamSets({
 			sets: [playedSetRow({ teamSide: "opponent1", winnerSide: "opponent1" })],
 			allRounds: ALL_ROUNDS,

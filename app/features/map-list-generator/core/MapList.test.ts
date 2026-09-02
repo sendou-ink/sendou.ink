@@ -318,10 +318,8 @@ describe("MapList.generate()", () => {
 		});
 
 		test("keeps cycling other modes across sets when a must-include pattern is set", () => {
-			// A single generator drives every bracket round. With a `[SZ]`
-			// must-include pattern the non-SZ slots should keep advancing through
-			// the mode order across rounds instead of replaying the order's prefix
-			// every set, otherwise modes in the order's tail (here RM) are starved.
+			// one generator drives every round: with a `[SZ]` must-include the non-SZ slots must keep
+			// advancing through the mode order instead of replaying its prefix, or the tail (RM) starves
 			const gen = MapList.generate({
 				mapPool: ALL_MODES_TEST_MAP_POOL,
 				modeOrder: ["SZ", "TC", "CB", "RM", "TW"],
@@ -338,11 +336,9 @@ describe("MapList.generate()", () => {
 		});
 
 		test("keeps cycling other modes across sets when a positional pattern is set", () => {
-			// With a `*SZ*` pattern and Bo3 sets the two ANY slots are filled from
-			// the non-SZ modes (TC, RM, CB). Because the cycle offset advances by the
-			// full set size (3) instead of the slots actually consumed, every round
-			// resolves the ANY slots to the same modes and the remaining mode (here
-			// RM) never appears in the whole bracket.
+			// `*SZ*` Bo3: the two ANY slots come from TC, RM, CB. Guards against the cycle offset
+			// advancing by the set size (3) instead of consumed slots, which resolved the ANY slots
+			// to the same modes every round so RM never appeared in the whole bracket
 			const gen = MapList.generate({
 				mapPool: new MapPool({
 					TW: [],

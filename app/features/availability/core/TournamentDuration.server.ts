@@ -13,10 +13,8 @@ interface EstimatedTournament {
 }
 
 /**
- * When a tournament is estimated to end: its start plus
- * {@link TournamentDuration.estimateSeconds}, sized by the count the event is
- * expected to draw rather than the one registered so far. Every surface showing
- * or blocking out a tournament's window goes through this so the two agree.
+ * Start plus {@link TournamentDuration.estimateSeconds} sized by the expected team count. Every
+ * view showing or blocking out a tournament's window goes through this so they agree.
  */
 export async function estimatedEndsAt(tournament: EstimatedTournament) {
 	return estimatedEndsAtWith(tournament, await SeriesTeamCount.lookup());

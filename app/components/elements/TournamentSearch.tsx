@@ -23,11 +23,7 @@ interface TournamentSearchProps<T extends object>
 	bottomText?: string;
 	errorText?: string;
 	initialTournamentId?: number;
-	/**
-	 * Restrict results to tournaments that have already started (finished/past)
-	 * instead of the default recent + upcoming window. Useful e.g. for importing
-	 * data from a previous tournament.
-	 */
+	/** Only tournaments that have already started, instead of the default recent + upcoming window. */
 	pastOnly?: boolean;
 	onChange?: (tournament: TournamentSearchItem | null) => void;
 	ref?: React.Ref<HTMLButtonElement>;

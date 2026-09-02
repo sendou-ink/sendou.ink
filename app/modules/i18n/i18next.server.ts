@@ -47,11 +47,7 @@ interface I18nStore {
 
 const i18nAsyncLocalStorage = new AsyncLocalStorage<I18nStore>();
 
-/**
- * Detects the request locale, initializes a request-scoped i18next instance and
- * makes both available to server helpers ({@link getLocale},
- * {@link getServerTFunction}) for the duration of the request.
- */
+/** Detects the locale and sets up the request-scoped i18next instance behind {@link getLocale} and {@link getServerTFunction}. */
 export const i18nMiddleware: MiddlewareFunction<Response> = (args, next) =>
 	remixI18nextMiddleware(args, () =>
 		i18nAsyncLocalStorage.run(
@@ -68,10 +64,7 @@ export function getLocale(): string {
 	return currentStore().locale;
 }
 
-/**
- * A `TFunction` bound to the current request's locale and the given namespaces.
- * Namespaces are already available in-memory so no async loading is needed.
- */
+/** `TFunction` bound to the request's locale and the given namespaces (all in-memory, no async loading). */
 export function getServerTFunction<
 	N extends
 		| FlatNamespace
@@ -85,14 +78,9 @@ export function getServerTFunction<
 }
 
 /**
- * The request-scoped i18next instance, used to provide translations while
- * server-side rendering. Reads from the React Router context so it can be called
- * from `entry.server` where the request context is passed explicitly.
- *
- * Falls back to a shared default-language instance when the context is missing.
- * This happens when the render is an error boundary for a request whose
- * middleware chain threw before {@link i18nMiddleware} ran: without the fallback
- * the missing context would throw a second error that masks the original one.
+ * Request-scoped i18next instance for SSR, read from the router context so `entry.server` can call it.
+ * Falls back to a shared default-language instance when an error boundary renders for a request whose
+ * middleware threw before {@link i18nMiddleware} ran, so a second error doesn't mask the original.
  */
 export function getI18nInstance(
 	context: Readonly<RouterContextProvider>,
@@ -104,11 +92,7 @@ export function getI18nInstance(
 	}
 }
 
-/**
- * A `TFunction` bound to a fixed language, independent of the current request.
- * Use this when translating outside of a request (e.g. notifications) or when a
- * specific language is required regardless of the user's locale.
- */
+/** `TFunction` bound to a fixed language, for outside a request (e.g. notifications) or a required language. */
 export async function getFixedTForLanguage<
 	N extends
 		| FlatNamespace
@@ -134,9 +118,7 @@ function fallbackI18nInstance(): i18n {
 	if (!sharedFallbackInstance) {
 		const instance = createInstance();
 		instance.use(initReactI18next);
-		// initAsync: false makes init synchronous, which is safe here since
-		// resources are already in-memory and lets this be called from the sync
-		// getI18nInstance without awaiting.
+		// initAsync: false is safe with in-memory resources and lets the sync getI18nInstance call this
 		instance.init({
 			...config,
 			resources,

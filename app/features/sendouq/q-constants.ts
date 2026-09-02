@@ -26,14 +26,11 @@ export const ACTION_TAB_AFTER_LOCKED_SECONDS = 24 * 60 * 60; // 24 hours
 /** Event bus channel that every user on the looking page subscribes to. */
 export const SENDOUQ_LOOKING_CHANNEL = "sq-looking";
 
-/**
- * Event bus channel for revalidation messages targeted at a single group (e.g. a
- * received like)
- * */
+/** Event bus channel for revalidation messages targeted at a single group (e.g. a received like) */
 export const sqGroupChannel = (groupId: number) =>
 	`${CHANNEL_PREFIX.sqGroup}${groupId}`;
 
 export const USER_SKILLS_CACHE_KEY = "user-skills";
 
-/** Breakpoint (in px) for the main container after which we switch from 3-column layout to tabs */
+/** Main container width (px) below which the 3-column layout switches to tabs */
 export const IS_Q_LOOKING_MOBILE_BREAKPOINT = 700;

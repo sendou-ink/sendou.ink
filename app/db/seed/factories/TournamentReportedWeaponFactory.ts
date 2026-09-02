@@ -11,11 +11,8 @@ type InsertArgs = Parameters<
 };
 
 /**
- * Creates the weapons a tournament match's players report having used. `createdAt`
- * is an argument of the write itself: reporting is open long after the games were
- * played, so the app stamps the weapon with the tournament's start instead of now.
- *
- * `mapIndex` is not defaulted, for the same reason it is not in `SQReportedWeaponFactory`.
+ * `createdAt` is an argument of the write itself: reporting stays open long after, so the app stamps the
+ * tournament's start instead of now. `mapIndex` is not defaulted, see `SQReportedWeaponFactory`.
  */
 export const { createMany } = defineFactory({
 	defaults: () => ({

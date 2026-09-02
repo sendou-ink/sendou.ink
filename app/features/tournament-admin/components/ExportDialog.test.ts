@@ -25,17 +25,14 @@ function checkIns(
 	})) as unknown as TournamentTeamFull["checkIns"];
 }
 
-// Event-level check-in is stored with bracketIdx === null (see CHECK_IN action:
-// `bracketIdx: bracket.sources ? data.bracketIdx : undefined`). A team checked in
-// to the tournament therefore has a single null-bracket, non-checkout row.
+// event-level check-in is stored with bracketIdx === null, so a team checked in to the
+// tournament has a single null-bracket, non-checkout row
 const checkedInAtEventLevel = team(1, checkIns([{ bracketIdx: null }]));
 
 describe("scopedAndSortedTeams() check-in filtering", () => {
-	// A bracket without its own check-in (the starting bracket / any bracket where
-	// requiresCheckIn is false) is exported against the event-level check-in. This is
-	// the user-reported case: selecting such a bracket previously matched bracketIdx
-	// against the (null) event rows, so "Checked in" was empty and "Not checked in"
-	// listed the teams that were actually checked in.
+	// a bracket without its own check-in (starting bracket / requiresCheckIn false) is exported
+	// against the event-level check-in; regression: matching bracketIdx against the null event
+	// rows emptied "Checked in" and listed the checked in teams under "Not checked in"
 	describe("bracket without its own check-in", () => {
 		const bracketParticipantIds = new Set([checkedInAtEventLevel.id]);
 
@@ -66,8 +63,7 @@ describe("scopedAndSortedTeams() check-in filtering", () => {
 		});
 	});
 
-	// A bracket with its own check-in (requiresCheckIn) is exported against its own
-	// per-bracket rows, so an event-level check-in alone is not enough.
+	// a bracket with its own check-in is exported against its per-bracket rows, event-level alone is not enough
 	describe("bracket with its own check-in", () => {
 		const checkedIntoBracket = team(
 			1,

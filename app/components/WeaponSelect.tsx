@@ -45,7 +45,7 @@ interface WeaponSelectProps<
 	disabledWeaponIds?: Array<MainWeaponId>;
 	testId?: string;
 	isRequired?: boolean;
-	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */
+	/** Shown while the search input is empty, e.g. previous selections */
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
 	isDisabled?: boolean;
 	placeholder?: string;
@@ -253,9 +253,8 @@ function useWeaponItems({
 	const [filterValue, setFilterValue] = React.useState("");
 	const { t } = useTranslation(["common"]);
 
-	// While closed only the selected item is needed (the trigger's value
-	// display); react-aria renders every item passed to it into a hidden
-	// collection even when the popover is closed.
+	// react-aria renders every item into a hidden collection even while closed,
+	// when only the selected item (the trigger's value) is needed
 	if (!isOpen) {
 		return {
 			items: collapseToSelectedItem(items, selectedKey),
@@ -298,7 +297,6 @@ function useWeaponItems({
 		};
 
 		return {
-			// not too sure why we need to type cast here.. was working fine before refactoring
 			items: [quickSelectCategory] as typeof items,
 			filterValue,
 			setFilterValue,
@@ -401,8 +399,7 @@ function keyify(value?: MainWeaponId | AnyWeapon | null) {
 function collapseToSelectedItem<
 	Category extends { items: Array<{ weapon: { anyWeaponId: string } }> },
 >(categories: Category[], selectedKey: string | null | undefined): Category[] {
-	// react-stately refuses to open a select whose collection is empty, so even
-	// with nothing selected the closed collection keeps one item around.
+	// react-stately refuses to open a select with an empty collection, so one item is always kept
 	const fallbackItems = () => {
 		const firstCategory = categories[0];
 		if (!firstCategory) return [];

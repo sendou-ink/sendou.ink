@@ -48,8 +48,7 @@ import {
 	validateField,
 } from "./utils";
 
-// lazy loaded so the trophies field's WebGL renderer stays out of the eager
-// bundle of every page rendering a form
+// keeps the trophies field's WebGL renderer out of every form-rendering page's eager bundle
 const TrophiesFormField = React.lazy(() =>
 	import("./fields/TrophiesFormField").then((module) => ({
 		default: module.TrophiesFormField,
@@ -73,14 +72,10 @@ interface FormFieldProps {
 	children?:
 		| ((props: CustomFieldRenderProps) => React.ReactNode)
 		| ((props: ArrayItemRenderContext) => React.ReactNode);
-	/** Field-specific options */
 	options?: unknown;
 	/** For `array` fields: hide the remove button for items where this returns false. */
 	canRemoveItem?: (itemValue: unknown, index: number) => boolean;
-	/**
-	 * Runs after the new value has been stored. For side effects on other fields;
-	 * to change what gets stored use the field schema's own options instead.
-	 */
+	/** Runs after the value is stored, for side effects on other fields; to change what is stored use the schema's options. */
 	onValueChange?: (newValue: unknown) => void;
 }
 
@@ -164,10 +159,8 @@ export function FormField({
 		context.setClientError(name, validationError);
 	};
 
-	// After the first submit, changes revalidate the whole form — except array
-	// appends, which stay silent so a freshly added empty item doesn't error
-	// immediately. Blur is the moment the user leaves such an item, so
-	// revalidating here surfaces its error without waiting for the next submit.
+	// after the first submit array appends don't revalidate (a fresh empty item shouldn't error at once),
+	// so blur is where such an item's error surfaces
 	const handleBlur = (latestValue?: unknown) => {
 		if (!context) return;
 		if (hasSubmitted) {
@@ -177,8 +170,7 @@ export function FormField({
 		runValidation(latestValue ?? value);
 	};
 
-	// Read through a ref so an inline `onValueChange` does not destabilize
-	// `handleChange`, which fields rely on to skip re-rendering.
+	// a ref so an inline `onValueChange` doesn't destabilize `handleChange`, which fields rely on to skip re-renders
 	const latestOnValueChange = React.useRef(onValueChange);
 	latestOnValueChange.current = onValueChange;
 
@@ -620,12 +612,8 @@ interface ArrayItemCustomRenderProps {
 }
 
 /**
- * One custom-rendered array item, memoized so that a form edit re-renders only
- * the item whose slice of the array changed — the array field itself re-renders
- * on every write to the array. For this to hold, anything the item render reads
- * from the form outside its own item must be subscribed to via `useFormValue`.
- * The callbacks read the current array through the store instead of closing
- * over it so a skipped re-render can never make them act on stale values.
+ * Memoized so an edit re-renders only the item whose slice changed. Anything the render reads outside its
+ * own item must go through `useFormValue`; callbacks read the array via the store so a skipped render never acts on stale values.
  */
 const ArrayItemCustomRender = React.memo(function ArrayItemCustomRender({
 	arrayName,

@@ -5,11 +5,7 @@ import { notify } from "../features/notifications/core/notify.server";
 import { logger } from "../utils/logger";
 import { Routine } from "./routine.server";
 
-/**
- * Reminds users whose teammates have reported the week that just started while
- * they have not. Runs on Mondays only, which is also what keeps it to at most
- * one reminder per user per week.
- */
+/** Reminds users whose teammates reported the week that just started while they have not. Mondays only, so at most one reminder per week. */
 export const NotifyScheduleTeamReminderRoutine = new Routine({
 	name: "NotifyScheduleTeamReminder",
 	func: async () => {

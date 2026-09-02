@@ -1,8 +1,7 @@
 /**
- * Glanceable card for one ScannerMatch in the live feed: stage banner
- * background, mode + stage, score, team weapons, and the match's /ingest
- * status. Expanding the card reveals the source event cards below it,
- * so the raw per-event view stays one click away.
+ * Glanceable card for one ScannerMatch in the live feed: stage banner, mode +
+ * stage, score, team weapons and /ingest status. Expanding reveals the source
+ * event cards below it.
  */
 
 import clsx from "clsx";
@@ -39,8 +38,8 @@ const UNKNOWN_MAIN_ABILITIES: AbilityWithUnknown[] = [
 
 /**
  * Where each main sits on the half-moon under the weapon. A positive CSS
- * rotation swings the arc's downward offset to the *left*, so the angles
- * descend to read head, clothes, shoes left to right.
+ * rotation swings the arc's offset to the *left*, so angles descend to read
+ * head, clothes, shoes left to right.
  */
 const ABILITY_ARC_ANGLES = ["44deg", "0deg", "-44deg"];
 
@@ -76,10 +75,7 @@ export function MatchCard({
 	onSend?: () => void;
 	/** still being played: no closing scoreboard yet and the scan is running */
 	live?: boolean;
-	/**
-	 * the newest match, still being formulated (no result yet) — shows an
-	 * "in progress" chip in the score slot; at most one card should get this
-	 */
+	/** the newest match, still being formulated — shows an "in progress" chip; at most one card */
 	inProgress?: boolean;
 	/** set = ingestSkipReasons held the match back from /ingest */
 	skipReason?: IngestSkipReason;
@@ -243,10 +239,9 @@ function Score({
 
 /**
  * `teams` order is winner-first on a scoreboard-closed match, so it flips
- * between the games of one feed. The card instead keeps the scan's own
- * side (alpha) left and the enemy (bravo) right for every match, so the
- * scores and weapons of consecutive games line up; footage with no POV
- * seat read (casts) keeps `teams` order.
+ * between games. The card keeps the scan's own side (alpha) left and the
+ * enemy right for every match so consecutive games line up; footage with no
+ * POV seat read (casts) keeps `teams` order.
  */
 function displayOrder(match: ScannerMatch): [0 | 1, 0 | 1] {
 	return match.pov?.team === 1 ? [1, 0] : [0, 1];
@@ -259,9 +254,8 @@ function winnerClass(match: ScannerMatch, team: 0 | 1): string | undefined {
 
 /**
  * A 100 only happens on a knockout, shown the way players say it. A knockout's
- * loser gets no score of its own, so the objective counter's last read stands
- * in — parenthesized, since the scan read it off the video and may have lost
- * sight of the counter before the game ended.
+ * loser gets no score, so the objective counter's last read stands in —
+ * parenthesized, since the scan may have lost sight of the counter early.
  */
 function scoreLabel(
 	score: number | null,
@@ -322,10 +316,7 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 	);
 }
 
-/**
- * The three gear mains of a build, or null when the scan read none of them —
- * a partially read build keeps its unknown slots.
- */
+/** The three gear mains of a build, or null when none were read; partial builds keep unknown slots. */
 function mainAbilities(
 	player: ScannerMatchPlayer,
 ): AbilityWithUnknown[] | null {

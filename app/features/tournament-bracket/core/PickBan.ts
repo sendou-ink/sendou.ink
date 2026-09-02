@@ -268,12 +268,8 @@ export function resolveCurrentStep({
 }
 
 /**
- * Returns the 0-based post-game cycle index for an event position. For an
- * event at `eventIndex`, this is the cycle the event belongs to; for a count
- * of events done so far, this is how many post-game cycles have been at least
- * started past the pre-set.
- *
- * Caller must ensure `eventIndex >= preSetLength` and `postGameLength > 0`.
+ * 0-based post-game cycle of an event index (or, for a count of events done, how many cycles have
+ * started past the pre-set). Caller must ensure `eventIndex >= preSetLength` and `postGameLength > 0`.
  */
 export function postGameCycleIndex({
 	eventIndex,
@@ -296,10 +292,7 @@ export function resolveTeamFromSide({
 	side: WhoSide;
 	teams: [PickBanTeam, PickBanTeam];
 	results: Array<{ winnerTeamId: number }>;
-	/**
-	 * The team index (0 or 1) the per-map coin flip landed on. Required when
-	 * `side` is RANDOM or RANDOM_OTHER. Compute with {@link randomWhoTeamIndex}.
-	 */
+	/** Team index the per-map coin flip landed on. Required when `side` is RANDOM or RANDOM_OTHER, see {@link randomWhoTeamIndex}. */
 	randomTeamIndex?: 0 | 1;
 }): number {
 	switch (side) {
@@ -337,10 +330,8 @@ export function resolveTeamFromSide({
 }
 
 /**
- * Resolves which of the two teams (0 or 1) the "RANDOM" side maps to for the
- * given event via a deterministic per-map coin flip. A single flip covers one
- * decision group: all pre-set steps share one flip, and each post-game cycle
- * (one per map) has its own. "RANDOM_OTHER" is the complement of this index.
+ * Team index (0 or 1) the "RANDOM" side maps to via a deterministic per-map coin flip. All pre-set
+ * steps share one flip, each post-game cycle has its own. "RANDOM_OTHER" is the complement.
  */
 export function randomWhoTeamIndex({
 	matchId,
@@ -362,12 +353,7 @@ export function randomWhoTeamIndex({
 	return randomInteger(2) as 0 | 1;
 }
 
-/**
- * Resolves which team is responsible for the pick/ban event at a given index,
- * across all pick/ban variants (BAN_2, COUNTERPICK, COUNTERPICK_MODE_REPEAT_OK,
- * CUSTOM). Returns null when the setup is not pick/ban or the team cannot be
- * determined (e.g. a CUSTOM ROLL step, or insufficient results).
- */
+/** Team responsible for the pick/ban event at the index, null if not pick/ban or undeterminable (CUSTOM ROLL step, insufficient results). */
 export function teamOfEvent({
 	eventIndex,
 	maps,
@@ -385,8 +371,7 @@ export function teamOfEvent({
 
 	switch (maps.pickBan) {
 		case "BAN_2": {
-			// turnOf uses: [secondPicker, firstPicker] = teams, so teams[1] bans
-			// first (event 0), teams[0] second (event 1).
+			// turnOf uses [secondPicker, firstPicker] = teams, so teams[1] bans first (event 0)
 			if (eventIndex === 0) return teams[1].id;
 			if (eventIndex === 1) return teams[0].id;
 			return null;
@@ -411,8 +396,7 @@ export function teamOfEvent({
 						: null;
 			if (!step?.side) return null;
 
-			// WINNER/LOSER sides are relative to the latest result at the time
-			// of the event, so slice results to the correct post-game cycle.
+			// WINNER/LOSER sides are relative to the latest result at the time of the event
 			if (step.side === "WINNER" || step.side === "LOSER") {
 				const cycleIndex = postGameCycleIndex({
 					eventIndex,
@@ -450,14 +434,10 @@ type TimelineItem =
 	| { kind: "result"; createdAt: number };
 
 /**
- * Resolves the timestamp at which the currently responsible team's pick/ban
- * session started. The session begins when responsibility transitions to that
- * team and continues across multiple consecutive actions by the same team.
- * A game result always ends the prior session, so a team that becomes
- * responsible after a result starts a fresh session at the result's timestamp.
- *
- * Returns `null` when there is no current pick/ban turn or `matchStartedAt` is
- * not available. When no transitions exist yet, returns `matchStartedAt`.
+ * When the currently responsible team's pick/ban session started: on responsibility transitioning to
+ * it (consecutive actions by the same team continue it), or at the latest game result as a result
+ * always ends the prior session. `matchStartedAt` when no transitions exist yet, `null` when there is
+ * no current turn or `matchStartedAt` is unavailable.
  */
 export function currentTurnSessionStartedAt({
 	currentTurn,

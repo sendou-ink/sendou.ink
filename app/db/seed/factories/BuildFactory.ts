@@ -4,17 +4,13 @@ import { defineFactory } from "../core/defineFactory";
 import { faker } from "../core/faker";
 import * as SplatoonFaker from "../core/SplatoonFaker";
 
-/**
- * Creates builds. `ownerId` is whose build it is. The ability and weapon rows every
- * build listing is read through are what the repository derives from `abilities` and
- * `weaponSplIds`; a multi-weapon build is `weaponSplIds` with more than one entry.
- */
 const NO_GEAR = {
 	headGearSplId: null,
 	clothesGearSplId: null,
 	shoesGearSplId: null,
 };
 
+/** The repository derives the ability and weapon rows from `abilities` and `weaponSplIds` (several = multi-weapon build). */
 export const { create, createMany } = defineFactory({
 	defaults: () => ({
 		title: faker.lorem.words(3),

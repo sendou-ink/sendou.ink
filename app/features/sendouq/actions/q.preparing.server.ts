@@ -98,9 +98,8 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 		}
 	} catch (error) {
-		// some errors are expected to happen, for example two requests racing to
-		// create/join a group. return null so loaders re-run and the user sees
-		// the fresh state instead of an error page
+		// expected errors (two requests racing to create/join a group): return null so
+		// loaders re-run and the user sees the fresh state instead of an error page
 		if (error instanceof SendouQError) {
 			return null;
 		}

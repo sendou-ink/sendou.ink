@@ -1,8 +1,6 @@
 /**
- * Shared domain vocabulary for the scanner feature: events, snap tables, and
- * constants speak sendou.ink's id types (ModeShort, StageId, weapon ids,
- * Ability) — canonical English strings live only inside the OCR snap
- * layer and never leave a detector.
+ * Shared domain vocabulary for the scanner: events, snap tables and constants
+ * speak sendou.ink's id types — canonical English strings never leave a detector.
  */
 import { abilities } from "~/modules/in-game-lists/abilities";
 import type {
@@ -26,9 +24,8 @@ export function toMainWeaponId(id: number | string): MainWeaponId | null {
 }
 
 /**
- * Narrow an ability-template id to an AbilityWithUnknown; null when the id is
- * not a known template. Note "UNKNOWN" is a template of its own (the badge was
- * read but not recognized) and is distinct from null.
+ * Narrows an ability-template id to an AbilityWithUnknown; null when unknown.
+ * "UNKNOWN" is a template of its own (badge read but not recognized), distinct from null.
  */
 export function toAbilityWithUnknown(id: string): AbilityWithUnknown | null {
 	if (id === "UNKNOWN") return id;

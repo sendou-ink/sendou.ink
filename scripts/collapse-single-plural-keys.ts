@@ -9,31 +9,22 @@ const __dirname = path.dirname(__filename);
 const LOCALES_PATH = path.join(__dirname, "..", "locales");
 const PRIMARY_LANGUAGE = "en";
 
-// When passed, no files are written. Instead the script exits non-zero if any
-// file would be collapsed, so CI can fail a PR that committed suffixed plural
-// keys in a single-plural language without running `pnpm run i18n:sync`.
+// writes nothing and exits non-zero if any file would be collapsed, so CI can
+// fail a PR that committed suffixed plural keys without running `pnpm run i18n:sync`
 const CHECK_KEY = "--check";
 const checkOnly = process.argv.includes(CHECK_KEY);
 
-// `_zero` is intentionally excluded: it is not a CLDR plural category but an
-// i18next special-case override for `count === 0`. `i18next-locales-sync` treats
-// e.g. `foo_zero` as a plain key (English has no `_zero` plural form), so it is
-// preserved across every language and must not be collapsed into `foo`.
+// `_zero` is excluded: an i18next `count === 0` override rather than a CLDR category, which
+// `i18next-locales-sync` treats as a plain key preserved across every language
 const COLLAPSIBLE_PLURAL_SUFFIXES = ["_one", "_two", "_few", "_many", "_other"];
 
-// The plural form whose value we keep when collapsing. `_other` is preferred
-// because it is the form i18next resolves at runtime for these languages and it
-// typically carries the `{{count}}` interpolation. The remaining forms are only
-// used as a fallback when `_other` has no translated value.
+// the form i18next resolves at runtime for these languages, typically carrying `{{count}}`;
+// the other forms are only a fallback when it has no translated value
 const PREFERRED_SUFFIX = "_other";
 
-// `i18next-locales-sync` stores plural keys for languages whose CLDR cardinal
-// rule has a single category ("other" only, e.g. zh, ja, ko) under the bare
-// singular key instead of suffixed `_one`/`_other` keys. When a translator adds
-// a value under a suffixed key for one of these languages, the sync tool can't
-// find the singular key it expects and silently drops the translation. We run
-// this before the sync to collapse those suffixed keys into the singular key,
-// preserving the (non-empty) value so it survives the sync.
+// `i18next-locales-sync` keys single-category languages (zh, ja, ko) by the bare singular key;
+// a translation a translator added under a suffixed key is silently dropped by the sync unless
+// collapsed into the singular key first, which is what this script does
 const languages = fs
 	.readdirSync(LOCALES_PATH)
 	.filter((lang) => lang !== PRIMARY_LANGUAGE && !lang.startsWith("."));
@@ -103,8 +94,7 @@ function collapsePluralKeys(content: Record<string, string>) {
 		collapsedBaseKeys.add(baseKey);
 		const isPreferred = suffix === PREFERRED_SUFFIX;
 
-		// prefer the `_other` value (it carries {{count}}); otherwise keep the
-		// first non-empty value found across the remaining plural forms
+		// `_other` wins; otherwise the first non-empty value of the remaining forms
 		const shouldReplace =
 			!(baseKey in collapsed) ||
 			(!collapsed[baseKey] && !!value) ||

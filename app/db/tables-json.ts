@@ -1,9 +1,4 @@
-/**
- * Shapes of JSON column payloads that have no natural feature home. Kept apart from
- * `tables.ts` so that what is declared there stays close to the `DB` interface. Payloads
- * that do belong to a feature (e.g. `StoredWidget`, `Notification`) live with that feature
- * and are imported by `tables.ts` directly.
- */
+/** JSON column payload shapes with no natural feature home; feature-owned ones (e.g. `StoredWidget`) live with their feature. */
 
 import type { DBBoolean } from "~/db/tables";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
@@ -54,17 +49,11 @@ export interface UserPreferences {
 	disallowScrimPickupsFromUntrusted?: boolean;
 	defaultCalendarFilters?: CalendarFilters;
 	defaultScrimsFilters?: ScrimFilters;
-	/**
-	 * What time format the user prefers?
-	 *
-	 * "auto" = use browser default (default value)
-	 * "24h" = 24 hour format (e.g. 14:00)
-	 * "12h" = 12 hour format (e.g. 2:00 PM)
-	 * */
+	/** "auto" (default) = browser default */
 	clockFormat?: "24h" | "12h" | "auto";
-	/** Is the new widget based user page enabled? (Supporter early preview) */
+	/** Widget based user page (supporter early preview) */
 	newProfileEnabled?: boolean;
-	/** Is spoiler-free mode enabled? Hides recent tournament results and scores until the user chooses to reveal them. */
+	/** Hides recent tournament results and scores until revealed */
 	spoilerFreeMode?: boolean;
 	weaponReportDefaultOpen?: boolean;
 	/** Start of the week the schedule sidebar nudge was last dismissed for, so it stays gone until the horizon rolls over. */
@@ -77,11 +66,8 @@ export type Pronouns = {
 };
 
 export interface PeakXP {
-	/** Peak XP across all divisions */
 	overall: number;
-	/** Peak XP (Takoroka division) */
 	takoroka: number | null;
-	/** Peak XP (Tentatek division) */
 	tentatek: number | null;
 }
 
@@ -117,9 +103,8 @@ export interface TournamentSettings {
 }
 
 export interface CastedMatchesInfo {
-	/** Array for matches that are locked because they are pending to be casted */
+	/** Matches locked because they are pending to be casted */
 	lockedMatches: Array<{ twitchAccount: string; matchId: number }>;
-	/** What matches are streamed currently & where */
 	castedMatches: { twitchAccount: string; matchId: number }[];
 	castedMatchHistory?: Array<{
 		twitchAccount: string;
@@ -185,10 +170,7 @@ export interface TournamentAuditLogMetadata {
 	tournamentName?: string | null;
 }
 
-/**
- * The result of sets in the tournament.
- * E.g. ["W", "L", null] would mean the user won the first set, lost the second and did not play the third.
- * */
+/** E.g. ["W", "L", null] = won the first set, lost the second, did not play the third. */
 export type WinLossParticipationArray = Array<"W" | "L" | null>;
 
 export interface NotificationSubscription {

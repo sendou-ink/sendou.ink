@@ -10,26 +10,14 @@ interface SecondaryActionProps {
 	collapsedLabel: string;
 	collapsedIcon?: React.JSX.Element;
 	expandedAriaLabel?: string;
-	/**
-	 * Always-open variant used when this is the only content in the tab (no
-	 * primary action to sit underneath). Hides the collapse toggle and drops the
-	 * striped footer styling.
-	 */
+	/** Only content in the tab: always open, no collapse toggle, no striped footer styling. */
 	standalone?: boolean;
-	/**
-	 * Forces the expanded state and hides the collapse toggle while keeping the
-	 * footer styling. Used when the expanded content is small enough that
-	 * collapsing brings no benefit.
-	 */
+	/** Always open without the collapse toggle, keeping the footer styling. */
 	alwaysOpen?: boolean;
 	children: React.ReactNode;
 }
 
-/**
- * Generic panel hosting follow-up match actions (e.g. weapon reporting, scrim
- * map list management). Defaults to a striped footer attached beneath the
- * primary action card; pass `standalone` when it is the only tab content.
- */
+/** Panel for follow-up match actions (weapon reporting etc.), a striped footer beneath the primary action card. */
 export function SecondaryAction({
 	isOpen,
 	onOpenChange,

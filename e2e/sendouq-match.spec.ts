@@ -46,8 +46,7 @@ test.describe("SendouQ match page", () => {
 
 		await expect(match.score(4, 1)).toBeVisible();
 
-		// Verify the reported Splattershot shows up on the result-tab timeline
-		// (the compact action-tab timeline omits per-map weapons).
+		// the compact action-tab timeline omits per-map weapons, the result tab's shows them
 		await match.goto(matchId, "result");
 		await expect(match.reportedWeaponImage("Splattershot")).toBeVisible();
 	});

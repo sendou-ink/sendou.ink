@@ -40,11 +40,8 @@ export interface VodPrefill {
 }
 
 /**
- * Maps the `ingest` search param the scanner VoD tab's "Add VoD" button
- * fills (an ingestVodPrefillSchema payload, see
- * ~/features/scanner-ingest/scanner-ingest-vod-schemas) into form-prefill data. Detection
- * misses stay null for the user to fill; a malformed param has already
- * decoded to null.
+ * `ingest` param (an ingestVodPrefillSchema payload from the scanner VoD tab's "Add VoD" button)
+ * to form-prefill data. Detection misses stay null; a malformed param has already decoded to null.
  */
 function vodPrefillFromIngestParam(
 	ingest: IngestVodPrefill | null,

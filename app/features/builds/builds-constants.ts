@@ -6,10 +6,9 @@ export const MAX_BUILD_FILTERS = 6;
 type Patch = { patch: string; date: string };
 
 /**
- * Every Splatoon 3 game version that introduced weapon parameter changes, newest first,
- * with its release date (`YYYY-MM-DD`). The version strings match those tracked in the
- * weapon params data (`metadata.versions`), so this is the single source of patch dates
- * used by both the builds date filter and the weapon params patch history.
+ * Every game version with weapon parameter changes, newest first, dates as `YYYY-MM-DD`. Versions
+ * match the weapon params data's `metadata.versions`; single source for the builds date filter and
+ * the patch history.
  */
 export const PATCHES: Array<Patch> = [
 	{ patch: "11.3.0", date: "2026-08-19" },
@@ -48,11 +47,7 @@ export const PATCHES: Array<Patch> = [
 
 const RECENT_PATCH_MAX_AGE_IN_DAYS = 365;
 
-/**
- * The subset of {@link PATCHES} released within roughly a year of the newest patch. Used
- * for the builds date filter so its dropdown stays short while always covering the patches
- * builds are most likely to be filtered against.
- */
+/** {@link PATCHES} from roughly the last year, keeping the builds date filter dropdown short. */
 export const RECENT_PATCHES: Array<Patch> = PATCHES.filter(
 	({ date }) =>
 		differenceInCalendarDays(new Date(PATCHES[0].date), new Date(date)) <=

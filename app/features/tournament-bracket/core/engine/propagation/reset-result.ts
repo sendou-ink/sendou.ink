@@ -8,11 +8,7 @@ import * as helpers from "./helpers";
 import { Store } from "./store";
 import { Propagator } from "./traversal";
 
-/**
- * Clears a match's results and rolls back everything that was propagated
- * from it. 1:1 with the old reset.ts, including the swiss/round_robin early
- * return.
- */
+/** Clears a match's results and rolls back everything propagated from it. */
 export function resetMatchResults(
 	data: BracketData,
 	matchId: number,

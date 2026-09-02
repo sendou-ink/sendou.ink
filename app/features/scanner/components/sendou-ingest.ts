@@ -1,16 +1,13 @@
 /**
- * Browser client for sendou.ink's /ingest. The scanner pages run inside
- * sendou.ink itself, so requests are same-origin: the session cookie rides
- * along automatically and the logged-in user comes from the root loader
- * (useUser) instead of an identity probe. sendou.ink authenticates the
- * session user and resolves the tournament/match server-side.
- *
- * The unit of accounting is one ScannerMatch (core/match-builder.ts) —
- * every source event's IndexedDB record tracks its outcome (the `send`
- * status the feed cards display) — while the unit of transport is a request
- * of up to `MAX_MATCHES_PER_REQUEST` of them. Resends are safe: sendou.ink
- * dedupes matches by content hash, merges partials, and scoreboards
- * first-ingest-wins.
+ * Browser client for sendou.ink's /ingest. The scanner runs inside sendou.ink,
+ * so requests are same-origin: the session cookie rides along and the
+ * logged-in user comes from the root loader (useUser); the server resolves
+ * the tournament/match. The unit of accounting is one ScannerMatch
+ * (core/match-builder.ts) — every source event's IndexedDB record tracks its
+ * outcome (the `send` status the feed cards display) — while the unit of
+ * transport is a request of up to `MAX_MATCHES_PER_REQUEST`. Resends are
+ * safe: sendou.ink dedupes by content hash, merges partials, and scoreboards
+ * are first-ingest-wins.
  */
 
 import * as R from "remeda";
@@ -34,10 +31,9 @@ const INGEST_URL = "/ingest";
 const MAX_MATCHES_PER_REQUEST = 50;
 
 /**
- * How long after each unlinked send to try again. A live send usually beats
- * the players to reporting the game, so the first attempts find nothing to
- * link to; these delays cover the reporting lag without hammering. Running
- * out of them gives up — the capture ending still makes one last attempt.
+ * Retry delays after each unlinked send: a live send usually beats the players
+ * to reporting the game, so the first attempts find nothing to link to. Running
+ * out gives up — the capture ending still makes one last attempt.
  */
 const UNLINKED_RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
 
@@ -54,17 +50,14 @@ export interface SendResult {
 /**
  * Builds the stored events into matches, POSTs the ingestable ones `include`
  * selects, and records the outcome on every source event's `send` status
- * (calling `onStatus` after each request's store writes so the feed can
- * refresh).
+ * (calling `onStatus` after each request's store writes).
  *
- * Matches go out as few requests as the server cap allows rather than one
- * apiece: sendou.ink resolves a whole request at once, so a request carrying
- * several matches anchors on their mode+stage sequence instead of guessing a
- * set from one match's timestamp. A live send is a single match either way;
- * catching up on a session's backlog is where it counts. One request resolves
- * to one context, so a backlog spanning two of them links the larger and
- * leaves the rest "unlinked" — the retry then carries only those, and they
- * resolve to their own context.
+ * Matches go out in as few requests as the server cap allows: sendou.ink
+ * resolves a whole request at once, so several matches anchor on their
+ * mode+stage sequence instead of one match's timestamp — this is what makes
+ * catching up on a session's backlog work. One request resolves to one
+ * context, so a backlog spanning two links the larger and leaves the rest
+ * "unlinked"; the retry carries only those, which then resolve on their own.
  */
 export async function sendMatches({
 	events,
@@ -97,10 +90,9 @@ export async function sendMatches({
 				const link = response.linkedMatches?.find(
 					(linked) => linked.matchIndex === matchIndex,
 				)?.link;
-				// stored but not linked, and sendou.ink knows which tournament or
-				// SendouQ match this is: the game is just not reported yet, so a
-				// later resend can still land it. Without a context there is nothing
-				// to wait for and the match is as done as it will get.
+				// stored but not linked while sendou.ink knows the tournament/SendouQ
+				// match: the game is just not reported yet, so a later resend can still
+				// land it. Without a context there is nothing to wait for.
 				const unlinked = !link && response.contextResolved;
 				await updateEventsSend(idsPerMatch[matchIndex]!, {
 					state: unlinked ? "unlinked" : "sent",
@@ -138,14 +130,11 @@ export interface VodResultsSendReport {
 }
 
 /**
- * One-go sender for the VoD tab's "Send results": builds a completed
- * scan's events into matches and POSTs as many per request as the server
- * cap allows — usually the whole scan in one request, so sendou.ink's
- * content-based tournament resolution sees the full match sequence (its
- * mode+stage order plus roster sides is near-unique in the user's history).
- * No per-event status bookkeeping — VoD events don't live in the live feed
- * store. Resending is safe (server-side dedupe/merge), so a partial failure
- * can simply be retried whole.
+ * One-go sender for the VoD tab's "Send results": POSTs as many matches per
+ * request as the server cap allows — usually the whole scan, so sendou.ink's
+ * content-based tournament resolution sees the full match sequence. No
+ * per-event status bookkeeping (VoD events don't live in the live feed store);
+ * resending is safe, so a partial failure is simply retried whole.
  */
 export async function sendVodResults(
 	events: readonly DetectedEvent[],
@@ -191,9 +180,9 @@ export function matchContaining(
 }
 
 /**
- * The single send status a match displays, folded from its source events:
- * an in-flight send wins, then a failure, then success, then queued. Within
- * a state the most recent change is shown.
+ * The single send status a match displays, folded from its source events: an
+ * in-flight send wins, then failure, then success, then queued; within a
+ * state the most recent change is shown.
  */
 export function aggregateSendStatus(
 	sources: readonly StoredEvent[],
@@ -223,10 +212,7 @@ export function unsentMatches(built: BuiltMatch<StoredEvent>): boolean {
 	);
 }
 
-/**
- * Match selector: matches sendou.ink stored without a game to link them to,
- * whose next attempt is due. Exhausting the backoff stops the retries.
- */
+/** Match selector: matches stored without a game to link to, whose next retry is due. */
 export function retryableUnlinkedMatches(
 	built: BuiltMatch<StoredEvent>,
 ): boolean {
@@ -267,10 +253,9 @@ async function postIngestMatches(
 }
 
 /**
- * Live sending marks events "queued" as they arrive; ones the match builder
- * later leaves out (non-private match, older than the fallback window) would
- * sit "queued" forever. Once a match boundary has passed them they can
- * never join a future match, so clear their status back to "not sent".
+ * Live sending marks events "queued" as they arrive; ones the builder later
+ * leaves out (non-private match, older than the fallback window) would sit
+ * "queued" forever, so once a match boundary has passed them clear the status.
  */
 async function clearOrphanedQueued(
 	events: readonly StoredEvent[],

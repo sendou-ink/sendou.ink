@@ -4,11 +4,7 @@ import type {
 	PersistedMapDefinition,
 } from "./persisted-state";
 
-/**
- * Asserts `decode(encode(x))` deep-equals `x` for every given example value,
- * and that a missing value decodes to the default. Every feature definition
- * registers a test with representative and edge-case values.
- */
+/** Asserts `decode(encode(x))` deep-equals `x` for every example, and that a missing value decodes to the default. */
 export function assertRoundTrips<T>(
 	definition: PersistedDefinition<T> | PersistedMapDefinition<T>,
 	examples: NoInfer<T>[],

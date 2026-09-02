@@ -24,7 +24,6 @@ function loadTranslations(): Record<string, Record<string, string>> {
 const translations = loadTranslations();
 
 function resolveTranslation(key: string): string {
-	// Handle keys like "common:forms.name" or "team:newTeam.header"
 	const [namespace, translationPath] = key.includes(":")
 		? key.split(":")
 		: ["common", key];

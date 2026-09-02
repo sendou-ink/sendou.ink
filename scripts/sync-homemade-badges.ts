@@ -16,7 +16,6 @@ async function main() {
 	let deleted = 0;
 	let updated = 0;
 
-	// update existing
 	for (const existingBadge of await homemadeBadgesInDb()) {
 		const badge = homemadeBadges[existingBadge.code];
 
@@ -51,7 +50,6 @@ async function main() {
 
 	let added = 0;
 
-	// add new
 	for (const [fileName, badge] of Object.entries(homemadeBadges)) {
 		const existing = homemadeAfterUpdates.find(
 			(existingBadge) => fileName === existingBadge.code,

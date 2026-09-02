@@ -160,10 +160,7 @@ function weekView({
 	};
 }
 
-/**
- * Tier of the best playable window starting on the given viewer-local day, the
- * same day a window renders its grid ranges on.
- */
+/** Tier of the best playable window starting on the viewer-local day (the day it renders its grid ranges on). */
 function bestWindowTierOfDay({
 	date,
 	windows,

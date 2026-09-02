@@ -14,7 +14,7 @@
 	gap: var(--s-1-5);
 }
 
-/* the author credit belongs visually to the title above it, counteract the container gap */
+/* the author credit belongs to the title above it */
 .title + .author {
 	margin-top: calc(-1 * var(--s-3));
 }

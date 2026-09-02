@@ -1,11 +1,7 @@
 import type { Duel, ParticipantSlot, SeedOrdering, StageType } from "../types";
 import { ordering } from "./seeding";
 
-/**
- * Makes a list of rounds containing the matches of a round-robin group.
- *
- * @param participants The participants to distribute.
- */
+/** Rounds of matches for a round-robin group. */
 export function makeRoundRobinMatches<T>(participants: T[]): [T, T][][] {
 	const n = participants.length;
 	const n1 = n % 2 === 0 ? n : n + 1;
@@ -38,18 +34,10 @@ export function makeRoundRobinMatches<T>(participants: T[]): [T, T][][] {
 }
 
 /**
- * Makes a list of rounds containing the matches of a bipartite (A/B divisions) round-robin group.
- *
- * Every A team plays every B team exactly once; there are no A-vs-A or B-vs-B matches.
- * Round 1 is cross-seeded (strongest A vs weakest B), and B is rotated cyclically downward
- * in each subsequent round.
- *
- * When the divisions have different sizes, the shorter side is padded with bye slots so the
- * rotation still works. Those bye pairings are filtered out of the output, so each round has
- * exactly `min(|A|, |B|)` real matches and the total is `|A| * |B|`.
- *
- * @param divisionA Participants in division A, ordered by seed.
- * @param divisionB Participants in division B, ordered by seed.
+ * Rounds of matches for a bipartite (A/B divisions) round-robin group: every A team plays every
+ * B team exactly once. Round 1 is cross-seeded (strongest A vs weakest B), B rotates downward each
+ * round. Uneven divisions are padded with byes that are filtered out, so each round has
+ * `min(|A|, |B|)` matches and the total is `|A| * |B|`. Both divisions ordered by seed.
  */
 export function makeAbDivisionRoundRobinMatches<T>(
 	divisionA: T[],
@@ -84,16 +72,8 @@ export function makeAbDivisionRoundRobinMatches<T>(
 }
 
 /**
- * Distributes A/B division participants into groups such that each group has an
- * equal number of A and B participants.
- *
- * The snake ordering used by `groups.seed_optimized` is applied independently to
- * each pool, so that relative seed order within each pool is preserved within
- * every group.
- *
- * @param divisionA Participants in division A, ordered by seed.
- * @param divisionB Participants in division B, ordered by seed.
- * @param groupCount Number of groups to distribute into.
+ * Distributes A/B division participants (ordered by seed) into groups with an equal number of A
+ * and B in each. `groups.seed_optimized` snake ordering is applied to each division independently.
  */
 export function makeAbDivisionGroups<T>(
 	divisionA: T[],
@@ -130,12 +110,7 @@ export function makeAbDivisionGroups<T>(
 	return groups;
 }
 
-/**
- * Distributes elements in groups of equal size.
- *
- * @param elements A list of elements to distribute in groups.
- * @param groupCount The group count.
- */
+/** Distributes elements in groups of equal size. */
 export function makeGroups<T>(elements: T[], groupCount: number): T[][] {
 	const groupSize = Math.ceil(elements.length / groupCount);
 	const result: T[][] = [];
@@ -149,23 +124,14 @@ export function makeGroups<T>(elements: T[], groupCount: number): T[][] {
 	return result;
 }
 
-/**
- * Makes pairs with each element and its next one.
- *
- * @example [1, 2, 3, 4] --> [[1, 2], [3, 4]]
- * @param array A list of elements.
- */
+/** [1, 2, 3, 4] --> [[1, 2], [3, 4]] */
 export function makePairs<T>(array: T[]): [T, T][] {
 	return array
 		.map((_, i) => (i % 2 === 0 ? [array[i], array[i + 1]] : []))
 		.filter((v): v is [T, T] => v.length === 2);
 }
 
-/**
- * Ensures there are no duplicates in a list of elements.
- *
- * @param array A list of elements.
- */
+/** Throws if the seeding has a duplicate participant. */
 export function ensureNoDuplicates<T>(array: (T | null)[]): void {
 	const nonNull = getNonNull(array);
 	const unique = nonNull.filter((item, index) => {
@@ -180,12 +146,7 @@ export function ensureNoDuplicates<T>(array: (T | null)[]): void {
 		throw new Error("The seeding has a duplicate participant.");
 }
 
-/**
- * Ensures that the participant count is valid.
- *
- * @param stageType Type of the stage to test.
- * @param participantCount The number to test.
- */
+/** Throws if the participant count is invalid for the stage type. */
 export function ensureValidSize(
 	stageType: StageType,
 	participantCount: number,
@@ -194,7 +155,6 @@ export function ensureValidSize(
 		throw Error("Impossible to create a stage with less than 2 participants.");
 
 	if (stageType === "round_robin") {
-		// Round robin supports any number of participants.
 		return;
 	}
 
@@ -204,11 +164,7 @@ export function ensureValidSize(
 		);
 }
 
-/**
- * Converts a participant slot to a result stored in storage, with the position the participant is coming from.
- *
- * @param slot A participant slot.
- */
+/** Participant slot as a stored result, with the position the participant is coming from. */
 export function toResultWithPosition(slot: ParticipantSlot): ParticipantSlot {
 	return (
 		slot && {
@@ -218,59 +174,38 @@ export function toResultWithPosition(slot: ParticipantSlot): ParticipantSlot {
 	);
 }
 
-/**
- * Returns the pre-computed winner for a match because of BYEs.
- *
- * @param opponents Two opponents.
- */
+/** Pre-computed winner of a match because of BYEs. */
 export function byeWinner(opponents: Duel): ParticipantSlot {
 	if (opponents[0] === null && opponents[1] === null)
 		// Double BYE.
-		return null; // BYE.
+		return null;
 
 	if (opponents[0] === null && opponents[1] !== null)
-		// opponent1 BYE.
-		return { id: opponents[1].id }; // opponent2.
+		return { id: opponents[1].id };
 
 	if (opponents[0] !== null && opponents[1] === null)
-		// opponent2 BYE.
-		return { id: opponents[0].id }; // opponent1.
+		return { id: opponents[0].id };
 
-	return { id: null }; // Normal.
+	return { id: null };
 }
 
-/**
- * Returns the pre-computed winner for a match because of BYEs in a lower bracket.
- *
- * @param opponents Two opponents.
- */
+/** Pre-computed winner of a lower bracket match because of BYEs. */
 export function byeWinnerToGrandFinal(opponents: Duel): ParticipantSlot {
 	const winner = byeWinner(opponents);
 	if (winner) winner.position = 1;
 	return winner;
 }
 
-/**
- * Returns the pre-computed loser for a match because of BYEs.
- *
- * Only used for loser bracket.
- *
- * @param opponents Two opponents.
- * @param index The index of the duel in the round.
- */
+/** Pre-computed loser of a match because of BYEs. Only used for loser bracket. */
 export function byeLoser(opponents: Duel, index: number): ParticipantSlot {
 	if (opponents[0] === null || opponents[1] === null)
 		// At least one BYE.
-		return null; // BYE.
+		return null;
 
-	return { id: null, position: index + 1 }; // Normal.
+	return { id: null, position: index + 1 };
 }
 
-/**
- * Makes the transition to a major round for duels of the previous round. The duel count is divided by 2.
- *
- * @param previousDuels The previous duels to transition from.
- */
+/** Transition to a major round: the duel count is halved. */
 export function transitionToMajor(previousDuels: Duel[]): Duel[] {
 	const currentDuelCount = previousDuels.length / 2;
 	const currentDuels: Duel[] = [];
@@ -286,13 +221,7 @@ export function transitionToMajor(previousDuels: Duel[]): Duel[] {
 	return currentDuels;
 }
 
-/**
- * Makes the transition to a minor round for duels of the previous round. The duel count stays the same.
- *
- * @param previousDuels The previous duels to transition from.
- * @param losers Losers from the previous major round.
- * @param method The ordering method for the losers.
- */
+/** Transition to a minor round: the duel count stays the same, losers of the previous major round join. */
 export function transitionToMinor(
 	previousDuels: Duel[],
 	losers: ParticipantSlot[],
@@ -313,44 +242,24 @@ export function transitionToMinor(
 	return currentDuels;
 }
 
-/**
- * Returns the number of rounds an upper bracket has given the number of participants in the stage.
- *
- * @param participantCount The number of participants in the stage.
- */
+/** Number of rounds in an upper bracket. */
 export function getUpperBracketRoundCount(participantCount: number): number {
 	return Math.log2(participantCount);
 }
 
-/**
- * Returns the count of round pairs (major & minor) in a loser bracket.
- *
- * @param participantCount The number of participants in the stage.
- */
+/** Count of round pairs (major & minor) in a loser bracket. */
 export function getRoundPairCount(participantCount: number): number {
 	return getUpperBracketRoundCount(participantCount) - 1;
 }
 
-/**
- * Determines whether a double elimination stage is really necessary.
- *
- * If the size is only two (less is impossible), then a lower bracket and a grand final are not necessary.
- *
- * @param participantCount The number of participants in the stage.
- */
+/** With only two participants a lower bracket and a grand final are not necessary. */
 export function isDoubleEliminationNecessary(
 	participantCount: number,
 ): boolean {
 	return participantCount > 2;
 }
 
-/**
- * Returns only the non null elements.
- *
- * @param array The array to process.
- */
 function getNonNull<T>(array: (T | null)[]): T[] {
-	// Use a TS type guard to exclude null from the resulting type.
 	const nonNull = array.filter((element): element is T => element !== null);
 	return nonNull;
 }

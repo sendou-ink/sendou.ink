@@ -8,19 +8,14 @@ import {
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import type { EntityWithPermissions } from "./types";
 
-/**
- * Determines whether a user has a specific permission for a given entity.
- * Single source of truth shared by `requirePermission` and `useHasPermission`.
- *
- * @returns A boolean indicating whether the user has the specified permission. Always false if user is not logged in.
- */
+/** Shared by `requirePermission` and `useHasPermission`. False when `user` is missing. */
 export function hasPermission<
 	T extends EntityWithPermissions,
 	K extends keyof T["permissions"],
 >(obj: T, permission: K, user?: { id: number } | null) {
 	if (!user) return false;
 
-	// admin can do anything in production but not in development or e2e tests for better testing
+	// admin can do anything in production only, so dev and e2e can test permissions
 	if (
 		process.env.NODE_ENV === "production" &&
 		!IS_E2E_TEST_RUN &&

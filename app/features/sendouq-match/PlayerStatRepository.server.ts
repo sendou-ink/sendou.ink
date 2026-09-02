@@ -149,10 +149,7 @@ export async function findSeasonMatesEnemiesByUserId({
 		.execute();
 }
 
-/**
- * Chronological (oldest first) scores of every set the user played in a given
- * season, both SendouQ matches and ranked tournaments.
- */
+/** Oldest-first scores of every set the user played in a season, SendouQ and ranked tournaments. */
 export async function findSeasonSetScoresByUserId(args: {
 	userId: number;
 	season: number;
@@ -181,11 +178,9 @@ export async function findSeasonSetScoresByUserId(args: {
 }
 
 /**
- * The user's won sets of a season ranked by the average opponent skill
- * (ordinal) at the time the set was played, best first. Covers both SendouQ
- * matches and ranked tournaments; tournament sets are skipped unless at least
- * two opponents have a calculated skill for that tournament. Only the best set
- * against any given opponent roster is included.
+ * The user's won sets of a season, best first by average opponent ordinal at play time. SendouQ
+ * and ranked tournaments; tournament sets need at least two opponents with a calculated skill.
+ * Only the best set against each opponent roster is included.
  */
 export async function findSeasonBestSetsByUserId({
 	userId,
@@ -353,11 +348,7 @@ export async function findSeasonBestSetsByUserId({
 	).slice(0, limit);
 }
 
-/**
- * The user's ranked tournament results of a season with the tournament's tier,
- * field size and the average end of season skill (ordinal) of its top 8 placing
- * players, for picking their best tournament run.
- */
+/** The user's ranked tournament results of a season with tier, field size and the average end-of-season ordinal of the top 8, for picking their best run. */
 export async function findSeasonTournamentRunsByUserId({
 	userId,
 	season,
@@ -466,10 +457,7 @@ export function upsertPlayerResults(
 		.execute();
 }
 
-/**
- * SendouQ sets of the user's season with the map score summed per match.
- * Callers add their extra selects and finish with a `groupBy("GroupMatch.id")`.
- */
+/** SendouQ sets of the user's season with the map score summed per match; callers add selects and finish with `groupBy("GroupMatch.id")`. */
 function sqSetScoresQuery({
 	userId,
 	season,
@@ -511,10 +499,7 @@ interface SeasonTournamentSet {
 	playedAt: number;
 }
 
-/**
- * One row per set the user played in the season's ranked tournaments (the
- * tournaments they have a `Skill` row for).
- */
+/** One row per set the user played in the season's ranked tournaments (those they have a `Skill` row for). */
 function tournamentSetsQuery({
 	userId,
 	season,
@@ -558,11 +543,7 @@ function tournamentSetsQuery({
 		.groupBy("TournamentMatch.id");
 }
 
-/**
- * Games of a tournament set won by either side, counted over every game of the
- * set since the user may have sat out some of them. Correlates on a
- * `tournamentSetsQuery` aliased as `"TournamentSet"`.
- */
+/** Games of a tournament set won by either side, over every game since the user may have sat some out. Correlates on `tournamentSetsQuery` aliased `"TournamentSet"`. */
 function tournamentSetGamesWonCount(
 	eb: ExpressionBuilder<
 		DB & { TournamentSet: SeasonTournamentSet },

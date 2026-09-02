@@ -1,15 +1,10 @@
 /**
- * ALL death-screen ROI coordinates, in canonical 1920x1080 space.
- * Calibrated against the death/ fixtures via scripts/scanner/dump-crops.ts,
- * HoughCircles measurement, and bright-row profiling.
- *
- * The death cam overlays three fixed elements on live gameplay: a dark
- * camo "splat burst" top-center (two-line "Splatted by" / "<weapon>!"
- * message); the killer's gear panel bottom-left (three gear rows, each
- * with one main-ability circle ⌀~68 plus three sub circles ⌀~48,
- * divided by dashed lines); and the killer's splash tag bottom-right,
- * tilted, name in large type. Probes sit in the overlays' opaque-dark
- * parts (everything but the tag banner sits over the live scene).
+ * Death-screen ROIs in canonical 1920x1080 space, calibrated against the death/
+ * fixtures (scripts/scanner/dump-crops.ts, HoughCircles, bright-row profiling).
+ * The overlay has three fixed elements over live gameplay: the dark camo splat
+ * burst top-center (two-line message), the killer's gear panel bottom-left
+ * (3 rows: main circle ⌀~68 + three sub circles ⌀~48) and the tilted splash tag
+ * bottom-right. Probes sit in the overlays' opaque-dark parts.
  */
 import type { Roi } from "../../canonical";
 
@@ -26,19 +21,15 @@ export const SPLAT_TEXT_BIN_THRESHOLD = 190;
 export const WEAPON_TEXT_HEIGHT = 34;
 
 /**
- * Non-Latin weaponLine=1 langs (JA: "<weapon> で" / "やられた！") swap line
- * widths: variable name gets the full-width box, the short constant line
- * gets a narrow one. Both boxes run taller than Latin: kana overshoot the
- * cap band both sides (JP line spans y=359..401 vs Latin's y=362 start).
+ * weaponLine=1 langs (JA: "<weapon> で" / "やられた！") swap line widths; boxes
+ * run taller than Latin since kana overshoot the cap band (JP y=359..401 vs 362).
  */
 export const JA_WEAPON_LINE_ROI: Roi = { x: 640, y: 354, w: 640, h: 62 };
 export const JA_CONST_LINE_ROI: Roi = { x: 790, y: 412, w: 340, h: 54 };
 
 /**
- * Killer's weapon icon, upright above the message text (~110px art;
- * specials render team-tinted, unmatched). Templates at
- * BURST_ICON_TEMPLATE_SIZES. A "Lost the Rainmaker!" style line shifts
- * the icon out of this box; the text read handles those.
+ * Killer's weapon icon above the message (~110px art; specials render
+ * team-tinted, unmatched). A "Lost the Rainmaker!" line shifts it out of the box.
  */
 export const BURST_ICON_ROI: Roi = { x: 785, y: 230, w: 190, h: 140 };
 export const BURST_ICON_TEMPLATE_SIZES = [116, 124, 132] as const;
@@ -52,10 +43,7 @@ const ABILITY_MAIN_YS = [696, 795, 887] as const;
 export const ABILITY_SUB_XS = [578, 630, 682] as const;
 const ABILITY_SUB_YS = [702, 797, 888] as const;
 
-/**
- * Search boxes around each circle; heights double as the size filter
- * (matchTemplate skips templates taller than the ROI).
- */
+/** Search boxes around each circle; heights double as the size filter (matchTemplate skips taller templates). */
 export function abilityMainRoi(row: number): Roi {
 	const cy = ABILITY_MAIN_YS[row]!;
 	return { x: ABILITY_MAIN_X - 38, y: cy - 38, w: 76, h: 76 };
@@ -71,48 +59,32 @@ export function abilitySubRoi(row: number, slot: number): Roi {
 export const ABILITY_MAIN_SIZES = [64, 68, 72] as const;
 export const ABILITY_SUB_SIZES = [44, 48, 52] as const;
 
-/**
- * Icon art diameter as fraction of circle box: mains peak 1.0, subs 0.92
- * — badges draw art nearly edge-to-edge, ring contributes ~nothing.
- */
+/** Icon art diameter as fraction of the circle box; badges draw art nearly edge-to-edge. */
 export const ABILITY_MAIN_ART_RATIO = 1.0;
 export const ABILITY_SUB_ART_RATIO = 0.92;
 
-/**
- * Ink threshold: badge near-black, icon art saturated-bright; panel is
- * slightly translucent so a bright scene can ghost through — kept above that.
- */
+/** Badge near-black, art bright; kept above what a bright scene ghosts through the translucent panel. */
 export const ABILITY_INK_THRESHOLD = 90;
 
 /**
- * A gear row carries only as many sub circles as gear slots (1-3); an
- * absent slot shows bare panel. Bright pixels (max channel >
- * ABILITY_INK_THRESHOLD) separate cases: absent measures 0, every real
- * badge measures 403+ even at the dimmest 720p capture.
+ * Rows carry 1-3 sub circles; absent slots show bare panel. Bright pixel count
+ * (max channel > ABILITY_INK_THRESHOLD): absent = 0, real badge 403+ even at dim 720p.
  */
 export const ABILITY_SLOT_MIN_INK = 200;
 
-/**
- * Splash tag name band. Tag renders tilted (baseline rises right by
- * TAG_TILT_DEG); crop TAG_NAME_OUTER, rotate level, read TAG_NAME_INNER
- * relative to the rotated crop.
- */
+/** Splash tag: crop TAG_NAME_OUTER, rotate level by TAG_TILT_DEG, read TAG_NAME_INNER in the rotated crop. */
 export const TAG_TILT_DEG = 3.0;
 export const TAG_NAME_OUTER: Roi = { x: 1130, y: 770, w: 650, h: 140 };
 /**
- * Name band inside the rotated crop. Top edge must clear kana dakuten
- * (old y=34 clipped them, misreading こ for ご); y=21 splits the title
- * line above (ends outer y=17) with margin.
+ * Top edge must clear kana dakuten (y=34 clipped them, misreading こ for ご) yet stay below the title
+ * line (ends y=17).
  */
 export const TAG_NAME_INNER: Roi = { x: 20, y: 21, w: 610, h: 87 };
 
 /** Tight cap height of the tag name text (atlas nominal height). */
 export const TAG_NAME_TEXT_HEIGHT = 46;
 
-/**
- * Gate probes: burst camo is dark left/right of the text line and below
- * the weapon line; gear panel is dark right of the sub circles.
- */
+/** Gate probes: burst camo dark around the text lines; gear panel dark right of the sub circles. */
 export const GATE_BURST_PROBES: readonly Roi[] = [
 	{ x: 750, y: 376, w: 36, h: 22 },
 	{ x: 1134, y: 376, w: 36, h: 22 },
@@ -129,11 +101,9 @@ export const GATE_TEXT_MIN_MAX = 210;
 export const GATE_TEXT_MAX_FRACTION = 0.35;
 
 /**
- * Dark probes + white text also match the scoreboard screens, so the gate
- * additionally requires bright icon art at all three main-ability centers
- * (max RGB channel, not grayscale — saturated art can be gray-dark yet
- * bright in max-channel). Death fixtures measure 244+, closest non-death
- * row 184.
+ * Dark probes + white text also match scoreboards, so the gate also needs bright
+ * art at all three main-ability centers (max RGB channel, not grayscale: saturated
+ * art can be gray-dark). Death fixtures 244+, closest non-death 184.
  */
 export function gateAbilityProbe(row: number): Roi {
 	return {

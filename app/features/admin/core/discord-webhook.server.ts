@@ -6,15 +6,12 @@ import {
 	type WebhookUser,
 } from "~/modules/discord-webhook.server";
 
-/**
- * Posts a rich embed about a user getting banned to the mod channel Discord webhook.
- * Fire-and-forget (see `sendModDiscordWebhook`).
- */
+/** Fire-and-forget embed to the mod channel webhook. */
 export function sendUserBannedWebhook(args: {
 	bannedUser: WebhookUser;
 	bannedBy: WebhookUser;
 	reason: string | null;
-	/** When the ban ends, null when the ban has no end date */
+	/** null = permanent */
 	expiresAt: Date | null;
 }) {
 	sendModDiscordWebhook({
@@ -46,10 +43,7 @@ export function sendUserBannedWebhook(args: {
 	});
 }
 
-/**
- * Posts a rich embed about a user getting unbanned to the mod channel Discord webhook.
- * Fire-and-forget (see `sendModDiscordWebhook`).
- */
+/** Fire-and-forget embed to the mod channel webhook. */
 export function sendUserUnbannedWebhook(args: {
 	unbannedUser: WebhookUser;
 	unbannedBy: WebhookUser;

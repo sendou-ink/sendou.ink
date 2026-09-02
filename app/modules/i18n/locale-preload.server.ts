@@ -7,10 +7,8 @@ const localeAssetUrls = import.meta.glob<string>("../../../locales/*/*.json", {
 });
 
 /**
- * Fingerprinted asset URLs of the always-loaded translation namespaces for the
- * given locale (plus the English fallback). Rendered as `<link rel="preload">`
- * tags in the document head so the browser starts fetching them at HTML parse
- * time instead of waiting for the client entry to load and execute.
+ * Fingerprinted URLs of the always-loaded namespaces for the locale (plus English fallback), rendered as
+ * `<link rel="preload">` so fetching starts at HTML parse time rather than after the client entry runs.
  */
 export function localePreloadUrls(locale: string): string[] {
 	const languages =

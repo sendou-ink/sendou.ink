@@ -8,14 +8,11 @@ export default defineConfig({
 			...configDefaults.exclude,
 			"e2e/**",
 			"**/*.browser.test.{ts,tsx}",
-			// the scanner golden-file suites have their own heavy project
-			// (vitest.scanner.config.ts); tests/logic/ stays here because it is
-			// pure logic over synthetic events and needs no image fixtures
+			// golden-file suites live in vitest.scanner.config.ts; tests/logic/ needs no fixtures so stays here
 			"app/features/scanner/tests/*.test.{ts,tsx}",
 		],
 		setupFiles: ["./app/test-setup.ts"],
-		// the scanner-ingest scenario suite exercises the real ingest action,
-		// whose gate reads Config.scannerEnabled from this variable
+		// the scanner-ingest scenario suite's real ingest action is gated on Config.scannerEnabled
 		env: {
 			VITE_SCANNER_ENABLED: "true",
 		},

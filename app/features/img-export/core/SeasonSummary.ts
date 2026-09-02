@@ -18,10 +18,7 @@ export interface SetScore {
 	opponentScore: number;
 }
 
-/**
- * Length of the longest run of consecutive set wins in the given
- * chronologically ordered list of sets.
- */
+/** Longest run of consecutive set wins; `sets` must be in chronological order. */
 export function longestWinStreak(sets: SetScore[]): number {
 	let longest = 0;
 	let current = 0;
@@ -38,10 +35,7 @@ export function longestWinStreak(sets: SetScore[]): number {
 	return longest;
 }
 
-/**
- * Win record in sets that went to a deciding map, i.e. the score margin was
- * exactly one (4-3 in SendouQ, 2-1/3-2 in tournaments).
- */
+/** Win record in sets decided by one map (4-3 in SendouQ, 2-1/3-2 in tournaments). */
 export function clutchRecord(sets: SetScore[]): { won: number; total: number } {
 	const decidingMapSets = sets.filter(
 		(set) => Math.abs(set.ownScore - set.opponentScore) === 1,
@@ -54,11 +48,7 @@ export function clutchRecord(sets: SetScore[]): { won: number; total: number } {
 	};
 }
 
-/**
- * Stage with the best winrate aggregated across modes. Stages with less than
- * a minimum threshold of maps played are excluded so a lucky 2-0 stage can't
- * win. Returns undefined when no stage passes the threshold.
- */
+/** Best winrate stage across modes; stages under the maps-played threshold are excluded so a lucky 2-0 can't win. */
 export function bestStage(
 	stages: Partial<
 		Record<
@@ -90,19 +80,15 @@ export function bestStage(
 }
 
 export interface TournamentRun {
-	/** Tournament tier, 1 = X (best) … 9 = C. Null when the tournament has no calculated tier (treated as below every tiered tournament). */
+	/** 1 = X (best) … 9 = C. Null (no calculated tier) ranks below every tiered tournament. */
 	tier: number | null;
 	placement: number;
 	teamsCount: number;
-	/** Average end of season SP of the players who placed in the tournament's top 8. Null when none of them had a calculated skill. */
+	/** Average end of season SP of the top 8 placers; null when none had a calculated skill. */
 	topEightAvgSp: number | null;
 }
 
-/**
- * Composite score for ranking a user's tournament runs of a season. The
- * tournament's tier dominates; within a tier both the user's placement quality
- * relative to the field size and the strength of that field contribute.
- */
+/** Ranks a season's tournament runs: tier dominates, then placement relative to field size and field strength. */
 export function tournamentRunScore(run: TournamentRun): number {
 	const tier = run.tier ?? UNTIERED_TOURNAMENT_TIER;
 
@@ -120,10 +106,7 @@ export function bestTournamentRun<T extends TournamentRun>(
 	return R.firstBy(runs, [tournamentRunScore, "desc"]);
 }
 
-/**
- * The user's most used weapons with their share of all reported weapon
- * occurrences, most used first.
- */
+/** Most used weapons with their share of all reported weapon occurrences, most used first. */
 export function topWeaponUsages(
 	reportedWeapons: Array<{ weaponSplId: MainWeaponId; count: number }>,
 ): Array<{ weaponSplId: MainWeaponId; usagePercentage: number }> {
@@ -139,15 +122,12 @@ export function topWeaponUsages(
 		}));
 }
 
-/** Whether the season has ended, a prerequisite for exporting its summary image. */
+/** Whether the season has ended. */
 export function isSeasonFinished(season: number, date = new Date()) {
 	return Seasons.allFinished(date).some((nth) => nth === season);
 }
 
-/**
- * Whether a season's summary image is exportable without the supporter perk:
- * only the latest finished season is, and only while no season is in progress.
- */
+/** Exportable without the supporter perk: only the latest finished season, and only while no season is in progress. */
 export function isSeasonExportableByAll(season: number, date = new Date()) {
 	return (
 		Seasons.current(date) === null && Seasons.allFinished(date)[0] === season
@@ -155,11 +135,8 @@ export function isSeasonExportableByAll(season: number, date = new Date()) {
 }
 
 /**
- * Whether the logged in user can export the season summary image from the
- * given profile. Only the profile owner can export, they must have
- * participated in the season and have a calculated (non-approximate) skill
- * for it. An ongoing season is never exportable. Supporters can export any of
- * their finished seasons, others only per {@link isSeasonExportableByAll}.
+ * Only the profile owner can export, with a non-approximate skill for a finished season. Supporters
+ * can export any finished season, others only per {@link isSeasonExportableByAll}.
  */
 export function canExportSeasonSummary({
 	loggedInUser,

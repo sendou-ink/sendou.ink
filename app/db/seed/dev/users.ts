@@ -242,8 +242,7 @@ async function seedShowcaseUsers() {
 	return { ids, artistIds, favoriteBadgeUserIds };
 }
 
-/** Widget profile of the one seeded supporter: both slots filled, and every widget
- * whose content other modules seed onto N-ZAP. */
+/** The one seeded supporter's widgets: both slots filled, every widget other modules seed content for. */
 function nzapWidgets(): NonNullable<
 	Parameters<typeof UserFactory.create>[1]
 >["widgets"] {

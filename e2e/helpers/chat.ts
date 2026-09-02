@@ -3,11 +3,7 @@ import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { CHAT_ROOMS_DATA_ROUTE, chatRoomMessagesRoute } from "~/utils/urls";
 import { expect, impersonate } from "./playwright";
 
-/**
- * A second logged in browser, for the tests needing two users connected at once:
- * live delivery cannot be seen by impersonating back and forth on one page, since
- * only one of the two ever holds an event stream.
- */
+/** A second logged in browser: impersonating back and forth on one page never shows live delivery, as only one user holds the event stream. */
 export async function openSecondUser(
 	browser: Browser,
 	baseURL: string,

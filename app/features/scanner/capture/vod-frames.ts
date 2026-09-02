@@ -1,11 +1,9 @@
 /**
  * VoD scan entry points. The primary path probes whether WebCodecs (via
- * mediabunny) can decode the file — if so, the analyzer workers each demux
- * and decode their own time slice of it (worker/analyzer.worker.ts) and no
- * frames cross the main thread at all. When the container/codec can't be
- * read that way, the fallback seek-steps a <video> element, which handles
- * anything the browser can play at the cost of per-seek latency; its stride
- * is supplied per step so the caller can widen it over calm footage.
+ * mediabunny) can decode the file — then the analyzer workers each decode
+ * their own time slice and no frames cross the main thread. Otherwise the
+ * fallback seek-steps a <video> element (anything the browser can play, at
+ * per-seek latency); its stride is supplied per step so it can widen over calm footage.
  */
 import { ALL_FORMATS, BlobSource, Input } from "mediabunny";
 
@@ -16,9 +14,7 @@ interface VodFrame {
 	t: number;
 }
 
-/**
- * Whether mediabunny + WebCodecs can decode `file`, and its duration if so.
- */
+/** Whether mediabunny + WebCodecs can decode `file`, and its duration if so. */
 export async function probeWebCodecs(
 	file: File,
 ): Promise<{ duration: number } | null> {
@@ -40,9 +36,8 @@ export async function probeWebCodecs(
 }
 
 /**
- * Open a seek-stepping scan over `video` (which must already have the file
- * loaded; metadata is awaited here). `nextStrideS` is consulted after every
- * yielded frame, so analysis feedback can adjust the step on the fly.
+ * Opens a seek-stepping scan over `video` (file already loaded; metadata is
+ * awaited here). `nextStrideS` is consulted after every yielded frame.
  */
 export async function openSeekScan(
 	video: HTMLVideoElement,

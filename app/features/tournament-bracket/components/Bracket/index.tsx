@@ -109,11 +109,9 @@ function ScrollableBracketContainer({
 }
 
 /**
- * Inside a breakout container (see `mainBreakout`), publishes the bracket's
- * distance from the top of the viewport as the `--bracket-fill-top` CSS
- * variable. The bracket's `max-height` is then derived from it in CSS, which
- * can account for the viewport, the mobile bottom nav and safe area insets in
- * ways JS can't read. A no-op elsewhere, so the static `max-height` applies.
+ * Inside a breakout container (see `mainBreakout`) publishes the bracket's distance from the viewport top
+ * as `--bracket-fill-top`, from which CSS derives `max-height` accounting for the mobile bottom nav and
+ * safe area insets JS can't read. No-op elsewhere, so the static `max-height` applies.
  */
 function usePublishBracketTopOffset(ref: React.RefObject<HTMLElement | null>) {
 	useIsomorphicLayoutEffect(() => {

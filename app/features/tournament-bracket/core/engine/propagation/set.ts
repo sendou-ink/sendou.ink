@@ -6,11 +6,7 @@ import { resetMatchResults } from "./reset-result";
 
 const SIDES = ["opponent1", "opponent2"] as const satisfies Side[];
 
-/**
- * Records one game win for the given team, resolving from the round's map
- * info (count & best of / play all) whether the set is now over. When it is,
- * the win/loss results are set and propagated (advancements, unlocks etc.).
- */
+/** Records one game win. If the round's map info (count & best of / play all) says the set is over, the result is set and propagated. */
 export function reportGameResult(
 	data: BracketData,
 	input: { matchId: number; winnerTeamId: number },
@@ -32,11 +28,7 @@ export function reportGameResult(
 	};
 }
 
-/**
- * Removes the last played game from a match. If the match goes back to no
- * games played, the whole match result is reset, rolling back anything that
- * was propagated from it.
- */
+/** Removes the last played game. Back at no games played the whole result is reset, rolling back what was propagated. */
 export function undoGameResult(
 	data: BracketData,
 	input: { matchId: number; lastGameWinnerTeamId: number },
@@ -65,11 +57,7 @@ export function undoGameResult(
 	};
 }
 
-/**
- * Ends the set early with the given team as the winner, keeping the current
- * scores as they are (an organizer action; e.g. the opponent can not play out
- * the rest of the set).
- */
+/** Ends the set early with the given winner, keeping the scores (organizer action, e.g. the opponent can't play on). */
 export function endSet(
 	data: BracketData,
 	input: { matchId: number; winnerTeamId: number },
@@ -83,11 +71,8 @@ export function endSet(
 }
 
 /**
- * Reopens a completed match for further reporting, clearing the set result.
- * Resolves from the round's map info whether the set had been force-ended
- * early: if it was, the scores are kept as is; otherwise the deciding game's
- * score is removed (the caller is expected to delete the corresponding game
- * result row, see `endedEarly` in the return value).
+ * Reopens a completed match, clearing the set result. A force-ended set keeps its scores, otherwise
+ * the deciding game's score is removed and the caller deletes its game result row (see `endedEarly`).
  */
 export function reopenMatch(
 	data: BracketData,

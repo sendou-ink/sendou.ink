@@ -15,10 +15,7 @@ import {
 	ingestBodySchema,
 } from "../scanner-ingest-schemas";
 
-/**
- * How far back the POV user's reported games are considered as content-
- * resolution candidates
- */
+/** How far back the POV user's reported games are content-resolution candidates */
 const CONTENT_RESOLUTION_WINDOW_DAYS = 365;
 
 export const action: ActionFunction = async ({ request }) => {
@@ -139,17 +136,12 @@ interface IngestContextCandidate {
 }
 
 /**
- * Resolves the context (tournament or SendouQ match) a request's matches
- * belong to.
- *
- * The user's activity around the time the matches were played is the strong
- * signal: the SendouQ match resp. tournament match of theirs running then
- * (for cast footage, the casted sets of tournaments the submitter helps
- * run as author/organizer/streamer). Candidates are scored by how many
- * matches would link to their games; a candidate is kept even when nothing links
- * yet (a live minimap-only match still gets its hint). With no activity,
- * the matches' content decides: the mode+stage sequence plus roster sides
- * is near-unique in a user's reported-game history.
+ * Resolves the context (tournament or SendouQ match) a request's matches belong to. The user's
+ * activity around play time is the strong signal: their match running then (for cast footage,
+ * the casted sets of tournaments they help run). Candidates are scored by how many matches would
+ * link, but kept even when nothing links yet (a live minimap-only match still gets its hint).
+ * Without activity the content decides: mode+stage sequence plus roster sides is near-unique in
+ * a user's history.
  */
 async function resolveIngestContext({
 	matches,
@@ -295,21 +287,14 @@ function countAttachableMatches(matches: ScannerMatch[]): number {
 	return matches.filter((match) => match.winner !== null).length;
 }
 
-/**
- * A results-screen POV seat disproves the cast flag — casts never see a
- * results screen — so a misflagged read still resolves through the sender's
- * own activity.
- */
+/** A results-screen POV seat disproves the cast flag (casts never see one), so a misflagged read still resolves through the sender's activity. */
 function withoutDisprovenCast(match: ScannerMatch): ScannerMatch {
 	if (!match.cast || match.pov === null) return match;
 
 	return { ...match, cast: false };
 }
 
-/**
- * The wall-clock time the request's matches were (probably) played: the
- * latest match's playedAt, falling back to "now".
- */
+/** When the request's matches were probably played: the latest playedAt, else "now". */
 function anchorTime(matches: ScannerMatch[]): number {
 	const playedAts = matches
 		.map((match) => match.playedAt)

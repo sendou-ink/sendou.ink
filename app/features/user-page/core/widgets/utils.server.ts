@@ -18,7 +18,7 @@ type UserSQLeaderboardTopData = Map<
 
 const SQ_LEADERBOARD_TOP_CACHE_KEY = "sq-leaderboard-top";
 
-/** How many times & in what seasons each user placed in the SendouQ leaderboard top 10 and top 100. */
+/** Per user: seasons placed in the SendouQ leaderboard top 10 and top 100. */
 export function cachedUserSQLeaderboardTopData() {
 	return cachified({
 		key: SQ_LEADERBOARD_TOP_CACHE_KEY,

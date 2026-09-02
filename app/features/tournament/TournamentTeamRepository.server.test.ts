@@ -361,9 +361,8 @@ describe("TournamentTeamRepository", () => {
 
 	describe("findRecentlyPlayedMapsByIds", () => {
 		test("leaves out the games of the match the maps are resolved for", async () => {
-			// the map list of an in-progress set is regenerated whenever its cache entry
-			// is lost, so counting the set's own games as recently played would change
-			// the maps the teams have left to play under them
+			// an in-progress set's map list is regenerated when its cache entry is lost, so counting its
+			// own games as recently played would change the maps left to play under the teams
 			const players = await UserFactory.createMany(TEAM_COUNT);
 			const tournament = await TournamentFactory.createPlayed(
 				{

@@ -2,13 +2,11 @@
  * Groups a detected-event timeline into ScannerMatch objects
  * (scanner-match.ts). A MapStart opens a match, a scoreboard-type event
  * closes one, and deaths in between belong to it; a scoreboard with no
- * preceding MapStart claims the last 8 minutes of deaths. Between delimiters
- * (casted footage has none) minimaps group per map by stage change and time
- * gap, since a Splatoon game runs a few minutes. A match is emitted only
- * when a scoreboard or minimaps back it (a MapStart with a missed results
- * screen identifies nothing), regardless of lobby/outcome —
- * `ingestSkipReasons` filters those. Deaths are harvested onto player rows
- * as enemy builds (ability-harvest.ts).
+ * preceding MapStart claims the last 8 minutes of deaths. Without delimiters
+ * (casted footage) minimaps group per map by stage change and time gap. A
+ * match is emitted only when a scoreboard or minimaps back it, regardless of
+ * lobby/outcome — `ingestSkipReasons` filters those. Deaths are harvested
+ * onto player rows as enemy builds (ability-harvest.ts).
  */
 import type {
 	AbilityWithUnknown,
@@ -75,83 +73,64 @@ import {
 /** The lobby header value private battles (tournament games) carry. */
 const TOURNAMENT_LOBBY = "PRIVATE";
 
-/**
- * How far back a scoreboard with no preceding MapStart claims deaths as its
- * match — matches run well under 8 minutes, so anything older is another
- * (undelimited) match's.
- */
+/** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
 const FALLBACK_WINDOW_SECONDS = 480;
 
-/**
- * Two minimaps more than this far apart cannot be the same game, so they
- * open separate matches even on the same stage.
- */
+/** Minimaps further apart than this cannot be the same game, even on the same stage. */
 const MATCH_GAP_SECONDS = 300;
 
 const PLAYERS_PER_TEAM = 4;
 
 /**
- * Slack the ended-early check gives a match before calling it a disconnect:
- * a counter read is a snapshot of numbers that keep moving, and the results
- * screen is only read some seconds after the last whistle.
+ * Slack before calling a match a disconnect: a counter read is a snapshot of
+ * moving numbers, and the results screen is read seconds after the last whistle.
  */
 const EARLY_END_MARGIN_SECONDS = 10;
 
 /**
- * The two team-ink hues must be at least this far apart before color is
- * trusted to orient counter reads: a game's color pair is picked to
- * contrast (attested pairs measure >130° apart), so a closer seed pair is
- * a misread, and orientation falls back to the as-read arrangement.
+ * Minimum hue distance between the two team inks before color orients counter
+ * reads: attested pairs measure >130° apart, so a closer seed pair is a misread
+ * and orientation falls back to the as-read arrangement.
  */
 const MIN_TEAM_HUE_SEPARATION = 30;
 
 /**
- * A counter read whose projected clock zero (`t + time`) sits further than
- * this from the match's dominant projection was taken off a broadcast
- * replay of another moment, not the live game. Live projections jitter by
- * a couple of seconds (wall clock and match timer both round to whole
- * seconds); attested replay wipes land a minute or more away.
+ * A read whose projected clock zero (`t + time`) sits further than this from
+ * the match's dominant projection came off a broadcast replay. Live projections
+ * jitter a couple of seconds (both clocks round to whole seconds); attested
+ * replay wipes land a minute or more away.
  */
 const REPLAY_ANCHOR_TOLERANCE_SECONDS = 10;
 
 /**
- * Dead-flag runs that fit between their flanking opposite-state reads in
- * less than these spans are physically impossible and get flipped to their
- * surroundings: the fastest respawn in Splatoon is 3.5s, so no true dead
- * stretch is shorter — while a respawned player CAN be re-splatted quickly
- * (spawncamps are real), so the alive floor stays a conservative 2s and
- * only clears blips like background ink bleeding through a crossed-out
- * icon. Judging by the flank-to-flank span (the longest the state could
- * truly have held) keeps sparse sampling honest: a lone dead read between
- * far-apart reads spans wide and is left alone.
+ * Dead-flag runs whose flank-to-flank span is shorter than these are flipped
+ * to their surroundings: the fastest respawn is 3.5s, so no true dead stretch
+ * is shorter, while a respawned player CAN be re-splatted fast (spawncamps),
+ * so the alive floor stays a conservative 2s. Judging by the flank-to-flank
+ * span keeps sparse sampling honest: a lone dead read between far-apart reads
+ * spans wide and is left alone.
  */
 const DEAD_RUN_MIN_SECONDS = 3.5;
 const ALIVE_RUN_MIN_SECONDS = 2;
 
 /**
- * A held special only goes away by being used (or by dying), and regaining
- * one takes at least this long — no special charges off ~10s of painting
- * even with max Special Charge Up. So an interior not-ready run flanked by
- * ready reads closer together than this, with no death inside the run, is
- * a misread gap (the ready wash pulses through a dim trough; overlays
- * clip the icons) and is bridged to ready.
+ * Regaining a used special takes at least this long (nothing charges off ~10s
+ * of painting even with max Special Charge Up), so a not-ready run flanked by
+ * ready reads closer than this, with no death inside, is a misread gap (the
+ * ready wash pulses through a dim trough; overlays clip icons) and is bridged.
  */
 const SPECIAL_REGAIN_MIN_SECONDS = 10;
 
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
-	/**
-	 * the input events the match was built from, chronological — the
-	 * send-status unit for callers with richer event records (StoredEvent)
-	 */
+	/** input events the match was built from, chronological — the send-status unit for callers */
 	sources: E[];
 }
 
 /**
- * Splits a timeline into ScannerMatch objects, chronological. Event types
- * that identify no match (ScoreboardOwn) are ignored. Every input event ends
- * up in at most one match's `sources` — orphan pools are cleared the moment
- * a boundary claims or invalidates them.
+ * Splits a timeline into ScannerMatch objects, chronological. Event types that
+ * identify no match (ScoreboardOwn) are ignored. Every input event ends up in
+ * at most one match's `sources`.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
@@ -211,9 +190,8 @@ export function buildScannerMatches<E extends DetectedEvent>(
 		} else if (event.type === MINIMAP_EVENT_TYPE) {
 			const stage = (event.data as MinimapData).stage;
 			if (open) {
-				// a stage change only splits when the next read doesn't refute
-				// it: a lone disagreeing frame is a misread to fold in as a
-				// minority vote, not a match boundary
+				// a stage change only splits when the next read doesn't refute it: a
+				// lone disagreeing frame is a misread folded in as a minority vote
 				const current = leadingStage(open.stageVotes);
 				const stageChanged =
 					current !== null &&
@@ -252,14 +230,12 @@ export type IngestSkipReason =
 	| "disconnect";
 
 /**
- * Which built matches are not worth sending to /ingest, and why. Kept out:
- * non-tournament lobbies (unread lobbies get the benefit of the doubt), and
- * games a disconnect cut short — proven either by counter reads showing the
- * game couldn't have ended on its own (see `endedEarly`), or by the same
- * map/mode being replayed right after with a score. Replay evidence only
- * ever arrives after the fact, so a live scan may already have sent the
- * abandoned game before its replay is detected; the counter-read check is
- * what catches it in the moment.
+ * Which built matches are not worth sending to /ingest, and why: non-tournament
+ * lobbies (unread lobbies get the benefit of the doubt), and games a disconnect
+ * cut short — counter reads show the game couldn't have ended on its own
+ * (`endedEarly`), or the same map/mode was replayed right after with a score.
+ * Replay evidence only arrives after the fact, so a live scan may already have
+ * sent the abandoned game; the counter-read check catches it in the moment.
  */
 export function ingestSkipReasons<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
@@ -277,12 +253,10 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 }
 
 /**
- * Objective-counter and player-status reads that landed on a match whose
+ * Objective-counter, player-status and strip-weapon reads on a match whose
  * detected mode is not Splat Zones — the SZ parser (the only one so far)
- * misreading another mode's counter overlay, and the statuses that rode
- * along with those misreads. The builder already leaves such a match's
- * `objective`/`playerStatus` null; callers should delete these events from
- * their stores.
+ * misreading another mode's overlay. The builder already leaves such a match's
+ * `objective`/`playerStatus` null; callers should delete these from their stores.
  */
 export function invalidObjectiveEvents<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
@@ -300,12 +274,10 @@ export function invalidObjectiveEvents<E extends DetectedEvent>(
 }
 
 /**
- * Whether a disconnect ended the match before it could be decided: it has a
- * results screen but no score on it, and its last counter read still needed
- * more game left than the footage gave it. From that read a game can end no
- * sooner than the clock running out, or the lower counter falling to zero at
- * its 1/s cap (a knockout) with any penalty worked off first — so when even
- * that came due after the match was already over, it was cut short.
+ * A disconnect ended the match before it was decided: a results screen with no
+ * score, and the last counter read still needed more game than the footage
+ * gave it — a game ends no sooner than the clock running out or the lower
+ * counter falling to zero at its 1/s cap (penalty worked off first).
  */
 function endedEarly(match: ScannerMatch): boolean {
 	// no results screen at all: an unfinished scan, not an unfinished game
@@ -335,10 +307,9 @@ function secondsUntilSoonestEnd(
 
 /**
  * Whether the scoreless match at `index` was played again right after: the
- * run of matches following it on the same mode and stage is the same game
- * restarted, so one of them reaching a score means the earlier attempts
- * ended in a disconnect. The run stops at the first other map, which keeps
- * the same map coming up again later in the scan out of it.
+ * following matches on the same mode and stage are the same game restarted, so
+ * one of them reaching a score means the earlier attempts were disconnects.
+ * The run stops at the first other map.
  */
 function wasReplayed<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
@@ -370,12 +341,10 @@ interface OpenMatch<E extends DetectedEvent> {
 	stripWeapons: E[];
 	scoreboard: E | null;
 	/**
-	 * per-stage read counts (a MapStart's stage seeds it); the plurality
-	 * winner delimits same-vs-next map so one misread frame can't poison
-	 * the whole match
+	 * per-stage read counts (a MapStart's stage seeds it); the plurality winner
+	 * delimits same-vs-next map so one misread frame can't poison the match
 	 */
 	stageVotes: Map<StageId, number>;
-	/** t of the last minimap added, for the gap check */
 	lastMinimapT: number | null;
 }
 
@@ -394,8 +363,8 @@ function startMatch<E extends DetectedEvent>(): OpenMatch<E> {
 }
 
 /**
- * For each minimap event, the next minimap's non-null stage read (walked
- * backwards) — the refutation signal for the stage-change split.
+ * For each minimap event, the next minimap's non-null stage read — the
+ * refutation signal for the stage-change split.
  */
 function buildNextStageMap<E extends DetectedEvent>(
 	sorted: readonly E[],
@@ -471,10 +440,9 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const minimaps = minimapReads.map((read) => read.data);
 
 	const mode = board?.mode ?? start?.mode ?? null;
-	// only the SZ counter is parsed — reads on a known other-mode match are
-	// misreads of a lookalike overlay, not progress data (statuses included:
-	// they only ever ride along with counter reads). Minimap card states are
-	// mode-agnostic, so they feed the status samples regardless
+	// only the SZ counter is parsed: reads on a known other-mode match are
+	// lookalike-overlay misreads (statuses ride along with counter reads).
+	// Minimap card states are mode-agnostic and feed status samples regardless
 	const counterModeValid = mode === null || mode === "SZ";
 	const progress = buildProgress(
 		counterModeValid ? objectives : [],
@@ -505,11 +473,10 @@ function toBuiltMatch<E extends DetectedEvent>(
 			? board.matchScores
 			: null,
 		replayCode: timestamped?.replayCode ?? null,
-		// layout alone cannot flag a broadcast: S3 first-person POV footage
-		// draws both narrow strip geometries, so only actual cast evidence
-		// counts — the spectator map screen or badge-proven strips. A results
-		// screen that identified the POV seat disproves them all: casts never
-		// see a results screen, so such evidence was misread
+		// layout alone cannot flag a broadcast (S3 POV footage draws both narrow
+		// strip geometries), so only the spectator map screen or badge-proven
+		// strips count; a results screen that identified the POV seat disproves
+		// them all — casts never see one
 		cast:
 			pov === null &&
 			(open.minimaps.some((event) => (event.data as MinimapData).spectator) ||
@@ -532,48 +499,36 @@ function floorOrNull(t: number | undefined): number | null {
 
 /**
  * The counter reads as `objective` samples and the icon-strip reads as
- * `playerStatus` samples, both in `teams` order. On POV footage the left
- * plate is the POV/alpha side for the whole game, but casted footage
- * reorders the plates to follow the specced player — so each counter read
- * is first oriented by its sides' team ink hues (clustered against the
- * first read that saw both), making the series side-stable; a status read
- * carries no ink of its own and inherits the orientation of the counter
- * read nearest in time (they are emitted off the same frames). Broadcast
- * replay wipes re-run an earlier moment with the whole HUD intact, so both
- * series are anchored by their projected clock zero (`t + time`) against
- * one shared dominant projection — the live game — and reads off it are
- * dropped; timerless reads follow their preceding anchored neighbor. A
- * displayed count never increases (it shows the team's best remaining), so
- * each side's counter series then keeps only its longest non-increasing
- * run of scores — surviving OCR blips are voided rather than charted. Both
- * series then go into `teams` order: a scoreboard-closed match is
- * winner-first (POV seat when read; else in SZ the winner is the side
- * whose remaining count went furthest down), a minimap-grouped match
- * anchors on the minimap's own/alpha-vs-enemy/bravo ink colors, and with
- * no signal the first read's arrangement stands. A side's four slots keep
- * their on-screen left-to-right order through a side swap — whether the
- * game mirrors slot order across sides is unattested so far.
+ * `playerStatus` samples, both in `teams` order. POV footage keeps the POV
+ * side on the left plate, but casted footage reorders the plates to follow
+ * the specced player — so each counter read is first oriented by its sides'
+ * ink hues (clustered against the first read that saw both); a status read
+ * carries no ink and inherits the orientation of the nearest counter read in
+ * time (same frames). Broadcast replay wipes re-run an earlier moment with the
+ * HUD intact, so both series are anchored by projected clock zero (`t + time`)
+ * against one shared dominant projection and reads off it are dropped;
+ * timerless reads follow their preceding anchored neighbor. A displayed count
+ * never increases, so each side keeps only its longest non-increasing score
+ * run (blips voided, not charted). Then into `teams` order: scoreboard-closed
+ * is winner-first (POV seat when read; else in SZ the side whose count went
+ * furthest down), minimap-grouped anchors on the minimap's own-vs-enemy ink
+ * colors, no signal keeps the first read's arrangement. Slots keep their
+ * on-screen left-to-right order through a side swap (whether the game mirrors
+ * slot order across sides is unattested).
  *
- * Minimap reads contribute status samples too (their card cross-out and
- * special-camo states), interleaved with the icon-strip reads on the same
- * replay-wipe anchor (timerless, so each follows its anchored neighbor).
- * Their sides are own/alpha-vs-enemy/bravo — camera-stable, unlike the
- * plates — so they skip the per-read cluster orientation and map to
- * `teams` through the same minimap ink anchor the whole match uses
- * (identity on a minimap-grouped match by construction).
+ * Minimap reads contribute status samples too (card cross-out and camo
+ * states), interleaved on the same replay-wipe anchor. Their sides are
+ * own/enemy — camera-stable — so they skip cluster orientation and map to
+ * `teams` through the match's minimap ink anchor.
  *
- * Within a side, the strip's slot order is the lobby seating while a
- * results scoreboard re-sorts its rows per game (attested in the
- * sendou-triton VoD) — so on a scoreboard-closed match each side's slots
- * are reordered into row order via the slot→row assignment
- * (slot-row-assignment.ts): weapon votes from the sampled StripWeapons
- * evidence plus the minimap's card columns, which mirror the strip's
- * seating (attested for the enemy column; the spectator screen's own
- * column is assumed symmetric). The POV overlay's teammate diamond
- * follows neither order, so diamond-sourced flags map by card name
- * instead, and keep their as-drawn order when too few names resolve. A
- * minimap-grouped match's `teams` come from the cards themselves, so its
- * samples stay as drawn by construction.
+ * Within a side the strip's slot order is the lobby seating while a results
+ * scoreboard re-sorts rows per game (attested in the sendou-triton VoD), so on
+ * a scoreboard-closed match each side's slots are reordered into row order via
+ * slot-row-assignment.ts: weapon votes from StripWeapons evidence plus the
+ * minimap's card columns (mirror the strip seating; attested for the enemy
+ * column, own column assumed symmetric). The POV diamond follows neither
+ * order, so its flags map by card name and stay as drawn when too few names
+ * resolve. A minimap-grouped match's samples stay as drawn by construction.
  */
 function buildProgress(
 	objectives: readonly { t: number; data: ObjectiveData }[],
@@ -689,19 +644,16 @@ interface SlotRowPerms {
 }
 
 /**
- * How much one minimap card's parsed weapon counts next to the strip
- * evidence's raw NCC scores (~0.3-0.6 per candidate per read): the card
- * parser is gated on a clean read, so one card outweighs a single strip
- * sample without being able to drown a match's worth of them.
+ * One minimap card's parsed weapon next to raw strip NCC scores (~0.3-0.6 per
+ * candidate per read): the card parser is gated on a clean read, so one card
+ * outweighs a single strip sample without drowning a match's worth of them.
  */
 const MINIMAP_CARD_VOTE = 1;
 
 /**
- * Accumulate the match's weapon votes (sampled strip evidence oriented
- * read-by-read like the status samples; minimap cards through the match's
- * minimap anchor) and solve each side's slot→row assignment against the
- * scoreboard's weapons, plus the diamond's name-based assignment for POV
- * teammate cards.
+ * Accumulates the match's weapon votes (strip evidence oriented read-by-read,
+ * minimap cards through the minimap anchor) and solves each side's slot→row
+ * assignment against the scoreboard's weapons, plus the diamond's name-based one.
  */
 function slotRowPermutations(
 	board: ScoreboardData,
@@ -792,9 +744,8 @@ function slotRowPermutations(
 }
 
 /**
- * Which permutation a status read's `sourceSide` flags go through on their
- * way to teams side `side`: strip-seated sources (the strip itself, card
- * columns) take the weapon-vote assignment, the POV diamond its name
+ * The permutation a status read's `sourceSide` flags take to teams side `side`:
+ * strip-seated sources use the weapon-vote assignment, the POV diamond its name
  * assignment; a minimap-grouped match (no perms) keeps everything as drawn.
  */
 function readPermutation(
@@ -811,12 +762,11 @@ function readPermutation(
 }
 
 /**
- * Debounce per-slot dead flags across a match's samples: an interior run
- * whose flanking opposite-state reads sit closer together than the state
- * could truly have held (DEAD/ALIVE_RUN_MIN_SECONDS) is a misread blip
- * (background ink bleeding through a translucent splatted icon, or a box
- * over a mid-animation icon) and takes the flanking state instead. Edge
- * runs stay — nothing attests what came before or after the match window.
+ * Debounces per-slot dead flags: an interior run whose flanking opposite-state
+ * reads sit closer than the state could have held (DEAD/ALIVE_RUN_MIN_SECONDS)
+ * is a misread blip (background ink through a translucent splatted icon, a box
+ * over a mid-animation icon) and takes the flanking state. Edge runs stay —
+ * nothing attests what came before or after the match window.
  */
 function withImpossibleDeadRunsFlipped(
 	samples: ScannerMatchPlayerStatusSample[],
@@ -863,13 +813,11 @@ function withImpossibleDeadRunsFlipped(
 }
 
 /**
- * Bridge per-slot special-ready gaps: an interior not-ready run whose
- * flanking ready reads sit closer together than a special could truly be
- * regained (SPECIAL_REGAIN_MIN_SECONDS), with no death inside the run to
- * explain the loss, is a misread gap (the ready wash pulses through a dim
- * trough) and reads ready throughout. Short READY runs are left alone — a
- * just-charged special really can be spent within a read or two. Edge
- * runs stay too: nothing attests the state beyond the match window.
+ * Bridges per-slot special-ready gaps: an interior not-ready run whose flanking
+ * ready reads sit closer than SPECIAL_REGAIN_MIN_SECONDS, with no death inside
+ * to explain the loss, is a misread gap (the ready wash's dim pulse trough) and
+ * reads ready throughout. Short READY runs stay (a fresh special really can be
+ * spent within a read or two), as do edge runs.
  */
 function withShortSpecialGapsBridged(
 	samples: ScannerMatchPlayerStatusSample[],
@@ -915,11 +863,7 @@ interface StatusRead {
 	t: number;
 	/** minimap sides are own/enemy — camera-stable, unlike the HUD plates */
 	fromMinimap: boolean;
-	/**
-	 * minimap reads only: the 8-card spectator screen, whose own-side
-	 * column is card-seated like the enemy one — the POV overlay's
-	 * teammate diamond is not (see readPermutation)
-	 */
+	/** minimap reads only: the 8-card spectator screen, whose own column is card-seated like the enemy one — the POV diamond is not (see readPermutation) */
 	spectator?: boolean;
 	data: {
 		time: number | null;
@@ -929,11 +873,9 @@ interface StatusRead {
 }
 
 /**
- * The minimap reads' card/row states as status reads: own/alpha side
- * first, slots in card order — the same order `teamsFromMinimaps` seats
- * players — with absent cards padded false (nothing to chart, never a
- * fabricated state). A read that saw no cards at all identifies nobody
- * and contributes nothing.
+ * The minimap reads' card states as status reads: own side first, slots in card
+ * order (the order `teamsFromMinimaps` seats players), absent cards padded
+ * false. A read that saw no cards identifies nobody and contributes nothing.
  */
 function minimapStatusReads(
 	minimapReads: readonly { t: number; data: MinimapData }[],
@@ -969,10 +911,9 @@ function sideFlags(
 }
 
 /**
- * The cluster-orientation flag of the counter read nearest in time —
- * status reads are emitted off the same frames as counter reads, so the
- * nearest one saw the same camera arrangement. False when no counter read
- * carried a usable flag (POV footage never swaps anyway).
+ * The cluster-orientation flag of the counter read nearest in time — status
+ * reads come off the same frames, so the nearest one saw the same camera
+ * arrangement. False when no counter read carried a flag (POV never swaps).
  */
 function nearestSwapFlag(
 	objectives: readonly { t: number }[],
@@ -1001,9 +942,8 @@ interface OrientedObjectiveRead {
 }
 
 /**
- * The two team-ink cluster hues, seeded from the first read that saw both
- * sides' colors far enough apart; null when no read qualifies (color
- * orientation then stays at the as-read arrangement).
+ * The two team-ink cluster hues, seeded from the first read that saw both sides
+ * far enough apart; null when none qualifies (orientation stays as read).
  */
 function seedClusterHues(
 	objectives: readonly { data: ObjectiveData }[],
@@ -1018,11 +958,10 @@ function seedClusterHues(
 }
 
 /**
- * Per-read cluster assignment of the sides: a read whose ink hues sit
- * closer to the clusters crosswise is swapped (the cast switched the
- * specced side). Reads with no readable color inherit the previous read's
- * orientation — plate arrangement only changes with a camera change, which
- * leaves the colors readable once the plates are back.
+ * Per-read side orientation: a read whose ink hues sit closer to the clusters
+ * crosswise is swapped (the cast switched the specced side). Reads with no
+ * readable color inherit the previous orientation — plates only rearrange with
+ * a camera change, which leaves the colors readable once they are back.
  */
 function readSwapFlags(
 	objectives: readonly { t: number; data: ObjectiveData }[],
@@ -1073,9 +1012,8 @@ function readSwapped(
 }
 
 /**
- * Whether the cluster order is bravo-first, judged against the minimap's
- * ink colors (own/alpha column, enemy/bravo column) — the `teams` anchor
- * for cast matches, which never see a results screen.
+ * Whether the cluster order is bravo-first, judged against the minimap's ink
+ * colors (own then enemy) — the `teams` anchor for cast matches.
  */
 function minimapAnchorSwap(
 	clusterHues: [number, number] | null,
@@ -1093,10 +1031,7 @@ function minimapAnchorSwap(
 	return swappedCost < identityCost;
 }
 
-/**
- * Componentwise mean of the minimap reads' per-side ink colors; null when
- * no read got a side's color (or there were no minimaps at all).
- */
+/** Componentwise mean of the minimap reads' per-side ink colors; null when unread. */
 function minimapTeamColors(
 	minimaps: readonly MinimapData[],
 ): [InkRgb | null, InkRgb | null] | null {
@@ -1116,9 +1051,8 @@ function minimapTeamColors(
 }
 
 /**
- * The dominant clock-zero projection across every read that carried a
- * timer; null when none did. Counter and status reads project the same
- * live clock, so one shared anchor voids replay wipes from both series.
+ * The dominant clock-zero projection across every timed read; null when none.
+ * Counter and status reads project the same clock, so one anchor voids both.
  */
 function dominantAnchorOf(
 	reads: readonly { t: number; data: { time: number | null } }[],
@@ -1130,14 +1064,12 @@ function dominantAnchorOf(
 }
 
 /**
- * Drops reads taken off broadcast replay wipes: `t + time` projects the
- * wall-clock moment the match timer reaches zero, which stays constant
- * across a live game but lands far away when the broadcast re-runs an
- * earlier moment, clock and all. Only reads near the dominant projection
- * (the live series always outnumbers ~30s replay clips) are kept; a
- * timerless read shares the fate of its preceding anchored neighbor (the
- * following one for a timerless head), so an unreadable — or as yet
- * unattested overtime — timer display never voids live reads.
+ * Drops reads taken off broadcast replay wipes: `t + time` projects the moment
+ * the match timer hits zero, constant across a live game but far off when the
+ * broadcast re-runs an earlier moment. Only reads near the dominant projection
+ * (the live series outnumbers ~30s replay clips) are kept; a timerless read
+ * shares the fate of its preceding anchored neighbor (the following one for a
+ * timerless head), so an unreadable timer never voids live reads.
  */
 function withoutReplayReads<
 	T extends { t: number; data: { time: number | null } },
@@ -1179,12 +1111,10 @@ function dominantAnchor(anchors: readonly number[]): number {
 }
 
 /**
- * Voids score reads that contradict SZ's countdown: per side, only the
- * longest non-increasing subsequence of the readable scores is kept and
- * every read off it gets that side's score nulled (its penalty/control
- * stand). A misread that slipped past the detector — a truncated "50"
- * charted as a 0-dip, a stray 100 — is always the minority against the
- * surrounding correct series, so it is what gets dropped.
+ * Voids score reads that contradict SZ's countdown: per side, only the longest
+ * non-increasing subsequence of readable scores is kept and every read off it
+ * gets that side's score nulled (penalty/control stand). A misread (a truncated
+ * "50" charted as 0, a stray 100) is always the minority, so it is what drops.
  */
 function withMonotonicScores(
 	oriented: readonly OrientedObjectiveRead[],
@@ -1237,11 +1167,10 @@ function bestCount(
 }
 
 /**
- * The wall-clock time the match was played: a replay/battle log screen's
- * on-screen recording timestamp (anchored to when the screen was seen, not
- * a possibly much later send), else the closing scoreboard's detection
- * time. Detection times ride richer event records (StoredEvent) and are
- * read structurally so the builder stays generic.
+ * When the match was played: a replay/battle log screen's on-screen recording
+ * timestamp (anchored to when the screen was seen, not a later send), else the
+ * closing scoreboard's detection time — read structurally off richer event
+ * records (StoredEvent) so the builder stays generic.
  */
 function playedAt(
 	scoreboard: DetectedEvent | null,
@@ -1288,9 +1217,9 @@ function teamsFromScoreboard(
 }
 
 /**
- * Players merged across a match's minimap frames, alpha side then bravo:
- * weapons and names are fixed for a match, so a slot missed in one frame is
- * filled from another (first frame that read it wins).
+ * Players merged across a match's minimap frames, alpha then bravo: weapons and
+ * names are fixed for a match, so a slot missed in one frame is filled from
+ * another (first read wins).
  */
 function teamsFromMinimaps(
 	frames: readonly MinimapData[],
@@ -1350,11 +1279,10 @@ interface MinimapCardRead {
 }
 
 /**
- * Gear mains per scoreboard row, harvested from the match's minimap cards.
- * A card's drawn position is no seat — a frame leaves absent and
- * evidence-less cards out of its columns — so cards identify their row by
- * name and weapon instead, within their own column's side (own/enemy is
- * camera-stable, unlike the HUD plates).
+ * Gear mains per scoreboard row, harvested from the minimap cards. A card's
+ * drawn position is no seat (frames leave absent cards out of their columns),
+ * so cards identify their row by name and weapon within their own column's
+ * side (own/enemy is camera-stable, unlike the HUD plates).
  */
 function minimapMainsByRow(
 	board: ScoreboardData,
@@ -1381,8 +1309,8 @@ function minimapMainsByRow(
 
 /**
  * The gear mains a set of card reads agree on: badges come and go with
- * cross-outs and camo surfaces, so each slot takes its first identified
- * read. Null when no read identified any of the three.
+ * cross-outs and camo, so each slot takes its first identified read. Null when
+ * no read identified any of the three.
  */
 function mergeMains(reads: readonly GearMains[]): GearMains | null {
 	const mains = GEAR_SLOTS.map((slot) => {

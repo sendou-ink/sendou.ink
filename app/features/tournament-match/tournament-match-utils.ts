@@ -106,6 +106,5 @@ export function isSetOverByResults({
 
 	const maxWins = Math.max(...Object.values(winCounts));
 
-	// best of
 	return maxWins >= Math.ceil(count / 2);
 }

@@ -58,8 +58,7 @@ export default function UserBuildsPage() {
 		"sorting",
 	);
 	const changingSorting = sorting && isOwnPage;
-	// lives here so closing the dialog mid-submit doesn't unmount the fetcher,
-	// which would discard the action's redirect and skip revalidation
+	// here so closing the dialog mid-submit doesn't unmount the fetcher and drop the redirect
 	const sortingFetcher = useFetcher();
 
 	const closeSortingDialog = () => setChangingSorting(false);

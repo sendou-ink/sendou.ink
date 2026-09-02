@@ -28,10 +28,7 @@
 	overflow: hidden;
 }
 
-/*
-The canvas is authored at the real 1200x630 OG image size and only scaled down
-for previewing, so the same styles can render the actual image.
-*/
+/* authored at the real 1200x630 OG size and only scaled down for previewing */
 .canvas {
 	--og-pink: #fd0075;
 	--og-cyan: #01d4ff;

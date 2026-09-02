@@ -62,7 +62,7 @@ export const CALENDAR_EVENT = {
 	DISCORD_INVITE_CODE_MAX_LENGTH: 50,
 	BRACKET_URL_MAX_LENGTH: 200,
 	MAX_AMOUNT_OF_DATES: 5,
-	/** Calendar event tag that is persisted in the database */
+	/** Tags persisted in the database */
 	TAGS: Object.keys(tags) as Array<CalendarEventTag>,
 };
 
@@ -86,7 +86,7 @@ export const REG_CLOSES_AT_OPTIONS = [
 
 export type RegClosesAtOption = (typeof REG_CLOSES_AT_OPTIONS)[number];
 
-/** How many days are shown at the /calendar page at a time (full week from Monday to Sunday) */
+/** Days shown on /calendar at a time (Monday to Sunday) */
 export const DAYS_SHOWN_AT_A_TIME = 7;
 
 /** Tags not shown on the tournament cards */

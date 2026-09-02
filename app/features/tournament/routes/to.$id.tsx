@@ -74,9 +74,7 @@ export const handle: SendouRouteHandle = {
 export default function TournamentLayoutShell() {
 	const isHydrated = useHydrated();
 
-	// tournaments are something that people like to refresh a lot
-	// which can cause spikes that are hard for the server to handle
-	// this is just making sure the SSR for this page is as fast as possible in prod
+	// tournament pages get refreshed a lot causing spikes, so keep the SSR as fast as possible in prod
 	if (!isHydrated)
 		return (
 			<Main bigger>
@@ -99,7 +97,7 @@ export function TournamentLayout() {
 	);
 	const [bracketExpanded, setBracketExpanded] = React.useState(true);
 
-	// this is nice to debug with tournament in browser console
+	// for debugging in the browser console
 	if (process.env.NODE_ENV === "development") {
 		React.useEffect(() => {
 			// @ts-expect-error for dev purposes
@@ -126,8 +124,7 @@ export function TournamentLayout() {
 		</>
 	);
 
-	// Always render within the breakout container so the nav (and content) keep a
-	// consistent width across routes, avoiding a layout shift when switching tabs.
+	// always in the breakout container so the nav keeps its width across routes, avoiding a layout shift
 	return (
 		<Main breakoutContainer>
 			<div className={containerClassName("wide")}>{content}</div>

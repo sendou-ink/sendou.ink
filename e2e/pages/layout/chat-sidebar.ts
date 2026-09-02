@@ -1,12 +1,9 @@
 import type { Locator, Page } from "@playwright/test";
 
 /**
- * The chat sidebar and the chats open inside it.
- *
- * The same component renders in three places — the desktop rail, the tablet modal
- * and the mobile panel — and never in more than one of them at a time, so the
- * accessors find their elements wherever the viewport put them instead of scoping
- * to a container.
+ * The chat sidebar and the chats open inside it. The same component renders in the desktop
+ * rail, the tablet modal or the mobile panel, never more than one at a time, so the accessors
+ * find their elements wherever the viewport put them instead of scoping to a container.
  */
 export class ChatSidebar {
 	readonly locators;
@@ -67,10 +64,7 @@ export class ChatSidebar {
 		await this.roomRow(title).click();
 	}
 
-	/**
-	 * One open chat: the only one, or the nth panel of the split view — where the
-	 * match chat comes first and the group chat below it.
-	 */
+	/** One open chat: the only one, or the nth panel of the split view (match chat first, group chat below). */
 	chat(nth = 0) {
 		return new ChatRoom(this.locators.openChats.nth(nth));
 	}

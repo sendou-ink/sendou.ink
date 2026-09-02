@@ -1,8 +1,4 @@
-/**
- * The result list chrome shared by the global search and its weapon sub-view:
- * the list box, its items and the empty state shown while there is nothing to
- * list.
- */
+/** Result list chrome (list box, items, empty state) shared by the global search and its weapon sub-view. */
 
 import clsx from "clsx";
 import type * as React from "react";

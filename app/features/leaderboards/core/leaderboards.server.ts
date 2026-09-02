@@ -69,7 +69,7 @@ export async function cachedTeamLeaderboard({
 	});
 }
 
-/** Clears both variants of a season's cached team leaderboard, so that a change to which teams are skipped shows without waiting for the cache to expire. */
+/** Clears both variants of a season's cached team leaderboard so a skip change shows without waiting for expiry. */
 export function clearCachedTeamLeaderboards(season: number) {
 	for (const onlyOneEntryPerUser of [true, false]) {
 		cache.delete(teamLeaderboardCacheKey({ season, onlyOneEntryPerUser }));
@@ -185,12 +185,7 @@ export function filterByWeaponCategory<
 	);
 }
 
-/**
- * The entries of the full user leaderboard that are visible on the leaderboard
- * page. Cut by placement rank instead of entry count so that players tied
- * across the cutoff are all shown; {@link ownEntryPeek} covers exactly the
- * entries this leaves out.
- */
+/** The user leaderboard entries the page shows, cut by placement rank (not count) so ties across the cutoff all show; {@link ownEntryPeek} covers what this leaves out. */
 export function shownUserLeaderboard(
 	leaderboard: UserLeaderboardWithAdditionsItem[],
 ) {

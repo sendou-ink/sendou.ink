@@ -60,19 +60,14 @@ import { TopRightButtons } from "./TopRightButtons";
 
 const MAX_DESKTOP_FRIENDS = 4;
 
-// lazy loaded so the rarely needed auth error dialog stays out of the eager
-// bundle loaded on every page
+// lazy loaded to stay out of the eager bundle
 const AuthErrorDialog = React.lazy(() =>
 	import("./AuthErrorDialog").then((module) => ({
 		default: module.AuthErrorDialog,
 	})),
 );
 
-/** Id of the loading-bar track rendered inside the header. NProgress mounts its
- * bar into it; the track sits just below the header border, spans only the area
- * between the sidebars, and clips the bar so it never extends over a sidebar.
- * Living inside the header makes it follow the header on scroll and in
- * standalone (PWA) mode where the header grows by the safe-area inset. */
+/** Loading-bar track inside the header that NProgress mounts into; styled in common.css. */
 export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
 
 function useRelativeDayFormat() {
@@ -147,10 +142,7 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 	return [collapsed, setCollapsedAndPersist] as const;
 }
 
-/**
- * Open state of a modal that only the tablet layout has, remembering the pathname it was
- * opened on so that leaving that layout or navigating elsewhere closes it on its own.
- */
+/** Open state of a tablet-layout-only modal; leaving that layout or navigating closes it. */
 function useTabletModal(isTabletLayout: boolean) {
 	const location = useLocation();
 	const [openedOnPathname, setOpenedOnPathname] = React.useState<string | null>(

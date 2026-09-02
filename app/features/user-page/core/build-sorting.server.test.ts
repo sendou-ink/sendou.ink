@@ -75,8 +75,6 @@ describe("sortBuilds()", () => {
 		expect(sortedBuilds[1].id).toBe(3);
 	});
 
-	// Add other test cases similarly...
-
 	test("sorts by both PUBLIC_BUILD and PRIVATE_BUILD", () => {
 		const builds = [
 			mockBuild({ id: 1, isPrivate: 1 }),

@@ -210,8 +210,7 @@ async function findTeamEntry({
 	if (rankedEntry)
 		return { entry: rankedEntry, rank: rankedEntry.placementRank ?? undefined };
 
-	// rosters that only show up on the "all entries" leaderboard have no
-	// placement comparable to the one shown on the main team leaderboard
+	// "all entries" only rosters have no placement comparable to the main team leaderboard's
 	const unrankedEntry = (
 		await LeaderboardRepository.findTeamLeaderboardBySeason({
 			season,

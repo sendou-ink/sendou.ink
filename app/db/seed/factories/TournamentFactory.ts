@@ -33,9 +33,7 @@ const SINGLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
 	},
 ];
 
-/** Every round of a bracket the factory starts is played on these, unless the
- * caller passes a `maps` option. A bracket can not be created without a map list,
- * and picking one is the organizer's job. */
+/** Default maps of every round the factory starts; a bracket can't be created without a map list. */
 const ROUND_MAPS = {
 	count: 3,
 	type: "BEST_OF",
@@ -61,17 +59,10 @@ type Options = {
 	isLeague?: boolean;
 };
 
-/** Brackets to play out fully: one by its idx in the progression, several, or
- * `"all"` for every bracket followed by finalizing the tournament. */
+/** Bracket idx(s) in the progression, or `"all"` = every bracket then finalize. */
 type PlayedBrackets = number | number[] | "all";
 
-/**
- * Creates tournaments. Aggregate factory: the `CalendarEvent` wrapping the
- * tournament and its start date are created with it, because there is no such thing
- * as a tournament without one. Returns both ids.
- *
- * The bracket is a single elimination one unless `bracketProgression` says otherwise.
- */
+/** Creates the wrapping `CalendarEvent` too and returns both ids. Single elimination unless `bracketProgression` says otherwise. */
 export const { create } = defineFactory({
 	defaults: () => ({
 		...eventDefaults(),
@@ -110,13 +101,8 @@ export const { create } = defineFactory({
 });
 
 /**
- * Creates a tournament that has been played. Every entry of `teamRosters` registers
- * as a team owned by the first of its users and checks in, and the brackets
- * `playedOut` names are played out off that seeding — the first bracket when not
- * given, `"all"` for the whole tournament played and finalized.
- *
- * Returns the teams and the matches played alongside the tournament, so that a
- * test can carry on from wherever `playedOut` left the tournament.
+ * Each `teamRosters` entry registers (owned by its first user) and checks in; the brackets `playedOut`
+ * names (default: the first) are played out off that seeding. Returns the teams and matches played.
  */
 export async function createPlayed(
 	overrides: Parameters<typeof create>[0],
@@ -149,13 +135,8 @@ export async function createPlayed(
 }
 
 /**
- * Plays brackets out fully, in the order given: each is started and every match of
- * it played. `"all"` plays every bracket of the progression and then finalizes the
- * tournament the same way the organizer's finalize button does: results on
- * profiles, the tournament's badges awarded to its winning team, skills and
- * leaderboard entries.
- *
- * Returns the matches played, in play order.
+ * Starts and plays every match of each bracket in order. `"all"` also finalizes like the organizer's
+ * button does (results, badges, skills, leaderboard). Returns the matches in play order.
  */
 export async function playOut(
 	tournamentId: number,
@@ -191,14 +172,8 @@ export async function playOut(
 }
 
 /**
- * Starts one of the tournament's brackets, seeded by the teams that are in it —
- * the same teams the organizer would see offered on the bracket page. Every round
- * is played on `maps`, or the factory's default SZ Bo3 list.
- *
- * Later brackets of a progression are started by calling this again once the
- * matches they source their teams from have been played.
- *
- * Returns the matches the bracket was created with, in the generator's own order.
+ * Starts a bracket seeded by the teams in it, every round on `maps` (default SZ Bo3). Later brackets
+ * are started by calling again once their source matches are played. Returns the matches created.
  */
 export async function startBracket(
 	tournamentId: number,
@@ -242,10 +217,7 @@ export async function startBracket(
 	return startedBracket.data.match.map((match) => ({ id: match.id }));
 }
 
-/**
- * Marks a match as casted by a Twitch account, adding the account to the
- * tournament's cast accounts first, the way the organizer's stream page does.
- */
+/** Marks a match casted by a Twitch account, adding the account to the cast accounts first like the stream page does. */
 export async function castMatch({
 	tournamentId,
 	matchId,
@@ -285,13 +257,8 @@ interface PlayedMatch {
 }
 
 /**
- * Plays out every match both of whose teams are known, the higher seeded team
- * winning each map of it. Every map goes through `reportScore`, the same function
- * the match page reports through, so the bracket, the standings and the
- * participation rows end up exactly as they do when the teams play it.
- *
- * One pass only: matches the played ones advance teams into are left for the next
- * call, so a caller can stop after any round. `playOut` plays to the end.
+ * Plays every match with both teams known, the higher seed winning each map through `reportScore` like
+ * the match page. One pass only: matches these advance teams into are left for the next call.
  */
 export async function playMatches(
 	tournamentId: number,
@@ -309,14 +276,7 @@ export async function playMatches(
 	return played;
 }
 
-/**
- * Generates the matches of a swiss bracket's next round, each of its groups the
- * same way the organizer's advance button does. Swiss pairs a round off the
- * standings of the one before it, so the matches of a round only exist once the
- * previous round has been played.
- *
- * Returns whether there was a round left to generate.
- */
+/** Next swiss round per group, like the organizer's advance button. Returns whether a round was left to generate. */
 async function generateNextSwissRound(
 	tournamentId: number,
 	bracketIdx: number,
@@ -361,10 +321,7 @@ async function generateNextSwissRound(
 	return generated;
 }
 
-/** Writes the seeds the bracket was created off, the same way starting a bracket
- * through the site does. Without them the seeds shown are recomputed from the teams'
- * seeding skills every time, so they drift out of sync with the started bracket as
- * soon as those change. */
+/** Without persisted seeds the shown ones are recomputed from seeding skills and drift from the started bracket. */
 async function persistSeeds(
 	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
 ) {
@@ -501,7 +458,7 @@ async function finalize(tournamentId: number) {
 	});
 }
 
-/** Whose the tournament's prizes are, as the organizer typically assigns them. */
+/** Who the organizer typically assigns the prizes to. */
 function winningTeam(tournament: Awaited<ReturnType<typeof tournamentFromDB>>) {
 	const winner = Standings.flattenStandings(
 		Standings.tournamentStandings(tournament),

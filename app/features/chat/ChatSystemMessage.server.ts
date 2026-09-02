@@ -38,11 +38,7 @@ const revalidateThrottle = createRevalidateBroadcastThrottle({
 		}),
 });
 
-/**
- * Publishes a contentless revalidate broadcast to the channel(s), prompting the
- * subscribed pages to refetch. Throttled per channel for the noisy kinds, see
- * {@link createRevalidateBroadcastThrottle}.
- */
+/** Publishes a contentless revalidate broadcast to the channel(s) so subscribed pages refetch. Noisy kinds are throttled per channel, see {@link createRevalidateBroadcastThrottle}. */
 export function send(broadcast: RevalidateBroadcast | RevalidateBroadcast[]) {
 	for (const msg of Array.isArray(broadcast) ? broadcast : [broadcast]) {
 		if (revalidateThrottle.throttles(msg)) {
@@ -53,11 +49,7 @@ export function send(broadcast: RevalidateBroadcast | RevalidateBroadcast[]) {
 	}
 }
 
-/**
- * Persists a system message (e.g. a reported score) as a chat line of the room
- * and publishes it, plus a revalidate broadcast so subscribed pages refetch.
- * Fire and forget like {@link send}: failures are logged, never thrown.
- */
+/** Persists a system message (e.g. a reported score) as a chat line and publishes it plus a revalidate broadcast. Fire and forget like {@link send}: failures are logged, never thrown. */
 export function sendPersisted(args: {
 	roomId: number;
 	type: PersistedSystemMessageType;
@@ -105,11 +97,7 @@ function publishRevalidate(msg: {
 	});
 }
 
-/**
- * Publishes a contentless "your notifications changed" event to the users'
- * event streams, prompting their clients to refetch. Fire and forget like the
- * other system messages; a missed event only delays the refetch.
- */
+/** Publishes a contentless "your notifications changed" event to the users' streams. Fire and forget; a missed event only delays the refetch. */
 export function notifyNotificationsChanged(userIds: number[]) {
 	if (userIds.length === 0) return;
 
@@ -118,12 +106,7 @@ export function notifyNotificationsChanged(userIds: number[]) {
 	});
 }
 
-/**
- * Publishes a "your chat room set changed" event to the users' event streams
- * after a membership change (leave, kick, group merge, added member). Clients
- * refetch their room list and drop rooms — including any locally held history —
- * they no longer have access to.
- */
+/** Publishes a "your chat room set changed" event after a membership change; clients refetch their room list and drop rooms (and held history) they lost access to. */
 export function notifyRoomsChanged(userIds: number[]) {
 	if (userIds.length === 0) return;
 
@@ -132,13 +115,7 @@ export function notifyRoomsChanged(userIds: number[]) {
 	});
 }
 
-/**
- * Same, for a change to the rooms themselves rather than to who is in them: the
- * participants are resolved from the rooms. Sent when a room's inactive flag
- * flips with its owner's state (e.g. its match completing), which the room list
- * would otherwise only pick up on the next page load. Fire and forget like
- * {@link send}: failures are logged, never thrown.
- */
+/** Same, for a change to the rooms themselves (participants resolved from them), e.g. the inactive flag flipping with a match completing. Fire and forget like {@link send}. */
 export function notifyRoomsChangedByRoomIds(roomIds: number[]): Promise<void> {
 	return notifyParticipantsOfRoomsChanged(roomIds).catch((err) =>
 		logger.error("Notifying participants of changed chat rooms failed:", err),

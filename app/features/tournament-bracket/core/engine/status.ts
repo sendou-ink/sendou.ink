@@ -9,13 +9,9 @@ import type {
 } from "./types";
 
 /**
- * The state of a match. Never persisted, always derived from the opponents of
- * the match and (for round robin) the progress of the previous round.
- *
- * - `PENDING` an opponent is still unknown, the match is a BYE or the teams are
- *   busy playing an earlier round.
- * - `STARTED` the match can be played and might already be in progress.
- * - `COMPLETED` the match has a winner.
+ * Never persisted, derived from the opponents and (round robin) the previous round's progress.
+ * `PENDING`: an opponent is unknown, a BYE or the teams are busy in an earlier round.
+ * `STARTED`: can be played, maybe in progress. `COMPLETED`: has a winner.
  */
 export type MatchStatus = "PENDING" | "STARTED" | "COMPLETED";
 
@@ -28,10 +24,7 @@ export function matchStatuses(data: BracketData): Map<number, MatchStatus> {
 	);
 }
 
-/**
- * Derives the status of one match of the bracket. Prefer {@link matchStatuses}
- * when the status of many matches of the same bracket is needed.
- */
+/** Prefer {@link matchStatuses} when many matches of the same bracket are needed. */
 export function matchStatus(data: BracketData, matchId: number): MatchStatus {
 	const match = data.match.find((match) => match.id === matchId);
 	if (!match) throw new Error(`Match not found: ${matchId}`);
@@ -39,33 +32,19 @@ export function matchStatus(data: BracketData, matchId: number): MatchStatus {
 	return resolveStatus(match, bracketContext(data));
 }
 
-/**
- * Checks if a match has had at least one game reported.
- *
- * @param match A match's results.
- */
+/** Whether at least one game has been reported. */
 export function isMatchStarted(match: MatchResults): boolean {
 	return (
 		match.opponent1?.score !== undefined || match.opponent2?.score !== undefined
 	);
 }
 
-/**
- * Checks if a match is completed.
- *
- * @param match A match's results.
- */
+/** Whether the match is completed. */
 export function isMatchCompleted(match: MatchResults): boolean {
 	return isMatchByeCompleted(match) || Boolean(match.winnerSide);
 }
 
-/**
- * Checks if a match is completed because of at least one BYE.
- *
- * A match "BYE vs. TBD" isn't considered completed yet.
- *
- * @param match A match's results.
- */
+/** Whether the match is completed because of a BYE. "BYE vs. TBD" isn't completed yet. */
 export function isMatchByeCompleted(match: MatchResults): boolean {
 	return (
 		(match.opponent1 === null && match.opponent2?.id !== null) || // BYE vs. someone
@@ -92,10 +71,7 @@ export function isSetOverByScore({
 	return scores[0] === matchOverAtXWins || scores[1] === matchOverAtXWins;
 }
 
-/**
- * The side the scores decide as the winner of the set, `undefined` while the
- * set is not over yet (or a play all set ended in a tie).
- */
+/** `undefined` while the set is not over (or a play all set ended in a tie). */
 export function winnerSideByScore(args: {
 	scores: [number, number];
 	count: number;
@@ -110,7 +86,7 @@ export function winnerSideByScore(args: {
 	return undefined;
 }
 
-/** Whether a completed match was ended before the set was decided by the games played (e.g. by an organizer force-ending it). */
+/** Completed before the games decided the set (e.g. organizer force-ending it). */
 export function matchEndedEarly({
 	opponentOne,
 	opponentTwo,
@@ -146,8 +122,7 @@ function resolveStatus(match: MatchData, context: BracketContext): MatchStatus {
 
 	if (!match.opponent1?.id || !match.opponent2?.id) return "PENDING";
 
-	// a match that is being played can't go back to pending e.g. because the
-	// result of an earlier match was reopened (issue #2690)
+	// a match being played can't go back to pending e.g. by an earlier match being reopened (issue #2690)
 	if (isMatchStarted(match)) return "STARTED";
 
 	if (isWaitingForPreviousRound(match, context)) return "PENDING";
@@ -155,11 +130,7 @@ function resolveStatus(match: MatchData, context: BracketContext): MatchStatus {
 	return "STARTED";
 }
 
-/**
- * In a round robin where the rounds are not independent both opponents are
- * known from the start but they can only play once they are done with the
- * previous round.
- */
+/** Non-independent round robin: opponents are known from the start but play only once done with the previous round. */
 function isWaitingForPreviousRound(
 	match: MatchData,
 	context: BracketContext,

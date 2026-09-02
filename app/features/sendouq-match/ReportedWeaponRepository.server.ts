@@ -139,12 +139,7 @@ export async function deleteOwnByMapIndexTournament({
 		.execute();
 }
 
-/**
- * Deletes reported weapons that no longer correspond to a played game, i.e.
- * those reported "in advance" for map indexes beyond the games that ended up
- * being played. Called when a set ends to trim leftover weapons that earlier
- * score undos intentionally left dangling.
- */
+/** Deletes weapons reported "in advance" for map indexes beyond the games played; called when a set ends to trim what score undos intentionally left dangling. */
 export async function deleteExtraByTournamentMatchId(
 	{
 		tournamentMatchId,
@@ -182,10 +177,7 @@ export async function findByTournamentMatchId(matchId: number) {
 	return rows;
 }
 
-/**
- * Aggregates a user's reported weapons across both SendouQ matches and
- * finalized tournaments that fall within the given season's date range.
- */
+/** A user's reported weapons across SendouQ matches and finalized tournaments within the season's date range. */
 export async function findSeasonReportedWeaponsByUserId({
 	userId,
 	season,
@@ -253,10 +245,7 @@ export interface WeaponUsageStat {
 	losses: number;
 }
 
-/**
- * Reports how often a user and the mates/enemies they played against used each
- * weapon on a given stage and mode during a season, along with win/loss counts.
- */
+/** How often a user and their mates/enemies used each weapon on a stage and mode during a season, with win/loss counts. */
 export async function findAllWeaponUsageStats({
 	userId,
 	mode,

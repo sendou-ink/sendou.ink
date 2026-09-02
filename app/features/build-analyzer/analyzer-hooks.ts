@@ -124,8 +124,7 @@ function validatedEffects({
 		const effectObj = SPECIAL_EFFECTS.find((e) => e.type === effect);
 		if (!effectObj) continue;
 
-		// e.g. even if OG effect is active in state
-		// it can't be on unless build has OG
+		// an ability effect can't be on unless the build has the ability
 		if (isAbility(effect) && !buildAbilities.includes(effect)) {
 			continue;
 		}
@@ -133,8 +132,7 @@ function validatedEffects({
 		result.push(effect);
 	}
 
-	// lde is a special case in that it's always
-	// considered active when in the build
+	// LDE is always considered active when in the build
 	if (buildAbilities.includes("LDE") && !result.includes("LDE")) {
 		result.push("LDE");
 	}

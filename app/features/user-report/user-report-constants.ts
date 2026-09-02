@@ -3,11 +3,7 @@ export const USER_REPORT = {
 	MATCH_ID_MAX_LENGTH: 10,
 };
 
-/**
- * Category offered in the report dialog but never stored: nicknames are not set on
- * sendou.ink, so picking it points the user to Splatoon 3 / Discord instead of
- * letting them send a report.
- */
+/** Offered in the dialog but never stored: picking it points the user to Splatoon 3 / Discord instead. */
 export const INAPPROPRIATE_NICKNAME_CATEGORY = "INAPPROPRIATE_NICKNAME";
 
 export const USER_REPORT_CATEGORIES = [
@@ -20,7 +16,7 @@ export const USER_REPORT_CATEGORIES = [
 
 export type UserReportCategory = (typeof USER_REPORT_CATEGORIES)[number];
 
-/** English display names, shown on the staff-only admin tab and in the Discord webhook embed. */
+/** English names for the staff-only admin tab and the Discord webhook embed. */
 export const USER_REPORT_CATEGORY_LABELS: Record<UserReportCategory, string> = {
 	INAPPROPRIATE_CONTENT: "Inappropriate content",
 	ALTING: "Alting",

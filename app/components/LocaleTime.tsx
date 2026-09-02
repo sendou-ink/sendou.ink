@@ -3,24 +3,18 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 
 interface LocaleTimeProps {
-	/** The date to render. Accepts a `Date` or a database timestamp (number), which is converted via `databaseTimestampToDate`. */
+	/** `Date` or database timestamp */
 	date: Date | number;
-	/** Formatting options forwarded to `Intl.DateTimeFormat`. Combined with the user's locale and hour cycle preferences. */
 	options: Intl.DateTimeFormatOptions;
-	/** Optional extra class names appended to the rendered `<time>` element. */
 	className?: string;
-	/** When `true`, renders inline; otherwise the element is displayed as a block. Defaults to block. */
+	/** defaults to block */
 	inline?: boolean;
-	/** Optional test id forwarded to the rendered `<time>` element. */
 	"data-testid"?: string;
 }
 
 /**
- * Renders a `<time>` element with the given date formatted according to the user's locale preferences.
- *
- * During SSR and before the user's locale preference has loaded the formatted text is hidden
- * (via `invisible`) while still reserving one line of height to avoid layout shift on hydration.
- * The `dateTime` attribute is always set to the ISO string for machine readability and a11y.
+ * `<time>` formatted per the user's locale preferences. Before the preference has loaded (SSR)
+ * the text is `invisible` but still reserves one line of height to avoid layout shift.
  */
 export function LocaleTime({
 	date,
@@ -36,9 +30,8 @@ export function LocaleTime({
 
 	return (
 		<time
-			// Hydration warnings are suppressed because callers may pass a live "now" value (e.g. a clock)
-			// whose server and client render instants differ slightly, which would otherwise mismatch the
-			// `dateTime` attribute. For fixed dates the ISO string is deterministic, so nothing real is masked.
+			// a live "now" value (e.g. a clock) differs slightly between server and client render,
+			// which would mismatch `dateTime`; fixed dates are deterministic so nothing real is masked
 			suppressHydrationWarning
 			data-testid={testId}
 			dateTime={dateObject.toISOString()}

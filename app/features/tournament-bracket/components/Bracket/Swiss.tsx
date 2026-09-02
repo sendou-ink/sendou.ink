@@ -37,8 +37,7 @@ export function SwissBracket({
 		tournamentBracketsSearchParams,
 		"group",
 	);
-	// the group of the shipped matches rather than that of the search param, so that
-	// the group being switched to only shows up once its matches have loaded
+	// group of the shipped matches rather than the search param's, so a switch shows once its matches loaded
 	const selectedGroupId = groupId ?? groups[0].groupId;
 
 	const selectedGroup = groups.find((g) => g.groupId === selectedGroupId)!;
@@ -67,8 +66,7 @@ export function SwissBracket({
 		return true;
 	};
 
-	// with the early advance variation the group can run out of teams before every
-	// round has been played, those rounds can never be started
+	// early advance: the group can run out of teams before every round is played
 	const groupHasActiveTeams = Engine.groupHasActiveTeams(bracket.data, {
 		groupId: selectedGroupId,
 		standings: bracket.liveStandings,

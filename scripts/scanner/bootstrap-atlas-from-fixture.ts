@@ -1,15 +1,14 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Bootstrap glyph atlases from the labeled reference fixtures: slices glyph
- * templates straight out of the reference frames, since the same scoreboard
- * captured through different pipelines (OBS virtual camera 720p, game
- * capture 1080p) yields subtly different pixels — every source contributes
- * its own crop per character and recognition takes the best-scoring one.
- * build-glyph-atlas.ts then fills in the rest of the charset from the
- * fonts, preserving these fixture-tagged glyphs.
+ * Bootstraps glyph atlases from labeled reference fixtures: slices templates
+ * straight out of the frames, since the same scoreboard captured through
+ * different pipelines (OBS virtual camera 720p, game capture 1080p) yields
+ * subtly different pixels — every source contributes its own crop per char and
+ * recognition takes the best-scoring one. build-glyph-atlas.ts then fills the
+ * rest of the charset from the fonts, preserving these fixture-tagged glyphs.
  *
  * Usage: pnpm scanner:bootstrap-atlas
- * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-{names,paint-digits,stat-digits}.{png,json}
+ * Writes SCANNER_ASSETS_DIR/glyphs/*.{png,json}
  */
 import { mkdirSync, writeFileSync } from "node:fs";
 import { join } from "node:path";
@@ -61,9 +60,8 @@ interface Source {
 	stats: string[][];
 	teamScores: string[];
 	/**
-	 * Split hints are absolute x positions where merged segments must be cut
-	 * (keyed by row index) — e.g. the "Te" in Teddy renders as one segment,
-	 * with the exact boundary shifting a couple of pixels between sources.
+	 * absolute x positions where merged segments must be cut, keyed by row —
+	 * e.g. "Te" in Teddy renders as one segment, boundary shifting a few px per source
 	 */
 	nameSplitHints: Record<number, number[]>;
 	/** omit to skip header harvest for this source */
@@ -94,10 +92,9 @@ const REFERENCE = {
 		["05", "02", "04"],
 	],
 	/**
-	 * Team totals render with an outline on the colored team box, so they get
-	 * their own atlas rather than reusing paint digits. This fixture only
-	 * contributes '5' and '0' — later fixtures extend the set (harvest keeps
-	 * the first instance per char, so rerunning with more fixtures is additive).
+	 * Team totals render outlined on the colored team box, so they get their own
+	 * atlas. This fixture only contributes '5' and '0'; harvest keeps the first
+	 * instance per char, so rerunning with more fixtures is additive.
 	 */
 	teamScores: ["500", "0"],
 	header: {
@@ -154,11 +151,10 @@ const SOURCES: Source[] = [
 		nameSplitHints: {},
 	},
 	{
-		// This capture renders names slightly smaller than the reference: its
-		// 'T' (9x15) loses to the taller reference crops, and its baseline dots
-		// are pure homoglyphs the font templates can't split — '.' renders 4px,
-		// '・' 5px, so exact crops separate them via the ink-coverage penalty.
-		// Only the dot/T rows are labeled; the rest add nothing new.
+		// Renders names slightly smaller than the reference: its 'T' (9x15) loses
+		// to the taller reference crops, and its baseline dots are homoglyphs the
+		// font templates can't split ('.' 4px, '・' 5px; exact crops separate them
+		// via the ink-coverage penalty). Only the dot/T rows are labeled.
 		frame: "scoreboard/robot/frame.png",
 		names: ["R.O.B.O.T", "", "", "", "", "Rαι×ι..・", "", ""],
 		paints: ["", "", "", "", "", "", "", ""],
@@ -239,10 +235,9 @@ async function loadGreen(framePath: string): Promise<Mat> {
 }
 
 /**
- * Death splash-tag name band, prepared the way the detector reads it
- * (see src/core/detectors/death/index.ts): crop the tilted tag, rotate it
- * level, crop the name band, then map each pixel to its max-channel
- * distance from the median banner color, normalized to 0-255.
+ * Death splash-tag name band, prepared the way death/index.ts reads it: crop
+ * the tilted tag, rotate it level, crop the name band, then map each pixel to
+ * its max-channel distance from the median banner color, normalized to 0-255.
  */
 async function loadTagBand(framePath: string): Promise<Mat> {
 	const srcMat = toMat(await readImage(join(FIXTURES_DIR, framePath)));
@@ -321,11 +316,9 @@ async function loadTagBand(framePath: string): Promise<Mat> {
 }
 
 /**
- * Zero out ink components touching the band border, exactly as the
- * detector does before parsing (see clearBorderBlobs in death/index.ts):
- * banner art and title-line slivers enter at the band edges, and without
- * this they join the column runs (mismatching the label) or push a crop's
- * tight box past the band edge.
+ * Zeroes ink components touching the band border, as the detector does before
+ * parsing (clearBorderBlobs in death/index.ts): banner art and title-line
+ * slivers at the edges would join the column runs or push a tight box past it.
  */
 function clearBorderBlobs(band: Mat, threshold: number): void {
 	const bin = new cv.Mat();
@@ -384,9 +377,8 @@ function columnRuns(
 		}
 	}
 	if (start >= 0) runs.push({ x0: start, x1: roi.x + roi.w });
-	// Merge hints bridge runs that belong to one glyph (multi-stroke kana
-	// like パ segments as two strokes): a hint x inside the gap between two
-	// consecutive runs joins them into a single crop.
+	// Merge hints bridge runs belonging to one glyph (multi-stroke kana like パ
+	// segment as two strokes): a hint x inside the gap joins the two runs.
 	for (const hint of mergeHints) {
 		const i = runs.findIndex(
 			(r, idx) =>
@@ -460,10 +452,9 @@ function cropGlyph(
 }
 
 /**
- * Slice a labeled text ROI into per-char crops. A Map collector keeps the
+ * Slices a labeled text ROI into per-char crops. A Map collector keeps the
  * first instance per char (digits render identically everywhere); an array
- * collector keeps every instance — letters land on different subpixel
- * phases, so each occurrence is a distinct, equally-authoritative exemplar.
+ * collector keeps every instance (letters land on different subpixel phases).
  */
 function harvest(
 	roi: Roi,
@@ -621,8 +612,7 @@ for (const source of SOURCES) {
 }
 
 // Replay-browser fixtures: the code line renders in FOT-RowdyStd, which no
-// live-scoreboard atlas covers. Letters land on different subpixel phases,
-// so keep every occurrence (array collector), like names.
+// live-scoreboard atlas covers. Every occurrence kept (array), like names.
 const REPLAY_SOURCES: { frame: string; code: string }[] = [
 	{
 		frame:
@@ -639,10 +629,9 @@ const REPLAY_SOURCES: { frame: string; code: string }[] = [
 			"scoreboard-battle-log-replay/private-battle-crableg-capital/frame.png",
 		code: "R1V4-PAHW-GGM2-PD9S",
 	},
-	// Heavily compressed stream captures: font-rendered templates lose to
-	// fixture crops of lookalikes on these (E beat a real F by 0.1+), so the
-	// chars they cover (8 B F J N T U 5 among them) need crops at this
-	// fidelity. brinewater-1411/marlin stay out as generalization checks.
+	// Heavily compressed stream captures: font-rendered templates lose to fixture
+	// crops of lookalikes here (E beat a real F by 0.1+), so the chars they cover
+	// need crops at this fidelity. brinewater-1411/marlin stay out as generalization checks.
 	{
 		frame:
 			"scoreboard-battle-log-replay/x-battle-rainmaker-brinewater-1404/frame.png",
@@ -671,9 +660,8 @@ for (const source of REPLAY_SOURCES) {
 }
 
 // Death splash-tag names (BlitzBold + Rowdy kana at ~46px). The atlas is
-// nominal 42 with the detector upscaling to 46 at load (see the builder
-// comment in scripts/scanner/build-glyph-atlas.ts), so native-size crops shrink to
-// 42 here and come back to native after the load-time upscale.
+// nominal 42 with the detector upscaling to 46 at load (see build-glyph-atlas.ts),
+// so native-size crops shrink to 42 here.
 const TAG_BIN_THRESHOLD = 160; // TAG_NAME_BIN_THRESHOLD in death/index.ts
 const TAG_ATLAS_HEIGHT = 42;
 const DEATH_TAG_SOURCES: {
@@ -725,10 +713,9 @@ for (const source of DEATH_TAG_SOURCES) {
 	}
 }
 
-// JA death-message lines (condensed Kurokane/Rowdy blend at ~40px; the
-// atlas is native-size, matched unscaled by the detector's JA read path).
-// ROIs are fixture-specific tight boxes around each line so scene ink
-// outside the burst stays out of the runs.
+// JA death-message lines (condensed Kurokane/Rowdy blend at ~40px; native-size
+// atlas, matched unscaled by the JA read path). ROIs are fixture-specific tight
+// boxes around each line so scene ink outside the burst stays out of the runs.
 const DEATH_JA_BIN_THRESHOLD = 190; // SPLAT_TEXT_BIN_THRESHOLD in death/rois.ts
 const DEATH_JA_SOURCES: {
 	frame: string;

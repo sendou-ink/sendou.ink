@@ -17,7 +17,7 @@ import styles from "./Calendar.module.css";
 export interface SendouCalendarProps<T extends DateValue>
 	extends CalendarProps<T> {
 	className?: string;
-	/** Highlights the whole week row rather than a single day, for pickers where choosing a day means choosing the week it belongs to. */
+	/** Selecting a day selects (and highlights) its whole week. */
 	weekSelection?: boolean;
 }
 

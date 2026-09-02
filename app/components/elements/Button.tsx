@@ -190,10 +190,7 @@ function iconClassName(
 	});
 }
 
-/**
- * Renders the button look on a plain element, for when the interactive element
- * is elsewhere, e.g. the box inside a tab.
- */
+/** Button look on a plain element, for when the interactive element is elsewhere (e.g. the box inside a tab). */
 export function ButtonLook({
 	className,
 	children,

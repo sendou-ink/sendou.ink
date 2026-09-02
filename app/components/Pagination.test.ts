@@ -87,9 +87,7 @@ describe("getPageNumbers", () => {
 	});
 
 	test("shows a bridging number instead of an ellipsis that hides a single page", () => {
-		// An ellipsis takes the same space as one page number, so replacing a
-		// lone hidden page with "..." is never an improvement (same intent as the
-		// edge "lonely jump" fix, but for windows one step inward).
+		// an ellipsis takes the same space as one page number, so hiding a lone page is never an improvement
 		// desktop window around page 5 of 10 leaves only page 2 hidden on the left
 		expect(desktopView(5, 10)).toEqual([1, 2, 3, 4, 5, 6, 7, "...", 10]);
 		// ...and only page 9 hidden on the right for page 6 of 10

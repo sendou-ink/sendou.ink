@@ -6,14 +6,11 @@ import { Main } from "~/components/Main";
 import { navIconUrl, OG_IMAGE_PAGES, type OgImagePage } from "~/utils/urls";
 import styles from "./og-images.module.css";
 
-// this page is not accessible in production, used to preview per page OG images
+// not accessible in production, previews per page OG images
 
 type IconColor = "pink" | "cyan" | "green";
 
-/**
- * Accent (blobs, sticker shadow, ring) and second accent (top blob) per page,
- * picked to match the two most used ink colors of that page's nav icon.
- */
+/** Accent (blobs, sticker shadow, ring) and second accent (top blob), matching the nav icon's two main ink colors. */
 const PAGE_COLORS: Record<
 	OgImagePage,
 	{ accent: IconColor; second: IconColor }

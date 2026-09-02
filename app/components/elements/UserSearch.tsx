@@ -76,11 +76,7 @@ function parseUserResults(
 		.filter((user) => user.id !== initialUser?.id);
 }
 
-/**
- * Resolves the full user object for a preselected id so it can be displayed.
- * Loads at most once per field: later id changes come from the user picking a
- * result, which already carries the full user object.
- */
+/** Loads the preselected id's user once; later changes come from picked results which carry the full user. */
 function useInitialUser(initialUserId?: number) {
 	const fetcher = useFetcher<SearchLoaderData>();
 	const { load } = fetcher;

@@ -38,10 +38,7 @@ const TOURNAMENT_STATUS_IS_IN_PROGRESS: Record<
 	THANKS_FOR_PLAYING: false,
 };
 
-/**
- * Twitch account streaming each ongoing SendouQ match, keyed by match id. Resolved
- * once per request as activity is resolved separately for every friend.
- */
+/** Twitch account streaming each ongoing SendouQ match, keyed by match id. Resolved once per request, activity being resolved per friend. */
 export async function resolveSendouQMatchStreams() {
 	const streams = await cachedStreams();
 
@@ -55,11 +52,7 @@ export async function resolveSendouQMatchStreams() {
 	return result;
 }
 
-/**
- * Resolves what a friend is currently doing for display in the friends list,
- * prioritizing in-progress activity (an ongoing SendouQ or tournament match) over
- * looking-for-members activity.
- */
+/** What a friend is currently doing, an ongoing SendouQ or tournament match taking priority over looking for members. */
 export function resolveFriendActivity({
 	friendId,
 	tournamentId,
@@ -156,11 +149,7 @@ function resolveTournamentActivity(friendId: number): FriendActivity | null {
 	return null;
 }
 
-/**
- * Where the friend's ongoing tournament match can be watched, preferring the view
- * that shows the friend best: their own stream, then a teammate's stream, then the
- * official cast of the match and finally an opponent's.
- */
+/** Where the friend's tournament match can be watched, preferring the view showing them best: own stream, teammate's, official cast, opponent's. */
 function tournamentStreamUrl({
 	tournament,
 	friendId,

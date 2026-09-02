@@ -334,12 +334,6 @@ describe("Seed ordering methods", () => {
 	});
 });
 
-/**
- * A helper to assert our generated round-robin is correct.
- *
- * @param input The input seeding.
- * @param output The resulting distribution of seeds in groups.
- */
 function assertRoundRobin(input: number[], output: [number, number][][]): void {
 	const n = input.length;
 	const matchPerRound = Math.floor(n / 2);
@@ -378,13 +372,6 @@ function assertRoundRobin(input: number[], output: [number, number][][]): void {
 	}
 }
 
-/**
- * A helper to assert our generated bipartite round-robin is correct.
- *
- * @param divisionA Seeds in division A (ordered by seed).
- * @param divisionB Seeds in division B (ordered by seed).
- * @param output The resulting rounds of matches.
- */
 function assertAbDivisionRoundRobin(
 	divisionA: number[],
 	divisionB: number[],

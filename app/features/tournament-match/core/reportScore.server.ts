@@ -20,13 +20,10 @@ export interface ReportScoreResult {
 }
 
 /**
- * Records the winner of one game of a tournament match, advancing the bracket and
- * storing who played it. `position` is the index of the game within the set, and a
- * report for any other index is a page that has fallen behind — those return `null`
- * rather than erroring, as does a game another request recorded first.
- *
- * The reporter must be an organizer or a member of one of the two teams. Both teams
- * must have an active roster; a team with no subs has one implicitly.
+ * Records the winner of one game, advancing the bracket and storing who played. `position` is
+ * the game's index in the set; any other index is a page that fell behind and returns `null`
+ * rather than erroring, as does a game another request recorded first. The reporter must be an
+ * organizer or on one of the teams; both teams need an active roster (implicit without subs).
  */
 export async function reportScore({
 	match,
@@ -50,8 +47,7 @@ export async function reportScore({
 		match.opponentTwo?.score ?? 0,
 	];
 
-	// they are trying to report score that was already reported
-	// assume that it was already reported and make their page refresh
+	// already reported, make their page refresh
 	if (position !== scores[0] + scores[1]) {
 		return null;
 	}
@@ -158,8 +154,7 @@ export async function reportScore({
 		setOver = operated.result.setOver;
 		endedMatchIds = operated.endedMatchIds;
 	} catch (error) {
-		// another request already reported this game in the race window,
-		// let their page refresh to pick up the already-recorded result
+		// another request already reported this game, let their page refresh to pick it up
 		if (errorIsSqliteUniqueConstraintFailure(error)) {
 			return null;
 		}
@@ -167,8 +162,7 @@ export async function reportScore({
 	}
 
 	if (setOver) {
-		// the set ended, so weapons reported in advance for map indexes
-		// beyond the games actually played are trimmed
+		// trim weapons reported in advance for maps beyond the games played
 		await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
 			tournamentMatchId: match.id,
 			gameCount: position + 1,

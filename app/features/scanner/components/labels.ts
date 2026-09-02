@@ -1,8 +1,7 @@
 /**
  * English display labels for the ids scanner events carry. UI-only: events and
- * detectors speak sendou ids (§ scanner-types.ts); these helpers turn them back
- * into human-readable names for cards, CSV export, and the fixture
- * exporter's informational *Label fields.
+ * detectors speak sendou ids; these turn them back into names for cards, CSV
+ * export and the fixture exporter's informational *Label fields.
  */
 
 import type {

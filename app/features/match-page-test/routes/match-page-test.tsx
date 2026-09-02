@@ -864,9 +864,8 @@ export default function MatchPageTestRoute() {
 }
 
 /**
- * Plays out a zones game second by second: the controlling side burns its
- * penalty before its count moves, and losing the zone after counting hands
- * the side a penalty to burn next time.
+ * Zones game second by second: the controlling side burns its penalty before its count moves,
+ * and losing the zone after counting hands it a penalty to burn next time.
  */
 function mockObjectiveEvents(): ObjectiveTimelineEvent[] {
 	const PHASES: Array<{ seconds: number; control: [boolean, boolean] }> = [
@@ -918,10 +917,7 @@ function mockObjectiveEvents(): ObjectiveTimelineEvent[] {
 	return events;
 }
 
-/**
- * Staggered respawn and special cycles per player over the same game as
- * `mockObjectiveEvents`, sampled at the same cadence.
- */
+/** Staggered respawn and special cycles per player over the `mockObjectiveEvents` game, same cadence. */
 function mockPlayerStatusSamples(): PlayerStatusTimelineSample[] {
 	const DURATION_SECONDS = 190;
 	const SAMPLE_EVERY_SECONDS = 2;

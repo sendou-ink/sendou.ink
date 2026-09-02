@@ -14,19 +14,12 @@ export interface WebhookUser {
 	customUrl: string | null;
 }
 
-/**
- * Posts a rich embed to the mod channel Discord webhook.
- * Fire-and-forget: meant to be called without awaiting, never throws, skipped with a log
- * line when `MOD_DISCORD_WEBHOOK_URL` is unset (e.g. in development).
- */
+/** Fire-and-forget embed to the mod channel: never throws, skipped with a log line when `MOD_DISCORD_WEBHOOK_URL` is unset. */
 export function sendModDiscordWebhook(embed: ModWebhookEmbed) {
 	sendDiscordWebhook("MOD_DISCORD_WEBHOOK_URL", embed);
 }
 
-/**
- * Posts a rich embed to the SendouQ canceled matches channel Discord webhook.
- * Fire-and-forget (see {@link sendModDiscordWebhook}).
- */
+/** Embed to the SendouQ canceled matches channel, fire-and-forget like {@link sendModDiscordWebhook}. */
 export function sendSQCancelDiscordWebhook(embed: ModWebhookEmbed) {
 	sendDiscordWebhook("SQ_CANCEL_DISCORD_WEBHOOK_URL", embed);
 }
@@ -63,10 +56,7 @@ function sendDiscordWebhook(
 		});
 }
 
-/**
- * Escapes then truncates free-text user input so it fits inside a Discord embed field
- * value without breaking the embed's markdown formatting.
- */
+/** Escapes then truncates user text to fit an embed field value without breaking its markdown. */
 export function truncateEmbedValue(text: string) {
 	const escaped = escapeMarkdown(text);
 	if (escaped.length <= EMBED_FIELD_VALUE_MAX_LENGTH) return escaped;

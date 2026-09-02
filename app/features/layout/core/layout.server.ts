@@ -3,11 +3,8 @@ import { resolveSidebarData } from "~/features/sidebar/core/sidebar.server";
 import { GIT_COMMIT } from "~/utils/git-commit";
 
 /**
- * The parts of the app shell that go stale on their own while a page sits open.
- * Served both by the root loader and by the resource route `LayoutDataProvider`
- * polls, so the two payloads can't drift apart. Notifications are not part of
- * this: they live in their own resource route refetched when the server
- * publishes that they changed (see `NotificationsProvider`).
+ * App shell data that goes stale while a page sits open; shared by the root loader and the route
+ * `LayoutDataProvider` polls so they can't drift. Notifications have their own route (`NotificationsProvider`).
  */
 export async function resolveLayoutData(user: AuthenticatedUser | undefined) {
 	return {

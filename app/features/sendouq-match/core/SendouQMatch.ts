@@ -2,11 +2,7 @@ import type { DBBoolean } from "~/db/tables";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { SENDOUQ_BEST_OF } from "~/features/sendouq/q-constants";
 
-/**
- * Calculates the current map win counts for each group in a SendouQ match and
- * indicates whether the match has been decided (i.e. one group has reached the
- * required number of map wins for the configured best-of).
- */
+/** Each group's map win count and whether one has reached the best-of's required wins. */
 export function score(match: {
 	mapList: Array<{ winnerGroupId: number | null }>;
 	groupAlpha: { id: number };
@@ -36,10 +32,7 @@ export function allMembers<T>(match: {
 	return [...match.groupAlpha.members, ...match.groupBravo.members];
 }
 
-/**
- * Returns which side ("ALPHA" or "BRAVO") of the match the given user belongs
- * to, or null if they are not a member of either group.
- */
+/** The user's side of the match, or null if in neither group. */
 export function resolveGroupMemberOf(args: {
 	groupAlpha: { members: { id: number }[] };
 	groupBravo: { members: { id: number }[] };
@@ -58,11 +51,7 @@ export function resolveGroupMemberOf(args: {
 	return null;
 }
 
-/**
- * Tier a group held when its match started, read off the snapshot taken then rather than
- * recomputed, because tier thresholds shift as a season's rating distribution does.
- * `undefined` for matches from before the snapshot was recorded.
- */
+/** Tier a group held when its match started, from the snapshot taken then (thresholds shift with the season's distribution). `undefined` for matches predating the snapshot. */
 export function groupTier(group: {
 	tierName: TierName | null;
 	tierIsPlus: DBBoolean;

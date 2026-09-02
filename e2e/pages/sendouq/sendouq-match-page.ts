@@ -108,13 +108,9 @@ export class SendouQMatchPage {
 		await waitForPOSTResponse(this.page, async () => {
 			await this.locators.reportScoreButton.click();
 		});
-		// Wait for the action panel to remount with the new reportedCount.
-		// waitForPOSTResponse only waits for the POST itself, not the loader
-		// revalidation. MatchActionTab is keyed on reportedCount, so it (and the
-		// nested WeaponReporter) unmounts and remounts when the loader returns.
-		// Without this wait, a follow-up click can land on the about-to-unmount
-		// instance — local state set by that click (e.g. WeaponReporter's isOpen)
-		// is then thrown away on remount.
+		// waitForPOSTResponse doesn't cover the loader revalidation, which remounts
+		// MatchActionTab (keyed on reportedCount) and the nested WeaponReporter; a
+		// follow-up click landing on the about-to-unmount instance loses its local state
 		await expect(this.locators.selectedWinner).toHaveCount(0);
 	}
 
@@ -204,18 +200,14 @@ export class SendouQMatchPage {
 
 	private async selectMapWinner(winner: Side) {
 		const teamName = TEAM_NAMES[winner];
-		// Wait for the action panel to settle before clicking. waitForPOSTResponse
-		// only waits for the POST itself; the loader revalidation that swaps in the
-		// next map's component runs after, so a previous winner can still be
-		// `data-selected="true"` here. Clicking too early hits the about-to-unmount
-		// label and the selection is lost on remount.
+		// the loader revalidation swapping in the next map runs after the POST, so a
+		// previous winner can still be selected; clicking the about-to-unmount label
+		// loses the selection on remount
 		await expect(this.locators.selectedWinner).toHaveCount(0);
-		// react-aria's Radio renders a hidden input behind a span overlay; click the
-		// wrapping label so the press handler fires and updates winnerId. The press
-		// occasionally registers a press-start without a press-end (same React Aria
-		// nondeterminism as in waitForPOSTResponse), so the selection silently drops
-		// and Submit stays disabled. Re-issue the click until the radio reports
-		// selected; otherwise the Submit-click retry loop spins on a disabled button.
+		// react-aria's Radio hides its input behind a span overlay, so the label is
+		// what clicks. The press occasionally never completes (same React Aria
+		// nondeterminism as in waitForPOSTResponse), leaving Submit disabled, so the
+		// click is re-issued until the radio reports selected.
 		const label = this.page.locator(
 			`label:has(input[aria-label="${teamName}"])`,
 		);

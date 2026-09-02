@@ -16,12 +16,8 @@ interface UseActionSubmitOptions {
 }
 
 /**
- * Programmatic counterpart of `<ActionButton>`: submits an `_action` mutation
- * from an event handler, type checked against the route's action schema.
- *
- * @example
- * const { submit } = useActionSubmit(deleteFriendSchema);
- * submit("DELETE_FRIEND", { friendshipId });
+ * Programmatic `<ActionButton>`: submits an `_action` mutation type checked against the route's schema,
+ * e.g. `submit("DELETE_FRIEND", { friendshipId })`.
  */
 export function useActionSubmit<TSchema extends AnySchema>(
 	_schema: TSchema,

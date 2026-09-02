@@ -42,11 +42,7 @@ export class EventsPage {
 		return this.page.getByTestId(`availability-day-edit-${dayIndex}`);
 	}
 
-	/**
-	 * Paints a range on a day track by dragging across it, `from` and `to` being
-	 * fractions of the track's width. Past 1 the drag runs beyond the hours the
-	 * track shows.
-	 */
+	/** Drags across a day track, `from` and `to` being fractions of its width (past 1 runs beyond the shown hours). */
 	async paintAvailability(dayIndex: number, from: number, to: number) {
 		const track = this.page.getByTestId(`availability-track-${dayIndex}`);
 		const box = await track.boundingBox();

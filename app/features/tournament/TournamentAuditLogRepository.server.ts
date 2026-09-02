@@ -21,11 +21,8 @@ interface InsertArgs {
 }
 
 /**
- * Inserts an audit log event within the caller's transaction (so it commits or
- * rolls back atomically with the mutation it records). The acting user is resolved
- * from request context via `actorId()`. Ensures a stable `TournamentTeamHistory`
- * row exists for the team, so the event remains readable even after the team is
- * hard-deleted.
+ * Inserts an audit log event in the caller's transaction, actor from `actorId()`. Ensures a
+ * `TournamentTeamHistory` row exists so the event stays readable after the team is hard-deleted.
  */
 export async function insert(args: InsertArgs, trx: Transaction<DB>) {
 	const team = await trx
@@ -63,10 +60,8 @@ export async function insert(args: InsertArgs, trx: Transaction<DB>) {
 }
 
 /**
- * Inserts a fresh history row for a team and links it back from the team, so a
- * `TournamentTeam.id` reused by SQLite after a hard-deletion always gets its own
- * history row instead of inheriting the deleted team's identity. Returns the new
- * history id.
+ * Fresh history row linked from the team, so a `TournamentTeam.id` SQLite reuses after a
+ * hard-deletion never inherits the deleted team's identity. Returns the history id.
  */
 async function insertTeamHistory(
 	{
@@ -91,11 +86,7 @@ async function insertTeamHistory(
 	return id;
 }
 
-/**
- * Keeps the team's preserved name current after a rename. No-op when the team
- * has no history row yet (it will be created with the up-to-date name on its
- * first audited event).
- */
+/** Keeps the preserved name current after a rename. No-op without a history row (created on the first audited event). */
 export function updateTeamHistoryName(
 	trx: Transaction<DB>,
 	{ tournamentTeamId, name }: { tournamentTeamId: number; name: string },
@@ -112,11 +103,7 @@ export function updateTeamHistoryName(
 		.execute();
 }
 
-/**
- * Returns a page of audit log events for a tournament, newest first, optionally
- * filtered by event type and/or team. Resolves the actor, the affected member
- * (when present) and the team name (preserved even for deleted teams).
- */
+/** A page of events, newest first, optionally filtered by type and/or team, with actor, affected member and (preserved) team name. */
 export function findByTournamentId({
 	tournamentId,
 	type,
@@ -184,7 +171,7 @@ export function findByTournamentId({
 	return query.execute();
 }
 
-/** Counts audit log events for a tournament matching the same optional filters as {@link findByTournamentId}. Used for pagination. */
+/** Event count under the same filters as {@link findByTournamentId}, for pagination. */
 export async function countByTournamentId({
 	tournamentId,
 	type,
@@ -227,7 +214,7 @@ export function deleteOld() {
 		.executeTakeFirst();
 }
 
-/** Returns every team (including deleted ones) that has appeared in the tournament's audit log, for the team filter dropdown. */
+/** Every team (deleted ones included) in the tournament's audit log, for the team filter. */
 export function findTeamsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentTeamHistory")

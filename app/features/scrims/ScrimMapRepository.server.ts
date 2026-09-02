@@ -14,11 +14,7 @@ interface ReportMapArgs {
 	winnerSide: NonNullable<TablesInsertable["ScrimMap"]["winnerSide"]>;
 }
 
-/**
- * Marks an existing map as reported with the given winner side, and
- * (atomically) generates and inserts the next map for the scrim if no
- * unreported map is currently waiting.
- */
+/** Marks a map as reported with the winner side and, atomically, inserts the next map if no unreported one is waiting. */
 export async function reportMapAndGenerateNext(
 	args: ReportMapArgs,
 ): Promise<void> {
@@ -38,11 +34,7 @@ export async function reportMapAndGenerateNext(
 	});
 }
 
-/**
- * Reverses the most recent report: deletes the currently unreported map (the
- * auto-generated next slot, if any) and clears the winner/reportedAt fields on
- * the most recently reported map so it can be played again.
- */
+/** Reverses the most recent report: deletes the unreported next slot (if any) and clears winner/reportedAt on the last reported map. */
 export async function undoMostRecentMap(scrimPostId: number): Promise<void> {
 	await db.transaction().execute(async (trx) => {
 		await trx
@@ -80,11 +72,7 @@ interface ReplaceCurrentMapArgs {
 	stageId: StageId;
 }
 
-/**
- * Replaces the currently unreported map for the scrim with the given
- * mode/stage. Used by both the "replay previous map" and "pick a map" actions.
- * The current map's index is preserved.
- */
+/** Replaces the scrim's unreported map with the given mode/stage, keeping its index ("replay previous map" and "pick a map"). */
 export async function replaceCurrentMap(
 	args: ReplaceCurrentMapArgs,
 ): Promise<void> {
@@ -109,13 +97,7 @@ export function findMapsByScrimPostId(scrimPostId: number) {
 		.execute();
 }
 
-/**
- * If a pool can be derived from the submitted map lists and no unreported map
- * is currently waiting, generates and inserts the next map. Runs entirely
- * within the caller's transaction so the read of the existing maps and the
- * insert see a consistent snapshot and no two concurrent report/submit actions
- * can insert a "next" map at the same index.
- */
+/** Inserts the next map when a pool derives from the submitted lists and no unreported map waits. Runs in the caller's transaction so two concurrent actions can't insert the same index. */
 export async function tryGenerateAndInsertNextMap(
 	scrimPostId: number,
 	trx: Transaction<DB>,

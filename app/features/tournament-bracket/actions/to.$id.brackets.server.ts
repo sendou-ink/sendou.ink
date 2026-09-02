@@ -80,9 +80,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 					? abDivisionsForSeeding(seeding, tournament, groupCount)
 					: undefined;
 
-			// in rr/swiss every group shares one map list per round number, and
-			// groups can have different round counts when teams divide unevenly,
-			// so compare against the number of distinct round numbers
+			// rr/swiss groups share one map list per round number and can have different round counts
 			const distinctRoundNumberCount = new Set(
 				bracket.data.round.map((round) => round.number),
 			).size;
@@ -110,7 +108,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				isLeague: tournament.isLeague,
 			});
 
-			// persist maps as prepared even if they weren't initially so sibling brackets can reuse them
+			// persisted as prepared so sibling brackets can reuse them
 			const existingPreparedMaps =
 				await TournamentRepository.findPreparedMapsById(tournamentId);
 			if (!existingPreparedMaps?.[data.bracketIdx]) {

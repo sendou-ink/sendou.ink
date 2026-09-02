@@ -1,11 +1,7 @@
 import { databaseTimestampToDate } from "~/utils/dates";
 import { useUserIntlPreference } from "./useUserIntlPreference";
 
-/**
- * Zero-width space rendered (hidden via `invisible`) during SSR so the element
- * reserves exactly one normal text line, avoiding layout shift on hydration
- * without an empty box's baseline quirks.
- */
+/** Rendered (via `invisible`) during SSR to reserve one text line without an empty box's baseline quirks. */
 const SSR_PLACEHOLDER = "\u200b";
 
 const SSR_FORMATTER = {
@@ -14,21 +10,13 @@ const SSR_FORMATTER = {
 };
 
 /**
- * SSR-safe wrapper around `Intl.DateTimeFormat`.
- *
- * Uses the user's locale and hour cycle preferences via `useUserIntlPreference`.
- * Before hydration the returned formatter's methods return a zero-width space
- * placeholder so that server output matches the initial client render while
- * reserving one text line.
- *
- * Inputs accept either a `Date` or a database timestamp (`number`); numbers
- * are converted via `databaseTimestampToDate`.
+ * SSR-safe `Intl.DateTimeFormat` using `useUserIntlPreference`. Before hydration the methods return a
+ * zero-width space placeholder. Inputs are a `Date` or a database timestamp (`number`).
  */
 export function useDateTimeFormat(options: Intl.DateTimeFormatOptions) {
 	const { language, hourCycle, isLoaded } = useUserIntlPreference();
 
-	// constructing an Intl.DateTimeFormat is expensive, so it is deferred until
-	// a format call actually happens (never on the server) and cached
+	// constructing an Intl.DateTimeFormat is expensive, so deferred to the first format call and cached
 	const formatter = () =>
 		cachedDateTimeFormat(language, {
 			...options,

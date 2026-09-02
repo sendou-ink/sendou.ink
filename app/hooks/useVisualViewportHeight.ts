@@ -2,13 +2,7 @@ import { useIsomorphicLayoutEffect } from "./useIsomorphicLayoutEffect";
 
 const CSS_VARIABLE = "--visual-viewport-height";
 
-/**
- * Keeps the `--visual-viewport-height` CSS variable in sync with the visual
- * viewport height on the document root. CSS has no native way to read the
- * visual (as opposed to layout) viewport, so elements that must stay above the
- * mobile on-screen keyboard rely on this variable to clamp their height as the
- * keyboard opens and closes.
- */
+/** Syncs `--visual-viewport-height` on the root; CSS can't read the visual viewport, which elements above the mobile keyboard need. */
 export function useVisualViewportHeight() {
 	useIsomorphicLayoutEffect(() => {
 		const viewport = window.visualViewport;

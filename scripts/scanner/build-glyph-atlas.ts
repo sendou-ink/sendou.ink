@@ -1,19 +1,15 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Build glyph atlases by rendering the Splatoon fonts at the exact
- * scoreboard render sizes, calibrated against the reference fixture:
+ * Builds glyph atlases by rendering the Splatoon fonts at the exact scoreboard
+ * render sizes, calibrated against the reference fixture:
  *
  *   paint digits  BlitzMain 34px  (tight '0' height ~29px at 1080p)
  *   stat digits   BlitzMain 20px  (~17px)
- *   team digits   BlitzBold 36px  (~28px — team totals use the bold face,
- *                                  which is why they can't reuse paint glyphs)
- *   names         BlitzMain 20px  (cap height ~17px), full charset:
- *                 ASCII + Latin-1 + kana + common symbols (~330 glyphs)
+ *   team digits   BlitzBold 36px  (~28px — bold face, so paint glyphs can't be reused)
+ *   names         BlitzMain 20px  (cap height ~17px), ASCII + Latin-1 + kana + symbols
  *
  * The fonts ship with the game and are not committed — drop them into
- * assets/fonts/ (see README). Fixture-crop bootstrapping
- * (scripts/scanner/bootstrap-atlas-from-fixture.ts) remains as a cross-check and as
- * the fallback when the fonts are unavailable.
+ * assets/fonts/ (see README); bootstrap-atlas-from-fixture.ts is the fallback.
  *
  * Usage: pnpm scanner:build-glyph-atlas
  * Writes SCANNER_ASSETS_DIR/glyphs/scoreboard-*.{png,json}
@@ -39,11 +35,9 @@ import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 import { readFontCoverage } from "./otf-cmap";
 
 /**
- * Atlases are hybrids: glyphs harvested from labeled fixtures
- * (scripts/scanner/bootstrap-atlas-from-fixture.ts, tagged source:"fixture") are exact
- * in-game pixels and are preserved across rebuilds; font-rendered glyphs
- * fill in the rest of the charset. Recognition takes the best-scoring glyph,
- * so fixture crops dominate wherever they exist.
+ * Atlases are hybrids: fixture-harvested glyphs (bootstrap-atlas-from-fixture.ts,
+ * source:"fixture") are exact in-game pixels preserved across rebuilds;
+ * font-rendered glyphs fill the rest of the charset and lose ties to them.
  */
 
 const FONTS_DIR = new URL("../../assets/fonts", import.meta.url).pathname;
@@ -59,11 +53,9 @@ const FONT_FILES = {
 } as const;
 
 /**
- * Which codepoints each font actually maps: canvas silently substitutes a
- * system font for the rest (the Blitz cuts have no kanji/hangul/hanzi), so
- * charsets are filtered through this before rendering — the CJK languages'
- * ideographs drop out of the localized charsets instead of baking
- * wrong-font glyphs into the atlases.
+ * Which codepoints each font maps: canvas silently substitutes a system font
+ * for the rest (the Blitz cuts have no kanji/hangul/hanzi), so charsets are
+ * filtered through this so no wrong-font glyphs get baked into the atlases.
  */
 const fontCoverage: Record<string, (codepoint: number) => boolean> = {};
 
@@ -100,35 +92,31 @@ function nameCharset(): string[] {
 }
 
 /**
- * Greek letters players stylize scoreboard names with, added per attested
- * fixture need only ("Rιppιng_H"): most of the block are homoglyphs of latin
- * or kana at capture fidelity (η~n, ε~c, Γ~か strokes...) and displace
- * correct matches on ranking noise, so it is not included wholesale — and
- * even a few extra narrow glyphs shift an atlas's median width enough to
- * change wide-segment splitting, so it stays out of the death-tag charset
- * until a death fixture attests it.
+ * Greek letters players stylize names with, added per attested fixture only
+ * ("Rιppιng_H"): most of the block are homoglyphs of latin/kana at capture
+ * fidelity (η~n, ε~c) and displace correct matches on ranking noise. Even a
+ * few narrow glyphs shift an atlas's median width enough to change
+ * wide-segment splitting, so it stays out of the death-tag charset until attested.
  */
 const NAME_GREEK = "ια"; // ι: "Rιppιng_H", α: "◇Dαrz™" (special-symbols fixture)
 
 /**
  * The rest of the in-game name editor's symbol pickers (sendou.ink's
- * IN_GAME_NAME_CHARACTER_CATEGORIES: "symbols" + "cjk-symbols"), minus what
- * nameCharset() already carries via ASCII/Latin-1/kana and minus chars the
- * Blitz cmap doesn't map (ˊˋ𝑓⁀⚪⚫◻◼⍑ — canvas would render a system-font
- * substitute; nameSymbols() re-checks at build time). "•" stays out too:
- * BlitzMain's own bullet is a 4px dot, the on-screen full-size circle comes
- * from "●" via RENDER_ALIASES. The tilde is the fullwidth "～" (U+FF5E) only
- * — the wave dash "〜" (U+301C) is a pixel-identical homoglyph that would
- * duel it on ranking noise, and FF5E is the form the fixture labels attest.
- * Like NAME_GREEK, scoreboard-names only (not death-tag) until attested.
+ * IN_GAME_NAME_CHARACTER_CATEGORIES "symbols" + "cjk-symbols"), minus what
+ * nameCharset() already carries and chars the Blitz cmap doesn't map
+ * (ˊˋ𝑓⁀⚪⚫◻◼⍑; nameSymbols() re-checks at build time). "•" stays out: BlitzMain's
+ * bullet is a 4px dot, the on-screen circle comes from "●" via RENDER_ALIASES.
+ * Only the fullwidth "～" (U+FF5E), the form fixture labels attest — the wave
+ * dash "〜" (U+301C) is a pixel-identical homoglyph that would duel it.
+ * Scoreboard-names only (not death-tag) until attested, like NAME_GREEK.
  */
 const NAME_SYMBOLS =
 	"′‘’‚‛…″“”„←→↑↓⇒⇔˜€∞√∀⊂⊃∴∵∂№♭♀♂◎◇◆△▲▽▼†※™" + "『』【】〈〉《》〔〕々〆〇〃～";
 
 /**
- * Render the key char's glyph but emit it as the value char: in-game names
- * show "•" as the full-size filled circle (BlitzMain's own "•" is a 4px dot
- * that never appears on screen), and fixture labels write it as "•".
+ * Render the key char but emit it as the value: in-game names show "•" as a
+ * full-size filled circle (BlitzMain's own "•" is a 4px dot never seen on
+ * screen) and fixture labels write it as "•".
  */
 const RENDER_ALIASES: Record<string, string> = { "●": "•" };
 
@@ -163,9 +151,8 @@ async function readFixtureGlyphs(name: string): Promise<GlyphBitmap[]> {
 }
 
 /**
- * Render one glyph and tight-crop it via the alpha channel. xScale < 1
- * condenses the glyph horizontally (the JA death message renders its font
- * squeezed to ~3/4 width in-game).
+ * Renders one glyph and tight-crops it via the alpha channel. xScale < 1
+ * condenses horizontally (the JA death message renders squeezed to ~3/4 width).
  */
 function renderGlyph(
 	family: string,
@@ -331,15 +318,12 @@ await build("scoreboard-names", 17, [
 	},
 ]);
 /**
- * Localized closed-set charsets (all 14 game languages; the canonical
- * English strings are included by construction), restricted to the Latin
- * scripts (< U+0250) the fixtures attest: like the Greek block in the name
- * charset, wholesale Cyrillic/kana/ideograph glyphs displace Latin matches
- * on ranking noise (adding them regressed the English fixtures), so the
- * non-Latin languages' entries stay in the closed sets — ready to snap —
- * but their glyphs wait for fixtures to tune against. Chars the font
- * doesn't map are dropped too: canvas would silently render a system-font
- * substitute into the atlas.
+ * Localized closed-set charsets (all 14 game languages), restricted to the
+ * Latin scripts (< U+0250) the fixtures attest: wholesale Cyrillic/kana/
+ * ideograph glyphs displace Latin matches on ranking noise (adding them
+ * regressed the English fixtures), so non-Latin entries stay in the closed
+ * sets but their glyphs wait for fixtures. Chars the font doesn't map are
+ * dropped too (canvas would render a system-font substitute).
  */
 function localizedChars(texts: readonly string[], family: string): string[] {
 	const covers = fontCoverage[family]!;
@@ -391,12 +375,10 @@ await build("scoreboard-replay-result", 30, [
 		chars: localizedChars(resultTexts, "Rowdy"),
 	},
 ]);
-// map-start intro splash: the big mode title on the center splat is
-// BlitzBold (~76px tight caps at 1080p; a px sweep against the fixture reads
-// best at 99-101), the stage name bottom-right is BlitzMain (~40px tight;
-// 46-48px render). The constant "MODE" label ("Kampfart", ...) is BlitzMain
-// too and is read with the stage atlas rescaled to its ~48px height, so its
-// chars ride along.
+// map-start intro splash: the mode title on the center splat is BlitzBold
+// (~76px tight caps at 1080p; a px sweep reads best at 99-101), the stage name
+// bottom-right is BlitzMain (~40px tight; 46-48px render). The constant "MODE"
+// label is BlitzMain too, read with the stage atlas rescaled to ~48px.
 await build("map-start-mode", 76, [
 	{
 		family: "BlitzBold",
@@ -411,11 +393,9 @@ await build("map-start-stage", 40, [
 		chars: localizedChars([...stageTexts, ...ALL_MODE_LABELS], "BlitzMain"),
 	},
 ]);
-// death screen: the localized "Splatted by <weapon>!" burst message (tight
-// caps ~28px; the face reads between the two Blitz cuts at capture
-// fidelity, so carry both and let recognition take the max) and the
-// splash-tag name, which is BlitzBold for latin but the angular Rowdy face
-// for kana
+// death screen: the localized "Splatted by <weapon>!" burst (tight caps ~28px;
+// the face reads between the two Blitz cuts at capture fidelity, so carry both)
+// and the splash-tag name: BlitzBold for latin, the angular Rowdy face for kana
 const deathWeaponTexts = [
 	...ALL_WEAPON_ENTRIES.map((e) => e.name),
 	...Object.values(LOCALIZED_WEAPON_NAMES).flatMap((names) =>
@@ -439,15 +419,12 @@ await build("death-weapon", 34, [
 		chars: localizedChars(deathWeaponTexts, "BlitzBold"),
 	},
 ]);
-// JA death message, a separate atlas read only by the JA line ROIs: mixing
-// kana into the Latin set would shift its median width (breaking wide-
-// segment splitting) and displace Latin matches on ranking noise. The
-// in-game JP face renders horizontally condensed and sits between the two
-// FOT cuts at capture fidelity — ス/ク read as Kurokane, で as Rowdy — so
-// carry both, at the (px, xScale) pairs that peaked in an NCC sweep against
-// the classic-squiffer-jp fixture. Latin/digit chars inside JP weapon names
-// (LACT-450, .52ガロン) ride along in both faces. Attested-fixture rule as
-// everywhere: KO/ZH names stay in the closed sets without an atlas.
+// JA death message, a separate atlas read only by the JA line ROIs: mixing kana
+// into the Latin set would shift its median width (breaking wide-segment
+// splitting) and displace Latin matches. The in-game JP face renders condensed
+// and sits between the two FOT cuts (ス/ク read as Kurokane, で as Rowdy), so
+// carry both at the (px, xScale) pairs that peaked in an NCC sweep against the
+// classic-squiffer-jp fixture. KO/ZH names stay in the closed sets without an atlas.
 const deathJaTexts = [
 	...(LOCALIZED_WEAPON_NAMES.JPja ?? []).map((n) => n.text),
 	...DEATH_MESSAGE_TEMPLATES.filter((t) =>

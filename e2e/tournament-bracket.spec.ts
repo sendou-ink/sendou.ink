@@ -35,7 +35,7 @@ test.describe("Tournament bracket", () => {
 
 		await expect(matchPage.locators.activeRosterNeededText).toBeVisible();
 
-		// The roster tab opens in editing mode by default when active roster is missing.
+		// the roster tab opens in editing mode while the active roster is missing
 		await matchPage.openTab("rosters");
 		await matchPage.playerCheckbox("bravo", 0).click();
 		await matchPage.playerCheckbox("bravo", 1).click();
@@ -43,13 +43,11 @@ test.describe("Tournament bracket", () => {
 		await matchPage.playerCheckbox("bravo", 3).click();
 		await matchPage.saveActiveRoster("bravo");
 
-		// did it persist?
 		await matchPage.goto({ tournamentId: tournament.id, matchId: match.id });
 		await isNotVisible(matchPage.locators.activeRosterNeededText);
 
 		await matchPage.openTab("rosters");
 		await matchPage.editActiveRosterButton("bravo").click();
-		// Swap player 3 out for player 4
 		await matchPage.playerCheckbox("bravo", 3).click();
 		await matchPage.playerCheckbox("bravo", 4).click();
 		await matchPage.saveActiveRoster("bravo");
@@ -180,10 +178,9 @@ test.describe("Tournament bracket", () => {
 
 		await expect(brackets.match(matchId)).toBeVisible();
 
-		// Verify timer shows on bracket page (timer is a sibling of the match link)
 		await expect(brackets.matchTimer(matchId)).toBeVisible();
 
-		// Fast forward time past limit (30 minutes for Bo3 = 26min limit)
+		// past the 26min limit of a Bo3
 		await page.clock.fastForward("30:00");
 		await page.reload();
 
@@ -192,7 +189,6 @@ test.describe("Tournament bracket", () => {
 		await match.openTab("admin");
 		await match.endSetWithRandomWinner();
 
-		// Match is now finalized (no longer ongoing) → "Final" appears in banner
 		await expect(match.locators.finalBanner).toBeVisible();
 	});
 

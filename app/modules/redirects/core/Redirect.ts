@@ -1,10 +1,7 @@
 type RedirectRule = {
 	/** Path to redirect from. A trailing `/*` matches the path and anything below it. */
 	from: string;
-	/**
-	 * Path to redirect to. Ends with `/*` if `from` does, the matched suffix being appended to it.
-	 * May contain a query string, in which case the original one is merged into it.
-	 */
+	/** Ends with `/*` if `from` does (matched suffix appended). A query string here is merged with the original. */
 	to: string;
 };
 
@@ -43,11 +40,8 @@ const REDIRECTS: RedirectRule[] = [
 ];
 
 /**
- * Resolves where a location should redirect to, or null if it should be served as is.
- * The query string and the part of the path matched by a wildcard are preserved.
- *
- * @example
- * Redirect.resolve({ pathname: "/to/3325/teams/58397", search: "" }) // "/to/3192/teams/58397"
+ * Where a location redirects to, or null to serve as is. Query string and wildcard-matched path are preserved,
+ * e.g. `/to/3325/teams/58397` → `/to/3192/teams/58397`.
  */
 export function resolve(location: {
 	pathname: string;

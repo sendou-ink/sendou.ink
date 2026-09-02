@@ -2,11 +2,7 @@ import { useUser } from "~/features/auth/core/user";
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
 import { hasPermission } from "./utils";
 
-/**
- * Determines whether a user has a specific global role.
- *
- * @returns A boolean indicating whether the user has the specified role. Always false if user is not logged in.
- */
+/** Whether the logged in user has the global role; false when logged out. */
 export function useHasRole(role: Role) {
 	const user = useUser();
 
@@ -15,11 +11,7 @@ export function useHasRole(role: Role) {
 	return user.roles.includes(role);
 }
 
-/**
- * Determines whether a user has a specific permission for a given entity.
- *
- * @returns A boolean indicating whether the user has the specified permission. Always false if user is not logged in.
- */
+/** Whether the logged in user has the permission on the entity; false when logged out. */
 export function useHasPermission<
 	T extends EntityWithPermissions,
 	K extends keyof T["permissions"],

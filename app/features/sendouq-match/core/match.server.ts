@@ -59,15 +59,7 @@ async function calculateMapWeights(
 	return applyDefaultWeights(combinedWeights);
 }
 
-/**
- * Normalizes and combines map weights from two teams.
- *
- * When both teams have weights, team one's weights are normalized to match
- * team two's total before combining. This ensures fair weighting when teams
- * have different numbers of preferences.
- *
- * @returns Combined weights map with all keys from both teams
- */
+/** Combines two teams' map weights, first normalizing team one's to team two's total so differing preference counts weigh fairly. */
 export function normalizeAndCombineWeights(
 	teamOneWeights: Map<string, number>,
 	teamTwoWeights: Map<string, number>,
@@ -99,15 +91,7 @@ export function normalizeAndCombineWeights(
 	return combinedWeights;
 }
 
-/**
- * Applies default map weights to combined weights for any maps not already weighted.
- *
- * Fetches global default weights and adds them to the combined weights map for any
- * map-mode combinations that don't already have weights. This ensures the pool always
- * has a baseline selection of maps.
- *
- * @returns Combined weights with defaults applied
- */
+/** Adds the global default weights for map-mode combinations not already weighted, so the pool always has a baseline. */
 async function applyDefaultWeights(
 	combinedWeights: WeightsMap,
 ): Promise<WeightsMap> {
@@ -312,7 +296,6 @@ export function compareMatchToReportedScores({
 	newReporterGroupId: number;
 	previousReporterGroupId?: number;
 }) {
-	// match has not been reported before
 	if (!match.mapList.some((m) => m.reportedByUserId !== null)) {
 		return "FIRST_REPORT";
 	}

@@ -23,10 +23,7 @@ type Options = {
 	avatarFileName?: string;
 };
 
-/**
- * Creates tournament organizations. `ownerId` is who owns it, added as its admin by
- * the repository. Slug follows from the name, as it does in production.
- */
+/** `ownerId` is added as admin by the repository. Slug follows from the name. */
 export const { create, createMany } = defineFactory({
 	defaults: ({ seq }) => ({
 		name: `Organization ${seq}`,
@@ -88,8 +85,7 @@ async function applyUpdate(
 			)
 		: null;
 
-	// the org edit page saves everything at once, so what exists already is read
-	// back and sent along
+	// the org edit page saves everything at once, so existing values are read back and sent along
 	await TournamentOrganizationRepository.update({
 		id: org.id,
 		name: org.name,

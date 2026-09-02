@@ -33,11 +33,7 @@ const LOCALE_LOADERS: Record<LanguageCode, () => Promise<Locale>> = {
 
 const loadedLocales = new Map<LanguageCode, Locale>();
 
-/**
- * Loads the date-fns locale for the given language into the in-memory cache
- * used by {@link formatDistanceToNow}. Load failures are logged and result in
- * an English fallback instead of rejecting.
- */
+/** Caches the date-fns locale for {@link formatDistanceToNow}; a load failure is logged and falls back to English. */
 export async function loadDateFnsLocale(language: LanguageCode) {
 	if (loadedLocales.has(language)) return;
 
@@ -54,18 +50,14 @@ export async function loadDateFnsLocale(language: LanguageCode) {
 	}
 }
 
-/** Loads every date-fns locale into the cache (meant for the server where bundle size does not matter). */
+/** Loads every date-fns locale (server only, bundle size irrelevant). */
 export function loadAllDateFnsLocales() {
 	return Promise.all(
 		(Object.keys(LOCALE_LOADERS) as LanguageCode[]).map(loadDateFnsLocale),
 	);
 }
 
-/**
- * Formats how long ago / until the given date in the given language. The
- * language's date-fns locale must be loaded first via
- * {@link loadDateFnsLocale}; otherwise falls back to English.
- */
+/** How long ago / until the date in the given language; falls back to English unless {@link loadDateFnsLocale} ran. */
 export function formatDistanceToNow(
 	date: Parameters<typeof dateFnsFormatDistanceToNow>[0],
 	options: Omit<
@@ -95,16 +87,12 @@ export function databaseTimestampNow() {
 	return dateToDatabaseTimestamp(new Date());
 }
 
-/**
- * Converts a date represented by day, month, and year into a JavaScript Date object, noon UTC.
- */
+/** Day/month/year to a Date at noon UTC. */
 export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
 	return new Date(Date.UTC(year, month, day, 12));
 }
 
-/**
- * Converts a JavaScript Date object into a CalendarDateTime object (used by react-aria-components).
- */
+/** Date to a react-aria-components CalendarDateTime. */
 export function dateToDateValue(date: Date) {
 	return new CalendarDateTime(
 		date.getFullYear(),
@@ -116,9 +104,7 @@ export function dateToDateValue(date: Date) {
 	);
 }
 
-/**
- * Converts a JavaScript Date object into a CalendarDate object (used by react-aria-components for date-only pickers).
- */
+/** Date to a react-aria-components CalendarDate (date-only pickers). */
 export function dateToCalendarDate(date: Date) {
 	return new CalendarDate(
 		date.getFullYear(),
@@ -127,18 +113,14 @@ export function dateToCalendarDate(date: Date) {
 	);
 }
 
-/**
- * Converts a date represented by day, month, and year into a DateValue object (used by react-aria-components), noon UTC.
- */
+/** Day/month/year to a react-aria-components DateValue, noon UTC. */
 export function dayMonthYearToDateValue({ day, month, year }: DayMonthYear) {
 	const isoString = dateToYYYYMMDD(new Date(Date.UTC(year, month, day, 12)));
 
 	return parseDate(isoString);
 }
 
-/**
- * Converts a date represented by day, month, and year into a database timestamp, noon UTC.
- */
+/** Day/month/year to a database timestamp, noon UTC. */
 export function dayMonthYearToDatabaseTimestamp(args: DayMonthYear) {
 	return dateToDatabaseTimestamp(dayMonthYearToDate(args));
 }
@@ -166,10 +148,8 @@ export function weekNumberToDate({
 }
 
 /**
- * Returns the UTC date range covering an ISO week: the Monday that starts the
- * week and the Monday that starts the following week (a 7-day span). Uses UTC
- * date arithmetic so the span is exactly 7×24h regardless of the server's
- * timezone or any DST transition that falls inside the week.
+ * UTC range of an ISO week: its Monday to the next Monday. UTC arithmetic keeps the span exactly
+ * 7×24h regardless of server timezone or DST.
  */
 export function weekNumberToDateRange({
 	week,
@@ -186,13 +166,6 @@ export function weekNumberToDateRange({
 	return { startTime, endTime };
 }
 
-/**
- * Checks if a date is valid or not.
- *
- * Returns:
- * - True if date is valid
- * - False otherwise
- */
 export function isValidDate(date: Date) {
 	return !Number.isNaN(date.getTime());
 }

@@ -69,15 +69,9 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 };
 
 /**
- * Click-to-open trigger that shows a popover with the user's card. Card data is resolved from the
- * route tree by `userId` (a parent loader spreads `{ userCards }` from `UserCardRepository.findAllByUserIds`);
- * pass `data` directly to bypass the lookup (e.g. the components showcase). When no card data exists
- * for the user, the `children` are rendered plain without a trigger.
- *
- * Viewer-relative friendship data (`isFriend`) is lazy-loaded from the `/user-card/:id/friendship`
- * route the first time the card opens. Mutual friends are only fetched and shown when
- * `withMutualFriends` is set (e.g. the SendouQ looking page); other views (e.g. match pages) skip
- * both the extra query and the row.
+ * Popover trigger showing the user's card. Data is resolved from the route tree by `userId` (a
+ * parent loader spread `{ userCards }`) or passed as `data`; without data `children` render plain.
+ * Friendship data is lazy-loaded from `/user-card/:id/friendship` on first open.
  */
 export function UserCard({
 	userId,
@@ -95,16 +89,14 @@ export function UserCard({
 	const lookedUpData = useUserCardData(userId);
 	const data = dataProp ?? lookedUpData;
 
-	// beside the trigger there is no room for the card on a narrow viewport, so it is placed
-	// vertically instead where React Aria can shift it horizontally to keep it on-screen
+	// on narrow viewports the card is placed vertically so React Aria can shift it to stay on-screen
 	const placement = useLayoutSize() === "mobile" ? "bottom" : "right";
 
 	const user = useUser();
 	const isOwnCard = user?.id === data?.id;
 
 	const [isOpen, setIsOpen] = React.useState(false);
-	// kept at this level (outside the popover) so the modals survive the popover closing when they
-	// take focus; the note view inside the card opens them
+	// outside the popover so the modals survive it closing when they take focus
 	const [isNoteDialogOpen, setIsNoteDialogOpen] = React.useState(false);
 	const [isDeleteConfirmOpen, setIsDeleteConfirmOpen] = React.useState(false);
 	const [isReportDialogOpen, setIsReportDialogOpen] = React.useState(false);
@@ -195,11 +187,7 @@ export function UserCard({
 	);
 }
 
-/**
- * Resolves a user's `UserCardData` from any matched route loader that spread `{ userCards }`
- * (see `UserCardRepository.findAllByUserIds`). Returns `undefined` when no loader on the current route
- * tree carries data for the given user.
- */
+/** `UserCardData` from any matched route loader that spread `{ userCards }`, or `undefined`. */
 export function useUserCardData(
 	userId: number | undefined,
 ): UserCardData | undefined {
@@ -419,12 +407,7 @@ function NoteView({
 	);
 }
 
-/**
- * Friend request action on the card, submitting to the `/friends` route action. Normally sends a
- * request and shows a checkmark once one is pending (server-known or just sent); when the shown
- * user has already sent the viewer a request, the same add-friend press accepts it instead.
- * Cancelling a pending request is done on the `/friends` page.
- */
+/** Sends a friend request, or accepts one the shown user already sent; cancelling happens on `/friends`. */
 function FriendRequestButton({
 	targetUserId,
 	sentFriendRequest,
@@ -447,11 +430,8 @@ function FriendRequestButton({
 	const previousStateRef = React.useRef(fetcher.state);
 	const acceptsIncomingRequest = incomingFriendRequestId !== null;
 
-	// Sending a request keeps this button mounted (it becomes the pending checkmark), so the
-	// success toast can wait for the server round-trip here — the action can still reject with
-	// "Maximum pending friend requests reached". The accept path instead unmounts the button as
-	// soon as the revalidated friendship data arrives, which can race the toast render, so that
-	// toast is fired directly from the press handler below.
+	// the send toast waits for the round-trip (the action can still reject on the pending limit); the
+	// accept path unmounts this button on revalidation, so its toast fires from the press handler
 	React.useEffect(() => {
 		if (
 			!acceptsIncomingRequest &&
@@ -520,7 +500,6 @@ function FriendRequestButton({
 	);
 }
 
-/** Development only shortcut for logging in as the shown user. */
 function ImpersonateButton({ userId }: { userId: number }) {
 	const location = useLocation();
 
@@ -542,10 +521,7 @@ function ImpersonateButton({ userId }: { userId: number }) {
 	);
 }
 
-/**
- * Mutual friends row with reserved height so the card does not shift when the lazy friendship fetch
- * resolves: empty while loading, "No mutual friends" when there are none, the avatar stack otherwise.
- */
+/** Has reserved height so the card does not shift when the lazy friendship fetch resolves. */
 function CardMutualFriends({
 	friendship,
 }: {

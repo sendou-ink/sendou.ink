@@ -83,8 +83,7 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 		}
 	}
 
-	// showcase users double as members of a secondary team; disjoint chunks so
-	// nobody exceeds the two-team limit
+	// showcase users double as secondary team members; disjoint chunks keep everyone within the two-team limit
 	for (let i = 0; i < SECONDARY_TEAM_COUNT; i++) {
 		const memberUserIds = users.showcaseIds.slice(i * 4, i * 4 + 4);
 

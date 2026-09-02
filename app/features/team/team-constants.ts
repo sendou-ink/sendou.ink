@@ -29,7 +29,7 @@ export type MemberRole = (typeof TEAM_MEMBER_ROLES)[number];
 /** Classifies how a team member's `customRole` should be treated. */
 export type MemberRoleType = "PLAYER" | "OTHER";
 
-/** Roles that are not part of a team's active competitive lineup. Excluded when sourcing a roster (e.g. prefilling tournament registration or a scrim post). */
+/** Not part of the competitive lineup; excluded when sourcing a roster (e.g. tournament registration). */
 export const NON_PLAYER_TEAM_ROLES: readonly (typeof TEAM_MEMBER_ROLES)[number][] =
 	["CHEERLEADER", "COACH", "SUB"];
 

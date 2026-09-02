@@ -17,11 +17,7 @@ import {
 import type { AnySchema } from "~/utils/schema";
 import { logger } from "./logger";
 
-/**
- * The user a wrapped action/loader call runs as: one of the pinned seed users,
- * or any user's id — scenario tests' users are participants and staff the test
- * itself created, not fixed ids.
- */
+/** User a wrapped action/loader runs as: a pinned seed user or any user id (e.g. one the test created). */
 export type TestUser = "admin" | "regular" | number;
 
 export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
@@ -30,40 +26,26 @@ export function arrayContainsSameItems<T>(arr1: T[], arr2: T[]) {
 	);
 }
 
-/**
- * Runs `fn` inside the user AsyncLocalStorage store so that repository functions
- * resolving the actor via `actorId()` / `actorIdOrNull()` see the user as the acting
- * one. Use in direct repository unit tests, which run outside a request.
- *
- * An id is all it takes: repositories read the actor solely through `actorId()`.
- */
+/** Runs `fn` with the user as the actor (`actorId()` / `actorIdOrNull()`), for repository tests outside a request. */
 export function withUserId<T>(id: number, fn: () => T): T {
 	return actAs(id, fn);
 }
 
-/**
- * Runs `fn` inside a user AsyncLocalStorage store with no acting user, mirroring an
- * anonymous visitor's request. Repository functions resolving the actor via
- * `actorIdOrNull()` then see `null`, as they would inside a real request context.
- */
+/** Runs `fn` with no acting user (`actorIdOrNull()` is `null`), like an anonymous visitor's request. */
 export function withNoUser<T>(fn: () => T): T {
 	return userAsyncLocalStorage.run({ user: undefined }, fn);
 }
 
 /**
- * Wraps an action function to provide a strongly-typed, reusable handler for executing actions
- * in unit tests as if it was a normal function. The returned function allows you to pass
- * parameters that match the schema defined by the action, and it simulates a request with
- * authentication headers based on the provided user type.
+ * Wraps an action into a typed function for unit tests: takes the schema's output as args and
+ * simulates a request authenticated as the given user.
  *
  * @example
- * import { someAction } from "../actions/some.action.server";
- *
  * const someAction = wrappedAction<typeof someActionSchema>({ action });
  */
 export function wrappedAction<T extends AnySchema>({
 	action,
-	/** Is this action submitted as json (via SendouForm) */
+	/** submitted as json (via SendouForm) */
 	isJsonSubmission = false,
 }: {
 	action: (args: ActionFunctionArgs) => any;
@@ -107,11 +89,10 @@ export function wrappedAction<T extends AnySchema>({
 
 				return response;
 			} catch (thrown) {
-				// we only log errors in vitest for failed tests so this is okay (more context)
+				// vitest only shows logs for failed tests, so this just adds context
 				logger.error("Error in wrappedAction:", thrown);
 
 				if (thrown instanceof Response) {
-					// it was a redirect
 					if (thrown.status === 302) return thrown;
 
 					throw new Error(`Response thrown with status code: ${thrown.status}`);
@@ -173,12 +154,7 @@ export function wrappedLoader<T>({
 	};
 }
 
-/**
- * Asserts that the given response errored out (with a toast message, via `errorToastIfFalsy(cond)` call)
- *
- * @param response - The HTTP response object to check.
- * @param message - Optional. The expected error toast message shown to the user.
- */
+/** Asserts the response is an error toast redirect (via `errorToastIfFalsy` etc.), optionally with the given message. */
 export function assertResponseErrored(response: Response, message?: string) {
 	if (!response) {
 		throw new Error(`Expected a Response, got: ${response}`);

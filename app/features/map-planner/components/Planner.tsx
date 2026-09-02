@@ -258,8 +258,7 @@ export default function Planner() {
 		}) => {
 			if (!editor) return;
 
-			// tldraw image shapes reference an asset by id, so many copies of the
-			// same image on the canvas only take up memory once
+			// image shapes reference an asset by id, so copies of the same image only take up memory once
 			const assetId: TLAssetId = AssetRecordType.createId();
 
 			const srcWithOutline = imgOutlined ? `${src}?outline=red` : src;
@@ -372,7 +371,7 @@ export default function Planner() {
 			setRangesVisible(false);
 
 			const shapes = editor.getCurrentPageShapes();
-			// i dont think locked shapes can be deleted
+			// locked shapes can't be deleted
 			for (const value of shapes) {
 				editor.updateShape({ id: value.id, type: value.type, isLocked: false });
 			}
@@ -498,7 +497,7 @@ export default function Planner() {
 	);
 }
 
-// Wraps the style panel so it can be styled to sit below the header bar, which otherwise blocks clicks on it
+// styled to sit below the header bar, which otherwise blocks clicks on it
 function CustomStylePanel(props: TLUiStylePanelProps) {
 	return (
 		<div className={props.isMobile ? undefined : styles.stylePanel}>
@@ -822,8 +821,7 @@ function StageBackgroundSelector({
 	);
 }
 
-// when adding new language check from Tldraw codebase what is the matching
-// language in TRANSLATIONS constant, or default to english if none found
+// for a new language check tldraw's TRANSLATIONS constant for the matching one, default to english
 const ourLanguageToTldrawLanguageMap: Record<LanguageCode, string> = {
 	"es-US": "es",
 	"es-ES": "es",

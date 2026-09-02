@@ -34,10 +34,7 @@ export const discordAvatarUrl = ({
 		discordAvatar
 	}.webp${size === "lg" ? "?size=240" : "?size=80"}`;
 
-/**
- * Resolves the avatar image url of an user, preferring their custom avatar over
- * the Discord one. Returns undefined if the user has neither.
- */
+/** Avatar url preferring the custom avatar over the Discord one; undefined without either. */
 export const resolveAvatarUrl = ({
 	customAvatarUrl,
 	discordId,
@@ -154,10 +151,7 @@ const STATIC_ASSETS_URL = Config.staticAssetsUrl;
 
 export const BLANK_IMAGE_URL = `${STATIC_ASSETS_URL}/img/blank.gif`;
 
-/**
- * Pages that have an OG image of their own, matching their nav item name.
- * Rendered by the `/admin/og-images` page.
- */
+/** Pages with an OG image of their own (named after the nav item), rendered by `/admin/og-images`. */
 export const OG_IMAGE_PAGES = [
 	"settings",
 	"sendouq",

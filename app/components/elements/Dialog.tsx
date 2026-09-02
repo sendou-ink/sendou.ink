@@ -19,41 +19,19 @@ interface SendouDialogProps extends ModalOverlayProps {
 	heading?: string;
 	showHeading?: boolean;
 	onClose?: () => void;
-	/** When closing the modal which URL to navigate to */
+	/** URL to navigate to on close */
 	onCloseTo?: string;
 	overlayClassName?: string;
 	"aria-label"?: string;
-	/** If true, the modal takes over the full screen with the content below hidden */
+	/** takes over the full screen, hiding the content below */
 	isFullScreen?: boolean;
-	/** If true, shows the close button even if onClose is not provided */
+	/** show the close button even without onClose */
 	showCloseButton?: boolean;
 }
 
 /**
- * This component allows you to create a dialog with a customizable trigger and content.
- * It supports both controlled and uncontrolled modes for managing the dialog's open state.
- *
- * @example
- * // Example usage with implicit isOpen
- * return (
- *   <SendouDialog
- *     heading="Dialog Title"
- *     onCloseTo={previousPageUrl()}
- *   >
- *     This is the dialog content.
- *   </SendouDialog>
- * );
- *
- * @example
- * // Example usage with a SendouButton as the trigger
- * return (
- *   <SendouDialog
- *     heading="Dialog Title"
- *     trigger={<SendouButton>Open Dialog</SendouButton>}
- *   >
- *     This is the dialog content.
- *   </SendouDialog>
- * );
+ * Dialog that is open by default without a `trigger` (or controlled via `isOpen`), or opened by
+ * the given `trigger` element.
  */
 export function SendouDialog({
 	trigger,

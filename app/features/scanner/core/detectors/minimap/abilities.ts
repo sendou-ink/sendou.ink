@@ -1,8 +1,4 @@
-/**
- * Ability badge templates at the minimap cards' badge size (⌀~44 on both
- * the own cards and the enemy panel; one role, mains only — the cards show
- * no sub-ability slots). Built via the death panel's badge compositor.
- */
+/** Ability badge templates at the minimap cards' badge size (⌀~44, mains only: cards show no subs). */
 import type { FrameData } from "../../image";
 import { buildAbilityRole } from "../death/abilities";
 import type { WeaponTemplate } from "../scoreboard/weapons";

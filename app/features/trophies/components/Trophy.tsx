@@ -25,23 +25,11 @@ type TrophyCtxValue =
 const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 
 /**
- * Shares one PicoCAD2 WebGL context across every `Trophy` rendered inside.
- *
- * `Trophy` falls back to creating its own internal context when no provider is
- * used, but browsers cap active WebGL contexts at 16 so any grid bigger than
- * that, or rapid mounting/unmounting, triggers a warning and broken rendering.
- *
- * We use two implementations to stay under the limit:
- *
- * 1. One page wide `PicoCAD2Context` singleton.
- * 	  Creating a new one per mount can stack contexts faster than the browser
- *    can remove them. Holding one for the page lifetime is cheaper in comparison.
- *
- * 2. The provider always renders its children so surrounding layout doesn't shift
- *    but uses an additional `isLoading` bool while `useState` is still `undefined`
- *    before the first effect fires. Descendant `Trophy` components read the bool
- *    and render an empty spacer instead of mounting a canvas that would create
- *    their own internal context.
+ * Shares one PicoCAD2 WebGL context across every `Trophy` inside. Without a provider each `Trophy`
+ * creates its own, but browsers cap active WebGL contexts at 16, so big grids or rapid remounts
+ * break rendering. One page-wide singleton is held for the page lifetime (per-mount contexts stack
+ * faster than the browser frees them), and while it is loading descendants render a spacer instead
+ * of a canvas that would create their own context.
  */
 
 let sharedContext: PicoCAD2Context | undefined;
@@ -119,9 +107,7 @@ export function Trophy({
 
 	const modelState = decompressTrophyModel(model);
 
-	// useCallback is needed to keep the ref callback identity stable.
-	// A new identity each render would make React detach and re-attach,
-	// disposing and rebuilding the viewer on every re-render
+	// stable ref callback identity, else React re-attaches and rebuilds the viewer every render
 	const canvasRef = useCallback(
 		(canvas: HTMLCanvasElement | null) => {
 			if (!canvas) {
@@ -146,10 +132,8 @@ export function Trophy({
 				return;
 			}
 
-			// continuous render loops starve the main thread when WebGL is
-			// software rendered, so e2e runs (which always render on CPU) draw a
-			// single static frame, as do surfaces showing many loops at once on
-			// devices without GPU acceleration
+			// render loops starve the main thread on software WebGL, so e2e (always CPU) and surfaces
+			// showing many trophies without GPU acceleration draw a single static frame
 			if (
 				preview ||
 				IS_E2E_TEST_RUN ||

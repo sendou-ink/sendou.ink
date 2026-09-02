@@ -49,7 +49,7 @@ const CALENDAR_WEEK_LENGTH = 7;
 const CALENDAR_WEEK_MONTH_DAY_INDEX = 3;
 /** Monday and Friday, the only rows the calendar names */
 const CALENDAR_NAMED_WEEKDAY_INDICES = [0, 4];
-/** Without weapons the teammates box is alone next to the activity calendar, so it has room for more */
+/** Without weapons the teammates box is alone next to the calendar, so it has room for more */
 const TOP_MATES_COUNT_WITHOUT_WEAPONS = 6;
 
 export type SeasonSummaryGraphicActivity = "sq" | "tournament" | "both";
@@ -58,7 +58,7 @@ export interface SeasonSummaryGraphicBestSet {
 	opponentPlayers: GraphicPlayer[];
 	ownScore: number;
 	opponentScore: number;
-	/** Average SP of the opposing players at the time the set was played */
+	/** Average SP of the opponents when the set was played */
 	opponentSp: number;
 	/** Where the set was played e.g. "SendouQ" or a tournament name */
 	context: string;
@@ -72,7 +72,7 @@ export interface SeasonSummaryGraphicStats {
 	mapsWon: number;
 	mapsLost: number;
 	longestWinStreak: number;
-	/** Sets that went to a deciding map: how many of those were won */
+	/** Sets that went to a deciding map */
 	clutch?: { won: number; total: number };
 	soloRank?: number;
 	teamRank?: {
@@ -605,10 +605,7 @@ function CalendarWeekdays({ firstWeek }: { firstWeek: Date[] }) {
 	);
 }
 
-/**
- * The season's Monday to Sunday week columns. A season ending mid-week (its last hours can fall on the
- * next day depending on the time zone) would leave a ragged column, so an incomplete last week is left out.
- */
+/** Monday to Sunday week columns; an incomplete last week (a season ending mid-week) is left out. */
 function seasonWeeks({
 	seasonFirstDay,
 	seasonLastDay,

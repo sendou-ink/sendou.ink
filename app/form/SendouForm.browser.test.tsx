@@ -906,8 +906,7 @@ describe("SendouForm", () => {
 		test("clicking add creates new item", async () => {
 			const screen = await renderForm(TEXT_FIELD_ARRAY);
 
-			// Adding from the single empty starter row materializes it and appends a
-			// new one, so one click goes from 1 visible row to 2.
+			// adding from the single empty starter row materializes it and appends a new one
 			await screen.getByRole("button", { name: "Add" }).click();
 			expect(
 				screen.container.querySelectorAll('input[type="text"]').length,
@@ -981,8 +980,7 @@ describe("SendouForm", () => {
 
 			await expect.element(screen.getByText("#1")).toBeVisible();
 
-			// The remove button is rendered but hidden (so the header keeps a stable
-			// height) since a single starter row can't be removed.
+			// rendered but hidden so the header keeps a stable height
 			const removeButtons = screen.container.querySelectorAll(
 				'button[aria-label="Remove item"]',
 			);
@@ -1065,8 +1063,7 @@ describe("SendouForm", () => {
 		});
 
 		test("removing an added fieldset row returns to a single non-removable row", async () => {
-			// Mirrors the staff form: a select field gives the row a non-empty default
-			// (role), so a freshly added row isn't "blank" yet is still pristine.
+			// like the staff form: the select gives a fresh row a non-empty default yet it is still pristine
 			const schema = v.object({
 				staff: array({
 					label: "labels.members",
@@ -1105,8 +1102,7 @@ describe("SendouForm", () => {
 				expect(button.classList.contains("invisible")).toBe(false);
 			}
 
-			// Removing the second row collapses back to the single starter row with a
-			// hidden remove button - not a lingering blank row that still shows one.
+			// back to the single starter row, not a lingering blank row with a visible remove button
 			await userEvent.click(removeButtonEls()[1]);
 
 			await expect.element(screen.getByText("#1")).toBeVisible();
@@ -1127,10 +1123,7 @@ describe("SendouForm", () => {
 		});
 
 		test("editing a starter row commits its select default on submit", async () => {
-			// Regression: editing one field of the empty-array starter row must seed the
-			// item's other fieldset defaults (e.g. a required select's first option),
-			// rather than leaving them only displayed as a fallback and failing
-			// validation on submit.
+			// regression: editing one field of the starter row must seed its other fieldset defaults
 			const onApply = vi.fn();
 			const schema = v.object({
 				staff: array({
@@ -1409,8 +1402,7 @@ describe("SendouForm", () => {
 			await screen.getByRole("button", { name: "Add" }).click();
 			await screen.getByRole("button", { name: "Remove member 1" }).click();
 
-			// A stale remove would have filtered the pre-add two-item array and
-			// dropped the freshly added row along with Alice.
+			// a stale remove would filter the pre-add array, dropping the fresh row along with Alice
 			expect(memberTestIds(screen).length).toBe(2);
 			await expect
 				.element(screen.getByTestId("member-0"))
@@ -1430,8 +1422,7 @@ describe("SendouForm", () => {
 				onApply,
 			});
 
-			// Editing item 1 does not re-render the memoized item 3, so its remove
-			// callback must read the current array instead of a stale closure.
+			// editing item 1 doesn't re-render memoized item 3, whose remove must not read a stale closure
 			await screen.getByRole("button", { name: "Edit member 1" }).click();
 			await screen.getByRole("button", { name: "Remove member 3" }).click();
 
@@ -1576,16 +1567,14 @@ describe("SendouForm", () => {
 
 			const screen = await render(<RouterProvider router={router} />);
 
-			// Verify initial state - 5 members rendered
 			const removeButtons = screen.container.querySelectorAll(
 				'button[aria-label="Remove item"]',
 			);
 			expect(removeButtons.length).toBe(5);
 
-			// Remove the 3rd member (index 2, userId: 30)
+			// the 3rd member, userId 30
 			await userEvent.click(removeButtons[2]);
 
-			// Wait for React effects to settle
 			await new Promise((resolve) => setTimeout(resolve, 200));
 
 			const members = latestValues.members as Array<{

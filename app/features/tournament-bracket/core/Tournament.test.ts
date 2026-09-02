@@ -691,11 +691,7 @@ describe("teamById division seeds", () => {
 	});
 });
 
-/**
- * Plays a 4 team, 5 round, advance threshold 3 swiss all the way to its end.
- * Team 1 wins rounds 1-3 locking their top cut spot, after which the pairing
- * excludes them from the remaining rounds.
- */
+/** 4 teams, 5 rounds, advance threshold 3. Team 1 wins rounds 1-3 locking their spot, after which the pairing excludes them. */
 function playOutEarlyAdvanceSwiss(
 	progression: Progression.ParsedBracket[],
 ): BracketData {

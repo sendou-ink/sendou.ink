@@ -57,11 +57,7 @@ export function TextareaFormField({
 	);
 }
 
-/**
- * Autofocusing a textarea leaves the caret before any existing text, which is the wrong place when
- * editing something already written. Defined at module level so the ref identity stays stable and
- * React only runs it on mount.
- */
+/** Autofocus leaves the caret before existing text. Module level so the ref identity is stable and runs only on mount. */
 function moveCaretToEnd(element: HTMLTextAreaElement | null) {
 	element?.setSelectionRange(element.value.length, element.value.length);
 }

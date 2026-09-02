@@ -21,12 +21,7 @@ const dotStatus = (screen: Awaited<ReturnType<typeof render>>) =>
 const createdAt = (offsetMs: number) =>
 	Math.floor((Date.now() + offsetMs) / 1000);
 
-/**
- * Runs the fake clock forward and lets React paint what the fired timers
- * changed. React schedules its render through a MessageChannel, which fake
- * timers do not control, so a message of our own posted afterwards is what
- * tells us the render already happened.
- */
+/** Runs the fake clock forward and lets React paint: renders go through a MessageChannel fake timers don't control, so a message of our own posted after signals the render happened. */
 const advanceTimers = async (ms: number) => {
 	await vi.advanceTimersByTimeAsync(ms);
 

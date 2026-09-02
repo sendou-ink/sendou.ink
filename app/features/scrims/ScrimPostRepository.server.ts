@@ -90,12 +90,7 @@ type InsertRequestArgs = Pick<
 	>;
 };
 
-/**
- * Inserts a new request to a scrim post.
- *
- * @returns id of the new request
- * @throws {DuplicateEntryError} If the team already has a request for the post
- */
+/** Inserts a request to a scrim post, returning its id. @throws {DuplicateEntryError} if the team already has one for the post. */
 export function insertRequest(args: InsertRequestArgs) {
 	invariant(args.users.length > 0, "At least one user must be provided");
 
@@ -535,17 +530,10 @@ export function cancelScrim(id: number, reason: string) {
 	});
 }
 
-/**
- * Finds all accepted scrims scheduled within a specific time range.
- *
- * @returns Array of accepted (matched) scrim posts within the time range
- */
+/** Accepted scrims starting within [startTime, endTime), excluding ones created after `excludeRecentlyCreated`. */
 export async function findAcceptedScrimsBetweenTwoTimestamps({
-	/** The earliest scrim start time to include (inclusive) */
 	startTime,
-	/** The latest scrim start time to include (exclusive) */
 	endTime,
-	/** Exclude scrims created after this timestamp */
 	excludeRecentlyCreated,
 }: {
 	startTime: Date;
@@ -566,14 +554,7 @@ export async function findAcceptedScrimsBetweenTwoTimestamps({
 	return rows.map(mapDBRowToScrimPost).filter((post) => Scrim.isAccepted(post));
 }
 
-/**
- * Finds the accepted (booked), uncanceled scrims of the given users whose
- * resolved start time — the accepted request's chosen time for a range post,
- * the post's own otherwise — falls within the given window. Used to resolve
- * availability commitments.
- *
- * @returns one row per participating user per scrim
- */
+/** Accepted, uncanceled scrims of the users whose resolved start (accepted request's time for a range post, else the post's) falls in the window; one row per participating user per scrim. */
 export async function findAllAcceptedByUserIds({
 	userIds,
 	startsAt,
@@ -619,12 +600,9 @@ export async function findAllAcceptedByUserIds({
 }
 
 /**
- * Finds pending (unaccepted, uncanceled, future) scrim posts and requests
- * involving any of the given users whose time overlaps [startTime, endTime].
- * Used to auto-clean conflicting availability when a scrim is scheduled.
- *
- * @returns posts (with their member ids, for notifying) and request ids
- * (deleted silently) that should be removed
+ * Pending (unaccepted, uncanceled, future) posts and requests involving the users that overlap
+ * [startTime, endTime], for auto-cleaning when a scrim is scheduled: posts come with member ids
+ * for notifying, requests are deleted silently.
  */
 export async function findPendingOverlapsForUsers({
 	userIds,

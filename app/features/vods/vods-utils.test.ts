@@ -223,10 +223,8 @@ describe("generateYoutubeTimestamps", () => {
 });
 
 describe("vodToVideoBeingAdded", () => {
-	// youtubePublishedAt is stored as noon UTC of the chosen day (see
-	// dayMonthYearToDatabaseTimestamp), so reading the day/month/year back out
-	// must also use UTC. Force a timezone east of UTC+12 where local time has
-	// already rolled over to the next day, making the bug deterministic.
+	// youtubePublishedAt is noon UTC of the chosen day, so it must be read back in UTC; a timezone
+	// east of UTC+12 has already rolled over to the next day, making the bug deterministic
 	const originalTimezone = process.env.TZ;
 	beforeAll(() => {
 		process.env.TZ = "Pacific/Kiritimati";

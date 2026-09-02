@@ -1,12 +1,9 @@
 /**
- * Worker/browser IO for ScoreboardResources: fetches over HTTP. Game icons
- * come from the CDN's shared `img/<dir>/<id>.avif` sets the rest of the app
- * already uses; the scanner-specific atlases (glyphs, planner signatures) come
- * from the same CDN under `scanner/v1/**`. What the bundle contains — every
- * key, template option set, and atlas name — lives in core/resources.ts,
- * shared with the Node loader. The base URL arrives via the worker init
- * message (see worker/protocol.ts) so this module never imports the app
- * config.
+ * Worker/browser IO for ScoreboardResources over HTTP: game icons come from
+ * the CDN's shared `img/<dir>/<id>.avif` sets, the scanner atlases from the
+ * same CDN under `scanner/v1/**`. What the bundle contains lives in
+ * core/resources.ts. The base URL arrives via the worker init message
+ * (worker/protocol.ts) so this module never imports the app config.
  */
 
 import {
@@ -19,10 +16,11 @@ import { type AtlasMeta, type GlyphSet, loadGlyphSet } from "../core/glyphs";
 import type { FrameData } from "../core/image";
 import { assembleScoreboardResources } from "../core/resources";
 
-/** Scanner parser atlases, relative to the CDN base; the version segment
- * guards against cache skew — bump it together with breaking atlas format
- * changes (must match the Node-side SCANNER_ASSETS_DIR default in
- * node/assets-dir.ts). */
+/**
+ * Atlas path relative to the CDN base; the version segment guards against
+ * cache skew — bump it with breaking atlas format changes (must match the
+ * Node-side SCANNER_ASSETS_DIR default in node/assets-dir.ts).
+ */
 const ATLAS_PATH = "scanner/v1";
 
 async function fetchImage(url: string): Promise<FrameData> {

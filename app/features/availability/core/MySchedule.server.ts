@@ -14,10 +14,8 @@ export type MyScheduleData = SerializeFrom<
 >;
 
 /**
- * The user's own reported schedule for the editable weeks (current and next)
- * in their timezone, as the wall-clock representation the schedule editor
- * uses. Also carries the ranges of the week before the current one for the
- * "Copy last week" prefill.
+ * The user's reported current and next week in their timezone as the editor's wall-clock
+ * representation, plus the week before for the "Copy last week" prefill.
  */
 export async function myScheduleData(userId: number) {
 	const timezone = getViewerTimezone() ?? "UTC";

@@ -40,7 +40,6 @@ export function modesIncluded(
 
 	const pickedModes = R.unique(toSetMapPool.map((map) => map.mode));
 
-	// fallback
 	if (pickedModes.length === 0) {
 		return [...rankedModesShort];
 	}
@@ -157,11 +156,8 @@ export function tournamentIsRanked({
 }
 
 /**
- * Whether a tournament's start time falls inside the active weapon-reporting window
- * for late (post-finalization) reporting.
- *
- * - In-season: window is `(previousSeason.ends, now]` — current season plus the off-season immediately before it.
- * - Off-season: window is `[previousSeason.starts, now]` — previous full season plus the current off-season.
+ * Whether a tournament's start time allows late (post-finalization) weapon reporting.
+ * In-season the window is `(previousSeason.ends, now]`, off-season `[previousSeason.starts, now]`.
  */
 export function tournamentInWeaponReportingWindow({
 	tournamentStartTime,
@@ -264,11 +260,8 @@ export type TeamForOrdering = {
 };
 
 /**
- * Compares two teams pairwise for ordering purposes. Not a strict weak order
- * when one team has a seed and the other does not (the seed is ignored in
- * favor of the skill comparison), so it must not be used as a raw `sort`
- * comparator over a mixed seeded/unseeded field — {@link sortTeamsBySeeding}
- * handles that case.
+ * Pairwise team comparison. Not a strict weak order when only one team has a seed (skill is
+ * compared instead), so never a raw `sort` comparator over a mixed field — see {@link sortTeamsBySeeding}.
  */
 export function compareTeamsForOrdering(
 	a: TeamForOrdering,
@@ -313,13 +306,10 @@ export function compareTeamsForOrdering(
 }
 
 /**
- * Orders tournament teams into their effective seed order. Within each
- * starting bracket manually seeded teams keep the organizer's seed order,
- * while unseeded teams (e.g. registered after the seeds were last saved) are
- * slotted in by skill: below every seeded team with a higher skill ordinal,
- * above the rest. Unseeded teams that are not full or have no skill ordinal
- * go below all seeded teams. The result is deterministic regardless of the
- * input order.
+ * Effective seed order. Within each starting bracket seeded teams keep the organizer's order;
+ * unseeded teams (e.g. registered after seeds were saved) slot in by skill below every seeded team
+ * with a higher ordinal. Unseeded teams that are not full or have no ordinal go last. Deterministic
+ * regardless of input order.
  */
 export function sortTeamsBySeeding<T extends TeamForOrdering>(
 	teams: T[],
@@ -446,20 +436,13 @@ export function getBracketProgressionLabel(
 const LEADING_SEPARATOR_REGEX = /^[\s_-]+/;
 
 /**
- * Splits a tournament name into its series name and a trailing "subtext"
- * (e.g. an edition number like `"54"` or a date like `"May 2026"`) based on the
- * names of the organization's tournament series.
- *
- * The longest series name that the tournament name starts with (case-insensitive)
- * is treated as the base name and whatever follows it becomes the subtext. If the
- * tournament name does not start with any of the series names, the whole name is
- * returned with no subtext.
+ * Splits a tournament name into the longest series name it starts with (case-insensitive) and
+ * the trailing subtext; the whole name with no subtext when no series matches.
  *
  * @example
  * // series: [{ name: "In The Zone" }]
- * splitTournamentName("In The Zone 54", series)     // { name: "In The Zone", subtext: "54" }
- * splitTournamentName("In The Zone Winter", series) // { name: "In The Zone", subtext: "Winter" }
- * splitTournamentName("Picnic Weekly", series)      // { name: "Picnic Weekly" }
+ * splitTournamentName("In The Zone 54", series) // { name: "In The Zone", subtext: "54" }
+ * splitTournamentName("Picnic Weekly", series)  // { name: "Picnic Weekly" }
  */
 export function splitTournamentName(
 	tournamentName: string,
@@ -485,12 +468,7 @@ export function splitTournamentName(
 	return { name: matchingSeries.name, subtext };
 }
 
-/**
- * Resolves the display name and subtext for a tournament's identity, based on
- * the organization's tournament series.
- *
- * @see {@link splitTournamentName}
- */
+/** Display name and subtext of a tournament based on its organization's series, see {@link splitTournamentName}. */
 export function tournamentNameParts(tournament: TournamentClass): {
 	name: string;
 	subtext?: string;
@@ -512,20 +490,10 @@ const STAGE_TYPE_TO_SHORT_CODE: Record<
 };
 
 /**
- * Builds a compact label describing the bracket progression of a tournament,
- * derived from `settings.bracketProgression`.
- *
- * Each main progression stage is rendered as a short code (`RR`, `SE`, `DE`, `SW`), arrow-separated
- * with consecutive duplicates collapsed (e.g. two single-elimination stages still render as a
- * single `SE`).
- *
- * Underground brackets are not part of the main progression — they give early losers another chance
- * to play. They are left out of the label and instead reported via `hasUnderground` so that the
- * caller can render a `+ UG` suffix. Their type and where they branch off from is deliberately not
- * conveyed, keeping the label to one shape no matter how the underground brackets are set up.
- *
- * Starting brackets that lead to the same shape (a league's divisions) are described once, as they
- * are played in parallel rather than one after the other.
+ * Compact bracket progression label: main stages as short codes (`RR`, `SE`, `DE`, `SW`), arrow
+ * separated, consecutive duplicates collapsed. Underground brackets are left out of the label and
+ * only reported via `hasUnderground` (for a `+ UG` suffix) so the label has one shape however they
+ * are set up. Parallel starting brackets leading to the same shape (league divisions) are described once.
  *
  * @example
  * // [{type: "round_robin"}, {type: "single_elimination"}, ...underground SE brackets]
@@ -559,10 +527,7 @@ function labelOfBrackets(bracketIdxs: number[], progression: ParsedBracket[]) {
 	return codes.join(" → ");
 }
 
-/**
- * Brackets the label describes: every one of them, or the brackets of one starting bracket when
- * the tournament has many that all lead to the same shape.
- */
+/** Every bracket, or those of one starting bracket when many lead to the same shape. */
 function labeledBracketIdxs(progression: ParsedBracket[]) {
 	const everyBracketIdx = progression.map((_, idx) => idx);
 
@@ -579,9 +544,8 @@ function labeledBracketIdxs(progression: ParsedBracket[]) {
 }
 
 /**
- * Returns a new `CastedMatchesInfo` with the cast assignment applied. Tracks history of streamed set per channel.
- * Deduplicates history by `matchId` so that correcting a wrong channel replaces the previous entry.
- *
+ * New `CastedMatchesInfo` with the cast assignment applied. History is deduplicated by `matchId`
+ * so correcting a wrong channel replaces the previous entry.
  */
 export function updatedCastedMatchesInfo(
 	current: CastedMatchesInfo,
@@ -608,9 +572,7 @@ export function updatedCastedMatchesInfo(
 		castedMatches: current.castedMatches
 			.filter(
 				(cm) =>
-					// currently a match can only be streamed by one account
-					// and a cast can only stream one match at a time
-					// these can change in the future
+					// for now one account per match and one match per account at a time
 					cm.matchId !== matchId && cm.twitchAccount !== twitchAccount,
 			)
 			.concat([{ twitchAccount, matchId }]),

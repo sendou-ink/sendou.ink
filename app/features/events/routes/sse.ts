@@ -86,7 +86,7 @@ export const loader = ({ request }: LoaderFunctionArgs) => {
 	return new Response(stream, {
 		headers: {
 			"Content-Type": "text/event-stream",
-			// no-transform keeps the compression middleware from buffering the stream
+			// no-transform keeps compression from buffering the stream
 			"Cache-Control": "no-cache, no-transform",
 			"X-Accel-Buffering": "no",
 		},

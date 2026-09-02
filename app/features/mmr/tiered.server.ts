@@ -86,8 +86,7 @@ function skillTierIntervals(
 	);
 	const hasLeviathan = points.length >= LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 	if (!hasLeviathan) {
-		// using all entries, no matter if they have enough to be on the leaderboard
-		// to create the tiers
+		// tiers from all entries, whether or not they have enough to be on the leaderboard
 		points = orderedPoints;
 	}
 

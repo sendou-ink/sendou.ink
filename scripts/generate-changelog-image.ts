@@ -120,10 +120,7 @@ async function main() {
 	}
 }
 
-/**
- * The screenshotted page is whatever dev server holds the port, which can be another
- * checkout of the repo whose entries are not the ones being shipped.
- */
+/** The dev server holding the port can be another checkout whose entries are not the ones being shipped. */
 async function assertSameCheckout(page: Page) {
 	const marker = page.locator("[data-changelog-head]");
 	const pageHead =

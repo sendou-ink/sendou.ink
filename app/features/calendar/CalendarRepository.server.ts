@@ -168,7 +168,7 @@ function findAllBetweenTwoTimestampsQuery({
 			"CalendarEvent.name",
 			"CalendarEvent.tags",
 			"CalendarEventDate.startsAt",
-			// events get grouped to their closest :00 or :30 so for example users can't make their event start at :59 to make it show at the top
+			// grouped to the closest :00 or :30 so a :59 start can't game its way to the top
 			sql<number>`(("CalendarEventDate"."startsAt" + 900) / 1800) * 1800`.as(
 				"normalizedStartsAt",
 			),
@@ -360,10 +360,8 @@ export async function findById(
 }
 
 /**
- * Tournaments from the past year organized by the user (as the author, via an
- * organization ADMIN/ORGANIZER role or as tournament staff ORGANIZER), newest first.
- * Only the latest event of each tournament series is included, unless there are fewer
- * series than spots to show, in which case the next newest events fill the rest.
+ * Past year's tournaments the user organized (author, organization ADMIN/ORGANIZER or staff
+ * ORGANIZER), newest first. Latest event per series only, the next newest filling spare spots.
  */
 export async function findRecentTournamentsByOrganizerUserId(userId: number) {
 	const tournaments = await db
@@ -479,10 +477,7 @@ export async function findResultsByEventId(eventId: number) {
 		.execute();
 }
 
-/**
- * Players of the podium teams of the given events, one row per player. Players reported as plain
- * text rather than linked to an account have a `null` id.
- */
+/** Podium players of the events, one row each; players reported as plain text have a `null` id. */
 export async function findTopThreeResultsByEventIds(eventIds: number[]) {
 	if (eventIds.length === 0) return [];
 

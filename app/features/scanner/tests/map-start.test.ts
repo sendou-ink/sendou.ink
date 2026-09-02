@@ -1,9 +1,6 @@
 /**
- * Golden-file tests for the MapStartDetector over every fixture in
- * map-start/, mirroring tests/suites/death.ts, plus cross-negative sweeps in
- * both directions: the map-start gate must stay quiet on every scoreboard,
- * replay, and death positive, and their gates must stay quiet on the
- * map-start fixtures.
+ * Golden-file tests for the MapStartDetector over every fixture in map-start/,
+ * plus cross-negative sweeps both ways against scoreboard, replay and death positives.
  */
 
 import assert from "node:assert/strict";
@@ -85,9 +82,8 @@ for (const fixture of fixtures) {
 	});
 }
 
-// The intro splash overlays live gameplay while the other screens replace
-// or overlay it differently; none of the four gates may fire on another
-// detector's positives.
+// The intro splash overlays live gameplay while the other screens replace or
+// overlay it differently; none of the four gates may fire on another's positives.
 const otherPositives = [
 	...loadFixtures("scoreboard").filter(
 		(f) => f.expected.event === "Scoreboard",

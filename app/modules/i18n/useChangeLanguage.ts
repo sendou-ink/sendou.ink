@@ -4,12 +4,8 @@ import type { LanguageCode } from "~/modules/i18n/config";
 import { loadDateFnsLocale } from "~/utils/dates";
 
 /**
- * Detect when the locale returned by the root route loader changes and call
- * `i18n.changeLanguage` with the new locale so translations load automatically.
- * The date-fns locale is loaded first so the re-render triggered by the
- * language change already has it available.
- *
- * Vendored from remix-i18next (removed in v8).
+ * Calls `i18n.changeLanguage` when the root loader's locale changes, loading the date-fns locale first so
+ * the re-render already has it. Vendored from remix-i18next (removed in v8).
  */
 export function useChangeLanguage(locale: string) {
 	const { i18n } = useTranslation();

@@ -16,14 +16,12 @@ test.describe("Object Damage Calculator", () => {
 		const dmgBefore = (await dmg.textContent())!;
 		const htdBefore = (await htd.textContent())!;
 
-		// test hits to destroy calculation
 		expect(Number(htdBefore)).toBe(
 			Math.ceil(Number(hpBefore) / Number(dmgBefore)),
 		);
 
 		await calculator.selectDamageType("NORMAL_MIN");
 
-		// select did what we expect it to do
 		await expect(hp).toHaveText(hpBefore);
 		await expect(dmg).not.toHaveText(dmgBefore);
 		await expect(htd).not.toHaveText(htdBefore);

@@ -30,9 +30,8 @@ export async function findShowcaseArts(): Promise<ListedArt[]> {
 	const arts = await db
 		.selectFrom((eb) =>
 			eb
-				// each author's most recent art (showcase ones first) via SQLite's
-				// max() + bare column rule, packed into one integer since createdAt
-				// always stays below the isShowcase component
+				// each author's most recent art (showcase first) via SQLite's max() + bare column rule,
+				// packed into one integer since createdAt always stays below the isShowcase component
 				.selectFrom("Art")
 				.innerJoin("User", "User.id", "Art.authorId")
 				.innerJoin("UserSubmittedImage", "UserSubmittedImage.id", "Art.imgId")

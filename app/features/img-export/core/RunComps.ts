@@ -6,7 +6,7 @@ const TACTICOOLER_SPECIAL_WEAPON_ID = 15;
 const COMP_SIZE = 4;
 
 export interface CompObservation {
-	/** Identity of the player within the aggregated maps: user id when known, otherwise the ingested scoreboard name */
+	/** User id when known, otherwise the ingested scoreboard name */
 	playerKey: string;
 	weaponSplId: MainWeaponId;
 	/** Chronological index of the map the weapon was played in */
@@ -14,11 +14,8 @@ export interface CompObservation {
 }
 
 /**
- * Builds a team's weapon comp from per map weapon observations. Each player
- * contributes the weapon they played the most (ties broken by the most
- * recently played one). The comp is in weapon id order, except weapons with
- * Tacticooler as the special go last. When more than {@link COMP_SIZE}
- * players were observed, the ones that played the most maps make the comp.
+ * Each player contributes their most played weapon (ties: most recent). Weapon id order, Tacticooler
+ * weapons last. Over {@link COMP_SIZE} players, the ones with the most maps make the comp.
  */
 export function buildComp(observations: CompObservation[]): MainWeaponId[] {
 	const byPlayer = new Map<string, CompObservation[]>();
@@ -43,11 +40,8 @@ export function buildComp(observations: CompObservation[]): MainWeaponId[] {
 }
 
 /**
- * Converts one map's reported and ingested weapon rows of a team into comp
- * observations. Ingested rows that duplicate a reported weapon are dropped:
- * a row linked to a user that already reported, or an unlinked row whose
- * weapon a report already accounts for (a multiset, matching how the match
- * page timeline merges the two sources).
+ * One map's reported and ingested weapon rows as observations. Ingested rows duplicating a report
+ * are dropped (same user, or an unlinked row whose weapon a report already covers, as a multiset).
  */
 export function mapObservations({
 	mapOrder,

@@ -177,7 +177,7 @@ function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
 	const [publicId, setPublicId] = React.useState(() => shortNanoid());
 	const [hasSent, setHasSent] = React.useState(false);
 
-	// don't let a send's autofocus carry over to an unrelated page
+	// a send's autofocus must not carry over to an unrelated page
 	React.useEffect(() => {
 		setHasSent(false);
 	}, [pathname]);

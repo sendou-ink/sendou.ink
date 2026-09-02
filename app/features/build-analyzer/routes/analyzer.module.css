@@ -255,8 +255,7 @@
 	align-items: center;
 }
 
-/* doubled class to outweigh the Table cell padding rule so the popover
-   button does not make these rows taller than the text-only rows */
+/* doubled class to outweigh the Table cell padding so the popover button doesn't make rows taller */
 .popoverCell.popoverCell {
 	padding-block: 0;
 }
@@ -268,13 +267,11 @@
 	--chart-height: 250px;
 	--chart-width: 340px;
 
-	/* Let the chart shrink to whatever height react-aria allots the popover
-	   (so it never gets clipped) by threading a flex column down to it. */
+	/* flex column threaded down so the chart shrinks to the popover height instead of clipping */
 	display: flex;
 	flex-direction: column;
 
-	/* The chart shrinks to fit, so no scroll is needed here; keep visible so the
-	   hover tooltip can overlay the chart instead of being clipped. */
+	/* visible so the hover tooltip can overlay the chart instead of being clipped */
 	overflow: visible;
 }
 

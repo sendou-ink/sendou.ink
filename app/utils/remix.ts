@@ -18,20 +18,20 @@ export function isRevalidation(args: ShouldRevalidateFunctionArgs) {
 export type SerializeFrom<T> = ReturnType<typeof useLoaderData<T>>;
 
 interface OpenGraphArgs {
-	/** Title as shown by the browser in the tab etc. Appended with "| sendou.ink"*/
+	/** Browser tab title, appended with "| sendou.ink" */
 	title: string;
-	/** Title as shown when shared on Bluesky, Discord etc. Also used in search results. If omitted, "title" is used instead. */
+	/** Title for link previews and search results, defaults to `title` */
 	ogTitle?: string;
-	/** Brief description of the page's contents used by search engines and social media sharing. If the description is over 300 characters long it is automatically truncated. */
+	/** Truncated past 300 characters */
 	description?: string;
 	location: Location;
-	/** Optionally override location pathname. */
+	/** overrides location pathname */
 	url?: string;
 	image?: OpenGraphImage;
 }
 
 interface OpenGraphImage {
-	/** Absolute URL of the image. */
+	/** absolute */
 	url: string;
 	dimensions?: {
 		width: number;

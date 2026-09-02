@@ -1,14 +1,9 @@
 /**
- * Golden-file suite for the DeathDetector over every fixture in death/,
- * mirroring tests/scoreboard.test.ts, plus cross-negative sweeps in both
- * directions: the death gate must stay quiet on every scoreboard and
- * replay positive, and their gates must stay quiet on the death fixtures.
- *
- * Death parses are the most expensive in the repo (four burst-line reads
- * plus up to six splash-tag name passes each), so the suite is sharded
- * across processes: tests/death.<n>.test.ts each run one shard. Every
- * fixture group is dealt round-robin, so the shards together still cover
- * exactly what the old single file did.
+ * Golden-file suite for the DeathDetector over every fixture in death/, plus
+ * cross-negative sweeps both ways against scoreboard and replay positives.
+ * Death parses are the most expensive in the repo (four burst-line reads plus
+ * up to six splash-tag name passes each), so the suite is sharded across
+ * processes: death.<n>.test.ts each run one round-robin shard.
  */
 
 import assert from "node:assert/strict";

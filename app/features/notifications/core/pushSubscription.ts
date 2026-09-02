@@ -11,12 +11,7 @@ export function isPushSupported() {
 	);
 }
 
-/**
- * Subscribes this browser to push notifications (reusing the existing
- * subscription if one is live) and syncs it to the server. Throws if
- * subscribing or the server sync fails, meaning the server might not know
- * where to deliver push notifications for this browser.
- */
+/** Subscribes this browser to push (reusing a live subscription) and syncs it to the server. Throws if either fails, meaning the server may not know where to deliver. */
 export async function subscribeToPush() {
 	const registration = await navigator.serviceWorker.register("/sw-2.js");
 	const subscription =
@@ -38,22 +33,13 @@ export async function subscribeToPush() {
 	}
 }
 
-/**
- * The live push subscription of this browser, or null when there is none
- * (never subscribed, expired, or revoked). Only call after hydration.
- */
+/** This browser's live push subscription, or null (never subscribed, expired, revoked). Only call after hydration. */
 export async function findPushSubscription() {
 	const registration = await navigator.serviceWorker.getRegistration();
 	return (await registration?.pushManager.getSubscription()) ?? null;
 }
 
-/**
- * Self-heals push delivery for a browser that has already opted in: if the
- * subscription expired, was revoked by the browser, or the server lost/deleted
- * its copy (e.g. after the push service returned 410 Gone), this resubscribes
- * and re-syncs so notifications keep arriving. Safe to call on every app
- * load; a failure is swallowed as the next load retries.
- */
+/** Self-heals push for an opted-in browser: resubscribes and re-syncs when the subscription expired, was revoked, or the server lost its copy (e.g. 410 Gone). Safe on every load; failures are swallowed. */
 export async function resyncPushSubscription() {
 	if (!isPushSupported() || Notification.permission !== "granted") return;
 

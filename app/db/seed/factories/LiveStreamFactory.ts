@@ -8,11 +8,8 @@ type Stream = Omit<Tables["LiveStream"], "id">;
 type StreamOverrides = Partial<Stream> & Pick<Stream, "userId">;
 
 /**
- * Replaces the live streams with one per entry, the same write the twitch poller
- * does. A later call replaces the earlier's streams, so seed them all at once.
- *
- * A stream credited to a user also links its Twitch account to them, as the poller
- * only credits a stream to the user who has that account on their profile.
+ * Same write as the twitch poller, so seed all streams at once. A stream credited to a user also links the
+ * Twitch account to them, as the poller only credits users with the account on their profile.
  */
 export async function replaceAll(streams: StreamOverrides[]) {
 	const filledStreams = streams.map(fillStream);

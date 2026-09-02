@@ -37,17 +37,17 @@ export function FormWithConfirm({
 	)[];
 	children?: React.ReactElement<ChildProps>;
 	dialogHeading: string;
-	/** Optional explanatory text shown below the heading in the confirm dialog */
+	/** shown below the heading in the confirm dialog */
 	description?: React.ReactNode;
 	submitButtonText?: string;
 	action?: string;
 	submitButtonTestId?: string;
 	submitButtonVariant?: SendouButtonProps["variant"];
 	fetcher?: FetcherWithComponents<any>;
-	/** Controls the dialog open state. When provided, no child trigger is needed. */
+	/** controlled open state, no child trigger needed */
 	isOpen?: boolean;
 	onOpenChange?: (isOpen: boolean) => void;
-	/** Confirming runs this callback instead of submitting a form (client only action) */
+	/** runs instead of submitting a form (client only action) */
 	onConfirm?: () => void;
 }) {
 	const componentsFetcher = useFetcher();

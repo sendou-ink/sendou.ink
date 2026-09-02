@@ -1,10 +1,8 @@
 /**
  * Team ink color sampling and comparison. Splatoon renders each team's UI
- * accents — counter plate fills and digits, minimap sub tiles — in the
- * team's ink color, fixed for the whole game and picked to contrast with
- * the opponent's. That makes ink hue a per-frame team identity signal
- * where screen position is not one: casted footage reorders HUD sides to
- * follow the currently specced player.
+ * accents (counter plate fills and digits, minimap sub tiles) in its ink
+ * color, fixed for the game and picked to contrast — a per-frame team identity
+ * signal where screen position is not one (casts reorder HUD sides).
  */
 import type { Mat } from "./cv";
 import { copyRoi, type Roi } from "./image";
@@ -22,10 +20,9 @@ const INK_MIN_SATURATION = 60;
 const MIN_INK_PIXELS = 30;
 
 /**
- * Mean RGB of the ink-saturated pixels across the ROIs (channel spread at
- * least `minSaturation`); null when fewer than MIN_INK_PIXELS qualify.
- * Averaging only saturated pixels keeps dark/white surroundings (plate
- * fills, digit cores, tile backgrounds) from washing the hue out.
+ * Mean RGB of the ink-saturated pixels across the ROIs (channel spread at least
+ * `minSaturation`); null when fewer than MIN_INK_PIXELS qualify. Averaging only
+ * saturated pixels keeps dark/white surroundings from washing the hue out.
  */
 export function meanInkColor(
 	frame: Mat,

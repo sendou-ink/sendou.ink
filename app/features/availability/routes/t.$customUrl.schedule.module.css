@@ -11,9 +11,8 @@
 	color: var(--color-text);
 }
 
-/* Lets the grid size against the full content area instead of the page width
-   (the team layout renders its <main> in breakout mode), capped at the wide
-   page width and centered back under the normal-width column. */
+/* sizes the grid against the breakout <main> of the team layout, capped at the wide page width
+   and centered under the normal-width column */
 .gridScroll {
 	overflow-x: auto;
 
@@ -36,8 +35,7 @@
 		white-space: nowrap;
 	}
 
-	/* the member column centers between the row lines while the day cells stay
-	   a top-aligned list */
+	/* the member column centers between the row lines, the day cells stay a top-aligned list */
 	& tbody th[scope="row"] {
 		vertical-align: middle;
 	}
@@ -62,8 +60,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 
-	/* block-level so the link centers by the cell's vertical-align alone,
-	   without the descender gap an inline box leaves under the baseline */
+	/* block-level so the link centers by vertical-align alone, without an inline box's descender gap */
 	& .memberLink {
 		display: flex;
 	}

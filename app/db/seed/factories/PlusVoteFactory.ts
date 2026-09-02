@@ -12,11 +12,7 @@ type Vote = UpsertManyPlusVotesArgs[number];
 
 const VOTING_ENDED_AGO = { minutes: 5 };
 
-/**
- * Creates plus server votes, `authorId` being who cast the vote and `votedId` who it
- * was cast on. Defaults to a vote of the latest completed voting, which is one that
- * already counts towards the plus tiers.
- */
+/** `authorId` cast the vote on `votedId`. Defaults to the latest completed voting, which already counts towards tiers. */
 export const { create, createMany } = defineFactory({
 	defaults: () => ({
 		...lastCompletedVoting(new Date()),
@@ -25,9 +21,7 @@ export const { create, createMany } = defineFactory({
 		becomesValidAt: dateToDatabaseTimestamp(sub(new Date(), VOTING_ENDED_AGO)),
 	}),
 	insert: async (vote: Vote) => {
-		// `upsertMany` replaces every vote its author cast that month, being one
-		// submission of the voting form, so the votes cast before this one are read
-		// back and sent along
+		// `upsertMany` replaces every vote the author cast that month, so earlier ones are read back and sent along
 		const alreadyCast = await db
 			.selectFrom("PlusVote")
 			.selectAll()

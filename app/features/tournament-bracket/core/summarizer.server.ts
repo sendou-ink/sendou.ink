@@ -47,12 +47,8 @@ type RatingWithMatchesCount = {
 };
 
 /**
- * Users and teams whose current ratings `tournamentSummary` may look up, for the caller to
- * load up front.
- *
- * A superset: which of a set's teams and players actually get looked up depends on who
- * played the most maps of the set, and ties there are broken at random. Enumerating every
- * candidate keeps that decision inside `tournamentSummary`.
+ * Superset of the users and teams whose ratings `tournamentSummary` may look up, for the caller to load
+ * up front. Which actually get looked up depends on who played the most maps, ties broken at random.
  */
 export function summaryRatingTargets(results: AllMatchResult[]) {
 	const userIds = new Set<number>();
@@ -139,7 +135,7 @@ export function tournamentSummary({
 
 		if (!endedEarly) return true;
 
-		// Include early-ended sets where a team dropped out (they still affect skills)
+		// early-ended sets where a team dropped out still affect skills
 		return match.opponentOne.droppedOut || match.opponentTwo.droppedOut;
 	});
 
@@ -253,13 +249,8 @@ function calculateIndividualPlayerSkills({
 }
 
 /**
- * Determines the most frequently appearing user IDs for both the winning and losing teams in a match/set.
- *
- * For each team (winner and loser), this function collects all user IDs from the match's map participants,
- * counts their occurrences, and returns the most popular user IDs up to a full team's worth depending on the tournament format (4v4, 3v3 etc.).
- * If there are ties at the cutoff, all tied user IDs are included.
- *
- * For dropped team sets without game results, uses the activeRosterUserIds from the team records.
+ * Most frequent map participants of the winner and loser, up to a full team's worth (4v4, 3v3 etc.), ties
+ * at the cutoff all included. Dropped team sets without game results use the active roster.
  */
 function matchToSetMostPlayedUsers(match: AllMatchResult) {
 	const winner =
@@ -267,7 +258,7 @@ function matchToSetMostPlayedUsers(match: AllMatchResult) {
 	const loser =
 		match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
-	// Handle dropped team sets without game results - use active roster or member list
+	// dropped team set without game results
 	if (match.maps.length === 0) {
 		const winnerRoster =
 			winner.activeRosterUserIds ?? winner.memberUserIds ?? [];
@@ -294,8 +285,7 @@ function matchToSetMostPlayedUsers(match: AllMatchResult) {
 		const result: number[] = [];
 		let previousCount = 0;
 		for (const [userId, count] of sorted) {
-			// take target amount of most popular users
-			// or more if there are ties
+			// target amount of most popular users, or more if there are ties
 			if (result.length >= targetAmount && count < previousCount) break;
 
 			result.push(userId);
@@ -343,13 +333,11 @@ function calculateTeamSkills({
 		const loser =
 			match.winnerSide === "opponent1" ? match.opponentTwo : match.opponentOne;
 
-		// Handle dropped team sets without game results - use active roster or member list
 		let winnerTeamIdentifier: SkillTeamIdentifier;
 		let loserTeamIdentifier: SkillTeamIdentifier;
 
 		if (match.maps.length === 0) {
-			// Use activeRosterUserIds if set, otherwise fall back to memberUserIds
-			// (teams without subs have their roster trivially inferred from members)
+			// dropped team set without game results, teams without subs have their roster inferred from members
 			const winnerRoster =
 				winner.activeRosterUserIds ?? winner.memberUserIds ?? [];
 			const loserRoster =

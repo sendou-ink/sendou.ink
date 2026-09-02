@@ -17,10 +17,8 @@ import {
 } from "./tournament-admin-registration-schemas";
 
 /**
- * Extends the client {@link adminRegistrationFormSchema} with server-only,
- * context-dependent validations that surface as field errors (rather than toasts):
- * unique team name, roster size limit, and per-member friend code / in-game name /
- * ban / already-on-another-team checks.
+ * {@link adminRegistrationFormSchema} plus server-only validations surfacing as field errors:
+ * unique name, roster size, per-member friend code / in-game name / ban / other-team checks.
  */
 export function adminRegistrationFormSchemaServer({
 	tournament,
@@ -56,8 +54,7 @@ export function adminRegistrationFormSchemaServer({
 				});
 			}
 
-			// the map pool is only written while it can still be changed, matching the
-			// form field's own visibility, so any other state says nothing about it
+			// the map pool is only written while it can still be changed, matching the field's visibility
 			if (tournament.teamsPrePickMaps && !tournament.hasStarted) {
 				const currentMapPool =
 					typeof data.tournamentTeamId === "number"
@@ -67,9 +64,8 @@ export function adminRegistrationFormSchemaServer({
 								])
 							).get(data.tournamentTeamId) ?? [])
 						: [];
-				// a pool valid when picked can stop being valid later (a map gets banned, the
-				// tie-breaker pool changes), so only a changed pool is held to being valid and
-				// an untouched one can't block unrelated edits to the team
+				// a pool can stop being valid after picking (map banned, tie-breaker pool changed), so only
+				// a changed pool is validated and an untouched one can't block unrelated edits
 				const mapPoolChanged =
 					MapPool.serialize(data.mapPool) !== MapPool.serialize(currentMapPool);
 

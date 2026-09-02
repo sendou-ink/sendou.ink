@@ -1,8 +1,4 @@
-/**
- * Everything the ingest scenario cases need: world builders (arrange), the
- * ingest wrapper (act), page-loader wrappers and row fetchers (assert).
- * Cases import only from here, plus vitest. See README.md for the design.
- */
+/** Everything ingest scenario cases need: world builders (arrange), ingest wrapper (act), page-loader wrappers and row fetchers (assert). See README.md. */
 import { addHours, addMinutes, subDays, subMinutes } from "date-fns";
 import * as R from "remeda";
 import { afterAll, beforeAll } from "vitest";
@@ -62,18 +58,11 @@ export interface ScannableGame {
 	stage: StageId;
 	/** chronological position among the world's games, spacing reads apart */
 	order: number;
-	/**
-	 * wall-clock ms the game was reported, for cases whose read has to sit on
-	 * the world's real timeline rather than the default "now + order" spacing
-	 */
+	/** wall-clock ms the game was reported, for reads that must sit on the world's real timeline rather than "now + order" */
 	playedAt?: number;
 	winnerNames: string[];
 	loserNames: string[];
-	/**
-	 * each player's weapon, keyed by name. Worlds keep this stable per player
-	 * so two games between different opponents never read as the same match.
-	 * Reads fall back to `WEAPONS` by row for games built outside a world.
-	 */
+	/** each player's weapon by name, stable per player so two games against different opponents never read as the same match; falls back to `WEAPONS` by row */
 	weaponFor?: (name: string) => MainWeaponId;
 }
 
@@ -86,11 +75,7 @@ export interface ScannedOptions extends Partial<ScannerMatch> {
 	partial?: boolean;
 }
 
-/**
- * Forces the scanner gate open for the whole suite (fallback for
- * `import.meta.env` not carrying the config's `test.env`), restoring the
- * original value afterwards. Call at the top of the test file.
- */
+/** Forces the scanner gate open for the suite (`import.meta.env` may not carry the config's `test.env`), restoring it afterwards. Call at the top of the test file. */
 export function setupScannerGate() {
 	let original: boolean;
 	beforeAll(() => {
@@ -113,12 +98,7 @@ export async function withScannerDisabled(fn: () => Promise<void>) {
 	}
 }
 
-/**
- * 8 users with deterministic in-game names (`Alpha1#1111`, …) and a SendouQ
- * match between them. The match starts unreported; `conclude()` plays it out
- * the way the teams report it (alpha sweeps), making its maps linkable, and
- * returns the refreshed map rows.
- */
+/** 8 users with deterministic in-game names (`Alpha1#1111`, …) and an unreported SendouQ match between them; `conclude()` plays it out (alpha sweeps), making its maps linkable, and returns the refreshed map rows. */
 export async function sendouqWorld(
 	options: {
 		createdAt?: Date;
@@ -176,14 +156,10 @@ export async function sendouqWorld(
 }
 
 /**
- * A played single-elimination tournament: `teams` rosters of 4 users, all
- * with deterministic in-game names (`T1P1#1111`, …), played out through
- * `playedOut` the way `TournamentFactory.createPlayed` plays brackets.
- * Match/game timestamps are staggered into the recent past in play order, so
- * activity resolution and chronological walks see an unambiguous timeline.
- * Creating a world clears the tournament data caches: SQLite ids restart
- * after the db wipe, so a previous test's entries could otherwise serve
- * stale data for a reused id.
+ * A played single-elimination tournament of `teams` 4-user rosters with deterministic in-game
+ * names (`T1P1#1111`, …). Timestamps are staggered into the recent past in play order so activity
+ * resolution sees an unambiguous timeline. Clears the tournament data caches: SQLite ids restart
+ * after the db wipe, so a previous test's entries could serve stale data for a reused id.
  */
 export async function tournamentWorld(
 	options: { teams?: number; playedOut?: number } = {},
@@ -285,10 +261,7 @@ export async function tournamentWorld(
 	};
 }
 
-/**
- * Another SendouQ match between a world's same players, made at `createdAt` —
- * the later queueing an earlier match's read must not be captured by.
- */
+/** Another SendouQ match between a world's same players at `createdAt` — the later queueing an earlier match's read must not be captured by. */
 export function anotherSendouqMatch(
 	world: {
 		alphaUsers: Array<{ id: number }>;
@@ -313,11 +286,9 @@ export function createUser(inGameName?: string) {
 }
 
 /**
- * Derives a full `ScannerMatch` from a sendou.ink game so mode/stage/rosters
- * line up by construction; options spell out a case's deviation. The default
- * read is winner-first with the POV on seat 0 of the winning team, played
- * when the game says it was — or, for games that carry no time of their own,
- * "now" offset by `order` so multi-read requests stay chronological.
+ * A full `ScannerMatch` derived from a game so mode/stage/rosters line up; options spell out a
+ * case's deviation. Default read is winner-first, POV on winning seat 0, played when the game
+ * says — or "now" offset by `order` for games without a time, so multi-read requests stay chronological.
  */
 export function scannedGame(
 	game: ScannableGame,
@@ -462,12 +433,7 @@ function groupMatchMaps(matchId: number) {
 		.execute();
 }
 
-/**
- * Backdates the set's reported maps so they look played minutes apart ending
- * at `reportedThrough`, rather than all inside the same test second.
- * Production reports a map as it finishes, and matching leans on that spacing
- * to tell two plays of one map apart.
- */
+/** Backdates the set's map reports minutes apart ending at `reportedThrough`: matching leans on that spacing to tell two plays of one map apart. */
 async function stampMapReports(matchId: number, reportedThrough: Date) {
 	const reported = (await groupMatchMaps(matchId)).filter(
 		(map) => map.winnerGroupId !== null,
@@ -525,10 +491,8 @@ async function concludeGroupMatch(matchId: number) {
 }
 
 /**
- * Backdates match `startedAt`s and game result `createdAt`s into the recent
- * past, staggered in play order: everything production stamps within the
- * same test second becomes an unambiguous timeline, so "latest match" and
- * game order come out the same on every run.
+ * Backdates match `startedAt`s and result `createdAt`s into the recent past, staggered in play
+ * order, so "latest match" and game order come out the same on every run.
  *
  * @returns each set's `startedAt`, keyed by match id
  */

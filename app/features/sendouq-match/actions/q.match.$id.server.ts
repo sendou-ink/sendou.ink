@@ -155,7 +155,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					});
 				}
 
-				// The group re-enters the looking pool, so refresh every looking client.
+				// the group re-enters the looking pool
 				ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 
 				break;
@@ -230,8 +230,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 						viewerGroup.members.map((member) => member.id),
 					);
 
-					// The continuing group re-enters the looking pool, so refresh
-					// every looking client.
+					// the continuing group re-enters the looking pool
 					ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 				}
 
@@ -426,9 +425,8 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 			}
 		}
 	} catch (error) {
-		// some errors are expected to happen, for example two requests racing to
-		// create/join a group. return null so loaders re-run and the user sees
-		// the fresh state instead of an error page
+		// expected errors (two requests racing to create/join a group): return null so
+		// loaders re-run and the user sees the fresh state instead of an error page
 		if (error instanceof SendouQError) {
 			return null;
 		}

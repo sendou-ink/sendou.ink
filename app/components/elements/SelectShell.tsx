@@ -1,8 +1,4 @@
-/**
- * The select look shared by `SendouSelect` and `SearchSelect`: the trigger
- * button, the popover with its search field, and the list box items' focus and
- * selection states. Both selects render their own contents inside these.
- */
+/** Select look (trigger, popover with search field, list box item states) shared by `SendouSelect` and `SearchSelect`. */
 
 import clsx from "clsx";
 import { ChevronsUpDown, Search, X } from "lucide-react";

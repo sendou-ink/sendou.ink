@@ -269,7 +269,7 @@ function markMatchesCompleted(
 ) {
 	for (const match of data.match) {
 		if (!completedRoundIds.has(match.roundId)) continue;
-		// skip BYE matches (opponent slot is null entirely)
+		// BYE matches
 		if (match.opponent1 === null || match.opponent2 === null) continue;
 
 		match.opponent1 = { ...match.opponent1, score: 2 };

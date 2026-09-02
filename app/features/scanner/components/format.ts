@@ -15,19 +15,13 @@ export function formatClock(seconds: number): string {
 	return `${m}:${String(s).padStart(2, "0")}`;
 }
 
-/**
- * Locale-aware time-of-day formatter for detection timestamps (epoch ms)
- * shown in scanner cards, in place of a raw `toLocaleTimeString()` call.
- */
+/** Locale-aware time-of-day formatter for detection timestamps (epoch ms). */
 export function useEventTimeFormatter(): (ms: number) => string {
 	const { formatter } = useDateTimeFormat({ timeStyle: "medium" });
 	return (ms: number) => formatter.format(new Date(ms));
 }
 
-/**
- * Locale-aware date+time formatter for absolute timestamps (epoch ms), e.g.
- * a saved VoD's scan time, in place of a raw `toLocaleString()` call.
- */
+/** Locale-aware date+time formatter for absolute timestamps (epoch ms), e.g. a VoD's scan time. */
 export function useEventDateTimeFormatter(): (ms: number) => string {
 	const { formatter } = useDateTimeFormat({
 		dateStyle: "medium",

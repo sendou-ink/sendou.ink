@@ -1,7 +1,4 @@
-/**
- * Gear-ability grid (3 rows: head/clothes/shoes, each [main, sub, sub, sub])
- * shared by the death card and the scoreboard player popover.
- */
+/** Gear-ability grid (head/clothes/shoes rows of [main, sub, sub, sub]) shared by death card and player popover. */
 
 import { Button } from "react-aria-components";
 import { Ability } from "~/components/Ability";
@@ -33,10 +30,7 @@ export function AbilityGrid({
 	);
 }
 
-/**
- * Click-to-toggle popover showing a player's ability grid; the trigger is
- * the head-main ability icon.
- */
+/** Click-to-toggle popover showing a player's ability grid; the head-main icon is the trigger. */
 export function AbilityPopover({
 	abilities,
 }: {

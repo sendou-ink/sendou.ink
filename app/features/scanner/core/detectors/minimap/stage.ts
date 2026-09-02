@@ -1,19 +1,11 @@
 /**
- * Stage identification for the minimap overlay by matching the drawn map
- * against sendou.ink planner renders (assets/cv/planner/, one PNG per
- * stage x mode, packed as a signature atlas).
- *
- * The map is drawn sharp over blurred gameplay, so a Laplacian edge mask
- * isolates it; dropping saturated (team-ink) edges leaves a structural,
- * ink-invariant signature. Downscaling+blurring also absorbs the POV (map
- * fills screen) vs spectator (map smaller, centered) scale/offset
- * difference, letting one atlas serve both via a translation search.
- *
- * Stage separates cleanly this way (NCC leads the next stage by
- * ~0.17-0.26). Mode does NOT — the objective marker is the only per-mode
- * difference and ink-invariance strips it — so the atlas keeps all five
- * renders per stage and reports only the winning tile's stage; mode comes
- * from map-start/scoreboard header instead.
+ * Minimap stage identification against sendou.ink planner renders
+ * (assets/cv/planner/, one per stage x mode, packed as a signature atlas). The
+ * map is drawn sharp over blurred gameplay, so a Laplacian edge mask minus
+ * saturated (team-ink) edges gives an ink-invariant signature; downscale+blur
+ * absorbs the POV vs spectator scale difference so one atlas serves both via a
+ * translation search. Stage separates cleanly (NCC lead ~0.17-0.26); mode does
+ * NOT (ink-invariance strips the objective marker), so only the stage is reported.
  */
 import type { StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
@@ -50,10 +42,8 @@ export interface StageMatch {
 }
 
 /**
- * Ink-invariant structural signature of a canonical-normalized RGBA frame:
- * downscaled, blurred, unit-L2-normalized float mask of the non-ink render
- * edges. Shared by the build tool and the runtime matcher so the atlas and
- * the live frame are computed identically.
+ * Ink-invariant signature of a canonical RGBA frame: downscaled, blurred,
+ * unit-L2 mask of non-ink edges. Shared by the atlas build tool and the matcher.
  */
 export function plannerSignature(frame: Mat): Float32Array {
 	const cv = getCV();
@@ -145,11 +135,7 @@ function bestNcc(a: Float32Array, b: Float32Array): number {
 	return best;
 }
 
-/**
- * Identify the stage of a minimap frame's signature against the planner
- * atlas. Returns null when no stage matches confidently (score floor) or two
- * stages are too close to call (margin floor) — e.g. a stage not in the set.
- */
+/** Stage of a minimap signature; null under the score floor or when two stages are too close to call. */
 export function matchStage(
 	sig: Float32Array,
 	planners: readonly PlannerStage[],
@@ -191,11 +177,7 @@ export interface PlannerManifest {
 	keys: string[];
 }
 
-/**
- * Slice the packed signature atlas (grayscale uint8 tiles) back into
- * unit-normalized PlannerStage signatures. Mirrors loadGlyphSet's atlas
- * convention; the build tool writes the atlas + manifest.
- */
+/** Slice the packed atlas (grayscale uint8 tiles) into unit-normalized signatures; mirrors loadGlyphSet. */
 export function loadPlannerStages(
 	atlas: FrameData,
 	manifest: PlannerManifest,

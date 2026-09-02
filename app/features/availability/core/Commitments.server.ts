@@ -10,16 +10,11 @@ import * as TournamentDuration from "./TournamentDuration";
 import { estimatedEndsAtWith } from "./TournamentDuration.server";
 
 /**
- * The busy blocks of the given users within the given window, keyed by user
- * id and sorted by start. A busy block overrides whatever availability the
- * user reported: effective availability = reported − busy blocks.
- *
- * Sourced from tournament registrations (start + estimated duration, see
- * {@link TournamentDuration.estimateSeconds}), accepted scrims (start + an
- * assumed length) and team events (their actual span). League registrations
- * are not blocks — a league runs over weeks and its matches are scheduled
- * separately. `excludeTournamentId` leaves that tournament's registrations
- * out, for surfaces asking "busy elsewhere" while looking at that tournament.
+ * Busy blocks of the users within the window, keyed by user id, sorted by start (effective
+ * availability = reported − busy). From tournament registrations (start + estimated duration,
+ * {@link TournamentDuration.estimateSeconds}), accepted scrims (start + assumed length) and team
+ * events (actual span). Leagues are not blocks, their matches are scheduled separately.
+ * `excludeTournamentId` leaves one tournament out, for "busy elsewhere" views of that tournament.
  */
 export async function busyBlocksByUserIds({
 	userIds,

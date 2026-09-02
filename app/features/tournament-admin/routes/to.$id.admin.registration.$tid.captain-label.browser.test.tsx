@@ -79,16 +79,15 @@ describe("tournament admin registration - captain label", () => {
 	test("captain dropdown shows the searched player's name, not a generic placeholder", async () => {
 		const screen = await renderPage();
 
-		// Pick a player in member #1 via the user search.
 		await userEvent.click(screen.getByRole("button", { name: "Player" }));
 		await userEvent.type(
 			screen.getByTestId("user-search-input").element(),
 			GREY.name,
 		);
-		// Auto-retries until the debounced search resolves and the result appears.
+		// auto-retries until the debounced search resolves
 		await screen.getByTestId("user-search-item").click();
 
-		// The Captain <select> should label that player by name, not "Player 1".
+		// labelled by name, not "Player 1"
 		await expect
 			.poll(
 				() =>

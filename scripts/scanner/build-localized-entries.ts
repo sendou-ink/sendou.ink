@@ -1,25 +1,19 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Generate the localized closed sets from the splat3 repo's language dumps
- * (https://github.com/Leanny/splat3, data/language/<Lang>_full.json), so
- * ingestion works no matter which language the player runs the game in.
- * Detectors OCR whatever is on screen, snap it against every language's
- * entries, and always emit the sendou.ink id (canonical English text
- * exists only inside the snap tables).
+ * Generates the localized closed sets from the splat3 repo's language dumps
+ * (https://github.com/Leanny/splat3, data/language/<Lang>_full.json) so
+ * ingestion works in any game language: detectors OCR what is on screen, snap
+ * it against every language's entries, and emit the sendou.ink id.
  *
  * Sources per language:
- *   CommonMsg/VS/VSRuleName          modes (+ the _2L two-line intro-splash
- *                                    wrap variants, e.g. "Muschel-\nchaos")
+ *   CommonMsg/VS/VSRuleName          modes (+ _2L two-line intro-splash wraps, "Muschel-\nchaos")
  *   CommonMsg/VS/VSStageName         stages (keyed via the USen values)
  *   CommonMsg/MatchMode              lobby tags (XMatch / Private)
  *   LayoutMsg/Lobby_MenuMode_00      the intro splash's "MODE" label
  *   LayoutMsg/Mng_Result_00          replay-browser VICTORY / DEFEAT tags
- *   LayoutMsg/VS_Beaten_00 (999)     the death-burst message; the weapon
- *                                    placeholder sits on line 1 or 2
- *                                    depending on language, so this becomes
- *                                    a per-language template
- *   CommonMsg/Weapon/WeaponName_*    weapon names, mapped to the canonical
- *                                    entries via their USen value
+ *   LayoutMsg/VS_Beaten_00 (999)     death-burst message; the weapon placeholder sits on
+ *                                    line 1 or 2 by language, so it becomes a per-language template
+ *   CommonMsg/Weapon/WeaponName_*    weapon names, mapped to canonical entries via USen
  *
  * Usage: pnpm scanner:build-localized-entries [path-to-splat3]
  * Writes app/features/scanner/core/localized-entries.ts
@@ -119,8 +113,6 @@ if (!languages.includes(CANONICAL_LANG)) {
 const dumps = new Map<string, LangDump>(languages.map((l) => [l, loadLang(l)]));
 const usen = dumps.get(CANONICAL_LANG)!;
 
-// ---- validate the canonical sets against USen ------------------------------
-
 for (const [key, mode] of Object.entries(RULE_KEYS)) {
 	const value = clean(usen["CommonMsg/VS/VSRuleName"]![key]!);
 	const expected = misc[`MODE_LONG_${mode}`]!;
@@ -151,8 +143,6 @@ for (const [name, stageId] of stageIdByEnglishName) {
 		);
 	}
 }
-
-// ---- per-language closed sets ----------------------------------------------
 
 interface LocalizedLobby {
 	text: string;
@@ -233,8 +223,6 @@ for (const category of ["lobbies", "modes", "modeWraps", "stages"] as const) {
 	}
 }
 
-// ---- death message templates -----------------------------------------------
-
 const PLACEHOLDER = /\[group=[^\]]*\]/;
 /** stands in for the weapon placeholder while splitting the message */
 const SENTINEL = "\u0000";
@@ -282,8 +270,6 @@ for (const lang of languages) {
 		});
 }
 
-// ---- localized weapon names --------------------------------------------------
-
 const WEAPON_MSGS = [
 	"CommonMsg/Weapon/WeaponName_Main",
 	"CommonMsg/Weapon/WeaponName_Sub",
@@ -327,8 +313,6 @@ for (const lang of languages) {
 	}
 	if (entries.length > 0) localizedWeaponNames[lang] = entries;
 }
-
-// ---- emit --------------------------------------------------------------------
 
 const banner = (extra: string) =>
 	`/**

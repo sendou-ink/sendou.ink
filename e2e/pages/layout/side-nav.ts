@@ -4,11 +4,9 @@ import { waitForPOSTResponse } from "../../helpers/playwright";
 type Section = "Events" | "Friends" | "Streams";
 
 /**
- * The sidebar of the site layout, a modal behind a hamburger on narrower viewports.
- *
- * Its rows are looked up inside the sidebar the viewport shows — the rail, or the
- * copy of it the modal renders — so that the same row appearing on the page behind
- * it (a tournament also shown as a front page card) is not mistaken for one.
+ * The sidebar of the site layout, a modal behind a hamburger on narrower viewports. Rows are
+ * looked up inside whichever the viewport shows so that the same row on the page behind it
+ * (a tournament also shown as a front page card) is not mistaken for one.
  */
 export class SideNav {
 	private readonly page: Page;

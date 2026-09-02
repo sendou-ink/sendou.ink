@@ -10,7 +10,7 @@ export const TOURNAMENT = {
 	MAX_BRACKETS_PER_TOURNAMENT: 10,
 	BRACKET_NAME_MAX_LENGTH: 32,
 	PLACEMENT_MAX: 100,
-	// just a fallback, normally this should be set by user explicitly
+	// fallback, normally set by the user explicitly
 	RR_DEFAULT_TEAM_COUNT_PER_GROUP: 4,
 	RR_TEAMS_PER_GROUP_OPTIONS: [3, 4, 5, 6, 7, 8],
 	RR_AB_DIVISIONS_TEAMS_PER_GROUP_OPTIONS: [4, 6, 8, 10, 12],
@@ -39,11 +39,7 @@ export const TOURNAMENT_STAGE_TYPES = [
 	"swiss",
 ] as const;
 
-/**
- * AUTO = teams pick their map pool ahead of time and the map lists are made
- * automatically for each round. TO = the traditional style where the TO picks
- * the maps.
- */
+/** AUTO = teams pick map pools ahead and each round's map list is made automatically, TO = the TO picks the maps. */
 export type TournamentMapPickingStyle =
 	| "TO"
 	| "AUTO_ALL"

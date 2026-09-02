@@ -1,8 +1,6 @@
 /**
- * Replay code recognition ("R6KE-DO64-3CXD-XVKL"): bright green text under
- * the team panels. Green on the dark background lands below the default
- * grayscale binarization threshold, so recognition runs on the green
- * channel, where the glyphs are near-white.
+ * Replay code recognition ("R6KE-DO64-3CXD-XVKL"): green text falls below the
+ * grayscale binarization threshold, so it runs on the green channel.
  */
 import { getCV, type Mat } from "../../cv";
 import {
@@ -14,12 +12,9 @@ import { cropRoi } from "../../image";
 import { REPLAY_CODE_ROI } from "./rois";
 
 /**
- * FOT-RowdyStd's 'Q' is a '0' bowl with a small tail below the baseline;
- * the bowl dominates template correlation, so a real Q ranks as '0' by a
- * hair. Like the P/p rule in scoreboard/names.ts, the segment geometry
- * decides what the templates cannot: a 0/O read whose ink reaches well
- * below the line's baseline (the median ink bottom of the other
- * alphanumerics) is a Q.
+ * FOT-RowdyStd's 'Q' is a '0' bowl with a tail, so a real Q ranks as '0' by a
+ * hair; like names.ts's P/p rule, a 0/O whose ink reaches well below the
+ * baseline (median ink bottom of the other chars) is a Q.
  */
 const Q_TWINS = new Set(["0", "O"]);
 const Q_DESCENT_MIN_PX = 4;
@@ -39,12 +34,9 @@ function resolveQsByDescent(raw: RecognizedText): string {
 }
 
 /**
- * On blurry captures a narrow 'L' template can edge out the true 'U' by a
- * hair. Segment geometry decides what templates can't: a U's right stroke
- * fills the segment's top-right quadrant, where an L has no ink (measured
- * 0.00-0.15 leak on true Ls vs 0.27+ on Us across fixtures). The margin only
- * skips confident reads and stays generous, since no true L on the fixtures
- * carries a 'U' candidate at all.
+ * On blurry captures 'L' can edge out a true 'U': a U's right stroke fills the
+ * top-right quadrant where an L has no ink (0.00-0.15 on true Ls vs 0.27+ on
+ * Us). The margin is generous since no fixture L carries a 'U' candidate at all.
  */
 const LU_SCORE_MARGIN = 0.12;
 const LU_INK_THRESHOLD = 150;
@@ -86,10 +78,7 @@ export interface ParsedReplayCode {
 
 const CODE_RE = /^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/;
 
-/**
- * Restrict a glyph set to the characters codes can contain — a shallow
- * view over the same template mats, so dispose only the source set.
- */
+/** Glyph set restricted to code characters; a shallow view, so dispose only the source set. */
 export function codeCharsetOf(set: GlyphSet): GlyphSet {
 	const glyphs = set.glyphs.filter((g) => /^[0-9A-Z-]$/.test(g.char));
 	const widths = glyphs.map((g) => g.mat.cols).sort((a, b) => a - b);
@@ -121,9 +110,7 @@ export function parseReplayCode(rgb: Mat, glyphs: GlyphSet): ParsedReplayCode {
 	green.delete();
 
 	let text = resolveQsByDescent(resolved).toUpperCase();
-	// Dashes are thin and can drop out of segmentation (any subset of the
-	// three); the 16 alphanumerics are unambiguous on their own, so re-derive
-	// the grouping from them alone.
+	// thin dashes can drop out of segmentation; re-derive the grouping from the 16 alphanumerics
 	const compact = text.replaceAll("-", "");
 	if (/^[0-9A-Z]{16}$/.test(compact)) {
 		text = compact.replace(/(.{4})(?=.)/g, "$1-");

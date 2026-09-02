@@ -106,8 +106,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			}
 		: undefined;
 
-	// the badges the user can pick from, plus any already-attached prize badges they no
-	// longer manage (so an existing selection still renders and stays removable)
+	// plus already-attached prize badges the user no longer manages, so the selection still renders and stays removable
 	const badgeOptions = R.uniqueBy(
 		[...managedBadges, ...(eventToEdit?.badgePrizes ?? [])].map((badge) => ({
 			id: badge.id,

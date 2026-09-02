@@ -1,14 +1,9 @@
 /**
- * Kit-icon identification: the team-tinted sub/special tiles next to a
- * player's main weapon (scoreboard: special icon above the specials
- * counter; minimap: sub-weapon tile). Tiles render the same art in each
- * team's ink hue, so unlike weapon icons the match is shape-only: alpha
- * silhouette vs the binarized search region, NCC + ink-coverage penalty.
- *
- * Low pixel budget (~22px specials, ~30px minimap subs) is enough because
- * it only splits main weapons whose *icons* are near-ties (Splash- vs
- * Sploosh-o-matic) — near-tie icon twins ship with far-apart kit
- * silhouettes (stamp vs crab, bomb vs beakon).
+ * Kit-icon identification: the team-tinted sub/special tiles (scoreboard
+ * special icon, minimap sub tile). Tinted per team, so the match is shape-only:
+ * alpha silhouette vs binarized region, NCC + ink-coverage penalty. ~22-30px is
+ * enough since it only splits near-tied main icons (Splash- vs Sploosh-o-matic)
+ * whose kit silhouettes are far apart (stamp vs crab, bomb vs beakon).
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import type { FrameData } from "../../image";
@@ -33,12 +28,7 @@ export interface SpecialMatch {
 	top: { id: string; score: number }[];
 }
 
-/**
- * Build binary silhouette templates from raw RGBA icon images (128x128 with
- * alpha): tight-crop the alpha extent, binarize, downscale to each height.
- * `templateSizes` defaults to the scoreboard's special-icon sizes; the
- * minimap builds its sub-weapon set at the sub tile's larger sizes.
- */
+/** Binary silhouettes from RGBA icons: tight-crop alpha, binarize, downscale to each height. */
 export function prepareSpecialTemplates(
 	icons: { id: string; image: FrameData }[],
 	templateSizes: readonly number[] = SPECIAL_TEMPLATE_SIZES,
@@ -85,8 +75,7 @@ export function prepareSpecialTemplates(
 				0,
 				cv.INTER_AREA,
 			);
-			// re-binarize the interpolated edges so template and search region
-			// live on the same two-level scale
+			// re-binarize the interpolated edges to match the search region's two-level scale
 			const mat = new cv.Mat();
 			cv.threshold(resized, mat, 127, 255, cv.THRESH_BINARY);
 			resized.delete();
@@ -99,10 +88,7 @@ export function prepareSpecialTemplates(
 	});
 }
 
-/**
- * searchRgb: RGB crop of the row's special-icon ROI (view is fine).
- * The region is binarized on max(r,g,b) so any ink tint reads as shape.
- */
+/** searchRgb: RGB crop of the icon ROI (view is fine); binarized on max(r,g,b) so any tint reads as shape. */
 export function matchSpecial(
 	searchRgb: Mat,
 	templates: SpecialTemplate[],
@@ -155,13 +141,9 @@ export function matchSpecial(
 const WEAPON_TIE_MARGIN = 0.04;
 
 /**
- * Icon twins whose art differs only by the nozzle (Splash- vs
- * Sploosh-o-matic share the body, gauge and handle). On the replay
- * browser's dim, drop-shadowed rendering the wrong twin can beat the right
- * one by far more than WEAPON_TIE_MARGIN (0.15 observed on the
- * brinewater-1411 fixture), so whenever both appear among the top
- * candidates the kit evidence is consulted regardless of the icon-score
- * gap — the KIT_DECISION_MARGIN still guards the actual re-rank.
+ * Icon twins differing only by the nozzle: on the replay browser's dim rendering
+ * the wrong twin can win by 0.15 (brinewater-1411), far past WEAPON_TIE_MARGIN,
+ * so kit evidence is consulted whenever both are in the top candidates.
  * Symmetric pairs, extended per attested fixture need only.
  */
 const ICON_TWINS: ReadonlyMap<string, string> = new Map([
@@ -170,20 +152,16 @@ const ICON_TWINS: ReadonlyMap<string, string> = new Map([
 ]);
 
 /**
- * The kit-icon evidence must separate the tied kits' entries by at least
- * this much to override the icon ranking: the shape matcher's own confusions
- * (Wave Breaker vs Ink Vac/Reef Slider on ~22px of silhouette) all land
- * inside this band, while true silhouette splits (stamp vs crab) clear it.
+ * Kit evidence must separate tied kits by this much: shape-matcher confusions (Wave Breaker vs Ink
+ * Vac) sit inside, true splits (stamp vs crab) clear it.
  */
 const KIT_DECISION_MARGIN = 0.06;
 
 type KitPart = "sub" | "special";
 
 /**
- * Weapon-icon candidates tied within WEAPON_TIE_MARGIN (plus the leader's
- * ICON_TWIN at any gap) whose kits carry different subs/specials — the only
- * case the kit icon can help with. Returns null when the icon match already
- * decided (or the kit part can't).
+ * Candidates tied within WEAPON_TIE_MARGIN (plus the leader's ICON_TWIN) whose kits differ in
+ * `part`; null otherwise.
  */
 function tiedWeaponsWithDistinctKit(
 	match: WeaponMatch,
@@ -220,11 +198,7 @@ export function tiedWeaponsWithDistinctSubs(
 	return tiedWeaponsWithDistinctKit(match, "sub");
 }
 
-/**
- * Re-rank tied weapon candidates by how well their kits' sub/special
- * matches the tile evidence. Only reorders on decisive evidence; ties whose
- * kit entries all score alike keep the icon-match order.
- */
+/** Re-rank tied candidates by their kit part's tile evidence; only on decisive evidence. */
 function disambiguateWeaponByKit(
 	match: WeaponMatch,
 	evidence: SpecialMatch,

@@ -1,7 +1,4 @@
-/**
- * Finds the series that the event belongs to, matched by any of the series'
- * substrings appearing in the event's name.
- */
+/** The series whose substring appears in the event's name. */
 export function findByEventName<T extends { substringMatches: string[] }>({
 	series,
 	eventName,

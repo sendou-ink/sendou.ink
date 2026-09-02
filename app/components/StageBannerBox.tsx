@@ -4,11 +4,7 @@ import type { StageId } from "~/modules/in-game-lists/types";
 import { stageBannerImageUrl } from "~/utils/urls";
 import styles from "./StageBannerBox.module.css";
 
-/**
- * Box with a stage banner image fading in from the right. The fade color
- * defaults to `--color-bg-high`; override per use with the
- * `--stage-banner-fade` CSS variable.
- */
+/** Box with a stage banner fading in from the right; fade color via `--stage-banner-fade` (default `--color-bg-high`). */
 export function StageBannerBox({
 	stageId,
 	className,

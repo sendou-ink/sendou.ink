@@ -113,8 +113,7 @@ function TournamentBracketsView() {
 		tournamentChannel(tournament.ctx.id),
 		!tournament.ctx.isFinalized,
 	);
-	// results of the loaded bracket (and group) broadcast to their own room, so that
-	// another bracket's or group's live scores do not make this view refetch
+	// own room per bracket (and group) so another's live scores do not make this view refetch
 	useTopicRevalidation(
 		tournamentBracketChannel({
 			tournamentId: tournament.ctx.id,
@@ -275,11 +274,7 @@ export interface BracketsPageState {
 	scrollToMatchId?: number;
 }
 
-/**
- * Scrolls the match referenced by the navigation `state` into view on load, so
- * returning from a match page lands the user at that match's spot in the bracket
- * instead of the top.
- */
+/** Returning from a match page lands at that match's spot in the bracket instead of the top. */
 function useScrollToMatchOnLoad() {
 	const location = useLocation();
 	const scrollToMatchId = (location.state as BracketsPageState | null)
@@ -494,10 +489,8 @@ function SubsPopover({ children }: { children: React.ReactNode }) {
 }
 
 /**
- * Bracket switcher. Only the bracket the loader shipped the match data of is rendered;
- * switching navigates so that the newly selected bracket's data gets loaded, the
- * previously loaded bracket staying up until it arrives. Of a league only the brackets
- * of the division the loader resolved can be switched between.
+ * Only the bracket the loader shipped is rendered; switching navigates to load the new one, the previous
+ * staying up until it arrives. A league switches only within the loader's division.
  */
 function BracketTabs({
 	loadedBracketIdx,

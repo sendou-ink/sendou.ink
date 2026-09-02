@@ -1,13 +1,9 @@
 /**
- * Valibot schemas for the scanner domain — the single source of truth shared by
- * the producer (the scanner match builder/UI in this feature) and the
- * validator (features/scanner-ingest). Every domain field is a sendou.ink id
- * type; the compile-time asserts at the bottom pin each schema to the
- * corresponding core interface so producer and validator cannot drift.
- *
- * The core/worker modules consume only the *types* (type-only imports point
- * the other way), so valibot never enters the worker bundle; runtime validation
- * happens at the boundaries (ingest action, prefill loader).
+ * Valibot schemas for the scanner domain, shared by the producer (match
+ * builder/UI) and the validator (features/scanner-ingest). Every field is a
+ * sendou.ink id type; the compile-time asserts at the bottom pin each schema
+ * to its core interface. core/worker consume only the *types*, so valibot
+ * never enters the worker bundle; validation happens at the boundaries.
  */
 import * as v from "valibot";
 import { abilities } from "~/modules/in-game-lists/abilities";
@@ -124,8 +120,6 @@ export const scannerMatchSchema = v.object({
 		}),
 	),
 });
-
-// ---- compile-time drift protection: schema output <-> core interface ----
 
 type MutuallyAssignable<A, B> = [A] extends [B]
 	? [B] extends [A]

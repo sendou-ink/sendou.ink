@@ -12,11 +12,7 @@ import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 
 type MatchData = SendouQMatchLoaderData["match"];
 
-/**
- * Resolves display names for the two groups in a match, falling back to the
- * translated "Group Alpha"/"Group Bravo" labels when a group is not associated
- * with a registered team.
- */
+/** Display names of a match's two groups, translated "Group Alpha"/"Group Bravo" for ones without a registered team. */
 export function resolveGroupNames(match: MatchData, t: TFunction<["q"]>) {
 	return {
 		alpha: match.groupAlpha.team?.name ?? t("q:match.groupAlpha"),

@@ -395,12 +395,7 @@ function resolveCurrentMinutes({
 	);
 }
 
-/**
- * Resolves the database timestamp that the current "session" (the thing the
- * sub-timer counts up from) started at. For pick/ban matches this is the start
- * of the current pick/ban turn, otherwise it is the time the most recently
- * reported game finished, falling back to the match start.
- */
+/** Start of what the sub-timer counts from: the current pick/ban turn, else the last reported game's end, else match start. */
 function resolveCurrentSessionStartedAt({
 	data,
 	tournament,

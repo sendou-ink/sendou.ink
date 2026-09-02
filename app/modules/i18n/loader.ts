@@ -36,12 +36,7 @@ declare global {
 	}
 }
 
-/**
- * Get the list of namespaces used by the application server-side so they can be
- * set on i18next init options and preloaded before hydration.
- *
- * Vendored from remix-i18next (removed in v8).
- */
+/** Namespaces used server-side, preloaded before hydration. Vendored from remix-i18next (removed in v8). */
 function getInitialNamespaces(): string[] {
 	return Object.values(window.__reactRouterRouteModules).flatMap((route) => {
 		const handle = route?.handle;

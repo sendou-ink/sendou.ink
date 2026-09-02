@@ -29,7 +29,7 @@ const ADMIN_FRIEND_COUNT = 3;
 const STREAM_COUNT = 20;
 
 export type SeededMisc = {
-	/** The admin's friends, who are none of them their teammate. */
+	/** None of them a teammate. */
 	adminFriendIds: number[];
 };
 

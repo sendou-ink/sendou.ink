@@ -4,11 +4,7 @@ import * as ChatRoomResolver from "../ChatRoomResolver.server";
 import { roomListItem } from "../chat-room-list.server";
 import type { ChatRoomListItem } from "../chat-types";
 
-/**
- * The user's open chat rooms with server-computed unread counts. A background
- * resource like the notifications peek: fetched after mount and refetched on
- * `chatMessage` / `roomsChanged` events instead of riding any page loader.
- */
+/** The user's open chat rooms with unread counts; fetched after mount and refetched on `chatMessage` / `roomsChanged` events, never riding a page loader. */
 export const loader = async (): Promise<{ rooms: ChatRoomListItem[] }> => {
 	const user = requireUser();
 

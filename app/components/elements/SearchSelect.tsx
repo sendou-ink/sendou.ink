@@ -56,11 +56,7 @@ interface SearchSelectProps<
 	renderItem: (item: TItem) => React.ReactElement;
 }
 
-/**
- * Presentational autocomplete select shared by the entity search components
- * (e.g. `UserSearch`, `TeamSearch`, `TournamentSearch`). Wire up data fetching
- * with `useEntitySearch` and pass its result as `search`.
- */
+/** Presentational autocomplete select for the entity searches (`UserSearch` etc.); `search` comes from `useEntitySearch`. */
 export function SearchSelect<
 	TItem extends { id: number; name: string },
 	T extends object,
@@ -131,8 +127,7 @@ function PlaceholderItem({
 }) {
 	const { t } = useTranslation(["common"]);
 
-	// for some reason the `renderEmptyState` on ListBox is not working
-	// so doing this as a workaround
+	// workaround for `renderEmptyState` on ListBox not working
 	return (
 		<ListBoxItem
 			textValue="PLACEHOLDER"
@@ -146,11 +141,7 @@ function PlaceholderItem({
 	);
 }
 
-/**
- * One result inside a `SearchSelect`'s list: an optional leading avatar or
- * logo, then the texts. `SearchSelectItemAdditionalText` renders the muted
- * second line, which is hidden while the item is shown in the trigger.
- */
+/** One `SearchSelect` result; `SearchSelectItemAdditionalText` is the muted second line, hidden in the trigger. */
 export function SearchSelectItem({
 	id,
 	textValue,

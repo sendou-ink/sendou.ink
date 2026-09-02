@@ -8,17 +8,12 @@ type Options = {
 	matchesCount: number;
 };
 
-/**
- * Creates a user's starting skill of a season. `mu` is the rating the ordinal every
- * ranking reads is derived from, so a user given a higher `mu` than another ranks
- * above them.
- */
+/** Starting skill of a season. Rankings read the ordinal derived from `mu`, so a higher `mu` ranks higher. */
 export const { create, createMany } = defineFactory({
 	defaults: () => ({ season: 1, ...rating() }),
 	insert: SkillRepository.addInitialSkill,
 	applyOptions: async (skill, { matchesCount }: Options) => {
-		// written directly because production only raises `matchesCount` while reporting
-		// a SendouQ match or finalizing a tournament, and a starting skill has neither
+		// written directly: production only raises `matchesCount` when reporting a match or finalizing a tournament
 		await db
 			.updateTable("Skill")
 			.set({ matchesCount })

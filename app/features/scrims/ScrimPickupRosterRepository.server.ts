@@ -6,9 +6,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { commonUserSelect, jsonArrayFrom } from "~/utils/kysely.server";
 import { SCRIM } from "./scrims-constants";
 
-/**
- * Pick-up rosters recently used by the logged in user, newest first.
- */
+/** Pick-up rosters recently used by the logged in user, newest first. */
 export function findAllOwnRecent() {
 	return db
 		.selectFrom("ScrimPickupRoster")
@@ -33,13 +31,7 @@ export function findAllOwnRecent() {
 		.execute();
 }
 
-/**
- * Marks the given roster as the most recently used pick-up of the logged in user.
- * Reuses the existing roster if the same members were already saved and prunes
- * the rosters that fall out of the most recently used ones.
- *
- * @returns id of the roster that was inserted or reused
- */
+/** Marks the roster as the user's most recently used pick-up, reusing a saved one with the same members and pruning the ones that fall out. @returns id of the inserted or reused roster */
 export function upsertOwn(memberUserIds: number[]) {
 	const ownerId = actorId();
 

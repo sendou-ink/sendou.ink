@@ -1,12 +1,10 @@
 /**
- * Golden-file tests for the StripWeapons evidence event over every fixture
- * in strip-weapons/. Single reads are deliberately weak (the true weapon
- * ranks top-1 only about half the time), so per-slot assertions stay
- * structural — splatted slots skipped, alive slots ranked — and the
- * accuracy assertion is the one production relies on: votes aggregated
- * across the fixtures assign every slot to its scoreboard row. The
- * fixtures are frames of one match of the sendou-triton VoD, whose results
- * screen (and D-column ground truth) attests both sides' row orders.
+ * Golden-file tests for the StripWeapons evidence event. Single reads are
+ * deliberately weak (the true weapon ranks top-1 about half the time), so
+ * per-slot assertions stay structural and the accuracy assertion is the one
+ * production relies on: votes aggregated across the fixtures (frames of one
+ * sendou-triton VoD match, whose results screen attests both row orders)
+ * assign every slot to its scoreboard row.
  */
 
 import assert from "node:assert/strict";
@@ -84,14 +82,12 @@ for (const fixture of fixtures) {
 	});
 }
 
-// The assertion production leans on: aggregated across the match's sampled
-// reads, each side's best-of-24 assignment against the results screen's
-// row weapons places every slot. Row orders attested on the VoD's results
-// screen: left/losing side rows [Snipewriter 5H, Custom Blaster,
-// Splattershot Jr., Splat Roller] vs strip seating [Snipewriter, Jr,
-// Custom Blaster, Roller]; right/winning side rows [.52 Gal, Neo
-// Splash-o-matic, Snipewriter 5H, Planetz Big Swig Roller] vs seating
-// [Planetz, .52, Neo Splash, Snipewriter].
+// The assertion production leans on: aggregated across the match's reads, each
+// side's best-of-24 assignment places every slot. Row orders attested on the
+// results screen: left/losing side rows [Snipewriter 5H, Custom Blaster,
+// Splattershot Jr., Splat Roller] vs strip seating [Snipewriter, Jr, Custom
+// Blaster, Roller]; right/winning side rows [.52 Gal, Neo Splash-o-matic,
+// Snipewriter 5H, Planetz Big Swig Roller] vs seating [Planetz, .52, Neo Splash, Snipewriter].
 test("aggregated votes assign every slot to its scoreboard row", () => {
 	assert.ok(parsed.size >= 2, "needs at least two parsed fixtures");
 	const votes = [0, 1].map(() =>

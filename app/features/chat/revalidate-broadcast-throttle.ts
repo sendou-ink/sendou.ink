@@ -19,22 +19,13 @@ interface ThrottleEntry {
 export const MAX_ENTRIES = 5_000;
 
 /**
- * Rate limits revalidation broadcasts per channel so that a burst of them
- * (e.g. every player of a forming SendouQ match confirming within seconds, or every
- * reported game of a live tournament) fans out to the channel's subscribers at most
- * twice per window instead of once per event — each fan-out makes every subscribed
- * client refetch its loaders at once.
+ * Rate limits revalidation broadcasts per channel so a burst (every player of a forming SendouQ
+ * match confirming, every reported game of a live tournament) fans out at most twice per window:
+ * the first is delivered immediately, the rest coalesce into one trailing broadcast at the
+ * window's end whose scope is the broadest seen and which carries no author or type.
  *
- * The first broadcast of a window is delivered immediately; further broadcasts for
- * the same channel within the window coalesce into a single trailing broadcast at the
- * window's end, so subscribers never miss the final state. A trailing broadcast
- * covers every coalesced one: its scope is widened to the broadest seen and it
- * carries no author (nobody may skip it as their own) and no type.
- *
- * Broadcasts whose type plays a sound (a starting match, a ready check) are left alone:
- * coalescing would cost the player the sound, and they are rare enough not to be worth
- * rate limiting. Soundless types (a reported tournament game) are throttled like the
- * rest — they are the bulk of the traffic the throttle exists for.
+ * Types that play a sound (starting match, ready check) are left alone: coalescing would cost
+ * the sound, and they are rare. Soundless types are the bulk the throttle exists for.
  */
 export function createRevalidateBroadcastThrottle({
 	windowMs,

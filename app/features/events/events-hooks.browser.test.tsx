@@ -165,10 +165,8 @@ function CatchUpHarness({ enabled }: { enabled: boolean }) {
 }
 
 /**
- * Runs the fake clock forward and lets React paint what the fired timers
- * changed. React schedules its render through a MessageChannel, which fake
- * timers do not control, so a message of our own posted afterwards is what
- * tells us the render already happened.
+ * Runs the fake clock forward and lets React paint. React renders through a MessageChannel fake
+ * timers don't control, so a message of our own posted afterwards tells us the render happened.
  */
 const advanceTimers = async (ms = 0) => {
 	await vi.advanceTimersByTimeAsync(ms);

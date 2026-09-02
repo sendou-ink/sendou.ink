@@ -2,11 +2,7 @@ import * as React from "react";
 
 const COPY_SUCCESS_DURATION_MS = 2000;
 
-/**
- * Copies a string to the clipboard and exposes `copySuccess`, which stays
- * `true` for a short while after a successful copy so a confirmation (e.g. a
- * checkmark) can be flashed. `reset` clears `copySuccess` immediately.
- */
+/** `copySuccess` stays `true` for a short while after a copy so a confirmation can be flashed; `reset` clears it. */
 export function useCopyToClipboard(): {
 	copyToClipboard: (value: string) => void;
 	copySuccess: boolean;
@@ -23,11 +19,7 @@ export function useCopyToClipboard(): {
 	return { copyToClipboard, copySuccess, reset };
 }
 
-/**
- * Copies a .png image to the clipboard, exposing `copySuccess` like {@link useCopyToClipboard}.
- * The image is taken as a promise rather than a blob because Safari only allows the write while
- * the click that started it is still being handled, so awaiting the image first would break it.
- */
+/** Like {@link useCopyToClipboard} for a png. Takes a promise since Safari only allows the write during the click that started it. */
 export function useCopyPngToClipboard(): {
 	copyPngToClipboard: (png: Promise<Blob>) => Promise<void>;
 	copySuccess: boolean;

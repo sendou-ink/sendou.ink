@@ -7,7 +7,7 @@ interface Subscriber {
 
 const subscribersByChannel = new Map<string, Set<Subscriber>>();
 
-/** Delivers the event to every live subscriber of the given channels, once per subscriber even when it listens on several of them. */
+/** Delivers the event to every live subscriber of the channels, once each even when listening on several. */
 export function publish(channels: string[], event: ServerEvent): void {
 	const recipients = new Set<Subscriber>();
 	for (const channel of channels) {
@@ -22,7 +22,7 @@ export function publish(channels: string[], event: ServerEvent): void {
 	}
 }
 
-/** Subscribes to the given channels, yielding events as they are published until the signal aborts (pending events are dropped) or the consumer stops iterating. */
+/** Yields the channels' events until the signal aborts (pending events dropped) or the consumer stops iterating. */
 export function subscribe(
 	channels: string[],
 	signal: AbortSignal,

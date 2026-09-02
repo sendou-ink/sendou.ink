@@ -3,14 +3,9 @@ const listeners = new Set<() => void>();
 let historyPatched = false;
 
 /**
- * Subscribes to changes of the current URL search string, from any write
- * channel: react-router navigations (which call `history.pushState` /
- * `history.replaceState` under the hood), our own `history.replaceState`
- * writes and back/forward navigation.
- *
- * Note that our own `history.replaceState` writes (`loader: false` params) are
- * invisible to react-router: `useLocation()` keeps returning the search string
- * of the last navigation. Read those params through this module's hooks.
+ * Fires on any search string change: react-router navigations, our own `history.replaceState` writes and
+ * back/forward. Our `replaceState` writes (`loader: false`) are invisible to `useLocation()`, so read those
+ * params through this module's hooks.
  */
 export function subscribe(listener: () => void) {
 	patchHistoryOnce();

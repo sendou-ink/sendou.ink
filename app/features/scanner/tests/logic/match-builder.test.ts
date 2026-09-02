@@ -784,11 +784,9 @@ test("a confirmed stage change splits even when the misread-looking frame is mid
 	);
 });
 
-// KNOWN LIMITATION (documented, not desired): two consecutive games on the
-// SAME stage with a between-games break shorter than MATCH_GAP_SECONDS merge
-// into one match — no native UI delimits them on casted footage and the
-// simplified minimap carries no signal to split on. Real mode/game detection
-// should replace this.
+// KNOWN LIMITATION: two consecutive games on the SAME stage with a break
+// shorter than MATCH_GAP_SECONDS merge into one match — casted footage has no
+// native delimiter and the minimap carries no signal to split on.
 test("same-stage rematch within the gap window merges into one match (known limitation)", () => {
 	const game1 = [minimap(70), minimap(150)];
 	const game2 = [minimap(380), minimap(460)];
@@ -868,8 +866,6 @@ test("a scoreboard is the preferred weapon/mode source and closes a match", () =
 test("no minimaps and no scoreboard means no match", () => {
 	assert.deepEqual(buildScannerMatches([mapStart(30), mapStart(400)]), []);
 });
-
-// ---- player-status samples ----
 
 const ALL_FALSE = [
 	[false, false, false, false],
@@ -1207,8 +1203,6 @@ test("a losing-side pov swaps minimap-sourced samples into teams order", () => {
 		[true, false, false, false],
 	]);
 });
-
-// ---- strip-slot → scoreboard-row assignment ----
 
 test("strip weapon evidence reorders status slots into scoreboard rows", () => {
 	// strip seating [2010, 40, 3030, 1001] vs scoreboard rows ALPHA

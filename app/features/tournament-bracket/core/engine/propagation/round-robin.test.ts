@@ -60,39 +60,29 @@ describe("Update scores in a round-robin stage", () => {
 	});
 
 	test("unlocks next round matches as soon as both participants are ready", () => {
-		// Round robin with 4 teams: [1, 2, 3, 4]
-		// Round 1: Match 0 (1 vs 2), Match 1 (3 vs 4)
-		// Round 2: Match 2 (1 vs 3), Match 3 (2 vs 4)
-		// Round 3: Match 4 (1 vs 4), Match 5 (2 vs 3)
+		// 4 teams. Round 1: (1 vs 2), (3 vs 4). Round 2: (1 vs 3), (2 vs 4). Round 3: (1 vs 4), (2 vs 3)
 
-		// Initially, only round 1 matches should be ready
 		expect(Engine.matchStatus(data, 0)).toBe("STARTED"); // Ready (1 vs 2)
 		expect(Engine.matchStatus(data, 1)).toBe("STARTED"); // Ready (3 vs 4)
 		expect(Engine.matchStatus(data, 2)).toBe("PENDING"); // Locked (1 vs 3)
 		expect(Engine.matchStatus(data, 3)).toBe("PENDING"); // Locked (2 vs 4)
 
-		// Complete first match of round 1 (1 vs 2)
 		data = Engine.reportResult(data, {
 			matchId: 0,
 			scores: [16, 9], // Team 2 loses
 			winnerSide: "opponent1", // Team 1 wins
 		}).data;
 
-		// Round 2 Match 1 (1 vs 3) should still be locked because team 3 hasn't finished
-		// Round 2 Match 2 (2 vs 4) should still be locked because team 4 hasn't finished
+		// round 2 still locked because teams 3 and 4 haven't finished
 		expect(Engine.matchStatus(data, 2)).toBe("PENDING"); // Still Locked
 		expect(Engine.matchStatus(data, 3)).toBe("PENDING"); // Still Locked
 
-		// Complete second match of round 1 (3 vs 4)
 		data = Engine.reportResult(data, {
 			matchId: 1,
 			scores: [3, 16], // Team 3 loses
 			winnerSide: "opponent2", // Team 4 wins
 		}).data;
 
-		// Now both matches in round 2 should be unlocked
-		// Match 2 (1 vs 3): both team 1 and team 3 have finished round 1
-		// Match 3 (2 vs 4): both team 2 and team 4 have finished round 1
 		expect(Engine.matchStatus(data, 2)).toBe("STARTED"); // Ready
 		expect(Engine.matchStatus(data, 3)).toBe("STARTED"); // Ready
 	});
@@ -193,19 +183,14 @@ describe("Update scores in a round-robin stage", () => {
 	});
 
 	test("unlocks next round matches with BYE participants", () => {
-		// Create a round robin with 3 teams (odd number creates rounds where one team doesn't play)
 		data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3],
 			settings: { groupCount: 1 },
 		});
 
-		// With 3 teams, the rounds look like:
-		// Round 1: Match (teams 3 vs 2) - Team 1 doesn't play
-		// Round 2: Match (teams 1 vs 3) - Team 2 doesn't play
-		// Round 3: Match (teams 2 vs 1) - Team 3 doesn't play
+		// 3 teams, one sits out each round. Round 1: 3 vs 2. Round 2: 1 vs 3. Round 3: 2 vs 1
 
-		// Find the actual match (not BYE vs BYE which doesn't exist)
 		const round1RealMatch = data.match.find(
 			(match) =>
 				match.roundId === data.round[0].id &&
@@ -222,17 +207,13 @@ describe("Update scores in a round-robin stage", () => {
 		expect(Engine.matchStatus(data, round1RealMatch.id)).toBe("STARTED");
 		expect(Engine.matchStatus(data, round2RealMatch.id)).toBe("PENDING"); // initially
 
-		// Complete the only real match in round 1 (teams 3 vs 2)
-		// Team 1 didn't play in round 1
 		data = Engine.reportResult(data, {
 			matchId: round1RealMatch.id,
 			scores: [16, 9],
 			winnerSide: "opponent1",
 		}).data;
 
-		// The real match in round 2 (teams 1 vs 3) should now be unlocked
-		// because team 1 didn't play in round 1 (considered ready)
-		// and team 3 just finished their match
+		// team 1 sat out round 1 (considered ready) and team 3 just finished
 		expect(Engine.matchStatus(data, round2RealMatch.id)).toBe("STARTED");
 	});
 });

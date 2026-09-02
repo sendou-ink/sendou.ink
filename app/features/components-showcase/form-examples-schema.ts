@@ -25,7 +25,6 @@ import {
 } from "~/form/fields";
 
 export const formFieldsShowcaseSchema = v.object({
-	// Text fields
 	requiredText: textField({
 		label: "labels.name",
 		maxLength: 100,
@@ -38,7 +37,6 @@ export const formFieldsShowcaseSchema = v.object({
 		label: "labels.vodTeamSize",
 	}),
 
-	// Text areas
 	requiredTextArea: textArea({
 		label: "labels.description",
 		maxLength: 500,
@@ -48,7 +46,6 @@ export const formFieldsShowcaseSchema = v.object({
 		maxLength: 1000,
 	}),
 
-	// Toggles
 	isPublic: toggle({
 		label: "labels.buildPrivate",
 	}),
@@ -56,7 +53,6 @@ export const formFieldsShowcaseSchema = v.object({
 		label: "labels.isEstablished",
 	}),
 
-	// Selects
 	requiredSelect: select({
 		label: "labels.voiceChat",
 		items: [
@@ -99,7 +95,6 @@ export const formFieldsShowcaseSchema = v.object({
 		],
 	}),
 
-	// Radio & Checkbox groups
 	matchType: radioGroup({
 		label: "labels.scrimMaps",
 		items: [
@@ -118,7 +113,6 @@ export const formFieldsShowcaseSchema = v.object({
 		],
 	}),
 
-	// Date & Time
 	requiredDatetime: datetime({
 		label: "labels.startTime",
 	}),
@@ -134,7 +128,6 @@ export const formFieldsShowcaseSchema = v.object({
 		endLabel: "labels.end",
 	}),
 
-	// Game-specific fields
 	weapons: weaponPool({
 		label: "labels.weaponPool",
 		maxCount: 5,
@@ -150,7 +143,6 @@ export const formFieldsShowcaseSchema = v.object({
 		label: "labels.player",
 	}),
 
-	// Image fields
 	logo: image({
 		label: "labels.logo",
 	}),
@@ -159,7 +151,6 @@ export const formFieldsShowcaseSchema = v.object({
 		dimensions: "thick-banner",
 	}),
 
-	// Custom field
 	customValue: customField(
 		{ initialValue: "custom initial value" },
 		v.optional(v.string()),

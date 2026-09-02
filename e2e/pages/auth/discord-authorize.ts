@@ -3,10 +3,9 @@ import { type BrowserContext, expect } from "@playwright/test";
 const AUTHORIZE_PATHNAME = "/oauth2/authorize";
 
 /**
- * Captures the Discord authorize URL from the login POST's redirect and serves a
- * stub page in its place, so the start of the login flow can be asserted without
- * discord.com being reachable. Redirects are followed inside a single request, so
- * routing discord.com directly would never fire; the capture happens on `/auth`.
+ * Captures the Discord authorize URL from the login POST's redirect and serves a stub page in
+ * its place, so the login flow can be asserted without discord.com. The capture happens on
+ * `/auth` since redirects are followed inside a single request and a discord.com route would never fire.
  */
 export class DiscordAuthorizeInterceptor {
 	private capturedUrl: URL | null = null;

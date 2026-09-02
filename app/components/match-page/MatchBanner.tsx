@@ -215,10 +215,7 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 	);
 }
 
-/**
- * Trigger for the small popovers hung off a banner's info row, e.g. who voted
- * for the map or which team picked it.
- */
+/** Trigger for the small popovers on a banner's info row, e.g. who voted for the map. */
 export function MatchBannerInfoBadge({
 	children,
 }: {

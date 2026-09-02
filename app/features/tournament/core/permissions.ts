@@ -3,14 +3,9 @@ import type { TournamentStaffRole } from "~/features/tournament/tournament-const
 import type { TournamentOrganizationRole } from "~/features/tournament-organization/tournament-organization-constants";
 
 /**
- * Who may run the tournament, following the convention in docs/dev/permissions.md.
- * The half of a tournament's permissions that only depends on the author, the
- * organization's members and the staff, shared with callers that resolve those
- * rows without loading the whole tournament.
- *
- * - `ADMIN`: full control of the tournament
- * - `ORGANIZE`: running the tournament
- * - `MANAGE_MATCHES`: casting, locking and admining individual matches
+ * The half of a tournament's permissions (docs/dev/permissions.md) depending only on author,
+ * organization members and staff, for callers not loading the whole tournament. `ADMIN`: full
+ * control, `ORGANIZE`: running it, `MANAGE_MATCHES`: casting, locking and admining matches.
  */
 export function organizerPermissions(args: {
 	authorId: number;

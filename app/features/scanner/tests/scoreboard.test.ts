@@ -1,9 +1,7 @@
 /**
- * Golden-file tests: run the ScoreboardDetector over every fixture and
- * compare per field, so a failure names the exact field and row with the
- * raw match score (threshold problems must look different from ROI problems).
- *
- * Target one case: pnpm test:scanner -t "xbattle"
+ * Golden-file tests: run the ScoreboardDetector over every fixture and compare
+ * per field, so a failure names the exact field and row with the raw match
+ * score. Target one case: pnpm test:scanner -t "xbattle"
  */
 
 import assert from "node:assert/strict";
@@ -163,10 +161,8 @@ for (const fixture of fixtures) {
 	});
 }
 
-// Mirror of the cross-negative sweeps in
-// suites/scoreboard-battle-log-replay.ts and scoreboard-battle-log.test.ts:
-// the live gate must stay quiet on every replay-browser and battle log
-// positive.
+// Mirror of the cross-negative sweeps in suites/scoreboard-battle-log-replay.ts
+// and scoreboard-battle-log.test.ts: the live gate must stay quiet on their positives.
 for (const fixture of [
 	...loadFixtures("scoreboard-battle-log-replay").filter(
 		(f) => f.expected.event === "ScoreboardBattleLogReplay",

@@ -35,9 +35,7 @@ export const mapModePreferencesValueSchema = v.pipe(
 			}),
 		),
 	}),
-	// Pools for avoided modes are kept in the client form state so they can be
-	// restored if the user later un-avoids the mode, but they must not be
-	// persisted as active pools. Strip them out before the value reaches the action.
+	// avoided modes' pools stay in client state (restorable on un-avoid) but must not persist
 	v.transform((val) => ({
 		...val,
 		pool: val.pool.filter((pool) => {

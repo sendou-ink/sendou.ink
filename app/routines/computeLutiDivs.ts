@@ -9,10 +9,8 @@ import { Routine } from "./routine.server";
 export const LUTI_NAME_PREFIX = "LUTI";
 
 /**
- * Recomputes `User.div` (the user's division in the latest finished LUTI). Looks at the most recent
- * finalized LUTI season and sets the division for every eligible participant (on a team that did
- * not drop out and played at least one match). Users not in that season keep their previous
- * division. Idempotent.
+ * Recomputes `User.div` from the latest finalized LUTI season for every eligible participant (team
+ * did not drop out, played at least one match). Others keep their previous division. Idempotent.
  */
 export const ComputeLutiDivsRoutine = new Routine({
 	name: "ComputeLutiDivs",

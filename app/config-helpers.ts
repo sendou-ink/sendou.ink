@@ -3,11 +3,7 @@ import * as v from "valibot";
 const TRUTHY_ENV_VALUES = ["true", "1", "yes", "on", "y", "enabled"];
 const FALSY_ENV_VALUES = ["false", "0", "no", "off", "n", "disabled"];
 
-/**
- * Builds an `Error` with a readable, multi-line message describing every invalid
- * environment variable. Schemas are keyed by the literal env var name so the
- * issue path points straight at the variable a contributor needs to fix.
- */
+/** `Error` listing every invalid env var; issue paths are the literal variable names. */
 export function formatEnvErrors(
 	scope: "client" | "server",
 	issues: readonly v.BaseIssue<unknown>[],
@@ -24,15 +20,10 @@ export function formatEnvErrors(
 	);
 }
 
-/**
- * String schema that must be set to a non-empty value in production, but falls
- * back to `devFallback` outside of production so contributors can run the app
- * without configuring every integration.
- */
+/** Non-empty string in production, `devFallback` elsewhere. */
 export function requiredInProd(isProd: boolean, devFallback: string) {
-	// The production branch defaults to `""` rather than being required outright
-	// so that a missing variable reaches `minLength` and reports the same
-	// actionable message an empty one does, instead of valibot's "Invalid key".
+	// defaults to `""` so a missing variable reaches `minLength` and gets the same
+	// actionable message as an empty one, instead of valibot's "Invalid key"
 	return isProd
 		? v.pipe(
 				v.optional(v.string(), ""),

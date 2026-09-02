@@ -1,10 +1,6 @@
 import type { TournamentLoaderData } from "../loaders/to.$id.server";
 
-/**
- * Team keys that {@link serializeTournamentLoaderData} drops when null and
- * {@link parseTournamentLoaderData} restores. Null for most teams, so dropping
- * them trims the layout payload of big tournaments by a few gzipped kilobytes.
- */
+/** Team keys dropped when null and restored on parse; null for most teams, saving big tournaments a few gzipped kB. */
 const NULL_COMPACTED_TEAM_KEYS = [
 	"seed",
 	"logoUrl",
@@ -17,15 +13,11 @@ const NULL_COMPACTED_TEAM_KEYS = [
 
 type LayoutTeam = TournamentLoaderData["tournament"]["ctx"]["teams"][number];
 
-/**
- * Serializes the tournament layout loader data, omitting null-valued team keys.
- * Counterpart of {@link parseTournamentLoaderData}, the only way the payload
- * should be read.
- */
+/** Serializes the layout loader data omitting null team keys; read only via {@link parseTournamentLoaderData}. */
 export function serializeTournamentLoaderData(
 	data: TournamentLoaderData,
 ): string {
-	// JSON.stringify so that we skip expensive rr7 data serialization (hot path loader)
+	// plain JSON.stringify skips the expensive rr7 data serialization (hot path loader)
 	return JSON.stringify({
 		...data,
 		tournament: {
@@ -38,10 +30,7 @@ export function serializeTournamentLoaderData(
 	});
 }
 
-/**
- * Parses the tournament layout loader data serialized by
- * {@link serializeTournamentLoaderData}, restoring the null team keys it omitted.
- */
+/** Parses {@link serializeTournamentLoaderData} output, restoring the omitted null team keys. */
 export function parseTournamentLoaderData(raw: string): TournamentLoaderData {
 	const data = JSON.parse(raw) as TournamentLoaderData;
 

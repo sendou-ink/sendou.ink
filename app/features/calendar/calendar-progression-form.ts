@@ -44,8 +44,7 @@ export interface ProgressionFormValue {
 	sources: ProgressionSourceFormValue[];
 }
 
-// extracted so their literal item values don't widen to `string` in the
-// fieldset's inferred value type
+// extracted so the literal item values don't widen to `string` in the fieldset's inferred value type
 const bracketTypeField = select({
 	label: "labels.format",
 	items: [
@@ -202,7 +201,7 @@ function newBracketFormValue(): BracketFormValue {
 	};
 }
 
-/** Progression form field value appended when a new bracket is added: a follow-up bracket sourcing teams from the first bracket. */
+/** Progression entry of a newly added bracket: a follow-up sourcing teams from the first bracket. */
 export function newFollowUpProgressionEntry(): ProgressionFormValue {
 	return { source: "BRACKET", sources: [newProgressionSource()] };
 }
@@ -295,7 +294,7 @@ export function progressionToFormValues(
 	};
 }
 
-/** Does the bracket of the given progression source advance teams via a Swiss early advance threshold (meaning placements are not specified)? */
+/** Whether the source bracket advances teams via a Swiss early advance threshold (so placements are not specified). */
 export function sourceBracketHasEarlyAdvance(
 	brackets: BracketFormValue[],
 	source: ProgressionSourceFormValue,
@@ -304,7 +303,7 @@ export function sourceBracketHasEarlyAdvance(
 	return sourceBracket?.type === "swiss" && sourceBracket.earlyAdvance;
 }
 
-/** Validates the `brackets` + `progression` form values together via {@link Progression.validatedBrackets}, attaching each error to the closest form field. */
+/** Validates `brackets` + `progression` via {@link Progression.validatedBrackets}, attaching each error to the closest field. */
 export function validateBracketProgressionFormValues(
 	brackets: BracketFormValue[],
 	progression: ProgressionFormValue[],
@@ -373,8 +372,7 @@ function progressionErrorPaths(
 		case "GAP_IN_PLACEMENTS":
 		case "CYCLIC_PROGRESSION":
 			return error.bracketIdxs.map((idx) => ["progression", idx, "sources"]);
-		// a bracket can have many sources but the error only identifies the bracket,
-		// so the message attaches to the sources list rather than one source's placements
+		// the error only identifies the bracket, not which of its sources, so it attaches to the sources list
 		case "PLACEMENTS_PARSE_ERROR":
 		case "TOO_MANY_PLACEMENTS":
 		case "PLACEMENT_TOO_HIGH":

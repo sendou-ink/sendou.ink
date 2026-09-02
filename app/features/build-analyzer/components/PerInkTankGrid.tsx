@@ -233,8 +233,7 @@ function calculateGrid({
 	return withColors;
 }
 
-// this is a performance optimization over simply calling "buildStats"
-// as it would be doing a lot of unnecessary work
+// cheaper than calling "buildStats", which would do a lot of unnecessary work
 function inkTankOptionsWhenNSubsUsed({
 	issAP,
 	ismAP,
@@ -330,9 +329,8 @@ function generateHexCode({
 	const clampedValue = Math.max(minValue, Math.min(value, maxValue));
 	const normalizedPosition = (clampedValue - minValue) / (maxValue - minValue);
 
-	// Adjust saturation and brightness to lighten the colors
-	const saturationFactor = 0.5; // Adjust this to control the saturation
-	const brightnessFactor = 0.8; // Adjust this to control the brightness
+	const saturationFactor = 0.5;
+	const brightnessFactor = 0.8;
 
 	const red =
 		Math.floor(255 * (1 - normalizedPosition) * saturationFactor) +

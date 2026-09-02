@@ -87,11 +87,9 @@ function QLookingPage() {
 	const data = useLoaderData<typeof loader>();
 	const [joining] = useSearchParam(qLookingSearchParams, "joining");
 
-	// Pool-shape changes (a group joining/leaving, a morph, a match starting) are
-	// broadcast to this shared room so every looking client revalidates.
+	// pool-shape changes (a group joining/leaving, a morph, a match starting)
 	useTopicRevalidation(SENDOUQ_LOOKING_CHANNEL);
-	// Group-specific updates (e.g. a received like) are pushed to the group's own
-	// dedicated topic.
+	// group-specific updates (e.g. a received like)
 	useTopicRevalidation(
 		data.ownGroup ? sqGroupChannel(data.ownGroup.id) : "",
 		Boolean(data.ownGroup),
@@ -487,11 +485,9 @@ function Groups() {
 }
 
 /**
- * Floats groups a teammate suggested to the very top, then groups the viewer has
- * a positive private note on up and groups with a negative note down, while
- * preserving the server's tier/activity ordering within each bucket and keeping
- * full (censored) groups last. The note sentiment is read from the already-loaded
- * `userCards` data so the server does not need to attach notes to group members.
+ * Floats teammate-suggested groups to the top, then positive private note groups up and negative
+ * ones down, keeping the server's order within each bucket and full (censored) groups last. Note
+ * sentiment comes from the already-loaded `userCards`.
  */
 function sortGroups<T extends { id: number; members?: { id: number }[] }>(
 	groups: T[],

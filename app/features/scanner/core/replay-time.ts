@@ -1,14 +1,12 @@
 /**
- * Turns the replay browser's on-screen recording timestamp (locale-formatted
- * by the console, e.g. "3/7/2026 22:28", "7.3.2026 22:28", "2026/3/7 22:28")
- * into a UTC epoch, read in the local timezone. The string carries no
- * timezone or day/month-order marker, so ambiguous day-vs-month (both ≤ 12)
- * resolves in three steps: hour 0 or ≥13 proves a 24h clock (12h consoles
- * render AM/PM) and 24h locales are near-universally day-first, except
- * en-US which is 12h; failing that, the browser locale's date-part order
- * decides; finally, since the console's locale and the browser's can still
- * disagree, a recency check swaps day/month when that reading lands near now
- * while the un-swapped one doesn't (replays are near-always ingested soon
+ * Turns the replay browser's on-screen recording timestamp (console-locale
+ * formatted: "3/7/2026 22:28", "7.3.2026 22:28", "2026/3/7 22:28") into a UTC
+ * epoch in the local timezone. The string carries no timezone or day/month
+ * marker, so an ambiguous day-vs-month (both ≤ 12) resolves in three steps:
+ * hour 0 or ≥13 proves a 24h clock, and 24h locales are near-universally
+ * day-first (en-US is 12h); failing that, the browser locale's date-part
+ * order decides; finally a recency check swaps day/month when that reading
+ * lands near now while the un-swapped one doesn't (replays are ingested soon
  * after recording).
  */
 
@@ -23,10 +21,9 @@ const FUTURE_SLACK_MS = 24 * 60 * 60 * 1000;
 type Ymd = { year: number; month: number; day: number };
 
 /**
- * Parses a replay timestamp into UTC epoch milliseconds, or null when the
- * string doesn't form a valid date. `locale` defaults to the environment's;
- * `now` (default `Date.now()`) anchors the recency disambiguation — pass the
- * moment the replay screen was on-screen, not the send time.
+ * Parses a replay timestamp into UTC epoch ms, or null when invalid. `now`
+ * (default `Date.now()`) anchors the recency disambiguation — pass the moment
+ * the replay screen was on-screen, not the send time.
  */
 export function parseReplayTimestamp(
 	raw: string,
@@ -39,9 +36,8 @@ export function parseReplayTimestamp(
 	const minutes = Number(m[5]!);
 	if (hours > 23 || minutes > 59) return null;
 
-	// hour 0 or ≥13 only occurs on a 24h clock, and 24h locales are
-	// near-universally day-first; only an ambiguous hour falls back to the
-	// browser locale, which may not match the console's
+	// hour 0 or ≥13 only occurs on a 24h clock, and 24h locales are near-universally
+	// day-first; only an ambiguous hour falls back to the browser locale
 	const is24hClock = hours === 0 || hours >= 13;
 	const resolved = resolveDateParts(
 		dateParts,
@@ -88,12 +84,11 @@ function toEpoch(
 }
 
 /**
- * Splits the three date segments into year/month/day. The year is the
- * segment with ≥3 digits (leading for ja-style "2026/3/7", trailing
- * otherwise); with no such segment the last one is a 2-digit year. Day vs
- * month resolves by magnitude when one exceeds 12, else by the caller's
- * order guess (year-first formats are month-first — no locale writes Y/D/M);
- * a guessed split also reports the swapped reading for the recency check.
+ * Splits the three date segments into year/month/day. The year is the segment
+ * with ≥3 digits (leading for ja-style, trailing otherwise), else the last one
+ * as a 2-digit year. Day vs month resolves by magnitude when one exceeds 12,
+ * else by the caller's order guess (year-first formats are month-first); a
+ * guessed split also reports the swapped reading for the recency check.
  */
 function resolveDateParts(
 	parts: number[],

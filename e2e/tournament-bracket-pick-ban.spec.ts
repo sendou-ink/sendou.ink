@@ -131,7 +131,6 @@ test.describe("Tournament bracket pick/ban", () => {
 			],
 		};
 
-		// 1) Start bracket with CUSTOM pick/ban flow
 		await impersonate(page);
 
 		const brackets = new TournamentBracketsPage(page);
@@ -144,7 +143,7 @@ test.describe("Tournament bracket pick/ban", () => {
 
 		const match = new TournamentMatchPage(page);
 
-		// 2) PreSet: Higher seed bans 2 maps
+		// PreSet: higher seed bans 2 maps
 		await impersonate(page, higherSeedCaptainId);
 		await match.goto({ tournamentId: tournament.id, matchId });
 		await match.openTab("action");
@@ -154,7 +153,7 @@ test.describe("Tournament bracket pick/ban", () => {
 		await expect(match.locators.lastBanText).toBeVisible();
 		await match.pickBan();
 
-		// 3) PreSet: Lower seed bans 2 maps
+		// PreSet: lower seed bans 2 maps
 		await impersonate(page, lowerSeedCaptainId);
 		await match.goto({ tournamentId: tournament.id, matchId });
 		await match.openTab("action");
@@ -164,21 +163,21 @@ test.describe("Tournament bracket pick/ban", () => {
 		await expect(match.locators.lastBanText).toBeVisible();
 		await match.pickBan();
 
-		// 4) Roll auto-executed after last ban; report game 1 score
+		// the roll auto-executes after the last ban
 		await expect(match.locators.stageBanner).toBeVisible();
 		await match.openTab("action");
 
 		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
 		await expect(match.score([1, 0])).toBeVisible();
 
-		// 5) PostGame: Winner (the alpha team, whose captain is still impersonated) bans 2 maps
+		// PostGame: the winner (alpha, whose captain is still impersonated) bans 2 maps
 		await expect(match.locators.banAMapText).toBeVisible();
 		await match.pickBan();
 
 		await expect(match.locators.lastBanText).toBeVisible();
 		await match.pickBan();
 
-		// PostGame: Loser (the bravo team) picks a map
+		// PostGame: the loser (bravo) picks a map
 		await impersonate(page, higherSeedCaptainId);
 		await match.goto({ tournamentId: tournament.id, matchId });
 		await match.openTab("action");
@@ -186,14 +185,14 @@ test.describe("Tournament bracket pick/ban", () => {
 		await expect(match.locators.pickAMapText).toBeVisible();
 		await match.pickBan();
 
-		// 6) Undo game 1 score — also deletes postGame pick/ban events
+		// undoing game 1 also deletes the postGame pick/ban events
 		await expect(match.locators.stageBanner).toBeVisible();
 		await match.undoLastReport();
 
 		await expect(match.score([0, 0])).toBeVisible();
 		await expect(match.locators.stageBanner).toBeVisible();
 
-		// 7) Re-report game 1 and verify postGame cycle restarts
+		// the postGame cycle restarts
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
 		await expect(match.score([1, 0])).toBeVisible();

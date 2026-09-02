@@ -2,11 +2,7 @@ import type { OgImagePage } from "~/utils/urls";
 
 export const CHANGELOG_FOLDER_PATH = "changelog";
 
-/**
- * Discord emoji shortcode per nav item, either one uploaded to the server or a
- * built-in. Typing `:name:` in the Discord client resolves to the emoji, so the
- * generated post is copy-pasteable. Most match the nav item name but not all.
- */
+/** Discord emoji shortcode per nav item (server-uploaded or built-in), so the generated post is copy-pasteable. */
 export const DISCORD_EMOJI_NAMES: Record<OgImagePage, string> = {
 	settings: "settings",
 	sendouq: "sendouq",

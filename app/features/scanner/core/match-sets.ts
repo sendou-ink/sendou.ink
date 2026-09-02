@@ -1,28 +1,22 @@
 /**
- * Divide a chronological run of ScannerMatches into sets — consecutive games
- * played by the same eight players (a Bo3/Bo5 between two teams). Rosters
- * are compared by in-game names pooled across both teams (scoreboards list
- * winners first, so team sides swap between games): names match fuzzily
- * because two OCR reads of the same name can differ by a glyph or two, and
- * one differing player is tolerated as a sub between games. A match with no
- * readable names is inconclusive and never opens a new set.
+ * Divides a chronological run of ScannerMatches into sets — consecutive games
+ * by the same eight players. Rosters are compared by names pooled across both
+ * teams (sides swap between games), fuzzily since two OCR reads of a name can
+ * differ by a glyph or two; one differing player is tolerated as a sub. A
+ * match with no readable names is inconclusive and never opens a new set.
  */
 import type { ScannerMatch } from "./scanner-match";
 import { matchKey, rankBy } from "./text";
 
-/**
- * closestBy score two reads of the same name must reach — 0.7 forgives one
- * bad glyph on a four-letter name, two on longer ones.
- */
+/** closestBy score two reads of a name must reach: 0.7 forgives one bad glyph on four letters. */
 const SAME_NAME_SCORE = 0.7;
 
 /** Players allowed to differ between consecutive games of one set. */
 const MAX_SUBS_PER_GAME = 1;
 
 /**
- * For each match its 1-based set number, aligned by index with the input;
- * matches must be in chronological order. Numbers only ever step up by one:
- * a match whose roster disagrees with the current set's opens the next set.
+ * Each match's 1-based set number, aligned by index with the (chronological)
+ * input. A roster disagreeing with the current set's opens the next set.
  */
 export function assignMatchSets(matches: readonly ScannerMatch[]): number[] {
 	const setNumbers: number[] = [];
@@ -48,9 +42,8 @@ function rosterNames(match: ScannerMatch): string[] {
 
 /**
  * Whether two rosters read as the same eight players: every name of the
- * smaller roster must find a partner in the other, short of
- * MAX_SUBS_PER_GAME misses. Partial reads compare only what both saw, so a
- * minimap-sourced half-roster still chains a set together.
+ * smaller roster must find a partner in the other, short of MAX_SUBS_PER_GAME
+ * misses. Partial reads compare only what both saw.
  */
 function sameRoster(a: readonly string[], b: readonly string[]): boolean {
 	const remaining = [...b];
@@ -69,11 +62,10 @@ function sameRoster(a: readonly string[], b: readonly string[]): boolean {
 }
 
 /**
- * Whether two reads of a name agree on a leading prefix long enough that the
- * difference reads as tail damage, not another player. CJK names run 2-4
- * glyphs, so a single truncated (れた → れ) or garbled (ほった → ほっ′`)
- * tail glyph sinks the edit-distance score below any usable threshold while
- * the OCR damage sits, as it nearly always does, at the end of the row.
+ * Whether two reads of a name share a prefix long enough that the difference
+ * reads as tail damage. CJK names run 2-4 glyphs, so one truncated (れた → れ)
+ * or garbled (ほった → ほっ′`) tail glyph sinks the edit-distance score below
+ * any usable threshold, while OCR damage nearly always sits at the row's end.
  */
 function sharedPrefixRead(a: string, b: string): boolean {
 	const keyA = matchKey(a);

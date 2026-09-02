@@ -34,7 +34,6 @@ export async function calculateMatchSkills({
 		const oldWinnerRatings = winner.map((userId) => ratings.user(userId));
 		const oldLoserRatings = loser.map((userId) => ratings.user(userId));
 
-		// individual skills
 		const [winnerTeamNew, loserTeamNew] = rate([
 			oldWinnerRatings.map(({ rating }) => rating),
 			oldLoserRatings.map(({ rating }) => rating),
@@ -64,7 +63,6 @@ export async function calculateMatchSkills({
 	}
 
 	{
-		// team skills
 		const oldWinnerGroupRating = ratings.team(winnerTeamIdentifier);
 		const oldLoserGroupRating = ratings.team(loserTeamIdentifier);
 

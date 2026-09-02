@@ -2,11 +2,8 @@ import * as R from "remeda";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 
 /**
- * Maps each roundId to the cumulative number of teams eliminated by the end of
- * that round, counting one elimination per non-bye match. This is a structural
- * property of the bracket that does not depend on which matches have already
- * been reported, so teams tied at the same placement resolve to the same
- * placement even while some of their round's matches are still in progress.
+ * roundId -> teams eliminated by the end of that round (one per non-bye match). Structural, independent
+ * of reported matches, so tied teams resolve to the same placement while their round is in progress.
  */
 export function cumulativeEliminationsByRound(
 	matches: BracketData["match"],

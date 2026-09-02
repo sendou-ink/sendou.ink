@@ -168,8 +168,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 			userId: member.userId,
 			inGameName: member.inGameName,
 			tournamentName: member.tournamentName,
-			// fresh key so the member rows remount and their user-search inputs
-			// re-resolve when importing a different team over a previous import
+			// fresh key so member rows remount and re-resolve their user search when importing over a previous import
 			_key: crypto.randomUUID(),
 		}));
 		importedValues.ownerId = owner ? String(owner.userId) : "";
@@ -188,9 +187,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 			setValue(name, value);
 		}
 
-		// if the form was already submitted, recompute against the imported values
-		// so stale "required" errors don't linger on now-filled fields; before any
-		// submit there are no errors to surface yet
+		// after a submit, recompute against the imported values so stale "required" errors don't linger
 		if (hasSubmitted) {
 			revalidateAll({ ...values, ...importedValues });
 		}
@@ -206,9 +203,8 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 			label: usernames[member.userId] ?? `${t("forms:labels.player")} ${i + 1}`,
 		}));
 
-	// the non-clearable Captain <select> always displays a member as selected, so
-	// keep ownerId in sync with it: default to the first member and reset when the
-	// current captain is no longer on the roster (e.g. their row was removed)
+	// the non-clearable Captain <select> always shows a member as selected, so keep ownerId in sync:
+	// default to the first member, reset when the current captain left the roster
 	const ownerOptionsKey = ownerOptions.map((option) => option.value).join(",");
 	React.useEffect(() => {
 		if (ownerOptions.length === 0) return;
@@ -227,8 +223,7 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 			<FormField name="linkedTeam" />
 			{linkedTeam ? (
 				<FormField
-					// remount the search when a different team is imported so it picks up
-					// the new initialTeam instead of clearing its stale selection
+					// remount on import so the search picks up the new initialTeam instead of clearing
 					key={team?.team?.id ?? importedLinkedTeam?.id ?? "new"}
 					name="teamId"
 					options={
@@ -275,17 +270,14 @@ function RegistrationFields({ team }: { team: TournamentTeamFull | null }) {
 							name={`${itemName}.userId`}
 							options={
 								{
-									// capture the picked user's name so the Captain dropdown can
-									// label them instead of falling back to "Player N"
+									// the Captain dropdown labels by name instead of "Player N"
 									onUserSelected: (user) => {
 										if (!user) return;
 										setUsernames((prev) => ({ ...prev, [user.id]: user.name }));
-										// prefill the in-game name from the user's existing one
 										if (requireInGameNames && user.inGameName) {
 											setValue(`${itemName}.inGameName`, user.inGameName);
 										}
-										// the field is saved as is, so it has to show the name the
-										// user already has or saving would clear it
+										// saved as is, so it must show the user's current name or saving would clear it
 										if (canEditTournamentNames) {
 											setValue(
 												`${itemName}.tournamentName`,
@@ -330,8 +322,7 @@ function MapPoolField({
 	const { t } = useTranslation(["common"]);
 	const validationStatus = useCounterPickMapPoolValidationStatus(value);
 
-	// the pickers are a group of buttons rather than one control, so there is no
-	// input for the label to point at
+	// the pickers are a group of buttons, so there is no input for the label to point at
 	return (
 		<div className="stack sm">
 			<Label spaced={false}>{t("common:maps.mapPool")}</Label>
@@ -418,9 +409,8 @@ function ImportTeamFields({
 	const teams = fetcher.data?.teams ?? [];
 	teamsRef.current = teams;
 
-	// the non-clearable native select visually shows the first option, so keep the
-	// form value in sync with it: default to the first team and reset when the
-	// loaded set of teams changes (e.g. after picking a different tournament)
+	// the non-clearable native select shows the first option, so keep the form value in sync:
+	// default to the first team, reset when the loaded teams change
 	const teamIdsKey = teams.map((team) => team.id).join(",");
 	React.useEffect(() => {
 		if (teams.length === 0) return;

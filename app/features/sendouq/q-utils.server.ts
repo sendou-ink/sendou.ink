@@ -2,7 +2,6 @@ import { TIERS } from "~/features/mmr/mmr-constants";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 
-/** Error class for SendouQ (expected) errors */
 export class SendouQError extends Error {
 	constructor(message: string) {
 		super(message);

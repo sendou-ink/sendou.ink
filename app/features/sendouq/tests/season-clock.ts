@@ -19,11 +19,7 @@ const insideASeason = new Date(
 	),
 );
 
-/**
- * Pins the suite's clock inside a season, for the tests whose subject only happens
- * while one is running. Seasons are a fixed list, so between the last one ending and
- * the next one being added every such test would otherwise fail.
- */
+/** Pins the suite's clock inside a season; seasons are a fixed list, so between the last ending and the next being added such tests would otherwise fail. */
 export function pinClockInsideSeason() {
 	beforeAll(() => {
 		vi.useFakeTimers({ toFake: ["Date"] });

@@ -1,10 +1,8 @@
 /**
- * Connect death events to scoreboard players: a death overlay shows the
- * killer's splash-tag name, weapon, and full gear-ability grid, so every
- * death in a match reveals one enemy player's build. Deaths are attributed
- * to the next scoreboard-type event in the timeline (a match's deaths
- * always precede its results screen), and matched to a player row by name
- * and weapon id.
+ * Connects death events to scoreboard players: a death overlay shows the
+ * killer's splash-tag name, weapon and full gear-ability grid, so every death
+ * reveals one enemy build. Deaths are attributed to the next scoreboard-type
+ * event in the timeline and matched to a player row by name and weapon id.
  */
 
 import type {
@@ -36,10 +34,9 @@ interface BuildRead {
 }
 
 /**
- * Match a build read to a player row. Both signals are OCR output, so
- * neither is trusted alone unless it is unambiguous: a combined name+weapon
- * hit wins, then a unique name hit, then a unique weapon hit (two players on
- * the same weapon with a misread name stay unattributed).
+ * Matches a build read to a player row. Both signals are OCR output, so a
+ * combined name+weapon hit wins, then a unique name hit, then a unique weapon
+ * hit (two players on the same weapon with a misread name stay unattributed).
  */
 function matchPlayer(
 	players: readonly HarvestablePlayer[],
@@ -63,10 +60,7 @@ function matchPlayer(
 	return null;
 }
 
-/**
- * Harvest the builds one match's death events reveal: each death with a
- * readable ability grid is attributed to a scoreboard player row.
- */
+/** Harvests the builds a match's deaths reveal, attributed to scoreboard player rows. */
 export function harvestAbilities(
 	players: readonly HarvestablePlayer[],
 	deaths: readonly DeathData[],
@@ -80,10 +74,7 @@ export function harvestAbilities(
 	return abilities;
 }
 
-/**
- * A death as a build read: scoreboard rows carry main-weapon ids, so a
- * sub/special kill credit says nothing about which main the killer holds.
- */
+/** A death as a build read: a sub/special kill credit says nothing about the killer's main. */
 function deathRead(death: DeathData): BuildRead {
 	return {
 		name: death.name,
@@ -95,11 +86,9 @@ function deathRead(death: DeathData): BuildRead {
 }
 
 /**
- * Harvest the gear mains one side's minimap cards reveal: a card shows the
- * three mains only, and is attributed to a player row the way a death is —
- * refusing an ambiguous read rather than guessing a seat. Cards come and go
- * across a match's frames (cross-outs, absent slots), so each gear slot
- * keeps the first badge that identified it.
+ * Harvests the gear mains one side's minimap cards reveal (three mains only),
+ * attributed like a death — refusing ambiguous reads. Cards come and go across
+ * frames (cross-outs, absent slots), so each slot keeps its first badge.
  */
 export function harvestCardMains(
 	players: readonly HarvestablePlayer[],
@@ -134,9 +123,8 @@ function betterRead(
 }
 
 /**
- * For each scoreboard/replay event, harvest abilities from the death events
- * since the previous scoreboard. Keyed by event object identity; events
- * without any attributed death are absent from the result.
+ * Per scoreboard/replay event, the abilities harvested from the deaths since the
+ * previous scoreboard; keyed by event identity, absent when none attributed.
  */
 export function connectAbilities(
 	events: readonly DetectedEvent[],

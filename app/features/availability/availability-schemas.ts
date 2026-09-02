@@ -82,9 +82,8 @@ const teamEventFields = {
 	startsAt: datetime({
 		label: "labels.start",
 		min: () => sub(new Date(), { hours: 1 }),
-		// end of the next week, the furthest the schedule shows; the hours are
-		// slack for server-side validation running in another timezone than the
-		// viewer's week
+		// end of the next week, the furthest the schedule shows, plus hours of slack for server-side
+		// validation running in another timezone than the viewer's
 		max: () =>
 			add(
 				startOfWeek(addWeeks(new Date(), AVAILABILITY.WEEK_HORIZON), {

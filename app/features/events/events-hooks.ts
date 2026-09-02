@@ -7,15 +7,13 @@ import type { ServerEvent } from "~/features/events/events-types";
 
 // how long the page must have been away for coming back to it to be worth a catch-up
 const CATCH_UP_AWAY_MS = 20 * 1000;
-// how often the page marks itself as running in the foreground; the gap left in these
-// ticks is what an absence is measured by, so it bounds how much of one goes unnoticed
+// foreground heartbeat; an absence is measured by the gap in these ticks, so this bounds how much of one goes unnoticed
 const FOREGROUND_TICK_MS = 5 * 1000;
 // how often to catch up while the event stream is down and nothing can arrive over it
 const EVENTS_DOWN_CATCH_UP_MS = 2 * 60 * 1000;
 // spreads out the catch-ups of the many clients that reconnect at once after a deploy
 const CATCH_UP_MAX_JITTER_MS = 3_000;
-// a first connect slower than this did not happen as part of page load, so what was
-// published between the two can only be caught up on
+// a first connect slower than this was not part of page load, so what was published in between must be caught up on
 const LATE_FIRST_CONNECT_MS = 2_000;
 
 /** Keeps the shared SSE connection open while mounted and enabled. */
@@ -54,14 +52,10 @@ export function useEventsTopic(topic: string, enabled = true) {
 }
 
 /**
- * Calls `onCatchUp` whenever events may have been missed: the stream came back up, the
- * page was returned to after being away long enough, or the stream is down and nothing
- * can arrive over it at all. Returns the same trigger for callers that have a reason of
- * their own to catch up.
- *
- * Every catch-up is jittered so the clients that reconnect together after a deploy do
- * not all refetch in the same instant, and one triggered while another is already
- * scheduled is absorbed into it.
+ * Calls `onCatchUp` whenever events may have been missed: the stream came back up, the page
+ * returned after being away long enough, or the stream is down. Returns the trigger for callers
+ * with reasons of their own. Catch-ups are jittered so clients reconnecting together after a
+ * deploy don't refetch at once; one triggered while another is scheduled is absorbed into it.
  */
 export function useEventStreamCatchUp({
 	enabled,
@@ -113,10 +107,8 @@ export function useEventStreamCatchUp({
 }
 
 /**
- * Calls `onConnect` every time the event stream comes up, skipping a first connect
- * that page load itself waited for: only what happened while nothing was listening
- * needs catching up on. A first connect that took longer than that left a window
- * whose events reach the page no other way.
+ * Calls `onConnect` every time the stream comes up, skipping a first connect page load itself
+ * waited for: only what happened while nothing was listening needs catching up on.
  */
 function useCatchUpOnConnect(
 	enabled: boolean,
@@ -127,8 +119,7 @@ function useCatchUpOnConnect(
 	const listeningSinceRef = React.useRef<number | null>(null);
 
 	React.useEffect(() => {
-		// while disabled nothing can be missed, so the wait for the connect that
-		// follows starts over from the moment listening resumes
+		// while disabled nothing can be missed, so the wait for the next connect restarts when listening resumes
 		if (!enabled) {
 			listeningSinceRef.current = null;
 			return;
@@ -155,13 +146,10 @@ let foregroundTicker: ReturnType<typeof setInterval> | null = null;
 let lastForegroundTickAt = 0;
 
 /**
- * Notifies every listener when the page comes back from being away long enough that the
- * event stream can not be trusted to have delivered everything: a backgrounded tab, an
- * app the phone suspended, a sleeping device. Returns an unsubscribe function.
- *
- * Time away is the gap between the ticks of a heartbeat that only runs while the page is
- * in the foreground, since a suspended page is never handed the transition to hidden that
- * a return would otherwise be measured against.
+ * Notifies listeners when the page comes back from being away long enough (backgrounded tab,
+ * suspended app, sleeping device) that the stream can't be trusted to have delivered everything.
+ * Time away is the gap between foreground heartbeat ticks, since a suspended page never gets
+ * the transition to hidden a return could otherwise be measured against. Returns an unsubscribe.
  */
 function subscribeToPageReturn(listener: () => void) {
 	returnListeners.add(listener);
@@ -190,8 +178,7 @@ function noticeReturn() {
 	const awayFor = Date.now() - lastForegroundTickAt;
 	lastForegroundTickAt = Date.now();
 
-	// a quick tab away can not have missed anything the stream would not still
-	// deliver, and catching up for it would be pure server load
+	// a quick tab away misses nothing the stream won't still deliver; catching up would be pure server load
 	if (awayFor < CATCH_UP_AWAY_MS) return;
 
 	for (const listener of returnListeners) {

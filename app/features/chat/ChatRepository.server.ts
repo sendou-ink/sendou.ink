@@ -17,11 +17,9 @@ import type { ChatRoomType, PersistedSystemMessageType } from "./chat-types";
 const MESSAGES_DEFAULT_LIMIT = 500;
 
 /**
- * How far back the room list looks for the user's SendouQ memberships. An
- * unmatched group goes inactive an hour after its last action and a match room
- * lives a day, so no open SQ room hangs off a membership older than this. The
- * bound is what keeps a veteran's thousands of past groups out of the lookup —
- * raise it rather than let a room quietly stop showing up.
+ * How far back the room list looks for SendouQ memberships: an unmatched group goes inactive
+ * after an hour and a match room lives a day, so no open room hangs off an older membership.
+ * Keeps a veteran's thousands of past groups out of the lookup — raise rather than let a room vanish.
  */
 const SQ_MEMBERSHIP_LOOKBACK_HOURS = 72;
 
@@ -37,13 +35,9 @@ export async function findAllRoomsByIds(roomIds: number[]) {
 }
 
 /**
- * Ids of the rooms the user currently participates in (unexpired and unclosed).
- * Membership-first: every branch starts from the user's own membership rows and
- * probes forward to the room, so the cost tracks how much the user takes part in
- * rather than how many rooms the site has open. Driving from the open room set
- * instead costs the same for every user, participant or not, and grows with the
- * site. The SendouQ branches narrow that further to
- * {@link SQ_MEMBERSHIP_LOOKBACK_HOURS}, past which no room can still be open.
+ * Ids of the open rooms the user participates in. Membership-first: every branch starts from the
+ * user's own membership rows so the cost tracks their participation, not the site's open room
+ * count. SendouQ branches narrow further to {@link SQ_MEMBERSHIP_LOOKBACK_HOURS}.
  */
 export async function findAllOpenRoomIdsByUserId(
 	userId: number,
@@ -380,11 +374,7 @@ export async function closeExpiredRooms(expiredBefore: Date) {
 	return Number(result.numUpdatedRows);
 }
 
-/**
- * Deletes rooms no owner row points at any more, returning how many. Backstop
- * for owner deletes that missed their room. A room's type names the one table
- * that can own it, so each room is checked against that table alone.
- */
+/** Deletes rooms no owner row points at any more (backstop for owner deletes that missed their room), returning how many. A room's type names its one owner table. */
 export async function deleteOrphanedRooms() {
 	const result = await db
 		.deleteFrom("ChatRoom")

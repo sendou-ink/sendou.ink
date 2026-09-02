@@ -51,12 +51,7 @@ export interface FormContextValue<T extends v.ObjectEntries = v.ObjectEntries> {
 	fetcherState: "idle" | "loading" | "submitting";
 }
 
-/**
- * Holds the frequently-changing form state (values and client errors) outside
- * React state so that a change to one field does not re-render the whole form.
- * Fields subscribe to their own slice via `useSyncExternalStore` and only
- * re-render when that slice changes.
- */
+/** Values and client errors live outside React state; fields subscribe to their own slice via `useSyncExternalStore`. */
 interface FormStore {
 	values: Record<string, unknown>;
 	clientErrors: Partial<Record<string, string>>;
@@ -99,56 +94,29 @@ type BaseFormProps<T extends v.ObjectEntries> = {
 	submitButtonVariant?: SendouButtonProps["variant"];
 	submitButtonSize?: SendouButtonProps["size"];
 	revalidateRoot?: boolean;
-	/**
-	 * Replaces the default form layout classes entirely (it does not merge with
-	 * them), so `fullWidth` has no effect when this is set.
-	 */
+	/** Replaces the default layout classes entirely, so `fullWidth` has no effect when set. */
 	className?: string;
-	/**
-	 * When true, opts out of the default centered, max-width layout so the form
-	 * expands to fill its parent container. Use when embedding a form inside a
-	 * layout that already controls width/alignment.
-	 */
+	/** Opts out of the default centered max-width layout to fill the parent. */
 	fullWidth?: boolean;
-	/**
-	 * When true, renders the form for viewing only: every field is disabled and
-	 * the submit button is hidden.
-	 */
+	/** Every field disabled and the submit button hidden. */
 	readOnly?: boolean;
 	secondarySubmit?: React.ReactNode;
-	/**
-	 * Hides the submit button while the current values match, for forms with a
-	 * branch that has nothing to submit (e.g. a choice that only shows guidance).
-	 */
+	/** Hides the submit button while the values match, for branches with nothing to submit. */
 	hideSubmitButtonWhen?: (
 		values: Partial<v.InferInput<v.ObjectSchema<T, undefined>>>,
 	) => boolean;
-	/**
-	 * Called once after a server submission completes successfully (the action
-	 * returned without field errors). Useful for collapsing an inline edit form
-	 * back to a read-only view.
-	 */
+	/** Called once after the action returns without field errors. */
 	onSuccess?: () => void;
-	/**
-	 * Hides the built-in submit button, for forms that render their own submit
-	 * control inside `children` (e.g. the chat composer's send button).
-	 */
+	/** For forms that render their own submit control inside `children`. */
 	hideSubmitButton?: boolean;
-	/**
-	 * When false, navigating away with unsaved edits is not blocked. For forms
-	 * whose value is ephemeral by nature, like a chat message draft.
-	 */
+	/** When false, navigating away with unsaved edits is not blocked (e.g. a chat draft). */
 	guardUnsavedChanges?: boolean;
 };
 
 /**
- * How submitting works:
- * - `"submit"` (default): the user submits via the submit button. Values go to
- *   the server, or to `onApply` when provided.
- * - `"autoSubmit"`: no submit button; every change that passes validation is
- *   sent to the server.
- * - `"client"`: no submit button and no `<form>` element; every change is
- *   passed to `onApply` and field errors are computed already on mount.
+ * `"submit"` (default): submit button sends values to the server, or to `onApply` when provided.
+ * `"autoSubmit"`: no button; every valid change is sent to the server.
+ * `"client"`: no button or `<form>`; every change goes to `onApply` and errors are computed on mount.
  */
 type FormModeProps<T extends v.ObjectEntries> =
 	| {
@@ -188,7 +156,7 @@ interface LatestFormProps {
 export function SendouForm<T extends v.ObjectEntries>(
 	props: SendouFormProps<T>,
 ) {
-	// Remounting on URL change resets all form state (handles edit → new transitions)
+	// remount on URL change resets form state (edit → new transitions)
 	const location = useLocation();
 
 	return (
@@ -417,10 +385,7 @@ function SubmitRow({
 	);
 }
 
-/**
- * Split out of {@link SubmitRow} so that only forms that opt in subscribe to the
- * form's values (and re-render on every edit).
- */
+/** Split out of {@link SubmitRow} so only forms that opt in subscribe to the values (re-rendering on every edit). */
 function ConditionalSubmitRow({
 	hideWhen,
 	children,
@@ -489,11 +454,8 @@ interface FormActionDeps {
 }
 
 /**
- * Creates the form's action functions once per form instance. They read the
- * current values/props through the store and the `latest` ref, so their
- * identities stay stable across renders — this keeps the form context
- * referentially stable, which is what lets fields skip re-rendering when an
- * unrelated field changes.
+ * Created once per form instance, reading current values/props through the store and `latest` ref,
+ * so the form context stays referentially stable and fields skip re-rendering on unrelated changes.
  */
 function createFormActions({
 	store,
@@ -561,11 +523,9 @@ function createFormActions({
 		store.setClientErrors({ ...store.clientErrors, [name]: error });
 	};
 
-	// Server errors are keyed by positional path (e.g. `members[2].userId`). When
-	// the user edits a field, the server's verdict for that field — and for any
-	// nested descendants when an array/object changes — is stale, so drop it.
-	// Without this, removing an array item and re-adding one at the same index
-	// would resurrect the previous item's server error.
+	// server errors are keyed by positional path (e.g. `members[2].userId`); an edit makes the verdict for
+	// that field and its descendants stale, otherwise re-adding an array item at the same index would
+	// resurrect the previous item's error
 	const clearServerError = (name: string) => {
 		setVisibleServerErrors((prev) => {
 			const isStale = (key: string) =>
@@ -614,9 +574,8 @@ function createFormActions({
 	const submitToServer = (valuesToSubmit: Record<string, unknown>) => {
 		if (!validateAndPrepare()) return;
 
-		// Cleared before `onApply` because it may navigate synchronously (e.g.
-		// calendar filters set search params) — the blocker would otherwise still
-		// see the form as dirty and block that navigation.
+		// before `onApply` since it may navigate synchronously (e.g. calendar filters) and the blocker
+		// would still see the form as dirty
 		store.setDirty(false);
 		latest.current.onApply?.(store.values);
 
@@ -647,9 +606,7 @@ function createFormActions({
 
 		const { onApply } = latest.current;
 		if (onApply) {
-			// Cleared before `onApply` because it may navigate synchronously (e.g.
-			// calendar filters set search params) — the blocker would otherwise
-			// still see the form as dirty and block that navigation.
+			// see the same note in autoSubmit above
 			store.setDirty(false);
 			onApply(store.values);
 		} else {
@@ -670,11 +627,8 @@ function createFormActions({
 }
 
 /**
- * Derives all client errors from a single full-schema parse. Each issue is
- * attributed both to its top-level field (single-control composites like
- * dual-select or weapon-pool read their error keyed by their own name even
- * when the issue points inside the value) and to its full nested path
- * (array/fieldset children render their own error slots).
+ * One full-schema parse; each issue is keyed both by its top-level field (single-control composites
+ * like weapon-pool read errors by their own name) and its full nested path (array/fieldset children).
  */
 function computeFieldErrors(
 	schema: FormObjectSchema,
@@ -733,8 +687,7 @@ function buildInitialValues<T extends v.ObjectEntries>(
 		const defaultValue = defaultValues?.[key as keyof typeof defaultValues];
 		if (defaultValue !== undefined) {
 			if (formField?.type === "array" && Array.isArray(defaultValue)) {
-				// only object-array (fieldset) items get a stable `_key`; spreading would
-				// collapse non-plain objects like `Date` into `{}`, so leave those intact
+				// only fieldset items get a `_key`; spreading would collapse e.g. `Date` into `{}`
 				result[key] = (defaultValue as unknown[]).map((item) =>
 					isPlainObject(item)
 						? {
@@ -798,12 +751,7 @@ export function useOptionalFormFieldContext() {
 	return React.useContext(FormContext);
 }
 
-/**
- * Subscribes to a single form value by (possibly nested) path, e.g. `"type"`
- * or `"matches[2].mode"`. Unlike `useFormFieldContext` this re-renders only
- * when that value changes, so prefer it for reading form state in components
- * that should not re-render on every form edit.
- */
+/** Subscribes to one value by path (e.g. `"matches[2].mode"`), re-rendering only when it changes, unlike `useFormFieldContext`. */
 export function useFormValue(name: string): unknown {
 	const context = React.useContext(FormContext);
 	const store = context?.store ?? EMPTY_FORM_STORE;
@@ -812,11 +760,7 @@ export function useFormValue(name: string): unknown {
 	return React.useSyncExternalStore(store.subscribe, getValue, getValue);
 }
 
-/**
- * "First" error means first in DOM order, not first in error-map insertion
- * order — validation collects errors in schema order which does not have to
- * match the rendered field order.
- */
+/** DOM order, not error-map order: schema order need not match rendered order. */
 function findFirstErrorElementInDomOrder(errorFieldNames: string[]) {
 	const errorElements = errorFieldNames.flatMap((name) => {
 		const element = document.getElementById(errorMessageId(name));
@@ -833,12 +777,7 @@ function findFirstErrorElementInDomOrder(errorFieldNames: string[]) {
 	return errorElements.at(0);
 }
 
-/**
- * Moves focus to the failing field so keyboard and screen reader users are
- * taken to the problem, not just scrolled past it. Prefers the control that
- * references the error via `aria-errormessage`, then any focusable control in
- * the same wrapper, and as a last resort the error message element itself.
- */
+/** Focuses the control referencing the error via `aria-errormessage`, else any focusable in the wrapper, else the message itself. */
 function focusAndScrollToError({
 	name,
 	element,

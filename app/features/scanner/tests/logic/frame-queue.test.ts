@@ -1,8 +1,7 @@
 /**
- * Unit tests for the live frame backlog's decimating eviction: which index
- * gets dropped, and the property the policy exists for — a long parse
- * stall keeps thinned coverage of its whole span instead of truncating to
- * the newest limit/fps seconds.
+ * Tests for the live frame backlog's decimating eviction: which index drops,
+ * and the property it exists for — a long stall keeps thinned coverage of
+ * its whole span instead of truncating to the newest limit/fps seconds.
  */
 
 import assert from "node:assert/strict";

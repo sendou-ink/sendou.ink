@@ -1,14 +1,9 @@
 /**
- * ScoreboardBattleLogDetector: parses the Recent Battles detail screen
- * (battle log) — the same match data as the live scoreboard (header, team
- * scores, 8 player rows) plus the recording timestamp, but no replay code.
- *
- * The two team panels sit STACKED (observed winner on top, confirmed by the
- * VICTORY/DEFEAT tags) and the row text renders at the live scoreboard's
- * sizes, so field parsing reuses the scoreboard helpers with the shared
- * glyph sets unscaled — only the ROI geometry is this screen's own. The
- * header is the replay browser's (timestamp + stage / lobby + mode tags),
- * parsed with battle log bands.
+ * ScoreboardBattleLogDetector: parses the Recent Battles detail screen — the
+ * live scoreboard's data plus recording timestamp, no replay code. The panels
+ * sit STACKED (winner on top, confirmed by VICTORY/DEFEAT tags) with row text
+ * at live sizes, so the scoreboard helpers run with unscaled glyph sets; the
+ * header is the replay browser's, parsed with battle log bands.
  */
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
@@ -76,20 +71,15 @@ export interface ScoreboardBattleLogData extends ScoreboardData {
 
 export const SCOREBOARD_BATTLE_LOG_EVENT_TYPE = "ScoreboardBattleLog";
 
-/**
- * White outlined team totals on the panel's saturated color band — a yellow
- * band grays at ~190, so binarize just above it (the digit cores are ~250).
- */
+/** White team totals on the color band: a yellow band grays at ~190, digit cores ~250. */
 const TEAM_SCORE_BIN_THRESHOLD = 205;
 
 /** Canonical results the localized VICTORY/DEFEAT panel tags snap to. */
 type PanelResult = "VICTORY" | "DEFEAT";
 const RESULT_MIN_SCORE = 0.6;
 /**
- * The tag letters render in the team's ink color on the gray stamp box
- * (~75 gray, trailing status icons ~120), so binarize the max-channel
- * image just above the icons — every ink color's brightest channel
- * clears this.
+ * Tag letters in team ink on the gray stamp (~75, trailing icons ~120): max-channel binarized just
+ * above the icons.
  */
 const RESULT_TAG_BIN_THRESHOLD = 140;
 
@@ -121,8 +111,7 @@ export function createScoreboardBattleLogDetector(
 		resources.headerLineGlyphs,
 		HEADER_LINE_HEIGHT,
 	);
-	// The tags render in FOT-RowdyStd — use the dedicated atlas when present;
-	// the BlitzMain-based fallback reads them only roughly.
+	// tags render in FOT-RowdyStd; the BlitzMain fallback reads them only roughly
 	const resultGlyphs =
 		scaled(resources.replayResultGlyphs ?? null, RESULT_TAG_TEXT_HEIGHT) ??
 		scaled(resources.headerLineGlyphs, RESULT_TAG_TEXT_HEIGHT);
@@ -175,10 +164,8 @@ export function createScoreboardBattleLogDetector(
 				colorOk / GATE_COLOR_PROBES.length) /
 			3;
 		const pass = darkOk >= 7 && suffixOk >= 7 && colorOk === 3;
-		// browsing flips between entries never drop this gate, so it
-		// fingerprints the content that always differs between two battles
-		// (recording timestamp + stage tag) plus the name column — the
-		// scheduler re-arms suppression when the fingerprint moves
+		// browsing between entries never drops this gate, so fingerprint what
+		// differs between battles (timestamp, stage, names) for the scheduler
 		const signature = pass ? contentSignature(gray) : undefined;
 		gray.delete();
 		return { pass, score, signature };
@@ -220,9 +207,8 @@ export function createScoreboardBattleLogDetector(
 			rows.push(row.debug);
 		}
 
-		// The panel's point total is read only to recognize a knockout (the
-		// count times five: only a knockout's full count reaches 500); it is
-		// never emitted as a score.
+		// the point total is read only to recognize a knockout (only a knockout's
+		// full count reaches 500); never emitted as a score
 		let teamScore: ParsedNumber | null = null;
 		if (teamDigits) {
 			const crop = cropRoi(gray, teamScoreRoi(dy));
@@ -370,10 +356,8 @@ export function createScoreboardBattleLogDetector(
 		];
 	}
 
-	// no rearm cooldown — distinct battles browsed in quick succession are
-	// told apart by content: the gate signature re-arms scheduler suppression
-	// and the timeline merges via sameScoreboardMatch (same as the replay
-	// browser)
+	// no rearm cooldown: browsed battles are told apart by the gate signature and
+	// the timeline merges via sameScoreboardMatch
 	return {
 		id: "scoreboard-battle-log",
 		sufficientConfidence: 0.8,
@@ -383,11 +367,9 @@ export function createScoreboardBattleLogDetector(
 }
 
 /**
- * Whether the winner sits in the bottom panel. A confident VICTORY/DEFEAT
- * tag decides (the distressed tag texture usually reads below the floor);
- * otherwise the panel totals are checked against the banner scores — the
- * total is the count times five, and only a knockout winner's reaches 500.
- * Default: winner on top, which every observed battle log screen shows.
+ * Whether the winner sits in the bottom panel: a confident VICTORY/DEFEAT tag
+ * (the distressed texture usually reads under the floor), else panel totals
+ * (count x5; only a knockout reaches 500) against the banner. Default top.
  */
 function decideSwapped(
 	top: PanelParse,

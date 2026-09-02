@@ -40,8 +40,7 @@ export function TournamentMatchActionTab({
 		weaponReportingOpen: tournament.weaponReportingOpen,
 	});
 
-	// during pick/ban there is no current map to report, but a wrongly reported
-	// score from a previous game can still be undone (not once the set is over)
+	// no current map to report during pick/ban, but a previous game's score can still be undone (not once the set is over)
 	if (!currentMap) {
 		const canUndo = scoreSum > 0 && !data.matchIsOver;
 		return (
@@ -196,8 +195,7 @@ function useTournamentWeaponReport({
 	function viewerPlayedMap(mapIndex: number) {
 		if (viewerUserId === undefined) return false;
 
-		// a played map remembers the roster it was played with, the map still to be
-		// played goes by the roster as it stands now
+		// a played map remembers its roster, the map still to be played goes by the roster as it stands now
 		const result = data.results[mapIndex];
 		if (result) {
 			return result.participants.some((p) => p.userId === viewerUserId);

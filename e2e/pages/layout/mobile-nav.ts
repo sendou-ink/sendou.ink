@@ -14,10 +14,8 @@ const TAB_NAMES: Record<Panel, string> = {
 const PANELS: Panel[] = ["menu", "friends", "tourneys", "chat", "you"];
 
 /**
- * The bottom tab bar and its panels, rendered in place of the side nav on mobile.
- *
- * The panels show the same rows as the side nav does, and its accessors find them
- * the same way — scoped to the panel that is open.
+ * The bottom tab bar and its panels, rendered in place of the side nav on mobile. The panels
+ * show the same rows as the side nav, found the same way but scoped to the open panel.
  */
 export class MobileNav {
 	private readonly page: Page;
@@ -52,10 +50,7 @@ export class MobileNav {
 		await this.tab(panel).click();
 	}
 
-	/**
-	 * Switches between panels the way the tab bar does while a panel is open. Its
-	 * tabs are then covered by invisible overlays, which only a dispatched event reaches.
-	 */
+	/** Switches panels while one is open: the tabs are then under invisible overlays only a dispatched event reaches. */
 	async switchPanel(panel: Panel) {
 		await this.page
 			.locator("[class*='ghostTab']:not([class*='ghostTabBar'])")

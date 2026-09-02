@@ -8,12 +8,7 @@ import trophies from "../data/trophies.json" with { type: "json" };
 /** Compressed model states of real trophies, one of which every trophy is given. */
 export const MODELS = Object.values(trophies);
 
-/**
- * Creates trophies. A trophy only comes into existence in production once a
- * submission has gathered its approvals, which `createPending` covers — one that
- * merely has to exist is written directly. Winning one is `TournamentFactory`'s
- * job: a trophy is awarded by finalizing the tournament it was the prize of.
- */
+/** Written directly; `createPending` covers the submission flow. Awarding is `TournamentFactory`'s job (finalizing). */
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({
 		name: `Trophy ${seq}`,
@@ -38,10 +33,7 @@ type PendingOptions = {
 	declinedBy?: { userId: number; reason: string };
 };
 
-/**
- * Creates trophy submissions awaiting review. The options review the submission the
- * way the review page does, so one can be brought to any point of its life.
- */
+/** Submissions awaiting review; the options review them the way the review page does. */
 export const { create: createPending, createMany: createManyPending } =
 	defineFactory({
 		defaults: ({ seq }) => ({

@@ -16,42 +16,15 @@ import { ButtonLook } from "./Button";
 import styles from "./Tabs.module.css";
 
 interface SendouTabsProps extends TabsProps {
-	/** Should there be padding above the panels. Defaults to true, pass in false if the panel content is managing its own padding. */
+	/** Padding above the panels, default true. */
 	padded?: boolean;
-	/** Hide tabs if only one tab shown? Defaults to true. */
+	/** Hide tabs if only one tab shown, default true. */
 	disappearing?: boolean;
-	/** When orientation is "vertical", switch to horizontal once the main content width drops below this many pixels. */
+	/** Vertical orientation switches to horizontal below this main content width (px). */
 	horizontalBelow?: number;
 }
 
-/**
- * Renders a set of accessible tabs using the provided props.
- *
- * This component is a wrapper around the `Tabs` component, forwarding all props.
- *
- * @param props - The properties to pass to the underlying `Tabs` component.
- * @returns The rendered tab interface.
- *
- * @url https://react-spectrum.adobe.com/react-aria/Tabs.html
- *
- * @example
- * <SendouTabs>
- *   <SendouTabList>
- *     <Tab id="shooter">Shooter</Tab>
- *     <Tab id="roller">Roller</Tab>
- *     <Tab id="charger">Charger</Tab>
- *   </SendouTabList>
- *   <SendouTabPanel id="shooter">
- *     Splattershot, Aerospray, etc.
- *   </SendouTabPanel>
- *   <SendouTabPanel id="roller">
- *     Splat Roller, Dynamo Roller, etc.
- *   </SendouTabPanel>
- *   <SendouTabPanel id="charger">
- *     Splat Charger, E-liter, etc.
- *   </SendouTabPanel>
- * </SendouTabs>
- */
+/** Wrapper around react-aria `Tabs`, see https://react-spectrum.adobe.com/react-aria/Tabs.html */
 export function SendouTabs({
 	padded = true,
 	disappearing = true,
@@ -89,7 +62,7 @@ export function SendouTabs({
 interface SendouTabProps extends TabProps {
 	icon?: React.ReactNode;
 	number?: number;
-	/** Render a warning-colored alert icon to draw attention to this tab. */
+	/** warning-colored alert icon on the tab */
 	alert?: boolean;
 	children?: React.ReactNode;
 }
@@ -117,7 +90,7 @@ export function SendouTab({
 
 interface SendouTabListProps<T extends object> extends TabListProps<T> {
 	sticky?: boolean;
-	/** Should tabs take 100% width with equal distribution? */
+	/** tabs share 100% width equally */
 	fullWidth?: boolean;
 }
 
@@ -130,8 +103,6 @@ export function SendouTabList<T extends object>({
 		<div className={clsx(styles.tabListContainer, "scrollbar")}>
 			<TabList
 				className={clsx(styles.tabList, {
-					// invisible: cantSwitchTabs && !disappearing,
-					// hidden: cantSwitchTabs && disappearing,
 					[styles.sticky]: sticky,
 					[styles.fullWidth]: fullWidth,
 				})}

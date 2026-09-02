@@ -42,11 +42,7 @@ function findAllLiveStreams() {
 	return db.selectFrom("LiveStream").selectAll().execute();
 }
 
-/**
- * A tournament the sync routine considers live: its teams are in the database,
- * which is where the routine looks up their members' Twitch accounts, and the
- * tournament itself is in the running tournaments registry.
- */
+/** A tournament the routine considers live: teams in the database (for members' Twitch accounts) and in the running tournaments registry. */
 async function addRunningTournament({
 	memberUserIds = [],
 	castTwitchAccounts = [],

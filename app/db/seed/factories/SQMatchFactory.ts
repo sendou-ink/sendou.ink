@@ -33,17 +33,13 @@ type CancelReport = {
 };
 
 type Options = {
-	/** Play the match out, alpha winning every map, up to both teams having agreed
-	 * on the score. Leaves both groups inactive, as a real concluded match does. */
+	/** Alpha wins every map and both teams agree on the score. Both groups end up inactive. */
 	isConcluded?: boolean;
-	/** Cancel the match the way the two teams do: alpha's owner requests the
-	 * cancellation and bravo's owner accepts it, each giving their own account. */
+	/** Alpha's owner requests the cancellation and bravo's accepts, each giving their own account. */
 	cancel?: { requested: CancelReport; accepted: CancelReport };
 	/** Cancel the match the way staff does, leaving neither team an account of it. */
 	canceledByStaffUserId?: number;
-	/** Play the match out, alpha winning every map, and report the score as alpha —
-	 * leaving bravo still to confirm it. Alpha's group goes inactive, as reporting
-	 * makes it, so its members are free to queue again. */
+	/** Alpha wins every map and reports, bravo still to confirm. Alpha's group goes inactive. */
 	isReported?: boolean;
 	/** When the match was made, for one that should look older than now. */
 	createdAt?: Date;
@@ -51,11 +47,7 @@ type Options = {
 	confirmedAt?: Date;
 };
 
-/**
- * Creates SendouQ matches together with the two groups playing them: a match is
- * only ever made out of two full groups, the way the matchmaking UI makes one, so
- * the groups are not the caller's to bring. Both are returned with the match.
- */
+/** Creates the two full groups with the match, like the matchmaking UI does. Both are returned with the match. */
 export const { create } = defineFactory({
 	defaults: () => ({
 		mapList: SplatoonFaker.mapList(SENDOUQ_BEST_OF).map((map) => ({
@@ -139,8 +131,7 @@ function memberTiers(userIds: number[]) {
 	return userIds.map((userId) => ({ userId, tier: SEEDED_TIER }));
 }
 
-/** Concluding stamps the skill rows *now*; move them to when the match was played
- * so the season progression chart spreads over days. */
+/** Concluding stamps skill rows *now*; backdating spreads the season progression chart over days. */
 async function backdateSkills(matchId: number, createdAt: Date) {
 	const skills = await db
 		.selectFrom("Skill")

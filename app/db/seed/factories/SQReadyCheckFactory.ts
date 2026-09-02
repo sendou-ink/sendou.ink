@@ -8,11 +8,7 @@ type Options = {
 	confirmedByUserIds?: number[];
 };
 
-/**
- * Creates the ready check two matched up groups go through before their match is
- * created. Both groups have to be active, since a ready check is what takes them
- * out of the looking pool.
- */
+/** Both groups have to be active, since a ready check is what takes them out of the looking pool. */
 export const { create } = defineFactory({
 	insert: (args: InsertArgs) => SQGroupRepository.insertReadyCheck(args),
 	applyOptions: async (readyCheck, { confirmedByUserIds }: Options) => {

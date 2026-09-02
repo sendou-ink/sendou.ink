@@ -114,9 +114,8 @@ const specialIdsForRow = (rowKey: string) =>
 	);
 
 /**
- * Resolves the per-target damage rate of every damage rate info row in a single config dump.
- * Only the PvP-relevant receivers are kept and the synthetic launched/Recycled Brella canopy
- * targets are derived the same way the live object damage calculator expects them.
+ * Per-target damage rates of every damage rate info row in one config dump, PvP-relevant receivers
+ * only, with the synthetic launched/Recycled Brella canopy targets derived as the calculator expects.
  */
 const damageRatesByRow = (
 	config: DamageRateConfig,
@@ -190,9 +189,8 @@ function versionDirToDisplay(version: string): string {
 }
 
 /**
- * Builds the per-row, per-target damage rate history across every versioned config dump and
- * writes it for the params page to surface in its patch history. Only PvP-relevant rows and
- * only targets whose rate actually changed at some point are kept, so the output stays small.
+ * Writes the per-row, per-target damage rate history across every versioned dump for the params
+ * page's patch history. Only PvP-relevant rows and targets whose rate ever changed are kept.
  */
 function writeDamageRateHistory() {
 	const versionDirs = fs

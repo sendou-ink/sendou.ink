@@ -11,8 +11,7 @@ import * as AdminRepository from "./AdminRepository.server";
 
 const users = UserFactory.pool();
 
-// the ban log records who banned by their Discord id, so the tests give the users
-// one they can name
+// the ban log records who banned by their Discord id
 const createUsers = (count: number) =>
 	users.create(count, (index) => ({ discordId: String(index) }));
 

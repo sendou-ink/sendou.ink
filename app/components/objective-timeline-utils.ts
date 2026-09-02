@@ -1,10 +1,6 @@
 const PENALTY_BRIDGE_SECONDS = 6;
 
-/**
- * Width of the label gutter left of the plot area, shared by the objective
- * chart (its y-axis is forced to this width) and the player-status rows (their
- * weapon-icon column), so both plots span exactly the same x-range.
- */
+/** Label gutter left of the plot, shared by the objective chart's y-axis and the player-status weapon column so both span the same x-range. */
 export const TIMELINE_PLOT_GUTTER_PX = 36;
 
 /** The count a knockout wins at: the counter runs out and the team takes all of it. */
@@ -18,14 +14,11 @@ export interface PenaltyRead {
 }
 
 /**
- * The penalty pill is misread for a frame or two at a time: it flickers
- * between a value and null, and occasionally drops a digit ("36" read as
- * "6"). Median-filters isolated outlier values, drops one-off reads with no
- * nearby confirmation and carries the previous value across short null gaps
- * so the band renders as one steady shape instead of a picket fence.
+ * The penalty pill flickers between a value and null and occasionally drops a digit ("36" → "6").
+ * Median-filters outliers, drops one-off reads with no nearby confirmation and carries the previous
+ * value across short null gaps so the band renders as one steady shape.
  *
- * @param reads one team's penalty reads, sorted by `t` ascending
- * @returns the smoothed penalty per read, index-aligned with the input
+ * @param reads one team's reads sorted by `t` ascending; result is index-aligned
  */
 export function smoothPenalties(
 	reads: readonly PenaltyRead[],
@@ -69,15 +62,11 @@ export interface ObjectiveScoreRead {
 }
 
 /**
- * Match scores implied by each team's last readable counter read. The counter
- * counts down from 100 while match scores run the other way (100 = knockout),
- * so a read is inverted into the count the team took. Stands in where the
- * results screen reports no score of its own — a knockout's loser — but the
- * last read is only as late as the last frame the counter was seen in, so it
- * can trail the count the team ended on.
+ * Match scores (0-100, null if nothing read) implied by each team's last readable counter read,
+ * inverted since the counter counts down. Stands in where the results screen has no score (a
+ * knockout's loser), but can trail the final count since it only goes as far as the counter was last seen.
  *
- * @param reads counter reads, in any order
- * @returns per-team match score (0-100); null where nothing was read
+ * @param reads in any order
  */
 export function matchScoresFromObjective(
 	reads: readonly ObjectiveScoreRead[],
@@ -97,10 +86,7 @@ export function matchScoresFromObjective(
 	return [lastCountTaken(0), lastCountTaken(1)];
 }
 
-/**
- * Seconds into the source formatted for display: m:ss, growing an hours
- * part only when needed.
- */
+/** Seconds formatted as m:ss, with an hours part only when needed. */
 export function formatElapsed(seconds: number): string {
 	const hours = Math.floor(seconds / 3600);
 	const minutes = Math.floor((seconds % 3600) / 60);

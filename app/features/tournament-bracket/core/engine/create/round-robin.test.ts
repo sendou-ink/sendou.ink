@@ -33,9 +33,7 @@ describe("Create a round-robin stage", () => {
 	});
 
 	test("does not pad a short group with empty rounds when teams divide unevenly", () => {
-		// 5 teams in 2 groups -> groups of 3 and 2. The 2-team group must be a
-		// clean single-round single-match group, not padded with BYE-only rounds
-		// that strand the real match in a later round.
+		// the 2-team group must be a single-round single-match group, not padded with BYE-only rounds
 		const data = createResolved({
 			type: "round_robin",
 			seeding: [1, 2, 3, 4, 5],

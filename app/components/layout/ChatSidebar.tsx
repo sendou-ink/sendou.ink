@@ -165,8 +165,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		return room ? [{ ...entry, room }] : [];
 	});
 
-	// Rooms the active route opens together collapse into a single combined list
-	// entry that opens the stacked split view.
+	// rooms the active route opens together collapse into one entry opening the stacked split view
 	const autoOpenRooms = routeRooms.filter((entry) => entry.autoOpen);
 	const combinedRooms = autoOpenRooms.length > 1 ? autoOpenRooms : [];
 	const combinedRoomIds = new Set(combinedRooms.map((entry) => entry.room.id));
@@ -449,9 +448,8 @@ function CombinedChatView({
 		</>
 	);
 
-	// Primary (match) sits on top, flush below the main header which already names
-	// it, so its sub-header is hidden. Desktop splits evenly; mobile gives the
-	// match chat the larger 3/5 share (group chat 2/5).
+	// primary (match) sits on top with its sub-header hidden, the main header already names it;
+	// desktop splits evenly, mobile gives the match chat 3/5
 	const panels = [
 		{ room: primary, grow: isMobile ? 3 : 1, showHeader: false },
 		...rooms.slice(1).map((room) => ({

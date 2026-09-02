@@ -53,11 +53,8 @@ const EVENINGS: WeekSchedule = [
 ];
 
 /**
- * Availability of the admin's team, their friends and a stranger, for this week
- * and the next. Every state the schedule surfaces can be in is on the admin's
- * team: a filled week, a week submitted as unavailable, a week nobody reported,
- * ranges crossing midnight, day notes, and ranges a tournament or a booked scrim
- * takes back.
+ * The admin's team, friends and a stranger, this week and next. The admin's team covers every state: a filled
+ * week, one submitted as unavailable, one nobody reported, midnight-crossing ranges, day notes, commitments.
  */
 export async function seedAvailability({
 	users,
@@ -76,16 +73,14 @@ export async function seedAvailability({
 	const [, multiRangeId, crossMidnightId, unavailableId, weekendId] =
 		teams.allianceRogue.playerUserIds;
 
-	// the tournament and the scrim the admin's team is committed to, with room
-	// around them so that the commitment visibly takes availability back
+	// with room around them so the commitment visibly takes availability back
 	const commitments = [
 		{
 			userId: users.adminId,
 			startsAt: scrims.accepted.startsAt - HOUR,
 			endsAt: scrims.accepted.startsAt + 2 * HOUR,
 		},
-		// registration availability of the reg open tournament: fully available,
-		// available from an hour in, and not available at all
+		// reg open tournament: fully available, available from an hour in, not available at all
 		{
 			userId: users.adminId,
 			startsAt: tournaments.regOpen.startsAt - HOUR,
@@ -104,8 +99,7 @@ export async function seedAvailability({
 	];
 
 	const schedules: Array<SeededSchedule> = [
-		// N-ZAP reports nothing at all, so that they are the one the Monday
-		// reminder routine has something to say to
+		// N-ZAP reports nothing, so the Monday reminder routine has someone to nudge
 		{
 			userId: users.adminId,
 			timezone: "Europe/Helsinki",
@@ -169,8 +163,7 @@ export async function seedAvailability({
 		{
 			userId: teams.allianceRogue.subUserId,
 			timezone: "Europe/Helsinki",
-			// Wednesday ends exactly at midnight, the shape the drag editor
-			// produces when a bar is pulled to the 00:00 tick
+			// Wednesday ends exactly at midnight, as the drag editor produces at the 00:00 tick
 			weekly: [[], [["18:00", "22:00"]], [["18:00", "00:00"]], [], [], [], []],
 			fillsNextWeek: true,
 		},
@@ -188,8 +181,7 @@ export async function seedAvailability({
 			],
 			fillsNextWeek: true,
 		},
-		// the last of the admin's friends reports nothing, so the friends page has
-		// a row with no schedule to sort below the ones that have one
+		// the last friend reports nothing, giving the friends page a schedule-less row to sort last
 		...misc.adminFriendIds.slice(0, -1).map((userId, index) => ({
 			userId,
 			timezone: "Europe/Helsinki",

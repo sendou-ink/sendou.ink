@@ -11,10 +11,7 @@ import type { WeaponPoolWeapon } from "./WeaponPool";
 /** Ingested scoreboard rows come winning team first, 4 players per side. */
 const SCOREBOARD_PLAYERS_PER_TEAM = 4;
 
-/**
- * Maps a game's ingested scoreboard (stored winner-first) onto the
- * alpha/bravo-oriented shape the match timeline renders.
- */
+/** Maps a game's ingested scoreboard (stored winner-first) onto the alpha/bravo shape the timeline renders. */
 export function resolveTimelineScoreboard(
 	data: IngestedScoreboardData | undefined,
 	alphaIsWinner: boolean,
@@ -48,17 +45,12 @@ export function resolveTimelineScoreboard(
 }
 
 /**
- * One team's weapons for a map row: each roster member's reported weapon,
- * with the gaps filled from the map's ingested scoreboard rows that no
- * member accounts for. An ingested row without a user is only unaccounted
- * for if no roster member already reported its weapon, otherwise it is that
- * member's row and reusing it would show their weapon twice — a multiset
- * count, so two ingested rows of a weapon survive one report of it.
+ * One team's weapons for a map row: each roster member's reported weapon, gaps filled from the
+ * ingested scoreboard rows no member accounts for. A userless ingested row counts as accounted
+ * for once a member reported its weapon (multiset count), else the weapon would show twice.
  *
- * @param linkedWeapons per roster member, the weapon they reported for the map (null = none)
- * @param ingestedPlayers the map's ingested scoreboard rows (empty when none ingested)
+ * @param linkedWeapons per roster member (null = none); result is index-aligned, fills marked unverified
  * @param tournamentTeamId the team's side id in the game result (tournament team or SendouQ group id)
- * @returns index-aligned with `linkedWeapons`; ingested fills are marked unverified
  */
 export function resolveTimelineWeapons({
 	linkedWeapons,

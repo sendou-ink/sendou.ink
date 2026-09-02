@@ -9,8 +9,6 @@
 	}
 }
 
-/* ---- per-detector gate results ---- */
-
 .gateList {
 	display: grid;
 	grid-template-columns: repeat(3, max-content) 1fr;
@@ -63,8 +61,6 @@
 	color: var(--color-text-high);
 	font-size: var(--font-2xs);
 }
-
-/* ---- fired detector's parse detail ---- */
 
 .detail {
 	display: flex;
@@ -166,8 +162,6 @@
 		color: var(--color-warning-high);
 	}
 }
-
-/* ---- per-row parse inspector ---- */
 
 .inspector {
 	width: 100%;

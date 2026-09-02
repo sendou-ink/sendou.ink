@@ -1,11 +1,9 @@
 /**
- * Display-side cleanup for a match card's source event list: a long map-open
- * can fragment into several minimap events (the timeline's merge window
- * tracks a drifting `t`, and VoD results arrive out of order), so a minimap
- * that shows nothing new versus the previous one is pure noise. Names are
- * ignored in the comparison — OCR wobbles on them while the actual content
- * (stage, weapons, ability reads) is unchanged. Stored events are untouched;
- * this only filters what gets rendered.
+ * Display-side cleanup for a match card's source events: a long map-open can
+ * fragment into several minimap events (the merge window tracks a drifting
+ * `t`, VoD results arrive out of order), so a minimap showing nothing new
+ * versus the previous one is noise. Names are ignored (OCR wobbles on them).
+ * Stored events are untouched; this only filters what is rendered.
  */
 
 import { isDeepEqual, omit } from "remeda";

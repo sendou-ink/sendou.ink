@@ -12,18 +12,11 @@ export type XRankPlacementInsertArgs = Omit<
 > & {
 	/** In-game id of the player the placement belongs to. */
 	playerSplId: string;
-	/**
-	 * Site user whose results these are, for a source that already knows the pairing.
-	 * A player claiming their own results afterwards goes through
-	 * `AdminRepository.linkUserAndPlayer`, which also refreshes what the link derives.
-	 */
+	/** For sources that already know the pairing; claiming later goes through `AdminRepository.linkUserAndPlayer`. */
 	playerUserId?: number;
 };
 
-/**
- * Adds the given placements, creating a `SplatoonPlayer` row for every in-game id
- * not seen before. Returns the placement ids in insertion order.
- */
+/** Inserts placements, creating `SplatoonPlayer` rows for new in-game ids. Returns ids in insertion order. */
 export function insertMany(placements: XRankPlacementInsertArgs[]) {
 	return db.transaction().execute(async (trx) => {
 		const ids: number[] = [];
@@ -59,7 +52,7 @@ export function insertMany(placements: XRankPlacementInsertArgs[]) {
 	});
 }
 
-/** Removes every placement of the given month, before its results are read in anew. */
+/** Removes every placement of the given month. */
 export function deleteAllByMonthYear(
 	args: Pick<Tables["XRankPlacement"], "month" | "year">,
 ) {
@@ -89,10 +82,7 @@ export async function isPlayerLinkedByUserId(userId: number): Promise<boolean> {
 	return Boolean(player);
 }
 
-/**
- * The user's verified peak XP, read from their linked player's denormalized `SplatoonPlayer.peakXp`
- * column (see {@link refreshAllPeakXp}). `null` when they have no linked player or no placements.
- */
+/** From the linked player's denormalized `SplatoonPlayer.peakXp` (see {@link refreshAllPeakXp}); `null` without one. */
 export async function findPeakVerifiedXpByUserId(
 	userId: Tables["User"]["id"],
 ): Promise<number | null> {
@@ -225,8 +215,7 @@ export async function refreshAllPeakXp() {
 	await db
 		.updateTable("SplatoonPlayer")
 		.set({
-			// denormalized PeakXP json: overall + per-division peaks
-			// (region WEST = Tentatek, otherwise Takoroka). null when no placements.
+			// denormalized PeakXP json: overall + per-division peaks (WEST = Tentatek, else Takoroka)
 			peakXp: sql<string | null>`(
 				select iif(
 					max("XRankPlacement"."power") is null,

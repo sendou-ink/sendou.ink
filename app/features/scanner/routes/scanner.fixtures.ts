@@ -1,8 +1,7 @@
 /**
- * Dev-only resource route backing the scanner Fixtures tab: without params it
- * lists every fixture with its expected.json, with params it serves the raw
- * frame bytes. Registered under devOnlyRoutes — the fixture corpus only
- * exists in a source checkout.
+ * Dev-only resource route backing the Fixtures tab: without params it lists
+ * every fixture with its expected.json, with params it serves the raw frame
+ * bytes. Registered under devOnlyRoutes — the corpus only exists in a checkout.
  */
 import { readdirSync, readFileSync } from "node:fs";
 import type { LoaderFunctionArgs } from "react-router";

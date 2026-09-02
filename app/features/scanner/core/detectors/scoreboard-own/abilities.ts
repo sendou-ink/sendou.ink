@@ -1,8 +1,4 @@
-/**
- * Ability badge templates for the personal-results gear cards. Same
- * composite-and-resize pipeline as the death panel (death/abilities.ts),
- * at this screen's smaller badge sizes and its gray-strip ink threshold.
- */
+/** Ability badge templates for the personal-results gear cards, via the death panel's pipeline. */
 import type { FrameData } from "../../image";
 import { type AbilityTemplates, buildAbilityRole } from "../death/abilities";
 import {

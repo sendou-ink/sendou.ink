@@ -2,11 +2,7 @@ import { requireUser } from "~/features/auth/core/user.server";
 import type { EntityWithPermissions, Role } from "~/modules/permissions/types";
 import { hasPermission } from "./utils";
 
-/**
- * Checks if a user has the required global role.
- *
- * @throws {Response} - Throws a 403 Forbidden response if the user does not have the required role.
- */
+/** @throws {Response} 403 if the user lacks the global role. */
 export function requireRole(role: Role) {
 	const user = requireUser();
 	if (!user.roles.includes(role)) {
@@ -14,11 +10,7 @@ export function requireRole(role: Role) {
 	}
 }
 
-/**
- * Checks if a user has the required permission to perform an action on a given entity.
- *
- * @throws {Response} - Throws a 403 Forbidden response if the user does not have the required permission.
- */
+/** @throws {Response} 403 if the user lacks the permission on the entity. */
 export function requirePermission<
 	T extends EntityWithPermissions,
 	K extends keyof T["permissions"],

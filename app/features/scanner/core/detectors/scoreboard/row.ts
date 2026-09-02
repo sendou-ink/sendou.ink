@@ -1,10 +1,7 @@
 /**
- * The shared scoreboard row parse — weapon (with special-icon tie-break),
- * paint, name trimmed at the leftmost paint digit, stat counters — used by
- * both the results scoreboard and the replay-browser detail screen. The
- * callers differ only in ROI geometry (the replay panels are dx-shifted),
- * glyph sets (replay rows are smaller, so it passes rescaled sets), and two
- * match options.
+ * Shared scoreboard row parse (weapon with special-icon tie-break, paint, name
+ * trimmed at the leftmost paint digit, stats); callers differ only in ROI
+ * geometry, glyph sets and two match options.
  */
 import { toMainWeaponId } from "../../../scanner-types";
 import type { Mat } from "../../cv";
@@ -44,10 +41,7 @@ export interface RowResources {
 export interface RowOptions {
 	/** passed through to matchWeapon (replay rows sit on a lighter panel) */
 	weaponInkThreshold?: number;
-	/**
-	 * replay only: the left-aligned paint number puts the "p" suffix inside
-	 * the ROI when the paint has fewer than 4 digits
-	 */
+	/** replay only: the left-aligned paint puts the "p" suffix inside the ROI under 4 digits */
 	paintDropLoweredTrailing?: boolean;
 }
 
@@ -73,8 +67,7 @@ export function parseScoreboardRow(
 				: {},
 		);
 		crop.delete();
-		// near-tied icons with different kit specials: let the row's special
-		// icon break the tie
+		// near-tied icons with different kit specials: the row's special icon breaks the tie
 		if (resources.specials?.length && tiedWeaponsWithDistinctSpecials(weapon)) {
 			const spCrop = cropRoi(rgb, rois.specialIcon(cy));
 			special = matchSpecial(spCrop, resources.specials);

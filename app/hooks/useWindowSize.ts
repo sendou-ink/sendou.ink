@@ -10,11 +10,7 @@ function subscribe(listener: () => void) {
 	return () => window.removeEventListener("resize", listener);
 }
 
-/**
- * Returns the current window dimensions, re-rendering on resize. Both
- * dimensions are `0` during server-side rendering and the initial hydration
- * render.
- */
+/** Window dimensions, re-rendering on resize. `0` on the server and the hydration render. */
 export function useWindowSize(): WindowSize {
 	const width = React.useSyncExternalStore(
 		subscribe,

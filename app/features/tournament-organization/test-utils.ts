@@ -4,14 +4,9 @@ import { withUserId } from "~/utils/Test";
 import * as TournamentTeamRepository from "../tournament/TournamentTeamRepository.server";
 
 /**
- * Seeds a played tournament hosted by `organizationId`, starting at `startTime`
- * (a database timestamp in seconds), with one team whose roster is
- * `participantUserIds`. The team is checked in by default.
- *
- * The bracket is started and its one match played out, because a participant of
- * the organization's events is somebody who appears in a game result.
- *
- * Only meant for use in tests.
+ * Seeds a played tournament of `organizationId` starting at `startTime` (database timestamp,
+ * seconds) with one team of `participantUserIds`, checked in by default. Its one match is played
+ * out, because a participant of the organization's events is somebody in a game result.
  */
 export async function seedOrgEventWithParticipants({
 	organizationId,
@@ -44,8 +39,7 @@ export async function seedOrgEventWithParticipants({
 		{ teamRosters: [participantUserIds, opponentUserIds] },
 	);
 
-	// the opponent exists only to give the participants somebody to play, so it
-	// leaves no check in behind to be counted as one of the event's own teams
+	// the opponent only gives the participants somebody to play, so it leaves no check in to be counted
 	await asOwner(() =>
 		TournamentTeamRepository.checkOut({
 			tournamentTeamId: opponent.id,
@@ -63,8 +57,7 @@ export async function seedOrgEventWithParticipants({
 	}
 
 	if (checkIn === "out") {
-		// a check out leaves a row of its own only when it concerns one bracket,
-		// otherwise checking out simply undoes the check in
+		// a check out only leaves a row of its own for one bracket, otherwise it undoes the check in
 		await asOwner(async () => {
 			await TournamentTeamRepository.checkOut({
 				tournamentTeamId: team.id,

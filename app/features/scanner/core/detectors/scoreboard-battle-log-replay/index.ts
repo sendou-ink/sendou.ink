@@ -1,13 +1,9 @@
 /**
- * ScoreboardBattleLogReplayDetector: parses the replay-browser detail
- * screen — the same match data as the live scoreboard (header, team scores,
- * 8 player rows) plus the recording timestamp and the replay code.
- *
- * Layout differs from the live scoreboard: the two team panels sit side by
- * side and the replay owner's team may be on either side, so the
- * VICTORY/DEFEAT panel tags are read to keep `players`/`matchScores`
- * ordered winners-first like the live event. Field parsing reuses the
- * scoreboard helpers with glyph sets rescaled to this screen's text sizes.
+ * ScoreboardBattleLogReplayDetector: parses the replay-browser detail screen —
+ * the live scoreboard's data plus recording timestamp and replay code. The two
+ * team panels sit side by side with the owner's team on either side, so the
+ * VICTORY/DEFEAT tags keep `players`/`matchScores` winners-first. Reuses the
+ * scoreboard helpers with glyph sets rescaled to this screen.
  */
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
@@ -87,20 +83,15 @@ export const SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE =
 const REPLAY_INK_THRESHOLD = 90;
 
 /**
- * White banner digits on saturated team color: applies to the "Score:"
- * banners AND the team totals — a green DEFEAT panel weighs in at ~184
- * on the green-heavy grayscale, above the default 150.
+ * White digits on team color ("Score:" banners and team totals): a green DEFEAT panel reads ~184
+ * gray, above the default 150.
  */
 const BANNER_BIN_THRESHOLD = 190;
 
 /** Canonical results the localized VICTORY/DEFEAT panel tags snap to. */
 type PanelResult = "VICTORY" | "DEFEAT";
 const RESULT_MIN_SCORE = 0.6;
-/**
- * The chunky outlined tag letters bridge at the default 150 on the
- * max-channel image; 190 keeps the cores separated (and drops the gray
- * gear/signal icons trailing the text).
- */
+/** Outlined tag letters bridge at 150 on max-channel; 190 keeps cores separated and drops trailing gray icons. */
 const RESULT_TAG_BIN_THRESHOLD = 190;
 
 interface PanelParse {
@@ -155,8 +146,7 @@ export function createScoreboardBattleLogReplayDetector(
 		resources.headerLineGlyphs,
 		HEADER_LINE_HEIGHT,
 	);
-	// Code and result tags render in FOT-RowdyStd — use the dedicated atlases
-	// when present; the BlitzMain-based fallbacks read them only roughly.
+	// code and result tags render in FOT-RowdyStd; the BlitzMain fallbacks read them only roughly
 	const resultGlyphs =
 		scaled(resources.replayResultGlyphs ?? null, RESULT_TAG_TEXT_HEIGHT) ??
 		scaled(resources.headerLineGlyphs, RESULT_TAG_TEXT_HEIGHT);
@@ -201,10 +191,8 @@ export function createScoreboardBattleLogReplayDetector(
 			suffixOk >= 7 &&
 			gapOk === 2 &&
 			codeFraction >= GATE_CODE_MIN_FRACTION;
-		// browsing flips between replays never drop this gate, so it
-		// fingerprints the content that always differs between two battles
-		// (recording timestamp band + replay code) plus the name columns —
-		// the scheduler re-arms suppression when the fingerprint moves
+		// browsing between replays never drops this gate, so fingerprint what
+		// differs between battles (timestamp, code, names) for the scheduler
 		const signature = pass ? contentSignature(gray) : undefined;
 		gray.delete();
 		return { pass, score, signature };
@@ -242,16 +230,12 @@ export function createScoreboardBattleLogReplayDetector(
 			nameGlyphs,
 		};
 		for (const cy of ROW_CENTERS) {
-			// A short team (e.g. a 7-player private battle) renders no pill for
-			// the unused bottom row — just near-black panel background where the
-			// flat probe expects the mid-gray pill (the gate's flatOk >= 7 already
-			// tolerates the missing row). Skip it: no phantom player.
+			// a short team (7-player private battle) renders no pill for the unused
+			// bottom row (gate's flatOk >= 7 tolerates it); skip it, no phantom player
 			const flat = meanBrightness(rgb, gateFlatProbe(cy, dx));
 			if (flat < GATE_FLAT_MIN_MEAN || flat > GATE_FLAT_MAX_MEAN) continue;
 
-			// replay rows render smaller (icons ~26px, inside the live template
-			// set's slide range) on a lighter panel; the paint number is
-			// left-aligned so the "p" suffix lands inside the ROI on short paints
+			// paint is left-aligned so the "p" suffix lands inside the ROI on short paints
 			const row = parseScoreboardRow(
 				gray,
 				rgb,
@@ -268,9 +252,8 @@ export function createScoreboardBattleLogReplayDetector(
 			rows.push(row.debug);
 		}
 
-		// The panel's point total is read only to recognize a knockout below
-		// (the count times five: only a knockout's full count reaches 500);
-		// it is never emitted as a score.
+		// the point total is read only to recognize a knockout below (only a
+		// knockout's full count reaches 500); never emitted as a score
 		let teamScore: ParsedNumber | null = null;
 		if (teamDigits) {
 			const crop = cropRoi(gray, teamScoreRoi(dx));
@@ -295,9 +278,8 @@ export function createScoreboardBattleLogReplayDetector(
 			}
 			crop.delete();
 			confidences.push(matchScore.confidence);
-			// No number under the floor + a full team count = the KNOCKOUT! burst
-			// sitting where the banner's score would be. Report the count it won at
-			// rather than a hole; an unreadable banner on a lesser total stays null.
+			// no number + a full team count = the KNOCKOUT! burst sits where the score
+			// would be; an unreadable banner on a lesser total stays null
 			if (
 				matchScore.value === null &&
 				teamScore?.value === FULL_COUNT_TEAM_SCORE
@@ -358,9 +340,8 @@ export function createScoreboardBattleLogReplayDetector(
 			PanelParse,
 		];
 
-		// Winners first. Trust a confident VICTORY/DEFEAT tag read; when the
-		// tags are inconclusive, the higher "Score:" banner marks the winner
-		// (the shown match score decides the game). Default to left otherwise.
+		// winners first: confident VICTORY/DEFEAT tag, else the higher "Score:"
+		// banner, else left
 		let swapped = false;
 		if (left.result !== null || right.result !== null) {
 			swapped = left.result === "DEFEAT" || right.result === "VICTORY";
@@ -448,9 +429,8 @@ export function createScoreboardBattleLogReplayDetector(
 		];
 	}
 
-	// no rearm cooldown — distinct replays browsed in quick succession are
-	// told apart by content. sufficientConfidence just under the measured
-	// clean-read floor (fixtures 0.808-0.890)
+	// no rearm cooldown: browsed replays are told apart by content signature.
+	// sufficientConfidence just under the clean-read floor (fixtures 0.808-0.890)
 	return {
 		id: "scoreboard-battle-log-replay",
 		sufficientConfidence: 0.8,

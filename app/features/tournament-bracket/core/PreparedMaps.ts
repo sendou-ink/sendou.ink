@@ -10,7 +10,7 @@ import type { BracketData } from "./engine/types";
 import * as Progression from "./Progression";
 import type { BracketMeta, Tournament } from "./Tournament";
 
-/** Returns the prepared maps for one exact bracket index OR maps of a "sibling bracket" i.e. bracket that has the same depth in progression  */
+/** Prepared maps of the bracket, or of a "sibling" bracket at the same progression depth. */
 export function resolvePreparedForTheBracket({
 	preparedByBracket,
 	bracketIdx,
@@ -22,7 +22,6 @@ export function resolvePreparedForTheBracket({
 }) {
 	const bracketMaps = preparedByBracket?.[bracketIdx];
 
-	// maps exactly for this bracket have been prepared, use them
 	if (bracketMaps) {
 		return bracketMaps;
 	}
@@ -31,7 +30,6 @@ export function resolvePreparedForTheBracket({
 	const bracketProgression = tournament.ctx.settings.bracketProgression;
 	const targetDepth = Progression.bracketDepth(bracketIdx, bracketProgression);
 
-	// lets look for an "equivalent" prepared bracket to use
 	// e.g. SoS RR -> 4x SE style the SE brackets can share maps
 	for (const [anotherBracketIdx, bracket] of bracketProgression.entries()) {
 		const depth = Progression.bracketDepth(
@@ -95,7 +93,7 @@ const DOUBLE_ELIMINATION_TEAM_RANGES: readonly TeamCountRange[] = [
 	{ min: 193, max: 256 },
 ];
 
-/** For single elimination and double elimination returns the amount of options that are the "steps" that affect the round count. Takes in currentCount as an argument, filtering out counts below that.  */
+/** Elimination team counts that are the "steps" affecting the round count, from currentCount up. */
 export function eliminationTeamCountOptions({
 	type,
 	currentCount,
@@ -111,7 +109,7 @@ export function eliminationTeamCountOptions({
 	return ranges.filter(({ max }) => max >= currentCount);
 }
 
-/** Validates that given count is a known "max" elimination team count value */
+/** Whether the count is a known "max" elimination team count. */
 export function isValidMaxEliminationTeamCount(count: number) {
 	return [
 		...SINGLE_ELIMINATION_TEAM_RANGES,
@@ -125,10 +123,7 @@ const REGISTRATION_CLOSING_SOON_MS = hoursToMilliseconds(1);
 /** How big a share of a team count range must be unfilled for an estimated count not to be rounded up to the next range. */
 const ESTIMATE_SLACK_RATIO = 0.1;
 
-/**
- * Team count to prefill the "expected teams" selection with when preparing maps for an elimination bracket.
- * Null when it can't be told yet how many teams will play in the bracket e.g. registration is still open.
- */
+/** Prefill for the "expected teams" selection, null when it can't be told yet e.g. registration is still open. */
 export function eliminationTeamCountPrefill({
 	tournament,
 	bracketIdx,
@@ -170,14 +165,13 @@ interface TrimPreparedEliminationMapsAgs {
 	bracket: Bracket;
 }
 
-/** Trim prepared elimination bracket maps to match the actual number. If not prepared or prepared for too few returns null */
+/** Trims prepared elimination maps to the actual team count, null if not prepared or prepared for too few. */
 export function trimPreparedEliminationMaps({
 	preparedMaps,
 	teamCount,
 	...rest
 }: TrimPreparedEliminationMapsAgs) {
 	if (!preparedMaps) {
-		// we did not prepare enough maps
 		return null;
 	}
 
@@ -194,7 +188,6 @@ export function trimPreparedEliminationMaps({
 		!preparedMaps.eliminationTeamCount ||
 		preparedMaps.eliminationTeamCount < teamCount
 	) {
-		// we did not prepared enough maps
 		return null;
 	}
 
@@ -392,7 +385,7 @@ function advancingTeamCount({
 	return { count, isExact };
 }
 
-/** How many teams the given source sends forward, based on the shape the source bracket would have with the given participant count. */
+/** How many teams the source sends forward, given the shape the source bracket would have with the participant count. */
 function advancingFromSource({
 	bracket,
 	participantCount,

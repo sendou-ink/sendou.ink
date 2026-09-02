@@ -47,11 +47,7 @@ interface ChatContextValue {
 	totalUnreadCount: number;
 	chatOpen: boolean;
 	setChatOpen: (open: boolean) => void;
-	/**
-	 * Rooms the user is currently viewing. Empty means none are open, one
-	 * renders a single chat, more than one renders the split view. The first room
-	 * is the primary one (shown on top / given the larger share in split view).
-	 */
+	/** Rooms on screen: none, one, or several (split view, the first being primary). */
 	activeRoomIds: number[];
 	setActiveRoomIds: (roomIds: number[]) => void;
 }
@@ -351,12 +347,9 @@ function useChatRouteSync({
 }
 
 /**
- * Chat rooms the current route surfaces, from its loader's `chatRooms`. The
- * `autoOpen` ones are opened for the viewer (a route may expose several, e.g. a
- * SendouQ match exposes the match chat alongside the user's own group chat,
- * which are then shown as a single combined split view); the rest are only
- * listed in the sidebar for the viewer to open themselves (a staff member
- * reading the group chats of a SendouQ match they are not in).
+ * Chat rooms the current route surfaces (loader `chatRooms`). `autoOpen` ones open for the viewer
+ * (a SendouQ match opens match chat and group chat as one split view); the rest are only listed
+ * for the viewer to open (staff reading group chats of a match they are not in).
  */
 export function useCurrentRouteChatRooms(): RouteChatRoom[] {
 	const matches = useMatches();

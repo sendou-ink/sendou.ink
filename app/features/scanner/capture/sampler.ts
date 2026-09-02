@@ -1,7 +1,6 @@
 /**
  * Capture layer: OBS Virtual Camera in via getUserMedia, frames out as
- * ImageBitmaps at a low sample rate. The interface downstream is just
- * (bitmap, t) — a WHIP/MediaMTX transport can replace this file later.
+ * ImageBitmaps at a low sample rate. Downstream sees only (bitmap, t).
  */
 
 export async function openVirtualCamera(
@@ -25,14 +24,13 @@ export async function listVideoInputs(): Promise<MediaDeviceInfo[]> {
 export type FrameHandler = (bitmap: ImageBitmap, t: number) => void;
 
 /**
- * Sample frames from a playing video element at ~fps. The clock is a
+ * Samples frames from a playing video element at ~fps. The clock is a
  * setInterval in a dedicated worker (ticker.worker.ts): rAF and
- * requestVideoFrameCallback pause entirely in hidden tabs, but worker timers
- * keep firing and the camera stream keeps decoding, so capture continues
- * while the user is in another tab or window. Timestamps come from
- * performance.now() (monotonic, which the timeline's merge windows rely on)
- * rather than mediaTime, which Firefox never advances for MediaStream-backed
- * videos anyway. Returns a stop function.
+ * requestVideoFrameCallback pause in hidden tabs, but worker timers keep
+ * firing, so capture continues in another tab. Timestamps come from
+ * performance.now() (monotonic, which the merge windows rely on) rather than
+ * mediaTime, which Firefox never advances for MediaStream-backed videos.
+ * Returns a stop function.
  */
 export function startSampler(
 	video: HTMLVideoElement,

@@ -268,7 +268,7 @@ export interface AllMatchResult {
 		mode: ModeShort;
 		winnerTeamId: number;
 		participants: Array<{
-			// in the DB this can actually also be null, but for new tournaments it should always be a number
+			// nullable in the DB, but always a number for new tournaments
 			tournamentTeamId: number;
 			userId: number;
 		}>;
@@ -323,8 +323,7 @@ export async function findAllResultsByTournamentId(
 					.select("TournamentTeamMember.userId")
 					.whereRef("TournamentTeamMember.tournamentTeamId", "=", "Team2.id"),
 			).as("opponentTwoMembers"),
-			// participants are fetched flat below: nesting them in here made SQLite build
-			// and re-parse a JSON document per game for tens of thousands of rows
+			// participants are fetched flat below: nesting made SQLite build and re-parse a JSON document per game
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentMatchGameResult")
@@ -344,7 +343,7 @@ export async function findAllResultsByTournamentId(
 		])
 		.where("TournamentStage.tournamentId", "=", tournamentId)
 		.where("TournamentMatch.winnerSide", "is not", null)
-		// strictly speaking the order by condition is not accurate, future improvement would be to add order conditions that match the tournament structure
+		// not strictly accurate, ordering by the tournament structure would be an improvement
 		.orderBy("TournamentMatch.id", "asc")
 		.execute();
 

@@ -43,8 +43,7 @@ export class CalendarNewEventPage {
 		await navigate({ page: this.page, url: TOURNAMENT_NEW_PAGE });
 	}
 
-	// the `date` datetime inputs use the array item's label ("Date"), not the
-	// array's own label, so they're driven directly rather than via the form helper
+	// the `date` inputs carry the array item's label ("Date"), not the array's, so the form helper can't drive them
 	async setFirstDate(date: Date) {
 		const fill = (segment: string, value: string) =>
 			this.page

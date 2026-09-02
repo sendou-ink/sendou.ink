@@ -1,31 +1,22 @@
-/**
- * Whether a higher value is better ("higher") or worse ("lower") for the player who owns
- * the weapon. `null` means the direction is unknown / context-dependent.
- */
+/** Whether a higher value is better or worse for the weapon's owner; `null` = unknown / context-dependent. */
 type ParamDirection = "higher" | "lower" | null;
 
-/**
- * How a value change between two patches affected the weapon: a `"buff"` made it stronger,
- * a `"nerf"` made it weaker, and `"neutral"` is either an unclassified parameter or a change
- * whose impact direction we don't track.
- */
+/** `"neutral"` = unclassified parameter or a change whose direction isn't tracked. */
 export type ParamChangeKind = "buff" | "nerf" | "neutral";
 
 /**
- * Ordered substring rules describing whether a higher value of a parameter is good for its
- * weapon. The first rule whose `match` is a substring of the full `${category}.${key}` wins,
- * so narrower exceptions are listed before broader rules (e.g. `ReceiveDamage` before
- * `Damage`). Parameters matching no rule are treated as having an unknown direction.
+ * First rule whose `match` is a substring of `${category}.${key}` wins, so narrower exceptions go
+ * before broader rules (`ReceiveDamage` before `Damage`). No match = unknown direction.
  */
 const PARAM_DIRECTION_RULES: Array<{
 	match: string;
 	betterWhenHigher: boolean;
 }> = [
-	// Taking less damage is good, so these override the broader "Damage" rule below.
+	// overrides the broader "Damage" rule below
 	{ match: "ReceiveDamage", betterWhenHigher: false },
 	{ match: "AttackedDamageRate", betterWhenHigher: false },
 
-	// Lower is better: less ink, faster recovery, tighter spread, shorter delays.
+	// lower is better
 	{ match: "InkConsume", betterWhenHigher: false },
 	{ match: "InkRecoverStop", betterWhenHigher: false },
 	{ match: "DegSwerve", betterWhenHigher: false },
@@ -38,7 +29,7 @@ const PARAM_DIRECTION_RULES: Array<{
 	{ match: "NakedFrame", betterWhenHigher: false },
 	{ match: "Dash_ChargeCancelableFrame", betterWhenHigher: false },
 
-	// Higher is better: more damage, durability, mobility, paint, range, uptime.
+	// higher is better
 	{ match: "Damage", betterWhenHigher: true },
 	{ match: "CanopyHP", betterWhenHigher: true },
 	{ match: "ArmorHP", betterWhenHigher: true },
@@ -59,7 +50,6 @@ const PARAM_DIRECTION_RULES: Array<{
 	{ match: "PowerUpFrame", betterWhenHigher: true },
 	{ match: "KnockBackParam.Distance", betterWhenHigher: true },
 
-	// Longer-lasting effects and uptime are buffs.
 	{ match: "SpecialTotalFrame", betterWhenHigher: true },
 	{ match: "SpecialDurationFrame", betterWhenHigher: true },
 	{ match: "MarkingFrame", betterWhenHigher: true },
@@ -70,11 +60,6 @@ const PARAM_DIRECTION_RULES: Array<{
 	{ match: ".High", betterWhenHigher: true },
 ];
 
-/**
- * Returns whether a higher value of the given parameter benefits the weapon's owner, using
- * substring matching against `${category}.${key}`. Returns `null` when the parameter is not
- * recognized as clearly directional.
- */
 function getParamDirection(category: string, key: string): ParamDirection {
 	const fullKey = `${category}.${key}`;
 
@@ -87,14 +72,9 @@ function getParamDirection(category: string, key: string): ParamDirection {
 	return null;
 }
 
-/** Matches a single `"<damage> @ <distance>"` breakpoint of a serialized damage falloff curve. */
 const DAMAGE_BREAKPOINT_PATTERN = /^\s*([\d.]+)\s*@\s*([\d.]+)\s*$/;
 
-/**
- * Parses a serialized damage falloff curve (see `formatDistanceDamageArray`) back into its
- * breakpoints. Returns `null` for any other string (enums, primitive-array blobs), which are
- * treated as non-directional.
- */
+/** Inverse of `formatDistanceDamageArray`; `null` for any other string (enums, primitive-array blobs). */
 function parseDamageCurve(
 	value: number | string,
 ): Array<{ damage: number; distance: number }> | null {
@@ -113,11 +93,8 @@ function parseDamageCurve(
 }
 
 /**
- * Classifies a change between two damage falloff curves by comparing them breakpoint by
- * breakpoint. Both more damage and more reach (a higher distance at which a damage tier still
- * applies) count as improvements, so a curve where every change improves is a buff, every change
- * worsens is a nerf, and a mix (or curves of differing shape) is neutral. Returns `null` when the
- * values are not both damage curves, so the caller falls back to scalar comparison.
+ * Breakpoint by breakpoint; more damage and more reach both count as improvements. All improve = buff,
+ * all worsen = nerf, mixed or differing shape = neutral. `null` when not both curves.
  */
 function classifyDamageCurveChange(
 	direction: ParamDirection,
@@ -153,11 +130,8 @@ function classifyDamageCurveChange(
 }
 
 /**
- * Classifies a parameter value change between two patches as a buff, a nerf, or neutral.
- *
- * Damage falloff curves are compared breakpoint by breakpoint (see
- * {@link classifyDamageCurveChange}). Neutral is returned for other non-numeric values, unchanged
- * values, or parameters whose impact direction is unknown (see {@link getParamDirection}).
+ * Buff, nerf or neutral. Falloff curves go through {@link classifyDamageCurveChange}; other non-numeric,
+ * unchanged or unknown-direction ({@link getParamDirection}) values are neutral.
  */
 export function classifyParamChange(
 	category: string,

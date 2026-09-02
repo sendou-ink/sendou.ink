@@ -49,8 +49,7 @@ export async function findAllByMonth(args: MonthYear & { tier?: number }) {
 		.$narrowType<{ author: NotNull; suggested: NotNull }>()
 		.execute();
 
-	// filter out suggestions that were made in the time period
-	// between voting ending and people gaining access from the leaderboard
+	// drops suggestions made between voting ending and people gaining access from the leaderboard
 	const rows = allRows.filter(
 		(r) => !r.suggestedPlusTier || r.suggestedPlusTier > r.tier,
 	);
@@ -157,8 +156,7 @@ export async function findMonthSummary(
 		if (row.suggestedPlusTier && row.suggestedPlusTier <= row.tier) continue;
 		if (!isPlusTier(row.tier)) continue;
 
-		// rows are in creation order, so the first row of a suggestion is the one
-		// that started it and every later row is a follow up comment
+		// rows are in creation order: the first row of a suggestion started it, later ones are comments
 		const key = `${row.tier}-${row.suggestedId}`;
 		if (seenSuggestions.has(key)) continue;
 		seenSuggestions.add(key);
@@ -211,7 +209,6 @@ export function deleteWithCommentsBySuggestedUserId({
 		.execute();
 }
 
-/** Plus tier the suggested user already has, if any. */
 // the first entry is the suggestion itself; deleting it deletes the whole
 // suggestion which the author may only do while it has no comments
 function entryPermissions({
@@ -239,6 +236,7 @@ function entryPermissions({
 	};
 }
 
+/** Plus tier the suggested user already has, if any. */
 function suggestedPlusTier(eb: ExpressionBuilder<DB, "PlusSuggestion">) {
 	return eb
 		.selectFrom("PlusTier")
