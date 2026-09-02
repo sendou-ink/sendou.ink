@@ -262,7 +262,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				bracket.type === "swiss",
 				"Can't unadvance non-swiss bracket",
 			);
-			errorToastIfFalsyNoFollowUpBrackets(tournament);
+			errorToastIfFalsyNoFollowUpBrackets(tournament, data.bracketIdx);
 
 			await BracketRepository.deleteRoundMatches({
 				groupId: data.groupId,
@@ -340,9 +340,12 @@ export const action: ActionFunction = async ({ params, request }) => {
 	return null;
 };
 
-function errorToastIfFalsyNoFollowUpBrackets(tournament: Tournament) {
+function errorToastIfFalsyNoFollowUpBrackets(
+	tournament: Tournament,
+	bracketIdx: number,
+) {
 	const followUpBrackets = tournament.brackets.filter((b) =>
-		b.sources?.some((source) => source.bracketIdx === 0),
+		b.sources?.some((source) => source.bracketIdx === bracketIdx),
 	);
 
 	errorToastIfFalsy(
