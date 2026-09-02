@@ -111,11 +111,20 @@ function editorWeek({
 }
 
 function slotToDayRange(slot: TimeRange, timezone: string): DayTimeRange {
-	const start = Availability.timeToMinutes(
-		Availability.timeInTimezone(slot.startsAt, timezone),
-	);
+	const date = Availability.dateInTimezone(slot.startsAt, timezone);
 
-	return { start, end: start + Math.round((slot.endsAt - slot.startsAt) / 60) };
+	return {
+		start: Availability.timestampToDayMinutes({
+			date,
+			timestamp: slot.startsAt,
+			timezone,
+		}),
+		end: Availability.timestampToDayMinutes({
+			date,
+			timestamp: slot.endsAt,
+			timezone,
+		}),
+	};
 }
 
 function noteOfDay(week: ReportedWeek, date: string, timezone: string) {

@@ -1,10 +1,12 @@
 import { TZDate } from "@date-fns/tz";
 import {
 	addWeeks,
+	differenceInCalendarDays,
 	format,
 	getISOWeek,
 	isMonday,
 	isSunday,
+	parseISO,
 	startOfWeek,
 } from "date-fns";
 import * as R from "remeda";
@@ -116,6 +118,31 @@ export function dayMinutesToTimestamp({
 
 	return dateToDatabaseTimestamp(
 		new TZDate(year, month - 1, day, 0, minutes, 0, timezone),
+	);
+}
+
+/**
+ * Minutes from midnight of `date` in `timezone`, the inverse of {@link dayMinutesToTimestamp}.
+ * A timestamp on a later day counts on past 1440, read off the wall clock so a DST change inside
+ * the range does not stretch or shrink it.
+ */
+export function timestampToDayMinutes({
+	date,
+	timestamp,
+	timezone,
+}: {
+	date: string;
+	timestamp: number;
+	timezone: string;
+}) {
+	const dayDifference = differenceInCalendarDays(
+		parseISO(dateInTimezone(timestamp, timezone)),
+		parseISO(date),
+	);
+
+	return (
+		dayDifference * DAY_MINUTES +
+		timeToMinutes(timeInTimezone(timestamp, timezone))
 	);
 }
 
