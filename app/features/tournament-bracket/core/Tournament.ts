@@ -130,7 +130,16 @@ export class Tournament {
 			: Boolean(bracketsMeta?.some((meta) => !meta.preview));
 		const minMembersPerTeam = ctx.settings.minMembersPerTeam ?? 4;
 
-		const teamsInSeedOrder = sortTeamsBySeeding(ctx.teams, minMembersPerTeam);
+		// a bracket that stopped being a starting bracket can leave stale indexes behind
+		const teamsWithoutStaleStartingBrackets =
+			Progression.startingBrackets(ctx.settings.bracketProgression).length > 1
+				? ctx.teams
+				: ctx.teams.map((team) => ({ ...team, startingBracketIdx: null }));
+
+		const teamsInSeedOrder = sortTeamsBySeeding(
+			teamsWithoutStaleStartingBrackets,
+			minMembersPerTeam,
+		);
 
 		this.args = args;
 		this.data = data;

@@ -781,24 +781,25 @@ async function updateTournamentTables(
 				: undefined,
 	};
 
+	const changedFormat = Progression.changedBracketProgressionFormat(
+		existingSettings.bracketProgression,
+		args.bracketProgression,
+	);
+
 	const { mapPickingStyle } = await trx
 		.updateTable("Tournament")
 		.set({
 			settings: JSON.stringify(settings),
 			rules: args.rules,
-			preparedMaps: Progression.changedBracketProgressionFormat(
-				existingSettings.bracketProgression,
-				args.bracketProgression,
-			)
-				? null
-				: undefined,
+			preparedMaps: changedFormat ? null : undefined,
 		})
 		.where("id", "=", tournamentId)
 		.returning("mapPickingStyle")
 		.executeTakeFirstOrThrow();
 
 	if (
-		Progression.changedBracketProgressionFormat(
+		changedFormat ||
+		Progression.changedStartingBrackets(
 			existingSettings.bracketProgression,
 			args.bracketProgression,
 		)

@@ -1082,8 +1082,14 @@ export function updateProgression({
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow();
 
+		const changedFormat = Progression.changedBracketProgressionFormat(
+			existingSettings.bracketProgression,
+			bracketProgression,
+		);
+
 		if (
-			Progression.changedBracketProgressionFormat(
+			changedFormat ||
+			Progression.changedStartingBrackets(
 				existingSettings.bracketProgression,
 				bracketProgression,
 			)
@@ -1124,12 +1130,7 @@ export function updateProgression({
 			.updateTable("Tournament")
 			.set({
 				settings: JSON.stringify(newSettings),
-				preparedMaps: Progression.changedBracketProgressionFormat(
-					existingSettings.bracketProgression,
-					bracketProgression,
-				)
-					? null
-					: undefined,
+				preparedMaps: changedFormat ? null : undefined,
 			})
 			.where("id", "=", tournamentId)
 			.execute();

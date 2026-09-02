@@ -1047,6 +1047,17 @@ export function changedBracketProgressionFormat(
 	return false;
 }
 
+/** Returns true if the set of brackets that teams can start in changed */
+export function changedStartingBrackets(
+	oldProgression: ParsedBracket[],
+	newProgression: ParsedBracket[],
+): boolean {
+	return !R.isDeepEqual(
+		startingBrackets(oldProgression),
+		startingBrackets(newProgression),
+	);
+}
+
 /**
  * Bracket order for standings: a participant's standing comes from the first bracket in this order they
  * are in. Finals first; a bracket always comes after every bracket it advances teams to, so teams it
