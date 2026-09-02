@@ -195,6 +195,12 @@
 	position: absolute;
 	bottom: -21px;
 	right: 9px;
+	height: 18px;
+
+	&:focus-visible {
+		outline-offset: 2px;
+		border-radius: 6px;
+	}
 }
 
 .categoryHeading {
