@@ -82,7 +82,7 @@ const getAllSkills = async () => {
 		const bestTier = toConsider.reduce(
 			(acc, cur, idx) => {
 				const seasonsSkill = cur[member.userId!];
-				if (!seasonsSkill) {
+				if (!seasonsSkill || seasonsSkill.approximate) {
 					return acc;
 				}
 
