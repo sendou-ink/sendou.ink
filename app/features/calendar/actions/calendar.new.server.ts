@@ -81,7 +81,19 @@ export const action: ActionFunction = async ({ request }) => {
 		data.badges = [];
 	}
 
+	const eventToEdit = data.eventToEditId
+		? badRequestIfFalsy(
+				await CalendarRepository.findById(data.eventToEditId, {
+					includeBadgePrizes: true,
+				}),
+			)
+		: null;
+
 	const managedBadges = await BadgeRepository.findManagedByUserId(user.id);
+	const attachableBadgeIds = new Set([
+		...managedBadges.map((badge) => badge.id),
+		...(eventToEdit?.badgePrizes ?? []).map((badge) => badge.id),
+	]);
 
 	const dates =
 		isAddingTournament && data.startTime ? [data.startTime] : data.date;
@@ -104,9 +116,7 @@ export const action: ActionFunction = async ({ request }) => {
 							CALENDAR_EVENT.TAGS.indexOf(a) - CALENDAR_EVENT.TAGS.indexOf(b),
 					)
 				: null,
-		badges: data.badges.filter((badge) =>
-			managedBadges.some((mb) => mb.id === badge),
-		),
+		badges: data.badges.filter((badge) => attachableBadgeIds.has(badge)),
 		trophyId: data.trophyId ?? null,
 		// resolved by parseFormDataWithImages from the `image()` field
 		avatarImgId: data.avatarImgId ?? undefined,
@@ -146,10 +156,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const deserializedMaps = data.pool ? MapPool.toDbList(data.pool) : undefined;
 
-	if (data.eventToEditId) {
-		const eventToEdit = badRequestIfFalsy(
-			await CalendarRepository.findById(data.eventToEditId),
-		);
+	if (eventToEdit) {
 		if (eventToEdit.tournamentId) {
 			const tournament = await tournamentFromDB(eventToEdit.tournamentId);
 			errorToastIfFalsy(
@@ -168,7 +175,7 @@ export const action: ActionFunction = async ({ request }) => {
 		}
 
 		await CalendarRepository.update({
-			eventId: data.eventToEditId,
+			eventId: eventToEdit.eventId,
 			mapPoolMaps: deserializedMaps,
 			...commonArgs,
 		});
@@ -178,7 +185,7 @@ export const action: ActionFunction = async ({ request }) => {
 			ShowcaseTournaments.clearParticipationInfoMap();
 		}
 
-		throw redirect(calendarEventPage(data.eventToEditId));
+		throw redirect(calendarEventPage(eventToEdit.eventId));
 	}
 	const mapPickingStyle = () => {
 		if (data.toToolsMode === "TO") return "TO" as const;
