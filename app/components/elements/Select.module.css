@@ -94,11 +94,6 @@
 	&:popover-open {
 		display: flex;
 	}
-
-	/* the listbox holds focus while a non-search select is open */
-	&:has(> .listBox:focus) {
-		outline: var(--focus-ring);
-	}
 }
 
 .listBox {
