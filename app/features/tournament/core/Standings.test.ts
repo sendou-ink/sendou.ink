@@ -165,6 +165,33 @@ describe("tournamentStandings", () => {
 			1, 2, 3, 4, 5, 5, 5, 5,
 		]);
 	});
+
+	test("keeps quarterfinal losers 5th while the third place match is still pending", () => {
+		const result = tournamentStandings(
+			singleEliminationWithPendingThirdPlaceMatch(),
+		);
+		invariant(result.type === "single");
+
+		const placementOf = (teamId: number) =>
+			result.standings.find((standing) => standing.team.id === teamId)
+				?.placement;
+
+		expect(placementOf(1)).toBe(1);
+		expect(placementOf(2)).toBe(2);
+		expect([5, 6, 7, 8].map(placementOf)).toEqual([5, 5, 5, 5]);
+	});
+
+	test("lists the semifinal losers while the third place match is still pending", () => {
+		const result = tournamentStandings(
+			singleEliminationWithPendingThirdPlaceMatch(),
+		);
+		invariant(result.type === "single");
+
+		const teamIds = result.standings.map((standing) => standing.team.id);
+
+		expect(teamIds).toContain(3);
+		expect(teamIds).toContain(4);
+	});
 });
 
 describe("reNumberPlacements", () => {
@@ -512,6 +539,54 @@ function singleEliminationTournament() {
 				tournamentCtxTeam(3, { seed: 3 }),
 				tournamentCtxTeam(4, { seed: 4 }),
 			],
+		},
+		data,
+	});
+}
+
+/** Eight teams, every match reported except the third place match. */
+function singleEliminationWithPendingThirdPlaceMatch() {
+	let data = createResolved({
+		type: "single_elimination",
+		seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+		settings: { consolationFinal: true },
+	});
+	const thirdPlaceGroupId = Math.max(...data.group.map((group) => group.id));
+
+	while (true) {
+		const pending = data.match.find(
+			(match) =>
+				match.groupId !== thirdPlaceGroupId &&
+				typeof match.opponent1?.id === "number" &&
+				typeof match.opponent2?.id === "number" &&
+				!match.winnerSide,
+		);
+		if (!pending) break;
+
+		const winnerIsOpp1 =
+			(pending.opponent1!.id as number) < (pending.opponent2!.id as number);
+		data = Engine.reportResult(data, {
+			matchId: pending.id,
+			scores: [winnerIsOpp1 ? 2 : 0, winnerIsOpp1 ? 0 : 2],
+			winnerSide: winnerIsOpp1 ? "opponent1" : "opponent2",
+		}).data;
+	}
+
+	return testTournament({
+		ctx: {
+			settings: {
+				bracketProgression: [
+					{
+						type: "single_elimination",
+						name: "Main Bracket",
+						requiresCheckIn: false,
+						settings: { thirdPlaceMatch: true },
+					},
+				],
+			},
+			teams: [1, 2, 3, 4, 5, 6, 7, 8].map((id) =>
+				tournamentCtxTeam(id, { seed: id }),
+			),
 		},
 		data,
 	});
