@@ -48,8 +48,9 @@ export function weekNumber(range: TimeRange, timezone: string) {
 
 /**
  * One member's week bucketed into the viewer's days: effective free time (commitments cut out
- * first), the commitments and their notes. Slots land on the viewer-local day they start on,
- * wherever the author's week put them, adjacent weeks' spillover included.
+ * first), the commitments and their notes. Slots land on the viewer-local day track they start
+ * on, wherever the author's week put them, adjacent weeks' spillover included, and what runs past
+ * the end of that track continues on the next day.
  */
 export function memberRow({
 	userId,
@@ -89,9 +90,12 @@ export function memberRow({
 		};
 	}
 
-	const slots = Availability.subtract(
-		memberWeeks.flatMap((week) => week.slots),
-		busy,
+	const slots = Availability.splitByDayTracks(
+		Availability.subtract(
+			memberWeeks.flatMap((week) => week.slots),
+			busy,
+		),
+		timezone,
 	);
 
 	return {

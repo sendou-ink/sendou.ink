@@ -220,6 +220,32 @@ export function clip(
 	});
 }
 
+/** The ranges cut up into the day tracks they render on, what runs past a track's end continuing on the next day's. */
+export function splitByDayTracks(
+	ranges: Array<TimeRange>,
+	timezone: string,
+): Array<TimeRange> {
+	return ranges.flatMap((range) => {
+		const tracks: Array<TimeRange> = [];
+
+		let startsAt = range.startsAt;
+		while (startsAt < range.endsAt) {
+			const trackEndsAt = dayMinutesToTimestamp({
+				date: dateInTimezone(startsAt, timezone),
+				minutes: AVAILABILITY.TRACK_LATER_END_MINUTES,
+				timezone,
+			});
+			const endsAt = Math.min(range.endsAt, trackEndsAt);
+			if (endsAt <= startsAt) break;
+
+			tracks.push({ startsAt, endsAt });
+			startsAt = endsAt;
+		}
+
+		return tracks;
+	});
+}
+
 /**
  * How one person's schedule relates to an event's window. A busy block overlapping it
  * wins over anything reported (committed elsewhere, schedule known or not). Otherwise the

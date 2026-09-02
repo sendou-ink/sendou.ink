@@ -84,10 +84,15 @@ function editorWeek({
 		Availability.isSameWeek(week.weekStartsAt, range.startsAt),
 	);
 
+	const slots = Availability.splitByDayTracks(
+		matchingWeek?.slots ?? [],
+		timezone,
+	);
+
 	const days = ScheduleWeek.days(range, timezone).map(({ date }) => ({
 		date,
 		ranges: Availability.mergedDayRanges(
-			(matchingWeek?.slots ?? [])
+			slots
 				.filter(
 					(slot) =>
 						Availability.dateInTimezone(slot.startsAt, timezone) === date,
