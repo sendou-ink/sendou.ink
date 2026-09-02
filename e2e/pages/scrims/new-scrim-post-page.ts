@@ -63,11 +63,9 @@ export class NewScrimPostPage {
 		return this.page.getByLabel(`User ${nth}`);
 	}
 
-	/** One segment of the Start date picker, e.g. `"hour"` or `"day"`. */
-	startSegment(segmentName: string) {
-		return this.page.getByRole("spinbutton", {
-			name: new RegExp(`^${segmentName}, Start`),
-		});
+	/** The Start datetime input. */
+	get startInput() {
+		return this.page.getByLabel(/^Start *\*?$/);
 	}
 
 	/** Limits who sees the post to one of the author's associations. */

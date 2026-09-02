@@ -67,6 +67,8 @@
 	"errors.notAllowedCharacters": "Contains not allowed characters",
 	"errors.imageTooLarge": "Image is too large. Try one with a smaller file size.",
 	"errors.atLeastOneOption": "At least one option must be selected",
+	"errors.invalidTime": "Must be a valid time, e.g. 18:30",
+	"errors.timeRangeIncomplete": "Both a start and an end time are needed",
 	"errors.duplicateName": "There is already a team with this name",
 	"errors.duplicateOrgName": "There is already an organization with this name",
 	"errors.duplicateOrgMember": "This user is already listed as a member",

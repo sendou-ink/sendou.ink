@@ -5,6 +5,7 @@ import {
 	type Page,
 	type Response,
 } from "@playwright/test";
+import { format } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import {
 	assertFlushed,
@@ -204,7 +205,17 @@ export async function selectTournament({
 	await item.first().click();
 }
 
-/** Fills a React Aria datetime field's segments, targeting them by the field's label. */
+/** The value a native `datetime-local` input takes for a local `Date`. */
+export function datetimeLocalValue(date: Date) {
+	return format(date, "yyyy-MM-dd'T'HH:mm");
+}
+
+/** The value a native `date` input takes for a local `Date`. */
+export function dateInputValue(date: Date) {
+	return format(date, "yyyy-MM-dd");
+}
+
+/** Fills a native datetime field, targeting it by its label. */
 export async function fillDateTimeField({
 	scope,
 	label,
@@ -214,18 +225,9 @@ export async function fillDateTimeField({
 	label: string;
 	date: Date;
 }) {
-	const fillSegment = (segment: string, value: string) =>
-		scope
-			.getByRole("spinbutton", { name: new RegExp(`^${segment}, ${label}`) })
-			.fill(value);
-
-	const hours = date.getHours();
-	await fillSegment("year", String(date.getFullYear()));
-	await fillSegment("month", String(date.getMonth() + 1));
-	await fillSegment("day", String(date.getDate()));
-	await fillSegment("hour", String(hours % 12 || 12));
-	await fillSegment("minute", String(date.getMinutes()).padStart(2, "0"));
-	await fillSegment("AM/PM", hours >= 12 ? "PM" : "AM");
+	await scope
+		.getByLabel(new RegExp(`^${label} *\\*?$`))
+		.fill(datetimeLocalValue(date));
 }
 
 /** page.goto that waits for the page to be hydrated before proceeding */

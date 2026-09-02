@@ -6,6 +6,7 @@ import type * as v from "valibot";
 import { getFormFieldMetadata } from "~/form/fields";
 import type { FormField, FormObjectSchema } from "~/form/types";
 import type { AnySyncSchema } from "~/utils/schema";
+import { dateInputValue, datetimeLocalValue } from "./playwright";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 
@@ -230,41 +231,12 @@ export function createFormHelpers<T extends v.ObjectEntries>(
 
 		async setDateTime(name, date) {
 			const label = getLabel(String(name));
-			const hours = date.getHours();
-
-			const fillSpinbutton = async (spinName: string, value: string) => {
-				await page
-					.getByRole("spinbutton", {
-						name: new RegExp(`^${spinName}, ${label}`),
-					})
-					.fill(value);
-			};
-
-			await fillSpinbutton("year", date.getFullYear().toString());
-			await fillSpinbutton("month", (date.getMonth() + 1).toString());
-			await fillSpinbutton("day", date.getDate().toString());
-			await fillSpinbutton("hour", String(hours % 12 || 12));
-			await fillSpinbutton(
-				"minute",
-				date.getMinutes().toString().padStart(2, "0"),
-			);
-			await fillSpinbutton("AM/PM", hours >= 12 ? "PM" : "AM");
+			await byLabel(label).fill(datetimeLocalValue(date));
 		},
 
 		async setDate(name, date) {
 			const label = getLabel(String(name));
-
-			const fillSpinbutton = async (spinName: string, value: string) => {
-				await page
-					.getByRole("spinbutton", {
-						name: new RegExp(`^${spinName}, ${label}`),
-					})
-					.fill(value);
-			};
-
-			await fillSpinbutton("year", date.getFullYear().toString());
-			await fillSpinbutton("month", (date.getMonth() + 1).toString());
-			await fillSpinbutton("day", date.getDate().toString());
+			await byLabel(label).fill(dateInputValue(date));
 		},
 
 		async setImage(name, filePath) {

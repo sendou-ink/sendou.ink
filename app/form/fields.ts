@@ -838,12 +838,18 @@ type TimeRangeArgs = WithTypedTranslationKeys<
 	endLabel?: FormsTranslationKey;
 };
 
+const timeRangeEndpoint = v.pipe(
+	v.string(),
+	v.nonEmpty("forms:errors.timeRangeIncomplete"),
+	v.check((value) => v.is(timeString, value), "forms:errors.invalidTime"),
+);
+
 export function timeRangeOptional(args: TimeRangeArgs) {
 	return register(
 		v.nullable(
 			v.object({
-				start: timeString,
-				end: timeString,
+				start: timeRangeEndpoint,
+				end: timeRangeEndpoint,
 			}),
 		),
 		{

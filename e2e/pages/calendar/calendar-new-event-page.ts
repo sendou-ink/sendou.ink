@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { calendarNewBaseSchema } from "~/features/calendar/calendar-new-schemas";
 import { CALENDAR_NEW_PAGE, TOURNAMENT_NEW_PAGE } from "~/utils/urls";
-import { navigate, submit } from "../../helpers/playwright";
+import { datetimeLocalValue, navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 
 /** `/calendar/new`, also used for adding tournaments and editing existing events. */
@@ -46,19 +46,10 @@ export class CalendarNewEventPage {
 	// the `date` datetime inputs use the array item's label ("Date"), not the
 	// array's own label, so they're driven directly rather than via the form helper
 	async setFirstDate(date: Date) {
-		const fill = (segment: string, value: string) =>
-			this.page
-				.getByRole("spinbutton", { name: new RegExp(`^${segment}, Date`) })
-				.first()
-				.fill(value);
-
-		const hours = date.getHours();
-		await fill("year", String(date.getFullYear()));
-		await fill("month", String(date.getMonth() + 1));
-		await fill("day", String(date.getDate()));
-		await fill("hour", String(hours % 12 || 12));
-		await fill("minute", date.getMinutes().toString().padStart(2, "0"));
-		await fill("AM/PM", hours >= 12 ? "PM" : "AM");
+		await this.page
+			.getByLabel(/^Date *\*?$/)
+			.first()
+			.fill(datetimeLocalValue(date));
 	}
 
 	// the TO map pool grid exposes each map as a mode button inside a group labelled

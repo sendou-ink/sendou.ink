@@ -489,9 +489,7 @@ test.describe("Scrim schedule picker", () => {
 
 		// 18:00, with the flexibility that still leaves an hour of the window
 		// to play whichever start is settled on, capped at the longest option
-		await expect(newPost.startSegment("hour")).toHaveText("6");
-		await expect(newPost.startSegment("minute")).toHaveText("00");
-		await expect(newPost.startSegment("AM/PM")).toHaveText("PM");
+		await expect(newPost.startInput).toHaveValue(/T18:00$/);
 		await expect(newPost.locators.flexibility).toHaveValue("+3hours");
 		await expect(slot).toHaveAttribute("data-picked", "true");
 	});

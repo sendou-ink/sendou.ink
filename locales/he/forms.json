@@ -67,6 +67,8 @@
 	"errors.notAllowedCharacters": "",
 	"errors.imageTooLarge": "",
 	"errors.atLeastOneOption": "",
+	"errors.invalidTime": "",
+	"errors.timeRangeIncomplete": "",
 	"errors.duplicateName": "יש כבר צוות בשם הזה",
 	"errors.duplicateOrgName": "",
 	"errors.duplicateOrgMember": "",

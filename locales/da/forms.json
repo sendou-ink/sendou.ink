@@ -67,6 +67,8 @@
 	"errors.notAllowedCharacters": "",
 	"errors.imageTooLarge": "",
 	"errors.atLeastOneOption": "",
+	"errors.invalidTime": "",
+	"errors.timeRangeIncomplete": "",
 	"errors.duplicateName": "Holdnavnet er taget af et andet hold",
 	"errors.duplicateOrgName": "",
 	"errors.duplicateOrgMember": "",
