@@ -35,7 +35,7 @@ import { userCardEditPage } from "~/features/user-card/user-card-urls";
 import { MutualFriends } from "~/features/user-page/components/MutualFriends";
 import { ReportUserDialog } from "~/features/user-report/components/ReportUserDialog";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { useLayoutSize } from "~/hooks/useLayoutSize";
 import type { BrandId } from "~/modules/in-game-lists/types";
 import { assertUnreachable } from "~/utils/types";
 import {

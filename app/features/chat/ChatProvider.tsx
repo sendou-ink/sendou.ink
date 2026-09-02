@@ -7,7 +7,7 @@ import {
 	useEventsConnection,
 } from "~/features/events/events-hooks";
 import { chatRoomChannel } from "~/features/events/events-types";
-import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { useLayoutSize } from "~/hooks/useLayoutSize";
 import type { LoggedInUser } from "~/root";
 import { type ChatSnapshot, chatClient } from "./chat-client";
 import { useServerRevalidationEvents } from "./chat-hooks";

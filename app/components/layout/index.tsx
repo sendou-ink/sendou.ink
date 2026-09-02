@@ -27,7 +27,8 @@ import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
@@ -156,25 +157,24 @@ function useTabletModal(isTabletLayout: boolean) {
 	return [isOpen, setIsOpen] as const;
 }
 
+/** Hides the mobile header while scrolling down and brings it back on scrolling up; always `0` outside the mobile layout. */
 function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 	const [navOffset, setNavOffset] = React.useState(0);
 	const lastScrollY = React.useRef(0);
+	const isMobileLayout = useMediaQuery(MOBILE_LAYOUT_QUERY);
 
-	const MOBILE_BREAKPOINT = 600;
 	const NAV_HEIGHT_FALLBACK = 55;
 	const SCROLL_THRESHOLD_PX = 200;
 
 	const scrollAccumulator = React.useRef(0);
 
 	React.useEffect(() => {
-		const handleScroll = () => {
-			if (window.innerWidth >= MOBILE_BREAKPOINT) {
-				setNavOffset(0);
-				lastScrollY.current = window.scrollY;
-				scrollAccumulator.current = 0;
-				return;
-			}
+		if (!isMobileLayout) return;
 
+		lastScrollY.current = window.scrollY;
+		scrollAccumulator.current = 0;
+
+		const handleScroll = () => {
 			const navHeight = headerRef.current?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
 			const currentScrollY = window.scrollY;
 			const scrollDelta = currentScrollY - lastScrollY.current;
@@ -209,20 +209,13 @@ function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 			lastScrollY.current = currentScrollY;
 		};
 
-		const handleResize = () => {
-			if (window.innerWidth >= MOBILE_BREAKPOINT) {
-				setNavOffset(0);
-			}
-		};
-
 		window.addEventListener("scroll", handleScroll, { passive: true });
-		window.addEventListener("resize", handleResize);
 
 		return () => {
 			window.removeEventListener("scroll", handleScroll);
-			window.removeEventListener("resize", handleResize);
+			setNavOffset(0);
 		};
-	}, [headerRef]);
+	}, [headerRef, isMobileLayout]);
 
 	return navOffset;
 }

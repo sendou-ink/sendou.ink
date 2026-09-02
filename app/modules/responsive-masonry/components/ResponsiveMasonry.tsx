@@ -1,31 +1,18 @@
 // adapted from https://github.com/cedricdelpoux/react-responsive-masonry
 
 import React from "react";
-import { useWindowSize } from "~/hooks/useWindowSize";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
 import Masonry from "./Masonry";
 
-const COLUMN_COUNTS = {
-	L: 3,
-	M: 2,
-	S: 1,
-};
-
-const BREAKPOINTS = {
-	L: 900,
-	M: 750,
-	S: 350,
-} as const;
-
-type Breakpoint = keyof typeof BREAKPOINTS;
+const THREE_COLUMNS_QUERY = "(width >= 900px)";
+const TWO_COLUMNS_QUERY = "(width >= 750px)";
 
 const MasonryResponsive = ({
 	children,
 }: {
 	children: React.ReactNode | React.ReactNode[];
 }) => {
-	const breakpoint = useBreakpoint();
-
-	const columnsCount = COLUMN_COUNTS[breakpoint];
+	const columnsCount = useColumnsCount();
 
 	return (
 		<div>
@@ -47,13 +34,11 @@ export function ResponsiveMasonry({ children }: { children: React.ReactNode }) {
 	);
 }
 
-function useBreakpoint(): Breakpoint {
-	const { width } = useWindowSize();
+function useColumnsCount() {
+	const threeColumns = useMediaQuery(THREE_COLUMNS_QUERY);
+	const twoColumns = useMediaQuery(TWO_COLUMNS_QUERY);
 
-	const ascending = Object.entries(BREAKPOINTS).sort((a, b) => a[1] - b[1]);
-	return ascending.reduce<Breakpoint>(
-		(current, [name, minWidth]) =>
-			width >= minWidth ? (name as Breakpoint) : current,
-		ascending[0][0] as Breakpoint,
-	);
+	if (threeColumns) return 3;
+	if (twoColumns) return 2;
+	return 1;
 }

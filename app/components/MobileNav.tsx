@@ -22,7 +22,7 @@ import { useChatContext } from "~/features/chat/ChatProvider";
 import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
-import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { useLayoutSize } from "~/hooks/useLayoutSize";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
 import {

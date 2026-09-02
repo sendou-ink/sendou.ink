@@ -195,8 +195,7 @@
 	object-fit: cover;
 }
 
-/** needs to go away so we have enough space even with both side panels open */
-@media screen and (max-width: 1100px) {
+@container (width < 660px) {
 	.searchKbd {
 		display: none;
 	}

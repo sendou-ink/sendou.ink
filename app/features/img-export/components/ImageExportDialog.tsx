@@ -11,6 +11,7 @@ import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { useTheme } from "~/features/theme/core/provider";
 import { useCopyPngToClipboard } from "~/hooks/useCopyToClipboard";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 import { GraphicQrCodeContext } from "./Graphic";
 import styles from "./ImageExportDialog.module.css";
@@ -269,18 +270,8 @@ async function saveImage(
 	URL.revokeObjectURL(url);
 }
 
-function subscribeToPointerQuery(callback: () => void) {
-	const mediaQueryList = window.matchMedia(COARSE_POINTER_QUERY);
-	mediaQueryList.addEventListener("change", callback);
-	return () => mediaQueryList.removeEventListener("change", callback);
-}
-
 function useIsMobile() {
-	return React.useSyncExternalStore(
-		subscribeToPointerQuery,
-		() => window.matchMedia(COARSE_POINTER_QUERY).matches,
-		() => false,
-	);
+	return useMediaQuery(COARSE_POINTER_QUERY);
 }
 
 function usePageHasCustomTheme() {
