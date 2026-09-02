@@ -20,6 +20,40 @@ const WINDOW = {
 	endTime: dbTs(add(BOOKED_AT, { hours: 1 })),
 };
 
+/**
+ * A "flexible time" post whose window opened `windowOpensInMinutes` from now,
+ * booked by a request that picked a start `bookedInMinutes` from now.
+ */
+async function createBookedRangeScrim({
+	windowOpensInMinutes,
+	bookedInMinutes,
+}: {
+	windowOpensInMinutes: number;
+	bookedInMinutes: number;
+}) {
+	const now = new Date();
+	const bookedAt = add(now, { minutes: bookedInMinutes });
+
+	const { id } = await ScrimPostFactory.create(
+		{
+			startsAt: dbTs(add(now, { minutes: windowOpensInMinutes })),
+			rangeEndsAt: dbTs(add(now, { minutes: windowOpensInMinutes + 120 })),
+			users: [{ userId: users.id(1), isOwner: 1 }],
+		},
+		{
+			requests: [
+				{
+					startsAt: dbTs(bookedAt),
+					users: [{ userId: users.id(2), isOwner: 1 }],
+					isAccepted: true,
+				},
+			],
+		},
+	);
+
+	return { id, bookedAt: dbTs(bookedAt) };
+}
+
 describe("findPendingOverlapsForUsers", () => {
 	beforeEach(async () => {
 		await users.create(5);
@@ -250,6 +284,68 @@ describe("findUserScrims", () => {
 
 		expect(postOwnerScrims).toHaveLength(1);
 		expect(postOwnerScrims[0]!.status).toBe("booked");
+	});
+
+	test("lists a booked range scrim whose post window opened before the booked start", async () => {
+		const { id } = await createBookedRangeScrim({
+			windowOpensInMinutes: -30,
+			bookedInMinutes: 45,
+		});
+
+		const scrims = await ScrimPostRepository.findUserScrims(users.id(1));
+
+		expect(scrims.map((scrim) => scrim.id)).toContain(id);
+	});
+
+	test("reports the booked start of a range scrim, not the start of its window", async () => {
+		const { id, bookedAt } = await createBookedRangeScrim({
+			windowOpensInMinutes: 30,
+			bookedInMinutes: 90,
+		});
+
+		const scrims = await ScrimPostRepository.findUserScrims(users.id(2));
+		const scrim = scrims.find((scrim) => scrim.id === id);
+
+		expect(scrim?.status).toBe("booked");
+		expect(scrim?.startsAt).toBe(bookedAt);
+	});
+});
+
+describe("findAcceptedScrimsBetweenTwoTimestamps", () => {
+	beforeEach(async () => {
+		await users.create(2);
+	});
+
+	const startingWithinTheHour = async () => {
+		const now = new Date();
+
+		return ScrimPostRepository.findAcceptedScrimsBetweenTwoTimestamps({
+			startTime: now,
+			endTime: add(now, { hours: 1 }),
+			excludeRecentlyCreated: add(now, { minutes: 1 }),
+		});
+	};
+
+	test("finds a range scrim booked to start inside the window", async () => {
+		const { id } = await createBookedRangeScrim({
+			windowOpensInMinutes: -30,
+			bookedInMinutes: 45,
+		});
+
+		const scrims = await startingWithinTheHour();
+
+		expect(scrims.map((scrim) => scrim.id)).toContain(id);
+	});
+
+	test("leaves out a range scrim booked to start after the window", async () => {
+		const { id } = await createBookedRangeScrim({
+			windowOpensInMinutes: 30,
+			bookedInMinutes: 120,
+		});
+
+		const scrims = await startingWithinTheHour();
+
+		expect(scrims.map((scrim) => scrim.id)).not.toContain(id);
 	});
 });
 

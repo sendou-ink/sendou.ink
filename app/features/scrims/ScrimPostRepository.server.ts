@@ -239,6 +239,9 @@ const baseFindQuery = db
 		).as("requests"),
 	]);
 
+/** The booked start of a scrim: the accepted request's chosen time for a range post, the post's own otherwise. */
+const bookedStartsAt = sql<number>`coalesce((select "ScrimPostRequest"."startsAt" from "ScrimPostRequest" where "ScrimPostRequest"."scrimPostId" = "ScrimPost"."id" and "ScrimPostRequest"."isAccepted" = 1), "ScrimPost"."startsAt")`;
+
 function findMany() {
 	const min = sub(new Date(), { hours: 3 });
 
@@ -541,8 +544,8 @@ export async function findAcceptedScrimsBetweenTwoTimestamps({
 	excludeRecentlyCreated: Date;
 }) {
 	const rows = await baseFindQuery
-		.where("ScrimPost.startsAt", ">=", dateToDatabaseTimestamp(startTime))
-		.where("ScrimPost.startsAt", "<", dateToDatabaseTimestamp(endTime))
+		.where(bookedStartsAt, ">=", dateToDatabaseTimestamp(startTime))
+		.where(bookedStartsAt, "<", dateToDatabaseTimestamp(endTime))
 		.where("ScrimPost.canceledAt", "is", null)
 		.where(
 			"ScrimPost.createdAt",
@@ -711,7 +714,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 
 	const rows = await baseFindQuery
 		.where("ScrimPost.canceledAt", "is", null)
-		.where("ScrimPost.startsAt", ">=", now)
+		.where(bookedStartsAt, ">=", now)
 		.where((eb) =>
 			eb.or([
 				eb.exists(
@@ -735,7 +738,7 @@ export async function findUserScrims(userId: number): Promise<SidebarScrim[]> {
 				),
 			]),
 		)
-		.orderBy("ScrimPost.startsAt", "asc")
+		.orderBy(bookedStartsAt, "asc")
 		.execute();
 
 	return rows
