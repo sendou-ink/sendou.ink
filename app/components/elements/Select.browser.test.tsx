@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import {
 	SendouSelect,
@@ -95,6 +96,25 @@ describe("SendouSelect", () => {
 			.element(screen.getByRole("option", { name: "Season 2" }))
 			.toBeVisible();
 		expect(options()).toBe(3);
+	});
+
+	test("tabbing out of the open listbox closes it", async () => {
+		const screen = await render(
+			<>
+				<GroupedSelect />
+				<button type="button">After</button>
+			</>,
+		);
+
+		await screen.getByRole("button", { name: /Season/ }).click();
+		await expect.element(screen.getByRole("listbox")).toBeVisible();
+
+		await userEvent.keyboard("{Tab}");
+
+		await expect.element(screen.getByRole("listbox")).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole("button", { name: "After" }))
+			.toHaveFocus();
 	});
 
 	test("hovering an option moves the active descendant to it", async () => {

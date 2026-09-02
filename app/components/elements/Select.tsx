@@ -279,6 +279,11 @@ export function SendouSelect<T extends object>({
 			triggerElementRef.current?.focus();
 			return;
 		}
+		if (event.key === "Tab") {
+			triggerElementRef.current?.focus();
+			setOpen(false);
+			return;
+		}
 		if (event.key === "ArrowDown") {
 			event.preventDefault();
 			moveFocus("next");
@@ -425,6 +430,9 @@ export function SendouSelect<T extends object>({
 					event.currentTarget.contains(event.relatedTarget)
 				) {
 					return;
+				}
+				if (event.relatedTarget instanceof Node) {
+					setOpen(false);
 				}
 				onBlur?.();
 			}}
