@@ -890,17 +890,37 @@ describe("single elimination standings - third place match", () => {
 			data,
 		});
 
-		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
+		return {
+			tournament,
+			semifinalLoserIds,
+			thirdPlaceWinnerId,
+			thirdPlaceLoserId,
+		};
 	};
 
-	test("excludes semifinal losers from standings before the third place match concludes", () => {
-		const { tournament } = singleEliminationTournament({
+	test("keeps semifinal losers tied 3rd before the third place match concludes", () => {
+		const { tournament, semifinalLoserIds } = singleEliminationTournament({
 			thirdPlaceMatchReported: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
 
-		expect(standings).toHaveLength(0);
+		const byId = (a: number, b: number) => a - b;
+		expect(standings.map((s) => s.team.id).sort(byId)).toEqual(
+			semifinalLoserIds.slice().sort(byId),
+		);
+		expect(standings.map((s) => s.placement)).toEqual([3, 3]);
+	});
+
+	test("source does not consider 3rd and 4th decided before the third place match concludes", () => {
+		const { tournament } = singleEliminationTournament({
+			thirdPlaceMatchReported: false,
+		});
+
+		expect(
+			tournament.bracketByIdx(0)!.source({ placements: [3] })
+				.relevantMatchesFinished,
+		).toBe(false);
 	});
 
 	test("places third place match winner 3rd and loser 4th once it is played", () => {
