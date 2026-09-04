@@ -88,7 +88,7 @@ function InviteCodeSection() {
 					<SendouButton
 						size="small"
 						icon={copySuccess ? <Check /> : <Clipboard />}
-						onPress={() => copyToClipboard(inviteLink)}
+						onClick={() => copyToClipboard(inviteLink)}
 					>
 						{t("common:actions.copyToClipboard")}
 					</SendouButton>

@@ -141,7 +141,7 @@ export function UndoReportButton({ scoreSum }: { scoreSum: number }) {
 			icon={<Undo2 size={16} />}
 			isPending={undoReport.state !== "idle"}
 			isDisabled={scoreSum === 0}
-			onPress={() => {
+			onClick={() => {
 				undoReport.submit("UNDO_REPORT_SCORE", { position: scoreSum - 1 });
 			}}
 			testId="undo-score-button"

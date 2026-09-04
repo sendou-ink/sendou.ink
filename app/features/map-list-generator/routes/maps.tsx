@@ -125,7 +125,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 				<Label>{t("common:maps.halfSz")}</Label>
 				<SendouSwitch isSelected={szEveryOther} onChange={setSzEveryOther} />
 			</div>
-			<SendouButton onPress={handleCreateMaplist} isDisabled={disabled}>
+			<SendouButton onClick={handleCreateMaplist} isDisabled={disabled}>
 				{t("common:maps.createMapList")}
 			</SendouButton>
 			{mapList && (
@@ -147,7 +147,7 @@ function MapListCreator({ mapPool }: { mapPool: MapPool }) {
 						size="small"
 						variant="outlined"
 						icon={copySuccess ? <Check /> : <Clipboard />}
-						onPress={() =>
+						onClick={() =>
 							copyToClipboard(
 								mapList
 									.map(

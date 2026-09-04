@@ -111,7 +111,7 @@ export default function BracketTestLayout() {
 								key={opt.value}
 								variant={format === opt.value ? undefined : "outlined"}
 								size="small"
-								onPress={() => setFormat(opt.value)}
+								onClick={() => setFormat(opt.value)}
 							>
 								{opt.label}
 							</SendouButton>

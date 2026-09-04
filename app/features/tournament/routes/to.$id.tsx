@@ -71,6 +71,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
+// xxx: measure if we can get rid of this and other similar perf hacks
 export default function TournamentLayoutShell() {
 	const isHydrated = useHydrated();
 

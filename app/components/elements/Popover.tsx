@@ -1,14 +1,13 @@
 import clsx from "clsx";
 import * as React from "react";
+import {
+	type AnchorFallbackPlacement,
+	useAnchorPositionFallback,
+} from "./anchor-position-fallback";
 import styles from "./Popover.module.css";
 import { useCloseOnScrollClip } from "./popover-scroll-close";
 
-export type PopoverPlacement =
-	| "top"
-	| "bottom"
-	| "right"
-	| "bottom start"
-	| "bottom end";
+export type PopoverPlacement = AnchorFallbackPlacement;
 
 /** `useId` values hold characters CSS idents can't (e.g. `:`), strip them for anchor names. */
 export function useAnchorSafeId() {
@@ -67,6 +66,7 @@ export function SendouPopover({
 	const open = isControlled ? Boolean(isOpen) : uncontrolledOpen;
 
 	const popoverRef = React.useRef<HTMLDivElement>(null);
+	const triggerContainerRef = React.useRef<HTMLSpanElement>(null);
 
 	const setOpen = (next: boolean) => {
 		if (!isControlled) {
@@ -99,6 +99,13 @@ export function SendouPopover({
 	}, [open]);
 
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
+	useAnchorPositionFallback({
+		isOpen: open,
+		popoverRef,
+		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,
+		placement,
+		constrainHeight: true,
+	});
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
 		if (!isOwnToggle(event)) return;
@@ -115,6 +122,7 @@ export function SendouPopover({
 	return (
 		<>
 			<span
+				ref={triggerContainerRef}
 				className={styles.triggerContainer}
 				style={{ "--popover-anchor": anchorName } as React.CSSProperties}
 			>
@@ -183,6 +191,12 @@ export function SendouAnchoredPopover({
 	}, [isOpen, triggerRef, anchorName]);
 
 	useCloseOnScrollClip(isOpen, popoverRef, () => onOpenChange(false));
+	useAnchorPositionFallback({
+		isOpen,
+		popoverRef,
+		getAnchor: () => triggerRef.current,
+		constrainHeight: true,
+	});
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
 		if (!isOwnToggle(event)) return;

@@ -366,7 +366,7 @@ function PovFormField({ FormField }: { FormField: VodFormFieldComponent }) {
 						<SendouButton
 							size="small"
 							variant="minimal"
-							onPress={toggleInputType}
+							onClick={toggleInputType}
 							className="mt-2"
 						>
 							{asPlainInput
@@ -439,7 +439,7 @@ function MatchFieldsetContent({
 					<SendouButton
 						size="small"
 						variant="minimal-destructive"
-						onPress={remove}
+						onClick={remove}
 					>
 						{t("common:actions.remove")}
 					</SendouButton>
@@ -453,7 +453,7 @@ function MatchFieldsetContent({
 						<SendouButton
 							variant="minimal"
 							size="miniscule"
-							onPress={() => setItemField("startsAt", currentTime)}
+							onClick={() => setItemField("startsAt", currentTime)}
 							className="mt-2"
 						>
 							{t("vods:forms.action.setAsCurrent", { time: currentTime })}
@@ -579,7 +579,7 @@ function WeaponsField({
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
-					onPress={copyFromPrevious}
+					onClick={copyFromPrevious}
 					className="mt-2"
 				>
 					{t("vods:forms.action.copyFromPrevious")}

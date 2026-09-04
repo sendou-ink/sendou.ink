@@ -260,7 +260,7 @@ function SeasonSummaryExportDialog({
 					size="small"
 					variant="outlined"
 					icon={<HardDriveDownload />}
-					onPress={handleOpen}
+					onClick={handleOpen}
 				>
 					{t("user:seasons.summary.export")}
 				</SendouButton>

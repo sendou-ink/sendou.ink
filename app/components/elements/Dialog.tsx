@@ -30,6 +30,7 @@ interface DialogElementProps {
  * server.
  */
 export function SendouModal({ ref, ...rest }: DialogElementProps) {
+	// xxx: we have a hook for this, no need to roll a new one
 	const [mounted, setMounted] = React.useState(false);
 	React.useEffect(() => setMounted(true), []);
 	if (!mounted) return null;
@@ -78,7 +79,7 @@ function DialogElement({
 	);
 }
 
-// Safari is missing `closedby`, close on backdrop clicks manually
+// Safari 26 is missing `closedby`, close on backdrop clicks manually
 function closeOnBackdropClick(event: React.MouseEvent<HTMLDialogElement>) {
 	if (event.target !== event.currentTarget) return;
 	const rect = event.currentTarget.getBoundingClientRect();
@@ -104,7 +105,7 @@ interface SendouDialogProps {
 	 * hydration. Its content is remounted on every close.
 	 */
 	trigger?: React.ReactElement<
-		Pick<SendouButtonProps, "onPress" | "commandfor" | "command">
+		Pick<SendouButtonProps, "onClick" | "commandfor" | "command">
 	>;
 	children?: React.ReactNode;
 	heading?: string;
@@ -203,6 +204,8 @@ function TriggeredDialog({
 	const dialogId = React.useId();
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const [open, setOpen] = React.useState(false);
+
+	// xxx: what is this?
 	const [contentKey, remountContent] = React.useReducer(
 		(key: number) => key + 1,
 		0,
@@ -233,8 +236,8 @@ function TriggeredDialog({
 			{React.cloneElement(trigger, {
 				commandfor: dialogId,
 				command: "show-modal",
-				onPress: (event) => {
-					trigger.props.onPress?.(event);
+				onClick: (event) => {
+					trigger.props.onClick?.(event);
 					if (!supportsInvokerCommands()) {
 						dialogRef.current?.showModal();
 					}
@@ -349,7 +352,7 @@ function DialogChrome({
 						aria-label="Close"
 						commandfor={dialogId}
 						command="close"
-						onPress={(event) => {
+						onClick={(event) => {
 							if (!supportsInvokerCommands()) {
 								event.currentTarget.closest("dialog")?.close();
 							}

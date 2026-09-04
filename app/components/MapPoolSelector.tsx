@@ -86,7 +86,7 @@ export function MapPoolSelector({
 			{Boolean(handleRemoval || allowBulkEdit) && (
 				<div className="stack horizontal sm justify-end">
 					{handleRemoval && (
-						<SendouButton variant="minimal" onPress={handleRemoval}>
+						<SendouButton variant="minimal" onClick={handleRemoval}>
 							{t("actions.remove")}
 						</SendouButton>
 					)}
@@ -94,7 +94,7 @@ export function MapPoolSelector({
 						<SendouButton
 							variant="minimal-destructive"
 							isDisabled={mapPool.isEmpty()}
-							onPress={handleClear}
+							onClick={handleClear}
 						>
 							{t("actions.clear")}
 						</SendouButton>
@@ -281,7 +281,7 @@ export function MapPoolStages({
 									<SendouButton
 										shape="circle"
 										key="clear"
-										onPress={() => handleStageClear(stageId)}
+										onClick={() => handleStageClear(stageId)}
 										icon={<X />}
 										variant="minimal"
 										aria-label={t("common:actions.remove")}
@@ -291,7 +291,7 @@ export function MapPoolStages({
 									<SendouButton
 										shape="circle"
 										key="select-all"
-										onPress={() => handleStageAdd(stageId)}
+										onClick={() => handleStageAdd(stageId)}
 										icon={<ArrowLeft />}
 										variant="minimal"
 										aria-label={t("common:actions.selectAll")}

@@ -67,7 +67,7 @@ export function TrustedRejoinSection({
 			<SendouButton
 				variant="primary"
 				isPending={lookAgain.state !== "idle"}
-				onPress={() => {
+				onClick={() => {
 					lookAgain.submit("LOOK_AGAIN", {
 						previousGroupId: viewerGroup.id,
 					});
@@ -93,7 +93,7 @@ function DeclinedSection() {
 				variant="minimal"
 				className="text-sm font-bold"
 				isPending={rejoinQueue.state !== "idle"}
-				onPress={() => {
+				onClick={() => {
 					rejoinQueue.submit("JOIN_QUEUE", { direct: "true" });
 				}}
 			>

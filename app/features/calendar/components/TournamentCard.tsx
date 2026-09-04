@@ -286,7 +286,7 @@ function SpoilerRevealPill({ onReveal }: { onReveal: () => void }) {
 		<SendouButton
 			variant="outlined"
 			size="miniscule"
-			onPress={onReveal}
+			onClick={onReveal}
 			icon={<ShieldMinus />}
 		>
 			{t("common:actions.reveal")}

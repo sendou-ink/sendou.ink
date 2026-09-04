@@ -50,7 +50,7 @@ export function SecondaryAction({
 					variant="minimal"
 					size="small"
 					icon={collapsedIcon}
-					onPress={() => onOpenChange(true)}
+					onClick={() => onOpenChange(true)}
 					testId="expand-secondary-action-button"
 				>
 					{collapsedLabel}
@@ -66,7 +66,7 @@ export function SecondaryAction({
 					variant="minimal"
 					size="miniscule"
 					icon={<ChevronUp size={22} />}
-					onPress={() => onOpenChange(false)}
+					onClick={() => onOpenChange(false)}
 					className={styles.collapseButton}
 					aria-label={expandedAriaLabel ?? collapsedLabel}
 					testId="collapse-secondary-action-button"

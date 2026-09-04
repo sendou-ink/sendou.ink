@@ -33,6 +33,9 @@ import {
 } from "../SideNav";
 import styles from "./ChatSidebar.module.css";
 
+// xxx: plain /q/looking group chat not full height
+// xxx: test virtualizer
+
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
 
@@ -215,7 +218,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 						{combinedRooms.length > 0 ? (
 							<CombinedRoomListItem
 								rooms={combinedRooms.map((entry) => entry.room)}
-								onPress={() =>
+								onClick={() =>
 									openRooms(combinedRooms.map((entry) => entry.room.id))
 								}
 							/>
@@ -225,14 +228,14 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 								key={room.id}
 								room={room}
 								subtitle={label}
-								onPress={() => openRooms([room.id])}
+								onClick={() => openRooms([room.id])}
 							/>
 						))}
 						{activeRooms.map((room) => (
 							<RoomListItem
 								key={room.id}
 								room={room}
-								onPress={() => openRooms([room.id])}
+								onClick={() => openRooms([room.id])}
 							/>
 						))}
 						{inactiveRooms.length > 0 ? (
@@ -255,7 +258,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 												key={room.id}
 												room={room}
 												inactive
-												onPress={() => openRooms([room.id])}
+												onClick={() => openRooms([room.id])}
 											/>
 										))
 									: null}
@@ -272,13 +275,13 @@ function RoomListItem({
 	room,
 	inactive = false,
 	subtitle: subtitleOverride,
-	onPress,
+	onClick,
 }: {
 	room: ChatRoomListItem;
 	inactive?: boolean;
 	/** Names the room in place of its own subtitle, where that can't tell it apart. */
 	subtitle?: string;
-	onPress: () => void;
+	onClick: () => void;
 }) {
 	const roomDisplay = useRoomDisplay();
 	const { formatter: timestampFormatter } = useDateTimeFormat({
@@ -292,7 +295,7 @@ function RoomListItem({
 	return (
 		<NavListButton
 			className={clsx(styles.roomItem, inactive ? "opaque" : null)}
-			onPress={onPress}
+			onClick={onClick}
 		>
 			<NavListImage src={imageUrl} />
 			<NavListTexts>
@@ -314,10 +317,10 @@ function RoomListItem({
 
 function CombinedRoomListItem({
 	rooms,
-	onPress,
+	onClick,
 }: {
 	rooms: ChatRoomListItem[];
-	onPress: () => void;
+	onClick: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 	const roomDisplay = useRoomDisplay();
@@ -327,7 +330,7 @@ function CombinedRoomListItem({
 	const unread = rooms.reduce((sum, room) => sum + room.unreadCount, 0);
 
 	return (
-		<NavListButton className={styles.roomItem} onPress={onPress}>
+		<NavListButton className={styles.roomItem} onClick={onClick}>
 			<NavListImage src={imageUrl} />
 			<NavListTexts>
 				<NavListTitle className={styles.roomName}>{title}</NavListTitle>

@@ -31,7 +31,7 @@ export function MemberAdder({
 					<SendouButton
 						shape="square"
 						variant={copySuccess ? "outlined-success" : "outlined"}
-						onPress={() => copyToClipboard(inviteLink)}
+						onClick={() => copyToClipboard(inviteLink)}
 						icon={copySuccess ? <Check /> : <Clipboard />}
 						aria-label="Copy to clipboard"
 					/>

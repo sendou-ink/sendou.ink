@@ -354,7 +354,7 @@ function ClockHeader({
 				{hiddenEventsCount > 0 ? (
 					<SendouButton
 						icon={hiddenShown ? <Eye /> : <EyeOff />}
-						onPress={onToggleHidden}
+						onClick={onToggleHidden}
 						variant="minimal"
 						className={styles.hiddenEventsButton}
 						data-testid="hidden-events-button"

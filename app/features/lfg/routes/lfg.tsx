@@ -310,7 +310,7 @@ function WeaponsPopover({
 						<SendouButton
 							key={weapon}
 							variant="minimal"
-							onPress={() =>
+							onClick={() =>
 								onChange(weapons.filter((weaponId) => weaponId !== weapon))
 							}
 						>

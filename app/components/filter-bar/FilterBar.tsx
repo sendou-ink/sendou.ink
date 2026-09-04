@@ -90,7 +90,7 @@ export function FilterBar({
 			{onReset || actions ? (
 				<div className={styles.actions}>
 					{onReset ? (
-						<SendouButton icon={<RotateCcw />} onPress={resetPills}>
+						<SendouButton icon={<RotateCcw />} onClick={resetPills}>
 							{t("actions.reset")}
 						</SendouButton>
 					) : null}

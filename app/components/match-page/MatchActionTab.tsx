@@ -166,7 +166,7 @@ export function MatchActionTab({
 					<SendouButton
 						variant="primary"
 						isDisabled={!canSubmit || isSubmitting}
-						onPress={() => {
+						onClick={() => {
 							if (winnerId === null) return;
 							if (setEnding?.setEndingTeamIds.includes(winnerId)) {
 								setConfirming(true);
@@ -241,12 +241,12 @@ function SetEndingConfirmation({
 				<SendouButton
 					variant="primary"
 					isDisabled={isSubmitting}
-					onPress={onConfirm}
+					onClick={onConfirm}
 					testId="confirm-set-end-button"
 				>
 					{t("common:actions.confirm")}
 				</SendouButton>
-				<SendouButton variant="outlined" onPress={onBack}>
+				<SendouButton variant="outlined" onClick={onBack}>
 					{t("common:actions.back")}
 				</SendouButton>
 			</div>

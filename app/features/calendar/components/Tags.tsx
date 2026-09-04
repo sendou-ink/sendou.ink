@@ -46,7 +46,7 @@ export function Tags({
 						{t(`tag.name.${tag}`)}
 						{onDelete ? (
 							<SendouButton
-								onPress={() => onDelete(tag)}
+								onClick={() => onDelete(tag)}
 								className={styles.tagDeleteButton}
 								icon={<X />}
 								variant="minimal"

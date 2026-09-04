@@ -229,7 +229,7 @@ function Match({
 			) : null}
 			<SendouButton
 				size="small"
-				onPress={() => setStart(match.startsAt)}
+				onClick={() => setStart(match.startsAt)}
 				variant="outlined"
 			>
 				{secondsToHoursMinutesSecondString(match.startsAt)}
@@ -273,7 +273,7 @@ function CopyTimestampsButton({
 				size="small"
 				variant="outlined"
 				icon={<ClipboardCopy />}
-				onPress={() => {
+				onClick={() => {
 					setDialogOpen(true);
 					reset();
 				}}
@@ -331,7 +331,7 @@ function CopyTimestampsButton({
 						{t("vods:copyTimestamps.help")}
 					</p>
 					<SendouButton
-						onPress={handleCopy}
+						onClick={handleCopy}
 						icon={copySuccess ? <Check /> : <Copy />}
 					>
 						{copySuccess

@@ -21,7 +21,7 @@ export function ShareUrlButton({
 				size="small"
 				shape="circle"
 				icon={<Share2 />}
-				onPress={() => navigator.share({ url })}
+				onClick={() => navigator.share({ url })}
 				aria-label={t("common:actions.share")}
 				{...buttonProps}
 			/>

@@ -60,7 +60,7 @@ function TableOfContents() {
 			<ul>
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("general-info")}
+						onClick={handleTitleClick("general-info")}
 						variant="minimal"
 					>
 						General info
@@ -69,7 +69,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("before-joining")}
+						onClick={handleTitleClick("before-joining")}
 						variant="minimal"
 					>
 						Before joining
@@ -86,7 +86,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("joining-the-queue")}
+						onClick={handleTitleClick("joining-the-queue")}
 						variant="minimal"
 					>
 						Joining the queue
@@ -97,7 +97,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("finding-a-group")}
+						onClick={handleTitleClick("finding-a-group")}
 						variant="minimal"
 					>
 						Finding a group
@@ -110,7 +110,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("finding-an-opponent")}
+						onClick={handleTitleClick("finding-an-opponent")}
 						variant="minimal"
 					>
 						Finding an opponent
@@ -120,7 +120,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("playing-the-match")}
+						onClick={handleTitleClick("playing-the-match")}
 						variant="minimal"
 					>
 						Playing the match
@@ -134,7 +134,7 @@ function TableOfContents() {
 
 				<li>
 					<SendouButton
-						onPress={handleTitleClick("other-topics")}
+						onClick={handleTitleClick("other-topics")}
 						variant="minimal"
 					>
 						Other topics

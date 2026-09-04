@@ -148,7 +148,7 @@ export function Chat({
 				{unseenMessagesInTheRoom ? (
 					<SendouButton
 						className={styles.unseenMessages}
-						onPress={scrollToBottom}
+						onClick={scrollToBottom}
 					>
 						{t("common:chat.newMessages")}
 					</SendouButton>

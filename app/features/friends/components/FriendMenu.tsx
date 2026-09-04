@@ -160,7 +160,7 @@ export function FriendMenu({
 						<div className="stack horizontal md justify-center mt-2">
 							<SendouButton
 								variant="destructive"
-								onPress={() => {
+								onClick={() => {
 									deleteFriend.submit("DELETE_FRIEND", { friendshipId });
 									setConfirmOpen(false);
 								}}

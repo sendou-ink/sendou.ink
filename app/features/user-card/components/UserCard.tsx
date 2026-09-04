@@ -305,7 +305,7 @@ function CardContent({
 							icon={
 								data.privateNote !== null ? <NotebookText /> : <NotebookPen />
 							}
-							onPress={onNoteButtonPress}
+							onClick={onNoteButtonPress}
 							aria-label={t("user:card.editPrivateNote")}
 						/>
 						{onReport ? (
@@ -313,7 +313,7 @@ function CardContent({
 								size="miniscule"
 								shape="circle"
 								icon={<Flag />}
-								onPress={onReport}
+								onClick={onReport}
 								aria-label="Report user"
 								data-testid="report-user-button"
 							/>
@@ -407,7 +407,7 @@ function NoteView({
 					variant="minimal"
 					size="miniscule"
 					icon={<Pencil />}
-					onPress={onEdit}
+					onClick={onEdit}
 				>
 					{t("common:actions.edit")}
 				</SendouButton>
@@ -415,7 +415,7 @@ function NoteView({
 					variant="minimal-destructive"
 					size="miniscule"
 					icon={<Trash2 />}
-					onPress={onDelete}
+					onClick={onDelete}
 				>
 					{t("common:actions.delete")}
 				</SendouButton>
@@ -480,7 +480,7 @@ function FriendRequestButton({
 				icon={<UserPlus />}
 				isDisabled={fetcher.state !== "idle" || fetcher.data === null}
 				aria-label="Accept friend request"
-				onPress={() => {
+				onClick={() => {
 					if (incomingFriendRequestId === null) return;
 					toastQueue.add(
 						{
@@ -518,7 +518,7 @@ function FriendRequestButton({
 			shape="circle"
 			icon={<UserPlus />}
 			aria-label={t("user:card.sendFriendRequest")}
-			onPress={() =>
+			onClick={() =>
 				sendRequest.submit("SEND_REQUEST", { userId: targetUserId })
 			}
 		/>

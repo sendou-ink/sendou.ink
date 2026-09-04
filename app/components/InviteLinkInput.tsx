@@ -34,7 +34,7 @@ export function InviteLinkInput({
 				<SendouButton
 					shape="square"
 					variant={copySuccess ? "outlined-success" : "outlined"}
-					onPress={() => copyToClipboard(link)}
+					onClick={() => copyToClipboard(link)}
 					icon={copySuccess ? <Check /> : <Clipboard />}
 					aria-label={t("common:actions.copyToClipboard")}
 					data-testid="copy-invite-link-button"

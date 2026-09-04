@@ -454,7 +454,7 @@ function StepListSection({
 				size="small"
 				variant="outlined"
 				icon={<Plus />}
-				onPress={addStep}
+				onClick={addStep}
 			>
 				{t("tournament:customFlow.addStep")}
 			</SendouButton>

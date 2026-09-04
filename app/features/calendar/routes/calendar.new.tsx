@@ -422,7 +422,7 @@ function TrophyField() {
 									<span>{selectedTrophy.name}</span>
 									<SendouButton
 										className="ml-auto"
-										onPress={() => handleChange(null)}
+										onClick={() => handleChange(null)}
 										icon={<Trash />}
 										variant="minimal-destructive"
 										aria-label="Remove trophy"
@@ -520,7 +520,7 @@ function CalendarMapPoolField() {
 								size="small"
 								variant="outlined"
 								id={id}
-								onPress={() => setInclude(true)}
+								onClick={() => setInclude(true)}
 							>
 								{t("common:actions.add")}
 							</SendouButton>

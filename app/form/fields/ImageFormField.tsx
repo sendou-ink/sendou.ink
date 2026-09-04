@@ -101,7 +101,7 @@ export function ImageFormField({
 					<SendouButton
 						variant="minimal-destructive"
 						size="small"
-						onPress={() => onChange(null)}
+						onClick={() => onChange(null)}
 						isDisabled={disabled}
 					>
 						{t("common:actions.remove")}

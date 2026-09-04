@@ -101,7 +101,7 @@ export function RematchVotePanel({
 						variant="primary"
 						size="small"
 						isDisabled={isPending || viewerVotedYes}
-						onPress={() => submit("CAST_CONTINUE_VOTE", { isContinuing: true })}
+						onClick={() => submit("CAST_CONTINUE_VOTE", { isContinuing: true })}
 					>
 						{t("q:match.rematch.vote.yes")}
 					</SendouButton>

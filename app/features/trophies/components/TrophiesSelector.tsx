@@ -170,7 +170,7 @@ function SortableTrophyItem({
 				size="small"
 				icon={<Trash />}
 				aria-label="Remove"
-				onPress={() => onRemove(trophy.id)}
+				onClick={() => onRemove(trophy.id)}
 			/>
 		</li>
 	);

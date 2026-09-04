@@ -445,7 +445,7 @@ export function CustomThemeSelector({
 					isDisabled={
 						!isSupporter || (fetcherState != null && fetcherState !== "idle")
 					}
-					onPress={handleSave}
+					onClick={handleSave}
 				>
 					{t("common:actions.save")}
 				</SendouButton>
@@ -454,7 +454,7 @@ export function CustomThemeSelector({
 						!isSupporter || (fetcherState != null && fetcherState !== "idle")
 					}
 					variant="destructive"
-					onPress={handleReset}
+					onClick={handleReset}
 				>
 					{t("common:actions.reset")}
 				</SendouButton>
@@ -492,14 +492,14 @@ function ThemeShareInput({
 					shape="square"
 					variant="outlined"
 					icon={copySuccess ? <Check /> : <Clipboard />}
-					onPress={() => copyToClipboard(themeString)}
+					onClick={() => copyToClipboard(themeString)}
 					aria-label={t("common:settings.customTheme.copy")}
 				/>
 				<SendouButton
 					shape="square"
 					variant="outlined"
 					icon={<PencilLine />}
-					onPress={handlePaste}
+					onClick={handlePaste}
 					aria-label={t("common:settings.customTheme.paste")}
 				/>
 			</div>

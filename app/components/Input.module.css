@@ -10,9 +10,9 @@
 
 	& svg {
 		color: var(--color-text-high);
-		height: calc(var(--field-size) / 2);
+		height: var(--field-size-icon);
 		margin: auto;
-		margin-right: 15px;
+		margin-right: var(--field-padding);
 	}
 
 	&:has(input:user-invalid) {

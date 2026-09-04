@@ -414,13 +414,13 @@ function EditableDestination({
 							variant="minimal"
 							icon={<Check />}
 							size="small"
-							onPress={handleSubmit}
+							onClick={handleSubmit}
 						/>
 						<SendouButton
 							variant="minimal-destructive"
 							size="small"
 							icon={<X />}
-							onPress={() => setEditingDestination(false)}
+							onClick={() => setEditingDestination(false)}
 						/>
 					</div>
 				</td>
@@ -471,7 +471,7 @@ function EditableDestination({
 						variant="minimal"
 						icon={<SquarePen />}
 						size="small"
-						onPress={() => setEditingDestination(true)}
+						onClick={() => setEditingDestination(true)}
 					/>
 				</td>
 			) : canEditDestination ? (

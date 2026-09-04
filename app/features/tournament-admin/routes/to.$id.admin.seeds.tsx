@@ -157,7 +157,7 @@ export default function TournamentAdminSeedsPage() {
 						variant="minimal"
 						size="small"
 						type="button"
-						onPress={sortAllBySp}
+						onClick={sortAllBySp}
 					>
 						Sort all by SP
 					</SendouButton>
@@ -349,7 +349,7 @@ function StartingBracketDialog() {
 		<div>
 			<SendouButton
 				size="small"
-				onPress={() => setIsOpen(true)}
+				onClick={() => setIsOpen(true)}
 				data-testid="set-starting-brackets"
 			>
 				Set starting brackets
@@ -522,7 +522,7 @@ function AbDivisionsDialog() {
 		<div>
 			<SendouButton
 				size="small"
-				onPress={() => setIsOpen(true)}
+				onClick={() => setIsOpen(true)}
 				data-testid="set-ab-divisions"
 			>
 				Set A/B divisions

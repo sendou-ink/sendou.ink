@@ -2,6 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { Link } from "react-router";
 import { Image } from "../Image";
+import { useAnchorPositionFallback } from "./anchor-position-fallback";
 import styles from "./Menu.module.css";
 import { isOwnToggle, useAnchorSafeId } from "./Popover";
 import { useCloseOnScrollClip } from "./popover-scroll-close";
@@ -38,6 +39,7 @@ export function SendouMenu({
 
 	const [open, setOpen] = React.useState(false);
 	const popoverRef = React.useRef<HTMLDivElement>(null);
+	const triggerContainerRef = React.useRef<HTMLSpanElement>(null);
 
 	// an eager menu can be open before hydration, its toggle event long gone
 	React.useEffect(() => {
@@ -47,6 +49,15 @@ export function SendouMenu({
 	useCloseOnScrollClip(open, popoverRef, () =>
 		popoverRef.current?.hidePopover(),
 	);
+	useAnchorPositionFallback({
+		isOpen: open,
+		popoverRef,
+		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,
+		placement:
+			opensLeft || (placement && placement !== "bottom start")
+				? "bottom end"
+				: "bottom start",
+	});
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
 		if (!isOwnToggle(event)) return;
@@ -84,6 +95,7 @@ export function SendouMenu({
 	return (
 		<>
 			<span
+				ref={triggerContainerRef}
 				className={styles.triggerContainer}
 				style={{ "--menu-anchor": anchorName } as React.CSSProperties}
 			>

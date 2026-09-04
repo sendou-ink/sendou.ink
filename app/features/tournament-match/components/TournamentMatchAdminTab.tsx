@@ -405,7 +405,7 @@ function EditReportedScoreRow({
 					icon={<SquarePen />}
 					variant="outlined"
 					size="small"
-					onPress={() => setEditing(true)}
+					onClick={() => setEditing(true)}
 					data-testid={`edit-result-${index}-button`}
 				>
 					{t("common:actions.edit")}
@@ -537,7 +537,7 @@ function EditReportedScoreForm({
 				>
 					{t("common:actions.save")}
 				</SubmitButton>
-				<SendouButton variant="destructive" size="small" onPress={onCancel}>
+				<SendouButton variant="destructive" size="small" onClick={onCancel}>
 					{t("common:actions.cancel")}
 				</SendouButton>
 			</div>

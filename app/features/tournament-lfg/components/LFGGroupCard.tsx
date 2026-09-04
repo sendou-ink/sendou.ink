@@ -282,7 +282,7 @@ function LFGTeamNote({
 					<SendouButton
 						size="miniscule"
 						variant="minimal"
-						onPress={() => setEditing(true)}
+						onClick={() => setEditing(true)}
 						className="mt-2 ml-auto"
 					>
 						{t("q:looking.groups.editNote")}
@@ -298,7 +298,7 @@ function LFGTeamNote({
 		<SendouButton
 			variant="minimal"
 			size="miniscule"
-			onPress={() => setEditing(true)}
+			onClick={() => setEditing(true)}
 		>
 			{t("q:looking.groups.addNote")}
 		</SendouButton>
@@ -327,7 +327,7 @@ function LFGEditGroupForm({
 				<SendouButton
 					variant="minimal-destructive"
 					size="miniscule"
-					onPress={stopEditing}
+					onClick={stopEditing}
 				>
 					{t("common:actions.cancel")}
 				</SendouButton>

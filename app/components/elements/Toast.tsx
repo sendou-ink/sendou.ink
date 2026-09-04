@@ -17,6 +17,9 @@ interface QueuedToast {
 	content: SendouToast;
 }
 
+// xxx: text color wrong
+// xxx: close button a lil ugly color, placement
+
 class ToastQueue {
 	private toasts: QueuedToast[] = [];
 	private listeners = new Set<() => void>();
@@ -122,7 +125,7 @@ export function SendouToastRegion() {
 							className={styles.closeButton}
 							aria-label="Close"
 							size="small"
-							onPress={() => toastQueue.close(toast.key)}
+							onClick={() => toastQueue.close(toast.key)}
 						/>
 					</div>
 					<div>{toast.content.message}</div>

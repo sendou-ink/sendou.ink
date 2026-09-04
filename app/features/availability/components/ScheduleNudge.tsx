@@ -53,7 +53,7 @@ export function ScheduleNudge({
 				size="miniscule"
 				className={styles.dismissButton}
 				aria-label={t("front:sideNav.scheduleNudge.dismiss")}
-				onPress={dismiss}
+				onClick={dismiss}
 			/>
 		</div>
 	);

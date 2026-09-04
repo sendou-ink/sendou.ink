@@ -54,12 +54,12 @@ export function UnsavedChangesGuard() {
 			<div className="stack md stack md text-sm text-lighter">
 				{t("forms:unsavedChanges.body")}
 				<div className="stack horizontal md justify-center">
-					<SendouButton variant="outlined" onPress={() => blocker.reset()}>
+					<SendouButton variant="outlined" onClick={() => blocker.reset()}>
 						{t("common:actions.cancel")}
 					</SendouButton>
 					<SendouButton
 						variant="destructive"
-						onPress={() => blocker.proceed()}
+						onClick={() => blocker.proceed()}
 						data-testid="discard-changes-button"
 					>
 						{t("forms:unsavedChanges.discard")}

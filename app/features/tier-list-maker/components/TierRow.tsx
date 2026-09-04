@@ -136,7 +136,7 @@ export function TierRow({ tier }: TierRowProps) {
 						</div>
 						<div className="stack horizontal justify-end">
 							<SendouButton
-								onPress={() => handleRemoveTier(tier.id)}
+								onClick={() => handleRemoveTier(tier.id)}
 								variant="minimal-destructive"
 								icon={<Trash />}
 							/>

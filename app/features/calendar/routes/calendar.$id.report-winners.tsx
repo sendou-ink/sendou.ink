@@ -127,7 +127,7 @@ function PlayersFormField({
 				<SendouButton
 					size="small"
 					variant="outlined"
-					onPress={() => onChange([...players, EMPTY_REPORTED_PLAYER])}
+					onClick={() => onChange([...players, EMPTY_REPORTED_PLAYER])}
 					isDisabled={
 						players.length === CALENDAR_EVENT_RESULT.MAX_PLAYERS_LENGTH
 					}
@@ -137,7 +137,7 @@ function PlayersFormField({
 				<SendouButton
 					size="small"
 					variant="destructive"
-					onPress={() => onChange(players.slice(0, -1))}
+					onClick={() => onChange(players.slice(0, -1))}
 					isDisabled={players.length === 1}
 				>
 					{t("calendar:forms.team.player.remove")}
@@ -190,7 +190,7 @@ function PlayerInput({
 			<SendouButton
 				size="small"
 				variant="minimal"
-				onPress={() =>
+				onClick={() =>
 					onPlayerChange(
 						index,
 						asPlainInput ? EMPTY_REPORTED_PLAYER : { type: "NAME", name: "" },

@@ -45,8 +45,8 @@ const THEME_SELECTIONS = [
 ] as const;
 
 interface ImageExportDialogProps {
-	/** Button that opens the dialog, e.g. a `SendouButton` (its own `onPress` also runs, useful for lazy loading the graphic's data) */
-	trigger: React.ReactElement<{ onPress?: () => void }>;
+	/** Button that opens the dialog, e.g. a `SendouButton` (its own `onClick` also runs, useful for lazy loading the graphic's data) */
+	trigger: React.ReactElement<{ onClick?: () => void }>;
 	heading: string;
 	/** Name of the downloaded file without the extension */
 	filename: string;
@@ -182,7 +182,7 @@ function ImageExportDialogContent({
 			<div className={styles.actions}>
 				<SendouButton
 					icon={isMobile ? <Share2 /> : <HardDriveDownload />}
-					onPress={handleDownload}
+					onClick={handleDownload}
 					isDisabled={exportAction !== null}
 				>
 					{exportAction === "download"
@@ -195,7 +195,7 @@ function ImageExportDialogContent({
 					<SendouButton
 						variant={copySuccess ? "outlined-success" : "outlined"}
 						icon={copySuccess ? <Check /> : <Copy />}
-						onPress={handleCopy}
+						onClick={handleCopy}
 						isDisabled={exportAction !== null}
 					>
 						{t("common:actions.copyToClipboard")}

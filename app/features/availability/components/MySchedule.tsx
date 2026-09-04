@@ -141,7 +141,7 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 					variant="outlined"
 					size="small"
 					isDisabled={!canCopy}
-					onPress={copyPreviousWeek}
+					onClick={copyPreviousWeek}
 					testId="copy-last-week-button"
 				>
 					{t("schedule:editor.copyLastWeek")}
@@ -149,7 +149,7 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 				<SendouButton
 					size="small"
 					isDisabled={state !== "idle"}
-					onPress={saveWeek}
+					onClick={saveWeek}
 					testId="save-week-button"
 				>
 					{t("schedule:editor.saveWeek")}

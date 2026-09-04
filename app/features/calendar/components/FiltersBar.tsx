@@ -394,7 +394,7 @@ export function FiltersBar() {
 					<SendouButton
 						icon={<Star />}
 						isDisabled={persistFetcher.state !== "idle"}
-						onPress={() =>
+						onClick={() =>
 							persistFetcher.submit(filters, {
 								method: "post",
 								encType: "application/json",
@@ -468,7 +468,7 @@ function OrgListEditor({
 						variant="minimal-destructive"
 						size="miniscule"
 						aria-label={`Remove ${org}`}
-						onPress={() => onChange(values.filter((value) => value !== org))}
+						onClick={() => onChange(values.filter((value) => value !== org))}
 					/>
 				</div>
 			))}
@@ -492,7 +492,7 @@ function OrgListEditor({
 						variant="minimal"
 						size="small"
 						isDisabled={disabled || draft.trim().length === 0}
-						onPress={addDraft}
+						onClick={addDraft}
 					>
 						{t("common:actions.add")}
 					</SendouButton>
@@ -522,7 +522,7 @@ function ExcludedAuthorsEditor({
 						variant="minimal-destructive"
 						size="miniscule"
 						aria-label="Remove excluded author"
-						onPress={() => onChange(values.filter((value) => value !== userId))}
+						onClick={() => onChange(values.filter((value) => value !== userId))}
 					/>
 				</div>
 			))}

@@ -108,7 +108,7 @@ export default function ArtPage() {
 						size="small"
 						variant="minimal-destructive"
 						icon={<X />}
-						onPress={() => {
+						onClick={() => {
 							setParams({ tag: null });
 						}}
 						data-testid="clear-filter-button"

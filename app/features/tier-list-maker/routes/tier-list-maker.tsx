@@ -133,7 +133,7 @@ function TierListMakerContent() {
 		<Main bigger className={clsx(styles.container, "stack lg")}>
 			<div className={styles.header}>
 				<div className="stack horizontal md">
-					<SendouButton onPress={handleAddTier} size="small" icon={<Plus />}>
+					<SendouButton onClick={handleAddTier} size="small" icon={<Plus />}>
 						{t("tier-list-maker:addTier")}
 					</SendouButton>
 					<TierListExportDialog />
@@ -360,7 +360,7 @@ function ResetPopover({ handleReset }: { handleReset: () => void }) {
 					<SendouButton
 						size="miniscule"
 						variant="destructive"
-						onPress={() => {
+						onClick={() => {
 							handleReset();
 						}}
 					>

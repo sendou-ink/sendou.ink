@@ -222,7 +222,7 @@ export function ExportDialog({
 					}))}
 				/>
 
-				<SendouButton onPress={onDownload} className="mx-auto">
+				<SendouButton onClick={onDownload} className="mx-auto">
 					Download
 				</SendouButton>
 			</div>

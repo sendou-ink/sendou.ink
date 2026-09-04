@@ -153,7 +153,7 @@ function CancelRespondTab({ data }: { data: SendouQMatchLoaderData }) {
 						variant="outlined"
 						icon={<X />}
 						isDisabled={refuseCancel.state !== "idle"}
-						onPress={() => {
+						onClick={() => {
 							refuseCancel.submit("REFUSE_CANCEL");
 						}}
 					>
@@ -342,7 +342,7 @@ function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
 			<SendouButton
 				variant="primary"
 				isPending={confirmFetcherPending}
-				onPress={() => {
+				onClick={() => {
 					if (!decidingMap?.winnerGroupId) return;
 					submit("REPORT_SCORE", {
 						winnerId: decidingMap.winnerGroupId,
@@ -372,7 +372,7 @@ function ReporterUndoSection() {
 				variant="outlined"
 				size="small"
 				isPending={undoReport.state !== "idle"}
-				onPress={() => {
+				onClick={() => {
 					undoReport.submit("UNDO_MATCH_REPORT");
 				}}
 			>
@@ -504,7 +504,7 @@ function InProgressTab({
 						icon={<Undo2 size={16} />}
 						isPending={undoReport.state !== "idle"}
 						isDisabled={!scoreIsNotZero}
-						onPress={() => {
+						onClick={() => {
 							const mapIndex = data.match.mapList.findLastIndex(
 								(m) => m.winnerGroupId !== null,
 							);

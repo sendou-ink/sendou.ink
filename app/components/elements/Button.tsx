@@ -17,18 +17,15 @@ type ButtonVariant =
 	| "minimal-destructive";
 
 export interface SendouButtonProps
-	extends Omit<
-		React.ComponentPropsWithRef<"button">,
-		"onClick" | "disabled" | "children"
-	> {
+	extends Omit<React.ComponentPropsWithRef<"button">, "disabled" | "children"> {
 	variant?: ButtonVariant;
 	size?: "miniscule" | "small" | "medium" | "big";
 	shape?: "circle" | "square";
 	icon?: JSX.Element;
 	children?: React.ReactNode;
 	testId?: string;
-	onPress?: (event: React.MouseEvent<HTMLButtonElement>) => void;
 	isDisabled?: boolean;
+	// xxx: why would we need to keep it focusable?
 	/** Keeps the button focusable but blocks presses, for in-flight submissions. */
 	isPending?: boolean;
 }
@@ -41,7 +38,7 @@ export function SendouButton({
 	className,
 	icon,
 	testId,
-	onPress,
+	onClick,
 	isDisabled,
 	isPending,
 	type = "button",
@@ -60,7 +57,7 @@ export function SendouButton({
 					event.preventDefault();
 					return;
 				}
-				onPress?.(event);
+				onClick?.(event);
 			}}
 			className={buttonClassName({ className, variant, size, shape })}
 		>

@@ -225,17 +225,17 @@ export function NavIconContainer({ children }: { children: React.ReactNode }) {
 export function NavListButton({
 	children,
 	className,
-	onPress,
+	onClick,
 }: {
 	children: React.ReactNode;
 	className?: string;
-	onPress: () => void;
+	onClick: () => void;
 }) {
 	return (
 		<button
 			type="button"
 			className={clsx(styles.listButton, className)}
-			onClick={onPress}
+			onClick={onClick}
 		>
 			{children}
 		</button>

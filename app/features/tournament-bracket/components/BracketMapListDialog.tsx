@@ -515,7 +515,7 @@ export function BracketMapListDialog({
 									size="small"
 									icon={<RefreshCcw />}
 									variant="outlined"
-									onPress={() =>
+									onClick={() =>
 										setMaps(
 											generateTournamentRoundMaplist({
 												mapCounts,

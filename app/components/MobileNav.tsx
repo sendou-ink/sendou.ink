@@ -146,7 +146,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 			<MobileTabBar
 				panelIds={panelIds}
 				activePanel={activePanel}
-				onPressStart={rememberOpenPanel}
+				onBeforeToggle={rememberOpenPanel}
 				isLoggedIn={Boolean(user)}
 				hasUnseenNotifications={showUnseenDot}
 				hasFriendInSendouQ={hasFriendInSendouQ}
@@ -159,7 +159,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 function MobileTabBar({
 	panelIds,
 	activePanel,
-	onPressStart,
+	onBeforeToggle,
 	isLoggedIn,
 	hasUnseenNotifications,
 	hasFriendInSendouQ,
@@ -167,7 +167,7 @@ function MobileTabBar({
 }: {
 	panelIds: PanelIds;
 	activePanel: PanelType | null;
-	onPressStart: () => void;
+	onBeforeToggle: () => void;
 	isLoggedIn: boolean;
 	hasUnseenNotifications: boolean;
 	hasFriendInSendouQ: boolean;
@@ -183,7 +183,7 @@ function MobileTabBar({
 				label={t("front:mobileNav.menu")}
 				panelId={panelIds.menu}
 				isActive={activePanel === "menu"}
-				onPressStart={onPressStart}
+				onBeforeToggle={onBeforeToggle}
 			/>
 
 			{isLoggedIn ? (
@@ -193,7 +193,7 @@ function MobileTabBar({
 						label={t("front:mobileNav.friends")}
 						panelId={panelIds.friends}
 						isActive={activePanel === "friends"}
-						onPressStart={onPressStart}
+						onBeforeToggle={onBeforeToggle}
 						showNotificationDot={hasFriendInSendouQ}
 						badgeCount={unseenFriendRequests}
 						badgeLeft={hasFriendInSendouQ}
@@ -203,14 +203,14 @@ function MobileTabBar({
 						label={t("front:sideNav.myCalendar")}
 						panelId={panelIds.tourneys}
 						isActive={activePanel === "tourneys"}
-						onPressStart={onPressStart}
+						onBeforeToggle={onBeforeToggle}
 					/>
 					<MobileTab
 						icon={<MessageSquare />}
 						label={t("front:mobileNav.chat")}
 						panelId={panelIds.chat}
 						isActive={activePanel === "chat"}
-						onPressStart={onPressStart}
+						onBeforeToggle={onBeforeToggle}
 						unreadCount={chatContext?.totalUnreadCount}
 					/>
 					<MobileTab
@@ -218,7 +218,7 @@ function MobileTabBar({
 						label={t("front:mobileNav.you")}
 						panelId={panelIds.you}
 						isActive={activePanel === "you"}
-						onPressStart={onPressStart}
+						onBeforeToggle={onBeforeToggle}
 						showNotificationDot={hasUnseenNotifications}
 					/>
 				</>
@@ -241,7 +241,7 @@ function MobileTab({
 	label,
 	panelId,
 	isActive,
-	onPressStart,
+	onBeforeToggle,
 	showNotificationDot,
 	unreadCount,
 	badgeCount,
@@ -251,7 +251,7 @@ function MobileTab({
 	label: string;
 	panelId: string;
 	isActive: boolean;
-	onPressStart: () => void;
+	onBeforeToggle: () => void;
 	showNotificationDot?: boolean;
 	unreadCount?: number;
 	badgeCount?: number;
@@ -265,9 +265,9 @@ function MobileTab({
 			className={styles.tab}
 			data-active={isActive}
 			popoverTarget={panelId}
-			onPointerDown={onPressStart}
+			onPointerDown={onBeforeToggle}
 			onKeyDown={(event) => {
-				if (event.key === "Enter" || event.key === " ") onPressStart();
+				if (event.key === "Enter" || event.key === " ") onBeforeToggle();
 			}}
 		>
 			<span className={styles.tabIcon}>

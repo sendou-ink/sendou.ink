@@ -24,7 +24,7 @@ export function CopyToClipboardPopover({
 				<SendouButton
 					size="miniscule"
 					variant="minimal"
-					onPress={() => copyToClipboard(url)}
+					onClick={() => copyToClipboard(url)}
 					icon={copySuccess ? <Check /> : <Clipboard />}
 				>
 					{t("common:actions.copyToClipboard")}

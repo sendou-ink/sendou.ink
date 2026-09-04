@@ -92,6 +92,8 @@ export const handle: SendouRouteHandle = {
 	i18n: ["user", "q", "calendar", "tournament", "schedule"],
 };
 
+// xxx: hydration error
+
 export const SECTIONS = [
 	{ title: "Buttons", id: "buttons", component: ButtonsSection },
 	{ title: "Alerts", id: "alerts", component: AlertsSection },
@@ -1233,7 +1235,7 @@ function DialogSection({ id }: { id: string }) {
 
 				<ComponentRow label="Controlled">
 					<div className="stack horizontal sm">
-						<SendouButton onPress={() => setIsOpen(true)}>
+						<SendouButton onClick={() => setIsOpen(true)}>
 							Open Controlled Dialog
 						</SendouButton>
 						<SendouDialog
@@ -1243,7 +1245,7 @@ function DialogSection({ id }: { id: string }) {
 							showCloseButton
 						>
 							<p>This dialog is controlled via state.</p>
-							<SendouButton onPress={() => setIsOpen(false)}>
+							<SendouButton onClick={() => setIsOpen(false)}>
 								Close
 							</SendouButton>
 						</SendouDialog>
@@ -1403,7 +1405,7 @@ function FilterBarSection({ id }: { id: string }) {
 					mode !== null || stage !== null ? (
 						<SendouButton
 							icon={<RotateCcw />}
-							onPress={() => {
+							onClick={() => {
 								setMode(null);
 								setStage(null);
 							}}
@@ -1426,7 +1428,7 @@ function ToastSection({ id }: { id: string }) {
 				<ComponentRow label="Success Toast">
 					<SendouButton
 						variant="success"
-						onPress={() =>
+						onClick={() =>
 							toastQueue.add({
 								message: "Operation completed successfully!",
 								variant: "success",
@@ -1440,7 +1442,7 @@ function ToastSection({ id }: { id: string }) {
 				<ComponentRow label="Error Toast">
 					<SendouButton
 						variant="destructive"
-						onPress={() =>
+						onClick={() =>
 							toastQueue.add({
 								message: "Something went wrong. Please try again.",
 								variant: "error",
@@ -1453,7 +1455,7 @@ function ToastSection({ id }: { id: string }) {
 
 				<ComponentRow label="Info Toast">
 					<SendouButton
-						onPress={() =>
+						onClick={() =>
 							toastQueue.add({
 								message: "Here is some information for you.",
 								variant: "info",
@@ -3066,13 +3068,13 @@ function ScheduleSection({ id }: { id: string }) {
 						<SendouButton
 							variant="outlined"
 							size="small"
-							onPress={() => setWeek(SCHEDULE_EXAMPLE_WEEK)}
+							onClick={() => setWeek(SCHEDULE_EXAMPLE_WEEK)}
 						>
 							Reset
 						</SendouButton>
 						<SendouButton
 							size="small"
-							onPress={() =>
+							onClick={() =>
 								toastQueue.add({
 									message: `Saved week with ${rangeCount} time ranges`,
 									variant: "success",

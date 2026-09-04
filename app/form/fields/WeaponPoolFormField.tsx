@@ -226,7 +226,7 @@ function StaticWeaponItem({
 							)
 						}
 						aria-label="Toggle favorite"
-						onPress={() => onToggleFavorite(weapon.id)}
+						onClick={() => onToggleFavorite(weapon.id)}
 						isDisabled={disabled}
 					/>
 				) : null}
@@ -235,7 +235,7 @@ function StaticWeaponItem({
 					size="small"
 					icon={<Trash />}
 					aria-label="Delete"
-					onPress={() => onRemove(weapon.id)}
+					onClick={() => onRemove(weapon.id)}
 					isDisabled={disabled}
 				/>
 			</div>
@@ -308,7 +308,7 @@ function SortableWeaponItem({
 							)
 						}
 						aria-label="Toggle favorite"
-						onPress={() => onToggleFavorite(weapon.id)}
+						onClick={() => onToggleFavorite(weapon.id)}
 					/>
 				) : null}
 				<SendouButton
@@ -316,7 +316,7 @@ function SortableWeaponItem({
 					size="small"
 					icon={<Trash />}
 					aria-label="Delete"
-					onPress={() => onRemove(weapon.id)}
+					onClick={() => onRemove(weapon.id)}
 				/>
 			</div>
 		</li>
