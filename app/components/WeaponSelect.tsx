@@ -51,8 +51,6 @@ interface WeaponSelectProps<
 	placeholder?: string;
 }
 
-// xxx: is it possible to combine with dataset?
-
 export function WeaponSelect<
 	Clearable extends boolean | undefined = undefined,
 	IncludeSubSpecial extends boolean | undefined = undefined,

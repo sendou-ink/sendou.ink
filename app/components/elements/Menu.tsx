@@ -5,7 +5,7 @@ import { Image } from "../Image";
 import { useAnchorPositionFallback } from "./anchor-position-fallback";
 import styles from "./Menu.module.css";
 import { isOwnToggle, useAnchorSafeId } from "./Popover";
-import { useCloseOnScrollClip } from "./popover-scroll-close";
+import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
 type MenuPlacement = "bottom start" | "bottom end" | "bottom right";
 

@@ -25,8 +25,6 @@ export interface SendouButtonProps
 	children?: React.ReactNode;
 	testId?: string;
 	isDisabled?: boolean;
-	// xxx: why would we need to keep it focusable?
-	/** Keeps the button focusable but blocks presses, for in-flight submissions. */
 	isPending?: boolean;
 }
 

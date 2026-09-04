@@ -9,6 +9,7 @@
 	padding: 0;
 	border: none;
 	background: transparent;
+	color: var(--color-text);
 	overflow: visible;
 	outline: none;
 
@@ -59,7 +60,6 @@
 	font-size: var(--font-xs);
 	gap: var(--s-2);
 	align-items: center;
-	margin-block-end: var(--s-1-5);
 }
 
 .errorToast {
@@ -82,7 +82,16 @@
 
 .closeButton {
 	margin-inline-start: auto;
-	outline-color: var(--color-text) !important;
+	margin-inline-end: calc(var(--s-1) * -1);
+	height: auto;
+	padding: var(--s-1);
+	border-radius: var(--radius-box);
+	color: inherit;
+	opacity: 0.75;
+
+	&:hover {
+		opacity: 1;
+	}
 
 	& svg {
 		width: 1rem;

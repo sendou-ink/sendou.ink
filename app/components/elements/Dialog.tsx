@@ -7,6 +7,7 @@ import {
 	SendouButton,
 	type SendouButtonProps,
 } from "~/components/elements/Button";
+import { useHydrated } from "~/hooks/useHydrated";
 import styles from "./Dialog.module.css";
 
 interface DialogElementProps {
@@ -30,10 +31,8 @@ interface DialogElementProps {
  * server.
  */
 export function SendouModal({ ref, ...rest }: DialogElementProps) {
-	// xxx: we have a hook for this, no need to roll a new one
-	const [mounted, setMounted] = React.useState(false);
-	React.useEffect(() => setMounted(true), []);
-	if (!mounted) return null;
+	const isHydrated = useHydrated();
+	if (!isHydrated) return null;
 
 	return createPortal(
 		<DialogElement
@@ -205,7 +204,6 @@ function TriggeredDialog({
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const [open, setOpen] = React.useState(false);
 
-	// xxx: what is this?
 	const [contentKey, remountContent] = React.useReducer(
 		(key: number) => key + 1,
 		0,

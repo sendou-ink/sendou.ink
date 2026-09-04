@@ -7,8 +7,8 @@ import { SendouButton } from "~/components/elements/Button";
 import { Image } from "../Image";
 import { useAnchorPositionFallback } from "./anchor-position-fallback";
 import { isOwnToggle, useAnchorSafeId } from "./Popover";
-import { useCloseOnScrollClip } from "./popover-scroll-close";
 import styles from "./Select.module.css";
+import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
 // xxx: why when weaponselect e.g. going out from the bottom of the screen dont get popover up top? only when we type and clear it goes to the top (as expected)
 // xxx: when top one fixed, always keep the selection above/below instead of flip flopping even if the contents height shrinks

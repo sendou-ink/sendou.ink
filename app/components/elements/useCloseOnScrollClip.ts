@@ -2,8 +2,6 @@ import * as React from "react";
 
 const VISIBLE_RATIO_THRESHOLD = 0.98;
 
-// xxx: follow our hook file convention
-
 /**
  * Closes an open popover once scrolling clips it against the sticky header
  * (`--popover-boundary-top`) or the bottom of the viewport.

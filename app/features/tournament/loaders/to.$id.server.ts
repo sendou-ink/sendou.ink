@@ -58,7 +58,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			subDays(new Date(), TOURNAMENT.VOD_VISIBILITY_DAYS),
 		);
 
-	// xxx: measure if we can get rid of serializeTournamentLoaderData
 	return serializeTournamentLoaderData({
 		tournament: {
 			ctx: tournament.ctx,

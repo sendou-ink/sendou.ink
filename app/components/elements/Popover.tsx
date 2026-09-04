@@ -5,7 +5,7 @@ import {
 	useAnchorPositionFallback,
 } from "./anchor-position-fallback";
 import styles from "./Popover.module.css";
-import { useCloseOnScrollClip } from "./popover-scroll-close";
+import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
 export type PopoverPlacement = AnchorFallbackPlacement;
 

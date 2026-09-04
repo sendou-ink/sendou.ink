@@ -89,10 +89,8 @@ import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q", "calendar", "tournament", "schedule"],
+	i18n: ["user", "q", "calendar", "tournament", "schedule", "builds"],
 };
-
-// xxx: hydration error
 
 export const SECTIONS = [
 	{ title: "Buttons", id: "buttons", component: ButtonsSection },
