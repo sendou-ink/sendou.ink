@@ -29,6 +29,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	customAvatarUrl,
 	jsonArrayFrom,
+	jsonObjectFrom,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
 	userProfileWeapons,
@@ -438,6 +439,24 @@ export async function findLeanById(id: number) {
 				.orderBy("UserFriendCode.createdAt", "desc")
 				.limit(1)
 				.as("friendCode"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("TeamMember")
+					.innerJoin("Team", "Team.id", "TeamMember.teamId")
+					.leftJoin(
+						"UserSubmittedImage",
+						"UserSubmittedImage.id",
+						"Team.avatarImgId",
+					)
+					.select(({ ref }) => [
+						"Team.name",
+						"Team.customUrl",
+						concatUserSubmittedImagePrefix(ref("UserSubmittedImage.url")).as(
+							"avatarUrl",
+						),
+					])
+					.where("TeamMember.userId", "=", id),
+			).as("team"),
 		])
 		.executeTakeFirst();
 

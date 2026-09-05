@@ -44,6 +44,7 @@
 	"header.adder.calendarEvent": "Календарное событие",
 	"header.adder.build": "Сборка",
 	"header.adder.team": "Команда",
+	"header.myTeam": "",
 	"header.adder.scrimPost": "Скрим пост",
 	"header.adder.association": "Ассоциация",
 	"header.adder.lfgPost": "LFG пост",

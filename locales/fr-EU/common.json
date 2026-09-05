@@ -44,6 +44,7 @@
 	"header.adder.calendarEvent": "Calendrier d'évenement",
 	"header.adder.build": "set",
 	"header.adder.team": "Equipe",
+	"header.myTeam": "",
 	"header.adder.scrimPost": "Poste scrim",
 	"header.adder.association": "Association",
 	"header.adder.lfgPost": "Post LFG",

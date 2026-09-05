@@ -32,6 +32,7 @@ import {
 	SENDOU_INK_BASE_URL,
 	SETTINGS_PAGE,
 	SUPPORT_PAGE,
+	teamPage,
 	userPage,
 } from "~/utils/urls";
 import { Avatar } from "./Avatar";
@@ -580,6 +581,26 @@ function YouPanel({
 					<Avatar user={user} size="sm" />
 					<span className={styles.youPanelUsername}>{user.username}</span>
 				</Link>
+				{user.team ? (
+					<Link
+						to={teamPage(user.team.customUrl)}
+						className={styles.youPanelSettingsButton}
+						onClick={onClose}
+						aria-label={t("common:header.myTeam")}
+					>
+						{user.team.avatarUrl ? (
+							<img
+								src={user.team.avatarUrl}
+								alt=""
+								className={styles.youPanelTeamAvatar}
+								width={22}
+								height={22}
+							/>
+						) : (
+							<Image path={navIconUrl("t")} alt="" width={22} height={22} />
+						)}
+					</Link>
+				) : null}
 				<Link
 					to={SETTINGS_PAGE}
 					className={styles.youPanelSettingsButton}

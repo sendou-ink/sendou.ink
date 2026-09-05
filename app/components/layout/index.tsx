@@ -38,8 +38,10 @@ import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
+	navIconUrl,
 	PLANNER_URL,
 	SETTINGS_PAGE,
+	teamPage,
 	userPage,
 } from "~/utils/urls";
 import { Avatar, generateIdenticon } from "../Avatar";
@@ -663,6 +665,26 @@ function SideNavUserPanel() {
 					<span className={styles.sideNavFooterUsername}>{user.username}</span>
 				</Link>
 				<div className={styles.sideNavFooterActions}>
+					{user.team ? (
+						<Link
+							to={teamPage(user.team.customUrl)}
+							className={styles.sideNavFooterButton}
+							aria-label={t("header.myTeam")}
+							title={t("header.myTeam")}
+						>
+							{user.team.avatarUrl ? (
+								<img
+									src={user.team.avatarUrl}
+									alt=""
+									className={styles.sideNavFooterTeamAvatar}
+									width={22}
+									height={22}
+								/>
+							) : (
+								<Image path={navIconUrl("t")} alt="" width={22} height={22} />
+							)}
+						</Link>
+					) : null}
 					{notifications ? (
 						<div
 							className={styles.sideNavFooterNotification}

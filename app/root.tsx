@@ -170,6 +170,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 						plusTier: user.plusTier,
 						roles: user.roles,
 						createdAt: user.createdAt,
+						team: user.team,
 					}
 				: undefined,
 			customTheme: isSupporter(user) ? user?.customTheme : undefined,

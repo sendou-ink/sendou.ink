@@ -21,6 +21,7 @@ export class SideNav {
 				name: "Log in via Discord",
 			}),
 			footerUsername: this.root.locator("[class*='sideNavFooterUsername']"),
+			footerTeamLink: this.root.getByRole("link", { name: "My team" }),
 			collapseButton: page.getByTestId("sidenav-collapse-button"),
 			modalTrigger: page.getByTestId("sidenav-modal-trigger"),
 			siteLogoLink: this.root.locator("a[class*='siteLogo']"),

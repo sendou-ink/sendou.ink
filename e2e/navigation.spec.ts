@@ -1,5 +1,5 @@
 import { NZAP_TEST_ID } from "~/db/seed/constants";
-import { SENDOUQ_PAGE } from "~/utils/urls";
+import { SENDOUQ_PAGE, teamPage } from "~/utils/urls";
 import {
 	expect,
 	impersonate,
@@ -9,6 +9,7 @@ import {
 	test,
 } from "./helpers/playwright";
 import { MobileNav } from "./pages/layout/mobile-nav";
+import { SideNav } from "./pages/layout/side-nav";
 import { TopNavMenus } from "./pages/layout/top-nav-menus";
 
 test.describe("Navigation", () => {
@@ -60,6 +61,28 @@ test.describe("Navigation", () => {
 		await mobileNav.menuLink("SendouQ").click();
 		await expect(page).toHaveURL(SENDOUQ_PAGE);
 		await expect(mobileNav.menuLink("SendouQ")).not.toBeVisible();
+	});
+
+	test("my team shortcut navigates to the team page on desktop and mobile", async ({
+		page,
+		factories,
+	}) => {
+		const team = await factories.TeamFactory.create({
+			memberUserIds: [NZAP_TEST_ID],
+		});
+
+		await impersonate(page, NZAP_TEST_ID);
+		await navigate({ page, url: "/" });
+
+		await new SideNav(page).locators.footerTeamLink.click();
+		await expect(page).toHaveURL(teamPage(team.customUrl));
+
+		await navigate({ page, url: "/" });
+		await page.setViewportSize(MOBILE_VIEWPORT);
+		const mobileNav = new MobileNav(page);
+		await mobileNav.openPanel("you");
+		await mobileNav.locators.youPanelTeamLink.click();
+		await expect(page).toHaveURL(teamPage(team.customUrl));
 	});
 
 	test("tablet navigation", async ({ page }) => {
