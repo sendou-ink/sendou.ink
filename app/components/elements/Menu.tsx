@@ -2,7 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { Link } from "react-router";
 import { Image } from "../Image";
-import { useAnchorPositionFallback } from "./anchor-position-fallback";
+import { useAnchorPositioning } from "./anchor-positioning";
 import styles from "./Menu.module.css";
 import { isOwnToggle, useAnchorSafeId } from "./Popover";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
@@ -49,7 +49,7 @@ export function SendouMenu({
 	useCloseOnScrollClip(open, popoverRef, () =>
 		popoverRef.current?.hidePopover(),
 	);
-	useAnchorPositionFallback({
+	useAnchorPositioning({
 		isOpen: open,
 		popoverRef,
 		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,

@@ -4,6 +4,10 @@ import { SendouPopover } from "./Popover";
 import { SendouSelect, SendouSelectItem } from "./Select";
 
 const SEASONS = [{ id: 1, name: "Season 1" }];
+const MANY_SEASONS = Array.from({ length: 40 }, (_, index) => ({
+	id: index + 1,
+	name: `Season ${index + 1}`,
+}));
 
 let disablingStyle: HTMLStyleElement | null = null;
 
@@ -30,7 +34,7 @@ function rectOf(element: Element) {
 	return element.getBoundingClientRect();
 }
 
-describe("useAnchorPositionFallback", () => {
+describe("useAnchorPositioning", () => {
 	test("centers the popover under its trigger", async () => {
 		disableAnchorPositioning();
 		const screen = await render(
@@ -89,4 +93,58 @@ describe("useAnchorPositionFallback", () => {
 		expect(popoverRect.left).toBeCloseTo(triggerRect.left, 0);
 		expect(popoverRect.top).toBeGreaterThanOrEqual(triggerRect.bottom);
 	});
+
+	test("opens a select upwards when its options do not fit below the trigger", async () => {
+		const screen = await render(<SelectNearViewportBottom />);
+
+		const trigger = screen.getByRole("button", { name: /Pick a season/ });
+		await trigger.click();
+		await expect
+			.element(screen.getByRole("option", { name: "Season 1", exact: true }))
+			.toBeVisible();
+
+		const triggerRect = rectOf(trigger.element());
+		const popoverRect = rectOf(document.querySelector("[popover]") as Element);
+
+		expect(popoverRect.bottom).toBeLessThanOrEqual(triggerRect.top);
+		expect(popoverRect.top).toBeGreaterThanOrEqual(0);
+	});
+
+	test("keeps the select where it opened when searching shrinks the list", async () => {
+		const screen = await render(<SelectNearViewportBottom />);
+
+		const trigger = screen.getByRole("button", { name: /Pick a season/ });
+		await trigger.click();
+		await expect
+			.element(screen.getByRole("option", { name: "Season 1", exact: true }))
+			.toBeVisible();
+		const popover = document.querySelector("[popover]") as Element;
+		const bottomOnOpen = rectOf(popover).bottom;
+
+		await screen.getByRole("combobox").fill("Season 40");
+		await expect
+			.element(screen.getByRole("option", { name: "Season 40" }))
+			.toBeVisible();
+
+		expect(rectOf(popover).bottom).toBeCloseTo(bottomOnOpen, 0);
+	});
 });
+
+function SelectNearViewportBottom() {
+	return (
+		<div style={{ marginTop: "calc(100vh - 100px)" }}>
+			<SendouSelect
+				label="Season"
+				items={MANY_SEASONS}
+				placeholder="Pick a season"
+				search={{ placeholder: "Search seasons..." }}
+			>
+				{({ id, name }: (typeof MANY_SEASONS)[number]) => (
+					<SendouSelectItem key={id} id={id}>
+						{name}
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+		</div>
+	);
+}

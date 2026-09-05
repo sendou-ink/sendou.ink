@@ -76,10 +76,11 @@
 	position-try-fallbacks: flip-block;
 	width: anchor-size(width);
 	min-width: anchor-size(width);
-	/* fill the space the position-area leaves (its containing block), like the
-	   old JS positioning did; the 200px floor forces a flip to the roomier side
-	   instead of squeezing against the viewport edge */
-	max-height: max(200px, calc(100% - 12px));
+	/* fills the space the position-area leaves (its containing block), less the
+	   gap to the anchor (the popover's own margin) and the padding to the
+	   viewport edge; which side that space is on gets pinned when the popover
+	   opens, flip-block only covers one opened before hydration */
+	max-height: calc(100% - var(--s-2) - 12px);
 	margin: var(--s-2) 0;
 	padding: var(--s-1);
 	border: var(--border-style);
@@ -93,6 +94,11 @@
 
 	&:popover-open {
 		display: flex;
+	}
+
+	/* opened upwards the sticky header is the ceiling, not the viewport top */
+	&[data-side="above"] {
+		max-height: calc(100% - var(--s-2) - 12px - var(--popover-boundary-top));
 	}
 }
 

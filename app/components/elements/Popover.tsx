@@ -1,13 +1,13 @@
 import clsx from "clsx";
 import * as React from "react";
 import {
-	type AnchorFallbackPlacement,
-	useAnchorPositionFallback,
-} from "./anchor-position-fallback";
+	type AnchorPlacement,
+	useAnchorPositioning,
+} from "./anchor-positioning";
 import styles from "./Popover.module.css";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
-export type PopoverPlacement = AnchorFallbackPlacement;
+export type PopoverPlacement = AnchorPlacement;
 
 /** `useId` values hold characters CSS idents can't (e.g. `:`), strip them for anchor names. */
 export function useAnchorSafeId() {
@@ -99,7 +99,7 @@ export function SendouPopover({
 	}, [open]);
 
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
-	useAnchorPositionFallback({
+	useAnchorPositioning({
 		isOpen: open,
 		popoverRef,
 		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,
@@ -191,7 +191,7 @@ export function SendouAnchoredPopover({
 	}, [isOpen, triggerRef, anchorName]);
 
 	useCloseOnScrollClip(isOpen, popoverRef, () => onOpenChange(false));
-	useAnchorPositionFallback({
+	useAnchorPositioning({
 		isOpen,
 		popoverRef,
 		getAnchor: () => triggerRef.current,

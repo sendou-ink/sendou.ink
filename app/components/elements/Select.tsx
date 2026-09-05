@@ -5,13 +5,10 @@ import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
 import { Image } from "../Image";
-import { useAnchorPositionFallback } from "./anchor-position-fallback";
+import { useAnchorPositioning } from "./anchor-positioning";
 import { isOwnToggle, useAnchorSafeId } from "./Popover";
 import styles from "./Select.module.css";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
-
-// xxx: why when weaponselect e.g. going out from the bottom of the screen dont get popover up top? only when we type and clear it goes to the top (as expected)
-// xxx: when top one fixed, always keep the selection above/below instead of flip flopping even if the contents height shrinks
 
 export type SelectKey = string | number;
 
@@ -185,7 +182,7 @@ export function SendouSelect<T extends object>({
 	const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
-	useAnchorPositionFallback({
+	useAnchorPositioning({
 		isOpen: open,
 		popoverRef,
 		getAnchor: () => triggerElementRef.current,
