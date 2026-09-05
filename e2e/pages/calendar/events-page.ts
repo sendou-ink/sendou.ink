@@ -29,6 +29,11 @@ export class EventsPage {
 			saveWeekButton: page.getByTestId("save-week-button"),
 			copyLastWeekButton: page.getByTestId("copy-last-week-button"),
 			dayEditorPopover: page.getByRole("dialog"),
+			teamScheduleLink: page.getByTestId("team-schedule-link"),
+			// the chip radio input is visually hidden, so the label is what clicks
+			nextWeekToggle: page.locator(
+				'label[for="chip-radio-my-schedule-week-next"]',
+			),
 		};
 	}
 

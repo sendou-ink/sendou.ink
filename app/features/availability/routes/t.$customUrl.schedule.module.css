@@ -6,6 +6,20 @@
 	gap: var(--s-2);
 }
 
+/* narrow: the actions take a line of their own, so they split to the edges of it */
+.headerActions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	flex-grow: 1;
+
+	@container (width >= 640px) {
+		flex-grow: 0;
+	}
+}
+
 .heading {
 	font-size: var(--font-md);
 	color: var(--color-text);

@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { isSameDay } from "date-fns";
-import { Flag, Pencil, Plus, Trash } from "lucide-react";
+import { CalendarClock, Flag, Pencil, Plus, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
@@ -8,7 +8,7 @@ import * as R from "remeda";
 import type * as v from "valibot";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { FormMessage } from "~/components/FormMessage";
 import { UserLink } from "~/components/UserLink";
@@ -24,6 +24,7 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { EVENTS_PAGE } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.schedule.server";
 import {
 	addTeamEventSchema,
@@ -91,11 +92,22 @@ function ScheduleWeeks({ weeks }: { weeks: Array<WeekData> }) {
 						shownWeek.days[6].noonAt,
 					)}
 				</h2>
-				<WeekToggle
-					name="schedule-week"
-					value={week}
-					onChange={(value) => setParams({ week: value })}
-				/>
+				<div className={styles.headerActions}>
+					<LinkButton
+						to={scheduleWeekSearchParams.href(EVENTS_PAGE, { week })}
+						variant="minimal"
+						size="miniscule"
+						icon={<CalendarClock />}
+						testId="edit-availability-link"
+					>
+						{t("schedule:team.editAvailability")}
+					</LinkButton>
+					<WeekToggle
+						name="schedule-week"
+						value={week}
+						onChange={(value) => setParams({ week: value })}
+					/>
+				</div>
 			</div>
 			<TeamEvents week={shownWeek} />
 			<ScheduleGrid week={shownWeek} />

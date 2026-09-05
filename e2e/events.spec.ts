@@ -12,6 +12,7 @@ import {
 	test,
 } from "./helpers/playwright";
 import { EventsPage } from "./pages/calendar/events-page";
+import { TeamSchedulePage } from "./pages/team/team-schedule-page";
 
 const JOINED_TOURNAMENT_NAME = "Joined Tournament";
 const ORGANIZED_TOURNAMENT_NAME = "Organized Tournament";
@@ -118,6 +119,37 @@ test.describe("My schedule", () => {
 		await events.goto();
 		await isNotVisible(events.locators.availabilityBars);
 		await isNotVisible(events.weekNotFilledMarker("current"));
+	});
+
+	test("crosses over to the team schedule and back, keeping the week", async ({
+		page,
+		factories,
+	}) => {
+		const { customUrl } = await factories.TeamFactory.create({
+			name: "Team Olive",
+			memberUserIds: [ADMIN_ID],
+		});
+
+		await impersonate(page, ADMIN_ID);
+		await setTimezoneCookie(page);
+
+		const events = new EventsPage(page);
+		await events.goto();
+
+		// the week the editor is showing carries over to the team schedule
+		await events.locators.nextWeekToggle.click();
+		await events.locators.teamScheduleLink.click();
+		await expect(page).toHaveURL(
+			new RegExp(`/t/${customUrl}/schedule\\?week=next`),
+		);
+
+		const schedule = new TeamSchedulePage(page);
+		await expect(schedule.locators.grid).toBeVisible();
+
+		// the week the schedule is showing carries over to the editor
+		await schedule.locators.editAvailabilityLink.click();
+		await expect(page).toHaveURL(/\/events\?week=next/);
+		await expect(events.weekNotFilledMarker("next")).toBeVisible();
 	});
 
 	test("shows a commitment as a locked block on the editor", async ({

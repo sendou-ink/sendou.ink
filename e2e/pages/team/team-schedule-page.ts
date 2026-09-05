@@ -16,6 +16,7 @@ export class TeamSchedulePage {
 			notes: page.getByTestId("schedule-note"),
 			teamEvents: page.getByTestId("schedule-team-event"),
 			addEventButton: page.getByTestId("add-team-event-button"),
+			editAvailabilityLink: page.getByTestId("edit-availability-link"),
 			// the chip radio input is visually hidden, so the label is what clicks
 			nextWeekToggle: page.locator(
 				'label[for="chip-radio-schedule-week-next"]',

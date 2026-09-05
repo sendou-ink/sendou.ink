@@ -1,13 +1,16 @@
+import { Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import * as R from "remeda";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
+import { useUser } from "~/features/auth/core/user";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { teamSchedulePage } from "~/utils/urls";
 import { saveWeekSchema } from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
 import type { AvailabilityEditorWeek } from "../availability-types";
@@ -19,6 +22,7 @@ import { WeekToggle } from "./WeekToggle";
 /** The events page's "My schedule": editor with current/next week toggle, "Copy last week" prefill and save. */
 export function MySchedule({ data }: { data: MyScheduleData }) {
 	const { t } = useTranslation(["schedule"]);
+	const user = useUser();
 	const [{ week }, setParams] = useSearchParamsTyped(scheduleWeekSearchParams);
 	const [weeks, setWeeks] = React.useState<Array<AvailabilityEditorWeek>>(() =>
 		data.weeks.map((editorWeek) => editorWeek.days),
@@ -87,7 +91,23 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 	return (
 		<section className="stack sm" data-testid="my-schedule">
 			<div className={styles.header}>
-				<h2 className="text-lg mx-2">{t("schedule:editor.title")}</h2>
+				<div className={styles.title}>
+					<h2 className="text-lg mx-2">{t("schedule:editor.title")}</h2>
+					{user?.team ? (
+						<LinkButton
+							to={scheduleWeekSearchParams.href(
+								teamSchedulePage(user.team.customUrl),
+								{ week },
+							)}
+							variant="minimal"
+							size="miniscule"
+							icon={<Users />}
+							testId="team-schedule-link"
+						>
+							{t("schedule:editor.teamSchedule")}
+						</LinkButton>
+					) : null}
+				</div>
 				<WeekToggle
 					name="my-schedule-week"
 					value={week}
