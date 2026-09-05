@@ -124,11 +124,13 @@ function groupPlusVotingResults(rows: EnrichedRow[]) {
 		.sort((a, b) => a.tier - b.tier);
 }
 
+type Bio = { text: string; markdown: boolean };
+
 export type UsersForVoting = {
 	user: Pick<
 		Tables["User"],
 		"id" | "discordId" | "username" | "discordAvatar"
-	> & { customAvatarUrl: string | null; bio: string | null };
+	> & { customAvatarUrl: string | null; bio: Bio | null };
 	suggestion?: PlusSuggestionRepository.FindAllByMonthItem;
 }[];
 
@@ -232,7 +234,7 @@ export function upsertMany(votes: UpsertManyPlusVotesArgs) {
 
 /** Bios as the profile page's bio widget stores them, keyed by user id. */
 async function findBiosByUserIds(userIds: number[]) {
-	const bios = new Map<number, string>();
+	const bios = new Map<number, Bio>();
 
 	if (userIds.length === 0) return bios;
 
@@ -243,6 +245,7 @@ async function findBiosByUserIds(userIds: number[]) {
 			sql<
 				string | null
 			>`json_extract("UserWidget"."widget", '$.settings.bio')`.as("bio"),
+			sql<string>`json_extract("UserWidget"."widget", '$.id')`.as("widgetId"),
 		])
 		.where("UserWidget.userId", "in", userIds)
 		.where(sql`json_extract("UserWidget"."widget", '$.id')`, "in", [
@@ -255,7 +258,10 @@ async function findBiosByUserIds(userIds: number[]) {
 	for (const row of rows) {
 		// a user can have both bio widgets, the one higher up their profile wins
 		if (row.bio && !bios.has(row.userId)) {
-			bios.set(row.userId, row.bio);
+			bios.set(row.userId, {
+				text: row.bio,
+				markdown: row.widgetId === "bio-md",
+			});
 		}
 	}
 
