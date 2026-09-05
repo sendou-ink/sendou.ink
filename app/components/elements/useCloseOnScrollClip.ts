@@ -31,7 +31,12 @@ export function useCloseOnScrollClip(
 		let wasFullyVisible = false;
 		let scrolledSinceFullyVisible = false;
 
-		const onScroll = () => {
+		const onScroll = (event: Event) => {
+			// the popover scrolling its own content (e.g. a select revealing the
+			// selected option) is not the page moving out from under it
+			if (event.target instanceof Node && element.contains(event.target)) {
+				return;
+			}
 			scrolledSinceFullyVisible = true;
 		};
 		window.addEventListener("scroll", onScroll, {

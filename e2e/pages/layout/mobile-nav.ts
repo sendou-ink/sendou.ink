@@ -52,24 +52,29 @@ export class MobileNav {
 
 	async openPanel(panel: Panel) {
 		await this.tab(panel).click();
+		await this.settleAnimations();
 	}
 
 	/** Switches to another panel while one is open; the tab bar stays usable under the panels. */
 	async switchPanel(panel: Panel) {
 		await this.tab(panel).click();
+		await this.settleAnimations();
 	}
 
 	async closePanel() {
-		// with scripts off Playwright never sees a still sliding-in panel settle,
-		// so its animation is waited out first
+		await this.settleAnimations();
+		await this.openPanelDialog
+			.locator("button[class*='panelCloseButton']")
+			.click();
+	}
+
+	/** With scripts off Playwright never sees a still sliding-in panel settle, so its animation is waited out instead. */
+	private async settleAnimations() {
 		await this.page.evaluate(() =>
 			Promise.all(
 				document.getAnimations().map((animation) => animation.finished),
 			),
 		);
-		await this.openPanelDialog
-			.locator("button[class*='panelCloseButton']")
-			.click();
 	}
 
 	menuLink(name: string) {

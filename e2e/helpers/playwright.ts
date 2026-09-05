@@ -3,7 +3,6 @@ import {
 	expect,
 	type Locator,
 	type Page,
-	type Response,
 } from "@playwright/test";
 import { format } from "date-fns";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
@@ -379,30 +378,14 @@ export async function submit(page: Page, target?: string | Locator) {
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	await flushIfDirty(page);
 
-	const MAX_ATTEMPTS = 3;
-	const PER_ATTEMPT_TIMEOUT = 10_000;
-
 	await armRouterProbe(page);
 
-	// React Aria buttons fire their handler on press end. Occasionally a click
-	// registers the press start (the button goes `:active`) but the press never
-	// completes into a submit, so no POST fires — e.g. when a re-render lands
-	// mid-press. Re-issue the action when the expected POST doesn't arrive
-	// within the per-attempt window.
-	let response: Response | undefined;
-	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
-		const responsePromise = page.waitForResponse(
-			(res) => res.request().method() === "POST" && isDataRequest(res.url()),
-			{ timeout: PER_ATTEMPT_TIMEOUT },
-		);
-		await cb();
-		try {
-			response = await responsePromise;
-			break;
-		} catch (error) {
-			if (attempt === MAX_ATTEMPTS) throw error;
-		}
-	}
+	const responsePromise = page.waitForResponse(
+		(res) => res.request().method() === "POST" && isDataRequest(res.url()),
+		{ timeout: 10_000 },
+	);
+	await cb();
+	const response = await responsePromise;
 
 	// React commits the submission before the POST leaves the browser, but on a
 	// loaded machine it can lag behind the response; without waiting for it the
@@ -426,7 +409,7 @@ export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	// revalidation on navigation (e.g. to.$id) then keep the stale data.
 	await expectRouterIdle(page);
 
-	return response!;
+	return response;
 }
 
 function isDataRequest(url: string) {

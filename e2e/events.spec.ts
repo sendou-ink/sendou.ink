@@ -144,7 +144,7 @@ test.describe("My schedule", () => {
 		);
 
 		const schedule = new TeamSchedulePage(page);
-		await expect(schedule.locators.grid).toBeVisible();
+		await expect(schedule.locators.heatmap).toBeVisible();
 
 		// the week the schedule is showing carries over to the editor
 		await schedule.locators.editAvailabilityLink.click();

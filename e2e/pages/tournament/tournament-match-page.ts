@@ -273,10 +273,8 @@ export class TournamentMatchPage {
 	}
 
 	async backToBracket() {
-		await expect(async () => {
-			await this.locators.backToBracketButton.click();
-			await expect(this.page.getByTestId("brackets-viewer")).toBeVisible();
-		}).toPass();
+		await this.locators.backToBracketButton.click();
+		await expect(this.page.getByTestId("brackets-viewer")).toBeVisible();
 		return new TournamentBracketsPage(this.page);
 	}
 
