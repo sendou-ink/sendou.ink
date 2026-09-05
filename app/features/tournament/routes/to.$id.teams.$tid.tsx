@@ -253,7 +253,7 @@ function RunImageExport() {
 					size="small"
 					variant="outlined"
 					icon={<HardDriveDownload />}
-					onPress={handleOpen}
+					onClick={handleOpen}
 					className="mx-auto"
 				>
 					{t("common:imageExport.export")}

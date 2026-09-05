@@ -1,4 +1,3 @@
-import type { CalendarDateTime } from "@internationalized/date";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, useLoaderData } from "react-router";
@@ -11,7 +10,6 @@ import { FormFieldWrapper } from "~/form/fields/FormFieldWrapper";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { nullFilledArray } from "~/utils/arrays";
-import { dateToDateValue } from "~/utils/dates";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FormMessage } from "../../../components/FormMessage";
@@ -212,25 +210,11 @@ function NotFoundVisibilityFormField({
 
 	if (noAssociations || baseVisibility === "PUBLIC") return null;
 
-	const handleDateChange = (val: CalendarDateTime | null) => {
-		if (val) {
-			const date = new Date(
-				val.year,
-				val.month - 1,
-				val.day,
-				val.hour,
-				val.minute,
-			);
-			setValue("notFoundVisibility", {
-				...notFoundVisibility,
-				at: date,
-			});
-		} else {
-			setValue("notFoundVisibility", {
-				...notFoundVisibility,
-				at: null,
-			});
-		}
+	const handleDateChange = (val: Date | null) => {
+		setValue("notFoundVisibility", {
+			...notFoundVisibility,
+			at: val,
+		});
 	};
 
 	const handleAssociationChange = (e: React.ChangeEvent<HTMLSelectElement>) => {
@@ -241,7 +225,7 @@ function NotFoundVisibilityFormField({
 	};
 
 	const dateValue = notFoundVisibility.at
-		? dateToDateValue(new Date(notFoundVisibility.at))
+		? new Date(notFoundVisibility.at)
 		: null;
 
 	return (

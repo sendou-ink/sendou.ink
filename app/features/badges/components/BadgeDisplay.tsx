@@ -112,7 +112,7 @@ export function BadgeDisplay({
 						<SendouButton
 							icon={<Trash />}
 							variant="minimal-destructive"
-							onPress={() =>
+							onClick={() =>
 								onChange(
 									badges.filter((b) => b.id !== bigBadge.id).map((b) => b.id),
 								)

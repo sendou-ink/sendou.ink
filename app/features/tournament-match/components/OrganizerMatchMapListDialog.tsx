@@ -101,7 +101,7 @@ export function OrganizerMatchMapListDialog({
 				variant="outlined"
 				size="small"
 				icon={<MapIcon />}
-				onPress={() => setIsOpen(true)}
+				onClick={() => setIsOpen(true)}
 			>
 				Show maplist
 			</SendouButton>

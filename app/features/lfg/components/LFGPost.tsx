@@ -391,7 +391,7 @@ function PostExpandableText({
 			<div className={styles.text}>{text}</div>
 			{isExpandable ? (
 				<SendouButton
-					onPress={() => setIsExpanded(!isExpanded)}
+					onClick={() => setIsExpanded(!isExpanded)}
 					className={clsx([styles.showAllButton], {
 						[styles.showAllButtonExpanded]: isExpanded,
 					})}

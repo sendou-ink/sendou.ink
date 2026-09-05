@@ -204,22 +204,12 @@ export class SendouQMatchPage {
 		// previous winner can still be selected; clicking the about-to-unmount label
 		// loses the selection on remount
 		await expect(this.locators.selectedWinner).toHaveCount(0);
-		// react-aria's Radio hides its input behind a span overlay, so the label is
-		// what clicks. The press occasionally never completes (same React Aria
-		// nondeterminism as in waitForPOSTResponse), leaving Submit disabled, so the
-		// click is re-issued until the radio reports selected.
-		const label = this.page.locator(
-			`label:has(input[aria-label="${teamName}"])`,
-		);
+		// the radio's testId sits on the label wrapping its visually hidden input
 		const radio = this.page.locator(
 			`[data-testid^="winner-radio-"]:has(input[aria-label="${teamName}"])`,
 		);
-		await expect(async () => {
-			await label.click();
-			await expect(radio).toHaveAttribute("data-selected", "true", {
-				timeout: 1_000,
-			});
-		}).toPass();
+		await radio.click();
+		await expect(radio).toHaveAttribute("data-selected", "true");
 	}
 
 	private async confirmDialog() {

@@ -1,5 +1,6 @@
 .root {
 	background-color: var(--color-bg);
+	color: var(--color-text);
 	border-radius: var(--radius-box);
 	padding: var(--s-4);
 	border: var(--border-style);
@@ -38,6 +39,7 @@
 
 .grid {
 	width: 100%;
+	border-spacing: 0;
 }
 
 .headerCell {
@@ -53,19 +55,15 @@
 	height: 35px;
 	border-radius: var(--radius-field);
 	outline-color: var(--color-accent);
+	border: none;
+	background: transparent;
+	color: var(--color-text);
+	cursor: pointer;
+	margin: 0 auto;
 
 	&:focus-visible {
 		outline: var(--focus-ring);
 		outline-offset: 1px;
-	}
-
-	&[data-outside-month] {
-		display: none;
-	}
-
-	&[data-disabled] {
-		opacity: 0.5;
-		background-color: transparent !important;
 	}
 
 	&[data-selected] {

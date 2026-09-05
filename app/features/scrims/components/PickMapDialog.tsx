@@ -6,7 +6,7 @@ export function PickMapDialog({
 	trigger,
 	heading,
 }: {
-	trigger: React.ReactNode;
+	trigger: React.ReactElement<{ onClick?: () => void }>;
 	heading: string;
 }) {
 	return (

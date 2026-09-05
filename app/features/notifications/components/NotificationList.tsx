@@ -19,10 +19,8 @@ export function NotificationsList({ children }: { children: React.ReactNode }) {
 
 export function NotificationItem({
 	notification,
-	onClose,
 }: {
 	notification: LoaderNotification;
-	onClose?: () => void;
 }) {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
@@ -32,7 +30,6 @@ export function NotificationItem({
 			to={notificationLink(notification, user)}
 			className={styles.item}
 			data-testid="notification-item"
-			onClick={onClose}
 		>
 			<NotificationImage notification={notification}>
 				{!notification.seen ? (

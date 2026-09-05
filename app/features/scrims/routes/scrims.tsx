@@ -269,7 +269,7 @@ function Filters() {
 					<SendouButton
 						icon={<Star />}
 						isDisabled={persistFilters.state !== "idle"}
-						onPress={() =>
+						onClick={() =>
 							persistFilters.submit("PERSIST_SCRIM_FILTERS", { filters })
 						}
 						data-testid="save-filters-as-default-button"
@@ -506,7 +506,7 @@ function AvailableScrimsFilterButtons({
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
-					onPress={() => setShowFiltered(!showFiltered)}
+					onClick={() => setShowFiltered(!showFiltered)}
 					icon={<Funnel />}
 					className={showFiltered ? styles.active : undefined}
 				>
@@ -519,7 +519,7 @@ function AvailableScrimsFilterButtons({
 				<SendouButton
 					variant="minimal"
 					size="miniscule"
-					onPress={() => setShowRequestPending(!showRequestPending)}
+					onClick={() => setShowRequestPending(!showRequestPending)}
 					icon={<Download />}
 					className={showRequestPending ? styles.active : undefined}
 					data-testid="toggle-pending-requests-button"

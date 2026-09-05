@@ -115,7 +115,7 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					<SendouButton
 						className="ml-auto"
 						variant="minimal"
-						onPress={undoLast}
+						onClick={undoLast}
 					>
 						Undo?
 					</SendouButton>
@@ -140,14 +140,14 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 								styles.votingVoteButtonDownvote,
 							)}
 							variant="outlined"
-							onPress={() => addVote("downvote")}
+							onClick={() => addVote("downvote")}
 						>
 							-1
 						</SendouButton>
 						<SendouButton
 							className={styles.votingVoteButton}
 							variant="outlined"
-							onPress={() => addVote("upvote")}
+							onClick={() => addVote("upvote")}
 						>
 							+1
 						</SendouButton>

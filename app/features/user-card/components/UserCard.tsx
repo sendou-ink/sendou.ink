@@ -12,12 +12,12 @@ import {
 	VenetianMask,
 } from "lucide-react";
 import * as React from "react";
-import { Button, Dialog, DialogTrigger, Popover } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Form, useFetcher, useLocation, useMatches } from "react-router";
 import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { toastQueue } from "~/components/elements/Toast";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, TierImage } from "~/components/Image";
@@ -142,22 +142,27 @@ export function UserCard({
 
 	return (
 		<>
-			<DialogTrigger isOpen={isOpen} onOpenChange={handleOpenChange}>
-				<Button className={styles.trigger}>{children}</Button>
-				<Popover placement={placement} className={styles.popover}>
-					<Dialog className={styles.dialog}>
-						<CardContent
-							data={data}
-							friendship={friendship}
-							isOwnCard={isOwnCard}
-							withMutualFriends={withMutualFriends}
-							onEditNote={openNoteDialog}
-							onDeleteNote={openDeleteConfirm}
-							onReport={user ? openReportDialog : undefined}
-						/>
-					</Dialog>
-				</Popover>
-			</DialogTrigger>
+			<SendouPopover
+				isOpen={isOpen}
+				onOpenChange={handleOpenChange}
+				placement={placement}
+				popoverClassName={styles.popover}
+				trigger={
+					<button type="button" className={styles.trigger}>
+						{children}
+					</button>
+				}
+			>
+				<CardContent
+					data={data}
+					friendship={friendship}
+					isOwnCard={isOwnCard}
+					withMutualFriends={withMutualFriends}
+					onEditNote={openNoteDialog}
+					onDeleteNote={openDeleteConfirm}
+					onReport={user ? openReportDialog : undefined}
+				/>
+			</SendouPopover>
 			{isNoteDialogOpen ? (
 				<AddPrivateNoteDialog
 					userId={data.id}
@@ -288,7 +293,7 @@ function CardContent({
 							icon={
 								data.privateNote !== null ? <NotebookText /> : <NotebookPen />
 							}
-							onPress={onNoteButtonPress}
+							onClick={onNoteButtonPress}
 							aria-label={t("user:card.editPrivateNote")}
 						/>
 						{onReport ? (
@@ -296,7 +301,7 @@ function CardContent({
 								size="miniscule"
 								shape="circle"
 								icon={<Flag />}
-								onPress={onReport}
+								onClick={onReport}
 								aria-label="Report user"
 								data-testid="report-user-button"
 							/>
@@ -390,7 +395,7 @@ function NoteView({
 					variant="minimal"
 					size="miniscule"
 					icon={<Pencil />}
-					onPress={onEdit}
+					onClick={onEdit}
 				>
 					{t("common:actions.edit")}
 				</SendouButton>
@@ -398,7 +403,7 @@ function NoteView({
 					variant="minimal-destructive"
 					size="miniscule"
 					icon={<Trash2 />}
-					onPress={onDelete}
+					onClick={onDelete}
 				>
 					{t("common:actions.delete")}
 				</SendouButton>
@@ -455,7 +460,7 @@ function FriendRequestButton({
 				icon={<UserPlus />}
 				isDisabled={fetcher.state !== "idle" || fetcher.data === null}
 				aria-label="Accept friend request"
-				onPress={() => {
+				onClick={() => {
 					if (incomingFriendRequestId === null) return;
 					toastQueue.add(
 						{
@@ -493,7 +498,7 @@ function FriendRequestButton({
 			shape="circle"
 			icon={<UserPlus />}
 			aria-label={t("user:card.sendFriendRequest")}
-			onPress={() =>
+			onClick={() =>
 				sendRequest.submit("SEND_REQUEST", { userId: targetUserId })
 			}
 		/>

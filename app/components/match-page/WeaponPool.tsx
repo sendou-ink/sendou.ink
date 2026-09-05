@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
@@ -32,7 +31,7 @@ export function WeaponPool({
 	return (
 		<SendouPopover
 			trigger={
-				<Button className={styles.weaponRow}>
+				<button type="button" className={styles.weaponRow}>
 					{entries.map((weapon, i) =>
 						weapon !== null ? (
 							<WeaponImage
@@ -54,7 +53,7 @@ export function WeaponPool({
 							/>
 						),
 					)}
-				</Button>
+				</button>
 			}
 		>
 			<div className={styles.weaponPopover}>

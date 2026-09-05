@@ -123,12 +123,12 @@ function PushNotificationsEnabler() {
 		<div>
 			<Label>{t("common:settings.notifications.title")}</Label>
 			{subscribeFailed ? (
-				<SendouButton size="small" variant="minimal" onPress={askPermission}>
+				<SendouButton size="small" variant="minimal" onClick={askPermission}>
 					{t("common:actions.enable")}
 				</SendouButton>
 			) : notificationsPermsGranted === "granted" &&
 				hasSubscription === false ? (
-				<SendouButton size="small" variant="minimal" onPress={askPermission}>
+				<SendouButton size="small" variant="minimal" onClick={askPermission}>
 					{t("common:actions.enable")}
 				</SendouButton>
 			) : notificationsPermsGranted === "granted" ? (
@@ -155,7 +155,7 @@ function PushNotificationsEnabler() {
 						: t("common:settings.notifications.permissionDenied")}
 				</SendouPopover>
 			) : (
-				<SendouButton size="small" variant="minimal" onPress={askPermission}>
+				<SendouButton size="small" variant="minimal" onClick={askPermission}>
 					{t("common:actions.enable")}
 				</SendouButton>
 			)}

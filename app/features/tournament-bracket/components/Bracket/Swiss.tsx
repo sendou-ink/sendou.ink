@@ -103,7 +103,7 @@ export function SwissBracket({
 						{groups.map((g) => (
 							<SendouButton
 								key={g.groupId}
-								onPress={() => setSelectedGroupId(g.groupId)}
+								onClick={() => setSelectedGroupId(g.groupId)}
 								className={clsx(
 									styles.bracketNavLink,
 									styles.bracketNavLinkBig,

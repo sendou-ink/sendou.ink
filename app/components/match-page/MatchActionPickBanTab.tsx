@@ -149,7 +149,7 @@ export function MatchActionPickBanTab({
 							variant="primary"
 							className={styles.submit}
 							isDisabled={!selected || isSubmitting}
-							onPress={() => {
+							onClick={() => {
 								if (!selected) return;
 								onSubmit?.({ type, map: selected });
 							}}

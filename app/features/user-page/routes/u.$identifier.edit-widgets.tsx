@@ -158,7 +158,7 @@ export default function EditWidgetsPage() {
 			<header className={styles.header}>
 				<h1>{t("user:widgets.editTitle")}</h1>
 				<div className={styles.actions}>
-					<SendouButton onPress={handleSubmit}>
+					<SendouButton onClick={handleSubmit}>
 						{t("common:actions.save")}
 					</SendouButton>
 				</div>
@@ -267,7 +267,7 @@ function AvailableWidgetsList({
 										<SendouButton
 											size="miniscule"
 											variant="outlined"
-											onPress={() => onAddWidget(widget.id)}
+											onClick={() => onAddWidget(widget.id)}
 											isDisabled={isSelected || isMaxReached}
 											testId={`add-widget-${widget.id}`}
 										>
@@ -442,7 +442,7 @@ function DraggableWidgetItem({
 						<SendouButton
 							size="miniscule"
 							variant="outlined"
-							onPress={() => onToggleExpanded(widget.id)}
+							onClick={() => onToggleExpanded(widget.id)}
 						>
 							{isExpanded
 								? t("common:actions.hide")
@@ -452,7 +452,7 @@ function DraggableWidgetItem({
 					<SendouButton
 						size="miniscule"
 						variant="minimal-destructive"
-						onPress={() => onRemove(widget.id)}
+						onClick={() => onRemove(widget.id)}
 					>
 						{t("user:widgets.remove")}
 					</SendouButton>

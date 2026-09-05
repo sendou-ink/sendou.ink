@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { Bell, ChevronRight } from "lucide-react";
 import * as React from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -51,12 +50,20 @@ export function NotificationPopover({
 	unseenIds: number[];
 	triggerClassName?: string;
 }) {
+	const [isOpen, setIsOpen] = React.useState(false);
+
 	return (
 		<SendouPopover
+			eager
+			onOpenChange={setIsOpen}
 			trigger={
-				<Button className={triggerClassName} data-testid="notifications-button">
+				<button
+					type="button"
+					className={triggerClassName}
+					data-testid="notifications-button"
+				>
 					<Bell />
-				</Button>
+				</button>
 			}
 			popoverClassName={clsx(styles.popoverContainer, {
 				[styles.noNotificationsContainer]: notifications.length === 0,
@@ -65,24 +72,28 @@ export function NotificationPopover({
 			<NotificationContent
 				notifications={notifications}
 				unseenIds={unseenIds}
+				isOpen={isOpen}
 			/>
 		</SendouPopover>
 	);
 }
 
+const NO_IDS: number[] = [];
+
+/** The list of the bell popover and the mobile "You" panel, rendered while closed too so that both work before hydration. */
 export function NotificationContent({
 	notifications,
 	unseenIds,
-	onClose,
+	isOpen,
 }: {
 	notifications: LoaderNotification[];
 	unseenIds: number[];
-	onClose?: () => void;
+	isOpen: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
-	const stickyUnseenIds = useStickyUnseenIds(notifications);
+	const stickyUnseenIds = useStickyUnseenIds(notifications, isOpen);
 
-	useMarkNotificationsAsSeen(unseenIds);
+	useMarkNotificationsAsSeen(isOpen ? unseenIds : NO_IDS);
 
 	return (
 		<>
@@ -104,7 +115,6 @@ export function NotificationContent({
 									...notification,
 									seen: Number(!stickyUnseenIds.has(notification.id)),
 								}}
-								onClose={onClose}
 							/>
 							{i !== notifications.length - 1 && <NotificationItemDivider />}
 						</React.Fragment>
@@ -112,13 +122,13 @@ export function NotificationContent({
 				</NotificationsList>
 			)}
 			{notifications.length === NOTIFICATIONS.PEEK_COUNT ? (
-				<NotificationsFooter onClose={onClose} />
+				<NotificationsFooter />
 			) : null}
 		</>
 	);
 }
 
-function NotificationsFooter({ onClose }: { onClose?: () => void }) {
+function NotificationsFooter() {
 	const { t } = useTranslation(["common"]);
 
 	return (
@@ -128,7 +138,6 @@ function NotificationsFooter({ onClose }: { onClose?: () => void }) {
 				to={NOTIFICATIONS_URL}
 				className={styles.viewAllLink}
 				data-testid="notifications-see-all-button"
-				onClick={onClose}
 			>
 				{t("common:actions.viewAll")}
 				<ChevronRight size={14} />

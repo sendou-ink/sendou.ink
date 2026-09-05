@@ -106,7 +106,10 @@ export class AdminActionsPage {
 		const form = this.form("Add as artist");
 		await form.getByLabel("User").click();
 		await this.page.getByTestId("user-search-input").fill(userName);
-		return this.page.getByTestId("user-search-item").first();
+		return this.page
+			.getByRole("listbox")
+			.getByTestId("user-search-item")
+			.first();
 	}
 
 	async openFriendCodeLookUp() {

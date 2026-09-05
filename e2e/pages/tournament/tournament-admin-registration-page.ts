@@ -62,7 +62,7 @@ export class TournamentAdminRegistrationPage {
 		await this.page.getByLabel("Player").last().click();
 		await this.page.getByTestId("user-search-input").fill(userName);
 		await expect(
-			this.page.getByTestId("user-search-item").first(),
+			this.page.getByRole("listbox").getByTestId("user-search-item").first(),
 		).toBeVisible();
 		await this.page.keyboard.press("Enter");
 	}

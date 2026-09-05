@@ -152,7 +152,7 @@ export function ArrayFormField({
 									aria-label="Remove item"
 									size="small"
 									variant="minimal-destructive"
-									onPress={() => handleRemoveAt(idx)}
+									onClick={() => handleRemoveAt(idx)}
 									className={styles.removeButton}
 									data-testid={`${name}-remove-item-button`}
 								/>
@@ -170,7 +170,7 @@ export function ArrayFormField({
 					size="small"
 					variant="outlined"
 					icon={<Plus />}
-					onPress={handleAdd}
+					onClick={handleAdd}
 					isDisabled={count >= max || disabled}
 					className="m-0-auto"
 					data-testid={`${name}-add-item-button`}
@@ -217,7 +217,7 @@ function ArrayItemFieldset({
 							aria-label="Move down"
 							size="small"
 							variant="minimal"
-							onPress={onMoveDown}
+							onClick={onMoveDown}
 							isDisabled={!canMoveDown}
 						/>
 						<SendouButton
@@ -226,7 +226,7 @@ function ArrayItemFieldset({
 							aria-label="Move up"
 							size="small"
 							variant="minimal"
-							onPress={onMoveUp}
+							onClick={onMoveUp}
 							isDisabled={!canMoveUp}
 						/>
 					</>
@@ -238,7 +238,7 @@ function ArrayItemFieldset({
 					aria-label="Remove item"
 					size="small"
 					variant="minimal-destructive"
-					onPress={onRemove}
+					onClick={onRemove}
 					isDisabled={!canRemove}
 					data-testid={removeButtonTestId}
 				/>

@@ -7,7 +7,6 @@ import clsx from "clsx";
 import { ChevronDown, ChevronUp, Trash } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useLayoutEffect, useRef } from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -78,7 +77,8 @@ export function TierRow({ tier }: TierRowProps) {
 			{showTierHeaders ? (
 				<SendouPopover
 					trigger={
-						<Button
+						<button
+							type="button"
 							className={styles.tierLabel}
 							style={{
 								backgroundColor: tier.color,
@@ -90,7 +90,7 @@ export function TierRow({ tier }: TierRowProps) {
 							>
 								{tier.name}
 							</span>
-						</Button>
+						</button>
 					}
 				>
 					<div className={styles.popupContent}>
@@ -136,7 +136,7 @@ export function TierRow({ tier }: TierRowProps) {
 						</div>
 						<div className="stack horizontal justify-end">
 							<SendouButton
-								onPress={() => handleRemoveTier(tier.id)}
+								onClick={() => handleRemoveTier(tier.id)}
 								variant="minimal-destructive"
 								icon={<Trash />}
 							/>

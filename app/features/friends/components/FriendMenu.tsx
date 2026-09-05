@@ -46,7 +46,6 @@ export function FriendMenu({
 	streamUrl,
 	friendshipId,
 	friendshipCreatedAt,
-	onNavigate,
 }: {
 	discordId: string;
 	discordAvatar: string | null;
@@ -61,7 +60,6 @@ export function FriendMenu({
 	streamUrl: string | null;
 	friendshipId?: number;
 	friendshipCreatedAt?: number | null;
-	onNavigate?: () => void;
 }) {
 	const { t } = useTranslation(["common", "friends"]);
 	const { formatter: dateFormatter } = useDateTimeFormat({
@@ -85,6 +83,7 @@ export function FriendMenu({
 	return (
 		<>
 			<SendouMenu
+				eager
 				trigger={
 					<ListButton
 						user={{ discordId, discordAvatar, customAvatarUrl }}
@@ -103,7 +102,7 @@ export function FriendMenu({
 				}
 			>
 				<SendouMenuSection headerText={friendSinceText ?? undefined}>
-					<SendouMenuItem href={url} icon={<User />} onAction={onNavigate}>
+					<SendouMenuItem href={url} icon={<User />}>
 						{t("friends:friendsList.viewUserPage")}
 					</SendouMenuItem>
 					{streamUrl ? (
@@ -112,7 +111,6 @@ export function FriendMenu({
 							target="_blank"
 							rel="noreferrer"
 							icon={<TwitchIcon />}
-							onAction={onNavigate}
 						>
 							{t("friends:friendsList.watchStream")}
 						</SendouMenuItem>
@@ -120,29 +118,20 @@ export function FriendMenu({
 					{activity?.type === "join-sendouq" ? (
 						<SendouMenuItem
 							icon={<Swords />}
-							onAction={() => {
-								joinQueue.submit("JOIN_QUEUE", { direct: "true" });
-								onNavigate?.();
-							}}
+							onAction={() =>
+								joinQueue.submit("JOIN_QUEUE", { direct: "true" })
+							}
 						>
 							{t("friends:friendsList.joinSendouQ")}
 						</SendouMenuItem>
 					) : null}
 					{activity?.type === "view-match" ? (
-						<SendouMenuItem
-							href={activity.url}
-							icon={<Swords />}
-							onAction={onNavigate}
-						>
+						<SendouMenuItem href={activity.url} icon={<Swords />}>
 							{t("friends:friendsList.viewMatch")}
 						</SendouMenuItem>
 					) : null}
 					{activity?.type === "view-tournament" ? (
-						<SendouMenuItem
-							href={activity.url}
-							icon={<Swords />}
-							onAction={onNavigate}
-						>
+						<SendouMenuItem href={activity.url} icon={<Swords />}>
 							{t("friends:friendsList.viewTournament")}
 						</SendouMenuItem>
 					) : null}
@@ -171,7 +160,7 @@ export function FriendMenu({
 						<div className="stack horizontal md justify-center mt-2">
 							<SendouButton
 								variant="destructive"
-								onPress={() => {
+								onClick={() => {
 									deleteFriend.submit("DELETE_FRIEND", { friendshipId });
 									setConfirmOpen(false);
 								}}

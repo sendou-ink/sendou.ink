@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { AlertCircle, Check, UserRound, UsersRound, X } from "lucide-react";
 import * as React from "react";
-import { Text } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
 import * as R from "remeda";
@@ -965,15 +964,15 @@ function QuickAddPlayers({
 		>
 			{entryByUserId ? (
 				<span className={styles.quickAddItem}>
-					<Text slot="label">{player.username}</Text>
-					<Text slot="description">
+					<span slot="label">{player.username}</span>
+					<span slot="description">
 						<span className={styles.quickAddItemAvailability}>
 							<AvailabilityStatusDots
 								statuses={[availabilityRowStatus(entryByUserId.get(player.id))]}
 							/>
 							<AvailabilityRowDetail entry={entryByUserId.get(player.id)} />
 						</span>
-					</Text>
+					</span>
 				</span>
 			) : (
 				player.username
@@ -990,7 +989,6 @@ function QuickAddPlayers({
 						items={sections}
 						selectedKey={selectedUserId}
 						onSelectionChange={(key) => setSelectedUserId(key as number | null)}
-						estimatedRowHeight={entryByUserId ? 52 : undefined}
 						className={styles.quickAddSelect}
 						data-testid="quick-add-select"
 					>

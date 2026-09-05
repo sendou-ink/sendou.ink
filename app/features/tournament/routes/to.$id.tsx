@@ -7,11 +7,9 @@ import {
 	useOutletContext,
 } from "react-router";
 import { containerClassName, Main } from "~/components/Main";
-import { Placeholder } from "~/components/Placeholder";
 import { isMatchResultsScopedRevalidation } from "~/features/chat/revalidation-scope";
 import { TournamentProvider } from "~/features/tournament/tournament-context";
 import { Tournament } from "~/features/tournament-bracket/core/Tournament";
-import { useHydrated } from "~/hooks/useHydrated";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { tournamentPage } from "~/utils/urls";
 import { isRevalidation, metaTags } from "../../../utils/remix";
@@ -71,21 +69,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-export default function TournamentLayoutShell() {
-	const isHydrated = useHydrated();
-
-	// tournament pages get refreshed a lot causing spikes, so keep the SSR as fast as possible in prod
-	if (!isHydrated)
-		return (
-			<Main bigger>
-				<Placeholder />
-			</Main>
-		);
-
-	return <TournamentLayout />;
-}
-
-export function TournamentLayout() {
+export default function TournamentLayout() {
 	const rawData = useLoaderData<typeof loader>();
 	const data = React.useMemo(
 		() => parseTournamentLoaderData(rawData),

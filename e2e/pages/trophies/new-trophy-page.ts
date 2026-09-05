@@ -48,7 +48,11 @@ export class NewTrophyPage {
 		await this.page
 			.getByTestId("organization-search-input")
 			.fill(organizationName);
-		await this.page.getByTestId("organization-search-item").first().click();
+		await this.page
+			.getByRole("listbox")
+			.getByTestId("organization-search-item")
+			.first()
+			.click();
 
 		await this.locators.modelInput.fill(model);
 	}

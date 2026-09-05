@@ -302,7 +302,7 @@ export function PlusSuggestionComments({
 										icon={<SquarePen />}
 										variant="minimal"
 										aria-label={t("common:actions.edit")}
-										onPress={() => setEditingSuggestionId(entry.id)}
+										onClick={() => setEditingSuggestionId(entry.id)}
 									/>
 								) : null}
 								{deleteButtonArgs && hasPermission(entry, "DELETE", user) ? (

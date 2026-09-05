@@ -1,10 +1,10 @@
 import * as React from "react";
-import type { SelectProps } from "react-aria-components";
 import { useFetcher } from "react-router";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import { Avatar } from "../Avatar";
 import {
 	SearchSelect,
+	type SearchSelectFieldProps,
 	SearchSelectItem,
 	SearchSelectItemAdditionalText,
 } from "./SearchSelect";
@@ -15,27 +15,18 @@ export type UserSearchResult = Extract<
 	{ type: "user" }
 >;
 
-interface UserSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children" | "onChange"> {
-	name?: string;
-	label?: string;
-	bottomText?: string;
-	errorText?: string;
+interface UserSearchProps extends SearchSelectFieldProps {
 	initialUserId?: number;
 	onChange?: (user: UserSearchResult | null) => void;
 	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export function UserSearch<T extends object>({
-	name,
-	label,
-	bottomText,
-	errorText,
+export function UserSearch({
 	initialUserId,
 	onChange,
 	ref,
 	...rest
-}: UserSearchProps<T>) {
+}: UserSearchProps) {
 	const initialUser = useInitialUser(initialUserId);
 
 	const search = useEntitySearch<UserSearchResult>({
@@ -49,10 +40,6 @@ export function UserSearch<T extends object>({
 	return (
 		<SearchSelect
 			{...rest}
-			name={name}
-			label={label}
-			bottomText={bottomText}
-			errorText={errorText}
 			ariaLabel="User search"
 			inputTestId="user-search-input"
 			inputClassName="in-container"

@@ -137,6 +137,15 @@ export function formDataToObject(formData: FormData) {
 const LOHI_TOKEN_HEADER_NAME = "Lohi-Token";
 
 /** Some endpoints can only be accessed with an auth token. Used by Lohi bot and cron jobs. */
+/** A `returnTo` form value narrowed to a same-site path, so that redirecting to it can not leave the site. */
+export function safeReturnTo(value: FormDataEntryValue | null) {
+	if (typeof value !== "string") return null;
+	// a second slash or backslash makes it a protocol-relative URL to another host
+	if (!/^\/(?![\\/])/.test(value)) return null;
+
+	return value;
+}
+
 export function canAccessLohiEndpoint(request: Request) {
 	return request.headers.get(LOHI_TOKEN_HEADER_NAME) === ServerConfig.lohiToken;
 }

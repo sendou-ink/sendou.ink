@@ -89,15 +89,30 @@ export function useShowUnseenDot(
 	return showDot;
 }
 
-/** Ids to show an unseen dot for while the list stays open: opening marks them seen right away, and this keeps the reader from losing track of which were new. */
+/**
+ * Ids of the notifications to show an unseen dot for, keeping the dot for as
+ * long as the list stays open. Opening the list marks its notifications as
+ * seen right away so the bell stops claiming there is something new, and this
+ * keeps the reader from losing track of which ones those were. The list stays
+ * mounted while closed, so each opening starts over from what is unseen then.
+ */
 export function useStickyUnseenIds(
 	notifications: Array<{ id: number; seen: number }>,
+	isOpen: boolean,
 ) {
 	const [unseenIds, setUnseenIds] = React.useState(
 		() => new Set(unseenIdsOf(notifications)),
 	);
 	const [prevNotifications, setPrevNotifications] =
 		React.useState(notifications);
+	const [prevIsOpen, setPrevIsOpen] = React.useState(isOpen);
+
+	if (prevIsOpen !== isOpen) {
+		setPrevIsOpen(isOpen);
+		if (isOpen) {
+			setUnseenIds(new Set(unseenIdsOf(notifications)));
+		}
+	}
 
 	if (prevNotifications !== notifications) {
 		setPrevNotifications(notifications);

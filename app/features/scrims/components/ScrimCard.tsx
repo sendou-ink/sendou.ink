@@ -445,7 +445,7 @@ function ScrimActionButtons({
 			<>
 				<SendouButton
 					size="small"
-					onPress={() => setIsRequestModalOpen(true)}
+					onClick={() => setIsRequestModalOpen(true)}
 					icon={<Upload />}
 					data-testid="request-scrim-button"
 				>
@@ -470,7 +470,7 @@ function ScrimActionButtons({
 			<>
 				<SendouButton
 					size="small"
-					onPress={() => setIsViewRequestModalOpen(true)}
+					onClick={() => setIsViewRequestModalOpen(true)}
 					variant="outlined"
 					icon={<Download />}
 					data-testid="view-request-button"

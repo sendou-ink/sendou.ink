@@ -304,7 +304,7 @@ function AbilityConditionsPopover({
 				size="small"
 				variant="minimal"
 				isDisabled={conditions.length >= MAX_BUILD_FILTERS}
-				onPress={addCondition}
+				onClick={addCondition}
 				data-testid="add-ability-condition"
 			>
 				{t("builds:filters.addAbility")}
@@ -354,7 +354,7 @@ function AbilityConditionRow({
 				icon={<X />}
 				size="miniscule"
 				variant="minimal-destructive"
-				onPress={remove}
+				onClick={remove}
 				aria-label="Delete ability condition"
 				data-testid="delete-ability-condition"
 			/>

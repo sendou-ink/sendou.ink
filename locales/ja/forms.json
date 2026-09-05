@@ -67,6 +67,8 @@
 	"errors.notAllowedCharacters": "",
 	"errors.imageTooLarge": "",
 	"errors.atLeastOneOption": "",
+	"errors.invalidTime": "",
+	"errors.timeRangeIncomplete": "",
 	"errors.duplicateName": "そのチーム名はすでに使用されています",
 	"errors.duplicateOrgName": "",
 	"errors.duplicateOrgMember": "",

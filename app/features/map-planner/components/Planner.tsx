@@ -522,7 +522,7 @@ function OutlineToggle({
 	return (
 		<SendouButton
 			variant="minimal"
-			onPress={handleClick}
+			onClick={handleClick}
 			icon={<Square />}
 			className={clsx(
 				styles.outlineToggleButton,
@@ -546,7 +546,7 @@ function RangeToggle({
 	return (
 		<SendouButton
 			variant="minimal"
-			onPress={onToggle}
+			onClick={onToggle}
 			icon={<Radius />}
 			className={clsx(
 				styles.outlineToggleButton,
@@ -809,7 +809,7 @@ function StageBackgroundSelector({
 				</select>
 			) : null}
 			<SendouButton
-				onPress={() =>
+				onClick={() =>
 					onAddBackground({ style: backgroundStyle, stageId, mode, waterLevel })
 				}
 				className="w-max"

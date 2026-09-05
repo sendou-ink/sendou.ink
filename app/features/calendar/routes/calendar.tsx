@@ -9,7 +9,6 @@ import {
 	Link as LinkIcon,
 } from "lucide-react";
 import type * as React from "react";
-import type { DateValue } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Link, useLoaderData, useNavigate } from "react-router";
@@ -28,7 +27,6 @@ import { useCollapsableEvents } from "~/features/calendar/calendar-hooks";
 import { calendarSearchParams } from "~/features/calendar/calendar-search-params";
 import { dragToScroll } from "~/hooks/useDragToScroll";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
-import { dayMonthYearToDateValue } from "~/utils/dates";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import type { DayMonthYear } from "~/utils/schema";
@@ -172,12 +170,12 @@ function CalendarDatePicker({ dayMonthYear }: { dayMonthYear: DayMonthYear }) {
 	const navigate = useNavigate();
 	const dayHref = useCalendarDayHref();
 
-	const onChange = (date: DateValue) => {
+	const onChange = (date: Date) => {
 		navigate(
 			dayHref({
-				day: date.day,
-				month: date.month - 1,
-				year: date.year,
+				day: date.getDate(),
+				month: date.getMonth(),
+				year: date.getFullYear(),
 			}),
 		);
 	};
@@ -190,7 +188,9 @@ function CalendarDatePicker({ dayMonthYear }: { dayMonthYear: DayMonthYear }) {
 		>
 			<SendouCalendar
 				className={styles.calendar}
-				value={dayMonthYearToDateValue(dayMonthYear)}
+				value={
+					new Date(dayMonthYear.year, dayMonthYear.month, dayMonthYear.day)
+				}
 				onChange={onChange}
 				firstDayOfWeek="mon"
 				weekSelection
@@ -354,7 +354,7 @@ function ClockHeader({
 				{hiddenEventsCount > 0 ? (
 					<SendouButton
 						icon={hiddenShown ? <Eye /> : <EyeOff />}
-						onPress={onToggleHidden}
+						onClick={onToggleHidden}
 						variant="minimal"
 						className={styles.hiddenEventsButton}
 						data-testid="hidden-events-button"

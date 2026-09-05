@@ -1,6 +1,6 @@
 import clsx from "clsx";
-import { Radio, RadioGroup } from "react-aria-components";
 import { useTranslation } from "react-i18next";
+import { SendouRadio, SendouRadioGroup } from "~/components/elements/Radio";
 import type { Preference } from "~/db/tables-json";
 import { preferenceEmojiUrl } from "~/utils/urls";
 import styles from "./PreferenceRadioGroup.module.css";
@@ -17,16 +17,15 @@ export function PreferenceRadioGroup({
 	const { t } = useTranslation(["settings"]);
 
 	return (
-		<RadioGroup
+		<SendouRadioGroup
 			value={preference ?? "NEUTRAL"}
 			onChange={(newPreference) =>
 				onPreferenceChange(newPreference as Preference & "NEUTRAL")
 			}
 			className="stack horizontal xs"
 			aria-label={ariaLabel}
-			orientation="horizontal"
 		>
-			<Radio value="AVOID" aria-label="Avoid the mode">
+			<SendouRadio value="AVOID" aria-label="Avoid the mode">
 				{({ isSelected, isFocusVisible }) => (
 					<span
 						className={clsx(styles.radio, {
@@ -43,8 +42,8 @@ export function PreferenceRadioGroup({
 						{t("settings:matchProfile.maps.avoid")}
 					</span>
 				)}
-			</Radio>
-			<Radio value="NEUTRAL" aria-label="Neutral towards the mode">
+			</SendouRadio>
+			<SendouRadio value="NEUTRAL" aria-label="Neutral towards the mode">
 				{({ isSelected, isFocusVisible }) => (
 					<span
 						className={clsx(styles.radio, {
@@ -61,8 +60,8 @@ export function PreferenceRadioGroup({
 						{t("settings:matchProfile.maps.neutral")}
 					</span>
 				)}
-			</Radio>
-			<Radio value="PREFER" aria-label="Prefer the mode">
+			</SendouRadio>
+			<SendouRadio value="PREFER" aria-label="Prefer the mode">
 				{({ isSelected, isFocusVisible }) => (
 					<span
 						className={clsx(styles.radio, {
@@ -79,7 +78,7 @@ export function PreferenceRadioGroup({
 						{t("settings:matchProfile.maps.prefer")}
 					</span>
 				)}
-			</Radio>
-		</RadioGroup>
+			</SendouRadio>
+		</SendouRadioGroup>
 	);
 }

@@ -1,0 +1,22 @@
+.button {
+	width: 100%;
+}
+
+/* in a narrow header only the plus fits, like the search button next to it */
+@media screen and (min-width: 600px) {
+	@container (max-width: 475px) {
+		.button {
+			width: auto;
+			aspect-ratio: 1 / 1;
+			padding: 0;
+
+			& svg {
+				margin-inline-end: 0;
+			}
+		}
+
+		.label {
+			display: none;
+		}
+	}
+}

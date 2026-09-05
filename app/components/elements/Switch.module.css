@@ -35,7 +35,7 @@
 	font-weight: var(--weight-bold);
 	margin-block-end: 0;
 
-	&[data-selected] .indicator {
+	&:has(> .input:checked) .indicator {
 		background: var(--color-text-accent);
 		border-color: var(--color-text-accent);
 		grid-template-columns: 1fr 1fr 0fr;
@@ -45,16 +45,28 @@
 		}
 	}
 
-	&[data-focus-visible] .indicator {
+	&:has(> .input:focus-visible) .indicator {
 		outline: var(--focus-ring);
 		outline-offset: 1px;
 	}
 
-	&[data-disabled] {
+	&:has(> .input:disabled) {
 		cursor: not-allowed;
 
 		& .indicator {
 			opacity: 0.65;
 		}
 	}
+}
+
+.input {
+	position: absolute;
+	width: 1px;
+	height: 1px;
+	margin: 0;
+	padding: 0;
+	border: 0;
+	clip-path: inset(50%);
+	overflow: hidden;
+	white-space: nowrap;
 }

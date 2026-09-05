@@ -1,6 +1,5 @@
 /** Gear-ability grid (head/clothes/shoes rows of [main, sub, sub, sub]) shared by death card and player popover. */
 
-import { Button } from "react-aria-components";
 import { Ability } from "~/components/Ability";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
@@ -41,12 +40,13 @@ export function AbilityPopover({
 	return (
 		<SendouPopover
 			trigger={
-				<Button
+				<button
+					type="button"
 					className={styles.abilityTrigger}
 					aria-label="Show abilities (from death events)"
 				>
 					<Ability ability={trigger} size="TINY" />
-				</Button>
+				</button>
 			}
 		>
 			<AbilityGrid abilities={abilities} />

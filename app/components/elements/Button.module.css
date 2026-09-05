@@ -17,20 +17,18 @@
 	height: var(--field-size);
 	white-space: nowrap;
 
-	&[data-focus-visible],
 	&:focus-visible {
 		outline-style: solid;
 		outline-width: 2px;
 		outline-offset: 1px;
 	}
 
-	&[data-pressed],
 	&:active {
 		transform: translateY(1px);
 	}
 
-	&[data-disabled],
-	&:disabled {
+	&:disabled,
+	&[data-pending] {
 		cursor: not-allowed;
 		opacity: 0.5;
 		transform: initial;
@@ -89,7 +87,7 @@
 	color: var(--color-text-accent);
 	outline: initial;
 
-	&[data-focus-visible] {
+	&:focus-visible {
 		outline: var(--focus-ring);
 	}
 }

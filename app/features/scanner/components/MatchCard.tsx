@@ -151,7 +151,7 @@ export function MatchCard({
 							className={clsx(styles.expand, { [styles.expanded]: expanded })}
 							aria-expanded={expanded}
 							aria-label={expanded ? "Hide events" : "Show events"}
-							onPress={() => setExpanded(!expanded)}
+							onClick={() => setExpanded(!expanded)}
 						/>
 					) : null}
 				</div>

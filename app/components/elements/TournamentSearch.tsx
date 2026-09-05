@@ -1,11 +1,11 @@
 import { sub } from "date-fns";
 import type * as React from "react";
-import type { SelectProps } from "react-aria-components";
 import type { TournamentSearchLoaderData } from "~/features/tournament/routes/to.search";
 import { tournamentSearchSearchParams } from "~/features/tournament/tournament-search-params";
 import { LocaleTime } from "../LocaleTime";
 import {
 	SearchSelect,
+	type SearchSelectFieldProps,
 	SearchSelectItem,
 	SearchSelectItemAdditionalText,
 	SearchSelectItemLogo,
@@ -16,12 +16,7 @@ export type TournamentSearchItem = NonNullable<
 	Extract<TournamentSearchLoaderData, { tournaments: unknown }>
 >["tournaments"][number];
 
-interface TournamentSearchProps<T extends object>
-	extends Omit<SelectProps<T>, "children" | "onChange"> {
-	name?: string;
-	label?: string;
-	bottomText?: string;
-	errorText?: string;
+interface TournamentSearchProps extends SearchSelectFieldProps {
 	initialTournamentId?: number;
 	/** Only tournaments that have already started, instead of the default recent + upcoming window. */
 	pastOnly?: boolean;
@@ -29,17 +24,13 @@ interface TournamentSearchProps<T extends object>
 	ref?: React.Ref<HTMLButtonElement>;
 }
 
-export function TournamentSearch<T extends object>({
-	name,
-	label,
-	bottomText,
-	errorText,
+export function TournamentSearch({
 	initialTournamentId,
 	pastOnly,
 	onChange,
 	ref,
 	...rest
-}: TournamentSearchProps<T>) {
+}: TournamentSearchProps) {
 	const search = useEntitySearch<TournamentSearchItem>({
 		buildUrl: (query) =>
 			pastOnly
@@ -61,10 +52,6 @@ export function TournamentSearch<T extends object>({
 	return (
 		<SearchSelect
 			{...rest}
-			name={name}
-			label={label}
-			bottomText={bottomText}
-			errorText={errorText}
 			ariaLabel="Tournament search"
 			inputTestId="tournament-search-input"
 			i18nKey="tournamentSearch"

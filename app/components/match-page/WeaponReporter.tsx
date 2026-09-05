@@ -96,7 +96,7 @@ export function WeaponReporter({
 						<SendouButton
 							variant="primary"
 							isDisabled={selectedWeapon === null || isSubmitting}
-							onPress={() => {
+							onClick={() => {
 								if (selectedWeapon === null) return;
 								onSubmit(selectedWeapon);
 								setSelectedWeapon(null);
@@ -121,7 +121,7 @@ export function WeaponReporter({
 						variant="minimal"
 						size="small"
 						isDisabled={isSubmitting}
-						onPress={onUndo}
+						onClick={onUndo}
 					>
 						{t("q:match.weapon.undoWeapon")}
 					</SendouButton>

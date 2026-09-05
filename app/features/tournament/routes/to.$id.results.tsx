@@ -54,7 +54,7 @@ export default function TournamentResultsPage() {
 				<SendouButton
 					variant="outlined"
 					size="big"
-					onPress={() => reveal(tournament.ctx.id)}
+					onClick={() => reveal(tournament.ctx.id)}
 					icon={<ShieldMinus />}
 				>
 					{t("common:spoilerFree.showResults")}

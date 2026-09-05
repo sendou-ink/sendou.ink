@@ -1,23 +1,7 @@
-import type * as React from "react";
-import {
-	Autocomplete,
-	type Key,
-	ListBoxItem,
-	type SelectProps,
-	SelectValue,
-} from "react-aria-components";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { SendouBottomTexts } from "~/components/elements/BottomTexts";
-import { SendouLabel } from "~/components/elements/Label";
 import styles from "./SearchSelect.module.css";
-import {
-	SelectShell,
-	SelectShellItem,
-	SelectShellListBox,
-	SelectShellPopover,
-	SelectShellSearchField,
-	SelectShellTrigger,
-} from "./SelectShell";
+import { SendouSelect, SendouSelectItem } from "./Select";
 import type { EntitySearch } from "./useEntitySearch";
 
 const PLACEHOLDER_TEXTS = {
@@ -39,14 +23,21 @@ const PLACEHOLDER_TEXTS = {
 	},
 } as const;
 
-interface SearchSelectProps<
-	TItem extends { id: number; name: string },
-	T extends object,
-> extends Omit<SelectProps<T>, "children" | "onChange"> {
+/** Field props the entity search components (`UserSearch`, `TeamSearch`, ...) pass straight through. */
+export interface SearchSelectFieldProps {
 	name?: string;
 	label?: string;
 	bottomText?: string;
 	errorText?: string;
+	isRequired?: boolean;
+	isDisabled?: boolean;
+	className?: string;
+	onBlur?: () => void;
+	"data-testid"?: string;
+}
+
+interface SearchSelectProps<TItem extends { id: number; name: string }>
+	extends SearchSelectFieldProps {
 	ariaLabel: string;
 	inputTestId: string;
 	inputClassName?: string;
@@ -57,10 +48,7 @@ interface SearchSelectProps<
 }
 
 /** Presentational autocomplete select for the entity searches (`UserSearch` etc.); `search` comes from `useEntitySearch`. */
-export function SearchSelect<
-	TItem extends { id: number; name: string },
-	T extends object,
->({
+export function SearchSelect<TItem extends { id: number; name: string }>({
 	name,
 	label,
 	bottomText,
@@ -72,49 +60,45 @@ export function SearchSelect<
 	search,
 	buttonRef,
 	renderItem,
-	...rest
-}: SearchSelectProps<TItem, T>) {
+	isRequired,
+	isDisabled,
+	className,
+	onBlur,
+	"data-testid": testId,
+}: SearchSelectProps<TItem>) {
 	return (
-		<SelectShell
+		<SendouSelect
 			name={name}
-			placeholder=""
+			label={label}
+			labelRequired={isRequired}
+			isRequired={isRequired}
+			isDisabled={isDisabled}
+			className={className}
+			onBlur={onBlur}
+			data-testid={testId}
 			selectedKey={search.selectedKey}
-			onSelectionChange={(key: Key | null) => {
+			onSelectionChange={(key) => {
 				if (key != null) {
 					search.onSelectionChange(Number(key));
 				}
 			}}
 			aria-label={ariaLabel}
-			{...rest}
+			searchInputValue={search.filterText}
+			onSearchInputChange={search.setFilterText}
+			search={{ testId: inputTestId, inputClassName: inputClassName ?? "" }}
+			bottomText={bottomText}
+			errorText={errorText}
+			triggerRef={buttonRef}
+			popoverClassName={styles.popover}
 		>
-			{label ? (
-				<SendouLabel required={rest.isRequired}>{label}</SendouLabel>
-			) : null}
-			<SelectShellTrigger ref={buttonRef}>
-				<SelectValue className={styles.selectValue} />
-			</SelectShellTrigger>
-			<SendouBottomTexts bottomText={bottomText} errorText={errorText} />
-			<SelectShellPopover className={styles.popover}>
-				<Autocomplete
-					inputValue={search.filterText}
-					onInputChange={search.setFilterText}
-				>
-					<SelectShellSearchField
-						inputClassName={inputClassName}
-						inputTestId={inputTestId}
-					/>
-					<SelectShellListBox items={search.items}>
-						{(item) =>
-							typeof item.id === "string" ? (
-								<PlaceholderItem id={item.id} i18nKey={i18nKey} />
-							) : (
-								renderItem(item as TItem)
-							)
-						}
-					</SelectShellListBox>
-				</Autocomplete>
-			</SelectShellPopover>
-		</SelectShell>
+			{search.items.map((item) =>
+				typeof item.id === "string" ? (
+					<PlaceholderItem key={item.id} id={item.id} i18nKey={i18nKey} />
+				) : (
+					React.cloneElement(renderItem(item as TItem), { key: item.id })
+				),
+			)}
+		</SendouSelect>
 	);
 }
 
@@ -127,9 +111,9 @@ function PlaceholderItem({
 }) {
 	const { t } = useTranslation(["common"]);
 
-	// workaround for `renderEmptyState` on ListBox not working
 	return (
-		<ListBoxItem
+		<SendouSelectItem
+			id={id}
 			textValue="PLACEHOLDER"
 			isDisabled
 			className={styles.placeholder}
@@ -137,7 +121,7 @@ function PlaceholderItem({
 			{id === "PLACEHOLDER"
 				? t(PLACEHOLDER_TEXTS[i18nKey].placeholder)
 				: t(PLACEHOLDER_TEXTS[i18nKey].noResults)}
-		</ListBoxItem>
+		</SendouSelectItem>
 	);
 }
 
@@ -156,7 +140,7 @@ export function SearchSelectItem({
 	children: React.ReactNode;
 }) {
 	return (
-		<SelectShellItem
+		<SendouSelectItem
 			id={id}
 			textValue={textValue}
 			className={styles.item}
@@ -164,7 +148,7 @@ export function SearchSelectItem({
 		>
 			{leading}
 			<div className={styles.itemTextsContainer}>{children}</div>
-		</SelectShellItem>
+		</SendouSelectItem>
 	);
 }
 

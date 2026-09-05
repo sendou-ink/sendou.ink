@@ -61,7 +61,7 @@ function AddedForEventForm({
 			submitButtonText={t("common:actions.save")}
 			onSuccess={onSuccess}
 			secondarySubmit={
-				<SendouButton variant="destructive" onPress={onCancel}>
+				<SendouButton variant="destructive" onClick={onCancel}>
 					{t("common:actions.cancel")}
 				</SendouButton>
 			}
@@ -108,7 +108,7 @@ function AddedForEventRows({
 				icon={<SquarePen />}
 				variant="outlined"
 				size="small"
-				onPress={onEdit}
+				onClick={onEdit}
 				className="m-0-auto"
 				data-testid="edit-staff-button"
 			>

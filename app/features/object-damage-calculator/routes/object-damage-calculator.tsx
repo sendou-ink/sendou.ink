@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import React, { type JSX } from "react";
-import { Button } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";
@@ -339,7 +338,7 @@ function DamageReceiversGrid({
 									</Label>
 									<SendouPopover
 										trigger={
-											<Button className={styles.receiverButton}>
+											<button type="button" className={styles.receiverButton}>
 												<Image
 													className={styles.receiverImage}
 													alt={translateReceiver(damageToReceiver.receiver)}
@@ -347,7 +346,7 @@ function DamageReceiversGrid({
 													width={40}
 													height={40}
 												/>
-											</Button>
+											</button>
 										}
 									>
 										{translateReceiver(damageToReceiver.receiver)}

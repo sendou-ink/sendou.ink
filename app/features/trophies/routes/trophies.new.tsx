@@ -189,7 +189,7 @@ function TrophyTermsGate({ children }: { children: React.ReactNode }) {
 					</Trans>
 				</p>
 			</div>
-			<SendouButton className={styles.termsAgreeButton} onPress={agreeToTerms}>
+			<SendouButton className={styles.termsAgreeButton} onClick={agreeToTerms}>
 				{t("trophies:new.terms.agree")}
 			</SendouButton>
 		</div>
@@ -817,7 +817,7 @@ function TrophyListRow({
 						<>
 							<SendouButton
 								size="small"
-								onPress={handleApprove}
+								onClick={handleApprove}
 								isDisabled={state !== "idle" || alreadyApproved}
 							>
 								{alreadyApproved
@@ -830,7 +830,7 @@ function TrophyListRow({
 								size="small"
 								shape="square"
 								icon={<Clipboard size={16} />}
-								onPress={() =>
+								onClick={() =>
 									navigator.clipboard.writeText(
 										decompressTrophyModel(pending.model ?? "{}") ?? "",
 									)
@@ -843,7 +843,7 @@ function TrophyListRow({
 							variant="minimal-destructive"
 							size="small"
 							shape="square"
-							onPress={handleDelete}
+							onClick={handleDelete}
 							isDisabled={state !== "idle"}
 							icon={<Trash2 size={16} />}
 						/>
@@ -873,7 +873,7 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 			<SendouButton
 				variant="outlined-destructive"
 				size="small"
-				onPress={() => setIsOpen(true)}
+				onClick={() => setIsOpen(true)}
 			>
 				{t("trophies:new.pending.decline")}
 			</SendouButton>

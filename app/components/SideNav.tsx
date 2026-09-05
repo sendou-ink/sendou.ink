@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import type * as React from "react";
-import { Button } from "react-aria-components";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import type { Tables } from "~/db/tables";
@@ -15,6 +14,7 @@ export function SideNav({
 	top,
 	topCentered,
 	collapsed,
+	...rest
 }: {
 	children: React.ReactNode;
 	className?: string;
@@ -22,12 +22,13 @@ export function SideNav({
 	top?: React.ReactNode;
 	topCentered?: boolean;
 	collapsed?: boolean;
-}) {
+} & Omit<React.ComponentPropsWithRef<"nav">, "children" | "className">) {
 	return (
 		<nav
 			className={clsx(styles.sideNav, className, {
 				[styles.sideNavCollapsed]: collapsed,
 			})}
+			{...rest}
 		>
 			<div
 				className={clsx(styles.sideNavTop, {
@@ -142,7 +143,6 @@ function ListItemContent({
 export function ListLink({
 	children,
 	to,
-	onClick,
 	isActive,
 	imageUrl,
 	overlayIconUrl,
@@ -153,7 +153,6 @@ export function ListLink({
 }: {
 	children: React.ReactNode;
 	to: string;
-	onClick?: (event: React.MouseEvent<HTMLAnchorElement>) => void;
 	isActive?: boolean;
 	imageUrl?: string;
 	overlayIconUrl?: string;
@@ -168,7 +167,6 @@ export function ListLink({
 		<Link
 			to={to}
 			className={styles.listLink}
-			onClick={onClick}
 			aria-current={isActive ? "page" : undefined}
 		>
 			<ListItemContent
@@ -192,6 +190,7 @@ export function ListButton({
 	subtitle,
 	badge,
 	badgeVariant,
+	...rest
 }: {
 	children: React.ReactNode;
 	user?: Pick<Tables["User"], "discordId" | "discordAvatar"> & {
@@ -200,9 +199,9 @@ export function ListButton({
 	subtitle?: string | null;
 	badge?: string | null;
 	badgeVariant?: "default" | "warning";
-}) {
+} & Omit<React.ComponentPropsWithoutRef<"button">, "children">) {
 	return (
-		<Button className={styles.listButton}>
+		<button type="button" className={styles.listButton} {...rest}>
 			<ListItemContent
 				user={user}
 				subtitle={subtitle}
@@ -211,7 +210,7 @@ export function ListButton({
 			>
 				{children}
 			</ListItemContent>
-		</Button>
+		</button>
 	);
 }
 
@@ -226,16 +225,20 @@ export function NavIconContainer({ children }: { children: React.ReactNode }) {
 export function NavListButton({
 	children,
 	className,
-	onPress,
+	onClick,
 }: {
 	children: React.ReactNode;
 	className?: string;
-	onPress: () => void;
+	onClick: () => void;
 }) {
 	return (
-		<Button className={clsx(styles.listButton, className)} onPress={onPress}>
+		<button
+			type="button"
+			className={clsx(styles.listButton, className)}
+			onClick={onClick}
+		>
 			{children}
-		</Button>
+		</button>
 	);
 }
 

@@ -2,7 +2,10 @@ import clsx from "clsx";
 import { Check, X } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
-import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { specialWeaponImageUrl, stageBannerImageUrl } from "~/utils/urls";
@@ -218,11 +221,12 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 /** Trigger for the small popovers on a banner's info row, e.g. who voted for the map. */
 export function MatchBannerInfoBadge({
 	children,
+	...rest
 }: {
 	children: React.ReactNode;
-}) {
+} & SendouButtonProps) {
 	return (
-		<SendouButton variant="minimal" className={styles.infoBadge}>
+		<SendouButton variant="minimal" className={styles.infoBadge} {...rest}>
 			{children}
 		</SendouButton>
 	);

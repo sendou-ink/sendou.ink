@@ -129,7 +129,7 @@ export function IngameNameInput({
 					isDisabled={disabled}
 					aria-label={t("forms:inGameName.addCharacter")}
 					aria-expanded={isPickerOpen}
-					onPress={() => setIsPickerOpen((open) => !open)}
+					onClick={() => setIsPickerOpen((open) => !open)}
 				/>
 			</div>
 			{isPickerOpen ? (

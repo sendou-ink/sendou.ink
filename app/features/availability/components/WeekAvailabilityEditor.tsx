@@ -724,7 +724,7 @@ function DayEditor({
 						variant="minimal-destructive"
 						size="small"
 						aria-label={t("common:actions.delete")}
-						onPress={() => {
+						onClick={() => {
 							const remaining = ranges.filter((other) => other.id !== range.id);
 							update(remaining, note);
 							onRangeDelete({ ranges: remaining, note });
@@ -737,7 +737,7 @@ function DayEditor({
 				variant="minimal"
 				size="small"
 				className={styles.dayEditorAdd}
-				onPress={() => {
+				onClick={() => {
 					const id = nextIdRef.current;
 					nextIdRef.current += 1;
 					update([...ranges, { id, start: "", end: "" }], note);

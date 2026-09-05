@@ -67,6 +67,8 @@
 	"errors.notAllowedCharacters": "包含非法字符",
 	"errors.imageTooLarge": "",
 	"errors.atLeastOneOption": "请至少选择一个选项",
+	"errors.invalidTime": "",
+	"errors.timeRangeIncomplete": "",
 	"errors.duplicateName": "该队伍名称已被占用",
 	"errors.duplicateOrgName": "该组织名称已被占用",
 	"errors.duplicateOrgMember": "",

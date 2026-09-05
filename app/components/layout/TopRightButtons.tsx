@@ -57,18 +57,13 @@ export function TopRightButtons({
 								<GlobalSearch />
 							</div>
 						) : null}
-						<div className={styles.addNewWrapper}>
-							<AnythingAdder />
-						</div>
-						<div className={styles.addNewWrapperCompact}>
-							<AnythingAdder compact />
-						</div>
+						<AnythingAdder />
 					</div>
 					{onChatToggle ? (
 						<div className={styles.chatButtonWrapperPersistent}>
 							<ChatButton
 								variant="outlined"
-								onPress={onChatToggle}
+								onClick={onChatToggle}
 								unreadCount={chatUnreadCount}
 							/>
 						</div>
@@ -77,7 +72,7 @@ export function TopRightButtons({
 						<div className={styles.chatButtonWrapperModal}>
 							<ChatButton
 								variant="outlined"
-								onPress={onChatModalToggle}
+								onClick={onChatModalToggle}
 								unreadCount={chatUnreadCount}
 							/>
 						</div>
@@ -96,11 +91,11 @@ export function TopRightButtons({
 
 function ChatButton({
 	variant,
-	onPress,
+	onClick,
 	unreadCount,
 }: {
 	variant: "outlined" | "primary";
-	onPress: () => void;
+	onClick: () => void;
 	unreadCount?: number;
 }) {
 	return (
@@ -110,7 +105,7 @@ function ChatButton({
 				size="small"
 				icon={<MessageSquare />}
 				variant={variant}
-				onPress={onPress}
+				onClick={onClick}
 				testId="chat-toggle-button"
 			/>
 			{unreadCount ? (

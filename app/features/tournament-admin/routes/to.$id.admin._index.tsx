@@ -78,7 +78,7 @@ export default function TournamentAdminTeamsPage() {
 						size="small"
 						variant="outlined"
 						icon={<Download />}
-						onPress={() => setExportOpen(true)}
+						onClick={() => setExportOpen(true)}
 					>
 						Export
 					</SendouButton>
@@ -168,7 +168,7 @@ function AddSubButton() {
 				size="small"
 				variant="outlined"
 				icon={<Plus />}
-				onPress={() => setDialogOpen(true)}
+				onClick={() => setDialogOpen(true)}
 			>
 				Add sub
 			</SendouButton>

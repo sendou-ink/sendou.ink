@@ -195,7 +195,7 @@ function ErrorGirlImage() {
 function RefreshPageButton() {
 	return (
 		<SendouButton
-			onPress={() => window.location.reload()}
+			onClick={() => window.location.reload()}
 			icon={<RefreshCcw />}
 		>
 			Refresh page

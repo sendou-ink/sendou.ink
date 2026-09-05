@@ -336,7 +336,7 @@ function TeamEvents({ week }: { week: WeekData }) {
 						size="small"
 						variant="outlined"
 						icon={<Plus />}
-						onPress={() => setAddDialogOpen(true)}
+						onClick={() => setAddDialogOpen(true)}
 						data-testid="add-team-event-button"
 					>
 						{t("schedule:events.add")}
@@ -383,7 +383,7 @@ function TeamEvents({ week }: { week: WeekData }) {
 									variant="minimal"
 									size="miniscule"
 									icon={<Pencil />}
-									onPress={() => setEditedEvent(event)}
+									onClick={() => setEditedEvent(event)}
 									aria-label={t("schedule:events.edit")}
 									data-testid={`edit-team-event-${event.id}`}
 								/>

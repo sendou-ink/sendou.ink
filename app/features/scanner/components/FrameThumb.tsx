@@ -84,7 +84,7 @@ export function FrameThumb({
 								<SendouButton
 									size="small"
 									icon={<ExternalLink />}
-									onPress={onInspect}
+									onClick={onInspect}
 								>
 									Inspect
 								</SendouButton>
@@ -94,7 +94,7 @@ export function FrameThumb({
 									size="small"
 									variant="outlined"
 									icon={<FlaskConical />}
-									onPress={onSaveFixture}
+									onClick={onSaveFixture}
 								>
 									Save fixture
 								</SendouButton>

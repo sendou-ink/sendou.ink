@@ -23,8 +23,9 @@ import {
 	SendouMenuItem,
 	type SendouMenuItemProps,
 } from "../elements/Menu";
+import styles from "./AnythingAdder.module.css";
 
-export function AnythingAdder({ compact }: { compact?: boolean }) {
+export function AnythingAdder() {
 	const { t } = useTranslation(["common"]);
 	const user = useUser();
 
@@ -112,14 +113,17 @@ export function AnythingAdder({ compact }: { compact?: boolean }) {
 	return (
 		<SendouMenu
 			placement="bottom right"
+			eager
 			trigger={
 				<SendouButton
 					size="small"
 					icon={<Plus />}
-					shape={compact ? "square" : undefined}
+					className={styles.button}
 					data-testid="anything-adder-menu-button"
 				>
-					{compact ? undefined : `${t("common:actions.addNew")}…`}
+					<span
+						className={styles.label}
+					>{`${t("common:actions.addNew")}…`}</span>
 				</SendouButton>
 			}
 		>

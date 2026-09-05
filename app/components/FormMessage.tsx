@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import type * as React from "react";
-import { FieldError, Text } from "react-aria-components";
 import styles from "./FormMessage.module.css";
 
 export function FormMessage({
@@ -30,7 +29,7 @@ export function FormMessage({
 	);
 }
 
-/** Field-level error, wired to the surrounding React Aria field's validation. */
+/** Field-level error below an input. */
 export function SendouFieldError({
 	children,
 	id,
@@ -38,10 +37,12 @@ export function SendouFieldError({
 	children?: React.ReactNode;
 	id?: string;
 }) {
+	if (!children) return null;
+
 	return (
-		<FieldError className={styles.error} id={id}>
+		<span className={styles.error} id={id}>
 			{children}
-		</FieldError>
+		</span>
 	);
 }
 
@@ -51,9 +52,5 @@ export function SendouFieldMessage({
 }: {
 	children: React.ReactNode;
 }) {
-	return (
-		<Text slot="description" className={styles.info}>
-			{children}
-		</Text>
-	);
+	return <span className={styles.info}>{children}</span>;
 }

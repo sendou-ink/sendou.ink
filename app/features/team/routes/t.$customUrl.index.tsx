@@ -300,7 +300,7 @@ function ConfirmActionContent({
 			<div className="stack horizontal md justify-center mt-2">
 				<SendouButton
 					variant="destructive"
-					onPress={onConfirm}
+					onClick={onConfirm}
 					data-testid="confirm-button"
 				>
 					{buttonText}

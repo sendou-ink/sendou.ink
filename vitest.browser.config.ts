@@ -24,4 +24,8 @@ export default defineConfig({
 	resolve: {
 		tsconfigPaths: true,
 	},
+	// pre-bundled with the rest so the hydration tests share one React copy
+	optimizeDeps: {
+		include: ["react-dom/server"],
+	},
 });

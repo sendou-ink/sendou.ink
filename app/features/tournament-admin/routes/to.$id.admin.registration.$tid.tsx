@@ -366,7 +366,7 @@ function ImportTeamSection({
 				variant="outlined"
 				size="small"
 				icon={<Import />}
-				onPress={() => setIsOpen(true)}
+				onClick={() => setIsOpen(true)}
 			>
 				{t("forms:regImportTeam")}
 			</SendouButton>

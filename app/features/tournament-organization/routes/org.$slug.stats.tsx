@@ -1,6 +1,5 @@
 import clsx from "clsx";
 import { parse } from "date-fns";
-import { ProgressBar } from "react-aria-components";
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, useLoaderData } from "react-router";
 import { Main } from "~/components/Main";
@@ -53,34 +52,33 @@ function EstablishedStatus() {
 	return (
 		<Section title={t("org:stats.established.title")}>
 			<div className="stack md">
-				<ProgressBar
-					value={averageMonthlyParticipants}
-					minValue={0}
-					maxValue={ESTABLISHED_ORG.GAIN_THRESHOLD}
+				<div
+					role="progressbar"
+					aria-valuenow={averageMonthlyParticipants}
+					aria-valuemin={0}
+					aria-valuemax={ESTABLISHED_ORG.GAIN_THRESHOLD}
 					aria-label={t("org:stats.established.title")}
 					className={styles.progress}
 				>
-					{({ percentage }) => (
-						<>
-							<div className={styles.progressHeader}>
-								<span className={styles.statNumber}>
-									{averageMonthlyParticipants.toFixed(1)}
-								</span>
-								<span className="text-lighter">
-									/ {ESTABLISHED_ORG.GAIN_THRESHOLD}
-								</span>
-							</div>
-							<div className={styles.progressTrack}>
-								<div
-									className={clsx(styles.progressBar, {
-										[styles.progressBarMet]: meetsThreshold,
-									})}
-									style={{ width: `${percentage}%` }}
-								/>
-							</div>
-						</>
-					)}
-				</ProgressBar>
+					<div className={styles.progressHeader}>
+						<span className={styles.statNumber}>
+							{averageMonthlyParticipants.toFixed(1)}
+						</span>
+						<span className="text-lighter">
+							/ {ESTABLISHED_ORG.GAIN_THRESHOLD}
+						</span>
+					</div>
+					<div className={styles.progressTrack}>
+						<div
+							className={clsx(styles.progressBar, {
+								[styles.progressBarMet]: meetsThreshold,
+							})}
+							style={{
+								width: `${Math.min((averageMonthlyParticipants / ESTABLISHED_ORG.GAIN_THRESHOLD) * 100, 100)}%`,
+							}}
+						/>
+					</div>
+				</div>
 				<div className="text-xs text-lighter">
 					{t("org:stats.established.help", {
 						months: ESTABLISHED_ORG.MONTHS_CONSIDERED,
@@ -90,31 +88,28 @@ function EstablishedStatus() {
 				</div>
 				<div className={styles.breakdown}>
 					{monthlyStats.map((monthStat) => (
-						<ProgressBar
+						<div
 							key={monthStat.month}
-							value={monthStat.count}
-							minValue={0}
-							maxValue={maxCount}
+							role="progressbar"
+							aria-valuenow={monthStat.count}
+							aria-valuemin={0}
+							aria-valuemax={maxCount}
 							aria-label={formatMonth(monthStat.month, formatter)}
 							className={styles.breakdownRow}
 						>
-							{({ percentage }) => (
-								<>
-									<span className={styles.breakdownLabel}>
-										{formatMonth(monthStat.month, formatter)}
-									</span>
-									<div className={styles.breakdownTrack}>
-										<div
-											className={styles.breakdownBar}
-											style={{ width: `${percentage}%` }}
-										/>
-									</div>
-									<span className={styles.breakdownCount}>
-										{monthStat.count}
-									</span>
-								</>
-							)}
-						</ProgressBar>
+							<span className={styles.breakdownLabel}>
+								{formatMonth(monthStat.month, formatter)}
+							</span>
+							<div className={styles.breakdownTrack}>
+								<div
+									className={styles.breakdownBar}
+									style={{
+										width: `${maxCount > 0 ? Math.min((monthStat.count / maxCount) * 100, 100) : 0}%`,
+									}}
+								/>
+							</div>
+							<span className={styles.breakdownCount}>{monthStat.count}</span>
+						</div>
 					))}
 				</div>
 			</div>

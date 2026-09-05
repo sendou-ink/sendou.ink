@@ -520,7 +520,7 @@ function MemberNote({
 					<SendouButton
 						size="miniscule"
 						variant="minimal"
-						onPress={startEditing}
+						onClick={startEditing}
 						className="mt-2 ml-auto"
 					>
 						{t("q:looking.groups.editNote")}
@@ -533,7 +533,7 @@ function MemberNote({
 	if (!editable) return null;
 
 	return (
-		<SendouButton variant="minimal" size="miniscule" onPress={startEditing}>
+		<SendouButton variant="minimal" size="miniscule" onClick={startEditing}>
 			{t("q:looking.groups.addNote")}
 		</SendouButton>
 	);
@@ -561,7 +561,7 @@ function AddPrivateNoteForm({
 				<SendouButton
 					variant="minimal-destructive"
 					size="miniscule"
-					onPress={stopEditing}
+					onClick={stopEditing}
 				>
 					{t("common:actions.cancel")}
 				</SendouButton>

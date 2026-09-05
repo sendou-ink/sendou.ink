@@ -250,7 +250,10 @@ export const themeInputSchema = v.object({
 });
 
 const timeStringRegex = /^([01]\d|2[0-3]):([0-5]\d)$/;
-export const timeString = v.pipe(v.string(), v.regex(timeStringRegex));
+export const timeString = v.pipe(
+	v.string(),
+	v.regex(timeStringRegex, "forms:errors.invalidTime"),
+);
 
 const abilityNameToType = (val: string) =>
 	abilities.find((ability) => ability.name === val)?.type;

@@ -13,7 +13,7 @@ import { FormMessage } from "./FormMessage";
 import { SubmitButton } from "./SubmitButton";
 
 interface ChildProps {
-	onPress?: () => void;
+	onClick?: () => void;
 	type?: "button";
 }
 
@@ -109,7 +109,7 @@ export function FormWithConfirm({
 							<SendouButton
 								variant={submitButtonVariant}
 								testId={dialogOpen ? "confirm-button" : submitButtonTestId}
-								onPress={() => {
+								onClick={() => {
 									closeDialog();
 									onConfirm();
 								}}
@@ -130,7 +130,7 @@ export function FormWithConfirm({
 			</SendouDialog>
 			{children
 				? React.cloneElement(children, {
-						onPress: openDialog,
+						onClick: openDialog,
 						type: "button",
 					})
 				: null}

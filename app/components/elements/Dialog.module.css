@@ -1,25 +1,27 @@
-.overlay {
-	position: fixed;
-	inset: 0;
-	z-index: 20;
-	overflow: hidden;
-	background-color: rgba(0, 0, 0, 0.25);
-	display: flex;
-	min-height: 100%;
-	align-items: flex-start;
-	justify-content: center;
-	padding: 1rem;
-	text-align: center;
-	backdrop-filter: blur(10px); /* Adjust blur value as needed */
+.modal {
+	width: calc(100% - 2rem);
+	max-width: 28rem;
+	max-height: min(80dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
+	overflow-x: hidden;
+	overflow-y: auto;
+	border-radius: 1rem;
+	border: 1px solid var(--color-border);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	padding: var(--s-6);
+	text-align: left;
+	vertical-align: middle;
+	box-shadow:
+		0 10px 15px -3px rgba(0, 0, 0, 0.1),
+		0 4px 6px -2px rgba(0, 0, 0, 0.05);
+	margin: auto;
+	animation: zoom-in-95 300ms ease-out;
 
-	&[data-entering] {
+	&::backdrop {
+		background-color: rgba(0, 0, 0, 0.25);
+		backdrop-filter: blur(10px);
 		animation: fade-in 300ms ease-out;
 	}
-}
-
-.fullScreenOverlay {
-	padding: 0;
-	display: initial;
 }
 
 @keyframes fade-in {
@@ -31,36 +33,17 @@
 	}
 }
 
-.modal {
-	width: 100%;
-	max-width: 28rem;
-	max-height: min(80dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
-	overflow-x: hidden;
-	overflow-y: auto;
-	border-radius: 1rem;
-	border: 1px solid var(--color-border);
-	background-color: var(--color-bg);
-	padding: var(--s-6);
-	text-align: left;
-	vertical-align: middle;
-	box-shadow:
-		0 10px 15px -3px rgba(0, 0, 0, 0.1),
-		0 4px 6px -2px rgba(0, 0, 0, 0.05);
-	margin: auto;
-
-	&[data-entering] {
-		animation: zoom-in-95 300ms ease-out;
-	}
-}
-
 :global(html[data-fuse="true"]) .modal {
 	max-height: min(72dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
 }
 
 .fullScreenModal {
+	width: 100%;
 	min-width: 100%;
-	min-height: 100%;
+	height: 100dvh;
+	max-height: 100dvh;
 	border-radius: 0;
+	margin: 0;
 	padding-block-start: calc(env(safe-area-inset-top) + var(--s-6));
 	padding-block-end: var(--s-32);
 }
@@ -74,11 +57,6 @@
 		opacity: 1;
 		transform: scale(1);
 	}
-}
-
-.dialog {
-	outline: none;
-	position: relative;
 }
 
 .headingContainer {

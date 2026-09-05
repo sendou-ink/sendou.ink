@@ -1,8 +1,3 @@
-import {
-	CalendarDate,
-	CalendarDateTime,
-	parseDate,
-} from "@internationalized/date";
 import type { Locale } from "date-fns";
 import { formatDistanceToNow as dateFnsFormatDistanceToNow } from "date-fns";
 import { enUS } from "date-fns/locale/en-US";
@@ -90,34 +85,6 @@ export function databaseTimestampNow() {
 /** Day/month/year to a Date at noon UTC. */
 export function dayMonthYearToDate({ day, month, year }: DayMonthYear) {
 	return new Date(Date.UTC(year, month, day, 12));
-}
-
-/** Date to a react-aria-components CalendarDateTime. */
-export function dateToDateValue(date: Date) {
-	return new CalendarDateTime(
-		date.getFullYear(),
-		date.getMonth() + 1,
-		date.getDate(),
-		date.getHours(),
-		date.getMinutes(),
-		date.getSeconds(),
-	);
-}
-
-/** Date to a react-aria-components CalendarDate (date-only pickers). */
-export function dateToCalendarDate(date: Date) {
-	return new CalendarDate(
-		date.getFullYear(),
-		date.getMonth() + 1,
-		date.getDate(),
-	);
-}
-
-/** Day/month/year to a react-aria-components DateValue, noon UTC. */
-export function dayMonthYearToDateValue({ day, month, year }: DayMonthYear) {
-	const isoString = dateToYYYYMMDD(new Date(Date.UTC(year, month, day, 12)));
-
-	return parseDate(isoString);
 }
 
 /** Day/month/year to a database timestamp, noon UTC. */

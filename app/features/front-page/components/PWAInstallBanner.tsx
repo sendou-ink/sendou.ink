@@ -59,7 +59,7 @@ export function PWAInstallBanner() {
 					<SendouButton
 						variant="minimal-destructive"
 						size="small"
-						onPress={dismissBanner}
+						onClick={dismissBanner}
 					>
 						{t("common:actions.dismiss")}
 					</SendouButton>
@@ -89,7 +89,7 @@ function InstallAction({
 		<SendouButton
 			size="small"
 			icon={<Download />}
-			onPress={
+			onClick={
 				installState === "native"
 					? () => deferredInstallPrompt?.prompt()
 					: undefined

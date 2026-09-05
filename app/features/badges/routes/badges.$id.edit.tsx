@@ -82,7 +82,7 @@ function Managers({ data }: { data: BadgeDetailsLoaderData }) {
 								icon={<Trash />}
 								variant="minimal-destructive"
 								aria-label="Delete badge manager"
-								onPress={() =>
+								onClick={() =>
 									setManagers(managers.filter((m) => m.id !== manager.id))
 								}
 							/>

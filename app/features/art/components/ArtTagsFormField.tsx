@@ -83,7 +83,7 @@ export function ArtTagsFormField({
 								size="small"
 								variant="outlined"
 								className={styles.addButton}
-								onPress={handleAddNewTag}
+								onClick={handleAddNewTag}
 							>
 								{t("common:actions.add")}
 							</SendouButton>
@@ -92,7 +92,7 @@ export function ArtTagsFormField({
 							<SendouButton
 								variant="minimal"
 								className={styles.switcherButton}
-								onPress={() => setCreationMode(false)}
+								onClick={() => setCreationMode(false)}
 							>
 								{t("art:forms.tags.selectFromExisting")}
 							</SendouButton>
@@ -119,7 +119,7 @@ export function ArtTagsFormField({
 							<SendouButton
 								variant="minimal"
 								className={styles.switcherButton}
-								onPress={() => setCreationMode(true)}
+								onClick={() => setCreationMode(true)}
 							>
 								{t("art:forms.tags.addNew")}
 							</SendouButton>
@@ -135,7 +135,7 @@ export function ArtTagsFormField({
 									icon={<X />}
 									size="miniscule"
 									variant="minimal-destructive"
-									onPress={() =>
+									onClick={() =>
 										onChange(value.filter((it) => it.name !== tag.name))
 									}
 								/>

@@ -240,11 +240,11 @@ function TournamentBracketsView() {
 						</LinkButton>
 					) : null}
 					{censored ? (
-						<SendouButton onPress={revealSpoiler} icon={<ShieldMinus />}>
+						<SendouButton onClick={revealSpoiler} icon={<ShieldMinus />}>
 							{t("common:spoilerFree.showResults")}
 						</SendouButton>
 					) : canToggle ? (
-						<SendouButton onPress={hideSpoiler} icon={<ShieldPlus />}>
+						<SendouButton onClick={hideSpoiler} icon={<ShieldPlus />}>
 							{t("common:spoilerFree.hideResults")}
 						</SendouButton>
 					) : null}
@@ -345,7 +345,7 @@ function BracketStarter({
 				variant="outlined"
 				size="small"
 				data-testid="finalize-bracket-button"
-				onPress={() => setDialogOpen(true)}
+				onClick={() => setDialogOpen(true)}
 				isDisabled={isDisabled}
 			>
 				Start the bracket
@@ -420,7 +420,7 @@ function MapPreparer({
 					size="small"
 					variant="outlined"
 					icon={<MapIcon />}
-					onPress={() => setDialogOpen(true)}
+					onClick={() => setDialogOpen(true)}
 					data-testid="prepare-maps-button"
 				>
 					Prepare maps
@@ -725,7 +725,7 @@ function CompactifyButton() {
 
 	return (
 		<SendouButton
-			onPress={() => {
+			onClick={() => {
 				setBracketExpanded(!bracketExpanded);
 			}}
 			className={styles.compactifyButton}

@@ -87,7 +87,7 @@ export default function UserBuildsPage() {
 			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
 				{isOwnPage ? (
 					<SendouButton
-						onPress={() => setChangingSorting(true)}
+						onClick={() => setChangingSorting(true)}
 						size="small"
 						variant="outlined"
 						icon={<ArrowDownNarrowWide />}
@@ -145,7 +145,7 @@ function BuildsFilters({
 	return (
 		<div className="stack horizontal sm flex-wrap">
 			<SendouButton
-				onPress={() => setWeaponFilter("ALL")}
+				onClick={() => setWeaponFilter("ALL")}
 				variant={weaponFilter === "ALL" ? undefined : "outlined"}
 				size="small"
 				className={styles.buildFilterButton}
@@ -155,7 +155,7 @@ function BuildsFilters({
 			{showPublicPrivateFilters ? (
 				<>
 					<SendouButton
-						onPress={() => setWeaponFilter("PUBLIC")}
+						onClick={() => setWeaponFilter("PUBLIC")}
 						variant={weaponFilter === "PUBLIC" ? undefined : "outlined"}
 						size="small"
 						className={styles.buildFilterButton}
@@ -164,7 +164,7 @@ function BuildsFilters({
 						{t("builds:stats.public")} ({publicBuildsCount})
 					</SendouButton>
 					<SendouButton
-						onPress={() => setWeaponFilter("PRIVATE")}
+						onClick={() => setWeaponFilter("PRIVATE")}
 						variant={weaponFilter === "PRIVATE" ? undefined : "outlined"}
 						size="small"
 						className={styles.buildFilterButton}
@@ -240,7 +240,7 @@ function ChangeSortingDialog({
 							className="ml-auto"
 							variant="minimal"
 							size="small"
-							onPress={() => setBuildSorting([...DEFAULT_BUILD_SORT, null])}
+							onClick={() => setBuildSorting([...DEFAULT_BUILD_SORT, null])}
 						>
 							{t("user:builds.sorting.backToDefaults")}
 						</SendouButton>
@@ -276,7 +276,7 @@ function ChangeSortingDialog({
 											size="small"
 											icon={<Trash />}
 											variant="minimal-destructive"
-											onPress={deleteLastSorting}
+											onClick={deleteLastSorting}
 											data-testid="delete-sorting-button"
 										/>
 									) : null}

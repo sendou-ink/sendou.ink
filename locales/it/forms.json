@@ -67,6 +67,8 @@
 	"errors.notAllowedCharacters": "",
 	"errors.imageTooLarge": "",
 	"errors.atLeastOneOption": "",
+	"errors.invalidTime": "",
+	"errors.timeRangeIncomplete": "",
 	"errors.duplicateName": "Esiste già un team con questo nome",
 	"errors.duplicateOrgName": "",
 	"errors.duplicateOrgMember": "",

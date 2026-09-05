@@ -111,7 +111,7 @@ function MapActionButtons() {
 				icon={<Undo2 size={16} />}
 				isPending={undoMap.state !== "idle"}
 				isDisabled={!undoAllowed}
-				onPress={() => {
+				onClick={() => {
 					undoMap.submit("UNDO_MAP");
 				}}
 			>
@@ -124,7 +124,7 @@ function MapActionButtons() {
 				icon={<Repeat size={16} />}
 				isPending={replayMap.state !== "idle"}
 				isDisabled={!replayAllowed}
-				onPress={() => {
+				onClick={() => {
 					replayMap.submit("REPLAY_MAP");
 				}}
 			>

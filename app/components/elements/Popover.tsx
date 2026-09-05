@@ -1,13 +1,49 @@
 import clsx from "clsx";
+import * as React from "react";
 import {
-	Dialog,
-	DialogTrigger,
-	Popover,
-	type PopoverProps,
-} from "react-aria-components";
+	type AnchorPlacement,
+	useAnchorPositioning,
+} from "./anchor-positioning";
 import styles from "./Popover.module.css";
+import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
-/** Popover opened by `trigger` (a SendouButton or React Aria Button); controlled or uncontrolled. */
+export type PopoverPlacement = AnchorPlacement;
+
+/** `useId` values hold characters CSS idents can't (e.g. `:`), strip them for anchor names. */
+export function useAnchorSafeId() {
+	return React.useId().replace(/[^a-zA-Z0-9-]/g, "");
+}
+
+/**
+ * `toggle` does not bubble natively but React propagates it anyway, so an
+ * overlay nested inside another (a select in a popover, a menu in a dialog)
+ * would otherwise open and close its ancestor along with itself.
+ */
+export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
+	return event.target === event.currentTarget;
+}
+
+/**
+ * Whether a focusout moved focus to an element outside all of `containers`,
+ * so an overlay tabbed out of can close. Focus lost to nowhere (a click on a
+ * non-focusable spot) does not count: native light dismiss covers pointers.
+ */
+export function focusLeftTo(
+	event: React.FocusEvent,
+	containers: Array<Element | null | undefined>,
+) {
+	const next = event.relatedTarget;
+	if (!(next instanceof Node)) return false;
+	return !containers.some((container) => container?.contains(next));
+}
+
+/**
+ * Popover opened by `trigger` (a SendouButton); controlled or uncontrolled. Renders through the
+ * native popover API with CSS anchor positioning.
+ *
+ * With `eager` the content is rendered while closed too, so the popover opens with its content
+ * before hydration (and without JavaScript altogether).
+ */
 export function SendouPopover({
 	children,
 	trigger,
@@ -15,24 +51,116 @@ export function SendouPopover({
 	placement,
 	onOpenChange,
 	isOpen,
+	eager,
 }: {
 	children: React.ReactNode;
-	trigger: React.ReactNode;
+	trigger: React.ReactElement<Record<string, unknown>>;
 	popoverClassName?: string;
-	placement?: PopoverProps["placement"];
-	onOpenChange?: PopoverProps["onOpenChange"];
+	placement?: PopoverPlacement;
+	onOpenChange?: (isOpen: boolean) => void;
 	isOpen?: boolean;
+	eager?: boolean;
 }) {
+	const uid = useAnchorSafeId();
+	const popoverId = `${uid}-popover`;
+	const anchorName = `--popover-anchor-${uid}`;
+
+	const [isControlled] = React.useState(isOpen !== undefined);
+	const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
+	const open = isControlled ? Boolean(isOpen) : uncontrolledOpen;
+
+	const popoverRef = React.useRef<HTMLDivElement>(null);
+	const triggerContainerRef = React.useRef<HTMLSpanElement>(null);
+
+	const setOpen = (next: boolean) => {
+		if (!isControlled) {
+			setUncontrolledOpen(next);
+		}
+		onOpenChange?.(next);
+	};
+	const setOpenRef = React.useRef(setOpen);
+	setOpenRef.current = setOpen;
+
+	const hasSyncedRef = React.useRef(false);
+	React.useEffect(() => {
+		const popover = popoverRef.current;
+		if (!popover) return;
+		const domOpen = popover.matches(":popover-open");
+		const isFirstSync = !hasSyncedRef.current;
+		hasSyncedRef.current = true;
+
+		if (domOpen === open) return;
+		// opened before hydration: adopt it rather than closing it under the user
+		if (isFirstSync && domOpen) {
+			setOpenRef.current(true);
+			return;
+		}
+		if (open) {
+			popover.showPopover();
+		} else {
+			popover.hidePopover();
+		}
+	}, [open]);
+
+	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
+	useAnchorPositioning({
+		isOpen: open,
+		popoverRef,
+		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,
+		placement,
+		constrainHeight: true,
+	});
+
+	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
+		if (!isOwnToggle(event)) return;
+
+		const next = event.newState === "open";
+		if (next !== open) {
+			setOpen(next);
+		}
+		if (next) {
+			popoverRef.current?.focus();
+		}
+	};
+
+	const onBlur = (event: React.FocusEvent) => {
+		if (
+			open &&
+			focusLeftTo(event, [triggerContainerRef.current, popoverRef.current])
+		) {
+			popoverRef.current?.hidePopover();
+		}
+	};
+
 	return (
-		<DialogTrigger isOpen={isOpen} onOpenChange={onOpenChange}>
-			{trigger}
-			<Popover
-				className={clsx(styles.content, popoverClassName)}
-				placement={placement}
+		<>
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the trigger */}
+			<span
+				ref={triggerContainerRef}
+				className={styles.triggerContainer}
+				style={{ "--popover-anchor": anchorName } as React.CSSProperties}
+				onBlur={onBlur}
 			>
-				<Dialog className={styles.dialog}>{children}</Dialog>
-			</Popover>
-		</DialogTrigger>
+				{React.cloneElement(trigger, {
+					popoverTarget: popoverId,
+					"aria-haspopup": "dialog",
+				})}
+			</span>
+			<div
+				ref={popoverRef}
+				id={popoverId}
+				popover="auto"
+				className={clsx(styles.content, popoverClassName)}
+				style={{ positionAnchor: anchorName } as React.CSSProperties}
+				role="dialog"
+				tabIndex={-1}
+				data-placement={placement}
+				onToggle={onToggle}
+				onBlur={onBlur}
+			>
+				{open || eager ? children : null}
+			</div>
+		</>
 	);
 }
 
@@ -50,16 +178,62 @@ export function SendouAnchoredPopover({
 	triggerRef: React.RefObject<HTMLElement | null>;
 	"aria-label"?: string;
 }) {
+	const uid = useAnchorSafeId();
+	const anchorName = `--popover-anchor-${uid}`;
+
+	const popoverRef = React.useRef<HTMLDivElement>(null);
+
+	React.useEffect(() => {
+		const trigger = triggerRef.current;
+		const popover = popoverRef.current;
+		if (!popover) return;
+
+		if (isOpen) {
+			trigger?.style.setProperty("anchor-name", anchorName);
+			if (!popover.matches(":popover-open")) {
+				popover.showPopover();
+			}
+		} else if (popover.matches(":popover-open")) {
+			popover.hidePopover();
+		}
+
+		return () => {
+			trigger?.style.removeProperty("anchor-name");
+		};
+	}, [isOpen, triggerRef, anchorName]);
+
+	useCloseOnScrollClip(isOpen, popoverRef, () => onOpenChange(false));
+	useAnchorPositioning({
+		isOpen,
+		popoverRef,
+		getAnchor: () => triggerRef.current,
+		constrainHeight: true,
+	});
+
+	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
+		if (!isOwnToggle(event)) return;
+
+		const next = event.newState === "open";
+		if (next !== isOpen) {
+			onOpenChange(next);
+		}
+		if (next) {
+			popoverRef.current?.focus();
+		}
+	};
+
 	return (
-		<Popover
-			isOpen={isOpen}
+		<div
+			ref={popoverRef}
+			popover="auto"
 			className={styles.content}
-			onOpenChange={onOpenChange}
-			triggerRef={triggerRef}
+			style={{ positionAnchor: anchorName } as React.CSSProperties}
+			role="dialog"
+			tabIndex={-1}
+			aria-label={ariaLabel}
+			onToggle={onToggle}
 		>
-			<Dialog className={styles.dialog} aria-label={ariaLabel}>
-				{children}
-			</Dialog>
-		</Popover>
+			{isOpen ? children : null}
+		</div>
 	);
 }

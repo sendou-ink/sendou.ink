@@ -270,7 +270,7 @@ function ScheduleButton({
 				icon={<CalendarDays size={18} />}
 				aria-label={t("schedule:friends.availabilityOf", { name: username })}
 				testId={`friend-schedule-button-${userId}`}
-				onPress={() => setDialogOpen(true)}
+				onClick={() => setDialogOpen(true)}
 			/>
 			{dialogOpen ? (
 				<ScheduleWeekDialog

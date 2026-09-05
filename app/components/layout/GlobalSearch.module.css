@@ -8,6 +8,7 @@
 	background-color: var(--color-bg);
 	color: var(--color-text-high);
 	font-size: var(--font-xs);
+	text-decoration: none;
 	cursor: pointer;
 	height: var(--field-size-sm);
 	transition: background-color 0.15s;
@@ -41,41 +42,27 @@
 	font-family: inherit;
 }
 
-.overlay {
-	position: fixed;
-	inset: 0;
-	z-index: 20;
-	background-color: rgba(0, 0, 0, 0.25);
-	display: flex;
-	align-items: flex-start;
-	justify-content: center;
-	backdrop-filter: blur(10px);
-	padding: var(--layout-main-padding);
-	padding-top: 15vh;
-
-	&[data-entering] {
-		animation: fade-in 200ms ease-out;
-	}
-}
-
 .modal {
-	width: 100%;
+	width: calc(100% - 2 * var(--layout-main-padding));
 	max-width: 36rem;
+	margin: 15vh auto auto;
+	padding: 0;
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
+	color: var(--color-text);
 	border-radius: var(--radius-box);
 	box-shadow:
 		0 10px 15px -3px rgba(0, 0, 0, 0.1),
 		0 4px 6px -2px rgba(0, 0, 0, 0.05);
 	overflow: hidden;
-
-	&[data-entering] {
-		animation: zoom-in-95 200ms ease-out;
-	}
-}
-
-.dialog {
 	outline: none;
+	animation: zoom-in-95 200ms ease-out;
+
+	&::backdrop {
+		background-color: rgba(0, 0, 0, 0.25);
+		backdrop-filter: blur(10px);
+		animation: fade-in 200ms ease-out;
+	}
 }
 
 .inputContainer {

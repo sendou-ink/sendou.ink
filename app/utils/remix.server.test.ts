@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { paginate } from "./remix.server";
+import { paginate, safeReturnTo } from "./remix.server";
 
 const buildUrl = (url: string) => new URL(url);
 
@@ -110,5 +110,30 @@ describe("paginate()", () => {
 		);
 
 		expect(response?.headers.get("Location")).toBe("/vods?page=1");
+	});
+});
+
+describe("safeReturnTo()", () => {
+	test.each([
+		["/u/sendou", "a same-site path"],
+		["/calendar?page=2", "a path with search params"],
+		["/", "the root path"],
+	])("returns %s (%s)", (value) => {
+		expect(safeReturnTo(value)).toBe(value);
+	});
+
+	test.each([
+		["//evil.com", "protocol-relative URL"],
+		["/\\evil.com", "backslash the browser normalises to a slash"],
+		["/\\\\evil.com", "double backslash"],
+		["https://evil.com", "absolute URL"],
+		["evil.com", "no leading slash"],
+		["\\/evil.com", "leading backslash"],
+	])("returns null for %s (%s)", (value) => {
+		expect(safeReturnTo(value)).toBeNull();
+	});
+
+	test("returns null for a non-string value", () => {
+		expect(safeReturnTo(null)).toBeNull();
 	});
 });

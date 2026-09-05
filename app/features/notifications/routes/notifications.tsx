@@ -30,7 +30,7 @@ export const meta: MetaFunction = (args) => {
 export default function NotificationsPage() {
 	const { t } = useTranslation(["common"]);
 	const data = useLoaderData<typeof loader>();
-	const unseenIds = useStickyUnseenIds(data.notifications);
+	const unseenIds = useStickyUnseenIds(data.notifications, true);
 
 	const unSeenIdsArr = React.useMemo(() => Array.from(unseenIds), [unseenIds]);
 

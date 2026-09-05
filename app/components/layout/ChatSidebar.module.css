@@ -268,17 +268,15 @@
 		min-height: 0;
 	}
 
-	/* messages */
-	& [role="listbox"] {
+	/* messages: no top padding, fill available space */
+	& [role="log"] {
 		padding-top: 0;
+		padding-inline: var(--s-2);
 		flex: 1;
 		height: auto;
 	}
 
-	& [role="option"] {
-		padding-inline: var(--s-2);
-	}
-
+	/* form: stick to bottom */
 	& form {
 		padding: var(--s-1-5);
 		margin-top: 0;

@@ -24,7 +24,7 @@ export function DotPagination({
 					key={i}
 					variant="minimal"
 					aria-label={`${ariaLabelPrefix} page ${i + 1}`}
-					onPress={() => setPage(i + 1)}
+					onClick={() => setPage(i + 1)}
 					className={clsx(styles.button, {
 						[styles.buttonActive]: currentPage === i + 1,
 					})}

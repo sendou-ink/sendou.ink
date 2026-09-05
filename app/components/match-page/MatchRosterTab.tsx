@@ -180,7 +180,7 @@ function TeamRoster({
 							isDisabled={
 								isSubmitting || selectedMemberIds.length !== minMembersPerTeam
 							}
-							onPress={handleSubmit}
+							onClick={handleSubmit}
 							testId={`save-active-roster-button-${side}`}
 						>
 							{t("common:actions.submit")}
@@ -189,7 +189,7 @@ function TeamRoster({
 							<SendouButton
 								variant="outlined"
 								size="small"
-								onPress={handleCancel}
+								onClick={handleCancel}
 							>
 								{t("common:actions.cancel")}
 							</SendouButton>
@@ -202,7 +202,7 @@ function TeamRoster({
 					icon={<Edit />}
 					className="mt-4 mx-auto"
 					size="small"
-					onPress={() => {
+					onClick={() => {
 						setSelectedMemberIds(activeMembers.map((m) => m.id));
 						setIsEditing(true);
 					}}

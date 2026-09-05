@@ -95,7 +95,7 @@ function isScrolledToBottom(element: HTMLElement) {
 }
 
 describe("Chat", () => {
-	test("renders messages inside a virtualized listbox", async () => {
+	test("renders messages inside a virtualized log", async () => {
 		const screen = await renderChat([
 			createMessage({
 				id: 1,
@@ -109,32 +109,30 @@ describe("Chat", () => {
 			}),
 		]);
 
-		await expect.element(screen.getByRole("listbox")).toBeInTheDocument();
+		await expect.element(screen.getByRole("log")).toBeInTheDocument();
 		await expect.element(screen.getByText("First message")).toBeInTheDocument();
 		await expect
 			.element(screen.getByText("Second message"))
 			.toBeInTheDocument();
-		expect(screen.getByRole("option").elements()).toHaveLength(2);
+		expect(screen.getByTestId("chat-message-row").elements()).toHaveLength(2);
 	});
 
 	test("virtualizes a long list into a scrollable region taller than its viewport", async () => {
 		const screen = await renderChat(manyMessages(100));
 
-		const listbox = screen.getByRole("listbox").element() as HTMLElement;
-		await expect.element(screen.getByRole("listbox")).toBeInTheDocument();
+		const log = screen.getByRole("log").element() as HTMLElement;
+		await expect.element(screen.getByRole("log")).toBeInTheDocument();
 
-		const scrollContent = listbox.querySelector(
-			":scope > [role=presentation]",
+		const scrollContent = log.querySelector(
+			":scope > div",
 		) as HTMLElement | null;
-		const messageRow = listbox.querySelector(
-			"[role=option]",
+		const messageRow = log.querySelector(
+			"[data-testid=chat-message-row]",
 		) as HTMLElement | null;
 
 		expect(scrollContent).not.toBeNull();
-		expect(scrollContent!.offsetHeight).toBeGreaterThan(listbox.clientHeight);
-		expect(getComputedStyle(messageRow!.parentElement!).position).toBe(
-			"absolute",
-		);
+		expect(scrollContent!.offsetHeight).toBeGreaterThan(log.clientHeight);
+		expect(getComputedStyle(messageRow!).position).toBe("absolute");
 	});
 
 	test("renders system messages with the author interpolated", async () => {
@@ -169,9 +167,9 @@ describe("Chat", () => {
 		await expect.element(link).toHaveAttribute("target", "_blank");
 		await expect.element(link).toHaveAttribute("rel", "noopener noreferrer");
 		await expect.element(screen.getByRole("img")).toBeInTheDocument();
-		expect(screen.getByRole("option").element().textContent).toContain(
-			"join here",
-		);
+		expect(
+			screen.getByTestId("chat-message-row").element().textContent,
+		).toContain("join here");
 	});
 
 	test("renders a deleted account's message with a fallback name", async () => {
@@ -186,11 +184,11 @@ describe("Chat", () => {
 	test("scrolls to the bottom on initial load", async () => {
 		const { screen } = await renderChatWithControls(manyMessages(50));
 
-		const listbox = screen.getByRole("listbox");
-		await expect.element(listbox).toBeInTheDocument();
+		const log = screen.getByRole("log");
+		await expect.element(log).toBeInTheDocument();
 
 		await vi.waitFor(() => {
-			const element = listbox.element() as HTMLElement;
+			const element = log.element() as HTMLElement;
 			expect(element.scrollHeight).toBeGreaterThan(element.clientHeight);
 			expect(isScrolledToBottom(element)).toBe(true);
 		});
@@ -199,9 +197,9 @@ describe("Chat", () => {
 	test("auto scrolls when a new message arrives while at the bottom", async () => {
 		const { screen, controls } = await renderChatWithControls(manyMessages(50));
 
-		const listbox = screen.getByRole("listbox");
+		const log = screen.getByRole("log");
 		await vi.waitFor(() => {
-			expect(isScrolledToBottom(listbox.element() as HTMLElement)).toBe(true);
+			expect(isScrolledToBottom(log.element() as HTMLElement)).toBe(true);
 		});
 
 		controls.addMessage(
@@ -217,19 +215,19 @@ describe("Chat", () => {
 			.element(screen.getByText(/A brand new message/))
 			.toBeInTheDocument();
 		await vi.waitFor(() => {
-			expect(isScrolledToBottom(listbox.element() as HTMLElement)).toBe(true);
+			expect(isScrolledToBottom(log.element() as HTMLElement)).toBe(true);
 		});
 	});
 
 	test("does not auto scroll when scrolled up, shows the new messages button instead", async () => {
 		const { screen, controls } = await renderChatWithControls(manyMessages(50));
 
-		const listbox = screen.getByRole("listbox");
+		const log = screen.getByRole("log");
 		await vi.waitFor(() => {
-			expect(isScrolledToBottom(listbox.element() as HTMLElement)).toBe(true);
+			expect(isScrolledToBottom(log.element() as HTMLElement)).toBe(true);
 		});
 
-		const element = listbox.element() as HTMLElement;
+		const element = log.element() as HTMLElement;
 		element.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
 		element.scrollTop = 0;
 		element.dispatchEvent(new Event("scroll"));
@@ -261,12 +259,12 @@ describe("Chat", () => {
 	test("keeps the reading position when a new message arrives while scrolled up", async () => {
 		const { screen, controls } = await renderChatWithControls(manyMessages(50));
 
-		const listbox = screen.getByRole("listbox");
+		const log = screen.getByRole("log");
 		await vi.waitFor(() => {
-			expect(isScrolledToBottom(listbox.element() as HTMLElement)).toBe(true);
+			expect(isScrolledToBottom(log.element() as HTMLElement)).toBe(true);
 		});
 
-		const element = listbox.element() as HTMLElement;
+		const element = log.element() as HTMLElement;
 		const readingPosition = Math.floor(element.scrollHeight / 2);
 		element.dispatchEvent(new WheelEvent("wheel", { deltaY: -100 }));
 		element.scrollTop = readingPosition;

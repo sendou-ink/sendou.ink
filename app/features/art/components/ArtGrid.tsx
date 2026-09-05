@@ -141,7 +141,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			<SendouButton
 				variant="destructive"
 				className="mx-auto mt-6"
-				onPress={close}
+				onClick={close}
 				icon={<X />}
 			>
 				Close
