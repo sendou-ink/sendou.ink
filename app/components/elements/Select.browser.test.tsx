@@ -81,6 +81,39 @@ describe("SendouSelect", () => {
 			.not.toBeInTheDocument();
 	});
 
+	test("keeps the popover open when Enter has no match to commit", async () => {
+		const screen = await render(<GroupedSelect search={{}} />);
+
+		await screen.getByRole("button").click();
+		await screen.getByRole("combobox").fill("Season 1");
+		await expect
+			.element(screen.getByRole("combobox"))
+			.toHaveAttribute(
+				"aria-activedescendant",
+				(await screen.getByRole("option", { name: "Season 1" }).element()).id,
+			);
+		await screen.getByRole("combobox").fill("nope");
+		await userEvent.keyboard("{Enter}");
+
+		await expect.element(screen.getByRole("listbox")).toBeVisible();
+		await expect
+			.element(screen.getByRole("button", { name: /Season/ }))
+			.toHaveTextContent("Pick a season");
+	});
+
+	test("commits the focused search result on Enter", async () => {
+		const screen = await render(<GroupedSelect search={{}} />);
+
+		await screen.getByRole("button").click();
+		await screen.getByRole("combobox").fill("Season 1");
+		await userEvent.keyboard("{Enter}");
+
+		await expect.element(screen.getByRole("listbox")).not.toBeInTheDocument();
+		await expect
+			.element(screen.getByRole("button"))
+			.toHaveTextContent("Season 1");
+	});
+
 	test("mounts only the selected option while closed", async () => {
 		const screen = await render(<GroupedSelect selectedKey={1} />);
 

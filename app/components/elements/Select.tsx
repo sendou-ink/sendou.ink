@@ -315,10 +315,11 @@ export function SendouSelect<T extends object>({
 		if (event.key === "Enter") {
 			event.preventDefault();
 			const focusedKey = focusStore.get();
-			if (
-				focusedKey !== null &&
-				!itemsMapRef.current.get(focusedKey)?.disabled
-			) {
+			// registration is what proves the option is still in the list, the
+			// search can have filtered the focused one out from under the user
+			const focusedItem =
+				focusedKey !== null ? itemsMapRef.current.get(focusedKey) : undefined;
+			if (focusedKey !== null && focusedItem && !focusedItem.disabled) {
 				commitSelection(focusedKey);
 			}
 		}
@@ -381,10 +382,7 @@ export function SendouSelect<T extends object>({
 		) {
 			return;
 		}
-		const firstKey = orderedKeys()[0];
-		if (firstKey !== undefined) {
-			focusStore.set(firstKey);
-		}
+		focusStore.set(orderedKeys()[0] ?? null);
 	});
 
 	const state: SelectState = {
