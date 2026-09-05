@@ -12,6 +12,9 @@ import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
 export type SelectKey = string | number;
 
+/** How long a type-ahead query keeps collecting characters, like the native select. */
+const TYPEAHEAD_RESET_MS = 1000;
+
 interface RegisteredItem {
 	element: HTMLElement;
 	textValue: string;
@@ -175,6 +178,7 @@ export function SendouSelect<T extends object>({
 	/** Selection whose content only a wrapped item's registration can provide. */
 	const unresolvedSelectionRef = React.useRef<SelectKey | null>(null);
 	const normalizedTextCacheRef = React.useRef(new Map<string, string>());
+	const typeaheadRef = React.useRef({ query: "", at: 0 });
 
 	const triggerElementRef = React.useRef<HTMLButtonElement | null>(null);
 	const popoverRef = React.useRef<HTMLDivElement | null>(null);
@@ -312,6 +316,17 @@ export function SendouSelect<T extends object>({
 			moveFocus("last");
 			return;
 		}
+		if (
+			!search &&
+			event.key.length === 1 &&
+			!event.ctrlKey &&
+			!event.metaKey &&
+			!event.altKey
+		) {
+			event.preventDefault();
+			typeahead(event.key);
+			return;
+		}
 		if (event.key === "Enter") {
 			event.preventDefault();
 			const focusedKey = focusStore.get();
@@ -348,6 +363,7 @@ export function SendouSelect<T extends object>({
 		} else {
 			setSearchValue("");
 			focusStore.set(null);
+			typeaheadRef.current = { query: "", at: 0 };
 		}
 	};
 
@@ -360,6 +376,39 @@ export function SendouSelect<T extends object>({
 			cache.set(textValue, normalized);
 		}
 		return normalized;
+	};
+
+	/** Focuses the next option starting with what was typed, like the native select. */
+	const typeahead = (character: string) => {
+		const now = Date.now();
+		const previous = typeaheadRef.current;
+		const query =
+			now - previous.at > TYPEAHEAD_RESET_MS
+				? character
+				: previous.query + character;
+		typeaheadRef.current = { query, at: now };
+
+		// repeating a single character cycles through the options starting with it
+		const repeatedCharacter = [...query].every(
+			(queryCharacter) => queryCharacter === query[0],
+		);
+		const needle = normalizeForSearch(repeatedCharacter ? query[0] : query);
+
+		const keys = orderedKeys();
+		const focusedKey = focusStore.get();
+		const focusedIndex = focusedKey === null ? -1 : keys.indexOf(focusedKey);
+		const startIndex =
+			focusedIndex === -1 ? 0 : focusedIndex + (repeatedCharacter ? 1 : 0);
+
+		for (let offset = 0; offset < keys.length; offset++) {
+			const key = keys[(startIndex + offset) % keys.length];
+			const textValue = itemsMapRef.current.get(key)?.textValue;
+			if (textValue && normalizedTextValue(textValue).startsWith(needle)) {
+				focusStore.set(key);
+				scrollIntoView(key);
+				return;
+			}
+		}
 	};
 
 	const matches = (textValue: string) => {

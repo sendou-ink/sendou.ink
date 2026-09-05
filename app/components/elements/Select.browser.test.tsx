@@ -150,6 +150,32 @@ describe("SendouSelect", () => {
 			.toHaveFocus();
 	});
 
+	test("type-ahead focuses the option matching what was typed", async () => {
+		const screen = await render(<GroupedSelect />);
+
+		await screen.getByRole("button").click();
+		await expect.element(screen.getByRole("listbox")).toHaveFocus();
+		await userEvent.keyboard("season 0");
+
+		const option = screen.getByRole("option", { name: "Season 0" });
+		await expect
+			.element(screen.getByRole("listbox"))
+			.toHaveAttribute("aria-activedescendant", (await option.element()).id);
+	});
+
+	test("repeating a type-ahead character cycles through the matches", async () => {
+		const screen = await render(<GroupedSelect />);
+
+		await screen.getByRole("button").click();
+		await expect.element(screen.getByRole("listbox")).toHaveFocus();
+		await userEvent.keyboard("ss");
+
+		const option = screen.getByRole("option", { name: "Season 1" });
+		await expect
+			.element(screen.getByRole("listbox"))
+			.toHaveAttribute("aria-activedescendant", (await option.element()).id);
+	});
+
 	test("hovering an option moves the active descendant to it", async () => {
 		const screen = await render(<GroupedSelect />);
 
