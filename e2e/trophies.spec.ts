@@ -55,6 +55,9 @@ test.describe("Trophies", () => {
 
 		const trophy = await factories.TrophyFactory.create({ name: TROPHY_NAME });
 		const tournament = await playTrophyTournament(factories, trophy.id);
+		await factories.UserFactory.grant(ADMIN_ID, {
+			widgets: [{ id: "trophies-owned" }],
+		});
 
 		await impersonate(page);
 
