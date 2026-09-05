@@ -268,22 +268,19 @@
 	--chart-height: 250px;
 	--chart-width: 340px;
 
-	/* Let the chart shrink to whatever height react-aria allots the popover
-	   (so it never gets clipped) by threading a flex column down to it. */
-	display: flex;
 	flex-direction: column;
+	align-items: center;
 
 	/* The chart shrinks to fit, so no scroll is needed here; keep visible so the
 	   hover tooltip can overlay the chart instead of being clipped. */
 	overflow: visible;
-}
 
-.statPopover [role="dialog"] {
-	display: flex;
-	flex-direction: column;
-	align-items: center;
-	flex: 1;
-	min-height: 0;
+	/* a display on the class itself would show the closed popovers too */
+	&:popover-open {
+		/* let the chart shrink to whatever height the popover is allotted (so it
+		   never gets clipped) by threading a flex column down to it */
+		display: flex;
+	}
 }
 
 .statChartContainer {
