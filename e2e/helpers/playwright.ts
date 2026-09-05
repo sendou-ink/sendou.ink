@@ -256,6 +256,28 @@ function scriptsRan(page: Page) {
 	return page.evaluate(() => "__reactRouterContext" in window);
 }
 
+/**
+ * Holds back the page's scripts so that the server rendered DOM can be interacted
+ * with the way a user beating hydration to it does. The returned function lets
+ * them through, after which the page hydrates as usual.
+ */
+export async function holdScripts(page: Page) {
+	const waiting: Array<() => void> = [];
+	let holding = true;
+
+	await page.route(/\/assets\/.*\.js/, async (route) => {
+		if (holding) {
+			await new Promise<void>((resolve) => waiting.push(resolve));
+		}
+		await route.continue();
+	});
+
+	return () => {
+		holding = false;
+		for (const release of waiting) release();
+	};
+}
+
 /** Waits and expects the page to be hydrated (click handlers etc. ready for testing) */
 export async function expectIsHydrated(page: Page) {
 	// waitFor reacts within a frame of the marker appearing, where the expect

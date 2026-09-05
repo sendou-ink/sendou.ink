@@ -51,11 +51,12 @@ import { ShareUrlButton } from "./ShareUrlButton";
 import { StreamListItems } from "./StreamListItems";
 
 type SidebarData = RootLoaderData["sidebar"] | undefined;
-type PanelType = "menu" | "friends" | "tourneys" | "chat" | "you";
+type PanelType = (typeof PANEL_TYPES)[number];
 type PanelIds = Record<PanelType, string>;
 type PanelToggleHandler = (event: React.ToggleEvent<HTMLDivElement>) => void;
 
 const MOBILE_NAV_ID = "mobile-nav";
+const PANEL_TYPES = ["menu", "friends", "tourneys", "chat", "you"] as const;
 
 /**
  * The bottom tab bar and its panels. The panels are native popovers opened by
@@ -73,21 +74,31 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const { showUnseenDot } = useNotifications();
 	const chatContext = useChatContext();
 	const uid = React.useId();
-	const panelIds: PanelIds = {
-		menu: `${uid}-menu`,
-		friends: `${uid}-friends`,
-		tourneys: `${uid}-tourneys`,
-		chat: `${uid}-chat`,
-		you: `${uid}-you`,
-	};
+	const panelIds = Object.fromEntries(
+		PANEL_TYPES.map((panel) => [panel, panelDomId(uid, panel)]),
+	) as PanelIds;
 
 	useClosePopoversOnNavigation(rootRef);
 
+	const chatContextRef = React.useRef(chatContext);
+	chatContextRef.current = chatContext;
+
 	React.useEffect(() => {
+		// a panel can be opened before hydration, its toggle event long gone
+		const openPanel = PANEL_TYPES.find((panel) =>
+			document.getElementById(panelDomId(uid, panel))?.matches(":popover-open"),
+		);
+		if (openPanel) {
+			setActivePanel(openPanel);
+			if (openPanel === "chat") {
+				chatContextRef.current?.setChatOpen(true);
+			}
+		}
+
 		const root = rootRef.current;
 		if (!root || root.matches(":popover-open")) return;
 		root.showPopover();
-	}, []);
+	}, [uid]);
 
 	const hasFriendInSendouQ =
 		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
@@ -621,4 +632,8 @@ function ChatPanel({
 			</div>
 		</div>
 	);
+}
+
+function panelDomId(uid: string, panel: PanelType) {
+	return `${uid}-${panel}`;
 }

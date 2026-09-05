@@ -12,6 +12,8 @@ import {
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
+	expectIsHydrated,
+	holdScripts,
 	impersonate,
 	MOBILE_VIEWPORT,
 	runRoutine,
@@ -558,6 +560,33 @@ test.describe("Chat", () => {
 		} finally {
 			await other.close();
 		}
+	});
+
+	test("Mobile: a chat panel opened before hydration fills in", async ({
+		page,
+		factories,
+	}) => {
+		const { match, bravo } = await createMatch(factories);
+
+		await page.setViewportSize(MOBILE_VIEWPORT);
+		await impersonate(page, bravo[0].id);
+
+		const releaseScripts = await holdScripts(page);
+		await page.goto(sendouQMatchPage(match.id), {
+			waitUntil: "domcontentloaded",
+		});
+
+		const mobileNav = new MobileNav(page);
+		await mobileNav.openPanel("chat");
+
+		releaseScripts();
+		await expectIsHydrated(page);
+
+		// the panel the user opened without waiting is adopted rather than left empty
+		await expect(
+			new ChatSidebar(page).locators.openChats.first(),
+		).toBeVisible();
+		await expect(mobileNav.tab("chat")).toHaveAttribute("data-active", "true");
 	});
 
 	test("Mobile: the chat waits behind the tab bar, then opens straight into the room", async ({
