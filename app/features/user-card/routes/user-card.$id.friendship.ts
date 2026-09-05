@@ -8,11 +8,8 @@ import type { UserCardFriendship } from "../user-card-types";
 export type UserCardFriendshipLoaderData = SerializeFrom<typeof loader>;
 
 /**
- * Viewer-relative friendship data for a single user, lazy-loaded by the `UserCard`
- * popover when it opens (keeps `isFriend` + `mutualFriends` out of the batched card
- * query). Resolves to empty values when there is no logged-in viewer. Mutual friends
- * are only resolved when the card opts in via the `mutuals=true` query param (some
- * views, e.g. match pages, don't surface them), so the extra query is otherwise skipped.
+ * Viewer-relative friendship data, lazy-loaded when a `UserCard` opens. Empty without a logged-in
+ * viewer; mutual friends only with the `mutuals=true` param, skipping that query otherwise.
  */
 export const loader = async ({
 	params,

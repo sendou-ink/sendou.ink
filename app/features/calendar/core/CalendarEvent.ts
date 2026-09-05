@@ -34,9 +34,7 @@ export const FILTERS_KEYS = [
 assertType<(typeof FILTERS_KEYS)[number], keyof CalendarFilters>();
 assertType<keyof CalendarFilters, (typeof FILTERS_KEYS)[number]>();
 
-/**
- * Returns the default empty state of filter settings for calendar events.
- */
+/** Default empty calendar filters. */
 export function defaultFilters(): CalendarFilters {
 	return {
 		preferredStartTime: "ANY",
@@ -59,9 +57,7 @@ export function defaultFilters(): CalendarFilters {
 
 const defaultFiltersString = filtersToString(defaultFilters());
 
-/**
- * Determines whether the provided calendar filters match the default filter settings.
- */
+/** Whether the filters equal the defaults. */
 export function isDefaultFilters(filters: CalendarFilters): boolean {
 	return filtersToString(filters) === defaultFiltersString;
 }
@@ -76,11 +72,7 @@ function filtersToString(filters: CalendarFilters): string {
 	return result;
 }
 
-/**
- * Applies the provided calendar filters to a list of grouped calendar events.
- *
- * Returns a new array where each group contains separated lists of shown and hidden events. Event is shown if it matches all set filters.
- */
+/** Splits each group's events into shown (matching every set filter) and hidden. */
 export function applyFilters(
 	events: {
 		at: number;

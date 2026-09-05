@@ -1,15 +1,11 @@
 /**
- * "Score:" banner parsing for the results screens. Each side of the colored
- * banner shows one team's game score (0-100) as white BlitzBold digits after
- * a localized label — some languages render no label at all, so the digits'
- * x position is not fixed. A knockout replaces the winning side's value with
- * the localized KNOCKOUT! burst, whose letters only weakly match digit
- * templates (real digits score 0.9+); the knockout itself is recognized from
- * the winner's team total instead (the box prints the count times five, and
- * only a knockout's full 100 count reaches 500). The score value bounces as
- * it lands, so a frame may catch the digits settled or mid-pop — this module
- * parses at every size and binarization threshold and keeps the best
- * read (valid over none, longer digit run over shorter, then confidence).
+ * "Score:" banner parsing: each side shows a team's score (0-100) as white
+ * BlitzBold digits after a localized label (some languages have none, so x is
+ * not fixed). A knockout replaces the winner's value with the KNOCKOUT! burst
+ * (weak digit matches; real digits score 0.9+) and is recognized from the
+ * winner's team total instead (count x5; only a full 100 reaches 500). Digits
+ * bounce as the value lands, so every size and threshold is parsed and the best
+ * read kept (valid over none, longer run over shorter, then confidence).
  */
 import { getCV, type Mat } from "../../cv";
 import {
@@ -24,24 +20,17 @@ import { copyRoi, type Roi } from "../../image";
 export const KO_MATCH_SCORE = 100;
 
 /**
- * The team box prints the count times five ("440 p" alongside a 88 banner),
- * so a knockout's full 100 count shows as 500 — a total only a knockout
- * reaches, which is what separates a burst-covered banner from an unread one.
+ * The team box prints count x5 ("440 p" for 88), so only a knockout reaches 500; separates a
+ * burst-covered banner from an unread one.
  */
 export const FULL_COUNT_TEAM_SCORE = KO_MATCH_SCORE * 5;
 
-/**
- * Replay-screen reads below this floor are discarded rather than trusted as
- * a score — burst/label letters overlapping a score ROI match digit
- * templates at ~0.4 there.
- */
+/** Replay-screen reads below this are discarded: burst/label letters match digit templates at ~0.4 there. */
 export const MATCH_SCORE_MIN_CONF = 0.6;
 
 /**
- * Char floor for the live banner's trailing-digit run. KNOCKOUT! letters
- * have matched digit templates at up to 0.62 (the ko-hagglefish fixture's
- * "07"), while genuine banner digits score 0.79+ across every fixture —
- * including 720p upscales.
+ * Char floor for the trailing-digit run: KNOCKOUT! letters reach 0.62 (ko-hagglefish "07"), real
+ * digits 0.79+ on every fixture.
  */
 const DIGIT_MIN_CONF = 0.75;
 
@@ -49,44 +38,28 @@ const DIGIT_MIN_CONF = 0.75;
 const BANNER_SCORE_BIN_THRESHOLD = 205;
 
 /**
- * Second binarization pass for pale team colors: a light banner (gray ~220,
- * with the wave-crest highlight brighter still) binarizes solid white at the
- * base threshold, gluing label and digits into one giant unmatchable blob
- * that can swallow all but the last digit. Only the ~250 digit ink survives
- * this threshold. Every pass always runs; a swallowed background can only
- * shorten the digit run, never lengthen it, so the longer run wins
- * regardless of confidence (the truncated read's surviving digit is genuine
- * ink and scores just as well).
+ * Second pass for pale banners (gray ~220): the base threshold glues label and
+ * digits into one blob, swallowing all but the last digit; only ~250 digit ink
+ * survives this. A swallowed background can only shorten the run, so the
+ * longer run wins regardless of confidence.
  */
 const BANNER_SCORE_BRIGHT_BIN_THRESHOLD = 240;
 
 /**
- * Third pass for the brightest banners: a yellow battle-log banner grays at
- * ~245 near the wave crest, so even the bright pass keeps label ink attached
- * and erodes the digits below the confidence floor. Only the ~250 digit
- * cores survive this threshold.
+ * Third pass: a yellow battle-log banner grays at ~245 near the wave crest; only the ~250 digit
+ * cores survive this.
  */
 const BANNER_SCORE_BRIGHTEST_BIN_THRESHOLD = 248;
 
-/**
- * Digits of one number nearly touch; anything further apart than this
- * fraction of a digit width is the label (or an unreadable glyph) ending
- * the run.
- */
+/** Digits of one number nearly touch; a gap past this fraction of a digit width ends the run. */
 const DIGIT_GAP_MAX_RATIO = 0.55;
 
-/**
- * A score digit spans the set's full height; the label's lowercase letters
- * top out ~0.75 of it, so they cannot pass as digits even when their shapes
- * correlate.
- */
+/** Digits span the set's full height; the label's lowercase letters top out ~0.75 of it. */
 const DIGIT_MIN_HEIGHT_RATIO = 0.82;
 
 /**
- * The banner's bright wave-crest highlight can dip into the score line as a
- * wide ~12px-tall streak whose columns merge into the digits' segments and
- * ruin their ink extents. Every real digit is at least ~26px tall, so ink
- * components shorter than this are wiped before recognition.
+ * The wave-crest highlight dips into the score line as a ~12px streak merging into digit segments;
+ * real digits are ~26px+ tall.
  */
 const MIN_COMPONENT_HEIGHT = 20;
 
@@ -109,13 +82,9 @@ const EMPTY_READ: BannerScoreRead = {
 };
 
 /**
- * Reads one banner side's score from `roi`: recognizes with each digit set
- * (one per on-screen text size) at each binarization threshold and keeps
- * the best read — a valid value beats none, a longer digit run beats a
- * shorter one, confidence breaks ties. The score is the trailing run of
- * full-height, confidently-matched digits — everything the localized label
- * or the KNOCKOUT! burst leaves in the ROI fails at least one of those
- * tests.
+ * One banner side's score: each digit set at each threshold, best read kept
+ * (isBetterRead). The score is the trailing run of full-height, confident
+ * digits; label and burst leftovers fail at least one of those tests.
  */
 export function parseBannerScore(
 	gray: Mat,
@@ -145,13 +114,9 @@ export function parseBannerScore(
 }
 
 /**
- * Winner-first score pair from the two banner sides. A confirmed knockout
- * (winner team total = 500) dominates: the winner reports the full count no
- * matter what was read off the burst-covered side, and the loser is the
- * more confident read (genuine digits score well clear of burst letters
- * that survive the floor). Without a knockout, ranked scores never tie, so
- * when both sides read the higher value is the winner's; one unreadable
- * side cannot be attributed to a team, so nothing is reported.
+ * Winner-first score pair. A confirmed knockout dominates: winner = full count,
+ * loser = the more confident read. Otherwise ranked scores never tie so the
+ * higher value is the winner's; one unreadable side reports nothing.
  */
 export function resolveMatchScores({
 	left,
@@ -212,11 +177,7 @@ function clearShortBlobs(band: Mat): void {
 	labels.delete();
 }
 
-/**
- * Read preference shared by every multi-attempt digit read: a valid value
- * beats none, a longer digit run beats a shorter one, confidence breaks
- * ties.
- */
+/** A valid value beats none, a longer digit run beats a shorter one, confidence breaks ties. */
 export function isBetterRead(
 	read: BannerScoreRead,
 	best: BannerScoreRead,
@@ -232,10 +193,8 @@ export interface TrailingDigitOptions {
 	/** char floor a glyph must clear to count as a digit of the number */
 	minCharScore?: number;
 	/**
-	 * lower floor for digits joining a run that another digit anchors at
-	 * `minCharScore` — motion blur / compression can erode one digit of a
-	 * genuine number below the main floor while its neighbor stays crisp.
-	 * Defaults to `minCharScore` (no two-tier extension).
+	 * lower floor for digits joining a run anchored by a `minCharScore` digit
+	 * (blur can erode one digit while its neighbor stays crisp); defaults to `minCharScore`
 	 */
 	extendMinScore?: number;
 	/** min ink height as a fraction of the set height (drops labels, '+') */
@@ -243,22 +202,14 @@ export interface TrailingDigitOptions {
 	/** values above this are rejected as misreads */
 	maxValue?: number;
 	/**
-	 * reject the read (null) when the char immediately left of the run sat
-	 * within digit-gap distance but failed the floors — on a band that holds
-	 * nothing but the number (objective counter plates), that char is a
-	 * blur-mangled leading digit and the run is a truncated misread ("50"
-	 * returning 0). Off for banner bands, where an adjacent label/burst
-	 * letter legitimately borders the digits.
+	 * reject the read when a char within digit-gap distance left of the run failed
+	 * the floors: on a number-only band that is a mangled leading digit ("50" as
+	 * 0). Off for banners, where a label/burst letter legitimately borders the digits.
 	 */
 	rejectTruncated?: boolean;
 }
 
-/**
- * The trailing run of full-height, confidently-matched digits of a
- * recognized line — the number-on-a-plate read shared by the score banner
- * and the objective counters, where a localized label / burst / '+' sign
- * precedes the digits and must fail at least one of the floors.
- */
+/** Trailing run of full-height, confident digits; shared by the score banner and objective counters. */
 export function trailingDigitRun(
 	raw: RecognizedText,
 	set: GlyphSet,
@@ -289,9 +240,8 @@ export function trailingDigitRun(
 	if (!run.some((c) => c.score >= minCharScore)) {
 		return { ...EMPTY_READ, reading: raw.text };
 	}
-	// A further digit left of the run means an unreadable glyph split the
-	// number (turf war percentages read "48", ".", "7") — the tail is not
-	// the score.
+	// a further digit left of the run means an unreadable glyph split the number
+	// (turf war "48", ".", "7"); the tail is not the score
 	for (let k = i; k >= 0; k--) {
 		const c = raw.chars[k]!;
 		if (c.score >= minCharScore && fullHeight(c)) {

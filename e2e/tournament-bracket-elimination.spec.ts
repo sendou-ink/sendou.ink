@@ -19,13 +19,6 @@ import { UserResultsPage } from "./pages/user/user-results-page";
 const DE_LOSERS_ROUND_ID = 3;
 
 test.describe("Tournament bracket elimination", () => {
-	// 1) Report winner of N-ZAP's first match
-	// 2) Report winner of the adjacent match by using admin powers
-	// 3) Report one match on the only losers side match available
-	// 4) Try to reopen N-ZAP's first match and fail
-	// 5) Undo score of first losers match
-	// 6) Try to reopen N-ZAP's first match and succeed
-	// 7) As N-ZAP, undo all scores and switch to different team sweeping
 	test("reports score and sees bracket update", async ({ page, factories }) => {
 		test.slow();
 		const tournament = await factories.TournamentFactory.create({
@@ -49,44 +42,44 @@ test.describe("Tournament bracket elimination", () => {
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
 
-		// 1)
+		// report winner of N-ZAP's first match
 		let match = await brackets.openMatch(nzapsMatchId);
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 2 });
 		await match.backToBracket();
 
-		// 2)
+		// report winner of the adjacent match using admin powers
 		match = await brackets.openMatch(adjacentMatchId);
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 2 });
 		await match.backToBracket();
 
-		// 3)
+		// report one map of the only losers side match available
 		match = await brackets.openMatch(losersMatchId);
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 1, setEnds: false });
 		await match.backToBracket();
 
-		// 4)
+		// N-ZAP's first match can't be reopened while the losers match depends on it
 		match = await brackets.openMatch(nzapsMatchId);
 		await match.openTab("admin");
 		await isNotVisible(match.locators.reopenMatchButton);
 		await match.backToBracket();
 
-		// 5)
+		// undo the losers match score
 		match = await brackets.openMatch(losersMatchId);
 		await match.openTab("action");
 		await match.undoLastReport();
 		await expect(match.score([0, 0])).toBeVisible();
 		await match.backToBracket();
 
-		// 6)
+		// now the reopen succeeds
 		match = await brackets.openMatch(nzapsMatchId);
 		await match.openTab("admin");
 		await match.reopen();
 		await expect(match.score([1, 0])).toBeVisible();
 
-		// 7)
+		// as N-ZAP, undo every score and let the other team sweep instead
 		await impersonate(page, NZAP_TEST_ID);
 		await brackets.goto(tournament.id);
 		match = await brackets.openMatch(nzapsMatchId);
@@ -239,7 +232,7 @@ test.describe("Tournament bracket elimination", () => {
 		// match 3 is the winners' final the winner of match 1 waits in
 		match = await brackets.openMatch(3);
 		await match.openTab("admin");
-		// Picking a chip auto-submits the cast channel; lock the match afterwards.
+		// picking a chip auto-submits the cast channel
 		await match.setCastedBy("test");
 		await match.submitCastInfo();
 		await match.backToBracket();
@@ -252,16 +245,15 @@ test.describe("Tournament bracket elimination", () => {
 		await expect(brackets.locators.castBadges.first()).toBeVisible();
 		match = await brackets.openMatch(3);
 		await match.openTab("admin");
-		// Lock state is signalled by the toggle being "Unlock" instead of "Lock"
+		// the toggle reading "Unlock" is what signals the locked state
 		await expect(match.locators.unlockButton).toBeVisible();
-		// A locked match still needs to show the pool & room pass so players can join
+		// a locked match still shows the pool & room pass so players can join
 		await expect(match.locators.poolLabel).toBeVisible();
 		await expect(match.locators.roomPass).toBeVisible();
 		await match.submitCastInfo();
 		await expect(match.locators.stageBanner).toBeVisible();
 
-		// Cast channel "test" persists across unlock; the bracket badge flips
-		// from 🔒 CAST to 🔴 LIVE once the match is unlocked and ongoing.
+		// the cast channel persists across unlock; the bracket badge flips from CAST to LIVE
 		await match.backToBracket();
 		await expect(brackets.locators.liveBadges.first()).toBeVisible();
 	});
@@ -294,7 +286,6 @@ test.describe("Tournament bracket elimination", () => {
 		await admin.resetBracket("Main bracket");
 
 		await admin.adminTab("Teams").click();
-		// check the top seed back in
 		await admin.checkTeamIn(0);
 
 		const bracketsAfterReset = await admin.nav.openBrackets();
@@ -322,7 +313,6 @@ test.describe("Tournament bracket elimination", () => {
 
 		await impersonate(page);
 
-		// 1) Report partial score on the first winners bracket match
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
 		let match = await brackets.openMatch(ongoingMatchId);
@@ -330,26 +320,23 @@ test.describe("Tournament bracket elimination", () => {
 		await match.reportResult({ mapsToReport: 1, winner: 1, setEnds: false });
 		await match.backToBracket();
 
-		// 2) Drop the fourth team (the bravo side of the ongoing match) via admin
+		// the fourth team is the bravo side of the ongoing match
 		const admin = new TournamentAdminPage(page);
 		await admin.goto(tournament.id);
 		await admin.dropOutTeam(3);
 
-		// 3) Verify the ongoing match ended early (no longer ongoing → "Final")
+		// dropping out ended the ongoing match early
 		await match.goto({ tournamentId: tournament.id, matchId: ongoingMatchId });
 		await expect(match.locators.finalBanner).toBeVisible();
 		await match.backToBracket();
 
-		// 4) Complete the adjacent match so its loser goes to losers bracket
+		// completing the adjacent match sends its loser to the losers bracket
 		match = await brackets.openMatch(adjacentMatchId);
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 2 });
 		await match.backToBracket();
 
-		// 5) The losers bracket match should now have teams:
-		//    - Loser of the first match (the dropped team)
-		//    - Loser of the adjacent match
-		//    It should have ended early since the dropped team is in it
+		// the losers match, now holding the dropped team, ended early as well
 		match = await brackets.openMatch(losersMatchId);
 		await expect(match.locators.finalBanner).toBeVisible();
 	});

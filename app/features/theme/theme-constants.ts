@@ -35,7 +35,7 @@ export const CUSTOM_THEME_VARS = [
 
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];
 
-/** Subset of {@link CUSTOM_THEME_VARS} the patron chip in the footer resolves its background and text color from. */
+/** Subset of {@link CUSTOM_THEME_VARS} the footer's patron chip resolves its colors from. */
 export const PATRON_CHIP_THEME_VARS = [
 	"--_base-h",
 	"--_base-c-2",

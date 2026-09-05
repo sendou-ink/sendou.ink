@@ -93,8 +93,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	let emitMatchUpdate = false;
 	let emitTournamentUpdate = false;
-	// true when nothing outside match data (scores, pick/ban events) changed, letting
-	// broadcast receivers skip revalidating the tournament layout and root loaders
+	// lets broadcast receivers skip revalidating the tournament layout and root loaders
 	let onlyMatchResultsChanged = false;
 	let setIsOver = false;
 	let endedDroppedMatchIds: number[] = [];
@@ -120,8 +119,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
-			// a set ending (or dropped teams' matches ending) changes bracket state
-			// the layout ships (bracketsMeta), so only mid-set reports are scoped
+			// a set ending (or dropped teams' matches ending) changes the layout's bracketsMeta
 			onlyMatchResultsChanged = !setIsOver && endedDroppedMatchIds.length === 0;
 
 			break;
@@ -412,8 +410,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			const eventType = (() => {
 				if (match.roundMaps.pickBan === "CUSTOM") {
-					// a no-mode-repeat pick is stored as a regular map pick; the
-					// restriction only applies while choosing, not to the stored event
+					// the no-mode-repeat restriction only applies while choosing, not to the stored event
 					return actionType === "PICK_NO_MODE_REPEAT"
 						? ("PICK" as const)
 						: actionType;
@@ -432,15 +429,13 @@ export const action: ActionFunction = async ({ params, request }) => {
 					type: eventType,
 				});
 			} catch (error) {
-				// another request already recorded this pick/ban in the race window,
-				// let their page refresh to pick up the already-recorded event
+				// another request already recorded this pick/ban, let their page refresh to pick it up
 				if (errorIsSqliteUniqueConstraintFailure(error)) {
 					return null;
 				}
 				throw error;
 			}
 
-			// Chain roll after action for CUSTOM flow
 			if (match.roundMaps.pickBan === "CUSTOM" && match.roundMaps.customFlow) {
 				const updatedEvents =
 					await TournamentRepository.findPickBanEventsByMatchId(match.id);
@@ -481,7 +476,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				operation: (bracketData) => Engine.reopenMatch(bracketData, match.id),
 				endDroppedTeams: false,
 				inTransaction: async (result, trx) => {
-					// edge case but for round robin we can just leave the match as is, lock it then unlock later to continue where they left off (should not really ever happen)
+					// round robin edge case: leave the match as is, lock it and unlock later to continue (should not really ever happen)
 					if (bracketFormat !== "round_robin") {
 						for (const followingMatch of followingMatches) {
 							await TournamentMatchRepository.deletePickBanEventsByMatchId(
@@ -491,9 +486,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 						}
 					}
 
-					// when the set was force-ended early no extra result was inserted for
-					// the forced win, so the last result is a genuinely played game and must
-					// be kept to avoid desyncing the score from the results
+					// a force-ended set inserted no result for the forced win, so its last result is a
+					// played game that must stay or the score desyncs from the results
 					if (!result.endedEarly) {
 						invariant(lastResult, "Last result is missing");
 						await TournamentMatchRepository.deleteResultById(
@@ -508,8 +502,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 				`Reopening match: User ID: ${user.id}; Match ID: ${match.id}; Ended early: ${reopened.endedEarly}`,
 			);
 
-			// the teams advanced into following matches are being pulled back out,
-			// so those "waiting for teams" pages need to revalidate too
+			// teams pulled back out of following matches: their "waiting for teams" pages revalidate too
 			followingMatchIds = followingMatches.map(
 				(followingMatch) => followingMatch.id,
 			);
@@ -588,7 +581,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 			);
 			errorToastIfFalsy(!match.winnerSide, "Match is already over");
 
-			// Determine winner (random if not specified)
 			const winnerTeamId = (() => {
 				if (data.winnerTeamId) {
 					errorToastIfFalsy(
@@ -599,7 +591,6 @@ export const action: ActionFunction = async ({ params, request }) => {
 					return data.winnerTeamId;
 				}
 
-				// Random winner: true 50/50 selection
 				return Math.random() < 0.5
 					? match.opponentOne.id
 					: match.opponentTwo.id;
@@ -621,8 +612,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 			endedDroppedMatchIds = endedMatchIds;
 
-			// the set ended early so no further games will be played; trim weapons
-			// reported in advance for map indexes beyond the games actually played
+			// no further games: trim weapons reported in advance for maps beyond the games played
 			const playedResults =
 				await TournamentMatchRepository.findResultsByMatchId(matchId);
 			await ReportedWeaponRepository.deleteExtraByTournamentMatchId({
@@ -679,12 +669,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	// update RunningTournaments to make sure sidebar is not showing stale matches at the end
-	// of the tournament in case the TO is not finalizing the tournament right away
+	// refresh RunningTournaments so the sidebar doesn't show stale matches while the TO delays finalizing
 	if (setIsOver) {
 		const refreshedTournament = await tournamentFromDB(tournamentId);
-		// the teams that just advanced now populate following matches, so their
-		// "waiting for teams" pages need to revalidate too
+		// teams just advanced into following matches: their "waiting for teams" pages revalidate too
 		followingMatchIds = refreshedTournament
 			.followingMatches(match.id)
 			.map((followingMatch) => followingMatch.id);
@@ -724,11 +712,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	return null;
 };
 
-/**
- * Room of the brackets page views that render this match, i.e. the ones a change of its
- * results can be seen in. Falls back to the whole tournament's room if the match's bracket
- * can not be resolved.
- */
+/** Room of the brackets page views rendering this match; the whole tournament's room if its bracket can't be resolved. */
 function matchResultsRoom(
 	tournament: Tournament,
 	match: NonNullable<FindMatchById>,

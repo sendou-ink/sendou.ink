@@ -1,7 +1,6 @@
 /**
- * Environment-agnostic frame representation and helpers.
- * A FrameData is RGBA, same layout as browser ImageData — Node code builds it
- * from @napi-rs/canvas, browser code from a canvas or VideoFrame.
+ * Environment-agnostic frame representation: a FrameData is RGBA with the
+ * same layout as browser ImageData (Node builds it from @napi-rs/canvas).
  */
 
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "./canonical";
@@ -22,10 +21,7 @@ export function toMat(frame: FrameData): Mat {
 	return cv.matFromImageData(frame as unknown as ImageData);
 }
 
-/**
- * Normalize any input frame to the canonical 1920x1080 RGBA mat that all ROI
- * constants are defined against. Returns a new mat; caller owns both.
- */
+/** Normalizes any frame to the canonical 1920x1080 RGBA mat all ROI constants assume. New mat; caller owns both. */
 export function normalizeFrame(src: Mat): Mat {
 	const cv = getCV();
 	const dst = new cv.Mat();
@@ -47,10 +43,9 @@ export function normalizeFrame(src: Mat): Mat {
 }
 
 /**
- * Crop a rect out of a mat. Returns a view: fine as *input* to OpenCV calls
- * (matchTemplate, mean, resize, ...) but NEVER read `.data` off it — in this
- * opencv.js build both `.data` and `.clone()` mishandle non-continuous views.
- * Use copyRoi when pixel access is needed.
+ * Crops a rect out of a mat as a view: fine as *input* to OpenCV calls but
+ * NEVER read `.data` off it — this opencv.js build mishandles `.data` and
+ * `.clone()` on non-continuous views. Use copyRoi for pixel access.
  */
 export function cropRoi(src: Mat, roi: Roi): Mat {
 	const cv = getCV();
@@ -67,9 +62,8 @@ export function copyRoi(src: Mat, roi: Roi): Mat {
 }
 
 /**
- * Mean brightness of a ROI: the average of the first three channels on a
- * color mat, the single channel's mean on a grayscale (or |Laplacian|) mat.
- * The shared probe primitive of every detector gate.
+ * Mean brightness of a ROI: average of the first three channels on a color
+ * mat, the single channel's mean on grayscale. The shared gate probe.
  */
 export function meanBrightness(mat: Mat, roi: Roi): number {
 	const view = cropRoi(mat, roi);
@@ -129,12 +123,11 @@ export function minChannel(mat: Mat, roi?: Roi): Mat {
 }
 
 /**
- * Coarse content fingerprint of a grayscale ROI: the mean brightness of each
- * cell in a cols x rows grid over the region. Cheap enough for gates.
- * Consecutive frames of one static screen move a cell by ≤~2 while different
- * text/content moves cells by tens (measured on battle log browsing footage)
- * — the scheduler compares fingerprints to re-arm suppression when a passing
- * gate's screen flips to a new real occurrence (GateResult.signature).
+ * Coarse content fingerprint of a grayscale ROI: mean brightness per cell of a
+ * cols x rows grid. Consecutive frames of one static screen move a cell by
+ * ≤~2 while different content moves cells by tens (measured on battle log
+ * browsing) — the scheduler compares fingerprints to re-arm suppression when
+ * a passing gate's screen flips to a new occurrence (GateResult.signature).
  */
 export function roiSignature(
 	gray: Mat,

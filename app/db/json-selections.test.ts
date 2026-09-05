@@ -25,8 +25,7 @@ describe("computedJsonColumns", () => {
 				).as("weapons"),
 			]);
 
-		// `username` is `coalesce("User"."tournamentName", "User"."username")`, which
-		// SQLite reports the same way as the weapons subquery: as a computed column
+		// `username` is a `coalesce(...)`, reported by SQLite as a computed column like the weapons subquery
 		expect(computedJsonColumns(query.compile().query)).toEqual(
 			new Set(["weapons"]),
 		);
@@ -101,8 +100,7 @@ describe("reading rows", () => {
 			.where("User.id", "=", member.id)
 			.executeTakeFirstOrThrow();
 
-		// rendered as a bare JSX child on public tournament pages, so an object here
-		// is "Objects are not valid as a React child" for everyone viewing them
+		// rendered as a bare JSX child on public pages; an object here would crash React for every viewer
 		expect(row.username).toBe(JSON_SHAPED_TEXT);
 	});
 

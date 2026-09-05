@@ -13,8 +13,7 @@ export async function loader({ params }: LoaderFunctionArgs) {
 			organization.members.map((member) => member.id),
 		);
 
-		// handles edge case where the badge is not managed by the org anymore for whatever reason
-		// -> let's still keep it still deletable
+		// a badge the org no longer manages stays deletable
 		for (const badge of organization.badges) {
 			if (!result.find((b) => b.id === badge.id)) {
 				result.push(badge);

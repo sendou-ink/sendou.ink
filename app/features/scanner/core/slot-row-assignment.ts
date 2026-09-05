@@ -1,23 +1,18 @@
 /**
  * Strip-slot → scoreboard-row assignment. The in-match icon strip (and the
  * minimap's card columns, which mirror it) keeps the lobby seating for the
- * whole set, while the results scoreboard re-sorts each team per game — so
- * per-slot status series can only be paired with scoreboard rows through
- * identity evidence. Two kinds are combined:
+ * whole set, while the results scoreboard re-sorts each team per game, so
+ * per-slot status series pair with rows only through identity evidence:
  *
  * - weapon votes: per-slot candidate scores accumulated across a match's
- *   sampled StripWeapons reads (strip-weapons.ts) plus the minimap cards'
- *   parsed weapons. The best-scoring of the 24 possible slot→row
- *   assignments against the scoreboard's four weapons wins — the global
- *   constraint corrects slots whose own evidence is wrong or missing
- *   (attested: a slot with zero readable votes still lands right by
- *   elimination).
- * - card names (the POV minimap's teammate diamond): matched directly
- *   against scoreboard row names.
+ *   StripWeapons reads plus the minimap cards' parsed weapons. The best of the
+ *   24 slot→row assignments against the scoreboard's four weapons wins — the
+ *   global constraint corrects slots whose own evidence is wrong or missing
+ *   (attested: a slot with zero readable votes still lands by elimination).
+ * - card names (the POV minimap's teammate diamond): matched against row names.
  *
  * Ties resolve toward the fewest moved slots, so two rows sharing a weapon
- * keep their as-drawn relative order, and thin evidence degrades to the
- * as-drawn arrangement rather than a coin flip.
+ * keep their as-drawn order and thin evidence degrades to as-drawn, not a coin flip.
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 
@@ -27,12 +22,10 @@ export type SlotRowPermutation = readonly [number, number, number, number];
 export const IDENTITY_PERMUTATION: SlotRowPermutation = [0, 1, 2, 3];
 
 /**
- * Total accumulated vote score the winning assignment needs before it may
- * reorder anything, and the lead it needs over the best differing
- * assignment. Calibrated on the sendou-triton VoD, where correct
- * assignments scored 10-33 with margins 2.2-5.3 over ~20 sampled reads;
- * junk evidence (a strip geometry mispick, non-Splatoon lookalikes)
- * spreads flat and fails the margin.
+ * Total vote score the winning assignment needs before it may reorder, and
+ * its lead over the best differing assignment. Calibrated on the sendou-triton
+ * VoD: correct assignments scored 10-33 with margins 2.2-5.3 over ~20 reads;
+ * junk evidence (a strip geometry mispick, lookalikes) spreads flat and fails.
  */
 const MIN_ASSIGNMENT_SCORE = 1.5;
 const MIN_ASSIGNMENT_MARGIN = 0.75;
@@ -52,10 +45,9 @@ const PERMUTATIONS: SlotRowPermutation[] = (() => {
 })();
 
 /**
- * The slot→row assignment best supported by one side's accumulated weapon
- * votes, against that side's scoreboard row weapons. Falls back to the
- * as-drawn order when the evidence is too thin or too close to call (see
- * MIN_ASSIGNMENT_SCORE/MARGIN).
+ * The slot→row assignment best supported by one side's weapon votes against
+ * its scoreboard row weapons; as-drawn when the evidence is too thin or too
+ * close to call (MIN_ASSIGNMENT_SCORE/MARGIN).
  */
 export function weaponSlotRowPermutation(
 	votes: readonly ReadonlyMap<MainWeaponId, number>[],
@@ -86,12 +78,10 @@ export function weaponSlotRowPermutation(
 }
 
 /**
- * A card→row assignment from card names (the POV minimap's teammate
- * diamond, whose order matches neither the strip nor the scoreboard):
- * unique case-insensitive name matches place their cards, the leftovers
- * keep their relative as-drawn order. Null — keep the as-drawn order —
- * when fewer than two cards resolve, since a single hit cannot attest the
- * arrangement is worth disturbing.
+ * A card→row assignment from card names (the POV minimap's teammate diamond,
+ * ordered like neither the strip nor the scoreboard): unique case-insensitive
+ * name matches place their cards, leftovers keep their as-drawn order. Null
+ * (keep as drawn) when fewer than two cards resolve.
  */
 export function nameSlotRowPermutation(
 	cardNames: readonly (string | null)[],

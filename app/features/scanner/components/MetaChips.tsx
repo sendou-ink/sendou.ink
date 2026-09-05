@@ -1,7 +1,6 @@
 /**
- * The pill group every event card's meta row opens with: video timestamp,
- * detection confidence and the event type, kept tight together so the free-form
- * detail text that follows reads as a separate group.
+ * The pill group every event card's meta row opens with (video timestamp,
+ * confidence, event type), kept tight so the detail text after reads as its own group.
  */
 
 import { Clock, Gauge } from "lucide-react";

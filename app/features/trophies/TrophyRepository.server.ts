@@ -450,10 +450,7 @@ export async function findOrganizationIdById(trophyId: number) {
 	return row?.organizationId ?? null;
 }
 
-/**
- * Checks whether a trophy name is taken by an existing trophy or a submission still
- * awaiting review. Accepted submissions don't count.
- */
+/** Whether the name is taken by a trophy or a submission still awaiting review. */
 export async function existsByName(args: {
 	name: string;
 	excludeTrophyId?: number;
@@ -507,10 +504,7 @@ export async function findAllForEditing() {
 		.execute();
 }
 
-/**
- * Recomputes ownership of every special trophy (supporter, XP).
- * Existing owner rows that are still eligible keep their original `createdAt`.
- */
+/** Recomputes special trophy (supporter, XP) ownership; still-eligible owners keep their `createdAt`. */
 export function syncSpecialTrophies() {
 	return db.transaction().execute(async (trx) => {
 		await syncSupporterTrophyOwners(trx);

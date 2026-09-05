@@ -638,6 +638,64 @@ describe("Availability.playableWindows", () => {
 	});
 });
 
+describe("Availability.availabilitySegments", () => {
+	const members = (
+		ranges: Array<Array<[start: string, end: string, endDate?: string]>>,
+	) =>
+		ranges.map((memberRanges, index) => ({
+			userId: index + 1,
+			ranges: memberRanges.map(([start, end, endDate]) =>
+				range("2026-08-24", start, end, endDate),
+			),
+		}));
+
+	test("returns nothing for no members", () => {
+		expect(Availability.availabilitySegments([])).toEqual([]);
+	});
+
+	test("splits overlapping members at every start and end with who is free throughout", () => {
+		const segments = Availability.availabilitySegments(
+			members([[["18:00", "22:00"]], [["19:00", "23:00"]]]),
+		);
+
+		expect(segments).toEqual([
+			{ ...range("2026-08-24", "18:00", "19:00"), userIds: [1] },
+			{ ...range("2026-08-24", "19:00", "22:00"), userIds: [1, 2] },
+			{ ...range("2026-08-24", "22:00", "23:00"), userIds: [2] },
+		]);
+	});
+
+	test("a gap between members comes out as a span with nobody free", () => {
+		const segments = Availability.availabilitySegments(
+			members([[["18:00", "19:00"]], [["20:00", "21:00"]]]),
+		);
+
+		expect(segments).toEqual([
+			{ ...range("2026-08-24", "18:00", "19:00"), userIds: [1] },
+			{ ...range("2026-08-24", "19:00", "20:00"), userIds: [] },
+			{ ...range("2026-08-24", "20:00", "21:00"), userIds: [2] },
+		]);
+	});
+
+	test("merges one member's touching ranges before splitting", () => {
+		const segments = Availability.availabilitySegments(
+			members([
+				[
+					["18:00", "20:00"],
+					["20:00", "22:00"],
+				],
+				[["19:00", "21:00"]],
+			]),
+		);
+
+		expect(segments).toEqual([
+			{ ...range("2026-08-24", "18:00", "19:00"), userIds: [1] },
+			{ ...range("2026-08-24", "19:00", "21:00"), userIds: [1, 2] },
+			{ ...range("2026-08-24", "21:00", "22:00"), userIds: [1] },
+		]);
+	});
+});
+
 describe("Availability.snapMinutes", () => {
 	test.each([
 		[0, 0],

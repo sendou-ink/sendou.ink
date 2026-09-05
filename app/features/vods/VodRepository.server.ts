@@ -322,8 +322,7 @@ async function save(
 			.returning("VideoMatch.id")
 			.execute();
 
-		// SQLite assigns ids in insertion order, but RETURNING makes no ordering
-		// promise, so sort to line the new ids back up with args.matches
+		// RETURNING makes no ordering promise, so sort to line the ids up with args.matches
 		const matchIds = insertedMatches
 			.map((match) => match.id)
 			.sort((a, b) => a - b);

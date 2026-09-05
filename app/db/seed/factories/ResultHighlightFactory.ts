@@ -9,11 +9,7 @@ type ReplaceAllArgs = {
 	resultTournamentTeamIds: number[];
 };
 
-/**
- * Replaces the results a user has highlighted on their profile, the same write the
- * highlight picking page does. A later call replaces the earlier's highlights, so
- * seed them all at once.
- */
+/** Same write as the highlight picking page, so seed all highlights at once. */
 export function replaceAll({ userId, ...args }: ReplaceAllArgs) {
 	return actAs(userId, () => UserRepository.updateOwnResultHighlights(args));
 }

@@ -1,17 +1,12 @@
 /**
- * VoD tab: load a video file and scan it for scoreboard matches as fast as
- * decoding allows — no real-time playback. On the primary (WebCodecs) path
- * the file's duration is split into one contiguous slice per analyzer
- * worker and each worker demuxes, decodes, schedules and analyzes its slice
- * by itself (worker/analyzer.worker.ts): no frames cross the main thread,
- * scheduling state is exact per slice, and calm stretches are skimmed by
- * keyframe hops instead of decoded frame-by-frame. The seek fallback drives
- * a <video> element through a single worker, widening its stride over calm
- * footage. Each match can be opened in the screenshot page with the exact
- * frame that was analyzed.
- *
- * Completed scans are persisted to IndexedDB keyed by file name
- * (store/vods.ts); the default view lists them for reinspection.
+ * VoD tab: load a video file and scan it as fast as decoding allows — no
+ * real-time playback. On the primary (WebCodecs) path the duration is split
+ * into one contiguous slice per analyzer worker and each worker demuxes,
+ * decodes, schedules and analyzes its slice itself (worker/analyzer.worker.ts):
+ * no frames cross the main thread and calm stretches are skimmed by keyframe
+ * hops. The seek fallback drives a <video> element through a single worker,
+ * widening its stride over calm footage. Completed scans are persisted to
+ * IndexedDB keyed by file name (store/vods.ts) and listed for reinspection.
  */
 import clsx from "clsx";
 import { Download, FileText, Send, Trash2, Video } from "lucide-react";
@@ -88,9 +83,8 @@ const SCANNER_TEAM_LABELS = ["Alpha", "Bravo"] as const;
 /** seek-fallback stride while the worker reports activity */
 const SEEK_ACTIVE_STRIDE_S = 0.25;
 /**
- * seek-fallback stride over calm footage (nothing detected for a while, no
- * match open) — small enough that the screens that can start activity from
- * dead air (results ~10s, match intro ~7s) still get sampled
+ * seek-fallback stride over calm footage — small enough that the screens that
+ * start activity from dead air (results ~10s, match intro ~7s) still get sampled
  */
 const SEEK_CALM_STRIDE_S = 2.5;
 
@@ -99,8 +93,8 @@ type Status = "idle" | "scanning" | "done" | "error";
 interface VodMatch {
 	event: DetectedEvent<FixtureData>;
 	/**
-	 * render identity — inherited when a better read replaces the event, so
-	 * match cards keyed on it don't remount (replaying the enter animation)
+	 * render identity, inherited when a better read replaces the event so match
+	 * cards keyed on it don't remount (replaying the enter animation)
 	 */
 	key: number;
 	thumbnail?: string;
@@ -190,9 +184,8 @@ export function VodPage({
 			!groupedEvents.has(m.event) && m.event.type !== STRIP_WEAPONS_EVENT_TYPE,
 	);
 
-	// "Send results" sends the whole scan in one go, so its outcome maps
-	// onto every ingestable card; a partial failure (some chunks sent, some
-	// not) can't be attributed per match — the bulk status text covers it
+	// "Send results" sends the whole scan in one go, so its outcome maps onto
+	// every ingestable card; a partial failure can't be attributed per match
 	const bulkSend: SendStatus | undefined =
 		resultsSend?.state === "sending"
 			? { state: "sending", at: 0 }
@@ -207,8 +200,7 @@ export function VodPage({
 	const upload =
 		status === "done" ? sendouUpload(matches.map((m) => m.event)) : null;
 
-	// "Send results" — the /ingest counterpart of live sending: the
-	// scan's ingestable ScannerMatches POSTed in one go
+	// "Send results": the scan's ingestable ScannerMatches POSTed to /ingest in one go
 	const resultsMatchCount =
 		status === "done" ? countIngestableMatches(matches.map((m) => m.event)) : 0;
 
@@ -238,8 +230,7 @@ export function VodPage({
 			links: report.links,
 		};
 		setResultsSend({ state: "done", ...outcome });
-		// the scan is saved under its file name, so its send outcome can be
-		// restored when the VoD is reopened
+		// saved under its file name so the send outcome is restored when the VoD is reopened
 		if (fileName) {
 			await saveVodResultsSend(fileName, outcome);
 			await refreshVods();
@@ -734,10 +725,9 @@ export function VodPage({
 								ingestableBuilt.indexOf(built),
 							);
 							const send = skipReason ? undefined : bulkSend;
-							// counter reads render as one timeline chart, not a card each --
-							// from the builder's samples, whose sides are team-stable (raw
-							// reads follow the specced player on casts); a non-SZ match's
-							// reads (objective null) are never shown
+							// counter reads render as one timeline chart, not a card each, from the
+							// builder's samples, whose sides are team-stable (raw reads follow the
+							// specced player on casts); a non-SZ match's reads (objective null) are hidden
 							const objectiveEvents = (
 								built.match.objective?.samples ?? []
 							).map((sample) => ({ t: sample.t, data: sample }));

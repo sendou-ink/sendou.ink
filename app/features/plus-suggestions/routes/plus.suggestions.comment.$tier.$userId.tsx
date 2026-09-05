@@ -28,8 +28,7 @@ export default function PlusCommentModalPage() {
 		return <Redirect to={plusSuggestionPage()} />;
 	}
 
-	// the parent only loads one tier's suggestions, so a link that arrived without
-	// the matching tier search param (an old bookmark) is sent through it first
+	// the parent only loads one tier, so a link missing the tier param (an old bookmark) is redirected
 	if (data.tier !== tierSuggestedTo) {
 		return (
 			<Redirect

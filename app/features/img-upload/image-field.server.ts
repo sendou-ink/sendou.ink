@@ -12,15 +12,9 @@ import { uploadStreamToS3 } from "./s3.server";
 import { MAX_UNVALIDATED_IMG_COUNT } from "./upload-constants";
 
 /**
- * Resolves a SendouForm `image` field value to the image id to store on the consuming FK column.
- *
- * - `null` → `null` (image removed / none)
- * - `EXISTING` → the unchanged `imgId` (no bytes are re-uploaded)
- * - `NEW` → decodes the base64 image, uploads it to S3 and inserts an unvalidated image row,
- *   auto-validating it for supporters (or always when `autoValidate` is set), then returns the
- *   new id.
- *
- * The consuming action is responsible for writing the returned value to its own FK column.
+ * Resolves a SendouForm `image` field value to the image id the caller stores on its FK column:
+ * `null` → `null`, `EXISTING` → the unchanged `imgId`, `NEW` → uploads to S3 and inserts an
+ * unvalidated image row (auto-validated for supporters or when `autoValidate` is set).
  */
 export async function imageFieldValueToImgId({
 	value,
@@ -29,7 +23,7 @@ export async function imageFieldValueToImgId({
 }: {
 	value: ImageFieldValue;
 	user: AuthenticatedUser;
-	/** Validate the image immediately, bypassing the moderator queue (e.g. trusted org logos). */
+	/** Bypass the moderator queue (e.g. trusted org logos). */
 	autoValidate?: boolean;
 }): Promise<number | null> {
 	if (!value) return null;

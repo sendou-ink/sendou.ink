@@ -695,20 +695,16 @@ function parametersToSubWeaponResult(
 	};
 }
 
-// Thrown targeting specials (Booyah Bomb, Super Chump, Triple Inkstrike, Ultra Stamp) are
-// player-aimed and have no throw-distance param in the game data, so their throw (fly) range is
-// approximated with a constant. Kept as named per-special constants so each can be tuned later;
-// for now they all reuse Booyah Bomb's value.
+// Thrown targeting specials (Booyah Bomb, Super Chump, Triple Inkstrike, Ultra Stamp) are player-aimed
+// with no throw-distance param, so their fly range is a per-special constant, all Booyah Bomb's value for now.
 const BOOYAH_BOMB_FLY_DISTANCE = 27;
 const SUPER_CHUMP_FLY_DISTANCE = 30;
 const TRIPLE_INKSTRIKE_FLY_DISTANCE = 28;
 const ULTRA_STAMP_FLY_DISTANCE = 24;
 
-// Range circle data for the map planner. Projectile / thrown specials store the distance the shot
-// travels plus its blast; a few store a single effect radius. Specials whose reach is global
-// (Tenta Missiles, Killer Wail), placed or utility (Big Bubbler, Tacticooler, Ink Storm, Ink Vac),
-// or otherwise has no meaningful circle (Kraken Royale, Splattercolor Screen) are left out.
-// See app/features/comp-analyzer/core/special-weapon-range.ts.
+// Range circles for the map planner (see app/features/comp-analyzer/core/special-weapon-range.ts):
+// travel distance plus blast, or a single effect radius. Global (Tenta Missiles, Killer Wail), placed/utility
+// (Big Bubbler, Tacticooler, Ink Storm, Ink Vac) and circle-less (Kraken Royale, Splattercolor Screen) specials are left out.
 function specialWeaponRangeParams(
 	specialWeapon: SpecialWeapon,
 	rawParams: any,
@@ -785,8 +781,7 @@ function specialWeaponRangeParams(
 	}
 }
 
-// some specials lack damage values in the params
-// so they are instead hardcoded here as a workaround
+// some specials lack damage values in the params, so they are hardcoded here
 function parametersToSpecialWeaponResult(params: any) {
 	const result: any = {};
 

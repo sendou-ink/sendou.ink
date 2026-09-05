@@ -6,6 +6,13 @@
 	flex-wrap: wrap;
 }
 
+.title {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	flex-wrap: wrap;
+}
+
 .weekHeading {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);

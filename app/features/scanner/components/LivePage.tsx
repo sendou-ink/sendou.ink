@@ -65,21 +65,15 @@ import { thumbnailFromBlob } from "./thumbnail";
 const SAMPLE_FPS = 2;
 
 /**
- * A slow parse (a browsed battle-log entry, a CJK splash-tag name) can
- * occupy the worker for seconds to tens of seconds; buffering the frames
- * sampled meanwhile (analyzed late, VoD-style) keeps what happened during
- * the stall from being missed. 24 frames hold ~12s at full density; past
- * that the backlog is decimated toward even spacing over the whole stall
- * (worker/frame-queue.ts) instead of dropping its oldest frames, so a
- * results screen mid-stall survives as a few frames.
+ * A slow parse (a browsed battle-log entry, a CJK splash-tag name) can occupy
+ * the worker for seconds to tens of seconds; buffering the frames sampled
+ * meanwhile keeps the stall from being missed. 24 frames hold ~12s at full
+ * density; past that the backlog is decimated toward even spacing over the
+ * stall (worker/frame-queue.ts) so a results screen mid-stall survives.
  */
 const FRAME_QUEUE_LIMIT = 24;
 
-/**
- * How often a running capture rechecks whether a match sendou.ink could not
- * link yet is due for another attempt (the backoff itself lives in
- * sendou-ingest.ts).
- */
+/** How often a running capture rechecks unlinked matches for a retry (backoff in sendou-ingest.ts). */
 const UNLINKED_RETRY_TICK_MS = 15_000;
 
 /** The scan knows the on-screen sides only, not who is playing. */
@@ -131,9 +125,8 @@ export function LivePage({
 		Array<(built: BuiltMatch<StoredEvent>) => boolean>
 	>([]);
 
-	// every saved event asks for a refresh, ~2-3 a second during a match;
-	// requests landing while one runs coalesce into a single trailing pass so
-	// the store read + feed render never pile up on the main thread
+	// every saved event asks for a refresh, ~2-3 a second during a match; requests
+	// landing while one runs coalesce into a single trailing pass
 	const refreshStateRef = useRef({ running: false, queued: false });
 	const refreshFeed = useCallback(() => {
 		const state = refreshStateRef.current;
@@ -147,9 +140,8 @@ export function LivePage({
 				do {
 					state.queued = false;
 					const events = await listEvents();
-					// objective reads grouped into a known non-SZ match slipped past
-					// the live block (e.g. the mode read arrived after them) — delete
-					// them
+					// objective reads grouped into a known non-SZ match slipped past the live
+					// block (e.g. the mode read arrived after them) — delete them
 					const invalid = new Set(
 						invalidObjectiveEvents(buildScannerMatches(events)),
 					);
@@ -184,11 +176,7 @@ export function LivePage({
 		};
 	}, [refreshFeed]);
 
-	/**
-	 * Sends the matches `include` selects; serialized so sends never overlap.
-	 * A send requested while one is in flight runs right after it instead of
-	 * being dropped.
-	 */
+	/** Sends the matches `include` selects; serialized so sends never overlap (a send requested mid-flight runs right after). */
 	const send = async (
 		include: (built: BuiltMatch<StoredEvent>) => boolean,
 		{ manual = false } = {},
@@ -323,10 +311,9 @@ export function LivePage({
 			stopRef.current = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
 				clientRef.current?.analyze(bitmap, t);
 			});
-			// a match sent the moment its scoreboard closed usually beats the
-			// players to reporting the game, so sendou.ink had nothing to link
-			// it to; give those another go while the capture runs — along with
-			// any closed match whose close-send never got attempted
+			// a match sent the moment its scoreboard closed usually beats the players to
+			// reporting it, so sendou.ink had nothing to link to; retry those while the
+			// capture runs, along with closed matches whose close-send was never attempted
 			retryTimerRef.current ??= setInterval(() => {
 				if (liveSendRef.current) {
 					void send(
@@ -480,10 +467,9 @@ export function LivePage({
 						renderMatch={(built, justFormed) => {
 							const id = built.sources[0]!.id!;
 							const skipReason = skipReasons.get(built);
-							// counter reads render as one timeline chart, not a card each --
-							// from the builder's samples, whose sides are team-stable (raw
-							// reads follow the specced player on casts); a non-SZ match's
-							// reads (objective null) are never shown
+							// counter reads render as one timeline chart, not a card each, from the
+							// builder's samples, whose sides are team-stable (raw reads follow the
+							// specced player on casts); a non-SZ match's reads (objective null) are hidden
 							const objectiveEvents = (
 								built.match.objective?.samples ?? []
 							).map((sample) => ({ t: sample.t, data: sample }));
@@ -633,10 +619,8 @@ function LiveMenu({
 
 /**
  * A closed match whose send was never attempted: a match-close send can be
- * skipped (it queues behind an in-flight send now, but a page reload also
- * loses the queue), so the retry tick flushes these. Sources sit at
- * "queued"/no status until a send marks them; sent/unlinked/failed matches
- * follow their own paths.
+ * skipped (a page reload loses the queue), so the retry tick flushes these.
+ * Sent/unlinked/failed matches follow their own paths.
  */
 function unsentClosedMatches(built: BuiltMatch<StoredEvent>): boolean {
 	return (

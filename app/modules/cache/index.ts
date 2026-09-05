@@ -1,8 +1,4 @@
-/**
- * A lightweight least-recently-used cache backed by a `Map`. Once `max` entries
- * are stored, inserting a new key evicts the least recently used one. Reading a
- * key via `get` marks it as most recently used.
- */
+/** LRU cache over a `Map`: past `max` entries an insert evicts the least recently used; `get` marks most recent. */
 export class LRUCache<K, V> {
 	private readonly max: number;
 	private readonly map = new Map<K, V>();

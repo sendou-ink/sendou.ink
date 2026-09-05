@@ -1,8 +1,4 @@
-/**
- * Pure constants/types shared by UI and pipeline. No OpenCV dependency —
- * the main-thread bundle must not pull in the WASM module (that lives in
- * the worker).
- */
+/** Pure constants/types shared by UI and pipeline; no OpenCV dependency, so the main bundle never pulls in the WASM. */
 export const CANONICAL_WIDTH = 1920;
 export const CANONICAL_HEIGHT = 1080;
 

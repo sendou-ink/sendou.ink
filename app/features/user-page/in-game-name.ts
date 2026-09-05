@@ -9,9 +9,7 @@ export const IN_GAME_NAME = {
 export const IN_GAME_NAME_MAX_LENGTH =
 	IN_GAME_NAME.NAME_MAX_LENGTH + 1 + IN_GAME_NAME.DISCRIMINATOR_MAX_LENGTH;
 
-/**
- * @see {@link https://github.com/kjhf/NintendoSwitchKeyboard}
- */
+/** @see {@link https://github.com/kjhf/NintendoSwitchKeyboard} */
 export const IN_GAME_NAME_CHARACTER_CATEGORIES = [
 	{
 		id: "symbols",
@@ -72,15 +70,11 @@ const ALLOWED_CHARACTERS = new Set<string>([
 	...PICKER_CHARACTERS,
 ]);
 
-/**
- * Letters of every script a Nintendo Switch keyboard can produce. Notably this
- * includes kanji/hanzi and hangul, which are too numerous to enumerate in the
- * character picker but are perfectly valid to paste in.
- */
+/** Every script a Switch keyboard can produce, incl. kanji/hanzi and hangul which the picker can't enumerate. */
 const ALLOWED_SCRIPTS_REGEXP =
 	/^[\p{Script=Latin}\p{Script=Greek}\p{Script=Cyrillic}\p{Script=Hiragana}\p{Script=Katakana}\p{Script=Han}\p{Script=Hangul}]$/u;
 
-/** Punctuation & symbol code point ranges not covered by any of the scripts above. */
+/** Punctuation & symbols not covered by the scripts above. */
 const ALLOWED_CODE_POINT_RANGES = [
 	[0x3000, 0x303f], // CJK symbols and punctuation
 	[0x3099, 0x309c], // Kana voiced sound marks
@@ -94,17 +88,17 @@ const IN_GAME_NAME_REGEXP = new RegExp(
 	"u",
 );
 
-/** Length of a string counted in code points (so astral characters count as one). */
+/** Length in code points, so astral characters count as one. */
 export function inGameNameLength(value: string): number {
 	return [...value].length;
 }
 
-/** Normalizes the in-game name and drops every character the game does not allow. */
+/** Normalizes and drops every character the game does not allow. */
 export function sanitizeInGameName(value: string): string {
 	return [...normalizeInGameName(value)].filter(characterIsAllowed).join("");
 }
 
-/** Unicode normalization applied to in-game names before they are validated or stored. */
+/** Unicode normalization applied before validating or storing. */
 export function normalizeInGameName(value: string): string {
 	return value.normalize("NFC");
 }

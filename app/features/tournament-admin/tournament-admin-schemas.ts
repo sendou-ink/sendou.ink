@@ -16,11 +16,7 @@ import {
 import { bracketIdx } from "../tournament-bracket/tournament-bracket-schemas";
 import { adminStaffFormSchema } from "./tournament-admin-staff-schemas";
 
-/**
- * Extends the client {@link adminStaffFormSchema} with a server-only,
- * context-dependent validation: the tournament author can't be added as staff
- * (they are always shown as an organizer for info only).
- */
+/** {@link adminStaffFormSchema} plus the server-only rule that the author (always shown as organizer) can't be added as staff. */
 export function adminStaffFormSchemaServer({
 	tournament,
 }: {

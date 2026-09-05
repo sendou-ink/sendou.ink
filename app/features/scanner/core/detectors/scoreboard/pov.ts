@@ -1,10 +1,8 @@
 /**
- * POV arrow detection: both results screens mark the recording player's row
- * with a solid yellow arrow at the row's left edge (absent in spectator or
- * overhead footage). The arrow is the only saturated pure-yellow blob in
- * that strip — team-ink yellows there are patterned/duller and stay under
- * the mask thresholds — so a plain color-mask pixel count decides, no
- * template needed.
+ * POV arrow detection: the recording player's row carries a solid yellow arrow
+ * at its left edge (absent on spectator footage). It is the only saturated
+ * pure-yellow blob there (team-ink yellows are duller), so a color-mask pixel
+ * count decides.
  */
 import { getCV, type Mat } from "../../cv";
 import { cropRoi, type Roi } from "../../image";
@@ -17,10 +15,7 @@ const YELLOW_RG_MAX_DIFF = 60;
 
 /** Arrow pixels fill ~15-30% of the probe ROI; arrow-less rows measure ~0. */
 const POV_MIN_FRACTION = 0.05;
-/**
- * If the runner-up row reaches this share of the best row's fraction, the
- * yellow is ambient (team ink leaking into the strip), not the arrow.
- */
+/** A runner-up row at this share of the best means ambient team-ink yellow, not the arrow. */
 const POV_RUNNER_UP_MAX_RATIO = 0.5;
 
 /** Fraction of `roi` pixels that are arrow-yellow. `rgb` is a 3-channel RGB mat. */
@@ -50,10 +45,7 @@ export function povYellowFraction(rgb: Mat, roi: Roi): number {
 	return n > 0 ? yellow / n : 0;
 }
 
-/**
- * Pick the arrow row from per-row yellow fractions: the best row must clear
- * POV_MIN_FRACTION and stand clear of the runner-up; null means no arrow.
- */
+/** Arrow row from per-row yellow fractions; null when none clears POV_MIN_FRACTION or the runner-up is close. */
 export function findPovIndex(fractions: readonly number[]): number | null {
 	let best = -1;
 	for (let i = 0; i < fractions.length; i++) {

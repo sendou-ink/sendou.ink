@@ -1,12 +1,7 @@
 /**
- * Replay-browser header parsing. Same black auto-sized tag style as the
- * live scoreboard header, but different content: the top line holds the
- * recording timestamp ("3/7/2026 22:28") followed by the stage, the bottom
- * line the lobby (bold) followed by the mode.
- *
- * The timestamp is locale-formatted and open-ended, so it is validated by
- * shape and kept as a raw string; stage and lobby+mode snap to the closed
- * sets shared with the live header.
+ * Replay-browser header: same tag style as the live header, top line timestamp
+ * ("3/7/2026 22:28") + stage, bottom line lobby + mode. The locale-formatted
+ * timestamp is validated by shape and kept raw; the rest snaps to closed sets.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { ScannerLobby } from "../../../scanner-types";
@@ -36,33 +31,24 @@ export interface ParsedReplayHeader {
 const MIN_MATCH_SCORE = 0.62;
 
 /**
- * Lifted-blacks captures (720p streams upscaled and re-encoded) raise the
- * tag background to ~80-115 gray, above readTagBand's default dark ceiling,
- * so the tag-extent trim truncates the band to a sliver and the read comes
- * back empty. A band whose closed-set snap fails is re-read with this
- * ceiling; the retry is adopted only when it snaps at least as well.
+ * Lifted-blacks captures raise the tag background to ~80-115 gray, above
+ * readTagBand's default ceiling, truncating the band to a sliver. A failed snap
+ * is re-read with this ceiling and adopted only when it snaps at least as well.
  */
 const TAG_DARK_MAX_LIFTED = 120;
 
 /**
- * "3/7/2026 22:28" and friends; capture the rest of the line (the stage).
- * The console formats the date per locale — "7.3.2026" (de), "2026/3/7"
- * (ja) — so any . / - separated triple followed by a time is accepted.
- * Adjacent skinny time digits can read with a spurious gap on compressed
- * captures ("14:1 1"), so a lone space is tolerated between them and
- * stripped when the timestamp is assembled. Not left-anchored: the
- * battle log line leads with a rank icon on ranked lobbies, which reads as
- * a junk glyph before the date.
+ * Locale date ("3/7/2026", "7.3.2026", "2026/3/7") + time, rest = stage. A lone
+ * space between skinny time digits is tolerated ("14:1 1") and stripped. Not
+ * left-anchored: the battle log's rank icon reads as a junk glyph before the date.
  */
 const TIMESTAMP_RE =
 	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4})\s+(\d(?: ?\d)?: ?\d ?\d)\s*(.*)$/;
 
 /**
- * The date-to-time gap can also collapse entirely ("22/8/202620:37"), tried
- * only after the spaced form fails. The date's last component is lazy so the
- * time match decides where the fused run splits ("2026/3/720:28" is 7 +
- * 20:28, not 7202 + 0:28), and the time drops the spurious-gap tolerance —
- * with it, a lazy match could steal the year's last digit instead.
+ * Fused date-time ("22/8/202620:37"), tried after the spaced form. The date's
+ * last component is lazy so the time decides the split ("2026/3/720:28" = 7 +
+ * 20:28); no spurious-gap tolerance or a lazy match could steal a year digit.
  */
 const TIMESTAMP_FUSED_RE =
 	/(\d{1,4}[./-]\d{1,2}[./-]\d{1,4}?)(\d{1,2}:\d\d)\s*(.*)$/;
@@ -75,13 +61,9 @@ interface TopBandParse {
 }
 
 /**
- * In the BlitzMain glyphs the digit forms are near-identical to their letter
- * lookalikes (0/O, the 1/I/l/| bars), so a stage read can surface the digit
- * ("R0M-en") or the wrong bar ("WnrId") and burn an edit the snap threshold
- * cannot spare. Stage names are digit-free in every language (sole exception
- * carries a '9'), so digits and bars fold to letters before snapping — on
- * both the reading and the entry, so an entry's own 'I' ("Inkblot") lands in
- * the same folded space.
+ * BlitzMain digits are near-identical to letter lookalikes (0/O, 1/I/l/|), so a
+ * stage read like "R0M-en" burns an edit the snap cannot spare. Stage names are
+ * digit-free (sole exception carries a '9'), so both reading and entry fold.
  */
 function foldDigitLookalikes(s: string): string {
 	return s.replace(/0/g, "o").replace(/[1|I]/g, "l");
@@ -91,11 +73,8 @@ function parseTopBand(reading: string): TopBandParse {
 	let timestamp: string | null = null;
 	let stage: StageId | null = null;
 	let stageScore = 0;
-	// The top band reads with the BlitzMain name glyphs, where 1/I/l/| are
-	// identical bars ("I9:04"), O/o ride a hair off 0, and 8 can surface as
-	// S ("O9/OS/2Oo6"); in the digits-only timestamp every lookalike folds
-	// to its digit. Match on the normalized line, keep the stage part's
-	// original reading (the replacements are 1:1, so offsets line up).
+	// BlitzMain lookalikes ("I9:04", "O9/OS/2Oo6") fold to digits for the
+	// timestamp; the stage part keeps its original reading (1:1 replacements, offsets line up)
 	const normalized = reading
 		.replace(/[Il|]/g, "1")
 		.replace(/[Oo]/g, "0")
@@ -124,10 +103,7 @@ function parseTopBand(reading: string): TopBandParse {
 export interface ReplayHeaderBands {
 	top: Roi;
 	bottom: Roi;
-	/**
-	 * see TagBandOptions.tagLeadInMax; the battle log tags are not
-	 * left-anchored
-	 */
+	/** see TagBandOptions.tagLeadInMax; the battle log tags are not left-anchored */
 	tagLeadInMax?: number;
 	/** see TagBandOptions.tagColumnFraction; the battle log tags are tilted */
 	tagColumnFraction?: number;

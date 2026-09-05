@@ -1,6 +1,14 @@
 import clsx from "clsx";
 import { isSameDay } from "date-fns";
-import { Flag, Pencil, Plus, Trash } from "lucide-react";
+import {
+	CalendarClock,
+	Flag,
+	Flame,
+	Pencil,
+	Plus,
+	Table,
+	Trash,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
@@ -8,8 +16,14 @@ import * as R from "remeda";
 import type * as v from "valibot";
 import { ActionButton } from "~/components/ActionButton";
 import { Alert } from "~/components/Alert";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { FormMessage } from "~/components/FormMessage";
 import { UserLink } from "~/components/UserLink";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
@@ -24,6 +38,7 @@ import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { databaseTimestampToDate } from "~/utils/dates";
 import invariant from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
+import { EVENTS_PAGE } from "~/utils/urls";
 import { action } from "../actions/t.$customUrl.schedule.server";
 import {
 	addTeamEventSchema,
@@ -31,7 +46,12 @@ import {
 	teamScheduleActionSchema,
 } from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
+import {
+	PlayableWindowsSummary,
+	TierDot,
+} from "../components/PlayableWindowsSummary";
 import { ScheduleDayCell } from "../components/ScheduleDayCell";
+import { ScheduleHeatmap } from "../components/ScheduleHeatmap";
 import { WeekToggle } from "../components/WeekToggle";
 import type { TeamScheduleLoaderData } from "../loaders/t.$customUrl.schedule.server";
 import { loader } from "../loaders/t.$customUrl.schedule.server";
@@ -73,7 +93,10 @@ export default function TeamSchedulePage() {
 
 function ScheduleWeeks({ weeks }: { weeks: Array<WeekData> }) {
 	const { t } = useTranslation(["schedule"]);
-	const [{ week }, setParams] = useSearchParamsTyped(scheduleWeekSearchParams);
+	const members = useTeamMembers();
+	const [{ week, view }, setParams] = useSearchParamsTyped(
+		scheduleWeekSearchParams,
+	);
 	const { formatter: headingFormatter } = useDateTimeFormat({
 		month: "short",
 		day: "numeric",
@@ -91,15 +114,51 @@ function ScheduleWeeks({ weeks }: { weeks: Array<WeekData> }) {
 						shownWeek.days[6].noonAt,
 					)}
 				</h2>
-				<WeekToggle
-					name="schedule-week"
-					value={week}
-					onChange={(value) => setParams({ week: value })}
-				/>
+				<div className={styles.headerActions}>
+					<LinkButton
+						to={scheduleWeekSearchParams.href(EVENTS_PAGE, { week })}
+						variant="minimal"
+						size="miniscule"
+						icon={<CalendarClock />}
+						testId="edit-availability-link"
+					>
+						{t("schedule:team.editAvailability")}
+					</LinkButton>
+					<WeekToggle
+						name="schedule-week"
+						value={week}
+						onChange={(value) => setParams({ week: value })}
+					/>
+				</div>
 			</div>
 			<TeamEvents week={shownWeek} />
-			<ScheduleGrid week={shownWeek} />
-			<PlayableWindowsSummary week={shownWeek} />
+			<SendouTabs
+				selectedKey={view}
+				onSelectionChange={(key) =>
+					setParams({ view: key === "grid" ? "grid" : "heatmap" })
+				}
+			>
+				<SendouTabList>
+					<SendouTab id="heatmap" icon={<Flame />}>
+						{t("schedule:team.viewHeatmap")}
+					</SendouTab>
+					<SendouTab id="grid" icon={<Table />}>
+						{t("schedule:team.viewGrid")}
+					</SendouTab>
+				</SendouTabList>
+				<SendouTabPanel id="heatmap">
+					<ScheduleHeatmap week={shownWeek} members={members} />
+				</SendouTabPanel>
+				<SendouTabPanel id="grid">
+					<div className="stack md">
+						<ScheduleGrid week={shownWeek} />
+						<PlayableWindowsSummary
+							windows={shownWeek.windows}
+							minPlayers={shownWeek.minPlayers}
+						/>
+					</div>
+				</SendouTabPanel>
+			</SendouTabs>
 			<WeekNotes week={shownWeek} />
 		</div>
 	);
@@ -150,11 +209,10 @@ function ScheduleGrid({ week }: { week: WeekData }) {
 						{week.days.map((day, dayIndex) => (
 							<th key={day.date} scope="col" className={styles.dayHeader}>
 								{day.windowTier ? (
-									<span
-										className={clsx(styles.tierDot, styles.dayDot, {
-											[styles.tierDotFull]: day.windowTier === "FULL",
-										})}
-										data-testid={`schedule-day-dot-${dayIndex}`}
+									<TierDot
+										full={day.windowTier === "FULL"}
+										className={styles.dayDot}
+										testId={`schedule-day-dot-${dayIndex}`}
 									/>
 								) : null}
 								{dayFormatter.format(day.noonAt)}
@@ -198,63 +256,6 @@ function ScheduleCell({
 				note={note?.text}
 			/>
 		</td>
-	);
-}
-
-function PlayableWindowsSummary({ week }: { week: WeekData }) {
-	const { t } = useTranslation(["schedule"]);
-
-	const fullWindows = week.windows.filter((window) => window.tier === "FULL");
-	const oneShortWindows = week.windows.filter(
-		(window) => window.tier === "ONE_SHORT",
-	);
-
-	return (
-		<div className={styles.summary} data-testid="schedule-summary">
-			<div className={styles.summaryRow}>
-				<span className={clsx(styles.tierDot, styles.tierDotFull)} />
-				<span className={styles.summaryLabel}>
-					{t("schedule:team.canPlay", { players: week.minPlayers })}
-				</span>
-				<WindowList windows={fullWindows} />
-			</div>
-			{week.minPlayers > 1 && oneShortWindows.length > 0 ? (
-				<div className={styles.summaryRow}>
-					<span className={styles.tierDot} />
-					<span className={styles.summaryLabel}>
-						{t("schedule:team.withSub", { players: week.minPlayers - 1 })}
-					</span>
-					<WindowList windows={oneShortWindows} />
-				</div>
-			) : null}
-		</div>
-	);
-}
-
-function WindowList({ windows }: { windows: WeekData["windows"] }) {
-	const { t } = useTranslation(["schedule"]);
-	const { formatter: windowFormatter } = useDateTimeFormat({
-		weekday: "short",
-		hour: "numeric",
-		minute: "2-digit",
-	});
-
-	if (windows.length === 0) {
-		return <span className="text-lighter">{t("schedule:team.noWindows")}</span>;
-	}
-
-	return (
-		<span className={styles.windowList}>
-			{windows.map((window) => (
-				<span
-					key={window.startsAt}
-					className={styles.window}
-					data-testid="schedule-window"
-				>
-					{windowFormatter.formatRange(window.startsAt, window.endsAt)}
-				</span>
-			))}
-		</span>
 	);
 }
 
@@ -495,12 +496,10 @@ function ParticipantUserIdsFormField() {
 	return (
 		<FormField
 			name="participantUserIds"
-			options={members
-				.filter((member) => member.role !== "CHEERLEADER")
-				.map((member) => ({
-					value: String(member.id),
-					label: () => member.username,
-				}))}
+			options={members.map((member) => ({
+				value: String(member.id),
+				label: () => member.username,
+			}))}
 		/>
 	);
 }

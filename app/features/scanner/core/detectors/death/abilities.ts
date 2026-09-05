@@ -1,13 +1,9 @@
 /**
- * Ability badge templates for the death-screen gear panel.
- *
- * Committed icon assets (assets/cv/abilities/) are bare icon art with
- * alpha; on screen each sits centered on a near-black circular badge
- * filling a known fraction of the slot. Templates composite the art onto a
- * black square at that fraction, then resize to the candidate badge sizes —
- * shaped like weapon templates so matchWeapon's NCC + ink-coverage scoring
- * (see weapons.ts) applies directly. Mains (⌀~68) and subs (⌀~48) use
- * different art fractions, so each role gets its own template set.
+ * Ability badge templates for the death-screen gear panel: the bare icon art
+ * (assets/cv/abilities/) is composited onto a near-black square at the on-screen
+ * art fraction and resized to candidate badge sizes, shaped like weapon templates
+ * so matchWeapon's scoring applies. Mains (⌀~68) and subs (⌀~48) use different
+ * art fractions, hence separate template sets.
  */
 import { getCV } from "../../cv";
 import type { FrameData } from "../../image";
@@ -29,10 +25,8 @@ export interface AbilityTemplates {
 }
 
 /**
- * Exported for the calibration tooling's art-ratio sweeps and for other
- * screens' badge sets (scoreboard-own builds its sizes/threshold here).
- * inkThreshold must match the one passed to matchWeapon, or the coverage
- * ratio compares mismatched ink counts.
+ * Also used by calibration art-ratio sweeps and scoreboard-own's badge set.
+ * inkThreshold must match the one passed to matchWeapon or coverage ratios mismatch.
  */
 export function buildAbilityRole(
 	icons: { id: string; image: FrameData }[],
@@ -42,8 +36,7 @@ export function buildAbilityRole(
 ): WeaponTemplate[] {
 	const cv = getCV();
 	return icons.map(({ id, image }) => {
-		// composite the icon art over the badge black, padded so the art
-		// occupies artRatio of the square (as it does of the badge on screen)
+		// pad so the art occupies artRatio of the square, as it does of the badge on screen
 		const side = Math.round(image.width / artRatio);
 		const offset = Math.floor((side - image.width) / 2);
 		const padded = new cv.Mat(

@@ -277,8 +277,7 @@ function Players({
 	return (
 		<div className="stack md horizontal justify-center flex-wrap">
 			{players.map((player) => {
-				// a player only met on maps of a set someone else's team was fielded
-				// for has no set record to show a win rate of
+				// a player only met on maps of another team's set has no set record
 				const setWinRate = winPercentage(player.setWins, player.setLosses);
 				const mapWinRate = winPercentage(player.mapWins, player.mapLosses);
 				return (

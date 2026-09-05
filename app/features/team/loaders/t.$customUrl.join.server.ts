@@ -58,7 +58,7 @@ export function validateInviteCode({
 	inviteCode: string;
 	realInviteCode: string;
 	team: TeamRepository.findByCustomUrl;
-	user?: { id: number; team?: { name: string } };
+	user?: { id: number };
 	reachedTeamCountLimit: boolean;
 }) {
 	if (inviteCode.length !== SHORT_NANOID_LENGTH) {

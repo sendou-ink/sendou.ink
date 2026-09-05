@@ -1,7 +1,6 @@
 /**
- * Page chrome shared by the scanner's live, VoD and screenshot pages: the
- * controls row and its status pill, the preview/feed split and the file
- * dropzone the VoD and screenshot pages both start from.
+ * Page chrome shared by the live, VoD and screenshot pages: the controls row
+ * with its status pill, the preview/feed split and the file dropzone.
  */
 
 import clsx from "clsx";

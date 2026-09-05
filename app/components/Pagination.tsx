@@ -249,15 +249,10 @@ export function getPageNumbers(
 }
 
 /**
- * Inclusive range of inner page numbers (excluding the always-shown first and
- * last page) to render around the current page. The window is nudged inward by
- * one when the current page is the very first or last page, so the edge view
- * shows a bridging number instead of a lonely jump like "1 2 … 8".
- *
- * When exactly one page would be left between the window and the always-shown
- * first or last page, the window is widened to include it: an ellipsis takes
- * the same space as a single page number, so "1 … 3" is never better than
- * "1 2 3".
+ * Inclusive range of inner page numbers (first and last are always shown) around the current
+ * page. Nudged inward by one at the very first/last page so the edge shows a bridging number
+ * instead of "1 2 … 8", and widened when exactly one page would be hidden: an ellipsis takes the
+ * same space, so "1 … 3" is never better than "1 2 3".
  */
 function innerPageWindow(
 	currentPage: number,

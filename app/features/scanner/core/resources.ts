@@ -1,12 +1,10 @@
 /**
- * Environment-agnostic assembly of ScoreboardResources. Node (filesystem)
- * and the worker (HTTP) inject only the four IO primitives; every resource
- * key, icon directory, template option set, and atlas name lives here once,
- * so adding a resource cannot desync the two loaders. Icon/atlas decoding is
- * eager (cheap), but template prep and atlas slicing are deferred behind
- * memoized getters — a test process loads the full bundle while its one
- * detector touches only a slice, and unused sets (four weapon-template
- * builds alone are ~7k resizes) dominated startup.
+ * Environment-agnostic assembly of ScoreboardResources: Node (filesystem) and
+ * the worker (HTTP) inject only the IO primitives; every resource key, icon
+ * directory, template option set and atlas name lives here once. Icon/atlas
+ * decoding is eager (cheap); template prep and atlas slicing are memoized
+ * getters, since unused sets (four weapon-template builds alone are ~7k
+ * resizes) dominated startup.
  */
 
 import { abilities as abilityList } from "~/modules/in-game-lists/abilities";

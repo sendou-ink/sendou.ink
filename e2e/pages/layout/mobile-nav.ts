@@ -34,6 +34,9 @@ export class MobileNav {
 			youPanelSettingsLink: this.openPanelDialog.getByRole("link", {
 				name: "Settings",
 			}),
+			youPanelTeamLink: this.openPanelDialog.getByRole("link", {
+				name: "My team",
+			}),
 			friendItems: this.openPanelDialog.locator("button[class*='listButton']"),
 		};
 	}

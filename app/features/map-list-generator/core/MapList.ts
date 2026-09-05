@@ -11,7 +11,7 @@ import type { MapPool } from "./map-pool";
 import type { ReadonlyMapPoolObject } from "./map-pool-serializer/types";
 
 interface GenerateNext {
-	/** How many maps to return? E.g. for a Bo5 set, amount should be 5 */
+	/** Maps to return, e.g. 5 for a Bo5. */
 	amount: number;
 	pattern?: string;
 }
@@ -19,23 +19,19 @@ interface GenerateNext {
 interface MaplistPattern {
 	mustInclude?: Array<{
 		mode: ModeShort;
-		/** Should the mode appear in the guaranteed to be played maps of a Best of set e.g. first 3 of a Bo5? */
+		/** Must appear among the guaranteed maps of a best of, e.g. first 3 of a Bo5. */
 		isGuaranteed: boolean;
 	}>;
 	pattern: Array<"ANY" | ModeShort>;
 }
 
-/**
- * Creates a unique key for a stage-mode combination.
- * @example
- * stageModeKey("SZ", 1); // "1-SZ"
- */
+/** Unique key of a mode-stage combination, e.g. `modeStageKey("SZ", 1)` gives `"SZ-1"`. */
 export function modeStageKey(mode: ModeShort, stageId: StageId): string {
 	return `${mode}-${stageId}`;
 }
 
 /**
- * Generates map lists that avoid repeating stages and optionally allows providing mode pattern.
+ * Generates map lists avoiding stage repeats, optionally following a mode pattern.
  *
  * @example
  * const generator = generate({ mapPool: new MapPool(pool) });
@@ -44,17 +40,16 @@ export function modeStageKey(mode: ModeShort, stageId: StageId): string {
  * const secondSet = generator.next({ amount: 3, pattern: "SZ*TC" }).value; // remembers stages used in firstSet
  */
 export function* generate(args: {
-	/** The map pool to use for generating map lists (MapPool class) */
 	mapPool: MapPool;
-	/** Should the function bias in favor of maps not played? E.g. maps 4 & 5 in a Bo5 format (not every team plays them). Should be true if generating for tournament with best of format. */
+	/** Bias towards maps not guaranteed to be played (e.g. maps 4 & 5 of a Bo5). True for best of formats. */
 	considerGuaranteed?: boolean;
-	/** Initial weights for specific stage-mode combinations. Key format: `${mode}-${stageId}` (generate via `MapList.stageModeKey`). Negative weights can be used to deprioritize certain maps. */
+	/** Initial weights keyed by `modeStageKey`. Negative weights deprioritize maps. */
 	initialWeights?: Map<string, number>;
-	/** Skip the ensureMinimumCandidates check that inflates weights to ensure half the pool is available. Useful when initial weights already define the desired selection. */
+	/** Skip inflating weights so half the pool is available, e.g. when initial weights already define the selection. */
 	skipEnsureMinimumCandidates?: boolean;
-	/** Fixed mode order — when set, skips the random shuffle and uses only this order. Intended for `resume`. */
+	/** Fixed mode order instead of a random shuffle. Intended for `resume`. */
 	modeOrder?: ModeShort[];
-	/** Initial weights for stages (mode-agnostic). Used by `resume` to carry over stage-level penalties from history. */
+	/** Mode-agnostic initial stage weights, how `resume` carries over stage-level penalties from history. */
 	initialStageWeights?: Map<StageId, number>;
 }): Generator<Array<ModeWithStage>, Array<ModeWithStage>, GenerateNext> {
 	if (args.mapPool.isEmpty()) {
@@ -141,11 +136,8 @@ export function* generate(args: {
 }
 
 /**
- * Returns a generator primed to continue map selection after the given history.
- *
- * Keeps the pool's mode order stable (rotated so the next-to-play mode is first)
- * and biases against already-played `(mode, stage)` pairs so they are not picked
- * again unless every option in that mode has already been played.
+ * Generator primed to continue after `history`: mode order kept stable (rotated so the next mode
+ * is first) and played `(mode, stage)` pairs avoided unless every option in that mode was played.
  *
  * @example
  * const generator = resume({ mapPool, history });
@@ -281,7 +273,7 @@ function selectStageWeighted({
 	});
 }
 
-/** Ensure that stage map pool has at least half the total options at the start of a round to avoid predictable replay order */
+/** At least half the pool must be available at the start of a round, or the replay order gets predictable. */
 function ensureMinimumCandidates({
 	mapPool,
 	stageWeights,
@@ -424,7 +416,7 @@ function modifyModeOrderByPattern(
 const validPatternParts = new Set(["*", ...modesShort] as const);
 
 /**
- * Parses a pattern string into structured pattern data for map list generation.
+ * Parses a mode pattern string.
  *
  * @example
  * unwrapOr(parsePattern("SZ*TC"), null); // { pattern: ["SZ", "ANY", "TC"] }

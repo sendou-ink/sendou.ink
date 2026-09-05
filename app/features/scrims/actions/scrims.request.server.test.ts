@@ -6,7 +6,7 @@ import * as ScrimPostRepository from "../ScrimPostRepository.server";
 import type { scrimRequestFormSchema } from "../scrims-schemas";
 import { action as scrimsAction } from "./scrims.server";
 
-// The request action fires a fire-and-forget push/DB notification; not under test here.
+// the action's fire-and-forget notification is not under test
 vi.mock("~/features/notifications/core/notify.server", () => ({
 	notify: () => Promise.resolve(),
 }));
@@ -50,8 +50,7 @@ describe("Scrim requests: pickup roster validation", () => {
 			{ user: "regular" },
 		);
 
-		// The post-creation path rejects this via validatePickupFriends; the request
-		// path must too, rather than going through without the victim.
+		// post creation rejects this via validatePickupFriends; the request path must too
 		expect(res?.fieldErrors?.from).toBeTruthy();
 		expect(await requestsForPost(post.id)).toHaveLength(0);
 	});

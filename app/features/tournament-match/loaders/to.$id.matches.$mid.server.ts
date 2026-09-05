@@ -106,8 +106,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		}
 	}
 
-	// cached so that some user changing their noScreen preference doesn't
-	// change the selection once the match has started
+	// cached so a noScreen preference change doesn't change the selection once the match has started
 	const noScreen =
 		match.opponentOne?.id && match.opponentTwo?.id
 			? await cachified({

@@ -24,13 +24,10 @@ const NotificationsContext = React.createContext<NotificationsContextValue>({
 });
 
 /**
- * Serves the notification peek (bell popover + unseen dot) and keeps it fresh
- * push-first: an initial fetch after mount (deliberately not part of any
- * loader, so notifications never delay a page), then a refetch whenever the
- * server publishes over the shared SSE connection that the user's
- * notifications changed server-side (new notification, marked seen, resolved
- * by an action elsewhere). Polling and refetch-on-activity heuristics only
- * kick in as a fallback while the event stream is down.
+ * Serves the notification peek (bell popover + unseen dot), push-first: an initial fetch after
+ * mount (not in any loader, so notifications never delay a page), then a refetch whenever the
+ * server publishes over SSE that they changed. Polling and refetch-on-activity are only the
+ * fallback while the event stream is down.
  */
 export function NotificationsProvider({
 	user,
@@ -93,12 +90,9 @@ export function useNotificationsData() {
 }
 
 /**
- * Without the event stream there is no ping when something the user did resolves
- * an unseen notification, so fall back to refetching after anything that may
- * have: a navigation (loaders mark notifications seen when the user views the
- * page a notification points at) or a settled action submission (actions mark
- * them seen when the user addresses the thing itself). Only fires while an
- * unseen notification exists, so it usually adds no server load even then.
+ * Without the event stream nothing pings when the user resolves an unseen notification, so refetch
+ * after anything that may have: a navigation (loaders mark seen) or a settled action (actions mark
+ * seen). Only fires while an unseen notification exists.
  */
 function useFallbackRefreshOnPotentialResolution({
 	enabled,

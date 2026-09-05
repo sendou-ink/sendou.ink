@@ -1,19 +1,4 @@
 import * as React from "react";
-import { useWindowSize } from "./useWindowSize";
-
-export const MOBILE_BREAKPOINT = 600;
-export const DESKTOP_BREAKPOINT = 1000;
-
-type LayoutSize = "mobile" | "tablet" | "desktop";
-
-export function useLayoutSize(): LayoutSize {
-	const { width } = useWindowSize();
-
-	if (width === 0) return "desktop";
-	if (width < MOBILE_BREAKPOINT) return "mobile";
-	if (width < DESKTOP_BREAKPOINT) return "tablet";
-	return "desktop";
-}
 
 const listeners = new Set<() => void>();
 let observer: ResizeObserver | null = null;

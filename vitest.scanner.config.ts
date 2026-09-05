@@ -1,12 +1,9 @@
 import { configDefaults, defineConfig } from "vitest/config";
 
-// Scanner golden-file suite: Node-side (OpenCV.js WASM + @napi-rs/canvas image
-// IO), sweeping every fixture under app/features/scanner/tests/fixtures. Kept
-// out of the unit project so `--project unit` stays fast, and out of CI
-// (`test:unit:browser`) because the game icons come from a sibling
-// sendou-ink/assets checkout the runner does not have — run it locally with
-// `pnpm test:scanner`. The fixture-free logic tests live in
-// app/features/scanner/tests/logic and run in the unit project instead.
+// Scanner golden-file suite (OpenCV.js WASM + @napi-rs/canvas) over app/features/scanner/tests/fixtures.
+// Out of the unit project to keep it fast and out of CI because the game icons come from a
+// sibling sendou-ink/assets checkout; run locally with `pnpm test:scanner`. The fixture-free
+// logic tests in app/features/scanner/tests/logic run in the unit project.
 export default defineConfig({
 	test: {
 		name: "scanner",

@@ -86,7 +86,7 @@
 	grid-template-columns: repeat(2, 1fr);
 	gap: var(--s-3);
 
-	@media (max-width: 640px) {
+	@container (width < 640px) {
 		grid-template-columns: 1fr;
 	}
 }

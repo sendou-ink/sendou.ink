@@ -12,10 +12,11 @@ export const createTeamSchemaServer = v.objectAsync({
 	name: v.pipeAsync(
 		createTeamSchema.entries.name,
 		v.checkAsync(async (name) => {
-			const teams = await TeamRepository.findAllUndisbanded();
-			const customUrl = mySlugify(name);
+			const existingTeam = await TeamRepository.findByCustomUrl(
+				mySlugify(name),
+			);
 
-			return !teams.some((team) => team.customUrl === customUrl);
+			return !existingTeam;
 		}, "forms:errors.duplicateName"),
 	),
 });

@@ -1,7 +1,6 @@
 /**
- * "Save as fixture": download the raw captured frame as PNG plus an
- * expected.json prefilled from the detector's own output, so labeling a new
- * fixture is review-and-correct instead of data entry.
+ * "Save as fixture": downloads the raw captured frame as PNG plus an
+ * expected.json prefilled from the detector's output, so labeling is review-and-correct.
  */
 
 import {
@@ -250,10 +249,7 @@ function buildExpectedJson(
 	)}\n`;
 }
 
-/**
- * expected.json alone, for a frame the user already has on disk (Screenshot
- * page). Null data produces the negative-fixture form.
- */
+/** expected.json alone, for a frame already on disk (Screenshot page). Null data = negative-fixture form. */
 export function downloadExpectedJson(
 	data: FixtureData | null,
 	eventType?: string,
@@ -266,10 +262,7 @@ export function downloadExpectedJson(
 	);
 }
 
-/**
- * Fixture export for a live detection: the stored PNG is the byte-exact
- * frame the detector analyzed, paired with that event's own parse output.
- */
+/** Fixture export for a live detection: the stored PNG is the byte-exact analyzed frame plus its parse output. */
 export function saveFixtureFromEvent(
 	frame: Blob,
 	data: FixtureData,

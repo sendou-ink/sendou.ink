@@ -68,8 +68,6 @@ export interface BaseWeaponStats {
 	DamageParam_ValueMinCharge?: number;
 	BlastParam_SplashDamage?: number;
 	BlastParam_DistanceDamage?: Array<DistanceDamage>;
-	// DamageParam_ReduceStartFrame?: number;
-	// DamageParam_ReduceEndFrame?: number;
 	/** Brella shield HP */
 	CanopyHP?: number;
 	/** Amount of frames white ink (=no ink recovery during this time) takes */
@@ -100,9 +98,6 @@ export interface BaseWeaponStats {
 	InkConsume_SideStepParam?: number;
 	/** How much ink a fully charged Splatana shot consumes? */
 	InkConsumeFullCharge_ChargeParam?: number;
-	//InkConsumeMidCharge_ChargeParam?: number;
-	// SpeedInkConsumeMax_WeaponRollParam?: number;
-	// SpeedInkConsumeMin_WeaponRollParam?: number;
 
 	// Range parameters for shooters/blasters/sloshers/splatlings/dualies
 	/** Initial bullet velocity */
@@ -293,7 +288,7 @@ export interface AnalyzedBuild {
 		specialPoint: Stat;
 		specialLost: Stat;
 		specialLostSplattedByRP: Stat;
-		/** Seconds it takes Tenacity to fill the special gauge, keyed by how many active players the user's team is down. Only set if the build has Tenacity. */
+		/** Seconds for Tenacity to fill the special gauge, keyed by how many players the team is down. */
 		tenacitySecondsToSpecial?: Record<TenacityPlayerDeficit, number>;
 		mainWeaponWhiteInkSeconds?: number;
 		subWeaponWhiteInkSeconds: number;

@@ -3,12 +3,7 @@ import type { StageCreator } from "./builder";
 import * as helpers from "./helpers";
 import { ordering, STANDARD_BRACKET_FIRST_ROUND_ORDERING } from "./seeding";
 
-/**
- * Creates a double elimination stage.
- *
- * One upper bracket (winner bracket, WB), one lower bracket (loser bracket, LB) and a double grand final
- * between the winner of both brackets.
- */
+/** Winner bracket (WB), loser bracket (LB) and a double grand final between the winners of both. */
 export function createDoubleElimination(creator: StageCreator): void {
 	const slots = creator.getSlots();
 	const stage = creator.createStage();
@@ -26,9 +21,7 @@ export function createDoubleElimination(creator: StageCreator): void {
 	}
 }
 
-/**
- * Creates a double grand final for winners of both brackets in a double elimination stage.
- */
+/** Double grand final for the winners of both brackets. */
 function createGrandFinal(
 	creator: StageCreator,
 	stageId: number,

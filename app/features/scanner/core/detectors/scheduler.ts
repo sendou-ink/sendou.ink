@@ -31,30 +31,21 @@ export interface SchedulingInfo {
 }
 
 export interface SchedulerOptions {
-	/**
-	 * false = one-shot harness mode: every detector is due on every frame and
-	 * parses are never suppressed
-	 */
+	/** false = one-shot harness mode: every detector due every frame, never suppressed */
 	suppressSteadyFrames: boolean;
-	/** check cadence while a detector's gate is passing (per-detector
-	 * refineIntervalS overrides — for detectors whose parse is expensive
-	 * enough that the dense default multiplies real cost) */
+	/** check cadence while a gate is passing (per-detector refineIntervalS overrides) */
 	refineIntervalS: number;
-	/** check cadence while a detector's gate is failing (per-detector
-	 * searchIntervalS overrides) */
+	/** check cadence while a gate is failing (per-detector searchIntervalS overrides) */
 	searchIntervalS: number;
-	/** consecutive non-improving parses tolerated before suppression
-	 * (per-detector maxStagnantParses overrides) */
+	/** non-improving parses tolerated before suppression (per-detector maxStagnantParses overrides) */
 	maxStagnantParses: number;
 	/** seconds without improvement tolerated before suppression */
 	stagnantAfterS: number;
 	/** minimum confidence gain that counts as an improvement */
 	minImprovement: number;
 	/**
-	 * a gate signature cell moving more than this since the streak's last
-	 * parse means the screen's content changed and the streak resets
-	 * (measured on battle log browsing: static-screen noise ≤2 per cell,
-	 * entry flips ≥57)
+	 * a signature cell moving more than this since the streak's last parse
+	 * resets the streak (battle log browsing: static noise ≤2 per cell, entry flips ≥57)
 	 */
 	signatureTolerance: number;
 	/** seconds without any gate pass before the scan counts as calm */
@@ -72,8 +63,7 @@ const DEFAULT_SCHEDULER_OPTIONS: SchedulerOptions = {
 	refineIntervalS: 0.15,
 	searchIntervalS: 0.25,
 	maxStagnantParses: 6,
-	// give a screen ~3s to animate in and produce its best read, whatever
-	// the sampling cadence
+	// ~3s for a screen to animate in and produce its best read, whatever the cadence
 	stagnantAfterS: 3,
 	minImprovement: 0.001,
 	signatureTolerance: 12,
@@ -138,10 +128,7 @@ export class DetectorScheduler {
 		this.#matchOpenUntilT = Number.NEGATIVE_INFINITY;
 	}
 
-	/**
-	 * Earliest t at which any detector wants a check — frames before it can
-	 * skip analysis (and its canvas readback) entirely.
-	 */
+	/** Earliest t any detector wants a check; frames before it skip analysis and readback. */
 	nextDueT(): number {
 		let next = Number.POSITIVE_INFINITY;
 		for (const state of this.#states.values()) {
@@ -154,8 +141,7 @@ export class DetectorScheduler {
 	/** Detector ids that should gate the frame at `t`. */
 	dueDetectors(t: number): string[] {
 		if (t + RESET_TOLERANCE_S < this.#maxT) this.reset(t);
-		// the first frame seeds the activity clock so a fresh session is never
-		// instantly calm — it has to earn its quiet period first
+		// first frame seeds the activity clock so a fresh session is never instantly calm
 		if (this.#lastActivityT === Number.NEGATIVE_INFINITY) {
 			this.#lastActivityT = t;
 		}
@@ -222,8 +208,7 @@ export class DetectorScheduler {
 		this.#recordMatchState(t, events);
 		const state = this.#states.get(id);
 		if (!state || state.info.checkIntervalS !== undefined) return;
-		// no events counts as confidence 0: a false-firing gate on a static
-		// screen stagnates and gets suppressed just like a parsed one
+		// no events counts as confidence 0 so a false-firing gate on a static screen stagnates too
 		const confidence = events.reduce(
 			(max, e) => Math.max(max, e.confidence),
 			0,
@@ -274,11 +259,7 @@ export class DetectorScheduler {
 		}
 	}
 
-	/**
-	 * True when the footage at `t` is dead air as far as detection goes: no
-	 * gate has passed for quietAfterS and no match is open — the VoD scanner
-	 * may skim by keyframes instead of decoding densely.
-	 */
+	/** Dead air: no gate pass for quietAfterS and no open match, so the VoD scanner may skim keyframes. */
 	calm(t: number): boolean {
 		if (!this.#options.suppressSteadyFrames) return false;
 		return (
@@ -292,8 +273,7 @@ export class DetectorScheduler {
 		const { info } = state;
 		if (info.checkIntervalS !== undefined) return info.checkIntervalS;
 		const search = info.searchIntervalS ?? this.#options.searchIntervalS;
-		// while suppressed only the gate keeps running (to spot the screen
-		// changing), which the sparser search cadence covers
+		// while suppressed only the gate runs (to spot the screen changing); search cadence suffices
 		if (state.streak?.suppressed) return search;
 		if (!state.gatePassing) return search;
 		return info.refineIntervalS ?? this.#options.refineIntervalS;

@@ -38,10 +38,7 @@ const memberCountOfOnlyTeam = async (tournamentId: number) => {
 	return count;
 };
 
-/**
- * A tournament open for registration with one team of `rosterSize` captained by the
- * user the action submits as, and a friend of theirs available to be added to it.
- */
+/** Open tournament with one team of `rosterSize` captained by the submitting user, plus a friend to add. */
 const scenario = async ({
 	rosterSize,
 	requireInGameNames = false,
@@ -49,11 +46,10 @@ const scenario = async ({
 	rosterSize: number;
 	requireInGameNames?: boolean;
 }) => {
-	// the captain, who submits the request
 	const captain = await UserFactory.createRegular({
 		profile: requireInGameNames ? { inGameName: "Captain#1234" } : null,
 	});
-	// the player they try to add, without an in-game name of their own
+	// without an in-game name of their own
 	const friend = await UserFactory.create({ profile: null });
 	const teammates = await UserFactory.createMany(rosterSize - 1);
 

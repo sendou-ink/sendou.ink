@@ -55,10 +55,7 @@ export function analyzeTrophyModel(model: string): TrophyModelAnalysis | null {
 	}
 }
 
-/**
- * Animations can toggle meshes on and off, so the peak across frames
- * is what the draw call and poly metrics should show.
- */
+/** Animations toggle meshes, so draw call and poly metrics show the peak across frames. */
 export function mergePeakRenderStats(
 	previous: RenderStats | null,
 	frame: RenderStats,

@@ -12,8 +12,7 @@ import * as BuildRepository from "./BuildRepository.server";
 
 const users = UserFactory.pool();
 
-// Splattershot (40) is the canonical base, Hero Shot Replica (45) is an alt skin
-// that should be folded to 40 by the canonical id mapping.
+// Hero Shot Replica (45) is an alt skin folded to Splattershot (40) by the canonical id mapping
 const SPLATTERSHOT: MainWeaponId = 40;
 const HERO_SHOT_REPLICA: MainWeaponId = 45;
 const SPLATTERSHOT_NOUVEAU: MainWeaponId = 41;
@@ -318,9 +317,7 @@ describe("BuildRepository.findAllPopularAbilitiesByWeaponId", () => {
 	});
 
 	test("counts each user at most once across signature buckets", async () => {
-		// Each user has two Splattershot builds with different signatures.
-		// Without per-user dedup, both users would inflate both buckets and
-		// the total count across rows would be 4 instead of <=2.
+		// without per-user dedup both users would inflate both buckets (4 total instead of <= 2)
 		await createBuild({ ownerId: users.id(1) });
 		await createBuild({ ownerId: users.id(1), abilities: SS_ABILITIES });
 		await createBuild({ ownerId: users.id(2) });

@@ -35,8 +35,7 @@ const calendarEventDateField = datetime({
 	max: calendarEventMaxDate,
 });
 
-// extracted so its literal item values don't widen to `string` in the
-// object's inferred value type
+// extracted so the literal item values don't widen to `string` in the object's inferred value type
 const toToolsModeField = select({
 	label: "labels.mapPickingStyle",
 	items: [
@@ -69,9 +68,8 @@ export const calendarNewBaseSchema = v.object({
 		bottomText: "bottomTexts.bioMarkdown",
 		maxLength: CALENDAR_EVENT.RULES_MAX_LENGTH,
 	}),
-	// calendar events can span multiple dates; tournaments always have exactly one
-	// (`startTime`). Only the relevant field is rendered, and the other stays at its
-	// empty initial value — `calendarNewSyncRefine` enforces the right one per type.
+	// calendar events span multiple dates, tournaments have exactly one (`startTime`); only the
+	// relevant field is rendered, `calendarNewSyncRefine` enforces the right one per type
 	date: array({
 		label: "labels.dates",
 		max: CALENDAR_EVENT.MAX_AMOUNT_OF_DATES,
@@ -128,8 +126,7 @@ export const calendarNewBaseSchema = v.object({
 	}),
 	toToolsMode: toToolsModeField,
 	pool: customField({ initialValue: "" }, v.optional(v.string())),
-	// the two bracket progression fields are only rendered (and validated) for
-	// tournaments; for calendar events both stay at their empty initial value
+	// only rendered (and validated) for tournaments, calendar events keep the empty initial values
 	brackets: bracketsFormField,
 	progression: progressionFormField,
 	isRanked: toggle({

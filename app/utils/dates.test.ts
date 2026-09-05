@@ -26,8 +26,7 @@ describe("getDateAtNextFullHour", () => {
 });
 
 describe("weekNumberToDate", () => {
-	// Force a timezone west of UTC so the assertion is deterministic regardless
-	// of where the test happens to run (the bug only manifests west of UTC).
+	// the bug only manifests west of UTC
 	const originalTimezone = process.env.TZ;
 	beforeAll(() => {
 		process.env.TZ = "America/Los_Angeles";
@@ -52,8 +51,7 @@ describe("weekNumberToDate", () => {
 });
 
 describe("weekNumberToDateRange", () => {
-	// Force a timezone west of UTC observing DST so the assertion is deterministic
-	// regardless of where the test happens to run.
+	// a timezone west of UTC observing DST
 	const originalTimezone = process.env.TZ;
 	beforeAll(() => {
 		process.env.TZ = "America/New_York";
@@ -65,8 +63,7 @@ describe("weekNumberToDateRange", () => {
 	const SEVEN_DAYS_MS = 7 * 24 * 60 * 60 * 1000;
 
 	test("spans exactly seven days even when the week contains a DST transition", () => {
-		// US spring-forward 2025 happened on Sunday 2025-03-09, which falls inside
-		// ISO week 10 of 2025 (Mon 2025-03-03 .. Mon 2025-03-10).
+		// US spring-forward Sunday 2025-03-09 falls inside ISO week 10 (Mon 03-03 .. Mon 03-10)
 		const { startTime, endTime } = weekNumberToDateRange({
 			week: 10,
 			year: 2025,

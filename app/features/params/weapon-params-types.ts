@@ -16,7 +16,6 @@ export interface ParamValueWithHistory {
 	history: Array<{ version: string; value: number | string }>;
 }
 
-/** Which set of weapons a params page compares: main weapons, sub weapons or special weapons. */
 export type WeaponParamKind = "main" | "sub" | "special";
 
 const WEAPON_PARAM_KIND_KEY_PREFIX: Record<WeaponParamKind, string> = {
@@ -54,33 +53,21 @@ export interface SpecialPointWithHistory {
 	history: Array<{ version: string; value: number }>;
 }
 
-/**
- * History of a weapon's damage multiplier against a single object (a {@link DAMAGE_RECEIVERS}
- * target), surfaced only in the patch history. `target` is the receiver key used by the object
- * damage calculator.
- */
+/** Damage multiplier history against one object; `target` is a {@link DAMAGE_RECEIVERS} key. Patch history only. */
 export interface DamageMultiplierWithHistory {
 	target: string;
 	current: number;
 	history: Array<{ version: string; value: number }>;
 }
 
-/**
- * The set of weapons whose damage rate against an object changed together. Carried by an incoming
- * damage multiplier {@link PatchChange} so the badge can show the attacking weapons' icons.
- */
+/** Weapons whose damage rate against an object changed together, so the {@link PatchChange} badge can show their icons. */
 export interface IncomingDamageAttackers {
 	mainWeaponIds: MainWeaponId[];
 	subWeaponIds: SubWeaponId[];
 	specialWeaponIds: SpecialWeaponId[];
 }
 
-/**
- * History of some attacking weapons' shared damage multiplier against a single object
- * ({@link DamageMultiplierWithHistory} from the defender's perspective): the page's sub or special
- * weapon is the object being damaged. `target` is the receiver key used by the object damage
- * calculator.
- */
+/** {@link DamageMultiplierWithHistory} from the defender's perspective: the page's sub/special is the object damaged. */
 export interface IncomingDamageMultiplierWithHistory {
 	target: string;
 	attackers: IncomingDamageAttackers;
@@ -94,14 +81,11 @@ export interface PatchChange {
 	from: number | string;
 	to: number | string;
 	kind: ParamChangeKind;
-	/** The specific kit a special points change belongs to. Only set for special points. */
+	/** Only set for special points changes. */
 	weaponId?: MainWeaponId;
-	/**
-	 * Which weapon of a kit the change belongs to. Used by the per-kit patch history to group a
-	 * column's changes under a divider per weapon. Only set for kit patch histories.
-	 */
+	/** Which weapon of the kit the change belongs to. Only set for kit patch histories. */
 	source?: WeaponParamKind;
-	/** The weapons whose rate changed. Only set for incoming damage multiplier changes. */
+	/** Only set for incoming damage multiplier changes. */
 	attackers?: IncomingDamageAttackers;
 }
 
@@ -111,11 +95,7 @@ export interface WeaponPatch {
 	changes: PatchChange[];
 }
 
-/**
- * Patch history of a single main weapon kit, folding the main weapon's changes together with its
- * sub and special weapon's changes. Each {@link PatchChange} carries a `source` so the changes can
- * be grouped per weapon within a patch.
- */
+/** Patch history of one kit: main + sub + special changes, each {@link PatchChange} tagged with its `source`. */
 export interface KitPatchHistory {
 	weaponId: MainWeaponId;
 	subWeaponId: SubWeaponId;

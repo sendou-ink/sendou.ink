@@ -180,7 +180,7 @@ export class RoundRobinBracket extends Bracket {
 				}
 			};
 
-			// every team of the group belongs in the standings even if all of its matches were forfeited by dropped out opponents, dropped out ones are seeded further below
+			// every team belongs in the standings even if all its matches were forfeited by dropped out opponents
 			const groupTeamIds = R.unique(
 				matches
 					.flatMap((match) => [match.opponent1?.id, match.opponent2?.id])
@@ -217,7 +217,7 @@ export class RoundRobinBracket extends Bracket {
 						"RoundRobinBracket.standings: winner or loser id not found",
 				);
 
-				// note: score might be missing in the case the set was ended early. In the future we might want to handle this differently than defaulting both to 0.
+				// score might be missing when the set was ended early, defaulting both to 0 for now
 
 				updateTeam({
 					teamId: winner.id,
@@ -260,7 +260,7 @@ export class RoundRobinBracket extends Bracket {
 				}
 			}
 
-			// Seed dropped teams here (after wins-against-tied) so forfeit matches don't credit opponents while still keeping them in standings.
+			// dropped teams seeded after wins-against-tied so forfeits don't credit opponents while keeping them in standings
 			for (const teamId of droppedOutWithIncompleteMatches) {
 				teams.push({
 					id: teamId,

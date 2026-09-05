@@ -8,13 +8,10 @@ type Rating = Pick<Tables["Skill"], "mu" | "sigma">;
 type RatingWithMatchesCount = { rating: Rating; matchesCount: number };
 
 /**
- * Loads the current ratings of the given users and teams for one season in two queries,
- * exposing them as synchronous lookups so that rating math can stay pure.
- *
- * Users and teams without a skill row that season resolve to the default rating. Asking
- * for anything that was not part of `userIds`/`identifiers` throws, as a silent default
- * rating would be indistinguishable from a real one. Note that `teamPlayerAverage` reads
- * the ratings of the identifier's members, so those users must be included in `userIds`.
+ * Loads the season's current ratings of the users and teams in two queries as synchronous lookups
+ * so rating math stays pure. Missing skill rows resolve to the default rating; asking for anything
+ * outside `userIds`/`identifiers` throws, as a silent default would pass for a real one.
+ * `teamPlayerAverage` reads the members' ratings, so those users must be in `userIds`.
  */
 export async function seasonRatings({
 	season,
@@ -77,11 +74,7 @@ export async function seasonRatings({
 	return { user, team, teamPlayerAverage };
 }
 
-/**
- * Loads the current seeding ratings of the given users for one seeding type in a single
- * query, exposing them as a synchronous lookup. Users without a seeding skill resolve to
- * the default rating.
- */
+/** Loads the users' seeding ratings of one type in a single query as a synchronous lookup; users without one resolve to the default rating. */
 export async function seedingRatings({
 	type,
 	userIds,

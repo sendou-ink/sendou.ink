@@ -11,32 +11,21 @@ import type {
 } from "../types";
 import { calculateTeamStatus } from "./team-status";
 
-/**
- * Weight subtracted for each time a pair has already played each other. Big enough
- * to dwarf every other weight of the whole round, meaning rematches only happen when
- * unavoidable and then as few of them as possible.
- */
+/** Subtracted per prior meeting of a pair. Dwarfs every other weight of the round so rematches happen only when unavoidable, and then as few as possible. */
 const REMATCH_PENALTY = 1_000_000_000;
 
 /**
- * Weight added for each team of a pair that has already received a bye, making
- * previously-byed teams more attractive to pair up. Applied per team (not per pair)
- * so that a matching leaving a bye-less team unpaired always beats one giving a team
- * a second bye: with an odd team count exactly one team is left unpaired, so the
- * matchings differ by exactly one bonus, which is set to dwarf every score-based
- * weight (including HIGH_SCORE_PAIRING_BONUS) while staying far below
- * REMATCH_PENALTY.
+ * Added per team of a pair that already received a bye. Per team, not per pair, so leaving a bye-less
+ * team unpaired always beats a second bye: with an odd count exactly one team is unpaired, so matchings
+ * differ by one bonus, sized to dwarf every score-based weight while staying far below REMATCH_PENALTY.
  */
 const PRIOR_BYE_PAIRING_BONUS = 10_000_000;
 
 /**
- * Weight added per score point of both teams of a pair. Summed over a full matching
- * this contributes the bonus times the total score of all paired teams, so with an
- * odd team count the matching maximizes it by leaving a lowest-score team unpaired —
- * that team receives the bye. Without this term the bye can drift to a top score
- * group team whenever the score group size parities make all-within-group pairings
- * possible only that way. Sized to dwarf the pairing quality weights (< ~100 per
- * pair) while a full round's worth stays far below PRIOR_BYE_PAIRING_BONUS.
+ * Added per score point of both teams of a pair, so with an odd count the matching leaves a lowest-score
+ * team unpaired for the bye. Without it the bye can drift to a top team when score group parities allow
+ * all-within-group pairings only that way. Dwarfs the pairing quality weights (< ~100 per pair) while a
+ * full round's worth stays far below PRIOR_BYE_PAIRING_BONUS.
  */
 const HIGH_SCORE_PAIRING_BONUS = 10_000;
 
@@ -47,19 +36,13 @@ interface GroupArgs {
 }
 
 /**
- * Generates the next round of matchups for a Swiss tournament bracket within a specific group.
- *
- * Considers only the matches and teams within the specified group. Teams that have dropped out are excluded from the pairing process.
- * If the group has an uneven number of teams, the lowest standing team that has not already received a bye is preferred to receive one.
- * A team that is the only one left in the running receives a bye for the round.
- * Matches are generated such that teams do not replay previous opponents if possible.
+ * Next round of a Swiss group. Dropped out teams are excluded. With an uneven count the lowest standing
+ * team without a prior bye gets one; a lone remaining team gets a bye. Rematches are avoided if possible.
  */
 export function generateRound(
 	data: BracketData,
 	args: GroupArgs,
 ): Result<GeneratedRound, string> {
-	// lets consider only this groups matches
-	// in the case that there are more than one group
 	const groupsMatches = data.match.filter((m) => m.groupId === args.groupId);
 
 	if (groupsMatches.length === 0) return err("No matches found for group");
@@ -118,13 +101,7 @@ export function generateRound(
 	});
 }
 
-/**
- * Whether the group still has at least one team that can be paired into a new round.
- *
- * False when every team of the group has dropped out or, with the early advance
- * variation, has already advanced or been eliminated. In that case the remaining
- * rounds of the group can never be started.
- */
+/** False when every team dropped out or (early advance) advanced/got eliminated, so no further round can start. */
 export function groupHasActiveTeams(data: BracketData, args: GroupArgs) {
 	return activeTeamStandings(data, args).length > 0;
 }
@@ -139,12 +116,10 @@ function activeTeamStandings(data: BracketData, args: GroupArgs) {
 		return groupsTeams.some((team) => team?.id === standing.team.id);
 	});
 
-	// teams who have dropped out are not considered
 	const standingsWithoutDropouts = groupsStandings.filter(
 		(s) => !s.team.droppedOut,
 	);
 
-	// filter out teams that have advanced or been eliminated if early advance/elimination is enabled
 	if (typeof args.settings?.advanceThreshold !== "number") {
 		return standingsWithoutDropouts;
 	}
@@ -179,19 +154,15 @@ function everyMatchOver(matches: MatchData[]) {
 
 interface SwissPairingTeam {
 	id: number;
-	/** How many matches has the team won */
 	score: number;
-	/** List of tournament team ids this team already played, one entry per meeting */
+	/** Tournament team ids already played, one entry per meeting */
 	avoid: Array<number>;
 	receivedBye?: boolean;
 }
 
 /**
- * Pairs up teams for a swiss round using maximum weighted matching, avoiding
- * rematches if possible and preferring teams with equal scores to play each other.
- * A team left over (odd amount of teams, or only one team given) receives a bye.
- *
- * Adapted from https://github.com/slashinfty/tournament-pairings
+ * Maximum weighted matching avoiding rematches if possible and preferring equal scores. A team left
+ * over gets a bye. Adapted from https://github.com/slashinfty/tournament-pairings
  */
 export function pairUp(players: SwissPairingTeam[]) {
 	if (players.length === 0) {
@@ -223,8 +194,7 @@ export function pairUp(players: SwissPairingTeam[]) {
 		),
 	].sort((a, b) => a - b);
 
-	// every pair is considered so that the matching always covers as many teams as
-	// possible, rematches are simply weighted down heavily rather than left out
+	// every pair is considered so the matching covers as many teams as possible, rematches are weighted down instead of left out
 	const blossomPairs = blossom(
 		generateWeightedPairs({ playerArray, scoreGroups, scoreSums }),
 		true,
@@ -302,7 +272,7 @@ function generateWeightedPairs({
 
 			wt += 23 / (2 * (scoreGroupDiff + 2));
 
-			// Lower weight for larger score differences, we really want to avoid 2-0 playing 0-2 etc.
+			// really want to avoid 2-0 playing 0-2 etc.
 			if (scoreGroupDiff >= 2) {
 				wt -= 10;
 			}

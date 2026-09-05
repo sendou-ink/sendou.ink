@@ -18,12 +18,9 @@ describe("calendar loader default view", () => {
 		vi.useRealTimers();
 	});
 
-	// The client resolves the shown week from the user's local clock while the
-	// loader resolves the fetched week from the server's clock. Around the week
-	// boundary these disagree by a full week for users ahead of UTC: e.g. in
-	// Auckland (UTC+13) Monday 2026-01-12 10:00 local is still Sunday 2026-01-11
-	// 21:00 UTC, so the user is shown the week Jan 12–18 but the loader only
-	// fetches up to ~Jan 13. Events from Tuesday evening onwards are missing.
+	// the client's shown week (local clock) and the loader's fetched week (server clock) disagree by a
+	// full week around the boundary for users ahead of UTC: in Auckland (UTC+13) Monday 2026-01-12
+	// 10:00 is still Sunday 21:00 UTC, so the user sees Jan 12–18 but the loader fetched up to ~Jan 13
 	test("fetches events for the whole week shown to a user ahead of UTC", async () => {
 		vi.useFakeTimers({ toFake: ["Date"] });
 		vi.setSystemTime(new Date("2026-01-11T21:00:00Z"));

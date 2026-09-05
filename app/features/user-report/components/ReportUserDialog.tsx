@@ -17,11 +17,7 @@ type ReportFormFieldComponent = FormRenderProps<
 	typeof reportUserSchema.entries
 >["FormField"];
 
-/**
- * Modal for reporting a user to the staff, posting to the `/user-report/:id` resource
- * route. Re-reporting the same user overwrites the previous report. Rendered wherever
- * a `UserCard` lives.
- */
+/** Posts to the `/user-report/:id` resource route; re-reporting the same user overwrites the previous report. */
 export function ReportUserDialog({
 	userId,
 	username,
@@ -65,10 +61,7 @@ export function ReportUserDialog({
 	);
 }
 
-/**
- * The report itself, replaced by instructions when the selected category is one the
- * staff can't act on.
- */
+/** Replaced by instructions when the selected category is one the staff can't act on. */
 function ReportFields({ FormField }: { FormField: ReportFormFieldComponent }) {
 	const { t } = useTranslation(["user"]);
 	const category = useFormValue("category");
@@ -105,10 +98,7 @@ function InappropriateNicknameInstructions() {
 	);
 }
 
-/**
- * Reads the SendouQ match id from the current route so a report opened from a match page
- * prefills its "Match ID" field. Returns `undefined` on any other page.
- */
+/** SendouQ match id from the current route to prefill "Match ID"; `undefined` elsewhere. */
 function useSendouQMatchIdFromRoute() {
 	const matches = useMatches();
 

@@ -32,8 +32,7 @@ type ResultsByMonthYearQueryReturnType = InferResult<
 >;
 
 export async function findAllPlusTiersFromLatestVoting() {
-	// resolving month & year separately first allows SQLite to push the
-	// filtering down into the PlusVotingResult view's aggregation
+	// resolving month & year first lets SQLite push the filter into the PlusVotingResult view
 	const latestVoting = await db
 		.selectFrom("PlusVote")
 		.select(["PlusVote.year", "PlusVote.month"])
@@ -152,8 +151,7 @@ export async function findAllUsersForVoting(loggedInUser: {
 		tier: loggedInUser.plusTier,
 	});
 
-	// the suggestions page does not render bios, so they are not part of a
-	// suggestion and are looked up for the voting page separately
+	// bios are not part of a suggestion (the suggestions page does not render them)
 	const suggestedUserBios = await findBiosByUserIds(
 		suggestedUsers.map((suggestion) => suggestion.suggested.id),
 	);

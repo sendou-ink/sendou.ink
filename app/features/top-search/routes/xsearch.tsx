@@ -101,9 +101,8 @@ function SeasonMonthsSelect() {
 }
 
 /**
- * Rendered as its own component (rather than formatted where the select's items are built)
- * because React Aria snapshots item content when it builds the collection, which happens
- * before hydration and thus before the locale aware formatting is available.
+ * Its own component because React Aria snapshots item content when building the collection,
+ * before hydration and thus before locale aware formatting is available.
  */
 function MonthYearSpan({ monthYear }: { monthYear: MonthYear }) {
 	const span = monthYearToSpan(monthYear);

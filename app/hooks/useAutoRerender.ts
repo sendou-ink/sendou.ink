@@ -55,16 +55,8 @@ function getTickStore(everyMs: number, alignToMs: number): TickStore {
 }
 
 /**
- * Forces the component to rerender periodically. Returns the `Date` of the
- * latest tick — callers should consume this value (e.g. pass it to date-fns)
- * so React Compiler can see the state is observable and won't memoize the
- * rerender away.
- *
- * Backed by a shared tick store: all components subscribed to the same
- * interval (and `alignTo` reference time) share a single timer. Ticks are
- * aligned via a self-rescheduling `setTimeout`, so with `every: "minute"` the
- * component rerenders at exactly `alignTo + N*60s` rather than at arbitrary
- * offsets from mount.
+ * Rerenders periodically, returning the latest tick's `Date`: consume it so React Compiler can't memoize the
+ * rerender away. Components on the same interval and `alignTo` share one timer, ticking at exactly `alignTo + N*interval`.
  */
 export function useAutoRerender(): Date;
 export function useAutoRerender(every: "second" | "ten seconds"): Date;

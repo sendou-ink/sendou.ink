@@ -125,8 +125,7 @@ export function BracketMapListDialog({
 				return true;
 			}
 
-			// if maps were set before infer default from whether finals and third place match have different maps or not
-
+			// infer default from whether finals and third place match have different maps
 			const finalsMaps = preparedMaps.maps
 				.filter((map) => map.groupId === 0)
 				.sort((a, b) => b.roundId - a.roundId)[0];
@@ -276,7 +275,6 @@ export function BracketMapListDialog({
 		for (const groupCounts of mapCounts.values()) {
 			let roundPreviousValue = 0;
 			for (const [, roundValue] of Array.from(groupCounts.entries()).sort(
-				// sort by round number
 				(a, b) => a[0] - b[0],
 			)) {
 				if (roundPreviousValue > roundValue.count) {
@@ -287,7 +285,7 @@ export function BracketMapListDialog({
 			}
 		}
 
-		// check grands have at least as many maps as winners final (different groups)
+		// grands need at least as many maps as winners final (different groups)
 		if (bracket.type === "double_elimination") {
 			const grandsCounts = Array.from(mapCounts.get(2)?.values() ?? []);
 			const winnersCounts = Array.from(mapCounts.get(0)?.values() ?? []);
@@ -768,8 +766,7 @@ function inferMapCounts({
 				groupId,
 				new Map(result.get(groupId)).set(roundNumber, {
 					count,
-					// currently "best of" / "play all" is defined per bracket but in future it might be per round
-					// that's why there is this hardcoded default value for now
+					// "best of" / "play all" is per bracket for now, might be per round in the future
 					type: "BEST_OF",
 				}),
 			);
@@ -818,7 +815,7 @@ function teamCountAdjustedBracketData({
 			// always has the same amount of rounds even if 0 participants
 			return bracket.data;
 		case "round_robin":
-			// ensure a full bracket (no bye round) gets generated even if registration is underway
+			// full bracket (no bye round) even if registration is underway
 			return bracket.generateMatchesData(
 				nullFilledArray(
 					bracket.settings?.teamsPerGroup ??
@@ -857,7 +854,7 @@ function EliminationTeamCountSelect({
 				<option value="">Select count</option>
 				{PreparedMaps.eliminationTeamCountOptions({
 					type,
-					// the prepared for count can be below the current team count e.g. when some of the registered teams are not expected to play
+					// prepared for count can be below the current team count e.g. when some registered teams are not expected to play
 					currentCount: Math.min(realCount, count ?? realCount),
 				}).map((teamCountRange) => {
 					const label =
@@ -1187,13 +1184,8 @@ function MapListRow({
 }
 
 /**
- * Filter for the map search input that supports an optional game mode prefix.
- *
- * - `"sz"` matches every Splat Zones map
- * - `"sz crab"` matches Splat Zones maps whose stage name contains "crab"
- * - input without a recognized mode prefix matches against the stage name as before
- *
- * Expects `textValue` to be formatted as `"${modeShort} ${stageName}"`.
+ * Map search filter with an optional mode prefix: "sz" matches every Splat Zones map, "sz crab" those
+ * whose stage name contains "crab", no prefix matches the stage name. `textValue` is `"${modeShort} ${stageName}"`.
  */
 export function mapSearchFilter(
 	textValue: string,

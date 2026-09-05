@@ -1,16 +1,13 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Build the planner signature atlas from the assets repo's planner renders.
- *
- * The sendou-ink/assets checkout's assets/planner-maps/ holds the full
- * planner PNGs (~340MB), named "<stageId>-<MODE>-<TYPE>.png" (MODE in
- * CB/RM/SZ/TC/TW; TYPE in OVER/MINI/ITEMS). This tool reduces each
- * PLANNER_TYPE render to the ink-invariant structural signature
- * (app/features/scanner/core/detectors/minimap/stage.ts) and packs all of them,
- * quantized to uint8, into a single grayscale atlas PNG plus a manifest
- * (keys "<stageId>-<MODE>") — a few hundred KB the minimap detector loads
- * to identify the stage. Output goes to the assets checkout
- * (SCANNER_ASSETS_DIR/planner); shipping a regen means pushing the assets repo.
+ * Builds the planner signature atlas from the assets repo's planner renders:
+ * assets/planner-maps/ in the sendou-ink/assets checkout holds the full PNGs
+ * (~340MB) named "<stageId>-<MODE>-<TYPE>.png" (MODE in CB/RM/SZ/TC/TW; TYPE
+ * in OVER/MINI/ITEMS). Each PLANNER_TYPE render is reduced to the
+ * ink-invariant structural signature (core/detectors/minimap/stage.ts) and
+ * packed, quantized to uint8, into one grayscale atlas PNG plus a manifest
+ * (keys "<stageId>-<MODE>"). Output goes to SCANNER_ASSETS_DIR/planner;
+ * shipping a regen means pushing the assets repo.
  *
  *   pnpm scanner:build-planner-signatures
  */

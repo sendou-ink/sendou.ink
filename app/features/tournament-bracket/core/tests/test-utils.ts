@@ -122,11 +122,7 @@ export const testTournament = ({
 	});
 };
 
-/**
- * Combines separately created brackets into the bracket data of one tournament,
- * offsetting the local ids of every bracket after the first the same way the
- * database does when a new stage is added to an existing tournament.
- */
+/** Combines brackets into one tournament's data, offsetting local ids the way the database does on adding a stage. */
 export const mergeStages = (...brackets: BracketData[]): BracketData => {
 	const merged: BracketData = { stage: [], group: [], round: [], match: [] };
 

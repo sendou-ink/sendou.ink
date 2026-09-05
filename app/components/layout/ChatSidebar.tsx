@@ -17,7 +17,6 @@ import {
 import type { ChatRoomListItem } from "~/features/chat/chat-types";
 import { Chat } from "~/features/chat/components/Chat";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import { useLayoutSize } from "~/hooks/useMainContentWidth";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -164,8 +163,7 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 		return room ? [{ ...entry, room }] : [];
 	});
 
-	// Rooms the active route opens together collapse into a single combined list
-	// entry that opens the stacked split view.
+	// rooms the active route opens together collapse into one entry opening the stacked split view
 	const autoOpenRooms = routeRooms.filter((entry) => entry.autoOpen);
 	const combinedRooms = autoOpenRooms.length > 1 ? autoOpenRooms : [];
 	const combinedRoomIds = new Set(combinedRooms.map((entry) => entry.room.id));
@@ -438,7 +436,6 @@ function CombinedChatView({
 }) {
 	const chatContext = useChatContext()!;
 	const roomDisplay = useRoomDisplay();
-	const isMobile = useLayoutSize() === "mobile";
 
 	const primary = rooms[0];
 	const display = roomDisplay(primary);
@@ -453,18 +450,6 @@ function CombinedChatView({
 			</div>
 		</>
 	);
-
-	// Primary (match) sits on top, flush below the main header which already names
-	// it, so its sub-header is hidden. Desktop splits evenly; mobile gives the
-	// match chat the larger 3/5 share (group chat 2/5).
-	const panels = [
-		{ room: primary, grow: isMobile ? 3 : 1, showHeader: false },
-		...rooms.slice(1).map((room) => ({
-			room,
-			grow: isMobile ? 2 : 1,
-			showHeader: true,
-		})),
-	];
 
 	return (
 		<div className={styles.sidebar}>
@@ -494,35 +479,26 @@ function CombinedChatView({
 				) : null}
 			</div>
 			<div className={styles.splitView}>
-				{panels.map(({ room, grow, showHeader }) => (
-					<SplitPanel
-						key={room.id}
-						room={room}
-						grow={grow}
-						showHeader={showHeader}
-					/>
+				{rooms.map((room, index) => (
+					<SplitPanel key={room.id} room={room} showHeader={index > 0} />
 				))}
 			</div>
 		</div>
 	);
 }
 
+/** The primary (match) room sits on top with its sub-header hidden, the main header already names it. */
 function SplitPanel({
 	room,
-	grow,
 	showHeader,
 }: {
 	room: ChatRoomListItem;
-	grow: number;
 	showHeader: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
 
 	return (
-		<div
-			className={styles.splitPanel}
-			style={{ "--split-grow": grow } as React.CSSProperties}
-		>
+		<div className={styles.splitPanel}>
 			{showHeader ? (
 				<div className={styles.splitPanelHeader}>{roomShortLabel(room, t)}</div>
 			) : null}

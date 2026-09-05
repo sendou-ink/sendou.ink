@@ -1,24 +1,13 @@
 /**
- * StripWeapons: per-slot weapon-icon evidence off the same icon strip the
- * PlayerStatus read classifies, emitted by the ObjectiveDetector on a
- * sampled cadence (identities are fixed for a match, so every read would be
- * waste). The results scoreboard re-sorts each team per game while the
- * strip keeps the lobby seating (attested in the sendou-triton VoD: strip
- * [Planetz, .52, Neo Splash, Snipewriter] vs scoreboard rows
- * [.52, Neo Splash, Snipewriter, Planetz]), so status samples cannot be
- * paired with scoreboard rows by position alone — the match builder
- * aggregates these candidate lists across the match and solves the
- * slot→row assignment against the scoreboard's weapons
- * (slot-row-assignment.ts).
- *
- * A slot's icon is the weapon render over a team-ink squid plate; the
- * plate (and scene bleeding through it — the plates are translucent) is
- * what drowns template matching, so saturated pixels near the plate's
- * modal hue are flattened to the template background before the NCC
- * ranking. One read's top-1 is only right about half the time on attested
- * footage — the value is in the aggregate, so the event carries a ranked
- * candidate list per slot. Splatted slots grey the render out and are
- * skipped rather than guessed.
+ * StripWeapons: per-slot weapon-icon evidence off the PlayerStatus icon strip,
+ * sampled by the ObjectiveDetector. The scoreboard re-sorts each team per game
+ * while the strip keeps lobby seating (sendou-triton VoD: strip [Planetz, .52,
+ * Neo Splash, Snipewriter] vs rows [.52, Neo Splash, Snipewriter, Planetz]), so
+ * the match builder aggregates these candidate lists to solve the slot→row
+ * assignment (slot-row-assignment.ts). The translucent team-ink squid plate
+ * drowns template matching, so pixels near its modal hue are flattened to the
+ * template background first. A single top-1 is right only about half the time,
+ * hence the ranked list per slot. Splatted slots grey out and are skipped.
  */
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
@@ -52,19 +41,11 @@ export interface StripWeaponsData {
 	time: number | null;
 	/** the icon-strip geometry the paired PlayerStatus read picked */
 	layout: PlayerStatusLayout;
-	/**
-	 * ranked weapon candidates per slot, [left team, right team], slots
-	 * left-to-right as drawn; null = slot skipped (splatted icons grey the
-	 * weapon render out)
-	 */
+	/** ranked candidates per slot, [left team, right team], as drawn; null = splatted slot skipped */
 	slots: [(StripWeaponCandidate[] | null)[], (StripWeaponCandidate[] | null)[]];
 }
 
-/**
- * Match every alive slot's icon against the strip weapon templates.
- * `status` is the PlayerStatus read off the same frame — its layout picks
- * the slot centers and its dead flags pick which slots are worth reading.
- */
+/** Match every alive slot's icon; `status` (same frame) supplies slot centers and dead flags. */
 export function parseStripWeapons(
 	frame: Mat,
 	t: number,
@@ -85,9 +66,8 @@ export function parseStripWeapons(
 	return {
 		type: STRIP_WEAPONS_EVENT_TYPE,
 		t,
-		// raw NCC peaks on attested footage sit ~0.4-0.6 even for correct
-		// reads; the aggregate assignment carries the reliability, so the
-		// event's own confidence only reflects that something matched at all
+		// correct reads peak at only ~0.4-0.6 NCC; reliability lives in the aggregate,
+		// so this only reflects that something matched
 		confidence: scores.length > 0 ? Math.max(...scores) : 0,
 		data: {
 			time: status.time,
@@ -134,12 +114,7 @@ function matchSlot(
 	}));
 }
 
-/**
- * Flatten the squid plate out of the search region: the modal hue of the
- * region's saturated pixels is the plate's team ink, and every pixel near
- * that hue is replaced with the flat template background, leaving the
- * weapon render (grey/white bodies and off-hue accents) to carry the NCC.
- */
+/** Replace pixels near the modal saturated hue (the plate's team ink) with the flat template background. */
 function knockoutPlate(search: Mat): void {
 	const { data } = search;
 	const n = search.rows * search.cols;

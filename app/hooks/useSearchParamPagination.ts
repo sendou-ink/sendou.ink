@@ -11,13 +11,8 @@ type PaginatedShape = { page: ParamDef<number> } & Record<
 >;
 
 /**
- * Pagination state for pages where the current page lives in the `page` search
- * param of the given search params definition and the loader takes care of
- * slicing the results.
- *
- * Returns props that can be spread to the `<Pagination />` component.
- *
- * For paginating a list that is fully available on the client, see `usePagination`.
+ * `<Pagination />` props for pages whose current page lives in the definition's `page` search param and
+ * whose loader slices the results. For a list fully on the client see `usePagination`.
  */
 export function useSearchParamPagination<Shape extends PaginatedShape>({
 	definition,

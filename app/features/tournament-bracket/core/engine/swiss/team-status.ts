@@ -1,17 +1,8 @@
 export type SwissTeamStatus = "active" | "advanced" | "eliminated";
 
 /**
- * Calculates whether a team should advance, be eliminated, or remain active
- * in a Swiss tournament with early advance/elimination rules.
- *
- * @returns The team's status: "advanced" if they've secured advancement,
- *          "eliminated" if they can no longer mathematically advance, or "active" if still competing
- *
- * @example
- * // In a 5-round Swiss where teams need 3 wins to advance:
- * calculateTeamStatus({ wins: 3, losses: 1, advanceThreshold: 3, roundCount: 5 }) // "advanced"
- * calculateTeamStatus({ wins: 2, losses: 3, advanceThreshold: 3, roundCount: 5 }) // "eliminated"
- * calculateTeamStatus({ wins: 2, losses: 2, advanceThreshold: 3, roundCount: 5 }) // "active"
+ * Swiss early advance/elimination: "advanced" once the threshold is reached, "eliminated" when it can
+ * no longer be reached, otherwise "active".
  */
 export function calculateTeamStatus({
 	wins,
@@ -19,13 +10,10 @@ export function calculateTeamStatus({
 	advanceThreshold,
 	roundCount,
 }: {
-	/** Number of matches the team has won */
 	wins: number;
-	/** Number of matches the team has lost */
 	losses: number;
-	/** Number of wins required to advance to the next stage */
+	/** Wins required to advance */
 	advanceThreshold: number;
-	/** Total number of rounds in the Swiss stage */
 	roundCount: number;
 }): SwissTeamStatus {
 	if (wins >= advanceThreshold) {
@@ -39,17 +27,12 @@ export function calculateTeamStatus({
 	return "active";
 }
 
-/**
- * Calculates the maximum valid advance threshold for a given round count.
- * The threshold must allow for meaningful play - teams need a chance to both advance and be eliminated.
- */
+/** Teams need a chance to both advance and be eliminated. */
 export function maxAdvanceThreshold({ roundCount }: { roundCount: number }) {
 	return Math.ceil(roundCount / 2) + 1;
 }
 
-/**
- * Calculates the maximum losses allowed before elimination given an advance threshold and round count.
- */
+/** Losses that eliminate a team. */
 export function eliminationThreshold({
 	roundCount,
 	advanceThreshold,
@@ -60,9 +43,7 @@ export function eliminationThreshold({
 	return roundCount - advanceThreshold + 1;
 }
 
-/**
- * Validates if an advance threshold is valid for the given round count.
- */
+/** Whether the advance threshold is valid for the round count. */
 export function isValidAdvanceThreshold({
 	roundCount,
 	advanceThreshold,
@@ -75,10 +56,7 @@ export function isValidAdvanceThreshold({
 	);
 }
 
-/**
- * Returns a list of valid advance threshold options for a given round count.
- * Starts from 2 wins minimum up to the calculated maximum.
- */
+/** From 2 wins up to {@link maxAdvanceThreshold}. */
 export function validAdvanceThresholdOptions({
 	roundCount,
 }: {

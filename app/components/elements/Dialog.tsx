@@ -110,7 +110,7 @@ interface SendouDialogProps {
 	heading?: string;
 	showHeading?: boolean;
 	onClose?: () => void;
-	/** When closing the modal which URL to navigate to */
+	/** URL to navigate to on close */
 	onCloseTo?: string;
 	onOpenChange?: (isOpen: boolean) => void;
 	isOpen?: boolean;
@@ -118,9 +118,9 @@ interface SendouDialogProps {
 	isDismissable?: boolean;
 	className?: string;
 	"aria-label"?: string;
-	/** If true, the modal takes over the full screen with the content below hidden */
+	/** takes over the full screen, hiding the content below */
 	isFullScreen?: boolean;
-	/** If true, shows the close button even if onClose is not provided */
+	/** show the close button even without onClose */
 	showCloseButton?: boolean;
 	/**
 	 * Trigger mode: mount the content only while open, for content that is
@@ -130,32 +130,8 @@ interface SendouDialogProps {
 }
 
 /**
- * This component allows you to create a modal dialog with a customizable
- * trigger and content, rendered through the native `<dialog>` element.
- * It supports both controlled and uncontrolled modes for managing the
- * dialog's open state.
- *
- * @example
- * // Example usage with implicit isOpen
- * return (
- *   <SendouDialog
- *     heading="Dialog Title"
- *     onCloseTo={previousPageUrl()}
- *   >
- *     This is the dialog content.
- *   </SendouDialog>
- * );
- *
- * @example
- * // Example usage with a SendouButton as the trigger
- * return (
- *   <SendouDialog
- *     heading="Dialog Title"
- *     trigger={<SendouButton>Open Dialog</SendouButton>}
- *   >
- *     This is the dialog content.
- *   </SendouDialog>
- * );
+ * Dialog that is open by default without a `trigger` (or controlled via `isOpen`), or opened by
+ * the given `trigger` element.
  */
 export function SendouDialog({
 	trigger,

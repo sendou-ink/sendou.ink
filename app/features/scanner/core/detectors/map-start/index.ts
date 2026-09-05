@@ -1,18 +1,11 @@
 /**
- * MapStartDetector: parses the match-intro splash — the mode title on the
- * black center splat and the stage name bottom-right, both snapped to the
- * localized closed sets (core/localized.ts) and reported under canonical
- * English names.
- *
- * The mode title wraps to two lines for longer names ("Splat" / "Zones"),
- * so parse finds text lines inside MODE_BLOCK_ROI by row projection, OCRs
- * each band, and snaps the joined reading. The constant "MODE" label
- * doubles as a parse-time confirmation (else a lookalike gate hit emits
- * nothing). The splash sits on live gameplay, so bright stages leak
- * background past the text edges: the title block is masked to near-dark
- * for line finding only (raw crop OCRs better); the stage line reads its
- * min channel (drops blue-tinted water gray keeps) under several
- * binarizations, keeping the best-snapping one (see rois.ts).
+ * MapStartDetector: parses the match-intro splash — mode title on the black
+ * center splat and stage name bottom-right, snapped to the localized closed sets
+ * (core/localized.ts). The title wraps to two lines, so parse finds line bands
+ * by row projection and snaps the joined reading; the constant "MODE" label is
+ * the parse-time confirmation. Bright stages leak background past text edges:
+ * the title block is masked to near-dark for line finding only (raw crop OCRs
+ * better) and the stage line reads its min channel under several binarizations.
  */
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat, minMaxLoc } from "../../cv";
@@ -103,10 +96,9 @@ function findLineBands(binary: Mat): LineBand[] {
 			if (data[y * cols + x]! > 0) counts[y]!++;
 		}
 	}
-	// dual threshold: a band needs rows above a cutoff scaled to the
-	// strongest row (background leaking past the splat's rim puts a
-	// scene-dependent noise floor under every row), then extends over a
-	// fixed floor so antialiased glyph tops/bottoms stay inside the band
+	// dual threshold: band core scaled to the strongest row (background leak sets a
+	// scene-dependent noise floor), then extended over a fixed floor to keep
+	// antialiased glyph tops/bottoms inside
 	const core = Math.max(
 		LINE_MIN_ROW_PIXELS,
 		LINE_ROW_FRACTION * Math.max(...counts),
@@ -139,10 +131,7 @@ function findLineBands(binary: Mat): LineBand[] {
 	return merged.filter((b) => b.y1 - b.y0 >= LINE_MIN_HEIGHT);
 }
 
-/**
- * Trim a line band to its text columns (on the masked binary), so the raw
- * OCR crop excludes the background the wide block picks up at its edges.
- */
+/** Trim a line band to its text columns so the raw OCR crop excludes edge background. */
 function bandExtent(
 	binary: Mat,
 	band: LineBand,
@@ -201,9 +190,8 @@ export function createMapStartDetector(
 			whiteFraction > GATE_TEXT_MIN_FRACTION &&
 			whiteFraction < GATE_TEXT_MAX_FRACTION;
 
-		// the label-to-title gap core is solid ink on this screen: it must be
-		// near-totally dark (the scoreboards' pills aren't) and carry no bright
-		// pixels (the death burst's "Splatted by" line crosses it)
+		// label-to-title gap is solid ink here: near-totally dark (scoreboard pills
+		// aren't) with no bright pixels (death's "Splatted by" line crosses it)
 		const band = copyRoi(gray, GATE_INK_BAND);
 		const bandPixels = band.rows * band.cols;
 		const bandBright = new cv.Mat();
@@ -256,10 +244,8 @@ export function createMapStartDetector(
 		let modeReading = "";
 		if (modeGlyphs) {
 			const block = copyRoi(gray, MODE_BLOCK_ROI);
-			// find line bands on the masked block (bright background rows would
-			// merge/invent bands) but OCR the raw crop (masking clips strokes and
-			// costs accuracy); each band is trimmed to its text columns (also
-			// from the mask) since the full-width block picks up background junk
+			// find bands on the masked block (bright background merges/invents bands)
+			// but OCR the raw crop (masking clips strokes)
 			const masked = maskNearDark(block, BLOCK_MASK_RADIUS);
 			const binary = new cv.Mat();
 			cv.threshold(masked, binary, TEXT_BIN_THRESHOLD, 255, cv.THRESH_BINARY);
@@ -297,10 +283,8 @@ export function createMapStartDetector(
 			}
 		}
 
-		// 3. stage name. Backdrop is live gameplay (dark water on one stage,
-		// a bright floor on another), so no single binarization works
-		// everywhere: read the near-dark-masked crop plus the raw crop at a
-		// few rising thresholds, and keep whichever snaps best.
+		// 3. stage name over live gameplay: no single binarization works everywhere,
+		// so try the masked crop plus raw crop at rising thresholds, keep the best snap
 		let stage: StageId | null = null;
 		let stageScore = 0;
 		let stageReading = "";
@@ -337,9 +321,8 @@ export function createMapStartDetector(
 			{
 				type: MAP_START_EVENT_TYPE,
 				t,
-				// mean like every other detector: a clean mode read must survive an
-				// unreadable stage (map-start is the only mode source for VoD matches),
-				// not be zeroed by it
+				// mean, so a clean mode read survives an unreadable stage (map-start is
+				// the only mode source for VoD matches)
 				confidence: (modeScore + stageScore) / 2,
 				data: { mode, stage },
 				debug: {
@@ -354,8 +337,7 @@ export function createMapStartDetector(
 		];
 	}
 
-	// just under the measured clean-read floor (fixtures 0.795-0.864,
-	// confirmed scan events 0.854-1.0)
+	// just under the clean-read floor (fixtures 0.795-0.864, scan events 0.854-1.0)
 	return {
 		id: "map-start",
 		sufficientConfidence: 0.79,

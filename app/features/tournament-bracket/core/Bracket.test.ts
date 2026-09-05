@@ -890,17 +890,37 @@ describe("single elimination standings - third place match", () => {
 			data,
 		});
 
-		return { tournament, thirdPlaceWinnerId, thirdPlaceLoserId };
+		return {
+			tournament,
+			semifinalLoserIds,
+			thirdPlaceWinnerId,
+			thirdPlaceLoserId,
+		};
 	};
 
-	test("excludes semifinal losers from standings before the third place match concludes", () => {
-		const { tournament } = singleEliminationTournament({
+	test("keeps semifinal losers tied 3rd before the third place match concludes", () => {
+		const { tournament, semifinalLoserIds } = singleEliminationTournament({
 			thirdPlaceMatchReported: false,
 		});
 
 		const standings = tournament.bracketByIdx(0)!.standings;
 
-		expect(standings).toHaveLength(0);
+		const byId = (a: number, b: number) => a - b;
+		expect(standings.map((s) => s.team.id).sort(byId)).toEqual(
+			semifinalLoserIds.slice().sort(byId),
+		);
+		expect(standings.map((s) => s.placement)).toEqual([3, 3]);
+	});
+
+	test("source does not consider 3rd and 4th decided before the third place match concludes", () => {
+		const { tournament } = singleEliminationTournament({
+			thirdPlaceMatchReported: false,
+		});
+
+		expect(
+			tournament.bracketByIdx(0)!.source({ placements: [3] })
+				.relevantMatchesFinished,
+		).toBe(false);
 	});
 
 	test("places third place match winner 3rd and loser 4th once it is played", () => {
@@ -1475,6 +1495,69 @@ describe("swiss between rounds", () => {
 		});
 
 		expect(tournament.canFinalize({ id: 1 })).toBe(false);
+	});
+});
+
+describe("single elimination sourcing - placements are tiers", () => {
+	const TEAM_IDS = Array.from({ length: 16 }, (_, index) => index + 1);
+
+	const SE_TO_TOP_4 = [
+		{
+			type: "single_elimination" as const,
+			name: "Main Bracket",
+			requiresCheckIn: false,
+			settings: { thirdPlaceMatch: false },
+		},
+		{
+			type: "single_elimination" as const,
+			name: "Top 4",
+			requiresCheckIn: false,
+			settings: { thirdPlaceMatch: false },
+			sources: [{ bracketIdx: 0, placements: [1, 2, 3, 4] }],
+		},
+	];
+
+	/** Plays the bracket out in match order, the lower team id always winning, stopping after `maxMatches`. */
+	const playOut = (maxMatches: number) => {
+		let data = createResolved({
+			type: "single_elimination",
+			seeding: TEAM_IDS,
+			settings: { consolationFinal: false },
+		});
+
+		for (let played = 0; played < maxMatches; played++) {
+			const [pending] = readyMatches(data, () => true);
+			if (!pending) break;
+
+			data = reportLowerIdWinner(data, pending.id);
+		}
+
+		return data;
+	};
+
+	const top4Seeding = (data: BracketData) =>
+		testTournament({
+			ctx: {
+				settings: { bracketProgression: SE_TO_TOP_4 },
+				teams: TEAM_IDS.map((id) => tournamentCtxTeam(id, { seed: id })),
+			},
+			data,
+		})
+			.bracketByIdx(1)!
+			.seeding!.toSorted((a, b) => a - b);
+
+	test("sources only the semifinal losers while the final is unplayed", () => {
+		const beforeFinal = playOut(14);
+
+		expect(top4Seeding(beforeFinal)).toEqual([3, 4]);
+	});
+
+	// without a third place match the placements are 1, 2, 3, 3, 5, 5, 5, 5, 9...
+	// so placements 1-4 are the four best tiers: the quarterfinal losers advance as the fourth
+	test("sources the 1st, the 2nd, both 3rd and all four 5th placed teams for placements 1-4 once the final is played", () => {
+		const afterFinal = playOut(15);
+
+		expect(top4Seeding(afterFinal)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 	});
 });
 

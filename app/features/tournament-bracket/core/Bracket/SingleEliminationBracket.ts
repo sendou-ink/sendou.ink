@@ -65,6 +65,24 @@ export class SingleEliminationBracket extends Bracket {
 		return R.unique(this.data.match.map((m) => m.groupId)).length > 1;
 	}
 
+	private thirdPlaceMatch() {
+		if (!this.hasThirdPlaceMatch()) return undefined;
+
+		const thirdPlaceGroupId = Math.max(
+			...this.data.group.map((group) => group.id),
+		);
+
+		return this.data.match.find((match) => match.groupId === thirdPlaceGroupId);
+	}
+
+	private thirdPlaceMatchUndecided() {
+		const thirdPlaceMatch = this.thirdPlaceMatch();
+
+		return (
+			Boolean(thirdPlaceMatch) && !winnerOfThirdPlaceMatch(thirdPlaceMatch)
+		);
+	}
+
 	protected calculateStandings(): Standing[] {
 		const teams: { id: number; lostAt: number }[] = [];
 
@@ -140,20 +158,18 @@ export class SingleEliminationBracket extends Bracket {
 			});
 		}
 
-		const thirdPlaceMatch = this.hasThirdPlaceMatch()
-			? this.data.match.find((m) => m.groupId !== matches[0].groupId)
-			: undefined;
-		const thirdPlaceMatchWinner = winnerOfThirdPlaceMatch(thirdPlaceMatch);
+		const thirdPlaceMatchWinner = winnerOfThirdPlaceMatch(
+			this.thirdPlaceMatch(),
+		);
 
 		const resultWithThirdPlaceTiebroken = result
-			.flatMap((standing) => {
-				if (standing.placement !== 3 || !thirdPlaceMatch) return [standing];
-				// semifinal losers have not finished their run before the third place match is played
-				if (!thirdPlaceMatchWinner) return [];
-				if (thirdPlaceMatchWinner.id !== standing.team.id) {
-					return [{ ...standing, placement: 4 }];
-				}
-				return [standing];
+			.map((standing) => {
+				// semifinal losers stay tied until the third place match decides between them
+				if (standing.placement !== 3 || !thirdPlaceMatchWinner) return standing;
+
+				return thirdPlaceMatchWinner.id === standing.team.id
+					? standing
+					: { ...standing, placement: 4 };
 			})
 			.sort((a, b) => a.placement - b.placement);
 
@@ -169,11 +185,15 @@ export class SingleEliminationBracket extends Bracket {
 		);
 
 		if (placements.every((placement) => placement > 0)) {
-			return this.sourceByStandings(placements, rest === true);
+			const source = this.sourceByStandings(placements, rest === true);
+
+			// 3rd and 4th are only decided once the third place match is played
+			return this.thirdPlaceMatchUndecided()
+				? { ...source, relevantMatchesFinished: false }
+				: source;
 		}
 
-		// third place match lives in a separate (higher) group; the winners
-		// group teams get eliminated from is the lowest group id
+		// third place match lives in a separate (higher) group, the lowest group id is the winners group
 		const mainGroupId = Math.min(...this.data.group.map((group) => group.id));
 
 		const orderedRoundsIds = this.data.round
@@ -220,11 +240,7 @@ export class SingleEliminationBracket extends Bracket {
 	}
 }
 
-/**
- * A third place match with only one opponent is decided by a BYE: the semifinal
- * on the other side was itself won against a BYE, so it produced no loser and
- * the lone semifinal loser takes third place without playing.
- */
+/** The other semifinal was won against a BYE and produced no loser, so the lone semifinal loser takes third without playing. */
 function winnerOfThirdPlaceMatch(match: MatchData | undefined) {
 	if (!match) return undefined;
 

@@ -6,14 +6,27 @@
 	gap: var(--s-2);
 }
 
+/* narrow: the actions take a line of their own, so they split to the edges of it */
+.headerActions {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	flex-grow: 1;
+
+	@container (width >= 640px) {
+		flex-grow: 0;
+	}
+}
+
 .heading {
 	font-size: var(--font-md);
 	color: var(--color-text);
 }
 
-/* Lets the grid size against the full content area instead of the page width
-   (the team layout renders its <main> in breakout mode), capped at the wide
-   page width and centered back under the normal-width column. */
+/* sizes the grid against the breakout <main> of the team layout, capped at the wide page width
+   and centered under the normal-width column */
 .gridScroll {
 	overflow-x: auto;
 
@@ -36,8 +49,7 @@
 		white-space: nowrap;
 	}
 
-	/* the member column centers between the row lines while the day cells stay
-	   a top-aligned list */
+	/* the member column centers between the row lines, the day cells stay a top-aligned list */
 	& tbody th[scope="row"] {
 		vertical-align: middle;
 	}
@@ -62,8 +74,7 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 
-	/* block-level so the link centers by the cell's vertical-align alone,
-	   without the descender gap an inline box leaves under the baseline */
+	/* block-level so the link centers by vertical-align alone, without an inline box's descender gap */
 	& .memberLink {
 		display: flex;
 	}
@@ -73,52 +84,8 @@
 	color: var(--color-text-accent);
 }
 
-.summary {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-1);
-	font-size: var(--font-xs);
-}
-
-.summaryRow {
-	display: flex;
-	flex-wrap: wrap;
-	align-items: baseline;
-	gap: var(--s-1-5);
-}
-
-.summaryLabel {
-	font-weight: var(--weight-semi);
-}
-
-.tierDot {
-	display: inline-block;
-	vertical-align: middle;
-	align-self: center;
-	flex-shrink: 0;
-	width: 0.6rem;
-	height: 0.6rem;
-	border-radius: 50%;
-	background-color: var(--color-success-low);
-	border: 1px solid var(--color-success);
-
-	&.tierDotFull {
-		background-color: var(--color-success);
-	}
-}
-
 .dayDot {
 	margin-inline-end: var(--s-1);
-}
-
-.windowList {
-	display: inline-flex;
-	flex-wrap: wrap;
-	gap: var(--s-1) var(--s-2);
-}
-
-.window {
-	white-space: nowrap;
 }
 
 .notes {

@@ -6,17 +6,9 @@ interface ValidateArgs {
 }
 
 /**
- * Validates that the checked-in teams are ready to start a bipartite (A/B) round robin bracket.
- *
- * Returns the division assignments parallel to the seeding order on success, or an error message
- * suitable for surfacing to the organizer if any of the following are violated:
- *
- * - Every team has an A (0) or B (1) assignment
- * - The counts of A and B teams differ by at most 1
- * - When the counts differ by 1, there must be only one group (uneven divisions can't be split
- *   evenly across multiple groups)
- * - When the counts are equal, the total team count splits evenly across the groups and each
- *   group's team count is even (so A and B can be balanced within the group)
+ * Division assignments parallel to the seeding for an A/B round robin, or an error message for the
+ * organizer: every team needs an A (0) or B (1) assignment, counts may differ by at most 1 (and then
+ * only one group is allowed), equal counts must split evenly into groups of even size.
  */
 export function validate({
 	abDivisionsBySeedOrder,

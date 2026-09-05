@@ -55,7 +55,6 @@ async function waitForMinio(timeout = 60000): Promise<boolean> {
 }
 
 async function ensureMinioRunning(): Promise<boolean> {
-	// Check if MinIO is already running
 	if (await isMinioBucketReady()) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log("MinIO is already running");
@@ -108,19 +107,16 @@ async function waitForServer(port: number, timeout = 120000): Promise<void> {
 				// 404 is fine - server is up, just no route at /
 				return;
 			}
-		} catch {
-			// Server not ready yet
-		}
+		} catch {}
 		await new Promise((resolve) => setTimeout(resolve, 100));
 	}
 	throw new Error(`Server on port ${port} did not start within ${timeout}ms`);
 }
 
 /**
- * The last e2e build can be reused when no build input changed since its marker
- * was written. Directory mtimes catch deletes and renames; a build made outside
- * the e2e flow (no marker, or output newer than the marker) forces a rebuild, as
- * does a marker from a different port setup. E2E_FORCE_BUILD=true overrides.
+ * Reuses the last e2e build when no build input changed since its marker. Directory mtimes
+ * catch deletes and renames; a build made outside the e2e flow (no marker, or output newer
+ * than the marker) or a marker from another port setup forces a rebuild. E2E_FORCE_BUILD=true overrides.
  */
 function isBuildFresh(): boolean {
 	if (process.env.E2E_FORCE_BUILD === "true") return false;
@@ -155,11 +151,8 @@ async function globalSetup(config: FullConfig) {
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log(`\nStarting e2e test setup with ${workerCount} workers...`);
 
-	// Start MinIO if not already running
 	await ensureMinioRunning();
 
-	// Build the app once with E2E test flag so VITE_E2E_TEST_RUN is embedded
-	// Use port 6173 as the base - tests will rewrite URLs as needed
 	if (isBuildFresh()) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(
@@ -185,7 +178,6 @@ async function globalSetup(config: FullConfig) {
 		);
 	}
 
-	// Prepare databases and start servers for each worker
 	const serverPromises: Promise<void>[] = [];
 
 	// Kill any existing processes on our ports before starting; sweep beyond the
@@ -207,7 +199,6 @@ async function globalSetup(config: FullConfig) {
 
 		ensureMigratedDb(dbPath);
 
-		// Start server
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log(`Starting server for worker ${i} on port ${port}...`);
 		// react-router-serve directly instead of `pnpm start`: ensureMigratedDb
@@ -264,11 +255,9 @@ async function globalSetup(config: FullConfig) {
 		);
 	}
 
-	// Store server processes globally for teardown before awaiting readiness so
-	// a failed startup still gets every already-spawned server cleaned up
+	// exposed to teardown before awaiting readiness so a failed startup still cleans up every spawned server
 	global.__E2E_SERVERS__ = SERVER_PROCESSES;
 
-	// Wait for all servers to be ready
 	await Promise.all(serverPromises);
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output

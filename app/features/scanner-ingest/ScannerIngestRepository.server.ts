@@ -16,11 +16,7 @@ import * as Scoreboards from "./core/Scoreboards";
 const opponentOneId = sql<number>`"TournamentMatch"."opponentOne" ->> '$.id'`;
 const opponentTwoId = sql<number>`"TournamentMatch"."opponentTwo" ->> '$.id'`;
 
-/**
- * How far a stored match's playedAt may sit from an incoming one and still
- * be loaded as a merge candidate (content contradictions are checked by
- * Matches.isSameMatch; this only bounds the query).
- */
+/** Max playedAt distance for a stored match to load as a merge candidate; only bounds the query, Matches.isSameMatch checks content. */
 const MERGE_CANDIDATE_PLAYED_AT_WINDOW_DAYS = 1;
 /** How recently a playedAt-less stored match must have been created to be a candidate. */
 const MERGE_CANDIDATE_CREATED_AT_WINDOW_DAYS = 7;
@@ -44,11 +40,7 @@ export function gamesPlayedByUserInTournament(params: {
 	return tournamentGames(params);
 }
 
-/**
- * Returns the games a user played in any tournament since the given
- * database timestamp, in chronological order — tournament candidates for
- * content-based context resolution (Scoreboards.resolveContext).
- */
+/** Games a user played in any tournament since the timestamp, chronological — candidates for Scoreboards.resolveContext. */
 export function gamesPlayedByUserSince(params: {
 	userId: number;
 	/** database timestamp (seconds) */
@@ -57,11 +49,7 @@ export function gamesPlayedByUserSince(params: {
 	return tournamentGames(params);
 }
 
-/**
- * Returns the games of a tournament's casted sets (currently streamed ones
- * plus the cast history), in chronological order — the candidate set for
- * cast footage, whose submitter is staff rather than a player of the games.
- */
+/** Games of a tournament's casted sets (streamed now plus cast history), chronological — candidates for cast footage, whose submitter is staff. */
 export async function castedGamesInTournament(tournamentId: number) {
 	const tournament = await db
 		.selectFrom("Tournament")
@@ -85,30 +73,17 @@ export async function castedGamesInTournament(tournamentId: number) {
 	return tournamentGames({ tournamentId, tournamentMatchIds });
 }
 
-/**
- * Returns the reported games of one tournament match, in chronological
- * order — the candidate set for a live send, which carries no sequence of
- * its own to anchor on and so must not see the rest of the tournament.
- */
+/** Reported games of one tournament match, chronological — candidates for a live send, which has no sequence to anchor on and must not see the rest of the tournament. */
 export function gamesInTournamentMatch(tournamentMatchId: number) {
 	return tournamentGames({ tournamentMatchIds: [tournamentMatchId] });
 }
 
-/**
- * Returns a SendouQ match's reported games, in map order. The match's
- * pre-generated unplayed maps are left out: only a reported game is a link
- * target, so a match sent before its game's report stays unlinked (and gets
- * linked by a later resend instead).
- */
+/** A SendouQ match's reported games in map order. Unplayed maps are left out: a scan sent before its game's report stays unlinked until a resend. */
 export function gamesInGroupMatch(groupMatchId: number) {
 	return sendouqGames({ groupMatchId });
 }
 
-/**
- * Returns the reported games of SendouQ matches a user played in since the
- * given database timestamp, in chronological order — SendouQ candidates for
- * content-based context resolution (Scoreboards.resolveContext).
- */
+/** Reported SendouQ games a user played since the timestamp, chronological — candidates for Scoreboards.resolveContext. */
 export function sendouqGamesPlayedByUserSince(params: {
 	userId: number;
 	/** database timestamp (seconds) */
@@ -118,12 +93,9 @@ export function sendouqGamesPlayedByUserSince(params: {
 }
 
 /**
- * The tournament match the user was (probably) playing at the given
- * wall-clock time: their team is in a match whose `startedAt` is close
- * enough before `at`. When several qualify the one that started most
- * recently before `at` wins — a later round of the same event is still
- * within the window, and taking it would scope an earlier set's games out
- * of reach.
+ * The tournament match the user was probably playing at `at`: their team's match whose
+ * `startedAt` is close enough before it. The most recently started wins — a later round of the
+ * same event is still within the window and would scope an earlier set's games out of reach.
  */
 export async function tournamentActivityAt({
 	userId,
@@ -142,24 +114,18 @@ export async function tournamentActivityAt({
 			"TournamentTeam.id",
 			"TournamentTeamMember.tournamentTeamId",
 		)
-		.innerJoin(
-			"TournamentStage",
-			"TournamentStage.tournamentId",
-			"TournamentTeam.tournamentId",
-		)
-		.innerJoin(
-			"TournamentMatch",
-			"TournamentMatch.stageId",
-			"TournamentStage.id",
+		// the opponent ids already tie a match to its team; without the stage
+		// detour the `startedAt` index narrows the matches before the join
+		.innerJoin("TournamentMatch", (join) =>
+			join.on((eb) =>
+				eb.or([
+					eb(opponentOneId, "=", eb.ref("TournamentTeam.id")),
+					eb(opponentTwoId, "=", eb.ref("TournamentTeam.id")),
+				]),
+			),
 		)
 		.select(["TournamentTeam.tournamentId", "TournamentMatch.id as matchId"])
 		.where("TournamentTeamMember.userId", "=", userId)
-		.where((eb) =>
-			eb.or([
-				eb(opponentOneId, "=", eb.ref("TournamentTeam.id")),
-				eb(opponentTwoId, "=", eb.ref("TournamentTeam.id")),
-			]),
-		)
 		.where(
 			"TournamentMatch.startedAt",
 			"<=",
@@ -179,11 +145,9 @@ export async function tournamentActivityAt({
 }
 
 /**
- * The SendouQ match the user was (probably) playing at the given wall-clock
- * time: a group they are a member of is in a non-canceled match created
- * close enough before `at`. When several qualify the one created most
- * recently before `at` wins — queueing again right after a set still falls
- * within the window, and the newer match is not the one that was played.
+ * The SendouQ match the user was probably playing at `at`: their group's non-canceled match
+ * created close enough before it. The most recently created wins — queueing again right after
+ * a set still falls within the window.
  */
 export async function groupMatchIdAt({
 	userId,
@@ -237,12 +201,7 @@ export async function groupMatchIdAt({
 	return row?.id ?? null;
 }
 
-/**
- * Tournaments running a match around the given wall-clock time that the
- * user helps run: they authored the event, are on its staff (organizer or
- * streamer), or hold an admin/organizer/streamer role in its organization.
- * The candidate contexts for cast footage.
- */
+/** Tournaments with a match around `at` the user helps run (author, organizer/streamer staff, or org admin/organizer/streamer) — candidate contexts for cast footage. */
 export async function staffTournamentIdsAt({
 	userId,
 	at,
@@ -314,10 +273,7 @@ export async function staffTournamentIdsAt({
 	return rows.map((row) => row.tournamentId);
 }
 
-/**
- * Returns a tournament match's ingested scoreboards with their 0-based map
- * indexes, each derived from the game's linked ingested matches.
- */
+/** A tournament match's ingested scoreboards with 0-based map indexes, derived from each game's linked ingests. */
 export async function findScoreboardsByTournamentMatchId(
 	tournamentMatchId: number,
 ) {
@@ -383,10 +339,7 @@ export async function findScoreboardsByTournamentMatchId(
 	});
 }
 
-/**
- * Returns a SendouQ match's ingested scoreboards with their 0-based map
- * indexes, each derived from the map's linked ingested matches.
- */
+/** A SendouQ match's ingested scoreboards with 0-based map indexes, derived from each map's linked ingests. */
 export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 	const rows = await db
 		.selectFrom("IngestedMatchLink")
@@ -447,15 +400,12 @@ export async function findScoreboardsByGroupMatchId(groupMatchId: number) {
 }
 
 /**
- * Stores ingested matches, merging partials: a match that
- * `Matches.isSameMatch` recognizes as an already stored one (same POV user
- * scope) enriches that row instead of inserting. Identical resends are
- * no-ops via the content hash. The resolved context is stamped onto the
- * rows as tournamentIdHint/groupMatchIdHint (existing hints win; missing
- * ones are backfilled even on no-op resends).
+ * Stores ingested matches, merging partials: one `Matches.isSameMatch` recognizes (same POV user
+ * scope) enriches the stored row instead of inserting; identical resends are no-ops via the
+ * content hash. The resolved context is stamped as tournamentIdHint/groupMatchIdHint (existing
+ * hints win, missing ones backfilled even on no-op resends).
  *
- * @returns counts plus the post-merge rows (a partial arriving after an
- * earlier richer send links downstream with the merged, fuller data)
+ * @returns counts plus the post-merge rows, so a partial after a richer send links with the fuller data
  */
 export async function addOrMergeMatches({
 	povUserId,
@@ -496,11 +446,9 @@ export async function addOrMergeMatches({
 }
 
 /**
- * Links ingested matches to the game results they were matched to. A row
- * links to at most one game (re-sends are no-ops); one game may collect
- * links from many rows (each POV's scan of it). When the row's POV player
- * is known, their weapon is reported as a regular ReportedWeapon, unless
- * the user already has one for that game.
+ * Links ingested matches to their matched game results. A row links to at most one game (re-sends
+ * are no-ops); a game collects links from many rows (each POV's scan). A known POV player's
+ * weapon is reported as a regular ReportedWeapon unless they already have one for that game.
  *
  * @returns count of newly created links
  */
@@ -643,11 +591,7 @@ async function backfillHints(
 		.execute();
 }
 
-/**
- * The stored match the incoming one describes the same game as, if any:
- * rows in the same POV user scope, near in play time (or recent when either
- * side has none), content-checked by Matches.isSameMatch.
- */
+/** The stored match describing the same game, if any: same POV user scope, near in play time (or recent when either has none), content-checked by Matches.isSameMatch. */
 async function findMergeCandidate(
 	trx: Transaction<DB>,
 	{
@@ -714,11 +658,9 @@ function newestFirst<T extends { createdAt: number }>(a: T[], b: T[]): T[] {
 }
 
 /**
- * Orders activity candidates by how well their start explains a scan taken
- * at `atSeconds`: the one that started most recently at or before it, and
- * only when none did, the nearest one starting after (the window's clock-skew
- * allowance). Ordering by start alone would prefer whatever started last,
- * which for an event running back-to-back rounds is the wrong set.
+ * Orders candidates by how well their start explains a scan at `atSeconds`: most recent start at
+ * or before it, else the nearest after (clock-skew allowance). Start alone would prefer whatever
+ * started last, the wrong set for back-to-back rounds.
  */
 function startedNearestBefore(
 	column: "TournamentMatch.startedAt" | "GroupMatch.createdAt",
@@ -1007,10 +949,7 @@ async function groupRosters(groupIds: number[]) {
 	return result;
 }
 
-/**
- * The winner-first player names of each game's earliest linked ingested
- * match, keyed by the given link target column's value.
- */
+/** Winner-first player names of each game's earliest linked ingest, keyed by the link target column's value. */
 async function linkedPlayerNamesByTarget(
 	column: "tournamentMatchGameResultId" | "groupMatchMapId",
 	targetIds: number[],

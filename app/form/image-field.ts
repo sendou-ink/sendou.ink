@@ -1,25 +1,13 @@
 import * as v from "valibot";
 import { id } from "~/utils/schema";
 
-/**
- * Allowed prefixes for a {@link imageValue} `NEW` data URL. The client compresses to webp,
- * but browsers without canvas webp encoding (Safari, Brave with fingerprint protection)
- * silently fall back to png per the HTML spec.
- */
+/** The client compresses to webp, but browsers without canvas webp encoding (Safari, Brave) silently fall back to png. */
 const IMAGE_FIELD_DATA_URL_PREFIX_REGEX = /^data:image\/(webp|png);base64,/;
 
-/**
- * Hard ceiling for a `NEW` data URL's length. Caps the JSON body size so a malicious or
- * oversized payload can't bloat the request. A `thick-banner` webp base64-encodes to ~200KB,
- * so this leaves comfortable headroom.
- */
+/** Caps the JSON body size; a `thick-banner` webp base64-encodes to ~200KB, so this leaves comfortable headroom. */
 const IMAGE_FIELD_MAX_DATA_URL_LENGTH = 3_000_000;
 
-/**
- * JSON-serializable value of a SendouForm `image` field. Covers every state an edit form needs:
- * `null` (none / removed), an unchanged `EXISTING` image (only the id reference + a preview url
- * ride in JSON, never bytes), or a newly picked `NEW` image as a base64 webp/png data URL.
- */
+/** `null` (none / removed), an unchanged `EXISTING` image (id + preview url, never bytes), or a `NEW` base64 webp/png data URL. */
 export const imageValue = v.nullable(
 	v.union([
 		v.object({
@@ -40,10 +28,7 @@ export const imageValue = v.nullable(
 
 export type ImageFieldValue = v.InferOutput<typeof imageValue>;
 
-/**
- * Builds an `EXISTING` {@link ImageFieldValue} for an edit form's default values, or `null`
- * when either the id or preview url is missing.
- */
+/** `EXISTING` {@link ImageFieldValue} for an edit form's defaults, or `null` when the id or preview url is missing. */
 export function existingImage(
 	imgId: number | null | undefined,
 	url: string | null | undefined,

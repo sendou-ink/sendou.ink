@@ -49,14 +49,14 @@ export default function Chart({
 	xTicksLimit?: number;
 	yTicksLimit?: number;
 	xAbilityLimit?: number;
-	/** Marks current positions on the curve, each at ability point `x` and stat value `y` (e.g. one per build being compared). */
+	/** Markers on the curve at ability point `x` / stat value `y`, e.g. one per build compared. */
 	highlight?: Array<{ x: number; y: number }>;
-	/** When true, draws dashed guide lines from the hovered point to the x- and y-axes. */
+	/** dashed guide lines from the hovered point to both axes */
 	crosshair?: boolean;
 }) {
 	const isHydrated = useHydrated();
 
-	// Ref to the Chart.js instance, allows proper cleanup between renders to prevent "Canvas is already in use" errors
+	// cleanup between renders prevents "Canvas is already in use" errors
 	const chartRef = useRef<ChartType<"line"> | null>(null);
 	const chartId = React.useId();
 	// Chart.js re-fires the external tooltip on every redraw; track the last value to skip redundant state updates
@@ -74,22 +74,19 @@ export default function Chart({
 		header: string;
 	} | null>(null);
 
-	// Format dates in the tooltip header using the user's locale
 	const { formatter: headerFormatter } = useDateTimeFormat({
 		weekday: "short",
 		day: "numeric",
 		month: "numeric",
 	});
 
-	// Format dates on the xAxis
 	const { formatter: scaleFormatter } = useDateTimeFormat({
 		day: "numeric",
 		month: "numeric",
 	});
 
-	// Get the chart colors from CSS variables
 	const colors = useThemeColors({
-		// bright "high" variants for the curve lines so they stay legible on the dark chart
+		// "high" variants for the curve lines so they stay legible on the dark chart
 		accentHigh: "--color-text-accent",
 		infoHigh: "--color-info-high",
 		secondHigh: "--color-second-high",
@@ -110,13 +107,12 @@ export default function Chart({
 		[colors.border, colors.borderHigh, colors.text],
 	);
 
-	// Make a color list to use inside ChartData for the borderColor and the external tooltip
 	const colorList = React.useMemo(
 		() => [colors.accentHigh, colors.infoHigh, colors.secondHigh],
 		[colors.accentHigh, colors.infoHigh, colors.secondHigh],
 	);
 
-	// Distinct accent/secondary pair so the highlight markers (e.g. build 1 vs build 2) stay tellable apart in both themes
+	// distinct pair so highlight markers (e.g. build 1 vs build 2) stay apart in both themes
 	const markerColors = React.useMemo(
 		() => [colors.accentLow, colors.secondLow],
 		[colors.accentLow, colors.secondLow],
@@ -169,7 +165,6 @@ export default function Chart({
 		[options, datasetColors, highlight, markerColors, colors.text],
 	);
 
-	// Draws dashed guide lines from the hovered point to the y-axis (left) and x-axis (bottom)
 	const crosshairPlugin = React.useMemo(
 		() => ({
 			id: "crosshair",

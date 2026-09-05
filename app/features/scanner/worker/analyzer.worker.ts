@@ -1,14 +1,11 @@
 /**
  * AnalyzerWorker: owns OpenCV.js (WASM), the detector registry and a
- * DetectorScheduler. Two entry points: "frame" — the main thread posts one
- * ImageBitmap/VideoFrame at a time (live capture, screenshot harness, VoD
- * seek fallback); results come back per detector, then a "done" carrying the
- * scheduler's calm signal and telemetry. "scanChunk" — a VoD time slice is
- * demuxed/decoded entirely in the worker with mediabunny: the worker owns a
- * contiguous slice so scheduling is exact, undue frames skip canvas
- * readback, and calm stretches skim by keyframe hops instead of decoding
- * every frame — the big VoD speedup, since sequential decode bounds scan
- * wall-clock time.
+ * DetectorScheduler. "frame": the main thread posts one ImageBitmap/VideoFrame
+ * at a time; results come back per detector, then a "done" with the calm
+ * signal and telemetry. "scanChunk": a VoD slice is demuxed/decoded in the
+ * worker with mediabunny — the worker owns a contiguous slice so scheduling is
+ * exact, undue frames skip canvas readback, and calm stretches skim by
+ * keyframe hops — the big VoD speedup, since sequential decode bounds scan time.
  */
 import {
 	ALL_FORMATS,
@@ -41,11 +38,7 @@ import type {
 } from "./protocol";
 import { fetchScoreboardResources } from "./resources";
 
-/**
- * Widest skim hop: calm footage is sampled at the keyframe cadence, capped
- * here so long-GOP recordings still cannot slip a results screen (~10s) or
- * a match intro (~7s) between two samples.
- */
+/** Widest skim hop, so long-GOP recordings can't slip a results screen (~10s) or intro (~7s) between samples. */
 const MAX_SKIM_STRIDE_S = 2.5;
 const PROGRESS_POST_INTERVAL_MS = 400;
 const PREVIEW_POST_INTERVAL_MS = 600;
@@ -87,10 +80,7 @@ async function init({
 	}
 }
 
-/**
- * Run the due detectors over one frame; closes `bitmap`. When the scheduler
- * has no detector due, the canvas readback and normalize are skipped too.
- */
+/** Runs the due detectors over one frame; closes `bitmap`. Readback and normalize are skipped when nothing is due. */
 async function analyzeFrame(
 	bitmap: ImageBitmap | VideoFrame,
 	t: number,
@@ -122,9 +112,8 @@ async function analyzeFrame(
 	}
 	if (telemetry) telemetry.analyzedFrames++;
 
-	// On detection, ship back the exact analyzed pixels (lossless, at capture
-	// resolution) so the UI never has to re-grab a later frame — encoded at
-	// most once per frame, however many detectors fire on it.
+	// ship back the exact analyzed pixels (lossless, capture resolution) so the
+	// UI never re-grabs a later frame — encoded at most once per frame
 	let encoded: Promise<Blob> | null = null;
 	const frameBlob = () =>
 		(encoded ??= canvas.convertToBlob({ type: "image/png" }));

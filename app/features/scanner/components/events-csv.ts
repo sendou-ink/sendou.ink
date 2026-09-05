@@ -1,9 +1,7 @@
 /**
- * Flatten detected events into a single CSV for download. One row per event;
- * the event types share columns where they overlap (lobby/mode/stage,
- * weapon/name/abilities) and a scoreboard's eight player rows — or the
- * minimap's teammates+enemies, or the objective HUD's icon strip — are packed
- * into one cell, matching the compact per-event view of the live feed.
+ * Flattens detected events into one CSV. One row per event; types share
+ * columns where they overlap, and a scoreboard's eight player rows (or the
+ * minimap's cards, or the objective HUD's icon strip) pack into one cell.
  */
 
 import type { MainWeaponId } from "~/modules/in-game-lists/types";

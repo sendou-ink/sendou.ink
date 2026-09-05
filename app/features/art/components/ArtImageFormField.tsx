@@ -20,10 +20,8 @@ type ArtImageFormFieldProps = Omit<
 >;
 
 /**
- * Image picker for art. Produces both derived assets the art pipeline needs — the full image with
- * its aspect ratio and format preserved, and a thumbnail — as base64 data URLs so they can ride
- * along in `SendouForm`'s single JSON submit. Art of already uploaded art can't be swapped, so an
- * `EXISTING` value renders as a plain preview.
+ * Produces the full image (aspect ratio and format preserved) and a thumbnail as data URLs for
+ * `SendouForm`'s JSON submit. Uploaded art can't be swapped, so `EXISTING` renders a plain preview.
  */
 export function ArtImageFormField({
 	value,

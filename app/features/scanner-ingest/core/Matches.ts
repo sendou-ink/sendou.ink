@@ -1,8 +1,4 @@
-/**
- * Pure logic for stored scanner matches: canonical serialization (hashing),
- * deciding whether two partial ScannerMatches describe the same game, and
- * merging a newly ingested partial into a stored one.
- */
+/** Pure logic for stored scanner matches: canonical serialization (hashing), same-game identity of two partials, and merging a partial into a stored one. */
 import type {
 	ScannerMatch,
 	ScannerMatchObjective,
@@ -12,11 +8,7 @@ import type {
 } from "~/features/scanner/core/scanner-match";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 
-/**
- * Replay codes are random enough that two different games share almost no
- * positions; this many differing characters still reads as OCR jitter of
- * the same code, at or above it as a different game.
- */
+/** Replay codes of different games share almost no positions; fewer differing characters than this is OCR jitter of the same code. */
 const REPLAY_CODE_MAX_OCR_ERRORS = 3;
 
 /** Two reads of one game land within this of each other (clock skew, retries). */
@@ -32,11 +24,7 @@ const MIN_WEAPON_SLOTS_READ = 7;
 
 const PLAYERS_PER_TEAM = 4;
 
-/**
- * Rebuilds a match with a fixed key order so `JSON.stringify` of the result
- * is stable regardless of how the input was constructed — the hashing and
- * change-detection representation.
- */
+/** Rebuilds a match with a fixed key order so `JSON.stringify` is stable — the hashing and change-detection representation. */
 export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 	return {
 		startsAt: match.startsAt,
@@ -68,11 +56,9 @@ export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 }
 
 /**
- * Whether two (possibly partial) matches describe the same game. Callers
- * pre-scope candidates to the same tournament + POV user; this checks the
- * contents: contradicting mode/stage/replay-code/play-time rules identity
- * out, then a matching replay code, close play times, or an aligning roster
- * (names, or weapons when names are unread) rules it in.
+ * Whether two (possibly partial) matches describe the same game; callers pre-scope to the same
+ * tournament + POV user. Contradicting mode/stage/replay-code/play-time rules identity out; then a
+ * matching replay code, close play times, or an aligning roster (names, else weapons) rules it in.
  */
 export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
 	if (a.mode !== null && b.mode !== null && a.mode !== b.mode) return false;
@@ -105,12 +91,9 @@ export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
 }
 
 /**
- * Merges a newly ingested partial into the stored match: the incoming teams
- * are first aligned to the stored orientation (a scoreboard match's teams[0]
- * is the winner side while a minimap match's is alpha), then every field
- * fills stored nulls, stored values winning on conflict (mirroring the
- * scoreboard attachment's first-ingest-wins). `changed` is false when the
- * merge added nothing, so callers can skip the write.
+ * Merges an ingested partial into the stored match: incoming teams are aligned to the stored
+ * orientation (a scoreboard match's teams[0] is the winner, a minimap match's is alpha), then
+ * every field fills stored nulls, stored values winning. `changed` is false when nothing was added.
  */
 export function mergeMatches(
 	existing: ScannerMatch,
@@ -205,10 +188,7 @@ function canonicalPlayer(player: ScannerMatchPlayer): ScannerMatchPlayer {
 	};
 }
 
-/**
- * Positions at which two replay codes differ; null when either is unread.
- * A length mismatch counts every position of the longer code.
- */
+/** Positions at which two replay codes differ (a length mismatch counts every position of the longer); null when either is unread. */
 function replayCodeDiff(a: string | null, b: string | null): number | null {
 	if (a === null || b === null) return null;
 	const longer = Math.max(a.length, b.length);
@@ -227,10 +207,7 @@ interface Alignment {
 	weaponOverlap: number;
 }
 
-/**
- * How `b`'s teams best map onto `a`'s: as-is or sides swapped, scored by
- * name and weapon overlap. Ties keep "straight".
- */
+/** How `b`'s teams best map onto `a`'s (as-is or swapped), scored by name and weapon overlap. Ties keep "straight". */
 function bestAlignment(a: ScannerMatch, b: ScannerMatch): Alignment {
 	const straight = pairScore(a, b.teams[0], b.teams[1]);
 	const swapped = pairScore(a, b.teams[1], b.teams[0]);
@@ -333,12 +310,7 @@ function mergeScorePair(
 	return [existing[0] ?? incoming[0], existing[1] ?? incoming[1]];
 }
 
-/**
- * Merge one team's rows: each stored row takes its incoming counterpart —
- * matched by readable name, then by a weapon unique among the unmatched,
- * then by position — field-wise with stored values winning. Incoming rows
- * no stored row claimed append while the team stays ≤4.
- */
+/** Merges one team's rows: each stored row takes its counterpart (by name, then a unique weapon, then position), stored values winning; unclaimed incoming rows append while the team stays ≤4. */
 function mergeTeam(
 	existing: ScannerMatchTeam,
 	incoming: ScannerMatchTeam,

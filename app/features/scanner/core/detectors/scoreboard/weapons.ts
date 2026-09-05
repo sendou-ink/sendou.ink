@@ -1,23 +1,13 @@
 /**
- * Weapon icon identification: NCC of every candidate icon (pre-scaled to a
- * few sizes) against the row's weapon ROI, with an ink-coverage penalty so a
- * small template can't win by matching a lucky sub-window of a bigger icon
- * (the template's opaque area should match the ink actually present).
- *
- * Large template sets run coarse-to-fine: every icon first ranked at quarter
- * resolution (same scoring), then only the shortlist re-matched at full res.
- * Small sets (ability badges) skip the coarse pass — not worth it below ~2x
- * the shortlist size.
+ * Weapon icon identification: NCC of every candidate icon (pre-scaled to a few
+ * sizes) against the weapon ROI, with an ink-coverage penalty so a small
+ * template can't win on a lucky sub-window of a bigger icon. Large sets run
+ * coarse-to-fine (quarter-res ranking, shortlist re-matched at full res).
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import type { FrameData } from "../../image";
 
-/**
- * Icon heights (px at 1080p) to try. The live scoreboard renders in-row
- * icons at ~44-56px; the replay browser at ~60-64px. The oversized entries
- * are skipped inside the live detector's 56px-tall weapon ROI at match
- * time, so they only ever compete on the replay screen.
- */
+/** Icon heights to try: live rows ~44-56px, replay browser ~60-64px (skipped inside the live 56px ROI). */
 const WEAPON_TEMPLATE_SIZES = [40, 44, 48, 52, 56, 60, 64] as const;
 
 /** Row pill background the icons sit on (near-black). */
@@ -27,13 +17,9 @@ const PILL_BACKGROUND = 12;
 const INK_THRESHOLD = 40;
 
 /**
- * Scoped chargers' icons differ from their unscoped twins only by the scope
- * tube, which is near-black and sits on the near-black pill — measurably
- * invisible at ~50px (a synthetic scoped row probes *darker* in the scope
- * band than a real unscoped row does from barrel bleed). When the two
- * variants score within noise of each other, resolve to the unscoped one
- * (matches labeled fixtures and typical usage) and flag the ambiguity.
- * Map: scoped id -> unscoped id.
+ * Scoped chargers differ from unscoped twins only by the near-black scope tube,
+ * invisible on the near-black pill at ~50px. Within-noise ties resolve to the
+ * unscoped one (matches fixtures and typical usage) and flag the ambiguity.
  */
 const SCOPED_TWINS: ReadonlyMap<string, string> = new Map([
 	["2040", "2030"], // Splat Scope -> Splat Charger
@@ -87,15 +73,11 @@ function countInkRgb(mat: Mat, threshold: number): number {
 }
 
 /**
- * Downscale a composited RGB icon to each candidate size, with the coarse
- * variant and ink counts matchWeapon needs. Ink is counted on the resized
- * pixels, not scaled from source alpha (which undercounts antialiased edges
- * and can flip the coverage ratio toward a wrong icon).
- *
- * `referenceSize` scales by size/referenceSize instead of resizing to a
- * size×size square — "the art as it renders inside a size-sized padded
- * square" — letting a template whose icon square is taller than the ROI
- * still compete when its art fits (see prepareWeaponTemplates cropToArt).
+ * Downscale a composited RGB icon to each size with coarse variant and ink
+ * counts. Ink is counted on the resized pixels, not scaled from source alpha
+ * (undercounts antialiased edges). `referenceSize` scales by size/referenceSize
+ * instead of resizing to a square, so cropped art can compete when its padded
+ * square would exceed the ROI (see cropToArt).
  */
 export function buildTemplateSizes(
 	composited: Mat,
@@ -140,17 +122,11 @@ export function buildTemplateSizes(
 }
 
 /**
- * Build match-ready templates from raw RGBA icon images (256x256 with
- * alpha): composite over the pill background, then downscale to each size.
- * Screens whose pills aren't near-black (minimap cards, camo surfaces)
- * override `background` and `inkThreshold` (must clear the new background
- * or ink counts saturate).
- *
- * `cropToArt` trims each template to the icon's alpha bbox (source icons
- * carry generous transparent padding) while keeping the padded-square scale
- * semantics — without it, a screen rendering icons near the ROI height
- * (minimap cards, ~56-60px in a 54px box) can never match, since matchWeapon
- * skips templates taller/wider than the ROI.
+ * Match-ready templates from RGBA icons (256x256): composite over the pill
+ * background, downscale to each size. Lighter surfaces override `background`
+ * and `inkThreshold` (must clear the background or ink counts saturate).
+ * `cropToArt` trims to the alpha bbox while keeping padded-square scale; without
+ * it icons near the ROI height (minimap ~56-60px in a 54px box) can never match.
  */
 export function prepareWeaponTemplates(
 	icons: { id: string; image: FrameData }[],
@@ -217,7 +193,7 @@ function cropToAlphaBbox(rgba: Mat): Mat {
 	y1 = Math.min(rows - 1, y1 + ART_BBOX_MARGIN);
 	const view = rgba.roi(new cv.Rect(x0, y0, x1 - x0 + 1, y1 - y0 + 1));
 	const out = new cv.Mat();
-	view.copyTo(out); // ROI views: .data/.clone broken in this build, copy out
+	view.copyTo(out); // ROI views: .data/.clone broken, copy out
 	view.delete();
 	return out;
 }
@@ -238,12 +214,9 @@ function compositeOnBackground(rgba: Mat, background: number): Mat {
 }
 
 /**
- * Coarse pass: rank every template by its best quarter-resolution score
- * (same NCC + ink-coverage formula as the full pass) and return the
- * COARSE_SHORTLIST ids worth full-resolution matching. Scoped ids drag
- * their unscoped twin along so the twin tie-break always has both scores.
- * Returns null when no coarse template fits (caller falls back to the
- * full set, which then skips the same templates and reports unknown).
+ * Rank every template at quarter resolution (same formula) and return the
+ * COARSE_SHORTLIST ids; scoped ids drag their unscoped twin along for the
+ * tie-break. Null when no coarse template fits.
  */
 function coarseShortlist(
 	searchRgb: Mat,
@@ -271,8 +244,7 @@ function coarseShortlist(
 	for (const template of templates) {
 		let score = -1;
 		for (const { mat, coarse } of template.sizes) {
-			// gate on the *full-res* dims so a size competes here iff it competes
-			// in the full pass, then also require the coarse pair to fit
+			// gate on the *full-res* dims so a size competes here iff it competes in the full pass
 			if (mat.rows > searchRows || mat.cols > searchCols) continue;
 			if (coarse.mat.rows > regionRows || coarse.mat.cols > regionCols)
 				continue;
@@ -300,11 +272,9 @@ function coarseShortlist(
 }
 
 /**
- * searchRgb: RGB crop of the row's weapon ROI (view is fine).
- * inkThreshold separates icon ink from the pill background in the search
- * region — raise it on screens whose pills are lighter than the live
- * scoreboard's (~12), e.g. the replay browser (~61), or everything counts
- * as ink and the coverage penalty collapses.
+ * searchRgb: RGB crop of the weapon ROI (view is fine). Raise inkThreshold on
+ * screens with lighter pills (replay browser ~61 vs live ~12) or everything
+ * counts as ink and the coverage penalty collapses.
  */
 export function matchWeapon(
 	searchRgb: Mat,
@@ -321,8 +291,7 @@ export function matchWeapon(
 	const searchInk = countInkRgb(cont, inkThreshold);
 	cont.delete();
 
-	// shortlist large sets at coarse resolution first; below ~2x the shortlist
-	// size the coarse pass costs more calls than it saves
+	// below ~2x the shortlist size the coarse pass costs more calls than it saves
 	let pool = templates;
 	if (templates.length > COARSE_SHORTLIST * 2) {
 		const ids = coarseShortlist(searchRgb, templates, inkThreshold);

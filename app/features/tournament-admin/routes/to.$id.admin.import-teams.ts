@@ -11,10 +11,7 @@ import { tournamentImportTeamsSearchParams } from "../tournament-admin-search-pa
 
 export type ImportTeamsLoaderData = SerializeFrom<typeof loader>;
 
-/**
- * Returns the teams (with rosters) of another tournament so an organizer can
- * import one into the registration form they are filling out.
- */
+/** Teams (with rosters) of another tournament for importing into the registration form. */
 export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const user = requireUser();
 

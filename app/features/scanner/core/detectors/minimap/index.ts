@@ -1,25 +1,16 @@
 /**
- * MinimapDetector: parses the in-match map overlay (opened with X) — the
- * own-team callout cards (name, main weapon, the three main-ability
- * badges), the enemy panel rows (weapon, abilities; the game shows no
- * enemy names) — plus the stage, matched from the drawn map (stage.ts).
- * The goal is the most complete read of every card/row; map control is
- * deliberately not reported.
- *
- * Two per-player screen states are reported (`dead`, `specialReady` — the
- * match builder merges them into the death/special timeline alongside the
- * icon-strip PlayerStatus reads) and steer the reads themselves:
- * - a respawning player's card is struck through with a large team-color
- *   X that covers the name and badges (own cards also lose the weapon;
- *   enemy rows keep theirs — the X spares the row's weapon icon). Reading
- *   through the X yields garbage, so an occlusion probe skips the covered
- *   fields and reports them null;
- * - a charged special swaps the card/row background for a light camo
- *   pattern; weapons are full-color icon art matched against art-cropped
- *   template sets composited for the surface actually behind them — bg-40
- *   for the translucent dark cards/rows, bg-150 for the camo (dark
- *   templates anti-correlate there) — so a corner-brightness probe picks
- *   the template set, ink threshold, and score floor per card.
+ * MinimapDetector: parses the in-match map overlay (X) — own-team callout cards
+ * (name, main weapon, three main-ability badges), enemy panel rows (weapon,
+ * abilities; no enemy names) and the stage matched from the drawn map
+ * (stage.ts). Map control is deliberately not reported. Two per-player states
+ * (`dead`, `specialReady`) feed the match builder's timeline and steer the reads:
+ * - a respawning player's card is struck through with a team-color X covering
+ *   name and badges (enemy rows keep their weapon icon); an occlusion probe
+ *   skips covered fields and reports them null;
+ * - a charged special swaps the background for light camo; weapons match
+ *   against template sets composited for the surface behind them (bg-40 dark,
+ *   bg-150 camo — dark templates anti-correlate there), so a corner-brightness
+ *   probe picks template set, ink threshold and score floor per card.
  */
 
 import type {
@@ -95,10 +86,7 @@ export interface MinimapTeammate {
 	name: string | null;
 	/** sendou main-weapon id; null when unreadable/covered */
 	weaponId: MainWeaponId | null;
-	/**
-	 * the card's three main abilities, [head, clothes, shoes] (null per
-	 * unreadable badge); empty when a respawn cross-out sits over the badges
-	 */
+	/** [head, clothes, shoes] main abilities (null per unreadable badge); empty when crossed out */
 	abilities: (AbilityWithUnknown | null)[];
 	/** struck through with the respawn cross-out at the read */
 	dead: boolean;
@@ -107,10 +95,7 @@ export interface MinimapTeammate {
 }
 
 export interface MinimapEnemy {
-	/**
-	 * the POV overlay shows no enemy names (always null there); the
-	 * spectator screen does, so spectator rows carry them
-	 */
+	/** always null on the POV overlay; the spectator screen shows enemy names */
 	name: string | null;
 	/** readable even on struck rows: the cross-out spares the weapon icon */
 	weaponId: MainWeaponId | null;
@@ -122,18 +107,11 @@ export interface MinimapEnemy {
 }
 
 export interface MinimapData {
-	/**
-	 * sendou stage id, matched from the drawn map against the planner
-	 * renders (stage.ts); null when no stage matched confidently or the
-	 * planner signatures were not loaded. The mode is not identifiable this
-	 * way (see stage.ts) and is left to the mode-bearing detectors.
-	 */
+	/** matched from the drawn map (stage.ts); null when unconfident or planner signatures not loaded */
 	stage: StageId | null;
 	/**
-	 * true when the frame is a casted stream's 8-player spectator map screen
-	 * rather than the POV overlay: the alpha (left) column is reported as
-	 * teammates (d-pad slots up/right/down/left) and the bravo (right)
-	 * column as enemy rows — with names, which this screen shows
+	 * casted 8-player spectator screen rather than the POV overlay: alpha (left)
+	 * column reported as teammates, bravo (right) as enemy rows, both with names
 	 */
 	spectator: boolean;
 	/** own-team callout cards; a slot missing from the frame is omitted */
@@ -141,10 +119,9 @@ export interface MinimapData {
 	/** enemy panel rows, top to bottom */
 	enemies: MinimapEnemy[];
 	/**
-	 * mean team-ink RGB per side sampled from the sub-weapon tiles
-	 * ([teammates/alpha, enemies/bravo]); null when too little saturated
-	 * ink. Anchors the objective counter's color-tracked sides to `teams`
-	 * order on casted footage, which never shows a results screen.
+	 * mean team-ink RGB per side from the sub-weapon tiles ([alpha, bravo]); null
+	 * on too little ink. Anchors the objective counter's sides to `teams` order on
+	 * casted footage, which never shows a results screen.
 	 */
 	teamColors: [InkRgb | null, InkRgb | null];
 }
@@ -152,11 +129,9 @@ export interface MinimapData {
 export const MINIMAP_EVENT_TYPE = "Minimap";
 
 /**
- * Timeline content guard: minimap frames inside the merge window collapse
- * only while every card/row keeps its dead/special state, so each flip a
- * map-open catches (a respawn, a special charged or spent) stays its own
- * event. Names, weapons and badges are not compared — OCR wobble on an
- * unchanged screen is still the same state.
+ * Timeline content guard: frames in the merge window collapse only while every
+ * card/row keeps its dead/special state, so each flip stays its own event.
+ * Names/weapons/badges are not compared (OCR wobble is still the same state).
  */
 export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
 	const da = a as MinimapData;
@@ -179,13 +154,10 @@ export function sameMinimapStatusData(a: unknown, b: unknown): boolean {
 const ABILITY_MIN_SCORE = 0.45;
 
 /**
- * Light-camo (special-charged) probe: the dimmer of the two 8x8 top
- * corners of the weapon box, its brightness and saturation. Camo
- * backgrounds brighten both corners (140-165) and are gray-green
- * unsaturated; on a dark card at least one corner stays dark even when
- * avatar bleed or a cross-out stroke lights up the other, and a bright
- * scene bleeding through the card lights both but stays colored (see
- * SPECIAL_READY_MAX_CORNER_SATURATION).
+ * Light-camo probe: brightness and saturation of the dimmer 8x8 top corner of
+ * the weapon box. Camo brightens both corners (140-165) and is unsaturated; a
+ * dark card keeps one corner dark despite bleed or a cross-out stroke, and
+ * scene bleed lights both but stays colored.
  */
 function minTopCorner(
 	gray: Mat,
@@ -331,11 +303,8 @@ export function createMinimapDetector(
 	}
 
 	/**
-	 * Weapon icon match against the composite set for the surface behind
-	 * it: light templates on the camo surface, dark templates on a dark
-	 * card — and on a bright-bleed surface (see
-	 * WEAPON_BLEED_MIN_CORNER_MEAN) both sets, better score wins, since
-	 * neither composite matches scene bleed exactly.
+	 * Weapon match against the composite set for the surface behind it; on a
+	 * bright-bleed surface (WEAPON_BLEED_MIN_CORNER_MEAN) both sets, better wins.
 	 */
 	function matchSurfaceWeapon(
 		rgb: Mat,
@@ -378,10 +347,8 @@ export function createMinimapDetector(
 	}
 
 	/**
-	 * Near-tied weapon icons whose kits differ by sub (plain vs Custom
-	 * Dualie Squelchers): let the card/row's team-tinted sub tile break the
-	 * tie. Shape-only matching survives the tint, the camo surface, and a
-	 * cross-out stroke clipping the tile.
+	 * Near-tied icons whose kits differ by sub (plain vs Custom Dualie Squelchers):
+	 * the sub tile breaks the tie; shape-only matching survives tint, camo and cross-out.
 	 */
 	function resolveTieBySubTile(
 		rgb: Mat,
@@ -408,11 +375,7 @@ export function createMinimapDetector(
 		return best;
 	}
 
-	/**
-	 * The spectator screen's 8-card grid doesn't share the overlay's ROIs
-	 * (running the overlay parse against it reads phantom cards), so it gets
-	 * its own card loop: same fields per card, both columns carry names.
-	 */
+	/** The spectator 8-card grid has its own ROIs (the overlay parse reads phantom cards on it). */
 	function parseSpectator(
 		frame: Mat,
 		gray: Mat,
@@ -456,8 +419,7 @@ export function createMinimapDetector(
 				let weapon: WeaponMatch | null = null;
 				const badgeDebug: (WeaponMatch | null)[] = [];
 				let abilities: (AbilityWithUnknown | null)[] = [];
-				// the spectator cross-out sits clear of the weapon ROI (like
-				// overlay enemy rows), so the weapon stays readable when struck
+				// the spectator cross-out sits clear of the weapon ROI, so it stays readable when struck
 				weapon = matchSurfaceWeapon(
 					rgb,
 					layout.weapon,
@@ -686,8 +648,7 @@ export function createMinimapDetector(
 			const occluded =
 				crossFraction >= CROSS_MIN_FRACTION && crossLap >= CROSS_MIN_LAPLACIAN;
 
-			// light camo rows: pick the template variant by the weapon box's
-			// corner brightness and raise the ink threshold past that background
+			// light camo rows: pick template variant by corner brightness, raise ink threshold past it
 			const corner = minTopCorner(gray, hsv, weaponRoi);
 			const cornerMin = corner.mean;
 			const lightSurface =
@@ -769,16 +730,12 @@ export function createMinimapDetector(
 		];
 	}
 
-	// sufficientConfidence sits just under the lowest confirmed scan read
-	// (fixtures 0.746-0.800; confirmed scan events reach down to 0.699), so
-	// nearly every real overlay suppresses after one parse. Reads below it
-	// would fall back to stagnation, but a map-open's confidence keeps
-	// fluctuating upward, resetting the stagnation counter — on the live
-	// capture that ran the ~4s browser parse over and over until the worker
-	// starved the frame queue and whole match stretches were never analyzed
-	// (2026-08-23 Mincemeat: the last 95s of counter reads lost). The rearm
-	// cooldown covers the overlay's flicker the same way death's does: a
-	// gate blink otherwise clears the suppression and re-runs the parse.
+	// sufficientConfidence sits just under the lowest confirmed scan read (fixtures
+	// 0.746-0.800, scan events down to 0.699) so nearly every overlay suppresses
+	// after one parse; stagnation can't be relied on since a map-open's confidence
+	// keeps fluctuating upward, which once re-ran the ~4s parse until the worker
+	// starved the frame queue (2026-08-23 Mincemeat: last 95s of counter reads
+	// lost). The rearm cooldown covers gate flicker like death's does.
 	return {
 		id: "minimap",
 		refineIntervalS: 0.4,

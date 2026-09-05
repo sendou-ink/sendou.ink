@@ -17,11 +17,7 @@ const ianaTimezone = v.pipe(
 	}),
 );
 
-/**
- * Stores the browser's IANA timezone in a cookie so that the server can read it
- * while rendering. Neither a request header nor a client hint carries the
- * timezone, so it has to be written client-side before the server can know it.
- */
+/** No request header or client hint carries the timezone, so the browser writes it to a cookie for the server. */
 export function writeViewerTimezoneCookie() {
 	try {
 		const timezone = Intl.DateTimeFormat().resolvedOptions().timeZone;
@@ -51,10 +47,7 @@ export function writeViewerTimezoneCookie() {
 	}
 }
 
-/**
- * The viewer's IANA timezone as written by {@link writeViewerTimezoneCookie}.
- * `null` when the cookie is missing or holds something that is not a timezone.
- */
+/** Timezone written by {@link writeViewerTimezoneCookie}; `null` when missing or not a timezone. */
 export function viewerTimezoneFromCookieHeader(
 	header: string | null,
 ): string | null {

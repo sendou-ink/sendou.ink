@@ -133,7 +133,6 @@ test.describe("Team page", () => {
 		const team = new TeamPage(page);
 		await team.goto(customUrl);
 
-		// Owner is Sendou
 		await expect(team.ownerBadge(ADMIN_ID)).toBeVisible();
 
 		const roster = await team.openManageRoster();
@@ -191,7 +190,6 @@ test.describe("Team page", () => {
 		await expect(firstRow.locators.moveUpButton).toBeDisabled();
 		await expect(lastRow.locators.moveDownButton).toBeDisabled();
 
-		// move the first member down one slot
 		await firstRow.moveDown();
 
 		await expect(firstRow.locators.username).toHaveText(secondName);
@@ -202,7 +200,6 @@ test.describe("Team page", () => {
 		await team.goto(customUrl);
 		await team.openManageRoster();
 
-		// the new order is persisted
 		await expect(firstRow.locators.username).toHaveText(secondName);
 	});
 
@@ -422,11 +419,13 @@ async function createFullTeam(factories: Factories) {
 }
 
 test.describe("Team schedule", () => {
-	test("member sees the grid states and playable windows", async ({
+	test("member sees the heatmap, the grid states and playable windows", async ({
 		page,
 		factories,
 	}) => {
-		const noScheduleMember = await factories.UserFactory.create();
+		const noScheduleMember = await factories.UserFactory.create({
+			discordName: "Schedules-Later",
+		});
 		const { id: teamId, customUrl } = await factories.TeamFactory.create({
 			name: TEAM_NAME,
 			memberUserIds: [ADMIN_ID, NZAP_TEST_ID, noScheduleMember.id],
@@ -468,6 +467,34 @@ test.describe("Team schedule", () => {
 		await team.goto(customUrl);
 
 		const schedule = await team.openSchedule();
+
+		// heatmap is the default view: two share Wed 19-22, one is also free Wed 18-19 and Thu 1-2
+		await expect(schedule.locators.heatmap).toBeVisible();
+		await expect(schedule.heatmapCells(2)).toHaveCount(3);
+		await expect(schedule.heatmapCells(1)).toHaveCount(2);
+		// the count shade must actually paint: an equal-specificity base background once blanked the whole grid
+		expect(await schedule.heatmapCellBackground(2)).not.toBe(
+			await schedule.heatmapCellBackground(0),
+		);
+		await expect(schedule.locators.heatmapUnreported).toContainText(
+			"Schedules-Later",
+		);
+		await expect(schedule.dayDot(WEDNESDAY)).toBeVisible();
+
+		// hovering a block names who is free then and who has no schedule
+		await schedule.heatmapCells(2).first().hover();
+		await expect(schedule.locators.heatmapTooltip).toContainText("2/3");
+		await expect(schedule.locators.heatmapTooltip).toContainText("N-ZAP");
+		await expect(schedule.locators.heatmapTooltip).toContainText(
+			"Schedules-Later",
+		);
+
+		// dropping the member without a schedule from the count clears the nudge about them
+		await schedule.memberChip(noScheduleMember.id).click();
+		await isNotVisible(schedule.locators.heatmapUnreported);
+		await schedule.memberChip(noScheduleMember.id).click();
+
+		await schedule.locators.gridViewTab.click();
 		await expect(schedule.locators.grid).toBeVisible();
 
 		await expect(schedule.cellRange(ADMIN_ID, WEDNESDAY)).toBeVisible();

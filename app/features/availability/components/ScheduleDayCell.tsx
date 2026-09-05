@@ -7,10 +7,8 @@ import type { BusyBlock, TimeRange } from "../availability-types";
 import styles from "./ScheduleDayCell.module.css";
 
 /**
- * One day of one person's week: the ranges they are effectively free for and,
- * where the surface shows them, the commitments taking time back and the note
- * they left on the day. Shared by the team schedule grid and the single person
- * week view so the two cannot drift apart.
+ * One day of one person's week: free ranges plus, where shown, commitments and the day note.
+ * Shared by the team schedule grid and the single person week view so they cannot drift apart.
  */
 export function ScheduleDayCell({
 	reported,
@@ -73,11 +71,7 @@ export function ScheduleDayCell({
 	);
 }
 
-/**
- * Formats a range as times only. `formatRange` expands to full dates when the
- * ends fall on different calendar days, so a range crossing (or ending exactly
- * at) midnight formats its ends separately.
- */
+/** Times only: `formatRange` expands to full dates across days, so a range crossing midnight formats its ends separately. */
 export function useRangeText() {
 	const { formatter } = useDateTimeFormat({
 		hour: "numeric",

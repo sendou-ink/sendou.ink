@@ -8,10 +8,7 @@ import type {
 	StageType,
 } from "../types";
 
-/**
- * Resolves the user-selected settings into the engine's internal stage
- * settings, applying our defaults (seed ordering, group counts etc.).
- */
+/** User-selected settings to internal stage settings, applying defaults (seed ordering, group counts etc.). */
 export function resolveStageSettings(input: CreateBracketInput): StageSettings {
 	const { type, settings, seeding } = input;
 
@@ -49,19 +46,14 @@ export function resolveStageSettings(input: CreateBracketInput): StageSettings {
 	}
 }
 
-/**
- * How many rounds a swiss bracket was created with. Read off the stage's own
- * settings (resolved and persisted when the bracket was created) so that later
- * edits to the tournament's bracket progression can't change the advance and
- * elimination math of a bracket that already exists.
- */
+/** Off the stage's own persisted settings so later progression edits can't change an existing bracket's advance/elimination math. */
 export function swissRoundCount(data: BracketData): number {
 	return (
 		data.stage[0]?.settings.roundCount ?? TOURNAMENT.SWISS_DEFAULT_ROUND_COUNT
 	);
 }
 
-/** Whether the bracket will include a third place match. Only possible for single elimination with at least 4 participants. */
+/** Only possible for single elimination with at least 4 participants. */
 export function hasThirdPlaceMatch(args: {
 	type: StageType;
 	settings: TournamentStageSettings | null;
@@ -76,7 +68,7 @@ export function hasThirdPlaceMatch(args: {
 	);
 }
 
-/** How many groups a round robin bracket will have, derived from the user-selected teams per group count and the participant count. */
+/** Round robin group count from the user-selected teams per group and the participant count. */
 export function roundRobinGroupCount(
 	settings: TournamentStageSettings | null,
 	participantsCount: number,

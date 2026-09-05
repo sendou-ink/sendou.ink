@@ -7,11 +7,7 @@ type InsertArgs = {
 	type: ApiTokenType;
 };
 
-/**
- * Creates API tokens. `userId` is whose token it is — note that having one and being
- * allowed to use it are separate things, the permission coming from the user's roles.
- * The token itself is the repository's own.
- */
+/** Having a token and being allowed to use it are separate things: the permission comes from the user's roles. */
 export const { create } = defineFactory({
 	defaults: () => ({ type: "read" as const }),
 	insert: ({ userId, type }: InsertArgs) =>

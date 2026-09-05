@@ -1,16 +1,11 @@
 import * as React from "react";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 
-// Lives outside the to.$id route module on purpose: a context created inside a
-// route module gets a new identity when HMR re-executes that module, leaving
-// consumers in sibling route modules reading the stale context (null).
+// outside the to.$id route module on purpose: HMR re-executing a route module gives a context
+// created there a new identity, leaving sibling route modules reading the stale one (null)
 const TournamentContext = React.createContext<Tournament | null>(null);
 
-/**
- * Provides the tournament of the subtree. Rendered by the tournament layout,
- * and rendered again by views that load bracket match data of their own to
- * override the layout's tournament.
- */
+/** Rendered by the tournament layout, and again by views loading their own bracket match data to override it. */
 export function TournamentProvider({
 	tournament,
 	children,

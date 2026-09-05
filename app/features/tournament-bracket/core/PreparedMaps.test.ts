@@ -277,10 +277,7 @@ describe("PreparedMaps - eliminationTeamCountOptions", () => {
 		});
 	}
 
-	/**
-	 * Names of the rounds that actually get played i.e. what both the bracket and the prepared maps dialog show.
-	 * The third place match is left out because it is trimmed separately when it disappears below four teams.
-	 */
+	/** Round names as both the bracket and the prepared maps dialog show them. Third place match left out as it is trimmed separately. */
 	function playedRoundNames({
 		type,
 		teamCount,

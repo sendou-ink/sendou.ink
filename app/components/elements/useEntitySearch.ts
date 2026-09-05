@@ -12,14 +12,11 @@ export type EntitySearchItem<TItem> = TItem | EntitySearchPlaceholder;
 interface UseEntitySearchArgs<TItem extends { id: number }> {
 	/** Builds the loader URL queried (debounced) as the user types. */
 	buildUrl: (query: string) => string;
-	/**
-	 * Turns raw loader data into result items. Return `null` when the data does
-	 * not (yet) correspond to the current query so a placeholder is shown.
-	 */
+	/** Return `null` when the data does not (yet) correspond to the query, showing a placeholder. */
 	parseResults: (data: unknown, query: string) => TItem[] | null;
-	/** Already resolved item to pin to the top of the list (e.g. when editing). */
+	/** pinned to the top of the list (e.g. when editing) */
 	initialItem?: TItem;
-	/** Id to preselect on mount even before its item is resolved. */
+	/** preselected on mount even before its item is resolved */
 	initialSelectedId?: number;
 	onChange?: (item: TItem | null) => void;
 }
@@ -32,12 +29,7 @@ export interface EntitySearch<TItem extends { id: number }> {
 	onSelectionChange: (key: number) => void;
 }
 
-/**
- * Shared state + data fetching for the autocomplete search selects
- * (e.g. `UserSearch`, `TeamSearch`, `TournamentSearch`). Pair with the
- * presentational `SearchSelect` component, passing the returned value as its
- * `search` prop.
- */
+/** State + data fetching for the entity search selects (`UserSearch` etc.); pass the result as `SearchSelect`'s `search` prop. */
 export function useEntitySearch<TItem extends { id: number }>({
 	buildUrl,
 	parseResults,

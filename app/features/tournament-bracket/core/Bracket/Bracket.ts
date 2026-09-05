@@ -114,11 +114,7 @@ export abstract class Bracket {
 		this.startTime = startTime;
 	}
 
-	/**
-	 * Can the organizer start this bracket at this moment? Evaluated on access rather than
-	 * stored because it depends on the current time, and a bracket can be built (and cached)
-	 * long before the clock reaches its start time.
-	 */
+	/** Evaluated on access as it depends on the current time and a bracket can be built (and cached) long before its start time. */
 	get canBeStarted() {
 		if (!this.participantsReady) return false;
 		if (this.startTime && this.startTime > new Date()) return false;
@@ -127,10 +123,7 @@ export abstract class Bracket {
 		return this.tournament.regularCheckInHasEnded;
 	}
 
-	/**
-	 * Bracket data with the results of the unplayed matches filled in, showing how teams are
-	 * expected to advance. Simulating is expensive so it happens on first access only.
-	 */
+	/** Unplayed matches filled in with the expected results. Simulating is expensive so it happens on first access only. */
 	get simulatedData(): BracketData | undefined {
 		if (!this._simulatedData) {
 			this._simulatedData = { value: this.createdSimulation() };
@@ -258,10 +251,7 @@ export abstract class Bracket {
 
 	abstract get type(): Tables["TournamentStage"]["type"];
 
-	/**
-	 * Standings that are settled i.e. teams still playing are left out. Safe to
-	 * use for deciding who advances to another bracket.
-	 */
+	/** Settled standings, teams still playing left out. Safe for deciding who advances. */
 	get standings(): Standing[] {
 		if (!this._standings) {
 			this._standings = this.calculateStandings();
@@ -272,11 +262,7 @@ export abstract class Bracket {
 
 	protected abstract calculateStandings(): Standing[];
 
-	/**
-	 * How many rounds a swiss bracket has. Comes from the bracket's own stage
-	 * settings rather than `settings` (the progression's, editable at any time),
-	 * so it can't drift from the bracket that actually exists.
-	 */
+	/** From the bracket's own stage settings rather than the progression's (editable at any time), so it can't drift. */
 	get swissRoundCount() {
 		return Engine.swissRoundCount(this.data);
 	}
@@ -289,10 +275,7 @@ export abstract class Bracket {
 		) as number[];
 	}
 
-	/**
-	 * Standings including teams that are still playing. Meant for displaying the
-	 * bracket's current state, not for deciding who advances.
-	 */
+	/** Includes teams still playing: for display, not for deciding who advances. */
 	get liveStandings(): Standing[] {
 		if (!this._liveStandings) {
 			this._liveStandings = this.calculateLiveStandings();
@@ -309,15 +292,15 @@ export abstract class Bracket {
 		return;
 	}
 
-	/** Returns true if this bracket is a starting bracket (i.e., teams in it start their tournament from this bracket). Note: there can be more than one starting bracket. */
+	/** Teams start their tournament from this bracket. There can be more than one. */
 	get isStartingBracket() {
 		return !this.sources || this.sources.length === 0;
 	}
 
-	/** Resolves teams' effective seeds: the better of a team's own seed and the best
-	 * seed of a team it defeated in this bracket. A team that beats a higher seed
-	 * inherits that seed, so cross-group placement ties break in the overtaker's
-	 * favor while defaulting to the original seeding when no upsets happened. */
+	/**
+	 * Effective seed = the better of a team's own seed and the best seed it defeated in this bracket,
+	 * so cross-group placement ties break in the overtaker's favor.
+	 */
 	protected effectiveSeedResolver(): (tournamentTeamId: number) => number {
 		const teamSeed = (tournamentTeamId: number) => {
 			const seed = this.tournament.teamById(tournamentTeamId)?.seed;
@@ -447,10 +430,7 @@ export abstract class Bracket {
 		);
 	}
 
-	/**
-	 * Whether the standings of this bracket are final i.e. no further match can
-	 * change them. While false the standings are provisional.
-	 */
+	/** No further match can change the standings. */
 	get standingsAreFinal() {
 		return this.everyMatchOver;
 	}
@@ -491,9 +471,10 @@ export abstract class Bracket {
 		teams: number[];
 	};
 
-	/** Advances top finishers by their standings placement. Only settled teams appear in
-	 * the standings, so placements are matched raw until the full standings resolve and
-	 * only then normalized (1,3,5 -> 1,2,3) the way group brackets source. */
+	/**
+	 * Only settled teams appear in the standings, so placements are matched raw until the full
+	 * standings resolve and only then normalized (1,3,5 -> 1,2,3) the way group brackets source.
+	 */
 	protected sourceByStandings(placements: number[], rest: boolean) {
 		const standings = this.standings;
 		const relevantMatchesFinished =
@@ -549,13 +530,7 @@ export abstract class Bracket {
 		return status;
 	}
 
-	/**
-	 * Returns match IDs that are currently ongoing (ready to start).
-	 * A match is ongoing when:
-	 * - Both teams are defined
-	 * - No team has an earlier match (lower number) currently in progress
-	 * - Match is not completed
-	 */
+	/** Matches with both teams defined, not completed and neither team busy in an earlier (lower number) match. */
 	ongoingMatches(): number[] {
 		const ongoingMatchIds: number[] = [];
 

@@ -37,12 +37,8 @@ export async function isBannedByOrganization({
 }
 
 /**
- * Whether the given team name is already used by another team in the tournament.
- * Single source of truth for the uniqueness rule shared by the player registration
- * ({@link registerTeamFormSchemaServer}) and admin registration
- * ({@link adminRegistrationFormSchemaServer}) forms.
- *
- * @param exceptTournamentTeamId - the team being edited, excluded from the comparison
+ * Whether another team in the tournament already uses the name, shared by the player and admin
+ * registration forms. `exceptTournamentTeamId` is the team being edited.
  */
 export function tournamentTeamNameTaken({
 	tournament,
@@ -85,14 +81,8 @@ export async function fulfillsSendouQParticipation({
 }
 
 /**
- * Ends all unfinished matches involving dropped teams by awarding wins to their opponents.
- * If both teams in a match have dropped, a random winner is selected. Pure over the given
- * bracket data — the caller persists the returned changedMatches.
- *
- * @param tournament - The tournament instance
- * @param data - The bracket data to end matches in (fresh rows or the previous engine result)
- * @param droppedTeamId - Optional team ID to filter matches for a specific dropped team.
- *                        If omitted, processes all matches with any dropped team.
+ * Ends unfinished matches of dropped teams (of `droppedTeamId` only when given) by awarding the
+ * opponent the win, random when both dropped. Pure over `data` — the caller persists changedMatches.
  */
 export function endDroppedTeamMatches({
 	tournament,

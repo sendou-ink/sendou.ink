@@ -1,6 +1,6 @@
 import { cachified } from "@epic-web/cachified";
 import type { Tables } from "~/db/tables";
-import { cache } from "~/utils/cache.server";
+import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "../leaderboards/leaderboards-constants";
 import { USER_SKILLS_CACHE_KEY } from "../sendouq/q-constants";
 import {
@@ -59,9 +59,17 @@ export function userSkills(season: number, { forceFresh = false } = {}) {
 		key: userSkillsCacheKey(season),
 		cache,
 		forceFresh,
-		// no ttl: a season's tiers only go stale when a match of it is played,
-		// and those code paths refresh this themselves
-		getFreshValue: () => freshUserSkills(season),
+		// no ttl once the season has skills: its tiers only go stale when a match
+		// of it is played, and those code paths refresh this themselves
+		getFreshValue: async (context) => {
+			const value = await freshUserSkills(season);
+
+			if (Object.keys(value.userSkills).length === 0) {
+				context.metadata.ttl = ttl(IN_MILLISECONDS.HALF_HOUR);
+			}
+
+			return value;
+		},
 	});
 }
 
@@ -86,8 +94,7 @@ function skillTierIntervals(
 	);
 	const hasLeviathan = points.length >= LEADERBOARD_MIN_ENTRIES_FOR_LEVIATHAN;
 	if (!hasLeviathan) {
-		// using all entries, no matter if they have enough to be on the leaderboard
-		// to create the tiers
+		// tiers from all entries, whether or not they have enough to be on the leaderboard
 		points = orderedPoints;
 	}
 

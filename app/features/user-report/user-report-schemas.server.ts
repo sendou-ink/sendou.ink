@@ -7,8 +7,7 @@ export const reportUserSchemaServer = v.objectAsync({
 	...reportUserSchema.entries,
 	// the dialog also offers a category that only shows guidance, never a report
 	category: v.picklist(USER_REPORT_CATEGORIES),
-	// cast to the concrete value type: the field's nullability makes its inferred
-	// type a union the async pipe can't resolve
+	// cast: the field's nullability makes its inferred type a union the async pipe can't resolve
 	matchId: v.pipeAsync(
 		reportUserSchema.entries.matchId as v.GenericSchema<unknown, string | null>,
 		v.checkAsync(async (matchId) => {

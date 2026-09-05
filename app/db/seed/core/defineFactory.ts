@@ -42,19 +42,10 @@ export type Factory<Args, Row, Defaults, Options> = {
 const sequenceResets = new Set<() => void>();
 
 /**
- * Defines a factory: a thin wrapper around a repository write function that fills
- * arguments with a plausible default and lets the caller override any of them.
- *
- * `Args` is inferred from `insert`, so factories never restate column types. What
- * `defaults` leaves out — foreign keys above all, which a factory must not invent —
- * becomes a required argument of `create`.
- *
- * Defaults are drawn eagerly, before overrides are applied, so that which fields a
- * caller happens to override does not shift the values every later row gets.
- *
- * `applyOptions` runs after the insert and is how a factory hands back a row in a
- * later state (a concluded match, a finalized tournament). It gets there by running
- * the app's own operations, never by writing the resulting rows itself.
+ * Wraps a repository write with plausible defaults; `Args` is inferred from `insert` and whatever `defaults`
+ * leaves out (foreign keys above all) is required by `create`. Defaults are drawn eagerly, before overrides,
+ * so overriding doesn't shift later rows. `applyOptions` runs after the insert to reach later states through
+ * the app's own operations, never by writing rows itself.
  */
 export function defineFactory<
 	Args,
@@ -86,8 +77,7 @@ export function defineFactory<
 		return row;
 	};
 
-	// `create` requires everything `defaults` doesn't supply, so the merge is a
-	// complete `Args` — something the compiler can't work out from the spread
+	// the merge is a complete `Args`, which the compiler can't work out from the spread
 	const build = (overrides: Partial<Args>) =>
 		({
 			...defaults?.({ seq: ++seq }),

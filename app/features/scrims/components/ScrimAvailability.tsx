@@ -23,13 +23,9 @@ export interface ScrimRosterFit {
 }
 
 /**
- * How one of the viewer's teams fits a post they could request, resolved from
- * the schedules the browsing page loaded. `teamId` picks the team (their main
- * one by default) and `at` narrows the fit to one start inside the post's
- * flexibility instead of the best one on offer.
- *
- * Null whenever there is nothing to show: no team, a post past the reportable
- * horizon, or a week nobody filled in.
+ * How one of the viewer's teams (`teamId`, main by default) fits a post, from the schedules the
+ * page loaded; `at` narrows the fit to one start instead of the best on offer. Null when there
+ * is nothing to show: no team, a post past the reportable horizon, or a week nobody filled in.
  */
 export function useRosterFit({
 	post,
@@ -67,13 +63,7 @@ export function useRosterFit({
 	return { team, roster, fit };
 }
 
-/**
- * The post card's fit indicator: a stripe above the card's actions saying how
- * much of the viewer's roster could play it, the who and when a click away.
- *
- * Left out when none of them could — a row of zeroes down the page is noise,
- * and the request button says all there is to say then.
- */
+/** The post card's fit stripe: how much of the viewer's roster could play it, details a click away. Left out when none could — a row of zeroes down the page is noise. */
 export function ScrimFitStripe({ post }: { post: ScrimPost }) {
 	const { t } = useTranslation(["schedule"]);
 	const fit = useRosterFit({ post });

@@ -20,33 +20,6 @@ import {
 import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
 
-export function findAllUndisbanded() {
-	return db
-		.selectFrom("Team")
-		.leftJoin("UserSubmittedImage", "UserSubmittedImage.id", "Team.avatarImgId")
-		.select(({ eb }) => [
-			"Team.customUrl",
-			"Team.name",
-			"Team.tag",
-			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
-				"avatarUrl",
-			),
-			jsonArrayFrom(
-				eb
-					// AllTeamMember directly instead of the TeamMemberWithSecondary view:
-					// the view's team-existence check is redundant when joining to Team
-					.selectFrom("AllTeamMember")
-					.innerJoin("User", "User.id", "AllTeamMember.userId")
-					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-					.select(["User.id", "User.username", "PlusTier.tier as plusTier"])
-					.whereRef("AllTeamMember.teamId", "=", "Team.id")
-					.where("AllTeamMember.leftAt", "is", null)
-					.orderBy("AllTeamMember.order", "asc"),
-			).as("members"),
-		])
-		.execute();
-}
-
 export function searchByName({
 	query,
 	limit,
@@ -139,9 +112,8 @@ export async function findByCustomUrl(
 		includeMapModePreferences = false,
 	} = {},
 ) {
-	// join the unvalidated table (instead of the validated-only `UserSubmittedImage` view) so the
-	// edit page can preview images still pending moderation; for everyone else the url is gated on
-	// `validatedAt` so pending images stay hidden
+	// joins the unvalidated table so the edit page can preview images pending moderation;
+	// for everyone else the url is gated on `validatedAt`
 	const row = await db
 		.selectFrom("Team")
 		.leftJoin(
@@ -245,9 +217,7 @@ export function findResultPlacementsById(teamId: number) {
 		.execute();
 }
 
-/**
- * Retrieves tournament results for a given team by its ID.
- */
+/** Tournament results of the team. */
 export async function findResultsById(teamId: number) {
 	const rows = await db
 		.with("results", (db) =>
@@ -341,9 +311,7 @@ export async function findResultsById(teamId: number) {
 	});
 }
 
-// reads AllTeamMember instead of the TeamMemberWithSecondary view because the
-// view filters out members who have left, and past members are exactly what
-// subsOfResult needs to tell substitutes apart from since-departed roster members
+// AllTeamMember rather than the TeamMemberWithSecondary view: subsOfResult needs past members too
 function allMembersById(teamId: number) {
 	return db
 		.selectFrom("AllTeamMember")
@@ -436,8 +404,7 @@ export async function update({
 			.where("id", "=", id)
 			.executeTakeFirst();
 
-		// images that got removed or replaced are no longer referenced by anything,
-		// so their submitted image rows are cleaned up
+		// removed or replaced images' submitted image rows are cleaned up
 		const orphanedImageIds: number[] = [];
 		if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
 			orphanedImageIds.push(current.avatarImgId);
@@ -486,7 +453,7 @@ export async function updateCustomTheme({
 		.execute();
 }
 
-/** Updates the team's SendouQ map/mode preferences, or clears them when passed `null`. Keeps existing map pools of modes missing from the new value. */
+/** Sets (or clears with `null`) SendouQ map/mode preferences; map pools of modes missing from the new value are kept. */
 export async function updateMapModePreferences({
 	id,
 	mapModePreferences,
@@ -559,7 +526,7 @@ export function deleteById(teamId: number) {
 			.where("teamId", "=", teamId)
 			.execute();
 
-		// switch main team to another if they at least one secondary team
+		// switch main team to a secondary team if they have one
 		for (const member of members) {
 			const currentTeams = await findAllByMemberUserId(member.userId, trx);
 
@@ -662,10 +629,7 @@ export function handleMemberLeaving({
 		.execute((trx) => memberLeave(trx, { userId, teamId, newOwnerUserId }));
 }
 
-/**
- * Applies a roster edit in a single transaction: updates each kept member's role
- * & editor status and removes (kicks) the members in `kickedUserIds`.
- */
+/** In one transaction: updates kept members' role & editor status and kicks `kickedUserIds`. */
 export function updateRoster({
 	teamId,
 	members,

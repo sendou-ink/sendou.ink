@@ -3,27 +3,21 @@ import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { databaseTimestampToDate } from "~/utils/dates";
 
 interface LocaleTimeRangeProps {
-	/** Start of the range. Accepts a `Date` or a database timestamp (number), which is converted via `databaseTimestampToDate`. */
+	/** `Date` or database timestamp */
 	from: Date | number;
-	/** End of the range. Accepts a `Date` or a database timestamp (number), which is converted via `databaseTimestampToDate`. */
+	/** `Date` or database timestamp */
 	to: Date | number;
-	/** Formatting options forwarded to `Intl.DateTimeFormat`. Combined with the user's locale and hour cycle preferences. */
 	options: Intl.DateTimeFormatOptions;
-	/** Optional extra class names appended to the rendered element. */
 	className?: string;
-	/** When `true`, renders inline; otherwise the element is displayed as a block. Defaults to block. */
+	/** defaults to block */
 	inline?: boolean;
-	/** Optional test id forwarded to the rendered element. */
 	"data-testid"?: string;
 }
 
 /**
- * Renders the given date range formatted according to the user's locale preferences,
- * using `Intl.DateTimeFormat.prototype.formatRange` for locale-aware separators and
- * collapsing of shared parts (e.g. the year when both bounds share it).
- *
- * During SSR and before the user's locale preference has loaded the formatted text is hidden
- * (via `invisible`) while still reserving one line of height to avoid layout shift on hydration.
+ * Date range via `Intl.DateTimeFormat.formatRange` (locale-aware separators, shared parts
+ * collapsed). Before the locale preference has loaded (SSR) the text is `invisible` but still
+ * reserves one line of height to avoid layout shift.
  */
 export function LocaleTimeRange({
 	from,

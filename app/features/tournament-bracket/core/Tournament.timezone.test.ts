@@ -2,8 +2,7 @@ import { afterAll, beforeAll, describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { testTournament } from "./tests/test-utils";
 
-// in its own file because changing the process timezone affects every Date
-// operation of the worker while these tests run
+// own file because changing the process timezone affects every Date operation of the worker
 describe("regularCheckInStartsAt in a DST observing timezone", () => {
 	const ORIGINAL_TZ = process.env.TZ;
 

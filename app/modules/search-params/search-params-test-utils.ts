@@ -8,12 +8,7 @@ import * as SearchParams from "./search-params";
 
 type AnyShape = Record<string, ParamDef<any>>;
 
-/**
- * Asserts `decode(encode(x))` deep-equals `x` for every given example value,
- * through both the plain and the compressed transport form, and additionally
- * through a full `href` → `parse` cycle. Every feature definition registers a
- * test with representative and edge-case values.
- */
+/** Asserts `decode(encode(x))` deep-equals `x` through plain and compressed forms and a full `href` → `parse` cycle. */
 export function assertRoundTrips<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
 	examples: {

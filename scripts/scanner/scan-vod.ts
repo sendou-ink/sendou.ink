@@ -1,18 +1,15 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * CLI equivalent of the VoD tab: scan a video file with the full detector
- * registry and write the same events CSV the tab's Export menu downloads.
- * ffmpeg decodes the video to raw RGBA frames piped through the
- * DetectorScheduler + detectors, and every parse event goes through a
- * TimelineBuilder with the tab's default merge/confidence options — so the
- * CSV matches a browser scan of the same footage (minus the calm-stretch
- * keyframe skimming, which only affects speed, not results).
+ * CLI equivalent of the VoD tab: scans a video with the full detector registry
+ * and writes the same events CSV the tab's Export menu downloads. ffmpeg
+ * decodes to raw RGBA frames piped through the DetectorScheduler + detectors
+ * and a TimelineBuilder with the tab's default options, so the CSV matches a
+ * browser scan (minus keyframe skimming, which only affects speed).
  *
  * Requires ffmpeg (and ffprobe for the progress percentage) on PATH.
  *
  * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry]
- * --telemetry prints the VoD tab's ?telemetry=true scan counters after the
- * run (per-detector gate/parse time, scheduling savings).
+ * --telemetry prints the VoD tab's ?telemetry=true scan counters after the run.
  */
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";

@@ -51,7 +51,6 @@ export const action: ActionFunction = async ({ request, params }) => {
 					.filter(
 						(member) =>
 							member.id !== user.id &&
-							member.role !== "CHEERLEADER" &&
 							(!participantUserIds || participantUserIds.includes(member.id)),
 					)
 					.map((member) => member.id),
@@ -119,9 +118,7 @@ function validatedParticipantUserIds(
 	const userIds = data.participantUserIds.map(Number);
 	errorToastIfFalsy(
 		userIds.every((userId) =>
-			team.members.some(
-				(member) => member.id === userId && member.role !== "CHEERLEADER",
-			),
+			team.members.some((member) => member.id === userId),
 		),
 		"Participants must be members of the team",
 	);

@@ -26,15 +26,14 @@ export function BracketProgressionFormFields({
 	isInvitational: boolean;
 	/** Idxs of brackets that have already started and can no longer be edited or deleted. */
 	disabledBracketIdxs?: number[];
-	/** When the tournament is in progress, which brackets are starting brackets can no longer be changed. */
+	/** In progress: which brackets are starting brackets can no longer change. */
 	isTournamentInProgress?: boolean;
 }) {
 	const { values, setValue } = useFormFieldContext();
 	const brackets = (values.brackets ?? []) as BracketFormValue[];
 	const progression = (values.progression ?? []) as ProgressionFormValue[];
 
-	// the array field's own add/remove buttons only report the new value, so the
-	// removed bracket is located by reference diffing against the previous value
+	// the array field only reports the new value, so the removed bracket is found by reference diffing
 	const handleBracketsChanged = (newValue: unknown) => {
 		const newBrackets = newValue as BracketFormValue[];
 
@@ -67,9 +66,8 @@ export function BracketProgressionFormFields({
 		<>
 			<FormField
 				name="brackets"
-				// removing a bracket shifts the idxs of the brackets after it, so
-				// brackets before a started one must stay to keep started brackets'
-				// idxs (and disabledBracketIdxs) stable, matching the server's guard
+				// removing shifts later idxs, so brackets before a started one must stay to keep its idx
+				// (and disabledBracketIdxs) stable, matching the server's guard
 				canRemoveItem={(_, idx) =>
 					idx !== 0 &&
 					disabledBracketIdxs.every((disabledIdx) => disabledIdx < idx)
@@ -234,8 +232,7 @@ function ProgressionEntryFields({
 
 	const isFirstBracket = index === 0;
 
-	// a newly added row defaults to the first bracket, which is usually already a
-	// source of this bracket, so it gets moved to the first one not sourced yet
+	// a new row defaults to the first bracket, usually already a source, so it moves to the first one not sourced yet
 	const handleSourcesChanged = (newValue: unknown) => {
 		const newSources = newValue as ProgressionSourceFormValue[];
 		if (newSources.length <= sources.length) return;
@@ -309,8 +306,7 @@ function SourceFields({
 		[]) as ProgressionFormValue[];
 	const siblingSources = progression[destinationBracketIdx]?.sources ?? [];
 
-	// a bracket can be sourced only once, so the brackets taken by the other rows
-	// are not offered here
+	// a bracket can be sourced only once, so the ones taken by other rows are not offered
 	const bracketOptions = brackets.flatMap((bracket, bracketIdx) =>
 		bracketIdx === destinationBracketIdx ||
 		!bracket.name ||

@@ -4,10 +4,7 @@ import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 
 type RankedStream = { stream: SidebarStream; score: number };
 
-/**
- * Score for admin-curated external streams. Below every other source's minimum (0) so they sort
- * to the top of the ranking, reserving the first sidebar slots.
- */
+/** Below every other source's minimum (0) so external streams take the first sidebar slots. */
 export const EXTERNAL_STREAM_SCORE = -1;
 
 export function rank(

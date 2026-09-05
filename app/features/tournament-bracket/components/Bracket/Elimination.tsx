@@ -17,8 +17,7 @@ interface EliminationBracketSideProps {
 	isExpanded?: boolean;
 }
 
-// these values must match --match-height in index.module.css and the match
-// gap in BracketColumns.module.css
+// must match --match-height in index.module.css and the match gap in BracketColumns.module.css
 const MATCH_HEIGHT = 55;
 const GAP = 32;
 const MATCH_SPACING = MATCH_HEIGHT + GAP;
@@ -191,12 +190,9 @@ export function EliminationBracketSide(props: EliminationBracketSideProps) {
 }
 
 /**
- * Resolves whether the first round should be rendered compacted, meaning one
- * slot per second round match instead of two. This is possible when fewer
- * than half of the potential first round matches are played, as then each
- * second round match has at most one first round feeder and the played
- * matches can be laid out right next to their destination with a straight
- * connector, halving the bracket's height.
+ * Compacted = one first round slot per second round match instead of two, halving the height. Possible
+ * when fewer than half of the potential first round matches are played, as then each second round match
+ * has at most one feeder that can sit right next to it with a straight connector.
  */
 function resolveCompactedFirstRoundId(args: {
 	rounds: ReturnType<typeof getRounds>;

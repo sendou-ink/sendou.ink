@@ -386,9 +386,8 @@ export function findAllSeries() {
 }
 
 /**
- * How many teams each organization's already started tournaments drew within the
- * given window, oldest first. Counts what the tournament's own page shows:
- * placeholder teams excluded, dropped out ones included.
+ * Team counts of each organization's started tournaments within the window, oldest first.
+ * Counts what the tournament page shows: placeholder teams excluded, dropped out ones included.
  */
 export function findAllOrganizedTournamentTeamCounts({
 	startedAfter,
@@ -476,9 +475,8 @@ export async function findPaginatedEventsBySeries({
 }
 
 /**
- * Every event of the series, newest first. Selects only what the leaderboard and the series header
- * need - the winners of {@link findPaginatedEventsBySeries} are far too costly across a whole
- * series.
+ * Every event of the series, newest first, with only what the leaderboard and series header need:
+ * the winners of {@link findPaginatedEventsBySeries} are far too costly across a whole series.
  */
 export async function findAllEventsBySeries({
 	organizationId,
@@ -535,9 +533,8 @@ export async function findAllSeriesByOrganizationIds(
 }
 
 /**
- * Events of the series that the user won, oldest first. Both tournaments hosted on the site
- * and events whose results were reported by hand count. Only finalized tournaments have
- * results, so an event that is still ongoing is never included.
+ * Events of the series the user won, oldest first, hosted tournaments and hand-reported results
+ * alike. Only finalized tournaments have results, so ongoing events are never included.
  */
 export async function findAllSeriesWinsByUserId({
 	organizationId,
@@ -624,12 +621,8 @@ export async function findAllSeriesWinsByUserId({
 }
 
 /**
- * Counts the distinct players who participated in at least one match of a
- * tournament hosted by the organization, whose event started within the
- * `[startTime, endTime]` range. Only players belonging to teams that checked
- * in (and did not check out) are included.
- *
- * `startTime` and `endTime` are database timestamps (seconds).
+ * Distinct players on checked-in (not checked out) teams who played at least one match of the
+ * organization's tournaments starting within `[startTime, endTime]` (database timestamps, seconds).
  */
 export async function countActiveParticipants({
 	organizationId,
@@ -705,8 +698,7 @@ export function update({
 				.where("id", "=", id)
 				.executeTakeFirst();
 
-			// the logo got removed or replaced, so the old submitted image row is
-			// no longer referenced by anything and is cleaned up
+			// a removed or replaced logo leaves its submitted image row unreferenced
 			if (current?.avatarImgId && current.avatarImgId !== avatarImgId) {
 				await trx
 					.deleteFrom("UnvalidatedUserSubmittedImage")
@@ -837,9 +829,7 @@ export function deleteOwnMembership(organizationId: number) {
 		.execute();
 }
 
-/**
- * Inserts a user to the banned list for a tournament organization or updates the existing entry if already exists.
- */
+/** Bans a user from the organization, updating the entry if they already are. */
 export function upsertBannedUser(
 	args: Omit<TablesInsertable["TournamentOrganizationBannedUser"], "updatedAt">,
 ) {
@@ -849,9 +839,7 @@ export function upsertBannedUser(
 		.execute();
 }
 
-/**
- * Removes a user from the banned list for a tournament organization
- */
+/** Removes a user from the organization's banned list. */
 export function unbanUser({
 	organizationId,
 	userId,
@@ -866,9 +854,7 @@ export function unbanUser({
 		.execute();
 }
 
-/**
- * Returns all banned users for a specific tournament organization
- */
+/** All users banned by the organization. */
 export function findAllBannedUsersByOrganizationId(organizationId: number) {
 	return db
 		.selectFrom("TournamentOrganizationBannedUser")
@@ -888,9 +874,7 @@ export function findAllBannedUsersByOrganizationId(organizationId: number) {
 		.execute();
 }
 
-/**
- * Checks if a user is banned by a specific organization
- */
+/** Whether the organization has banned the user. */
 export async function isUserBannedByOrganization({
 	organizationId,
 	userId,
@@ -912,9 +896,7 @@ export async function isUserBannedByOrganization({
 	return isFuture(databaseTimestampToDate(result.expiresAt));
 }
 
-/**
- * Returns the number of organizations a user is a member of.
- */
+/** How many organizations the user is a member of. */
 export async function countOrganizationsByUserId(userId: number) {
 	const result = await db
 		.selectFrom("TournamentOrganizationMember")
@@ -925,9 +907,7 @@ export async function countOrganizationsByUserId(userId: number) {
 	return Number(result.count);
 }
 
-/**
- * Updates the isEstablished status for a tournament organization.
- */
+/** Sets the organization's `isEstablished` flag. */
 export function updateIsEstablished(
 	organizationId: number,
 	isEstablished: boolean,

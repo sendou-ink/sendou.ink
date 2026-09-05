@@ -10,11 +10,7 @@ import type {
 import styles from "./ParamComparisonDialog.module.css";
 import { WeaponParamImage } from "./WeaponParamsTable";
 
-/**
- * Modal with a simple horizontal bar chart comparing one parameter's numeric value across the
- * currently visible weapons. Bars are scaled relative to the largest absolute value so weapons can
- * be compared at a glance.
- */
+/** Horizontal bar chart of one parameter across the visible weapons, scaled to the largest absolute value. */
 export function ParamComparisonDialog({
 	kind,
 	label,

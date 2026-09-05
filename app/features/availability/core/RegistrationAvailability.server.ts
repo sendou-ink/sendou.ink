@@ -13,15 +13,9 @@ export type RegistrationAvailability = Awaited<
 >;
 
 /**
- * Availability of the given users for a tournament's estimated window
- * (start to {@link estimatedEndsAt}), for the registration
- * page's availability panel. The tournament's own registrations do not count
- * as being busy — the panel asks whether people can play this very event.
- *
- * When the event starts past the reportable horizon there is nothing to
- * compute: every schedule would be unknown, so the result is only when
- * schedules for the event's week open up (the Monday its week becomes the
- * "next week").
+ * Availability of the users for the tournament's estimated window (start to
+ * {@link estimatedEndsAt}); its own registrations don't count as busy. Past the reportable
+ * horizon every schedule would be unknown, so the result is only when the event's week opens up.
  */
 export async function registrationAvailability({
 	tournament,

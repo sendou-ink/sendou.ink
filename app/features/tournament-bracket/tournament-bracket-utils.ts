@@ -11,10 +11,8 @@ export const tournamentChannel = (tournamentId: number) =>
 	`${CHANNEL_PREFIX.tournament}${tournamentId}`;
 
 /**
- * Channel of the slice of the brackets page one bracket's (for the types viewed one group at
- * a time, one group's) match data is rendered in. Broadcasts that can only have changed
- * that match data go here rather than to the whole tournament's channel, so that the viewers
- * of the other brackets and groups do not refetch.
+ * Channel of one bracket's (or, for types viewed one group at a time, one group's) match data.
+ * Broadcasts only affecting that data go here instead of the tournament's channel so other viewers don't refetch.
  */
 export const tournamentBracketChannel = ({
 	tournamentId,
@@ -34,18 +32,10 @@ export const tournamentBracketChannel = ({
 export const showsOneGroupAtATime = (type: Tables["TournamentStage"]["type"]) =>
 	type === "swiss";
 
-/**
- * Converts a group number to its corresponding letter representation.
- *
- * The function takes a one-based group number and converts it to a string
- * of uppercase letters, similar to how Excel columns are labeled (e.g., 1 -> 'A', 26 -> 'Z', 27 -> 'AA').
- *
- * @param groupNumber - The one-based group number to convert.
- * @returns The letter representation of the group number.
- */
+/** One-based group number to Excel column style letters: 1 -> 'A', 26 -> 'Z', 27 -> 'AA'. */
 export function groupNumberToLetters(groupNumber: number) {
 	let letters = "";
-	let num = groupNumber - 1; // Adjust for one-based input
+	let num = groupNumber - 1;
 	while (num >= 0) {
 		letters = String.fromCharCode((num % 26) + 65) + letters;
 		num = Math.floor(num / 26) - 1;
@@ -92,14 +82,8 @@ export function ensureOneStandingPerUser(standings: Standing[]) {
 }
 
 /**
- * Validates the assignment of badges to receivers in a tournament finalization context.
- *
- * Checks the following conditions:
- * - Each badge receiver references a valid badge from the provided list.
- * - Every badge has at least one assigned receiver (both team and at least one user).
- * - No duplicate tournament team IDs exist among the badge receivers.
- *
- *   Returns `null` if all validations pass.
+ * Every receiver references a given badge, every badge has a team and at least one user, no team
+ * receives twice. Returns `null` when valid.
  */
 export function validateBadgeReceivers({
 	badgeReceivers,

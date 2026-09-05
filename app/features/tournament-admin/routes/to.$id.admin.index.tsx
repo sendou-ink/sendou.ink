@@ -1,10 +1,6 @@
 import { Outlet, useOutletContext } from "react-router";
 
-/**
- * Layout shared by the admin teams table (index) and the registration editor.
- * Rendering them as sibling routes lets the editor take over the content area
- * in place of the table instead of opening as a modal on top of it.
- */
+/** Shared by the teams table (index) and the registration editor as sibling routes, so the editor replaces the table instead of a modal. */
 export default function TournamentAdminTeamsLayout() {
 	const outletContext = useOutletContext();
 

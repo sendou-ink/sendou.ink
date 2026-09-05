@@ -16,11 +16,7 @@ export interface AllRoundsItem {
 export interface PlayedSet {
 	tournamentMatchId: number;
 	score: [teamBeingViewed: number, opponent: number];
-	/**
-	 * Who won the set according to the bracket. Can disagree with the maps and
-	 * the score e.g. when an organizer overrode the winner after games were
-	 * already reported.
-	 */
+	/** Per the bracket; can disagree with the maps and score, e.g. an organizer overrode the winner after reports. */
 	result: "win" | "loss";
 	round: {
 		type: "winners" | "losers" | "single_elim" | "round_robin" | "swiss";
@@ -36,7 +32,6 @@ export interface PlayedSet {
 	opponent: {
 		id: number;
 		name: string;
-		/** Team's roster that played in this set */
 		roster: Array<
 			Pick<
 				Tables["User"],

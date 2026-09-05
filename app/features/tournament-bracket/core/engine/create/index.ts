@@ -14,10 +14,8 @@ import { createSingleElimination } from "./single-elimination";
 import { createSwiss } from "./swiss";
 
 /**
- * Generates the full structure for a new bracket of any type from the
- * user-selected settings. Pure function: returns rows with local ids
- * (0..n-1 per table); the repository maps them to real row ids on insert.
- * For swiss this includes the empty future rounds + round 1 matches.
+ * Full structure of a new bracket with local ids (0..n-1 per table) the repository maps to row ids on
+ * insert. Swiss gets its empty future rounds + round 1 matches.
  */
 export function create(input: CreateBracketInput): BracketData {
 	const data = createResolved({
@@ -35,11 +33,7 @@ export function create(input: CreateBracketInput): BracketData {
 	return data;
 }
 
-/**
- * Engine-internal `create` taking already-resolved internal stage settings.
- * Tests use this to control knobs that are an implementation detail to the
- * app (seed ordering, byes balancing).
- */
+/** `create` with resolved internal settings, letting tests control seed ordering and byes balancing. */
 export function createResolved(input: ResolvedCreateBracketInput): BracketData {
 	if (input.type === "swiss") return createSwiss(input);
 
@@ -76,8 +70,7 @@ function attachRoundMaps(
 	};
 
 	if (type === "round_robin" || type === "swiss") {
-		// groups share one map list per round number, and groups can have
-		// different round counts when teams divide unevenly
+		// groups share one map list per round number and can have different round counts
 		const distinctRoundNumberCount = new Set(
 			data.round.map((round) => round.number),
 		).size;

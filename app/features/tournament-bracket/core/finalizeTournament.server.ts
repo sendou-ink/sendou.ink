@@ -18,8 +18,7 @@ import { summaryRatingTargets, tournamentSummary } from "./summarizer.server";
 import type { Tournament } from "./Tournament";
 import { clearTournamentDataCache } from "./Tournament.server";
 
-/** Finalizes a fully played tournament with a real summary: results, skills, badges,
- * trophies and leaderboard entries. */
+/** Results, skills, badges, trophies and leaderboard entries of a fully played tournament. */
 export async function finalizeTournament({
 	tournament,
 	badgeReceivers,
@@ -132,8 +131,7 @@ function resolveFinalizationSeason(tournament: Tournament) {
 	const season = Seasons.current(attributionDate);
 	if (!season) return undefined;
 
-	// don't allow changing seasons that have already been closed for a long while
-	// even if you were sluggish with finalizing the tournament
+	// seasons closed for a long while can't be changed even by a sluggishly finalized tournament
 	if (differenceInHours(new Date(), season.ends) >= 24) return undefined;
 
 	return season.nth;

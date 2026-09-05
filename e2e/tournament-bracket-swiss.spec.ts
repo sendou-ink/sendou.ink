@@ -31,7 +31,6 @@ test.describe("Tournament bracket swiss", () => {
 		await brackets.goto(tournament.id);
 		await brackets.finalize();
 
-		// report all group A round 1 scores
 		for (const matchId of [1, 2, 3, 4]) {
 			const match = await brackets.openMatch(matchId);
 			await match.openTab("action");
@@ -39,7 +38,6 @@ test.describe("Tournament bracket swiss", () => {
 			await match.backToBracket();
 		}
 
-		// test that we can change to view different group
 		await expect(brackets.locators.startRoundButton).toBeVisible();
 		await brackets.openGroup("B");
 		await isNotVisible(brackets.locators.startRoundButton);

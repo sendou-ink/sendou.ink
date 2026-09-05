@@ -11,8 +11,7 @@ const badge = (id: number, displayName: string) => ({
 
 describe("BadgeDisplay", () => {
 	test("shows the badges of the props it is given after they change", async () => {
-		// e.g. navigating from one organization's page to another's: the route
-		// component stays mounted and only the badges prop changes
+		// e.g. navigating between organization pages: only the badges prop changes
 		const screen = await render(
 			<BadgeDisplay badges={[badge(1, "Alpha Invitational")]} />,
 		);

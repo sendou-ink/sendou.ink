@@ -44,11 +44,7 @@ export async function seedTrophies({
 	return { ids };
 }
 
-/**
- * Creates the trophies awarded off something other than a tournament win and hands
- * them to everybody eligible, as the nightly sync does. Runs last of the seed: who
- * is eligible follows from the patrons and X Rank placements seeded before it.
- */
+/** Non-tournament trophies handed to everybody eligible like the nightly sync. Runs last: eligibility follows from patrons and X Rank placements. */
 export async function seedSpecialTrophies() {
 	const models = TrophyFactory.MODELS;
 

@@ -3,14 +3,10 @@ import type { SeededCalendarEvents } from "./calendar";
 import type { SeededTournaments } from "./tournaments";
 import type { SeededUsers } from "./users";
 
-/** Calendar event results N-ZAP highlights, few enough that the highlights view of
- * his results page is a page shorter than the full one. */
+/** Few enough that the highlights view of N-ZAP's results page is a page shorter than the full one. */
 const NZAP_CALENDAR_HIGHLIGHT_COUNT = 6;
 
-/**
- * Highlights some of N-ZAP's results, so that his profile has a highlighted results
- * widget and his results page opens on the highlights view.
- */
+/** Gives N-ZAP a highlighted results widget and a results page opening on the highlights view. */
 export async function seedResultHighlights({
 	users,
 	calendarEvents,

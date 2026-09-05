@@ -25,11 +25,7 @@ import { adminRegistrationFormSchemaServer } from "../tournament-admin-registrat
 export const action: ActionFunction = (args) =>
 	upsertRegistrationAction(args, { allowTournamentNameUpdates: true });
 
-/**
- * The registration upsert itself, shared with the public API's version of this
- * endpoint. That one passes `allowTournamentNameUpdates: false`: tournament names
- * are the admin form's business and the API can only read them.
- */
+/** Shared with the public API, which passes `allowTournamentNameUpdates: false` as it may only read tournament names. */
 export const upsertRegistrationAction = async (
 	{ request, params }: ActionFunctionArgs,
 	{ allowTournamentNameUpdates }: { allowTournamentNameUpdates: boolean },
@@ -93,8 +89,7 @@ export const upsertRegistrationAction = async (
 		return [{ userId: member.userId, inGameName: member.inGameName }];
 	});
 
-	// only a submission from someone allowed to edit tournament names says anything
-	// about them, everyone else leaves the names the players have untouched
+	// only a submission from someone allowed to edit tournament names says anything about them
 	const tournamentNameUpdates =
 		allowTournamentNameUpdates && tournament.canEditTournamentNames(user)
 			? submittedMembers.map((member) => ({
@@ -103,8 +98,7 @@ export const upsertRegistrationAction = async (
 				}))
 			: [];
 
-	// the map pool field is only shown while it can still be changed, so a submission
-	// from any other state says nothing about the pool the team has
+	// the map pool field is only shown while it can still be changed, other states say nothing about it
 	const mapPool =
 		tournament.teamsPrePickMaps && !tournament.hasStarted
 			? new MapPool(data.mapPool)

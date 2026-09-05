@@ -14,7 +14,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const startTime = new Date();
 	const endTime = new Date(startTime);
 
-	// get all events over the two weeks, might be good to make this an parameter in the future
+	// two weeks of events, could be a parameter in the future
 	endTime.setDate(startTime.getDate() + 14);
 
 	// handle timezone mismatch between server and client

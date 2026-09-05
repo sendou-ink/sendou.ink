@@ -16,10 +16,8 @@ export interface InferredSubstitution {
 }
 
 /**
- * Compares the rosters of two consecutive maps and pairs up any
- * players that dropped from a side with new players that joined the same side.
- * The pairs are returned in roster order, so the first player out is paired with
- * the first new player in. When the counts don't match, unpaired players are ignored.
+ * Pairs players that dropped from a side between two consecutive maps with the new players that
+ * joined it, in roster order. Unpaired players are ignored when the counts don't match.
  */
 export function inferSubstitutions(
 	previousRosters: Rosters,
@@ -59,11 +57,7 @@ const NUM_MAP = {
 	"0": ["0", "8"],
 };
 
-/**
- * Generates a deterministic 4-digit Splatoon private battle room password based on the provided seed.
- *
- * Given the same seed, this function will always return the same password.
- */
+/** Deterministic 4-digit private battle room password for the seed. */
 export function resolveRoomPass(seed: number | string) {
 	let pass = "5";
 	for (let i = 0; i < 3; i++) {
@@ -75,8 +69,7 @@ export function resolveRoomPass(seed: number | string) {
 		pass += next;
 	}
 
-	// prevent 5555 since many use it as a default pass
-	// making it a bit more common guess
+	// 5555 is a common default pass, so a more common guess
 	if (pass === "5555") return "5800";
 
 	return pass;

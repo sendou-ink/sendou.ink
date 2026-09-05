@@ -1,9 +1,7 @@
 /**
  * Golden-file suite for the ScoreboardBattleLogDetector over every fixture in
- * scoreboard-battle-log/, mirroring
- * tests/suites/scoreboard-battle-log-replay.ts (the battle log shows the same
- * data sans the replay code), plus cross-negative sweeps: the battle log gate
- * must stay quiet on both lookalike results screens.
+ * scoreboard-battle-log/ (same data as the replay screen sans replay code),
+ * plus cross-negative sweeps against both lookalike results screens.
  */
 
 import assert from "node:assert/strict";
@@ -200,9 +198,8 @@ for (const fixture of fixtures) {
 	});
 }
 
-// The three scoreboard-shaped screens must not trigger each other's
-// detectors; the mirror sweeps live in scoreboard.test.ts and
-// suites/scoreboard-battle-log-replay.ts.
+// The three scoreboard-shaped screens must not trigger each other's detectors;
+// the mirror sweeps live in scoreboard.test.ts and suites/scoreboard-battle-log-replay.ts.
 for (const fixture of [
 	...loadFixtures("scoreboard").filter(
 		(f) => f.expected.event === "Scoreboard",

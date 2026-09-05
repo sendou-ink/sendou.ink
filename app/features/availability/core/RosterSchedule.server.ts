@@ -19,13 +19,10 @@ export type RosterScheduleData = SerializeFrom<
 >;
 
 /**
- * Effective availability of the given users over the reportable horizon, laid
- * out as the viewer-local weeks and days the schedule surfaces render on.
- *
- * Which of these users make up a roster is only known in the browser (the
- * scrim post form's team select, its pick-up member search), so the roster's
- * shared free time is not resolved here — the members come out one by one and
- * {@link Availability.playableWindows} merges the picked ones client side.
+ * Effective availability of the users over the reportable horizon as viewer-local weeks and
+ * days. Which users form a roster is only known in the browser (scrim post form's team select,
+ * pick-up search), so members come out one by one and {@link Availability.playableWindows}
+ * merges the picked ones client side.
  */
 export async function rosterScheduleData({
 	userIds,
@@ -114,13 +111,9 @@ function weekView({ range, timezone }: { range: TimeRange; timezone: string }) {
 }
 
 /**
- * What the given users' schedules say about each of the given windows: what
- * they reported inside it, the commitments overriding that and whether they
- * filled in the week it falls in at all.
- *
- * The windows are resolved in one go so that a page showing many of them (the
- * scrim browsing page's fit indicators) reads the schedules once. Windows past
- * the reportable horizon are left out — nothing could be known about them.
+ * What the users' schedules say about each window: reported ranges inside it, overriding
+ * commitments and whether the week was filled in at all. Resolved in one go so a page with many
+ * windows (scrim fit indicators) reads the schedules once. Windows past the horizon are left out.
  */
 export async function windowSchedules({
 	windows,
@@ -129,8 +122,7 @@ export async function windowSchedules({
 	windows: Array<TimeRange & { id: number }>;
 	userIds: Array<number>;
 }) {
-	// the horizon's last week starts at the current week's start at the latest,
-	// so nothing inside it reaches this far
+	// the horizon's last week starts at the current week's start at the latest, so nothing inside it reaches this far
 	const horizonEndsAt = dateToDatabaseTimestamp(
 		addWeeks(new Date(), AVAILABILITY.WEEK_HORIZON),
 	);
@@ -162,8 +154,7 @@ export async function windowSchedules({
 
 			return {
 				userId,
-				// which week a window falls in is a question about the member's own
-				// clock, the same one they filled the week in on
+				// which week a window falls in goes by the member's own clock, the one they filled the week in on
 				reported: memberWeeks.some(
 					(week) =>
 						Availability.weekStartsAt(

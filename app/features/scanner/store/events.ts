@@ -1,39 +1,28 @@
 /**
- * IndexedDB event store: one `events` object store, keyed by auto id,
- * indexed by timestamp. A small thumbnail of the detection frame is kept
- * per event for the feed; the full-res analyzed PNG lives in the separate
- * `frames` store under the same id (loaded on demand via loadEventFrame),
- * so listing the feed never deserializes megabytes of blobs. The store is
- * capped: saving past MAX_EVENTS evicts the oldest events and their frames,
- * and past MAX_FRAMES the oldest frames alone (the events stay, marked
- * frameless).
+ * IndexedDB event store: one `events` store keyed by auto id, indexed by
+ * timestamp, with a small thumbnail per event; the full-res analyzed PNG lives
+ * in the separate `frames` store under the same id (loadEventFrame) so listing
+ * the feed never deserializes megabytes of blobs. Saving past MAX_EVENTS
+ * evicts the oldest events and their frames; past MAX_FRAMES the oldest
+ * frames alone (the events stay, marked frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
 import { db, EVENTS_STORE, FRAMES_STORE, tx } from "./db";
 
 /**
- * Oldest events are evicted past this count. Counter/status reads land ~2.2
- * events a second of match time, so a cap must hold a whole session — at
- * 1000 the store rolled over in ~8 minutes and evicted matches before they
- * were ever sent (2026-08-23: Mahi-Mahi reached sendou.ink with no data).
- * Events are small; the full-res frames are capped separately below.
+ * Counter/status reads land ~2.2 events a second of match time, so the cap must
+ * hold a whole session: at 1000 the store rolled over in ~8 minutes and evicted
+ * matches before they were sent (2026-08-23: Mahi-Mahi reached sendou.ink with no data).
  */
 const MAX_EVENTS = 10_000;
 
-/**
- * Oldest full-res frame PNGs (~1-2MB each) are evicted past this count,
- * independently of their events — the event keeps its thumbnail and data,
- * only "Save fixture" loses the byte-exact frame.
- */
+/** Full-res frame PNGs (~1-2MB each) evicted past this count; only "Save fixture" loses them. */
 const MAX_FRAMES = 200;
 
 /** Where an event stands with sendou.ink /ingest; absent = never attempted. */
 export interface SendStatus {
-	/**
-	 * "unlinked": sendou.ink stored the match but its game is not reported
-	 * yet, so it has no scoreboard to attach to — resent on a backoff.
-	 */
+	/** "unlinked": sendou.ink stored the match but its game is not reported yet — resent on a backoff */
 	state: "queued" | "sending" | "sent" | "unlinked" | "failed";
 	/** wall-clock time of the last state change */
 	at: number;
@@ -61,9 +50,8 @@ export interface StoredEvent {
 }
 
 /**
- * Persist a detection; resolves to its store id. `reuseId` overwrites that
- * existing row (and its frame) instead of adding a new one, so an event a
- * better read replaces keeps a stable id.
+ * Persists a detection; resolves to its store id. `reuseId` overwrites that row
+ * (and its frame) so an event a better read replaces keeps a stable id.
  */
 export async function saveEvent(
 	event: DetectedEvent,

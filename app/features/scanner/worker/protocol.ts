@@ -3,42 +3,30 @@ import type { DetectedEvent, GateResult } from "../core/detectors/types";
 
 export interface InitRequest {
 	kind: "init";
-	/**
-	 * static assets CDN root the worker fetches icons and atlases from
-	 * (`Config.staticAssetsUrl`); passed in the init message so the worker
-	 * bundle stays free of the app config graph
-	 */
+	/** static assets CDN root (`Config.staticAssetsUrl`), passed in so the worker bundle stays free of the app config graph */
 	assetsBaseUrl: string;
 	/**
 	 * skip parse() for a detector whose gate keeps firing without confidence
-	 * improving (static screen), and let the scheduler thin out checks;
-	 * default true — one-shot consumers like the screenshot harness turn it
-	 * off to get every detector on every frame
+	 * improving and let the scheduler thin out checks; default true — one-shot
+	 * consumers like the screenshot harness turn it off
 	 */
 	suppressSteadyFrames?: boolean;
-	/**
-	 * accumulate scan telemetry counters (and time the detectors) so they can
-	 * be reported back with progress and done messages; default false — the
-	 * VoD tab only asks for them when the telemetry panel is opted into
-	 */
+	/** accumulate scan telemetry counters and time the detectors; default false (VoD telemetry panel opts in) */
 	collectTelemetry?: boolean;
 }
 
 export interface AnalyzeRequest {
 	kind: "frame";
-	/** VideoFrame is what VoD decode produces; transferring it directly skips
-	 * a main-thread ImageBitmap conversion */
+	/** VideoFrame is what VoD decode produces; transferring it skips a main-thread ImageBitmap conversion */
 	bitmap: ImageBitmap | VideoFrame;
 	/** seconds into the stream */
 	t: number;
 }
 
 /**
- * Scan a time slice of a VoD entirely inside the worker: demux + decode with
- * mediabunny, schedule detectors, post results as they fire. Decoding in the
- * worker removes the per-frame main-thread hop and lets each worker own a
- * contiguous slice, so scheduler state (cadence, suppression, calm) is exact
- * instead of split across a pool.
+ * Scans a VoD time slice entirely inside the worker: demux + decode with
+ * mediabunny, schedule detectors, post results as they fire. Each worker owns
+ * a contiguous slice, so scheduler state (cadence, suppression, calm) is exact.
  */
 export interface ScanChunkRequest {
 	kind: "scanChunk";

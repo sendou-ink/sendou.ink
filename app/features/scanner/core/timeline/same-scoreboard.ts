@@ -1,27 +1,21 @@
 /**
- * Content guard for merging scoreboard-shaped events (results screen,
- * replay-browser detail). The replay browser lets users flip between
- * different matches' detail screens within seconds, so a time window alone
- * can't tell "same board, re-sampled" from "next replay opened." Two events
- * are treated as the same match unless something decisive says otherwise;
- * every check tolerates read jitter (glyph misreads, a flipped winner side,
- * fields that only read on some frames), so a split only happens on
- * evidence that survives that noise.
+ * Content guard for merging scoreboard-shaped events. The replay browser lets
+ * users flip between matches' detail screens within seconds, so time alone
+ * can't tell "same board, re-sampled" from "next replay opened". Two events
+ * are the same match unless something decisive says otherwise; every check
+ * tolerates read jitter (glyph misreads, a flipped winner side, fields read
+ * on some frames only).
  */
 import type { ScoreboardData } from "../detectors/scoreboard/index";
 import type { ScoreboardBattleLogReplayData } from "../detectors/scoreboard-battle-log-replay/index";
 
 /**
- * Replay codes of the same replay re-read on a low-fidelity capture differ
- * in a few glyphs (U/V, G/C confusions); different replays share almost no
- * positions. Split only past this many mismatched characters.
+ * Re-reads of one replay code on a low-fidelity capture differ in a few glyphs
+ * (U/V, G/C); different replays share almost no positions.
  */
 const CODE_DIFF_MIN = 7;
 
-/**
- * Paint totals are per-match fingerprints that read reliably (big digits).
- * Compared only when both events read at least this many of the 8 rows.
- */
+/** Paint totals are reliable per-match fingerprints; compared only when both read this many of 8 rows. */
 const PAINT_MIN_READ = 6;
 
 /** Positions where two equal-length strings disagree (∞ on length mismatch). */

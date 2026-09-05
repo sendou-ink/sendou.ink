@@ -410,8 +410,7 @@ describe("mergeTeams", () => {
 			maxGroupSize: 4,
 		});
 
-		// the loser's room is gone; only the survivor's (possibly reusing the
-		// freed rowid) remains
+		// the loser's room is gone; only the survivor's (possibly reusing the freed rowid) remains
 		const rooms = await db.selectFrom("ChatRoom").select("id").execute();
 		expect(rooms).toHaveLength(1);
 		expect(rooms[0].id).toBe(await chatRoomIdOf(team1.id));
@@ -449,8 +448,8 @@ describe("mergeTeams", () => {
 		const team1 = await createPlaceholder(tournament.id, users.id(1));
 		const team2 = await createPlaceholder(tournament.id, users.id(2));
 
-		// user 2 was looking before user 1 i.e. has an older createdAt. The column
-		// defaults in SQL, and the table has no id of its own for `backdate` to key on
+		// user 2 was looking before user 1 (older createdAt); the column defaults in SQL and the table
+		// has no id for `backdate` to key on
 		// biome-ignore lint/plugin: no production write sets the timestamp
 		await db
 			.updateTable("TournamentTeamMember")

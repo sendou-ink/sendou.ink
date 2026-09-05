@@ -43,9 +43,7 @@ export function ArrayFormField({
 		useTranslatedTexts({ label, bottomText, error });
 
 	const count = value.length;
-	// Always render at least one item so an empty array still shows an input
-	// the user can fill, rather than only an "Add" button. The underlying value
-	// stays empty until edited, so submitting an untouched field sends nothing.
+	// an empty array still shows one input; the value stays empty until edited
 	const minVisible = Math.max(min, 1);
 	const visibleCount = Math.max(count, minVisible);
 
@@ -65,9 +63,7 @@ export function ArrayFormField({
 	};
 
 	const handleAdd = () => {
-		// While the array is empty we still render one placeholder row that isn't
-		// part of `value` yet. Pad `value` up to the number of visible rows first so
-		// the added item appears below them instead of only backing the placeholder.
+		// pad up to the visible rows first so the added item appears below the placeholder row
 		const padded = [...value];
 		while (padded.length < visibleCount) {
 			padded.push(makeNewItem());
@@ -75,8 +71,7 @@ export function ArrayFormField({
 		onChange([...padded, makeNewItem()]);
 	};
 
-	// An item the user hasn't touched still equals the freshly added template, so
-	// it's indistinguishable from the placeholder shown for an empty array.
+	// an untouched item still equals the template, like the empty-array placeholder
 	const isPristineItem = (item: unknown) => {
 		const template = itemInitialValue;
 		if (typeof template === "object" && template !== null) {
@@ -91,9 +86,7 @@ export function ArrayFormField({
 			: isDeepEqual(item, template);
 	};
 
-	// A single pristine row is indistinguishable from the empty-array placeholder,
-	// so it shouldn't offer a remove button (you can't go below one visible row
-	// anyway). A lone edited row stays removable so the only item can be cleared.
+	// a single pristine row is the placeholder, so no remove button; a lone edited row stays removable
 	const canRemoveAt = (index: number) =>
 		!disabled &&
 		(canRemoveItem ? canRemoveItem(value[index], index) : true) &&
@@ -102,9 +95,7 @@ export function ArrayFormField({
 
 	const handleRemoveAt = (index: number) => {
 		const next = value.filter((_, i) => i !== index);
-		// Removing down to a single pristine row would leave a stray entry that
-		// looks untouched but still fails validation on submit; collapse it back to
-		// an empty array so it matches the pristine state.
+		// a lone pristine row would still fail validation on submit, so collapse to empty
 		onChange(next.length === 1 && isPristineItem(next[0]) ? [] : next);
 	};
 
@@ -113,8 +104,7 @@ export function ArrayFormField({
 		return ((value[idx] as Record<string, unknown>)?._key as string) ?? idx;
 	};
 
-	// Sorting is only offered for object arrays; primitive arrays are rendered
-	// inline without the fieldset header that carries the reorder controls.
+	// primitive arrays render inline without the fieldset header that carries the reorder controls
 	const isSortable = Boolean(sortable) && isObjectArray && !disabled;
 
 	const handleMoveAt = (index: number, direction: 1 | -1) => {

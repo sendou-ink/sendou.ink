@@ -8,10 +8,7 @@ import { ScheduleDayCell } from "./ScheduleDayCell";
 import styles from "./ScheduleWeekDialog.module.css";
 import { WeekToggle } from "./WeekToggle";
 
-/**
- * One person's reportable weeks as a read-only day-by-day list of the time
- * they are free to play.
- */
+/** One person's reportable weeks as a read-only day-by-day list of their free time. */
 export function ScheduleWeekDialog({
 	username,
 	weeks,

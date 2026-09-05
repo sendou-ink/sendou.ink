@@ -97,8 +97,7 @@ describe("findEventsByMonth", () => {
 	});
 
 	test("includes an event starting within the timezone margin after the month", async () => {
-		// Jan 31, 6 PM in America/Los_Angeles — the org page calendar renders
-		// this into the January grid for viewers west of UTC
+		// Jan 31, 6 PM in America/Los_Angeles: rendered into the January grid for viewers west of UTC
 		const org = await seedOrgEventAt(new Date("2025-02-01T02:00:00Z"));
 
 		const events = await TournamentOrganizationRepository.findEventsByMonth({

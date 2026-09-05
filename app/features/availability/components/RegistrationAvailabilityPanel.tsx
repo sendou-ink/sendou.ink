@@ -34,11 +34,7 @@ export type AvailabilityRowStatus =
 	/** On the roster, but their schedule is not visible to the viewer (neither a teammate nor a friend). */
 	| "hidden";
 
-/**
- * The tournament registration page's availability panel: how each member of
- * the roster relates to the event's estimated window, plus the friends who
- * could sub (the ones actually free during it).
- */
+/** How each roster member relates to the event's estimated window, plus the friends free to sub. */
 export function RegistrationAvailabilityPanel({
 	availability,
 	roster,
@@ -131,11 +127,7 @@ export function RegistrationAvailabilityPanel({
 	);
 }
 
-/**
- * One user's availability as a list row: status icon, avatar, name and the
- * availability detail. The registration page composes it with roster extras
- * (an in-game name line, a remove button).
- */
+/** One user's availability row; the registration page composes it with roster extras (IGN line, remove button). */
 export function AvailabilityMemberRow({
 	user,
 	entry,
@@ -183,10 +175,7 @@ export function AvailabilityMemberRow({
 	);
 }
 
-/**
- * Resolves the shown status for a roster member; no entry at all means their
- * schedule is not visible to the viewer.
- */
+/** Shown status of a roster member; no entry means their schedule is not visible to the viewer. */
 export function availabilityRowStatus(
 	entry?: AvailabilityPanelEntry,
 ): AvailabilityRowStatus {

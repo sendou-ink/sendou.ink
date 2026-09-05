@@ -166,7 +166,7 @@ test.describe("Match profile map preferences", () => {
 		const matchProfile = new MatchProfilePage(page);
 		await matchProfile.goto();
 
-		// Save a map pool for both SZ and TC (stage 2 is not banned in TC).
+		// stage 2 is not banned in TC
 		await matchProfile.maps.setModePreference("SZ", "Prefer");
 		await matchProfile.maps.selectModeTab("SZ");
 		await matchProfile.maps.mapButton("SZ", 1).click();
@@ -175,15 +175,13 @@ test.describe("Match profile map preferences", () => {
 		await matchProfile.maps.mapButton("TC", 2).click();
 		await matchProfile.save();
 
-		// Switch to "zones only" by avoiding every mode except SZ, then save.
 		await matchProfile.maps.setModePreference("TW", "Avoid");
 		await matchProfile.maps.setModePreference("TC", "Avoid");
 		await matchProfile.maps.setModePreference("RM", "Avoid");
 		await matchProfile.maps.setModePreference("CB", "Avoid");
 		await matchProfile.save();
 
-		// Reload so the form loads the persisted preferences. The previously saved
-		// TC pool must not resurface as an invalid "pool for an avoided mode".
+		// the previously saved TC pool must not resurface as an invalid "pool for an avoided mode"
 		await matchProfile.goto();
 
 		await matchProfile.save();
@@ -202,19 +200,16 @@ test.describe("Spoiler-free mode", () => {
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
 
-		// bracket is censored — "Show results" button visible
 		await expect(brackets.locators.showResultsButton).toBeVisible();
 
-		// later rounds show "???" for team names
 		await expect(brackets.locators.censoredTeamNames.first()).toBeVisible();
 
 		await brackets.locators.showResultsButton.click();
 
-		// after reveal, "Hide results" button appears and "???" is gone
 		await expect(brackets.locators.hideResultsButton).toBeVisible();
 		await isNotVisible(brackets.locators.censoredTeamNames);
 
-		// navigate to results page — sessionStorage reveal carries over
+		// the sessionStorage reveal carries over to the results page
 		const results = new TournamentResultsPage(page);
 		await results.goto(tournament.id);
 		await expect(results.locators.resultTeamNames.first()).toBeVisible();
@@ -233,11 +228,9 @@ test.describe("Spoiler-free mode", () => {
 		const results = new TournamentResultsPage(page);
 		await results.goto(tournament.id);
 
-		// results are censored
 		await expect(results.locators.showResultsButton).toBeVisible();
 		await isNotVisible(results.locators.resultTeamNames);
 
-		// reveal
 		await results.locators.showResultsButton.click();
 		await expect(results.locators.resultTeamNames.first()).toBeVisible();
 	});

@@ -4,10 +4,7 @@ import * as TeamRepository from "../TeamRepository.server";
 export const loader = async () => {
 	const user = requireUser();
 
-	const teams = await TeamRepository.findAllUndisbanded();
-	const teamMemberOfCount = teams.filter((team) =>
-		team.members.some((m) => m.id === user.id),
-	).length;
+	const teams = await TeamRepository.findAllMemberOfByUserId(user.id);
 
-	return { teamMemberOfCount };
+	return { teamMemberOfCount: teams.length };
 };

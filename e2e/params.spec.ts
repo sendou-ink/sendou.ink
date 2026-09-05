@@ -16,8 +16,7 @@ test.describe("Weapon parameters", () => {
 		const weaponParams = await analyzer.openRawParameters("splattershot");
 		await expect(page).toHaveURL(/\/params\/splattershot/);
 
-		// Filtering: hide a weapon column. Wait for a sibling column to render after the client-side
-		// navigation before counting, otherwise the count can be taken mid-hydration.
+		// a sibling column has to render after the client-side navigation first, or the count is taken mid-hydration
 		const { weaponHeaders, showAllWeaponsButton } = weaponParams.locators;
 		await expect(weaponHeaders.nth(1)).toBeVisible();
 		const initialColumnCount = await weaponHeaders.count();
@@ -29,19 +28,16 @@ test.describe("Weapon parameters", () => {
 		await expect(weaponHeaders).toHaveCount(initialColumnCount - 1);
 		await expect(page).toHaveURL(/hidden=\d/);
 
-		// Refresh keeps the hidden selection
 		await weaponParams.reload();
 		await expect(page).toHaveURL(/hidden=\d/);
 		await expect(showAllWeaponsButton).toBeVisible();
 		await expect(weaponHeaders).toHaveCount(initialColumnCount - 1);
 
-		// Restore all weapons
 		await weaponParams.showAllWeapons();
 		await expect(showAllWeaponsButton).not.toBeVisible();
 		await expect(weaponHeaders).toHaveCount(initialColumnCount);
 		await expect(page).not.toHaveURL(/hidden=\d/);
 
-		// Comparison bar graph
 		await weaponParams.openParamComparison();
 		await expect(weaponParams.locators.comparisonDialog).toBeVisible();
 		expect(
@@ -50,8 +46,7 @@ test.describe("Weapon parameters", () => {
 		await weaponParams.closeParamComparison();
 		await expect(weaponParams.locators.comparisonDialog).not.toBeVisible();
 
-		// Collapsing a history row after expanding it. The patch-count badge is shown while the row
-		// is collapsed and hidden once expanded, so it is a reliable signal for the toggle state.
+		// the patch-count badge shows only while the row is collapsed, signalling the toggle state
 		const historyRow = weaponParams.historyRow(0);
 		await expect(historyRow.root).toBeVisible();
 		await expect(historyRow.historyBadge).toBeVisible();
@@ -83,7 +78,6 @@ test.describe("Weapon parameters", () => {
 		await weaponParams.openPatchHistoryTab();
 		await expect(page).toHaveURL(/tab=patches/);
 
-		// Refresh keeps the selected tab
 		await weaponParams.reload();
 		await expect(page).toHaveURL(/tab=patches/);
 		await expect(patchHistoryTab).toHaveAttribute("aria-selected", "true");
@@ -91,7 +85,6 @@ test.describe("Weapon parameters", () => {
 		// Either patch columns are shown or the empty state
 		await expect(weaponParams.locators.patchColumns.first()).toBeVisible();
 
-		// Toggle "Show sub & special changes" and verify it persists on refresh
 		await expect(subAndSpecialChangesSwitch).toBeChecked();
 		await weaponParams.toggleSubAndSpecialChanges();
 		await expect(page).toHaveURL(/kitExtras=false/);

@@ -1,10 +1,8 @@
 /**
  * Node-only image decode/encode (@napi-rs/canvas). Never imported from core/.
- *
- * Decoding goes through a canvas, whose backing store is alpha-premultiplied;
- * RGB at partial-alpha pixels can shift by ±1. Everything we read is either
- * fully opaque (frames, atlases) or consumed premultiplied anyway (weapon
- * icons are composited over a background), so this is lossless in practice.
+ * Decoding goes through a canvas whose backing store is alpha-premultiplied, so
+ * RGB at partial-alpha pixels can shift by ±1; everything read is either fully
+ * opaque or consumed premultiplied anyway, so this is lossless in practice.
  */
 import { readFileSync, writeFileSync } from "node:fs";
 import { createCanvas, Image, ImageData } from "@napi-rs/canvas";

@@ -44,13 +44,9 @@ interface DaySlot extends Scrim.PickableSlot {
 }
 
 /**
- * The roster's merged free time as a week of day tracks, one click on which
- * fills in the post's start and start-time flexibility. Which roster is merged
- * follows the "With" field, so this only appears once a team or a full pick-up
- * has been picked.
- *
- * Only ever a prefill: the start inputs stay authoritative, and a start the
- * schedules do not cover is warned about, never blocked.
+ * The roster's merged free time as a week of day tracks; a click fills in the post's start and
+ * flexibility. Follows the "With" field, so it only appears once a team or full pick-up is picked.
+ * Only a prefill: the start inputs stay authoritative, an uncovered start is warned about, never blocked.
  */
 export function ScrimSchedulePicker({
 	schedule,

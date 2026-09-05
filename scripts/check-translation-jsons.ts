@@ -12,10 +12,8 @@ const dontWrite = process.argv.includes(NO_WRITE_KEY);
 
 const KNOWN_SUFFIXES = ["_zero", "_one", "_two", "_few", "_many", "_other"];
 
-// `_zero` is an i18next `count === 0` override, not a CLDR plural category. It
-// may legitimately sit alongside the bare singular key that single-plural
-// languages (zh, ja, ko) use after `i18n:sync` collapses their plural forms, so
-// unlike the real plural suffixes it never counts as a with/without-suffix clash.
+// `_zero` is an i18next `count === 0` override, not a CLDR category: it legitimately sits beside the
+// bare singular key single-plural languages (zh, ja, ko) use, so it never counts as a suffix clash
 const ZERO_SUFFIX = "_zero";
 const PLURAL_SUFFIXES = KNOWN_SUFFIXES.filter((sfx) => sfx !== ZERO_SUFFIX);
 
@@ -188,7 +186,7 @@ function validateNoDuplicateKeys({
 	}
 }
 
-// get keys while respecting different plural/context key suffixes in different languages.
+// keys with their language-specific plural/context suffixes stripped
 function getKeysWithoutSuffix(
 	translations: Record<string, string>,
 	lang: string,

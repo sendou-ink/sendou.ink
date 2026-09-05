@@ -16,31 +16,20 @@ import * as Matches from "./Matches";
 /** Lobby header value scoreboards of tournament/SendouQ games are expected to have. */
 const TOURNAMENT_LOBBY = "PRIVATE";
 
-/**
- * How many of the 8 player rows must carry the same readable name in the
- * same position for a match to count as a re-detection of a game's
- * already linked scoreboard (allows a couple of OCR misreads).
- */
+/** Of 8 player rows, how many must share name and position for a match to count as a re-detection (tolerates a couple of OCR misreads). */
 const MIN_LINKED_DUPLICATE_NAME_MATCHES = 6;
 
 /** How many players on the winning (first) resp. losing side of a scoreboard. */
 const PLAYERS_PER_TEAM = 4;
 
-/**
- * How many matches must align with one context's games for content
- * resolution to trust it. A single game's (mode, stage, sides) is common
- * across a user's history; two already carry order.
- */
+/** Matches that must align with one context's games before content resolution trusts it: one (mode, stage, sides) is common across a user's history, two carry order. */
 const MIN_RESOLVED_SCOREBOARDS = 2;
 
 /**
- * How far a scan's play time may sit from a game's report for the two to
- * still be the same game. Reporting follows the game by minutes, so this is
- * mostly headroom for a slow reporter and for the scan's clock (the client's
- * own) — while staying far inside the gap between two plays of one map. A
- * scan that lands outside every candidate stays unlinked rather than
- * guessing: an unlinked scan keeps its hint and can be re-sent, a wrongly
- * linked one silently puts strangers on a match page.
+ * Max distance between a scan's play time and a game's report for them to be the same game:
+ * headroom for a slow reporter and the client's clock, still far inside the gap between two
+ * plays of one map. Outside every candidate the scan stays unlinked (re-sendable) rather than
+ * silently putting strangers on a match page.
  */
 const PLAYED_AT_TOLERANCE_MS = 30 * 60 * 1000;
 
@@ -73,18 +62,9 @@ export interface IngestableGame {
 	winnerInGameNames: string[];
 	/** known in-game names of the losing team's roster, the side fallback for reads without a POV seat */
 	loserInGameNames: string[];
-	/**
-	 * database timestamp of the game's own report — both the chronological
-	 * ordering key across matches and what a scan's play time is measured
-	 * against to tell two plays of one map apart
-	 */
+	/** timestamp of the game's report: the chronological key and what a scan's play time is measured against */
 	playedAt: number;
-	/**
-	 * player names (winner-first, in scoreboard row order) of an already
-	 * linked ingested match of the game; null when the game has none yet.
-	 * Lets matching skip taken games across requests while recognizing
-	 * re-detections of the same scoreboard.
-	 */
+	/** winner-first row-order names of an already linked ingest of the game, null when none; lets matching skip taken games yet recognize re-detections */
 	linkedPlayerNames: string[] | null;
 }
 
@@ -107,12 +87,9 @@ export function contextKey(context: IngestContext): string {
 }
 
 /**
- * Resolves which context (tournament or SendouQ match) a request's matches
- * belong to from their content alone: the candidate games (the POV user's
- * reported games) are grouped by context and each context is scored by how
- * many matches `matchedGames` aligns with its games — the same mode+stage
- * sequence walk and roster-side validation that decides what would actually
- * be linked.
+ * Resolves which context (tournament or SendouQ match) a request's matches belong to from content
+ * alone: the POV user's reported games are grouped by context and each is scored by how many
+ * matches `matchedGames` aligns with its games.
  */
 export function resolveContext({
 	matches,
@@ -148,32 +125,21 @@ export function resolveContext({
 }
 
 /**
- * Matches ingested matches against a context's games, deciding which game
- * result each match should link to.
+ * Decides which game result each ingested match links to.
  *
- * Only matches whose winner is known with two full teams qualify (a
- * minimap-only match can never link — its winner and stats are unread).
- * Matches and games are both walked in chronological order: each match is
- * assigned to a not-yet-assigned game with the same mode and stage whose
- * sides agree with what is known. Among those, a match carrying a wall clock
- * takes the game reported nearest it (and none at all when every candidate
- * is further off than `PLAYED_AT_TOLERANCE_MS`); a match without one — a VoD
- * read, whose times are offsets into a video — takes the next in sequence,
- * which is what the chronological walk is for.
+ * Only matches with a known winner and two full teams qualify (minimap-only reads never link).
+ * Matches and games are walked chronologically: each match takes an unassigned game of the same
+ * mode+stage whose sides agree with what is known. A match with a wall clock takes the game
+ * reported nearest it (none beyond `PLAYED_AT_TOLERANCE_MS`); a VoD read (video offsets only)
+ * takes the next in sequence.
  *
- * The POV seat decides the sides where it can: the sender is the POV player,
- * so which of the game's rosters they belong to pins the scan's sides to the
- * game's teams — OCR'd names are too
- * unreliable to overrule it. Only when no seat can decide (cast footage, no
- * POV read) do the known in-game names arbitrate the sides. Matches from
- * other lobbies, with unreadable mode/stage or duplicated detections of the
- * same game are skipped.
+ * The sender is the POV player, so the roster they sit in pins the scan's sides — OCR'd names
+ * are too unreliable to overrule it. Only without a POV seat (cast footage) do in-game names
+ * arbitrate. Other lobbies, unreadable mode/stage and duplicate detections are skipped.
  *
- * One session's matches may arrive over many requests (one per game), so
- * games another ingest already linked to are skipped — unless the incoming
- * match is a re-detection of the linked one, which is matched to the same
- * game so re-sends stay idempotent and another POV's scan of the same game
- * lands on it too.
+ * Matches arrive over many requests, so games already linked are skipped — unless the incoming
+ * match is a re-detection of the linked one, which lands on the same game so re-sends stay
+ * idempotent and another POV's scan joins it.
  */
 export function matchedGames({
 	matches,
@@ -229,38 +195,23 @@ export interface IngestedScoreboardPlayer {
 	userId?: number;
 }
 
-/**
- * The scoreboard of a game derived from its linked ingested matches — the
- * shape match pages render. Derived at read time, not stored.
- */
+/** A game's scoreboard derived from its linked ingested matches, the shape match pages render. Derived at read time, not stored. */
 export interface IngestedScoreboardData {
 	/** game scores [winner, loser] (0-100; a knockout's winner is 100) */
 	scores: [number | null, number | null];
 	/** in scoreboard order: rows 0-3 winning team, rows 4-7 losing team */
 	players: IngestedScoreboardPlayer[];
-	/**
-	 * objective-counter progress of the game, per-team values [winner, loser]
-	 * and sample `t` in seconds since the game's first read (the source video
-	 * the raw values are offsets into is not stored). Absent when no counter
-	 * was read.
-	 */
+	/** objective-counter progress, per-team values [winner, loser], `t` in seconds since the game's first read (the source video is not stored). Absent when no counter was read. */
 	objective?: ScannerMatchObjective;
-	/**
-	 * per-player special/death samples, teams winner-first and `t` rebased
-	 * onto the same origin as `objective` so both chart on one axis. Absent
-	 * when the icon strip was never read.
-	 */
+	/** per-player special/death samples, teams winner-first, `t` on the same origin as `objective`. Absent when the icon strip was never read. */
 	playerStatus?: ScannerMatchPlayerStatus;
 }
 
 /**
- * Derives a game's scoreboard from its linked ingested matches: the earliest
- * link is the base and later ones enrich it (first-ingest-wins field-wise,
- * via Matches.mergeMatches), the merged match is projected winner-first, and
- * every linked POV seat attributes its player row to the POV user.
- *
- * `winnerTeamId`/`loserTeamId` are the game result's sides (tournament team
- * or SendouQ group ids), stamped onto the rows for the reader.
+ * Derives a game's scoreboard from its linked ingests: earliest link is the base, later ones
+ * enrich it field-wise (Matches.mergeMatches), projected winner-first, with every linked POV seat
+ * attributing its row to the POV user. `winnerTeamId`/`loserTeamId` are the result's sides
+ * (tournament team or SendouQ group ids) stamped onto the rows.
  */
 export function deriveScoreboardData({
 	linked,
@@ -307,21 +258,13 @@ export function deriveScoreboardData({
 	};
 }
 
-/**
- * A match's players winner-first in scoreboard row order (unread names as
- * empty strings), or null when the match has no such view — the
- * `linkedPlayerNames` a game's already linked ingest contributes.
- */
+/** A match's players winner-first in row order (unread names as ""), or null without such a view — a game's `linkedPlayerNames`. */
 export function winnerFirstPlayerNames(match: ScannerMatch): string[] | null {
 	const view = winnerFirstView(match, 0);
 	return view ? view.players.map((player) => player.name.trim()) : null;
 }
 
-/**
- * A match's players in linked-scoreboard order — winning team's rows first —
- * with unread names as empty strings. Null when the match can't link: its
- * winner is unknown or either team wasn't fully seen.
- */
+/** Winner-first row view of a match (unread names as ""). Null when it can't link: unknown winner or a team not fully seen. */
 interface WinnerFirstView {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
@@ -403,11 +346,7 @@ function winnerFirstView(
 	};
 }
 
-/**
- * The shared `t` origin of a match's progress series: the earliest counter
- * or status read, so both rebase onto one axis and stay aligned without
- * the source video.
- */
+/** Shared `t` origin of a match's progress series: the earliest counter or status read. */
 function firstProgressT(match: ScannerMatch): number {
 	const ts = [
 		...(match.objective?.samples ?? []).map((sample) => sample.t),
@@ -416,12 +355,7 @@ function firstProgressT(match: ScannerMatch): number {
 	return ts.length > 0 ? Math.min(...ts) : 0;
 }
 
-/**
- * Puts a match's counter samples in derived-scoreboard shape: per-team
- * values winner-first like `scores` and `players`, and `t` rebased to the
- * game's first progress read so the samples stay meaningful without the
- * source video.
- */
+/** Counter samples winner-first with `t` rebased to the game's first progress read. */
 function winnerFirstObjective(
 	objective: ScannerMatchObjective | null,
 	winner: 0 | 1,
@@ -466,11 +400,9 @@ function winnerFirstPlayerStatus(
 }
 
 /**
- * Attributes each linked match's POV seat to its POV user on the merged
- * rows: the seat's read name picks the row (unique name match), falling
- * back to the seat's own winner-first position when the names don't
- * contradict. A row already attributed, or a user already present, is left
- * alone (first link wins).
+ * Attributes each linked POV seat to its user on the merged rows: unique name match picks the
+ * row, else the seat's own winner-first position when names don't contradict. Already attributed
+ * rows and already present users are left alone (first link wins).
  */
 function attributePovUsers(
 	players: IngestedScoreboardPlayer[],
@@ -511,12 +443,7 @@ function attributionIndex(
 	return fallbackIndex;
 }
 
-/**
- * Drops re-detections of the same game within one request: same mode and
- * stage with enough player rows carrying the same readable name in the same
- * position — the same OCR-jitter tolerance as the cross-request duplicate
- * check (isLinkedDuplicate).
- */
+/** Drops re-detections of the same game within one request, with the same OCR-jitter tolerance as isLinkedDuplicate. */
 function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 	const result: IndexedView[] = [];
 
@@ -537,14 +464,9 @@ function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 }
 
 /**
- * The index of the game `view` should link to, or null when none fits. Only
- * games from `from` on are considered, so two scans of one request never
- * take the same game and the sequence stays ordered.
- *
- * A scan that knows when it was played takes the candidate reported nearest
- * that moment, which keeps two plays of one map apart — they sit minutes
- * from their own report and a session apart from each other. One that does
- * not takes the next candidate in sequence.
+ * Index of the game `view` links to, or null. Only games from `from` on are considered so two
+ * scans of one request never take the same game. A scan with a play time takes the candidate
+ * reported nearest it (keeps two plays of one map apart); one without takes the next in sequence.
  */
 function pickGame(
 	view: IndexedView,
@@ -569,11 +491,7 @@ function pickGame(
 	return best?.index ?? null;
 }
 
-/**
- * Whether a game is a candidate for a scan at all: the same map, and sides
- * that do not contradict — an already linked game only through being a
- * re-detection of the scan already on it.
- */
+/** Same map and non-contradicting sides; an already linked game only as a re-detection of the scan on it. */
 function canLink(
 	view: WinnerFirstView,
 	game: IngestableGame,
@@ -591,11 +509,8 @@ function canLink(
 }
 
 /**
- * Whether the POV seat's side in the scan agrees with the sender's side in
- * the game: the sender is the POV player, so the roster their user id sits
- * in says whether their seat should be on the winning rows. Null when the
- * check cannot decide — no POV seat read, no sender, or the sender in
- * neither roster (cast footage) — leaving the sides to the name fallback.
+ * Whether the POV seat's side agrees with the roster the sender sits in. Null when undecidable
+ * (no POV seat, no sender, or sender in neither roster — cast footage), leaving it to the name fallback.
  */
 function povSideAgreement(
 	view: WinnerFirstView,
@@ -611,11 +526,8 @@ function povSideAgreement(
 }
 
 /**
- * The side fallback for reads no POV seat can pin (cast footage above all):
- * the winning rows should overlap the game winner's in-game names at least
- * as well as the losing team's (and vice versa). A contradiction means the
- * match belongs to some other game. No overlap at all (e.g. no in-game
- * names set) counts as a pass.
+ * Side fallback when no POV seat can pin (cast footage): winning rows must overlap the winner's
+ * in-game names at least as well as the loser's, and vice versa. No overlap at all passes.
  */
 function sidesMatchKnownPlayers(view: WinnerFirstView, game: IngestableGame) {
 	const winnerSide = view.players
@@ -641,12 +553,7 @@ function nameOverlap(names: string[], knownNames: string[]) {
 	return names.filter((name) => name && known.has(name)).length;
 }
 
-/**
- * Checks whether a match is a re-detection of a game's already linked
- * scoreboard: enough player rows carry the same readable name in the same
- * position. Positional comparison keeps two games between the same eight
- * players apart — their row orders and sides practically always differ.
- */
+/** Re-detection check: enough rows share name and position. Positional so two games between the same eight players stay apart. */
 function isLinkedDuplicate(view: WinnerFirstView, linkedPlayerNames: string[]) {
 	const matches = view.players.filter((player, i) => {
 		const name = Matches.normalizeInGameName(player.name);

@@ -211,10 +211,8 @@ interface PartialCombo {
 }
 
 /**
- * Groups a weapon slot's damage into a single "channel" that may only ever
- * contribute one damage type per combo. In single-weapon mode each weapon type
- * (main/sub/special) is its own channel so a single weapon can pair e.g. its
- * main damage with its sub; otherwise a whole slot is one channel.
+ * A "channel" contributes at most one damage type per combo: in single-weapon mode each of
+ * main/sub/special is its own channel, otherwise a whole slot is one.
  */
 function slotDamageChannel(
 	option: DamageOption,
@@ -460,13 +458,8 @@ function isExcessiveCombo(combo: DamageCombo): boolean {
 const SPLASH_O_MATIC_ID = 20;
 
 /**
- * Calculates the number of frames needed for enemy ink damage to finish off
- * a target after dealing a certain amount of combo damage.
- *
- * @param comboDamage - The damage dealt by the combo
- * @param targetResAp - The target's Ink Resistance Up ability points (0-57)
- * @returns The number of frames needed, or null if the combo is already lethal
- *          or ink damage cannot finish the kill (remaining damage exceeds ink damage limit)
+ * Frames of enemy ink damage needed to finish a target after `comboDamage`. `targetResAp` is Ink
+ * Resistance Up AP (0-57). Null when the combo is already lethal or ink damage can't finish it.
  */
 export function calculateInkTimeToKill(
 	comboDamage: number,

@@ -14,11 +14,8 @@ import {
 } from "kysely";
 
 /**
- * Makes inserting an empty array of values a no-op instead of a syntax error.
- * Kysely compiles `.values([])` into invalid SQL, so without this plugin every
- * dynamic multi-row insert would need a length check before it. The empty
- * insert is rewritten into `INSERT INTO "T" SELECT * FROM "T" WHERE 0` which
- * inserts zero rows and returns zero rows for any `returning` clause.
+ * Kysely compiles `.values([])` into invalid SQL; this rewrites it into `INSERT INTO "T" SELECT * FROM "T" WHERE 0`,
+ * inserting and returning zero rows.
  */
 export class EmptyValuesNoopPlugin implements KyselyPlugin {
 	transformQuery(args: PluginTransformQueryArgs): RootOperationNode {

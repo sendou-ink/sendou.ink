@@ -10,24 +10,18 @@ type InsertArgs = Omit<
 	XRankPlacementRepository.XRankPlacementInsertArgs,
 	"playerSplId"
 > & {
-	/** Defaults to one derived from `playerUserId`, for a player who only ever
-	 * appears as that user. */
+	/** Defaults to one derived from `playerUserId`. */
 	playerSplId?: string;
 };
 
 type Options = {
-	/** Derive `SplatoonPlayer.peakXp` from the placements, as the import does once
-	 * it has added a month's worth of them. */
+	/** Derive `SplatoonPlayer.peakXp` from the placements, as the import does after a month's worth. */
 	refreshPeakXp?: boolean;
 };
 
 /**
- * Creates X Rank placements. `playerSplId` is the in-game id of the player who
- * placed — the repository creates their `SplatoonPlayer` row if the id is new, so
- * repeating an id places the same player again. `playerUserId` is the site user
- * whose results they are, and stands in for the in-game id when none is given.
- *
- * Rank counts up, since a month's leaderboard has no two players at the same rank.
+ * Repeating a `playerSplId` places the same `SplatoonPlayer` again; `playerUserId` stands in for it when
+ * not given. Rank counts up since a month's leaderboard has no ties.
  */
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({

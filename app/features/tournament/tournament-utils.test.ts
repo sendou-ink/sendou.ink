@@ -39,11 +39,7 @@ const teamForOrdering = (
 
 const MIN_MEMBERS = 4;
 
-/**
- * Every ordering rule, stated as the order callers actually see: what
- * `sortTeamsBySeeding` produces. `compareTeamsForOrdering` is only checked
- * against its antisymmetry contract over the same rows.
- */
+/** Every ordering rule as `sortTeamsBySeeding` output; `compareTeamsForOrdering` is only checked for antisymmetry over the same rows. */
 const ORDERING_RULES: {
 	rule: string;
 	teams: TeamForOrdering[];

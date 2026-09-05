@@ -24,11 +24,7 @@ type SetSearchParams<Shape extends AnyShape> = (
 
 const InitialSearchContext = React.createContext<string | null>(null);
 
-/**
- * Provides the initial search string for server rendering and hydration.
- * Mounted once in the root route; the value never updates so consumers do not
- * rerender through it.
- */
+/** Initial search string for SSR and hydration. Mounted once in root; never updates so consumers don't rerender through it. */
 export function SearchParamsProvider({
 	children,
 }: {
@@ -45,13 +41,8 @@ export function SearchParamsProvider({
 }
 
 /**
- * Typed search params state for a whole definition.
- *
- * Writes are merges: params not mentioned are preserved, declared `resets`
- * are applied and values equal to their default are removed from the URL. If
- * any written param is `loader: true` the batch writes through one navigation,
- * otherwise through `history.replaceState` without triggering loaders. A write
- * known not to change loader data can force the latter with `{ loader: false }`.
+ * Writes are merges (unmentioned params preserved, `resets` applied, defaults removed). A batch with any
+ * `loader: true` param goes through one navigation, otherwise `history.replaceState`; `{ loader: false }` forces the latter.
  */
 export function useSearchParamsTyped<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
@@ -62,10 +53,7 @@ export function useSearchParamsTyped<Shape extends AnyShape>(
 	return [values, setParams];
 }
 
-/**
- * Focused subscription to a single param of a definition: rerenders only when
- * that param's raw string value changes.
- */
+/** Rerenders only when this one param's raw string value changes. */
 export function useSearchParam<
 	Shape extends AnyShape,
 	K extends keyof Shape & string,

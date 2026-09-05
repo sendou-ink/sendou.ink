@@ -118,9 +118,8 @@ export function ExportDialog({
 			sort,
 			bracketIdx,
 			bracketRequiresOwnCheckIn,
-			// A team belongs to a bracket whether or not it has checked in: the
-			// checked-in teams populate the matches, the rest are pending check-in.
-			// Both are scoped out of the export when they don't belong to the bracket.
+			// a team belongs to a bracket whether or not it has checked in (the rest are pending check-in);
+			// both are scoped out of the export when they don't belong to it
 			bracketParticipantIds: selectedBracket
 				? new Set([
 						...selectedBracket.participantTournamentTeamIds,
@@ -438,10 +437,8 @@ function buildContent({
 		return CSV.serialize([header, ...rows]);
 	}
 
-	// list: members grouped under each team (omitted when no member fields chosen,
-	// so a team-name-only export is just a plain list of names). Members are only
-	// indented under a team header when team fields are present — without them the
-	// export is a tight flat list (e.g. captains-only + Discord mention).
+	// list: members grouped under each team; without member fields a plain list of team names, without
+	// team fields a tight flat list of members (e.g. captains-only + Discord mention)
 	const hasMemberFields = memberFields.length > 0;
 	const groupByTeam = teamFields.length > 0;
 

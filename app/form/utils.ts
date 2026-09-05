@@ -7,11 +7,7 @@ export function infoMessageId(fieldId: string) {
 	return `${fieldId}-info`;
 }
 
-/**
- * Builds a form field name (e.g. `members[0].userId`) from a validation issue
- * path so that server- and client-side validation errors key fields
- * identically.
- */
+/** Builds a field name (e.g. `members[0].userId`) from an issue path so server and client errors key fields identically. */
 export function buildFieldPath(path: PropertyKey[]): string | null {
 	if (path.length === 0) return null;
 
@@ -101,11 +97,7 @@ export function setNestedValue(
 	};
 }
 
-/**
- * The default value object for a `fieldset` field, built from each sub-field's
- * own `initialValue` (e.g. a `select`'s first option). Returns `{}` for
- * non-fieldset fields.
- */
+/** Default value of a `fieldset` field built from its sub-fields' `initialValue`s. `{}` for non-fieldset fields. */
 export function fieldsetDefaults(
 	fieldsetMeta: FormField,
 ): Record<string, unknown> {
@@ -121,13 +113,9 @@ export function fieldsetDefaults(
 }
 
 /**
- * When a leaf field inside an array-of-fieldset item is edited (e.g.
- * `staff[0].userId`), the enclosing item is created on demand. Without this the
- * item would only contain the touched field, dropping defaults that were merely
- * shown as a fallback (e.g. a required `select`'s first option) and failing
- * validation on submit. This seeds the item with its fieldset defaults, keeping
- * any values it already has. Untouched items are never created, so this doesn't
- * affect submitting a pristine form.
+ * Editing a leaf inside an array-of-fieldset item (e.g. `staff[0].userId`) creates the item on demand;
+ * seeds it with its fieldset defaults (keeping existing values) so fallback-only defaults like a
+ * required `select`'s first option aren't dropped and fail validation. Untouched items are never created.
  */
 export function seedArrayItemDefaults(
 	schema: FormObjectSchema,
@@ -135,8 +123,7 @@ export function seedArrayItemDefaults(
 	name: string,
 ): Record<string, unknown> {
 	const lastBracket = name.lastIndexOf("]");
-	// No enclosing array item (`-1`) or the leaf is the array element itself
-	// (path ends in `]`, i.e. a primitive array) — nothing to seed.
+	// no enclosing array item, or the leaf is a primitive array element itself
 	if (lastBracket === -1 || lastBracket === name.length - 1) return values;
 
 	const itemPath = name.slice(0, lastBracket + 1);
@@ -183,12 +170,7 @@ export function getNestedSchema(
 	return current;
 }
 
-/**
- * Unwraps optional/nullable/nullish wrappers and pipes (e.g. `preprocess`)
- * down to the schema that carries the structural properties (`entries`/`item`).
- * A pipe over a plain schema needs no unwrapping since it spreads that
- * schema's own properties.
- */
+/** Unwraps optional/nullable/nullish wrappers and pipes down to the schema carrying `entries`/`item`. */
 function unwrapSchema(schema: AnySyncSchema): AnySyncSchema {
 	if (
 		(schema.type === "optional" ||
@@ -231,11 +213,8 @@ export function validateField(
 	const result = v.safeParse(fieldSchema, value);
 	if (result.success) return undefined;
 
-	// `array`/`fieldset` fields render each child as its own FormField with its
-	// own error slot, so a nested issue (e.g. an empty member inside a `members`
-	// array) belongs to that child — attributing it to the parent would surface
-	// the wrong message at the wrong field. Other composite fields (e.g. a custom
-	// tuple) render as a single control, so their nested issues belong to them.
+	// `array`/`fieldset` children render their own error slots, so nested issues belong to the child;
+	// other composites (e.g. a custom tuple) render as one control and own their nested issues
 	const fieldMeta = getFormFieldMetadata(fieldSchema);
 	const childrenRenderOwnErrors =
 		fieldMeta?.type === "array" || fieldMeta?.type === "fieldset";
@@ -265,12 +244,9 @@ export function validateField(
 }
 
 /**
- * Accessibility attributes for a form control. Ids are derived from the field
- * `name` because the error/info messages render with name-based ids
- * (`errorMessageId`/`infoMessageId`) — a `useId()` value would point at
- * elements that don't exist. The error id is also included in
- * `aria-describedby` since `aria-errormessage` support in screen readers is
- * still inconsistent.
+ * Accessibility attributes for a form control. Ids derive from the field `name` to match the
+ * name-based `errorMessageId`/`infoMessageId`. The error id is also in `aria-describedby` since
+ * screen reader support for `aria-errormessage` is inconsistent.
  */
 export function ariaAttributes({
 	name,

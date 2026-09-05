@@ -1,25 +1,13 @@
 /**
- * ObjectiveDetector: parses the ranked in-match counter overlay top-center —
- * each team's count plate, the penalty pill under it, which team is in
- * control (controlling team's plate keeps its saturated team-color fill;
- * otherwise near-black fill with digits in the team's ink color — see
- * rois.ts), and the M:SS match timer above the plates.
- *
- * Digits are read as the trailing digit run (banner.ts) under several
- * channel extractions — team-color ink on a black plate needs the
- * brightest channel (dark blue ink is near-black in luminance), ink on a
- * team-color fill needs the darkest channel — every extraction is tried at
- * each threshold/size and the best-scoring read wins. A gate hit with no
- * readable count on either side emits nothing (lookalike frame).
- *
- * `ObjectiveData` is a discriminated union on `mode`; only SZ exists so
- * far. Identifying mode from the badge between the plates awaits TC/RM/CB
- * fixtures.
- *
- * Every successful counter read additionally emits a PlayerStatus event
- * (player-status.ts) parsed off the per-player icon strip of the same
- * frame — the counter parse carries the lookalike rejection for both, and
- * the shared timer value pairs the two events downstream.
+ * ObjectiveDetector: parses the ranked counter overlay top-center — count plates,
+ * penalty pills, control (the controlling plate keeps its team-color fill, the
+ * other is near-black with digits in team ink) and the M:SS timer. Digits read
+ * as the trailing digit run (banner.ts) under several channel extractions (ink
+ * on black needs the brightest channel, ink on a team fill the darkest); best
+ * read wins. No readable count on either side = lookalike, emits nothing.
+ * `ObjectiveData` is discriminated on `mode`; only SZ exists until TC/RM/CB
+ * fixtures. Each read also emits a PlayerStatus event (player-status.ts) off
+ * the same frame, paired downstream by the shared timer value.
  */
 import { getCV, type Mat, minMaxLoc } from "../../cv";
 import {
@@ -81,11 +69,7 @@ export type ObjectiveData = SplatZonesObjectiveData;
 
 export interface SplatZonesObjectiveData {
 	mode: "SZ";
-	/**
-	 * seconds shown on the match timer above the plates ("3:35" = 215);
-	 * null = unreadable. Counts down in regulation; the overtime display is
-	 * unattested so far.
-	 */
+	/** match timer seconds ("3:35" = 215); null = unreadable. Overtime display unattested so far. */
 	time: number | null;
 	/** displayed count per team, [alpha, bravo]; null = unreadable */
 	score: [number | null, number | null];
@@ -94,11 +78,9 @@ export interface SplatZonesObjectiveData {
 	/** which team currently holds the zone (team-color plate fill) */
 	control: [boolean, boolean];
 	/**
-	 * mean team-ink RGB per side, sampled off the plate (the team-color
-	 * fill while in control, the digit ink otherwise — one of the two is
-	 * always drawn in the team's color); null when too little saturated
-	 * ink was found. The stable team identity for casted footage, where
-	 * the plates follow the specced player's side instead of alpha/bravo.
+	 * mean team-ink RGB per side off the plate (fill in control, digit ink
+	 * otherwise); null on too little ink. The stable team identity on casted
+	 * footage, where plates follow the specced player's side.
 	 */
 	teamColor: [InkRgb | null, InkRgb | null];
 }
@@ -109,11 +91,9 @@ export const OBJECTIVE_EVENT_TYPE = "Objective";
 const CHECK_INTERVAL_SECONDS = 1;
 
 /**
- * Timeline content guard: consecutive counter reads merge only when they
- * show the same state, so every actual tick/penalty/control change becomes
- * its own event. `time` is deliberately not compared — the timer ticks
- * every second, so comparing it would keep any two reads from ever merging
- * — and neither is `teamColor`, whose raw pixel means jitter per frame.
+ * Timeline content guard: reads merge only with the same state so every tick/
+ * penalty/control change is its own event. `time` (ticks every second) and
+ * `teamColor` (pixel means jitter) are deliberately not compared.
  */
 export function sameObjectiveData(a: unknown, b: unknown): boolean {
 	const da = a as ObjectiveData;
@@ -142,8 +122,7 @@ export function createObjectiveDetector(
 ): Detector<ObjectiveData | PlayerStatusData | StripWeaponsData> {
 	const cv = getCV();
 	let lastStatus: { layout: PlayerStatusLayout; t: number } | undefined;
-	// primed so the very first counter read samples — short matches and
-	// single-frame runs (fixtures) get evidence too
+	// primed so the very first read samples (short matches, single-frame fixtures)
 	let readsSinceWeaponSample = STRIP_WEAPON_SAMPLE_INTERVAL;
 
 	const scoreSets: GlyphSet[] = resources.paintDigits
@@ -211,11 +190,7 @@ export function createObjectiveDetector(
 		return { pass: passed === checks.length, score: passed / checks.length };
 	}
 
-	/**
-	 * Best trailing-digit read of the band across channel extractions,
-	 * thresholds, and glyph sizes (see module header for why one pass
-	 * cannot cover both plate styles).
-	 */
+	/** Best trailing-digit read across channel extractions, thresholds and glyph sizes. */
 	function readScore(frame: Mat, gray: Mat, roi: Roi): BannerScoreRead {
 		let best: BannerScoreRead = {
 			value: null,
@@ -236,9 +211,8 @@ export function createObjectiveDetector(
 						spaceGap: Number.POSITIVE_INFINITY,
 						minCharScore: 0.3,
 					});
-					// the band holds nothing but the count, so a leading digit
-					// blurred below the extension floor voids the read instead of
-					// truncating it (see SCORE_EXTEND_MIN_CONF)
+					// the band holds only the count, so a leading digit under the
+					// extension floor voids the read instead of truncating it
 					const read = trailingDigitRun(raw, set, {
 						extendMinScore: SCORE_EXTEND_MIN_CONF,
 						rejectTruncated: true,
@@ -252,12 +226,9 @@ export function createObjectiveDetector(
 	}
 
 	/**
-	 * The match timer's M:SS over TIMER_DIGIT_ROI: white digits on the
-	 * near-black box the gate already anchored on. The colon's two dots stack
-	 * to well under the digit height floor, so a valid read is exactly three
-	 * full-height digits — the minute, then the two second digits. Each glyph
-	 * size is tried (the digits render bigger on upscaled 720p footage) and
-	 * the valid read with the most confident digits wins.
+	 * M:SS timer: the colon's dots fall under the digit height floor, so a valid
+	 * read is exactly three full-height digits. Each glyph size is tried (digits
+	 * render bigger on upscaled 720p) and the most confident valid read wins.
 	 */
 	function readTimer(gray: Mat): { value: number | null; reading: string } {
 		const band = copyRoi(gray, TIMER_DIGIT_ROI);
@@ -320,11 +291,7 @@ export function createObjectiveDetector(
 		return trailingDigitRun(raw, penaltySet);
 	}
 
-	/**
-	 * Control: the plate's fill (sampled over the probe strip) is the
-	 * saturated team-color style instead of the near-black fill shown while
-	 * not in control (see CONTROL_PLATE_MIN_SATURATION in rois.ts).
-	 */
+	/** Plate fill over the probe strip; saturated = team-color style = in control (CONTROL_PLATE_MIN_SATURATION). */
 	function plateFill(
 		frame: Mat,
 		side: 0 | 1,
@@ -365,8 +332,7 @@ export function createObjectiveDetector(
 					score.value !== null &&
 					fill.saturation >= CONTROL_PLATE_MIN_SATURATION,
 				fill,
-				// the fill while in control, the digit ink otherwise — both
-				// ROIs together always cover whichever carries the team color
+				// both ROIs together always cover whichever carries the team color
 				teamColor: meanInkColor(frame, [
 					SCORE_ROIS[side],
 					PLATE_PROBE_ROIS[side],
@@ -389,9 +355,8 @@ export function createObjectiveDetector(
 		);
 		lastStatus = { layout: playerStatus.data.layout, t };
 
-		// sampled slot-identity evidence for the strip → scoreboard-row
-		// assignment; every read would re-measure fixed identities at full
-		// template-sweep cost
+		// sampled slot-identity evidence for the strip → scoreboard-row assignment;
+		// identities are fixed so every read would re-measure at full sweep cost
 		let stripWeapons: DetectedEvent<StripWeaponsData> | null = null;
 		readsSinceWeaponSample++;
 		if (
@@ -412,9 +377,8 @@ export function createObjectiveDetector(
 			...(side.penalty?.value != null ? [side.penalty.confidence] : []),
 		]);
 		return [
-			// the icon-strip statuses ride along with every counter read: the
-			// count confirmation above is the shared lookalike rejection, and
-			// the shared timer value is what pairs the two events downstream
+			// the strip statuses ride along with every counter read; the shared
+			// timer value pairs the two events downstream
 			{
 				type: OBJECTIVE_EVENT_TYPE,
 				t,

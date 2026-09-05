@@ -6,6 +6,7 @@ describe("scheduleWeekSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(scheduleWeekSearchParams, {
 			week: ["current", "next"],
+			view: ["heatmap", "grid"],
 		});
 	});
 });

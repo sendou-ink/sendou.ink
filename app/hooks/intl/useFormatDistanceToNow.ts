@@ -6,16 +6,9 @@ import {
 } from "~/utils/dates";
 
 /**
- * Hook that returns a `formatDistanceToNow` function (date-fns) bound to the
- * current site language, for locale-aware "x ago" / "in x" output.
- *
- * Accepts either a `Date` or a database timestamp (`number`); numbers are
- * converted via `databaseTimestampToDate`.
- *
- * Note: this intentionally does NOT honor the user's "always use browser
- * language" preference (unlike `useDateTimeFormat`). The browser may be set to
- * a language we have not loaded a date-fns locale for, so we use the
- * site language to guarantee a translated result.
+ * date-fns `formatDistanceToNow` bound to the site language, taking a `Date` or database timestamp. Unlike
+ * `useDateTimeFormat` it ignores the "always use browser language" preference: that language may have no
+ * date-fns locale loaded.
  */
 export function useFormatDistanceToNow() {
 	const { i18n } = useTranslation();

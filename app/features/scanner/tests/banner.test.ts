@@ -1,7 +1,4 @@
-/**
- * resolveMatchScores is pure — the parse side of banner.ts is covered by
- * the scoreboard fixture suite, this pins the winner/loser resolution.
- */
+/** resolveMatchScores is pure — the parse side of banner.ts is covered by the scoreboard fixture suite. */
 
 import assert from "node:assert/strict";
 import {

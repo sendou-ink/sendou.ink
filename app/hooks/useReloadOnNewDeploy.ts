@@ -11,18 +11,14 @@ const reloadedForCommitPersisted = PersistedState.define({
 });
 
 /**
- * Reloads the page when the server starts reporting a different build than the
- * one this client's JavaScript was loaded from. Pages that stay open for hours
- * while revalidating (SendouQ looking above all) otherwise keep running old
- * code against new loader data, breaking whenever a deploy changes the shape of
- * that data.
+ * Reloads when the server reports a different build than this client's JS, since long-open revalidating
+ * pages (SendouQ looking above all) would otherwise run old code against new loader data.
  */
 export function useReloadOnNewDeploy(serverCommit: string) {
 	React.useEffect(() => {
 		if (!GIT_COMMIT || !serverCommit || serverCommit === GIT_COMMIT) return;
 
-		// the reload is expected to serve the new bundle, but should it not, the
-		// same build is never retried so the page can't end up in a reload loop
+		// the same build is never retried, so a reload not serving the new bundle can't loop
 		if (PersistedState.read(reloadedForCommitPersisted) === serverCommit) {
 			return;
 		}

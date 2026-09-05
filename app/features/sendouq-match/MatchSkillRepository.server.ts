@@ -13,9 +13,7 @@ type InsertMatchSkills = Pick<
 	"groupMatchId" | "identifier" | "mu" | "season" | "sigma" | "userId"
 >[];
 
-/**
- * Inserts the new skill rows resulting from a match and their team memberships.
- */
+/** Inserts the new skill rows resulting from a match and their team memberships. */
 export async function insertMatchSkills(
 	skills: InsertMatchSkills,
 	trx?: Transaction<DB>,

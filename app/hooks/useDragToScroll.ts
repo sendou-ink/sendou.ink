@@ -7,10 +7,7 @@ const MOMENTUM_FRAME_MS = 1000 / 60;
 const VELOCITY_IDLE_TIMEOUT_MS = 100;
 const SNAP_RESTORE_SMOOTH_TIMEOUT_MS = 750;
 
-/**
- * Makes an element with overflowing content scrollable by dragging with the
- * mouse. Returns the ref to attach to the scrollable element.
- */
+/** Mouse drag-to-scroll; returns the ref to attach to the scrollable element. */
 export function useDragToScroll<
 	T extends HTMLElement,
 >(): React.RefObject<T | null> {
@@ -25,12 +22,7 @@ export function useDragToScroll<
 	return ref;
 }
 
-/**
- * Attaches mouse drag-to-scroll behavior with release momentum to an element,
- * returning a cleanup function. A grabbing cursor is shown while dragging and
- * clicks that conclude a drag are suppressed.
- * Framework-agnostic on purpose (usable as a Svelte attachment as is).
- */
+/** Drag-to-scroll with release momentum, suppressing clicks that conclude a drag. Framework-agnostic (usable as a Svelte attachment). */
 export function dragToScroll(element: HTMLElement): () => void {
 	const hasScrollSnap = getComputedStyle(element).scrollSnapType !== "none";
 	let grabbingCursorStyle: HTMLStyleElement | null = null;
@@ -54,8 +46,7 @@ export function dragToScroll(element: HTMLElement): () => void {
 		element.style.scrollBehavior = "";
 	};
 
-	// mandatory scroll snap re-snaps on every programmatic scrollLeft/scrollTop
-	// write, so it has to be off for the duration of the drag
+	// mandatory scroll snap re-snaps on every programmatic scroll write
 	const suppressScrollSnap = () => {
 		if (!hasScrollSnap || isSnapSuppressed) return;
 

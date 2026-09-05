@@ -1,13 +1,16 @@
+import { Users } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { FetcherWithComponents } from "react-router";
 import * as R from "remeda";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { toastQueue } from "~/components/elements/Toast";
+import { useUser } from "~/features/auth/core/user";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
+import { teamSchedulePage } from "~/utils/urls";
 import { saveWeekSchema } from "../availability-schemas";
 import { scheduleWeekSearchParams } from "../availability-search-params";
 import type { AvailabilityEditorWeek } from "../availability-types";
@@ -16,12 +19,10 @@ import styles from "./MySchedule.module.css";
 import { WeekAvailabilityEditor } from "./WeekAvailabilityEditor";
 import { WeekToggle } from "./WeekToggle";
 
-/**
- * The "My schedule" section of the events page: the schedule editor with a
- * current/next week toggle, "Copy last week" prefill and the save action.
- */
+/** The events page's "My schedule": editor with current/next week toggle, "Copy last week" prefill and save. */
 export function MySchedule({ data }: { data: MyScheduleData }) {
 	const { t } = useTranslation(["schedule"]);
+	const user = useUser();
 	const [{ week }, setParams] = useSearchParamsTyped(scheduleWeekSearchParams);
 	const [weeks, setWeeks] = React.useState<Array<AvailabilityEditorWeek>>(() =>
 		data.weeks.map((editorWeek) => editorWeek.days),
@@ -35,11 +36,9 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 		day: "numeric",
 	});
 
-	// dirty = the editor differs from what the loader last saw, or the day
-	// popover holds edits it has not committed yet; a successful save
-	// revalidates the loader, which makes this read clean again. Edits survive
-	// same-route navigations (the view tabs), so only a pathname change or a
-	// full unload warns.
+	// dirty = editor differs from the loader (a save revalidates it, reading clean again) or the day
+	// popover holds uncommitted edits. Edits survive same-route navigations (view tabs), so only a
+	// pathname change or a full unload warns
 	const hasPendingDraftRef = React.useRef(false);
 	const hasUnsavedChangesRef = React.useRef<
 		Parameters<typeof useUnsavedChangesChecker>[0]["current"]
@@ -92,7 +91,23 @@ export function MySchedule({ data }: { data: MyScheduleData }) {
 	return (
 		<section className="stack sm" data-testid="my-schedule">
 			<div className={styles.header}>
-				<h2 className="text-lg mx-2">{t("schedule:editor.title")}</h2>
+				<div className={styles.title}>
+					<h2 className="text-lg mx-2">{t("schedule:editor.title")}</h2>
+					{user?.team ? (
+						<LinkButton
+							to={scheduleWeekSearchParams.href(
+								teamSchedulePage(user.team.customUrl),
+								{ week },
+							)}
+							variant="minimal"
+							size="miniscule"
+							icon={<Users />}
+							testId="team-schedule-link"
+						>
+							{t("schedule:editor.teamSchedule")}
+						</LinkButton>
+					) : null}
+				</div>
 				<WeekToggle
 					name="my-schedule-week"
 					value={week}

@@ -1,10 +1,12 @@
 import { TZDate } from "@date-fns/tz";
 import {
 	addWeeks,
+	differenceInCalendarDays,
 	format,
 	getISOWeek,
 	isMonday,
 	isSunday,
+	parseISO,
 	startOfWeek,
 } from "date-fns";
 import * as R from "remeda";
@@ -26,10 +28,7 @@ import type {
 const MINUTE_IN_SECONDS = 60;
 const DAY_MINUTES = 24 * 60;
 
-/**
- * Database timestamp of the Monday 00:00 that starts the week `date` falls in,
- * as the week is seen in `timezone`.
- */
+/** Database timestamp of the Monday 00:00 starting the week `date` falls in, as seen in `timezone`. */
 export function weekStartsAt(date: Date, timezone: string) {
 	const zoned = new TZDate(date.getTime(), timezone);
 
@@ -37,9 +36,8 @@ export function weekStartsAt(date: Date, timezone: string) {
 }
 
 /**
- * The week `date` falls in as a time range, `endsAt` being the Monday 00:00 that
- * starts the next week. Not always 7×24h long: a week with a DST transition in
- * it is an hour shorter or longer.
+ * The week `date` falls in, `endsAt` being the next Monday 00:00. Not always 7×24h:
+ * a week with a DST transition is an hour shorter or longer.
  */
 export function weekRange(date: Date, timezone: string): TimeRange {
 	const zoned = new TZDate(date.getTime(), timezone);
@@ -66,11 +64,7 @@ export function isoWeekNumber(timestamp: number, timezone: string) {
 	return getISOWeek(inTimezone(timestamp, timezone));
 }
 
-/**
- * Whether a week reported to start at `weekStartsAt` is the week starting at
- * `rangeStartsAt`: the two starts are closer than timezones can set them
- * apart (hours, never days).
- */
+/** Whether the two week starts name the same week: closer than timezones can set them apart (hours, never days). */
 export function isSameWeek(weekStartsAt: number, rangeStartsAt: number) {
 	return (
 		Math.abs(weekStartsAt - rangeStartsAt) <
@@ -78,11 +72,7 @@ export function isSameWeek(weekStartsAt: number, rangeStartsAt: number) {
 	);
 }
 
-/**
- * Database timestamp of the given wall clock time in `timezone`. `date` is
- * `YYYY-MM-DD` and `time` is `HH:mm`, the shapes the availability tables and
- * form fields use.
- */
+/** Database timestamp of `date` (`YYYY-MM-DD`) at `time` (`HH:mm`) in `timezone`. */
 export function localToTimestamp({
 	date,
 	time,
@@ -106,11 +96,9 @@ export function localToTimestamp({
 }
 
 /**
- * Database timestamp of the given minutes from midnight of `date` in
- * `timezone`, the clock representation the schedule editor uses. Minutes past
- * 1440 roll into the next day, so the end of a range crossing midnight
- * converts like any other. On a DST transition day the clock simply rolls
- * through the change, same as entering the time by hand would.
+ * Database timestamp of `minutes` from midnight of `date` in `timezone`. Minutes past
+ * 1440 roll into the next day; on a DST day the clock rolls through the change like a
+ * hand-entered time would.
  */
 export function dayMinutesToTimestamp({
 	date,
@@ -134,9 +122,33 @@ export function dayMinutesToTimestamp({
 }
 
 /**
- * `YYYY-MM-DD` of the timestamp in `timezone`. What day a slot belongs to
- * depends on who is looking at it, so the day of a slot is always resolved from
- * its timestamp rather than from the day its author entered it on.
+ * Minutes from midnight of `date` in `timezone`, the inverse of {@link dayMinutesToTimestamp}.
+ * A timestamp on a later day counts on past 1440, read off the wall clock so a DST change inside
+ * the range does not stretch or shrink it.
+ */
+export function timestampToDayMinutes({
+	date,
+	timestamp,
+	timezone,
+}: {
+	date: string;
+	timestamp: number;
+	timezone: string;
+}) {
+	const dayDifference = differenceInCalendarDays(
+		parseISO(dateInTimezone(timestamp, timezone)),
+		parseISO(date),
+	);
+
+	return (
+		dayDifference * DAY_MINUTES +
+		timeToMinutes(timeInTimezone(timestamp, timezone))
+	);
+}
+
+/**
+ * `YYYY-MM-DD` of the timestamp in `timezone`. A slot's day depends on who is looking,
+ * so it is always resolved from the timestamp, never from the day its author entered it on.
  */
 export function dateInTimezone(timestamp: number, timezone: string) {
 	return format(inTimezone(timestamp, timezone), "yyyy-MM-dd");
@@ -148,9 +160,8 @@ export function timeInTimezone(timestamp: number, timezone: string) {
 }
 
 /**
- * `YYYY-MM-DD` in the `to` timezone of a day saved as a date in the `from`
- * timezone, mapped through that day's noon in case the viewer has since
- * moved. How day notes find their viewer-local day.
+ * `YYYY-MM-DD` in `to` of a day saved as a date in `from`, mapped through that day's
+ * noon in case the viewer has since moved. How day notes find their viewer-local day.
  */
 export function dateAcrossTimezones({
 	date,
@@ -172,10 +183,7 @@ export function overlaps(one: TimeRange, other: TimeRange) {
 	return one.startsAt < other.endsAt && other.startsAt < one.endsAt;
 }
 
-/**
- * The given ranges sorted and merged, so that no two of them overlap or touch.
- * Empty ranges are dropped.
- */
+/** The ranges sorted and merged so that no two overlap or touch. Empty ranges are dropped. */
 export function normalize(ranges: Array<TimeRange>): Array<TimeRange> {
 	const sorted = R.sortBy(
 		ranges.filter((range) => range.endsAt > range.startsAt),
@@ -196,10 +204,7 @@ export function normalize(ranges: Array<TimeRange>): Array<TimeRange> {
 	return merged;
 }
 
-/**
- * Effective availability: what is left of `ranges` once every busy block is cut
- * out of them. A commitment always wins over what the user reported.
- */
+/** What is left of `ranges` once every busy block is cut out: a commitment always wins over what was reported. */
 export function subtract(
 	ranges: Array<TimeRange>,
 	busy: Array<TimeRange>,
@@ -229,10 +234,7 @@ export function subtract(
 	return remaining;
 }
 
-/**
- * The parts of the ranges that fall inside `window`, sorted and merged. Used to
- * keep one week's view from picking up windows that belong to the next.
- */
+/** The parts of the ranges inside `window`, sorted and merged. Keeps one week's view from picking up the next week's windows. */
 export function clip(
 	ranges: Array<TimeRange>,
 	window: TimeRange,
@@ -245,14 +247,37 @@ export function clip(
 	});
 }
 
+/** The ranges cut up into the day tracks they render on, what runs past a track's end continuing on the next day's. */
+export function splitByDayTracks(
+	ranges: Array<TimeRange>,
+	timezone: string,
+): Array<TimeRange> {
+	return ranges.flatMap((range) => {
+		const tracks: Array<TimeRange> = [];
+
+		let startsAt = range.startsAt;
+		while (startsAt < range.endsAt) {
+			const trackEndsAt = dayMinutesToTimestamp({
+				date: dateInTimezone(startsAt, timezone),
+				minutes: AVAILABILITY.TRACK_LATER_END_MINUTES,
+				timezone,
+			});
+			const endsAt = Math.min(range.endsAt, trackEndsAt);
+			if (endsAt <= startsAt) break;
+
+			tracks.push({ startsAt, endsAt });
+			startsAt = endsAt;
+		}
+
+		return tracks;
+	});
+}
+
 /**
- * How one person's schedule relates to an event's window. A busy block
- * overlapping the window wins over anything reported — the person is committed
- * elsewhere, whether or not their schedule is known. Otherwise the reported
- * slots either cover the window (`available`, with the overlapping ranges as
- * reported), cover part of it (`partial`, with the overlap clipped to the
- * window so it reads as "which part"), miss it entirely (`unavailable`) or do
- * not exist (`unknown`).
+ * How one person's schedule relates to an event's window. A busy block overlapping it
+ * wins over anything reported (committed elsewhere, schedule known or not). Otherwise the
+ * slots cover the window (`available`, ranges as reported), part of it (`partial`, overlap
+ * clipped to the window), miss it (`unavailable`) or do not exist (`unknown`).
  */
 export function availabilityInWindow({
 	reported,
@@ -286,11 +311,9 @@ export function availabilityInWindow({
 }
 
 /**
- * The windows the team could play in: spans
- * where `minPlayers` of the members (`FULL`) or one fewer (`ONE_SHORT`) are all
- * free from the first minute of the window to the last. Windows shorter than
- * `minDurationMinutes` are left out, as is any `ONE_SHORT` window that already
- * contains a `FULL` one.
+ * Spans where `minPlayers` members (`FULL`) or one fewer (`ONE_SHORT`) are free throughout.
+ * Windows shorter than `minDurationMinutes` are dropped, as is a `ONE_SHORT` window
+ * containing a `FULL` one.
  */
 export function playableWindows({
 	members,
@@ -336,10 +359,10 @@ export function snapMinutes(
 }
 
 /**
- * Splits the members' availability into the spans between every start and end
- * of it, each with the members free for the whole span.
+ * Splits the members' availability at every start/end into spans, each with the members free
+ * throughout. Spans nobody is free in come out with an empty `userIds`.
  */
-function availabilitySegments(members: Array<MemberAvailability>) {
+export function availabilitySegments(members: Array<MemberAvailability>) {
 	const normalized = members.map((member) => ({
 		userId: member.userId,
 		ranges: normalize(member.ranges),
@@ -372,11 +395,7 @@ function availabilitySegments(members: Array<MemberAvailability>) {
 
 type AvailabilitySegment = ReturnType<typeof availabilitySegments>[number];
 
-/**
- * The longest possible windows over which at least `threshold` of the same
- * members are free throughout. A window is only reported when no longer window
- * contains it.
- */
+/** Longest windows over which at least `threshold` of the same members are free; windows inside a longer one are skipped. */
 function maximalWindows({
 	segments,
 	threshold,
@@ -431,10 +450,7 @@ export function timeToMinutes(time: string) {
 	return hours * 60 + minutes;
 }
 
-/**
- * `HH:mm` on the clock at the given minutes from midnight. Minutes past 24h
- * wrap around, so the end of a range crossing midnight prints as e.g. `02:00`.
- */
+/** `HH:mm` at the given minutes from midnight; minutes past 24h wrap, so a range crossing midnight ends at e.g. `02:00`. */
 export function minutesToTime(minutes: number) {
 	const onClock = ((minutes % DAY_MINUTES) + DAY_MINUTES) % DAY_MINUTES;
 
@@ -444,9 +460,8 @@ export function minutesToTime(minutes: number) {
 }
 
 /**
- * Editor day range of the given start and end times. An end earlier than the
- * start means the range crosses midnight; an end equal to the start is an
- * empty range (dropped by {@link mergedDayRanges}).
+ * Editor day range of the given times. An end before the start crosses midnight;
+ * an end equal to the start is an empty range (dropped by {@link mergedDayRanges}).
  */
 export function dayRangeFromTimes(start: string, end: string): DayTimeRange {
 	const startMinutes = timeToMinutes(start);
@@ -458,10 +473,7 @@ export function dayRangeFromTimes(start: string, end: string): DayTimeRange {
 	};
 }
 
-/**
- * The ranges of one day track sorted and merged so that no two of them overlap
- * or touch. Empty ranges are dropped.
- */
+/** One day track's ranges sorted and merged so that no two overlap or touch. Empty ranges are dropped. */
 export function mergedDayRanges(
 	ranges: Array<DayTimeRange>,
 ): Array<DayTimeRange> {
@@ -476,19 +488,16 @@ interface TrackWindowArgs {
 }
 
 /**
- * Latest minute a range may start on: the last step before midnight. A range
- * belongs to the day it starts on, so a start past midnight would silently be
- * another day's range — the track's post-midnight zone only extends ends.
+ * Last step before midnight. A range belongs to the day it starts on, so a start past
+ * midnight would silently be another day's range — the post-midnight zone only extends ends.
  */
 const MAX_RANGE_START = DAY_MINUTES - AVAILABILITY.SLOT_STEP_MINUTES;
 
 /**
- * Range painted by dragging on an empty part of a day track from `anchor` to
- * `cursor` (both minutes from midnight): ends snapped to the entry step, at
- * least one step long and kept inside the track. The start is kept before
- * midnight — a paint anchored past it grows leftwards from the day's last
- * step. Painting cannot start on a wall (a commitment) but may extend across
- * one — null when the anchor is inside a wall.
+ * Range painted by dragging an empty part of a day track from `anchor` to `cursor` (minutes
+ * from midnight): snapped to the entry step, at least one step long, inside the track, start
+ * kept before midnight (a paint anchored past it grows leftwards from the day's last step).
+ * Null when the anchor is inside a wall (a commitment); a paint may still extend across one.
  */
 export function paintedRange({
 	anchor,
@@ -524,10 +533,7 @@ export function paintedRange({
 	return { start, end };
 }
 
-/**
- * `range` moved by `delta` minutes: the move is snapped to the entry step and
- * stopped at the track edges, with the start kept before midnight.
- */
+/** `range` moved by `delta` minutes, snapped to the entry step, stopped at the track edges, start kept before midnight. */
 export function movedRange({
 	range,
 	delta,
@@ -548,11 +554,7 @@ export function movedRange({
 	return { start, end: start + length };
 }
 
-/**
- * `range` with one edge dragged to `cursor`: snapped to the entry step, kept
- * at least one step long and stopped at the track edges, with the start kept
- * before midnight.
- */
+/** `range` with one edge dragged to `cursor`: snapped, at least one step long, inside the track, start kept before midnight. */
 export function resizedRange({
 	range,
 	edge,

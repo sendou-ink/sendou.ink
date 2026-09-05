@@ -14,11 +14,7 @@ type TimestampColumn<T extends BackdatableTable> = Extract<
 	`${string}At`
 >;
 
-/**
- * Moves a row's timestamps into the past. Every production write stamps *now*, so
- * a seed that needs rows looking old — an expired vote, a season's worth of matches
- * — has no way to ask for one.
- */
+/** Moves a row's timestamps into the past, since every production write stamps *now*. */
 export async function backdate<T extends BackdatableTable>(
 	table: T,
 	id: number,
@@ -27,7 +23,7 @@ export async function backdate<T extends BackdatableTable>(
 	const assignments: RawBuilder<unknown>[] = [];
 
 	for (const [column, date] of Object.entries(timestamps)) {
-		// so that a caller passing its own optional dates through needs no filtering
+		// callers pass their own optional dates through unfiltered
 		if (!date) continue;
 
 		assignments.push(

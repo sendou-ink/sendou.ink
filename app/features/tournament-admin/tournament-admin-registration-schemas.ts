@@ -17,11 +17,7 @@ import {
 import { modeShort, stageId, superRefine } from "~/utils/schema";
 import { IN_GAME_NAME_MAX_LENGTH } from "../user-page/in-game-name";
 import { USER } from "../user-page/user-page-constants";
-/**
- * Roster size cap for organizer-managed registrations. The per-tournament
- * `maxMembersPerTeam` limit intentionally doesn't apply to organizers, so this
- * is a safety ceiling rather than a competitive constraint.
- */
+/** Safety ceiling for organizer-managed rosters; the tournament's `maxMembersPerTeam` intentionally doesn't apply to them. */
 export const ADMIN_REGISTRATION_MAX_MEMBERS = 12;
 
 const memberFieldset = fieldset({
@@ -31,11 +27,7 @@ const memberFieldset = fieldset({
 			label: "labels.inGameName",
 			maxLength: IN_GAME_NAME_MAX_LENGTH,
 		}),
-		/**
-		 * Only editable by members of an established organization
-		 * (`Tournament.canEditTournamentNames`), whose submission is authoritative:
-		 * `null` clears the name the player has. Ignored from everyone else.
-		 */
+		/** Authoritative (`null` clears) from members of an established organization (`Tournament.canEditTournamentNames`), ignored from others. */
 		tournamentName: textFieldOptional({
 			label: "labels.tournamentName",
 			bottomText: "bottomTexts.tournamentName",
@@ -107,12 +99,7 @@ export type AdminRegistrationFormValues = v.InferInput<
 	typeof adminRegistrationFormSchema
 >;
 
-/**
- * Modal form used to import an existing team's roster from another tournament
- * into the {@link adminRegistrationFormSchema} when adding a new team. Validated
- * client-side only — submitting prefills the registration form rather than
- * hitting the server.
- */
+/** Modal importing a roster from another tournament into {@link adminRegistrationFormSchema}. Client-side only, prefills the form. */
 export const importTeamFormSchema = v.pipe(
 	v.object({
 		sourceTournamentId: tournamentSearchOptional({

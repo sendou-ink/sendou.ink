@@ -253,11 +253,7 @@ export async function insertFromPrevious(
 	});
 }
 
-/**
- * Stamps the group as a team's, when a full group's worth of its members share one,
- * and clears the stamp otherwise. A team's group queues on the team's own map & mode
- * preferences rather than on those of its members.
- */
+/** Stamps the group as a team's when a full group's worth of members share one, else clears it. A team's group queues on the team's own map & mode preferences. */
 export async function syncTeamId(groupId: number, trx: Transaction<DB>) {
 	// the tables are joined directly instead of through `TeamMemberWithSecondary`,
 	// which SQLite materializes in full before the group filter narrows it down
@@ -320,11 +316,7 @@ function deleteSuggestionsByGroupId(groupId: number, trx: Transaction<DB>) {
 		.execute();
 }
 
-/**
- * Deletes every like and suggestion where the given group is on either side.
- * Called when the group's pending challenges and suggestions stop being
- * actionable e.g. its roster changed or it started a match.
- */
+/** Deletes every like and suggestion with the group on either side, for when they stop being actionable (roster changed, match started). */
 export async function deleteLikesAndSuggestionsByGroupId(
 	groupId: number,
 	trx: Transaction<DB>,
@@ -844,11 +836,7 @@ export function deleteAllLikesByGroupId(groupId: number) {
 	return db.transaction().execute((trx) => deleteLikesByGroupId(groupId, trx));
 }
 
-/**
- * Removes the user from their group, deleting the group if they were its last
- * member. A ready check the group was in is called off, its groups returning to
- * the looking pool. Returns the ids of the groups that were in that check.
- */
+/** Removes the user from their group (deleting it if they were last). A ready check the group was in is called off; returns the ids of the groups that were in it. */
 export function leaveGroup(userId: number) {
 	return db.transaction().execute(async (trx) => {
 		const userGroup = await trx
@@ -1038,11 +1026,7 @@ export function findAllReadyChecksStartedBefore(date: Date) {
 		.execute();
 }
 
-/**
- * Starts a ready check between two groups, taking both out of the looking pool
- * along with everything they had pending. The user starting it counts as ready
- * right away.
- */
+/** Starts a ready check between two groups, taking both and everything they had pending out of the looking pool. The starter counts as ready right away. */
 export function insertReadyCheck({
 	alphaGroupId,
 	bravoGroupId,
@@ -1134,11 +1118,7 @@ export function insertReadyCheckConfirmation({
 	});
 }
 
-/**
- * Ends a ready check, returning both of its groups to the looking pool. With
- * `markMissedMembers` the members who never confirmed are marked as having
- * missed it, which is what lets the rest of their group kick them.
- */
+/** Ends a ready check, returning both groups to the looking pool. `markMissedMembers` marks the unconfirmed as having missed it, which lets the rest of their group kick them. */
 export function deleteReadyCheck(
 	{ id, markMissedMembers }: { id: number; markMissedMembers: boolean },
 	trx?: Transaction<DB>,
@@ -1202,11 +1182,9 @@ async function deleteReadyCheckInTrx(
 }
 
 /**
- * Records the user as not continuing with the group they last played a matchmade
- * match with, taking that group's votes in favour down with it. Getting a group
- * elsewhere overrides a vote already cast in favour: the group can no longer
- * continue at the size that vote was for, so the rest have to vote again. Once
- * their no vote is in, that group is settled and later queue actions leave it be.
+ * Records the user as not continuing with the group they last played a matchmade match with,
+ * clearing that group's yes votes: it can no longer continue at the size they were for, so the
+ * rest have to vote again. Once the no vote is in, later queue actions leave that group be.
  */
 async function recordImplicitRejoinNoVote(
 	userId: number,

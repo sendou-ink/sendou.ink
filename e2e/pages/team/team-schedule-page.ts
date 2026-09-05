@@ -10,16 +10,21 @@ export class TeamSchedulePage {
 		this.page = page;
 		this.locators = {
 			grid: page.getByTestId("schedule-grid"),
+			heatmap: page.getByTestId("schedule-heatmap"),
+			heatmapTooltip: page.getByTestId("schedule-heatmap-tooltip"),
+			heatmapUnreported: page.getByTestId("schedule-heatmap-unreported"),
 			summary: page.getByTestId("schedule-summary"),
 			hiddenMessage: page.getByTestId("schedule-hidden"),
 			windows: page.getByTestId("schedule-window"),
 			notes: page.getByTestId("schedule-note"),
 			teamEvents: page.getByTestId("schedule-team-event"),
 			addEventButton: page.getByTestId("add-team-event-button"),
+			editAvailabilityLink: page.getByTestId("edit-availability-link"),
 			// the chip radio input is visually hidden, so the label is what clicks
 			nextWeekToggle: page.locator(
 				'label[for="chip-radio-schedule-week-next"]',
 			),
+			gridViewTab: page.getByRole("tab", { name: "Grid" }),
 		};
 	}
 
@@ -44,5 +49,21 @@ export class TeamSchedulePage {
 
 	dayDot(dayIndex: number) {
 		return this.page.getByTestId(`schedule-day-dot-${dayIndex}`);
+	}
+
+	memberChip(userId: number) {
+		return this.page.getByTestId(`heatmap-member-${userId}`);
+	}
+
+	heatmapCells(count: number) {
+		return this.page.locator(
+			`[data-testid="schedule-heatmap-cell"][data-count="${count}"]`,
+		);
+	}
+
+	heatmapCellBackground(count: number) {
+		return this.heatmapCells(count)
+			.first()
+			.evaluate((cell) => getComputedStyle(cell).backgroundColor);
 	}
 }

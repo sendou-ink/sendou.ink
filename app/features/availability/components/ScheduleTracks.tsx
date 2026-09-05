@@ -15,14 +15,10 @@ const MIN_FITTED_SPAN_MINUTES = 4 * MINUTES_IN_HOUR;
 export type ClockWindow = ReturnType<typeof useClockWindow>;
 
 /**
- * The hours the day tracks put on screen and how a range of a day maps onto
- * them. Defaults to the evening hours people play in, the expanders widening
- * it towards the morning on either end.
- *
- * `fitTo` compacts it around what is actually on the tracks instead, for views
- * that only show availability: the width then goes to the bars and their
- * labels rather than to hours nobody is free in. The expanders still open the
- * full day either way.
+ * The hours the day tracks show and how a day range maps onto them. Defaults to the evening
+ * hours people play in, the expanders widening towards the morning on either end. `fitTo`
+ * compacts it around what is on the tracks instead (read-only views), so the width goes to the
+ * bars rather than hours nobody is free in. The expanders still open the full day either way.
  */
 export function useClockWindow({
 	fitTo,
@@ -30,11 +26,7 @@ export function useClockWindow({
 }: {
 	/** Everything drawn on the tracks, in minutes from their own day's midnight. */
 	fitTo?: Array<DayTimeRange>;
-	/**
-	 * Content the window must reach even when it falls outside the default
-	 * hours (a time typed by hand, a week saved in another timezone), for
-	 * views that keep the default window otherwise — the editor.
-	 */
+	/** Content the window must reach even outside the default hours (a typed time, a week saved in another timezone). For the editor. */
 	expandTo?: Array<DayTimeRange>;
 } = {}) {
 	const [earlierShown, setEarlierShown] = React.useState(false);
@@ -92,11 +84,7 @@ export function useClockWindow({
 	};
 }
 
-/**
- * Whole hours around everything on the tracks, the span rounded up so that a
- * label lands on both edges. Null when there is nothing to fit, leaving the
- * default window in place.
- */
+/** Whole hours around everything on the tracks, rounded so a label lands on both edges. Null when nothing to fit. */
 function fittedWindow(ranges?: Array<DayTimeRange>) {
 	if (!ranges || ranges.length === 0) return null;
 

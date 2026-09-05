@@ -3,11 +3,7 @@ import type { StageCreator } from "./builder";
 import * as helpers from "./helpers";
 import { ordering } from "./seeding";
 
-/**
- * Creates a round-robin stage.
- *
- * Group count must be given. It will distribute participants in groups and rounds.
- */
+/** Distributes participants in groups (count must be given) and rounds. */
 export function createRoundRobin(creator: StageCreator): void {
 	if (creator.settings.hasAbDivisions) {
 		createAbDivisionRoundRobin(creator);
@@ -21,12 +17,7 @@ export function createRoundRobin(creator: StageCreator): void {
 		creator.createRoundRobinGroup(stage.id, i + 1, groups[i]);
 }
 
-/**
- * Creates a bipartite (A/B divisions) round-robin stage.
- *
- * Participants are partitioned into two pools by `abDivisions` (parallel to the seeding).
- * Each group receives equal A and B teams, and matches only pair A against B.
- */
+/** A/B divisions (`abDivisions`, parallel to the seeding): equal A and B teams per group, matches only pair A against B. */
 function createAbDivisionRoundRobin(creator: StageCreator): void {
 	const groups = getAbDivisionGroups(creator);
 	const stage = creator.createStage();
@@ -40,9 +31,7 @@ function createAbDivisionRoundRobin(creator: StageCreator): void {
 		);
 }
 
-/**
- * Gets the slots in groups for a round-robin stage.
- */
+/** Slots in groups for a round-robin stage. */
 function getRoundRobinGroups(creator: StageCreator): ParticipantSlot[][] {
 	if (
 		creator.settings.groupCount === undefined ||
@@ -61,10 +50,7 @@ function getRoundRobinGroups(creator: StageCreator): ParticipantSlot[][] {
 	return helpers.makeGroups(ordered, creator.settings.groupCount);
 }
 
-/**
- * Partitions the seeded slots into A and B pools then distributes them into groups
- * such that each group has an equal number of A and B participants.
- */
+/** A and B pools distributed into groups with an equal number of each. */
 function getAbDivisionGroups(creator: StageCreator): {
 	a: ParticipantSlot[];
 	b: ParticipantSlot[];

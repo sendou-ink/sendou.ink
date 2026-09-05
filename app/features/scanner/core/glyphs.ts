@@ -1,17 +1,15 @@
 /**
  * Glyph-template text recognition: font/size/position are known, so instead
- * of OCR we segment the crop by column projection and classify each segment
- * via sliding NCC against grayscale glyph templates (native scale;
- * scaleGlyphSet pre-scales for larger text like team scores). Accuracy
- * details: matching runs on the *masked* grayscale crop (background zeroed
- * via a dilated binary mask) so colored backgrounds behave like black pills
- * while antialiasing survives; scores carry an ink-coverage penalty (else a
- * narrow template inside a wider glyph wins, e.g. 'c' outscoring 'o');
- * segments wider than the median glyph split at deep projection dips ('T'
- * overhangs merge into the next letter); multi-stroke glyphs with a stroke
- * gap (katakana パ/ハ/リ) segment as fragments no template matches, so close
- * pairs are re-classified merged and kept only when the merge decisively
- * outscores both fragments.
+ * of OCR the crop is segmented by column projection and each segment
+ * classified via sliding NCC against grayscale glyph templates (native scale;
+ * scaleGlyphSet pre-scales for larger text). Matching runs on the *masked*
+ * grayscale crop (background zeroed via a dilated binary mask) so colored
+ * backgrounds behave like black while antialiasing survives; scores carry an
+ * ink-coverage penalty (else a narrow template inside a wider glyph wins, 'c'
+ * over 'o'); segments wider than the median glyph split at deep projection
+ * dips ('T' overhangs merge into the next letter); multi-stroke glyphs with a
+ * stroke gap (katakana パ/ハ/リ) segment as unmatched fragments, so close pairs
+ * are re-classified merged and kept only when the merge decisively wins.
  */
 import { getCV, type Mat } from "./cv";
 import type { FrameData } from "./image";
@@ -23,10 +21,9 @@ interface AtlasGlyphMeta {
 	w: number;
 	h: number;
 	/**
-	 * Template origin: "fixture" = exact pixel crop from a labeled frame
-	 * (high fidelity, sparse coverage); "font" = rendered from game fonts
-	 * (full coverage, imperfect). Recognition takes the max score, so
-	 * fixture glyphs win where they exist.
+	 * "fixture" = exact pixel crop from a labeled frame (high fidelity, sparse);
+	 * "font" = rendered from game fonts (full coverage, imperfect). Recognition
+	 * takes the max score, so fixture glyphs win where they exist.
 	 */
 	source?: "fixture" | "font";
 }
@@ -293,30 +290,25 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
 
 /**
  * Fixture crops are ground truth; a font glyph must beat one by this margin
- * to win (stops 'I' noise-edging out an exact 'l' crop). Keep tight — at
- * 0.04 a fixture crop of a genuinely different char ('h' vs 'b') can
- * displace a correct font match.
+ * (stops 'I' noise-edging out an exact 'l' crop). Keep tight: at 0.04 a fixture
+ * crop of a different char ('h' vs 'b') can displace a correct font match.
  */
 const FIXTURE_TIEBREAK = 0.02;
 
 /**
  * A CJK-charset segment leaves thousands of templates eligible with barely
- * differing bounds (similar ink coverage and heights across the charset),
- * so the bound-sorted early break never fires and every template pays a
- * full matchTemplate — tens of seconds per segment. Above this eligibility
- * count a half-scale NCC pass ranks the templates first (matchTemplate
- * work scales with region area × template area, so ~16x cheaper) and only
- * glyphs whose estimated score lands within PRESCREEN_MARGIN of the
- * front-runner advance to full matching. The margin absorbs the low-res
- * estimate's error and sits far beyond FIXTURE_TIEBREAK, so the tie-break
- * pool survives; the estimate only prunes, never scores. Tuning is
- * accuracy-first, verified against the full scanner:report — at these
- * values the report is bit-identical to no-prescreen while a JP
- * splash-tag read drops from ~21s to ~1.3s. Quarter scale is too coarse
- * (20px glyphs land at ~5px where the NCC ranking turns to noise), a
- * tighter margin loses real reads ('R' at 0.12, and stragglers survive
- * past 0.22), and the keep cap is only a runaway backstop — capping at
- * 256 cut true glyphs that sat within the margin.
+ * differing bounds, so the bound-sorted early break never fires and every
+ * template pays a full matchTemplate (tens of seconds per segment). Above this
+ * eligibility count a half-scale NCC pass (~16x cheaper) ranks the templates
+ * first and only glyphs within PRESCREEN_MARGIN of the front-runner advance to
+ * full matching. The margin absorbs the low-res estimate's error and sits far
+ * beyond FIXTURE_TIEBREAK, so the tie-break pool survives; the estimate only
+ * prunes, never scores. Verified against scanner:report: at these values the
+ * report is bit-identical to no-prescreen while a JP splash-tag read drops
+ * from ~21s to ~1.3s. Quarter scale is too coarse (20px glyphs at ~5px turn
+ * the NCC ranking to noise), a tighter margin loses real reads ('R' at 0.12,
+ * stragglers past 0.22), and the keep cap is only a runaway backstop (256 cut
+ * true glyphs within the margin).
  */
 const PRESCREEN_MIN_ELIGIBLE = 200;
 const PRESCREEN_SCALE = 0.5;
@@ -328,11 +320,10 @@ function classifySegment(
 	seg: SegmentInfo,
 	set: GlyphSet,
 	/**
-	 * Exact early-reject floor: a score can never exceed its precomputed
-	 * bound, so a caller that only needs to know whether any glyph can beat
-	 * `scoreFloor` (mergeSplitGlyphs) lets the bound-sorted loop stop as soon
-	 * as none can. Scores that ARE computed come out identical — but the
-	 * returned list omits sub-floor candidates, so pass it only for probes.
+	 * Exact early-reject floor: a score never exceeds its precomputed bound, so a
+	 * caller only asking whether any glyph can beat `scoreFloor` (mergeSplitGlyphs)
+	 * lets the bound-sorted loop stop early. Computed scores are identical, but
+	 * sub-floor candidates are omitted, so pass it only for probes.
 	 */
 	scoreFloor = Number.NEGATIVE_INFINITY,
 ): { char: string; score: number; ncc: number; source: "fixture" | "font" }[] {
@@ -345,23 +336,20 @@ function classifySegment(
 	const x0 = Math.max(0, seg.x0 - pad);
 	const x1 = Math.min(masked.cols, seg.x1 + pad);
 	const regionCols = x1 - x0;
-	// Crop the search region vertically to the segment's ink rows: line crops
-	// can run far taller than the text (the death tag band is ~2x its glyphs),
-	// and every extra row multiplies matchTemplate work while only offering
-	// placements away from the ink no correct match can occupy. The slack
-	// keeps every hRatio-eligible template (tRows <= 1.3 * seg.height)
-	// placeable: seg.height + 2 * (0.15 * seg.height + 2) >= 1.3 * seg.height.
+	// Crop the search region vertically to the segment's ink rows: line crops can
+	// run far taller than the text (the death tag band is ~2x its glyphs) and every
+	// extra row multiplies matchTemplate work. The slack keeps every hRatio-eligible
+	// template (tRows <= 1.3 * seg.height) placeable.
 	const vSlack = Math.ceil(0.15 * seg.height) + 2;
 	const y0 = Math.max(0, seg.y0 - vSlack);
 	const y1 = Math.min(maskedRows, seg.y1 + vSlack);
 	const regionRows = y1 - y0;
 	const region = masked.roi(new cv.Rect(x0, y0, regionCols, regionRows));
 
-	// Both penalty factors below depend only on the glyph and the segment, and
-	// NCC <= 1, so their product bounds the score a glyph can reach before any
-	// matching runs. Matching in descending-bound order lets the loop stop as
-	// soon as no remaining glyph could come within FIXTURE_TIEBREAK of the
-	// best — those can neither win nor take part in the fixture tie-break.
+	// Both penalty factors depend only on glyph and segment, and NCC <= 1, so
+	// their product bounds a glyph's score before matching. Matching in
+	// descending-bound order lets the loop stop once no remaining glyph could
+	// come within FIXTURE_TIEBREAK of the best.
 	const eligible: EligibleGlyph[] = [];
 	for (const glyph of set.glyphs) {
 		const t = glyph.mat;
@@ -371,16 +359,14 @@ function classifySegment(
 		const wRatio = tCols / Math.max(segWidth, 1);
 		if (wRatio < 0.4 || wRatio > 2.5) continue;
 		const hRatio = tRows / Math.max(seg.height, 1);
-		// a template sliding freely inside a taller region can score high on a
-		// fragment of the segment (an 'l' bar inside a 'c'), so reject templates
-		// much taller or shorter than the segment's ink extent
+		// a template sliding freely in a taller region can score high on a fragment
+		// of the segment (an 'l' bar inside a 'c'), so reject height mismatches
 		if (hRatio < 0.5 || hRatio > 1.3) continue;
 		// ink-coverage penalty: templates should explain the segment's ink
 		const r =
 			Math.min(glyph.ink, seg.ink) / Math.max(Math.max(glyph.ink, seg.ink), 1);
-		// height-mismatch penalty: an x-height template sliding on an ascender/
-		// descender glyph ('o' on 'b' or 'g') can correlate well on the bowl
-		// alone; matching heights should outrank it
+		// height-mismatch penalty: an x-height template on an ascender/descender
+		// glyph ('o' on 'b') correlates well on the bowl alone
 		const hr =
 			Math.min(tRows, seg.height) / Math.max(tRows, Math.max(seg.height, 1));
 		eligible.push({
@@ -401,19 +387,16 @@ function classifySegment(
 		ncc: number;
 		source: "fixture" | "font";
 	}[] = [];
-	// Only consider placements that cover most of the segment: the region
-	// is padded, so a freely-sliding template can otherwise score a perfect
-	// match on the *neighboring* glyph inside the pad (an 'l' template next
-	// to a narrow 'i' segment matches the adjacent real 'l' at 0.97+), or
-	// on a fragment of the segment (a 't' stem on the left bar of a 'b').
+	// Only placements covering most of the segment: the region is padded, so a
+	// free-sliding template can otherwise match the *neighboring* glyph inside
+	// the pad ('l' next to a narrow 'i' at 0.97+) or a fragment ('t' stem on 'b').
 	const minOverlap = 0.7 * segWidth;
-	// In probe mode only the boolean "can any glyph beat the floor" matters,
-	// so the loop can stop as soon as either answer is certain: no remaining
-	// bound reaches the floor, or a computed score already cleared it.
+	// In probe mode only "can any glyph beat the floor" matters, so the loop stops
+	// once either answer is certain.
 	const probeMode = scoreFloor !== Number.NEGATIVE_INFINITY;
-	// a probe prunes against its own floor instead of the front-runner: its
-	// usual answer is "no glyph clears the floor", which otherwise costs a
-	// full match of every template whose loose bound exceeds it
+	// a probe prunes against its own floor instead of the front-runner: its usual
+	// answer is "nothing clears the floor", which otherwise costs a full match of
+	// every template whose loose bound exceeds it
 	const contenders =
 		eligible.length >= PRESCREEN_MIN_ELIGIBLE
 			? prescreen(
@@ -472,9 +455,9 @@ function classifySegment(
 			(c) =>
 				c.source === "fixture" &&
 				top.score - c.score < FIXTURE_TIEBREAK &&
-				// ...but only when the fixture's raw correlation is also competitive;
-				// a fixture crop of a *different* char that merely lands near the top
-				// score via the ink penalty must not displace a well-matching font glyph
+				// ...only when the fixture's raw correlation is also competitive: a fixture
+				// crop of a *different* char landing near the top via the ink penalty must
+				// not displace a well-matching font glyph
 				top.ncc - c.ncc < FIXTURE_TIEBREAK,
 		);
 		if (fixture && fixture !== top) {
@@ -494,13 +477,12 @@ interface EligibleGlyph {
 	bound: number;
 }
 
-/** Low-res ranking pass over an oversized eligibility list; see the
- * PRESCREEN_* constants for why and how survivors are chosen. `geometry`
- * carries the caller's placement window in full-res coordinates: without
- * the same min-overlap restriction the estimates suffer exactly the
- * failure the full loop guards against — a template scoring on the
- * neighboring glyph inside the pad — which inflates the front-runner and
- * prunes the true glyph. */
+/**
+ * Low-res ranking pass over an oversized eligibility list; see PRESCREEN_*.
+ * `geometry` carries the caller's placement window in full-res coordinates:
+ * without the same min-overlap restriction a template scoring on the neighbor
+ * inside the pad inflates the front-runner and prunes the true glyph.
+ */
 function prescreen(
 	region: Mat,
 	eligible: EligibleGlyph[],
@@ -525,10 +507,9 @@ function prescreen(
 	// boundary placement the full-res window allows
 	const minOverlap = geometry.minOverlap * PRESCREEN_SCALE - 1;
 	const result = new cv.Mat();
-	// entries the low-res pass cannot estimate (template degenerate or no
-	// valid placement after scaling) are force-kept — but must stay out of
-	// the front-runner max, or their untightened bound (≈1) inflates the
-	// floor and prunes every genuinely estimated glyph
+	// entries the low-res pass cannot estimate (degenerate template or no valid
+	// placement after scaling) are force-kept but stay out of the front-runner
+	// max, or their untightened bound (≈1) prunes every estimated glyph
 	const kept: EligibleGlyph[] = [];
 	const scored: { entry: EligibleGlyph; est: number }[] = [];
 	for (const entry of eligible) {
@@ -616,15 +597,13 @@ interface ClassifiedSegment {
 }
 
 /**
- * Multi-stroke glyphs whose strokes never connect (katakana ハ/パ/リ and kin)
- * segment as two fragments no full-glyph template can match (width-ratio
- * filter rejects a wide template on a narrow fragment). Close neighbor pairs
- * are re-classified merged and kept only when the merge beats both fragments
- * by a clear margin — genuine pairs ("rn", "VV") already read well alone, so
- * a lookalike merge ('m', 'W') can't clear it. Kana gaps run wide (い's
- * strokes sit ~0.4 medianWidth apart at tag-name scale), so
- * MERGE_MAX_GAP_RATIO reaches past that while staying below the space gap
- * (0.55), so merges never bridge a real word break.
+ * Multi-stroke glyphs whose strokes never connect (katakana ハ/パ/リ) segment as
+ * two fragments no full-glyph template matches (width-ratio filter). Close
+ * neighbor pairs are re-classified merged and kept only when the merge beats
+ * both fragments by a clear margin — genuine pairs ("rn", "VV") read well
+ * alone, so a lookalike merge ('m', 'W') can't clear it. Kana gaps run wide
+ * (い's strokes sit ~0.4 medianWidth apart at tag-name scale), so the gap ratio
+ * reaches past that while staying below the space gap (0.55).
  */
 const MERGE_MAX_GAP_RATIO = 0.45;
 const MERGE_MARGIN = 0.02;
@@ -652,10 +631,9 @@ function mergeSplitGlyphs(
 			b.ranked[0]?.score ?? 0,
 		);
 		const floor = fragmentBest + MERGE_MARGIN;
-		// Probe with the floor first: most neighbor pairs are genuine letter
-		// pairs whose merge can't win, and the floor lets the bound-sorted
-		// matching stop almost immediately. The probe's computed scores are
-		// exact, so "no candidate beats the floor" is a definitive reject.
+		// Probe with the floor first: most neighbor pairs are genuine letter pairs
+		// whose merge can't win, so the bound-sorted matching stops almost at once.
+		// Probe scores are exact, so "nothing beats the floor" is definitive.
 		const probe = classifySegment(masked, seg, set, floor);
 		let merged = false;
 		if (probe.some((c) => c.score > floor)) {
@@ -673,17 +651,14 @@ function mergeSplitGlyphs(
 }
 
 /**
- * A wide-segment split can land inside a glyph instead of at the true
- * boundary: capture blur can leave the gap between two glyphs shallower in
- * the column profile than the hollows of their bowls, so the deepest-dip cut
- * severs a bowl edge ("do" reading as "′k"). Both halves of such a miscut
- * classify poorly, so adjacent low-scoring segments are re-cut: each profile
- * dip across their joint span is tried as the boundary and the cut whose
- * weaker half classifies best wins. Template scores carry real noise at the
- * blur levels where miscuts happen (a wrong "l|U" outscored a true "d|u" by
- * 0.07), so a re-cut is adopted only when it is both a decent read in
- * absolute terms and decisively better than the original pair — otherwise
- * the read stays as segmented.
+ * A wide-segment split can land inside a glyph: capture blur can leave the gap
+ * between two glyphs shallower than the hollows of their bowls, so the
+ * deepest-dip cut severs a bowl edge ("do" reading as "′k"). Both halves then
+ * classify poorly, so adjacent low-scoring segments are re-cut at each profile
+ * dip across their joint span and the cut whose weaker half classifies best
+ * wins. Scores carry real noise at those blur levels (a wrong "l|U" outscored a
+ * true "d|u" by 0.07), so a re-cut is adopted only when it is a decent read in
+ * absolute terms and decisively better than the original pair.
  */
 const RECUT_MAX_SCORE = 0.75;
 const RECUT_MARGIN = 0.08;
@@ -749,10 +724,7 @@ function recutMiscutPairs(
 	}
 }
 
-/**
- * Recognize white-on-dark text in a grayscale crop.
- * The crop must be tight vertically (one text line).
- */
+/** Recognizes white-on-dark text in a grayscale crop tight to one text line. */
 export function recognizeText(
 	gray: Mat,
 	set: GlyphSet,

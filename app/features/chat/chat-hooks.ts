@@ -109,9 +109,8 @@ export function useChatAutoScroll(
 
 	const hasMessages = messages.length > 0;
 
-	// the virtualizer resizes the scrollable content asynchronously as it
-	// measures rows, without scroll events firing, so keep the view glued to
-	// the bottom whenever the content height changes while pinned there
+	// the virtualizer resizes the content asynchronously as it measures rows, without
+	// scroll events, so keep the view glued to the bottom while pinned there
 	React.useEffect(() => {
 		if (!hasMessages) return;
 
@@ -151,11 +150,9 @@ export function useChatAutoScroll(
 }
 
 /**
- * Subscribes the page to a server event topic over the shared SSE connection so
- * that `revalidate` broadcasts to the topic trigger a data loader revalidation.
- * Topics are lightweight: no metadata, no participants, no history — purely a
- * fan-out channel. Pass `connected=false` to opt out (e.g. once a tournament
- * has been finalized and no further updates are expected).
+ * Subscribes the page to a server event topic (a pure fan-out channel: no metadata, participants
+ * or history) so `revalidate` broadcasts to it revalidate loaders. `connected=false` opts out,
+ * e.g. once a tournament is finalized.
  */
 export function useTopicRevalidation(topic: string, connected = true) {
 	useLiveRevalidation(connected);
@@ -176,11 +173,7 @@ export function useLiveRevalidation(enabled = true) {
 	});
 }
 
-/**
- * Handles `revalidate` events arriving over the shared SSE connection: plays the
- * sound the event carries and schedules a loader revalidation, skipping the
- * actor's own broadcasts (their form submission already reran the loaders).
- */
+/** Handles SSE `revalidate` events: plays the carried sound and schedules a loader revalidation, skipping the actor's own broadcasts (their submission already reran the loaders). */
 export function useServerRevalidationEvents(userId: number) {
 	const { revalidate } = useRevalidator();
 

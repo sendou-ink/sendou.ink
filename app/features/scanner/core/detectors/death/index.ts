@@ -1,15 +1,11 @@
 /**
- * DeathDetector: parses the death cam overlay — "Splatted by <weapon>!"
- * text, the killer's gear abilities (3 rows x [main, sub, sub, sub]), and
- * the killer's name from the tilted splash tag.
- *
- * Weapon reads primarily as OCR text matched against per-language message
- * templates (localized-messages.ts); the constant line doubles as a
- * parse-time confirmation (else a lookalike gate hit emits nothing). Falls
- * back to template-matching the burst weapon icon when the WIPEOUT banner
- * covers the text, then to a candidate-lattice re-rank for low-fidelity
- * captures, then to icon/text corroboration when neither is decisive alone
- * (steps 2c/2d).
+ * DeathDetector: parses the death cam overlay — "Splatted by <weapon>!" text,
+ * the killer's gear abilities (3 rows x [main, sub, sub, sub]) and the name on
+ * the tilted splash tag. Weapon reads as OCR text against per-language message
+ * templates (the constant line doubles as confirmation, else a lookalike gate
+ * hit emits nothing), falling back to the burst weapon icon (WIPEOUT banner
+ * covers the text), a candidate-lattice re-rank (low-fidelity captures), then
+ * icon/text corroboration (steps 2c/2d).
  */
 import type {
 	AbilityWithUnknown,
@@ -69,17 +65,11 @@ import {
 } from "./weapon-names";
 
 export interface DeathData {
-	/**
-	 * the killer's weapon id — a sendou main/sub/special weapon id, unique
-	 * only within its kind (`weaponType` disambiguates); null if unreadable
-	 */
+	/** sendou main/sub/special weapon id, unique only within its kind (`weaponType`); null if unreadable */
 	weaponId: MainWeaponId | SubWeaponId | SpecialWeaponId | null;
-	/** which kind of weapon got the splat; null when the weapon is unreadable */
+	/** null when the weapon is unreadable */
 	weaponType: WeaponType | null;
-	/**
-	 * killer's gear abilities, [head, clothes, shoes] rows of [main, sub...]
-	 * ability ids; rows carry as many sub entries as the gear has slots (1-3)
-	 */
+	/** [head, clothes, shoes] rows of [main, sub...]; rows carry as many subs as the gear has slots (1-3) */
 	abilities: AbilityWithUnknown[][];
 	/** killer's splash-tag name; null if unreadable */
 	name: string | null;
@@ -90,10 +80,8 @@ export const DEATH_EVENT_TYPE = "Death";
 /** The constant message line must read back at least this well to emit. */
 const LINE1_MIN_SCORE = 0.5;
 /**
- * A Latin template's constant line reading at least this well settles the
- * language and the (expensive) JA line reads are skipped. Fixture-measured:
- * Latin-language frames read their template at 0.889+, while JA frames'
- * best Latin-template score is 0.222.
+ * A Latin constant line reading this well skips the expensive JA line reads.
+ * Fixtures: Latin frames read their template at 0.889+, JA frames' best Latin score is 0.222.
  */
 const LATIN_DECISIVE_SCORE = 0.85;
 /** Snapped weapon reading below this is reported as null (kept in debug). */
@@ -101,55 +89,42 @@ const WEAPON_MIN_SCORE = 0.55;
 /** Burst-icon fallback match below this is ignored (kept in debug). */
 const BURST_ICON_MIN_SCORE = 0.52;
 /**
- * Candidate-lattice re-rank acceptance (rankByRead — its scores sit well
- * below the plain-snap scale; see text.ts). On the 720p-upscaled JP
- * frames that motivated it, correct picks score 0.25-0.47 with a margin
- * of 0.056+ over the nearest other weapon, while wrong picks margin
- * <= 0.03 — the margin, not the score, is the discriminator.
+ * Lattice re-rank acceptance (rankByRead scores sit well below plain-snap scale).
+ * On 720p-upscaled JP frames correct picks score 0.25-0.47 with margin 0.056+
+ * over the next weapon, wrong picks margin <= 0.03 — the margin discriminates.
  */
 const LATTICE_MIN_SCORE = 0.22;
 const LATTICE_MIN_MARGIN = 0.05;
 /**
- * Burst-icon corroboration: below the decisive threshold the icon alone
- * can't be trusted, but when the garbled text *independently* ranks the
- * icon's weapon at (or within EPS of) its own top, the two weak signals
- * agree out of ~350 candidates and the weapon is accepted. Floor sits at
- * the weakest corroborated fixture positive (Splat Dualies at 0.33).
+ * Burst-icon corroboration: a non-decisive icon is accepted when the garbled
+ * text independently ranks its weapon at (within EPS of) the top of ~350
+ * candidates. Floor = weakest corroborated fixture positive (Splat Dualies 0.33).
  */
 const BURST_ICON_CORROBORATE_MIN_SCORE = 0.3;
 const CORROBORATE_EPS = 0.02;
 const TAG_NAME_BIN_THRESHOLD = 160;
 /**
- * The text-color refinement band is absolute closeness (255 - distance) to
- * the estimated text color, so its threshold is tight by construction:
- * 215 keeps pixels within 40 of the text color — glyph cores — while art
- * highlights that leak past the banner-median band sit further away.
+ * Refinement band is closeness (255 - distance) to the text color: 215 keeps
+ * pixels within 40 (glyph cores) and drops art highlights that leak past the banner band.
  */
 const TAG_NAME_REFINE_BIN_THRESHOLD = 215;
 /** Don't trust a text-color estimate taken from fewer ink pixels. */
 const TAG_NAME_REFINE_MIN_INK = 200;
 /**
- * Split-banner detection: some banners paint the name band in two flat
- * hues (diagonal splits). Any single background estimate turns the other
- * half into one huge "ink" blob that border-clearing deletes together
- * with the glyphs standing on it, so when a second quantized color bin
- * both covers a real share of the band and sits far from the first, a
- * third read candidate measures distance from the *nearest* of the two.
- * The share floor keeps the text color itself (or sparse art) from being
- * mistaken for a second background, which would erase the glyphs.
+ * Split banners paint the name band in two hues; a single background estimate
+ * makes the other half one huge ink blob that border-clearing deletes along with
+ * its glyphs. A second color bin with a real share, far from the first, adds a
+ * read candidate measuring distance from the nearest hue. The share floor keeps
+ * the text color itself from counting as a background.
  */
 const TAG_SPLIT_MIN_FRACTION = 0.15;
 const TAG_SPLIT_MIN_CHANNEL_DISTANCE = 40;
 
 /**
- * The splash-tag read dominates parse cost — a CJK name OCRs against the
- * full name atlas for tens of seconds, 90%+ of a slow death parse — and
- * the same killer's tag recurs pixel-identical, both across the frames of
- * one death's parse streak and across their later kills. Reads are
- * memoized on a small downscaled signature of the leveled tag band:
- * VoD-measured mean abs diffs are ≤1 between reads of one killer's tag
- * (even across different deaths) and ≥95 between different killers, so
- * the threshold has a wide margin on both sides.
+ * The tag read dominates parse cost (a CJK name OCRs for tens of seconds) and a
+ * killer's tag recurs pixel-identical across frames and later kills, so reads
+ * are memoized on a downscaled signature of the leveled band. VoD-measured mean
+ * abs diff: ≤1 for the same killer, ≥95 between killers.
  */
 const TAG_MEMO_WIDTH = 48;
 const TAG_MEMO_HEIGHT = 12;
@@ -178,9 +153,8 @@ function isJaTemplate(t: DeathMessageTemplate): boolean {
 }
 
 /**
- * The weapon-line strings a template can show: that language's localized
- * names plus every canonical English name (localized-messages omits names
- * identical to English), wrapped in the template's constant pre/post text.
+ * Weapon-line strings a template can show: the language's localized names plus
+ * every canonical English name (identical ones are omitted from localized-messages).
  */
 const templateCandidates = new Map<DeathMessageTemplate, WeaponCandidate[]>();
 function candidatesFor(template: DeathMessageTemplate): WeaponCandidate[] {
@@ -218,8 +192,7 @@ export function createDeathDetector(
 	): GlyphSet | null => (set ? scaleGlyphSet(set, height / set.height) : null);
 
 	const weaponGlyphs = scaled(resources.deathWeaponGlyphs, WEAPON_TEXT_HEIGHT);
-	// JA glyphs match at native scale: the atlas mixes fixture crops with
-	// per-face renders already sized to the on-screen condensed text
+	// JA atlas is already sized to the on-screen condensed text, so no scaling
 	const jaGlyphs = resources.deathWeaponJaGlyphs ?? null;
 	const tagNameGlyphs = scaled(
 		resources.deathTagNameGlyphs,
@@ -366,15 +339,11 @@ export function createDeathDetector(
 	}
 
 	/**
-	 * Dominant colors of `inner`: most frequent quantized colors (5 bits/
-	 * channel), clustered by proximity (else a hue straddling a quantization
-	 * boundary under-reports, split across neighbor bins), each refined to
-	 * its per-channel median with its share of the band. A second background
-	 * estimator besides medianColor — neither wins everywhere (whole-image
-	 * medians blend distinct populations into a color nobody has; the bin
-	 * vote loses to a flat art blob out-voting a textured banner's true
-	 * color) — so both are tried and the better read kept. The runner-up
-	 * cluster feeds the split-banner candidate (see TAG_SPLIT_MIN_FRACTION).
+	 * Most frequent quantized colors (5 bits/channel), clustered by proximity so a
+	 * hue straddling a bin boundary isn't split, each refined to its median.
+	 * Second background estimator besides medianColor: neither wins everywhere
+	 * (medians blend populations; the bin vote loses to flat art blobs), so both
+	 * reads are tried. The runner-up feeds the split-banner candidate.
 	 */
 	function dominantColors(
 		inner: Mat,
@@ -435,12 +404,9 @@ export function createDeathDetector(
 	}
 
 	/**
-	 * Text-ness map: per-pixel max-channel distance from the nearest of
-	 * `colors` (one for solid banners, two hues for a split banner). Uses
-	 * distance from banner color rather than a fixed brightness/polarity
-	 * since text/banner colors vary per player (e.g. pink text on a
-	 * light-blue banner has near-zero luminance contrast). `invert` flips to
-	 * *closeness* for the text-color refinement pass.
+	 * Per-pixel max-channel distance from the nearest of `colors` (two for a split
+	 * banner). Distance rather than brightness since text/banner colors vary per
+	 * player (pink on light blue has ~zero luminance contrast). `invert` = closeness.
 	 */
 	function distanceBand(
 		inner: Mat,
@@ -467,11 +433,9 @@ export function createDeathDetector(
 	}
 
 	/**
-	 * Zero ink components touching the band border. Busy banner art also
-	 * differs from the median banner color but continues past the name
-	 * band's edges, while the name sits inside it (fixture extremes: dakuten
-	 * at y=3, descender 2px above bottom) — left in place an edge blob
-	 * merges into a glyph and corrupts the read.
+	 * Zero ink components touching the border: banner art continues past the band
+	 * edges while the name sits inside (fixture extremes: dakuten at y=3, descender
+	 * 2px above bottom), and an edge blob merged into a glyph corrupts the read.
 	 */
 	function clearBorderBlobs(band: Mat, threshold: number): void {
 		const bin = new cv.Mat();
@@ -518,11 +482,8 @@ export function createDeathDetector(
 		const confidences: number[] = [];
 
 		// 1. read both burst lines and find the language template whose constant
-		// line reads back best — a gate hit matching none is a lookalike.
-		// Latin templates read the standard line boxes with the Latin atlas;
-		// JA templates read the swapped-width JA boxes (weapon line 1 wide,
-		// constant line 2 narrow — see rois.ts) with the JA atlas, so the two
-		// scripts never compete inside one glyph set.
+		// line reads best; a gate hit matching none is a lookalike. Latin and JA
+		// templates use separate boxes (rois.ts) and atlases so the scripts never compete.
 		let line1: RecognizedText | null = null;
 		let line2: RecognizedText | null = null;
 		let jaWeaponLine: RecognizedText | null = null;
@@ -550,10 +511,7 @@ export function createDeathDetector(
 					template = t;
 				}
 			}
-			// the JA line reads cost ~2x the Latin ones (condensed-kana atlas),
-			// so they only run when no Latin template already owns the frame:
-			// measured constant-line scores separate cleanly (Latin frames read
-			// their template at 0.889+, JA frames' best Latin score is <= 0.222)
+			// JA line reads cost ~2x, so they only run when no Latin template owns the frame
 			if (jaGlyphs && line1Score < LATIN_DECISIVE_SCORE) {
 				jaWeaponLine = readLine(JA_WEAPON_LINE_ROI, jaGlyphs);
 				jaConstLine = readLine(JA_CONST_LINE_ROI, jaGlyphs);
@@ -605,11 +563,9 @@ export function createDeathDetector(
 			}
 		}
 
-		// 2b. text can be unreadable while the burst's weapon icon is intact
-		// (the WIPEOUT banner covers the weapon name line), so fall back to
-		// matching the icon against the main-weapon set at burst size. Only a
-		// decisive match is trusted: fixture positives score 0.55+ while the
-		// best off-target frame (icon displaced by a rainmaker line) hits 0.48.
+		// 2b. the WIPEOUT banner can cover the text while the burst icon stays intact:
+		// match it against the main-weapon set. Fixture positives score 0.55+, best
+		// off-target frame (icon displaced by a rainmaker line) 0.48.
 		let burstIcon: WeaponMatch | null = null;
 		if (weapon === null && burstWeapons) {
 			const crop = cropRoi(rgb, BURST_ICON_ROI);
@@ -622,11 +578,8 @@ export function createDeathDetector(
 			if (entry) accept(entry, burstIcon.score);
 		}
 
-		// 2c. low-fidelity captures (720p upscaled to canonical) garble the
-		// per-segment top-1 read enough that the plain snap stays under
-		// WEAPON_MIN_SCORE, while the correct glyphs sit at rank 2-3 of the
-		// segments' candidate lists. Re-rank through those lists (rankByRead)
-		// and accept the top weapon when it clears the field decisively.
+		// 2c. 720p-upscaled captures garble the top-1 read below WEAPON_MIN_SCORE while
+		// the correct glyphs sit at rank 2-3 per segment: re-rank through those lists
 		let latticeTop: {
 			entry: WeaponEntry;
 			score: number;
@@ -645,8 +598,7 @@ export function createDeathDetector(
 				(c) => c.text,
 			);
 			const top = latticeRanked[0]!;
-			// margin vs the nearest *other* weapon: the same weapon rides both
-			// its localized and English candidate lines
+			// margin vs the nearest *other* weapon: a weapon has both localized and English lines
 			const runner = latticeRanked.find(
 				(r) => r.entry.entry !== top.entry.entry,
 			);
@@ -663,10 +615,8 @@ export function createDeathDetector(
 			}
 		}
 
-		// 2d. neither signal is decisive alone, but if the burst icon's main
-		// weapon is also the text's best guess (plain or lattice ranking,
-		// within EPS of that ranking's top), the independent agreement is
-		// decisive together.
+		// 2d. neither signal decisive alone, but icon weapon == text's best guess
+		// (plain or lattice, within EPS of the top) is decisive together
 		if (
 			weapon === null &&
 			burstIcon &&
@@ -690,8 +640,7 @@ export function createDeathDetector(
 		}
 		if (weaponGlyphs && template) confidences.push(weaponScore);
 
-		// 3. ability grid; rows carry 1-3 sub circles (left-aligned, as many
-		// as the gear has slots), so a sub box without badge ink ends the row
+		// 3. ability grid; rows carry 1-3 left-aligned sub circles, so a sub box without badge ink ends the row
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
 		if (abilities) {
@@ -732,11 +681,9 @@ export function createDeathDetector(
 			}
 		}
 
-		// 4. splash-tag name: read against the estimated banner color, then
-		// (since busy banner art also differs from that estimate and can
-		// survive as fake glyphs) against closeness to the text color
-		// estimated from pass 1's ink; whichever reads back more confidently
-		// wins. Both background estimators (dominantColors) run the same way.
+		// 4. splash-tag name: read against the banner color, then (busy art survives
+		// that as fake glyphs) against closeness to the text color estimated from
+		// pass 1's ink; the more confident read wins. Same for each background estimator.
 		let name: string | null = null;
 		let nameConfidence = 0;
 		let nameRaw = "";
@@ -805,11 +752,9 @@ export function createDeathDetector(
 				) {
 					candidates.push([dominant, second.color]);
 				}
-				// an empty read never beats one with glyphs (an estimate landing on
-				// the text color blanks the band, and recognizeText scores a
-				// segment-less band confidence 1); near-tied confidences resolve to
-				// the longer read, since confidence is the *min* char score and
-				// erasing most of the name can still read the survivors immaculately
+				// an empty read never beats one with glyphs (a blanked band scores confidence 1);
+				// near ties go to the longer read since confidence is the *min* char score
+				// and erasing most of a name can still read the survivors immaculately
 				const NEAR_TIE = 0.03;
 				const beats = (
 					a: { parsed: { name: string; confidence: number } },
@@ -896,15 +841,11 @@ export function createDeathDetector(
 		];
 	}
 
-	// the death cam's animated background flickers the gate; after a
-	// sufficient read the 4s rearm hold stays inside the timeline's 8s
-	// Death merge window, so every parse it skips would merge anyway.
-	// sufficientConfidence sits just under the measured clean-read floor
-	// (fixtures 0.750-0.825, confirmed scan events 0.751+); the refine and
-	// stagnation overrides cap what a parse can cost when a dirty read
-	// never reaches it, and the tag memo keeps the streak's repeat parses
-	// off the expensive name read (a first-sight CJK name runs tens of
-	// seconds; repeats must not)
+	// the animated background flickers the gate; the 4s rearm hold stays inside
+	// the timeline's 8s Death merge window so every skipped parse would merge anyway.
+	// sufficientConfidence sits just under the clean-read floor (fixtures
+	// 0.750-0.825, scan events 0.751+); refine/stagnation overrides cap the cost
+	// of a dirty read that never reaches it
 	return {
 		id: "death",
 		refineIntervalS: 0.5,

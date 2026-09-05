@@ -14,10 +14,7 @@ type InsertArgs = Omit<
 	"isFullTournament" | "bracketProgression" | "mapPickingStyle"
 >;
 
-/**
- * What every calendar event is defaulted to, tournaments included — a tournament is
- * a calendar event with one attached, see `TournamentFactory`.
- */
+/** Defaults of every calendar event, tournaments (see `TournamentFactory`) included. */
 export const eventDefaults = () => ({
 	name: faker.company.name(),
 	description: faker.number.float(1) < 0.4 ? faker.lorem.paragraph() : null,

@@ -1,6 +1,6 @@
 import * as React from "react";
 import { useLocation } from "react-router";
-import { DESKTOP_BREAKPOINT, MOBILE_BREAKPOINT } from "./useMainContentWidth";
+import { DESKTOP_LAYOUT_QUERY, MOBILE_LAYOUT_QUERY } from "./useLayoutSize";
 
 /**
  * Closes the open popovers in `ref` (the element itself or any inside it) on
@@ -22,8 +22,8 @@ export function useClosePopoversOnNavigation(
 	}, [locationKey, ref]);
 
 	React.useEffect(() => {
-		const breakpoints = [MOBILE_BREAKPOINT, DESKTOP_BREAKPOINT].map((width) =>
-			window.matchMedia(`(min-width: ${width}px)`),
+		const breakpoints = [MOBILE_LAYOUT_QUERY, DESKTOP_LAYOUT_QUERY].map(
+			(query) => window.matchMedia(query),
 		);
 		const onChange = () => hidePopoversWithin(ref.current);
 

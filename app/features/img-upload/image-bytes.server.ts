@@ -2,11 +2,7 @@ import invariant from "~/utils/invariant";
 
 export type ImageExtension = "webp" | "png" | "jpeg";
 
-/**
- * Decodes a base64 image data URL to a buffer, resolving the format from the buffer's own magic
- * bytes rather than trusting the client-declared mime type, and asserting it is one of
- * `allowedExtensions`.
- */
+/** Format is resolved from the magic bytes, not the client-declared mime type, and must be in `allowedExtensions`. */
 export function dataUrlToImageBuffer(
 	dataUrl: string,
 	allowedExtensions: ReadonlyArray<ImageExtension>,

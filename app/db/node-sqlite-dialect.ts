@@ -22,10 +22,7 @@ import {
 	SqliteQueryCompiler,
 } from "kysely";
 
-/**
- * Query kinds whose compiled SQL is stable enough to keep a prepared statement
- * around for. Everything else (DDL, raw SQL, `begin`/`commit`) is prepared fresh.
- */
+/** Query kinds worth caching a prepared statement for; DDL, raw SQL and `begin`/`commit` are prepared fresh. */
 const CACHEABLE_QUERY_KINDS = new Set([
 	"SelectQueryNode",
 	"InsertQueryNode",
@@ -34,11 +31,7 @@ const CACHEABLE_QUERY_KINDS = new Set([
 	"MergeQueryNode",
 ]);
 
-/**
- * Leading keywords of raw statements that can not change the schema, so the
- * column lists the statement cache is holding stay valid across them. Raw DDL
- * (`create`, `alter`, `drop`, ...) is not here and clears the cache.
- */
+/** Leading keywords of raw statements that can't change the schema; any other raw statement clears the cache. */
 const SCHEMA_PRESERVING_RAW_COMMANDS = new Set([
 	"begin",
 	"commit",
@@ -62,39 +55,24 @@ const NO_JSON_OUTPUT_NAMES: ReadonlySet<string> = new Set();
 
 export interface NodeSqliteDialectConfig {
 	database: DatabaseSync;
-	/**
-	 * Keeps prepared statements around between queries, keyed by their SQL. Saves
-	 * a re-compile per query at the cost of holding onto the compiled programs.
-	 * Off by default because it assumes the schema does not change under the
-	 * connection, which is not true while migrations run.
-	 */
+	/** Caches prepared statements by SQL. Off by default since it assumes a stable schema, untrue while migrations run. */
 	cacheStatements?: boolean;
 	/**
-	 * "Table.column" names whose text content is a JSON document. When given,
-	 * result values of these columns are parsed into objects. Other text columns
-	 * are always returned verbatim, so JSON-shaped user input stays a string.
-	 * Origin metadata from `statement.columns()` sees through aliases, views,
-	 * subqueries and CTEs, so the names here are the underlying table names
-	 * (e.g. `AllTeam`, not the `Team` view).
+	 * "Table.column" names parsed as JSON; other text stays verbatim so JSON-shaped user input stays a string.
+	 * Origin metadata sees through aliases, views, subqueries and CTEs, so use underlying table names (`AllTeam`, not `Team`).
 	 */
 	jsonColumns?: ReadonlySet<string>;
 	/**
-	 * Output names of a query's computed result columns whose value is a JSON
-	 * document, which is what `jsonArrayFrom`/`jsonObjectFrom` subqueries compile
-	 * to. SQLite reports no origin for a computed expression, so only the query's
-	 * own AST tells those apart from an ordinary `coalesce(...)` over user text.
+	 * Output names of computed JSON result columns (`jsonArrayFrom`/`jsonObjectFrom` subqueries). SQLite reports no
+	 * origin for computed expressions, so only the AST tells them from a `coalesce(...)` over user text.
 	 * Called once per prepared statement. Requires {@link jsonColumns}.
 	 */
 	computedJsonColumns?: (query: RootOperationNode) => ReadonlySet<string>;
 }
 
 /**
- * Kysely dialect backed by Node's built-in `node:sqlite` module, replacing the
- * `better-sqlite3` native addon that Kysely's own `SqliteDialect` expects.
- *
- * Rows come back from `node:sqlite` as arrays rather than objects: the objects it
- * builds itself are both slower to produce and have a `null` prototype, which is
- * not what the rest of the codebase (or Kysely's own dialects) hand out.
+ * Kysely dialect over `node:sqlite` instead of the `better-sqlite3` addon. Rows are read as arrays:
+ * the objects `node:sqlite` builds are slower and have a `null` prototype.
  */
 export class NodeSqliteDialect implements Dialect {
 	readonly #config: NodeSqliteDialectConfig;
@@ -252,8 +230,7 @@ class NodeSqliteConnection implements DatabaseConnection {
 			);
 		}
 
-		// deliberately uncached: the cursor stays open across yields, so sharing the
-		// statement with another query would reset it mid-iteration
+		// uncached: the cursor stays open across yields, sharing the statement would reset it mid-iteration
 		const prepared = prepare(
 			this.#database,
 			compiledQuery.sql,
@@ -342,8 +319,7 @@ function columnMetadata(
 		columnNames: columns.map((it) => it.name),
 		jsonColumnFlags: columns.map((it) => {
 			if (!jsonColumns) return false;
-			// a null origin is a computed expression (a jsonArrayFrom subquery, but also
-			// e.g. a coalesce over user text), which only the query itself can classify
+			// null origin = computed expression (jsonArrayFrom subquery, or a coalesce over user text)
 			if (it.column === null) return jsonColumns.byOutputName.has(it.name);
 			return jsonColumns.byOrigin.has(`${it.table}.${it.column}`);
 		}),
@@ -360,8 +336,7 @@ function readRows<R>(
 
 	if (rawRows.length === 0) return [];
 
-	// `select *` widens when a migration adds a column, leaving a cached statement
-	// with a stale column list until the next read notices the mismatch
+	// `select *` widens when a migration adds a column, leaving a cached statement with a stale column list
 	if (rawRows[0].length !== prepared.columnNames.length) {
 		Object.assign(
 			prepared,
@@ -407,8 +382,19 @@ function parseJsonValue(value: string): unknown {
 		return value;
 	}
 
-	sanitizeParsedJson(parsed);
+	if (mayPrototypePollute(value)) {
+		sanitizeParsedJson(parsed);
+	}
 	return parsed;
+}
+
+/** Could the raw document hold a `__proto__`/`constructor` key? `\u` escapes could spell either, so those walk too. */
+function mayPrototypePollute(value: string) {
+	return (
+		value.includes("__proto__") ||
+		value.includes("constructor") ||
+		value.includes("\\u")
+	);
 }
 
 /** Strips `__proto__` and `constructor.prototype` so the parsed document can not prototype-pollute downstream merges. */

@@ -7,10 +7,7 @@ import * as PersistedState from "./persisted-state";
 
 const SERVER_MAP_SNAPSHOT: Record<string, never> = {};
 
-/**
- * Typed React state backed by a persisted definition. The value stays in sync
- * across components and browser tabs; the setter accepts a value or an updater.
- */
+/** React state backed by a persisted definition, in sync across components and tabs. Setter takes a value or updater. */
 export function usePersistedState<T>(
 	definition: PersistedDefinition<T>,
 ): [T, (next: T | ((previous: T) => T)) => void] {

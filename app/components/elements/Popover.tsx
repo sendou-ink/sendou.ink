@@ -38,21 +38,11 @@ export function focusLeftTo(
 }
 
 /**
- * A reusable popover component that wraps around a trigger element (SendouButton).
- * Renders through the native popover API with CSS anchor positioning.
- * Supports controlled and uncontrolled open states.
+ * Popover opened by `trigger` (a SendouButton); controlled or uncontrolled. Renders through the
+ * native popover API with CSS anchor positioning.
  *
- * With `eager` the content is rendered while closed too, so the popover opens
- * with its content before hydration (and without JavaScript altogether).
- *
- * @example
- * ```tsx
- * <SendouPopover
- *   trigger={<SendouButton>Click me</SendouButton>}
- * >
- *   Popover content goes here!
- * </SendouPopover>
- * ```
+ * With `eager` the content is rendered while closed too, so the popover opens with its content
+ * before hydration (and without JavaScript altogether).
  */
 export function SendouPopover({
 	children,
@@ -174,11 +164,7 @@ export function SendouPopover({
 	);
 }
 
-/**
- * Popover anchored to a trigger rendered outside of it, with its open state
- * controlled by the caller. Prefer `SendouPopover` when the trigger can be
- * passed in.
- */
+/** Controlled popover anchored to a trigger rendered outside of it. Prefer `SendouPopover` when the trigger can be passed in. */
 export function SendouAnchoredPopover({
 	children,
 	isOpen,

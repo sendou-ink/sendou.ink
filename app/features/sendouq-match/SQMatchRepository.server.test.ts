@@ -528,9 +528,8 @@ describe("finalizeMatch", () => {
 		expect((await fetchChatRoom(setup.match.chatRoomId!)).inactive).toBe(1);
 	});
 
-	// Demonstrates a bug: reportMapWinner checks the match lock on a snapshot read
-	// outside the finalizing transaction, so two teammates confirming the score at
-	// the same time both finalize. Rating/stat changes get applied twice.
+	// regression: the lock state must be read inside the finalizing transaction, or two
+	// teammates confirming at once both finalize and apply rating/stat changes twice
 	test("concurrent score confirmations finalize the match only once", async () => {
 		const setup = await setupMatch();
 

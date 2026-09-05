@@ -78,15 +78,10 @@ export function findAllByType<T extends Notification["type"]>(type: T) {
 }
 
 /**
- * Marks the users' unseen notifications of the given type as seen, optionally
- * only those whose meta matches every given key/value pair. Used to clear the
- * unseen dot when the user addresses what the notification is about. Returns
- * the user ids whose rows actually changed.
- *
- * The correlated `exists` keeps this proportional to the users' own
- * notifications. A `notificationId in (select ...)` reads the same but makes
- * SQLite materialize every notification of the type (json_extract'ing each one)
- * before touching the user's rows, which is ~80x slower on a hot path.
+ * Marks the users' unseen notifications of the type (optionally only those whose meta matches
+ * every key/value) as seen, returning the user ids whose rows changed. The correlated `exists`
+ * keeps this proportional to the users' own notifications; `notificationId in (select ...)` makes
+ * SQLite materialize every notification of the type first, ~80x slower on a hot path.
  */
 export async function markAsSeenByType({
 	userIds,
@@ -130,11 +125,7 @@ export async function markAsSeenByType({
 	return R.unique(updated.map((row) => row.userId));
 }
 
-/**
- * Marks the actor's notifications as seen. Returns the actor's user id in an
- * array if any row actually changed (empty array otherwise), shaped for
- * passing straight to `ChatSystemMessage.notifyNotificationsChanged`.
- */
+/** Marks the actor's notifications as seen. Returns `[actorId]` if any row changed, else `[]`, shaped for `ChatSystemMessage.notifyNotificationsChanged`. */
 export async function markOwnAsSeen(notificationIds: number[]) {
 	const updated = await db
 		.updateTable("NotificationUser")
@@ -180,11 +171,7 @@ export function upsertOwnSubscription(subscription: NotificationSubscription) {
 		.execute();
 }
 
-/**
- * Finds the push subscriptions of the given notification's recipients who have
- * not seen it yet. Lets the push sender skip users who already addressed what
- * the notification is about during the delivery grace period.
- */
+/** Push subscriptions of the notification's recipients who have not seen it yet, so the push sender skips users who addressed it during the grace period. */
 export function findUnseenSubscriptionsByNotificationId(
 	notificationId: number,
 ) {

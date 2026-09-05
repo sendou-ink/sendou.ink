@@ -66,14 +66,12 @@ test.describe("Tournament bracket round robin", () => {
 
 		await match.openTab("admin");
 		await match.editResultButton(0).click();
-		// Swap player 3 out for player 4 on the alpha (winner) team
 		await match.editResultPlayerCheckbox("alpha", 3).click();
 		await match.editResultPlayerCheckbox("alpha", 4).click();
-		// Toggle KO so we can verify the edit went through (RR collects KO).
+		// RR collects KO, which shows the edit went through
 		await match.locators.koCheckbox.check();
 		await match.saveResult(0);
 
-		// Edit returns to read-only view, now showing the KO label
 		await expect(match.editResultButton(0)).toBeVisible();
 		await expect(match.locators.koResultText).toBeVisible();
 	});
@@ -120,9 +118,8 @@ test.describe("Tournament bracket round robin", () => {
 		});
 		await createTeams(factories, tournament.id, teamSeeds(4));
 
-		// set situation where match A is completed and its participants also completed
-		// their follow up matches B & C and then we go back and change the winner of A:
-		// the two passes play rounds 1 (matches 1 & 2) and 2 (matches 3 & 4)
+		// the two passes play rounds 1 (matches 1 & 2) and 2 (matches 3 & 4), so the
+		// winner of a match whose participants already played on gets changed
 		await factories.TournamentFactory.startBracket(tournament.id);
 		await factories.TournamentFactory.playMatches(tournament.id);
 		await factories.TournamentFactory.playMatches(tournament.id);
@@ -135,10 +132,8 @@ test.describe("Tournament bracket round robin", () => {
 		const match = await brackets.openMatch(2);
 		await match.openTab("admin");
 		await match.reopen();
-		// Wait for the reopen to be reflected before switching tabs: switching
-		// tabs is a `defaultShouldRevalidate: false` navigation that would abort
-		// the still-in-flight post-reopen loader revalidation, leaving the match
-		// stuck as "over" so the action tab never appears.
+		// switching tabs is a `defaultShouldRevalidate: false` navigation that would
+		// abort the in-flight post-reopen revalidation, leaving the match "over"
 		await isNotVisible(match.locators.reopenMatchButton);
 		await match.openTab("action");
 		await match.undoLastReport();
@@ -160,7 +155,7 @@ test.describe("Tournament bracket round robin", () => {
 		});
 		await createTeams(factories, tournament.id, teamSeeds(4));
 
-		// Complete R1 matches (1 and 2) to unlock R2 matches
+		// playing R1 (matches 1 and 2) unlocks R2
 		await factories.TournamentFactory.startBracket(tournament.id);
 		await factories.TournamentFactory.playMatches(tournament.id);
 
@@ -169,21 +164,19 @@ test.describe("Tournament bracket round robin", () => {
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
 
-		// Match 3 is R2 - should now be unlocked since R1 is complete
-		// Start it but don't complete it
+		// match 3 is R2: start it without completing it
 		let match = await brackets.openMatch(3);
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 1, setEnds: false });
 		await match.backToBracket();
 
-		// Reopen match 1 (R1 match) - simulating a score misreport correction
+		// reopening the R1 match simulates a score misreport correction
 		match = await brackets.openMatch(1);
 		await match.openTab("admin");
 		await match.reopen();
 		await match.backToBracket();
 
-		// Verify the R2 match that was already in progress is still playable
-		// Before the fix, this would become locked and unplayable
+		// the R2 match already in progress used to become locked and unplayable
 		match = await brackets.openMatch(3);
 		await expect(match.score([1, 0])).toBeVisible();
 		await match.openTab("action");

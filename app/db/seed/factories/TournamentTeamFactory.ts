@@ -31,12 +31,8 @@ type Options = {
 };
 
 /**
- * Creates tournament teams. The first of `memberUserIds` is the owner, on whose
- * behalf the team is registered; the rest are added to it the way they are in
- * production. Invite code and in-game names are the repository's own.
- *
- * A player looking for a team without one to register is a placeholder team
- * instead, see `TournamentLFGTeamFactory`.
+ * Registered by the first of `memberUserIds`, the rest added like in production. A player looking for a
+ * team is a placeholder team instead, see `TournamentLFGTeamFactory`.
  */
 export const { create } = defineFactory({
 	defaults: () => ({

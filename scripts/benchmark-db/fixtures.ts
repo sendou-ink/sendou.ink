@@ -137,10 +137,8 @@ export interface Fixtures {
 }
 
 /**
- * Resolves "worst-case" benchmark arguments by sampling the heaviest rows from
- * the database (user with most tournament results, tournament with most teams
- * and so on). Fields resolve to null when the source table is empty which
- * causes the dependent benchmark cases to be skipped.
+ * Resolves worst-case benchmark arguments by sampling the heaviest rows (user with most
+ * results, tournament with most teams...). Fields resolve to null when the source table is empty, skipping their cases.
  */
 export async function resolveFixtures(): Promise<Fixtures> {
 	const heavyUser = await resolveHeavyUser();

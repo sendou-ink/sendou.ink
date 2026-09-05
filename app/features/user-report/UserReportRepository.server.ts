@@ -3,11 +3,7 @@ import { db } from "~/db/sql";
 import type { TablesInsertable } from "~/db/tables";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 
-/**
- * Inserts a report or, when the (reporter, reported) pair already has one, overwrites
- * its category and description bumping `createdAt`. Returns whether an existing report
- * was updated instead of a new one created.
- */
+/** Inserts, or overwrites the pair's existing report (bumping `createdAt`). Returns whether it was an update. */
 export function upsert(
 	args: Omit<TablesInsertable["UserReport"], "createdAt">,
 ) {
@@ -37,7 +33,7 @@ export function upsert(
 	});
 }
 
-/** Returns how many reports have been made against the given user in the last month and in the last year. */
+/** Reports against the user in the last month and in the last year. */
 export async function countRecentByReportedUserId(reportedUserId: number) {
 	const monthAgo = dateToDatabaseTimestamp(subMonths(new Date(), 1));
 	const yearAgo = dateToDatabaseTimestamp(subYears(new Date(), 1));
@@ -58,7 +54,7 @@ export async function countRecentByReportedUserId(reportedUserId: number) {
 	return { lastMonth: row.lastMonth, lastYear: row.lastYear };
 }
 
-/** Returns all reports made against the given user, newest first, with the reporter's identifying info. */
+/** Reports against the user, newest first, with reporter info. */
 export function findAllByReportedUserId(reportedUserId: number) {
 	return db
 		.selectFrom("UserReport")

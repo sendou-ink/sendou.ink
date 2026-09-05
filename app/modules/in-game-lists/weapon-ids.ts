@@ -108,31 +108,14 @@ const altWeaponIdToId = new Map<MainWeaponId, MainWeaponId>([
 ]);
 
 /**
- * Folds an alt-skin weapon id to its base id, leaving non-alt ids untouched.
- *
- * Unlike {@link weaponIdToBaseWeaponId}, alt kits are preserved (e.g. Tentatek
- * Splattershot stays 41) — only cosmetic alt skins collapse to their base.
- *
- * Mirrors the `BuildWeapon.canonicalWeaponSplId` column so TypeScript callers
- * and SQL queries agree on what a weapon's canonical id is.
- *
- * @example
- * // Splattershot — base weapon, returned unchanged
- * canonicalWeaponSplId(40); // -> 40
- *
- * // Tentatek Splattershot — alt kit, returned unchanged
- * canonicalWeaponSplId(41); // -> 41
- *
- * // Hero Shot Replica — alt skin, folded to Splattershot
- * canonicalWeaponSplId(45); // -> 40
+ * Folds only cosmetic alt skins to their base (45 Hero Shot Replica → 40), keeping alt kits unlike
+ * {@link weaponIdToBaseWeaponId} (41 Tentatek stays 41). Mirrors the `BuildWeapon.canonicalWeaponSplId` column.
  */
 export function canonicalWeaponSplId(weaponSplId: MainWeaponId): MainWeaponId {
 	return altWeaponIdToId.get(weaponSplId) ?? weaponSplId;
 }
 
-/**
- * Converts a given weapon ID to an array containing the weapon ID and its alternate IDs. For example if you enter the ID 40 (Splattershot) it will return [40, 45, 47] (Splattershot, Hero Shot Replica, Order Shot Replica)
- */
+/** The weapon id and its alt skin ids, e.g. 40 (Splattershot) → [40, 45, 47] (+ Hero Shot Replica, Order Shot Replica). */
 export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
 	const altId = weaponIdToAltId.get(weaponId);
 	if (altId !== undefined) {
@@ -150,21 +133,7 @@ export function weaponIdToArrayWithAlts(weaponId: MainWeaponId) {
 	return [weaponId];
 }
 
-/**
- * Determines the type of weapon based on its ID
- *
- * @returns "ALT_SKIN" if the weapon is an alternate skin, "BASE" if it's a base weapon, or "ALT_KIT" if it's an alternate kit
- *
- * @example
- * // Splattershot is a base weapon
- * weaponIdToType(40); // -> "BASE"
- *
- * // Tentatek Splattershot is an alternate kit
- * weaponIdToType(41); // -> "ALT_KIT"
- *
- * // Hero Shot Replica is an alternate skin
- * weaponIdToType(45); // -> "ALT_SKIN"
- */
+/** 40 Splattershot → "BASE", 41 Tentatek → "ALT_KIT", 45 Hero Shot Replica → "ALT_SKIN". */
 export const weaponIdToType = (weaponId: MainWeaponId) => {
 	if (altWeaponIdToId.has(weaponId)) return "ALT_SKIN";
 	if (weaponId === weaponIdToBaseWeaponId(weaponId)) return "BASE";
@@ -304,18 +273,6 @@ export const exampleMainWeaponIdWithSpecialWeaponId = (
 	}
 };
 
-/**
- * Calculates the base weapon ID from a main weapon ID.
- *
- * @example
- * // Returns 40 (because Splattershot is the base weapon for its kit)
- * weaponIdToBaseWeaponId(40); // -> 40
- *
- * // (41 is Tentatek Splattershot, which is an alt kit of Splattershot)
- * weaponIdToBaseWeaponId(41); // -> 40
- *
- * // (45 is Hero Shot Replica, which is an alt skin of Splattershot)
- * weaponIdToBaseWeaponId(45); // -> 40
- */
+/** Base weapon of a kit or skin: 40, 41 (Tentatek) and 45 (Hero Shot Replica) → 40. */
 export const weaponIdToBaseWeaponId = (id: MainWeaponId) =>
 	(id - (id % 10)) as MainWeaponId;

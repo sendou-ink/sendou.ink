@@ -10,11 +10,7 @@ export interface MemberAvailability {
 	ranges: Array<TimeRange>;
 }
 
-/**
- * A span the team could play in:
- * - `FULL` = the required amount of players is free for the whole window
- * - `ONE_SHORT` = one player short, so they would need a sub
- */
+/** `FULL` = the required players are free for the whole window, `ONE_SHORT` = one short, a sub is needed. */
 export type PlayableWindowTier = "FULL" | "ONE_SHORT";
 
 export interface PlayableWindow extends TimeRange {
@@ -23,10 +19,7 @@ export interface PlayableWindow extends TimeRange {
 	userIds: Array<number>;
 }
 
-/**
- * A span within one day of the schedule editor, in minutes from that day's
- * midnight. `end` may pass 1440 for a range crossing midnight.
- */
+/** A span within one editor day in minutes from midnight. `end` may pass 1440 for a range crossing midnight. */
 export interface DayTimeRange {
 	start: number;
 	end: number;
@@ -50,24 +43,16 @@ export interface EditorCommitment {
 	name: string;
 }
 
-/**
- * A span a commitment makes the user busy for, overriding whatever
- * availability they reported. `name` is what the user is at (e.g. the
- * tournament's name); `null` when the type alone says it (a scrim).
- */
+/** A commitment overriding reported availability. `name` is e.g. the tournament's name, null when the type says it (a scrim). */
 export interface BusyBlock extends TimeRange {
 	type: "tournament" | "scrim" | "teamEvent";
 	name: string | null;
 }
 
 /**
- * How one person's schedule relates to an event's window:
- * - `available` — reported availability covers the whole window
- * - `partial` — covers part of it; `ranges` show which part
- * - `unavailable` — a week was reported, none of it overlaps the window
- * - `busy` — a commitment elsewhere overlaps the window, overriding whatever
- *   was reported
- * - `unknown` — no reported week covers the window
+ * `available` = reported availability covers the window, `partial` = part of it (`ranges` say which),
+ * `unavailable` = a week was reported but none overlaps, `busy` = a commitment overrides whatever
+ * was reported, `unknown` = no reported week covers the window.
  */
 export type WindowAvailability =
 	| { status: "available" | "partial"; ranges: Array<TimeRange> }
@@ -75,11 +60,7 @@ export type WindowAvailability =
 	| { status: "unavailable" }
 	| { status: "unknown" };
 
-/**
- * How one person's schedule relates to a window, as the surfaces showing a
- * roster's fit render it. `notes` is left out by the surfaces that have no day
- * notes at hand.
- */
+/** One person's fit to a window as roster views render it. `notes` is left out by views without day notes at hand. */
 export interface WindowAvailabilityEntry {
 	userId: number;
 	availability: WindowAvailability;
@@ -87,27 +68,23 @@ export interface WindowAvailabilityEntry {
 }
 
 /**
- * What is known about one person inside a window: the material
- * `Availability.availabilityInWindow` resolves a status from. Sent to the
- * browser as is by the surfaces that ask about many windows at once, so that
- * narrowing one down (picking a start inside a post's flexibility) needs no
- * further round trip.
+ * What `Availability.availabilityInWindow` resolves a status from. Sent to the browser as is by
+ * views asking about many windows, so narrowing one down (a start inside a post's flexibility)
+ * needs no further round trip.
  */
 export interface WindowSchedule {
 	userId: number;
 	/** Whether they filled in the week the window falls in. */
 	reported: boolean;
-	/** Their effective availability inside the window. */
+	/** Effective availability inside the window. */
 	ranges: Array<TimeRange>;
-	/** Their commitments overlapping the window. */
+	/** Commitments overlapping the window. */
 	busy: Array<BusyBlock>;
 }
 
 /**
- * One person's week as the read-only week views render it: the seven days in
- * the viewer's timezone with the time they are effectively free to play. What
- * a commitment takes back is already cut out — the view answers "when can they
- * play", not "what are they doing".
+ * One person's week as read-only views render it: seven days in the viewer's timezone with the
+ * time they are free to play, commitments already cut out ("when can they play", not "what are they doing").
  */
 export interface ScheduleWeekView {
 	week: "current" | "next";

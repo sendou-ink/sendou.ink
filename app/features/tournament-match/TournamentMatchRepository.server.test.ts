@@ -33,8 +33,7 @@ describe("findByTournamentTeamId", () => {
 	});
 
 	test("preserves stage order: matches from an earlier stage come first even when later stage has lower group numbers", async () => {
-		// the pools stage numbers its groups 1..2 while the final is group 1 of its
-		// own stage, so the team page has to order by stage before group
+		// pools are groups 1..2 while the final is group 1 of its own stage, so order by stage before group
 		const tournament = await TournamentFactory.createPlayed(
 			{
 				authorId: users.id(1),

@@ -3,13 +3,8 @@ import { Store } from "./store";
 import { Propagator } from "./traversal";
 
 /**
- * Ends all unfinished matches involving dropped teams by awarding wins to
- * their opponents. Ported from tournament-utils.server.ts. When both teams in
- * a match have dropped, a random winner is picked.
- *
- * Matches that only gain a dropped opponent through propagation caused by this
- * call are not ended (same as the old implementation, which iterated a
- * snapshot); they are picked up by the next call.
+ * Ends unfinished matches of dropped teams by awarding wins to their opponents (random winner when both
+ * dropped). Matches that gain a dropped opponent through this call's propagation are left for the next call.
  */
 export function endDroppedTeamMatches(
 	data: BracketData,

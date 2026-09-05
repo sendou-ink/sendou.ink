@@ -9,10 +9,7 @@ import {
 import { SENDOU_INK_BASE_URL, sendouQMatchPage } from "~/utils/urls";
 import { USER_REPORT_CATEGORY_LABELS } from "../user-report-constants";
 
-/**
- * Posts a rich embed about a new/updated user report to the mod channel Discord webhook.
- * Fire-and-forget (see `sendModDiscordWebhook`).
- */
+/** Fire-and-forget embed to the mod channel webhook. */
 export function sendUserReportWebhook(args: {
 	reportedUser: WebhookUser;
 	reporter: WebhookUser;

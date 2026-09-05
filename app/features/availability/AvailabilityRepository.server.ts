@@ -10,14 +10,12 @@ import {
 import { AVAILABILITY } from "./availability-constants";
 import type { TimeRange } from "./availability-types";
 
-/** Longest a week can be, a DST week included. Weeks are indexed by their start, so finding the ones overlapping a window means looking this far back. */
+/** Longest week (DST included). Weeks are indexed by start, so overlapping a window means looking this far back. */
 const WEEK_MAX_SECONDS = 169 * 60 * 60;
 
 /**
- * Reported availability of the given users for every week overlapping the given
- * window, with the week's slots and day notes. A week without slots was
- * submitted as "unavailable all week"; a user with no week at all for the
- * window simply has not reported anything.
+ * Reported weeks of the given users overlapping the window, with slots and day notes. A week
+ * without slots means "unavailable all week"; no week at all means nothing was reported.
  */
 export function findAllWeeksByUserIds({
 	userIds,
@@ -68,9 +66,8 @@ export function findAllWeeksByUserIds({
 }
 
 /**
- * Whether the user has reported the week starting at `weekStartsAt`. The week
- * is theirs to place, so a start within {@link AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS}
- * of the asked one is the same week seen from another timezone.
+ * Whether the user reported the week starting at `weekStartsAt`. A start within
+ * {@link AVAILABILITY.WEEK_MATCH_MAX_DISTANCE_SECONDS} is the same week seen from another timezone.
  */
 export async function hasReportedWeek({
 	userId,
@@ -99,20 +96,12 @@ export async function hasReportedWeek({
 }
 
 /**
- * Ids of the users who have not reported the week starting at `weekStartsAt`
- * while at least one of their teammates has — the reminder is only worth
- * sending when somebody else on the team already moved. Cheerleaders are left
- * out, the schedule surfaces do not show them.
+ * Users who have not reported the week starting at `weekStartsAt` while a teammate has (a reminder
+ * is only worth sending then).
  */
 export async function findWeekReminderUserIds(weekStartsAt: number) {
 	const memberships = await db
 		.selectFrom("TeamMemberWithSecondary")
-		.where((eb) =>
-			eb.or([
-				eb("TeamMemberWithSecondary.role", "is", null),
-				eb("TeamMemberWithSecondary.role", "!=", "CHEERLEADER"),
-			]),
-		)
 		.leftJoin("AvailabilityWeek", (join) =>
 			join
 				.onRef("AvailabilityWeek.userId", "=", "TeamMemberWithSecondary.userId")
@@ -149,9 +138,8 @@ export async function findWeekReminderUserIds(weekStartsAt: number) {
 }
 
 /**
- * Team events of every team the given users are members of (secondary teams
- * included) that overlap the given window, one row per member. Events limited
- * to selected participants only produce rows for those participants.
+ * Team events overlapping the window of every team (secondary included) the users are members of,
+ * one row per member. Events limited to selected participants only produce rows for those.
  */
 export function findAllTeamEventsByUserIds({
 	userIds,
@@ -200,7 +188,7 @@ export function findAllTeamEventsByUserIds({
 		.execute();
 }
 
-/** Team events of one team overlapping the given window, with the participant user ids of events limited to selected members (empty = the whole team). */
+/** One team's events overlapping the window, with the participant user ids (empty = the whole team). */
 export function findTeamEventsByTeamId({
 	teamId,
 	startsAt,
@@ -233,10 +221,9 @@ export function findTeamEventsByTeamId({
 }
 
 /**
- * Ongoing and upcoming team events of every team the given user is a member of
- * (secondary teams included), starting within the given window, with the
- * owning team attached. Events limited to selected participants show up only
- * for those participants. For the user's personal calendar surfaces.
+ * Ongoing and upcoming events starting within the window of every team (secondary included) the
+ * user is a member of, with the owning team. Events limited to selected participants show up only
+ * for those. For the user's personal calendar views.
  */
 export function findAllUpcomingTeamEventsByUserId({
 	userId,
@@ -303,13 +290,9 @@ interface UpsertOwnWeekArgs {
 }
 
 /**
- * Saves the acting user's availability for one week, replacing whatever they
- * had reported for it. The week is saved as a whole, so slots and day notes
- * left out are removed. A week reported earlier from another timezone (its
- * start hours apart, never days) is the same week and gets replaced, not
- * duplicated.
- *
- * @returns id of the week
+ * Replaces the acting user's week as a whole (slots and day notes left out are removed). A week
+ * reported earlier from another timezone (start hours apart, never days) is replaced, not duplicated.
+ * Returns the week id.
  */
 export function upsertOwnWeek(args: UpsertOwnWeekArgs) {
 	const userId = actorId();
@@ -391,10 +374,7 @@ export function upsertOwnWeek(args: UpsertOwnWeekArgs) {
 	});
 }
 
-/**
- * Deletes availability weeks that started before the given timestamp. Their
- * slots and day notes go with them via cascade delete.
- */
+/** Deletes weeks started before the timestamp; slots and day notes cascade. */
 export function deleteWeeksStartedBefore(weekStartsAt: number) {
 	return db
 		.deleteFrom("AvailabilityWeek")
@@ -410,12 +390,7 @@ export function deleteTeamEventsEndedBefore(endsAt: number) {
 		.executeTakeFirstOrThrow();
 }
 
-/**
- * Adds a team event. Author is the acting user. Without `participantUserIds`
- * the whole team takes part; with them only the given members do.
- *
- * @returns id of the new event
- */
+/** Adds a team event authored by the acting user; without `participantUserIds` the whole team takes part. Returns its id. */
 export function insertTeamEvent({
 	participantUserIds,
 	...args

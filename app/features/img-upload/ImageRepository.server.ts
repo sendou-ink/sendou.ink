@@ -5,7 +5,7 @@ import { databaseTimestampNow } from "~/utils/dates";
 import { concatUserSubmittedImagePrefix } from "~/utils/kysely.server";
 import { IMAGES_TO_VALIDATE_AT_ONCE } from "./upload-constants";
 
-/** Finds an unvalidated image by ID with associated calendar event data */
+/** Unvalidated image with its calendar event data. */
 export function findById(id: number) {
 	return db
 		.selectFrom("UnvalidatedUserSubmittedImage")
@@ -19,7 +19,7 @@ export function findById(id: number) {
 		.executeTakeFirst();
 }
 
-/** Deletes an image and its associated art entry in a transaction */
+/** Deletes an image and its art entry. */
 export function deleteById(id: number) {
 	return db.transaction().execute(async (trx) => {
 		await trx.deleteFrom("Art").where("Art.imgId", "=", id).execute();
@@ -30,7 +30,7 @@ export function deleteById(id: number) {
 	});
 }
 
-/** Counts unvalidated art images for a specific author */
+/** Count of the author's unvalidated art images. */
 export async function countUnvalidatedArt(authorId: number) {
 	const result = await db
 		.selectFrom("UnvalidatedUserSubmittedImage")
@@ -85,7 +85,7 @@ const unvalidatedImagesBaseQuery = db
 		]),
 	);
 
-/** Counts all unvalidated images used in teams, art, or calendar events */
+/** Count of unvalidated images used in teams, art or calendar events. */
 export async function countAllUnvalidated() {
 	const result = await unvalidatedImagesBaseQuery
 		.select(({ fn }) => fn.countAll<number>().as("count"))
@@ -93,7 +93,7 @@ export async function countAllUnvalidated() {
 	return result.count;
 }
 
-/** Fetches unvalidated images for admin review with submitter info */
+/** Unvalidated images for admin review, with submitter info. */
 export function findAllUnvalidated() {
 	return unvalidatedImagesBaseQuery
 		.leftJoin(
@@ -113,11 +113,7 @@ export function findAllUnvalidated() {
 		.execute();
 }
 
-/**
- * Counts unvalidated images submitted by a user that are connected to a team, art, or calendar
- * event (i.e. excluding not-yet-connected orphans), so it can gate the SendouForm `image()` upload
- * path.
- */
+/** Count of the user's unvalidated images connected to a team, art or event (orphans excluded); gates `image()` uploads. */
 export async function countUnvalidatedBySubmitterUserId(userId: number) {
 	const result = await unvalidatedImagesBaseQuery
 		.select(({ fn }) => fn.countAll<number>().as("count"))
@@ -126,7 +122,7 @@ export async function countUnvalidatedBySubmitterUserId(userId: number) {
 	return result.count;
 }
 
-/** Marks an image as validated by setting the current timestamp */
+/** Marks an image as validated. */
 export function validateById(id: number) {
 	return db
 		.updateTable("UnvalidatedUserSubmittedImage")
@@ -135,9 +131,7 @@ export function validateById(id: number) {
 		.execute();
 }
 
-/**
- * Inserts an unvalidated image row without associating it with any owner. Returns the inserted row.
- */
+/** Inserts an unvalidated image row without an owner. Returns the inserted row. */
 export function insert(
 	args: TablesInsertable["UnvalidatedUserSubmittedImage"],
 	trx?: Transaction<DB>,

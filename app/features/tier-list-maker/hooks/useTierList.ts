@@ -134,8 +134,7 @@ export function useTierList() {
 				? findContainer(overItem)
 				: null;
 
-		// Same-container reordering is handled in handleDragEnd. Doing it here
-		// would create a render → dragOver ping-pong loop with arrayMove.
+		// same-container reordering is in handleDragEnd; here it would ping-pong render → dragOver
 		if (!overContainer || activeContainer === overContainer) {
 			return;
 		}
@@ -482,11 +481,7 @@ export function useTierList() {
 	};
 }
 
-/**
- * The tier list state itself. `setTiers` only updates React state (drag-over
- * fires on every pointer move); `persistTiersStateToParams` writes the state
- * to the URL and is called when a drag or tier edit settles.
- */
+/** `setTiers` only touches React state (drag-over fires per pointer move); `persistTiersStateToParams` writes the URL. */
 function useSearchParamTiersState() {
 	const [stateParam, setStateParam] = useSearchParam(
 		tierListMakerSearchParams,

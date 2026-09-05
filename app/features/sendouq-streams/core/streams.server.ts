@@ -44,17 +44,14 @@ export function cachedStreams() {
 					return -1;
 				}
 
-				// sort by base tier
 				if (aTierIndex !== bTierIndex) {
 					return aTierIndex - bTierIndex;
 				}
 
-				// if base tier is the same, sort by plus
 				if (a.tier?.isPlus !== b.tier?.isPlus) {
 					return a.tier?.isPlus ? -1 : 1;
 				}
 
-				// if tier is the same, sort by viewer count
 				return b.stream.viewerCount - a.stream.viewerCount;
 			});
 		},

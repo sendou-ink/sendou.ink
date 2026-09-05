@@ -47,14 +47,11 @@ export function useMarkNotificationsAsSeen(unseenIds: number[]) {
 const UNSEEN_DOT_GRACE_MS = 10_000;
 
 /**
- * Whether the bell should show its unseen dot. An unseen notification born
- * while the session is already open only counts once it has stayed unseen past
- * a short grace period: one about something the user is already on their way
- * to (e.g. a SendouQ match that just started, with the redirect to the match
- * page a second away) resolves itself right after, and the dot flashing for
- * it would be false signal. Notifications predating the session show the dot
- * right away — anything that was going to resolve them (a loader of the page
- * being landed on) already ran before the first notifications fetch.
+ * Whether the bell shows its unseen dot. A notification born during the session only counts once
+ * unseen past a short grace period: one about something the user is already headed to (a SendouQ
+ * match that just started, redirect a second away) resolves itself right after and the dot would
+ * flash for nothing. Ones predating the session show right away — whatever would resolve them
+ * already ran before the first fetch.
  */
 export function useShowUnseenDot(
 	notifications: Array<{ createdAt: number; seen: number }> | undefined,
@@ -126,7 +123,6 @@ export function useStickyUnseenIds(
 				newUnseenIds.add(id);
 			}
 
-			// optimize render by not updating state if nothing changed
 			if (newUnseenIds.size === prevUnseenIds.size) return prevUnseenIds;
 
 			return newUnseenIds;

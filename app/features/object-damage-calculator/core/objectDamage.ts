@@ -77,8 +77,7 @@ function resolveRelevantKey({
 	if (actualKeys.length === 1) return actualKeys[0];
 
 	for (const [weaponType, weaponIds, damageType, key] of damagePriorities) {
-		// handle alt kits e.g. Splatteshot might have id 10 but Tentatek Splattershot has id 11
-		// but in the context of this function they are one and the same
+		// alt kits (e.g. Tentatek Splattershot) share their base kit's damage
 		const normalizedWeaponId =
 			weapon.type === "MAIN" ? weaponIdToBaseWeaponId(weapon.id) : weapon.id;
 
@@ -290,8 +289,7 @@ export function calculateDamage({
 							const otherMultiplier =
 								multipliers[toCombine.combineWith][receiver];
 
-							// calculate "made up" multiplier that is taking the
-							// weighted average of the two multipliers
+							// "made up" multiplier: weighted average of the two
 							return (
 								(normalMultiplier * actualDamage() +
 									otherMultiplier * otherDamage()) /

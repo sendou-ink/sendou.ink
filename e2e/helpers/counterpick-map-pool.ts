@@ -21,10 +21,7 @@ export function pickedCounterpickMap(
 	return page.getByTestId(`map-pool-${mode}-${stageId}-picked`);
 }
 
-/**
- * Picks the required amount of counterpick maps for every ranked mode, skipping
- * banned ones, and returns what was picked.
- */
+/** Picks the required amount of counterpick maps for every ranked mode, skipping banned ones, and returns them. */
 export async function pickCounterpickMaps(page: Page) {
 	const picked: Array<{ mode: ModeShort; stageId: StageId }> = [];
 	let stageId = FIRST_COUNTERPICK_STAGE_ID;

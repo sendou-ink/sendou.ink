@@ -12,14 +12,13 @@ test.describe("Composition Analyzer", () => {
 
 		await compAnalyzer.selectWeapon(40);
 
-		// First slot should now have the weapon
 		await expect(compAnalyzer.selectedWeapon(0)).toBeVisible();
 		await expect(compAnalyzer.locators.emptyWeaponSlots).toHaveCount(3);
 
 		await compAnalyzer.removeWeapon(0);
 		await expect(compAnalyzer.locators.emptyWeaponSlots).toHaveCount(4);
 
-		// Select 4 weapons to test auto-collapse
+		// a full four weapons auto-collapse the grid
 		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
 
 		await compAnalyzer.selectWeapon(40);
@@ -31,7 +30,6 @@ test.describe("Composition Analyzer", () => {
 
 		await expect(page).toHaveURL(/weapons=/);
 
-		// Weapons should still be selected after reload
 		await page.reload();
 
 		await expect(compAnalyzer.selectedWeapon(0)).toBeVisible();
@@ -52,7 +50,6 @@ test.describe("Composition Analyzer", () => {
 		await compAnalyzer.selectCategorization("special");
 		await expect(compAnalyzer.categorizationRadio("special")).toBeChecked();
 
-		// Grid should be expanded
 		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
 
 		await compAnalyzer.toggleWeaponGrid();
@@ -61,7 +58,6 @@ test.describe("Composition Analyzer", () => {
 		await compAnalyzer.toggleWeaponGrid();
 		await expect(compAnalyzer.locators.categorizationToggle).toBeVisible();
 
-		// Switch categorization and test URL persistence
 		await compAnalyzer.selectCategorization("sub");
 		await expect(page).toHaveURL(/categorization=sub/);
 
@@ -76,18 +72,16 @@ test.describe("Composition Analyzer", () => {
 
 		const damageCombos = compAnalyzer.damageCombos;
 
-		// Both should not be visible initially
 		await expect(damageCombos.root).not.toBeVisible();
 		await expect(compAnalyzer.locators.rangeVisualization).not.toBeVisible();
 
-		// Select two weapons with range data (blaster - ID 210)
+		// 210 is a blaster, which has range data
 		await compAnalyzer.selectWeapon(40);
 		await compAnalyzer.selectWeapon(210);
 
 		await expect(damageCombos.root).toBeVisible();
 		await expect(compAnalyzer.locators.rangeVisualization).toBeVisible();
 
-		// Should be expanded by default
 		await expect(damageCombos.content).toBeVisible();
 
 		await damageCombos.toggleCollapsed();
@@ -110,13 +104,11 @@ test.describe("Composition Analyzer", () => {
 		const damageCombos = compAnalyzer.damageCombos;
 		await expect(damageCombos.root).toBeVisible();
 
-		// Part 1: Test Sub Defense slider
 		const initialDamageValues =
 			await damageCombos.damageValues.allTextContents();
 
 		await damageCombos.subDefenseSlider.fill("57");
 
-		// Damage of sub weapons should be reduced
 		const newDamageValues = await damageCombos.damageValues.allTextContents();
 		expect(initialDamageValues.join(",")).not.toEqual(
 			newDamageValues.join(","),
@@ -124,14 +116,13 @@ test.describe("Composition Analyzer", () => {
 
 		await damageCombos.subDefenseSlider.fill("0");
 
-		// Part 2: Test Ink Resistance slider
 		const initialInkTimes = await damageCombos.inkTimes.allTextContents();
 
 		await damageCombos.inkResistanceSlider.fill("57");
 
 		const newInkTimes = await damageCombos.inkTimes.allTextContents();
 
-		// If there were ink times, they should have increased or more ink combos should appear
+		// ink resistance makes ink times longer or reveals more ink combos
 		if (initialInkTimes.length > 0 || newInkTimes.length > 0) {
 			const initialTotalFrames = initialInkTimes.reduce(
 				(sum, t) => sum + (Number.parseInt(t, 10) || 0),
@@ -144,7 +135,6 @@ test.describe("Composition Analyzer", () => {
 			expect(newTotalFrames).toBeGreaterThanOrEqual(initialTotalFrames);
 		}
 
-		// Part 3: Test damage type filtering
 		const firstDamageTypeLabel = damageCombos.damageTypeLabels.first();
 		const damageTypeText = await firstDamageTypeLabel.textContent();
 
@@ -159,7 +149,6 @@ test.describe("Composition Analyzer", () => {
 			damageTypeText ?? "",
 		);
 
-		// Clicking a filtered item restores it
 		await damageCombos.filteredItems.first().click();
 		await expect(damageCombos.filteredItems).toHaveCount(filteredCount - 1);
 	});

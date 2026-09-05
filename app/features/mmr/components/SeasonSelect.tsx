@@ -6,10 +6,8 @@ import {
 import * as Seasons from "~/features/mmr/core/Seasons";
 
 /**
- * Select for choosing one of the started seasons, grouped by the year the season started in.
- *
- * @param label - Localized word for "season", used both as the select's label and as the prefix of every season's name.
- * @param isSeasonDisabled - If given, seasons it returns `true` for can't be selected.
+ * Select of the started seasons, grouped by start year. `label` is the localized word for
+ * "season", used as the label and as each season name's prefix; `isSeasonDisabled` blocks the seasons it returns `true` for.
  */
 export function SeasonSelect({
 	label,

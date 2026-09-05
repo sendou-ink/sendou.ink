@@ -1,11 +1,9 @@
 /**
  * Golden-file tests for the PlayerStatus event over every fixture in
- * player-status/, mirroring objective.test.ts. The event is emitted by the
- * ObjectiveDetector alongside each counter read — a positive fixture must
- * produce both events off one parse, with the icon-strip statuses and the
- * shared timer matching the hand-corrected labels. Other detectors' gates
- * must stay quiet on these frames (they show live gameplay HUD, which only
- * the objective family may claim — death excepted, see objective.test.ts).
+ * player-status/. The event is emitted by the ObjectiveDetector alongside each
+ * counter read — a positive fixture must produce both off one parse, with the
+ * statuses and shared timer matching the labels. Other detectors' gates must
+ * stay quiet on these frames (death excepted, see objective.test.ts).
  */
 
 import assert from "node:assert/strict";

@@ -279,8 +279,7 @@ describe("Tournament match page", () => {
 	describe("locked match", () => {
 		test("returns error when reporting score for a match waiting on previous matches", async () => {
 			await setActiveRosterAction();
-			// the state under test is one an earlier match of a larger bracket puts this
-			// row in, not one the match was created in
+			// a state an earlier match of a larger bracket puts this row in, not one it was created in
 			// biome-ignore lint/plugin: written rather than seeded, see above
 			await db
 				.updateTable("TournamentMatch")
@@ -295,8 +294,7 @@ describe("Tournament match page", () => {
 	});
 
 	describe("BYE matches", () => {
-		// as above: a BYE and a TBD opponent are states the surrounding bracket
-		// produces, so they are written here rather than seeded
+		// as above: a BYE and a TBD opponent are states the surrounding bracket produces, so written not seeded
 		test("404s when accessing a BYE match", async () => {
 			// biome-ignore lint/plugin: as above
 			await db

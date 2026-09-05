@@ -1,27 +1,17 @@
 /**
- * PlayerStatus: the per-player state read off the eight squid/octo icons
- * flanking the match timer, emitted by the ObjectiveDetector alongside each
- * Objective read (same frame, same `time`, so callers can pair the two).
- *
- * Per slot, three pixel-class fractions decide the state (rois.ts documents
- * the calibration): an alive icon's body is saturated team ink; holding
- * special washes the body into a bright pale glow that PULSES — bright
- * frames light the shoulder probe past the glow floor, trough frames only
- * read as pale — and a splatted icon is an unsaturated grey/dark X with
- * none of the three. Three strip geometries exist, named by which side
- * sits at the packed pitch: "even", "narrow-right" (the casted spectator
- * HUD's usual arrangement — S3 POV footage draws it too) and its mirror
- * "narrow-left" (whose right column nearly coincides with even's). White
- * camera badges under the right team prove a broadcast outright, but
- * broadcasts can hide them while keeping their geometry, so a badge-less
- * frame picks whichever geometry reads more decisively (bodies far from
- * the dead threshold on either side) instead of assuming even — with two
- * positional refinements: a decisive slot-comb win proves badge-less
- * narrow-left outright, and a history-less near-tie stays with
- * narrow-right (see pickLayout). The spectator wash glow is pale, so on
- * the narrow layouts only the unsaturated glow fraction counts toward
- * ready (and against dead) — saturated backdrop leaking over a dead
- * icon's shoulder cannot fake or suppress a state.
+ * PlayerStatus: per-player state off the eight squid/octo icons flanking the
+ * timer, emitted alongside each Objective read (same frame, same `time`).
+ * Three pixel-class fractions decide a slot (calibration in rois.ts): alive =
+ * saturated team-ink body; special held = bright pale wash that PULSES (bright
+ * frames light the shoulder probe, trough frames only read pale); splatted =
+ * unsaturated grey X with none of the three. Three geometries, named by which
+ * side sits at the packed pitch: "even", "narrow-right" (usual spectator HUD;
+ * S3 POV draws it too) and "narrow-left" (right column nearly coincides with
+ * even's). Camera badges prove a broadcast, but broadcasts can hide them, so a
+ * badge-less frame picks the geometry reading more decisively, with a slot-comb
+ * win proving narrow-left and a history-less near-tie staying narrow-right
+ * (pickLayout). On narrow layouts only the unsaturated glow counts toward ready
+ * so saturated backdrop leaks cannot fake or suppress a state.
  */
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
@@ -78,38 +68,26 @@ export type PlayerStatusFlags = [boolean, boolean, boolean, boolean];
 export type PlayerStatusLayout = "even" | "narrow-right" | "narrow-left";
 
 export interface PlayerStatusData {
-	/**
-	 * seconds shown on the match timer at the read, same value as the
-	 * Objective event from the same frame — the key for pairing the two
-	 */
+	/** match timer seconds, same as the paired Objective event's */
 	time: number | null;
 	/** special held per slot, [left team, right team], slots left-to-right */
 	special: [PlayerStatusFlags, PlayerStatusFlags];
 	/** splatted per slot, same arrangement */
 	dead: [PlayerStatusFlags, PlayerStatusFlags];
 	/**
-	 * which icon-strip geometry the frame showed, named by which side's
-	 * icons sit at the packed ~76px pitch ("even" = both sides at the wide
-	 * ~99px pitch). Pure geometry, never footage type: S3 first-person POV
-	 * footage draws both narrow arrangements in steady state (the
-	 * 2026-08-11 Um'ami VoD measures identical to narrow-right, the
-	 * 2026-08-22 Sendou VoD to narrow-left), so only `cast` is broadcast
-	 * evidence
+	 * strip geometry, named by which side sits at the packed ~76px pitch ("even"
+	 * = both at ~99px). Pure geometry, never footage type: S3 POV draws both
+	 * narrow arrangements (2026-08-11 Um'ami VoD = narrow-right, 2026-08-22
+	 * Sendou VoD = narrow-left), so only `cast` is broadcast evidence
 	 */
 	layout: PlayerStatusLayout;
-	/**
-	 * true when the white camera badges proved a casted spectator HUD on
-	 * this frame; null otherwise — badge absence proves nothing (broadcasts
-	 * can hide them while keeping the geometry), so this never reads false
-	 */
+	/** true when camera badges proved a cast; never false since badge absence proves nothing */
 	cast: true | null;
 }
 
 /**
- * Timeline content guard: reads merge only while every slot state matches,
- * so each death/respawn/special flip becomes its own event. `time` is not
- * compared (it ticks every second) and neither is `layout` (a camera-style
- * change with identical states is the same state).
+ * Timeline content guard: reads merge only while every slot state matches.
+ * `time` (ticks every second) and `layout` (same states = same state) are not compared.
  */
 export function samePlayerStatusData(a: unknown, b: unknown): boolean {
 	const da = a as PlayerStatusData;
@@ -134,13 +112,10 @@ interface SlotRead {
 }
 
 /**
- * Parse the icon strip of a frame the objective gate already anchored as
- * the in-match counter HUD. Callers emit the event only alongside a
- * successful Objective read — the counter parse carries the lookalike
- * rejection for both. `prevLayout` is the layout of the caller's previous
- * read (sticky: a badge-less frame only switches geometry when the other
- * layout wins the decisiveness score by a clear margin — the footage type
- * does not flip frame to frame, but a busy scene can nudge the score).
+ * Parse the icon strip of a frame the objective gate anchored; emitted only
+ * alongside a successful Objective read (its lookalike rejection covers both).
+ * `prevLayout` is sticky: a badge-less frame only switches geometry on a clear
+ * decisiveness margin, since a busy scene can nudge the score.
  */
 export function parsePlayerStatus(
 	frame: Mat,
@@ -235,16 +210,12 @@ const ALL_LAYOUTS: readonly PlayerStatusLayout[] = [
 ];
 
 /**
- * Which layouts a badge-less frame may flip to from an established one on
- * score alone. The narrow-left right column nearly coincides with even's,
- * so decisiveness cannot tell those two apart — and a wrong even pick on
- * broadcast footage self-heals (the next badge frame proves the
- * arrangement) while a wrong narrow-left pick on POV footage never would
- * (POV footage shows no badges). So on score alone narrow-left is only
- * reachable via badges or from an established narrow-right (the specced
- * POV switching teams mid-game, attested in the AREA CUP VoD's badge-less
- * overhead stretches); a fresh history-less frame may still open on
- * narrow-left through the left-column gate (see pickLayout).
+ * Layouts a badge-less frame may flip to on score alone. Decisiveness cannot
+ * tell even from narrow-left (right columns coincide); a wrong even pick on a
+ * broadcast self-heals at the next badge frame while a wrong narrow-left on POV
+ * never would, so narrow-left is only reachable via badges or from an
+ * established narrow-right (specced POV switching teams, AREA CUP VoD). A fresh
+ * frame may still open narrow-left through the left-column gate (pickLayout).
  */
 const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
 	{
@@ -254,35 +225,22 @@ const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
 	};
 
 /**
- * Camera badges prove a broadcast arrangement outright (each arrangement
- * has its own badge columns). Badge-less frames are NOT proven even —
- * broadcasts can hide the badges while keeping their icon geometry — so
- * the candidate geometries are scored and the one whose body reads land
- * decisively on either side of the dead threshold wins. A mispicked
- * geometry puts outer-slot boxes between icons or on backdrop, which reads
- * mid-range ink — exactly what the score punishes; boxes on featureless
- * dark backdrop still read "decisively dead" though, so a busy scene can
- * nudge a frame's score across — the sticky margin keeps a single noisy
- * frame from flipping an established layout, and SCORED_FLIPS keeps the
- * even/narrow-left false friends from ever trading places without badge
- * proof.
- *
- * Three decisions decisiveness cannot make on its own:
- * - Badge-less narrow-left (attested in the sendou-triton VoD) scores
- *   below narrow-right even on true narrow-left frames, so a decisive
- *   slot-comb win (see combContrast) overrides everything but badges —
- *   comb evidence is positional and cannot confuse the even/narrow-left
- *   false friends because only their differing left columns can produce a
- *   decisive lead.
- * - A history-less even-vs-narrow-right near-tie (busy backdrops mis-rank
- *   broadcast footage): the fresh pick stays narrow-right unless it reads
- *   under the floor or even leads decisively (STATUS_FRESH_* in rois.ts).
- * - Steady-state badge-less narrow-left POV footage over pale backdrops
- *   (the 2026-08-22 Sendou POV VoD) drowns the comb — gaps read as
- *   iconness — so a fresh narrow-left pick may also come from the left
- *   column, the only one where narrow-left and even differ, winning the
- *   per-side decisiveness outright, with a readable rival left comb as
- *   the veto (STATUS_FRESH_NARROW_LEFT_* in rois.ts).
+ * Badges prove an arrangement outright. Badge-less frames are NOT proven even,
+ * so geometries are scored by how decisively body reads land on either side of
+ * the dead threshold: a mispicked geometry puts outer boxes on backdrop, which
+ * reads mid-range ink. Featureless dark backdrop still reads "decisively dead",
+ * so the sticky margin stops one noisy frame flipping an established layout and
+ * SCORED_FLIPS keeps the even/narrow-left false friends from trading places.
+ * Three decisions decisiveness cannot make alone:
+ * - badge-less narrow-left (sendou-triton VoD) scores below narrow-right even
+ *   when true, so a decisive slot-comb win (combContrast) overrides all but
+ *   badges — positional, so only the differing left columns can lead;
+ * - a history-less even-vs-narrow-right near-tie stays narrow-right unless it
+ *   reads under the floor or even leads decisively (STATUS_FRESH_*);
+ * - badge-less narrow-left POV over pale backdrops (2026-08-22 Sendou VoD)
+ *   drowns the comb, so a fresh narrow-left pick may also come from the left
+ *   column winning decisiveness, vetoed by a readable rival left comb
+ *   (STATUS_FRESH_NARROW_LEFT_*).
  */
 function pickLayout(
 	frame: Mat,
@@ -323,13 +281,9 @@ function pickLayout(
 		return { layout: "narrow-left", scores };
 	}
 	if (prevLayout) {
-		// flips away from narrow-right additionally need positional
-		// corroboration: S3 POV footage draws that geometry, but while the
-		// POV player is dead the strip shrinks toward the timer and those
-		// transient frames spike the challenger decisiveness past the sticky
-		// margin (the 2026-08-11 POV VoD locked into narrow-left that way) —
-		// a real arrangement change moves the slot comb with it, a shrink
-		// does not
+		// flips away from narrow-right also need comb corroboration: on S3 POV the
+		// strip shrinks toward the timer while the POV player is dead, spiking the
+		// challenger past the sticky margin (2026-08-11 VoD locked into narrow-left)
 		const challengers = SCORED_FLIPS[prevLayout].filter(
 			(layout) =>
 				prevLayout !== "narrow-right" ||
@@ -388,20 +342,13 @@ function sideDecisiveness(reads: SlotRead[]): number {
 }
 
 /**
- * State from the pixel-class fractions, with a confidence scaled by the
- * distance to the nearest decision boundary (1 at twice the threshold / at
- * zero). On the narrow layouts a ready icon is always the wash, which
- * replaces the body's team ink — an ink-heavy body there means the bright
- * read is backdrop leaking past the icon edge, not a held special, unless
- * the body also reads strongly pale (the graded STATUS_READY_*WASH*
- * guards) — and the wash glow is pale, so only the
- * unsaturated glow fraction counts (a saturated bright leak, like sky over
- * a dead icon's shoulder, is not a wash — see STATUS_GLOW_MAX_SPREAD).
- * A pale backdrop can still light a DEAD icon's shoulder past the ready
- * floor (the grey X passes every ink guard), so narrow-layout ready reads
- * additionally need the wash's pale body — and for the same reason the
- * dead read there ignores the shoulder and trusts the body classes alone
- * (see STATUS_READY_MIN_WASH_BODY_PALE / STATUS_DEAD_MAX_SHOULDER_GLOW).
+ * State from the class fractions; confidence scales with distance to the
+ * nearest boundary (1 at twice the threshold / at zero). On narrow layouts the
+ * wash replaces the body's ink, so an ink-heavy body means backdrop leak unless
+ * strongly pale too (graded STATUS_READY_*WASH* guards), and only unsaturated
+ * glow counts (STATUS_GLOW_MAX_SPREAD). A pale backdrop can still light a DEAD
+ * icon's shoulder, so narrow ready reads also need the wash's pale body and the
+ * narrow dead read trusts the body classes alone.
  */
 function classifySlot(
 	bodyInk: number,
@@ -488,15 +435,10 @@ function classFractions(
 }
 
 /**
- * Slot-comb contrast per layout and side: mean iconness (ink-or-pale
- * column fraction over the strip's body band) at the layout's slot centers
- * minus the mean at its between-slot gap midpoints, maximized over a small
- * global shift. Icon bodies concentrate iconness at true centers while the
- * V-notches between kites drop it, so a rigid comb at the wrong pitch
- * cannot score all four slots at once — positional evidence orthogonal to
- * body decisiveness, strong enough to prove the badge-less narrow-left
- * arrangement (see STATUS_NARROW_LEFT_COMB_* in rois.ts) and to veto the
- * false-friend fresh narrow-left pick off its left half.
+ * Slot-comb contrast per layout and side: mean iconness (ink-or-pale column
+ * fraction) at slot centers minus at gap midpoints, maximized over a small
+ * shift. A rigid comb at the wrong pitch cannot score all four slots at once:
+ * positional evidence orthogonal to body decisiveness (STATUS_NARROW_LEFT_COMB_*).
  */
 function combScores(frame: Mat): Record<PlayerStatusLayout, [number, number]> {
 	const profiles = STATUS_COMB_SIDE_SPANS.map(([x0, x1]) =>

@@ -1,7 +1,7 @@
 import { ordering } from "./engine/create/seeding";
 
 export interface FollowUpBracketSource {
-	/** Standings of the source bracket, best placements first. Tied placements (e.g. the winner of each group) form the tiers that seeding keeps intact. */
+	/** Best placements first. Tied placements (e.g. the winner of each group) form the tiers seeding keeps intact. */
 	standings: Array<{
 		tournamentTeamId: number;
 		placement: number;
@@ -27,21 +27,16 @@ interface Constraints {
 const MAX_SEARCH_NODES = 10_000;
 
 /**
- * Reorders teams advancing into a single or double elimination bracket so that:
+ * Reorders teams advancing into an elimination bracket so that:
  *
- * - teams sharing a source group spread evenly across the bracket's sections and can
- *   meet again only as late as the bracket allows (e.g. 4 groups of 4 into a 16 bracket:
- *   every quarter holds one team per group, so rivals can rematch in the semis at the earliest)
- * - teams that already faced each other do not rematch in round 1 (relevant e.g. when
- *   a single Swiss group feeds a top cut)
- * - placement tiers stay intact: a team never takes a seed reserved for a better
- *   placement, keeping byes and favorable lines with the top placing teams. The
- *   exception is the bottom half of a bracket sourced from a single group, where
- *   placements may be swapped to avoid round 1 rematches.
+ * - teams sharing a source group spread evenly and can rematch only as late as the bracket allows
+ *   (e.g. 4 groups of 4 into a 16 bracket: one team per group in every quarter, rematch in the semis at earliest)
+ * - teams that already faced each other do not rematch in round 1 (e.g. a single Swiss group feeding a top cut)
+ * - placement tiers stay intact: a team never takes a seed reserved for a better placement, except in
+ *   the bottom half of a bracket sourced from a single group, where placements may swap to avoid rematches
  *
- * Within those constraints the incoming order changes as little as possible. When the
- * constraints cannot all be satisfied they are relaxed step by step, and as the last
- * resort the teams are returned in the incoming order.
+ * The incoming order changes as little as possible. Unsatisfiable constraints are relaxed step by
+ * step, as the last resort the incoming order is returned.
  */
 export function forFollowUpBracket({
 	teams,
@@ -129,10 +124,10 @@ function resolveTeamMeta(teams: number[], sources: FollowUpBracketSource[]) {
 	return metaByTeamId;
 }
 
-/** When one group feeds the whole bracket its placements are all distinct and there
- * would be no freedom to avoid rematches. Mirroring how brackets are commonly
- * re-seeded by hand, the top half keeps its exact placements while the bottom half
- * placements become interchangeable. */
+/**
+ * One group feeding the whole bracket has all distinct placements, leaving no freedom to avoid rematches.
+ * As brackets are commonly re-seeded by hand, the top half keeps its placements, the bottom half's are interchangeable.
+ */
 function poolSingleGroupBottomHalf(
 	teams: number[],
 	sources: FollowUpBracketSource[],
@@ -178,9 +173,7 @@ function resolveClasses(teams: number[], metaByTeamId: Map<number, TeamMeta>) {
 	return classes;
 }
 
-/** The largest aligned lineup block a group's teams can be kept from sharing: with T
- * teams of a group in the bracket they fit into T disjoint blocks of bracketSize / T
- * slots, delaying their meetings the furthest the bracket structure allows. */
+/** With T teams of a group in the bracket they fit into T disjoint blocks of bracketSize / T slots, delaying their meetings the furthest. */
 function resolveIdealBlockSizes(
 	teams: number[],
 	metaByTeamId: Map<number, TeamMeta>,
@@ -228,9 +221,7 @@ function* relaxationLadder(
 	}
 }
 
-/** Depth-first search assigning the seeds best first, always trying the highest
- * ranked remaining team of the seed's tier first: the first solution found is the
- * one closest to the incoming order. */
+/** DFS assigning seeds best first, trying the highest ranked remaining team of the tier first, so the first solution is closest to the incoming order. */
 function search({
 	teams,
 	classes,

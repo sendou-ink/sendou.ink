@@ -1,21 +1,12 @@
 const PREP_TIME_MINUTES = 6.5;
 const MINUTES_PER_GAME = 6.5;
 
-/**
- * Calculates the max duration for a match considered acceptable.
- * @param maxGamesCount - The maximum number of games in the match
- * @returns Time in minutes (preparation time + game time)
- */
+/** Acceptable max duration of a match in minutes (preparation time + game time). */
 export function totalMatchTime(maxGamesCount: number): number {
 	return PREP_TIME_MINUTES + MINUTES_PER_GAME * maxGamesCount;
 }
 
-/**
- * Calculates the progress percentage based on elapsed time.
- * @param elapsedMinutes - Time elapsed since match start
- * @param totalMinutes - Total expected match duration
- * @returns Percentage value (0-100+)
- */
+/** Elapsed share of the expected duration as a percentage (0-100+). */
 export function progressPercentage(
 	elapsedMinutes: number,
 	totalMinutes: number,
@@ -23,11 +14,7 @@ export function progressPercentage(
 	return (elapsedMinutes / totalMinutes) * 100;
 }
 
-/**
- * Generates marker positions for each game in the match timeline.
- * @param maxGamesCount - The maximum number of games in the match
- * @returns Array of game markers with their position as a percentage
- */
+/** Position of each game on the match timeline as a percentage. */
 export function gameMarkers(maxGamesCount: number): Array<{
 	gameNumber: number;
 	percentage: number;
@@ -53,11 +40,7 @@ export function gameMarkers(maxGamesCount: number): Array<{
 	return markers;
 }
 
-/**
- * Determines the current status of a match based on time and progress.
- * @param params - Object containing elapsed time, games completed, and max games
- * @returns "normal" if on track, "warning" if behind schedule, "error" if overtime
- */
+/** "normal" if on track, "warning" if behind schedule, "error" if overtime. */
 export function matchStatus({
 	elapsedMinutes,
 	gamesCompleted,

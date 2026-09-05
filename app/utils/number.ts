@@ -1,30 +1,11 @@
 import * as R from "remeda";
 
-/**
- * Rounds a number to a specified number of decimal places.
- *
- * @example
- * ```typescript
- * roundToNDecimalPlaces(3.14159); // returns 3.14
- * roundToNDecimalPlaces(3.14159, 3); // returns 3.142
- * roundToNDecimalPlaces(2.5, 0); // returns 3
- * ```
- */
+/** Rounds to `n` decimal places (default 2). */
 export function roundToNDecimalPlaces(num: number, n = 2) {
 	return Number((Math.round(num * 10 ** n) / 10 ** n).toFixed(n));
 }
 
-/**
- * Truncates a number to a specified number of decimal places without rounding.
- *
- * @example
- * ```typescript
- * cutToNDecimalPlaces(3.9999, 2); // returns 3.99
- * cutToNDecimalPlaces(3.12, 1); // returns 3.1
- * cutToNDecimalPlaces(100, 2); // returns 100
- * cutToNDecimalPlaces(3.0001, 2); // returns 3
- * ```
- */
+/** Truncates to `n` decimal places without rounding, dropping trailing zeros (3.0001 → 3). */
 export function cutToNDecimalPlaces(num: number, n = 2) {
 	const multiplier = 10 ** n;
 	// Round away floating point representation error (e.g. 0.29 * 100 = 28.999...) before truncating
@@ -34,41 +15,14 @@ export function cutToNDecimalPlaces(num: number, n = 2) {
 	return Number(n > 0 ? result.replace(/\.?0+$/, "") : result);
 }
 
-/**
- * Calculates the average (arithmetic mean) of an array of numbers.
- * Returns 0 if the array is empty.
- *
- * @example
- * ```typescript
- * averageArray([2, 4, 6, 8]); // returns 5
- * averageArray([-2, -4, -6, -8]); // returns -5
- * averageArray([10, -10, 20, -20]); // returns 0
- * averageArray([42]); // returns 42
- * averageArray([]); // returns 0
- * ```
- */
+/** Arithmetic mean, 0 for an empty array. */
 export function averageArray(arr: number[]) {
 	if (arr.length === 0) return 0;
 
 	return R.sum(arr) / arr.length;
 }
 
-/**
- * Safely parses a string into a number, returning `null` if the input is `null`,
- * empty, or not a valid number.
- *
- * Trims whitespace from the input before parsing. If the trimmed string is empty
- * or cannot be converted to a valid number, returns `null`.
- *
- * @example
- * ```typescript
- * safeNumberParse("42"); // returns 42
- * safeNumberParse("  3.14 "); // returns 3.14
- * safeNumberParse(""); // returns null
- * safeNumberParse("abc"); // returns null
- * safeNumberParse(null); // returns null
- * ```
- */
+/** Parses a trimmed string into a number; `null` for `null`, empty or non-numeric input. */
 export function safeNumberParse(value: string | null) {
 	if (value === null) return null;
 
@@ -79,16 +33,7 @@ export function safeNumberParse(value: string | null) {
 	return Number.isNaN(result) ? null : result;
 }
 
-/**
- * Share of games won as a percentage, or `null` when no games were played.
- * Callers decide how to round it and what to show in place of a missing rate.
- *
- * @example
- * ```typescript
- * winPercentage(3, 1); // returns 75
- * winPercentage(0, 0); // returns null
- * ```
- */
+/** Share of games won as an unrounded percentage, or `null` when no games were played. */
 export function winPercentage(wins: number, losses: number) {
 	const played = wins + losses;
 	if (played === 0) return null;

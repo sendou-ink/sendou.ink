@@ -50,11 +50,7 @@ const createGroup = async (
 	return group.id;
 };
 
-/**
- * Gives every group the same `latestActionAt`, so the sort comparator's recency
- * tie-breaker stays neutral and the assertion does not depend on whether the group
- * inserts straddle a second boundary (which they can on slow CI).
- */
+/** Gives every group the same `latestActionAt` so the recency tie-breaker stays neutral even when inserts straddle a second boundary (slow CI). */
 const alignLatestActionAt = async (groupIds: number[]) => {
 	const at = new Date();
 

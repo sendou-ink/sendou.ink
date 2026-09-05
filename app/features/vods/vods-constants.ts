@@ -1,4 +1,4 @@
-/** The `type` column of `UnvalidatedVideo` and the `Video` view is typed off this. */
+/** Types `UnvalidatedVideo.type`. */
 export const videoMatchTypes = [
 	"TOURNAMENT",
 	"CAST",

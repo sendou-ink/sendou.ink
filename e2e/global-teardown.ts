@@ -22,8 +22,7 @@ async function globalTeardown(_config: FullConfig) {
 			);
 
 			if (process.platform === "win32" && server.pid) {
-				// the whole process tree needs to be killed on Windows to not leave
-				// the ports occupied
+				// Windows needs the whole process tree killed or the ports stay occupied
 				try {
 					execSync(`taskkill /pid ${server.pid} /T /F`, { stdio: "pipe" });
 				} catch {
@@ -40,7 +39,7 @@ async function globalTeardown(_config: FullConfig) {
 		new Promise((resolve) => setTimeout(resolve, 2000)),
 	]);
 
-	// Stop MinIO if we started it (check for marker file)
+	// only stop MinIO if we started it
 	if (fs.existsSync(MINIO_MARKER_FILE)) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
 		console.log("Stopping MinIO...");

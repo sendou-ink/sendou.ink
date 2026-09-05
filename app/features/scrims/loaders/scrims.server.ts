@@ -81,11 +81,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	};
 };
 
-/**
- * How the viewer's teams relate to the posts they could request: the material
- * the fit indicators on the post cards and in the request dialog are resolved
- * from, one entry per post.
- */
+/** How the viewer's teams relate to the requestable posts, one entry per post: what the fit indicators on cards and in the request dialog resolve from. */
 async function rosterAvailability({
 	posts,
 	teams,

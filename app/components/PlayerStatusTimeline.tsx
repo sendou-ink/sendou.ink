@@ -1,12 +1,8 @@
 /**
- * Per-player status bands over a game's scanned icon-strip reads: one row
- * per player (weapon icon as the label), a band while the player was
- * splatted and another while they held their special, both teams stacked.
- * Rendered above the ObjectiveTimeline chart on the same `t` seconds axis —
- * pass `domain` so both span the same range. Reads re-confirm an unchanged
- * state every few seconds; a longer sample gap means the HUD was not
- * observed, so bands never bridge across one (the state there is unknown,
- * not continued).
+ * Per-player splatted / special-held bands over a game's scanned icon-strip reads, rendered above
+ * the ObjectiveTimeline on the same `t` axis (pass `domain` to share the range). Reads re-confirm
+ * an unchanged state every few seconds; a longer gap means the HUD was not observed, so bands never
+ * bridge across one.
  */
 import { useTranslation } from "react-i18next";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -150,10 +146,8 @@ interface StatusSpan {
 }
 
 /**
- * Contiguous stretches where the flag held true: a span opens at its first
- * true read and closes at the read that shows false — or one second past
- * its last confirmation when the next read is too far away (or the series
- * ends) to know what happened in between.
+ * Contiguous stretches where the flag held true: opens at the first true read, closes at the read
+ * showing false, or one second past the last confirmation when the next read is too far away.
  */
 export function statusSpans(
 	sorted: readonly PlayerStatusTimelineSample[],

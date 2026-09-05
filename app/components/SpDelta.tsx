@@ -1,10 +1,6 @@
 import { roundToNDecimalPlaces } from "~/utils/number";
 
-/**
- * An SP change, rendered as a colored arrow followed by the size of the change.
- * A change of exactly zero gets no arrow. Meant to be placed in a flex or grid
- * container that spaces the two apart.
- */
+/** SP change as a colored arrow (none for zero) and the size; place in a flex/grid container spacing the two. */
 export function SpDelta({ diff }: { diff: number }) {
 	const rounded = roundToNDecimalPlaces(diff);
 

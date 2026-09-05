@@ -34,11 +34,7 @@ type ReceiverTranslation =
 	| { key: string }
 	| { weaponKey: string; suffixKey: string };
 
-/**
- * Maps each damage receiver to the i18n key(s) describing the object it represents. Some
- * receivers are a plain weapon/mode name, others combine a weapon name with a suffix (e.g.
- * "<weapon> Canopy"). Consumed via {@link translateDamageReceiver}.
- */
+/** i18n key(s) per damage receiver: a plain weapon/mode name or a weapon name plus a suffix ("<weapon> Canopy"). */
 const damageReceiverTranslations: Record<DamageReceiver, ReceiverTranslation> =
 	{
 		Chariot: { key: "weapons:SPECIAL_12" },
@@ -99,10 +95,7 @@ const damageReceiverTranslations: Record<DamageReceiver, ReceiverTranslation> =
 		},
 	};
 
-/**
- * Resolves the localized display name of a damage receiver using the given i18next `t` function.
- * The `weapons`, `analyzer` and `game-misc` namespaces must be available to the caller.
- */
+/** Localized name of a damage receiver; needs the `weapons`, `analyzer` and `game-misc` namespaces. */
 export function translateDamageReceiver<Ns extends Namespace>(
 	t: TFunction<Ns>,
 	receiver: DamageReceiver,
@@ -116,11 +109,7 @@ export function translateDamageReceiver<Ns extends Namespace>(
 	});
 }
 
-/**
- * The suffix-only localized label of a damage receiver (e.g. "Shield", "Weak Point"), or `null`
- * when the receiver is a plain weapon/mode name with no suffix. Used to disambiguate the parts of
- * a multi-part object (e.g. Big Bubbler's shield vs. weak point) without repeating the weapon name.
- */
+/** Suffix-only label ("Shield", "Weak Point") to tell apart the parts of a multi-part object, or `null`. */
 export function damageReceiverSuffix<Ns extends Namespace>(
 	t: TFunction<Ns>,
 	receiver: DamageReceiver,

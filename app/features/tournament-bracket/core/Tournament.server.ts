@@ -35,9 +35,7 @@ import {
 	type TournamentStream,
 } from "./Tournament";
 
-/**
- * Everything a tournament is made of including brackets and streams.
- */
+/** Everything a tournament is made of including brackets and streams. */
 export async function tournamentData(tournamentId: number) {
 	const ctx = await TournamentRepository.findById(tournamentId);
 	if (!ctx) return null;
@@ -74,11 +72,7 @@ export async function tournamentData(tournamentId: number) {
 	};
 }
 
-/**
- * Live streams of the tournament read fresh from the database, bypassing the tournament
- * data cache. The streams view and bracket views ship these; the cached copy (read once
- * per cache fill) only serves the server-side consumers of running tournaments.
- */
+/** Read fresh, bypassing the cache whose copy (read once per fill) only serves server-side consumers. */
 export async function fetchTournamentStreams(
 	tournamentId: number,
 ): Promise<TournamentStream[]> {
@@ -117,27 +111,20 @@ export async function fetchTournamentStreams(
 
 export type TournamentData = NonNullable<Unwrapped<typeof tournamentData>>;
 
-/**
- * What the tournament layout ships: everything every view needs and nothing a single view
- * needs. Match data is loaded per bracket by the views that render brackets.
- */
+/** What the layout ships: everything every view needs. Match data is loaded per bracket by the bracket views. */
 export type TournamentLayoutData = {
 	ctx: TournamentData["ctx"];
 	bracketsMeta: BracketDerivedMeta[];
 };
 
-/**
- * A tournament team as the tournament layout ships it: no per member profile data,
- * map pool or invite code. See {@link tournamentTeamsFullCached} for those.
- */
+/** No per member profile data, map pool or invite code, see {@link tournamentTeamsFullCached} for those. */
 export type TournamentDataTeam = Omit<
 	TournamentRepository.FindById["teams"][number],
 	"teamLogoUrl" | "pickupAvatarUrl" | "inviteCode"
 > & {
 	/**
-	 * Logo of the linked team, falling back to the pickup avatar once the tournament has
-	 * started. The views that show pickup avatars before that (own team, organizer views)
-	 * read them off {@link tournamentTeamsFullCached}, which censors per viewer.
+	 * Linked team logo, falling back to the pickup avatar once started. Views showing pickup avatars
+	 * before that (own team, organizer) read them off {@link tournamentTeamsFullCached}, censored per viewer.
 	 */
 	logoUrl: string | null;
 };
@@ -149,12 +136,8 @@ type TournamentVisibilityCtx = Pick<
 >;
 
 /**
- * Ensures the tournament may be seen by the given user. Draft tournaments are only visible
- * to their organizers.
- *
- * Every loader under the tournament layout route must run this (normally via
- * {@link tournamentFromParams}). They are each reachable on their own via single fetch,
- * without the layout loader (and its check) ever running.
+ * Every loader under the tournament layout must run this (normally via {@link tournamentFromParams}):
+ * single fetch reaches each without the layout loader's check.
  *
  * @throws {Response} 404 if the tournament is a draft the user is not an organizer of
  */
@@ -171,11 +154,7 @@ export function requireTournamentVisible({
 	throw new Response(null, { status: 404 });
 }
 
-/**
- * Throws an error toast unless the user is an organizer of the tournament. For guarding
- * a single `_action` branch; whole-route guards use {@link tournamentFromParams} with
- * `for: "organizer"` instead.
- */
+/** Guards a single `_action` branch; whole-route guards use {@link tournamentFromParams} with `for: "organizer"`. */
 export function requireTournamentOrganizer(
 	tournament: Tournament,
 	user: AuthenticatedUser,
@@ -184,7 +163,7 @@ export function requireTournamentOrganizer(
 	errorToastIfFalsy(tournament.isOrganizer(user), message);
 }
 
-/** Throws an error toast unless the user is an admin of the tournament. */
+/** Throws an error toast unless the user is an admin. */
 export function requireTournamentAdmin(
 	tournament: Tournament,
 	user: AuthenticatedUser,
@@ -197,15 +176,11 @@ type TournamentFromParamsOptions = {
 };
 
 /**
- * The shared preamble of `to.$id.*` loaders and actions: parses the tournament id from the
- * route params (404 on invalid), loads the tournament and runs the access guard.
+ * Preamble of `to.$id.*` loaders and actions: parses the id (404 on invalid), loads and guards.
  *
- * - `view`: anyone the tournament is visible to; cached read. The tournament is the same
- *   for every viewer, so one shared instance serves them all, amortizing bracket building.
- * - `action`: any logged-in user; fresh read from the database for actions that do their
- *   own per `_action` authorization.
- * - `organizer` / `admin`: like `action` but non-organizers/non-admins are redirected to
- *   the tournament front page.
+ * - `view`: anyone the tournament is visible to; shared cached instance, amortizing bracket building.
+ * - `action`: any logged-in user; fresh read for actions doing their own per `_action` authorization.
+ * - `organizer` / `admin`: like `action` but others are redirected to the tournament front page.
  */
 export async function tournamentFromParams(
 	params: Params<string>,
@@ -267,11 +242,9 @@ const TOURNAMENT_DATA_CACHE_TTL_MS = IN_MILLISECONDS.HALF_HOUR;
 
 type TournamentDataCacheEntry = {
 	storedAt: number;
-	// caching promise ensures that if many requests are made for the same tournament
-	// at the same time they reuse the same resolving promise
+	// concurrent requests for the same tournament reuse the same resolving promise
 	data: ReturnType<typeof tournamentData>;
-	// what the brackets derive from is the same for every viewer, so building them once
-	// per cache fill serves every request
+	// brackets are the same for every viewer, build once per cache fill
 	tournament?: Tournament;
 };
 
@@ -287,11 +260,7 @@ export async function tournamentDataCached(tournamentId: number) {
 	return notFoundIfNullish(await tournamentDataCacheEntry(tournamentId).data);
 }
 
-/**
- * A `Tournament` shared by every request for the lifetime of the cache entry. The bracket
- * level derivations (bracket state, standings, one bracket's data) are the same for every
- * viewer, so building the brackets happens once per cache fill instead of once per request.
- */
+/** Shared by every request for the lifetime of the cache entry, so brackets are built once per fill. */
 export async function tournamentSharedCached(tournamentId: number) {
 	if (ServerConfig.disableCache) {
 		return new Tournament(
@@ -308,7 +277,7 @@ export async function tournamentSharedCached(tournamentId: number) {
 	return entry.tournament;
 }
 
-/** State of every bracket of the tournament, without any of the match data it derives from. */
+/** State of every bracket without the match data it derives from. */
 export async function bracketsMetaCached(
 	tournamentId: number,
 ): Promise<BracketDerivedMeta[]> {
@@ -316,9 +285,8 @@ export async function bracketsMetaCached(
 }
 
 /**
- * One bracket with its match data, in the shape {@link Tournament.withBrackets} revives.
- * With a `groupId` only that group's rounds and matches are included, every group of the
- * bracket still being listed so that the view can offer switching to the others.
+ * In the shape {@link Tournament.withBrackets} revives. With a `groupId` only that group's rounds and
+ * matches are included, every group still listed so the view can offer switching.
  */
 export function serializeBracket(
 	bracket: Bracket,
@@ -376,7 +344,7 @@ function tournamentDataCacheEntry(tournamentId: number) {
 	return entry;
 }
 
-/** A tournament team with its full roster, as the views that render rosters get it. */
+/** Team with its full roster. */
 export type TournamentTeamFull = Unwrapped<typeof tournamentTeamsFullCached>;
 
 type TournamentTeamsCacheEntry = {
@@ -389,10 +357,7 @@ const tournamentTeamsCache = new LRUCache<number, TournamentTeamsCacheEntry>({
 	max: TOURNAMENT_DATA_CACHE_MAX_ENTRIES,
 });
 
-/**
- * Full rosters of a tournament's teams, censored for the given viewer. Its own cache
- * slice so that the (much smaller) tournament layout data does not have to carry them.
- */
+/** Full rosters censored for the viewer. Own cache slice so the much smaller layout data needn't carry them. */
 export async function tournamentTeamsFullCached({
 	user,
 	tournamentId,
@@ -427,10 +392,7 @@ export async function tournamentTeamsFullCached({
 	return entry.anonymousCensored;
 }
 
-/**
- * {@link tournamentTeamsFullCached} in the tournament's own seed order, which is not
- * the order the team rows come back in.
- */
+/** {@link tournamentTeamsFullCached} in seed order, which is not the order the rows come back in. */
 export async function tournamentTeamsFullInSeedOrder({
 	tournament,
 	user,
@@ -528,11 +490,7 @@ function isTournamentLive(tournament: Tournament) {
 	return Boolean(latestStartTime && latestStartTime >= cutoff);
 }
 
-/**
- * Re-evaluates liveness of every tournament in the running tournaments registry,
- * evicting those that are no longer live (e.g. abandoned tournaments whose latest
- * day started over 6 hours ago and no page load has triggered a re-sync).
- */
+/** Evicts no longer live tournaments (e.g. abandoned ones whose latest day started over 6 hours ago). */
 export function evictStaleRunningTournaments() {
 	for (const tournament of RunningTournaments.all) {
 		syncTournamentToRegistry(tournament);
@@ -556,11 +514,7 @@ function syncTournamentToRegistry(tournament: Tournament) {
 	}
 }
 
-/**
- * Rebuilds the running tournaments registry from the database, forgetting the
- * tournaments it held. E2E workers call this (via `/refresh-caches`) after
- * writing tournaments straight into the database file.
- */
+/** E2E workers call this (via `/refresh-caches`) after writing tournaments straight into the database file. */
 export async function refreshRunningTournaments() {
 	RunningTournaments.clear();
 

@@ -14,18 +14,16 @@ const DEFAULT_FREE_GRAVITY = 0.016;
 const DEFAULT_FREE_AIR_RESIST = 0;
 
 export interface SpecialWeaponRangeResult {
-	/** Radius of the range circle, in game distance units. */
+	/** In game distance units. */
 	range: number;
-	/** Extra outer radius covered by the projectile's blast, in game distance units. */
+	/** Extra outer radius of the projectile's blast, in game distance units. */
 	blastRadius?: number;
 	rangeType: "projectile" | "radius";
 }
 
 /**
- * Range circle definition for a special weapon, or `null` when the special has no meaningful
- * range to draw. The underlying values come from `weapon-params.ts` (populated by
- * `scripts/create-analyzer-json.ts`): projectile specials reuse the main weapon trajectory
- * model, the rest carry a single effect radius.
+ * Range circle of a special, or `null` when it has none worth drawing. Values come from
+ * `weapon-params.ts`: projectile specials reuse the main weapon trajectory model, the rest carry a radius.
  */
 export function getSpecialWeaponRange(
 	specialWeaponId: SpecialWeaponId,
@@ -74,10 +72,7 @@ export interface SpecialWeaponWithRange extends SpecialWeaponRangeResult {
 	specialWeaponId: SpecialWeaponId;
 }
 
-/**
- * Every special weapon that has a range to draw, widest first. Specials without a meaningful
- * range circle are omitted.
- */
+/** Every special with a range to draw, widest first. */
 export function getSpecialsWithRange(): SpecialWeaponWithRange[] {
 	return specialWeaponIds
 		.flatMap((specialWeaponId): SpecialWeaponWithRange[] => {

@@ -66,8 +66,6 @@ export function WeaponParamImage({
 	);
 }
 
-// The display name and (English) url slug of a weapon, resolved from the right `weapons`
-// translation key for the table's kind.
 function useWeaponParamNaming(kind: WeaponParamKind) {
 	const { t } = useTranslation(["weapons"]);
 
@@ -147,8 +145,7 @@ export function WeaponParamsTable({
 		});
 	};
 
-	// Bars are only drawn for plain numbers, so string-valued (or array/object) params and hidden
-	// weapons are skipped here. The compare button shows up only when at least two weapons remain.
+	// bars only for plain numbers; compare button needs at least two weapons left
 	const comparisonEntries = (
 		getValue: (weaponId: number) => number | string | undefined,
 	) =>

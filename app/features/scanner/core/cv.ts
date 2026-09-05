@@ -1,13 +1,9 @@
 /**
- * OpenCV.js singleton loader. Works in Node, browser main thread, and workers —
- * the UMD bundle embeds its WASM, so no asset paths are involved.
- *
- * Everything in core/ obtains the cv namespace through getCV(); callers must
- * await loadOpenCV() once at startup (worker bootstrap, test setup, tool entry).
- *
- * Gotcha of this build (5.0.0-release.1): `.data` and `.clone()` are broken
- * on ROI views — `view.copyTo(freshMat)` before pixel access. Views are fine
- * as inputs to cv calls.
+ * OpenCV.js singleton loader for Node, browser main thread and workers (the
+ * UMD bundle embeds its WASM). core/ obtains the namespace through getCV();
+ * callers await loadOpenCV() once at startup. Gotcha of this build
+ * (5.0.0-release.1): `.data` and `.clone()` are broken on ROI views —
+ * `view.copyTo(freshMat)` before pixel access. Views are fine as cv inputs.
  */
 import cvModule from "@techstark/opencv-js";
 
@@ -22,12 +18,10 @@ export function loadOpenCV(): Promise<CV> {
 	if (loading) return loading;
 	const attempt = (async () => {
 		// The package is patched (patches/@techstark__opencv-js…) to export
-		// { cvReadyPromise } instead of the bare ready-promise: a thenable (or
-		// default-wrapped thenable) module.exports leaks `then` through
-		// vite-node's CJS namespace proxy and crashes every Node-side import.
-		// Depending on bundler interop we see the wrapper (possibly nested
-		// under `default`) or, in bundles that took the UMD's non-CJS branch,
-		// the promise itself.
+		// { cvReadyPromise } instead of the bare ready-promise: a thenable
+		// module.exports leaks `then` through vite-node's CJS namespace proxy and
+		// crashes every Node-side import. Depending on bundler interop we see the
+		// wrapper (possibly under `default`) or, via the UMD's non-CJS branch, the promise.
 		const raw = cvModule as {
 			cvReadyPromise?: unknown;
 			default?: { cvReadyPromise?: unknown };

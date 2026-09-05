@@ -77,11 +77,7 @@ export interface SearchParamsDefinition<Shape extends AnyShape> {
 	shouldRevalidate: ShouldRevalidateFunction;
 }
 
-/**
- * Creates a search params definition from param declarations (see `SP.param`,
- * `SP.json` and `SP.custom`). One definition per route or feature drives
- * loader parsing, client state, href building and revalidation.
- */
+/** One definition per route/feature (from `SP.*` declarations) drives parsing, client state, hrefs and revalidation. */
 export function define<Shape extends AnyShape>(
 	shape: Shape,
 ): SearchParamsDefinition<Shape> {
@@ -157,10 +153,8 @@ export function define<Shape extends AnyShape>(
 }
 
 /**
- * Decodes one param from its raw URL values, resolving to the default when the
- * param is missing or malformed. Uses a per-param cache keyed on the raw values
- * so repeated decodes of the same string return the same reference. Params
- * declared `timeDependent` skip the cache and decode fresh every time.
+ * Decodes raw URL values, resolving to the default when missing or malformed. Cached per raw values
+ * so the same string returns the same reference; `timeDependent` params skip the cache.
  */
 export function decodeParam<T>(def: ParamDef<T>, values: string[]): T {
 	if (def.timeDependent) return def.decodeValues(values);
@@ -180,10 +174,7 @@ export function decodeParam<T>(def: ParamDef<T>, values: string[]): T {
 	return decoded;
 }
 
-/**
- * Encodes one param value to its URL values. Returns an empty array (param
- * absent) for values equal to the default.
- */
+/** Encodes to URL values; empty (param absent) for the default. */
 export function encodeParam<T>(
 	def: ParamDef<T>,
 	value: T,
@@ -195,10 +186,8 @@ export function encodeParam<T>(
 }
 
 /**
- * Applies a partial values update on top of the current search params,
- * preserving params outside the definition, applying declared `resets` and
- * omitting values equal to their defaults. A key written in the same batch is
- * never reset by another key of that batch.
+ * Merges a partial update into the current search params: outside params preserved, `resets` applied,
+ * defaults omitted. A key written in the same batch is never reset by another key of that batch.
  */
 export function applyToSearchParams<Shape extends AnyShape>(
 	definition: SearchParamsDefinition<Shape>,
@@ -239,11 +228,7 @@ export function applyToSearchParams<Shape extends AnyShape>(
 	return { next, navigationNeeded };
 }
 
-/**
- * Serializes only the definition's keys out of a search string. Used as a
- * cheap fingerprint: it changes exactly when one of the definition's params
- * changes in the URL.
- */
+/** Only the definition's keys of a search string; a fingerprint that changes exactly when one of them does. */
 export function pickRelevantSearch(keys: string[], search: string): string {
 	const searchParams = new URLSearchParams(search);
 	const picked = new URLSearchParams();
@@ -263,11 +248,7 @@ export interface ParamCodec<Value> {
 	encode: (value: Value) => string;
 }
 
-/**
- * Creates a {@link ParamCodec} whose decode result is validated against
- * `schema`. The `decode` implementation returns `undefined` (or any value the
- * schema rejects) for malformed input.
- */
+/** {@link ParamCodec} whose decode result is validated against `schema`; `decode` returns `undefined` for malformed input. */
 export function codec<TSchema extends AnySchema>(
 	schema: TSchema,
 	impl: {
@@ -284,11 +265,7 @@ export function codec<TSchema extends AnySchema>(
 	};
 }
 
-/**
- * Widens a codec to also accept `null` as its value. `null` must be the
- * param's default, so it never reaches `encode` (encoding the default omits
- * the param from the URL).
- */
+/** Widens a codec to accept `null`, which must be the default and so never reaches `encode`. */
 export function nullableCodec<Value>(
 	inner: ParamCodec<Value>,
 ): ParamCodec<Value | null> {
@@ -305,19 +282,12 @@ export function nullableCodec<Value>(
 	};
 }
 
-/**
- * Param declaration helpers. `SP.param` is the canonical declaration deriving
- * the URL encoding from the value schema; `SP.json` and `SP.custom` are the
- * explicit helpers for shapes outside the derivation table.
- */
+/** Param declarations. `SP.param` derives the encoding from the schema; `SP.json`/`SP.custom` cover the rest. */
 export const SP = {
 	/**
-	 * Declares a param whose URL encoding is derived from the valibot value
-	 * schema's type tree. Supported shapes: strings, numbers, booleans, string
-	 * and number enums/literals, same-base-type unions, arrays of those
-	 * (encoded as repeated keys) and a top-level `.nullable()` wrapper (`null`
-	 * encodes as param absent, so `default` is omitted for those). Anything else
-	 * is a `define()`-time error — use `SP.json` or `SP.custom` instead.
+	 * Encoding derived from the schema: strings, numbers, booleans, enums/literals, same-base-type unions,
+	 * arrays of those (repeated keys) and a top-level `.nullable()` (`null` = absent, no `default`).
+	 * Anything else fails at `define()` time — use `SP.json` or `SP.custom`.
 	 */
 	param<S extends AnySchema>(
 		schema: S,
@@ -399,11 +369,7 @@ export const SP = {
 		};
 	},
 
-	/**
-	 * Escape hatch: declares a param from a {@link ParamCodec} (see `codec`)
-	 * passed directly. The codec's `decode` may accept legacy formats while
-	 * `encode` always emits the canonical one.
-	 */
+	/** Escape hatch taking a {@link ParamCodec}; `decode` may accept legacy formats, `encode` emits the canonical one. */
 	custom<Value>(
 		paramCodec: ParamCodec<Value>,
 		opts: ParamOptions<Value>,
@@ -564,12 +530,7 @@ function deriveScalarBase(schema: AnySchema): ScalarBase | null {
 	return null;
 }
 
-/**
- * A pipe may only add validations, metadata and type-preserving
- * transformations (e.g. `v.trim()`) on top of its base schema. A custom
- * transform or a nested schema changes the value's type, so the URL encoding
- * cannot be derived from the base type.
- */
+/** A custom transform or nested schema changes the value's type, so the encoding can't derive from the base type. */
 function hasNonValidationPipeItems(schema: AnySchema): boolean {
 	if (!("pipe" in schema)) return false;
 
@@ -647,10 +608,7 @@ function urlEncodedLength(value: string) {
 	return new URLSearchParams([["", value]]).toString().length;
 }
 
-/**
- * Wraps a plain encoded value in the compressed transport form. Any param can
- * arrive compressed like this; used by round-trip tests and share links.
- */
+/** Compressed transport form of a plain value. Any param can arrive like this; used by round-trip tests and share links. */
 export function compressTransportValue(plain: string) {
 	return `${COMPRESSED_PREFIX}${compressToBase64(plain, { urlSafe: true })}`;
 }

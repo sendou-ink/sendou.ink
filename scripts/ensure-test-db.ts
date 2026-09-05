@@ -15,23 +15,17 @@ const TEST_DB_PATH = path.join(ROOT_DIR, "db-test.sqlite3");
 export function setup() {
 	ensureMigratedDb(TEST_DB_PATH);
 
-	// Test workers only ever read this file, to copy its schema into their own
-	// in-memory database. Taking it out of WAL drops the -wal/-shm sidecars, so
-	// those concurrent opens need no write access and cannot contend.
+	// test workers only read this file to copy its schema; out of WAL there are no
+	// -wal/-shm sidecars, so their concurrent opens need no write access
 	const db = new DatabaseSync(TEST_DB_PATH);
 	db.exec("PRAGMA journal_mode = DELETE");
 	db.close();
 }
 
 /**
- * Ensures the SQLite file at `dbPath` has every migration applied: creates it
- * if missing, applies pending migrations, and rebuilds it from scratch if an
- * already applied migration no longer exists on disk or its contents changed
- * since it was applied.
- *
- * Rebuilding on changed contents matters because a branch edits the migration
- * it added rather than stacking a new one, so the file name kysely tracks stays
- * the same while the schema it produces does not.
+ * Creates `dbPath` if missing, applies pending migrations, and rebuilds it from scratch if an
+ * applied migration disappeared or changed contents: a branch edits the migration it added
+ * rather than stacking a new one, so the file name kysely tracks stays the same while the schema does not.
  */
 export function ensureMigratedDb(dbPath: string) {
 	const resolvedPath = path.resolve(ROOT_DIR, dbPath);

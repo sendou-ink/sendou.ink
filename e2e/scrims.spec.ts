@@ -359,7 +359,6 @@ test.describe("Scrims", () => {
 			isAccepted: true,
 		});
 
-		// the admin opens the Action tab — the map list form is shown immediately
 		await impersonate(page, ADMIN_ID);
 
 		const scrim = new ScrimPage(page);
@@ -368,10 +367,8 @@ test.describe("Scrims", () => {
 
 		await expect(scrim.locators.mapListForm).toBeVisible();
 
-		// the post's tournament is the default source for the author's side, so they
-		// can submit without running the tournament search. A first map is generated
-		// immediately, so the page moves on to the report UI with the map-list
-		// manager collapsed.
+		// the post's tournament is the author's default source, so no tournament search is
+		// needed; the first map is generated right away, collapsing the map-list manager
 		await scrim.submitMapList();
 
 		await expect(scrim.locators.reportScoreButton).toBeVisible();
@@ -380,8 +377,7 @@ test.describe("Scrims", () => {
 
 		await expect(scrim.mapListRow("ALPHA")).toContainText(TOURNAMENT_NAME);
 
-		// N-ZAP submits a pool-URL-based map list. They have no list yet, so the
-		// map-list manager is already expanded on mount.
+		// N-ZAP has no list yet, so the map-list manager is already expanded on mount
 		await impersonate(page, NZAP_TEST_ID);
 		await scrim.goto(post.id);
 		await scrim.openTab("action");
@@ -390,21 +386,19 @@ test.describe("Scrims", () => {
 		await expect(scrim.locators.reportScoreButton).toBeVisible();
 		await expect(scrim.mapListRow("BRAVO")).toContainText("Pool");
 
-		// map 1: ALPHA wins → next map auto-generated
+		// every reported map auto-generates the next one
 		await scrim.reportMapWinner("ALPHA");
 		await expect(scrim.locators.reportScoreButton).toBeVisible();
 
-		// map 2: BRAVO wins → next map auto-generated
 		await scrim.reportMapWinner("BRAVO");
 		await expect(scrim.locators.reportScoreButton).toBeVisible();
 
-		// map 3: ALPHA wins → undo (un-reports map 3, deletes auto-gen map 4)
+		// undo un-reports map 3 and deletes the generated map 4
 		await scrim.reportMapWinner("ALPHA");
 		await expect(scrim.locators.undoMapButton).toBeVisible();
 		await scrim.undoMap();
 		await expect(scrim.locators.reportScoreButton).toBeVisible();
 
-		// re-report map 3 as BRAVO wins → next map auto-generated
 		await scrim.reportMapWinner("BRAVO");
 
 		// replaying replaces the generated map with a copy of the previous one
@@ -412,7 +406,6 @@ test.describe("Scrims", () => {
 		await scrim.replayMap();
 		await scrim.reportMapWinner("ALPHA");
 
-		// back as the admin to change their list
 		await impersonate(page, ADMIN_ID);
 		await scrim.goto(post.id);
 		await scrim.openTab("action");

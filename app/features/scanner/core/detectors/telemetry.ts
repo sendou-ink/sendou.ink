@@ -1,9 +1,6 @@
 /**
- * Scan telemetry: counters the analyzer accumulates so scan performance is
- * measurable instead of guessed at — how many frames were decoded vs.
- * actually analyzed, where detector time goes (gate vs. parse), how much
- * work scheduling saved, and how much of a VoD was covered in skim mode.
- * Plain JSON so it travels over the worker boundary as-is.
+ * Scan telemetry: frames decoded vs. analyzed, gate vs. parse time, work saved
+ * by scheduling, VoD skim coverage. Plain JSON so it crosses the worker boundary.
  */
 
 export interface DetectorTelemetry {

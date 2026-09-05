@@ -11,11 +11,7 @@ import { refreshTentativeTiersCache } from "~/features/tournament-organization/c
 import { clearUserCardCache } from "~/features/user-card/UserCardRepository.server";
 import { cache } from "~/utils/cache.server";
 
-/**
- * Clears and refreshes every in-process cache, so the server serves what is in
- * the database right now. E2E workers call this (via the route) after writing
- * test data straight into the database file.
- */
+/** Clears and refreshes every in-process cache; E2E workers call this (via the route) after writing test data straight into the database file. */
 export async function refreshCaches() {
 	clearAllTournamentDataCache();
 	clearParticipationInfoMap();

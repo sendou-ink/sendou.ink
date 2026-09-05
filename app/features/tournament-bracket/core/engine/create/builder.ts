@@ -19,12 +19,7 @@ import {
 	padSeedingToPowerOfTwo,
 } from "./seeding";
 
-/**
- * Accumulates the rows of a stage being created. Pure port of the old
- * brackets-manager `Create` class: same call order, same inserted values, but
- * rows are collected into arrays with local ids (0..n-1 per table) instead of
- * being written to storage.
- */
+/** Accumulates the rows of a stage being created, with local ids (0..n-1 per table). */
 export class StageCreator {
 	readonly input: ResolvedCreateBracketInput;
 	settings: StageSettings;
@@ -61,11 +56,7 @@ export class StageCreator {
 		return id;
 	}
 
-	/**
-	 * Creates a round-robin group.
-	 *
-	 * This will make as many rounds as needed to let each participant match every other once.
-	 */
+	/** As many rounds as needed for each participant to play every other once. */
 	createRoundRobinGroup(
 		stageId: number,
 		number: number,
@@ -76,11 +67,8 @@ export class StageCreator {
 			number,
 		});
 
-		// Groups can be padded with empty slots when teams don't divide evenly
-		// (`null`) or by the seed ordering (`undefined`). An empty slot is just an
-		// absent team, so drop it to round-robin only the present teams — otherwise
-		// the padding becomes BYE rounds that strand real matches in later rounds.
-		// TBD slots (`{ id: null }`) are kept; only nullish placeholders are removed.
+		// padding slots (`null` from uneven teams, `undefined` from seed ordering) would become BYE rounds
+		// that strand real matches in later rounds, so drop them. TBD slots (`{ id: null }`) are kept.
 		const presentSlots = slots.filter(
 			(slot) => slot !== null && slot !== undefined,
 		);
@@ -91,9 +79,7 @@ export class StageCreator {
 			this.createRound(stageId, groupId, i + 1, rounds[0].length, rounds[i]);
 	}
 
-	/**
-	 * Creates a bipartite round-robin group where every A team plays every B team exactly once.
-	 */
+	/** Bipartite round-robin: every A team plays every B team exactly once. */
 	createAbDivisionRoundRobinGroup(
 		stageId: number,
 		number: number,
@@ -111,11 +97,7 @@ export class StageCreator {
 			this.createRound(stageId, groupId, i + 1, rounds[0].length, rounds[i]);
 	}
 
-	/**
-	 * Creates a standard bracket, which is the only one in single elimination and the upper one in double elimination.
-	 *
-	 * This will make as many rounds as needed to end with one winner.
-	 */
+	/** The only bracket in single elimination, the upper one in double elimination. */
 	createStandardBracket(
 		stageId: number,
 		number: number,
@@ -142,12 +124,7 @@ export class StageCreator {
 		return { losers, winner: helpers.byeWinner(duels[0]) };
 	}
 
-	/**
-	 * Creates a lower bracket, alternating between major and minor rounds.
-	 *
-	 * - A major round is a regular round.
-	 * - A minor round matches the previous (major) round's winners against upper bracket losers of the corresponding round.
-	 */
+	/** Alternates major (regular) rounds and minor rounds where the major round's winners meet upper bracket losers. */
 	createLowerBracket(
 		stageId: number,
 		number: number,
@@ -195,9 +172,7 @@ export class StageCreator {
 		return helpers.byeWinnerToGrandFinal(duels[0]);
 	}
 
-	/**
-	 * Creates a bracket with rounds that only have 1 match each. Used for finals.
-	 */
+	/** Rounds of 1 match each, used for finals. */
 	createUniqueMatchBracket(
 		stageId: number,
 		number: number,
@@ -212,9 +187,6 @@ export class StageCreator {
 			this.createRound(stageId, groupId, i + 1, 1, [duels[i]]);
 	}
 
-	/**
-	 * Creates a round, which contain matches.
-	 */
 	createRound(
 		stageId: number,
 		groupId: number,
@@ -233,9 +205,6 @@ export class StageCreator {
 		}
 	}
 
-	/**
-	 * Creates a match of the stage.
-	 */
 	createMatch(
 		stageId: number,
 		groupId: number,
@@ -246,7 +215,7 @@ export class StageCreator {
 		const opponent1 = helpers.toResultWithPosition(opponents[0]);
 		const opponent2 = helpers.toResultWithPosition(opponents[1]);
 
-		// Round-robin matches can easily be removed. Prevent BYE vs. BYE matches.
+		// no BYE vs. BYE matches in round robin
 		if (
 			this.input.type === "round_robin" &&
 			opponent1 === null &&
@@ -265,11 +234,7 @@ export class StageCreator {
 		});
 	}
 
-	/**
-	 * Gets the duels for the current round based on the previous one. No ordering is done for
-	 * major rounds, it must be done beforehand for the first round. Ordering is done for LB
-	 * minor rounds via the given method.
-	 */
+	/** No ordering for major rounds (the first round must be ordered beforehand), LB minor rounds use the given method. */
 	getCurrentDuels(previousDuels: Duel[], currentDuelCount: number): Duel[];
 	getCurrentDuels(
 		previousDuels: Duel[],
@@ -303,14 +268,10 @@ export class StageCreator {
 			return helpers.transitionToMajor(previousDuels);
 		}
 
-		// From major to minor (LB).
-		// Losers and method won't be undefined.
+		// From major to minor (LB). Losers and method won't be undefined.
 		return helpers.transitionToMinor(previousDuels, losers!, method);
 	}
 
-	/**
-	 * Returns the list of slots from the seeding.
-	 */
 	getSlots(): ParticipantSlot[] {
 		helpers.ensureValidSize(this.input.type, this.seeding.length);
 		helpers.ensureNoDuplicates(this.seeding);
@@ -318,9 +279,6 @@ export class StageCreator {
 		return this.getSlotsUsingIds(this.seeding);
 	}
 
-	/**
-	 * Returns the list of slots with a seeding containing IDs.
-	 */
 	private getSlotsUsingIds(seeding: Seeding): ParticipantSlot[] {
 		return seeding.map((slot, i) => {
 			if (slot === null) return null; // BYE.
@@ -329,30 +287,22 @@ export class StageCreator {
 		});
 	}
 
-	/**
-	 * The only major ordering for the lower bracket.
-	 */
+	/** The only major ordering for the lower bracket. */
 	private getMajorOrdering(participantCount: number): SeedOrdering {
 		return defaultMinorOrdering[participantCount]?.[0] || "natural";
 	}
 
-	/**
-	 * A minor ordering for the lower bracket by its index.
-	 */
 	private getMinorOrdering(
 		participantCount: number,
 		index: number,
 		minorRoundCount: number,
 	): SeedOrdering | undefined {
-		// No ordering for the last minor round. There is only one participant to order.
+		// the last minor round has only one participant to order
 		if (index === minorRoundCount - 1) return undefined;
 
 		return defaultMinorOrdering[participantCount]?.[1 + index] || "natural";
 	}
 
-	/**
-	 * Creates the stage row.
-	 */
 	createStage(): StageData {
 		const stage: StageData = {
 			id: 0,

@@ -120,10 +120,7 @@ export function removeFromCached({
 	participationInfoMap.set(userId, participation);
 }
 
-/**
- * Re-reads the team & participant counts of one tournament from the database into the cached
- * showcase tournaments. No-op if the tournament is not part of the current cache.
- */
+/** Refreshes one cached showcase tournament's team & participant counts; no-op if not cached. */
 export async function refreshCachedTournamentCounts(tournamentId: number) {
 	if (!cache.has(SHOWCASE_TOURNAMENTS_CACHE_KEY)) return;
 

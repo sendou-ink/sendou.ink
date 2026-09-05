@@ -7,11 +7,8 @@ import type {
 import { UNKNOWN_SHORT } from "../analyzer-constants";
 
 /**
- * Serializes a build to a comma separated string for use in URLs.
- *
- * Lives in its own module (instead of `core/utils.ts`) so that URL-building
- * code can import it without pulling the weapon params data into the eager
- * bundle.
+ * Comma separated build for URLs. Kept out of `core/utils.ts` so URL-building code doesn't pull
+ * the weapon params data into the eager bundle.
  */
 export function serializeBuild(build: BuildAbilitiesTupleWithUnknown) {
 	return build

@@ -1150,10 +1150,8 @@ function SelectedTeamAvailability() {
 		return status === "available" || status === "partial";
 	};
 
-	// with a team selected the panel shows its full roster, every status
-	// included; signing up as a pickup it instead lists everyone the viewer
-	// could recruit (all their teams' members and friends) in one list, kept
-	// to those actually free during the event
+	// with a team selected the panel shows its full roster; as a pickup it lists everyone the viewer
+	// could recruit (all their teams' members and friends) that is free during the event
 	const roster = teamId
 		? (data?.friendPlayers?.friends ?? []).filter(
 				(friend) => friend.teamId === teamId,

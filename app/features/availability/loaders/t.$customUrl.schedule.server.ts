@@ -41,9 +41,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		meta: { teamCustomUrl: team.customUrl },
 	});
 
-	const members = team.members.filter(
-		(member) => member.role !== "CHEERLEADER",
-	);
+	const members = team.members;
 	const timezone = getViewerTimezone() ?? "UTC";
 	const now = new Date();
 
@@ -132,6 +130,12 @@ function weekView({
 
 	const days = ScheduleWeek.days(range, timezone).map((day) => ({
 		...day,
+		/** Local midnight starting the day, the zero the heatmap reads track minutes from. */
+		startsAt: Availability.localToTimestamp({
+			date: day.date,
+			time: "00:00",
+			timezone,
+		}),
 		windowTier: bestWindowTierOfDay({ date: day.date, windows, timezone }),
 	}));
 
@@ -160,10 +164,7 @@ function weekView({
 	};
 }
 
-/**
- * Tier of the best playable window starting on the given viewer-local day, the
- * same day a window renders its grid ranges on.
- */
+/** Tier of the best playable window starting on the viewer-local day (the day it renders its grid ranges on). */
 function bestWindowTierOfDay({
 	date,
 	windows,

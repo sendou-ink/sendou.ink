@@ -47,7 +47,7 @@ test.describe("Tournament staff", () => {
 		const admin = new TournamentAdminPage(page);
 		await admin.goto(tournament.id);
 
-		// check that got redirected since has no access
+		// no access yet, so redirected to info
 		await page.waitForURL("**/info");
 
 		await impersonate(page, ADMIN_ID);
@@ -58,7 +58,7 @@ test.describe("Tournament staff", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await admin.goto(tournament.id);
 
-		// being an organizer grants admin page access (no longer redirected to info)
+		// an organizer gets admin page access
 		await expect(admin.adminTab("Teams")).toBeVisible();
 		// but an organizer has no perms to manage staff
 		await isNotVisible(admin.adminTab("Staff"));

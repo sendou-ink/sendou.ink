@@ -27,8 +27,7 @@ const tierNumber = v.pipe(
 	v.maxValue(WORST_TIER_NUMBER),
 );
 
-// plain number schemas (not `dayMonthYear`'s coercing ones) because SP.param
-// derives the URL encoding from the schema's base type and coerces itself
+// plain number schemas, not `dayMonthYear`'s coercing ones: SP.param derives the encoding from the base type and coerces itself
 const dayNumber = v.pipe(
 	v.number(),
 	v.integer(),

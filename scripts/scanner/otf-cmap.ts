@@ -1,13 +1,10 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * Minimal OpenType cmap reader: which codepoints does a font actually map?
- *
+ * Minimal OpenType cmap reader: which codepoints a font actually maps.
  * @napi-rs/canvas silently falls back to a system font for characters the
- * requested family lacks (the Blitz cuts carry Latin/Greek/Cyrillic/kana
- * but no kanji, hangul or hanzi), which would bake wrong-font glyphs into
- * the atlases. The builder filters every charset through this before
- * rendering. Supports the two subtable formats the game fonts use:
- * format 4 (BMP segments) and format 12 (grouped full-range).
+ * family lacks (the Blitz cuts have no kanji, hangul or hanzi), which would
+ * bake wrong-font glyphs into the atlases. Supports format 4 (BMP segments)
+ * and format 12 (grouped full-range), the two the game fonts use.
  */
 import { readFileSync } from "node:fs";
 

@@ -48,7 +48,6 @@ test.describe("User page", () => {
 		await expect(userPage.badgeImage("Badge 12")).toBeVisible();
 		await userPage.locators.badgePaginationButtons.nth(1).click();
 
-		// test changing the big badge
 		await userPage.badgeImage("Badge 1").click();
 		await expect(userPage.badgeImage("Badge 1")).toHaveAttribute(
 			"width",
@@ -148,20 +147,17 @@ test.describe("User page", () => {
 		const settings = new SettingsPage(page);
 		await settings.goto("theme");
 
-		// initially no custom theme
 		await expect(settings.hasCustomTheme()).resolves.toBe(false);
 
 		await settings.setBaseHue("120");
 		await settings.saveTheme();
 		await settings.reload();
 
-		// verify custom theme was applied
 		await expect(settings.hasCustomTheme()).resolves.toBe(true);
 
 		await settings.resetTheme();
 		await settings.reload();
 
-		// verify custom theme was removed
 		await expect(settings.hasCustomTheme()).resolves.toBe(false);
 	});
 

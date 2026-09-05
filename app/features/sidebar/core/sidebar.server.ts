@@ -155,10 +155,7 @@ export async function resolveSidebarData(user: AuthenticatedUser | undefined) {
 	};
 }
 
-/**
- * Whether to prompt the user to report next week: they are on its last day, it
- * is still empty, and they have not waved the prompt away for this week.
- */
+/** Prompt to report next week: on its last day, still empty, and not dismissed this week. */
 async function showScheduleNudge(user: AuthenticatedUser | undefined) {
 	if (!user) return false;
 
@@ -461,7 +458,7 @@ export function tournamentToSidebarEvent(
 
 const TEAM_EVENT_WINDOW_DAYS = 14;
 
-/** Team events shown on the sidebar and the personal calendar page: ongoing ones and those starting within the next two weeks. */
+/** Ongoing team events and those starting within two weeks. */
 export function findUpcomingTeamEvents(userId: number) {
 	const now = new Date();
 

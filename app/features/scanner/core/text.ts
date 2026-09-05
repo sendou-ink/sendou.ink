@@ -1,6 +1,4 @@
-/**
- * Small text utilities: edit distance and closed-set snapping for OCR output.
- */
+/** Small text utilities: edit distance and closed-set snapping for OCR output. */
 
 function editDistance(a: string, b: string): number {
 	const dp = Array.from({ length: a.length + 1 }, (_, i) => {
@@ -21,11 +19,7 @@ function editDistance(a: string, b: string): number {
 	return dp[a.length]![b.length]!;
 }
 
-/**
- * Case-, space- and diacritic-insensitive comparison key (é≈e), so OCR
- * confusing an accented glyph with its base form stays a near-match across
- * the localized closed sets.
- */
+/** Case-, space- and diacritic-insensitive comparison key (é≈e), so an accent misread stays a near-match. */
 export function matchKey(s: string): string {
 	return s
 		.toLowerCase()
@@ -81,25 +75,19 @@ export function rankBy<T>(
 		.sort((a, b) => b.score - a.score);
 }
 
-/**
- * One recognized text segment with its ranked alternatives — structurally
- * compatible with glyphs.ts RecognizedChar, kept minimal here so string
- * utilities stay decoupled from the recognition module.
- */
+/** One recognized segment with its ranked alternatives — structurally compatible with glyphs.ts RecognizedChar. */
 export interface ReadSegment {
 	candidates?: readonly { char: string; score: number }[];
 }
 
 /**
- * Rank a closed set against the segment *candidate lists* of a recognized
- * line instead of its greedy top-1-per-segment string. On low-fidelity
- * captures (720p upscaled) the right glyph often sits at rank 2-3 of a
- * segment while the top-1 string is garbage; plain edit distance can't see
- * it, this can. Alignment is a weighted edit distance: matching a segment
- * to a target char costs 1 minus that char's score in the segment's
- * candidate list (1 when absent), insert/delete cost 1. Scores land well
- * below rankBy's for the same quality of match (a correct char still costs
- * 1 - templateScore), so the two scales must not share thresholds.
+ * Ranks a closed set against a recognized line's per-segment *candidate lists*
+ * instead of its greedy top-1 string: on low-fidelity captures the right
+ * glyph often sits at rank 2-3 while the top-1 string is garbage. Alignment
+ * is a weighted edit distance: matching a segment to a target char costs 1
+ * minus that char's candidate score (1 when absent), insert/delete cost 1.
+ * Scores land well below rankBy's for the same match quality, so the two
+ * scales must not share thresholds.
  */
 export function rankByRead<T>(
 	segments: readonly ReadSegment[],

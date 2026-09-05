@@ -60,10 +60,7 @@ export interface BenchmarkCase {
 	run: () => Promise<unknown>;
 }
 
-/**
- * Builds the full benchmark case registry from resolved fixtures. Cases whose
- * fixture resolved to null are returned in `skipped` instead.
- */
+/** Builds the benchmark case registry from resolved fixtures; cases whose fixture resolved to null go to `skipped`. */
 export function buildCases(fx: Fixtures): {
 	cases: BenchmarkCase[];
 	skipped: string[];
@@ -87,7 +84,6 @@ export function buildCases(fx: Fixtures): {
 		cases.push({ name, run: async () => run() });
 	}
 
-	// AdminRepository
 	addStatic("AdminRepository.findAllBannedUsers", () =>
 		AdminRepository.findAllBannedUsers(),
 	);
@@ -95,7 +91,6 @@ export function buildCases(fx: Fixtures): {
 		AdminRepository.findModNoteById(id),
 	);
 
-	// ExternalStreamRepository
 	addStatic("ExternalStreamRepository.findAll", () =>
 		ExternalStreamRepository.findAll(),
 	);
@@ -103,7 +98,6 @@ export function buildCases(fx: Fixtures): {
 		ExternalStreamRepository.findAllForSidebar(),
 	);
 
-	// ApiRepository
 	add("ApiRepository.findTokenByUserId", fx.apiTokenUserId, (userId) =>
 		ApiRepository.findTokenByUserId(userId, "read"),
 	);
@@ -111,7 +105,6 @@ export function buildCases(fx: Fixtures): {
 		ApiRepository.findAllApiTokens(),
 	);
 
-	// ArtRepository
 	addStatic("ArtRepository.findShowcaseArts", () =>
 		ArtRepository.findShowcaseArts(),
 	);
@@ -129,7 +122,6 @@ export function buildCases(fx: Fixtures): {
 		ArtRepository.findById(artId),
 	);
 
-	// AssociationRepository
 	add("AssociationRepository.findById", fx.heavyAssociation, (association) =>
 		AssociationRepository.findById(association.id, { withMembers: true }),
 	);
@@ -155,12 +147,10 @@ export function buildCases(fx: Fixtures): {
 		(association) => AssociationRepository.findInviteCodeById(association.id),
 	);
 
-	// LogInLinkRepository
 	add("LogInLinkRepository.findValidByCode", fx.logInLinkCode, (code) =>
 		LogInLinkRepository.findValidByCode(code),
 	);
 
-	// AvailabilityRepository
 	add(
 		"AvailabilityRepository.findAllWeeksByUserIds",
 		both(fx.manyUserIds, fx.availabilityWindow),
@@ -220,7 +210,6 @@ export function buildCases(fx: Fixtures): {
 		AvailabilityRepository.findTeamEventById(id),
 	);
 
-	// BadgeRepository
 	addStatic("BadgeRepository.findAll", () => BadgeRepository.findAll());
 	add("BadgeRepository.findById", fx.heavyBadgeId, (badgeId) =>
 		BadgeRepository.findById(badgeId),
@@ -238,7 +227,6 @@ export function buildCases(fx: Fixtures): {
 		BadgeRepository.findByAuthorUserId(userId),
 	);
 
-	// BuildRepository
 	add("BuildRepository.findAllByUserId", fx.heavyBuildUserId, (userId) =>
 		BuildRepository.findAllByUserId(userId, {
 			showPrivate: true,
@@ -269,7 +257,6 @@ export function buildCases(fx: Fixtures): {
 		}),
 	);
 
-	// CalendarRepository
 	add(
 		"CalendarRepository.findAllBetweenTwoTimestamps",
 		fx.calendarWindow,
@@ -297,7 +284,6 @@ export function buildCases(fx: Fixtures): {
 		(eventId) => CalendarRepository.findTopThreeResultsByEventIds([eventId]),
 	);
 
-	// ChatRepository
 	add("ChatRepository.findAllRoomsByIds", fx.heavyChatUsers, (chatUsers) =>
 		ChatRepository.findAllRoomsByIds(chatUsers.busiest.openRoomIds),
 	);
@@ -329,7 +315,6 @@ export function buildCases(fx: Fixtures): {
 			),
 	);
 
-	// ChatRoomResolver
 	// a tournament match room is the costliest to resolve: its owner join carries
 	// the team members and the tournament's organizer permissions on top
 	add(
@@ -341,7 +326,6 @@ export function buildCases(fx: Fixtures): {
 		ChatRoomResolver.findAllByUserId(chatUsers.busiest.id),
 	);
 
-	// FriendRepository
 	add("FriendRepository.findByUserIdWithActivity", fx.heavyFriendPair, (pair) =>
 		FriendRepository.findByUserIdWithActivity(pair.userId),
 	);
@@ -391,7 +375,6 @@ export function buildCases(fx: Fixtures): {
 		(request) => FriendRepository.findFriendRequestByIdAndReceiver(request),
 	);
 
-	// ImageRepository
 	add("ImageRepository.findById", fx.imageId, (imageId) =>
 		ImageRepository.findById(imageId),
 	);
@@ -410,7 +393,6 @@ export function buildCases(fx: Fixtures): {
 		(userId) => ImageRepository.countUnvalidatedBySubmitterUserId(userId),
 	);
 
-	// LeaderboardRepository
 	add("LeaderboardRepository.findTeamLeaderboardBySeason", fx.sq, (sq) =>
 		LeaderboardRepository.findTeamLeaderboardBySeason({
 			season: sq.season,
@@ -441,7 +423,6 @@ export function buildCases(fx: Fixtures): {
 		LeaderboardRepository.findSeasonPopularUsersWeapon(sq.season),
 	);
 
-	// LFGRepository
 	addStatic("LFGRepository.findAllPosts.anon", () =>
 		LFGRepository.findAllPosts(),
 	);
@@ -452,17 +433,14 @@ export function buildCases(fx: Fixtures): {
 		LFGRepository.findByAuthorUserId(authorId),
 	);
 
-	// LiveStreamRepository
 	addStatic("LiveStreamRepository.findXRankStreams", () =>
 		LiveStreamRepository.findXRankStreams(),
 	);
 
-	// MatchProfileRepository
 	add("MatchProfileRepository.findSettingsByUserId", fx.heavyUser, (user) =>
 		MatchProfileRepository.findSettingsByUserId(user.id),
 	);
 
-	// SkillRepository (app/features/mmr)
 	add("SkillRepository.findCurrentUserSkills", fx.skillBatch, (skillBatch) =>
 		SkillRepository.findCurrentUserSkills({
 			season: skillBatch.season,
@@ -497,7 +475,6 @@ export function buildCases(fx: Fixtures): {
 		SkillRepository.findSeasonActiveDaysByUserId(sq),
 	);
 
-	// NotificationRepository
 	add("NotificationRepository.findByUserId", fx.notification, (notification) =>
 		NotificationRepository.findByUserId(notification.userId, { limit: 50 }),
 	);
@@ -510,7 +487,6 @@ export function buildCases(fx: Fixtures): {
 		(userIds) => NotificationRepository.findAllSubscriptionsByUserIds(userIds),
 	);
 
-	// PlusSuggestionRepository
 	add(
 		"PlusSuggestionRepository.findAllByMonth",
 		fx.plusSuggestionMonthYear,
@@ -530,7 +506,6 @@ export function buildCases(fx: Fixtures): {
 		(args) => PlusSuggestionRepository.findMonthSummary(args),
 	);
 
-	// PlusVotingRepository
 	addStatic("PlusVotingRepository.findAllPlusTiersFromLatestVoting", () =>
 		PlusVotingRepository.findAllPlusTiersFromLatestVoting(),
 	);
@@ -550,7 +525,6 @@ export function buildCases(fx: Fixtures): {
 		}),
 	);
 
-	// ScannerIngestRepository
 	add(
 		"ScannerIngestRepository.gamesPlayedByUserInTournament",
 		fx.scannerIngest,
@@ -637,7 +611,6 @@ export function buildCases(fx: Fixtures): {
 			ScannerIngestRepository.gamesInTournamentMatch(tournamentMatchId),
 	);
 
-	// ScrimMapListRepository
 	add(
 		"ScrimMapListRepository.findMapListsByScrimPostId",
 		fx.heavyScrimPostId,
@@ -645,14 +618,12 @@ export function buildCases(fx: Fixtures): {
 			ScrimMapListRepository.findMapListsByScrimPostId(scrimPostId),
 	);
 
-	// ScrimMapRepository
 	add(
 		"ScrimMapRepository.findMapsByScrimPostId",
 		fx.heavyScrimPostId,
 		(scrimPostId) => ScrimMapRepository.findMapsByScrimPostId(scrimPostId),
 	);
 
-	// ScrimPostRepository
 	add(
 		"ScrimPostRepository.findAllByChatRoomIds",
 		fx.openChatRoomIdsByType?.SCRIM ?? null,
@@ -699,14 +670,12 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 
-	// GroupMatchContinueVoteRepository
 	add(
 		"GroupMatchContinueVoteRepository.findAllByGroupIds",
 		fx.heavyGroupIds,
 		(groupIds) => GroupMatchContinueVoteRepository.findAllByGroupIds(groupIds),
 	);
 
-	// PlayerStatRepository
 	add("PlayerStatRepository.findSeasonMapWinrateByUserId", fx.sq, (sq) =>
 		PlayerStatRepository.findSeasonMapWinrateByUserId(sq),
 	);
@@ -732,7 +701,6 @@ export function buildCases(fx: Fixtures): {
 		PlayerStatRepository.findSeasonTournamentRunsByUserId(sq),
 	);
 
-	// ReportedWeaponRepository
 	add(
 		"ReportedWeaponRepository.findByMatchId",
 		fx.heavyGroupMatchId,
@@ -760,7 +728,6 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 
-	// SQMatchRepository
 	add(
 		"SQMatchRepository.findAllByChatRoomIds",
 		fx.openChatRoomIdsByType?.SQ_MATCH ?? null,
@@ -793,12 +760,11 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 
-	// QStreamsRepository
 	addStatic("QStreamsRepository.findAllActiveMatchPlayers", () =>
 		QStreamsRepository.findAllActiveMatchPlayers(),
 	);
 
-	// PrivateUserNoteRepository (relies on the benchmark's actor context)
+	// relies on the benchmark's actor context
 	addStatic("PrivateUserNoteRepository.findAllOwn.all", () =>
 		PrivateUserNoteRepository.findAllOwn(),
 	);
@@ -808,7 +774,6 @@ export function buildCases(fx: Fixtures): {
 		(userIds) => PrivateUserNoteRepository.findAllOwn(userIds),
 	);
 
-	// SQGroupRepository
 	add(
 		"SQGroupRepository.findAllByChatRoomIds",
 		fx.openChatRoomIdsByType?.SQ_GROUP ?? null,
@@ -858,15 +823,10 @@ export function buildCases(fx: Fixtures): {
 		SQGroupRepository.findRecentlyFinishedMatches(),
 	);
 
-	// SplatoonRotationRepository
 	addStatic("SplatoonRotationRepository.findAll", () =>
 		SplatoonRotationRepository.findAll(),
 	);
 
-	// TeamRepository
-	addStatic("TeamRepository.findAllUndisbanded", () =>
-		TeamRepository.findAllUndisbanded(),
-	);
 	addStatic("TeamRepository.searchByName", () =>
 		TeamRepository.searchByName(SEARCH_QUERY),
 	);
@@ -891,7 +851,6 @@ export function buildCases(fx: Fixtures): {
 		TeamRepository.findAllByMemberUserId(team.memberUserId),
 	);
 
-	// XRankPlacementRepository
 	add("XRankPlacementRepository.isPlayerLinkedByUserId", fx.xrank, (xrank) =>
 		XRankPlacementRepository.isPlayerLinkedByUserId(xrank.userId),
 	);
@@ -922,14 +881,12 @@ export function buildCases(fx: Fixtures): {
 		XRankPlacementRepository.findPeaksByUserId(xrank.userId, "both"),
 	);
 
-	// BracketRepository
 	add(
 		"BracketRepository.findByTournamentId",
 		fx.heaviestBracketTournamentId,
 		(tournamentId) => BracketRepository.findByTournamentId(tournamentId),
 	);
 
-	// TournamentMatchVodRepository
 	add(
 		"TournamentMatchVodRepository.findVodsByTournamentId",
 		fx.heavyTournamentId,
@@ -960,7 +917,6 @@ export function buildCases(fx: Fixtures): {
 			),
 	);
 
-	// TournamentLFGRepository
 	add(
 		"TournamentLFGRepository.findLookingTeamsByTournamentId",
 		fx.lfgTournament,
@@ -980,7 +936,6 @@ export function buildCases(fx: Fixtures): {
 			TournamentLFGRepository.findAllSubsByTournamentId(lfg.tournamentId),
 	);
 
-	// TournamentMatchRepository
 	add(
 		"TournamentMatchRepository.findAllByChatRoomIds",
 		fx.openChatRoomIdsByType?.TOURNAMENT_MATCH ?? null,
@@ -1022,7 +977,6 @@ export function buildCases(fx: Fixtures): {
 			TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId),
 	);
 
-	// TournamentOrganizationRepository
 	add("TournamentOrganizationRepository.findBySlug", fx.heavyOrg, (org) =>
 		TournamentOrganizationRepository.findBySlug(org.slug),
 	);
@@ -1112,7 +1066,6 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 
-	// SavedCalendarEventRepository
 	add(
 		"SavedCalendarEventRepository.isSaved",
 		both(fx.heavyUser, fx.heavyTournamentId),
@@ -1131,7 +1084,6 @@ export function buildCases(fx: Fixtures): {
 		(user) => SavedCalendarEventRepository.findAllUpcomingByUserId(user.id),
 	);
 
-	// TournamentAuditLogRepository
 	add(
 		"TournamentAuditLogRepository.findByTournamentId",
 		fx.auditTournamentId,
@@ -1155,7 +1107,6 @@ export function buildCases(fx: Fixtures): {
 			TournamentAuditLogRepository.findTeamsByTournamentId(tournamentId),
 	);
 
-	// TournamentRepository
 	add(
 		"TournamentRepository.findOrganizerPermissionsByTournamentIds",
 		fx.recentTournamentIds,
@@ -1272,7 +1223,6 @@ export function buildCases(fx: Fixtures): {
 		TournamentRepository.findRunningTournamentIds(),
 	);
 
-	// TournamentTeamRepository
 	add(
 		"TournamentTeamRepository.findAllByChatRoomIds",
 		fx.openChatRoomIdsByType?.TOURNAMENT_TEAM ?? null,
@@ -1328,7 +1278,6 @@ export function buildCases(fx: Fixtures): {
 			}),
 	);
 
-	// TrophyRepository
 	addStatic("TrophyRepository.all", () => TrophyRepository.all());
 	add("TrophyRepository.findById", fx.trophy, (trophy) =>
 		TrophyRepository.findById(trophy.heavyTrophyId),
@@ -1343,7 +1292,6 @@ export function buildCases(fx: Fixtures): {
 		TrophyRepository.findWinsByOwner(trophy.wins),
 	);
 
-	// UserCardRepository
 	add("UserCardRepository.findAllByUserIds", fx.manyUserIds, (userIds) =>
 		UserCardRepository.findAllByUserIds({
 			userIds,
@@ -1361,7 +1309,6 @@ export function buildCases(fx: Fixtures): {
 		UserCardRepository.findVerifiedXpByUserId(user.id, null),
 	);
 
-	// UserRepository
 	add("UserRepository.findIdByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findIdByIdentifier(user.identifier),
 	);
@@ -1466,7 +1413,6 @@ export function buildCases(fx: Fixtures): {
 		UserRepository.findWeaponPoolByUserId(user.id),
 	);
 
-	// VodRepository
 	add("VodRepository.findByUserId", fx.vod, (vod) =>
 		VodRepository.findByUserId(vod.userId),
 	);

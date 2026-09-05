@@ -25,15 +25,12 @@ test.describe("Build Analyzer", () => {
 		// Luna Blaster is a light weapon so it should have lower base swim speed than Splattershot
 		await expect(swimSpeed.baseValue).not.toHaveText(swimSpeedSplattershot);
 
-		// shows comparison value when you have relevant abilities selected
 		await isNotVisible(swimSpeed.buildValueTitle);
 		await analyzer.addAbility("SSU");
 		await expect(swimSpeed.buildValueTitle).toBeVisible();
 
-		// on new build page with preselected values
 		const buildForm = await analyzer.openNewBuildPrompt();
 		await expect(buildForm.gearSelect("HEAD")).toBeVisible();
-		// Check that Luna Blaster appears in the weapon pool list (not in dropdown options)
 		await expect(buildForm.weaponPoolItem("Luna Blaster")).toBeVisible();
 		await expect(buildForm.ability("SSU")).toBeVisible();
 	});

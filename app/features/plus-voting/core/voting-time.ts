@@ -2,7 +2,7 @@ import { Config } from "~/config";
 import * as Seasons from "../../mmr/core/Seasons";
 import type { MonthYear } from "./types";
 
-/** In local development voting is always open so that the voting page can be tested outside a voting window. */
+/** Lets the voting page be tested outside a voting window. */
 const VOTING_ALWAYS_OPEN =
 	process.env.NODE_ENV === "development" && !Config.prodMode;
 
@@ -61,22 +61,14 @@ export function seasonToVotingRange(season: Seasons.ListItem) {
 	return { startDate, endDate };
 }
 
-/**
- * Whether votes can be cast right now. Unlike {@link isVotingActive}, which also decides when
- * suggesting is locked, this is always true in local development so the voting page can be
- * tested outside an actual voting window.
- */
+/** Whether votes can be cast; unlike {@link isVotingActive} (which also locks suggesting) always true in local dev. */
 export function isVotingOpen() {
 	return VOTING_ALWAYS_OPEN || isVotingActive();
 }
 
 let votingActiveOverride = false;
 
-/**
- * Tests only: makes {@link isVotingActive} (and thus {@link isVotingOpen}) resolve to
- * true as if a voting window was ongoing, so tests can cover voting without a real
- * window having to be open.
- */
+/** Tests only: fakes an ongoing voting window for {@link isVotingActive}. */
 export function DANGEROUS_setVotingActiveOverride(votingActive: boolean) {
 	votingActiveOverride = votingActive;
 }

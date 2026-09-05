@@ -6,12 +6,7 @@ import type {
 	StageData,
 } from "../types";
 
-/**
- * A working copy of BracketData. The input is cloned once on construction and
- * every row handed out afterwards is a live reference into that copy, so
- * mutating a row is the write. Callers report the match rows they mutated so
- * that a delta can be emitted.
- */
+/** Working copy of BracketData: rows handed out are live references into the clone, so mutating a row is the write. Callers report mutated match rows for the delta. */
 export class Store {
 	readonly data: BracketData;
 	private readonly stagesById: Map<number, StageData>;
@@ -92,7 +87,7 @@ export class Store {
 		this.changedMatchIds.add(match.id);
 	}
 
-	/** Returns the final version of every match row that was written during this operation. */
+	/** Final version of every match row written during this operation. */
 	changedMatches(): MatchData[] {
 		return this.data.match.filter((match) =>
 			this.changedMatchIds.has(match.id),

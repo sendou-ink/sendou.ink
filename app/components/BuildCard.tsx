@@ -65,7 +65,7 @@ interface BuildProps {
 		Partial<
 			Pick<BuildGraphicOwner, "customUrl" | "discordAvatar" | "customAvatarUrl">
 		>;
-	/** Set to false when the page context already shows the owner (e.g. their own builds page) */
+	/** false when the page already shows the owner (e.g. their own builds page) */
 	showOwner?: boolean;
 	canEdit?: boolean;
 }

@@ -198,8 +198,7 @@ function useDefaultValues() {
 				? databaseTimestampToDate(data.eventToEdit.startTimes[0])
 				: getDateAtNextFullHour(new Date())
 			: null,
-		// tournaments hide this field, so seed a valid URL to satisfy the url-format
-		// validation (the action coalesces to the same default)
+		// tournaments hide this field, so seed a valid URL for the url-format validation (the action coalesces to the same default)
 		bracketUrl: data.isAddingTournament
 			? "https://sendou.ink"
 			: (data.eventToEdit?.bracketUrl ?? ""),

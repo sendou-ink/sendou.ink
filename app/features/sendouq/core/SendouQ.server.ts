@@ -61,7 +61,6 @@ class SendouQClass {
 	#isAccurateTiers;
 	#userSkills;
 	#intervals;
-	/** Array of user IDs currently in the queue */
 	usersInQueue;
 
 	constructor(
@@ -110,13 +109,8 @@ class SendouQClass {
 		}));
 	}
 
-	/**
-	 * Determines the current view state for a user based on their group status.
-	 */
-	currentViewByUserId(
-		/** The ID of the logged in user */
-		userId: number,
-	) {
+	/** The current view state for a user based on their group status. */
+	currentViewByUserId(userId: number) {
 		const ownGroup = this.findOwnGroup(userId);
 
 		if (!ownGroup) return "default";
@@ -127,43 +121,25 @@ class SendouQClass {
 		return "looking";
 	}
 
-	/**
-	 * Finds the group that a user belongs to.
-	 * @returns The user's group, or undefined if not in a group
-	 */
+	/** The user's group, or undefined if not in one. */
 	findOwnGroup(userId: number) {
 		return this.groups.find((group) =>
 			group.members.some((member) => member.id === userId),
 		);
 	}
 
-	/**
-	 * Finds a group by its ID without censoring sensitive data.
-	 * @returns The uncensored group, or undefined if not found
-	 */
+	/** A group by id without censoring sensitive data. */
 	findUncensoredGroupById(groupId: number) {
 		return this.groups.find((group) => group.id === groupId);
 	}
 
-	/**
-	 * Finds a group by its invite code.
-	 * @returns The group with matching invite code, or undefined if not found
-	 */
+	/** A group by its invite code. */
 	findGroupByInviteCode(inviteCode: string) {
 		return this.groups.find((group) => group.inviteCode === inviteCode);
 	}
 
-	/**
-	 * Maps a database match to a format with appropriate censoring based on user permissions.
-	 * Includes private notes for team members and censors sensitive data for non-participants.
-	 * @returns The mapped match with censored data based on user permissions
-	 */
-	mapMatch(
-		/** The database match object to map */
-		match: DBMatch,
-		/** The authenticated user viewing the match (if any) */
-		user?: AuthenticatedUser,
-	) {
+	/** Maps a database match for the viewer: private notes for team members, sensitive data censored for non-participants. */
+	mapMatch(match: DBMatch, user?: AuthenticatedUser) {
 		const viewerSide = SendouQMatch.resolveGroupMemberOf({
 			groupAlpha: match.groupAlpha,
 			groupBravo: match.groupBravo,
@@ -244,14 +220,8 @@ class SendouQClass {
 		};
 	}
 
-	/**
-	 * Returns all groups with wide tier ranges for preview purposes. Full groups being preview always show the full range (IRON-LEVIATHAN)
-	 * @returns Array of censored groups with preview tier ranges
-	 */
-	previewGroups(
-		/** The ID of the user viewing the preview */
-		userId: number,
-	) {
+	/** All groups with wide tier ranges for preview; full groups always show the full range (IRON-LEVIATHAN). */
+	previewGroups(userId: number) {
 		const usersTier = this.#getUserTier(userId);
 		return this.groups
 			.filter((group) => this.#isSuitableLookingGroup({ group }))
@@ -260,16 +230,8 @@ class SendouQClass {
 			.map((group) => this.#censorGroup(group));
 	}
 
-	/**
-	 * Returns groups that are available for matchmaking for a specific user based on their current group size.
-	 * Filters groups based on member count compatibility, activity status, and excludes stale groups.
-	 * Results are sorted by tier difference and activity.
-	 * @returns Array of compatible groups sorted by relevance, or empty array if user has no group
-	 */
-	lookingGroups(
-		/** The ID of the user looking for groups */
-		userId: number,
-	) {
+	/** Groups compatible with the user's own group's size, stale ones excluded, sorted by tier difference and activity. Empty if the user has no group. */
+	lookingGroups(userId: number) {
 		const ownGroup = this.findOwnGroup(userId);
 		if (!ownGroup) return [];
 
@@ -476,7 +438,6 @@ class SendouQClass {
 			}
 		}
 
-		// reasonable default
 		if (modePreferences.length === 0) {
 			return ["SZ"];
 		}
@@ -608,13 +569,10 @@ function matchMapPools(match: DBMatch) {
 	);
 }
 
-/** Global instance of the SendouQ manager. Manages all active groups and matchmaking state. */
+/** Global SendouQ manager: all active groups and matchmaking state. */
 export let SendouQ = await freshSendouQInstance();
 
-/**
- * Refreshes the global SendouQ instance with the latest data from the database.
- * Should be called after any database changes that affect groups or matches.
- */
+/** Reloads the global SendouQ instance from the database; call after any change to groups or matches. */
 export async function refreshSendouQInstance() {
 	SendouQ = await freshSendouQInstance();
 }
@@ -631,7 +589,7 @@ async function freshSendouQInstance() {
 	return new SendouQClass(groups, recentMatches, skills);
 }
 
-/** User needs to be on certain page depending on their SendouQ group status. This functions throws a `Redirect` if they are trying to load the wrong page. */
+/** Throws a redirect when the user loads a page other than the one their SendouQ group status puts them on. */
 export async function sqRedirectIfNeeded({
 	ownGroup,
 	currentLocation,
@@ -643,7 +601,6 @@ export async function sqRedirectIfNeeded({
 		await groupUnlessSeasonIsOver(ownGroup),
 	);
 
-	// we are already in the correct location, don't redirect
 	if (currentLocation === "default" && newLocation === SENDOUQ_PAGE) return;
 	if (currentLocation === "preparing" && newLocation === SENDOUQ_PREPARING_PAGE)
 		return;
@@ -655,17 +612,12 @@ export async function sqRedirectIfNeeded({
 	throw redirect(newLocation);
 }
 
-/**
- * Takes the group out of the queue if the season it was queueing for has ended,
- * leaving nowhere for it to be redirected but the front page. A group that got
- * its match stays as it is, so the match can be reported during its grace period.
- */
+/** Takes the group out of the queue if its season has ended (nowhere to redirect but the front page); a group in a match stays so it can be reported during the grace period. */
 async function groupUnlessSeasonIsOver(ownGroup?: SQOwnGroup) {
 	if (!ownGroup || ownGroup.matchId || Seasons.current()) return ownGroup;
 
-	// the ready check the group is in can't produce a rated match anymore, and
-	// leaving it behind would have the expiry routine mark its members as having
-	// missed a check they never had the chance to make
+	// the ready check can't produce a rated match anymore; left behind, the expiry
+	// routine would mark its members as having missed a check they never could make
 	if (ownGroup.status === "READY_CHECK") {
 		const readyCheck = await SQGroupRepository.findReadyCheckByGroupId(
 			ownGroup.id,

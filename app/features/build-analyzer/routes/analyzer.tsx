@@ -112,7 +112,7 @@ export const handle: SendouRouteHandle = {
 	}),
 };
 
-// Resolves this Github issue: https://github.com/sendou-ink/sendou.ink/issues/1053
+// https://github.com/sendou-ink/sendou.ink/issues/1053
 export const shouldRevalidate: ShouldRevalidateFunction = () => false;
 
 export default function BuildAnalyzerShell() {
@@ -254,8 +254,7 @@ function BuildAnalyzerPage() {
 		),
 	].filter(Boolean);
 
-	// Handles edge case where a primary slot-only ability (e.g. Ninja Squid) is selected & the 'abilityPoints' count is still 0,
-	//  and also fixes an edge case with Ability Doubler as the only ability in the build
+	// a primary slot-only ability (e.g. Ninja Squid) or Ability Doubler alone leaves abilityPoints at 0
 	const showAbilityChunksRequired: boolean = build.some(
 		(gear) =>
 			gear.filter((ability) => !ABILITIES_WITHOUT_CHUNKS.has(ability)).length,
@@ -335,8 +334,7 @@ function BuildAnalyzerPage() {
 																.every((ability) => ability === "UNKNOWN") &&
 															focused === 1;
 
-														// if we don't do this the
-														// build2 would be duplicated
+														// otherwise build2 would be duplicated
 														if (buildWasEmptied) {
 															handleChange({
 																newBuild: build2,
@@ -1482,10 +1480,7 @@ function StatCard({
 		if (isStaticValue) return false;
 		if (isComparing) return true;
 
-		// slightly hacky but handles the edge case
-		// where baseValue === value which can happen when
-		// you have Ninja Squid and stack swim speed
-		// -> we still want to show the build value
+		// baseValue === value can happen with Ninja Squid + stacked swim speed; still show the build value
 		return [stat[0].modifiedBy].flat().some((ability) => {
 			const hasStackable = (abilityPoints.get(ability) ?? 0) > 0;
 			const hasEffect = baseValue !== stat[0].value;
@@ -1823,9 +1818,7 @@ function ConsumptionTable({
 
 						const cells: React.ReactNode[] = [];
 
-						// weird using basic for loop in react code but here we are essentially
-						// zipping these two arrays into one cell and if one of the arrays
-						// doesn't have value then it shows as a dash instead
+						// zips the two arrays into one cell, a missing value shows as a dash
 						for (
 							let i = 0;
 							i <

@@ -6,7 +6,7 @@ import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 const LOG_IN_LINK_LENGTH = 12;
 const LOG_IN_LINK_VALID_FOR_MINUTES = 10;
 
-/** Creates a new login link for a user with 10-minute expiration */
+/** Creates a login link valid for `LOG_IN_LINK_VALID_FOR_MINUTES`. */
 export function insert(userId: number) {
 	return db
 		.insertInto("LogInLink")
@@ -21,12 +21,12 @@ export function insert(userId: number) {
 		.executeTakeFirstOrThrow();
 }
 
-/** Deletes a login link by its code */
+/** Deletes a login link by its code. */
 export function deleteByCode(code: string) {
 	return db.deleteFrom("LogInLink").where("code", "=", code).execute();
 }
 
-/** Finds a valid (non-expired) login link by code, returns userId if valid */
+/** Non-expired login link by code. */
 export function findValidByCode(code: string) {
 	return db
 		.selectFrom("LogInLink")

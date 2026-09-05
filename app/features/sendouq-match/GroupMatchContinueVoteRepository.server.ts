@@ -30,10 +30,7 @@ export async function findAllByGroupIds(
 	}));
 }
 
-/**
- * Records the logged in user's vote on continuing with their group. Voting against continuing also
- * clears the group's votes in favor, since those were cast for a group size that no longer applies.
- */
+/** Records the user's continue vote. A no vote also clears the group's yes votes, cast for a size that no longer applies. */
 export async function castOwnVote(
 	{
 		groupId,
@@ -50,9 +47,8 @@ export async function castOwnVote(
 
 	const runner = async (t: Transaction<DB>) => {
 		if (!isContinuing) {
-			// every vote is only valid for a specific continuing size
-			// e.g. if i want to keep going with a full group, i might not
-			// want to continue with just 3 people -> revote required from all
+			// a yes vote is for a specific size: wanting to keep a full group is not
+			// wanting to continue with 3, so everyone revotes
 			await t
 				.deleteFrom("GroupMatchContinueVote")
 				.where("GroupMatchContinueVote.groupId", "=", groupId)

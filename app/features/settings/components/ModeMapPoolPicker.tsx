@@ -29,7 +29,6 @@ export function ModeMapPoolPicker({
 	/** When provided, the divider becomes a tab switcher between these modes. */
 	modeTabs?: ModeShort[];
 	onModeChange?: (mode: ModeShort) => void;
-	/** When true, stages can't be picked or removed (view-only). */
 	disabled?: boolean;
 }) {
 	const [wigglingStageId, setWigglingStageId] = React.useState<StageId | null>(
@@ -46,13 +45,11 @@ export function ModeMapPoolPicker({
 	};
 
 	const handleUnpickedStageClick = (stageId: StageId) => {
-		// is there space left?
 		if (stages[amountToPick - 1] !== null) {
 			setWigglingStageId(stageId);
 			return;
 		}
 
-		// was it already picked?
 		if (pool.includes(stageId)) {
 			return;
 		}

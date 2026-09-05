@@ -27,10 +27,8 @@ const LayoutDataContext = React.createContext<LayoutDataContextValue>({
 });
 
 /**
- * Serves the parts of the app shell that go stale while a page sits open, from
- * the root loader first and from a polled resource route after. Polling instead
- * of revalidating means a page whose own loader is expensive (plus suggestions,
- * a tournament's brackets) is not refetched just to refresh the sidebar.
+ * App shell data that goes stale while a page sits open: from the root loader first, then a polled
+ * resource route, so pages with expensive loaders are not refetched just to refresh the sidebar.
  */
 export function LayoutDataProvider({
 	data,
@@ -45,8 +43,7 @@ export function LayoutDataProvider({
 		refresh,
 	} = useBackgroundResource<SerializeFrom<typeof loader>>(LAYOUT_DATA_ROUTE);
 
-	// read through a ref so a poll elsewhere in the app does not re-run the effect
-	// and restart the interval before it ever fires
+	// a ref so a poll elsewhere does not re-run the effect and restart the interval before it fires
 	const isLoadingRef = React.useRef(isLoading);
 	isLoadingRef.current = isLoading;
 
@@ -93,10 +90,7 @@ export function LayoutDataProvider({
 	);
 }
 
-/**
- * App shell data (sidebar, build commit), fresher than the root loader
- * whenever a poll has landed since the last root revalidation.
- */
+/** App shell data, fresher than the root loader whenever a poll has landed since. */
 export function useLayoutData() {
 	return React.useContext(LayoutDataContext);
 }
@@ -117,11 +111,7 @@ function useReloadOnStaleAuth({
 	}, [clientUserId, serverUserId]);
 }
 
-/**
- * Whichever of the two arrived last. The root loader reruns on every navigation
- * and the poll fires on its own schedule, so neither source is reliably the
- * newer one and both have to be watched for a change.
- */
+/** Whichever arrived last; neither the root loader nor the poll is reliably the newer one. */
 function useNewestOf(
 	rootData: RootLoaderData | undefined,
 	polledData: LayoutData | undefined,

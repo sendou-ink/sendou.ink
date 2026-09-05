@@ -1,15 +1,10 @@
 /**
  * Golden-file suite for the ScoreboardBattleLogReplayDetector over every
- * fixture in scoreboard-battle-log-replay/, mirroring tests/scoreboard.test.ts,
- * plus the replay extras (timestamp, replay code, match scores) and a
- * cross-negative sweep: the replay gate must stay quiet on every
- * live-scoreboard positive.
- *
- * Replay parses are expensive (eight 68px weapon rows plus the Rowdy-face
- * code line), so the suite is sharded across processes:
- * tests/scoreboard-battle-log-replay.<n>.test.ts each run one shard. Every
- * fixture group is dealt round-robin, so the shards together still cover
- * exactly what the old single file did.
+ * fixture in scoreboard-battle-log-replay/, plus the replay extras (timestamp,
+ * replay code, match scores) and a cross-negative sweep over live-scoreboard
+ * positives. Replay parses are expensive (eight 68px weapon rows plus the
+ * Rowdy-face code line), so the suite is sharded across processes:
+ * scoreboard-battle-log-replay.<n>.test.ts each run one round-robin shard.
  */
 
 import assert from "node:assert/strict";

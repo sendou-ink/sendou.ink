@@ -149,8 +149,7 @@ function useNavItems({
 
 	const items: Partial<Record<NavItemKey, NavItem>> = {};
 
-	// invitational teams are added by the organizer so registration is never "open",
-	// but their captains still need to reach this page to set their roster & map pool
+	// invitational registration is never "open", but captains still need the page for roster & map pool
 	const showRegisterForInvitationalCaptain =
 		tournament.isInvitational &&
 		!tournament.hasStarted &&
@@ -289,9 +288,7 @@ function NavItemLink({
 	);
 }
 
-// horizontal space reserved on the right for the overflow hamburger: its big icon
-// box (var(--button-icon-big) = 28px) plus breathing room before the last item.
-// The hamburger is positioned absolutely so it never shrinks the measured container.
+// space for the absolutely positioned overflow hamburger: its icon box (var(--button-icon-big) = 28px) plus breathing room
 const HAMBURGER_WIDTH = 36;
 
 function useNavOverflow(totalItems: number) {
@@ -309,8 +306,7 @@ function useNavOverflow(totalItems: number) {
 		const computeVisible = () => {
 			const containerWidth = container.getBoundingClientRect().width;
 			const listLeft = list.getBoundingClientRect().left;
-			// actual rendered right edge of each slot relative to the list start,
-			// so the real flex gaps are accounted for without re-deriving them
+			// rendered right edges relative to the list start, so the real flex gaps are accounted for
 			const rightEdges = slots.map(
 				(slot) => slot.getBoundingClientRect().right - listLeft,
 			);

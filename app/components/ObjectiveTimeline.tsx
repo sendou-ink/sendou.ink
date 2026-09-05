@@ -1,20 +1,9 @@
 /**
- * Line chart of a game's objective-counter reads: one line per team
- * (remaining count over match time, so lines fall toward 0). Control is a
- * state rather than a count, so it gets its own lane in a gutter below the
- * zero gridline instead of sharing the count axis — a strip in the
- * controlling team's color, absent while neither team controls. The
- * zero gridline is drawn in the stronger border color to read as the
- * divider between the counts above and the lane below. Penalty is a
- * translucent band filled between score and score + penalty — its thickness
- * is the extra count the team must burn through before its score moves
- * again, so it grows when a penalty lands and shrinks as it counts down.
- * Control state and exact values stay in the shared hover tooltip.
- *
- * Series colors are the chart tokens from vars.css — the theme's text-tier
- * colors are too pastel to tell apart as marks; these are the same two hues
- * re-stepped per theme and validated for CVD separation and surface
- * contrast.
+ * Line chart of a game's objective-counter reads, one falling line per team. Control is a state,
+ * not a count, so it gets its own lane below the zero gridline (strip in the controlling team's
+ * color); penalty is a translucent band between score and score + penalty, so its thickness is
+ * the extra count to burn through. Series colors are the chart tokens from vars.css: the text-tier
+ * colors are too pastel to tell apart as marks.
  */
 
 import {
@@ -261,10 +250,7 @@ export function ObjectiveTimeline({
 	);
 }
 
-/**
- * One tick every 25 up to the top of the data and none below zero, so the
- * control gutter stays free of axis furniture.
- */
+/** One tick every 25 up to the top of the data, none below zero so the control gutter stays clean. */
 function countAxisTicks(max: number) {
 	const ticks = [];
 	for (let value = 0; value <= max; value += COUNT_TICK_STEP) {

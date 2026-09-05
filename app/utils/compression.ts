@@ -1,9 +1,6 @@
 import { deflateSync, Inflate, strToU8 } from "fflate";
 
-/**
- * Compresses a string with raw deflate and encodes the result as base64.
- * With `urlSafe` the output uses the URL-safe base64 alphabet without padding.
- */
+/** Raw deflate + base64; `urlSafe` uses the URL-safe alphabet without padding. */
 export function compressToBase64(
 	value: string,
 	options?: { urlSafe?: boolean },
@@ -22,10 +19,8 @@ export function compressToBase64(
 }
 
 /**
- * Decompresses a base64 encoded (standard or URL-safe alphabet) raw deflate
- * string. Returns `null` if the input is corrupt or, when
- * `maxDecompressedBytes` is given, if it inflates past that limit (a
- * decompression bomb guard for attacker controlled input).
+ * Inverse of {@link compressToBase64} (either alphabet). `null` for corrupt input or when it
+ * inflates past `maxDecompressedBytes` (decompression bomb guard for attacker controlled input).
  */
 export function decompressFromBase64(
 	compressed: string,

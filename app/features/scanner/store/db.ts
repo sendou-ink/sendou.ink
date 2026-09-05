@@ -1,13 +1,11 @@
 /**
- * Shared IndexedDB handle for the app's stores:
- *  - `events`: live-tab detections, keyed by auto id (see events.ts)
- *  - `frames`: the live events' full-res analyzed PNGs, keyed by event id —
- *    kept out of `events` so listing the feed never deserializes them
- *  - `vods`: one summary record per fully scanned VoD, keyed by file name
- *  - `vod-events`: the detections of each saved VoD, indexed by VoD name
- *  - `vod-frames`: the vod-events' PNGs, keyed by vod-event id
- *  - `inspect-frames`: one-shot Inspect handoffs into a new screenshot tab,
- *    keyed by handoff key (see inspect.ts)
+ * Shared IndexedDB handle. Stores:
+ *  - `events`: live-tab detections, keyed by auto id (events.ts)
+ *  - `frames`: their full-res analyzed PNGs by event id, kept apart so listing the feed never deserializes them
+ *  - `vods`: one summary per fully scanned VoD, keyed by file name
+ *  - `vod-events`: each saved VoD's detections, indexed by VoD name
+ *  - `vod-frames`: their PNGs, keyed by vod-event id
+ *  - `inspect-frames`: one-shot Inspect handoffs into a new screenshot tab (inspect.ts)
  */
 const DB_NAME = "scanner";
 const DB_VERSION = 1;
@@ -19,10 +17,7 @@ export const VOD_EVENTS_STORE = "vod-events";
 export const VOD_FRAMES_STORE = "vod-frames";
 export const INSPECT_FRAMES_STORE = "inspect-frames";
 
-/**
- * Recreates the schema from scratch, dropping any stores already there, so a
- * DB_VERSION bump is always a clean slate at the cost of wiping scanner data.
- */
+/** Recreates the schema from scratch, so a DB_VERSION bump is a clean slate that wipes scanner data. */
 function createStores(database: IDBDatabase): void {
 	for (const name of Array.from(database.objectStoreNames)) {
 		database.deleteObjectStore(name);

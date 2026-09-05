@@ -18,11 +18,7 @@ const frontmatterSchema = v.object({
 	type: v.picklist(["feature", "bug"] as const),
 });
 
-/**
- * Every changelog entry added between the given commit and HEAD, oldest first.
- *
- * @param since Sha of the commit the previous update was shipped from.
- */
+/** Entries added between `since` (sha the previous update shipped from) and HEAD, oldest first. */
 export function entriesSince(since: string): ChangelogGraphicEntry[] {
 	const output = execFileSync(
 		"git",
@@ -55,10 +51,7 @@ export function allEntries(): ChangelogGraphicEntry[] {
 		.map(parseEntryFile);
 }
 
-/**
- * Sha of the commit the entries are read from, letting a caller check it is
- * talking to a server running the same checkout it is.
- */
+/** Sha the entries are read from, so a caller can check the server runs the same checkout. */
 export function headSha(): string {
 	return execFileSync("git", ["rev-parse", "HEAD"], {
 		encoding: "utf8",

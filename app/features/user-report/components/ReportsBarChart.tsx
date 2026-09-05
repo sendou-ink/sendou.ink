@@ -13,10 +13,7 @@ import styles from "./ReportsBarChart.module.css";
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, Tooltip);
 
-/**
- * Bar graph of reports made against a user, one bar per calendar month.
- * Theme colors are read from CSS variables like `app/components/Chart.tsx` does.
- */
+/** One bar per calendar month. Theme colors come from CSS variables like `app/components/Chart.tsx`. */
 export function ReportsBarChart({
 	monthlyCounts,
 }: {

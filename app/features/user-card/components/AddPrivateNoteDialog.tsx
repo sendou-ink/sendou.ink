@@ -8,10 +8,8 @@ import { userCardNoteSaveSchema } from "../user-card-schemas";
 type PrivateNote = Pick<Tables["PrivateUserNote"], "text" | "sentiment">;
 
 /**
- * Modal for adding/editing the viewer's private note about a user, posting to the
- * `/user-card/:id/note` resource route. Closes once the save succeeds (automatic revalidation
- * refreshes the card). Clearing the text with a neutral sentiment and saving deletes the note
- * (handled by the route). Rendered wherever a `UserCard` lives.
+ * Posts to the `/user-card/:id/note` resource route and closes on success. Saving empty text with
+ * a neutral sentiment deletes the note (handled by the route).
  */
 export function AddPrivateNoteDialog({
 	userId,

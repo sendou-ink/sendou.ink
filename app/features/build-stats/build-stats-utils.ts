@@ -94,8 +94,6 @@ export function abilityPointCountsToAverages({
 	};
 }
 
-// ---
-
 export function popularBuilds(rows: Array<PopularBuildsRow>) {
 	let previousCount: number;
 	return rows.map(({ abilitiesSignature, count }) => {

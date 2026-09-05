@@ -9,18 +9,17 @@ import {
 import invariant from "../../../utils/invariant";
 
 export interface DBSource {
-	/** Index of the bracket where the teams come from */
 	bracketIdx: number;
-	/** Team placements that join this bracket. E.g. [1, 2] would mean top 1 & 2 teams. [-1] would mean the last placing teams. Can be empty array for Swiss brackets with early advance. */
+	/** E.g. [1, 2] = top 2 teams, [-1] = last placing teams, [] = Swiss early advancers. */
 	placements: number[];
-	/** When true, the highest value in `placements` is treated as "and every placement after that". Set by the "N+" rest syntax. Only valid with positive placements. */
+	/** Highest value in `placements` means "and every placement after that" ("N+" syntax). Only valid with positive placements. */
 	rest?: boolean;
 }
 
 export interface EditableSource {
-	/** Bracket ID that exists in frontend only while editing. Once the sources are set an index is used to identifyer them instead. See DBSource.bracketIdx for more info. */
+	/** Frontend-only id while editing, replaced by an index once set. See DBSource.bracketIdx. */
 	bracketId: string;
-	/** User editable string of placements. For example might be "1-3" or "1,2,3" which both mean same thing. See DBSource.placements for the validated and serialized version. */
+	/** User editable, "1-3" and "1,2,3" mean the same. See DBSource.placements for the validated version. */
 	placements: string;
 }
 
@@ -35,7 +34,7 @@ export interface InputBracket extends BracketBase {
 	id: string;
 	sources?: EditableSource[];
 	startTime?: Date;
-	/** This bracket cannot be edited (because it is already underway) */
+	/** Already underway */
 	disabled?: boolean;
 }
 
@@ -50,7 +49,7 @@ export type ValidationError =
 			type: "PLACEMENTS_PARSE_ERROR";
 			bracketIdx: number;
 	  }
-	// tournament is ending with a format that does not resolve a winner such as round robin or grouped swiss
+	// tournament ends with a format that does not resolve a winner e.g. round robin or grouped swiss
 	| {
 			type: "NOT_RESOLVING_WINNER";
 	  }
@@ -59,12 +58,12 @@ export type ValidationError =
 			type: "SAME_PLACEMENT_TO_MULTIPLE_BRACKETS";
 			bracketIdxs: number[];
 	  }
-	// from one bracket e.g. if 1st goes somewhere and 3rd goes somewhere then 2nd must also go somewhere
+	// e.g. if 1st and 3rd go somewhere then 2nd must also go somewhere
 	| {
 			type: "GAP_IN_PLACEMENTS";
 			bracketIdxs: number[];
 	  }
-	// if round robin groups size is 4 then it doesn't make sense to have destination for 5
+	// e.g. round robin group size 4 can't have a destination for 5th
 	| {
 			type: "TOO_MANY_PLACEMENTS";
 			bracketIdx: number;
@@ -79,7 +78,7 @@ export type ValidationError =
 			type: "DUPLICATE_BRACKET_NAME";
 			bracketIdxs: number[];
 	  }
-	// all brackets must have a name that is not an empty string
+	// bracket name can not be empty
 	| {
 			type: "NAME_MISSING";
 			bracketIdx: number;
@@ -109,7 +108,7 @@ export type ValidationError =
 			type: "AB_DIVISIONS_NOT_STARTING";
 			bracketIdx: number;
 	  }
-	// A/B divisions requires an even teamsPerGroup so each group can be split equally
+	// A/B divisions need an even teamsPerGroup to split each group equally
 	| {
 			type: "AB_DIVISIONS_ODD_TEAMS_PER_GROUP";
 			bracketIdx: number;
@@ -129,13 +128,13 @@ export type ValidationError =
 			type: "CYCLIC_PROGRESSION";
 			bracketIdxs: number[];
 	  }
-	// teams that started in different brackets can never meet, so the routes from many starting brackets can not merge
+	// teams that started in different brackets can never meet
 	| {
 			type: "MERGED_STARTING_BRACKETS";
 			bracketIdx: number;
 	  };
 
-/** Takes validated brackets and returns them in the format that is ready for user input. */
+/** Validated brackets in the format ready for user input. */
 export function validatedBracketsToInputFormat(
 	brackets: ParsedBracket[],
 ): InputBracket[] {
@@ -160,7 +159,7 @@ export function validatedBracketsToInputFormat(
 	});
 }
 
-/** Formats a placements array into the compact user-facing string form, e.g. [1, 2, 3] -> "1-3" and [5, 6] with rest -> "5,6+". */
+/** [1, 2, 3] -> "1-3", [5, 6] with rest -> "5,6+" */
 export function placementsToString(placements: number[], rest = false): string {
 	if (placements.length === 0) return "";
 
@@ -200,7 +199,7 @@ export function placementsToString(placements: number[], rest = false): string {
 	return ranges.join(",");
 }
 
-/** Takes bracket progression as entered by user as input and returns the validated brackets ready for input to the database or errors if any. */
+/** User-entered bracket progression to validated brackets ready for the database, or errors. */
 export function validatedBrackets(
 	brackets: InputBracket[],
 ): ParsedBracket[] | ValidationError {
@@ -227,7 +226,7 @@ export function validatedBrackets(
 	return parsed;
 }
 
-/** Checks parsed brackets for any errors related to how the progression is laid out  */
+/** Errors in how the progression is laid out. */
 export function bracketsToValidationError(
 	brackets: ParsedBracket[],
 ): ValidationError | null {
@@ -493,7 +492,6 @@ function resolvesWinner(brackets: ParsedBracket[]) {
 
 function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
 	const map = new Map<string, number[]>();
-	// per source bracketIdx: list of { destinationBracketIdx, restFromPlacement }
 	const restSources = new Map<
 		number,
 		{ destinationBracketIdx: number; restFromPlacement: number }[]
@@ -538,7 +536,6 @@ function samePlacementToMultipleBrackets(brackets: ParsedBracket[]) {
 	}
 
 	for (const [sourceBracketIdx, restList] of restSources) {
-		// multiple "rest" sources from same bracket = conflict
 		if (restList.length > 1) {
 			for (const { destinationBracketIdx } of restList) {
 				result.add(destinationBracketIdx);
@@ -866,7 +863,7 @@ function mergedStartingBrackets(brackets: ParsedBracket[]) {
 	for (const [bracketIdx, bracket] of brackets.entries()) {
 		if (startingAncestors(bracketIdx).size <= 1) continue;
 
-		// the merge already happened earlier in the progression, that bracket is reported instead
+		// merge happened earlier in the progression, that bracket is reported instead
 		const mergedEarlier = (bracket.sources ?? []).some(
 			(source) => startingAncestors(source.bracketIdx).size > 1,
 		);
@@ -878,28 +875,28 @@ function mergedStartingBrackets(brackets: ParsedBracket[]) {
 	return null;
 }
 
-/** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a successful validation */
+/** Narrows the return type of `Progression.validatedBrackets` to a successful validation. */
 export function isBrackets(
 	input: ParsedBracket[] | ValidationError,
 ): input is ParsedBracket[] {
 	return Array.isArray(input);
 }
 
-/** Takes the return type of `Progression.validatedBrackets` as an input and narrows the type to a unsuccessful validation */
+/** Narrows the return type of `Progression.validatedBrackets` to a failed validation. */
 export function isError(
 	input: ParsedBracket[] | ValidationError,
 ): input is ValidationError {
 	return !Array.isArray(input);
 }
 
-/** Given bracketIdx and bracketProgression will resolve if this the "final stage" of the tournament that decides the final standings  */
+/** Whether the bracket is the final stage that decides the final standings. */
 export function isFinals(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
 	return resolveMainBracketProgression(brackets).at(-1) === idx;
 }
 
-/** Returns true if the finals bracket of the tournament is an A/B divisions round robin. */
+/** Whether the finals bracket is an A/B divisions round robin. */
 export function hasAbDivisionsFinals(brackets: ParsedBracket[]): boolean {
 	const finals = brackets.find((_, idx) => isFinals(idx, brackets));
 	if (!finals) return false;
@@ -909,9 +906,7 @@ export function hasAbDivisionsFinals(brackets: ParsedBracket[]): boolean {
 	);
 }
 
-/** Given bracketIdx and bracketProgression will resolve if this an "underground bracket".
- * Underground bracket is defined as a bracket that is not part of the main tournament progression e.g. optional bracket for early losers
- */
+/** Underground bracket = not part of the main progression, e.g. an optional bracket for early losers. */
 export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
@@ -923,8 +918,7 @@ export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 
 	if (mainBracketIdxs.has(idx)) return false;
 
-	// a bracket whose top finishers advance (transitively) into the main progression
-	// is a redemption style intermediate bracket, not an underground one
+	// top finishers advancing (transitively) into the main progression makes it a redemption bracket, not underground
 	const queue = [idx];
 	const visited = new Set<number>();
 	while (queue.length > 0) {
@@ -949,11 +943,7 @@ export function isUnderground(idx: number, brackets: ParsedBracket[]) {
 	return true;
 }
 
-/**
- * Returns the depth of a bracket in the tournament progression.
- * Depth is the distance from a starting bracket (bracket with no sources).
- * Starting brackets have depth 0, brackets sourced from them have depth 1, etc.
- */
+/** Distance from a starting bracket (no sources): starting brackets 0, brackets sourced from them 1, etc. */
 export function bracketDepth(idx: number, brackets: ParsedBracket[]): number {
 	invariant(idx < brackets.length, "Bracket index out of bounds");
 
@@ -1004,8 +994,7 @@ function resolveMainBracketProgression(
 			),
 		);
 
-		// -1 = end of the progression, already visited is only possible
-		// with an invalid progression, see CYCLIC_PROGRESSION
+		// -1 = end of the progression, already visited only with an invalid progression (CYCLIC_PROGRESSION)
 		if (bracket === -1 || visited.has(bracket)) break;
 
 		bracketIdxToFind = bracket;
@@ -1016,7 +1005,7 @@ function resolveMainBracketProgression(
 	return result;
 }
 
-/** Considering all fields. Returns array of bracket indexes that were changed */
+/** Indexes of brackets changed in any field. */
 export function changedBracketProgression(
 	oldProgression: ParsedBracket[],
 	newProgression: ParsedBracket[],
@@ -1035,7 +1024,7 @@ export function changedBracketProgression(
 	return changed;
 }
 
-/** Considering only fields that affect the format. Returns true if the tournament bracket format was changed and false otherwise */
+/** Whether any field affecting the format changed. */
 export function changedBracketProgressionFormat(
 	oldProgression: ParsedBracket[],
 	newProgression: ParsedBracket[],
@@ -1058,14 +1047,22 @@ export function changedBracketProgressionFormat(
 	return false;
 }
 
+/** Returns true if the set of brackets that teams can start in changed */
+export function changedStartingBrackets(
+	oldProgression: ParsedBracket[],
+	newProgression: ParsedBracket[],
+): boolean {
+	return !R.isDeepEqual(
+		startingBrackets(oldProgression),
+		startingBrackets(newProgression),
+	);
+}
+
 /**
- * Returns the order of brackets as is to be considered for standings. Teams from the bracket of lower index are considered to be above those from the lower bracket.
- * A participant's standing is the first bracket to appear in order that has the participant in it.
- *
- * The order is so that most significant brackets (i.e. finals) appear first. A bracket always appears after every bracket
- * it advances teams to, so the teams it eliminated end up below the teams that advanced out of it.
- *
- * Underground brackets are omitted as they are only used to break ties within their source bracket, see `tiebrokenByUndergroundBrackets`.
+ * Bracket order for standings: a participant's standing comes from the first bracket in this order they
+ * are in. Finals first; a bracket always comes after every bracket it advances teams to, so teams it
+ * eliminated end up below those that advanced. Underground brackets are omitted as they only break
+ * ties within their source bracket, see `tiebrokenByUndergroundBrackets`.
  */
 export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 	const bracketsToConsider = bracketsReachableFrom(0, progression);
@@ -1087,11 +1084,10 @@ export function bracketIdxsForStandings(progression: ParsedBracket[]) {
 }
 
 /**
- * Orders the given brackets so that every bracket appears after all the brackets it is a source of.
- * Among the brackets that are free to be placed next, the one whose teams placed the highest in the
- * deepest bracket they have in common (e.g. a top cut over a consolation bracket) goes first. The comparison
- * follows the whole route the teams took, so e.g. a bracket taking the low placements of a redemption bracket
- * can still rank above a bracket taking mid placements straight from the pools that fed that redemption bracket.
+ * Every bracket comes after all the brackets it is a source of. Among the brackets free to be placed
+ * next, the one whose teams placed highest in the deepest bracket they have in common goes first (e.g.
+ * a top cut over a consolation bracket). The whole route counts, so a bracket taking low placements
+ * of a redemption bracket can rank above one taking mid placements straight from the pools that fed it.
  */
 function destinationsFirstOrder(
 	bracketIdxs: number[],
@@ -1210,10 +1206,7 @@ export function destinationsFromBracketIdx(
 	return destinations;
 }
 
-/**
- * Returns the indexes of the underground brackets sourced from the given bracket.
- * An underground bracket is one that takes teams eliminated from its source bracket (negative placements).
- */
+/** Underground brackets (taking eliminated teams, negative placements) sourced from the given bracket. */
 export function undergroundBracketIdxs(
 	bracketIdx: number,
 	progression: ParsedBracket[],
@@ -1268,12 +1261,9 @@ export function startingBrackets(progression: ParsedBracket[]): number[] {
 }
 
 /**
- * Orders a bracket's sources for seeding purposes. Teams sourced with a better placement
- * in a shared ancestor bracket seed above teams that took a longer route there, e.g. if the top cut
- * sources both the top 2 of "Day 1 Pools" directly and the winners of a "Redemption" bracket
- * (itself sourcing pools placements 3-4), the direct pools source is ordered first.
- *
- * Sources that share no ancestor bracket keep their original relative order.
+ * Orders sources for seeding: a better placement in a shared ancestor bracket seeds above a longer
+ * route there, e.g. the top 2 of pools directly over the winners of a redemption bracket sourcing pools
+ * placements 3-4. Sources sharing no ancestor keep their relative order.
  */
 export function sortedSourcesForSeeding(
 	sources: DBSource[],

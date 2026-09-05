@@ -1,4 +1,4 @@
-/** Map list generation logic for "TO pick" as in the map list is defined beforehand by TO and teams don't pick */
+/** Map list generation for "TO pick": the map list is defined beforehand by the TO. */
 
 import type { Tables } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
@@ -34,12 +34,10 @@ export type TournamentRoundMapList = ReturnType<
 export function generateTournamentRoundMaplist(
 	args: GenerateTournamentRoundMaplistArgs,
 ) {
-	// in round robin different group ids represent different groups
-	// but they share the map list
+	// round robin groups share the map list
 	const filteredRounds = getFilteredRounds(args.rounds, args.type);
 
-	// sort rounds in a way that allows us to space maps out
-	// so in the typical order that people play out the tournament
+	// in the typical play order, so maps can be spaced out
 	const sortedRounds = sortRounds(filteredRounds, args.type);
 
 	//                roundId
@@ -98,9 +96,8 @@ function getFilteredRounds(
 ) {
 	if (type !== "round_robin" && type !== "swiss") return rounds;
 
-	// Groups can have different round counts when teams don't divide evenly
-	// (e.g. groups of 3 and 2). Use the group with the most rounds: it covers
-	// every round number and its map list is shared with the smaller groups.
+	// groups can have different round counts (e.g. groups of 3 and 2), the one with the most rounds
+	// covers every round number and its map list is shared with the smaller groups
 	const fullestGroupId = fullestGroupIdByRounds(rounds);
 	return rounds.filter((x) => x.groupId === fullestGroupId);
 }
@@ -159,8 +156,7 @@ function resolveRoundMapCount(
 	counts: BracketMapCounts,
 	type: Tables["TournamentStage"]["type"],
 ) {
-	// with rr/swiss every group shares the same map list, so use the group with
-	// the most rounds since it is the one that covers every round number
+	// rr/swiss groups share the map list, the one with the most rounds covers every round number
 	const groupId =
 		type === "round_robin" || type === "swiss"
 			? fullestGroupIdByCounts(counts)

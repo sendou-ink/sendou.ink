@@ -29,7 +29,6 @@ test.describe("Tournament streams", () => {
 		await stream.fillAccount(1, "another_cast");
 		await stream.save();
 
-		// Verify persistence by navigating away and back
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournament.id);
 		await stream.goto(tournament.id);
@@ -56,12 +55,12 @@ test.describe("Tournament streams", () => {
 		await brackets.goto(tournament.id);
 
 		const match = await brackets.openMatch(matches[0].id);
-		// Report partial score to set startedAt (match becomes "in progress")
+		// a partial score sets startedAt, making the match in progress
 		await match.openTab("action");
 		await match.reportResult({ mapsToReport: 1, setEnds: false });
 		await match.backToBracket();
 
-		// The LIVE button should be visible since a match participant is streaming
+		// a participant of an in progress match is streaming
 		await expect(brackets.locators.liveBadges.first()).toBeVisible();
 
 		await brackets.locators.liveBadges.first().click();

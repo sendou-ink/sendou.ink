@@ -1,9 +1,8 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
- * CLI harness: replay a directory of extracted VoD frames through the full
- * detector registry driven by a DetectorScheduler, mirroring the analyzer
- * worker's chunk scan — to reproduce scheduling-dependent misses offline.
- * This is the tool for "the browser scan missed an event that a fixture
+ * CLI harness: replays a directory of extracted VoD frames through the full
+ * detector registry driven by a DetectorScheduler, mirroring the worker's
+ * chunk scan — the tool for "the browser scan missed an event that a fixture
  * parses fine": extract the surrounding footage with
  *   ffmpeg -ss <startT> -i vod.mkv -t 30 -vf fps=6 frames/f%04d.png
  * then replay it and watch which checks the scheduler ran and what they saw.

@@ -14,14 +14,7 @@ export const recentlyReportedWeaponsPersisted = PersistedState.define({
 	default: [],
 });
 
-/**
- * This hook provides access to the list of recently reported weapons,
- * which is persisted in local storage, and a function to add a new weapon
- * to the list.
- *
- * If a weapon is added that already exists in the list, it will be moved to the front of the list.
- * If the list exceeds the maximum number of reported weapons, the oldest weapon will be removed.
- */
+/** Local storage list of recently reported weapons; adding moves to the front and caps the length. */
 export function useRecentlyReportedWeapons() {
 	const [recentlyReportedWeapons, setRecentlyReportedWeapons] =
 		usePersistedState(recentlyReportedWeaponsPersisted);

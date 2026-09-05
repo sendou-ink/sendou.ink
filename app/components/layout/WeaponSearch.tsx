@@ -60,11 +60,7 @@ export interface SelectedWeapon {
 	paramsSlug: string;
 }
 
-/**
- * Builds the {@link SelectedWeapon} for a main weapon id: its localized name plus the English-derived
- * url slugs (the build pages slug from the weapon's canonical id, the params page slug from its base
- * id). The caller's `t` must have the `weapons` namespace available.
- */
+/** {@link SelectedWeapon} for a main weapon id: localized name plus English-derived url slugs. `t` needs the `weapons` namespace. */
 export function weaponToSelectedWeapon<Ns extends Namespace>(
 	id: MainWeaponId,
 	t: TFunction<Ns>,

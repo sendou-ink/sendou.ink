@@ -42,20 +42,7 @@ export function allI18nNamespaces() {
 	return [...ALL_NAMESPACES];
 }
 
-/**
- * Returns the localized display name for a given ISO country code using the specified language. If the country code is unknown or the function fails for othe reason, returns the country code itself as a fallback.
- *
- * @example
- * ```typescript
- * function CountryNameComponent() {
- *  const { i18n } = useTranslation();
- *  const countryName = countryCodeToTranslatedName({
- *   countryCode: "FI",
- *   language: i18n.language,
- *  }); // "Suomi" in Finnish
- * }
- * ```
- */
+/** Localized display name of an ISO country code, falling back to the code itself. */
 export function countryCodeToTranslatedName({
 	countryCode,
 	language,
@@ -75,16 +62,13 @@ export function countryCodeToTranslatedName({
 			`Error getting display name for country code "${countryCode}":`,
 			e,
 		);
-		return countryCode; // fallback to the code itself if display name fails
+		return countryCode;
 	}
 }
 
 /**
- * Ordinal placement suffixes per language, keyed by the CLDR ordinal plural
- * category given by `Intl.PluralRules(language, { type: "ordinal" })`. A leading
- * `^` marks a suffix that should render as superscript. Languages without a
- * written ordinal suffix use explicit `null` – rendering no suffix is preferred
- * over borrowing the English one.
+ * Ordinal suffixes keyed by CLDR ordinal plural category. A leading `^` marks superscript.
+ * Languages without a written ordinal suffix are `null`: no suffix beats borrowing the English one.
  */
 const ORDINAL_SUFFIXES: Record<
 	LanguageCode,
@@ -122,12 +106,7 @@ function regionDisplayNames(language: string): Intl.DisplayNames {
 
 const pluralRulesCache = new Map<string, Intl.PluralRules>();
 
-/**
- * Returns the localized ordinal suffix for a placement number in the given
- * language (e.g. `"^st"` for `1` in English). A leading `^` marks a suffix the
- * caller should render as superscript. Returns an empty string for languages
- * without a written ordinal suffix.
- */
+/** Localized ordinal suffix (`"^st"` for 1 in English; leading `^` = superscript), empty when the language has none. */
 export function ordinalSuffix(placement: number, language: string): string {
 	const category = ordinalPluralRules(language).select(placement);
 

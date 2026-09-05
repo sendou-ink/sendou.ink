@@ -366,9 +366,8 @@ function permissionsOf(tournament: {
 }
 
 /**
- * User ids of everyone on multiple teams' rosters mapped to the team they joined
- * most recently. Nearly always empty, allowing the teams to drop per member join
- * timestamps that only this tiebreak needed.
+ * Users on multiple rosters mapped to the team they joined most recently. Nearly always
+ * empty, which lets the teams drop the per member join timestamps only this tiebreak needs.
  */
 function latestTeamIdByDuplicatedUserId(
 	teams: Array<{
@@ -405,10 +404,7 @@ function latestTeamIdByDuplicatedUserId(
 	return result;
 }
 
-/**
- * Live streams of the tournament: streams of checked-in participants and the streams
- * of the tournament's cast Twitch accounts.
- */
+/** Live streams of checked-in participants and of the tournament's cast Twitch accounts. */
 export async function findStreamsByTournamentId(tournamentId: number) {
 	const [participantStreams, castStreams] = await Promise.all([
 		db
@@ -672,9 +668,7 @@ export async function findDescriptionById(tournamentId: number) {
 	return row?.description ?? null;
 }
 
-/**
- * Loads a tournament's seeding snapshot.
- */
+/** Loads a tournament's seeding snapshot. */
 export async function findSeedingSnapshotById(tournamentId: number) {
 	const row = await db
 		.selectFrom("Tournament")
@@ -685,10 +679,7 @@ export async function findSeedingSnapshotById(tournamentId: number) {
 	return row?.seedingSnapshot ?? null;
 }
 
-/**
- * Per-user results of a finalized tournament as persisted at finalization time.
- * Empty for tournaments that have not been finalized.
- */
+/** Per-user results persisted at finalization time. Empty for tournaments not yet finalized. */
 export function findResultsByTournamentId(tournamentId: number) {
 	return db
 		.selectFrom("TournamentResult")
@@ -704,12 +695,10 @@ export function findResultsByTournamentId(tournamentId: number) {
 }
 
 /**
- * Participants of the latest finalized league of the given organization, along with the bracket
- * progression that tells what division (= starting bracket) each of them played in.
- *
- * Only participants eligible for a division placement are included: they have a result, were on a
- * team that did not drop out, and played at least one match. Null if the organization has no
- * finalized league.
+ * Participants of the organization's latest finalized league, with the bracket progression that
+ * tells what division (= starting bracket) each played in. Only participants eligible for a
+ * division placement: have a result, team did not drop out, played at least one match. Null if
+ * the organization has no finalized league.
  */
 export async function findLatestFinalizedLeagueParticipants(args: {
 	organizationId: number;
@@ -926,10 +915,7 @@ function databaseTimestampWeekAgo() {
 	return dateToDatabaseTimestamp(now);
 }
 
-/**
- * Resolves the team & participant counts of one tournament exactly like {@link findAllForShowcase}
- * does, meant for refreshing those counts of an already cached showcase tournament.
- */
+/** Team & participant counts of one tournament as {@link findAllForShowcase} computes them, for refreshing a cached showcase tournament. */
 export function findShowcaseCountsById(tournamentId: number) {
 	return db
 		.selectFrom("Tournament")
@@ -968,11 +954,7 @@ export function findAllBetweenTwoTimestamps({
 		.execute();
 }
 
-/**
- * `ORGANIZE` and `MANAGE_MATCHES` holders per tournament, keyed by tournament id.
- * For callers that need the ids of many tournaments' organizers without loading
- * the tournaments themselves.
- */
+/** `ORGANIZE` and `MANAGE_MATCHES` holders keyed by tournament id, without loading the tournaments themselves. */
 export async function findOrganizerPermissionsByTournamentIds(
 	tournamentIds: number[],
 ) {
@@ -1100,8 +1082,14 @@ export function updateProgression({
 			.where("id", "=", tournamentId)
 			.executeTakeFirstOrThrow();
 
+		const changedFormat = Progression.changedBracketProgressionFormat(
+			existingSettings.bracketProgression,
+			bracketProgression,
+		);
+
 		if (
-			Progression.changedBracketProgressionFormat(
+			changedFormat ||
+			Progression.changedStartingBrackets(
 				existingSettings.bracketProgression,
 				bracketProgression,
 			)
@@ -1114,7 +1102,6 @@ export function updateProgression({
 					.execute()
 			).map((t) => t.id);
 
-			// delete all bracket check-ins
 			await trx
 				.deleteFrom("TournamentTeamCheckIn")
 				.where("TournamentTeamCheckIn.bracketIdx", "is not", null)
@@ -1143,12 +1130,7 @@ export function updateProgression({
 			.updateTable("Tournament")
 			.set({
 				settings: JSON.stringify(newSettings),
-				preparedMaps: Progression.changedBracketProgressionFormat(
-					existingSettings.bracketProgression,
-					bracketProgression,
-				)
-					? null
-					: undefined,
+				preparedMaps: changedFormat ? null : undefined,
 			})
 			.where("id", "=", tournamentId)
 			.execute();
@@ -1333,16 +1315,14 @@ export function unlockMatch({
 			.where("id", "=", tournamentId)
 			.execute();
 
-		// Make sure that a match is not marked as started when it is unlocked
-		// as we use this timestamp to determine the "deadline" for the match
-		// so it doesn't make sense for that timer to run if players can't play yet
+		// startedAt drives the match deadline, which must not run while locked: restart it now
+		// (but only if it was ever set)
 		await trx
 			.updateTable("TournamentMatch")
 			.set({
 				startedAt: databaseTimestampNow(),
 			})
 			.where("id", "=", matchId)
-			// ensure we don't set startedAt if it was never set before
 			.where("TournamentMatch.startedAt", "is not", null)
 			.execute();
 	});
@@ -1425,16 +1405,12 @@ export function reopenTournament(tournamentId: number) {
 	});
 }
 
-/** How many rows one multi-row insert of the summary binds at a time. SQLite
- * rejects any statement binding over 32,766 parameters, a ceiling a big
- * tournament's deltas cross when inserted as a single statement. */
+/** SQLite rejects statements binding over 32,766 parameters, which a big tournament's deltas cross in one insert. */
 const SUMMARY_INSERT_CHUNK_SIZE = 1000;
 
 /**
- * Finalizes a tournament, recording the full summary: skills, seeding skills,
- * map/player result deltas, badge owners and placements. Use
- * {@link finalizeWithoutSummary} for test tournaments that should be marked as
- * finalized without recording any stats.
+ * Finalizes a tournament, recording the full summary: skills, seeding skills, map/player
+ * result deltas, badge owners and placements. See {@link finalizeWithoutSummary} for test tournaments.
  */
 export function finalize({
 	tournamentId,
@@ -1455,13 +1431,10 @@ export function finalize({
 		const skillTeamUsers: Array<{ skillId: number; userId: number }> = [];
 		for (const skill of summary.skills) {
 			invariant(seasonValue !== null, "Season missing for skill");
-			// A skill row keys on either userId (solo) or identifier (team), never
-			// both. The matchesCount subquery filters by whichever is present so it
-			// references exactly one indexed column — a combined
-			// `where "userId" = ? or "identifier" = ?` triggers a stat4-driven
-			// misestimate when one parameter is NULL (the planner treats NULL as a
-			// frequent indexed value, ~900K rows for Skill.identifier) and picks a
-			// pathological MULTI-INDEX OR plan.
+			// A skill row keys on either userId (solo) or identifier (team), never both. The
+			// matchesCount subquery filters by whichever is present so it hits exactly one index:
+			// `where "userId" = ? or "identifier" = ?` with a NULL parameter makes the planner
+			// (stat4, NULL ~900K rows for Skill.identifier) pick a pathological MULTI-INDEX OR plan.
 			const insertedSkill = await trx
 				.insertInto("Skill")
 				.values((eb) => ({
@@ -1670,10 +1643,7 @@ export function finalize({
 	});
 }
 
-/**
- * Marks a tournament as finalized without recording any summary stats. Used for
- * test tournaments. See {@link finalize} for the normal path.
- */
+/** Marks a test tournament as finalized without recording any summary stats. See {@link finalize}. */
 export function finalizeWithoutSummary(tournamentId: number) {
 	return db
 		.updateTable("Tournament")
@@ -1685,11 +1655,7 @@ export function finalizeWithoutSummary(tournamentId: number) {
 /** How close to its start time a tournament counts as happening right now. */
 const TOURNAMENT_ONGOING_WINDOW_IN_SECONDS = 24 * 60 * 60;
 
-/**
- * Searches tournaments whose calendar event name contains the query, hidden events excluded.
- *
- * Ordered so that the tournaments most likely being looked for come first
- */
+/** Tournaments whose calendar event name contains the query, hidden excluded, most likely matches first. */
 export async function searchByName({
 	query,
 	limit,
@@ -1703,8 +1669,7 @@ export async function searchByName({
 }) {
 	const now = databaseTimestampNow();
 	const distanceFromNow = sql<number>`abs("CalendarEventDate"."startsAt" - ${now})`;
-	// window function so that the next tournament up is the next one of all the matches,
-	// not only of the ones that happen to fit in the limit
+	// window function: next up is the next of all matches, not only of those within the limit
 	const nextUpStartsAt = sql<number>`min(case when "CalendarEventDate"."startsAt" - ${now} >= ${TOURNAMENT_ONGOING_WINDOW_IN_SECONDS} then "CalendarEventDate"."startsAt" end) over ()`;
 
 	let sqlQuery = db
@@ -1811,9 +1776,8 @@ export function updateTeamSeeds({
 }
 
 /**
- * Records the tier of one division (= starting bracket), calculated from the teams that checked in
- * to it, and updates the tournament's own tier to the best tier of its divisions. Tournaments where
- * every team plays the same bracket have one division, making the two the same.
+ * Records the tier of one division (= starting bracket) from its checked-in teams and sets the
+ * tournament's own tier to the best of its divisions (the same thing when there is one division).
  */
 export async function upsertDivisionTier({
 	tournamentId,
@@ -1883,10 +1847,7 @@ export async function findRunningTournamentIds() {
 	return rows.map((row) => row.id);
 }
 
-/**
- * Tier the trophy was won at: the tier of the division the winning team played in, falling back to
- * the tournament's own tier when the team is not known or its division was never tiered.
- */
+/** Tier of the winning team's division, falling back to the tournament's tier when unknown or never tiered. */
 async function trophyTier(
 	trx: Transaction<DB>,
 	{

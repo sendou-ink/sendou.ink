@@ -5,12 +5,7 @@ import { superRefineAsync } from "~/utils/schema";
 import { registerTeamFormSchema } from "./tournament-register-schemas";
 import { tournamentTeamNameTaken } from "./tournament-utils.server";
 
-/**
- * Extends the client {@link registerTeamFormSchema} with the server-only unique team
- * name check, surfaced as a field error. Shares the uniqueness rule with the admin
- * registration form ({@link adminRegistrationFormSchemaServer}) via
- * {@link tournamentTeamNameTaken}.
- */
+/** {@link registerTeamFormSchema} plus the server-only unique name check ({@link tournamentTeamNameTaken}) as a field error. */
 export function registerTeamFormSchemaServer({
 	tournament,
 	ownTeamId,

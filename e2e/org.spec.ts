@@ -57,12 +57,10 @@ test.describe("Tournament Organization", () => {
 
 		const organization = new OrganizationPage(page);
 
-		// 1. As a regular user, verify edit controls are not visible
 		await impersonate(page, NZAP_TEST_ID);
 		await organization.goto(org.slug);
 		await isNotVisible(organization.locators.editButton);
 
-		// 2. As admin, promote user to admin
 		await impersonate(page, ADMIN_ID);
 		await organization.goto(org.slug);
 		const organizationEdit = await organization.openEdit();
@@ -73,13 +71,11 @@ test.describe("Tournament Organization", () => {
 		await organization.goto(org.slug);
 		await organization.establish();
 
-		// 3. As the promoted user, verify edit controls are visible and page can be accessed
 		await impersonate(page, NZAP_TEST_ID);
 		await organization.goto(org.slug);
 		await organization.openEdit();
 		await expect(organizationEdit.locators.title).toBeVisible();
 
-		// 4. As the promoted user, verify they can edit tournaments
 		const tournamentPage = new TournamentPage(page);
 		await tournamentPage.goto(tournament.id);
 
@@ -109,7 +105,6 @@ test.describe("Tournament Organization", () => {
 		const organization = new OrganizationPage(page);
 		const tournamentPage = new TournamentPage(page);
 
-		// 1. As admin, ban the player from the organization
 		await impersonate(page, ADMIN_ID);
 		await organization.goto(org.slug);
 		await organization.openBannedUsers();
@@ -126,7 +121,6 @@ test.describe("Tournament Organization", () => {
 			"Test reason",
 		);
 
-		// 2. As the banned user, try to join a tournament
 		await impersonate(page, player.id);
 		await tournamentPage.goto(tournament.id);
 
@@ -137,13 +131,11 @@ test.describe("Tournament Organization", () => {
 		// "Fill roster" only appears after a successful registration
 		await expect(register.locators.fillRosterHeading).not.toBeVisible();
 
-		// 3. As admin, remove the ban
 		await impersonate(page, ADMIN_ID);
 		await organization.goto(org.slug);
 		await organization.openBannedUsers();
 		await organization.unban();
 
-		// 4. As the unbanned user, verify they can now join a tournament
 		await impersonate(page, player.id);
 		await tournamentPage.goto(tournament.id);
 		const registerAgain = await tournamentPage.register();
@@ -156,7 +148,6 @@ test.describe("Tournament Organization", () => {
 
 		await expect(teamsTab).toContainText("Teams (1)");
 
-		// 5. As admin, ban user again but with permanent ban this time
 		await impersonate(page, ADMIN_ID);
 		await organization.goto(org.slug);
 		await organization.openBannedUsers();

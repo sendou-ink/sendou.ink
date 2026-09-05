@@ -34,11 +34,11 @@ interface SendouTabsProps {
 	defaultSelectedKey?: string;
 	onSelectionChange?: (key: string) => void;
 	orientation?: TabsOrientation;
-	/** Should there be padding above the panels. Defaults to true, pass in false if the panel content is managing its own padding. */
+	/** Padding above the panels, default true. */
 	padded?: boolean;
-	/** Hide tabs if only one tab shown? Defaults to true. */
+	/** Hide tabs if only one tab shown, default true. */
 	disappearing?: boolean;
-	/** When orientation is "vertical", switch to horizontal once the main content width drops below this many pixels. */
+	/** Vertical orientation switches to horizontal below this main content width (px). */
 	horizontalBelow?: number;
 	className?: string;
 	children: React.ReactNode;
@@ -176,7 +176,7 @@ interface SendouTabProps {
 	id: string;
 	icon?: React.ReactNode;
 	number?: number;
-	/** Render a warning-colored alert icon to draw attention to this tab. */
+	/** warning-colored alert icon on the tab */
 	alert?: boolean;
 	isDisabled?: boolean;
 	href?: string;
@@ -269,7 +269,7 @@ export function SendouTab({
 
 interface SendouTabListProps {
 	sticky?: boolean;
-	/** Should tabs take 100% width with equal distribution? */
+	/** tabs share 100% width equally */
 	fullWidth?: boolean;
 	"aria-label"?: string;
 	children: React.ReactNode;

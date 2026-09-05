@@ -40,8 +40,7 @@ const withManagers = (eb: ExpressionBuilder<DB, "Badge">) => {
 	).as("managers");
 };
 
-// takes badgeId as a constant instead of correlating to "Badge"."id" so that
-// SQLite can push the predicate down into both arms of the BadgeOwner view
+// a constant badgeId (not correlated to "Badge"."id") lets SQLite push the predicate into both arms of the BadgeOwner view
 const withOwners = (eb: ExpressionBuilder<DB, "Badge">, badgeId: number) => {
 	return jsonArrayFrom(
 		eb

@@ -4,14 +4,13 @@ import type { AnySchema } from "~/utils/schema";
 import { SendouButton, type SendouButtonProps } from "./elements/Button";
 
 type SubmitButtonProps<TSchema extends AnySchema> = SendouButtonProps & {
-	/** If the page has multiple forms you can pass in fetcher.state to differentiate when this SubmitButton should be in submitting state */
+	/** fetcher.state, to tell apart submitting state between multiple forms */
 	state?: FetcherWithComponents<any>["state"];
 	testId?: string;
 } & (
 		| {
-				/** Action schema of the route the form submits to. Only used for typing `_action`. */
+				/** Route's action schema, only used for typing `_action`. */
 				schema: TSchema;
-				/** `_action` to submit, narrowed to the literals of the schema. */
 				_action: ActionsOf<TSchema>;
 		  }
 		| { schema?: never; _action?: never }

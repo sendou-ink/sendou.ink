@@ -5,14 +5,9 @@ import { weaponReportActionSchema } from "./match-page-schemas";
 import type { WeaponReporterMap, WeaponReporterProps } from "./WeaponReporter";
 
 /**
- * Wires the `<WeaponReporter />` component to the standard
- * `REPORT_WEAPON` / `UNDO_WEAPON_REPORT` fetcher actions and to the
- * locally persisted recently-reported weapons list.
- *
- * `maps` is the maps the viewer can report a weapon for, in play order, each
- * carrying its `mapIndex` in the match's map list — a viewer who sat out a map
- * simply has no entry for it. `pastReported` is the weapons the viewer has
- * already reported, paired with the `mapIndex` they were reported for.
+ * Wires `<WeaponReporter />` to the `REPORT_WEAPON` / `UNDO_WEAPON_REPORT` actions and the
+ * locally persisted recently-reported list. `maps` are the maps the viewer can report for, in
+ * play order with their `mapIndex` in the match's map list (sat out maps have no entry).
  */
 export function useMatchWeaponReport({
 	maps,

@@ -1,6 +1,4 @@
-/**
- * Player name recognition: glyph matching over the name ROI.
- */
+/** Player name recognition: glyph matching over the name ROI. */
 import { getCV, type Mat } from "../../cv";
 import {
 	type GlyphSet,
@@ -17,25 +15,17 @@ export interface ParsedName {
 }
 
 /**
- * BlitzMain renders 'I', 'l', '|', and '1' as near-identical bars — no pixel
- * evidence separates them, so fall back to context, by decreasing weight of
- * evidence: a bar next to a lowercase letter is overwhelmingly an 'l' in
- * latin names ("Olise"), next to a digit it's a '1' ("Jrod_14"), next to an
- * uppercase letter it's an 'I' ("SHIP"), a bare bar hanging off an
- * underscore is a numbered-alt suffix ("gori_1"), and with no latin/digit
- * context at all (kana, symbols, edges) 'l' is the common case in the wild.
- * (This will genuinely miss e.g. "McIntosh", but so would a human reading
- * the pixels.)
+ * BlitzMain renders 'I', 'l', '|', '1' as near-identical bars, so context
+ * decides: next to lowercase 'l' ("Olise"), digit '1' ("Jrod_14"), uppercase
+ * 'I' ("SHIP"), off an underscore '1' ("gori_1"), else 'l'. Misses "McIntosh",
+ * but so would a human reading the pixels.
  */
 const BAR_CHARS = new Set(["I", "l", "|", "1"]);
 
 function normalizeBars(name: string): string {
 	const chars = [...name];
-	// Context is the nearest NON-BAR char within the word: consecutive bars
-	// ("ll" in "Chill") must all resolve from the same real-letter neighbor,
-	// not from each other's arbitrary raw reading. Underscores bound words
-	// like spaces do — "gori_1"'s lowercase must not leak across the
-	// separator onto the suffix.
+	// context is the nearest NON-BAR char within the word ("ll" in "Chill" must
+	// resolve from the same neighbor); underscores bound words like spaces
 	const neighbor = (i: number, step: -1 | 1): string | undefined => {
 		for (let j = i + step; j >= 0 && j < chars.length; j += step) {
 			const c = chars[j]!;
@@ -64,12 +54,8 @@ function normalizeBars(name: string): string {
 }
 
 /**
- * The kana long-vowel bar 'ー' and the ASCII hyphen '-' are horizontal-bar
- * homoglyphs the same way the vertical bars are: both are a single
- * horizontal stroke whose length difference drowns in capture blur, so
- * which template wins is noise ("ドラグ-ン"). Resolve by script context —
- * a kana neighbor reads 'ー', a Latin/digit neighbor reads '-', and with
- * no context the raw pick stands.
+ * Kana 'ー' and hyphen '-' are homoglyphs under capture blur ("ドラグ-ン"):
+ * a kana neighbor reads 'ー', a Latin/digit neighbor '-', else the raw pick stands.
  */
 const LONG_BAR_CHARS = new Set(["-", "ー"]);
 
@@ -100,12 +86,9 @@ function normalizeLongBars(name: string): string {
 }
 
 /**
- * BlitzMain's 'O' and '0' are the same rounded box at capture fidelity —
- * which template wins is noise — so, like the bars, resolve by context via
- * the nearest unambiguous neighbor in the word: a digit neighbor keeps '0',
- * an uppercase neighbor reads 'O' ("AHOO"), after a lowercase letter it's a
- * stylized digit ("y0s"), and word-initial before lowercase it's a
- * capitalized name ("Olise").
+ * BlitzMain's 'O' and '0' are the same box at capture fidelity: a digit neighbor
+ * keeps '0', uppercase reads 'O' ("AHOO"), after lowercase '0' ("y0s"),
+ * word-initial before lowercase 'O' ("Olise").
  */
 function normalizeOhs(name: string): string {
 	const chars = [...name];
@@ -138,13 +121,10 @@ function normalizeOhs(name: string): string {
 }
 
 /**
- * The round dots '.', '・', and '·' tight-crop to near-identical blobs, so
- * which template wins is noise. Vertical position decides in one direction
- * only: a period sits on the baseline, so a dot floating well above it
- * cannot be '.' — reread it as the best-scoring middle-dot candidate. The
- * reverse does not hold: BlitzMain draws '・' ON the baseline in some names
- * (scoreboard/robot row 5, "..・"), so baseline dots stay with the template
- * ranking, where the exact fixture crops separate the sizes.
+ * '.', '・', '·' tight-crop to near-identical blobs. A dot floating well above
+ * the baseline cannot be '.', so it rereads as the best middle-dot candidate;
+ * the reverse does not hold (BlitzMain draws '・' ON the baseline in some names,
+ * scoreboard/robot row 5), so baseline dots keep the template ranking.
  */
 const DOT_CHARS = new Set([".", "・", "·"]);
 const DOT_BASELINE_SLACK_PX = 3;
@@ -172,15 +152,11 @@ function fixRaisedDots(raw: RecognizedText): RecognizedText {
 }
 
 /**
- * On soft captures BlitzMain's 'b' and 'h' come down to whether the bowl
- * closes at the bottom, and template correlation weighs that stroke too
- * lightly to be trusted (a font 'h' beats a fixture 'b' by ~0.003 on a true
- * 'b'). The segment's own pixels decide: the bottom band between the stems
- * is solid ink in a 'b' (the bowl floor) and empty in an 'h' (open legs) —
- * measured 0.90 vs 0.15 across fixtures. Only near-tied twin reads are
- * re-decided; confident reads keep the template pick. Small text is exempt:
- * below ~20px of ink height the blur closes a true 'h' too (a 15px 'h'
- * measured 0.67), so the pixels only outrank the templates at row scale.
+ * On soft captures 'b' vs 'h' comes down to the bowl floor, which correlation
+ * weighs too lightly (font 'h' beats fixture 'b' by ~0.003 on a true 'b'). The
+ * bottom band between the stems is solid in a 'b', empty in an 'h' (0.90 vs
+ * 0.15). Only near-ties are re-decided, and only above ~20px ink height: blur
+ * closes a true 'h' below that (15px 'h' measured 0.67).
  */
 const BH_TWINS: Record<string, string> = { b: "h", h: "b" };
 const BH_SCORE_MARGIN = 0.08;
@@ -234,14 +210,9 @@ function resolveBhByBowlFloor(
 }
 
 /**
- * BlitzMain's 'P' and 'p' tight-crop to the same stem-and-bowl shape, so the
- * template scores between them are noise — but unlike the bars and ohs the
- * pixels do decide: 'p' hangs below the baseline while 'P' sits on it. The
- * templates lose that position, the segment keeps it. Take the baseline as
- * the median ink bottom of the non-twin glyphs (most chars rest exactly on
- * it, so the median shrugs off real descenders and symbols) and pick the
- * case by whether the segment descends past it. Skipped when no other glyph
- * anchors the baseline.
+ * 'P' and 'p' tight-crop to the same shape, but the segment keeps the position
+ * the templates lose: 'p' hangs below the baseline (median ink bottom of the
+ * non-twin glyphs, which shrugs off real descenders). Skipped with no anchor glyph.
  */
 const DESCENDER_TWINS: Record<string, [upper: string, lower: string]> = {
 	P: ["P", "p"],

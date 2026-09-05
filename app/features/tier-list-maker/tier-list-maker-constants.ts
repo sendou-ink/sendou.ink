@@ -2,7 +2,7 @@ import type { TierListMakerTier } from "./tier-list-maker-schemas";
 
 export const TIER_NAME_MAX_LENGTH = 50;
 
-/** Search params that hold the tier list itself, shared by the maker page and the links pointing back to it */
+/** Params holding the tier list itself, shared by the maker page and links back to it */
 export const TIER_LIST_SEARCH_PARAM_NAMES = {
 	STATE: "state",
 	TITLE: "title",

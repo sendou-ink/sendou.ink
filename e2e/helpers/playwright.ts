@@ -234,17 +234,13 @@ export async function fillDateTimeField({
 export async function navigate({ page, url }: { page: Page; url: string }) {
 	await flushIfDirty(page);
 
-	// Rewrite absolute URLs with localhost to use the worker's baseURL
-	// This handles invite links and other URLs embedded with VITE_SITE_DOMAIN
+	// invite links and other URLs embed VITE_SITE_DOMAIN; strip it so Playwright applies the worker's baseURL
 	let targetUrl = url;
 	if (url.startsWith("http://localhost:")) {
 		const urlObj = new URL(url);
-		// Extract just the path and search params, let Playwright use the correct baseURL
 		targetUrl = urlObj.pathname + urlObj.search;
 	}
-	// domcontentloaded instead of the default load event: module scripts have
-	// executed by then, and the hydration wait below covers the rest — no need
-	// to also wait for images and other subresources
+	// domcontentloaded: module scripts have run by then and the hydration wait covers the rest
 	await page.goto(targetUrl, { waitUntil: "domcontentloaded" });
 	if (await scriptsRan(page)) {
 		await expectIsHydrated(page);
@@ -291,10 +287,7 @@ export function impersonate(page: Page, userId = ADMIN_ID) {
 	return retryPost(page, "impersonate", `/auth/impersonate?id=${userId}`);
 }
 
-/**
- * Makes the worker's server resolve every season as over, so tests can cover the
- * season boundary. Undone before the next test starts.
- */
+/** Makes the worker's server resolve every season as over. Undone before the next test starts. */
 export async function endSeason(page: Page) {
 	const response = await retryPost(page, "endSeason", "/end-season");
 	if (!response?.ok()) {
@@ -304,10 +297,7 @@ export async function endSeason(page: Page) {
 	}
 }
 
-/**
- * Makes the worker's server resolve Plus Server voting as active, so tests can
- * cover the voting window. Undone before the next test starts.
- */
+/** Makes the worker's server resolve Plus Server voting as active. Undone before the next test starts. */
 export async function setPlusVotingActive(page: Page, active: boolean) {
 	const response = await retryPost(
 		page,
@@ -334,11 +324,7 @@ export async function runRoutine(page: Page, name: string) {
 	}
 }
 
-/**
- * Direct (non-browser) POST that retries on transient network failures such as
- * "socket hang up", which the dev server can produce intermittently under load.
- * Only safe for idempotent endpoints.
- */
+/** Direct POST retrying transient failures ("socket hang up" under load). Only for idempotent endpoints. */
 async function retryPost(
 	page: Page,
 	name: string,
@@ -351,8 +337,7 @@ async function retryPost(
 
 	for (let attempt = 1; attempt <= MAX_ATTEMPTS; attempt++) {
 		try {
-			// maxRedirects 0: impersonate answers with a redirect to the admin
-			// page, and following it would server-render a page nobody reads —
+			// maxRedirects 0: following impersonate's redirect would render a page nobody reads;
 			// the Set-Cookie lands in the context jar either way
 			return await page.request.post(url, {
 				timeout: 7_500,
@@ -448,11 +433,7 @@ function isDataRequest(url: string) {
 	return new URL(url).pathname.endsWith(".data");
 }
 
-/**
- * Starts recording whether the router turns busy. A fast action holds the busy
- * marker for a frame or two, which a polled wait misses outright; the flag a
- * `MutationObserver` sets survives the marker flipping back.
- */
+/** Records whether the router turns busy: a fast action holds the marker for a frame or two, which a polled wait misses. */
 async function armRouterProbe(page: Page) {
 	await page.evaluate(() => {
 		window.__routerProbe?.observer.disconnect();
@@ -519,10 +500,7 @@ export function modalClickConfirmButton(page: Page) {
 	return submit(page, "confirm-button");
 }
 
-/**
- * Clicks a tournament nav tab by its testId, opening the overflow ("More") menu
- * first when the tab has collapsed into it on the current viewport.
- */
+/** Clicks a tournament nav tab by testId, via the overflow ("More") menu when it has collapsed into it. */
 export async function clickNavTab(page: Page, testId: string) {
 	const visibleTab = page.locator(`[data-testid="${testId}"]:visible`);
 	if ((await visibleTab.count()) === 0) {
@@ -535,11 +513,7 @@ export async function clickNavTab(page: Page, testId: string) {
 export const MACHINE_TIMEZONE =
 	Intl.DateTimeFormat().resolvedOptions().timeZone;
 
-/**
- * Writes the timezone cookie the browser would after hydration, so that the
- * very first document request already renders in the machine's timezone the
- * test computed its fixture times in.
- */
+/** Pre-writes the timezone cookie so the first document request already renders in the machine's timezone. */
 export function setTimezoneCookie(page: Page) {
 	return page.context().addCookies([
 		{

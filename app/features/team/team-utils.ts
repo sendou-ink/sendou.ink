@@ -42,7 +42,7 @@ export function canAddCustomizedColors(team: {
 	);
 }
 
-/** Returns the user who will become the new owner after old one leaves */
+/** Who becomes owner after the current one leaves. */
 export function resolveNewOwner(
 	members: Array<{
 		id: number;
@@ -65,9 +65,8 @@ export function resolveNewOwner(
 }
 
 /**
- * Resolves how a team member's role should be classified. For custom roles the explicit
- * `roleType` is authoritative; for predefined roles it is derived from {@link NON_PLAYER_TEAM_ROLES}.
- * Returns `null` when the member has no role at all (treated as a player by callers).
+ * Custom roles use their explicit `roleType`, predefined ones derive from {@link NON_PLAYER_TEAM_ROLES}.
+ * `null` without a role (callers treat as a player).
  */
 export function getMemberRoleType(member: {
 	role: MemberRole | null;
@@ -78,14 +77,7 @@ export function getMemberRoleType(member: {
 	return NON_PLAYER_TEAM_ROLES.includes(member.role) ? "OTHER" : "PLAYER";
 }
 
-/**
- * Returns a list of participant IDs who are considered "substitutes" for a given tournament result,
- * based on the team's member history and the result's participants.
- *
- * A participant is considered a substitute if both:
- * - They are not a current member (i.e., their `leftAt` is set).
- * - They are not a past member who was part of the team during the result's start time.
- */
+/** Participants of the result who were neither a current member nor a member at the time of the result. */
 export function subsOfResult<T extends { id: number }>(
 	result: { participants: Array<T>; startsAt: number },
 	members: Array<Pick<Tables["TeamMember"], "userId" | "createdAt" | "leftAt">>,

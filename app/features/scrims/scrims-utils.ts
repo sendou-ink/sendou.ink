@@ -59,10 +59,7 @@ export const parseLutiDiv = (div: number): LutiDiv => {
 	return String(div) as LutiDiv;
 };
 
-/**
- * Extracts the LUTI division (e.g. `"X"`, `"2"`) from a tournament name such as
- * "LUTI: Season 15 - Division 2". Returns `null` if no valid division token is found.
- */
+/** The LUTI division (e.g. `"X"`, `"2"`) of a name like "LUTI: Season 15 - Division 2", or `null`. */
 export const parseLutiDivFromName = (name: string): LutiDiv | null => {
 	const match = name.match(/\bdiv(?:ision)?\.?\s*(X|11|10|[1-9])\b/i);
 	if (!match) return null;
@@ -79,12 +76,7 @@ export const serializeLutiDiv = (div: LutiDiv): number => {
 	return Number(div);
 };
 
-/**
- * The starts a request for the post can still be made for: its start, the half
- * hours inside its start-time flexibility and the end of that flexibility,
- * with the ones already past dropped. A post with no flexibility left offers
- * `now` — "looking now" is what it means.
- */
+/** Starts a request can still be made for: the post's start, the half hours inside its flexibility and its end, past ones dropped. No flexibility left offers `now` ("looking now"). */
 export function requestStarts({
 	post,
 	now,
@@ -104,10 +96,7 @@ export function requestStarts({
 	return upcoming.length > 0 ? upcoming : [now];
 }
 
-/**
- * The whole span the post's scrim could take up: from the earliest start still
- * on offer to the end of a scrim played from the latest one.
- */
+/** The whole span the scrim could take up: earliest start still on offer to the end of a scrim from the latest one. */
 export function postSpan({
 	post,
 	now,

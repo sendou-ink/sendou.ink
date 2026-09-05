@@ -22,7 +22,8 @@ import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useLayoutSize } from "~/hooks/useMainContentWidth";
+import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
+import { useMediaQuery } from "~/hooks/useMediaQuery";
 import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
@@ -32,8 +33,10 @@ import type { Breadcrumb, SendouRouteHandle } from "~/utils/remix.server";
 import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
+	navIconUrl,
 	PLANNER_URL,
 	SETTINGS_PAGE,
+	teamPage,
 	userPage,
 } from "~/utils/urls";
 import { Avatar, generateIdenticon } from "../Avatar";
@@ -58,19 +61,14 @@ import { TopRightButtons } from "./TopRightButtons";
 const MAX_DESKTOP_FRIENDS = 4;
 const SIDENAV_ACTION = "/sidenav";
 
-// lazy loaded so the rarely needed auth error dialog stays out of the eager
-// bundle loaded on every page
+// lazy loaded to stay out of the eager bundle
 const AuthErrorDialog = React.lazy(() =>
 	import("./AuthErrorDialog").then((module) => ({
 		default: module.AuthErrorDialog,
 	})),
 );
 
-/** Id of the loading-bar track rendered inside the header. NProgress mounts its
- * bar into it; the track sits just below the header border, spans only the area
- * between the sidebars, and clips the bar so it never extends over a sidebar.
- * Living inside the header makes it follow the header on scroll and in
- * standalone (PWA) mode where the header grows by the safe-area inset. */
+/** Loading-bar track inside the header that NProgress mounts into; styled in common.css. */
 export const NPROGRESS_ANCHOR_ID = "nprogress-anchor";
 
 function useRelativeDayFormat() {
@@ -145,10 +143,7 @@ function useSideNavCollapsed(initialCollapsed: boolean) {
 	return [collapsed, setCollapsedAndPersist] as const;
 }
 
-/**
- * Open state of a modal that only the tablet layout has, remembering the pathname it was
- * opened on so that leaving that layout or navigating elsewhere closes it on its own.
- */
+/** Open state of a tablet-layout-only modal; leaving that layout or navigating closes it. */
 function useTabletModal(isTabletLayout: boolean) {
 	const location = useLocation();
 	const [openedOnPathname, setOpenedOnPathname] = React.useState<string | null>(
@@ -162,25 +157,24 @@ function useTabletModal(isTabletLayout: boolean) {
 	return [isOpen, setIsOpen] as const;
 }
 
+/** Hides the mobile header while scrolling down and brings it back on scrolling up; always `0` outside the mobile layout. */
 function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 	const [navOffset, setNavOffset] = React.useState(0);
 	const lastScrollY = React.useRef(0);
+	const isMobileLayout = useMediaQuery(MOBILE_LAYOUT_QUERY);
 
-	const MOBILE_BREAKPOINT = 600;
 	const NAV_HEIGHT_FALLBACK = 55;
 	const SCROLL_THRESHOLD_PX = 200;
 
 	const scrollAccumulator = React.useRef(0);
 
 	React.useEffect(() => {
-		const handleScroll = () => {
-			if (window.innerWidth >= MOBILE_BREAKPOINT) {
-				setNavOffset(0);
-				lastScrollY.current = window.scrollY;
-				scrollAccumulator.current = 0;
-				return;
-			}
+		if (!isMobileLayout) return;
 
+		lastScrollY.current = window.scrollY;
+		scrollAccumulator.current = 0;
+
+		const handleScroll = () => {
 			const navHeight = headerRef.current?.offsetHeight ?? NAV_HEIGHT_FALLBACK;
 			const currentScrollY = window.scrollY;
 			const scrollDelta = currentScrollY - lastScrollY.current;
@@ -215,20 +209,13 @@ function useNavOffset(headerRef: React.RefObject<HTMLElement | null>) {
 			lastScrollY.current = currentScrollY;
 		};
 
-		const handleResize = () => {
-			if (window.innerWidth >= MOBILE_BREAKPOINT) {
-				setNavOffset(0);
-			}
-		};
-
 		window.addEventListener("scroll", handleScroll, { passive: true });
-		window.addEventListener("resize", handleResize);
 
 		return () => {
 			window.removeEventListener("scroll", handleScroll);
-			window.removeEventListener("resize", handleResize);
+			setNavOffset(0);
 		};
-	}, [headerRef]);
+	}, [headerRef, isMobileLayout]);
 
 	return navOffset;
 }
@@ -687,6 +674,26 @@ function SideNavUserPanel() {
 					<span className={styles.sideNavFooterUsername}>{user.username}</span>
 				</Link>
 				<div className={styles.sideNavFooterActions}>
+					{user.team ? (
+						<Link
+							to={teamPage(user.team.customUrl)}
+							className={styles.sideNavFooterButton}
+							aria-label={t("header.myTeam")}
+							title={t("header.myTeam")}
+						>
+							{user.team.avatarUrl ? (
+								<img
+									src={user.team.avatarUrl}
+									alt=""
+									className={styles.sideNavFooterTeamAvatar}
+									width={22}
+									height={22}
+								/>
+							) : (
+								<Image path={navIconUrl("t")} alt="" width={22} height={22} />
+							)}
+						</Link>
+					) : null}
 					{notifications ? (
 						<div
 							className={styles.sideNavFooterNotification}

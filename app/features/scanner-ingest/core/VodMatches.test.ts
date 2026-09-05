@@ -65,9 +65,8 @@ describe("prefillVodMatches", () => {
 	});
 
 	test("accepts the `ingest` search param the scanner VoD tab sends", () => {
-		// what the scanner VoD tab's "Add VoD" button puts in the URL
-		// (~/features/scanner/components/sendou-upload.ts): a { type?, matches }
-		// payload in the compressed `ingest` param
+		// the { type?, matches } payload the scanner VoD tab's "Add VoD" button puts in the
+		// compressed `ingest` param (~/features/scanner/components/sendou-upload.ts)
 		const href = vodsNewSearchParams.href("/vods/new", {
 			ingest: { type: "CAST", matches: [testMatch()] },
 		});

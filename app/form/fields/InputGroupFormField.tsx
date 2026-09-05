@@ -107,8 +107,7 @@ export function CheckboxGroupFormField<V extends string>({
 			? [...value, itemValue]
 			: value.filter((v) => v !== itemValue);
 		onChange(newValue);
-		// validate with the value the click produced — the click event would
-		// otherwise validate the pre-click value and show a stale error
+		// the click event would otherwise validate the pre-click value and show a stale error
 		onBlur?.(newValue);
 	};
 

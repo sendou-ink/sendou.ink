@@ -10,10 +10,7 @@ export function tierListItemId(item: TierListItem) {
 	return `${item.type}:${item.id}${item.nth ? `:${item.nth}` : ""}`;
 }
 
-/**
- * Path to the tier list maker page that opens the given tier list as it was made,
- * used by the exported image's QR code.
- */
+/** Path that reopens the given tier list, used by the exported image's QR code. */
 export function tierListMakerPathWithState({
 	state,
 	title,
@@ -30,11 +27,7 @@ export function tierListMakerPathWithState({
 	});
 }
 
-/**
- * Returns a new tier list state with the given item appended to the end of the
- * specified tier. Used by the "click" placement mode. If the tier does not
- * exist the state is returned unchanged.
- */
+/** State with the item appended to the tier; unchanged if the tier does not exist. */
 export function addItemToTier(
 	state: TierListState,
 	tierId: string,
@@ -54,11 +47,7 @@ export function addItemToTier(
 	};
 }
 
-/**
- * Finds the next nth value for a duplicate item in the tier list.
- * Searches through all tiers to find the maximum nth value for items
- * with the same id and type, then returns max + 1.
- */
+/** Next `nth` for a duplicate item: max across all tiers of the same id and type, plus one. */
 export function getNextNthForItem(
 	item: TierListItem,
 	tiers: TierListState,
@@ -77,10 +66,7 @@ export function getNextNthForItem(
 	);
 }
 
-/**
- * Resolves the font size for a tier label so that longer tier names
- * shrink to fit inside the fixed-width label.
- */
+/** Longer tier names shrink to fit the fixed-width label. */
 export function tierNameFontSize(name: string) {
 	const length = name.length;
 	for (const breakpoint of TIER_NAME_FONT_SIZE_BREAKPOINTS) {

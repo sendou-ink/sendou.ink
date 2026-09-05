@@ -4,13 +4,8 @@ import { IS_E2E_TEST_RUN } from "./utils/e2e";
 import { superRefine, type ValidationCtx } from "./utils/schema";
 
 /**
- * Server (`process.env`) configuration. Import with
- * `import { ServerConfig } from "~/config.server"` and read values like
- * `ServerConfig.dbPath` or `ServerConfig.storage.endpoint`.
- *
- * Values are validated once when this module is first imported, surfacing a
- * single clear error for any misconfigured variable. Variables required in
- * production fall back to development defaults outside of production.
+ * Server (`process.env`) configuration, validated once on first import. Variables required in
+ * production fall back to development defaults elsewhere.
  */
 
 const isProd = process.env.NODE_ENV === "production" && !IS_E2E_TEST_RUN;
@@ -41,9 +36,8 @@ const schema = v.pipe(
 
 		PATREON_ACCESS_TOKEN: v.optional(v.string()),
 
-		// The VAPID public key (VITE_VAPID_PUBLIC_KEY) lives in `~/config` since
-		// it is client-readable; the full three-var coupling is completed by the
-		// runtime check in webPush.server.ts.
+		// the client-readable public key (VITE_VAPID_PUBLIC_KEY) lives in `~/config`;
+		// webPush.server.ts checks all three are set together
 		VAPID_PRIVATE_KEY: v.optional(v.string()),
 		VAPID_EMAIL: v.optional(v.string()),
 	}),
@@ -60,34 +54,23 @@ if (!parsed.success) {
 const values = parsed.output;
 
 export const ServerConfig = {
-	/**
-	 * Whether `NODE_ENV` is `"production"`. Note: this is `true` during e2e tests
-	 * (which run a production build), so combine it with `IS_E2E_TEST_RUN` when
-	 * you specifically need to exclude the e2e environment (as the session
-	 * cookies do).
-	 */
+	/** Also `true` during e2e tests (production build); combine with `IS_E2E_TEST_RUN` to exclude them. */
 	isProduction: values.NODE_ENV === "production",
-	/** Whether the app is running under the test runner. */
 	isTest: values.NODE_ENV === "test",
 
-	/** Path to the SQLite database file. */
 	dbPath: values.DB_PATH,
-	/** Secret used to sign session cookies. */
 	sessionSecret: values.SESSION_SECRET,
-	/** Token authorizing internal Lohi (bot/cron) requests. */
+	/** Authorizes internal Lohi (bot/cron) requests. */
 	lohiToken: values.LOHI_TOKEN,
-	/** SQL query logging level. */
 	sqlLog: values.SQL_LOG,
-	/** Whether response caching is disabled. */
 	disableCache: values.DISABLE_CACHE,
 
-	/** Discord OAuth configuration. */
 	discord: {
 		clientId: values.DISCORD_CLIENT_ID,
 		clientSecret: values.DISCORD_CLIENT_SECRET,
 	},
 
-	/** S3-compatible object storage configuration. */
+	/** S3-compatible object storage */
 	storage: {
 		endpoint: values.STORAGE_END_POINT,
 		accessKey: values.STORAGE_ACCESS_KEY,
@@ -96,18 +79,17 @@ export const ServerConfig = {
 		bucket: values.STORAGE_BUCKET,
 	},
 
-	/** Twitch integration credentials. Optional — streams are hidden when unset. */
+	/** Optional, streams are hidden when unset. */
 	twitch: {
 		clientId: values.TWITCH_CLIENT_ID,
 		clientSecret: values.TWITCH_CLIENT_SECRET,
 	},
 
-	/** Patreon integration configuration. */
 	patreon: {
 		accessToken: values.PATREON_ACCESS_TOKEN,
 	},
 
-	/** Web push (VAPID) server configuration. */
+	/** web push */
 	vapid: {
 		privateKey: values.VAPID_PRIVATE_KEY,
 		email: values.VAPID_EMAIL,

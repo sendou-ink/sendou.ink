@@ -24,10 +24,9 @@ export const meta: MetaFunction = (args) => {
 	});
 };
 
-// Everything below the shell assumes a browser: the OpenCV.js worker,
-// IndexedDB, WebCodecs, getUserMedia. Nothing from core/worker/capture/store
-// may be imported at route-module top level — only from inside this lazily
-// imported client component tree, after hydration.
+// Everything below the shell assumes a browser (OpenCV.js worker, IndexedDB,
+// WebCodecs, getUserMedia): nothing from core/worker/capture/store may be
+// imported at route-module top level — only inside this lazy client tree.
 const ScannerApp = lazy(() =>
 	import("~/features/scanner/components/ScannerApp").then((m) => ({
 		default: m.ScannerApp,

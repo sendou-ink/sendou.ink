@@ -15,7 +15,7 @@ export type TeamSearchResult = Extract<
 >;
 
 interface TeamSearchProps extends SearchSelectFieldProps {
-	/** Team to preselect and display on mount (e.g. when editing a linked team). */
+	/** preselected on mount (e.g. when editing a linked team) */
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 	onChange?: (team: TeamSearchResult | null) => void;
 	ref?: React.Ref<HTMLButtonElement>;

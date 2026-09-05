@@ -1,6 +1,4 @@
-// if one mode -> try to find common, otherwise something neither picked
-// if a tie breaker -> random tiebreaker
-// seed = always same
+// one mode: a common map, else one neither picked; tiebreaker: random; seeded
 
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { logger } from "~/utils/logger";
@@ -48,8 +46,7 @@ export function starterMap(args: StarterMapArgs): Array<TournamentMapListMap> {
 		];
 	}
 
-	// should be only one mode here always but just in case
-	// making it capable of handling many modes too
+	// should only ever be one mode, but handles many just in case
 	const allAvailableMaps = seededShuffle(
 		args.modesIncluded
 			.sort((a, b) => modesShort.indexOf(a) - modesShort.indexOf(b))

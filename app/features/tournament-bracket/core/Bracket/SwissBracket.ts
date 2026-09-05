@@ -34,8 +34,7 @@ export class SwissBracket extends Bracket {
 
 		const relevantMatchesFinished = this.standingsAreFinal;
 
-		// explicit placements override the threshold, e.g. a consolation
-		// bracket for the teams that did not advance
+		// explicit placements override the threshold, e.g. a consolation bracket for the teams that did not advance
 		if (advanceThreshold && placements.length === 0) {
 			return {
 				relevantMatchesFinished,
@@ -54,7 +53,6 @@ export class SwissBracket extends Bracket {
 			};
 		}
 
-		// Standard Swiss logic without early advance/elimination
 		const uniquePlacements = R.unique(standings.map((s) => s.placement));
 
 		// 1,3,5 -> 1,2,3 e.g.
@@ -75,9 +73,8 @@ export class SwissBracket extends Bracket {
 	}
 
 	/**
-	 * Swiss rounds are paired one at a time, so a round that has no matches yet can still change the standings.
-	 * Exception being rounds that can never be paired because every team of the group has already
-	 * advanced or been eliminated (early advance variation).
+	 * Rounds are paired one at a time, so a round without matches yet can still change the standings,
+	 * unless it can never be paired because every team already advanced or got eliminated.
 	 */
 	get everyMatchOver() {
 		if (!super.everyMatchOver) return false;
@@ -385,16 +382,13 @@ export class SwissBracket extends Bracket {
 						if (a.setLosses < b.setLosses) return -1;
 						if (a.setLosses > b.setLosses) return 1;
 
-						// TIEBREAKER 2) losses against tied - a team that lost to fewer of the
-						// teams it is tied with is placed higher. Unlike round robin (which uses
-						// wins against tied), Swiss counts losses because not every tied team has
-						// played each other: rewarding wins would unfairly favor teams who simply
-						// faced more of their tied peers, whereas penalizing head-to-head losses is
-						// schedule-independent. (winsAgainstTied is still tracked for display only.)
+						// TIEBREAKER 2) losses against tied. Unlike round robin (wins against tied), Swiss counts
+						// losses because not every tied team has played each other: wins would favor teams who
+						// faced more tied peers, losses are schedule-independent. winsAgainstTied is display only.
 						if (a.lossesAgainstTied > b.lossesAgainstTied) return 1;
 						if (a.lossesAgainstTied < b.lossesAgainstTied) return -1;
 
-						// TIEBREAKER 3) opponent set win % - how good the opponents they played against were?
+						// TIEBREAKER 3) opponent set win %
 						const aOpponentSetWinPercentage = this.trackRecordToWinPercentage(
 							a.opponentSets,
 						);
@@ -415,7 +409,7 @@ export class SwissBracket extends Bracket {
 						if (a.mapLosses < b.mapLosses) return -1;
 						if (a.mapLosses > b.mapLosses) return 1;
 
-						// TIEBREAKER 5) map wins against tied OW% (M) - note that this needs to be lower than map wins tiebreaker to make sure that throwing maps is not optimal
+						// TIEBREAKER 5) map wins against tied OW% (M), must rank below map wins so throwing maps is not optimal
 						const aOpponentMapWinPercentage = this.trackRecordToWinPercentage(
 							a.opponentMaps,
 						);

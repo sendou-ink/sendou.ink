@@ -5,8 +5,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { getAbilityChunksMapAsArray } from "./abilityChunksCalc";
 
-// Utility function that performs an order-agnostic check to see
-//  if the abilityChunksArray contains all elements from the expected output.
+// order-agnostic check that abilityChunksArray contains all expected elements
 function validateAbilityChunksArray(
 	abilityChunksArray: [AbilityWithUnknown, number][],
 	expectedOutput: (string | number)[][],

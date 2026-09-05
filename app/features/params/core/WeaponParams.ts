@@ -29,11 +29,7 @@ import type {
 } from "../weapon-params-types";
 import { classifyParamChange } from "./param-directions";
 
-/**
- * Shape of the committed `all-version-*-params.json` data files: a map of weapon id to its raw
- * per-version params, the ordered list of tracked game versions, and (weapons only) special
- * points history.
- */
+/** Shape of the committed `all-version-*-params.json` files. */
 export interface AllVersionParams {
 	metadata: { versions: string[] };
 	weapons: Record<string, Record<string, Record<string, unknown>>>;
@@ -73,10 +69,7 @@ function isDistanceDamageBreakpoint(
 	);
 }
 
-/**
- * Whether `value` is a damage falloff curve: an array of {@link DistanceDamageBreakpoint}, with
- * each entry possibly being a nested array of breakpoints (e.g. fizzy bomb bounces).
- */
+/** Damage falloff curve: {@link DistanceDamageBreakpoint}s, possibly nested (e.g. fizzy bomb bounces). */
 function isDistanceDamageArray(
 	value: unknown[],
 ): value is Array<DistanceDamageBreakpoint | DistanceDamageBreakpoint[]> {
@@ -92,11 +85,7 @@ function isDistanceDamageArray(
 	);
 }
 
-/**
- * Serializes a damage falloff curve into a compact `"<damage> @ <distance>"` string (damage
- * scaled to displayed HP, i.e. divided by 10) so its per-version changes flow through the same
- * scalar param pipeline as plain values. Nested breakpoint arrays are flattened.
- */
+/** Falloff curve as `"<damage> @ <distance>"` (damage / 10 = displayed HP) so it flows through the scalar param pipeline. */
 function formatDistanceDamageArray(
 	value: Array<DistanceDamageBreakpoint | DistanceDamageBreakpoint[]>,
 ): string {
@@ -121,10 +110,8 @@ function flattenScalarParams(
 		if (typeof value === "number" || typeof value === "string") {
 			result.push([fullKey, value]);
 		} else if (Array.isArray(value)) {
-			// Damage falloff curves and arrays of plain numbers/strings (e.g.
-			// SplashSpawnParam.ForceSpawnNearestAddNumArray) are kept as a single joined string so
-			// their per-version changes still show up. Other arrays of objects are too structured
-			// to represent this way and are skipped.
+			// falloff curves and arrays of primitives become one joined string so their changes still
+			// show up; other arrays of objects are skipped
 			if (isDistanceDamageArray(value)) {
 				result.push([fullKey, formatDistanceDamageArray(value)]);
 			} else if (
@@ -146,10 +133,7 @@ function flattenScalarParams(
 	return result;
 }
 
-/**
- * Parses a single weapon's raw per-version params into the {@link ParsedWeaponParams} shape: each
- * parameter's current value plus its tracked history, grouped by category.
- */
+/** Raw per-version params of one weapon → {@link ParsedWeaponParams} (current value + history, by category). */
 export function parse(
 	weaponId: number,
 	rawParams: Record<string, Record<string, unknown>>,
@@ -214,10 +198,8 @@ export function parse(
 }
 
 /**
- * Parses the params of every given weapon id from a static all-version params data file, keyed by
- * weapon id (as a string). Ids with no entry in the data are skipped. `toDataKey` maps a weapon id
- * to the id its params are stored under — main weapons share params with their base weapon, while
- * subs and specials use their own id (the default identity mapping).
+ * Parses every given weapon id from an all-version data file, keyed by id string; ids with no data are
+ * skipped. `toDataKey` maps an id to the id its params are stored under (main weapons → base weapon).
  */
 export function parseMany<Id extends number>(
 	ids: readonly Id[],
@@ -236,10 +218,7 @@ export function parseMany<Id extends number>(
 	return result;
 }
 
-/**
- * Collects every distinct `${category}.${key}` parameter present across the given weapons, sorted
- * by category then key, for use as the comparison table's row definitions.
- */
+/** Every distinct `${category}.${key}` across the weapons, sorted, for the comparison table rows. */
 export function allParamKeys(
 	weaponParams: Record<string, ParsedWeaponParams>,
 ): ParamDefinition[] {
@@ -274,10 +253,7 @@ function getWeaponCategory(weaponId: MainWeaponId) {
 	);
 }
 
-/**
- * Returns the base main weapon ids of the given weapon's category, used as the columns its params
- * are compared against. A non-base weapon is kept first, followed by the other base weapons.
- */
+/** Base main weapon ids of the weapon's category (comparison columns); a non-base weapon is kept first. */
 export function categoryWeaponIds(weaponId: MainWeaponId): MainWeaponId[] {
 	const category = getWeaponCategory(weaponId);
 	if (!category) {
@@ -296,11 +272,7 @@ export function categoryWeaponIds(weaponId: MainWeaponId): MainWeaponId[] {
 	return [weaponId, ...baseWeapons.filter((id) => id !== currentWeaponBaseId)];
 }
 
-/**
- * Returns the main weapon ids that are kit siblings of the given weapon, i.e. they share
- * the same base weapon (e.g. a weapon and its alternate kit) but excluding cosmetic alt
- * skins. The returned list includes the given weapon itself.
- */
+/** Main weapon ids sharing the base weapon (alternate kits, not alt skins), including the weapon itself. */
 export function kitSiblingIds(weaponId: MainWeaponId): MainWeaponId[] {
 	const baseId = weaponIdToBaseWeaponId(weaponId);
 	return mainWeaponIds.filter(
@@ -344,10 +316,8 @@ function isMoreInformativeMultiplier(
 }
 
 /**
- * Collects the damage multiplier history of every damage rate row that applies to the given
- * weapon, reduced to a single entry per object target. A weapon can map to several rows (e.g.
- * different attacks) that share the same target; the most informative one (longest tracked
- * history, then highest current rate) is kept. Entries are ordered like {@link DAMAGE_RECEIVERS}.
+ * Damage multiplier history per object target, keeping the most informative row (longest history,
+ * then highest rate) when several attacks share a target. Ordered like {@link DAMAGE_RECEIVERS}.
  */
 export function damageMultipliersForWeapon(
 	rows: Record<string, DamageRateHistoryRow>,
@@ -391,11 +361,8 @@ function attackerGroupKey(attackers: IncomingDamageAttackers): string {
 }
 
 /**
- * Collects, for the given sub or special weapon (which must itself be a damageable object), the
- * history of every *other* weapon's damage multiplier against it. Each entry is one group of
- * attacking weapons that shared a rate change against one of the weapon's receiver targets; per
- * (attacker group, target) the most informative entry (longest history, then highest rate) is
- * kept. Entries are ordered like {@link DAMAGE_RECEIVERS}, then by attacker group.
+ * For a damageable sub/special: every other weapon's damage multiplier history against it, one entry
+ * per (attacker group, target) keeping the most informative. Ordered like {@link DAMAGE_RECEIVERS}.
  */
 export function incomingDamageMultipliersForWeapon(
 	rows: Record<string, DamageRateHistoryRow>,
@@ -461,8 +428,7 @@ function changesFromHistory(
 		const { version, value: from } = history[i];
 		const to = i < history.length - 1 ? history[i + 1].value : current;
 
-		// A recorded value is the value *before* a change, so the change took effect at the
-		// next tracked game version.
+		// a recorded value is the value *before* a change, so it took effect at the next version
 		const recordedIndex = versionIndex.get(version);
 		if (recordedIndex === undefined) continue;
 		const patchVersion = versions[recordedIndex + 1];
@@ -474,13 +440,7 @@ function changesFromHistory(
 	return result;
 }
 
-/**
- * Groups every tracked parameter change of a single weapon by the game version (patch) that
- * introduced it. Optionally folds the weapon's special points history into the same grouping.
- *
- * Within each patch the changes are sorted with special points first, then alphabetically by
- * category and key.
- */
+/** Every tracked change of one weapon grouped by the patch that introduced it, optionally with special points. */
 function computeWeaponPatchChanges(
 	parsed: ParsedWeaponParams,
 	versions: string[],
@@ -528,7 +488,7 @@ function computeWeaponPatchChanges(
 			versions,
 			versionIndex,
 		)) {
-			// Fewer special points needed means the special charges faster.
+			// fewer points = charges faster
 			const kind = from === to ? "neutral" : to < from ? "buff" : "nerf";
 			push(patchVersion, {
 				category: SPECIAL_POINTS_PARAM_KEY,
@@ -549,7 +509,6 @@ function computeWeaponPatchChanges(
 			versions,
 			versionIndex,
 		)) {
-			// A higher damage rate means the weapon deals more damage to the object.
 			const kind = from === to ? "neutral" : to > from ? "buff" : "nerf";
 			push(patchVersion, {
 				category: DAMAGE_MULTIPLIER_PARAM_KEY,
@@ -569,8 +528,7 @@ function computeWeaponPatchChanges(
 			versions,
 			versionIndex,
 		)) {
-			// A higher incoming damage rate means the object takes more damage, i.e. a nerf to the
-			// sub or special weapon being defended (the inverse of an outgoing damage multiplier).
+			// higher incoming rate = the sub/special takes more damage = nerf
 			const kind = from === to ? "neutral" : to > from ? "nerf" : "buff";
 			push(patchVersion, {
 				category: INCOMING_DAMAGE_MULTIPLIER_PARAM_KEY,
@@ -586,8 +544,7 @@ function computeWeaponPatchChanges(
 
 	for (const changes of byVersion.values()) {
 		changes.sort((a, b) => {
-			// Special points first (ordered by kit), then outgoing damage multipliers, then
-			// incoming damage multipliers, then regular params by category and key.
+			// special points, outgoing multipliers, incoming multipliers, then params by category and key
 			const rank = (change: PatchChange) =>
 				change.category === SPECIAL_POINTS_PARAM_KEY
 					? 0
@@ -620,12 +577,7 @@ function computeWeaponPatchChanges(
 	return byVersion;
 }
 
-/**
- * Assembles per-version change maps into the descending-by-version patch history, attaching each
- * tracked game version's release date and skipping versions with no changes. When several maps are
- * given (e.g. a kit's main, sub and special weapon changes) their changes are concatenated in the
- * order the maps are passed, keeping each map's own within-version ordering.
- */
+/** Change maps → descending patch history with release dates, skipping empty versions; maps concatenate in order. */
 function changeMapsToPatches(
 	maps: Array<Map<string, PatchChange[]>>,
 	versions: string[],
@@ -642,11 +594,7 @@ function changeMapsToPatches(
 		.reverse();
 }
 
-/**
- * Builds the descending-by-version patch history of a single weapon, attaching each tracked
- * game version's release date and skipping versions with no tracked balance changes. Special
- * points changes are only folded in for main weapons (pass their history as `specialPoints`).
- */
+/** Descending patch history of one weapon. Pass `specialPoints` for main weapons to fold those changes in. */
 export function patchHistory(
 	parsed: ParsedWeaponParams | undefined,
 	versions: string[],
@@ -671,11 +619,7 @@ export function patchHistory(
 	);
 }
 
-/**
- * Builds a patch history per kit of a main weapon, folding the (shared) main weapon changes
- * together with the kit's own special points, sub weapon and special weapon changes. Every change
- * is tagged with its `source` so the patch history can group a column under a divider per weapon.
- */
+/** Patch history per kit: shared main weapon changes + the kit's special points, sub and special. Changes are tagged by `source`. */
 export function kitPatchHistories({
 	mainParsed,
 	versions,

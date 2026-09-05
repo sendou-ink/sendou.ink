@@ -1,9 +1,7 @@
 /**
- * Lobby tabs over the match feed: private battles (the games /ingest cares
- * about) split from X Battles and everything else, so a scan that picked up
- * ranked play between tournament sets stays readable. Sets are a private
- * battle concept — consecutive games between the same two teams — so only
- * that tab gets set dividers, and set numbers are assigned within the tab.
+ * Lobby tabs over the match feed: private battles (what /ingest cares about)
+ * split from X Battles and everything else. Sets are a private battle concept,
+ * so only that tab gets set dividers, numbered within the tab.
  */
 
 import { Fragment, useEffect, useRef } from "react";
@@ -84,10 +82,9 @@ function lobbyGroup(lobby: ScannerLobby | null): LobbyGroup {
 }
 
 /**
- * Keys of the matches that showed up since the previous render — the ones a
- * scan just formed. A list arriving whole (the live feed loaded from storage,
- * a saved VoD opened) is not "just formed": every card would animate in at
- * once for something the user did not watch happen.
+ * Keys of the matches that showed up since the previous render. A list
+ * arriving whole (feed loaded from storage, a saved VoD opened) is not "just
+ * formed": every card would animate in for something the user did not watch.
  */
 function useJustFormedKeys(keys: React.Key[]): ReadonlySet<React.Key> {
 	const seenRef = useRef<Set<React.Key> | null>(null);

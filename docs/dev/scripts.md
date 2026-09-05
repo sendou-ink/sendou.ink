@@ -67,10 +67,28 @@ Note: it only works with Node 16.
 
 Note: This is only useful if you have access to a production running on Render.com
 
-1. Access the "Shell" tab
-2. `cd /var/data`
-3. `cp db.sqlite3 db-copy.sqlite3`
+```bash
+pnpm run download-prod-db
+```
+
+Takes a `VACUUM INTO` snapshot of the live database (compacted, and consistent unlike a `cp` of a WAL database), streams it down gzipped, and archives it as `../backups/db-<timestamp>.sqlite3.gz`. Once the snapshot has been verified it replaces `db-copy.sqlite3` in every local sendou.ink checkout, deletes the stale `db-prod.sqlite3` files, and rebuilds `db-prod.sqlite3` in the checkout you ran it from.
+
+Flags: `--dry-run` prints what would happen, `--yes` skips the confirmation, `--keep <n>` prunes all but the newest `n` archives.
+
+### One-time setup
+
+1. Add your public key at Render Dashboard -> Account Settings -> SSH Keys.
+2. Set `PROD_SSH_TARGET` in `.env` to the address in Render Dashboard -> the service -> SSH, e.g. `srv-xxxxxxxx@ssh.frankfurt.render.com`.
+3. Run `ssh $PROD_SSH_TARGET 'echo ok'` once to accept the host key.
+
+### Doing it by hand
+
+If SSH is unavailable, the same thing through the dashboard "Shell" tab:
+
+1. `cd /var/data`
+2. `sqlite3 -readonly db.sqlite3 "VACUUM INTO '/var/data/db-copy.sqlite3'"`
 3. `gzip db-copy.sqlite3`
 4. `wormhole send db-copy.sqlite3.gz`
 5. On the receiving computer use the command shown.
 6. `gunzip db-copy.sqlite3.gz`
+7. `rm db-copy.sqlite3.gz` on the server, it is sharing the disk with production

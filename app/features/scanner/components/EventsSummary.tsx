@@ -1,8 +1,6 @@
 /**
- * One light line summarizing raw detections as per-type counts, with a
- * toggle for their event card feed. Callers pass only events not covered
- * by a match card — a fallback for detections not yet grouped, hidden
- * entirely once everything lives in a match.
+ * One light line summarizing raw detections as per-type counts, with a toggle
+ * for their card feed. Callers pass only events not covered by a match card.
  */
 
 import * as R from "remeda";

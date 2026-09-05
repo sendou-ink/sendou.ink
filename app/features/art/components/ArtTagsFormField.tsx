@@ -11,12 +11,10 @@ import { TagSelect } from "./TagSelect";
 export type ArtTag = { name?: string; id?: number };
 
 type ArtTagsFormFieldProps = Omit<CustomFieldRenderProps<ArtTag[]>, "name"> & {
-	/** All tags that exist in the database, selectable without creating a new one. */
 	existingTags: Array<{ id: number; name: string }>;
 };
 
-// note: not handling edge case where a tag was added by another user while this
-// user was adding a new art with the same tag -> will crash
+// NOTE: a tag added by another user while this form is open will crash on submit
 export function ArtTagsFormField({
 	value,
 	onChange,
@@ -31,7 +29,6 @@ export function ArtTagsFormField({
 	const handleAddNewTag = () => {
 		const normalizedNewTagValue = newTagValue
 			.trim()
-			// replace many whitespaces with one
 			.replace(/\s\s+/g, " ")
 			.toLowerCase();
 

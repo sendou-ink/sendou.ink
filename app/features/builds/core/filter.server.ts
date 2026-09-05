@@ -19,11 +19,7 @@ interface BuildFilters {
 	date: string | null;
 }
 
-/**
- * Filters an array of builds based on the provided filter criteria and returns up to a specified count of matching builds.
- *
- * Filters are applied on "AND" basis, meaning all filters must match for a build to be included in the result.
- */
+/** Up to `count` builds matching every filter (AND). */
 export function filterBuilds<T extends PartialBuild>({
 	abilities,
 	mode,

@@ -36,14 +36,13 @@ interface ResolveCurrentMapListArgs {
 		stageId: StageId | null;
 		type: Tables["TournamentMatchPickBanEvent"]["type"];
 	}>;
-	/** Maps that both teams (interleaved) have recently played in the tournament with the most recent being first. */
+	/** Both teams' recently played maps interleaved, most recent first. */
 	recentlyPlayedMaps?: Array<{ mode: ModeShort; stageId: StageId }>;
 }
 
 export function resolveMapList(
 	args: ResolveCurrentMapListArgs,
 ): TournamentMapListMap[] {
-	// CUSTOM flow: map list is built from pick/ban events
 	if (args.maps.pickBan === "CUSTOM") {
 		return resolveCustomMapList(args);
 	}
@@ -93,10 +92,8 @@ export function resolveMapList(
 }
 
 /**
- * The map list the given match is played on, `null` when it does not yet have both
- * of its teams. Resolves the arguments {@link resolveMapList} needs out of the match
- * and its tournament: the teams' map pools, the pick/ban events so far and, for the
- * picking styles that avoid repeats, the maps the teams recently played.
+ * The match's map list, `null` without both teams. Resolves what {@link resolveMapList} needs
+ * from the match and tournament: map pools, pick/ban events and, for repeat-avoiding styles, recent maps.
  */
 export async function resolveMatchMapList({
 	match,
@@ -172,7 +169,7 @@ export function mapListFromResults(
 		mode: result.mode,
 		stageId: result.stageId,
 		source: parseMaplistSource(result.source),
-		// Banned maps are not relevant for completed matches
+		// not relevant for completed matches
 		bannedByTournamentTeamId: undefined,
 	}));
 }

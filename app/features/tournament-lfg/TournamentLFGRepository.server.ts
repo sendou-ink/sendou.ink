@@ -186,8 +186,7 @@ export function mergeTeams({
 
 		await ensurePickupChatRoom(survivingTeamId, chatRoomExpiresAt, trx);
 
-		// the merged-in members either lost their old room or gained the
-		// surviving team's, and the surviving members may have just gained theirs
+		// merged-in members lost their old room or gained the surviving team's, which may itself be new
 		return memberUserIds;
 	});
 }

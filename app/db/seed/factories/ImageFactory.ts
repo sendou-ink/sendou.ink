@@ -10,14 +10,8 @@ type Options = {
 };
 
 /**
- * Creates user submitted images, unvalidated as the repository function makes them.
- * An image on its own is an orphan — the queries counting images for approval only
- * see it once something (a calendar event avatar, a team logo) points at it.
- *
- * The url is one of the numbered logos seeded to the local image storage, so that an
- * image the caller does not name renders in dev instead of 404ing.
- *
- * Art brings its own image, see `ArtFactory`.
+ * Unvalidated by default. An image alone is an orphan: approval queries only see it once something points
+ * at it. Default url is a numbered logo seeded to local storage so it renders in dev. Art: see `ArtFactory`.
  */
 export const { create } = defineFactory({
 	defaults: ({ seq }) => ({

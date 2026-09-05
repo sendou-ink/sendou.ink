@@ -24,8 +24,7 @@ export const CUSTOM_NAMES = [
 	"xX_sniper_Xx",
 ];
 
-/** Kana-only in-game names — the Switch keyboard allows no kanji or emoji, so a
- * kanji display name pairs with one of these. */
+/** The Switch keyboard allows no kanji or emoji, so a kanji display name pairs with one of these. */
 const KANA_NAMES = [
 	"スプラちゃん",
 	"いかタコどん",

@@ -60,17 +60,11 @@ export interface ScoreboardData {
 	lobby: ScannerLobby | null;
 	mode: ModeShort | null;
 	stage: StageId | null;
-	/**
-	 * the "Score:" banner game scores, [winner, loser]; a knockout's winner
-	 * reports 100 (the burst hides the real banner)
-	 */
+	/** "Score:" banner scores, [winner, loser]; a knockout's winner reports 100 (the burst hides the banner) */
 	matchScores: [number | null, number | null];
 	/** 8 players: rows 0-3 winning team, rows 4-7 losing team */
 	players: ScoreboardPlayer[];
-	/**
-	 * index into `players` of the recording player's row, marked by the
-	 * yellow arrow; null when no arrow is found (spectator/overhead footage)
-	 */
+	/** index into `players` of the yellow-arrow row; null when none (spectator footage) */
 	povIndex: number | null;
 }
 
@@ -88,95 +82,70 @@ export interface ScoreboardRowDebug {
 export interface ScoreboardResources {
 	weapons: WeaponTemplate[];
 	/**
-	 * Weapon renders prepared for the in-match icon strip (objective's
-	 * StripWeapons evidence). Optional: without them the strip slot →
-	 * scoreboard row assignment falls back to as-drawn order.
+	 * Renders for the in-match icon strip (StripWeapons); without them slot → row assignment falls
+	 * back to as-drawn order.
 	 */
 	stripWeapons?: WeaponTemplate[] | null;
 	/**
-	 * Special-weapon silhouettes (assets/cv/specials). Optional: without
-	 * them, near-tied weapon icons (Splash- vs Sploosh-o-matic) stay decided
-	 * by icon score alone.
+	 * Special silhouettes (assets/cv/specials); without them near-tied icons (Splash- vs
+	 * Sploosh-o-matic) stay decided by icon score.
 	 */
 	specials?: SpecialTemplate[] | null;
 	/** digit templates at paint size (h~28); team scores reuse these, scaled */
 	paintDigits: GlyphSet | null;
 	/** digit templates at stat-counter size (h~17) */
 	statDigits: GlyphSet | null;
-	/**
-	 * digit templates for team totals (h~33, outlined, on team-color box).
-	 * Optional: falls back to scaled paint digits, at reduced accuracy.
-	 */
+	/** digit templates for team totals (h~33, outlined, on team-color box); falls back to scaled paint digits */
 	teamDigits: GlyphSet | null;
 	nameGlyphs: GlyphSet | null;
 	/** header tag glyphs: lobby line, and the mode+stage line */
 	headerLobbyGlyphs: GlyphSet | null;
 	headerLineGlyphs: GlyphSet | null;
 	/**
-	 * Replay-browser extras (FOT-RowdyStd face, unlike everything above):
-	 * the replay code line, and the VICTORY/DEFEAT panel tags. Optional:
-	 * the replay detector falls back to rescaled name/header glyphs, at
-	 * reduced accuracy.
+	 * Replay-browser extras in FOT-RowdyStd (code line, VICTORY/DEFEAT tags); falls back to
+	 * rescaled name/header glyphs.
 	 */
 	replayCodeGlyphs?: GlyphSet | null;
 	replayResultGlyphs?: GlyphSet | null;
 	/**
-	 * Death-screen extras. Optional: the death detector skips the fields it
-	 * has no resources for. The weapon atlas carries both Blitz faces; the
-	 * tag-name atlas is BlitzBold + Rowdy (kana).
+	 * Death-screen extras; missing ones skip their fields. Weapon atlas = both Blitz faces;
+	 * tag-name = BlitzBold + Rowdy (kana).
 	 */
 	abilities?: import("../death/abilities").AbilityTemplates | null;
 	deathWeaponGlyphs?: GlyphSet | null;
 	/**
-	 * JA death-message glyphs (Kurokane/Rowdy condensed + fixture crops),
-	 * built at the on-screen text's native size. Optional: without them JA
-	 * death screens fail the constant-line confirmation and emit nothing.
+	 * JA death-message glyphs at native size (Kurokane/Rowdy condensed + fixture crops); without
+	 * them JA death screens emit nothing.
 	 */
 	deathWeaponJaGlyphs?: GlyphSet | null;
 	deathTagNameGlyphs?: GlyphSet | null;
 	/**
-	 * The main-weapon icons again, rebuilt at the death burst's icon size
-	 * (~124px vs the rows' 40-64px). Optional: without them the death
-	 * detector cannot recover the killer's weapon when the message text is
-	 * unreadable (e.g. the WIPEOUT banner covering the weapon name line).
+	 * Main-weapon icons at the death burst's size (~124px); without them an unreadable message
+	 * (WIPEOUT banner) loses the weapon.
 	 */
 	deathBurstWeapons?: WeaponTemplate[] | null;
-	/**
-	 * Personal-results extras: the same ability icons rebuilt at the gear
-	 * cards' badge sizes (scoreboard-own/abilities.ts). Optional: without
-	 * them the scoreboard-own detector skips the ability grid.
-	 */
+	/** Ability icons at the personal-results gear cards' badge sizes; without them the ability grid is skipped. */
 	ownAbilities?: import("../death/abilities").AbilityTemplates | null;
 	/**
-	 * Map-start intro extras: the big BlitzBold mode title, and the BlitzMain
-	 * stage name (whose atlas also reads the "MODE" label, rescaled).
-	 * Optional: without them the map-start detector emits nothing.
+	 * Map-start extras: BlitzBold mode title, BlitzMain stage name (also reads the "MODE" label
+	 * rescaled); without them map-start emits nothing.
 	 */
 	mapStartModeGlyphs?: GlyphSet | null;
 	mapStartStageGlyphs?: GlyphSet | null;
 	/**
-	 * Minimap extras (minimap/rois.ts documents the screen): the main-weapon
-	 * icons composited on the card-pill background for the teammate cards'
-	 * light silhouettes, a light-background variant for highlighted enemy
-	 * rows, and the ability icons at the cards' badge size. Optional: without
-	 * them the minimap detector skips the corresponding fields (enemy rows
-	 * fall back to the standard `weapons` set). Names reuse `nameGlyphs`.
+	 * Minimap extras: main-weapon icons on the card-pill background, a
+	 * light-background variant for special-ready camo, and ability icons at the
+	 * cards' badge size. Missing ones skip their fields; names reuse `nameGlyphs`.
 	 */
 	minimapCardWeapons?: WeaponTemplate[] | null;
 	minimapLightWeapons?: WeaponTemplate[] | null;
 	minimapAbilities?: WeaponTemplate[] | null;
 	/**
-	 * Sub-weapon silhouettes (assets/cv/sub-weapons) at the minimap sub
-	 * tile's sizes. Optional: without them, near-tied minimap weapon icons
-	 * whose kits differ only by sub (plain vs Custom Dualie Squelchers) stay
-	 * decided by icon score alone.
+	 * Sub silhouettes at the minimap sub tile's sizes; without them near-tied icons differing only
+	 * by sub stay decided by icon score.
 	 */
 	minimapSubWeapons?: SpecialTemplate[] | null;
-	/**
-	 * Planner-map structural signatures (assets/cv/planner) used by the
-	 * minimap detector to identify the stage. Optional: without them the
-	 * minimap event's `stage` stays null.
-	 */
+	/** Planner-map signatures (assets/cv/planner) for minimap stage identification; without them `stage` stays null. */
 	plannerStages?: import("../minimap/stage").PlannerStage[] | null;
 }
 
@@ -269,15 +238,12 @@ export function createScoreboardDetector(
 			confidences.push(header.confidence);
 		}
 
-		// The winner's team total is read only to recognize a knockout: the
-		// box prints the count times five, and only a knockout's full 100
-		// count reaches 500 (the banner value it would confirm is hidden
-		// under the KNOCKOUT! burst).
+		// the winner's total is read only to recognize a knockout: only a full 100
+		// count reaches 500, and the banner value is hidden under the KNOCKOUT! burst
 		let knockout = false;
 		let winnerTotalConf = 0;
 		if (teamDigits) {
-			// The total sits on the team-colored box (light swirl pattern),
-			// so binarize more aggressively than on the black pills.
+			// the total sits on the team-colored swirl box, so binarize higher than on black pills
 			const crop = cropRoi(gray, TEAM_SCORE_ROIS[0]);
 			const winnerTotal = parseNumber(crop, teamDigits, {
 				binThreshold: 175,
@@ -327,8 +293,7 @@ export function createScoreboardDetector(
 		];
 	}
 
-	// just under the measured clean-read floor (fixtures 0.865-0.899,
-	// confirmed scan events down to 0.799)
+	// just under the clean-read floor (fixtures 0.865-0.899, scan events down to 0.799)
 	return {
 		id: "scoreboard",
 		sufficientConfidence: 0.79,

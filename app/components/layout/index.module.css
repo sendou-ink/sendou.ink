@@ -422,6 +422,11 @@ shown, so the popover's user agent styles are reset here.
 	}
 }
 
+.sideNavFooterTeamAvatar {
+	border-radius: 50%;
+	object-fit: cover;
+}
+
 .sideNavFooterNotification {
 	position: relative;
 }

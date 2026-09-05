@@ -33,15 +33,9 @@ import type {
 import { isValidUnverifiedXp } from "./user-card-utils";
 
 /**
- * Loads `UserCardData` for many users at once, keyed by user id. The single batched DB query (see
- * {@link userCardDataJsonObject}) is merged with the in-memory SEASON caches (tier from
- * `userSkills`, leaderboard placement from `cachedFullUserLeaderboard`) in this app-layer enrich
- * pass, producing the fully-formed `stats` array each card renders. The acting user viewing the
- * cards (resolved from request context via `actorIdOrNull()`, or `null` when anonymous) scopes the
- * per-viewer `privateNote`.
- *
- * Designed to be spread into a route loader (`{ ...(await findAllByUserIds(...)) }`) so the `UserCard`
- * component can resolve its own data from the route tree by id.
+ * `UserCardData` for many users, keyed by user id. One batched query ({@link userCardDataJsonObject})
+ * merged with the in-memory SEASON caches (`userSkills`, `cachedFullUserLeaderboard`); `privateNote`
+ * is scoped to the acting user. Spread the result into a route loader so `UserCard` can find it.
  */
 export async function findAllByUserIds({
 	userIds,
@@ -49,12 +43,9 @@ export async function findAllByUserIds({
 	includeHiddenStats = false,
 }: {
 	userIds: Array<number>;
-	/** Opt-in fields skipped from the query by default; defaults to `false` each. */
+	/** Opt-in fields skipped from the query by default. */
 	include?: { friendCode?: boolean };
-	/**
-	 * Keep stats the user has hidden in the resolved `stats` array. Off by default so hidden stat
-	 * values never reach a viewer; the edit page opts in to render (and un-hide) its own toggles.
-	 */
+	/** Keep hidden stats in `stats`; only the edit page opts in, so hidden values never reach a viewer. */
 	includeHiddenStats?: boolean;
 }): Promise<{ userCards: Map<number, UserCardData> }> {
 	if (userIds.length === 0) return { userCards: new Map() };
@@ -77,23 +68,16 @@ const cardCache = new LRUCache<
 >({ max: CARD_CACHE_MAX_ENTRIES });
 
 /**
- * Like {@link findAllByUserIds} but serves the viewer-independent card data from a
- * short-lived in-memory cache, querying only users whose entry is missing or stale.
- * The per-viewer `privateNote` and the opt-in `friendCode` are overlaid fresh on
- * every call so a cached card is never viewer- or caller-specific. For high-frequency
- * views (the SendouQ looking page) where broadcast-driven revalidation makes many
- * clients rebuild the same cards at once; cards may be up to 30 seconds stale.
- *
- * The cache holds the in-flight query rather than its result, so concurrent misses for
- * the same user (exactly what a revalidation burst causes) await one shared query
- * instead of each firing their own.
+ * Like {@link findAllByUserIds} but viewer-independent card data comes from a 30s in-memory cache
+ * (for revalidation bursts on the SendouQ looking page); `privateNote` and `friendCode` are overlaid
+ * fresh per call. The cache holds the in-flight query so concurrent misses share one query.
  */
 export async function findAllByUserIdsCached({
 	userIds,
 	include,
 }: {
 	userIds: Array<number>;
-	/** Opt-in fields skipped by default; defaults to `false` each. */
+	/** Opt-in fields skipped from the query by default. */
 	include?: { friendCode?: boolean };
 }): Promise<{ userCards: Map<number, UserCardData> }> {
 	if (ServerConfig.disableCache) return findAllByUserIds({ userIds, include });
@@ -141,7 +125,7 @@ export async function findAllByUserIdsCached({
 	return { userCards };
 }
 
-/** Forgets every cached card, so the next read builds them from the database again. */
+/** Drops every cached card. */
 export function clearUserCardCache() {
 	cardCache.clear();
 }
@@ -211,7 +195,6 @@ async function queryUserCards({
 	return userCards;
 }
 
-/** The acting user's private notes about the given users, keyed by their user id. */
 async function findPrivateNotesByTargetIds(userIds: Array<number>) {
 	const notes = new Map<number, NonNullable<UserCardData["privateNote"]>>();
 
@@ -237,10 +220,7 @@ async function findPrivateNotesByTargetIds(userIds: Array<number>) {
 	return notes;
 }
 
-/**
- * Latest friend code of each given user, keyed by their user id. Scanned oldest to newest so the
- * newest code is the one left in the map, matching {@link friendCodeScalar}.
- */
+/** Latest friend code per user; scanned oldest to newest so the newest wins, like {@link friendCodeScalar}. */
 async function findFriendCodesByUserIds(userIds: Array<number>) {
 	const friendCodes = new Map<number, string>();
 	if (userIds.length === 0) return friendCodes;
@@ -259,11 +239,7 @@ async function findFriendCodesByUserIds(userIds: Array<number>) {
 	return friendCodes;
 }
 
-/**
- * Raw card fields the edit form needs that are not part of {@link UserCardData}: the uploaded banner
- * image (id + preview url, for the image field's default value), the self-reported peak XP, the
- * picked XP division, and the hidden stat types (to pre-check the visibility toggles).
- */
+/** Raw card fields the edit form needs that are not part of {@link UserCardData}. */
 export async function findCardEditExtrasByUserId(userId: number) {
 	const row = await db
 		.selectFrom("User")
@@ -287,9 +263,8 @@ export async function findCardEditExtrasByUserId(userId: number) {
 }
 
 /**
- * The verified XP the user's card shows if their XP division were `xpDivision`, resolved exactly as
- * {@link findAllByUserIds} does (see {@link verifiedXp}). `null` when they have no X Rank placements.
- * Lets the edit form judge a self-reported peak XP against the very value it will sit on top of.
+ * Verified XP the card would show with `xpDivision` (see {@link verifiedXp}), so the edit form can
+ * judge a self-reported peak against it. `null` without X Rank placements.
  */
 export async function findVerifiedXpByUserId(
 	userId: number,
@@ -304,10 +279,7 @@ export async function findVerifiedXpByUserId(
 	return verifiedXp(row?.xpPeaks ?? null, xpDivision);
 }
 
-/**
- * Updates the editable user card fields of the acting user (their own card), dropping their
- * cached card so they are not shown their pre-edit one by {@link findAllByUserIdsCached}.
- */
+/** Updates the acting user's own card and drops it from the cache. */
 export async function updateOwnCard(args: {
 	shortBio: string | null;
 	bannerPresetImg: string | null;
@@ -319,8 +291,7 @@ export async function updateOwnCard(args: {
 }) {
 	const userId = actorId();
 	await db.transaction().execute(async (trx) => {
-		// a removed or replaced uploaded banner is no longer referenced by anything,
-		// so its submitted image row is cleaned up (mirrors custom avatar handling)
+		// a removed or replaced uploaded banner's image row is cleaned up (mirrors custom avatar handling)
 		const current = await trx
 			.selectFrom("User")
 			.select("User.bannerImgId")
@@ -362,15 +333,9 @@ const BANNER_PRESET_COLOR_CASE = `case "User"."id" % ${PRESET_COLORS.length}\n${
 ).join("\n")}\nend`;
 
 /**
- * Kysely expression building the JSON object for all DB-resident `UserCard` fields of a single user.
- * Designed to be composed both standalone (one user) and inside a batched list query (see
- * {@link findAllByUserIds}). `"User"` must be in scope at the call site.
- *
- * SEASON stats (tier + leaderboard placement) are NOT included here — they live in the in-memory
- * `userSkills`/leaderboard caches and are merged in an app-layer enrich pass. `banner` is returned as
- * loosely-typed fields (narrow to the discriminated union there). `friendCode` is opt-in via
- * `include.friendCode` (defaults to off, resolving to `null`) so callers that never surface it skip
- * the extra correlated subquery.
+ * JSON object of all DB-resident card fields of one user; `"User"` must be in scope. SEASON stats
+ * come from in-memory caches and are merged in the enrich pass, which also narrows `banner`.
+ * `friendCode` is opt-in so callers that never surface it skip the correlated subquery.
  */
 function userCardDataJsonObject(
 	eb: ExpressionBuilder<Tables, "User">,
@@ -409,11 +374,8 @@ type RawUserCardData =
 		: never;
 
 /**
- * Loosely-typed banner. A supporter-uploaded image (`User.bannerImgId`) takes precedence and yields
- * a `URL` banner; otherwise it is pulled from the `User.bannerPresetImg` column ("hex code or stage
- * id") where a numeric value is a stage id (`STAGE`) and anything else a `COLOR` hex code. When both
- * are null (no explicit choice) a preset color is derived from the user id. Narrow to the
- * `{ URL | COLOR | STAGE }` union in the enrich pass.
+ * Uploaded image (`bannerImgId`) wins; else `bannerPresetImg` holds a stage id (numeric) or a hex
+ * color; with neither set a preset color is derived from the user id.
  */
 function bannerJson(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonBuildObject({
@@ -436,7 +398,6 @@ function bannerJson(eb: ExpressionBuilder<Tables, "User">) {
 	});
 }
 
-/** Full URL of the supporter-uploaded banner image (resolved from `User.bannerImgId`), or null. */
 function bannerImageUrl(eb: ExpressionBuilder<Tables, "User">) {
 	return concatUserSubmittedImagePrefix(
 		eb
@@ -481,11 +442,7 @@ function privateNoteJson(
 	);
 }
 
-/**
- * Id of the user's most recent non-expired "looking for team" LFG post, which marks them as a free
- * agent. `null` when they have no such post. Mirrors the LFG page's freshness cutoff so the id always
- * points at a post that is still listed there.
- */
+/** Latest non-expired "looking for team" post (uses the LFG page's freshness cutoff), marking a free agent. */
 function freeAgentPostIdScalar(eb: ExpressionBuilder<Tables, "User">) {
 	return eb
 		.selectFrom("LFGPost")
@@ -514,11 +471,7 @@ function plusTierScalar(eb: ExpressionBuilder<Tables, "User">) {
 
 type XpPeaks = Record<XRankPlacementRegion, number | null> | null;
 
-/**
- * Highest X Rank power placement (verified XP) per division. Both are read because the division the
- * card settles on is resolved in the app layer (see {@link verifiedXp}); with no placements at all
- * the aggregates simply come back null.
- */
+/** Peak X Rank power per division; the division shown is picked in the app layer (see {@link verifiedXp}). */
 function xpPeaksJson(eb: ExpressionBuilder<Tables, "User">) {
 	return jsonObjectFrom(
 		eb
@@ -544,9 +497,6 @@ function xpPeaksJson(eb: ExpressionBuilder<Tables, "User">) {
 	);
 }
 
-/**
- * Self-reported peak XP from the `User.unverifiedPeakXP` column.
- */
 function xpUnverifiedPointsScalar() {
 	return sql<number | null>`"User"."unverifiedPeakXP" ->> '$.overall'`;
 }
@@ -557,10 +507,8 @@ type SeasonResult = {
 };
 
 /**
- * Resolves one finished season's data for the requested users. `userSkills` is an in-memory
- * cache, so we read tiers first and only fetch the (DB-backed) leaderboard when at least
- * one requested user reached Leviathan+ that season—placements are surfaced for that rank only, so
- * the common case of regular users never touches the leaderboard cache at all.
+ * Placements are shown for Leviathan+ only, so the DB-backed leaderboard is fetched only when one
+ * of the users reached it; tiers come from the in-memory `userSkills`.
  */
 async function seasonResult(
 	season: number,
@@ -585,10 +533,8 @@ async function seasonResult(
 const placementsBySeason = new Map<number, Map<number, number>>();
 
 /**
- * Leaderboard placements of a finished season, keyed by user id. Cached for the process lifetime:
- * a finished season's leaderboard is immutable, matching how `userSkills` already holds finished
- * seasons' tiers permanently. This keeps cards off `cachedFullUserLeaderboard`'s TTL, whose
- * synchronous rebuild would otherwise stall the first Leviathan+ card render after a quiet period.
+ * Cached for the process lifetime since a finished season's leaderboard is immutable; avoids
+ * `cachedFullUserLeaderboard`'s TTL rebuild stalling the first Leviathan+ card after a quiet period.
  */
 async function finishedSeasonPlacements(
 	season: number,
@@ -611,10 +557,8 @@ const isLeviathanPlus = (tier: TieredSkill["tier"]) =>
 	tier.name === "LEVIATHAN" && tier.isPlus;
 
 /**
- * Comparable strength of a tier (higher = better). Based on the tier's position in `TIERS` rather
- * than the raw ordinal, because each season sets its own ordinal thresholds—the same ordinal can
- * map to different tiers across seasons—so only the tier itself is comparable. `isPlus` (top half of
- * a tier) breaks ties within the same tier name.
+ * Higher = better. Uses the position in `TIERS`, not the ordinal, since ordinal thresholds differ per
+ * season; `isPlus` breaks ties within a tier.
  */
 const tierStrength = (tier: TieredSkill["tier"]) => {
 	const index = TIERS.findIndex((t) => t.name === tier.name);
@@ -622,10 +566,8 @@ const tierStrength = (tier: TieredSkill["tier"]) => {
 };
 
 /**
- * Reduces a user's results across the last two finished seasons into the single result their card
- * shows: the highest tier they reached (ignoring `approximate` tiers, which lack enough matches to
- * count), and—only when that includes the very top Leviathan+ rank—their best (lowest) leaderboard
- * placement among the Leviathan+ seasons.
+ * Highest non-approximate tier across the given seasons, plus the best leaderboard placement among
+ * the Leviathan+ seasons.
  */
 function bestSeasonResult(
 	userId: number,
@@ -699,11 +641,7 @@ function enrichUserCardData(
 	};
 }
 
-/**
- * The verified XP a card shows: the peak of the division the user picked, since the two divisions
- * are separate ladders and a peak in one says nothing about the other. Falls back to their highest
- * across both when they picked no division or have never placed in the one they picked.
- */
+/** Peak of the picked division (the divisions are separate ladders); else the highest across both. */
 function verifiedXp(
 	peaks: XpPeaks,
 	xpDivision: XRankPlacementRegion | null,
@@ -767,8 +705,7 @@ function userCardStats({
 		});
 
 		const xpValues: Array<UserCardStatXPValue> = unverified ? [unverified] : [];
-		// the verified peak joins the claim only when it is from the division the claim was made in;
-		// in another division it is a peak on a ladder the card is not about
+		// the verified peak is shown beside the claim only when it is from the same division
 		if (!unverified || unverified.region === xpVerified.region) {
 			xpValues.push({
 				isVerified: true,

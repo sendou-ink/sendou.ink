@@ -30,10 +30,8 @@ export interface PersistedMapDefinition<T> extends DefinitionBase<T> {
 }
 
 /**
- * Declares a client state persisted in web storage. One definition per stored
- * key drives reads, writes, cross-tab sync and the `usePersistedState` hook.
- * Decoding is total: the default resolves for missing or malformed values,
- * legacy plain-string values are accepted where the schema allows them.
+ * One definition per storage key drives reads, writes, cross-tab sync and `usePersistedState`. Decoding is
+ * total: missing or malformed resolves to the default, legacy plain strings are accepted where the schema allows.
  */
 export function define<S extends AnySyncSchema>(options: {
 	key: string;
@@ -49,10 +47,7 @@ export function define<S extends AnySyncSchema>(options: {
 	};
 }
 
-/**
- * Declares a keyed family of persisted values sharing a storage key prefix,
- * for maps whose entries are written independently (e.g. per chat room).
- */
+/** Keyed family sharing a storage key prefix, for entries written independently (e.g. per chat room). */
 export function defineMap<S extends AnySyncSchema>(options: {
 	keyPrefix: string;
 	storage: StorageKind;

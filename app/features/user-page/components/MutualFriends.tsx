@@ -13,7 +13,7 @@ export function MutualFriends({
 	withoutPopover = false,
 }: {
 	mutualFriends: Array<CommonUser>;
-	/** When true renders a static avatar stack without the interactive popover, e.g. on the user card. */
+	/** Static avatar stack without the popover, e.g. on the user card. */
 	withoutPopover?: boolean;
 }) {
 	if (mutualFriends.length === 0) return null;

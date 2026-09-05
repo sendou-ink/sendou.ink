@@ -1,5 +1,3 @@
-// timezone example is 'Asia/Tokyo'
-
 /** Hours between the local clock times of two timezones, wrapped to [-12, 12]. */
 export function hourDifferenceBetweenTimezones(
 	timezone1: string,
@@ -8,11 +6,7 @@ export function hourDifferenceBetweenTimezones(
 	return createTimezoneHourDifference()(timezone1, timezone2);
 }
 
-/**
- * Same as {@link hourDifferenceBetweenTimezones}, but resolving each timezone's
- * offset only once. Resolving an offset is expensive, so comparing many
- * timezones (filtering a list of posts, say) should share one instance.
- */
+/** {@link hourDifferenceBetweenTimezones} resolving each timezone's offset only once; resolving is expensive, so comparing many (filtering posts) should share one instance. */
 export function createTimezoneHourDifference() {
 	const offsets = new Map<string, number>();
 
@@ -38,19 +32,16 @@ export function createTimezoneHourDifference() {
 function getTimezoneOffset(timeZone: string) {
 	const date = new Date();
 
-	// Abuse the Intl API to get a local ISO 8601 string for a given time zone.
+	// Intl gives a local ISO 8601 string for the time zone
 	let iso = date
 		.toLocaleString("en-CA", { timeZone, hour12: false })
 		.replace(", ", "T");
 
-	// Include the milliseconds from the original timestamp
 	iso += `.${date.getMilliseconds().toString().padStart(3, "0")}`;
 
-	// Lie to the Date object constructor that it's a UTC time.
+	// parsed as if UTC
 	const lie = new Date(`${iso}Z`);
 
-	// Return the difference in timestamps, as minutes
-	// Positive values are West of GMT, opposite of ISO 8601
-	// this matches the output of `Date.getTimeZoneOffset`
+	// minutes, positive West of GMT (opposite of ISO 8601) like `Date.getTimezoneOffset`
 	return -(lie.getTime() - date.getTime()) / 60 / 1000;
 }

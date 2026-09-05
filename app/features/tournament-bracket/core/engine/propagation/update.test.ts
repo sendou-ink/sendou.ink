@@ -38,7 +38,6 @@ describe("Update matches", () => {
 		expect(Engine.matchStatus(data, 0)).toBe("STARTED");
 		expect(after.opponent1?.score).toBe(2);
 
-		// Id should stay. It shouldn't be overwritten.
 		expect(after.opponent1?.id).toBe(1);
 	});
 

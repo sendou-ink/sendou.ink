@@ -10,10 +10,7 @@ const ROTATION_TYPES = ["SERIES", "OPEN", "X"] as const;
 const ROTATIONS_PER_TYPE = 12;
 const TWO_HOURS = 2 * 60 * 60;
 
-/**
- * Replaces the Splatoon rotations with a schedule starting from the current
- * two-hour slot, the same write the rotation sync routine does.
- */
+/** Schedule starting from the current two-hour slot, same write as the rotation sync routine. */
 export function replaceAll() {
 	const nowUnix = Math.floor(Date.now() / 1000);
 	const currentSlotStartsAt = nowUnix - (nowUnix % TWO_HOURS);

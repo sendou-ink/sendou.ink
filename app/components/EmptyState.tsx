@@ -9,7 +9,7 @@ interface EmptyStateProps {
 	children: React.ReactNode;
 }
 
-/** Renders the message shown by a page or tab that has no content, with the feature's nav icon above it. */
+/** Message for a page or tab with no content, with the feature's nav icon above it. */
 export function EmptyState({ navItem, children }: EmptyStateProps) {
 	return (
 		<div className={styles.container}>

@@ -335,7 +335,7 @@ describe("AvailabilityRepository.findWeekReminderUserIds", () => {
 		expect(await reminderUserIds()).toEqual([]);
 	});
 
-	test("leaves cheerleaders out, the schedule surfaces do not show them", async () => {
+	test("reminds cheerleaders like any other member", async () => {
 		await TeamFactory.create(
 			{ memberUserIds: [users.id(1), users.id(2), users.id(3)] },
 			{ roles: { [users.id(3)]: "CHEERLEADER" } },
@@ -345,7 +345,7 @@ describe("AvailabilityRepository.findWeekReminderUserIds", () => {
 			weekStartsAt: WEEK_STARTS_AT,
 		});
 
-		expect(await reminderUserIds()).toEqual([users.id(2)]);
+		expect(await reminderUserIds()).toEqual([users.id(2), users.id(3)]);
 	});
 });
 

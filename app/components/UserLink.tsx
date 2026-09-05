@@ -18,7 +18,7 @@ type UnlinkedPlayer = { name: string | null } & {
 	[K in keyof UserLinkUser]: UserLinkUser[K] | null;
 };
 
-/** Link to a user's page showing their avatar and username. Accepts also result players without an account, rendering just their name. */
+/** Avatar + username link; result players without an account render just their name. */
 export function UserLink({
 	user,
 	size = "xxs",

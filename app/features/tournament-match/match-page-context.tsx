@@ -12,10 +12,7 @@ import {
 import type { TournamentMatchLoaderData } from "./loaders/to.$id.matches.$mid.server";
 import { matchIsLocked, resolveHostingTeam } from "./tournament-match-utils";
 
-/**
- * One of the match's two teams: the tournament wide lite team (with its resolved seed)
- * plus the roster and map pool that the match loader ships for these two teams only.
- */
+/** The tournament wide lite team (resolved seed) plus the roster and map pool the match loader ships for its two teams. */
 export type MatchPageTeam = NonNullable<ReturnType<Tournament["teamById"]>> &
 	Pick<TournamentMatchLoaderData["teams"][number], "members" | "mapPool">;
 
@@ -218,8 +215,7 @@ function resolveVisibleTabs({
 	if (isAdminEligible) {
 		tabs.push(TAB_KEYS.ADMIN);
 	}
-	// matchIsOver with no reports nor pick/ban events = drop-out / forfeit;
-	// no results to show
+	// over with no reports nor pick/ban events = drop-out / forfeit, no results to show
 	if (hasReportedMaps || hasPickBanEvents) {
 		tabs.push(TAB_KEYS.RESULT);
 	}
@@ -227,10 +223,8 @@ function resolveVisibleTabs({
 	return tabs;
 }
 
-// Derived from the match loader's data instead of the tournament loader's
-// bracket data — the latter can be stale on the client (its revalidation is
-// aborted if the user navigates mid-flight and same-tournament navigations
-// skip it), which would hide the action tab on an already-ready match.
+// from the match loader's data, as the tournament loader's bracket data can be stale on the
+// client (revalidation aborted mid-flight, skipped by same-tournament navigations) and hide the action tab
 function resolveCanReportScore({
 	tournament,
 	user,

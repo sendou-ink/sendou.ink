@@ -58,8 +58,7 @@ export default function UserCardEditPage() {
 function defaultValues(data: Awaited<ReturnType<typeof loader>>) {
 	const { card, extras } = data;
 	const banner = card.banner;
-	// a stored self-reported peak XP is only autofilled while it's still a valid claim on top of a
-	// verified placement; otherwise the field is left blank rather than showing an unsubmittable value
+	// a stored self-reported peak XP is only autofilled while it's still a valid (submittable) claim
 	const peakXp =
 		extras.unverifiedPeakXP &&
 		isValidUnverifiedXp({

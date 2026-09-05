@@ -178,7 +178,6 @@ test.describe("Calendar", () => {
 		await expect(page).toHaveURL(calendarEventPage(eventId));
 		await expect(calendarEvent.startTime(editedDate)).toBeVisible();
 
-		// the edited name and date land on the calendar
 		const calendar = new CalendarPage(page);
 		const editedDateWeek = { day: 20, month: 0, year: 2027 };
 		await calendar.goto(editedDateWeek);
@@ -244,12 +243,10 @@ test.describe("Calendar", () => {
 		await expect(page).toHaveURL(/\/to\/\d+/);
 		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
 
-		// start time round-trips
 		const tournamentInfo = new TournamentInfoPage(page);
 		await tournamentInfo.goto(tournamentId);
 		await expect(tournamentInfo.startTime(startTime).first()).toBeVisible();
 
-		// the follow-up bracket shows up
 		const brackets = new TournamentBracketsPage(page);
 		await brackets.goto(tournamentId);
 		await expect(brackets.bracketTab("Underground")).toBeVisible();

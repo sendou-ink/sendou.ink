@@ -69,12 +69,10 @@ interface DayDraft {
 }
 
 /**
- * One week of the user's own availability as an editable timeline: on wide
- * containers each day is a track where ranges are painted, moved, resized and
- * drag-filled with the pointer; on narrow containers a stacked per-day list.
- * Both share the same popover with exact time inputs and the day note, which
- * is also the keyboard path. Commitments render as locked blocks on the
- * tracks; gestures may cross them, but a new range cannot start on one.
+ * One week of the user's own availability: on wide containers a track per day where ranges are
+ * painted, moved, resized and drag-filled; on narrow ones a stacked per-day list. Both share the
+ * popover with exact time inputs and the day note, also the keyboard path. Commitments are locked
+ * blocks: gestures may cross them, but a new range cannot start on one.
  */
 export function WeekAvailabilityEditor({
 	value,
@@ -391,9 +389,7 @@ export function WeekAvailabilityEditor({
 		setOpenDayDate(null);
 	};
 
-	// deleting commits right away so the bar disappears as the button is
-	// pressed; once no ranges are left the popover has nothing to edit and
-	// closes too
+	// deleting commits right away so the bar disappears as pressed; with no ranges left the popover closes too
 	const handleRangeDelete = (draft: DayDraft) => {
 		if (!openDayDate) return;
 
@@ -436,8 +432,7 @@ export function WeekAvailabilityEditor({
 			gesture && gesture.type !== "fill" && gesture.dayIndex === dayIndex
 				? gesture
 				: null;
-		// a plain click on a bar starts a move gesture too; the live time label
-		// only belongs to an actual drag, not to the click opening the popover
+		// a plain click on a bar starts a move gesture too; the live time label belongs only to an actual drag
 		const liveRange =
 			dayGesture?.type === "move" && !dayGesture.moved
 				? null
@@ -674,7 +669,7 @@ function DayEditor({
 	/** Opens with an empty row already appended, for an "add time" entry point. */
 	startWithNewRow: boolean;
 	onDraftChange: (draft: DayDraft) => void;
-	/** Called with the remaining draft after a range row is deleted — deletes commit instantly instead of waiting for the popover to close. */
+	/** Called with the remaining draft after a range row is deleted; deletes commit instantly. */
 	onRangeDelete: (draft: DayDraft) => void;
 }) {
 	const { t } = useTranslation(["schedule", "common", "forms"]);

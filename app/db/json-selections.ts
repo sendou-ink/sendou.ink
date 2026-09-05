@@ -22,8 +22,7 @@ const NO_NAMES: ReadonlySet<string> = new Set();
 export function computedJsonColumns(
 	query: RootOperationNode,
 ): ReadonlySet<string> {
-	// only select queries have computed result columns: `returning` selections keep
-	// the origin metadata of the column they write to
+	// `returning` selections keep the origin metadata of the column they write to
 	return SelectQueryNode.is(query) ? outputNames(query) : NO_NAMES;
 }
 
@@ -90,8 +89,7 @@ function outputNames(select: SelectQueryNode): ReadonlySet<string> {
 		}
 	}
 
-	// a compound select is named after its first branch, but any branch can be the
-	// one contributing the JSON document
+	// a compound select is named after its first branch, but any branch can contribute the JSON
 	for (const { expression } of select.setOperations ?? []) {
 		if (!SelectQueryNode.is(expression)) continue;
 

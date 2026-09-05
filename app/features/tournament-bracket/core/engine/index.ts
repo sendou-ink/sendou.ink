@@ -1,8 +1,4 @@
-/**
- * Pure bracket engine. No I/O anywhere in this module tree — callers hydrate
- * BracketData via BracketRepository, call engine functions, persist the
- * returned delta via BracketRepository.
- */
+/** Pure bracket engine, no I/O: callers hydrate BracketData via BracketRepository and persist the returned delta. */
 
 export { create } from "./create";
 export {

@@ -118,10 +118,7 @@ export function FormFieldWrapper({
 	);
 }
 
-/**
- * Wrapper for the entity-search fields (user, team, tournament), which render
- * their own label through the search component instead of taking one here.
- */
+/** For the entity-search fields, which render their own label through the search component. */
 export function SearchFormFieldWrapper({
 	children,
 }: {

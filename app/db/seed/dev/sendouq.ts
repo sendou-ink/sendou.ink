@@ -14,8 +14,7 @@ const SQUAD_COUNT = 8;
 const LOOKING_GROUP_COUNT = 10;
 const REPORTED_MAP_COUNT = 4;
 
-/** N-ZAP's unconfirmed match, on an id worth remembering. Every other match is
- * created before it, so the squad matches make up the difference. */
+/** N-ZAP's unconfirmed match id; every other match is created before it, squad matches making up the difference. */
 const NZAP_MATCH_ID = 500;
 const SQUAD_MATCH_COUNT =
 	NZAP_MATCH_ID - 1 - RECENT_MATCH_COUNT - OLDER_MATCH_COUNT;
@@ -60,9 +59,7 @@ export async function seedSendouQ(
 	return { recentMatchIds };
 }
 
-/** A match N-ZAP's team has reported but the other has not confirmed, so it is the
- * other team's to report and N-ZAP's group is free to queue again. His side is
- * Alliance Rogue's lineup, so the match is one of a team against a pickup group. */
+/** Reported by N-ZAP's side (Alliance Rogue vs. a pickup), unconfirmed, so his group is free to queue again. */
 async function seedNzapReportedMatch(users: SeededUsers, teams: SeededTeams) {
 	const opponentIds = users.crowdIds.slice(-88, -84);
 
@@ -81,9 +78,7 @@ async function seedNzapReportedMatch(users: SeededUsers, teams: SeededTeams) {
 	);
 }
 
-/** One canceled match of each form the cancel reports take, so that the staff-only
- * views have every one of them to show: the two teams pointing at the same player,
- * at different ones, and a match staff canceled without either team's account of it. */
+/** Every cancel report form for the staff views: both teams naming the same player, different ones, and a staff cancel. */
 async function seedNzapCanceledMatches(users: SeededUsers, teams: SeededTeams) {
 	const [nzapId, ...teammateIds] = allianceRogueLineup(teams);
 	const opponentIds = users.crowdIds.slice(-104, -88);
@@ -187,8 +182,7 @@ function allianceRogueLineup(teams: SeededTeams) {
 	return allianceRogue.memberUserIds;
 }
 
-/** Fixed team lineups playing together repeatedly, so their identifier skills reach
- * the match count the team leaderboard requires. */
+/** Fixed lineups playing repeatedly so their identifier skills reach the team leaderboard's match count. */
 async function seedSquadMatches(teams: SeededTeams) {
 	const squads = teams.squads.slice(0, SQUAD_COUNT);
 

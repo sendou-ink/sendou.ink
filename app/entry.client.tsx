@@ -9,9 +9,8 @@ import { loadDateFnsLocale } from "./utils/dates";
 import { logger } from "./utils/logger";
 import { getSessionId } from "./utils/session-id";
 
-/** Base delays in milliseconds before each retry attempt following the initial request. */
 const FETCH_RETRY_DELAYS_MS = [0, 5000, 15000];
-/** Random jitter added to each retry delay to avoid a thundering herd against a struggling server. */
+/** avoids a thundering herd against a struggling server */
 const FETCH_RETRY_JITTER_MS = 1000;
 
 writeViewerTimezoneCookie();
@@ -97,13 +96,11 @@ async function fetchWithRetry(
 
 if ("serviceWorker" in navigator) {
 	window.addEventListener("load", () => {
-		// we will register it after the page complete the load
 		void navigator.serviceWorker.register("/sw-2.js");
 	});
 }
 
-// the server rendered with the page language's date-fns locale, so it must be
-// cached before hydration to avoid a markup mismatch
+// the server rendered with the page language's date-fns locale, so cache it before hydration
 Promise.all([
 	i18nLoader(),
 	loadDateFnsLocale(document.documentElement.lang as LanguageCode),

@@ -73,9 +73,9 @@ export interface SendouSelectProps<T extends object> {
 	className?: string;
 	popoverClassName?: string;
 	search?: { placeholder?: string; testId?: string; inputClassName?: string };
-	/** Value of the search input, used for controlled components */
+	/** controlled search input value */
 	searchInputValue?: string;
-	/** Callback for when the search input value changes. When defined `items` has to be filtered on the caller side (automatic filtering in component disabled). */
+	/** When defined, the caller filters `items` (automatic filtering disabled). */
 	onSearchInputChange?: (value: string) => void;
 	/** Custom search matcher, replacing the default textValue "contains" filter. */
 	filter?: (textValue: string, searchValue: string) => boolean;

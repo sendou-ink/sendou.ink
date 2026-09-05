@@ -22,10 +22,7 @@ import type { DB, Tables } from "~/db/tables";
 import { IS_E2E_TEST_RUN } from "./e2e";
 import { safeNumberParse } from "./number";
 
-/**
- * Base query selecting the user matching a URL identifier, which can be their user id, their Discord
- * id or their custom URL. Extend it with the columns the caller needs.
- */
+/** Base query selecting the user by URL identifier (user id, Discord id or custom URL). */
 export function userByIdentifierQuery(identifier: string) {
 	return db
 		.selectFrom("User")
@@ -86,13 +83,10 @@ type CommonUserSelectResult<O> = readonly [
 ];
 
 /**
- * Select list for the fields shared by every user representation across the app. Includes
- * `customAvatarUrl`, the full URL of the user's supporter custom avatar (resolved from
- * `User.customAvatarImgId`), or `null` when they have none. By default reads from `"User"` which
- * must be in scope at the call site; pass `alias` when the table is joined under another name
- * (`alias: "LinkedUser"`), `prefix` to prefix every output column (`prefix: "sender"` →
- * `senderId`, `senderUsername`, ...), `idAs` to rename only the id column (`idAs: "userId"`) and
- * `inTournament` to resolve `username` via {@link tournamentUsername}.
+ * Select list for the fields shared by every user representation, incl. `customAvatarUrl` (full
+ * supporter avatar URL or `null`). Reads from `"User"` unless `alias` is given; `prefix` prefixes
+ * every output column (`sender` → `senderId`, ...), `idAs` renames only the id column and
+ * `inTournament` resolves `username` via {@link tournamentUsername}.
  */
 export function commonUserSelect<const O extends CommonUserSelectOptions>(
 	eb: ExpressionBuilder<DB, any>,
@@ -118,11 +112,8 @@ export function commonUserSelect<const O extends CommonUserSelectOptions>(
 }
 
 /**
- * SQL expression resolving to the full URL of a user's supporter custom avatar (from
- * `User.customAvatarImgId`), or `null` when they have none. Alias it
- * (`.as("customAvatarUrl")`) when selecting it directly. Pass `alias` when the `User` table is
- * joined under another name. Prefer {@link commonUserSelect} / {@link commonUserJsonObject};
- * reach for this only when those don't fit (e.g. a hand-built `jsonBuildObject`).
+ * Full URL of a user's supporter custom avatar, or `null`. Alias it when selecting directly.
+ * Prefer {@link commonUserSelect} / {@link commonUserJsonObject} when they fit.
  */
 export function customAvatarUrl(
 	eb: ExpressionBuilder<DB, any>,
@@ -208,13 +199,7 @@ const USER_SUBMITTED_IMAGE_ROOT =
 		? "http://127.0.0.1:9000/sendou"
 		: "https://sendou.nyc3.cdn.digitaloceanspaces.com";
 
-/**
- * Constructs a SQL expression that returns the full URL for a tournament's logo.
- * If the tournament has a custom logo (via avatarImgId), returns that logo's URL.
- * Otherwise, returns null.
- *
- * @returns A SQL expression that concatenates the image root URL with either the custom logo URL or default logo
- */
+/** Full URL of the tournament's custom logo (via `avatarImgId`), or null when it has none. */
 export function tournamentLogoOrNull(
 	eb: ExpressionBuilder<Tables, "CalendarEvent">,
 ) {
@@ -235,13 +220,7 @@ export function tournamentLogoOrNull(
 	]);
 }
 
-/**
- * Constructs a SQL expression that returns the full URL for a tournament's logo.
- * If the tournament has a custom logo (via avatarImgId), returns that logo's URL.
- * Otherwise, falls back to the default tournament logo.
- *
- * @returns A SQL expression that concatenates the image root URL with either the custom logo URL or default logo
- */
+/** Full URL of the tournament's custom logo (via `avatarImgId`), falling back to the default logo. */
 export function tournamentLogoWithDefault(
 	eb: ExpressionBuilder<Tables, "CalendarEvent">,
 ) {
@@ -262,9 +241,8 @@ export function tournamentLogoWithDefault(
 }
 
 /**
- * Subquery resolving to the event's earliest `CalendarEventDate` start time, or `null` when it has
- * no dates. Correlates on `"CalendarEvent"."id"`. Alias it `.as("startTime")` when selecting it
- * directly. Can also be passed to `orderBy` as is.
+ * Subquery for the event's earliest `CalendarEventDate` start time (`null` without dates).
+ * Correlates on `"CalendarEvent"."id"`; alias when selecting, usable in `orderBy` as is.
  */
 export function calendarEventStartTime(
 	eb: ExpressionBuilder<Tables, "CalendarEvent">,
@@ -275,10 +253,7 @@ export function calendarEventStartTime(
 		.whereRef("CalendarEventDate.eventId", "=", "CalendarEvent.id");
 }
 
-/**
- * Subquery counting a tournament's non-placeholder teams. Correlates on `"Tournament"."id"`.
- * Alias it `.as("teamsCount")` when selecting it directly.
- */
+/** Subquery counting a tournament's non-placeholder teams. Correlates on `"Tournament"."id"`. */
 export function tournamentTeamCount(
 	eb: ExpressionBuilder<Tables, "Tournament">,
 ) {
@@ -300,12 +275,10 @@ function tournamentHasStarted(eb: ExpressionBuilder<DB, "Tournament">) {
 }
 
 /**
- * Subquery resolving to the non-placeholder teams of a tournament that are still relevant to it:
- * every registered team as long as no bracket has been started, only the checked in ones after
- * that. Mirrors how the tournament page itself resolves its teams, so keep the two in sync.
- * Correlates on `"Tournament"."id"`. Has no select of its own, so extend it with the aggregate the
- * caller needs. A team can have several check in rows, so aggregate with `.distinct()`, e.g.
- * `.select(({ fn }) => fn.count("TournamentTeam.id").distinct().as("count"))`.
+ * Non-placeholder teams still relevant to a tournament: all registered teams until a bracket has
+ * started, only checked in ones after. Mirrors the tournament page's own team resolution, keep in
+ * sync. Correlates on `"Tournament"."id"`. Has no select; a team can have several check in rows,
+ * so aggregate with `.distinct()`.
  */
 function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
 	return eb
@@ -325,10 +298,7 @@ function tournamentCheckedInTeams(eb: ExpressionBuilder<DB, "Tournament">) {
 		);
 }
 
-/**
- * Subquery counting the teams of {@link tournamentCheckedInTeams}. Correlates on
- * `"Tournament"."id"`. Alias it `.as("teamsCount")` when selecting it directly.
- */
+/** Subquery counting the teams of {@link tournamentCheckedInTeams}. Correlates on `"Tournament"."id"`. */
 export function tournamentTeamsCount(eb: ExpressionBuilder<DB, "Tournament">) {
 	return tournamentCheckedInTeams(eb).select(({ fn }) => [
 		fn.count<number>("TournamentTeam.id").distinct().as("count"),
@@ -336,10 +306,8 @@ export function tournamentTeamsCount(eb: ExpressionBuilder<DB, "Tournament">) {
 }
 
 /**
- * Expression resolving to a tournament's participant count: rostered players of the teams from
- * {@link tournamentCheckedInTeams} while the tournament is still ongoing, players who actually got
- * a result once it has been finalized. Correlates on `"Tournament"."id"`. Alias it
- * `.as("membersCount")` when selecting it directly.
+ * Tournament participant count: rostered players of {@link tournamentCheckedInTeams} while ongoing,
+ * players with a result once finalized. Correlates on `"Tournament"."id"`.
  */
 export function tournamentMembersCount(
 	eb: ExpressionBuilder<DB, "Tournament">,
@@ -374,9 +342,8 @@ export function tournamentMembersCount(
 
 /**
  * Grouped subquery picking each user's (`by: "userId"`) or team's (`by: "identifier"`) latest
- * Skill row of a season: `latestId` plus that row's `ordinal`, `matchesCount` and the `by`
- * column. Wrap it with `.selectFrom(latestSkillPerSeason(...).as("Latest"))`; extra `.where`s
- * compose before aliasing.
+ * Skill row of a season: `latestId`, `ordinal`, `matchesCount` and the `by` column.
+ * Use as `.selectFrom(latestSkillPerSeason(...).as("Latest"))`; extra `.where`s compose before aliasing.
  */
 export function latestSkillPerSeason<By extends "userId" | "identifier">({
 	season,
@@ -385,14 +352,10 @@ export function latestSkillPerSeason<By extends "userId" | "identifier">({
 	season: number;
 	by: By;
 }) {
-	// The latest row per user/team is picked via SQLite's bare column rule: with a `max()`
-	// aggregate the other selected columns come from the row that produced the max.
-	// A self-join against a `max(id)` subquery is avoided because it lets the planner
-	// pick a nested-loop plan when it misjudges the season's row count (e.g. a freshly
-	// started season whose stats are dwarfed by older seasons), which made this query
-	// take ~12s. This form is plan-stable regardless of stats: a single grouped scan of
-	// the `skill_season_user_id_leaderboard` / `skill_season_identifier_leaderboard`
-	// covering index, no temp b-tree per partition.
+	// Relies on SQLite's bare column rule: with `max()` the other columns come from the max row.
+	// A self-join against a `max(id)` subquery took ~12s when the planner misjudged a fresh
+	// season's row count; this form is plan-stable: one grouped scan of the
+	// `skill_season_{user_id,identifier}_leaderboard` covering index.
 	return db
 		.selectFrom("Skill")
 		.select(({ fn }) => [
@@ -407,9 +370,8 @@ export function latestSkillPerSeason<By extends "userId" | "identifier">({
 }
 
 /**
- * Predicate for `Skill` rows of the user that represent a played set: either a SendouQ match or
- * a ranked tournament the user has a result in. Filters out e.g. skills of tournament teams the
- * user dropped from before results. `"Skill"` must be in scope at the call site.
+ * Predicate for the user's `Skill` rows representing a played set: a SendouQ match or a ranked
+ * tournament they have a result in (excludes teams they dropped from before results).
  */
 export function skillCountsAsSeasonSet(
 	eb: ExpressionBuilder<DB, "Skill">,
@@ -427,12 +389,11 @@ export function skillCountsAsSeasonSet(
 	]);
 }
 
-/** Concats the file name (a bit misleadingly called `url` in the DB schema) with the root URL, giving the full URL for the image */
+/** Prefixes the file name (called `url` in the DB schema) with the root URL. */
 export function concatUserSubmittedImagePrefix<T extends string | null>(
 	expr: Expression<T>,
 ) {
-	// null-propagating || instead of iif(expr is not null, concat(...), null)
-	// so a correlated subquery passed as expr is evaluated only once per row
+	// null-propagating || so a correlated subquery expr is evaluated only once per row
 	return sql<T extends null ? string | null : string>`(${sql.lit(
 		`${USER_SUBMITTED_IMAGE_ROOT}/`,
 	)} || ${expr})`;
@@ -489,10 +450,8 @@ export function userProfileWeapons(eb: ExpressionBuilder<DB, any>) {
 }
 
 /**
- * The name a user is shown under inside tournaments: the name organizers have given them
- * (`User.tournamentName`) falling back to their `username`. Alias it (`.as("username")`) when
- * selecting it directly. Prefer `commonUserSelect(eb, { inTournament: true })`; reach for this
- * only when the query doesn't select the common user fields.
+ * Name shown inside tournaments: `User.tournamentName` falling back to `username`.
+ * Prefer `commonUserSelect(eb, { inTournament: true })` when selecting the common user fields.
  */
 export function tournamentUsername(alias = "User") {
 	return sql<string>`coalesce(${sql.ref(`${alias}.tournamentName`)}, ${sql.ref(
@@ -505,12 +464,10 @@ type SelectQueryBuilderExpression<O> = Parameters<
 >[0];
 
 /**
- * Drop-in replacement for kysely's sqlite `jsonArrayFrom`. Emits the same query, except
- * JSON-valued selections (per {@link jsonValuedSelection}: JSON columns, nested json helpers) get
- * `json(...)` applied at the `json_object` argument position. SQLite's JSON subtype never
- * survives a subquery boundary, so without the re-tag such values would be embedded as
- * strings; the dialect parses each result column exactly once and relies on documents
- * arriving fully nested. Always use this over the kysely one.
+ * Drop-in replacement for kysely's sqlite `jsonArrayFrom` that wraps JSON-valued selections
+ * (per {@link jsonValuedSelection}) in `json(...)`. SQLite's JSON subtype doesn't survive a
+ * subquery boundary, so without it nested documents would arrive as strings; the dialect parses
+ * each result column exactly once. Always use this over the kysely one.
  */
 export function jsonArrayFrom<O>(
 	expr: SelectQueryBuilderExpression<O>,
@@ -546,10 +503,8 @@ export function jsonBuildObject<O extends Record<string, Expression<unknown>>>(
 }
 
 /**
- * Re-tags a JSON-valued expression with SQLite's `json()` so it stays a nested document
- * (instead of an escaped string) inside {@link jsonBuildObject}/{@link jsonArrayFrom}.
- * Only needed for expressions the helpers can not recognize as JSON on their own, e.g. a
- * raw `IIF(...)` over a JSON column.
+ * Re-tags an expression with `json()` so it stays nested inside {@link jsonBuildObject}/{@link jsonArrayFrom}.
+ * Only needed when the helpers can't recognize it as JSON, e.g. a raw `IIF(...)` over a JSON column.
  */
 export function asJson<T>(expr: Expression<T>): RawBuilder<T> {
 	return sql<T>`json(${expr})`;

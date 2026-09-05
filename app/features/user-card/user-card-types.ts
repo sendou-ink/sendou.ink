@@ -10,9 +10,7 @@ export interface UserCardData extends CommonUser {
 	shortBio: string | null;
 	customTheme: CustomTheme | null;
 	friendCode: string | null;
-	/** Id of the user's free agent LFG post, or `null` if they have none. */
 	freeAgentPostId: number | null;
-	/** The viewer's private note about this user, or `null` when they have none. */
 	privateNote: Pick<
 		Tables["PrivateUserNote"],
 		"text" | "sentiment" | "updatedAt"
@@ -20,16 +18,10 @@ export interface UserCardData extends CommonUser {
 	stats: Array<UserCardStat>;
 }
 
-/**
- * Viewer-relative card fields lazy-loaded when the card opens (see the
- * `/user-card/:id/friendship` resource route), kept out of the batched `UserCardData`
- * query because they are only needed for the one card a viewer actually opens.
- */
+/** Viewer-relative fields lazy-loaded from `/user-card/:id/friendship` when a card opens. */
 export interface UserCardFriendship {
 	isFriend: boolean;
-	/** Whether the viewer has a pending friend request sent to this user. */
 	sentFriendRequest: boolean;
-	/** Id of this user's pending friend request to the viewer, or `null` when there is none. */
 	incomingFriendRequestId: number | null;
 	mutualFriends: Array<CommonUser>;
 }
@@ -67,7 +59,6 @@ export type UserCardStat =
 			top: number | null;
 	  };
 
-/** Card stat types that a user can hide from their card. */
 export type HideableUserCardStat = Extract<UserCardStat["type"], "XP" | "DIV">;
 
 export interface UserCardStatXPValue {

@@ -42,10 +42,8 @@ export interface ResolvedRoom {
 	/** Role labels (e.g. "TO", "Stream") shown next to non-participant authors, keyed by user id. */
 	labelByUserId: Record<number, string>;
 	/**
-	 * - `VIEW`: reading the room. After `closedAt` only observers keep it.
-	 * - `POST`: sending a message, while the room is unexpired and unclosed.
-	 * - `OBSERVE`: read-only access resolved from the owning entity (tournament
-	 *   organizers and streamers), plus site staff who observe every room.
+	 * `VIEW`: reading the room, after `closedAt` only observers keep it. `POST`: sending while unexpired
+	 * and unclosed. `OBSERVE`: read-only access from the owning entity (organizers, streamers) plus site staff.
 	 */
 	permissions: {
 		VIEW: number[];
@@ -60,21 +58,14 @@ export interface ResolvedRoom {
 
 type ChatRoomRow = Tables["ChatRoom"];
 
-/**
- * Resolves a room's participants, title and access live from its owning entity.
- * A room whose owner row is gone resolves to `null`.
- */
+/** Resolves a room's participants, title and access live from its owning entity; `null` when the owner row is gone. */
 export async function resolve(roomId: number): Promise<ResolvedRoom | null> {
 	const [room] = await resolveAll([roomId]);
 
 	return room ?? null;
 }
 
-/**
- * Resolves a room for the current user.
- *
- * @throws {Response} 404 if the room does not resolve, 403 without the permission.
- */
+/** Resolves a room for the current user. @throws {Response} 404 if it does not resolve, 403 without the permission. */
 export async function requireRoom(
 	roomId: number,
 	permission: keyof ResolvedRoom["permissions"],

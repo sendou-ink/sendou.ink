@@ -35,8 +35,7 @@ const CANONICAL_MAIN_WEAPON_IDS = mainWeaponIds.filter(
 	(id) => canonicalWeaponSplId(id) === id,
 );
 
-/** `count` main weapons distinct down to their canonical id, e.g. a weapon pool or
- * a multi-weapon build's. */
+/** `count` main weapons distinct down to their canonical id. */
 export function mainWeapons(count: number): MainWeaponId[] {
 	return faker.helpers.arrayElements(CANONICAL_MAIN_WEAPON_IDS, count);
 }
@@ -50,10 +49,7 @@ export function gear() {
 	};
 }
 
-/**
- * An in-game name with its discriminator, e.g. `Agent 4#1859`. `name` is sanitized and
- * truncated the way the real thing is, so the result always passes `inGameNameIsValid`.
- */
+/** E.g. `Agent 4#1859`; `name` is sanitized and truncated so the result always passes `inGameNameIsValid`. */
 export function inGameName(name = faker.person.firstName()): string {
 	const discriminator = faker.string.alphanumeric({
 		length: {
@@ -66,10 +62,7 @@ export function inGameName(name = faker.person.firstName()): string {
 	return `${sanitizedName(name)}#${discriminator}`;
 }
 
-/**
- * A map list of `count` maps, rotating through the ranked modes and never repeating
- * a stage, the way a real one looks. Callers add whatever `source` their domain uses.
- */
+/** `count` maps rotating through the ranked modes, never repeating a stage. Callers add their own `source`. */
 export function mapList(count: number): ModeWithStage[] {
 	const stages = faker.helpers.arrayElements(stageIds, count);
 
@@ -79,10 +72,7 @@ export function mapList(count: number): ModeWithStage[] {
 	}));
 }
 
-/**
- * The abilities of a build: a main and three subs per gear slot. All of them are
- * stackable ones, which every slot allows.
- */
+/** A main and three subs per gear slot, all stackable so every slot allows them. */
 export function buildAbilities(): BuildAbilitiesTuple {
 	return [gearAbilities(), gearAbilities(), gearAbilities()];
 }

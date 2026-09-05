@@ -14,16 +14,15 @@ interface ActionButtonBaseProps<
 	TSchema extends AnySchema,
 	TAction extends ActionsOf<TSchema>,
 > extends Omit<SendouButtonProps, "type" | "name" | "value" | "form"> {
-	/** Action schema of the route the button submits to. Only used for typing `action` and `fields`. */
+	/** Route's action schema, only used for typing `action` and `fields`. */
 	schema: TSchema;
-	/** `_action` to submit, narrowed to the literals of the schema. */
 	action: TAction;
-	/** Route to submit to. Defaults to the current route. */
+	/** Defaults to the current route. */
 	formAction?: string;
 	formClassName?: string;
-	/** Fetcher to submit with, e.g. to share submitting state between buttons. Defaults to own fetcher. */
+	/** e.g. to share submitting state between buttons */
 	fetcher?: FetcherWithComponents<unknown>;
-	/** When set, submits only after the user confirms via a dialog. */
+	/** submits only after the user confirms via a dialog */
 	confirm?: {
 		dialogHeading: string;
 		description?: React.ReactNode;

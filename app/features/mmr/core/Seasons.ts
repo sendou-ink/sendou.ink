@@ -2,27 +2,10 @@ import { addHours } from "date-fns";
 import { Config } from "~/config";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 
-/**
- * How long past a season's end its matches can still be resolved. A match can be
- * created up to the very end of the season and the stale match routine resolves
- * it 24h after creation, with up to an hour of scheduling lag on top.
- */
+/** How long past a season's end its matches can still resolve: 24h stale match routine after a buzzer-beater creation, plus up to an hour of scheduling lag. */
 const REPORTING_GRACE_HOURS = 25;
 
-/**
- * List of seasons with their respective start and end dates.
- *
- * Each season is represented as an object with the following properties:
- * - `nth`: The sequential number of the season (starting from 0).
- * - `starts`: The start date of the season as a `Date` object.
- * - `ends`: The end date of the season as a `Date` object.
- *
- * Note: The value is conditionally set based on the environment. In development mode,
- * the end date of the first season is set to a later date for testing purposes (ensures a season is always open).
- *
- * @example
- * console.log(Seasons.list[0].starts); // Logs the start date of the first season
- */
+/** Seasons (`nth` from 0) with their start and end dates. Outside production the list is a test set that keeps a season always open. */
 export const list =
 	// when we do pnpm run setup NODE_ENV is not set -> use test seasons
 	!process.env.NODE_ENV ||
@@ -113,16 +96,10 @@ export const list =
 				},
 			] as const);
 
-/**
- * Represents an individual item from the `Seasons.list` array.
- */
+/** An item of `Seasons.list`. */
 export type ListItem = (typeof list)[number];
 
-/**
- * Determines the current season relative to the provided date (defaults to now), or falls back to the previous season if no current season is found.
- *
- * @returns The current season if it exists; otherwise, the previous season.
- */
+/** The current season at `date` (default now), falling back to the previous one. */
 export function currentOrPrevious(date?: Date): ListItem | null {
 	const _currentSeason = current(date);
 	if (_currentSeason) return _currentSeason;
@@ -130,11 +107,7 @@ export function currentOrPrevious(date?: Date): ListItem | null {
 	return previous(date);
 }
 
-/**
- * Determines the previous season relative to the provided date (defaults to now).
- *
- * @returns The previous season if one exists.
- */
+/** The previous season relative to `date` (default now). */
 export function previous(date = new Date()): ListItem | null {
 	let latestPreviousSeason: ListItem | null = null;
 	for (const season of list) {
@@ -146,20 +119,12 @@ export function previous(date = new Date()): ListItem | null {
 
 let seasonEndedOverride = false;
 
-/**
- * Tests only: makes `current()` resolve to `null` as if every season had ended, so
- * tests can cover the season boundary without one having to actually pass. Only
- * "now" is affected, an explicitly given date still resolves to its real season.
- */
+/** Tests only: makes `current()` for "now" resolve to `null` as if every season had ended; an explicit date still resolves normally. */
 export function DANGEROUS_setSeasonEndedOverride(seasonEnded: boolean) {
 	seasonEndedOverride = seasonEnded;
 }
 
-/**
- * Determines the current ongoing season relative to the provided date (defaults to now).
- *
- * @returns The current season if one exists.
- */
+/** The ongoing season at `date` (default now), if any. */
 export function current(date?: Date): ListItem | null {
 	if (seasonEndedOverride && !date) return null;
 
@@ -174,11 +139,7 @@ export function current(date?: Date): ListItem | null {
 	return null;
 }
 
-/**
- * Determines the next upcoming season relative to the provided date (defaults to now).
- *
- * @returns The next season if one exists.
- */
+/** The next upcoming season relative to `date` (default now), if any. */
 export function next(date = new Date()): ListItem | null {
 	for (const season of list) {
 		if (date < season.starts) return season;
@@ -187,12 +148,7 @@ export function next(date = new Date()): ListItem | null {
 	return null;
 }
 
-/**
- * Retrieves the date range for a specific season based on its number.
- *
- * @returns An object containing the start and end dates of the specified season.
- * @throws {Error} If the season does not exist.
- */
+/** Start and end dates of season `nth`. @throws if the season does not exist. */
 export function nthToDateRange(nth: number) {
 	const seasonObject = list[nth];
 	if (!seasonObject) {
@@ -205,13 +161,7 @@ export function nthToDateRange(nth: number) {
 	};
 }
 
-/**
- * Retrieves the date range within which a season's results can land, i.e. the season
- * itself plus the grace period matches started at the buzzer are resolved within.
- *
- * @returns An object containing the start date of the specified season and the end of its reporting grace period.
- * @throws {Error} If the season does not exist.
- */
+/** The range a season's results can land in: the season plus the reporting grace period. @throws if the season does not exist. */
 export function nthToReportingDateRange(nth: number) {
 	const { starts, ends } = nthToDateRange(nth);
 
@@ -221,11 +171,7 @@ export function nthToReportingDateRange(nth: number) {
 	};
 }
 
-/**
- * Retrieves a list of season numbers that have started based on the provided date (defaults to now).
- *
- * @returns An array of season numbers in descending order (newest first). If no seasons have started, returns an array containing only `[0]`.
- */
+/** Numbers of seasons started by `date` (default now), newest first; `[0]` if none have. */
 export function allStarted(date = new Date()) {
 	const startedSeasons = list.filter((s) => date >= s.starts);
 	if (startedSeasons.length > 0) {
@@ -234,11 +180,7 @@ export function allStarted(date = new Date()) {
 
 	return [0];
 }
-/**
- * Retrieves a list of season numbers that have finished based on the provided date (defaults to now).
- *
- * @returns An array of season numbers in descending order. If no seasons have finished, returns an empty array.
- */
+/** Numbers of seasons finished by `date` (default now), newest first. */
 export function allFinished(date = new Date()) {
 	const finishedSeasons = list.filter((s) => date > s.ends);
 	return finishedSeasons.map((s) => s.nth).reverse();

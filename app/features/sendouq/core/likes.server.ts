@@ -8,12 +8,7 @@ import {
 } from "../q-constants";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
-/**
- * Cancels every pending challenge (both given and received) involving the user's
- * active and full SendouQ group. Only full groups are affected: partial groups
- * merge (rather than start a match) when a request is accepted, so their members'
- * preferences are not yet locked in.
- */
+/** Cancels every pending challenge involving the user's active full group. Partial groups merge rather than start a match on accept, so their preferences are not locked in yet. */
 export async function cancelActiveGroupLikes(userId: number) {
 	const ownGroup = SendouQ.findOwnGroup(userId);
 	if (!ownGroup) return;

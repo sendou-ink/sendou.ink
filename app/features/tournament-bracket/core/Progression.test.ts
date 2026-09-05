@@ -26,7 +26,7 @@ const SWISS_EARLY_ADVANCE: BracketInput = {
 	settings: { advanceThreshold: 3 },
 };
 
-/** Fills in the ids and names `validatedBrackets` needs so tests only state what they vary. Bracket N is referenced as source bracketId `"N"`. */
+/** Fills in the ids and names `validatedBrackets` needs. Bracket N is referenced as source bracketId `"N"`. */
 const getValidatedBrackets = (brackets: BracketInput[]) =>
 	Progression.validatedBrackets(
 		brackets.map((bracket, i) => ({
@@ -652,7 +652,6 @@ describe("validatedSources - other rules", () => {
 	});
 
 	test("allows Swiss early advance when bracket has destination", () => {
-		// Swiss bracket with early advance that leads to another bracket should be valid
 		const result = getValidatedBrackets([
 			{
 				settings: {
@@ -667,7 +666,6 @@ describe("validatedSources - other rules", () => {
 			},
 		]);
 
-		// Should be valid (no error returned)
 		expect(Array.isArray(result)).toBe(true);
 	});
 

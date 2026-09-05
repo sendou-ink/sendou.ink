@@ -77,8 +77,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 					noScreen: toDBBoolean(data.noScreen),
 				});
 
-			// Challenges are made based on the modes/preferences shown at that
-			// moment, so changing them must undo pending requests to/from the group.
+			// challenges are based on the preferences shown at the time, so changing them undoes pending ones
 			if (mapModePreferencesChanged || noScreenChanged) {
 				await cancelActiveGroupLikes(user.id);
 			}

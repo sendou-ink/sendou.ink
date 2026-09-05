@@ -19,9 +19,8 @@ import {
 } from "../q-constants";
 import { SendouQError } from "../q-utils.server";
 
-// this function doesn't throw normally because we are assuming
-// if there is a validation error the user saw stale data
-// and when we return null we just force a refresh
+// a validation error means the user saw stale data, so instead of throwing
+// this returns null to force a refresh
 export const action: ActionFunction = async ({ request }) => {
 	const user = requireUser();
 	const result = await parseFormData({
@@ -273,9 +272,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 		return null;
 	} catch (error) {
-		// some errors are expected to happen, for example they might request two groups at the same time
-		// then after morphing one group the other request fails because the group no longer exists
-		// return null causes loaders to run and they see the fresh state again instead of error page
+		// expected errors (e.g. two groups requested at once, the second failing once the first
+		// morphed): return null so loaders re-run and the user sees the fresh state
 		if (error instanceof SendouQError) {
 			return null;
 		}

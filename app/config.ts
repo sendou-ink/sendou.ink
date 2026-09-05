@@ -3,16 +3,11 @@ import { envBoolean, formatEnvErrors, requiredInProd } from "./config-helpers";
 import { IS_E2E_TEST_RUN } from "./utils/e2e";
 
 /**
- * Client (`VITE_*`) configuration. Import with `import { Config } from "~/config"`
- * and read values like `Config.siteDomain` or `Config.staticAssetsUrl`.
- *
- * Values are validated once when this module is first imported, surfacing a
- * single clear error for any misconfigured variable. Variables required in
- * production fall back to development defaults outside of production.
+ * Client (`VITE_*`) configuration, validated once on first import. Variables required in
+ * production fall back to development defaults elsewhere.
  */
 
-// `import.meta.env` is undefined when Playwright bundles test code, so guard the
-// access and treat that environment as non-production (see `~/utils/e2e`).
+// `import.meta.env` is undefined when Playwright bundles test code; treat that as non-production (see `~/utils/e2e`)
 const env =
 	typeof import.meta.env !== "undefined"
 		? (import.meta.env as Record<string, string | undefined>)
@@ -42,9 +37,8 @@ const schema = v.object({
 	VITE_LEAGUE_GOOGLE_FORM_URL: v.optional(v.string()),
 	VITE_SHOW_BANNER_FOR_SEASON: v.optional(v.string()),
 
-	// The VAPID private key and email live in `~/config.server` since they are
-	// server-only; the full three-var coupling is completed by the runtime check
-	// in webPush.server.ts.
+	// the server-only private key and email live in `~/config.server`;
+	// webPush.server.ts checks all three are set together
 	VITE_VAPID_PUBLIC_KEY: v.optional(v.string()),
 });
 
@@ -55,24 +49,20 @@ if (!parsed.success) {
 const values = parsed.output;
 
 export const Config = {
-	/** Base URL of the site, e.g. `https://sendou.ink`. */
+	/** e.g. `https://sendou.ink` */
 	siteDomain: values.VITE_SITE_DOMAIN,
-	/** Filename of the default tournament logo asset. */
 	tournamentDefaultLogo: values.VITE_TOURNAMENT_DEFAULT_LOGO,
-	/** Base URL for static assets (images, sounds, svg). */
 	staticAssetsUrl: values.VITE_STATIC_ASSETS_URL,
-	/** Whether to use real seasons & league data (used when developing against the production database). */
+	/** Use real seasons & league data (when developing against the production database). */
 	prodMode: values.VITE_PROD_MODE,
-	/** Whether to show the LUTI navigation item. */
 	showLutiNavItem: values.VITE_SHOW_LUTI_NAV_ITEM,
 	fuseEnabled: values.VITE_FUSE_ENABLED,
-	/** Whether the scanner is available to everyone. While false only the admin and devs can use the scanner page and its ingest endpoint. */
+	/** While false only the admin and devs can use the scanner page and its ingest endpoint. */
 	scannerEnabled: values.VITE_SCANNER_ENABLED,
-	/** Google Form URL for league registration, if configured. */
 	leagueGoogleFormUrl: values.VITE_LEAGUE_GOOGLE_FORM_URL,
-	/** Season identifier to show the registration banner for, if any. */
+	/** Season to show the registration banner for. */
 	showBannerForSeason: values.VITE_SHOW_BANNER_FOR_SEASON,
-	/** Web push (VAPID) client configuration. */
+	/** web push */
 	vapid: {
 		publicKey: values.VITE_VAPID_PUBLIC_KEY,
 	},

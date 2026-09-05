@@ -45,7 +45,7 @@ interface WeaponSelectProps<
 	disabledWeaponIds?: Array<MainWeaponId>;
 	testId?: string;
 	isRequired?: boolean;
-	/** If set, selection of weapons that user sees when search input is empty allowing for quick select for e.g. previous selections */
+	/** Shown while the search input is empty, e.g. previous selections */
 	quickSelectWeaponsIds?: Array<MainWeaponId>;
 	isDisabled?: boolean;
 	placeholder?: string;
@@ -276,7 +276,6 @@ function useWeaponItems({
 		};
 
 		return {
-			// not too sure why we need to type cast here.. was working fine before refactoring
 			items: [quickSelectCategory] as typeof items,
 			filterValue,
 			setFilterValue,

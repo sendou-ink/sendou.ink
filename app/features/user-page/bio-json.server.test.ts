@@ -13,10 +13,7 @@ describe("profile bio is always a string", () => {
 			String(user.id),
 		);
 
-		// `User.bio` is a text column; the loader types it as `string | null` and the
-		// profile page renders it directly as a React child. If it comes back as an
-		// object, `<article>{data.user.bio}</article>` throws "Objects are not valid
-		// as a React child" and the whole profile page 500s.
+		// the profile page renders bio directly as a React child; an object would 500 the page
 		expect(typeof profile?.bio).toBe("string");
 	});
 });
