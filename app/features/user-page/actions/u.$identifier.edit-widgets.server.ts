@@ -4,6 +4,7 @@ import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { widgetsEditSchema } from "~/features/user-page/user-page-schemas";
 import { parseFormData } from "~/form/parse.server";
+import { isSupporter } from "~/modules/permissions/utils";
 import { userPage } from "~/utils/urls";
 
 export const action = async ({ request }: { request: Request }) => {
@@ -11,7 +12,7 @@ export const action = async ({ request }: { request: Request }) => {
 
 	const result = await parseFormData({
 		request,
-		schema: widgetsEditSchema,
+		schema: widgetsEditSchema(isSupporter(user)),
 	});
 
 	if (!result.success) {

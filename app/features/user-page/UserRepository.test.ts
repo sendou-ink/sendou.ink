@@ -514,6 +514,43 @@ describe("UserRepository", () => {
 		});
 	});
 
+	describe("UserRepository.findStoredWidgetsByUserId", () => {
+		const sixMainWidgets: Parameters<typeof UserFactory.create>[1] = {
+			widgets: [
+				{ id: "weapon-pool" },
+				{ id: "trophies-owned" },
+				{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
+				{ id: "badges-authored" },
+				{ id: "badges-managed" },
+				{ id: "builds" },
+			],
+		};
+
+		test("returns all the widgets of a supporter", async () => {
+			const { id } = await UserFactory.create(null, {
+				...sixMainWidgets,
+				patronTier: 2,
+			});
+
+			const widgets = await UserRepository.findStoredWidgetsByUserId(id);
+
+			expect(widgets).toHaveLength(6);
+		});
+
+		test("truncates the widgets over the limit of a non supporter", async () => {
+			const { id } = await UserFactory.create(null, sixMainWidgets);
+
+			const widgets = await UserRepository.findStoredWidgetsByUserId(id);
+
+			expect(widgets.map((widget) => widget.id)).toEqual([
+				"weapon-pool",
+				"trophies-owned",
+				"badges-owned",
+				"badges-authored",
+			]);
+		});
+	});
+
 	describe("UserRepository.findAllPatronsForFooter", () => {
 		const patrons = UserFactory.pool();
 

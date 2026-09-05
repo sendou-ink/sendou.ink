@@ -18,7 +18,7 @@ import { Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData, useMatches } from "react-router";
 import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
@@ -30,22 +30,37 @@ import {
 	ALL_WIDGETS,
 	defaultStoredWidget,
 	findWidgetById,
+	maxWidgetsPerSlot,
 } from "~/features/user-page/core/widgets/portfolio";
 import { getWidgetFormSchema } from "~/features/user-page/core/widgets/widget-form-schemas";
 import { USER } from "~/features/user-page/user-page-constants";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useHasRole } from "~/modules/permissions/hooks";
+import invariant from "~/utils/invariant";
+import { SUPPORT_PAGE, userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
 export { action, loader };
+
+type MaxWidgets = ReturnType<typeof maxWidgetsPerSlot>;
 
 export default function EditWidgetsPage() {
 	const { t } = useTranslation(["user", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
+
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+
+	const isSupporter = useHasRole("SUPPORTER");
+	const maxWidgets = maxWidgetsPerSlot(isSupporter);
 
 	const [selectedWidgets, setSelectedWidgets] = useState<
 		Array<Tables["UserWidget"]["widget"]>
@@ -98,8 +113,7 @@ export default function EditWidgetsPage() {
 
 		const currentCount =
 			widget.slot === "main" ? mainWidgets.length : sideWidgets.length;
-		const maxCount =
-			widget.slot === "main" ? USER.MAX_MAIN_WIDGETS : USER.MAX_SIDE_WIDGETS;
+		const maxCount = widget.slot === "main" ? maxWidgets.main : maxWidgets.side;
 
 		if (currentCount >= maxCount) return;
 
@@ -150,11 +164,23 @@ export default function EditWidgetsPage() {
 	};
 
 	if (!isHydrated) {
-		return <Placeholder />;
+		return (
+			<div className={styles.container}>
+				<SubPageHeader
+					user={layoutData.user}
+					backTo={userPage(layoutData.user)}
+				/>
+				<Placeholder />
+			</div>
+		);
 	}
 
 	return (
 		<div className={styles.container}>
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<header className={styles.header}>
 				<h1>{t("user:widgets.editTitle")}</h1>
 				<div className={styles.actions}>
@@ -175,6 +201,7 @@ export default function EditWidgetsPage() {
 							<SelectedWidgetsList
 								mainWidgets={mainWidgets}
 								sideWidgets={sideWidgets}
+								maxWidgets={maxWidgets}
 								onRemoveWidget={removeWidget}
 								onSettingsChange={handleSettingsChange}
 								expandedWidgetId={expandedWidgetId}
@@ -189,6 +216,8 @@ export default function EditWidgetsPage() {
 							selectedWidgets={selectedWidgets}
 							mainWidgets={mainWidgets}
 							sideWidgets={sideWidgets}
+							maxWidgets={maxWidgets}
+							isSupporter={isSupporter}
 							onAddWidget={addWidget}
 						/>
 					</section>
@@ -202,6 +231,8 @@ interface AvailableWidgetsListProps {
 	selectedWidgets: Array<Tables["UserWidget"]["widget"]>;
 	mainWidgets: Array<Tables["UserWidget"]["widget"]>;
 	sideWidgets: Array<Tables["UserWidget"]["widget"]>;
+	maxWidgets: MaxWidgets;
+	isSupporter: boolean;
 	onAddWidget: (widgetId: string) => void;
 }
 
@@ -209,6 +240,8 @@ function AvailableWidgetsList({
 	selectedWidgets,
 	mainWidgets,
 	sideWidgets,
+	maxWidgets,
+	isSupporter,
 	onAddWidget,
 }: AvailableWidgetsListProps) {
 	const { t } = useTranslation(["user"]);
@@ -253,10 +286,9 @@ function AvailableWidgetsList({
 									? mainWidgets.length
 									: sideWidgets.length;
 							const maxCount =
-								widget.slot === "main"
-									? USER.MAX_MAIN_WIDGETS
-									: USER.MAX_SIDE_WIDGETS;
+								widget.slot === "main" ? maxWidgets.main : maxWidgets.side;
 							const isMaxReached = currentCount >= maxCount;
+							const isLocked = Boolean(widget.supporterOnly) && !isSupporter;
 
 							return (
 								<div key={widget.id} className={styles.widgetCard}>
@@ -264,15 +296,25 @@ function AvailableWidgetsList({
 										<span className={styles.widgetName}>
 											{t(`user:widget.${widget.id}` as const)}
 										</span>
-										<SendouButton
-											size="miniscule"
-											variant="outlined"
-											onClick={() => onAddWidget(widget.id)}
-											isDisabled={isSelected || isMaxReached}
-											testId={`add-widget-${widget.id}`}
-										>
-											{t("user:widgets.add")}
-										</SendouButton>
+										{isLocked ? (
+											<Link
+												to={SUPPORT_PAGE}
+												className={styles.supporterOnly}
+												data-testid={`supporter-only-${widget.id}`}
+											>
+												{t("user:widgets.supporterOnly")}
+											</Link>
+										) : (
+											<SendouButton
+												size="miniscule"
+												variant="outlined"
+												onClick={() => onAddWidget(widget.id)}
+												isDisabled={isSelected || isMaxReached}
+												testId={`add-widget-${widget.id}`}
+											>
+												{t("user:widgets.add")}
+											</SendouButton>
+										)}
 									</div>
 									<div className={styles.widgetFooter}>
 										<div className={styles.widgetSlot}>
@@ -309,6 +351,7 @@ function AvailableWidgetsList({
 interface SelectedWidgetsListProps {
 	mainWidgets: Array<Tables["UserWidget"]["widget"]>;
 	sideWidgets: Array<Tables["UserWidget"]["widget"]>;
+	maxWidgets: MaxWidgets;
 	onRemoveWidget: (widgetId: string) => void;
 	onSettingsChange: (widgetId: string, settings: any) => void;
 	expandedWidgetId: string | null;
@@ -318,6 +361,7 @@ interface SelectedWidgetsListProps {
 function SelectedWidgetsList({
 	mainWidgets,
 	sideWidgets,
+	maxWidgets,
 	onRemoveWidget,
 	onSettingsChange,
 	expandedWidgetId,
@@ -332,9 +376,11 @@ function SelectedWidgetsList({
 					<span className="stack horizontal xs">
 						<MainSlotIcon size={24} /> {t("user:widgets.mainSlot")}
 					</span>
-					<span className={styles.slotCount}>
-						{mainWidgets.length}/{USER.MAX_MAIN_WIDGETS}
-					</span>
+					<SlotCount
+						count={mainWidgets.length}
+						max={maxWidgets.main}
+						supporterMax={USER.MAX_MAIN_WIDGETS_SUPPORTER}
+					/>
 				</div>
 				<SortableContext items={mainWidgets.map((w) => w.id)}>
 					<div className={styles.widgetList}>
@@ -363,9 +409,11 @@ function SelectedWidgetsList({
 					<span className="stack horizontal xs">
 						<SideSlotIcon size={24} /> {t("user:widgets.sideSlot")}
 					</span>
-					<span className={styles.slotCount}>
-						{sideWidgets.length}/{USER.MAX_SIDE_WIDGETS}
-					</span>
+					<SlotCount
+						count={sideWidgets.length}
+						max={maxWidgets.side}
+						supporterMax={USER.MAX_SIDE_WIDGETS_SUPPORTER}
+					/>
 				</div>
 				<SortableContext items={sideWidgets.map((w) => w.id)}>
 					<div className={styles.widgetList}>
@@ -389,6 +437,29 @@ function SelectedWidgetsList({
 				</SortableContext>
 			</div>
 		</div>
+	);
+}
+
+function SlotCount({
+	count,
+	max,
+	supporterMax,
+}: {
+	count: number;
+	max: number;
+	supporterMax: number;
+}) {
+	const { t } = useTranslation(["user"]);
+
+	return (
+		<span className={styles.slotCount}>
+			{count}/{max}
+			{max === supporterMax ? null : (
+				<Link to={SUPPORT_PAGE} className={styles.supporterMax}>
+					{t("user:widgets.supporterMax", { max: supporterMax })}
+				</Link>
+			)}
+		</span>
 	);
 }
 
@@ -443,6 +514,7 @@ function DraggableWidgetItem({
 							size="miniscule"
 							variant="outlined"
 							onClick={() => onToggleExpanded(widget.id)}
+							testId={`widget-settings-${widget.id}`}
 						>
 							{isExpanded
 								? t("common:actions.hide")
@@ -453,6 +525,7 @@ function DraggableWidgetItem({
 						size="miniscule"
 						variant="minimal-destructive"
 						onClick={() => onRemove(widget.id)}
+						testId={`remove-widget-${widget.id}`}
 					>
 						{t("user:widgets.remove")}
 					</SendouButton>

@@ -148,7 +148,7 @@ test.describe("Admin panel", () => {
 
 		const userPage = new UserPage(page);
 		await userPage.goto(NZAP_TEST_DISCORD_ID);
-		await expect(userPage.locators.placementsBox).toBeVisible();
+		await expect(userPage.widget("x-rank-peaks")).toBeVisible();
 		const playerPage = await userPage.openPlacements();
 		await expect(playerPage.locators.heading).toBeVisible();
 

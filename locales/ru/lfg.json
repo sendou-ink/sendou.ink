@@ -24,7 +24,7 @@
 	"new.visibility.everyone": "Все",
 	"new.editOn": "Изменить на:",
 	"new.weaponPool.header": "Пул оружия",
-	"new.weaponPool.userProfile": "профиль пользователя",
+	"new.weaponPool.matchProfile": "",
 	"new.languages.header": "Языки",
 	"new.languages.placeholder": "Выбрать языки",
 	"new.languages.sqSettingsPage": "Страница настроек SendouQ"

@@ -24,7 +24,7 @@
 	"new.visibility.everyone": "所有人",
 	"new.editOn": "在这里编辑: ",
 	"new.weaponPool.header": "武器池",
-	"new.weaponPool.userProfile": "用户主页",
+	"new.weaponPool.matchProfile": "",
 	"new.languages.header": "语言",
 	"new.languages.placeholder": "选择所有符合的选项",
 	"new.languages.sqSettingsPage": "SendouQ 设置页面"

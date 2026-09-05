@@ -14,8 +14,8 @@ import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
+	matchProfileWeapons,
 	tournamentLogoOrNull,
-	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { toDBBoolean } from "~/utils/sql";
 import { mySlugify } from "~/utils/urls";
@@ -168,7 +168,7 @@ export async function findByCustomUrl(
 						"TeamMemberWithSecondary.isMainTeam",
 						"User.country",
 						"User.patronTier",
-						userProfileWeapons(innerEb).as("weapons"),
+						matchProfileWeapons(innerEb).as("weapons"),
 					])
 					.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id")
 					.orderBy("TeamMemberWithSecondary.order", "asc"),

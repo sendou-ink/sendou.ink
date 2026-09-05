@@ -5,6 +5,7 @@ import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
@@ -24,8 +25,11 @@ export const WIDGET_LOADERS = {
 
 		return TrophyRepository.findByOwnerUserId(userId);
 	},
-	"badges-owned": async (userId: number) => {
-		return BadgeRepository.findByOwnerUserId(userId);
+	"badges-owned": async (
+		userId: number,
+		settings: ExtractWidgetSettings<"badges-owned">,
+	) => {
+		return BadgeRepository.findByOwnerUserId(userId, settings.favoriteBadgeIds);
 	},
 	"badges-authored": async (userId: number) => {
 		return BadgeRepository.findByAuthorUserId(userId);
@@ -287,7 +291,7 @@ export const WIDGET_LOADERS = {
 		return UserRepository.findCommissionsByUserId(userId);
 	},
 	"weapon-pool": async (userId: number) => {
-		return UserRepository.findWeaponPoolByUserId(userId);
+		return MatchProfileRepository.findWeaponPoolByUserId(userId);
 	},
 	"social-links": async (userId: number) => {
 		return UserRepository.findSocialLinksByUserId(userId);

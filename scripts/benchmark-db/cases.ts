@@ -221,7 +221,7 @@ export function buildCases(fx: Fixtures): {
 		BadgeRepository.findManagedByUserId(userId),
 	);
 	add("BadgeRepository.findByOwnerUserId", fx.badgeOwnerUserId, (userId) =>
-		BadgeRepository.findByOwnerUserId(userId),
+		BadgeRepository.findByOwnerUserId(userId, []),
 	);
 	add("BadgeRepository.findByAuthorUserId", fx.badgeAuthorId, (userId) =>
 		BadgeRepository.findByAuthorUserId(userId),
@@ -439,6 +439,9 @@ export function buildCases(fx: Fixtures): {
 
 	add("MatchProfileRepository.findSettingsByUserId", fx.heavyUser, (user) =>
 		MatchProfileRepository.findSettingsByUserId(user.id),
+	);
+	add("MatchProfileRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
+		MatchProfileRepository.findWeaponPoolByUserId(user.id),
 	);
 
 	add("SkillRepository.findCurrentUserSkills", fx.skillBatch, (skillBatch) =>
@@ -1327,20 +1330,11 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.findProfileByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findProfileByIdentifier(user.identifier),
 	);
-	add("UserRepository.findOwnedBadgesByUserId", fx.badgeOwnerUserId, (userId) =>
-		UserRepository.findOwnedBadgesByUserId(userId),
-	);
-	add("UserRepository.findEnabledWidgetsByIdentifier", fx.heavyUser, (user) =>
-		UserRepository.findEnabledWidgetsByIdentifier(user.identifier),
-	);
-	add("UserRepository.findPreferencesByUserId", fx.heavyUser, (user) =>
-		UserRepository.findPreferencesByUserId(user.id),
-	);
 	add("UserRepository.findStoredWidgetsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findStoredWidgetsByUserId(user.id),
 	);
 	add("UserRepository.findWidgetsByUserId", fx.heavyUser, (user) =>
-		UserRepository.findWidgetsByUserId(user.identifier),
+		UserRepository.findWidgetsByUserId(user.id),
 	);
 	add("UserRepository.findByCustomUrl", fx.userCustomUrl, (customUrl) =>
 		UserRepository.findByCustomUrl(customUrl),
@@ -1408,9 +1402,6 @@ export function buildCases(fx: Fixtures): {
 		fx.twitchUsernames,
 		(twitchUsernames) =>
 			UserRepository.findIdsByTwitchUsernames(twitchUsernames),
-	);
-	add("UserRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
-		UserRepository.findWeaponPoolByUserId(user.id),
 	);
 
 	add("VodRepository.findByUserId", fx.vod, (vod) =>

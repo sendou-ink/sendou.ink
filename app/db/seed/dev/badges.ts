@@ -1,9 +1,11 @@
 import { BADGE } from "~/features/badges/badges-constants";
+import { DEFAULT_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import { faker } from "../core/faker";
 import badges from "../data/badges.json";
 import * as BadgeFactory from "../factories/BadgeFactory";
 import * as UserFactory from "../factories/UserFactory";
-import type { SeededUsers } from "./users";
+import { nzapWidgets, type SeededUsers } from "./users";
 
 const HOMEMADE_BADGE_COUNT = 5;
 const NZAP_BADGE_COUNT = 20;
@@ -95,13 +97,27 @@ function fakeOwnerIds({
 
 async function seedFavoriteBadges(users: SeededUsers, badgeIds: number[]) {
 	for (const [i, userId] of users.favoriteBadgeUserIds.entries()) {
-		await UserFactory.updateProfile(userId, {
-			favoriteBadgeIds: [badgeIds[i % 3]],
+		await UserFactory.grant(userId, {
+			widgets: withFavoriteBadges(DEFAULT_WIDGETS, [badgeIds[i % 3]]),
 		});
 	}
 
 	// a supporter picks a whole row of small badges alongside the big one
-	await UserFactory.updateProfile(users.nzapId, {
-		favoriteBadgeIds: badgeIds.slice(0, NZAP_FAVORITE_BADGE_COUNT),
+	await UserFactory.grant(users.nzapId, {
+		widgets: withFavoriteBadges(
+			nzapWidgets(),
+			badgeIds.slice(0, NZAP_FAVORITE_BADGE_COUNT),
+		),
 	});
+}
+
+function withFavoriteBadges(
+	widgets: StoredWidget[],
+	favoriteBadgeIds: number[],
+): StoredWidget[] {
+	return widgets.map((widget) =>
+		widget.id === "badges-owned"
+			? { ...widget, settings: { favoriteBadgeIds } }
+			: widget,
+	);
 }

@@ -11,7 +11,7 @@ import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { SettingsPage } from "./pages/settings/settings-page";
-import { UserEditProfilePage } from "./pages/user/user-edit-profile-page";
+import { UserEditWidgetsPage } from "./pages/user/user-edit-widgets-page";
 import { UserPage } from "./pages/user/user-page";
 import { UserSeasonsPage } from "./pages/user/user-seasons-page";
 
@@ -67,11 +67,14 @@ test.describe("User page", () => {
 
 		await impersonate(page, NZAP_TEST_ID);
 
-		const editProfile = new UserEditProfilePage(page);
-		await editProfile.goto(NZAP_TEST_DISCORD_ID);
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(NZAP_TEST_DISCORD_ID);
 
-		await editProfile.selectFavoriteBadge(firstBadge.id);
-		await editProfile.save();
+		// the default layout's bio widget is empty, and an empty bio blocks saving
+		await editWidgets.removeWidget("bio");
+		await editWidgets.openWidgetSettings("badges-owned");
+		await editWidgets.selectFavoriteBadge(firstBadge.id);
+		await editWidgets.save();
 
 		const userPage = new UserPage(page);
 		await userPage.goto(NZAP_TEST_DISCORD_ID);
@@ -94,13 +97,15 @@ test.describe("User page", () => {
 
 		await impersonate(page);
 
-		const editProfile = new UserEditProfilePage(page);
-		await editProfile.goto(ADMIN_DISCORD_ID);
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(ADMIN_DISCORD_ID);
 
-		await editProfile.selectFavoriteBadge(badges[0].id);
-		await expect(editProfile.locators.badgeDisplay).toBeVisible();
-		await editProfile.selectFavoriteBadge(badges[1].id);
-		await editProfile.save();
+		await editWidgets.removeWidget("bio");
+		await editWidgets.openWidgetSettings("badges-owned");
+		await editWidgets.selectFavoriteBadge(badges[0].id);
+		await expect(editWidgets.locators.badgeDisplay).toBeVisible();
+		await editWidgets.selectFavoriteBadge(badges[1].id);
+		await editWidgets.save();
 
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
@@ -123,16 +128,11 @@ test.describe("User page", () => {
 		const editProfile = await userPage.openEditProfile();
 
 		await editProfile.form.fill("inGameName", "Lean#1234");
-		await editProfile.selectStickSens("0");
-		await editProfile.selectMotionSens("-50");
 		await editProfile.selectCountry("Sweden");
-		await editProfile.form.fill("bio", "My awesome bio");
 		await editProfile.save();
 
 		await expect(userPage.flag("SE")).toBeVisible();
-		await expect(userPage.text("My awesome bio")).toBeVisible();
 		await expect(userPage.text("Lean#1234")).toBeVisible();
-		await expect(userPage.text("Motion -5 / Stick 0")).toBeVisible();
 	});
 
 	test("customizes theme colors and resets them", async ({
@@ -198,12 +198,14 @@ test.describe("User page", () => {
 		await isNotVisible(seasonsPage.locators.downloadButton);
 	});
 
-	test("edits weapon pool", async ({ page, factories }) => {
+	test("shows the match profile weapon pool", async ({ page, factories }) => {
 		await factories.UserFactory.grant(ADMIN_ID, {
-			weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
-				weaponSplId,
-				isFavorite: 0 as const,
-			})),
+			matchProfile: {
+				weaponPool: ([200, 1100, 2000, 4000] as const).map((id) => ({
+					id,
+					isFavorite: false,
+				})),
+			},
 		});
 
 		await impersonate(page);
@@ -212,16 +214,6 @@ test.describe("User page", () => {
 		await userPage.goto(ADMIN_DISCORD_ID);
 
 		for (const [i, id] of [200, 1100, 2000, 4000].entries()) {
-			await expect(userPage.weaponPoolImage(id, i + 1)).toBeVisible();
-		}
-
-		const editProfile = await userPage.openEditProfile();
-
-		await editProfile.form.selectWeapons("weapons", ["Range Blaster"]);
-		await editProfile.deleteWeapon(/Inkbrush/);
-		await editProfile.save();
-
-		for (const [i, id] of [200, 2000, 4000, 220].entries()) {
 			await expect(userPage.weaponPoolImage(id, i + 1)).toBeVisible();
 		}
 	});
@@ -281,10 +273,6 @@ test.describe("User page", () => {
 		page,
 		factories,
 	}) => {
-		await factories.UserFactory.grant(ADMIN_ID, {
-			patronTier: 2,
-			preferences: { newProfileEnabled: true },
-		});
 		await factories.VodFactory.createMany(2, (index) => ({
 			submitterUserId: ADMIN_ID,
 			pov: { type: "USER" as const, userId: ADMIN_ID },
@@ -320,21 +308,21 @@ test.describe("User page", () => {
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
 
+		// no team, so the default layout's teams widget has nothing to show
+		await isNotVisible(userPage.widgetHeading("Teams"));
+
 		const editWidgets = await userPage.openEditWidgets();
+		// the default layout is what an untouched profile starts editing from
+		await editWidgets.removeWidget("bio");
 		await editWidgets.addWidget("bio");
 		await editWidgets.fillBio("Reformed Hydra main");
-		await editWidgets.addWidget("join-date");
 		await editWidgets.save();
 
 		await expect(userPage.widgetHeading("Bio")).toBeVisible();
-		await expect(
-			userPage.text("Reformed Hydra main").filter({ visible: true }),
-		).toBeVisible();
+		await expect(userPage.text("Reformed Hydra main")).toBeVisible();
 		await expect(userPage.widgetHeading("Member #")).toBeVisible();
 		// admin is the first user created, so their join order is 1
-		await expect(
-			userPage.exactText("#1").filter({ visible: true }),
-		).toBeVisible();
+		await expect(userPage.exactText("#1")).toBeVisible();
 
 		const vodsPage = await userPage.openVods();
 		await expect(vodsPage.vodTitle("Ranked grind episode 1")).toBeVisible();
@@ -355,6 +343,53 @@ test.describe("User page", () => {
 
 		await seasonsPage.openStatsTab("Teammates");
 		await expect(seasonsPage.playerLink("N-ZAP")).toBeVisible();
+	});
+
+	test("gates supporter only widgets behind supporter status", async ({
+		page,
+		factories,
+	}) => {
+		await impersonate(page);
+
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(ADMIN_DISCORD_ID);
+
+		await expect(editWidgets.supporterOnlyLabel("bio-md")).toBeVisible();
+		await isNotVisible(editWidgets.addWidgetButton("bio-md"));
+
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+		await editWidgets.goto(ADMIN_DISCORD_ID);
+
+		await isNotVisible(editWidgets.supporterOnlyLabel("bio-md"));
+		await editWidgets.removeWidget("bio");
+		await editWidgets.addWidget("bio-md");
+		await editWidgets.fillBio("**Reformed** Hydra main");
+		await editWidgets.save();
+
+		const userPage = new UserPage(page);
+		await expect(userPage.widget("bio-md").locator("strong")).toHaveText(
+			"Reformed",
+		);
+	});
+
+	test("redirects to the preferred identifier", async ({ page, factories }) => {
+		const customUrl = "zapfish";
+		await factories.UserFactory.updateProfile(NZAP_TEST_ID, { customUrl });
+
+		const userPage = new UserPage(page);
+
+		await userPage.gotoWithIdentifier(NZAP_TEST_ID);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		await userPage.gotoWithIdentifier(NZAP_TEST_DISCORD_ID);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		await userPage.gotoWithIdentifier(customUrl);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		// without a custom URL the Discord id is the preferred identifier
+		await userPage.gotoWithIdentifier(ADMIN_ID);
+		await expect(page).toHaveURL(`/u/${ADMIN_DISCORD_ID}`);
 	});
 });
 

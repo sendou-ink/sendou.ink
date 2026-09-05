@@ -947,8 +947,6 @@ export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
 	bannedReason: string | null;
-	/** Shown on old user profile and Plus Voting */
-	bio: string | null;
 	/** Shown on user card */
 	shortBio: string | null;
 	commissionsOpen: Generated<DBBoolean>;
@@ -967,8 +965,6 @@ export interface User {
 	/** Name the user is shown under in tournaments, set by organizers of established organizations. `null` = their `username` is used. */
 	tournamentName: string | null;
 	discordUniqueName: string | null;
-	/** User's favorite badges they want to show on the front page of the badge display. Index = 0 big badge. */
-	favoriteBadgeIds: JSONColumnTypeNullable<number[]>;
 	favoriteTrophyIds: JSONColumnTypeNullable<number[]>;
 	hiddenTrophyIds: JSONColumnTypeNullable<number[]>;
 	id: GeneratedAlways<number>;
@@ -978,16 +974,12 @@ export interface User {
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
-	motionSens: number | null;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronStartedAt: number | null;
 	patronTier: number | null;
 	patronExpiresAt: number | null;
-	showDiscordUniqueName: Generated<DBBoolean>;
-	stickSens: number | null;
 	twitch: string | null;
 	bsky: string | null;
-	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
@@ -1036,14 +1028,6 @@ export interface UserSearch {
 	inGameName: GeneratedAlways<string | null>;
 	discordUniqueName: GeneratedAlways<string | null>;
 	customUrl: GeneratedAlways<string | null>;
-}
-
-export interface UserWeapon {
-	createdAt: Generated<number>;
-	isFavorite: Generated<DBBoolean>;
-	order: number;
-	userId: number;
-	weaponSplId: MainWeaponId;
 }
 
 export interface UserWeaponPool {
@@ -1479,7 +1463,6 @@ export interface DB {
 	UserResultHighlight: UserResultHighlight;
 	/** VIEW over `UnvalidatedUserSubmittedImage`, excludes images awaiting validation. Insert/update via `UnvalidatedUserSubmittedImage`. */
 	UserSubmittedImage: UserSubmittedImage;
-	UserWeapon: UserWeapon;
 	UserWeaponPool: UserWeaponPool;
 	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;

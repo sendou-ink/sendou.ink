@@ -23,10 +23,6 @@ export function migrate(args: { newUserId: number; oldUserId: number }) {
 		// small data on the new account is dropped so it doesn't block the migration;
 		// bigger things (e.g. played tournaments) still fail validation
 		await trx
-			.deleteFrom("UserWeapon")
-			.where("userId", "=", args.newUserId)
-			.execute();
-		await trx
 			.deleteFrom("Build")
 			.where("ownerId", "=", args.newUserId)
 			.execute();

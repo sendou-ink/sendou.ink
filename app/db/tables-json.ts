@@ -51,8 +51,6 @@ export interface UserPreferences {
 	defaultScrimsFilters?: ScrimFilters;
 	/** "auto" (default) = browser default */
 	clockFormat?: "24h" | "12h" | "auto";
-	/** Widget based user page (supporter early preview) */
-	newProfileEnabled?: boolean;
 	/** Hides recent tournament results and scores until revealed */
 	spoilerFreeMode?: boolean;
 	weaponReportDefaultOpen?: boolean;

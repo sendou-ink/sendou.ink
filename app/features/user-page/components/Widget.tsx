@@ -38,6 +38,7 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
+import { rawSensToString } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
 	brandImageUrl,
@@ -73,35 +74,37 @@ export function Widget({
 	const content = () => {
 		switch (widget.id) {
 			case "bio":
-				return <article>{widget.data.bio}</article>;
+				return widget.data.bio ? <article>{widget.data.bio}</article> : null;
 			case "bio-md":
-				return (
+				return widget.data.bio ? (
 					<article>
 						<Markdown>{widget.data.bio}</Markdown>
 					</article>
-				);
+				) : null;
 			case "trophies-owned":
-				return <TrophyDisplay trophies={widget.data} userId={user.id} />;
+				return widget.data.length === 0 ? null : (
+					<TrophyDisplay trophies={widget.data} userId={user.id} />
+				);
 			case "badges-owned":
-				return (
+				return widget.data.length === 0 ? null : (
 					<BadgeDisplay badges={widget.data} key={`badges-owned-${user.id}`} />
 				);
 			case "badges-authored":
-				return (
+				return widget.data.length === 0 ? null : (
 					<BadgeDisplay
 						badges={widget.data}
 						key={`badges-authored-${user.id}`}
 					/>
 				);
 			case "badges-managed":
-				return (
+				return widget.data.length === 0 ? null : (
 					<BadgeDisplay
 						badges={widget.data}
 						key={`badges-managed-${user.id}`}
 					/>
 				);
 			case "teams":
-				return (
+				return widget.data.length === 0 ? null : (
 					<Memberships
 						memberships={widget.data.map((team) => ({
 							id: team.id,
@@ -115,7 +118,7 @@ export function Widget({
 					/>
 				);
 			case "organizations":
-				return (
+				return widget.data.length === 0 ? null : (
 					<Memberships
 						memberships={widget.data.map((org) => ({
 							id: org.id,
@@ -249,7 +252,10 @@ export function Widget({
 					<WeaponPool weapons={widget.data} />
 				);
 			case "sens":
-				return <SensWidget data={widget.data} />;
+				return typeof widget.data.motionSens !== "number" &&
+					typeof widget.data.stickSens !== "number" ? null : (
+					<SensWidget data={widget.data} />
+				);
 			case "art":
 				return widget.data.length === 0 ? null : (
 					<ArtWidget arts={widget.data} />
@@ -303,8 +309,12 @@ export function Widget({
 		}
 	})();
 
+	const renderedContent = content();
+
+	if (!renderedContent) return null;
+
 	return (
-		<div className={styles.widget}>
+		<div className={styles.widget} data-testid={`widget-${widget.id}`}>
 			<div className={styles.header}>
 				<h2 className={styles.headerText}>{t(`user:widget.${widget.id}`)}</h2>
 				{widgetLink ? (
@@ -313,7 +323,7 @@ export function Widget({
 					</Link>
 				) : null}
 			</div>
-			<div className={styles.content}>{content()}</div>
+			<div className={styles.content}>{renderedContent}</div>
 		</div>
 	);
 }
@@ -639,10 +649,15 @@ function WeaponPool({
 }) {
 	return (
 		<div className="stack horizontal sm justify-center flex-wrap">
-			{weapons.map((weapon) => {
+			{weapons.map((weapon, i) => {
 				return (
-					<div key={weapon.weaponSplId} className="u__weapon">
-						<WeaponImage weapon={weapon} width={38} height={38} />
+					<div key={weapon.weaponSplId} className={styles.weapon}>
+						<WeaponImage
+							testId={`${weapon.weaponSplId}-${i + 1}`}
+							weapon={weapon}
+							width={38}
+							height={38}
+						/>
 					</div>
 				);
 			})}
@@ -678,9 +693,6 @@ function SensWidget({
 	data: Extract<LoadedWidget, { id: "sens" }>["data"];
 }) {
 	const { t } = useTranslation(["user"]);
-
-	const rawSensToString = (sens: number) =>
-		`${sens > 0 ? "+" : ""}${sens / 10}`;
 
 	return (
 		<div className="stack md items-center">

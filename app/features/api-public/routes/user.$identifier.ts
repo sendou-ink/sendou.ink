@@ -1,9 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { db } from "~/db/sql";
+import * as BadgeRepository from "~/features/badges/BadgeRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { userSkills as _userSkills } from "~/features/mmr/tiered.server";
-import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { jsonArrayFrom, peakXpOverallSql } from "~/utils/kysely.server";
 import { safeNumberParse } from "~/utils/number";
@@ -29,7 +29,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"User.country",
 				"User.discordName",
 				"User.twitch",
-				"User.battlefy",
 				"User.bsky",
 				"User.customUrl",
 				"User.discordId",
@@ -39,10 +38,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"PlusTier.tier",
 				jsonArrayFrom(
 					eb
-						.selectFrom("UserWeapon")
-						.select(["UserWeapon.isFavorite", "UserWeapon.weaponSplId"])
-						.whereRef("UserWeapon.userId", "=", "User.id")
-						.orderBy("UserWeapon.order", "asc"),
+						.selectFrom("UserWeaponPool")
+						.select(["UserWeaponPool.isFavorite", "UserWeaponPool.weaponSplId"])
+						.whereRef("UserWeaponPool.userId", "=", "User.id")
+						.orderBy("UserWeaponPool.sortOrder", "asc"),
 				).as("weapons"),
 				peakXpOverallSql().as("peakXp"),
 				jsonArrayFrom(
@@ -68,7 +67,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			.executeTakeFirst(),
 	);
 
-	const badges = await UserRepository.findOwnedBadgesByUserId(user.id);
+	const badges = await BadgeRepository.findByOwnerUserId(user.id, []);
 
 	const season = Seasons.currentOrPrevious(new Date())!.nth;
 
@@ -89,7 +88,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		plusServerTier: user.tier as GetUserResponse["plusServerTier"],
 		socials: {
 			twitch: user.twitch,
-			battlefy: user.battlefy,
 			bsky: user.bsky,
 			twitter: null, // deprecated field
 		},

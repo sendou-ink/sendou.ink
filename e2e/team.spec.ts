@@ -349,8 +349,8 @@ test.describe("Team page", () => {
 		const user = new UserPage(page);
 		await user.goto(ADMIN_DISCORD_ID);
 
-		await expect(user.locators.secondaryTeamsTrigger).toBeVisible();
-		await expect(user.locators.mainTeamLink).not.toContainText(TEAM_NAME);
+		await expect(user.teamLinks()).toHaveCount(2);
+		await expect(user.teamLinks().first()).not.toContainText(TEAM_NAME);
 
 		const mainTeam = await user.openMainTeam();
 
@@ -360,8 +360,8 @@ test.describe("Team page", () => {
 
 		await user.goto(ADMIN_DISCORD_ID);
 
-		await isNotVisible(user.locators.secondaryTeamsTrigger);
-		await expect(user.locators.mainTeamLink).toContainText(TEAM_NAME);
+		await expect(user.teamLinks()).toHaveCount(1);
+		await expect(user.teamLinks().first()).toContainText(TEAM_NAME);
 	});
 
 	test("makes another user editor, who can edit the page & becomes owner after the original leaves", async ({

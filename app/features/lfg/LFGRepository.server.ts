@@ -8,7 +8,7 @@ import {
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
 	jsonObjectFrom,
-	userProfileWeapons,
+	matchProfileWeapons,
 } from "~/utils/kysely.server";
 import { LFG } from "./lfg-constants";
 
@@ -39,7 +39,7 @@ export async function findAllPosts(user?: {
 						"User.languages",
 						"User.country",
 						"PlusTier.tier as plusTier",
-						userProfileWeapons(innerEb).as("weaponPool"),
+						matchProfileWeapons(innerEb).as("weaponPool"),
 					])
 					.whereRef("User.id", "=", "LFGPost.authorId"),
 			).as("author"),
@@ -67,7 +67,7 @@ export async function findAllPosts(user?: {
 									"User.languages",
 									"User.country",
 									"PlusTier.tier as plusTier",
-									userProfileWeapons(innestEb).as("weaponPool"),
+									matchProfileWeapons(innestEb).as("weaponPool"),
 								])
 								.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 						).as("members"),

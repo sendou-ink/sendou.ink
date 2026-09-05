@@ -10,13 +10,12 @@ const badge = (id: number) => ({
 describe("sortBadgesByFavorites", () => {
 	test("returns badges sorted by descending id when no favorites", () => {
 		const result = sortBadgesByFavorites({
-			favoriteBadgeIds: null,
+			favoriteBadgeIds: [],
 			badges: [badge(1), badge(3), badge(2)],
 			patronTier: null,
 		});
 
-		expect(result.badges.map((b) => b.id)).toEqual([3, 2, 1]);
-		expect(result.favoriteBadgeIds).toBeNull();
+		expect(result.map((b) => b.id)).toEqual([3, 2, 1]);
 	});
 
 	test("places favorites first in order for supporters", () => {
@@ -26,8 +25,7 @@ describe("sortBadgesByFavorites", () => {
 			patronTier: 2,
 		});
 
-		expect(result.badges.map((b) => b.id)).toEqual([2, 1, 3]);
-		expect(result.favoriteBadgeIds).toEqual([2, 1]);
+		expect(result.map((b) => b.id)).toEqual([2, 1, 3]);
 	});
 
 	test("limits non-supporters to one favorite", () => {
@@ -37,27 +35,16 @@ describe("sortBadgesByFavorites", () => {
 			patronTier: null,
 		});
 
-		expect(result.favoriteBadgeIds).toEqual([2]);
-		expect(result.badges[0].id).toBe(2);
+		expect(result.map((b) => b.id)).toEqual([2, 3, 1]);
 	});
 
-	test("filters out unowned favorite badge ids", () => {
+	test("ignores favorite badge ids no longer owned", () => {
 		const result = sortBadgesByFavorites({
 			favoriteBadgeIds: [99, 1],
 			badges: [badge(1), badge(2)],
 			patronTier: 2,
 		});
 
-		expect(result.favoriteBadgeIds).toEqual([1]);
-	});
-
-	test("returns null favoriteBadgeIds when all favorites are unowned", () => {
-		const result = sortBadgesByFavorites({
-			favoriteBadgeIds: [99],
-			badges: [badge(1), badge(2)],
-			patronTier: 2,
-		});
-
-		expect(result.favoriteBadgeIds).toBeNull();
+		expect(result.map((b) => b.id)).toEqual([1, 2]);
 	});
 });

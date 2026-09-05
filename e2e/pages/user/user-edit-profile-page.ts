@@ -8,15 +8,10 @@ import { createFormHelpers } from "../../helpers/playwright-form";
 export class UserEditProfilePage {
 	private readonly page: Page;
 	readonly form;
-	readonly locators;
 
 	constructor(page: Page) {
 		this.page = page;
 		this.form = createFormHelpers(page, userEditProfileBaseSchema);
-		this.locators = {
-			badgesSelector: page.getByTestId("badges-selector"),
-			badgeDisplay: page.getByTestId("badge-display"),
-		};
 	}
 
 	async goto(discordId: string) {
@@ -24,18 +19,6 @@ export class UserEditProfilePage {
 			page: this.page,
 			url: userEditProfilePage({ discordId }),
 		});
-	}
-
-	async selectFavoriteBadge(badgeId: number) {
-		await this.locators.badgesSelector.selectOption(String(badgeId));
-	}
-
-	async selectStickSens(value: string) {
-		await this.page.getByLabel("R-stick sens").selectOption(value);
-	}
-
-	async selectMotionSens(value: string) {
-		await this.page.getByLabel("Motion sens").selectOption(value);
 	}
 
 	async selectCountry(name: string) {

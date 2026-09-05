@@ -1,12 +1,10 @@
 import * as v from "valibot";
-import { BADGE } from "~/features/badges/badges-constants";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import {
 	OBJECT_PRONOUNS,
 	SUBJECT_PRONOUNS,
 } from "~/features/user-page/user-page-constants";
 import {
-	badges,
 	checkboxGroup,
 	customField,
 	dualSelectOptional,
@@ -43,9 +41,12 @@ import {
 	stackableAbility,
 	superRefine,
 } from "~/utils/schema";
-import { rawSensToString } from "~/utils/strings";
 import { isCustomUrl } from "~/utils/urls";
-import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
+import {
+	allWidgetsFlat,
+	findWidgetById,
+	maxWidgetsPerSlot,
+} from "./core/widgets/portfolio";
 import {
 	BUILD_SORT_IDENTIFIERS,
 	HIGHLIGHT_CHECKBOX_NAME,
@@ -54,14 +55,6 @@ import {
 } from "./user-page-constants";
 
 export const userParamsSchema = v.object({ identifier: v.string() });
-
-const SENS_ITEMS = [
-	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
-	40, 45, 50,
-].map((val) => ({
-	label: () => rawSensToString(val),
-	value: String(val),
-}));
 
 export const userEditProfileBaseSchema = v.object({
 	customAvatar: image({
@@ -93,19 +86,6 @@ export const userEditProfileBaseSchema = v.object({
 		label: "labels.inGameName",
 		bottomText: "bottomTexts.profileInGameName",
 	}),
-	sensitivity: dualSelectOptional({
-		fields: [
-			{ label: "labels.profileMotionSens", items: SENS_ITEMS },
-			{ label: "labels.profileStickSens", items: SENS_ITEMS },
-		],
-		validate: {
-			func: ([motion, stick]) => {
-				if (motion !== null && stick === null) return false;
-				return true;
-			},
-			message: "errors.profileSensBothOrNeither",
-		},
-	}),
 	pronouns: dualSelectOptional({
 		bottomText: "bottomTexts.profilePronouns",
 		fields: [
@@ -127,19 +107,9 @@ export const userEditProfileBaseSchema = v.object({
 			message: "errors.profilePronounsBothOrNeither",
 		},
 	}),
-	battlefy: textFieldOptional({
-		label: "labels.profileBattlefy",
-		bottomText: "bottomTexts.profileBattlefy",
-		leftAddon: "https://battlefy.com/users/",
-		maxLength: USER.BATTLEFY_MAX_LENGTH,
-	}),
 	country: selectDynamicOptional({
 		label: "labels.profileCountry",
 		searchable: true,
-	}),
-	favoriteBadgeIds: badges({
-		label: "labels.profileFavoriteBadges",
-		maxCount: BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1,
 	}),
 	favoriteTrophyIds: trophies({
 		label: "labels.profileFavoriteTrophies",
@@ -147,18 +117,6 @@ export const userEditProfileBaseSchema = v.object({
 	}),
 	hiddenTrophyIds: trophies({
 		label: "labels.profileHiddenTrophies",
-	}),
-	weapons: weaponPool({
-		label: "labels.weaponPool",
-		maxCount: USER.WEAPON_POOL_MAX_SIZE,
-	}),
-	bio: textAreaOptional({
-		label: "labels.bio",
-		maxLength: USER.BIO_MAX_LENGTH,
-	}),
-	showDiscordUniqueName: toggle({
-		label: "labels.profileShowDiscordUniqueName",
-		bottomText: "bottomTexts.profileShowDiscordUniqueName",
 	}),
 	commissionsOpen: toggle({
 		label: "labels.profileCommissionsOpen",
@@ -168,10 +126,6 @@ export const userEditProfileBaseSchema = v.object({
 		label: "labels.profileCommissionText",
 		bottomText: "bottomTexts.profileCommissionText",
 		maxLength: USER.COMMISSION_TEXT_MAX_LENGTH,
-	}),
-	newProfileEnabled: toggle({
-		label: "labels.profileNewProfileEnabled",
-		bottomText: "bottomTexts.profileNewProfileEnabled",
 	}),
 });
 
@@ -217,29 +171,31 @@ const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
 
 const widgetSettingsSchema = v.union(widgetSettingsSchemas);
 
-export const widgetsEditSchema = v.object({
-	widgets: preprocess(
-		safeJSONParse,
-		v.pipe(
-			v.array(widgetSettingsSchema),
-			v.maxLength(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS),
-			v.check((widgets) => {
-				let mainCount = 0;
-				let sideCount = 0;
-				for (const w of widgets) {
-					const def = findWidgetById(w.id);
-					if (!def) return false;
-					if (def.slot === "main") mainCount++;
-					else sideCount++;
-				}
-				return (
-					mainCount <= USER.MAX_MAIN_WIDGETS &&
-					sideCount <= USER.MAX_SIDE_WIDGETS
-				);
-			}),
+export const widgetsEditSchema = (isSupporter: boolean) => {
+	const max = maxWidgetsPerSlot(isSupporter);
+
+	return v.object({
+		widgets: preprocess(
+			safeJSONParse,
+			v.pipe(
+				v.array(widgetSettingsSchema),
+				v.maxLength(max.main + max.side),
+				v.check((widgets) => {
+					let mainCount = 0;
+					let sideCount = 0;
+					for (const w of widgets) {
+						const def = findWidgetById(w.id);
+						if (!def) return false;
+						if (def.supporterOnly && !isSupporter) return false;
+						if (def.slot === "main") mainCount++;
+						else sideCount++;
+					}
+					return mainCount <= max.main && sideCount <= max.side;
+				}),
+			),
 		),
-	),
-});
+	});
+};
 
 const headGearIdSchema = v.pipe(
 	v.nullable(v.number()),

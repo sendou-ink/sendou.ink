@@ -130,7 +130,14 @@ export function findManagedByUserId(userId: number) {
 		.execute();
 }
 
-export async function findByOwnerUserId(userId: number) {
+/**
+ * Takes a constant userId on purpose: correlating to an outer "User"."id" would stop SQLite
+ * pushing the predicate into both arms of the BadgeOwner view, materializing the full view.
+ */
+export async function findByOwnerUserId(
+	userId: number,
+	favoriteBadgeIds: number[],
+) {
 	const rows = await db
 		.selectFrom("BadgeOwner")
 		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
@@ -141,7 +148,6 @@ export async function findByOwnerUserId(userId: number) {
 			"Badge.displayName",
 			"Badge.code",
 			"Badge.hue",
-			"User.favoriteBadgeIds",
 			"User.patronTier",
 		])
 		.where("BadgeOwner.userId", "=", userId)
@@ -150,15 +156,11 @@ export async function findByOwnerUserId(userId: number) {
 
 	if (rows.length === 0) return [];
 
-	const { favoriteBadgeIds, patronTier } = rows[0];
-
 	return sortBadgesByFavorites({
 		favoriteBadgeIds,
-		badges: rows.map(
-			({ favoriteBadgeIds: _, patronTier: __, ...badge }) => badge,
-		),
-		patronTier,
-	}).badges;
+		badges: rows.map(({ patronTier: _, ...badge }) => badge),
+		patronTier: rows[0].patronTier,
+	});
 }
 
 export function findByAuthorUserId(userId: number) {

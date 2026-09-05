@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { wrappedAction } from "~/utils/Test";
 import type { userEditProfileBaseSchema } from "../user-page-schemas";
 import { action as editUserProfileAction } from "./u.$identifier.edit";
@@ -11,7 +10,6 @@ const action = wrappedAction<typeof userEditProfileBaseSchema>({
 });
 
 const DEFAULT_FIELDS = {
-	battlefy: null,
 	bio: null,
 	commissionsOpen: false,
 	commissionText: null,
@@ -19,14 +17,11 @@ const DEFAULT_FIELDS = {
 	customAvatar: null,
 	customName: null,
 	customUrl: null,
-	favoriteBadgeIds: [],
 	favoriteTrophyIds: [],
 	hiddenTrophyIds: [],
 	inGameName: null,
 	sensitivity: [null, null] as [null, null],
 	pronouns: [null, null] as [null, null],
-	weapons: [{ id: 1 as MainWeaponId, isFavorite: false }],
-	showDiscordUniqueName: true,
 	newProfileEnabled: false,
 };
 

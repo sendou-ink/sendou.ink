@@ -8,7 +8,6 @@ import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRe
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
-import { toDBBoolean } from "~/utils/sql";
 import {
 	ORG_ADMIN_TEST_ID,
 	REGULAR_USER_TEST_ID,
@@ -46,11 +45,9 @@ type Options = {
 	ban?: Omit<Parameters<typeof AdminRepository.banUser>[0], "userId">;
 	/** Division the user played their last season in. */
 	div?: NonNullable<Tables["User"]["div"]>;
-	/** Weapon pool, submitted as the user themselves. */
-	weapons?: Parameters<typeof UserRepository.updateOwnProfile>[0]["weapons"];
 	/** User card fields, submitted as the user themselves. */
 	card?: Partial<CardArgs>;
-	/** Replaces the user's widgets. Only shown to a supporter with `newProfileEnabled` in `preferences`. */
+	/** Replaces the user's widgets, i.e. their profile layout, in place of the default one. */
 	widgets?: Parameters<typeof UserRepository.upsertWidgets>[1];
 	/** Preferences, merged into the ones the user has, as the settings pages save them. */
 	preferences?: UserPreferences;
@@ -148,18 +145,12 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 		.selectFrom("User")
 		.select([
 			"country",
-			"bio",
 			"customUrl",
 			"customName",
-			"motionSens",
-			"stickSens",
 			"pronouns",
 			"inGameName",
-			"battlefy",
-			"showDiscordUniqueName",
 			"commissionText",
 			"commissionsOpen",
-			"favoriteBadgeIds",
 			"favoriteTrophyIds",
 			"hiddenTrophyIds",
 			"customAvatarImgId",
@@ -167,17 +158,9 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 		.where("id", "=", userId)
 		.executeTakeFirstOrThrow();
 
-	const weapons = await db
-		.selectFrom("UserWeapon")
-		.select(["weaponSplId", "isFavorite"])
-		.where("userId", "=", userId)
-		.orderBy("order", "asc")
-		.execute();
-
 	return {
 		...user,
 		pronouns: user.pronouns ? JSON.stringify(user.pronouns) : null,
-		weapons,
 	};
 }
 
@@ -231,25 +214,8 @@ function fakeProfile(): Partial<ProfileArgs> | null {
 
 	return {
 		country: fakeCountry(),
-		bio: chance(0.4)
-			? faker.lorem.paragraphs(faker.helpers.arrayElement([1, 1, 2, 3]), "\n\n")
-			: undefined,
 		inGameName: chance(0.5) ? SplatoonFaker.inGameName() : undefined,
-		motionSens: chance(0.3)
-			? faker.helpers.arrayElement([-50, -30, -10, 0, 10, 30, 50])
-			: undefined,
-		stickSens: chance(0.3)
-			? faker.helpers.arrayElement([-50, -20, 0, 20, 50])
-			: undefined,
 		pronouns: chance(0.2) ? fakePronouns() : undefined,
-		weapons: chance(0.6)
-			? SplatoonFaker.mainWeapons(
-					faker.helpers.arrayElement([1, 2, 3, 4, 5]),
-				).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: toDBBoolean(faker.number.float(1) < 0.2),
-				}))
-			: [],
 	};
 }
 
@@ -354,7 +320,6 @@ export async function grant(
 		matchProfile,
 		ban,
 		div,
-		weapons,
 		card,
 		widgets,
 		preferences,
@@ -399,11 +364,6 @@ export async function grant(
 
 	if (div) {
 		await UserRepository.updateManyDivs([{ userId, div }]);
-	}
-
-	if (weapons) {
-		// the profile page saves every field at once; the rest is still empty on a fresh upsert
-		await actAs(userId, () => UserRepository.updateOwnProfile({ weapons }));
 	}
 
 	if (widgets) {

@@ -155,6 +155,8 @@ test.describe("Tournament bracket multi stage", () => {
 		await userPage.openSeasons();
 		await expect(userPage.locators.seasonsTournamentResult).toBeVisible();
 
+		await userPage.backToProfile();
+
 		const userResults = await userPage.openResults();
 		await expect(
 			userResults.locators.tournamentNameCells.first(),

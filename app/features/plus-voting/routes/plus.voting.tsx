@@ -5,6 +5,7 @@ import type { MetaFunction } from "react-router";
 import { Form, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
+import { Markdown } from "~/components/Markdown";
 import { RelativeTime } from "~/components/RelativeTime";
 import { usePlusVoting } from "~/features/plus-voting/core";
 import { UserCard } from "~/features/user-card/components/UserCard";
@@ -161,7 +162,11 @@ function Voting(data: Extract<PlusVotingLoaderData, { type: "voting" }>) {
 					{currentUser.user.bio ? (
 						<article className="w-full">
 							<h2 className={styles.votingBioHeader}>Bio</h2>
-							{currentUser.user.bio}
+							{currentUser.user.bio.markdown ? (
+								<Markdown>{currentUser.user.bio.text}</Markdown>
+							) : (
+								currentUser.user.bio.text
+							)}
 						</article>
 					) : null}
 				</div>

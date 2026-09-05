@@ -4,6 +4,8 @@ import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
 import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
+import { DEFAULT_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -36,7 +38,7 @@ export type SeededUsers = {
 };
 
 export async function seedUsers(): Promise<SeededUsers> {
-	// the plainest of the two profiles: no supporter perks, so the old profile page
+	// the plainest of the two profiles: no widgets of their own, so the default layout
 	const admin = await UserFactory.createAdmin(
 		{
 			discordId: ADMIN_DISCORD_ID,
@@ -48,14 +50,16 @@ export async function seedUsers(): Promise<SeededUsers> {
 				country: "FI",
 				customUrl: "sendou",
 				inGameName: "Sendou#1234",
-				bio: showcaseNames.postText(),
-				weapons: [{ weaponSplId: 200, isFavorite: 0 }],
 			},
 			friendCode: "0109-8080-3707",
 		},
 		{
 			roles: ["VIDEO_ADDER", "TOURNAMENT_ORGANIZER", "ARTIST"],
-			matchProfile: { mapModePreferences: fakePreferences(), vc: "YES" },
+			matchProfile: {
+				mapModePreferences: fakePreferences(),
+				vc: "YES",
+				weaponPool: [{ id: 200, isFavorite: false }],
+			},
 		},
 	);
 
@@ -71,15 +75,8 @@ export async function seedUsers(): Promise<SeededUsers> {
 			profile: {
 				country: "SE",
 				customUrl: "nzap",
-				motionSens: 50,
-				stickSens: 5,
 				pronouns: JSON.stringify({ subject: "they", object: "them" }),
 				inGameName: "N-ZAP#5678",
-				bio: showcaseNames.maxLengthBio(),
-				weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: 0 as const,
-				})),
 			},
 			friendCode: "1234-5678-9012",
 		},
@@ -96,7 +93,6 @@ export async function seedUsers(): Promise<SeededUsers> {
 				})),
 			},
 			card: { shortBio: "Supporter of sendou.ink" },
-			preferences: { newProfileEnabled: true },
 			widgets: nzapWidgets(),
 		},
 	);
@@ -141,7 +137,7 @@ async function seedShowcaseUsers() {
 	const artistIds: number[] = [];
 	const favoriteBadgeUserIds: number[] = [];
 
-	for (const [i, customName] of showcaseNames.CUSTOM_NAMES.entries()) {
+	for (const customName of showcaseNames.CUSTOM_NAMES) {
 		const hasKanji = /[一-龯]/u.test(customName);
 
 		const user = await UserFactory.create(
@@ -151,8 +147,6 @@ async function seedShowcaseUsers() {
 					inGameName: hasKanji
 						? showcaseNames.kanaInGameName()
 						: SplatoonFaker.inGameName(),
-					bio: i === 0 ? showcaseNames.maxLengthBio() : undefined,
-					weapons: [],
 				},
 			},
 			showcaseOptions(),
@@ -174,20 +168,14 @@ async function seedShowcaseUsers() {
 				customName: showcaseNames.customName(),
 				customUrl: "maximal",
 				country: "JP",
-				bio: showcaseNames.maxLengthBio(),
 				pronouns: JSON.stringify({ subject: "they", object: "them" }),
-				motionSens: -25,
-				stickSens: 10,
 				inGameName: showcaseNames.kanaInGameName(),
-				weapons: SplatoonFaker.mainWeapons(5).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: 1,
-				})),
 			},
 		},
 		{
 			...showcaseOptions(),
 			patronTier: 2,
+			widgets: migratedWidgets(),
 			card: {
 				shortBio: faker.lorem.sentence(),
 				bannerPresetImg: String(faker.helpers.arrayElement(stageIds)),
@@ -211,20 +199,12 @@ async function seedShowcaseUsers() {
 					customUrl: faker.number.float(1) < 0.2 ? `showcase-${i}` : undefined,
 					country:
 						faker.number.float(1) < 0.8 ? UserFactory.fakeCountry() : undefined,
-					bio:
-						faker.number.float(1) < 0.5 ? showcaseNames.postText() : undefined,
 					inGameName:
 						faker.number.float(1) < 0.4
 							? showcaseNames.kanaInGameName()
 							: SplatoonFaker.inGameName(),
 					commissionsOpen: commissionsOpen ? 1 : undefined,
 					commissionText: commissionsOpen ? faker.lorem.paragraph() : undefined,
-					weapons: SplatoonFaker.mainWeapons(
-						faker.helpers.arrayElement([1, 2, 3, 4]),
-					).map((weaponSplId) => ({
-						weaponSplId,
-						isFavorite: faker.number.float(1) < 0.2 ? 1 : 0,
-					})),
 				},
 			},
 			{
@@ -242,10 +222,27 @@ async function seedShowcaseUsers() {
 	return { ids, artistIds, favoriteBadgeUserIds };
 }
 
-/** The one seeded supporter's widgets: both slots filled, every widget other modules seed content for. */
-function nzapWidgets(): NonNullable<
+/** What the widget backfill migration leaves a user who had a bio and sensitivity saved. */
+function migratedWidgets(): NonNullable<
 	Parameters<typeof UserFactory.create>[1]
 >["widgets"] {
+	return DEFAULT_WIDGETS.map((widget) => {
+		if (widget.id === "bio") {
+			return { ...widget, settings: { bio: showcaseNames.maxLengthBio() } };
+		}
+		if (widget.id === "sens") {
+			return {
+				...widget,
+				settings: { ...widget.settings, motionSens: -25, stickSens: 10 },
+			};
+		}
+
+		return widget;
+	});
+}
+
+/** The one seeded supporter's widgets: both slots filled to the supporter limits. */
+export function nzapWidgets(): StoredWidget[] {
 	return [
 		{ id: "bio-md", settings: { bio: showcaseNames.maxLengthBio() } },
 		{ id: "teams" },
@@ -258,15 +255,10 @@ function nzapWidgets(): NonNullable<
 		{ id: "timezone", settings: { timezone: "Europe/Stockholm" } },
 		{ id: "social-links" },
 		{ id: "weapon-pool" },
-		{ id: "badges-owned" },
+		{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
 		{ id: "trophies-owned" },
-		{ id: "builds" },
-		{ id: "videos" },
 		{ id: "art", settings: { source: "ALL" } },
 		{ id: "x-rank-peaks", settings: { division: "both" } },
-		{ id: "peak-sp" },
-		{ id: "peak-xp" },
-		{ id: "friends" },
 		{ id: "highlighted-results" },
 	];
 }

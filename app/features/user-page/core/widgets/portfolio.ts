@@ -1,9 +1,11 @@
 import type * as v from "valibot";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import { USER } from "~/features/user-page/user-page-constants";
 import type { FormObjectSchema } from "~/form/types";
 import type { StoredWidget } from "./types";
 import {
 	artSchema,
+	badgesOwnedSchema,
 	bioMdSchema,
 	bioSchema,
 	favoriteStageSchema,
@@ -29,11 +31,12 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "bio-md",
 			slot: "main",
+			supporterOnly: true,
 			schema: bioMdSchema,
 			defaultSettings: { bio: "" },
 		}),
 		defineWidget({ id: "organizations", slot: "side" }),
-		defineWidget({ id: "patron-since", slot: "side" }),
+		defineWidget({ id: "patron-since", slot: "side", supporterOnly: true }),
 		defineWidget({ id: "join-date", slot: "side" }),
 		defineWidget({
 			id: "timezone",
@@ -44,6 +47,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "favorite-stage",
 			slot: "side",
+			supporterOnly: true,
 			schema: favoriteStageSchema,
 			defaultSettings: { stageId: 1 },
 		}),
@@ -64,6 +68,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "links",
 			slot: "side",
+			supporterOnly: true,
 			schema: linksSchema,
 			defaultSettings: { links: [] },
 		}),
@@ -76,7 +81,12 @@ export const ALL_WIDGETS = {
 	],
 	trophies: [defineWidget({ id: "trophies-owned", slot: "main" })],
 	badges: [
-		defineWidget({ id: "badges-owned", slot: "main" }),
+		defineWidget({
+			id: "badges-owned",
+			slot: "main",
+			schema: badgesOwnedSchema,
+			defaultSettings: { favoriteBadgeIds: [] },
+		}),
 		defineWidget({ id: "badges-authored", slot: "main" }),
 		defineWidget({ id: "badges-managed", slot: "main" }),
 	],
@@ -92,6 +102,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "peak-xp-unverified",
 			slot: "side",
+			supporterOnly: true,
 			schema: peakXpUnverifiedSchema,
 			defaultSettings: { peakXp: 2000, division: "tentatek" },
 		}),
@@ -138,6 +149,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "game-badges",
 			slot: "main",
+			supporterOnly: true,
 			schema: gameBadgesSchema,
 			defaultSettings: { badgeIds: [] },
 		}),
@@ -150,12 +162,70 @@ export const ALL_WIDGETS = {
 	],
 } as const;
 
+/**
+ * Layout of a user who has not saved their own, matching what the profile page
+ * showed before it was widget based.
+ */
+export const DEFAULT_WIDGETS: StoredWidget[] = [
+	{ id: "weapon-pool" },
+	{ id: "x-rank-peaks", settings: { division: "both" } },
+	{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
+	{ id: "bio", settings: { bio: "" } },
+	{ id: "teams" },
+	{
+		id: "sens",
+		settings: { controller: "s2-pro-con", motionSens: null, stickSens: null },
+	},
+	{ id: "join-date" },
+];
+
 export function allWidgetsFlat() {
 	return Object.values(ALL_WIDGETS).flat();
 }
 
 export function findWidgetById(widgetId: string) {
 	return allWidgetsFlat().find((w) => w.id === widgetId);
+}
+
+/** How many widgets fit in each slot, supporters get more. */
+export function maxWidgetsPerSlot(isSupporter: boolean) {
+	return isSupporter
+		? {
+				main: USER.MAX_MAIN_WIDGETS_SUPPORTER,
+				side: USER.MAX_SIDE_WIDGETS_SUPPORTER,
+			}
+		: { main: USER.MAX_MAIN_WIDGETS, side: USER.MAX_SIDE_WIDGETS };
+}
+
+/** Drops supporter only widgets and widgets past the slot limits e.g. when supporter status lapsed. */
+export function widgetsAvailableTo(
+	widgets: StoredWidget[],
+	isSupporter: boolean,
+): StoredWidget[] {
+	const max = maxWidgetsPerSlot(isSupporter);
+	const result: StoredWidget[] = [];
+	let mainCount = 0;
+	let sideCount = 0;
+
+	for (const widget of widgets) {
+		const definition = findWidgetById(widget.id);
+
+		if (!isSupporter && definition?.supporterOnly) continue;
+
+		const slot = definition?.slot;
+
+		if (slot === "main") {
+			mainCount++;
+			if (mainCount > max.main) continue;
+		} else if (slot === "side") {
+			sideCount++;
+			if (sideCount > max.side) continue;
+		}
+
+		result.push(widget);
+	}
+
+	return result;
 }
 
 function defineWidget<
@@ -165,6 +235,7 @@ function defineWidget<
 >(def: {
 	id: Id;
 	slot: Slot;
+	supporterOnly?: true;
 	schema: S;
 	defaultSettings: v.InferOutput<S>;
 }): typeof def;
@@ -172,7 +243,12 @@ function defineWidget<
 function defineWidget<
 	const Id extends string,
 	const Slot extends "main" | "side",
->(def: { id: Id; slot: Slot; schema?: never }): typeof def;
+>(def: {
+	id: Id;
+	slot: Slot;
+	supporterOnly?: true;
+	schema?: never;
+}): typeof def;
 function defineWidget(def: Record<string, unknown>) {
 	return def;
 }

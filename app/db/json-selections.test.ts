@@ -19,9 +19,9 @@ describe("computedJsonColumns", () => {
 				...commonUserSelect(eb, { inTournament: true }),
 				jsonArrayFrom(
 					eb
-						.selectFrom("UserWeapon")
-						.select("UserWeapon.weaponSplId")
-						.whereRef("UserWeapon.userId", "=", "User.id"),
+						.selectFrom("UserWeaponPool")
+						.select("UserWeaponPool.weaponSplId")
+						.whereRef("UserWeaponPool.userId", "=", "User.id"),
 				).as("weapons"),
 			]);
 

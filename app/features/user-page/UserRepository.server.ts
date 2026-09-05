@@ -32,13 +32,15 @@ import {
 	jsonObjectFrom,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
-	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
-import { sortBadgesByFavorites } from "./core/badge-sorting.server";
-import { findWidgetById } from "./core/widgets/portfolio";
+import {
+	DEFAULT_WIDGETS,
+	findWidgetById,
+	widgetsAvailableTo,
+} from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
@@ -81,10 +83,10 @@ export async function findBuildFieldsByIdentifier(identifier: string) {
 			"User.buildSorting",
 			jsonArrayFrom(
 				eb
-					.selectFrom("UserWeapon")
-					.select("UserWeapon.weaponSplId")
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
+					.selectFrom("UserWeaponPool")
+					.select("UserWeaponPool.weaponSplId")
+					.whereRef("UserWeaponPool.userId", "=", "User.id")
+					.orderBy("UserWeaponPool.sortOrder", "asc"),
 			).as("weapons"),
 		])
 		.executeTakeFirst();
@@ -180,27 +182,18 @@ export function findLayoutDataByIdentifier(
 		.executeTakeFirst();
 }
 
-export async function findProfileByIdentifier(
-	identifier: string,
-	forceShowDiscordUniqueName?: boolean,
-) {
+export async function findProfileByIdentifier(identifier: string) {
 	const row = await userByIdentifierQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
 			"User.twitch",
 			"User.youtubeId",
-			"User.battlefy",
 			"User.bsky",
 			"User.country",
-			"User.bio",
-			"User.motionSens",
-			"User.stickSens",
 			"User.inGameName",
 			"User.customName",
 			"User.discordName",
-			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
-			"User.favoriteBadgeIds",
 			"User.favoriteTrophyIds",
 			"User.hiddenTrophyIds",
 			"User.patronTier",
@@ -208,7 +201,6 @@ export async function findProfileByIdentifier(
 			"User.pronouns",
 			"User.customAvatarImgId",
 			customAvatarUrl(eb).as("customAvatarUrl"),
-			userProfileWeapons(eb).as("weapons"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -231,23 +223,6 @@ export async function findProfileByIdentifier(
 					])
 					.whereRef("TeamMemberWithSecondary.userId", "=", "User.id"),
 			).as("teams"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("SplatoonPlayer")
-					.innerJoin(
-						"XRankPlacement",
-						"XRankPlacement.playerId",
-						"SplatoonPlayer.id",
-					)
-					.select(({ fn }) => [
-						"XRankPlacement.mode",
-						fn.max<number>("XRankPlacement.power").as("power"),
-						fn.min<number>("XRankPlacement.rank").as("rank"),
-						"XRankPlacement.playerId",
-					])
-					.whereRef("SplatoonPlayer.userId", "=", "User.id")
-					.groupBy(["XRankPlacement.mode"]),
-			).as("topPlacements"),
 		])
 		.executeTakeFirst();
 
@@ -255,61 +230,12 @@ export async function findProfileByIdentifier(
 		return null;
 	}
 
-	// queried separately with a constant userId, see findOwnedBadgesByUserId
-	const badges = await findOwnedBadgesByUserId(row.id);
-
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		...sortBadgesByFavorites({ ...row, badges }),
-		discordUniqueName:
-			forceShowDiscordUniqueName || row.showDiscordUniqueName
-				? row.discordUniqueName
-				: null,
 	};
-}
-
-/**
- * Takes a constant userId on purpose: correlating to an outer "User"."id" would stop SQLite
- * pushing the predicate into both arms of the BadgeOwner view, materializing the full view.
- */
-export function findOwnedBadgesByUserId(userId: number) {
-	return db
-		.selectFrom("BadgeOwner")
-		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-		.select(({ fn }) => [
-			fn.sum<number>("BadgeOwner.count").as("count"),
-			"Badge.id",
-			"Badge.displayName",
-			"Badge.code",
-			"Badge.hue",
-		])
-		.where("BadgeOwner.userId", "=", userId)
-		.groupBy("BadgeOwner.badgeId")
-		.execute();
-}
-
-export async function findEnabledWidgetsByIdentifier(identifier: string) {
-	const row = await userByIdentifierQuery(identifier)
-		.select(["User.preferences", "User.patronTier"])
-		.executeTakeFirst();
-
-	if (!row) return false;
-	if (!isSupporter(row)) return false;
-
-	return row?.preferences?.newProfileEnabled === true;
-}
-
-export async function findPreferencesByUserId(userId: number) {
-	const row = await db
-		.selectFrom("User")
-		.select("User.preferences")
-		.where("User.id", "=", userId)
-		.executeTakeFirst();
-
-	return row?.preferences ?? null;
 }
 
 export async function upsertWidgets(
@@ -337,42 +263,37 @@ export async function findStoredWidgetsByUserId(
 ): Promise<Array<Tables["UserWidget"]["widget"]>> {
 	const rows = await db
 		.selectFrom("UserWidget")
-		.select(["widget"])
-		.where("userId", "=", userId)
-		.orderBy("index", "asc")
+		.innerJoin("User", "User.id", "UserWidget.userId")
+		.select(["UserWidget.widget", "User.patronTier"])
+		.where("UserWidget.userId", "=", userId)
+		.orderBy("UserWidget.index", "asc")
 		.execute();
 
-	return rows.map((row) => row.widget);
+	if (rows.length === 0) return DEFAULT_WIDGETS;
+
+	return widgetsAvailableTo(
+		rows.map((row) => row.widget),
+		isSupporter({ patronTier: rows[0]!.patronTier }),
+	);
 }
 
 export async function findWidgetsByUserId(
-	identifier: string,
-): Promise<LoadedWidget[] | null> {
-	const user = await findIdByIdentifier(identifier);
-
-	if (!user) return null;
-
-	const widgets = await db
-		.selectFrom("UserWidget")
-		.select(["widget"])
-		.where("userId", "=", user.id)
-		.orderBy("index", "asc")
-		.execute();
+	userId: number,
+): Promise<LoadedWidget[]> {
+	const widgets = await findStoredWidgetsByUserId(userId);
 
 	const loadedWidgets = await Promise.all(
-		widgets.map(async ({ widget }) => {
+		widgets.map(async (widget) => {
 			const definition = findWidgetById(widget.id);
 
 			if (!definition) {
-				logger.warn(
-					`Unknown widget id found for user ${user.id}: ${widget.id}`,
-				);
+				logger.warn(`Unknown widget id found for user ${userId}: ${widget.id}`);
 				return null;
 			}
 
 			const loader = WIDGET_LOADERS[widget.id as keyof typeof WIDGET_LOADERS];
 			const data = loader
-				? await loader(user.id, widget.settings as any)
+				? await loader(userId, widget.settings as any)
 				: widget.settings;
 
 			return {
@@ -1006,13 +927,7 @@ const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 		"User.inGameName",
 		"User.tournamentName",
 		"PlusTier.tier as plusTier",
-		eb
-			.fn<string | null>("iif", [
-				"User.showDiscordUniqueName",
-				"User.discordUniqueName",
-				sql`null`,
-			])
-			.as("discordUniqueName"),
+		"User.discordUniqueName",
 	] as const;
 export async function search({
 	query,
@@ -1277,20 +1192,13 @@ export function upsert(
 type UpdateProfileArgs = Pick<
 	TablesInsertable["User"],
 	| "country"
-	| "bio"
 	| "customUrl"
 	| "customName"
-	| "motionSens"
-	| "stickSens"
 	| "pronouns"
 	| "inGameName"
-	| "battlefy"
-	| "showDiscordUniqueName"
 	| "commissionText"
 	| "commissionsOpen"
 > & {
-	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
-	favoriteBadgeIds?: number[] | null;
 	favoriteTrophyIds?: number[] | null;
 	hiddenTrophyIds?: number[] | null;
 	customAvatarImgId?: number | null;
@@ -1298,8 +1206,6 @@ type UpdateProfileArgs = Pick<
 export function updateOwnProfile(args: UpdateProfileArgs) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("UserWeapon").where("userId", "=", userId).execute();
-
 		// a removed or replaced custom avatar's image row is cleaned up
 		const current = await trx
 			.selectFrom("User")
@@ -1317,40 +1223,20 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				.execute();
 		}
 
-		await trx
-			.insertInto("UserWeapon")
-			.values(
-				args.weapons.map((weapon, i) => ({
-					userId,
-					weaponSplId: weapon.weaponSplId,
-					isFavorite: weapon.isFavorite ?? 0,
-					order: i + 1,
-				})),
-			)
-			.execute();
-
 		return trx
 			.updateTable("User")
 			.set({
 				country: args.country,
-				bio: args.bio,
 				customUrl: args.customUrl,
 				customName: args.customName,
-				motionSens: args.motionSens,
-				stickSens: args.stickSens,
 				pronouns: args.pronouns,
 				inGameName: args.inGameName,
-				battlefy: args.battlefy,
-				favoriteBadgeIds: args.favoriteBadgeIds
-					? JSON.stringify(args.favoriteBadgeIds)
-					: null,
 				favoriteTrophyIds: args.favoriteTrophyIds
 					? JSON.stringify(args.favoriteTrophyIds)
 					: null,
 				hiddenTrophyIds: args.hiddenTrophyIds
 					? JSON.stringify(args.hiddenTrophyIds)
 					: null,
-				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
 				commissionsOpenedAt:
@@ -1596,26 +1482,5 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 		.selectFrom("User")
 		.select(["User.id", "User.twitch"])
 		.where("User.twitch", "in", twitchUsernames)
-		.execute();
-}
-
-/** Weapon pool entries with ten-star status. */
-export function findWeaponPoolByUserId(userId: number) {
-	return db
-		.selectFrom("UserWeaponPool")
-		.leftJoin("TenStarWeapon", (join) =>
-			join
-				.onRef("TenStarWeapon.userId", "=", "UserWeaponPool.userId")
-				.onRef("TenStarWeapon.weaponSplId", "=", "UserWeaponPool.weaponSplId"),
-		)
-		.select([
-			"UserWeaponPool.weaponSplId",
-			"UserWeaponPool.isFavorite",
-			sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`.as(
-				"isTenStar",
-			),
-		])
-		.where("UserWeaponPool.userId", "=", userId)
-		.orderBy("UserWeaponPool.sortOrder", "asc")
 		.execute();
 }
