@@ -11,7 +11,6 @@ const action = wrappedAction<typeof userEditProfileBaseSchema>({
 });
 
 const DEFAULT_FIELDS = {
-	battlefy: null,
 	bio: null,
 	commissionsOpen: false,
 	commissionText: null,

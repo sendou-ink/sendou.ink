@@ -66,7 +66,6 @@ export const action: ActionFunction = async ({ request }) => {
 		customName: data.customName,
 		pronouns,
 		inGameName: data.inGameName,
-		battlefy: data.battlefy,
 		weapons,
 		favoriteBadgeIds: limitedBadgeIds.length > 0 ? limitedBadgeIds : null,
 		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,

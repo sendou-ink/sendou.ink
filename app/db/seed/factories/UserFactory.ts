@@ -152,7 +152,6 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 			"customName",
 			"pronouns",
 			"inGameName",
-			"battlefy",
 			"showDiscordUniqueName",
 			"commissionText",
 			"commissionsOpen",

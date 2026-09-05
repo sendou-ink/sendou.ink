@@ -193,7 +193,6 @@ export async function findProfileByIdentifier(
 		.select(({ eb }) => [
 			"User.twitch",
 			"User.youtubeId",
-			"User.battlefy",
 			"User.bsky",
 			"User.country",
 			"User.inGameName",
@@ -1239,7 +1238,6 @@ type UpdateProfileArgs = Pick<
 	| "customName"
 	| "pronouns"
 	| "inGameName"
-	| "battlefy"
 	| "showDiscordUniqueName"
 	| "commissionText"
 	| "commissionsOpen"
@@ -1292,7 +1290,6 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				customName: args.customName,
 				pronouns: args.pronouns,
 				inGameName: args.inGameName,
-				battlefy: args.battlefy,
 				favoriteBadgeIds: args.favoriteBadgeIds
 					? JSON.stringify(args.favoriteBadgeIds)
 					: null,

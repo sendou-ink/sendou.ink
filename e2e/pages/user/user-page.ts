@@ -87,6 +87,11 @@ export class UserPage {
 		return new TopSearchPlayerPage(this.page);
 	}
 
+	/** Returns to the profile from a sub page via its header back button. */
+	async backToProfile() {
+		await this.page.getByRole("link", { name: "Back to profile" }).click();
+	}
+
 	async openSeasons() {
 		await this.locators.seasonsTab.click();
 	}

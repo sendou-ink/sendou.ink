@@ -93,7 +93,7 @@ test.describe("Builds", () => {
 		await buildForm.form.check("isPrivate");
 		await buildForm.form.submit();
 
-		await expect(userBuilds.locators.buildsTab).toContainText("Builds (2)");
+		await expect(userBuilds.locators.buildCards).toHaveCount(2);
 		await expect(userBuilds.buildCard(0).root).toContainText("Private");
 
 		const buildIdAfter = await userBuilds.buildId(0);
@@ -101,7 +101,7 @@ test.describe("Builds", () => {
 
 		await impersonate(page, NZAP_TEST_ID);
 		await userBuilds.goto(ADMIN_DISCORD_ID);
-		await expect(userBuilds.locators.buildsTab).toContainText("Builds (1)");
+		await expect(userBuilds.locators.buildCards).toHaveCount(1);
 		await expect(userBuilds.buildCard(0).root).not.toContainText("Private");
 	});
 

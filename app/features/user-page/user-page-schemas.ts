@@ -109,12 +109,6 @@ export const userEditProfileBaseSchema = v.object({
 			message: "errors.profilePronounsBothOrNeither",
 		},
 	}),
-	battlefy: textFieldOptional({
-		label: "labels.profileBattlefy",
-		bottomText: "bottomTexts.profileBattlefy",
-		leftAddon: "https://battlefy.com/users/",
-		maxLength: USER.BATTLEFY_MAX_LENGTH,
-	}),
 	country: selectDynamicOptional({
 		label: "labels.profileCountry",
 		searchable: true,

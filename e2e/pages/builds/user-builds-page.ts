@@ -20,7 +20,6 @@ export class UserBuildsPage {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			buildsTab: page.getByTestId("user-builds-tab"),
 			changeSortingButton: page.getByTestId("change-sorting-button"),
 			buildCards: page.getByTestId("build-card"),
 			editBuildLinks: page.getByTestId("edit-build"),

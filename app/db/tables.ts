@@ -983,7 +983,6 @@ export interface User {
 	showDiscordUniqueName: Generated<DBBoolean>;
 	twitch: string | null;
 	bsky: string | null;
-	battlefy: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;

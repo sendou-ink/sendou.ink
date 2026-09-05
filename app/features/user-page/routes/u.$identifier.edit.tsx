@@ -58,7 +58,6 @@ export default function UserEditPage() {
 		customUrl: layoutData.user.customUrl ?? "",
 		inGameName: data.user.inGameName ?? "",
 		pronouns: pronounsDefaultValue(data.user.pronouns),
-		battlefy: data.user.battlefy ?? "",
 		country: data.user.country ?? null,
 		favoriteBadgeIds: data.favoriteBadgeIds ?? [],
 		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
@@ -88,7 +87,6 @@ export default function UserEditPage() {
 						<FormField name="customAvatar" disabled={!isSupporter} />
 						<FormField name="inGameName" />
 						<FormField name="pronouns" />
-						<FormField name="battlefy" />
 						<FormField name="country" options={countryOptions} />
 						{data.user.badges.length >= 2 ? (
 							<FormField

@@ -11,7 +11,8 @@ import { type Kysely, sql } from "kysely";
  * picked their widgets are left alone.
  *
  * Once the values are copied over, the columns they came from go, as does the
- * preference that used to gate the widget profile.
+ * preference that used to gate the widget profile. The battlefy account name goes
+ * with them, as it is no longer collected or exposed anywhere.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	await sql`
@@ -72,7 +73,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 		where json_extract("preferences", '$.newProfileEnabled') is not null
 	`.execute(db);
 
-	for (const column of ["bio", "motionSens", "stickSens"]) {
+	for (const column of ["bio", "motionSens", "stickSens", "battlefy"]) {
 		await db.schema.alterTable("User").dropColumn(column).execute();
 	}
 }

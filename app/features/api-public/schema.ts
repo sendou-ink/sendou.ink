@@ -20,7 +20,6 @@ export interface GetUserResponse {
 		twitch: string | null;
 		/** @deprecated */
 		twitter: null;
-		battlefy: string | null;
 		bsky: string | null;
 	};
 	plusServerTier: 1 | 2 | 3 | null;
@@ -162,8 +161,6 @@ export type GetTournamentTeamsResponse = Array<{
 		name: string;
 		/** @example "79237403620945920" */
 		discordId: string;
-		/** @example "sendouc" */
-		battlefy: string | null;
 		/** @example "https://cdn.discordapp.com/avatars/79237403620945920/6fc41a44b069a0d2152ac06d1e496c6c.png" */
 		avatarUrl: string | null;
 		/** @example "FI" */

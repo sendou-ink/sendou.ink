@@ -105,7 +105,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						tournamentUsername().as("username"),
 						"User.discordId",
 						"User.discordAvatar",
-						"User.battlefy",
 						"User.country",
 						"User.pronouns",
 						"TournamentTeamMember.inGameName",
@@ -166,7 +165,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				return {
 					userId: member.userId,
 					name: member.username,
-					battlefy: member.battlefy,
 					discordId: member.discordId,
 					avatarUrl: member.discordAvatar
 						? `https://cdn.discordapp.com/avatars/${member.discordId}/${member.discordAvatar}.png`
