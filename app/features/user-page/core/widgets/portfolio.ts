@@ -172,7 +172,6 @@ export const DEFAULT_WIDGETS: StoredWidget[] = [
 	{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
 	{ id: "bio", settings: { bio: "" } },
 	{ id: "teams" },
-	{ id: "social-links" },
 	{
 		id: "sens",
 		settings: { controller: "s2-pro-con", motionSens: null, stickSens: null },

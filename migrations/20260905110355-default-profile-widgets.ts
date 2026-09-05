@@ -47,13 +47,11 @@ export async function up(db: Kysely<any>): Promise<void> {
 			union all
 			select 1, json_object('id', 'x-rank-peaks', 'settings', json_object('division', 'both'))
 			union all
-			select 2, json_object('id', 'trophies-owned')
+			select 2, json_object('id', 'badges-owned')
 			union all
-			select 3, json_object('id', 'badges-owned')
+			select 4, json_object('id', 'teams')
 			union all
-			select 5, json_object('id', 'teams')
-			union all
-			select 8, json_object('id', 'join-date')
+			select 7, json_object('id', 'join-date')
 		)
 		insert into "UserWidget" ("userId", "index", "widget")
 		select "eligible"."id", "presetWidget"."index", "presetWidget"."widget"
@@ -61,13 +59,13 @@ export async function up(db: Kysely<any>): Promise<void> {
 		union all
 		select
 			"eligible"."id",
-			4,
+			3,
 			json_object('id', 'bio', 'settings', json_object('bio', coalesce("eligible"."bio", '')))
 		from "eligible"
 		union all
 		select
 			"eligible"."id",
-			7,
+			6,
 			json_object(
 				'id', 'sens',
 				'settings', json_object(
@@ -78,7 +76,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 			)
 		from "eligible"
 		union all
-		select "eligible"."id", 6, json_object('id', 'social-links')
+		select "eligible"."id", 5, json_object('id', 'social-links')
 		from "eligible"
 		where "eligible"."discordUniqueName" is null
 			or "eligible"."showDiscordUniqueName" = 1

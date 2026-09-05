@@ -242,9 +242,13 @@ async function findBiosByUserIds(userIds: number[]) {
 		.selectFrom("UserWidget")
 		.select([
 			"UserWidget.userId",
+			// cast keeps a bio that happens to look like JSON a string, the dialect
+			// parses raw selections starting with `json` as documents
 			sql<
 				string | null
-			>`json_extract("UserWidget"."widget", '$.settings.bio')`.as("bio"),
+			>`cast(json_extract("UserWidget"."widget", '$.settings.bio') as text)`.as(
+				"bio",
+			),
 			sql<string>`json_extract("UserWidget"."widget", '$.id')`.as("widgetId"),
 		])
 		.where("UserWidget.userId", "in", userIds)
