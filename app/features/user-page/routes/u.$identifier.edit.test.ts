@@ -1,6 +1,5 @@
 import { beforeEach, describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { wrappedAction } from "~/utils/Test";
 import type { userEditProfileBaseSchema } from "../user-page-schemas";
 import { action as editUserProfileAction } from "./u.$identifier.edit";
@@ -24,7 +23,6 @@ const DEFAULT_FIELDS = {
 	inGameName: null,
 	sensitivity: [null, null] as [null, null],
 	pronouns: [null, null] as [null, null],
-	weapons: [{ id: 1 as MainWeaponId, isFavorite: false }],
 	showDiscordUniqueName: true,
 	newProfileEnabled: false,
 };

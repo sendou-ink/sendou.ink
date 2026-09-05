@@ -12,7 +12,8 @@ import { type Kysely, sql } from "kysely";
  *
  * Once the values are copied over, the columns they came from go, as does the
  * preference that used to gate the widget profile. The battlefy account name goes
- * with them, as it is no longer collected or exposed anywhere.
+ * with them, as it is no longer collected or exposed anywhere. The profile weapon
+ * pool goes too: the match profile's pool is the only weapon pool from now on.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	await sql`
@@ -76,4 +77,6 @@ export async function up(db: Kysely<any>): Promise<void> {
 	for (const column of ["bio", "motionSens", "stickSens", "battlefy"]) {
 		await db.schema.alterTable("User").dropColumn(column).execute();
 	}
+
+	await db.schema.dropTable("UserWeapon").execute();
 }

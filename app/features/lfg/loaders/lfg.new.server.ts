@@ -20,7 +20,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 
 	return {
 		team: userProfileData?.team,
-		weaponPool: userProfileData?.weapons,
+		weaponPool: userMatchProfile.weaponPool,
 		languages: postToEdit?.languages ?? userMatchProfile.languages,
 		postToEdit,
 		userPostTypes: userPostTypes(allPosts, user.id),

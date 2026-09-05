@@ -32,7 +32,6 @@ import {
 	jsonObjectFrom,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
-	userProfileWeapons,
 } from "~/utils/kysely.server";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
@@ -85,10 +84,10 @@ export async function findBuildFieldsByIdentifier(identifier: string) {
 			"User.buildSorting",
 			jsonArrayFrom(
 				eb
-					.selectFrom("UserWeapon")
-					.select("UserWeapon.weaponSplId")
-					.whereRef("UserWeapon.userId", "=", "User.id")
-					.orderBy("UserWeapon.order", "asc"),
+					.selectFrom("UserWeaponPool")
+					.select("UserWeaponPool.weaponSplId")
+					.whereRef("UserWeaponPool.userId", "=", "User.id")
+					.orderBy("UserWeaponPool.sortOrder", "asc"),
 			).as("weapons"),
 		])
 		.executeTakeFirst();
@@ -208,7 +207,6 @@ export async function findProfileByIdentifier(
 			"User.pronouns",
 			"User.customAvatarImgId",
 			customAvatarUrl(eb).as("customAvatarUrl"),
-			userProfileWeapons(eb).as("weapons"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("TeamMemberWithSecondary")
@@ -1242,7 +1240,6 @@ type UpdateProfileArgs = Pick<
 	| "commissionText"
 	| "commissionsOpen"
 > & {
-	weapons: Pick<TablesInsertable["UserWeapon"], "weaponSplId" | "isFavorite">[];
 	favoriteBadgeIds?: number[] | null;
 	favoriteTrophyIds?: number[] | null;
 	hiddenTrophyIds?: number[] | null;
@@ -1251,8 +1248,6 @@ type UpdateProfileArgs = Pick<
 export function updateOwnProfile(args: UpdateProfileArgs) {
 	const userId = actorId();
 	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("UserWeapon").where("userId", "=", userId).execute();
-
 		// a removed or replaced custom avatar's image row is cleaned up
 		const current = await trx
 			.selectFrom("User")
@@ -1269,18 +1264,6 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				.where("UnvalidatedUserSubmittedImage.submitterUserId", "=", userId)
 				.execute();
 		}
-
-		await trx
-			.insertInto("UserWeapon")
-			.values(
-				args.weapons.map((weapon, i) => ({
-					userId,
-					weaponSplId: weapon.weaponSplId,
-					isFavorite: weapon.isFavorite ?? 0,
-					order: i + 1,
-				})),
-			)
-			.execute();
 
 		return trx
 			.updateTable("User")
@@ -1545,26 +1528,5 @@ export function findIdsByTwitchUsernames(twitchUsernames: string[]) {
 		.selectFrom("User")
 		.select(["User.id", "User.twitch"])
 		.where("User.twitch", "in", twitchUsernames)
-		.execute();
-}
-
-/** Profile weapon pool entries, as the profile form saves them, with ten-star status. */
-export function findWeaponPoolByUserId(userId: number) {
-	return db
-		.selectFrom("UserWeapon")
-		.leftJoin("TenStarWeapon", (join) =>
-			join
-				.onRef("TenStarWeapon.userId", "=", "UserWeapon.userId")
-				.onRef("TenStarWeapon.weaponSplId", "=", "UserWeapon.weaponSplId"),
-		)
-		.select([
-			"UserWeapon.weaponSplId",
-			"UserWeapon.isFavorite",
-			sql<number>`case when "TenStarWeapon"."weaponSplId" is not null then 1 else 0 end`.as(
-				"isTenStar",
-			),
-		])
-		.where("UserWeapon.userId", "=", userId)
-		.orderBy("UserWeapon.order", "asc")
 		.execute();
 }

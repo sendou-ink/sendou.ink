@@ -440,6 +440,9 @@ export function buildCases(fx: Fixtures): {
 	add("MatchProfileRepository.findSettingsByUserId", fx.heavyUser, (user) =>
 		MatchProfileRepository.findSettingsByUserId(user.id),
 	);
+	add("MatchProfileRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
+		MatchProfileRepository.findWeaponPoolByUserId(user.id),
+	);
 
 	add("SkillRepository.findCurrentUserSkills", fx.skillBatch, (skillBatch) =>
 		SkillRepository.findCurrentUserSkills({
@@ -1402,9 +1405,6 @@ export function buildCases(fx: Fixtures): {
 		fx.twitchUsernames,
 		(twitchUsernames) =>
 			UserRepository.findIdsByTwitchUsernames(twitchUsernames),
-	);
-	add("UserRepository.findWeaponPoolByUserId", fx.heavyUser, (user) =>
-		UserRepository.findWeaponPoolByUserId(user.id),
 	);
 
 	add("VodRepository.findByUserId", fx.vod, (vod) =>

@@ -49,13 +49,16 @@ export async function seedUsers(): Promise<SeededUsers> {
 				country: "FI",
 				customUrl: "sendou",
 				inGameName: "Sendou#1234",
-				weapons: [{ weaponSplId: 200, isFavorite: 0 }],
 			},
 			friendCode: "0109-8080-3707",
 		},
 		{
 			roles: ["VIDEO_ADDER", "TOURNAMENT_ORGANIZER", "ARTIST"],
-			matchProfile: { mapModePreferences: fakePreferences(), vc: "YES" },
+			matchProfile: {
+				mapModePreferences: fakePreferences(),
+				vc: "YES",
+				weaponPool: [{ id: 200, isFavorite: false }],
+			},
 		},
 	);
 
@@ -73,10 +76,6 @@ export async function seedUsers(): Promise<SeededUsers> {
 				customUrl: "nzap",
 				pronouns: JSON.stringify({ subject: "they", object: "them" }),
 				inGameName: "N-ZAP#5678",
-				weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: 0 as const,
-				})),
 			},
 			friendCode: "1234-5678-9012",
 		},
@@ -147,7 +146,6 @@ async function seedShowcaseUsers() {
 					inGameName: hasKanji
 						? showcaseNames.kanaInGameName()
 						: SplatoonFaker.inGameName(),
-					weapons: [],
 				},
 			},
 			showcaseOptions(),
@@ -171,10 +169,6 @@ async function seedShowcaseUsers() {
 				country: "JP",
 				pronouns: JSON.stringify({ subject: "they", object: "them" }),
 				inGameName: showcaseNames.kanaInGameName(),
-				weapons: SplatoonFaker.mainWeapons(5).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: 1,
-				})),
 			},
 		},
 		{
@@ -210,12 +204,6 @@ async function seedShowcaseUsers() {
 							: SplatoonFaker.inGameName(),
 					commissionsOpen: commissionsOpen ? 1 : undefined,
 					commissionText: commissionsOpen ? faker.lorem.paragraph() : undefined,
-					weapons: SplatoonFaker.mainWeapons(
-						faker.helpers.arrayElement([1, 2, 3, 4]),
-					).map((weaponSplId) => ({
-						weaponSplId,
-						isFavorite: faker.number.float(1) < 0.2 ? 1 : 0,
-					})),
 				},
 			},
 			{

@@ -193,12 +193,14 @@ test.describe("User page", () => {
 		await isNotVisible(seasonsPage.locators.downloadButton);
 	});
 
-	test("edits weapon pool", async ({ page, factories }) => {
+	test("shows the match profile weapon pool", async ({ page, factories }) => {
 		await factories.UserFactory.grant(ADMIN_ID, {
-			weapons: ([200, 1100, 2000, 4000] as const).map((weaponSplId) => ({
-				weaponSplId,
-				isFavorite: 0 as const,
-			})),
+			matchProfile: {
+				weaponPool: ([200, 1100, 2000, 4000] as const).map((id) => ({
+					id,
+					isFavorite: false,
+				})),
+			},
 		});
 
 		await impersonate(page);
@@ -207,16 +209,6 @@ test.describe("User page", () => {
 		await userPage.goto(ADMIN_DISCORD_ID);
 
 		for (const [i, id] of [200, 1100, 2000, 4000].entries()) {
-			await expect(userPage.weaponPoolImage(id, i + 1)).toBeVisible();
-		}
-
-		const editProfile = await userPage.openEditProfile();
-
-		await editProfile.form.selectWeapons("weapons", ["Range Blaster"]);
-		await editProfile.deleteWeapon(/Inkbrush/);
-		await editProfile.save();
-
-		for (const [i, id] of [200, 2000, 4000, 220].entries()) {
 			await expect(userPage.weaponPoolImage(id, i + 1)).toBeVisible();
 		}
 	});

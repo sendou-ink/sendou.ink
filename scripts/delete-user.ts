@@ -17,7 +17,6 @@ invariant(user, `user with discord id ${discordId} not found`);
 const userId = user.id;
 
 await db.deleteFrom("Build").where("ownerId", "=", userId).execute();
-await db.deleteFrom("UserWeapon").where("userId", "=", userId).execute();
 await db.deleteFrom("User").where("id", "=", userId).execute();
 
 logger.info(`Deleted user with discord id: ${discordId}`);

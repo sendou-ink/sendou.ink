@@ -40,11 +40,6 @@ export const action: ActionFunction = async ({ request }) => {
 			? JSON.stringify({ subject: subjectPronoun, object: objectPronoun })
 			: null;
 
-	const weapons = data.weapons.map((w) => ({
-		weaponSplId: w.id,
-		isFavorite: w.isFavorite ? (1 as const) : (0 as const),
-	}));
-
 	const isSupporter = user.roles?.includes("SUPPORTER");
 	const isArtist = user.roles?.includes("ARTIST");
 
@@ -66,7 +61,6 @@ export const action: ActionFunction = async ({ request }) => {
 		customName: data.customName,
 		pronouns,
 		inGameName: data.inGameName,
-		weapons,
 		favoriteBadgeIds: limitedBadgeIds.length > 0 ? limitedBadgeIds : null,
 		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
 		hiddenTrophyIds:

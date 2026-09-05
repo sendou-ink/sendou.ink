@@ -38,10 +38,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				"PlusTier.tier",
 				jsonArrayFrom(
 					eb
-						.selectFrom("UserWeapon")
-						.select(["UserWeapon.isFavorite", "UserWeapon.weaponSplId"])
-						.whereRef("UserWeapon.userId", "=", "User.id")
-						.orderBy("UserWeapon.order", "asc"),
+						.selectFrom("UserWeaponPool")
+						.select(["UserWeaponPool.isFavorite", "UserWeaponPool.weaponSplId"])
+						.whereRef("UserWeaponPool.userId", "=", "User.id")
+						.orderBy("UserWeaponPool.sortOrder", "asc"),
 				).as("weapons"),
 				peakXpOverallSql().as("peakXp"),
 				jsonArrayFrom(

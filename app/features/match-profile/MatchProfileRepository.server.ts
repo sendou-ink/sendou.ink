@@ -23,6 +23,16 @@ export function findSettingsByUserId(userId: number) {
 		.executeTakeFirstOrThrow();
 }
 
+/** Match profile weapon pool of one user, with ten-star status. */
+export function findWeaponPoolByUserId(userId: number) {
+	return db
+		.selectFrom("User")
+		.select(({ eb }) => matchProfileWeapons(eb).as("weaponPool"))
+		.where("User.id", "=", userId)
+		.executeTakeFirstOrThrow()
+		.then((row) => row.weaponPool);
+}
+
 export async function updateOwnMatchProfile({
 	mapModePreferences,
 	vc,

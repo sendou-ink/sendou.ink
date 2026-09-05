@@ -124,10 +124,6 @@ export const userEditProfileBaseSchema = v.object({
 	hiddenTrophyIds: trophies({
 		label: "labels.profileHiddenTrophies",
 	}),
-	weapons: weaponPool({
-		label: "labels.weaponPool",
-		maxCount: USER.WEAPON_POOL_MAX_SIZE,
-	}),
 	showDiscordUniqueName: toggle({
 		label: "labels.profileShowDiscordUniqueName",
 		bottomText: "bottomTexts.profileShowDiscordUniqueName",

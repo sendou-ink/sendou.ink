@@ -8,7 +8,6 @@ import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRe
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import invariant from "~/utils/invariant";
-import { toDBBoolean } from "~/utils/sql";
 import {
 	ORG_ADMIN_TEST_ID,
 	REGULAR_USER_TEST_ID,
@@ -46,8 +45,6 @@ type Options = {
 	ban?: Omit<Parameters<typeof AdminRepository.banUser>[0], "userId">;
 	/** Division the user played their last season in. */
 	div?: NonNullable<Tables["User"]["div"]>;
-	/** Weapon pool, submitted as the user themselves. */
-	weapons?: Parameters<typeof UserRepository.updateOwnProfile>[0]["weapons"];
 	/** User card fields, submitted as the user themselves. */
 	card?: Partial<CardArgs>;
 	/** Replaces the user's widgets, i.e. their profile layout, in place of the default one. */
@@ -163,17 +160,9 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 		.where("id", "=", userId)
 		.executeTakeFirstOrThrow();
 
-	const weapons = await db
-		.selectFrom("UserWeapon")
-		.select(["weaponSplId", "isFavorite"])
-		.where("userId", "=", userId)
-		.orderBy("order", "asc")
-		.execute();
-
 	return {
 		...user,
 		pronouns: user.pronouns ? JSON.stringify(user.pronouns) : null,
-		weapons,
 	};
 }
 
@@ -229,14 +218,6 @@ function fakeProfile(): Partial<ProfileArgs> | null {
 		country: fakeCountry(),
 		inGameName: chance(0.5) ? SplatoonFaker.inGameName() : undefined,
 		pronouns: chance(0.2) ? fakePronouns() : undefined,
-		weapons: chance(0.6)
-			? SplatoonFaker.mainWeapons(
-					faker.helpers.arrayElement([1, 2, 3, 4, 5]),
-				).map((weaponSplId) => ({
-					weaponSplId,
-					isFavorite: toDBBoolean(faker.number.float(1) < 0.2),
-				}))
-			: [],
 	};
 }
 
@@ -341,7 +322,6 @@ export async function grant(
 		matchProfile,
 		ban,
 		div,
-		weapons,
 		card,
 		widgets,
 		preferences,
@@ -386,11 +366,6 @@ export async function grant(
 
 	if (div) {
 		await UserRepository.updateManyDivs([{ userId, div }]);
-	}
-
-	if (weapons) {
-		// the profile page saves every field at once; the rest is still empty on a fresh upsert
-		await actAs(userId, () => UserRepository.updateOwnProfile({ weapons }));
 	}
 
 	if (widgets) {

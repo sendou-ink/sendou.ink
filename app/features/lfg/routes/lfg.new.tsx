@@ -15,7 +15,7 @@ import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { LFG_PAGE, navIconUrl, userEditProfilePage } from "~/utils/urls";
+import { LFG_PAGE, MATCH_PROFILE_PAGE, navIconUrl } from "~/utils/urls";
 import { action } from "../actions/lfg.new.server";
 import { LFG, TEAM_POST_TYPES, TIMEZONES } from "../lfg-constants";
 import { lfgNewSchema } from "../lfg-schemas";
@@ -143,7 +143,6 @@ function ConditionalWeaponPool() {
 
 function WeaponPool() {
 	const { t } = useTranslation(["lfg"]);
-	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 
 	return (
@@ -161,8 +160,8 @@ function WeaponPool() {
 			</div>
 			<FormMessage type="info">
 				{t("lfg:new.editOn")}{" "}
-				<Link to={userEditProfilePage(user!)}>
-					{t("lfg:new.weaponPool.userProfile")}
+				<Link to={MATCH_PROFILE_PAGE}>
+					{t("lfg:new.weaponPool.matchProfile")}
 				</Link>
 			</FormMessage>
 		</div>

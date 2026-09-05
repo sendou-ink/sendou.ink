@@ -63,10 +63,6 @@ export default function UserEditPage() {
 		favoriteBadgeIds: data.favoriteBadgeIds ?? [],
 		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
 		hiddenTrophyIds: data.hiddenTrophyIds ?? [],
-		weapons: data.user.weapons.map((w) => ({
-			id: w.weaponSplId,
-			isFavorite: Boolean(w.isFavorite),
-		})),
 		showDiscordUniqueName: Boolean(data.user.showDiscordUniqueName),
 		commissionsOpen: Boolean(layoutData.user.commissionsOpen),
 		commissionText: layoutData.user.commissionText ?? "",
@@ -113,7 +109,6 @@ export default function UserEditPage() {
 							{data.ownedTrophies.length >= 1 ? (
 								<FormField name="hiddenTrophyIds" options={trophyOptions} />
 							) : null}
-							<FormField name="weapons" />
 							{data.discordUniqueName ? (
 								<FormField name="showDiscordUniqueName" />
 							) : null}

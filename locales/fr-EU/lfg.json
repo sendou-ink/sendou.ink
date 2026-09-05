@@ -24,7 +24,7 @@
 	"new.visibility.everyone": "Tout le monde",
 	"new.editOn": "Modifier sur votre",
 	"new.weaponPool.header": "Arme utilisé",
-	"new.weaponPool.userProfile": "profil",
+	"new.weaponPool.matchProfile": "",
 	"new.languages.header": "Langues",
 	"new.languages.placeholder": "Selectionner",
 	"new.languages.sqSettingsPage": "page de paramètres SendouQ"

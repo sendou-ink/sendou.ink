@@ -1033,14 +1033,6 @@ export interface UserSearch {
 	customUrl: GeneratedAlways<string | null>;
 }
 
-export interface UserWeapon {
-	createdAt: Generated<number>;
-	isFavorite: Generated<DBBoolean>;
-	order: number;
-	userId: number;
-	weaponSplId: MainWeaponId;
-}
-
 export interface UserWeaponPool {
 	userId: number;
 	sortOrder: number;
@@ -1474,7 +1466,6 @@ export interface DB {
 	UserResultHighlight: UserResultHighlight;
 	/** VIEW over `UnvalidatedUserSubmittedImage`, excludes images awaiting validation. Insert/update via `UnvalidatedUserSubmittedImage`. */
 	UserSubmittedImage: UserSubmittedImage;
-	UserWeapon: UserWeapon;
 	UserWeaponPool: UserWeaponPool;
 	TenStarWeapon: TenStarWeapon;
 	UserFriendCode: UserFriendCode;

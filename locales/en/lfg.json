@@ -24,7 +24,7 @@
 	"new.visibility.everyone": "Everyone",
 	"new.editOn": "Edit on your",
 	"new.weaponPool.header": "Weapon pool",
-	"new.weaponPool.userProfile": "user profile",
+	"new.weaponPool.matchProfile": "match profile",
 	"new.languages.header": "Languages",
 	"new.languages.placeholder": "Select all that apply",
 	"new.languages.sqSettingsPage": "SendouQ settings page"

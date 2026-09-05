@@ -429,26 +429,6 @@ export function matchProfileWeapons(eb: ExpressionBuilder<DB, any>) {
 	);
 }
 
-/** User profile weapons (from UserWeapon) with TenStarWeapon join. Correlates on "User"."id". */
-export function userProfileWeapons(eb: ExpressionBuilder<DB, any>) {
-	return jsonArrayFrom(
-		eb
-			.selectFrom("UserWeapon")
-			.leftJoin("TenStarWeapon", (join) =>
-				join
-					.onRef("TenStarWeapon.userId", "=", "UserWeapon.userId")
-					.onRef("TenStarWeapon.weaponSplId", "=", "UserWeapon.weaponSplId"),
-			)
-			.select([
-				"UserWeapon.weaponSplId",
-				"UserWeapon.isFavorite",
-				TEN_STAR_CASE.as("isTenStar"),
-			])
-			.whereRef("UserWeapon.userId", "=", "User.id")
-			.orderBy("UserWeapon.order", "asc"),
-	);
-}
-
 /**
  * Name shown inside tournaments: `User.tournamentName` falling back to `username`.
  * Prefer `commonUserSelect(eb, { inTournament: true })` when selecting the common user fields.
