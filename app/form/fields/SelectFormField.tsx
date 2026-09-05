@@ -183,7 +183,11 @@ function CustomSelect<V extends string>({
 				isDisabled={disabled}
 			>
 				{(item) => (
-					<SendouSelectItem id={item.id} textValue={item.textValue}>
+					<SendouSelectItem
+						key={item.id}
+						id={item.id}
+						textValue={item.textValue}
+					>
 						{item.description ? (
 							<span className={styles.twoLineItem}>
 								<span slot="label">{item.textValue}</span>

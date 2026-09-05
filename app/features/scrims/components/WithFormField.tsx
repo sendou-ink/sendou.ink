@@ -161,7 +161,11 @@ export function WithFormField({
 				onSelectionChange={handleSelectionChange}
 			>
 				{(option) => (
-					<SendouSelectItem id={option.key} textValue={option.textValue}>
+					<SendouSelectItem
+						key={option.key}
+						id={option.key}
+						textValue={option.textValue}
+					>
 						<div className={styles.option}>
 							{option.label}
 							{option.users ? (
