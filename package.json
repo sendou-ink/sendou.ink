@@ -20,6 +20,7 @@
 		"check-articles": "vite-node scripts/check-articles.ts",
 		"bench:db": "cross-env DB_PATH=db-prod.sqlite3 VITE_PROD_MODE=true vite-node scripts/benchmark-db.ts",
 		"compute-luti-divs": "vite-node scripts/compute-luti-divs.ts",
+		"download-prod-db": "node scripts/download-prod-db.ts",
 		"refresh-prod-db": "node scripts/refresh-prod-db.ts && pnpm run migrate:prod",
 		"biome:check": "biome check --error-on-warnings .",
 		"biome:fix": "biome check --error-on-warnings --write .",
