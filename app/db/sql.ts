@@ -25,6 +25,9 @@ sql.exec("PRAGMA journal_mode = WAL");
 sql.exec("PRAGMA synchronous = NORMAL");
 sql.exec("PRAGMA foreign_keys = ON");
 sql.exec("PRAGMA busy_timeout = 5000");
+// a checkpoint only rewinds the WAL, without this the file keeps the high water mark of the
+// largest transaction ever written (a VACUUM rewrites the whole db through it) forever
+sql.exec("PRAGMA journal_size_limit = 67108864");
 // 64MB page cache (default is 2MB)
 sql.exec("PRAGMA cache_size = -65536");
 // reads straight from the OS page cache without read() syscalls (https://sqlite.org/mmap.html)
