@@ -7,7 +7,10 @@ import {
 import type { SerializeFrom } from "~/utils/remix";
 import { paginate } from "~/utils/remix.server";
 import { tournamentTeamsSearchParams } from "../tournament-search-params";
-import { getBracketProgressionLabel } from "../tournament-utils";
+import {
+	getBracketProgressionLabel,
+	seedsByStartingBracket,
+} from "../tournament-utils";
 
 export type TournamentTeamsLoaderData = SerializeFrom<typeof loader>;
 
@@ -43,32 +46,20 @@ export const loader = async ({ request, params, url }: LoaderFunctionArgs) => {
 };
 
 function teamSeedInfo(tournament: Tournament) {
-	const perBracketSeedCounters = new Map<number, number>();
+	const seedByTeamId = seedsByStartingBracket(tournament.ctx.teams);
 
 	return new Map(
-		tournament.ctx.teams.map((team, globalIndex) => {
-			if (!tournament.isMultiStartingBracket) {
-				return [
-					team.id,
-					{
-						seed: globalIndex + 1,
-						bracketLabel: undefined as string | undefined,
-					},
-				] as const;
-			}
-
-			const bracketIdx = team.startingBracketIdx ?? 0;
-			const currentSeed = (perBracketSeedCounters.get(bracketIdx) ?? 0) + 1;
-			perBracketSeedCounters.set(bracketIdx, currentSeed);
-
+		tournament.ctx.teams.map((team) => {
 			return [
 				team.id,
 				{
-					seed: currentSeed,
-					bracketLabel: getBracketProgressionLabel(
-						bracketIdx,
-						tournament.ctx.settings.bracketProgression,
-					),
+					seed: seedByTeamId.get(team.id)!,
+					bracketLabel: tournament.isMultiStartingBracket
+						? getBracketProgressionLabel(
+								team.startingBracketIdx ?? 0,
+								tournament.ctx.settings.bracketProgression,
+							)
+						: undefined,
 				},
 			] as const;
 		}),

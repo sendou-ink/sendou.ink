@@ -2,8 +2,14 @@ import { sql } from "kysely";
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
 import { db } from "~/db/sql";
+import type { TournamentSettings } from "~/db/tables-json";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import {
+	seedsByStartingBracket,
+	sortTeamsBySeeding,
+} from "~/features/tournament/tournament-utils";
+import * as Progression from "~/features/tournament-bracket/core/Progression";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
 import { nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -28,6 +34,19 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
+	const tournament = await db
+		.selectFrom("Tournament")
+		.select(({ exists, selectFrom }) => [
+			"Tournament.settings",
+			exists(
+				selectFrom("TournamentStage")
+					.select("TournamentStage.id")
+					.where("TournamentStage.tournamentId", "=", id),
+			).as("hasStarted"),
+		])
+		.where("Tournament.id", "=", id)
+		.executeTakeFirst();
+
 	const teams = await db
 		.selectFrom("TournamentTeam")
 		.leftJoin("UserSubmittedImage", "avatarImgId", "UserSubmittedImage.id")
@@ -44,6 +63,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			"TournamentTeam.id",
 			"TournamentTeam.name",
 			"TournamentTeam.seed",
+			"TournamentTeam.startingBracketIdx",
 			"TournamentTeam.createdAt",
 			"TournamentTeamCheckIn.checkedInAt",
 			concatUserSubmittedImagePrefix(eb.ref("UserSubmittedImage.url")).as(
@@ -117,6 +137,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const friendCodes =
 		await TournamentRepository.findFriendCodesByTournamentId(id);
 
+	const seedByTeamId =
+		tournament?.hasStarted && tournament.settings
+			? seedsOfStartedTournament({ teams, settings: tournament.settings })
+			: null;
+
 	const result: GetTournamentTeamsResponse = teams.map((team) => {
 		return {
 			id: team.id,
@@ -126,7 +151,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				team.team?.customUrl && !team.team.deletedAt
 					? `https://sendou.ink/t/${team.team.customUrl}`
 					: null,
-			seed: team.seed,
+			seed: seedByTeamId ? (seedByTeamId.get(team.id) ?? null) : team.seed,
 			registeredAt: databaseTimestampToDate(team.createdAt).toISOString(),
 			checkedIn: Boolean(team.checkedInAt),
 			seedingPower: {
@@ -172,6 +197,58 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return Response.json(result);
 };
+
+/**
+ * Seeds as the site shows them once the tournament has started: all teams are put in seed order, then
+ * those who did not check in are left out and the rest numbered per starting bracket, the same
+ * derivation the tournament pages do.
+ */
+function seedsOfStartedTournament({
+	teams,
+	settings,
+}: {
+	teams: Array<{
+		id: number;
+		seed: number | null;
+		createdAt: number;
+		startingBracketIdx: number | null;
+		checkedInAt: number | null;
+		members: Array<{
+			userId: number;
+			rankedOrdinal: number | null;
+			unrankedOrdinal: number | null;
+		}>;
+	}>;
+	settings: TournamentSettings;
+}) {
+	const isMultiStartingBracket =
+		Progression.startingBrackets(settings.bracketProgression).length > 1;
+
+	const teamsInSeedOrder = sortTeamsBySeeding(
+		teams.map((team) => ({
+			id: team.id,
+			seed: team.seed,
+			createdAt: team.createdAt,
+			checkedInAt: team.checkedInAt,
+			startingBracketIdx: isMultiStartingBracket
+				? team.startingBracketIdx
+				: null,
+			memberUserIds: team.members.map((member) => member.userId),
+			avgSeedingSkillOrdinal: nullifyingAvg(
+				team.members
+					.map((member) =>
+						settings.isRanked ? member.rankedOrdinal : member.unrankedOrdinal,
+					)
+					.filter((ordinal) => typeof ordinal === "number"),
+			),
+		})),
+		settings.minMembersPerTeam ?? 4,
+	);
+
+	return seedsByStartingBracket(
+		teamsInSeedOrder.filter((team) => team.checkedInAt),
+	);
+}
 
 function toSeedingPowerSP(ordinals: (number | null)[]) {
 	const avg = nullifyingAvg(

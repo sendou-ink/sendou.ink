@@ -374,6 +374,27 @@ function orderTeamsOfBracket<T extends TeamForOrdering>(
 	return [...result, ...appended];
 }
 
+/**
+ * Seed numbers of teams already in {@link sortTeamsBySeeding} order, counted from 1 within each
+ * starting bracket. Teams that get no seed (e.g. the no-shows of a started tournament) are left out
+ * of the input after sorting, never before, so that the rest keep the order the sort gave them.
+ */
+export function seedsByStartingBracket(
+	teamsInSeedOrder: Array<{ id: number; startingBracketIdx: number | null }>,
+) {
+	const seedCounters = new Map<number, number>();
+
+	return new Map(
+		teamsInSeedOrder.map((team) => {
+			const startingBracketIdx = team.startingBracketIdx ?? 0;
+			const seed = (seedCounters.get(startingBracketIdx) ?? 0) + 1;
+			seedCounters.set(startingBracketIdx, seed);
+
+			return [team.id, seed] as const;
+		}),
+	);
+}
+
 export function findTeamInsertPosition<T extends TeamForOrdering>(
 	existingOrder: number[],
 	newTeam: T,

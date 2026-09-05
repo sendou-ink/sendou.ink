@@ -8,6 +8,7 @@ import {
 	compareTeamsForOrdering,
 	findTeamInsertPosition,
 	getBracketProgressionLabel,
+	seedsByStartingBracket,
 	sortTeamsBySeeding,
 	splitTournamentName,
 	type TeamForOrdering,
@@ -251,6 +252,36 @@ describe("sortTeamsBySeeding", () => {
 		sortTeamsBySeeding(teams, MIN_MEMBERS);
 
 		expect(teams[0].id).toBe(2);
+	});
+});
+
+describe("seedsByStartingBracket", () => {
+	test("numbers teams from 1 in the given order", () => {
+		const seeds = seedsByStartingBracket([
+			teamForOrdering(7),
+			teamForOrdering(3),
+			teamForOrdering(5),
+		]);
+
+		expect([...seeds]).toEqual([
+			[7, 1],
+			[3, 2],
+			[5, 3],
+		]);
+	});
+
+	test("restarts the count for each starting bracket", () => {
+		const seeds = seedsByStartingBracket([
+			teamForOrdering(1, { startingBracketIdx: 0 }),
+			teamForOrdering(2, { startingBracketIdx: 0 }),
+			teamForOrdering(3, { startingBracketIdx: 1 }),
+		]);
+
+		expect([...seeds]).toEqual([
+			[1, 1],
+			[2, 2],
+			[3, 1],
+		]);
 	});
 });
 

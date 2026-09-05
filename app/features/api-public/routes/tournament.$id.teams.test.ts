@@ -1,4 +1,4 @@
-import { describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test } from "vitest";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
@@ -8,6 +8,8 @@ import type { GetTournamentTeamsResponse } from "../schema";
 import { loader } from "./tournament.$id.teams";
 
 const TEAM_NAME = "Team Olive";
+
+const users = UserFactory.pool();
 
 const teamsLoader = wrappedLoader<Response>({ loader });
 
@@ -37,7 +39,27 @@ const registeredPlayer = async () => {
 	return { organizer, player, tournament, team };
 };
 
+/** Registers three teams, the second of which never checks in, then starts the bracket. */
+const startedTournamentWithNoShow = async () => {
+	const tournament = await TournamentFactory.create({ authorId: users.id(1) });
+
+	for (const [index, ownerUserId] of users.ids().slice(1).entries()) {
+		await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds: [ownerUserId] },
+			{ isCheckedIn: index !== 1 },
+		);
+	}
+
+	await TournamentFactory.startBracket(tournament.id);
+
+	return { tournament };
+};
+
 describe("GET /api/tournament/:id/teams", () => {
+	beforeEach(async () => {
+		await users.create(4);
+	});
+
 	test("returns the tournament name organizers gave a player instead of their username", async () => {
 		const { organizer, player, tournament, team } = await registeredPlayer();
 
@@ -68,5 +90,13 @@ describe("GET /api/tournament/:id/teams", () => {
 		const teams = await fetchTeams(tournament.id);
 
 		expect(teams[0].members[0].name).toBe("xXsplatlordXx");
+	});
+
+	test("skips teams that did not check in when numbering the seeds of a started tournament", async () => {
+		const { tournament } = await startedTournamentWithNoShow();
+
+		const teams = await fetchTeams(tournament.id);
+
+		expect(teams.map((team) => team.seed)).toEqual([1, null, 2]);
 	});
 });
