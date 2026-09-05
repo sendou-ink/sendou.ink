@@ -1,8 +1,10 @@
 import * as v from "valibot";
 import { ART_SOURCES } from "~/features/art/art-types";
+import { BADGE } from "~/features/badges/badges-constants";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
 import {
 	array,
+	badges,
 	customField,
 	numberField,
 	select,
@@ -126,6 +128,13 @@ export const tierListSchema = v.object({
 	}),
 });
 
+export const badgesOwnedSchema = v.object({
+	favoriteBadgeIds: badges({
+		label: "labels.profileFavoriteBadges",
+		maxCount: BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1,
+	}),
+});
+
 const gameBadgeId = v.pipe(
 	v.string(),
 	v.check((val) => (GAME_BADGE_IDS as readonly string[]).includes(val)),
@@ -157,6 +166,7 @@ const WIDGET_FORM_SCHEMAS: Record<string, FormObjectSchema> = {
 	art: artSchema,
 	links: linksSchema,
 	"tier-list": tierListSchema,
+	"badges-owned": badgesOwnedSchema,
 	"game-badges": gameBadgesSchema,
 	"game-badges-small": gameBadgesSmallSchema,
 };

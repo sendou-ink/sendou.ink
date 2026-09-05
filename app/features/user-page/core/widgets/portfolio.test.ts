@@ -5,7 +5,7 @@ import type { StoredWidget } from "./types";
 const MAIN_WIDGETS: StoredWidget[] = [
 	{ id: "weapon-pool" },
 	{ id: "trophies-owned" },
-	{ id: "badges-owned" },
+	{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
 	{ id: "badges-authored" },
 	{ id: "badges-managed" },
 	{ id: "builds" },

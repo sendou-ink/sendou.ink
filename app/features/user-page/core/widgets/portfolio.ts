@@ -5,6 +5,7 @@ import type { FormObjectSchema } from "~/form/types";
 import type { StoredWidget } from "./types";
 import {
 	artSchema,
+	badgesOwnedSchema,
 	bioMdSchema,
 	bioSchema,
 	favoriteStageSchema,
@@ -80,7 +81,12 @@ export const ALL_WIDGETS = {
 	],
 	trophies: [defineWidget({ id: "trophies-owned", slot: "main" })],
 	badges: [
-		defineWidget({ id: "badges-owned", slot: "main" }),
+		defineWidget({
+			id: "badges-owned",
+			slot: "main",
+			schema: badgesOwnedSchema,
+			defaultSettings: { favoriteBadgeIds: [] },
+		}),
 		defineWidget({ id: "badges-authored", slot: "main" }),
 		defineWidget({ id: "badges-managed", slot: "main" }),
 	],
@@ -163,7 +169,7 @@ export const ALL_WIDGETS = {
 export const DEFAULT_WIDGETS: StoredWidget[] = [
 	{ id: "weapon-pool" },
 	{ id: "x-rank-peaks", settings: { division: "both" } },
-	{ id: "badges-owned" },
+	{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
 	{ id: "bio", settings: { bio: "" } },
 	{ id: "teams" },
 	{ id: "social-links" },

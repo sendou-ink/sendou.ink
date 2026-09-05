@@ -1,11 +1,15 @@
 import { useTranslation } from "react-i18next";
+import { useLoaderData } from "react-router";
 import type { Tables } from "~/db/tables";
+import { BADGE } from "~/features/badges/badges-constants";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
+import { useHasRole } from "~/modules/permissions/hooks";
 import {
 	getWidgetFormSchema,
 	TIMEZONE_OPTIONS,
 } from "../core/widgets/widget-form-schemas";
+import type { loader } from "../loaders/u.$identifier.edit-widgets.server";
 import { USER } from "../user-page-constants";
 import { GameBadgeSelectField } from "./GameBadgeSelectField";
 
@@ -89,6 +93,8 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 			return <FormField name="links" />;
 		case "tier-list":
 			return <FormField name="searchParams" />;
+		case "badges-owned":
+			return <FavoriteBadgesField />;
 		case "game-badges":
 			return (
 				<FormField name="badgeIds">
@@ -114,6 +120,19 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 		default:
 			return null;
 	}
+}
+
+function FavoriteBadgesField() {
+	const data = useLoaderData<typeof loader>();
+	const isSupporter = useHasRole("SUPPORTER");
+
+	return (
+		<FormField
+			name="favoriteBadgeIds"
+			options={data.ownedBadges}
+			maxCount={isSupporter ? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1 : 1}
+		/>
+	);
 }
 
 const SENS_OPTIONS = [

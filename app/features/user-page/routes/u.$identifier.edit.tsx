@@ -2,7 +2,6 @@ import { Trans, useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
-import { BADGE } from "~/features/badges/badges-constants";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
@@ -36,13 +35,6 @@ export default function UserEditPage() {
 
 	const countryOptions = useCountryOptions();
 
-	const badgeOptions = data.user.badges.map((badge) => ({
-		id: badge.id,
-		displayName: badge.displayName,
-		code: badge.code,
-		hue: badge.hue,
-	}));
-
 	const trophyOptions = data.ownedTrophies.map((trophy) => ({
 		id: trophy.id,
 		name: trophy.name,
@@ -60,7 +52,6 @@ export default function UserEditPage() {
 		inGameName: data.user.inGameName ?? "",
 		pronouns: pronounsDefaultValue(data.user.pronouns),
 		country: data.user.country ?? null,
-		favoriteBadgeIds: data.favoriteBadgeIds ?? [],
 		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
 		hiddenTrophyIds: data.hiddenTrophyIds ?? [],
 		commissionsOpen: Boolean(layoutData.user.commissionsOpen),
@@ -89,15 +80,6 @@ export default function UserEditPage() {
 							<FormField name="inGameName" />
 							<FormField name="pronouns" />
 							<FormField name="country" options={countryOptions} />
-							{data.user.badges.length >= 2 ? (
-								<FormField
-									name="favoriteBadgeIds"
-									options={badgeOptions}
-									maxCount={
-										isSupporter ? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1 : 1
-									}
-								/>
-							) : null}
 							{isSupporter && data.ownedTrophies.length >= 2 ? (
 								<FormField
 									name="favoriteTrophyIds"

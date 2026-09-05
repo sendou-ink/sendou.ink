@@ -1,6 +1,5 @@
 import { type ActionFunction, redirect } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
-import { BADGE } from "~/features/badges/badges-constants";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { clearTournamentDataCache } from "~/features/tournament-bracket/core/Tournament.server";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
@@ -43,11 +42,6 @@ export const action: ActionFunction = async ({ request }) => {
 	const isSupporter = user.roles?.includes("SUPPORTER");
 	const isArtist = user.roles?.includes("ARTIST");
 
-	const maxBadgeCount = isSupporter
-		? BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1
-		: 1;
-	const limitedBadgeIds = data.favoriteBadgeIds.slice(0, maxBadgeCount);
-
 	const hiddenTrophySet = new Set(data.hiddenTrophyIds);
 	const limitedTrophyIds = isSupporter
 		? data.favoriteTrophyIds
@@ -61,7 +55,6 @@ export const action: ActionFunction = async ({ request }) => {
 		customName: data.customName,
 		pronouns,
 		inGameName: data.inGameName,
-		favoriteBadgeIds: limitedBadgeIds.length > 0 ? limitedBadgeIds : null,
 		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
 		hiddenTrophyIds:
 			data.hiddenTrophyIds.length > 0 ? data.hiddenTrophyIds : null,

@@ -1,12 +1,12 @@
 import { type Kysely, sql } from "kysely";
 
 /**
- * The profile page is widget based for everyone from now on, and bio & sensitivity
- * live in widget settings rather than in their own `User` columns. Users who have
- * either of those saved get the default layout written out with the values carried
- * over, so their profile keeps showing what it showed before.
+ * The profile page is widget based for everyone from now on, and bio, sensitivity &
+ * favorite badges live in widget settings rather than in their own `User` columns.
+ * Users who have any of those saved get the default layout written out with the values
+ * carried over, so their profile keeps showing what it showed before.
  *
- * Users without a bio or sensitivity keep no rows of their own: they render the
+ * Users without any of them keep no rows of their own: they render the
  * default layout, which stays in sync as the default changes. Users who have already
  * picked their widgets are left alone.
  *
@@ -28,6 +28,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 				"User"."bio",
 				"User"."motionSens",
 				"User"."stickSens",
+				"User"."favoriteBadgeIds",
 				"User"."discordUniqueName",
 				"User"."showDiscordUniqueName"
 			from "User"
@@ -35,6 +36,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 					("User"."bio" is not null and "User"."bio" != '')
 					or "User"."motionSens" is not null
 					or "User"."stickSens" is not null
+					or "User"."favoriteBadgeIds" is not null
 				)
 				and not exists (
 					select 1 from "UserWidget" where "UserWidget"."userId" = "User"."id"
@@ -94,6 +96,21 @@ export async function up(db: Kysely<any>): Promise<void> {
 	`.execute(db);
 
 	await sql`
+		update "UserWidget"
+		set "widget" = json_object(
+			'id', 'badges-owned',
+			'settings', json_object(
+				'favoriteBadgeIds',
+				json(coalesce(
+					(select "User"."favoriteBadgeIds" from "User" where "User"."id" = "UserWidget"."userId"),
+					'[]'
+				))
+			)
+		)
+		where json_extract("widget", '$.id') = 'badges-owned'
+	`.execute(db);
+
+	await sql`
 		update "User"
 		set "preferences" = json_remove("preferences", '$.newProfileEnabled')
 		where json_extract("preferences", '$.newProfileEnabled') is not null
@@ -105,6 +122,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 		"stickSens",
 		"battlefy",
 		"showDiscordUniqueName",
+		"favoriteBadgeIds",
 	]) {
 		await db.schema.alterTable("User").dropColumn(column).execute();
 	}

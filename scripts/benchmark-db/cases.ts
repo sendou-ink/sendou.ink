@@ -221,7 +221,7 @@ export function buildCases(fx: Fixtures): {
 		BadgeRepository.findManagedByUserId(userId),
 	);
 	add("BadgeRepository.findByOwnerUserId", fx.badgeOwnerUserId, (userId) =>
-		BadgeRepository.findByOwnerUserId(userId),
+		BadgeRepository.findByOwnerUserId(userId, []),
 	);
 	add("BadgeRepository.findByAuthorUserId", fx.badgeAuthorId, (userId) =>
 		BadgeRepository.findByAuthorUserId(userId),
@@ -1329,9 +1329,6 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("UserRepository.findProfileByIdentifier", fx.heavyUser, (user) =>
 		UserRepository.findProfileByIdentifier(user.identifier),
-	);
-	add("UserRepository.findOwnedBadgesByUserId", fx.badgeOwnerUserId, (userId) =>
-		UserRepository.findOwnedBadgesByUserId(userId),
 	);
 	add("UserRepository.findStoredWidgetsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findStoredWidgetsByUserId(user.id),

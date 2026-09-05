@@ -25,8 +25,11 @@ export const WIDGET_LOADERS = {
 
 		return TrophyRepository.findByOwnerUserId(userId);
 	},
-	"badges-owned": async (userId: number) => {
-		return BadgeRepository.findByOwnerUserId(userId);
+	"badges-owned": async (
+		userId: number,
+		settings: ExtractWidgetSettings<"badges-owned">,
+	) => {
+		return BadgeRepository.findByOwnerUserId(userId, settings.favoriteBadgeIds);
 	},
 	"badges-authored": async (userId: number) => {
 		return BadgeRepository.findByAuthorUserId(userId);

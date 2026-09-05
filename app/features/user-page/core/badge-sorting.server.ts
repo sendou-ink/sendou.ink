@@ -1,39 +1,32 @@
 import { isSupporter } from "~/modules/permissions/utils";
 
 interface SortBadgesByFavoritesArgs<T extends { id: number }[]> {
-	favoriteBadgeIds: number[] | null;
+	favoriteBadgeIds: number[];
 	badges: T;
 	patronTier: number | null;
 }
 
+/**
+ * Favorite badges first, in the order the user picked them, the rest by descending id.
+ * Favorites no longer owned are ignored and non-supporters get only one, handling lapsed
+ * supporter status.
+ */
 export function sortBadgesByFavorites<T extends { id: number }[]>({
 	favoriteBadgeIds,
 	badges,
 	patronTier,
-}: SortBadgesByFavoritesArgs<T>): {
-	badges: T;
-	favoriteBadgeIds: number[] | null;
-} {
-	// filter out favorite badges no longer owner of
-	let filteredFavoriteIds =
-		favoriteBadgeIds?.filter((badgeId) =>
-			badges.some((badge) => badge.id === badgeId),
-		) ?? null;
+}: SortBadgesByFavoritesArgs<T>): T {
+	const ownedFavoriteIds = favoriteBadgeIds.filter((badgeId) =>
+		badges.some((badge) => badge.id === badgeId),
+	);
 
-	if (filteredFavoriteIds?.length === 0) {
-		filteredFavoriteIds = null;
-	}
+	const effectiveFavoriteIds = isSupporter({ patronTier })
+		? ownedFavoriteIds
+		: ownedFavoriteIds.slice(0, 1);
 
-	filteredFavoriteIds = isSupporter({ patronTier })
-		? filteredFavoriteIds
-		: filteredFavoriteIds
-			? [filteredFavoriteIds[0]]
-			: null;
-
-	// non-supporters can only have one favorite badge, handle losing supporter status
-	const sortedBadges = badges.toSorted((a, b) => {
-		const aIdx = filteredFavoriteIds?.indexOf(a.id) ?? -1;
-		const bIdx = filteredFavoriteIds?.indexOf(b.id) ?? -1;
+	return badges.toSorted((a, b) => {
+		const aIdx = effectiveFavoriteIds.indexOf(a.id);
+		const bIdx = effectiveFavoriteIds.indexOf(b.id);
 
 		if (aIdx !== bIdx) {
 			if (aIdx === -1) return 1;
@@ -44,6 +37,4 @@ export function sortBadgesByFavorites<T extends { id: number }[]>({
 
 		return b.id - a.id;
 	}) as T;
-
-	return { badges: sortedBadges, favoriteBadgeIds: filteredFavoriteIds };
 }

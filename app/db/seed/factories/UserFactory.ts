@@ -151,7 +151,6 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 			"inGameName",
 			"commissionText",
 			"commissionsOpen",
-			"favoriteBadgeIds",
 			"favoriteTrophyIds",
 			"hiddenTrophyIds",
 			"customAvatarImgId",

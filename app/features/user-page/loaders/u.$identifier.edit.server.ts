@@ -30,7 +30,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	return {
 		user: userProfile,
-		favoriteBadgeIds: userProfile.favoriteBadgeIds,
 		favoriteTrophyIds: userProfile.favoriteTrophyIds,
 		hiddenTrophyIds: userProfile.hiddenTrophyIds,
 		ownedTrophies,

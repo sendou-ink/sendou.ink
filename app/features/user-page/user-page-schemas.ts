@@ -1,12 +1,10 @@
 import * as v from "valibot";
-import { BADGE } from "~/features/badges/badges-constants";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
 import {
 	OBJECT_PRONOUNS,
 	SUBJECT_PRONOUNS,
 } from "~/features/user-page/user-page-constants";
 import {
-	badges,
 	checkboxGroup,
 	customField,
 	dualSelectOptional,
@@ -112,10 +110,6 @@ export const userEditProfileBaseSchema = v.object({
 	country: selectDynamicOptional({
 		label: "labels.profileCountry",
 		searchable: true,
-	}),
-	favoriteBadgeIds: badges({
-		label: "labels.profileFavoriteBadges",
-		maxCount: BADGE.SMALL_BADGES_PER_DISPLAY_PAGE + 1,
 	}),
 	favoriteTrophyIds: trophies({
 		label: "labels.profileFavoriteTrophies",

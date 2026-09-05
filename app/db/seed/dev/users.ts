@@ -5,6 +5,7 @@ import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-
 import { LUTI_DIVS } from "~/features/scrims/scrims-constants";
 import { PRESET_COLORS } from "~/features/tier-list-maker/tier-list-maker-constants";
 import { DEFAULT_WIDGETS } from "~/features/user-page/core/widgets/portfolio";
+import type { StoredWidget } from "~/features/user-page/core/widgets/types";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -241,9 +242,7 @@ function migratedWidgets(): NonNullable<
 }
 
 /** The one seeded supporter's widgets: both slots filled to the supporter limits. */
-function nzapWidgets(): NonNullable<
-	Parameters<typeof UserFactory.create>[1]
->["widgets"] {
+export function nzapWidgets(): StoredWidget[] {
 	return [
 		{ id: "bio-md", settings: { bio: showcaseNames.maxLengthBio() } },
 		{ id: "teams" },
@@ -256,7 +255,7 @@ function nzapWidgets(): NonNullable<
 		{ id: "timezone", settings: { timezone: "Europe/Stockholm" } },
 		{ id: "social-links" },
 		{ id: "weapon-pool" },
-		{ id: "badges-owned" },
+		{ id: "badges-owned", settings: { favoriteBadgeIds: [] } },
 		{ id: "trophies-owned" },
 		{ id: "art", settings: { source: "ALL" } },
 		{ id: "x-rank-peaks", settings: { division: "both" } },

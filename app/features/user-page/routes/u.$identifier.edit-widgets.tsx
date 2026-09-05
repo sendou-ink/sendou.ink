@@ -514,6 +514,7 @@ function DraggableWidgetItem({
 							size="miniscule"
 							variant="outlined"
 							onClick={() => onToggleExpanded(widget.id)}
+							testId={`widget-settings-${widget.id}`}
 						>
 							{isExpanded
 								? t("common:actions.hide")

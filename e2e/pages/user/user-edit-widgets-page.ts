@@ -11,6 +11,8 @@ export class UserEditWidgetsPage {
 		this.page = page;
 		this.locators = {
 			saveButton: page.getByRole("button", { name: "Save", exact: true }),
+			badgesSelector: page.getByTestId("badges-selector"),
+			badgeDisplay: page.getByTestId("badge-display"),
 		};
 	}
 
@@ -38,6 +40,16 @@ export class UserEditWidgetsPage {
 	/** Removes one of the selected widgets by its id. */
 	async removeWidget(widgetId: string) {
 		await this.page.getByTestId(`remove-widget-${widgetId}`).click();
+	}
+
+	/** Expands the settings of one of the selected widgets. */
+	async openWidgetSettings(widgetId: string) {
+		await this.page.getByTestId(`widget-settings-${widgetId}`).click();
+	}
+
+	/** Picks one favorite badge in the badges widget's settings. */
+	async selectFavoriteBadge(badgeId: number) {
+		await this.locators.badgesSelector.selectOption(String(badgeId));
 	}
 
 	/** Fills the bio widget's settings, expanded right after adding it. */

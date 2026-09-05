@@ -36,7 +36,6 @@ import {
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
-import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import {
 	DEFAULT_WIDGETS,
 	findWidgetById,
@@ -195,7 +194,6 @@ export async function findProfileByIdentifier(identifier: string) {
 			"User.customName",
 			"User.discordName",
 			"User.discordUniqueName",
-			"User.favoriteBadgeIds",
 			"User.favoriteTrophyIds",
 			"User.hiddenTrophyIds",
 			"User.patronTier",
@@ -232,36 +230,12 @@ export async function findProfileByIdentifier(identifier: string) {
 		return null;
 	}
 
-	// queried separately with a constant userId, see findOwnedBadgesByUserId
-	const badges = await findOwnedBadgesByUserId(row.id);
-
 	return {
 		...row,
 		team: row.teams.find((t) => t.isMainTeam),
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
-		...sortBadgesByFavorites({ ...row, badges }),
 	};
-}
-
-/**
- * Takes a constant userId on purpose: correlating to an outer "User"."id" would stop SQLite
- * pushing the predicate into both arms of the BadgeOwner view, materializing the full view.
- */
-export function findOwnedBadgesByUserId(userId: number) {
-	return db
-		.selectFrom("BadgeOwner")
-		.innerJoin("Badge", "Badge.id", "BadgeOwner.badgeId")
-		.select(({ fn }) => [
-			fn.sum<number>("BadgeOwner.count").as("count"),
-			"Badge.id",
-			"Badge.displayName",
-			"Badge.code",
-			"Badge.hue",
-		])
-		.where("BadgeOwner.userId", "=", userId)
-		.groupBy("BadgeOwner.badgeId")
-		.execute();
 }
 
 export async function upsertWidgets(
@@ -1225,7 +1199,6 @@ type UpdateProfileArgs = Pick<
 	| "commissionText"
 	| "commissionsOpen"
 > & {
-	favoriteBadgeIds?: number[] | null;
 	favoriteTrophyIds?: number[] | null;
 	hiddenTrophyIds?: number[] | null;
 	customAvatarImgId?: number | null;
@@ -1258,9 +1231,6 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				customName: args.customName,
 				pronouns: args.pronouns,
 				inGameName: args.inGameName,
-				favoriteBadgeIds: args.favoriteBadgeIds
-					? JSON.stringify(args.favoriteBadgeIds)
-					: null,
 				favoriteTrophyIds: args.favoriteTrophyIds
 					? JSON.stringify(args.favoriteTrophyIds)
 					: null,

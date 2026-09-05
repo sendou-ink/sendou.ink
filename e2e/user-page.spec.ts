@@ -11,7 +11,6 @@ import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { SettingsPage } from "./pages/settings/settings-page";
-import { UserEditProfilePage } from "./pages/user/user-edit-profile-page";
 import { UserEditWidgetsPage } from "./pages/user/user-edit-widgets-page";
 import { UserPage } from "./pages/user/user-page";
 import { UserSeasonsPage } from "./pages/user/user-seasons-page";
@@ -68,11 +67,14 @@ test.describe("User page", () => {
 
 		await impersonate(page, NZAP_TEST_ID);
 
-		const editProfile = new UserEditProfilePage(page);
-		await editProfile.goto(NZAP_TEST_DISCORD_ID);
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(NZAP_TEST_DISCORD_ID);
 
-		await editProfile.selectFavoriteBadge(firstBadge.id);
-		await editProfile.save();
+		// the default layout's bio widget is empty, and an empty bio blocks saving
+		await editWidgets.removeWidget("bio");
+		await editWidgets.openWidgetSettings("badges-owned");
+		await editWidgets.selectFavoriteBadge(firstBadge.id);
+		await editWidgets.save();
 
 		const userPage = new UserPage(page);
 		await userPage.goto(NZAP_TEST_DISCORD_ID);
@@ -95,13 +97,15 @@ test.describe("User page", () => {
 
 		await impersonate(page);
 
-		const editProfile = new UserEditProfilePage(page);
-		await editProfile.goto(ADMIN_DISCORD_ID);
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(ADMIN_DISCORD_ID);
 
-		await editProfile.selectFavoriteBadge(badges[0].id);
-		await expect(editProfile.locators.badgeDisplay).toBeVisible();
-		await editProfile.selectFavoriteBadge(badges[1].id);
-		await editProfile.save();
+		await editWidgets.removeWidget("bio");
+		await editWidgets.openWidgetSettings("badges-owned");
+		await editWidgets.selectFavoriteBadge(badges[0].id);
+		await expect(editWidgets.locators.badgeDisplay).toBeVisible();
+		await editWidgets.selectFavoriteBadge(badges[1].id);
+		await editWidgets.save();
 
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
