@@ -31,6 +31,11 @@ export class UserPage {
 		await navigate({ page: this.page, url: userPage({ discordId }) });
 	}
 
+	/** Navigates with any of the identifiers the page accepts: user id, Discord id or custom URL. */
+	async gotoWithIdentifier(identifier: string | number) {
+		await navigate({ page: this.page, url: `/u/${identifier}` });
+	}
+
 	badgeImage(displayName: string) {
 		return this.page.getByAltText(displayName, { exact: true });
 	}

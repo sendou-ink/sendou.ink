@@ -339,6 +339,26 @@ test.describe("User page", () => {
 		await seasonsPage.openStatsTab("Teammates");
 		await expect(seasonsPage.playerLink("N-ZAP")).toBeVisible();
 	});
+
+	test("redirects to the preferred identifier", async ({ page, factories }) => {
+		const customUrl = "zapfish";
+		await factories.UserFactory.updateProfile(NZAP_TEST_ID, { customUrl });
+
+		const userPage = new UserPage(page);
+
+		await userPage.gotoWithIdentifier(NZAP_TEST_ID);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		await userPage.gotoWithIdentifier(NZAP_TEST_DISCORD_ID);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		await userPage.gotoWithIdentifier(customUrl);
+		await expect(page).toHaveURL(`/u/${customUrl}`);
+
+		// without a custom URL the Discord id is the preferred identifier
+		await userPage.gotoWithIdentifier(ADMIN_ID);
+		await expect(page).toHaveURL(`/u/${ADMIN_DISCORD_ID}`);
+	});
 });
 
 /**
