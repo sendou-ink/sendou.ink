@@ -148,7 +148,8 @@ const LOHI_TOKEN_HEADER_NAME = "Lohi-Token";
 /** A `returnTo` form value narrowed to a same-site path, so that redirecting to it can not leave the site. */
 export function safeReturnTo(value: FormDataEntryValue | null) {
 	if (typeof value !== "string") return null;
-	if (!value.startsWith("/") || value.startsWith("//")) return null;
+	// a second slash or backslash makes it a protocol-relative URL to another host
+	if (!/^\/(?![\\/])/.test(value)) return null;
 
 	return value;
 }
