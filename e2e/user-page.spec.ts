@@ -12,6 +12,7 @@ import type { Factories } from "./helpers/factories";
 import { expect, impersonate, isNotVisible, test } from "./helpers/playwright";
 import { SettingsPage } from "./pages/settings/settings-page";
 import { UserEditProfilePage } from "./pages/user/user-edit-profile-page";
+import { UserEditWidgetsPage } from "./pages/user/user-edit-widgets-page";
 import { UserPage } from "./pages/user/user-page";
 import { UserSeasonsPage } from "./pages/user/user-seasons-page";
 
@@ -309,7 +310,7 @@ test.describe("User page", () => {
 		const editWidgets = await userPage.openEditWidgets();
 		// the default layout is what an untouched profile starts editing from
 		await editWidgets.removeWidget("bio");
-		await editWidgets.addWidget("bio-md");
+		await editWidgets.addWidget("bio");
 		await editWidgets.fillBio("Reformed Hydra main");
 		await editWidgets.save();
 
@@ -338,6 +339,33 @@ test.describe("User page", () => {
 
 		await seasonsPage.openStatsTab("Teammates");
 		await expect(seasonsPage.playerLink("N-ZAP")).toBeVisible();
+	});
+
+	test("gates supporter only widgets behind supporter status", async ({
+		page,
+		factories,
+	}) => {
+		await impersonate(page);
+
+		const editWidgets = new UserEditWidgetsPage(page);
+		await editWidgets.goto(ADMIN_DISCORD_ID);
+
+		await expect(editWidgets.supporterOnlyLabel("bio-md")).toBeVisible();
+		await isNotVisible(editWidgets.addWidgetButton("bio-md"));
+
+		await factories.UserFactory.grant(ADMIN_ID, { patronTier: 2 });
+		await editWidgets.goto(ADMIN_DISCORD_ID);
+
+		await isNotVisible(editWidgets.supporterOnlyLabel("bio-md"));
+		await editWidgets.removeWidget("bio");
+		await editWidgets.addWidget("bio-md");
+		await editWidgets.fillBio("**Reformed** Hydra main");
+		await editWidgets.save();
+
+		const userPage = new UserPage(page);
+		await expect(userPage.widget("bio-md").locator("strong")).toHaveText(
+			"Reformed",
+		);
 	});
 
 	test("redirects to the preferred identifier", async ({ page, factories }) => {

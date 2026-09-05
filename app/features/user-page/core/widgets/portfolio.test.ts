@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { widgetsWithinLimits } from "./portfolio";
+import { widgetsAvailableTo } from "./portfolio";
 import type { StoredWidget } from "./types";
 
 const MAIN_WIDGETS: StoredWidget[] = [
@@ -25,15 +25,15 @@ const SIDE_WIDGETS: StoredWidget[] = [
 
 const idsOf = (widgets: StoredWidget[]) => widgets.map((widget) => widget.id);
 
-describe("widgetsWithinLimits", () => {
+describe("widgetsAvailableTo", () => {
 	test("keeps widgets that fit in both slots", () => {
 		const widgets = [...MAIN_WIDGETS.slice(0, 4), ...SIDE_WIDGETS.slice(0, 5)];
 
-		expect(widgetsWithinLimits(widgets, false)).toEqual(widgets);
+		expect(widgetsAvailableTo(widgets, false)).toEqual(widgets);
 	});
 
 	test("drops main widgets over the limit keeping the first ones", () => {
-		expect(idsOf(widgetsWithinLimits(MAIN_WIDGETS, false))).toEqual([
+		expect(idsOf(widgetsAvailableTo(MAIN_WIDGETS, false))).toEqual([
 			"weapon-pool",
 			"trophies-owned",
 			"badges-owned",
@@ -42,7 +42,7 @@ describe("widgetsWithinLimits", () => {
 	});
 
 	test("drops side widgets over the limit keeping the first ones", () => {
-		expect(idsOf(widgetsWithinLimits(SIDE_WIDGETS, false))).toEqual([
+		expect(idsOf(widgetsAvailableTo(SIDE_WIDGETS, false))).toEqual([
 			"teams",
 			"friends",
 			"organizations",
@@ -52,13 +52,44 @@ describe("widgetsWithinLimits", () => {
 	});
 
 	test("allows supporters more widgets per slot", () => {
-		expect(widgetsWithinLimits(MAIN_WIDGETS, true)).toHaveLength(6);
-		expect(widgetsWithinLimits(SIDE_WIDGETS, true)).toHaveLength(7);
+		expect(widgetsAvailableTo(MAIN_WIDGETS, true)).toHaveLength(6);
+		expect(widgetsAvailableTo(SIDE_WIDGETS, true)).toHaveLength(7);
+	});
+
+	test("drops supporter only widgets from a non supporter", () => {
+		const widgets: StoredWidget[] = [
+			{ id: "join-date" },
+			{ id: "patron-since" },
+			{ id: "links", settings: { links: [] } },
+			{ id: "teams" },
+		];
+
+		expect(idsOf(widgetsAvailableTo(widgets, false))).toEqual([
+			"join-date",
+			"teams",
+		]);
+	});
+
+	test("keeps supporter only widgets for a supporter", () => {
+		const widgets: StoredWidget[] = [{ id: "patron-since" }];
+
+		expect(widgetsAvailableTo(widgets, true)).toEqual(widgets);
+	});
+
+	test("dropped supporter only widgets do not take up a slot", () => {
+		const widgets: StoredWidget[] = [
+			{ id: "patron-since" },
+			...SIDE_WIDGETS.slice(0, 5),
+		];
+
+		expect(idsOf(widgetsAvailableTo(widgets, false))).toEqual(
+			idsOf(SIDE_WIDGETS.slice(0, 5)),
+		);
 	});
 
 	test("keeps widgets of an unknown id", () => {
 		const widgets = [{ id: "removed-widget" } as unknown as StoredWidget];
 
-		expect(widgetsWithinLimits(widgets, false)).toEqual(widgets);
+		expect(widgetsAvailableTo(widgets, false)).toEqual(widgets);
 	});
 });

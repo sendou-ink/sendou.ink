@@ -210,3 +210,10 @@
 	color: var(--color-text-accent);
 	font-weight: var(--weight-semi);
 }
+
+.supporterOnly {
+	color: var(--color-text-accent);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+}

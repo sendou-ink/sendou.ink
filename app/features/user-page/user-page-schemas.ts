@@ -192,6 +192,7 @@ export const widgetsEditSchema = (isSupporter: boolean) => {
 					for (const w of widgets) {
 						const def = findWidgetById(w.id);
 						if (!def) return false;
+						if (def.supporterOnly && !isSupporter) return false;
 						if (def.slot === "main") mainCount++;
 						else sideCount++;
 					}

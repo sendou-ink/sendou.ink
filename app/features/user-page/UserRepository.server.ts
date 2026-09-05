@@ -40,7 +40,7 @@ import { sortBadgesByFavorites } from "./core/badge-sorting.server";
 import {
 	DEFAULT_WIDGETS,
 	findWidgetById,
-	widgetsWithinLimits,
+	widgetsAvailableTo,
 } from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
@@ -297,7 +297,7 @@ export async function findStoredWidgetsByUserId(
 
 	if (rows.length === 0) return DEFAULT_WIDGETS;
 
-	return widgetsWithinLimits(
+	return widgetsAvailableTo(
 		rows.map((row) => row.widget),
 		isSupporter({ patronTier: rows[0]!.patronTier }),
 	);

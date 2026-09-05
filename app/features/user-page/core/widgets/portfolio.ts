@@ -30,11 +30,12 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "bio-md",
 			slot: "main",
+			supporterOnly: true,
 			schema: bioMdSchema,
 			defaultSettings: { bio: "" },
 		}),
 		defineWidget({ id: "organizations", slot: "side" }),
-		defineWidget({ id: "patron-since", slot: "side" }),
+		defineWidget({ id: "patron-since", slot: "side", supporterOnly: true }),
 		defineWidget({ id: "join-date", slot: "side" }),
 		defineWidget({
 			id: "timezone",
@@ -45,6 +46,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "favorite-stage",
 			slot: "side",
+			supporterOnly: true,
 			schema: favoriteStageSchema,
 			defaultSettings: { stageId: 1 },
 		}),
@@ -65,6 +67,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "links",
 			slot: "side",
+			supporterOnly: true,
 			schema: linksSchema,
 			defaultSettings: { links: [] },
 		}),
@@ -93,6 +96,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "peak-xp-unverified",
 			slot: "side",
+			supporterOnly: true,
 			schema: peakXpUnverifiedSchema,
 			defaultSettings: { peakXp: 2000, division: "tentatek" },
 		}),
@@ -139,6 +143,7 @@ export const ALL_WIDGETS = {
 		defineWidget({
 			id: "game-badges",
 			slot: "main",
+			supporterOnly: true,
 			schema: gameBadgesSchema,
 			defaultSettings: { badgeIds: [] },
 		}),
@@ -187,8 +192,8 @@ export function maxWidgetsPerSlot(isSupporter: boolean) {
 		: { main: USER.MAX_MAIN_WIDGETS, side: USER.MAX_SIDE_WIDGETS };
 }
 
-/** Drops widgets past the slot limits, keeping the first ones e.g. when supporter status lapsed. */
-export function widgetsWithinLimits(
+/** Drops supporter only widgets and widgets past the slot limits e.g. when supporter status lapsed. */
+export function widgetsAvailableTo(
 	widgets: StoredWidget[],
 	isSupporter: boolean,
 ): StoredWidget[] {
@@ -198,7 +203,11 @@ export function widgetsWithinLimits(
 	let sideCount = 0;
 
 	for (const widget of widgets) {
-		const slot = findWidgetById(widget.id)?.slot;
+		const definition = findWidgetById(widget.id);
+
+		if (!isSupporter && definition?.supporterOnly) continue;
+
+		const slot = definition?.slot;
 
 		if (slot === "main") {
 			mainCount++;
@@ -221,6 +230,7 @@ function defineWidget<
 >(def: {
 	id: Id;
 	slot: Slot;
+	supporterOnly?: true;
 	schema: S;
 	defaultSettings: v.InferOutput<S>;
 }): typeof def;
@@ -228,7 +238,12 @@ function defineWidget<
 function defineWidget<
 	const Id extends string,
 	const Slot extends "main" | "side",
->(def: { id: Id; slot: Slot; schema?: never }): typeof def;
+>(def: {
+	id: Id;
+	slot: Slot;
+	supporterOnly?: true;
+	schema?: never;
+}): typeof def;
 function defineWidget(def: Record<string, unknown>) {
 	return def;
 }

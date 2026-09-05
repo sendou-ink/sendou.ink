@@ -55,6 +55,7 @@
 	"widgets.mainSlot": "Main Widgets",
 	"widgets.sideSlot": "Side Widgets",
 	"widgets.supporterMax": "(Supporter max: {{max}})",
+	"widgets.supporterOnly": "Supporter only",
 	"widgets.main": "Main",
 	"widgets.side": "Side",
 	"widgets.add": "Add",

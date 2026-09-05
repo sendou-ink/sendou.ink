@@ -59,7 +59,8 @@ export default function EditWidgetsPage() {
 	invariant(parentRoute);
 	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
-	const maxWidgets = maxWidgetsPerSlot(useHasRole("SUPPORTER"));
+	const isSupporter = useHasRole("SUPPORTER");
+	const maxWidgets = maxWidgetsPerSlot(isSupporter);
 
 	const [selectedWidgets, setSelectedWidgets] = useState<
 		Array<Tables["UserWidget"]["widget"]>
@@ -216,6 +217,7 @@ export default function EditWidgetsPage() {
 							mainWidgets={mainWidgets}
 							sideWidgets={sideWidgets}
 							maxWidgets={maxWidgets}
+							isSupporter={isSupporter}
 							onAddWidget={addWidget}
 						/>
 					</section>
@@ -230,6 +232,7 @@ interface AvailableWidgetsListProps {
 	mainWidgets: Array<Tables["UserWidget"]["widget"]>;
 	sideWidgets: Array<Tables["UserWidget"]["widget"]>;
 	maxWidgets: MaxWidgets;
+	isSupporter: boolean;
 	onAddWidget: (widgetId: string) => void;
 }
 
@@ -238,6 +241,7 @@ function AvailableWidgetsList({
 	mainWidgets,
 	sideWidgets,
 	maxWidgets,
+	isSupporter,
 	onAddWidget,
 }: AvailableWidgetsListProps) {
 	const { t } = useTranslation(["user"]);
@@ -284,6 +288,7 @@ function AvailableWidgetsList({
 							const maxCount =
 								widget.slot === "main" ? maxWidgets.main : maxWidgets.side;
 							const isMaxReached = currentCount >= maxCount;
+							const isLocked = Boolean(widget.supporterOnly) && !isSupporter;
 
 							return (
 								<div key={widget.id} className={styles.widgetCard}>
@@ -291,15 +296,25 @@ function AvailableWidgetsList({
 										<span className={styles.widgetName}>
 											{t(`user:widget.${widget.id}` as const)}
 										</span>
-										<SendouButton
-											size="miniscule"
-											variant="outlined"
-											onClick={() => onAddWidget(widget.id)}
-											isDisabled={isSelected || isMaxReached}
-											testId={`add-widget-${widget.id}`}
-										>
-											{t("user:widgets.add")}
-										</SendouButton>
+										{isLocked ? (
+											<Link
+												to={SUPPORT_PAGE}
+												className={styles.supporterOnly}
+												data-testid={`supporter-only-${widget.id}`}
+											>
+												{t("user:widgets.supporterOnly")}
+											</Link>
+										) : (
+											<SendouButton
+												size="miniscule"
+												variant="outlined"
+												onClick={() => onAddWidget(widget.id)}
+												isDisabled={isSelected || isMaxReached}
+												testId={`add-widget-${widget.id}`}
+											>
+												{t("user:widgets.add")}
+											</SendouButton>
+										)}
 									</div>
 									<div className={styles.widgetFooter}>
 										<div className={styles.widgetSlot}>
