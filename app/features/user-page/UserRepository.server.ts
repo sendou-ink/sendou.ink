@@ -16,6 +16,7 @@ import type {
 	ResultSource,
 } from "~/features/user-page/user-page-constants";
 import { userRoles } from "~/modules/permissions/mapper.server";
+import { isSupporter } from "~/modules/permissions/utils";
 import {
 	databaseTimestampNow,
 	dateToDatabaseTimestamp,
@@ -37,7 +38,11 @@ import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
 import { sortBadgesByFavorites } from "./core/badge-sorting.server";
-import { DEFAULT_WIDGETS, findWidgetById } from "./core/widgets/portfolio";
+import {
+	DEFAULT_WIDGETS,
+	findWidgetById,
+	widgetsWithinLimits,
+} from "./core/widgets/portfolio";
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
@@ -295,14 +300,18 @@ export async function findStoredWidgetsByUserId(
 ): Promise<Array<Tables["UserWidget"]["widget"]>> {
 	const rows = await db
 		.selectFrom("UserWidget")
-		.select(["widget"])
-		.where("userId", "=", userId)
-		.orderBy("index", "asc")
+		.innerJoin("User", "User.id", "UserWidget.userId")
+		.select(["UserWidget.widget", "User.patronTier"])
+		.where("UserWidget.userId", "=", userId)
+		.orderBy("UserWidget.index", "asc")
 		.execute();
 
 	if (rows.length === 0) return DEFAULT_WIDGETS;
 
-	return rows.map((row) => row.widget);
+	return widgetsWithinLimits(
+		rows.map((row) => row.widget),
+		isSupporter({ patronTier: rows[0]!.patronTier }),
+	);
 }
 
 export async function findWidgetsByUserId(

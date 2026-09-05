@@ -54,6 +54,7 @@
 	"widgets.available": "Gallery",
 	"widgets.mainSlot": "Main Widgets",
 	"widgets.sideSlot": "Side Widgets",
+	"widgets.supporterMax": "(Supporter max: {{max}})",
 	"widgets.main": "Main",
 	"widgets.side": "Side",
 	"widgets.add": "Add",

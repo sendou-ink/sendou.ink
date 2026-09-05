@@ -252,7 +252,7 @@ function migratedWidgets(): NonNullable<
 	});
 }
 
-/** The one seeded supporter's widgets: both slots filled, every widget other modules seed content for. */
+/** The one seeded supporter's widgets: both slots filled to the supporter limits. */
 function nzapWidgets(): NonNullable<
 	Parameters<typeof UserFactory.create>[1]
 >["widgets"] {
@@ -270,13 +270,8 @@ function nzapWidgets(): NonNullable<
 		{ id: "weapon-pool" },
 		{ id: "badges-owned" },
 		{ id: "trophies-owned" },
-		{ id: "builds" },
-		{ id: "videos" },
 		{ id: "art", settings: { source: "ALL" } },
 		{ id: "x-rank-peaks", settings: { division: "both" } },
-		{ id: "peak-sp" },
-		{ id: "peak-xp" },
-		{ id: "friends" },
 		{ id: "highlighted-results" },
 	];
 }

@@ -1,5 +1,6 @@
 import type * as v from "valibot";
 import { TIMEZONES } from "~/features/lfg/lfg-constants";
+import { USER } from "~/features/user-page/user-page-constants";
 import type { FormObjectSchema } from "~/form/types";
 import type { StoredWidget } from "./types";
 import {
@@ -157,7 +158,6 @@ export const ALL_WIDGETS = {
 export const DEFAULT_WIDGETS: StoredWidget[] = [
 	{ id: "weapon-pool" },
 	{ id: "x-rank-peaks", settings: { division: "both" } },
-	{ id: "trophies-owned" },
 	{ id: "badges-owned" },
 	{ id: "bio", settings: { bio: "" } },
 	{ id: "teams" },
@@ -175,6 +175,43 @@ export function allWidgetsFlat() {
 
 export function findWidgetById(widgetId: string) {
 	return allWidgetsFlat().find((w) => w.id === widgetId);
+}
+
+/** How many widgets fit in each slot, supporters get more. */
+export function maxWidgetsPerSlot(isSupporter: boolean) {
+	return isSupporter
+		? {
+				main: USER.MAX_MAIN_WIDGETS_SUPPORTER,
+				side: USER.MAX_SIDE_WIDGETS_SUPPORTER,
+			}
+		: { main: USER.MAX_MAIN_WIDGETS, side: USER.MAX_SIDE_WIDGETS };
+}
+
+/** Drops widgets past the slot limits, keeping the first ones e.g. when supporter status lapsed. */
+export function widgetsWithinLimits(
+	widgets: StoredWidget[],
+	isSupporter: boolean,
+): StoredWidget[] {
+	const max = maxWidgetsPerSlot(isSupporter);
+	const result: StoredWidget[] = [];
+	let mainCount = 0;
+	let sideCount = 0;
+
+	for (const widget of widgets) {
+		const slot = findWidgetById(widget.id)?.slot;
+
+		if (slot === "main") {
+			mainCount++;
+			if (mainCount > max.main) continue;
+		} else if (slot === "side") {
+			sideCount++;
+			if (sideCount > max.side) continue;
+		}
+
+		result.push(widget);
+	}
+
+	return result;
 }
 
 function defineWidget<

@@ -44,7 +44,11 @@ import {
 	superRefine,
 } from "~/utils/schema";
 import { isCustomUrl } from "~/utils/urls";
-import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
+import {
+	allWidgetsFlat,
+	findWidgetById,
+	maxWidgetsPerSlot,
+} from "./core/widgets/portfolio";
 import {
 	BUILD_SORT_IDENTIFIERS,
 	HIGHLIGHT_CHECKBOX_NAME,
@@ -187,29 +191,30 @@ const widgetSettingsSchemas = allWidgetsFlat().map((widget) => {
 
 const widgetSettingsSchema = v.union(widgetSettingsSchemas);
 
-export const widgetsEditSchema = v.object({
-	widgets: preprocess(
-		safeJSONParse,
-		v.pipe(
-			v.array(widgetSettingsSchema),
-			v.maxLength(USER.MAX_MAIN_WIDGETS + USER.MAX_SIDE_WIDGETS),
-			v.check((widgets) => {
-				let mainCount = 0;
-				let sideCount = 0;
-				for (const w of widgets) {
-					const def = findWidgetById(w.id);
-					if (!def) return false;
-					if (def.slot === "main") mainCount++;
-					else sideCount++;
-				}
-				return (
-					mainCount <= USER.MAX_MAIN_WIDGETS &&
-					sideCount <= USER.MAX_SIDE_WIDGETS
-				);
-			}),
+export const widgetsEditSchema = (isSupporter: boolean) => {
+	const max = maxWidgetsPerSlot(isSupporter);
+
+	return v.object({
+		widgets: preprocess(
+			safeJSONParse,
+			v.pipe(
+				v.array(widgetSettingsSchema),
+				v.maxLength(max.main + max.side),
+				v.check((widgets) => {
+					let mainCount = 0;
+					let sideCount = 0;
+					for (const w of widgets) {
+						const def = findWidgetById(w.id);
+						if (!def) return false;
+						if (def.slot === "main") mainCount++;
+						else sideCount++;
+					}
+					return mainCount <= max.main && sideCount <= max.side;
+				}),
+			),
 		),
-	),
-});
+	});
+};
 
 const headGearIdSchema = v.pipe(
 	v.nullable(v.number()),
