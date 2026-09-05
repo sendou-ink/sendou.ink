@@ -109,7 +109,7 @@
 	},
 	"devDependencies": {
 		"@babel/preset-typescript": "7.29.7",
-		"@biomejs/biome": "2.5.9",
+		"@biomejs/biome": "2.5.10",
 		"@faker-js/faker": "10.6.0",
 		"@napi-rs/canvas": "1.0.8",
 		"@playwright/test": "1.62.1",
