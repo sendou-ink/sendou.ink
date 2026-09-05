@@ -103,6 +103,8 @@ export default defineConfig((config) => {
 			// Pre-bundling them at startup avoids mid-session re-optimization
 			// and full page reloads on first navigations.
 			include: [
+				"@aws-sdk/client-s3",
+				"@aws-sdk/lib-storage",
 				"@date-fns/tz",
 				"@techstark/opencv-js",
 				"@dnd-kit/core",
@@ -110,7 +112,7 @@ export default defineConfig((config) => {
 				"@dnd-kit/sortable",
 				"@dnd-kit/utilities",
 				"@epic-web/cachified",
-				"@internationalized/date",
+				"@react-router/node",
 				"@tldraw/tldraw",
 				"@zumer/snapdom",
 				"chart.js",
@@ -132,6 +134,7 @@ export default defineConfig((config) => {
 				"date-fns/locale/zh-CN",
 				"edmonds-blossom-fixed",
 				"fflate",
+				"gray-matter",
 				"i18next-browser-languagedetector",
 				"i18next-http-backend",
 				"kysely",
@@ -139,11 +142,11 @@ export default defineConfig((config) => {
 				"mediabunny",
 				"nanoid",
 				"openskill",
+				"p-limit",
 				"picocad2-web",
 				"qrcode.react",
 				"react-chartjs-2",
 				"react-flip-toolkit",
-				"react-use-draggable-scroll",
 				"remeda",
 				"remix-auth",
 				"remix-auth-oauth2",
@@ -152,6 +155,7 @@ export default defineConfig((config) => {
 				"swr/immutable",
 				"valibot",
 				"web-haptics/react",
+				"web-push",
 			],
 		},
 	};
