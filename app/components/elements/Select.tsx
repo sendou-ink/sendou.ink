@@ -4,9 +4,10 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
+import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
-import { isOwnToggle, useAnchorSafeId } from "./Popover";
+import { focusLeftTo, isOwnToggle, useAnchorSafeId } from "./Popover";
 import styles from "./Select.module.css";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
@@ -49,6 +50,8 @@ interface SelectState {
 
 const SelectRegistryContext = React.createContext<SelectRegistry | null>(null);
 const SelectStateContext = React.createContext<SelectState | null>(null);
+/** Inside the trigger an item renders only its content, standing in for the selection. */
+const SelectTriggerContext = React.createContext(false);
 
 export interface SendouSelectProps<T extends object> {
 	label?: string;
@@ -90,7 +93,9 @@ export interface SendouSelectProps<T extends object> {
  *
  * Options mount only while the popover is open (plus the selected one, so the
  * trigger can show it); the trigger's content is read straight from the
- * `SendouSelectItem` element matching the selection, so it is server rendered.
+ * `SendouSelectItem` element matching the selection, or from the element
+ * keyed by the selection when a wrapper component renders the item, so it is
+ * server rendered.
  *
  * @example
  * ```tsx
@@ -258,23 +263,17 @@ export function SendouSelect<T extends object>({
 		itemsMapRef.current.get(key)?.element.scrollIntoView({ block: "nearest" });
 	};
 
-	const moveFocus = (direction: "next" | "previous" | "first" | "last") => {
+	const moveFocus = (move: FocusMove) => {
 		const keys = orderedKeys();
 		if (keys.length === 0) return;
 
 		const focusedKey = focusStore.get();
 		const currentIndex = focusedKey === null ? -1 : keys.indexOf(focusedKey);
-		const targetIndex =
-			direction === "first"
-				? 0
-				: direction === "last"
-					? keys.length - 1
-					: direction === "next"
-						? Math.min(currentIndex + 1, keys.length - 1)
-						: Math.max(currentIndex - 1, 0);
+		const targetKey =
+			keys[rovingFocusIndex(move, currentIndex, keys.length, { wrap: false })];
 
-		focusStore.set(keys[targetIndex]);
-		scrollIntoView(keys[targetIndex]);
+		focusStore.set(targetKey);
+		scrollIntoView(targetKey);
 	};
 
 	const onTriggerKeyDown = (event: React.KeyboardEvent) => {
@@ -458,7 +457,12 @@ export function SendouSelect<T extends object>({
 				visibleItemCount++;
 			}
 		},
-		() => {
+		(element) => {
+			if (currentKey !== null && element.key === String(currentKey)) {
+				selectedItemContent = (
+					<SelectTriggerContext value>{element}</SelectTriggerContext>
+				);
+			}
 			visibleItemCount++;
 		},
 	);
@@ -482,13 +486,8 @@ export function SendouSelect<T extends object>({
 			className={clsx(className, styles.select)}
 			data-testid={testId}
 			onBlur={(event) => {
-				if (
-					event.relatedTarget instanceof Node &&
-					event.currentTarget.contains(event.relatedTarget)
-				) {
-					return;
-				}
-				if (event.relatedTarget instanceof Node) {
+				if (event.currentTarget.contains(event.relatedTarget)) return;
+				if (focusLeftTo(event, [event.currentTarget])) {
 					setOpen(false);
 				}
 				onBlur?.();
@@ -770,7 +769,7 @@ function isItemVisible(state: SelectState, id: SelectKey, textValue: string) {
 function forEachItemElement(
 	node: React.ReactNode,
 	visit: (props: SendouSelectItemProps) => void,
-	onOpaque: () => void,
+	onOpaque: (element: React.ReactElement) => void,
 ) {
 	if (Array.isArray(node)) {
 		for (const child of node) {
@@ -792,7 +791,7 @@ function forEachItemElement(
 			onOpaque,
 		);
 	} else {
-		onOpaque();
+		onOpaque(node);
 	}
 }
 
@@ -813,6 +812,13 @@ function hasVisibleItems(state: SelectState, node: React.ReactNode) {
 }
 
 export function SendouSelectItem(props: SendouSelectItemProps) {
+	const inTrigger = React.use(SelectTriggerContext);
+	if (inTrigger) return props.children;
+
+	return <SelectOption {...props} />;
+}
+
+function SelectOption(props: SendouSelectItemProps) {
 	const {
 		id,
 		isDisabled: isDisabledProp = false,
@@ -904,7 +910,7 @@ export function SendouSelectItemSection({
 
 	return (
 		// biome-ignore lint/a11y/useSemanticElements: a fieldset would carry form semantics this listbox section does not have
-		<div role="group" aria-label={heading} className={styles.section}>
+		<div role="group" aria-label={heading}>
 			<div className={clsx(className, styles.categoryHeading)}>
 				{headingImgPath ? (
 					<Image path={headingImgPath} size={28} alt="" />

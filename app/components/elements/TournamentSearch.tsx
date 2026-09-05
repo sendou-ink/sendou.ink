@@ -5,6 +5,7 @@ import { tournamentSearchSearchParams } from "~/features/tournament/tournament-s
 import { LocaleTime } from "../LocaleTime";
 import {
 	SearchSelect,
+	type SearchSelectFieldProps,
 	SearchSelectItem,
 	SearchSelectItemAdditionalText,
 	SearchSelectItemLogo,
@@ -15,16 +16,7 @@ export type TournamentSearchItem = NonNullable<
 	Extract<TournamentSearchLoaderData, { tournaments: unknown }>
 >["tournaments"][number];
 
-interface TournamentSearchProps {
-	isRequired?: boolean;
-	isDisabled?: boolean;
-	className?: string;
-	onBlur?: () => void;
-	"data-testid"?: string;
-	name?: string;
-	label?: string;
-	bottomText?: string;
-	errorText?: string;
+interface TournamentSearchProps extends SearchSelectFieldProps {
 	initialTournamentId?: number;
 	/**
 	 * Restrict results to tournaments that have already started (finished/past)
@@ -37,10 +29,6 @@ interface TournamentSearchProps {
 }
 
 export function TournamentSearch({
-	name,
-	label,
-	bottomText,
-	errorText,
 	initialTournamentId,
 	pastOnly,
 	onChange,
@@ -68,10 +56,6 @@ export function TournamentSearch({
 	return (
 		<SearchSelect
 			{...rest}
-			name={name}
-			label={label}
-			bottomText={bottomText}
-			errorText={errorText}
 			ariaLabel="Tournament search"
 			inputTestId="tournament-search-input"
 			i18nKey="tournamentSearch"

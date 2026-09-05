@@ -118,6 +118,10 @@
 	overflow: hidden;
 	cursor: pointer;
 	outline: none;
+	/* long lists (every weapon) skip laying out and painting the options
+	   scrolled out of view, keeping them in the accessibility tree */
+	content-visibility: auto;
+	contain-intrinsic-block-size: auto 33px;
 
 	&[data-disabled] {
 		color: var(--color-text-high);

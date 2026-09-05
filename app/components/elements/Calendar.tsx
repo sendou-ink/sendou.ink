@@ -1,8 +1,25 @@
 import clsx from "clsx";
+import {
+	addDays,
+	addMonths,
+	addYears,
+	eachDayOfInterval,
+	endOfMonth,
+	endOfWeek,
+	isSameDay,
+	isSameMonth,
+	isToday,
+	startOfDay,
+	startOfMonth,
+	startOfWeek,
+} from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import * as React from "react";
+import * as R from "remeda";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import styles from "./Calendar.module.css";
+
+const DAYS_IN_WEEK = 7;
 
 export interface SendouCalendarProps {
 	value: Date | null;
@@ -13,6 +30,11 @@ export interface SendouCalendarProps {
 	firstDayOfWeek?: "sun" | "mon";
 }
 
+/**
+ * Month grid for picking a day. Arrow keys move a day or a week at a time,
+ * Home/End jump to the ends of the week and PageUp/PageDown flip months
+ * (years with Shift), following focus across month boundaries.
+ */
 export function SendouCalendar({
 	value,
 	onChange,
@@ -27,31 +49,61 @@ export function SendouCalendar({
 	const { formatter: weekdayFormatter } = useDateTimeFormat({
 		weekday: "narrow",
 	});
+	const { formatter: dayFormatter } = useDateTimeFormat({
+		weekday: "long",
+		day: "numeric",
+		month: "long",
+		year: "numeric",
+	});
+	const headingId = React.useId();
 
-	const anchor = value ?? new Date();
-	const [viewYear, setViewYear] = React.useState(anchor.getFullYear());
-	const [viewMonth, setViewMonth] = React.useState(anchor.getMonth());
+	const weekStartsOn = firstDayOfWeek === "mon" ? 1 : 0;
+	const [viewMonth, setViewMonth] = React.useState(() =>
+		startOfMonth(value ?? new Date()),
+	);
+	const [focusedDate, setFocusedDate] = React.useState(
+		() => value ?? startOfDay(new Date()),
+	);
+	const pendingFocusRef = React.useRef(false);
 
-	const moveMonth = (offset: number) => {
-		const next = new Date(viewYear, viewMonth + offset, 1);
-		setViewYear(next.getFullYear());
-		setViewMonth(next.getMonth());
+	const moveMonth = (offset: number) =>
+		setViewMonth(addMonths(viewMonth, offset));
+
+	const moveFocusTo = (date: Date) => {
+		setFocusedDate(date);
+		if (!isSameMonth(date, viewMonth)) {
+			setViewMonth(startOfMonth(date));
+		}
+		pendingFocusRef.current = true;
 	};
 
-	const heading = headingFormatter.format(new Date(viewYear, viewMonth, 1));
-	// 2023-01-01 was a Sunday
-	const firstWeekdayOffset = firstDayOfWeek === "mon" ? 2 : 1;
-	const weekdayNames = Array.from({ length: 7 }, (_, i) =>
-		weekdayFormatter.format(new Date(2023, 0, firstWeekdayOffset + i)),
+	const onDayKeyDown = (event: React.KeyboardEvent, date: Date) => {
+		const target = keyboardTarget(event, date, weekStartsOn);
+		if (!target) return;
+		event.preventDefault();
+		moveFocusTo(target);
+	};
+
+	// the one day reachable with Tab: the focused day in this month, else the selection, else the first
+	const tabStop = isSameMonth(focusedDate, viewMonth)
+		? focusedDate
+		: value && isSameMonth(value, viewMonth)
+			? value
+			: viewMonth;
+
+	const focusWhenPending = (element: HTMLButtonElement | null) => {
+		if (element && pendingFocusRef.current) {
+			pendingFocusRef.current = false;
+			element.focus();
+		}
+	};
+
+	const weekdayNames = Array.from({ length: DAYS_IN_WEEK }, (_, i) =>
+		weekdayFormatter.format(
+			addDays(startOfWeek(viewMonth, { weekStartsOn }), i),
+		),
 	);
-
-	const weeks = calendarWeeks(viewYear, viewMonth, firstDayOfWeek);
-
-	const isSelectedDay = (day: number) =>
-		value !== null &&
-		value.getFullYear() === viewYear &&
-		value.getMonth() === viewMonth &&
-		value.getDate() === day;
+	const weeks = calendarWeeks(viewMonth, weekStartsOn);
 
 	return (
 		<div
@@ -68,7 +120,9 @@ export function SendouCalendar({
 				>
 					<ChevronLeft className={styles.navIcon} />
 				</button>
-				<h2 className={styles.heading}>{heading}</h2>
+				<h2 id={headingId} className={styles.heading}>
+					{headingFormatter.format(viewMonth)}
+				</h2>
 				<button
 					type="button"
 					className={styles.navButton}
@@ -78,7 +132,8 @@ export function SendouCalendar({
 					<ChevronRight className={styles.navIcon} />
 				</button>
 			</header>
-			<table className={styles.grid}>
+			{/* biome-ignore lint/a11y/noNoninteractiveElementToInteractiveRole: a date grid per the ARIA date picker pattern */}
+			<table className={styles.grid} role="grid" aria-labelledby={headingId}>
 				<thead>
 					<tr>
 						{weekdayNames.map((weekday, index) => (
@@ -88,60 +143,85 @@ export function SendouCalendar({
 						))}
 					</tr>
 				</thead>
+				{/* biome-ignore-start lint/a11y/noNoninteractiveElementToInteractiveRole: gridcells of the date grid */}
 				<tbody>
 					{weeks.map((week, weekIndex) => (
 						<tr key={weekIndex}>
-							{week.map((day, dayIndex) => (
-								<td key={dayIndex}>
-									{day !== null ? (
-										<button
-											type="button"
-											className={styles.cell}
-											data-testid="choose-date-button"
-											data-selected={isSelectedDay(day) || undefined}
-											onClick={() =>
-												onChange(new Date(viewYear, viewMonth, day))
-											}
-										>
-											{day}
-										</button>
-									) : null}
-								</td>
-							))}
+							{week.map((day, dayIndex) => {
+								const selected =
+									value !== null && day !== null && isSameDay(day, value);
+								const isTabStop = day !== null && isSameDay(day, tabStop);
+
+								return (
+									// biome-ignore lint/a11y/useFocusableInteractive: the cell carries the selection, its button the focus
+									<td
+										key={dayIndex}
+										role="gridcell"
+										aria-selected={day !== null ? selected : undefined}
+									>
+										{day !== null ? (
+											<button
+												type="button"
+												ref={isTabStop ? focusWhenPending : undefined}
+												tabIndex={isTabStop ? 0 : -1}
+												className={styles.cell}
+												aria-label={dayFormatter.format(day)}
+												aria-current={isToday(day) ? "date" : undefined}
+												data-testid="choose-date-button"
+												data-selected={selected || undefined}
+												onClick={() => onChange(day)}
+												onKeyDown={(event) => onDayKeyDown(event, day)}
+											>
+												{day.getDate()}
+											</button>
+										) : null}
+									</td>
+								);
+							})}
 						</tr>
 					))}
 				</tbody>
+				{/* biome-ignore-end lint/a11y/noNoninteractiveElementToInteractiveRole: gridcells of the date grid */}
 			</table>
 		</div>
 	);
 }
 
-function calendarWeeks(
-	year: number,
-	month: number,
-	firstDayOfWeek: "sun" | "mon",
+function keyboardTarget(
+	event: React.KeyboardEvent,
+	date: Date,
+	weekStartsOn: 0 | 1,
 ) {
-	const firstOfMonth = new Date(year, month, 1);
-	const daysInMonth = new Date(year, month + 1, 0).getDate();
-	const leadingEmpty =
-		firstDayOfWeek === "mon"
-			? (firstOfMonth.getDay() + 6) % 7
-			: firstOfMonth.getDay();
-
-	const weeks: Array<Array<number | null>> = [];
-	let week: Array<number | null> = new Array(leadingEmpty).fill(null);
-
-	for (let day = 1; day <= daysInMonth; day++) {
-		week.push(day);
-		if (week.length === 7) {
-			weeks.push(week);
-			week = [];
-		}
+	switch (event.key) {
+		case "ArrowLeft":
+			return addDays(date, -1);
+		case "ArrowRight":
+			return addDays(date, 1);
+		case "ArrowUp":
+			return addDays(date, -DAYS_IN_WEEK);
+		case "ArrowDown":
+			return addDays(date, DAYS_IN_WEEK);
+		case "Home":
+			return startOfWeek(date, { weekStartsOn });
+		case "End":
+			return startOfDay(endOfWeek(date, { weekStartsOn }));
+		case "PageUp":
+			return event.shiftKey ? addYears(date, -1) : addMonths(date, -1);
+		case "PageDown":
+			return event.shiftKey ? addYears(date, 1) : addMonths(date, 1);
+		default:
+			return null;
 	}
-	if (week.length > 0) {
-		while (week.length < 7) week.push(null);
-		weeks.push(week);
-	}
+}
 
-	return weeks;
+/** The month's weeks as rows of seven, days of neighbouring months left as null. */
+function calendarWeeks(monthStart: Date, weekStartsOn: 0 | 1) {
+	const days = eachDayOfInterval({
+		start: startOfWeek(monthStart, { weekStartsOn }),
+		end: endOfWeek(endOfMonth(monthStart), { weekStartsOn }),
+	});
+
+	return R.chunk(days, DAYS_IN_WEEK).map((week) =>
+		week.map((day) => (isSameMonth(day, monthStart) ? day : null)),
+	);
 }

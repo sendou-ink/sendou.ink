@@ -1,10 +1,15 @@
 import clsx from "clsx";
 import * as React from "react";
 import { Link } from "react-router";
+import {
+	type FocusMove,
+	focusMoveForKey,
+	rovingFocusIndex,
+} from "~/utils/roving-focus";
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
 import styles from "./Menu.module.css";
-import { isOwnToggle, useAnchorSafeId } from "./Popover";
+import { focusLeftTo, isOwnToggle, useAnchorSafeId } from "./Popover";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
 type MenuPlacement = "bottom start" | "bottom end" | "bottom right";
@@ -77,27 +82,29 @@ export function SendouMenu({
 			popoverRef.current?.hidePopover();
 			return;
 		}
-		const direction =
-			event.key === "ArrowDown"
-				? ("next" as const)
-				: event.key === "ArrowUp"
-					? ("previous" as const)
-					: event.key === "Home"
-						? ("first" as const)
-						: event.key === "End"
-							? ("last" as const)
-							: null;
-		if (!direction) return;
+		const move = focusMoveForKey(event.key);
+		if (!move) return;
 		event.preventDefault();
-		focusItem(popoverRef.current, direction);
+		focusItem(popoverRef.current, move);
+	};
+
+	const onBlur = (event: React.FocusEvent) => {
+		if (
+			open &&
+			focusLeftTo(event, [triggerContainerRef.current, popoverRef.current])
+		) {
+			popoverRef.current?.hidePopover();
+		}
 	};
 
 	return (
 		<>
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the trigger */}
 			<span
 				ref={triggerContainerRef}
 				className={styles.triggerContainer}
 				style={{ "--menu-anchor": anchorName } as React.CSSProperties}
+				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
 					popoverTarget: popoverId,
@@ -119,6 +126,7 @@ export function SendouMenu({
 				data-placement={placement}
 				onToggle={onToggle}
 				onKeyDown={onKeyDown}
+				onBlur={onBlur}
 			>
 				<div className={styles.itemsContainer} role="menu">
 					{open || eager ? (
@@ -134,10 +142,7 @@ export function SendouMenu({
 	);
 }
 
-function focusItem(
-	popover: HTMLElement | null,
-	target: "first" | "last" | "next" | "previous",
-) {
+function focusItem(popover: HTMLElement | null, move: FocusMove) {
 	const elements = [
 		...(popover?.querySelectorAll<HTMLElement>(
 			'[role="menuitem"]:not([aria-disabled="true"])',
@@ -146,16 +151,9 @@ function focusItem(
 	if (elements.length === 0) return;
 
 	const activeIndex = elements.indexOf(document.activeElement as HTMLElement);
-	const targetIndex =
-		target === "first"
-			? 0
-			: target === "last"
-				? elements.length - 1
-				: target === "next"
-					? (activeIndex + 1) % elements.length
-					: (activeIndex - 1 + elements.length) % elements.length;
-
-	elements[targetIndex].focus();
+	elements[
+		rovingFocusIndex(move, activeIndex, elements.length, { wrap: true })
+	].focus();
 }
 
 export interface SendouMenuItemProps {

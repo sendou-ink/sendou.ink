@@ -23,11 +23,21 @@ const PLACEHOLDER_TEXTS = {
 	},
 } as const;
 
-interface SearchSelectProps<TItem extends { id: number; name: string }> {
+/** Field props the entity search components (`UserSearch`, `TeamSearch`, ...) pass straight through. */
+export interface SearchSelectFieldProps {
 	name?: string;
 	label?: string;
 	bottomText?: string;
 	errorText?: string;
+	isRequired?: boolean;
+	isDisabled?: boolean;
+	className?: string;
+	onBlur?: () => void;
+	"data-testid"?: string;
+}
+
+interface SearchSelectProps<TItem extends { id: number; name: string }>
+	extends SearchSelectFieldProps {
 	ariaLabel: string;
 	inputTestId: string;
 	inputClassName?: string;
@@ -35,11 +45,6 @@ interface SearchSelectProps<TItem extends { id: number; name: string }> {
 	search: EntitySearch<TItem>;
 	buttonRef?: React.Ref<HTMLButtonElement>;
 	renderItem: (item: TItem) => React.ReactElement;
-	isRequired?: boolean;
-	isDisabled?: boolean;
-	className?: string;
-	onBlur?: () => void;
-	"data-testid"?: string;
 }
 
 /**

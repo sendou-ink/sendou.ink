@@ -3,6 +3,7 @@ import { useFetcher } from "react-router";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import {
 	SearchSelect,
+	type SearchSelectFieldProps,
 	SearchSelectItem,
 	SearchSelectItemAdditionalText,
 } from "./SearchSelect";
@@ -13,26 +14,13 @@ export type OrganizationSearchResult = Extract<
 	{ type: "organization" }
 >;
 
-interface OrganizationSearchProps {
-	isRequired?: boolean;
-	isDisabled?: boolean;
-	className?: string;
-	onBlur?: () => void;
-	"data-testid"?: string;
-	name?: string;
-	label?: string;
-	bottomText?: string;
-	errorText?: string;
+interface OrganizationSearchProps extends SearchSelectFieldProps {
 	initialOrganizationId?: number;
 	onChange?: (organization: OrganizationSearchResult | null) => void;
 	ref?: React.Ref<HTMLButtonElement>;
 }
 
 export function OrganizationSearch({
-	name,
-	label,
-	bottomText,
-	errorText,
 	initialOrganizationId,
 	onChange,
 	ref,
@@ -52,10 +40,6 @@ export function OrganizationSearch({
 	return (
 		<SearchSelect
 			{...rest}
-			name={name}
-			label={label}
-			bottomText={bottomText}
-			errorText={errorText}
 			ariaLabel="Organization search"
 			inputTestId="organization-search-input"
 			i18nKey="organizationSearch"

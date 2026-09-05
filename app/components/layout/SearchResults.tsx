@@ -7,6 +7,11 @@
 import clsx from "clsx";
 import * as React from "react";
 import { Link } from "react-router";
+import {
+	type FocusMove,
+	focusMoveForKey,
+	rovingFocusIndex,
+} from "~/utils/roving-focus";
 import styles from "./SearchResults.module.css";
 
 const ListBoxContext = React.createContext<{
@@ -40,37 +45,21 @@ export function SearchResultsListBox({
 			[]),
 	];
 
-	const moveFocus = (target: "first" | "last" | "next" | "previous") => {
+	const moveFocus = (move: FocusMove) => {
 		const elements = options();
 		if (elements.length === 0) return;
 
 		const activeIndex = elements.indexOf(document.activeElement as HTMLElement);
-		const targetIndex =
-			target === "first"
-				? 0
-				: target === "last"
-					? elements.length - 1
-					: target === "next"
-						? Math.min(activeIndex + 1, elements.length - 1)
-						: Math.max(activeIndex - 1, 0);
-
-		elements[targetIndex].focus();
+		elements[
+			rovingFocusIndex(move, activeIndex, elements.length, { wrap: false })
+		].focus();
 	};
 
 	const onKeyDown = (event: React.KeyboardEvent) => {
-		const direction =
-			event.key === "ArrowDown"
-				? ("next" as const)
-				: event.key === "ArrowUp"
-					? ("previous" as const)
-					: event.key === "Home"
-						? ("first" as const)
-						: event.key === "End"
-							? ("last" as const)
-							: null;
-		if (!direction) return;
+		const move = focusMoveForKey(event.key);
+		if (!move) return;
 		event.preventDefault();
-		moveFocus(direction);
+		moveFocus(move);
 	};
 
 	const isEmpty = React.Children.count(children) === 0;

@@ -24,6 +24,20 @@ export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
 }
 
 /**
+ * Whether a focusout moved focus to an element outside all of `containers`,
+ * so an overlay tabbed out of can close. Focus lost to nowhere (a click on a
+ * non-focusable spot) does not count: native light dismiss covers pointers.
+ */
+export function focusLeftTo(
+	event: React.FocusEvent,
+	containers: Array<Element | null | undefined>,
+) {
+	const next = event.relatedTarget;
+	if (!(next instanceof Node)) return false;
+	return !containers.some((container) => container?.contains(next));
+}
+
+/**
  * A reusable popover component that wraps around a trigger element (SendouButton).
  * Renders through the native popover API with CSS anchor positioning.
  * Supports controlled and uncontrolled open states.
@@ -119,12 +133,23 @@ export function SendouPopover({
 		}
 	};
 
+	const onBlur = (event: React.FocusEvent) => {
+		if (
+			open &&
+			focusLeftTo(event, [triggerContainerRef.current, popoverRef.current])
+		) {
+			popoverRef.current?.hidePopover();
+		}
+	};
+
 	return (
 		<>
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: only observes focus leaving the trigger */}
 			<span
 				ref={triggerContainerRef}
 				className={styles.triggerContainer}
 				style={{ "--popover-anchor": anchorName } as React.CSSProperties}
+				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
 					popoverTarget: popoverId,
@@ -141,6 +166,7 @@ export function SendouPopover({
 				tabIndex={-1}
 				data-placement={placement}
 				onToggle={onToggle}
+				onBlur={onBlur}
 			>
 				{open || eager ? children : null}
 			</div>

@@ -2,6 +2,7 @@ import type * as React from "react";
 import type { SearchLoaderData } from "~/features/search/routes/search";
 import {
 	SearchSelect,
+	type SearchSelectFieldProps,
 	SearchSelectItem,
 	SearchSelectItemLogo,
 } from "./SearchSelect";
@@ -13,16 +14,7 @@ export type TeamSearchResult = Extract<
 	{ type: "team" }
 >;
 
-interface TeamSearchProps {
-	isRequired?: boolean;
-	isDisabled?: boolean;
-	className?: string;
-	onBlur?: () => void;
-	"data-testid"?: string;
-	name?: string;
-	label?: string;
-	bottomText?: string;
-	errorText?: string;
+interface TeamSearchProps extends SearchSelectFieldProps {
 	/** Team to preselect and display on mount (e.g. when editing a linked team). */
 	initialTeam?: { id: number; name: string; avatarUrl?: string | null };
 	onChange?: (team: TeamSearchResult | null) => void;
@@ -30,10 +22,6 @@ interface TeamSearchProps {
 }
 
 export function TeamSearch({
-	name,
-	label,
-	bottomText,
-	errorText,
 	initialTeam,
 	onChange,
 	ref,
@@ -50,10 +38,6 @@ export function TeamSearch({
 	return (
 		<SearchSelect
 			{...rest}
-			name={name}
-			label={label}
-			bottomText={bottomText}
-			errorText={errorText}
 			ariaLabel="Team search"
 			inputTestId="team-search-input"
 			i18nKey="teamSearch"

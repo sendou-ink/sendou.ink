@@ -33,7 +33,7 @@ describe("Toast", () => {
 
 		toastQueue.add({ message: "Dismiss me", variant: "info" }, { timeout: 0 });
 
-		const toast = screen.getByText("Dismiss me");
+		const toast = screen.getByRole("alert").filter({ hasText: "Dismiss me" });
 		await expect.element(toast).toBeVisible();
 
 		await screen.getByLabelText("Close").first().click();

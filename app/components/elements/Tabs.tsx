@@ -3,6 +3,7 @@ import { TriangleAlert } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
+import { focusMoveForKey, rovingFocusIndex } from "~/utils/roving-focus";
 
 import { ButtonLook } from "./Button";
 import styles from "./Tabs.module.css";
@@ -74,8 +75,9 @@ export function SendouTabs({
 	const mainWidth = useMainContentWidth();
 
 	const [isControlled] = React.useState(selectedKey !== undefined);
+	// resolved during render so the first panel is server rendered
 	const [uncontrolledKey, setUncontrolledKey] = React.useState<string | null>(
-		defaultSelectedKey ?? null,
+		() => defaultSelectedKey ?? firstTabId(children),
 	);
 	const currentKey = isControlled ? (selectedKey ?? null) : uncontrolledKey;
 
@@ -124,17 +126,12 @@ export function SendouTabs({
 			const keys = orderedKeys();
 			if (keys.length === 0) return;
 
-			const fromIndex = keys.indexOf(fromKey);
-			const targetIndex =
-				direction === "first"
-					? 0
-					: direction === "last"
-						? keys.length - 1
-						: direction === "next"
-							? (fromIndex + 1) % keys.length
-							: (fromIndex - 1 + keys.length) % keys.length;
-
-			const targetKey = keys[targetIndex];
+			const targetKey =
+				keys[
+					rovingFocusIndex(direction, keys.indexOf(fromKey), keys.length, {
+						wrap: true,
+					})
+				];
 			tabsRef.current.get(targetKey)?.focus();
 			select(targetKey);
 		},
@@ -153,6 +150,26 @@ export function SendouTabs({
 			</div>
 		</TabsContext>
 	);
+}
+
+/** Id of the first enabled `SendouTab` in the tree, the default selection; tabs behind other components stay unseen and register on mount instead. */
+function firstTabId(node: React.ReactNode): string | null {
+	if (Array.isArray(node)) {
+		for (const child of node) {
+			const id = firstTabId(child);
+			if (id !== null) return id;
+		}
+		return null;
+	}
+	if (!React.isValidElement(node)) return null;
+
+	if (node.type === SendouTab) {
+		const props = node.props as SendouTabProps;
+		return props.isDisabled ? null : props.id;
+	}
+	if (node.type === SendouTabPanel) return null;
+
+	return firstTabId((node.props as { children?: React.ReactNode }).children);
 }
 
 interface SendouTabProps {
@@ -184,26 +201,11 @@ export function SendouTab({
 	const selected = tabs.selectedKey === id;
 
 	const onKeyDown = (event: React.KeyboardEvent) => {
-		const nextKey =
-			tabs.orientation === "vertical" ? "ArrowDown" : "ArrowRight";
-		const previousKey =
-			tabs.orientation === "vertical" ? "ArrowUp" : "ArrowLeft";
-
-		const direction =
-			event.key === nextKey
-				? ("next" as const)
-				: event.key === previousKey
-					? ("previous" as const)
-					: event.key === "Home"
-						? ("first" as const)
-						: event.key === "End"
-							? ("last" as const)
-							: null;
-
-		if (!direction) return;
+		const move = focusMoveForKey(event.key, tabs.orientation);
+		if (!move) return;
 
 		event.preventDefault();
-		tabs.moveFocus(id, direction);
+		tabs.moveFocus(id, move);
 	};
 
 	const register = (element: HTMLElement | null) => {

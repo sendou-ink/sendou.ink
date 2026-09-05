@@ -1,4 +1,4 @@
-import { format } from "date-fns";
+import { format, parse } from "date-fns";
 import * as React from "react";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { isValidDate } from "~/utils/dates";
@@ -52,7 +52,9 @@ export function SendouDatePicker({
 				id={id}
 				type={granularity === "day" ? "date" : "datetime-local"}
 				value={inputValue}
-				onChange={(event) => onChange(parseInputValue(event.target.value))}
+				onChange={(event) =>
+					onChange(parseInputValue(event.target.value, granularity))
+				}
 				onBlur={() => onBlur?.()}
 				disabled={isDisabled}
 				required={isRequired}
@@ -68,17 +70,20 @@ export function SendouDatePicker({
 	);
 }
 
-// the input's value is local time without a zone, which `new Date(string)` would
-// misread as UTC for date-only values, so it is assembled part by part instead
-function parseInputValue(raw: string): Date | null {
+// the input's value is local time without a zone, which `new Date(string)`
+// would misread as UTC for date-only values, so it is parsed against the
+// format it was written with
+function parseInputValue(
+	raw: string,
+	granularity: "day" | "minute",
+): Date | null {
 	if (!raw) return null;
 
-	const [datePart, timePart = "00:00"] = raw.split("T");
-	const [year, month, day] = datePart.split("-").map(Number);
-	const [hours, minutes] = timePart.split(":").map(Number);
-
-	const date = new Date(2000, month - 1, day, hours, minutes);
-	date.setFullYear(year);
+	const date = parse(
+		raw,
+		granularity === "day" ? DATE_INPUT_FORMAT : DATETIME_INPUT_FORMAT,
+		new Date(),
+	);
 
 	return isValidDate(date) ? date : null;
 }
