@@ -33,9 +33,6 @@ import {
 } from "../SideNav";
 import styles from "./ChatSidebar.module.css";
 
-// xxx: plain /q/looking group chat not full height
-// xxx: test virtualizer
-
 export function ChatSidebar({ onClose }: { onClose?: () => void }) {
 	const chatContext = useChatContext();
 

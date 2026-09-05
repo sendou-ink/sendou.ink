@@ -262,14 +262,11 @@
 	}
 
 	/* messages: no top padding, fill available space */
-	& [role="listbox"] {
+	& [role="log"] {
 		padding-top: 0;
+		padding-inline: var(--s-2);
 		flex: 1;
 		height: auto;
-	}
-
-	& [role="option"] {
-		padding-inline: var(--s-2);
 	}
 
 	/* form: stick to bottom */
