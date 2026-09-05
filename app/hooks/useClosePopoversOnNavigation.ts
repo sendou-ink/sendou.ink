@@ -6,6 +6,7 @@ import { DESKTOP_BREAKPOINT, MOBILE_BREAKPOINT } from "./useMainContentWidth";
  * Closes the open popovers in `ref` (the element itself or any inside it) on
  * navigation and when the viewport crosses into another layout. For the
  * popovers of the layout shell, which outlive the page they were opened on.
+ * Manual popovers are left alone, their owner decides when they show.
  */
 export function useClosePopoversOnNavigation(
 	ref: React.RefObject<HTMLElement | null>,
@@ -44,7 +45,7 @@ function hidePopoversWithin(element: HTMLElement | null) {
 		element,
 		...element.querySelectorAll<HTMLElement>("[popover]"),
 	]) {
-		if (popover.matches(":popover-open")) {
+		if (popover.popover !== "manual" && popover.matches(":popover-open")) {
 			popover.hidePopover();
 		}
 	}

@@ -55,10 +55,15 @@ type PanelType = "menu" | "friends" | "tourneys" | "chat" | "you";
 type PanelIds = Record<PanelType, string>;
 type PanelToggleHandler = (event: React.ToggleEvent<HTMLDivElement>) => void;
 
+const MOBILE_NAV_ID = "mobile-nav";
+
 /**
  * The bottom tab bar and its panels. The panels are native popovers opened by
  * the tabs, so they work before hydration; opening one closes the other and the
  * tab bar stays usable underneath. The state here only mirrors them.
+ *
+ * The bar itself is a manual popover shown on hydration so it lives in the top
+ * layer; before that it is a plain fixed bar.
  */
 export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const [activePanel, setActivePanel] = React.useState<PanelType | null>(null);
@@ -77,6 +82,12 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	};
 
 	useClosePopoversOnNavigation(rootRef);
+
+	React.useEffect(() => {
+		const root = rootRef.current;
+		if (!root || root.matches(":popover-open")) return;
+		root.showPopover();
+	}, []);
 
 	const hasFriendInSendouQ =
 		sidebarData?.friends.some((f) => f.subtitle === SENDOUQ_ACTIVITY_LABEL) ??
@@ -104,7 +115,12 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 	const rememberOpenPanel = () => setSkipAnimation(activePanel !== null);
 
 	return (
-		<div className={styles.mobileNav} ref={rootRef}>
+		<div
+			id={MOBILE_NAV_ID}
+			className={styles.mobileNav}
+			ref={rootRef}
+			popover="manual"
+		>
 			<MenuPanel
 				id={panelIds.menu}
 				streams={sidebarData?.streams ?? []}
