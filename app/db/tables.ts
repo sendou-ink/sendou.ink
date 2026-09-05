@@ -947,8 +947,6 @@ export interface User {
 	/** 1 = permabanned, timestamp = ban active till then */
 	banned: Generated<number | null>;
 	bannedReason: string | null;
-	/** Shown on old user profile and Plus Voting */
-	bio: string | null;
 	/** Shown on user card */
 	shortBio: string | null;
 	commissionsOpen: Generated<DBBoolean>;
@@ -978,13 +976,11 @@ export interface User {
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
-	motionSens: number | null;
 	pronouns: JSONColumnTypeNullable<Pronouns>;
 	patronStartedAt: number | null;
 	patronTier: number | null;
 	patronExpiresAt: number | null;
 	showDiscordUniqueName: Generated<DBBoolean>;
-	stickSens: number | null;
 	twitch: string | null;
 	bsky: string | null;
 	battlefy: string | null;

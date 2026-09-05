@@ -30,14 +30,6 @@ export class UserEditProfilePage {
 		await this.locators.badgesSelector.selectOption(String(badgeId));
 	}
 
-	async selectStickSens(value: string) {
-		await this.page.getByLabel("R-stick sens").selectOption(value);
-	}
-
-	async selectMotionSens(value: string) {
-		await this.page.getByLabel("Motion sens").selectOption(value);
-	}
-
 	async selectCountry(name: string) {
 		await this.page.getByLabel("Country").click();
 		await this.page.getByRole("combobox", { name: "Search" }).fill(name);

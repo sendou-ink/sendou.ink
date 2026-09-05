@@ -17,10 +17,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		),
 	);
 
-	const widgetsEnabled = await UserRepository.findEnabledWidgetsByIdentifier(
-		params.identifier!,
-	);
-
 	const mutualFriends =
 		loggedInUser && loggedInUser.id !== user.id
 			? await FriendRepository.findMutualFriends({
@@ -32,7 +28,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		user,
 		customTheme: user.customTheme,
-		type: widgetsEnabled ? ("new" as const) : ("old" as const),
 		mutualFriends,
 	};
 };

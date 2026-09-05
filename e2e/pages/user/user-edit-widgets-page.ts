@@ -26,6 +26,11 @@ export class UserEditWidgetsPage {
 		await this.page.getByTestId(`add-widget-${widgetId}`).click();
 	}
 
+	/** Removes one of the selected widgets by its id. */
+	async removeWidget(widgetId: string) {
+		await this.page.getByTestId(`remove-widget-${widgetId}`).click();
+	}
+
 	/** Fills the bio widget's settings, expanded right after adding it. */
 	async fillBio(text: string) {
 		await this.page.getByLabel("Bio").fill(text);

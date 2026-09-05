@@ -1330,17 +1330,11 @@ export function buildCases(fx: Fixtures): {
 	add("UserRepository.findOwnedBadgesByUserId", fx.badgeOwnerUserId, (userId) =>
 		UserRepository.findOwnedBadgesByUserId(userId),
 	);
-	add("UserRepository.findEnabledWidgetsByIdentifier", fx.heavyUser, (user) =>
-		UserRepository.findEnabledWidgetsByIdentifier(user.identifier),
-	);
-	add("UserRepository.findPreferencesByUserId", fx.heavyUser, (user) =>
-		UserRepository.findPreferencesByUserId(user.id),
-	);
 	add("UserRepository.findStoredWidgetsByUserId", fx.heavyUser, (user) =>
 		UserRepository.findStoredWidgetsByUserId(user.id),
 	);
 	add("UserRepository.findWidgetsByUserId", fx.heavyUser, (user) =>
-		UserRepository.findWidgetsByUserId(user.identifier),
+		UserRepository.findWidgetsByUserId(user.id),
 	);
 	add("UserRepository.findByCustomUrl", fx.userCustomUrl, (customUrl) =>
 		UserRepository.findByCustomUrl(customUrl),

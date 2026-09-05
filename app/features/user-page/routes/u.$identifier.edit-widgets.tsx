@@ -453,6 +453,7 @@ function DraggableWidgetItem({
 						size="miniscule"
 						variant="minimal-destructive"
 						onClick={() => onRemove(widget.id)}
+						testId={`remove-widget-${widget.id}`}
 					>
 						{t("user:widgets.remove")}
 					</SendouButton>

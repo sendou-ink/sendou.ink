@@ -40,8 +40,6 @@ export const action: ActionFunction = async ({ request }) => {
 			? JSON.stringify({ subject: subjectPronoun, object: objectPronoun })
 			: null;
 
-	const [motionSens, stickSens] = data.sensitivity ?? [null, null];
-
 	const weapons = data.weapons.map((w) => ({
 		weaponSplId: w.id,
 		isFavorite: w.isFavorite ? (1 as const) : (0 as const),
@@ -64,11 +62,8 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const editedUser = await UserRepository.updateOwnProfile({
 		country: data.country,
-		bio: data.bio,
 		customUrl: data.customUrl,
 		customName: data.customName,
-		motionSens: motionSens !== null ? Number(motionSens) : null,
-		stickSens: stickSens !== null ? Number(stickSens) : null,
 		pronouns,
 		inGameName: data.inGameName,
 		battlefy: data.battlefy,
@@ -81,10 +76,6 @@ export const action: ActionFunction = async ({ request }) => {
 		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
 		commissionText: isArtist ? data.commissionText : null,
 		customAvatarImgId: isSupporter ? data.customAvatar : null,
-	});
-
-	await UserRepository.updateOwnPreferences({
-		newProfileEnabled: isSupporter ? data.newProfileEnabled : false,
 	});
 
 	// TODO: to transaction

@@ -43,7 +43,6 @@ import {
 	stackableAbility,
 	superRefine,
 } from "~/utils/schema";
-import { rawSensToString } from "~/utils/strings";
 import { isCustomUrl } from "~/utils/urls";
 import { allWidgetsFlat, findWidgetById } from "./core/widgets/portfolio";
 import {
@@ -54,14 +53,6 @@ import {
 } from "./user-page-constants";
 
 export const userParamsSchema = v.object({ identifier: v.string() });
-
-const SENS_ITEMS = [
-	-50, -45, -40, -35, -30, -25, -20, -15, -10, -5, 0, 5, 10, 15, 20, 25, 30, 35,
-	40, 45, 50,
-].map((val) => ({
-	label: () => rawSensToString(val),
-	value: String(val),
-}));
 
 export const userEditProfileBaseSchema = v.object({
 	customAvatar: image({
@@ -92,19 +83,6 @@ export const userEditProfileBaseSchema = v.object({
 	inGameName: inGameName({
 		label: "labels.inGameName",
 		bottomText: "bottomTexts.profileInGameName",
-	}),
-	sensitivity: dualSelectOptional({
-		fields: [
-			{ label: "labels.profileMotionSens", items: SENS_ITEMS },
-			{ label: "labels.profileStickSens", items: SENS_ITEMS },
-		],
-		validate: {
-			func: ([motion, stick]) => {
-				if (motion !== null && stick === null) return false;
-				return true;
-			},
-			message: "errors.profileSensBothOrNeither",
-		},
 	}),
 	pronouns: dualSelectOptional({
 		bottomText: "bottomTexts.profilePronouns",
@@ -152,10 +130,6 @@ export const userEditProfileBaseSchema = v.object({
 		label: "labels.weaponPool",
 		maxCount: USER.WEAPON_POOL_MAX_SIZE,
 	}),
-	bio: textAreaOptional({
-		label: "labels.bio",
-		maxLength: USER.BIO_MAX_LENGTH,
-	}),
 	showDiscordUniqueName: toggle({
 		label: "labels.profileShowDiscordUniqueName",
 		bottomText: "bottomTexts.profileShowDiscordUniqueName",
@@ -168,10 +142,6 @@ export const userEditProfileBaseSchema = v.object({
 		label: "labels.profileCommissionText",
 		bottomText: "bottomTexts.profileCommissionText",
 		maxLength: USER.COMMISSION_TEXT_MAX_LENGTH,
-	}),
-	newProfileEnabled: toggle({
-		label: "labels.profileNewProfileEnabled",
-		bottomText: "bottomTexts.profileNewProfileEnabled",
 	}),
 });
 

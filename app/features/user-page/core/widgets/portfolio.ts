@@ -150,6 +150,25 @@ export const ALL_WIDGETS = {
 	],
 } as const;
 
+/**
+ * Layout of a user who has not saved their own, matching what the profile page
+ * showed before it was widget based.
+ */
+export const DEFAULT_WIDGETS: StoredWidget[] = [
+	{ id: "weapon-pool" },
+	{ id: "x-rank-peaks", settings: { division: "both" } },
+	{ id: "trophies-owned" },
+	{ id: "badges-owned" },
+	{ id: "bio", settings: { bio: "" } },
+	{ id: "teams" },
+	{ id: "social-links" },
+	{
+		id: "sens",
+		settings: { controller: "s2-pro-con", motionSens: null, stickSens: null },
+	},
+	{ id: "join-date" },
+];
+
 export function allWidgetsFlat() {
 	return Object.values(ALL_WIDGETS).flat();
 }

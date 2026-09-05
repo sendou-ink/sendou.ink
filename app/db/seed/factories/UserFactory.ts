@@ -50,7 +50,7 @@ type Options = {
 	weapons?: Parameters<typeof UserRepository.updateOwnProfile>[0]["weapons"];
 	/** User card fields, submitted as the user themselves. */
 	card?: Partial<CardArgs>;
-	/** Replaces the user's widgets. Only shown to a supporter with `newProfileEnabled` in `preferences`. */
+	/** Replaces the user's widgets, i.e. their profile layout, in place of the default one. */
 	widgets?: Parameters<typeof UserRepository.upsertWidgets>[1];
 	/** Preferences, merged into the ones the user has, as the settings pages save them. */
 	preferences?: UserPreferences;
@@ -148,11 +148,8 @@ async function currentProfile(userId: number): Promise<ProfileArgs> {
 		.selectFrom("User")
 		.select([
 			"country",
-			"bio",
 			"customUrl",
 			"customName",
-			"motionSens",
-			"stickSens",
 			"pronouns",
 			"inGameName",
 			"battlefy",
@@ -231,16 +228,7 @@ function fakeProfile(): Partial<ProfileArgs> | null {
 
 	return {
 		country: fakeCountry(),
-		bio: chance(0.4)
-			? faker.lorem.paragraphs(faker.helpers.arrayElement([1, 1, 2, 3]), "\n\n")
-			: undefined,
 		inGameName: chance(0.5) ? SplatoonFaker.inGameName() : undefined,
-		motionSens: chance(0.3)
-			? faker.helpers.arrayElement([-50, -30, -10, 0, 10, 30, 50])
-			: undefined,
-		stickSens: chance(0.3)
-			? faker.helpers.arrayElement([-50, -20, 0, 20, 50])
-			: undefined,
 		pronouns: chance(0.2) ? fakePronouns() : undefined,
 		weapons: chance(0.6)
 			? SplatoonFaker.mainWeapons(

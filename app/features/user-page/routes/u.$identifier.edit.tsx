@@ -57,7 +57,6 @@ export default function UserEditPage() {
 		customName: data.user.customName ?? "",
 		customUrl: layoutData.user.customUrl ?? "",
 		inGameName: data.user.inGameName ?? "",
-		sensitivity: sensDefaultValue(data.user.motionSens, data.user.stickSens),
 		pronouns: pronounsDefaultValue(data.user.pronouns),
 		battlefy: data.user.battlefy ?? "",
 		country: data.user.country ?? null,
@@ -68,11 +67,9 @@ export default function UserEditPage() {
 			id: w.weaponSplId,
 			isFavorite: Boolean(w.isFavorite),
 		})),
-		bio: data.user.bio ?? "",
 		showDiscordUniqueName: Boolean(data.user.showDiscordUniqueName),
 		commissionsOpen: Boolean(layoutData.user.commissionsOpen),
 		commissionText: layoutData.user.commissionText ?? "",
-		newProfileEnabled: isSupporter && data.newProfileEnabled,
 	};
 
 	return (
@@ -90,7 +87,6 @@ export default function UserEditPage() {
 						<FormField name="customUrl" />
 						<FormField name="customAvatar" disabled={!isSupporter} />
 						<FormField name="inGameName" />
-						<FormField name="sensitivity" />
 						<FormField name="pronouns" />
 						<FormField name="battlefy" />
 						<FormField name="country" options={countryOptions} />
@@ -114,7 +110,6 @@ export default function UserEditPage() {
 							<FormField name="hiddenTrophyIds" options={trophyOptions} />
 						) : null}
 						<FormField name="weapons" />
-						<FormField name="bio" />
 						{data.discordUniqueName ? (
 							<FormField name="showDiscordUniqueName" />
 						) : null}
@@ -124,7 +119,6 @@ export default function UserEditPage() {
 								<FormField name="commissionText" />
 							</>
 						) : null}
-						<FormField name="newProfileEnabled" disabled={!isSupporter} />
 						<FormMessage type="info">
 							<Trans i18nKey={"user:discordExplanation"} t={t}>
 								Username, profile picture, YouTube, Bluesky and Twitch accounts
@@ -161,15 +155,4 @@ function pronounsDefaultValue(
 ): [string | null, string | null] {
 	if (!pronouns) return [null, null];
 	return [pronouns.subject, pronouns.object];
-}
-
-function sensDefaultValue(
-	motionSens: number | null,
-	stickSens: number | null,
-): [string | null, string | null] {
-	if (motionSens === null && stickSens === null) return [null, null];
-	return [
-		motionSens !== null ? String(motionSens) : null,
-		stickSens !== null ? String(stickSens) : null,
-	];
 }

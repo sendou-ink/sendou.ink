@@ -123,16 +123,11 @@ test.describe("User page", () => {
 		const editProfile = await userPage.openEditProfile();
 
 		await editProfile.form.fill("inGameName", "Lean#1234");
-		await editProfile.selectStickSens("0");
-		await editProfile.selectMotionSens("-50");
 		await editProfile.selectCountry("Sweden");
-		await editProfile.form.fill("bio", "My awesome bio");
 		await editProfile.save();
 
 		await expect(userPage.flag("SE")).toBeVisible();
-		await expect(userPage.text("My awesome bio")).toBeVisible();
 		await expect(userPage.text("Lean#1234")).toBeVisible();
-		await expect(userPage.text("Motion -5 / Stick 0")).toBeVisible();
 	});
 
 	test("customizes theme colors and resets them", async ({
@@ -281,10 +276,6 @@ test.describe("User page", () => {
 		page,
 		factories,
 	}) => {
-		await factories.UserFactory.grant(ADMIN_ID, {
-			patronTier: 2,
-			preferences: { newProfileEnabled: true },
-		});
 		await factories.VodFactory.createMany(2, (index) => ({
 			submitterUserId: ADMIN_ID,
 			pov: { type: "USER" as const, userId: ADMIN_ID },
@@ -320,21 +311,21 @@ test.describe("User page", () => {
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
 
+		// no team, so the default layout's teams widget has nothing to show
+		await isNotVisible(userPage.widgetHeading("Teams"));
+
 		const editWidgets = await userPage.openEditWidgets();
-		await editWidgets.addWidget("bio");
+		// the default layout is what an untouched profile starts editing from
+		await editWidgets.removeWidget("bio");
+		await editWidgets.addWidget("bio-md");
 		await editWidgets.fillBio("Reformed Hydra main");
-		await editWidgets.addWidget("join-date");
 		await editWidgets.save();
 
 		await expect(userPage.widgetHeading("Bio")).toBeVisible();
-		await expect(
-			userPage.text("Reformed Hydra main").filter({ visible: true }),
-		).toBeVisible();
+		await expect(userPage.text("Reformed Hydra main")).toBeVisible();
 		await expect(userPage.widgetHeading("Member #")).toBeVisible();
 		// admin is the first user created, so their join order is 1
-		await expect(
-			userPage.exactText("#1").filter({ visible: true }),
-		).toBeVisible();
+		await expect(userPage.exactText("#1")).toBeVisible();
 
 		const vodsPage = await userPage.openVods();
 		await expect(vodsPage.vodTitle("Ranked grind episode 1")).toBeVisible();

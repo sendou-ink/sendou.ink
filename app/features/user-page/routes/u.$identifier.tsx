@@ -86,9 +86,8 @@ export default function UserPageLayout() {
 	const allResultsCount =
 		data.user.calendarEventResultsCount + data.user.tournamentResultsCount;
 
-	const isNewUserPage = matches.some(
-		(m) => (m.loaderData as any)?.type === "new",
-	);
+	// the profile page has its own icon nav, other user pages navigate via the sub nav
+	const isProfilePage = matches.at(-1)?.id.endsWith("u.$identifier.index");
 
 	const navItems: UserPageNavItem[] = [
 		{
@@ -143,7 +142,7 @@ export default function UserPageLayout() {
 
 	return (
 		<Main bigger={location.pathname.includes("results")}>
-			{isNewUserPage ? null : (
+			{isProfilePage ? null : (
 				<SubNav>
 					<SubNavLink to={userPage(data.user)} data-testid="user-profile-tab">
 						{t("common:header.profile")}

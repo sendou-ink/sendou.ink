@@ -68,6 +68,21 @@ describe("team page editing", () => {
 		await UserFactory.createRegular(null, { patronTier: 2 });
 	});
 
+	describe("bio", () => {
+		beforeEach(() => createTeam());
+
+		test("keeps a JSON-object-shaped bio as text (not a parsed object)", async () => {
+			await editTeamProfileAction(
+				// a bio the user typed that happens to be valid JSON of object shape
+				{ ...DEFAULT_EDIT_FIELDS, bio: '{"note":"gg"}' },
+				{ user: "regular", params: { customUrl } },
+			);
+
+			// the team page renders bio directly as a React child; an object would 500 the page
+			expect(typeof (await teamRow()).bio).toBe("string");
+		});
+	});
+
 	describe("custom theme", () => {
 		beforeEach(() => createTeam());
 

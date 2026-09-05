@@ -15,17 +15,14 @@ export class UserPage {
 	constructor(page: Page) {
 		this.page = page;
 		this.locators = {
-			mainTeamLink: page.getByTestId("main-team-link"),
-			secondaryTeamsTrigger: page.getByTestId("secondary-team-trigger"),
-			placementsBox: page.getByTestId("placements-box"),
 			badgeDisplay: page.getByTestId("badge-display"),
 			badgePaginationButtons: page.getByTestId("badge-pagination-button"),
-			editProfileButton: page.getByText("Edit", { exact: true }),
+			editProfileButton: page.getByRole("link", { name: "Edit Profile" }),
 			editWidgetsButton: page.getByRole("link", { name: "Edit Widgets" }),
-			seasonsTab: page.getByTestId("user-seasons-tab"),
 			// the icon nav has a desktop and a mobile copy, only one of them shown
+			seasonsTab: page.locator('[data-testid="user-seasons-tab"]:visible'),
 			vodsTab: page.locator('[data-testid="user-vods-tab"]:visible'),
-			resultsTab: page.getByTestId("user-results-tab"),
+			resultsTab: page.locator('[data-testid="user-results-tab"]:visible'),
 			seasonsTournamentResult: page.getByTestId("seasons-tournament-result"),
 		};
 	}
@@ -55,9 +52,19 @@ export class UserPage {
 		return this.page.getByText(content, { exact: true });
 	}
 
-	/** The title of a widget on the new (widgets-enabled) profile. */
+	/** The title of a profile widget. */
 	widgetHeading(name: string) {
 		return this.page.getByRole("heading", { name, exact: true });
+	}
+
+	/** A profile widget by its id. */
+	widget(widgetId: string) {
+		return this.page.getByTestId(`widget-${widgetId}`);
+	}
+
+	/** The teams the user is a member of, their main team first. */
+	teamLinks() {
+		return this.widget("teams").getByRole("link");
 	}
 
 	usernameHeading(username: string) {
@@ -70,13 +77,13 @@ export class UserPage {
 	}
 
 	async openMainTeam() {
-		await this.locators.mainTeamLink.click();
+		await this.teamLinks().first().click();
 		return new TeamPage(this.page);
 	}
 
 	/** The X Rank summary, shown only for a user with a linked player. */
 	async openPlacements() {
-		await this.locators.placementsBox.click();
+		await this.widget("x-rank-peaks").getByRole("link").click();
 		return new TopSearchPlayerPage(this.page);
 	}
 

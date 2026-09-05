@@ -147,6 +147,12 @@
 	gap: var(--s-3);
 }
 
+.weapon {
+	padding: var(--s-2);
+	border-radius: 100%;
+	background-color: var(--color-bg-high);
+}
+
 .weaponGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
