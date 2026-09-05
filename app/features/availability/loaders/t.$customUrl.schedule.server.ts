@@ -130,6 +130,12 @@ function weekView({
 
 	const days = ScheduleWeek.days(range, timezone).map((day) => ({
 		...day,
+		/** Local midnight starting the day, the zero the heatmap reads track minutes from. */
+		startsAt: Availability.localToTimestamp({
+			date: day.date,
+			time: "00:00",
+			timezone,
+		}),
 		windowTier: bestWindowTierOfDay({ date: day.date, windows, timezone }),
 	}));
 

@@ -7,4 +7,8 @@ export const scheduleWeekSearchParams = SearchParams.define({
 		default: "current",
 		loader: false,
 	}),
+	view: SP.param(v.picklist(["heatmap", "grid"]), {
+		default: "heatmap",
+		loader: false,
+	}),
 });

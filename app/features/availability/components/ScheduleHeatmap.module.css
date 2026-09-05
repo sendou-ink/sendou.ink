@@ -1,0 +1,208 @@
+.heatmap {
+	/* how many are free at once, as steps between the track and the strongest "can play" green */
+	--heat-1: color-mix(
+		in oklab,
+		var(--color-success-high) 20%,
+		var(--color-bg-high)
+	);
+	--heat-2: color-mix(
+		in oklab,
+		var(--color-success-high) 40%,
+		var(--color-bg-high)
+	);
+	--heat-3: color-mix(
+		in oklab,
+		var(--color-success-high) 60%,
+		var(--color-bg-high)
+	);
+	--heat-4: color-mix(
+		in oklab,
+		var(--color-success-high) 80%,
+		var(--color-bg-high)
+	);
+	--heat-5: var(--color-success-high);
+}
+
+.chips {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-1-5);
+}
+
+/* the chip-radio look, as a multi-select: solid fills, no borders */
+.chip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	padding: 0 var(--s-2) 0 var(--s-1);
+	height: var(--selector-size);
+	background-color: var(--color-bg-higher);
+	border: none;
+	border-radius: var(--radius-selector);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text);
+	cursor: pointer;
+	transition: background-color 0.15s;
+
+	&[aria-pressed="true"] {
+		background-color: var(--color-text-accent);
+		color: var(--color-text-inverse);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+}
+
+.chipUnknown {
+	opacity: 0.7;
+}
+
+.dotSlot {
+	display: inline-flex;
+	width: 0.6rem;
+	flex-shrink: 0;
+}
+
+.cellRow {
+	display: grid;
+	grid-template-columns: repeat(var(--cells), 1fr);
+	gap: 2px;
+}
+
+.cell {
+	height: 1.5rem;
+	border-radius: 3px;
+	background-color: var(--color-bg-high);
+
+	&:hover {
+		outline: 2px solid var(--color-border-high);
+		outline-offset: 1px;
+	}
+}
+
+.count1 {
+	background-color: var(--heat-1);
+}
+
+.count2 {
+	background-color: var(--heat-2);
+}
+
+.count3 {
+	background-color: var(--heat-3);
+}
+
+.count4 {
+	background-color: var(--heat-4);
+}
+
+.count5 {
+	background-color: var(--heat-5);
+}
+
+/* framed like the popover element: page background inside the standard border */
+.tooltip {
+	position: fixed;
+	z-index: 10;
+	transform: translate(-50%, calc(-100% - 6px));
+	max-width: 16rem;
+	padding: var(--s-2);
+	background-color: var(--color-bg);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	pointer-events: none;
+
+	&.tooltipBelow {
+		transform: translate(-50%, 6px);
+	}
+}
+
+.tooltipTime {
+	font-weight: var(--weight-semi);
+}
+
+.tooltipCount {
+	color: var(--color-text-high);
+	margin-block-end: var(--s-1);
+}
+
+.tooltipMembers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.tooltipDot {
+	/* whole pixels: a fractional size rounds width and height differently and the circle turns oval */
+	width: 8px;
+	height: 8px;
+	border-radius: 50%;
+	background-color: var(--color-success);
+	flex-shrink: 0;
+
+	&.tooltipDotUnknown {
+		background-color: transparent;
+		border: 1px dashed currentColor;
+	}
+}
+
+.tooltipMember {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	white-space: nowrap;
+
+	&.tooltipMemberOff {
+		color: var(--color-text-high);
+
+		& .tooltipDot {
+			background-color: transparent;
+			border: 1px solid currentColor;
+		}
+	}
+}
+
+.listChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-2);
+	background-color: var(--color-bg-high);
+	border-radius: var(--radius-full);
+	font-size: var(--font-xs);
+	color: var(--color-text);
+}
+
+.legend {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+}
+
+.legendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.legendSwatch {
+	width: 14px;
+	height: 10px;
+	border-radius: 2px;
+}
+
+.unreported {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}

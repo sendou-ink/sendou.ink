@@ -358,8 +358,11 @@ export function snapMinutes(
 	return Math.round(minutes / step) * step;
 }
 
-/** Splits the members' availability at every start/end into spans, each with the members free throughout. */
-function availabilitySegments(members: Array<MemberAvailability>) {
+/**
+ * Splits the members' availability at every start/end into spans, each with the members free
+ * throughout. Spans nobody is free in come out with an empty `userIds`.
+ */
+export function availabilitySegments(members: Array<MemberAvailability>) {
 	const normalized = members.map((member) => ({
 		userId: member.userId,
 		ranges: normalize(member.ranges),
