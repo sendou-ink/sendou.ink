@@ -124,10 +124,6 @@ export const userEditProfileBaseSchema = v.object({
 	hiddenTrophyIds: trophies({
 		label: "labels.profileHiddenTrophies",
 	}),
-	showDiscordUniqueName: toggle({
-		label: "labels.profileShowDiscordUniqueName",
-		bottomText: "bottomTexts.profileShowDiscordUniqueName",
-	}),
 	commissionsOpen: toggle({
 		label: "labels.profileCommissionsOpen",
 		bottomText: "bottomTexts.profileCommissionsOpen",

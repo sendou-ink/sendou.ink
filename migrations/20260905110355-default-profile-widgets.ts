@@ -14,11 +14,22 @@ import { type Kysely, sql } from "kysely";
  * preference that used to gate the widget profile. The battlefy account name goes
  * with them, as it is no longer collected or exposed anywhere. The profile weapon
  * pool goes too: the match profile's pool is the only weapon pool from now on.
+ *
+ * The opt-in for showing the Discord username goes as well, the verified social links
+ * widget always showing it from now on. Anyone who had opted out loses that widget,
+ * migrated or already customized, so the change can't expose a username that used to
+ * be hidden.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	await sql`
 		with "eligible" as (
-			select "User"."id", "User"."bio", "User"."motionSens", "User"."stickSens"
+			select
+				"User"."id",
+				"User"."bio",
+				"User"."motionSens",
+				"User"."stickSens",
+				"User"."discordUniqueName",
+				"User"."showDiscordUniqueName"
 			from "User"
 			where (
 					("User"."bio" is not null and "User"."bio" != '')
@@ -39,8 +50,6 @@ export async function up(db: Kysely<any>): Promise<void> {
 			select 3, json_object('id', 'badges-owned')
 			union all
 			select 5, json_object('id', 'teams')
-			union all
-			select 6, json_object('id', 'social-links')
 			union all
 			select 8, json_object('id', 'join-date')
 		)
@@ -66,6 +75,22 @@ export async function up(db: Kysely<any>): Promise<void> {
 				)
 			)
 		from "eligible"
+		union all
+		select "eligible"."id", 6, json_object('id', 'social-links')
+		from "eligible"
+		where "eligible"."discordUniqueName" is null
+			or "eligible"."showDiscordUniqueName" = 1
+	`.execute(db);
+
+	await sql`
+		delete from "UserWidget"
+		where json_extract("widget", '$.id') = 'social-links'
+			and exists (
+				select 1 from "User"
+				where "User"."id" = "UserWidget"."userId"
+					and "User"."discordUniqueName" is not null
+					and "User"."showDiscordUniqueName" = 0
+			)
 	`.execute(db);
 
 	await sql`
@@ -74,7 +99,13 @@ export async function up(db: Kysely<any>): Promise<void> {
 		where json_extract("preferences", '$.newProfileEnabled') is not null
 	`.execute(db);
 
-	for (const column of ["bio", "motionSens", "stickSens", "battlefy"]) {
+	for (const column of [
+		"bio",
+		"motionSens",
+		"stickSens",
+		"battlefy",
+		"showDiscordUniqueName",
+	]) {
 		await db.schema.alterTable("User").dropColumn(column).execute();
 	}
 

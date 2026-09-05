@@ -63,7 +63,6 @@ export default function UserEditPage() {
 		favoriteBadgeIds: data.favoriteBadgeIds ?? [],
 		favoriteTrophyIds: data.favoriteTrophyIds ?? [],
 		hiddenTrophyIds: data.hiddenTrophyIds ?? [],
-		showDiscordUniqueName: Boolean(data.user.showDiscordUniqueName),
 		commissionsOpen: Boolean(layoutData.user.commissionsOpen),
 		commissionText: layoutData.user.commissionText ?? "",
 	};
@@ -108,9 +107,6 @@ export default function UserEditPage() {
 							) : null}
 							{data.ownedTrophies.length >= 1 ? (
 								<FormField name="hiddenTrophyIds" options={trophyOptions} />
-							) : null}
-							{data.discordUniqueName ? (
-								<FormField name="showDiscordUniqueName" />
 							) : null}
 							{isArtist ? (
 								<>

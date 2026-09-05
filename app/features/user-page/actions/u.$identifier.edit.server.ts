@@ -65,7 +65,6 @@ export const action: ActionFunction = async ({ request }) => {
 		favoriteTrophyIds: limitedTrophyIds.length > 0 ? limitedTrophyIds : null,
 		hiddenTrophyIds:
 			data.hiddenTrophyIds.length > 0 ? data.hiddenTrophyIds : null,
-		showDiscordUniqueName: data.showDiscordUniqueName ? 1 : 0,
 		commissionsOpen: isArtist && data.commissionsOpen ? 1 : 0,
 		commissionText: isArtist ? data.commissionText : null,
 		customAvatarImgId: isSupporter ? data.customAvatar : null,

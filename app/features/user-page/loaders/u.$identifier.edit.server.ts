@@ -20,7 +20,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const userProfile = (await UserRepository.findProfileByIdentifier(
 		identifier,
-		true,
 	))!;
 	const friendCodeResult = await UserRepository.findCurrentFriendCodeByUserId(
 		user.id,
@@ -35,7 +34,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		favoriteTrophyIds: userProfile.favoriteTrophyIds,
 		hiddenTrophyIds: userProfile.hiddenTrophyIds,
 		ownedTrophies,
-		discordUniqueName: userProfile.discordUniqueName,
 		friendCode: friendCodeResult?.friendCode ?? null,
 	};
 };

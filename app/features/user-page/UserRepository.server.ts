@@ -183,10 +183,7 @@ export function findLayoutDataByIdentifier(
 		.executeTakeFirst();
 }
 
-export async function findProfileByIdentifier(
-	identifier: string,
-	forceShowDiscordUniqueName?: boolean,
-) {
+export async function findProfileByIdentifier(identifier: string) {
 	const row = await userByIdentifierQuery(identifier)
 		.leftJoin("PlusTier", "PlusTier.userId", "User.id")
 		.select(({ eb }) => [
@@ -197,7 +194,6 @@ export async function findProfileByIdentifier(
 			"User.inGameName",
 			"User.customName",
 			"User.discordName",
-			"User.showDiscordUniqueName",
 			"User.discordUniqueName",
 			"User.favoriteBadgeIds",
 			"User.favoriteTrophyIds",
@@ -245,10 +241,6 @@ export async function findProfileByIdentifier(
 		secondaryTeams: row.teams.filter((t) => !t.isMainTeam),
 		teams: undefined,
 		...sortBadgesByFavorites({ ...row, badges }),
-		discordUniqueName:
-			forceShowDiscordUniqueName || row.showDiscordUniqueName
-				? row.discordUniqueName
-				: null,
 	};
 }
 
@@ -961,13 +953,7 @@ const searchSelectedFields = (eb: ExpressionBuilder<DB, "User">) =>
 		"User.inGameName",
 		"User.tournamentName",
 		"PlusTier.tier as plusTier",
-		eb
-			.fn<string | null>("iif", [
-				"User.showDiscordUniqueName",
-				"User.discordUniqueName",
-				sql`null`,
-			])
-			.as("discordUniqueName"),
+		"User.discordUniqueName",
 	] as const;
 export async function search({
 	query,
@@ -1236,7 +1222,6 @@ type UpdateProfileArgs = Pick<
 	| "customName"
 	| "pronouns"
 	| "inGameName"
-	| "showDiscordUniqueName"
 	| "commissionText"
 	| "commissionsOpen"
 > & {
@@ -1282,7 +1267,6 @@ export function updateOwnProfile(args: UpdateProfileArgs) {
 				hiddenTrophyIds: args.hiddenTrophyIds
 					? JSON.stringify(args.hiddenTrophyIds)
 					: null,
-				showDiscordUniqueName: args.showDiscordUniqueName,
 				commissionText: args.commissionText,
 				commissionsOpen: args.commissionsOpen,
 				commissionsOpenedAt:

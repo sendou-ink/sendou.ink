@@ -980,7 +980,6 @@ export interface User {
 	patronStartedAt: number | null;
 	patronTier: number | null;
 	patronExpiresAt: number | null;
-	showDiscordUniqueName: Generated<DBBoolean>;
 	twitch: string | null;
 	bsky: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;

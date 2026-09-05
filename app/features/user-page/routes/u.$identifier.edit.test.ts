@@ -23,7 +23,6 @@ const DEFAULT_FIELDS = {
 	inGameName: null,
 	sensitivity: [null, null] as [null, null],
 	pronouns: [null, null] as [null, null],
-	showDiscordUniqueName: true,
 	newProfileEnabled: false,
 };
 
