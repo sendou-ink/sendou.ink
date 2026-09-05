@@ -18,7 +18,7 @@ import { Search as SearchIcon } from "lucide-react";
 import { useState } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useLoaderData } from "react-router";
+import { Link, useFetcher, useLoaderData, useMatches } from "react-router";
 import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
 import { Input } from "~/components/Input";
@@ -36,10 +36,13 @@ import { getWidgetFormSchema } from "~/features/user-page/core/widgets/widget-fo
 import { USER } from "~/features/user-page/user-page-constants";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { SUPPORT_PAGE } from "~/utils/urls";
+import invariant from "~/utils/invariant";
+import { SUPPORT_PAGE, userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
+import { SubPageHeader } from "../components/SubPageHeader";
 import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
+import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
 export { action, loader };
@@ -51,6 +54,10 @@ export default function EditWidgetsPage() {
 	const data = useLoaderData<typeof loader>();
 	const isHydrated = useHydrated();
 	const fetcher = useFetcher();
+
+	const [, parentRoute] = useMatches();
+	invariant(parentRoute);
+	const layoutData = parentRoute.loaderData as UserPageLoaderData;
 
 	const maxWidgets = maxWidgetsPerSlot(useHasRole("SUPPORTER"));
 
@@ -156,11 +163,23 @@ export default function EditWidgetsPage() {
 	};
 
 	if (!isHydrated) {
-		return <Placeholder />;
+		return (
+			<div className={styles.container}>
+				<SubPageHeader
+					user={layoutData.user}
+					backTo={userPage(layoutData.user)}
+				/>
+				<Placeholder />
+			</div>
+		);
 	}
 
 	return (
 		<div className={styles.container}>
+			<SubPageHeader
+				user={layoutData.user}
+				backTo={userPage(layoutData.user)}
+			/>
 			<header className={styles.header}>
 				<h1>{t("user:widgets.editTitle")}</h1>
 				<div className={styles.actions}>
