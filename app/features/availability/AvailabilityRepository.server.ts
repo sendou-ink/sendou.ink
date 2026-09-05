@@ -97,17 +97,11 @@ export async function hasReportedWeek({
 
 /**
  * Users who have not reported the week starting at `weekStartsAt` while a teammate has (a reminder
- * is only worth sending then). Cheerleaders are left out, the schedule views do not show them.
+ * is only worth sending then).
  */
 export async function findWeekReminderUserIds(weekStartsAt: number) {
 	const memberships = await db
 		.selectFrom("TeamMemberWithSecondary")
-		.where((eb) =>
-			eb.or([
-				eb("TeamMemberWithSecondary.role", "is", null),
-				eb("TeamMemberWithSecondary.role", "!=", "CHEERLEADER"),
-			]),
-		)
 		.leftJoin("AvailabilityWeek", (join) =>
 			join
 				.onRef("AvailabilityWeek.userId", "=", "TeamMemberWithSecondary.userId")

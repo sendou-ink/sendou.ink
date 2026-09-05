@@ -41,9 +41,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		meta: { teamCustomUrl: team.customUrl },
 	});
 
-	const members = team.members.filter(
-		(member) => member.role !== "CHEERLEADER",
-	);
+	const members = team.members;
 	const timezone = getViewerTimezone() ?? "UTC";
 	const now = new Date();
 

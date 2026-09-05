@@ -495,12 +495,10 @@ function ParticipantUserIdsFormField() {
 	return (
 		<FormField
 			name="participantUserIds"
-			options={members
-				.filter((member) => member.role !== "CHEERLEADER")
-				.map((member) => ({
-					value: String(member.id),
-					label: () => member.username,
-				}))}
+			options={members.map((member) => ({
+				value: String(member.id),
+				label: () => member.username,
+			}))}
 		/>
 	);
 }
