@@ -127,6 +127,35 @@ describe("findVods", () => {
 		expect(result).toHaveLength(1);
 	});
 
+	test("returns the vod's full weapon list with the filtered weapon first", async () => {
+		await VodFactory.create({
+			submitterUserId: users.id(1),
+			matches: [
+				{ mode: "TW", stageId: 1, startsAt: "0:00", weapons: [10, 20, 30] },
+				{ mode: "SZ", stageId: 2, startsAt: "5:00", weapons: [0] },
+			],
+		});
+
+		const [result] = await VodRepository.findVods({ weapon: 0 });
+
+		expect(result.weapons).toHaveLength(4);
+		expect(result.weapons[0]).toBe(0);
+	});
+
+	test("alt skin of the filtered weapon leads the list", async () => {
+		await VodFactory.create({
+			submitterUserId: users.id(1),
+			matches: [
+				{ mode: "TW", stageId: 1, startsAt: "0:00", weapons: [10, 45] },
+			],
+		});
+
+		const [result] = await VodRepository.findVods({ weapon: 40 });
+
+		expect(result.weapons).toHaveLength(2);
+		expect(result.weapons[0]).toBe(45);
+	});
+
 	test("filters by type", async () => {
 		for (const type of ["TOURNAMENT", "CAST", "SCRIM"] as const) {
 			await VodFactory.create({ submitterUserId: users.id(1), type });
