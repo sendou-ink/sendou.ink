@@ -6,7 +6,6 @@
 	"radios.all": "Todos",
 	"radios.madeBy": "Arte creado por",
 	"radios.madeFor": "Arte creado para",
-	"filterByTag": "Filtrar por etiqueta",
 	"filteringByTag": "Mostrando resultados filtrados por #{{tag}}",
 	"commissionsOpen": "Comisiones abiertas",
 	"commissionsClosed": "Comisiones cerradas",

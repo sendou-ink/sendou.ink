@@ -12,7 +12,7 @@ import {
 	SEED_NUMBERED_LOGOS,
 } from "./seed-art-urls";
 
-async function checkMinioConnection(): Promise<boolean> {
+async function checkStorageConnection(): Promise<boolean> {
 	try {
 		const {
 			STORAGE_END_POINT,
@@ -66,7 +66,7 @@ async function readLocalImage(filename: string): Promise<Buffer> {
 	return await readFile(imagePath);
 }
 
-async function uploadToMinio(
+async function uploadToStorage(
 	imageBuffer: Buffer,
 	filename: string,
 ): Promise<string> {
@@ -105,7 +105,7 @@ async function uploadToMinio(
 	return filename;
 }
 
-async function fileExistsInMinio(filename: string): Promise<boolean> {
+async function fileExistsInStorage(filename: string): Promise<boolean> {
 	try {
 		const {
 			STORAGE_END_POINT,
@@ -137,11 +137,11 @@ async function fileExistsInMinio(filename: string): Promise<boolean> {
 }
 
 export async function seedImages(): Promise<void> {
-	const minioAvailable = await checkMinioConnection();
+	const storageAvailable = await checkStorageConnection();
 
-	if (!minioAvailable) {
+	if (!storageAvailable) {
 		logger.warn(
-			"⚠️  Minio is not available. Skipping image seeding. Make sure Docker is running if you want to seed images.",
+			"⚠️  SeaweedFS is not available. Skipping image seeding. Make sure Docker is running if you want to seed images.",
 		);
 		return;
 	}
@@ -158,25 +158,25 @@ export async function seedImages(): Promise<void> {
 		const smallFilename = filename.replace(/\.(\w+)$/, "-small.$1");
 
 		try {
-			const regularExists = await fileExistsInMinio(filename);
-			const smallExists = await fileExistsInMinio(smallFilename);
+			const regularExists = await fileExistsInStorage(filename);
+			const smallExists = await fileExistsInStorage(smallFilename);
 
 			if (regularExists && smallExists) {
 				skippedCount++;
 				logger.info(
-					`  ↷ Files ${filename} and ${smallFilename} already exist in Minio`,
+					`  ↷ Files ${filename} and ${smallFilename} already exist in storage`,
 				);
 			} else {
 				const imageBuffer = await downloadImage(url);
 
 				if (!regularExists) {
-					logger.info(`  Uploading ${filename} to Minio...`);
-					await uploadToMinio(imageBuffer, filename);
+					logger.info(`  Uploading ${filename} to storage...`);
+					await uploadToStorage(imageBuffer, filename);
 				}
 
 				if (!smallExists) {
-					logger.info(`  Uploading ${smallFilename} to Minio...`);
-					await uploadToMinio(imageBuffer, smallFilename);
+					logger.info(`  Uploading ${smallFilename} to storage...`);
+					await uploadToStorage(imageBuffer, smallFilename);
 				}
 
 				successCount++;
@@ -212,25 +212,25 @@ export async function seedImages(): Promise<void> {
 		const smallFilename = filename.replace(/\.(\w+)$/, "-small.$1");
 
 		try {
-			const regularExists = await fileExistsInMinio(filename);
-			const smallExists = await fileExistsInMinio(smallFilename);
+			const regularExists = await fileExistsInStorage(filename);
+			const smallExists = await fileExistsInStorage(smallFilename);
 
 			if (regularExists && smallExists) {
 				localSkippedCount++;
 				logger.info(
-					`  ↷ Files ${filename} and ${smallFilename} already exist in Minio`,
+					`  ↷ Files ${filename} and ${smallFilename} already exist in storage`,
 				);
 			} else {
 				const imageBuffer = await readLocalImage(sourceFilename);
 
 				if (!regularExists) {
-					logger.info(`  Uploading ${filename} to Minio...`);
-					await uploadToMinio(imageBuffer, filename);
+					logger.info(`  Uploading ${filename} to storage...`);
+					await uploadToStorage(imageBuffer, filename);
 				}
 
 				if (!smallExists) {
-					logger.info(`  Uploading ${smallFilename} to Minio...`);
-					await uploadToMinio(imageBuffer, smallFilename);
+					logger.info(`  Uploading ${smallFilename} to storage...`);
+					await uploadToStorage(imageBuffer, smallFilename);
 				}
 
 				localSuccessCount++;

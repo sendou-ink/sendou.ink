@@ -2,7 +2,7 @@ import { execSync } from "node:child_process";
 import fs from "node:fs";
 import type { FullConfig } from "@playwright/test";
 
-const MINIO_MARKER_FILE = ".e2e-minio-started";
+const SEAWEEDFS_MARKER_FILE = ".e2e-seaweedfs-started";
 
 declare global {
 	var __E2E_SERVERS__: import("node:child_process").ChildProcess[];
@@ -39,16 +39,16 @@ async function globalTeardown(_config: FullConfig) {
 		new Promise((resolve) => setTimeout(resolve, 2000)),
 	]);
 
-	// only stop MinIO if we started it
-	if (fs.existsSync(MINIO_MARKER_FILE)) {
+	// only stop SeaweedFS if we started it
+	if (fs.existsSync(SEAWEEDFS_MARKER_FILE)) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
-		console.log("Stopping MinIO...");
+		console.log("Stopping SeaweedFS...");
 		try {
-			execSync("docker compose stop minio", { stdio: "inherit" });
+			execSync("docker compose stop seaweedfs", { stdio: "inherit" });
 		} catch {
-			// Ignore errors - MinIO might already be stopped
+			// Ignore errors - SeaweedFS might already be stopped
 		}
-		fs.unlinkSync(MINIO_MARKER_FILE);
+		fs.unlinkSync(SEAWEEDFS_MARKER_FILE);
 	}
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output

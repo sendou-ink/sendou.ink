@@ -5,7 +5,6 @@
 	"radios.all": "Alle",
 	"radios.madeBy": "Kunst lavet af ",
 	"radios.madeFor": "Kunst lavet til",
-	"filterByTag": "Filtrer efter etiket",
 	"filteringByTag": "Viser resultater filtreret efter #{{tag}}",
 	"commissionsOpen": "Åben for bestillinger",
 	"commissionsClosed": "Lukket for bestillinger",

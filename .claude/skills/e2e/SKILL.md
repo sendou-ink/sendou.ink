@@ -13,7 +13,7 @@ description: Run, debug, and manage Playwright e2e tests. Use when running e2e t
 - Port calculation: `E2E_BASE_PORT = PORT (from .env) + 500`. Worker N uses port base+N, except ports on the WHATWG fetch bad port list (e.g. 6679) are skipped — see `e2eWorkerPort` in `e2e/helpers/playwright.ts`
 - Worker count: `E2E_WORKERS` env, defaulting to `min(8, max(4, cores - 2))`
 - Worker databases: `db-test-e2e-<N>.sqlite3` in the project root; every test starts from a wiped database holding only the admin (Sendou) and N-ZAP users, and builds its own data with the `factories` fixture
-- MinIO (S3-compatible storage) is started via Docker Compose if not already running
+- SeaweedFS (S3-compatible storage) is started via Docker Compose if not already running
 
 ## Pre-flight checks (run before every test execution)
 
@@ -25,7 +25,7 @@ Before running tests, check for these common issues:
    ```
    If ports are occupied by leftover e2e servers, kill them. If occupied by something else, warn the user.
 
-2. **Docker running** — MinIO requires Docker. Check with `docker info` if there are storage-related failures.
+2. **Docker running** — SeaweedFS requires Docker. Check with `docker info` if there are storage-related failures.
 
 Stale worker databases (`db-test-e2e-*.sqlite3`) are handled automatically: global setup applies pending migrations and rebuilds databases whose migration history has drifted.
 
@@ -65,7 +65,7 @@ Follow this funnel when tests fail:
 Common infrastructure errors and fixes:
 - **"table already exists"** → Should not happen anymore (global setup rebuilds drifted worker DBs); if it does, `rm -f db-test-e2e-*.sqlite3` and investigate `scripts/ensure-test-db.ts`
 - **"Server on port X did not start within timeout"** → Port conflict or app build error. Check ports with `lsof -i :<port>` and check for build errors
-- **"MinIO failed to start"** → Docker not running or compose issue. Check `docker info`
+- **"SeaweedFS failed to start"** → Docker not running or compose issue. Check `docker info`
 - **"Test ended with database writes the server never saw"** → A factory call was not followed by a helper that talks to the server; add a `navigate`/`impersonate` after the writes
 
 ### Step 3: Reduce to single debug worker

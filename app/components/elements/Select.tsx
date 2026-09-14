@@ -670,6 +670,7 @@ function SearchField({
 				value={value}
 				onChange={(event) => onChange(event.target.value)}
 				placeholder={placeholder}
+				autoComplete="off"
 				role="combobox"
 				aria-label="Search"
 				aria-controls={listboxId}

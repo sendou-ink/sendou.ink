@@ -3,7 +3,6 @@
 	"radios.all": "すべて",
 	"radios.madeBy": "作成した人: ",
 	"radios.madeFor": "依頼者: ",
-	"filterByTag": "タグで絞り込み",
 	"filteringByTag": "#{{tag}} で絞り込まれた結果を表示中",
 	"commissionsOpen": "依頼を受付中",
 	"commissionsClosed": "依頼の受付終了中",

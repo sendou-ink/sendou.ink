@@ -7,6 +7,7 @@ import {
 	getNextNthForItem,
 	tierListItemId,
 	tierListMakerPathWithState,
+	tierListSearchParamsHaveItems,
 } from "./tier-list-maker-utils";
 
 function makeState(
@@ -151,5 +152,44 @@ describe("tierListItemId", () => {
 		expect(tierListItemId({ ...splattershot, nth: 2 })).toBe(
 			"main-weapon:40:2",
 		);
+	});
+});
+
+describe("tierListSearchParamsHaveItems", () => {
+	function searchParamsFor(state: TierListState) {
+		return tierListMakerPathWithState({
+			state,
+			title: "Weapons ranked",
+			showTierHeaders: true,
+		}).split("?")[1];
+	}
+
+	test("accepts a tier list that has items", () => {
+		expect(
+			tierListSearchParamsHaveItems(
+				searchParamsFor(makeState({ "tier-a": [splattershot] })),
+			),
+		).toBe(true);
+	});
+
+	test("rejects a state param cut short, as a too long URL pasted into a maxLength input is", () => {
+		const params = new URLSearchParams(
+			searchParamsFor(makeState({ "tier-a": [splattershot] })),
+		);
+		const state = params.get(TIER_LIST_SEARCH_PARAM_NAMES.STATE)!;
+		params.set(
+			TIER_LIST_SEARCH_PARAM_NAMES.STATE,
+			state.slice(0, Math.floor(state.length / 2)),
+		);
+
+		expect(tierListSearchParamsHaveItems(params.toString())).toBe(false);
+	});
+
+	test.each([
+		{ why: "no state param at all", searchParams: "title=Weapons+ranked" },
+		{ why: "state param is not decodable", searchParams: "state=notATierList" },
+		{ why: "every tier is empty", searchParams: searchParamsFor(makeState()) },
+	])("rejects when $why", ({ searchParams }) => {
+		expect(tierListSearchParamsHaveItems(searchParams)).toBe(false);
 	});
 });

@@ -20,23 +20,23 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
-      - name: Start MinIO
-        run: docker compose up -d minio
+      - name: Start SeaweedFS
+        run: docker compose up -d seaweedfs
 
-      # the bucket, not the health endpoint: MinIO answers health/live while it is still
-      # bootstrapping, so a run whose bucket never got created would only surface much later
-      # as a 500 in the one test that uploads an image
-      - name: Wait for MinIO to be ready
+      # the marker object, not the port: SeaweedFS answers on its S3 port, and even lists the
+      # bucket, while its volume server is still registering, so a premature run would only
+      # surface much later as a 500 in the one test that uploads an image
+      - name: Wait for SeaweedFS to be ready
         run: |
           for i in {1..30}; do
-            if curl -sf -o /dev/null http://127.0.0.1:9000/sendou/; then
-              echo "MinIO is ready"
+            if curl -sf -o /dev/null http://127.0.0.1:9000/sendou/.ready; then
+              echo "SeaweedFS is ready"
               exit 0
             fi
-            echo "Waiting for MinIO... ($i/30)"
+            echo "Waiting for SeaweedFS... ($i/30)"
             sleep 2
           done
-          echo "MinIO failed to start"
+          echo "SeaweedFS failed to start"
           exit 1
 
       - uses: pnpm/action-setup@v4
@@ -55,7 +55,7 @@ jobs:
       - name: Run E2E tests
         run: pnpm run test:e2e
 
-      - name: Stop MinIO
+      - name: Stop SeaweedFS
         if: always()
         run: docker compose down
 
