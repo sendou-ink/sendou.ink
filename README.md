@@ -106,13 +106,13 @@ Static assets (weapon, gear and stage images, badges, sounds, etc.) are not stor
 
 #### Docker
 
-Optionally, if you want to develop image upload, you can use Docker to spin up Minio for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:
+Optionally, if you want to develop image upload, you can use Docker to spin up [SeaweedFS](https://github.com/seaweedfs/seaweedfs) for image hosting. You will need [Docker](https://www.docker.com/) up and running and then run the following command:
 
 ```
 docker compose up -d
 ```
 
-Minio admin UI to manage uploaded photos should be up and running at http://localhost:9001
+It serves an S3 compatible API at http://localhost:9000 and creates the `sendou` bucket on startup. Uploaded photos can be browsed in the SeaweedFS filer UI at http://localhost:8888/buckets/sendou/
 
 #### Windows performance tips
 

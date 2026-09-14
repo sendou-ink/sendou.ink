@@ -10,10 +10,10 @@ import {
 
 const DEBUG = process.env.E2E_DEBUG === "true";
 const SERVER_PROCESSES: ChildProcess[] = [];
-const MINIO_MARKER_FILE = ".e2e-minio-started";
+const SEAWEEDFS_MARKER_FILE = ".e2e-seaweedfs-started";
 const STORAGE_BUCKET = "sendou";
-/** Anonymously listable only once the bucket exists and its public policy is set. */
-const MINIO_BUCKET_URL = `http://127.0.0.1:9000/${STORAGE_BUCKET}/`;
+/** Marker object the container writes once the bucket exists; reading it back proves object reads work. */
+const SEAWEEDFS_READY_URL = `http://127.0.0.1:9000/${STORAGE_BUCKET}/.ready`;
 const BUILD_MARKER_FILE = ".e2e-build-marker";
 const BUILD_INPUTS = [
 	"app",
@@ -28,24 +28,25 @@ declare global {
 }
 
 /**
- * Whether the image storage is usable, which takes more than MinIO answering its health check:
- * the container bootstraps the bucket only after startup, and a run whose bucket never got created
- * would otherwise fail deep inside the one test that uploads an image (`art.spec.ts`) with an
- * opaque 500.
+ * Whether the image storage is usable, which takes more than SeaweedFS answering on its port:
+ * the bucket is bootstrapped only after startup, and the volume server registers with the master
+ * later still, so listing the bucket succeeds while object reads are answering 500. Fetching the
+ * marker object exercises the whole chain — otherwise a run would fail deep inside the one test
+ * that uploads an image (`art.spec.ts`) with an opaque 500.
  */
-async function isMinioBucketReady(): Promise<boolean> {
+async function isSeaweedfsReady(): Promise<boolean> {
 	try {
-		const response = await fetch(MINIO_BUCKET_URL);
+		const response = await fetch(SEAWEEDFS_READY_URL);
 		return response.ok;
 	} catch {
 		return false;
 	}
 }
 
-async function waitForMinio(timeout = 60000): Promise<boolean> {
+async function waitForSeaweedfs(timeout = 60000): Promise<boolean> {
 	const start = Date.now();
 	while (Date.now() - start < timeout) {
-		if (await isMinioBucketReady()) {
+		if (await isSeaweedfsReady()) {
 			return true;
 		}
 		await new Promise((resolve) => setTimeout(resolve, 1000));
@@ -53,28 +54,28 @@ async function waitForMinio(timeout = 60000): Promise<boolean> {
 	return false;
 }
 
-async function ensureMinioRunning(): Promise<boolean> {
-	if (await isMinioBucketReady()) {
+async function ensureSeaweedfsRunning(): Promise<boolean> {
+	if (await isSeaweedfsReady()) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
-		console.log("MinIO is already running");
+		console.log("SeaweedFS is already running");
 		return false;
 	}
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output
-	console.log("Starting MinIO...");
-	execSync("docker compose up -d minio", { stdio: "inherit" });
+	console.log("Starting SeaweedFS...");
+	execSync("docker compose up -d seaweedfs", { stdio: "inherit" });
 
-	const isReady = await waitForMinio();
+	const isReady = await waitForSeaweedfs();
 	if (!isReady) {
 		throw new Error(
-			`MinIO did not become usable within timeout (${MINIO_BUCKET_URL} never answered OK). If MinIO is running, its "${STORAGE_BUCKET}" bucket is missing or not public — recreate the container with "docker compose up -d --force-recreate minio".`,
+			`SeaweedFS did not become usable within timeout (${SEAWEEDFS_READY_URL} never answered OK). If SeaweedFS is running, its "${STORAGE_BUCKET}" bucket never finished bootstrapping — recreate the container with "docker compose up -d --force-recreate seaweedfs".`,
 		);
 	}
 
 	// biome-ignore lint/suspicious/noConsole: CLI script output
-	console.log("MinIO is ready");
+	console.log("SeaweedFS is ready");
 
-	fs.writeFileSync(MINIO_MARKER_FILE, "");
+	fs.writeFileSync(SEAWEEDFS_MARKER_FILE, "");
 	return true;
 }
 
@@ -150,7 +151,7 @@ async function globalSetup(config: FullConfig) {
 	// biome-ignore lint/suspicious/noConsole: CLI script output
 	console.log(`\nStarting e2e test setup with ${workerCount} workers...`);
 
-	await ensureMinioRunning();
+	await ensureSeaweedfsRunning();
 
 	if (isBuildFresh()) {
 		// biome-ignore lint/suspicious/noConsole: CLI script output
@@ -217,8 +218,8 @@ async function globalSetup(config: FullConfig) {
 					VITE_SITE_DOMAIN: `http://localhost:${port}`,
 					VITE_E2E_TEST_RUN: "true",
 					STORAGE_END_POINT: "http://127.0.0.1:9000",
-					STORAGE_ACCESS_KEY: "minio-user",
-					STORAGE_SECRET: "minio-password",
+					STORAGE_ACCESS_KEY: "seaweedfs-user",
+					STORAGE_SECRET: "seaweedfs-password",
 					STORAGE_REGION: "us-east-1",
 					STORAGE_BUCKET,
 					// creds from .env must not reach test servers (SyncLiveStreams would

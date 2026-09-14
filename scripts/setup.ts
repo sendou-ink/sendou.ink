@@ -21,7 +21,7 @@ async function main() {
 		}
 	}
 
-	logger.info("🖼️  Seeding images to Minio...");
+	logger.info("🖼️  Seeding images to storage...");
 	try {
 		await seedImages();
 	} catch (err) {
