@@ -27,6 +27,14 @@ export function tierListMakerPathWithState({
 	});
 }
 
+export function tierListSearchParamsHaveItems(searchParams: string) {
+	const { state } = tierListMakerSearchParams.parse(
+		new URLSearchParams(searchParams),
+	);
+
+	return Array.from(state.tierItems.values()).some((items) => items.length > 0);
+}
+
 /** State with the item appended to the tier; unchanged if the tier does not exist. */
 export function addItemToTier(
 	state: TierListState,

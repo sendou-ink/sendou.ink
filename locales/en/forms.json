@@ -61,6 +61,7 @@
 	"errors.mustBeWholeNumber": "Must be a whole number (no decimals)",
 	"errors.matchNotFound": "No SendouQ match found with this ID",
 	"errors.invalidUrl": "Must be a valid URL",
+	"errors.tierListUrlIncomplete": "Tier list URL is incomplete or the tier list is empty",
 	"errors.imageTooLarge": "Image is too large. Try one with a smaller file size.",
 	"errors.invalidTime": "Must be a valid time, e.g. 18:30",
 	"errors.timeRangeIncomplete": "Both a start and an end time are needed",

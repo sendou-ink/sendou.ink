@@ -61,6 +61,7 @@
 	"errors.mustBeWholeNumber": "",
 	"errors.matchNotFound": "",
 	"errors.invalidUrl": "",
+	"errors.tierListUrlIncomplete": "",
 	"errors.imageTooLarge": "",
 	"errors.invalidTime": "",
 	"errors.timeRangeIncomplete": "",

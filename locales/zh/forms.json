@@ -61,6 +61,7 @@
 	"errors.mustBeWholeNumber": "",
 	"errors.matchNotFound": "",
 	"errors.invalidUrl": "请输入有效的 URL 地址",
+	"errors.tierListUrlIncomplete": "",
 	"errors.imageTooLarge": "",
 	"errors.invalidTime": "",
 	"errors.timeRangeIncomplete": "",

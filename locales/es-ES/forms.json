@@ -61,6 +61,7 @@
 	"errors.mustBeWholeNumber": "Debe ser un número entero (sin decimales)",
 	"errors.matchNotFound": "No se ha encontrado ninguna partida de SendouQ con esta ID",
 	"errors.invalidUrl": "Debe ser una URL válida",
+	"errors.tierListUrlIncomplete": "",
 	"errors.imageTooLarge": "La imagen es demasiado grande. Prueba con un archivo más pequeño.",
 	"errors.invalidTime": "",
 	"errors.timeRangeIncomplete": "",
