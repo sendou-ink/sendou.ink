@@ -99,6 +99,34 @@ describe("findVods", () => {
 		expect(result).toHaveLength(1);
 	});
 
+	test("filters by weapon id 0", async () => {
+		for (const weapon of [0, 10] as const) {
+			await VodFactory.create({
+				submitterUserId: users.id(1),
+				matches: [
+					{ mode: "TW", stageId: 1, startsAt: "0:00", weapons: [weapon] },
+				],
+			});
+		}
+
+		const result = await VodRepository.findVods({ weapon: 0 });
+
+		expect(result).toHaveLength(1);
+	});
+
+	test("filters by stage id 0", async () => {
+		for (const stageId of [0, 1] as const) {
+			await VodFactory.create({
+				submitterUserId: users.id(1),
+				matches: [{ mode: "TW", stageId, startsAt: "0:00", weapons: [10] }],
+			});
+		}
+
+		const result = await VodRepository.findVods({ stageId: 0 });
+
+		expect(result).toHaveLength(1);
+	});
+
 	test("filters by type", async () => {
 		for (const type of ["TOURNAMENT", "CAST", "SCRIM"] as const) {
 			await VodFactory.create({ submitterUserId: users.id(1), type });
@@ -136,6 +164,8 @@ describe("countVods", () => {
 		["by weapon", () => ({ weapon: 1000 as const }), 2],
 		["by mode", () => ({ mode: "SZ" as const }), 2],
 		["by stageId", () => ({ stageId: 1 as const }), 2],
+		["by weapon id 0", () => ({ weapon: 0 as const }), 1],
+		["by stage id 0", () => ({ stageId: 0 as const }), 1],
 		["by type", () => ({ type: "CAST" as const }), 1],
 		["by user", () => ({ userId: users.id(1) }), 1],
 		["without filters", () => ({}), 3],
@@ -464,6 +494,6 @@ async function seedVodsOfEveryFilter() {
 		submitterUserId: users.id(2),
 		type: "SCRIM",
 		pov: { type: "USER", userId: users.id(2) },
-		matches: [{ mode: "TC", stageId: 3, startsAt: "0:00", weapons: [0] }],
+		matches: [{ mode: "TC", stageId: 0, startsAt: "0:00", weapons: [0] }],
 	});
 }

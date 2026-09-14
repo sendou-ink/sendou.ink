@@ -331,11 +331,11 @@ function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
 			if (mode) {
 				conditions.push(eb("VideoMatch.mode", "=", mode));
 			}
-			if (stageId) {
+			if (stageId !== undefined) {
 				conditions.push(eb("VideoMatch.stageId", "=", stageId));
 			}
 		}
-		if (weapon) {
+		if (weapon !== undefined) {
 			conditions.push(
 				eb(
 					"VideoMatchPlayer.weaponSplId",
@@ -355,8 +355,9 @@ function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
  */
 function filteredVideoIds(filters: VodFilters) {
 	const { type, userId, mode, stageId, weapon } = filters;
-	const filtersPlayers = Boolean(userId || weapon);
-	const filtersMatches = !filtersPlayers && Boolean(mode || stageId);
+	const filtersPlayers = userId !== undefined || weapon !== undefined;
+	const filtersMatches =
+		!filtersPlayers && (mode !== undefined || stageId !== undefined);
 
 	return db
 		.selectFrom("Video")
