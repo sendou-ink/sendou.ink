@@ -27,7 +27,6 @@ import type { SendouRouteHandle } from "~/utils/remix.server";
 import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
 import type { RegClosesAtOption } from "../calendar-constants";
-import styles from "../calendar-new.module.css";
 import { calendarNewBaseSchema } from "../calendar-new-schemas";
 import {
 	defaultBracketsFormValues,
@@ -413,10 +412,7 @@ function TrophyField() {
 						</div>
 						{selectedTrophy ? (
 							<div className="stack md items-center">
-								<Trophy
-									model={selectedTrophy.model}
-									className={styles.trophyPreview}
-								/>
+								<Trophy model={selectedTrophy.model} />
 								<div className="stack horizontal md items-center">
 									<span>{selectedTrophy.name}</span>
 									<SendouButton

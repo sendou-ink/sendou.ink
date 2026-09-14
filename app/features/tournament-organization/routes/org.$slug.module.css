@@ -62,14 +62,6 @@
 	padding-inline-start: var(--s-3);
 }
 
-.trophyGridButton {
-	all: unset;
-	cursor: pointer;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
 .trophyModalTournaments {
 	display: flex;
 	flex-direction: column;

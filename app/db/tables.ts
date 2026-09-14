@@ -208,6 +208,7 @@ export interface PendingTrophy {
 	acceptedAt: number | null;
 	targetTrophyId: number | null;
 	managerId: number | null;
+	creatorId: number | null;
 }
 
 export interface PendingTrophyApproval {
