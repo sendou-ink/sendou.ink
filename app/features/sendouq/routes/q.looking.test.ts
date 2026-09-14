@@ -17,6 +17,7 @@ import { action as rawLookingAction } from "./q.looking";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 }));
 

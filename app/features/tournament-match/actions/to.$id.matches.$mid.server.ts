@@ -97,6 +97,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 	// lets broadcast receivers skip revalidating the tournament layout and root loaders
 	let onlyMatchResultsChanged = false;
 	let setIsOver = false;
+	let emitStatusUpdate = false;
 	let endedDroppedMatchIds: number[] = [];
 	let followingMatchIds: number[] = [];
 
@@ -520,6 +521,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			emitMatchUpdate = true;
 			emitTournamentUpdate = true;
+			emitStatusUpdate = true;
 
 			break;
 		}
@@ -566,6 +568,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitMatchUpdate = true;
+			emitStatusUpdate = true;
 
 			break;
 		}
@@ -581,6 +584,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitMatchUpdate = true;
+			emitStatusUpdate = true;
 
 			break;
 		}
@@ -681,12 +685,28 @@ export const action: ActionFunction = async ({ params, request }) => {
 	clearTournamentDataCache(tournamentId);
 
 	// refresh RunningTournaments so the sidebar doesn't show stale matches while the TO delays finalizing
-	if (setIsOver) {
+	if (setIsOver || emitStatusUpdate) {
 		const refreshedTournament = await tournamentFromDB(tournamentId);
-		// teams just advanced into following matches: their "waiting for teams" pages revalidate too
-		followingMatchIds = refreshedTournament
-			.followingMatches(match.id)
-			.map((followingMatch) => followingMatch.id);
+		const followingMatches = refreshedTournament.followingMatches(match.id);
+
+		if (setIsOver) {
+			// teams just advanced into following matches: their "waiting for teams" pages revalidate too
+			followingMatchIds = followingMatches.map(
+				(followingMatch) => followingMatch.id,
+			);
+		}
+
+		ChatSystemMessage.notifyStatusChanged([
+			...match.players.map((player) => player.id),
+			...followingMatches.flatMap((followingMatch) =>
+				[followingMatch.opponent1?.id, followingMatch.opponent2?.id].flatMap(
+					(teamId) =>
+						typeof teamId === "number"
+							? (refreshedTournament.teamById(teamId)?.memberUserIds ?? [])
+							: [],
+				),
+			),
+		]);
 	}
 
 	const revalidateScope = onlyMatchResultsChanged

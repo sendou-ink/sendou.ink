@@ -9,6 +9,7 @@ import { ResolveStaleSQMatchesRoutine } from "./resolveStaleSQMatches";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 }));
 

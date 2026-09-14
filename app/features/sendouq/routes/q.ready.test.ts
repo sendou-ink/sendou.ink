@@ -17,6 +17,7 @@ import { action as rawReadyAction, loader as rawReadyLoader } from "./q.ready";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 }));
 

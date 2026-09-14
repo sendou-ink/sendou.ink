@@ -18,6 +18,7 @@ import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
+import { useMarkSqLikesSeen } from "~/features/global-status/global-status-likes-seen";
 import type { UserCardData } from "~/features/user-card/user-card-types";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
@@ -80,11 +81,15 @@ export default function QLookingShell() {
 	return <QLookingPage />;
 }
 
+// xxx: show in global indicator if group expired
+
 function QLookingPage() {
 	const { t } = useTranslation(["q"]);
 	const user = useUser();
 	const data = useLoaderData<typeof loader>();
 	const [joining] = useSearchParam(qLookingSearchParams, "joining");
+
+	useMarkSqLikesSeen(data.ownGroup?.id, data.likes.received.length);
 
 	// pool-shape changes (a group joining/leaving, a morph, a match starting)
 	useTopicRevalidation(SENDOUQ_LOOKING_CHANNEL);

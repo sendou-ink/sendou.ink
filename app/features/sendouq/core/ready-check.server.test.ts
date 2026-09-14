@@ -19,6 +19,7 @@ import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 }));
 

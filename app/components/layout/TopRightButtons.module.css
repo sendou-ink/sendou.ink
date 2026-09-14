@@ -2,6 +2,7 @@
 	display: flex;
 	gap: var(--s-4);
 	margin-left: auto;
+	min-width: 0;
 }
 
 .supportWrapper {
@@ -15,7 +16,7 @@
 }
 
 @media screen and (min-width: 600px) {
-	@container (max-width: 600px) {
+	@container (max-width: 700px) {
 		.supportWrapper {
 			display: none;
 		}
@@ -24,12 +25,36 @@
 			display: block;
 		}
 	}
+
+	@container (max-width: 920px) {
+		.withStatus .supportWrapper {
+			display: none;
+		}
+
+		.withStatus .supportWrapperCompact {
+			display: block;
+		}
+	}
 }
 
 .searchAndAddContainer {
-	display: grid;
-	grid-template-columns: 1fr max-content;
+	display: flex;
 	gap: var(--s-2);
+	min-width: 0;
+}
+
+.searchWrapper {
+	flex: 1 1 0;
+	min-width: 0;
+}
+
+/* the status indicator takes the room the search button gives up */
+.withStatus {
+	@container (max-width: 920px) {
+		& .searchWrapper {
+			flex: none;
+		}
+	}
 }
 
 .searchWrapper > button {

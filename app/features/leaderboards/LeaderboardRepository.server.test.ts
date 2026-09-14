@@ -15,6 +15,7 @@ import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "./leaderboards-constants";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 	notifyRoomsChangedByRoomIds: vi.fn(),
 }));

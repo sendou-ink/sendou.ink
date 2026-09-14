@@ -1,5 +1,8 @@
+import clsx from "clsx";
 import { Heart, LogIn, MessageSquare } from "lucide-react";
 import { useTranslation } from "react-i18next";
+import { GlobalStatusIndicator } from "~/features/global-status/components/GlobalStatusIndicator";
+import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import { SUPPORT_PAGE } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../elements/Button";
 import { AnythingAdder } from "./AnythingAdder";
@@ -21,9 +24,16 @@ export function TopRightButtons({
 	chatUnreadCount?: number;
 }) {
 	const { t } = useTranslation(["common", "front"]);
+	const { status: globalStatus } = useGlobalStatus();
+	const hasGlobalStatus = globalStatus !== null;
 
 	return (
-		<div className={styles.container}>
+		<div
+			className={clsx(
+				styles.container,
+				hasGlobalStatus ? styles.withStatus : null,
+			)}
+		>
 			{showSupport ? (
 				<>
 					<div className={styles.supportWrapper}>
@@ -48,7 +58,11 @@ export function TopRightButtons({
 				</>
 			) : null}
 			<div className={styles.searchAndAddContainer}>
-				<div className={styles.searchWrapper}>
+				<GlobalStatusIndicator />
+				<div
+					className={styles.searchWrapper}
+					data-with-status={hasGlobalStatus ? "" : undefined}
+				>
 					{isLoggedIn ? <GlobalSearch /> : <LoggedOutGlobalSearch />}
 				</div>
 				{isLoggedIn ? <AnythingAdder /> : null}

@@ -124,8 +124,10 @@ export function GlobalSearch() {
 				className={styles.searchButton}
 			>
 				<Search className={styles.searchIcon} />
-				<span className={styles.searchPlaceholder}>{t("common:search")}</span>
-				<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
+				<span className={styles.searchLabel}>
+					<span className={styles.searchPlaceholder}>{t("common:search")}</span>
+					<kbd className={styles.searchKbd}>{isMac ? "Cmd+K" : "Ctrl+K"}</kbd>
+				</span>
 			</Link>
 			{isOpen ? (
 				<SendouModal

@@ -1,7 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as v from "valibot";
-import { SendouQ } from "~/features/sendouq/core/SendouQ.server";
-import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
+import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
 import { parseParams } from "~/utils/remix.server";
 import { id } from "~/utils/schema";
 import type { GetUsersActiveMatchResponse } from "../schema";
@@ -16,10 +15,11 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		schema: paramsSchema,
 	});
 
-	const sendouqGroup = SendouQ.findOwnGroup(userId);
-	if (sendouqGroup?.matchId) {
+	const activity = UserActivity.resolve(userId);
+
+	if (activity.sendouq?.group.matchId) {
 		const result: GetUsersActiveMatchResponse = {
-			matchId: sendouqGroup.matchId,
+			matchId: activity.sendouq.group.matchId,
 			lobby: "sendouq",
 			tournamentId: null,
 			bracketIdx: null,
@@ -27,9 +27,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		return Response.json(result);
 	}
 
-	for (const tournament of RunningTournaments.all) {
-		const status = tournament.teamMemberOfProgressStatus({ id: userId });
-		if (status?.type === "MATCH") {
+	for (const { tournament, status } of activity.tournaments) {
+		if (status.type === "MATCH") {
 			const result: GetUsersActiveMatchResponse = {
 				matchId: status.matchId,
 				lobby: "tournament",

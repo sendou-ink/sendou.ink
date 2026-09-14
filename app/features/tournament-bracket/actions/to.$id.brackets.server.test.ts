@@ -11,6 +11,7 @@ import { action } from "./to.$id.brackets.server";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 	notifyRoomsChangedByRoomIds: vi.fn(),
 }));

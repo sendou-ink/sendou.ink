@@ -53,6 +53,13 @@ export const action: ActionFunction = async ({ request }) => {
 			type: "LIKE_RECEIVED",
 		});
 
+	const notifyGroupStatusChanged = (groupId: number) =>
+		ChatSystemMessage.notifyStatusChanged(
+			SendouQ.findUncensoredGroupById(groupId)?.members.map(
+				(member) => member.id,
+			) ?? [],
+		);
+
 	try {
 		switch (data._action) {
 			case "LIKE": {
@@ -62,8 +69,11 @@ export const action: ActionFunction = async ({ request }) => {
 					createdByUserId: user.id,
 				});
 
+				await refreshSendouQInstance();
+
 				notifyLikeReceived(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
+				notifyGroupStatusChanged(data.targetGroupId);
 
 				break;
 			}
@@ -99,8 +109,11 @@ export const action: ActionFunction = async ({ request }) => {
 					targetGroupId: data.targetGroupId,
 				});
 
+				await refreshSendouQInstance();
+
 				notifyLikeReceived(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
+				notifyGroupStatusChanged(data.targetGroupId);
 				break;
 			}
 			case "UNLIKE": {
@@ -109,8 +122,11 @@ export const action: ActionFunction = async ({ request }) => {
 					targetGroupId: data.targetGroupId,
 				});
 
+				await refreshSendouQInstance();
+
 				revalidateGroupTopic(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
+				notifyGroupStatusChanged(data.targetGroupId);
 
 				break;
 			}
@@ -144,6 +160,11 @@ export const action: ActionFunction = async ({ request }) => {
 
 				// both old rooms died and a fresh merged room was created
 				ChatSystemMessage.notifyRoomsChanged(
+					[...ourGroup.members, ...theirGroup.members].map(
+						(member) => member.id,
+					),
+				);
+				ChatSystemMessage.notifyStatusChanged(
 					[...ourGroup.members, ...theirGroup.members].map(
 						(member) => member.id,
 					),
@@ -203,6 +224,9 @@ export const action: ActionFunction = async ({ request }) => {
 				ChatSystemMessage.notifyRoomsChanged(
 					currentGroup.members.map((member) => member.id),
 				);
+				ChatSystemMessage.notifyStatusChanged(
+					currentGroup.members.map((member) => member.id),
+				);
 
 				broadcastLookingUpdate();
 
@@ -237,6 +261,9 @@ export const action: ActionFunction = async ({ request }) => {
 				}
 
 				ChatSystemMessage.notifyRoomsChanged(
+					currentGroup.members.map((member) => member.id),
+				);
+				ChatSystemMessage.notifyStatusChanged(
 					currentGroup.members.map((member) => member.id),
 				);
 

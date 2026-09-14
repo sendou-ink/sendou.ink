@@ -39,6 +39,7 @@ import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
+import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
 import { LayoutDataProvider } from "./features/layout/LayoutDataProvider";
 import { NotificationsProvider } from "./features/notifications/NotificationsProvider";
@@ -268,7 +269,9 @@ function Document({
 						<ChatProvider user={rootData?.user}>
 							<NotificationsProvider user={rootData?.user}>
 								<LayoutDataProvider data={rootData}>
-									<Layout data={rootData}>{children}</Layout>
+									<GlobalStatusProvider user={rootData?.user}>
+										<Layout data={rootData}>{children}</Layout>
+									</GlobalStatusProvider>
 								</LayoutDataProvider>
 							</NotificationsProvider>
 						</ChatProvider>

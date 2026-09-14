@@ -9,6 +9,7 @@ import { CloseExpiredContinueVotesRoutine } from "./closeExpiredContinueVotes";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 }));
 

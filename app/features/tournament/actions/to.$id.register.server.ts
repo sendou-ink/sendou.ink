@@ -13,6 +13,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
+	tournamentFromDB,
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -62,6 +63,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	);
 
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
+	let statusChangedUserIds: number[] = [];
 
 	switch (data._action) {
 		case "UPSERT_TEAM": {
@@ -273,6 +275,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 				type: "TO_CHECK_IN_OPENED",
 				meta: { tournamentId },
 			});
+
+			statusChangedUserIds = teamMemberOf.memberUserIds;
 			break;
 		}
 		case "ADD_PLAYER": {
@@ -431,6 +435,12 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
+
+	if (statusChangedUserIds.length > 0) {
+		// re-hydrate so the status refetch this prompts reads post-change state
+		await tournamentFromDB(tournamentId);
+		ChatSystemMessage.notifyStatusChanged(statusChangedUserIds);
+	}
 
 	return null;
 };

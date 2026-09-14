@@ -5,6 +5,7 @@ import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournam
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import {
 	clearTournamentDataCache,
+	tournamentFromDB,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TournamentLFGRepository from "~/features/tournament-lfg/TournamentLFGRepository.server";
@@ -91,6 +92,10 @@ export const action: ActionFunction = async ({ params, url }) => {
 	await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 	clearTournamentDataCache(tournamentId);
+
+	// re-hydrate so the status refetch this prompts reads post-change state
+	await tournamentFromDB(tournamentId);
+	ChatSystemMessage.notifyStatusChanged([user.id]);
 
 	throw redirect(
 		tournament.registrationOpen

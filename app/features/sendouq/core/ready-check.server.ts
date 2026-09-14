@@ -73,6 +73,10 @@ export async function start({
 		},
 		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);
+	ChatSystemMessage.notifyStatusChanged([
+		...ownGroup.members.map((m) => m.id),
+		...theirGroup.members.map((m) => m.id),
+	]);
 
 	notify({
 		userIds: [
@@ -165,6 +169,9 @@ async function endReadyCheck(
 	await refreshSendouQInstance();
 
 	revalidateGroups(readyCheck);
+	ChatSystemMessage.notifyStatusChanged(
+		readyCheck.members.map((member) => member.userId),
+	);
 	// both groups return to the looking pool, so its shape changed for everyone
 	ChatSystemMessage.send({ channel: SENDOUQ_LOOKING_CHANNEL });
 }
@@ -221,6 +228,9 @@ async function createMatch({
 		},
 		{ channel: SENDOUQ_LOOKING_CHANNEL },
 	]);
+	ChatSystemMessage.notifyStatusChanged(
+		readyCheck.members.map((member) => member.userId),
+	);
 
 	notify({
 		userIds: readyCheck.members.map((member) => member.userId),

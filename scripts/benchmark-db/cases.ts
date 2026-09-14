@@ -762,6 +762,9 @@ export function buildCases(fx: Fixtures): {
 	add("SQMatchRepository.findById", fx.heavyGroupMatchId, (matchId) =>
 		SQMatchRepository.findById(matchId),
 	);
+	add("SQMatchRepository.findScoreStateById", fx.heavyGroupMatchId, (matchId) =>
+		SQMatchRepository.findScoreStateById(matchId),
+	);
 	add("SQMatchRepository.countSeasonResultPagesByUserId", fx.sq, (sq) =>
 		SQMatchRepository.countSeasonResultPagesByUserId(sq),
 	);
@@ -847,6 +850,9 @@ export function buildCases(fx: Fixtures): {
 	);
 	addStatic("SQGroupRepository.findRecentlyFinishedMatches", () =>
 		SQGroupRepository.findRecentlyFinishedMatches(),
+	);
+	addStatic("SQGroupRepository.findCurrentReceivedLikeCounts", () =>
+		SQGroupRepository.findCurrentReceivedLikeCounts(),
 	);
 
 	addStatic("SplatoonRotationRepository.findAll", () =>
