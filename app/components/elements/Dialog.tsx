@@ -25,6 +25,7 @@ interface DialogElementProps {
  * Unstyled native `<dialog>` shell: shows itself modally on mount, closes on
  * Escape (and outside clicks when `isDismissable`) and reports every close
  * through `onClose`. The caller owns visibility by mounting/unmounting it.
+ * Focus lands on the dialog itself rather than its first control.
  *
  * Portaled to `<body>` so a dialog holding a form can be rendered from inside
  * another form without nesting the `<form>` elements. Renders nothing on the
@@ -44,6 +45,7 @@ export function SendouModal({ ref, ...rest }: DialogElementProps) {
 				}
 				if (dialog && !dialog.open) {
 					dialog.showModal();
+					dialog.focus();
 				}
 			}}
 			{...rest}
@@ -69,6 +71,7 @@ function DialogElement({
 			className={className}
 			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
+			tabIndex={-1}
 			closedby={isDismissable ? "any" : "closerequest"}
 			onClose={onClose}
 			onClick={isDismissable ? closeOnBackdropClick : undefined}
@@ -195,13 +198,22 @@ function TriggeredDialog({
 	};
 
 	// React wires `onToggle` on a hydrated <dialog> only when it is also a
-	// popover, so the open state listens natively (and seeds from a dialog
+	// popover, so opens are observed natively (also seeding from a dialog
 	// opened before hydration)
 	const trackOpenState = (dialog: HTMLDialogElement) => {
-		const onToggle = (event: Event) =>
-			setOpen((event as ToggleEvent).newState === "open");
+		const handleOpened = () => {
+			setOpen(true);
+			dialog.focus();
+		};
+		const onToggle = (event: Event) => {
+			if ((event as ToggleEvent).newState === "open") {
+				handleOpened();
+			} else {
+				setOpen(false);
+			}
+		};
 		dialog.addEventListener("toggle", onToggle);
-		if (dialog.open) setOpen(true);
+		if (dialog.open) handleOpened();
 		return () => dialog.removeEventListener("toggle", onToggle);
 	};
 
@@ -220,7 +232,7 @@ function TriggeredDialog({
 			<DialogElement
 				ref={(dialog) => {
 					dialogRef.current = dialog;
-					return dialog && lazy ? trackOpenState(dialog) : undefined;
+					return dialog ? trackOpenState(dialog) : undefined;
 				}}
 				id={dialogId}
 				{...dialogElementProps(chrome, dialogId, handleClosed)}
