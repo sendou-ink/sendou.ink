@@ -33,8 +33,17 @@
 		border-radius: var(--radius-box);
 	}
 
+	/* long boards skip laying out and painting the rows scrolled out of view;
+	   the skipped ones must still be exactly as tall as the rendered ones or the
+	   page jumps while scrolling, and as engines disagree on whether the
+	   intrinsic size includes the padding, the height is pinned with a min-height
+	   instead: an avatar row, or a weapon image row */
 	content-visibility: auto;
-	contain-intrinsic-size: auto 32px;
+	min-block-size: calc(24px + 2 * var(--s-2));
+
+	&:has(.weapon) {
+		min-block-size: calc(32px + 2 * var(--s-2));
+	}
 }
 
 .dividerRow {

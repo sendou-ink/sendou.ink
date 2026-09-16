@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import * as React from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { useNavigate } from "react-router";
 import {
 	SendouButton,
@@ -199,11 +199,23 @@ function TriggeredDialog({
 
 	// React wires `onToggle` on a hydrated <dialog> only when it is also a
 	// popover, so opens are observed natively (also seeding from a dialog
-	// opened before hydration)
-	const trackOpenState = (dialog: HTMLDialogElement) => {
+	// opened before hydration). Lazy content is committed on `beforetoggle`,
+	// which fires synchronously before the dialog shows, so it is in the
+	// dialog's first painted frame rather than a frame behind it. Wired once
+	// on mount: a ref callback would rerun on every render and, on an open
+	// dialog, take the focus back from whatever inside it the user is typing in.
+	React.useEffect(() => {
+		const dialog = dialogRef.current;
+		if (!dialog) return;
+
 		const handleOpened = () => {
 			setOpen(true);
 			dialog.focus();
+		};
+		const onBeforeToggle = (event: Event) => {
+			if ((event as ToggleEvent).newState === "open") {
+				flushSync(() => setOpen(true));
+			}
 		};
 		const onToggle = (event: Event) => {
 			if ((event as ToggleEvent).newState === "open") {
@@ -212,10 +224,14 @@ function TriggeredDialog({
 				setOpen(false);
 			}
 		};
+		dialog.addEventListener("beforetoggle", onBeforeToggle);
 		dialog.addEventListener("toggle", onToggle);
 		if (dialog.open) handleOpened();
-		return () => dialog.removeEventListener("toggle", onToggle);
-	};
+		return () => {
+			dialog.removeEventListener("beforetoggle", onBeforeToggle);
+			dialog.removeEventListener("toggle", onToggle);
+		};
+	}, []);
 
 	return (
 		<>
@@ -230,10 +246,7 @@ function TriggeredDialog({
 				},
 			})}
 			<DialogElement
-				ref={(dialog) => {
-					dialogRef.current = dialog;
-					return dialog ? trackOpenState(dialog) : undefined;
-				}}
+				ref={dialogRef}
 				id={dialogId}
 				{...dialogElementProps(chrome, dialogId, handleClosed)}
 			>

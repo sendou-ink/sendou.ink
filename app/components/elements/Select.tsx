@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { ChevronsUpDown, Search, X } from "lucide-react";
 import * as React from "react";
-import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
@@ -9,7 +8,12 @@ import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
-import { focusLeftTo, isOwnToggle, useAnchorSafeId } from "./Popover";
+import {
+	focusLeftTo,
+	isOwnToggle,
+	useAnchorSafeId,
+	useShowPopoverOnOpen,
+} from "./Popover";
 import styles from "./Select.module.css";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
@@ -168,8 +172,6 @@ export function SendouSelect<T extends object>({
 	};
 
 	const [open, setOpenState] = React.useState(false);
-	/** Set while the layout effect below shows the popover, so the beforetoggle handler lets that one through. */
-	const showingRef = React.useRef(false);
 	const [, rerenderWithRegisteredContent] = React.useReducer(
 		(count: number) => count + 1,
 		0,
@@ -194,15 +196,11 @@ export function SendouSelect<T extends object>({
 	const listboxRef = React.useRef<HTMLDivElement | null>(null);
 	const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
-	// shown only once the options and search field are committed, and before
-	// the positioning effect measures it, so the first paint is the final one
-	useIsomorphicLayoutEffect(() => {
-		const popover = popoverRef.current;
-		if (!open || !popover || popover.matches(":popover-open")) return;
-		showingRef.current = true;
-		popover.showPopover();
-		showingRef.current = false;
-	}, [open]);
+	const onPopoverBeforeToggle = useShowPopoverOnOpen({
+		popoverRef,
+		open,
+		onOpen: () => setOpen(true),
+	});
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
 	useAnchorPositioning({
 		isOpen: open,
@@ -365,24 +363,6 @@ export function SendouSelect<T extends object>({
 				commitSelection(focusedKey);
 			}
 		}
-	};
-
-	/**
-	 * The trigger's popoverTarget opens the popover before the options exist:
-	 * mount them first and let the layout effect show it. That happens in the
-	 * next frame, still before it paints, as showing a popover from inside the
-	 * show operation being cancelled here is an error.
-	 */
-	const onPopoverBeforeToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
-		if (
-			!isOwnToggle(event) ||
-			event.newState !== "open" ||
-			showingRef.current
-		) {
-			return;
-		}
-		event.preventDefault();
-		requestAnimationFrame(() => flushSync(() => setOpen(true)));
 	};
 
 	const onPopoverToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
