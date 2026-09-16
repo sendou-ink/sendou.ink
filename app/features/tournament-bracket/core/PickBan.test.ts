@@ -959,7 +959,6 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 			mapList: null,
 			teams,
 			pickerTeamId: 100,
-			tieBreakerMapPool: [],
 			toSetMapPool,
 			pickBanEvents,
 		});
@@ -1006,7 +1005,6 @@ describe("mapsListWithLegality — MODE_PICK restriction survives intervening ev
 			mapList: null,
 			teams,
 			pickerTeamId: 100,
-			tieBreakerMapPool: [],
 			toSetMapPool,
 			pickBanEvents,
 		});
@@ -1067,7 +1065,6 @@ describe("mapsListWithLegality — pre-set MODE_PICK only restricts the first ma
 			mapList: null,
 			teams,
 			pickerTeamId: 100,
-			tieBreakerMapPool: [],
 			toSetMapPool,
 			pickBanEvents,
 		});
@@ -1122,7 +1119,6 @@ describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
 			mapList: null,
 			teams,
 			pickerTeamId: 100,
-			tieBreakerMapPool: [],
 			toSetMapPool,
 			pickBanEvents,
 		});
@@ -1157,7 +1153,6 @@ describe("mapsListWithLegality — PICK_NO_MODE_REPEAT", () => {
 			mapList: null,
 			teams,
 			pickerTeamId: 100,
-			tieBreakerMapPool: [],
 			toSetMapPool,
 			pickBanEvents,
 		});
@@ -1220,7 +1215,6 @@ describe("mapsListWithLegality — pre-set MODE_BAN persists into postGame", () 
 			mapList: null,
 			teams,
 			pickerTeamId: 100,
-			tieBreakerMapPool: [],
 			toSetMapPool,
 			pickBanEvents,
 		});
@@ -1271,7 +1265,6 @@ describe("isModeLegal", () => {
 		mapList: null,
 		teams,
 		pickerTeamId: 100,
-		tieBreakerMapPool: [],
 		toSetMapPool,
 	};
 

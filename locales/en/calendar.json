@@ -18,6 +18,8 @@
 	"forms.trophy": "Trophy prize",
 	"forms.trophy.placeholder": "Choose a trophy prize",
 	"forms.mapPool": "Map pool",
+	"forms.teamPick.poolShortfall": "{{mode}} needs at least {{required}} stages (has {{has}})",
+	"forms.teamPick.poolOk": "The map pool has enough stages in every mode",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",
 	"forms.reportResultsInfo": "You choose how many results to report. It can be just the winning team, top 3 or whatever you decide.",
 	"forms.team.placing": "Placing",

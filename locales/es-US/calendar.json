@@ -20,6 +20,8 @@
 	"forms.trophy": "Premio de trofeo",
 	"forms.trophy.placeholder": "Elige un trofeo como premio",
 	"forms.mapPool": "Grupo de mapas",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "Anunciando resultados para {{eventName}}",
 	"forms.reportResultsInfo": "Tú decides cuántos resultados reportar. Puede ser solo el equipo ganador, los 3 primeros o lo que quieras.",
 	"forms.team.placing": "Lugar",

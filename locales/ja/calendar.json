@@ -16,6 +16,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "選択可能なステージ",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "{{eventName}} の結果報告",
 	"forms.reportResultsInfo": "報告する結果の数を選択します。勝者のみ、トップ3など自由に決定できます。",
 	"forms.team.placing": "順位",

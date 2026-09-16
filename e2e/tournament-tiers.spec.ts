@@ -54,7 +54,8 @@ test.describe("Tournament tiers", () => {
 			organizationId: org.id,
 			startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
 			tags: null,
-			mapPickingStyle: "AUTO_SZ",
+			mapPickingStyle: "AUTO",
+			teamPick: { modes: [{ mode: "SZ", count: 6 }], pool: "SENDOUQ" },
 		});
 		for (const roster of rosters) {
 			await factories.TournamentTeamFactory.create(

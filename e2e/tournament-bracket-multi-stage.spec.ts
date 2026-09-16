@@ -321,7 +321,7 @@ test.describe("Tournament bracket multi stage", () => {
 		// start time in the past so the brackets can be started right away
 		await newTournament.setFirstDate(subMinutes(new Date(), 30));
 
-		await newTournament.form.select("toToolsMode", "TO");
+		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
 		await newTournament.selectMapPoolTemplate("preset:SZ");
 
 		// groups of 4: top 2 advance to the finals directly, 3rd placers get

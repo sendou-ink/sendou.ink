@@ -15,9 +15,11 @@ export interface TournamentMaplistInput {
 			maps: MapPool;
 		},
 	];
-	tiebreakerMaps: MapPool;
+	/** The tournament's effective map pool, where the random neutral maps are drawn from. */
+	pool: MapPool;
 	modesIncluded: ModeShort[];
-	followModeOrder?: boolean;
+	/** Fixed mode of each slot. Without it the modes rotate in `modesIncluded` order from a seeded start. */
+	modeOrder?: ModeShort[] | null;
 	recentlyPlayedMaps?: ModeWithStage[];
 }
 

@@ -18,6 +18,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Beschikbare levels",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "Uitslagen doorgeven voor {{eventName}}",
 	"forms.reportResultsInfo": "Je kunt zelf kiezen hoeveel uitslagen je wilt doorgeven. Het kan bijvoorbeeld alleen het winnende team zijn, maar ook de top 3, etc.",
 	"forms.team.placing": "Plaatsing",

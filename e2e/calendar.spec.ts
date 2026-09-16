@@ -228,8 +228,8 @@ test.describe("Calendar", () => {
 		// flip a tournament setting away from its default
 		await newTournament.form.check("requireInGameNames");
 
-		// "Picked by TO" allows an arbitrary map pool, unlike the validated tiebreaker modes
-		await newTournament.form.select("toToolsMode", "TO");
+		// "Organizer picked" allows an arbitrary map pool, unlike the validated team pick pools
+		await newTournament.form.checkItems("mapPickingStyle", ["TO"]);
 		await newTournament.pickMapPool(mapPool);
 
 		await newTournament.addFollowUpBracket({
@@ -257,6 +257,68 @@ test.describe("Calendar", () => {
 		for (const { stage, mode } of mapPool) {
 			await expect(rules.stageName(stage)).toBeVisible();
 			await expect(rules.modeImage(mode).first()).toBeVisible();
+		}
+	});
+
+	test("creates a team picked tournament with a custom map pool", async ({
+		page,
+		factories,
+	}) => {
+		const organizer = await factories.UserFactory.create(null, {
+			roles: ["TOURNAMENT_ORGANIZER"],
+		});
+
+		await impersonate(page, organizer.id);
+
+		const newTournament = new CalendarNewEventPage(page);
+		await newTournament.gotoNewTournament();
+
+		await newTournament.form.fill("name", "Team Pick Tournament");
+		await newTournament.setFirstDate(new Date(2027, 0, 15, 17, 0));
+
+		await newTournament.form.checkItems("mapPickingStyle", ["AUTO"]);
+		await newTournament.setTeamPickModes(["Splat Zones", "Tower Control"]);
+		await newTournament.teamPickCountInput("Splat Zones").fill("2");
+		await newTournament.teamPickCountInput("Tower Control").fill("2");
+		await newTournament.form.checkItems("teamPickPool", ["CUSTOM"]);
+
+		const stages = ["Scorch Gorge", "Eeltail Alley", "Hagglefish Market"];
+		const customPool = stages.flatMap((stage) => [
+			{ stage, mode: "Splat Zones" },
+			{ stage, mode: "Tower Control" },
+		]);
+
+		// every mode needs one stage more than the teams pick in it
+		await newTournament.pickMapPool(
+			customPool.filter((map) => map.stage !== "Hagglefish Market"),
+		);
+		await expect(
+			newTournament.teamPickPoolStatus("SZ needs at least 3 stages (has 2)"),
+		).toBeVisible();
+
+		await newTournament.pickMapPool(
+			customPool.filter((map) => map.stage === "Hagglefish Market"),
+		);
+		await expect(
+			newTournament.teamPickPoolStatus(
+				"The map pool has enough stages in every mode",
+			),
+		).toBeVisible();
+
+		await newTournament.form.submit();
+
+		await expect(page).toHaveURL(/\/to\/\d+/);
+		const tournamentId = Number(page.url().match(/\/to\/(\d+)/)?.[1]);
+
+		// the picked modes, counts and custom pool round-trip onto the rules page
+		const rules = new TournamentRulesPage(page);
+		await rules.goto(tournamentId);
+		await expect(rules.rule("each team picking 2× SZ, 2× TC")).toBeVisible();
+		await expect(
+			rules.rule("Maps are limited to the map pool above"),
+		).toBeVisible();
+		for (const stage of stages) {
+			await expect(rules.stageName(stage)).toBeVisible();
 		}
 	});
 

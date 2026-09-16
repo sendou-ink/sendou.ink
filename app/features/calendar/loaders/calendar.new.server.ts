@@ -27,7 +27,6 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 				? undefined
 				: await CalendarRepository.findById(id, {
 						includeMapPool: true,
-						includeTieBreakerMapPool: true,
 						includeBadgePrizes: true,
 						includeTrophy: true,
 					});
@@ -35,12 +34,21 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		if (!event) return;
 
 		if (!event?.tournamentId)
-			return { ...event, tournament: null, rules: null };
+			return {
+				...event,
+				tournament: null,
+				rules: null,
+				teamsHavePickedMaps: false,
+			};
+
+		const eventTournament = await tournamentData(event.tournamentId);
 
 		return {
 			...event,
-			tournament: await tournamentData(event.tournamentId),
+			tournament: eventTournament,
 			rules: await TournamentRepository.findRulesById(event.tournamentId),
+			teamsHavePickedMaps:
+				eventTournament?.ctx.teams.some((team) => team.hasMapPool) ?? false,
 		};
 	};
 

@@ -20,6 +20,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Pool di scenari",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "Reporting results for {{eventName}}",
 	"forms.reportResultsInfo": "Puoi scegliere quanti risultati vuoi riportare, se fare solo la squadra vincitrice, la top 3 o un'altra combinazione.",
 	"forms.team.placing": "Risultato",

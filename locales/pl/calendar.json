@@ -22,6 +22,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Pula map",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "Zgłaszanie wyników dla {{eventName}}",
 	"forms.reportResultsInfo": "Możesz wybrać ile zgłosić wyników. Mogą to być wyniki drużyny zwyciężonej, Top 3 lub ile chcesz.",
 	"forms.team.placing": "Miejsce",

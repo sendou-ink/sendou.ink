@@ -4,7 +4,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Divider } from "~/components/Divider";
 import { ModeImage } from "~/components/Image";
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { shortStageName, stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -15,7 +14,8 @@ export function ModeMapPoolPicker({
 	mode,
 	amountToPick,
 	pool,
-	tiebreaker,
+	allowedStages,
+	unavailableLabel,
 	onChange,
 	modeTabs,
 	onModeChange,
@@ -24,7 +24,9 @@ export function ModeMapPoolPicker({
 	mode: ModeShort;
 	amountToPick: number;
 	pool: StageId[];
-	tiebreaker?: StageId;
+	/** Stages that can be picked. The rest are shown greyed out with `unavailableLabel`, or not at all without one. */
+	allowedStages: readonly StageId[];
+	unavailableLabel?: string;
 	onChange: (stages: StageId[]) => void;
 	/** When provided, the divider becomes a tab switcher between these modes. */
 	modeTabs?: ModeShort[];
@@ -98,14 +100,13 @@ export function ModeMapPoolPicker({
 			</Divider>
 			<div className="stack sm horizontal flex-wrap justify-center mt-1">
 				{stageIds.map((stageId) => {
-					const isTiebreaker = tiebreaker === stageId;
-					const banned = BANNED_MAPS[mode].includes(stageId);
+					const unavailable = !allowedStages.includes(stageId);
+					if (unavailable && !unavailableLabel) return null;
 					const selected = stages.includes(stageId);
 
 					const onClick = () => {
 						if (disabled) return;
-						if (isTiebreaker) return;
-						if (banned) return;
+						if (unavailable) return;
 						if (selected) return handlePickedStageClick(stageId);
 
 						handleUnpickedStageClick(stageId);
@@ -117,8 +118,8 @@ export function ModeMapPoolPicker({
 							stageId={stageId}
 							onClick={onClick}
 							selected={selected}
-							banned={banned}
-							tiebreaker={isTiebreaker}
+							unavailable={unavailable}
+							unavailableLabel={unavailableLabel}
 							wiggle={wigglingStageId === stageId}
 							onWiggleEnd={() => setWigglingStageId(null)}
 							disabled={disabled}
@@ -147,8 +148,8 @@ function MapButton({
 	stageId,
 	onClick,
 	selected,
-	banned,
-	tiebreaker,
+	unavailable,
+	unavailableLabel,
 	wiggle,
 	onWiggleEnd,
 	disabled,
@@ -157,8 +158,8 @@ function MapButton({
 	stageId: StageId;
 	onClick: () => void;
 	selected?: boolean;
-	banned?: boolean;
-	tiebreaker?: boolean;
+	unavailable?: boolean;
+	unavailableLabel?: string;
 	wiggle?: boolean;
 	onWiggleEnd?: () => void;
 	disabled?: boolean;
@@ -173,12 +174,12 @@ function MapButton({
 			<button
 				className={clsx(styles.mapButton, {
 					[styles.mapButtonWiggle]: wiggle,
-					[styles.mapButtonGreyedOut]: selected || banned || tiebreaker,
+					[styles.mapButtonGreyedOut]: selected || unavailable,
 				})}
 				style={{ "--map-image-url": `url("${stageImageUrl(stageId)}.avif")` }}
 				onClick={onClick}
 				onAnimationEnd={wiggle ? onWiggleEnd : undefined}
-				disabled={disabled || banned}
+				disabled={disabled || unavailable}
 				type="button"
 				aria-label={t(`game-misc:STAGE_${stageId}`)}
 				data-testid={testId}
@@ -190,10 +191,10 @@ function MapButton({
 					data-testid={`${testId}-picked`}
 				/>
 			) : null}
-			{tiebreaker ? (
-				<div className={styles.mapButtonText}>Tiebreak</div>
-			) : banned ? (
-				<div className={clsx(styles.mapButtonText, "text-error")}>Banned</div>
+			{unavailable ? (
+				<div className={clsx(styles.mapButtonText, "text-error")}>
+					{unavailableLabel}
+				</div>
 			) : null}
 			<div className={styles.mapButtonLabel}>
 				{shortStageName(t(`game-misc:STAGE_${stageId}`))}

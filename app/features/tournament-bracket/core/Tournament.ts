@@ -1,6 +1,11 @@
 import { sub } from "date-fns";
 import type { Tables } from "~/db/tables";
-import type { TournamentStageSettings } from "~/db/tables-json";
+import type {
+	TeamPickSettings,
+	TournamentStageSettings,
+} from "~/db/tables-json";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	modesIncluded,
@@ -10,6 +15,7 @@ import {
 } from "~/features/tournament/tournament-utils";
 import type { MatchData } from "~/features/tournament-bracket/core/engine/types";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import { hasPermission } from "~/modules/permissions/utils";
 import {
@@ -691,17 +697,50 @@ export class Tournament {
 		return this.ctx.mapPickingStyle !== "TO";
 	}
 
-	/** What Splatoon modes are played in this tournament */
-	get modesIncluded(): ModeShort[] {
-		return modesIncluded(this.ctx.mapPickingStyle, this.ctx.toSetMapPool);
+	/** Team pick configuration, null when the organizer picks the maps. */
+	get teamPickSettings(): TeamPickSettings | null {
+		if (!this.teamsPrePickMaps) return null;
+
+		return (
+			this.ctx.settings.teamPick ?? TeamPick.defaultSettings(rankedModesShort)
+		);
 	}
 
-	/** Rules page (and its nav item) is shown if there are rules or any map pool. */
+	/** What Splatoon modes are played in this tournament */
+	get modesIncluded(): ModeShort[] {
+		return modesIncluded(
+			this.teamPickSettings ?? undefined,
+			this.ctx.toSetMapPool,
+		);
+	}
+
+	/** Pool the maps of the tournament come from: the organizer's pool, or for team picked tournaments the pool the teams pick from. */
+	get mapPool(): MapPool {
+		const teamPick = this.teamPickSettings;
+		if (!teamPick) return new MapPool(this.ctx.toSetMapPool);
+
+		return TeamPick.effectivePool(teamPick, this.ctx.toSetMapPool);
+	}
+
+	/** Organizer picked maps, empty when the teams pick their own (their custom pool is not legal as such). */
+	get organizerPickedMapPool() {
+		return this.teamsPrePickMaps ? [] : this.ctx.toSetMapPool;
+	}
+
+	/** In how many modes a stage may appear in a team's picks, see {@link TeamPick.stageRepeatCap}. */
+	get stageRepeatCap() {
+		const teamPick = this.teamPickSettings;
+		if (!teamPick) return null;
+
+		return TeamPick.stageRepeatCap({ teamPick, pool: this.mapPool });
+	}
+
+	/** Rules page (and its nav item) is shown if there are rules or maps to describe. */
 	get hasRulesPage() {
 		return (
 			this.ctx.hasRules ||
 			this.ctx.toSetMapPool.length > 0 ||
-			this.ctx.tieBreakerMapPool.length > 0
+			this.teamsPrePickMaps
 		);
 	}
 

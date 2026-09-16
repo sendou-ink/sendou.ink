@@ -20,6 +20,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "מאגר מפות",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "דיווח תוצאות עבור {{eventName}}",
 	"forms.reportResultsInfo": "אתם בוחרים כמה תוצאות לדווח. זה יכול להיות רק הצוות המנצח, הטופ מ-3 או כל מה שתחליטו.",
 	"forms.team.placing": "מיקום",
