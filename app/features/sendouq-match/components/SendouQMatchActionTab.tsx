@@ -53,7 +53,6 @@ export function SendouQMatchActionTab({
 	if (!user) return null;
 
 	const isStaffOnly = ownTeamId == null;
-	if (data.match.isCanceled) return null;
 
 	const { isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
@@ -278,7 +277,10 @@ function RequeueTab({
 					{!data.isOffSeason &&
 					!viewerGroup.matchmade &&
 					(!awaitingConfirmation || isOnReporterTeam) ? (
-						<TrustedRejoinSection viewerGroup={viewerGroup} />
+						<TrustedRejoinSection
+							viewerGroup={viewerGroup}
+							hasJoinedNewGroup={data.hasJoinedNewGroup}
+						/>
 					) : null}
 					{isOnReporterTeam ? <hr className={styles.divider} /> : null}
 
@@ -287,7 +289,9 @@ function RequeueTab({
 					) : null}
 					{isOnConfirmerTeam ? <ScoreConfirmerSection data={data} /> : null}
 					{isOnReporterTeam ? <ReporterUndoSection /> : null}
-					<WeaponReportSection data={data} viewerUserId={user.id} />
+					{data.match.isCanceled ? null : (
+						<WeaponReportSection data={data} viewerUserId={user.id} />
+					)}
 				</div>
 			)}
 		</SendouTabPanel>

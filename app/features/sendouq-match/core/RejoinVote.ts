@@ -29,6 +29,19 @@ export function result(votes: RejoinVote[]) {
 	};
 }
 
+/**
+ * The one player both teams named as a cause of the cancellation, or `null` when they
+ * named nobody in common or agreed on more than one.
+ */
+export function agreedNominatedUserId(nominationsByTeam: number[][]) {
+	if (nominationsByTeam.length !== 2) return null;
+
+	const [ofOneTeam, ofTheOther] = nominationsByTeam.map((ids) => new Set(ids));
+	const agreedOn = [...ofOneTeam].filter((userId) => ofTheOther.has(userId));
+
+	return agreedOn.length === 1 ? agreedOn[0] : null;
+}
+
 /** The user's vote, or null if they have not voted. */
 export function userContinueStatus(votes: RejoinVote[], userId: number) {
 	return votes.find((vote) => vote.userId === userId)?.isContinuing ?? null;
