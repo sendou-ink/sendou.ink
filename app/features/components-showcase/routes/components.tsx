@@ -3155,6 +3155,11 @@ const GLOBAL_STATUS_EXAMPLES: Array<{
 		},
 	},
 	{
+		id: "sq-expired",
+		name: "SendouQ: Group inactive",
+		status: { state: "SQ_EXPIRED", url: SENDOUQ_LOOKING_PAGE },
+	},
+	{
 		id: "sq-ready-check",
 		name: "SendouQ: Ready check",
 		status: { state: "SQ_READY_CHECK", url: SENDOUQ_LOOKING_PAGE },

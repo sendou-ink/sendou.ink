@@ -8,6 +8,7 @@ import {
 } from "~/features/auth/core/user.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { LRUCache } from "~/modules/cache";
@@ -310,6 +311,13 @@ export async function tournamentSharedCached(tournamentId: number) {
 		entry.tournament = new Tournament(notFoundIfNullish(await entry.data));
 	}
 
+	if (
+		!RunningTournaments.has(tournamentId) &&
+		hasImminentBracket(entry.tournament)
+	) {
+		syncTournamentToRegistry(entry.tournament);
+	}
+
 	return entry.tournament;
 }
 
@@ -525,8 +533,22 @@ function mostRecentStartTime(tournament: Tournament) {
 		.sort((a, b) => b.getTime() - a.getTime())[0];
 }
 
+/** A scheduled bracket the tournament is about to resume with, e.g. day 2 of a two day event once its check-in opens. */
+function hasImminentBracket(tournament: Tournament) {
+	const opensAt = new Date(Date.now() + TOURNAMENT.REGULAR_CHECK_IN_WINDOW_MS);
+
+	return tournament.ctx.settings.bracketProgression.some((bracket) => {
+		if (!bracket.startTime) return false;
+
+		const startTime = databaseTimestampToDate(bracket.startTime);
+
+		return startTime > new Date() && startTime <= opensAt;
+	});
+}
+
 function isTournamentLive(tournament: Tournament) {
 	if (!tournament.hasStarted || tournament.everyBracketOver) return false;
+	if (hasImminentBracket(tournament)) return true;
 
 	const cutoff = sub(new Date(), { hours: RUNNING_TOURNAMENT_MAX_AGE_HOURS });
 	const latestStartTime = mostRecentStartTime(tournament);

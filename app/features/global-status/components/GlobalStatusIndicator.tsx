@@ -12,6 +12,7 @@ import styles from "./GlobalStatusIndicator.module.css";
 const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
 	SQ_PREPARING: "sendouq",
 	SQ_QUEUED: "sendouq",
+	SQ_EXPIRED: "sendouq",
 	SQ_READY_CHECK: "sendouq",
 	SQ_MATCH: "sendouq",
 	SQ_AWAITING_REPORT: "sendouq",
@@ -20,6 +21,8 @@ const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
 	TO_WAITING_FOR_MATCH: "medal",
 	TO_WAITING_FOR_CAST: "medal",
 };
+
+const ALERT_BADGE_STATES: GlobalStatusState[] = ["SQ_EXPIRED", "TO_CHECKIN"];
 
 export function GlobalStatusIndicator() {
 	const { status } = useGlobalStatus();
@@ -46,7 +49,9 @@ export function GlobalStatusIndicator() {
 				/>
 			)}
 			<span className={styles.text}>{text}</span>
-			{typeof status.count === "number" ? (
+			{ALERT_BADGE_STATES.includes(status.state) ? (
+				<span className={clsx(styles.countBadge, styles.alertBadge)}>!</span>
+			) : typeof status.count === "number" ? (
 				<span
 					className={clsx(
 						styles.countBadge,

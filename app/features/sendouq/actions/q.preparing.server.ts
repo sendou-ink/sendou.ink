@@ -81,7 +81,6 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 						? updatedGroup.members.map((member) => member.id)
 						: [data.id],
 				);
-				// xxx: do we have a better architecture e.g. sub/pub than to spam this everywhere?
 				ChatSystemMessage.notifyStatusChanged(
 					updatedGroup
 						? updatedGroup.members.map((member) => member.id)

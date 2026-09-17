@@ -8,6 +8,7 @@ import { resolveNotifications } from "~/features/notifications/core/resolve.serv
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { getMemberRoleType } from "~/features/team/team-utils";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
@@ -266,6 +267,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 
 			await TournamentTeamRepository.checkIn(teamMemberOf.id);
+			PendingCheckIns.clearCache();
 			logger.info(
 				`Checking in (success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournamentId}`,
 			);

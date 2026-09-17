@@ -7,12 +7,14 @@ import { useLayoutData } from "~/features/layout/LayoutDataProvider";
 import { useBackgroundResource } from "~/hooks/useBackgroundResource";
 import type { SerializeFrom } from "~/utils/remix";
 import { STATUS_DATA_ROUTE } from "~/utils/urls";
+import { useHasSqGroupExpired } from "./global-status-expiry";
 import { useHasUnseenSqLikes } from "./global-status-likes-seen";
 import type { loader } from "./routes/api.status";
 
 export type GlobalStatusState =
 	| "SQ_PREPARING"
 	| "SQ_QUEUED"
+	| "SQ_EXPIRED"
 	| "SQ_READY_CHECK"
 	| "SQ_MATCH"
 	| "SQ_AWAITING_REPORT"
@@ -35,6 +37,8 @@ export interface GlobalStatus {
 	countNeedsAction?: boolean;
 	/** SendouQ group the queued status belongs to, scoping the likes seen tracking. */
 	groupId?: number;
+	/** When the queued group drops out of the looking pool, flipping the status to `SQ_EXPIRED`. */
+	expiresAt?: number;
 }
 
 interface GlobalStatusContextValue {
@@ -94,12 +98,13 @@ export function GlobalStatusProvider({
 		data !== undefined ? data.globalStatus : (layoutStatus ?? null);
 	const resolvedStatus = loggedIn ? serverStatus : null;
 	const hasUnseenLikes = useHasUnseenSqLikes(resolvedStatus);
+	const hasExpired = useHasSqGroupExpired(resolvedStatus);
 
 	const status =
 		override !== undefined
 			? override
 			: resolvedStatus
-				? { ...resolvedStatus, countNeedsAction: hasUnseenLikes }
+				? withClientState(resolvedStatus, { hasUnseenLikes, hasExpired })
 				: null;
 
 	return (
@@ -116,4 +121,18 @@ export function GlobalStatusProvider({
  */
 export function useGlobalStatus() {
 	return React.useContext(GlobalStatusContext);
+}
+
+/** Folds in what only the browser knows: the likes seen on this device and the group's expiry passing. */
+function withClientState(
+	status: GlobalStatus,
+	{
+		hasUnseenLikes,
+		hasExpired,
+	}: { hasUnseenLikes: boolean; hasExpired: boolean },
+): GlobalStatus {
+	// an expired group has nothing to fill or to like anymore, only to refresh
+	if (hasExpired) return { state: "SQ_EXPIRED", url: status.url };
+
+	return { ...status, countNeedsAction: hasUnseenLikes };
 }

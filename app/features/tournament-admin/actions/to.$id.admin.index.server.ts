@@ -4,6 +4,7 @@ import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
@@ -58,6 +59,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			if (!bracket.sources) {
+				PendingCheckIns.clearCache();
 				await resolveNotifications({
 					userIds: team.memberUserIds,
 					type: "TO_CHECK_IN_OPENED",
@@ -85,6 +87,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				// no sources = regular check in
 				bracketIdx: !bracket.sources ? null : data.bracketIdx,
 			});
+			if (!bracket.sources) {
+				PendingCheckIns.clearCache();
+			}
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 			logger.info(
 				`Checked out: tournament team id: ${data.teamId} - user id: ${user.id} - tournament id: ${tournamentId} - bracket idx: ${data.bracketIdx}`,

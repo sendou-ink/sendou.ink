@@ -1,6 +1,8 @@
+import { groupExpiresAt } from "~/features/sendouq/core/groups";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import * as UserActivity from "~/features/user-activity/core/UserActivity.server";
@@ -31,7 +33,9 @@ const TOURNAMENT_STATUS_URGENCY: Record<
 /**
  * Resolves the status shown in the app header, or null when the user has
  * nothing ongoing. SendouQ states always beat tournament states; leagues are
- * excluded. The one DB read happens only when the user is in a SendouQ match.
+ * excluded. A tournament the user has yet to check in to comes last: it is the
+ * only one resolved outside the in-memory activity, as a tournament that has
+ * not started is not running.
  */
 export async function resolveGlobalStatus(
 	userId: number,
@@ -39,8 +43,23 @@ export async function resolveGlobalStatus(
 	const activity = UserActivity.resolve(userId);
 
 	return (
-		(await resolveSendouQStatus(activity)) ?? resolveTournamentStatus(activity)
+		(await resolveSendouQStatus(activity)) ??
+		resolveTournamentStatus(activity) ??
+		(await resolvePendingCheckInStatus(userId))
 	);
+}
+
+async function resolvePendingCheckInStatus(
+	userId: number,
+): Promise<GlobalStatus | null> {
+	const pendingCheckIn = await PendingCheckIns.byUserId(userId);
+	if (!pendingCheckIn) return null;
+
+	return {
+		state: "TO_CHECKIN",
+		url: tournamentRegisterPage(pendingCheckIn.tournamentId),
+		logoUrl: pendingCheckIn.logoUrl,
+	};
 }
 
 async function resolveSendouQStatus(
@@ -48,7 +67,7 @@ async function resolveSendouQStatus(
 ): Promise<GlobalStatus | null> {
 	if (!activity.sendouq) return null;
 
-	const { group, likesReceivedCount } = activity.sendouq;
+	const { group, likesReceivedCount, expired } = activity.sendouq;
 	const groupSize = { members: group.members.length, max: FULL_GROUP_SIZE };
 
 	if (group.status === "PREPARING") {
@@ -63,12 +82,17 @@ async function resolveSendouQStatus(
 		return { state: "SQ_READY_CHECK", url: SENDOUQ_READY_PAGE };
 	}
 
+	if (expired) {
+		return { state: "SQ_EXPIRED", url: SENDOUQ_LOOKING_PAGE };
+	}
+
 	return {
 		state: "SQ_QUEUED",
 		url: SENDOUQ_LOOKING_PAGE,
 		groupSize,
 		count: likesReceivedCount,
 		groupId: group.id,
+		expiresAt: groupExpiresAt(group.latestActionAt).getTime(),
 	};
 }
 

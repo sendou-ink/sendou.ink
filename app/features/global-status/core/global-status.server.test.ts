@@ -1,9 +1,14 @@
+import { addHours, addMinutes, subHours } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReadyCheckFactory from "~/db/seed/factories/SQReadyCheckFactory";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as Engine from "~/features/tournament-bracket/core/engine";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
@@ -103,8 +108,27 @@ describe("resolveGlobalStatus", () => {
 	beforeEach(async () => {
 		await users.create(8);
 		RunningTournaments.clear();
+		PendingCheckIns.clearCache();
 		await refreshSendouQInstance();
 	});
+
+	/** A tournament inside its check-in window, with the users' team registered. */
+	const tournamentWithCheckInOpen = async ({
+		isCheckedIn,
+	}: {
+		isCheckedIn?: boolean;
+	} = {}) => {
+		const { id: tournamentId } = await TournamentFactory.create({
+			authorId: users.id(8),
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		});
+		await TournamentTeamFactory.create(
+			{ tournamentId, memberUserIds: userIds([1, 2, 3, 4]) },
+			{ isCheckedIn },
+		);
+
+		return tournamentId;
+	};
 
 	test("returns null for a user with nothing ongoing", async () => {
 		expect(await resolveGlobalStatus(users.id(1))).toBeNull();
@@ -140,6 +164,22 @@ describe("resolveGlobalStatus", () => {
 			groupSize: { members: 2, max: 4 },
 			count: 1,
 			groupId: group.id,
+			expiresAt: expect.any(Number),
+		});
+	});
+
+	test("resolves a group inactive for too long as expired", async () => {
+		const group = await SQGroupFactory.create({
+			memberUserIds: userIds([1, 2]),
+		});
+		await backdate("Group", group.id, {
+			latestActionAt: subHours(new Date(), 2),
+		});
+		await refreshSendouQInstance();
+
+		expect(await resolveGlobalStatus(users.id(1))).toEqual({
+			state: "SQ_EXPIRED",
+			url: SENDOUQ_LOOKING_PAGE,
 		});
 	});
 
@@ -190,6 +230,48 @@ describe("resolveGlobalStatus", () => {
 			state: "SQ_AWAITING_REPORT",
 			url: sendouQMatchPage(match.id),
 		});
+	});
+
+	test("resolves a tournament the user has yet to check in to", async () => {
+		const tournamentId = await tournamentWithCheckInOpen();
+
+		expect(await resolveGlobalStatus(users.id(1))).toEqual({
+			state: "TO_CHECKIN",
+			url: tournamentRegisterPage(tournamentId),
+			logoUrl: expect.any(String),
+		});
+	});
+
+	test("resolves nothing once the team has checked in", async () => {
+		await tournamentWithCheckInOpen({ isCheckedIn: true });
+
+		expect(await resolveGlobalStatus(users.id(1))).toBeNull();
+	});
+
+	test("resolves nothing while check-in has yet to open", async () => {
+		const { id: tournamentId } = await TournamentFactory.create({
+			authorId: users.id(8),
+			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 5))],
+		});
+		await TournamentTeamFactory.create({
+			tournamentId,
+			memberUserIds: userIds([1, 2, 3, 4]),
+		});
+
+		expect(await resolveGlobalStatus(users.id(1))).toBeNull();
+	});
+
+	test("an ongoing tournament match beats a check-in of another tournament", async () => {
+		await tournamentWithCheckInOpen();
+		RunningTournaments.add(
+			runningTournamentWithMatch({
+				tournamentId: 100,
+				teamOneUserIds: userIds([1]),
+				teamTwoUserIds: userIds([2]),
+			}),
+		);
+
+		expect((await resolveGlobalStatus(users.id(1)))?.state).toBe("TO_MATCH");
 	});
 
 	test("SendouQ status beats a tournament status", async () => {

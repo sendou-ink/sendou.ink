@@ -1,3 +1,4 @@
+import * as ChatSystemMessage from "../features/chat/ChatSystemMessage.server";
 import { notify } from "../features/notifications/core/notify.server";
 import * as TournamentRepository from "../features/tournament/TournamentRepository.server";
 import { tournamentDataCached } from "../features/tournament-bracket/core/Tournament.server";
@@ -24,6 +25,9 @@ export const NotifyCheckInStartRoutine = new Routine({
 			logger.info(
 				`Notifying check-in start for tournament ${tournament.ctx.id}`,
 			);
+			const memberUserIds = tournament.ctx.teams.flatMap(
+				(team) => team.memberUserIds,
+			);
 			await notify({
 				notification: {
 					type: "TO_CHECK_IN_OPENED",
@@ -33,10 +37,12 @@ export const NotifyCheckInStartRoutine = new Routine({
 					},
 					pictureUrl: tournament.ctx.logoUrl,
 				},
-				userIds: tournament.ctx.teams
-					.flatMap((team) => team.memberUserIds)
-					.concat(tournament.ctx.staff.map((staff) => staff.id)),
+				userIds: memberUserIds.concat(
+					tournament.ctx.staff.map((staff) => staff.id),
+				),
 			});
+			// so the header check-in reminder appears without waiting for a navigation
+			ChatSystemMessage.notifyStatusChanged(memberUserIds);
 		}
 	},
 });

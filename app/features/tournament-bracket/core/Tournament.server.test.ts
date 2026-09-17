@@ -1,4 +1,4 @@
-import { subHours, subMinutes } from "date-fns";
+import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
 import { beforeEach, describe, expect, test } from "vitest";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
@@ -80,9 +80,12 @@ describe("evictStaleRunningTournaments", () => {
 	const tournamentStarted = ({
 		startsAt,
 		bracketStartedAt,
+		nextBracketStartsAt,
 	}: {
 		startsAt: Date;
 		bracketStartedAt: Date;
+		/** Schedules a follow-up bracket, as a tournament running over several days has. */
+		nextBracketStartsAt?: Date;
 	}) => {
 		const data = Engine.create({
 			type: "swiss",
@@ -100,7 +103,17 @@ describe("evictStaleRunningTournaments", () => {
 			},
 			ctx: {
 				startsAt: dateToDatabaseTimestamp(startsAt),
-				settings: { bracketProgression: progressions.swissOneGroup },
+				settings: {
+					bracketProgression: nextBracketStartsAt
+						? [
+								...progressions.swissOneGroup,
+								{
+									...progressions.roundRobinToSingleElimination[1],
+									startTime: dateToDatabaseTimestamp(nextBracketStartsAt),
+								},
+							]
+						: progressions.swissOneGroup,
+				},
 			},
 		});
 	};
@@ -123,6 +136,34 @@ describe("evictStaleRunningTournaments", () => {
 			tournamentStarted({
 				startsAt: subHours(new Date(), 24),
 				bracketStartedAt: subHours(new Date(), 7),
+			}),
+		);
+
+		evictStaleRunningTournaments();
+
+		expect(RunningTournaments.has(1)).toBe(false);
+	});
+
+	test("keeps a long paused tournament whose next bracket's check-in has opened", () => {
+		RunningTournaments.add(
+			tournamentStarted({
+				startsAt: subHours(new Date(), 24),
+				bracketStartedAt: subHours(new Date(), 7),
+				nextBracketStartsAt: addMinutes(new Date(), 30),
+			}),
+		);
+
+		evictStaleRunningTournaments();
+
+		expect(RunningTournaments.has(1)).toBe(true);
+	});
+
+	test("evicts it again while that bracket's check-in has yet to open", () => {
+		RunningTournaments.add(
+			tournamentStarted({
+				startsAt: subHours(new Date(), 24),
+				bracketStartedAt: subHours(new Date(), 7),
+				nextBracketStartsAt: addHours(new Date(), 5),
 			}),
 		);
 

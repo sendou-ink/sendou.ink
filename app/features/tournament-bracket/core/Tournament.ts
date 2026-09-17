@@ -921,7 +921,9 @@ export class Tournament {
 
 	get regularCheckInStartsAt() {
 		// elapsed time math so the window stays one hour long across a DST transition
-		return new Date(this.ctx.startsAt.getTime() - 60 * 60 * 1000);
+		return new Date(
+			this.ctx.startsAt.getTime() - TOURNAMENT.REGULAR_CHECK_IN_WINDOW_MS,
+		);
 	}
 
 	get regularCheckInEndsAt() {
@@ -1201,10 +1203,14 @@ export class Tournament {
 			} as const;
 		}
 
-		for (const [bracketIdx, bracket] of this.brackets.entries()) {
-			if (bracket.teamsPendingCheckIn?.includes(team.id)) {
-				return { type: "CHECKIN", bracketIdx } as const;
-			}
+		for (const bracketIdx of this.ctx.settings.bracketProgression.keys()) {
+			const bracket = this.bracketMetaByIdx(bracketIdx);
+			if (!bracket?.teamsPendingCheckIn?.includes(team.id)) continue;
+
+			// a follow-up bracket's check-in only opens an hour before it starts
+			return this.canCheckInToBracket(bracketIdx, user)
+				? ({ type: "CHECKIN", bracketIdx } as const)
+				: ({ type: "WAITING_FOR_BRACKET" } as const);
 		}
 
 		for (const bracket of startedBrackets) {

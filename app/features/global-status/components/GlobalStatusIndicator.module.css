@@ -58,3 +58,7 @@
 	background-color: var(--color-text-accent);
 	color: var(--color-text-inverse);
 }
+
+.alertBadge {
+	color: var(--color-warning);
+}

@@ -1,9 +1,11 @@
+import { addMinutes } from "date-fns";
 import { describe, expect, test } from "vitest";
 import type {
 	BracketData,
 	GeneratedRound,
 	MatchData,
 } from "~/features/tournament-bracket/core/engine/types";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { unwrap } from "~/utils/result";
 import * as Engine from "./engine";
 import type * as Progression from "./Progression";
@@ -601,6 +603,47 @@ describe("teamMemberOfProgressStatus in swiss", () => {
 
 		expect(tournament.teamMemberOfProgressStatus({ id: 104 })?.type).toBe(
 			"THANKS_FOR_PLAYING",
+		);
+	});
+});
+
+describe("teamMemberOfProgressStatus with a follow-up bracket check-in", () => {
+	const teamsWithMembers = [1, 2, 3, 4].map((teamId) =>
+		tournamentCtxTeam(teamId, { memberUserIds: [100 + teamId] }),
+	);
+
+	const progressionStartingIn = (
+		minutes: number,
+	): Progression.ParsedBracket[] => [
+		{
+			...progressions.swissEarlyAdvance[0],
+		},
+		{
+			...progressions.swissEarlyAdvance[1],
+			requiresCheckIn: true,
+			startTime: dateToDatabaseTimestamp(addMinutes(new Date(), minutes)),
+		},
+	];
+
+	const progressStatusWithFollowUpIn = (minutes: number) => {
+		const bracketProgression = progressionStartingIn(minutes);
+
+		return testTournament({
+			data: playOutEarlyAdvanceSwiss(bracketProgression),
+			ctx: { settings: { bracketProgression }, teams: teamsWithMembers },
+		}).teamMemberOfProgressStatus({ id: 101 });
+	};
+
+	test("asks for the check-in once the bracket's check-in has opened", () => {
+		expect(progressStatusWithFollowUpIn(30)).toEqual({
+			type: "CHECKIN",
+			bracketIdx: 1,
+		});
+	});
+
+	test("waits for the bracket while its check-in has yet to open", () => {
+		expect(progressStatusWithFollowUpIn(3 * 60)?.type).toBe(
+			"WAITING_FOR_BRACKET",
 		);
 	});
 });
