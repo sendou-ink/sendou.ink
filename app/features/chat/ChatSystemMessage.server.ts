@@ -9,10 +9,8 @@ import * as ChatRoomResolver from "./ChatRoomResolver.server";
 import type {
 	PersistedSystemMessageType,
 	RevalidateScope,
-	SoundOnlySystemMessageType,
-	SystemMessageType,
+	UnthrottledSystemMessageType,
 } from "./chat-types";
-import { soundOnlyType } from "./chat-utils";
 import { createRevalidateBroadcastThrottle } from "./revalidate-broadcast-throttle";
 
 type RevalidateBroadcast = {
@@ -21,7 +19,7 @@ type RevalidateBroadcast = {
 	/** Actor whose own broadcast clients skip (their submission already reran the loaders). */
 	authorUserId?: number;
 	revalidateScope?: RevalidateScope;
-	type?: SoundOnlySystemMessageType;
+	type?: UnthrottledSystemMessageType;
 };
 
 const REVALIDATE_BROADCAST_THROTTLE_WINDOW_MS = 2_000;
@@ -87,13 +85,11 @@ function publishRevalidate(msg: {
 	channel: string;
 	revalidateScope?: RevalidateScope;
 	authorUserId?: number;
-	type?: SystemMessageType;
 }) {
 	EventBus.publish([msg.channel], {
 		kind: "revalidate",
 		scope: msg.revalidateScope,
 		authorUserId: msg.authorUserId ?? actorIdOrNullSafe() ?? undefined,
-		type: soundOnlyType(msg.type),
 	});
 }
 

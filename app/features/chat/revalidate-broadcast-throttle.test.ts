@@ -26,14 +26,14 @@ describe("createRevalidateBroadcastThrottle", () => {
 		vi.useRealTimers();
 	});
 
-	test("does not throttle broadcasts whose sound must not be dropped", () => {
+	test("does not throttle broadcasts marking a moment", () => {
 		const { throttle } = setup();
 
 		expect(throttle.throttles({ type: "MATCH_STARTED" })).toBe(false);
 		expect(throttle.throttles({ type: "READY_CHECK_STARTED" })).toBe(false);
 	});
 
-	test("throttles broadcasts that play no sound", () => {
+	test("throttles broadcasts of every other type", () => {
 		const { throttle } = setup();
 
 		expect(throttle.throttles({})).toBe(true);

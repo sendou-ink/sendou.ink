@@ -103,7 +103,6 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 		.execute();
 }
 
-// xxx: overkill? or just one status for both
 /** Just enough of a match to tell playing / awaiting score confirmation / over apart, for the header status. */
 export async function findScoreStateById(id: number) {
 	return db

@@ -7,7 +7,6 @@ import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
-import { playSound } from "~/features/chat/chat-utils";
 import { useTournament } from "~/features/tournament/tournament-context";
 import { checkInSchema } from "~/features/tournament/tournament-schemas";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
@@ -23,8 +22,6 @@ export function TournamentTeamActions({
 }) {
 	const tournament = useTournament();
 	const user = useUser();
-
-	useMatchReadySound(status?.type);
 
 	if (!status) return null;
 
@@ -211,18 +208,4 @@ function Dots() {
 			..<span className={clsx({ invisible: !thirdVisible })}>.</span>
 		</span>
 	);
-}
-
-function useMatchReadySound(statusType?: string) {
-	const isWaiting = React.useRef(false);
-
-	React.useEffect(() => {
-		if (statusType === "MATCH" && isWaiting.current) {
-			playSound("tournament_match");
-		}
-
-		isWaiting.current = !statusType || statusType?.startsWith("WAITING_");
-	}, [statusType]);
-
-	return isWaiting;
 }

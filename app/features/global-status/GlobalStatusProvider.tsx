@@ -9,6 +9,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { STATUS_DATA_ROUTE } from "~/utils/urls";
 import { useHasSqGroupExpired } from "./global-status-expiry";
 import { useHasUnseenSqLikes } from "./global-status-likes-seen";
+import { useGlobalStatusSounds } from "./global-status-sounds";
 import type { loader } from "./routes/api.status";
 
 export type GlobalStatusState =
@@ -80,10 +81,6 @@ export function GlobalStatusProvider({
 		onCatchUp: refresh,
 	});
 
-	// xxx: play a sound on transitions into SQ_READY_CHECK / SQ_MATCH / TO_MATCH
-	// so they are heard anywhere on the site; move the page-local triggers
-	// (useServerRevalidationEvents' sound, useMatchReadySound) here to not double up
-
 	// the event carries no data on purpose: it only says that the user's
 	// status changed server-side
 	useServerEventListener((event) => {
@@ -99,6 +96,8 @@ export function GlobalStatusProvider({
 	const resolvedStatus = loggedIn ? serverStatus : null;
 	const hasUnseenLikes = useHasUnseenSqLikes(resolvedStatus);
 	const hasExpired = useHasSqGroupExpired(resolvedStatus);
+	// the server-resolved status on purpose: the showcase's override is not a moment to announce
+	useGlobalStatusSounds(resolvedStatus);
 
 	const status =
 		override !== undefined
