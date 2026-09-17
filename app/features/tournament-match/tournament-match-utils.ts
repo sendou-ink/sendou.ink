@@ -72,8 +72,8 @@ export function pickInfoText({
 	if (map.source === teams[1].id) {
 		return t("tournament:pickInfo.team", { number: 2 });
 	}
-	if (map.source === "TIEBREAKER") {
-		return t("tournament:pickInfo.tiebreaker");
+	if (map.source === "RANDOM") {
+		return t("tournament:pickInfo.random");
 	}
 	if (map.source === "BOTH") return t("tournament:pickInfo.both");
 	if (map.source === "DEFAULT") return t("tournament:pickInfo.default");

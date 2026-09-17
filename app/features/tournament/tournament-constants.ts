@@ -2,9 +2,6 @@ import { TEAM } from "../team/team-constants";
 
 export const TOURNAMENT = {
 	TEAM_NAME_MAX_LENGTH: TEAM.NAME_MAX_LENGTH,
-	COUNTERPICK_MAPS_PER_MODE: 2,
-	COUNTERPICK_MAX_STAGE_REPEAT: 2,
-	COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE: 6,
 	AVAILABLE_BEST_OF: [1, 3, 5, 7, 9] as const,
 	ENOUGH_TEAMS_TO_START: 2,
 	MAX_BRACKETS_PER_TOURNAMENT: 10,
@@ -40,13 +37,12 @@ export const TOURNAMENT_STAGE_TYPES = [
 ] as const;
 
 /** AUTO = teams pick map pools ahead and each round's map list is made automatically, TO = the TO picks the maps. */
-export type TournamentMapPickingStyle =
-	| "TO"
-	| "AUTO_ALL"
-	| "AUTO_SZ"
-	| "AUTO_TC"
-	| "AUTO_RM"
-	| "AUTO_CB";
+export type TournamentMapPickingStyle = "TO" | "AUTO";
+
+/** Where team picked maps come from: SendouQ legal maps, every map or a pool the organizer builds. */
+export const TEAM_PICK_POOLS = ["SENDOUQ", "ALL", "CUSTOM"] as const;
+
+export type TeamPickPool = (typeof TEAM_PICK_POOLS)[number];
 
 export const TOURNAMENT_STAFF_ROLES = ["ORGANIZER", "STREAMER"] as const;
 

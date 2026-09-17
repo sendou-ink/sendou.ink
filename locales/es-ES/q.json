@@ -157,7 +157,7 @@
 	"match.rematch.vote.yes": "Sí, continuar",
 	"match.rematch.vote.no": "No, he terminado",
 	"match.rematch.vote.noConfirm": "¿Votar no? No podrás cambiar tu voto después.",
-	"match.rematch.declined": "Rechazaste continuar",
+	"match.rematch.declined": "",
 	"match.rematch.fizzled": "Nadie quiso continuar",
 	"match.rematch.rejoinQueue": "Volver a la cola",
 	"match.rematch.backToQueue": "Volver a la cola",

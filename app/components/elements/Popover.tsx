@@ -1,5 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
+import { flushSync } from "react-dom";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import {
 	type AnchorPlacement,
 	useAnchorPositioning,
@@ -21,6 +23,50 @@ export function useAnchorSafeId() {
  */
 export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
 	return event.target === event.currentTarget;
+}
+
+/**
+ * Shows a popover once React has committed `open`, so content mounted only
+ * while open is in the popover's first painted frame instead of appearing a
+ * frame after it. Returns the `beforetoggle` handler for the popover: the
+ * browser's own open (the trigger's `popoverTarget`) is cancelled there and
+ * redone through `onOpen` in the next frame, still before it paints, as a
+ * popover cannot be shown from inside the show operation being cancelled.
+ * Call it before `useAnchorPositioning` so the popover is showing by the time
+ * that measures it.
+ */
+export function useShowPopoverOnOpen({
+	popoverRef,
+	open,
+	onOpen,
+}: {
+	popoverRef: React.RefObject<HTMLElement | null>;
+	open: boolean;
+	onOpen: () => void;
+}) {
+	const showingRef = React.useRef(false);
+	const onOpenRef = React.useRef(onOpen);
+	onOpenRef.current = onOpen;
+
+	useIsomorphicLayoutEffect(() => {
+		const popover = popoverRef.current;
+		if (!open || !popover || popover.matches(":popover-open")) return;
+		showingRef.current = true;
+		popover.showPopover();
+		showingRef.current = false;
+	}, [open, popoverRef]);
+
+	return (event: React.ToggleEvent<HTMLElement>) => {
+		if (
+			!isOwnToggle(event) ||
+			event.newState !== "open" ||
+			showingRef.current
+		) {
+			return;
+		}
+		event.preventDefault();
+		requestAnimationFrame(() => flushSync(() => onOpenRef.current()));
+	};
 }
 
 /**
@@ -95,13 +141,16 @@ export function SendouPopover({
 			setOpenRef.current(true);
 			return;
 		}
-		if (open) {
-			popover.showPopover();
-		} else {
+		if (!open) {
 			popover.hidePopover();
 		}
 	}, [open]);
 
+	const onBeforeToggle = useShowPopoverOnOpen({
+		popoverRef,
+		open,
+		onOpen: () => setOpen(true),
+	});
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
 	useAnchorPositioning({
 		isOpen: open,
@@ -155,6 +204,7 @@ export function SendouPopover({
 				role="dialog"
 				tabIndex={-1}
 				data-placement={placement}
+				onBeforeToggle={onBeforeToggle}
 				onToggle={onToggle}
 				onBlur={onBlur}
 			>
@@ -183,7 +233,8 @@ export function SendouAnchoredPopover({
 
 	const popoverRef = React.useRef<HTMLDivElement>(null);
 
-	React.useEffect(() => {
+	// before the positioning effect, so the content is placed by its first paint
+	useIsomorphicLayoutEffect(() => {
 		const trigger = triggerRef.current;
 		const popover = popoverRef.current;
 		if (!popover) return;

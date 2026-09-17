@@ -26,7 +26,6 @@
 }
 
 .tierName {
-	color: var(--color-text-on-light);
 	line-height: 1.2;
 	max-width: 90px;
 	overflow-wrap: break-word;
@@ -36,13 +35,16 @@
 .popupContent {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-6);
+	gap: var(--s-4);
 	padding: var(--s-2);
 }
 
+.deleteButton {
+	height: auto;
+}
+
 .nameInput {
-	width: 250px;
-	text-align: center;
+	width: 100%;
 }
 
 .targetZone {
@@ -133,17 +135,10 @@
 	color: var(--color-text);
 }
 
-.colorPickerContainer {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-3);
-	align-items: center;
-}
-
-.presetColorsGrid {
+.colorGrid {
 	display: grid;
-	grid-template-columns: repeat(5, 1fr);
-	gap: var(--s-2);
+	grid-template-columns: repeat(6, 1fr);
+	gap: var(--s-3);
 }
 
 .colorButton {
@@ -166,10 +161,39 @@
 	box-shadow: 0 0 0 2px var(--color-bg);
 }
 
-.customColorLabel {
-	width: 100%;
+.customColorButton {
+	position: relative;
 	display: flex;
-	flex-direction: column;
 	align-items: center;
+	justify-content: center;
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
+
+	&:focus-within {
+		outline: var(--border-style-high);
+		outline-offset: 2px;
+	}
+}
+
+.customColorButtonOnLight {
+	color: var(--color-text-on-light);
+}
+
+.customColorButtonOnDark {
+	color: var(--color-text-on-dark);
+}
+
+.customColorIcon {
+	width: 20px;
+	height: 20px;
+	pointer-events: none;
+}
+
+.customColorInput {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	opacity: 0;
 	cursor: pointer;
 }

@@ -1262,7 +1262,7 @@ export const PADDLING_POOL_257 = () =>
 				],
 				lockedMatches: [],
 			},
-			mapPickingStyle: "AUTO_ALL",
+			mapPickingStyle: "AUTO",
 			name: "Paddling Pool 257",
 			hasRules: false,
 			logoUrl: "/test.avif",
@@ -2517,24 +2517,6 @@ export const PADDLING_POOL_257 = () =>
 				},
 			],
 			toSetMapPool: [],
-			tieBreakerMapPool: [
-				{
-					stageId: 15,
-					mode: "SZ",
-				},
-				{
-					stageId: 0,
-					mode: "CB",
-				},
-				{
-					stageId: 16,
-					mode: "RM",
-				},
-				{
-					stageId: 8,
-					mode: "TC",
-				},
-			],
 			latestTeamIdByDuplicatedUserId: {},
 		},
 	}) as TournamentData;
@@ -3876,7 +3858,7 @@ export const PADDLING_POOL_255 = () =>
 				],
 				lockedMatches: [],
 			},
-			mapPickingStyle: "AUTO_ALL",
+			mapPickingStyle: "AUTO",
 			name: "Paddling Pool 255",
 			hasRules: false,
 			logoUrl: "/test.avif",
@@ -5098,24 +5080,6 @@ export const PADDLING_POOL_255 = () =>
 				},
 			],
 			toSetMapPool: [],
-			tieBreakerMapPool: [
-				{
-					stageId: 15,
-					mode: "SZ",
-				},
-				{
-					stageId: 0,
-					mode: "CB",
-				},
-				{
-					stageId: 16,
-					mode: "RM",
-				},
-				{
-					stageId: 8,
-					mode: "TC",
-				},
-			],
 			latestTeamIdByDuplicatedUserId: {},
 		},
 	}) as TournamentData;
@@ -6341,6 +6305,7 @@ export const IN_THE_ZONE_32 = ({
 			eventId: 1134,
 			bracketProgressionOverrides: [],
 			settings: {
+				teamPick: { modes: [{ mode: "SZ", count: 6 }], pool: "SENDOUQ" },
 				bracketProgression: [
 					{
 						name: "Main bracket",
@@ -6363,7 +6328,7 @@ export const IN_THE_ZONE_32 = ({
 			discordUrl: null,
 			castTwitchAccounts: ["dappleproductions", "kyochandxd"],
 			castedMatchesInfo: null,
-			mapPickingStyle: "AUTO_SZ",
+			mapPickingStyle: "AUTO",
 			name: "In The Zone 32",
 			hasRules: false,
 			logoUrl: "/test.avif",
@@ -7281,7 +7246,6 @@ export const IN_THE_ZONE_32 = ({
 				},
 			],
 			toSetMapPool: [],
-			tieBreakerMapPool: [],
 			latestTeamIdByDuplicatedUserId: {},
 		},
 	}) as TournamentData;

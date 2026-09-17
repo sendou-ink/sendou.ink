@@ -1,20 +1,28 @@
-import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { err, ok, type Result } from "~/utils/result";
 import type { ModeShort, StageId } from "../in-game-lists/types";
-import { DEFAULT_MAP_POOL } from "./constants";
 import type {
 	TournamentMapListMap,
 	TournamentMaplistInput,
 	TournamentMaplistSource,
 } from "./types";
 
-type ModeWithStageAndScore = TournamentMapListMap & { score: number };
+type ModeWithStageAndScore = TournamentMapListMap & {
+	score: number;
+	/** A pool map rather than a team's pick, meant for the last slot. */
+	isNeutral?: boolean;
+	/** A neutral map some team picked, used only when the pool has nothing neither team picked in the mode. */
+	isFallback?: boolean;
+};
 
 const OPTIMAL_MAPLIST_SCORE = 0;
 const MAX_RECURSION_DEPTH = 5_000;
+const UNFAIR_PENALTY = 100;
+const FALLBACK_NEUTRAL_MAP_PENALTY = 5;
+/** Below the bad last map penalty (1) so a common map still decides the match when a fixed mode order runs the picks dry. */
+const EARLY_NEUTRAL_MAP_PENALTY = 0.5;
 
 type MapListGenerationError =
 	| "MAX_RECURSION_DEPTH_EXCEEDED"
@@ -53,14 +61,17 @@ function generateWithInput(
 
 	const { seededShuffle } = seededRandom(input.seed);
 	// least recently played first so a good enough list is found before the recursion depth cap
-	const stages = seededShuffle(resolveCommonStages()).sort(
+	const stages = seededShuffle(resolveTeamStages()).sort(
 		(a, b) => recencyPenalty(a) - recencyPenalty(b),
 	);
-	const mapList: Array<ModeWithStageAndScore & { score: number }> = [];
+	const neutralStages = seededShuffle(resolveNeutralStages()).sort(
+		(a, b) => recencyPenalty(a) - recencyPenalty(b),
+	);
+	const mapList: Array<ModeWithStageAndScore> = [];
 	const bestMapList: { maps?: Array<ModeWithStageAndScore>; score: number } = {
 		score: Number.POSITIVE_INFINITY,
 	};
-	const usedStages = new Set<number>();
+	const usedStages = new Set<string>();
 	let depth = 0;
 
 	const backtrack = (): boolean => {
@@ -79,28 +90,22 @@ function generateWithInput(
 			return true;
 		}
 
-		const stageList =
-			mapList.length < input.count - 1 || input.tiebreakerMaps.length === 0
-				? resolveStages()
-				: input.tiebreakerMaps.stageModePairs.map((p) => ({
-						...p,
-						score: 0,
-						source: "TIEBREAKER" as const,
-					}));
+		// a fixed mode can run the teams' picks dry before the last slot, the pool covers the rest
+		const stageList = isNeutralSlot()
+			? [...stages.filter((stage) => stage.score === 0), ...neutralStages]
+			: fixedModeOfSlot(mapList.length)
+				? [...stages, ...neutralStages]
+				: stages;
 
-		// tiebreaker/fallback lists get their own key range so indices don't collide with the main list
-		const usedStageKeyOffset = stageList === stages ? 0 : stages.length;
-
-		for (const [i, stage] of stageList.entries()) {
-			const usedStageKey = i + usedStageKeyOffset;
-			if (!stageIsOk(stage, usedStageKey)) continue;
+		for (const stage of stageList) {
+			if (!stageIsOk(stage)) continue;
 			mapList.push(stage);
-			usedStages.add(usedStageKey);
+			usedStages.add(stageKey(stage));
 
 			const continueSearch = backtrack();
 			if (!continueSearch) return false;
 
-			usedStages.delete(usedStageKey);
+			usedStages.delete(stageKey(stage));
 			mapList.pop();
 		}
 
@@ -110,21 +115,48 @@ function generateWithInput(
 	const searchExhausted = backtrack();
 
 	// a list found before the depth cap is valid, only its optimality is unproven
-	if (bestMapList.maps) return ok(bestMapList.maps);
+	if (bestMapList.maps) {
+		if (bestMapList.maps.some((map) => map.isFallback)) {
+			logger.warn(
+				`Neutral map fallback: both teams together picked every pool map of the mode. Team IDs: ${input.teams.map((t) => t.id).join(", ")}`,
+			);
+		}
+
+		return ok(
+			bestMapList.maps.map(
+				({ score: _score, isNeutral: _neutral, isFallback: _fb, ...map }) =>
+					map,
+			),
+		);
+	}
 	if (!searchExhausted) return err("MAX_RECURSION_DEPTH_EXCEEDED");
 
 	return err("COULD_NOT_GENERATE_MAPLIST");
 
-	function resolveCommonStages() {
+	function stageKey(stage: { mode: ModeShort; stageId: StageId }) {
+		return `${stage.mode}-${stage.stageId}`;
+	}
+
+	/** Both teams' picks scored per team, or the whole pool when neither picked. */
+	function resolveTeamStages(): Array<ModeWithStageAndScore> {
+		if (neitherTeamSubmitted()) {
+			return poolMaps().map((pair) => ({
+				...pair,
+				score: 0,
+				source: "RANDOM" as const,
+			}));
+		}
+
 		const sorted = input.teams
 			.slice()
 			.sort((a, b) => a.id - b.id) as TournamentMaplistInput["teams"];
 
-		const result = sorted[0].maps.stageModePairs.map((pair) => ({
-			...pair,
-			score: 1,
-			source: sorted[0].id as TournamentMaplistSource,
-		}));
+		const result: Array<ModeWithStageAndScore> =
+			sorted[0].maps.stageModePairs.map((pair) => ({
+				...pair,
+				score: 1,
+				source: sorted[0].id as TournamentMaplistSource,
+			}));
 
 		for (const stage of sorted[1].maps.stageModePairs) {
 			const alreadyIncludedStage = result.find(
@@ -140,65 +172,46 @@ function generateWithInput(
 			}
 		}
 
-		if (
-			input.teams[0].maps.stages.length === 0 &&
-			input.teams[1].maps.stages.length === 0
-		) {
-			// neither team submitted map, we go default
-			result.push(
-				...getDefaultMapPool().map((pair) => ({
-					...pair,
-					score: 0,
-					source: "DEFAULT" as const,
-				})),
-			);
-		} else if (
-			input.teams[0].maps.stages.length === 0 ||
-			input.teams[1].maps.stages.length === 0
-		) {
-			// if one team didn't submit, the list can consist of only the other team's stages
+		// if one team didn't submit, the list can consist of only the other team's stages
+		if (!bothTeamsSubmitted()) {
 			for (const stageObj of result) {
 				stageObj.score = 0;
 			}
 		}
 
-		return result.sort((a, b) =>
-			`${a.stageId}-${a.mode}`.localeCompare(`${b.stageId}-${b.mode}`),
-		);
+		return result.sort((a, b) => stageKey(a).localeCompare(stageKey(b)));
 	}
 
-	function resolveStages() {
-		if (utilizeOtherStageIdsWhenNoTiebreaker()) {
-			// no overlap so we need to use a random map for tiebreaker
+	/**
+	 * Random neutral map candidates: pool maps neither team picked in that mode. A mode where the
+	 * teams together picked the whole pool falls back to every pool map of the mode.
+	 */
+	function resolveNeutralStages(): Array<ModeWithStageAndScore> {
+		if (neitherTeamSubmitted()) return [];
 
-			if (tournamentIsOneModeOnly()) {
-				return seededShuffle([...stageIds])
-					.filter(
-						(stageId) =>
-							!input.teams[0].maps.hasStage(stageId) &&
-							!input.teams[1].maps.hasStage(stageId),
-					)
-					.map((stageId) => ({
-						stageId,
-						mode: input.modesIncluded[0],
-						score: 0,
-						source: "TIEBREAKER" as const,
-					}));
-			}
-			return DEFAULT_MAP_POOL.stageModePairs
-				.filter(
-					(pair) =>
-						!input.teams[0].maps.has(pair) && !input.teams[1].maps.has(pair),
-				)
-				.map((pair) => ({
-					stageId: pair.stageId,
-					mode: pair.mode,
-					score: 0,
-					source: "TIEBREAKER" as const,
-				}));
-		}
+		const pool = poolMaps();
+		const pickedByATeam = (pair: { mode: ModeShort; stageId: StageId }) =>
+			input.teams.some((team) => team.maps.has(pair));
 
-		return stages;
+		return input.modesIncluded.flatMap((mode) => {
+			const ofMode = pool.filter((pair) => pair.mode === mode);
+			const neitherPicked = ofMode.filter((pair) => !pickedByATeam(pair));
+			const candidates = neitherPicked.length > 0 ? neitherPicked : ofMode;
+
+			return candidates.map((pair) => ({
+				...pair,
+				score: 0,
+				source: "RANDOM" as const,
+				isNeutral: true,
+				isFallback: neitherPicked.length === 0,
+			}));
+		});
+	}
+
+	function poolMaps() {
+		return input.pool.stageModePairs
+			.filter((pair) => input.modesIncluded.includes(pair.mode))
+			.sort((a, b) => stageKey(a).localeCompare(stageKey(b)));
 	}
 
 	function validateInput(
@@ -212,9 +225,7 @@ function generateWithInput(
 		if (!everyMapIsOfIncludedMode) return "MAPS_FOR_MODES_NOT_INCLUDED";
 
 		for (const team of args.teams) {
-			const stringified = team.maps.stageModePairs.map(
-				(p) => `${p.stageId}-${p.mode}`,
-			);
+			const stringified = team.maps.stageModePairs.map(stageKey);
 			const unique = new Set(stringified);
 			if (unique.size !== stringified.length) {
 				return "DUPLICATE_MAPS_IN_MAP_POOL";
@@ -224,39 +235,36 @@ function generateWithInput(
 		return null;
 	}
 
-	function utilizeOtherStageIdsWhenNoTiebreaker() {
-		if (mapList.length < input.count - 1) return false;
-
-		if (
-			input.teams.every((team) => !team.maps.isEmpty()) &&
-			!input.teams[0].maps.overlaps(input.teams[1].maps)
-		) {
-			return true;
-		}
-
-		const teamsMapsLeftNotPicked = [
-			...input.teams[0].maps,
-			...input.teams[1].maps,
-		].some(
-			(stage) =>
-				!mapList.some(
-					(map) => map.stageId === stage.stageId && map.mode === stage.mode,
-				),
-		);
-		if (!teamsMapsLeftNotPicked) return true;
-
-		return false;
+	function bothTeamsSubmitted() {
+		return input.teams.every((team) => !team.maps.isEmpty());
 	}
 
-	function getDefaultMapPool() {
-		if (tournamentIsOneModeOnly()) {
-			const mode = input.modesIncluded[0];
+	function neitherTeamSubmitted() {
+		return input.teams.every((team) => team.maps.isEmpty());
+	}
 
-			return stageIds.map((id) => ({ mode, stageId: id }));
-		}
+	/** The last slot, decided by a map both teams picked or a random one from the pool. */
+	function isNeutralSlot() {
+		return mapList.length === input.count - 1;
+	}
 
-		return DEFAULT_MAP_POOL.stageModePairs.filter(({ mode }) =>
-			input.modesIncluded.includes(mode),
+	/** Mode fixed for the slot by the mode order, if any. */
+	function fixedModeOfSlot(index: number) {
+		if (!input.modeOrder || input.modeOrder.length === 0) return null;
+
+		return input.modeOrder[index % input.modeOrder.length];
+	}
+
+	/** Maps both teams picked that could decide the match in the last slot. */
+	function commonMapsForNeutralSlot() {
+		if (!bothTeamsSubmitted()) return [];
+
+		const lastSlotMode = fixedModeOfSlot(input.count - 1);
+
+		return input.teams[0].maps.stageModePairs.filter(
+			(pair) =>
+				input.teams[1].maps.has(pair) &&
+				(lastSlotMode === null || pair.mode === lastSlotMode),
 		);
 	}
 
@@ -266,15 +274,16 @@ function generateWithInput(
 	>;
 
 	// rules here both shape the generated list and prune subtrees from the search
-	function stageIsOk(stage: StageValidatorInput, index: number) {
-		if (usedStages.has(index)) return false;
+	function stageIsOk(stage: StageValidatorInput) {
+		if (usedStages.has(stageKey(stage))) return false;
 		if (mapListAlreadyFull()) return false;
+		if (isNotFollowingModeOrder(stage)) return false;
 		if (isEarlyModeRepeat(stage)) return false;
 		if (isNotFollowingModePattern(stage)) return false;
 		if (isMakingThingsUnfair(stage)) return false;
 		if (isStageRepeatWithoutBreak(stage)) return false;
 		if (isSecondPickBySameTeamInRow(stage)) return false;
-		if (wouldPreventTiebreaker(stage)) return false;
+		if (wouldUseUpCommonMaps(stage)) return false;
 
 		return true;
 	}
@@ -287,29 +296,26 @@ function generateWithInput(
 		return mapList.length === input.count;
 	}
 
+	function isNotFollowingModeOrder(stage: StageValidatorInput) {
+		const fixedMode = fixedModeOfSlot(mapList.length);
+		if (!fixedMode) return false;
+
+		return stage.mode !== fixedMode;
+	}
+
 	function isEarlyModeRepeat(stage: StageValidatorInput) {
-		if (tournamentIsOneModeOnly()) return false;
+		if (tournamentIsOneModeOnly() || input.modeOrder) return false;
 
 		// all modes already appeared
 		if (mapList.length >= input.modesIncluded.length) return false;
 
-		if (
-			mapList.some(
-				(alreadyIncludedStage) => alreadyIncludedStage.mode === stage.mode,
-			)
-		) {
-			return true;
-		}
-
-		return false;
+		return mapList.some(
+			(alreadyIncludedStage) => alreadyIncludedStage.mode === stage.mode,
+		);
 	}
 
 	function isNotFollowingModePattern(stage: StageValidatorInput) {
-		if (tournamentIsOneModeOnly()) return false;
-
-		if (input.followModeOrder) {
-			return isNotFollowingModeOrder(stage);
-		}
+		if (tournamentIsOneModeOnly() || input.modeOrder) return false;
 
 		// not all modes appeared yet
 		if (mapList.length < input.modesIncluded.length) return false;
@@ -329,21 +335,11 @@ function generateWithInput(
 		return mapList[mapList.length - 1].mode !== previousModeShouldBe;
 	}
 
-	function isNotFollowingModeOrder(stage: StageValidatorInput) {
-		let currentIndex = 0;
-		for (const _ of mapList) {
-			currentIndex++;
-			if (currentIndex === input.modesIncluded.length) currentIndex = 0;
-		}
-
-		return stage.mode !== input.modesIncluded[currentIndex];
-	}
-
 	// don't allow making two picks from one team in row
 	function isMakingThingsUnfair(stage: StageValidatorInput) {
-		// e.g. Bo5 with 100% overlap in one mode only: overlap, T1, T2, T1, TIEBREAKER must be allowed;
+		// e.g. Bo5 with 100% overlap in one mode only: overlap, T1, T2, T1, RANDOM must be allowed;
 		// scoring still prefers better options
-		if (stage.source === "TIEBREAKER") return false;
+		if (stage.source === "RANDOM") return false;
 
 		const score = mapList.reduce((acc, cur) => acc + cur.score, 0);
 		const newScore = score + stage.score;
@@ -369,34 +365,27 @@ function generateWithInput(
 		return lastStage.score === stage.score;
 	}
 
-	function wouldPreventTiebreaker(stage: StageValidatorInput) {
-		// tiebreaker always guaranteed if maps are explicitly set
-		if (input.tiebreakerMaps.length > 0) return false;
+	/** A map both teams picked is reserved for the last slot when one exists. */
+	function wouldUseUpCommonMaps(stage: StageValidatorInput) {
+		const commonMaps = commonMapsForNeutralSlot();
+		if (commonMaps.length === 0) return false;
 
-		const commonMaps = input.teams[0].maps.stageModePairs.filter(
-			({ stageId, mode }) =>
-				input.teams[1].maps.stageModePairs.some(
-					(pair) => pair.stageId === stageId && pair.mode === mode,
-				),
-		);
+		// both teams having identical pools
+		if (commonMaps.length === input.teams[0].maps.stageModePairs.length) {
+			return false;
+		}
 
 		const newMapList = [...mapList, stage];
+		if (newMapList.length === input.count) return false;
 
-		const newCommonMaps = commonMaps.filter(
+		const commonMapsLeft = commonMaps.filter(
 			({ stageId, mode }) =>
 				!newMapList.some(
 					(pair) => pair.stageId === stageId && pair.mode === mode,
 				),
 		);
 
-		// a common map for the tiebreaker existed but got picked too early
-		return (
-			commonMaps.length > 0 &&
-			// both teams having identical pools
-			commonMaps.length !== input.teams[0].maps.stageModePairs.length &&
-			newCommonMaps.length === 0 &&
-			newMapList.length !== input.count
-		);
+		return commonMapsLeft.length === 0;
 	}
 
 	function rateMapList() {
@@ -416,17 +405,21 @@ function generateWithInput(
 			appearedMaps.set(stage.stageId, timesAppeared + 1);
 		}
 
-		if (!lastMapIsAGoodTieBreaker()) {
+		if (!lastMapIsAGoodNeutralMap()) {
 			score += 1;
 		}
 
 		const fairnessBalance = mapList.reduce((acc, cur) => acc + cur.score, 0);
 		if (fairnessBalance !== 0) {
-			score += 100;
+			score += UNFAIR_PENALTY;
 		}
 
-		for (const map of mapList) {
+		for (const [i, map] of mapList.entries()) {
 			score += recencyPenalty(map);
+			if (map.isFallback) score += FALLBACK_NEUTRAL_MAP_PENALTY;
+			if (map.isNeutral && i !== mapList.length - 1) {
+				score += EARLY_NEUTRAL_MAP_PENALTY;
+			}
 		}
 
 		return score;
@@ -443,29 +436,10 @@ function generateWithInput(
 		return Math.max(10 - Math.floor(recentIndex / 2) * 2, 0);
 	}
 
-	function lastMapIsAGoodTieBreaker() {
-		// guaranteed to be good if more than one mode
-		if (!tournamentIsOneModeOnly()) return true;
+	/** A map both teams picked decides the match whenever there is one that could. */
+	function lastMapIsAGoodNeutralMap() {
+		if (commonMapsForNeutralSlot().length === 0) return true;
 
-		// specifically made tiebreaker map is considered good
-		const last = mapList[mapList.length - 1];
-		if (last.source === "TIEBREAKER") return true;
-
-		// we can't have a map from pools of both teams if both didn't submit maps
-		if (input.teams.some((team) => team.maps.stageModePairs.length === 0)) {
-			return true;
-		}
-
-		const tieBreakerMap = mapList[mapList.length - 1];
-
-		let appearanceCount = 0;
-
-		for (const team of input.teams) {
-			for (const stage of team.maps.stages) {
-				if (stage === tieBreakerMap.stageId) appearanceCount++;
-			}
-		}
-
-		return appearanceCount === 2;
+		return mapList[mapList.length - 1].source === "BOTH";
 	}
 }

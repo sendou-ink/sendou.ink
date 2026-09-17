@@ -62,7 +62,7 @@ export function BracketMapListDialog({
 	bracketIdx: number;
 	isPreparing?: boolean;
 }) {
-	const { t } = useTranslation(["common"]);
+	const { t } = useTranslation(["common", "tournament"]);
 	const fetcher = useFetcher();
 	const tournament = useTournament();
 	const untrimmedPreparedMaps = useBracketPreparedMaps(bracketIdx);
@@ -172,7 +172,8 @@ export function BracketMapListDialog({
 		return generateTournamentRoundMaplist({
 			mapCounts: defaultRoundBestOfs,
 			roundsWithPickBan: new Set(),
-			pool: tournament.ctx.toSetMapPool,
+			pool: tournament.mapPool.dbList,
+			teamsPickMaps: tournament.teamsPrePickMaps,
 			rounds,
 			type: bracket.type,
 			pickBanStyle: null,
@@ -424,7 +425,8 @@ export function BracketMapListDialog({
 												generateTournamentRoundMaplist({
 													mapCounts:
 														bracket.defaultRoundBestOfs(newBracketData),
-													pool: tournament.ctx.toSetMapPool,
+													pool: tournament.mapPool.dbList,
+													teamsPickMaps: tournament.teamsPrePickMaps,
 													rounds: newBracketData.round,
 													type: bracket.type,
 													roundsWithPickBan,
@@ -481,7 +483,8 @@ export function BracketMapListDialog({
 												setMaps(
 													generateTournamentRoundMaplist({
 														mapCounts,
-														pool: tournament.ctx.toSetMapPool,
+														pool: tournament.mapPool.dbList,
+														teamsPickMaps: tournament.teamsPrePickMaps,
 														rounds,
 														type: bracket.type,
 														roundsWithPickBan: newRoundsWithPickBan,
@@ -500,8 +503,7 @@ export function BracketMapListDialog({
 										onSetCountType={setCountType}
 									/>
 								) : null}
-								{tournament.ctx.mapPickingStyle === "TO" &&
-								tournament.modesIncluded.length > 1 &&
+								{tournament.modesIncluded.length > 1 &&
 								!needsToPickEliminationTeamCount ? (
 									<PatternInputs
 										patterns={patterns}
@@ -510,7 +512,7 @@ export function BracketMapListDialog({
 									/>
 								) : null}
 							</div>
-							{tournament.ctx.toSetMapPool.length > 0 &&
+							{tournament.mapPool.length > 0 &&
 							!needsToPickEliminationTeamCount ? (
 								<SendouButton
 									size="small"
@@ -520,7 +522,8 @@ export function BracketMapListDialog({
 										setMaps(
 											generateTournamentRoundMaplist({
 												mapCounts,
-												pool: tournament.ctx.toSetMapPool,
+												pool: tournament.mapPool.dbList,
+												teamsPickMaps: tournament.teamsPrePickMaps,
 												rounds,
 												type: bracket.type,
 												roundsWithPickBan,
@@ -531,7 +534,9 @@ export function BracketMapListDialog({
 										)
 									}
 								>
-									Reroll all maps
+									{tournament.teamsPrePickMaps
+										? t("tournament:mapList.rerollModeOrder")
+										: t("tournament:mapList.rerollAllMaps")}
 								</SendouButton>
 							) : null}
 						</div>
@@ -588,7 +593,8 @@ export function BracketMapListDialog({
 														setMaps(
 															generateTournamentRoundMaplist({
 																mapCounts: newMapCounts,
-																pool: tournament.ctx.toSetMapPool,
+																pool: tournament.mapPool.dbList,
+																teamsPickMaps: tournament.teamsPrePickMaps,
 																rounds,
 																type: bracket.type,
 																roundsWithPickBan,
@@ -631,7 +637,8 @@ export function BracketMapListDialog({
 
 													const newMap = generateTournamentRoundMaplist({
 														mapCounts: newMapCounts,
-														pool: tournament.ctx.toSetMapPool,
+														pool: tournament.mapPool.dbList,
+														teamsPickMaps: tournament.teamsPrePickMaps,
 														rounds,
 														type: bracket.type,
 														roundsWithPickBan,
@@ -651,7 +658,8 @@ export function BracketMapListDialog({
 														setMaps(
 															generateTournamentRoundMaplist({
 																mapCounts,
-																pool: tournament.ctx.toSetMapPool,
+																pool: tournament.mapPool.dbList,
+																teamsPickMaps: tournament.teamsPrePickMaps,
 																rounds,
 																type: bracket.type,
 																roundsWithPickBan: newRoundsWithPickBan,
@@ -674,7 +682,8 @@ export function BracketMapListDialog({
 
 													const newMap = generateTournamentRoundMaplist({
 														mapCounts,
-														pool: tournament.ctx.toSetMapPool,
+														pool: tournament.mapPool.dbList,
+														teamsPickMaps: tournament.teamsPrePickMaps,
 														rounds,
 														type: bracket.type,
 														roundsWithPickBan: newRoundsWithPickBan,
@@ -974,8 +983,6 @@ function RoundMapList({
 	link?: () => void;
 	hoveredMap: string | null;
 }) {
-	const tournament = useTournament();
-
 	const minCount = TOURNAMENT.AVAILABLE_BEST_OF[0];
 	const maxCount = TOURNAMENT.AVAILABLE_BEST_OF.at(-1)!;
 
@@ -1044,7 +1051,6 @@ function RoundMapList({
 								key={i}
 								number={i + 1}
 								isCounterpicks={false}
-								isTiebreaker={false}
 								isCustomFlow
 							/>
 						))
@@ -1072,20 +1078,34 @@ function RoundMapList({
 							}
 
 							const isTeamsPick = !maps.list && i === 0;
-							const isLast =
-								i ===
-								(maps.pickBan === "BAN_2" ? maps.count + 2 : maps.count) - 1;
+							const isCounterpicks =
+								!isTeamsPick && maps.pickBan === "COUNTERPICK";
+							const mode = maps.modes?.[i];
+
+							if (mode) {
+								return (
+									<ModeListRow
+										key={i}
+										mode={mode}
+										number={i + 1}
+										isCounterpicks={isCounterpicks}
+										onModeChange={(newMode) => {
+											onRoundMapListChange({
+												...maps,
+												modes: maps.modes?.map((m, j) =>
+													i === j ? newMode : m,
+												),
+											});
+										}}
+									/>
+								);
+							}
 
 							return (
 								<MysteryRow
 									key={i}
 									number={i + 1}
-									isCounterpicks={
-										!isTeamsPick && maps.pickBan === "COUNTERPICK"
-									}
-									isTiebreaker={
-										tournament.ctx.mapPickingStyle === "AUTO_ALL" && isLast
-									}
+									isCounterpicks={isCounterpicks}
 								/>
 							);
 						})}
@@ -1226,17 +1246,68 @@ export function mapSearchFilter(
 	return contains(stageName, restQuery);
 }
 
+/** A team picked slot: the mode is fixed here, the map comes from the teams' picks at match time. */
+function ModeListRow({
+	mode,
+	number,
+	isCounterpicks,
+	onModeChange,
+}: {
+	mode: ModeShort;
+	number: number;
+	isCounterpicks: boolean;
+	onModeChange: (mode: ModeShort) => void;
+}) {
+	const { t } = useTranslation(["game-misc", "tournament"]);
+	const tournament = useTournament();
+
+	const items = tournament.modesIncluded.map((m) => ({
+		id: m,
+		name: t(`game-misc:MODE_LONG_${m}`),
+	}));
+
+	return (
+		<li className={styles.mapListRow}>
+			<span className="text-sm text-lighter font-semi-bold">{number}.</span>
+			<SendouSelect
+				aria-label="Mode"
+				items={items}
+				selectedKey={mode}
+				onSelectionChange={(key) => {
+					if (key === null) return;
+					onModeChange(String(key) as ModeShort);
+				}}
+				className={styles.mapRowSelect}
+			>
+				{(item) => (
+					<SendouSelectItem key={item.id} id={item.id} textValue={item.name}>
+						<div className={styles.mapSelectItem}>
+							<ModeImage mode={item.id} size={20} title={item.name} />
+							<div className={styles.stagePlaceholder}>?</div>
+							<span className={clsx({ "text-accent-high": isCounterpicks })}>
+								{isCounterpicks
+									? t("tournament:pickInfo.counterpick")
+									: t("tournament:mapList.teamsPick")}
+							</span>
+						</div>
+					</SendouSelectItem>
+				)}
+			</SendouSelect>
+		</li>
+	);
+}
+
 function MysteryRow({
 	number,
 	isCounterpicks,
-	isTiebreaker,
 	isCustomFlow,
 }: {
 	number: number;
 	isCounterpicks: boolean;
-	isTiebreaker: boolean;
 	isCustomFlow?: boolean;
 }) {
+	const { t } = useTranslation(["tournament"]);
+
 	return (
 		<li className={styles.mapListRow}>
 			<div
@@ -1246,12 +1317,10 @@ function MysteryRow({
 			>
 				<span className="text-lg">{number}.</span>
 				{isCustomFlow
-					? "Custom flow"
+					? t("tournament:mapList.customFlow")
 					: isCounterpicks
-						? "Counterpick"
-						: isTiebreaker
-							? "Tiebreaker"
-							: "Team's pick"}
+						? t("tournament:pickInfo.counterpick")
+						: t("tournament:mapList.teamsPick")}
 			</div>
 		</li>
 	);

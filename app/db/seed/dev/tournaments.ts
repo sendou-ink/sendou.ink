@@ -1,7 +1,8 @@
 import { sub } from "date-fns";
-import type { TournamentSettings } from "~/db/tables-json";
+import type { TeamPickSettings, TournamentSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -20,6 +21,26 @@ import type { SeededOrganization } from "./organizations";
 import type { SeededTeams } from "./teams";
 import type { SeededTrophies } from "./trophies";
 import type { SeededUsers } from "./users";
+
+const SZ_ONLY_TEAM_PICK: TeamPickSettings = {
+	modes: [{ mode: "SZ", count: 6 }],
+	pool: "SENDOUQ",
+};
+const RANKED_MODES_TEAM_PICK = TeamPick.defaultSettings([...rankedModesShort]);
+/** Uneven counts from a custom pool: every SZ stage, half of the legal TC stages. */
+const PADDLING_POOL_TEAM_PICK: TeamPickSettings = {
+	modes: [
+		{ mode: "SZ", count: 6 },
+		{ mode: "TC", count: 3 },
+	],
+	pool: "CUSTOM",
+};
+const PADDLING_POOL_MAP_POOL = [
+	...legalStages("SZ").map((stageId) => ({ mode: "SZ" as const, stageId })),
+	...legalStages("TC")
+		.slice(0, Math.ceil(legalStages("TC").length / 2))
+		.map((stageId) => ({ mode: "TC" as const, stageId })),
+];
 
 /** Series the past tournaments are named off; the four in a state worth opening have series of their own. */
 const TOURNAMENT_NAME_STEMS = [
@@ -244,14 +265,16 @@ async function seedInTheZone({
 	};
 }
 
-/** #2 double elim + underground, AUTO_SZ, ranked — started, nothing reported. N-ZAP is seeded past the byes so he has a match going. */
+/** #2 double elim + underground, team picked SZ ×6 + TC ×3 from a custom pool, ranked — started, nothing reported. N-ZAP is seeded past the byes so he has a match going. */
 async function seedPaddlingPool({ users, rosters }: Ctx) {
 	const tournament = await TournamentFactory.create({
 		name: nameFor("Paddling Pool"),
 		authorId: users.adminId,
 		avatarFileName: "paddling-pool.png",
 		startTimes: [dateToDatabaseTimestamp(hoursAgo(1))],
-		mapPickingStyle: "AUTO_SZ",
+		mapPickingStyle: "AUTO",
+		teamPick: PADDLING_POOL_TEAM_PICK,
+		mapPoolMaps: PADDLING_POOL_MAP_POOL,
 		bracketProgression: DOUBLE_ELIMINATION_WITH_UNDERGROUND,
 		isRanked: true,
 	});
@@ -266,7 +289,8 @@ async function seedPaddlingPool({ users, rosters }: Ctx) {
 		tournamentId: tournament.id,
 		rosters: teamRosters,
 		isCheckedIn: true,
-		mapPool: () => counterpickMapPool("AUTO_SZ"),
+		mapPool: () =>
+			counterpickMapPool(PADDLING_POOL_TEAM_PICK, PADDLING_POOL_MAP_POOL),
 	});
 
 	await TournamentFactory.startBracket(tournament.id);
@@ -353,6 +377,7 @@ async function seedHistoricalTournaments({
 		const badgeId = i % 3 === 0 ? badges.ids[i % badges.ids.length] : undefined;
 		const stem = TOURNAMENT_NAME_STEMS[i % TOURNAMENT_NAME_STEMS.length];
 		const authorId = faker.helpers.arrayElement(users.showcaseIds);
+		const teamPick = isRecent ? SZ_ONLY_TEAM_PICK : RANKED_MODES_TEAM_PICK;
 
 		const tournament = await TournamentFactory.create(
 			{
@@ -360,8 +385,8 @@ async function seedHistoricalTournaments({
 				avatarImgId: await seriesLogoImgId(seriesLogoImgIds, stem, authorId),
 				authorId,
 				startTimes: [dateToDatabaseTimestamp(startsAt)],
-				mapPickingStyle: isRecent ? "AUTO_SZ" : "AUTO_ALL",
-				mapPoolMaps: isRecent ? undefined : tiebreakerMapPool(),
+				mapPickingStyle: "AUTO",
+				teamPick,
 				bracketProgression: progression,
 				teamsPerGroup: 4,
 				isRanked: isRecent,
@@ -388,7 +413,7 @@ async function seedHistoricalTournaments({
 			rosters: teamRosters,
 			isCheckedIn: true,
 			registeredAt: sub(startsAt, { days: 2 }),
-			mapPool: () => counterpickMapPool(isRecent ? "AUTO_SZ" : "AUTO_ALL"),
+			mapPool: () => counterpickMapPool(teamPick),
 		});
 
 		if (nzapRosterIdx !== null) {
@@ -610,10 +635,6 @@ function toSetMapPool() {
 	return mapsPerMode(7);
 }
 
-function tiebreakerMapPool() {
-	return mapsPerMode(1);
-}
-
 function mapsPerMode(count: number) {
 	return rankedModesShort.flatMap((mode) =>
 		legalStages(mode)
@@ -622,19 +643,20 @@ function mapsPerMode(count: number) {
 	);
 }
 
-function counterpickMapPool(style: "AUTO_SZ" | "AUTO_ALL") {
-	const pairs =
-		style === "AUTO_SZ"
-			? faker.helpers
-					.arrayElements(legalStages("SZ"), 6)
-					.map((stageId) => ({ mode: "SZ" as const, stageId }))
-			: rankedModesShort.flatMap((mode) =>
-					faker.helpers
-						.arrayElements(legalStages(mode), 2)
-						.map((stageId) => ({ mode, stageId })),
-				);
+/** A team's picks: the configured amount of random stages per mode from the tournament's pool. */
+function counterpickMapPool(
+	teamPick: TeamPickSettings,
+	customPool: Array<{ mode: ModeShort; stageId: StageId }> = [],
+) {
+	const pool = TeamPick.effectivePool(teamPick, customPool);
 
-	return new MapPool(pairs);
+	return new MapPool(
+		teamPick.modes.flatMap(({ mode, count }) =>
+			faker.helpers
+				.arrayElements(pool.parsed[mode], count)
+				.map((stageId) => ({ mode, stageId })),
+		),
+	);
 }
 
 function legalStages(mode: ModeShort): StageId[] {

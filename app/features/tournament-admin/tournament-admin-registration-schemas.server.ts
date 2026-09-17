@@ -2,11 +2,8 @@ import * as v from "valibot";
 import { userIsBanned } from "~/features/ban/core/banned.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import {
-	isOneModeTournamentOf,
-	validateCounterPickMapPool,
-} from "~/features/tournament/tournament-utils";
 import { tournamentTeamNameTaken } from "~/features/tournament/tournament-utils.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -55,7 +52,8 @@ export function adminRegistrationFormSchemaServer({
 			}
 
 			// the map pool is only written while it can still be changed, matching the field's visibility
-			if (tournament.teamsPrePickMaps && !tournament.hasStarted) {
+			const teamPick = tournament.teamPickSettings;
+			if (teamPick && !tournament.hasStarted) {
 				const currentMapPool =
 					typeof data.tournamentTeamId === "number"
 						? ((
@@ -64,25 +62,19 @@ export function adminRegistrationFormSchemaServer({
 								])
 							).get(data.tournamentTeamId) ?? [])
 						: [];
-				// a pool can stop being valid after picking (map banned, tie-breaker pool changed), so only
+				// a pool can stop being valid after picking (map banned, pool changed), so only
 				// a changed pool is validated and an untouched one can't block unrelated edits
 				const mapPoolChanged =
 					MapPool.serialize(data.mapPool) !== MapPool.serialize(currentMapPool);
 
 				if (mapPoolChanged) {
-					const invalidMode = data.mapPool.some(
-						(map) => !tournament.modesIncluded.includes(map.mode),
-					);
-					const status = validateCounterPickMapPool(
-						new MapPool(data.mapPool),
-						isOneModeTournamentOf(
-							tournament.ctx.mapPickingStyle,
-							tournament.ctx.toSetMapPool,
-						),
-						tournament.ctx.tieBreakerMapPool,
-					);
+					const status = TeamPick.validateTeamPool({
+						mapPool: new MapPool(data.mapPool),
+						teamPick,
+						pool: tournament.mapPool,
+					});
 
-					if (invalidMode || status !== "VALID") {
+					if (status !== "VALID") {
 						ctx.addIssue({
 							message: "forms:errors.invalidMapPool",
 							path: ["mapPool"],

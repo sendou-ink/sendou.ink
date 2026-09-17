@@ -487,7 +487,6 @@ export interface MapPoolMap {
 	calendarEventId: number | null;
 	mode: ModeShort;
 	stageId: StageId;
-	tieBreakerCalendarEventId: number | null;
 	tournamentTeamId: number | null;
 }
 

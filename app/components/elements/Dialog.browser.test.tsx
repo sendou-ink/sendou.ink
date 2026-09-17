@@ -119,4 +119,36 @@ describe("SendouDialog", () => {
 		await expect.element(page.getByText("Lazy content")).toBeVisible();
 		expect(openDialog().open).toBe(true);
 	});
+
+	test("focuses the dialog itself instead of the close button on open", async () => {
+		await render(
+			withRouter(
+				<SendouDialog heading="Hello" onClose={() => {}}>
+					<button type="button">Action</button>
+				</SendouDialog>,
+			),
+		);
+		await expect.element(page.getByText("Action")).toBeVisible();
+
+		expect(document.activeElement).toBe(openDialog());
+	});
+
+	test("focuses the dialog itself when opened by its trigger", async () => {
+		const screen = await render(
+			withRouter(
+				<SendouDialog
+					heading="Hello"
+					trigger={<button type="button">Open</button>}
+					showCloseButton
+				>
+					Content
+				</SendouDialog>,
+			),
+		);
+
+		await screen.getByRole("button", { name: "Open" }).click();
+		await expect.element(screen.getByText("Content")).toBeVisible();
+
+		await vi.waitFor(() => expect(document.activeElement).toBe(openDialog()));
+	});
 });

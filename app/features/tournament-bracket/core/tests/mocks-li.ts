@@ -8594,7 +8594,6 @@ export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 				avgSeedingSkillOrdinal: -5.653760133881115,
 			},
 		],
-		tieBreakerMapPool: [],
 		toSetMapPool: [
 			{
 				mode: "CB",

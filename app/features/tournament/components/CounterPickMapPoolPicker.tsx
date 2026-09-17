@@ -2,15 +2,10 @@ import { useTranslation } from "react-i18next";
 import { Alert } from "~/components/Alert";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { ModeMapPoolPicker } from "~/features/settings/components/ModeMapPoolPicker";
-import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { TOURNAMENT } from "../tournament-constants";
+import { invariant } from "~/utils/invariant";
+import * as TeamPick from "../core/TeamPick";
 import { useTournament } from "../tournament-context";
-import {
-	type CounterPickValidationStatus,
-	isOneModeTournamentOf,
-	validateCounterPickMapPool,
-} from "../tournament-utils";
 
 export type CounterPickMapPool = Array<{
 	mode: ModeShort;
@@ -28,24 +23,19 @@ export function CounterPickMapPoolPicker({
 	disabled?: boolean;
 }) {
 	const tournament = useTournament();
-	const oneModeOnlyFor = oneModeTournamentOf(tournament);
+	const teamPick = tournament.teamPickSettings;
+	invariant(teamPick, "Tournament does not have teams pick maps");
+
+	const pool = tournament.mapPool;
 
 	return (
 		<>
-			{tournament.modesIncluded.map((mode) => (
+			{teamPick.modes.map(({ mode, count }) => (
 				<ModeMapPoolPicker
 					key={mode}
-					amountToPick={
-						oneModeOnlyFor
-							? TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
-							: TOURNAMENT.COUNTERPICK_MAPS_PER_MODE
-					}
+					amountToPick={count}
 					mode={mode}
-					tiebreaker={
-						tournament.ctx.tieBreakerMapPool.find(
-							(stage) => stage.mode === mode,
-						)?.stageId
-					}
+					allowedStages={pool.parsed[mode]}
 					pool={mapPool
 						.filter((map) => map.mode === mode)
 						.map((map) => map.stageId)}
@@ -67,27 +57,29 @@ export function useCounterPickMapPoolValidationStatus(
 	mapPool: CounterPickMapPool,
 ) {
 	const tournament = useTournament();
+	const teamPick = tournament.teamPickSettings;
+	invariant(teamPick, "Tournament does not have teams pick maps");
 
-	return validateCounterPickMapPool(
-		new MapPool(mapPool),
-		oneModeTournamentOf(tournament),
-		tournament.ctx.tieBreakerMapPool,
-	);
+	return TeamPick.validateTeamPool({
+		mapPool: new MapPool(mapPool),
+		teamPick,
+		pool: tournament.mapPool,
+	});
 }
 
 /** Explains why a counterpick map pool can't be saved. Renders nothing for statuses without an explanation. */
 export function MapPoolValidationStatusMessage({
 	status,
 }: {
-	status: CounterPickValidationStatus;
+	status: TeamPick.TeamPoolValidationStatus;
 }) {
 	const { t } = useTranslation(["common"]);
+	const tournament = useTournament();
 
 	if (
 		status !== "TOO_MUCH_STAGE_REPEAT" &&
 		status !== "STAGE_REPEAT_IN_SAME_MODE" &&
-		status !== "INCLUDES_BANNED" &&
-		status !== "INCLUDES_TIEBREAKER"
+		status !== "NOT_IN_POOL"
 	) {
 		return null;
 	}
@@ -96,16 +88,9 @@ export function MapPoolValidationStatusMessage({
 		<div className="mt-4">
 			<Alert alertClassName="w-max" variation="WARNING" tiny>
 				{t(`common:maps.validation.${status}`, {
-					maxStageRepeat: TOURNAMENT.COUNTERPICK_MAX_STAGE_REPEAT,
+					maxStageRepeat: tournament.stageRepeatCap ?? 1,
 				})}
 			</Alert>
 		</div>
-	);
-}
-
-function oneModeTournamentOf(tournament: Tournament): ModeShort | null {
-	return isOneModeTournamentOf(
-		tournament.ctx.mapPickingStyle,
-		tournament.ctx.toSetMapPool,
 	);
 }

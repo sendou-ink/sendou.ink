@@ -233,13 +233,35 @@ async function seedConcludedMatch(playerIds: number[], createdAt: Date) {
 
 async function seedLookingGroups(users: SeededUsers) {
 	// the tail of the crowd is free of tournament rosters, so these read as their own scene
-	const availableUserIds = [users.nzapId, ...users.crowdIds.slice(-80)];
+	const availableUserIds = users.crowdIds.slice(-80);
 
 	const groupIds: number[] = [];
-	for (let i = 0; i < LOOKING_GROUP_COUNT; i++) {
-		const memberCount =
-			i === 0 ? 4 : faker.helpers.arrayElement([1, 1, 2, 3, 4]);
-		const memberUserIds = availableUserIds.splice(0, memberCount);
+
+	// both test users lead a full group, so they can be matched against each other.
+	// Only N-ZAP's is matchmade, so that one match covers both requeue flows: the
+	// continue vote for his group, one-click look again for the admin's premade one
+	for (const leader of [
+		{ userId: users.nzapId, isMatchmade: true },
+		{ userId: users.adminId, isMatchmade: false },
+	]) {
+		const group = await SQGroupFactory.create(
+			{
+				memberUserIds: [
+					leader.userId,
+					...availableUserIds.splice(0, FULL_GROUP_SIZE - 1),
+				],
+			},
+			{ isMatchmade: leader.isMatchmade },
+		);
+
+		groupIds.push(group.id);
+	}
+
+	for (let i = groupIds.length; i < LOOKING_GROUP_COUNT; i++) {
+		const memberUserIds = availableUserIds.splice(
+			0,
+			faker.helpers.arrayElement([1, 1, 2, 3, 4]),
+		);
 
 		const group = await SQGroupFactory.create(
 			{ memberUserIds },

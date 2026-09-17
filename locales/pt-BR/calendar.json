@@ -20,6 +20,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Conjunto de mapas",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "Declarando resultados para o(a) {{eventName}}",
 	"forms.reportResultsInfo": "Você decide quantos resultados declarar. Pode ser apenas o time vencedor, Top 3 ou qualquer outro tipo de placar que você quiser.",
 	"forms.team.placing": "Placar",

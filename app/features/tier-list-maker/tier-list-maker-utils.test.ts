@@ -5,6 +5,7 @@ import { tierListMakerSearchParams } from "./tier-list-maker-search-params";
 import {
 	addItemToTier,
 	getNextNthForItem,
+	isLightColor,
 	tierListItemId,
 	tierListMakerPathWithState,
 	tierListSearchParamsHaveItems,
@@ -191,5 +192,19 @@ describe("tierListSearchParamsHaveItems", () => {
 		{ why: "every tier is empty", searchParams: searchParamsFor(makeState()) },
 	])("rejects when $why", ({ searchParams }) => {
 		expect(tierListSearchParamsHaveItems(searchParams)).toBe(false);
+	});
+});
+
+describe("isLightColor", () => {
+	test.each([
+		{ hex: "#ffd23f", expected: true, why: "bright yellow" },
+		{ hex: "#ffffff", expected: true, why: "white" },
+		{ hex: "#90ee90", expected: true, why: "light green" },
+		{ hex: "#8b0000", expected: false, why: "dark red" },
+		{ hex: "#4169e1", expected: false, why: "royal blue" },
+		{ hex: "#000000", expected: false, why: "black" },
+		{ hex: "#fff", expected: false, why: "unsupported short form" },
+	])("$why -> $expected", ({ hex, expected }) => {
+		expect(isLightColor(hex)).toBe(expected);
 	});
 });

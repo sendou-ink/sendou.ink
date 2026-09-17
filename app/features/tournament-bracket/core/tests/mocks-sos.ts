@@ -4173,7 +4173,6 @@ export const SWIM_OR_SINK_167 = (
 				abDivision: null,
 			},
 		],
-		tieBreakerMapPool: [],
 		toSetMapPool: [
 			{
 				mode: "CB",

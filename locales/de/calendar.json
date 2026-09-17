@@ -18,6 +18,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "Arenen-Pool",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "Berichten der Ergebnisse von {{eventName}}",
 	"forms.reportResultsInfo": "Die Anzahl der eintragbaren Ergebnisse ist frei wählbar. Es kann nur das erste Team sein, die Top 3 oder mehr.",
 	"forms.team.placing": "Platz",

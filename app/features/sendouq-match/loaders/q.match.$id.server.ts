@@ -45,7 +45,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const match = SendouQ.mapMatch(matchUnmapped, user);
 
+	const currentGroup = user ? SendouQ.findOwnGroup(user.id) : undefined;
+
 	return {
+		// e.g. the group already requeued, so the viewer has nothing left to requeue with
+		hasJoinedNewGroup: Boolean(
+			currentGroup && currentGroup.matchId !== matchId,
+		),
 		...(await UserCardRepository.findAllByUserIds({
 			userIds: matchUsers,
 			include: { friendCode: isStaff || isParticipant },

@@ -14,6 +14,8 @@
 	"forms.trophy": "",
 	"forms.trophy.placeholder": "",
 	"forms.mapPool": "",
+	"forms.teamPick.poolShortfall": "",
+	"forms.teamPick.poolOk": "",
 	"forms.reportResultsHeader": "{{eventName}}의 결과 보고",
 	"forms.reportResultsInfo": "얼마나 많은 결과를 보고할지 선택할 수 있습니다.우승팀만일 수도 있고 탑3 또는 원하시는대로.",
 	"forms.team.placing": "순위",

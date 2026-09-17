@@ -20,11 +20,12 @@ export const TIER_NAME_FONT_SIZE_BREAKPOINTS = [
 export const TIER_NAME_FONT_SIZE_MIN = "var(--font-2xs)";
 
 export const PRESET_COLORS = [
-	"#ff4655",
+	"#ff5c66",
 	"#ff8c42",
 	"#ffd23f",
 	"#bfe84d",
 	"#5dbb63",
+	"#e56fb0",
 	"#8b0000",
 	"#90ee90",
 	"#4169e1",
@@ -33,7 +34,7 @@ export const PRESET_COLORS = [
 ];
 
 export const DEFAULT_TIERS: TierListMakerTier[] = [
-	{ id: "tier-x", name: "X", color: "#ff4655" },
+	{ id: "tier-x", name: "X", color: "#ff5c66" },
 	{ id: "tier-s", name: "S", color: "#ff8c42" },
 	{ id: "tier-a", name: "A", color: "#ffd23f" },
 	{ id: "tier-b", name: "B", color: "#bfe84d" },

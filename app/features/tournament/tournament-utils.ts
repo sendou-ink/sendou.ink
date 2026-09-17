@@ -1,41 +1,28 @@
 import { sub } from "date-fns";
 import * as R from "remeda";
-import type { CastedMatchesInfo } from "~/db/tables-json";
+import type { CastedMatchesInfo, TeamPickSettings } from "~/db/tables-json";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
-import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import type { Tables } from "../../db/tables";
-import { MapPool } from "../map-list-generator/core/map-pool";
-import { BANNED_MAPS } from "../match-profile/banned-maps";
 import * as Seasons from "../mmr/core/Seasons";
 import type { Bracket as BracketClass } from "../tournament-bracket/core/Bracket";
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
-import type { TournamentData } from "../tournament-bracket/core/Tournament.server";
-import { TOURNAMENT } from "./tournament-constants";
+import * as TeamPick from "./core/TeamPick";
 
-const mapPickingStyleToModeRecord = {
-	AUTO_SZ: ["SZ"],
-	AUTO_TC: ["TC"],
-	AUTO_RM: ["RM"],
-	AUTO_CB: ["CB"],
-	AUTO_ALL: rankedModesShort,
-} as const;
-
-export const mapPickingStyleToModes = (
-	mapPickingStyle: Exclude<Tables["Tournament"]["mapPickingStyle"], "TO">,
-) => {
-	return mapPickingStyleToModeRecord[mapPickingStyle].slice();
-};
-
+/**
+ * Modes played in a tournament: the team pick modes when teams pick, otherwise the distinct modes
+ * of the organizer's pool (every ranked mode while the pool is empty).
+ */
 export function modesIncluded(
-	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"],
+	teamPick: TeamPickSettings | undefined,
 	toSetMapPool: Array<{ mode: ModeShort }>,
 ): ModeShort[] {
-	if (mapPickingStyle !== "TO") {
-		return mapPickingStyleToModes(mapPickingStyle);
+	if (teamPick) {
+		return TeamPick.pickedModes(teamPick);
 	}
 
 	const pickedModes = R.unique(toSetMapPool.map((map) => map.mode));
@@ -47,90 +34,6 @@ export function modesIncluded(
 	return pickedModes.sort(
 		(a, b) => modesShort.indexOf(a) - modesShort.indexOf(b),
 	);
-}
-
-export function isOneModeTournamentOf(
-	mapPickingStyle: Tables["Tournament"]["mapPickingStyle"],
-	toSetMapPool: Array<{ mode: ModeShort }>,
-) {
-	return modesIncluded(mapPickingStyle, toSetMapPool).length === 1
-		? modesIncluded(mapPickingStyle, toSetMapPool)[0]
-		: null;
-}
-
-export type CounterPickValidationStatus =
-	| "PICKING"
-	| "VALID"
-	| "TOO_MUCH_STAGE_REPEAT"
-	| "STAGE_REPEAT_IN_SAME_MODE"
-	| "INCLUDES_BANNED"
-	| "INCLUDES_TIEBREAKER";
-
-export function validateCounterPickMapPool(
-	mapPool: MapPool,
-	isOneModeOnlyTournamentFor: ModeShort | null,
-	tieBreakerMapPool: TournamentData["ctx"]["tieBreakerMapPool"],
-): CounterPickValidationStatus {
-	const stageCounts = new Map<StageId, number>();
-	for (const stageId of mapPool.stages) {
-		if (!stageCounts.has(stageId)) {
-			stageCounts.set(stageId, 0);
-		}
-
-		if (
-			stageCounts.get(stageId)! >= TOURNAMENT.COUNTERPICK_MAX_STAGE_REPEAT ||
-			(isOneModeOnlyTournamentFor && stageCounts.get(stageId)! >= 1)
-		) {
-			return "TOO_MUCH_STAGE_REPEAT";
-		}
-
-		stageCounts.set(stageId, stageCounts.get(stageId)! + 1);
-	}
-
-	if (
-		new MapPool(mapPool.serialized).stageModePairs.length !==
-		mapPool.stageModePairs.length
-	) {
-		return "STAGE_REPEAT_IN_SAME_MODE";
-	}
-
-	if (
-		mapPool.stageModePairs.some((pair) =>
-			BANNED_MAPS[pair.mode].includes(pair.stageId),
-		)
-	) {
-		return "INCLUDES_BANNED";
-	}
-
-	if (
-		mapPool.stageModePairs.some((pair) =>
-			tieBreakerMapPool.some(
-				(stage) => stage.mode === pair.mode && stage.stageId === pair.stageId,
-			),
-		)
-	) {
-		return "INCLUDES_TIEBREAKER";
-	}
-
-	if (
-		!isOneModeOnlyTournamentFor &&
-		(mapPool.parsed.SZ.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE ||
-			mapPool.parsed.TC.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE ||
-			mapPool.parsed.RM.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE ||
-			mapPool.parsed.CB.length !== TOURNAMENT.COUNTERPICK_MAPS_PER_MODE)
-	) {
-		return "PICKING";
-	}
-
-	if (
-		isOneModeOnlyTournamentFor &&
-		mapPool.parsed[isOneModeOnlyTournamentFor].length !==
-			TOURNAMENT.COUNTERPICK_ONE_MODE_TOURNAMENT_MAPS_PER_MODE
-	) {
-		return "PICKING";
-	}
-
-	return "VALID";
 }
 
 export function tournamentIsRanked({
