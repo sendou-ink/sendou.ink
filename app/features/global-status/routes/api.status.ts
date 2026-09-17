@@ -1,4 +1,4 @@
-import { getUser } from "~/features/auth/core/user.server";
+import { requireUser } from "~/features/auth/core/user.server";
 import { resolveGlobalStatus } from "../core/global-status.server";
 
 /**
@@ -6,11 +6,10 @@ import { resolveGlobalStatus } from "../core/global-status.server";
  * whenever an event announces that the user's status changed, instead of being
  * polled with the rest of the app shell data.
  */
-// xxx: or just requireUser?
 export const loader = async () => {
-	const user = getUser();
+	const user = requireUser();
 
 	return {
-		globalStatus: user ? await resolveGlobalStatus(user.id) : null,
+		globalStatus: await resolveGlobalStatus(user.id),
 	};
 };

@@ -1,6 +1,3 @@
-/* xxx: try animating the indicator appearing & the search/add new buttons
-   making room for it */
-
 .status {
 	display: flex;
 	align-items: center;
