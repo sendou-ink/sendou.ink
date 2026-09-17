@@ -93,9 +93,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 					maps: match.roundMaps,
 					pickBanEvents,
 					results,
-					tournamentId,
 					teams: [teamOne, teamTwo],
-					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+					toSetMapPool: tournament.organizerPickedMapPool,
 				});
 				if (rollExecuted) {
 					pickBanEvents = await TournamentRepository.findPickBanEventsByMatchId(
@@ -133,7 +132,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 						mapPoolByTeamId: (teamId) => teamFullById(teamId)?.mapPool ?? [],
 						mapPickingStyle: match.mapPickingStyle,
 						maps: match.roundMaps,
-						tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+						pool: tournament.mapPool,
+						modesIncluded: tournament.modesIncluded,
 						pickBanEvents,
 						recentlyPlayedMaps:
 							match.mapPickingStyle !== "TO"

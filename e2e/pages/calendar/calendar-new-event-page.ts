@@ -4,6 +4,14 @@ import { CALENDAR_NEW_PAGE, TOURNAMENT_NEW_PAGE } from "~/utils/urls";
 import { datetimeLocalValue, navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 
+const ALL_MODE_NAMES = [
+	"Turf War",
+	"Splat Zones",
+	"Tower Control",
+	"Rainmaker",
+	"Clam Blitz",
+];
+
 /** `/calendar/new`, also used for adding tournaments and editing existing events. */
 export class CalendarNewEventPage {
 	private readonly page: Page;
@@ -51,8 +59,35 @@ export class CalendarNewEventPage {
 			.fill(datetimeLocalValue(date));
 	}
 
-	// the TO map pool grid exposes each map as a mode button inside a group labelled
-	// by its stage name
+	// a mode's checkbox and its "Maps per mode" input share the mode's name as
+	// their label, so they are told apart by role
+	teamPickModeCheckbox(modeName: string) {
+		return this.page.getByRole("checkbox", { name: modeName });
+	}
+
+	teamPickCountInput(modeName: string) {
+		return this.page.getByRole("spinbutton", { name: modeName });
+	}
+
+	/** Text of the alert below the custom team pick pool, telling whether it has enough stages. */
+	teamPickPoolStatus(text: string) {
+		return this.page.getByText(text);
+	}
+
+	/** Checks exactly the given modes for teams to pick maps in. */
+	async setTeamPickModes(modeNames: string[]) {
+		for (const modeName of ALL_MODE_NAMES) {
+			const checkbox = this.teamPickModeCheckbox(modeName);
+			const shouldBeChecked = modeNames.includes(modeName);
+
+			if ((await checkbox.isChecked()) !== shouldBeChecked) {
+				await checkbox.click();
+			}
+		}
+	}
+
+	// the map pool grid exposes each map as a mode button inside a group labelled
+	// by its stage name, both for the TO pool and the custom team pick pool
 	async pickMapPool(maps: Array<{ stage: string; mode: string }>) {
 		for (const { stage, mode } of maps) {
 			await this.page

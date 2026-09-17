@@ -3,8 +3,10 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
+import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { invariant } from "~/utils/invariant";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import { action } from "./to.$id.brackets.server";
@@ -183,5 +185,172 @@ async function startedSwissFirstRound(tournamentId: number) {
 		matchCount: swiss.data.match.filter(
 			(match) => match.roundId === firstRound.id,
 		).length,
+	};
+}
+
+const RANKED_MODE_ORDER: ModeShort[] = ["SZ", "TC", "RM"];
+/** Turf War is not among the ranked modes a default team picked tournament plays. */
+const MODE_ORDER_WITH_UNPLAYED_MODE: ModeShort[] = ["SZ", "TW", "TC"];
+
+describe("Brackets action START_BRACKET", () => {
+	beforeEach(async () => {
+		await users.create(TEAM_COUNT);
+	});
+
+	test("rejects a mode order with a mode the tournament does not play", async () => {
+		const tournament = await createTeamPickedTournament(organizerId());
+		const rounds = await previewRounds(tournament.id);
+
+		const response = await bracketsAction(
+			{
+				_action: "START_BRACKET",
+				bracketIdx: 0,
+				thirdPlaceMatchLinked: false,
+				maps: rounds.map((round) =>
+					teamPickedRoundMaps(round, MODE_ORDER_WITH_UNPLAYED_MODE),
+				),
+			},
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		assertResponseErrored(
+			response as Response,
+			"Mode order includes a mode not played in the tournament",
+		);
+
+		const after = await tournamentFromDB(tournament.id);
+		expect(after.bracketByIdx(0)?.preview).toBe(true);
+	});
+
+	test("starts a team picked bracket with the mode order of every round", async () => {
+		const tournament = await createTeamPickedTournament(organizerId());
+		const rounds = await previewRounds(tournament.id);
+
+		const response = await bracketsAction(
+			{
+				_action: "START_BRACKET",
+				bracketIdx: 0,
+				thirdPlaceMatchLinked: false,
+				maps: rounds.map((round) =>
+					teamPickedRoundMaps(round, RANKED_MODE_ORDER),
+				),
+			},
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		expect(
+			response instanceof Response ? response.headers.get("Location") : null,
+		).toBeNull();
+
+		const after = await tournamentFromDB(tournament.id);
+		const bracket = after.bracketByIdx(0);
+		invariant(bracket && !bracket.preview);
+		expect(bracket.data.round.length).toBe(rounds.length);
+		for (const round of bracket.data.round) {
+			expect(round.maps?.modes).toEqual(RANKED_MODE_ORDER);
+			expect(round.maps?.list).toBeFalsy();
+		}
+	});
+});
+
+describe("Brackets action PREPARE_MAPS", () => {
+	beforeEach(async () => {
+		await users.create(TEAM_COUNT);
+	});
+
+	test("rejects a mode order with a mode the tournament does not play", async () => {
+		const tournament = await createTeamPickedTournament(organizerId());
+		const rounds = await previewRounds(tournament.id);
+
+		const response = await bracketsAction(
+			{
+				_action: "PREPARE_MAPS",
+				bracketIdx: 0,
+				thirdPlaceMatchLinked: false,
+				eliminationTeamCount: undefined,
+				maps: rounds.map((round) =>
+					teamPickedRoundMaps(round, MODE_ORDER_WITH_UNPLAYED_MODE),
+				),
+			},
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		assertResponseErrored(
+			response as Response,
+			"Mode order includes a mode not played in the tournament",
+		);
+		expect(
+			await TournamentRepository.findPreparedMapsById(tournament.id),
+		).toBeUndefined();
+	});
+
+	test("saves the prepared mode orders of a team picked bracket", async () => {
+		const tournament = await createTeamPickedTournament(organizerId());
+		const rounds = await previewRounds(tournament.id);
+
+		const response = await bracketsAction(
+			{
+				_action: "PREPARE_MAPS",
+				bracketIdx: 0,
+				thirdPlaceMatchLinked: false,
+				eliminationTeamCount: undefined,
+				maps: rounds.map((round) =>
+					teamPickedRoundMaps(round, RANKED_MODE_ORDER),
+				),
+			},
+			{ user: organizerId(), params: { id: String(tournament.id) } },
+		);
+
+		expect(
+			response instanceof Response ? response.headers.get("Location") : null,
+		).toBeNull();
+
+		const prepared = await TournamentRepository.findPreparedMapsById(
+			tournament.id,
+		);
+		expect(prepared?.[0]?.maps.map((round) => round.modes)).toEqual(
+			rounds.map(() => RANKED_MODE_ORDER),
+		);
+	});
+});
+
+/** Single elimination tournament whose teams pick their own maps, every team checked in and ready to start. */
+async function createTeamPickedTournament(authorId: number) {
+	const tournament = await TournamentFactory.create({
+		authorId,
+		minMembersPerTeam: 1,
+		mapPickingStyle: "AUTO",
+	});
+	for (const userId of users.ids(TEAM_COUNT)) {
+		await TournamentTeamFactory.create(
+			{ tournamentId: tournament.id, memberUserIds: [userId] },
+			{ isCheckedIn: true },
+		);
+	}
+
+	return tournament;
+}
+
+async function previewRounds(tournamentId: number) {
+	const tournament = await tournamentFromDB(tournamentId);
+	const bracket = tournament.bracketByIdx(0);
+	invariant(bracket?.preview, "expected the bracket to not be started yet");
+
+	return bracket.data.round;
+}
+
+function teamPickedRoundMaps(
+	round: { id: number; groupId: number },
+	modes: ModeShort[],
+) {
+	return {
+		roundId: round.id,
+		groupId: round.groupId,
+		count: 3 as const,
+		type: "BEST_OF" as const,
+		list: null,
+		modes,
+		pickBan: null,
+		customFlow: null,
 	};
 }

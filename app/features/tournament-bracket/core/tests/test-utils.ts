@@ -71,11 +71,11 @@ export const testTournament = ({
 		castTwitchAccounts: [],
 		bracketProgressionOverrides: [],
 		staff: [],
-		tieBreakerMapPool: [],
 		toSetMapPool: [],
 		latestTeamIdByDuplicatedUserId: {},
-		mapPickingStyle: "AUTO_SZ",
+		mapPickingStyle: "AUTO",
 		settings: {
+			teamPick: { modes: [{ mode: "SZ", count: 6 }], pool: "SENDOUQ" },
 			bracketProgression: [
 				{
 					name: "Main Bracket",

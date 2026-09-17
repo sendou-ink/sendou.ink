@@ -7,7 +7,6 @@
 	"radios.all": "Все",
 	"radios.madeBy": "Работы автора",
 	"radios.madeFor": "Работы, сделанные для пользователя",
-	"filterByTag": "Фильтр",
 	"filteringByTag": "Результаты по фильтру #{{tag}}",
 	"commissionsOpen": "Заказы открыты",
 	"commissionsClosed": "Заказы закрыты",

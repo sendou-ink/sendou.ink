@@ -4,7 +4,6 @@
 	"radios.all": "全部",
 	"radios.madeBy": "该用户为创作者",
 	"radios.madeFor": "该用户为创作对象",
-	"filterByTag": "按标签筛选",
 	"filteringByTag": "正在显示包含 #{{tag}} 的结果",
 	"commissionsOpen": "委托开放中",
 	"commissionsClosed": "委托未开放",

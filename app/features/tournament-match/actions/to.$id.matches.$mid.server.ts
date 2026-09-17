@@ -365,12 +365,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			const pickBanLegalityArgs = {
 				results,
 				maps: match.roundMaps,
-				toSetMapPool:
-					tournament.ctx.mapPickingStyle === "TO"
-						? await TournamentRepository.findTOSetMapPoolById(tournamentId)
-						: [],
+				toSetMapPool: tournament.organizerPickedMapPool,
 				mapList,
-				tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
 				teams: [teamOne, teamTwo] as [PickBan.MapPoolTeam, PickBan.MapPoolTeam],
 				pickerTeamId,
 				pickBanEvents: currentPickBanEvents,
@@ -456,9 +452,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 					maps: match.roundMaps,
 					pickBanEvents: updatedEvents,
 					results,
-					tournamentId,
 					teams: [teamOne, teamTwo],
-					tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+					toSetMapPool: tournament.organizerPickedMapPool,
 				});
 			}
 

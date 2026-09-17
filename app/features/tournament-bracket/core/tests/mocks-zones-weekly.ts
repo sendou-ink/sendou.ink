@@ -533,7 +533,6 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 				avgSeedingSkillOrdinal: -6.382139240461566,
 			},
 		],
-		tieBreakerMapPool: [],
 		toSetMapPool: [
 			{
 				mode: "SZ",

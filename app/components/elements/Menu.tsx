@@ -9,7 +9,12 @@ import {
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
 import styles from "./Menu.module.css";
-import { focusLeftTo, isOwnToggle, useAnchorSafeId } from "./Popover";
+import {
+	focusLeftTo,
+	isOwnToggle,
+	useAnchorSafeId,
+	useShowPopoverOnOpen,
+} from "./Popover";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
 type MenuPlacement = "bottom start" | "bottom end" | "bottom right";
@@ -51,6 +56,11 @@ export function SendouMenu({
 		if (popoverRef.current?.matches(":popover-open")) setOpen(true);
 	}, []);
 
+	const onBeforeToggle = useShowPopoverOnOpen({
+		popoverRef,
+		open,
+		onOpen: () => setOpen(true),
+	});
 	useCloseOnScrollClip(open, popoverRef, () =>
 		popoverRef.current?.hidePopover(),
 	);
@@ -68,11 +78,11 @@ export function SendouMenu({
 		if (!isOwnToggle(event)) return;
 
 		const next = event.newState === "open";
-		if (next === open) return;
-		setOpen(next);
-
 		if (next) {
-			requestAnimationFrame(() => popoverRef.current?.focus());
+			popoverRef.current?.focus();
+		}
+		if (next !== open) {
+			setOpen(next);
 		}
 	};
 
@@ -124,6 +134,7 @@ export function SendouMenu({
 				})}
 				style={{ positionAnchor: anchorName } as React.CSSProperties}
 				data-placement={placement}
+				onBeforeToggle={onBeforeToggle}
 				onToggle={onToggle}
 				onKeyDown={onKeyDown}
 				onBlur={onBlur}

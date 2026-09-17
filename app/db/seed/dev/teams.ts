@@ -1,4 +1,4 @@
-import { faker } from "../core/faker";
+import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
 import * as TeamFactory from "../factories/TeamFactory";
 import type { SeededUsers } from "./users";
@@ -67,7 +67,7 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 
 		const team = await TeamFactory.create(
 			{
-				name: i === 1 ? "Team Olive" : showcaseNames.teamName(),
+				name: i === 1 ? "Team Olive" : unique(() => showcaseNames.teamName()),
 				memberUserIds,
 			},
 			i === 1 || faker.number.float(1) < 0.3 ? { hasAvatar: true } : undefined,
@@ -88,7 +88,7 @@ export async function seedTeams(users: SeededUsers): Promise<SeededTeams> {
 		const memberUserIds = users.showcaseIds.slice(i * 4, i * 4 + 4);
 
 		const team = await TeamFactory.create({
-			name: showcaseNames.teamName(),
+			name: unique(() => showcaseNames.teamName()),
 			isMainTeam: false,
 			memberUserIds,
 		});

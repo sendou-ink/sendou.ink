@@ -45,6 +45,7 @@ import { SendouQError } from "../sendouq/q-utils.server";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
 import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
+import * as RejoinVote from "./core/RejoinVote";
 import * as SendouQMatch from "./core/SendouQMatch";
 import * as SkillDifference from "./core/SkillDifference";
 import { calculateMatchSkills } from "./core/skills.server";
@@ -1250,6 +1251,15 @@ export async function acceptCancelMatch({
 			trx,
 		);
 
+		await recordAgreedNominationNoVote(
+			{
+				match,
+				requesterGroupId,
+				accepterNominatedUserIds: nominatedUserIds,
+			},
+			trx,
+		);
+
 		return { status: "ACCEPTED" };
 	});
 }
@@ -1884,6 +1894,59 @@ function findCancelState(matchId: number, trx: Transaction<DB>) {
 		])
 		.where("GroupMatch.id", "=", matchId)
 		.executeTakeFirstOrThrow();
+}
+
+/**
+ * Votes the one player both teams blamed for the cancellation out of their group's requeue
+ * vote, so the rest can carry on without waiting for them. The teams naming nobody in common,
+ * or more than one player between them, leaves the requeue to a plain vote. A group that was
+ * put together by invites is left alone: it never votes and requeues with whoever it likes.
+ */
+async function recordAgreedNominationNoVote(
+	{
+		match,
+		requesterGroupId,
+		accepterNominatedUserIds,
+	}: {
+		match: NonNullable<Awaited<ReturnType<typeof findById>>>;
+		requesterGroupId: number;
+		accepterNominatedUserIds: number[];
+	},
+	trx: Transaction<DB>,
+) {
+	const requesterNominations = await trx
+		.selectFrom("GroupMatchCancelReportPlayer")
+		.innerJoin(
+			"GroupMatchCancelReport",
+			"GroupMatchCancelReport.id",
+			"GroupMatchCancelReportPlayer.cancelReportId",
+		)
+		.select("GroupMatchCancelReportPlayer.userId")
+		.where("GroupMatchCancelReport.groupMatchId", "=", match.id)
+		.where("GroupMatchCancelReport.groupId", "=", requesterGroupId)
+		.execute();
+
+	const agreedUserId = RejoinVote.agreedNominatedUserId([
+		requesterNominations.map((nomination) => nomination.userId),
+		accepterNominatedUserIds,
+	]);
+	const blamedGroup = [match.groupAlpha, match.groupBravo].find((group) =>
+		group.members.some((member) => member.id === agreedUserId),
+	);
+
+	if (agreedUserId === null || !blamedGroup?.matchmade) return;
+
+	await trx
+		.insertInto("GroupMatchContinueVote")
+		.values({
+			groupId: blamedGroup.id,
+			userId: agreedUserId,
+			isContinuing: 0,
+		})
+		.onConflict((oc) =>
+			oc.columns(["groupId", "userId"]).doUpdateSet({ isContinuing: 0 }),
+		)
+		.execute();
 }
 
 async function insertCancelReport(

@@ -532,7 +532,7 @@ interface MapListWithStatusesArgs {
 	mapList: TournamentMapListMap[] | null;
 	teams: [MapPoolTeam, MapPoolTeam];
 	pickerTeamId: number;
-	tieBreakerMapPool: ModeWithStage[];
+	/** The organizer's maps, empty when the teams picked their own (the legal maps are then the union of their picks). */
 	toSetMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
 	pickBanEvents?: PickBanEvent[];
 }
@@ -553,7 +553,6 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 					const combinedPools = [
 						...(args.teams[0].mapPool ?? []),
 						...(args.teams[1].mapPool ?? []),
-						...args.tieBreakerMapPool,
 					];
 
 					const result: ModeWithStage[] = [];
@@ -580,7 +579,6 @@ export function mapsListWithLegality(args: MapListWithStatusesArgs) {
 				const combinedPools = [
 					...(args.teams[0].mapPool ?? []),
 					...(args.teams[1].mapPool ?? []),
-					...args.tieBreakerMapPool,
 				];
 
 				return R.uniqueBy(combinedPools, (m) => `${m.mode}-${m.stageId}`);

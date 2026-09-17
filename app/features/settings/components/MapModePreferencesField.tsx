@@ -1,7 +1,11 @@
 import * as React from "react";
+import { useTranslation } from "react-i18next";
 import { ModeImage } from "~/components/Image";
 import type { Preference, UserMapModePreferences } from "~/db/tables-json";
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
+import {
+	BANNED_MAPS,
+	SENDOUQ_MAP_POOL,
+} from "~/features/match-profile/banned-maps";
 import { AMOUNT_OF_MAPS_IN_POOL_PER_MODE } from "~/features/match-profile/match-profile-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -29,6 +33,7 @@ export function MapModePreferencesField({
 	value: UserMapModePreferences;
 	onChange: (value: UserMapModePreferences) => void;
 }) {
+	const { t } = useTranslation(["common"]);
 	const handleModePreferenceChange = ({
 		mode,
 		preference,
@@ -93,6 +98,8 @@ export function MapModePreferencesField({
 					modeTabs={pickableModes}
 					onModeChange={setSelectedMode}
 					amountToPick={AMOUNT_OF_MAPS_IN_POOL_PER_MODE}
+					allowedStages={SENDOUQ_MAP_POOL.parsed[activeMode]}
+					unavailableLabel={t("common:maps.banned")}
 					pool={value.pool.find((p) => p.mode === activeMode)?.stages ?? []}
 					onChange={(stages) => handlePoolChange(activeMode, stages)}
 				/>

@@ -17,15 +17,7 @@
 	"filters.MinTier": "最小ティア",
 	"filters.orAbove": "より上",
 	"new.noMorePosts": "これ以上ポーストは作れません",
-	"new.type.header": "種類",
-	"new.timezone.header": "タイムゾーン",
-	"new.text.header": "文字",
-	"new.visibility.header": "可視性",
-	"new.visibility.everyone": "みんな",
 	"new.editOn": "編集する",
 	"new.weaponPool.header": "武器プール",
-	"new.weaponPool.matchProfile": "",
-	"new.languages.header": "言語",
-	"new.languages.placeholder": "該当するものを全て選んでください。",
-	"new.languages.sqSettingsPage": "SendouQ 設定"
+	"new.weaponPool.matchProfile": ""
 }

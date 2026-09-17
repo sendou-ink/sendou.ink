@@ -1,3 +1,7 @@
+.option {
+	--option-content-height: 24px;
+}
+
 .item {
 	display: flex;
 	gap: var(--s-2);

@@ -6,7 +6,11 @@ import type {
 	TierListItem,
 	TierListMakerTier,
 } from "../tier-list-maker-schemas";
-import { tierListItemId, tierNameFontSize } from "../tier-list-maker-utils";
+import {
+	tierListItemId,
+	tierNameFontSize,
+	tierTextColor,
+} from "../tier-list-maker-utils";
 import styles from "./TierListGraphic.module.css";
 import { TierListItemImage } from "./TierListItemImage";
 
@@ -49,7 +53,10 @@ export function TierListGraphic({
 						{showTierHeaders ? (
 							<div
 								className={styles.tierLabel}
-								style={{ backgroundColor: tier.color }}
+								style={{
+									backgroundColor: tier.color,
+									color: tierTextColor(tier.color),
+								}}
 							>
 								<span style={{ fontSize: tierNameFontSize(tier.name) }}>
 									{tier.name}

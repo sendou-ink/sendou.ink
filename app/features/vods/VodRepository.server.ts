@@ -72,7 +72,6 @@ export async function findVods({
 					.whereRef("User.id", "=", "VideoMatchPlayer.playerUserId"),
 			).as("players"),
 		])
-		.where(vodFilters(filters))
 		// the page is resolved by id first: with the limit on this read, the aggregates
 		// of every matching vod would be computed before it applies
 		.where(
@@ -88,9 +87,10 @@ export async function findVods({
 		.execute();
 
 	const vods = result.map((value) => {
-		const { playerNames, players, ...vod } = value;
+		const { playerNames, players, weapons, ...vod } = value;
 		return {
 			...vod,
+			weapons: filteredWeaponFirst(weapons, filters.weapon),
 			pov: playerNames[0] ?? players[0],
 		};
 	});
@@ -318,6 +318,17 @@ type VodsWithMatchesDB =
 
 type VodsTables = "Video" | "VideoMatch" | "VideoMatchPlayer";
 
+/** The filtered weapon and its alt skins lead the list so the listing's peek always shows what was filtered for. */
+function filteredWeaponFirst(
+	weapons: MainWeaponId[],
+	weapon: MainWeaponId | undefined,
+) {
+	if (weapon === undefined) return weapons;
+
+	const filtered = new Set(weaponIdToArrayWithAlts(weapon));
+	return R.partition(weapons, (id) => filtered.has(id)).flat();
+}
+
 /** Conditions the filters put on the match rows. `userId` makes the vod's own filters moot: it is the user's vods regardless. */
 function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
 	return (eb: ExpressionBuilder<VodsWithMatchesDB, VodsTables>) => {
@@ -331,11 +342,11 @@ function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
 			if (mode) {
 				conditions.push(eb("VideoMatch.mode", "=", mode));
 			}
-			if (stageId) {
+			if (stageId !== undefined) {
 				conditions.push(eb("VideoMatch.stageId", "=", stageId));
 			}
 		}
-		if (weapon) {
+		if (weapon !== undefined) {
 			conditions.push(
 				eb(
 					"VideoMatchPlayer.weaponSplId",
@@ -355,8 +366,9 @@ function vodFilters({ weapon, mode, stageId, type, userId }: VodFilters) {
  */
 function filteredVideoIds(filters: VodFilters) {
 	const { type, userId, mode, stageId, weapon } = filters;
-	const filtersPlayers = Boolean(userId || weapon);
-	const filtersMatches = !filtersPlayers && Boolean(mode || stageId);
+	const filtersPlayers = userId !== undefined || weapon !== undefined;
+	const filtersMatches =
+		!filtersPlayers && (mode !== undefined || stageId !== undefined);
 
 	return db
 		.selectFrom("Video")

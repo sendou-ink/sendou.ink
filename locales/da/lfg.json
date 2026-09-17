@@ -17,15 +17,7 @@
 	"filters.MinTier": "Min tier",
 	"filters.orAbove": "Eller over",
 	"new.noMorePosts": "Du kan ikke lave flere opslag",
-	"new.type.header": "Type",
-	"new.timezone.header": "Tidszone",
-	"new.text.header": "Tekst",
-	"new.visibility.header": "Synlighed",
-	"new.visibility.everyone": "Alle",
 	"new.editOn": "Tilpas dette på din",
 	"new.weaponPool.header": "Våbenpulje",
-	"new.weaponPool.matchProfile": "",
-	"new.languages.header": "Sprog",
-	"new.languages.placeholder": "",
-	"new.languages.sqSettingsPage": "SendouQ opsætnings-side"
+	"new.weaponPool.matchProfile": ""
 }

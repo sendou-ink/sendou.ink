@@ -1,5 +1,5 @@
 import type { ActionFunction } from "react-router";
-import type { PreparedMaps } from "~/db/tables-json";
+import type { PreparedMaps, TournamentRoundMaps } from "~/db/tables-json";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -68,6 +68,11 @@ export const action: ActionFunction = async ({ params, request }) => {
 				settings: bracket.settings,
 				participantsCount: seeding.length,
 			});
+
+			errorToastIfFalsy(
+				roundModesAreIncluded(data.maps, tournament),
+				"Mode order includes a mode not played in the tournament",
+			);
 
 			const maps = hasThirdPlaceMatch
 				? adjustLinkedRounds({
@@ -204,6 +209,10 @@ export const action: ActionFunction = async ({ params, request }) => {
 			errorToastIfFalsy(
 				bracket.preview,
 				"Bracket has started, preparing maps no longer possible",
+			);
+			errorToastIfFalsy(
+				roundModesAreIncluded(data.maps, tournament),
+				"Mode order includes a mode not played in the tournament",
 			);
 
 			const hasThirdPlaceMatch = Engine.hasThirdPlaceMatch({
@@ -396,6 +405,17 @@ function abDivisionsForSeeding(
 	errorToastIfErr(result);
 
 	return result.value;
+}
+
+function roundModesAreIncluded(
+	maps: Array<Pick<TournamentRoundMaps, "modes">>,
+	tournament: Tournament,
+) {
+	return maps.every((round) =>
+		(round.modes ?? []).every((mode) =>
+			tournament.modesIncluded.includes(mode),
+		),
+	);
 }
 
 function adjustLinkedRounds({

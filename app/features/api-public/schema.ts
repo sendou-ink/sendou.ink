@@ -387,7 +387,7 @@ export type MapListMap = {
 	 * One of the following:
 	 * - id of the team that picked the map
 	 * - "DEFAULT" if it was a default map, something went wrong with the algorithm typically
-	 * - "TIEBREAKER" if it was a tiebreaker map (selected by the TO)
+	 * - "RANDOM" if it was a random map from the tournament's map pool that neither team picked
 	 * - "BOTH" both teams picked the map
 	 * - "TO" if it was a TO pick (from predefined maplist)
 	 * - "COUNTERPICK" if it was a counterpick
@@ -396,7 +396,7 @@ export type MapListMap = {
 	source:
 		| number
 		| "DEFAULT"
-		| "TIEBREAKER"
+		| "RANDOM"
 		| "BOTH"
 		| "TO"
 		| "COUNTERPICK"

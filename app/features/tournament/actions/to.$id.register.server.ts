@@ -25,11 +25,8 @@ import { logger } from "~/utils/logger";
 import { errorToastIfFalsy, successToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
+import * as TeamPick from "../core/TeamPick";
 import { registerSchema } from "../tournament-schemas.server";
-import {
-	isOneModeTournamentOf,
-	validateCounterPickMapPool,
-} from "../tournament-utils";
 import {
 	fulfillsSendouQParticipation,
 	isBannedByOrganization,
@@ -226,15 +223,14 @@ export const action: ActionFunction = async ({ request, params }) => {
 		case "UPDATE_MAP_POOL": {
 			const mapPool = new MapPool(data.mapPool);
 			errorToastIfFalsy(ownTeam, "You are not registered to this tournament");
+			const teamPick = tournament.teamPickSettings;
+			errorToastIfFalsy(teamPick, "Teams don't pick maps in this tournament");
 			errorToastIfFalsy(
-				validateCounterPickMapPool(
+				TeamPick.validateTeamPool({
 					mapPool,
-					isOneModeTournamentOf(
-						tournament.ctx.mapPickingStyle,
-						tournament.ctx.toSetMapPool,
-					),
-					tournament.ctx.tieBreakerMapPool,
-				) === "VALID",
+					teamPick,
+					pool: tournament.mapPool,
+				}) === "VALID",
 				"Invalid map pool",
 			);
 

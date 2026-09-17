@@ -17,15 +17,7 @@
 	"filters.MinTier": "Min tier",
 	"filters.orAbove": "or above",
 	"new.noMorePosts": "You can't create any more posts",
-	"new.type.header": "Type",
-	"new.timezone.header": "Timezone",
-	"new.text.header": "Text",
-	"new.visibility.header": "Visibility",
-	"new.visibility.everyone": "Everyone",
 	"new.editOn": "Edit on your",
 	"new.weaponPool.header": "Weapon pool",
-	"new.weaponPool.matchProfile": "match profile",
-	"new.languages.header": "Languages",
-	"new.languages.placeholder": "Select all that apply",
-	"new.languages.sqSettingsPage": "SendouQ settings page"
+	"new.weaponPool.matchProfile": "match profile"
 }

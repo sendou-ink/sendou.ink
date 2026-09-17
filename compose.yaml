@@ -1,24 +1,25 @@
 services:
-  minio:
-    image: "minio/minio:latest"
+  seaweedfs:
+    image: "chrislusf/seaweedfs:latest"
     ports:
       - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: minio-user
-      MINIO_ROOT_PASSWORD: minio-password
+      - "8888:8888"
     entrypoint: >
       /bin/sh -c '
-        isAlive() { curl -sf http://127.0.0.1:9000/minio/health/live; }    # check if Minio is alive
-        minio $$0 "$$@" --quiet & echo $$! > /tmp/minio.pid                # start Minio in the background
-        while ! isAlive; do sleep 0.1; done                                # wait until Minio is alive
-        until mc alias set minio http://127.0.0.1:9000 minio-user minio-password; do sleep 0.5; done # setup Minio client (health/live can answer before credentials are accepted)
-        until mc mb --ignore-existing minio/sendou; do sleep 0.5; done      # create a test bucket
-        until mc anonymous set public minio/sendou; do sleep 0.5; done      # make the test bucket public
-        kill -s INT $$(cat /tmp/minio.pid) && rm /tmp/minio.pid            # stop Minio
-        while isAlive; do sleep 0.1; done                                  # wait until Minio is stopped
-        exec minio $$0 "$$@"                                               # start Minio in the foreground
+        isReady() { curl -sf -o /dev/null http://127.0.0.1:9000/sendou/.ready; }  # reading the marker back over S3 proves the whole chain is up
+        (
+          until isReady; do
+            echo "s3.bucket.create -name sendou" | weed shell -master=127.0.0.1:9333 >/dev/null 2>&1   # create the test bucket
+            curl -sf -o /dev/null -T /etc/hostname http://127.0.0.1:8888/buckets/sendou/.ready         # write the marker through the filer
+            sleep 1
+          done
+        ) &
+        exec weed $$0 "$$@"                                                       # start SeaweedFS in the foreground
       '
     volumes:
-      - ~/minio/data:/data
-    command: server /data --console-address ":9001"
+      - ./docker/seaweedfs-s3.json:/etc/seaweedfs/s3.json:ro
+      - seaweedfs-data:/data
+    command: server -dir=/data -filer -s3 -s3.port=9000 -s3.config=/etc/seaweedfs/s3.json
+
+volumes:
+  seaweedfs-data:

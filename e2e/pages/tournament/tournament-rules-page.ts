@@ -24,4 +24,9 @@ export class TournamentRulesPage {
 	modeImage(mode: string) {
 		return this.page.getByAltText(mode);
 	}
+
+	/** A line of the team pick rules, matched by (part of) its text. */
+	rule(text: string) {
+		return this.page.getByText(text);
+	}
 }

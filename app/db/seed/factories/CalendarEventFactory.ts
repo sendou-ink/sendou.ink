@@ -59,7 +59,7 @@ export const { create } = defineFactory({
 			isFullTournament: false,
 			bracketProgression: null,
 			// only read for events with a tournament of their own
-			mapPickingStyle: "AUTO_ALL",
+			mapPickingStyle: "AUTO",
 		});
 
 		return { id: eventId };

@@ -44,6 +44,7 @@ export function TextareaFormField({
 				onChange={(e) => onChange(e.target.value)}
 				onBlur={() => onBlur?.()}
 				disabled={disabled}
+				autoComplete="off"
 				// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
 				autoFocus={autoFocus}
 				{...ariaAttributes({

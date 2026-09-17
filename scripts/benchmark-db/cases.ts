@@ -274,7 +274,6 @@ export function buildCases(fx: Fixtures): {
 	add("CalendarRepository.findById", fx.heavyCalendarEventId, (eventId) =>
 		CalendarRepository.findById(eventId, {
 			includeMapPool: true,
-			includeTieBreakerMapPool: true,
 			includeBadgePrizes: true,
 		}),
 	);

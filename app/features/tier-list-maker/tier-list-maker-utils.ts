@@ -27,6 +27,14 @@ export function tierListMakerPathWithState({
 	});
 }
 
+export function tierListSearchParamsHaveItems(searchParams: string) {
+	const { state } = tierListMakerSearchParams.parse(
+		new URLSearchParams(searchParams),
+	);
+
+	return Array.from(state.tierItems.values()).some((items) => items.length > 0);
+}
+
 /** State with the item appended to the tier; unchanged if the tier does not exist. */
 export function addItemToTier(
 	state: TierListState,
@@ -75,4 +83,24 @@ export function tierNameFontSize(name: string) {
 		}
 	}
 	return TIER_NAME_FONT_SIZE_MIN;
+}
+
+const LIGHT_COLOR_LUMINANCE_THRESHOLD = 0.5;
+
+/** Whether dark text/icons read better on the given `#rrggbb` color than light ones. */
+export function isLightColor(hex: string) {
+	const channels = hex.replace("#", "").match(/.{2}/g);
+	if (!channels || channels.length < 3) return false;
+
+	const [r, g, b] = channels.map((channel) => Number.parseInt(channel, 16));
+	const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
+
+	return luminance > LIGHT_COLOR_LUMINANCE_THRESHOLD;
+}
+
+/** Text color that stays readable on a tier's `#rrggbb` background color. */
+export function tierTextColor(hex: string) {
+	return isLightColor(hex)
+		? "var(--color-text-on-light)"
+		: "var(--color-text-on-dark)";
 }

@@ -69,8 +69,6 @@
 	font-weight: var(--weight-bold);
 	line-height: 1.2;
 	text-align: center;
-	/* tier label backgrounds are bright preset colors in both themes */
-	color: oklch(17% 0.03 268);
 	white-space: normal;
 	overflow-wrap: break-word;
 	border-radius: var(--radius-field);

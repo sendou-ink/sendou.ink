@@ -17,15 +17,7 @@
 	"filters.MinTier": "",
 	"filters.orAbove": "",
 	"new.noMorePosts": "",
-	"new.type.header": "",
-	"new.timezone.header": "",
-	"new.text.header": "",
-	"new.visibility.header": "",
-	"new.visibility.everyone": "",
 	"new.editOn": "",
 	"new.weaponPool.header": "",
-	"new.weaponPool.matchProfile": "",
-	"new.languages.header": "",
-	"new.languages.placeholder": "",
-	"new.languages.sqSettingsPage": ""
+	"new.weaponPool.matchProfile": ""
 }

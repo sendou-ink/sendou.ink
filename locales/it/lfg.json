@@ -17,15 +17,7 @@
 	"filters.MinTier": "Tier minimo",
 	"filters.orAbove": "o più",
 	"new.noMorePosts": "Non puoi creare altri posts",
-	"new.type.header": "Tipo",
-	"new.timezone.header": "Fuso orario",
-	"new.text.header": "Testo",
-	"new.visibility.header": "Visibilità",
-	"new.visibility.everyone": "Tutti",
 	"new.editOn": "Modifica sul tuo",
 	"new.weaponPool.header": "Pool di armi",
-	"new.weaponPool.matchProfile": "",
-	"new.languages.header": "Lingue",
-	"new.languages.placeholder": "Seleziona quelle che preferisci",
-	"new.languages.sqSettingsPage": "Pagina impostazioni SendouQ"
+	"new.weaponPool.matchProfile": ""
 }

@@ -1,9 +1,10 @@
+import { RotateCcw } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import { useFetcher } from "react-router";
+import { Link, useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import { frontPageSchema } from "~/features/sendouq/q-action-schemas";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { SENDOUQ_PAGE } from "~/utils/urls";
+import { SENDOUQ_LOOKING_PAGE, SENDOUQ_PAGE } from "~/utils/urls";
 import * as RejoinVote from "../core/RejoinVote";
 import type { SendouQMatchLoaderData } from "../loaders/q.match.$id.server";
 import { matchSchema } from "../q-match-schemas";
@@ -56,11 +57,25 @@ export function MatchmadeRejoinSection({
 
 export function TrustedRejoinSection({
 	viewerGroup,
+	hasJoinedNewGroup,
 }: {
 	viewerGroup: NonNullable<SendouQMatchLoaderData["match"]["groupAlpha"]>;
+	hasJoinedNewGroup: boolean;
 }) {
 	const { t } = useTranslation(["q"]);
 	const lookAgain = useActionSubmit(matchSchema);
+
+	if (hasJoinedNewGroup) {
+		return (
+			<div className="stack md items-center">
+				<Link to={SENDOUQ_LOOKING_PAGE}>
+					<SendouButton variant="primary" icon={<RotateCcw />}>
+						{t("q:match.rematch.backToQueue")}
+					</SendouButton>
+				</Link>
+			</div>
+		);
+	}
 
 	return (
 		<div className="stack md items-center">

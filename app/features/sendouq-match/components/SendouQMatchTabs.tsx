@@ -3,7 +3,7 @@ import { MatchResultTab } from "~/components/match-page/MatchResultTab";
 import { MatchRosterTab } from "~/components/match-page/MatchRosterTab";
 import { MatchTabs } from "~/components/match-page/MatchTabs";
 import { useUser } from "~/features/auth/core/user";
-import { ACTION_TAB_AFTER_LOCKED_SECONDS } from "~/features/sendouq/q-constants";
+import { ACTION_TAB_AFTER_MATCH_MADE_SECONDS } from "~/features/sendouq/q-constants";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampNow } from "~/utils/dates";
 import { teamPage } from "~/utils/urls";
@@ -41,21 +41,18 @@ export function SendouQMatchTabs({ data }: { data: SendouQMatchLoaderData }) {
 	const { alphaWins, bravoWins, isDecisive } = SendouQMatch.score(data.match);
 	const awaitingConfirmation = !data.match.isLocked && isDecisive;
 	const isLocked = data.match.isLocked;
-	const isCanceled = data.match.isCanceled;
 
 	const isParticipant = Boolean(userSide);
 
 	const lockedActionTabVisible =
-		data.match.confirmedAt !== null &&
 		databaseTimestampNow() <
-			data.match.confirmedAt + ACTION_TAB_AFTER_LOCKED_SECONDS;
+		data.match.createdAt + ACTION_TAB_AFTER_MATCH_MADE_SECONDS;
 
 	const matchInProgress = !isLocked && !awaitingConfirmation && currentMap;
 
 	const showActionTab =
 		(isParticipant ||
 			(isStaffOnly && (Boolean(matchInProgress) || awaitingConfirmation))) &&
-		!isCanceled &&
 		(matchInProgress ||
 			awaitingConfirmation ||
 			(isLocked && lockedActionTabVisible));

@@ -5,7 +5,6 @@
 	"radios.all": "All",
 	"radios.madeBy": "Art made by",
 	"radios.madeFor": "Art made for",
-	"filterByTag": "Filter by tag",
 	"filteringByTag": "Showing results filtered by #{{tag}}",
 	"commissionsOpen": "Commissions are open",
 	"commissionsClosed": "Commissions are closed",

@@ -134,15 +134,15 @@ Unlike test mode, draft tournaments are fully functional once opened: they appea
 
 ## Tournament maps
 
-With sendou.ink tournaments all maps are decided ahead of time. The map picking style can't be changed after the tournament has been created.
+With sendou.ink tournaments all maps are decided ahead of time. The map settings can be edited until the tournament starts, but changing them resets the maps every team has already picked.
 
-### Prepicked by teams
+### Team picked
 
-Map pool is always the same as current SendouQ seasonal map pool in terms of bans.
+The tournament organizer chooses which modes are played (any combination, Turf War included) and how many maps each team picks in every mode. By default a one mode tournament has teams pick 6 maps, two modes 4 maps each, three modes 3 maps each and four or more modes 2 maps each.
 
-For SZ/TC/RM/CB only no maps are picked by the tournament organizer. Teams pick 6 maps of that mode.
+The maps teams can pick from are either the SendouQ legal maps, all maps or a custom map pool built by the organizer. A custom pool needs at least one more stage than teams pick in every mode.
 
-For all modes the tournament organizer picks one tiebreaker map per mode. Teams pick 2 maps per mode.
+When a match is played the last map of the list is a map both teams picked when one exists, otherwise a random map from the pool that neither team picked. When starting a bracket the organizer can fix the mode order of the rounds with the same mode patterns as organizer picked tournaments use.
 
 ![alt text](./img/tournament-team-map-pick.png)
 *Team picking maps as part of their registration process*
@@ -153,7 +153,7 @@ Then when the tournament in in progress an algorithm decides the map list for ea
 
 [More info on how it works](https://gist.github.com/sendou-ink/285c697ad98171243bf5c08a4c7e1f30).
 
-### Picked by TO
+### Organizer picked
 
 Note that here you select just the map pool. The actual map lists are picked when the bracket starts (or prepared) in advance:
 

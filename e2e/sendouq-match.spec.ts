@@ -178,8 +178,9 @@ test.describe("SendouQ match page", () => {
 		await match.goto(matchId);
 
 		await expect(match.score(4, 0)).toBeVisible();
-		// the match is locked; a participant now sees the rejoin button
-		await expect(match.locators.lookAgainButton).toBeVisible();
+		// the requeue window runs out a day after the match was made, so by the time
+		// the routine resolves one there is nothing left to requeue with
+		await expect(match.locators.lookAgainButton).toBeHidden();
 	});
 
 	test("Rejoin: trusted group one-click look again", async ({
@@ -198,6 +199,47 @@ test.describe("SendouQ match page", () => {
 
 		await new SendouQPage(page).goto();
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+	});
+
+	test("Rejoin after cancel: trusted group requeues with the blamed member", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, alpha, bravo } = await createMatch(factories);
+		const [owner, blamed] = alpha;
+
+		await impersonate(page, owner.id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+		await match.requestCancel({
+			reason: "Our fourth never came back to the room",
+			nominateUserId: blamed.id,
+		});
+
+		await impersonate(page, bravo[0].id);
+		await match.goto(matchId);
+		await match.acceptCancel({
+			reason: "We waited for them for 15 minutes",
+			nominateUserId: blamed.id,
+		});
+
+		// a premade group is a team: the blamed player requeues with the rest of them
+		await impersonate(page, blamed.id);
+		await match.goto(matchId);
+		await match.lookAgain();
+
+		await new SendouQPage(page).goto();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+
+		const looking = new SendouQLookingPage(page);
+		await expect(looking.ownGroupCard.members).toHaveCount(FULL_GROUP_SIZE);
+
+		// the group is already back in the queue, so the rest of them are pointed at
+		// it rather than at a requeue that can only fail
+		await impersonate(page, owner.id);
+		await match.goto(matchId);
+		await expect(match.locators.lookAgainButton).toBeHidden();
+		await expect(match.locators.backToQueueButton).toBeVisible();
 	});
 
 	test("Rejoin vote: 'no' shows rejoin queue button that rejoins directly", async ({
@@ -284,6 +326,51 @@ test.describe("SendouQ match page", () => {
 		// the three who stayed get their group, rather than being sent back to /q
 		await impersonate(page, owner.id);
 		await q.goto();
+		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
+
+		const looking = new SendouQLookingPage(page);
+		await expect(looking.ownGroupCard.members).toHaveCount(3);
+	});
+
+	test("Rejoin after cancel: the player both teams blamed is voted out of the requeue", async ({
+		page,
+		factories,
+	}) => {
+		const { matchId, alpha, bravo } = await createMatch(factories, {
+			isMatchmade: true,
+		});
+		const [owner, blamed, memberC, memberD] = alpha;
+
+		await impersonate(page, owner.id);
+		const match = new SendouQMatchPage(page);
+		await match.goto(matchId);
+		await match.requestCancel({
+			reason: "Our fourth never joined the room",
+			nominateUserId: blamed.id,
+		});
+
+		await impersonate(page, bravo[0].id);
+		await match.goto(matchId);
+		await match.acceptCancel({
+			reason: "We waited for them for 15 minutes",
+			nominateUserId: blamed.id,
+		});
+
+		// nobody on the other team was blamed, so their requeue is a plain vote
+		await expect(match.locators.pendingVotes).toHaveCount(FULL_GROUP_SIZE);
+
+		await impersonate(page, blamed.id);
+		await match.goto(matchId);
+		await expect(match.locators.declinedText).toBeVisible();
+
+		for (const member of [owner, memberC, memberD]) {
+			await impersonate(page, member.id);
+			await match.goto(matchId);
+			await match.voteYes();
+		}
+
+		await impersonate(page, owner.id);
+		await new SendouQPage(page).goto();
 		await expect(page).toHaveURL(SENDOUQ_LOOKING_PAGE);
 
 		const looking = new SendouQLookingPage(page);

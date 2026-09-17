@@ -128,6 +128,7 @@ const tournamentRoundMaps = v.object({
 			),
 		),
 	),
+	modes: v.optional(v.nullable(v.array(modeShort))),
 	count: numericEnum(TOURNAMENT.AVAILABLE_BEST_OF),
 	type: v.picklist(["BEST_OF", "PLAY_ALL"]),
 	pickBan: v.nullish(v.picklist(PickBan.types)),

@@ -14,7 +14,6 @@ import {
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { parseFormDataWithImages } from "~/form/parse.server";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import {
 	requirePermission,
 	requireRole,
@@ -31,6 +30,10 @@ import {
 import { pathnameFromPotentialURL } from "~/utils/strings";
 import { calendarEventPage } from "~/utils/urls";
 import { CALENDAR_EVENT } from "../calendar-constants";
+import {
+	customTeamPickPool,
+	teamPickSettingsFromFormValues,
+} from "../calendar-new-schemas";
 import { calendarNewSchemaServer } from "../calendar-new-schemas.server";
 import { formValuesToInputBrackets } from "../calendar-progression-form";
 import { regClosesAtDate } from "../calendar-utils";
@@ -128,8 +131,11 @@ export const action: ActionFunction = async ({ request }) => {
 		// resolved by parseFormDataWithImages from the `image()` field
 		avatarImgId: data.avatarImgId ?? undefined,
 		toToolsEnabled: Number(data.toToolsEnabled),
-		toToolsMode:
-			rankedModesShort.find((mode) => mode === data.toToolsMode) ?? null,
+		mapPickingStyle: data.mapPickingStyle,
+		teamPick:
+			isAddingTournament && data.mapPickingStyle === "AUTO"
+				? teamPickSettingsFromFormValues(data)
+				: undefined,
 		bracketProgression: bracketProgressionFromFormData(data),
 		minMembersPerTeam: Number(data.minMembersPerTeam),
 		maxMembersPerTeam:
@@ -161,7 +167,13 @@ export const action: ActionFunction = async ({ request }) => {
 		"Bracket progression must be set for tournaments",
 	);
 
-	const deserializedMaps = data.pool ? MapPool.toDbList(data.pool) : undefined;
+	const deserializedMaps = (() => {
+		if (!isAddingTournament || data.mapPickingStyle === "TO") {
+			return data.pool ? MapPool.toDbList(data.pool) : undefined;
+		}
+
+		return data.teamPickPool === "CUSTOM" ? customTeamPickPool(data) : [];
+	})();
 
 	if (eventToEdit) {
 		if (eventToEdit.tournamentId) {
@@ -194,17 +206,11 @@ export const action: ActionFunction = async ({ request }) => {
 
 		throw redirect(calendarEventPage(eventToEdit.eventId));
 	}
-	const mapPickingStyle = () => {
-		if (data.toToolsMode === "TO") return "TO" as const;
-		if (data.toToolsMode) return `AUTO_${data.toToolsMode}` as const;
 
-		return "AUTO_ALL" as const;
-	};
 	const { eventId: createdEventId, tournamentId: createdTournamentId } =
 		await CalendarRepository.insert({
 			mapPoolMaps: deserializedMaps,
 			isFullTournament: data.toToolsEnabled,
-			mapPickingStyle: mapPickingStyle(),
 			...commonArgs,
 		});
 

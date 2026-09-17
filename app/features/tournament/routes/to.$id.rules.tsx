@@ -9,7 +9,6 @@ import { Section } from "~/components/Section";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { mapsPageWithMapPool } from "~/features/map-list-generator/map-list-generator-urls";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { modesShort } from "~/modules/in-game-lists/modes";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl } from "~/utils/urls";
 import { MarkdownSection } from "../components/MarkdownSection";
@@ -27,13 +26,13 @@ export default function TournamentRulesPage() {
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
 			{rules ? <MarkdownSection>{rules}</MarkdownSection> : null}
-			<CounterPickMapPool />
-			<TiebreakerMapPool />
+			<OrganizerMapPool />
+			<TeamPickRules />
 		</div>
 	);
 }
 
-function CounterPickMapPool() {
+function OrganizerMapPool() {
 	const { t } = useTranslation(["calendar"]);
 	const tournament = useTournament();
 
@@ -56,25 +55,29 @@ function CounterPickMapPool() {
 	);
 }
 
-function TiebreakerMapPool() {
+function TeamPickRules() {
 	const { t } = useTranslation(["tournament", "game-misc"]);
 	const tournament = useTournament();
+	const teamPick = tournament.teamPickSettings;
 
-	if (tournament.ctx.tieBreakerMapPool.length === 0) return null;
+	if (!teamPick) return null;
+
+	const picks = teamPick.modes
+		.map(({ mode, count }) => `${count}× ${t(`game-misc:MODE_SHORT_${mode}`)}`)
+		.join(", ");
 
 	return (
-		<div className="text-sm text-lighter text-semi-bold">
-			{t("tournament:rules.tiebreakerMapPool", {
-				maps: tournament.ctx.tieBreakerMapPool
-					.sort(
-						(a, b) => modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode),
-					)
-					.map(
-						(map) =>
-							`${t(`game-misc:MODE_SHORT_${map.mode}`)} ${t(`game-misc:STAGE_${map.stageId}`)}`,
-					)
-					.join(", "),
-			})}
+		<div className="text-sm text-lighter text-semi-bold stack xs">
+			<div>{t("tournament:rules.teamPick.picks", { picks })}</div>
+			<div>{t(`tournament:rules.teamPick.pool.${teamPick.pool}`)}</div>
+			<div>{t("tournament:rules.teamPick.neutral")}</div>
+			{teamPick.modes.length > 1 ? (
+				<div>
+					{t("tournament:rules.teamPick.stageRepeat", {
+						cap: tournament.stageRepeatCap,
+					})}
+				</div>
+			) : null}
 		</div>
 	);
 }

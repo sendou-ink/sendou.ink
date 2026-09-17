@@ -95,7 +95,6 @@ erDiagram
 ```mermaid
 erDiagram
     MapPoolMap }o--|| CalendarEvent : calendar_event
-    MapPoolMap }o--|| CalendarEvent : tie_breaker_calendar_event
     MapPoolMap }o--|| TournamentTeam : tournament_team
 ```
 
@@ -103,9 +102,8 @@ erDiagram
 
 Can be one of the following:
 1) Regular calendar events map pool
-2) Tournament's tiebreaker maps (teams' pick mode, AUTO_ALL)
-3) Tournament's map pool (TO's map picking mode)
-4) Tournament teams map picks (teams' pick mode, AUTO_ALL, AUTO_SZ etc.)
+2) Tournament's map pool (organizer picked, or the custom pool of a team picked tournament)
+3) Tournament teams map picks (team picked, the modes and counts live in `Tournament.settings.teamPick`)
 
 ## Plus Server Suggestions
 

@@ -62,6 +62,7 @@ export function InputFormField({
 					onBlur={() => onBlur?.()}
 					maxLength={maxLength}
 					disabled={disabled}
+					autoComplete="off"
 					// biome-ignore lint/a11y/noAutofocus: opt-in per call site, used for inline edit forms
 					autoFocus={autoFocus}
 					placeholder={translatedPlaceholder}

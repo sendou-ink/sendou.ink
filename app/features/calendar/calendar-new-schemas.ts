@@ -1,5 +1,8 @@
 import * as v from "valibot";
+import type { TeamPickSettings } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
+import { TEAM_PICK_POOLS } from "~/features/tournament/tournament-constants";
 import {
 	array,
 	badges,
@@ -11,6 +14,7 @@ import {
 	idConstantOptional,
 	image,
 	numberFieldOptional,
+	radioGroup,
 	select,
 	selectDynamicOptional,
 	textAreaOptional,
@@ -18,8 +22,9 @@ import {
 	textFieldOptional,
 	toggle,
 } from "~/form/fields";
-import { rankedModesShort } from "~/modules/in-game-lists/modes";
-import { id, type ValidationCtx } from "~/utils/schema";
+import { modesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort } from "~/modules/in-game-lists/types";
+import { id, modeShort, type ValidationCtx } from "~/utils/schema";
 import { CALENDAR_EVENT, REG_CLOSES_AT_OPTIONS } from "./calendar-constants";
 import {
 	bracketsFormField,
@@ -36,17 +41,42 @@ const calendarEventDateField = datetime({
 });
 
 // extracted so the literal item values don't widen to `string` in the object's inferred value type
-const toToolsModeField = select({
+const mapPickingStyleField = radioGroup({
 	label: "labels.mapPickingStyle",
 	items: [
-		{ value: "ALL", label: "options.toToolsMode.ALL" },
-		{ value: "SZ", label: "options.toToolsMode.SZ" },
-		{ value: "TC", label: "options.toToolsMode.TC" },
-		{ value: "RM", label: "options.toToolsMode.RM" },
-		{ value: "CB", label: "options.toToolsMode.CB" },
-		{ value: "TO", label: "options.toToolsMode.TO" },
+		{ value: "TO", label: "options.mapPickingStyle.TO" },
+		{ value: "AUTO", label: "options.mapPickingStyle.AUTO" },
 	],
 });
+
+const teamPickModesField = checkboxGroup({
+	label: "labels.teamPickModes",
+	items: modesShort.map((mode) => ({
+		value: mode,
+		label: `modes.${mode}` as const,
+	})),
+});
+
+const teamPickPoolField = radioGroup({
+	label: "labels.teamPickPool",
+	items: TEAM_PICK_POOLS.map((pool) => ({
+		value: pool,
+		label: `options.teamPickPool.${pool}` as const,
+	})),
+});
+
+/** How many maps a team picks per mode, one entry per picked mode. */
+export type TeamPickCountsFormValue = Array<{ mode: ModeShort; count: number }>;
+
+const teamPickCountsField = customField(
+	{ initialValue: [] as TeamPickCountsFormValue },
+	v.array(
+		v.object({
+			mode: modeShort,
+			count: v.pipe(v.number(), v.integer()),
+		}),
+	),
+);
 
 export const calendarNewBaseSchema = v.object({
 	// discriminates between a calendar event and a tournament; seeded from the loader, no visible control
@@ -124,7 +154,11 @@ export const calendarNewBaseSchema = v.object({
 		label: "labels.maxTeamSize",
 		bottomText: "bottomTexts.maxTeamSize",
 	}),
-	toToolsMode: toToolsModeField,
+	mapPickingStyle: mapPickingStyleField,
+	teamPickModes: teamPickModesField,
+	teamPickCounts: teamPickCountsField,
+	teamPickPool: teamPickPoolField,
+	// organizer's map pool: of a calendar event, a "TO" tournament or the custom pool of a team picked one
 	pool: customField({ initialValue: "" }, v.optional(v.string())),
 	// only rendered (and validated) for tournaments, calendar events keep the empty initial values
 	brackets: bracketsFormField,
@@ -207,19 +241,8 @@ export function calendarNewSyncRefine(
 		}
 	}
 
-	// "Prepicked by teams - All modes" requires one tiebreaker map per ranked mode
-	if (data.toToolsEnabled && data.toToolsMode === "ALL") {
-		const maps = data.pool ? MapPool.toDbList(data.pool) : [];
-		const isValid =
-			maps.length === rankedModesShort.length &&
-			rankedModesShort.every((mode) => maps.some((map) => map.mode === mode));
-
-		if (!isValid) {
-			ctx.addIssue({
-				path: ["pool"],
-				message: "forms:errors.allModePool",
-			});
-		}
+	if (data.toToolsEnabled && data.mapPickingStyle === "AUTO") {
+		validateTeamPick(data, ctx);
 	}
 
 	if (data.trophyId && data.badges.length > 0) {
@@ -240,4 +263,76 @@ export function calendarNewSyncRefine(
 			message: "forms:errors.maxMembersRange",
 		});
 	}
+}
+
+function validateTeamPick(
+	data: Pick<
+		v.InferOutput<typeof calendarNewBaseSchema>,
+		"teamPickModes" | "teamPickCounts" | "teamPickPool" | "pool"
+	>,
+	ctx: ValidationCtx,
+) {
+	if (data.teamPickModes.length === 0) {
+		ctx.addIssue({
+			path: ["teamPickModes"],
+			message: "forms:errors.teamPick.noModes",
+		});
+		return;
+	}
+
+	const teamPick = teamPickSettingsFromFormValues(data);
+	const pool = TeamPick.effectivePool(teamPick, customTeamPickPool(data));
+
+	if (
+		teamPick.pool === "CUSTOM" &&
+		TeamPick.poolShortfalls(teamPick, pool).length > 0
+	) {
+		ctx.addIssue({
+			path: ["pool"],
+			message: "forms:errors.teamPick.poolTooSmall",
+		});
+		return;
+	}
+
+	const countOutOfRange = teamPick.modes.some(
+		({ mode, count }) => count < 1 || count > TeamPick.maxCount(pool, mode),
+	);
+	if (countOutOfRange) {
+		ctx.addIssue({
+			path: ["teamPickCounts"],
+			message: "forms:errors.teamPick.countOutOfRange",
+		});
+	}
+}
+
+/** Team pick settings the form values describe, a picked mode without a count gets the default one. */
+export function teamPickSettingsFromFormValues(data: {
+	teamPickModes: ModeShort[];
+	teamPickCounts: TeamPickCountsFormValue;
+	teamPickPool: TeamPickSettings["pool"];
+}): TeamPickSettings {
+	const modes = TeamPick.sortModes(data.teamPickModes);
+	const defaultCount = TeamPick.defaultCount(modes.length);
+
+	return {
+		modes: modes.map((mode) => ({
+			mode,
+			count:
+				data.teamPickCounts.find((count) => count.mode === mode)?.count ??
+				defaultCount,
+		})),
+		pool: data.teamPickPool,
+	};
+}
+
+/** The custom pool of a team picked tournament, limited to the picked modes. */
+export function customTeamPickPool(data: {
+	teamPickModes: ModeShort[];
+	pool?: string;
+}) {
+	if (!data.pool) return [];
+
+	return MapPool.toDbList(data.pool).filter((map) =>
+		data.teamPickModes.includes(map.mode),
+	);
 }

@@ -256,16 +256,6 @@ export async function findById(id: number) {
 			jsonArrayFrom(
 				eb
 					.selectFrom("MapPoolMap")
-					.select(["MapPoolMap.stageId", "MapPoolMap.mode"])
-					.whereRef(
-						"MapPoolMap.tieBreakerCalendarEventId",
-						"=",
-						"CalendarEvent.id",
-					),
-			).as("tieBreakerMapPool"),
-			jsonArrayFrom(
-				eb
-					.selectFrom("MapPoolMap")
 					.select(["MapPoolMap.mode", "MapPoolMap.stageId"])
 					.whereRef("MapPoolMap.calendarEventId", "=", "CalendarEvent.id"),
 			).as("toSetMapPool"),

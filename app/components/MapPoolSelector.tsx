@@ -5,7 +5,6 @@ import { useTranslation } from "react-i18next";
 import { Image } from "~/components/Image";
 import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
-import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -31,7 +30,6 @@ export type MapPoolSelectorProps = {
 	footer?: React.ReactNode;
 	/** Enables clear button, template selection, and toggling a whole stage */
 	allowBulkEdit?: boolean;
-	hideBanned?: boolean;
 };
 
 export function MapPoolSelector({
@@ -45,7 +43,6 @@ export function MapPoolSelector({
 	info,
 	footer,
 	allowBulkEdit = false,
-	hideBanned = false,
 }: MapPoolSelectorProps) {
 	const { t } = useTranslation();
 
@@ -115,7 +112,6 @@ export function MapPoolSelector({
 					allowBulkEdit={allowBulkEdit}
 					modesToInclude={modesToInclude}
 					preselectedMapPool={preselectedMapPool}
-					hideBanned={hideBanned}
 				/>
 				{footer}
 			</div>
@@ -129,7 +125,6 @@ export type MapPoolStagesProps = {
 	allowBulkEdit?: boolean;
 	modesToInclude?: ModeShort[];
 	preselectedMapPool?: MapPool;
-	hideBanned?: boolean;
 };
 
 export function MapPoolStages({
@@ -138,7 +133,6 @@ export function MapPoolStages({
 	allowBulkEdit = false,
 	modesToInclude,
 	preselectedMapPool,
-	hideBanned = false,
 }: MapPoolStagesProps) {
 	const { t } = useTranslation(["game-misc", "common"]);
 
@@ -254,8 +248,6 @@ export function MapPoolStages({
 											className={clsx(styles.modeButton, {
 												[styles.selected]: selected,
 												[styles.preselected]: preselected,
-												invisible:
-													hideBanned && BANNED_MAPS[mode].includes(stageId),
 											})}
 											onClick={() => handleModeChange?.({ mode, stageId })}
 											type="button"
