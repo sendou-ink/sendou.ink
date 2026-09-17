@@ -3,28 +3,11 @@ import { createMemoryRouter, RouterProvider } from "react-router";
 import { describe, expect, test, vi } from "vitest";
 import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
+import { TournamentProvider } from "~/features/tournament/tournament-context";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import TournamentAdminRegistrationPage from "./to.$id.admin.registration.$tid";
 
-const { mockTournament } = vi.hoisted(() => ({
-	mockTournament: {
-		ctx: { id: 1, settings: { requireInGameNames: false } },
-		canEditTournamentNames: () => false,
-	},
-}));
-
-vi.mock("react-router", async () => {
-	const actual = await vi.importActual("react-router");
-	return {
-		...actual,
-		// no team -> "add new team" flow, where the roster is built via user search
-		useLoaderData: () => ({ team: null }),
-	};
-});
-
-vi.mock("~/features/tournament/tournament-context", () => ({
-	useTournament: () => mockTournament,
-}));
-
+// stubbed so importing the route in a browser test doesn't pull in the database-backed action
 vi.mock(
 	"~/features/tournament-admin/actions/to.$id.admin.registration.server",
 	() => ({ action: vi.fn() }),
@@ -34,6 +17,16 @@ vi.mock(
 	"~/features/tournament-admin/loaders/to.$id.admin.registration.$tid.server",
 	() => ({ loader: vi.fn() }),
 );
+
+const ROUTE_ID = "registration";
+
+const tournament = {
+	ctx: { id: 1, settings: { requireInGameNames: false } },
+	canEditTournamentNames: (): boolean => false,
+} as unknown as Tournament;
+
+// no team -> "add new team" flow, where the roster is built via user search
+const LOADER_DATA = { team: null };
 
 const GREY = {
 	type: "user" as const,
@@ -51,8 +44,14 @@ function renderPage() {
 	const router = createMemoryRouter(
 		[
 			{
+				id: ROUTE_ID,
 				path: "/",
-				element: <TournamentAdminRegistrationPage />,
+				element: (
+					<TournamentProvider tournament={tournament}>
+						<TournamentAdminRegistrationPage />
+					</TournamentProvider>
+				),
+				loader: () => LOADER_DATA,
 				action: () => null,
 			},
 			{
@@ -68,7 +67,10 @@ function renderPage() {
 				},
 			},
 		],
-		{ initialEntries: ["/"] },
+		{
+			initialEntries: ["/"],
+			hydrationData: { loaderData: { [ROUTE_ID]: LOADER_DATA } },
+		},
 	);
 
 	return render(<RouterProvider router={router} />);
