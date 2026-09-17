@@ -24,9 +24,12 @@
 	height: 100%;
 	min-width: var(--card-width);
 	max-width: var(--card-width);
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover .avatarImg {
-		outline: 6px solid var(--color-bg-higher);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-higher);
 	}
 }
 

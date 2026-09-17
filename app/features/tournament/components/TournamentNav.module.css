@@ -91,15 +91,17 @@
 	text-decoration: none;
 	cursor: pointer;
 	min-width: max-content;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }
 
 .linkActive {
 	color: var(--color-text-accent);
-	background-color: var(--color-bg-high);
+	background-color: var(--color-bg-higher);
 }
 
 .icon {
@@ -146,8 +148,10 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }

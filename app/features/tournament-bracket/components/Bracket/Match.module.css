@@ -87,12 +87,13 @@
 	gap: var(--s-1);
 	color: var(--color-text);
 	justify-content: center;
-	transition: background-color 0.2s;
+	text-decoration: none;
+	transition: background-color 0.15s;
 }
 
-a.match:hover {
-	background-color: var(--color-bg-high);
-	border-radius: var(--radius-field);
+a.match:hover,
+a.match:focus-visible {
+	background-color: var(--color-bg-higher);
 }
 
 .matchSeparator {

@@ -71,6 +71,7 @@
 }
 
 .noticeableLink {
+	text-decoration: none;
 	display: flex;
 	width: 100%;
 	align-items: center;
@@ -174,11 +175,12 @@
 }
 
 .statCardPopoverTrigger {
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
 	display: inline;
 	height: 1rem;
 	padding: 0;
 	border: none;
-	background-color: transparent;
 	color: var(--color-accent);
 	font-size: var(--font-md);
 	font-weight: var(--weight-bold);

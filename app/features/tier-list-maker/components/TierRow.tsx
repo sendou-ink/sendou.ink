@@ -5,7 +5,7 @@ import {
 } from "@dnd-kit/sortable";
 import clsx from "clsx";
 import { ChevronDown, ChevronUp, Plus, Trash } from "lucide-react";
-import type { KeyboardEvent } from "react";
+import type { CSSProperties, KeyboardEvent } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
@@ -89,9 +89,7 @@ export function TierRow({ tier }: TierRowProps) {
 						<button
 							type="button"
 							className={styles.tierLabel}
-							style={{
-								backgroundColor: tier.color,
-							}}
+							style={{ "--tier-color": tier.color } as CSSProperties}
 						>
 							<span
 								className={styles.tierName}

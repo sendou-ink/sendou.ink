@@ -17,11 +17,17 @@
 	color: var(--color-text);
 	border-radius: var(--radius-field);
 	cursor: pointer;
-	transition: opacity 0.2s;
+	background-color: var(--tier-color);
+	transition: background-color 0.15s;
 	border: none;
 
-	&:hover {
-		opacity: 0.9;
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--tier-color) 85%,
+			var(--color-text)
+		);
 	}
 }
 
@@ -57,7 +63,7 @@
 	border-radius: var(--radius-field) 0 0 var(--radius-field);
 	align-items: center;
 	align-content: center;
-	transition: background 0.2s;
+	transition: background-color 0.15s;
 }
 
 .targetZoneOver {
@@ -109,10 +115,11 @@
 	background: var(--color-bg-high);
 	border: none;
 	cursor: pointer;
-	transition: opacity 0.2s;
+	transition: background-color 0.15s;
 
-	&:hover:not(:disabled) {
-		opacity: 0.8;
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background: var(--color-bg-higher);
 	}
 
 	&:disabled {
@@ -147,11 +154,11 @@
 	border-radius: 50%;
 	border: 2px solid transparent;
 	cursor: pointer;
-	transition: all 0.2s;
+	transition: border-color 0.15s;
 	padding: 0;
 
-	&:hover {
-		transform: scale(1.1);
+	&:hover,
+	&:focus-visible {
 		border-color: var(--color-text-high);
 	}
 }

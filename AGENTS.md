@@ -56,6 +56,7 @@
 ## Styling
 
 - use CSS modules
+- hover/focus/selected state rules are in [styling.md](./docs/dev/styling.md)
 - one file containing React code should have a matching CSS module file e.g. `Component.tsx` should have a file with the same root name i.e. `Component.module.css`
 - prefer using [CSS variables](./app/styles/vars.css) for theming
 - for any CSS variable used, make sure it is defined either locally or in the `vars.css` file

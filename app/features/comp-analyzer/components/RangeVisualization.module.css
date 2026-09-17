@@ -20,9 +20,15 @@
 	color: var(--color-text);
 	width: 100%;
 	text-align: left;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }
 

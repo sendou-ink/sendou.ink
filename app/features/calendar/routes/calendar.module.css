@@ -34,6 +34,7 @@
 	all: unset;
 	background-color: var(--color-bg-higher);
 	border: var(--border-style);
+	transition: background-color 0.15s;
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
@@ -47,11 +48,25 @@
 		outline: var(--focus-ring);
 	}
 
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
+	}
+
 	&:not(.navigateArrowButton) {
 		justify-content: center;
 		flex-basis: 100%;
 		background-color: var(--color-bg);
 		min-height: 30px;
+
+		&:hover,
+		&:focus-visible {
+			background-color: var(--color-bg-high);
+		}
 	}
 
 	& svg {

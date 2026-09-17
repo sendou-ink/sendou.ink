@@ -17,8 +17,13 @@
 	background-color: var(--color-bg-higher);
 	transition: background-color 0.15s;
 
-	&:has(.trigger:hover) {
-		background-color: var(--color-bg-high);
+	&:has(.trigger:hover),
+	&:has(.trigger:focus-visible) {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }
 
@@ -56,14 +61,23 @@
 	background-color: transparent;
 	color: var(--color-text-high);
 	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
 	& > svg {
 		width: 14px;
 		height: 14px;
 	}
 
-	&:hover {
-		color: var(--color-error);
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
+		color: var(--color-text);
 	}
 
 	&:focus-visible {
@@ -94,7 +108,8 @@
 		background-color 0.15s,
 		color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 		color: var(--color-text);
 	}

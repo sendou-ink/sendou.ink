@@ -37,5 +37,6 @@
 }
 
 .friendLink {
+	text-decoration: none;
 	padding: var(--s-0-5) var(--s-1);
 }

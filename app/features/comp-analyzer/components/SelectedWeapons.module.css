@@ -99,9 +99,15 @@
 	line-height: 1;
 	color: var(--color-text-high);
 	flex-shrink: 0;
+	border-radius: var(--radius-field);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
-		color: var(--color-error);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
 	}
 }
 

@@ -12,6 +12,7 @@
 	background-repeat: no-repeat;
 	color: var(--color-text);
 	cursor: pointer;
+	transition: background-color 0.15s;
 	font-family: inherit;
 	font-size: var(--font-xs);
 	height: var(--field-size-sm);
@@ -30,6 +31,11 @@
 	&:disabled {
 		cursor: not-allowed;
 		opacity: 0.5;
+	}
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 }
 

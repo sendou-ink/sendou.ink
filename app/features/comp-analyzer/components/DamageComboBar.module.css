@@ -20,9 +20,15 @@
 	color: var(--color-text);
 	width: 100%;
 	text-align: left;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }
 
@@ -105,9 +111,14 @@
 	border: 1px solid transparent;
 	border-radius: var(--radius-selector);
 	cursor: pointer;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
-		text-decoration: line-through;
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
 	}
 }
 
@@ -190,10 +201,15 @@
 	font-size: var(--font-xs);
 	color: var(--color-text);
 	cursor: pointer;
-	transition: background-color 0.15s ease;
+	transition: background-color 0.15s;
 
-	&:hover:not(:disabled) {
-		background: var(--color-bg-high);
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 
 	&:disabled {
@@ -222,10 +238,15 @@
 	font-size: var(--font-xs);
 	color: var(--color-text-high);
 	cursor: pointer;
-	transition: background-color 0.15s ease;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }
 

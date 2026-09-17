@@ -10,6 +10,12 @@
 	display: flex;
 	align-items: center;
 	justify-content: center;
+	transition: background-color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+	}
 
 	&:focus-visible {
 		outline: var(--focus-ring);

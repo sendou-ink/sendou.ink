@@ -48,8 +48,17 @@
 	color: var(--color-text-inverse);
 	text-decoration: none;
 	flex-shrink: 0;
-	transition: background-color 0.2s;
+	transition: background-color 0.15s;
 	line-height: 1;
+
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-text-accent) 85%,
+			var(--color-text)
+		);
+	}
 
 	&:focus-visible {
 		outline: var(--focus-ring);
@@ -375,8 +384,10 @@ shown, so the popover's user agent styles are reset here.
 	margin-left: calc(-1 * var(--s-1));
 	flex: 1;
 	min-width: 0;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }
@@ -405,8 +416,13 @@ shown, so the popover's user agent styles are reset here.
 	border-radius: var(--radius-field);
 	color: var(--color-text-high);
 	cursor: pointer;
+	text-decoration: none;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 		color: var(--color-text);
 	}

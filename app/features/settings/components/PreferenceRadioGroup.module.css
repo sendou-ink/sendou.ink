@@ -10,11 +10,16 @@
 	align-items: center;
 	gap: var(--s-1);
 	cursor: pointer;
+	transition: background-color 0.15s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
 }
 
 .emoji {
 	filter: grayscale(100%);
-	transition: all 0.2s;
+	transition: filter 0.2s;
 }
 
 .checked {
@@ -28,8 +33,4 @@
 
 .focusVisible {
 	outline: var(--focus-ring);
-}
-
-.radio:hover .emoji {
-	scale: 1.1;
 }

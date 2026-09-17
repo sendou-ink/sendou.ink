@@ -6,13 +6,9 @@ button.iconMenu {
 	height: var(--field-size-sm);
 	border-radius: var(--radius-field);
 	padding: 0;
+	--button-bg: var(--color-bg-higher);
 	border: var(--border-style);
-	background: var(--color-bg-higher);
 	color: var(--color-text);
-
-	&:hover {
-		color: var(--color-text-accent);
-	}
 
 	& > svg {
 		width: var(--field-size-icon);

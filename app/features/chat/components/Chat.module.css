@@ -154,8 +154,8 @@
 	position: absolute;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
+	--button-bg: var(--color-bg-higher);
 	border-radius: var(--radius-field);
-	background-color: var(--color-bg-higher);
 	border: none;
 	color: var(--color-text);
 	bottom: 60px;

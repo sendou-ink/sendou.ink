@@ -48,8 +48,10 @@
 	border-radius: 0 0 var(--radius-selector) var(--radius-selector);
 	background-color: var(--color-bg);
 	cursor: pointer;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }
@@ -123,8 +125,10 @@
 	border-radius: 0 var(--radius-selector) var(--radius-selector) 0;
 	background-color: var(--color-bg);
 	cursor: pointer;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }
@@ -177,8 +181,10 @@
 	background: transparent;
 	cursor: grab;
 	touch-action: none;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }

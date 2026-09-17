@@ -17,10 +17,6 @@
 		font-size: var(--font-2xs);
 	}
 
-	&:not(.noRowHover) tbody tr:hover {
-		background-color: var(--color-bg-high);
-	}
-
 	& > thead > tr > th {
 		padding: var(--s-2);
 	}

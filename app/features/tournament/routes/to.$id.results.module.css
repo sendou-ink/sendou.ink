@@ -1,4 +1,5 @@
 .standingsMatchResultSquare {
+	text-decoration: none;
 	width: 28px;
 	height: 28px;
 	display: grid;

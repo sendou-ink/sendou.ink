@@ -1,13 +1,9 @@
 .thumbnail {
 	cursor: pointer;
-	transition: all 0.2s ease;
-
-	&:hover {
-		scale: 1.025;
-	}
 }
 
 .dialogTag {
+	text-decoration: none;
 	background-color: #fff;
 	border-radius: var(--radius-box);
 	color: #000;
@@ -17,6 +13,7 @@
 }
 
 .dialogTagUser {
+	text-decoration: none;
 	background-color: var(--color-accent);
 }
 

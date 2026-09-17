@@ -36,9 +36,14 @@
 .gearLink {
 	display: inline-flex;
 	align-items: center;
-	border-radius: var(--radius-rounded);
+	padding: var(--s-0-5);
+	margin: calc(-1 * var(--s-0-5));
+	border-radius: var(--radius-field);
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover {
-		filter: brightness(1.2);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 }

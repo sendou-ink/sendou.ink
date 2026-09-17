@@ -10,10 +10,6 @@
 	border-radius: 0;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
-
-	&:hover {
-		background-color: var(--color-bg-high);
-	}
 }
 
 .stripeTeam {

@@ -51,14 +51,21 @@
 	font-weight: var(--weight-semi);
 	cursor: pointer;
 	text-decoration: none;
-	transition: color 0.15s;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
+	}
 
 	&:focus-visible {
 		outline: var(--focus-ring);
 		outline-offset: -1px;
 	}
 
-	&:hover,
 	&[data-active="true"] {
 		color: var(--color-text-accent);
 	}
@@ -235,9 +242,15 @@
 	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
 	margin-inline-start: auto;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
 	}
 }
 
@@ -278,10 +291,6 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	text-align: center;
-
-	&:hover {
-		color: var(--color-text-accent);
-	}
 }
 
 .navItemImage {
@@ -291,6 +300,16 @@
 	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
+	transition: background-color 0.15s;
+
+	.navItem:hover &,
+	.navItem:focus-visible & {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
+	}
 }
 
 .youPanelUserRow {
@@ -309,8 +328,10 @@
 	text-decoration: none;
 	color: var(--color-text);
 	border-radius: var(--radius-field);
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }
@@ -329,8 +350,12 @@
 	border-radius: var(--radius-field);
 	height: var(--field-size);
 	aspect-ratio: 1 / 1;
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 		color: var(--color-text);
 	}
@@ -361,12 +386,16 @@
 	padding: 0 var(--s-3);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-selector);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
 	& svg {
 		stroke-width: 3;
 	}
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		color: var(--color-text);
 		background-color: var(--color-bg-higher);
 	}

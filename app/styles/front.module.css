@@ -12,6 +12,7 @@
 }
 
 .changeLogIconButton {
+	text-decoration: none;
 	display: flex;
 	flex-direction: row;
 	gap: var(--s-1-5);
@@ -19,11 +20,18 @@
 	align-items: center;
 	font-weight: var(--weight-bold);
 	font-size: var(--font-xs);
-	border-radius: 100%;
+	padding: var(--s-0-5) var(--s-1-5);
+	margin: calc(-1 * var(--s-0-5)) calc(-1 * var(--s-1-5));
+	border-radius: var(--radius-field);
 	color: var(--color-text-high);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
-		color: var(--color-text-accent);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+		color: var(--color-text);
 	}
 }
 
@@ -54,8 +62,9 @@
 	position: relative;
 	color: var(--color-text);
 	border: var(--border-style-high);
-	transition: --l 0.2s ease-out;
+	transition: --l 0.15s;
 	margin-block-start: var(--s-6);
+	text-decoration: none;
 
 	&:hover {
 		--l: 75%;
@@ -93,11 +102,6 @@
 
 	& svg {
 		width: 24px;
-		transition: all 0.2s ease-out;
-	}
-
-	&:hover svg {
-		translate: 2px;
 	}
 }
 
@@ -153,12 +157,18 @@
 	font-weight: var(--weight-bold);
 	text-align: center;
 	color: var(--color-text);
-	transition: background-color 0.2s ease-out;
+	text-decoration: none;
+	transition: background-color 0.15s;
 	min-width: 90px;
 	max-width: 90px;
 
-	&:hover {
-		background-color: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }
 
@@ -222,7 +232,8 @@
 	position: relative;
 	color: var(--color-text);
 	overflow: hidden;
-	transition: --l 0.2s ease-out;
+	text-decoration: none;
+	transition: --l 0.15s;
 
 	&:hover {
 		--l: 75%;
@@ -307,9 +318,16 @@
 	flex-wrap: wrap;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background-color: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 
 	& svg {
@@ -337,16 +355,22 @@
 }
 
 .weaponPill {
+	text-decoration: none;
 	display: flex;
 	align-items: center;
 	justify-content: center;
 	background-color: var(--color-bg-higher);
 	border-radius: var(--radius-full);
 	padding: var(--s-1);
-	transition: background-color 0.15s ease-out;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background-color: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }
 
@@ -370,6 +394,7 @@
 	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
+	transition: background-color 0.15s;
 }
 
 .discoverGridItem {
@@ -383,7 +408,12 @@
 	font-weight: var(--weight-semi);
 	text-align: center;
 
-	&:hover .discoverGridItemImage {
-		background-color: var(--color-bg-high);
+	&:hover .discoverGridItemImage,
+	&:focus-visible .discoverGridItemImage {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }

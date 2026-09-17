@@ -50,9 +50,15 @@
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	vertical-align: middle;
-	transition: background-color 0.15s ease-out;
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background-color: var(--color-bg-high);
+	&:hover,
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 }

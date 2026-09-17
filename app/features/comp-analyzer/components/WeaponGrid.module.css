@@ -82,19 +82,20 @@
 	border: 2px solid transparent;
 	border-radius: var(--radius-box);
 	cursor: pointer;
-	transition: border-color 0.1s;
+	transition: background-color 0.15s;
 
-	&:hover {
-		border-color: var(--color-text-accent);
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
 	}
 
 	&:disabled {
 		opacity: 0.6;
 		cursor: not-allowed;
-
-		&:hover {
-			border-color: transparent;
-		}
 	}
 }
 

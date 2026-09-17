@@ -204,6 +204,11 @@ button.cardToggle {
 	cursor: pointer;
 	font-size: var(--font-2xs);
 	color: var(--color-text-high);
+	transition: color 0.15s;
+
+	&:hover {
+		color: var(--color-text);
+	}
 }
 
 .json {

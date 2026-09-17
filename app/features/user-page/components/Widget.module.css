@@ -46,13 +46,20 @@
 }
 
 .membership {
+	text-decoration: none;
 	display: flex;
 	align-items: center;
 	gap: var(--s-3);
 	color: var(--color-text);
-	margin-block-end: var(--s-1);
+	padding: var(--s-1) var(--s-1-5);
+	margin-block-start: calc(-1 * var(--s-1));
 	border-radius: var(--radius-field);
-	transition: background-color 0.2s;
+	transition: background-color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+	}
 }
 
 .membershipInfo {
@@ -183,10 +190,12 @@
 	font-size: var(--font-sm);
 	border-radius: var(--radius-field);
 	padding: var(--s-2);
-	transition: background-color 0.2s;
+	text-decoration: none;
+	transition: background-color 0.15s;
 	background-color: var(--color-bg-high);
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
 	}
 }
@@ -280,6 +289,7 @@
 }
 
 .socialLinkIconContainer {
+	text-decoration: none;
 	background-color: var(--color-bg-higher);
 	display: grid;
 	place-items: center;
@@ -343,8 +353,11 @@
 .friendLink {
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--radius-field);
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
 	}
 }

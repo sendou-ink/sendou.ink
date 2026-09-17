@@ -113,6 +113,7 @@
 }
 
 .chip {
+	text-decoration: none;
 	display: block;
 	max-width: 250px;
 	overflow: hidden;
@@ -150,6 +151,7 @@
 }
 
 .card {
+	text-decoration: none;
 	display: flex;
 	align-items: center;
 	min-width: 10.5rem;

@@ -118,6 +118,7 @@
 }
 
 .previewIcon {
+	text-decoration: none;
 	display: flex;
 	flex-shrink: 0;
 	padding: var(--s-1);

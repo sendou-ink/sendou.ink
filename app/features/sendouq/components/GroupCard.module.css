@@ -82,8 +82,8 @@
 }
 
 .extraInfoButton {
+	--button-bg: var(--color-bg);
 	font-size: var(--font-xs);
-	background-color: var(--color-bg);
 	border-radius: var(--radius-box);
 	padding: var(--s-0-5) var(--s-1-5);
 	width: max-content;
@@ -126,7 +126,8 @@
 }
 
 .popoverButton {
-	background-color: transparent;
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-higher);
 	color: var(--color-text-high);
 	font-size: var(--font-xs);
 	padding: 0;

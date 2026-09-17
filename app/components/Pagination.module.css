@@ -21,10 +21,11 @@
 	color: var(--color-text);
 	cursor: pointer;
 	border-radius: var(--radius-full);
-	transition: opacity 0.15s ease;
+	transition: background-color 0.15s;
 
-	&:hover:not(:disabled) {
-		opacity: 0.7;
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 
 	&:disabled {
@@ -47,10 +48,11 @@
 	font-weight: var(--weight-semi);
 	cursor: pointer;
 	border-radius: var(--radius-full);
-	transition: background-color 0.15s ease;
+	transition: background-color 0.15s;
 
-	&:hover:not(.pageActive) {
-		background-color: var(--color-bg-higher);
+	&:hover:not(.pageActive),
+	&:focus-visible:not(.pageActive) {
+		background-color: var(--color-bg-high);
 	}
 }
 
@@ -74,10 +76,11 @@
 	background: transparent;
 	cursor: pointer;
 	border-radius: var(--radius-full);
-	transition: background-color 0.15s ease;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background-color: var(--color-bg-higher);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 }
 

@@ -52,12 +52,16 @@
 	height: var(--selector-size);
 	background-color: var(--color-bg-high);
 	border-radius: var(--radius-field);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
 	& svg {
 		stroke-width: 3;
 	}
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		color: var(--color-text);
 		background-color: var(--color-bg-higher);
 	}

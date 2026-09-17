@@ -18,8 +18,9 @@
 	align-items: center;
 	justify-content: space-between;
 	color: var(--color-text);
-	transition: 0.1s ease-in-out background-color;
+	transition: background-color 0.15s;
 	border-radius: 0;
+	text-decoration: none;
 
 	&:first-of-type {
 		border-radius: var(--radius-box) var(--radius-box) 0 0;
@@ -53,7 +54,8 @@
 	font-size: var(--font-xs);
 }
 
-a.row:hover {
+a.row:hover,
+a.row:focus-visible {
 	background-color: var(--color-bg-higher);
 }
 

@@ -3,12 +3,14 @@
 	border-radius: var(--radius-box);
 	padding: var(--s-2) var(--s-3);
 	color: var(--color-text);
-	transition: ease-in 0.2s background-color;
+	text-decoration: none;
+	transition: background-color 0.15s;
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-4);
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
 	}
 }

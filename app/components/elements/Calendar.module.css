@@ -60,6 +60,12 @@
 	color: var(--color-text);
 	cursor: pointer;
 	margin: 0 auto;
+	transition: background-color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+	}
 
 	&:focus-visible {
 		outline: var(--focus-ring);
@@ -67,13 +73,9 @@
 	}
 
 	&[data-selected] {
-		background-color: var(--color-bg-high);
+		background-color: var(--color-bg-higher);
 		color: var(--color-text-accent);
-	}
-
-	&:hover {
-		background-color: var(--color-bg-high);
-		outline: initial;
+		font-weight: var(--weight-bold);
 	}
 }
 
@@ -83,9 +85,12 @@
 		border-spacing: 0;
 	}
 
-	& tr:hover td,
-	& tr:has([data-selected]) td {
+	& tr:hover td {
 		background-color: var(--color-bg-high);
+	}
+
+	& tr:has([data-selected]) td {
+		background-color: var(--color-bg-higher);
 	}
 
 	& tr:hover td:first-child,
@@ -101,7 +106,8 @@
 	}
 
 	& .cell {
-		&:hover {
+		&:hover,
+		&:focus-visible {
 			background-color: transparent;
 		}
 

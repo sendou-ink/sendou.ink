@@ -47,9 +47,11 @@
 	color: var(--color-text);
 	font-size: var(--font-sm);
 	cursor: pointer;
+	transition: background-color 0.15s;
 
-	&:hover {
-		background-color: var(--color-bg-higher);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 
 	&:focus-visible {

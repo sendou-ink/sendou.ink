@@ -13,7 +13,8 @@
 	height: var(--field-size-sm);
 	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 

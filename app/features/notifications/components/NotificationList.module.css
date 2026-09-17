@@ -24,9 +24,13 @@
 	column-gap: var(--s-2);
 	padding-block: var(--s-3);
 	color: var(--color-text);
+	border-radius: var(--radius-field);
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover .imageContainer {
-		outline: 3px solid var(--color-bg-higher);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 
 	&:focus-within .imageContainer {

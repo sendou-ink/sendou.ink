@@ -4,11 +4,23 @@
 	gap: var(--s-1);
 	background: none;
 	border: none;
-	padding: 0;
+	padding: 0 var(--s-1);
+	margin-inline: calc(-1 * var(--s-1));
+	border-radius: var(--radius-field);
 	font: inherit;
 	color: inherit;
 	cursor: pointer;
 	text-transform: inherit;
+	transition: background-color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+	}
 }
 
 .sortIcon {
@@ -18,9 +30,4 @@
 
 .sortIconInactive {
 	opacity: 0.4;
-
-	.sortHeader:hover &,
-	.sortHeader:focus-visible & {
-		opacity: 0.85;
-	}
 }

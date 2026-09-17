@@ -8,7 +8,9 @@
 	display: inline-grid;
 	justify-items: center;
 	grid-template-columns: 0fr 1fr 1fr;
-	transition: grid-template-columns 200ms;
+	transition:
+		grid-template-columns 200ms,
+		background-color 0.15s;
 
 	&:before {
 		content: "";
@@ -48,6 +50,20 @@
 	&:has(> .input:focus-visible) .indicator {
 		outline: var(--focus-ring);
 		outline-offset: 1px;
+	}
+
+	&:hover:not(:has(> .input:disabled)) .indicator,
+	&:has(> .input:focus-visible) .indicator {
+		background: var(--color-bg-high);
+	}
+
+	&:hover:not(:has(> .input:disabled)):has(> .input:checked) .indicator,
+	&:has(> .input:focus-visible:checked) .indicator {
+		background: color-mix(
+			in oklch,
+			var(--color-text-accent) 85%,
+			var(--color-text)
+		);
 	}
 
 	&:has(> .input:disabled) {

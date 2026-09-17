@@ -22,9 +22,12 @@
 .tabContainer {
 	min-width: fit-content;
 	margin-bottom: -2px;
+	text-decoration: none;
 
 	& .tabButton {
-		background-color: transparent;
+		--button-bg: transparent;
+		--button-hover-bg: transparent;
+		--button-hover-border: var(--color-border-high);
 		border: none;
 		font-size: var(--font-xs);
 		border-radius: 0;
@@ -33,6 +36,9 @@
 		white-space: nowrap;
 		flex: 1;
 		transform: none !important;
+		transition:
+			border-color 0.15s,
+			color 0.15s;
 
 		& img {
 			min-width: 16px;
@@ -41,12 +47,17 @@
 		}
 	}
 
+	&:hover:not([data-selected]) .tabButton {
+		color: var(--color-text);
+	}
+
 	&:focus-visible {
 		outline: var(--focus-ring);
 		outline-offset: -2px;
 	}
 
 	&[data-selected] .tabButton {
+		--button-hover-border: var(--color-text-accent);
 		border-color: var(--color-text-accent);
 		color: var(--color-text);
 	}

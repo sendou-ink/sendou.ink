@@ -7,6 +7,7 @@
 }
 
 .results {
+	text-decoration: none;
 	background-color: var(--color-bg-higher);
 	max-width: 32rem;
 	margin: 0 auto;

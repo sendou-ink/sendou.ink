@@ -42,13 +42,19 @@
 	padding: 0;
 	border-radius: var(--radius-field);
 	margin-inline-start: auto;
+	transition: background-color 0.15s;
 
 	@media screen and (min-width: 600px) {
 		height: var(--field-size-sm);
 	}
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
 	}
 }
 
@@ -81,9 +87,18 @@
 	letter-spacing: 0.04em;
 	color: var(--color-text-high);
 	border-radius: var(--radius-field);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
+		color: var(--color-text);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
 	}
 }
 
@@ -133,9 +148,15 @@
 	height: var(--field-size-sm);
 	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-field);
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
 	}
 }
 
@@ -175,7 +196,8 @@
 	border-radius: var(--radius-field);
 	transition: background-color 0.15s;
 
-	&:is(a):hover {
+	&:is(a):hover,
+	&:is(a):focus-visible {
 		background-color: var(--color-bg-higher);
 	}
 }

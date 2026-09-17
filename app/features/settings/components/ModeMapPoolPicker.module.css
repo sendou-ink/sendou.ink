@@ -123,6 +123,7 @@
 	border: var(--border-style);
 	border-radius: var(--radius-full);
 	background-color: transparent;
+	transition: background-color 0.15s;
 
 	& img {
 		filter: grayscale(100%);
@@ -132,8 +133,9 @@
 			opacity 0.2s;
 	}
 
-	&:hover img {
-		opacity: 0.8;
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 
 	&:focus-visible {

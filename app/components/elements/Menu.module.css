@@ -47,6 +47,7 @@
 }
 
 .item {
+	text-decoration: none;
 	display: flex;
 	align-items: center;
 	font-weight: var(--weight-bold);
@@ -64,8 +65,8 @@
 	transition: background-color 0.15s;
 	cursor: pointer;
 
-	&:hover,
-	&:focus {
+	&:hover:not(.itemDisabled),
+	&:focus:not(.itemDisabled) {
 		background-color: var(--color-bg-higher);
 	}
 }

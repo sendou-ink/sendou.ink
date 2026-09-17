@@ -108,10 +108,10 @@
 	font-weight: var(--weight-semi);
 	padding: 0;
 	text-align: left;
-	text-decoration: underline;
 
-	&:hover {
-		opacity: 0.8;
+	&:hover,
+	&:focus-visible {
+		text-decoration: underline;
 	}
 }
 

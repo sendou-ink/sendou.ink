@@ -35,9 +35,10 @@
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
 	cursor: pointer;
-	transition: background-color 0.2s ease;
+	transition: background-color 0.15s;
 
-	&:hover:not(:disabled):not(.roundButtonActive) {
+	&:hover:not(:disabled):not(.roundButtonActive),
+	&:focus-visible:not(.roundButtonActive) {
 		background-color: var(--color-bg-higher);
 	}
 

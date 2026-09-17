@@ -30,14 +30,16 @@
 	background-color: var(--color-bg);
 	border: 2px solid var(--color-bg-higher);
 	color: var(--color-text);
-	transition: all 0.2s;
+	text-decoration: none;
+	transition: background-color 0.15s;
 
 	& svg {
 		min-width: 30px;
 	}
 
-	&:hover {
-		background-color: var(--color-bg-higher);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 }
 

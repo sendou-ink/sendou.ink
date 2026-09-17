@@ -4,8 +4,11 @@
 	gap: var(--s-2);
 	padding: var(--s-1-5);
 	border-radius: var(--radius-field);
+	text-decoration: none;
+	transition: background-color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		background-color: var(--color-bg-high);
 	}
 }

@@ -5,6 +5,7 @@
 }
 
 .iconNavItem {
+	text-decoration: none;
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
@@ -17,11 +18,12 @@
 	color: var(--color-text);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	transition: all 0.2s;
+	transition: background-color 0.15s;
 	cursor: pointer;
 
-	&:hover {
-		background-color: var(--color-bg-higher);
+	&:hover,
+	&:focus-visible {
+		background-color: var(--color-bg-high);
 	}
 
 	&:focus-visible {

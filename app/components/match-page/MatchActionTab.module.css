@@ -174,8 +174,8 @@
 	transition: background-color 0.15s;
 	height: 100%;
 
-	&:hover .checkCircle {
-		border-color: var(--color-accent-high);
+	&:hover {
+		background-color: var(--color-bg-higher);
 	}
 
 	@container (max-width: 599px) {

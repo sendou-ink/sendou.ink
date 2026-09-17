@@ -84,7 +84,7 @@
 	width: 24px;
 	height: 24px;
 	border-radius: 100%;
-	background-color: var(--color-bg-higher);
+	--button-bg: var(--color-bg-higher);
 	border: none;
 	padding: 0;
 	cursor: pointer;

@@ -1,4 +1,11 @@
 .button {
+	--button-bg: var(--color-text-accent);
+	--button-hover-bg: color-mix(
+		in oklch,
+		var(--button-bg) 85%,
+		var(--color-text)
+	);
+	--button-hover-border: var(--button-hover-bg);
 	display: flex;
 	width: auto;
 	align-items: center;
@@ -6,7 +13,7 @@
 	border: var(--border-style-accent);
 	border-radius: var(--radius-field);
 	appearance: none;
-	background: var(--color-text-accent);
+	background: var(--button-bg);
 	color: var(--color-text-inverse);
 	cursor: pointer;
 	font-size: var(--font-sm);
@@ -16,6 +23,16 @@
 	outline-color: var(--color-text-accent);
 	height: var(--field-size);
 	white-space: nowrap;
+	text-decoration: none;
+	transition:
+		background-color 0.15s,
+		border-color 0.15s;
+
+	&:hover:not(:disabled):not([data-pending]),
+	&:focus-visible {
+		background-color: var(--button-hover-bg);
+		border-color: var(--button-hover-border);
+	}
 
 	&:focus-visible {
 		outline-style: solid;
@@ -36,20 +53,26 @@
 }
 
 .outlined {
-	background-color: transparent;
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
+	--button-hover-border: var(--color-text-accent);
 	color: var(--color-text-accent);
 }
 
 .outlinedSuccess {
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
+	--button-hover-border: var(--color-success);
 	border-color: var(--color-success);
-	background-color: transparent;
 	color: var(--color-success);
 	outline-color: var(--color-success);
 }
 
 .outlinedDestructive {
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
+	--button-hover-border: var(--color-error);
 	border-color: var(--color-error);
-	background-color: transparent;
 	color: var(--color-error);
 	outline-color: var(--color-error);
 }
@@ -69,21 +92,11 @@
 	height: var(--field-size-lg);
 }
 
-.square {
-	aspect-ratio: 1 / 1;
-	padding: 0;
-}
-
-.circle {
-	border-radius: 50%;
-	aspect-ratio: 1 / 1;
-	padding: 0;
-}
-
 .minimal {
-	padding: 0;
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
+	padding: 0 var(--s-1);
 	border: none;
-	background-color: transparent;
 	color: var(--color-text-accent);
 	outline: initial;
 
@@ -93,32 +106,45 @@
 }
 
 .minimalSuccess {
-	padding: 0;
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
+	padding: 0 var(--s-1);
 	border: none;
-	background-color: transparent;
 	color: var(--color-success);
 	outline-color: var(--color-success);
 }
 
 .success {
+	--button-bg: var(--color-success);
 	border-color: var(--color-success);
-	background-color: var(--color-success);
 	outline-color: var(--color-success);
 }
 
 .destructive {
+	--button-bg: var(--color-error);
 	border-color: var(--color-error);
-	background-color: var(--color-error);
 	color: var(--color-text-inverse);
 	outline-color: var(--color-error);
 }
 
 .minimalDestructive {
-	padding: 0;
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
+	padding: 0 var(--s-1);
 	border: none;
-	background-color: transparent;
 	color: var(--color-error);
 	outline-color: var(--color-error);
+}
+
+.square {
+	aspect-ratio: 1 / 1;
+	padding: 0;
+}
+
+.circle {
+	border-radius: 50%;
+	aspect-ratio: 1 / 1;
+	padding: 0;
 }
 
 .buttonIcon {

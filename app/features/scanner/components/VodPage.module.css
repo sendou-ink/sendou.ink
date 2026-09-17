@@ -61,8 +61,8 @@
 button.vodDelete {
 	width: var(--field-size-sm);
 	padding: 0;
+	--button-bg: var(--color-error);
 	border-color: var(--color-error);
-	background: var(--color-error);
 	outline-color: var(--color-error);
 }
 
@@ -73,6 +73,11 @@ button.vodDelete {
 
 	& summary {
 		cursor: pointer;
+		transition: color 0.15s;
+
+		&:hover {
+			color: var(--color-text);
+		}
 	}
 
 	& table {

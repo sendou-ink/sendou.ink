@@ -89,10 +89,6 @@
 	color: inherit;
 	opacity: 0.75;
 
-	&:hover {
-		opacity: 1;
-	}
-
 	& svg {
 		width: 1rem;
 	}

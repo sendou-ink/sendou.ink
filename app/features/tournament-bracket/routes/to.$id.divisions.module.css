@@ -5,6 +5,7 @@
 }
 
 .link {
+	text-decoration: none;
 	background-color: var(--color-bg-high);
 	padding: var(--s-2) var(--s-4);
 	border-radius: var(--radius-box);

@@ -159,6 +159,13 @@
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
+	color: var(--color-text-high);
+	transition: color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-text);
+	}
 
 	&::before,
 	&::after {
@@ -320,7 +327,6 @@
 	width: auto;
 	padding: 0;
 	border: none;
-	background: transparent;
 	color: inherit;
 	font-size: inherit;
 	font-weight: inherit;
@@ -433,7 +439,6 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
-	background: transparent;
 	border: none;
 	padding: var(--s-0-5) var(--s-1);
 	border-radius: var(--radius-field);

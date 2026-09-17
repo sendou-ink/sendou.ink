@@ -79,6 +79,10 @@
 		text-decoration: none;
 		border-radius: var(--radius-field);
 
+		&:hover {
+			text-decoration: underline;
+		}
+
 		&:focus-visible {
 			outline: var(--focus-ring);
 			outline-offset: 1px;

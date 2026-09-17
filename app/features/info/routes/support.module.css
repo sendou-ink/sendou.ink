@@ -12,11 +12,12 @@
 }
 
 .popoverTrigger {
+	--button-bg: transparent;
+	--button-hover-bg: var(--color-bg-high);
 	display: inline;
 	height: 1rem;
 	padding: 0;
 	border: none;
-	background-color: transparent;
 	color: var(--color-text-accent);
 	font-size: var(--font-md);
 	font-weight: var(--weight-bold);

@@ -1,20 +1,9 @@
-import clsx from "clsx";
 import styles from "./Table.module.css";
 
-export function Table({
-	children,
-	noRowHover,
-}: {
-	children: React.ReactNode;
-	noRowHover?: boolean;
-}) {
+export function Table({ children }: { children: React.ReactNode }) {
 	return (
 		<div className={styles.container}>
-			<table
-				className={clsx(styles.table, { [styles.noRowHover]: noRowHover })}
-			>
-				{children}
-			</table>
+			<table className={styles.table}>{children}</table>
 		</div>
 	);
 }

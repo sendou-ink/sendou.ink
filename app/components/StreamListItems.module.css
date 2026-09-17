@@ -50,9 +50,17 @@
 	height: var(--selector-size-sm);
 	aspect-ratio: 1 / 1;
 	border-radius: var(--radius-selector);
+	transition:
+		background-color 0.15s,
+		color 0.15s;
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		color: var(--color-text);
 		background-color: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
 	}
 }

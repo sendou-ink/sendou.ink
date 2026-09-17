@@ -111,7 +111,7 @@ function ResultsTable({ standings }: { standings: ResultsStanding[] }) {
 	let rowDarkerBg = false;
 
 	return (
-		<Table noRowHover>
+		<Table>
 			<thead>
 				<tr>
 					<th>{t("tournament:results.column.standing")}</th>

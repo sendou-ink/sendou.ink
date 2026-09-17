@@ -101,6 +101,7 @@
 }
 
 .editButton {
+	text-decoration: none;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	border-radius: var(--radius-selector);

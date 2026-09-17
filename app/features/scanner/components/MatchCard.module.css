@@ -268,14 +268,18 @@ button.expand {
 	background: color-mix(in oklab, var(--color-bg) 55%, transparent);
 	backdrop-filter: blur(8px);
 	color: var(--color-text-high);
-	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
+	transition:
+		transform 0.25s cubic-bezier(0.16, 1, 0.3, 1),
+		background-color 0.15s,
+		color 0.15s;
 
 	& svg {
 		width: var(--field-size-icon);
 		height: var(--field-size-icon);
 	}
 
-	&:hover {
+	&:hover,
+	&:focus-visible {
 		color: var(--color-text);
 		background: color-mix(in oklab, var(--color-bg) 78%, transparent);
 	}
@@ -338,12 +342,7 @@ button.expand {
 
 		& a {
 			color: inherit;
-			text-decoration: underline;
 			text-underline-offset: 2px;
-
-			&:hover {
-				color: var(--color-text-high);
-			}
 		}
 	}
 

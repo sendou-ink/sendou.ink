@@ -69,8 +69,13 @@ from sendou.ink's app/styles/vars.css.
 			text-decoration: none;
 			padding: var(--s-1) var(--s-2-5);
 			border-radius: var(--radius-field);
+			transition:
+				background-color 0.15s,
+				color 0.15s;
 
-			&:hover {
+			&:hover,
+			&:focus-visible {
+				background-color: var(--color-bg-high);
 				color: var(--color-text);
 			}
 

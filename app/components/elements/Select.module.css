@@ -29,6 +29,12 @@
 	width: 100%;
 	cursor: pointer;
 	text-align: start;
+	transition: background-color 0.15s;
+
+	&:hover:not(:disabled),
+	&:focus-visible {
+		background-color: var(--color-bg-high);
+	}
 
 	&:focus-visible,
 	&[aria-expanded="true"] {
@@ -187,6 +193,12 @@
 	padding: 0;
 	cursor: pointer;
 	color: var(--color-text-high);
+	transition: color 0.15s;
+
+	&:hover,
+	&:focus-visible {
+		color: var(--color-text);
+	}
 }
 
 .searchField[data-empty] .searchClearButton {

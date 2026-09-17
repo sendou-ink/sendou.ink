@@ -43,6 +43,7 @@
 }
 
 .bskyLink {
+	text-decoration: none;
 	padding: var(--s-1);
 	border: 1px solid;
 	border-radius: 50%;

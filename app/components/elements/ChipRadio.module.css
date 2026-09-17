@@ -49,4 +49,22 @@
 		background-color: var(--color-text-accent);
 		color: var(--color-text-inverse);
 	}
+
+	&:not(:checked) + .label:hover,
+	&:not(:checked):focus-visible + .label {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 85%,
+			var(--color-text)
+		);
+	}
+
+	&:checked + .label:hover,
+	&:checked:focus-visible + .label {
+		background-color: color-mix(
+			in oklch,
+			var(--color-text-accent) 85%,
+			var(--color-text)
+		);
+	}
 }

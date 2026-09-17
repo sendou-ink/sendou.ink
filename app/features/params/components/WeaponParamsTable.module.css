@@ -51,10 +51,6 @@
 	text-align: left;
 
 	& tbody {
-		& tr:hover {
-			background-color: var(--color-bg-high);
-		}
-
 		& td {
 			padding: var(--s-2) var(--s-3);
 			border-bottom: 1px solid var(--color-border);
@@ -125,6 +121,7 @@
 
 .expandableRow .paramName {
 	cursor: pointer;
+	transition: background-color 0.15s;
 
 	&:hover {
 		background-color: var(--color-bg-high);
