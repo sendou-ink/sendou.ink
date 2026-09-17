@@ -1,0 +1,15 @@
+/* the status indicator takes the room the label gives up */
+@container (max-width: 760px) {
+	.button.withStatus {
+		aspect-ratio: 1 / 1;
+		padding: 0;
+
+		& > svg {
+			margin-inline-end: 0;
+		}
+
+		& .label {
+			display: none;
+		}
+	}
+}

@@ -27,8 +27,14 @@ export function GlobalStatusIndicator() {
 
 	if (!status) return null;
 
+	const text = `${t(`common:globalStatus.${status.state}`)}${
+		status.groupSize
+			? ` (${status.groupSize.members}/${status.groupSize.max})`
+			: ""
+	}`;
+
 	return (
-		<Link to={status.url} className={styles.status}>
+		<Link to={status.url} className={styles.status} aria-label={text}>
 			{status.logoUrl ? (
 				<img src={status.logoUrl} alt="" className={styles.logo} />
 			) : (
@@ -39,12 +45,7 @@ export function GlobalStatusIndicator() {
 					containerClassName={styles.iconContainer}
 				/>
 			)}
-			<span className={styles.text}>
-				{t(`common:globalStatus.${status.state}`)}
-				{status.groupSize
-					? ` (${status.groupSize.members}/${status.groupSize.max})`
-					: ""}
-			</span>
+			<span className={styles.text}>{text}</span>
 			{typeof status.count === "number" ? (
 				<span
 					className={clsx(

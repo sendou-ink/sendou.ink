@@ -13,7 +13,7 @@ type AddableItem =
 	| "tournament"
 	| "vods";
 
-/** The "Add new…" menu of the site layout, available on every page. */
+/** The "Add new" menu of the site layout, available on every page. */
 export class AnythingAdder {
 	private readonly page: Page;
 	readonly locators;

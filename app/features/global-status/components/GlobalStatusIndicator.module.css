@@ -29,6 +29,10 @@
 	min-width: 0;
 	overflow: hidden;
 	text-overflow: ellipsis;
+
+	@container (width < 660px) {
+		display: none;
+	}
 }
 
 .logo {
