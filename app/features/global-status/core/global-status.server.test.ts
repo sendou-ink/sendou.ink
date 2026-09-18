@@ -172,7 +172,7 @@ describe("resolveGlobalStatus", () => {
 		});
 	});
 
-	test("resolves a reported match as awaiting the confirmation", async () => {
+	test("resolves a reported match still awaiting the confirmation", async () => {
 		const match = await SQMatchFactory.create(
 			{
 				alphaUserIds: userIds([1, 2, 3, 4]),
@@ -183,7 +183,7 @@ describe("resolveGlobalStatus", () => {
 		await refreshSendouQInstance();
 
 		expect(await resolveGlobalStatus(users.id(5))).toEqual({
-			state: "SQ_AWAITING_REPORT",
+			state: "SQ_MATCH",
 			url: sendouQMatchPage(match.id),
 		});
 	});

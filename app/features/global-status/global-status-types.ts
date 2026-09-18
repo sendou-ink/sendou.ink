@@ -4,7 +4,6 @@ export type GlobalStatusState =
 	| "SQ_EXPIRED"
 	| "SQ_READY_CHECK"
 	| "SQ_MATCH"
-	| "SQ_AWAITING_REPORT"
 	| "TO_CHECKIN"
 	| "TO_MATCH"
 	| "TO_WAITING_FOR_MATCH"

@@ -1,7 +1,6 @@
 import * as R from "remeda";
 import { groupExpiresAt } from "~/features/sendouq/core/groups";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
-import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import type { TournamentTeamMemberProgressStatus } from "~/features/tournament-bracket/core/Tournament";
@@ -100,19 +99,10 @@ async function resolveSendouQStatus(
 async function resolveSendouQMatchStatus(
 	matchId: number,
 ): Promise<GlobalStatus | null> {
-	const match = await SQMatchRepository.findScoreStateById(matchId);
+	const match = await SQMatchRepository.findLiveStateById(matchId);
 	if (!match || match.isLocked || match.isCanceled) return null;
 
-	const { isDecisive } = SendouQMatch.score({
-		mapList: match.mapList,
-		groupAlpha: { id: match.alphaGroupId },
-		groupBravo: { id: match.bravoGroupId },
-	});
-
-	return {
-		state: isDecisive ? "SQ_AWAITING_REPORT" : "SQ_MATCH",
-		url: sendouQMatchPage(matchId),
-	};
+	return { state: "SQ_MATCH", url: sendouQMatchPage(matchId) };
 }
 
 function resolveTournamentStatus(

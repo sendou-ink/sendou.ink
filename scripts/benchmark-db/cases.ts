@@ -761,8 +761,8 @@ export function buildCases(fx: Fixtures): {
 	add("SQMatchRepository.findById", fx.heavyGroupMatchId, (matchId) =>
 		SQMatchRepository.findById(matchId),
 	);
-	add("SQMatchRepository.findScoreStateById", fx.heavyGroupMatchId, (matchId) =>
-		SQMatchRepository.findScoreStateById(matchId),
+	add("SQMatchRepository.findLiveStateById", fx.heavyGroupMatchId, (matchId) =>
+		SQMatchRepository.findLiveStateById(matchId),
 	);
 	add("SQMatchRepository.countSeasonResultPagesByUserId", fx.sq, (sq) =>
 		SQMatchRepository.countSeasonResultPagesByUserId(sq),

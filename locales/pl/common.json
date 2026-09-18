@@ -52,7 +52,6 @@
 	"globalStatus.SQ_EXPIRED": "",
 	"globalStatus.SQ_READY_CHECK": "",
 	"globalStatus.SQ_MATCH": "",
-	"globalStatus.SQ_AWAITING_REPORT": "",
 	"globalStatus.TO_CHECKIN": "",
 	"globalStatus.TO_MATCH": "",
 	"globalStatus.TO_WAITING_FOR_MATCH": "",

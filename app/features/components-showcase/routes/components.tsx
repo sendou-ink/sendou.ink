@@ -3168,11 +3168,6 @@ const GLOBAL_STATUS_EXAMPLES: Array<{
 		status: { state: "SQ_MATCH", url: sendouQMatchPage(123) },
 	},
 	{
-		id: "sq-awaiting-report",
-		name: "SendouQ: Report score",
-		status: { state: "SQ_AWAITING_REPORT", url: sendouQMatchPage(123) },
-	},
-	{
 		id: "to-checkin",
 		name: "Tournament: Check in",
 		status: {

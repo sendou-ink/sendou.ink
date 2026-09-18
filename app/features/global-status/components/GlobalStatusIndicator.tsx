@@ -13,7 +13,6 @@ const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
 	SQ_EXPIRED: "sendouq",
 	SQ_READY_CHECK: "sendouq",
 	SQ_MATCH: "sendouq",
-	SQ_AWAITING_REPORT: "sendouq",
 	TO_CHECKIN: "medal",
 	TO_MATCH: "medal",
 	TO_WAITING_FOR_MATCH: "medal",

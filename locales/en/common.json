@@ -52,7 +52,6 @@
 	"globalStatus.SQ_EXPIRED": "Group inactive",
 	"globalStatus.SQ_READY_CHECK": "Ready check",
 	"globalStatus.SQ_MATCH": "In match",
-	"globalStatus.SQ_AWAITING_REPORT": "Report score",
 	"globalStatus.TO_CHECKIN": "Check in",
 	"globalStatus.TO_MATCH": "In match",
 	"globalStatus.TO_WAITING_FOR_MATCH": "Waiting for match",
