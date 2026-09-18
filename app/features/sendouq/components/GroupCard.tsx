@@ -2,7 +2,7 @@ import clsx from "clsx";
 import type { SqlBool } from "kysely";
 import { Check, Hourglass, Mic, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
-import { Flipped } from "react-flip-toolkit";
+import { ViewTransition } from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
@@ -30,6 +30,7 @@ import {
 	TIERS_PAGE,
 	tierImageUrl,
 } from "~/utils/urls";
+import { finishUpdateIfUnmoved } from "~/utils/view-transition";
 import type {
 	SQGroup,
 	SQGroupMember,
@@ -60,7 +61,6 @@ export function GroupCard({
 	ownGroup,
 	readyUserIds,
 	kickableUserIds,
-	layout = "desktop",
 }: {
 	group: SQGroup | SQOwnGroup;
 	action?: "LIKE" | "UNLIKE" | "GROUP_UP" | "MATCH_UP" | "MATCH_UP_RECHALLENGE";
@@ -78,7 +78,6 @@ export function GroupCard({
 	readyUserIds?: number[];
 	/** Members the viewer can kick out of the group. */
 	kickableUserIds?: number[];
-	layout?: "mobile" | "desktop";
 }) {
 	const { t } = useTranslation(["q"]);
 
@@ -98,11 +97,7 @@ export function GroupCard({
 	const actionToShow = ownGroup ? action : undefined;
 
 	return (
-		<GroupCardContainer
-			groupId={group.id}
-			isOwnGroup={isOwnGroup}
-			layout={layout}
-		>
+		<GroupCardContainer isOwnGroup={isOwnGroup}>
 			<section
 				className={clsx(styles.group, { [styles.suggested]: isSuggested })}
 				data-testid="sendouq-group-card"
@@ -307,18 +302,18 @@ function GroupCardTrailText({
 
 function GroupCardContainer({
 	isOwnGroup,
-	groupId,
-	layout,
 	children,
 }: {
 	isOwnGroup: boolean;
-	groupId: number;
-	layout: "mobile" | "desktop";
 	children: React.ReactNode;
 }) {
 	if (isOwnGroup) return <>{children}</>;
 
-	return <Flipped flipId={`${layout}-${groupId}`}>{children}</Flipped>;
+	return (
+		<ViewTransition update="card-update" onUpdate={finishUpdateIfUnmoved}>
+			{children}
+		</ViewTransition>
+	);
 }
 
 function GroupMember({

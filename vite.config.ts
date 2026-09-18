@@ -137,7 +137,6 @@ export default defineConfig((config) => {
 				"picocad2-web",
 				"qrcode.react",
 				"react-chartjs-2",
-				"react-flip-toolkit",
 				"remeda",
 				"remix-auth",
 				"remix-auth-oauth2",

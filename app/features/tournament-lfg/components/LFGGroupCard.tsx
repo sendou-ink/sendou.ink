@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { Edit, Mic, Star, Trash, Volume2, VolumeX } from "lucide-react";
 import * as React from "react";
-import { Flipped } from "react-flip-toolkit";
+import { ViewTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
@@ -13,7 +13,6 @@ import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Image, WeaponImage } from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { useUser } from "~/features/auth/core/user";
-import { IS_Q_LOOKING_MOBILE_BREAKPOINT } from "~/features/sendouq/q-constants";
 import { useTournament } from "~/features/tournament/tournament-context";
 import {
 	UserCard,
@@ -21,11 +20,11 @@ import {
 } from "~/features/user-card/components/UserCard";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import { useMainContentWidth } from "~/hooks/useMainContentWidth";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
+import { finishUpdateIfUnmoved } from "~/utils/view-transition";
 import {
 	lookingSchema,
 	updateGroupFormSchema,
@@ -84,7 +83,7 @@ export function LFGGroupCard({
 	const showOrganizerDelete = !currentMember && tournament.isOrganizer(user);
 
 	return (
-		<LFGGroupCardContainer groupId={group.id} isOwnGroup={isOwnGroup}>
+		<LFGGroupCardContainer isOwnGroup={isOwnGroup}>
 			<section className={styles.group}>
 				{group.teamName ? (
 					<Divider smallText className={styles.teamHeader}>
@@ -178,19 +177,18 @@ function LFGOrganizerGroupRemover({ group }: { group: LFGGroup }) {
 
 function LFGGroupCardContainer({
 	isOwnGroup,
-	groupId,
 	children,
 }: {
 	isOwnGroup: boolean;
-	groupId: number;
 	children: React.ReactNode;
 }) {
-	const width = useMainContentWidth();
-	const layout = width < IS_Q_LOOKING_MOBILE_BREAKPOINT ? "mobile" : "desktop";
-
 	if (isOwnGroup) return <>{children}</>;
 
-	return <Flipped flipId={`${layout}-${groupId}`}>{children}</Flipped>;
+	return (
+		<ViewTransition update="card-update" onUpdate={finishUpdateIfUnmoved}>
+			{children}
+		</ViewTransition>
+	);
 }
 
 function LFGGroupMemberRow({

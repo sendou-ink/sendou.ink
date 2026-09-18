@@ -534,4 +534,13 @@
 		max-width: 24rem;
 		margin-inline: auto;
 	}
+
+	@media (prefers-reduced-motion: reduce) {
+		::view-transition-group(*),
+		::view-transition-image-pair(*),
+		::view-transition-old(*),
+		::view-transition-new(*) {
+			animation: none;
+		}
+	}
 }
