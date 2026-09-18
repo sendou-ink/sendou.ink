@@ -685,24 +685,22 @@ function SideNavUserPanel() {
 							)}
 						</Link>
 					) : null}
-					{notifications ? (
-						<div
-							className={styles.sideNavFooterNotification}
-							key={location.pathname}
-						>
-							{showUnseenDot ? (
-								<NotificationDot
-									className={styles.sideNavFooterUnseenDot}
-									testId="notifications-bell-dot"
-								/>
-							) : null}
-							<NotificationPopover
-								notifications={notifications}
-								unseenIds={unseenIds}
-								triggerClassName={styles.sideNavFooterButton}
+					<div
+						className={styles.sideNavFooterNotification}
+						key={location.pathname}
+					>
+						{showUnseenDot ? (
+							<NotificationDot
+								className={styles.sideNavFooterUnseenDot}
+								testId="notifications-bell-dot"
 							/>
-						</div>
-					) : null}
+						) : null}
+						<NotificationPopover
+							notifications={notifications}
+							unseenIds={unseenIds}
+							triggerClassName={styles.sideNavFooterButton}
+						/>
+					</div>
 					<Link to={SETTINGS_PAGE} className={styles.sideNavFooterButton}>
 						<Settings />
 					</Link>

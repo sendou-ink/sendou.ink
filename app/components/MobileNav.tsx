@@ -613,13 +613,11 @@ function YouPanel({
 				</Link>
 			</div>
 
-			{notifications ? (
-				<NotificationContent
-					notifications={notifications}
-					unseenIds={unseenIds}
-					isOpen={isOpen}
-				/>
-			) : null}
+			<NotificationContent
+				notifications={notifications}
+				unseenIds={unseenIds}
+				isOpen={isOpen}
+			/>
 		</MobilePanel>
 	);
 }
