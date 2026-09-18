@@ -1,6 +1,8 @@
 import * as React from "react";
 
 const VISIBLE_RATIO_THRESHOLD = 0.98;
+/** A visual viewport shorter than the window by more than this is the virtual keyboard, not collapsing browser chrome. */
+const KEYBOARD_MIN_HEIGHT = 150;
 
 /**
  * Closes an open popover once scrolling clips it against the sticky header
@@ -8,7 +10,11 @@ const VISIBLE_RATIO_THRESHOLD = 0.98;
  *
  * Only scrolling may close: a popover clipped by its own content growing (the
  * moment before anchor positioning flips it into view), one too tall to ever
- * fit fully, or one measured before it is shown must not close itself.
+ * fit fully, or one measured before it is shown must not close itself. The
+ * virtual keyboard opening is not scrolling either, even though the browser
+ * scrolls the page to keep the focused field in view as it does: a popover
+ * left under the keyboard beats one that closes as its own search input is
+ * focused.
  */
 export function useCloseOnScrollClip(
 	isOpen: boolean,
@@ -37,12 +43,21 @@ export function useCloseOnScrollClip(
 			if (event.target instanceof Node && element.contains(event.target)) {
 				return;
 			}
+			if (keyboardIsOpen()) return;
 			scrolledSinceFullyVisible = true;
 		};
 		window.addEventListener("scroll", onScroll, {
 			capture: true,
 			passive: true,
 		});
+
+		// the keyboard can land after the scroll it causes, which then has to be forgotten
+		const onViewportResize = () => {
+			if (keyboardIsOpen()) {
+				scrolledSinceFullyVisible = false;
+			}
+		};
+		window.visualViewport?.addEventListener("resize", onViewportResize);
 
 		const observer = new IntersectionObserver(
 			(entries) => {
@@ -64,7 +79,15 @@ export function useCloseOnScrollClip(
 
 		return () => {
 			window.removeEventListener("scroll", onScroll, { capture: true });
+			window.visualViewport?.removeEventListener("resize", onViewportResize);
 			observer.disconnect();
 		};
 	}, [isOpen, elementRef]);
+}
+
+function keyboardIsOpen() {
+	const viewport = window.visualViewport;
+	if (!viewport) return false;
+
+	return window.innerHeight - viewport.height > KEYBOARD_MIN_HEIGHT;
 }
