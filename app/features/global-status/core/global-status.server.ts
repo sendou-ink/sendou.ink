@@ -15,7 +15,7 @@ import {
 	tournamentMatchPage,
 	tournamentRegisterPage,
 } from "~/utils/urls";
-import type { GlobalStatus } from "../GlobalStatusProvider";
+import type { GlobalStatus } from "../global-status-types";
 
 const TOURNAMENT_STATUS_URGENCY: Record<
 	TournamentTeamMemberProgressStatus["type"],

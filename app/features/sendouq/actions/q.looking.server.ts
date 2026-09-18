@@ -74,6 +74,7 @@ export const action: ActionFunction = async ({ request }) => {
 				notifyLikeReceived(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
 				notifyGroupStatusChanged(data.targetGroupId);
+				notifyGroupStatusChanged(currentGroup.id);
 
 				break;
 			}
@@ -100,6 +101,7 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				revalidateGroupTopic(currentGroup.id);
+				notifyGroupStatusChanged(currentGroup.id);
 
 				break;
 			}
@@ -127,6 +129,7 @@ export const action: ActionFunction = async ({ request }) => {
 				revalidateGroupTopic(data.targetGroupId);
 				revalidateGroupTopic(currentGroup.id);
 				notifyGroupStatusChanged(data.targetGroupId);
+				notifyGroupStatusChanged(currentGroup.id);
 
 				break;
 			}
@@ -291,6 +294,8 @@ export const action: ActionFunction = async ({ request }) => {
 				});
 
 				await refreshSendouQInstance();
+
+				notifyGroupStatusChanged(currentGroup.id);
 
 				broadcastLookingUpdate();
 

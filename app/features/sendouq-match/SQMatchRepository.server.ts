@@ -112,23 +112,8 @@ export async function findScoreStateById(id: number) {
 			"GroupMatch.alphaGroupId",
 			"GroupMatch.bravoGroupId",
 
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", id),
-				)
-				.as("isLocked"),
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", id)
-						.where("Skill.season", "=", CANCELED_MATCH_SEASON),
-				)
-				.as("isCanceled"),
+			isLockedSubquery(eb, id).as("isLocked"),
+			isCanceledSubquery(eb, id).as("isCanceled"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("GroupMatchMap")
@@ -154,23 +139,8 @@ export async function findById(id: number) {
 			"GroupMatch.cancelAcceptedByUserId",
 			"GroupMatch.noScreen",
 
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", id),
-				)
-				.as("isLocked"),
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", id)
-						.where("Skill.season", "=", CANCELED_MATCH_SEASON),
-				)
-				.as("isCanceled"),
+			isLockedSubquery(eb, id).as("isLocked"),
+			isCanceledSubquery(eb, id).as("isCanceled"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("GroupMatchMap")
@@ -279,6 +249,32 @@ function skillDifferences(match: {
 	}
 
 	return { users, groups };
+}
+
+/** Whether the match's skills have been calculated, i.e. it can no longer be edited. */
+function isLockedSubquery(
+	eb: ExpressionBuilder<DB, "GroupMatch">,
+	matchId: number,
+) {
+	return eb.exists(
+		eb
+			.selectFrom("Skill")
+			.select("Skill.id")
+			.where("Skill.groupMatchId", "=", matchId),
+	);
+}
+
+function isCanceledSubquery(
+	eb: ExpressionBuilder<DB, "GroupMatch">,
+	matchId: number,
+) {
+	return eb.exists(
+		eb
+			.selectFrom("Skill")
+			.select("Skill.id")
+			.where("Skill.groupMatchId", "=", matchId)
+			.where("Skill.season", "=", CANCELED_MATCH_SEASON),
+	);
 }
 
 function groupWithTeamAndMembers(
@@ -1646,14 +1642,7 @@ function findLockState(matchId: number, trx: Transaction<DB>) {
 		.selectFrom("GroupMatch")
 		.select((eb) => [
 			"GroupMatch.confirmedAt",
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", matchId),
-				)
-				.as("isLocked"),
+			isLockedSubquery(eb, matchId).as("isLocked"),
 		])
 		.where("GroupMatch.id", "=", matchId)
 		.executeTakeFirstOrThrow();
@@ -1883,14 +1872,7 @@ function findCancelState(matchId: number, trx: Transaction<DB>) {
 		.selectFrom("GroupMatch")
 		.select((eb) => [
 			"GroupMatch.cancelRequestedByUserId",
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", matchId),
-				)
-				.as("isLocked"),
+			isLockedSubquery(eb, matchId).as("isLocked"),
 		])
 		.where("GroupMatch.id", "=", matchId)
 		.executeTakeFirstOrThrow();

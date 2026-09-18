@@ -56,6 +56,11 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 		"Not a participant of this match",
 	);
 
+	const notifyMatchStatusChanged = () =>
+		ChatSystemMessage.notifyStatusChanged(
+			SendouQMatch.allMembers(match).map((m) => m.id),
+		);
+
 	try {
 		switch (data._action) {
 			case "REPORT_SCORE": {
@@ -95,9 +100,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.notifyStatusChanged(
-					SendouQMatch.allMembers(match).map((m) => m.id),
-				);
+				notifyMatchStatusChanged();
 
 				if (match.chatRoomId) {
 					if (result.status === "MATCH_FINALIZED") {
@@ -286,9 +289,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.notifyStatusChanged(
-					SendouQMatch.allMembers(match).map((m) => m.id),
-				);
+				notifyMatchStatusChanged();
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
@@ -313,9 +314,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.notifyStatusChanged(
-					SendouQMatch.allMembers(match).map((m) => m.id),
-				);
+				notifyMatchStatusChanged();
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({
@@ -381,9 +380,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.notifyStatusChanged(
-					SendouQMatch.allMembers(match).map((m) => m.id),
-				);
+				notifyMatchStatusChanged();
 				break;
 			}
 			case "ADMIN_CANCEL": {
@@ -405,9 +402,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 
 				await refreshSendouQInstance();
 
-				ChatSystemMessage.notifyStatusChanged(
-					SendouQMatch.allMembers(match).map((m) => m.id),
-				);
+				notifyMatchStatusChanged();
 
 				if (match.chatRoomId) {
 					ChatSystemMessage.send({

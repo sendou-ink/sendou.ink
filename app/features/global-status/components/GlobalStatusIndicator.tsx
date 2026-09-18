@@ -3,10 +3,8 @@ import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Image } from "~/components/Image";
 import { navIconUrl } from "~/utils/urls";
-import {
-	type GlobalStatusState,
-	useGlobalStatus,
-} from "../GlobalStatusProvider";
+import { useGlobalStatus } from "../GlobalStatusProvider";
+import type { GlobalStatusState } from "../global-status-types";
 import styles from "./GlobalStatusIndicator.module.css";
 
 const STATE_NAV_ICON: Record<GlobalStatusState, string> = {
@@ -51,7 +49,7 @@ export function GlobalStatusIndicator() {
 			<span className={styles.text}>{text}</span>
 			{ALERT_BADGE_STATES.includes(status.state) ? (
 				<span className={clsx(styles.countBadge, styles.alertBadge)}>!</span>
-			) : typeof status.count === "number" ? (
+			) : status.count ? (
 				<span
 					className={clsx(
 						styles.countBadge,

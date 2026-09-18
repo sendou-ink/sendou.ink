@@ -4,13 +4,8 @@ import { backdate } from "~/db/seed/core/backdate";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
-import * as Engine from "~/features/tournament-bracket/core/engine";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
-import {
-	progressions,
-	testTournament,
-	tournamentCtxTeam,
-} from "~/features/tournament-bracket/core/tests/test-utils";
+import { runningTournamentWithMatch } from "~/features/tournament-bracket/core/tests/test-utils";
 import * as UserActivity from "./UserActivity.server";
 
 const { mockSeasonCurrentOrPrevious } = vi.hoisted(() => ({
@@ -27,39 +22,6 @@ vi.mock("~/features/mmr/core/Seasons", () => ({
 
 /** Users are interchangeable here, so tests name them by 1-based position. */
 const users = UserFactory.pool();
-
-const runningTournamentWithMatch = ({
-	tournamentId,
-	teamOneUserIds,
-	teamTwoUserIds,
-	isLeague,
-}: {
-	tournamentId: number;
-	teamOneUserIds: number[];
-	teamTwoUserIds: number[];
-	isLeague?: boolean;
-}) => {
-	const data = Engine.create({
-		type: "swiss",
-		seeding: [1, 2],
-		settings: {},
-	});
-
-	return testTournament({
-		data,
-		ctx: {
-			id: tournamentId,
-			settings: {
-				bracketProgression: progressions.swissOneGroup,
-				isLeague,
-			},
-			teams: [
-				tournamentCtxTeam(1, { memberUserIds: teamOneUserIds }),
-				tournamentCtxTeam(2, { memberUserIds: teamTwoUserIds }),
-			],
-		},
-	});
-};
 
 describe("UserActivity.resolve", () => {
 	beforeEach(async () => {

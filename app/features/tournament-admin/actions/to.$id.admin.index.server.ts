@@ -224,10 +224,8 @@ async function dropTeamOut({
 				endedMatchIds: droppedResult.endedMatchIds,
 				changedChatRoomIds: chatRoomIds,
 				statusChangedTeamIds: teamIdsAffectedByDrop({
-					tournament,
-					data: bracketData,
 					droppedTeamId: teamId,
-					endedMatchIds: droppedResult.endedMatchIds,
+					changedMatches: droppedResult.changedMatches,
 				}),
 			};
 		});
@@ -245,30 +243,23 @@ async function dropTeamOut({
 	return { endedMatchIds, statusChangedTeamIds };
 }
 
-/** The dropped team plus the teams an ended match advances, whose header status the drop moves. */
+/**
+ * The dropped team plus the teams whose header status the drop moves. Read off the propagation's
+ * own changed matches: the follow-up match a walkover fills only shares a participant with the
+ * ended match once the winner has been written into it.
+ */
 function teamIdsAffectedByDrop({
-	tournament,
-	data,
 	droppedTeamId,
-	endedMatchIds,
+	changedMatches,
 }: {
-	tournament: Tournament;
-	data: Engine.BracketData;
 	droppedTeamId: number;
-	endedMatchIds: number[];
+	changedMatches: Engine.MatchData[];
 }) {
 	const teamIds = new Set([droppedTeamId]);
 
-	for (const matchId of endedMatchIds) {
-		const matches = [
-			data.match.find((match) => match.id === matchId),
-			...tournament.followingMatches(matchId),
-		];
-
-		for (const match of matches) {
-			for (const opponentId of [match?.opponent1?.id, match?.opponent2?.id]) {
-				if (typeof opponentId === "number") teamIds.add(opponentId);
-			}
+	for (const match of changedMatches) {
+		for (const opponentId of [match.opponent1?.id, match.opponent2?.id]) {
+			if (typeof opponentId === "number") teamIds.add(opponentId);
 		}
 	}
 

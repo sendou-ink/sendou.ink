@@ -354,6 +354,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 			});
 
 			emitTournamentUpdate = true;
+			statusChangedUserIds =
+				tournament.teamById(data.tournamentTeamId)?.memberUserIds ?? [];
 
 			break;
 		}

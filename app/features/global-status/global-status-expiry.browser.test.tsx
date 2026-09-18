@@ -1,8 +1,8 @@
 import { afterEach, beforeEach, describe, expect, test, vi } from "vitest";
 import { render } from "vitest-browser-react";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import type { GlobalStatus } from "./GlobalStatusProvider";
 import { useHasSqGroupExpired } from "./global-status-expiry";
+import type { GlobalStatus } from "./global-status-types";
 
 const THIRTY_MINUTES_MS = 30 * 60 * 1000;
 

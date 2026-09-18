@@ -1,5 +1,5 @@
 import * as React from "react";
-import type { GlobalStatus } from "./GlobalStatusProvider";
+import type { GlobalStatus } from "./global-status-types";
 
 /**
  * Whether a queued group has gone inactive since the server resolved the

@@ -2,7 +2,7 @@ import * as React from "react";
 import * as v from "valibot";
 import { usePersistedState } from "~/modules/persisted-state/hooks";
 import * as PersistedState from "~/modules/persisted-state/persisted-state";
-import type { GlobalStatus } from "./GlobalStatusProvider";
+import type { GlobalStatus } from "./global-status-types";
 
 const seenSqLikesPersisted = PersistedState.define({
 	key: "seen-sq-likes",

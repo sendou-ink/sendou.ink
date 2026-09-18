@@ -150,6 +150,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 					userId: user.id,
 				});
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+				// registration and check-in windows overlap, so a fresh registrant can
+				// already be pending check-in
+				PendingCheckIns.clearCache();
+				statusChangedUserIds = [user.id];
 			}
 			break;
 		}
@@ -183,6 +188,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			PendingCheckIns.clearCache();
+			statusChangedUserIds = [data.userId];
 			break;
 		}
 		case "LEAVE_TEAM": {
@@ -217,6 +225,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: user.id,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			PendingCheckIns.clearCache();
+			statusChangedUserIds = [user.id];
 
 			break;
 		}
@@ -424,6 +435,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				});
 			}
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			PendingCheckIns.clearCache();
+			statusChangedUserIds = ownTeam.memberUserIds;
 
 			break;
 		}

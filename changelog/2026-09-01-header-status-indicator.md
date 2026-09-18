@@ -1,5 +1,5 @@
 ---
-navItem: sendouq
+navItem: [sendouq, medal]
 type: feature
 ---
 New header status indicator

@@ -9,10 +9,9 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
-import * as Engine from "~/features/tournament-bracket/core/engine";
 import { RunningTournaments } from "~/features/tournament-bracket/core/RunningTournaments.server";
 import {
-	progressions,
+	runningTournamentWithMatch,
 	testTournament,
 	tournamentCtxTeam,
 } from "~/features/tournament-bracket/core/tests/test-utils";
@@ -43,49 +42,6 @@ const users = UserFactory.pool();
 
 const userIds = (positions: number[]) =>
 	positions.map((position) => users.id(position));
-
-const runningTournamentWithMatch = ({
-	tournamentId,
-	teamOneUserIds,
-	teamTwoUserIds,
-	isLeague,
-	lockFirstMatchForCast,
-}: {
-	tournamentId: number;
-	teamOneUserIds: number[];
-	teamTwoUserIds: number[];
-	isLeague?: boolean;
-	lockFirstMatchForCast?: boolean;
-}) => {
-	const data = Engine.create({
-		type: "swiss",
-		seeding: [1, 2],
-		settings: {},
-	});
-
-	return testTournament({
-		data,
-		ctx: {
-			id: tournamentId,
-			settings: {
-				bracketProgression: progressions.swissOneGroup,
-				isLeague,
-			},
-			castedMatchesInfo: lockFirstMatchForCast
-				? {
-						lockedMatches: [
-							{ matchId: data.match[0].id, twitchAccount: "test" },
-						],
-						castedMatches: [],
-					}
-				: null,
-			teams: [
-				tournamentCtxTeam(1, { memberUserIds: teamOneUserIds }),
-				tournamentCtxTeam(2, { memberUserIds: teamTwoUserIds }),
-			],
-		},
-	});
-};
 
 const runningTournamentWithOpenCheckIn = ({
 	tournamentId,

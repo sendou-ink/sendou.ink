@@ -6,8 +6,8 @@ import {
 	SENDOUQ_READY_PAGE,
 	sendouQMatchPage,
 } from "~/utils/urls";
-import type { GlobalStatus } from "./GlobalStatusProvider";
 import { useGlobalStatusSounds } from "./global-status-sounds";
+import type { GlobalStatus } from "./global-status-types";
 
 const mocks = vi.hoisted(() => ({
 	playSound: vi.fn(),

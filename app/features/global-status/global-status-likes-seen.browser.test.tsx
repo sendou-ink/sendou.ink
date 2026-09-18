@@ -1,11 +1,11 @@
 import { afterEach, describe, expect, test } from "vitest";
 import { render } from "vitest-browser-react";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
-import type { GlobalStatus } from "./GlobalStatusProvider";
 import {
 	useHasUnseenSqLikes,
 	useMarkSqLikesSeen,
 } from "./global-status-likes-seen";
+import type { GlobalStatus } from "./global-status-types";
 
 const SEEN_SQ_LIKES_KEY = "seen-sq-likes";
 const GROUP_ID = 1;

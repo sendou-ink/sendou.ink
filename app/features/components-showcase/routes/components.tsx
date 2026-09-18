@@ -60,10 +60,8 @@ import {
 	ChangelogGraphic,
 	type ChangelogGraphicEntry,
 } from "~/features/changelog/components/ChangelogGraphic";
-import {
-	type GlobalStatus,
-	useGlobalStatus,
-} from "~/features/global-status/GlobalStatusProvider";
+import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
+import type { GlobalStatus } from "~/features/global-status/global-status-types";
 import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,

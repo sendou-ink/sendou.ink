@@ -1,6 +1,6 @@
 import * as React from "react";
 import { playSound } from "~/features/chat/chat-utils";
-import type { GlobalStatus, GlobalStatusState } from "./GlobalStatusProvider";
+import type { GlobalStatus, GlobalStatusState } from "./global-status-types";
 
 const SOUND_BY_STATE: Partial<Record<GlobalStatusState, string>> = {
 	SQ_READY_CHECK: "sq_ready-check",
