@@ -4,6 +4,7 @@
 	max-height: min(80dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
 	overflow-x: hidden;
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	border-radius: 1rem;
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
