@@ -941,7 +941,7 @@ export function findAllBetweenTwoTimestamps({
 }
 
 /**
- * Members of teams that have not checked in, for every tournament whose first day starts inside the window.
+ * Members of teams that have not checked in nor dropped out, for every tournament whose first day starts inside the window.
  * One row per member per tournament; the caller narrows the window to the check-in period.
  */
 export function findPendingCheckInsStartingBetween({
@@ -987,6 +987,7 @@ export function findPendingCheckInsStartingBetween({
 			)
 			.where("CalendarEvent.hidden", "=", 0)
 			.where("Tournament.isFinalized", "=", 0)
+			.where("TournamentTeam.droppedOut", "=", 0)
 			.where(
 				sql<number>`json_extract("Tournament"."settings", '$.isTest')`,
 				"is not",

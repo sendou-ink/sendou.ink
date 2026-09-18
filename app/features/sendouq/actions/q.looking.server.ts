@@ -276,6 +276,10 @@ export const action: ActionFunction = async ({ request }) => {
 
 				await refreshSendouQInstance();
 
+				ChatSystemMessage.notifyStatusChanged(
+					currentGroup.members.map((member) => member.id),
+				);
+
 				broadcastLookingUpdate();
 
 				break;

@@ -1237,6 +1237,15 @@ export function buildCases(fx: Fixtures): {
 		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),
 	);
 	add(
+		"TournamentRepository.findPendingCheckInsStartingBetween",
+		fx.calendarWindow,
+		(window) =>
+			TournamentRepository.findPendingCheckInsStartingBetween({
+				startsAfter: window.startTime,
+				startsBefore: window.endTime,
+			}),
+	);
+	add(
 		"TournamentRepository.findTopThreeResultsByTournamentIds",
 		fx.heavyTournamentId,
 		(tournamentId) =>

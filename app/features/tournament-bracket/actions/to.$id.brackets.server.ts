@@ -25,6 +25,7 @@ import * as PreparedMapsUtils from "../core/PreparedMaps";
 import type { Tournament } from "../core/Tournament";
 import {
 	clearTournamentDataCache,
+	notifyTournamentStatusChanged,
 	requireTournamentOrganizer,
 	tournamentFromDB,
 	tournamentFromParams,
@@ -363,11 +364,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	if (statusChangedUserIds.length > 0) {
-		// re-hydrate so the status refetch this prompts reads post-change state
-		await tournamentFromDB(tournamentId);
-		ChatSystemMessage.notifyStatusChanged(statusChangedUserIds);
-	}
+	await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
 	if (emitTournamentUpdate) {
 		ChatSystemMessage.send([{ channel: tournamentChannel(tournament.ctx.id) }]);

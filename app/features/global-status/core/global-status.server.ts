@@ -1,3 +1,4 @@
+import * as R from "remeda";
 import { groupExpiresAt } from "~/features/sendouq/core/groups";
 import { FULL_GROUP_SIZE } from "~/features/sendouq/q-constants";
 import * as SendouQMatch from "~/features/sendouq-match/core/SendouQMatch";
@@ -121,11 +122,10 @@ function resolveTournamentStatus(
 		(entry) => UserActivity.TOURNAMENT_STATUS_IS_IN_PROGRESS[entry.status.type],
 	);
 
-	const mostUrgent = relevant.sort(
-		(a, b) =>
-			TOURNAMENT_STATUS_URGENCY[a.status.type] -
-			TOURNAMENT_STATUS_URGENCY[b.status.type],
-	)[0];
+	const mostUrgent = R.firstBy(
+		relevant,
+		(entry) => TOURNAMENT_STATUS_URGENCY[entry.status.type],
+	);
 	if (!mostUrgent) return null;
 
 	const { tournament, status } = mostUrgent;

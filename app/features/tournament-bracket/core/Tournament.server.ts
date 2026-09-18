@@ -6,6 +6,7 @@ import {
 	getUser,
 	requireUser,
 } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
@@ -272,6 +273,20 @@ export async function tournamentFromDB(tournamentId: number) {
 	syncTournamentToRegistry(tournament);
 
 	return tournament;
+}
+
+/**
+ * Prompts the users' clients to refetch their header status after a change to the tournament,
+ * re-hydrating first so the refetch reads post-change state.
+ */
+export async function notifyTournamentStatusChanged(
+	tournamentId: number,
+	userIds: number[],
+) {
+	if (userIds.length === 0) return;
+
+	await tournamentFromDB(tournamentId);
+	ChatSystemMessage.notifyStatusChanged(userIds);
 }
 
 const TOURNAMENT_DATA_CACHE_MAX_ENTRIES = 250;

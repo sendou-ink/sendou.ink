@@ -14,7 +14,7 @@ import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamR
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
-	tournamentFromDB,
+	notifyTournamentStatusChanged,
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -434,11 +434,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	clearTournamentDataCache(tournamentId);
 
-	if (statusChangedUserIds.length > 0) {
-		// re-hydrate so the status refetch this prompts reads post-change state
-		await tournamentFromDB(tournamentId);
-		ChatSystemMessage.notifyStatusChanged(statusChangedUserIds);
-	}
+	await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
 	return null;
 };
