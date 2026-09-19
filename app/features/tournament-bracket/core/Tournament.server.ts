@@ -276,8 +276,9 @@ export async function tournamentFromDB(tournamentId: number) {
 }
 
 /**
- * Prompts the users' clients to refetch their header status after a change to the tournament,
- * re-hydrating first so the refetch reads post-change state.
+ * Prompts the users' clients to refetch their header status after a change to the tournament.
+ * Fills the (just cleared) cache and syncs the registry from that one rebuild so the refetch
+ * reads post-change state and the revalidation that follows the action finds a warm cache.
  */
 export async function notifyTournamentStatusChanged(
 	tournamentId: number,
@@ -285,7 +286,7 @@ export async function notifyTournamentStatusChanged(
 ) {
 	if (userIds.length === 0) return;
 
-	await tournamentFromDB(tournamentId);
+	syncTournamentToRegistry(await tournamentSharedCached(tournamentId));
 	ChatSystemMessage.notifyStatusChanged(userIds);
 }
 
