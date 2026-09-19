@@ -80,8 +80,13 @@ scored `kills² + kills / span`. Both controllers run the same
   a `MediaStreamTrackProcessor` → `VideoEncoder` (hardware H.264, ~16 Mbps,
   keyframe every 2 s) into a ring of GOPs holding the last
   `RING_BUFFER_SECONDS`; the audio track through an `AudioEncoder` (AAC,
-  else Opus) into the same ring. Packets are stamped with the wall clock on
-  arrival. A window is cut once `windowClosed` (no kill can join and the
+  else Opus) into the same ring. Packets carry the wall-clock time their
+  frame was captured (noted at encoder input, claimed at output, so encoder
+  latency never shifts audio against video). The audio processor queues
+  `AUDIO_BUFFER_FRAMES` slices so a busy main thread does not drop any, and
+  the encoder's input is watched for signal: a device that opens but sends
+  silence shows on the live status line. A window is cut once
+  `windowClosed` (no kill can join and the
   tail is captured): the GOP at or before its start through its end, muxed
   to MP4 with mediabunny's `EncodedVideoPacketSource` — no decode. Audio is
   the chosen source's own input (`audioInputFor`: same `groupId`, else a

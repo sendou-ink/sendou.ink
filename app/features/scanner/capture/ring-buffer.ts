@@ -3,10 +3,12 @@
  * VideoEncoder (hardware H.264 where available, a keyframe every
  * `KEYFRAME_INTERVAL_S`) into a ring of GOPs holding the last `seconds`;
  * the audio track through an AudioEncoder into the same ring. Every packet
- * is stamped with the wall clock as it arrives, the clock the sampler stamps
- * detections with, so a cut asks for wall-clock seconds and gets the GOP at
- * or before its start through the packets up to its end, muxed to MP4 with
- * mediabunny — no decode, so a cut takes milliseconds.
+ * is stamped with the wall clock its frame was captured at (noted as the
+ * frame enters the encoder, claimed as the packet comes out, so encoder
+ * latency does not shift it), the clock the sampler stamps detections with,
+ * so a cut asks for wall-clock seconds and gets the GOP at or before its
+ * start through the packets up to its end, muxed to MP4 with mediabunny —
+ * no decode, so a cut takes milliseconds.
  */
 import {
 	type AudioCodec,
@@ -31,6 +33,10 @@ const AUDIO_CODECS: { codec: string; container: AudioCodec }[] = [
 ];
 const THUMBNAIL_WIDTH = 320;
 const THUMBNAIL_HEIGHT = 180;
+/** 10 ms audio slices the processor queues while the main thread is busy; past it Chromium drops the oldest */
+const AUDIO_BUFFER_FRAMES = 200;
+/** a slice whose loudest sample is under this (about -60 dBFS) carries no signal */
+const SILENCE_PEAK = 0.001;
 
 interface Stamped {
 	packet: EncodedPacket;
@@ -53,6 +59,7 @@ const TrackProcessor = (
 	globalThis as unknown as {
 		MediaStreamTrackProcessor?: new (init: {
 			track: MediaStreamTrack;
+			maxBufferSize?: number;
 		}) => TrackProcessor<VideoFrame | AudioData>;
 	}
 ).MediaStreamTrackProcessor;
@@ -85,11 +92,23 @@ export class ClipRingBuffer {
 	#videoEncoder: VideoEncoder | null = null;
 	#audioEncoder: AudioEncoder | null = null;
 	#readers: ReadableStreamDefaultReader<VideoFrame | AudioData>[] = [];
+	readonly #videoClock = new CaptureClock();
+	readonly #audioClock = new CaptureClock();
+	#audioSignalAt: number | null = null;
 	#stopped = false;
 	#lastKeyframeAt = Number.NEGATIVE_INFINITY;
 
 	constructor(seconds: number) {
 		this.#seconds = seconds;
+	}
+
+	/**
+	 * Wall-clock seconds the audio encoder last got a slice with sound in it;
+	 * null while no audio is being encoded. Stuck in the past = the input is
+	 * open but silent.
+	 */
+	get audioSignalAt(): number | null {
+		return this.#audioSignalAt;
 	}
 
 	/** Starts encoding both tracks; resolves once the video encoder is configured. */
@@ -214,6 +233,9 @@ export class ClipRingBuffer {
 		this.#audioEncoder = null;
 		this.#gops.length = 0;
 		this.#audio.length = 0;
+		this.#videoClock.clear();
+		this.#audioClock.clear();
+		this.#audioSignalAt = null;
 	}
 
 	async #pumpVideo(track: MediaStreamTrack): Promise<void> {
@@ -242,19 +264,24 @@ export class ClipRingBuffer {
 					if (gop && !gop.thumbnail) gop.thumbnail = thumbnail;
 				});
 			}
+			this.#videoClock.note(frame.timestamp, now);
 			encoder.encode(frame, { keyFrame });
 			frame.close();
 		}
 	}
 
 	async #startAudio(track: MediaStreamTrack): Promise<void> {
-		const reader = new TrackProcessor!({ track }).readable.getReader();
+		const reader = new TrackProcessor!({
+			track,
+			maxBufferSize: AUDIO_BUFFER_FRAMES,
+		}).readable.getReader();
 		this.#readers.push(reader);
 		let configured = false;
 		while (!this.#stopped) {
 			const { value, done } = await reader.read();
 			if (done || !value) break;
 			const data = value as AudioData;
+			const now = Date.now() / 1000;
 			if (!configured) {
 				configured = true;
 				const choice = await firstSupportedAudioCodec(
@@ -278,9 +305,13 @@ export class ClipRingBuffer {
 					sampleRate: data.sampleRate,
 					bitrate: AUDIO_BITRATE,
 				});
+				this.#audioSignalAt = now;
 			}
 			const encoder = this.#audioEncoder;
 			if (encoder?.state === "configured" && encoder.encodeQueueSize < 32) {
+				const peak = peakOf(data);
+				if (peak === null || peak > SILENCE_PEAK) this.#audioSignalAt = now;
+				this.#audioClock.note(data.timestamp, now);
 				encoder.encode(data);
 			}
 			data.close();
@@ -294,7 +325,7 @@ export class ClipRingBuffer {
 		if (meta?.decoderConfig) this.#videoConfig = meta.decoderConfig;
 		const stamped = {
 			packet: EncodedPacket.fromEncodedChunk(chunk),
-			wall: Date.now() / 1000,
+			wall: this.#videoClock.claim(chunk.timestamp),
 		};
 		if (chunk.type === "key" || this.#gops.length === 0) {
 			this.#gops.push({ packets: [stamped] });
@@ -311,7 +342,7 @@ export class ClipRingBuffer {
 		if (meta?.decoderConfig) this.#audioConfig = meta.decoderConfig;
 		this.#audio.push({
 			packet: EncodedPacket.fromEncodedChunk(chunk),
-			wall: Date.now() / 1000,
+			wall: this.#audioClock.claim(chunk.timestamp),
 		});
 	}
 
@@ -345,6 +376,52 @@ export class ClipRingBuffer {
 
 	#fail(): void {
 		this.#videoEncoder = null;
+	}
+}
+
+/**
+ * Wall-clock stamps of the frames handed to an encoder, claimed in order by
+ * the packets that come out: a packet's stamp is its frame's capture time,
+ * whatever the encoder's latency. Output timestamps trail the input ones
+ * only where the encoder saw a gap, so a claim also sweeps up everything
+ * older (frames the encoder dropped).
+ */
+class CaptureClock {
+	readonly #entries: { timestamp: number; wall: number }[] = [];
+
+	/** `timestamp` in microseconds, as WebCodecs frames carry it */
+	note(timestamp: number, wall: number): void {
+		this.#entries.push({ timestamp, wall });
+	}
+
+	/** Wall-clock seconds for the packet at `timestamp` (microseconds); now when nothing was noted for it. */
+	claim(timestamp: number): number {
+		let wall = Date.now() / 1000;
+		let claimed = 0;
+		for (const entry of this.#entries) {
+			if (entry.timestamp > timestamp) break;
+			wall = entry.wall + (timestamp - entry.timestamp) / 1e6;
+			claimed++;
+		}
+		this.#entries.splice(0, claimed);
+		return wall;
+	}
+
+	clear(): void {
+		this.#entries.length = 0;
+	}
+}
+
+/** The loudest sample of the slice's first channel; null when it cannot be read. */
+function peakOf(data: AudioData): number | null {
+	try {
+		const samples = new Float32Array(data.numberOfFrames);
+		data.copyTo(samples, { planeIndex: 0, format: "f32-planar" });
+		let peak = 0;
+		for (const sample of samples) peak = Math.max(peak, Math.abs(sample));
+		return peak;
+	} catch {
+		return null;
 	}
 }
 
