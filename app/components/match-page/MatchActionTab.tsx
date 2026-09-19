@@ -4,6 +4,7 @@ import type * as React from "react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useWebHaptics } from "web-haptics/react";
+import { useCooldown } from "~/hooks/useCooldown";
 import { shortStageName } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import type { CommonUser } from "~/utils/kysely.server";
@@ -43,6 +44,7 @@ interface MatchActionTabProps {
 	onSubmit?: (data: { winnerId: number; ko?: boolean }) => void;
 	isSubmitting?: boolean;
 	setEnding?: SetEndingData;
+	submitCooldownUntil?: number | null;
 	actionButtons?: React.ReactNode;
 	secondaryAction?: React.ReactNode;
 }
@@ -56,6 +58,7 @@ export function MatchActionTab({
 	onSubmit,
 	isSubmitting,
 	setEnding,
+	submitCooldownUntil = null,
 	actionButtons,
 	secondaryAction,
 }: MatchActionTabProps) {
@@ -64,8 +67,9 @@ export function MatchActionTab({
 	const [isKo, setIsKo] = useState(false);
 	const [confirming, setConfirming] = useState(false);
 	const { trigger } = useWebHaptics();
+	const cooldownSecondsLeft = useCooldown(submitCooldownUntil);
 
-	const canSubmit = winnerId !== null;
+	const canSubmit = winnerId !== null && cooldownSecondsLeft === 0;
 
 	const isOnTeam =
 		ownTeamId != null &&
@@ -177,7 +181,9 @@ export function MatchActionTab({
 						className={styles.submit}
 						testId="report-score-button"
 					>
-						{t("common:actions.submit")}
+						{cooldownSecondsLeft > 0
+							? `${t("common:actions.submit")} (${cooldownSecondsLeft})`
+							: t("common:actions.submit")}
 					</SendouButton>
 				</div>
 			)}

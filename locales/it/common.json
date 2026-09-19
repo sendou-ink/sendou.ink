@@ -368,6 +368,7 @@
 	"chat.send": "Invia",
 	"chat.systemMsg.scoreReported": "{{name}} ha riportato il punteggio",
 	"chat.systemMsg.scoreConfirmed": "{{name}} ha confermato il punteggio. Il match è ora bloccato",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "{{name}} ha richiesto la cancellazione del match",
 	"chat.systemMsg.cancelConfirmed": "{{name}} ha confermato la cancellazione del match. Il match è ora bloccato",
 	"chat.systemMsg.cancelRefused": "",

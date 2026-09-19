@@ -368,6 +368,7 @@
 	"chat.send": "Enviar",
 	"chat.systemMsg.scoreReported": "{{name}} ha reportado el resultado",
 	"chat.systemMsg.scoreConfirmed": "{{name}} ha confirmado el resultado. La partida está cerrada",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "{{name}} pidió cancelar la partida",
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmó cancelar la partida. La partida está cerrada",
 	"chat.systemMsg.cancelRefused": "{{name}} ha rechazado cancelar la partida",

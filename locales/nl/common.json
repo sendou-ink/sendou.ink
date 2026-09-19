@@ -368,6 +368,7 @@
 	"chat.send": "",
 	"chat.systemMsg.scoreReported": "",
 	"chat.systemMsg.scoreConfirmed": "",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "",
 	"chat.systemMsg.cancelConfirmed": "",
 	"chat.systemMsg.cancelRefused": "",

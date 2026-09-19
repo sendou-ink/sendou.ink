@@ -368,6 +368,7 @@
 	"chat.send": "Envoyer",
 	"chat.systemMsg.scoreReported": "{{name}} a reporté le score",
 	"chat.systemMsg.scoreConfirmed": "{{name}} a confirmé le score. Le match est maintenant vérrouillé",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "{{name}} a demandé d'annuler le match",
 	"chat.systemMsg.cancelConfirmed": "{{name}} a confirmé l'anunulation du match. Le match est maintenant vérrouillé",
 	"chat.systemMsg.cancelRefused": "",

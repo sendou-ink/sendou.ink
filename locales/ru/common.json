@@ -368,6 +368,7 @@
 	"chat.send": "Отправить",
 	"chat.systemMsg.scoreReported": "{{name}} сообщил результаты",
 	"chat.systemMsg.scoreConfirmed": "{{name}} подтвердил счёт. Матч теперь закрыт",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "{{name}} запросил отмену матча",
 	"chat.systemMsg.cancelConfirmed": "{{name}} подтвердил отмену матча. Матч теперь закрыт",
 	"chat.systemMsg.cancelRefused": "",

@@ -35,6 +35,12 @@ export const matchSchema = v.union([
 		_action: _action("REPORT_SCORE"),
 		winnerId: id,
 		reportedCount: v.pipe(coerceNumber(), v.integer(), v.minValue(0)),
+		confirmingReportedAt: v.optional(
+			v.pipe(coerceNumber(), v.integer(), v.minValue(0)),
+		),
+	}),
+	v.object({
+		_action: _action("DISPUTE_SCORE"),
 	}),
 	v.object({
 		_action: _action("LOOK_AGAIN"),

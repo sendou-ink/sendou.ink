@@ -368,6 +368,7 @@
 	"chat.send": "发送",
 	"chat.systemMsg.scoreReported": "{{name}} 汇报比分",
 	"chat.systemMsg.scoreConfirmed": "{{name}} 确认了比分，本次对局已锁定",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "{{name}} 申请取消对局",
 	"chat.systemMsg.cancelConfirmed": "{{name}} 确认取消对局，本次对局已锁定",
 	"chat.systemMsg.cancelRefused": "{{name}} 拒绝取消对局",
