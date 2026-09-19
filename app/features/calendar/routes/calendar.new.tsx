@@ -407,10 +407,7 @@ function TrophyField() {
 						</div>
 						{selectedTrophy ? (
 							<div className="stack md items-center">
-								<Trophy
-									model={selectedTrophy.model}
-									className={styles.trophyPreview}
-								/>
+								<Trophy model={selectedTrophy.model} />
 								<div className="stack horizontal md items-center">
 									<span>{selectedTrophy.name}</span>
 									<SendouButton
