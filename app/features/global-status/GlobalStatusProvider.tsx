@@ -28,8 +28,10 @@ const GlobalStatusContext = React.createContext<GlobalStatusContextValue>({
  * and keeps it fresh push-first: the layout data seeds the first paint, then a
  * refetch of the status's own resource route whenever the server publishes
  * over the shared SSE connection that the user's status changed. The refetch
- * happens without jitter — the events fan out to at most the 8 players of a
- * match — so the header moves together with the page's own revalidation.
+ * happens without jitter: a bracket-wide event (bracket start, swiss round
+ * advance, check-in opening) reaches every participant at once, but the status
+ * resolves mostly from in-memory activity so the burst is cheap, and those are
+ * the moments the header is the call to action.
  */
 export function GlobalStatusProvider({
 	user,
