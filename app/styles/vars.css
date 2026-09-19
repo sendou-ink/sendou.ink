@@ -178,7 +178,6 @@ html.light [data-custom-theme],
 
 /* the vars you mainly want to use */
 html,
-/* biome-ignore lint/style/noDescendingSpecificity: [data-custom-theme] and [data-theme] re-declare theme vars for subtrees; different properties than the html.dark/light blocks so no real override */
 [data-custom-theme],
 [data-theme] {
 	--color-text: var(--color-base-0);
