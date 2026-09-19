@@ -13,8 +13,7 @@ export type BracketMapCounts = Map<
 	// round.groupId ->
 	number,
 	// round.number ->
-	Map<number, { count: number; type: "BEST_OF" }>
->;
+	Map<number, { count: number; type: "BEST_OF" }>>;
 
 export interface GenerateTournamentRoundMaplistArgs {
 	/** The tournament's effective map pool, see `Tournament.mapPool`. */
