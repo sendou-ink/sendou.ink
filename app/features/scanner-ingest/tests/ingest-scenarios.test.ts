@@ -16,28 +16,12 @@ import {
 	renamed,
 	scannedGame,
 	sendouqWorld,
-	setupScannerGate,
 	tournamentMatchPage,
 	tournamentWorld,
 	WEAPONS,
-	withScannerDisabled,
 } from "./harness";
 
-setupScannerGate();
-
 describe("gating & request filtering", () => {
-	test("G1 gate closed: scanner disabled and non-privileged user → 403, nothing stored", async () => {
-		const w = await sendouqWorld();
-
-		await withScannerDisabled(async () => {
-			await expect(
-				ingest(w.bravoUsers[1]!, [w.scanned(w.maps[0]!)]),
-			).rejects.toThrow("403");
-		});
-
-		expect(await fetchIngestedMatches()).toHaveLength(0);
-	});
-
 	test("G2 non-private lobby: only X-battle matches in the request → skipped entirely", async () => {
 		const w = await sendouqWorld();
 		await w.conclude();

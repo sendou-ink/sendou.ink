@@ -32,7 +32,6 @@ const schema = v.object({
 	VITE_PROD_MODE: v.optional(envBoolean, "false"),
 	VITE_SHOW_LUTI_NAV_ITEM: v.optional(envBoolean, "false"),
 	VITE_FUSE_ENABLED: v.optional(envBoolean, "false"),
-	VITE_SCANNER_ENABLED: v.optional(envBoolean, "false"),
 
 	VITE_LEAGUE_GOOGLE_FORM_URL: v.optional(v.string()),
 	VITE_SHOW_BANNER_FOR_SEASON: v.optional(v.string()),
@@ -57,8 +56,6 @@ export const Config = {
 	prodMode: values.VITE_PROD_MODE,
 	showLutiNavItem: values.VITE_SHOW_LUTI_NAV_ITEM,
 	fuseEnabled: values.VITE_FUSE_ENABLED,
-	/** While false only the admin and devs can use the scanner page and its ingest endpoint. */
-	scannerEnabled: values.VITE_SCANNER_ENABLED,
 	leagueGoogleFormUrl: values.VITE_LEAGUE_GOOGLE_FORM_URL,
 	/** Season to show the registration banner for. */
 	showBannerForSeason: values.VITE_SHOW_BANNER_FOR_SEASON,

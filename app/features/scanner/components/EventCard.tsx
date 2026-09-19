@@ -1,12 +1,11 @@
 /**
- * Single dispatch point from a detected event to its card, shared by the live
- * and VoD feeds. Frames load lazily through `getFrame` (IndexedDB keeps them
- * out of the listed records); the Inspect action (open the frame in the
- * screenshot page in a new tab, leaving the running scan undisturbed) is
+ * Single dispatch point from a detected event to its card (the debug "raw
+ * detections" of a match). Frames load lazily through `getFrame` (IndexedDB
+ * keeps them out of the listed records); the Inspect action (open the frame
+ * in the debug view in a new tab, leaving the running scan undisturbed) is
  * derived from it here.
  */
 
-import clsx from "clsx";
 import { SCANNER_PAGE } from "~/utils/urls";
 import type { PlayerAbilityMap } from "../core/ability-harvest";
 import {
@@ -40,12 +39,9 @@ import {
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
 import { scannerSearchParams } from "../scanner-search-params";
-import type { SendStatus } from "../store/events";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { DeathCard } from "./DeathCard";
-import styles from "./EventCard.module.css";
 import type { FixtureData } from "./fixture-export";
-import { useEventTimeFormatter } from "./format";
 import { KillCard } from "./KillCard";
 import { MapStartCard } from "./MapStartCard";
 import { MinimapCard } from "./MinimapCard";
@@ -68,10 +64,6 @@ export function EventCard(props: {
 	getFrame?: GetFrame;
 	/** Scoreboard only: abilities harvested from the match's death events */
 	abilities?: PlayerAbilityMap;
-	/** sendou.ink /ingest status of this event; absent = never attempted */
-	send?: SendStatus;
-	/** when set, shows a Send/Retry button that sends this event's match batch */
-	onSend?: () => void;
 }) {
 	const { type, t, confidence, data, thumbnail, detectedAt, getFrame } = props;
 	// window.open must run synchronously in the click gesture (popup blockers);
@@ -81,7 +73,7 @@ export function EventCard(props: {
 				const key = newInspectKey();
 				window.open(
 					scannerSearchParams.href(SCANNER_PAGE, {
-						tab: "screenshot",
+						view: "debug",
 						inspect: key,
 					}),
 					"_blank",
@@ -93,60 +85,7 @@ export function EventCard(props: {
 		: undefined;
 	const shared = { t, confidence, thumbnail, detectedAt, getFrame, onInspect };
 
-	const card = renderCard(type, data, shared, props.abilities);
-	if (!props.send && !props.onSend) return card;
-	return (
-		<div className={styles.sendWrap}>
-			{card}
-			<SendStrip send={props.send} onSend={props.onSend} />
-		</div>
-	);
-}
-
-/** `unlinked` has no strip styling of its own */
-const SEND_STATE_CLASS: Record<SendStatus["state"], string | undefined> = {
-	queued: styles.queued,
-	sending: styles.sending,
-	sent: styles.sent,
-	unlinked: undefined,
-	failed: styles.failed,
-};
-
-const SEND_LABELS: Record<SendStatus["state"], string> = {
-	queued: "queued",
-	sending: "sending…",
-	sent: "sent",
-	unlinked: "waiting for report",
-	failed: "failed",
-};
-
-function SendStrip({
-	send,
-	onSend,
-}: {
-	send?: SendStatus;
-	onSend?: () => void;
-}) {
-	const state = send?.state;
-	const formatSentAt = useEventTimeFormatter();
-	return (
-		<div
-			className={clsx(styles.sendStrip, state ? SEND_STATE_CLASS[state] : null)}
-		>
-			<span>
-				sendou.ink: {state ? SEND_LABELS[state] : "not sent"}
-				{state === "sent" && send ? ` ${formatSentAt(send.at)}` : null}
-			</span>
-			{send?.error ? (
-				<span className={styles.sendError}>{send.error}</span>
-			) : null}
-			{onSend && state !== "sent" && state !== "sending" ? (
-				<button type="button" onClick={onSend}>
-					{state === "failed" ? "Retry" : "Send"}
-				</button>
-			) : null}
-		</div>
-	);
+	return renderCard(type, data, shared, props.abilities);
 }
 
 function renderCard(

@@ -1,0 +1,119 @@
+.strip {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.titleRow {
+	display: flex;
+	align-items: baseline;
+	gap: var(--s-2);
+}
+
+.title {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.count {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.seeAll {
+	margin-inline-start: auto;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+}
+
+/* the scroll box would clip a tile's focus/hover outline, so it gets room the margin takes back */
+.tiles {
+	--outline-room: 3px;
+
+	display: flex;
+	gap: var(--s-2-5);
+	overflow-x: auto;
+	padding: var(--outline-room) var(--outline-room) var(--s-1);
+	margin: calc(-1 * var(--outline-room)) calc(-1 * var(--outline-room)) 0;
+	scrollbar-width: thin;
+}
+
+.tile {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	flex: 0 0 auto;
+	width: 148px;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	text-align: left;
+	cursor: pointer;
+	border-radius: var(--radius-box);
+
+	&:hover .thumb,
+	&:focus-visible .thumb {
+		outline: 2px solid var(--color-text-accent);
+		outline-offset: 1px;
+	}
+
+	&:focus-visible {
+		outline: none;
+	}
+}
+
+.thumb {
+	position: relative;
+	display: block;
+	aspect-ratio: 16 / 9;
+	border-radius: var(--radius-box);
+	background: #000 center / cover no-repeat;
+	overflow: hidden;
+}
+
+.play {
+	position: absolute;
+	inset-block-start: var(--s-1-5);
+	inset-inline-start: var(--s-1-5);
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--radius-full);
+	background: rgb(0 0 0 / 0.65);
+	color: #fff;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.length {
+	position: absolute;
+	inset-block-end: var(--s-1-5);
+	inset-inline-end: var(--s-1-5);
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background: rgb(0 0 0 / 0.65);
+	color: #fff;
+	font-size: var(--font-3xs);
+	font-variant-numeric: tabular-nums;
+}
+
+.where {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}
+
+.source {
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+	white-space: nowrap;
+	overflow: hidden;
+	text-overflow: ellipsis;
+}

@@ -1,56 +1,55 @@
 /**
- * Flattens detected events into one CSV. One row per event; types share
- * columns where they overlap, and a scoreboard's eight player rows (or the
- * minimap's cards, or the objective HUD's icon strip) pack into one cell.
+ * "Raw detections" export: one row per detected event. Types share columns
+ * where they overlap, and a scoreboard's eight player rows (or the minimap's
+ * cards, or the objective HUD's icon strip) pack into one cell. Positions are
+ * reported relative to `originT` (a live session's first event, 0 for a file).
  */
 
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	DEATH_EVENT_TYPE,
-	type DeathData,
-} from "../core/detectors/death/index";
-import { KILL_EVENT_TYPE, type KillData } from "../core/detectors/kill/index";
+import { DEATH_EVENT_TYPE, type DeathData } from "../detectors/death/index";
+import { KILL_EVENT_TYPE, type KillData } from "../detectors/kill/index";
 import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
-} from "../core/detectors/map-start/index";
+} from "../detectors/map-start/index";
 import {
 	MINIMAP_EVENT_TYPE,
 	type MinimapData,
-} from "../core/detectors/minimap/index";
+} from "../detectors/minimap/index";
 import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
-} from "../core/detectors/objective/index";
+} from "../detectors/objective/index";
 import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
-} from "../core/detectors/objective/player-status";
+} from "../detectors/objective/player-status";
 import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
-} from "../core/detectors/objective/strip-weapons";
+} from "../detectors/objective/strip-weapons";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
-} from "../core/detectors/scoreboard/index";
-import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
+} from "../detectors/scoreboard/index";
+import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import {
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	type ScoreboardBattleLogReplayData,
-} from "../core/detectors/scoreboard-battle-log-replay/index";
+} from "../detectors/scoreboard-battle-log-replay/index";
 import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
-} from "../core/detectors/scoreboard-own/index";
-import { formatClock, formatTime } from "./format";
+} from "../detectors/scoreboard-own/index";
+import { formatClock, formatTime } from "../format";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
 	modeLabel,
 	stageLabel,
 	weaponLabel,
-} from "./labels";
+} from "../labels";
+import { type CsvCell, toCsv } from "./csv";
 
 export interface CsvEvent {
 	type: string;
@@ -82,12 +81,11 @@ const HEADER = [
 	"replay_timestamp",
 ];
 
-type Cell = string | number | null | undefined;
-
-function csvCell(value: Cell): string {
-	if (value === null || value === undefined) return "";
-	const s = String(value);
-	return /[",\n\r]/.test(s) ? `"${s.replaceAll('"', '""')}"` : s;
+export function eventsToCsv(events: readonly CsvEvent[], originT = 0): string {
+	return toCsv(
+		HEADER,
+		events.map((event) => eventCells(event, originT)),
+	);
 }
 
 /** [head, clothes, shoes] rows of [main, sub, sub, sub] ability ids */
@@ -147,11 +145,12 @@ function formatPlayers(data: ScoreboardData): string {
 		.join("; ");
 }
 
-function eventCells(event: CsvEvent): Cell[] {
-	const base: Cell[] = [
+function eventCells(event: CsvEvent, originT: number): CsvCell[] {
+	const t = event.t - originT;
+	const base: CsvCell[] = [
 		event.type,
-		formatTime(event.t),
-		Math.round(event.t * 1000) / 1000,
+		formatTime(t),
+		Math.round(t * 1000) / 1000,
 		event.detectedAt === undefined
 			? ""
 			: new Date(event.detectedAt).toISOString(),
@@ -261,11 +260,11 @@ function eventCells(event: CsvEvent): Cell[] {
 			const self = d.teammates.find((p) => p.self);
 			return [
 				...base,
-				"", // lobby
-				"", // mode (not readable from the minimap)
-				stageLabel(d.stage), // stage (planner-signature match)
-				"", // winner_score
-				"", // loser_score
+				"",
+				"",
+				stageLabel(d.stage),
+				"",
+				"",
 				self?.name,
 				self ? mainWeaponLabel(self.weaponId) : "",
 				"",
@@ -338,21 +337,4 @@ function eventCells(event: CsvEvent): Cell[] {
 		default:
 			return [...base, ...Array(HEADER.length - base.length).fill("")];
 	}
-}
-
-export function eventsToCsv(events: CsvEvent[]): string {
-	const lines = [HEADER.join(",")];
-	for (const event of events)
-		lines.push(eventCells(event).map(csvCell).join(","));
-	return `${lines.join("\r\n")}\r\n`;
-}
-
-export function downloadEventsCsv(filename: string, events: CsvEvent[]): void {
-	const blob = new Blob([eventsToCsv(events)], { type: "text/csv" });
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = filename;
-	a.click();
-	URL.revokeObjectURL(url);
 }

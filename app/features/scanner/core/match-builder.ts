@@ -51,6 +51,10 @@ import {
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	type ScoreboardBattleLogReplayData,
 } from "./detectors/scoreboard-battle-log-replay/index";
+import {
+	SCOREBOARD_OWN_EVENT_TYPE,
+	type ScoreboardOwnData,
+} from "./detectors/scoreboard-own/index";
 import type { DetectedEvent } from "./detectors/types";
 import { hueDistance, hueOf, type InkRgb } from "./ink-color";
 import { parseReplayTimestamp } from "./replay-time";
@@ -135,6 +139,12 @@ const KILL_ROW_LIFETIME_SECONDS = 8;
 /** Name similarity (1 - edits / length) at which two stack reads show the same row. */
 const KILL_SAME_ROW_MIN_SIMILARITY = 0.7;
 
+/**
+ * The personal results screen follows the results screen of the same game;
+ * one seen this long after a closed match's scoreboard belongs to that match.
+ */
+const OWN_RESULTS_WINDOW_SECONDS = 90;
+
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
 	/** input events the match was built from, chronological — the send-status unit for callers */
@@ -142,9 +152,10 @@ export interface BuiltMatch<E extends DetectedEvent> {
 }
 
 /**
- * Splits a timeline into ScannerMatch objects, chronological. Event types that
- * identify no match (ScoreboardOwn) are ignored. Every input event ends up in
- * at most one match's `sources`.
+ * Splits a timeline into ScannerMatch objects, chronological. A personal
+ * results screen identifies no match of its own but completes the POV
+ * player's build on the match whose results screen it follows. Every input
+ * event ends up in at most one match's `sources`.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
@@ -237,11 +248,32 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			(open?.stripWeapons ?? orphanStripWeapons).push(event);
 		} else if (event.type === KILL_EVENT_TYPE) {
 			(open?.kills ?? orphanKills).push(event);
+		} else if (event.type === SCOREBOARD_OWN_EVENT_TYPE) {
+			attachOwnResults(built.at(-1), event);
 		}
 	}
 	finalize();
 
 	return built;
+}
+
+/**
+ * The personal results screen shows the POV player's full gear (mains and
+ * subs), which no other screen reads whole: it completes that player's build
+ * on the match whose scoreboard it follows.
+ */
+function attachOwnResults<E extends DetectedEvent>(
+	last: BuiltMatch<E> | undefined,
+	event: E,
+): void {
+	if (!last?.match.pov || last.match.endsAt === null) return;
+	if (event.t - last.match.endsAt > OWN_RESULTS_WINDOW_SECONDS) return;
+	const data = event.data as ScoreboardOwnData;
+	const player =
+		last.match.teams[last.match.pov.team].players[last.match.pov.index];
+	if (!player || data.abilities.length === 0) return;
+	player.abilities = data.abilities;
+	last.sources.push(event);
 }
 
 /** Why a built match is held back from /ingest; absent = it is sent. */

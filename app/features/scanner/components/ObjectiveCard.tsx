@@ -2,9 +2,10 @@ import {
 	OBJECTIVE_EVENT_TYPE,
 	type ObjectiveData,
 } from "../core/detectors/objective/index";
+import { formatClock } from "../core/format";
 import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
-import { formatClock, useEventTimeFormatter } from "./format";
+import { useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
 
 export function ObjectiveCard(props: {

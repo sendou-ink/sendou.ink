@@ -1,0 +1,32 @@
+/* as wide as the screen allows while the 16:9 video still fits under the dialog's height cap */
+.dialog {
+	width: min(1600px, calc(100vw - 2 * var(--s-4)), calc(65dvh * 16 / 9));
+	max-width: none;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.video {
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	background: #000;
+	border-radius: var(--radius-box);
+}
+
+.actions {
+	display: flex;
+	align-items: center;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+}
+
+.meta {
+	margin-inline-end: auto;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}

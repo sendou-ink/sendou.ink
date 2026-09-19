@@ -2,9 +2,10 @@ import {
 	PLAYER_STATUS_EVENT_TYPE,
 	type PlayerStatusData,
 } from "../core/detectors/objective/player-status";
+import { formatClock } from "../core/format";
 import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
-import { formatClock, useEventTimeFormatter } from "./format";
+import { useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
 
 export function PlayerStatusCard(props: {

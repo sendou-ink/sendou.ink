@@ -5,6 +5,7 @@ import type {
 } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
+import { lobbyLabel, modeLabel, stageLabel } from "../core/labels";
 import { AbilityPopover } from "./AbilityGrid";
 import {
 	EventCardMeta,
@@ -19,7 +20,6 @@ import {
 import { FrameThumb } from "./FrameThumb";
 import type { CardData } from "./fixture-export";
 import { useEventTimeFormatter } from "./format";
-import { lobbyLabel, modeLabel, stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
 function PlayerRows({

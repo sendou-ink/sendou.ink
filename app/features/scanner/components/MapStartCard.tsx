@@ -2,10 +2,10 @@ import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
+import { modeLabel, stageLabel } from "../core/labels";
 import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
-import { modeLabel, stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
 export function MapStartCard(props: {

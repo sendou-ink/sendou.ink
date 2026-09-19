@@ -1,0 +1,200 @@
+.landing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
+/* the whole landing accepts a drop, but only the File card's dropzone lights up */
+.over .dropzone {
+	border-color: var(--color-text-accent);
+	color: var(--color-text-accent);
+}
+
+.top {
+	display: flex;
+	justify-content: flex-end;
+}
+
+.cards {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(min(100%, 300px), 1fr));
+	gap: var(--s-4);
+}
+
+/* the bordered card of the scrims/availability panels */
+.card {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+}
+
+.cardTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	margin: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+}
+
+.cardText {
+	margin: 0;
+	flex: 1;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.cardActions {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: space-between;
+	gap: var(--s-2) var(--s-3);
+	align-items: flex-start;
+}
+
+.error {
+	margin: 0;
+	font-size: var(--font-2xs);
+	color: var(--color-error);
+}
+
+.dropzone {
+	display: block;
+	padding: var(--s-5) var(--s-3);
+	border: var(--border-width) dashed var(--color-border-high);
+	border-radius: var(--radius-box);
+	text-align: center;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	cursor: pointer;
+
+	&:hover {
+		border-color: var(--color-text-accent);
+		color: var(--color-text);
+	}
+}
+
+.choose {
+	text-decoration: underline;
+	color: var(--color-text-accent);
+}
+
+.fileInput {
+	display: none;
+}
+
+.checkbox {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	cursor: pointer;
+
+	& input {
+		width: var(--selector-size-sm);
+		height: var(--selector-size-sm);
+		margin: 0;
+	}
+}
+
+.sessions {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.sectionTitle {
+	margin: 0;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.empty {
+	margin: 0;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.rows {
+	display: flex;
+	flex-direction: column;
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+	overflow: hidden;
+}
+
+.row {
+	display: grid;
+	grid-template-columns: auto minmax(0, 1fr) auto auto;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2-5) var(--s-4);
+	color: inherit;
+	text-decoration: none;
+	font-size: var(--font-xs);
+
+	& + & {
+		border-top: var(--border-width) solid var(--color-border);
+	}
+
+	&:hover {
+		background: var(--color-bg-higher);
+	}
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -2px;
+	}
+}
+
+.rowTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	min-width: 0;
+	font-weight: var(--weight-bold);
+}
+
+.rowName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.tag {
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background: var(--color-bg-higher);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.08em;
+	color: var(--color-text-high);
+}
+
+.rowDate {
+	font-weight: var(--weight-body);
+	color: var(--color-text-high);
+}
+
+.rowStats {
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+	white-space: nowrap;
+}
+
+@container scanner (width < 640px) {
+	.row {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+	}
+
+	.rowStats {
+		grid-column: 2 / -1;
+		white-space: normal;
+	}
+}

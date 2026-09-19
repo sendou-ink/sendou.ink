@@ -10,6 +10,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
 import { CANONICAL_HEIGHT, CANONICAL_WIDTH, type Roi } from "../core/canonical";
+import { eventsToCsv } from "../core/csv/events";
 import type { DeathData } from "../core/detectors/death/index";
 import * as death from "../core/detectors/death/rois";
 import type { KillData } from "../core/detectors/kill/index";
@@ -32,21 +33,21 @@ import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
 import type { DetectedEvent } from "../core/detectors/types";
-import { scannerSearchParams } from "../scanner-search-params";
-import { claimInspectFrame } from "../store/inspect";
-import { AnalyzerClient } from "../worker/client";
-import type { WorkerResponse } from "../worker/protocol";
-import { downloadEventsCsv } from "./events-csv";
-import { type CardData, downloadExpectedJson } from "./fixture-export";
 import {
 	lobbyLabel,
 	mainWeaponLabel,
 	modeLabel,
 	stageLabel,
 	weaponLabel,
-} from "./labels";
+} from "../core/labels";
+import { scannerSearchParams } from "../scanner-search-params";
+import { claimInspectFrame } from "../store/inspect";
+import { AnalyzerClient } from "../worker/client";
+import type { WorkerResponse } from "../worker/protocol";
+import { Dropzone } from "./Dropzone";
+import { downloadCsv } from "./download";
+import { type CardData, downloadExpectedJson } from "./fixture-export";
 import { drawNormalizedCanvas } from "./normalized-canvas";
-import { ScannerDropzone } from "./ScannerChrome";
 import styles from "./ScreenshotPage.module.css";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
@@ -526,7 +527,7 @@ export function ScreenshotPage() {
 
 	return (
 		<div>
-			<ScannerDropzone onFile={(file) => void analyze(file)}>
+			<Dropzone onFile={(file: File) => void analyze(file)}>
 				Drop a frame (PNG/JPEG) here, or{" "}
 				<label>
 					pick a file
@@ -542,7 +543,7 @@ export function ScreenshotPage() {
 					/>
 				</label>
 				{busy ? " — analyzing…" : null}
-			</ScannerDropzone>
+			</Dropzone>
 			{error ? <p className="text-error">{error}</p> : null}
 
 			<div
@@ -566,9 +567,9 @@ export function ScreenshotPage() {
 						type="button"
 						disabled={!event}
 						onClick={() =>
-							downloadEventsCsv(
+							downloadCsv(
 								"screenshot-events.csv",
-								Object.values(results).flatMap((r) => r.events),
+								eventsToCsv(Object.values(results).flatMap((r) => r.events)),
 							)
 						}
 					>

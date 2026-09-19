@@ -1,7 +1,8 @@
 import { KILL_EVENT_TYPE, type KillData } from "../core/detectors/kill/index";
+import { formatClock } from "../core/format";
 import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
-import { formatClock, useEventTimeFormatter } from "./format";
+import { useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
 
 export function KillCard(props: {

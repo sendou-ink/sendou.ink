@@ -4,6 +4,7 @@ import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
 } from "../core/detectors/death/index";
+import { weaponLabel } from "../core/labels";
 import styles from "./DeathCard.module.css";
 import {
 	EventCardMeta,
@@ -14,7 +15,6 @@ import {
 } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
-import { weaponLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
 export function DeathCard(props: {

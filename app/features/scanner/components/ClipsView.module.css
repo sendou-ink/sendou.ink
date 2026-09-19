@@ -1,0 +1,125 @@
+.view {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.title {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.count {
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.note {
+	margin: 0;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 320px), 1fr));
+	gap: var(--s-4);
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+	overflow: hidden;
+}
+
+.video,
+.thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	background: #000 center / cover no-repeat;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	position: relative;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -3px;
+	}
+}
+
+.video {
+	cursor: default;
+}
+
+.playBadge {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+
+	&::before {
+		content: "";
+		position: absolute;
+		width: 48px;
+		height: 48px;
+		border-radius: var(--radius-full);
+		background: rgb(0 0 0 / 0.6);
+	}
+
+	& svg {
+		position: relative;
+	}
+}
+
+.cardBody {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: var(--s-2-5) var(--s-3);
+}
+
+.cardTitle {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.cardMeta {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.sourceLink {
+	flex: 1;
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+	color: inherit;
+}
+
+.cardActions {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+}
+
+.length {
+	font-variant-numeric: tabular-nums;
+	margin-inline-end: var(--s-1);
+}
+
+.storage {
+	margin: 0;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}

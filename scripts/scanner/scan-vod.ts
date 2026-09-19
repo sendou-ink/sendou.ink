@@ -17,7 +17,7 @@ import { basename } from "node:path";
 import {
 	type CsvEvent,
 	eventsToCsv,
-} from "../../app/features/scanner/components/events-csv";
+} from "../../app/features/scanner/core/csv/events";
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
 import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
 import {
