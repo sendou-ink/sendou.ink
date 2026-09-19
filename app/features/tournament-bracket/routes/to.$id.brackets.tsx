@@ -240,6 +240,7 @@ function TournamentBracketsView() {
 				</div>
 			) : null}
 			<BracketTabs
+				loadedBracket={bracket}
 				loadedBracketIdx={data.bracketIdx}
 				divisionIdx={data.divisionIdx}
 			>
@@ -424,10 +425,12 @@ function MapPreparer({
  * staying up until it arrives. A league switches only within the loader's division.
  */
 function BracketTabs({
+	loadedBracket,
 	loadedBracketIdx,
 	divisionIdx,
 	children,
 }: {
+	loadedBracket: BracketType | null;
 	loadedBracketIdx: number;
 	divisionIdx: number | null;
 	children: React.ReactNode;
@@ -439,12 +442,18 @@ function BracketTabs({
 
 	const bracketNameForTab = (name: string) => name.replace("bracket", "");
 
+	const canCompactify =
+		loadedBracket &&
+		loadedBracket.type !== "round_robin" &&
+		!loadedBracket.preview &&
+		tournament.bracketsMeta[loadedBracketIdx].enoughTeams;
+
 	return (
 		<SendouTabs
 			selectedKey={String(loadedBracketIdx)}
 			onSelectionChange={(key) => setIdxParam(Number(key))}
 		>
-			<SendouTabList>
+			<SendouTabList actions={canCompactify ? <CompactifyButton /> : null}>
 				{visibleBrackets.map((bracket) => (
 					<SendouTab
 						key={bracket.name}
@@ -485,11 +494,6 @@ function BracketTabContent({
 			<PrepareMapsButton bracket={bracket} bracketIdx={bracketIdx} />
 			{tournament.bracketsMeta[bracketIdx].enoughTeams ? (
 				<>
-					{bracket.type !== "round_robin" && !bracket.preview ? (
-						<div className="stack horizontal sm mb-4">
-							<CompactifyButton />
-						</div>
-					) : null}
 					<StartBracketAlert bracket={bracket} bracketIdx={bracketIdx} />
 					<Bracket
 						bracket={bracket}
@@ -659,6 +663,8 @@ function CompactifyButton() {
 			onClick={() => {
 				setBracketExpanded(!bracketExpanded);
 			}}
+			variant="minimal"
+			size="miniscule"
 			className={styles.compactifyButton}
 			icon={bracketExpanded ? <EyeOff /> : <Eye />}
 		>
