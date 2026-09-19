@@ -82,6 +82,9 @@ const RING_BUFFER_SECONDS = MAX_CLIP_SECONDS + STREAK_MAX_GAP_S + 10;
 
 /** Windows close by time passing, not only by new events. */
 const CLIP_TICK_MS = 5_000;
+/** how often the audio input is checked for a signal, and how long without one counts as silent */
+const AUDIO_CHECK_MS = 1_000;
+const AUDIO_SILENCE_MS = 5_000;
 
 /** Event types the ingested matches are built from — the only ones with a send status. */
 const INGESTABLE_TYPES = [
@@ -95,6 +98,8 @@ const INGESTABLE_TYPES = [
 export type LiveStatus = "idle" | "starting" | "running" | "error";
 /** `unsupported`: no WebCodecs/track processor; `failed`: the encoder refused this stream */
 export type ClipsState = "on" | "off" | "unsupported" | "failed";
+/** `muted`: the browser gets nothing from the device; `silent`: it gets samples, all of them silence */
+export type AudioSignal = "ok" | "silent" | "muted";
 
 export interface LiveSnapshot {
 	status: LiveStatus;
@@ -106,6 +111,8 @@ export interface LiveSnapshot {
 	hasAudio: boolean;
 	/** why it does not, when an audio input was expected */
 	audioError: string | null;
+	/** what the clip encoder is getting from that track; null while clips are off */
+	audioSignal: AudioSignal | null;
 	clips: ClipsState;
 	/** highest gate score on the latest frame (debug) */
 	gateScore: number | null;
@@ -120,6 +127,7 @@ const IDLE: LiveSnapshot = {
 	stream: null,
 	hasAudio: false,
 	audioError: null,
+	audioSignal: null,
 	clips: "off",
 	gateScore: null,
 	detecting: false,
@@ -134,6 +142,7 @@ let ring: ClipRingBuffer | null = null;
 let stopSampler: (() => void) | null = null;
 let retryTimer: ReturnType<typeof setInterval> | null = null;
 let clipTimer: ReturnType<typeof setInterval> | null = null;
+let audioTimer: ReturnType<typeof setInterval> | null = null;
 let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
@@ -244,6 +253,7 @@ export async function startCapture(): Promise<void> {
 			}
 		}, UNLINKED_RETRY_TICK_MS);
 		clipTimer = setInterval(clipTick, CLIP_TICK_MS);
+		audioTimer = setInterval(audioCheck, AUDIO_CHECK_MS);
 		unsubscribeFeed = subscribeFeed(clipTick);
 		void trimEvents().catch(() => {});
 		set({
@@ -290,6 +300,8 @@ function release(): void {
 	retryTimer = null;
 	if (clipTimer) clearInterval(clipTimer);
 	clipTimer = null;
+	if (audioTimer) clearInterval(audioTimer);
+	audioTimer = null;
 	unsubscribeFeed?.();
 	unsubscribeFeed = null;
 	ring?.stop();
@@ -372,6 +384,23 @@ async function persist(
 		set({ error: describeError(error) });
 	}
 	refreshFeed();
+}
+
+/** Whether the clip encoder is getting sound; a device that opens fine but delivers silence shows up here. */
+function audioCheck(): void {
+	if (snapshot.status !== "running") return;
+	const track = snapshot.stream?.getAudioTracks()[0];
+	const signalAt = ring?.audioSignalAt ?? null;
+	const next: AudioSignal | null = !track
+		? null
+		: track.muted || track.readyState === "ended"
+			? "muted"
+			: signalAt === null
+				? null
+				: Date.now() / 1000 - signalAt > AUDIO_SILENCE_MS / 1000
+					? "silent"
+					: "ok";
+	if (next !== snapshot.audioSignal) set({ audioSignal: next });
 }
 
 /** Cuts every scored window of the running session whose post-roll is in the ring. */

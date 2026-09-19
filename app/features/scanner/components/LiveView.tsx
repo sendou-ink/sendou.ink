@@ -57,7 +57,11 @@ export function LiveView() {
 	const clipsNote =
 		live.clips === "on"
 			? live.hasAudio
-				? "Clips on · Audio ✓"
+				? live.audioSignal === "muted"
+					? "Clips on · audio input muted by the browser"
+					: live.audioSignal === "silent"
+						? "Clips on · Audio ✓ but only silence is coming in"
+						: "Clips on · Audio ✓"
 				: `Clips on · no audio${live.audioError ? ` (${live.audioError})` : ""}`
 			: live.clips === "unsupported"
 				? "Clips need a Chromium browser"
