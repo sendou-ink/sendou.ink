@@ -1,4 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	tournamentDataCached,
 	tournamentFromParams,
@@ -11,6 +12,7 @@ import type { SerializeFrom } from "~/utils/remix";
 import { parseParams } from "~/utils/remix.server";
 import * as Standings from "../core/Standings";
 import { type AllRoundsItem, tournamentTeamSets } from "../core/sets.server";
+import * as TournamentTeamRepository from "../TournamentTeamRepository.server";
 
 export type TournamentTeamLoaderData = SerializeFrom<typeof loader>;
 
@@ -62,6 +64,10 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	return {
 		tournamentTeamId,
 		team,
+		// the invite link of the add sub popover, only the team's own captain gets it
+		subInviteCode: canAddSubs(fullTournament, tournamentTeamId, user)
+			? await TournamentTeamRepository.findInviteCodeById(tournamentTeamId)
+			: null,
 		activePlayers:
 			sets.length > 0
 				? fullTournament.participatedPlayerUserIdsByTeamId(tournamentTeamId)
@@ -98,3 +104,18 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				: undefined,
 	};
 };
+
+function canAddSubs(
+	tournament: Tournament,
+	tournamentTeamId: number,
+	user: { id: number } | undefined,
+) {
+	if (tournament.ownedTeamByUser(user)?.id !== tournamentTeamId) return false;
+
+	return (
+		tournament.hasStarted &&
+		!tournament.everyBracketOver &&
+		tournament.autonomousSubs &&
+		tournament.teamMemberOfProgressStatus(user)?.type !== "THANKS_FOR_PLAYING"
+	);
+}

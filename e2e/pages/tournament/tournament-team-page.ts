@@ -21,6 +21,13 @@ export class TournamentTeamPage {
 		});
 	}
 
+	/** Copies the sub invite link of the own team and reads it off the clipboard. */
+	async copySubInviteLink(): Promise<string> {
+		await this.page.getByTestId("add-sub-button").click();
+		await this.page.getByTestId("copy-invite-link-button").click();
+		return this.page.evaluate("navigator.clipboard.readText()");
+	}
+
 	/** A map of the team's counterpick map pool, shown to organizers before the tournament starts. */
 	mapPoolStage(mode: ModeShort, stageId: StageId) {
 		return this.page.getByTestId(`team-map-pool-${mode}-${stageId}`);

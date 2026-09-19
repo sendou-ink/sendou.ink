@@ -39,7 +39,6 @@ export class TournamentBracketsPage {
 			byeTeam: page.getByTestId("bye-team"),
 			prepareMapsButton: page.getByTestId("prepare-maps-button"),
 			preparedMapsCheckIcon: page.getByTestId("prepared-maps-check-icon"),
-			waitingOnGroupText: page.getByText("Waiting on group to finish"),
 		};
 	}
 
@@ -161,13 +160,6 @@ export class TournamentBracketsPage {
 		// a click that beat hydration loads the match page as a new document
 		await expectIsHydrated(this.page);
 		return new TournamentMatchPage(this.page);
-	}
-
-	/** Copies the sub invite link of the own team and reads it off the clipboard. */
-	async copySubInviteLink(): Promise<string> {
-		await this.page.getByTestId("add-sub-button").click();
-		await this.page.getByTestId("copy-invite-link-button").click();
-		return this.page.evaluate("navigator.clipboard.readText()");
 	}
 
 	/** Checks the own team in to a bracket that requires a check-in. */

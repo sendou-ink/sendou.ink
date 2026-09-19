@@ -1,6 +1,5 @@
 import { type LoaderFunctionArgs, redirect } from "react-router";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
-import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { tournamentDivisionsPage } from "~/utils/urls";
 import type { Bracket } from "../core/Bracket";
@@ -50,8 +49,6 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 		});
 	}
 
-	const ownedTeam = tournament.ownedTeamByUser(user);
-
 	return {
 		bracketIdx,
 		divisionIdx,
@@ -62,12 +59,9 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					groupId: bracket.preview ? null : groupId,
 				})
 			: null,
-		// the invite link of the add subs popover, only the team's own captain sees it
-		ownTeamInviteCode: ownedTeam
-			? await TournamentTeamRepository.findInviteCodeById(ownedTeam.id)
-			: null,
 		// the layout does not ship these, standings derived in the view need them
 		participatedUserIds: tournament.participatedUserIds,
+		// only its bracket check-in is acted on here, the header status indicator covers the rest
 		teamProgressStatus: tournament.teamMemberOfProgressStatus(user),
 		// the match cards' LIVE badges need these, also not shipped by the layout
 		streams: tournament.streams,

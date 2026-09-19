@@ -13,6 +13,7 @@ import {
 	teamSeeds,
 } from "./helpers/tournament";
 import { CalendarNewEventPage } from "./pages/calendar/calendar-new-event-page";
+import { TopRightButtons } from "./pages/layout/top-right-buttons";
 import { TournamentAdminPage } from "./pages/tournament/tournament-admin-page";
 import { TournamentAdminRegistrationPage } from "./pages/tournament/tournament-admin-registration-page";
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
@@ -209,7 +210,10 @@ test.describe("Tournament bracket multi stage", () => {
 			await match.backToBracket();
 		}
 
-		await expect(brackets.locators.waitingOnGroupText).toBeVisible();
+		// Sendou's team has finished its group's matches, the header says so while the last one plays out
+		await expect(
+			new TopRightButtons(page).globalStatus("Waiting for match"),
+		).toBeVisible();
 
 		const lastGroupsMatch = await brackets.openMatch(5);
 		await lastGroupsMatch.openTab("action");

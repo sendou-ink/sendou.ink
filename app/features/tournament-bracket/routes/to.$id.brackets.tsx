@@ -7,7 +7,6 @@ import {
 	ShieldMinus,
 	ShieldPlus,
 	Stamp,
-	UserPlus,
 } from "lucide-react";
 import * as React from "react";
 import { ErrorBoundary } from "react-error-boundary";
@@ -19,7 +18,6 @@ import {
 	useOutletContext,
 } from "react-router";
 import { Alert } from "~/components/Alert";
-import { Divider } from "~/components/Divider";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import {
@@ -28,7 +26,6 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { InviteLinkInput } from "~/components/InviteLinkInput";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
@@ -37,12 +34,10 @@ import {
 	TournamentProvider,
 	useTournament,
 } from "~/features/tournament/tournament-context";
-import { tournamentJoinPage } from "~/features/tournament/tournament-urls";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { SENDOU_INK_BASE_URL } from "~/utils/urls";
 import {
 	useBracketExpanded,
 	useTournamentPreparedMaps,
@@ -50,8 +45,8 @@ import {
 import { action } from "../actions/to.$id.brackets.server";
 import { Bracket } from "../components/Bracket";
 import { useBracketSpoilerCensor } from "../components/Bracket/useBracketSpoilerCensor";
+import { BracketCheckIn } from "../components/BracketCheckIn";
 import { BracketMapListDialog } from "../components/BracketMapListDialog";
-import { TournamentTeamActions } from "../components/TournamentTeamActions";
 import * as AbDivisions from "../core/AbDivisions";
 import type { Bracket as BracketType } from "../core/Bracket";
 import * as PreparedMaps from "../core/PreparedMaps";
@@ -122,13 +117,11 @@ function TournamentBracketsView() {
 		!tournament.ctx.isFinalized,
 	);
 
-	const teamProgressStatus = data.teamProgressStatus;
-	const showAddSubsButton =
-		!tournament.canFinalize(user) &&
-		!tournament.everyBracketOver &&
-		tournament.hasStarted &&
-		tournament.autonomousSubs &&
-		teamProgressStatus?.type !== "THANKS_FOR_PLAYING";
+	const bracketCheckInIdx =
+		data.teamProgressStatus?.type === "CHECKIN" &&
+		typeof data.teamProgressStatus.bracketIdx === "number"
+			? data.teamProgressStatus.bracketIdx
+			: null;
 
 	const {
 		censored,
@@ -137,8 +130,6 @@ function TournamentBracketsView() {
 		hide: hideSpoiler,
 	} = useBracketSpoilerCensor();
 
-	const showTeamActionsRow =
-		(!tournament.isLeague && Boolean(teamProgressStatus)) || showAddSubsButton;
 	const showSecondaryActionsRow =
 		tournament.canFinalize(user) || censored || canToggle;
 
@@ -220,13 +211,9 @@ function TournamentBracketsView() {
 	return (
 		<div>
 			<Outlet context={ctx} />
-			{showTeamActionsRow ? (
-				<div className="stack horizontal mb-4 sm justify-between items-center">
-					{/** TournamentTeamActions more confusing than helpful for leagues, for example might say "Waiting for match..." when previous match was rescheduled  */}
-					{!tournament.isLeague ? (
-						<TournamentTeamActions status={teamProgressStatus} />
-					) : null}
-					{showAddSubsButton ? <AddSubsPopOver /> : null}
+			{bracketCheckInIdx !== null ? (
+				<div className="stack horizontal mb-4 items-center">
+					<BracketCheckIn bracketIdx={bracketCheckInIdx} />
 				</div>
 			) : null}
 			{showSecondaryActionsRow ? (
@@ -429,64 +416,6 @@ function MapPreparer({
 				</SendouButton>
 			</div>
 		</>
-	);
-}
-
-function AddSubsPopOver() {
-	const { t } = useTranslation(["common", "tournament"]);
-	const tournament = useTournament();
-	const user = useUser();
-	const data = useLoaderData<TournamentBracketsLoaderData>();
-
-	const ownedTeam = tournament.ownedTeamByUser(user);
-	if (!ownedTeam || !data.ownTeamInviteCode) {
-		const teamMemberOf = tournament.teamMemberOfByUser(user);
-		if (!teamMemberOf) return null;
-
-		return <SubsPopover>Only team captain or a TO can add subs</SubsPopover>;
-	}
-
-	const subsAvailableToAdd =
-		tournament.maxMembersPerTeam - ownedTeam.memberUserIds.length;
-
-	const inviteLink = `${SENDOU_INK_BASE_URL}${tournamentJoinPage({
-		tournamentId: tournament.ctx.id,
-		inviteCode: data.ownTeamInviteCode,
-	})}`;
-
-	return (
-		<SubsPopover>
-			{t("tournament:actions.sub.prompt", { count: subsAvailableToAdd })}
-			{subsAvailableToAdd > 0 ? (
-				<>
-					<Divider className="my-2" />
-					<InviteLinkInput link={inviteLink} />
-				</>
-			) : null}
-		</SubsPopover>
-	);
-}
-
-function SubsPopover({ children }: { children: React.ReactNode }) {
-	const { t } = useTranslation(["tournament"]);
-
-	return (
-		<SendouPopover
-			popoverClassName="text-xs"
-			trigger={
-				<SendouButton
-					className="ml-auto"
-					variant="outlined"
-					size="small"
-					icon={<UserPlus />}
-					data-testid="add-sub-button"
-				>
-					{t("tournament:actions.addSub")}
-				</SendouButton>
-			}
-		>
-			{children}
-		</SendouPopover>
 	);
 }
 
