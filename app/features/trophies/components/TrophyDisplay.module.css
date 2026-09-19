@@ -5,25 +5,6 @@
 	width: max-content;
 }
 
-.grid {
-	display: grid;
-	grid-template-columns: repeat(3, 100px);
-	justify-content: center;
-	gap: var(--s-2);
-	padding: var(--s-2);
-	border: var(--border-style);
-	border-radius: var(--radius-box);
-}
-
-.trophyButton {
-	all: unset;
-	cursor: pointer;
-	position: relative;
-	display: flex;
-	align-items: center;
-	justify-content: center;
-}
-
 .win {
 	display: flex;
 	flex-direction: column;

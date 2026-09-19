@@ -64,5 +64,32 @@ describe("trophy submissions before release", () => {
 			await TrophyRepository.pendingBySubmitter(REGULAR_USER_TEST_ID);
 		expect(pending.length).toBe(1);
 		expect(pending[0].name).toBe("Regular Trophy");
+		expect(pending[0].creatorId).toBe(REGULAR_USER_TEST_ID);
+	});
+
+	test("a submission can name someone else as the creator", async () => {
+		const organization = await TournamentOrganizationFactory.create({
+			ownerId: ADMIN_ID,
+		});
+		const artist = await UserFactory.create();
+
+		const result = await submitAction(
+			{
+				_action: "CREATE",
+				name: "Commissioned Trophy",
+				model: decompressFromBase64(TrophyFactory.MODELS[0]) ?? "",
+				organizationId: organization.id,
+				creatorId: artist.id,
+				description: null,
+			},
+			{ user: "regular" },
+		);
+
+		expect(result).toBe(null);
+
+		const pending =
+			await TrophyRepository.pendingBySubmitter(REGULAR_USER_TEST_ID);
+		expect(pending[0].creatorId).toBe(artist.id);
+		expect(pending[0].creator?.id).toBe(artist.id);
 	});
 });

@@ -1,6 +1,8 @@
 .mobileNav {
 	display: block;
 	position: fixed;
+	/* captured on its own so animating content slides under it instead of over it */
+	view-transition-name: layout-mobile-nav;
 	inset: auto 0 0 0;
 	width: auto;
 	height: auto;
@@ -402,4 +404,14 @@
 	&::backdrop {
 		animation: none;
 	}
+}
+
+::view-transition-group(layout-mobile-nav) {
+	z-index: 1;
+}
+
+::view-transition-group(layout-mobile-nav),
+::view-transition-old(layout-mobile-nav),
+::view-transition-new(layout-mobile-nav) {
+	animation-duration: 0s;
 }

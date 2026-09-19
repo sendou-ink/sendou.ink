@@ -1,9 +1,11 @@
 import clsx from "clsx";
 import { Check, CircleAlert, OctagonAlert, X } from "lucide-react";
 import * as React from "react";
-import { flushSync } from "react-dom";
+import { ViewTransition } from "react";
 import { useTranslation } from "react-i18next";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
+import { finishUpdateIfUnmoved } from "~/utils/view-transition";
 import { SendouButton } from "./Button";
 import styles from "./Toast.module.css";
 
@@ -42,27 +44,16 @@ class ToastQueue {
 
 	subscribe = (listener: () => void) => {
 		this.listeners.add(listener);
-		return () => this.listeners.delete(listener);
+		return () => {
+			this.listeners.delete(listener);
+		};
 	};
 
 	getSnapshot = () => this.toasts;
 
 	private update(mutate: () => void) {
-		const notify = () => {
-			mutate();
-			flushSync(() => {
-				for (const listener of this.listeners) listener();
-			});
-		};
-
-		if (typeof document !== "undefined" && "startViewTransition" in document) {
-			const transition = document.startViewTransition(notify);
-			// rejects with AbortError if another transition interrupts this one
-			transition.ready.catch(() => {});
-		} else {
-			mutate();
-			for (const listener of this.listeners) listener();
-		}
+		mutate();
+		for (const listener of this.listeners) listener();
 	}
 }
 
@@ -72,14 +63,20 @@ const EMPTY_TOASTS: QueuedToast[] = [];
 
 export function SendouToastRegion() {
 	const { t } = useTranslation(["common"]);
-	const toasts = React.useSyncExternalStore(
-		toastQueue.subscribe,
-		toastQueue.getSnapshot,
-		() => EMPTY_TOASTS,
-	);
+	const [toasts, setToasts] = React.useState(EMPTY_TOASTS);
+	React.useEffect(() => {
+		const sync = () => {
+			React.startTransition(() => setToasts(toastQueue.getSnapshot()));
+		};
+		const unsubscribe = toastQueue.subscribe(sync);
+		// a toast added before this subscription (e.g. from a layout effect on load)
+		sync();
+		return unsubscribe;
+	}, []);
 	const regionRef = React.useRef<HTMLDivElement>(null);
 
-	React.useEffect(() => {
+	// layout effect so the region is open before the entering toast gets snapshotted
+	useIsomorphicLayoutEffect(() => {
 		const region = regionRef.current;
 		if (!region) return;
 		if (toasts.length > 0 && !region.matches(":popover-open")) {
@@ -97,35 +94,40 @@ export function SendouToastRegion() {
 			className={clsx(styles.toastRegion, { hidden: IS_E2E_TEST_RUN })}
 		>
 			{toasts.map((toast) => (
-				<div
+				<ViewTransition
 					key={toast.key}
-					role={toast.content.variant === "error" ? "alert" : "status"}
-					style={{ viewTransitionName: toast.key }}
-					className={clsx(styles.toast, {
-						[styles.errorToast]: toast.content.variant === "error",
-						[styles.successToast]: toast.content.variant === "success",
-						[styles.infoToast]: toast.content.variant === "info",
-					})}
+					enter="toast"
+					exit="toast"
+					onUpdate={finishUpdateIfUnmoved}
 				>
-					<div className={styles.topRow}>
-						{toast.content.variant === "success" ? (
-							<Check className={styles.alertIcon} />
-						) : toast.content.variant === "error" ? (
-							<OctagonAlert className={styles.alertIcon} />
-						) : (
-							<CircleAlert className={styles.alertIcon} />
-						)}
-						{t(`common:toasts.${toast.content.variant}`)}
-						<SendouButton
-							variant="minimal"
-							icon={<X />}
-							className={styles.closeButton}
-							aria-label="Close"
-							onClick={() => toastQueue.close(toast.key)}
-						/>
+					<div
+						role={toast.content.variant === "error" ? "alert" : "status"}
+						className={clsx(styles.toast, {
+							[styles.errorToast]: toast.content.variant === "error",
+							[styles.successToast]: toast.content.variant === "success",
+							[styles.infoToast]: toast.content.variant === "info",
+						})}
+					>
+						<div className={styles.topRow}>
+							{toast.content.variant === "success" ? (
+								<Check className={styles.alertIcon} />
+							) : toast.content.variant === "error" ? (
+								<OctagonAlert className={styles.alertIcon} />
+							) : (
+								<CircleAlert className={styles.alertIcon} />
+							)}
+							{t(`common:toasts.${toast.content.variant}`)}
+							<SendouButton
+								variant="minimal"
+								icon={<X />}
+								className={styles.closeButton}
+								aria-label="Close"
+								onClick={() => toastQueue.close(toast.key)}
+							/>
+						</div>
+						<div>{toast.content.message}</div>
 					</div>
-					<div>{toast.content.message}</div>
-				</div>
+				</ViewTransition>
 			))}
 		</section>
 	);

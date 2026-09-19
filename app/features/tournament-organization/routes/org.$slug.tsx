@@ -40,7 +40,6 @@ import {
 	Trophy,
 	TrophyContextProvider,
 	TrophyGrid,
-	TrophyPlaceholder,
 } from "~/features/trophies/components/Trophy";
 import { TrophyShowcaseModal } from "~/features/trophies/components/TrophyShowcase";
 import { TrophyTournamentHistory } from "~/features/trophies/components/TrophyTournamentHistory";
@@ -734,27 +733,22 @@ function RewardsTrophyGrid({
 	return (
 		<TrophyContextProvider>
 			<TrophyGrid>
-				{trophies.map((trophy, i) =>
-					i < visibleCount ? (
-						<button
-							key={trophy.id}
-							type="button"
-							className={styles.trophyGridButton}
-							onClick={() => setOpenTrophy(trophy)}
-							aria-label={trophy.name}
-						>
-							<Trophy
-								tile
-								model={trophy.model}
-								tier={trophy.tier}
-								tentativeTier={trophy.tentativeTier}
-								preview
-							/>
-						</button>
-					) : (
-						<TrophyPlaceholder key={trophy.id} />
-					),
-				)}
+				{trophies.map((trophy, i) => (
+					<button
+						key={trophy.id}
+						type="button"
+						onClick={() => setOpenTrophy(trophy)}
+						aria-label={trophy.name}
+					>
+						<Trophy
+							model={trophy.model}
+							tier={trophy.tier}
+							tentativeTier={trophy.tentativeTier}
+							preview
+							deferred={i >= visibleCount}
+						/>
+					</button>
+				))}
 			</TrophyGrid>
 			{openTrophy ? (
 				<TrophyShowcaseModal

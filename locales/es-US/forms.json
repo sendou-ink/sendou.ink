@@ -459,6 +459,7 @@
 	"labels.trophyModel": "Estado del modelo 3D",
 	"labels.trophyOrganization": "Organización",
 	"labels.trophyManager": "Mánager",
+	"labels.trophyCreator": "",
 	"labels.trophyInformation": "Información adicional",
 	"labels.profileFavoriteTrophies": "Trofeos favoritos",
 	"labels.profileHiddenTrophies": "Trofeos ocultos",

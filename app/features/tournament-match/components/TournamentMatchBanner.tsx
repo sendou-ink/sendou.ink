@@ -17,6 +17,7 @@ import {
 	MatchBannerContainer,
 	MatchBannerInfoBadge,
 	MultiMatchBanner,
+	preloadStageBanners,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
@@ -54,7 +55,17 @@ export function TournamentMatchBanner({
 		joinPool,
 		joinPass,
 		teams,
+		scoreSum,
 	} = useMatch();
+
+	if (!data.matchIsOver) {
+		preloadStageBanners(
+			(data.mapList ?? [])
+				.filter((map) => !map.bannedByTournamentTeamId)
+				.slice(scoreSum)
+				.map((map) => map.stageId),
+		);
+	}
 
 	const [teamOne, teamTwo] = teams;
 	const hostingTeam =

@@ -7,8 +7,21 @@
 
 	html {
 		color-scheme: light dark;
+		/* only elements React names take part in view transitions, the rest of the page swaps instantly */
+		view-transition-name: none;
 		accent-color: var(--color-text-accent);
 		scroll-padding-top: var(--layout-sticky-top);
+	}
+
+	/* the page stays usable while a transition plays */
+	::view-transition {
+		pointer-events: none;
+	}
+
+	/* a card React decided not to animate is left as an old-only snapshot that would still
+	   fade for the full duration, holding the next render for a transition of no change */
+	::view-transition-old(.card-update):only-child {
+		animation-duration: 0s;
 	}
 
 	body {
@@ -673,6 +686,14 @@
 			var(--layout-nav-height) +
 			env(safe-area-inset-bottom)
 		) !important;
+	}
+}
+
+/* the consent dialog is drawn outside the top layer, where the tab bar would cover its buttons */
+@media screen and (max-width: 599px) {
+	body:not(:has(.planner)) #qc-cmp2-container .qc-cmp-cleanslate {
+		bottom: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
+		height: auto;
 	}
 }
 

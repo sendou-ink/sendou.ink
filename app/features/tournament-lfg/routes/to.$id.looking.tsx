@@ -1,7 +1,6 @@
 import clsx from "clsx";
 import { Mic, Trash } from "lucide-react";
 import * as React from "react";
-import { Flipper } from "react-flip-toolkit";
 import { useTranslation } from "react-i18next";
 import { useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
@@ -100,8 +99,6 @@ function GroupsView({
 		data.likes.received.some((like) => like.teamId === group.id),
 	);
 
-	const flipKey = `${neutralGroups.map((g) => `${g.id}-${isMobile ? true : data.likes.given.some((l) => l.teamId === g.id)}`).join(":")}:${groupsReceivedLikesFrom.map((g) => g.id).join(":")}`;
-
 	const invitedGroupsDesktop = (
 		<div className="stack sm">
 			<ColumnHeader>{t("q:looking.columns.invited")}</ColumnHeader>
@@ -139,99 +136,94 @@ function GroupsView({
 	);
 
 	return (
-		<Flipper flipKey={flipKey}>
-			<div
-				className={clsx(styles.container, {
-					[styles.containerMobile]: isMobile,
-				})}
-			>
-				{!isMobile ? (
-					<div>
-						<SendouTabs>
-							<SendouTabList>
-								<SendouTab id="own" number={ownTabMemberCount}>
-									{t("q:looking.columns.myGroup")}
-								</SendouTab>
-							</SendouTabList>
-							<SendouTabPanel id="own">{leftColumnContent}</SendouTabPanel>
-						</SendouTabs>
-					</div>
-				) : null}
-				<div className={styles.innerContainer}>
+		<div
+			className={clsx(styles.container, {
+				[styles.containerMobile]: isMobile,
+			})}
+		>
+			{!isMobile ? (
+				<div>
 					<SendouTabs>
 						<SendouTabList>
-							<SendouTab id="groups" number={neutralGroups.length}>
-								{t("q:looking.columns.groups")}
+							<SendouTab id="own" number={ownTabMemberCount}>
+								{t("q:looking.columns.myGroup")}
 							</SendouTab>
-							{isMobile ? (
-								<SendouTab
-									id="received"
-									number={groupsReceivedLikesFrom.length}
-								>
-									{t("q:looking.columns.invitations")}
-								</SendouTab>
-							) : null}
-							{isMobile ? (
-								<SendouTab id="own" number={ownTabMemberCount}>
-									{t("q:looking.columns.myGroup")}
-								</SendouTab>
-							) : null}
 						</SendouTabList>
-						<SendouTabPanel id="groups">
-							<div className="stack sm">
-								<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
-								{(isMobile
-									? compatibleGroups.filter(
-											(group) =>
-												!data.likes.received.some(
-													(like) => like.teamId === group.id,
-												),
-										)
-									: neutralGroups
-								).map((group) => (
-									<LFGGroupCard
-										key={group.id}
-										group={group}
-										action={
-											data.likes.given.some((like) => like.teamId === group.id)
-												? "UNLIKE"
-												: "LIKE"
-										}
-										ownGroup={data.ownGroup ?? undefined}
-									/>
-								))}
-							</div>
-						</SendouTabPanel>
-						<SendouTabPanel id="received">
-							<div className="stack sm">
-								{groupsReceivedLikesFrom.map((group) => (
-									<LFGGroupCard
-										key={group.id}
-										group={group}
-										action="ACCEPT"
-										ownGroup={data.ownGroup ?? undefined}
-									/>
-								))}
-							</div>
-						</SendouTabPanel>
 						<SendouTabPanel id="own">{leftColumnContent}</SendouTabPanel>
 					</SendouTabs>
 				</div>
-				{!isMobile ? (
-					<div className="stack sm">
-						<ColumnHeader>{t("q:looking.columns.invitations")}</ColumnHeader>
-						{groupsReceivedLikesFrom.map((group) => (
-							<LFGGroupCard
-								key={group.id}
-								group={group}
-								action="ACCEPT"
-								ownGroup={data.ownGroup ?? undefined}
-							/>
-						))}
-					</div>
-				) : null}
+			) : null}
+			<div className={styles.innerContainer}>
+				<SendouTabs>
+					<SendouTabList>
+						<SendouTab id="groups" number={neutralGroups.length}>
+							{t("q:looking.columns.groups")}
+						</SendouTab>
+						{isMobile ? (
+							<SendouTab id="received" number={groupsReceivedLikesFrom.length}>
+								{t("q:looking.columns.invitations")}
+							</SendouTab>
+						) : null}
+						{isMobile ? (
+							<SendouTab id="own" number={ownTabMemberCount}>
+								{t("q:looking.columns.myGroup")}
+							</SendouTab>
+						) : null}
+					</SendouTabList>
+					<SendouTabPanel id="groups">
+						<div className="stack sm">
+							<ColumnHeader>{t("q:looking.columns.available")}</ColumnHeader>
+							{(isMobile
+								? compatibleGroups.filter(
+										(group) =>
+											!data.likes.received.some(
+												(like) => like.teamId === group.id,
+											),
+									)
+								: neutralGroups
+							).map((group) => (
+								<LFGGroupCard
+									key={group.id}
+									group={group}
+									action={
+										data.likes.given.some((like) => like.teamId === group.id)
+											? "UNLIKE"
+											: "LIKE"
+									}
+									ownGroup={data.ownGroup ?? undefined}
+								/>
+							))}
+						</div>
+					</SendouTabPanel>
+					<SendouTabPanel id="received">
+						<div className="stack sm">
+							{groupsReceivedLikesFrom.map((group) => (
+								<LFGGroupCard
+									key={group.id}
+									group={group}
+									action="ACCEPT"
+									ownGroup={data.ownGroup ?? undefined}
+								/>
+							))}
+						</div>
+					</SendouTabPanel>
+					<SendouTabPanel id="own">{leftColumnContent}</SendouTabPanel>
+				</SendouTabs>
 			</div>
-		</Flipper>
+			{!isMobile ? (
+				<div className="stack sm">
+					<ColumnHeader>{t("q:looking.columns.invitations")}</ColumnHeader>
+					{groupsReceivedLikesFrom.map((group) => (
+						<LFGGroupCard
+							key={group.id}
+							group={group}
+							action="ACCEPT"
+							ownGroup={data.ownGroup ?? undefined}
+						/>
+					))}
+				</div>
+			) : null}
+		</div>
 	);
 }
 
