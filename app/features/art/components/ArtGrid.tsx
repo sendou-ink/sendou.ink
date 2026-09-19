@@ -1,11 +1,11 @@
 import clsx from "clsx";
-import { SquarePen, Trash, Unlink, X } from "lucide-react";
+import { SquarePen, Trash, Unlink } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouModal } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
 import { artPage, newArtPage, userArtPage } from "~/features/art/art-urls";
@@ -23,6 +23,8 @@ import { artGridSearchParams } from "../art-search-params";
 import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
+
+const preloadedImageUrls = new Set<string>();
 
 export function ArtGrid({
 	arts,
@@ -84,68 +86,99 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
+	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	const [infoVisible, setInfoVisible] = React.useState(true);
 	const [imageSettled, imageRef] = useImageSettled();
+	const [aspectRatio, placeholderRef] = useImageAspectRatio();
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
 	});
 
+	const dateText = formatter.format(databaseTimestampToDate(art.createdAt));
+
+	const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+		const target = event.target as HTMLElement;
+		if (target.closest("a")) return;
+		if (target.closest("figure") && !deviceCanHover()) {
+			setInfoVisible((visible) => !visible);
+			return;
+		}
+		dialogRef.current?.close();
+	};
+
 	return (
-		<SendouDialog
-			heading={formatter.format(databaseTimestampToDate(art.createdAt)) ?? ""}
+		<SendouModal
+			ref={dialogRef}
+			className={styles.lightbox}
+			blurredBackdrop
 			onClose={close}
-			isFullScreen
+			aria-label={art.description || dateText}
 		>
-			<img
-				alt=""
-				src={art.url}
-				loading="lazy"
-				className={styles.dialogImg}
-				ref={imageRef}
-			/>
-			{art.tags || art.linkedUsers ? (
-				<div
-					className={clsx(styles.tagsContainer, { invisible: !imageSettled })}
-				>
-					{art.linkedUsers?.map((user) => (
-						<Link
-							to={userPage(user)}
-							key={user.discordId}
-							className={clsx(styles.dialogTag, styles.dialogTagUser)}
-						>
-							{user.username}
-						</Link>
-					))}
-					{art.tags?.map((tag) => (
-						<Link
-							to={artPage(tag.name)}
-							key={tag.id}
-							className={styles.dialogTag}
-						>
-							#{tag.name}
-						</Link>
-					))}
-				</div>
-			) : null}
-			{art.description ? (
-				<div
-					className={clsx(styles.dialogDescription, {
-						invisible: !imageSettled,
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: click-anywhere to close, Escape is handled by the dialog */}
+			<div className={styles.lightboxBody} onClick={handleClick}>
+				<figure
+					className={clsx(styles.lightboxFigure, {
+						[styles.lightboxFigureSized]: aspectRatio,
 					})}
+					style={
+						aspectRatio
+							? ({ "--aspect-ratio": aspectRatio } as React.CSSProperties)
+							: undefined
+					}
 				>
-					{art.description}
-				</div>
-			) : null}
-			<SendouButton
-				variant="destructive"
-				className="mx-auto mt-6"
-				onClick={close}
-				icon={<X />}
-			>
-				Close
-			</SendouButton>
-		</SendouDialog>
+					<img
+						alt=""
+						src={previewUrl(art.url)}
+						className={styles.lightboxPlaceholder}
+						ref={placeholderRef}
+					/>
+					<img
+						alt=""
+						src={art.url}
+						className={clsx(styles.lightboxImg, {
+							[styles.lightboxImgSettled]: imageSettled,
+						})}
+						ref={imageRef}
+					/>
+					<figcaption
+						className={clsx(styles.lightboxInfo, {
+							[styles.lightboxInfoHidden]: !infoVisible,
+						})}
+					>
+						<time className={styles.lightboxDate}>{dateText}</time>
+						{art.description ? (
+							<div className={styles.lightboxDescription}>
+								{art.description}
+							</div>
+						) : null}
+						{art.tags || art.linkedUsers ? (
+							<div className={styles.tagsContainer}>
+								{art.linkedUsers?.map((user) => (
+									<Link
+										to={userPage(user)}
+										key={user.discordId}
+										className={clsx(styles.dialogTag, styles.dialogTagUser)}
+									>
+										{user.username}
+									</Link>
+								))}
+								{art.tags?.map((tag) => (
+									<Link
+										to={artPage(tag.name)}
+										key={tag.id}
+										className={styles.dialogTag}
+									>
+										#{tag.name}
+									</Link>
+								))}
+							</div>
+						) : null}
+					</figcaption>
+				</figure>
+			</div>
+		</SendouModal>
 	);
 }
 
@@ -173,6 +206,7 @@ function ImagePreview({
 			src={previewUrl(art.url)}
 			loading="lazy"
 			onClick={onClick}
+			onPointerEnter={enablePreview ? () => preloadImage(art.url) : undefined}
 			ref={imageRef}
 			className={enablePreview ? styles.thumbnail : undefined}
 			data-testid="art-image"
@@ -328,4 +362,40 @@ function useImageSettled() {
 	};
 
 	return [imageSettled, imageRef] as const;
+}
+
+/** Aspect ratio of the image once it has loaded, and the ref to give it. */
+function useImageAspectRatio() {
+	const [aspectRatio, setAspectRatio] = React.useState<number | null>(null);
+
+	const imageRef = (image: HTMLImageElement | null) => {
+		if (!image) return;
+
+		const measure = () => {
+			if (image.naturalWidth > 0 && image.naturalHeight > 0) {
+				setAspectRatio(image.naturalWidth / image.naturalHeight);
+			}
+		};
+		if (image.complete) {
+			measure();
+			return;
+		}
+
+		image.addEventListener("load", measure);
+		return () => image.removeEventListener("load", measure);
+	};
+
+	return [aspectRatio, imageRef] as const;
+}
+
+/** Touch devices have no hover to reveal the lightbox info with, so a tap on the image toggles it instead. */
+function deviceCanHover() {
+	return window.matchMedia("(hover: hover)").matches;
+}
+
+/** Warms the browser cache so the full-size image is ready by the time the lightbox opens. */
+function preloadImage(url: string) {
+	if (preloadedImageUrls.has(url)) return;
+	preloadedImageUrls.add(url);
+	new Image().src = url;
 }

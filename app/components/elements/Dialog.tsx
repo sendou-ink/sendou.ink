@@ -13,6 +13,8 @@ import styles from "./Dialog.module.css";
 interface DialogElementProps {
 	id?: string;
 	className?: string;
+	/** The standard dialog backdrop: dimmed and blurred page behind. */
+	blurredBackdrop?: boolean;
 	isDismissable?: boolean;
 	onClose?: () => void;
 	"aria-label"?: string;
@@ -57,6 +59,7 @@ export function SendouModal({ ref, ...rest }: DialogElementProps) {
 function DialogElement({
 	id,
 	className,
+	blurredBackdrop,
 	isDismissable,
 	onClose,
 	"aria-label": ariaLabel,
@@ -68,7 +71,9 @@ function DialogElement({
 		<dialog
 			ref={ref}
 			id={id}
-			className={className}
+			className={clsx(className, {
+				[styles.blurredBackdrop]: blurredBackdrop,
+			})}
 			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
 			tabIndex={-1}
@@ -307,6 +312,7 @@ function dialogElementProps(
 		className: clsx(className, styles.modal, "scrollbar", {
 			[styles.fullScreenModal]: isFullScreen,
 		}),
+		blurredBackdrop: true,
 		isDismissable,
 		onClose,
 		"aria-label": ariaLabel,

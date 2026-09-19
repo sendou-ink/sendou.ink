@@ -18,12 +18,12 @@
 	margin: auto;
 	outline: none;
 	animation: zoom-in-95 300ms ease-out;
+}
 
-	&::backdrop {
-		background-color: rgba(0, 0, 0, 0.25);
-		backdrop-filter: blur(10px);
-		animation: fade-in 300ms ease-out;
-	}
+.blurredBackdrop::backdrop {
+	background-color: rgba(0, 0, 0, 0.25);
+	backdrop-filter: blur(10px);
+	animation: fade-in 300ms ease-out;
 }
 
 @keyframes fade-in {
