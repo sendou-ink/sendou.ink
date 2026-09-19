@@ -542,5 +542,11 @@
 		::view-transition-new(*) {
 			animation: none;
 		}
+
+		/* opt-in for boundaries whose animation is a plain fade */
+		::view-transition-old(*.reduced-motion-safe),
+		::view-transition-new(*.reduced-motion-safe) {
+			animation: revert-layer;
+		}
 	}
 }

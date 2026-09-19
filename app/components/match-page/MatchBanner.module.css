@@ -38,6 +38,82 @@
 	justify-self: flex-end;
 }
 
+/* only the new image scales (from 1.05): a snapshot smaller than the frame shows its edge */
+::view-transition-group(:global(.stage-banner-swap)) {
+	animation-duration: 0s;
+}
+
+::view-transition-image-pair(:global(.stage-banner-swap)) {
+	clip-path: inset(0 round var(--radius-box));
+}
+
+::view-transition-old(:global(.stage-banner-swap)) {
+	mix-blend-mode: plus-lighter;
+	animation: fade-out 400ms ease both;
+}
+
+::view-transition-new(:global(.stage-banner-swap)) {
+	mix-blend-mode: plus-lighter;
+	animation: settle-in 400ms ease both;
+}
+
+/* map name and pick info: old fades out first, new rises in once the image has settled */
+::view-transition-group(:global(.stage-banner-text)) {
+	animation: none;
+}
+
+/* snapshots are stretched to the group's (new) width by default */
+::view-transition-old(:global(.stage-banner-text)),
+::view-transition-new(:global(.stage-banner-text)) {
+	inline-size: auto;
+	block-size: auto;
+}
+
+/* right-aligned, so a width change must keep the end edge in place */
+::view-transition-old(match-stage-banner-info),
+::view-transition-new(match-stage-banner-info) {
+	inset-inline-start: auto;
+	inset-inline-end: 0;
+}
+
+::view-transition-old(:global(.stage-banner-text)) {
+	animation: fade-out 150ms ease both;
+}
+
+::view-transition-new(:global(.stage-banner-text)) {
+	animation: rise-in 250ms cubic-bezier(0.22, 1, 0.36, 1) 400ms both;
+}
+
+/* unchanged parts; the old snapshot is hidden as stacking it would brighten the 70% opacity labels */
+::view-transition-group(:global(.stage-banner-static)),
+::view-transition-new(:global(.stage-banner-static)) {
+	animation: none;
+}
+
+::view-transition-old(:global(.stage-banner-static)) {
+	display: none;
+}
+
+@keyframes fade-out {
+	to {
+		opacity: 0;
+	}
+}
+
+@keyframes settle-in {
+	from {
+		opacity: 0;
+		transform: scale(1.05);
+	}
+}
+
+@keyframes rise-in {
+	from {
+		opacity: 0;
+		transform: translateY(6px);
+	}
+}
+
 .map {
 	grid-area: map;
 	display: flex;

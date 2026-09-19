@@ -9,6 +9,7 @@ import {
 	MatchBannerContainer,
 	MatchBannerInfoBadge,
 	MultiMatchBanner,
+	preloadStageBanners,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
@@ -79,6 +80,12 @@ export function SendouQMatchBanner({ data }: { data: SendouQMatchLoaderData }) {
 
 	const currentMap = data.match.currentMap;
 	invariant(currentMap);
+
+	preloadStageBanners(
+		data.match.mapList
+			.filter((map) => map.winnerGroupId === null)
+			.map((map) => map.stageId),
+	);
 
 	const isParticipant = Boolean(
 		SendouQMatch.resolveGroupMemberOf({
