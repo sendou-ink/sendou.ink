@@ -43,7 +43,7 @@ export class SendouQMatchPage {
 			undoReportButton: page.getByRole("button", { name: "Undo report" }),
 			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),
 			undoWeaponButton: page.getByRole("button", { name: "Undo weapon" }),
-			confirmScoreButton: page.getByRole("button", { name: "Confirm score" }),
+			confirmScoreButton: page.getByTestId("confirm-score-button"),
 			requestCancelButton: page.getByRole("button", { name: "Request cancel" }),
 			cancelPendingText: page.getByText("Pending other team's confirmation"),
 			cancelPrompt: page.getByText("Accept canceling the set?"),
@@ -152,8 +152,19 @@ export class SendouQMatchPage {
 	}
 
 	async confirmScore() {
+		await expect(this.locators.confirmScoreButton).toBeEnabled({
+			timeout: 10_000,
+		});
+		await this.locators.confirmScoreButton.click();
+
+		const armedLossButton = this.locators.confirmScoreButton.filter({
+			hasText: "Tap again",
+		});
+
 		await waitForPOSTResponse(this.page, async () => {
-			await this.locators.confirmScoreButton.click();
+			if (await armedLossButton.isVisible()) {
+				await armedLossButton.click();
+			}
 		});
 	}
 

@@ -68,6 +68,9 @@ export function Chat({
 			case "SCORE_CONFIRMED": {
 				return t("common:chat.systemMsg.scoreConfirmed", { name });
 			}
+			case "SCORE_DISPUTED": {
+				return t("common:chat.systemMsg.scoreDisputed", { name });
+			}
 			case "CANCEL_REPORTED": {
 				return t("common:chat.systemMsg.cancelReported", { name });
 			}

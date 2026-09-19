@@ -1,5 +1,6 @@
 import type { TFunction } from "i18next";
 import { Ban, Check, Undo2, X } from "lucide-react";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
@@ -16,6 +17,7 @@ import { FormField } from "~/form/FormField";
 import { SendouForm } from "~/form/SendouForm";
 import type { FormObjectSchema } from "~/form/types";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useCooldown } from "~/hooks/useCooldown";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import {
 	resolveGroupNames,
@@ -35,6 +37,10 @@ import {
 	TrustedRejoinSection,
 } from "./RejoinSections";
 import styles from "./SendouQMatchActionTab.module.css";
+
+const CONFIRM_COOLDOWN_MS = 5_000;
+const CONFIRM_LOSS_ARMED_MS = 5_000;
+const MAP_CHANGED_COOLDOWN_MS = 10_000;
 
 export function SendouQMatchActionTab({
 	data,
@@ -259,7 +265,7 @@ function RequeueTab({
 						<MatchTimeline compact teams={teams} score={score} maps={maps} />
 					) : null}
 					{isStaffOnly && awaitingConfirmation ? (
-						<ScoreConfirmerSection data={data} />
+						<ScoreConfirmerSection data={data} viewerSide={null} />
 					) : null}
 				</div>
 			) : (
@@ -287,7 +293,9 @@ function RequeueTab({
 					{showTimeline ? (
 						<MatchTimeline compact teams={teams} score={score} maps={maps} />
 					) : null}
-					{isOnConfirmerTeam ? <ScoreConfirmerSection data={data} /> : null}
+					{isOnConfirmerTeam ? (
+						<ScoreConfirmerSection data={data} viewerSide={viewerSide} />
+					) : null}
 					{isOnReporterTeam ? <ReporterUndoSection /> : null}
 					{data.match.isCanceled ? null : (
 						<WeaponReportSection data={data} viewerUserId={user.id} />
@@ -329,10 +337,22 @@ function WeaponReportSection({
 	return <WeaponReporter {...weaponReport} />;
 }
 
-function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
+function ScoreConfirmerSection({
+	data,
+	viewerSide,
+}: {
+	data: SendouQMatchLoaderData;
+	/** `null` for staff confirming on a team's behalf, who get a neutral button. */
+	viewerSide: "ALPHA" | "BRAVO" | null;
+}) {
 	const { t } = useTranslation(["q"]);
-	const { submit, state } = useActionSubmit(matchSchema);
-	const confirmFetcherPending = state !== "idle";
+	const confirmScore = useActionSubmit(matchSchema);
+	const disputeScore = useActionSubmit(matchSchema);
+	const [cooldownUntil] = useState(() => Date.now() + CONFIRM_COOLDOWN_MS);
+	const cooldownSecondsLeft = useCooldown(cooldownUntil);
+	const [lossArmedUntil, setLossArmedUntil] = useState<number | null>(null);
+	const isLossArmed = useCooldown(lossArmedUntil) > 0;
+	const [hasDisputed, setHasDisputed] = useState(false);
 
 	const decidingMap = [...data.match.mapList]
 		.reverse()
@@ -341,24 +361,103 @@ function ScoreConfirmerSection({ data }: { data: SendouQMatchLoaderData }) {
 		(m) => m.winnerGroupId !== null,
 	).length;
 
+	const { alphaWins, bravoWins } = SendouQMatch.score(data.match);
+	const winnerSide =
+		decidingMap?.winnerGroupId === data.match.groupAlpha.id ? "ALPHA" : "BRAVO";
+	const reporterSide = SendouQMatch.resolveGroupMemberOf({
+		groupAlpha: data.match.groupAlpha,
+		groupBravo: data.match.groupBravo,
+		userId: decidingMap?.reportedByUserId,
+	});
+	const groupNames = resolveGroupNames(data.match, t);
+	const scoreFor = (side: "ALPHA" | "BRAVO") =>
+		side === "ALPHA"
+			? `${alphaWins}-${bravoWins}`
+			: `${bravoWins}-${alphaWins}`;
+
+	const outcome =
+		viewerSide === null ? null : viewerSide === winnerSide ? "win" : "loss";
+	const ownScore = viewerSide === null ? null : scoreFor(viewerSide);
+
+	const buttonLabel = () => {
+		if (outcome === "win") {
+			return t("q:match.confirmScore.win", { score: ownScore });
+		}
+		if (outcome === "loss") {
+			return isLossArmed
+				? t("q:match.confirmScore.lossAgain")
+				: t("q:match.confirmScore.loss", { score: ownScore });
+		}
+		return t("q:match.confirmScore");
+	};
+
+	const submitConfirmation = () => {
+		if (!decidingMap?.winnerGroupId) return;
+		confirmScore.submit("REPORT_SCORE", {
+			winnerId: decidingMap.winnerGroupId,
+			reportedCount,
+			confirmingReportedAt: decidingMap.reportedAt ?? undefined,
+		});
+	};
+
 	return (
 		<div className="stack md items-center">
-			<SendouButton
-				variant="primary"
-				isPending={confirmFetcherPending}
-				onClick={() => {
-					if (!decidingMap?.winnerGroupId) return;
-					submit("REPORT_SCORE", {
-						winnerId: decidingMap.winnerGroupId,
-						reportedCount,
-					});
-				}}
-			>
-				{t("q:match.confirmScore")}
-			</SendouButton>
+			{reporterSide ? (
+				<p className="text-sm text-center">
+					{reporterSide === winnerSide
+						? t("q:match.confirmScore.reportedWin", {
+								team: groupNames[reporterSide === "ALPHA" ? "alpha" : "bravo"],
+								score: scoreFor(reporterSide),
+							})
+						: t("q:match.confirmScore.reportedLoss", {
+								team: groupNames[reporterSide === "ALPHA" ? "alpha" : "bravo"],
+								score: scoreFor(reporterSide),
+							})}
+				</p>
+			) : null}
 			<p className="text-lighter text-xs text-center">
-				{t("q:match.confirmScore.wrongHint")}
+				{t("q:match.confirmScore.check")}
 			</p>
+			<SendouButton
+				variant={
+					outcome === "win"
+						? "success"
+						: outcome === "loss"
+							? "destructive"
+							: "primary"
+				}
+				isDisabled={cooldownSecondsLeft > 0}
+				isPending={confirmScore.state !== "idle"}
+				onClick={() => {
+					if (outcome === "loss" && !isLossArmed) {
+						setLossArmedUntil(Date.now() + CONFIRM_LOSS_ARMED_MS);
+						return;
+					}
+					submitConfirmation();
+				}}
+				testId="confirm-score-button"
+			>
+				{cooldownSecondsLeft > 0
+					? `${buttonLabel()} (${cooldownSecondsLeft})`
+					: buttonLabel()}
+			</SendouButton>
+			{viewerSide === null ? null : hasDisputed ? (
+				<p className="text-lighter text-xs text-center">
+					{t("q:match.confirmScore.wrongSent")}
+				</p>
+			) : (
+				<SendouButton
+					variant="minimal-destructive"
+					size="small"
+					isPending={disputeScore.state !== "idle"}
+					onClick={() => {
+						setHasDisputed(true);
+						disputeScore.submit("DISPUTE_SCORE");
+					}}
+				>
+					{t("q:match.confirmScore.wrong")}
+				</SendouButton>
+			)}
 		</div>
 	);
 }
@@ -403,6 +502,26 @@ function InProgressTab({
 	const reportScore = useActionSubmit(matchSchema);
 	const undoReport = useActionSubmit(matchSchema);
 	const cancelFetcher = useFetcher();
+
+	// the reported count this viewer's own last report or undo would move the match
+	// to; a change to any other count came from someone else
+	const [expectedReportedCount, setExpectedReportedCount] = useState<
+		number | null
+	>(null);
+	const [mapChange, setMapChange] = useState({
+		reportedCount,
+		cooldownUntil: null as number | null,
+	});
+	if (mapChange.reportedCount !== reportedCount) {
+		const changedByOthers = expectedReportedCount !== reportedCount;
+		setMapChange({
+			reportedCount,
+			cooldownUntil: changedByOthers
+				? Date.now() + MAP_CHANGED_COOLDOWN_MS
+				: null,
+		});
+		setExpectedReportedCount(null);
+	}
 
 	const isStaffOnly = ownTeamId == null;
 
@@ -462,7 +581,9 @@ function InProgressTab({
 			withKo={false}
 			isSubmitting={reportScore.state !== "idle"}
 			setEnding={setEnding}
+			submitCooldownUntil={mapChange.cooldownUntil}
 			onSubmit={({ winnerId }) => {
+				setExpectedReportedCount(reportedCount + 1);
 				reportScore.submit("REPORT_SCORE", { winnerId, reportedCount });
 			}}
 			secondaryAction={
@@ -513,6 +634,7 @@ function InProgressTab({
 								(m) => m.winnerGroupId !== null,
 							);
 							if (mapIndex < 0) return;
+							setExpectedReportedCount(reportedCount - 1);
 							undoReport.submit("UNDO_MAP_REPORT", { mapIndex });
 						}}
 					>

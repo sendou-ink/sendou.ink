@@ -1,5 +1,5 @@
 import { add, sub } from "date-fns";
-import { beforeEach, describe, expect, test } from "vitest";
+import { beforeEach, describe, expect, test, vi } from "vitest";
 import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
@@ -677,6 +677,86 @@ describe("finalizeMatch", () => {
 		const skillsFromThisFinalization =
 			skillsAfterConfirm.length - skillsBeforeConfirm.length;
 		expect(skillsFromThisFinalization).toBe(FULL_GROUP_SIZE * 2 + 2);
+	});
+});
+
+describe("reportMapWinner confirmation", () => {
+	test("rejects as stale a confirmation of a set-ending report undone and re-reported since", async () => {
+		vi.useFakeTimers({ toFake: ["Date"] });
+		try {
+			const setup = await setupMatch();
+
+			const reportSweep = async () => {
+				let reportedCount = 0;
+				let result = await SQMatchRepository.reportMapWinner({
+					matchId: setup.match.id,
+					winnerId: setup.alphaGroupId,
+					reportedByUserId: setup.alphaMembers[0].id,
+					reportedCount,
+				});
+				while (result.status === "MAP_REPORTED") {
+					reportedCount++;
+					result = await SQMatchRepository.reportMapWinner({
+						matchId: setup.match.id,
+						winnerId: setup.alphaGroupId,
+						reportedByUserId: setup.alphaMembers[0].id,
+						reportedCount,
+					});
+				}
+				expect(result.status).toBe("MATCH_REPORTED");
+
+				return reportedCount + 1;
+			};
+
+			const decidingMapReportedAt = async () => {
+				const maps = await fetchMapResults(setup.match.id);
+				const decidingMap = maps.findLast((m) => m.winnerGroupId !== null);
+				invariant(decidingMap?.reportedAt, "No deciding map reported");
+
+				return decidingMap.reportedAt;
+			};
+
+			const reportedCount = await reportSweep();
+			const originalReportedAt = await decidingMapReportedAt();
+
+			vi.setSystemTime(add(new Date(), { seconds: 5 }));
+			await SQMatchRepository.undoMatchReport({
+				matchId: setup.match.id,
+				requestedByUserId: setup.alphaMembers[0].id,
+				isStaff: false,
+			});
+			await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.alphaMembers[0].id,
+				reportedCount: reportedCount - 1,
+			});
+			const replacementReportedAt = await decidingMapReportedAt();
+			expect(replacementReportedAt).not.toBe(originalReportedAt);
+
+			const staleConfirmation = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.bravoMembers[0].id,
+				reportedCount,
+				confirmingReportedAt: originalReportedAt,
+			});
+			expect(staleConfirmation.status).toBe("STALE");
+			expect(
+				(await SQMatchRepository.findById(setup.match.id))?.isLocked,
+			).toBeFalsy();
+
+			const confirmation = await SQMatchRepository.reportMapWinner({
+				matchId: setup.match.id,
+				winnerId: setup.alphaGroupId,
+				reportedByUserId: setup.bravoMembers[0].id,
+				reportedCount,
+				confirmingReportedAt: replacementReportedAt,
+			});
+			expect(confirmation.status).toBe("MATCH_FINALIZED");
+		} finally {
+			vi.useRealTimers();
+		}
 	});
 });
 

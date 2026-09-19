@@ -368,6 +368,7 @@
 	"chat.send": "Send",
 	"chat.systemMsg.scoreReported": "{{name}} reported score",
 	"chat.systemMsg.scoreConfirmed": "{{name}} confirmed score. Match is now locked",
+	"chat.systemMsg.scoreDisputed": "{{name}} says the reported score is wrong.",
 	"chat.systemMsg.cancelReported": "{{name}} requested canceling the match",
 	"chat.systemMsg.cancelConfirmed": "{{name}} confirmed canceling the match. Match is now locked",
 	"chat.systemMsg.cancelRefused": "{{name}} refused canceling the match",

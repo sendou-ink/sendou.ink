@@ -368,6 +368,7 @@
 	"chat.send": "送る",
 	"chat.systemMsg.scoreReported": "{{name}}がスコアを報告しました",
 	"chat.systemMsg.scoreConfirmed": "{{name}}がスコアを確認しました。試合がロックされました",
+	"chat.systemMsg.scoreDisputed": "",
 	"chat.systemMsg.cancelReported": "{{name}} が試合のキャンセルを申請しました",
 	"chat.systemMsg.cancelConfirmed": "{{name}} が試合キャンセルを承認しました。試合がロックされました",
 	"chat.systemMsg.cancelRefused": "{{name}} が試合キャンセルを却下しました。",

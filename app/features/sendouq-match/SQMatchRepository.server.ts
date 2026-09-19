@@ -1314,12 +1314,14 @@ export async function reportMapWinner({
 	winnerId,
 	reportedByUserId,
 	reportedCount,
+	confirmingReportedAt,
 	isStaffReport,
 }: {
 	matchId: number;
 	winnerId: number;
 	reportedByUserId: number;
 	reportedCount: number;
+	confirmingReportedAt?: number;
 	isStaffReport?: boolean;
 }): Promise<ReportMapWinnerResult> {
 	const match = await findById(matchId);
@@ -1340,7 +1342,6 @@ export async function reportMapWinner({
 		isDecisive: scoreAlreadyDecisive,
 	} = SendouQMatch.score(match);
 
-	// Confirmation flow: score is already decisive (first team reported the set-ending map)
 	if (scoreAlreadyDecisive) {
 		return handleMatchConfirmation({
 			match,
@@ -1348,6 +1349,7 @@ export async function reportMapWinner({
 			reportedByUserId,
 			existingAlphaWins,
 			mapsToWin,
+			confirmingReportedAt,
 			isStaffReport,
 		});
 	}
@@ -1421,6 +1423,7 @@ async function handleMatchConfirmation({
 	reportedByUserId,
 	existingAlphaWins,
 	mapsToWin,
+	confirmingReportedAt,
 	isStaffReport,
 }: {
 	match: NonNullable<Awaited<ReturnType<typeof findById>>>;
@@ -1428,6 +1431,7 @@ async function handleMatchConfirmation({
 	reportedByUserId: number;
 	existingAlphaWins: number;
 	mapsToWin: number;
+	confirmingReportedAt?: number;
 	isStaffReport?: boolean;
 }): Promise<ReportMapWinnerResult> {
 	const members = buildMembers(match);
@@ -1437,6 +1441,13 @@ async function handleMatchConfirmation({
 		.toReversed()
 		.find((m) => m.winnerGroupId !== null);
 	invariant(decidingMap, "No deciding map found");
+
+	if (
+		typeof confirmingReportedAt === "number" &&
+		confirmingReportedAt !== decidingMap.reportedAt
+	) {
+		return { status: "STALE" };
+	}
 
 	const originalReporterGroupId = decidingMap.reportedByUserId
 		? members.find((m) => m.id === decidingMap.reportedByUserId)?.groupId

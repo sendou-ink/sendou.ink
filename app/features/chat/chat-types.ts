@@ -16,6 +16,7 @@ export type SystemMessageType =
 	| "LIKE_RECEIVED"
 	| "SCORE_REPORTED"
 	| "SCORE_CONFIRMED"
+	| "SCORE_DISPUTED"
 	| "CANCEL_REPORTED"
 	| "CANCEL_CONFIRMED"
 	| "CANCEL_REFUSED"
@@ -29,6 +30,7 @@ export type PersistedSystemMessageType = Extract<
 	SystemMessageType,
 	| "SCORE_REPORTED"
 	| "SCORE_CONFIRMED"
+	| "SCORE_DISPUTED"
 	| "CANCEL_REPORTED"
 	| "CANCEL_CONFIRMED"
 	| "CANCEL_REFUSED"
