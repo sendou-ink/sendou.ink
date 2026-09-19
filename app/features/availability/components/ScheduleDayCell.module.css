@@ -15,27 +15,37 @@
 
 .busy {
 	display: flex;
-	align-items: center;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-0-5);
 	max-width: 10rem;
-	padding: var(--s-0-5) var(--s-1-5);
+	padding: var(--s-1);
 	background: repeating-linear-gradient(
 		-45deg,
 		var(--color-bg-higher) 0 5px,
 		transparent 5px 10px
 	);
-	border-radius: var(--radius-full);
+	border-radius: var(--radius-field);
 	align-self: flex-start;
 
+	& .busyTime,
 	& .busyName {
 		max-width: 100%;
 		padding-inline: var(--s-1);
 		font-size: var(--font-3xs);
-		color: var(--color-text-high);
 		white-space: nowrap;
 		overflow: hidden;
 		text-overflow: ellipsis;
 		background-color: var(--color-bg);
 		border-radius: var(--radius-full);
+	}
+
+	& .busyTime {
+		color: var(--color-text-high);
+	}
+
+	& .busyName {
+		color: var(--color-text);
 	}
 }
 
