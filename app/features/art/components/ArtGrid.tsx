@@ -84,7 +84,7 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const [imageSettled, setImageSettled] = React.useState(false);
+	const [imageSettled, imageRef] = useImageSettled();
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
@@ -102,8 +102,7 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 				src={art.url}
 				loading="lazy"
 				className={styles.dialogImg}
-				onLoad={() => setImageSettled(true)}
-				onError={() => setImageSettled(true)}
+				ref={imageRef}
 			/>
 			{art.tags || art.linkedUsers ? (
 				<div
@@ -163,7 +162,7 @@ function ImagePreview({
 }) {
 	const canEdit = useHasPermission(art, "EDIT");
 	const canUnlink = useHasPermission(art, "UNLINK");
-	const [imageSettled, setImageSettled] = React.useState(false);
+	const [imageSettled, imageRef] = useImageSettled();
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
 
@@ -174,8 +173,7 @@ function ImagePreview({
 			src={previewUrl(art.url)}
 			loading="lazy"
 			onClick={onClick}
-			onLoad={() => setImageSettled(true)}
-			onError={() => setImageSettled(true)}
+			ref={imageRef}
 			className={enablePreview ? styles.thumbnail : undefined}
 			data-testid="art-image"
 		/>
@@ -300,4 +298,34 @@ function ImagePreview({
 			</div>
 		</Link>
 	);
+}
+
+/**
+ * Whether the image has finished loading (or failed to), and the ref to give it.
+ *
+ * Native listeners rather than `onLoad`/`onError` because React drops those
+ * events when the image settles right after mounting, e.g. when it comes from
+ * the browser cache.
+ */
+function useImageSettled() {
+	const [imageSettled, setImageSettled] = React.useState(false);
+
+	const imageRef = (image: HTMLImageElement | null) => {
+		if (!image) return;
+		if (image.complete) {
+			setImageSettled(true);
+			return;
+		}
+
+		const settle = () => setImageSettled(true);
+		image.addEventListener("load", settle);
+		image.addEventListener("error", settle);
+
+		return () => {
+			image.removeEventListener("load", settle);
+			image.removeEventListener("error", settle);
+		};
+	};
+
+	return [imageSettled, imageRef] as const;
 }
