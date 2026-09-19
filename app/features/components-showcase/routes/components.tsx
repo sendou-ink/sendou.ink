@@ -63,8 +63,10 @@ import {
 	ChangelogGraphic,
 	type ChangelogGraphicEntry,
 } from "~/features/changelog/components/ChangelogGraphic";
+import { calculateDamageCombos } from "~/features/comp-analyzer/core/damage-combinations";
 import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import type { GlobalStatus } from "~/features/global-status/global-status-types";
+import { CompGraphic } from "~/features/img-export/components/CompGraphic";
 import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,
@@ -100,7 +102,16 @@ import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q", "calendar", "tournament", "schedule", "builds", "lfg"],
+	i18n: [
+		"user",
+		"q",
+		"calendar",
+		"tournament",
+		"schedule",
+		"builds",
+		"lfg",
+		"analyzer",
+	],
 };
 
 export const SECTIONS = [
@@ -147,6 +158,11 @@ export const SECTIONS = [
 		title: "LFG Post Graphic",
 		id: "lfg-post-graphic",
 		component: LFGPostGraphicSection,
+	},
+	{
+		title: "Comp Graphic",
+		id: "comp-graphic",
+		component: CompGraphicSection,
 	},
 	{
 		title: "Changelog Graphic",
@@ -2276,6 +2292,33 @@ function LFGPostGraphicSection({ id }: { id: string }) {
 
 				<ComponentRow label="Team post">
 					<LFGPostGraphic post={LFG_GRAPHIC_TEAM_POST} />
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const COMP_GRAPHIC_WEAPON_IDS: MainWeaponId[] = [40, 220, 2070, 5010];
+
+function CompGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Comp Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="With title">
+					<CompGraphic
+						weaponIds={COMP_GRAPHIC_WEAPON_IDS}
+						combos={calculateDamageCombos(COMP_GRAPHIC_WEAPON_IDS)}
+						title="Low Ink comp"
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="Without title">
+					<CompGraphic
+						weaponIds={COMP_GRAPHIC_WEAPON_IDS}
+						combos={calculateDamageCombos(COMP_GRAPHIC_WEAPON_IDS)}
+					/>
 				</ComponentRow>
 			</div>
 		</Section>

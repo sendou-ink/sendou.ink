@@ -222,5 +222,6 @@
 	"comp.specialCategory.TEAM_BUFF": "Mejora de equipo",
 	"comp.removeAll": "Eliminar todos",
 	"comp.addAll": "Añadir todos",
-	"comp.singleWeaponCombos": "Combos de un arma"
+	"comp.singleWeaponCombos": "Combos de un arma",
+	"comp.graphicSubtitle": ""
 }

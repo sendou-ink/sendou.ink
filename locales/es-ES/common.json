@@ -184,6 +184,7 @@
 	"imageExport.theme.lightCustom": "Claro (personalizado)",
 	"imageExport.theme.darkCustom": "Oscuro (personalizado)",
 	"imageExport.qrCode": "Código QR",
+	"imageExport.title": "",
 	"imageExport.buildTitle": "Título de la build",
 	"imageExport.abilityPoints": "Puntos de potenciador",
 	"imageExport.abilityChunks": "Fragmentos",

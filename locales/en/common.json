@@ -184,6 +184,7 @@
 	"imageExport.theme.lightCustom": "Light (custom)",
 	"imageExport.theme.darkCustom": "Dark (custom)",
 	"imageExport.qrCode": "QR code",
+	"imageExport.title": "Title",
 	"imageExport.buildTitle": "Build title",
 	"imageExport.abilityPoints": "Ability points",
 	"imageExport.abilityChunks": "Ability chunks",

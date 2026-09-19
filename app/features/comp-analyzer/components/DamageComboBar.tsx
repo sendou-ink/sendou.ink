@@ -260,11 +260,16 @@ function FilteredItem({ filterKey, onRestore }: FilteredItemProps) {
 
 interface DamageComboListProps {
 	weaponIds: MainWeaponId[];
+	excludedKeys: ExcludedDamageKey[];
+	onExcludedKeysChange: (keys: ExcludedDamageKey[]) => void;
 }
 
-export function DamageComboList({ weaponIds }: DamageComboListProps) {
+export function DamageComboList({
+	weaponIds,
+	excludedKeys,
+	onExcludedKeysChange: setExcludedKeys,
+}: DamageComboListProps) {
 	const { t } = useTranslation(["analyzer"]);
-	const [excludedKeys, setExcludedKeys] = useState<ExcludedDamageKey[]>([]);
 	const [initialTargetResAp, commitTargetResAp] = useTargetResAp();
 	const [initialTargetSubDefenseAp, commitTargetSubDefenseAp] =
 		useTargetSubDefenseAp();

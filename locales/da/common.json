@@ -184,6 +184,7 @@
 	"imageExport.theme.lightCustom": "",
 	"imageExport.theme.darkCustom": "",
 	"imageExport.qrCode": "",
+	"imageExport.title": "",
 	"imageExport.buildTitle": "",
 	"imageExport.abilityPoints": "",
 	"imageExport.abilityChunks": "",

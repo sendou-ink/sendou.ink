@@ -1,0 +1,225 @@
+.slot {
+	&[data-slot="0"] {
+		--slot-color: #f5d742;
+	}
+
+	&[data-slot="1"] {
+		--slot-color: #f5b8d0;
+	}
+
+	&[data-slot="2"] {
+		--slot-color: #90e8a8;
+	}
+
+	&[data-slot="3"] {
+		--slot-color: #8cd4f5;
+	}
+}
+
+.subtitle {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.weaponsList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.weaponRow {
+	position: relative;
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+	padding: var(--s-2) var(--s-3) var(--s-2) var(--s-5);
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-box);
+
+	/* a pill inside the box instead of a left border so the color is not cut by the rounded corners */
+	&::before {
+		content: "";
+		position: absolute;
+		inset-block: var(--s-1-5);
+		left: var(--s-1-5);
+		width: 4px;
+		background-color: var(--slot-color);
+		border-radius: var(--radius-full);
+	}
+}
+
+.weaponBadge {
+	display: flex;
+	padding: var(--s-0-5);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: 50%;
+}
+
+.weaponInfo {
+	min-width: 0;
+	overflow: hidden;
+}
+
+.weaponName {
+	overflow: hidden;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	white-space: nowrap;
+	text-overflow: ellipsis;
+}
+
+.weaponRoles {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	margin-top: var(--s-0-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
+
+.weaponRoleSeparator {
+	opacity: 0.5;
+}
+
+.kit {
+	display: flex;
+	gap: var(--s-1-5);
+	padding: var(--s-1-5);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-field);
+}
+
+.rangeChart {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.rangeRow {
+	display: grid;
+	grid-template-columns: auto 1fr 3rem;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.rangeTrack {
+	position: relative;
+	height: 14px;
+	overflow: hidden;
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-full);
+}
+
+.rangeBar {
+	position: absolute;
+	inset-block: 0;
+	left: 0;
+	background-color: var(--slot-color);
+	border-radius: var(--radius-full);
+
+	/* the blast radius continues the bar, so its end stays square */
+	&.rangeBarWithBlast {
+		border-start-end-radius: 0;
+		border-end-end-radius: 0;
+	}
+}
+
+.rangeBlast {
+	position: absolute;
+	inset-block: 0;
+	background-color: color-mix(in oklch, var(--slot-color) 35%, transparent);
+	border-radius: 0 var(--radius-full) var(--radius-full) 0;
+}
+
+.rangeValue {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+	text-align: right;
+}
+
+.combosList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.comboRow {
+	display: grid;
+	grid-template-columns: 1fr auto;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.comboBar {
+	position: relative;
+	display: flex;
+	overflow: hidden;
+	background-color: var(--graphic-row-bg);
+	border: 1.5px solid var(--graphic-row-border);
+	border-radius: var(--radius-field);
+}
+
+.comboSegment {
+	display: flex;
+	flex-shrink: 0;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	/* the widths are damage shares, but a segment never gets narrower than its content */
+	min-width: fit-content;
+	height: 32px;
+	padding: 0 var(--s-2);
+	color: oklch(20% 0 0);
+	background-color: var(--slot-color);
+}
+
+.segmentDamage {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.segmentMultiplier {
+	margin-left: var(--s-0-5);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	opacity: 0.8;
+}
+
+.lethalLine {
+	position: absolute;
+	inset-block: 0;
+	z-index: 1;
+	width: 0;
+	border-left: 2px dashed oklch(20% 0 0 / 0.6);
+}
+
+.comboTotal {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-end;
+	min-width: 3.5rem;
+	line-height: 1.15;
+}
+
+.comboDamage {
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.comboDamageLethal {
+	color: var(--graphic-win);
+}
+
+.comboHits {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--graphic-text-dim);
+}
