@@ -1,6 +1,6 @@
 import type { Tables } from "~/db/tables";
 import type { CommonUser } from "~/utils/kysely.server";
-import type { SOUND_BY_SYSTEM_MESSAGE_TYPE } from "./chat-constants";
+import type { UNTHROTTLED_SYSTEM_MESSAGE_TYPES } from "./chat-constants";
 
 export type ChatRoomType =
 	| "SQ_GROUP"
@@ -10,7 +10,6 @@ export type ChatRoomType =
 	| "SCRIM";
 
 export type SystemMessageType =
-	| "NEW_GROUP"
 	| "USER_LEFT"
 	| "MATCH_STARTED"
 	| "READY_CHECK_STARTED"
@@ -41,9 +40,9 @@ export type PersistedSystemMessageType = Extract<
 	| "MODE_BANNED"
 >;
 
-export type SoundOnlySystemMessageType = Extract<
+export type UnthrottledSystemMessageType = Extract<
 	SystemMessageType,
-	keyof typeof SOUND_BY_SYSTEM_MESSAGE_TYPE
+	(typeof UNTHROTTLED_SYSTEM_MESSAGE_TYPES)[number]
 >;
 
 export interface ChatMessageAuthor extends CommonUser {

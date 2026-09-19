@@ -7,7 +7,6 @@ import {
 } from "~/features/events/events-hooks";
 import { useUser } from "../auth/core/user";
 import type { ClientChatMessage } from "./chat-types";
-import { playMessageSound } from "./chat-utils";
 import {
 	revalidateWithScope,
 	scheduleBroadcastRevalidation,
@@ -173,14 +172,12 @@ export function useLiveRevalidation(enabled = true) {
 	});
 }
 
-/** Handles SSE `revalidate` events: plays the carried sound and schedules a loader revalidation, skipping the actor's own broadcasts (their submission already reran the loaders). */
+/** Handles SSE `revalidate` events: schedules a loader revalidation, skipping the actor's own broadcasts (their submission already reran the loaders). */
 export function useServerRevalidationEvents(userId: number) {
 	const { revalidate } = useRevalidator();
 
 	useServerEventListener((event) => {
 		if (event.kind !== "revalidate") return;
-
-		playMessageSound(event.type);
 
 		if (event.authorUserId === userId) return;
 

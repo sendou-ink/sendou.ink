@@ -16,6 +16,7 @@ import { action, loader } from "./to.$id.matches.$mid";
 
 vi.mock("~/features/chat/ChatSystemMessage.server", () => ({
 	send: vi.fn(),
+	notifyStatusChanged: vi.fn(),
 	sendPersisted: vi.fn(),
 	notifyNotificationsChanged: vi.fn(),
 	notifyRoomsChangedByRoomIds: vi.fn(),

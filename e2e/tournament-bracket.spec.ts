@@ -12,6 +12,7 @@ import {
 import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentJoinPage } from "./pages/tournament/tournament-join-page";
 import { TournamentMatchPage } from "./pages/tournament/tournament-match-page";
+import { TournamentTeamPage } from "./pages/tournament/tournament-team-page";
 
 test.describe("Tournament bracket", () => {
 	test("sets active roster as regular member", async ({ page, factories }) => {
@@ -134,10 +135,10 @@ test.describe("Tournament bracket", () => {
 		// captain of the last seeded team
 		await impersonate(page, teams[2].ownerUserId);
 
-		const brackets = new TournamentBracketsPage(page);
-		await brackets.goto(tournament.id);
+		const teamPage = new TournamentTeamPage(page);
+		await teamPage.goto(tournament.id, teams[2].id);
 
-		const inviteLink = await brackets.copySubInviteLink();
+		const inviteLink = await teamPage.copySubInviteLink();
 
 		await impersonate(page, sub.id);
 

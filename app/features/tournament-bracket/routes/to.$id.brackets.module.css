@@ -6,9 +6,6 @@
 }
 
 .compactifyButton {
-	font-size: var(--font-2xs);
 	color: var(--color-text-high);
-	border-color: var(--color-bg-higher);
-	background-color: var(--color-bg);
-	border-radius: var(--radius-box);
+	white-space: nowrap;
 }

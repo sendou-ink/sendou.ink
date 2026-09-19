@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ChevronDown } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLocation } from "react-router";
@@ -100,6 +101,7 @@ function DevMenu() {
 						onPointerEnter={() => setIsPreviewSuppressed(false)}
 					>
 						Dev
+						<ChevronDown className={styles.menuButtonChevron} />
 					</button>
 				}
 				popoverClassName={styles.menuPopover}
@@ -222,6 +224,7 @@ function CategoryMenu({
 						onPointerEnter={() => setIsPreviewSuppressed(false)}
 					>
 						{t(`front:nav.${category.name}`)}
+						<ChevronDown className={styles.menuButtonChevron} />
 					</button>
 				}
 				popoverClassName={styles.menuPopover}

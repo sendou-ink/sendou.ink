@@ -36,7 +36,7 @@ describe("ChatSystemMessage.send", () => {
 		]);
 	});
 
-	test("keeps a sound-carrying type on the broadcast, bypassing the throttle", async () => {
+	test("delivers every unthrottled type's broadcast, bypassing the throttle", async () => {
 		const received = subscribeTo("sq-group__102");
 
 		ChatSystemMessage.send({
@@ -52,12 +52,12 @@ describe("ChatSystemMessage.send", () => {
 		await flushEvents();
 
 		expect(received).toEqual([
-			{ kind: "revalidate", authorUserId: 5, type: "READY_CHECK_STARTED" },
-			{ kind: "revalidate", authorUserId: 5, type: "READY_CHECK_STARTED" },
+			{ kind: "revalidate", authorUserId: 5 },
+			{ kind: "revalidate", authorUserId: 5 },
 		]);
 	});
 
-	test("throttles rapid soundless broadcasts to the same topic", async () => {
+	test("throttles rapid untyped broadcasts to the same topic", async () => {
 		const received = subscribeTo("tournament__104");
 
 		ChatSystemMessage.send({

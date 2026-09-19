@@ -104,6 +104,18 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 		.execute();
 }
 
+/** Just enough of a match to tell still being played apart from over, for the header status. */
+export async function findLiveStateById(id: number) {
+	return db
+		.selectFrom("GroupMatch")
+		.select((eb) => [
+			isLockedSubquery(eb, id).as("isLocked"),
+			isCanceledSubquery(eb, id).as("isCanceled"),
+		])
+		.where("GroupMatch.id", "=", id)
+		.executeTakeFirst();
+}
+
 export async function findById(id: number) {
 	const result = await db
 		.selectFrom("GroupMatch")
@@ -117,23 +129,8 @@ export async function findById(id: number) {
 			"GroupMatch.cancelAcceptedByUserId",
 			"GroupMatch.noScreen",
 
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", id),
-				)
-				.as("isLocked"),
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", id)
-						.where("Skill.season", "=", CANCELED_MATCH_SEASON),
-				)
-				.as("isCanceled"),
+			isLockedSubquery(eb, id).as("isLocked"),
+			isCanceledSubquery(eb, id).as("isCanceled"),
 			jsonArrayFrom(
 				eb
 					.selectFrom("GroupMatchMap")
@@ -242,6 +239,32 @@ function skillDifferences(match: {
 	}
 
 	return { users, groups };
+}
+
+/** Whether the match's skills have been calculated, i.e. it can no longer be edited. */
+function isLockedSubquery(
+	eb: ExpressionBuilder<DB, "GroupMatch">,
+	matchId: number,
+) {
+	return eb.exists(
+		eb
+			.selectFrom("Skill")
+			.select("Skill.id")
+			.where("Skill.groupMatchId", "=", matchId),
+	);
+}
+
+function isCanceledSubquery(
+	eb: ExpressionBuilder<DB, "GroupMatch">,
+	matchId: number,
+) {
+	return eb.exists(
+		eb
+			.selectFrom("Skill")
+			.select("Skill.id")
+			.where("Skill.groupMatchId", "=", matchId)
+			.where("Skill.season", "=", CANCELED_MATCH_SEASON),
+	);
 }
 
 function groupWithTeamAndMembers(
@@ -1609,14 +1632,7 @@ function findLockState(matchId: number, trx: Transaction<DB>) {
 		.selectFrom("GroupMatch")
 		.select((eb) => [
 			"GroupMatch.confirmedAt",
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", matchId),
-				)
-				.as("isLocked"),
+			isLockedSubquery(eb, matchId).as("isLocked"),
 		])
 		.where("GroupMatch.id", "=", matchId)
 		.executeTakeFirstOrThrow();
@@ -1626,7 +1642,21 @@ function findLockState(matchId: number, trx: Transaction<DB>) {
 export function findUnfinishedMatchesCreatedBefore(cutoff: Date) {
 	return db
 		.selectFrom("GroupMatch")
-		.select(["GroupMatch.id", "GroupMatch.chatRoomId"])
+		.select(({ eb }) => [
+			"GroupMatch.id",
+			"GroupMatch.chatRoomId",
+			jsonArrayFrom(
+				eb
+					.selectFrom("GroupMember")
+					.select("GroupMember.userId")
+					.where((wb) =>
+						wb.or([
+							wb("GroupMember.groupId", "=", wb.ref("GroupMatch.alphaGroupId")),
+							wb("GroupMember.groupId", "=", wb.ref("GroupMatch.bravoGroupId")),
+						]),
+					),
+			).as("members"),
+		])
 		.where("GroupMatch.confirmedAt", "is", null)
 		.where("GroupMatch.createdAt", "<", dateToDatabaseTimestamp(cutoff))
 		.where((eb) =>
@@ -1832,14 +1862,7 @@ function findCancelState(matchId: number, trx: Transaction<DB>) {
 		.selectFrom("GroupMatch")
 		.select((eb) => [
 			"GroupMatch.cancelRequestedByUserId",
-			eb
-				.exists(
-					eb
-						.selectFrom("Skill")
-						.select("Skill.id")
-						.where("Skill.groupMatchId", "=", matchId),
-				)
-				.as("isLocked"),
+			isLockedSubquery(eb, matchId).as("isLocked"),
 		])
 		.where("GroupMatch.id", "=", matchId)
 		.executeTakeFirstOrThrow();

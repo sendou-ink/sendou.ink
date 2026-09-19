@@ -32,6 +32,7 @@ import { nullFilledArray, nullifyingAvg } from "~/utils/arrays";
 import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import {
+	calendarEventStartTime,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
@@ -937,6 +938,84 @@ export function findAllBetweenTwoTimestamps({
 		.where("CalendarEventDate.startsAt", "<=", dateToDatabaseTimestamp(endTime))
 		.where("CalendarEvent.hidden", "=", 0)
 		.execute();
+}
+
+/**
+ * Members of teams that have not checked in nor dropped out, for every tournament whose first day starts inside the window.
+ * One row per member per tournament; the caller narrows the window to the check-in period.
+ */
+export function findPendingCheckInsStartingBetween({
+	startsAfter,
+	startsBefore,
+}: {
+	startsAfter: Date;
+	startsBefore: Date;
+}) {
+	return (
+		db
+			.selectFrom("TournamentTeamMember")
+			.innerJoin(
+				"TournamentTeam",
+				"TournamentTeamMember.tournamentTeamId",
+				"TournamentTeam.id",
+			)
+			.innerJoin("Tournament", "TournamentTeam.tournamentId", "Tournament.id")
+			.innerJoin("CalendarEvent", "CalendarEvent.tournamentId", "Tournament.id")
+			.innerJoin(
+				"CalendarEventDate",
+				"CalendarEvent.id",
+				"CalendarEventDate.eventId",
+			)
+			.select((eb) => [
+				"TournamentTeamMember.userId",
+				"Tournament.id as tournamentId",
+				tournamentLogoWithDefault(eb).as("logoUrl"),
+			])
+			// a multi-day tournament checks in before its first day only
+			.where("CalendarEventDate.startsAt", "=", (eb) =>
+				calendarEventStartTime(eb),
+			)
+			.where(
+				"CalendarEventDate.startsAt",
+				">",
+				dateToDatabaseTimestamp(startsAfter),
+			)
+			.where(
+				"CalendarEventDate.startsAt",
+				"<=",
+				dateToDatabaseTimestamp(startsBefore),
+			)
+			.where("CalendarEvent.hidden", "=", 0)
+			.where("Tournament.isFinalized", "=", 0)
+			.where("TournamentTeam.droppedOut", "=", 0)
+			.where(
+				sql<number>`json_extract("Tournament"."settings", '$.isTest')`,
+				"is not",
+				1,
+			)
+			.where(
+				sql<number>`json_extract("Tournament"."settings", '$.isDraft')`,
+				"is not",
+				1,
+			)
+			.where((eb) =>
+				eb.not(
+					eb.exists(
+						eb
+							.selectFrom("TournamentTeamCheckIn")
+							.select("TournamentTeamCheckIn.tournamentTeamId")
+							.whereRef(
+								"TournamentTeamCheckIn.tournamentTeamId",
+								"=",
+								"TournamentTeam.id",
+							)
+							.where("TournamentTeamCheckIn.bracketIdx", "is", null),
+					),
+				),
+			)
+			.orderBy("CalendarEventDate.startsAt")
+			.execute()
+	);
 }
 
 /** `ORGANIZE` and `MANAGE_MATCHES` holders keyed by tournament id, without loading the tournaments themselves. */

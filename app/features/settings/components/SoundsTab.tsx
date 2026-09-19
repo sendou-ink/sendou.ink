@@ -26,7 +26,6 @@ function SoundCheckboxes() {
 
 	const sounds = [
 		{ code: "sq_like", name: t("settings:sounds.likeReceived") },
-		{ code: "sq_new-group", name: t("settings:sounds.groupNewMember") },
 		{ code: "sq_ready-check", name: t("settings:sounds.readyCheckStarted") },
 		{ code: "sq_match", name: t("settings:sounds.matchStarted") },
 		{

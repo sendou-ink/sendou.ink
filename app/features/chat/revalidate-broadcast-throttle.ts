@@ -1,5 +1,9 @@
+import { UNTHROTTLED_SYSTEM_MESSAGE_TYPES } from "./chat-constants";
 import type { RevalidateScope, SystemMessageType } from "./chat-types";
-import { messageTypeToSound } from "./chat-utils";
+
+const UNTHROTTLED = new Set<SystemMessageType>(
+	UNTHROTTLED_SYSTEM_MESSAGE_TYPES,
+);
 
 interface ThrottleableMessage {
 	channel: string;
@@ -24,8 +28,8 @@ export const MAX_ENTRIES = 5_000;
  * the first is delivered immediately, the rest coalesce into one trailing broadcast at the
  * window's end whose scope is the broadest seen and which carries no author or type.
  *
- * Types that play a sound (starting match, ready check) are left alone: coalescing would cost
- * the sound, and they are rare. Soundless types are the bulk the throttle exists for.
+ * The types marking a moment (starting match, ready check) are left alone: coalescing would
+ * delay it, and they are rare. The rest are the bulk the throttle exists for.
  */
 export function createRevalidateBroadcastThrottle({
 	windowMs,
@@ -53,9 +57,9 @@ export function createRevalidateBroadcastThrottle({
 	};
 
 	return {
-		/** Whether the message is throttled; ones carrying a sound are not. */
+		/** Whether the message is throttled; the ones marking a moment are not. */
 		throttles(msg: Pick<ThrottleableMessage, "type">): boolean {
-			return !messageTypeToSound(msg.type);
+			return !msg.type || !UNTHROTTLED.has(msg.type);
 		},
 		handle(msg: ThrottleableMessage): void {
 			const now = Date.now();

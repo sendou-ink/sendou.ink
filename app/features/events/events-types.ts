@@ -1,7 +1,6 @@
 import type {
 	ChatMessageWithAuthor,
 	RevalidateScope,
-	SoundOnlySystemMessageType,
 } from "~/features/chat/chat-types";
 
 /** Prefix of each entity scoped channel, joined to the entity's id by the channel's builder. */
@@ -25,11 +24,7 @@ export function chatRoomChannel(roomId: number): string {
 
 export type ServerEvent =
 	| { kind: "chatMessage"; roomId: number; message: ChatMessageWithAuthor }
-	| {
-			kind: "revalidate";
-			scope?: RevalidateScope;
-			authorUserId?: number;
-			type?: SoundOnlySystemMessageType;
-	  }
+	| { kind: "revalidate"; scope?: RevalidateScope; authorUserId?: number }
 	| { kind: "notificationsChanged" }
-	| { kind: "roomsChanged" };
+	| { kind: "roomsChanged" }
+	| { kind: "statusChanged" };

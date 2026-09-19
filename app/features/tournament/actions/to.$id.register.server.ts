@@ -8,11 +8,13 @@ import { resolveNotifications } from "~/features/notifications/core/resolve.serv
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
 import { getMemberRoleType } from "~/features/team/team-utils";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as SavedCalendarEventRepository from "~/features/tournament/SavedCalendarEventRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
+	notifyTournamentStatusChanged,
 	tournamentFromParams,
 	tournamentTeamsFullCached,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -59,6 +61,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 	);
 
 	const ownTeamCheckedIn = Boolean(ownTeam && ownTeam.checkIns.length > 0);
+	let statusChangedUserIds: number[] = [];
 
 	switch (data._action) {
 		case "UPSERT_TEAM": {
@@ -147,6 +150,11 @@ export const action: ActionFunction = async ({ request, params }) => {
 					userId: user.id,
 				});
 				await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+				// registration and check-in windows overlap, so a fresh registrant can
+				// already be pending check-in
+				PendingCheckIns.clearCache();
+				statusChangedUserIds = [user.id];
 			}
 			break;
 		}
@@ -180,6 +188,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: data.userId,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			PendingCheckIns.clearCache();
+			statusChangedUserIds = [data.userId];
 			break;
 		}
 		case "LEAVE_TEAM": {
@@ -214,6 +225,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 				userId: user.id,
 			});
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
+
+			PendingCheckIns.clearCache();
+			statusChangedUserIds = [user.id];
 
 			break;
 		}
@@ -260,6 +274,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 			);
 
 			await TournamentTeamRepository.checkIn(teamMemberOf.id);
+			PendingCheckIns.clearCache();
 			logger.info(
 				`Checking in (success): tournament team id: ${teamMemberOf.id} - user id: ${user.id} - tournament id: ${tournamentId}`,
 			);
@@ -269,6 +284,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 				type: "TO_CHECK_IN_OPENED",
 				meta: { tournamentId },
 			});
+
+			statusChangedUserIds = teamMemberOf.memberUserIds;
 			break;
 		}
 		case "ADD_PLAYER": {
@@ -419,6 +436,9 @@ export const action: ActionFunction = async ({ request, params }) => {
 			}
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
+			PendingCheckIns.clearCache();
+			statusChangedUserIds = ownTeam.memberUserIds;
+
 			break;
 		}
 		default: {
@@ -427,6 +447,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 	}
 
 	clearTournamentDataCache(tournamentId);
+
+	await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
 
 	return null;
 };

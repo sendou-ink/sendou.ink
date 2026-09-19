@@ -9,7 +9,6 @@
 	"matchProfile.maps.prefer": "Prefer",
 	"matchProfile.maps.neutral": "Neutral",
 	"sounds.likeReceived": "Group invitation received",
-	"sounds.groupNewMember": "Group invitation accepted",
 	"sounds.readyCheckStarted": "SendouQ ready check started",
 	"sounds.matchStarted": "SendouQ match started",
 	"sounds.tournamentMatchStarted": "Tournament match started"

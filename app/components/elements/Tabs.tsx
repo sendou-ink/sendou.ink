@@ -272,6 +272,8 @@ interface SendouTabListProps {
 	sticky?: boolean;
 	/** tabs share 100% width equally */
 	fullWidth?: boolean;
+	/** Controls shown at the end of the tab row, outside the tablist itself (horizontal orientation only). */
+	actions?: React.ReactNode;
 	"aria-label"?: string;
 	children: React.ReactNode;
 }
@@ -279,12 +281,13 @@ interface SendouTabListProps {
 export function SendouTabList({
 	sticky,
 	fullWidth,
+	actions,
 	"aria-label": ariaLabel,
 	children,
 }: SendouTabListProps) {
 	const tabs = useTabsContext();
 
-	return (
+	const tabList = (
 		<div className={clsx(styles.tabListContainer, "scrollbar")}>
 			<div
 				className={clsx(styles.tabList, {
@@ -297,6 +300,15 @@ export function SendouTabList({
 			>
 				{children}
 			</div>
+		</div>
+	);
+
+	if (!actions || tabs.orientation === "vertical") return tabList;
+
+	return (
+		<div className={styles.tabListRow}>
+			{tabList}
+			<div className={styles.tabListActions}>{actions}</div>
 		</div>
 	);
 }

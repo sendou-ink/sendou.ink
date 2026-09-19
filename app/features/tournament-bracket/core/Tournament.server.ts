@@ -6,8 +6,10 @@ import {
 	getUser,
 	requireUser,
 } from "~/features/auth/core/user.server";
+import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import { clearCombinedStreamsCache } from "~/features/core/streams/streams.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
 import { getTentativeTier } from "~/features/tournament-organization/core/tentativeTiers.server";
 import { LRUCache } from "~/modules/cache";
@@ -273,6 +275,21 @@ export async function tournamentFromDB(tournamentId: number) {
 	return tournament;
 }
 
+/**
+ * Prompts the users' clients to refetch their header status after a change to the tournament.
+ * Fills the (just cleared) cache and syncs the registry from that one rebuild so the refetch
+ * reads post-change state and the revalidation that follows the action finds a warm cache.
+ */
+export async function notifyTournamentStatusChanged(
+	tournamentId: number,
+	userIds: number[],
+) {
+	if (userIds.length === 0) return;
+
+	syncTournamentToRegistry(await tournamentSharedCached(tournamentId));
+	ChatSystemMessage.notifyStatusChanged(userIds);
+}
+
 const TOURNAMENT_DATA_CACHE_MAX_ENTRIES = 250;
 const TOURNAMENT_DATA_CACHE_TTL_MS = IN_MILLISECONDS.HALF_HOUR;
 
@@ -308,6 +325,13 @@ export async function tournamentSharedCached(tournamentId: number) {
 
 	if (!entry.tournament) {
 		entry.tournament = new Tournament(notFoundIfNullish(await entry.data));
+	}
+
+	if (
+		!RunningTournaments.has(tournamentId) &&
+		hasImminentBracket(entry.tournament)
+	) {
+		syncTournamentToRegistry(entry.tournament);
 	}
 
 	return entry.tournament;
@@ -508,15 +532,39 @@ function mostRecentStartTime(tournament: Tournament) {
 		.filter((b) => b.startTime)
 		.map((b) => databaseTimestampToDate(b.startTime!));
 
-	const allStartTimes = [tournament.ctx.startsAt, ...bracketStartTimes];
+	// a bracket actually starting keeps the tournament live even when it was
+	// never scheduled, or the schedule has long slipped
+	const actualBracketStartTimes = tournament.brackets
+		.filter((bracket) => !bracket.preview && bracket.createdAt)
+		.map((bracket) => databaseTimestampToDate(bracket.createdAt!));
+
+	const allStartTimes = [
+		tournament.ctx.startsAt,
+		...bracketStartTimes,
+		...actualBracketStartTimes,
+	];
 
 	return allStartTimes
 		.filter((t) => t <= new Date())
 		.sort((a, b) => b.getTime() - a.getTime())[0];
 }
 
+/** A scheduled bracket the tournament is about to resume with, e.g. day 2 of a two day event once its check-in opens. */
+function hasImminentBracket(tournament: Tournament) {
+	const opensAt = new Date(Date.now() + TOURNAMENT.REGULAR_CHECK_IN_WINDOW_MS);
+
+	return tournament.ctx.settings.bracketProgression.some((bracket) => {
+		if (!bracket.startTime) return false;
+
+		const startTime = databaseTimestampToDate(bracket.startTime);
+
+		return startTime > new Date() && startTime <= opensAt;
+	});
+}
+
 function isTournamentLive(tournament: Tournament) {
 	if (!tournament.hasStarted || tournament.everyBracketOver) return false;
+	if (hasImminentBracket(tournament)) return true;
 
 	const cutoff = sub(new Date(), { hours: RUNNING_TOURNAMENT_MAX_AGE_HOURS });
 	const latestStartTime = mostRecentStartTime(tournament);

@@ -1,7 +1,13 @@
-import { describe, expect, test } from "vitest";
+import { addHours, addMinutes, subHours, subMinutes } from "date-fns";
+import { beforeEach, describe, expect, test } from "vitest";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as Engine from "./engine";
-import { serializeBracket } from "./Tournament.server";
-import { testTournament } from "./tests/test-utils";
+import { RunningTournaments } from "./RunningTournaments.server";
+import {
+	evictStaleRunningTournaments,
+	serializeBracket,
+} from "./Tournament.server";
+import { progressions, testTournament } from "./tests/test-utils";
 
 const SWISS_SETTINGS = { groupCount: 2, roundCount: 3 };
 
@@ -63,5 +69,106 @@ describe("serializeBracket", () => {
 		});
 
 		expect(serialized.data.group).toEqual(bracket.data.group);
+	});
+});
+
+describe("evictStaleRunningTournaments", () => {
+	beforeEach(() => {
+		RunningTournaments.clear();
+	});
+
+	const tournamentStarted = ({
+		startsAt,
+		bracketStartedAt,
+		nextBracketStartsAt,
+	}: {
+		startsAt: Date;
+		bracketStartedAt: Date;
+		/** Schedules a follow-up bracket, as a tournament running over several days has. */
+		nextBracketStartsAt?: Date;
+	}) => {
+		const data = Engine.create({
+			type: "swiss",
+			seeding: [1, 2],
+			settings: {},
+		});
+
+		return testTournament({
+			data: {
+				...data,
+				stage: data.stage.map((stage) => ({
+					...stage,
+					createdAt: dateToDatabaseTimestamp(bracketStartedAt),
+				})),
+			},
+			ctx: {
+				startsAt: dateToDatabaseTimestamp(startsAt),
+				settings: {
+					bracketProgression: nextBracketStartsAt
+						? [
+								...progressions.swissOneGroup,
+								{
+									...progressions.roundRobinToSingleElimination[1],
+									startTime: dateToDatabaseTimestamp(nextBracketStartsAt),
+								},
+							]
+						: progressions.swissOneGroup,
+				},
+			},
+		});
+	};
+
+	test("keeps a tournament whose bracket was actually started recently despite an old scheduled start", () => {
+		RunningTournaments.add(
+			tournamentStarted({
+				startsAt: subHours(new Date(), 24),
+				bracketStartedAt: subMinutes(new Date(), 5),
+			}),
+		);
+
+		evictStaleRunningTournaments();
+
+		expect(RunningTournaments.has(1)).toBe(true);
+	});
+
+	test("evicts a tournament whose every start is older than the liveness window", () => {
+		RunningTournaments.add(
+			tournamentStarted({
+				startsAt: subHours(new Date(), 24),
+				bracketStartedAt: subHours(new Date(), 7),
+			}),
+		);
+
+		evictStaleRunningTournaments();
+
+		expect(RunningTournaments.has(1)).toBe(false);
+	});
+
+	test("keeps a long paused tournament whose next bracket's check-in has opened", () => {
+		RunningTournaments.add(
+			tournamentStarted({
+				startsAt: subHours(new Date(), 24),
+				bracketStartedAt: subHours(new Date(), 7),
+				nextBracketStartsAt: addMinutes(new Date(), 30),
+			}),
+		);
+
+		evictStaleRunningTournaments();
+
+		expect(RunningTournaments.has(1)).toBe(true);
+	});
+
+	test("evicts it again while that bracket's check-in has yet to open", () => {
+		RunningTournaments.add(
+			tournamentStarted({
+				startsAt: subHours(new Date(), 24),
+				bracketStartedAt: subHours(new Date(), 7),
+				nextBracketStartsAt: addHours(new Date(), 5),
+			}),
+		);
+
+		evictStaleRunningTournaments();
+
+		expect(RunningTournaments.has(1)).toBe(false);
 	});
 });

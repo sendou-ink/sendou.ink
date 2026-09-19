@@ -4,12 +4,15 @@ import { db } from "~/db/sql";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
+import * as PendingCheckIns from "~/features/tournament/core/PendingCheckIns.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
 import { endDroppedTeamMatches } from "~/features/tournament/tournament-utils.server";
 import * as BracketRepository from "~/features/tournament-bracket/BracketRepository.server";
+import type * as Engine from "~/features/tournament-bracket/core/engine";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	clearTournamentDataCache,
+	notifyTournamentStatusChanged,
 	requireTournamentOrganizer,
 	tournamentFromParams,
 } from "~/features/tournament-bracket/core/Tournament.server";
@@ -31,6 +34,8 @@ export const action: ActionFunction = async ({ request, params }) => {
 		params,
 		{ for: "action" },
 	);
+
+	let statusChangedUserIds: number[] = [];
 
 	switch (data._action) {
 		case "CHECK_IN": {
@@ -58,12 +63,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
 			if (!bracket.sources) {
+				PendingCheckIns.clearCache();
 				await resolveNotifications({
 					userIds: team.memberUserIds,
 					type: "TO_CHECK_IN_OPENED",
 					meta: { tournamentId },
 				});
 			}
+
+			statusChangedUserIds = team.memberUserIds;
 
 			break;
 		}
@@ -85,10 +93,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 				// no sources = regular check in
 				bracketIdx: !bracket.sources ? null : data.bracketIdx,
 			});
+			if (!bracket.sources) {
+				PendingCheckIns.clearCache();
+			}
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 			logger.info(
 				`Checked out: tournament team id: ${data.teamId} - user id: ${user.id} - tournament id: ${tournamentId} - bracket idx: ${data.bracketIdx}`,
 			);
+
+			statusChangedUserIds = team.memberUserIds;
 
 			break;
 		}
@@ -111,13 +124,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 			}
 			await ShowcaseTournaments.refreshCachedTournamentCounts(tournamentId);
 
+			statusChangedUserIds = team.memberUserIds;
+
 			break;
 		}
 		case "DROP_TEAM_OUT": {
 			requireTournamentOrganizer(tournament, user);
 			errorToastIfFalsy(tournament.teamById(data.teamId), "Invalid team id");
 
-			const endedMatchIds = await dropTeamOut({
+			const { endedMatchIds, statusChangedTeamIds } = await dropTeamOut({
 				tournament,
 				teamId: data.teamId,
 			});
@@ -127,12 +142,19 @@ export const action: ActionFunction = async ({ request, params }) => {
 				endedMatchIds,
 			});
 
+			statusChangedUserIds = statusChangedTeamIds.flatMap(
+				(teamId) => tournament.teamById(teamId)?.memberUserIds ?? [],
+			);
+
 			break;
 		}
 		case "UNDO_DROP_TEAM_OUT": {
 			requireTournamentOrganizer(tournament, user);
 
 			await TournamentTeamRepository.undoDropOut(data.teamId);
+
+			statusChangedUserIds =
+				tournament.teamById(data.teamId)?.memberUserIds ?? [];
 
 			break;
 		}
@@ -143,12 +165,15 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 	clearTournamentDataCache(tournamentId);
 
+	await notifyTournamentStatusChanged(tournamentId, statusChangedUserIds);
+
 	return null;
 };
 
 /**
  * Drops a team out: random active roster for teams with subs, ends their in-progress matches,
- * marks them dropped. Returns the ended match ids for one batch of chat messages.
+ * marks them dropped. Returns the ended match ids for one batch of chat messages and the ids of
+ * the teams whose header status the drop moved.
  */
 async function dropTeamOut({
 	tournament,
@@ -174,7 +199,7 @@ async function dropTeamOut({
 		});
 	}
 
-	const { endedMatchIds, changedChatRoomIds } = await db
+	const { endedMatchIds, changedChatRoomIds, statusChangedTeamIds } = await db
 		.transaction()
 		.execute(async (trx) => {
 			const bracketData = await BracketRepository.findByTournamentId(
@@ -198,6 +223,10 @@ async function dropTeamOut({
 			return {
 				endedMatchIds: droppedResult.endedMatchIds,
 				changedChatRoomIds: chatRoomIds,
+				statusChangedTeamIds: teamIdsAffectedByDrop({
+					droppedTeamId: teamId,
+					changedMatches: droppedResult.changedMatches,
+				}),
 			};
 		});
 
@@ -211,7 +240,30 @@ async function dropTeamOut({
 		),
 	});
 
-	return endedMatchIds;
+	return { endedMatchIds, statusChangedTeamIds };
+}
+
+/**
+ * The dropped team plus the teams whose header status the drop moves. Read off the propagation's
+ * own changed matches: the follow-up match a walkover fills only shares a participant with the
+ * ended match once the winner has been written into it.
+ */
+function teamIdsAffectedByDrop({
+	droppedTeamId,
+	changedMatches,
+}: {
+	droppedTeamId: number;
+	changedMatches: Engine.MatchData[];
+}) {
+	const teamIds = new Set([droppedTeamId]);
+
+	for (const match of changedMatches) {
+		for (const opponentId of [match.opponent1?.id, match.opponent2?.id]) {
+			if (typeof opponentId === "number") teamIds.add(opponentId);
+		}
+	}
+
+	return Array.from(teamIds);
 }
 
 function sendDroppedMatchChatMessages({

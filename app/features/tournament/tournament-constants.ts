@@ -17,6 +17,8 @@ export const TOURNAMENT = {
 	MAX_SAVED_COUNT: 20,
 	/** How many days after a tournament ends VOD links are shown on the bracket */
 	VOD_VISIBILITY_DAYS: 7,
+	/** How long before the start regular check-in opens, closing when the tournament starts */
+	REGULAR_CHECK_IN_WINDOW_MS: 60 * 60 * 1000,
 	ROUND_NAMES: {
 		WB_FINALS: "WB Finals",
 		GRAND_FINALS: "Grand Finals",

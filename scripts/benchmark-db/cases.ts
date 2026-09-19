@@ -761,6 +761,9 @@ export function buildCases(fx: Fixtures): {
 	add("SQMatchRepository.findById", fx.heavyGroupMatchId, (matchId) =>
 		SQMatchRepository.findById(matchId),
 	);
+	add("SQMatchRepository.findLiveStateById", fx.heavyGroupMatchId, (matchId) =>
+		SQMatchRepository.findLiveStateById(matchId),
+	);
 	add("SQMatchRepository.countSeasonResultPagesByUserId", fx.sq, (sq) =>
 		SQMatchRepository.countSeasonResultPagesByUserId(sq),
 	);
@@ -846,6 +849,9 @@ export function buildCases(fx: Fixtures): {
 	);
 	addStatic("SQGroupRepository.findRecentlyFinishedMatches", () =>
 		SQGroupRepository.findRecentlyFinishedMatches(),
+	);
+	addStatic("SQGroupRepository.findCurrentReceivedLikeCounts", () =>
+		SQGroupRepository.findCurrentReceivedLikeCounts(),
 	);
 
 	addStatic("SplatoonRotationRepository.findAll", () =>
@@ -1229,6 +1235,15 @@ export function buildCases(fx: Fixtures): {
 		"TournamentRepository.findAllBetweenTwoTimestamps",
 		fx.calendarWindow,
 		(window) => TournamentRepository.findAllBetweenTwoTimestamps(window),
+	);
+	add(
+		"TournamentRepository.findPendingCheckInsStartingBetween",
+		fx.calendarWindow,
+		(window) =>
+			TournamentRepository.findPendingCheckInsStartingBetween({
+				startsAfter: window.startTime,
+				startsBefore: window.endTime,
+			}),
 	);
 	add(
 		"TournamentRepository.findTopThreeResultsByTournamentIds",
