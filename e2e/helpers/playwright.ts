@@ -29,6 +29,7 @@ interface RouterProbe {
 declare global {
 	interface Window {
 		__routerProbe?: RouterProbe;
+		__scrollYAtPress?: number;
 	}
 }
 
@@ -501,6 +502,34 @@ const DND_KIT_CLICK_SUPPRESSION_MS = 50;
 export async function waitForDropToSettle(page: Page) {
 	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the suppression window has no observable end
 	await page.waitForTimeout(2 * DND_KIT_CLICK_SUPPRESSION_MS);
+}
+
+/**
+ * The scroll position the page was at when it was last pressed, for asserting that
+ * an action did not move the viewer. Playwright scrolls a click target into view
+ * itself, and a retried click force-scrolls it again, so a reading taken before the
+ * press can be stale by the time the press lands.
+ */
+export async function trackScrollYAtPress(page: Page) {
+	await page.evaluate(() => {
+		window.__scrollYAtPress = undefined;
+		document.addEventListener(
+			"pointerdown",
+			() => {
+				window.__scrollYAtPress = window.scrollY;
+			},
+			{ capture: true },
+		);
+	});
+
+	return async () => {
+		const scrollY = await page.evaluate(() => window.__scrollYAtPress);
+		if (typeof scrollY !== "number") {
+			throw new Error("The page was never pressed");
+		}
+
+		return scrollY;
+	};
 }
 
 /** Asserts the page rendered rather than the error boundary catching something. */

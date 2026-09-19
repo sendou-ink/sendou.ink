@@ -19,6 +19,7 @@ import {
 	isNotVisible,
 	runRoutine,
 	test,
+	trackScrollYAtPress,
 } from "./helpers/playwright";
 import { NotificationPopover } from "./pages/layout/notification-popover";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
@@ -237,13 +238,15 @@ test.describe("SendouQ", () => {
 
 			const lastCard = looking.groupCard(otherUsers.length - 1);
 			await lastCard.root.scrollIntoViewIfNeeded();
-			const scrollBefore = await page.evaluate(() => window.scrollY);
-			expect(scrollBefore).toBeGreaterThan(0);
+			expect(await page.evaluate(() => window.scrollY)).toBeGreaterThan(0);
 
+			const scrollYAtPress = await trackScrollYAtPress(page);
 			await lastCard.pressSuggest();
 
 			await expect(looking.groupCard(0).trail).toBeVisible();
-			expect(await page.evaluate(() => window.scrollY)).toBe(scrollBefore);
+			expect(await page.evaluate(() => window.scrollY)).toBe(
+				await scrollYAtPress(),
+			);
 		});
 	});
 
