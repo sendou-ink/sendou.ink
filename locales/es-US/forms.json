@@ -260,6 +260,7 @@
 	"options.controller.s1-pro-con": "Mando Pro de Switch 1",
 	"options.controller.s2-pro-con": "Mando Pro de Switch 2",
 	"options.controller.grip": "Soporte para Joy-Con",
+	"options.controller.s2-grip": "",
 	"options.controller.s1-split-joycon": "",
 	"options.controller.s2-split-joycon": "",
 	"options.controller.handheld": "Modo portátil",

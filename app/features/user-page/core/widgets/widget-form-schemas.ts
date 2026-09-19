@@ -108,6 +108,7 @@ const CONTROLLERS = [
 	"s1-pro-con",
 	"s2-pro-con",
 	"grip",
+	"s2-grip",
 	"s1-split-joycon",
 	"s2-split-joycon",
 	"handheld",
