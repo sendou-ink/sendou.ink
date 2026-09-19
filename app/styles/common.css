@@ -689,6 +689,14 @@
 	}
 }
 
+/* the consent dialog is drawn outside the top layer, where the tab bar would cover its buttons */
+@media screen and (max-width: 599px) {
+	body:not(:has(.planner)) #qc-cmp2-container .qc-cmp-cleanslate {
+		bottom: calc(var(--layout-nav-height) + env(safe-area-inset-bottom));
+		height: auto;
+	}
+}
+
 .publift-widget-sticky_footer-container:not(.closed) {
 	border-top: 1.5px solid var(--color-border);
 }
