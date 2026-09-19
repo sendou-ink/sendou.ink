@@ -1,3 +1,15 @@
+/* the gap is what surrounds an expiry alert; a post not led by one doubles it */
+.posts {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
+}
+
 .post {
+	margin-block-start: var(--s-6);
 	scroll-margin-top: 6rem;
+}
+
+.expiryAlert + .post {
+	margin-block-start: 0;
 }

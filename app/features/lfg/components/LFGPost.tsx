@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { SquarePen, Trash } from "lucide-react";
+import { HardDriveDownload, SquarePen, Trash } from "lucide-react";
 import React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher } from "react-router";
@@ -9,8 +9,13 @@ import { SendouButton } from "~/components/elements/Button";
 import { Flag } from "~/components/Flag";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { WeaponImage } from "~/components/Image";
+import {
+	LFGPostGraphic,
+	lfgPostGraphicPath,
+} from "~/components/LFGPostGraphic";
 import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
+import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
 import {
 	UserCard,
@@ -28,6 +33,11 @@ import styles from "./LFGPost.module.css";
 
 type Post = LFGLoaderData["posts"][number];
 
+/** Keep in sync with `.textCollapsed` max-height */
+const COLLAPSED_TEXT_HEIGHT = 150;
+/** Server-side guess of whether the text gets clipped, corrected by measuring once mounted */
+const CLIPPED_TEXT_GUESS = { length: 300, lines: 6 };
+
 export function LFGPost({ post }: { post: Post }) {
 	if (post.team) {
 		return <TeamLFGPost post={{ ...post, team: post.team }} />;
@@ -36,7 +46,6 @@ export function LFGPost({ post }: { post: Post }) {
 	return <UserLFGPost post={post} />;
 }
 
-const USER_POST_EXPANDABLE_CRITERIA = 300;
 function UserLFGPost({ post }: { post: Post }) {
 	const canEdit = useHasPermission(post, "EDIT");
 	const canDelete = useHasPermission(post, "DELETE");
@@ -54,7 +63,7 @@ function UserLFGPost({ post }: { post: Post }) {
 					languages={post.languages}
 					timezone={post.timezone}
 					canEdit={canEdit}
-					postId={post.id}
+					post={post}
 				/>
 			</div>
 			<div>
@@ -68,7 +77,6 @@ function UserLFGPost({ post }: { post: Post }) {
 					text={post.text}
 					isExpanded={isExpanded}
 					setIsExpanded={setIsExpanded}
-					expandableCriteria={USER_POST_EXPANDABLE_CRITERIA}
 				/>
 			</div>
 		</div>
@@ -89,9 +97,9 @@ function TeamLFGPost({
 		<div className={styles.wideLayout}>
 			<div className="stack md">
 				<div className="stack xs">
-					<div className="stack horizontal items-center justify-between">
+					<div className="stack horizontal sm items-center justify-between flex-wrap">
 						<PostTeamLogoHeader team={post.team} />
-						<div className="stack horizontal items-center sm">
+						<div className="stack horizontal items-center sm flex-wrap">
 							{isHydrated ? (
 								<PostTimezonePill timezone={post.timezone} />
 							) : null}
@@ -101,9 +109,14 @@ function TeamLFGPost({
 						</div>
 					</div>
 					<Divider />
-					<div className="stack horizontal justify-between items-center">
+					<div className="stack horizontal sm justify-between items-center flex-wrap">
 						<PostTime createdAt={post.createdAt} updatedAt={post.updatedAt} />
-						{canEdit ? <PostEditButton id={post.id} /> : null}
+						{canEdit ? (
+							<div className="stack horizontal sm items-center flex-wrap justify-end">
+								<PostImageExportDialog post={post} />
+								<PostEditButton id={post.id} />
+							</div>
+						) : null}
 					</div>
 				</div>
 				{isExpanded ? (
@@ -123,6 +136,7 @@ function TeamLFGPost({
 					text={post.text}
 					isExpanded={isExpanded}
 					setIsExpanded={setIsExpanded}
+					alwaysExpandable
 				/>
 			</div>
 		</div>
@@ -166,7 +180,7 @@ function PostTeamMember({
 	const cardData = useUserCardData(member.id);
 
 	return (
-		<div className="stack sm items-center flex-same-size">
+		<div className={clsx("stack sm items-center", styles.teamMember)}>
 			<UserCard userId={member.id} withMutualFriends>
 				<span className="stack sm items-center">
 					<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
@@ -260,12 +274,12 @@ function PostPills({
 	timezone,
 	languages,
 	canEdit,
-	postId,
+	post,
 }: {
 	timezone?: string | null;
 	languages?: UnifiedLanguageCode[] | null;
 	canEdit?: boolean;
-	postId: number;
+	post: Post;
 }) {
 	const isHydrated = useHydrated();
 
@@ -280,7 +294,8 @@ function PostPills({
 			) : null}
 			{!isHydrated ? <PostTimezonePillPlaceholder /> : null}
 			{languages ? <PostLanguagePill languages={languages} /> : null}
-			{canEdit ? <PostEditButton id={postId} /> : null}
+			{canEdit ? <PostImageExportDialog post={post} /> : null}
+			{canEdit ? <PostEditButton id={post.id} /> : null}
 		</div>
 	);
 }
@@ -341,6 +356,26 @@ function PostEditButton({ id }: { id: number }) {
 	);
 }
 
+function PostImageExportDialog({ post }: { post: Post }) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<ImageExportDialog
+			trigger={
+				<button type="button" className={styles.editButton}>
+					<HardDriveDownload />
+					{t("common:imageExport.export")}
+				</button>
+			}
+			heading={t("common:imageExport.export")}
+			filename={`lfg-post-${post.id}`}
+			qrCodePath={lfgPostGraphicPath(post.id)}
+		>
+			<LFGPostGraphic post={post} />
+		</ImageExportDialog>
+	);
+}
+
 function PostDeleteButton({ id, type }: { id: number; type: Post["type"] }) {
 	const fetcher = useFetcher();
 	const { t } = useTranslation(["common", "lfg"]);
@@ -369,33 +404,52 @@ function PostDeleteButton({ id, type }: { id: number; type: Post["type"] }) {
 
 function PostExpandableText({
 	text,
-	isExpanded: _isExpanded,
+	isExpanded,
 	setIsExpanded,
-	expandableCriteria,
+	alwaysExpandable = false,
 }: {
 	text: string;
 	isExpanded: boolean;
 	setIsExpanded: (isExpanded: boolean) => void;
-	expandableCriteria?: number;
+	/** Keeps the button even when the text fits, for expanding content outside the text (team roster) */
+	alwaysExpandable?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
-	const isExpandable = !expandableCriteria || text.length > expandableCriteria;
+	const [isClipped, setIsClipped] = React.useState(
+		() =>
+			text.length > CLIPPED_TEXT_GUESS.length ||
+			text.split("\n").length > CLIPPED_TEXT_GUESS.lines,
+	);
 
-	const isExpanded = !isExpandable ? true : _isExpanded;
+	const measureText = (element: HTMLDivElement | null) => {
+		if (!element) return;
+
+		const observer = new ResizeObserver(() => {
+			setIsClipped(element.offsetHeight > COLLAPSED_TEXT_HEIGHT);
+		});
+		observer.observe(element);
+
+		return () => observer.disconnect();
+	};
+
+	const showButton = isClipped || alwaysExpandable;
+	const isTextCollapsed = isClipped && !isExpanded;
 
 	return (
 		<div
-			className={clsx({
-				[styles.textContainer]: !isExpanded,
-				[styles.textContainerExpanded]: isExpanded,
+			className={clsx(styles.textContainer, {
+				[styles.textCollapsed]: isTextCollapsed,
+				[styles.textWithButtonBelow]: showButton && !isTextCollapsed,
 			})}
 		>
-			<div className={styles.text}>{text}</div>
-			{isExpandable ? (
+			<div ref={measureText} className={styles.text}>
+				{text}
+			</div>
+			{showButton ? (
 				<SendouButton
 					onClick={() => setIsExpanded(!isExpanded)}
-					className={clsx([styles.showAllButton], {
-						[styles.showAllButtonExpanded]: isExpanded,
+					className={clsx(styles.showAllButton, {
+						[styles.showAllButtonBelow]: !isTextCollapsed,
 					})}
 					variant="outlined"
 					size="small"
@@ -405,7 +459,7 @@ function PostExpandableText({
 						: t("common:actions.showMore")}
 				</SendouButton>
 			) : null}
-			{!isExpanded ? <div className={styles.textCut} /> : null}
+			{isTextCollapsed ? <div className={styles.textCut} /> : null}
 		</div>
 	);
 }

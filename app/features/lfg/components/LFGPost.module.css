@@ -32,8 +32,14 @@
 	color: var(--color-text);
 }
 
+/* the name cap equals the basis so cells wrap instead of a long name squishing a short one's avatar */
+.teamMember {
+	flex: 1 1 64px;
+	max-width: 80px;
+}
+
 .teamMemberName {
-	max-width: 75px;
+	max-width: 64px;
 	text-overflow: ellipsis;
 	overflow: hidden;
 	white-space: nowrap;
@@ -44,13 +50,16 @@
 
 .textContainer {
 	position: relative;
+}
+
+/* keep in sync with COLLAPSED_TEXT_HEIGHT */
+.textCollapsed {
 	max-height: 150px;
 	overflow: hidden;
 }
 
-.textContainerExpanded {
-	position: relative;
-	margin-bottom: var(--s-6);
+.textWithButtonBelow {
+	margin-bottom: var(--s-10);
 }
 
 .text {
@@ -78,8 +87,8 @@
 	z-index: 1;
 }
 
-.showAllButtonExpanded {
-	bottom: -35px;
+.showAllButtonBelow {
+	bottom: -44px;
 }
 
 .pill {
@@ -93,6 +102,8 @@
 	align-items: center;
 	gap: var(--s-0-5);
 	position: relative;
+	flex-shrink: 0;
+	white-space: nowrap;
 }
 
 .pillPlaceholder {
@@ -103,6 +114,8 @@
 .editButton {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
+	font-family: inherit;
+	border: 0;
 	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
 	padding: 0 var(--s-2);
@@ -111,6 +124,8 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-1);
+	white-space: nowrap;
+	cursor: pointer;
 
 	& > svg {
 		width: 14px;
