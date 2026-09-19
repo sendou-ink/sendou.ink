@@ -5,11 +5,11 @@ import { mainWeaponImageUrl, SCANNER_PAGE } from "~/utils/urls";
 import type { Roi } from "../core/canonical";
 import type { PlayerStatusLayout } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
+import { mainWeaponLabel } from "../core/labels";
 import type { FixtureListItem } from "../routes/scanner.fixtures";
 import { scannerSearchParams } from "../scanner-search-params";
 import { newInspectKey, putInspectFrame } from "../store/inspect";
 import styles from "./FixturesPage.module.css";
-import { mainWeaponLabel } from "./labels";
 import { drawNormalizedCanvas } from "./normalized-canvas";
 import { formatTimer, RoiCrop } from "./ScreenshotPage";
 
@@ -122,7 +122,7 @@ function frameUrl(fixture: FixtureListItem): string {
 function inspectFixture(url: string) {
 	const key = newInspectKey();
 	window.open(
-		scannerSearchParams.href(SCANNER_PAGE, { tab: "screenshot", inspect: key }),
+		scannerSearchParams.href(SCANNER_PAGE, { view: "debug", inspect: key }),
 		"_blank",
 	);
 	void fetch(url)

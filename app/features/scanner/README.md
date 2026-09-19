@@ -1,19 +1,103 @@
 # Scanner — Splatoon match-event detection
 
-Browser app (route `/scanner`, dev-only until promoted) that watches OBS
-Virtual Camera footage, VoD files, or screenshots, detects Splatoon 3 UI
-screens with OpenCV.js in a Web Worker, and parses them into events speaking
-sendou.ink ids (`ModeShort`/`StageId`/weapon ids/`Ability`). Events aggregate
-client-side into `ScannerMatch` objects (`core/scanner-match.ts`) — one
-detected game per object, every field nullable — which feed `/ingest`
-(features/scanner-ingest) and the `/vods/new` prefill. Imported from the
-emberz repo; see `MIGRATION.md` there.
+Browser app (route `/scanner`, linked from the Tools menu) that watches a
+capture card or OBS Virtual Camera while you play, or scans VoD files,
+detects Splatoon 3 UI screens with OpenCV.js in a Web Worker, and parses them
+into events speaking sendou.ink ids (`ModeShort`/`StageId`/weapon ids/`Ability`).
+Events aggregate client-side into `ScannerMatch` objects
+(`core/scanner-match.ts`) — one detected game per object, every field
+nullable — which feed `/ingest` (features/scanner-ingest), the `/vods/new`
+prefill, the match cards and the clip cutter. Imported from the emberz repo;
+see `MIGRATION.md` there.
 
-Deliberate convention exceptions (dev tool, ported wholesale): the UI is
-English-only (no i18next), `tests/node-test-compat.ts` uses a default export
-to stay a `node:test` drop-in, and the suites assert with `node:assert/strict`
-rather than the repo-wide `expect`. Keep whichever file you touch on the
-idiom it already uses — a half-migration would leave three idioms behind.
+Deliberate convention exceptions (ported wholesale): the UI is English-only
+(no i18next; the public release should flip that), `tests/node-test-compat.ts`
+uses a default export to stay a `node:test` drop-in, and the suites assert
+with `node:assert/strict` rather than the repo-wide `expect`. Keep whichever
+file you touch on the idiom it already uses — a half-migration would leave
+three idioms behind.
+
+## Product shape
+
+Anyone can capture, scan files and get clips locally; only uploading needs a
+login (`components/upload.ts` mirrors the root loader's user for the
+controllers). The landing (`components/LandingView.tsx`) is two entry cards
+(Live / File), the clip history strip and the sessions list; everything else
+is one component, `components/SessionView.tsx`, rendered identically for the
+running capture (`LiveView`), a past session (`PastSessionView`) and a
+scanned VoD (`VodView`): header, clip strip, then match cards
+(`components/MatchCard.tsx`) newest first. Views are picked by the `view`
+search param (`scanner-search-params.ts`: `live`, `session&id=`,
+`vod&name=`, `clips`, and the debug-gated `debug` / dev-only `fixtures`).
+
+- **Controllers are module singletons**, not view state: the capture
+  (`components/live-session.ts`) and a running VoD scan
+  (`components/vod-scan.ts`) are mounted above the view switch, so moving
+  between views never stops them; a capture runs until Stop (even off the
+  page), a scan until it finishes or the scanner page is left.
+  Views subscribe through `useSyncExternalStore` hooks, as they do to the
+  event feed (`components/events-feed.ts`, sessions built once per refresh),
+  the clip list (`clips-feed.ts`), the VoD list (`vods-feed.ts`) and the
+  localStorage settings (`settings.ts`: source, upload toggle, clip toggle).
+- **Sessions** are client-only and derived at render (`core/sessions.ts`):
+  live events ordered by `detectedAt`, split wherever a gap of ≥ 2 h opens,
+  keyed by the first event's `detectedAt` (the URL id). A VoD is its own
+  session keyed by file name. Live `t` is wall-clock seconds (`Date.now()`)
+  so events from different page loads share one timeline; the ring buffer
+  stamps footage the same way.
+- **Retention** (`store/events.ts`, on a throttled pass at every save):
+  whole sessions older than 30 days or beyond the newest 20 go; full-res
+  frames are kept for everyone — a misread is only reportable while the
+  frame exists — bounded by 72 h and `MAX_FRAMES`, the event staying with
+  `hasFrame: false`. Clips have their own cap and outlive session deletion.
+- **Upload** is on by default when logged in (settings toggle, persisted).
+  Live: a scoreboard closes its match and sends it, a 15 s tick retries
+  unlinked matches on a backoff (`sendou-ingest.ts`) and flushes closed
+  matches whose send was skipped; Stop sends what is left. VoD: the whole
+  scan sends once saved. Both write per-event send statuses to their own
+  store (`updateEventsSend` takes the store), so the cards' upload chip
+  (`UploadChip.tsx`) and the per-card Retry/Upload are one code path.
+- **CSV** is a normal feature: `⇩ CSV` in every session header offers
+  `Matches` (`core/csv/matches.ts`, one row per game, the rows the cards
+  render) and `Raw detections` (`core/csv/events.ts`, one row per event).
+  Column names stay English keys.
+- **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`): the
+  image/screenshot view (`ScreenshotPage.tsx`), the dev-only fixtures view,
+  `Save frame as fixture`, `?telemetry=true`, and the `Raw detections`
+  disclosure inside a match card (the per-event cards with Inspect).
+
+## Clips
+
+Clips are real video with audio, cut in the browser. `core/clips/scoring.ts`
+is the pure, swappable scorer: only the POV player's own kills feed it
+(`ScannerMatch.kills`, off the kill feed); a streak is consecutive kills with
+no POV death between them and no pause over `STREAK_MAX_GAP_S`, cut where the
+clip would outgrow `MAX_CLIP_SECONDS`; `MIN_KILLS` (4) makes it a window,
+scored `kills² + kills / span`. Both controllers run the same
+`scoreWindows(match, deaths)` → cut → `store/clips.ts` path:
+
+- **Live** (`capture/ring-buffer.ts`): the stream's video track runs through
+  a `MediaStreamTrackProcessor` → `VideoEncoder` (hardware H.264, ~16 Mbps,
+  keyframe every 2 s) into a ring of GOPs holding the last
+  `RING_BUFFER_SECONDS`; the audio track through an `AudioEncoder` (AAC,
+  else Opus) into the same ring. Packets are stamped with the wall clock on
+  arrival. A window is cut once `windowClosed` (no kill can join and the
+  tail is captured): the GOP at or before its start through its end, muxed
+  to MP4 with mediabunny's `EncodedVideoPacketSource` — no decode. Audio is
+  the chosen source's own input (`audioInputFor`: same `groupId`, else a
+  shared label prefix); OBS Virtual Camera carries none, so its clips are
+  silent, which the source select says.
+- **VoD** (`capture/vod-clips.ts`): packets from the keyframe at or before
+  the window start are copied into a fresh MP4 (video + audio, no
+  re-encode, so a minute of 1080p takes well under a second). mediabunny's
+  `Conversion` with `trim` always transcodes; keep using the packet copy.
+- **Buckets** (`store/clips.ts`): `session` holds the running session's
+  clips (nothing evicted while you play); Stop rolls them into `history`,
+  where `MAX_HISTORY_CLIPS` (20) applies by score — download to keep. A
+  file's clips (`vod`) live for one visit and are purged on the next page
+  load; the file is on disk. Clip records carry the real `start`/`end`
+  seconds (a packet-copied clip starts at a keyframe), and a card's deaths
+  and kills get a ▶ when a clip covers their `t`.
 
 ## Commands
 
@@ -23,7 +107,7 @@ pnpm test:unit:browser                  # includes tests/logic/ — the fixture-
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
-pnpm scanner:scan-vod <video>           # VoD-tab scan as a CLI (ffmpeg): video in, events CSV out
+pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out
 pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
 pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
@@ -45,24 +129,25 @@ sequenceDiagram
   participant W as analyzer.worker (OpenCV)
   participant TL as TimelineBuilder
   participant MB as match-builder
-  participant UI as Live/VoD tab
+  participant UI as live-session / vod-scan
   participant ING as /ingest (scanner-ingest)
   participant DB as IngestedMatch / IngestedMatchLink
   Cap->>W: frame + t (live/screenshot/seek) — VoD: worker decodes its own slice
   W->>W: scheduler dueDetectors() → gate() → parse()
   W-->>TL: DetectedEvents
-  TL-->>UI: deduped timeline (IndexedDB on Live)
+  TL-->>UI: deduped timeline (IndexedDB: events / vod-events)
   UI->>MB: buildScannerMatches(events)
   MB-->>UI: ScannerMatch[] + source events
-  UI->>ING: POST { matches } (Live: on match close / scan end, VoD: whole scan)
+  UI->>ING: POST { matches } (live: on match close / stop, VoD: once saved)
   ING->>ING: resolve context (current tournament/SendouQ activity, casts via staff roles, else content sequence ≥2)
   ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge, context hints)
   ING->>DB: link matches to game results → IngestedMatchLink (POV weapon → ReportedWeapon; scoreboards derived at read time)
-  Note over UI: VoD "Add VoD": ScannerMatch → slim prefill param → /vods/new
+  Note over UI: VoD "Add to VoDs": ScannerMatch → slim prefill param → /vods/new
+  Note over UI: scoreWindows(match) → ring buffer / file packet copy → clips store
 ```
 
 - `core/` is pure (mats in, events/matches out) and runs in the worker, the
-  Screenshot tab, and Node tests. No DOM/browser APIs; Node-only helpers live
+  debug view, and Node tests. No DOM/browser APIs; Node-only helpers live
   in `node/`. Pure data/type imports from `~/modules` and
   `~/features/build-analyzer/data` are fine — valibot and the app config graph
   are not (schemas live in `scanner-schemas.ts`; core only `import type`s
@@ -71,7 +156,11 @@ sequenceDiagram
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
   when the intro was missed), minimaps group per map by confirmed stage
   change and >5 min gap. An event belongs to at most one match; deaths
-  reveal enemy builds (`ability-harvest.ts`). Partial matches are fine —
+  reveal enemy builds (`ability-harvest.ts`), the personal results screen
+  (`ScoreboardOwn`, seen within `OWN_RESULTS_WINDOW_SECONDS` of a closed
+  match's scoreboard) completes the POV player's full build, and minimap
+  cards contribute everyone else's mains — so a card's Builds section
+  covers both teams, each row rendered as far as it was read. Partial matches are fine —
   scanner-ingest merges them server-side. Senders filter with
   `ingestSkipReasons`: private/unread lobby only, and no games a disconnect
   cut short (scoreless + counter left more time than the footage did, or
@@ -79,7 +168,8 @@ sequenceDiagram
   practice since it only resolves after the fact).
 - The route (`routes/scanner.tsx`) is SSR-guarded: the client tree loads via
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
-  may be imported at route-module top level.
+  may be imported at route-module top level. There is no feature flag: the
+  page and `/ingest` are open to everyone (ingest still requires a login).
 - Nine detectors: `scoreboard` (results screen),
   `scoreboard-battle-log-replay` (replay-browser detail),
   `scoreboard-battle-log` (Recent Battles detail — same data sans replay
@@ -203,26 +293,28 @@ sequenceDiagram
   into an earlier read — a 1080p PNG per repeat read cost more than the
   parse once the kill feed re-read its stack twice a second. Frames no
   detector is due for skip canvas readback, and everything is counted in
-  `core/detectors/telemetry.ts` — but only when the VoD tab is opened with
-  `?telemetry=true` (nothing links there); otherwise the workers skip
-  collection and the panel stays hidden. A match's objective reads render
+  `core/detectors/telemetry.ts` — but only when a VoD is scanned with
+  `?telemetry=true` in the URL (nothing links there) by a debug user;
+  otherwise the workers skip collection and the panel stays hidden. A match's objective reads render
   as one step-line timeline
   (`~/components/ObjectiveTimeline.tsx`, shared with the match page).
-  The Live tab buffers frames sampled while the worker is busy; past the
+  The live capture buffers frames sampled while the worker is busy; past the
   buffer limit the backlog is decimated toward even time-spacing
   (`worker/frame-queue.ts`) rather than truncated oldest-first, so a
   parse stall can no longer swallow a results screen whole (the exact
   failure that cost a live match its scoreboard on 2026-08-22).
-- VoD scans (`components/VodPage.tsx`): on the WebCodecs path each worker
+- VoD scans (`components/vod-scan.ts`): on the WebCodecs path each worker
   demuxes + decodes its own contiguous slice (mediabunny in the worker — no
   frames cross the main thread). When the scheduler reports calm (no gate
   pass for a quiet period, no open match), the worker skims
   keyframe-to-keyframe (hop capped at 2.5s so short screens can't hide),
   snapping back to dense decode on any gate pass. The seek fallback drives
-  one worker and widens its stride over calm footage the same way.
+  one worker and widens its stride over calm footage the same way; its
+  metadata wait is bounded so an undecodable file errors instead of hanging.
+  A scan is all or nothing: leaving the page cancels it and nothing is saved.
 - Recognition is language-agnostic: OCR output snaps against every game
   language at once (`core/localized-entries.ts`, generated) and events carry
-  sendou ids. English display names come from `components/labels.ts`.
+  sendou ids. English display names come from `core/labels.ts`.
 - ROI coordinates live in each detector's `rois.ts`, in canonical 1920×1080
   space; every frame is normalized to that size first — black bars around the
   picture (letterbox/pillarbox, or a scene drawing the game smaller than its
@@ -299,13 +391,13 @@ detector's suite sweeps them. Every live misread should become a fixture —
 the live app's "Save fixture" button exports the byte-exact analyzed frame
 plus a prefilled `expected.json`. **Fixture ground-truth labels are
 hand-corrected by the user (the Splatoon domain authority) — treat them as
-definitive over any matcher output.** The dev-only Fixtures tab
-(`/scanner?tab=fixtures`) renders every fixture's frame beside its
+definitive over any matcher output.** The dev-only fixtures view
+(`/scanner?view=fixtures`) renders every fixture's frame beside its
 `expected.json` for that ground-truth review — player-status and
 strip-weapons cases get per-slot icon crops with the expected label under
-each icon, and Inspect re-analyzes any frame in the Screenshot tab. The `q`
+each icon, and Inspect re-analyzes any frame in the debug view (`/scanner?view=debug`). The `q`
 param narrows by case-name substring (comma = OR) and lives in the URL, so
 finished labeling work can be handed over as a reviewable link, e.g.
-`/scanner?tab=fixtures&q=gauge-overlay,ready-trough`. Fixtures are committed as plain blobs
+`/scanner?view=fixtures&q=gauge-overlay,ready-trough`. Fixtures are committed as plain blobs
 (no LFS for now); keep additions deliberate — fixture IO is isolated in
 `node/fixtures.ts` if a retreat to LFS/an external corpus is needed.

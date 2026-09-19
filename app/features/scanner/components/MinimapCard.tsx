@@ -10,6 +10,7 @@ import {
 	type MinimapEnemy,
 	type MinimapTeammate,
 } from "../core/detectors/minimap/index";
+import { stageLabel } from "../core/labels";
 import {
 	EventCardMeta,
 	EventCardShell,
@@ -18,7 +19,6 @@ import {
 } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
-import { stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 import styles from "./MinimapCard.module.css";
 

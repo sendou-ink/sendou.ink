@@ -13,4 +13,8 @@ export class ScannerPage {
 	async goto() {
 		await navigate({ page: this.page, url: SCANNER_PAGE });
 	}
+
+	startCaptureButton() {
+		return this.page.getByRole("button", { name: "Start capture" });
+	}
 }

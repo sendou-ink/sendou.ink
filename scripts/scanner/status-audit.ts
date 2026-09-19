@@ -19,13 +19,6 @@ import {
 	type PlayerStatusTimelineSample,
 	statusSpans,
 } from "../../app/components/PlayerStatusTimeline";
-import { formatTime } from "../../app/features/scanner/components/format";
-import {
-	lobbyLabel,
-	mainWeaponLabel,
-	modeLabel,
-	stageLabel,
-} from "../../app/features/scanner/components/labels";
 import {
 	DEATH_EVENT_TYPE,
 	type DeathData,
@@ -63,6 +56,13 @@ import {
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/index";
 import type { DetectedEvent } from "../../app/features/scanner/core/detectors/types";
+import { formatTime } from "../../app/features/scanner/core/format";
+import {
+	lobbyLabel,
+	mainWeaponLabel,
+	modeLabel,
+	stageLabel,
+} from "../../app/features/scanner/core/labels";
 import {
 	type BuiltMatch,
 	buildScannerMatches,

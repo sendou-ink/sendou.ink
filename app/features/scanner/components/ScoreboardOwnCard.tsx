@@ -2,6 +2,12 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
+import {
+	lobbyLabel,
+	mainWeaponLabel,
+	modeLabel,
+	stageLabel,
+} from "../core/labels";
 import { AbilityGrid } from "./AbilityGrid";
 import {
 	EventCardMeta,
@@ -12,7 +18,6 @@ import {
 } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
 import { useEventTimeFormatter } from "./format";
-import { lobbyLabel, mainWeaponLabel, modeLabel, stageLabel } from "./labels";
 import { MetaPills } from "./MetaChips";
 
 export function ScoreboardOwnCard(props: {

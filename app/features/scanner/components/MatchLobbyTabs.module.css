@@ -1,5 +1,0 @@
-.matchList {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-3);
-}

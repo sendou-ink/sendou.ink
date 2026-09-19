@@ -18,6 +18,7 @@ import type { StripWeaponsData } from "../../core/detectors/objective/strip-weap
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
 import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
 import type { ScoreboardBattleLogReplayData } from "../../core/detectors/scoreboard-battle-log-replay/index";
+import type { ScoreboardOwnData } from "../../core/detectors/scoreboard-own/index";
 import type { DetectedEvent } from "../../core/detectors/types";
 import {
 	buildScannerMatches,
@@ -476,6 +477,43 @@ test("a stray full-count blip is voided against the surrounding countdown", () =
 			[73, 100],
 		],
 	);
+});
+
+const OWN_BUILD: AbilityWithUnknown[][] = [
+	["SCU", "ISM", "ISM", "ISS"],
+	["QR", "RSU", "RSU", "QSJ"],
+	["SJ", "SSU", "SSU", "IRU"],
+];
+
+function ownResults(t: number): DetectedEvent {
+	const data: ScoreboardOwnData = {
+		lobby: "PRIVATE",
+		mode: "SZ",
+		stage: 0,
+		weaponId: 40,
+		abilities: OWN_BUILD,
+	};
+	return { type: "ScoreboardOwn", t, confidence: 0.9, data };
+}
+
+test("the personal results screen completes the POV player's build", () => {
+	const [built] = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300, { povIndex: 5 }),
+		ownResults(320),
+	]);
+	assert.deepEqual(built!.match.teams[1].players[1]!.abilities, OWN_BUILD);
+	assert.equal(built!.sources.length, 3);
+});
+
+test("a personal results screen long after the scoreboard is left alone", () => {
+	const [built] = buildScannerMatches([
+		mapStart(0),
+		scoreboard(300),
+		ownResults(600),
+	]);
+	assert.equal(built!.match.teams[0].players[0]!.abilities, undefined);
+	assert.equal(built!.sources.length, 2);
 });
 
 test("enriches players with abilities from the match's deaths", () => {

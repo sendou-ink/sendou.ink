@@ -4,8 +4,8 @@
  */
 
 import { Clock, Gauge } from "lucide-react";
+import { formatTime } from "../core/format";
 import { EventTypeIcon } from "./EventTypeIcon";
-import { formatTime } from "./format";
 import styles from "./MetaChips.module.css";
 
 export function MetaPills({

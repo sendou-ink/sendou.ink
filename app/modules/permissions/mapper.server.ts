@@ -1,14 +1,7 @@
 import type { UserWithPlusTier } from "~/utils/kysely.server";
 import { userDiscordIdIsAged } from "~/utils/users";
 import type { Role } from "./types";
-import {
-	isAdmin,
-	isDev,
-	isQa,
-	isScannerTester,
-	isStaff,
-	isSupporter,
-} from "./utils";
+import { isAdmin, isDev, isQa, isStaff, isSupporter } from "./utils";
 
 export function userRoles(
 	user: Pick<
@@ -39,10 +32,6 @@ export function userRoles(
 
 	if (isQa(user)) {
 		result.push("QA");
-	}
-
-	if (isScannerTester(user)) {
-		result.push("SCANNER_TESTER");
 	}
 
 	if (typeof user.patronTier === "number") {

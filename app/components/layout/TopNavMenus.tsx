@@ -52,6 +52,7 @@ const NAV_CATEGORIES = [
 			{ name: "maps", url: "maps" },
 			{ name: "tier-list-maker", url: "tier-list-maker" },
 			{ name: "xsearch", url: "xsearch" },
+			{ name: "scanner", url: "scanner" },
 			{
 				name: "admin",
 				url: "admin",

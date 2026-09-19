@@ -1,67 +1,72 @@
-import clsx from "clsx";
-import { Link } from "react-router";
+/**
+ * The scanner's client tree: one container the views' container queries
+ * key off, and the view switch. The live capture and a running VoD scan are
+ * module singletons (live-session.ts, vod-scan.ts) mounted above this
+ * switch, so moving between views never stops them; only leaving the page
+ * cancels a scan, while a capture keeps running until Stop.
+ */
+import { useEffect } from "react";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { SCANNER_PAGE } from "~/utils/urls";
-import {
-	SCANNER_TABS,
-	type ScannerTab,
-	scannerSearchParams,
-} from "../scanner-search-params";
+import { scannerSearchParams } from "../scanner-search-params";
+import { deleteVodClips } from "../store/clips";
+import { ClipsView } from "./ClipsView";
+import { refreshClips } from "./clips-feed";
 import { FixturesPage } from "./FixturesPage";
-import { LivePage } from "./LivePage";
+import { LandingView } from "./LandingView";
+import { LiveView } from "./LiveView";
+import { useLiveSession } from "./live-session";
+import { PastSessionView } from "./PastSessionView";
 import styles from "./ScannerApp.module.css";
 import { ScreenshotPage } from "./ScreenshotPage";
-import type { SendouUser } from "./sendou-ingest";
-import { VodPage } from "./VodPage";
+import { setUploadUser } from "./upload";
+import { useDebug } from "./use-debug";
+import { VodView } from "./VodView";
+import { cancelVodScan } from "./vod-scan";
 
-const TAB_LABELS: Record<ScannerTab, string> = {
-	live: "Live",
-	screenshot: "Screenshot",
-	vod: "VoD",
-	fixtures: "Fixtures",
-};
-
-// the fixtures tab reads the corpus off disk, which only a dev checkout has
-const visibleTabs =
-	process.env.NODE_ENV === "development"
-		? SCANNER_TABS
-		: SCANNER_TABS.filter((tab) => tab !== "fixtures");
+/** A file's clips live for one visit: the file is on disk, so a new page load starts without them. */
+let vodClipsPurged = false;
 
 export function ScannerApp() {
-	const [tab] = useSearchParam(scannerSearchParams, "tab");
-	const rootUser = useUser();
-	const sendouUser: SendouUser | null = rootUser
-		? { id: rootUser.id, username: rootUser.username }
-		: null;
+	const [view] = useSearchParam(scannerSearchParams, "view");
+	const user = useUser();
+	const live = useLiveSession();
+	const debug = useDebug();
+
+	// the controllers run outside React and need the login to decide on uploads
+	useEffect(() => {
+		setUploadUser(user ? { id: user.id } : null);
+	}, [user]);
+
+	useEffect(() => {
+		if (vodClipsPurged) return;
+		vodClipsPurged = true;
+		void deleteVodClips()
+			.catch(() => {})
+			.then(() => refreshClips());
+	}, []);
+
+	// a file scan has no Cancel button: leaving the page is how it is stopped
+	useEffect(() => cancelVodScan, []);
+
+	const capturing = live.status === "running" || live.status === "starting";
 
 	const page =
-		tab === "screenshot" ? (
+		view === "live" && capturing ? (
+			<LiveView />
+		) : view === "session" ? (
+			<PastSessionView />
+		) : view === "vod" ? (
+			<VodView />
+		) : view === "clips" ? (
+			<ClipsView />
+		) : view === "debug" && debug ? (
 			<ScreenshotPage />
-		) : tab === "vod" ? (
-			<VodPage sendouUser={sendouUser} />
-		) : tab === "fixtures" && process.env.NODE_ENV === "development" ? (
+		) : view === "fixtures" && process.env.NODE_ENV === "development" ? (
 			<FixturesPage />
 		) : (
-			<LivePage sendouUser={sendouUser} />
+			<LandingView />
 		);
 
-	return (
-		<div className={styles.app}>
-			<header className={styles.topbar}>
-				<nav>
-					{visibleTabs.map((tabOption) => (
-						<Link
-							key={tabOption}
-							to={scannerSearchParams.href(SCANNER_PAGE, { tab: tabOption })}
-							className={clsx({ [styles.active]: tab === tabOption })}
-						>
-							{TAB_LABELS[tabOption]}
-						</Link>
-					))}
-				</nav>
-			</header>
-			{page}
-		</div>
-	);
+	return <div className={styles.app}>{page}</div>;
 }

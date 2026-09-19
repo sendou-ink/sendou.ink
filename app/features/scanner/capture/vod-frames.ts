@@ -61,18 +61,38 @@ async function* seekFrames(
 	}
 }
 
+/**
+ * An undecodable file (wrong container, not a video at all) can fire neither
+ * `loadedmetadata` nor `error`, so the wait is bounded.
+ */
+const METADATA_TIMEOUT_MS = 15_000;
+
 function loadMetadata(video: HTMLVideoElement): Promise<void> {
 	return new Promise((resolve, reject) => {
 		if (video.readyState >= HTMLMediaElement.HAVE_METADATA) return resolve();
-		video.addEventListener("loadedmetadata", () => resolve(), { once: true });
+		const fail = () =>
+			reject(
+				new Error(video.error?.message || "cannot decode this file as video"),
+			);
+		const timer = setTimeout(fail, METADATA_TIMEOUT_MS);
 		video.addEventListener(
-			"error",
-			() =>
-				reject(
-					new Error(video.error?.message || "cannot decode this file as video"),
-				),
+			"loadedmetadata",
+			() => {
+				clearTimeout(timer);
+				resolve();
+			},
 			{ once: true },
 		);
+		for (const type of ["error", "emptied", "stalled"]) {
+			video.addEventListener(
+				type,
+				() => {
+					clearTimeout(timer);
+					fail();
+				},
+				{ once: true },
+			);
+		}
 	});
 }
 

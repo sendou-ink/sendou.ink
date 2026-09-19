@@ -72,6 +72,10 @@ export const navItems = [
 		url: "vods",
 	},
 	{
+		name: "scanner",
+		url: "scanner",
+	},
+	{
 		name: "art",
 		url: "art",
 	},

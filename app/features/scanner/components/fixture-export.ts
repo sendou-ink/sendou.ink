@@ -34,7 +34,8 @@ import {
 	SCOREBOARD_OWN_EVENT_TYPE,
 	type ScoreboardOwnData,
 } from "../core/detectors/scoreboard-own/index";
-import { mainWeaponLabel, stageLabel, weaponLabel } from "./labels";
+import { mainWeaponLabel, stageLabel, weaponLabel } from "../core/labels";
+import { downloadBlob as download } from "./download";
 
 /** Scoreboard data with the replay extras present when the event has them. */
 export type CardData = ScoreboardData &
@@ -54,15 +55,6 @@ export type FixtureData =
 
 function isDeath(_data: FixtureData, eventType: string): _data is DeathData {
 	return eventType === DEATH_EVENT_TYPE;
-}
-
-function download(name: string, blob: Blob): void {
-	const url = URL.createObjectURL(blob);
-	const a = document.createElement("a");
-	a.href = url;
-	a.download = name;
-	a.click();
-	URL.revokeObjectURL(url);
 }
 
 function buildExpectedJson(

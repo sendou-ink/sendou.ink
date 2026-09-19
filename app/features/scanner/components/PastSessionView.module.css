@@ -1,0 +1,9 @@
+.title {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.summary {
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}

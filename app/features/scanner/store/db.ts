@@ -1,52 +1,83 @@
 /**
  * Shared IndexedDB handle. Stores:
- *  - `events`: live-tab detections, keyed by auto id (events.ts)
+ *  - `events`: live detections, keyed by auto id (events.ts)
  *  - `frames`: their full-res analyzed PNGs by event id, kept apart so listing the feed never deserializes them
- *  - `vods`: one summary per fully scanned VoD, keyed by file name
+ *  - `vods`: one summary per scanned VoD, keyed by file name (vods.ts)
  *  - `vod-events`: each saved VoD's detections, indexed by VoD name
  *  - `vod-frames`: their PNGs, keyed by vod-event id
- *  - `inspect-frames`: one-shot Inspect handoffs into a new screenshot tab (inspect.ts)
+ *  - `clips`: clip records by auto id, indexed by bucket (clips.ts)
+ *  - `clip-blobs`: the clips' MP4s, keyed by clip id
+ *  - `inspect-frames`: one-shot Inspect handoffs into a new debug tab (inspect.ts)
  */
 const DB_NAME = "scanner";
-const DB_VERSION = 1;
+const DB_VERSION = 2;
 
 export const EVENTS_STORE = "events";
 export const FRAMES_STORE = "frames";
 export const VODS_STORE = "vods";
 export const VOD_EVENTS_STORE = "vod-events";
 export const VOD_FRAMES_STORE = "vod-frames";
+export const CLIPS_STORE = "clips";
+export const CLIP_BLOBS_STORE = "clip-blobs";
 export const INSPECT_FRAMES_STORE = "inspect-frames";
 
-/** Recreates the schema from scratch, so a DB_VERSION bump is a clean slate that wipes scanner data. */
-function createStores(database: IDBDatabase): void {
-	for (const name of Array.from(database.objectStoreNames)) {
-		database.deleteObjectStore(name);
+/**
+ * Adds the stores a DB_VERSION bump introduced, keeping the existing ones and
+ * their data. v2 added the clip stores and moved live event times onto the
+ * wall clock, so a v1 database's live events (stamped on the page clock)
+ * are dropped. Changing an existing store's shape needs a real migration here.
+ */
+function upgrade(database: IDBDatabase, oldVersion: number): void {
+	const has = (name: string) => database.objectStoreNames.contains(name);
+
+	if (oldVersion < 2 && has(EVENTS_STORE)) {
+		database.deleteObjectStore(EVENTS_STORE);
+		database.deleteObjectStore(FRAMES_STORE);
 	}
 
-	const events = database.createObjectStore(EVENTS_STORE, {
-		keyPath: "id",
-		autoIncrement: true,
-	});
-	events.createIndex("t", "t");
-	events.createIndex("detectedAt", "detectedAt");
+	if (!has(EVENTS_STORE)) {
+		const events = database.createObjectStore(EVENTS_STORE, {
+			keyPath: "id",
+			autoIncrement: true,
+		});
+		events.createIndex("t", "t");
+		events.createIndex("detectedAt", "detectedAt");
+	}
 
-	database.createObjectStore(VODS_STORE, { keyPath: "name" });
+	if (!has(VODS_STORE)) {
+		database.createObjectStore(VODS_STORE, { keyPath: "name" });
+	}
 
-	const vodEvents = database.createObjectStore(VOD_EVENTS_STORE, {
-		keyPath: "id",
-		autoIncrement: true,
-	});
-	vodEvents.createIndex("vod", "vod");
+	if (!has(VOD_EVENTS_STORE)) {
+		const vodEvents = database.createObjectStore(VOD_EVENTS_STORE, {
+			keyPath: "id",
+			autoIncrement: true,
+		});
+		vodEvents.createIndex("vod", "vod");
+	}
 
-	database.createObjectStore(FRAMES_STORE);
-	database.createObjectStore(VOD_FRAMES_STORE);
-	database.createObjectStore(INSPECT_FRAMES_STORE);
+	if (!has(CLIPS_STORE)) {
+		const clips = database.createObjectStore(CLIPS_STORE, {
+			keyPath: "id",
+			autoIncrement: true,
+		});
+		clips.createIndex("bucket", "bucket");
+	}
+
+	for (const name of [
+		FRAMES_STORE,
+		VOD_FRAMES_STORE,
+		CLIP_BLOBS_STORE,
+		INSPECT_FRAMES_STORE,
+	]) {
+		if (!has(name)) database.createObjectStore(name);
+	}
 }
 
 function openDb(): Promise<IDBDatabase> {
 	return new Promise((resolve, reject) => {
 		const req = indexedDB.open(DB_NAME, DB_VERSION);
-		req.onupgradeneeded = () => createStores(req.result);
+		req.onupgradeneeded = (event) => upgrade(req.result, event.oldVersion);
 		req.onblocked = () => {
 			// biome-ignore lint/suspicious/noConsole: the only diagnostic channel for a hang caused by other tabs
 			console.warn(
@@ -59,16 +90,23 @@ function openDb(): Promise<IDBDatabase> {
 }
 
 let dbPromise: Promise<IDBDatabase> | null = null;
-export function db(): Promise<IDBDatabase> {
-	dbPromise ??= openDb().then((database) => {
-		// when another tab needs to upgrade, release the connection instead of
-		// blocking that tab forever; the next call here reconnects fresh
-		database.onversionchange = () => {
-			database.close();
+function db(): Promise<IDBDatabase> {
+	dbPromise ??= openDb().then(
+		(database) => {
+			// when another tab needs to upgrade, release the connection instead of
+			// blocking that tab forever; the next call here reconnects fresh
+			database.onversionchange = () => {
+				database.close();
+				dbPromise = null;
+			};
+			return database;
+		},
+		(error) => {
+			// a failed open (private mode, quota) must not be cached forever
 			dbPromise = null;
-		};
-		return database;
-	});
+			throw error;
+		},
+	);
 	return dbPromise;
 }
 
@@ -84,5 +122,20 @@ export async function tx<T>(
 		const req = run(transaction.objectStore(storeName));
 		req.onsuccess = () => resolve(req.result);
 		req.onerror = () => reject(req.error);
+	});
+}
+
+/** Runs `run` inside one readwrite transaction over `storeNames`, resolving on commit. */
+export async function readwrite(
+	storeNames: string[],
+	run: (transaction: IDBTransaction) => void,
+): Promise<void> {
+	const database = await db();
+	return new Promise<void>((resolve, reject) => {
+		const transaction = database.transaction(storeNames, "readwrite");
+		run(transaction);
+		transaction.oncomplete = () => resolve();
+		transaction.onerror = () => reject(transaction.error);
+		transaction.onabort = () => reject(transaction.error);
 	});
 }

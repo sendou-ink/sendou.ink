@@ -1,8 +1,6 @@
 /** Everything ingest scenario cases need: world builders (arrange), ingest wrapper (act), page-loader wrappers and row fetchers (assert). See README.md. */
 import { addHours, addMinutes, subDays, subMinutes } from "date-fns";
 import * as R from "remeda";
-import { afterAll, beforeAll } from "vitest";
-import { Config } from "~/config";
 import { backdate } from "~/db/seed/core/backdate";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
@@ -73,29 +71,6 @@ export interface ScannedOptions extends Partial<ScannerMatch> {
 	cast?: boolean;
 	/** minimap-only read: empty rosters, winner/mode/scores unread */
 	partial?: boolean;
-}
-
-/** Forces the scanner gate open for the suite (`import.meta.env` may not carry the config's `test.env`), restoring it afterwards. Call at the top of the test file. */
-export function setupScannerGate() {
-	let original: boolean;
-	beforeAll(() => {
-		original = Config.scannerEnabled;
-		Config.scannerEnabled = true;
-	});
-	afterAll(() => {
-		Config.scannerEnabled = original;
-	});
-}
-
-/** Runs `fn` with the scanner gate closed, restoring it even on a throw. */
-export async function withScannerDisabled(fn: () => Promise<void>) {
-	const original = Config.scannerEnabled;
-	Config.scannerEnabled = false;
-	try {
-		await fn();
-	} finally {
-		Config.scannerEnabled = original;
-	}
 }
 
 /** 8 users with deterministic in-game names (`Alpha1#1111`, …) and an unreported SendouQ match between them; `conclude()` plays it out (alpha sweeps), making its maps linkable, and returns the refreshed map rows. */

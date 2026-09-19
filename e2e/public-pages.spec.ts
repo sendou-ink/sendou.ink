@@ -109,12 +109,12 @@ test.describe("Public pages", () => {
 		await expectNoErrorPage(page);
 		await expect(links.resourceLink("Inkipedia")).toBeVisible();
 
-		// scanner is not publicly enabled in the test env: the route renders and
-		// sends a logged-out visitor to the front page instead of erroring
+		// anyone can capture and scan; only uploading needs a login
 		const scanner = new ScannerPage(page);
 		await scanner.goto();
 		await expectNoErrorPage(page);
-		await expect(page).toHaveURL("/");
+		await expect(page).toHaveURL(/\/scanner$/);
+		await expect(scanner.startCaptureButton()).toBeVisible();
 	});
 
 	test("prompts a logged out visitor to log in when using search or a filter", async ({

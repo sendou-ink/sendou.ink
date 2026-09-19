@@ -186,6 +186,7 @@ export const NAV_ICONS = [
 	"associations",
 	"badges",
 	"luti",
+	"scanner",
 ] as const;
 
 export type NavIcon = (typeof NAV_ICONS)[number];

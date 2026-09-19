@@ -2,10 +2,7 @@ import { lazy } from "react";
 import type { MetaFunction } from "react-router";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
-import { Redirect } from "~/components/Redirect";
-import { Config } from "~/config";
 import { useHydrated } from "~/hooks/useHydrated";
-import { useHasRole } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 
@@ -19,7 +16,7 @@ export const meta: MetaFunction = (args) => {
 	return metaTags({
 		title: "Scanner",
 		description:
-			"Detect Splatoon 3 match events (scoreboards, deaths, map screens) from live OBS footage, VoDs, and screenshots",
+			"Keep it running while you play: reads your Splatoon 3 games off a capture card or a VoD, uploads the results to sendou.ink and clips your best moments",
 		location: args.location,
 	});
 };
@@ -35,13 +32,6 @@ const ScannerApp = lazy(() =>
 
 export default function ScannerPage() {
 	const isHydrated = useHydrated();
-	const isAdmin = useHasRole("ADMIN");
-	const isDev = useHasRole("DEV");
-	const isScannerTester = useHasRole("SCANNER_TESTER");
-
-	if (!Config.scannerEnabled && !isAdmin && !isDev && !isScannerTester) {
-		return <Redirect to="/" />;
-	}
 
 	return <Main bigger>{isHydrated ? <ScannerApp /> : <Placeholder />}</Main>;
 }

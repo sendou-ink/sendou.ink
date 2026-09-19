@@ -2,10 +2,11 @@ import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "../core/detectors/objective/strip-weapons";
+import { formatClock } from "../core/format";
+import { mainWeaponLabel } from "../core/labels";
 import { EventCardMeta, EventCardShell } from "./EventCardShell";
 import { FrameThumb } from "./FrameThumb";
-import { formatClock, useEventTimeFormatter } from "./format";
-import { mainWeaponLabel } from "./labels";
+import { useEventTimeFormatter } from "./format";
 import { MetaPills } from "./MetaChips";
 
 export function StripWeaponsCard(props: {
