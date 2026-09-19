@@ -27,6 +27,10 @@
 	}
 }
 
+.pending {
+	min-height: 150px;
+}
+
 .noNotifications {
 	display: grid;
 	place-items: center;

@@ -30,15 +30,14 @@
 	border: 2px solid var(--color-info);
 	width: 250px;
 	outline: none;
-	view-transition-class: toast;
 }
 
-::view-transition-new(.toast):only-child {
+::view-transition-new(:global(.toast)):only-child {
 	animation: appear 400ms;
 }
 
-::view-transition-old(.toast):only-child {
-	animation: disappear 400ms;
+::view-transition-old(:global(.toast)):only-child {
+	animation: disappear 400ms forwards;
 }
 
 @keyframes disappear {

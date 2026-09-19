@@ -1,4 +1,4 @@
-/** Map list generation for "TO pick": the map list is defined beforehand by the TO. */
+/** Map list generation for "TO pick": the map list is defined beforehand by the TO. For "team pick" only the mode order is generated, the maps come from the teams' picks. */
 
 import type { Tables } from "~/db/tables";
 import type { TournamentRoundMaps } from "~/db/tables-json";
@@ -17,7 +17,10 @@ export type BracketMapCounts = Map<
 >;
 
 export interface GenerateTournamentRoundMaplistArgs {
+	/** The tournament's effective map pool, see `Tournament.mapPool`. */
 	pool: Array<{ mode: ModeShort; stageId: StageId }>;
+	/** Teams pick the maps: rounds get a mode order from the pattern instead of a map list. */
+	teamsPickMaps: boolean;
 	rounds: RoundData[];
 	mapCounts: BracketMapCounts;
 	type: Tables["TournamentStage"]["type"];
@@ -70,20 +73,30 @@ export function generateTournamentRoundMaplist(
 
 		const pattern = args.patterns.get(count);
 
+		const generated = () =>
+			generator.next({
+				amount: amountOfMapsToGenerate(),
+				pattern,
+			}).value;
+
+		if (args.teamsPickMaps) {
+			result.set(round.id, {
+				count,
+				pickBan: args.roundsWithPickBan.has(round.id)
+					? args.pickBanStyle
+					: undefined,
+				list: null,
+				modes: generated().map((map) => map.mode),
+			});
+			continue;
+		}
+
 		result.set(round.id, {
 			count,
 			pickBan: args.roundsWithPickBan.has(round.id)
 				? args.pickBanStyle
 				: undefined,
-			list:
-				// teams pick
-				args.pool.length === 0
-					? null
-					: // TO pick
-						generator.next({
-							amount: amountOfMapsToGenerate(),
-							pattern,
-						}).value,
+			list: args.pool.length === 0 ? null : generated(),
 		});
 	}
 

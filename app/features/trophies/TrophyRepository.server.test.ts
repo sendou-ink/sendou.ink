@@ -52,6 +52,36 @@ describe("trophy approvals", () => {
 		expect(await trophyCount()).toBe(1);
 	});
 
+	test("the named creator becomes the trophy's creator", async () => {
+		const artist = await UserFactory.create();
+		const submitter = await UserFactory.create();
+		const organization = await TournamentOrganizationFactory.create({
+			ownerId: submitter.id,
+		});
+		const pending = await TrophyFactory.createPending({
+			organizationId: organization.id,
+			submitterUserId: submitter.id,
+			creatorId: artist.id,
+		});
+
+		let accepted: null | {
+			id: number;
+		} = null;
+		for (const userId of reviewerIds.slice(0, TROPHY_APPROVALS_REQUIRED)) {
+			accepted = await TrophyRepository.addApproval({
+				pendingTrophyId: pending.id,
+				userId,
+			});
+		}
+
+		const trophy = await db
+			.selectFrom("Trophy")
+			.select(["creatorId", "managerId"])
+			.where("id", "=", accepted!.id)
+			.executeTakeFirstOrThrow();
+		expect(trophy).toEqual({ creatorId: artist.id, managerId: submitter.id });
+	});
+
 	test("ignores repeated approvals from the same user", async () => {
 		await TrophyRepository.addApproval({
 			pendingTrophyId,

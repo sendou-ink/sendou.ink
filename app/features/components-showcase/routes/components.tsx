@@ -1,4 +1,3 @@
-import clsx from "clsx";
 import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
@@ -2728,20 +2727,11 @@ function TrophySection({ id }: { id: string }) {
 			<TrophyContextProvider>
 				<div className="stack md">
 					<ComponentRow label="Interactive (drag to rotate)">
-						<Trophy
-							tile
-							model={EXAMPLE_TROPHY_MODEL}
-							className={styles.trophyExample}
-						/>
+						<Trophy model={EXAMPLE_TROPHY_MODEL} />
 					</ComponentRow>
 
 					<ComponentRow label="Preview (static)">
-						<Trophy
-							tile
-							model={EXAMPLE_TROPHY_MODEL}
-							className={styles.trophyExample}
-							preview
-						/>
+						<Trophy model={EXAMPLE_TROPHY_MODEL} preview />
 					</ComponentRow>
 
 					<ComponentRow label="With Tier">
@@ -2749,9 +2739,7 @@ function TrophySection({ id }: { id: string }) {
 							{([1, 4, 9] as const).map((tier) => (
 								<Trophy
 									key={tier}
-									tile
 									model={EXAMPLE_TROPHY_MODEL}
-									className={styles.trophyExample}
 									tier={tier}
 									preview
 								/>
@@ -2760,42 +2748,7 @@ function TrophySection({ id }: { id: string }) {
 					</ComponentRow>
 
 					<ComponentRow label="Tentative Tier">
-						<Trophy
-							tile
-							model={EXAMPLE_TROPHY_MODEL}
-							className={styles.trophyExample}
-							tentativeTier={2}
-							preview
-						/>
-					</ComponentRow>
-
-					<ComponentRow label="Different Sizes">
-						<div className="stack horizontal sm items-end flex-wrap">
-							<Trophy
-								tile
-								model={EXAMPLE_TROPHY_MODEL}
-								className={clsx(
-									styles.trophyExample,
-									styles.trophyExampleSmall,
-								)}
-								preview
-							/>
-							<Trophy
-								tile
-								model={EXAMPLE_TROPHY_MODEL}
-								className={styles.trophyExample}
-								preview
-							/>
-							<Trophy
-								tile
-								model={EXAMPLE_TROPHY_MODEL}
-								className={clsx(
-									styles.trophyExample,
-									styles.trophyExampleLarge,
-								)}
-								preview
-							/>
-						</div>
+						<Trophy model={EXAMPLE_TROPHY_MODEL} tentativeTier={2} preview />
 					</ComponentRow>
 				</div>
 			</TrophyContextProvider>

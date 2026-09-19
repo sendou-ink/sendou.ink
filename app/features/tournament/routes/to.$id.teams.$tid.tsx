@@ -316,8 +316,8 @@ function SetInfo({
 				return t("tournament:pickInfo.both");
 			case "DEFAULT":
 				return t("tournament:pickInfo.default");
-			case "TIEBREAKER":
-				return t("tournament:pickInfo.tiebreaker");
+			case "RANDOM":
+				return t("tournament:pickInfo.random");
 			case "COUNTERPICK": {
 				if (mapIndex > 0) {
 					const previousMap = set.maps[mapIndex - 1];

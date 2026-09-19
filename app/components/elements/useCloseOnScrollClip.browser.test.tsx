@@ -8,6 +8,7 @@ const PAGE_HEIGHT = 5000;
 
 afterEach(() => {
 	window.scrollTo(0, 0);
+	closeKeyboard();
 });
 
 function Overlay({
@@ -66,6 +67,29 @@ function ScrollingOverlay({
 
 const settle = () => new Promise((resolve) => setTimeout(resolve, 150));
 
+const KEYBOARD_HEIGHT = 300;
+
+/** Shrinks the visual viewport the way the virtual keyboard opening does. */
+function openKeyboard() {
+	const viewport = window.visualViewport;
+	invariant(viewport);
+
+	const shrunk = viewport.height - KEYBOARD_HEIGHT;
+	Object.defineProperty(viewport, "height", {
+		configurable: true,
+		get: () => shrunk,
+	});
+	viewport.dispatchEvent(new Event("resize"));
+}
+
+function closeKeyboard() {
+	const viewport = window.visualViewport;
+	invariant(viewport);
+
+	Reflect.deleteProperty(viewport, "height");
+	viewport.dispatchEvent(new Event("resize"));
+}
+
 describe("useCloseOnScrollClip", () => {
 	test("closes once scrolling clips a popover that was fully visible", async () => {
 		const close = vi.fn();
@@ -95,6 +119,32 @@ describe("useCloseOnScrollClip", () => {
 		await settle();
 
 		window.scrollTo(0, 250);
+		await settle();
+
+		expect(close).not.toHaveBeenCalled();
+	});
+
+	test("never closes over the scroll the virtual keyboard opening causes", async () => {
+		const close = vi.fn();
+		await render(<Overlay top={200} height={100} close={close} />);
+		await settle();
+
+		openKeyboard();
+		window.scrollTo(0, 250);
+		await settle();
+
+		expect(close).not.toHaveBeenCalled();
+	});
+
+	test("forgets a scroll the keyboard only lands after", async () => {
+		const close = vi.fn();
+		await render(<Overlay top={200} height={100} close={close} />);
+		await settle();
+
+		window.scrollTo(0, 250);
+		// the scroll can reach the page before the keyboard has shrunk the viewport
+		window.dispatchEvent(new Event("scroll"));
+		openKeyboard();
 		await settle();
 
 		expect(close).not.toHaveBeenCalled();

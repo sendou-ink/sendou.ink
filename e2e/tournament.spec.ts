@@ -44,7 +44,7 @@ test.describe("Tournament", () => {
 			authorId: ADMIN_ID,
 			startTimes: [dateToDatabaseTimestamp(addHours(new Date(), 2))],
 			// teams pick their own counterpick maps
-			mapPickingStyle: "AUTO_ALL",
+			mapPickingStyle: "AUTO",
 		});
 
 		await impersonate(page, captain.id);

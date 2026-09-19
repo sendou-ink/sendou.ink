@@ -46,19 +46,6 @@
 	font-size: var(--font-xs);
 }
 
-.trophyPreview {
-	border-radius: var(--radius-field);
-	background-color: var(--color-bg-high);
-	margin-top: var(--s-4);
-
-	&:has(div) {
-		width: 100px;
-		height: auto;
-		aspect-ratio: 1 / 1;
-		border: var(--border-width) solid var(--tier-bg);
-	}
-}
-
 .previewThemes {
 	display: grid;
 	grid-template-columns: 1fr 1fr;
@@ -75,11 +62,6 @@
 	border: var(--border-style);
 	border-radius: var(--radius-field);
 	background-color: var(--color-bg);
-
-	& .trophyPreview {
-		margin-top: 0;
-		width: 100%;
-	}
 }
 
 .previewThemeLabel {
@@ -241,12 +223,6 @@
 	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
-	opacity: 1;
-	transition: opacity 0.2s ease;
-
-	@starting-style {
-		opacity: 0;
-	}
 }
 
 .pendingMain {

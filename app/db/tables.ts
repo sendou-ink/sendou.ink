@@ -208,6 +208,7 @@ export interface PendingTrophy {
 	acceptedAt: number | null;
 	targetTrophyId: number | null;
 	managerId: number | null;
+	creatorId: number | null;
 }
 
 export interface PendingTrophyApproval {
@@ -486,7 +487,6 @@ export interface MapPoolMap {
 	calendarEventId: number | null;
 	mode: ModeShort;
 	stageId: StageId;
-	tieBreakerCalendarEventId: number | null;
 	tournamentTeamId: number | null;
 }
 

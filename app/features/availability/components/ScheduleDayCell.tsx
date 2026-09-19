@@ -56,9 +56,10 @@ export function ScheduleDayCell({
 				<div
 					key={index}
 					className={styles.busy}
-					title={`${rangeText(block)} · ${busyName(block)}`}
+					title={busyName(block)}
 					data-testid="schedule-busy"
 				>
+					<span className={styles.busyTime}>{rangeText(block)}</span>
 					<span className={styles.busyName}>{busyName(block)}</span>
 				</div>
 			))}

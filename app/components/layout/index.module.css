@@ -17,12 +17,18 @@
 	position: sticky;
 	top: 0;
 	z-index: 10;
+	/* captured on its own so animating content slides under it instead of over it */
+	view-transition-name: layout-header;
 }
 
-.siteTitleFlipper {
-	min-width: 0;
-	padding: 3px;
-	margin: -3px;
+::view-transition-group(layout-header) {
+	z-index: 1;
+}
+
+::view-transition-group(layout-header),
+::view-transition-old(layout-header),
+::view-transition-new(layout-header) {
+	animation-duration: 0s;
 }
 
 .siteTitle {

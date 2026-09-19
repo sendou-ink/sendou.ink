@@ -3,7 +3,6 @@ import type { TournamentRoundMaps } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import { mapPickingStyleToModes } from "~/features/tournament/tournament-utils";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -30,7 +29,9 @@ interface ResolveCurrentMapListArgs {
 		teamId: number,
 	) => Array<{ mode: ModeShort; stageId: StageId }>;
 	maps: TournamentRoundMaps;
-	tieBreakerMapPool: Array<{ mode: ModeShort; stageId: StageId }>;
+	/** The tournament's effective map pool, see `Tournament.mapPool`. */
+	pool: MapPool;
+	modesIncluded: ModeShort[];
 	pickBanEvents: Array<{
 		mode: ModeShort | null;
 		stageId: StageId | null;
@@ -133,7 +134,8 @@ export async function resolveMatchMapList({
 		mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
 		mapPickingStyle: match.mapPickingStyle,
 		maps: match.roundMaps,
-		tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+		pool: tournament.mapPool,
+		modesIncluded: tournament.modesIncluded,
 		pickBanEvents,
 		recentlyPlayedMaps,
 	});
@@ -202,9 +204,6 @@ function resolveFreshTeamPickedMapList(
 		mapPickingStyle: Exclude<Tables["Tournament"]["mapPickingStyle"], "TO">;
 	},
 ) {
-	const tieBreakerMapPool =
-		args.mapPickingStyle === "AUTO_ALL" ? args.tieBreakerMapPool : [];
-
 	const pickBanCount = (pickBan: PickBan.Type, baseCount: number) => {
 		switch (pickBan) {
 			case "BAN_2":
@@ -227,55 +226,39 @@ function resolveFreshTeamPickedMapList(
 		return args.maps.count;
 	};
 
+	const generatorInput = {
+		seed: String(args.matchId),
+		modesIncluded: args.modesIncluded,
+		pool: args.pool,
+		modeOrder: args.maps.modes,
+		recentlyPlayedMaps: args.recentlyPlayedMaps,
+	};
+
+	const teams = args.teams.map((teamId) => ({
+		id: teamId,
+		maps: new MapPool(args.mapPoolByTeamId(teamId)),
+	})) as [{ id: number; maps: MapPool }, { id: number; maps: MapPool }];
+
 	if (count() === 1) {
-		return starterMap({
-			seed: String(args.matchId),
-			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
-			tiebreakerMaps: new MapPool(tieBreakerMapPool),
-			teams: [
-				{
-					id: args.teams[0],
-					maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
-				},
-				{
-					id: args.teams[1],
-					maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
-				},
-			],
-			recentlyPlayedMaps: args.recentlyPlayedMaps,
-		});
+		return starterMap({ ...generatorInput, teams });
 	}
 
 	const result = generateBalancedMapList({
+		...generatorInput,
 		count: count(),
-		seed: String(args.matchId),
-		modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
-		tiebreakerMaps: new MapPool(tieBreakerMapPool),
-		teams: [
-			{
-				id: args.teams[0],
-				maps: new MapPool(args.mapPoolByTeamId(args.teams[0])),
-			},
-			{
-				id: args.teams[1],
-				maps: new MapPool(args.mapPoolByTeamId(args.teams[1])),
-			},
-		],
-		recentlyPlayedMaps: args.recentlyPlayedMaps,
+		teams,
 	});
 	if (result.ok) return result.value;
 
 	logger.error(
-		"Failed to create map list. Falling back to default maps.",
+		"Failed to create map list. Falling back to random maps from the pool.",
 		result.error,
 	);
 
 	return unwrap(
 		generateBalancedMapList({
+			...generatorInput,
 			count: count(),
-			seed: String(args.matchId),
-			modesIncluded: mapPickingStyleToModes(args.mapPickingStyle),
-			tiebreakerMaps: new MapPool(tieBreakerMapPool),
 			teams: [
 				{
 					id: -1,
@@ -286,7 +269,6 @@ function resolveFreshTeamPickedMapList(
 					maps: new MapPool([]),
 				},
 			],
-			recentlyPlayedMaps: args.recentlyPlayedMaps,
 		}),
 	);
 }

@@ -4,10 +4,16 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
+import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
-import { focusLeftTo, isOwnToggle, useAnchorSafeId } from "./Popover";
+import {
+	focusLeftTo,
+	isOwnToggle,
+	useAnchorSafeId,
+	useShowPopoverOnOpen,
+} from "./Popover";
 import styles from "./Select.module.css";
 import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
 
@@ -190,6 +196,11 @@ export function SendouSelect<T extends object>({
 	const listboxRef = React.useRef<HTMLDivElement | null>(null);
 	const searchInputRef = React.useRef<HTMLInputElement | null>(null);
 
+	const onPopoverBeforeToggle = useShowPopoverOnOpen({
+		popoverRef,
+		open,
+		onOpen: () => setOpen(true),
+	});
 	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
 	useAnchorPositioning({
 		isOpen: open,
@@ -198,6 +209,16 @@ export function SendouSelect<T extends object>({
 		matchAnchorWidth: true,
 		constrainHeight: true,
 	});
+	// after positioning, so the selection scrolls into the space the list ends up with
+	useIsomorphicLayoutEffect(() => {
+		if (!open) return;
+		if (search) {
+			searchInputRef.current?.focus();
+		} else {
+			listboxRef.current?.focus();
+		}
+		scrollIntoView(currentKey);
+	}, [open]);
 
 	const commitSelection = (key: SelectKey | null) => {
 		if (!isControlled) {
@@ -209,11 +230,14 @@ export function SendouSelect<T extends object>({
 	};
 
 	function setOpen(next: boolean) {
-		if (next) {
-			popoverRef.current?.showPopover();
-		} else {
+		if (!next) {
 			popoverRef.current?.hidePopover();
+			return;
 		}
+		if (open) return;
+		setOpenState(true);
+		onOpenChange?.(true);
+		focusStore.set(currentKey);
 	}
 
 	const commitSelectionRef = React.useRef(commitSelection);
@@ -260,7 +284,9 @@ export function SendouSelect<T extends object>({
 
 	const scrollIntoView = (key: SelectKey | null) => {
 		if (key === null) return;
-		itemsMapRef.current.get(key)?.element.scrollIntoView({ block: "nearest" });
+		document
+			.getElementById(registry.optionIdFor(key))
+			?.scrollIntoView({ block: "nearest" });
 	};
 
 	const moveFocus = (move: FocusMove) => {
@@ -340,30 +366,13 @@ export function SendouSelect<T extends object>({
 	};
 
 	const onPopoverToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
-		if (!isOwnToggle(event)) return;
+		if (!isOwnToggle(event) || event.newState === "open" || !open) return;
 
-		const next = event.newState === "open";
-		if (next === open) return;
-		setOpenState(next);
-		onOpenChange?.(next);
-
-		if (next) {
-			focusStore.set(currentKey);
-			// the toggle event's render mounts the options synchronously, so they
-			// are registered by the time this runs
-			requestAnimationFrame(() => {
-				if (search) {
-					searchInputRef.current?.focus();
-				} else {
-					listboxRef.current?.focus();
-				}
-				scrollIntoView(currentKey);
-			});
-		} else {
-			setSearchValue("");
-			focusStore.set(null);
-			typeaheadRef.current = { query: "", at: 0 };
-		}
+		setOpenState(false);
+		onOpenChange?.(false);
+		setSearchValue("");
+		focusStore.set(null);
+		typeaheadRef.current = { query: "", at: 0 };
 	};
 
 	const normalizedSearchValue = normalizeForSearch(searchValue);
@@ -565,6 +574,7 @@ export function SendouSelect<T extends object>({
 				popover="auto"
 				className={clsx(styles.popover, popoverClassName)}
 				style={{ positionAnchor: anchorName } as React.CSSProperties}
+				onBeforeToggle={onPopoverBeforeToggle}
 				onToggle={onPopoverToggle}
 				onKeyDown={onPopoverKeyDown}
 				tabIndex={-1}
@@ -670,6 +680,7 @@ function SearchField({
 				value={value}
 				onChange={(event) => onChange(event.target.value)}
 				placeholder={placeholder}
+				autoComplete="off"
 				role="combobox"
 				aria-label="Search"
 				aria-controls={listboxId}

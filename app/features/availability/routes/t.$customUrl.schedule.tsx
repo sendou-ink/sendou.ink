@@ -250,7 +250,7 @@ function ScheduleCell({
 		<td data-testid={`schedule-cell-${row.userId}-${dayIndex}`}>
 			<ScheduleDayCell
 				reported={row.reported}
-				ranges={day.ranges}
+				ranges={day.reportedRanges}
 				busy={day.busy}
 				note={note?.text}
 			/>

@@ -114,7 +114,8 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			mapPoolByTeamId: (teamId) => mapPools.get(teamId) ?? [],
 			mapPickingStyle: match.mapPickingStyle,
 			maps: match.maps,
-			tieBreakerMapPool: tournament.ctx.tieBreakerMapPool,
+			pool: tournament.mapPool,
+			modesIncluded: tournament.modesIncluded,
 			pickBanEvents,
 			recentlyPlayedMaps:
 				match.mapPickingStyle !== "TO"

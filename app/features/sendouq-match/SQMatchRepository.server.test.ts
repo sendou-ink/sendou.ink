@@ -17,9 +17,16 @@ import * as TournamentRepository from "~/features/tournament/TournamentRepositor
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
+import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
 import * as SQMatchRepository from "./SQMatchRepository.server";
 
-const setupMatch = async (options?: { createdAt?: Date }) => {
+const setupMatch = async ({
+	isMatchmade,
+	...options
+}: {
+	createdAt?: Date;
+	isMatchmade?: boolean;
+} = {}) => {
 	const users = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
 	const alphaMembers = users.slice(0, FULL_GROUP_SIZE);
 	const bravoMembers = users.slice(FULL_GROUP_SIZE);
@@ -28,6 +35,7 @@ const setupMatch = async (options?: { createdAt?: Date }) => {
 		{
 			alphaUserIds: alphaMembers.map((member) => member.id),
 			bravoUserIds: bravoMembers.map((member) => member.id),
+			isMatchmade,
 		},
 		options,
 	);
@@ -438,7 +446,99 @@ describe("acceptCancelMatch", () => {
 			[setup.bravoMembers[0].id, setup.bravoMembers[1].id].sort(),
 		);
 	});
+
+	test("votes the one player both teams nominated out of their group's requeue", async () => {
+		const setup = await setupMatch({ isMatchmade: true });
+		const blamed = setup.alphaMembers[1];
+
+		await SQMatchRepository.requestCancelMatch({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+			reason: "Requester reason",
+			nominatedUserIds: [blamed.id],
+		});
+		await SQMatchRepository.acceptCancelMatch({
+			matchId: setup.match.id,
+			acceptedByUserId: setup.bravoMembers[0].id,
+			reason: "Accepter reason",
+			nominatedUserIds: [blamed.id, setup.bravoMembers[0].id],
+		});
+
+		const votes = await fetchContinueVotes(setup);
+		expect(votes).toHaveLength(1);
+		expect(votes[0].groupId).toBe(setup.alphaGroupId);
+		expect(votes[0].userId).toBe(blamed.id);
+		expect(votes[0].isContinuing).toBe(false);
+	});
+
+	test("leaves the requeue to a plain vote when the teams nominate different players", async () => {
+		const setup = await setupMatch({ isMatchmade: true });
+
+		await SQMatchRepository.requestCancelMatch({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+			reason: "Requester reason",
+			nominatedUserIds: [setup.bravoMembers[0].id],
+		});
+		await SQMatchRepository.acceptCancelMatch({
+			matchId: setup.match.id,
+			acceptedByUserId: setup.bravoMembers[0].id,
+			reason: "Accepter reason",
+			nominatedUserIds: [setup.alphaMembers[0].id],
+		});
+
+		expect(await fetchContinueVotes(setup)).toEqual([]);
+	});
+
+	test("leaves the requeue to a plain vote when the teams agree on several players", async () => {
+		const setup = await setupMatch({ isMatchmade: true });
+		const blamed = [setup.alphaMembers[1].id, setup.bravoMembers[1].id];
+
+		await SQMatchRepository.requestCancelMatch({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+			reason: "Requester reason",
+			nominatedUserIds: blamed,
+		});
+		await SQMatchRepository.acceptCancelMatch({
+			matchId: setup.match.id,
+			acceptedByUserId: setup.bravoMembers[0].id,
+			reason: "Accepter reason",
+			nominatedUserIds: blamed,
+		});
+
+		expect(await fetchContinueVotes(setup)).toEqual([]);
+	});
+
+	test("leaves an invite-made group free to look again with the nominated player", async () => {
+		const setup = await setupMatch();
+		const blamed = setup.alphaMembers[1];
+
+		await SQMatchRepository.requestCancelMatch({
+			matchId: setup.match.id,
+			requestedByUserId: setup.alphaMembers[0].id,
+			reason: "Requester reason",
+			nominatedUserIds: [blamed.id],
+		});
+		await SQMatchRepository.acceptCancelMatch({
+			matchId: setup.match.id,
+			acceptedByUserId: setup.bravoMembers[0].id,
+			reason: "Accepter reason",
+			nominatedUserIds: [blamed.id],
+		});
+
+		expect(await fetchContinueVotes(setup)).toEqual([]);
+	});
 });
+
+const fetchContinueVotes = (setup: {
+	alphaGroupId: number;
+	bravoGroupId: number;
+}) =>
+	GroupMatchContinueVoteRepository.findAllByGroupIds([
+		setup.alphaGroupId,
+		setup.bravoGroupId,
+	]);
 
 describe("finalizeMatch", () => {
 	test("playing the match out normally deletes a pending cancel request's report", async () => {

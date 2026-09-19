@@ -21,7 +21,8 @@ export const FULL_GROUP_SIZE = 4;
 
 export const SENDOUQ_BEST_OF = 7;
 
-export const ACTION_TAB_AFTER_LOCKED_SECONDS = 24 * 60 * 60; // 24 hours
+/** How long a finished match keeps offering its action tab, counted from when it was made. */
+export const ACTION_TAB_AFTER_MATCH_MADE_SECONDS = 24 * 60 * 60; // 24 hours
 
 /** Event bus channel that every user on the looking page subscribes to. */
 export const SENDOUQ_LOOKING_CHANNEL = "sq-looking";

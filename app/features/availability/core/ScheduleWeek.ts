@@ -25,7 +25,13 @@ export interface MemberWeek {
 	userId: number;
 	/** Whether they filled the week in at all. */
 	reported: boolean;
-	days: Array<{ ranges: Array<TimeRange>; busy: Array<BusyBlock> }>;
+	days: Array<{
+		/** Free to play: commitments cut out. What "when can we play" views read. */
+		ranges: Array<TimeRange>;
+		/** What they filled in, commitments left in place. What views showing the commitments beside it read. */
+		reportedRanges: Array<TimeRange>;
+		busy: Array<BusyBlock>;
+	}>;
 	notes: Array<{ dayIndex: number; text: string }>;
 }
 
@@ -47,10 +53,10 @@ export function weekNumber(range: TimeRange, timezone: string) {
 }
 
 /**
- * One member's week bucketed into the viewer's days: effective free time (commitments cut out
- * first), the commitments and their notes. Slots land on the viewer-local day track they start
- * on, wherever the author's week put them, adjacent weeks' spillover included, and what runs past
- * the end of that track continues on the next day.
+ * One member's week bucketed into the viewer's days: free time both with commitments cut out and
+ * as they reported it, the commitments and their notes. Slots land on the viewer-local day track
+ * they start on, wherever the author's week put them, adjacent weeks' spillover included, and what
+ * runs past the end of that track continues on the next day.
  */
 export function memberRow({
 	userId,
@@ -84,28 +90,34 @@ export function memberRow({
 			reported: false,
 			days: weekDays.map((day) => ({
 				ranges: [] as Array<TimeRange>,
+				reportedRanges: [] as Array<TimeRange>,
 				busy: busyOfDay(day),
 			})),
 			notes: [],
 		};
 	}
 
-	const slots = Availability.splitByDayTracks(
-		Availability.subtract(
-			memberWeeks.flatMap((week) => week.slots),
-			busy,
-		),
+	// stored slots are one row per painted span, so adjacent ones merge before they render
+	const reportedSlots = Availability.normalize(
+		memberWeeks.flatMap((week) => week.slots),
+	);
+	const freeTracks = Availability.splitByDayTracks(
+		Availability.subtract(reportedSlots, busy),
 		timezone,
 	);
+	const reportedTracks = Availability.splitByDayTracks(reportedSlots, timezone);
+	const tracksOfDay = (tracks: Array<TimeRange>, day: ScheduleWeekDay) =>
+		tracks.filter(
+			(track) =>
+				Availability.dateInTimezone(track.startsAt, timezone) === day.date,
+		);
 
 	return {
 		userId,
 		reported: true,
 		days: weekDays.map((day) => ({
-			ranges: slots.filter(
-				(slot) =>
-					Availability.dateInTimezone(slot.startsAt, timezone) === day.date,
-			),
+			ranges: tracksOfDay(freeTracks, day),
+			reportedRanges: tracksOfDay(reportedTracks, day),
 			busy: busyOfDay(day),
 		})),
 		notes: memberWeeks.flatMap((week) =>

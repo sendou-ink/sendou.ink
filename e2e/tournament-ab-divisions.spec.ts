@@ -23,7 +23,7 @@ test.describe("Tournament A/B divisions", () => {
 			{
 				authorId: NZAP_TEST_ID,
 				startTimes: [dateToDatabaseTimestamp(subMinutes(new Date(), 30))],
-				mapPickingStyle: "AUTO_ALL",
+				mapPickingStyle: "AUTO",
 				bracketProgression: [
 					{
 						type: "round_robin",

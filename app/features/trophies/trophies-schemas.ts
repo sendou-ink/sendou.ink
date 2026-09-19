@@ -56,6 +56,7 @@ export const createTrophyFormSchema = v.object({
 	}),
 	model: trophyModelField(),
 	organizationId: customField({ initialValue: null }, id),
+	creatorId: customField({ initialValue: null }, v.nullish(id)),
 	description: textAreaOptional({
 		label: "labels.trophyInformation",
 		maxLength: TROPHY_DESCRIPTION_MAX_LENGTH,
@@ -73,6 +74,7 @@ export const updateTrophyFormSchema = v.object({
 	model: trophyModelField(),
 	organizationId: customField({ initialValue: null }, id),
 	managerId: customField({ initialValue: null }, id),
+	creatorId: customField({ initialValue: null }, v.nullish(id)),
 	description: textAreaOptional({
 		label: "labels.trophyInformation",
 		maxLength: TROPHY_DESCRIPTION_MAX_LENGTH,

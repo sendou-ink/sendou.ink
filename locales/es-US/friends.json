@@ -16,7 +16,6 @@
 	"friendsList.joinSendouQ": "Unirse a SendouQ",
 	"friendsList.deleteFriend": "Eliminar amigo",
 	"friendsList.deleteConfirm": "¿Eliminar a {{name}} de tus amigos?",
-	"view.label": "Filtro de vista",
 	"view.friends": "Amigos",
 	"view.teamMembers": "Miembros del equipo",
 	"view.all": "Todos",

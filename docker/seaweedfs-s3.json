@@ -1,0 +1,18 @@
+{
+	"identities": [
+		{
+			"name": "sendou",
+			"credentials": [
+				{
+					"accessKey": "seaweedfs-user",
+					"secretKey": "seaweedfs-password"
+				}
+			],
+			"actions": ["Admin", "Read", "List", "Tagging", "Write"]
+		},
+		{
+			"name": "anonymous",
+			"actions": ["Read", "List"]
+		}
+	]
+}

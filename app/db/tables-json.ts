@@ -4,6 +4,7 @@ import type { DBBoolean } from "~/db/tables";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { CustomThemeVar } from "~/features/theme/theme-constants";
+import type { TeamPickPool } from "~/features/tournament/tournament-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type {
@@ -100,6 +101,14 @@ export interface TournamentSettings {
 	requireSendouQParticipation?: boolean;
 	/** Is this tournament a league? Leagues are played over many weeks, each starting bracket being a division. */
 	isLeague?: boolean;
+	/** Team picked map configuration, always set when `Tournament.mapPickingStyle` is "AUTO". */
+	teamPick?: TeamPickSettings;
+}
+
+export interface TeamPickSettings {
+	/** Modes teams pick maps for and how many maps for each, unique modes in `modesShort` order, count ≥ 1. */
+	modes: Array<{ mode: ModeShort; count: number }>;
+	pool: TeamPickPool;
 }
 
 export interface CastedMatchesInfo {
@@ -130,6 +139,8 @@ export interface PreparedMaps {
 
 export interface TournamentRoundMaps {
 	list?: Array<{ mode: ModeShort; stageId: StageId }> | null;
+	/** Fixed mode of each slot of a team picked round with a mode pattern, the maps still come from the teams' picks. `count + 2` long for "BAN_2". */
+	modes?: ModeShort[] | null;
 	count: number;
 	type: "BEST_OF" | "PLAY_ALL";
 	pickBan?: PickBan.Type | null;

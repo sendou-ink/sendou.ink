@@ -5,10 +5,12 @@ import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
+import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import { invariant } from "~/utils/invariant";
 import { wrappedAction } from "~/utils/Test";
 import type { calendarNewSchemaServer } from "../calendar-new-schemas.server";
-import { defaultBracketsFormValues } from "../calendar-progression-form";
+import { calendarNewFormValues } from "../tests/fixtures";
 import { action } from "./calendar.new.server";
 
 const editAction = wrappedAction<typeof calendarNewSchemaServer>({
@@ -57,37 +59,14 @@ describe("calendar new action: editing an event with badge prizes", () => {
 		eventId: number;
 		organizationId: number;
 		badgeIds: number[];
-	}) => ({
-		toToolsEnabled: true,
-		eventToEditId: eventId,
-		name: "Low Ink (edited)",
-		description: "",
-		organizationId: String(organizationId),
-		rules: "",
-		date: [],
-		startTime: addDays(new Date(), 7).toISOString() as never,
-		bracketUrl: "https://sendou.ink",
-		discordInviteCode: "",
-		tags: [],
-		badges: badgeIds,
-		trophyId: null,
-		avatarImgId: null,
-		regClosesAt: "0" as const,
-		minMembersPerTeam: "4" as const,
-		maxMembersPerTeam: undefined,
-		toToolsMode: "TO" as const,
-		pool: "",
-		...defaultBracketsFormValues(),
-		isRanked: true,
-		enableNoScreenToggle: true,
-		enableSubs: true,
-		autonomousSubs: true,
-		requireInGameNames: false,
-		isInvitational: false,
-		isTest: false,
-		isDraft: false,
-		requireSendouQParticipation: false,
-	});
+	}) =>
+		calendarNewFormValues({
+			eventToEditId: eventId,
+			name: "Low Ink (edited)",
+			organizationId: String(organizationId),
+			bracketUrl: "https://sendou.ink",
+			badges: badgeIds,
+		});
 
 	const badgePrizeIds = async (eventId: number) =>
 		(
@@ -136,37 +115,13 @@ describe("calendar new action: bracket URL", () => {
 
 	const newEventFields = (
 		overrides: Partial<Parameters<typeof editAction>[0]>,
-	) => ({
-		toToolsEnabled: false,
-		name: "In The Zone",
-		description: "",
-		organizationId: "",
-		rules: "",
-		date: [addDays(new Date(), 7).toISOString() as never],
-		startTime: null,
-		bracketUrl: "",
-		discordInviteCode: "",
-		tags: [],
-		badges: [],
-		trophyId: null,
-		avatarImgId: null,
-		regClosesAt: "0" as const,
-		minMembersPerTeam: "4" as const,
-		maxMembersPerTeam: undefined,
-		toToolsMode: "TO" as const,
-		pool: "",
-		...defaultBracketsFormValues(),
-		isRanked: true,
-		enableNoScreenToggle: true,
-		enableSubs: true,
-		autonomousSubs: true,
-		requireInGameNames: false,
-		isInvitational: false,
-		isTest: false,
-		isDraft: false,
-		requireSendouQParticipation: false,
-		...overrides,
-	});
+	) =>
+		calendarNewFormValues({
+			toToolsEnabled: false,
+			date: [addDays(new Date(), 7).toISOString() as never],
+			startTime: null,
+			...overrides,
+		});
 
 	test.each([
 		{
@@ -207,5 +162,53 @@ describe("calendar new action: bracket URL", () => {
 			Number(location.split("/").at(-1)),
 		);
 		expect(created?.bracketUrl).toBe("https://sendou.ink");
+	});
+});
+
+describe("calendar new action: team picked tournament", () => {
+	beforeEach(async () => {
+		await UserFactory.createRegular(null, { roles: ["TOURNAMENT_ORGANIZER"] });
+	});
+
+	test("saves the team pick settings and the custom pool", async () => {
+		const customPool = new MapPool({
+			...MapPool.EMPTY.parsed,
+			SZ: [1, 2, 3, 4, 5],
+			TC: [6, 7, 8],
+		});
+
+		const res = await editAction(
+			calendarNewFormValues({
+				mapPickingStyle: "AUTO",
+				teamPickModes: ["TC", "SZ"],
+				teamPickCounts: [{ mode: "TC", count: 2 }],
+				teamPickPool: "CUSTOM",
+				pool: customPool.serialized,
+			}),
+			{ user: "regular" },
+		);
+
+		expect(res.fieldErrors).toBeUndefined();
+
+		const location =
+			res instanceof Response ? res.headers.get("Location") : null;
+		invariant(location, "expected a redirect to the created event");
+
+		const created = await CalendarRepository.findById(
+			Number(location.split("/").at(-1)),
+		);
+		invariant(created?.tournamentId, "expected a tournament to be created");
+
+		const tournament = await tournamentFromDB(created.tournamentId);
+		expect(tournament.teamPickSettings).toEqual({
+			modes: [
+				{ mode: "SZ", count: 4 },
+				{ mode: "TC", count: 2 },
+			],
+			pool: "CUSTOM",
+		});
+		expect(new MapPool(tournament.ctx.toSetMapPool).serialized).toBe(
+			customPool.serialized,
+		);
 	});
 });

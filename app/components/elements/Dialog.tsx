@@ -1,7 +1,7 @@
 import clsx from "clsx";
 import { X } from "lucide-react";
 import * as React from "react";
-import { createPortal } from "react-dom";
+import { createPortal, flushSync } from "react-dom";
 import { useNavigate } from "react-router";
 import {
 	SendouButton,
@@ -25,6 +25,7 @@ interface DialogElementProps {
  * Unstyled native `<dialog>` shell: shows itself modally on mount, closes on
  * Escape (and outside clicks when `isDismissable`) and reports every close
  * through `onClose`. The caller owns visibility by mounting/unmounting it.
+ * Focus lands on the dialog itself rather than its first control.
  *
  * Portaled to `<body>` so a dialog holding a form can be rendered from inside
  * another form without nesting the `<form>` elements. Renders nothing on the
@@ -44,6 +45,7 @@ export function SendouModal({ ref, ...rest }: DialogElementProps) {
 				}
 				if (dialog && !dialog.open) {
 					dialog.showModal();
+					dialog.focus();
 				}
 			}}
 			{...rest}
@@ -69,6 +71,7 @@ function DialogElement({
 			className={className}
 			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
+			tabIndex={-1}
 			closedby={isDismissable ? "any" : "closerequest"}
 			onClose={onClose}
 			onClick={isDismissable ? closeOnBackdropClick : undefined}
@@ -195,15 +198,40 @@ function TriggeredDialog({
 	};
 
 	// React wires `onToggle` on a hydrated <dialog> only when it is also a
-	// popover, so the open state listens natively (and seeds from a dialog
-	// opened before hydration)
-	const trackOpenState = (dialog: HTMLDialogElement) => {
-		const onToggle = (event: Event) =>
-			setOpen((event as ToggleEvent).newState === "open");
+	// popover, so opens are observed natively (also seeding from a dialog
+	// opened before hydration). Lazy content is committed on `beforetoggle`,
+	// which fires synchronously before the dialog shows, so it is in the
+	// dialog's first painted frame rather than a frame behind it. Wired once
+	// on mount: a ref callback would rerun on every render and, on an open
+	// dialog, take the focus back from whatever inside it the user is typing in.
+	React.useEffect(() => {
+		const dialog = dialogRef.current;
+		if (!dialog) return;
+
+		const handleOpened = () => {
+			setOpen(true);
+			dialog.focus();
+		};
+		const onBeforeToggle = (event: Event) => {
+			if ((event as ToggleEvent).newState === "open") {
+				flushSync(() => setOpen(true));
+			}
+		};
+		const onToggle = (event: Event) => {
+			if ((event as ToggleEvent).newState === "open") {
+				handleOpened();
+			} else {
+				setOpen(false);
+			}
+		};
+		dialog.addEventListener("beforetoggle", onBeforeToggle);
 		dialog.addEventListener("toggle", onToggle);
-		if (dialog.open) setOpen(true);
-		return () => dialog.removeEventListener("toggle", onToggle);
-	};
+		if (dialog.open) handleOpened();
+		return () => {
+			dialog.removeEventListener("beforetoggle", onBeforeToggle);
+			dialog.removeEventListener("toggle", onToggle);
+		};
+	}, []);
 
 	return (
 		<>
@@ -218,10 +246,7 @@ function TriggeredDialog({
 				},
 			})}
 			<DialogElement
-				ref={(dialog) => {
-					dialogRef.current = dialog;
-					return dialog && lazy ? trackOpenState(dialog) : undefined;
-				}}
+				ref={dialogRef}
 				id={dialogId}
 				{...dialogElementProps(chrome, dialogId, handleClosed)}
 			>

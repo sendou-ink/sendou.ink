@@ -7,6 +7,7 @@ import type { Tables } from "~/db/tables";
 import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
+import { modesShort } from "~/modules/in-game-lists/modes";
 import { userPage } from "~/utils/urls";
 import { accountCreatedInTheLastSixMonths } from "~/utils/users";
 import { useTournamentFriendCodes } from "../routes/to.$id";
@@ -142,13 +143,19 @@ function TeamMapPool({
 }: {
 	mapPool: Array<Pick<Tables["MapPoolMap"], "stageId" | "mode">>;
 }) {
+	const sortedMapPool = mapPool.toSorted(
+		(a, b) =>
+			modesShort.indexOf(a.mode) - modesShort.indexOf(b.mode) ||
+			a.stageId - b.stageId,
+	);
+
 	return (
 		<div
 			className={clsx(styles.teamWithRosterMapPool, {
 				[styles.teamWithRosterMapPool3Columns]: mapPool.length % 3 === 0,
 			})}
 		>
-			{mapPool.map(({ mode, stageId }, i) => {
+			{sortedMapPool.map(({ mode, stageId }, i) => {
 				return (
 					<div key={i}>
 						<StageImage

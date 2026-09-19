@@ -17,7 +17,6 @@ import {
 	Trophy,
 	TrophyContextProvider,
 	TrophyGrid,
-	TrophyPlaceholder,
 } from "../components/Trophy";
 import { loader } from "../loaders/trophies.server";
 import {
@@ -74,32 +73,26 @@ export default function TrophiesPage() {
 					/>
 					<TrophyGrid>
 						<TrophyContextProvider>
-							{filteredTrophies.map((trophy, i) =>
-								i < visibleCount ? (
-									<NavLink to={String(trophy.id)} key={trophy.id}>
-										<Trophy
-											tile
-											model={trophy.model}
-											tier={trophy.tier}
-											tentativeTier={trophy.tentativeTier}
-											preview
-											pill={
-												hasUpcomingTournamentSoon(
-													trophy.upcomingTournamentAt,
-												) ? (
-													<CalendarClock
-														size={16}
-														role="img"
-														aria-label={t("trophies:details.upcoming")}
-													/>
-												) : undefined
-											}
-										/>
-									</NavLink>
-								) : (
-									<TrophyPlaceholder key={trophy.id} />
-								),
-							)}
+							{filteredTrophies.map((trophy, i) => (
+								<NavLink to={String(trophy.id)} key={trophy.id}>
+									<Trophy
+										model={trophy.model}
+										tier={trophy.tier}
+										tentativeTier={trophy.tentativeTier}
+										preview
+										deferred={i >= visibleCount}
+										pill={
+											hasUpcomingTournamentSoon(trophy.upcomingTournamentAt) ? (
+												<CalendarClock
+													size={16}
+													role="img"
+													aria-label={t("trophies:details.upcoming")}
+												/>
+											) : undefined
+										}
+									/>
+								</NavLink>
+							))}
 						</TrophyContextProvider>
 					</TrophyGrid>
 				</div>

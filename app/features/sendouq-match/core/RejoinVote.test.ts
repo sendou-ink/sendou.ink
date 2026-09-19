@@ -47,6 +47,36 @@ describe("RejoinVote.result()", () => {
 	});
 });
 
+describe("RejoinVote.agreedNominatedUserId()", () => {
+	test.each([
+		{ why: "both teams named only them", teams: [[7], [7]], expected: 7 },
+		{
+			why: "they are the only name in common",
+			teams: [
+				[7, 8],
+				[7, 9],
+			],
+			expected: 7,
+		},
+		{
+			why: "the teams named nobody in common",
+			teams: [[7], [8]],
+			expected: null,
+		},
+		{
+			why: "the teams agree on more than one",
+			teams: [
+				[7, 8],
+				[7, 8],
+			],
+			expected: null,
+		},
+		{ why: "only one team reported", teams: [[7]], expected: null },
+	])("returns $expected when $why", ({ teams, expected }) => {
+		expect(RejoinVote.agreedNominatedUserId(teams)).toBe(expected);
+	});
+});
+
 describe("RejoinVote.userContinueStatus()", () => {
 	test("returns null when the user has not voted", () => {
 		expect(RejoinVote.userContinueStatus([], 1)).toBeNull();

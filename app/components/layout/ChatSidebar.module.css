@@ -58,6 +58,7 @@
 	gap: var(--s-0-5);
 	padding: var(--s-1-5);
 	overflow-y: auto;
+	overscroll-behavior: contain;
 	flex: 1;
 	min-height: 0;
 }

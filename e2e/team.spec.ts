@@ -452,7 +452,8 @@ test.describe("Team schedule", () => {
 			slots: [daySlot(WEDNESDAY, "19:00", "23:00")],
 		});
 		// a commitment late in the shared Wednesday evening: renders as a busy
-		// block and trims effective availability without removing the window
+		// block beside the reported time in the grid and trims the heatmap's
+		// effective availability without removing the window
 		await factories.TeamEventFactory.create({
 			teamId,
 			authorId: ADMIN_ID,
@@ -501,8 +502,16 @@ test.describe("Team schedule", () => {
 		await expect(schedule.cellRange(ADMIN_ID, THURSDAY)).toBeVisible();
 		await expect(schedule.cell(ADMIN_ID, 0)).toHaveText("—");
 		await expect(schedule.cell(noScheduleMember.id, 0)).toHaveText("?");
-		await expect(schedule.cellBusy(NZAP_TEST_ID, WEDNESDAY)).toHaveText(
+		// the grid shows the reported 19-23 in full, the commitment named beside
+		// it with its own time rather than cut out of it
+		await expect(schedule.cellRange(NZAP_TEST_ID, WEDNESDAY)).toContainText(
+			"11:00",
+		);
+		await expect(schedule.cellBusy(NZAP_TEST_ID, WEDNESDAY)).toContainText(
 			"VoD review",
+		);
+		await expect(schedule.cellBusy(NZAP_TEST_ID, WEDNESDAY)).toContainText(
+			"10:00",
 		);
 		await expect(schedule.locators.notes).toContainText("Leaving early");
 

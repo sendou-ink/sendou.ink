@@ -141,6 +141,7 @@ export function WeaponSelect<
 							key={weapon.anyWeaponId}
 							id={weapon.anyWeaponId}
 							textValue={weaponName}
+							className={styles.option}
 							isDisabled={
 								includeSubSpecial
 									? false

@@ -1,5 +1,7 @@
 import clsx from "clsx";
 import { Check, X } from "lucide-react";
+import { ViewTransition } from "react";
+import { preload } from "react-dom";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
 import {
@@ -47,30 +49,74 @@ export function MatchBanner({
 	const { t } = useTranslation(["game-misc"]);
 
 	return (
-		<div
-			className={styles.banner}
-			style={{
-				"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
-			}}
-			data-testid="stage-banner"
+		// keyed so a map change makes a share pair; default="none" so other
+		// re-renders (score reports, timer ticks) start no transition
+		<ViewTransition
+			key={`${mode}-${stageId}`}
+			name="match-stage-banner"
+			share="stage-banner-swap"
+			default="none"
 		>
 			<div
-				className={clsx(styles.map, styles.thickText)}
-				data-testid={`banner-map-${mode}-${stageId}`}
+				className={styles.banner}
+				style={{
+					"--stage-img": `url(${stageBannerImageUrl(stageId)})`,
+				}}
+				data-testid="stage-banner"
 			>
-				<ModeImage mode={mode} size={24} />
-				{t(`game-misc:MODE_SHORT_${mode}`)} {t(`game-misc:STAGE_${stageId}`)}
-			</div>
-			<div className={clsx(styles.info, styles.thickText)}>{children}</div>
+				<ViewTransition
+					name="match-stage-banner-map"
+					share="stage-banner-text reduced-motion-safe"
+					default="none"
+				>
+					<div
+						className={clsx(styles.map, styles.thickText)}
+						data-testid={`banner-map-${mode}-${stageId}`}
+					>
+						<ModeImage mode={mode} size={24} />
+						{t(`game-misc:MODE_SHORT_${mode}`)}{" "}
+						{t(`game-misc:STAGE_${stageId}`)}
+					</div>
+				</ViewTransition>
+				<ViewTransition
+					name="match-stage-banner-info"
+					share="stage-banner-text reduced-motion-safe"
+					default="none"
+				>
+					<div className={clsx(styles.info, styles.thickText)}>{children}</div>
+				</ViewTransition>
 
-			{joinPool ? (
-				<JoinInfo pool={joinPool} pass={joinPass} host={host} />
-			) : null}
-			{screenLegal !== undefined ? (
-				<ScreenNotice screenLegal={screenLegal} />
-			) : null}
-		</div>
+				{joinPool ? (
+					<ViewTransition
+						name="match-stage-banner-join"
+						share="stage-banner-static"
+						default="none"
+					>
+						<JoinInfo pool={joinPool} pass={joinPass} host={host} />
+					</ViewTransition>
+				) : null}
+				{screenLegal !== undefined ? (
+					<ViewTransition
+						name="match-stage-banner-notice"
+						share="stage-banner-static"
+						default="none"
+					>
+						<ScreenNotice screenLegal={screenLegal} />
+					</ViewTransition>
+				) : null}
+			</div>
+		</ViewTransition>
 	);
+}
+
+/** Warms the cache with the remaining maps' banners so the transition to the next one has its image. */
+export function preloadStageBanners(stageIds: StageId[]) {
+	for (const stageId of new Set(stageIds)) {
+		preload(stageBannerImageUrl(stageId), {
+			as: "image",
+			fetchPriority: "low",
+		});
+	}
 }
 
 export function MultiMatchBanner({ stageIds }: { stageIds: StageId[] }) {

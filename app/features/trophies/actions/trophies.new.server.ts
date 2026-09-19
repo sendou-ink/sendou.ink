@@ -67,6 +67,7 @@ export const action: ActionFunction = async ({ request }) => {
 				submitterUserId: user.id,
 				targetTrophyId: data.targetTrophyId,
 				managerId: data.managerId,
+				creatorId: data.creatorId ?? undefined,
 			});
 
 			await notifyReviewersOfSubmission({
@@ -90,6 +91,7 @@ export const action: ActionFunction = async ({ request }) => {
 			description: data.description ?? "",
 			organizationId: data.organizationId,
 			submitterUserId: user.id,
+			creatorId: data.creatorId ?? user.id,
 		});
 
 		await notifyReviewersOfSubmission({

@@ -171,7 +171,7 @@ test.describe("Tournament admin team management", () => {
 	}) => {
 		// teams pre-pick their maps, so the registration form has a map pool to edit
 		const tournament = await createTournament(factories, {
-			mapPickingStyle: "AUTO_ALL",
+			mapPickingStyle: "AUTO",
 		});
 		const roster = await factories.UserFactory.createMany(ROSTER_SIZE);
 		const team = await factories.TournamentTeamFactory.create({

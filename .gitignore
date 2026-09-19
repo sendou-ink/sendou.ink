@@ -30,7 +30,7 @@ dump
 # Vitest auto-captured failure screenshots (numbered, without browser info)
 # Real baselines have pattern: *-chromium-darwin.png
 **/__screenshots__/**/*-[0-9].png
-.e2e-minio-started
+.e2e-seaweedfs-started
 .e2e-build-marker
 
 notepad.txt
@@ -41,3 +41,4 @@ notepad.txt
 *.mp4
 *.mkv
 *.webm
+*.mov

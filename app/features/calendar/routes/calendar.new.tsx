@@ -3,23 +3,29 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { Form, Link, useLoaderData } from "react-router";
-import type { AlertVariation } from "~/components/Alert";
 import { Alert } from "~/components/Alert";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { FormMessage } from "~/components/FormMessage";
+import { ModeImage } from "~/components/Image";
+import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { MapPoolSelector } from "~/components/MapPoolSelector";
 import { SubmitButton } from "~/components/SubmitButton";
-import type { Tables } from "~/db/tables";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
+import * as TeamPick from "~/features/tournament/core/TeamPick";
+import type {
+	TeamPickPool,
+	TournamentMapPickingStyle,
+} from "~/features/tournament/tournament-constants";
 import { Trophy } from "~/features/trophies/components/Trophy";
 import { type CustomFieldRenderProps, FormField } from "~/form/FormField";
 import { existingImage } from "~/form/image-field";
 import { SendouForm, useFormFieldContext } from "~/form/SendouForm";
 import { errorMessageId } from "~/form/utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
-import type { RankedModeShort } from "~/modules/in-game-lists/types";
+import { rankedModesShort } from "~/modules/in-game-lists/modes";
+import type { ModeShort } from "~/modules/in-game-lists/types";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
 import { metaTags } from "~/utils/remix";
@@ -28,7 +34,12 @@ import { CREATING_TOURNAMENT_DOC_LINK, FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/calendar.new.server";
 import type { RegClosesAtOption } from "../calendar-constants";
 import styles from "../calendar-new.module.css";
-import { calendarNewBaseSchema } from "../calendar-new-schemas";
+import {
+	calendarNewBaseSchema,
+	customTeamPickPool,
+	type TeamPickCountsFormValue,
+	teamPickSettingsFromFormValues,
+} from "../calendar-new-schemas";
 import {
 	defaultBracketsFormValues,
 	progressionToFormValues,
@@ -54,18 +65,6 @@ export const meta: MetaFunction<typeof loader> = (args) => {
 
 export const handle: SendouRouteHandle = {
 	i18n: ["calendar", "game-misc", "tournament"],
-};
-
-const mapPickingStyleToShort: Record<
-	Tables["Tournament"]["mapPickingStyle"],
-	"ALL" | "TO" | RankedModeShort
-> = {
-	TO: "TO",
-	AUTO_ALL: "ALL",
-	AUTO_SZ: "SZ",
-	AUTO_TC: "TC",
-	AUTO_RM: "RM",
-	AUTO_CB: "CB",
 };
 
 const useBaseEvent = () => {
@@ -155,22 +154,14 @@ function useDefaultValues() {
 			})
 		: "0";
 
-	const toToolsMode = baseEvent?.mapPickingStyle
-		? mapPickingStyleToShort[baseEvent.mapPickingStyle]
-		: "ALL";
+	const mapPickingStyle: TournamentMapPickingStyle =
+		baseEvent?.mapPickingStyle ?? "AUTO";
+	const teamPick =
+		settings?.teamPick ?? TeamPick.defaultSettings([...rankedModesShort]);
 
-	const pool = (() => {
-		if (!baseEvent) return "";
-		if (!data.isAddingTournament || toToolsMode === "TO") {
-			return baseEvent.mapPool ? new MapPool(baseEvent.mapPool).serialized : "";
-		}
-		if (toToolsMode === "ALL") {
-			return baseEvent.tieBreakerMapPool
-				? new MapPool(baseEvent.tieBreakerMapPool).serialized
-				: "";
-		}
-		return "";
-	})();
+	const pool = baseEvent?.mapPool
+		? new MapPool(baseEvent.mapPool).serialized
+		: "";
 
 	const bracketProgressionValues = settings?.bracketProgression
 		? progressionToFormValues(settings.bracketProgression)
@@ -217,7 +208,10 @@ function useDefaultValues() {
 			| "3"
 			| "4",
 		maxMembersPerTeam: settings?.maxMembersPerTeam ?? undefined,
-		toToolsMode,
+		mapPickingStyle,
+		teamPickModes: TeamPick.pickedModes(teamPick),
+		teamPickCounts: teamPick.modes,
+		teamPickPool: teamPick.pool,
 		pool,
 		brackets: bracketProgressionValues.brackets,
 		progression: bracketProgressionValues.progression,
@@ -413,10 +407,7 @@ function TrophyField() {
 						</div>
 						{selectedTrophy ? (
 							<div className="stack md items-center">
-								<Trophy
-									model={selectedTrophy.model}
-									className={styles.trophyPreview}
-								/>
+								<Trophy model={selectedTrophy.model} />
 								<div className="stack horizontal md items-center">
 									<span>{selectedTrophy.name}</span>
 									<SendouButton
@@ -461,29 +452,15 @@ function DraftField() {
 }
 
 function MapsSection({ isTournament }: { isTournament: boolean }) {
+	const { t } = useTranslation(["forms"]);
 	const { values, setValue } = useFormFieldContext();
 	const data = useLoaderData<typeof loader>();
-	const mode = values.toToolsMode as "ALL" | "TO" | RankedModeShort;
 
 	if (!isTournament) {
 		return <CalendarMapPoolField />;
 	}
 
-	const isEditing = Boolean(data.eventToEdit);
-
-	// can't change map picking style after creation
-	if (isEditing) {
-		if (mode !== "TO") return null;
-
-		return (
-			<div className="stack md w-full">
-				<Divider smallText className="mt-4">
-					Tournament maps
-				</Divider>
-				<TournamentMapPoolField />
-			</div>
-		);
-	}
+	const mapPickingStyle = values.mapPickingStyle as TournamentMapPickingStyle;
 
 	return (
 		<div className="stack md w-full">
@@ -491,14 +468,238 @@ function MapsSection({ isTournament }: { isTournament: boolean }) {
 				Tournament maps
 			</Divider>
 			{/* reset the (polymorphic) pool when switching map picking style so a
-			previous mode's maps don't leak into the new one */}
+			previous style's maps don't leak into the new one */}
 			<FormField
-				name="toToolsMode"
+				name="mapPickingStyle"
 				onValueChange={() => setValue("pool", "")}
 			/>
-			{mode === "ALL" ? <TiebreakerMapPoolField /> : null}
-			{mode === "TO" ? <TournamentMapPoolField /> : null}
+			{mapPickingStyle === "AUTO" ? (
+				<TeamPickFields />
+			) : (
+				<TournamentMapPoolField />
+			)}
+			{data.eventToEdit?.teamsHavePickedMaps ? (
+				<div className="text-warning text-sm">
+					{t("forms:bottomTexts.teamPickReset")}
+				</div>
+			) : null}
 		</div>
+	);
+}
+
+function TeamPickFields() {
+	const { values, setValue } = useFormFieldContext();
+	// counts the organizer set by hand keep their value when the mode set changes
+	const [touchedModes, setTouchedModes] = React.useState<
+		ReadonlySet<ModeShort>
+	>(new Set());
+
+	const teamPickPool = values.teamPickPool as TeamPickPool;
+	const pickedModes = TeamPick.sortModes(values.teamPickModes as ModeShort[]);
+
+	const handleModesChange = (newValue: unknown) => {
+		const modes = TeamPick.sortModes(newValue as ModeShort[]);
+		const counts = values.teamPickCounts as TeamPickCountsFormValue;
+		const defaultCount = TeamPick.defaultCount(modes.length);
+
+		setValue(
+			"teamPickCounts",
+			modes.map((mode) => ({
+				mode,
+				count: touchedModes.has(mode)
+					? (counts.find((count) => count.mode === mode)?.count ?? defaultCount)
+					: defaultCount,
+			})),
+		);
+
+		if (typeof values.pool === "string" && values.pool) {
+			setValue(
+				"pool",
+				new MapPool(
+					customTeamPickPool({ teamPickModes: modes, pool: values.pool }),
+				).serialized,
+			);
+		}
+	};
+
+	return (
+		<>
+			<FormField name="teamPickModes" onValueChange={handleModesChange} />
+			<FormField name="teamPickCounts">
+				{({ value, onChange, error }: CustomFieldRenderProps) => (
+					<TeamPickCountInputs
+						value={value as TeamPickCountsFormValue}
+						onChange={(newValue, touchedMode) => {
+							setTouchedModes(new Set([...touchedModes, touchedMode]));
+							onChange(newValue);
+						}}
+						error={error}
+					/>
+				)}
+			</FormField>
+			<FormField
+				name="teamPickPool"
+				onValueChange={() => setValue("pool", "")}
+			/>
+			{teamPickPool === "CUSTOM" ? (
+				<CustomTeamPickPoolField pickedModes={pickedModes} />
+			) : null}
+		</>
+	);
+}
+
+function TeamPickCountInputs({
+	value,
+	onChange,
+	error,
+}: {
+	value: TeamPickCountsFormValue;
+	onChange: (value: TeamPickCountsFormValue, touchedMode: ModeShort) => void;
+	error?: string;
+}) {
+	const { t } = useTranslation(["forms", "game-misc"]);
+	const { values } = useFormFieldContext();
+	const id = React.useId();
+
+	const pickedModes = TeamPick.sortModes(values.teamPickModes as ModeShort[]);
+	if (pickedModes.length === 0) return null;
+
+	const pool = TeamPick.effectivePool(
+		teamPickSettingsFromFormValues({
+			teamPickModes: pickedModes,
+			teamPickCounts: value,
+			teamPickPool: values.teamPickPool as TeamPickPool,
+		}),
+		customTeamPickPool({
+			teamPickModes: pickedModes,
+			pool: values.pool as string | undefined,
+		}),
+	);
+
+	return (
+		<div className="stack xs">
+			<Label>{t("forms:labels.teamPickCounts")}</Label>
+			<div className="stack horizontal md flex-wrap">
+				{pickedModes.map((mode) => {
+					const count = value.find((c) => c.mode === mode)?.count ?? "";
+
+					return (
+						<div key={mode} className="stack horizontal xs items-center">
+							<label htmlFor={`${id}-${mode}`}>
+								<ModeImage
+									mode={mode}
+									size={24}
+									title={t(`game-misc:MODE_LONG_${mode}`)}
+								/>
+							</label>
+							<input
+								id={`${id}-${mode}`}
+								type="number"
+								className={styles.countInput}
+								min={1}
+								max={TeamPick.maxCount(pool, mode)}
+								value={count}
+								onChange={(e) =>
+									onChange(
+										pickedModes.map((m) => ({
+											mode: m,
+											count:
+												m === mode
+													? Number(e.target.value)
+													: (value.find((c) => c.mode === m)?.count ?? 1),
+										})),
+										mode,
+									)
+								}
+							/>
+						</div>
+					);
+				})}
+			</div>
+			<FormMessage type="info">
+				{t("forms:bottomTexts.teamPickCounts")}
+			</FormMessage>
+			{error ? (
+				<FormMessage id={errorMessageId("teamPickCounts")} type="error">
+					{t(error as never)}
+				</FormMessage>
+			) : null}
+		</div>
+	);
+}
+
+function CustomTeamPickPoolField({
+	pickedModes,
+}: {
+	pickedModes: ModeShort[];
+}) {
+	const { t } = useTranslation(["common", "calendar", "game-misc"]);
+	const { values } = useFormFieldContext();
+
+	return (
+		<FormField name="pool">
+			{({ value, onChange, error }: CustomFieldRenderProps) => {
+				const mapPool = new MapPool(
+					customTeamPickPool({
+						teamPickModes: pickedModes,
+						pool: value as string | undefined,
+					}),
+				);
+				const teamPick = teamPickSettingsFromFormValues({
+					teamPickModes: pickedModes,
+					teamPickCounts: values.teamPickCounts as TeamPickCountsFormValue,
+					teamPickPool: "CUSTOM",
+				});
+				const shortfalls = TeamPick.poolShortfalls(teamPick, mapPool);
+
+				return (
+					<>
+						<MapPoolSelector
+							className="w-full"
+							mapPool={mapPool}
+							title={t("common:maps.mapPool")}
+							modesToInclude={pickedModes}
+							handleMapPoolChange={(newPool) =>
+								onChange(
+									new MapPool(
+										customTeamPickPool({
+											teamPickModes: pickedModes,
+											pool: newPool.serialized,
+										}),
+									).serialized,
+								)
+							}
+							allowBulkEdit
+							info={
+								<div>
+									<Alert
+										variation={shortfalls.length === 0 ? "SUCCESS" : "WARNING"}
+										tiny
+									>
+										{shortfalls.length === 0
+											? t("calendar:forms.teamPick.poolOk")
+											: shortfalls
+													.map(({ mode, required, has }) =>
+														t("calendar:forms.teamPick.poolShortfall", {
+															mode: t(`game-misc:MODE_SHORT_${mode}`),
+															required,
+															has,
+														}),
+													)
+													.join(", ")}
+									</Alert>
+								</div>
+							}
+						/>
+						{error ? (
+							<FormMessage id={errorMessageId("pool")} type="error">
+								{t(error as never)}
+							</FormMessage>
+						) : null}
+					</>
+				);
+			}}
+		</FormField>
 	);
 }
 
@@ -569,38 +770,6 @@ function TournamentMapPoolField() {
 	);
 }
 
-function TiebreakerMapPoolField() {
-	const { t } = useTranslation(["common"]);
-
-	return (
-		<FormField name="pool">
-			{({ value, onChange, error }: CustomFieldRenderProps) => {
-				const mapPool = value ? new MapPool(value as string) : MapPool.EMPTY;
-				const status = validateTiebreakerMapPool(mapPool);
-
-				return (
-					<>
-						<MapPoolSelector
-							className="w-full"
-							mapPool={mapPool}
-							title={t("common:maps.tieBreakerMapPool")}
-							modesToInclude={["SZ", "TC", "RM", "CB"]}
-							hideBanned
-							handleMapPoolChange={(newPool) => onChange(newPool.serialized)}
-							info={<MapPoolValidationStatusMessage status={status} />}
-						/>
-						{error ? (
-							<FormMessage id={errorMessageId("pool")} type="error">
-								{t(error as never)}
-							</FormMessage>
-						) : null}
-					</>
-				);
-			}}
-		</FormField>
-	);
-}
-
 function BracketProgressionField() {
 	const { values } = useFormFieldContext();
 
@@ -612,58 +781,6 @@ function BracketProgressionField() {
 			<BracketProgressionFormFields
 				isInvitational={Boolean(values.isInvitational)}
 			/>
-		</div>
-	);
-}
-
-type CounterPickValidationStatus =
-	| "PICKING"
-	| "VALID"
-	| "NOT_ONE_MAP_PER_MODE"
-	| "MAP_REPEATED"
-	| "MODE_REPEATED";
-
-function validateTiebreakerMapPool(
-	mapPool: MapPool,
-): CounterPickValidationStatus {
-	if (mapPool.stages.length !== new Set(mapPool.stages).size) {
-		return "MAP_REPEATED";
-	}
-	if (
-		mapPool.parsed.SZ.length > 1 ||
-		mapPool.parsed.TC.length > 1 ||
-		mapPool.parsed.RM.length > 1 ||
-		mapPool.parsed.CB.length > 1
-	) {
-		return "MODE_REPEATED";
-	}
-	if (
-		mapPool.parsed.SZ.length < 1 ||
-		mapPool.parsed.TC.length < 1 ||
-		mapPool.parsed.RM.length < 1 ||
-		mapPool.parsed.CB.length < 1
-	) {
-		return "PICKING";
-	}
-
-	return "VALID";
-}
-
-function MapPoolValidationStatusMessage({
-	status,
-}: {
-	status: CounterPickValidationStatus;
-}) {
-	const { t } = useTranslation(["common"]);
-
-	const alertVariation: AlertVariation =
-		status === "VALID" ? "SUCCESS" : status === "PICKING" ? "INFO" : "WARNING";
-
-	return (
-		<div>
-			<Alert variation={alertVariation} tiny>
-				{t(`common:maps.validation.${status}`)}
-			</Alert>
 		</div>
 	);
 }

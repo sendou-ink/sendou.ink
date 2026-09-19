@@ -10,7 +10,7 @@ import {
 	Users,
 } from "lucide-react";
 import * as React from "react";
-import { Flipped, Flipper } from "react-flip-toolkit";
+import { ViewTransition } from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useFetcher, useLocation, useMatches } from "react-router";
 import { Config } from "~/config";
@@ -24,7 +24,6 @@ import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigati
 import { useHydrated } from "~/hooks/useHydrated";
 import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
-import { usePrefersReducedMotion } from "~/hooks/usePrefersReducedMotion";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -35,7 +34,6 @@ import {
 	EVENTS_PAGE,
 	FRIENDS_PAGE,
 	navIconUrl,
-	PLANNER_URL,
 	SETTINGS_PAGE,
 	teamPage,
 	userPage,
@@ -508,58 +506,52 @@ export function Layout({
 
 function SiteTitle() {
 	const location = useLocation();
-	const prefersReducedMotion = usePrefersReducedMotion();
 	const { breadcrumbs, currentPageText } = useBreadcrumbData();
 
 	const isFrontPage = location.pathname === "/";
 	const hasBreadcrumbs = breadcrumbs.length > 0;
 
 	return (
-		<Flipper
-			flipKey={isFrontPage ? "front" : "other"}
-			className={styles.siteTitleFlipper}
-			decisionData={{ pathname: location.pathname }}
-		>
-			<div className={styles.siteTitle}>
-				<Flipped
-					flipId="site-logo"
-					shouldFlip={(prev, current) =>
-						!prefersReducedMotion &&
-						prev?.pathname !== PLANNER_URL &&
-						current?.pathname !== PLANNER_URL
-					}
-				>
-					<Link to="/" className={styles.siteLogo}>
-						<SiteLogoContent />
-					</Link>
-				</Flipped>
+		<div className={styles.siteTitle}>
+			{/* the key remounts the logo when it changes place so it animates as a
+			    shared element; an update animation would instead run on every
+			    navigation since React can't tell the logo didn't move */}
+			<ViewTransition
+				key={isFrontPage ? "front" : "other"}
+				name="site-logo"
+				share="auto"
+				default="none"
+			>
+				<Link to="/" className={styles.siteLogo}>
+					<SiteLogoContent />
+				</Link>
+			</ViewTransition>
 
-				{hasBreadcrumbs ? (
-					<>
-						{breadcrumbs.map((crumb) => {
-							const isCurrentPage = location.pathname === crumb.href;
+			{hasBreadcrumbs ? (
+				<>
+					{breadcrumbs.map((crumb) => {
+						const isCurrentPage = location.pathname === crumb.href;
 
-							return (
-								<React.Fragment key={crumb.href}>
-									<span className={styles.separator}>/</span>
-									{isCurrentPage ? (
+						return (
+							<React.Fragment key={crumb.href}>
+								<span className={styles.separator}>/</span>
+								{isCurrentPage ? (
+									<PageIcon crumb={crumb} />
+								) : (
+									<Link to={crumb.href} className={styles.breadcrumbLink}>
 										<PageIcon crumb={crumb} />
-									) : (
-										<Link to={crumb.href} className={styles.breadcrumbLink}>
-											<PageIcon crumb={crumb} />
-										</Link>
-									)}
-								</React.Fragment>
-							);
-						})}
+									</Link>
+								)}
+							</React.Fragment>
+						);
+					})}
 
-						{currentPageText ? (
-							<span className={styles.pageName}>{currentPageText}</span>
-						) : null}
-					</>
-				) : null}
-			</div>
-		</Flipper>
+					{currentPageText ? (
+						<span className={styles.pageName}>{currentPageText}</span>
+					) : null}
+				</>
+			) : null}
+		</div>
 	);
 }
 
@@ -693,24 +685,22 @@ function SideNavUserPanel() {
 							)}
 						</Link>
 					) : null}
-					{notifications ? (
-						<div
-							className={styles.sideNavFooterNotification}
-							key={location.pathname}
-						>
-							{showUnseenDot ? (
-								<NotificationDot
-									className={styles.sideNavFooterUnseenDot}
-									testId="notifications-bell-dot"
-								/>
-							) : null}
-							<NotificationPopover
-								notifications={notifications}
-								unseenIds={unseenIds}
-								triggerClassName={styles.sideNavFooterButton}
+					<div
+						className={styles.sideNavFooterNotification}
+						key={location.pathname}
+					>
+						{showUnseenDot ? (
+							<NotificationDot
+								className={styles.sideNavFooterUnseenDot}
+								testId="notifications-bell-dot"
 							/>
-						</div>
-					) : null}
+						) : null}
+						<NotificationPopover
+							notifications={notifications}
+							unseenIds={unseenIds}
+							triggerClassName={styles.sideNavFooterButton}
+						/>
+					</div>
 					<Link to={SETTINGS_PAGE} className={styles.sideNavFooterButton}>
 						<Settings />
 					</Link>

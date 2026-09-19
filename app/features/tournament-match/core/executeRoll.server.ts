@@ -12,9 +12,8 @@ export async function executeRoll({
 	maps,
 	pickBanEvents,
 	results,
-	tournamentId,
 	teams,
-	tieBreakerMapPool,
+	toSetMapPool,
 }: {
 	matchId: number;
 	maps: TournamentRoundMaps;
@@ -22,9 +21,9 @@ export async function executeRoll({
 		ReturnType<typeof TournamentRepository.findPickBanEventsByMatchId>
 	>;
 	results: Awaited<ReturnType<typeof findResultsByMatchId>>;
-	tournamentId: number;
 	teams: [PickBan.MapPoolTeam, PickBan.MapPoolTeam];
-	tieBreakerMapPool: ModeWithStage[];
+	/** See `Tournament.organizerPickedMapPool`. */
+	toSetMapPool: ModeWithStage[];
 }): Promise<boolean> {
 	const customFlow = maps.customFlow;
 	if (!customFlow) return false;
@@ -38,14 +37,11 @@ export async function executeRoll({
 
 	if (step?.action !== "ROLL") return false;
 
-	const toSetMapPool =
-		await TournamentRepository.findTOSetMapPoolById(tournamentId);
 	const legalMaps = PickBan.mapsListWithLegality({
 		toSetMapPool,
 		maps,
 		mapList: null,
 		teams,
-		tieBreakerMapPool,
 		pickerTeamId: teams[0].id,
 		results,
 		pickBanEvents,
