@@ -67,9 +67,19 @@ function DialogElement({
 	children,
 	ref,
 }: DialogElementProps) {
+	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	useScrollLockWhileOpen(dialogRef);
+
 	return (
 		<dialog
-			ref={ref}
+			ref={(dialog) => {
+				dialogRef.current = dialog;
+				if (typeof ref === "function") {
+					ref(dialog);
+				} else if (ref) {
+					ref.current = dialog;
+				}
+			}}
 			id={id}
 			className={clsx(className, {
 				[styles.blurredBackdrop]: blurredBackdrop,
@@ -98,6 +108,79 @@ function closeOnBackdropClick(event: React.MouseEvent<HTMLDialogElement>) {
 	if (outside) {
 		event.currentTarget.close();
 	}
+}
+
+/**
+ * Locks page scrolling for as long as the dialog is open. Open state is read
+ * from the DOM (`toggle` events plus the initial `open`) rather than React
+ * state, so a dialog opened before hydration or closed natively is covered.
+ */
+function useScrollLockWhileOpen(
+	dialogRef: React.RefObject<HTMLDialogElement | null>,
+) {
+	React.useEffect(() => {
+		const dialog = dialogRef.current;
+		if (!dialog) return;
+
+		let release: (() => void) | undefined;
+		const syncLock = (isOpen: boolean) => {
+			if (isOpen) {
+				release ??= lockPageScroll();
+			} else {
+				release?.();
+				release = undefined;
+			}
+		};
+		const onToggle = (event: Event) => {
+			syncLock((event as ToggleEvent).newState === "open");
+		};
+
+		dialog.addEventListener("toggle", onToggle);
+		syncLock(dialog.open);
+		return () => {
+			dialog.removeEventListener("toggle", onToggle);
+			syncLock(false);
+		};
+	}, [dialogRef]);
+}
+
+let pageScrollLocks = 0;
+let restorePageScroll: (() => void) | undefined;
+
+/**
+ * Hides the root scrollbar without the page reflowing into its space: when a
+ * classic scrollbar was taking up width, `scrollbar-gutter: stable` keeps that
+ * width reserved. Overlay scrollbars take no width so nothing is reserved.
+ * Reference counted so nested dialogs release the lock only once all close.
+ */
+function lockPageScroll() {
+	if (pageScrollLocks++ === 0) {
+		const root = document.documentElement;
+		const scrollbarTakesWidth = window.innerWidth > root.clientWidth;
+		const previous = {
+			overflow: root.style.overflow,
+			scrollbarGutter: root.style.scrollbarGutter,
+		};
+
+		root.style.overflow = "hidden";
+		if (scrollbarTakesWidth) {
+			root.style.scrollbarGutter = "stable";
+		}
+		restorePageScroll = () => {
+			root.style.overflow = previous.overflow;
+			root.style.scrollbarGutter = previous.scrollbarGutter;
+		};
+	}
+
+	let released = false;
+	return () => {
+		if (released) return;
+		released = true;
+		if (--pageScrollLocks === 0) {
+			restorePageScroll?.();
+			restorePageScroll = undefined;
+		}
+	};
 }
 
 /** Invoker commands open and close the dialog natively; this guards the JS fallback for browsers without them. */
