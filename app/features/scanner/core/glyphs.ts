@@ -165,6 +165,8 @@ export interface RecognizeOptions {
 	spaceGap?: number;
 	/** discard chars scoring below this */
 	minCharScore?: number;
+	/** runner-up candidates kept per segment */
+	maxCandidates?: number;
 }
 
 interface Segment {
@@ -294,6 +296,14 @@ function measureSegment(binary: Mat, seg: Segment): SegmentInfo {
  * crop of a different char ('h' vs 'b') can displace a correct font match.
  */
 const FIXTURE_TIEBREAK = 0.02;
+/**
+ * ...and the fixture must explain about as much of the segment's ink as the
+ * font glyph: an 'L' crop correlates 0.91 with the left stem and floor of a 'U'
+ * while covering 0.63 of its ink against the font 'U's 0.93.
+ */
+const FIXTURE_TIEBREAK_MAX_INK_GAP = 0.1;
+
+const DEFAULT_MAX_CANDIDATES = 5;
 
 /**
  * A CJK-charset segment leaves thousands of templates eligible with barely
@@ -326,6 +336,7 @@ function classifySegment(
 	 * sub-floor candidates are omitted, so pass it only for probes.
 	 */
 	scoreFloor = Number.NEGATIVE_INFINITY,
+	maxCandidates = DEFAULT_MAX_CANDIDATES,
 ): { char: string; score: number; ncc: number; source: "fixture" | "font" }[] {
 	const cv = getCV();
 	const segWidth = seg.x1 - seg.x0;
@@ -386,6 +397,7 @@ function classifySegment(
 		score: number;
 		ncc: number;
 		source: "fixture" | "font";
+		inkCoverage: number;
 	}[] = [];
 	// Only placements covering most of the segment: the region is padded, so a
 	// free-sliding template can otherwise match the *neighboring* glyph inside
@@ -443,6 +455,7 @@ function classifySegment(
 				score,
 				ncc: maxVal,
 				source: glyph.source,
+				inkCoverage: r,
 			});
 		}
 	}
@@ -458,14 +471,15 @@ function classifySegment(
 				// ...only when the fixture's raw correlation is also competitive: a fixture
 				// crop of a *different* char landing near the top via the ink penalty must
 				// not displace a well-matching font glyph
-				top.ncc - c.ncc < FIXTURE_TIEBREAK,
+				top.ncc - c.ncc < FIXTURE_TIEBREAK &&
+				top.inkCoverage - c.inkCoverage < FIXTURE_TIEBREAK_MAX_INK_GAP,
 		);
 		if (fixture && fixture !== top) {
 			candidates.splice(candidates.indexOf(fixture), 1);
 			candidates.unshift(fixture);
 		}
 	}
-	return candidates.slice(0, 5);
+	return candidates.slice(0, maxCandidates);
 }
 
 interface EligibleGlyph {
@@ -607,12 +621,22 @@ interface ClassifiedSegment {
  */
 const MERGE_MAX_GAP_RATIO = 0.45;
 const MERGE_MARGIN = 0.02;
+/**
+ * A fragment no template explains (ル's left stroke reads ィ at 0.61) is itself
+ * evidence of a split glyph: the merge then only has to be a strong read that
+ * keeps up with the better fragment, which a fixture crop of a lookalike can
+ * outscore on its own stroke ('L' at 0.87 on ル's right stroke, ル at 0.86).
+ */
+const MERGE_WEAK_FRAGMENT = 0.65;
+const MERGE_STRONG_READ = 0.8;
+const MERGE_WEAK_SLACK = 0.03;
 
 function mergeSplitGlyphs(
 	items: ClassifiedSegment[],
 	binary: Mat,
 	masked: Mat,
 	set: GlyphSet,
+	maxCandidates: number,
 ): void {
 	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
 	const maxCharWidth = Math.round(set.medianWidth * 1.5);
@@ -626,11 +650,16 @@ function mergeSplitGlyphs(
 			continue;
 		}
 		const seg = measureSegment(binary, { x0: a.seg.x0, x1: b.seg.x1 });
-		const fragmentBest = Math.max(
-			a.ranked[0]?.score ?? 0,
-			b.ranked[0]?.score ?? 0,
-		);
-		const floor = fragmentBest + MERGE_MARGIN;
+		const aScore = a.ranked[0]?.score ?? 0;
+		const bScore = b.ranked[0]?.score ?? 0;
+		const fragmentBest = Math.max(aScore, bScore);
+		let floor = fragmentBest + MERGE_MARGIN;
+		if (Math.min(aScore, bScore) < MERGE_WEAK_FRAGMENT) {
+			floor = Math.min(
+				floor,
+				Math.max(MERGE_STRONG_READ, fragmentBest - MERGE_WEAK_SLACK),
+			);
+		}
 		// Probe with the floor first: most neighbor pairs are genuine letter pairs
 		// whose merge can't win, so the bound-sorted matching stops almost at once.
 		// Probe scores are exact, so "nothing beats the floor" is definitive.
@@ -639,7 +668,13 @@ function mergeSplitGlyphs(
 		if (probe.some((c) => c.score > floor)) {
 			// full run (rare): the winning merge's ranked list must also carry
 			// the sub-floor runner-up candidates downstream consumers see
-			const ranked = classifySegment(masked, seg, set);
+			const ranked = classifySegment(
+				masked,
+				seg,
+				set,
+				undefined,
+				maxCandidates,
+			);
 			if ((ranked[0]?.score ?? 0) > floor) {
 				// stay at i: the merged segment may absorb yet another stroke
 				items.splice(i, 2, { seg, ranked });
@@ -677,14 +712,102 @@ function dipCuts(profile: number[], x0: number, x1: number): number[] {
 	return [...cuts];
 }
 
-function recutMiscutPairs(
-	items: ClassifiedSegment[],
+/**
+ * The `count` lowest dips (ties broken by depth relative to the peaks either
+ * side), with each dip's far edge like dipCuts. Raw depth first: the junction
+ * of two fused glyphs is the sparsest column even when one of them is a low
+ * bar ("g_") whose own columns hold barely more ink.
+ */
+function deepestDipCuts(
 	profile: number[],
-	binary: Mat,
-	masked: Mat,
-	set: GlyphSet,
-): void {
-	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
+	x0: number,
+	x1: number,
+	count: number,
+): number[] {
+	const dips: { x: number; value: number; ratio: number }[] = [];
+	for (let x = x0 + 3; x <= x1 - 3; x++) {
+		const v = profile[x]!;
+		if (v > profile[x - 1]! || v > profile[x + 1]!) continue;
+		const peak = Math.min(
+			Math.max(...profile.slice(x0, x)),
+			Math.max(...profile.slice(x + 1, x1)),
+		);
+		dips.push({ x, value: v, ratio: v / Math.max(1, peak) });
+	}
+	dips.sort((a, b) => a.value - b.value || a.ratio - b.ratio);
+	const cuts = new Set<number>();
+	for (const { x } of dips.slice(0, count)) {
+		cuts.add(x);
+		if (x + 1 <= x1 - 3) cuts.add(x + 1);
+	}
+	return [...cuts];
+}
+
+interface RecutContext {
+	profile: number[];
+	binary: Mat;
+	masked: Mat;
+	set: GlyphSet;
+	maxCandidates: number;
+}
+
+/**
+ * Best two-way cut of `span` among `cuts` whose weaker half classifies above
+ * `minScore` (raised to each adopted cut's weaker score); cuts inside `skip` are
+ * the original segmentation and are not retried.
+ */
+function bestRecut(
+	ctx: RecutContext,
+	span: Segment,
+	cuts: number[],
+	skip: Segment | null,
+	minScore: number,
+): [ClassifiedSegment, ClassifiedSegment] | null {
+	const { binary, masked, set, maxCandidates } = ctx;
+	let floor = minScore;
+	let best: [ClassifiedSegment, ClassifiedSegment] | null = null;
+	for (const cut of cuts) {
+		if (skip && cut >= skip.x0 && cut <= skip.x1) continue;
+		const left = measureSegment(binary, { x0: span.x0, x1: cut });
+		const right = measureSegment(binary, { x0: cut, x1: span.x1 });
+		// probe with the floor first (see mergeSplitGlyphs): most candidate
+		// cuts can't beat it and the probes early-stop almost immediately
+		const canWin = (seg: SegmentInfo) =>
+			classifySegment(masked, seg, set, floor).some((c) => c.score > floor);
+		if (!canWin(left) || !canWin(right)) continue;
+		const leftRanked = classifySegment(
+			masked,
+			left,
+			set,
+			undefined,
+			maxCandidates,
+		);
+		const rightRanked = classifySegment(
+			masked,
+			right,
+			set,
+			undefined,
+			maxCandidates,
+		);
+		const weaker = Math.min(
+			leftRanked[0]?.score ?? 0,
+			rightRanked[0]?.score ?? 0,
+		);
+		if (weaker <= floor) continue;
+		floor = weaker;
+		best = [
+			{ seg: left, ranked: leftRanked },
+			{ seg: right, ranked: rightRanked },
+		];
+	}
+	return best;
+}
+
+function recutMiscutPairs(items: ClassifiedSegment[], ctx: RecutContext): void {
+	const maxGap = Math.max(
+		3,
+		Math.round(ctx.set.medianWidth * MERGE_MAX_GAP_RATIO),
+	);
 	for (let i = 0; i + 1 < items.length; i++) {
 		const a = items[i]!;
 		const b = items[i + 1]!;
@@ -692,35 +815,52 @@ function recutMiscutPairs(
 		const bScore = b.ranked[0]?.score ?? 0;
 		if (aScore >= RECUT_MAX_SCORE || bScore >= RECUT_MAX_SCORE) continue;
 		if (b.seg.x0 - a.seg.x1 > maxGap) continue;
-		let floor = Math.max(
+		const floor = Math.max(
 			RECUT_MIN_SCORE,
 			Math.max(aScore, bScore) + RECUT_MARGIN,
 		);
-		let best: [ClassifiedSegment, ClassifiedSegment] | null = null;
-		for (const cut of dipCuts(profile, a.seg.x0, b.seg.x1)) {
-			// a cut inside the existing gap reproduces the original pair
-			if (cut >= a.seg.x1 && cut <= b.seg.x0) continue;
-			const left = measureSegment(binary, { x0: a.seg.x0, x1: cut });
-			const right = measureSegment(binary, { x0: cut, x1: b.seg.x1 });
-			// probe with the floor first (see mergeSplitGlyphs): most candidate
-			// cuts can't beat it and the probes early-stop almost immediately
-			const canWin = (seg: SegmentInfo) =>
-				classifySegment(masked, seg, set, floor).some((c) => c.score > floor);
-			if (!canWin(left) || !canWin(right)) continue;
-			const leftRanked = classifySegment(masked, left, set);
-			const rightRanked = classifySegment(masked, right, set);
-			const weaker = Math.min(
-				leftRanked[0]?.score ?? 0,
-				rightRanked[0]?.score ?? 0,
-			);
-			if (weaker <= floor) continue;
-			floor = weaker;
-			best = [
-				{ seg: left, ranked: leftRanked },
-				{ seg: right, ranked: rightRanked },
-			];
-		}
+		const span = { x0: a.seg.x0, x1: b.seg.x1 };
+		const best = bestRecut(
+			ctx,
+			span,
+			dipCuts(ctx.profile, span.x0, span.x1),
+			{ x0: a.seg.x1, x1: b.seg.x0 },
+			floor,
+		);
 		if (best) items.splice(i, 2, ...best);
+	}
+}
+
+/**
+ * Blur can also fuse two glyphs into one segment narrower than the wide-segment
+ * split's floor ("oj" reading as a lone パ, "fi" as ↑), which then classifies
+ * poorly as a whole. A low-scoring segment wider than a typical glyph is re-cut
+ * the same way, adopted under the same floor and margin. Unreadable text (a
+ * splash tag in a decorative face) is full of such segments, so only the three
+ * lowest dips are tried: the junction of two fused glyphs is always one.
+ */
+const FUSED_MIN_WIDTH_RATIO = 1.2;
+const FUSED_DIPS_TRIED = 3;
+
+function splitFusedGlyphs(items: ClassifiedSegment[], ctx: RecutContext): void {
+	const minWidth = ctx.set.medianWidth * FUSED_MIN_WIDTH_RATIO;
+	for (let i = 0; i < items.length; i++) {
+		const item = items[i]!;
+		const score = item.ranked[0]?.score ?? 0;
+		if (score >= RECUT_MAX_SCORE || item.seg.x1 - item.seg.x0 < minWidth)
+			continue;
+		const floor = Math.max(RECUT_MIN_SCORE, score + RECUT_MARGIN);
+		const cuts = deepestDipCuts(
+			ctx.profile,
+			item.seg.x0,
+			item.seg.x1,
+			FUSED_DIPS_TRIED,
+		);
+		const best = bestRecut(ctx, item.seg, cuts, null, floor);
+		if (best) {
+			items.splice(i, 1, ...best);
+			i++;
+		}
 	}
 }
 
@@ -736,6 +876,7 @@ export function recognizeText(
 		minColumnPixels = 1,
 		spaceGap = Math.max(5, Math.round(set.medianWidth * 0.55)),
 		minCharScore = 0.4,
+		maxCandidates = DEFAULT_MAX_CANDIDATES,
 	} = options;
 
 	const binary = new cv.Mat();
@@ -758,10 +899,12 @@ export function recognizeText(
 
 	const items: ClassifiedSegment[] = segments.map((seg) => ({
 		seg,
-		ranked: classifySegment(masked, seg, set),
+		ranked: classifySegment(masked, seg, set, undefined, maxCandidates),
 	}));
-	mergeSplitGlyphs(items, binary, masked, set);
-	recutMiscutPairs(items, profile, binary, masked, set);
+	mergeSplitGlyphs(items, binary, masked, set, maxCandidates);
+	const ctx: RecutContext = { profile, binary, masked, set, maxCandidates };
+	recutMiscutPairs(items, ctx);
+	splitFusedGlyphs(items, ctx);
 
 	const chars: RecognizedChar[] = [];
 	let text = "";

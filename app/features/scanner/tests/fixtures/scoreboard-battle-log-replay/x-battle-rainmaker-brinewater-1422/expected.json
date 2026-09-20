@@ -79,9 +79,6 @@
     "stageLabel": "Brinewater Springs"
   },
   "options": {
-    "skipFields": [
-      "players.5.name"
-    ],
-    "notes": "Same stream as the 1404 case; parses correctly today - regression guard. The old export carried anonymized-view nicknames; names here are the on-screen ones ('S' and '0' are real one-char names). players.5 truth is ブラスターアレルギー but reads with アレィLギ garbled mid-name."
+    "notes": "Same stream as the 1404 case; parses correctly today - regression guard. The old export carried anonymized-view nicknames; names here are the on-screen ones ('S' and '0' are real one-char names). players.5 (ブラスターアレルギー) once read アレィLギ mid-name: ル's two strokes segment apart and a fixture 'L' crop outscored the merged ル on the right stroke alone, until a fragment no template explains lowered the merge floor."
   }
 }

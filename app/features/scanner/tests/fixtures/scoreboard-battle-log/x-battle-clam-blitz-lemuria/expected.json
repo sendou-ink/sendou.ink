@@ -79,9 +79,6 @@
     "stageLabel": "Lemuria Hub"
   },
   "options": {
-    "skipFields": [
-      "players.4.name"
-    ],
-    "notes": "players.4.name (Invisifloats) reads lnvisifloats — I and l are pixel-identical bars in this face. Weapons row order: N-ZAP '85, Sploosh-o-matic, E-liter 4K, Rapid Blaster Pro Deco, N-ZAP '85, Rapid Blaster Pro WNT-R, E-liter 4K, Splat Roller (Big Bubbler special confirms the near-tied Flingza off)."
+    "notes": "players.4.name (Invisifloats) once read lnvisifloats — I and l are pixel-identical bars in this face; a word-initial bar before a consonant now reads I. Weapons row order: N-ZAP '85, Sploosh-o-matic, E-liter 4K, Rapid Blaster Pro Deco, N-ZAP '85, Rapid Blaster Pro WNT-R, E-liter 4K, Splat Roller (Big Bubbler special confirms the near-tied Flingza off)."
   }
 }

@@ -234,7 +234,9 @@ export function spectatorCardLayout(
 ): Omit<CardLayout, "self"> {
 	const dy = SPECTATOR_ROW_PITCH * row;
 	return {
-		name: { x: 198 + dx, y: 306 + dy, w: 310, h: 44 },
+		// superscripts and accents reach 2px above the old top (x² read x・); the
+		// card's team stripe ends 4px above this one
+		name: { x: 198 + dx, y: 303 + dy, w: 310, h: 47 },
 		weapon: { x: 196 + dx, y: 350 + dy, w: 66, h: 54 },
 		subTile: { x: 264 + dx, y: 354 + dy, w: 38, h: 42 },
 		badges: [
