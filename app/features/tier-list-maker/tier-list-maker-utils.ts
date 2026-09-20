@@ -87,20 +87,36 @@ export function tierNameFontSize(name: string) {
 
 const LIGHT_COLOR_LUMINANCE_THRESHOLD = 0.5;
 
-/** Whether dark text/icons read better on the given `#rrggbb` color than light ones. */
+/** Whether dark text/icons read better on the given `#rgb` or `#rrggbb` color than light ones. */
 export function isLightColor(hex: string) {
-	const channels = hex.replace("#", "").match(/.{2}/g);
-	if (!channels || channels.length < 3) return false;
+	const channels = hexChannels(hex);
+	if (!channels) return false;
 
-	const [r, g, b] = channels.map((channel) => Number.parseInt(channel, 16));
+	const [r, g, b] = channels;
 	const luminance = (0.299 * r + 0.587 * g + 0.114 * b) / 255;
 
 	return luminance > LIGHT_COLOR_LUMINANCE_THRESHOLD;
 }
 
-/** Text color that stays readable on a tier's `#rrggbb` background color. */
+/** Text color that stays readable on a tier's `#rgb` or `#rrggbb` background color. */
 export function tierTextColor(hex: string) {
 	return isLightColor(hex)
 		? "var(--color-text-on-light)"
 		: "var(--color-text-on-dark)";
+}
+
+function hexChannels(hex: string) {
+	const digits = hex.replace("#", "");
+	const channels =
+		digits.length === 3
+			? digits.split("").map((digit) => `${digit}${digit}`)
+			: digits.match(/.{2}/g);
+
+	if (!channels || channels.length < 3) return null;
+
+	const parsed = channels
+		.slice(0, 3)
+		.map((channel) => Number.parseInt(channel, 16));
+
+	return parsed.some(Number.isNaN) ? null : parsed;
 }

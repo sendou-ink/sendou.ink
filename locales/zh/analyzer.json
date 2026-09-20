@@ -214,5 +214,6 @@
 	"comp.removeAll": "移除所有",
 	"comp.addAll": "添加所有",
 	"comp.singleWeaponCombos": "",
-	"comp.graphicSubtitle": ""
+	"comp.graphicSubtitle": "",
+	"comp.exportHint": ""
 }

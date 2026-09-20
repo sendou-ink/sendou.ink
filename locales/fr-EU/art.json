@@ -24,5 +24,6 @@
 	"delete.title": "Êtes vous sûre de vouloir supprimer cette œuvre?",
 	"unlink.title": "Êtes vous sûre de vouloir supprimer cette œuvre de votre profil? (Seulement {{username}} pourra le remettre)",
 	"noArtForTag": "",
-	"imageFailed": ""
+	"imageFailed": "",
+	"openImage": ""
 }

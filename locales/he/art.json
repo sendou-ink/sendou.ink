@@ -24,5 +24,6 @@
 	"delete.title": "האם אתה בטוח שאתה רוצה למחוק את הציור?",
 	"unlink.title": "האם אתה בטוח שאתה רוצה להסיר את הציור הזה מהפרופיל שלך (רק {{username}} יוכל להוסיף אותו חזרה)?",
 	"noArtForTag": "",
-	"imageFailed": ""
+	"imageFailed": "",
+	"openImage": ""
 }

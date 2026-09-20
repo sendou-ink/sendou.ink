@@ -22,5 +22,6 @@
 	"delete.title": "您确定要删除这件作品吗？",
 	"unlink.title": "您确定要将这件作品从个人资料中移除吗（只有 {{username}} 可以重新添加）？",
 	"noArtForTag": "未能找到包含 #{{tag}} 的作品。",
-	"imageFailed": ""
+	"imageFailed": "",
+	"openImage": ""
 }

@@ -2,7 +2,11 @@ import { HardDriveDownload } from "lucide-react";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
-import { SendouButton } from "~/components/elements/Button";
+import {
+	SendouButton,
+	type SendouButtonProps,
+} from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
@@ -63,6 +67,7 @@ export default function CompAnalyzerShell() {
 }
 
 function CompAnalyzerPage() {
+	const { t } = useTranslation(["common", "analyzer"]);
 	const [selectedWeaponIds, setSelectedWeaponIds] = useSelectedWeapons();
 	const [categorization, setCategorization] = useCategorization();
 	const [isGridCollapsed, setIsGridCollapsed] = useState(
@@ -99,14 +104,18 @@ function CompAnalyzerPage() {
 				onRemove={handleRemoveWeapon}
 				onReorder={setSelectedWeaponIds}
 			/>
-			{selectedWeaponIds.length >= MAX_WEAPONS ? (
-				<div className="stack horizontal justify-end">
+			<div className="stack horizontal justify-end">
+				{selectedWeaponIds.length >= MAX_WEAPONS ? (
 					<CompExportDialog
 						weaponIds={selectedWeaponIds}
 						excludedDamageKeys={excludedDamageKeys}
 					/>
-				</div>
-			) : null}
+				) : (
+					<SendouPopover trigger={<ExportButton />}>
+						{t("analyzer:comp.exportHint", { max: MAX_WEAPONS })}
+					</SendouPopover>
+				)}
+			</div>
 			<WeaponCategories selectedWeaponIds={selectedWeaponIds} />
 			<WeaponGrid
 				selectedWeaponIds={selectedWeaponIds}
@@ -139,15 +148,7 @@ function CompExportDialog({ weaponIds, excludedDamageKeys }: CompExportProps) {
 
 	return (
 		<ImageExportDialog
-			trigger={
-				<SendouButton
-					size="small"
-					variant="outlined"
-					icon={<HardDriveDownload />}
-				>
-					{t("common:imageExport.export")}
-				</SendouButton>
-			}
+			trigger={<ExportButton />}
 			heading={t("common:imageExport.export")}
 			filename="comp"
 			settings={
@@ -210,5 +211,20 @@ function CompGraphicWithCombos({
 			showRanges={showRanges}
 			showCombos={showCombos}
 		/>
+	);
+}
+
+function ExportButton(props: SendouButtonProps) {
+	const { t } = useTranslation(["common"]);
+
+	return (
+		<SendouButton
+			{...props}
+			size="small"
+			variant="outlined"
+			icon={<HardDriveDownload />}
+		>
+			{t("common:imageExport.export")}
+		</SendouButton>
 	);
 }

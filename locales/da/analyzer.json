@@ -219,5 +219,6 @@
 	"comp.removeAll": "",
 	"comp.addAll": "",
 	"comp.singleWeaponCombos": "",
-	"comp.graphicSubtitle": ""
+	"comp.graphicSubtitle": "",
+	"comp.exportHint": ""
 }

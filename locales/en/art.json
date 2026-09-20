@@ -23,5 +23,6 @@
 	"delete.title": "Are you sure you want to delete the art?",
 	"unlink.title": "Are you sure you want to remove this art from your profile (only {{username}} can add it back)?",
 	"noArtForTag": "No uploaded art found for #{{tag}}",
-	"imageFailed": "Image could not be loaded"
+	"imageFailed": "Image could not be loaded",
+	"openImage": "Open image"
 }

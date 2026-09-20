@@ -21,5 +21,6 @@
 	"delete.title": "本当にこの作品を削除しますか？",
 	"unlink.title": "本当にこの作品をプロフィールから削除しますか？{{username}}しか再び追加することはできません。",
 	"noArtForTag": "#{{tag}}の作品が見つかりませんでした。",
-	"imageFailed": ""
+	"imageFailed": "",
+	"openImage": ""
 }

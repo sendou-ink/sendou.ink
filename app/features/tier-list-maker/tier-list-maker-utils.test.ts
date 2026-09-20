@@ -203,7 +203,10 @@ describe("isLightColor", () => {
 		{ hex: "#8b0000", expected: false, why: "dark red" },
 		{ hex: "#4169e1", expected: false, why: "royal blue" },
 		{ hex: "#000000", expected: false, why: "black" },
-		{ hex: "#fff", expected: false, why: "unsupported short form" },
+		{ hex: "#fff", expected: true, why: "short form white" },
+		{ hex: "#000", expected: false, why: "short form black" },
+		{ hex: "#ffd", expected: true, why: "short form light yellow" },
+		{ hex: "not-a-color", expected: false, why: "garbage" },
 	])("$why -> $expected", ({ hex, expected }) => {
 		expect(isLightColor(hex)).toBe(expected);
 	});

@@ -1,3 +1,15 @@
+.thumbnailButton {
+	all: unset;
+	display: block;
+	cursor: pointer;
+
+	/* thumbnails have square corners, a rounded ring would leave the art's corners outside it */
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+	}
+}
+
 .thumbnail {
 	cursor: pointer;
 	transition: all 0.2s ease;

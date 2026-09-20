@@ -211,18 +211,29 @@ function ImagePreview({
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
 
-	const img = (
-		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
+	const image = (
 		<img
 			alt=""
 			src={previewUrl(art.url)}
 			loading="lazy"
-			onClick={onClick}
-			onPointerEnter={enablePreview ? () => preloadImage(art.url) : undefined}
 			ref={imageRef}
 			className={enablePreview ? styles.thumbnail : undefined}
 			data-testid="art-image"
 		/>
+	);
+
+	const img = onClick ? (
+		<button
+			type="button"
+			onClick={onClick}
+			onPointerEnter={() => preloadImage(art.url)}
+			className={styles.thumbnailButton}
+			aria-label={art.description || t("art:openImage")}
+		>
+			{image}
+		</button>
+	) : (
+		image
 	);
 
 	if (!art.author && canEdit) {

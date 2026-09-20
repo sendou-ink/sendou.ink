@@ -223,5 +223,6 @@
 	"comp.removeAll": "Eliminar todos",
 	"comp.addAll": "Añadir todos",
 	"comp.singleWeaponCombos": "Combos de un arma",
-	"comp.graphicSubtitle": ""
+	"comp.graphicSubtitle": "",
+	"comp.exportHint": ""
 }

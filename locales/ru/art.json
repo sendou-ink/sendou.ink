@@ -25,5 +25,6 @@
 	"delete.title": "Вы точно хотите удалить этот арт?",
 	"unlink.title": "Вы точно хотите удалить этот арт с вашего профиля (только {{username}} может добавить его обратно)?",
 	"noArtForTag": "",
-	"imageFailed": ""
+	"imageFailed": "",
+	"openImage": ""
 }

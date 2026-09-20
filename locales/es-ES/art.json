@@ -24,5 +24,6 @@
 	"delete.title": "¿Seguro que quieres eliminar este arte?",
 	"unlink.title": "¿Seguro que quieres desvincular este arte de tu perfil? (solo {{username}} puede volver a añadirlo)",
 	"noArtForTag": "No se ha encontrado arte subido para #{{tag}}",
-	"imageFailed": ""
+	"imageFailed": "",
+	"openImage": ""
 }

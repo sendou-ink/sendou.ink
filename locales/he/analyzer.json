@@ -223,5 +223,6 @@
 	"comp.removeAll": "הסר הכל",
 	"comp.addAll": "הוסף הכל",
 	"comp.singleWeaponCombos": "",
-	"comp.graphicSubtitle": ""
+	"comp.graphicSubtitle": "",
+	"comp.exportHint": ""
 }
