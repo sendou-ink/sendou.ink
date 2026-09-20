@@ -129,6 +129,13 @@
 }
 
 /* one pill per player slot */
+.downloads {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	margin-block: var(--s-3);
+}
+
 .statusSlots {
 	display: inline-flex;
 	gap: var(--s-2);

@@ -6,6 +6,7 @@ import {
 	useRef,
 	useState,
 } from "react";
+import { SendouButton } from "~/components/elements/Button";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl } from "~/utils/urls";
@@ -107,26 +108,26 @@ function LabeledCrop(props: {
 	);
 }
 
-/** One pill per player slot: number = alive, ★ = special held, ✗ = splatted. */
-function StatusSlots(props: { data: PlayerStatusData }) {
+/** One pill per player slot, both sides; a lit pill is a slot the flag was read on. */
+function StatusSlots(props: {
+	flags: PlayerStatusData["special"] | PlayerStatusData["dead"];
+	tone: "special" | "dead";
+}) {
 	return (
 		<span className={styles.statusSlots}>
-			{([0, 1] as const).map((side) => (
-				<span key={side} className={styles.statusSide}>
-					{props.data.dead[side].map((dead, slot) => {
-						const special = !dead && props.data.special[side][slot];
-						return (
-							<span
-								key={slot}
-								className={clsx(styles.statusSlot, {
-									[styles.dead]: dead,
-									[styles.special]: special,
-								})}
-							>
-								{dead ? "✗" : special ? "★" : slot + 1}
-							</span>
-						);
-					})}
+			{props.flags.map((side, sideIndex) => (
+				<span key={sideIndex} className={styles.statusSide}>
+					{side.map((on, slot) => (
+						<span
+							key={slot}
+							className={clsx(styles.statusSlot, {
+								[styles.dead]: on && props.tone === "dead",
+								[styles.special]: on && props.tone === "special",
+							})}
+						>
+							{slot + 1}
+						</span>
+					))}
 				</span>
 			))}
 		</span>
@@ -554,18 +555,20 @@ export function ScreenshotPage() {
 			</div>
 
 			{frame && !busy ? (
-				<p>
-					<button
-						type="button"
+				<div className={styles.downloads}>
+					<SendouButton
+						variant="outlined"
+						size="small"
 						onClick={() =>
 							downloadExpectedJson(event?.data ?? null, event?.type)
 						}
 					>
 						Download expected.json
-					</button>{" "}
-					<button
-						type="button"
-						disabled={!event}
+					</SendouButton>
+					<SendouButton
+						variant="outlined"
+						size="small"
+						isDisabled={!event}
 						onClick={() =>
 							downloadCsv(
 								"screenshot-events.csv",
@@ -574,8 +577,8 @@ export function ScreenshotPage() {
 						}
 					>
 						Download CSV
-					</button>
-				</p>
+					</SendouButton>
+				</div>
 			) : null}
 
 			{Object.keys(results).length > 0 ? (
@@ -834,8 +837,14 @@ export function ScreenshotPage() {
 									{status ? (
 										<>
 											<Stat label="layout">{status.data.layout}</Stat>
-											<Stat label="players">
-												<StatusSlots data={status.data} />
+											<Stat label="special">
+												<StatusSlots
+													flags={status.data.special}
+													tone="special"
+												/>
+											</Stat>
+											<Stat label="splatted">
+												<StatusSlots flags={status.data.dead} tone="dead" />
 											</Stat>
 										</>
 									) : null}

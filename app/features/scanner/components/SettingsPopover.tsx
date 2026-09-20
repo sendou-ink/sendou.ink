@@ -1,8 +1,8 @@
 /**
  * The settings popover, opened from ⚙ on the landing and the live header:
- * the upload and clip toggles, the retention notes, and the debug links for
- * those who see them. The
- * source lives on the landing's Live card, the one place it must be right.
+ * the upload and clip toggles, the retention notes, and in development the
+ * fixtures link. The source lives on the landing's Live card, the one place
+ * it must be right.
  */
 import { Settings } from "lucide-react";
 import { Link } from "react-router";
@@ -25,14 +25,12 @@ import {
 	useScannerSettings,
 } from "./settings";
 import { isLoggedIn } from "./upload";
-import { useDebug } from "./use-debug";
 
 /** a step of one frame-ish: fine enough to tune by ear, coarse enough to reach a second in a few clicks */
 const AUDIO_OFFSET_STEP_MS = 25;
 
 export function SettingsPopover() {
 	const settings = useScannerSettings();
-	const debug = useDebug();
 	const loggedIn = isLoggedIn();
 
 	return (
@@ -122,26 +120,18 @@ export function SettingsPopover() {
 					<br />
 					Sessions: last 30 days or {MAX_SESSIONS} sessions.
 				</p>
-				{debug ? (
+				{process.env.NODE_ENV === "development" ? (
 					<section className={styles.section}>
 						<span className={styles.label}>Debug</span>
 						<div className={styles.row}>
 							<Link
-								to={scannerSearchParams.href(SCANNER_PAGE, { view: "debug" })}
+								to={scannerSearchParams.href(SCANNER_PAGE, {
+									view: "fixtures",
+								})}
 								defaultShouldRevalidate={false}
 							>
-								Image / screenshot view
+								Fixtures
 							</Link>
-							{process.env.NODE_ENV === "development" ? (
-								<Link
-									to={scannerSearchParams.href(SCANNER_PAGE, {
-										view: "fixtures",
-									})}
-									defaultShouldRevalidate={false}
-								>
-									Fixtures
-								</Link>
-							) : null}
 						</div>
 					</section>
 				) : null}

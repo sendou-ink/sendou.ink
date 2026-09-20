@@ -20,7 +20,6 @@ import { PastSessionView } from "./PastSessionView";
 import styles from "./ScannerApp.module.css";
 import { ScreenshotPage } from "./ScreenshotPage";
 import { setUploadUser } from "./upload";
-import { useDebug } from "./use-debug";
 import { VodView } from "./VodView";
 import { cancelVodScan } from "./vod-scan";
 
@@ -35,7 +34,6 @@ export function ScannerApp() {
 	const [view] = useSearchParam(scannerSearchParams, "view");
 	const user = useUser();
 	const live = useLiveSession();
-	const debug = useDebug();
 
 	// the controllers run outside React and need the login to decide on uploads
 	useEffect(() => {
@@ -65,7 +63,7 @@ export function ScannerApp() {
 			<VodView />
 		) : view === "clips" ? (
 			<ClipsView />
-		) : view === "debug" && debug ? (
+		) : view === "debug" ? (
 			<ScreenshotPage />
 		) : view === "fixtures" && process.env.NODE_ENV === "development" ? (
 			<FixturesPage />
