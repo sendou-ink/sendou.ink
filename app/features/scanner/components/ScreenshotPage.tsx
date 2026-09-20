@@ -27,9 +27,14 @@ import {
 	type PlayerStatusLayout,
 } from "../core/detectors/objective/player-status";
 import * as objective from "../core/detectors/objective/rois";
+import {
+	RECTIFY as QUICK_RECTIFY,
+	ROIS as quick,
+} from "../core/detectors/quick-scoreboard-battle-log/rois";
 import type { ScoreboardRowDebug } from "../core/detectors/scoreboard/index";
 import * as sb from "../core/detectors/scoreboard/rois";
-import * as bl from "../core/detectors/scoreboard-battle-log/rois";
+import type { BattleLogRois } from "../core/detectors/scoreboard-battle-log/detector";
+import { ROIS as bl } from "../core/detectors/scoreboard-battle-log/rois";
 import * as replay from "../core/detectors/scoreboard-battle-log-replay/rois";
 import type { ScoreboardOwnData } from "../core/detectors/scoreboard-own/index";
 import * as own from "../core/detectors/scoreboard-own/rois";
@@ -41,6 +46,12 @@ import {
 	stageLabel,
 	weaponLabel,
 } from "../core/labels";
+import {
+	homographyFromQuad,
+	invertHomography,
+	projectedBounds,
+	projectRoi,
+} from "../core/rectify";
 import { scannerSearchParams } from "../scanner-search-params";
 import { claimInspectFrame } from "../store/inspect";
 import { AnalyzerClient } from "../worker/client";
@@ -53,6 +64,10 @@ import styles from "./ScreenshotPage.module.css";
 import { SessionHeader } from "./SessionHeader";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
+
+/** Maps the quick battle log's rectified ROIs back onto the raw frame this page draws. */
+const QUICK_TO_RAW = invertHomography(homographyFromQuad(QUICK_RECTIFY));
+const onRawFrame = (roi: Roi) => projectedBounds(QUICK_TO_RAW, roi);
 
 /** Draw a ROI crop from the normalized frame, scaled up. */
 export function RoiCrop(props: {
@@ -153,20 +168,26 @@ function scoreboardRows(): RowRois[] {
 }
 
 /** winnerSide comes from the event debug: players are ordered winners-first. */
-function battleLogRows(winnerSide: string): RowRois[] {
-	const panels = winnerSide === "bottom" ? [bl.PANEL_DY, 0] : [0, bl.PANEL_DY];
+/** Both stacked battle log layouts; `toRaw` maps a rectified ROI onto the raw frame for the crops. */
+function battleLogRows(
+	rois: BattleLogRois,
+	winnerSide: string,
+	toRaw: (roi: Roi) => Roi = (roi) => roi,
+): RowRois[] {
+	const panels =
+		winnerSide === "bottom" ? [rois.PANEL_DYS[1], 0] : [0, rois.PANEL_DYS[1]];
 	return panels.flatMap((dy) =>
-		bl.ROW_CENTERS.map((base) => {
+		rois.ROW_CENTERS.map((base) => {
 			const cy = base + dy;
 			return {
-				weapon: bl.weaponRoi(cy),
-				name: bl.nameRoi(cy),
-				paint: bl.paintRoi(cy),
-				stats: [bl.statRoi(cy, 0), bl.statRoi(cy, 1), bl.statRoi(cy, 2)] as [
-					Roi,
-					Roi,
-					Roi,
-				],
+				weapon: toRaw(rois.weaponRoi(cy)),
+				name: toRaw(rois.nameRoi(cy)),
+				paint: toRaw(rois.paintRoi(cy)),
+				stats: [
+					toRaw(rois.statRoi(cy, 0)),
+					toRaw(rois.statRoi(cy, 1)),
+					toRaw(rois.statRoi(cy, 2)),
+				] as [Roi, Roi, Roi],
 			};
 		}),
 	);
@@ -258,6 +279,39 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		ctx.strokeStyle = color;
 		ctx.lineWidth = 2;
 		ctx.strokeRect(roi.x, roi.y, roi.w, roi.h);
+	};
+	// the quick battle log's ROIs live in the rectified frame: draw them where
+	// they land on the raw one
+	const quad = (roi: Roi, color: string) => {
+		const corners = projectRoi(QUICK_TO_RAW, roi);
+		ctx.strokeStyle = color;
+		ctx.lineWidth = 2;
+		ctx.beginPath();
+		for (const [i, [x, y]] of corners.entries()) {
+			if (i === 0) ctx.moveTo(x, y);
+			else ctx.lineTo(x, y);
+		}
+		ctx.closePath();
+		ctx.stroke();
+	};
+	const battleLog = (rois: BattleLogRois, draw: typeof rect) => {
+		for (const [panel, dy] of rois.PANEL_DYS.entries()) {
+			for (const base of rois.ROW_CENTERS) {
+				const cy = base + dy;
+				draw(rois.weaponRoi(cy), "#f87171");
+				draw(rois.nameRoi(cy), "#4ade80");
+				draw(rois.paintRoi(cy), "#60a5fa");
+				for (const i of [0, 1, 2] as const)
+					draw(rois.statRoi(cy, i), "#e879f9");
+				draw(rois.gateDarkProbe(cy), "#facc15");
+			}
+			draw(rois.teamScoreRoi(panel as 0 | 1), "#60a5fa");
+			draw(rois.resultTagRoi(panel as 0 | 1), "#fb923c");
+		}
+		for (const roi of rois.MATCH_SCORE_ROIS) draw(roi, "#60a5fa");
+		for (const roi of rois.GATE_COLOR_PROBES) draw(roi, "#facc15");
+		draw(rois.HEADER_TOP_BAND, "#34d399");
+		draw(rois.HEADER_BOTTOM_BAND, "#34d399");
 	};
 	if (detector === "death") {
 		rect(death.SPLAT_LINE1_ROI, "#34d399");
@@ -363,22 +417,11 @@ function drawOverlay(ctx: CanvasRenderingContext2D, detector: string) {
 		return;
 	}
 	if (detector === "scoreboard-battle-log") {
-		for (const dy of bl.PANEL_DYS) {
-			for (const base of bl.ROW_CENTERS) {
-				const cy = base + dy;
-				rect(bl.weaponRoi(cy), "#f87171");
-				rect(bl.nameRoi(cy), "#4ade80");
-				rect(bl.paintRoi(cy), "#60a5fa");
-				for (const i of [0, 1, 2] as const) rect(bl.statRoi(cy, i), "#e879f9");
-				rect(bl.gateDarkProbe(cy), "#facc15");
-			}
-			rect(bl.teamScoreRoi(dy), "#60a5fa");
-			rect(bl.resultTagRoi(dy), "#fb923c");
-		}
-		for (const roi of bl.MATCH_SCORE_ROIS) rect(roi, "#60a5fa");
-		for (const roi of bl.GATE_COLOR_PROBES) rect(roi, "#facc15");
-		rect(bl.HEADER_TOP_BAND, "#34d399");
-		rect(bl.HEADER_BOTTOM_BAND, "#34d399");
+		battleLog(bl, rect);
+		return;
+	}
+	if (detector === "quick-scoreboard-battle-log") {
+		battleLog(quick, quad);
 		return;
 	}
 	if (detector === "scoreboard-battle-log-replay") {
@@ -514,6 +557,8 @@ export function ScreenshotPage() {
 	const rows = (event?.debug?.rows ?? []) as ScoreboardRowDebug[];
 	const isReplay = activeDetector === "scoreboard-battle-log-replay";
 	const isScoreboardBattleLog = activeDetector === "scoreboard-battle-log";
+	const isQuickScoreboardBattleLog =
+		activeDetector === "quick-scoreboard-battle-log";
 	const isDeath = activeDetector === "death";
 	const isMapStart = activeDetector === "map-start";
 	const isOwn = activeDetector === "scoreboard-own";
@@ -524,8 +569,10 @@ export function ScreenshotPage() {
 	const rowRois = isReplay
 		? replayRows(winnerSide)
 		: isScoreboardBattleLog
-			? battleLogRows(winnerSide)
-			: scoreboardRows();
+			? battleLogRows(bl, winnerSide)
+			: isQuickScoreboardBattleLog
+				? battleLogRows(quick, winnerSide, onRawFrame)
+				: scoreboardRows();
 
 	return (
 		<div>
@@ -633,7 +680,9 @@ export function ScreenshotPage() {
 				</div>
 			) : null}
 
-			{frame && event && isScoreboardBattleLog ? (
+			{frame &&
+			event &&
+			(isScoreboardBattleLog || isQuickScoreboardBattleLog) ? (
 				<div className={styles.detail}>
 					<div className={styles.detailStats}>
 						<Stat label="timestamp">{event.data.timestamp ?? "?"}</Stat>
@@ -646,12 +695,20 @@ export function ScreenshotPage() {
 						<LabeledCrop
 							label="header top"
 							frame={frame}
-							roi={bl.HEADER_TOP_BAND}
+							roi={
+								isQuickScoreboardBattleLog
+									? onRawFrame(quick.HEADER_TOP_BAND)
+									: bl.HEADER_TOP_BAND
+							}
 						/>
 						<LabeledCrop
 							label="header bottom"
 							frame={frame}
-							roi={bl.HEADER_BOTTOM_BAND}
+							roi={
+								isQuickScoreboardBattleLog
+									? onRawFrame(quick.HEADER_BOTTOM_BAND)
+									: bl.HEADER_BOTTOM_BAND
+							}
 						/>
 					</div>
 				</div>

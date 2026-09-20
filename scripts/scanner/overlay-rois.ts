@@ -1,37 +1,49 @@
 /** biome-ignore-all lint/suspicious/noConsole: CLI script output */
 /**
  * Draw all scoreboard ROIs on a (normalized) frame for visual calibration.
- * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log]
+ * Usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|...]
+ * The quick battle log's overlay is drawn on the rectified frame its ROIs apply to.
  */
+import {
+	CANONICAL_HEIGHT,
+	CANONICAL_WIDTH,
+} from "../../app/features/scanner/core/canonical";
 import { loadOpenCV, type Mat } from "../../app/features/scanner/core/cv";
 import * as death from "../../app/features/scanner/core/detectors/death/rois";
 import * as kill from "../../app/features/scanner/core/detectors/kill/rois";
 import * as mapStart from "../../app/features/scanner/core/detectors/map-start/rois";
 import * as minimap from "../../app/features/scanner/core/detectors/minimap/rois";
 import { TIMER_DIGIT_ROI } from "../../app/features/scanner/core/detectors/objective/rois";
+import {
+	RECTIFY as QUICK_RECTIFY,
+	ROIS as quick,
+} from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/rois";
 import * as sb from "../../app/features/scanner/core/detectors/scoreboard/rois";
-import * as bl from "../../app/features/scanner/core/detectors/scoreboard-battle-log/rois";
+import type { BattleLogRois } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/detector";
+import { ROIS as bl } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/rois";
 import * as replay from "../../app/features/scanner/core/detectors/scoreboard-battle-log-replay/rois";
 import {
 	matToFrameData,
 	normalizeFrame,
 	type Roi,
 	toMat,
+	warpPerspective,
 } from "../../app/features/scanner/core/image";
+import { homographyFromQuad } from "../../app/features/scanner/core/rectify";
 import { readImage, writePng } from "../../app/features/scanner/node/image-io";
 
 const [imagePath, outPath = "roi-overlay.png", detector = "scoreboard"] =
 	process.argv.slice(2);
 if (!imagePath) {
 	console.error(
-		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|death|kill|map-start|minimap]",
+		"usage: vite-node -c scripts/scanner/vite-node.config.ts scripts/scanner/overlay-rois.ts <image> [out.png] [scoreboard|scoreboard-battle-log-replay|scoreboard-battle-log|quick-scoreboard-battle-log|death|kill|map-start|minimap]",
 	);
 	process.exit(1);
 }
 
 const cv = await loadOpenCV();
 const src = toMat(await readImage(imagePath));
-const frame = normalizeFrame(src);
+let frame = normalizeFrame(src);
 src.delete();
 
 function rect(m: Mat, roi: Roi, color: [number, number, number]) {
@@ -75,26 +87,17 @@ if (detector === "scoreboard") {
 	rect(frame, replay.HEADER_BOTTOM_BAND, [0, 255, 0]);
 	rect(frame, replay.REPLAY_CODE_ROI, [0, 255, 0]);
 } else if (detector === "scoreboard-battle-log") {
-	for (const dy of bl.PANEL_DYS) {
-		for (const base of bl.ROW_CENTERS) {
-			const cy = base + dy;
-			rect(frame, bl.weaponRoi(cy), [255, 0, 0]);
-			rect(frame, bl.nameRoi(cy), [0, 255, 0]);
-			rect(frame, bl.paintRoi(cy), [0, 128, 255]);
-			rect(frame, bl.paintSuffixRoi(cy), [0, 255, 255]);
-			for (const i of [0, 1, 2] as const)
-				rect(frame, bl.statRoi(cy, i), [255, 0, 255]);
-			rect(frame, bl.gateDarkProbe(cy), [255, 255, 0]);
-			rect(frame, bl.povArrowRoi(cy), [255, 128, 0]);
-			rect(frame, bl.specialIconRoi(cy), [255, 0, 0]);
-		}
-		rect(frame, bl.teamScoreRoi(dy), [0, 128, 255]);
-		rect(frame, bl.resultTagRoi(dy), [255, 128, 0]);
-	}
-	for (const roi of bl.MATCH_SCORE_ROIS) rect(frame, roi, [0, 128, 255]);
-	for (const roi of bl.GATE_COLOR_PROBES) rect(frame, roi, [255, 255, 0]);
-	rect(frame, bl.HEADER_TOP_BAND, [0, 255, 0]);
-	rect(frame, bl.HEADER_BOTTOM_BAND, [0, 255, 0]);
+	drawBattleLog(frame, bl);
+} else if (detector === "quick-scoreboard-battle-log") {
+	const flat = warpPerspective(frame, homographyFromQuad(QUICK_RECTIFY), {
+		x: 0,
+		y: 0,
+		w: CANONICAL_WIDTH,
+		h: CANONICAL_HEIGHT,
+	});
+	frame.delete();
+	frame = flat;
+	drawBattleLog(frame, quick);
 } else if (detector === "death") {
 	rect(frame, death.SPLAT_LINE1_ROI, [0, 255, 0]);
 	rect(frame, death.WEAPON_LINE_ROI, [255, 0, 0]);
@@ -153,3 +156,26 @@ if (detector === "scoreboard") {
 writePng(outPath, matToFrameData(frame));
 frame.delete();
 console.info(`wrote ${outPath}`);
+
+function drawBattleLog(target: Mat, rois: BattleLogRois) {
+	for (const [panel, dy] of rois.PANEL_DYS.entries()) {
+		for (const base of rois.ROW_CENTERS) {
+			const cy = base + dy;
+			rect(target, rois.weaponRoi(cy), [255, 0, 0]);
+			rect(target, rois.nameRoi(cy), [0, 255, 0]);
+			rect(target, rois.paintRoi(cy), [0, 128, 255]);
+			rect(target, rois.paintSuffixRoi(cy), [0, 255, 255]);
+			for (const i of [0, 1, 2] as const)
+				rect(target, rois.statRoi(cy, i), [255, 0, 255]);
+			rect(target, rois.gateDarkProbe(cy), [255, 255, 0]);
+			rect(target, rois.povArrowRoi(cy), [255, 128, 0]);
+			rect(target, rois.specialIconRoi(cy), [255, 0, 0]);
+		}
+		rect(target, rois.teamScoreRoi(panel as 0 | 1), [0, 128, 255]);
+		rect(target, rois.resultTagRoi(panel as 0 | 1), [255, 128, 0]);
+	}
+	for (const roi of rois.MATCH_SCORE_ROIS) rect(target, roi, [0, 128, 255]);
+	for (const roi of rois.GATE_COLOR_PROBES) rect(target, roi, [255, 255, 0]);
+	rect(target, rois.HEADER_TOP_BAND, [0, 255, 0]);
+	rect(target, rois.HEADER_BOTTOM_BAND, [0, 255, 0]);
+}

@@ -1,0 +1,88 @@
+{
+  "event": "QuickScoreboardBattleLog",
+  "data": {
+    "lobby": "SERIES",
+    "mode": "CB",
+    "stage": 11,
+    "timestamp": "20/9/2026 14:36",
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 1,
+    "players": [
+      {
+        "name": "エンジェルサック",
+        "paint": 575,
+        "ka": 10,
+        "d": 4,
+        "s": 1,
+        "weaponId": 50
+      },
+      {
+        "name": "Sendou",
+        "paint": 491,
+        "ka": 4,
+        "d": 3,
+        "s": 1,
+        "weaponId": 220
+      },
+      {
+        "name": "でるた",
+        "paint": 594,
+        "ka": 7,
+        "d": 3,
+        "s": 2,
+        "weaponId": 50
+      },
+      {
+        "name": "かねもとひさこ",
+        "paint": 536,
+        "ka": 4,
+        "d": 4,
+        "s": 1,
+        "weaponId": 5001
+      },
+      {
+        "name": "ut",
+        "paint": 592,
+        "ka": 6,
+        "d": 6,
+        "s": 1,
+        "weaponId": 0
+      },
+      {
+        "name": "がんばるりゅた",
+        "paint": 818,
+        "ka": 4,
+        "d": 5,
+        "s": 2,
+        "weaponId": 3000
+      },
+      {
+        "name": "きんちょうした??",
+        "paint": 542,
+        "ka": 3,
+        "d": 5,
+        "s": 1,
+        "weaponId": 7030
+      },
+      {
+        "name": "ギロロ",
+        "paint": 378,
+        "ka": 3,
+        "d": 4,
+        "s": 0,
+        "weaponId": 201
+      }
+    ],
+    "stageLabel": "Wahoo World"
+  },
+  "options": {
+    "skipFields": [
+      "players.0.name",
+      "players.5.name"
+    ],
+    "notes": "1080p capture of the lobby's quick battle log (X menu overlay, list on the left), a knockout with the POV player on the winning side. The card is drawn in slight perspective, rectified by the detector before parsing. players.0.name (エンジェルサック) reads エンシェルサック and players.5.name (がんばるりゅた) reads かんばるりゅた — the dakuten marks are lost at this size. players.6.name's question marks may be fullwidth on screen; the read is ASCII. Weapons row order: .52 Gal, Range Blaster, .52 Gal, Dapple Dualies Nouveau, Sploosh-o-matic, Slosher, Wellstring V, Luna Blaster Neo."
+  }
+}

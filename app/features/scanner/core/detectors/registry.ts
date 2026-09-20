@@ -6,6 +6,10 @@ import { createMapStartDetector } from "./map-start/index";
 import { createMinimapDetector } from "./minimap/index";
 import { createObjectiveDetector } from "./objective/index";
 import {
+	createQuickScoreboardBattleLogDetector,
+	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
+} from "./quick-scoreboard-battle-log/index";
+import {
 	createScoreboardDetector,
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardResources,
@@ -26,6 +30,7 @@ export const SCOREBOARD_EVENT_TYPES: readonly string[] = [
 	SCOREBOARD_EVENT_TYPE,
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
+	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 ];
 
 export function createAllDetectors(
@@ -35,6 +40,7 @@ export function createAllDetectors(
 		createScoreboardDetector(resources) as Detector<unknown>,
 		createScoreboardBattleLogReplayDetector(resources) as Detector<unknown>,
 		createScoreboardBattleLogDetector(resources) as Detector<unknown>,
+		createQuickScoreboardBattleLogDetector(resources) as Detector<unknown>,
 		createScoreboardOwnDetector(resources) as Detector<unknown>,
 		createDeathDetector(resources) as Detector<unknown>,
 		createMapStartDetector(resources) as Detector<unknown>,

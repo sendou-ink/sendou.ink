@@ -48,6 +48,7 @@ import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "../../app/features/scanner/core/detectors/objective/strip-weapons";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
@@ -91,6 +92,7 @@ const SPAN_EPSILON_SECONDS = 0.001;
 const SCOREBOARD_TYPES = new Set([
 	SCOREBOARD_EVENT_TYPE,
 	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
+	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
 ]);
 

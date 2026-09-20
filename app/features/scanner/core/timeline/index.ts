@@ -19,6 +19,7 @@ import {
 	samePlayerStatusData,
 } from "../detectors/objective/player-status";
 import { STRIP_WEAPONS_EVENT_TYPE } from "../detectors/objective/strip-weapons";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPE } from "../detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../detectors/scoreboard-battle-log-replay/index";
@@ -78,6 +79,7 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[SCOREBOARD_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: sameScoreboardMatch,
 		[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
+		[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: sameScoreboardMatch,
 		[MINIMAP_EVENT_TYPE]: sameMinimapStatusData,
 		[OBJECTIVE_EVENT_TYPE]: sameObjectiveData,
 		[PLAYER_STATUS_EVENT_TYPE]: samePlayerStatusData,

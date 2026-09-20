@@ -11,6 +11,7 @@ import {
 	Map as MapIcon,
 	Play,
 	RotateCcw,
+	Sidebar,
 	Skull,
 	Target,
 	Trophy,
@@ -21,6 +22,7 @@ import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPE } from "../core/detectors/scoreboard/index";
 import { SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log/index";
 import { SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE } from "../core/detectors/scoreboard-battle-log-replay/index";
@@ -35,6 +37,7 @@ const EVENT_TYPE_ICONS: Record<string, LucideIcon> = {
 	[SCOREBOARD_EVENT_TYPE]: Trophy,
 	[SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE]: RotateCcw,
 	[SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: History,
+	[QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE]: Sidebar,
 	[SCOREBOARD_OWN_EVENT_TYPE]: User,
 };
 

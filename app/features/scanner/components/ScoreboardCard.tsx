@@ -1,4 +1,5 @@
 import type { PlayerAbilityMap } from "../core/ability-harvest";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../core/detectors/quick-scoreboard-battle-log/index";
 import type {
 	ScoreboardData,
 	ScoreboardPlayer,
@@ -82,6 +83,8 @@ export function ScoreboardCard(props: {
 	const data = props.data as CardData;
 	const isReplay = eventType === SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE;
 	const isScoreboardBattleLog = eventType === SCOREBOARD_BATTLE_LOG_EVENT_TYPE;
+	const isQuickScoreboardBattleLog =
+		eventType === QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<EventCardShell>
@@ -95,7 +98,9 @@ export function ScoreboardCard(props: {
 							? "replay scoreboard"
 							: isScoreboardBattleLog
 								? "battle log"
-								: "scoreboard"
+								: isQuickScoreboardBattleLog
+									? "quick battle log"
+									: "scoreboard"
 					}
 				/>
 				{data.mode !== null || data.stage !== null ? (

@@ -21,6 +21,7 @@ import {
 	createMinimapDetector,
 	type MinimapData,
 } from "../../app/features/scanner/core/detectors/minimap/index";
+import { createQuickScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/quick-scoreboard-battle-log/index";
 import { createScoreboardDetector } from "../../app/features/scanner/core/detectors/scoreboard/index";
 import { createScoreboardBattleLogDetector } from "../../app/features/scanner/core/detectors/scoreboard-battle-log/index";
 import {
@@ -66,6 +67,12 @@ const configs: Config[] = [
 		detector: createScoreboardBattleLogDetector(resources),
 		fixturesDir: "scoreboard-battle-log",
 		event: "ScoreboardBattleLog",
+	},
+	{
+		label: "quick-scoreboard-battle-log",
+		detector: createQuickScoreboardBattleLogDetector(resources),
+		fixturesDir: "quick-scoreboard-battle-log",
+		event: "QuickScoreboardBattleLog",
 	},
 ];
 
