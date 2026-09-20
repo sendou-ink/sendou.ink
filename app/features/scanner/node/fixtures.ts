@@ -65,6 +65,7 @@ interface ExpectedScoreboard {
 		| "Scoreboard"
 		| "ScoreboardBattleLogReplay"
 		| "ScoreboardBattleLog"
+		| "QuickScoreboardBattleLog"
 		| "ScoreboardOwn"
 		| "Death"
 		| "MapStart"
@@ -80,7 +81,7 @@ interface ExpectedScoreboard {
 		stage?: StageId;
 		/** informational for the human corrector; tests compare `stage` */
 		stageLabel?: string;
-		/** ScoreboardBattleLogReplay + ScoreboardBattleLog only */
+		/** ScoreboardBattleLogReplay + (Quick)ScoreboardBattleLog only */
 		timestamp?: string;
 		/** ScoreboardBattleLogReplay only */
 		replayCode?: string;
@@ -160,6 +161,25 @@ export function loadFixtures(detector: string): Fixture[] {
 			return { name: e.name, dir, framePath, expected };
 		})
 		.sort((a, b) => a.name.localeCompare(b.name));
+}
+
+/** The scoreboard-shaped screens: each one's positives must leave the other detectors' gates quiet. */
+const SCOREBOARD_SHAPED: readonly [
+	dir: string,
+	event: ExpectedScoreboard["event"],
+][] = [
+	["scoreboard", "Scoreboard"],
+	["scoreboard-battle-log-replay", "ScoreboardBattleLogReplay"],
+	["scoreboard-battle-log", "ScoreboardBattleLog"],
+	["quick-scoreboard-battle-log", "QuickScoreboardBattleLog"],
+];
+
+/** Positive fixtures of every scoreboard-shaped screen but `ownDir`'s, for cross-negative gate sweeps. */
+export function loadScoreboardLookalikes(ownDir: string): Fixture[] {
+	return SCOREBOARD_SHAPED.filter(([dir]) => dir !== ownDir).flatMap(
+		([dir, event]) =>
+			loadFixtures(dir).filter((f) => f.expected.event === event),
+	);
 }
 
 export function isFieldSkipped(fixture: Fixture, field: string): boolean {

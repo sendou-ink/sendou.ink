@@ -10,6 +10,7 @@ import {
 	type Roi,
 } from "./canonical";
 import { getCV, type Mat, meanOf, minMaxLoc } from "./cv";
+import type { Homography } from "./rectify";
 
 export type { Roi };
 
@@ -63,6 +64,38 @@ export function normalizeFrame(src: Mat): Mat {
 export function cropRoi(src: Mat, roi: Roi): Mat {
 	const cv = getCV();
 	return src.roi(new cv.Rect(roi.x, roi.y, roi.w, roi.h));
+}
+
+/**
+ * `region` of the plane `src` maps onto under `h` (row-major 3x3, source to
+ * destination coordinates), as a region-sized mat with region.x/y at 0/0.
+ * Bilinear; pixels from outside the frame come out black.
+ */
+export function warpPerspective(src: Mat, h: Homography, region: Roi): Mat {
+	const cv = getCV();
+	const m = cv.matFromArray(3, 3, cv.CV_64F, [
+		h[0] - region.x * h[6],
+		h[1] - region.x * h[7],
+		h[2] - region.x * h[8],
+		h[3] - region.y * h[6],
+		h[4] - region.y * h[7],
+		h[5] - region.y * h[8],
+		h[6],
+		h[7],
+		h[8],
+	]);
+	const dst = new cv.Mat();
+	cv.warpPerspective(
+		src,
+		dst,
+		m,
+		new cv.Size(region.w, region.h),
+		cv.INTER_LINEAR,
+		cv.BORDER_CONSTANT,
+		new cv.Scalar(0, 0, 0, 255),
+	);
+	m.delete();
+	return dst;
 }
 
 /** Crop a rect into a fresh continuous mat (safe for `.data` access). */

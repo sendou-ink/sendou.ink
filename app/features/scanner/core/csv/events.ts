@@ -28,6 +28,7 @@ import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "../detectors/objective/strip-weapons";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "../detectors/quick-scoreboard-battle-log/index";
 import {
 	SCOREBOARD_EVENT_TYPE,
 	type ScoreboardData,
@@ -314,8 +315,9 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 		}
 		case SCOREBOARD_EVENT_TYPE:
 		case SCOREBOARD_BATTLE_LOG_EVENT_TYPE:
+		case QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE:
 		case SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE: {
-			// the three scoreboard reads share the base shape
+			// the scoreboard reads share the base shape
 			const d = event.data as ScoreboardData &
 				Partial<ScoreboardBattleLogReplayData>;
 			return [

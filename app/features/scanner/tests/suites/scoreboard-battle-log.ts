@@ -1,19 +1,19 @@
 /**
- * Golden-file suite for the ScoreboardBattleLogReplayDetector over every
- * fixture in scoreboard-battle-log-replay/, plus the replay extras (timestamp,
- * replay code, match scores) and a cross-negative sweep over live-scoreboard
- * positives. Replay parses are expensive (eight 68px weapon rows plus the
- * Rowdy-face code line), so the suite is sharded across processes:
- * scoreboard-battle-log-replay.<n>.test.ts each run one round-robin shard.
+ * Golden-file suite shared by the two Recent Battles detail detectors (the
+ * full screen and the lobby's quick view): every fixture in the detector's
+ * directory, plus cross-negative sweeps against the other scoreboard-shaped
+ * screens and the shared negatives.
  */
 
 import assert from "node:assert/strict";
 import { loadOpenCV } from "../../core/cv";
 import type {
 	ScoreboardPlayer,
+	ScoreboardResources,
 	ScoreboardRowDebug,
 } from "../../core/detectors/scoreboard/index";
-import { createScoreboardBattleLogReplayDetector } from "../../core/detectors/scoreboard-battle-log-replay/index";
+import type { ScoreboardBattleLogData } from "../../core/detectors/scoreboard-battle-log/index";
+import type { Detector } from "../../core/detectors/types";
 import {
 	type Fixture,
 	isFieldSkipped,
@@ -24,32 +24,29 @@ import {
 import { loadScoreboardResources } from "../../node/resources";
 import { test } from "../node-test-compat";
 
-export async function runScoreboardBattleLogReplaySuite(
-	shard: number,
-	shardCount: number,
-): Promise<void> {
+export interface BattleLogSuite {
+	/** fixture directory under tests/fixtures/, also the test name prefix */
+	fixturesDir: string;
+	eventType: string;
+	createDetector(
+		resources: ScoreboardResources,
+	): Detector<ScoreboardBattleLogData>;
+}
+
+export async function runScoreboardBattleLogSuite(suite: BattleLogSuite) {
+	const { fixturesDir, eventType } = suite;
 	await loadOpenCV();
-	const detector = createScoreboardBattleLogReplayDetector(
-		await loadScoreboardResources(),
-	);
-	const fixtures = loadFixtures("scoreboard-battle-log-replay");
-	const mine = <T>(items: T[]): T[] =>
-		items.filter((_, i) => i % shardCount === shard);
+	const detector = suite.createDetector(await loadScoreboardResources());
+	const fixtures = loadFixtures(fixturesDir);
 
-	if (shard === 0) {
-		test("replay fixtures exist", () => {
-			assert.ok(
-				fixtures.length > 0,
-				"no fixtures found under scoreboard-battle-log-replay/",
-			);
-		});
-	}
+	test(`${fixturesDir} fixtures exist`, () => {
+		assert.ok(fixtures.length > 0, `no fixtures found under ${fixturesDir}/`);
+	});
 
-	for (const fixture of mine(fixtures)) {
-		test(`scoreboard-battle-log-replay/${fixture.name}`, async (t) => {
+	for (const fixture of fixtures) {
+		test(`${fixturesDir}/${fixture.name}`, async (t) => {
 			const { gate, events } = await runDetectorOnFixture(detector, fixture);
-			const expectPositive =
-				fixture.expected.event === "ScoreboardBattleLogReplay";
+			const expectPositive = fixture.expected.event === eventType;
 
 			await t.test("gate", () => {
 				assert.equal(
@@ -69,7 +66,14 @@ export async function runScoreboardBattleLogReplaySuite(
 				"matchScores",
 				{ skip: skip(fixture, "matchScores") },
 				() => {
-					assert.deepEqual(event.data.matchScores, expected.matchScores);
+					const dbg = event.debug?.matchScore as
+						| { left?: { reading?: string }; right?: { reading?: string } }
+						| undefined;
+					assert.deepEqual(
+						event.data.matchScores,
+						expected.matchScores,
+						`matchScores mismatch (readings: "${dbg?.left?.reading}" / "${dbg?.right?.reading}")`,
+					);
 				},
 			);
 
@@ -114,21 +118,6 @@ export async function runScoreboardBattleLogReplaySuite(
 			);
 
 			await t.test(
-				"replayCode",
-				{
-					skip:
-						expected.replayCode === undefined || skip(fixture, "replayCode"),
-				},
-				() => {
-					assert.equal(
-						event.data.replayCode,
-						expected.replayCode,
-						`replay code mismatch (raw: "${event.debug?.codeRaw}")`,
-					);
-				},
-			);
-
-			await t.test(
 				"povIndex",
 				{ skip: expected.povIndex === undefined || skip(fixture, "povIndex") },
 				() => {
@@ -143,8 +132,6 @@ export async function runScoreboardBattleLogReplaySuite(
 
 			const players = expected.players ?? [];
 
-			// Fixtures list the complete roster; empty pills (short teams) must be
-			// skipped by the parser, not emitted as phantom players.
 			await t.test(
 				"player count",
 				{ skip: expected.players === undefined || skip(fixture, "players") },
@@ -225,28 +212,26 @@ export async function runScoreboardBattleLogReplaySuite(
 	}
 
 	// The scoreboard-shaped screens must not trigger each other's detectors;
-	// the mirror sweeps live in scoreboard.test.ts and suites/scoreboard-battle-log.ts.
-	for (const fixture of mine(
-		loadScoreboardLookalikes("scoreboard-battle-log-replay"),
-	)) {
-		test(`replay gate stays quiet on ${fixture.name}`, async () => {
+	// the mirror sweeps live in scoreboard.test.ts and suites/scoreboard-battle-log-replay.ts.
+	for (const fixture of loadScoreboardLookalikes(fixturesDir)) {
+		test(`${fixturesDir} gate stays quiet on ${fixture.name}`, async () => {
 			const { gate } = await runDetectorOnFixture(detector, fixture);
 			assert.equal(
 				gate.pass,
 				false,
-				`replay gate fired (score=${gate.score.toFixed(3)})`,
+				`${fixturesDir} gate fired (score=${gate.score.toFixed(3)})`,
 			);
 		});
 	}
 
 	// Shared negatives (tests/fixtures/negative/): frames no detector may fire on.
-	for (const fixture of mine(loadFixtures("negative"))) {
-		test(`replay gate stays quiet on negative/${fixture.name}`, async () => {
+	for (const fixture of loadFixtures("negative")) {
+		test(`${fixturesDir} gate stays quiet on negative/${fixture.name}`, async () => {
 			const { gate } = await runDetectorOnFixture(detector, fixture);
 			assert.equal(
 				gate.pass,
 				false,
-				`replay gate fired (score=${gate.score.toFixed(3)})`,
+				`${fixturesDir} gate fired (score=${gate.score.toFixed(3)})`,
 			);
 		});
 	}

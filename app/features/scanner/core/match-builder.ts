@@ -41,6 +41,7 @@ import {
 	STRIP_WEAPONS_EVENT_TYPE,
 	type StripWeaponsData,
 } from "./detectors/objective/strip-weapons";
+import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "./detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
 import type { ScoreboardData } from "./detectors/scoreboard/index";
 import {
@@ -470,11 +471,12 @@ function toBuiltMatch<E extends DetectedEvent>(
 
 	const board = open.scoreboard?.data as ScoreboardData | undefined;
 	const start = open.mapStart?.data as MapStartData | undefined;
-	// the replay-browser and battle log screens both carry the recording
+	// the replay-browser and both battle log screens carry the recording
 	// timestamp; only the former a replay code
 	const timestamped =
 		open.scoreboard?.type === SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ||
-		open.scoreboard?.type === SCOREBOARD_BATTLE_LOG_EVENT_TYPE
+		open.scoreboard?.type === SCOREBOARD_BATTLE_LOG_EVENT_TYPE ||
+		open.scoreboard?.type === QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE
 			? (open.scoreboard.data as ScoreboardBattleLogData &
 					Partial<ScoreboardBattleLogReplayData>)
 			: undefined;

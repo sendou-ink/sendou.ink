@@ -203,10 +203,14 @@ sequenceDiagram
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
   may be imported at route-module top level. There is no feature flag: the
   page and `/ingest` are open to everyone (ingest still requires a login).
-- Nine detectors: `scoreboard` (results screen),
+- Ten detectors: `scoreboard` (results screen),
   `scoreboard-battle-log-replay` (replay-browser detail),
   `scoreboard-battle-log` (Recent Battles detail — same data sans replay
-  code, panels stacked), `scoreboard-own` (personal results), `death`
+  code, panels stacked), `quick-scoreboard-battle-log` (the same detail as
+  the lobby's quick view draws it: a card in slight perspective, so its
+  frames are rectified by a homography — `RECTIFY` in its `rois.ts`,
+  `core/rectify.ts` — before the shared parser in
+  `scoreboard-battle-log/detector.ts` reads it), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
   counts, penalties, holder, match timer — a mode-discriminated union with
@@ -354,7 +358,10 @@ sequenceDiagram
   picture (letterbox/pillarbox, or a scene drawing the game smaller than its
   canvas) are cropped away before the resize (`detectContentBox` in
   `core/canonical.ts`; a bar must be level and ≥1% deep, since the Recent
-  Battles screen's own scanline-textured edge is dark but neither).
+  Battles screen's own scanline-textured edge is dark but neither). A
+  layout drawn in perspective (the quick battle log card) additionally
+  names a `RECTIFY` quad: its ROIs are in the frame warped by that
+  homography, which the debug overlays map back onto the raw frame.
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
   `gate(mat)` at sample rate plus `parse(mat, t)` when the gate fires.
   Register in `core/detectors/registry.ts`.
