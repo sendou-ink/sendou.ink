@@ -30,9 +30,12 @@ export function specialIconRoi(cy: number, dx: number): Roi {
 	return { x: 1104 + dx, y: cy - 32, w: 38, h: 33 };
 }
 
-/** Name text (descenders reach cy+18); long names run into the paint column, trim at its leftmost digit. */
+/**
+ * Name text (dakuten marks reach cy-19, descenders cy+18); long names run into the paint column,
+ * trim at its leftmost digit.
+ */
 export function nameRoi(cy: number, dx: number): Roi {
-	return { x: 620 + dx, y: cy - 16, w: 226, h: 37 };
+	return { x: 620 + dx, y: cy - 21, w: 226, h: 42 };
 }
 
 /**

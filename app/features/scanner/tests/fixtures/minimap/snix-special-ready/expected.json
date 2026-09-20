@@ -105,9 +105,6 @@
     "stageLabel": "Undertow Spillway"
   },
   "options": {
-    "skipFields": [
-      "teammates.0.name"
-    ],
-    "notes": "Tower Control frame with three special-ready camo surfaces: the left card (Splatana Stamper — dark art whose padded-square icon renders bigger than the 54px weapon box, unmatchable before the art-cropped templates) and enemy rows 0 (Inkbrush Nouveau) and 2 (Big Swig Roller). Self card is a Custom Blaster on a warm translucent background (kit tiles: Point Sensor + Triple Splashdown). teammates.0.name skipped: the up card reads こむきこをこねたユウ — the ぎ dakuten is below atlas resolution at 29px. Control values are the deterministic estimator output."
+    "notes": "Tower Control frame with three special-ready camo surfaces: the left card (Splatana Stamper — dark art whose padded-square icon renders bigger than the 54px weapon box, unmatchable before the art-cropped templates) and enemy rows 0 (Inkbrush Nouveau) and 2 (Big Swig Roller). Self card is a Custom Blaster on a warm translucent background (kit tiles: Point Sensor + Triple Splashdown). teammates.0.name (こむぎこをこねたユウ) once read こむきこをこねたユウ — the thinned ぎ dakuten lost the near-tie to き until parseName's floating-mark probe. Control values are the deterministic estimator output."
   }
 }

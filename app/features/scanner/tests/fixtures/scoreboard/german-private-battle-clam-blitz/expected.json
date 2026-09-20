@@ -79,9 +79,9 @@
   },
   "options": {
     "skipFields": [
-      "players.0.name",
       "players.3.name",
       "players.6.name"
-    ]
+    ],
+    "notes": "players.3.name (Ù Ballóòn) reads u Balloon — the accents are lost at this size; players.6.name (リッター4K) reads リツター4K — small ッ and ツ differ only in size."
   }
 }
