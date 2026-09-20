@@ -117,8 +117,10 @@ function TournamentBracketsView() {
 		!tournament.ctx.isFinalized,
 	);
 
+	// "WAITING_FOR_BRACKET" so that the team is also told ahead of time when the check-in opens
 	const bracketCheckInIdx =
-		data.teamProgressStatus?.type === "CHECKIN" &&
+		(data.teamProgressStatus?.type === "CHECKIN" ||
+			data.teamProgressStatus?.type === "WAITING_FOR_BRACKET") &&
 		typeof data.teamProgressStatus.bracketIdx === "number"
 			? data.teamProgressStatus.bracketIdx
 			: null;

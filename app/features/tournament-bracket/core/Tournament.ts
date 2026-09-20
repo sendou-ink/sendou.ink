@@ -1249,7 +1249,7 @@ export class Tournament {
 			// a follow-up bracket's check-in only opens an hour before it starts
 			return this.canCheckInToBracket(bracketIdx, user)
 				? ({ type: "CHECKIN", bracketIdx } as const)
-				: ({ type: "WAITING_FOR_BRACKET" } as const);
+				: ({ type: "WAITING_FOR_BRACKET", bracketIdx } as const);
 		}
 
 		for (const bracket of startedBrackets) {
