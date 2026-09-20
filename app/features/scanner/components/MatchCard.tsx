@@ -1,7 +1,8 @@
 /**
  * One game of a session or file, the same card in every view. Collapsed it
  * is one row: mode and stage, the result, the POV weapon and K/D/S, then
- * the game's clips and its upload state. Expanded it shows the data and
+ * the game's clips and, once the game is over, its upload state beside the
+ * expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
  * timeline, deaths and kills (each with a ▶ when a clip covers it) and the
  * builds read for both teams.
@@ -40,7 +41,7 @@ import styles from "./MatchCard.module.css";
 import { playerStatusTeams } from "./player-status-view";
 import { RawDetections } from "./RawDetections";
 import type { ScanEvent, SessionKind } from "./session-data";
-import { UploadChip, type UploadState } from "./UploadChip";
+import { type UploadState, UploadStatusButton } from "./UploadStatus";
 
 /** the game score a knockout wins at */
 const KO_MATCH_SCORE = 100;
@@ -166,7 +167,6 @@ export function MatchCard({
 							{pov.ka ?? "?"}/{pov.d ?? "?"}/{pov.s ?? "?"}
 						</span>
 					) : null}
-					<UploadChip state={upload} />
 				</div>
 			</div>
 			<div className={styles.foot}>
@@ -189,24 +189,24 @@ export function MatchCard({
 						))}
 					</span>
 				) : null}
-				<span className={styles.footEnd}>
-					{expandable ? (
+				{expandable ? (
+					<span className={styles.footEnd}>
+						<UploadStatusButton state={upload} className={styles.circle} />
 						<SendouButton
 							variant="minimal"
 							size="small"
 							shape="circle"
 							icon={<ChevronDown />}
-							className={clsx(styles.expand, { [styles.expanded]: expanded })}
+							className={clsx(styles.circle, styles.expand, {
+								[styles.expanded]: expanded,
+							})}
 							aria-expanded={expanded}
 							aria-label={expanded ? "Hide details" : "Show details"}
 							onClick={() => setExpanded(!expanded)}
 						/>
-					) : null}
-				</span>
+					</span>
+				) : null}
 			</div>
-			{upload.kind === "failed" && upload.error ? (
-				<div className={styles.error}>{upload.error}</div>
-			) : null}
 		</div>
 	);
 

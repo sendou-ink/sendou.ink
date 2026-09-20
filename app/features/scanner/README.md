@@ -57,8 +57,8 @@ opens it, for anyone, through the same handoff Inspect uses.
   unlinked matches on a backoff (`sendou-ingest.ts`) and flushes closed
   matches whose send was skipped; Stop sends what is left. VoD: the whole
   scan sends once saved. Both write per-event send statuses to their own
-  store (`updateEventsSend` takes the store), so the cards' upload chip
-  (`UploadChip.tsx`) and the per-card Retry/Upload are one code path.
+  store (`updateEventsSend` takes the store), so the cards' upload status
+  button (`UploadStatus.tsx`) and its Retry/Upload are one code path.
 - **CSV** is a normal feature: `⇩ CSV` in every session header offers
   `Matches` (`core/csv/matches.ts`, one row per game, the rows the cards
   render) and `Raw detections` (`core/csv/events.ts`, one row per event).

@@ -1,0 +1,104 @@
+/* tone colors win over the card's circle-button color by specificity, hover included */
+.trigger {
+	&[data-tone="success"] {
+		&,
+		&:hover {
+			color: var(--color-success-high);
+		}
+	}
+
+	&[data-tone="info"] {
+		&,
+		&:hover {
+			color: var(--color-info-high);
+		}
+	}
+
+	&[data-tone="warning"] {
+		&,
+		&:hover {
+			color: var(--color-warning-high);
+		}
+	}
+
+	&[data-tone="error"] {
+		&,
+		&:hover {
+			color: var(--color-error-high);
+		}
+	}
+}
+
+.busy {
+	animation: scanner-pulse 1.4s ease-in-out infinite;
+}
+
+.popover {
+	width: min(18rem, calc(100vw - 2 * var(--s-4)));
+	white-space: normal;
+}
+
+.body {
+	display: flex;
+	flex-direction: column;
+	align-items: flex-start;
+	gap: var(--s-2);
+	padding: var(--s-1);
+	font-size: var(--font-xs);
+}
+
+.title {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-weight: var(--weight-bold);
+
+	& svg {
+		width: 14px;
+		height: 14px;
+		flex-shrink: 0;
+	}
+}
+
+.detail {
+	margin: 0;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+	line-height: 1.5;
+}
+
+.error {
+	margin: 0;
+	font-size: var(--font-2xs);
+	color: var(--color-error);
+	line-height: 1.5;
+	overflow-wrap: anywhere;
+}
+
+.link {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+	color: var(--color-text-accent);
+	text-decoration: underline;
+	text-underline-offset: 2px;
+}
+
+.action {
+	align-self: flex-end;
+}
+
+@keyframes scanner-pulse {
+	50% {
+		opacity: 0.25;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.busy {
+		animation: none;
+	}
+}
