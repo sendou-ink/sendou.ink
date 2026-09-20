@@ -66,7 +66,6 @@ export async function sendMatches({
 		buildScannerMatches(events.filter((e) => e.id !== undefined)),
 	);
 	const selected = allBuilt.filter(include);
-	await clearOrphanedQueued(events, allBuilt, store);
 
 	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
 	for (const request of R.chunk(selected, MAX_MATCHES_PER_REQUEST)) {
@@ -132,8 +131,8 @@ export function matchContaining(
 
 /**
  * The single send status a match displays, folded from its source events: an
- * in-flight send wins, then failure, then success, then queued; within a
- * state the most recent change is shown.
+ * in-flight send wins, then failure, then success; within a state the most
+ * recent change is shown.
  */
 export function aggregateSendStatus(
 	sources: readonly ScanEvent[],
@@ -141,13 +140,7 @@ export function aggregateSendStatus(
 	const statuses = sources
 		.map((e) => e.send)
 		.filter((status) => status !== undefined);
-	for (const state of [
-		"sending",
-		"failed",
-		"unlinked",
-		"sent",
-		"queued",
-	] as const) {
+	for (const state of ["sending", "failed", "unlinked", "sent"] as const) {
 		const ofState = statuses.filter((status) => status.state === state);
 		if (ofState.length > 0) {
 			return ofState.reduce((a, b) => (a.at >= b.at ? a : b));
@@ -182,9 +175,7 @@ export function retryableUnlinkedMatches(
 export function unsentClosedMatches(built: BuiltMatch<ScanEvent>): boolean {
 	return (
 		built.sources.some((e) => SCOREBOARD_EVENT_TYPES.includes(e.type)) &&
-		built.sources.every(
-			(e) => e.send === undefined || e.send.state === "queued",
-		)
+		built.sources.every((e) => e.send === undefined)
 	);
 }
 
@@ -209,35 +200,6 @@ async function postIngestMatches(
 		);
 	}
 	return res.json();
-}
-
-/**
- * Live sending marks events "queued" as they arrive; ones the builder later
- * leaves out (non-private match, older than the fallback window) would sit
- * "queued" forever, so once a match boundary has passed them clear the status.
- */
-async function clearOrphanedQueued(
-	events: readonly ScanEvent[],
-	allBuilt: BuiltMatch<ScanEvent>[],
-	store: string,
-): Promise<void> {
-	const lastBoundaryT = Math.max(
-		...allBuilt.map((built) => built.sources.at(-1)!.t),
-		Number.NEGATIVE_INFINITY,
-	);
-	const builtIds = new Set(
-		allBuilt.flatMap((built) => built.sources.map((e) => e.id)),
-	);
-	const orphaned = events
-		.filter(
-			(e) =>
-				e.send?.state === "queued" &&
-				e.id !== undefined &&
-				!builtIds.has(e.id) &&
-				e.t <= lastBoundaryT,
-		)
-		.map((e) => e.id!);
-	if (orphaned.length > 0) await updateEventsSend(orphaned, undefined, store);
 }
 
 async function errorText(res: Response): Promise<string> {

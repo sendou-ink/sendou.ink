@@ -43,3 +43,27 @@
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
+
+.number {
+	width: 6rem;
+	height: var(--field-size-sm);
+	padding: 0 var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+	font: inherit;
+	font-size: var(--font-xs);
+	font-variant-numeric: tabular-nums;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 1px;
+	}
+}
+
+.hint {
+	flex-basis: 100%;
+	font-size: var(--font-3xs);
+	color: var(--color-text-high);
+}

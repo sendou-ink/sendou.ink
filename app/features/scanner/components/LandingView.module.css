@@ -134,6 +134,8 @@
 	align-items: center;
 	gap: var(--s-3);
 	padding: var(--s-2-5) var(--s-4);
+	/* the global link radius would curve the divider's ends */
+	border-radius: 0;
 	color: inherit;
 	text-decoration: none;
 	font-size: var(--font-xs);

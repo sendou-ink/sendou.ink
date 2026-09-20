@@ -100,6 +100,8 @@ export async function openCapture({
 		deviceId: videoDeviceId ? { exact: videoDeviceId } : undefined,
 		width: { ideal: 1920 },
 		height: { ideal: 1080 },
+		// Chromium's own default is 30, which would halve a capture card's 60
+		frameRate: { ideal: 60 },
 	};
 	let audioError: string | null = null;
 	if (audioDeviceId) {
@@ -123,6 +125,59 @@ export async function openCapture({
 		audio: false,
 	});
 	return { stream, audioError };
+}
+
+interface DesktopAudioOptions extends DisplayMediaStreamOptions {
+	/** Chromium's picker hints, not in TypeScript's DOM lib */
+	systemAudio?: "include" | "exclude";
+	selfBrowserSurface?: "include" | "exclude";
+}
+
+/**
+ * The desktop's sound as one audio track, through the browser's share
+ * picker: Chromium offers "Also share system audio" for a whole screen and
+ * a tab's audio for a tab. The picked video surface is dropped at once.
+ * Must run inside the click that starts the capture (the picker needs the
+ * activation). Null with the reason when nothing usable was shared.
+ */
+export async function openDesktopAudio(): Promise<{
+	track: MediaStreamTrack | null;
+	error: string | null;
+}> {
+	if (!navigator.mediaDevices?.getDisplayMedia) {
+		return { track: null, error: "this browser cannot share desktop audio" };
+	}
+	try {
+		const options: DesktopAudioOptions = {
+			video: true,
+			audio: {
+				echoCancellation: false,
+				noiseSuppression: false,
+				autoGainControl: false,
+				// Chromium's own: keep the shared sound playing on the desktop too
+				suppressLocalAudioPlayback: false,
+			} as MediaTrackConstraints,
+			systemAudio: "include",
+			selfBrowserSurface: "exclude",
+		};
+		const shared = await navigator.mediaDevices.getDisplayMedia(options);
+		for (const track of shared.getVideoTracks()) track.stop();
+		const track = shared.getAudioTracks()[0] ?? null;
+		return {
+			track,
+			error: track
+				? null
+				: 'nothing was shared with sound, pick a screen and tick "Also share system audio"',
+		};
+	} catch (error) {
+		return {
+			track: null,
+			error:
+				error instanceof DOMException && error.name === "NotAllowedError"
+					? "desktop audio sharing was cancelled"
+					: audioErrorText(error),
+		};
+	}
 }
 
 function audioErrorText(error: unknown): string {

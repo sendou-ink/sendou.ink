@@ -14,6 +14,7 @@ import {
 	inputsRevealed,
 	listMediaInputs,
 	openCapture,
+	openDesktopAudio,
 	requestInputAccess,
 	startSampler,
 } from "../capture/sampler";
@@ -25,12 +26,10 @@ import {
 	windowClosed,
 } from "../core/clips/scoring";
 import { DEATH_EVENT_TYPE } from "../core/detectors/death/index";
-import { KILL_EVENT_TYPE } from "../core/detectors/kill/index";
 import {
 	MAP_START_EVENT_TYPE,
 	type MapStartData,
 } from "../core/detectors/map-start/index";
-import { MINIMAP_EVENT_TYPE } from "../core/detectors/minimap/index";
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
@@ -38,13 +37,14 @@ import type { DetectedEvent, GateResult } from "../core/detectors/types";
 import type { ScannerMatch } from "../core/scanner-match";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
+	deleteClip,
 	requestPersistentStorage,
 	rollSessionClipsIntoHistory,
 	saveClip,
 } from "../store/clips";
-import { saveEvent, trimEvents, updateEventsSend } from "../store/events";
+import { saveEvent, trimEvents } from "../store/events";
 import { AnalyzerClient } from "../worker/client";
-import { refreshClips } from "./clips-feed";
+import { getClips, refreshClips } from "./clips-feed";
 import { describeError } from "./errors";
 import {
 	currentSession,
@@ -59,7 +59,7 @@ import {
 	unsentClosedMatches,
 	unsentMatches,
 } from "./sendou-ingest";
-import { readSettings } from "./settings";
+import { audioDeviceIdOf, readSettings } from "./settings";
 import { thumbnailFromBlob } from "./thumbnail";
 import { sendLive, uploadEnabled } from "./upload";
 
@@ -85,21 +85,14 @@ const CLIP_TICK_MS = 5_000;
 /** how often the audio input is checked for a signal, and how long without one counts as silent */
 const AUDIO_CHECK_MS = 1_000;
 const AUDIO_SILENCE_MS = 5_000;
-
-/** Event types the ingested matches are built from — the only ones with a send status. */
-const INGESTABLE_TYPES = [
-	MAP_START_EVENT_TYPE,
-	DEATH_EVENT_TYPE,
-	KILL_EVENT_TYPE,
-	MINIMAP_EVENT_TYPE,
-	...SCOREBOARD_EVENT_TYPES,
-];
+/** one capture per browser profile: two would write the same games twice */
+const CAPTURE_LOCK = "scanner:capture";
 
 export type LiveStatus = "idle" | "starting" | "running" | "error";
 /** `unsupported`: no WebCodecs/track processor; `failed`: the encoder refused this stream */
 export type ClipsState = "on" | "off" | "unsupported" | "failed";
-/** `muted`: the browser gets nothing from the device; `silent`: it gets samples, all of them silence */
-export type AudioSignal = "ok" | "silent" | "muted";
+/** `muted`: the browser gets nothing from the device; `silent`: it gets samples, all of them silence; `ended`: the track stopped (a share ended, say); `failed`: the encoder gave up */
+export type AudioSignal = "ok" | "silent" | "muted" | "ended" | "failed";
 
 export interface LiveSnapshot {
 	status: LiveStatus;
@@ -143,6 +136,7 @@ let stopSampler: (() => void) | null = null;
 let retryTimer: ReturnType<typeof setInterval> | null = null;
 let clipTimer: ReturnType<typeof setInterval> | null = null;
 let audioTimer: ReturnType<typeof setInterval> | null = null;
+let releaseCaptureLock: (() => void) | null = null;
 let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
@@ -152,7 +146,24 @@ let latestParse: { type: string; data: FixtureData } | null = null;
 // misreads of another mode's overlay and are not collected at all
 let objectiveBlocked = false;
 /** windows already cut, `${match first source id}:${window t}` */
-const cutWindows = new Set<string>();
+/**
+ * Footage cut this capture, plus (at tick time) the session's saved clips
+ * from earlier captures — the session outlives a capture, so its windows
+ * come up again after a restart. A kill belongs to one clip: a window over
+ * footage already cut (redrawn by a late-read kill, or simply seen again)
+ * is skipped unless it scores higher, when it replaces the clips it overlaps.
+ */
+const cuts: LiveCut[] = [];
+/** clips this capture saved, already represented in `cuts` */
+const ownClipIds = new Set<number>();
+
+interface LiveCut {
+	start: number;
+	end: number;
+	score: number;
+	/** the saved clip's id, once the cut lands; null when it yielded nothing */
+	clipId: Promise<number | null>;
+}
 
 export function useLiveSession(): LiveSnapshot {
 	return useSyncExternalStore(
@@ -179,14 +190,28 @@ function set(patch: Partial<LiveSnapshot>): void {
 /** Opens the source, brings the worker up, then starts sampling; a second call while running is ignored. */
 export async function startCapture(): Promise<void> {
 	if (snapshot.status === "starting" || snapshot.status === "running") return;
+	releaseCaptureLock = await acquireCaptureLock();
+	if (!releaseCaptureLock) {
+		set({
+			...IDLE,
+			status: "error",
+			error:
+				"The scanner is already capturing in another tab. Stop it there first.",
+		});
+		return;
+	}
 	set({ ...IDLE, status: "starting" });
 	objectiveBlocked = false;
 	gates.clear();
-	cutWindows.clear();
+	cuts.length = 0;
+	ownClipIds.clear();
 	timeline = new TimelineBuilder();
 	let stream: MediaStream | null = null;
 	try {
 		const settings = readSettings();
+		// first thing, while the click's activation still covers the share picker
+		const desktop =
+			settings.audioSource === "desktop" ? await openDesktopAudio() : null;
 		const noInputs = { video: [], audio: [] };
 		let inputs = await listMediaInputs().catch(() => noInputs);
 		// the source's audio side is only listed with the microphone permission
@@ -195,14 +220,17 @@ export async function startCapture(): Promise<void> {
 		}
 		const videoInput =
 			inputs.video.find((d) => d.deviceId === settings.sourceDeviceId) ?? null;
-		const audioInput = videoInput
-			? audioInputFor(videoInput, inputs.audio)
-			: null;
+		const sourceAudio =
+			settings.audioSource === "source" && videoInput
+				? audioInputFor(videoInput, inputs.audio)
+				: null;
 		const opened = await openCapture({
 			videoDeviceId: settings.sourceDeviceId,
-			audioDeviceId: audioInput?.deviceId ?? null,
+			audioDeviceId:
+				sourceAudio?.deviceId ?? audioDeviceIdOf(settings.audioSource),
 		});
 		stream = opened.stream;
+		if (desktop?.track) stream.addTrack(desktop.track);
 		video = document.createElement("video");
 		video.muted = true;
 		video.playsInline = true;
@@ -261,7 +289,7 @@ export async function startCapture(): Promise<void> {
 			since: Date.now(),
 			stream,
 			hasAudio: stream.getAudioTracks().length > 0,
-			audioError: opened.audioError,
+			audioError: desktop ? desktop.error : opened.audioError,
 			clips,
 		});
 	} catch (error) {
@@ -294,6 +322,8 @@ export function saveCurrentFrameAsFixture(): void {
 }
 
 function release(): void {
+	releaseCaptureLock?.();
+	releaseCaptureLock = null;
 	stopSampler?.();
 	stopSampler = null;
 	if (retryTimer) clearInterval(retryTimer);
@@ -310,6 +340,29 @@ function release(): void {
 	client = null;
 	if (video) video.srcObject = null;
 	video = null;
+}
+
+/**
+ * Holds the capture lock until the returned function is called; null when
+ * another tab (or a page instance left running) holds it. The browser lets
+ * go of a tab's locks when it closes or crashes, so a dead capture never
+ * blocks the next one.
+ */
+function acquireCaptureLock(): Promise<(() => void) | null> {
+	if (!navigator.locks) return Promise.resolve(() => {});
+	return new Promise((resolve) => {
+		void navigator.locks.request(
+			CAPTURE_LOCK,
+			{ ifAvailable: true },
+			(lock) => {
+				if (!lock) {
+					resolve(null);
+					return;
+				}
+				return new Promise<void>((unlock) => resolve(unlock));
+			},
+		);
+	});
 }
 
 function stopTracks(stream: MediaStream): void {
@@ -369,16 +422,12 @@ async function persist(
 		// repeat detections don't remount the cards
 		const id = await saveEvent(event, thumbnail, frame, stale);
 		storedIds.set(event, id);
-		if (uploadEnabled() && INGESTABLE_TYPES.includes(event.type)) {
-			if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-				// a scoreboard closes its match — send it
-				refreshFeed();
-				await sendLive(
-					(built) => matchContaining(id)(built) && unsentMatches(built),
-				);
-			} else {
-				await updateEventsSend([id], { state: "queued", at: Date.now() });
-			}
+		if (uploadEnabled() && SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			// a scoreboard closes its match — send it
+			refreshFeed();
+			await sendLive(
+				(built) => matchContaining(id)(built) && unsentMatches(built),
+			);
 		}
 	} catch (error) {
 		set({ error: describeError(error) });
@@ -393,13 +442,17 @@ function audioCheck(): void {
 	const signalAt = ring?.audioSignalAt ?? null;
 	const next: AudioSignal | null = !track
 		? null
-		: track.muted || track.readyState === "ended"
-			? "muted"
-			: signalAt === null
-				? null
-				: Date.now() / 1000 - signalAt > AUDIO_SILENCE_MS / 1000
-					? "silent"
-					: "ok";
+		: ring?.audioFailure
+			? "failed"
+			: track.readyState === "ended"
+				? "ended"
+				: track.muted
+					? "muted"
+					: signalAt === null
+						? null
+						: Date.now() / 1000 - signalAt > AUDIO_SILENCE_MS / 1000
+							? "silent"
+							: "ok";
 	if (next !== snapshot.audioSignal) set({ audioSignal: next });
 }
 
@@ -409,6 +462,19 @@ function clipTick(): void {
 	const session = currentSession(getFeed());
 	if (!session) return;
 	const nowT = Date.now() / 1000;
+	const saved: LiveCut[] = getClips()
+		.filter(
+			(clip) =>
+				clip.source.kind === "live" &&
+				clip.source.sessionKey === session.key &&
+				!ownClipIds.has(clip.id),
+		)
+		.map((clip) => ({
+			start: clip.start,
+			end: clip.end,
+			score: clip.score,
+			clipId: Promise.resolve(clip.id),
+		}));
 	for (const built of session.built) {
 		const deaths = built.sources
 			.filter((event) => event.type === DEATH_EVENT_TYPE)
@@ -416,24 +482,42 @@ function clipTick(): void {
 		for (const window of scoreWindows(built.match, deaths, {
 			minKills: readSettings().clipMinKills,
 		})) {
-			const key = `${built.sources[0]?.id ?? built.match.startsAt}:${window.t}`;
-			if (cutWindows.has(key) || !windowClosed(window, nowT)) continue;
-			cutWindows.add(key);
-			void cutClip(session.key, built.match, window);
+			if (!windowClosed(window, nowT)) continue;
+			const overlapping = [...cuts, ...saved].filter(
+				(cut) => window.start < cut.end && window.end > cut.start,
+			);
+			if (overlapping.some((cut) => cut.score >= window.score)) continue;
+			for (const cut of overlapping) {
+				if (cuts.includes(cut)) cuts.splice(cuts.indexOf(cut), 1);
+				else saved.splice(saved.indexOf(cut), 1);
+			}
+			const clipId = cutClip(session.key, built.match, window, overlapping);
+			cuts.push({
+				start: window.start,
+				end: window.end,
+				score: window.score,
+				clipId,
+			});
 		}
 	}
 }
 
+/** Cuts and saves the window, then drops the clips it `replaces`; resolves to the saved clip's id. */
 async function cutClip(
 	sessionKey: number,
 	match: ScannerMatch,
 	window: ClipWindow,
-): Promise<void> {
-	if (!ring) return;
+	replaces: readonly LiveCut[],
+): Promise<number | null> {
+	if (!ring) return null;
 	try {
-		const clip = await ring.cut(window.start, window.end);
-		if (!clip) return;
-		await saveClip(
+		const clip = await ring.cut(
+			window.start,
+			window.end,
+			readSettings().audioOffsetMs / 1000,
+		);
+		if (!clip) return null;
+		const saved = await saveClip(
 			{
 				createdAt: Date.now(),
 				bucket: "session",
@@ -451,9 +535,16 @@ async function cutClip(
 			},
 			clip.blob,
 		);
+		ownClipIds.add(saved.id);
+		for (const cut of replaces) {
+			const id = await cut.clipId;
+			if (id !== null) await deleteClip(id);
+		}
 		requestPersistentStorage();
 		await refreshClips();
+		return saved.id;
 	} catch (error) {
 		set({ error: describeError(error) });
+		return null;
 	}
 }

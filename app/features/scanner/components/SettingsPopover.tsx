@@ -19,12 +19,16 @@ import { scannerSearchParams } from "../scanner-search-params";
 import { MAX_HISTORY_CLIPS } from "../store/clips";
 import styles from "./SettingsPopover.module.css";
 import {
+	AUDIO_OFFSET_LIMIT_MS,
 	CLIP_MIN_KILLS_OPTIONS,
 	updateSettings,
 	useScannerSettings,
 } from "./settings";
 import { isLoggedIn } from "./upload";
 import { useDebug } from "./use-debug";
+
+/** a step of one frame-ish: fine enough to tune by ear, coarse enough to reach a second in a few clicks */
+const AUDIO_OFFSET_STEP_MS = 25;
 
 export function SettingsPopover() {
 	const settings = useScannerSettings();
@@ -80,6 +84,35 @@ export function SettingsPopover() {
 								</SendouChipRadio>
 							))}
 						</SendouChipRadioGroup>
+					</div>
+					<div className={styles.row}>
+						<label className={styles.rowLabel} htmlFor="scanner-audio-offset">
+							Clip audio offset (ms)
+						</label>
+						<input
+							id="scanner-audio-offset"
+							type="number"
+							className={styles.number}
+							value={settings.audioOffsetMs}
+							min={-AUDIO_OFFSET_LIMIT_MS}
+							max={AUDIO_OFFSET_LIMIT_MS}
+							step={AUDIO_OFFSET_STEP_MS}
+							onChange={(e) => {
+								const value = e.target.valueAsNumber;
+								if (Number.isFinite(value)) {
+									updateSettings({
+										audioOffsetMs: Math.max(
+											-AUDIO_OFFSET_LIMIT_MS,
+											Math.min(AUDIO_OFFSET_LIMIT_MS, value),
+										),
+									});
+								}
+							}}
+						/>
+						<span className={styles.hint}>
+							Sound ahead of the picture? Raise it. Behind? Lower it. Desktop
+							audio and a capture card usually need a few hundred ms.
+						</span>
 					</div>
 				</section>
 				<p className={styles.note}>
