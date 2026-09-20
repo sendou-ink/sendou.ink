@@ -8,19 +8,19 @@ import {
 } from "../q-constants";
 import { refreshSendouQInstance, SendouQ } from "./SendouQ.server";
 
-/** Cancels every pending challenge involving the user's active full group. Partial groups merge rather than start a match on accept, so their preferences are not locked in yet. */
+/** Cancels every pending challenge involving the user's active full group, returning whether any were, which also means the instance was refreshed. Partial groups merge rather than start a match on accept, so their preferences are not locked in yet. */
 export async function cancelActiveGroupLikes(userId: number) {
 	const ownGroup = SendouQ.findOwnGroup(userId);
-	if (!ownGroup) return;
-	if (ownGroup.status !== "ACTIVE" || ownGroup.matchId) return;
-	if (ownGroup.members.length !== FULL_GROUP_SIZE) return;
+	if (!ownGroup) return false;
+	if (ownGroup.status !== "ACTIVE" || ownGroup.matchId) return false;
+	if (ownGroup.members.length !== FULL_GROUP_SIZE) return false;
 
 	const likes = await SQGroupRepository.findAllLikesByGroupId(ownGroup.id);
 	const affectedGroupIds = R.unique([
 		...likes.given.map((like) => like.groupId),
 		...likes.received.map((like) => like.groupId),
 	]);
-	if (affectedGroupIds.length === 0) return;
+	if (affectedGroupIds.length === 0) return false;
 
 	await SQGroupRepository.deleteAllLikesByGroupId(ownGroup.id);
 
@@ -40,4 +40,6 @@ export async function cancelActiveGroupLikes(userId: number) {
 				) ?? [],
 		),
 	);
+
+	return true;
 }
