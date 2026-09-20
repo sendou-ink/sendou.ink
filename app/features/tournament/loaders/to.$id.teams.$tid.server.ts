@@ -41,8 +41,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		await TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId);
 	const allRounds: AllRoundsItem[] = data.round.map((round) => {
 		const stage = data.stage.find((s) => s.id === round.stageId);
-		const group = data.group.find((g) => g.id === round.groupId);
-		invariant(stage && group, "Stage or group not found for round");
+		invariant(stage, "Stage not found for round");
 		invariant(stage.name, "Stage from the database is missing a name");
 
 		return {
@@ -50,7 +49,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			stageName: stage.name,
 			stageType: stage.type,
 			roundNumber: round.number,
-			groupNumber: group.number,
+			section: round.section,
 		};
 	});
 

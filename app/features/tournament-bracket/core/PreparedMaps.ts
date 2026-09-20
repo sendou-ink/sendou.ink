@@ -218,38 +218,33 @@ function trimMapsByTeamCount({
 		nullFilledArray(teamCount).map((_, i) => i + 1),
 	).round;
 
-	const groupIds = R.unique(preparedMaps.maps.map((r) => r.groupId));
+	const sections = R.unique(preparedMaps.maps.map((r) => r.section));
 
 	const result = { ...preparedMaps };
-	for (const groupId of groupIds) {
-		const actualRoundsForGroup = actualRounds.filter(
-			(r) => r.groupId === groupId,
+	for (const section of sections) {
+		const actualRoundsForSection = actualRounds.filter(
+			(r) => r.section === section,
 		);
 
-		const preparedRoundsForGroup = preparedMaps.maps.filter(
-			(r) => r.groupId === groupId,
+		const preparedRoundsForSection = preparedMaps.maps.filter(
+			(r) => r.section === section,
 		);
 
-		const actualRoundsCount = actualRoundsForGroup.length;
+		const actualRoundsCount = actualRoundsForSection.length;
 
 		const trimmedRounds = roundsWithVirtualIds(
-			preparedRoundsForGroup.slice(
-				preparedRoundsForGroup.length - actualRoundsCount,
+			preparedRoundsForSection.slice(
+				preparedRoundsForSection.length - actualRoundsCount,
 			),
-			actualRoundsForGroup.map((r) => r.id).sort((a, b) => a - b),
+			actualRoundsForSection.map((r) => r.id).sort((a, b) => a - b),
 		);
 
-		result.maps = result.maps.filter((r) => r.groupId !== groupId);
+		result.maps = result.maps.filter((r) => r.section !== section);
 		result.maps.push(...trimmedRounds);
 	}
 
-	result.maps.sort((a, b) => {
-		if (a.groupId === b.groupId) {
-			return a.roundId - b.roundId;
-		}
-
-		return a.groupId - b.groupId;
-	});
+	// round ids follow the creation order of the sections: winners, losers, finals
+	result.maps.sort((a, b) => a.roundId - b.roundId);
 
 	return result;
 }
@@ -275,8 +270,9 @@ function thirdPlaceMatchDisappeared({
 		return false;
 	}
 
-	const preparedHasThirdPlace =
-		R.unique(preparedMaps.maps.map((r) => r.groupId)).length > 1;
+	const preparedHasThirdPlace = preparedMaps.maps.some(
+		(r) => r.section === "finals",
+	);
 
 	return preparedHasThirdPlace && teamCount < 4;
 }
@@ -284,7 +280,7 @@ function thirdPlaceMatchDisappeared({
 function filterOutThirdPlaceMatch(prepared: PreparedMaps): PreparedMaps {
 	return {
 		...prepared,
-		maps: prepared.maps.filter((map) => map.groupId === 0),
+		maps: prepared.maps.filter((map) => map.section !== "finals"),
 	};
 }
 
@@ -489,7 +485,8 @@ function eliminationPlacementSizes({
 	].filter((size) => size > 0);
 
 	const thirdPlaceMatchExists =
-		type === "single_elimination" && data.group.length > 1;
+		type === "single_elimination" &&
+		data.round.some((round) => round.section === "finals");
 	const semiFinalLosersIdx = 2;
 	if (thirdPlaceMatchExists && sizes[semiFinalLosersIdx] === 2) {
 		// the third place match splits the semi final losers into 3rd and 4th
@@ -538,15 +535,10 @@ function eliminationRounds({
 	type: "single_elimination" | "double_elimination";
 	data: BracketData;
 }) {
-	const groupIds = R.unique(data.round.map((round) => round.groupId));
-	// third place match lives in a separate (higher) group, as does the losers bracket
-	const groupId =
-		type === "double_elimination"
-			? Math.min(...groupIds) + 1
-			: Math.min(...groupIds);
+	const section = type === "double_elimination" ? "losers" : "winners";
 
 	return data.round
-		.filter((round) => round.groupId === groupId)
+		.filter((round) => round.section === section)
 		.sort((a, b) => a.id - b.id);
 }
 

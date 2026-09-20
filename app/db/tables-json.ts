@@ -4,7 +4,10 @@ import type { DBBoolean } from "~/db/tables";
 import type { CalendarFilters } from "~/features/calendar/calendar-types";
 import type { ScrimFilters } from "~/features/scrims/scrims-types";
 import type { CustomThemeVar } from "~/features/theme/theme-constants";
-import type { TeamPickPool } from "~/features/tournament/tournament-constants";
+import type {
+	TeamPickPool,
+	TournamentRoundSection,
+} from "~/features/tournament/tournament-constants";
 import type * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import type * as Progression from "~/features/tournament-bracket/core/Progression";
 import type {
@@ -133,7 +136,13 @@ export interface SeedingSnapshot {
 export interface PreparedMaps {
 	authorId: number;
 	createdAt: number;
-	maps: Array<TournamentRoundMaps & { roundId: number; groupId: number }>;
+	/** Keyed by the local round ids of the bracket preview the maps were picked against; groups share one map list per round number. */
+	maps: Array<
+		TournamentRoundMaps & {
+			roundId: number;
+			section: TournamentRoundSection | null;
+		}
+	>;
 	eliminationTeamCount?: number;
 }
 

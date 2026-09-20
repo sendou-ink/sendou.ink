@@ -32,6 +32,7 @@ export function createSwiss(input: ResolvedCreateBracketInput): BracketData {
 			nullFilledArray(roundCount).map((_, i) => ({
 				id: roundId++,
 				groupId: g.id,
+				section: null,
 				number: i + 1,
 				stageId: 0,
 			})),

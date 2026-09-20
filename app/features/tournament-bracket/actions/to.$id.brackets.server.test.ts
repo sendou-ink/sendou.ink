@@ -4,6 +4,7 @@ import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactor
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { TournamentSettings } from "~/db/tables-json";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
+import type { RoundData } from "~/features/tournament-bracket/core/engine/types";
 import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
 import type { bracketSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import type { ModeShort } from "~/modules/in-game-lists/types";
@@ -340,12 +341,12 @@ async function previewRounds(tournamentId: number) {
 }
 
 function teamPickedRoundMaps(
-	round: { id: number; groupId: number },
+	round: { id: number; section: RoundData["section"] },
 	modes: ModeShort[],
 ) {
 	return {
 		roundId: round.id,
-		groupId: round.groupId,
+		section: round.section,
 		count: 3 as const,
 		type: "BEST_OF" as const,
 		list: null,

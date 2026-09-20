@@ -38,6 +38,15 @@ export const TOURNAMENT_STAGE_TYPES = [
 	"swiss",
 ] as const;
 
+/** Parts of an elimination group that number their rounds separately: the (winners) bracket, the losers bracket and the finals (grand finals or a consolation final). */
+export const TOURNAMENT_ROUND_SECTIONS = [
+	"winners",
+	"losers",
+	"finals",
+] as const;
+
+export type TournamentRoundSection = (typeof TOURNAMENT_ROUND_SECTIONS)[number];
+
 /** AUTO = teams pick map pools ahead and each round's map list is made automatically, TO = the TO picks the maps. */
 export type TournamentMapPickingStyle = "TO" | "AUTO";
 

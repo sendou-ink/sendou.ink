@@ -1,30 +1,18 @@
-import * as R from "remeda";
 import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
 import { TOURNAMENT } from "../../tournament/tournament-constants";
 
+/** Rounds of one side of an elimination bracket in play order with their display names. `winners` includes the grand finals, `single` the consolation final. */
 export function getRounds(args: {
 	bracketData: BracketData;
 	type: "winners" | "losers" | "single";
 }) {
-	const groupIds = args.bracketData.group.flatMap((group) => {
-		if (args.type === "winners" && group.number === 2) return [];
-		if (args.type === "losers" && group.number !== 2) return [];
-
-		return group.id;
-	});
-
 	let showingBracketReset = args.bracketData.round.length > 1;
 	const rounds = args.bracketData.round
-		.flatMap((round) => {
-			if (
-				typeof round.groupId === "number" &&
-				!groupIds.includes(round.groupId)
-			) {
-				return [];
-			}
-
-			return round;
-		})
+		.filter((round) =>
+			args.type === "losers"
+				? round.section === "losers"
+				: round.section !== "losers",
+		)
 		.filter((round, i, allRounds) => {
 			const isBracketReset =
 				args.type === "winners" && i === allRounds.length - 1;
@@ -53,7 +41,7 @@ export function getRounds(args: {
 
 	const hasThirdPlaceMatch =
 		args.type === "single" &&
-		R.unique(args.bracketData.match.map((m) => m.groupId)).length > 1;
+		args.bracketData.round.some((round) => round.section === "finals");
 	const namedRounds = rounds.map((round, i) => {
 		const name = () => {
 			if (

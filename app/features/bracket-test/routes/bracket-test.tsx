@@ -39,7 +39,11 @@ export default function BracketTestLayout() {
 	const { totalRounds, wbRounds, lbRounds } = countRounds(data, isDoubleElim);
 
 	if (isDoubleElim) {
-		simulateCompletedRoundsByGroup(data, completedWbRounds, completedLbRounds);
+		simulateCompletedRoundsBySection(
+			data,
+			completedWbRounds,
+			completedLbRounds,
+		);
 	} else {
 		simulateCompletedRounds(data, Math.min(completedRounds, totalRounds));
 	}
@@ -213,29 +217,23 @@ function countRounds(data: BracketData, isDoubleElim: boolean) {
 
 	if (!isDoubleElim) return { totalRounds, wbRounds: 0, lbRounds: 0 };
 
-	const wbGroupId = data.group.find((g) => g.number === 1)?.id;
-	const lbGroupId = data.group.find((g) => g.number === 2)?.id;
-
-	const wbRounds = data.round.filter((r) => r.groupId === wbGroupId).length;
-	const lbRounds = data.round.filter((r) => r.groupId === lbGroupId).length;
+	const wbRounds = data.round.filter((r) => r.section === "winners").length;
+	const lbRounds = data.round.filter((r) => r.section === "losers").length;
 
 	return { totalRounds, wbRounds, lbRounds };
 }
 
-function simulateCompletedRoundsByGroup(
+function simulateCompletedRoundsBySection(
 	data: BracketData,
 	wbCompleted: number,
 	lbCompleted: number,
 ) {
-	const wbGroupId = data.group.find((g) => g.number === 1)?.id;
-	const lbGroupId = data.group.find((g) => g.number === 2)?.id;
-
 	const completedRoundIds = new Set<number>();
 	for (const round of data.round) {
-		if (round.groupId === wbGroupId && round.number <= wbCompleted) {
+		if (round.section === "winners" && round.number <= wbCompleted) {
 			completedRoundIds.add(round.id);
 		}
-		if (round.groupId === lbGroupId && round.number <= lbCompleted) {
+		if (round.section === "losers" && round.number <= lbCompleted) {
 			completedRoundIds.add(round.id);
 		}
 	}

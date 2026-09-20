@@ -28,7 +28,10 @@ import { calendarEditPage } from "~/features/calendar/calendar-urls";
 import { useTournamentPreparedMaps } from "~/features/tournament/routes/to.$id";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import { useTournament } from "~/features/tournament/tournament-context";
-import type { BracketData } from "~/features/tournament-bracket/core/engine/types";
+import type {
+	BracketData,
+	RoundData,
+} from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
@@ -45,6 +48,7 @@ import type { Tournament } from "../core/Tournament";
 import {
 	type BracketMapCounts,
 	generateTournamentRoundMaplist,
+	roundSetKey,
 	type TournamentRoundMapList,
 } from "../core/toMapList";
 import { bracketSchema } from "../tournament-bracket-schemas";
@@ -127,9 +131,11 @@ export function BracketMapListDialog({
 
 			// infer default from whether finals and third place match have different maps
 			const finalsMaps = preparedMaps.maps
-				.filter((map) => map.groupId === 0)
+				.filter((map) => map.section === "winners")
 				.sort((a, b) => b.roundId - a.roundId)[0];
-			const thirdPlaceMaps = preparedMaps.maps.find((map) => map.groupId === 1);
+			const thirdPlaceMaps = preparedMaps.maps.find(
+				(map) => map.section === "finals",
+			);
 
 			if (!finalsMaps?.list || !thirdPlaceMaps?.list) {
 				logger.error(
@@ -223,14 +229,14 @@ export function BracketMapListDialog({
 			const singleElimRounds = getRounds({ type: "single", bracketData });
 
 			const hasThirdPlaceMatch = singleElimRounds.some(
-				(round) => round.groupId === 1,
+				(round) => round.section === "finals",
 			);
 
 			if (!thirdPlaceMatchLinked || !hasThirdPlaceMatch)
 				return singleElimRounds;
 
 			return singleElimRounds
-				.filter((round) => round.groupId !== 1)
+				.filter((round) => round.section !== "finals")
 				.map((round) =>
 					round.name === "Finals"
 						? {
@@ -247,13 +253,13 @@ export function BracketMapListDialog({
 	const mapCountsWithGlobalCount = (newCount: number) => {
 		const newMap = new Map(defaultRoundBestOfs);
 
-		for (const [groupId, value] of newMap.entries()) {
-			const newGroupMap: typeof value = new Map(value);
+		for (const [roundSet, value] of newMap.entries()) {
+			const newRoundSetMap: typeof value = new Map(value);
 			for (const [roundNumber, roundValue] of value.entries()) {
-				newGroupMap.set(roundNumber, { ...roundValue, count: newCount });
+				newRoundSetMap.set(roundNumber, { ...roundValue, count: newCount });
 			}
 
-			newMap.set(groupId, newGroupMap);
+			newMap.set(roundSet, newRoundSetMap);
 		}
 
 		return newMap;
@@ -276,9 +282,9 @@ export function BracketMapListDialog({
 	};
 
 	const validateNoDecreasingCount = () => {
-		for (const groupCounts of mapCounts.values()) {
+		for (const roundSetCounts of mapCounts.values()) {
 			let roundPreviousValue = 0;
-			for (const [, roundValue] of Array.from(groupCounts.entries()).sort(
+			for (const [, roundValue] of Array.from(roundSetCounts.entries()).sort(
 				(a, b) => a[0] - b[0],
 			)) {
 				if (roundPreviousValue > roundValue.count) {
@@ -289,10 +295,17 @@ export function BracketMapListDialog({
 			}
 		}
 
-		// grands need at least as many maps as winners final (different groups)
+		// grands need at least as many maps as winners final (different sections)
 		if (bracket.type === "double_elimination") {
-			const grandsCounts = Array.from(mapCounts.get(2)?.values() ?? []);
-			const winnersCounts = Array.from(mapCounts.get(0)?.values() ?? []);
+			const sectionCounts = (section: RoundData["section"]) =>
+				rounds
+					.filter((round) => round.section === section)
+					.flatMap(
+						(round) =>
+							mapCounts.get(roundSetKey(round))?.get(round.number) ?? [],
+					);
+			const grandsCounts = sectionCounts("finals");
+			const winnersCounts = sectionCounts("winners");
 			const maxWinnersCount = Math.max(...winnersCounts.map((c) => c.count));
 
 			if (grandsCounts.some(({ count }) => count < maxWinnersCount)) {
@@ -357,7 +370,7 @@ export function BracketMapListDialog({
 						Array.from(maps.entries()).map(([key, value]) => ({
 							...value,
 							roundId: key,
-							groupId: rounds.find((r) => r.id === key)?.groupId,
+							section: rounds.find((r) => r.id === key)?.section ?? null,
 							type: countType,
 							customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
 						})),
@@ -615,22 +628,22 @@ export function BracketMapListDialog({
 														"Expected round to be defined",
 													);
 
-													const groupInfo = newMapCounts.get(
-														bracketRound.groupId,
+													const roundSetInfo = newMapCounts.get(
+														roundSetKey(bracketRound),
 													);
 													invariant(
-														groupInfo,
-														"Expected group info to be defined",
+														roundSetInfo,
+														"Expected round set info to be defined",
 													);
-													const oldMapInfo = newMapCounts
-														.get(bracketRound.groupId)
-														?.get(bracketRound.number);
+													const oldMapInfo = roundSetInfo.get(
+														bracketRound.number,
+													);
 													invariant(
 														oldMapInfo,
 														"Expected map info to be defined",
 													);
 
-													groupInfo.set(bracketRound.number, {
+													roundSetInfo.set(bracketRound.number, {
 														...oldMapInfo,
 														count: newCount,
 													});
@@ -759,30 +772,27 @@ function inferMapCounts({
 	tournamentRoundMapList: TournamentRoundMapList;
 }) {
 	const result: BracketMapCounts = new Map();
+	const defaultBestOfs = bracket.defaultRoundBestOfs(data);
 
-	for (const [groupId, value] of bracket.defaultRoundBestOfs(data).entries()) {
-		for (const roundNumber of value.keys()) {
-			const roundId = data.round.find(
-				(round) => round.groupId === groupId && round.number === roundNumber,
-			)?.id;
-			invariant(typeof roundId === "number", "Expected roundId to be defined");
+	for (const round of data.round) {
+		const key = roundSetKey(round);
+		if (!defaultBestOfs.get(key)?.has(round.number)) continue;
 
-			const count = tournamentRoundMapList.get(roundId)?.count;
+		const count = tournamentRoundMapList.get(round.id)?.count;
 
-			// skip rounds in RR and Swiss that don't have maps (only one group has maps)
-			if (typeof count !== "number") {
-				continue;
-			}
-
-			result.set(
-				groupId,
-				new Map(result.get(groupId)).set(roundNumber, {
-					count,
-					// "best of" / "play all" is per bracket for now, might be per round in the future
-					type: "BEST_OF",
-				}),
-			);
+		// skip rounds in RR and Swiss that don't have maps (only one group has maps)
+		if (typeof count !== "number") {
+			continue;
 		}
+
+		result.set(
+			key,
+			new Map(result.get(key)).set(round.number, {
+				count,
+				// "best of" / "play all" is per bracket for now, might be per round in the future
+				type: "BEST_OF",
+			}),
+		);
 	}
 
 	invariant(result.size > 0, "Expected result to be defined");
@@ -1336,8 +1346,8 @@ function PatternInputs({
 	onPatternsChange: (patterns: Map<number, string>) => void;
 }) {
 	const uniqueCounts = new Set<number>();
-	for (const groupCounts of mapCounts.values()) {
-		for (const { count } of groupCounts.values()) {
+	for (const roundSetCounts of mapCounts.values()) {
+		for (const { count } of roundSetCounts.values()) {
 			uniqueCounts.add(count);
 		}
 	}

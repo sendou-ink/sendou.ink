@@ -1,9 +1,9 @@
 import { matchStatus, winnerSideByScore } from "../status";
 import type {
-	GroupData,
 	GroupType,
 	MatchData,
 	MatchResultsInput,
+	RoundSection,
 	Side,
 	StageData,
 	StageType,
@@ -33,10 +33,10 @@ export class Propagator {
 		const stage = this.store.stageById(match.stageId);
 		if (!stage) throw new Error("Stage not found.");
 
-		const group = this.store.groupById(match.groupId);
-		if (!group) throw new Error("Group not found.");
-
-		const matchLocation = helpers.getMatchLocation(stage.type, group.number);
+		const matchLocation = helpers.getMatchLocation(
+			stage.type,
+			this.sectionOf(match),
+		);
 
 		this.updateNext(match, matchLocation, stage, roundNumber, roundCount);
 	}
@@ -191,13 +191,14 @@ export class Propagator {
 		if (helpers.hasBye(match)) this.updateRelatedMatches(match);
 	}
 
+	/** Round number and count within the round's section (a round robin group's rounds, the losers bracket...). */
 	getRoundPositionalInfo(roundId: number): RoundPositionalInfo {
 		const round = this.store.roundById(roundId);
 		if (!round) throw new Error("Round not found.");
 
 		return {
 			roundNumber: round.number,
-			roundCount: this.store.roundCountInGroup(round.groupId),
+			roundCount: this.store.roundCountInSection(round.groupId, round.section),
 		};
 	}
 
@@ -219,12 +220,7 @@ export class Propagator {
 			case "winner_bracket":
 				return this.getNextMatchesWB(match, stage, roundNumber, roundCount);
 			case "loser_bracket":
-				return this.getNextMatchesLB(
-					match,
-					stage.type,
-					roundNumber,
-					roundCount,
-				);
+				return this.getNextMatchesLB(match, roundNumber, roundCount);
 			case "final_group":
 				return this.getNextMatchesFinal(match, roundNumber, roundCount);
 			default:
@@ -238,14 +234,13 @@ export class Propagator {
 		roundNumber: number,
 		roundCount: number,
 	): (MatchData | null)[] {
-		const loserBracket = this.getLoserBracket(match.stageId);
-		if (loserBracket === null)
+		if (!this.hasSection(match.groupId, "losers"))
 			// Only one match in the stage, there is no loser bracket.
 			return [];
 
 		const roundNumberLB = roundNumber > 1 ? (roundNumber - 1) * 2 : 1;
 
-		const participantCount = this.participantCount(match.stageId);
+		const participantCount = this.participantCount(match.groupId);
 		const method = helpers.getLoserOrdering(participantCount, roundNumberLB);
 		const actualMatchNumberLB = helpers.findLoserMatchNumber(
 			participantCount,
@@ -261,7 +256,12 @@ export class Propagator {
 				roundNumber,
 				roundCount,
 			),
-			this.findMatch(loserBracket.id, roundNumberLB, actualMatchNumberLB),
+			this.findMatch(
+				match.groupId,
+				"losers",
+				roundNumberLB,
+				actualMatchNumberLB,
+			),
 		];
 	}
 
@@ -274,62 +274,55 @@ export class Propagator {
 		if (stageType === "single_elimination")
 			return this.getNextMatchesUpperBracketSingleElimination(
 				match,
-				stageType,
 				roundNumber,
 				roundCount,
 			);
 
 		if (stageType === "double_elimination" && roundNumber === roundCount)
-			return [this.getFirstMatchFinal(match, stageType)];
+			return [this.getFirstMatchFinal(match)];
 
-		return [this.getDiagonalMatch(match.groupId, roundNumber, match.number)];
+		return [this.getDiagonalMatch(match, roundNumber)];
 	}
 
 	private getNextMatchesUpperBracketSingleElimination(
 		match: MatchData,
-		stageType: StageType,
 		roundNumber: number,
 		roundCount: number,
 	): MatchData[] {
 		if (roundNumber === roundCount - 1) {
-			const final = this.getFirstMatchFinal(match, stageType);
+			const final = this.getFirstMatchFinal(match);
 			return [
-				this.getDiagonalMatch(match.groupId, roundNumber, match.number),
+				this.getDiagonalMatch(match, roundNumber),
 				...(final ? [final] : []),
 			];
 		}
 
 		if (roundNumber === roundCount) return [];
 
-		return [this.getDiagonalMatch(match.groupId, roundNumber, match.number)];
+		return [this.getDiagonalMatch(match, roundNumber)];
 	}
 
 	private getNextMatchesLB(
 		match: MatchData,
-		stageType: StageType,
 		roundNumber: number,
 		roundCount: number,
 	): MatchData[] {
 		if (roundNumber === roundCount) {
-			const final = this.getFirstMatchFinal(match, stageType);
+			const final = this.getFirstMatchFinal(match);
 			return final ? [final] : [];
 		}
 
 		if (roundNumber % 2 === 1)
-			return this.getMatchAfterMajorRoundLB(match, roundNumber);
+			return [this.getParallelMatch(match, roundNumber)];
 
-		return this.getMatchAfterMinorRoundLB(match, roundNumber);
+		return [this.getDiagonalMatch(match, roundNumber)];
 	}
 
-	/** First match of the final group (consolation final or grand final). */
-	private getFirstMatchFinal(
-		match: MatchData,
-		stageType: StageType,
-	): MatchData | null {
-		const finalGroupId = this.getFinalGroupId(match.stageId, stageType);
-		if (finalGroupId === null) return null;
+	/** First match of the finals section (consolation final or grand final) of the match's group. */
+	private getFirstMatchFinal(match: MatchData): MatchData | null {
+		if (!this.hasSection(match.groupId, "finals")) return null;
 
-		return this.findMatch(finalGroupId, 1, 1);
+		return this.findMatch(match.groupId, "finals", 1, 1);
 	}
 
 	private getNextMatchesFinal(
@@ -345,84 +338,55 @@ export class Propagator {
 			return [];
 		}
 
-		return [this.findMatch(match.groupId, roundNumber + 1, 1)];
+		return [this.findMatch(match.groupId, "finals", roundNumber + 1, 1)];
 	}
 
-	private getMatchAfterMajorRoundLB(
-		match: MatchData,
-		roundNumber: number,
-	): MatchData[] {
-		return [this.getParallelMatch(match.groupId, roundNumber, match.number)];
-	}
-
-	private getMatchAfterMinorRoundLB(
-		match: MatchData,
-		roundNumber: number,
-	): MatchData[] {
-		return [this.getDiagonalMatch(match.groupId, roundNumber, match.number)];
-	}
-
-	private getFinalGroupId(
-		stageId: number,
-		stageType: StageType,
-	): number | null {
-		const groupNumber =
-			stageType === "single_elimination"
-				? 2 /* Consolation final */
-				: 3; /* Grand final */
-		const finalGroup = this.store.groupByNumber(stageId, groupNumber);
-		if (!finalGroup) return null;
-		return finalGroup.id;
-	}
-
-	/** The only bracket in single elimination, the winner bracket in double elimination. */
-	private getUpperBracket(stageId: number): GroupData {
-		const winnerBracket = this.store.groupByNumber(stageId, 1);
-		if (!winnerBracket) throw new Error("Winner bracket not found.");
-		return winnerBracket;
-	}
-
-	/** Derived from the upper bracket's first round (two participants per match, BYEs included). */
-	private participantCount(stageId: number): number {
-		const upperBracket = this.getUpperBracket(stageId);
-		const firstRound = this.store.roundByNumber(upperBracket.id, 1);
+	/** Derived from the winners section's first round (two participants per match, BYEs included). */
+	private participantCount(groupId: number): number {
+		const firstRound = this.store.roundByNumber(groupId, "winners", 1);
 		if (!firstRound) throw new Error("First round not found.");
 
 		return this.store.matchCountInRound(firstRound.id) * 2;
 	}
 
-	private getLoserBracket(stageId: number): GroupData | null {
-		return this.store.groupByNumber(stageId, 2);
+	private hasSection(groupId: number, section: RoundSection): boolean {
+		return this.store.roundCountInSection(groupId, section) > 0;
+	}
+
+	private sectionOf(match: MatchData): RoundSection | null {
+		const round = this.store.roundById(match.roundId);
+		if (!round) throw new Error("Round not found.");
+
+		return round.section;
 	}
 
 	/** Corresponding match in the next round, like Round 1 to Round 2 in single elimination. */
-	private getDiagonalMatch(
-		groupId: number,
-		roundNumber: number,
-		matchNumber: number,
-	): MatchData {
+	private getDiagonalMatch(match: MatchData, roundNumber: number): MatchData {
 		return this.findMatch(
-			groupId,
+			match.groupId,
+			this.sectionOf(match),
 			roundNumber + 1,
-			helpers.getDiagonalMatchNumber(matchNumber),
+			helpers.getDiagonalMatchNumber(match.number),
 		);
 	}
 
 	/** Same match number in the next round, like major round to minor round in the loser bracket. */
-	private getParallelMatch(
-		groupId: number,
-		roundNumber: number,
-		matchNumber: number,
-	): MatchData {
-		return this.findMatch(groupId, roundNumber + 1, matchNumber);
+	private getParallelMatch(match: MatchData, roundNumber: number): MatchData {
+		return this.findMatch(
+			match.groupId,
+			this.sectionOf(match),
+			roundNumber + 1,
+			match.number,
+		);
 	}
 
 	findMatch(
 		groupId: number,
+		section: RoundSection | null,
 		roundNumber: number,
 		matchNumber: number,
 	): MatchData {
-		const round = this.store.roundByNumber(groupId, roundNumber);
+		const round = this.store.roundByNumber(groupId, section, roundNumber);
 
 		if (!round) throw new Error("Round not found.");
 

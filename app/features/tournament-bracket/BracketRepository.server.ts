@@ -77,6 +77,7 @@ export async function findByTournamentId(
 						"TournamentRound.id",
 						"TournamentRound.stageId",
 						"TournamentRound.groupId",
+						"TournamentRound.section",
 						"TournamentRound.number",
 						"TournamentRound.maps",
 						"TournamentRound.defaultPlayTime",
@@ -198,6 +199,7 @@ export function insertBracket(args: {
 				args.bracket.round.map((round) => ({
 					stageId: stage.id,
 					groupId: groupIdMapping.get(round.groupId)!,
+					section: round.section,
 					number: round.number,
 					maps: JSON.stringify(round.maps),
 				})),

@@ -5,7 +5,7 @@ import type {
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
-import type { BracketMapCounts } from "../toMapList";
+import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 import { cumulativeEliminationsByRound } from "./utils";
 
@@ -17,42 +17,38 @@ export class DoubleEliminationBracket extends Bracket {
 	defaultRoundBestOfs(data: BracketData) {
 		const result: BracketMapCounts = new Map();
 
-		for (const group of data.group) {
-			const roundsOfGroup = data.round.filter(
-				(round) => round.groupId === group.id,
+		const lastLosersRoundNumber = Math.max(
+			...data.round
+				.filter((round) => round.section === "losers")
+				.map((round) => round.number),
+		);
+		const defaultOfRound = (round: RoundData) => {
+			if (round.section === "finals") return 5;
+			if (round.section === "losers") {
+				if (round.number === lastLosersRoundNumber) return 5;
+				return 3;
+			}
+
+			if (round.number > 2) return 5;
+			return 3;
+		};
+
+		for (const round of data.round) {
+			const atLeastOneNonByeMatch = data.match.some(
+				(match) =>
+					match.roundId === round.id && match.opponent1 && match.opponent2,
 			);
 
-			const defaultOfRound = (round: RoundData) => {
-				if (group.number === 3) return 5;
-				if (group.number === 2) {
-					const lastRoundNumber = Math.max(
-						...roundsOfGroup.map((each) => each.number),
-					);
+			if (!atLeastOneNonByeMatch) continue;
 
-					if (round.number === lastRoundNumber) return 5;
-					return 3;
-				}
-
-				if (round.number > 2) return 5;
-				return 3;
-			};
-
-			for (const round of roundsOfGroup) {
-				const atLeastOneNonByeMatch = data.match.some(
-					(match) =>
-						match.roundId === round.id && match.opponent1 && match.opponent2,
-				);
-
-				if (!atLeastOneNonByeMatch) continue;
-
-				if (!result.get(group.id)) {
-					result.set(group.id, new Map());
-				}
-
-				result
-					.get(group.id)!
-					.set(round.number, { count: defaultOfRound(round), type: "BEST_OF" });
+			const key = roundSetKey(round);
+			if (!result.get(key)) {
+				result.set(key, new Map());
 			}
+
+			result
+				.get(key)!
+				.set(round.number, { count: defaultOfRound(round), type: "BEST_OF" });
 		}
 
 		return result;
@@ -64,21 +60,27 @@ export class DoubleEliminationBracket extends Bracket {
 
 		const roundNumberWB = Math.ceil((roundNumber + 1) / 2);
 
-		const groupIdWB = this.data.group.find((g) => g.number === 1)?.id;
-
 		return this.data.round.find(
-			(round) => round.number === roundNumberWB && round.groupId === groupIdWB,
+			(round) => round.number === roundNumberWB && round.section === "winners",
 		);
+	}
+
+	private matchesOfSection(section: RoundData["section"]) {
+		const roundIds = new Set(
+			this.data.round
+				.filter((round) => round.section === section)
+				.map((round) => round.id),
+		);
+
+		return this.data.match.filter((match) => roundIds.has(match.roundId));
 	}
 
 	protected calculateStandings(): Standing[] {
 		if (!this.enoughTeams) return [];
 
-		const losersGroupId = this.data.group.find((g) => g.number === 2)?.id;
-
-		const losersMatches = this.data.match
-			.filter((match) => match.groupId === losersGroupId)
-			.sort((a, b) => a.roundId - b.roundId);
+		const losersMatches = this.matchesOfSection("losers").sort(
+			(a, b) => a.roundId - b.roundId,
+		);
 
 		const teams: { id: number; lostAt: number }[] = [];
 
@@ -123,16 +125,12 @@ export class DoubleEliminationBracket extends Bracket {
 			}
 		}
 
-		// edge case: 1 match only
-		const noLosersRounds = losersGroupId === undefined;
-		const grandFinalsNumber = noLosersRounds ? 1 : 3;
-		const grandFinalsGroupId = this.data.group.find(
-			(g) => g.number === grandFinalsNumber,
-		)?.id;
-		invariant(grandFinalsGroupId !== undefined, "GF group not found");
-		const grandFinalMatches = this.data.match.filter(
-			(match) => match.groupId === grandFinalsGroupId,
+		// edge case: 1 match only, the winners bracket final is the grand final
+		const noLosersRounds = losersMatches.length === 0;
+		const grandFinalMatches = this.matchesOfSection(
+			noLosersRounds ? "winners" : "finals",
 		);
+		invariant(grandFinalMatches.length > 0, "GF matches not found");
 
 		// if opponent1 won in DE it means that bracket reset is not played
 		if (
@@ -230,16 +228,9 @@ export class DoubleEliminationBracket extends Bracket {
 			return this.sourceByStandings(placements, rest === true);
 		}
 
-		const resolveLosersGroupId = (data: BracketData) => {
-			const minGroupId = Math.min(...data.round.map((round) => round.groupId));
-
-			return minGroupId + 1;
-		};
-		const placementsToRoundsIds = (data: BracketData, groupId: number) => {
+		const placementsToRoundsIds = () => {
 			const firstRoundIsOnlyByes = () => {
-				const losersMatches = data.match.filter(
-					(match) => match.groupId === groupId,
-				);
+				const losersMatches = this.matchesOfSection("losers");
 
 				const fistRoundId = Math.min(...losersMatches.map((m) => m.roundId));
 
@@ -252,8 +243,8 @@ export class DoubleEliminationBracket extends Bracket {
 				);
 			};
 
-			const losersRounds = data.round.filter(
-				(round) => round.groupId === groupId,
+			const losersRounds = this.data.round.filter(
+				(round) => round.section === "losers",
 			);
 			const orderedRoundsIds = losersRounds
 				.map((round) => round.id)
@@ -264,11 +255,7 @@ export class DoubleEliminationBracket extends Bracket {
 			return orderedRoundsIds.slice(0, amountOfRounds);
 		};
 
-		const losersGroupId = resolveLosersGroupId(this.data);
-		const sourceRoundsIds = placementsToRoundsIds(
-			this.data,
-			losersGroupId,
-		).sort(
+		const sourceRoundsIds = placementsToRoundsIds().sort(
 			// teams who made it further in the bracket get higher seed
 			(a, b) => b - a,
 		);

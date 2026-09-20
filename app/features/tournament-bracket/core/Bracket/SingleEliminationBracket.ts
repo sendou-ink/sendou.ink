@@ -6,7 +6,7 @@ import type {
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import { invariant } from "~/utils/invariant";
-import type { BracketMapCounts } from "../toMapList";
+import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing } from "./Bracket";
 import { cumulativeEliminationsByRound } from "./utils";
 
@@ -19,60 +19,54 @@ export class SingleEliminationBracket extends Bracket {
 		const result: BracketMapCounts = new Map();
 
 		const maxRoundNumber = Math.max(...data.round.map((round) => round.number));
-		for (const group of data.group) {
-			const roundsOfGroup = data.round.filter(
-				(round) => round.groupId === group.id,
+		const defaultOfRound = (round: RoundData) => {
+			// 3rd place match
+			if (round.section === "finals") return 5;
+
+			if (round.number > 2) return 5;
+
+			// small brackets
+			if (
+				round.number === maxRoundNumber ||
+				round.number === maxRoundNumber - 1
+			) {
+				return 5;
+			}
+			return 3;
+		};
+
+		for (const round of data.round) {
+			const atLeastOneNonByeMatch = data.match.some(
+				(match) =>
+					match.roundId === round.id && match.opponent1 && match.opponent2,
 			);
 
-			const defaultOfRound = (round: RoundData) => {
-				// 3rd place match
-				if (group.number === 2) return 5;
+			if (!atLeastOneNonByeMatch) continue;
 
-				if (round.number > 2) return 5;
-
-				// small brackets
-				if (
-					round.number === maxRoundNumber ||
-					round.number === maxRoundNumber - 1
-				) {
-					return 5;
-				}
-				return 3;
-			};
-
-			for (const round of roundsOfGroup) {
-				const atLeastOneNonByeMatch = data.match.some(
-					(match) =>
-						match.roundId === round.id && match.opponent1 && match.opponent2,
-				);
-
-				if (!atLeastOneNonByeMatch) continue;
-
-				if (!result.get(group.id)) {
-					result.set(group.id, new Map());
-				}
-
-				result
-					.get(group.id)!
-					.set(round.number, { count: defaultOfRound(round), type: "BEST_OF" });
+			const key = roundSetKey(round);
+			if (!result.get(key)) {
+				result.set(key, new Map());
 			}
+
+			result
+				.get(key)!
+				.set(round.number, { count: defaultOfRound(round), type: "BEST_OF" });
 		}
 
 		return result;
 	}
 
-	private hasThirdPlaceMatch() {
-		return R.unique(this.data.match.map((m) => m.groupId)).length > 1;
+	private thirdPlaceRound() {
+		return this.data.round.find((round) => round.section === "finals");
 	}
 
 	private thirdPlaceMatch() {
-		if (!this.hasThirdPlaceMatch()) return undefined;
+		const thirdPlaceRound = this.thirdPlaceRound();
+		if (!thirdPlaceRound) return undefined;
 
-		const thirdPlaceGroupId = Math.max(
-			...this.data.group.map((group) => group.id),
+		return this.data.match.find(
+			(match) => match.roundId === thirdPlaceRound.id,
 		);
-
-		return this.data.match.find((match) => match.groupId === thirdPlaceGroupId);
 	}
 
 	private thirdPlaceMatchUndecided() {
@@ -86,19 +80,10 @@ export class SingleEliminationBracket extends Bracket {
 	protected calculateStandings(): Standing[] {
 		const teams: { id: number; lostAt: number }[] = [];
 
-		const matches = (() => {
-			if (!this.hasThirdPlaceMatch()) {
-				return this.data.match.slice();
-			}
-
-			const thirdPlaceMatch = this.data.match.find(
-				(m) => m.groupId === Math.max(...this.data.group.map((g) => g.id)),
-			);
-
-			return this.data.match.filter(
-				(m) => m.groupId !== thirdPlaceMatch?.groupId,
-			);
-		})();
+		const thirdPlaceRound = this.thirdPlaceRound();
+		const matches = thirdPlaceRound
+			? this.data.match.filter((m) => m.roundId !== thirdPlaceRound.id)
+			: this.data.match.slice();
 
 		for (const match of matches.sort((a, b) => a.roundId - b.roundId)) {
 			if (!match.winnerSide) {
@@ -193,11 +178,8 @@ export class SingleEliminationBracket extends Bracket {
 				: source;
 		}
 
-		// third place match lives in a separate (higher) group, the lowest group id is the winners group
-		const mainGroupId = Math.min(...this.data.group.map((group) => group.id));
-
 		const orderedRoundsIds = this.data.round
-			.filter((round) => round.groupId === mainGroupId)
+			.filter((round) => round.section === "winners")
 			.map((round) => round.id)
 			.sort((a, b) => a - b);
 

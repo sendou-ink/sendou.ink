@@ -19,7 +19,10 @@ import {
 	safeJSONParse,
 	stageId,
 } from "~/utils/schema";
-import { TOURNAMENT } from "../tournament/tournament-constants";
+import {
+	TOURNAMENT,
+	TOURNAMENT_ROUND_SECTIONS,
+} from "../tournament/tournament-constants";
 import * as PickBan from "./core/PickBan";
 import * as PreparedMaps from "./core/PreparedMaps";
 
@@ -117,7 +120,7 @@ const customPickBanFlow = v.optional(
 
 const tournamentRoundMaps = v.object({
 	roundId: v.pipe(v.number(), v.integer(), v.minValue(0)),
-	groupId: v.pipe(v.number(), v.integer(), v.minValue(0)),
+	section: v.nullable(v.picklist(TOURNAMENT_ROUND_SECTIONS)),
 	list: v.optional(
 		v.nullable(
 			v.array(

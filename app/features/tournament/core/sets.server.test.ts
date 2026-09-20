@@ -8,7 +8,7 @@ const ALL_ROUNDS: AllRoundsItem[] = [
 		stageName: "Main bracket",
 		stageType: "single_elimination",
 		roundNumber: 1,
-		groupNumber: 1,
+		section: "winners",
 	},
 ];
 
@@ -26,7 +26,7 @@ function playedSetRow(
 		otherTeamName: "Opponent",
 		roundNumber: 1,
 		stageId: 1,
-		groupNumber: 1,
+		section: "winners",
 		matches: [
 			{ mode: "SZ", stageId: 1, source: "BOTH", wasWinner: 1 },
 			{ mode: "TC", stageId: 2, source: "BOTH", wasWinner: 0 },

@@ -391,7 +391,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		});
 
 		expect(trimmed?.maps.length).toBe(FOUR_TEAM_SE_PREPARED.maps.length - 1);
-		expect(trimmed?.maps.some((m) => m.groupId === 1)).toBe(false);
+		expect(trimmed?.maps.some((m) => m.section === "finals")).toBe(false);
 	});
 
 	test("trims the maps (SE - 1 extra round)", () => {
@@ -455,9 +455,9 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 
 		expect(trimmed?.maps.length).toBe(EIGHT_TEAM_SE_PREPARED.maps.length - 2);
 
-		const uniqueGroupIds = new Set(trimmed?.maps.map((map) => map.groupId));
+		const uniqueSections = new Set(trimmed?.maps.map((map) => map.section));
 
-		expect(uniqueGroupIds.size).toBe(1);
+		expect(uniqueSections.size).toBe(1);
 	});
 
 	const doubleEliminationTournament = testTournament({
@@ -487,15 +487,15 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		const expectedFinalsCount = 2;
 
 		expect(
-			trimmed?.maps.filter((m) => m.groupId === 0).length,
+			trimmed?.maps.filter((m) => m.section === "winners").length,
 			"Winners count is wrong",
 		).toBe(expectedWinnersCount);
 		expect(
-			trimmed?.maps.filter((m) => m.groupId === 1).length,
+			trimmed?.maps.filter((m) => m.section === "losers").length,
 			"Losers count is wrong",
 		).toBe(expectedLosersCount);
 		expect(
-			trimmed?.maps.filter((m) => m.groupId === 2).length,
+			trimmed?.maps.filter((m) => m.section === "finals").length,
 			"Finals count is wrong",
 		).toBe(expectedFinalsCount);
 	});
@@ -523,7 +523,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		maps: [
 			{
 				roundId: 0,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "TC",
@@ -551,7 +551,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 1,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "CB",
@@ -579,7 +579,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 2,
-				groupId: 1,
+				section: "finals",
 				list: [
 					{
 						mode: "TC",
@@ -615,7 +615,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		maps: [
 			{
 				roundId: 0,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "CB",
@@ -635,7 +635,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 1,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "RM",
@@ -663,7 +663,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 2,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "CB",
@@ -691,7 +691,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 3,
-				groupId: 1,
+				section: "finals",
 				list: [
 					{
 						mode: "CB",
@@ -727,7 +727,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 		maps: [
 			{
 				roundId: 0,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "SZ",
@@ -747,7 +747,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 3,
-				groupId: 1,
+				section: "losers",
 				list: [
 					{
 						mode: "CB",
@@ -767,7 +767,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 1,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "RM",
@@ -787,7 +787,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 4,
-				groupId: 1,
+				section: "losers",
 				list: [
 					{
 						mode: "TC",
@@ -807,7 +807,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 2,
-				groupId: 0,
+				section: "winners",
 				list: [
 					{
 						mode: "CB",
@@ -835,7 +835,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 5,
-				groupId: 1,
+				section: "losers",
 				list: [
 					{
 						mode: "CB",
@@ -855,7 +855,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 6,
-				groupId: 1,
+				section: "losers",
 				list: [
 					{
 						mode: "RM",
@@ -883,7 +883,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 7,
-				groupId: 2,
+				section: "finals",
 				list: [
 					{
 						mode: "RM",
@@ -911,7 +911,7 @@ describe("PreparedMaps - trimPreparedEliminationMaps", () => {
 			},
 			{
 				roundId: 8,
-				groupId: 2,
+				section: "finals",
 				list: [
 					{
 						mode: "TC",
