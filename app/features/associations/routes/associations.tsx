@@ -3,7 +3,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, Outlet, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
@@ -16,6 +16,7 @@ import {
 	loader,
 } from "~/features/associations/loaders/associations.server";
 import { useUser } from "~/features/auth/core/user";
+import { scrimsByAssociationPage } from "~/features/scrims/scrims-urls";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -133,35 +134,43 @@ function AssociationSection({
 						?.username,
 				})}
 			</div>
-			{!canManage || newAdmin ? (
-				<FormWithConfirm
-					dialogHeading={
-						newAdmin
-							? t("scrims:associations.leave.titleWithNewAdmin", {
-									name: association.name,
-									username: newAdmin.username,
-								})
-							: t("scrims:associations.leave.title", {
-									name: association.name,
-								})
-					}
-					fields={[
-						["_action", "LEAVE_ASSOCIATION"],
-						["associationId", association.id],
-					]}
-					submitButtonText={t("scrims:associations.leave.action")}
+			<div className="stack horizontal sm items-center my-2">
+				<LinkButton
+					to={scrimsByAssociationPage(association.id)}
+					variant="outlined"
+					size="small"
 				>
-					<SendouButton
-						variant="minimal-destructive"
-						type="submit"
-						size="small"
-						className="my-2"
-						data-testid="leave-team-button"
+					{t("scrims:associations.viewScrims")}
+				</LinkButton>
+				{!canManage || newAdmin ? (
+					<FormWithConfirm
+						dialogHeading={
+							newAdmin
+								? t("scrims:associations.leave.titleWithNewAdmin", {
+										name: association.name,
+										username: newAdmin.username,
+									})
+								: t("scrims:associations.leave.title", {
+										name: association.name,
+									})
+						}
+						fields={[
+							["_action", "LEAVE_ASSOCIATION"],
+							["associationId", association.id],
+						]}
+						submitButtonText={t("scrims:associations.leave.action")}
 					>
-						{t("scrims:associations.leave.action")}
-					</SendouButton>
-				</FormWithConfirm>
-			) : null}
+						<SendouButton
+							variant="minimal-destructive"
+							type="submit"
+							size="small"
+							data-testid="leave-team-button"
+						>
+							{t("scrims:associations.leave.action")}
+						</SendouButton>
+					</FormWithConfirm>
+				) : null}
+			</div>
 			<div className="stack sm mt-4">
 				{association.members?.map((member) => (
 					<AssociationMember

@@ -181,3 +181,44 @@ describe("isVisible", () => {
 		expect(Association.isVisible(args)).toBe(true);
 	});
 });
+
+describe("mentionsAssociation", () => {
+	test.each([
+		{ why: "no visibility", visibility: null, expected: false },
+		{
+			why: "current association",
+			visibility: { forAssociation: 1 },
+			expected: true,
+		},
+		{
+			why: "other association",
+			visibility: { forAssociation: 2 },
+			expected: false,
+		},
+		{
+			why: "virtual association",
+			visibility: { forAssociation: "+1" as const },
+			expected: false,
+		},
+		{
+			why: "association later in the schedule",
+			visibility: {
+				forAssociation: 2,
+				notFoundInstructions: [{ at: 0, forAssociation: 1 }],
+			},
+			expected: true,
+		},
+		{
+			why: "schedule going public only",
+			visibility: {
+				forAssociation: 2,
+				notFoundInstructions: [{ at: 0, forAssociation: null }],
+			},
+			expected: false,
+		},
+	])("$why", ({ visibility, expected }) => {
+		expect(
+			Association.mentionsAssociation({ visibility, associationId: 1 }),
+		).toBe(expected);
+	});
+});

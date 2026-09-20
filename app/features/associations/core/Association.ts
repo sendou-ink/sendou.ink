@@ -53,6 +53,24 @@ export function isVisible(args: IsVisibleArgs) {
 	);
 }
 
+/** Whether the association is in the visibility at any point of its schedule, not only right now. */
+export function mentionsAssociation({
+	visibility,
+	associationId,
+}: {
+	visibility: AssociationVisibility | null;
+	associationId: number;
+}) {
+	if (!visibility) return false;
+
+	return (
+		visibility.forAssociation === associationId ||
+		(visibility.notFoundInstructions ?? []).some(
+			(instruction) => instruction.forAssociation === associationId,
+		)
+	);
+}
+
 export function isPublic(args: Omit<IsVisibleArgs, "associations">) {
 	return isVisible({
 		associations: null,

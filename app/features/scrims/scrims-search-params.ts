@@ -9,6 +9,11 @@ export const scrimsSearchParams = SearchParams.define({
 	divs: SP.custom(divsCodec, { loader: true }),
 	/** False once the user has edited the filters, making the URL win over their saved defaults. */
 	useDefaults: SP.param(v.boolean(), { default: true, loader: true }),
+	/** Only posts whose visibility ever mentioned this association, not part of the saved default filters. */
+	associationId: SP.param(
+		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+		{ loader: true },
+	),
 	pendingRequestPostId: SP.param(
 		v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
 		{
