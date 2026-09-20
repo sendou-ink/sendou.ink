@@ -23,5 +23,7 @@
 	"unseenRequests_one": "",
 	"unseenRequests_few": "",
 	"unseenRequests_many": "",
-	"unseenRequests_other": ""
+	"unseenRequests_other": "",
+	"friendsList.pin": "",
+	"friendsList.unpin": ""
 }

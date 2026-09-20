@@ -22,5 +22,7 @@
 	"teamMembers.empty": "",
 	"unseenRequests_one": "",
 	"unseenRequests_many": "",
-	"unseenRequests_other": ""
+	"unseenRequests_other": "",
+	"friendsList.pin": "",
+	"friendsList.unpin": ""
 }

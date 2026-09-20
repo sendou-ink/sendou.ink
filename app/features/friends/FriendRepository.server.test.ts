@@ -420,3 +420,69 @@ describe("findByUserIdWithActivity", () => {
 		expect(result).toHaveLength(0);
 	});
 });
+
+describe("updateOwnFriendshipPinned", () => {
+	beforeEach(async () => {
+		await createUsers(3);
+	});
+
+	const isPinnedFor = async (userId: number) => {
+		const [friend] = await FriendRepository.findByUserIdWithActivity(userId);
+
+		return friend.isPinned;
+	};
+
+	test("pins the friendship for the acting user only", async () => {
+		const friendship = await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
+
+		await withUserId(users.id(2), () =>
+			FriendRepository.updateOwnFriendshipPinned({
+				friendshipId: friendship.id,
+				isPinned: true,
+			}),
+		);
+
+		expect(await isPinnedFor(users.id(2))).toBe(1);
+		expect(await isPinnedFor(users.id(1))).toBe(0);
+	});
+
+	test("unpins a pinned friendship", async () => {
+		const friendship = await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
+
+		await withUserId(users.id(1), async () => {
+			await FriendRepository.updateOwnFriendshipPinned({
+				friendshipId: friendship.id,
+				isPinned: true,
+			});
+			await FriendRepository.updateOwnFriendshipPinned({
+				friendshipId: friendship.id,
+				isPinned: false,
+			});
+		});
+
+		expect(await isPinnedFor(users.id(1))).toBe(0);
+	});
+
+	test("does not pin a friendship the user is not part of", async () => {
+		const friendship = await FriendshipFactory.create({
+			userOneId: users.id(1),
+			userTwoId: users.id(2),
+		});
+
+		await withUserId(users.id(3), () =>
+			FriendRepository.updateOwnFriendshipPinned({
+				friendshipId: friendship.id,
+				isPinned: true,
+			}),
+		);
+
+		expect(await isPinnedFor(users.id(1))).toBe(0);
+		expect(await isPinnedFor(users.id(2))).toBe(0);
+	});
+});

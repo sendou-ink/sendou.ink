@@ -918,6 +918,10 @@ export interface Friendship {
 	userOneId: number;
 	userTwoId: number;
 	createdAt: Generated<number>;
+	/** userOne keeps this friend at the top of their friends list */
+	isPinnedByUserOne: Generated<DBBoolean>;
+	/** userTwo keeps this friend at the top of their friends list */
+	isPinnedByUserTwo: Generated<DBBoolean>;
 }
 
 /** Pending friend request from one user to another. */

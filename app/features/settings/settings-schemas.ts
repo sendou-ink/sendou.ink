@@ -1,11 +1,11 @@
 import * as v from "valibot";
 import { hidden, select, stringConstant, toggle } from "~/form/fields";
-import { themeInputSchema } from "~/utils/schema";
+import { revalidateRoot, themeInputSchema } from "~/utils/schema";
 
 export const customThemeSchema = v.object({
 	_action: stringConstant("UPDATE_CUSTOM_THEME"),
 	newValue: hidden(v.nullable(themeInputSchema), null),
-	revalidateRoot: v.optional(v.nullable(v.literal(true))),
+	revalidateRoot,
 });
 
 export const clockFormatSchema = v.object({

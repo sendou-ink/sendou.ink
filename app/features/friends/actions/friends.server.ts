@@ -67,6 +67,22 @@ export const action: ActionFunction = async ({ request }) => {
 
 			break;
 		}
+		case "PIN_FRIEND": {
+			await FriendRepository.updateOwnFriendshipPinned({
+				friendshipId: result.data.friendshipId,
+				isPinned: true,
+			});
+
+			break;
+		}
+		case "UNPIN_FRIEND": {
+			await FriendRepository.updateOwnFriendshipPinned({
+				friendshipId: result.data.friendshipId,
+				isPinned: false,
+			});
+
+			break;
+		}
 		case "ACCEPT_REQUEST": {
 			const friendRequest =
 				await FriendRepository.findFriendRequestByIdAndReceiver({

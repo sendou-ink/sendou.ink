@@ -20,5 +20,7 @@
 	"view.teamMembers": "队伍成员",
 	"view.all": "全部",
 	"teamMembers.empty": "暂无队伍成员",
-	"unseenRequests": "有 {{count}} 条未查看的好友请求"
+	"unseenRequests": "有 {{count}} 条未查看的好友请求",
+	"friendsList.pin": "",
+	"friendsList.unpin": ""
 }

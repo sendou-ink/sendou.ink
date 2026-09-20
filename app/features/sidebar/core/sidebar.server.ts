@@ -17,6 +17,7 @@ import {
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import {
 	type FriendActivityType,
+	friendSectionSortValue,
 	isInProgressFriendActivity,
 } from "~/features/friends/friends-constants";
 import {
@@ -330,8 +331,8 @@ function resolveFriends(
 	friendsWithActivity: FriendWithActivity[],
 	streamedSendouQMatches: ReadonlyMap<number, string>,
 ) {
-	const activityForRow = (row: FriendWithActivity) =>
-		resolveFriendActivity({
+	const entries = R.uniqueBy(friendsWithActivity, (f) => f.id).map((row) => {
+		const activity = resolveFriendActivity({
 			friendId: row.id,
 			tournamentId: row.tournamentId,
 			tournamentName: row.tournamentName,
@@ -340,91 +341,69 @@ function resolveFriends(
 			sendouQMatchStreams: streamedSendouQMatches,
 		});
 
-	const unique = R.uniqueBy(friendsWithActivity, (f) => f.id);
-	const friendRows = unique.filter((f) => f.friendshipId !== null);
-	const teamMemberRows = unique.filter((f) => f.friendshipId === null);
+		return {
+			row,
+			activity,
+			isFriend: row.friendshipId !== null,
+			isPinned: Boolean(row.isPinned),
+			activityType: activity.type,
+		};
+	});
 
-	const activeFriends: SidebarFriend[] = [];
-	const sendouqFriends: SidebarFriend[] = [];
-	const tournamentSubFriends: SidebarFriend[] = [];
-	const inactiveFriends: FriendWithActivity[] = [];
+	return orderSidebarFriends(entries).map(({ row, activity }) =>
+		rowToSidebarFriend(row, activity),
+	);
+}
 
-	for (const friend of friendRows) {
-		const activity = activityForRow(friend);
+type OrderableFriend = {
+	/** Mutual friend rather than a team member shown alongside them. */
+	isFriend: boolean;
+	isPinned: boolean;
+	activityType: FriendActivityType | null;
+};
 
-		if (!activity.type) {
-			inactiveFriends.push(friend);
-			continue;
-		}
+/** Pinned friends with activity, the rest with activity, pinned idle friends, the rest, truncated to what fits. Each section keeps its own order of activity type quotas, friends before team members. */
+export function orderSidebarFriends<T extends OrderableFriend>(entries: T[]) {
+	const friends = entries.filter(({ isFriend }) => isFriend);
+	const teamMembers = entries.filter(({ isFriend }) => !isFriend);
 
-		const sidebarFriend = rowToSidebarFriend(friend, activity);
+	const sendouqFriends = friends.filter(
+		({ activityType }) => activityType === "SENDOUQ",
+	);
+	const tournamentSubFriends = friends.filter(
+		({ activityType }) => activityType === "TOURNAMENT_SUB",
+	);
+	const inMatchFriends = friends.filter(({ activityType }) =>
+		isInProgressFriendActivity(activityType),
+	);
+	const idleFriends = friends.filter(({ activityType }) => !activityType);
+	const activeTeamMembers = teamMembers.filter(
+		({ activityType }) => activityType,
+	);
+	const idleTeamMembers = teamMembers.filter(
+		({ activityType }) => !activityType,
+	);
 
-		if (isInProgressFriendActivity(activity.type)) {
-			activeFriends.push(sidebarFriend);
-		} else if (activity.type === "SENDOUQ") {
-			sendouqFriends.push(sidebarFriend);
-		} else {
-			tournamentSubFriends.push(sidebarFriend);
-		}
-	}
+	const ordered = [
+		...sendouqFriends.slice(0, SENDOUQ_QUOTA),
+		...tournamentSubFriends.slice(0, TOURNAMENT_SUB_QUOTA),
+		...sendouqFriends.slice(SENDOUQ_QUOTA),
+		...tournamentSubFriends.slice(TOURNAMENT_SUB_QUOTA),
+		...inMatchFriends,
+		...activeTeamMembers,
+		...idleFriends,
+		...idleTeamMembers,
+	];
 
-	const result: SidebarFriend[] = [];
-
-	const sendouqToShow = sendouqFriends.slice(0, SENDOUQ_QUOTA);
-	const tournamentToShow = tournamentSubFriends.slice(0, TOURNAMENT_SUB_QUOTA);
-
-	result.push(...sendouqToShow, ...tournamentToShow);
-
-	const remaining = MAX_FRIENDS_VISIBLE - result.length;
-	if (remaining > 0) {
-		const extraSendouq = sendouqFriends.slice(SENDOUQ_QUOTA);
-		const extraTournament = tournamentSubFriends.slice(TOURNAMENT_SUB_QUOTA);
-		result.push(...[...extraSendouq, ...extraTournament].slice(0, remaining));
-	}
-
-	if (result.length < MAX_FRIENDS_VISIBLE) {
-		result.push(...activeFriends.slice(0, MAX_FRIENDS_VISIBLE - result.length));
-	}
-
-	if (result.length < MAX_FRIENDS_VISIBLE) {
-		const shownIds = new Set(result.map((f) => f.id));
-		const inactiveTeamMembers: FriendWithActivity[] = [];
-
-		for (const tm of teamMemberRows) {
-			if (result.length >= MAX_FRIENDS_VISIBLE) break;
-			if (shownIds.has(tm.id)) continue;
-
-			const activity = activityForRow(tm);
-			if (!activity.type) {
-				inactiveTeamMembers.push(tm);
-				continue;
-			}
-
-			result.push(rowToSidebarFriend(tm, activity));
-			shownIds.add(tm.id);
-		}
-
-		for (const friend of inactiveFriends) {
-			if (result.length >= MAX_FRIENDS_VISIBLE) break;
-			if (shownIds.has(friend.id)) continue;
-
-			result.push(rowToSidebarFriend(friend, null));
-			shownIds.add(friend.id);
-		}
-
-		for (const tm of inactiveTeamMembers) {
-			if (result.length >= MAX_FRIENDS_VISIBLE) break;
-
-			result.push(rowToSidebarFriend(tm, null));
-		}
-	}
-
-	return result.slice(0, MAX_FRIENDS_VISIBLE);
+	return R.sortBy(ordered, friendSectionSortValue).slice(
+		0,
+		MAX_FRIENDS_VISIBLE,
+	);
 }
 
 function rowToSidebarFriend(
 	row: FriendWithActivity,
-	activity: FriendActivity | null,
+	activity: FriendActivity,
 ): SidebarFriend {
 	return {
 		id: row.id,
@@ -433,12 +412,12 @@ function rowToSidebarFriend(
 		discordAvatar: row.discordAvatar,
 		customAvatarUrl: row.customAvatarUrl,
 		url: userPage({ discordId: row.discordId, customUrl: row.customUrl }),
-		subtitle: activity?.subtitle ?? "",
-		badge: activity?.badge ?? "",
-		activityType: activity?.type ?? null,
-		matchId: activity?.matchId ?? null,
-		tournamentId: activity?.tournamentId ?? row.tournamentId,
-		streamUrl: activity?.streamUrl ?? null,
+		subtitle: activity.subtitle ?? "",
+		badge: activity.badge ?? "",
+		activityType: activity.type,
+		matchId: activity.matchId,
+		tournamentId: activity.tournamentId ?? row.tournamentId,
+		streamUrl: activity.streamUrl,
 	};
 }
 

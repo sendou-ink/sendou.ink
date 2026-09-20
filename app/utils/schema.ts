@@ -510,6 +510,11 @@ export function checkboxValueToBoolean(value: unknown) {
 export const _action = <T extends string>(value: T) =>
 	preprocess(deduplicate, v.literal(value));
 
+/** Marker field asking the root loader to revalidate too (see `shouldRevalidate` in root.tsx), `true` in a JSON body and `"true"` in form data. */
+export const revalidateRoot = v.optional(
+	v.nullable(v.union([v.literal(true), v.literal("true")])),
+);
+
 /** Works around a bug at least in Safari 15 where a SubmitButton value might get sent twice */
 export function deduplicate(value: unknown) {
 	if (Array.isArray(value)) {
