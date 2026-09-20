@@ -90,23 +90,52 @@ async function findBy(
 
 	return associations.map((a) => {
 		const members = a.members ?? [];
-		const adminIds = members
-			.filter((member) => member.role === "ADMIN")
-			.map((user) => user.id);
+		const adminIds = memberIdsWithRole(members, "ADMIN");
+		const managerIds = memberIdsWithRole(members, "MANAGER");
 
 		return {
 			...a,
+			members: a.members?.map((member) => ({
+				...member,
+				permissions: {
+					REMOVE: memberRemoverIds({ member, adminIds, managerIds }),
+				},
+			})),
 			permissions: {
 				MANAGE: adminIds,
-				SHARE_INVITE_LINK: [
-					...adminIds,
-					...members
-						.filter((member) => member.role === "MANAGER")
-						.map((user) => user.id),
-				],
+				MANAGE_INVITE_LINK: [...adminIds, ...managerIds],
 			},
 		};
 	});
+}
+
+function memberIdsWithRole(
+	members: Array<{ id: number; role: Tables["AssociationMember"]["role"] }>,
+	role: Tables["AssociationMember"]["role"],
+) {
+	return members
+		.filter((member) => member.role === role)
+		.map((member) => member.id);
+}
+
+/** Admins can remove anyone but themselves, managers only regular members. */
+function memberRemoverIds({
+	member,
+	adminIds,
+	managerIds,
+}: {
+	member: { id: number; role: Tables["AssociationMember"]["role"] };
+	adminIds: Array<number>;
+	managerIds: Array<number>;
+}) {
+	const removerIds =
+		member.role === "ADMIN"
+			? []
+			: member.role === "MANAGER"
+				? adminIds
+				: [...adminIds, ...managerIds];
+
+	return removerIds.filter((id) => id !== member.id);
 }
 
 const DEFAULT_VIRTUAL_ASSOCIATIONS: Array<AssociationVirtualIdentifier> = [

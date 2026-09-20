@@ -22,12 +22,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "REMOVE_MEMBER": {
-			await validateHasManagePermissions(data.associationId);
-
-			errorToastIfFalsy(
-				data.userId !== user.id,
-				"Cannot remove yourself from the association",
+			const association = await findAssociation(data.associationId);
+			const memberToRemove = badRequestIfFalsy(
+				association.members!.find((member) => member.id === data.userId),
 			);
+
+			requirePermission(memberToRemove, "REMOVE");
 
 			await AssociationRepository.deleteMember({
 				userId: data.userId,
@@ -38,8 +38,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		}
 		case "ADD_MANAGER":
 		case "REMOVE_MANAGER": {
-			const association = await validateHasManagePermissions(
+			const association = await requireAssociationPermission(
 				data.associationId,
+				"MANAGE",
 			);
 
 			errorToastIfFalsy(
@@ -58,14 +59,17 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "DELETE_ASSOCIATION": {
-			await validateHasManagePermissions(data.associationId);
+			await requireAssociationPermission(data.associationId, "MANAGE");
 
 			await AssociationRepository.deleteById(data.associationId);
 
 			break;
 		}
 		case "REFRESH_INVITE_CODE": {
-			await validateHasManagePermissions(data.associationId);
+			await requireAssociationPermission(
+				data.associationId,
+				"MANAGE_INVITE_LINK",
+			);
 
 			await AssociationRepository.refreshInviteCode(data.associationId);
 
@@ -105,11 +109,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LEAVE_ASSOCIATION": {
-			const association = badRequestIfFalsy(
-				await AssociationRepository.findById(data.associationId, {
-					withMembers: true,
-				}),
-			);
+			const association = await findAssociation(data.associationId);
 
 			const isAdmin = association.permissions.MANAGE.includes(user.id);
 			const newAdmin = isAdmin
@@ -137,12 +137,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return null;
 };
 
-async function validateHasManagePermissions(associationId: number) {
-	const association = badRequestIfFalsy(
+async function findAssociation(associationId: number) {
+	return badRequestIfFalsy(
 		await AssociationRepository.findById(associationId, { withMembers: true }),
 	);
+}
 
-	requirePermission(association, "MANAGE");
+async function requireAssociationPermission(
+	associationId: number,
+	permission: "MANAGE" | "MANAGE_INVITE_LINK",
+) {
+	const association = await findAssociation(associationId);
+
+	requirePermission(association, permission);
 
 	return association;
 }

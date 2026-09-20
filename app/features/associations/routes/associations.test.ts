@@ -70,6 +70,115 @@ describe("Associations page action", () => {
 		expect(associations[0]!.inviteCode).toBeUndefined();
 	});
 
+	test("starred member can reset the invite link", async () => {
+		const association = await AssociationFactory.create(
+			{ userId: adminId() },
+			{ managerUserIds: [memberId()] },
+		);
+
+		const before = await associationsLoader({ user: memberId() });
+
+		await associationsAction(
+			{ _action: "REFRESH_INVITE_CODE", associationId: association.id },
+			{ user: memberId() },
+		);
+
+		const after = await associationsLoader({ user: memberId() });
+		expect(after.associations[0]!.inviteCode).toBeTruthy();
+		expect(after.associations[0]!.inviteCode).not.toBe(
+			before.associations[0]!.inviteCode,
+		);
+	});
+
+	test("unstarred member can't reset the invite link", async () => {
+		const association = await AssociationFactory.create(
+			{ userId: adminId() },
+			{ memberUserIds: [memberId()] },
+		);
+
+		await expect(
+			associationsAction(
+				{ _action: "REFRESH_INVITE_CODE", associationId: association.id },
+				{ user: memberId() },
+			),
+		).rejects.toThrow();
+	});
+
+	test("starred member can remove an unstarred member", async () => {
+		const association = await AssociationFactory.create(
+			{ userId: adminId() },
+			{ managerUserIds: [memberId()], memberUserIds: [otherMemberId()] },
+		);
+
+		await associationsAction(
+			{
+				_action: "REMOVE_MEMBER",
+				associationId: association.id,
+				userId: otherMemberId(),
+			},
+			{ user: memberId() },
+		);
+
+		const { associations } = await associationsLoader({ user: memberId() });
+		expect(associations[0]!.members!.map((member) => member.id)).not.toContain(
+			otherMemberId(),
+		);
+	});
+
+	test("starred member can't remove another starred member", async () => {
+		const association = await AssociationFactory.create(
+			{ userId: adminId() },
+			{ managerUserIds: [memberId(), otherMemberId()] },
+		);
+
+		await expect(
+			associationsAction(
+				{
+					_action: "REMOVE_MEMBER",
+					associationId: association.id,
+					userId: otherMemberId(),
+				},
+				{ user: memberId() },
+			),
+		).rejects.toThrow();
+	});
+
+	test("starred member can't remove the admin", async () => {
+		const association = await AssociationFactory.create(
+			{ userId: adminId() },
+			{ managerUserIds: [memberId()] },
+		);
+
+		await expect(
+			associationsAction(
+				{
+					_action: "REMOVE_MEMBER",
+					associationId: association.id,
+					userId: adminId(),
+				},
+				{ user: memberId() },
+			),
+		).rejects.toThrow();
+	});
+
+	test("admin can't remove themselves", async () => {
+		const association = await AssociationFactory.create(
+			{ userId: adminId() },
+			{ memberUserIds: [memberId()] },
+		);
+
+		await expect(
+			associationsAction(
+				{
+					_action: "REMOVE_MEMBER",
+					associationId: association.id,
+					userId: adminId(),
+				},
+				{ user: adminId() },
+			),
+		).rejects.toThrow();
+	});
+
 	test("member can't star another member", async () => {
 		const association = await AssociationFactory.create(
 			{ userId: adminId() },

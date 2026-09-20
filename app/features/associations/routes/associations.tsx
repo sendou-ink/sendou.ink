@@ -177,7 +177,7 @@ function AssociationSection({
 						key={member.id}
 						member={member}
 						associationId={association.id}
-						showControls={canManage && member.id !== user?.id}
+						canStar={canManage && member.id !== user?.id}
 					/>
 				))}
 			</div>
@@ -190,7 +190,6 @@ function AssociationSection({
 				<AssociationInviteCodeActions
 					associationId={association.id}
 					inviteCode={association.inviteCode}
-					canResetLink={canManage}
 				/>
 			) : null}
 		</section>
@@ -200,11 +199,9 @@ function AssociationSection({
 function AssociationInviteCodeActions({
 	associationId,
 	inviteCode,
-	canResetLink,
 }: {
 	associationId: number;
 	inviteCode: string;
-	canResetLink: boolean;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
@@ -225,17 +222,15 @@ function AssociationInviteCodeActions({
 					aria-label="Copy to clipboard"
 				/>
 			</div>
-			{canResetLink ? (
-				<ActionButton
-					schema={associationsPageActionSchema}
-					action="REFRESH_INVITE_CODE"
-					fields={{ associationId }}
-					variant="minimal-destructive"
-					size="small"
-				>
-					{t("scrims:associations.shareLink.reset")}
-				</ActionButton>
-			) : null}
+			<ActionButton
+				schema={associationsPageActionSchema}
+				action="REFRESH_INVITE_CODE"
+				fields={{ associationId }}
+				variant="minimal-destructive"
+				size="small"
+			>
+				{t("scrims:associations.shareLink.reset")}
+			</ActionButton>
 		</div>
 	);
 }
@@ -243,21 +238,22 @@ function AssociationInviteCodeActions({
 function AssociationMember({
 	member,
 	associationId,
-	showControls,
+	canStar,
 }: {
 	member: NonNullable<
 		AssociationsLoaderData["associations"][number]["members"]
 	>[number];
 	associationId: number;
-	showControls?: boolean;
+	canStar: boolean;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
+	const canRemove = useHasPermission(member, "REMOVE");
 
 	return (
 		<div className="stack horizontal sm items-center justify-between">
 			<div className="stack horizontal sm items-center">
 				<UserLink user={member} />
-				{!showControls && member.role === "MANAGER" ? (
+				{!canStar && member.role === "MANAGER" ? (
 					<Star
 						className="small-icon"
 						fill="currentColor"
@@ -266,51 +262,55 @@ function AssociationMember({
 					/>
 				) : null}
 			</div>
-			{showControls ? (
+			{canStar || canRemove ? (
 				<div className="stack horizontal sm items-center">
-					<ActionButton
-						schema={associationsPageActionSchema}
-						action={
-							member.role === "MANAGER" ? "REMOVE_MANAGER" : "ADD_MANAGER"
-						}
-						fields={{ userId: member.id, associationId }}
-						shape="square"
-						variant="minimal"
-						size="small"
-						className="small-text"
-						icon={
-							<Star
-								className="small-icon"
-								fill={member.role === "MANAGER" ? "currentColor" : "none"}
-							/>
-						}
-						aria-label={t(
-							member.role === "MANAGER"
-								? "scrims:associations.manager.remove"
-								: "scrims:associations.manager.add",
-							{ username: member.username },
-						)}
-					/>
-					<FormWithConfirm
-						dialogHeading={t("scrims:associations.removeMember.title", {
-							username: member.username,
-						})}
-						submitButtonText={t("common:actions.remove")}
-						fields={[
-							["userId", member.id],
-							["associationId", associationId],
-							["_action", "REMOVE_MEMBER"],
-						]}
-					>
-						<SendouButton
+					{canStar ? (
+						<ActionButton
+							schema={associationsPageActionSchema}
+							action={
+								member.role === "MANAGER" ? "REMOVE_MANAGER" : "ADD_MANAGER"
+							}
+							fields={{ userId: member.id, associationId }}
 							shape="square"
-							icon={<Trash className="small-icon" />}
-							className="small-text"
-							variant="minimal-destructive"
+							variant="minimal"
 							size="small"
-							type="submit"
+							className="small-text"
+							icon={
+								<Star
+									className="small-icon"
+									fill={member.role === "MANAGER" ? "currentColor" : "none"}
+								/>
+							}
+							aria-label={t(
+								member.role === "MANAGER"
+									? "scrims:associations.manager.remove"
+									: "scrims:associations.manager.add",
+								{ username: member.username },
+							)}
 						/>
-					</FormWithConfirm>
+					) : null}
+					{canRemove ? (
+						<FormWithConfirm
+							dialogHeading={t("scrims:associations.removeMember.title", {
+								username: member.username,
+							})}
+							submitButtonText={t("common:actions.remove")}
+							fields={[
+								["userId", member.id],
+								["associationId", associationId],
+								["_action", "REMOVE_MEMBER"],
+							]}
+						>
+							<SendouButton
+								shape="square"
+								icon={<Trash className="small-icon" />}
+								className="small-text"
+								variant="minimal-destructive"
+								size="small"
+								type="submit"
+							/>
+						</FormWithConfirm>
+					) : null}
 				</div>
 			) : null}
 		</div>

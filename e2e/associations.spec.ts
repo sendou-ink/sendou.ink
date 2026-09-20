@@ -69,7 +69,8 @@ test.describe("Associations", () => {
 		await associations.goto();
 
 		await expect(associations.locators.inviteLinkInputs).toHaveCount(1);
-		await isNotVisible(associations.locators.resetLinkButton);
+		await expect(associations.locators.resetLinkButton).toBeVisible();
+		await isNotVisible(associations.locators.deleteButtons);
 
 		await impersonate(page, ADMIN_ID);
 		await associations.goto();
@@ -78,7 +79,7 @@ test.describe("Associations", () => {
 		await impersonate(page, NZAP_TEST_ID);
 		await associations.goto();
 
-		await expect(associations.locators.resetLinkButton).toBeVisible();
+		await expect(associations.locators.deleteButtons).toHaveCount(1);
 	});
 
 	test("joins and leaves an association", async ({ page, factories }) => {
