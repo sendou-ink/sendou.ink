@@ -6,6 +6,7 @@ import { SendouBottomTexts } from "~/components/elements/BottomTexts";
 import { SendouButton } from "~/components/elements/Button";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
+import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
 import {
@@ -144,6 +145,7 @@ export function SendouSelect<T extends object>({
 }: SendouSelectProps<T>) {
 	const { t } = useTranslation(["common"]);
 	const uid = useAnchorSafeId();
+	const topLayerStyle = useTopLayerViewTransitionStyle();
 	const popoverId = `${uid}-select-popover`;
 	const listboxId = `${uid}-select-listbox`;
 	const anchorName = `--select-anchor-${uid}`;
@@ -573,7 +575,12 @@ export function SendouSelect<T extends object>({
 				id={popoverId}
 				popover="auto"
 				className={clsx(styles.popover, popoverClassName)}
-				style={{ positionAnchor: anchorName } as React.CSSProperties}
+				style={
+					{
+						positionAnchor: anchorName,
+						...topLayerStyle,
+					} as React.CSSProperties
+				}
 				onBeforeToggle={onPopoverBeforeToggle}
 				onToggle={onPopoverToggle}
 				onKeyDown={onPopoverKeyDown}

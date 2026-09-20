@@ -2,6 +2,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { flushSync } from "react-dom";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
+import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import {
 	type AnchorPlacement,
 	useAnchorPositioning,
@@ -117,6 +118,7 @@ export function SendouPopover({
 
 	const popoverRef = React.useRef<HTMLDivElement>(null);
 	const triggerContainerRef = React.useRef<HTMLSpanElement>(null);
+	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	const setOpen = (next: boolean) => {
 		if (!isControlled) {
@@ -200,7 +202,12 @@ export function SendouPopover({
 				id={popoverId}
 				popover="auto"
 				className={clsx(styles.content, popoverClassName)}
-				style={{ positionAnchor: anchorName } as React.CSSProperties}
+				style={
+					{
+						positionAnchor: anchorName,
+						...topLayerStyle,
+					} as React.CSSProperties
+				}
 				role="dialog"
 				tabIndex={-1}
 				data-placement={placement}
@@ -232,6 +239,7 @@ export function SendouAnchoredPopover({
 	const anchorName = `--popover-anchor-${uid}`;
 
 	const popoverRef = React.useRef<HTMLDivElement>(null);
+	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	// before the positioning effect, so the content is placed by its first paint
 	useIsomorphicLayoutEffect(() => {
@@ -278,7 +286,9 @@ export function SendouAnchoredPopover({
 			ref={popoverRef}
 			popover="auto"
 			className={styles.content}
-			style={{ positionAnchor: anchorName } as React.CSSProperties}
+			style={
+				{ positionAnchor: anchorName, ...topLayerStyle } as React.CSSProperties
+			}
 			role="dialog"
 			tabIndex={-1}
 			aria-label={ariaLabel}

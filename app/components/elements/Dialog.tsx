@@ -8,6 +8,10 @@ import {
 	type SendouButtonProps,
 } from "~/components/elements/Button";
 import { useHydrated } from "~/hooks/useHydrated";
+import {
+	useReportModalOpen,
+	useTopLayerViewTransitionStyle,
+} from "~/utils/view-transition";
 import styles from "./Dialog.module.css";
 
 interface DialogElementProps {
@@ -35,6 +39,7 @@ interface DialogElementProps {
  */
 export function SendouModal({ ref, ...rest }: DialogElementProps) {
 	const isHydrated = useHydrated();
+	useReportModalOpen(isHydrated);
 	if (!isHydrated) return null;
 
 	return createPortal(
@@ -67,10 +72,13 @@ function DialogElement({
 	children,
 	ref,
 }: DialogElementProps) {
+	const topLayerStyle = useTopLayerViewTransitionStyle();
+
 	return (
 		<dialog
 			ref={ref}
 			id={id}
+			style={topLayerStyle}
 			className={clsx(className, {
 				[styles.blurredBackdrop]: blurredBackdrop,
 			})}
@@ -187,6 +195,7 @@ function TriggeredDialog({
 	const dialogId = React.useId();
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const [open, setOpen] = React.useState(false);
+	useReportModalOpen(open);
 
 	const [contentKey, remountContent] = React.useReducer(
 		(key: number) => key + 1,

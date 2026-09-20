@@ -82,6 +82,10 @@ import "~/styles/common.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
+import {
+	OpenModalsContext,
+	useHoverCursorForViewTransitions,
+} from "~/utils/view-transition";
 
 const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
 
@@ -199,6 +203,7 @@ function Document({
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
+	useHoverCursorForViewTransitions();
 
 	const htmlStyle: Record<string, string | number> = {
 		...Object.fromEntries(customThemeStyle),
@@ -427,6 +432,7 @@ function useCustomThemeVars() {
 
 export default function App() {
 	const rootData = useLoaderData<RootLoaderData>();
+	const [openModals, setOpenModals] = React.useState(0);
 
 	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
 	// elements to work properly when a React Aria Component disabled scrolling
@@ -467,14 +473,16 @@ export default function App() {
 	}, []);
 
 	return (
-		<ThemeProvider
-			specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
-			themeSource="user-preference"
-		>
-			<Document data={rootData}>
-				<Outlet />
-			</Document>
-		</ThemeProvider>
+		<OpenModalsContext value={{ count: openModals, setCount: setOpenModals }}>
+			<ThemeProvider
+				specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
+				themeSource="user-preference"
+			>
+				<Document data={rootData}>
+					<Outlet />
+				</Document>
+			</ThemeProvider>
+		</OpenModalsContext>
 	);
 }
 

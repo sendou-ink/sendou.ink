@@ -6,6 +6,7 @@ import {
 	focusMoveForKey,
 	rovingFocusIndex,
 } from "~/utils/roving-focus";
+import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import { Image } from "../Image";
 import { useAnchorPositioning } from "./anchor-positioning";
 import styles from "./Menu.module.css";
@@ -44,6 +45,7 @@ export function SendouMenu({
 	eager,
 }: SendouMenuProps) {
 	const uid = useAnchorSafeId();
+	const topLayerStyle = useTopLayerViewTransitionStyle();
 	const popoverId = `${uid}-menu`;
 	const anchorName = `--menu-anchor-${uid}`;
 
@@ -132,7 +134,12 @@ export function SendouMenu({
 					[styles.scrolling]: scrolling,
 					[styles.opensLeft]: opensLeft,
 				})}
-				style={{ positionAnchor: anchorName } as React.CSSProperties}
+				style={
+					{
+						positionAnchor: anchorName,
+						...topLayerStyle,
+					} as React.CSSProperties
+				}
 				data-placement={placement}
 				onBeforeToggle={onBeforeToggle}
 				onToggle={onToggle}

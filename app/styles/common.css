@@ -17,10 +17,29 @@
 		pointer-events: none;
 	}
 
+	/* captured elements are not hit tested while they animate, keep the cursor they had (see useHoverCursorForViewTransitions) */
+	html:active-view-transition {
+		cursor: var(--hover-cursor, auto);
+	}
+
 	/* a card React decided not to animate is left as an old-only snapshot that would still
 	   fade for the full duration, holding the next render for a transition of no change */
 	::view-transition-old(.card-update):only-child {
 		animation-duration: 0s;
+	}
+
+	/* top layer elements (see useTopLayerViewTransitionStyle) show their live state above the rest */
+	::view-transition-group(.top-layer) {
+		z-index: 2;
+		animation: none;
+	}
+
+	::view-transition-old(.top-layer) {
+		display: none;
+	}
+
+	::view-transition-new(.top-layer) {
+		animation: none;
 	}
 
 	body {
