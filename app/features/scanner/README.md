@@ -28,7 +28,9 @@ running capture (`LiveView`), a past session (`PastSessionView`) and a
 scanned VoD (`VodView`): header, clip strip, then match cards
 (`components/MatchCard.tsx`) newest first. Views are picked by the `view`
 search param (`scanner-search-params.ts`: `live`, `session&id=`,
-`vod&name=`, `clips`, and the debug-gated `debug` / dev-only `fixtures`).
+`vod&name=`, `clips`, `debug` and the dev-only `fixtures`). Nothing links to
+the `debug` screenshot view: dropping an image on the landing's File card
+opens it, for anyone, through the same handoff Inspect uses.
 
 - **Controllers are module singletons**, not view state: the capture
   (`components/live-session.ts`) and a running VoD scan
@@ -61,10 +63,11 @@ search param (`scanner-search-params.ts`: `live`, `session&id=`,
   `Matches` (`core/csv/matches.ts`, one row per game, the rows the cards
   render) and `Raw detections` (`core/csv/events.ts`, one row per event).
   Column names stay English keys.
-- **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`): the
-  image/screenshot view (`ScreenshotPage.tsx`), the dev-only fixtures view,
+- **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`):
   `Save frame as fixture`, `?telemetry=true`, and the `Raw detections`
-  disclosure inside a match card (the per-event cards with Inspect).
+  disclosure inside a match card (the per-event cards with Inspect). The
+  screenshot view (`ScreenshotPage.tsx`) is not gated; the fixtures view is
+  dev-only.
 
 ## Clips
 

@@ -1,7 +1,9 @@
 /**
  * The landing: two entry cards (Live / File), the clip history strip and
  * the sessions list. Anyone can capture, scan files and get clips locally;
- * only uploading needs a login. Dropping a file anywhere here starts a scan.
+ * only uploading needs a login. Dropping a file anywhere here starts a scan;
+ * an image opens the screenshot view instead, through the same handoff
+ * Inspect uses.
  */
 import clsx from "clsx";
 import { Play, Upload } from "lucide-react";
@@ -17,6 +19,7 @@ import {
 import { SCANNER_PAGE } from "~/utils/urls";
 import { scannerSearchParams } from "../scanner-search-params";
 import { MAX_HISTORY_CLIPS, type ScannerClip } from "../store/clips";
+import { newInspectKey, putInspectFrame } from "../store/inspect";
 import { ClipDialog } from "./ClipDialog";
 import { ClipStrip } from "./ClipStrip";
 import { useClips } from "./clips-feed";
@@ -71,8 +74,18 @@ export function LandingView() {
 	};
 
 	const scanFile = (file: File) => {
+		if (file.type.startsWith("image/")) {
+			void inspectScreenshot(file);
+			return;
+		}
 		void startVodScan(file, { saveClips: saveClipsFromFile, telemetry });
 		setParams({ view: "vod", name: file.name });
+	};
+
+	const inspectScreenshot = async (file: File) => {
+		const key = newInspectKey();
+		await putInspectFrame(key, file);
+		setParams({ view: "debug", inspect: key });
 	};
 
 	return (
@@ -131,13 +144,16 @@ export function LandingView() {
 						<Upload size={16} aria-hidden />
 						File
 					</h2>
-					<p className={styles.cardText}>Scan a recorded VoD.</p>
+					<p className={styles.cardText}>
+						Scan a recorded VoD, or a screenshot to see what the scanner reads
+						from it.
+					</p>
 					<label className={styles.dropzone}>
-						Drop a video here or{" "}
+						Drop a video or screenshot here or{" "}
 						<span className={styles.choose}>choose file</span>
 						<input
 							type="file"
-							accept="video/*"
+							accept="video/*,image/*"
 							className={styles.fileInput}
 							onChange={(e) => {
 								const file = e.target.files?.[0];
