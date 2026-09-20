@@ -22,6 +22,9 @@ type Tab = "action" | "result" | "rosters";
 
 const MAPS_TO_WIN = Math.ceil(SENDOUQ_BEST_OF / 2);
 
+/** The loss confirm ignores taps for `CONFIRM_LOSS_MIN_GAP_MS` after arming. */
+const LOSS_CONFIRM_MIN_GAP_MS = 400;
+
 const TEAM_NAMES: Record<Side, string> = {
 	ALPHA: "Group Alpha",
 	BRAVO: "Group Bravo",
@@ -161,8 +164,13 @@ export class SendouQMatchPage {
 			hasText: "Tap again",
 		});
 
+		const isArmed = await armedLossButton.isVisible();
+		if (isArmed) {
+			await waitOutLossConfirmMinGap(this.page);
+		}
+
 		await waitForPOSTResponse(this.page, async () => {
-			if (await armedLossButton.isVisible()) {
+			if (isArmed) {
 				await armedLossButton.click();
 			}
 		});
@@ -240,4 +248,10 @@ export class SendouQMatchPage {
 			await this.page.getByTestId("confirm-button").click();
 		});
 	}
+}
+
+/** Waits out the gap the loss confirm keeps between arming and accepting the second tap. */
+export async function waitOutLossConfirmMinGap(page: Page) {
+	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the min gap after arming has no observable end
+	await page.waitForTimeout(LOSS_CONFIRM_MIN_GAP_MS);
 }

@@ -40,6 +40,8 @@ import styles from "./SendouQMatchActionTab.module.css";
 
 const CONFIRM_COOLDOWN_MS = 5_000;
 const CONFIRM_LOSS_ARMED_MS = 5_000;
+/** Guards against an accidental double-click satisfying the loss "tap again". */
+const CONFIRM_LOSS_MIN_GAP_MS = 300;
 const MAP_CHANGED_COOLDOWN_MS = 10_000;
 
 export function SendouQMatchActionTab({
@@ -353,8 +355,13 @@ function ScoreConfirmerSection({
 	const disputeScore = useActionSubmit(matchSchema);
 	const [cooldownUntil] = useState(() => Date.now() + CONFIRM_COOLDOWN_MS);
 	const cooldownSecondsLeft = useCooldown(cooldownUntil);
-	const [lossArmedUntil, setLossArmedUntil] = useState<number | null>(null);
-	const isLossArmed = useCooldown(lossArmedUntil) > 0;
+	const [lossArmedAt, setLossArmedAt] = useState<number | null>(null);
+	const isLossArmed =
+		useCooldown(
+			typeof lossArmedAt === "number"
+				? lossArmedAt + CONFIRM_LOSS_ARMED_MS
+				: null,
+		) > 0;
 	const [hasDisputed, setHasDisputed] = useState(false);
 
 	const decidingMap = [...data.match.mapList]
@@ -432,9 +439,17 @@ function ScoreConfirmerSection({
 				isDisabled={cooldownSecondsLeft > 0}
 				isPending={confirmScore.state !== "idle"}
 				onClick={() => {
-					if (outcome === "loss" && !isLossArmed) {
-						setLossArmedUntil(Date.now() + CONFIRM_LOSS_ARMED_MS);
-						return;
+					if (outcome === "loss") {
+						if (!isLossArmed) {
+							setLossArmedAt(Date.now());
+							return;
+						}
+						if (
+							typeof lossArmedAt === "number" &&
+							Date.now() - lossArmedAt < CONFIRM_LOSS_MIN_GAP_MS
+						) {
+							return;
+						}
 					}
 					submitConfirmation();
 				}}
