@@ -150,15 +150,17 @@ async function toSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 	return sessions;
 }
 
-/** Changes when an event joins, leaves, or its send status moves. */
+/** Changes when an event joins, leaves, moves (a sampled run's trailing read) or its send status moves. */
 function signatureOf(events: readonly StoredEvent[]): string {
 	let sends = 0;
 	let latest = 0;
+	let latestT = Number.NEGATIVE_INFINITY;
 	for (const event of events) {
+		latestT = Math.max(latestT, event.t);
 		if (event.send) {
 			sends++;
 			latest = Math.max(latest, event.send.at);
 		}
 	}
-	return `${events.length}:${events.at(-1)?.id ?? 0}:${sends}:${latest}`;
+	return `${events.length}:${events.at(-1)?.id ?? 0}:${latestT}:${sends}:${latest}`;
 }
