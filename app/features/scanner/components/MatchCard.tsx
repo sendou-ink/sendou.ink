@@ -119,6 +119,7 @@ export function MatchCard({
 
 	const result = matchResult(match);
 	const pov = povPlayer(match);
+	const matchOrigin = timelineOrigin(match);
 	const meta = [
 		kind === "vod" && match.startsAt !== null
 			? `at ${formatPosition(match.startsAt - originT)}`
@@ -228,9 +229,11 @@ export function MatchCard({
 					{match.objective || match.playerStatus ? (
 						<GameTimeline
 							objectiveEvents={(match.objective?.samples ?? []).map(
-								(sample) => ({ t: sample.t, data: sample }),
+								(sample) => ({ t: sample.t - matchOrigin, data: sample }),
 							)}
-							playerStatusSamples={match.playerStatus?.samples ?? []}
+							playerStatusSamples={(match.playerStatus?.samples ?? []).map(
+								(sample) => ({ ...sample, t: sample.t - matchOrigin }),
+							)}
 							teams={playerStatusTeams(match, TEAM_LABELS)}
 						/>
 					) : null}
@@ -241,6 +244,19 @@ export function MatchCard({
 				</div>
 			) : null}
 		</div>
+	);
+}
+
+/**
+ * Live sessions stamp reads with wall-clock seconds and VoDs with file position;
+ * the timeline charts want seconds since the match began either way.
+ */
+function timelineOrigin(match: ScannerMatch): number {
+	return (
+		match.startsAt ??
+		match.objective?.samples[0]?.t ??
+		match.playerStatus?.samples[0]?.t ??
+		0
 	);
 }
 
