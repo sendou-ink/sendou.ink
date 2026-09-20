@@ -165,6 +165,7 @@
 	"match.rematch.vote.no": "不，到此为止",
 	"match.rematch.vote.noConfirm": "确认投反对票吗？投票后将无法更改。",
 	"match.rematch.declined": "",
+	"match.rematch.memberJoinedNewGroup": "",
 	"match.rematch.fizzled": "无人想要继续排队",
 	"match.rematch.rejoinQueue": "重新加入队列",
 	"match.rematch.backToQueue": "返回队列",

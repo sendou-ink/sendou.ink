@@ -58,9 +58,11 @@ export function MatchmadeRejoinSection({
 export function TrustedRejoinSection({
 	viewerGroup,
 	hasJoinedNewGroup,
+	someGroupMemberHasJoinedNewGroup,
 }: {
 	viewerGroup: NonNullable<SendouQMatchLoaderData["match"]["groupAlpha"]>;
 	hasJoinedNewGroup: boolean;
+	someGroupMemberHasJoinedNewGroup: boolean;
 }) {
 	const { t } = useTranslation(["q"]);
 	const lookAgain = useActionSubmit(matchSchema);
@@ -74,6 +76,15 @@ export function TrustedRejoinSection({
 					</SendouButton>
 				</Link>
 			</div>
+		);
+	}
+
+	// the whole group has to be free for it, so offering it here could only fail
+	if (someGroupMemberHasJoinedNewGroup) {
+		return (
+			<RejoinQueueSection
+				explanation={t("q:match.rematch.memberJoinedNewGroup")}
+			/>
 		);
 	}
 
@@ -96,14 +107,18 @@ export function TrustedRejoinSection({
 
 function DeclinedSection() {
 	const { t } = useTranslation(["q"]);
+
+	return <RejoinQueueSection explanation={t("q:match.rematch.declined")} />;
+}
+
+function RejoinQueueSection({ explanation }: { explanation: string }) {
+	const { t } = useTranslation(["q"]);
 	const rejoinQueue = useActionSubmit(frontPageSchema, {
 		action: SENDOUQ_PAGE,
 	});
 	return (
 		<div className="stack md items-center">
-			<p className="text-lighter text-sm text-center">
-				{t("q:match.rematch.declined")}
-			</p>
+			<p className="text-lighter text-sm text-center">{explanation}</p>
 			<SendouButton
 				variant="minimal"
 				className="text-sm font-bold"

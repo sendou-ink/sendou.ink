@@ -46,12 +46,23 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 
 	const match = SendouQ.mapMatch(matchUnmapped, user);
 
-	const currentGroup = user ? SendouQ.findOwnGroup(user.id) : undefined;
+	const viewerGroup = user
+		? [matchUnmapped.groupAlpha, matchUnmapped.groupBravo].find((group) =>
+				group.members.some((member) => member.id === user.id),
+			)
+		: undefined;
+
+	const joinedNewGroup = (userId: number) => {
+		const currentGroup = SendouQ.findOwnGroup(userId);
+		return Boolean(currentGroup && currentGroup.matchId !== matchId);
+	};
 
 	return {
 		// e.g. the group already requeued, so the viewer has nothing left to requeue with
-		hasJoinedNewGroup: Boolean(
-			currentGroup && currentGroup.matchId !== matchId,
+		hasJoinedNewGroup: Boolean(user && joinedNewGroup(user.id)),
+		// requeueing with the same group needs every member of it free of other groups
+		someGroupMemberHasJoinedNewGroup: Boolean(
+			viewerGroup?.members.some((member) => joinedNewGroup(member.id)),
 		),
 		...(await UserCardRepository.findAllByUserIds({
 			userIds: matchUsers,

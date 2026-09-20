@@ -286,6 +286,9 @@ function RequeueTab({
 						<TrustedRejoinSection
 							viewerGroup={viewerGroup}
 							hasJoinedNewGroup={data.hasJoinedNewGroup}
+							someGroupMemberHasJoinedNewGroup={
+								data.someGroupMemberHasJoinedNewGroup
+							}
 						/>
 					) : null}
 					{isOnReporterTeam ? <hr className={styles.divider} /> : null}

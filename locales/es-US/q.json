@@ -165,6 +165,7 @@
 	"match.rematch.vote.no": "No, he terminado",
 	"match.rematch.vote.noConfirm": "¿Votar no? No podrás cambiar tu voto después.",
 	"match.rematch.declined": "",
+	"match.rematch.memberJoinedNewGroup": "",
 	"match.rematch.fizzled": "Nadie quiso continuar",
 	"match.rematch.rejoinQueue": "Volver a la cola",
 	"match.rematch.backToQueue": "Volver a la cola",

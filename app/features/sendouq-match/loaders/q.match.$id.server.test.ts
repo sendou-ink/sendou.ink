@@ -1,7 +1,9 @@
 import { beforeEach, describe, expect, test } from "vitest";
+import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
+import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
 import type { SerializeFrom } from "~/utils/remix";
 import { wrappedLoader } from "~/utils/Test";
 import { loader } from "./q.match.$id.server";
@@ -21,11 +23,14 @@ describe("q match loader", () => {
 		await users.create(10);
 	});
 
-	const createMatch = () =>
-		SQMatchFactory.create({
-			alphaUserIds: alphaUserIds(),
-			bravoUserIds: bravoUserIds(),
-		});
+	const createMatch = (options: { isConcluded?: boolean } = {}) =>
+		SQMatchFactory.create(
+			{
+				alphaUserIds: alphaUserIds(),
+				bravoUserIds: bravoUserIds(),
+			},
+			options,
+		);
 
 	const groupChatRoomId = async (groupId: number) =>
 		(
@@ -92,5 +97,51 @@ describe("q match loader", () => {
 		const data = await loadAs(outsiderId(), match.id);
 
 		expect(data.chatRooms).toEqual([]);
+	});
+
+	describe("requeueing with the same group", () => {
+		const queueElsewhere = async (userId: number) => {
+			await SQGroupFactory.create({ memberUserIds: [userId] });
+			await refreshSendouQInstance();
+		};
+
+		test("offers the requeue while every member is free of other groups", async () => {
+			const match = await createMatch({ isConcluded: true });
+			await refreshSendouQInstance();
+
+			const data = await loadAs(alphaUserIds()[0], match.id);
+
+			expect(data.hasJoinedNewGroup).toBe(false);
+			expect(data.someGroupMemberHasJoinedNewGroup).toBe(false);
+		});
+
+		test("points the member who queued elsewhere to their new group", async () => {
+			const match = await createMatch({ isConcluded: true });
+			await queueElsewhere(alphaUserIds()[1]);
+
+			const data = await loadAs(alphaUserIds()[1], match.id);
+
+			expect(data.hasJoinedNewGroup).toBe(true);
+		});
+
+		test("blocks the requeue for the rest of the group too", async () => {
+			const match = await createMatch({ isConcluded: true });
+			await queueElsewhere(alphaUserIds()[1]);
+
+			const data = await loadAs(alphaUserIds()[0], match.id);
+
+			expect(data.hasJoinedNewGroup).toBe(false);
+			expect(data.someGroupMemberHasJoinedNewGroup).toBe(true);
+		});
+
+		test("leaves the other group's requeue alone", async () => {
+			const match = await createMatch({ isConcluded: true });
+			await queueElsewhere(alphaUserIds()[1]);
+
+			const data = await loadAs(bravoUserIds()[0], match.id);
+
+			expect(data.hasJoinedNewGroup).toBe(false);
+			expect(data.someGroupMemberHasJoinedNewGroup).toBe(false);
+		});
 	});
 });
