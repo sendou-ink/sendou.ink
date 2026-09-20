@@ -1,7 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
-import type { RouteChatRoom } from "~/features/chat/chat-types";
+import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import { cachedStreams } from "~/features/sendouq-streams/core/streams.server";
@@ -70,10 +70,11 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			: [],
 		lastUpdated: Date.now(),
 		streamsCount: (await cachedStreams()).length,
-		chatRooms: (ownGroup &&
-		ownGroup.members.length > 1 &&
-		ownGroup.chatRoomId !== null
-			? [{ roomId: ownGroup.chatRoomId, autoOpen: true }]
-			: []) satisfies RouteChatRoom[],
+		chatRooms: await RouteChatRooms.resolve(
+			user,
+			ownGroup && ownGroup.members.length > 1 && ownGroup.chatRoomId !== null
+				? [{ roomId: ownGroup.chatRoomId, autoOpen: true }]
+				: [],
+		),
 	};
 };

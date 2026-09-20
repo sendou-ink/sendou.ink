@@ -1,15 +1,19 @@
 import * as React from "react";
 import { useLocation, useMatches } from "react-router";
-import { preloadChatSidebar } from "~/components/layout/LazyChatSidebar";
 import { eventsClient } from "~/features/events/events-client";
 import {
 	useEventStreamCatchUp,
 	useEventsConnection,
 } from "~/features/events/events-hooks";
 import { chatRoomChannel } from "~/features/events/events-types";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useLayoutSize } from "~/hooks/useLayoutSize";
 import type { LoggedInUser } from "~/root";
-import { type ChatSnapshot, chatClient } from "./chat-client";
+import {
+	type ChatSnapshot,
+	chatClient,
+	snapshotFromLoaderData,
+} from "./chat-client";
 import { useServerRevalidationEvents } from "./chat-hooks";
 import type {
 	ChatRoomListItem,
@@ -18,6 +22,8 @@ import type {
 } from "./chat-types";
 
 const EMPTY_MESSAGES: ClientChatMessage[] = [];
+const EMPTY_ROOM_LIST: ChatRoomListItem[] = [];
+const EMPTY_ROUTE_ROOMS: RouteChatRoom[] = [];
 
 const SERVER_SNAPSHOT: ChatSnapshot = {
 	roomsLoaded: false,
@@ -60,33 +66,61 @@ export function useChatContext(): ChatContextValue | null {
 
 export function ChatProvider({
 	user,
+	roomList,
 	children,
 }: {
 	user?: LoggedInUser | null;
+	/** The user's rooms as the root loader served them. */
+	roomList?: ChatRoomListItem[];
 	children: React.ReactNode;
 }) {
 	if (!user) {
 		return <>{children}</>;
 	}
 
-	return <ChatProviderInner user={user}>{children}</ChatProviderInner>;
+	return (
+		<ChatProviderInner user={user} roomList={roomList ?? EMPTY_ROOM_LIST}>
+			{children}
+		</ChatProviderInner>
+	);
 }
 
 function ChatProviderInner({
 	user,
+	roomList,
 	children,
 }: {
 	user: LoggedInUser;
+	roomList: ChatRoomListItem[];
 	children: React.ReactNode;
 }) {
 	useEventsConnection(true);
 	useServerRevalidationEvents(user.id);
 
-	const snapshot = React.useSyncExternalStore(
+	const hydrated = useHydrated();
+	const routeRooms = useCurrentRouteChatRooms();
+
+	const storeSnapshot = React.useSyncExternalStore(
 		chatClient.subscribe,
 		chatClient.getSnapshot,
 		getServerSnapshot,
 	);
+	// the loader data stands in until the live client holds it, so the page
+	// arrives with its chat the way it will stay; memoized to keep the effects
+	// depending on it off the render loop
+	const loaderSnapshot = React.useMemo(
+		() => snapshotFromLoaderData(roomList, routeRooms),
+		[roomList, routeRooms],
+	);
+	const snapshot = storeSnapshot.roomsLoaded ? storeSnapshot : loaderSnapshot;
+
+	React.useEffect(() => {
+		chatClient.applyRoomList(roomList);
+	}, [roomList]);
+
+	React.useEffect(() => {
+		chatClient.applyRouteRooms(routeRooms);
+	}, [routeRooms]);
 
 	React.useEffect(() => {
 		chatClient.start(user.id);
@@ -113,25 +147,28 @@ function ChatProviderInner({
 	useEventStreamCatchUp({
 		enabled: true,
 		onCatchUp: () => chatClient.catchUp(),
+		// the loader data is at most as old as the navigation that fetched it
+		heldSince: performance.timeOrigin,
 	});
 
-	const [chatOpen, setChatOpenState] = React.useState(false);
-	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>([]);
-
-	// the sidebar chunk is fetched as soon as there is something to open it for,
-	// so that opening chat never waits on a download
-	const hasRoomToOpen =
-		snapshot.rooms.length > 0 || activeRoomIds.length > 0 || chatOpen;
-	React.useEffect(() => {
-		if (!hasRoomToOpen) return;
-
-		preloadChatSidebar();
-	}, [hasRoomToOpen]);
+	const autoOpenRoomIdsKey = routeRooms
+		.filter((room) => room.autoOpen)
+		.map((room) => room.room.id)
+		.join(",");
+	const [chatOpenState, setChatOpenState] = React.useState(false);
+	const [activeRoomIds, setActiveRoomIds] = React.useState<number[]>(() =>
+		roomIdsFromKey(autoOpenRoomIdsKey),
+	);
+	// the server renders a route's rooms open as the desktop layout has them
+	// (smaller layouts hide the rail); the route sync settles it once the
+	// layout is known
+	const chatOpen =
+		chatOpenState || (!hydrated && autoOpenRoomIdsKey.length > 0);
 
 	// messages arriving to a room on screen are read immediately instead of counting unread
 	React.useEffect(() => {
-		chatClient.setViewedRoomIds(chatOpen ? activeRoomIds : []);
-	}, [chatOpen, activeRoomIds]);
+		chatClient.setViewedRoomIds(chatOpenState ? activeRoomIds : []);
+	}, [chatOpenState, activeRoomIds]);
 
 	const rooms = snapshot.rooms;
 
@@ -172,9 +209,12 @@ function ChatProviderInner({
 
 	useChatRouteSync({
 		userId: user.id,
+		hydrated,
 		roomsLoaded: snapshot.roomsLoaded,
 		rooms,
 		observedRoomIds: snapshot.observedRoomIds,
+		routeRooms,
+		autoOpenRoomIdsKey,
 		setActiveRoomIds,
 		setChatOpenState,
 	});
@@ -221,27 +261,30 @@ function ChatProviderInner({
 
 function useChatRouteSync({
 	userId,
+	hydrated,
 	roomsLoaded,
 	rooms,
 	observedRoomIds,
+	routeRooms,
+	autoOpenRoomIdsKey,
 	setActiveRoomIds,
 	setChatOpenState,
 }: {
 	userId: number;
+	hydrated: boolean;
 	roomsLoaded: boolean;
 	rooms: ChatRoomListItem[];
 	observedRoomIds: ReadonlySet<number>;
+	routeRooms: RouteChatRoom[];
+	autoOpenRoomIdsKey: string;
 	setActiveRoomIds: React.Dispatch<React.SetStateAction<number[]>>;
 	setChatOpenState: (open: boolean) => void;
 }) {
-	const routeRooms = useCurrentRouteChatRooms();
 	// keys rather than the arrays themselves: a route revalidation hands over
 	// equal-but-new loader data that must not re-run the effects
-	const routeRoomIdsKey = routeRooms.map((room) => room.roomId).join(",");
-	const autoOpenRoomIdsKey = routeRooms
-		.filter((room) => room.autoOpen)
-		.map((room) => room.roomId)
-		.join(",");
+	const routeRoomIdsKey = routeRooms.map((room) => room.room.id).join(",");
+	const latestRouteRoomsRef = React.useRef(routeRooms);
+	latestRouteRoomsRef.current = routeRooms;
 	const { pathname } = useLocation();
 	const layoutSize = useLayoutSize();
 	const previousRouteRoomIdsKeyRef = React.useRef<string | null>(null);
@@ -261,7 +304,9 @@ function useChatRouteSync({
 	}, [routeRoomIdsKey]);
 
 	React.useEffect(() => {
-		if (!roomsLoaded) return;
+		// the hydration render's layout size is the server's guess, so a room
+		// opening on arrival waits for the real one
+		if (!roomsLoaded || !hydrated) return;
 
 		// route sync opens its own rooms directly: going through the context's
 		// `setChatOpen` would read the previous render's empty `activeRoomIds` and
@@ -291,16 +336,15 @@ function useChatRouteSync({
 				return kept.length === openRoomIds.length ? openRoomIds : kept;
 			});
 
-			// the loader can know about a just-created room before the room list
-			// does; an observer's room is never in the list at all, so its info is
-			// fetched separately as an observed room
-			for (const roomId of roomIdsFromKey(routeRoomIdsKey)) {
-				if (rooms.some((room) => room.id === roomId)) continue;
-
-				if (autoOpenRoomIds.includes(roomId)) {
-					void chatClient.refreshRooms();
-				}
-				chatClient.ensureRoomKnown(roomId);
+			// the loader can know about a just-created room of the user's own before
+			// the room list does: refetched so it gets listed rather than merely observed
+			const unlistedOwnRoom = latestRouteRoomsRef.current.find(
+				(entry) =>
+					entry.room.participantUserIds.includes(userId) &&
+					!rooms.some((room) => room.id === entry.room.id),
+			);
+			if (unlistedOwnRoom) {
+				void chatClient.refreshRooms();
 			}
 		}
 
@@ -308,8 +352,12 @@ function useChatRouteSync({
 			if (!routeRoomIdsChanged) return;
 
 			setActiveRoomIds(autoOpenRoomIds);
-			for (const roomId of autoOpenRoomIds) {
-				chatClient.ensureMessagesLoaded(roomId);
+			// a room opening on arrival brings its history along; one that did not
+			// (an older loader response) is fetched
+			for (const entry of latestRouteRoomsRef.current) {
+				if (entry.autoOpen && entry.messages === null) {
+					chatClient.ensureMessagesLoaded(entry.room.id);
+				}
 			}
 			if (layoutSize === "desktop") {
 				openChatForRooms(autoOpenRoomIds);
@@ -333,6 +381,7 @@ function useChatRouteSync({
 			openChatForRooms([matchedRoom.id]);
 		}
 	}, [
+		hydrated,
 		roomsLoaded,
 		routeRoomIdsKey,
 		autoOpenRoomIdsKey,
@@ -363,7 +412,7 @@ export function useCurrentRouteChatRooms(): RouteChatRoom[] {
 		}
 	}
 
-	return [];
+	return EMPTY_ROUTE_ROOMS;
 }
 
 function roomIdsFromKey(key: string) {

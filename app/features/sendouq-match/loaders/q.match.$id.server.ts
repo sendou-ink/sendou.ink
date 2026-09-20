@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { getUser } from "~/features/auth/core/user.server";
-import type { RouteChatRoom } from "~/features/chat/chat-types";
+import type { RouteChatRoomInput } from "~/features/chat/chat-types";
+import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
@@ -60,42 +61,44 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		reportedWeapons,
 		ingestedScoreboards,
 		isOffSeason: Seasons.current() === null,
-		chatRooms: ((): RouteChatRoom[] => {
-			if (!user) return [];
-
-			if (isParticipant) {
-				const ownGroup = matchUnmapped.groupAlpha.members.some(
-					(member) => member.id === user.id,
-				)
-					? match.groupAlpha
-					: match.groupBravo;
-
-				return [match.chatRoomId, ownGroup.chatRoomId]
-					.filter((id): id is number => typeof id === "number")
-					.map((roomId) => ({ roomId, autoOpen: true }));
-			}
-
-			if (!isStaff) return [];
-
-			return [
-				// staff observers chat alongside the participants in the match room
-				{ roomId: matchUnmapped.chatRoomId, autoOpen: true },
-				// the group chats stay private team spaces: staff only ever reads them
-				{
-					roomId: matchUnmapped.groupAlpha.chatRoomId,
-					autoOpen: false,
-					label: "Group Alpha",
-				},
-				{
-					roomId: matchUnmapped.groupBravo.chatRoomId,
-					autoOpen: false,
-					label: "Group Bravo",
-				},
-			].filter(
-				(room): room is RouteChatRoom => typeof room.roomId === "number",
-			);
-		})(),
+		chatRooms: await RouteChatRooms.resolve(user, routeChatRoomInputs()),
 	};
+
+	function routeChatRoomInputs(): RouteChatRoomInput[] {
+		if (!user) return [];
+
+		if (isParticipant) {
+			const ownGroup = matchUnmapped.groupAlpha.members.some(
+				(member) => member.id === user.id,
+			)
+				? match.groupAlpha
+				: match.groupBravo;
+
+			return [match.chatRoomId, ownGroup.chatRoomId]
+				.filter((id): id is number => typeof id === "number")
+				.map((roomId) => ({ roomId, autoOpen: true }));
+		}
+
+		if (!isStaff) return [];
+
+		return [
+			// staff observers chat alongside the participants in the match room
+			{ roomId: matchUnmapped.chatRoomId, autoOpen: true },
+			// the group chats stay private team spaces: staff only ever reads them
+			{
+				roomId: matchUnmapped.groupAlpha.chatRoomId,
+				autoOpen: false,
+				label: "Group Alpha",
+			},
+			{
+				roomId: matchUnmapped.groupBravo.chatRoomId,
+				autoOpen: false,
+				label: "Group Bravo",
+			},
+		].filter(
+			(room): room is RouteChatRoomInput => typeof room.roomId === "number",
+		);
+	}
 };
 
 export type SendouQMatchLoaderData = SerializeFrom<typeof loader>;

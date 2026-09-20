@@ -92,13 +92,20 @@ export interface ChatRoomListItem {
 	latestMessageAt: number | null;
 }
 
-/** A room the current route surfaces to the viewer, from its loader's `chatRooms`. */
-export interface RouteChatRoom {
+/** A room a route asks to surface to the viewer, resolved into a `RouteChatRoom` by `RouteChatRooms.resolve`. */
+export interface RouteChatRoomInput {
 	roomId: number;
 	/** Whether the room opens for the viewer on arrival, rather than only being listed in the sidebar (staff reading a private group chat). */
 	autoOpen: boolean;
 	/** Names the room in the sidebar, where its own title can't tell it apart (the two group chats of one match). */
 	label?: string;
+}
+
+/** A room the current route surfaces to the viewer, from its loader's `chatRooms`, arriving with everything the chat opens with. */
+export interface RouteChatRoom extends Omit<RouteChatRoomInput, "roomId"> {
+	room: ChatRoomListItem;
+	/** Latest messages oldest first; `null` for a room only listed, whose history is fetched when opened. */
+	messages: ChatMessageWithAuthor[] | null;
 }
 
 export type RevalidateScope = "MATCH_RESULTS";

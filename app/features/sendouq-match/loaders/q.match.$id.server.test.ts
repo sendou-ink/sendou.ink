@@ -39,12 +39,19 @@ describe("q match loader", () => {
 	const loadAs = (userId: number, matchId: number) =>
 		matchLoader({ user: userId, params: { id: String(matchId) } });
 
+	const surfacedRooms = (data: Awaited<ReturnType<typeof loadAs>>) =>
+		data.chatRooms.map(({ room, autoOpen, label }) => ({
+			roomId: room.id,
+			autoOpen,
+			label,
+		}));
+
 	test("surfaces both group chats read-only to staff outside the match", async () => {
 		const match = await createMatch();
 
 		const data = await loadAs(staffId(), match.id);
 
-		expect(data.chatRooms).toEqual([
+		expect(surfacedRooms(data)).toEqual([
 			{ roomId: match.chatRoomId, autoOpen: true },
 			{
 				roomId: await groupChatRoomId(match.alphaGroup.id),
@@ -57,6 +64,12 @@ describe("q match loader", () => {
 				label: "Group Bravo",
 			},
 		]);
+		// only the room opening on arrival brings its history along
+		expect(data.chatRooms.map((entry) => entry.messages !== null)).toEqual([
+			true,
+			false,
+			false,
+		]);
 	});
 
 	test("gives a participant the match chat and their own group chat only", async () => {
@@ -64,7 +77,7 @@ describe("q match loader", () => {
 
 		const data = await loadAs(alphaUserIds()[0], match.id);
 
-		expect(data.chatRooms).toEqual([
+		expect(surfacedRooms(data)).toEqual([
 			{ roomId: match.chatRoomId, autoOpen: true },
 			{
 				roomId: await groupChatRoomId(match.alphaGroup.id),

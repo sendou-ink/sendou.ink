@@ -38,6 +38,7 @@ import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
+import { resolveRoomList } from "./features/chat/chat-room-list.server";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
@@ -146,6 +147,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return data(
 		{
 			locale,
+			chatRoomList: user ? await resolveRoomList(user) : [],
 			i18nPreloadUrls: localePreloadUrls(locale),
 			theme: themeSession.getTheme(),
 			sidenavCollapsed: sidenavSession.getCollapsed(),
@@ -266,7 +268,10 @@ function Document({
 						<SendouToastRegion />
 						<UnsavedChangesGuard />
 						<MyFuse data={rootData} />
-						<ChatProvider user={rootData?.user}>
+						<ChatProvider
+							user={rootData?.user}
+							roomList={rootData?.chatRoomList}
+						>
 							<NotificationsProvider user={rootData?.user}>
 								<LayoutDataProvider data={rootData}>
 									<GlobalStatusProvider user={rootData?.user}>

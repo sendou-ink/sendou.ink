@@ -158,8 +158,9 @@ function RoomList({ onClose }: { onClose?: () => void }) {
 	const byRecency = (a: ChatRoomListItem, b: ChatRoomListItem) =>
 		(b.latestMessageAt ?? 0) - (a.latestMessageAt ?? 0) || b.id - a.id;
 
+	// the context's copy of the room over the route's: it carries the live unread count
 	const routeRooms = useCurrentRouteChatRooms().flatMap((entry) => {
-		const room = chatContext.roomForId(entry.roomId);
+		const room = chatContext.roomForId(entry.room.id);
 		return room ? [{ ...entry, room }] : [];
 	});
 
@@ -363,7 +364,7 @@ function SingleChatView({
 	const chatContext = useChatContext()!;
 	const roomDisplay = useRoomDisplay();
 	const routeLabel = useCurrentRouteChatRooms().find(
-		(entry) => entry.roomId === room?.id,
+		(entry) => entry.room.id === room?.id,
 	)?.label;
 
 	const otherRoomsUnreadCount = chatContext.rooms

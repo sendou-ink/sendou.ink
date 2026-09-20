@@ -1,6 +1,6 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
-import type { RouteChatRoom } from "~/features/chat/chat-types";
+import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
@@ -209,10 +209,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		endedEarly,
 		noScreen,
 		// observers (TO/streamer/site staff) chat alongside the participants
-		chatRooms: (match.chatRoomId &&
-		(isParticipant || isSiteStaff || tournament.isOrganizerOrStreamer(user))
-			? [{ roomId: match.chatRoomId, autoOpen: true }]
-			: []) satisfies RouteChatRoom[],
+		chatRooms: await RouteChatRooms.resolve(
+			user,
+			match.chatRoomId &&
+				(isParticipant || isSiteStaff || tournament.isOrganizerOrStreamer(user))
+				? [{ roomId: match.chatRoomId, autoOpen: true }]
+				: [],
+		),
 		canJoin,
 		// the views can't derive these themselves, the layout ships no bracket match data
 		bracketContext: {

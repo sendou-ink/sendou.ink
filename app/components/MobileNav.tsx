@@ -39,7 +39,7 @@ import { EventsList } from "./EventsList";
 import { LinkButton } from "./elements/Button";
 import { isOwnToggle } from "./elements/Popover";
 import { Image } from "./Image";
-import { LazyChatSidebar } from "./layout/LazyChatSidebar";
+import { ChatSidebar } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -649,7 +649,7 @@ function ChatPanel({
 		>
 			<div className={styles.panelDialog}>
 				{isOpen ? (
-					<LazyChatSidebar onClose={() => panelRef.current?.hidePopover()} />
+					<ChatSidebar onClose={() => panelRef.current?.hidePopover()} />
 				) : null}
 			</div>
 		</div>

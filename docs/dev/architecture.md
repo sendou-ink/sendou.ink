@@ -223,15 +223,17 @@ There is a single `ChatProvider` mounted near the root, glue over the framework-
 
 Two things drive which rooms the client cares about:
 
-1) **The user's own rooms.** `GET /api/chat/rooms` returns every room the user participates in, resolved from the owning entity (SendouQ group/match, tournament match/team, scrim). These show up in the chat list regardless of which page the user is on.
-2) **Route-exposed `chatRooms`.** A loader can expose `chatRooms: RouteChatRoom[]` in its returned data. The provider reads this out of `useMatches()` and surfaces those rooms for the duration of the route being active — used for rooms the user is viewing but is not a participant of (e.g. a tournament match chat viewed by a TO). An `autoOpen` room is opened for the viewer, the rest are only listed in the chat sidebar (e.g. the private group chats of a SendouQ match, which staff may read but not post in).
+1) **The user's own rooms.** Every room the user participates in, resolved from the owning entity (SendouQ group/match, tournament match/team, scrim). The root loader serves the list with the page (`chatRoomList`) and `GET /api/chat/rooms` refetches it on events and reconnects. These show up in the chat list regardless of which page the user is on.
+2) **Route-exposed `chatRooms`.** A loader can expose `chatRooms: RouteChatRoom[]` in its returned data, built with `RouteChatRooms.resolve()` so the page arrives with each room as the sidebar lists it and, for rooms opening on arrival, its latest messages (no fetch after mount, no content shift). The provider reads this out of `useMatches()` and surfaces those rooms for the duration of the route being active — used for rooms the user is viewing but is not a participant of (e.g. a tournament match chat viewed by a TO). An `autoOpen` room is opened for the viewer, the rest are only listed in the chat sidebar (e.g. the private group chats of a SendouQ match, which staff may read but not post in). The loader decides who gets which rooms; the helper drops any the user may not view.
 
 Example loader:
 
 ```ts
 return {
     // ...other loader data
-    chatRooms: [{ roomId: match.chatRoomId, autoOpen: true }],
+    chatRooms: await RouteChatRooms.resolve(user, [
+        { roomId: match.chatRoomId, autoOpen: true },
+    ]),
 };
 ```
 
