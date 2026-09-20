@@ -398,7 +398,7 @@ function onResult(
 			continue;
 		}
 		const action = timeline.push(event);
-		if (action.action !== "added" && action.action !== "replaced") continue;
+		if (action.action === "merged" || action.action === "dropped") continue;
 		if (event.type === MAP_START_EVENT_TYPE) {
 			const mode = (event.data as MapStartData).mode;
 			objectiveBlocked = mode !== null && mode !== "SZ";
@@ -406,8 +406,10 @@ function onResult(
 			objectiveBlocked = false;
 		}
 		const stale =
-			action.action === "replaced" ? storedIds.get(action.replaced) : undefined;
-		void persist(event, result.frame, stale);
+			action.action === "added" ? undefined : storedIds.get(action.replaced);
+		// a run's trailing read only moves its time; the run's first read keeps the frame
+		const frame = action.action === "extended" ? undefined : result.frame;
+		void persist(event, frame, stale);
 	}
 }
 

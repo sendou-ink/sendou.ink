@@ -168,7 +168,7 @@ sequenceDiagram
   Cap->>W: frame + t (live/screenshot/seek) — VoD: worker decodes its own slice
   W->>W: scheduler dueDetectors() → gate() → parse()
   W-->>TL: DetectedEvents
-  TL-->>UI: deduped timeline (IndexedDB: events / vod-events)
+  TL-->>UI: deduped timeline, status reads kept per run end (IndexedDB: events / vod-events)
   UI->>MB: buildScannerMatches(events)
   MB-->>UI: ScannerMatch[] + source events
   UI->>ING: POST { matches } (live: on match close / stop, VoD: once saved)
@@ -323,8 +323,9 @@ sequenceDiagram
   keeps continuously-firing events from storing a frame PNG each, and the
   worker only encodes a frame at all when a shadow `TimelineBuilder` (same
   defaults as the page's) says an event would be listed rather than merged
-  into an earlier read — a 1080p PNG per repeat read cost more than the
-  parse once the kill feed re-read its stack twice a second. Frames no
+  into an earlier read (or extend a status run's trailing read) — a 1080p
+  PNG per repeat read cost more than the parse once the kill feed re-read
+  its stack twice a second. Frames no
   detector is due for skip canvas readback, and everything is counted in
   `core/detectors/telemetry.ts` — but only when a VoD is scanned with
   `?telemetry=true` in the URL (nothing links there) by a debug user;

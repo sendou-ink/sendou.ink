@@ -218,18 +218,19 @@ export async function startVodScan(
 						if (!result.gate.pass) return;
 						for (const event of result.events as DetectedEvent<FixtureData>[]) {
 							const action = timeline.push(event);
-							if (action.action !== "added" && action.action !== "replaced")
+							if (action.action === "merged" || action.action === "dropped")
 								continue;
-							const frame = result.frame;
+							const frame =
+								action.action === "extended" ? undefined : result.frame;
 							thumbnailWork.push(
 								(async () => {
 									const thumbnail = frame
 										? await thumbnailFromBlob(frame)
 										: undefined;
 									const replaced =
-										action.action === "replaced"
-											? events.find((e) => sameEvent(e, action.replaced))
-											: undefined;
+										action.action === "added"
+											? undefined
+											: events.find((e) => sameEvent(e, action.replaced));
 									const scanEvent: ScanEvent = {
 										...event,
 										thumbnail,
