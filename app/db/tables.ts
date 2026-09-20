@@ -1269,7 +1269,8 @@ export interface Association {
 export interface AssociationMember {
 	userId: number;
 	associationId: number;
-	role: "MEMBER" | "ADMIN";
+	/** MANAGER can also share the invite link, ADMIN (one per association) can also manage the members */
+	role: "MEMBER" | "MANAGER" | "ADMIN";
 }
 
 export interface Notification {

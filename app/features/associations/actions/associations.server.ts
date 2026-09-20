@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { associationsPageActionSchema } from "~/features/associations/associations-schemas";
+import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
@@ -31,6 +32,27 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			await AssociationRepository.deleteMember({
 				userId: data.userId,
 				associationId: data.associationId,
+			});
+
+			break;
+		}
+		case "ADD_MANAGER":
+		case "REMOVE_MANAGER": {
+			const association = await validateHasManagePermissions(
+				data.associationId,
+			);
+
+			errorToastIfFalsy(
+				association.members!.some(
+					(member) => member.id === data.userId && member.role !== "ADMIN",
+				),
+				"Not a member of the association",
+			);
+
+			await AssociationRepository.updateMemberRole({
+				associationId: data.associationId,
+				userId: data.userId,
+				role: data._action === "ADD_MANAGER" ? "MANAGER" : "MEMBER",
 			});
 
 			break;
@@ -89,14 +111,20 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				}),
 			);
 
+			const isAdmin = association.permissions.MANAGE.includes(user.id);
+			const newAdmin = isAdmin
+				? Association.resolveNewAdmin(association.members!)
+				: null;
+
 			errorToastIfFalsy(
-				!association.permissions.MANAGE.includes(user.id),
-				"You cannot leave an association you manage",
+				!isAdmin || newAdmin,
+				"You cannot leave an association you manage without a starred member to take over",
 			);
 
-			await AssociationRepository.deleteMember({
+			await AssociationRepository.handleMemberLeaving({
 				userId: user.id,
 				associationId: data.associationId,
+				newAdminUserId: newAdmin?.id,
 			});
 
 			return successToast("Left association");
@@ -115,4 +143,6 @@ async function validateHasManagePermissions(associationId: number) {
 	);
 
 	requirePermission(association, "MANAGE");
+
+	return association;
 }

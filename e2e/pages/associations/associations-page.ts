@@ -17,6 +17,7 @@ export class AssociationsPage {
 			deleteButtons: page.getByTestId("delete-association"),
 			leaveButton: page.getByTestId("leave-team-button"),
 			inviteLinkInputs: page.getByLabel("Share link to add members"),
+			resetLinkButton: page.getByText("Reset link"),
 		};
 	}
 
@@ -50,6 +51,13 @@ export class AssociationsPage {
 	async deleteFirst() {
 		await this.locators.deleteButtons.first().click();
 		await modalClickConfirmButton(this.page);
+	}
+
+	/** The star that lets the member share the invite link, or takes that away. */
+	async toggleManager(username: string) {
+		await this.page
+			.getByRole("button", { name: username, exact: false })
+			.click();
 	}
 
 	async leave() {
