@@ -1,5 +1,7 @@
 import clsx from "clsx";
+import { ExternalLink } from "lucide-react";
 import { type ReactNode, useEffect, useState } from "react";
+import { SendouButton } from "~/components/elements/Button";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { mainWeaponImageUrl, SCANNER_PAGE } from "~/utils/urls";
 import type { Roi } from "../core/canonical";
@@ -12,6 +14,7 @@ import { newInspectKey, putInspectFrame } from "../store/inspect";
 import styles from "./FixturesPage.module.css";
 import { drawNormalizedCanvas } from "./normalized-canvas";
 import { formatTimer, RoiCrop } from "./ScreenshotPage";
+import { SessionHeader } from "./SessionHeader";
 
 const FIXTURES_ENDPOINT = "/scanner/fixtures";
 /** Filtering down to this many cases opens every card, for one-glance review */
@@ -76,25 +79,27 @@ export function FixturesPage() {
 
 	return (
 		<div className={styles.page}>
-			<div className={styles.controls}>
-				<input
-					type="search"
-					className={styles.filter}
-					value={q}
-					onChange={(e) => setQ(e.target.value)}
-					placeholder="Narrow by name substring — comma separates alternatives"
-				/>
-				<span className={styles.count}>
-					{fixtures
-						? `${filtered.length} / ${fixtures.length} fixtures`
-						: "loading…"}
-				</span>
-			</div>
-			<p className={styles.hint}>
-				Ground-truth review: check each expected label against its frame. The
-				filter lives in the URL, so a narrowed selection can be shared as a
-				link.
-			</p>
+			<SessionHeader>
+				<div className={styles.controls}>
+					<input
+						type="search"
+						className={styles.filter}
+						value={q}
+						onChange={(e) => setQ(e.target.value)}
+						placeholder="Narrow by name substring — comma separates alternatives"
+					/>
+					<span className={styles.count}>
+						{fixtures
+							? `${filtered.length} / ${fixtures.length} fixtures`
+							: "loading…"}
+					</span>
+				</div>
+				<p className={styles.hint}>
+					Ground-truth review: check each expected label against its frame. The
+					filter lives in the URL, so a narrowed selection can be shared as a
+					link.
+				</p>
+			</SessionHeader>
 			{error ? <p className="text-error">{error}</p> : null}
 			{[...groups.entries()].map(([detector, group]) => (
 				<section key={detector} className={styles.group}>
@@ -150,9 +155,14 @@ function FixtureCard(props: { fixture: FixtureListItem; autoExpand: boolean }) {
 					{fixture.name}
 				</button>
 				<span className={styles.cardEvent}>{fixture.expected.event}</span>
-				<button type="button" onClick={() => inspectFixture(url)}>
+				<SendouButton
+					size="small"
+					variant="outlined"
+					icon={<ExternalLink />}
+					onClick={() => inspectFixture(url)}
+				>
 					Inspect
-				</button>
+				</SendouButton>
 			</header>
 			{open ? (
 				<div className={styles.cardBody}>
