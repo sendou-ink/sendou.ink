@@ -16,14 +16,18 @@ export interface ParsedName {
 
 /**
  * BlitzMain renders 'I', 'l', '|', '1' as near-identical bars, so context
- * decides: next to lowercase 'l' ("Olise"), digit '1' ("Jrod_14"), uppercase
- * 'I' ("SHIP"), off an underscore '1' ("gori_1"), else 'l'. Misses "McIntosh",
- * but so would a human reading the pixels.
+ * decides: opening a word before a consonant 'I' ("Invisifloats", no word
+ * starts "ln"/"lv"), otherwise next to lowercase 'l' ("Olise", "lucas"), digit
+ * '1' ("Jrod_14"), uppercase 'I' ("SHIP"), off an underscore '1' ("gori_1"),
+ * else 'l'. Misses "McIntosh", but so would a human reading the pixels.
  */
 const BAR_CHARS = new Set(["I", "l", "|", "1"]);
+const LOWER_CONSONANT = /^[b-df-hj-np-tv-xz]$/;
 
-/** recognizeText's own default, shared with the mark probe so both see the same ink */
+/** recognizeText's own default, shared with the mark probes so both see the same ink */
 const DEFAULT_BIN_THRESHOLD = 150;
+/** deep enough for an accented variant to survive a stack of bare-letter fixture crops */
+const NAME_MAX_CANDIDATES = 12;
 
 function normalizeBars(name: string): string {
 	const chars = [...name];
@@ -47,6 +51,9 @@ function normalizeBars(name: string): string {
 			if (!BAR_CHARS.has(c)) return c;
 			const left = neighbor(i, -1);
 			const right = neighbor(i, 1);
+			const wordInitial =
+				i === 0 || chars[i - 1] === " " || chars[i - 1] === "_";
+			if (wordInitial && LOWER_CONSONANT.test(chars[i + 1] ?? "")) return "I";
 			if (isLower(left) || isLower(right)) return "l";
 			if (isDigit(left) || isDigit(right)) return "1";
 			if (isUpper(left) || isUpper(right)) return "I";
@@ -59,8 +66,10 @@ function normalizeBars(name: string): string {
 /**
  * Kana 'ー' and hyphen '-' are homoglyphs under capture blur ("ドラグ-ン"):
  * a kana neighbor reads 'ー', a Latin/digit neighbor '-', else the raw pick stands.
+ * Kana punctuation ('・') is not a kana neighbor: "x²-8" must keep its hyphen.
  */
 const LONG_BAR_CHARS = new Set(["-", "ー"]);
+const KANA_LETTER = /[ぁ-ゖァ-ヺ]/u;
 
 function normalizeLongBars(name: string): string {
 	const chars = [...name];
@@ -74,7 +83,7 @@ function normalizeLongBars(name: string): string {
 	};
 	const test = (re: RegExp) => (c: string | undefined) =>
 		c !== undefined && re.test(c);
-	const isKana = test(/[ぁ-ヾ]/u);
+	const isKana = test(KANA_LETTER);
 	const isLatinOrDigit = test(/[a-zA-Z0-9]/);
 	return chars
 		.map((c, i) => {
@@ -124,6 +133,37 @@ function normalizeOhs(name: string): string {
 }
 
 /**
+ * A long bar is '_' or a dash by height alone, which the templates weigh
+ * lightly: ">_<" read ">ー<". A bar whose bottom reaches the line's baseline
+ * (median ink bottom of the other glyphs) is an underscore; dashes float at
+ * mid height.
+ */
+const BASELINE_BAR_CHARS = new Set(["-", "ー", "¯", "_"]);
+const UNDERSCORE_BASELINE_SLACK_PX = 2;
+
+function resolveUnderscoreByBaseline(raw: RecognizedText): RecognizedText {
+	if (!raw.chars.some((c) => LONG_BAR_CHARS.has(c.char))) return raw;
+	const anchors = raw.chars
+		.filter((c) => !BASELINE_BAR_CHARS.has(c.char))
+		.map((c) => c.y1)
+		.sort((a, b) => a - b);
+	if (anchors.length === 0) return raw;
+	const baseline = anchors[Math.floor(anchors.length / 2)]!;
+	const chars = raw.chars.map((c) => {
+		if (!LONG_BAR_CHARS.has(c.char)) return c;
+		if (baseline - c.y1 > UNDERSCORE_BASELINE_SLACK_PX) return c;
+		return { ...c, char: "_" };
+	});
+	return { ...raw, text: retext(raw.text, chars), chars };
+}
+
+/** Rebuild the text from re-decided chars, keeping the spaces where they were. */
+function retext(text: string, chars: RecognizedChar[]): string {
+	let ci = 0;
+	return [...text].map((ch) => (ch === " " ? ch : chars[ci++]!.char)).join("");
+}
+
+/**
  * '.', '・', '·' tight-crop to near-identical blobs. A dot floating well above
  * the baseline cannot be '.', so it rereads as the best middle-dot candidate;
  * the reverse does not hold (BlitzMain draws '・' ON the baseline in some names,
@@ -147,25 +187,21 @@ function fixRaisedDots(raw: RecognizedText): RecognizedText {
 		);
 		return { ...c, char: alt?.char ?? "・" };
 	});
-	let ci = 0;
-	const text = [...raw.text]
-		.map((ch) => (ch === " " ? ch : chars[ci++]!.char))
-		.join("");
-	return { ...raw, text, chars };
+	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
 /**
  * On soft captures 'b' vs 'h' comes down to the bowl floor, which correlation
  * weighs too lightly (font 'h' beats fixture 'b' by ~0.003 on a true 'b'). The
- * bottom band between the stems is solid in a 'b', empty in an 'h' (0.90 vs
- * 0.15). Only near-ties are re-decided, and only above ~20px ink height: blur
- * closes a true 'h' below that (15px 'h' measured 0.67).
+ * bottom band between the stems is bright in a 'b' and dark in an 'h', but blur
+ * lifts it in both, so it is read against the band just below the arch, which
+ * blur lifts the same way: measured across fixtures at 15-50px, a 'b' floor
+ * is 90+ gray levels brighter than its mid band, an 'h' floor never brighter.
+ * Only near-ties are re-decided.
  */
 const BH_TWINS: Record<string, string> = { b: "h", h: "b" };
 const BH_SCORE_MARGIN = 0.08;
-const BH_INK_THRESHOLD = 150;
-const BH_BOWL_MIN_FRACTION = 0.5;
-const BH_MIN_INK_HEIGHT_PX = 20;
+const BH_BOWL_MIN_CONTRAST = 40;
 
 function resolveBhByBowlFloor(
 	raw: RecognizedText,
@@ -173,7 +209,7 @@ function resolveBhByBowlFloor(
 ): RecognizedText {
 	const contested = (c: RecognizedChar) => {
 		const twin = BH_TWINS[c.char];
-		if (!twin || c.y1 - c.y0 < BH_MIN_INK_HEIGHT_PX) return false;
+		if (!twin) return false;
 		return (
 			c.candidates?.some(
 				(k) => k.char === twin && c.score - k.score <= BH_SCORE_MARGIN,
@@ -186,30 +222,39 @@ function resolveBhByBowlFloor(
 	const gray = new (getCV().Mat)();
 	grayView.copyTo(gray);
 	const { cols, data } = gray;
+	const bandMean = (x0: number, x1: number, y0: number, y1: number) => {
+		let sum = 0;
+		let total = 0;
+		for (let y = y0; y < y1; y++) {
+			for (let x = x0; x < x1; x++) {
+				sum += data[y * cols + x]!;
+				total++;
+			}
+		}
+		return total > 0 ? sum / total : 0;
+	};
 	const chars = raw.chars.map((c) => {
 		if (!contested(c)) return c;
 		const w = c.x1 - c.x0;
 		const h = c.y1 - c.y0;
 		const cx0 = c.x0 + Math.round(w * 0.3);
 		const cx1 = c.x1 - Math.round(w * 0.3);
-		const by0 = c.y1 - Math.max(2, Math.round(h * 0.18));
-		let ink = 0;
-		let total = 0;
-		for (let y = by0; y < c.y1; y++) {
-			for (let x = cx0; x < cx1; x++) {
-				total++;
-				if (data[y * cols + x]! > BH_INK_THRESHOLD) ink++;
-			}
-		}
-		const bowlClosed = total > 0 && ink / total >= BH_BOWL_MIN_FRACTION;
-		return { ...c, char: bowlClosed ? "b" : "h" };
+		const floor = bandMean(
+			cx0,
+			cx1,
+			c.y1 - Math.max(2, Math.round(h * 0.18)),
+			c.y1,
+		);
+		const mid = bandMean(
+			cx0,
+			cx1,
+			c.y0 + Math.round(h * 0.45),
+			c.y0 + Math.round(h * 0.6),
+		);
+		return { ...c, char: floor - mid >= BH_BOWL_MIN_CONTRAST ? "b" : "h" };
 	});
 	gray.delete();
-	let ci = 0;
-	const text = [...raw.text]
-		.map((ch) => (ch === " " ? ch : chars[ci++]!.char))
-		.join("");
-	return { ...raw, text, chars };
+	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
 /**
@@ -244,12 +289,15 @@ for (const [plain, voiced] of [
 	}
 }
 const VOICED_SCORE_MARGIN = 0.1;
-/** ink pixels a row may hold and still count as the gap under the mark (capture noise) */
-const VOICED_GAP_MAX_INK = 1;
-const VOICED_MARK_MAX_HEIGHT_FRACTION = 0.4;
-const VOICED_BASE_MIN_HEIGHT_FRACTION = 0.5;
-const VOICED_MARK_MIN_LEFT_FRACTION = 0.35;
-const VOICED_MARK_MIN_RIGHT_FRACTION = 0.75;
+const MARK_MAX_HEIGHT_FRACTION = 0.4;
+const BASE_MIN_HEIGHT_FRACTION = 0.5;
+/** the (han)dakuten: upper-right corner; a blank gap row tolerates one noise pixel */
+const VOICED_MARK_SHAPE: MarkShape = {
+	minLeft: 0.35,
+	minRight: 0.75,
+	maxWidth: 1,
+	gapMaxInkFraction: 0,
+};
 
 function resolveVoicedByMark(
 	raw: RecognizedText,
@@ -270,25 +318,44 @@ function resolveVoicedByMark(
 	const { cols, data } = gray;
 	const chars = raw.chars.map((c) => {
 		const twin = voicedRunnerUp(c);
-		if (!twin || !hasFloatingMark(data, cols, c, binThreshold)) return c;
+		if (
+			!twin ||
+			!hasFloatingMark(data, cols, c, binThreshold, VOICED_MARK_SHAPE)
+		)
+			return c;
 		return { ...c, char: twin.char, score: twin.score };
 	});
 	gray.delete();
-	let ci = 0;
-	const text = [...raw.text]
-		.map((ch) => (ch === " " ? ch : chars[ci++]!.char))
-		.join("");
-	return { ...raw, text, chars };
+	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
+/** Where a detached mark may sit over its base glyph, as fractions of the segment width. */
+interface MarkShape {
+	/** the mark's left edge is at least this far in */
+	minLeft: number;
+	/** the mark's right edge reaches at least this far */
+	minRight: number;
+	/** the mark spans at most this much of the width */
+	maxWidth: number;
+	/** ink a row may hold and still be the gap under the mark, beyond one noise pixel */
+	gapMaxInkFraction: number;
+}
+
+/**
+ * Detached blob on top of the segment: 2+ ink rows (after any sparse leading
+ * rows, the antialiased top of the mark), a sparse row under it and a base at
+ * least half the height beneath, with the blob's columns inside `shape`.
+ */
 function hasFloatingMark(
 	data: Uint8Array,
 	cols: number,
 	c: RecognizedChar,
 	binThreshold: number,
+	shape: MarkShape,
 ): boolean {
 	const w = c.x1 - c.x0;
 	const h = c.y1 - c.y0;
+	const gapMaxInk = Math.max(1, shape.gapMaxInkFraction * w);
 	let markRows = 0;
 	let markX0 = Number.POSITIVE_INFINITY;
 	let markX1 = -1;
@@ -304,26 +371,89 @@ function hasFloatingMark(
 				hi = x;
 			}
 		}
-		if (ink <= VOICED_GAP_MAX_INK) break;
+		if (ink <= gapMaxInk) {
+			if (markRows === 0) continue;
+			break;
+		}
 		markRows++;
 		markX0 = Math.min(markX0, lo);
 		markX1 = Math.max(markX1, hi);
 	}
-	if (markRows < 2 || markRows > VOICED_MARK_MAX_HEIGHT_FRACTION * h)
-		return false;
+	if (markRows < 2 || markRows > MARK_MAX_HEIGHT_FRACTION * h) return false;
 	if (y >= c.y1) return false;
 	for (; y < c.y1; y++) {
 		let ink = 0;
 		for (let x = c.x0; x < c.x1; x++) {
 			if (data[y * cols + x]! > binThreshold) ink++;
 		}
-		if (ink > VOICED_GAP_MAX_INK) break;
+		if (ink > gapMaxInk) break;
 	}
-	if (c.y1 - y < VOICED_BASE_MIN_HEIGHT_FRACTION * h) return false;
+	if (c.y1 - y < BASE_MIN_HEIGHT_FRACTION * h) return false;
 	return (
-		(markX0 - c.x0) / w >= VOICED_MARK_MIN_LEFT_FRACTION &&
-		(markX1 + 1 - c.x0) / w >= VOICED_MARK_MIN_RIGHT_FRACTION
+		(markX0 - c.x0) / w >= shape.minLeft &&
+		(markX1 + 1 - c.x0) / w >= shape.minRight &&
+		(markX1 + 1 - markX0) / w <= shape.maxWidth
 	);
+}
+
+/**
+ * Latin accents at name size are thin, so the exact fixture crop of the bare
+ * letter outranks the font-rendered accented glyph (fixture 'u' over 'Ù' by
+ * 0.001; 'ó' trails a stack of 'o' crops). A bare Latin letter whose segment
+ * carries a detached blob above the letter body is re-decided to its best
+ * accented candidate. 'i' and 'j' carry their own detached dot and are exempt;
+ * the margin is wide because the mark itself is the evidence.
+ */
+const ACCENT_SCORE_MARGIN = 0.15;
+const ACCENT_EXEMPT = new Set(["i", "j"]);
+/**
+ * Anywhere over the letter but narrower than it, so the bar of a 'T' or the arms
+ * of a 'Y' over their stem never pass; blur leaves a couple of pixels in the
+ * gap row under an 'ó' accent, which stems (a quarter width and more) exceed.
+ */
+const ACCENT_MARK_SHAPE: MarkShape = {
+	minLeft: 0,
+	minRight: 0,
+	maxWidth: 0.8,
+	gapMaxInkFraction: 0.25,
+};
+
+function resolveAccentByMark(
+	raw: RecognizedText,
+	grayView: Mat,
+	binThreshold: number,
+): RecognizedText {
+	const accentedRunnerUp = (c: RecognizedChar) => {
+		if (!/^\p{Script=Latin}$/u.test(c.char) || ACCENT_EXEMPT.has(c.char))
+			return undefined;
+		if (c.char !== stripMarks(c.char)) return undefined;
+		return c.candidates?.find(
+			(k) =>
+				k.char !== stripMarks(k.char) &&
+				stripMarks(k.char).toLowerCase() === c.char.toLowerCase() &&
+				c.score - k.score <= ACCENT_SCORE_MARGIN,
+		);
+	};
+	if (!raw.chars.some(accentedRunnerUp)) return raw;
+
+	const gray = new (getCV().Mat)();
+	grayView.copyTo(gray);
+	const { cols, data } = gray;
+	const chars = raw.chars.map((c) => {
+		const accented = accentedRunnerUp(c);
+		if (
+			!accented ||
+			!hasFloatingMark(data, cols, c, binThreshold, ACCENT_MARK_SHAPE)
+		)
+			return c;
+		return { ...c, char: accented.char, score: accented.score };
+	});
+	gray.delete();
+	return { ...raw, text: retext(raw.text, chars), chars };
+}
+
+function stripMarks(s: string): string {
+	return s.normalize("NFD").replace(/[̀-ͯ]/g, "");
 }
 
 /**
@@ -383,11 +513,7 @@ function preferPlainTies(raw: RecognizedText, margin: number): RecognizedText {
 		);
 		return pick ? { ...c, char: pick.char, score: pick.score } : c;
 	});
-	let ci = 0;
-	const text = [...raw.text]
-		.map((ch) => (ch === " " ? ch : chars[ci++]!.char))
-		.join("");
-	return { ...raw, text, chars };
+	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
 export function parseName(
@@ -405,25 +531,34 @@ export function parseName(
 		spaceGap: options.spaceGap ?? 7,
 		binThreshold,
 		minCharScore: 0.35,
+		maxCandidates: NAME_MAX_CANDIDATES,
 	});
 	const raw =
 		options.plainTieMargin === undefined
 			? recognized
 			: preferPlainTies(recognized, options.plainTieMargin);
-	return {
-		name: normalizeLongBars(
-			normalizeOhs(
-				normalizeBars(
-					resolveCaseByDescent(
+	const name = normalizeLongBars(
+		normalizeOhs(
+			normalizeBars(
+				resolveCaseByDescent(
+					resolveAccentByMark(
 						resolveVoicedByMark(
-							resolveBhByBowlFloor(fixRaisedDots(raw), gray),
+							resolveBhByBowlFloor(
+								fixRaisedDots(resolveUnderscoreByBaseline(raw)),
+								gray,
+							),
 							gray,
 							binThreshold,
 						),
-					).trim(),
-				),
+						gray,
+						binThreshold,
+					),
+				).trim(),
 			),
 		),
+	);
+	return {
+		name,
 		confidence: raw.confidence,
 		raw,
 	};

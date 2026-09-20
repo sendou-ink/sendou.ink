@@ -80,9 +80,8 @@
   },
   "options": {
     "skipFields": [
-      "players.1.name",
-      "players.3.name"
+      "players.1.name"
     ],
-    "notes": "1080p stream capture with horizontal banding. Live misread: the header stage read came back 'Wahnn WnrId l' (banding cuts the o bowls) and failed to snap to Wahoo World before bar-lookalike folding covered 'I'. players.1.name (p) reads P and players.3.name (goji) reads gパi under the same banding."
+    "notes": "1080p stream capture with horizontal banding. Live misread: the header stage read came back 'Wahnn WnrId l' (banding cuts the o bowls) and failed to snap to Wahoo World before bar-lookalike folding covered 'I'. players.3.name (goji) once read gパi: banding fused 'oj' into one 15px segment below the wide-segment split floor, now re-cut as a low-scoring wide segment. players.1.name skipped: the lone glyph reads P. Its ink spans the cap line to the baseline exactly like the P of Pony two rows down (a p would hang 4px below the baseline like the paint suffix's), so the pixels say P — worth re-checking the label against the source."
   }
 }

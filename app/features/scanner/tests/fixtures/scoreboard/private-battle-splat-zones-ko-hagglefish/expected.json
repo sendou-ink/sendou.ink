@@ -1,10 +1,7 @@
 {
   "event": "Scoreboard",
   "options": {
-    "skipFields": [
-      "players.3.name"
-    ],
-    "notes": "KNOCKOUT! burst on the RIGHT banner side (loser's Score: 0 on the left) - regression guard for the burst reading as a 7-0 score. players.3 truth is AHOOUUUUUU but reads AHOOLUUUUU (U misread as L). players.6 name uses dotless i (as parsed) - verify against source if it ever fails."
+    "notes": "KNOCKOUT! burst on the RIGHT banner side (loser's Score: 0 on the left) - regression guard for the burst reading as a 7-0 score. players.3 (AHOOUUUUUU) once read AHOOLUUUUU: a fixture 'L' crop correlated 0.91 with the first U's stem and floor and took the fixture tie-break while explaining only 63% of its ink, which the tie-break now requires. players.6 name uses dotless i (as parsed) - verify against source if it ever fails."
   },
   "data": {
     "lobby": "PRIVATE",

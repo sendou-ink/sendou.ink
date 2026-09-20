@@ -106,9 +106,6 @@
     "stageLabel": "Crableg Capital"
   },
   "options": {
-    "skipFields": [
-      "teammates.3.name"
-    ],
-    "notes": "8-player spectator map screen from a different stream layout (PXG score bug top-left) — attests the card grid and the X jump-button disc land on the same ROIs across layouts. Latin names anchor the 29-30px glyph-height calibration. teammates.3.name skipped: the superscript two in f(x)= x²-8 is not a charset glyph (reads ´ or ·)."
+    "notes": "8-player spectator map screen from a different stream layout (PXG score bug top-left) — attests the card grid and the X jump-button disc land on the same ROIs across layouts. Latin names anchor the 29-30px glyph-height calibration. teammates.3.name (f(x)= x²-8) once read x・ー8: the superscript two sat above the name ROI, whose top now reaches to within 4px of the card's team stripe, and the leftover dot counted as a kana neighbor for the hyphen."
   }
 }

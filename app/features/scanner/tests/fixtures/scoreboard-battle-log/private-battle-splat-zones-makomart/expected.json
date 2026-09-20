@@ -80,9 +80,8 @@
   },
   "options": {
     "skipFields": [
-      "players.0.name",
-      "players.1.name"
+      "players.0.name"
     ],
-    "notes": "720p stream capture with horizontal banding. players.0.name (BDAYBOY) reads BOAuBOY and players.1.name (∴Columbina) reads ∴Columhina — the banding cuts glyph cores at this size. Weapons row order: N-ZAP '85, Sloshing Machine, .52 Gal, Custom Blaster, Tri-Slosher Nouveau, Stickerz Splatana Stamper, Snipewriter 5B, Carbon Roller ANG-L."
+    "notes": "720p stream capture with horizontal banding. players.0.name (BDAYBOY) reads BOAuBOY — the banding rounds the D's stem corners and lifts the u/Y tie the wrong way at this size; no measured corner or edge feature separates a blurred D from an O here. players.1.name (∴Columbina) once read ∴Columhina: the bowl-floor probe skipped glyphs under 20px, and now reads the floor against the band below the arch instead. Weapons row order: N-ZAP '85, Sloshing Machine, .52 Gal, Custom Blaster, Tri-Slosher Nouveau, Stickerz Splatana Stamper, Snipewriter 5B, Carbon Roller ANG-L."
   }
 }
