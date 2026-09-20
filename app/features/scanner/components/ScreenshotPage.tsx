@@ -50,6 +50,7 @@ import { downloadCsv } from "./download";
 import { type CardData, downloadExpectedJson } from "./fixture-export";
 import { drawNormalizedCanvas } from "./normalized-canvas";
 import styles from "./ScreenshotPage.module.css";
+import { SessionHeader } from "./SessionHeader";
 
 type Result = Extract<WorkerResponse, { kind: "result" }>;
 
@@ -528,23 +529,25 @@ export function ScreenshotPage() {
 
 	return (
 		<div>
-			<Dropzone onFile={(file: File) => void analyze(file)}>
-				Drop a frame (PNG/JPEG) here, or{" "}
-				<label>
-					pick a file
-					<input
-						type="file"
-						accept="image/png,image/jpeg"
-						style={{ display: "none" }}
-						onChange={(e) => {
-							const file = e.target.files?.[0];
-							e.target.value = ""; // allow re-picking the same file
-							if (file) void analyze(file);
-						}}
-					/>
-				</label>
-				{busy ? " — analyzing…" : null}
-			</Dropzone>
+			<SessionHeader>
+				<Dropzone onFile={(file: File) => void analyze(file)}>
+					Drop a frame (PNG/JPEG) here, or{" "}
+					<label>
+						pick a file
+						<input
+							type="file"
+							accept="image/png,image/jpeg"
+							style={{ display: "none" }}
+							onChange={(e) => {
+								const file = e.target.files?.[0];
+								e.target.value = ""; // allow re-picking the same file
+								if (file) void analyze(file);
+							}}
+						/>
+					</label>
+					{busy ? " — analyzing…" : null}
+				</Dropzone>
+			</SessionHeader>
 			{error ? <p className="text-error">{error}</p> : null}
 
 			<div
