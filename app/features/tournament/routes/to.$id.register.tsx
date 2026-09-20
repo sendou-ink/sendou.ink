@@ -118,7 +118,12 @@ export default function TournamentRegisterPage() {
 
 	return (
 		<div className={clsx("stack lg", containerClassName("normal"))}>
-			{isRegularMemberOfATeam ? (
+			{tournament.hasStarted && teamMemberOf ? (
+				<div className="stack md">
+					<Alert>{t("tournament:pre.startedNoEdit")}</Alert>
+					<RegistrationForms readOnly />
+				</div>
+			) : isRegularMemberOfATeam ? (
 				<div className="stack md">
 					<Alert>{t("tournament:pre.captainOnlyEdit")}</Alert>
 					<div className="stack md items-center">

@@ -3,6 +3,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as BadgeFactory from "~/db/seed/factories/BadgeFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as CalendarRepository from "~/features/calendar/CalendarRepository.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
@@ -21,6 +22,8 @@ const editAction = wrappedAction<typeof calendarNewSchemaServer>({
 const users = UserFactory.pool();
 
 const badgeManagingAuthorId = () => users.id(1);
+const teamPickAuthorId = () => users.id(5);
+const teamPickTeamMemberIds = () => users.ids(4);
 
 describe("calendar new action: editing an event with badge prizes", () => {
 	let orgAdminId: number;
@@ -168,6 +171,7 @@ describe("calendar new action: bracket URL", () => {
 describe("calendar new action: team picked tournament", () => {
 	beforeEach(async () => {
 		await UserFactory.createRegular(null, { roles: ["TOURNAMENT_ORGANIZER"] });
+		await users.create(5);
 	});
 
 	test("saves the team pick settings and the custom pool", async () => {
@@ -210,5 +214,38 @@ describe("calendar new action: team picked tournament", () => {
 		expect(new MapPool(tournament.ctx.toSetMapPool).serialized).toBe(
 			customPool.serialized,
 		);
+	});
+
+	test("changing the pick settings resets the teams' picks and checks them out", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: teamPickAuthorId(),
+			mapPickingStyle: "AUTO",
+			teamPick: { modes: [{ mode: "SZ", count: 2 }], pool: "ALL" },
+		});
+		await TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: teamPickTeamMemberIds(),
+				mapPool: new MapPool({ ...MapPool.EMPTY.parsed, SZ: [1, 2] }),
+			},
+			{ isCheckedIn: true },
+		);
+
+		const res = await editAction(
+			calendarNewFormValues({
+				eventToEditId: tournament.eventId,
+				bracketUrl: "https://sendou.ink",
+				mapPickingStyle: "AUTO",
+				teamPickModes: ["SZ"],
+				teamPickCounts: [{ mode: "SZ", count: 3 }],
+				teamPickPool: "ALL",
+			}),
+			{ user: teamPickAuthorId() },
+		);
+		expect(res.fieldErrors).toBeUndefined();
+
+		const edited = await tournamentFromDB(tournament.id);
+		expect(edited.ctx.teams[0].hasMapPool).toBe(0);
+		expect(edited.ctx.teams[0].checkIns).toEqual([]);
 	});
 });

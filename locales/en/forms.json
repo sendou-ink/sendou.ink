@@ -362,7 +362,7 @@
 	"options.teamPickPool.SENDOUQ": "SendouQ legal maps",
 	"options.teamPickPool.ALL": "All maps",
 	"options.teamPickPool.CUSTOM": "Custom",
-	"bottomTexts.teamPickReset": "Changing the map settings resets the maps every team has already picked",
+	"bottomTexts.teamPickReset": "Changing the map settings resets the maps every team has already picked and checks those teams out",
 	"bottomTexts.regClosesAt": "All times relative to the reported tournament start time e.g. \"30 minutes\" means \"30 minutes before event start time\". After registration closes only TO's can make changes to team rosters.",
 	"bottomTexts.maxTeamSize": "Maximum number of players that can be registered per team. Doesn't apply to tournament organizers. Default is 6.",
 	"bottomTexts.avatarValidation": "Note that for non-patrons there is a validation process before avatar is shown.",
