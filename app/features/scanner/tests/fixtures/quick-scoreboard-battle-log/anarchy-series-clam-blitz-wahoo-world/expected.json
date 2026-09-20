@@ -79,10 +79,6 @@
     "stageLabel": "Wahoo World"
   },
   "options": {
-    "skipFields": [
-      "players.0.name",
-      "players.5.name"
-    ],
-    "notes": "1080p capture of the lobby's quick battle log (X menu overlay, list on the left), a knockout with the POV player on the winning side. The card is drawn in slight perspective, rectified by the detector before parsing. players.0.name (エンジェルサック) reads エンシェルサック and players.5.name (がんばるりゅた) reads かんばるりゅた — the dakuten marks are lost at this size. players.6.name's question marks may be fullwidth on screen; the read is ASCII. Weapons row order: .52 Gal, Range Blaster, .52 Gal, Dapple Dualies Nouveau, Sploosh-o-matic, Slosher, Wellstring V, Luna Blaster Neo."
+    "notes": "1080p capture of the lobby's quick battle log (X menu overlay, list on the left), a knockout with the POV player on the winning side. The card is drawn in slight perspective, rectified by the detector before parsing. players.0.name (エンジェルサック) and players.5.name (がんばるりゅた) once read エンシェルサック / かんばるりゅた: at this size the thinned dakuten ticks let the plain twin win the ink penalty; parseName's floating-mark probe now settles those near-ties. players.6.name's question marks may be fullwidth on screen; the read is ASCII. Weapons row order: .52 Gal, Range Blaster, .52 Gal, Dapple Dualies Nouveau, Sploosh-o-matic, Slosher, Wellstring V, Luna Blaster Neo."
   }
 }

@@ -22,6 +22,9 @@ export interface ParsedName {
  */
 const BAR_CHARS = new Set(["I", "l", "|", "1"]);
 
+/** recognizeText's own default, shared with the mark probe so both see the same ink */
+const DEFAULT_BIN_THRESHOLD = 150;
+
 function normalizeBars(name: string): string {
 	const chars = [...name];
 	// context is the nearest NON-BAR char within the word ("ll" in "Chill" must
@@ -210,6 +213,120 @@ function resolveBhByBowlFloor(
 }
 
 /**
+ * A (han)dakuten is two short ticks (or a ring) floating above the base kana's
+ * upper right. Capture blur thins those ticks, so the ink-coverage penalty lets
+ * the plain twin ('か') edge out the voiced glyph ('が') whose extra template ink
+ * the thinned segment no longer explains — even when the voiced template
+ * correlates better (quick-log ジ over シ on raw NCC, and lost the tie). When a
+ * plain kana wins a near-tie over a voiced twin, the segment's own row profile
+ * decides: a 2+ row blob confined to the segment's right half, a blank row under
+ * it and a base at least half the height beneath is the floating mark. Only that
+ * direction is re-decided: the game draws some marks touching the base stroke
+ * (quick-log ば, ギ) and the templates already read those right, so a missing gap
+ * must not demote a voiced read. A plain kana's own detached top tick (う) starts
+ * far left of the mark's column band and fails the left-edge floor.
+ */
+const VOICED_TWINS: Record<string, string[]> = {};
+for (const [plain, voiced] of [
+	[
+		"かきくけこさしすせそたちつてとはひふへほう",
+		"がぎぐげござじずぜぞだぢづでどばびぶべぼゔ",
+	],
+	["はひふへほ", "ぱぴぷぺぽ"],
+	[
+		"カキクケコサシスセソタチツテトハヒフヘホウ",
+		"ガギグゲゴザジズゼゾダヂヅデドバビブベボヴ",
+	],
+	["ハヒフヘホ", "パピプペポ"],
+] as const) {
+	for (const [i, base] of [...plain].entries()) {
+		VOICED_TWINS[base] = [...(VOICED_TWINS[base] ?? []), [...voiced][i]!];
+	}
+}
+const VOICED_SCORE_MARGIN = 0.1;
+/** ink pixels a row may hold and still count as the gap under the mark (capture noise) */
+const VOICED_GAP_MAX_INK = 1;
+const VOICED_MARK_MAX_HEIGHT_FRACTION = 0.4;
+const VOICED_BASE_MIN_HEIGHT_FRACTION = 0.5;
+const VOICED_MARK_MIN_LEFT_FRACTION = 0.35;
+const VOICED_MARK_MIN_RIGHT_FRACTION = 0.75;
+
+function resolveVoicedByMark(
+	raw: RecognizedText,
+	grayView: Mat,
+	binThreshold: number,
+): RecognizedText {
+	const voicedRunnerUp = (c: RecognizedChar) => {
+		const twins = VOICED_TWINS[c.char];
+		if (!twins) return undefined;
+		return c.candidates?.find(
+			(k) => twins.includes(k.char) && c.score - k.score <= VOICED_SCORE_MARGIN,
+		);
+	};
+	if (!raw.chars.some(voicedRunnerUp)) return raw;
+
+	const gray = new (getCV().Mat)();
+	grayView.copyTo(gray);
+	const { cols, data } = gray;
+	const chars = raw.chars.map((c) => {
+		const twin = voicedRunnerUp(c);
+		if (!twin || !hasFloatingMark(data, cols, c, binThreshold)) return c;
+		return { ...c, char: twin.char, score: twin.score };
+	});
+	gray.delete();
+	let ci = 0;
+	const text = [...raw.text]
+		.map((ch) => (ch === " " ? ch : chars[ci++]!.char))
+		.join("");
+	return { ...raw, text, chars };
+}
+
+function hasFloatingMark(
+	data: Uint8Array,
+	cols: number,
+	c: RecognizedChar,
+	binThreshold: number,
+): boolean {
+	const w = c.x1 - c.x0;
+	const h = c.y1 - c.y0;
+	let markRows = 0;
+	let markX0 = Number.POSITIVE_INFINITY;
+	let markX1 = -1;
+	let y = c.y0;
+	for (; y < c.y1; y++) {
+		let ink = 0;
+		let lo = -1;
+		let hi = -1;
+		for (let x = c.x0; x < c.x1; x++) {
+			if (data[y * cols + x]! > binThreshold) {
+				ink++;
+				if (lo < 0) lo = x;
+				hi = x;
+			}
+		}
+		if (ink <= VOICED_GAP_MAX_INK) break;
+		markRows++;
+		markX0 = Math.min(markX0, lo);
+		markX1 = Math.max(markX1, hi);
+	}
+	if (markRows < 2 || markRows > VOICED_MARK_MAX_HEIGHT_FRACTION * h)
+		return false;
+	if (y >= c.y1) return false;
+	for (; y < c.y1; y++) {
+		let ink = 0;
+		for (let x = c.x0; x < c.x1; x++) {
+			if (data[y * cols + x]! > binThreshold) ink++;
+		}
+		if (ink > VOICED_GAP_MAX_INK) break;
+	}
+	if (c.y1 - y < VOICED_BASE_MIN_HEIGHT_FRACTION * h) return false;
+	return (
+		(markX0 - c.x0) / w >= VOICED_MARK_MIN_LEFT_FRACTION &&
+		(markX1 + 1 - c.x0) / w >= VOICED_MARK_MIN_RIGHT_FRACTION
+	);
+}
+
+/**
  * 'P' and 'p' tight-crop to the same shape, but the segment keeps the position
  * the templates lose: 'p' hangs below the baseline (median ink bottom of the
  * non-twin glyphs, which shrugs off real descenders). Skipped with no anchor glyph.
@@ -283,9 +400,10 @@ export function parseName(
 		plainTieMargin?: number;
 	} = {},
 ): ParsedName {
+	const binThreshold = options.binThreshold ?? DEFAULT_BIN_THRESHOLD;
 	const recognized = recognizeText(gray, glyphs, {
 		spaceGap: options.spaceGap ?? 7,
-		binThreshold: options.binThreshold,
+		binThreshold,
 		minCharScore: 0.35,
 	});
 	const raw =
@@ -297,7 +415,11 @@ export function parseName(
 			normalizeOhs(
 				normalizeBars(
 					resolveCaseByDescent(
-						resolveBhByBowlFloor(fixRaisedDots(raw), gray),
+						resolveVoicedByMark(
+							resolveBhByBowlFloor(fixRaisedDots(raw), gray),
+							gray,
+							binThreshold,
+						),
 					).trim(),
 				),
 			),

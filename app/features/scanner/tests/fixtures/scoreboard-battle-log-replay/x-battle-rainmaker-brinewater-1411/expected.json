@@ -79,11 +79,6 @@
     "stageLabel": "Brinewater Springs"
   },
   "options": {
-    "skipFields": [
-      "players.1.name",
-      "players.4.name",
-      "players.7.name"
-    ],
-    "notes": "Same stream as the 1404 case. The old export carried the anonymized-view nicknames; names here are the on-screen ones. Skipped names read without dakuten (めがねがし>めかねかし, むぎ>むき, コジャケサラダ>コジャケサラタ) - names atlas lacks templates for those glyphs. Code hand-verified (F>E misread)."
+    "notes": "Same stream as the 1404 case. The old export carried the anonymized-view nicknames; names here are the on-screen ones. めがねがし, むぎ and コジャケサラダ once read without dakuten (めかねかし, むき, コジャケサラタ): the name ROI clipped the marks off the top, so the voiced templates could not be placed. Code hand-verified (F>E misread)."
   }
 }
