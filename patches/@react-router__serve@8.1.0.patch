@@ -2,11 +2,12 @@ diff --git a/dist/cli.js b/dist/cli.js
 index 7871cebe46f6df886b76364db5346adfa1838622..cbb32659bb2a57c2cd847ddfd35a9a07ab22a033 100644
 --- a/dist/cli.js
 +++ b/dist/cli.js
-@@ -110,7 +110,6 @@ async function run() {
+@@ -110,7 +110,7 @@ async function run() {
  	};
  	let app = express();
  	app.disable("x-powered-by");
 -	if (!isRSCBuild) app.use(compression());
++	app.set("trust proxy", true);
  	let expressPublicPath = getExpressPath(build.publicPath);
  	app.use(path.posix.join(expressPublicPath, "assets"), express.static(path.join(build.assetsBuildDirectory, "assets"), {
  		immutable: true,
