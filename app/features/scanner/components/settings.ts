@@ -1,7 +1,8 @@
 /**
- * The scanner's settings, kept in localStorage: the capture source, whether
- * results upload to sendou.ink and whether live clips are saved. Read through
- * a store so the controllers (outside React) and the views see one value.
+ * The scanner's settings, kept in localStorage: the capture source, what
+ * clips hear, whether results upload to sendou.ink and whether live clips
+ * are saved. Read through a store so the controllers (outside React) and
+ * the views see one value.
  */
 import { useSyncExternalStore } from "react";
 
@@ -10,22 +11,38 @@ const STORAGE_KEY = "scanner:settings";
 export interface ScannerSettings {
 	/** `deviceId` of the video input; empty = the browser's default camera */
 	sourceDeviceId: string;
+	/** what live clips hear */
+	audioSource: AudioSource;
 	/** upload results to sendou.ink as games end (needs a login) */
 	upload: boolean;
 	/** keep the live ring buffer and cut clips of the best moments */
 	saveClips: boolean;
 	/** splats in a row that make a clip */
 	clipMinKills: ClipMinKills;
+	/** milliseconds the clips' sound is moved later (negative: earlier) against the picture */
+	audioOffsetMs: number;
 }
 
 export const CLIP_MIN_KILLS_OPTIONS = [3, 4, 5] as const;
 export type ClipMinKills = (typeof CLIP_MIN_KILLS_OPTIONS)[number];
 
+/**
+ * `source`: the video input's own audio side; `desktop`: the system's sound
+ * through the share picker; `off`: silent clips; `device:<id>`: a named
+ * audio input (a loopback device, say).
+ */
+export type AudioSource = "source" | "desktop" | "off" | `device:${string}`;
+
+/** two seconds either way covers any capture card against any audio path */
+export const AUDIO_OFFSET_LIMIT_MS = 2000;
+
 const DEFAULT_SETTINGS: ScannerSettings = {
 	sourceDeviceId: "",
+	audioSource: "source",
 	upload: true,
 	saveClips: true,
 	clipMinKills: 4,
+	audioOffsetMs: 0,
 };
 
 let settings: ScannerSettings | null = null;
@@ -51,6 +68,20 @@ export function useScannerSettings(): ScannerSettings {
 	return useSyncExternalStore(subscribe, readSettings, () => DEFAULT_SETTINGS);
 }
 
+/** The `deviceId` a `device:<id>` audio source names; null for the other kinds. */
+export function audioDeviceIdOf(source: AudioSource): string | null {
+	return source.startsWith("device:") ? source.slice("device:".length) : null;
+}
+
+function isAudioSource(value: unknown): value is AudioSource {
+	return (
+		value === "source" ||
+		value === "desktop" ||
+		value === "off" ||
+		(typeof value === "string" && value.startsWith("device:"))
+	);
+}
+
 function subscribe(listener: () => void): () => void {
 	listeners.add(listener);
 	return () => listeners.delete(listener);
@@ -66,6 +97,9 @@ function load(): ScannerSettings {
 				typeof parsed.sourceDeviceId === "string"
 					? parsed.sourceDeviceId
 					: DEFAULT_SETTINGS.sourceDeviceId,
+			audioSource: isAudioSource(parsed.audioSource)
+				? parsed.audioSource
+				: DEFAULT_SETTINGS.audioSource,
 			upload:
 				typeof parsed.upload === "boolean"
 					? parsed.upload
@@ -77,6 +111,14 @@ function load(): ScannerSettings {
 			clipMinKills:
 				CLIP_MIN_KILLS_OPTIONS.find((n) => n === parsed.clipMinKills) ??
 				DEFAULT_SETTINGS.clipMinKills,
+			audioOffsetMs:
+				typeof parsed.audioOffsetMs === "number" &&
+				Number.isFinite(parsed.audioOffsetMs)
+					? Math.max(
+							-AUDIO_OFFSET_LIMIT_MS,
+							Math.min(AUDIO_OFFSET_LIMIT_MS, parsed.audioOffsetMs),
+						)
+					: DEFAULT_SETTINGS.audioOffsetMs,
 		};
 	} catch {
 		return DEFAULT_SETTINGS;

@@ -9,7 +9,7 @@ import { useEffect } from "react";
 import { useUser } from "~/features/auth/core/user";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { scannerSearchParams } from "../scanner-search-params";
-import { deleteVodClips } from "../store/clips";
+import { deleteVodClips, rollSessionClipsIntoHistory } from "../store/clips";
 import { ClipsView } from "./ClipsView";
 import { refreshClips } from "./clips-feed";
 import { FixturesPage } from "./FixturesPage";
@@ -24,8 +24,12 @@ import { useDebug } from "./use-debug";
 import { VodView } from "./VodView";
 import { cancelVodScan } from "./vod-scan";
 
-/** A file's clips live for one visit: the file is on disk, so a new page load starts without them. */
-let vodClipsPurged = false;
+/**
+ * Once per page load: a file's clips live for one visit (the file is on
+ * disk), and session clips left by a capture that never reached Stop (a
+ * reload, a closed tab) belong to the history now, not the next capture.
+ */
+let storeSettled = false;
 
 export function ScannerApp() {
 	const [view] = useSearchParam(scannerSearchParams, "view");
@@ -39,11 +43,12 @@ export function ScannerApp() {
 	}, [user]);
 
 	useEffect(() => {
-		if (vodClipsPurged) return;
-		vodClipsPurged = true;
-		void deleteVodClips()
-			.catch(() => {})
-			.then(() => refreshClips());
+		if (storeSettled) return;
+		storeSettled = true;
+		void Promise.allSettled([
+			deleteVodClips(),
+			rollSessionClipsIntoHistory(),
+		]).then(() => refreshClips());
 	}, []);
 
 	// a file scan has no Cancel button: leaving the page is how it is stopped

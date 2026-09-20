@@ -22,7 +22,6 @@ import styles from "./UploadChip.module.css";
 export type UploadState =
 	| { kind: "uploaded"; link?: IngestedMatchLink }
 	| { kind: "uploading" }
-	| { kind: "queued" }
 	| { kind: "waiting"; onRetry?: () => void }
 	| { kind: "failed"; error?: string; onRetry?: () => void }
 	| { kind: "not-uploaded"; onUpload?: () => void }
@@ -50,8 +49,6 @@ export function uploadStateOf({
 			return { kind: "uploaded", link: send.link };
 		case "sending":
 			return { kind: "uploading" };
-		case "queued":
-			return { kind: "queued" };
 		case "unlinked":
 			return { kind: "waiting", onRetry: action };
 		case "failed":
@@ -86,13 +83,6 @@ export function UploadChip({ state }: { state: UploadState }) {
 				<span className={clsx(styles.chip, styles.busy)}>
 					<span className={styles.dot} />
 					uploading…
-				</span>
-			);
-		case "queued":
-			return (
-				<span className={clsx(styles.chip, styles.busy)}>
-					<span className={styles.dot} />
-					queued
 				</span>
 			);
 		case "waiting":

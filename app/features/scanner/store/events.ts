@@ -33,7 +33,7 @@ const RETENTION_INTERVAL_MS = 60_000;
 /** Where an event stands with sendou.ink /ingest; absent = never attempted. */
 export interface SendStatus {
 	/** "unlinked": sendou.ink stored the match but its game is not reported yet — resent on a backoff */
-	state: "queued" | "sending" | "sent" | "unlinked" | "failed";
+	state: "sending" | "sent" | "unlinked" | "failed";
 	/** wall-clock time of the last state change */
 	at: number;
 	/** failure detail, set when state is "failed" */

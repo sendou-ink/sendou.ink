@@ -16,6 +16,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
+import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
 import type { IngestSkipReason } from "../core/match-builder";
 import {
 	type BuiltMatch,
@@ -110,6 +111,13 @@ export function SessionView({
 		skipReasons,
 	};
 	const justFormedKeys = useJustFormedKeys(built.map(keyOf));
+	// the game being played is the only one still gathering events; a newer
+	// map intro means it is over even before that game has a card of its own
+	const lastBuiltT =
+		built.at(-1)?.sources.at(-1)?.t ?? Number.NEGATIVE_INFINITY;
+	const newerGameStarted = events.some(
+		(event) => event.type === MAP_START_EVENT_TYPE && event.t > lastBuiltT,
+	);
 	const groups = LOBBY_GROUPS.map((group) => ({
 		group,
 		matches: built.filter((b) => lobbyGroup(b.match.lobby) === group),
@@ -127,7 +135,12 @@ export function SessionView({
 				kind={kind}
 				justFormed={justFormedKeys.has(key)}
 				expandable={
-					!(running && index === built.length - 1 && b.match.winner === null)
+					!(
+						running &&
+						index === built.length - 1 &&
+						b.match.winner === null &&
+						!newerGameStarted
+					)
 				}
 				upload={uploadStateOf({
 					send: aggregateSendStatus(b.sources),

@@ -76,22 +76,47 @@ clip would outgrow `MAX_CLIP_SECONDS`; `MIN_KILLS` (4) makes it a window,
 scored `kills² + kills / span`. Both controllers run the same
 `scoreWindows(match, deaths)` → cut → `store/clips.ts` path:
 
-- **Live** (`capture/ring-buffer.ts`): the stream's video track runs through
-  a `MediaStreamTrackProcessor` → `VideoEncoder` (hardware H.264, ~16 Mbps,
-  keyframe every 2 s) into a ring of GOPs holding the last
-  `RING_BUFFER_SECONDS`; the audio track through an `AudioEncoder` (AAC,
-  else Opus) into the same ring. Packets carry the wall-clock time their
-  frame was captured (noted at encoder input, claimed at output, so encoder
-  latency never shifts audio against video). The audio processor queues
-  `AUDIO_BUFFER_FRAMES` slices so a busy main thread does not drop any, and
-  the encoder's input is watched for signal: a device that opens but sends
-  silence shows on the live status line. A window is cut once
-  `windowClosed` (no kill can join and the
+- One capture per browser profile: `startCapture` holds a Web Lock
+  (`CAPTURE_LOCK`) for its lifetime, so a second tab gets an error instead
+  of a second pipeline writing every game twice (two samplers on one store
+  double each event, and the repeated scoreboard opens a duplicate match).
+- **Live** (`capture/ring-buffer.ts` + `ring-buffer.worker.ts`): the
+  stream's tracks become `MediaStreamTrackProcessor` streams, transferred to
+  a worker so a busy page never costs the footage a frame (on the main
+  thread ~12% of a 60 fps track was lost to the one-frame processor
+  buffer). There the video runs through a `VideoEncoder` (hardware H.264,
+  ~16 Mbps, keyframe every 2 s) into a ring of GOPs holding the last
+  `RING_BUFFER_SECONDS`; the audio through an `AudioEncoder` (AAC, else
+  Opus) into the same ring. `openCapture` asks for 60 fps explicitly, as
+  Chromium's default of 30 would halve a capture card. Packets carry the
+  wall-clock time their frame was captured (noted at encoder input, claimed
+  at output, so encoder latency never shifts audio against video): video by
+  frame timestamp, audio by sample position (`SampleClock`), because audio
+  timestamps drift against the sample count on some sources (a display
+  capture, an element's `captureStream`) while the AAC encoder counts
+  samples — matching by timestamp pushed later packets into the future and
+  a cut lost its second half of audio. In the MP4 the audio runs on by
+  sample count from its first packet and only jumps forward on a delivery
+  gap over `AUDIO_RESYNC_S`. The remaining constant offset between a
+  capture card's picture and another path's sound (desktop audio, a
+  loopback device) is the `audioOffsetMs` setting, applied at cut time.
+  The audio input is watched for signal: a device that opens but sends
+  silence, and an encoder that gives up, show on the live status line. A window is cut once `windowClosed` (no
+  kill can join and the
   tail is captured): the GOP at or before its start through its end, muxed
-  to MP4 with mediabunny's `EncodedVideoPacketSource` — no decode. Audio is
-  the chosen source's own input (`audioInputFor`: same `groupId`, else a
-  shared label prefix); OBS Virtual Camera carries none, so its clips are
-  silent, which the source select says.
+  to MP4 with mediabunny's `EncodedVideoPacketSource` — no decode; a ring
+  that only begins more than `MAX_MISSING_LEAD_S` after the asked start
+  (a capture restarted mid-streak) yields nothing rather than a clip
+  missing its kills. A kill belongs to one clip: a window over footage
+  already cut — redrawn by a late-read kill, or seen again because the
+  session outlived the capture that first cut it — is skipped unless it
+  scores higher, when it is cut and the clips it overlaps are deleted
+  (`cuts` plus the session's saved clips, `live-session.ts`). What
+  the clips hear is the `audioSource` setting: the source's own input
+  (`audioInputFor`: same `groupId`, else a shared label prefix; OBS Virtual
+  Camera carries none), the desktop's sound (`openDesktopAudio`: the share
+  picker's audio track, opened before the camera so the click's activation
+  still covers it, its video surface dropped), any audio input, or off.
 - **VoD** (`capture/vod-clips.ts`): packets from the keyframe at or before
   the window start are copied into a fresh MP4 (video + audio, no
   re-encode, so a minute of 1080p takes well under a second). mediabunny's

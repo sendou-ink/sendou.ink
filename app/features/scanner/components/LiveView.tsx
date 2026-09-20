@@ -43,7 +43,12 @@ export function LiveView() {
 
 	const session = currentSession(feed);
 	const events = session?.events ?? [];
-	const sessionClips = clips.filter((clip) => clip.bucket === "session");
+	const sessionClips = clips.filter(
+		(clip) =>
+			clip.bucket === "session" &&
+			clip.source.kind === "live" &&
+			clip.source.sessionKey === session?.key,
+	);
 	const newest = session?.built.at(-1);
 	const reading =
 		newest !== undefined &&
@@ -57,12 +62,18 @@ export function LiveView() {
 	const clipsNote =
 		live.clips === "on"
 			? live.hasAudio
-				? live.audioSignal === "muted"
-					? "Clips on · audio input muted by the browser"
-					: live.audioSignal === "silent"
-						? "Clips on · Audio ✓ but only silence is coming in"
-						: "Clips on · Audio ✓"
-				: `Clips on · no audio${live.audioError ? ` (${live.audioError})` : ""}`
+				? live.audioSignal === "failed"
+					? "Clips on · audio encoder failed, clips are silent"
+					: live.audioSignal === "muted"
+						? "Clips on · audio input muted by the browser"
+						: live.audioSignal === "ended"
+							? "Clips on · audio input stopped"
+							: live.audioSignal === "silent"
+								? "Clips on · Audio ✓ but only silence is coming in"
+								: "Clips on · Audio ✓"
+				: settings.audioSource === "off"
+					? "Clips on · audio off"
+					: `Clips on · no audio${live.audioError ? ` (${live.audioError})` : ""}`
 			: live.clips === "unsupported"
 				? "Clips need a Chromium browser"
 				: live.clips === "failed"

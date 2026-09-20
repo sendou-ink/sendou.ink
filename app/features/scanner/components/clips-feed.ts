@@ -33,7 +33,8 @@ export function useClips(): ScannerClip[] {
 	return useSyncExternalStore(subscribe, getClips, () => EMPTY);
 }
 
-function getClips(): ScannerClip[] {
+/** The list as last loaded, for the controllers; loads on first use. */
+export function getClips(): ScannerClip[] {
 	if (!loaded && !refreshing) void refreshClips();
 	return clips;
 }
