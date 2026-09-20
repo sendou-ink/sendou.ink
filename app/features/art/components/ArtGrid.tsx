@@ -35,6 +35,7 @@ export function ArtGrid({
 	enablePreview?: boolean;
 	showUploadDate?: boolean;
 }) {
+	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const {
 		itemsToDisplay,
 		everythingVisible,
@@ -46,13 +47,13 @@ export function ArtGrid({
 	} = usePagination({
 		items: arts,
 		pageSize: ART_PER_PAGE,
+		initialPage: pageOfArt(arts, bigArtId),
 	});
-	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const isHydrated = useHydrated();
 
 	if (!isHydrated) return null;
 
-	const bigArt = itemsToDisplay.find((art) => art.id === bigArtId);
+	const bigArt = arts.find((art) => art.id === bigArtId);
 
 	return (
 		<>
@@ -409,6 +410,16 @@ function useImageAspectRatio() {
 	};
 
 	return [aspectRatio, imageRef] as const;
+}
+
+/** Page the art is on, so that a shared `?big=` link renders the page containing it. */
+function pageOfArt(arts: ListedArt[], artId: number | null) {
+	if (typeof artId !== "number") return 1;
+
+	const index = arts.findIndex((art) => art.id === artId);
+	if (index === -1) return 1;
+
+	return Math.floor(index / ART_PER_PAGE) + 1;
 }
 
 /** Touch devices have no hover to reveal the lightbox info with, so a tap on the image toggles it instead. */
