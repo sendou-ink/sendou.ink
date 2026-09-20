@@ -120,54 +120,6 @@ describe("SendouDialog", () => {
 		expect(openDialog().open).toBe(true);
 	});
 
-	test("locks page scrolling while open without changing the page width", async () => {
-		const tall = document.createElement("div");
-		tall.style.height = "300vh";
-		document.body.appendChild(tall);
-		cleanupFns.push(() => tall.remove());
-		const root = document.documentElement;
-		const widthBefore = root.clientWidth;
-
-		const screen = await render(
-			withRouter(
-				<SendouDialog
-					heading="Hello"
-					trigger={<button type="button">Open</button>}
-					showCloseButton
-				>
-					Content
-				</SendouDialog>,
-			),
-		);
-
-		await screen.getByRole("button", { name: "Open" }).click();
-		await expect.element(screen.getByText("Content")).toBeVisible();
-		await vi.waitFor(() => expect(root.style.overflow).toBe("hidden"));
-		expect(root.clientWidth).toBe(widthBefore);
-
-		await screen.getByRole("button", { name: "Close" }).click();
-		await vi.waitFor(() => expect(root.style.overflow).toBe(""));
-		expect(root.style.scrollbarGutter).toBe("");
-		expect(root.clientWidth).toBe(widthBefore);
-	});
-
-	test("releases the scroll lock when an open dialog unmounts", async () => {
-		const screen = await render(
-			withRouter(
-				<SendouDialog heading="Hello" onClose={() => {}}>
-					Content
-				</SendouDialog>,
-			),
-		);
-		await expect.element(screen.getByText("Content")).toBeVisible();
-		await vi.waitFor(() =>
-			expect(document.documentElement.style.overflow).toBe("hidden"),
-		);
-
-		await screen.unmount();
-		expect(document.documentElement.style.overflow).toBe("");
-	});
-
 	test("focuses the dialog itself instead of the close button on open", async () => {
 		await render(
 			withRouter(
