@@ -988,8 +988,14 @@ export function findPendingCheckInsStartingBetween({
 			.where("CalendarEvent.hidden", "=", 0)
 			.where("Tournament.isFinalized", "=", 0)
 			.where("TournamentTeam.droppedOut", "=", 0)
+			.where("TournamentTeam.isPlaceholder", "=", 0)
 			.where(
 				sql<number>`json_extract("Tournament"."settings", '$.isTest')`,
+				"is not",
+				1,
+			)
+			.where(
+				sql<number>`json_extract("Tournament"."settings", '$.isLeague')`,
 				"is not",
 				1,
 			)
