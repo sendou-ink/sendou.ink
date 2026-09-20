@@ -266,7 +266,7 @@
 }
 
 /* the shared circle button, translucent over the banner */
-button.expand {
+button.circle {
 	flex-shrink: 0;
 	width: 28px;
 	height: 28px;
@@ -276,7 +276,6 @@ button.expand {
 	background: color-mix(in oklab, var(--color-bg) 55%, transparent);
 	backdrop-filter: blur(8px);
 	color: var(--color-text-high);
-	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
 	& svg {
 		width: var(--field-size-icon);
@@ -287,15 +286,14 @@ button.expand {
 		color: var(--color-text);
 		background: color-mix(in oklab, var(--color-bg) 78%, transparent);
 	}
+}
+
+button.expand {
+	transition: transform 0.25s cubic-bezier(0.16, 1, 0.3, 1);
 
 	&.expanded {
 		transform: rotate(180deg);
 	}
-}
-
-.error {
-	font-size: var(--font-2xs);
-	color: var(--color-error);
 }
 
 /* the expanded content, indented under its card via a rail */
