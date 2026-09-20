@@ -297,6 +297,7 @@ function useTriggerToasts() {
 
 	const error = searchParams.get("__error");
 	const success = searchParams.get("__success");
+	const searchWithoutToastParams = searchParamsWithoutToastParams(searchParams);
 
 	// layout effect: the restore has to land after <ScrollRestoration /> (a child) reset the scroll, before paint
 	useIsomorphicLayoutEffect(() => {
@@ -324,14 +325,24 @@ function useTriggerToasts() {
 		}
 
 		navigate(
-			{ search: "" },
+			{ search: searchWithoutToastParams },
 			{
 				replace: true,
 				preventScrollReset: true,
 				defaultShouldRevalidate: false,
 			},
 		);
-	}, [error, success, navigate, scrollBeforeToast]);
+	}, [error, success, searchWithoutToastParams, navigate, scrollBeforeToast]);
+}
+
+function searchParamsWithoutToastParams(searchParams: URLSearchParams) {
+	const rest = new URLSearchParams(searchParams);
+	rest.delete("__error");
+	rest.delete("__success");
+
+	const asString = rest.toString();
+
+	return asString ? `?${asString}` : "";
 }
 
 /** Latest scroll position and the page it was scrolled on, to undo the scroll reset of a toast's redirect. */

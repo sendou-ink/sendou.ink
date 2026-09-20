@@ -1,9 +1,12 @@
 import { describe, expect, test } from "vitest";
 import {
+	errorToastRedirect,
 	paginate,
 	safeReturnTo,
+	successToast,
 	successToastWithRedirect,
 } from "./remix.server";
+import { runWithRequestContext } from "./request-context.server";
 
 const buildUrl = (url: string) => new URL(url);
 
@@ -180,5 +183,38 @@ describe("successToastWithRedirect()", () => {
 		expect(response.headers.get("Location")).toBe(
 			"/u/sendou?__success=Saved#results",
 		);
+	});
+});
+
+describe("errorToastRedirect()", () => {
+	const redirectLocationOf = (url: string, message: string) =>
+		runWithRequestContext({ url: new URL(url) }, () =>
+			errorToastRedirect(message).headers.get("Location"),
+		);
+
+	test("keeps the search params of the current request", () => {
+		expect(
+			redirectLocationOf("https://sendou.ink/q/match/1?tab=action", "No"),
+		).toBe("/q/match/1?tab=action&__error=No");
+	});
+
+	test("replaces a toast param already on the current request", () => {
+		expect(
+			redirectLocationOf(
+				"https://sendou.ink/q/match/1?tab=action&__success=Reported",
+				"No",
+			),
+		).toBe("/q/match/1?tab=action&__error=No");
+	});
+});
+
+describe("successToast()", () => {
+	test("keeps the search params of the current request", () => {
+		const location = runWithRequestContext(
+			{ url: new URL("https://sendou.ink/to/1/brackets?bracket=1") },
+			() => successToast("Saved").headers.get("Location"),
+		);
+
+		expect(location).toBe("/to/1/brackets?bracket=1&__success=Saved");
 	});
 });

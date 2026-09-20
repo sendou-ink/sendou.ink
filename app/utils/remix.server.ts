@@ -7,7 +7,7 @@ import { ServerConfig } from "~/config.server";
 import type { Ok, Result } from "~/utils/result";
 import type { AnySchema, AnySyncSchema } from "~/utils/schema";
 import { logger } from "./logger";
-import { currentRequestPathname } from "./request-context.server";
+import { currentRequestPath } from "./request-context.server";
 
 export function notFoundIfNullish<T>(value: T | null | undefined): T {
 	if (value === null || value === undefined) {
@@ -152,7 +152,7 @@ export function canAccessLohiEndpoint(request: Request) {
 
 export function errorToastRedirect(message: string) {
 	return redirect(
-		urlWithToastParam(currentRequestPathname() ?? "", "__error", message),
+		urlWithToastParam(currentRequestPath() ?? "", "__error", message),
 	);
 }
 
@@ -182,7 +182,7 @@ export function errorToast(message: string) {
 
 export function successToast(message: string) {
 	return redirect(
-		urlWithToastParam(currentRequestPathname() ?? "", "__success", message),
+		urlWithToastParam(currentRequestPath() ?? "", "__success", message),
 	);
 }
 
@@ -205,6 +205,8 @@ function urlWithToastParam(
 	const [pathname, search] = splitOnce(pathnameAndSearch, "?");
 
 	const searchParams = new URLSearchParams(search);
+	searchParams.delete("__error");
+	searchParams.delete("__success");
 	searchParams.set(param, message);
 
 	return `${pathname}?${searchParams}${hash ? `#${hash}` : ""}`;
