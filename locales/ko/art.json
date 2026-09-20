@@ -20,5 +20,6 @@
 	"forms.tags.maxReached": "",
 	"delete.title": "",
 	"unlink.title": "",
-	"noArtForTag": ""
+	"noArtForTag": "",
+	"imageFailed": ""
 }

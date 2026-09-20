@@ -23,5 +23,6 @@
 	"forms.tags.maxReached": "Límite máximo de etiquetas",
 	"delete.title": "¿Seguro que quieres eliminar este arte?",
 	"unlink.title": "¿Seguro que quieres desvincular este arte de tu perfil? (solo {{username}} puede volver a añadirlo)",
-	"noArtForTag": "No se ha encontrado arte subido para #{{tag}}"
+	"noArtForTag": "No se ha encontrado arte subido para #{{tag}}",
+	"imageFailed": ""
 }

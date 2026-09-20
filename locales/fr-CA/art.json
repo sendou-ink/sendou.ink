@@ -23,5 +23,6 @@
 	"forms.tags.maxReached": "Limite de tags atteinte",
 	"delete.title": "",
 	"unlink.title": "",
-	"noArtForTag": ""
+	"noArtForTag": "",
+	"imageFailed": ""
 }

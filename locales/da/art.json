@@ -22,5 +22,6 @@
 	"forms.tags.maxReached": "Maks antal etiketter opnået",
 	"delete.title": "",
 	"unlink.title": "",
-	"noArtForTag": ""
+	"noArtForTag": "",
+	"imageFailed": ""
 }

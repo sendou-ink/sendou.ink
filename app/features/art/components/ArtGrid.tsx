@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { SquarePen, Trash, Unlink } from "lucide-react";
+import { ImageOff, SquarePen, Trash, Unlink } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
@@ -90,11 +90,14 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 	const [infoVisible, setInfoVisible] = React.useState(true);
 	const [imageSettled, imageRef] = useImageSettled();
 	const [aspectRatio, placeholderRef] = useImageAspectRatio();
+	const { t } = useTranslation(["art"]);
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
 	});
+
+	const imageFailed = aspectRatio === "FAILED";
 
 	const dateText = formatter.format(databaseTimestampToDate(art.createdAt));
 
@@ -120,10 +123,11 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 			<div className={styles.lightboxBody} onClick={handleClick}>
 				<figure
 					className={clsx(styles.lightboxFigure, {
-						[styles.lightboxFigureSized]: aspectRatio,
+						[styles.lightboxFigureSized]: typeof aspectRatio === "number",
+						[styles.lightboxFigureFailed]: imageFailed,
 					})}
 					style={
-						aspectRatio
+						typeof aspectRatio === "number"
 							? ({ "--aspect-ratio": aspectRatio } as React.CSSProperties)
 							: undefined
 					}
@@ -134,14 +138,21 @@ function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
 						className={styles.lightboxPlaceholder}
 						ref={placeholderRef}
 					/>
-					<img
-						alt=""
-						src={art.url}
-						className={clsx(styles.lightboxImg, {
-							[styles.lightboxImgSettled]: imageSettled,
-						})}
-						ref={imageRef}
-					/>
+					{imageFailed ? (
+						<div className={styles.lightboxFailed}>
+							<ImageOff />
+							{t("art:imageFailed")}
+						</div>
+					) : (
+						<img
+							alt=""
+							src={art.url}
+							className={clsx(styles.lightboxImg, {
+								[styles.lightboxImgSettled]: imageSettled,
+							})}
+							ref={imageRef}
+						/>
+					)}
 					<figcaption
 						className={clsx(styles.lightboxInfo, {
 							[styles.lightboxInfoHidden]: !infoVisible,
@@ -364,17 +375,24 @@ function useImageSettled() {
 	return [imageSettled, imageRef] as const;
 }
 
-/** Aspect ratio of the image once it has loaded, and the ref to give it. */
+/**
+ * Aspect ratio of the image once it has loaded, "FAILED" if it never will,
+ * and the ref to give it.
+ */
 function useImageAspectRatio() {
-	const [aspectRatio, setAspectRatio] = React.useState<number | null>(null);
+	const [aspectRatio, setAspectRatio] = React.useState<
+		number | "FAILED" | null
+	>(null);
 
 	const imageRef = (image: HTMLImageElement | null) => {
 		if (!image) return;
 
 		const measure = () => {
-			if (image.naturalWidth > 0 && image.naturalHeight > 0) {
-				setAspectRatio(image.naturalWidth / image.naturalHeight);
-			}
+			setAspectRatio(
+				image.naturalWidth > 0 && image.naturalHeight > 0
+					? image.naturalWidth / image.naturalHeight
+					: "FAILED",
+			);
 		};
 		if (image.complete) {
 			measure();
@@ -382,7 +400,12 @@ function useImageAspectRatio() {
 		}
 
 		image.addEventListener("load", measure);
-		return () => image.removeEventListener("load", measure);
+		image.addEventListener("error", measure);
+
+		return () => {
+			image.removeEventListener("load", measure);
+			image.removeEventListener("error", measure);
+		};
 	};
 
 	return [aspectRatio, imageRef] as const;

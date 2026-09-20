@@ -56,6 +56,34 @@
 	);
 }
 
+/* nothing to look at, so the details take over the figure instead of floating over the image */
+.lightboxFigureFailed {
+	display: flex;
+	flex-direction: column;
+	width: min(var(--lightbox-max-width), 22rem);
+	background-color: rgba(0, 0, 0, 0.6);
+
+	.lightboxInfo {
+		position: static;
+		opacity: 1;
+		padding-block-start: var(--s-3);
+		background: none;
+	}
+}
+
+.lightboxFailed {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-2);
+	min-height: 10rem;
+	padding: var(--s-4);
+	color: rgba(255, 255, 255, 0.7);
+	font-size: var(--font-sm);
+	text-align: center;
+}
+
 .lightboxPlaceholder {
 	display: block;
 	width: 100%;
