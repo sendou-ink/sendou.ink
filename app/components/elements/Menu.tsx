@@ -9,7 +9,12 @@ import {
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import { Image } from "../Image";
 import styles from "./Menu.module.css";
-import { focusLeftTo, isOwnToggle, useShowPopoverOnOpen } from "./Popover";
+import {
+	focusLeftTo,
+	isOwnToggle,
+	usePopoverTargetOnceHydrated,
+	useShowPopoverOnOpen,
+} from "./Popover";
 import { useFloatingLayer } from "./useFloatingLayer";
 
 type MenuPlacement = "bottom start" | "bottom end" | "bottom right";
@@ -21,7 +26,7 @@ interface SendouMenuProps {
 	children: React.ReactNode;
 	popoverClassName?: string;
 	placement?: MenuPlacement;
-	/** Render the items while closed too, so the menu works before hydration (and without JavaScript). */
+	/** Render the items while closed too, so they are in the server markup and ready the moment the menu opens. */
 	eager?: boolean;
 }
 
@@ -39,6 +44,7 @@ export function SendouMenu({
 	eager,
 }: SendouMenuProps) {
 	const popoverId = `${React.useId()}-menu`;
+	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
 	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	const [open, setOpen] = React.useState(false);
@@ -108,7 +114,7 @@ export function SendouMenu({
 				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
-					popoverTarget: popoverId,
+					popoverTarget,
 					"aria-expanded": open,
 					"aria-haspopup": "menu",
 				})}

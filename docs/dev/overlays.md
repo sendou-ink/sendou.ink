@@ -51,6 +51,7 @@ The settings for the hook are global CSS properties in `vars.css`:
 - **The visible viewport is the boundary**, not the entire viewport, so it respects the mobile keyboard as well as the top nav and mobile nav.
 - **Positioning modes.** `position: absolute` in most cases, `position: fixed` if the anchor is inside or is itself a fixed or sticky element.
 - **Hidden when detached.** The popover is hidden when the anchor leaves the viewport, this includes being covered by the top nav and mobile nav.
+- **Nothing opens before hydration.** A trigger gets its `popovertarget` only once hydrated so the browser can't open the popover with no logic to place it. A click does nothing until the floating layer is loaded.
 - **The far edge stutters while scrolling.** When scrolling the popover resizing can sometimes look a bit laggy/stuttery. This is acceptable, no possible workaround (all UI libs have this).
 
 The calcuations live in `floating-layer.ts` as pure functions.

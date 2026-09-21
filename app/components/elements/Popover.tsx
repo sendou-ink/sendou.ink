@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import * as React from "react";
 import { flushSync } from "react-dom";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import styles from "./Popover.module.css";
@@ -16,6 +17,10 @@ export type PopoverPlacement = FloatingPlacement;
  */
 export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
 	return event.target === event.currentTarget;
+}
+
+export function usePopoverTargetOnceHydrated(popoverId: string) {
+	return useHydrated() ? popoverId : undefined;
 }
 
 /**
@@ -80,8 +85,8 @@ export function focusLeftTo(
  * Popover opened by `trigger` (a SendouButton); controlled or uncontrolled. Renders through the
  * native popover API, placed next to the trigger by `useFloatingLayer`.
  *
- * With `eager` the content is rendered while closed too, so the popover opens with its content
- * before hydration (and without JavaScript altogether).
+ * With `eager` the content is rendered while closed too, so it is in the server markup and there
+ * is nothing left to mount when the popover opens.
  */
 export function SendouPopover({
 	children,
@@ -101,6 +106,7 @@ export function SendouPopover({
 	eager?: boolean;
 }) {
 	const popoverId = `${React.useId()}-popover`;
+	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
 
 	const [isControlled] = React.useState(isOpen !== undefined);
 	const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
@@ -184,7 +190,7 @@ export function SendouPopover({
 				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
-					popoverTarget: popoverId,
+					popoverTarget,
 					"aria-haspopup": "dialog",
 				})}
 			</span>

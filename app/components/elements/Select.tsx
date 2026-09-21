@@ -8,7 +8,12 @@ import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import { Image } from "../Image";
-import { focusLeftTo, isOwnToggle, useShowPopoverOnOpen } from "./Popover";
+import {
+	focusLeftTo,
+	isOwnToggle,
+	usePopoverTargetOnceHydrated,
+	useShowPopoverOnOpen,
+} from "./Popover";
 import styles from "./Select.module.css";
 import { useFloatingLayer } from "./useFloatingLayer";
 import { useScrollIntoView } from "./useScrollIntoView";
@@ -142,6 +147,7 @@ export function SendouSelect<T extends object>({
 	const uid = React.useId();
 	const topLayerStyle = useTopLayerViewTransitionStyle();
 	const popoverId = `${uid}-select-popover`;
+	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
 	const listboxId = `${uid}-select-listbox`;
 	const labelId = label ? `${uid}-select-label` : undefined;
 	const valueId = `${uid}-select-value`;
@@ -531,7 +537,7 @@ export function SendouSelect<T extends object>({
 						: undefined
 				}
 				data-required={isRequired || undefined}
-				popoverTarget={popoverId}
+				popoverTarget={popoverTarget}
 				onKeyDown={onTriggerKeyDown}
 			>
 				<span
