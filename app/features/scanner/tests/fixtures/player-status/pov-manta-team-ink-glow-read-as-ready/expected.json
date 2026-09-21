@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "even",
+		"cast": null,
+		"time": 300,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Private-battle spectator on the overhead camera, Manta Maria SZ at the opening whistle (Top Level Scrim VoD 2tE_iIUDSio, t=780, clock 5:00): all eight bodies saturated, no cross-out, no wash - and nobody can hold a special yet. The overhead camera draws the even pitch here (apexes 566/654/744/834 left, 1086/1176/1262/1349 right); the POV camera the spectator cuts to 40s later draws narrow-right, see pov-manta-narrow-pitch-read-as-even. Two separate leaks starred this frame. Left slot 3 went through the shoulder probe counting RAW brightness: this team's orange ink clears the 225 glow floor on its own (glow 0.48 at body ink 0.81, pale 0.02), where the floor was calibrated on lime that peaked just under it - every attested ready glows UNSATURATED instead (<=0.02 saturated on all even fixtures), so only the pale glow counts now. Right slot 3 went through even's old exemption from the body guards: the ship's white hull runs right up against the outer icon and the shoulder box, which straddles the icon edge by design, takes 0.26 unsaturated glow off it. The body is the tell - 0.36 ink over 0.35 pale, short of the wash's - and even now reads the same body guards the narrow layouts do."
+	}
+}

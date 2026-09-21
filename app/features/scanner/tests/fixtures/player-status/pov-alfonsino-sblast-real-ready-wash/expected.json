@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": null,
+		"time": 198,
+		"special": [
+			[false, false, true, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Same VoD 26s later (t=1171.5, clock 3:18): left slot 2's S-BLAST '91 really is charged — the whole icon turns pale cream while its neighbours stay saturated orange, and the wash is spent within three seconds. Positive control for pov-alfonsino-sblast-render-read-as-ready: the white weapon render is drawn here too, but the wash has emptied the body of ink (0.10 against 0.39 alive) as well as paling it (0.60), which is what separates the two. All eight alive."
+	}
+}

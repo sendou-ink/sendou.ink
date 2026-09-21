@@ -10,9 +10,14 @@
  * S3 POV draws it too) and "narrow-left" (right column nearly coincides with
  * even's). Camera badges prove a broadcast, but broadcasts can hide them, so a
  * badge-less frame picks the geometry reading more decisively, with a slot-comb
- * win proving narrow-left and a history-less near-tie staying narrow-right
- * (pickLayout). On narrow layouts only the unsaturated glow counts toward ready
- * so saturated backdrop leaks cannot fake or suppress a state.
+ * win proving narrow-left or unseating a latched even, and a history-less
+ * near-tie staying narrow-right (pickLayout). Only the unsaturated glow counts
+ * toward ready — saturated backdrop leaks and bright team ink alike must not
+ * fake a state — and a ready read the shoulder does not corroborate needs a
+ * body the wash has emptied of ink, not merely paled (a near-white weapon
+ * render pales one without the other). Every layout also demands a washed
+ * (ink-poor, pale) body, since backdrop leaking past an icon edge fakes the
+ * shoulder glow.
  */
 import type { Mat } from "../../cv";
 import { copyRoi, type Roi } from "../../image";
@@ -32,6 +37,8 @@ import {
 	STATUS_DPAD_PROBES_EVEN,
 	STATUS_DPAD_PROBES_NARROW_LEFT,
 	STATUS_DPAD_PROBES_NARROW_RIGHT,
+	STATUS_EVEN_FLIP_COMB_LEAD,
+	STATUS_EVEN_FLIP_COMB_MIN,
 	STATUS_FRESH_EVEN_MIN_LEAD,
 	STATUS_FRESH_NARROW_LEFT_MIN_LEFT_LEAD,
 	STATUS_FRESH_NARROW_LEFT_RIVAL_COMB_VETO,
@@ -51,6 +58,7 @@ import {
 	STATUS_READY_MIN_BODY_PALE,
 	STATUS_READY_MIN_SHOULDER_GLOW,
 	STATUS_READY_MIN_WASH_BODY_PALE,
+	STATUS_READY_PALE_ONLY_MAX_BODY_INK,
 	STATUS_READY_WASH_MAX_BODY_INK,
 	STATUS_SHOULDER_BOX_EVEN,
 	STATUS_SHOULDER_BOX_NARROW,
@@ -239,10 +247,15 @@ const SCORED_FLIPS: Record<PlayerStatusLayout, readonly PlayerStatusLayout[]> =
  * reads mid-range ink. Featureless dark backdrop still reads "decisively dead",
  * so the sticky margin stops one noisy frame flipping an established layout and
  * SCORED_FLIPS keeps the even/narrow-left false friends from trading places.
- * Three decisions decisiveness cannot make alone:
+ * Four decisions decisiveness cannot make alone:
  * - badge-less narrow-left (sendou-triton VoD) scores below narrow-right even
  *   when true, so a decisive slot-comb win (combContrast) overrides all but
  *   badges — positional, so only the differing left columns can lead;
+ * - a spectator toggling between the overhead map and a player POV swaps even
+ *   for narrow-right mid-match, and even's columns sit between the narrow ones,
+ *   so the two score within 0.001 of each other and the wrong pick sticks for a
+ *   whole match; the comb sees the pitch and flips even outright
+ *   (STATUS_EVEN_FLIP_COMB_*), fresh or sticky;
  * - a history-less even-vs-narrow-right near-tie stays narrow-right unless it
  *   reads under the floor or even leads decisively (STATUS_FRESH_*);
  * - badge-less narrow-left POV over pale backdrops (2026-08-22 Sendou VoD)
@@ -290,6 +303,9 @@ function pickLayout(
 	) {
 		return { layout: "narrow-left", scores };
 	}
+	const combFlipsEven =
+		combs["narrow-right"] >= STATUS_EVEN_FLIP_COMB_MIN &&
+		combs["narrow-right"] >= combs.even + STATUS_EVEN_FLIP_COMB_LEAD;
 	if (prevLayout) {
 		// flips away from narrow-right also need comb corroboration: on S3 POV the
 		// strip shrinks toward the timer while the POV player is dead, spiking the
@@ -305,6 +321,8 @@ function pickLayout(
 			challengers.length > 0
 				? challengers.reduce((a, b) => (scores[b] > scores[a] ? b : a))
 				: null;
+		if (prevLayout === "even" && combFlipsEven)
+			return { layout: "narrow-right", scores };
 		return {
 			layout:
 				challenger !== null &&
@@ -332,7 +350,10 @@ function pickLayout(
 		return { layout: "narrow-right", scores };
 	}
 	return {
-		layout: scores.even >= scores["narrow-right"] ? "even" : "narrow-right",
+		layout:
+			scores.even >= scores["narrow-right"] && !combFlipsEven
+				? "even"
+				: "narrow-right",
 		scores,
 	};
 }
@@ -357,12 +378,16 @@ function sideDecisiveness(reads: SlotRead[]): number {
  * splat or a wash, and its tint tells them apart: the wash is a pale team tint
  * at every pulse phase while the splat is neutral grey — even when a blown-out
  * backdrop turns the plate near-white, or the trough dims the wash under both
- * ready floors. On narrow layouts the wash replaces the body's ink, so an
- * ink-heavy body means backdrop leak unless strongly pale too (graded
- * STATUS_READY_*WASH* guards), and only unsaturated glow counts
- * (STATUS_GLOW_MAX_SPREAD). A pale backdrop can still light a DEAD icon's
- * shoulder, so narrow ready reads also need the wash's pale body and the
- * narrow dead read trusts the body classes alone.
+ * ready floors. Only unsaturated glow counts as the wash's
+ * (STATUS_GLOW_MAX_SPREAD): bright team ink lights the shoulder on its own
+ * once the ink is light enough (orange clears the glow floor, lime does not).
+ * The wash also replaces the body's ink, so an ink-heavy body means backdrop
+ * leak unless strongly pale too (graded STATUS_READY_*WASH* guards). A pale
+ * backdrop can still light a DEAD icon's shoulder, so a ready read also needs
+ * the wash's pale body, and the narrow dead read trusts the body classes
+ * alone. Without the shoulder's corroboration the graded allowances do not
+ * apply at all: a pale-only ready needs the ink gone (STATUS_READY_PALE_ONLY_MAX_BODY_INK), since a pale body
+ * over live ink is a weapon render, not a wash.
  */
 function classifySlot(
 	bodyInk: number,
@@ -372,7 +397,8 @@ function classifySlot(
 	shoulderPaleGlow: number,
 	layout: PlayerStatusLayout,
 ): SlotRead {
-	const washGlow = layout === "even" ? shoulderGlow : shoulderPaleGlow;
+	// the wash glows pale on every layout; raw brightness is team ink or backdrop
+	const washGlow = shoulderPaleGlow;
 	const inkPoor = bodyInk <= STATUS_DEAD_MAX_BODY_INK;
 	const tinted = bodyTint >= STATUS_WASH_MIN_BODY_TINT;
 	const dead =
@@ -383,13 +409,15 @@ function classifySlot(
 		bodyInk <= STATUS_READY_CLEAN_WASH_MAX_BODY_INK ||
 		(bodyInk <= STATUS_READY_WASH_MAX_BODY_INK &&
 			bodyPale >= STATUS_READY_INKY_WASH_MIN_BODY_PALE);
+	const paleEmptiedBody =
+		bodyPale >= STATUS_READY_MIN_BODY_PALE &&
+		bodyInk <= STATUS_READY_PALE_ONLY_MAX_BODY_INK;
 	const special =
 		!dead &&
 		((inkPoor && tinted) ||
-			((washGlow >= STATUS_READY_MIN_SHOULDER_GLOW ||
-				bodyPale >= STATUS_READY_MIN_BODY_PALE) &&
-				(layout === "even" ||
-					(washedBody && bodyPale >= STATUS_READY_MIN_WASH_BODY_PALE))));
+			((washGlow >= STATUS_READY_MIN_SHOULDER_GLOW || paleEmptiedBody) &&
+				washedBody &&
+				bodyPale >= STATUS_READY_MIN_WASH_BODY_PALE));
 	const confidence = dead
 		? Math.min(
 				1,

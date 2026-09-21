@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "narrow-right",
+		"cast": null,
+		"time": 260,
+		"special": [
+			[true, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[true, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Private-battle spectator on Manta Maria SZ, 40s after pov-manta-team-ink-glow-read-as-ready (Top Level Scrim VoD 2tE_iIUDSio, t=822.6, clock 4:20): the spectator has left the overhead map for a player POV, so the strip now draws the narrow-right pitch (left apexes 542/643/744/843, right 1085/1162/1237/1317) where the opening frame drew even's. Left slot 0 holds a cream-pink wash, right slot 0 is crossed out, the rest are saturated. Decisiveness cannot see the pitch change - even scores 0.206 against narrow-right's 0.205 - so the scan kept even for the whole match and starred the outer right slot on 39% of its reads. Under even's centers that slot's body box hangs half off the icon onto the ship's white hull, which reads as an emptied pale body here (ink 0.17 over pale 0.36), so no body guard can catch it; only the pitch can. The comb is positional and does see it (narrow-right 0.42 vs even 0.00), so it now flips even outright (STATUS_EVEN_FLIP_COMB_*). Left slot 0's wash is the pink phase of the pulse, ink 0.41 over pale 0.36, which is why the inky-wash ceiling had to clear 0.41."
+	}
+}
