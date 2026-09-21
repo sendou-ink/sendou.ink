@@ -43,7 +43,7 @@ Configuration for these lives in `app/config.ts` (client, `VITE_*` variables, im
 sendou.ink/
 ├── app/
 │   ├── components/ -- React components used by many features
-│   │   └── elements/ -- Wrappers providing styling etc. around React Aria Components
+│   │   └── elements/ -- The design system's own components (buttons, inputs, popovers, selects, dialogs...)
 │   ├── db/ -- Database seeds, types & connection
 │   ├── features/ -- See "feature folders" below
 │   ├── form/ -- SendouForm & shared form field builders (see `forms.md`)

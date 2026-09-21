@@ -88,7 +88,7 @@
 
 .preview {
 	position: absolute;
-	top: calc(100% + var(--s-1));
+	top: calc(100% + var(--floating-gap));
 	left: 0;
 	z-index: 1;
 	display: grid;
@@ -121,7 +121,7 @@
 		content: "";
 		position: absolute;
 		z-index: -1;
-		inset: calc(-1 * (var(--s-1) + var(--border-width)));
+		inset: calc(-1 * (var(--floating-gap) + var(--border-width)));
 	}
 }
 

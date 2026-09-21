@@ -252,8 +252,12 @@ html,
 		var(--layout-main-padding) +
 		env(safe-area-inset-top)
 	);
-	/* anchored popovers close once scrolling pushes them under the sticky header */
+
 	--popover-boundary-top: var(--layout-nav-height);
+	--popover-boundary-bottom: 0px;
+	--modal-margin-block: 5rem;
+	--floating-gap: var(--s-2);
+	--floating-viewport-padding: 12px;
 
 	/*
 	Boxes contain other elements (cards, containers, modals). Fields are interactive elements
@@ -281,8 +285,26 @@ html,
 	--label-margin: var(--s-1);
 }
 
-/* registered so scripts read it as a resolved length even when it is a calc() */
+/* registered so scripts read them as resolved lengths even when they are a calc() */
 @property --popover-boundary-top {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --popover-boundary-bottom {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --floating-gap {
+	syntax: "<length>";
+	inherits: true;
+	initial-value: 0px;
+}
+
+@property --floating-viewport-padding {
 	syntax: "<length>";
 	inherits: true;
 	initial-value: 0px;
@@ -293,6 +315,19 @@ html,
 		--popover-boundary-top: calc(
 			var(--layout-nav-height) +
 			env(safe-area-inset-top)
+		);
+	}
+}
+
+@media (width < 600px) {
+	html {
+		--modal-margin-block: calc(
+			var(--s-4) +
+			max(env(safe-area-inset-top, 0px), env(safe-area-inset-bottom, 0px))
+		);
+		--popover-boundary-bottom: calc(
+			var(--layout-nav-height) +
+			env(safe-area-inset-bottom, 0px)
 		);
 	}
 }

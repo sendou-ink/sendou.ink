@@ -83,8 +83,8 @@ export function GlobalSearch() {
 	const [isOpen, setIsOpen] = React.useState(searchParamOpen);
 
 	const prevSearchParamOpen = React.useRef(searchParamOpen);
-	if (searchParamOpen && !prevSearchParamOpen.current) {
-		setIsOpen(true);
+	if (searchParamOpen !== prevSearchParamOpen.current) {
+		setIsOpen(searchParamOpen);
 	}
 	prevSearchParamOpen.current = searchParamOpen;
 
@@ -310,7 +310,7 @@ function GlobalSearchContent({
 
 	if (searchType === "weapons" && selectedWeapon) {
 		return (
-			<div onClickCapture={handleClickCapture}>
+			<div className={styles.content} onClickCapture={handleClickCapture}>
 				<WeaponDestinationMenu
 					selectedWeapon={selectedWeapon}
 					onBack={handleBackToWeaponSearch}
@@ -322,7 +322,7 @@ function GlobalSearchContent({
 	}
 
 	return (
-		<div onClickCapture={handleClickCapture}>
+		<div className={styles.content} onClickCapture={handleClickCapture}>
 			<div className={styles.inputContainer}>
 				<p className={styles.inputPrefix}>
 					{`${SEARCH_TYPE_TO_PREFIX[searchType]}.`}

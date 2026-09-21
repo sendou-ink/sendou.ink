@@ -4,7 +4,7 @@
 	position: fixed;
 	inset: unset;
 	top: calc(var(--layout-nav-height) + var(--s-2));
-	right: 10px;
+	right: calc(10px + var(--scrollbar-width, 0px));
 	margin: 0;
 	padding: 0;
 	border: none;

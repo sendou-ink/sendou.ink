@@ -10,6 +10,8 @@ import "~/styles/utils.css";
 import "~/styles/flags.css";
 
 document.documentElement.classList.add("dark");
+document.documentElement.style.setProperty("--popover-boundary-top", "0px");
+document.documentElement.style.setProperty("--popover-boundary-bottom", "0px");
 
 i18next.use(initReactI18next).init({
 	...config,

@@ -2,7 +2,6 @@ import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
-import { useEffect } from "react";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
@@ -433,44 +432,6 @@ function useCustomThemeVars() {
 export default function App() {
 	const rootData = useLoaderData<RootLoaderData>();
 	const [openModals, setOpenModals] = React.useState(0);
-
-	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
-	// elements to work properly when a React Aria Component disabled scrolling
-	useEffect(() => {
-		const htmlStyle = document.documentElement.style;
-		const bodyStyle = document.body.style;
-
-		const observer = new MutationObserver(() => {
-			observer.disconnect();
-
-			if (htmlStyle.overflow === "hidden") {
-				htmlStyle.overflow = "";
-				htmlStyle.scrollbarGutter = "";
-
-				const scrollbarWidth =
-					window.innerWidth - document.documentElement.clientWidth;
-
-				htmlStyle.overflow = "initial";
-				bodyStyle.overflow = "hidden";
-				bodyStyle.paddingRight = `${scrollbarWidth}px`;
-			} else if (bodyStyle.overflow === "hidden") {
-				bodyStyle.overflow = "";
-				bodyStyle.paddingRight = "";
-			}
-
-			observer.observe(document.documentElement, {
-				attributes: true,
-				attributeFilter: ["style"],
-			});
-		});
-
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ["style"],
-		});
-
-		return () => observer.disconnect();
-	}, []);
 
 	return (
 		<OpenModalsContext value={{ count: openModals, setCount: setOpenModals }}>
