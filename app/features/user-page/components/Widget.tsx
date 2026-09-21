@@ -88,7 +88,7 @@ export function Widget({
 				return widget.data.bio ? <article>{widget.data.bio}</article> : null;
 			case "bio-md":
 				return widget.data.bio ? (
-					<article>
+					<article className={styles.mdBio}>
 						<Markdown>{widget.data.bio}</Markdown>
 					</article>
 				) : null;

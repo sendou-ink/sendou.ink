@@ -7,6 +7,10 @@
 	overflow: hidden;
 }
 
+.mdBio {
+	clip-path: view-box;
+}
+
 .header {
 	display: flex;
 	align-items: center;
