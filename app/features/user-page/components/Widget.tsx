@@ -830,6 +830,28 @@ const urlToIcon = (url: string) => {
 	return <LinkIcon />;
 };
 
+const SOCIAL_PLATFORM_FALLBACK_NAMES = {
+	twitch: "Twitch",
+	youtube: "YouTube",
+	bsky: "Bluesky",
+	discord: "Discord",
+} as const;
+
+const platformToIcon = (
+	platform: "twitch" | "youtube" | "bsky" | "discord",
+) => {
+	switch (platform) {
+		case "twitch":
+			return <TwitchIcon />;
+		case "youtube":
+			return <YouTubeIcon />;
+		case "bsky":
+			return <BskyIcon />;
+		case "discord":
+			return <DiscordIcon />;
+	}
+};
+
 function SocialLinksWidget({
 	data,
 }: {
@@ -838,43 +860,42 @@ function SocialLinksWidget({
 	if (data.length === 0) return null;
 
 	return (
-		<div className={styles.socialLinksIcons}>
-			{data.map((link, i) => {
-				if (link.type === "popover") {
-					return (
-						<SendouPopover
-							key={i}
-							trigger={
-								<SendouButton
-									variant="minimal"
-									className={clsx(
-										styles.socialLinkIconContainer,
-										styles.discord,
-									)}
-								>
-									{link.platform === "discord" ? <DiscordIcon /> : null}
-								</SendouButton>
-							}
+		<div className={styles.socialLinksList}>
+			{data.map((link) => {
+				const content = (
+					<>
+						<div
+							className={clsx(
+								styles.socialLinkIconContainer,
+								styles.socialLinkIconCircle,
+								styles[link.platform],
+							)}
 						>
-							{link.value}
-						</SendouPopover>
+							{platformToIcon(link.platform)}
+						</div>
+						<span className={styles.socialLinkName}>
+							{link.name ?? SOCIAL_PLATFORM_FALLBACK_NAMES[link.platform]}
+						</span>
+					</>
+				);
+
+				if (link.type === "text") {
+					return (
+						<div key={link.platform} className={styles.linkRow}>
+							{content}
+						</div>
 					);
 				}
 
-				const type = urlToLinkType(link.value);
 				return (
 					<a
-						key={i}
-						href={link.value}
+						key={link.platform}
+						href={link.url}
 						target="_blank"
 						rel="noreferrer"
-						className={clsx(styles.socialLinkIconContainer, {
-							[styles.twitch]: type === "twitch",
-							[styles.youtube]: type === "youtube",
-							[styles.bsky]: type === "bsky",
-						})}
+						className={styles.linkRow}
 					>
-						{urlToIcon(link.value)}
+						{content}
 					</a>
 				);
 			})}
@@ -962,7 +983,7 @@ function FriendsWidget({
 	return (
 		<div className={styles.friendsList}>
 			{itemsToDisplay.map((friend) => (
-				<UserLink key={friend.id} user={friend} className={styles.friendLink} />
+				<UserLink key={friend.id} user={friend} className={styles.linkRow} />
 			))}
 			{!everythingVisible ? (
 				<div className="mt-4">
