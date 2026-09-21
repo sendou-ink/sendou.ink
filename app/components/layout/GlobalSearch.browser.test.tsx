@@ -1,15 +1,17 @@
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, beforeEach, describe, expect, test } from "vitest";
 import { page } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { GlobalSearch } from "./GlobalSearch";
 
+let hrefBefore = window.location.href;
+
+beforeEach(() => {
+	hrefBefore = window.location.href;
+});
+
 afterEach(() => {
-	const url = new URL(window.location.href);
-	if (url.searchParams.has("search")) {
-		url.searchParams.delete("search");
-		window.history.replaceState(null, "", url);
-	}
+	window.history.replaceState(null, "", hrefBefore);
 });
 
 function pushSearchParamOpen() {
