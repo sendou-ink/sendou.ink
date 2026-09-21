@@ -60,5 +60,7 @@
 }
 
 .alertBadge {
-	color: var(--color-warning);
+	background-color: var(--color-warning-low);
+	border: 1.5px solid var(--color-warning);
+	color: var(--color-warning-high);
 }
