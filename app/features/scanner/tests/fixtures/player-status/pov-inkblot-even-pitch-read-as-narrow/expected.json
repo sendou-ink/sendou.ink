@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "even",
+		"cast": null,
+		"time": 300,
+		"special": [
+			[false, false, false, false],
+			[false, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Private-battle spectator, Inkblot Art Academy SZ at the opening whistle (Top Level Scrim VoD 2tE_iIUDSio, t=14, clock 5:00): all eight bodies saturated purple/orange, nobody splatted, and nobody can hold a special yet. The strip draws even's pitch - right apexes 1086/1172/1262/1348 against even's 1090/1178/1267/1355 - but a fresh badge-less frame prefers narrow-right unless even leads decisively, and the old 0.05 margin was wider than this frame's 0.034 (even 0.273 vs narrow-right 0.239). Under narrow-right the left column shifts 28px out at slot 0, putting its shoulder box entirely off the strip on bright sky (pale glow 0.93 over a body box that is half sky: ink 0.31, pale 0.37) and slot 2's box 9px off (glow 0.35, ink 0.39, pale 0.41) - both land inside the inky-wash allowance, so the pixels alone cannot refuse them; only the pitch can. Every badge-less frame attested narrow-right hands even at most 0.016, so the margin now sits at 0.025. One read, but the timeline merge stretches it into a 4s band and the match card opened with the S-BLAST '91 and the Splash-o-matic both holding special."
+	}
+}

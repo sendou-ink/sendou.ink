@@ -174,10 +174,14 @@ export const STATUS_INK_MIN_VALUE = 105;
 export const STATUS_GLOW_MIN_VALUE = 225;
 
 /**
- * Narrow-layout glow must be UNSATURATED: the wash is pale while backdrop leak
- * is colored (sky over a dead shoulder: 0.30 raw, 0.00 capped, spread >130;
- * lilac/pink washes spread 70-90, capped 0.46-0.61). Even ready icons light IN
- * team color (glow 0.94 saturated), so narrow layouts only.
+ * Ready glow must be UNSATURATED on every layout: the wash is pale while
+ * backdrop leak is colored (sky over a dead shoulder: 0.30 raw, 0.00 capped,
+ * spread >130; lilac/pink washes spread 70-90, capped 0.46-0.61). Even was
+ * exempt on the belief that its ready icons light in team color, but all seven
+ * attested even-layout washes glow unsaturated too (saturated fraction <=0.02),
+ * and taking raw brightness there starred a live ORANGE body whose ink clears
+ * the 225 floor unaided (Manta Maria scrim VoD: glow 0.48 at body ink 0.81).
+ * The 225 floor was set against lime, which peaks just under it.
  */
 export const STATUS_GLOW_MAX_SPREAD = 90;
 
@@ -227,24 +231,43 @@ export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
 export const STATUS_READY_MIN_BODY_PALE = 0.3;
 
 /**
+ * ...and only on a body the wash has emptied of ink. Pale alone cannot carry a
+ * ready read: a near-white weapon render (S-BLAST '91, Museum d'Alfonsino
+ * scrim VoD) pales a live body to 0.33-0.44 without touching its ink, which
+ * charted two whole matches as one unbroken special-ready band. Body ink over
+ * that footage splits cleanly — 272 dense reads of the slot land at 0.01-0.09
+ * washed and 0.25-0.47 alive, nothing in between — and every attested wash
+ * reaching ready off the pale body alone reads <=0.18. The graded
+ * STATUS_READY_*WASH* allowances above stay wider because they only ever apply
+ * to washes the shoulder glow corroborates (attested inky washes 0.30-0.40 all
+ * glow >=0.27, though the triton one clears the glow floor by only 0.03 — if
+ * footage ever drops it under, that wash needs this branch and would be lost).
+ */
+export const STATUS_READY_PALE_ONLY_MAX_BODY_INK = 0.22;
+
+/**
  * Narrow-layout ready guard: the wash REPLACES body ink, so an ink-heavy body
  * means backdrop leak (the overhead view's left column sits ~12px off, sliding
  * probes onto pale buildings / the lead banner: ink >=0.44). Graded: clean
  * washes ink <=0.303 (SWS26 pale pink on orange; nearest alive 0.33 has no
- * wash signal); inky washes (0.316/0.344) still read strongly pale
- * (>=0.399) while the Um'ami POV leak read ink 0.36 / pale 0.269. Even ready
- * icons light IN team color (ink up to 0.68), so narrow only. Margins are THIN
- * (ink 0.303 vs 0.32, 0.344 vs 0.4; pale 0.399 vs 0.35) — re-measure before moving any.
+ * wash signal); inky washes (0.316-0.41) still read strongly pale (>=0.36)
+ * while the Um'ami POV leak read ink 0.36 / pale 0.269. The ceiling sits above
+ * the pink pulse phase of a pale-pink wash on orange (Manta Maria scrim VoD:
+ * ink 0.41 at pale 0.36, glow 0.43), which the pitch fix brought under these
+ * guards; the nearest leak that also reads pale is 0.45. Even reads them too:
+ * its inkiest attested wash is 0.403 at pale 0.37, with a colored weapon
+ * render still in the box. Margins are THIN (ink 0.303 vs 0.32, 0.403/0.41 vs
+ * 0.42 vs 0.45; pale 0.36 vs 0.35) — re-measure before moving any.
  */
-export const STATUS_READY_WASH_MAX_BODY_INK = 0.4;
+export const STATUS_READY_WASH_MAX_BODY_INK = 0.42;
 export const STATUS_READY_CLEAN_WASH_MAX_BODY_INK = 0.32;
 export const STATUS_READY_INKY_WASH_MIN_BODY_PALE = 0.35;
 
 /**
- * Narrow ready reads also need a minimally pale body: every attested wash reads
+ * A ready read also needs a minimally pale body: every attested wash reads
  * >=0.22 (bright and trough) while a dead icon under skylight leak (2026-08-22
  * VoD: shoulder 0.26-0.35) reads pale <=0.15 — a dead body is ink-poor, so the
- * ink guards cannot catch it. Even reads skip this.
+ * ink guards cannot catch it.
  */
 export const STATUS_READY_MIN_WASH_BODY_PALE = 0.2;
 
@@ -261,12 +284,16 @@ export const STATUS_LAYOUT_STICKY_MARGIN = 0.04;
  * attested; busy backdrops mis-rank: sendou-triton match-start scores even
  * 0.278 / narrow-right 0.273 yet is narrow-right). Even wins only when
  * narrow-right reads under the floor (S2 POV fixture 0.198 vs true >=0.212) or
- * leads decisively (true narrow-right mis-leads even by at most 0.036). With even
- * at the SWS26 pitch, the badge-less AREA CUP trough frame (0.192 vs even 0.224)
- * lands on even too, where every slot still reads right.
+ * leads decisively. Every badge-less frame attested narrow-right hands even a
+ * lead of at most 0.016 (worst: pov-alfonsino-false-star-at-match-start),
+ * while the one attested badge-less even frame that clears the floor leads by
+ * 0.034 (pov-inkblot-even-pitch-read-as-narrow, whose sky backdrop lifts
+ * narrow-right to 0.239) — the threshold splits that gap. With even at the
+ * SWS26 pitch, the badge-less AREA CUP trough frame (0.192 vs even 0.224)
+ * lands on even through the floor instead, where every slot still reads right.
  */
 export const STATUS_FRESH_NARROW_RIGHT_MIN_DECISIVENESS = 0.21;
-export const STATUS_FRESH_EVEN_MIN_LEAD = 0.05;
+export const STATUS_FRESH_EVEN_MIN_LEAD = 0.025;
 
 /**
  * Fresh badge-less NARROW-LEFT pick (pickLayout): S3 POV draws it in steady
@@ -309,6 +336,19 @@ export const STATUS_NARROW_LEFT_COMB_LEAD = 0.25;
  * combs 0.41-0.81 with >=0.31 lead; worst POV false comb 0.20, negative lead.
  */
 export const STATUS_STICKY_FLIP_COMB_MIN = 0.3;
+
+/**
+ * Even loses to narrow-right on the comb alone (past this floor AND leading by
+ * this much), no score margin needed: a spectator toggling between the overhead
+ * map and a player POV swaps the two geometries mid-match, and even's columns
+ * sit between the narrow ones, so the mispicked geometry still scores within
+ * 0.001 of the right one (Manta Maria scrim VoD locked even for a whole match,
+ * starring the outer right slot 39% of its reads). True narrow-right stretches
+ * combed 0.27-0.78 over that footage, leading even by 0.29-0.45; the widest
+ * false lead on genuinely even footage is 0.15 (pov-wahoo-world-special-dead).
+ */
+export const STATUS_EVEN_FLIP_COMB_MIN = 0.3;
+export const STATUS_EVEN_FLIP_COMB_LEAD = 0.25;
 
 /** Layout carries forward only across reads this close (~1s apart in-match); longer means a new match. */
 export const STATUS_LAYOUT_STICKY_MAX_GAP_S = 30;
