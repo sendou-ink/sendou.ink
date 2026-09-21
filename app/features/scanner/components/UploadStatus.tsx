@@ -138,6 +138,9 @@ function viewOf(state: UploadState): UploadView {
 				icon: <Check aria-hidden />,
 				tone: "success",
 				title: "Uploaded to sendou.ink",
+				detail: state.link
+					? undefined
+					: "This game isn't part of a known tournament or SendouQ match. It might be linked later automatically.",
 				link: state.link,
 			};
 		case "uploading":
