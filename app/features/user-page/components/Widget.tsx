@@ -6,7 +6,14 @@ import { BuildCard } from "~/components/BuildCard";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { Image, ModeImage, StageImage, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	ModeImage,
+	SpecialWeaponImage,
+	StageImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { BskyIcon } from "~/components/icons/Bsky";
 import { DiscordIcon } from "~/components/icons/Discord";
 import { TwitchIcon } from "~/components/icons/Twitch";
@@ -254,6 +261,10 @@ export function Widget({
 			case "weapon-pool":
 				return widget.data.length === 0 ? null : (
 					<WeaponPool weapons={widget.data} />
+				);
+			case "custom-kits":
+				return widget.data.length === 0 ? null : (
+					<CustomKits kits={widget.data} />
 				);
 			case "sens":
 				return typeof widget.data.motionSens !== "number" &&
@@ -696,6 +707,44 @@ function WeaponPool({
 					</div>
 				);
 			})}
+		</div>
+	);
+}
+
+function CustomKits({
+	kits,
+}: {
+	kits: Extract<LoadedWidget, { id: "custom-kits" }>["data"];
+}) {
+	const { t } = useTranslation(["weapons"]);
+
+	return (
+		<div className={styles.customKits}>
+			{kits.map((kit, i) => (
+				<div key={i} className={styles.customKit}>
+					<div className={styles.customKitWeapon}>
+						<WeaponImage
+							weaponSplId={kit.weaponSplId}
+							variant="build"
+							size={28}
+						/>
+					</div>
+					<div className={styles.customKitName}>
+						{t(`weapons:MAIN_${kit.weaponSplId}`)}
+					</div>
+					<div className={styles.customKitParts}>
+						<div className={styles.customKitPart}>
+							<SubWeaponImage subWeaponId={kit.subWeaponId} size={20} />
+						</div>
+						<div className={styles.customKitPart}>
+							<SpecialWeaponImage
+								specialWeaponId={kit.specialWeaponId}
+								size={20}
+							/>
+						</div>
+					</div>
+				</div>
+			))}
 		</div>
 	);
 }

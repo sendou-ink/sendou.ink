@@ -215,7 +215,7 @@
 .widgetSettings {
 	padding: var(--s-3);
 	margin-top: var(--s-1);
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
 	border-radius: var(--radius-box);
 }
 

@@ -153,6 +153,54 @@
 	background-color: var(--color-bg-high);
 }
 
+.customKits {
+	display: flex;
+	flex-direction: column;
+	padding-inline: var(--s-2);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.customKit {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+
+	& + & {
+		border-top: 1px solid var(--color-border);
+	}
+}
+
+.customKitWeapon {
+	display: flex;
+	flex-shrink: 0;
+	padding: var(--s-1-5);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.customKitName {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.customKitParts {
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--s-1);
+}
+
+.customKitPart {
+	display: flex;
+	padding: var(--s-1);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
 .weaponGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
