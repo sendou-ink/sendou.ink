@@ -400,13 +400,13 @@ function Scoreboard({
 								const isPov =
 									match.pov?.team === team && match.pov.index === index;
 								return (
-									<tr key={index} className={clsx({ [styles.pov]: isPov })}>
+									<tr key={index}>
 										<td className={styles.weaponCell}>
 											{player.weaponId !== null ? (
 												<WeaponImage
 													weaponSplId={player.weaponId}
 													variant="build"
-													size={24}
+													size={32}
 													className={clsx(styles.weapon, {
 														[styles.pov]: isPov,
 													})}
@@ -422,10 +422,7 @@ function Scoreboard({
 												</span>
 											)}
 										</td>
-										<td className={styles.name}>
-											{isPov ? "▸ " : null}
-											{player.name ?? "?"}
-										</td>
+										<td className={styles.name}>{player.name ?? "?"}</td>
 										<td className={styles.num}>
 											{player.ka ?? "?"}/{player.d ?? "?"}/{player.s ?? "?"}
 										</td>
