@@ -5,7 +5,12 @@ import {
 	inGameNameIsValid,
 	normalizeInGameName,
 } from "~/features/user-page/in-game-name";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	StageId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import { canonicalWeaponSplId } from "~/modules/in-game-lists/weapon-ids";
 import type { AnySyncSchema, DayMonthYear } from "~/utils/schema";
 import {
@@ -16,7 +21,9 @@ import {
 	preprocess,
 	safeNullableStringSchema,
 	safeStringSchema,
+	specialWeaponId,
 	stageId,
+	subWeaponId,
 	timeString,
 	weaponSplId,
 } from "~/utils/schema";
@@ -993,7 +1000,7 @@ type WeaponSelectArgs = WithTypedTranslationKeys<
 export function weaponSelect(
 	args: WeaponSelectArgs,
 ): v.GenericSchema<MainWeaponId> {
-	return register(weaponSplId, weaponSelectMetadata(args, true)) as never;
+	return register(weaponSplId, weaponSelectMetadata(args)) as never;
 }
 
 export function weaponSelectOptional(
@@ -1001,16 +1008,41 @@ export function weaponSelectOptional(
 ): v.OptionalSchema<v.GenericSchema<MainWeaponId>, undefined> {
 	return register(
 		v.optional(weaponSplId),
-		weaponSelectMetadata(args, false),
+		weaponSelectMetadata(args, "weapon-select", false),
 	) as never;
 }
 
-function weaponSelectMetadata(args: WeaponSelectArgs, required: boolean) {
+export function subWeaponSelect(
+	args: WeaponSelectArgs,
+): v.GenericSchema<SubWeaponId> {
+	return register(
+		subWeaponId,
+		weaponSelectMetadata(args, "sub-weapon-select"),
+	) as never;
+}
+
+export function specialWeaponSelect(
+	args: WeaponSelectArgs,
+): v.GenericSchema<SpecialWeaponId> {
+	return register(
+		specialWeaponId,
+		weaponSelectMetadata(args, "special-weapon-select"),
+	) as never;
+}
+
+function weaponSelectMetadata(
+	args: WeaponSelectArgs,
+	type:
+		| "weapon-select"
+		| "sub-weapon-select"
+		| "special-weapon-select" = "weapon-select",
+	required = true,
+) {
 	return {
 		...args,
 		label: prefixKey(args.label),
 		bottomText: prefixKey(args.bottomText),
-		type: "weapon-select" as const,
+		type,
 		initialValue: null,
 		required,
 	};

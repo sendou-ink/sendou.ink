@@ -153,6 +153,54 @@
 	background-color: var(--color-bg-high);
 }
 
+.customKits {
+	display: flex;
+	flex-direction: column;
+	padding-inline: var(--s-2);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.customKit {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+
+	& + & {
+		border-top: 1px solid var(--color-border);
+	}
+}
+
+.customKitWeapon {
+	display: flex;
+	flex-shrink: 0;
+	padding: var(--s-1-5);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.customKitName {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.customKitParts {
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--s-1);
+}
+
+.customKitPart {
+	display: flex;
+	padding: var(--s-1);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
 .weaponGrid {
 	display: grid;
 	grid-template-columns: repeat(auto-fill, minmax(40px, 1fr));
@@ -311,11 +359,44 @@
 	}
 }
 
-.socialLinksIcons {
+.socialLinksList {
 	display: flex;
-	gap: var(--s-2);
-	justify-content: center;
-	flex-wrap: wrap;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.socialLinkIconCircle {
+	border-radius: var(--radius-full);
+	padding: 0;
+	width: 24px;
+	height: 24px;
+
+	& svg {
+		width: 14px;
+		height: 14px;
+	}
+}
+
+.linkRow {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--s-1-5);
+	width: 100%;
+	height: auto;
+	padding: var(--s-0-5) var(--s-1);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-body);
+
+	&:is(a, button):hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.socialLinkName {
+	overflow-wrap: anywhere;
 }
 
 .gameBadgeGrid {
@@ -338,16 +419,7 @@
 .friendsList {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2);
-}
-
-.friendLink {
-	padding: var(--s-0-5) var(--s-1);
-	border-radius: var(--radius-field);
-
-	&:hover {
-		background-color: var(--color-bg-higher);
-	}
+	gap: var(--s-1);
 }
 
 .mapModePreferences {

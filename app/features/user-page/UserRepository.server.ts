@@ -1525,24 +1525,45 @@ export async function findSocialLinksByUserId(userId: number) {
 	if (!user) return [];
 
 	const links: Array<
-		| { type: "url"; value: string }
-		| { type: "popover"; platform: "discord"; value: string }
+		| {
+				type: "url";
+				platform: "twitch" | "youtube" | "bsky";
+				/** Account name on the platform, null if only an id is known */
+				name: string | null;
+				url: string;
+		  }
+		| { type: "text"; platform: "discord"; name: string }
 	> = [];
 
 	if (user.twitch) {
-		links.push({ type: "url", value: twitchUrl(user.twitch) });
+		links.push({
+			type: "url",
+			platform: "twitch",
+			name: user.twitch,
+			url: twitchUrl(user.twitch),
+		});
 	}
 	if (user.youtubeId) {
-		links.push({ type: "url", value: youtubeUrl(user.youtubeId) });
+		links.push({
+			type: "url",
+			platform: "youtube",
+			name: null,
+			url: youtubeUrl(user.youtubeId),
+		});
 	}
 	if (user.bsky) {
-		links.push({ type: "url", value: bskyUrl(user.bsky) });
+		links.push({
+			type: "url",
+			platform: "bsky",
+			name: user.bsky,
+			url: bskyUrl(user.bsky),
+		});
 	}
 	if (user.discordUniqueName) {
 		links.push({
-			type: "popover",
+			type: "text",
 			platform: "discord",
-			value: user.discordUniqueName,
+			name: user.discordUniqueName,
 		});
 	}
 

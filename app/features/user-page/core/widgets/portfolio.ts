@@ -9,6 +9,7 @@ import {
 	bioMdSchema,
 	bioSchema,
 	countdownSchema,
+	customKitsSchema,
 	favoriteStageSchema,
 	gameBadgesSchema,
 	gameBadgesSmallSchema,
@@ -60,6 +61,12 @@ export const ALL_WIDGETS = {
 			slot: "main",
 			schema: weaponPoolWidgetSchema,
 			defaultSettings: { weaponPool: [] },
+		}),
+		defineWidget({
+			id: "custom-kits",
+			slot: "side",
+			schema: customKitsSchema,
+			defaultSettings: { kits: [] },
 		}),
 		defineWidget({ id: "lfg-posts", slot: "main", navItem: "lfg" }),
 		defineWidget({
