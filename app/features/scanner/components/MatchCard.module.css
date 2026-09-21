@@ -350,18 +350,19 @@ button.expand {
 	font-size: var(--font-xs);
 
 	& td {
-		padding: var(--s-0-5) var(--s-1-5);
+		padding: var(--s-1);
 		vertical-align: middle;
 	}
 
-	& tr.pov {
-		font-weight: var(--weight-bold);
+	& .weapon {
+		width: 36px;
+		height: 36px;
 	}
 }
 
 /* the round weapon badge plus the cell padding, so the image is never squeezed */
 .weaponCell {
-	width: 40px;
+	width: 48px;
 }
 
 .name {
