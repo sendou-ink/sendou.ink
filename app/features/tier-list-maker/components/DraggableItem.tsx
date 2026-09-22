@@ -31,7 +31,12 @@ export function DraggableItem({ item }: DraggableItemProps) {
 
 	return (
 		<div ref={setNodeRef} className={styles.item} style={style}>
-			<div data-item-id={uniqueId} {...listeners} {...attributes}>
+			<div
+				data-item-id={uniqueId}
+				className={styles.hitArea}
+				{...listeners}
+				{...attributes}
+			>
 				<TierListItemImage item={item} />
 			</div>
 		</div>

@@ -48,10 +48,11 @@
 }
 
 .targetZone {
+	--tier-list-item-gap: var(--s-1-5);
 	grid-column: 2;
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-1-5);
+	gap: var(--tier-list-item-gap);
 	padding: var(--s-2);
 	background: var(--color-bg-high);
 	border-radius: var(--radius-field) 0 0 var(--radius-field);
