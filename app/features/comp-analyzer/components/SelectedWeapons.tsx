@@ -16,14 +16,15 @@ import {
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
 import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	abilityImageUrl,
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-} from "~/utils/urls";
+import { abilityImageUrl } from "~/utils/urls";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import styles from "./SelectedWeapons.module.css";
 
@@ -173,16 +174,11 @@ function SortableWeaponRow({
 			</div>
 			<div className={styles.subSpecialContainer}>
 				<div className={styles.kitIcon}>
-					<Image
-						path={subWeaponImageUrl(params.subWeaponId)}
-						alt={t(`weapons:SUB_${params.subWeaponId}`)}
-						size={24}
-					/>
+					<SubWeaponImage subWeaponId={params.subWeaponId} size={24} />
 				</div>
 				<div className={styles.kitIcon}>
-					<Image
-						path={specialWeaponImageUrl(params.specialWeaponId)}
-						alt={t(`weapons:SPECIAL_${params.specialWeaponId}`)}
+					<SpecialWeaponImage
+						specialWeaponId={params.specialWeaponId}
 						size={24}
 					/>
 				</div>

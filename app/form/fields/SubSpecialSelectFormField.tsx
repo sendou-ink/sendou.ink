@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
-import { Image } from "~/components/Image";
+import { SpecialWeaponImage, SubWeaponImage } from "~/components/Image";
 import type {
 	SpecialWeaponId,
 	SubWeaponId,
@@ -9,7 +9,6 @@ import {
 	specialWeaponIds,
 	subWeaponIds,
 } from "~/modules/in-game-lists/weapon-ids";
-import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
 import type { FormFieldProps } from "../types";
 import { FormFieldMessages, useTranslatedTexts } from "./FormFieldWrapper";
 import styles from "./SubSpecialSelectFormField.module.css";
@@ -38,17 +37,12 @@ export function SubSpecialSelectFormField({
 	const { t } = useTranslation(["weapons"]);
 	const { translatedLabel } = useTranslatedTexts({ label });
 
-	const options: Array<{ id: number; name: string; imgPath: string }> =
+	const options: Array<{ id: number; name: string }> =
 		weaponType === "SUB"
-			? subWeaponIds.map((id) => ({
-					id,
-					name: t(`weapons:SUB_${id}`),
-					imgPath: subWeaponImageUrl(id),
-				}))
+			? subWeaponIds.map((id) => ({ id, name: t(`weapons:SUB_${id}`) }))
 			: specialWeaponIds.map((id) => ({
 					id,
 					name: t(`weapons:SPECIAL_${id}`),
-					imgPath: specialWeaponImageUrl(id),
 				}));
 
 	return (
@@ -73,7 +67,17 @@ export function SubSpecialSelectFormField({
 						textValue={option.name}
 					>
 						<span className={styles.option}>
-							<Image path={option.imgPath} size={24} alt="" />
+							{weaponType === "SUB" ? (
+								<SubWeaponImage
+									subWeaponId={option.id as SubWeaponId}
+									size={24}
+								/>
+							) : (
+								<SpecialWeaponImage
+									specialWeaponId={option.id as SpecialWeaponId}
+									size={24}
+								/>
+							)}
 							{option.name}
 						</span>
 					</SendouSelectItem>

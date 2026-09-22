@@ -7,7 +7,6 @@ import { SendouButton } from "~/components/elements/Button";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
-import { Image } from "../Image";
 import {
 	focusLeftTo,
 	isOwnToggle,
@@ -901,14 +900,14 @@ function SelectOption(props: SendouSelectItemProps) {
 
 interface SendouSelectItemSectionProps {
 	heading: string;
-	headingImgPath?: string;
+	headingImg?: React.ReactNode;
 	children: React.ReactNode;
 	className?: string;
 }
 
 export function SendouSelectItemSection({
 	heading,
-	headingImgPath,
+	headingImg,
 	children,
 	className,
 }: SendouSelectItemSectionProps) {
@@ -922,9 +921,7 @@ export function SendouSelectItemSection({
 		// biome-ignore lint/a11y/useSemanticElements: a fieldset would carry form semantics this listbox section does not have
 		<div role="group" aria-label={heading}>
 			<div className={clsx(className, styles.categoryHeading)}>
-				{headingImgPath ? (
-					<Image path={headingImgPath} size={28} alt="" />
-				) : null}
+				{headingImg}
 				{heading}
 				<div className={styles.categoryDivider} />
 			</div>

@@ -57,7 +57,7 @@ export function GearSelect<Clearable extends boolean | undefined = undefined>({
 				<SendouSelectItemSection
 					className={idx === 0 ? "pt-0-5" : undefined}
 					heading={t(`game-misc:BRAND_${brandId}` as any)}
-					headingImgPath={brandImageUrl(brandId)}
+					headingImg={<Image path={brandImageUrl(brandId)} size={28} alt="" />}
 					key={key}
 				>
 					{gear.map(({ id, name }) => (

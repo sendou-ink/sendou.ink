@@ -9,7 +9,13 @@ import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
-import { Image, ModeImage, TierImage, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	ModeImage,
+	SpecialWeaponImage,
+	TierImage,
+	WeaponImage,
+} from "~/components/Image";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { useUser } from "~/features/auth/core/user";
 import { MATCHES_COUNT_NEEDED_FOR_LEADERBOARD } from "~/features/leaderboards/leaderboards-constants";
@@ -24,12 +30,7 @@ import { languagesUnified } from "~/modules/i18n/config";
 import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
 import { nullFilledArray } from "~/utils/arrays";
 import { inGameNameWithoutDiscriminator } from "~/utils/strings";
-import {
-	SENDOUQ_LOOKING_PAGE,
-	specialWeaponImageUrl,
-	TIERS_PAGE,
-	tierImageUrl,
-} from "~/utils/urls";
+import { SENDOUQ_LOOKING_PAGE, TIERS_PAGE, tierImageUrl } from "~/utils/urls";
 import {
 	finishUpdateIfUnmoved,
 	usePageViewTransitionClass,
@@ -144,11 +145,9 @@ export function GroupCard({
 						</div>
 						{group.noScreen ? (
 							<div className={styles.noScreen}>
-								<Image
-									path={specialWeaponImageUrl(SPLATTERCOLOR_SCREEN_ID)}
-									width={22}
-									height={22}
-									alt={`weapons:SPECIAL_${SPLATTERCOLOR_SCREEN_ID}`}
+								<SpecialWeaponImage
+									specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
+									size={22}
 								/>
 							</div>
 						) : null}

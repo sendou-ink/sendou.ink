@@ -79,6 +79,8 @@
 }
 
 .receiverImage {
+	display: flex;
+	width: fit-content;
 	padding: var(--s-2);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);

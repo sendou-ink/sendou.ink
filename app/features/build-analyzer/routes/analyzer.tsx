@@ -15,7 +15,7 @@ import {
 	SendouTabPanel,
 	SendouTabs,
 } from "~/components/elements/Tabs";
-import { Image } from "~/components/Image";
+import { Image, SpecialWeaponImage, SubWeaponImage } from "~/components/Image";
 import { weaponToSelectedWeapon } from "~/components/layout/WeaponSearch";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
@@ -52,8 +52,6 @@ import {
 	ANALYZER_URL,
 	mainWeaponImageUrl,
 	navIconUrl,
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
 	weaponParamsPage,
 } from "~/utils/urls";
 import { LinkButton, SendouButton } from "../../../components/elements/Button";
@@ -415,11 +413,9 @@ function BuildAnalyzerPage() {
 						title={t("analyzer:stat.category.sub")}
 						summaryRightContent={
 							<div className={styles.weaponInfoBadge}>
-								<Image
-									path={subWeaponImageUrl(analyzed.weapon.subWeaponSplId)}
-									width={20}
-									height={20}
-									alt={t(`weapons:SUB_${analyzed.weapon.subWeaponSplId}`)}
+								<SubWeaponImage
+									subWeaponId={analyzed.weapon.subWeaponSplId}
+									size={20}
 								/>
 								{t(`weapons:SUB_${analyzed.weapon.subWeaponSplId}`)}
 							</div>
@@ -504,15 +500,9 @@ function BuildAnalyzerPage() {
 						title={t("analyzer:stat.category.special")}
 						summaryRightContent={
 							<div className={styles.weaponInfoBadge}>
-								<Image
-									path={specialWeaponImageUrl(
-										analyzed.weapon.specialWeaponSplId,
-									)}
-									width={20}
-									height={20}
-									alt={t(
-										`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`,
-									)}
+								<SpecialWeaponImage
+									specialWeaponId={analyzed.weapon.specialWeaponSplId}
+									size={20}
 								/>
 								{t(`weapons:SPECIAL_${analyzed.weapon.specialWeaponSplId}`)}
 							</div>
@@ -1341,12 +1331,7 @@ function EffectsSelector({
 							) : effect.type === "AURA" ? (
 								<span className="text-xs font-bold">AURA</span>
 							) : (
-								<Image
-									path={specialWeaponImageUrl(15)}
-									alt={t("weapons:SPECIAL_15")}
-									height={32}
-									width={32}
-								/>
+								<SpecialWeaponImage specialWeaponId={15} size={32} />
 							)}
 						</div>
 						<div>
@@ -1721,12 +1706,7 @@ function DamageTable({
 							<td>
 								<div className="stack horizontal xs items-center">
 									{damageIsSubWeaponDamage(val) ? (
-										<Image
-											alt=""
-											path={subWeaponImageUrl(val.subWeaponId)}
-											width={12}
-											height={12}
-										/>
+										<SubWeaponImage subWeaponId={val.subWeaponId} size={12} />
 									) : null}{" "}
 									{t(typeRowName as any)}{" "}
 									{damageIsSubWeaponDamage(val) && val.type === "SPLASH" ? (

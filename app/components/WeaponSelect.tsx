@@ -7,7 +7,12 @@ import {
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
-import { Image, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import type { AnyWeapon } from "~/features/build-analyzer/analyzer-types";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { filterWeapon } from "~/modules/in-game-lists/utils";
@@ -20,11 +25,7 @@ import {
 	TRIZOOKA_ID,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
-import {
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-	weaponCategoryUrl,
-} from "~/utils/urls";
+import { weaponCategoryUrl } from "~/utils/urls";
 
 import styles from "./WeaponSelect.module.css";
 
@@ -124,14 +125,18 @@ export function WeaponSelect<
 			{({ key, items: weapons, name, idx }) => (
 				<SendouSelectItemSection
 					heading={name}
-					headingImgPath={
-						key === "quick-select"
-							? undefined
-							: name === "subs"
-								? subWeaponImageUrl(SPLAT_BOMB_ID)
-								: name === "specials"
-									? specialWeaponImageUrl(TRIZOOKA_ID)
-									: weaponCategoryUrl(name)
+					headingImg={
+						key === "quick-select" ? undefined : name === "subs" ? (
+							<SubWeaponImage subWeaponId={SPLAT_BOMB_ID} size={28} alt="" />
+						) : name === "specials" ? (
+							<SpecialWeaponImage
+								specialWeaponId={TRIZOOKA_ID}
+								size={28}
+								alt=""
+							/>
+						) : (
+							<Image path={weaponCategoryUrl(name)} size={28} alt="" />
+						)
 					}
 					className={idx === 0 ? "pt-0-5" : undefined}
 					key={key}
@@ -157,17 +162,15 @@ export function WeaponSelect<
 										className={styles.weaponImg}
 									/>
 								) : weapon.type === "SUB" ? (
-									<Image
-										path={subWeaponImageUrl(weapon.id)}
+									<SubWeaponImage
+										subWeaponId={weapon.id}
 										size={24}
-										alt=""
 										className={styles.weaponImg}
 									/>
 								) : (
-									<Image
-										path={specialWeaponImageUrl(weapon.id)}
+									<SpecialWeaponImage
+										specialWeaponId={weapon.id}
 										size={24}
-										alt=""
 										className={styles.weaponImg}
 									/>
 								)}
