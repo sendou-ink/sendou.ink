@@ -73,7 +73,7 @@
 	gap: var(--s-1);
 	height: 36px;
 	padding: 0 var(--s-2);
-	color: var(--color-text-inverse);
+	color: var(--color-text-on-light);
 	font-weight: var(--weight-semi);
 
 	&[data-slot-color="yellow"] {

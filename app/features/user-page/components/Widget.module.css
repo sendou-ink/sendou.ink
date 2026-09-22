@@ -468,8 +468,8 @@
 	height: var(--selector-size-xs);
 	padding: 0 var(--s-1);
 	border-radius: var(--radius-selector);
-	background-color: var(--color-text-second);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-second);
+	color: var(--color-text-on-second);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;

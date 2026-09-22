@@ -178,7 +178,8 @@
 }
 
 .listLinkBadgeWarning {
-	background-color: var(--color-text-second);
+	color: var(--color-text-on-second);
+	background-color: var(--color-fill-second);
 }
 
 .sideNavHeader {
