@@ -33,7 +33,7 @@ export const CUSTOM_THEME_VARS = [
 	"--_size-spacing",
 
 	"--_base-l",
-	"--_acc-chroma",
+	"--_acc-c",
 	"--_acc-l-0",
 	"--_acc-l-1",
 	"--_acc-l-2",

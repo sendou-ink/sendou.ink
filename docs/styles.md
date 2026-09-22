@@ -45,7 +45,7 @@ The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mo
 
 Stored themes are the output of `build()` at the time they were saved, and every stored theme is expected to have every variable in `CUSTOM_THEME_VARS`. When adding a variable, add a migration that backfills it into `User.customTheme` and `AllTeam.customTheme` (see `migrations/20260922181213-custom-theme-palette-vars.ts`). Backfill the value that reproduces how existing themes render, so they only change when re-saved.
 
-`toThemeInput()` recovers the slider values from a stored theme. The accent chroma is stored as is (`--_acc-chroma`) because the gamut boost makes it impossible to reverse from the output.
+`toThemeInput()` recovers the slider values from a stored theme. The accent chroma is stored as is (`--_acc-c`) because the gamut boost makes it impossible to reverse from the output.
 
 ### Size and border vars are for users only
 

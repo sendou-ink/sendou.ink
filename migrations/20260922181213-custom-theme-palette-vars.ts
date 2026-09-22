@@ -15,7 +15,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 				set "customTheme" = json_set(
 					"customTheme",
 					'$."--_base-l"', 0.17,
-					'$."--_acc-chroma"', json_extract("customTheme", '$."--_acc-c-2"') / 0.34,
+					'$."--_acc-c"', json_extract("customTheme", '$."--_acc-c-2"') / 0.34,
 					'$."--_acc-l-0"', 0.26,
 					'$."--_acc-l-1"', 0.52,
 					'$."--_acc-l-2"', 0.83,

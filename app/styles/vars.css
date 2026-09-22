@@ -11,6 +11,7 @@ custom theme with [data-default-theme] (e.g. image export previews)
 */
 html,
 [data-default-theme] {
+	--_base-l: 0.17;
 	--_base-h: 268;
 	--_base-c-0: 0;
 	--_base-c-1: 0.02356547860966049;
@@ -20,10 +21,9 @@ html,
 	--_base-c-5: 0.068;
 	--_base-c-6: 0.0645;
 	--_base-c-7: 0.0335;
-	--_base-l: 0.17;
 
+	--_acc-c: 0.24;
 	--_acc-h: 253;
-	--_acc-chroma: 0.24;
 	--_acc-l-0: 0.26;
 	--_acc-l-1: 0.52;
 	--_acc-l-2: 0.83;

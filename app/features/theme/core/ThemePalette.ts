@@ -179,7 +179,7 @@ export function build(input: ThemeInput): CustomTheme {
 		"--_base-c-7": baseChromas[7],
 		"--_base-l": bgLightness,
 		"--_acc-h": input.accentHue,
-		"--_acc-chroma": input.accentChroma,
+		"--_acc-c": input.accentChroma,
 		...slotVars("acc", accent),
 		"--_acc-l-6": lightFill.color.l,
 		"--_acc-c-6": lightFill.color.c,
@@ -207,7 +207,7 @@ export function toThemeInput(theme: CustomTheme): ThemeInput {
 				? theme["--_base-c-2"] / BASE_CHROMA_MULTIPLIERS[2]
 				: DEFAULT_THEME_INPUT.baseChroma,
 		accentHue: theme["--_acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
-		accentChroma: theme["--_acc-chroma"] ?? DEFAULT_THEME_INPUT.accentChroma,
+		accentChroma: theme["--_acc-c"] ?? DEFAULT_THEME_INPUT.accentChroma,
 		bgLightness: theme["--_base-l"] ?? DEFAULT_THEME_INPUT.bgLightness,
 		chatHue: theme["--_chat-h"],
 		radiusBox: theme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
