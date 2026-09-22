@@ -41,7 +41,7 @@
 		grid-template-columns: 1fr 1fr 0fr;
 
 		&:before {
-			background: var(--color-text-on-accent);
+			background: var(--color-fg-on-accent);
 		}
 	}
 

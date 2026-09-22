@@ -110,7 +110,7 @@
 }
 
 .multiplier {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	letter-spacing: 0.5px;

@@ -195,7 +195,7 @@
 	padding: 0 var(--s-1-5);
 	border-radius: var(--radius-selector);
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 }

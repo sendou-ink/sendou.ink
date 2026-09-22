@@ -101,7 +101,7 @@
 .unreadBadge {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	background-color: var(--color-fill-accent);
 	min-width: 18px;
 	height: 18px;
@@ -146,7 +146,7 @@
 	right: -2px;
 	font-size: var(--font-3xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	background-color: var(--color-fill-accent);
 	min-width: 14px;
 	height: 14px;

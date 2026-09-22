@@ -51,7 +51,7 @@
 	background-color: var(--color-fill-accent);
 	border-radius: var(--radius-field);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	text-decoration: none;
 	flex-shrink: 0;
 	transition: background-color 0.2s;
@@ -178,7 +178,7 @@
 .friendRequestsBadge {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	background-color: var(--color-fill-accent);
 	min-width: 18px;
 	height: 18px;
@@ -196,7 +196,7 @@
 	inset-inline-end: -5px;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	background-color: var(--color-fill-accent);
 	min-width: 16px;
 	height: 16px;

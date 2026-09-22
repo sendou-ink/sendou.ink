@@ -52,11 +52,11 @@
 	}
 
 	.text-theme {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 
 	.text-theme-secondary {
-		color: var(--color-text-second);
+		color: var(--color-fg-second);
 	}
 
 	.text-uppercase {

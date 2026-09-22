@@ -7,13 +7,13 @@
 	border-radius: var(--radius-field);
 	appearance: none;
 	background: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	cursor: pointer;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-bold);
 	padding: 0 var(--field-padding);
 	user-select: none;
-	outline-color: var(--color-text-accent);
+	outline-color: var(--color-fg-accent);
 	height: var(--field-size);
 	white-space: nowrap;
 
@@ -36,9 +36,9 @@
 }
 
 .outlined {
-	border-color: var(--color-text-accent);
+	border-color: var(--color-fg-accent);
 	background-color: transparent;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .outlinedSuccess {
@@ -85,7 +85,7 @@
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	outline: initial;
 
 	&:focus-visible {

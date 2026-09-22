@@ -23,7 +23,7 @@
 	color: var(--color-text-high);
 
 	&:hover {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }
 

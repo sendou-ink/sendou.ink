@@ -87,7 +87,7 @@ export function Chart({
 
 	const colors = useThemeColors({
 		// "high" variants for the curve lines so they stay legible on the dark chart
-		accentHigh: "--color-text-accent",
+		accentHigh: "--color-fg-accent",
 		infoHigh: "--color-info-high",
 		secondHigh: "--color-second-high",
 		// low variants for the highlight marker fills (paired with a light border)

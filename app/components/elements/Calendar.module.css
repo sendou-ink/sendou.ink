@@ -22,7 +22,7 @@
 
 .navButton {
 	background-color: transparent;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	border: none;
 	padding: 0;
 	border-radius: 100%;
@@ -68,7 +68,7 @@
 
 	&[data-selected] {
 		background-color: var(--color-bg-high);
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 
 	&:hover {

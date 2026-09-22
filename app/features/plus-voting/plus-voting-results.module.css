@@ -21,7 +21,7 @@
 .tierHeader {
 	display: flex;
 	flex-direction: row;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 
 	&::before,
 	&::after {
@@ -55,7 +55,7 @@
 	border-radius: var(--radius-selector);
 	height: var(--selector-size-sm);
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	padding-inline: var(--s-1-5);

@@ -18,7 +18,7 @@ from sendou.ink's app/styles/vars.css.
 		border-radius: var(--radius-field);
 		appearance: none;
 		background: var(--color-fill-accent);
-		color: var(--color-text-on-accent);
+		color: var(--color-fg-on-accent);
 		cursor: pointer;
 		font-family: inherit;
 		font-size: var(--font-xs);
@@ -80,7 +80,7 @@ from sendou.ink's app/styles/vars.css.
 			}
 
 			&.active {
-				color: var(--color-text-accent);
+				color: var(--color-fg-accent);
 				background: var(--color-bg-high);
 			}
 		}

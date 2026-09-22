@@ -147,7 +147,7 @@
 	border: none;
 	border-radius: var(--radius-full);
 	font-size: var(--font-xs);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	cursor: pointer;
 
 	&:focus-visible {

@@ -9,7 +9,7 @@
 	border: var(--border-width) solid var(--color-fill-accent);
 	border-radius: var(--radius-field);
 	background: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
 	white-space: nowrap;

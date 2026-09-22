@@ -167,7 +167,7 @@
 	margin-left: auto;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	background-color: var(--color-fill-accent);
 	padding: 0 var(--s-1);
 	border-radius: var(--radius-selector);
@@ -178,7 +178,7 @@
 }
 
 .listLinkBadgeWarning {
-	color: var(--color-text-on-second);
+	color: var(--color-fg-on-second);
 	background-color: var(--color-fill-second);
 }
 

@@ -48,7 +48,7 @@
 	left: 50%;
 	transform: translateX(-50%);
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding: 1px 4px;
@@ -58,7 +58,7 @@
 
 .pronounsTag {
 	background-color: var(--color-bg-higher);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	padding: 1px 5px;
@@ -69,7 +69,7 @@
 .messageUser {
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
-	color: oklch(from var(--color-text-accent) l c var(--chat-hue));
+	color: oklch(from var(--color-fg-accent) l c var(--chat-hue));
 	max-width: 110px;
 	overflow: hidden;
 	text-overflow: ellipsis;
@@ -89,7 +89,7 @@
 .sendButton.sendButton {
 	border-radius: var(--radius-full);
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	flex-shrink: 0;
 
 	&:disabled {
@@ -121,7 +121,7 @@
 }
 
 .roomLink {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	text-decoration: underline;
 	word-break: break-all;
 }

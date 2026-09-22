@@ -8,7 +8,7 @@
 		color-scheme: light dark;
 		/* only elements React names take part in view transitions, the rest of the page swaps instantly */
 		view-transition-name: none;
-		accent-color: var(--color-text-accent);
+		accent-color: var(--color-fg-accent);
 		scroll-padding-top: var(--layout-sticky-top);
 	}
 
@@ -106,7 +106,7 @@
 	}
 
 	a {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 		text-decoration: none;
 		border-radius: var(--radius-field);
 
@@ -235,8 +235,8 @@
 
 		&:checked,
 		&:indeterminate {
-			border-color: var(--color-text-accent);
-			background-color: var(--color-text-accent);
+			border-color: var(--color-fg-accent);
+			background-color: var(--color-fg-accent);
 			background-repeat: no-repeat;
 			background-position: center;
 			background-size: var(--field-size-icon) auto;
@@ -288,10 +288,10 @@
 		}
 
 		&:checked {
-			border-color: var(--color-text-accent);
+			border-color: var(--color-fg-accent);
 
 			&::after {
-				background-color: var(--color-text-accent);
+				background-color: var(--color-fg-accent);
 			}
 		}
 
@@ -540,7 +540,7 @@
 
 		&:focus-within {
 			--track-color: var(--color-bg-higher);
-			--thumb-color: var(--color-text-accent);
+			--thumb-color: var(--color-fg-accent);
 		}
 
 		&::-webkit-slider-runnable-track {
@@ -603,7 +603,7 @@
 		border: none;
 		border-radius: var(--radius-full);
 		background-color: var(--color-bg-high);
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 		vertical-align: baseline;
 
 		&::-webkit-progress-bar {
@@ -612,11 +612,11 @@
 		}
 
 		&::-moz-progress-bar {
-			background-color: var(--color-text-accent);
+			background-color: var(--color-fg-accent);
 		}
 
 		&[value]::-webkit-progress-value {
-			background-color: var(--color-text-accent);
+			background-color: var(--color-fg-accent);
 			transition: inline-size 0.2s ease;
 		}
 	}
@@ -659,7 +659,7 @@
 
 #nprogress {
 	& .bar {
-		background: var(--color-text-accent) !important;
+		background: var(--color-fg-accent) !important;
 	}
 
 	& .spinner {

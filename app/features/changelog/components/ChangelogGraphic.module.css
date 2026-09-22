@@ -19,7 +19,7 @@ avatar slot down to the entry icons */
 	background-color: var(--color-fill-accent);
 	border-radius: var(--radius-field);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	line-height: 1;
 }
 

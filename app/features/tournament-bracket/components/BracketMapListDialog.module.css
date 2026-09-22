@@ -59,8 +59,8 @@
 
 .roundButtonActive {
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
-	border-color: var(--color-text-accent);
+	color: var(--color-fg-on-accent);
+	border-color: var(--color-fg-accent);
 }
 
 .roundButtonNumber {

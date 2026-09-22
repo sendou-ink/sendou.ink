@@ -11,7 +11,7 @@
 .seasonWeaponBorderOuter {
 	--degree: 80deg;
 	--smoothing: 0.5deg;
-	--color: var(--color-text-accent);
+	--color: var(--color-fg-accent);
 
 	display: block;
 	content: "";

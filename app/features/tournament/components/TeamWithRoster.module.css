@@ -98,7 +98,7 @@
 .teamMemberNameRole {
 	position: absolute;
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	width: 12px;
 	height: 12px;
 	border-radius: var(--radius-full);

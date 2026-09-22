@@ -56,7 +56,7 @@
 
 .countBadgeAction {
 	background-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 }
 
 .alertBadge {

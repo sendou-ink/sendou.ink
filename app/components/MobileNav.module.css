@@ -62,7 +62,7 @@
 
 	&:hover,
 	&[data-active="true"] {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }
 
@@ -282,7 +282,7 @@
 	text-align: center;
 
 	&:hover {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }
 
@@ -380,7 +380,7 @@
 	right: -8px;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 	background-color: var(--color-fill-accent);
 	min-width: 16px;
 	height: 16px;

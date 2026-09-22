@@ -21,7 +21,7 @@
 	gap: var(--s-1-5);
 
 	&.active {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }
 

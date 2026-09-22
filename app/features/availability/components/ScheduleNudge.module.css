@@ -24,7 +24,7 @@
 	gap: var(--s-2);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 
 	&:hover {
 		text-decoration: underline;

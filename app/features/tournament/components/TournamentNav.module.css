@@ -98,7 +98,7 @@
 }
 
 .linkActive {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	background-color: var(--color-bg-high);
 }
 
@@ -153,5 +153,5 @@
 }
 
 .overflowLink.linkActive {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }

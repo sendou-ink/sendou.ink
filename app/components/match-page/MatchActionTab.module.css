@@ -201,7 +201,7 @@
 .checkCircleSelected {
 	background-color: var(--color-fill-accent);
 	border-color: var(--color-fill-accent);
-	color: var(--color-text-on-accent);
+	color: var(--color-fg-on-accent);
 
 	& svg {
 		stroke-width: 3px;

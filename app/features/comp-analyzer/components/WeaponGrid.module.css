@@ -85,7 +85,7 @@
 	transition: border-color 0.1s;
 
 	&:hover {
-		border-color: var(--color-text-accent);
+		border-color: var(--color-fg-accent);
 	}
 
 	&:disabled {

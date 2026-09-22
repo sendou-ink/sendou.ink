@@ -136,7 +136,7 @@
 .newBadge {
 	flex-shrink: 0;
 	background-color: var(--color-fill-second);
-	color: var(--color-text-on-second);
+	color: var(--color-fg-on-second);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding: 1px 4px;
@@ -167,7 +167,7 @@
 
 .playerNewBadge {
 	background-color: var(--color-fill-second);
-	color: var(--color-text-on-second);
+	color: var(--color-fg-on-second);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding: 1px 3px;
