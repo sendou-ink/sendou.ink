@@ -193,7 +193,6 @@ export function build(input: ThemeInput): CustomTheme {
 		"--_acc-c-6": lightFill.color.c,
 		"--_acc-h-6": lightFill.color.h,
 		"--_acc-fill-dark-text": lightFill.hasDarkText ? 1 : 0,
-		"--_second-h": secondaryHue,
 		...slotVars("second", secondary),
 		"--_second-l-6": secondaryLightFill.color.l,
 		"--_second-c-6": secondaryLightFill.color.c,

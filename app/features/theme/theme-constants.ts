@@ -16,7 +16,6 @@ export const CUSTOM_THEME_VARS = [
 	"--_acc-c-3",
 	"--_acc-c-4",
 	"--_acc-c-5",
-	"--_second-h",
 	"--_second-c-0",
 	"--_second-c-1",
 	"--_second-c-2",

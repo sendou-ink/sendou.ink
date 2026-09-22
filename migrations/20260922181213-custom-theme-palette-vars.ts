@@ -5,14 +5,15 @@ import { type Kysely, sql } from "kysely";
  * background lightness and the raw accent chroma. Existing themes get the
  * values they were rendered with until now (fixed lightness, unshifted hue)
  * so they look exactly the same until re-saved. Light mode secondary colors
- * used the dark mode chroma slots, now they have their own.
+ * used the dark mode chroma slots, now they have their own. The secondary
+ * hue is always the accent's opposite so it is no longer stored.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	await db.transaction().execute(async (trx) => {
 		for (const table of ["User", "AllTeam"]) {
 			await sql`
 				update ${sql.table(table)}
-				set "customTheme" = json_set(
+				set "customTheme" = json_remove(json_set(
 					"customTheme",
 					'$."--_base-l"', 0.17,
 					'$."--_acc-c"', json_extract("customTheme", '$."--_acc-c-2"') / 0.34,
@@ -51,7 +52,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 					'$."--_second-c-6"', json_extract("customTheme", '$."--_second-c-1"'),
 					'$."--_second-h-6"', json_extract("customTheme", '$."--_second-h"'),
 					'$."--_second-fill-dark-text"', 0
-				)
+				), '$."--_second-h"')
 				where "customTheme" is not null
 					and json_extract("customTheme", '$."--_base-l"') is null
 			`.execute(trx);
