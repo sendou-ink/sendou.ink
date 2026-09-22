@@ -50,7 +50,7 @@ import type { TierListItem } from "../tier-list-maker-schemas";
 import { tierListMakerPathWithState } from "../tier-list-maker-utils";
 import styles from "./tier-list-maker.module.css";
 
-const PLACEMENT_MODES: TierListPlacementMode[] = ["click", "track"];
+const PLACEMENT_MODES: TierListPlacementMode[] = ["track", "click"];
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({

@@ -5,6 +5,7 @@ import type {
 } from "@dnd-kit/core";
 import { arrayMove } from "@dnd-kit/sortable";
 import * as React from "react";
+import * as v from "valibot";
 import { abilitiesShort } from "~/modules/in-game-lists/abilities";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
@@ -14,6 +15,8 @@ import {
 	subWeaponIds,
 	weaponIdToType,
 } from "~/modules/in-game-lists/weapon-ids";
+import { usePersistedState } from "~/modules/persisted-state/hooks";
+import * as PersistedState from "~/modules/persisted-state/persisted-state";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { assertUnreachable } from "~/utils/types";
 import { DEFAULT_TIERS } from "../tier-list-maker-constants";
@@ -27,6 +30,13 @@ import { addItemToTier, getNextNthForItem } from "../tier-list-maker-utils";
 
 export type TierListPlacementMode = "track" | "click";
 
+const placementModePersisted = PersistedState.define({
+	key: "tier-list-maker__placement-mode",
+	storage: "local",
+	schema: v.picklist(["track", "click"]),
+	default: "track" as TierListPlacementMode,
+});
+
 export function useTierList() {
 	const [itemType, setItemType] = useSearchParam(
 		tierListMakerSearchParams,
@@ -37,10 +47,11 @@ export function useTierList() {
 		useSearchParamTiersState();
 	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
 
-	const [placementMode, setPlacementMode] =
-		React.useState<TierListPlacementMode>("click");
+	const [placementMode, setPlacementMode] = usePersistedState(
+		placementModePersisted,
+	);
 	const [selectedTierId, setSelectedTierId] = React.useState<string | null>(
-		() => tiers.tiers[0]?.id ?? null,
+		() => (placementMode === "click" ? (tiers.tiers[0]?.id ?? null) : null),
 	);
 
 	const handleChangePlacementMode = (mode: TierListPlacementMode) => {
