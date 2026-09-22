@@ -32,7 +32,7 @@ export const CUSTOM_THEME_VARS = [
 	"--_size-selector",
 	"--_size-spacing",
 
-	"--_bg-l",
+	"--_base-l",
 	"--_acc-chroma",
 	"--_acc-l-0",
 	"--_acc-l-1",
@@ -71,7 +71,7 @@ export const PATRON_CHIP_THEME_VARS = [
 	"--_base-h",
 	"--_base-c-2",
 	"--_base-c-5",
-	"--_bg-l",
+	"--_base-l",
 	"--_acc-h",
 	"--_acc-c-2",
 	"--_acc-c-4",

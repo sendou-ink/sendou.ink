@@ -47,7 +47,7 @@ const BASE_CHROMA_MULTIPLIERS = [
 	0.01, 0.49, 0.62, 1.4, 1.29, 1.36, 1.29, 0.67,
 ] as const;
 
-/** In dark mode --color-base-5...7 sit this much above the background lightness (`--_bg-l`) */
+/** In dark mode --color-base-5...7 sit this much above the background lightness (`--_base-l`) */
 const DARK_SURFACE_OFFSETS: Partial<Record<number, number>> = {
 	5: 0.15,
 	6: 0.08,
@@ -177,7 +177,7 @@ export function build(input: ThemeInput): CustomTheme {
 		"--_base-c-5": baseChromas[5],
 		"--_base-c-6": baseChromas[6],
 		"--_base-c-7": baseChromas[7],
-		"--_bg-l": bgLightness,
+		"--_base-l": bgLightness,
 		"--_acc-h": input.accentHue,
 		"--_acc-chroma": input.accentChroma,
 		...slotVars("acc", accent),
@@ -208,7 +208,7 @@ export function toThemeInput(theme: CustomTheme): ThemeInput {
 				: DEFAULT_THEME_INPUT.baseChroma,
 		accentHue: theme["--_acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
 		accentChroma: theme["--_acc-chroma"] ?? DEFAULT_THEME_INPUT.accentChroma,
-		bgLightness: theme["--_bg-l"] ?? DEFAULT_THEME_INPUT.bgLightness,
+		bgLightness: theme["--_base-l"] ?? DEFAULT_THEME_INPUT.bgLightness,
 		chatHue: theme["--_chat-h"],
 		radiusBox: theme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
 		radiusField: theme["--_radius-field"] ?? DEFAULT_THEME_INPUT.radiusField,
@@ -243,9 +243,9 @@ export function resolveColors(theme: CustomTheme) {
 		/** light mode lightnesses, also used as dark mode text colors */
 		base: lightBase,
 		dark: {
-			bg: base(theme["--_bg-l"], 7),
-			bgHigh: base(theme["--_bg-l"] + DARK_SURFACE_OFFSETS[6]!, 6),
-			bgHigher: base(theme["--_bg-l"] + DARK_SURFACE_OFFSETS[5]!, 5),
+			bg: base(theme["--_base-l"], 7),
+			bgHigh: base(theme["--_base-l"] + DARK_SURFACE_OFFSETS[6]!, 6),
+			bgHigher: base(theme["--_base-l"] + DARK_SURFACE_OFFSETS[5]!, 5),
 			text: lightBase[0],
 			textHigh: lightBase[3],
 			accentLow: slot("acc", 0),

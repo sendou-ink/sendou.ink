@@ -20,8 +20,7 @@ html,
 	--_base-c-5: 0.068;
 	--_base-c-6: 0.0645;
 	--_base-c-7: 0.0335;
-
-	--_bg-l: 0.17;
+	--_base-l: 0.17;
 
 	--_acc-h: 253;
 	--_acc-chroma: 0.24;
@@ -107,12 +106,12 @@ html.dark [data-custom-theme],
 	--color-base-3: oklch(64% var(--_base-c-3) var(--_base-h));
 	--color-base-4: oklch(46% var(--_base-c-4) var(--_base-h));
 	--color-base-5: oklch(
-		calc(var(--_bg-l) + 0.15) var(--_base-c-5) var(--_base-h)
+		calc(var(--_base-l) + 0.15) var(--_base-c-5) var(--_base-h)
 	);
 	--color-base-6: oklch(
-		calc(var(--_bg-l) + 0.08) var(--_base-c-6) var(--_base-h)
+		calc(var(--_base-l) + 0.08) var(--_base-c-6) var(--_base-h)
 	);
-	--color-base-7: oklch(var(--_bg-l) var(--_base-c-7) var(--_base-h));
+	--color-base-7: oklch(var(--_base-l) var(--_base-c-7) var(--_base-h));
 
 	--color-accent-low: oklch(var(--_acc-l-0) var(--_acc-c-0) var(--_acc-h-0));
 	--color-accent: oklch(var(--_acc-l-1) var(--_acc-c-1) var(--_acc-h-1));
@@ -189,7 +188,6 @@ html.light [data-custom-theme],
 	--color-text-accent: var(--color-accent);
 	--color-text-second: var(--color-second);
 	--color-fill-accent: oklch(var(--_acc-l-6) var(--_acc-c-6) var(--_acc-h-6));
-	/* white, or --color-base-0 when the fill is bright */
 	--color-text-on-accent: oklch(
 		calc(1 - 0.83 * var(--_acc-fill-dark-text))
 			calc(var(--_base-c-7) * var(--_acc-fill-dark-text)) var(--_base-h)

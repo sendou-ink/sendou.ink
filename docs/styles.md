@@ -24,7 +24,7 @@ Every color slot has a designed lightness (e.g. dark mode `--color-accent-high` 
 4. **Solves for contrast.** Text colors are moved lighter/darker until they have at least 4.5:1 (WCAG AA) against every surface they are shown on.
 5. **Picks the light mode accent fill.** `--color-fill-accent` (buttons, badges) is normally the same as the text color with white text on it. When a bright fill would be much more colorful (yellow, cyan...) it becomes a bright fill with dark text instead (`--_acc-fill-dark-text`).
 
-The dark mode background lightness (`--_bg-l`) is a slider of its own. Dark mode surfaces (`--color-base-5...7`) keep their distance from it.
+The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mode surfaces (`--color-base-5...7`) keep their distance from it.
 
 `ThemePalette.test.ts` sweeps inputs, checks the contrast of every text/background pair (`textContrastPairs()`) and that every resolved color (`resolveColors()`) is inside the sRGB gamut. Keep both in sync with how `vars.css` uses the variables.
 

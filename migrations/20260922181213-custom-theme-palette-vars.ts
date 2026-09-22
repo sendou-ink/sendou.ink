@@ -14,7 +14,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 				update ${sql.table(table)}
 				set "customTheme" = json_set(
 					"customTheme",
-					'$."--_bg-l"', 0.17,
+					'$."--_base-l"', 0.17,
 					'$."--_acc-chroma"', json_extract("customTheme", '$."--_acc-c-2"') / 0.34,
 					'$."--_acc-l-0"', 0.26,
 					'$."--_acc-l-1"', 0.52,
@@ -49,7 +49,7 @@ export async function up(db: Kysely<any>): Promise<void> {
 					'$."--_second-c-5"', json_extract("customTheme", '$."--_second-c-2"')
 				)
 				where "customTheme" is not null
-					and json_extract("customTheme", '$."--_bg-l"') is null
+					and json_extract("customTheme", '$."--_base-l"') is null
 			`.execute(trx);
 		}
 	});
