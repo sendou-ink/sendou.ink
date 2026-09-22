@@ -1,4 +1,4 @@
-import type { CollisionDetection, Modifier } from "@dnd-kit/core";
+import type { ClientRect, CollisionDetection, Modifier } from "@dnd-kit/core";
 import {
 	closestCenter,
 	DndContext,
@@ -71,9 +71,30 @@ const tierAwareCollisionDetection: CollisionDetection = (args) => {
 			(tierIdFromSortableId(String(container.id)) !== null) === isTierDrag,
 	);
 
-	return isTierDrag
-		? closestCenter({ ...args, droppableContainers })
-		: pointerWithin({ ...args, droppableContainers });
+	if (isTierDrag) return closestCenter({ ...args, droppableContainers });
+
+	const pointerCollisions = pointerWithin({ ...args, droppableContainers });
+
+	// gaps between items would otherwise resolve to the tier itself, snapping the sort preview back
+	const tierZoneCollision = pointerCollisions.find((collision) =>
+		String(collision.id).startsWith("tier-"),
+	);
+	const tierZoneRect = tierZoneCollision
+		? args.droppableRects.get(tierZoneCollision.id)
+		: undefined;
+	if (!tierZoneCollision || !tierZoneRect) return pointerCollisions;
+
+	const itemsInTierZone = droppableContainers.filter((container) => {
+		const rect = args.droppableRects.get(container.id);
+		return (
+			container.id !== tierZoneCollision.id &&
+			rect !== undefined &&
+			isRectCenterWithin(rect, tierZoneRect)
+		);
+	});
+	if (itemsInTierZone.length === 0) return [tierZoneCollision];
+
+	return closestCenter({ ...args, droppableContainers: itemsInTierZone });
 };
 
 const restrictTierDragToVerticalAxis: Modifier = (args) =>
@@ -410,5 +431,17 @@ function ResetPopover({ handleReset }: { handleReset: () => void }) {
 				</div>
 			</div>
 		</SendouPopover>
+	);
+}
+
+function isRectCenterWithin(rect: ClientRect, container: ClientRect) {
+	const centerX = rect.left + rect.width / 2;
+	const centerY = rect.top + rect.height / 2;
+
+	return (
+		centerX >= container.left &&
+		centerX <= container.right &&
+		centerY >= container.top &&
+		centerY <= container.bottom
 	);
 }

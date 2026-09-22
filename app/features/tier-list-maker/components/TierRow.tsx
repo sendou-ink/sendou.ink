@@ -1,6 +1,6 @@
 import { useDroppable } from "@dnd-kit/core";
 import {
-	horizontalListSortingStrategy,
+	rectSortingStrategy,
 	SortableContext,
 	useSortable,
 } from "@dnd-kit/sortable";
@@ -47,9 +47,12 @@ export function TierRow({ tier }: TierRowProps) {
 
 	const items = getItemsInTier(tier.id);
 	const { t } = useTranslation(["tier-list-maker", "common"]);
-	const { setNodeRef, isOver } = useDroppable({
+	const { setNodeRef, over } = useDroppable({
 		id: tier.id,
 	});
+	const itemIds = items.map(tierListItemId);
+	const isOver =
+		over !== null && (over.id === tier.id || itemIds.includes(String(over.id)));
 
 	const combinedRef = useLockedHeightWhileDragging({
 		setNodeRef,
@@ -193,10 +196,7 @@ export function TierRow({ tier }: TierRowProps) {
 							: t("tier-list-maker:dropItems")}
 					</div>
 				) : items.length > 0 ? (
-					<SortableContext
-						items={items.map(tierListItemId)}
-						strategy={horizontalListSortingStrategy}
-					>
+					<SortableContext items={itemIds} strategy={rectSortingStrategy}>
 						{items.map((item) => (
 							<DraggableItem key={tierListItemId(item)} item={item} />
 						))}
