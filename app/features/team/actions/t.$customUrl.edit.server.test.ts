@@ -5,8 +5,8 @@ import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as TeamRepository from "~/features/team/TeamRepository.server";
+import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import { invariant } from "~/utils/invariant";
-import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { assertResponseErrored, wrappedAction } from "~/utils/Test";
 import type { editTeamActionSchema } from "../team-schemas";
 import { action as _editTeamProfileAction } from "./t.$customUrl.edit.server";
@@ -31,6 +31,7 @@ const VALID_CUSTOM_THEME = {
 	baseChroma: 0.05,
 	accentHue: 200,
 	accentChroma: 0.1,
+	bgLightness: 0.17,
 	chatHue: null,
 	radiusBox: 3,
 	radiusField: 2,
@@ -42,7 +43,7 @@ const VALID_CUSTOM_THEME = {
 } as const;
 
 const expectedStoredTheme = () =>
-	JSON.parse(JSON.stringify(clampThemeToGamut(VALID_CUSTOM_THEME)));
+	JSON.parse(JSON.stringify(ThemePalette.build(VALID_CUSTOM_THEME)));
 
 const users = UserFactory.pool();
 const victimId = () => users.id(1);

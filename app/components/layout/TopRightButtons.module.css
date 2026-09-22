@@ -93,8 +93,8 @@
 	right: -6px;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-inverse);
-	background-color: var(--color-text-accent);
+	color: var(--color-text-on-accent);
+	background-color: var(--color-fill-accent);
 	min-width: 18px;
 	height: 18px;
 	padding: 0 var(--s-1);

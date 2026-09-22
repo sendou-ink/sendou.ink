@@ -77,8 +77,8 @@
 }
 
 .outlineToggleButtonOutlined {
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-text-on-accent);
 }
 
 .weaponsWrapper {

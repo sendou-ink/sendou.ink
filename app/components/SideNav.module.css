@@ -167,8 +167,8 @@
 	margin-left: auto;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
-	color: var(--color-text-inverse);
-	background-color: var(--color-text-accent);
+	color: var(--color-text-on-accent);
+	background-color: var(--color-fill-accent);
 	padding: 0 var(--s-1);
 	border-radius: var(--radius-selector);
 	height: var(--selector-size-xs);

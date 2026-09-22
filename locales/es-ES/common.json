@@ -411,6 +411,7 @@
 	"settings.customTheme.baseChroma": "Croma base",
 	"settings.customTheme.accentHue": "Tono de contraste",
 	"settings.customTheme.accentChroma": "Croma de contraste",
+	"settings.customTheme.bgLightness": "",
 	"settings.customTheme.chatHueToggle": "Usar color de nombre personalizado en el chat",
 	"settings.customTheme.chatHue": "Color del nombre en el chat",
 	"settings.customTheme.boxes": "Cajas",

@@ -11,10 +11,10 @@ import {
 	SENDOUQ_LOOKING_CHANNEL,
 	sqGroupChannel,
 } from "~/features/sendouq/q-constants";
+import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { isSupporter } from "~/modules/permissions/utils";
-import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToast } from "~/utils/remix.server";
 import { toDBBoolean } from "~/utils/sql";
 import { assertUnreachable } from "~/utils/types";
@@ -40,7 +40,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			}
 
 			const clampedTheme = data.newValue
-				? clampThemeToGamut(data.newValue)
+				? ThemePalette.build(data.newValue)
 				: null;
 
 			await UserRepository.updateOwnCustomTheme(clampedTheme);

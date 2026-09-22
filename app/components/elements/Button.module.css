@@ -3,11 +3,11 @@
 	width: auto;
 	align-items: center;
 	justify-content: center;
-	border: var(--border-style-accent);
+	border: var(--border-width) solid var(--color-fill-accent);
 	border-radius: var(--radius-field);
 	appearance: none;
-	background: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background: var(--color-fill-accent);
+	color: var(--color-text-on-accent);
 	cursor: pointer;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-bold);
@@ -36,6 +36,7 @@
 }
 
 .outlined {
+	border-color: var(--color-text-accent);
 	background-color: transparent;
 	color: var(--color-text-accent);
 }
@@ -103,6 +104,7 @@
 .success {
 	border-color: var(--color-success);
 	background-color: var(--color-success);
+	color: var(--color-text-inverse);
 	outline-color: var(--color-success);
 }
 

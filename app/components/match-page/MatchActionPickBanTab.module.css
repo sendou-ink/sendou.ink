@@ -175,13 +175,13 @@
 
 .tileNumber {
 	position: absolute;
-	background-color: var(--color-text-accent);
+	background-color: var(--color-fill-accent);
 	border-radius: 100%;
 	width: 18px;
 	height: 18px;
 	display: grid;
 	place-items: center;
-	color: var(--color-text-inverse);
+	color: var(--color-text-on-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	top: -5px;

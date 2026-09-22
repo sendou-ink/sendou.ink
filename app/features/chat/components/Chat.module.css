@@ -47,8 +47,8 @@
 	top: 28px;
 	left: 50%;
 	transform: translateX(-50%);
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-text-on-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding: 1px 4px;
@@ -88,8 +88,8 @@
 
 .sendButton.sendButton {
 	border-radius: var(--radius-full);
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-text-on-accent);
 	flex-shrink: 0;
 
 	&:disabled {
