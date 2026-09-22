@@ -1,4 +1,6 @@
+import type { CollisionDetection, Modifier } from "@dnd-kit/core";
 import {
+	closestCenter,
 	DndContext,
 	DragOverlay,
 	KeyboardSensor,
@@ -8,7 +10,12 @@ import {
 	useSensor,
 	useSensors,
 } from "@dnd-kit/core";
-import { sortableKeyboardCoordinates } from "@dnd-kit/sortable";
+import { restrictToVerticalAxis } from "@dnd-kit/modifiers";
+import {
+	SortableContext,
+	sortableKeyboardCoordinates,
+	verticalListSortingStrategy,
+} from "@dnd-kit/sortable";
 import clsx from "clsx";
 import { HardDriveDownload, Plus, RefreshCcw } from "lucide-react";
 import { useState } from "react";
@@ -47,10 +54,32 @@ import {
 } from "../contexts/TierListContext";
 import type { TierListPlacementMode } from "../hooks/useTierList";
 import type { TierListItem } from "../tier-list-maker-schemas";
-import { tierListMakerPathWithState } from "../tier-list-maker-utils";
+import {
+	tierIdFromSortableId,
+	tierListMakerPathWithState,
+	tierSortableId,
+} from "../tier-list-maker-utils";
 import styles from "./tier-list-maker.module.css";
 
 const PLACEMENT_MODES: TierListPlacementMode[] = ["track", "click"];
+
+/** Tier rows and items share one context, so each drag only collides with its own kind of target. */
+const tierAwareCollisionDetection: CollisionDetection = (args) => {
+	const isTierDrag = tierIdFromSortableId(String(args.active.id)) !== null;
+	const droppableContainers = args.droppableContainers.filter(
+		(container) =>
+			(tierIdFromSortableId(String(container.id)) !== null) === isTierDrag,
+	);
+
+	return isTierDrag
+		? closestCenter({ ...args, droppableContainers })
+		: pointerWithin({ ...args, droppableContainers });
+};
+
+const restrictTierDragToVerticalAxis: Modifier = (args) =>
+	args.active && tierIdFromSortableId(String(args.active.id)) !== null
+		? restrictToVerticalAxis(args)
+		: args.transform;
 
 export const meta: MetaFunction = (args) => {
 	return metaTags({
@@ -97,9 +126,11 @@ function TierListMakerContent() {
 		setItemType,
 		state,
 		activeItem,
+		isReorderingTiers,
 		handleDragStart,
 		handleDragOver,
 		handleDragEnd,
+		handleDragCancel,
 		handleAddTier,
 		handleReset,
 		hideAltKits,
@@ -144,16 +175,23 @@ function TierListMakerContent() {
 			<DndContext
 				key={itemType}
 				sensors={sensors}
-				collisionDetection={pointerWithin}
+				collisionDetection={tierAwareCollisionDetection}
+				modifiers={[restrictTierDragToVerticalAxis]}
 				onDragStart={handleDragStart}
 				onDragOver={handleDragOver}
 				onDragEnd={handleDragEnd}
+				onDragCancel={handleDragCancel}
 			>
 				<div className="stack">
 					<div className={styles.tierList}>
-						{state.tiers.map((tier) => (
-							<TierRow key={tier.id} tier={tier} />
-						))}
+						<SortableContext
+							items={state.tiers.map((tier) => tierSortableId(tier.id))}
+							strategy={verticalListSortingStrategy}
+						>
+							{state.tiers.map((tier) => (
+								<TierRow key={tier.id} tier={tier} />
+							))}
+						</SortableContext>
 					</div>
 
 					<div className="stack horizontal md flex-wrap items-center">
@@ -280,9 +318,12 @@ function TierListMakerContent() {
 					</SendouTabPanel>
 				</SendouTabs>
 
-				<DragOverlay>
-					{activeItem ? <ItemDragPreview item={activeItem} /> : null}
-				</DragOverlay>
+				{/* an empty overlay would hide the dropped tier row during its drop animation */}
+				{isReorderingTiers ? null : (
+					<DragOverlay>
+						{activeItem ? <ItemDragPreview item={activeItem} /> : null}
+					</DragOverlay>
+				)}
 			</DndContext>
 		</Main>
 	);

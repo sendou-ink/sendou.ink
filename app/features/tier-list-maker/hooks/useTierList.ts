@@ -26,7 +26,11 @@ import type {
 	TierListState,
 } from "../tier-list-maker-schemas";
 import { tierListMakerSearchParams } from "../tier-list-maker-search-params";
-import { addItemToTier, getNextNthForItem } from "../tier-list-maker-utils";
+import {
+	addItemToTier,
+	getNextNthForItem,
+	tierIdFromSortableId,
+} from "../tier-list-maker-utils";
 
 export type TierListPlacementMode = "track" | "click";
 
@@ -46,6 +50,7 @@ export function useTierList() {
 	const { tiers, setTiers, persistTiersStateToParams } =
 		useSearchParamTiersState();
 	const [activeItem, setActiveItem] = React.useState<TierListItem | null>(null);
+	const [isReorderingTiers, setIsReorderingTiers] = React.useState(false);
 
 	const [placementMode, setPlacementMode] = usePersistedState(
 		placementModePersisted,
@@ -119,6 +124,10 @@ export function useTierList() {
 	};
 
 	const handleDragStart = (event: DragStartEvent) => {
+		const isTierDrag = tierIdFromSortableId(String(event.active.id)) !== null;
+		setIsReorderingTiers(isTierDrag);
+		if (isTierDrag) return;
+
 		const item = parseItemFromId(String(event.active.id));
 		if (item) {
 			setActiveItem(item);
@@ -128,7 +137,7 @@ export function useTierList() {
 	const handleDragOver = (event: DragOverEvent) => {
 		const { active, over } = event;
 
-		if (!over) {
+		if (!over || tierIdFromSortableId(String(active.id))) {
 			return;
 		}
 
@@ -196,6 +205,13 @@ export function useTierList() {
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 		setActiveItem(null);
+		setIsReorderingTiers(false);
+
+		const draggedTierId = tierIdFromSortableId(String(active.id));
+		if (draggedTierId) {
+			handleReorderTiers(draggedTierId, over?.id);
+			return;
+		}
 
 		if (!over) {
 			persistTiersStateToParams(tiers);
@@ -273,6 +289,30 @@ export function useTierList() {
 		}
 
 		persistTiersStateToParams(tiers);
+	};
+
+	const handleDragCancel = () => {
+		setActiveItem(null);
+		setIsReorderingTiers(false);
+	};
+
+	const handleReorderTiers = (
+		draggedTierId: string,
+		overId: string | number | undefined,
+	) => {
+		const overTierId = overId ? tierIdFromSortableId(String(overId)) : null;
+		if (!overTierId || overTierId === draggedTierId) return;
+
+		const oldIndex = tiers.tiers.findIndex((tier) => tier.id === draggedTierId);
+		const newIndex = tiers.tiers.findIndex((tier) => tier.id === overTierId);
+		if (oldIndex === -1 || newIndex === -1) return;
+
+		const newState = {
+			...tiers,
+			tiers: arrayMove(tiers.tiers, oldIndex, newIndex),
+		};
+		setTiers(newState);
+		persistTiersStateToParams(newState);
 	};
 
 	const handleAddItemToTier = (item: TierListItem, tierId: string) => {
@@ -408,44 +448,6 @@ export function useTierList() {
 			});
 	};
 
-	const handleMoveTierUp = (tierId: string) => {
-		const currentIndex = tiers.tiers.findIndex((tier) => tier.id === tierId);
-		if (currentIndex <= 0) return;
-
-		const newTiers = [...tiers.tiers];
-		[newTiers[currentIndex - 1], newTiers[currentIndex]] = [
-			newTiers[currentIndex],
-			newTiers[currentIndex - 1],
-		];
-
-		const newState = {
-			...tiers,
-			tiers: newTiers,
-		};
-		setTiers(newState);
-		persistTiersStateToParams(newState);
-	};
-
-	const handleMoveTierDown = (tierId: string) => {
-		const currentIndex = tiers.tiers.findIndex((tier) => tier.id === tierId);
-		if (currentIndex === -1 || currentIndex >= tiers.tiers.length - 1) {
-			return;
-		}
-
-		const newTiers = [...tiers.tiers];
-		[newTiers[currentIndex], newTiers[currentIndex + 1]] = [
-			newTiers[currentIndex + 1],
-			newTiers[currentIndex],
-		];
-
-		const newState = {
-			...tiers,
-			tiers: newTiers,
-		};
-		setTiers(newState);
-		persistTiersStateToParams(newState);
-	};
-
 	const handleReset = () => {
 		const newState = {
 			tiers: DEFAULT_TIERS,
@@ -460,16 +462,16 @@ export function useTierList() {
 		setItemType,
 		state: tiers,
 		activeItem,
+		isReorderingTiers,
 		handleDragStart,
 		handleDragOver,
 		handleDragEnd,
+		handleDragCancel,
 		handleAddTier,
 		handleAddItemToTier,
 		handleRemoveTier,
 		handleRenameTier,
 		handleChangeTierColor,
-		handleMoveTierUp,
-		handleMoveTierDown,
 		handleReset,
 		getItemsInTier,
 		availableItems: getAvailableItems(),

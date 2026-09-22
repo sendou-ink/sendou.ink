@@ -5,6 +5,12 @@
 	min-height: 68px;
 }
 
+.containerReordering {
+	position: relative;
+	z-index: 1;
+	opacity: 0.75;
+}
+
 .tierLabel {
 	grid-column: 1;
 	display: flex;
@@ -93,14 +99,8 @@
 	justify-content: center;
 }
 
-.arrowControls {
+.dragHandle {
 	grid-column: 3;
-	display: grid;
-	grid-template-rows: 1fr 1fr;
-	gap: var(--s-1);
-}
-
-.arrowButton {
 	display: flex;
 	align-items: center;
 	justify-content: center;
@@ -109,31 +109,24 @@
 	padding: var(--s-1);
 	background: var(--color-bg-high);
 	border: none;
-	cursor: pointer;
-	transition: opacity 0.2s;
+	border-radius: 0 var(--radius-field) var(--radius-field) 0;
+	color: var(--color-text-high);
+	cursor: grab;
+	touch-action: none;
+	transition: color 0.2s;
 
-	&:hover:not(:disabled) {
-		opacity: 0.8;
+	&:hover {
+		color: var(--color-text);
 	}
 
-	&:disabled {
-		opacity: 0.3;
-		cursor: not-allowed;
+	&:active {
+		cursor: grabbing;
 	}
 }
 
-.arrowButtonUpper {
-	border-radius: 0 var(--radius-field) 0 0;
-}
-
-.arrowButtonLower {
-	border-radius: 0 0 var(--radius-field) 0;
-}
-
-.arrowIcon {
+.dragHandleIcon {
 	width: 20px;
 	height: 20px;
-	color: var(--color-text);
 }
 
 .colorGrid {

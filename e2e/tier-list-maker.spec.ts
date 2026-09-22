@@ -39,7 +39,7 @@ test.describe("Tier List Maker", () => {
 		const tierList = new TierListMakerPage(page);
 		await tierList.goto();
 
-		// click to place is the default mode
+		await tierList.setPlacementMode("click");
 		await expect(tierList.locators.emptyTiersClickMode).toHaveCount(5);
 
 		// the first tier is selected by default
@@ -49,5 +49,38 @@ test.describe("Tier List Maker", () => {
 		await tierList.selectFirstEmptyTier();
 		await tierList.clickFirstItem("main-weapon");
 		await expect(tierList.locators.emptyTiersClickMode).toHaveCount(3);
+	});
+
+	test("tiers are reordered by dragging their handle", async ({ page }) => {
+		const tierList = new TierListMakerPage(page);
+		await tierList.goto();
+
+		expect(await tierList.tierIds()).toEqual([
+			"tier-x",
+			"tier-s",
+			"tier-a",
+			"tier-b",
+			"tier-c",
+		]);
+
+		await tierList.dragTier({ from: 0, to: 2 });
+
+		expect(await tierList.tierIds()).toEqual([
+			"tier-s",
+			"tier-a",
+			"tier-x",
+			"tier-b",
+			"tier-c",
+		]);
+
+		await tierList.reload();
+
+		expect(await tierList.tierIds()).toEqual([
+			"tier-s",
+			"tier-a",
+			"tier-x",
+			"tier-b",
+			"tier-c",
+		]);
 	});
 });
