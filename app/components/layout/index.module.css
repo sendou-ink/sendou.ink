@@ -46,7 +46,7 @@
 	flex-direction: row;
 	align-items: center;
 	justify-content: center;
-	width: 40px;
+	width: 36px;
 	height: 36px;
 	background-color: var(--color-text-accent);
 	border-radius: var(--radius-field);
