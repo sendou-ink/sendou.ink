@@ -72,17 +72,11 @@
 }
 
 .popover {
-	position: fixed;
-	position-area: block-end;
-	width: anchor-size(width);
-	min-width: anchor-size(width);
-	/* fills the space the position-area leaves (its containing block), less the
-	   gap to the anchor (the popover's own margin) and the padding to the
-	   viewport edge; which side that space is on gets pinned when the popover
-	   opens, which also sets the cap in pixels as WebKit does not resolve this
-	   percentage */
-	max-height: calc(100% - var(--s-2) - 12px);
-	margin: var(--s-2) 0;
+	position: absolute;
+	margin: 0;
+	width: var(--floating-anchor-width);
+	min-width: var(--floating-anchor-width);
+	max-height: var(--floating-available-height, none);
 	padding: var(--s-1);
 	border: var(--border-style);
 	border-radius: var(--radius-box);
@@ -95,11 +89,6 @@
 
 	&:popover-open {
 		display: flex;
-	}
-
-	/* opened upwards the sticky header is the ceiling, not the viewport top */
-	&[data-side="above"] {
-		max-height: calc(100% - var(--s-2) - 12px - var(--popover-boundary-top));
 	}
 }
 

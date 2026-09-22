@@ -3,7 +3,7 @@
 	position: fixed;
 	/* captured on its own so animating content slides under it instead of over it */
 	view-transition-name: layout-mobile-nav;
-	inset: auto 0 0 0;
+	inset: auto var(--scrollbar-width, 0px) 0 0;
 	width: auto;
 	height: auto;
 	margin: 0;
@@ -102,7 +102,7 @@
 
 .panel {
 	position: fixed;
-	inset: auto 0 var(--mobile-nav-height) 0;
+	inset: auto var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
 	margin: 0;
 	padding: 0;
 	border: none;
@@ -176,7 +176,7 @@
 
 .menuOverlay {
 	position: fixed;
-	inset: 0 0 var(--mobile-nav-height) 0;
+	inset: 0 var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
 	margin: 0;
 	padding: 0;
 	border: none;

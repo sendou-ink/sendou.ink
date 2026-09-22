@@ -1,21 +1,14 @@
 import clsx from "clsx";
 import * as React from "react";
 import { flushSync } from "react-dom";
+import { useHydrated } from "~/hooks/useHydrated";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
-import {
-	type AnchorPlacement,
-	useAnchorPositioning,
-} from "./anchor-positioning";
 import styles from "./Popover.module.css";
-import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
+import { type FloatingPlacement, useFloatingLayer } from "./useFloatingLayer";
+import { useScrollIntoView } from "./useScrollIntoView";
 
-export type PopoverPlacement = AnchorPlacement;
-
-/** `useId` values hold characters CSS idents can't (e.g. `:`), strip them for anchor names. */
-export function useAnchorSafeId() {
-	return React.useId().replace(/[^a-zA-Z0-9-]/g, "");
-}
+export type PopoverPlacement = FloatingPlacement;
 
 /**
  * `toggle` does not bubble natively but React propagates it anyway, so an
@@ -26,6 +19,10 @@ export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
 	return event.target === event.currentTarget;
 }
 
+export function usePopoverTargetOnceHydrated(popoverId: string) {
+	return useHydrated() ? popoverId : undefined;
+}
+
 /**
  * Shows a popover once React has committed `open`, so content mounted only
  * while open is in the popover's first painted frame instead of appearing a
@@ -33,7 +30,7 @@ export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
  * browser's own open (the trigger's `popoverTarget`) is cancelled there and
  * redone through `onOpen` in the next frame, still before it paints, as a
  * popover cannot be shown from inside the show operation being cancelled.
- * Call it before `useAnchorPositioning` so the popover is showing by the time
+ * Call it before `useFloatingLayer` so the popover is showing by the time
  * that measures it.
  */
 export function useShowPopoverOnOpen({
@@ -86,10 +83,10 @@ export function focusLeftTo(
 
 /**
  * Popover opened by `trigger` (a SendouButton); controlled or uncontrolled. Renders through the
- * native popover API with CSS anchor positioning.
+ * native popover API, placed next to the trigger by `useFloatingLayer`.
  *
- * With `eager` the content is rendered while closed too, so the popover opens with its content
- * before hydration (and without JavaScript altogether).
+ * With `eager` the content is rendered while closed too, so it is in the server markup and there
+ * is nothing left to mount when the popover opens.
  */
 export function SendouPopover({
 	children,
@@ -108,9 +105,8 @@ export function SendouPopover({
 	isOpen?: boolean;
 	eager?: boolean;
 }) {
-	const uid = useAnchorSafeId();
-	const popoverId = `${uid}-popover`;
-	const anchorName = `--popover-anchor-${uid}`;
+	const popoverId = `${React.useId()}-popover`;
+	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
 
 	const [isControlled] = React.useState(isOpen !== undefined);
 	const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
@@ -153,13 +149,15 @@ export function SendouPopover({
 		open,
 		onOpen: () => setOpen(true),
 	});
-	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
-	useAnchorPositioning({
+	useScrollIntoView(
+		open,
+		() => triggerContainerRef.current?.firstElementChild ?? null,
+	);
+	useFloatingLayer({
 		isOpen: open,
-		popoverRef,
+		floatingRef: popoverRef,
 		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,
 		placement,
-		constrainHeight: true,
 	});
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
@@ -189,11 +187,10 @@ export function SendouPopover({
 			<span
 				ref={triggerContainerRef}
 				className={styles.triggerContainer}
-				style={{ "--popover-anchor": anchorName } as React.CSSProperties}
 				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
-					popoverTarget: popoverId,
+					popoverTarget,
 					"aria-haspopup": "dialog",
 				})}
 			</span>
@@ -202,15 +199,9 @@ export function SendouPopover({
 				id={popoverId}
 				popover="auto"
 				className={clsx(styles.content, popoverClassName)}
-				style={
-					{
-						positionAnchor: anchorName,
-						...topLayerStyle,
-					} as React.CSSProperties
-				}
+				style={topLayerStyle}
 				role="dialog"
 				tabIndex={-1}
-				data-placement={placement}
 				onBeforeToggle={onBeforeToggle}
 				onToggle={onToggle}
 				onBlur={onBlur}
@@ -235,38 +226,28 @@ export function SendouAnchoredPopover({
 	triggerRef: React.RefObject<HTMLElement | null>;
 	"aria-label"?: string;
 }) {
-	const uid = useAnchorSafeId();
-	const anchorName = `--popover-anchor-${uid}`;
-
 	const popoverRef = React.useRef<HTMLDivElement>(null);
 	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	// before the positioning effect, so the content is placed by its first paint
 	useIsomorphicLayoutEffect(() => {
-		const trigger = triggerRef.current;
 		const popover = popoverRef.current;
 		if (!popover) return;
 
 		if (isOpen) {
-			trigger?.style.setProperty("anchor-name", anchorName);
 			if (!popover.matches(":popover-open")) {
 				popover.showPopover();
 			}
 		} else if (popover.matches(":popover-open")) {
 			popover.hidePopover();
 		}
+	}, [isOpen]);
 
-		return () => {
-			trigger?.style.removeProperty("anchor-name");
-		};
-	}, [isOpen, triggerRef, anchorName]);
-
-	useCloseOnScrollClip(isOpen, popoverRef, () => onOpenChange(false));
-	useAnchorPositioning({
+	useScrollIntoView(isOpen, () => triggerRef.current);
+	useFloatingLayer({
 		isOpen,
-		popoverRef,
+		floatingRef: popoverRef,
 		getAnchor: () => triggerRef.current,
-		constrainHeight: true,
 	});
 
 	const onToggle = (event: React.ToggleEvent<HTMLDivElement>) => {
@@ -286,9 +267,7 @@ export function SendouAnchoredPopover({
 			ref={popoverRef}
 			popover="auto"
 			className={styles.content}
-			style={
-				{ positionAnchor: anchorName, ...topLayerStyle } as React.CSSProperties
-			}
+			style={topLayerStyle}
 			role="dialog"
 			tabIndex={-1}
 			aria-label={ariaLabel}

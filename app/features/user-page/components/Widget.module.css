@@ -336,7 +336,8 @@
 	display: grid;
 	place-items: center;
 	border-radius: var(--radius-box);
-	padding: var(--s-2);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
 	flex-shrink: 0;
 
 	& svg {
