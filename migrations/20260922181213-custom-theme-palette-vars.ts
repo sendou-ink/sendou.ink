@@ -46,7 +46,11 @@ export async function up(db: Kysely<any>): Promise<void> {
 					'$."--_second-h-5"', json_extract("customTheme", '$."--_second-h"'),
 					'$."--_second-c-3"', json_extract("customTheme", '$."--_second-c-0"'),
 					'$."--_second-c-4"', json_extract("customTheme", '$."--_second-c-1"'),
-					'$."--_second-c-5"', json_extract("customTheme", '$."--_second-c-2"')
+					'$."--_second-c-5"', json_extract("customTheme", '$."--_second-c-2"'),
+					'$."--_second-l-6"', 0.53,
+					'$."--_second-c-6"', json_extract("customTheme", '$."--_second-c-1"'),
+					'$."--_second-h-6"', json_extract("customTheme", '$."--_second-h"'),
+					'$."--_second-fill-dark-text"', 0
 				)
 				where "customTheme" is not null
 					and json_extract("customTheme", '$."--_base-l"') is null

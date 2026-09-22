@@ -163,7 +163,15 @@ export function build(input: ThemeInput): CustomTheme {
 	const lightFill = buildLightFill({
 		hue: input.accentHue,
 		chroma: input.accentChroma,
+		boostChroma: true,
 		darkFill: accent[4],
+		darkText: surfaces.light.darkText,
+	});
+	const secondaryLightFill = buildLightFill({
+		hue: secondaryHue,
+		chroma: input.accentChroma,
+		boostChroma: false,
+		darkFill: secondary[4],
 		darkText: surfaces.light.darkText,
 	});
 
@@ -187,6 +195,10 @@ export function build(input: ThemeInput): CustomTheme {
 		"--_acc-fill-dark-text": lightFill.hasDarkText ? 1 : 0,
 		"--_second-h": secondaryHue,
 		...slotVars("second", secondary),
+		"--_second-l-6": secondaryLightFill.color.l,
+		"--_second-c-6": secondaryLightFill.color.c,
+		"--_second-h-6": secondaryLightFill.color.h,
+		"--_second-fill-dark-text": secondaryLightFill.hasDarkText ? 1 : 0,
 		"--_chat-h": input.chatHue,
 		"--_radius-box": input.radiusBox,
 		"--_radius-field": input.radiusField,
@@ -270,6 +282,9 @@ export function resolveColors(theme: CustomTheme) {
 			secondLow: slot("second", 3),
 			second: slot("second", 4),
 			secondHigh: slot("second", 5),
+			fillSecond: slot("second", 6),
+			textOnSecond:
+				theme["--_second-fill-dark-text"] === 1 ? lightBase[7] : lightBase[0],
 		},
 	};
 }
@@ -296,6 +311,7 @@ export function textContrastPairs(theme: CustomTheme) {
 			fg: dark.secondHigh,
 			bg: dark.secondLow,
 		},
+		{ name: "dark text-on-second", fg: dark.bg, bg: dark.secondHigh },
 		{ name: "light text", fg: light.text, bg: light.bgHigh },
 		{ name: "light text-high", fg: light.textHigh, bg: light.bg },
 		{ name: "light text-accent", fg: light.accent, bg: light.bgHigh },
@@ -314,6 +330,11 @@ export function textContrastPairs(theme: CustomTheme) {
 			name: "light second-high on low",
 			fg: light.secondHigh,
 			bg: light.secondLow,
+		},
+		{
+			name: "light text-on-second",
+			fg: light.textOnSecond,
+			bg: light.fillSecond,
 		},
 	].map((pair) => ({ ...pair, contrast: contrastRatio(pair.fg, pair.bg) }));
 }
@@ -378,11 +399,13 @@ function buildPalette({
 function buildLightFill({
 	hue,
 	chroma,
+	boostChroma,
 	darkFill,
 	darkText,
 }: {
 	hue: number;
 	chroma: number;
+	boostChroma: boolean;
 	darkFill: Oklch;
 	darkText: Oklch;
 }) {
@@ -391,7 +414,7 @@ function buildLightFill({
 			lightness,
 			hue,
 			desiredChroma: chroma * BRIGHT_FILL.chromaMultiplier,
-			boostChroma: true,
+			boostChroma,
 		});
 	const brightFill = ensureContrast({
 		colorAt,

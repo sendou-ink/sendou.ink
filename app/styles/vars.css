@@ -66,6 +66,10 @@ html,
 	--_second-h-3: 73;
 	--_second-h-4: 73;
 	--_second-h-5: 73;
+	--_second-l-6: 0.8007;
+	--_second-c-6: 0.1704874227120647;
+	--_second-h-6: 73;
+	--_second-fill-dark-text: 1;
 
 	--_radius-box: 3;
 	--_radius-field: 2;
@@ -86,8 +90,8 @@ html,
 
 --color-text-accent and --color-text-second are for text, icons, borders and indicators (dots,
 bars, checkboxes...). Backgrounds with text on them (buttons, badges...) use --color-fill-accent
-with --color-text-on-accent: in light mode a yellow accent e.g. gets a bright fill with dark text
-while its text color stays dark enough to read.
+with --color-text-on-accent and --color-fill-second with --color-text-on-second. In light mode a
+yellow accent e.g. gets a bright fill with dark text while its text color stays dark enough to read.
 
 Info, success, warning, error: --color-x-high for text, --color-x-low for backgrounds,
 --color-x for borders and icons.
@@ -131,6 +135,8 @@ html.dark [data-custom-theme],
 	--color-text-second: var(--color-second-high);
 	--color-fill-accent: var(--color-accent-high);
 	--color-text-on-accent: var(--color-base-7);
+	--color-fill-second: var(--color-second-high);
+	--color-text-on-second: var(--color-base-7);
 
 	--color-info-low: oklch(26% 0.09 275);
 	--color-info: oklch(52% 0.27 275);
@@ -191,6 +197,13 @@ html.light [data-custom-theme],
 	--color-text-on-accent: oklch(
 		calc(1 - 0.83 * var(--_acc-fill-dark-text))
 			calc(var(--_base-c-7) * var(--_acc-fill-dark-text)) var(--_base-h)
+	);
+	--color-fill-second: oklch(
+		var(--_second-l-6) var(--_second-c-6) var(--_second-h-6)
+	);
+	--color-text-on-second: oklch(
+		calc(1 - 0.83 * var(--_second-fill-dark-text))
+			calc(var(--_base-c-7) * var(--_second-fill-dark-text)) var(--_base-h)
 	);
 
 	--color-info-low: oklch(87.897% 0.0555 279.573);

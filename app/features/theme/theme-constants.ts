@@ -62,6 +62,10 @@ export const CUSTOM_THEME_VARS = [
 	"--_second-h-3",
 	"--_second-h-4",
 	"--_second-h-5",
+	"--_second-l-6",
+	"--_second-c-6",
+	"--_second-h-6",
+	"--_second-fill-dark-text",
 ] as const;
 
 export type CustomThemeVar = (typeof CUSTOM_THEME_VARS)[number];

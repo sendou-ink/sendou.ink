@@ -81,6 +81,20 @@ describe("ThemePalette.build", () => {
 		expect(theme["--_acc-l-6"]).toBe(theme["--_acc-l-4"]);
 	});
 
+	test("gives the default theme's amber secondary a bright light mode fill with dark text on it", () => {
+		const theme = built();
+
+		expect(theme["--_second-fill-dark-text"]).toBe(1);
+		expect(theme["--_second-l-6"]).toBeGreaterThan(0.8);
+	});
+
+	test("keeps a yellow accent's blue secondary fill as its text color with white text on it", () => {
+		const theme = built({ accentHue: 100 });
+
+		expect(theme["--_second-fill-dark-text"]).toBe(0);
+		expect(theme["--_second-l-6"]).toBe(theme["--_second-l-4"]);
+	});
+
 	test("raises a yellow dark mode accent to where yellow is at its most vivid", () => {
 		const theme = built({ accentHue: 100 });
 

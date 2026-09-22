@@ -22,7 +22,7 @@ Every color slot has a designed lightness (e.g. dark mode `--color-accent-high` 
 2. **Rotates dark yellow shades toward amber.** Dark yellow reads as olive, so yellow hues get their hue shifted (`SHADE_HUE_SHIFT`) the further below their cusp they are.
 3. **Boosts chroma for hues with a larger gamut.** The accent chroma is scaled by how much more chroma the hue can have than the default accent hue at that lightness (`GAMUT_BOOST`), so a yellow can be as vivid as the default blue.
 4. **Solves for contrast.** Text colors are moved lighter/darker until they have at least 4.5:1 (WCAG AA) against every surface they are shown on.
-5. **Picks the light mode accent fill.** `--color-fill-accent` (buttons, badges) is normally the same as the text color with white text on it. When a bright fill would be much more colorful (yellow, cyan...) it becomes a bright fill with dark text instead (`--_acc-fill-dark-text`).
+5. **Picks the light mode fills.** `--color-fill-accent` and `--color-fill-second` (buttons, badges) are normally the same as the text color with white text on it. When a bright fill would be much more colorful (yellow, cyan...) it becomes a bright fill with dark text instead (`--_acc-fill-dark-text`, `--_second-fill-dark-text`).
 
 The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mode surfaces (`--color-base-5...7`) keep their distance from it.
 
@@ -45,7 +45,7 @@ The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mo
 
 Stored themes are the output of `build()` at the time they were saved, and every stored theme is expected to have every variable in `CUSTOM_THEME_VARS`. When adding a variable, add a migration that backfills it into `User.customTheme` and `AllTeam.customTheme` (see `migrations/20260922181213-custom-theme-palette-vars.ts`). Backfill the value that reproduces how existing themes render, so they only change when re-saved.
 
-`toThemeInput()` recovers the slider values from a stored theme. The accent chroma is stored as is (`--_acc-c`) because the gamut boost makes it impossible to reverse from the output.
+`toThemeInput()` recovers the slider values from a stored theme. The accent chroma is stored as is (`--_acc-chroma`) because the gamut boost makes it impossible to reverse from the output.
 
 ### Size and border vars are for users only
 
