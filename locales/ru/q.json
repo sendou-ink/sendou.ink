@@ -81,6 +81,7 @@
 	"looking.groups.addNote": "Добавить заметку",
 	"looking.groups.missedReadyCheck": "",
 	"looking.replay": "Повтор",
+	"looking.noScreen": "",
 	"looking.sp.calculating": "Идёт рассчет...",
 	"looking.rankCalculating": "Менее чем {{count}} матчей сыграно. Ранг ещё рассчитывается...",
 	"looking.allTiers": "Все ранги",

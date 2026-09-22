@@ -81,6 +81,7 @@
 	"looking.groups.addNote": "Añadir nota",
 	"looking.groups.missedReadyCheck": "",
 	"looking.replay": "Repetir",
+	"looking.noScreen": "",
 	"looking.sp.calculating": "Calculando...",
 	"looking.rankCalculating": "Menos de {{count}} sets jugados. El rango aún se está calculando...",
 	"looking.allTiers": "Todos los niveles",

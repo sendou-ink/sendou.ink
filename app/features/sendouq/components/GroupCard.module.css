@@ -16,14 +16,37 @@
 	overflow-anchor: none;
 }
 
+.futureMatchModes {
+	display: flex;
+	flex-wrap: wrap;
+	gap: var(--s-2);
+	align-items: center;
+	justify-content: center;
+}
+
 .noScreen {
-	background-color: var(--color-error-low);
-	border-radius: 100%;
-	padding: var(--s-1);
-	width: 30px;
-	height: 30px;
-	display: grid;
-	place-items: center;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	gap: var(--s-1);
+	margin-block-start: calc(-1 * var(--s-3));
+	margin-inline: calc(-1 * var(--s-3));
+	margin-block-end: calc(-1 * var(--s-2));
+	padding-block: var(--s-0-5);
+	border-start-start-radius: var(--radius-box);
+	border-start-end-radius: var(--radius-box);
+	background-color: var(--color-bg-higher);
+	color: var(--color-text-high);
+	font-size: var(--font-3xs);
+	font-weight: var(--weight-bold);
+	letter-spacing: 0.05em;
+	text-transform: uppercase;
+}
+
+.noScreenCross {
+	color: var(--color-error);
+	margin-inline-start: calc(-1 * var(--s-0-5));
+	margin-inline-end: var(--s-0-5);
 }
 
 .member {

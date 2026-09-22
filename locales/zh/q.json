@@ -81,6 +81,7 @@
 	"looking.groups.addNote": "添加备注",
 	"looking.groups.missedReadyCheck": "",
 	"looking.replay": "重赛",
+	"looking.noScreen": "",
 	"looking.sp.calculating": "正在计算...",
 	"looking.rankCalculating": "正在计算段位。共需完成 {{count}} 组比赛才能完成段位计算。",
 	"looking.allTiers": "所有段位",

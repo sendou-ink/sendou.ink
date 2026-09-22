@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import type { SqlBool } from "kysely";
-import { Check, Hourglass, Mic, Volume2, VolumeX } from "lucide-react";
+import { Check, Hourglass, Mic, Volume2, VolumeX, X } from "lucide-react";
 import * as React from "react";
 import { ViewTransition } from "react";
 import { Trans, useTranslation } from "react-i18next";
@@ -100,6 +100,8 @@ export function GroupCard({
 	// while previewing the queue the viewer has no group of their own to act with
 	const actionToShow = ownGroup ? action : undefined;
 
+	const futureMatchModesToShow = group.members ? null : futureMatchModes;
+
 	return (
 		<GroupCardContainer isOwnGroup={isOwnGroup}>
 			<section
@@ -123,34 +125,29 @@ export function GroupCard({
 						})}
 					</div>
 				) : null}
-				{futureMatchModes && !group.members ? (
-					<div
-						className={clsx("stack horizontal", {
-							"justify-between": group.noScreen,
-							"justify-center": !group.noScreen,
+				{futureMatchModesToShow && group.noScreen ? (
+					<div className={styles.noScreen}>
+						<SpecialWeaponImage
+							specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
+							size={14}
+						/>
+						<X size={12} className={styles.noScreenCross} />
+						{t("q:looking.noScreen")}
+					</div>
+				) : null}
+				{futureMatchModesToShow ? (
+					<div className={styles.futureMatchModes}>
+						{futureMatchModesToShow.map((mode) => {
+							return (
+								<div
+									key={mode}
+									className={styles.futureMatchMode}
+									data-testid={`group-card-mode-${mode}`}
+								>
+									<ModeImage mode={mode} />
+								</div>
+							);
 						})}
-					>
-						<div className="stack horizontal sm justify-center">
-							{futureMatchModes.map((mode) => {
-								return (
-									<div
-										key={mode}
-										className={styles.futureMatchMode}
-										data-testid={`group-card-mode-${mode}`}
-									>
-										<ModeImage mode={mode} />
-									</div>
-								);
-							})}
-						</div>
-						{group.noScreen ? (
-							<div className={styles.noScreen}>
-								<SpecialWeaponImage
-									specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
-									size={22}
-								/>
-							</div>
-						) : null}
 					</div>
 				) : null}
 				{group.tier &&
