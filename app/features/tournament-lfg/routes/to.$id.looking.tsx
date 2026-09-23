@@ -26,6 +26,7 @@ import {
 	UserCard,
 	useUserCardData,
 } from "~/features/user-card/components/UserCard";
+import { privateNoteSentimentScore } from "~/features/user-card/user-card-utils";
 import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
@@ -83,9 +84,13 @@ function GroupsView({
 		data.ownGroup?.members.length ?? data.ownTeam?.members.length ?? 0;
 	const availableSlots = tournament.maxMembersPerTeam - ownMemberCount;
 
-	const compatibleGroups = data.groups.filter(
-		(group) => group.members.length <= availableSlots,
-	);
+	const compatibleGroups = data.groups
+		.filter((group) => group.members.length <= availableSlots)
+		.toSorted(
+			(a, b) =>
+				privateNoteSentimentScore(b.members, data.userCards) -
+				privateNoteSentimentScore(a.members, data.userCards),
+		);
 
 	const neutralGroups = compatibleGroups.filter(
 		(group) =>

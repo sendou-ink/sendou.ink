@@ -19,6 +19,7 @@ import { useUser } from "~/features/auth/core/user";
 import { useTopicRevalidation } from "~/features/chat/chat-hooks";
 import { useMarkSqLikesSeen } from "~/features/global-status/global-status-likes-seen";
 import type { UserCardData } from "~/features/user-card/user-card-types";
+import { privateNoteSentimentScore } from "~/features/user-card/user-card-utils";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useMainContentWidth } from "~/hooks/useMainContentWidth";
@@ -478,18 +479,8 @@ function sortGroups<T extends { id: number; members?: { id: number }[] }>(
 		suggestedGroupIds: Set<number>;
 	},
 ): T[] {
-	const sentimentScore = (group: T) => {
-		if (!group.members) return 0;
-
-		let score = 0;
-		for (const member of group.members) {
-			const sentiment = userCards.get(member.id)?.privateNote?.sentiment;
-			if (sentiment === "NEGATIVE") return -1;
-			if (sentiment === "POSITIVE") score = 1;
-		}
-
-		return score;
-	};
+	const sentimentScore = (group: T) =>
+		group.members ? privateNoteSentimentScore(group.members, userCards) : 0;
 
 	return groups.toSorted((a, b) => {
 		const aIsSuggested = suggestedGroupIds.has(a.id);
