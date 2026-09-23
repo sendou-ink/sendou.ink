@@ -29,6 +29,7 @@ import { previewUrl } from "~/features/art/art-utils";
 import { BadgeDisplay } from "~/features/badges/components/BadgeDisplay";
 import { lfgSearchParams } from "~/features/lfg/lfg-search-params";
 import { tierListMakerSearchParams } from "~/features/tier-list-maker/tier-list-maker-search-params";
+import { DivisionImage } from "~/features/top-search/components/DivisionImage";
 import { topSearchPlayerPage } from "~/features/top-search/top-search-urls";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { tournamentOrganizationPage } from "~/features/tournament-organization/tournament-organization-urls";
@@ -50,7 +51,6 @@ import type { SerializeFrom } from "~/utils/remix";
 import { rawSensToString } from "~/utils/strings";
 import { assertUnreachable } from "~/utils/types";
 import {
-	brandImageUrl,
 	calendarEventPage,
 	controllerImageUrl,
 	gameBadgeUrl,
@@ -563,9 +563,6 @@ function LFGPosts({
 	);
 }
 
-const TENTATEK_BRAND_ID = "B10";
-const TAKOROKA_BRAND_ID = "B11";
-
 function XRankPeaks({
 	peaks,
 }: {
@@ -583,15 +580,10 @@ function XRankPeaks({
 							height={24}
 						/>
 						<div className={styles.xRankPeakDivision}>
-							<Image
-								path={brandImageUrl(
-									peak.region === "WEST"
-										? TENTATEK_BRAND_ID
-										: TAKOROKA_BRAND_ID,
-								)}
+							<DivisionImage
+								region={peak.region}
 								alt={peak.region === "WEST" ? "Tentatek" : "Takoroka"}
-								width={12}
-								height={12}
+								size={12}
 							/>
 						</div>
 					</div>
