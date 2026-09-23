@@ -1,5 +1,5 @@
-import clsx from "clsx";
 import { add, sub } from "date-fns";
+import * as React from "react";
 import { useTranslation } from "react-i18next";
 import type { MetaFunction } from "react-router";
 import { useLoaderData } from "react-router";
@@ -72,12 +72,14 @@ export default function LFGPage() {
 
 	return (
 		<Main className="stack xl">
-			<Filters />
+			<div className={styles.posts}>
+				<Filters />
+				{data.posts.length > 0 ? <PostsList posts={data.posts} /> : null}
+			</div>
 			{data.posts.length > 0 ? (
-				<>
-					<PostsList posts={data.posts} />
-					{data.pagesCount > 1 ? <Pagination {...pagination} /> : null}
-				</>
+				data.pagesCount > 1 ? (
+					<Pagination {...pagination} />
+				) : null
 			) : (
 				<EmptyState navItem="lfg">{t("lfg:noPosts")}</EmptyState>
 			)}
@@ -101,20 +103,14 @@ function PostsList({ posts }: { posts: LFGLoaderData["posts"] }) {
 		return true;
 	};
 
-	return (
-		<>
-			{posts.map((post) => (
-				<div
-					key={post.id}
-					id={String(post.id)}
-					className={clsx("stack sm", styles.post)}
-				>
-					{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}
-					<LFGPost post={post} />
-				</div>
-			))}
-		</>
-	);
+	return posts.map((post) => (
+		<React.Fragment key={post.id}>
+			{showExpiryAlert(post) ? <PostExpiryAlert postId={post.id} /> : null}
+			<div id={String(post.id)} className={styles.post}>
+				<LFGPost post={post} />
+			</div>
+		</React.Fragment>
+	));
 }
 
 function Filters() {
@@ -352,7 +348,7 @@ function PostExpiryAlert({ postId }: { postId: number }) {
 	const { t } = useTranslation(["common", "lfg"]);
 
 	return (
-		<Alert variation="WARNING">
+		<Alert variation="WARNING" alertClassName={styles.expiryAlert}>
 			<div className="stack md horizontal items-center">
 				{t("lfg:expiring")}{" "}
 				<ActionButton

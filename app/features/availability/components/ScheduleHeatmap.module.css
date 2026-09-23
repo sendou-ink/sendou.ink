@@ -46,8 +46,8 @@
 	transition: background-color 0.15s;
 
 	&[aria-pressed="true"] {
-		background-color: var(--color-text-accent);
-		color: var(--color-text-inverse);
+		background-color: var(--color-fill-accent);
+		color: var(--color-fg-on-accent);
 	}
 
 	&:focus-visible {

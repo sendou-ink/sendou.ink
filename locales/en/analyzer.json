@@ -218,5 +218,7 @@
 	"comp.specialCategory.TEAM_BUFF": "Team Buff",
 	"comp.removeAll": "Remove all",
 	"comp.addAll": "Add all",
-	"comp.singleWeaponCombos": "Single weapon combos"
+	"comp.singleWeaponCombos": "Single weapon combos",
+	"comp.graphicSubtitle": "Composition Analyzer",
+	"comp.exportHint": "Pick {{max}} weapons to export an image"
 }

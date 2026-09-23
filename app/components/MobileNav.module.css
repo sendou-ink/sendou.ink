@@ -3,7 +3,7 @@
 	position: fixed;
 	/* captured on its own so animating content slides under it instead of over it */
 	view-transition-name: layout-mobile-nav;
-	inset: auto 0 0 0;
+	inset: auto var(--scrollbar-width, 0px) 0 0;
 	width: auto;
 	height: auto;
 	margin: 0;
@@ -62,7 +62,7 @@
 
 	&:hover,
 	&[data-active="true"] {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }
 
@@ -102,7 +102,7 @@
 
 .panel {
 	position: fixed;
-	inset: auto 0 var(--mobile-nav-height) 0;
+	inset: auto var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
 	margin: 0;
 	padding: 0;
 	border: none;
@@ -176,7 +176,7 @@
 
 .menuOverlay {
 	position: fixed;
-	inset: 0 0 var(--mobile-nav-height) 0;
+	inset: 0 var(--scrollbar-width, 0px) var(--mobile-nav-height) 0;
 	margin: 0;
 	padding: 0;
 	border: none;
@@ -282,7 +282,7 @@
 	text-align: center;
 
 	&:hover {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }
 
@@ -380,8 +380,8 @@
 	right: -8px;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-inverse);
-	background-color: var(--color-text-accent);
+	color: var(--color-fg-on-accent);
+	background-color: var(--color-fill-accent);
 	min-width: 16px;
 	height: 16px;
 	padding: 0 var(--s-0-5);

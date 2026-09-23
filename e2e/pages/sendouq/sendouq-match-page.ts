@@ -22,6 +22,9 @@ type Tab = "action" | "result" | "rosters";
 
 const MAPS_TO_WIN = Math.ceil(SENDOUQ_BEST_OF / 2);
 
+/** The loss confirm ignores taps for `CONFIRM_LOSS_MIN_GAP_MS` after arming. */
+const LOSS_CONFIRM_MIN_GAP_MS = 400;
+
 const TEAM_NAMES: Record<Side, string> = {
 	ALPHA: "Group Alpha",
 	BRAVO: "Group Bravo",
@@ -43,7 +46,7 @@ export class SendouQMatchPage {
 			undoReportButton: page.getByRole("button", { name: "Undo report" }),
 			reportWeaponsButton: page.getByTestId("expand-secondary-action-button"),
 			undoWeaponButton: page.getByRole("button", { name: "Undo weapon" }),
-			confirmScoreButton: page.getByRole("button", { name: "Confirm score" }),
+			confirmScoreButton: page.getByTestId("confirm-score-button"),
 			requestCancelButton: page.getByRole("button", { name: "Request cancel" }),
 			cancelPendingText: page.getByText("Pending other team's confirmation"),
 			cancelPrompt: page.getByText("Accept canceling the set?"),
@@ -152,8 +155,24 @@ export class SendouQMatchPage {
 	}
 
 	async confirmScore() {
+		await expect(this.locators.confirmScoreButton).toBeEnabled({
+			timeout: 10_000,
+		});
+		await this.locators.confirmScoreButton.click();
+
+		const armedLossButton = this.locators.confirmScoreButton.filter({
+			hasText: "Tap again",
+		});
+
+		const isArmed = await armedLossButton.isVisible();
+		if (isArmed) {
+			await waitOutLossConfirmMinGap(this.page);
+		}
+
 		await waitForPOSTResponse(this.page, async () => {
-			await this.locators.confirmScoreButton.click();
+			if (isArmed) {
+				await armedLossButton.click();
+			}
 		});
 	}
 
@@ -229,4 +248,10 @@ export class SendouQMatchPage {
 			await this.page.getByTestId("confirm-button").click();
 		});
 	}
+}
+
+/** Waits out the gap the loss confirm keeps between arming and accepting the second tap. */
+async function waitOutLossConfirmMinGap(page: Page) {
+	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the min gap after arming has no observable end
+	await page.waitForTimeout(LOSS_CONFIRM_MIN_GAP_MS);
 }

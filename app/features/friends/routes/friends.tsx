@@ -1,7 +1,8 @@
-import { CalendarDays } from "lucide-react";
+import { CalendarDays, Pin } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, type MetaFunction, useLoaderData } from "react-router";
+import * as R from "remeda";
 import { ActionButton } from "~/components/ActionButton";
 import { Avatar } from "~/components/Avatar";
 import { Divider } from "~/components/Divider";
@@ -15,11 +16,14 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FriendMenu } from "../components/FriendMenu";
+import { friendSectionSortValue } from "../friends-constants";
 import {
 	acceptFriendRequestSchema,
 	cancelFriendRequestSchema,
 	declineFriendRequestSchema,
+	pinFriendSchema,
 	sendFriendRequestBaseSchema,
+	unpinFriendSchema,
 } from "../friends-schemas";
 import {
 	friendsSearchParams,
@@ -212,6 +216,7 @@ function FriendsListSection() {
 							secondary
 							controlled
 							active={filter === value}
+							preventScrollReset
 						>
 							{viewLabels[value]}
 						</SubNavLink>
@@ -234,19 +239,68 @@ function FriendsListSection() {
 }
 
 function FriendRow({ item }: { item: ShownItem }) {
+	const friendshipId =
+		"friendshipId" in item && typeof item.friendshipId === "number"
+			? item.friendshipId
+			: null;
+
 	return (
 		<div className={styles.friendRow} data-testid={`friend-row-${item.id}`}>
 			<FriendMenu name={item.username} {...item} />
-			<div className={styles.scheduleSlot}>
-				{item.schedule ? (
-					<ScheduleButton
-						userId={item.id}
-						username={item.username}
-						weeks={item.schedule}
-					/>
-				) : null}
+			<div className={styles.rowActions}>
+				<div className={styles.actionSlot}>
+					{item.schedule ? (
+						<ScheduleButton
+							userId={item.id}
+							username={item.username}
+							weeks={item.schedule}
+						/>
+					) : null}
+				</div>
+				<div className={styles.actionSlot}>
+					{typeof friendshipId === "number" ? (
+						<PinButton
+							userId={item.id}
+							username={item.username}
+							friendshipId={friendshipId}
+							isPinned={item.isPinned}
+						/>
+					) : null}
+				</div>
 			</div>
 		</div>
+	);
+}
+
+function PinButton({
+	userId,
+	username,
+	friendshipId,
+	isPinned,
+}: {
+	userId: number;
+	username: string;
+	friendshipId: number;
+	isPinned: boolean;
+}) {
+	const { t } = useTranslation(["friends"]);
+
+	return (
+		<ActionButton
+			schema={isPinned ? unpinFriendSchema : pinFriendSchema}
+			action={isPinned ? "UNPIN_FRIEND" : "PIN_FRIEND"}
+			fields={{ friendshipId, revalidateRoot: true }}
+			formClassName={styles.pinForm}
+			variant="minimal"
+			size="small"
+			icon={<Pin size={18} fill={isPinned ? "currentColor" : "none"} />}
+			aria-label={t(
+				isPinned ? "friends:friendsList.unpin" : "friends:friendsList.pin",
+				{ name: username },
+			)}
+			aria-pressed={isPinned}
+			testId={`friend-pin-button-${userId}`}
+		/>
 	);
 }
 
@@ -298,10 +352,11 @@ function resolveShownItems(
 		...data.teamMembers.filter((tm) => !friendIds.has(tm.id)),
 	];
 
-	// same order the loader sorted each group in: active first, then the ones
-	// who shared a schedule
-	const sortValue = (item: (typeof combined)[number]) =>
-		(item.subtitle ? 2 : 0) + (item.schedule ? 1 : 0);
-
-	return combined.sort((a, b) => sortValue(b) - sortValue(a));
+	// same order the loader sorted each group in: pinned and active first, then
+	// the ones who shared a schedule
+	return R.sortBy(
+		combined,
+		[(item) => friendSectionSortValue(item), "asc"],
+		[(item) => (item.schedule ? 1 : 0), "desc"],
+	);
 }

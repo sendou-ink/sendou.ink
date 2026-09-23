@@ -8,7 +8,7 @@ import { execFile } from "node:child_process";
 import fs from "node:fs/promises";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
-import { promisify } from "node:util";
+import { parseArgs, promisify } from "node:util";
 import { chromium, type Page } from "@playwright/test";
 import { format } from "date-fns";
 import sharp from "sharp";
@@ -25,7 +25,12 @@ try {
 	// .env is optional, the dev server port can also come from the environment
 }
 
-const CHANGELOG_IMAGE_PAGE_URL = `http://localhost:${process.env.PORT ?? 5173}/admin/changelog-image`;
+const { values: args, positionals } = parseArgs({
+	options: { port: { type: "string" } },
+	allowPositionals: true,
+});
+
+const CHANGELOG_IMAGE_PAGE_URL = `http://localhost:${args.port ?? process.env.PORT ?? 5173}/admin/changelog-image`;
 
 const OUT_DIR = fileURLToPath(new URL("./output", import.meta.url));
 
@@ -40,10 +45,10 @@ interface ChangelogEntry {
 }
 
 async function main() {
-	const since = process.argv[2];
+	const since = positionals[0];
 	if (!since) {
 		throw new Error(
-			"Usage: pnpm run changelog:image <sha-of-previous-update-commit>",
+			"Usage: pnpm run changelog:image <sha-of-previous-update-commit> [--port <dev-server-port>]",
 		);
 	}
 

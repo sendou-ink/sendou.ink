@@ -1,6 +1,6 @@
 import * as v from "valibot";
 import { stringConstant, userSearch } from "~/form/fields";
-import { _action, id } from "~/utils/schema";
+import { _action, id, revalidateRoot } from "~/utils/schema";
 
 export const sendFriendRequestBaseSchema = v.object({
 	_action: stringConstant("SEND_REQUEST"),
@@ -25,4 +25,16 @@ export const acceptFriendRequestSchema = v.object({
 export const declineFriendRequestSchema = v.object({
 	_action: _action("DECLINE_REQUEST"),
 	friendRequestId: id,
+});
+
+export const pinFriendSchema = v.object({
+	_action: _action("PIN_FRIEND"),
+	friendshipId: id,
+	revalidateRoot,
+});
+
+export const unpinFriendSchema = v.object({
+	_action: _action("UNPIN_FRIEND"),
+	friendshipId: id,
+	revalidateRoot,
 });

@@ -863,11 +863,11 @@ describe("single elimination standings - third place match", () => {
 		let thirdPlaceWinnerId: number | undefined;
 		let thirdPlaceLoserId: number | undefined;
 		if (thirdPlaceMatchReported) {
-			const thirdPlaceGroupId = Math.max(
-				...data.group.map((group) => group.id),
-			);
+			const thirdPlaceRoundId = data.round.find(
+				(round) => round.section === "finals",
+			)!.id;
 			const thirdPlaceMatch = data.match.find(
-				(match) => match.groupId === thirdPlaceGroupId,
+				(match) => match.roundId === thirdPlaceRoundId,
 			);
 			invariant(thirdPlaceMatch, "Third place match not found");
 			thirdPlaceWinnerId = thirdPlaceMatch.opponent1!.id!;
@@ -966,7 +966,7 @@ describe("single elimination standings - byes in later rounds", () => {
 		): MatchData => ({
 			id,
 			stageId,
-			groupId: roundId === thirdPlaceRoundId ? 1 : 0,
+			groupId: 0,
 			roundId,
 			number,
 			opponent1: opponent1 === null ? null : { id: opponent1 },
@@ -983,15 +983,18 @@ describe("single elimination standings - byes in later rounds", () => {
 					number: 1,
 				},
 			],
-			group: [
-				{ id: 0, stageId, number: 1 },
-				{ id: 1, stageId, number: 2 },
-			],
+			group: [{ id: 0, stageId, number: 1 }],
 			round: [
-				{ id: 0, stageId, groupId: 0, number: 1 },
-				{ id: 1, stageId, groupId: 0, number: 2 },
-				{ id: 2, stageId, groupId: 0, number: 3 },
-				{ id: thirdPlaceRoundId, stageId, groupId: 1, number: 1 },
+				{ id: 0, stageId, groupId: 0, section: "winners", number: 1 },
+				{ id: 1, stageId, groupId: 0, section: "winners", number: 2 },
+				{ id: 2, stageId, groupId: 0, section: "winners", number: 3 },
+				{
+					id: thirdPlaceRoundId,
+					stageId,
+					groupId: 0,
+					section: "finals",
+					number: 1,
+				},
 			],
 			match: [
 				match(0, 0, 1, 1, 2, "opponent1"),
@@ -1117,23 +1120,26 @@ describe("double elimination standings - projected ties", () => {
 			settings: {},
 		});
 
-		const groupId = (number: number) =>
-			data.group.find((group) => group.number === number)!.id;
-		const winnersGroupId = groupId(1);
-		const losersGroupId = groupId(2);
+		const winnersRoundIds = new Set(
+			data.round
+				.filter((round) => round.section === "winners")
+				.map((round) => round.id),
+		);
 
 		const losersRoundId = (number: number) =>
 			data.round.find(
-				(round) => round.groupId === losersGroupId && round.number === number,
+				(round) => round.section === "losers" && round.number === number,
 			)!.id;
 
 		// play out the entire winners bracket so all losers feed in
-		let winnersReady = readyMatches(data, (m) => m.groupId === winnersGroupId);
+		let winnersReady = readyMatches(data, (m) =>
+			winnersRoundIds.has(m.roundId),
+		);
 		while (winnersReady.length) {
 			for (const match of winnersReady) {
 				data = reportLowerIdWinner(data, match.id);
 			}
-			winnersReady = readyMatches(data, (m) => m.groupId === winnersGroupId);
+			winnersReady = readyMatches(data, (m) => winnersRoundIds.has(m.roundId));
 		}
 
 		// losers round 1: both matches -> two teams eliminated, tied 7th/8th
@@ -1214,9 +1220,13 @@ describe("single elimination source - underground", () => {
 			settings: {},
 		});
 
-		const winnersGroupId = data.group.find((group) => group.number === 1)!.id;
+		const winnersRoundIds = new Set(
+			data.round
+				.filter((round) => round.section === "winners")
+				.map((round) => round.id),
+		);
 		const firstRoundId = data.round.find(
-			(round) => round.groupId === winnersGroupId && round.number === 1,
+			(round) => round.section === "winners" && round.number === 1,
 		)!.id;
 
 		// lower id wins, so the higher id in each first-round match is the loser
@@ -1225,12 +1235,14 @@ describe("single elimination source - underground", () => {
 			(match) => match.roundId === firstRoundId,
 		).map((match) => Math.max(match.opponent1!.id!, match.opponent2!.id!));
 
-		let ready = readyMatches(data, (match) => match.groupId === winnersGroupId);
+		let ready = readyMatches(data, (match) =>
+			winnersRoundIds.has(match.roundId),
+		);
 		while (ready.length) {
 			for (const match of ready) {
 				data = reportLowerIdWinner(data, match.id);
 			}
-			ready = readyMatches(data, (match) => match.groupId === winnersGroupId);
+			ready = readyMatches(data, (match) => winnersRoundIds.has(match.roundId));
 		}
 
 		const tournament = testTournament({

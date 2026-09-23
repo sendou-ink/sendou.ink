@@ -217,6 +217,8 @@ export function getWeaponRange(weaponId: MainWeaponId): WeaponRangeResult {
 
 export interface WeaponWithRange {
 	weaponId: MainWeaponId;
+	/** Position in the comp, kept through the filtering so duplicates stay apart */
+	slot: number;
 	range: number;
 	blastRadius?: number;
 	rangeType: "calculated" | "direct" | "unsupported";
@@ -227,10 +229,11 @@ export function getWeaponsWithRange(
 	weaponIds: MainWeaponId[],
 ): WeaponWithRange[] {
 	return weaponIds
-		.map((weaponId) => {
+		.map((weaponId, slot) => {
 			const result = getWeaponRange(weaponId);
 			return {
 				weaponId,
+				slot,
 				...result,
 			};
 		})

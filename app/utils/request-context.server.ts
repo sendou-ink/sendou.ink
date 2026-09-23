@@ -17,7 +17,10 @@ export function runWithRequestContext<T>(
 	return requestContextAsyncLocalStorage.run(context, fn);
 }
 
-/** Pathname of the current request, `undefined` outside a request context. */
-export function currentRequestPathname(): string | undefined {
-	return requestContextAsyncLocalStorage.getStore()?.url.pathname;
+/** Pathname and search params of the current request, `undefined` outside a request context. */
+export function currentRequestPath(): string | undefined {
+	const url = requestContextAsyncLocalStorage.getStore()?.url;
+	if (!url) return undefined;
+
+	return `${url.pathname}${url.search}`;
 }

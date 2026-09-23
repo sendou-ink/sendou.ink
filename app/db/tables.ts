@@ -50,6 +50,7 @@ import type {
 	TOURNAMENT_STAGE_TYPES,
 	TournamentAuditLogType,
 	TournamentMapPickingStyle,
+	TournamentRoundSection,
 	TournamentStaffRole,
 } from "~/features/tournament/tournament-constants";
 import type {
@@ -680,8 +681,9 @@ export interface TournamentBadgeOwner {
 }
 
 /**
- * Groups rounds together. In round-robin and swiss a group is a pool; in elimination it is a bracket
- * (single: the bracket + optional consolation final, double: upper, lower + optional grand final).
+ * A set of participants of a stage that play among themselves: a pool of a round robin or swiss stage,
+ * or an elimination bracket whose rounds {@link TournamentRound.section} splits into winners, losers
+ * and finals. Every elimination stage has one group for now.
  */
 export interface TournamentGroup {
 	id: GeneratedAlways<number>;
@@ -752,8 +754,11 @@ export interface TournamentResult {
 export interface TournamentRound {
 	groupId: number;
 	id: GeneratedAlways<number>;
+	/** Restarts from 1 per group, and in an elimination group per {@link TournamentRound.section}. */
 	number: number;
 	stageId: number;
+	/** Part of the elimination group the round belongs to. `null` in round robin and swiss. */
+	section: TournamentRoundSection | null;
 	maps: JSONColumnType<TournamentRoundMaps>;
 	/** Datetime the round is played by default (leagues). Null = no default play time, the round is played whenever. */
 	defaultPlayTime: number | null;
@@ -913,6 +918,10 @@ export interface Friendship {
 	userOneId: number;
 	userTwoId: number;
 	createdAt: Generated<number>;
+	/** userOne keeps this friend at the top of their friends list */
+	isPinnedByUserOne: Generated<DBBoolean>;
+	/** userTwo keeps this friend at the top of their friends list */
+	isPinnedByUserTwo: Generated<DBBoolean>;
 }
 
 /** Pending friend request from one user to another. */
@@ -1269,7 +1278,8 @@ export interface Association {
 export interface AssociationMember {
 	userId: number;
 	associationId: number;
-	role: "MEMBER" | "ADMIN";
+	/** MANAGER can also share the invite link, ADMIN (one per association) can also manage the members */
+	role: "MEMBER" | "MANAGER" | "ADMIN";
 }
 
 export interface Notification {

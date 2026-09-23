@@ -2,7 +2,6 @@ import clsx from "clsx";
 import generalI18next from "i18next";
 import NProgress from "nprogress";
 import * as React from "react";
-import { useEffect } from "react";
 import { ErrorBoundary as ClientErrorBoundary } from "react-error-boundary";
 import { useTranslation } from "react-i18next";
 import type { LoaderFunctionArgs, MetaFunction } from "react-router";
@@ -38,6 +37,7 @@ import { Layout, NPROGRESS_ANCHOR_ID } from "./components/layout";
 import { getUser } from "./features/auth/core/user.server";
 import { userMiddleware } from "./features/auth/core/user-middleware.server";
 import { ChatProvider } from "./features/chat/ChatProvider";
+import { resolveRoomList } from "./features/chat/chat-room-list.server";
 import { isMatchResultsScopedRevalidation } from "./features/chat/revalidation-scope";
 import { GlobalStatusProvider } from "./features/global-status/GlobalStatusProvider";
 import { getSidenavSession } from "./features/layout/core/sidenav-session.server";
@@ -81,6 +81,10 @@ import "~/styles/common.css";
 import "~/styles/utils.css";
 import "~/styles/flags.css";
 import "nprogress/nprogress.css";
+import {
+	OpenModalsContext,
+	useHoverCursorForViewTransitions,
+} from "~/utils/view-transition";
 
 const PRELOAD_TRANSLATION_TIMEOUT_MS = 3000;
 
@@ -146,6 +150,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	return data(
 		{
 			locale,
+			chatRoomList: user ? await resolveRoomList(user) : [],
 			i18nPreloadUrls: localePreloadUrls(locale),
 			theme: themeSession.getTheme(),
 			sidenavCollapsed: sidenavSession.getCollapsed(),
@@ -197,6 +202,7 @@ function Document({
 	usePreloadTranslation();
 	useLoadingIndicator();
 	useTriggerToasts();
+	useHoverCursorForViewTransitions();
 
 	const htmlStyle: Record<string, string | number> = {
 		...Object.fromEntries(customThemeStyle),
@@ -266,7 +272,10 @@ function Document({
 						<SendouToastRegion />
 						<UnsavedChangesGuard />
 						<MyFuse data={rootData} />
-						<ChatProvider user={rootData?.user}>
+						<ChatProvider
+							user={rootData?.user}
+							roomList={rootData?.chatRoomList}
+						>
 							<NotificationsProvider user={rootData?.user}>
 								<LayoutDataProvider data={rootData}>
 									<GlobalStatusProvider user={rootData?.user}>
@@ -292,6 +301,7 @@ function useTriggerToasts() {
 
 	const error = searchParams.get("__error");
 	const success = searchParams.get("__success");
+	const searchWithoutToastParams = searchParamsWithoutToastParams(searchParams);
 
 	// layout effect: the restore has to land after <ScrollRestoration /> (a child) reset the scroll, before paint
 	useIsomorphicLayoutEffect(() => {
@@ -319,14 +329,24 @@ function useTriggerToasts() {
 		}
 
 		navigate(
-			{ search: "" },
+			{ search: searchWithoutToastParams },
 			{
 				replace: true,
 				preventScrollReset: true,
 				defaultShouldRevalidate: false,
 			},
 		);
-	}, [error, success, navigate, scrollBeforeToast]);
+	}, [error, success, searchWithoutToastParams, navigate, scrollBeforeToast]);
+}
+
+function searchParamsWithoutToastParams(searchParams: URLSearchParams) {
+	const rest = new URLSearchParams(searchParams);
+	rest.delete("__error");
+	rest.delete("__success");
+
+	const asString = rest.toString();
+
+	return asString ? `?${asString}` : "";
 }
 
 /** Latest scroll position and the page it was scrolled on, to undo the scroll reset of a toast's redirect. */
@@ -411,54 +431,19 @@ function useCustomThemeVars() {
 
 export default function App() {
 	const rootData = useLoaderData<RootLoaderData>();
-
-	// Move overflow:hidden from html to body to allow position: sticky and position: fixed
-	// elements to work properly when a React Aria Component disabled scrolling
-	useEffect(() => {
-		const htmlStyle = document.documentElement.style;
-		const bodyStyle = document.body.style;
-
-		const observer = new MutationObserver(() => {
-			observer.disconnect();
-
-			if (htmlStyle.overflow === "hidden") {
-				htmlStyle.overflow = "";
-				htmlStyle.scrollbarGutter = "";
-
-				const scrollbarWidth =
-					window.innerWidth - document.documentElement.clientWidth;
-
-				htmlStyle.overflow = "initial";
-				bodyStyle.overflow = "hidden";
-				bodyStyle.paddingRight = `${scrollbarWidth}px`;
-			} else if (bodyStyle.overflow === "hidden") {
-				bodyStyle.overflow = "";
-				bodyStyle.paddingRight = "";
-			}
-
-			observer.observe(document.documentElement, {
-				attributes: true,
-				attributeFilter: ["style"],
-			});
-		});
-
-		observer.observe(document.documentElement, {
-			attributes: true,
-			attributeFilter: ["style"],
-		});
-
-		return () => observer.disconnect();
-	}, []);
+	const [openModals, setOpenModals] = React.useState(0);
 
 	return (
-		<ThemeProvider
-			specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
-			themeSource="user-preference"
-		>
-			<Document data={rootData}>
-				<Outlet />
-			</Document>
-		</ThemeProvider>
+		<OpenModalsContext value={{ count: openModals, setCount: setOpenModals }}>
+			<ThemeProvider
+				specifiedTheme={isTheme(rootData.theme) ? rootData.theme : null}
+				themeSource="user-preference"
+			>
+				<Document data={rootData}>
+					<Outlet />
+				</Document>
+			</ThemeProvider>
+		</OpenModalsContext>
 	);
 }
 

@@ -15,6 +15,7 @@ import type {
 	ChatMessageWithAuthor,
 	ChatRoomListItem,
 	ClientChatMessage,
+	RouteChatRoom,
 } from "./chat-types";
 
 const READ_DEBOUNCE_MS = 1_500;
@@ -57,16 +58,18 @@ export interface ChatSnapshot {
 }
 
 export interface ChatClient {
-	/** Starts listening to server events and fetches the room list. */
+	/** Starts listening to server events, fetching the room list unless a loader's was applied already. */
 	start: (ownUserId: number) => void;
+	/** Takes a loader-served room list as the room list, the way a `GET /api/chat/rooms` response is. */
+	applyRoomList: (rooms: ChatRoomListItem[]) => void;
+	/** Takes in a route's rooms: one not in the user's list is held as observed, and a history that came along is merged into the room's held one. */
+	applyRouteRooms: (routeRooms: RouteChatRoom[]) => void;
 	/** Stops event handling and resets all held data. */
 	stop: () => void;
 	getSnapshot: () => ChatSnapshot;
 	/** Subscribes to snapshot changes, for `useSyncExternalStore`. Returns an unsubscribe function. */
 	subscribe: (listener: () => void) => () => void;
 	refreshRooms: () => Promise<void>;
-	/** Fetches a room's info as an observed room when the user's own room list does not carry it (observer access via a route's `chatRooms`). */
-	ensureRoomKnown: (roomId: number) => void;
 	/** Fetches the room's history unless it is already loaded or loading. An observed room's held history is refetched instead of trusted: messages only reach an observer while the route surfacing the room keeps its subscription. */
 	ensureMessagesLoaded: (roomId: number) => void;
 	/** Reconnect catch-up: refetches the room list and every loaded history. */
@@ -263,46 +266,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 				const data = await deps.fetchRooms();
 				if (!data) return;
 
-				const next = new Map<number, TrackedRoom>();
-				for (const room of data.rooms) {
-					// a room that arrived in the list is no longer unknown; a later
-					// recreation under the same owner may need a refetch again
-					refetchedUnknownRoomIds.delete(room.id);
-
-					// a message that arrived while the fetch was in flight is missing
-					// from its snapshot: the held room is the newer one
-					const known = roomsById.get(room.id);
-					const outrunByPush =
-						known !== undefined &&
-						(known.latestMessageId ?? 0) > (room.latestMessageId ?? 0);
-					const newer = outrunByPush ? known : room;
-
-					// a locally-read room stays read even when the server response
-					// raced the debounced read POST
-					const readUpTo = locallyReadByRoomId.get(room.id) ?? 0;
-					const locallyRead =
-						newer.latestMessageId !== null && readUpTo >= newer.latestMessageId;
-
-					next.set(room.id, {
-						...room,
-						latestMessageId: newer.latestMessageId,
-						latestMessageAt: newer.latestMessageAt,
-						unreadCount: locallyRead ? 0 : newer.unreadCount,
-						observed: false,
-					});
-				}
-
-				// the list version wins over a held observed copy
-				for (const [roomId, room] of roomsById) {
-					if (room.observed && !next.has(roomId)) {
-						next.set(roomId, room);
-					}
-				}
-
-				replaceRooms(next);
-				pruneLostRooms();
-				roomsLoaded = true;
-				notify();
+				mergeRoomList(data.rooms);
 			} catch (error) {
 				logger.error("Fetching chat rooms failed", error);
 			} finally {
@@ -315,6 +279,75 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 		})();
 
 		return roomsRefreshInflight;
+	};
+
+	/** Takes a room list snapshot (fetched or loader-served) as the user's own rooms, keeping what the snapshot predates. */
+	const mergeRoomList = (rooms: ChatRoomListItem[]) => {
+		const next = new Map<number, TrackedRoom>();
+		for (const room of rooms) {
+			// a room that arrived in the list is no longer unknown; a later
+			// recreation under the same owner may need a refetch again
+			refetchedUnknownRoomIds.delete(room.id);
+
+			// a message that arrived while the snapshot was on its way is missing
+			// from it: the held room is the newer one
+			const known = roomsById.get(room.id);
+			const outrunByPush =
+				known !== undefined &&
+				(known.latestMessageId ?? 0) > (room.latestMessageId ?? 0);
+			const newer = outrunByPush ? known : room;
+
+			// a locally-read room stays read even when the server response
+			// raced the debounced read POST
+			const readUpTo = locallyReadByRoomId.get(room.id) ?? 0;
+			const locallyRead =
+				newer.latestMessageId !== null && readUpTo >= newer.latestMessageId;
+
+			next.set(room.id, {
+				...room,
+				latestMessageId: newer.latestMessageId,
+				latestMessageAt: newer.latestMessageAt,
+				unreadCount: locallyRead ? 0 : newer.unreadCount,
+				observed: false,
+			});
+		}
+
+		// the list version wins over a held observed copy
+		for (const [roomId, room] of roomsById) {
+			if (room.observed && !next.has(roomId)) {
+				next.set(roomId, room);
+			}
+		}
+
+		replaceRooms(next);
+		pruneLostRooms();
+		roomsLoaded = true;
+		notify();
+	};
+
+	/** Folds a history snapshot into the held one, keeping everything the snapshot predates: optimistic sends, and messages pushed over SSE. */
+	const mergeHistory = (roomId: number, messages: ChatMessageWithAuthor[]) => {
+		const fetchedPublicIds = new Set(
+			messages.map((message) => message.publicId),
+		);
+		const held = messagesByRoomId.get(roomId) ?? [];
+		const missedBySnapshot = held.filter(
+			(message) => !fetchedPublicIds.has(message.publicId),
+		);
+		const merged = sortedMessages([...messages, ...missedBySnapshot]);
+
+		// a snapshot that says nothing new (a page revalidation) must not churn the view
+		const unchanged =
+			messagesByRoomId.has(roomId) &&
+			merged.length === held.length &&
+			merged.every(
+				(message, index) =>
+					message.id === held[index].id &&
+					message.publicId === held[index].publicId,
+			);
+		if (unchanged) return;
+
+		setMessages(roomId, merged);
 	};
 
 	/** A held history whose room is no longer known belongs to a room the user lost access to (e.g. left the group); drop the local copy. */
@@ -379,15 +412,7 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 				return;
 			}
 
-			// keep everything appended while the fetch was in flight that its
-			// snapshot predates: optimistic sends, and messages pushed over SSE
-			const fetchedPublicIds = new Set(
-				data.messages.map((message) => message.publicId),
-			);
-			const missedByFetch = (messagesByRoomId.get(roomId) ?? []).filter(
-				(message) => !fetchedPublicIds.has(message.publicId),
-			);
-			setMessages(roomId, sortedMessages([...data.messages, ...missedByFetch]));
+			mergeHistory(roomId, data.messages);
 			notify();
 
 			if (viewedRoomIds.has(roomId)) {
@@ -414,7 +439,30 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 
 			ownUserId = userId;
 			removeEventListener = deps.addServerEventListener(handleEvent);
-			void refreshRooms();
+			if (!roomsLoaded) {
+				void refreshRooms();
+			}
+		},
+		applyRoomList: mergeRoomList,
+		applyRouteRooms: (routeRooms) => {
+			for (const { room, messages } of routeRooms) {
+				if (!roomsById.has(room.id)) {
+					// a room outside the user's own list is only observed: it never
+					// accrues unread, so it must not start out with the server's count
+					// of everything said in it before the observer showed up
+					replaceRooms(
+						new Map(roomsById).set(room.id, {
+							...room,
+							unreadCount: 0,
+							observed: true,
+						}),
+					);
+				}
+				if (messages) {
+					mergeHistory(room.id, messages);
+				}
+			}
+			notify();
 		},
 		stop: () => {
 			removeEventListener?.();
@@ -450,10 +498,6 @@ export function createChatClient(deps: ChatClientDeps): ChatClient {
 			return () => listeners.delete(listener);
 		},
 		refreshRooms,
-		ensureRoomKnown: (roomId) => {
-			if (roomsById.has(roomId)) return;
-			void loadObservedRoom(roomId);
-		},
 		ensureMessagesLoaded: (roomId) => {
 			const canHaveMissedMessages = roomById(roomId)?.observed ?? false;
 			if (messagesByRoomId.has(roomId) && !canHaveMissedMessages) return;
@@ -551,6 +595,30 @@ function sortedMessages(messages: ClientChatMessage[]): ClientChatMessage[] {
 	);
 	persisted.sort((a, b) => a.id - b.id);
 	return [...persisted, ...pending];
+}
+
+const NEVER_RESOLVING = () => new Promise<never>(() => {});
+
+/** Deps of a client that never reaches the network, for a snapshot made from loader data alone. */
+const OFFLINE_DEPS: ChatClientDeps = {
+	fetchRooms: NEVER_RESOLVING,
+	fetchRoom: NEVER_RESOLVING,
+	fetchMessages: NEVER_RESOLVING,
+	postMessage: NEVER_RESOLVING,
+	postRead: NEVER_RESOLVING,
+	onSendFailed: () => {},
+	addServerEventListener: () => () => {},
+};
+
+/** What a page renders with before the live client has taken the loader data over: held exactly as `applyRoomList` and `applyRouteRooms` hold it. */
+export function snapshotFromLoaderData(
+	roomList: ChatRoomListItem[],
+	routeRooms: RouteChatRoom[],
+): ChatSnapshot {
+	const client = createChatClient(OFFLINE_DEPS);
+	client.applyRoomList(roomList);
+	client.applyRouteRooms(routeRooms);
+	return client.getSnapshot();
 }
 
 const fetchJson = async <T>(url: string): Promise<T | null> => {

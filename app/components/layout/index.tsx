@@ -25,8 +25,9 @@ import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigati
 import { useHydrated } from "~/hooks/useHydrated";
 import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { useScrollLock } from "~/hooks/useScrollLock";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
-import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
+import { useVisualViewport } from "~/hooks/useVisualViewport";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { RootLoaderData } from "~/root";
 import { generateIdenticon } from "~/utils/identicon";
@@ -49,9 +50,9 @@ import { MobileNav } from "../MobileNav";
 import { NotificationDot } from "../NotificationDot";
 import { ListLink, SideNav, SideNavFooter, SideNavHeader } from "../SideNav";
 import { StreamListItems } from "../StreamListItems";
+import { ChatSidebar } from "./ChatSidebar";
 import { Footer } from "./Footer";
 import styles from "./index.module.css";
-import { LazyChatSidebar } from "./LazyChatSidebar";
 import { LogInButtonContainer } from "./LogInButtonContainer";
 import { authErrorSearchParams } from "./layout-search-params";
 import { NotificationPopover, useNotifications } from "./NotificationPopover";
@@ -261,9 +262,10 @@ export function Layout({
 	const sideNavRef = React.useRef<HTMLElement>(null);
 	const [sideNavDrawerOpen, setSideNavDrawerOpen] = React.useState(false);
 	useClosePopoversOnNavigation(sideNavRef);
+	useScrollLock(sideNavDrawerOpen);
+	useVisualViewport();
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] =
 		useTabletModal(isTabletLayout);
-	useVisualViewportHeight();
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 
@@ -451,7 +453,7 @@ export function Layout({
 							aria-label={t("common:chat.sidebar.title")}
 							onClose={() => setChatSidebarModalOpenAndSync(false)}
 						>
-							<LazyChatSidebar />
+							<ChatSidebar />
 						</SendouModal>
 					) : null}
 					<form
@@ -518,7 +520,7 @@ export function Layout({
 						showLeaderboard && styles.sidebarFuseSpace,
 					)}
 				>
-					<LazyChatSidebar onClose={() => setChatSidebarOpen(false)} />
+					<ChatSidebar onClose={() => setChatSidebarOpen(false)} />
 				</div>
 			) : null}
 			{typeof authError === "string" ? (

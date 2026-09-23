@@ -22,6 +22,6 @@
 	font-weight: var(--weight-bold);
 
 	& svg {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 }

@@ -5,6 +5,7 @@ import type {
 	MatchData,
 	MatchResults,
 	MatchResultsInput,
+	RoundSection,
 	SeedOrdering,
 	Side,
 	StageData,
@@ -185,16 +186,16 @@ export function isSwiss(stage: StageData): boolean {
 	return stage.type === "swiss";
 }
 
-/** Type of group a match is located in. */
+/** Where in the elimination stage a match of a round with the section is located. */
 export function getMatchLocation(
 	stageType: StageType,
-	groupNumber: number,
+	section: RoundSection | null,
 ): GroupType {
-	if (isWinnerBracket(stageType, groupNumber)) return "winner_bracket";
+	if (isWinnerBracket(stageType, section)) return "winner_bracket";
 
-	if (isLoserBracket(stageType, groupNumber)) return "loser_bracket";
+	if (isLoserBracket(stageType, section)) return "loser_bracket";
 
-	if (isFinalGroup(stageType, groupNumber)) return "final_group";
+	if (isFinalGroup(section)) return "final_group";
 
 	return "single_bracket";
 }
@@ -242,18 +243,21 @@ function getLoserRoundLoserCount(
 }
 
 /** Not the opposite of `isLoserBracket()`: the only bracket of single elimination is neither. */
-function isWinnerBracket(stageType: StageType, groupNumber: number): boolean {
-	return stageType === "double_elimination" && groupNumber === 1;
+function isWinnerBracket(
+	stageType: StageType,
+	section: RoundSection | null,
+): boolean {
+	return stageType === "double_elimination" && section === "winners";
 }
 
-function isLoserBracket(stageType: StageType, groupNumber: number): boolean {
-	return stageType === "double_elimination" && groupNumber === 2;
+function isLoserBracket(
+	stageType: StageType,
+	section: RoundSection | null,
+): boolean {
+	return stageType === "double_elimination" && section === "losers";
 }
 
 /** Consolation final or grand final. */
-function isFinalGroup(stageType: StageType, groupNumber: number): boolean {
-	return (
-		(stageType === "single_elimination" && groupNumber === 2) ||
-		(stageType === "double_elimination" && groupNumber === 3)
-	);
+function isFinalGroup(section: RoundSection | null): boolean {
+	return section === "finals";
 }

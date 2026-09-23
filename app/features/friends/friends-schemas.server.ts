@@ -7,7 +7,9 @@ import {
 	cancelFriendRequestSchema,
 	declineFriendRequestSchema,
 	deleteFriendSchema,
+	pinFriendSchema,
 	sendFriendRequestBaseSchema,
+	unpinFriendSchema,
 } from "./friends-schemas";
 
 const sendFriendRequestSchemaServer = v.pipeAsync(
@@ -54,4 +56,6 @@ export const friendsActionSchema = v.unionAsync([
 	deleteFriendSchema,
 	acceptFriendRequestSchema,
 	declineFriendRequestSchema,
+	pinFriendSchema,
+	unpinFriendSchema,
 ]);

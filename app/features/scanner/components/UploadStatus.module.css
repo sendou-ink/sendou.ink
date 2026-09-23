@@ -82,7 +82,7 @@
 	gap: var(--s-1);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	text-decoration: underline;
 	text-underline-offset: 2px;
 }

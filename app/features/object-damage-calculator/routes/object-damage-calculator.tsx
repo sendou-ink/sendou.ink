@@ -5,12 +5,21 @@ import type { MetaFunction, ShouldRevalidateFunction } from "react-router";
 import { Ability } from "~/components/Ability";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { Image, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { WeaponSelect } from "~/components/WeaponSelect";
 import { possibleApValues } from "~/features/build-analyzer/analyzer-constants";
 import type { DamageType } from "~/features/build-analyzer/analyzer-types";
+import type {
+	SpecialWeaponId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import {
 	BIG_BUBBLER_ID,
 	BOOYAH_BOMB_ID,
@@ -33,9 +42,7 @@ import {
 	modeImageUrl,
 	navIconUrl,
 	OBJECT_DAMAGE_CALCULATOR_URL,
-	specialWeaponImageUrl,
 	specialWeaponVariantImageUrl,
-	subWeaponImageUrl,
 } from "~/utils/urls";
 import { translateDamageReceiver } from "../calculator-constants";
 import { useObjectDamage } from "../calculator-hooks";
@@ -191,40 +198,88 @@ function DamageTypesSelect({
 	);
 }
 
-const damageReceiverImages: Record<DamageReceiver, string> = {
-	Bomb_TorpedoBullet: subWeaponImageUrl(TORPEDO_ID),
-	BlowerInhale: specialWeaponImageUrl(INK_VAC_ID),
-	Chariot: specialWeaponImageUrl(CRAB_TANK_ID),
-	Gachihoko_Barrier: modeImageUrl("RM"),
-	GreatBarrier_Barrier: specialWeaponImageUrl(BIG_BUBBLER_ID),
-	GreatBarrier_WeakPoint: specialWeaponVariantImageUrl(
-		BIG_BUBBLER_ID,
-		"weakpoints",
-	),
-	NiceBall_Armor: specialWeaponImageUrl(BOOYAH_BOMB_ID),
-	ShockSonar: specialWeaponImageUrl(WAVE_BREAKER_ID),
-	Wsb_Flag: subWeaponImageUrl(SQUID_BEAKON_ID),
-	Wsb_Shield: subWeaponImageUrl(SPLASH_WALL_ID),
-	Wsb_Sprinkler: subWeaponImageUrl(SPRINKLER_ID),
-	BulletUmbrellaCanopyNormal: mainWeaponImageUrl(6000),
-	BulletUmbrellaCanopyWide: mainWeaponImageUrl(6010),
-	BulletUmbrellaCanopyCompact: mainWeaponImageUrl(6020),
-	BulletShelterCanopyFocus: mainWeaponImageUrl(6030),
-	BulletUmbrellaCanopyNormal_Launched: mainWeaponVariantImageUrl(
-		6000,
-		"launched",
-	),
-	BulletUmbrellaCanopyWide_Launched: mainWeaponVariantImageUrl(
-		6010,
-		"launched",
-	),
-	BulletShelterCanopyFocus_Launched: mainWeaponVariantImageUrl(
-		6030,
-		"launched",
-	),
-	Decoy: specialWeaponImageUrl(SUPER_CHUMP_ID),
-	BulletPogo: specialWeaponImageUrl(TRIPLE_SPLASHDOWN_ID),
+const RECEIVER_IMAGE_SIZE = 24;
+
+type DamageReceiverIcon =
+	| { kind: "sub"; id: SubWeaponId }
+	| { kind: "special"; id: SpecialWeaponId }
+	| { kind: "path"; path: string };
+
+const damageReceiverImages: Record<DamageReceiver, DamageReceiverIcon> = {
+	Bomb_TorpedoBullet: { kind: "sub", id: TORPEDO_ID },
+	BlowerInhale: { kind: "special", id: INK_VAC_ID },
+	Chariot: { kind: "special", id: CRAB_TANK_ID },
+	Gachihoko_Barrier: { kind: "path", path: modeImageUrl("RM") },
+	GreatBarrier_Barrier: { kind: "special", id: BIG_BUBBLER_ID },
+	GreatBarrier_WeakPoint: {
+		kind: "path",
+		path: specialWeaponVariantImageUrl(BIG_BUBBLER_ID, "weakpoints"),
+	},
+	NiceBall_Armor: { kind: "special", id: BOOYAH_BOMB_ID },
+	ShockSonar: { kind: "special", id: WAVE_BREAKER_ID },
+	Wsb_Flag: { kind: "sub", id: SQUID_BEAKON_ID },
+	Wsb_Shield: { kind: "sub", id: SPLASH_WALL_ID },
+	Wsb_Sprinkler: { kind: "sub", id: SPRINKLER_ID },
+	BulletUmbrellaCanopyNormal: { kind: "path", path: mainWeaponImageUrl(6000) },
+	BulletUmbrellaCanopyWide: { kind: "path", path: mainWeaponImageUrl(6010) },
+	BulletUmbrellaCanopyCompact: {
+		kind: "path",
+		path: mainWeaponImageUrl(6020),
+	},
+	BulletShelterCanopyFocus: { kind: "path", path: mainWeaponImageUrl(6030) },
+	BulletUmbrellaCanopyNormal_Launched: {
+		kind: "path",
+		path: mainWeaponVariantImageUrl(6000, "launched"),
+	},
+	BulletUmbrellaCanopyWide_Launched: {
+		kind: "path",
+		path: mainWeaponVariantImageUrl(6010, "launched"),
+	},
+	BulletShelterCanopyFocus_Launched: {
+		kind: "path",
+		path: mainWeaponVariantImageUrl(6030, "launched"),
+	},
+	Decoy: { kind: "special", id: SUPER_CHUMP_ID },
+	BulletPogo: { kind: "special", id: TRIPLE_SPLASHDOWN_ID },
 };
+
+function DamageReceiverImage({
+	icon,
+	alt,
+}: {
+	icon: DamageReceiverIcon;
+	alt: string;
+}) {
+	switch (icon.kind) {
+		case "sub":
+			return (
+				<SubWeaponImage
+					subWeaponId={icon.id}
+					alt={alt}
+					size={RECEIVER_IMAGE_SIZE}
+					containerClassName={styles.receiverImage}
+				/>
+			);
+		case "special":
+			return (
+				<SpecialWeaponImage
+					specialWeaponId={icon.id}
+					alt={alt}
+					size={RECEIVER_IMAGE_SIZE}
+					containerClassName={styles.receiverImage}
+				/>
+			);
+		case "path":
+			return (
+				<Image
+					containerClassName={styles.receiverImage}
+					alt={alt}
+					path={icon.path}
+					size={RECEIVER_IMAGE_SIZE}
+				/>
+			);
+	}
+}
 
 const damageReceiverAp: Partial<Record<DamageReceiver, JSX.Element>> = {
 	GreatBarrier_Barrier: (
@@ -293,19 +348,15 @@ function DamageReceiversGrid({
 									className={styles.weaponImage}
 								/>
 							) : weapon.type === "SUB" ? (
-								<Image
-									alt=""
-									path={subWeaponImageUrl(weapon.id)}
-									width={24}
-									height={24}
+								<SubWeaponImage
+									subWeaponId={weapon.id}
+									size={24}
 									className={styles.weaponImage}
 								/>
 							) : (
-								<Image
-									alt=""
-									path={specialWeaponImageUrl(weapon.id)}
-									width={24}
-									height={24}
+								<SpecialWeaponImage
+									specialWeaponId={weapon.id}
+									size={24}
 									className={styles.weaponImage}
 								/>
 							)}
@@ -342,12 +393,9 @@ function DamageReceiversGrid({
 									<SendouPopover
 										trigger={
 											<button type="button" className={styles.receiverButton}>
-												<Image
-													className={styles.receiverImage}
+												<DamageReceiverImage
+													icon={damageReceiverImages[damageToReceiver.receiver]}
 													alt={translateReceiver(damageToReceiver.receiver)}
-													path={damageReceiverImages[damageToReceiver.receiver]}
-													width={40}
-													height={40}
 												/>
 											</button>
 										}

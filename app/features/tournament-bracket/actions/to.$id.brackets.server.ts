@@ -426,18 +426,18 @@ function adjustLinkedRounds({
 }): Omit<PreparedMaps, "createdAt">["maps"] {
 	if (thirdPlaceMatchLinked) {
 		const finalsMaps = maps
-			.filter((m) => m.groupId === 0)
+			.filter((m) => m.section === "winners")
 			.sort((a, b) => b.roundId - a.roundId)[0];
 		invariant(finalsMaps, "Missing finals maps");
 
 		return [
-			...maps.filter((m) => m.groupId === 0),
-			{ ...finalsMaps, groupId: 1, roundId: finalsMaps.roundId + 1 },
+			...maps.filter((m) => m.section === "winners"),
+			{ ...finalsMaps, section: "finals", roundId: finalsMaps.roundId + 1 },
 		];
 	}
 
 	invariant(
-		maps.some((m) => m.groupId === 1),
+		maps.some((m) => m.section === "finals"),
 		"Missing 3rd place match maps",
 	);
 

@@ -69,9 +69,12 @@ export function useEventsTopic(topic: string, enabled = true) {
 export function useEventStreamCatchUp({
 	enabled,
 	onCatchUp,
+	heldSince,
 }: {
 	enabled: boolean;
 	onCatchUp: () => void;
+	/** When the data the caller holds was current (client clock), for data that predates listening: a first connect landing long after it catches up. Defaults to when listening started. */
+	heldSince?: number;
 }) {
 	const connected = useEventsConnected();
 	const latestOnCatchUp = React.useRef(onCatchUp);
@@ -97,7 +100,7 @@ export function useEventStreamCatchUp({
 		[],
 	);
 
-	useCatchUpOnConnect(enabled, connected, catchUp);
+	useCatchUpOnConnect(enabled, connected, catchUp, heldSince);
 
 	React.useEffect(() => {
 		if (!enabled) return;
@@ -123,6 +126,7 @@ function useCatchUpOnConnect(
 	enabled: boolean,
 	connected: boolean,
 	onConnect: () => void,
+	heldSince?: number,
 ) {
 	const hasConnectedRef = React.useRef(false);
 	const listeningSinceRef = React.useRef<number | null>(null);
@@ -141,13 +145,14 @@ function useCatchUpOnConnect(
 		hasConnectedRef.current = true;
 		if (
 			isFirstConnect &&
-			Date.now() - listeningSinceRef.current < LATE_FIRST_CONNECT_MS
+			Date.now() - (heldSince ?? listeningSinceRef.current) <
+				LATE_FIRST_CONNECT_MS
 		) {
 			return;
 		}
 
 		onConnect();
-	}, [enabled, connected, onConnect]);
+	}, [enabled, connected, onConnect, heldSince]);
 }
 
 const returnListeners = new Set<() => void>();

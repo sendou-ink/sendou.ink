@@ -44,7 +44,8 @@
 }
 
 @container (width < 620px) {
-	.searchLabel {
+	.searchLabel,
+	.searchPlaceholder {
 		display: none;
 	}
 
@@ -77,7 +78,20 @@
 .modal {
 	width: calc(100% - 2 * var(--layout-main-padding));
 	max-width: 36rem;
-	margin: 15vh auto auto;
+	inset-block-start: var(--visual-viewport-offset-top, 0px);
+	inset-block-end: calc(
+		100% -
+		var(--visual-viewport-offset-top, 0px) -
+		var(--visual-viewport-height, 100%)
+	);
+	max-height: calc(
+		var(--visual-viewport-height, 100dvh) -
+		2 *
+		var(--modal-margin-block)
+	);
+	margin: var(--modal-margin-block) auto auto;
+	display: flex;
+	flex-direction: column;
 	padding: 0;
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
@@ -97,13 +111,19 @@
 	}
 }
 
+.content {
+	display: flex;
+	flex-direction: column;
+	min-height: 0;
+}
+
 .inputContainer {
 	display: flex;
 	align-items: center;
 	border-bottom: 1px solid var(--color-border);
 
 	&:focus-within {
-		border-color: var(--color-text-accent);
+		border-color: var(--color-fg-accent);
 	}
 }
 
@@ -181,8 +201,8 @@
 }
 
 .searchTypeRadioSelected {
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
 	border-color: transparent;
 }
 

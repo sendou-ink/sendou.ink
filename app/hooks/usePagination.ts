@@ -3,13 +3,15 @@ import * as React from "react";
 export function usePagination<T>({
 	items,
 	pageSize,
+	initialPage = 1,
 	scrollToTop = true,
 }: {
 	items: T[];
 	pageSize: number;
+	initialPage?: number;
 	scrollToTop?: boolean;
 }) {
-	const [currentPage, setCurrentPage] = React.useState(1);
+	const [currentPage, setCurrentPage] = React.useState(initialPage);
 	const pagesCount = Math.ceil(items.length / pageSize);
 
 	const itemsToDisplay = React.useMemo(

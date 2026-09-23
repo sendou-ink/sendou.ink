@@ -1,5 +1,6 @@
 import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import { Ability } from "~/components/Ability";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
@@ -39,6 +40,10 @@ import {
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
 import { Label } from "~/components/Label";
+import {
+	LFGPostGraphic,
+	type LFGPostGraphicPost,
+} from "~/components/LFGPostGraphic";
 import { Main } from "~/components/Main";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -59,8 +64,10 @@ import {
 	ChangelogGraphic,
 	type ChangelogGraphicEntry,
 } from "~/features/changelog/components/ChangelogGraphic";
+import { calculateDamageCombos } from "~/features/comp-analyzer/core/damage-combinations";
 import { useGlobalStatus } from "~/features/global-status/GlobalStatusProvider";
 import type { GlobalStatus } from "~/features/global-status/global-status-types";
+import { CompGraphic } from "~/features/img-export/components/CompGraphic";
 import {
 	SeasonSummaryGraphic,
 	type SeasonSummaryGraphicActivity,
@@ -96,7 +103,16 @@ import { EXAMPLE_TROPHY_MODEL } from "../example-trophy-model";
 import { formFieldsShowcaseSchema } from "../form-examples-schema";
 
 export const handle: SendouRouteHandle = {
-	i18n: ["user", "q", "calendar", "tournament", "schedule", "builds"],
+	i18n: [
+		"user",
+		"q",
+		"calendar",
+		"tournament",
+		"schedule",
+		"builds",
+		"lfg",
+		"analyzer",
+	],
 };
 
 export const SECTIONS = [
@@ -140,6 +156,16 @@ export const SECTIONS = [
 		component: SeasonSummaryGraphicSection,
 	},
 	{
+		title: "LFG Post Graphic",
+		id: "lfg-post-graphic",
+		component: LFGPostGraphicSection,
+	},
+	{
+		title: "Comp Graphic",
+		id: "comp-graphic",
+		component: CompGraphicSection,
+	},
+	{
 		title: "Changelog Graphic",
 		id: "changelog-graphic",
 		component: ChangelogGraphicSection,
@@ -177,6 +203,7 @@ export default function ComponentsShowcasePage() {
 	return (
 		<Main className="stack lg">
 			<h1>Components</h1>
+			<Link to="/components/colors">Color tokens →</Link>
 			{SECTIONS.map(({ id, component: Component }) => (
 				<Component key={id} id={id} />
 			))}
@@ -2189,6 +2216,110 @@ function SeasonSummaryGraphicSection({ id }: { id: string }) {
 							ends: new Date("2026-05-17T20:59:59.999Z"),
 						}}
 						stats={SEASON_SUMMARY_STATS}
+					/>
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const LFG_GRAPHIC_AUTHOR: LFGPostGraphicPost["author"] = {
+	username: "Sendou",
+	discordId: "79237403620945920",
+	discordAvatar: null,
+	customAvatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/dBYwiLjlhVBwW-oyyNJkC-1721997877357.webp`,
+	country: "FI",
+	weaponPool: [
+		{ weaponSplId: 40, isFavorite: 1, isTenStar: 1 },
+		{ weaponSplId: 2070, isFavorite: 1, isTenStar: 0 },
+		{ weaponSplId: 8010, isFavorite: 0, isTenStar: 0 },
+		{ weaponSplId: 5030, isFavorite: 0, isTenStar: 0 },
+	],
+};
+
+const LFG_GRAPHIC_USER_POST: LFGPostGraphicPost = {
+	id: 1234,
+	type: "PLAYER_FOR_TEAM",
+	text: "Looking for a competitive team aiming for top 8 in LUTI Div 1 next season. Available most evenings EU time, can also do late-night NA scrims on weekends.\n\nMain slayer with Splattershot Jr. as a flex pick. Comfortable calling if needed. DM me on Discord or reply here!",
+	updatedAt: 1781974800,
+	timezone: "Europe/Helsinki",
+	languages: ["en", "de"],
+	author: LFG_GRAPHIC_AUTHOR,
+	team: null,
+};
+
+const LFG_GRAPHIC_TEAM_POST: LFGPostGraphicPost = {
+	id: 1235,
+	type: "TEAM_FOR_PLAYER",
+	text: "Besto Friendo is looking for a 4th! We're a Div 2 team playing 3-4 scrims a week plus weekend tournaments. Ideal pick-up would be a backline or a flexible support player.",
+	updatedAt: 1781974800,
+	timezone: "America/New_York",
+	languages: ["en"],
+	author: LFG_GRAPHIC_AUTHOR,
+	team: {
+		name: "Besto Friendo",
+		avatarUrl: `${RESULTS_GRAPHIC_IMG_ROOT}/fZrToLQrkqV3UZkdgwp0Q-1722263644749.webp`,
+		members: [
+			{ ...LFG_GRAPHIC_AUTHOR, id: 1, username: "Yeti", country: null },
+			{
+				...LFG_GRAPHIC_AUTHOR,
+				id: 2,
+				username: "まるお",
+				country: "JP",
+				weaponPool: [],
+			},
+			{
+				...LFG_GRAPHIC_AUTHOR,
+				id: 3,
+				username: "Grey",
+				country: "FR",
+				weaponPool: [
+					{ weaponSplId: 1120, isFavorite: 0, isTenStar: 0 },
+					{ weaponSplId: 2010, isFavorite: 0, isTenStar: 0 },
+				],
+			},
+		],
+	},
+};
+
+function LFGPostGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>LFG Post Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="Player post">
+					<LFGPostGraphic post={LFG_GRAPHIC_USER_POST} />
+				</ComponentRow>
+
+				<ComponentRow label="Team post">
+					<LFGPostGraphic post={LFG_GRAPHIC_TEAM_POST} />
+				</ComponentRow>
+			</div>
+		</Section>
+	);
+}
+
+const COMP_GRAPHIC_WEAPON_IDS: MainWeaponId[] = [40, 220, 2070, 5010];
+
+function CompGraphicSection({ id }: { id: string }) {
+	return (
+		<Section>
+			<SectionTitle id={id}>Comp Graphic</SectionTitle>
+
+			<div className="stack md">
+				<ComponentRow label="With title">
+					<CompGraphic
+						weaponIds={COMP_GRAPHIC_WEAPON_IDS}
+						combos={calculateDamageCombos(COMP_GRAPHIC_WEAPON_IDS)}
+						title="Low Ink comp"
+					/>
+				</ComponentRow>
+
+				<ComponentRow label="Without title">
+					<CompGraphic
+						weaponIds={COMP_GRAPHIC_WEAPON_IDS}
+						combos={calculateDamageCombos(COMP_GRAPHIC_WEAPON_IDS)}
 					/>
 				</ComponentRow>
 			</div>

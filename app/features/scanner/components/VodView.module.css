@@ -26,7 +26,7 @@
 .progress {
 	width: 100%;
 	height: 8px;
-	accent-color: var(--color-text-accent);
+	accent-color: var(--color-fg-accent);
 }
 
 .progressText {
@@ -95,10 +95,10 @@
 	width: fit-content;
 	height: var(--field-size-sm);
 	padding: 0 var(--field-padding);
-	border: var(--border-style-accent);
+	border: var(--border-width) solid var(--color-fill-accent);
 	border-radius: var(--radius-field);
-	background: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-bold);
 	cursor: pointer;

@@ -1,13 +1,14 @@
 import { describe, expect, test } from "vitest";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
-import { clampThemeToGamut } from "~/utils/oklch-gamut";
+import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import * as UserRepository from "./UserRepository.server";
 
-const CUSTOM_THEME = clampThemeToGamut({
+const CUSTOM_THEME = ThemePalette.build({
 	baseHue: 268,
 	baseChroma: 0.05,
 	accentHue: 253,
 	accentChroma: 0.24,
+	bgLightness: 0.17,
 	chatHue: null,
 	radiusBox: 3,
 	radiusField: 2,

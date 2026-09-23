@@ -515,7 +515,7 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 			"otherTeam.id as otherTeamId",
 			"TournamentRound.number as roundNumber",
 			"TournamentRound.stageId",
-			"TournamentGroup.number as groupNumber",
+			"TournamentRound.section",
 			jsonArrayFrom(
 				eb
 					.selectFrom("TournamentMatchGameResult")
@@ -586,6 +586,10 @@ export function findByTournamentTeamId(tournamentTeamId: number) {
 		)
 		.orderBy("TournamentRound.stageId", "asc")
 		.orderBy("TournamentGroup.number", "asc")
+		.orderBy(
+			sql`case "TournamentRound"."section" when 'winners' then 1 when 'losers' then 2 when 'finals' then 3 else 0 end`,
+			"asc",
+		)
 		.orderBy("TournamentRound.number", "asc")
 		.execute();
 }

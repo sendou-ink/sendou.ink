@@ -16,6 +16,18 @@ const removeMemberSchema = v.object({
 	userId: id,
 });
 
+const addManagerSchema = v.object({
+	_action: _action("ADD_MANAGER"),
+	associationId: id,
+	userId: id,
+});
+
+const removeManagerSchema = v.object({
+	_action: _action("REMOVE_MANAGER"),
+	associationId: id,
+	userId: id,
+});
+
 const deleteAssociationSchema = v.object({
 	_action: _action("DELETE_ASSOCIATION"),
 	associationId: id,
@@ -38,6 +50,8 @@ const leaveAssociationSchema = v.object({
 
 export const associationsPageActionSchema = v.union([
 	removeMemberSchema,
+	addManagerSchema,
+	removeManagerSchema,
 	deleteAssociationSchema,
 	refreshInviteCodeSchema,
 	joinAssociationSchema,

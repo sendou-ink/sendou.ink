@@ -1,10 +1,15 @@
 import { describe, expect, test, vi } from "vitest";
 import type { ServerEvent } from "~/features/events/events-types";
-import { type ChatClient, createChatClient } from "./chat-client";
+import {
+	type ChatClient,
+	createChatClient,
+	snapshotFromLoaderData,
+} from "./chat-client";
 import type {
 	ChatMessageAuthor,
 	ChatMessageWithAuthor,
 	ChatRoomListItem,
+	RouteChatRoom,
 } from "./chat-types";
 
 const READ_DEBOUNCE_MS = 20;
@@ -54,6 +59,14 @@ function message(
 		author: authorUserId === null ? null : author(authorUserId),
 		...overrides,
 	};
+}
+
+/** A route's room as its loader serves it, with the history an opening room brings along. */
+function routeRoom(
+	listItem: ChatRoomListItem,
+	messages: ChatMessageWithAuthor[] | null = null,
+): RouteChatRoom {
+	return { autoOpen: true, room: listItem, messages };
 }
 
 function createHarness({
@@ -512,17 +525,15 @@ describe("createChatClient", () => {
 		expect(harness.fetchRooms).toHaveBeenCalledTimes(5);
 	});
 
-	test("ensureRoomKnown fetches an observed room outside the user's list", async () => {
+	test("a route room outside the user's list is held as observed without a fetch", async () => {
 		const observed = room({ id: 50, url: "/to/2/matches/2" });
-		const harness = createHarness({ observedRoom: observed });
+		const harness = createHarness();
 		const client = await startedClient(harness);
 
-		client.ensureRoomKnown(50);
-		await flush();
-		client.ensureRoomKnown(50);
-		await flush();
+		client.applyRouteRooms([routeRoom(observed)]);
+		client.applyRouteRooms([routeRoom(observed)]);
 
-		expect(harness.fetchRoom).toHaveBeenCalledTimes(1);
+		expect(harness.fetchRoom).not.toHaveBeenCalled();
 		expect(client.getSnapshot().roomsById.get(50)).toMatchObject({ id: 50 });
 		expect(client.getSnapshot().rooms).toHaveLength(1);
 		expect([...client.getSnapshot().observedRoomIds]).toEqual([50]);
@@ -530,32 +541,30 @@ describe("createChatClient", () => {
 
 	test("an observed room starts with no unread of its own", async () => {
 		const observed = room({ id: 50, unreadCount: 12 });
-		const harness = createHarness({ observedRoom: observed });
+		const harness = createHarness();
 		const client = await startedClient(harness);
 
-		client.ensureRoomKnown(50);
-		await flush();
+		client.applyRouteRooms([routeRoom(observed)]);
 
 		expect(client.getSnapshot().roomsById.get(50)?.unreadCount).toBe(0);
 		expect(client.getSnapshot().totalUnreadCount).toBe(0);
 	});
 
-	test("ensureRoomKnown is a no-op for a room already in the user's list", async () => {
-		const harness = createHarness();
+	test("a route room already in the user's list stays listed with the list's unread", async () => {
+		const harness = createHarness({ rooms: [room({ id: 1, unreadCount: 4 })] });
 		const client = await startedClient(harness);
 
-		client.ensureRoomKnown(1);
-		await flush();
+		client.applyRouteRooms([routeRoom(room({ id: 1, unreadCount: 0 }))]);
 
-		expect(harness.fetchRoom).not.toHaveBeenCalled();
+		expect(client.getSnapshot().observedRoomIds.size).toBe(0);
+		expect(client.getSnapshot().totalUnreadCount).toBe(4);
 	});
 
 	test("a message to an observed room appends without counting unread or refetching the list", async () => {
 		const observed = room({ id: 50 });
-		const harness = createHarness({ observedRoom: observed });
+		const harness = createHarness();
 		const client = await startedClient(harness);
-		client.ensureRoomKnown(50);
-		await flush();
+		client.applyRouteRooms([routeRoom(observed)]);
 		client.ensureMessagesLoaded(50);
 		await flush();
 
@@ -575,12 +584,10 @@ describe("createChatClient", () => {
 	test("a rooms refetch keeps the held history of an observed room", async () => {
 		const observed = room({ id: 50 });
 		const harness = createHarness({
-			observedRoom: observed,
 			messages: [message({ id: 1, roomId: 50 })],
 		});
 		const client = await startedClient(harness);
-		client.ensureRoomKnown(50);
-		await flush();
+		client.applyRouteRooms([routeRoom(observed)]);
 		client.ensureMessagesLoaded(50);
 		await flush();
 
@@ -593,12 +600,10 @@ describe("createChatClient", () => {
 	test("reopening an observed room refetches its history", async () => {
 		const observed = room({ id: 50 });
 		const harness = createHarness({
-			observedRoom: observed,
 			messages: [message({ id: 1, roomId: 50 })],
 		});
 		const client = await startedClient(harness);
-		client.ensureRoomKnown(50);
-		await flush();
+		client.applyRouteRooms([routeRoom(observed)]);
 		client.ensureMessagesLoaded(50);
 		await flush();
 
@@ -618,10 +623,9 @@ describe("createChatClient", () => {
 
 	test("an observed room the user's list later carries is superseded by the list version", async () => {
 		const observed = room({ id: 50 });
-		const harness = createHarness({ observedRoom: observed });
+		const harness = createHarness();
 		const client = await startedClient(harness);
-		client.ensureRoomKnown(50);
-		await flush();
+		client.applyRouteRooms([routeRoom(observed)]);
 		expect(client.getSnapshot().rooms).toHaveLength(1);
 
 		harness.fetchRooms.mockResolvedValue({
@@ -633,6 +637,88 @@ describe("createChatClient", () => {
 		expect(client.getSnapshot().rooms.map((each) => each.id)).toEqual([1, 50]);
 		expect(client.getSnapshot().totalUnreadCount).toBe(3);
 		expect(client.getSnapshot().observedRoomIds.size).toBe(0);
+	});
+
+	test("start does not fetch a room list a loader already supplied", async () => {
+		const harness = createHarness();
+		harness.client.applyRoomList([room({ id: 1, unreadCount: 2 })]);
+
+		const client = await startedClient(harness);
+
+		expect(harness.fetchRooms).not.toHaveBeenCalled();
+		expect(client.getSnapshot().roomsLoaded).toBe(true);
+		expect(client.getSnapshot().totalUnreadCount).toBe(2);
+	});
+
+	test("a route room's history arrives without a fetch and keeps what was pushed since", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+
+		client.applyRouteRooms([
+			routeRoom(room(), [message({ id: 1 }), message({ id: 2 })]),
+		]);
+		harness.emit({
+			kind: "chatMessage",
+			roomId: 1,
+			message: message({ id: 3 }),
+		});
+		// a revalidation's snapshot taken before the push
+		client.applyRouteRooms([
+			routeRoom(room(), [message({ id: 1 }), message({ id: 2 })]),
+		]);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		expect(harness.fetchMessages).not.toHaveBeenCalled();
+		expect(
+			client
+				.getSnapshot()
+				.messagesByRoomId.get(1)
+				?.map((each) => each.id),
+		).toEqual([1, 2, 3]);
+	});
+
+	test("a route room's empty history counts as loaded", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+
+		client.applyRouteRooms([routeRoom(room(), [])]);
+		client.ensureMessagesLoaded(1);
+		await flush();
+
+		expect(harness.fetchMessages).not.toHaveBeenCalled();
+		expect(client.getSnapshot().messagesByRoomId.get(1)).toEqual([]);
+	});
+
+	test("a history snapshot saying nothing new leaves the held one untouched", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.applyRouteRooms([routeRoom(room(), [message({ id: 1 })])]);
+		const held = client.getSnapshot().messagesByRoomId.get(1);
+
+		client.applyRouteRooms([routeRoom(room(), [message({ id: 1 })])]);
+
+		expect(client.getSnapshot().messagesByRoomId.get(1)).toBe(held);
+	});
+
+	test("a pending send survives a route history snapshot", async () => {
+		const harness = createHarness();
+		const client = await startedClient(harness);
+		client.applyRouteRooms([routeRoom(room(), [])]);
+		client.send(1, {
+			publicId: "pending-1",
+			contents: "hi",
+			author: author(1),
+		});
+
+		client.applyRouteRooms([routeRoom(room(), [message({ id: 1 })])]);
+
+		expect(
+			client
+				.getSnapshot()
+				.messagesByRoomId.get(1)
+				?.map((each) => each.publicId),
+		).toEqual(["public-1", "pending-1"]);
 	});
 
 	test("a roomsChanged event refetches the room list", async () => {
@@ -777,5 +863,26 @@ describe("createChatClient", () => {
 				.messagesByRoomId.get(1)
 				?.map((m) => m.id),
 		).toEqual([3, 5]);
+	});
+});
+
+describe("snapshotFromLoaderData", () => {
+	test("holds the loader data the way the live client will", () => {
+		const snapshot = snapshotFromLoaderData(
+			[room({ id: 1, unreadCount: 2 })],
+			[
+				routeRoom(room({ id: 1, unreadCount: 0 }), [message({ id: 1 })]),
+				routeRoom(room({ id: 50, unreadCount: 7 }), [
+					message({ id: 2, roomId: 50 }),
+				]),
+			],
+		);
+
+		expect(snapshot.roomsLoaded).toBe(true);
+		expect(snapshot.rooms.map((each) => each.id)).toEqual([1]);
+		expect(snapshot.totalUnreadCount).toBe(2);
+		expect([...snapshot.observedRoomIds]).toEqual([50]);
+		expect(snapshot.messagesByRoomId.get(1)).toHaveLength(1);
+		expect(snapshot.messagesByRoomId.get(50)).toHaveLength(1);
 	});
 });

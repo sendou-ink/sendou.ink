@@ -1,11 +1,11 @@
 import clsx from "clsx";
-import { SquarePen, Trash, Unlink, X } from "lucide-react";
+import { ImageOff, SquarePen, Trash, Unlink } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
-import { SendouDialog } from "~/components/elements/Dialog";
+import { SendouModal } from "~/components/elements/Dialog";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Pagination } from "~/components/Pagination";
 import { artPage, newArtPage, userArtPage } from "~/features/art/art-urls";
@@ -24,6 +24,8 @@ import type { ListedArt } from "../art-types";
 import { previewUrl } from "../art-utils";
 import styles from "./ArtGrid.module.css";
 
+const preloadedImageUrls = new Set<string>();
+
 export function ArtGrid({
 	arts,
 	enablePreview = false,
@@ -33,6 +35,7 @@ export function ArtGrid({
 	enablePreview?: boolean;
 	showUploadDate?: boolean;
 }) {
+	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const {
 		itemsToDisplay,
 		everythingVisible,
@@ -44,13 +47,13 @@ export function ArtGrid({
 	} = usePagination({
 		items: arts,
 		pageSize: ART_PER_PAGE,
+		initialPage: pageOfArt(arts, bigArtId),
 	});
-	const [bigArtId, setBigArtId] = useSearchParam(artGridSearchParams, "big");
 	const isHydrated = useHydrated();
 
 	if (!isHydrated) return null;
 
-	const bigArt = itemsToDisplay.find((art) => art.id === bigArtId);
+	const bigArt = arts.find((art) => art.id === bigArtId);
 
 	return (
 		<>
@@ -84,69 +87,110 @@ export function ArtGrid({
 }
 
 function BigImageDialog({ close, art }: { close: () => void; art: ListedArt }) {
-	const [imageSettled, setImageSettled] = React.useState(false);
+	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	const [infoVisible, setInfoVisible] = React.useState(true);
+	const [imageSettled, imageRef] = useImageSettled();
+	const [aspectRatio, placeholderRef] = useImageAspectRatio();
+	const { t } = useTranslation(["art"]);
 	const { formatter } = useDateTimeFormat({
 		year: "numeric",
 		month: "numeric",
 		day: "numeric",
 	});
 
+	const imageFailed = aspectRatio === "FAILED";
+
+	const dateText = formatter.format(databaseTimestampToDate(art.createdAt));
+
+	const handleClick = (event: React.MouseEvent<HTMLDivElement>) => {
+		const target = event.target as HTMLElement;
+		if (target.closest("a")) return;
+		if (target.closest("figure") && !deviceCanHover()) {
+			setInfoVisible((visible) => !visible);
+			return;
+		}
+		dialogRef.current?.close();
+	};
+
 	return (
-		<SendouDialog
-			heading={formatter.format(databaseTimestampToDate(art.createdAt)) ?? ""}
+		<SendouModal
+			ref={dialogRef}
+			className={styles.lightbox}
+			blurredBackdrop
 			onClose={close}
-			isFullScreen
+			aria-label={art.description || dateText}
 		>
-			<img
-				alt=""
-				src={art.url}
-				loading="lazy"
-				className={styles.dialogImg}
-				onLoad={() => setImageSettled(true)}
-				onError={() => setImageSettled(true)}
-			/>
-			{art.tags || art.linkedUsers ? (
-				<div
-					className={clsx(styles.tagsContainer, { invisible: !imageSettled })}
-				>
-					{art.linkedUsers?.map((user) => (
-						<Link
-							to={userPage(user)}
-							key={user.discordId}
-							className={clsx(styles.dialogTag, styles.dialogTagUser)}
-						>
-							{user.username}
-						</Link>
-					))}
-					{art.tags?.map((tag) => (
-						<Link
-							to={artPage(tag.name)}
-							key={tag.id}
-							className={styles.dialogTag}
-						>
-							#{tag.name}
-						</Link>
-					))}
-				</div>
-			) : null}
-			{art.description ? (
-				<div
-					className={clsx(styles.dialogDescription, {
-						invisible: !imageSettled,
+			{/* biome-ignore lint/a11y/noStaticElementInteractions: click-anywhere to close, Escape is handled by the dialog */}
+			<div className={styles.lightboxBody} onClick={handleClick}>
+				<figure
+					className={clsx(styles.lightboxFigure, {
+						[styles.lightboxFigureSized]: typeof aspectRatio === "number",
+						[styles.lightboxFigureFailed]: imageFailed,
 					})}
+					style={
+						typeof aspectRatio === "number"
+							? ({ "--aspect-ratio": aspectRatio } as React.CSSProperties)
+							: undefined
+					}
 				>
-					{art.description}
-				</div>
-			) : null}
-			<SendouButton
-				variant="destructive"
-				className="mx-auto mt-6"
-				onClick={close}
-				icon={<X />}
-			>
-				Close
-			</SendouButton>
-		</SendouDialog>
+					<img
+						alt=""
+						src={previewUrl(art.url)}
+						className={styles.lightboxPlaceholder}
+						ref={placeholderRef}
+					/>
+					{imageFailed ? (
+						<div className={styles.lightboxFailed}>
+							<ImageOff />
+							{t("art:imageFailed")}
+						</div>
+					) : (
+						<img
+							alt=""
+							src={art.url}
+							className={clsx(styles.lightboxImg, {
+								[styles.lightboxImgSettled]: imageSettled,
+							})}
+							ref={imageRef}
+						/>
+					)}
+					<figcaption
+						className={clsx(styles.lightboxInfo, {
+							[styles.lightboxInfoHidden]: !infoVisible,
+						})}
+					>
+						<time className={styles.lightboxDate}>{dateText}</time>
+						{art.description ? (
+							<div className={styles.lightboxDescription}>
+								{art.description}
+							</div>
+						) : null}
+						{art.tags || art.linkedUsers ? (
+							<div className={styles.tagsContainer}>
+								{art.linkedUsers?.map((user) => (
+									<Link
+										to={userPage(user)}
+										key={user.discordId}
+										className={clsx(styles.dialogTag, styles.dialogTagUser)}
+									>
+										{user.username}
+									</Link>
+								))}
+								{art.tags?.map((tag) => (
+									<Link
+										to={artPage(tag.name)}
+										key={tag.id}
+										className={styles.dialogTag}
+									>
+										#{tag.name}
+									</Link>
+								))}
+							</div>
+						) : null}
+					</figcaption>
+				</figure>
+			</div>
+		</SendouModal>
 	);
 }
 
@@ -163,22 +207,33 @@ function ImagePreview({
 }) {
 	const canEdit = useHasPermission(art, "EDIT");
 	const canUnlink = useHasPermission(art, "UNLINK");
-	const [imageSettled, setImageSettled] = React.useState(false);
+	const [imageSettled, imageRef] = useImageSettled();
 	const { t } = useTranslation(["common", "art"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
 
-	const img = (
-		// biome-ignore lint/a11y/noStaticElementInteractions: Biome v2 migration
+	const image = (
 		<img
 			alt=""
 			src={previewUrl(art.url)}
 			loading="lazy"
-			onClick={onClick}
-			onLoad={() => setImageSettled(true)}
-			onError={() => setImageSettled(true)}
+			ref={imageRef}
 			className={enablePreview ? styles.thumbnail : undefined}
 			data-testid="art-image"
 		/>
+	);
+
+	const img = onClick ? (
+		<button
+			type="button"
+			onClick={onClick}
+			onPointerEnter={() => preloadImage(art.url)}
+			className={styles.thumbnailButton}
+			aria-label={art.description || t("art:openImage")}
+		>
+			{image}
+		</button>
+	) : (
+		image
 	);
 
 	if (!art.author && canEdit) {
@@ -300,4 +355,92 @@ function ImagePreview({
 			</div>
 		</Link>
 	);
+}
+
+/**
+ * Whether the image has finished loading (or failed to), and the ref to give it.
+ *
+ * Native listeners rather than `onLoad`/`onError` because React drops those
+ * events when the image settles right after mounting, e.g. when it comes from
+ * the browser cache.
+ */
+function useImageSettled() {
+	const [imageSettled, setImageSettled] = React.useState(false);
+
+	const imageRef = (image: HTMLImageElement | null) => {
+		if (!image) return;
+		if (image.complete) {
+			setImageSettled(true);
+			return;
+		}
+
+		const settle = () => setImageSettled(true);
+		image.addEventListener("load", settle);
+		image.addEventListener("error", settle);
+
+		return () => {
+			image.removeEventListener("load", settle);
+			image.removeEventListener("error", settle);
+		};
+	};
+
+	return [imageSettled, imageRef] as const;
+}
+
+/**
+ * Aspect ratio of the image once it has loaded, "FAILED" if it never will,
+ * and the ref to give it.
+ */
+function useImageAspectRatio() {
+	const [aspectRatio, setAspectRatio] = React.useState<
+		number | "FAILED" | null
+	>(null);
+
+	const imageRef = (image: HTMLImageElement | null) => {
+		if (!image) return;
+
+		const measure = () => {
+			setAspectRatio(
+				image.naturalWidth > 0 && image.naturalHeight > 0
+					? image.naturalWidth / image.naturalHeight
+					: "FAILED",
+			);
+		};
+		if (image.complete) {
+			measure();
+			return;
+		}
+
+		image.addEventListener("load", measure);
+		image.addEventListener("error", measure);
+
+		return () => {
+			image.removeEventListener("load", measure);
+			image.removeEventListener("error", measure);
+		};
+	};
+
+	return [aspectRatio, imageRef] as const;
+}
+
+/** Page the art is on, so that a shared `?big=` link renders the page containing it. */
+function pageOfArt(arts: ListedArt[], artId: number | null) {
+	if (typeof artId !== "number") return 1;
+
+	const index = arts.findIndex((art) => art.id === artId);
+	if (index === -1) return 1;
+
+	return Math.floor(index / ART_PER_PAGE) + 1;
+}
+
+/** Touch devices have no hover to reveal the lightbox info with, so a tap on the image toggles it instead. */
+function deviceCanHover() {
+	return window.matchMedia("(hover: hover)").matches;
+}
+
+/** Warms the browser cache so the full-size image is ready by the time the lightbox opens. */
+function preloadImage(url: string) {
+	if (preloadedImageUrls.has(url)) return;
+	preloadedImageUrls.add(url);
+	new Image().src = url;
 }

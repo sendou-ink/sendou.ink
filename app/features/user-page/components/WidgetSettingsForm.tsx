@@ -87,6 +87,8 @@ function WidgetFormFields({ widgetId }: { widgetId: string }) {
 			return <FormField name="weaponSplId" />;
 		case "weapon-pool":
 			return <FormField name="weaponPool" />;
+		case "custom-kits":
+			return <FormField name="kits" />;
 		case "sens":
 			return <SensFields />;
 		case "art":

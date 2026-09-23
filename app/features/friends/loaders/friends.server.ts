@@ -4,7 +4,10 @@ import * as FriendSchedule from "~/features/availability/core/FriendSchedule.ser
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
 import { userPage } from "~/utils/urls";
 import * as FriendRepository from "../FriendRepository.server";
-import { friendActivitySortValue } from "../friends-constants";
+import {
+	friendActivitySortValue,
+	friendSectionSortValue,
+} from "../friends-constants";
 import {
 	resolveFriendActivity,
 	resolveSendouQMatchStreams,
@@ -63,9 +66,11 @@ export const loader = async () => {
 					tournamentId: activity.tournamentId ?? friend.tournamentId,
 					streamUrl: activity.streamUrl,
 					friendshipCreatedAt: friend.friendshipCreatedAt,
+					isPinned: Boolean(friend.isPinned),
 					schedule: schedules.get(friend.id) ?? null,
 				};
 			}),
+		[(friend) => friendSectionSortValue(friend), "asc"],
 		[(friend) => friendActivitySortValue(friend.activityType), "desc"],
 		[(friend) => (friend.schedule ? 1 : 0), "desc"],
 		[(friend) => friend.friendshipCreatedAt ?? 0, "desc"],
@@ -100,6 +105,7 @@ export const loader = async () => {
 					matchId: activity.matchId,
 					tournamentId: activity.tournamentId ?? tm.tournamentId,
 					streamUrl: activity.streamUrl,
+					isPinned: false,
 					schedule: schedules.get(tm.id) ?? null,
 				};
 			}),

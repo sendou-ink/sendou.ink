@@ -1,7 +1,19 @@
 .modal {
+	--dialog-padding-block: var(--s-6);
+
 	width: calc(100% - 2rem);
 	max-width: 28rem;
-	max-height: min(80dvh, calc(var(--visual-viewport-height, 100dvh) - 10rem));
+	inset-block-start: var(--visual-viewport-offset-top, 0px);
+	inset-block-end: calc(
+		100% -
+		var(--visual-viewport-offset-top, 0px) -
+		var(--visual-viewport-height, 100%)
+	);
+	max-height: calc(
+		var(--visual-viewport-height, 100dvh) -
+		2 *
+		var(--modal-margin-block)
+	);
 	overflow-x: hidden;
 	overflow-y: auto;
 	overscroll-behavior: contain;
@@ -9,7 +21,7 @@
 	border: 1px solid var(--color-border);
 	background-color: var(--color-bg);
 	color: var(--color-text);
-	padding: var(--s-6);
+	padding: var(--dialog-padding-block) var(--s-6);
 	text-align: left;
 	vertical-align: middle;
 	box-shadow:
@@ -19,11 +31,15 @@
 	outline: none;
 	animation: zoom-in-95 300ms ease-out;
 
-	&::backdrop {
-		background-color: rgba(0, 0, 0, 0.25);
-		backdrop-filter: blur(10px);
-		animation: fade-in 300ms ease-out;
+	@media (width < 600px) {
+		--dialog-padding-block: var(--s-4);
 	}
+}
+
+.blurredBackdrop::backdrop {
+	background-color: rgba(0, 0, 0, 0.25);
+	backdrop-filter: blur(10px);
+	animation: fade-in 300ms ease-out;
 }
 
 @keyframes fade-in {
@@ -40,6 +56,7 @@
 	min-width: 100%;
 	height: 100dvh;
 	max-height: 100dvh;
+	inset-block: 0;
 	border-radius: 0;
 	margin: 0;
 	padding-block-start: calc(env(safe-area-inset-top) + var(--s-6));
@@ -67,7 +84,7 @@
 }
 
 .noHeading {
-	margin-block-start: -14px;
+	margin-block-start: calc(10px - var(--dialog-padding-block));
 }
 
 .heading {

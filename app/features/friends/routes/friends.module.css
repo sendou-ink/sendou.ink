@@ -37,11 +37,20 @@
 	gap: var(--s-1-5);
 }
 
-.scheduleSlot {
+.rowActions {
+	display: flex;
+	gap: var(--s-1-5);
+	margin-block-end: var(--s-1);
+}
+
+.actionSlot {
 	display: flex;
 	width: 18px;
-	margin-block-end: var(--s-1);
 	& > button {
 		height: auto;
 	}
+}
+
+.pinForm {
+	display: contents;
 }

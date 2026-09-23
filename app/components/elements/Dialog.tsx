@@ -8,11 +8,18 @@ import {
 	type SendouButtonProps,
 } from "~/components/elements/Button";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useScrollLockWhileOpen } from "~/hooks/useScrollLock";
+import {
+	useReportModalOpen,
+	useTopLayerViewTransitionStyle,
+} from "~/utils/view-transition";
 import styles from "./Dialog.module.css";
 
 interface DialogElementProps {
 	id?: string;
 	className?: string;
+	/** The standard dialog backdrop: dimmed and blurred page behind. */
+	blurredBackdrop?: boolean;
 	isDismissable?: boolean;
 	onClose?: () => void;
 	"aria-label"?: string;
@@ -33,6 +40,7 @@ interface DialogElementProps {
  */
 export function SendouModal({ ref, ...rest }: DialogElementProps) {
 	const isHydrated = useHydrated();
+	useReportModalOpen(isHydrated);
 	if (!isHydrated) return null;
 
 	return createPortal(
@@ -57,6 +65,7 @@ export function SendouModal({ ref, ...rest }: DialogElementProps) {
 function DialogElement({
 	id,
 	className,
+	blurredBackdrop,
 	isDismissable,
 	onClose,
 	"aria-label": ariaLabel,
@@ -64,35 +73,67 @@ function DialogElement({
 	children,
 	ref,
 }: DialogElementProps) {
+	const topLayerStyle = useTopLayerViewTransitionStyle();
+	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	const backdropPressHandlers = useBackdropDismiss(isDismissable);
+	useScrollLockWhileOpen(dialogRef);
+
 	return (
 		<dialog
-			ref={ref}
+			ref={(dialog) => {
+				dialogRef.current = dialog;
+				if (typeof ref === "function") {
+					ref(dialog);
+				} else if (ref) {
+					ref.current = dialog;
+				}
+			}}
 			id={id}
-			className={className}
+			style={topLayerStyle}
+			className={clsx(className, {
+				[styles.blurredBackdrop]: blurredBackdrop,
+			})}
 			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
 			tabIndex={-1}
-			closedby={isDismissable ? "any" : "closerequest"}
+			closedby="closerequest"
 			onClose={onClose}
-			onClick={isDismissable ? closeOnBackdropClick : undefined}
+			{...backdropPressHandlers}
 		>
 			{children}
 		</dialog>
 	);
 }
 
-// Safari 26 is missing `closedby`, close on backdrop clicks manually
-function closeOnBackdropClick(event: React.MouseEvent<HTMLDialogElement>) {
-	if (event.target !== event.currentTarget) return;
+// Native `closedby` closes on pointer up so the click can land on stuff like buttons underneath the backdrop
+// We just roll our own click handler here because that can't "leak" through
+function useBackdropDismiss(enabled: boolean | undefined) {
+	const pressStartedOnBackdropRef = React.useRef(false);
+
+	if (!enabled) return {};
+
+	return {
+		onPointerDown: (event: React.PointerEvent<HTMLDialogElement>) => {
+			pressStartedOnBackdropRef.current = isOnBackdrop(event);
+		},
+		onClick: (event: React.MouseEvent<HTMLDialogElement>) => {
+			if (pressStartedOnBackdropRef.current && isOnBackdrop(event)) {
+				event.currentTarget.close();
+			}
+		},
+	};
+}
+
+function isOnBackdrop(event: React.MouseEvent<HTMLDialogElement>) {
+	if (event.target !== event.currentTarget) return false;
 	const rect = event.currentTarget.getBoundingClientRect();
-	const outside =
+
+	return (
 		event.clientX < rect.left ||
 		event.clientX > rect.right ||
 		event.clientY < rect.top ||
-		event.clientY > rect.bottom;
-	if (outside) {
-		event.currentTarget.close();
-	}
+		event.clientY > rect.bottom
+	);
 }
 
 /** Invoker commands open and close the dialog natively; this guards the JS fallback for browsers without them. */
@@ -182,6 +223,7 @@ function TriggeredDialog({
 	const dialogId = React.useId();
 	const dialogRef = React.useRef<HTMLDialogElement>(null);
 	const [open, setOpen] = React.useState(false);
+	useReportModalOpen(open);
 
 	const [contentKey, remountContent] = React.useReducer(
 		(key: number) => key + 1,
@@ -307,6 +349,7 @@ function dialogElementProps(
 		className: clsx(className, styles.modal, "scrollbar", {
 			[styles.fullScreenModal]: isFullScreen,
 		}),
+		blurredBackdrop: true,
 		isDismissable,
 		onClose,
 		"aria-label": ariaLabel,

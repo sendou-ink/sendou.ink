@@ -1,6 +1,7 @@
 import type { ActionFunctionArgs } from "react-router";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import { associationsPageActionSchema } from "~/features/associations/associations-schemas";
+import * as Association from "~/features/associations/core/Association";
 import { requireUser } from "~/features/auth/core/user.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
 import {
@@ -21,12 +22,12 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 	switch (data._action) {
 		case "REMOVE_MEMBER": {
-			await validateHasManagePermissions(data.associationId);
-
-			errorToastIfFalsy(
-				data.userId !== user.id,
-				"Cannot remove yourself from the association",
+			const association = await findAssociation(data.associationId);
+			const memberToRemove = badRequestIfFalsy(
+				association.members!.find((member) => member.id === data.userId),
 			);
+
+			requirePermission(memberToRemove, "REMOVE");
 
 			await AssociationRepository.deleteMember({
 				userId: data.userId,
@@ -35,15 +36,40 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 
 			break;
 		}
+		case "ADD_MANAGER":
+		case "REMOVE_MANAGER": {
+			const association = await requireAssociationPermission(
+				data.associationId,
+				"MANAGE",
+			);
+
+			errorToastIfFalsy(
+				association.members!.some(
+					(member) => member.id === data.userId && member.role !== "ADMIN",
+				),
+				"Not a member of the association",
+			);
+
+			await AssociationRepository.updateMemberRole({
+				associationId: data.associationId,
+				userId: data.userId,
+				role: data._action === "ADD_MANAGER" ? "MANAGER" : "MEMBER",
+			});
+
+			break;
+		}
 		case "DELETE_ASSOCIATION": {
-			await validateHasManagePermissions(data.associationId);
+			await requireAssociationPermission(data.associationId, "MANAGE");
 
 			await AssociationRepository.deleteById(data.associationId);
 
 			break;
 		}
 		case "REFRESH_INVITE_CODE": {
-			await validateHasManagePermissions(data.associationId);
+			await requireAssociationPermission(
+				data.associationId,
+				"MANAGE_INVITE_LINK",
+			);
 
 			await AssociationRepository.refreshInviteCode(data.associationId);
 
@@ -83,20 +109,22 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 			break;
 		}
 		case "LEAVE_ASSOCIATION": {
-			const association = badRequestIfFalsy(
-				await AssociationRepository.findById(data.associationId, {
-					withMembers: true,
-				}),
-			);
+			const association = await findAssociation(data.associationId);
+
+			const isAdmin = association.permissions.MANAGE.includes(user.id);
+			const newAdmin = isAdmin
+				? Association.resolveNewAdmin(association.members!)
+				: null;
 
 			errorToastIfFalsy(
-				!association.permissions.MANAGE.includes(user.id),
-				"You cannot leave an association you manage",
+				!isAdmin || newAdmin,
+				"You cannot leave an association you manage without a starred member to take over",
 			);
 
-			await AssociationRepository.deleteMember({
+			await AssociationRepository.handleMemberLeaving({
 				userId: user.id,
 				associationId: data.associationId,
+				newAdminUserId: newAdmin?.id,
 			});
 
 			return successToast("Left association");
@@ -109,10 +137,19 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return null;
 };
 
-async function validateHasManagePermissions(associationId: number) {
-	const association = badRequestIfFalsy(
+async function findAssociation(associationId: number) {
+	return badRequestIfFalsy(
 		await AssociationRepository.findById(associationId, { withMembers: true }),
 	);
+}
 
-	requirePermission(association, "MANAGE");
+async function requireAssociationPermission(
+	associationId: number,
+	permission: "MANAGE" | "MANAGE_INVITE_LINK",
+) {
+	const association = await findAssociation(associationId);
+
+	requirePermission(association, permission);
+
+	return association;
 }

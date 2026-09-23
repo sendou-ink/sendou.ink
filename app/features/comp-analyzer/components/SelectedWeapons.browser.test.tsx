@@ -83,6 +83,22 @@ describe("SelectedWeapons", () => {
 			expect(kitIcons.length).toBeGreaterThan(0);
 		});
 
+		test("renders a row per copy when the same weapon is picked twice", async () => {
+			const screen = await renderSelectedWeapons({
+				selectedWeaponIds: [0, 0],
+			});
+
+			const rows = screen.container.querySelectorAll(
+				'[data-testid^="selected-weapon-"]',
+			);
+			expect(rows.length).toBe(2);
+
+			const emptySlots = screen.container.querySelectorAll(
+				'[class*="weaponNameEmpty"]',
+			);
+			expect(emptySlots.length).toBe(MAX_WEAPONS - 2);
+		});
+
 		test("shows empty slots for remaining positions", async () => {
 			const screen = await renderSelectedWeapons({
 				selectedWeaponIds: [0],
@@ -124,6 +140,21 @@ describe("SelectedWeapons", () => {
 			const onRemove = vi.fn();
 			const screen = await renderSelectedWeapons({
 				selectedWeaponIds: [0, 10],
+				onRemove,
+			});
+
+			const removeButtons = screen.container.querySelectorAll(
+				'[class*="removeButton"]',
+			);
+			(removeButtons[1] as HTMLElement).click();
+
+			expect(onRemove).toHaveBeenCalledWith(1);
+		});
+
+		test("calls onRemove with the clicked index when the same weapon is picked twice", async () => {
+			const onRemove = vi.fn();
+			const screen = await renderSelectedWeapons({
+				selectedWeaponIds: [0, 0],
 				onRemove,
 			});
 

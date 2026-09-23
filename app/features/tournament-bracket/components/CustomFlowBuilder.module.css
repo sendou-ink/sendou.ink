@@ -24,7 +24,7 @@
 .paletteLabel {
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	color: var(--color-text-second);
+	color: var(--color-fg-second);
 	min-width: 3rem;
 }
 
@@ -96,7 +96,7 @@
 
 .dragHandle {
 	cursor: grab;
-	color: var(--color-text-second);
+	color: var(--color-fg-second);
 	display: flex;
 	align-items: center;
 	touch-action: none;
@@ -131,12 +131,8 @@
 }
 
 .dropZoneOver {
-	border-color: var(--color-text-accent);
-	background-color: color-mix(
-		in srgb,
-		var(--color-text-accent) 10%,
-		transparent
-	);
+	border-color: var(--color-fg-accent);
+	background-color: color-mix(in srgb, var(--color-fg-accent) 10%, transparent);
 }
 
 .dropZoneInvalid {
@@ -154,7 +150,7 @@
 .removeButton {
 	background: none;
 	border: none;
-	color: var(--color-text-second);
+	color: var(--color-fg-second);
 	cursor: pointer;
 	padding: 2px;
 	display: flex;

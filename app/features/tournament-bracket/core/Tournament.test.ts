@@ -642,9 +642,10 @@ describe("teamMemberOfProgressStatus with a follow-up bracket check-in", () => {
 	});
 
 	test("waits for the bracket while its check-in has yet to open", () => {
-		expect(progressStatusWithFollowUpIn(3 * 60)?.type).toBe(
-			"WAITING_FOR_BRACKET",
-		);
+		expect(progressStatusWithFollowUpIn(3 * 60)).toEqual({
+			type: "WAITING_FOR_BRACKET",
+			bracketIdx: 1,
+		});
 	});
 });
 

@@ -24,5 +24,7 @@
 	"forms.tags.maxReached": "Максимальное кол-во тегов достигнуто",
 	"delete.title": "Вы точно хотите удалить этот арт?",
 	"unlink.title": "Вы точно хотите удалить этот арт с вашего профиля (только {{username}} может добавить его обратно)?",
-	"noArtForTag": ""
+	"noArtForTag": "",
+	"imageFailed": "",
+	"openImage": ""
 }

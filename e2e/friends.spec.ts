@@ -17,6 +17,7 @@ import {
 } from "./helpers/sidebar";
 import { FriendsPage } from "./pages/friends/friends-page";
 import { NotificationPopover } from "./pages/layout/notification-popover";
+import { SideNav } from "./pages/layout/side-nav";
 
 const WEDNESDAY = 2;
 
@@ -113,6 +114,64 @@ test.describe("Friends", () => {
 		// they only filled in the current week
 		await friends.locators.nextWeekToggle.click();
 		await expect(friends.locators.noScheduleText).toBeVisible();
+	});
+
+	test("pinned friends sort to the top of their section on the page and in the sidebar", async ({
+		page,
+		factories,
+	}) => {
+		const [pinnedQueueing, queueing, pinnedIdle, idle] = await createNamedUsers(
+			factories,
+			["PinQueue", "PlainQueue", "PinIdle", "PlainIdle"],
+		);
+		await befriend(
+			factories,
+			[idle.id, pinnedIdle.id, queueing.id, pinnedQueueing.id],
+			ADMIN_ID,
+		);
+		await factories.SQGroupFactory.create({ memberUserIds: [queueing.id] });
+		await factories.SQGroupFactory.create({
+			memberUserIds: [pinnedQueueing.id],
+		});
+
+		await impersonate(page, ADMIN_ID);
+
+		const friends = new FriendsPage(page);
+		await friends.goto();
+
+		await friends.togglePin(pinnedIdle.id);
+		await friends.togglePin(pinnedQueueing.id);
+		await expect(friends.pinButton(pinnedIdle.id)).toHaveAttribute(
+			"aria-pressed",
+			"true",
+		);
+		await expect(friends.pinButton(idle.id)).toHaveAttribute(
+			"aria-pressed",
+			"false",
+		);
+
+		await expectTopToBottom([
+			friends.row(pinnedQueueing.id),
+			friends.row(queueing.id),
+			friends.row(pinnedIdle.id),
+			friends.row(idle.id),
+		]);
+
+		// the sidebar refreshes with the page, no navigation needed
+		const sideNav = new SideNav(page);
+		await expectTopToBottom([
+			sideNav.friend("PinQueue").trigger,
+			sideNav.friend("PlainQueue").trigger,
+			sideNav.friend("PinIdle").trigger,
+			sideNav.friend("PlainIdle").trigger,
+		]);
+
+		await friends.goto();
+		await friends.togglePin(pinnedIdle.id);
+		await expect(friends.pinButton(pinnedIdle.id)).toHaveAttribute(
+			"aria-pressed",
+			"false",
+		);
 	});
 });
 

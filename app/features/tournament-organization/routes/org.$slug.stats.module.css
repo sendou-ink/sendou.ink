@@ -27,7 +27,7 @@
 .progressBar {
 	height: 100%;
 	border-radius: var(--radius-full);
-	background-color: var(--color-accent);
+	background-color: var(--color-fg-accent);
 	transition: width 0.3s ease;
 }
 
@@ -64,7 +64,7 @@
 .breakdownBar {
 	height: 100%;
 	border-radius: var(--radius-full);
-	background-color: var(--color-accent);
+	background-color: var(--color-fg-accent);
 }
 
 .breakdownCount {

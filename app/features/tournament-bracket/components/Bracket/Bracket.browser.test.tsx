@@ -131,6 +131,7 @@ function createSingleEliminationData(): BracketData {
 				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -138,6 +139,7 @@ function createSingleEliminationData(): BracketData {
 				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -145,6 +147,7 @@ function createSingleEliminationData(): BracketData {
 				groupId: 1,
 				number: 3,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 5, type: "BEST_OF", pickBan: null },
 			},
 		],
@@ -241,6 +244,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -248,6 +252,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -255,6 +260,7 @@ function createByeHeavySingleEliminationData(): BracketData {
 				groupId: 1,
 				number: 3,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 5, type: "BEST_OF", pickBan: null },
 			},
 		],
@@ -347,16 +353,14 @@ function createDoubleEliminationData(): BracketData {
 				settings: {},
 			},
 		],
-		group: [
-			{ id: 1, number: 1, stageId: 1 },
-			{ id: 2, number: 2, stageId: 1 },
-		],
+		group: [{ id: 1, number: 1, stageId: 1 }],
 		round: [
 			{
 				id: 1,
 				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -364,20 +368,23 @@ function createDoubleEliminationData(): BracketData {
 				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 5, type: "BEST_OF", pickBan: null },
 			},
 			{
 				id: 3,
-				groupId: 2,
+				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: "losers",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
 				id: 4,
-				groupId: 2,
+				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: "losers",
 				maps: { count: 5, type: "BEST_OF", pickBan: null },
 			},
 		],
@@ -416,7 +423,7 @@ function createDoubleEliminationData(): BracketData {
 				id: 4,
 				number: 1,
 				stageId: 1,
-				groupId: 2,
+				groupId: 1,
 				roundId: 3,
 				opponent1: { id: 4, score: 1 },
 				opponent2: { id: 3, score: 2 },
@@ -426,7 +433,7 @@ function createDoubleEliminationData(): BracketData {
 				id: 5,
 				number: 1,
 				stageId: 1,
-				groupId: 2,
+				groupId: 1,
 				roundId: 4,
 				opponent1: { id: 3 },
 				opponent2: { id: null },
@@ -457,6 +464,7 @@ function createRoundRobinData(): BracketData {
 				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -464,6 +472,7 @@ function createRoundRobinData(): BracketData {
 				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -471,6 +480,7 @@ function createRoundRobinData(): BracketData {
 				groupId: 1,
 				number: 3,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -478,6 +488,7 @@ function createRoundRobinData(): BracketData {
 				groupId: 2,
 				number: 1,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -485,6 +496,7 @@ function createRoundRobinData(): BracketData {
 				groupId: 2,
 				number: 2,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -492,6 +504,7 @@ function createRoundRobinData(): BracketData {
 				groupId: 2,
 				number: 3,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 		],
@@ -578,6 +591,7 @@ function createSwissData(): BracketData {
 				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -585,6 +599,7 @@ function createSwissData(): BracketData {
 				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -592,6 +607,7 @@ function createSwissData(): BracketData {
 				groupId: 1,
 				number: 3,
 				stageId: 1,
+				section: null,
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 		],
@@ -682,6 +698,7 @@ function createLargeSingleEliminationData(options?: {
 				groupId: 1,
 				number: 1,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -689,6 +706,7 @@ function createLargeSingleEliminationData(options?: {
 				groupId: 1,
 				number: 2,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -696,6 +714,7 @@ function createLargeSingleEliminationData(options?: {
 				groupId: 1,
 				number: 3,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 3, type: "BEST_OF", pickBan: null },
 			},
 			{
@@ -703,6 +722,7 @@ function createLargeSingleEliminationData(options?: {
 				groupId: 1,
 				number: 4,
 				stageId: 1,
+				section: "winners",
 				maps: { count: 5, type: "BEST_OF", pickBan: null },
 			},
 		],

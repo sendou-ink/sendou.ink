@@ -45,6 +45,43 @@ test.describe("Associations", () => {
 		await expect(associations.locators.deleteButtons).toHaveCount(1);
 	});
 
+	test("stars a member, who then takes over when the admin leaves", async ({
+		page,
+		factories,
+	}) => {
+		await factories.AssociationFactory.create(
+			{ userId: ADMIN_ID },
+			{ memberUserIds: [NZAP_TEST_ID] },
+		);
+
+		await impersonate(page, ADMIN_ID);
+
+		const associations = new AssociationsPage(page);
+		await associations.goto();
+
+		await isNotVisible(associations.locators.leaveButton);
+
+		await associations.toggleManager("N-ZAP");
+
+		await expect(associations.locators.leaveButton).toBeVisible();
+
+		await impersonate(page, NZAP_TEST_ID);
+		await associations.goto();
+
+		await expect(associations.locators.inviteLinkInputs).toHaveCount(1);
+		await expect(associations.locators.resetLinkButton).toBeVisible();
+		await isNotVisible(associations.locators.deleteButtons);
+
+		await impersonate(page, ADMIN_ID);
+		await associations.goto();
+		await associations.leave();
+
+		await impersonate(page, NZAP_TEST_ID);
+		await associations.goto();
+
+		await expect(associations.locators.deleteButtons).toHaveCount(1);
+	});
+
 	test("joins and leaves an association", async ({ page, factories }) => {
 		await factories.AssociationFactory.create({ userId: ADMIN_ID });
 

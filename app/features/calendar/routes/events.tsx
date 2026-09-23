@@ -86,6 +86,7 @@ export default function EventsPage() {
 									controlled
 									active={filter === value}
 									defaultShouldRevalidate={false}
+									preventScrollReset
 								>
 									{viewLabels[value]}
 								</SubNavLink>

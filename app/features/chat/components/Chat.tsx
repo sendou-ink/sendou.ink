@@ -3,21 +3,18 @@ import { sub } from "date-fns";
 import { SendHorizontal } from "lucide-react";
 import { QRCodeSVG } from "qrcode.react";
 import * as React from "react";
+import { browser } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { useLocation } from "react-router";
+import * as v from "valibot";
 import { useEventsReadyState } from "~/features/events/events-hooks";
-import {
-	type FormRenderProps,
-	SendouForm,
-	useFormValue,
-} from "~/form/SendouForm";
+import { useDebounce } from "~/hooks/useDebounce";
 import { useVirtualizer } from "~/modules/virtualizer/react";
 import { databaseTimestampToDate } from "~/utils/dates";
 import { shortNanoid } from "~/utils/id";
 import { Avatar } from "../../../components/Avatar";
 import { SendouButton } from "../../../components/elements/Button";
-import { SubmitButton } from "../../../components/SubmitButton";
 import { useDateTimeFormat } from "../../../hooks/intl/useDateTimeFormat";
+import { MESSAGE_MAX_LENGTH } from "../chat-constants";
 import { useChatAutoScroll } from "../chat-hooks";
 import { findRoomLinks } from "../chat-message-links";
 import { sendChatMessageSchema } from "../chat-schemas";
@@ -26,6 +23,8 @@ import styles from "./Chat.module.css";
 
 const MESSAGE_GAP = 8;
 const ESTIMATED_MESSAGE_HEIGHT = 44;
+/** How long the stream may be down before the composer says so, so a connect right after page load never flashes it. */
+const CONNECTION_STATUS_GRACE_MS = 1_500;
 
 export interface ChatProps {
 	messages: ClientChatMessage[];
@@ -51,6 +50,55 @@ export function Chat({
 	readOnly,
 }: ChatProps) {
 	const { t } = useTranslation(["common"]);
+
+	return (
+		<section className={clsx(styles.container, className)}>
+			<div className={styles.inputContainer}>
+				<React.Suspense
+					fallback={
+						// the same role as the log so the sidebar sizes it the same
+						<div
+							role="log"
+							aria-label="Chat messages"
+							className={clsx(
+								styles.messages,
+								"scrollbar",
+								messagesContainerClassName,
+							)}
+						/>
+					}
+				>
+					<MessageLog
+						messages={messages}
+						labelByUserId={labelByUserId}
+						className={messagesContainerClassName}
+					/>
+				</React.Suspense>
+				{readOnly ? (
+					// only observers ever see this, so it stays English
+					<div className="text-xs text-lighter text-center my-4">Read-only</div>
+				) : disabled ? (
+					<div className="text-xs text-lighter text-center my-4">
+						{t("common:chat.expired")}
+					</div>
+				) : (
+					<Composer onSend={onSend} />
+				)}
+			</div>
+		</section>
+	);
+}
+
+function MessageLog({
+	messages,
+	labelByUserId,
+	className,
+}: Pick<ChatProps, "messages" | "labelByUserId"> & { className?: string }) {
+	// the server can't open the pane scrolled to its end, so it stays empty
+	// (the fallback holding its place) until the browser renders it
+	React.use(browser("the chat log opens scrolled to its end"));
+
+	const { t } = useTranslation(["common"]);
 	const messagesContainerRef = React.useRef<HTMLDivElement>(null);
 
 	const { unseenMessagesInTheRoom, scrollToBottom } = useChatAutoScroll(
@@ -67,6 +115,9 @@ export function Chat({
 			}
 			case "SCORE_CONFIRMED": {
 				return t("common:chat.systemMsg.scoreConfirmed", { name });
+			}
+			case "SCORE_DISPUTED": {
+				return t("common:chat.systemMsg.scoreDisputed", { name });
 			}
 			case "CANCEL_REPORTED": {
 				return t("common:chat.systemMsg.cancelReported", { name });
@@ -109,160 +160,127 @@ export function Chat({
 	});
 
 	return (
-		<section className={clsx(styles.container, className)}>
-			<div className={styles.inputContainer}>
+		<>
+			<div
+				ref={messagesContainerRef}
+				role="log"
+				aria-label="Chat messages"
+				className={clsx(styles.messages, "scrollbar", className)}
+			>
 				<div
-					ref={messagesContainerRef}
-					role="log"
-					aria-label="Chat messages"
-					className={clsx(
-						styles.messages,
-						"scrollbar",
-						messagesContainerClassName,
-					)}
+					className={styles.messagesSizer}
+					style={{ height: virtualizer.totalSize }}
 				>
-					<div
-						className={styles.messagesSizer}
-						style={{ height: virtualizer.totalSize }}
-					>
-						{virtualizer.items.map(({ index, start }) => {
-							const msg = messages[index];
-							const systemMessage = systemMessageText(msg);
+					{virtualizer.items.map(({ index, start }) => {
+						const msg = messages[index];
+						const systemMessage = systemMessageText(msg);
 
-							return (
-								<div
-									key={msg.publicId}
-									ref={virtualizer.measureElement(index)}
-									className={styles.messageRow}
-									data-testid="chat-message-row"
-									style={{ transform: `translateY(${start}px)` }}
-								>
-									{systemMessage ? (
-										<SystemMessage message={msg} text={systemMessage} />
-									) : (
-										<Message
-											message={msg}
-											label={
-												msg.authorUserId != null
-													? labelByUserId?.[msg.authorUserId]
-													: undefined
-											}
-										/>
-									)}
-								</div>
-							);
-						})}
-					</div>
+						return (
+							<div
+								key={msg.publicId}
+								ref={virtualizer.measureElement(index)}
+								className={styles.messageRow}
+								data-testid="chat-message-row"
+								style={{ transform: `translateY(${start}px)` }}
+							>
+								{systemMessage ? (
+									<SystemMessage message={msg} text={systemMessage} />
+								) : (
+									<Message
+										message={msg}
+										label={
+											msg.authorUserId != null
+												? labelByUserId?.[msg.authorUserId]
+												: undefined
+										}
+									/>
+								)}
+							</div>
+						);
+					})}
 				</div>
-				{unseenMessagesInTheRoom ? (
-					<SendouButton
-						className={styles.unseenMessages}
-						onClick={scrollToBottom}
-					>
-						{t("common:chat.newMessages")}
-					</SendouButton>
-				) : null}
-				{readOnly ? (
-					// only observers ever see this, so it stays English
-					<div className="text-xs text-lighter text-center my-4">Read-only</div>
-				) : disabled ? (
-					<div className="text-xs text-lighter text-center my-4">
-						{t("common:chat.expired")}
-					</div>
-				) : (
-					<Composer onSend={onSend} />
-				)}
 			</div>
-		</section>
+			{unseenMessagesInTheRoom ? (
+				<SendouButton
+					className={styles.unseenMessages}
+					onClick={scrollToBottom}
+				>
+					{t("common:chat.newMessages")}
+				</SendouButton>
+			) : null}
+		</>
 	);
 }
 
+/** A plain form on purpose: the chat client POSTs the message itself, so sending never touches the router or revalidates the page's loaders. */
 function Composer({ onSend }: { onSend: ChatProps["onSend"] }) {
-	const { t } = useTranslation(["common"]);
-	const { pathname } = useLocation();
+	const { t } = useTranslation(["common", "forms"]);
 	const readyState = useEventsReadyState();
-	const [publicId, setPublicId] = React.useState(() => shortNanoid());
-	const [hasSent, setHasSent] = React.useState(false);
-
-	// a send's autofocus must not carry over to an unrelated page
-	React.useEffect(() => {
-		setHasSent(false);
-	}, [pathname]);
+	const [contents, setContents] = React.useState("");
+	const inputRef = React.useRef<HTMLInputElement>(null);
+	const [connectionStatusShown, setConnectionStatusShown] =
+		React.useState(false);
+	useDebounce(
+		() => setConnectionStatusShown(readyState !== "CONNECTED"),
+		CONNECTION_STATUS_GRACE_MS,
+		[readyState],
+	);
 
 	const sendingDisabled = readyState !== "CONNECTED";
+	const showConnectionStatus = sendingDisabled && connectionStatusShown;
+	const isEmpty = contents.trim().length === 0;
+
+	const handleSubmit = (event: React.FormEvent<HTMLFormElement>) => {
+		event.preventDefault();
+		if (sendingDisabled || isEmpty) return;
+
+		const parsed = v.safeParse(sendChatMessageSchema, {
+			publicId: shortNanoid(),
+			contents,
+		});
+		if (!parsed.success) return;
+
+		onSend(parsed.output);
+		setContents("");
+		inputRef.current?.focus();
+	};
 
 	return (
-		<SendouForm
-			key={publicId}
-			schema={sendChatMessageSchema}
-			defaultValues={{ publicId }}
-			className={styles.composer}
-			hideSubmitButton
-			guardUnsavedChanges={false}
-			// `onApply` bypasses the router: chat-client POSTs the message itself,
-			// so sending never revalidates the page's loaders
-			onApply={(values) => {
-				onSend(values);
-				setPublicId(shortNanoid());
-				setHasSent(true);
-			}}
-		>
-			{({ FormField }) => (
-				<>
-					{readyState !== "CONNECTED" ? (
-						<div
-							className={clsx(
-								"text-xxs font-semi-bold",
-								readyState === "CONNECTING" ? "text-lighter" : "text-warning",
-							)}
-						>
-							{t(
-								readyState === "CONNECTING"
-									? "common:chat.connecting"
-									: "common:chat.disconnected",
-							)}
-						</div>
-					) : null}
-					<ComposerRow
-						FormField={FormField}
-						sendingDisabled={sendingDisabled}
-						hasSent={hasSent}
-					/>
-				</>
-			)}
-		</SendouForm>
-	);
-}
-
-function ComposerRow({
-	FormField,
-	sendingDisabled,
-	hasSent,
-}: {
-	FormField: FormRenderProps<typeof sendChatMessageSchema.entries>["FormField"];
-	sendingDisabled: boolean;
-	hasSent: boolean;
-}) {
-	const { t } = useTranslation(["common"]);
-	const contents = useFormValue("contents");
-	const isEmpty = typeof contents !== "string" || contents.trim().length === 0;
-
-	return (
-		<div className={styles.composerRow}>
-			<FormField
-				name="contents"
-				disabled={sendingDisabled}
-				autoFocus={hasSent}
-			/>
-			<SubmitButton
-				className={styles.sendButton}
-				size="small"
-				isDisabled={sendingDisabled || isEmpty}
-				aria-label={t("common:chat.send")}
-				icon={<SendHorizontal size={16} />}
-				testId="chat-submit-button"
-			/>
-		</div>
+		<form className={styles.composer} onSubmit={handleSubmit}>
+			{showConnectionStatus ? (
+				<div
+					className={clsx(
+						"text-xxs font-semi-bold",
+						readyState === "CONNECTING" ? "text-lighter" : "text-warning",
+					)}
+				>
+					{t(
+						readyState === "CONNECTING"
+							? "common:chat.connecting"
+							: "common:chat.disconnected",
+					)}
+				</div>
+			) : null}
+			<div className={styles.composerRow}>
+				<input
+					ref={inputRef}
+					value={contents}
+					onChange={(event) => setContents(event.target.value)}
+					placeholder={t("forms:placeholders.chatMessage")}
+					maxLength={MESSAGE_MAX_LENGTH}
+					disabled={sendingDisabled}
+				/>
+				<SendouButton
+					type="submit"
+					className={styles.sendButton}
+					size="small"
+					isDisabled={sendingDisabled || isEmpty}
+					aria-label={t("common:chat.send")}
+					icon={<SendHorizontal size={16} />}
+					data-testid="chat-submit-button"
+				/>
+			</div>
+		</form>
 	);
 }
 

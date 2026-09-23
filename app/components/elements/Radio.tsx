@@ -18,6 +18,7 @@ export function SendouRadioGroup({
 	isDisabled,
 	className,
 	"aria-label": ariaLabel,
+	onMouseDown,
 	children,
 }: {
 	value: string | null;
@@ -25,12 +26,18 @@ export function SendouRadioGroup({
 	isDisabled?: boolean;
 	className?: string;
 	"aria-label"?: string;
+	onMouseDown?: (e: React.MouseEvent) => void;
 	children: React.ReactNode;
 }) {
 	const name = React.useId();
 
 	return (
-		<div role="radiogroup" aria-label={ariaLabel} className={className}>
+		<div
+			role="radiogroup"
+			aria-label={ariaLabel}
+			className={className}
+			onMouseDown={onMouseDown}
+		>
 			<RadioGroupContext value={{ name, value, isDisabled, onChange }}>
 				{children}
 			</RadioGroupContext>

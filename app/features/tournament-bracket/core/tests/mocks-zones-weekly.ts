@@ -35,6 +35,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 					type: "BEST_OF",
 					pickBan: "COUNTERPICK",
 				},
+				section: null,
 			},
 			{
 				id: 13716,
@@ -46,6 +47,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 					type: "BEST_OF",
 					pickBan: "COUNTERPICK",
 				},
+				section: null,
 			},
 			{
 				id: 13717,
@@ -57,6 +59,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 					type: "BEST_OF",
 					pickBan: "COUNTERPICK",
 				},
+				section: null,
 			},
 			{
 				id: 13718,
@@ -68,6 +71,7 @@ export const ZONES_WEEKLY_38 = (): TournamentData => ({
 					type: "BEST_OF",
 					pickBan: "COUNTERPICK",
 				},
+				section: null,
 			},
 		],
 		match: [

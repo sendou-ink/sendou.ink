@@ -1,12 +1,11 @@
 import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
+import { SpecialWeaponImage, SubWeaponImage } from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type {
 	MainWeaponId,
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import { specialWeaponImageUrl, subWeaponImageUrl } from "~/utils/urls";
 import {
 	SPECIAL_CATEGORY_ORDER,
 	SPECIAL_WEAPON_CATEGORIES,
@@ -86,11 +85,7 @@ export function WeaponCategories({ selectedWeaponIds }: WeaponCategoriesProps) {
 							className={styles.categoryItem}
 							data-first={index === 0}
 						>
-							<Image
-								path={subWeaponImageUrl(item.subId)}
-								alt={t(`weapons:SUB_${item.subId}`)}
-								size={20}
-							/>
+							<SubWeaponImage subWeaponId={item.subId} size={20} />
 							<span className={styles.categoryName}>
 								{t(`analyzer:comp.subCategory.${item.category}`)}
 							</span>
@@ -109,11 +104,7 @@ export function WeaponCategories({ selectedWeaponIds }: WeaponCategoriesProps) {
 							className={styles.categoryItem}
 							data-first={index === 0}
 						>
-							<Image
-								path={specialWeaponImageUrl(item.specialId)}
-								alt={t(`weapons:SPECIAL_${item.specialId}`)}
-								size={20}
-							/>
+							<SpecialWeaponImage specialWeaponId={item.specialId} size={20} />
 							<span className={styles.categoryName}>
 								{t(`analyzer:comp.specialCategory.${item.category}`)}
 							</span>

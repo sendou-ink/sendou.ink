@@ -110,6 +110,6 @@ function attachRoundMaps(
 }
 
 function toRoundMaps(input: RoundMapsInput): TournamentRoundMaps {
-	const { roundId, groupId, ...maps } = input;
+	const { roundId, section, ...maps } = input;
 	return maps;
 }

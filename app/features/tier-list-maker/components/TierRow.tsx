@@ -1,10 +1,12 @@
 import { useDroppable } from "@dnd-kit/core";
 import {
-	horizontalListSortingStrategy,
+	rectSortingStrategy,
 	SortableContext,
+	useSortable,
 } from "@dnd-kit/sortable";
+import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
-import { ChevronDown, ChevronUp, Plus, Trash } from "lucide-react";
+import { GripVertical, Plus, Trash } from "lucide-react";
 import type { KeyboardEvent } from "react";
 import { useLayoutEffect, useRef } from "react";
 import { useTranslation } from "react-i18next";
@@ -20,6 +22,7 @@ import {
 	isLightColor,
 	tierListItemId,
 	tierNameFontSize,
+	tierSortableId,
 	tierTextColor,
 } from "../tier-list-maker-utils";
 import { DraggableItem } from "./DraggableItem";
@@ -31,14 +34,11 @@ interface TierRowProps {
 
 export function TierRow({ tier }: TierRowProps) {
 	const {
-		state,
 		activeItem,
 		getItemsInTier,
 		handleRemoveTier,
 		handleRenameTier,
 		handleChangeTierColor,
-		handleMoveTierUp,
-		handleMoveTierDown,
 		showTierHeaders,
 		placementMode,
 		selectedTierId,
@@ -47,20 +47,27 @@ export function TierRow({ tier }: TierRowProps) {
 
 	const items = getItemsInTier(tier.id);
 	const { t } = useTranslation(["tier-list-maker", "common"]);
-	const { setNodeRef, isOver } = useDroppable({
+	const { setNodeRef, over } = useDroppable({
 		id: tier.id,
 	});
+	const itemIds = items.map(tierListItemId);
+	const isOver =
+		over !== null && (over.id === tier.id || itemIds.includes(String(over.id)));
 
 	const combinedRef = useLockedHeightWhileDragging({
 		setNodeRef,
 		isDragging: activeItem !== null,
 	});
 
-	const tierIndex = state.tiers.findIndex(
-		(candidate) => candidate.id === tier.id,
-	);
-	const isFirstTier = tierIndex === 0;
-	const isLastTier = tierIndex === state.tiers.length - 1;
+	const {
+		attributes,
+		listeners,
+		setNodeRef: setSortableNodeRef,
+		setActivatorNodeRef,
+		transform,
+		transition,
+		isDragging: isReordering,
+	} = useSortable({ id: tierSortableId(tier.id) });
 
 	const isClickMode = placementMode === "click";
 	const isSelected = isClickMode && selectedTierId === tier.id;
@@ -82,7 +89,14 @@ export function TierRow({ tier }: TierRowProps) {
 		: {};
 
 	return (
-		<div className={styles.container}>
+		<div
+			ref={setSortableNodeRef}
+			data-tier-id={tier.id}
+			className={clsx(styles.container, {
+				[styles.containerReordering]: isReordering,
+			})}
+			style={{ transform: CSS.Translate.toString(transform), transition }}
+		>
 			{showTierHeaders ? (
 				<SendouPopover
 					trigger={
@@ -182,10 +196,7 @@ export function TierRow({ tier }: TierRowProps) {
 							: t("tier-list-maker:dropItems")}
 					</div>
 				) : items.length > 0 ? (
-					<SortableContext
-						items={items.map(tierListItemId)}
-						strategy={horizontalListSortingStrategy}
-					>
+					<SortableContext items={itemIds} strategy={rectSortingStrategy}>
 						{items.map((item) => (
 							<DraggableItem key={tierListItemId(item)} item={item} />
 						))}
@@ -193,26 +204,16 @@ export function TierRow({ tier }: TierRowProps) {
 				) : null}
 			</div>
 
-			<div className={styles.arrowControls}>
-				<button
-					className={clsx(styles.arrowButton, styles.arrowButtonUpper)}
-					onClick={() => handleMoveTierUp(tier.id)}
-					disabled={isFirstTier}
-					type="button"
-					aria-label="Move tier up"
-				>
-					<ChevronUp className={styles.arrowIcon} />
-				</button>
-				<button
-					className={clsx(styles.arrowButton, styles.arrowButtonLower)}
-					onClick={() => handleMoveTierDown(tier.id)}
-					disabled={isLastTier}
-					type="button"
-					aria-label="Move tier down"
-				>
-					<ChevronDown className={styles.arrowIcon} />
-				</button>
-			</div>
+			<button
+				ref={setActivatorNodeRef}
+				className={styles.dragHandle}
+				type="button"
+				aria-label="Reorder tier"
+				{...attributes}
+				{...listeners}
+			>
+				<GripVertical className={styles.dragHandleIcon} />
+			</button>
 		</div>
 	);
 }

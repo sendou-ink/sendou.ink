@@ -102,7 +102,7 @@
 .expandButton {
 	background: none;
 	border: none;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	cursor: pointer;
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
@@ -138,7 +138,7 @@
 }
 
 .filteredFooter {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-accent);
 }
 
 .canceledContainer {

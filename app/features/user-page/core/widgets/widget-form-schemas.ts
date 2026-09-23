@@ -9,10 +9,13 @@ import {
 	badges,
 	customField,
 	datetime,
+	fieldset,
 	numberField,
 	select,
 	selectDynamic,
+	specialWeaponSelect,
 	stageSelect,
+	subWeaponSelect,
 	textArea,
 	textAreaOptional,
 	textField,
@@ -104,10 +107,27 @@ export const weaponPoolWidgetSchema = v.object({
 	}),
 });
 
+export const customKitsSchema = v.object({
+	kits: array({
+		label: "labels.customKits",
+		max: USER.CUSTOM_KITS_MAX,
+		field: fieldset({
+			fields: v.object({
+				weaponSplId: weaponSelect({ label: "labels.weapon" }),
+				subWeaponId: subWeaponSelect({ label: "labels.subWeapon" }),
+				specialWeaponId: specialWeaponSelect({
+					label: "labels.specialWeapon",
+				}),
+			}),
+		}),
+	}),
+});
+
 const CONTROLLERS = [
 	"s1-pro-con",
 	"s2-pro-con",
 	"grip",
+	"s2-grip",
 	"s1-split-joycon",
 	"s2-split-joycon",
 	"handheld",
@@ -219,6 +239,7 @@ const WIDGET_FORM_SCHEMAS: Record<string, FormObjectSchema> = {
 	"peak-xp-unverified": peakXpUnverifiedSchema,
 	"peak-xp-weapon": peakXpWeaponSchema,
 	"weapon-pool": weaponPoolWidgetSchema,
+	"custom-kits": customKitsSchema,
 	sens: sensSchema,
 	art: artSchema,
 	links: linksSchema,

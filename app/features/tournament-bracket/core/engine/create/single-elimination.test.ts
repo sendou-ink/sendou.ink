@@ -37,8 +37,9 @@ describe("Create single elimination stage", () => {
 			settings: { consolationFinal: true },
 		});
 
-		expect(data.group.length).toBe(2);
+		expect(data.group.length).toBe(1);
 		expect(data.round.length).toBe(4);
+		expect(data.round.at(-1)?.section).toBe("finals");
 		expect(data.match.length).toBe(8);
 	});
 

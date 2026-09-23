@@ -18,7 +18,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const associationsWithInviteCodes = await Promise.all(
 		associations.map(async (association) => ({
 			...association,
-			inviteCode: association.permissions.MANAGE.includes(user.id)
+			inviteCode: association.permissions.MANAGE_INVITE_LINK.includes(user.id)
 				? await AssociationRepository.findInviteCodeById(association.id)
 				: undefined,
 		})),

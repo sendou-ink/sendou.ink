@@ -5,6 +5,7 @@ import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
 import * as SQReadyCheckFactory from "~/db/seed/factories/SQReadyCheckFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentLFGTeamFactory from "~/db/seed/factories/TournamentLFGTeamFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { refreshSendouQInstance } from "~/features/sendouq/core/SendouQ.server";
@@ -200,6 +201,35 @@ describe("resolveGlobalStatus", () => {
 
 	test("resolves nothing once the team has checked in", async () => {
 		await tournamentWithCheckInOpen({ isCheckedIn: true });
+
+		expect(await resolveGlobalStatus(users.id(1))).toBeNull();
+	});
+
+	test("resolves nothing for a solo player looking for a team", async () => {
+		const { id: tournamentId } = await TournamentFactory.create({
+			authorId: users.id(8),
+			startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+		});
+		await TournamentLFGTeamFactory.create({
+			tournamentId,
+			userId: users.id(1),
+		});
+
+		expect(await resolveGlobalStatus(users.id(1))).toBeNull();
+	});
+
+	test("resolves nothing for a league, which has no check-in", async () => {
+		const { id: tournamentId } = await TournamentFactory.create(
+			{
+				authorId: users.id(8),
+				startTimes: [dateToDatabaseTimestamp(addMinutes(new Date(), 30))],
+			},
+			{ isLeague: true },
+		);
+		await TournamentTeamFactory.create({
+			tournamentId,
+			memberUserIds: userIds([1, 2, 3, 4]),
+		});
 
 		expect(await resolveGlobalStatus(users.id(1))).toBeNull();
 	});

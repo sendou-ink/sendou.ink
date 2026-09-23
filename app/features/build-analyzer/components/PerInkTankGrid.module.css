@@ -23,7 +23,7 @@
 }
 
 .inkGridApFocused {
-	color: var(--color-accent);
+	color: var(--color-fg-accent);
 	font-weight: var(--weight-bold);
 	text-decoration: underline;
 }

@@ -71,6 +71,7 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 					winnerId: data.winnerId,
 					reportedByUserId: user.id,
 					reportedCount: data.reportedCount,
+					confirmingReportedAt: data.confirmingReportedAt,
 					isStaffReport,
 				});
 
@@ -114,6 +115,41 @@ export const action = async ({ request, params }: ActionFunctionArgs) => {
 							channel: chatRoomChannel(match.chatRoomId),
 						});
 					}
+				}
+
+				break;
+			}
+			case "DISPUTE_SCORE": {
+				errorToastIfFalsy(!match.isLocked, "Match is already locked");
+				errorToastIfFalsy(
+					SendouQMatch.score(match).isDecisive,
+					"No reported score to dispute",
+				);
+
+				const decidingMap = match.mapList
+					.toReversed()
+					.find((m) => m.winnerGroupId !== null);
+				const reporterSide = SendouQMatch.resolveGroupMemberOf({
+					groupAlpha: match.groupAlpha,
+					groupBravo: match.groupBravo,
+					userId: decidingMap?.reportedByUserId,
+				});
+				const disputerSide = SendouQMatch.resolveGroupMemberOf({
+					groupAlpha: match.groupAlpha,
+					groupBravo: match.groupBravo,
+					userId: user.id,
+				});
+				errorToastIfFalsy(
+					disputerSide !== null && disputerSide !== reporterSide,
+					"Only the team asked to confirm can dispute the score",
+				);
+
+				if (match.chatRoomId) {
+					ChatSystemMessage.sendPersisted({
+						roomId: match.chatRoomId,
+						type: "SCORE_DISPUTED",
+						authorUserId: user.id,
+					});
 				}
 
 				break;

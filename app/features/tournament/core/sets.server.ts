@@ -10,7 +10,7 @@ export interface AllRoundsItem {
 	stageName: string;
 	stageType: Tables["TournamentStage"]["type"];
 	roundNumber: number;
-	groupNumber: number;
+	section: Tables["TournamentRound"]["section"];
 }
 
 export interface PlayedSet {
@@ -63,23 +63,26 @@ export function tournamentTeamSets({
 				return set.roundNumber;
 			}
 
-			if (set.groupNumber === 3) {
+			if (
+				round.stageType === "double_elimination" &&
+				set.section === "finals"
+			) {
 				if (set.roundNumber === 2) return "bracket_reset";
 
 				return "grand_finals";
 			}
 
-			const maxRoundNumberOfGroup = Math.max(
+			const maxRoundNumberOfSection = Math.max(
 				...allRounds
 					.filter(
 						(candidate) =>
-							candidate.groupNumber === set.groupNumber &&
+							candidate.section === set.section &&
 							candidate.stageId === set.stageId,
 					)
 					.map((candidate) => candidate.roundNumber),
 			);
 
-			if (set.roundNumber === maxRoundNumberOfGroup) {
+			if (set.roundNumber === maxRoundNumberOfSection) {
 				return "finals";
 			}
 
@@ -92,7 +95,7 @@ export function tournamentTeamSets({
 			round: {
 				round: resolveRound(),
 				type: resolveRoundType({
-					groupNumber: set.groupNumber,
+					section: set.section,
 					stageType: round.stageType,
 				}),
 			},
@@ -122,10 +125,10 @@ function scoreFromTeamPerspective(
 }
 
 function resolveRoundType({
-	groupNumber,
+	section,
 	stageType,
 }: {
-	groupNumber: number;
+	section: Tables["TournamentRound"]["section"];
 	stageType: Tables["TournamentStage"]["type"];
 }) {
 	if (stageType === "single_elimination") {
@@ -140,16 +143,16 @@ function resolveRoundType({
 		return "swiss";
 	}
 
-	if (groupNumber === 1 || groupNumber === 3) {
+	if (section === "winners" || section === "finals") {
 		return "winners";
 	}
 
-	if (groupNumber === 2) {
+	if (section === "losers") {
 		return "losers";
 	}
 
 	logger.warn(
-		`resolveRoundType: groupNumber ${groupNumber} and stageType ${stageType} not handled`,
+		`resolveRoundType: section ${section} and stageType ${stageType} not handled`,
 	);
 	return "single_elim";
 }

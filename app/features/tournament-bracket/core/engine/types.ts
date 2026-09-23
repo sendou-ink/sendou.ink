@@ -9,7 +9,10 @@ export type Side = "opponent1" | "opponent2";
 
 export type StageType = Tables["TournamentStage"]["type"];
 
-/** Group types of an elimination stage; `final_group` exists in both single and double elimination. */
+/** Part of an elimination group a round belongs to, `null` in round robin and swiss. */
+export type RoundSection = NonNullable<Tables["TournamentRound"]["section"]>;
+
+/** Where a match sits in an elimination stage, derived from the stage type and the round's section; `final_group` exists in both single and double elimination. */
 export type GroupType =
 	| "single_bracket"
 	| "winner_bracket"
@@ -82,6 +85,8 @@ export interface RoundData {
 	id: number;
 	stageId: number;
 	groupId: number;
+	section: RoundSection | null;
+	/** Restarts from 1 per group, and in an elimination group per section. */
 	number: number;
 	maps?: TournamentRoundMaps | null;
 	/** Datetime the round is played by default (leagues). */
@@ -151,7 +156,7 @@ export interface CreateBracketInput {
 /** One round's map info as picked by the organizer against a bracket preview. */
 export type RoundMapsInput = TournamentRoundMaps & {
 	roundId: number;
-	groupId?: number;
+	section?: RoundSection | null;
 };
 
 /** {@link CreateBracketInput} with settings already resolved to internal {@link StageSettings}. */

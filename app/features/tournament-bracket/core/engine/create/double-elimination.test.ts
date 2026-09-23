@@ -1,4 +1,5 @@
 import { describe, expect, test } from "vitest";
+import type { BracketData } from "../types";
 import { createResolved } from "./index";
 
 describe("Create double elimination stage", () => {
@@ -11,8 +12,12 @@ describe("Create double elimination stage", () => {
 
 		expect(data.stage[0].type).toBe("double_elimination");
 
-		expect(data.group.length).toBe(3);
-		expect(data.round.length).toBe(4 + 6 + 2);
+		expect(data.group.length).toBe(1);
+		expect(roundCountBySection(data)).toEqual({
+			winners: 4,
+			losers: 6,
+			finals: 2,
+		});
 		expect(data.match.length).toBe(31);
 	});
 
@@ -33,8 +38,21 @@ describe("Create double elimination stage", () => {
 			settings: {},
 		});
 
-		expect(data.group.length).toBe(3);
-		expect(data.round.length).toBe(3 + 4 + 2);
+		expect(data.group.length).toBe(1);
+		expect(roundCountBySection(data)).toEqual({
+			winners: 3,
+			losers: 4,
+			finals: 2,
+		});
 		expect(data.match.length).toBe(15);
 	});
 });
+
+function roundCountBySection(data: BracketData) {
+	const counts: Record<string, number> = {};
+	for (const round of data.round) {
+		counts[String(round.section)] = (counts[String(round.section)] ?? 0) + 1;
+	}
+
+	return counts;
+}

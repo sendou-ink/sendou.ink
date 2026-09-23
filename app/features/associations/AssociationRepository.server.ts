@@ -1,5 +1,5 @@
 import { db } from "~/db/sql";
-import type { TablesInsertable } from "~/db/tables";
+import type { Tables, TablesInsertable } from "~/db/tables";
 import type { AssociationVirtualIdentifier } from "~/features/associations/associations-constants";
 import { ASSOCIATION } from "~/features/associations/associations-constants";
 import * as FriendRepository from "~/features/friends/FriendRepository.server";
@@ -88,14 +88,54 @@ async function findBy(
 						.where("Association.id", "=", args.associationId)
 						.execute();
 
-	return associations.map((a) => ({
-		...a,
-		permissions: {
-			MANAGE: (a.members ?? [])
-				.filter((member) => member.role === "ADMIN")
-				.map((user) => user.id),
-		},
-	}));
+	return associations.map((a) => {
+		const members = a.members ?? [];
+		const adminIds = memberIdsWithRole(members, "ADMIN");
+		const managerIds = memberIdsWithRole(members, "MANAGER");
+
+		return {
+			...a,
+			members: a.members?.map((member) => ({
+				...member,
+				permissions: {
+					REMOVE: memberRemoverIds({ member, adminIds, managerIds }),
+				},
+			})),
+			permissions: {
+				MANAGE: adminIds,
+				MANAGE_INVITE_LINK: [...adminIds, ...managerIds],
+			},
+		};
+	});
+}
+
+function memberIdsWithRole(
+	members: Array<{ id: number; role: Tables["AssociationMember"]["role"] }>,
+	role: Tables["AssociationMember"]["role"],
+) {
+	return members
+		.filter((member) => member.role === role)
+		.map((member) => member.id);
+}
+
+/** Admins can remove anyone but themselves, managers only regular members. */
+function memberRemoverIds({
+	member,
+	adminIds,
+	managerIds,
+}: {
+	member: { id: number; role: Tables["AssociationMember"]["role"] };
+	adminIds: Array<number>;
+	managerIds: Array<number>;
+}) {
+	const removerIds =
+		member.role === "ADMIN"
+			? []
+			: member.role === "MANAGER"
+				? adminIds
+				: [...adminIds, ...managerIds];
+
+	return removerIds.filter((id) => id !== member.id);
 }
 
 const DEFAULT_VIRTUAL_ASSOCIATIONS: Array<AssociationVirtualIdentifier> = [
@@ -191,6 +231,23 @@ export function insertMember({
 		.execute();
 }
 
+export function updateMemberRole({
+	associationId,
+	userId,
+	role,
+}: {
+	associationId: number;
+	userId: number;
+	role: Tables["AssociationMember"]["role"];
+}) {
+	return db
+		.updateTable("AssociationMember")
+		.set({ role })
+		.where("associationId", "=", associationId)
+		.where("userId", "=", userId)
+		.execute();
+}
+
 export function deleteMember({
 	associationId,
 	userId,
@@ -203,6 +260,34 @@ export function deleteMember({
 		.where("associationId", "=", associationId)
 		.where("userId", "=", userId)
 		.execute();
+}
+
+/** Removes the member and, when they were the admin, promotes `newAdminUserId` in their place. */
+export function handleMemberLeaving({
+	associationId,
+	userId,
+	newAdminUserId,
+}: {
+	associationId: number;
+	userId: number;
+	newAdminUserId?: number;
+}) {
+	return db.transaction().execute(async (trx) => {
+		await trx
+			.deleteFrom("AssociationMember")
+			.where("associationId", "=", associationId)
+			.where("userId", "=", userId)
+			.execute();
+
+		if (typeof newAdminUserId === "number") {
+			await trx
+				.updateTable("AssociationMember")
+				.set({ role: "ADMIN" })
+				.where("associationId", "=", associationId)
+				.where("userId", "=", newAdminUserId)
+				.execute();
+		}
+	});
 }
 
 export function deleteById(associationId: number) {

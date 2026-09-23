@@ -1,5 +1,5 @@
 import type { LoaderFunctionArgs } from "react-router";
-import type { RouteChatRoom } from "~/features/chat/chat-types";
+import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -54,10 +54,13 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		})),
 		post,
 		// staff observers chat alongside the participants
-		chatRooms: (post.chatRoomId !== null &&
-		(participantIds.includes(user.id) || user.roles.includes("STAFF"))
-			? [{ roomId: post.chatRoomId, autoOpen: true }]
-			: []) satisfies RouteChatRoom[],
+		chatRooms: await RouteChatRooms.resolve(
+			user,
+			post.chatRoomId !== null &&
+				(participantIds.includes(user.id) || user.roles.includes("STAFF"))
+				? [{ roomId: post.chatRoomId, autoOpen: true }]
+				: [],
+		),
 		anyUserPrefersNoScreen,
 		mapByMap,
 	};

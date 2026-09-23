@@ -8,6 +8,7 @@ import * as R from "remeda";
 import * as v from "valibot";
 import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { FilterBar } from "~/components/filter-bar/FilterBar";
 import { LocaleTime } from "~/components/LocaleTime";
 import { associationsPage } from "~/features/associations/associations-urls";
@@ -197,6 +198,35 @@ function Filters() {
 		setParams({ ...filters, ...partial, useDefaults: false });
 	};
 
+	const associationPill =
+		data.associationOptions.length > 0
+			? [
+					{
+						key: "association",
+						name: t("scrims:filters.association"),
+						formattedValue: data.associationFilter?.name ?? null,
+						onRemove: () => setParams({ associationId: null }),
+						testId: "association-filter",
+						popover: (
+							<SendouSelect
+								aria-label={t("scrims:filters.association")}
+								items={data.associationOptions}
+								selectedKey={data.associationFilter?.id ?? null}
+								onSelectionChange={(key) =>
+									setParams({ associationId: key as number | null })
+								}
+							>
+								{({ id, name }) => (
+									<SendouSelectItem key={id} id={id}>
+										{name}
+									</SendouSelectItem>
+								)}
+							</SendouSelect>
+						),
+					},
+				]
+			: [];
+
 	return (
 		<FilterBar
 			pills={[
@@ -251,14 +281,17 @@ function Filters() {
 						/>
 					),
 				},
+				...associationPill,
 			]}
 			onReset={
-				!Scrim.filtersAreDefault(filters)
+				!Scrim.filtersAreDefault(filters) || data.associationFilter
 					? () =>
-							writeFilters({
+							setParams({
 								weekdayTimes: null,
 								weekendTimes: null,
 								divs: null,
+								associationId: null,
+								useDefaults: false,
 							})
 					: undefined
 			}

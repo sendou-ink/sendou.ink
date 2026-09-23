@@ -1,7 +1,18 @@
 .item {
+	display: grid;
 	min-height: 50px;
 	cursor: move;
 	touch-action: none;
 	user-select: none;
 	-webkit-user-select: none;
+}
+
+.hitArea {
+	position: relative;
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: calc(var(--tier-list-item-gap) / -2);
+	}
 }

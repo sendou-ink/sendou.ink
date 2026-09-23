@@ -1,6 +1,6 @@
 import clsx from "clsx";
 import { ChevronDown } from "lucide-react";
-import { useState } from "react";
+import { type PointerEvent, useState } from "react";
 import { useTranslation } from "react-i18next";
 import { Form, Link, useLocation } from "react-router";
 import { Config } from "~/config";
@@ -75,19 +75,48 @@ const NAV_CATEGORIES = [
 	},
 ] as const;
 
+interface MenuOpenState {
+	isOpen: boolean;
+	anotherIsOpen: boolean;
+	onOpenChange: (open: boolean) => void;
+}
+
 export function TopNavMenus() {
+	const [openMenu, setOpenMenu] = useState<string | null>(null);
+
+	const openStateOf = (name: string): MenuOpenState => ({
+		isOpen: openMenu === name,
+		anotherIsOpen: openMenu !== null && openMenu !== name,
+		onOpenChange: (open) =>
+			setOpenMenu((current) => {
+				if (open) return name;
+				return current === name ? null : current;
+			}),
+	});
+
 	return (
 		<nav className={styles.container}>
 			{NAV_CATEGORIES.map((category) => (
-				<CategoryMenu key={category.name} category={category} />
+				<CategoryMenu
+					key={category.name}
+					category={category}
+					openState={openStateOf(category.name)}
+				/>
 			))}
-			{process.env.NODE_ENV === "development" ? <DevMenu /> : null}
+			{process.env.NODE_ENV === "development" ? (
+				<DevMenu openState={openStateOf("dev")} />
+			) : null}
 		</nav>
 	);
 }
 
-function DevMenu() {
-	const [isOpen, setIsOpen] = useState(false);
+function takeOverOnHover(openState: MenuOpenState, event: PointerEvent) {
+	if (openState.anotherIsOpen && event.pointerType !== "touch") {
+		openState.onOpenChange(true);
+	}
+}
+
+function DevMenu({ openState }: { openState: MenuOpenState }) {
 	const [isPreviewSuppressed, setIsPreviewSuppressed] = useState(false);
 	const location = useLocation();
 	const returnTo = `${location.pathname}${location.search}`;
@@ -99,7 +128,10 @@ function DevMenu() {
 					<button
 						type="button"
 						className={styles.menuButton}
-						onPointerEnter={() => setIsPreviewSuppressed(false)}
+						onPointerEnter={(event) => {
+							setIsPreviewSuppressed(false);
+							takeOverOnHover(openState, event);
+						}}
 					>
 						Dev
 						<ChevronDown className={styles.menuButtonChevron} />
@@ -107,8 +139,8 @@ function DevMenu() {
 				}
 				popoverClassName={styles.menuPopover}
 				placement="bottom start"
-				isOpen={isOpen}
-				onOpenChange={setIsOpen}
+				isOpen={openState.isOpen}
+				onOpenChange={openState.onOpenChange}
 				eager
 			>
 				<div className={styles.menuContent}>
@@ -141,7 +173,7 @@ function DevMenu() {
 							to={item.url}
 							className={styles.menuItem}
 							onClick={() => {
-								setIsOpen(false);
+								openState.onOpenChange(false);
 								setIsPreviewSuppressed(true);
 							}}
 						>
@@ -156,7 +188,7 @@ function DevMenu() {
 					))}
 				</div>
 			</SendouPopover>
-			{!isOpen && !isPreviewSuppressed ? (
+			{!openState.isOpen && !isPreviewSuppressed ? (
 				<div className={styles.preview}>
 					{DEV_IMPERSONATE_ITEMS.map((item) => (
 						<Form
@@ -199,11 +231,12 @@ function DevMenu() {
 
 function CategoryMenu({
 	category,
+	openState,
 }: {
 	category: (typeof NAV_CATEGORIES)[number];
+	openState: MenuOpenState;
 }) {
 	const { t } = useTranslation(["common", "front"]);
-	const [isOpen, setIsOpen] = useState(false);
 	const [isPreviewSuppressed, setIsPreviewSuppressed] = useState(false);
 	const user = useUser();
 	const isStaff = user?.roles.includes("STAFF") ?? false;
@@ -222,7 +255,10 @@ function CategoryMenu({
 					<button
 						type="button"
 						className={styles.menuButton}
-						onPointerEnter={() => setIsPreviewSuppressed(false)}
+						onPointerEnter={(event) => {
+							setIsPreviewSuppressed(false);
+							takeOverOnHover(openState, event);
+						}}
 					>
 						{t(`front:nav.${category.name}`)}
 						<ChevronDown className={styles.menuButtonChevron} />
@@ -230,8 +266,8 @@ function CategoryMenu({
 				}
 				popoverClassName={styles.menuPopover}
 				placement="bottom start"
-				isOpen={isOpen}
-				onOpenChange={setIsOpen}
+				isOpen={openState.isOpen}
+				onOpenChange={openState.onOpenChange}
 				eager
 			>
 				<div className={styles.menuContent}>
@@ -242,7 +278,7 @@ function CategoryMenu({
 							prefetch="intent"
 							className={styles.menuItem}
 							onClick={() => {
-								setIsOpen(false);
+								openState.onOpenChange(false);
 								setIsPreviewSuppressed(true);
 							}}
 						>
@@ -257,7 +293,7 @@ function CategoryMenu({
 					))}
 				</div>
 			</SendouPopover>
-			{!isOpen && !isPreviewSuppressed ? (
+			{!openState.isOpen && !isPreviewSuppressed ? (
 				<div className={styles.preview}>
 					{visibleItems.map((item) => (
 						<Link

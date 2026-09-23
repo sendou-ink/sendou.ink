@@ -815,15 +815,7 @@ async function updateTournamentTables(
 
 	// the teams' picks were made against the old settings, so they pick again
 	if (changedMapPickingStyle || changedMapPool) {
-		await trx
-			.deleteFrom("MapPoolMap")
-			.where("tournamentTeamId", "in", (eb) =>
-				eb
-					.selectFrom("TournamentTeam")
-					.select("id")
-					.where("tournamentId", "=", tournamentId),
-			)
-			.execute();
+		await resetTeamMapPicks({ tournamentId, args }, trx);
 	}
 
 	if (
@@ -839,6 +831,47 @@ async function updateTournamentTables(
 			.where("tournamentId", "=", tournamentId)
 			.execute();
 	}
+}
+
+/**
+ * Deletes every team's map picks. Teams that had picked are also checked out when picks are still
+ * a check-in requirement, as otherwise they would enter the bracket without a pool.
+ */
+async function resetTeamMapPicks(
+	{
+		tournamentId,
+		args,
+	}: { tournamentId: number; args: Pick<UpdateArgs, "mapPickingStyle"> },
+	trx: Transaction<DB>,
+) {
+	// before the picks go, as the teams to check out are the ones that have them
+	if (args.mapPickingStyle !== "TO") {
+		await trx
+			.deleteFrom("TournamentTeamCheckIn")
+			.where("bracketIdx", "is", null)
+			.where("tournamentTeamId", "in", (eb) =>
+				eb
+					.selectFrom("MapPoolMap")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"MapPoolMap.tournamentTeamId",
+					)
+					.select("TournamentTeam.id")
+					.where("TournamentTeam.tournamentId", "=", tournamentId),
+			)
+			.execute();
+	}
+
+	await trx
+		.deleteFrom("MapPoolMap")
+		.where("tournamentTeamId", "in", (eb) =>
+			eb
+				.selectFrom("TournamentTeam")
+				.select("id")
+				.where("tournamentId", "=", tournamentId),
+		)
+		.execute();
 }
 
 function teamPickSettings(

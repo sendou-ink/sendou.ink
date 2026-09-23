@@ -1,20 +1,22 @@
-import { Check, Clipboard, Trash } from "lucide-react";
+import { Check, Clipboard, Star, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type MetaFunction, Outlet, useLoaderData } from "react-router";
 import { ActionButton } from "~/components/ActionButton";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { FormWithConfirm } from "~/components/FormWithConfirm";
 import { Label } from "~/components/Label";
 import { Main } from "~/components/Main";
 import { UserLink } from "~/components/UserLink";
 import { action } from "~/features/associations/actions/associations.server";
 import { associationsPage } from "~/features/associations/associations-urls";
+import * as Association from "~/features/associations/core/Association";
 import {
 	type AssociationsLoaderData,
 	loader,
 } from "~/features/associations/loaders/associations.server";
 import { useUser } from "~/features/auth/core/user";
+import { scrimsByAssociationPage } from "~/features/scrims/scrims-urls";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
 import { useHasPermission } from "~/modules/permissions/hooks";
 import { metaTags } from "~/utils/remix";
@@ -45,7 +47,7 @@ export default function AssociationsPage() {
 			</div>
 			<JoinForm />
 			{data.associations.map((association) => (
-				<Association key={association.id} association={association} />
+				<AssociationSection key={association.id} association={association} />
 			))}
 		</Main>
 	);
@@ -89,7 +91,7 @@ function JoinForm() {
 	);
 }
 
-function Association({
+function AssociationSection({
 	association,
 }: {
 	association: AssociationsLoaderData["associations"][number];
@@ -97,6 +99,9 @@ function Association({
 	const { t } = useTranslation(["common", "scrims"]);
 	const user = useUser();
 	const canManage = useHasPermission(association, "MANAGE");
+	const newAdmin = canManage
+		? Association.resolveNewAdmin(association.members ?? [])
+		: null;
 
 	return (
 		<section>
@@ -129,38 +134,58 @@ function Association({
 						?.username,
 				})}
 			</div>
-			{!canManage ? (
-				<FormWithConfirm
-					dialogHeading={t("scrims:associations.leave.title", {
-						name: association.name,
-					})}
-					fields={[
-						["_action", "LEAVE_ASSOCIATION"],
-						["associationId", association.id],
-					]}
-					submitButtonText={t("scrims:associations.leave.action")}
+			<div className="stack horizontal sm items-center my-2">
+				<LinkButton
+					to={scrimsByAssociationPage(association.id)}
+					variant="outlined"
+					size="small"
 				>
-					<SendouButton
-						variant="minimal-destructive"
-						type="submit"
-						size="small"
-						className="my-2"
-						data-testid="leave-team-button"
+					{t("scrims:associations.viewScrims")}
+				</LinkButton>
+				{!canManage || newAdmin ? (
+					<FormWithConfirm
+						dialogHeading={
+							newAdmin
+								? t("scrims:associations.leave.titleWithNewAdmin", {
+										name: association.name,
+										username: newAdmin.username,
+									})
+								: t("scrims:associations.leave.title", {
+										name: association.name,
+									})
+						}
+						fields={[
+							["_action", "LEAVE_ASSOCIATION"],
+							["associationId", association.id],
+						]}
+						submitButtonText={t("scrims:associations.leave.action")}
 					>
-						{t("scrims:associations.leave.action")}
-					</SendouButton>
-				</FormWithConfirm>
-			) : null}
+						<SendouButton
+							variant="minimal-destructive"
+							type="submit"
+							size="small"
+							data-testid="leave-team-button"
+						>
+							{t("scrims:associations.leave.action")}
+						</SendouButton>
+					</FormWithConfirm>
+				) : null}
+			</div>
 			<div className="stack sm mt-4">
 				{association.members?.map((member) => (
 					<AssociationMember
 						key={member.id}
 						member={member}
 						associationId={association.id}
-						showControls={canManage && member.id !== user?.id}
+						canStar={canManage && member.id !== user?.id}
 					/>
 				))}
 			</div>
+			{canManage ? (
+				<div className="text-xs text-lighter mt-2">
+					{t("scrims:associations.manager.explanation")}
+				</div>
+			) : null}
 			{association.inviteCode ? (
 				<AssociationInviteCodeActions
 					associationId={association.id}
@@ -213,40 +238,80 @@ function AssociationInviteCodeActions({
 function AssociationMember({
 	member,
 	associationId,
-	showControls,
+	canStar,
 }: {
 	member: NonNullable<
 		AssociationsLoaderData["associations"][number]["members"]
 	>[number];
 	associationId: number;
-	showControls?: boolean;
+	canStar: boolean;
 }) {
 	const { t } = useTranslation(["common", "scrims"]);
+	const canRemove = useHasPermission(member, "REMOVE");
 
 	return (
 		<div className="stack horizontal sm items-center justify-between">
-			<UserLink user={member} />
-			{showControls ? (
-				<FormWithConfirm
-					dialogHeading={t("scrims:associations.removeMember.title", {
-						username: member.username,
-					})}
-					submitButtonText={t("common:actions.remove")}
-					fields={[
-						["userId", member.id],
-						["associationId", associationId],
-						["_action", "REMOVE_MEMBER"],
-					]}
-				>
-					<SendouButton
-						shape="square"
-						icon={<Trash className="small-icon" />}
-						className="small-text"
-						variant="minimal-destructive"
-						size="small"
-						type="submit"
+			<div className="stack horizontal sm items-center">
+				<UserLink user={member} />
+				{!canStar && member.role === "MANAGER" ? (
+					<Star
+						className="small-icon"
+						fill="currentColor"
+						role="img"
+						aria-label={t("scrims:associations.manager.label")}
 					/>
-				</FormWithConfirm>
+				) : null}
+			</div>
+			{canStar || canRemove ? (
+				<div className="stack horizontal sm items-center">
+					{canStar ? (
+						<ActionButton
+							schema={associationsPageActionSchema}
+							action={
+								member.role === "MANAGER" ? "REMOVE_MANAGER" : "ADD_MANAGER"
+							}
+							fields={{ userId: member.id, associationId }}
+							shape="square"
+							variant="minimal"
+							size="small"
+							className="small-text"
+							icon={
+								<Star
+									className="small-icon"
+									fill={member.role === "MANAGER" ? "currentColor" : "none"}
+								/>
+							}
+							aria-label={t(
+								member.role === "MANAGER"
+									? "scrims:associations.manager.remove"
+									: "scrims:associations.manager.add",
+								{ username: member.username },
+							)}
+						/>
+					) : null}
+					{canRemove ? (
+						<FormWithConfirm
+							dialogHeading={t("scrims:associations.removeMember.title", {
+								username: member.username,
+							})}
+							submitButtonText={t("common:actions.remove")}
+							fields={[
+								["userId", member.id],
+								["associationId", associationId],
+								["_action", "REMOVE_MEMBER"],
+							]}
+						>
+							<SendouButton
+								shape="square"
+								icon={<Trash className="small-icon" />}
+								className="small-text"
+								variant="minimal-destructive"
+								size="small"
+								type="submit"
+							/>
+						</FormWithConfirm>
+					) : null}
+				</div>
 			) : null}
 		</div>
 	);

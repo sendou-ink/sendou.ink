@@ -1,8 +1,8 @@
 import type {
 	BracketData,
-	GroupData,
 	MatchData,
 	RoundData,
+	RoundSection,
 	StageData,
 } from "../types";
 
@@ -10,11 +10,9 @@ import type {
 export class Store {
 	readonly data: BracketData;
 	private readonly stagesById: Map<number, StageData>;
-	private readonly groupsById: Map<number, GroupData>;
 	private readonly roundsById: Map<number, RoundData>;
 	private readonly matchesById: Map<number, MatchData>;
-	private readonly groupsByStageId: Map<number, GroupData[]>;
-	private readonly roundsByGroupId: Map<number, RoundData[]>;
+	private readonly roundsBySection: Map<string, RoundData[]>;
 	private readonly matchesByRoundId: Map<number, MatchData[]>;
 	private readonly changedMatchIds = new Set<number>();
 
@@ -22,17 +20,11 @@ export class Store {
 		this.data = structuredClone(data);
 
 		this.stagesById = indexById(this.data.stage);
-		this.groupsById = indexById(this.data.group);
 		this.roundsById = indexById(this.data.round);
 		this.matchesById = indexById(this.data.match);
 
-		this.groupsByStageId = groupByKey(
-			this.data.group,
-			(group) => group.stageId,
-		);
-		this.roundsByGroupId = groupByKey(
-			this.data.round,
-			(round) => round.groupId,
+		this.roundsBySection = groupByKey(this.data.round, (round) =>
+			sectionKey(round.groupId, round.section),
 		);
 		this.matchesByRoundId = groupByKey(
 			this.data.match,
@@ -44,10 +36,6 @@ export class Store {
 		return this.stagesById.get(id) ?? null;
 	}
 
-	groupById(id: number): GroupData | null {
-		return this.groupsById.get(id) ?? null;
-	}
-
 	roundById(id: number): RoundData | null {
 		return this.roundsById.get(id) ?? null;
 	}
@@ -56,13 +44,13 @@ export class Store {
 		return this.matchesById.get(id) ?? null;
 	}
 
-	groupByNumber(stageId: number, groupNumber: number): GroupData | null {
-		const groups = this.groupsByStageId.get(stageId);
-		return groups?.find((group) => group.number === groupNumber) ?? null;
-	}
-
-	roundByNumber(groupId: number, roundNumber: number): RoundData | null {
-		const rounds = this.roundsByGroupId.get(groupId);
+	/** Round of a group's section, e.g. round 2 of the losers bracket. */
+	roundByNumber(
+		groupId: number,
+		section: RoundSection | null,
+		roundNumber: number,
+	): RoundData | null {
+		const rounds = this.roundsBySection.get(sectionKey(groupId, section));
 		return rounds?.find((round) => round.number === roundNumber) ?? null;
 	}
 
@@ -71,8 +59,8 @@ export class Store {
 		return matches?.find((match) => match.number === matchNumber) ?? null;
 	}
 
-	roundCountInGroup(groupId: number): number {
-		return this.roundsByGroupId.get(groupId)?.length ?? 0;
+	roundCountInSection(groupId: number, section: RoundSection | null): number {
+		return this.roundsBySection.get(sectionKey(groupId, section))?.length ?? 0;
 	}
 
 	matchCountInRound(roundId: number): number {
@@ -95,12 +83,16 @@ export class Store {
 	}
 }
 
+function sectionKey(groupId: number, section: RoundSection | null) {
+	return `${groupId}-${section}`;
+}
+
 function indexById<T extends { id: number }>(rows: T[]): Map<number, T> {
 	return new Map(rows.map((row) => [row.id, row]));
 }
 
-function groupByKey<T>(rows: T[], key: (row: T) => number): Map<number, T[]> {
-	const result = new Map<number, T[]>();
+function groupByKey<T, K>(rows: T[], key: (row: T) => K): Map<K, T[]> {
+	const result = new Map<K, T[]>();
 
 	for (const row of rows) {
 		const existing = result.get(key(row));

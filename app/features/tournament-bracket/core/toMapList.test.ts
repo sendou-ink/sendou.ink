@@ -8,6 +8,7 @@ import {
 	type BracketMapCounts,
 	type GenerateTournamentRoundMaplistArgs,
 	generateTournamentRoundMaplist,
+	roundSetKey,
 } from "./toMapList";
 
 const MAPS_PER_ROUND = 3;
@@ -18,12 +19,22 @@ const rankedPool = SENDOUQ_MAP_POOL.stageModePairs.filter(
 
 /** Rounds of the given groups, ids running from 1 in group order. */
 const roundsOf = (
-	groups: Array<{ groupId: number; roundCount: number }>,
+	groups: Array<{
+		groupId: number;
+		roundCount: number;
+		section?: RoundData["section"];
+	}>,
 ): RoundData[] => {
 	const rounds: RoundData[] = [];
-	for (const { groupId, roundCount } of groups) {
+	for (const { groupId, roundCount, section = null } of groups) {
 		for (let number = 1; number <= roundCount; number++) {
-			rounds.push({ id: rounds.length + 1, stageId: 1, groupId, number });
+			rounds.push({
+				id: rounds.length + 1,
+				stageId: 1,
+				groupId,
+				section,
+				number,
+			});
 		}
 	}
 
@@ -33,15 +44,17 @@ const roundsOf = (
 const mapCountsOf = (rounds: RoundData[]): BracketMapCounts => {
 	const counts: BracketMapCounts = new Map();
 	for (const round of rounds) {
-		const group = counts.get(round.groupId) ?? new Map();
-		group.set(round.number, { count: MAPS_PER_ROUND, type: "BEST_OF" });
-		counts.set(round.groupId, group);
+		const roundSet = counts.get(roundSetKey(round)) ?? new Map();
+		roundSet.set(round.number, { count: MAPS_PER_ROUND, type: "BEST_OF" });
+		counts.set(roundSetKey(round), roundSet);
 	}
 
 	return counts;
 };
 
-const singleGroupRounds = roundsOf([{ groupId: 0, roundCount: 3 }]);
+const singleGroupRounds = roundsOf([
+	{ groupId: 0, roundCount: 3, section: "winners" },
+]);
 
 const generate = (
 	overrides: Partial<GenerateTournamentRoundMaplistArgs> & {

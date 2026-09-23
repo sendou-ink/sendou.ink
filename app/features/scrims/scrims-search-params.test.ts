@@ -25,6 +25,7 @@ describe("scrimsSearchParams", () => {
 			],
 			pendingRequestPostId: [null, 1, 987654],
 			useDefaults: [true, false],
+			associationId: [null, 1, 42],
 		});
 	});
 
@@ -44,6 +45,12 @@ describe("scrimsSearchParams", () => {
 			[""],
 		]);
 		assertDecodesToDefault(scrimsSearchParams, "pendingRequestPostId", [
+			["abc"],
+			["0"],
+			["-2"],
+			["1.5"],
+		]);
+		assertDecodesToDefault(scrimsSearchParams, "associationId", [
 			["abc"],
 			["0"],
 			["-2"],

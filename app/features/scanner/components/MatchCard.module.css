@@ -205,7 +205,7 @@
 	padding: 2px;
 
 	&.pov {
-		outline: 2px solid var(--color-text-accent);
+		outline: 2px solid var(--color-fg-accent);
 		outline-offset: 1px;
 	}
 }
@@ -257,7 +257,7 @@
 	cursor: pointer;
 
 	&:hover {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 
 	&:focus-visible {
@@ -423,7 +423,7 @@ button.expand {
 
 .streak {
 	font-weight: var(--weight-bold);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .playSlot {
@@ -440,7 +440,7 @@ button.expand {
 	border: var(--border-style);
 	border-radius: var(--radius-full);
 	background: var(--color-bg);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	cursor: pointer;
 
 	&:hover {

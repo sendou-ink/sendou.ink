@@ -155,13 +155,20 @@ const LATE_FIRST_CONNECT_MS = 2_000;
 let catchUps = 0;
 let triggerCatchUp: () => void = () => {};
 
-function CatchUpHarness({ enabled }: { enabled: boolean }) {
+function CatchUpHarness({
+	enabled,
+	heldSince,
+}: {
+	enabled: boolean;
+	heldSince?: number;
+}) {
 	useEventsConnection(true);
 	triggerCatchUp = useEventStreamCatchUp({
 		enabled,
 		onCatchUp: () => {
 			catchUps++;
 		},
+		heldSince,
 	});
 
 	return null;
@@ -239,6 +246,17 @@ describe("useEventStreamCatchUp", () => {
 		await mountConnecting();
 
 		await advanceTimers(LATE_FIRST_CONNECT_MS);
+		await helloArrives();
+		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
+
+		expect(catchUps).toBe(1);
+	});
+
+	test("catches up on a first connect landing long after the data held was current", async () => {
+		await render(
+			<CatchUpHarness enabled heldSince={Date.now() - LATE_FIRST_CONNECT_MS} />,
+		);
+		await advanceTimers();
 		await helloArrives();
 		await advanceTimers(CATCH_UP_MAX_JITTER_MS);
 

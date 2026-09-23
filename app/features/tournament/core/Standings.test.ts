@@ -615,12 +615,14 @@ function singleEliminationWithPendingThirdPlaceMatch() {
 		seeding: [1, 2, 3, 4, 5, 6, 7, 8],
 		settings: { consolationFinal: true },
 	});
-	const thirdPlaceGroupId = Math.max(...data.group.map((group) => group.id));
+	const thirdPlaceRoundId = data.round.find(
+		(round) => round.section === "finals",
+	)!.id;
 
 	while (true) {
 		const pending = data.match.find(
 			(match) =>
-				match.groupId !== thirdPlaceGroupId &&
+				match.roundId !== thirdPlaceRoundId &&
 				typeof match.opponent1?.id === "number" &&
 				typeof match.opponent2?.id === "number" &&
 				!match.winnerSide,

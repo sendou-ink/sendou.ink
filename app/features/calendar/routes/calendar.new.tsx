@@ -601,13 +601,18 @@ function TeamPickCountInputs({
 								value={count}
 								onChange={(e) =>
 									onChange(
-										pickedModes.map((m) => ({
-											mode: m,
-											count:
+										// an emptied input drops the entry so the mode falls back to the default count
+										pickedModes.flatMap((m) => {
+											const newCount =
 												m === mode
-													? Number(e.target.value)
-													: (value.find((c) => c.mode === m)?.count ?? 1),
-										})),
+													? Number.parseInt(e.target.value, 10)
+													: value.find((c) => c.mode === m)?.count;
+
+											return typeof newCount === "number" &&
+												!Number.isNaN(newCount)
+												? [{ mode: m, count: newCount }]
+												: [];
+										}),
 										mode,
 									)
 								}

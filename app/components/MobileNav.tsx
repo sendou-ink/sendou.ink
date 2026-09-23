@@ -22,6 +22,7 @@ import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
+import { useScrollLock } from "~/hooks/useScrollLock";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
 import {
@@ -39,7 +40,7 @@ import { EventsList } from "./EventsList";
 import { LinkButton } from "./elements/Button";
 import { isOwnToggle } from "./elements/Popover";
 import { Image } from "./Image";
-import { LazyChatSidebar } from "./layout/LazyChatSidebar";
+import { ChatSidebar } from "./layout/ChatSidebar";
 import { LogInButtonContainer } from "./layout/LogInButtonContainer";
 import {
 	NotificationContent,
@@ -79,6 +80,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		PANEL_TYPES.map((panel) => [panel, panelDomId(uid, panel)]),
 	) as PanelIds;
 
+	useScrollLock(activePanel !== null);
 	useClosePopoversOnNavigation(rootRef);
 
 	const chatContextRef = React.useRef(chatContext);
@@ -649,7 +651,7 @@ function ChatPanel({
 		>
 			<div className={styles.panelDialog}>
 				{isOpen ? (
-					<LazyChatSidebar onClose={() => panelRef.current?.hidePopover()} />
+					<ChatSidebar onClose={() => panelRef.current?.hidePopover()} />
 				) : null}
 			</div>
 		</div>

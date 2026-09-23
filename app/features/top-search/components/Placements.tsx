@@ -11,18 +11,16 @@ import {
 	topSearchPage,
 	topSearchPlayerPage,
 } from "~/features/top-search/top-search-urls";
-import { brandImageUrl, modeImageUrl } from "~/utils/urls";
+import { modeImageUrl } from "~/utils/urls";
 import { monthYearToSpan } from "../top-search-utils";
 import type * as XRankPlacementRepository from "../XRankPlacementRepository.server";
+import { DivisionImage } from "./DivisionImage";
 import styles from "./Placements.module.css";
 
 interface PlacementsTableProps {
 	placements: Array<XRankPlacementRepository.FindPlacement>;
 	type?: "PLAYER_NAME" | "MODE_INFO";
 }
-
-const TENTATEK_BRAND_ID = "B10";
-const TAKOROKA_BRAND_ID = "B11";
 
 export function PlacementsTable({
 	placements,
@@ -47,19 +45,14 @@ export function PlacementsTable({
 						{type === "MODE_INFO" ? (
 							<>
 								<div className={styles.tableMode}>
-									<Image
+									<DivisionImage
+										region={placement.region}
 										alt={
 											placement.region === "WEST"
 												? "Tentatek Division"
 												: "Takoroka Division"
 										}
-										path={brandImageUrl(
-											placement.region === "WEST"
-												? TENTATEK_BRAND_ID
-												: TAKOROKA_BRAND_ID,
-										)}
-										width={24}
-										height={24}
+										size={24}
 									/>
 								</div>
 

@@ -24,7 +24,10 @@ import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import { languagesUnified } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
-import { finishUpdateIfUnmoved } from "~/utils/view-transition";
+import {
+	finishUpdateIfUnmoved,
+	usePageViewTransitionClass,
+} from "~/utils/view-transition";
 import {
 	lookingSchema,
 	updateGroupFormSchema,
@@ -182,10 +185,12 @@ function LFGGroupCardContainer({
 	isOwnGroup: boolean;
 	children: React.ReactNode;
 }) {
+	const updateClass = usePageViewTransitionClass("card-update");
+
 	if (isOwnGroup) return <>{children}</>;
 
 	return (
-		<ViewTransition update="card-update" onUpdate={finishUpdateIfUnmoved}>
+		<ViewTransition update={updateClass} onUpdate={finishUpdateIfUnmoved}>
 			{children}
 		</ViewTransition>
 	);

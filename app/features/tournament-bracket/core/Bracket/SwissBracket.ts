@@ -7,7 +7,7 @@ import { invariant } from "~/utils/invariant";
 import { logger } from "~/utils/logger";
 import { cutToNDecimalPlaces } from "../../../../utils/number";
 import { calculateTeamStatus } from "../engine/swiss/team-status";
-import type { BracketMapCounts } from "../toMapList";
+import { type BracketMapCounts, roundSetKey } from "../toMapList";
 import { Bracket, type Standing, type TeamTrackRecord } from "./Bracket";
 
 export class SwissBracket extends Bracket {
@@ -496,13 +496,12 @@ export class SwissBracket extends Bracket {
 		const result: BracketMapCounts = new Map();
 
 		for (const round of data.round) {
-			if (!result.get(round.groupId)) {
-				result.set(round.groupId, new Map());
+			const key = roundSetKey(round);
+			if (!result.get(key)) {
+				result.set(key, new Map());
 			}
 
-			result
-				.get(round.groupId)!
-				.set(round.number, { count: 3, type: "BEST_OF" });
+			result.get(key)!.set(round.number, { count: 3, type: "BEST_OF" });
 		}
 
 		return result;

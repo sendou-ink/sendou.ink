@@ -1,13 +1,58 @@
 import * as React from "react";
 import { createMemoryRouter, RouterProvider } from "react-router";
-import { describe, expect, test, vi } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
+import { userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
+import type { EventsReadyState } from "~/features/events/events-client";
 import type { ChatMessageAuthor, ClientChatMessage } from "../chat-types";
 import { Chat } from "./Chat";
+
+const CONNECTION_STATUS_GRACE_MS = 1_500;
 
 vi.mock("~/features/auth/core/user", () => ({
 	useUser: () => null,
 }));
+
+// the composer only sends over a live event stream, which the tests have none of
+const readyStateStore = vi.hoisted(() => {
+	let current = "CONNECTED";
+	const listeners = new Set<() => void>();
+
+	return {
+		get: () => current,
+		set: (next: string) => {
+			current = next;
+			for (const listener of listeners) listener();
+		},
+		subscribe: (listener: () => void) => {
+			listeners.add(listener);
+			return () => listeners.delete(listener);
+		},
+	};
+});
+
+vi.mock("~/features/events/events-hooks", async (importOriginal) => {
+	const react = await import("react");
+
+	return {
+		...(await importOriginal<
+			typeof import("~/features/events/events-hooks")
+		>()),
+		useEventsReadyState: () =>
+			react.useSyncExternalStore(
+				readyStateStore.subscribe,
+				readyStateStore.get,
+			),
+	};
+});
+
+const setReadyState = (next: EventsReadyState) => readyStateStore.set(next);
+
+const wait = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
+
+afterEach(() => {
+	setReadyState("CONNECTED");
+});
 
 const ALICE: ChatMessageAuthor = {
 	id: 1,
@@ -156,6 +201,32 @@ describe("Chat", () => {
 		expect(screen.getByRole("textbox").elements()).toHaveLength(0);
 	});
 
+	test("sends the draft on enter and clears the composer", async () => {
+		const onSend = vi.fn();
+		const screen = await renderChat([createMessage()], { onSend });
+
+		const composer = screen.getByPlaceholder("Press enter to send");
+		await composer.fill("hello there");
+		await userEvent.keyboard("{Enter}");
+
+		expect(onSend).toHaveBeenCalledWith({
+			publicId: expect.any(String),
+			contents: "hello there",
+		});
+		await expect.element(composer).toHaveValue("");
+	});
+
+	test("a blank draft is not sent", async () => {
+		const onSend = vi.fn();
+		const screen = await renderChat([createMessage()], { onSend });
+
+		const composer = screen.getByPlaceholder("Press enter to send");
+		await composer.fill("   ");
+		await userEvent.keyboard("{Enter}");
+
+		expect(onSend).not.toHaveBeenCalled();
+	});
+
 	test("renders a splatnet room link with its QR code", async () => {
 		const url = "https://s.nintendo.com/av5ja/lobby";
 		const screen = await renderChat([
@@ -283,5 +354,29 @@ describe("Chat", () => {
 		await expect.element(screen.getByText("New messages")).toBeInTheDocument();
 		await new Promise((resolve) => setTimeout(resolve, 300));
 		expect(element.scrollTop).toBe(readingPosition);
+	});
+
+	test("says the stream is down only once it has been down for the grace period", async () => {
+		const screen = await renderChat([createMessage()]);
+
+		setReadyState("CLOSED");
+		await wait(CONNECTION_STATUS_GRACE_MS / 2);
+		expect(screen.getByText("Disconnected").elements()).toHaveLength(0);
+
+		await wait(CONNECTION_STATUS_GRACE_MS);
+		await expect.element(screen.getByText("Disconnected")).toBeInTheDocument();
+	});
+
+	test("never says the stream is down when it reconnects inside the grace period", async () => {
+		const screen = await renderChat([createMessage()]);
+
+		setReadyState("CONNECTING");
+		await wait(CONNECTION_STATUS_GRACE_MS / 2);
+		expect(screen.getByText("Connecting...").elements()).toHaveLength(0);
+
+		setReadyState("CONNECTED");
+		await wait(CONNECTION_STATUS_GRACE_MS * 2);
+		expect(screen.getByText("Connecting...").elements()).toHaveLength(0);
+		expect(screen.getByText("Disconnected").elements()).toHaveLength(0);
 	});
 });

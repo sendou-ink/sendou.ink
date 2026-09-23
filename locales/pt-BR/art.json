@@ -23,5 +23,7 @@
 	"forms.tags.maxReached": "Quantidade máxima de marcações atingida",
 	"delete.title": "",
 	"unlink.title": "",
-	"noArtForTag": ""
+	"noArtForTag": "",
+	"imageFailed": "",
+	"openImage": ""
 }

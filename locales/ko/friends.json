@@ -19,5 +19,7 @@
 	"view.friends": "",
 	"view.teamMembers": "",
 	"view.all": "",
-	"teamMembers.empty": ""
+	"teamMembers.empty": "",
+	"friendsList.pin": "",
+	"friendsList.unpin": ""
 }

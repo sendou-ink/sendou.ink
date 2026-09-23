@@ -53,10 +53,41 @@ export function isVisible(args: IsVisibleArgs) {
 	);
 }
 
+/** Whether the association is in the visibility at any point of its schedule, not only right now. */
+export function mentionsAssociation({
+	visibility,
+	associationId,
+}: {
+	visibility: AssociationVisibility | null;
+	associationId: number;
+}) {
+	if (!visibility) return false;
+
+	return (
+		visibility.forAssociation === associationId ||
+		(visibility.notFoundInstructions ?? []).some(
+			(instruction) => instruction.forAssociation === associationId,
+		)
+	);
+}
+
 export function isPublic(args: Omit<IsVisibleArgs, "associations">) {
 	return isVisible({
 		associations: null,
 		time: args.time,
 		visibility: args.visibility,
 	});
+}
+
+/**
+ * Who becomes the admin after the current one leaves. `null` if no manager can take over,
+ * in which case the admin can't leave. Of several managers the one with the lowest user id
+ * (the oldest account) is picked, same as team ownership passing on.
+ */
+export function resolveNewAdmin<T extends { id: number; role: string }>(
+	members: Array<T>,
+) {
+	const managers = members.filter((member) => member.role === "MANAGER");
+
+	return managers.sort((a, b) => a.id - b.id).at(0) ?? null;
 }

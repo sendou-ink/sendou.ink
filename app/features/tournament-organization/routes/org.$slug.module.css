@@ -50,7 +50,7 @@
 	& li::marker {
 		font-size: var(--font-lg);
 		font-weight: var(--weight-bold);
-		color: var(--color-accent);
+		color: var(--color-fg-accent);
 		padding-inline-end: var(--s-2);
 	}
 }

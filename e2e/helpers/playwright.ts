@@ -29,6 +29,7 @@ interface RouterProbe {
 declare global {
 	interface Window {
 		__routerProbe?: RouterProbe;
+		__scrollYAtPress?: number;
 	}
 }
 
@@ -208,8 +209,9 @@ export async function selectUser({
 
 	await comboboxButton.click();
 	await searchInput.fill(userName);
-	await expect(option).toBeVisible();
-	await page.keyboard.press("Enter");
+	// clicking rather than pressing Enter: a result is in the DOM one commit
+	// before the effect that registers it and focuses it for Enter has run
+	await option.click();
 }
 
 export async function selectTournament({
@@ -500,6 +502,57 @@ const DND_KIT_CLICK_SUPPRESSION_MS = 50;
 export async function waitForDropToSettle(page: Page) {
 	// biome-ignore lint/nursery/noPlaywrightWaitForTimeout: the suppression window has no observable end
 	await page.waitForTimeout(2 * DND_KIT_CLICK_SUPPRESSION_MS);
+}
+
+/** Drags `from` onto the center of `to` with a dnd-kit compatible stepped pointer move, then waits for the drop to settle. */
+export async function dragAndDrop(
+	page: Page,
+	{ from, to }: { from: Locator; to: Locator },
+) {
+	await from.hover();
+	await page.mouse.down();
+
+	const targetBox = await to.boundingBox();
+	if (!targetBox) {
+		throw new Error("The drop target has no bounding box");
+	}
+	// the drag & drop library only registers the drop when moved in steps
+	await page.mouse.move(
+		targetBox.x + targetBox.width / 2,
+		targetBox.y + targetBox.height / 2,
+		{ steps: 10 },
+	);
+	await page.mouse.up();
+
+	await waitForDropToSettle(page);
+}
+
+/**
+ * The scroll position the page was at when it was last pressed, for asserting that
+ * an action did not move the viewer. Playwright scrolls a click target into view
+ * itself, and a retried click force-scrolls it again, so a reading taken before the
+ * press can be stale by the time the press lands.
+ */
+export async function trackScrollYAtPress(page: Page) {
+	await page.evaluate(() => {
+		window.__scrollYAtPress = undefined;
+		document.addEventListener(
+			"pointerdown",
+			() => {
+				window.__scrollYAtPress = window.scrollY;
+			},
+			{ capture: true },
+		);
+	});
+
+	return async () => {
+		const scrollY = await page.evaluate(() => window.__scrollYAtPress);
+		if (typeof scrollY !== "number") {
+			throw new Error("The page was never pressed");
+		}
+
+		return scrollY;
+	};
 }
 
 /** Asserts the page rendered rather than the error boundary catching something. */

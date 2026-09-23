@@ -52,9 +52,11 @@ export class FriendsPage {
 		);
 	}
 
-	/** Scoped to the page content: the mobile friends panel still shows the same name for a frame after navigating here from it. */
+	/** Scoped to the page content: the mobile friends panel still shows the same name for a frame after navigating here from it. Exact, as the pin button's label names the friend too. */
 	friendButton(name: string) {
-		return this.page.getByRole("main").getByRole("button", { name });
+		return this.page
+			.getByRole("main")
+			.getByRole("button", { name, exact: true });
 	}
 
 	friend(name: string) {
@@ -67,6 +69,14 @@ export class FriendsPage {
 
 	scheduleButton(userId: number) {
 		return this.page.getByTestId(`friend-schedule-button-${userId}`);
+	}
+
+	pinButton(userId: number) {
+		return this.page.getByTestId(`friend-pin-button-${userId}`);
+	}
+
+	async togglePin(userId: number) {
+		await waitForPOSTResponse(this.page, () => this.pinButton(userId).click());
 	}
 
 	/** One day row of the open week modal, Monday being 0. */
@@ -82,8 +92,11 @@ class FriendMenu {
 	constructor(page: Page, name: string) {
 		this.page = page;
 		// scoped to the page content because the sidebar's friends section shows
-		// a button with the same name once the friendship data refreshes
-		this.trigger = page.getByRole("main").getByRole("button", { name });
+		// a button with the same name once the friendship data refreshes, exact
+		// because the pin button's label names the friend too
+		this.trigger = page
+			.getByRole("main")
+			.getByRole("button", { name, exact: true });
 	}
 
 	async deleteFriend() {
