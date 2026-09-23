@@ -138,7 +138,7 @@
 }
 
 .filteredFooter {
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-accent);
 }
 
 .canceledContainer {

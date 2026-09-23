@@ -175,7 +175,7 @@
 	height: 100%;
 
 	&:hover .checkCircle {
-		border-color: var(--color-accent-high);
+		border-color: var(--color-fill-accent);
 	}
 
 	@container (max-width: 599px) {

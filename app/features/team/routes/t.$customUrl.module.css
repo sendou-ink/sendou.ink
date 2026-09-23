@@ -18,7 +18,7 @@
 
 .bannerPlaceholder {
 	height: 6rem;
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-accent);
 }
 
 .bannerFlags {
@@ -104,8 +104,8 @@
 
 .bannerTag {
 	font-size: var(--font-sm);
-	background-color: var(--color-accent-low);
-	color: var(--color-accent);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
 	padding: var(--s-1) var(--s-1-5);
 	border-radius: var(--radius-box);
 }

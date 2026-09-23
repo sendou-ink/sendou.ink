@@ -30,7 +30,7 @@
 	}
 
 	&:focus-within .imageContainer {
-		outline: 3px solid var(--color-accent-low);
+		outline: 3px solid var(--color-bg-accent);
 	}
 }
 

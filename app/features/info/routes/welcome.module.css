@@ -18,7 +18,7 @@
 		content: "";
 		position: absolute;
 		inset: 0;
-		background-color: var(--color-second);
+		background-color: var(--color-fg-second);
 		opacity: 0.3;
 		pointer-events: none;
 	}

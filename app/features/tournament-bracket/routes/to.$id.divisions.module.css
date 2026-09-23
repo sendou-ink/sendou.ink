@@ -15,7 +15,7 @@
 	border: var(--border-style);
 
 	&:focus-visible {
-		outline: 3px solid var(--color-accent);
+		outline: 3px solid var(--color-fg-accent);
 		outline-offset: 3px;
 	}
 }
@@ -25,7 +25,7 @@
 	outline-offset: 3px;
 
 	& svg {
-		fill: var(--color-accent);
+		fill: var(--color-fg-accent);
 	}
 }
 

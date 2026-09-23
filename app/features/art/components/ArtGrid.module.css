@@ -172,7 +172,8 @@
 }
 
 .dialogTagUser {
-	background-color: var(--color-accent);
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
 }
 
 @keyframes lightbox-zoom-in {

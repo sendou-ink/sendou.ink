@@ -17,7 +17,7 @@
 	background:
 		radial-gradient(
 			ellipse 90% 45% at 50% -5%,
-			color-mix(in oklch, var(--color-accent) 25%, transparent),
+			color-mix(in oklch, var(--color-fg-accent) 25%, transparent),
 			transparent 70%
 		),
 		var(--color-bg);

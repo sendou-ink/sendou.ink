@@ -1294,7 +1294,7 @@ function ModeListRow({
 						<div className={styles.mapSelectItem}>
 							<ModeImage mode={item.id} size={20} title={item.name} />
 							<div className={styles.stagePlaceholder}>?</div>
-							<span className={clsx({ "text-accent-high": isCounterpicks })}>
+							<span className={clsx({ "text-accent": isCounterpicks })}>
 								{isCounterpicks
 									? t("tournament:pickInfo.counterpick")
 									: t("tournament:mapList.teamsPick")}
@@ -1322,7 +1322,7 @@ function MysteryRow({
 		<li className={styles.mapListRow}>
 			<div
 				className={clsx("stack horizontal items-center xs text-lighter", {
-					"text-accent-high": isCounterpicks,
+					"text-accent": isCounterpicks,
 				})}
 			>
 				<span className="text-lg">{number}.</span>

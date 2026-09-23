@@ -33,6 +33,6 @@
 }
 
 .count {
-	color: var(--color-accent-high);
+	color: var(--color-fg-accent);
 	font-size: var(--font-xs);
 }

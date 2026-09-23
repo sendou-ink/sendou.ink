@@ -14,6 +14,19 @@ The custom theme system lets Patreon supporters customize the sites colors, bord
 | `app/components/CustomThemeSelector.tsx` | UI component |
 | `app/root.tsx` | `useCustomThemeVars()` applies theme to `<html>` element |
 
+## Semantic tokens
+
+Feature code never uses the palette slots (`--color-accent`, `--color-accent-low`...) directly. Accent and secondary colors are consumed through four kinds of tokens:
+
+| Token | Role | Example |
+| ------ | ----- | -------- |
+| `--color-bg-x` | Tinted surface | Container background, highlighted row |
+| `--color-fg-x` | Foreground on surfaces | Text, icons, borders, outlines, indicator dots and bars |
+| `--color-fill-x` | Fill that holds content | Button, badge background |
+| `--color-fg-on-x` | Foreground on a fill | Button label, badge text |
+
+`--color-fg-x` is readable on the page surfaces and on `--color-bg-x`. `--color-fg-on-x` is only readable on `--color-fill-x`, so always put a fill and its foreground together.
+
 ## How colors are generated
 
 Every color slot has a designed lightness (e.g. dark mode `--color-accent-high` is 83%). `build()` then:
@@ -21,8 +34,8 @@ Every color slot has a designed lightness (e.g. dark mode `--color-accent-high` 
 1. **Lifts light slots toward the hue's cusp.** Hues like yellow are only vivid when very light, at 83% they'd be a muddy khaki. Slots with `maxCuspLift` are raised toward the lightness where the hue is at its most saturated.
 2. **Rotates dark yellow shades toward amber.** Dark yellow reads as olive, so yellow hues get their hue shifted (`SHADE_HUE_SHIFT`) the further below their cusp they are.
 3. **Boosts chroma for hues with a larger gamut.** The accent chroma is scaled by how much more chroma the hue can have than the default accent hue at that lightness (`GAMUT_BOOST`), so a yellow can be as vivid as the default blue.
-4. **Solves for contrast.** Text colors are moved lighter/darker until they have at least 4.5:1 (WCAG AA) against every surface they are shown on.
-5. **Picks the light mode fills.** `--color-fill-accent` and `--color-fill-second` (buttons, badges) are normally the same as the text color with white text on it. When a bright fill would be much more colorful (yellow, cyan...) it becomes a bright fill with dark text instead (`--_acc-fill-dark-text`, `--_second-fill-dark-text`).
+4. **Solves for contrast.** Text colors are moved lighter/darker until they have at least 4.5:1 (WCAG AA) against every surface they are shown on, including the tinted `--color-bg-accent` / `--color-bg-second` surfaces.
+5. **Picks the light mode fills.** `--color-fill-accent` and `--color-fill-second` (buttons, badges) are normally the same as the foreground color with white text on it. When a bright fill would be much more colorful (yellow, cyan...) it becomes a bright fill with dark text instead (`--_acc-fill-dark-text`, `--_second-fill-dark-text`).
 
 The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mode surfaces (`--color-base-5...7`) keep their distance from it.
 

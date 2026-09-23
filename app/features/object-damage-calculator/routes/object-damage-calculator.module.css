@@ -126,8 +126,8 @@
 
 .patch {
 	border-radius: var(--radius-selector);
-	background-color: var(--color-accent-low);
-	color: var(--color-accent-high);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding-inline: var(--s-2);

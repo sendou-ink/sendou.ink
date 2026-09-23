@@ -304,6 +304,7 @@ export function textContrastPairs(theme: CustomTheme) {
 			bg: dark.accentLow,
 		},
 		{ name: "dark fg-on-accent", fg: dark.bg, bg: dark.accentHigh },
+		{ name: "dark text on bg-accent", fg: dark.text, bg: dark.accentLow },
 		{ name: "dark fg-second", fg: dark.secondHigh, bg: dark.bgHigher },
 		{
 			name: "dark fg-second on low",
@@ -311,6 +312,7 @@ export function textContrastPairs(theme: CustomTheme) {
 			bg: dark.secondLow,
 		},
 		{ name: "dark fg-on-second", fg: dark.bg, bg: dark.secondHigh },
+		{ name: "dark text on bg-second", fg: dark.text, bg: dark.secondLow },
 		{ name: "light text", fg: light.text, bg: light.bgHigh },
 		{ name: "light text-high", fg: light.textHigh, bg: light.bg },
 		{ name: "light fg-accent", fg: light.accent, bg: light.bgHigh },
@@ -324,6 +326,12 @@ export function textContrastPairs(theme: CustomTheme) {
 			fg: light.textOnAccent,
 			bg: light.fillAccent,
 		},
+		{
+			name: "light fg-accent on bg-accent",
+			fg: light.accent,
+			bg: light.accentLow,
+		},
+		{ name: "light text on bg-accent", fg: light.text, bg: light.accentLow },
 		{ name: "light fg-second", fg: light.second, bg: light.bgHigh },
 		{
 			name: "light second-high on low",
@@ -335,6 +343,12 @@ export function textContrastPairs(theme: CustomTheme) {
 			fg: light.textOnSecond,
 			bg: light.fillSecond,
 		},
+		{
+			name: "light fg-second on bg-second",
+			fg: light.second,
+			bg: light.secondLow,
+		},
+		{ name: "light text on bg-second", fg: light.text, bg: light.secondLow },
 	].map((pair) => ({ ...pair, contrast: contrastRatio(pair.fg, pair.bg) }));
 }
 
@@ -382,7 +396,7 @@ function buildPalette({
 		ensureContrast({
 			colorAt: colorAt(ACCENT_SLOTS[4]),
 			start: lightMid,
-			against: [surfaces.light.bg, surfaces.light.bgHigh],
+			against: [surfaces.light.bg, surfaces.light.bgHigh, lightLow],
 			direction: "darker",
 		}),
 		ensureContrast({

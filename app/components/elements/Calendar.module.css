@@ -54,7 +54,7 @@
 	width: 35px;
 	height: 35px;
 	border-radius: var(--radius-field);
-	outline-color: var(--color-accent);
+	outline-color: var(--color-fg-accent);
 	border: none;
 	background: transparent;
 	color: var(--color-text);
