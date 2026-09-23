@@ -12,10 +12,10 @@ import {
 	preferencesFromRaw,
 } from "~/features/settings/components/MapModePreferencesField";
 import { TeamGoBackButton } from "~/features/team/components/TeamGoBackButton";
+import type { ThemeInput } from "~/features/theme/core/ThemePalette";
 import { existingImage } from "~/form/image-field";
 import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
-import type { ThemeInput } from "~/utils/oklch-gamut";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/t.$customUrl.edit.server";

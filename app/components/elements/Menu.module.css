@@ -62,7 +62,7 @@
 }
 
 .itemActive {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .itemDestructive {

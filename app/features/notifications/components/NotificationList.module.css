@@ -30,12 +30,12 @@
 	}
 
 	&:focus-within .imageContainer {
-		outline: 3px solid var(--color-accent-low);
+		outline: 3px solid var(--color-bg-accent);
 	}
 }
 
 .unseenDot {
-	background-color: var(--color-text-accent);
+	background-color: var(--color-fg-accent);
 	border-radius: 100%;
 	width: 8px;
 	height: 8px;

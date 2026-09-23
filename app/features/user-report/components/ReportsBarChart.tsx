@@ -26,7 +26,7 @@ export function ReportsBarChart({
 	const isHydrated = useHydrated();
 
 	const colors = useThemeColors({
-		bar: "--color-text-accent",
+		bar: "--color-fg-accent",
 		border: "--color-border",
 		borderHigh: "--color-border-high",
 		text: "--color-text-high",

@@ -1,8 +1,10 @@
-import type * as v from "valibot";
-import type { CustomTheme } from "~/db/tables-json";
-import type { themeInputSchema } from "~/utils/schema";
-
-export type ThemeInput = v.InferOutput<typeof themeInputSchema>;
+export interface Oklch {
+	/** Lightness, 0-1 */
+	l: number;
+	c: number;
+	/** Hue in degrees */
+	h: number;
+}
 
 interface Lab {
 	L: number;
@@ -224,117 +226,67 @@ function maximum_chroma_for_lh(L: number, h: number): number {
 	return t;
 }
 
-// These are the lightness values used in vars.css
-// Any changes here NEED to be reflected in vars.css as well.
+const GAMUT_TIGHTEN_STEP = 0.00001;
 
-const BASE_LIGHTNESS_VALUES = [
-	1.0, // --base-c-0
-	0.95, // --base-c-1
-	0.9, // --base-c-2
-	0.64, // --base-c-3
-	0.46, // --base-c-4
-	0.32, // --base-c-5
-	0.25, // --base-c-6
-	0.17, // --base-c-7
-] as const;
+/** Highest chroma that stays inside the sRGB gamut at the given lightness (0-1) and hue (degrees). */
+export function maxChroma(lightness: number, hueDegrees: number): number {
+	let chroma = Math.max(
+		0,
+		maximum_chroma_for_lh(lightness, toRadians(hueDegrees)),
+	);
 
-const ACCENT_LIGHTNESS_VALUES = [
-	0.26, // --acc-c-0: dark mode low
-	0.52, // --acc-c-1: dark mode mid
-	0.83, // --acc-c-2: dark mode high
-	0.88, // --acc-c-3: light mode low
-	0.53, // --acc-c-4: light mode mid
-	0.32, // --acc-c-5: light mode high
-] as const;
+	// the estimate can land a hair outside the gamut
+	while (
+		chroma > 0 &&
+		!isInSrgbGamut({ l: lightness, c: chroma, h: hueDegrees })
+	) {
+		chroma = Math.max(0, chroma - GAMUT_TIGHTEN_STEP);
+	}
 
-export const BASE_CHROMA_MULTIPLIERS = [
-	0.01, // --base-c-0
-	0.49, // --base-c-1
-	0.62, // --base-c-2
-	1.4, // --base-c-3
-	1.29, // --base-c-4
-	1.36, // --base-c-5
-	1.29, // --base-c-6
-	0.67, // --base-c-7
-] as const;
-
-export const ACCENT_CHROMA_MULTIPLIERS = [
-	0.38, // --acc-c-0
-	1.11, // --acc-c-1
-	0.34, // --acc-c-2
-	0.25, // --acc-c-3
-	1.09, // --acc-c-4
-	0.56, // --acc-c-5
-] as const;
-
-function clampChromaForColor(
-	lightness: number,
-	desiredChroma: number,
-	hueRadians: number,
-): number {
-	const maxChroma = maximum_chroma_for_lh(lightness, hueRadians);
-	return Math.min(desiredChroma, maxChroma);
+	return chroma;
 }
 
-export function clampThemeToGamut(input: ThemeInput): CustomTheme {
-	const baseHueRadians = input.baseHue * (Math.PI / 180);
-	const accentHueRadians = input.accentHue * (Math.PI / 180);
+/** Whether the color can be displayed in sRGB without clipping. */
+export function isInSrgbGamut(color: Oklch): boolean {
+	const { r, g, b } = oklchToLinearSrgb(color);
 
-	const clampedBaseChromas = BASE_LIGHTNESS_VALUES.map((lightness, index) => {
-		const desiredChroma = input.baseChroma * BASE_CHROMA_MULTIPLIERS[index];
-		return clampChromaForColor(lightness, desiredChroma, baseHueRadians);
+	return [r, g, b].every((channel) => channel >= 0 && channel <= 1);
+}
+
+/** Lightness (0-1) at which the hue reaches its most saturated in-gamut color. */
+export function cuspLightness(hueDegrees: number): number {
+	const radians = toRadians(hueDegrees);
+	return find_cusp(Math.cos(radians), Math.sin(radians)).L;
+}
+
+/** WCAG 2 contrast ratio (1-21) between two colors. */
+export function contrastRatio(first: Oklch, second: Oklch): number {
+	const [lighter, darker] = [
+		relativeLuminance(first),
+		relativeLuminance(second),
+	].sort((a, b) => b - a);
+
+	return (lighter + 0.05) / (darker + 0.05);
+}
+
+function relativeLuminance(color: Oklch): number {
+	const { r, g, b } = oklchToLinearSrgb(color);
+
+	return (
+		0.2126 * clamp(r, 0, 1) + 0.7152 * clamp(g, 0, 1) + 0.0722 * clamp(b, 0, 1)
+	);
+}
+
+function oklchToLinearSrgb(color: Oklch) {
+	const radians = toRadians(color.h);
+
+	return oklab_to_linear_srgb({
+		L: color.l,
+		a: color.c * Math.cos(radians),
+		b: color.c * Math.sin(radians),
 	});
+}
 
-	const clampedAccentChromas = ACCENT_LIGHTNESS_VALUES.map(
-		(lightness, index) => {
-			const desiredChroma =
-				input.accentChroma * ACCENT_CHROMA_MULTIPLIERS[index];
-			return clampChromaForColor(lightness, desiredChroma, accentHueRadians);
-		},
-	);
-
-	const secondaryHue = (input.accentHue + 180) % 360;
-	const secondaryHueRadians = secondaryHue * (Math.PI / 180);
-
-	const clampedSecondaryChromas = ACCENT_LIGHTNESS_VALUES.map(
-		(lightness, index) => {
-			const desiredChroma =
-				input.accentChroma * ACCENT_CHROMA_MULTIPLIERS[index];
-			return clampChromaForColor(lightness, desiredChroma, secondaryHueRadians);
-		},
-	);
-
-	return {
-		"--_base-h": input.baseHue,
-		"--_base-c-0": clampedBaseChromas[0],
-		"--_base-c-1": clampedBaseChromas[1],
-		"--_base-c-2": clampedBaseChromas[2],
-		"--_base-c-3": clampedBaseChromas[3],
-		"--_base-c-4": clampedBaseChromas[4],
-		"--_base-c-5": clampedBaseChromas[5],
-		"--_base-c-6": clampedBaseChromas[6],
-		"--_base-c-7": clampedBaseChromas[7],
-		"--_acc-h": input.accentHue,
-		"--_acc-c-0": clampedAccentChromas[0],
-		"--_acc-c-1": clampedAccentChromas[1],
-		"--_acc-c-2": clampedAccentChromas[2],
-		"--_acc-c-3": clampedAccentChromas[3],
-		"--_acc-c-4": clampedAccentChromas[4],
-		"--_acc-c-5": clampedAccentChromas[5],
-		"--_second-h": secondaryHue,
-		"--_second-c-0": clampedSecondaryChromas[0],
-		"--_second-c-1": clampedSecondaryChromas[1],
-		"--_second-c-2": clampedSecondaryChromas[2],
-		"--_second-c-3": clampedSecondaryChromas[3],
-		"--_second-c-4": clampedSecondaryChromas[4],
-		"--_second-c-5": clampedSecondaryChromas[5],
-		"--_chat-h": input.chatHue,
-		"--_radius-box": input.radiusBox,
-		"--_radius-field": input.radiusField,
-		"--_radius-selector": input.radiusSelector,
-		"--_border-width": input.borderWidth,
-		"--_size-field": input.sizeField,
-		"--_size-selector": input.sizeSelector,
-		"--_size-spacing": input.sizeSpacing,
-	};
+function toRadians(degrees: number) {
+	return degrees * (Math.PI / 180);
 }

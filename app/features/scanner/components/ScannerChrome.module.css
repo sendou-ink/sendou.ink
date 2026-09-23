@@ -11,7 +11,7 @@ button.iconMenu {
 	color: var(--color-text);
 
 	&:hover {
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 
 	& > svg {
@@ -101,8 +101,8 @@ button.iconMenu {
 }
 
 .over {
-	border-color: var(--color-text-accent);
-	color: var(--color-text-accent);
+	border-color: var(--color-fg-accent);
+	color: var(--color-fg-accent);
 }
 
 /* a 640px wide preview would starve the feed next to it: split evenly instead */

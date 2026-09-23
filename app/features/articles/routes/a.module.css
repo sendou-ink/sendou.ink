@@ -7,6 +7,6 @@
 }
 
 .title {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-md);
 }

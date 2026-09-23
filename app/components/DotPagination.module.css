@@ -21,7 +21,7 @@
 }
 
 .buttonActive {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	background-color: var(--color-bg-high);
 	border-color: var(--color-border-high);
 }

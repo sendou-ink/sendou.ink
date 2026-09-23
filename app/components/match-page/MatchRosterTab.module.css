@@ -216,10 +216,10 @@
 	flex-shrink: 0;
 
 	&[data-side="alpha"] {
-		background-color: var(--color-accent);
+		background-color: var(--color-fg-accent);
 	}
 
 	&[data-side="bravo"] {
-		background-color: var(--color-second);
+		background-color: var(--color-fg-second);
 	}
 }

@@ -2,7 +2,7 @@
 	--graphic-row-bg: var(--color-bg-high);
 	--graphic-row-border: color-mix(in oklch, var(--color-text) 8%, transparent);
 	--graphic-text-dim: var(--color-text-high);
-	--graphic-accent: var(--color-text-accent);
+	--graphic-accent: var(--color-fg-accent);
 	--graphic-first: oklch(87% 0.13 85);
 	--graphic-second: oklch(83% 0.015 268);
 	--graphic-third: oklch(74% 0.09 55);
@@ -17,7 +17,7 @@
 	background:
 		radial-gradient(
 			ellipse 90% 45% at 50% -5%,
-			color-mix(in oklch, var(--color-accent) 25%, transparent),
+			color-mix(in oklch, var(--color-fg-accent) 25%, transparent),
 			transparent 70%
 		),
 		var(--color-bg);

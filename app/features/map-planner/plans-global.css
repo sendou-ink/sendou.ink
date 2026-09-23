@@ -65,8 +65,8 @@ body:has(.planner) footer {
 .tl-theme__light.tl-theme__light {
 	--color-panel: var(--color-bg);
 	--color-divider: var(--color-border);
-	--color-selected: var(--color-text-accent);
-	--color-selected-contrast: var(--color-text-inverse);
+	--color-selected: var(--color-fill-accent);
+	--color-selected-contrast: var(--color-fg-on-accent);
 	--color-hint: var(--color-bg-high);
 	--color-muted-2: var(--color-bg-high);
 	--color-background: var(--color-bg);

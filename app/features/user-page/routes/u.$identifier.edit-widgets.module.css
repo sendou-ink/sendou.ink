@@ -247,12 +247,12 @@
 
 .supporterMax {
 	margin-left: var(--s-1);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-weight: var(--weight-semi);
 }
 
 .supporterOnly {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	white-space: nowrap;
