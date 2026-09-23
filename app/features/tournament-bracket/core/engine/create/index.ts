@@ -79,18 +79,16 @@ function attachRoundMaps(
 			throw new Error("Invalid map list count");
 		}
 
-		const mapsByRoundNumber = new Map(
-			mapsInput.map((input) => [
-				resolveRound(input.roundId).number,
-				toRoundMaps(input),
-			]),
+		const inputByRoundNumber = new Map(
+			mapsInput.map((input) => [resolveRound(input.roundId).number, input]),
 		);
 
 		for (const round of data.round) {
-			const maps = mapsByRoundNumber.get(round.number);
-			if (!maps)
+			const input = inputByRoundNumber.get(round.number);
+			if (!input)
 				throw new Error(`No maps found for round number ${round.number}`);
-			round.maps = { ...maps };
+			round.maps = toRoundMaps(input);
+			round.isPlayableAt = input.isPlayableAt ?? null;
 		}
 
 		return;
@@ -101,7 +99,9 @@ function attachRoundMaps(
 	}
 
 	for (const input of mapsInput) {
-		resolveRound(input.roundId).maps = toRoundMaps(input);
+		const round = resolveRound(input.roundId);
+		round.maps = toRoundMaps(input);
+		round.isPlayableAt = input.isPlayableAt ?? null;
 	}
 
 	for (const round of data.round) {
@@ -110,6 +110,6 @@ function attachRoundMaps(
 }
 
 function toRoundMaps(input: RoundMapsInput): TournamentRoundMaps {
-	const { roundId, section, ...maps } = input;
+	const { roundId, section, isPlayableAt, ...maps } = input;
 	return maps;
 }

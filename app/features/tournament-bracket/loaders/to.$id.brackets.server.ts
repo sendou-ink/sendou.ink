@@ -29,7 +29,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	const hasDivisionToShow =
 		divisionIdx !== null &&
 		tournament.visibleBracketsMetaOfDivision(divisionIdx).length > 0;
-	if (tournament.isLeague && !hasDivisionToShow) {
+	if (tournament.leagueDivisions.length > 1 && !hasDivisionToShow) {
 		throw redirect(tournamentDivisionsPage(tournament.ctx.id));
 	}
 

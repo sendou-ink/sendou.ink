@@ -34,6 +34,8 @@ type MatchPageContextValue = {
 	isPickBanStep: boolean;
 	matchIsLocked: boolean;
 	waitingForPreviousMatch: boolean;
+	/** The viewer's team of the set when they play for one. */
+	ownTeamId: number | null;
 	joinPool: string | null;
 	joinPass: string | null;
 };
@@ -117,6 +119,9 @@ export function MatchPageProvider({
 	});
 
 	const waitingForPreviousMatch = data.match.status === "PENDING";
+	// a league set is played once the teams have agreed on a time and the round is playable
+	const leagueBlocksPlay =
+		data.schedule.phase !== "CLOSED" && data.schedule.phase !== "SCHEDULED";
 
 	const joinInfo = resolveJoinInfo({ tournament, data, teams });
 
@@ -137,7 +142,11 @@ export function MatchPageProvider({
 		isPickBanStep,
 		isAdminEligible:
 			tournament.isOrganizerOrStreamer(user) && !tournament.ctx.isFinalized,
-		leagueRoundLocked: data.bracketContext.leagueRoundLocked,
+		leagueBlocksPlay,
+		hasScheduleBoard:
+			data.schedule.canSeeBoard &&
+			data.schedule.phase !== "CLOSED" &&
+			data.schedule.phase !== "NOT_OPEN",
 		lockedForCast,
 		waitingForPreviousMatch,
 	});
@@ -156,6 +165,7 @@ export function MatchPageProvider({
 				isPickBanStep,
 				matchIsLocked: lockedForCast,
 				waitingForPreviousMatch,
+				ownTeamId: data.schedule.ownTeamId,
 				joinPool: joinInfo?.pool ?? null,
 				joinPass: joinInfo?.pass ?? null,
 			}}
@@ -182,7 +192,8 @@ function resolveVisibleTabs({
 	hasPickBanEvents,
 	isPickBanStep,
 	isAdminEligible,
-	leagueRoundLocked,
+	leagueBlocksPlay,
+	hasScheduleBoard,
 	lockedForCast,
 	waitingForPreviousMatch,
 }: {
@@ -194,14 +205,18 @@ function resolveVisibleTabs({
 	hasPickBanEvents: boolean;
 	isPickBanStep: boolean;
 	isAdminEligible: boolean;
-	leagueRoundLocked: boolean;
+	leagueBlocksPlay: boolean;
+	hasScheduleBoard: boolean;
 	lockedForCast: boolean;
 	waitingForPreviousMatch: boolean;
 }): MatchTabKey[] {
 	const tabs: MatchTabKey[] = [TAB_KEYS.ROSTERS];
 
+	if (hasScheduleBoard) {
+		tabs.push(TAB_KEYS.SCHEDULE);
+	}
 	if (
-		!leagueRoundLocked &&
+		!leagueBlocksPlay &&
 		!waitingForPreviousMatch &&
 		(isPickBanStep ||
 			(canReportScore &&

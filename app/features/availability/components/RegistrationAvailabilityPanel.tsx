@@ -301,7 +301,14 @@ function RangesText({ ranges }: { ranges: Array<TimeRange> }) {
 	const rangeText = useRangeText();
 
 	return (
-		<span className={styles.ranges}>{ranges.map(rangeText).join(" · ")}</span>
+		<span className={styles.ranges}>
+			{ranges.map((range, index) => (
+				<span key={index} className={styles.range}>
+					{index > 0 ? "· " : null}
+					{rangeText(range)}
+				</span>
+			))}
+		</span>
 	);
 }
 

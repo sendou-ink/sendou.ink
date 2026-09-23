@@ -1,6 +1,8 @@
 import * as R from "remeda";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
+import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
+import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import * as SeriesTeamCount from "~/features/tournament-organization/core/SeriesTeamCount.server";
 import * as AvailabilityRepository from "../AvailabilityRepository.server";
 import { AVAILABILITY } from "../availability-constants";
@@ -13,7 +15,8 @@ import { estimatedEndsAtWith } from "./TournamentDuration.server";
  * Busy blocks of the users within the window, keyed by user id, sorted by start (effective
  * availability = reported − busy). From tournament registrations (start + estimated duration,
  * {@link TournamentDuration.estimateSeconds}), accepted scrims (start + assumed length) and team
- * events (actual span). Leagues are not blocks, their matches are scheduled separately.
+ * events (actual span). A league registration is not a block, its sets are: each one agreed to be
+ * played blocks {@link LeagueScheduling.busyBlock}.
  * `excludeTournamentId` leaves one tournament out, for "busy elsewhere" views of that tournament.
  * Busy blocks are part of the schedule, so callers pass only ids
  * {@link AvailabilityRepository.findScheduleVisibleUserIds} handed back.
@@ -46,6 +49,12 @@ export async function busyBlocksByUserIds({
 	const teamEvents = await AvailabilityRepository.findAllTeamEventsByUserIds({
 		userIds,
 		startsAt,
+		endsAt,
+	});
+	const leagueSets = await TournamentMatchRepository.findScheduledByUserIds({
+		userIds,
+		startsAt:
+			startsAt - LeagueScheduling.LEAGUE_SCHEDULING.SET_DURATION_SECONDS,
 		endsAt,
 	});
 	const expectedTeamCount = await SeriesTeamCount.lookup();
@@ -83,6 +92,14 @@ export async function busyBlocksByUserIds({
 			startsAt: event.startsAt,
 			endsAt: event.endsAt,
 		})),
+		...leagueSets
+			.filter((set) => set.tournamentId !== excludeTournamentId)
+			.map((set) => ({
+				userId: set.userId,
+				type: "tournament" as const,
+				name: set.name,
+				...LeagueScheduling.busyBlock(set.scheduledAt),
+			})),
 	].filter((block) => Availability.overlaps(block, { startsAt, endsAt }));
 
 	return new Map(

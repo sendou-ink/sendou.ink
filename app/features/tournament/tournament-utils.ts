@@ -1,9 +1,7 @@
-import { sub } from "date-fns";
 import * as R from "remeda";
 import type { CastedMatchesInfo, TeamPickSettings } from "~/db/tables-json";
 import { modesShort, rankedModesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort } from "~/modules/in-game-lists/types";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { SHORT_NANOID_LENGTH } from "~/utils/id";
 import type { Tables } from "../../db/tables";
 import * as Seasons from "../mmr/core/Seasons";
@@ -11,6 +9,7 @@ import type { Bracket as BracketClass } from "../tournament-bracket/core/Bracket
 import type { ParsedBracket } from "../tournament-bracket/core/Progression";
 import * as Progression from "../tournament-bracket/core/Progression";
 import type { Tournament as TournamentClass } from "../tournament-bracket/core/Tournament";
+import * as LeagueScheduling from "../tournament-match/core/LeagueScheduling";
 import * as TeamPick from "./core/TeamPick";
 
 /**
@@ -80,8 +79,8 @@ export function tournamentInWeaponReportingWindow({
 	return tournamentStartTime > windowStart;
 }
 
-/** Datetime the league round is played by default, or null if the round has no default play time. */
-export function resolveLeagueRoundStartDate(
+/** Time the league round's sets are playable from, or null when the round has no such time (or the tournament is no league). */
+export function leagueRoundPlayableAt(
 	tournament: TournamentClass,
 	bracket: BracketClass | undefined,
 	roundId: number,
@@ -89,25 +88,9 @@ export function resolveLeagueRoundStartDate(
 	if (!tournament.isLeague) return null;
 
 	const round = bracket?.data.round.find((r) => r.id === roundId);
-	if (!round?.defaultPlayTime) return null;
+	if (!round?.isPlayableAt) return null;
 
-	return databaseTimestampToDate(round.defaultPlayTime);
-}
-
-const EARLIEST_TIMEZONE_OFFSET_HOURS = 14;
-
-export function isLeagueRoundLocked(
-	tournament: TournamentClass,
-	roundId: number,
-) {
-	const bracket = tournament.brackets.find((b) =>
-		b.data.round.some((r) => r.id === roundId),
-	);
-	const date = resolveLeagueRoundStartDate(tournament, bracket, roundId);
-
-	if (!date) return false;
-
-	return sub(date, { hours: EARLIEST_TIMEZONE_OFFSET_HOURS }) > new Date();
+	return LeagueScheduling.playableDate(round.isPlayableAt);
 }
 
 export function validateCanJoinTeam({

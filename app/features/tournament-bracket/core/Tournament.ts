@@ -6,6 +6,7 @@ import type {
 } from "~/db/tables-json";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
+import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { TOURNAMENT } from "~/features/tournament/tournament-constants";
 import {
 	modesIncluded,
@@ -108,6 +109,8 @@ type TournamentArgs = {
 	participatedUsers?: number[];
 	/** Live streams of the tournament. Absent in the views whose loader does not ship them. */
 	streams?: TournamentStream[];
+	/** Tier of each league division (starting bracket) that has one. Absent in the views whose loader does not ship them. */
+	divisionTiers?: Array<{ bracketIdx: number; tier: TournamentTierNumber }>;
 };
 
 /** The progress status of a team member in a running tournament, as resolved by {@link Tournament.teamMemberOfProgressStatus}. */
@@ -998,6 +1001,17 @@ export class Tournament {
 	/** Played over many weeks, each starting bracket a division the organizer places teams in. */
 	get isLeague() {
 		return this.ctx.settings.isLeague === true;
+	}
+
+	/** Tier of the division the bracket belongs to, the tournament's own tier when the division has none. */
+	divisionTierOfBracket(bracketIdx: number): TournamentTierNumber | null {
+		const divisionIdx = this.leagueDivisionOfBracket(bracketIdx);
+
+		return (
+			this.args.divisionTiers?.find(
+				(division) => division.bracketIdx === divisionIdx,
+			)?.tier ?? this.ctx.tier
+		);
 	}
 
 	/** Many first brackets whose progressions advance independently (so not all teams can meet). */

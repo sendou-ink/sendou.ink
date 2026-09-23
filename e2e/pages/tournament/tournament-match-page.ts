@@ -2,6 +2,7 @@ import type { Page } from "@playwright/test";
 import { tournamentMatchPage } from "~/utils/urls";
 import {
 	expect,
+	fillDateTimeField,
 	navigate,
 	selectWeapon,
 	submit,
@@ -12,13 +13,14 @@ import { TournamentNav } from "./tournament-nav";
 
 type Side = 1 | 2;
 type RosterSide = "alpha" | "bravo";
-type Tab = "action" | "admin" | "result" | "rosters";
+type Tab = "action" | "admin" | "result" | "rosters" | "schedule";
 
 const TAB_LABELS: Record<Tab, string> = {
 	action: "Action",
 	admin: "Admin",
 	result: "Result",
 	rosters: "Rosters",
+	schedule: "Schedule",
 };
 
 /** `/to/:id/matches/:mid`. The match page splits its UI into URL-driven tabs
@@ -61,7 +63,46 @@ export class TournamentMatchPage {
 				.getByRole("button", { name: "Submit", exact: true })
 				.last(),
 			undoWeaponButton: page.getByRole("button", { name: "Undo weapon" }),
+			// league scheduling
+			unscheduledBanner: page.getByTestId("league-unscheduled-banner"),
+			scheduleTab: page.getByTestId("schedule-tab"),
+			agreedTime: page.getByTestId("agreed-time"),
+			ownCandidates: page.getByTestId("own-candidates"),
+			opponentCandidates: page.getByTestId("opponent-candidates"),
+			candidateTimes: page.getByTestId("candidate-time"),
+			pickCandidateButtons: page.getByTestId("pick-candidate-button"),
+			rejectRescheduleButton: page.getByTestId("reject-reschedule-button"),
+			proposeTimesButton: page.getByTestId("propose-times-button"),
+			organizerSetTimeButton: page.getByTestId("organizer-set-time-button"),
+			setByOrganizerText: page.getByText("Set by the organizer"),
 		};
+	}
+
+	/** Puts one candidate time on the set's board from the schedule tab's form. */
+	async proposeTime(date: Date) {
+		await expect(this.locators.scheduleTab).toBeVisible();
+		await fillDateTimeField({
+			scope: this.locators.scheduleTab,
+			label: "Time",
+			date,
+		});
+		await submit(this.page, "propose-times-button");
+	}
+
+	/** Picks the `nth` candidate of the other team. */
+	async pickCandidate(nth = 0) {
+		await this.locators.pickCandidateButtons.nth(nth).click();
+		await submit(this.page, "confirm-button");
+	}
+
+	/** The organizer's final say on the set's time, from the admin tab. */
+	async organizerSetTime(date: Date) {
+		await fillDateTimeField({
+			scope: this.page.getByRole("tabpanel", { name: TAB_LABELS.admin }),
+			label: "Set time",
+			date,
+		});
+		await submit(this.page, "organizer-set-time-button");
 	}
 
 	async goto({

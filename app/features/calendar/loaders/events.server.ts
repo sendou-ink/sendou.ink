@@ -3,7 +3,9 @@ import { myScheduleData } from "~/features/availability/core/MySchedule.server";
 import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import * as ScrimPostRepository from "~/features/scrims/ScrimPostRepository.server";
 import {
+	findUpcomingLeagueMatches,
 	findUpcomingTeamEvents,
+	leagueMatchToSidebarEvent,
 	scrimToSidebarEvent,
 	teamEventToSidebarEvent,
 	tournamentToSidebarEvent,
@@ -28,11 +30,14 @@ export const loader = async () => {
 	);
 	const mySchedule = await myScheduleData(user.id);
 	const teamEvents = await findUpcomingTeamEvents(user.id);
+	const leagueMatches = await findUpcomingLeagueMatches(user.id);
 	const myTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
 
-	const registered = tournamentsData.participatingFor
-		.map(tournamentToSidebarEvent)
-		.sort((a, b) => a.startsAt - b.startsAt);
+	// xxx: rethink my events, maybe show all events in one list with filters instead of tabs
+	const registered = [
+		...tournamentsData.participatingFor.map(tournamentToSidebarEvent),
+		...leagueMatches.map(leagueMatchToSidebarEvent),
+	].sort((a, b) => a.startsAt - b.startsAt);
 
 	const hosting = tournamentsData.organizingFor
 		.map(tournamentToSidebarEvent)

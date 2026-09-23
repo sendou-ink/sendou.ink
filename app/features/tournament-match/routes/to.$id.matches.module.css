@@ -1,0 +1,123 @@
+.divisionSelect {
+	max-width: 240px;
+}
+
+.list {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	list-style: none;
+	padding: 0;
+	margin: 0;
+}
+
+.row {
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	border: var(--border-width) solid transparent;
+	transition: background-color 0.2s;
+
+	&:hover {
+		background-color: var(--color-bg-higher);
+	}
+}
+
+.ownRow {
+	border-color: var(--color-text-accent);
+}
+
+.rowLink {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	gap: var(--s-1) var(--s-4);
+	align-items: center;
+	padding: var(--s-2) var(--s-3);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+}
+
+.round {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-weight: var(--weight-semi);
+}
+
+.teams {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+	min-width: 0;
+}
+
+.team {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-weight: var(--weight-semi);
+	min-width: 0;
+}
+
+.teamName {
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.loser {
+	color: var(--color-text-high);
+}
+
+.vs {
+	color: var(--color-text-high);
+	font-weight: var(--weight-body);
+	margin-inline-end: var(--s-1);
+}
+
+.score {
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-accent);
+}
+
+.badges {
+	display: flex;
+	flex-wrap: wrap;
+	justify-content: flex-end;
+	gap: var(--s-1);
+	align-self: start;
+}
+
+.meta {
+	align-self: end;
+	justify-self: end;
+	text-align: end;
+}
+
+.time {
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+}
+
+.muted {
+	color: var(--color-text-high);
+}
+
+.badge {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	height: var(--selector-size-xs);
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	white-space: nowrap;
+	text-transform: uppercase;
+}
+
+.liveBadge {
+	padding: 0 var(--s-1);
+	background-color: var(--color-text-accent);
+	color: var(--color-text-inverse);
+}

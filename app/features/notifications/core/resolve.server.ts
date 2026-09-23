@@ -44,6 +44,10 @@ const RESOLUTION_TRIGGERS = {
 	SCRIM_SCHEDULED: "visits the scrim's page, or the scrim gets canceled",
 	SCRIM_CANCELED: null,
 	SCRIM_STARTING_SOON: "visits the scrim's page, or the scrim gets canceled",
+	TO_LEAGUE_TIMES_PROPOSED: "visits the set's match page",
+	TO_LEAGUE_MATCH_SCHEDULED: "visits the set's match page",
+	TO_LEAGUE_MATCH_STARTING_SOON:
+		"visits the set's match page, or the set gets rescheduled",
 	SCRIM_AUTO_DELETED: null,
 	COMMISSIONS_CLOSED: null,
 	FRIEND_REQUEST_RECEIVED:

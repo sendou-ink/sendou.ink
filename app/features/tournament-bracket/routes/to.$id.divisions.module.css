@@ -21,12 +21,7 @@
 }
 
 .participant {
-	outline: 3px solid var(--color-bg-higher);
-	outline-offset: 3px;
-
-	& svg {
-		fill: var(--color-accent);
-	}
+	border-color: var(--color-text-accent);
 }
 
 .participantCounts {

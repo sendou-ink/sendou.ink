@@ -4,6 +4,7 @@ import { SP } from "~/modules/search-params/search-params";
 
 const MATCH_PAGE_TABS = [
 	"rosters",
+	"schedule",
 	"action",
 	"result",
 	"stats",

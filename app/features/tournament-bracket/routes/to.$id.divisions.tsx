@@ -16,7 +16,8 @@ export default function TournamentDivisionsPage() {
 	const ownTeam = tournament.teamMemberOfByUser(user);
 	const ownDivisionIdx = ownTeam ? (ownTeam.startingBracketIdx ?? 0) : null;
 
-	if (!tournament.isLeague) {
+	// a single division has nothing to choose between, its brackets page is the one
+	if (tournament.leagueDivisions.length <= 1) {
 		return (
 			<Redirect
 				to={tournamentBracketsPage({ tournamentId: tournament.ctx.id })}

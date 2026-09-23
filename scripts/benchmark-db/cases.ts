@@ -1013,6 +1013,53 @@ export function buildCases(fx: Fixtures): {
 		(tournamentTeamId) =>
 			TournamentMatchRepository.findByTournamentTeamId(tournamentTeamId),
 	);
+	add(
+		"TournamentMatchRepository.findScheduleProposalsByMatchId",
+		fx.scheduleProposal?.matchId ?? fx.heavyTournamentMatchId,
+		(matchId) =>
+			TournamentMatchRepository.findScheduleProposalsByMatchId(matchId),
+	);
+	add(
+		"TournamentMatchRepository.findLastResultAtsByTournamentId",
+		fx.heaviestBracketTournamentId,
+		(tournamentId) =>
+			TournamentMatchRepository.findLastResultAtsByTournamentId(tournamentId),
+	);
+	add(
+		"TournamentMatchRepository.findScheduledByUserIds",
+		both(fx.manyUserIds, fx.availabilityWindow),
+		([userIds, window]) =>
+			TournamentMatchRepository.findScheduledByUserIds({
+				userIds,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add(
+		"TournamentMatchRepository.findScheduledByUserId",
+		both(fx.heavyUser, fx.availabilityWindow),
+		([user, window]) =>
+			TournamentMatchRepository.findScheduledByUserId({
+				userId: user.id,
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add(
+		"TournamentMatchRepository.findScheduledBetween",
+		fx.availabilityWindow,
+		(window) =>
+			TournamentMatchRepository.findScheduledBetween({
+				startsAt: window.startsAt,
+				endsAt: window.endsAt,
+			}),
+	);
+	add(
+		"TournamentMatchRepository.findScheduleProposalById",
+		fx.scheduleProposal,
+		(proposal) =>
+			TournamentMatchRepository.findScheduleProposalById(proposal.id),
+	);
 
 	add("TournamentOrganizationRepository.findBySlug", fx.heavyOrg, (org) =>
 		TournamentOrganizationRepository.findBySlug(org.slug),
@@ -1267,6 +1314,12 @@ export function buildCases(fx: Fixtures): {
 	);
 	addStatic("TournamentRepository.findRunningTournamentIds", () =>
 		TournamentRepository.findRunningTournamentIds(),
+	);
+	add(
+		"TournamentRepository.findDivisionTiersByTournamentId",
+		fx.heavyTournamentId,
+		(tournamentId) =>
+			TournamentRepository.findDivisionTiersByTournamentId(tournamentId),
 	);
 
 	add(

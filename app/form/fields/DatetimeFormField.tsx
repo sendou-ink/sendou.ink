@@ -1,3 +1,4 @@
+import * as React from "react";
 import { SendouDatePicker } from "~/components/elements/DatePicker";
 import type { FormFieldProps } from "../types";
 import { errorMessageId } from "../utils";
@@ -25,10 +26,19 @@ export function DatetimeFormField({
 	granularity = "minute",
 	disabled,
 }: DatetimeFormFieldProps) {
+	const [hasBadInput, setHasBadInput] = React.useState(false);
 	const { translatedLabel, translatedError, translatedBottomText } =
-		useTranslatedTexts({ label, error, bottomText });
+		useTranslatedTexts({
+			label,
+			error: error && hasBadInput ? "forms:errors.invalidDate" : error,
+			bottomText,
+		});
 
-	const handleChange = (val: Date | null) => {
+	const handleChange = (
+		val: Date | null,
+		{ isBadInput }: { isBadInput: boolean },
+	) => {
+		setHasBadInput(isBadInput);
 		onChange(val ?? undefined);
 	};
 

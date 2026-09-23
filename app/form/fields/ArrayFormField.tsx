@@ -3,6 +3,7 @@ import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { isDeepEqual, omit } from "remeda";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouLabel } from "~/components/elements/Label";
 import { FormMessage } from "~/components/FormMessage";
 import type { FormFieldProps } from "../types";
 import styles from "./ArrayFormField.module.css";
@@ -139,23 +140,26 @@ export function ArrayFormField({
 						</ArrayItemFieldset>
 					))
 				: Array.from({ length: visibleCount }).map((_, idx) => (
-						<div
-							key={itemKey(idx)}
-							className="stack horizontal sm items-start w-full"
-						>
+						<div key={itemKey(idx)} className={styles.itemRow}>
 							<div className={styles.itemInput}>
 								{renderItem(idx, `${name}[${idx}]`)}
 							</div>
 							{canRemoveAt(idx) ? (
-								<SendouButton
-									icon={<Trash />}
-									aria-label="Remove item"
-									size="small"
-									variant="minimal-destructive"
-									onClick={() => handleRemoveAt(idx)}
-									className={styles.removeButton}
-									data-testid={`${name}-remove-item-button`}
-								/>
+								<div className={styles.removeButtonColumn}>
+									{/* same height as the item's label so the button lines up with the input, not the error below it */}
+									<span aria-hidden className={styles.labelSpacer}>
+										<SendouLabel>&nbsp;</SendouLabel>
+									</span>
+									<SendouButton
+										icon={<Trash />}
+										aria-label="Remove item"
+										size="small"
+										variant="minimal-destructive"
+										onClick={() => handleRemoveAt(idx)}
+										className={styles.removeButton}
+										data-testid={`${name}-remove-item-button`}
+									/>
+								</div>
 							) : null}
 						</div>
 					))}

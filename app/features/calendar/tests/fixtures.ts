@@ -41,6 +41,7 @@ export function calendarNewFormValues(
 		requireInGameNames: false,
 		isInvitational: false,
 		isTest: false,
+		isLeague: false,
 		isDraft: false,
 		requireSendouQParticipation: false,
 		...overrides,

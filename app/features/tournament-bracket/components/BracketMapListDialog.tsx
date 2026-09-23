@@ -10,6 +10,7 @@ import {
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { type FetcherWithComponents, Link, useFetcher } from "react-router";
+import { SendouDatePicker } from "~/components/elements/DatePicker";
 import { SendouDialog } from "~/components/elements/Dialog";
 import {
 	SendouSelect,
@@ -33,6 +34,7 @@ import type {
 	RoundData,
 } from "~/features/tournament-bracket/core/engine/types";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { nullFilledArray } from "~/utils/arrays";
@@ -187,6 +189,18 @@ export function BracketMapListDialog({
 			countType,
 		});
 	});
+	// leagues: when each round's sets become playable, entered next to its maps
+	const [playableAts, setPlayableAts] = React.useState<
+		Map<number, number | null>
+	>(
+		() =>
+			new Map(
+				preparedMaps?.maps.map((map) => [
+					map.roundId,
+					map.isPlayableAt ?? null,
+				]) ?? [],
+			),
+	);
 	const [pickBanStyle, setPickBanStyle] = React.useState(
 		Array.from(maps.values()).find((round) => round.pickBan)?.pickBan ??
 			"COUNTERPICK",
@@ -349,6 +363,17 @@ export function BracketMapListDialog({
 			bracket.type === "double_elimination") &&
 		!eliminationTeamCount;
 
+	const roundMapsInput = Array.from(maps.entries()).map(([key, value]) => ({
+		...value,
+		roundId: key,
+		section: rounds.find((r) => r.id === key)?.section ?? null,
+		type: countType,
+		customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
+		isPlayableAt: tournament.isLeague
+			? (playableAts.get(key) ?? null)
+			: undefined,
+	}));
+
 	return (
 		<SendouDialog
 			heading={`Maplist selection (${bracket.name})`}
@@ -366,15 +391,7 @@ export function BracketMapListDialog({
 				<input
 					type="hidden"
 					name="maps"
-					value={JSON.stringify(
-						Array.from(maps.entries()).map(([key, value]) => ({
-							...value,
-							roundId: key,
-							section: rounds.find((r) => r.id === key)?.section ?? null,
-							type: countType,
-							customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
-						})),
-					)}
+					value={JSON.stringify(roundMapsInput)}
 				/>
 				{isPreparing &&
 				(bracket.type === "single_elimination" ||
@@ -587,6 +604,17 @@ export function BracketMapListDialog({
 												key={round.id}
 												name={round.name}
 												maps={roundMaps}
+												playableAt={
+													tournament.isLeague
+														? {
+																value: playableAts.get(round.id) ?? null,
+																onChange: (value) =>
+																	setPlayableAts(
+																		new Map(playableAts).set(round.id, value),
+																	),
+															}
+														: undefined
+												}
 												onHoverMap={setHoveredMap}
 												unlink={
 													showUnlinkButton
@@ -720,6 +748,13 @@ export function BracketMapListDialog({
 									<div className="mt-4 text-warning text-center">
 										Invalid selection: tournament progression decreases in map
 										count
+									</div>
+								) : !LeagueScheduling.playableAtsAreAscending(
+										roundMapsInput,
+									) ? (
+									<div className="mt-4 text-warning text-center">
+										Invalid selection: a round is playable before the round
+										preceding it
 									</div>
 								) : !validateCustomFlow() ? (
 									<div className="mt-4 text-warning text-center">
@@ -975,6 +1010,7 @@ const serializedMapMode = (
 function RoundMapList({
 	name,
 	maps,
+	playableAt,
 	onHoverMap,
 	onCountChange,
 	onPickBanChange,
@@ -985,6 +1021,11 @@ function RoundMapList({
 }: {
 	name: string;
 	maps: Omit<TournamentRoundMaps, "type">;
+	/** Leagues: when the round's sets become playable. */
+	playableAt?: {
+		value: number | null;
+		onChange: (value: number | null) => void;
+	};
 	onHoverMap: (map: string | null) => void;
 	onCountChange: (count: number) => void;
 	onPickBanChange: (hasPickBan: boolean) => void;
@@ -993,12 +1034,31 @@ function RoundMapList({
 	link?: () => void;
 	hoveredMap: string | null;
 }) {
+	const { t } = useTranslation(["forms"]);
 	const minCount = TOURNAMENT.AVAILABLE_BEST_OF[0];
 	const maxCount = TOURNAMENT.AVAILABLE_BEST_OF.at(-1)!;
 
 	return (
 		<div>
 			<h3>{name}</h3>
+			{playableAt ? (
+				<div className={styles.playableAt}>
+					<SendouDatePicker
+						label={t("forms:labels.roundPlayableFrom")}
+						granularity="day"
+						value={
+							playableAt.value !== null
+								? LeagueScheduling.playableDate(playableAt.value)
+								: null
+						}
+						onChange={(value) =>
+							playableAt.onChange(
+								value ? LeagueScheduling.playableAtFromDate(value) : null,
+							)
+						}
+					/>
+				</div>
+			) : null}
 			<div className={styles.roundControls}>
 				<button
 					type="button"

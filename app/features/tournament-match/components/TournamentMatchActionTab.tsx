@@ -1,9 +1,10 @@
-import { Undo2 } from "lucide-react";
+import { CalendarClock, Undo2 } from "lucide-react";
 import { useTranslation } from "react-i18next";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouTabPanel } from "~/components/elements/Tabs";
 import { MatchActionTab } from "~/components/match-page/MatchActionTab";
 import { TAB_KEYS } from "~/components/match-page/MatchTabs";
+import { matchPageSearchParams } from "~/components/match-page/match-page-search-params";
 import { useMatchWeaponReport } from "~/components/match-page/useMatchWeaponReport";
 import { WeaponReporter } from "~/components/match-page/WeaponReporter";
 import { useUser } from "~/features/auth/core/user";
@@ -12,6 +13,7 @@ import { isSetOverByScore } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
 import { tournamentTeamToActiveRosterUserIds } from "~/features/tournament-bracket/tournament-bracket-utils";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import type { CommonUser } from "~/utils/kysely.server";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
@@ -121,11 +123,34 @@ export function TournamentMatchActionTab({
 					ko: typeof ko === "boolean" ? ko : undefined,
 				});
 			}}
-			actionButtons={<UndoReportButton scoreSum={scoreSum} />}
+			actionButtons={
+				<>
+					<UndoReportButton scoreSum={scoreSum} />
+					{data.schedule.canSeeBoard ? <RescheduleButton /> : null}
+				</>
+			}
 			secondaryAction={
 				weaponReport ? <WeaponReporter {...weaponReport} /> : null
 			}
 		/>
+	);
+}
+
+/** Jumps to the schedule tab, where the set's agreed time can be moved. */
+function RescheduleButton() {
+	const { t } = useTranslation(["tournament"]);
+	const [, setTab] = useSearchParam(matchPageSearchParams, "tab");
+
+	return (
+		<SendouButton
+			variant="minimal"
+			size="miniscule"
+			icon={<CalendarClock size={16} />}
+			onClick={() => setTab(TAB_KEYS.SCHEDULE)}
+			data-testid="reschedule-button"
+		>
+			{t("tournament:match.schedule.reschedule")}
+		</SendouButton>
 	);
 }
 

@@ -55,6 +55,8 @@ export async function tournamentData(tournamentId: number) {
 		participatedUsers:
 			await TournamentRepository.findParticipatedUserIdsById(tournamentId),
 		streams: await fetchTournamentStreams(tournamentId),
+		divisionTiers:
+			await TournamentRepository.findDivisionTiersByTournamentId(tournamentId),
 		ctx: {
 			...ctx,
 			tentativeTier,

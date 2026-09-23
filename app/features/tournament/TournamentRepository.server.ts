@@ -1861,6 +1861,18 @@ export function updateTeamSeeds({
 	});
 }
 
+/** Tier of every league division (starting bracket) of the tournament that has one. */
+export function findDivisionTiersByTournamentId(tournamentId: number) {
+	return db
+		.selectFrom("TournamentDivisionTier")
+		.select([
+			"TournamentDivisionTier.bracketIdx",
+			"TournamentDivisionTier.tier",
+		])
+		.where("TournamentDivisionTier.tournamentId", "=", tournamentId)
+		.execute();
+}
+
 /**
  * Records the tier of one division (= starting bracket) from its checked-in teams and sets the
  * tournament's own tier to the best of its divisions (the same thing when there is one division).

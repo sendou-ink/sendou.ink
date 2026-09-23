@@ -72,7 +72,8 @@
 .nameBlock {
 	display: flex;
 	flex-direction: column;
-	min-width: 0;
+	flex-shrink: 0;
+	max-width: 50%;
 }
 
 .name {
@@ -98,8 +99,15 @@
 }
 
 .ranges {
+	display: flex;
+	flex-wrap: wrap;
+	column-gap: 0.25em;
+	min-width: 0;
 	color: var(--color-text-high);
 	font-variant-numeric: tabular-nums;
+}
+
+.range {
 	white-space: nowrap;
 }
 

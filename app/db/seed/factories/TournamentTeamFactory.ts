@@ -28,6 +28,8 @@ type Options = {
 	isCheckedIn?: boolean;
 	/** Is the team looking for more players on the tournament's LFG page? */
 	isLooking?: boolean;
+	/** The division (starting bracket) the organizer placed the team in, as the seeds page does. */
+	startingBracketIdx?: number;
 };
 
 /**
@@ -84,7 +86,16 @@ export const { create } = defineFactory({
 
 		return { id: team.id, ownerUserId, memberUserIds };
 	},
-	applyOptions: async (team, { isCheckedIn, isLooking }: Options) => {
+	applyOptions: async (
+		team,
+		{ isCheckedIn, isLooking, startingBracketIdx }: Options,
+	) => {
+		if (typeof startingBracketIdx === "number") {
+			await TournamentTeamRepository.updateStartingBrackets([
+				{ tournamentTeamId: team.id, startingBracketIdx },
+			]);
+		}
+
 		if (isCheckedIn) {
 			await actAs(team.ownerUserId, () =>
 				TournamentTeamRepository.checkIn(team.id),

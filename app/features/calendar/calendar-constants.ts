@@ -52,6 +52,9 @@ export const tags = {
 	COLLEGIATE: {
 		color: "#FFC107",
 	},
+	LEAGUE: {
+		color: "#80DEEA",
+	},
 };
 
 export const CALENDAR_EVENT = {

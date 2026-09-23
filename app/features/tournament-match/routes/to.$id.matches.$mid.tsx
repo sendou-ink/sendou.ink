@@ -15,7 +15,7 @@ import { tournamentMatchChannel } from "../tournament-match-utils";
 export { action, loader };
 
 export const handle: SendouRouteHandle = {
-	i18n: ["q", "user"],
+	i18n: ["q", "user", "schedule"],
 };
 
 export default function TournamentMatchPage() {

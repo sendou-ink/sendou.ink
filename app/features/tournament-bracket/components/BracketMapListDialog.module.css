@@ -14,6 +14,11 @@
 	gap: var(--s-8);
 }
 
+.playableAt {
+	max-width: 260px;
+	margin-block-start: var(--s-2);
+}
+
 .roundControls {
 	display: flex;
 	gap: var(--s-2);

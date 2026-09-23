@@ -29,11 +29,30 @@
 	gap: var(--s-4);
 }
 
+.itemRow {
+	display: flex;
+	align-items: flex-start;
+	gap: var(--s-2);
+	width: 100%;
+
+	&:not(:has(.itemInput label)) .labelSpacer {
+		display: none;
+	}
+}
+
 .itemInput {
 	flex: 1;
 }
 
+.removeButtonColumn {
+	display: flex;
+	flex-direction: column;
+}
+
+.labelSpacer {
+	visibility: hidden;
+}
+
 .removeButton {
 	height: var(--field-size);
-	align-self: flex-end;
 }

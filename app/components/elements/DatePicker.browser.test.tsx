@@ -35,7 +35,7 @@ describe("SendouDatePicker", () => {
 
 		await screen.getByLabelText("When").fill(input);
 
-		expect(onChange).toHaveBeenLastCalledWith(expected);
+		expect(onChange).toHaveBeenLastCalledWith(expected, { isBadInput: false });
 	});
 
 	test("clearing the input reports null", async () => {
@@ -51,6 +51,6 @@ describe("SendouDatePicker", () => {
 
 		await screen.getByLabelText("When").fill("");
 
-		expect(onChange).toHaveBeenLastCalledWith(null);
+		expect(onChange).toHaveBeenLastCalledWith(null, { isBadInput: false });
 	});
 });

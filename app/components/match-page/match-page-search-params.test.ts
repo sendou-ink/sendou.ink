@@ -8,7 +8,7 @@ import { matchPageSearchParams } from "./match-page-search-params";
 describe("matchPageSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(matchPageSearchParams, {
-			tab: [null, "rosters", "action", "result", "stats", "admin"],
+			tab: [null, "rosters", "schedule", "action", "result", "stats", "admin"],
 		});
 	});
 

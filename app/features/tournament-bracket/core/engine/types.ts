@@ -89,8 +89,8 @@ export interface RoundData {
 	/** Restarts from 1 per group, and in an elimination group per section. */
 	number: number;
 	maps?: TournamentRoundMaps | null;
-	/** Datetime the round is played by default (leagues). */
-	defaultPlayTime?: number | null;
+	/** Leagues: the round's sets are playable from this time on. */
+	isPlayableAt?: number | null;
 }
 
 export interface MatchResults {
@@ -108,6 +108,8 @@ export interface MatchData extends MatchResults {
 	roundId: number;
 	number: number;
 	startedAt?: number | null;
+	/** Leagues: the time the teams (or the organizer) agreed the set is played at. */
+	scheduledAt?: number | null;
 }
 
 /** Whole state of one tournament's brackets. Never mutated in place, every engine operation returns a new one. */
@@ -157,6 +159,8 @@ export interface CreateBracketInput {
 export type RoundMapsInput = TournamentRoundMaps & {
 	roundId: number;
 	section?: RoundSection | null;
+	/** Leagues: the round's sets are playable from this time on. */
+	isPlayableAt?: number | null;
 };
 
 /** {@link CreateBracketInput} with settings already resolved to internal {@link StageSettings}. */

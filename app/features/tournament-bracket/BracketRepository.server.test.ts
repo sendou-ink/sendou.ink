@@ -12,6 +12,7 @@ import {
 import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.server";
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
+import { databaseTimestampNow } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import * as BracketRepository from "./BracketRepository.server";
 import * as Engine from "./core/engine";
@@ -43,12 +44,16 @@ const ROUND_ROBIN: TournamentSettings["bracketProgression"] = [
 
 const setupStartedMatch = async (
 	overrides?: Partial<Parameters<typeof TournamentFactory.create>[0]>,
+	options?: Parameters<typeof TournamentFactory.create>[1],
 ) => {
 	const authorId = users.id(1);
 	const teamAlphaUserIds = [users.id(2), users.id(3), users.id(4), users.id(5)];
 	const teamBravoUserIds = [users.id(6), users.id(7), users.id(8), users.id(9)];
 
-	const tournament = await TournamentFactory.create({ authorId, ...overrides });
+	const tournament = await TournamentFactory.create(
+		{ authorId, ...overrides },
+		options,
+	);
 	for (const memberUserIds of [teamAlphaUserIds, teamBravoUserIds]) {
 		await TournamentTeamFactory.create(
 			{ tournamentId: tournament.id, memberUserIds },
@@ -158,6 +163,40 @@ describe("BracketRepository.applyMatchChanges", () => {
 	});
 });
 
+describe("BracketRepository league chat room expiry", () => {
+	const setupLeagueMatch = () =>
+		setupStartedMatch({ bracketProgression: ROUND_ROBIN }, { isLeague: true });
+
+	test("a league match's room lives two months", async () => {
+		const setup = await setupLeagueMatch();
+
+		expect(await roomLifespanDays(setup.chatRoomId)).toBe(60);
+	});
+
+	test("completing a league match cuts its room down to a week", async () => {
+		const setup = await setupLeagueMatch();
+
+		await playOutMatch(setup);
+
+		expect(await roomLifespanDays(setup.chatRoomId)).toBe(7);
+	});
+
+	test("reopening a league match restores its room's lifespan", async () => {
+		const setup = await setupLeagueMatch();
+		await playOutMatch(setup);
+
+		await executeBracketOperation({
+			tournamentId: setup.tournamentId,
+			tournament: await tournamentFromDB(setup.tournamentId),
+			operation: (bracketData) =>
+				Engine.reopenMatch(bracketData, setup.matchId),
+			endDroppedTeams: false,
+		});
+
+		expect(await roomLifespanDays(setup.chatRoomId)).toBe(60);
+	});
+});
+
 describe("BracketRepository.findByTournamentId", () => {
 	test("counts each opponent's KO wins into totalKos", async () => {
 		const setup = await setupStartedMatch({ bracketProgression: ROUND_ROBIN });
@@ -196,6 +235,11 @@ describe("BracketRepository.findByTournamentId", () => {
 		expect(playedMatch?.opponent2?.totalKos).toBe(0);
 	});
 });
+
+const roomLifespanDays = async (id: number) =>
+	Math.round(
+		((await roomById(id)).expiresAt - databaseTimestampNow()) / (24 * 60 * 60),
+	);
 
 const roomById = (id: number) =>
 	db

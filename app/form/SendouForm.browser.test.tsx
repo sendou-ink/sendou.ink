@@ -8,6 +8,7 @@ import { FormField } from "./FormField";
 import {
 	array,
 	checkboxGroup,
+	datetime,
 	fieldset,
 	radioGroup,
 	select,
@@ -72,6 +73,10 @@ const CHECKBOX_GROUP = v.object({
 		],
 		minLength: 1,
 	}),
+});
+
+const DATETIME = v.object({
+	startTime: datetime({ label: "labels.startTime" }),
 });
 
 const TIME_RANGE = v.object({
@@ -248,6 +253,32 @@ describe("SendouForm", () => {
 			await expect
 				.element(screen.getByLabelText("Name"))
 				.toHaveValue("Default Name");
+		});
+	});
+
+	describe("datetime field", () => {
+		test("shows required error on submit when empty", async () => {
+			const screen = await renderForm(DATETIME);
+
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			await expect
+				.element(screen.getByText("This field is required"))
+				.toBeVisible();
+		});
+
+		test("shows invalid date error on submit when the date is incomplete", async () => {
+			const screen = await renderForm(DATETIME, {
+				defaultValues: { startTime: new Date(2026, 8, 15, 18, 0) },
+			});
+
+			await userEvent.click(screen.getByLabelText("Start time").element());
+			await userEvent.keyboard("{Backspace}");
+			await screen.getByRole("button", { name: "Submit" }).click();
+
+			await expect
+				.element(screen.getByText("Date is incomplete or doesn't exist"))
+				.toBeVisible();
 		});
 	});
 

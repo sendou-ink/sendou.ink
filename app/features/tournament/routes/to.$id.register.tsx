@@ -1,5 +1,5 @@
 import clsx from "clsx";
-import { AlertCircle, Check, UserRound, UsersRound, X } from "lucide-react";
+import { Check, UserRound, UsersRound, X } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useFetcher, useLoaderData } from "react-router";
@@ -351,12 +351,6 @@ function RegistrationProgress({
 					status: completedIfTruthy(checkedIn),
 				}
 			: null,
-		tournament.isLeague
-			? {
-					name: t("tournament:pre.steps.googleSheet"),
-					status: "notice" as const,
-				}
-			: null,
 	].filter((step) => step !== null);
 
 	const regClosesBeforeStart =
@@ -389,8 +383,6 @@ function RegistrationProgress({
 										className="color-success"
 										data-testid={`checkmark-icon-num-${i + 1}`}
 									/>
-								) : step.status === "notice" ? (
-									<AlertCircle className="color-info" />
 								) : (
 									<X className="color-error" />
 								)}

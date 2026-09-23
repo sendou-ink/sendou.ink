@@ -224,6 +224,7 @@ export default [
 				),
 			],
 		),
+		route("matches", "features/tournament-match/routes/to.$id.matches.tsx"),
 		route(
 			"matches/:mid",
 			"features/tournament-match/routes/to.$id.matches.$mid.tsx",

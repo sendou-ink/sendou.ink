@@ -5,6 +5,7 @@ export const SWIM_OR_SINK_167 = (
 	overrides?: TournamentData["ctx"]["bracketProgressionOverrides"],
 ): TournamentData => ({
 	streams: [],
+	divisionTiers: [],
 	data: {
 		stage: [
 			{

@@ -19,8 +19,8 @@ import type {
 } from "./core/engine/types";
 
 const CHAT_ROOM_LIFESPAN_DAYS = 7;
-// league rounds can be scheduled weeks out and all rooms are created on insertBracket
-const LEAGUE_CHAT_ROOM_LIFESPAN_DAYS = 30;
+// league sets can be postponed to the end of the season, so their rooms live until the set is decided
+const LEAGUE_CHAT_ROOM_LIFESPAN_DAYS = 60;
 
 /**
  * Full BracketData of all stages, with score/totalKos aggregated over TournamentMatchGameResult.
@@ -80,7 +80,7 @@ export async function findByTournamentId(
 						"TournamentRound.section",
 						"TournamentRound.number",
 						"TournamentRound.maps",
-						"TournamentRound.defaultPlayTime",
+						"TournamentRound.isPlayableAt",
 					])
 					.where("TournamentStage.tournamentId", "=", tournamentId)
 					.orderBy("TournamentRound.stageId", "asc")
@@ -101,6 +101,7 @@ export async function findByTournamentId(
 						"TournamentMatch.roundId",
 						"TournamentMatch.number",
 						"TournamentMatch.startedAt",
+						"TournamentMatch.scheduledAt",
 						"TournamentMatch.winnerSide",
 						// totalKos is never persisted, it is aggregated fresh from the game results
 						serializedOpponentWithKos("opponentOne").as("opponent1"),
@@ -202,6 +203,7 @@ export function insertBracket(args: {
 					section: round.section,
 					number: round.number,
 					maps: JSON.stringify(round.maps),
+					isPlayableAt: round.isPlayableAt ?? null,
 				})),
 			)
 			.returning(["id"])
@@ -284,7 +286,14 @@ export async function applyMatchChanges(
 		trx,
 	);
 
-	return syncChatRoomInactive(args.previousData, args.result.data, trx);
+	return syncChatRoomInactive(
+		{
+			previousData: args.previousData,
+			data: args.result.data,
+			isLeague: args.isLeague,
+		},
+		trx,
+	);
 }
 
 /**
@@ -355,12 +364,16 @@ async function syncStartedAt(
 
 /**
  * Completing marks the chat room inactive, losing the winner again (reopen, undone final game) reactivates it.
+ * A league room's long lifespan is cut short on completion and restored on reopen.
  *
  * @returns ids of the rewritten chat rooms
  */
 async function syncChatRoomInactive(
-	previousData: BracketData,
-	data: BracketData,
+	{
+		previousData,
+		data,
+		isLeague,
+	}: { previousData: BracketData; data: BracketData; isLeague: boolean },
 	trx: Transaction<DB>,
 ): Promise<number[]> {
 	const previousStatuses = matchStatuses(previousData);
@@ -378,10 +391,31 @@ async function syncChatRoomInactive(
 		.filter((match) => wasCompleted(match.id) && !isCompleted(match.id))
 		.map((match) => match.id);
 
-	return [
-		...(await updateMatchChatRoomsInactive(completedMatchIds, true, trx)),
-		...(await updateMatchChatRoomsInactive(reopenedMatchIds, false, trx)),
-	];
+	const completedChatRoomIds = await updateMatchChatRoomsInactive(
+		completedMatchIds,
+		true,
+		trx,
+	);
+	const reopenedChatRoomIds = await updateMatchChatRoomsInactive(
+		reopenedMatchIds,
+		false,
+		trx,
+	);
+
+	if (isLeague) {
+		await ChatRepository.updateRoomsExpiresAt(
+			completedChatRoomIds,
+			addDays(new Date(), CHAT_ROOM_LIFESPAN_DAYS),
+			trx,
+		);
+		await ChatRepository.updateRoomsExpiresAt(
+			reopenedChatRoomIds,
+			addDays(new Date(), LEAGUE_CHAT_ROOM_LIFESPAN_DAYS),
+			trx,
+		);
+	}
+
+	return [...completedChatRoomIds, ...reopenedChatRoomIds];
 }
 
 async function updateMatchChatRoomsInactive(

@@ -24,6 +24,7 @@ import { type MatchPageTeam, useMatch } from "../match-page-context";
 import { TournamentMatchActionPickBanTab } from "./TournamentMatchActionPickBanTab";
 import { TournamentMatchActionTab } from "./TournamentMatchActionTab";
 import { TournamentMatchAdminTab } from "./TournamentMatchAdminTab";
+import { TournamentMatchScheduleTab } from "./TournamentMatchScheduleTab";
 
 export function TournamentMatchTabs({
 	data,
@@ -77,7 +78,12 @@ export function TournamentMatchTabs({
 	).map((m, i) => ({ ...m, pickedBy: pickBanData?.pickedBySlot.get(i) }));
 
 	return (
-		<MatchTabs tabs={tabs}>
+		<MatchTabs
+			tabs={tabs}
+			defaultTab={
+				data.schedule.phase === "UNSCHEDULED" ? TAB_KEYS.SCHEDULE : undefined
+			}
+		>
 			{tabs.includes(TAB_KEYS.RESULT) ? (
 				<MatchResultTab
 					teams={resolveTimelineTeams(opponentOneId, opponentTwoId, tournament)}
@@ -91,6 +97,9 @@ export function TournamentMatchTabs({
 				/>
 			) : null}
 			<TournamentMatchRosterTab data={data} />
+			{tabs.includes(TAB_KEYS.SCHEDULE) ? (
+				<TournamentMatchScheduleTab data={data} />
+			) : null}
 			{tabs.includes(TAB_KEYS.ACTION) ? (
 				isPickBanStep && turnOfResult ? (
 					<TournamentMatchActionPickBanTab

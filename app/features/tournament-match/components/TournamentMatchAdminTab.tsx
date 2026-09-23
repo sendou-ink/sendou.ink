@@ -19,9 +19,12 @@ import { useUser } from "~/features/auth/core/user";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type { MatchStatus } from "~/features/tournament-bracket/core/engine";
 import { matchSchema } from "~/features/tournament-bracket/tournament-bracket-schemas";
+import { SendouForm } from "~/form/SendouForm";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
+import { databaseTimestampToDate, getDateAtNextFullHour } from "~/utils/dates";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { type MatchPageTeam, useMatch } from "../match-page-context";
+import { organizerSetLeagueTimeSchema } from "../tournament-match-schemas";
 import { OrganizerMatchMapListDialog } from "./OrganizerMatchMapListDialog";
 import styles from "./TournamentMatchAdminTab.module.css";
 
@@ -45,6 +48,8 @@ export function TournamentMatchAdminTab({
 		isOrganizer && !data.matchIsOver && data.match.startedAt !== null;
 
 	const topActionsVisible = !!teamOne && !!teamTwo;
+	const scheduleSectionVisible =
+		isOrganizer && tournament.isLeague && data.schedule.phase !== "CLOSED";
 	const castSectionVisible = !data.matchIsOver;
 	const editScoresVisible =
 		isOrganizer && !!teamOne && !!teamTwo && data.results.length > 0;
@@ -59,6 +64,9 @@ export function TournamentMatchAdminTab({
 						{canEndSet ? <EndSetPopover teams={[teamOne!, teamTwo!]} /> : null}
 					</div>
 				) : null}
+				{scheduleSectionVisible ? (
+					<AdminScheduleSection schedule={data.schedule} />
+				) : null}
 				{castSectionVisible ? (
 					<AdminCastSection
 						matchId={data.match.id}
@@ -70,6 +78,40 @@ export function TournamentMatchAdminTab({
 				) : null}
 			</div>
 		</SendouTabPanel>
+	);
+}
+
+/** The organizer's final say on when the set is played; a set time closes the candidate board for the teams. */
+function AdminScheduleSection({
+	schedule,
+}: {
+	schedule: TournamentMatchLoaderData["schedule"];
+}) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<section className={styles.castSection}>
+			<div className={styles.castLabelRow}>
+				<Label spaced={false}>{t("tournament:match.admin.setTime")}</Label>
+				<InfoPopover tiny>
+					{t("tournament:match.admin.setTimeInfo")}
+				</InfoPopover>
+			</div>
+			<SendouForm
+				schema={organizerSetLeagueTimeSchema}
+				defaultValues={{
+					scheduledAt: schedule.scheduledAt
+						? databaseTimestampToDate(schedule.scheduledAt)
+						: getDateAtNextFullHour(new Date()),
+				}}
+				submitButtonText={t("tournament:match.admin.setTime")}
+				submitButtonSize="small"
+				submitButtonTestId="organizer-set-time-button"
+				fullWidth
+			>
+				{({ FormField }) => <FormField name="scheduledAt" />}
+			</SendouForm>
+		</section>
 	);
 }
 
