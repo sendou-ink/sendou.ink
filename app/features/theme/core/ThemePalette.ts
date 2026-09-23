@@ -1,4 +1,4 @@
-import type * as v from "valibot";
+import * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
 import {
 	contrastRatio,
@@ -6,7 +6,7 @@ import {
 	maxChroma,
 	type Oklch,
 } from "~/utils/oklch-gamut";
-import { THEME_INPUT_LIMITS, type themeInputSchema } from "~/utils/schema";
+import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/schema";
 
 export type ThemeInput = v.InferOutput<typeof themeInputSchema>;
 
@@ -25,6 +25,26 @@ export const DEFAULT_THEME_INPUT: ThemeInput = {
 	sizeSelector: 1,
 	sizeSpacing: 1,
 };
+
+/** Keys added after share codes were introduced go last, codes made before them just omit them */
+const LEGACY_SHARE_CODE_KEYS: ReadonlyArray<keyof ThemeInput> = [
+	"baseHue",
+	"baseChroma",
+	"accentHue",
+	"accentChroma",
+	"radiusBox",
+	"radiusField",
+	"radiusSelector",
+	"borderWidth",
+	"sizeField",
+	"sizeSelector",
+	"sizeSpacing",
+	"chatHue",
+];
+const SHARE_CODE_KEYS: ReadonlyArray<keyof ThemeInput> = [
+	...LEGACY_SHARE_CODE_KEYS,
+	"bgLightness",
+];
 
 /** WCAG AA for normal sized text */
 const MIN_TEXT_CONTRAST = 4.5;
@@ -230,6 +250,43 @@ export function toThemeInput(theme: CustomTheme): ThemeInput {
 		sizeSelector: theme["--_size-selector"] ?? DEFAULT_THEME_INPUT.sizeSelector,
 		sizeSpacing: theme["--_size-spacing"] ?? DEFAULT_THEME_INPUT.sizeSpacing,
 	};
+}
+
+/** Serializes the slider values into a share code other users can paste into their theme selector. */
+export function toShareCode(input: ThemeInput): string {
+	return SHARE_CODE_KEYS.map((key) => {
+		const value = input[key];
+		return value === null ? "_" : String(value);
+	}).join(";");
+}
+
+/** Parses a share code made by `toShareCode()` (also older ones without the later added keys), returns null if it is not a valid theme. */
+export function fromShareCode(code: string): ThemeInput | null {
+	const parts = code.split(";");
+	if (
+		parts.length !== SHARE_CODE_KEYS.length &&
+		parts.length !== LEGACY_SHARE_CODE_KEYS.length
+	) {
+		return null;
+	}
+
+	const raw: Record<string, number | null> = {};
+	for (let i = 0; i < parts.length; i++) {
+		const key = SHARE_CODE_KEYS[i];
+		const part = parts[i].trim();
+
+		if (key === "chatHue" && part === "_") {
+			raw[key] = null;
+			continue;
+		}
+
+		const num = Number(part);
+		if (Number.isNaN(num)) return null;
+		raw[key] = num;
+	}
+
+	const parsed = v.safeParse(themeInputSchema, raw);
+	return parsed.success ? parsed.output : null;
 }
 
 /**

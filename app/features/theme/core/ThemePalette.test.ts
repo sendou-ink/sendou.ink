@@ -175,6 +175,43 @@ describe("ThemePalette.toThemeInput", () => {
 	});
 });
 
+describe("ThemePalette.fromShareCode", () => {
+	test.each([
+		{ why: "default", overrides: {} },
+		{
+			why: "custom",
+			overrides: { accentHue: 100, bgLightness: 0.08, chatHue: 30 },
+		},
+	])("round-trips a $why theme through toShareCode", ({ overrides }) => {
+		const code = ThemePalette.toShareCode(input(overrides));
+
+		expect(ThemePalette.fromShareCode(code)).toEqual(input(overrides));
+	});
+
+	test("decodes a legacy code without background lightness", () => {
+		expect(
+			ThemePalette.fromShareCode("180;0.05;200;0.1;3;2;2;2;1;1;1;_"),
+		).toEqual(
+			input({
+				baseHue: 180,
+				accentHue: 200,
+				accentChroma: 0.1,
+			}),
+		);
+	});
+
+	test.each([
+		{ why: "too few parts", code: "180;0.05;200" },
+		{ why: "not a number", code: "180;0.05;200;x;3;2;2;2;1;1;1;_;0.17" },
+		{
+			why: "out of range value",
+			code: "180;0.05;200;0.1;3;2;2;2;1;1;1;_;0.5",
+		},
+	])("returns null for $why", ({ code }) => {
+		expect(ThemePalette.fromShareCode(code)).toBeNull();
+	});
+});
+
 function* sampledInputs() {
 	const { BG_LIGHTNESS_MIN, BG_LIGHTNESS_MAX } = THEME_INPUT_LIMITS;
 

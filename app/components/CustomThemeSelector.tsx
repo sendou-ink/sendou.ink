@@ -1,12 +1,11 @@
 import { Check, Clipboard, PencilLine } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
 import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import { CUSTOM_THEME_VARS } from "~/features/theme/theme-constants";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/schema";
+import { THEME_INPUT_LIMITS } from "~/utils/schema";
 import styles from "./CustomThemeSelector.module.css";
 import { Divider } from "./Divider";
 import { LinkButton, SendouButton } from "./elements/Button";
@@ -132,57 +131,6 @@ type ThemeInputKey =
 	| (typeof BORDER_SLIDERS)[number]["inputKey"]
 	| (typeof SIZE_SLIDERS)[number]["inputKey"]
 	| "chatHue";
-
-/** Keys added after share codes were introduced go last, codes made before them just omit them */
-const LEGACY_THEME_STRING_KEYS: readonly ThemeInputKey[] = [
-	"baseHue",
-	"baseChroma",
-	"accentHue",
-	"accentChroma",
-	...RADIUS_SLIDERS.map((s) => s.inputKey),
-	...BORDER_SLIDERS.map((s) => s.inputKey),
-	...SIZE_SLIDERS.map((s) => s.inputKey),
-	"chatHue",
-];
-const THEME_STRING_KEYS: readonly ThemeInputKey[] = [
-	...LEGACY_THEME_STRING_KEYS,
-	"bgLightness",
-];
-
-function themeInputToString(input: ThemePalette.ThemeInput): string {
-	return THEME_STRING_KEYS.map((key) => {
-		const value = input[key];
-		return value === null ? "_" : String(value);
-	}).join(";");
-}
-
-function themeInputFromString(str: string): ThemePalette.ThemeInput | null {
-	const parts = str.split(";");
-	if (
-		parts.length !== THEME_STRING_KEYS.length &&
-		parts.length !== LEGACY_THEME_STRING_KEYS.length
-	) {
-		return null;
-	}
-
-	const raw: Record<string, number | null> = {};
-	for (let i = 0; i < parts.length; i++) {
-		const key = THEME_STRING_KEYS[i];
-		const part = parts[i].trim();
-
-		if (key === "chatHue" && part === "_") {
-			raw[key] = null;
-			continue;
-		}
-
-		const num = Number(part);
-		if (Number.isNaN(num)) return null;
-		raw[key] = num;
-	}
-
-	const parsed = v.safeParse(themeInputSchema, raw);
-	return parsed.success ? parsed.output : null;
-}
 
 function applyThemeInput(input: ThemePalette.ThemeInput) {
 	const theme = ThemePalette.build(input);
@@ -444,11 +392,11 @@ function ThemeShareInput({
 	const { t } = useTranslation(["common"]);
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
-	const themeString = themeInputToString(themeInput);
+	const themeString = ThemePalette.toShareCode(themeInput);
 
 	const handlePaste = async () => {
 		const text = await navigator.clipboard.readText();
-		const parsed = themeInputFromString(text);
+		const parsed = ThemePalette.fromShareCode(text);
 		if (parsed) onImport(parsed);
 	};
 

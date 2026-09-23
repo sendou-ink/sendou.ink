@@ -132,20 +132,28 @@ describe("team page editing", () => {
 			expect((await teamRow()).customTheme).toBeNull();
 		});
 
-		test("prevents setting an invalid custom theme", async () => {
-			const response = await editTeamProfileAction(
-				{
-					_action: "UPDATE_CUSTOM_THEME",
-					newValue: {
-						...VALID_CUSTOM_THEME,
-						baseHue: 500, // Invalid: max is 360
+		test.each([
+			{ why: "base hue above max", field: "baseHue", value: 500 },
+			{ why: "bg lightness below min", field: "bgLightness", value: 0.05 },
+			{ why: "bg lightness above max", field: "bgLightness", value: 0.18 },
+			{ why: "bg lightness off step", field: "bgLightness", value: 0.125 },
+		])(
+			"prevents setting an invalid custom theme ($why)",
+			async ({ field, value }) => {
+				const response = await editTeamProfileAction(
+					{
+						_action: "UPDATE_CUSTOM_THEME",
+						newValue: {
+							...VALID_CUSTOM_THEME,
+							[field]: value,
+						},
 					},
-				},
-				{ user: "regular", params: { customUrl } },
-			);
+					{ user: "regular", params: { customUrl } },
+				);
 
-			expect(response.fieldErrors["newValue.baseHue"]).toBeTruthy();
-		});
+				expect(response.fieldErrors[`newValue.${field}`]).toBeTruthy();
+			},
+		);
 
 		test("preserves an existing custom theme when editing the team profile", async () => {
 			await editTeamProfileAction(
