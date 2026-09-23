@@ -181,7 +181,7 @@ function* sampledInputs() {
 	for (let baseHue = 0; baseHue < 360; baseHue += 30) {
 		for (const baseChroma of [0, 0.025, 0.05, 0.075, 0.1]) {
 			for (let accentHue = 0; accentHue < 360; accentHue += 5) {
-				for (const accentChroma of [0, 0.05, 0.1, 0.15, 0.2, 0.25, 0.3]) {
+				for (const accentChroma of [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]) {
 					for (const bgLightness of [
 						BG_LIGHTNESS_MIN,
 						(BG_LIGHTNESS_MIN + BG_LIGHTNESS_MAX) / 2,
