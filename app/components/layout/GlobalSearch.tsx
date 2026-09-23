@@ -343,6 +343,7 @@ function GlobalSearchContent({
 					onChange={handleSearchTypeChange}
 					aria-label="Search type"
 					className={styles.searchTypeRadioGroup}
+					onMouseDown={preventFocusLeavingInput}
 				>
 					{SEARCH_TYPES.map((type) => (
 						<SendouRadio
@@ -416,6 +417,10 @@ function GlobalSearchContent({
 			)}
 		</div>
 	);
+}
+
+function preventFocusLeavingInput(e: React.MouseEvent) {
+	e.preventDefault();
 }
 
 type SearchResult = NonNullable<SearchLoaderData>["results"][number];
