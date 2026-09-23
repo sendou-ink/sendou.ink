@@ -216,6 +216,7 @@
 
 	input[type="checkbox"] {
 		appearance: none;
+		position: relative;
 		cursor: pointer;
 		padding: 0;
 		width: var(--selector-size-sm);
@@ -235,19 +236,22 @@
 
 		&:checked,
 		&:indeterminate {
-			border-color: var(--color-fg-accent);
-			background-color: var(--color-fg-accent);
-			background-repeat: no-repeat;
-			background-position: center;
-			background-size: var(--field-size-icon) auto;
+			border-color: var(--color-fill-accent);
+			background-color: var(--color-fill-accent);
+
+			&::before {
+				content: "";
+				position: absolute;
+				inset: 0;
+				background-color: var(--color-fg-on-accent);
+				mask:
+					var(--field-icon-checkbox) center / var(--field-size-icon) auto
+					no-repeat;
+			}
 		}
 
-		&:checked {
-			background-image: var(--field-icon-checkbox);
-		}
-
-		&:indeterminate {
-			background-image: var(--field-icon-minus);
+		&:indeterminate::before {
+			mask-image: var(--field-icon-minus);
 		}
 
 		/* Hacky selector to remove the margin bottom from the container from Label.tsx */
