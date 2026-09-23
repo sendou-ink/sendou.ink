@@ -1,6 +1,6 @@
 import { useTranslation } from "react-i18next";
 import {
-	Image,
+	OutlinedImage,
 	SpecialWeaponImage,
 	SubWeaponImage,
 	WeaponImage,
@@ -138,8 +138,8 @@ export function WeaponGrid({
 											>
 												<WeaponImage
 													weaponSplId={weaponId}
-													variant="build"
-													size={32}
+													variant="badge"
+													size={36}
 												/>
 											</button>
 										);
@@ -169,7 +169,9 @@ interface WeaponGroup {
 function WeaponGroupIcon({ icon }: { icon: WeaponGroupIconValue }) {
 	switch (icon.kind) {
 		case "category":
-			return <Image path={weaponCategoryUrl(icon.name)} alt="" size={24} />;
+			return (
+				<OutlinedImage path={weaponCategoryUrl(icon.name)} alt="" size={24} />
+			);
 		case "sub":
 			return <SubWeaponImage subWeaponId={icon.id} size={24} />;
 		case "special":
