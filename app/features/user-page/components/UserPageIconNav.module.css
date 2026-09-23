@@ -25,12 +25,12 @@
 	}
 
 	&:focus-visible {
-		outline: 2px solid var(--color-text-second);
+		outline: 2px solid var(--color-fg-second);
 		outline-offset: 2px;
 	}
 
 	&.active {
-		border-color: var(--color-text-second);
+		border-color: var(--color-fg-second);
 		background-color: var(--color-bg-higher);
 	}
 }

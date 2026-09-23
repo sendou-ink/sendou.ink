@@ -23,7 +23,7 @@
 }
 
 .ownRow {
-	border-color: var(--color-text-accent);
+	border-color: var(--color-fg-accent);
 }
 
 .rowLink {
@@ -76,7 +76,7 @@
 
 .score {
 	font-variant-numeric: tabular-nums;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .badges {
@@ -118,6 +118,6 @@
 
 .liveBadge {
 	padding: 0 var(--s-1);
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
 }

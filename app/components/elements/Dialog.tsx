@@ -8,6 +8,7 @@ import {
 	type SendouButtonProps,
 } from "~/components/elements/Button";
 import { useHydrated } from "~/hooks/useHydrated";
+import { useScrollLockWhileOpen } from "~/hooks/useScrollLock";
 import {
 	useReportModalOpen,
 	useTopLayerViewTransitionStyle,
@@ -73,10 +74,20 @@ function DialogElement({
 	ref,
 }: DialogElementProps) {
 	const topLayerStyle = useTopLayerViewTransitionStyle();
+	const dialogRef = React.useRef<HTMLDialogElement>(null);
+	const backdropPressHandlers = useBackdropDismiss(isDismissable);
+	useScrollLockWhileOpen(dialogRef);
 
 	return (
 		<dialog
-			ref={ref}
+			ref={(dialog) => {
+				dialogRef.current = dialog;
+				if (typeof ref === "function") {
+					ref(dialog);
+				} else if (ref) {
+					ref.current = dialog;
+				}
+			}}
 			id={id}
 			style={topLayerStyle}
 			className={clsx(className, {
@@ -85,27 +96,44 @@ function DialogElement({
 			aria-label={ariaLabel}
 			aria-labelledby={ariaLabelledby}
 			tabIndex={-1}
-			closedby={isDismissable ? "any" : "closerequest"}
+			closedby="closerequest"
 			onClose={onClose}
-			onClick={isDismissable ? closeOnBackdropClick : undefined}
+			{...backdropPressHandlers}
 		>
 			{children}
 		</dialog>
 	);
 }
 
-// Safari 26 is missing `closedby`, close on backdrop clicks manually
-function closeOnBackdropClick(event: React.MouseEvent<HTMLDialogElement>) {
-	if (event.target !== event.currentTarget) return;
+// Native `closedby` closes on pointer up so the click can land on stuff like buttons underneath the backdrop
+// We just roll our own click handler here because that can't "leak" through
+function useBackdropDismiss(enabled: boolean | undefined) {
+	const pressStartedOnBackdropRef = React.useRef(false);
+
+	if (!enabled) return {};
+
+	return {
+		onPointerDown: (event: React.PointerEvent<HTMLDialogElement>) => {
+			pressStartedOnBackdropRef.current = isOnBackdrop(event);
+		},
+		onClick: (event: React.MouseEvent<HTMLDialogElement>) => {
+			if (pressStartedOnBackdropRef.current && isOnBackdrop(event)) {
+				event.currentTarget.close();
+			}
+		},
+	};
+}
+
+function isOnBackdrop(event: React.MouseEvent<HTMLDialogElement>) {
+	if (event.target !== event.currentTarget) return false;
 	const rect = event.currentTarget.getBoundingClientRect();
-	const outside =
+
+	return (
 		event.clientX < rect.left ||
 		event.clientX > rect.right ||
 		event.clientY < rect.top ||
-		event.clientY > rect.bottom;
-	if (outside) {
-		event.currentTarget.close();
-	}
+		event.clientY > rect.bottom
+	);
 }
 
 /** Invoker commands open and close the dialog natively; this guards the JS fallback for browsers without them. */

@@ -30,7 +30,7 @@
 button.toggle {
 	border: none;
 	background: transparent;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	height: auto;
 	padding: 0;
 	font-size: var(--font-2xs);

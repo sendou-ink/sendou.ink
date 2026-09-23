@@ -230,8 +230,8 @@ describe("SendouQ ready check", () => {
 			);
 
 		// the two who confirmed are not kickable, the two who didn't are
-		expect(kickable.sort()).toEqual(
-			[groups.ownMembers[2].id, groups.ownMembers[3].id].sort(),
+		expect(kickable.sort((a, b) => a - b)).toEqual(
+			[groups.ownMembers[2].id, groups.ownMembers[3].id].sort((a, b) => a - b),
 		);
 	});
 

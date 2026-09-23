@@ -130,7 +130,7 @@
 }
 
 .noteFlag {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	flex-shrink: 0;
 }
 

@@ -8,6 +8,7 @@ import {
 	useSensors,
 } from "@dnd-kit/core";
 import {
+	arrayMove,
 	SortableContext,
 	sortableKeyboardCoordinates,
 	useSortable,
@@ -15,15 +16,18 @@ import {
 } from "@dnd-kit/sortable";
 import { CSS } from "@dnd-kit/utilities";
 import clsx from "clsx";
+import { nanoid } from "nanoid";
+import { useState } from "react";
 import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
-import {
-	abilityImageUrl,
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-} from "~/utils/urls";
+import { abilityImageUrl } from "~/utils/urls";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import styles from "./SelectedWeapons.module.css";
 
@@ -39,6 +43,14 @@ export function SelectedWeapons({
 	onReorder,
 }: SelectedWeaponsProps) {
 	const { t } = useTranslation(["weapons", "analyzer"]);
+	const [rowsState, setRows] = useState(() =>
+		reconcileRows([], selectedWeaponIds),
+	);
+
+	const rows = reconcileRows(rowsState, selectedWeaponIds);
+	if (rows !== rowsState) {
+		setRows(rows);
+	}
 
 	const sensors = useSensors(
 		useSensor(PointerSensor),
@@ -50,16 +62,16 @@ export function SelectedWeapons({
 	const handleDragEnd = (event: DragEndEvent) => {
 		const { active, over } = event;
 
-		if (over && active.id !== over.id) {
-			const oldIndex = selectedWeaponIds.indexOf(active.id as MainWeaponId);
-			const newIndex = selectedWeaponIds.indexOf(over.id as MainWeaponId);
+		if (!over || active.id === over.id) return;
 
-			const newIds = [...selectedWeaponIds];
-			const [removed] = newIds.splice(oldIndex, 1);
-			newIds.splice(newIndex, 0, removed);
+		const oldIndex = rows.findIndex((row) => row.id === active.id);
+		const newIndex = rows.findIndex((row) => row.id === over.id);
 
-			onReorder(newIds);
-		}
+		if (oldIndex === -1 || newIndex === -1) return;
+
+		const newRows = arrayMove(rows, oldIndex, newIndex);
+		setRows(newRows);
+		onReorder(newRows.map((row) => row.weaponId));
 	};
 
 	const emptySlotCount = MAX_WEAPONS - selectedWeaponIds.length;
@@ -73,13 +85,14 @@ export function SelectedWeapons({
 				onDragEnd={handleDragEnd}
 			>
 				<SortableContext
-					items={selectedWeaponIds}
+					items={rows.map((row) => row.id)}
 					strategy={verticalListSortingStrategy}
 				>
-					{selectedWeaponIds.map((weaponId, index) => (
+					{rows.map((row, index) => (
 						<SortableWeaponRow
-							key={weaponId}
-							weaponId={weaponId}
+							key={row.id}
+							rowId={row.id}
+							weaponId={row.weaponId}
 							index={index}
 							onRemove={onRemove}
 							showDragHandle={showDragHandle}
@@ -104,7 +117,36 @@ export function SelectedWeapons({
 	);
 }
 
+interface WeaponRow {
+	/** Identity of the slot rather than of the weapon, so rows of the same weapon stay apart while dragging */
+	id: string;
+	weaponId: MainWeaponId;
+}
+
+/** Returns the same rows when they already match, so a reorder of identical weapons is not undone */
+function reconcileRows(
+	rows: WeaponRow[],
+	weaponIds: MainWeaponId[],
+): WeaponRow[] {
+	const alreadyMatching =
+		rows.length === weaponIds.length &&
+		rows.every((row, index) => row.weaponId === weaponIds[index]);
+	if (alreadyMatching) return rows;
+
+	const unclaimed = [...rows];
+
+	return weaponIds.map((weaponId) => {
+		const matchIndex = unclaimed.findIndex((row) => row.weaponId === weaponId);
+		if (matchIndex === -1) {
+			return { id: nanoid(), weaponId };
+		}
+
+		return unclaimed.splice(matchIndex, 1)[0];
+	});
+}
+
 interface SortableWeaponRowProps {
+	rowId: string;
 	weaponId: MainWeaponId;
 	index: number;
 	onRemove: (index: number) => void;
@@ -112,6 +154,7 @@ interface SortableWeaponRowProps {
 }
 
 function SortableWeaponRow({
+	rowId,
 	weaponId,
 	index,
 	onRemove,
@@ -125,7 +168,7 @@ function SortableWeaponRow({
 		transform,
 		transition,
 		isDragging,
-	} = useSortable({ id: weaponId });
+	} = useSortable({ id: rowId });
 
 	const style = {
 		transform: CSS.Transform.toString(transform),
@@ -173,16 +216,11 @@ function SortableWeaponRow({
 			</div>
 			<div className={styles.subSpecialContainer}>
 				<div className={styles.kitIcon}>
-					<Image
-						path={subWeaponImageUrl(params.subWeaponId)}
-						alt={t(`weapons:SUB_${params.subWeaponId}`)}
-						size={24}
-					/>
+					<SubWeaponImage subWeaponId={params.subWeaponId} size={24} />
 				</div>
 				<div className={styles.kitIcon}>
-					<Image
-						path={specialWeaponImageUrl(params.specialWeaponId)}
-						alt={t(`weapons:SPECIAL_${params.specialWeaponId}`)}
+					<SpecialWeaponImage
+						specialWeaponId={params.specialWeaponId}
 						size={24}
 					/>
 				</div>

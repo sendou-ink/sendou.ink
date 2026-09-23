@@ -55,7 +55,7 @@
 	gap: var(--s-1-5);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .emptySlotRowOptional {
@@ -70,11 +70,11 @@
 	place-items: center;
 	border-radius: var(--radius-full);
 	border: var(--border-style-accent);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .emptySlotCircleOptional {
-	border: var(--border-width) dashed var(--color-text-accent);
+	border: var(--border-width) dashed var(--color-fg-accent);
 }
 
 .addMembers {

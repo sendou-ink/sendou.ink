@@ -14,8 +14,12 @@ import {
 	outlinedFiveStarMainWeaponImageUrl,
 	outlinedMainWeaponImageUrl,
 	outlinedTenStarMainWeaponImageUrl,
+	specialWeaponDetailImageUrl,
+	specialWeaponHighlightImageUrl,
 	specialWeaponImageUrl,
 	stageImageUrl,
+	subWeaponDetailImageUrl,
+	subWeaponHighlightImageUrl,
 	subWeaponImageUrl,
 	TIER_PLUS_URL,
 	tierImageUrl,
@@ -167,45 +171,106 @@ export function StageImage({ stageId, testId, ...rest }: StageImageProps) {
 
 type SubWeaponImageProps = {
 	subWeaponId: SubWeaponId;
+	alt?: string;
 } & Omit<ImageProps, "path" | "alt" | "title">;
 
 export function SubWeaponImage({
 	subWeaponId,
+	alt,
 	testId,
 	...rest
 }: SubWeaponImageProps) {
 	const { t } = useTranslation(["weapons"]);
 
+	const name = alt ?? t(`weapons:SUB_${subWeaponId}`);
+
 	return (
-		<Image
+		<InkTintedImage
 			{...rest}
-			alt={t(`weapons:SUB_${subWeaponId}`)}
-			title={t(`weapons:SUB_${subWeaponId}`)}
+			alt={name}
+			title={name || undefined}
 			testId={testId}
 			path={subWeaponImageUrl(subWeaponId)}
+			detailPath={subWeaponDetailImageUrl(subWeaponId)}
+			highlightPath={subWeaponHighlightImageUrl(subWeaponId)}
 		/>
 	);
 }
 
 type SpecialWeaponImageProps = {
 	specialWeaponId: SpecialWeaponId;
+	alt?: string;
 } & Omit<ImageProps, "path" | "alt" | "title">;
 
 export function SpecialWeaponImage({
 	specialWeaponId,
+	alt,
 	testId,
 	...rest
 }: SpecialWeaponImageProps) {
 	const { t } = useTranslation(["weapons"]);
 
+	const name = alt ?? t(`weapons:SPECIAL_${specialWeaponId}`);
+
 	return (
-		<Image
+		<InkTintedImage
 			{...rest}
-			alt={t(`weapons:SPECIAL_${specialWeaponId}`)}
-			title={t(`weapons:SPECIAL_${specialWeaponId}`)}
+			alt={name}
+			title={name || undefined}
 			testId={testId}
 			path={specialWeaponImageUrl(specialWeaponId)}
+			detailPath={specialWeaponDetailImageUrl(specialWeaponId)}
+			highlightPath={specialWeaponHighlightImageUrl(specialWeaponId)}
 		/>
+	);
+}
+
+type InkTintedImageProps = {
+	/** Icon whose alpha channel is the silhouette to fill with the accent color. */
+	path: string;
+	/** Overlay holding the teal parts of the icon. */
+	detailPath: string;
+	/** Mask of the white parts of the icon, painted in the text color. */
+	highlightPath: string;
+} & Omit<ImageProps, "path" | "onClick" | "loading">;
+
+function InkTintedImage({
+	path,
+	detailPath,
+	highlightPath,
+	alt,
+	title,
+	className,
+	containerClassName,
+	containerStyle,
+	width,
+	height,
+	size,
+	style,
+	testId,
+}: InkTintedImageProps) {
+	return (
+		<div title={title} className={containerClassName} style={containerStyle}>
+			<span
+				role="img"
+				aria-label={alt}
+				data-testid={testId}
+				className={clsx(styles.inkTinted, className)}
+				style={
+					{
+						...style,
+						width: size ?? width,
+						height: size ?? height,
+						"--ink-silhouette": `url("${path}.avif")`,
+						"--ink-detail": `url("${detailPath}.avif")`,
+						"--ink-highlight": `url("${highlightPath}.avif")`,
+					} as React.CSSProperties
+				}
+			>
+				<span className={styles.inkArt} />
+				<span className={styles.inkHighlight} />
+			</span>
+		</div>
 	);
 }
 

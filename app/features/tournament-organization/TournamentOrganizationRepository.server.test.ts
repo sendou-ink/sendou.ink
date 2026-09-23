@@ -30,8 +30,8 @@ describe("findByUserId", () => {
 		);
 
 		expect(result).toHaveLength(2);
-		expect(result.map((org) => org.id).sort()).toEqual(
-			[org1.id, org2.id].sort(),
+		expect(result.map((org) => org.id).sort((a, b) => a - b)).toEqual(
+			[org1.id, org2.id].sort((a, b) => a - b),
 		);
 	});
 

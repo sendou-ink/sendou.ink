@@ -122,7 +122,7 @@
 	padding: var(--s-1) var(--s-2-5);
 	border-radius: var(--radius-full);
 	background-color: var(--color-bg-higher);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .cta {

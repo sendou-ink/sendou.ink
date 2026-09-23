@@ -20,7 +20,7 @@
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	display: flex;
 	align-items: center;
 

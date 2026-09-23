@@ -182,6 +182,7 @@ interface FormFieldStageSelect<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
 
+/** Shared by the main, sub and special weapon selects, which differ only in what they list. */
 interface FormFieldWeaponSelect<T extends string> extends FormFieldBase<T> {
 	required: boolean;
 }
@@ -213,7 +214,9 @@ export type FormField<V extends string = string> =
 	| FormFieldBadges<"badges">
 	| FormFieldTrophies<"trophies">
 	| FormFieldStageSelect<"stage-select">
-	| FormFieldWeaponSelect<"weapon-select">;
+	| FormFieldWeaponSelect<"weapon-select">
+	| FormFieldWeaponSelect<"sub-weapon-select">
+	| FormFieldWeaponSelect<"special-weapon-select">;
 
 export type FormFieldProps<T extends FormField["type"]> = Omit<
 	Extract<FormField, { type: T }>,

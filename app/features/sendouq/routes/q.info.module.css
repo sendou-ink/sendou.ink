@@ -7,7 +7,7 @@
 	& h2 {
 		font-size: var(--font-lg);
 		margin-block-end: var(--s-2);
-		color: var(--color-text-accent);
+		color: var(--color-fg-accent);
 	}
 
 	& h3 {

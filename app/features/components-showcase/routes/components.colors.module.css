@@ -1,0 +1,351 @@
+.preview {
+	padding: var(--s-4);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+	color: var(--color-text);
+}
+
+.sectionTitle {
+	font-size: var(--font-xl);
+	border-bottom: 2px solid var(--color-border);
+}
+
+.tokenName {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	word-break: break-all;
+}
+
+.swatch {
+	flex-shrink: 0;
+	width: 1rem;
+	height: 1rem;
+	border: 1px solid var(--color-border-high);
+	border-radius: var(--radius-selector);
+}
+
+.strikethrough {
+	text-decoration: line-through;
+}
+
+.annotated {
+	container-type: inline-size;
+	position: relative;
+}
+
+.annotatedGrid {
+	display: grid;
+	gap: var(--s-6);
+
+	@container (width > 44rem) {
+		grid-template-columns: minmax(0, 30rem) 18rem;
+		justify-content: space-between;
+		gap: var(--s-24);
+		align-items: center;
+	}
+}
+
+.stage {
+	padding: var(--s-6);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg);
+}
+
+.notes {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+	padding: 0;
+	margin: 0;
+	list-style: none;
+}
+
+.note {
+	display: flex;
+	gap: var(--s-2);
+	padding: var(--s-1-5);
+	border-radius: var(--radius-field);
+	cursor: default;
+
+	&[data-active="true"] {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.marker,
+.pin {
+	display: grid;
+	flex-shrink: 0;
+	place-items: center;
+	width: 1.25rem;
+	height: 1.25rem;
+	border-radius: var(--radius-full);
+	background-color: var(--color-text);
+	color: var(--color-text-inverse);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.pin {
+	position: absolute;
+	translate: -50% -50%;
+	pointer-events: none;
+}
+
+.arrows {
+	position: absolute;
+	inset: 0;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	pointer-events: none;
+}
+
+.arrow {
+	fill: none;
+	stroke: var(--color-text-high);
+	stroke-width: 1.5;
+	opacity: 0.6;
+
+	&[data-active="true"] {
+		stroke: var(--color-text);
+		stroke-width: 2;
+		opacity: 1;
+	}
+}
+
+.arrowHead {
+	fill: var(--color-text-high);
+
+	&[data-active="true"] {
+		fill: var(--color-text);
+	}
+}
+
+.targetHighlight {
+	position: absolute;
+	outline: 2px dashed var(--color-text);
+	outline-offset: 3px;
+	border-radius: var(--radius-field);
+	pointer-events: none;
+}
+
+.noteTarget {
+	display: inline-block;
+	width: fit-content;
+}
+
+.mockCard {
+	padding: var(--s-4);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.mockTitle {
+	width: fit-content;
+	color: var(--color-text);
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+}
+
+.mockMeta {
+	width: fit-content;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+}
+
+.mockDivider {
+	width: 100%;
+	margin: 0;
+	border: none;
+	border-top: var(--border-style);
+}
+
+.mockNeutralChip {
+	padding: var(--s-1) var(--s-2-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-higher);
+	color: var(--color-text);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.mockAccentChip {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-1) var(--s-2-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.mockTabs {
+	display: flex;
+	gap: var(--s-4);
+	border-bottom: var(--border-style);
+}
+
+.mockTab {
+	padding-block: var(--s-1-5);
+	margin-bottom: calc(var(--border-width) * -1);
+	border-bottom: var(--border-width) solid transparent;
+	color: var(--color-text-high);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+
+	&[data-active] {
+		border-color: var(--color-fg-accent);
+		color: var(--color-fg-accent);
+	}
+}
+
+.mockRow,
+.mockRowHighlighted {
+	display: flex;
+	justify-content: space-between;
+	padding: var(--s-1-5) var(--s-2);
+	border-radius: var(--radius-field);
+	font-size: var(--font-sm);
+}
+
+.mockRowHighlighted {
+	background-color: var(--color-bg-accent);
+	color: var(--color-text);
+	font-weight: var(--weight-semi);
+}
+
+.mockLink {
+	width: fit-content;
+	color: var(--color-fg-accent);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+	text-decoration: underline;
+}
+
+.mockFocused {
+	width: fit-content;
+	padding: var(--s-1) var(--s-2);
+	border-radius: var(--radius-field);
+	outline: var(--focus-ring);
+	outline-offset: 2px;
+	font-size: var(--font-sm);
+}
+
+.mockSecondBadge {
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	background-color: var(--color-fill-second);
+	color: var(--color-fg-on-second);
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.mockStat {
+	display: grid;
+	grid-template-columns: auto 1fr auto;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-sm);
+}
+
+.mockTrack {
+	height: 0.5rem;
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg-higher);
+}
+
+.mockBar {
+	height: 100%;
+	border-radius: var(--radius-full);
+	background-color: var(--color-fg-second);
+}
+
+.mockIconText {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	width: fit-content;
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.mockSecondTint {
+	padding: var(--s-2) var(--s-3);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg-second);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+}
+
+.mockErrorInput {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	max-width: 16rem;
+	height: var(--field-size);
+	padding-inline: var(--field-padding);
+	border: var(--border-width) solid var(--color-error);
+	border-radius: var(--radius-field);
+	background-color: var(--color-bg);
+	font-size: var(--font-sm);
+
+	& svg {
+		color: var(--color-error);
+	}
+}
+
+.pairings {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+	gap: var(--s-3);
+}
+
+.pairing {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.pairingSample {
+	padding: var(--s-4) var(--s-3);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-field);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-bold);
+}
+
+.verdict,
+.contrastBadge {
+	padding: 0 var(--s-1-5);
+	border-radius: var(--radius-selector);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.verdict[data-verdict="do"],
+.contrastBadge[data-level="pass"] {
+	background-color: var(--color-success-low);
+	color: var(--color-success-high);
+}
+
+.verdict[data-verdict="dont"],
+.contrastBadge[data-level="fail"] {
+	background-color: var(--color-error-low);
+	color: var(--color-error-high);
+}
+
+.contrastBadge[data-level="large"] {
+	background-color: var(--color-warning-low);
+	color: var(--color-warning-high);
+}

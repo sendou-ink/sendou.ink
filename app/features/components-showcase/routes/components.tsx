@@ -1,5 +1,6 @@
 import { Check, Plus, RotateCcw, Search, SquarePen, Trash } from "lucide-react";
 import { useState } from "react";
+import { Link } from "react-router";
 import { Ability } from "~/components/Ability";
 import { Alert } from "~/components/Alert";
 import { Avatar } from "~/components/Avatar";
@@ -202,6 +203,7 @@ export default function ComponentsShowcasePage() {
 	return (
 		<Main className="stack lg">
 			<h1>Components</h1>
+			<Link to="/components/colors">Color tokens →</Link>
 			{SECTIONS.map(({ id, component: Component }) => (
 				<Component key={id} id={id} />
 			))}

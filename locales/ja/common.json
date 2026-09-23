@@ -422,6 +422,7 @@
 	"settings.customTheme.baseChroma": "彩度一色目",
 	"settings.customTheme.accentHue": "色合い二色目",
 	"settings.customTheme.accentChroma": "彩度二色目",
+	"settings.customTheme.bgLightness": "",
 	"settings.customTheme.chatHueToggle": "カスタムカラーをチャットの名前に使用する",
 	"settings.customTheme.chatHue": "チャットの名前の色",
 	"settings.customTheme.boxes": "",

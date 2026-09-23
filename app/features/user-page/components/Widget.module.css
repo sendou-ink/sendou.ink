@@ -7,6 +7,10 @@
 	overflow: hidden;
 }
 
+.mdBio {
+	clip-path: view-box;
+}
+
 .header {
 	display: flex;
 	align-items: center;
@@ -29,7 +33,7 @@
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	letter-spacing: 0.05em;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .content {
@@ -151,6 +155,54 @@
 	padding: var(--s-2);
 	border-radius: 100%;
 	background-color: var(--color-bg-high);
+}
+
+.customKits {
+	display: flex;
+	flex-direction: column;
+	padding-inline: var(--s-2);
+	border: 1px solid var(--color-border);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.customKit {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding-block: var(--s-2);
+
+	& + & {
+		border-top: 1px solid var(--color-border);
+	}
+}
+
+.customKitWeapon {
+	display: flex;
+	flex-shrink: 0;
+	padding: var(--s-1-5);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
+}
+
+.customKitName {
+	flex: 1;
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.customKitParts {
+	display: flex;
+	flex-shrink: 0;
+	gap: var(--s-1);
+}
+
+.customKitPart {
+	display: flex;
+	padding: var(--s-1);
+	border-radius: 100%;
+	background-color: var(--color-bg-higher);
 }
 
 .weaponGrid {
@@ -284,7 +336,8 @@
 	display: grid;
 	place-items: center;
 	border-radius: var(--radius-box);
-	padding: var(--s-2);
+	height: var(--field-size);
+	aspect-ratio: 1 / 1;
 	flex-shrink: 0;
 
 	& svg {
@@ -310,11 +363,44 @@
 	}
 }
 
-.socialLinksIcons {
+.socialLinksList {
 	display: flex;
-	gap: var(--s-2);
-	justify-content: center;
-	flex-wrap: wrap;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.socialLinkIconCircle {
+	border-radius: var(--radius-full);
+	padding: 0;
+	width: 24px;
+	height: 24px;
+
+	& svg {
+		width: 14px;
+		height: 14px;
+	}
+}
+
+.linkRow {
+	display: flex;
+	align-items: center;
+	justify-content: flex-start;
+	gap: var(--s-1-5);
+	width: 100%;
+	height: auto;
+	padding: var(--s-0-5) var(--s-1);
+	border-radius: var(--radius-field);
+	color: var(--color-text);
+	font-size: var(--font-sm);
+	font-weight: var(--weight-body);
+
+	&:is(a, button):hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
+.socialLinkName {
+	overflow-wrap: anywhere;
 }
 
 .gameBadgeGrid {
@@ -337,16 +423,7 @@
 .friendsList {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2);
-}
-
-.friendLink {
-	padding: var(--s-0-5) var(--s-1);
-	border-radius: var(--radius-field);
-
-	&:hover {
-		background-color: var(--color-bg-higher);
-	}
+	gap: var(--s-1);
 }
 
 .mapModePreferences {
@@ -391,8 +468,8 @@
 	height: var(--selector-size-xs);
 	padding: 0 var(--s-1);
 	border-radius: var(--radius-selector);
-	background-color: var(--color-text-second);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-second);
+	color: var(--color-fg-on-second);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;

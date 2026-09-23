@@ -1,8 +1,6 @@
 // note: dev only component, not used in production code
 
-import { useTranslation } from "react-i18next";
-import { Image } from "~/components/Image";
-import { specialWeaponImageUrl } from "~/utils/urls";
+import { SpecialWeaponImage } from "~/components/Image";
 import {
 	getSpecialsWithRange,
 	type SpecialWeaponWithRange,
@@ -15,8 +13,6 @@ const RANGE_TYPE_COLOR: Record<SpecialWeaponWithRange["rangeType"], string> = {
 };
 
 export function SpecialRangeVisualization() {
-	const { t } = useTranslation(["weapons"]);
-
 	const specials = getSpecialsWithRange();
 	if (specials.length === 0) {
 		return null;
@@ -53,12 +49,9 @@ export function SpecialRangeVisualization() {
 
 				return (
 					<div key={special.specialWeaponId} className={styles.row}>
-						<Image
-							path={specialWeaponImageUrl(special.specialWeaponId)}
-							width={28}
-							height={28}
-							alt={t(`weapons:SPECIAL_${special.specialWeaponId}`)}
-							title={t(`weapons:SPECIAL_${special.specialWeaponId}`)}
+						<SpecialWeaponImage
+							specialWeaponId={special.specialWeaponId}
+							size={28}
 						/>
 						<div className={styles.track}>
 							{blastWidth > 0 ? (

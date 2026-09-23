@@ -51,7 +51,7 @@
 .star {
 	min-width: 18px;
 	max-width: 18px;
-	color: var(--color-text-second);
+	color: var(--color-fg-second);
 	stroke-width: 2;
 }
 

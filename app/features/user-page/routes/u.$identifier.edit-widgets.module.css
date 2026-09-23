@@ -215,7 +215,7 @@
 .widgetSettings {
 	padding: var(--s-3);
 	margin-top: var(--s-1);
-	background-color: var(--color-bg-higher);
+	background-color: var(--color-bg);
 	border-radius: var(--radius-box);
 }
 
@@ -247,12 +247,12 @@
 
 .supporterMax {
 	margin-left: var(--s-1);
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-weight: var(--weight-semi);
 }
 
 .supporterOnly {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	white-space: nowrap;

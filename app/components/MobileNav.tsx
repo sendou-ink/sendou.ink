@@ -22,6 +22,7 @@ import { FriendMenu } from "~/features/friends/components/FriendMenu";
 import { SENDOUQ_ACTIVITY_LABEL } from "~/features/friends/friends-constants";
 import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigation";
+import { useScrollLock } from "~/hooks/useScrollLock";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
 import type { RootLoaderData } from "~/root";
 import {
@@ -79,6 +80,7 @@ export function MobileNav({ sidebarData }: { sidebarData: SidebarData }) {
 		PANEL_TYPES.map((panel) => [panel, panelDomId(uid, panel)]),
 	) as PanelIds;
 
+	useScrollLock(activePanel !== null);
 	useClosePopoversOnNavigation(rootRef);
 
 	const chatContextRef = React.useRef(chatContext);

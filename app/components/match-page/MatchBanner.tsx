@@ -10,8 +10,9 @@ import {
 } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { specialWeaponImageUrl, stageBannerImageUrl } from "~/utils/urls";
-import { ModeImage } from "../Image";
+import { SPLATTERCOLOR_SCREEN_ID } from "~/modules/in-game-lists/weapon-ids";
+import { stageBannerImageUrl } from "~/utils/urls";
+import { ModeImage, SpecialWeaponImage } from "../Image";
 import styles from "./MatchBanner.module.css";
 
 interface BannerHost {
@@ -240,11 +241,9 @@ function ScreenNotice({ screenLegal }: { screenLegal: boolean }) {
 					testId={screenLegal ? "screen-allowed" : "screen-banned"}
 					aria-label={screenLegal ? "Screen allowed" : "Screen banned"}
 				>
-					<img
-						src={`${specialWeaponImageUrl(19)}.avif`}
-						width={imgSize}
-						height={imgSize}
-						alt=""
+					<SpecialWeaponImage
+						specialWeaponId={SPLATTERCOLOR_SCREEN_ID}
+						size={imgSize}
 					/>
 					<Icon
 						size={imgSize}

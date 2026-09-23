@@ -1,5 +1,5 @@
 .explanation {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-weight: var(--weight-semi);
 	text-align: center;
 }
@@ -33,6 +33,6 @@
 }
 
 .count {
-	color: var(--color-accent-high);
+	color: var(--color-fg-accent);
 	font-size: var(--font-xs);
 }

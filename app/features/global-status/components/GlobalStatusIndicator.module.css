@@ -55,10 +55,12 @@
 }
 
 .countBadgeAction {
-	background-color: var(--color-text-accent);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
 }
 
 .alertBadge {
-	color: var(--color-warning);
+	background-color: var(--color-warning-low);
+	border: 1.5px solid var(--color-warning);
+	color: var(--color-warning-high);
 }

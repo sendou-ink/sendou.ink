@@ -10,6 +10,20 @@ export function tierListItemId(item: TierListItem) {
 	return `${item.type}:${item.id}${item.nth ? `:${item.nth}` : ""}`;
 }
 
+const TIER_SORTABLE_ID_PREFIX = "tier-sortable:";
+
+/** Id of the tier row as a sortable, kept apart from the tier's own item drop zone id. */
+export function tierSortableId(tierId: string) {
+	return `${TIER_SORTABLE_ID_PREFIX}${tierId}`;
+}
+
+/** Tier id behind a sortable id, or `null` if the id belongs to something else being dragged. */
+export function tierIdFromSortableId(id: string) {
+	return id.startsWith(TIER_SORTABLE_ID_PREFIX)
+		? id.slice(TIER_SORTABLE_ID_PREFIX.length)
+		: null;
+}
+
 /** Path that reopens the given tier list, used by the exported image's QR code. */
 export function tierListMakerPathWithState({
 	state,

@@ -7,16 +7,15 @@ import { SendouButton } from "~/components/elements/Button";
 import { useIsomorphicLayoutEffect } from "~/hooks/useIsomorphicLayoutEffect";
 import { type FocusMove, rovingFocusIndex } from "~/utils/roving-focus";
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
-import { Image } from "../Image";
-import { useAnchorPositioning } from "./anchor-positioning";
 import {
 	focusLeftTo,
 	isOwnToggle,
-	useAnchorSafeId,
+	usePopoverTargetOnceHydrated,
 	useShowPopoverOnOpen,
 } from "./Popover";
 import styles from "./Select.module.css";
-import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
+import { useFloatingLayer } from "./useFloatingLayer";
+import { useScrollIntoView } from "./useScrollIntoView";
 
 export type SelectKey = string | number;
 
@@ -96,7 +95,7 @@ export interface SendouSelectProps<T extends object> {
 
 /**
  * A customizable select component with optional search functionality,
- * rendered through the native popover API with CSS anchor positioning.
+ * rendered through the native popover API and placed by `useFloatingLayer`.
  *
  * Options mount only while the popover is open (plus the selected one, so the
  * trigger can show it); the trigger's content is read straight from the
@@ -144,11 +143,11 @@ export function SendouSelect<T extends object>({
 	children,
 }: SendouSelectProps<T>) {
 	const { t } = useTranslation(["common"]);
-	const uid = useAnchorSafeId();
+	const uid = React.useId();
 	const topLayerStyle = useTopLayerViewTransitionStyle();
 	const popoverId = `${uid}-select-popover`;
+	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
 	const listboxId = `${uid}-select-listbox`;
-	const anchorName = `--select-anchor-${uid}`;
 	const labelId = label ? `${uid}-select-label` : undefined;
 	const valueId = `${uid}-select-value`;
 	const triggerId = `${uid}-select-trigger`;
@@ -203,13 +202,11 @@ export function SendouSelect<T extends object>({
 		open,
 		onOpen: () => setOpen(true),
 	});
-	useCloseOnScrollClip(open, popoverRef, () => setOpen(false));
-	useAnchorPositioning({
+	useScrollIntoView(open, () => triggerElementRef.current);
+	useFloatingLayer({
 		isOpen: open,
-		popoverRef,
+		floatingRef: popoverRef,
 		getAnchor: () => triggerElementRef.current,
-		matchAnchorWidth: true,
-		constrainHeight: true,
 	});
 	// after positioning, so the selection scrolls into the space the list ends up with
 	useIsomorphicLayoutEffect(() => {
@@ -539,8 +536,7 @@ export function SendouSelect<T extends object>({
 						: undefined
 				}
 				data-required={isRequired || undefined}
-				popoverTarget={popoverId}
-				style={{ anchorName } as React.CSSProperties}
+				popoverTarget={popoverTarget}
 				onKeyDown={onTriggerKeyDown}
 			>
 				<span
@@ -575,12 +571,7 @@ export function SendouSelect<T extends object>({
 				id={popoverId}
 				popover="auto"
 				className={clsx(styles.popover, popoverClassName)}
-				style={
-					{
-						positionAnchor: anchorName,
-						...topLayerStyle,
-					} as React.CSSProperties
-				}
+				style={topLayerStyle}
 				onBeforeToggle={onPopoverBeforeToggle}
 				onToggle={onPopoverToggle}
 				onKeyDown={onPopoverKeyDown}
@@ -909,14 +900,14 @@ function SelectOption(props: SendouSelectItemProps) {
 
 interface SendouSelectItemSectionProps {
 	heading: string;
-	headingImgPath?: string;
+	headingImg?: React.ReactNode;
 	children: React.ReactNode;
 	className?: string;
 }
 
 export function SendouSelectItemSection({
 	heading,
-	headingImgPath,
+	headingImg,
 	children,
 	className,
 }: SendouSelectItemSectionProps) {
@@ -930,9 +921,7 @@ export function SendouSelectItemSection({
 		// biome-ignore lint/a11y/useSemanticElements: a fieldset would carry form semantics this listbox section does not have
 		<div role="group" aria-label={heading}>
 			<div className={clsx(className, styles.categoryHeading)}>
-				{headingImgPath ? (
-					<Image path={headingImgPath} size={28} alt="" />
-				) : null}
+				{headingImg}
 				{heading}
 				<div className={styles.categoryDivider} />
 			</div>

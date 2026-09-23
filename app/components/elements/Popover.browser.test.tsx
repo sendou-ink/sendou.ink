@@ -1,6 +1,6 @@
 import { hydrateRoot } from "react-dom/client";
 import { renderToString } from "react-dom/server";
-import { afterEach, describe, expect, test } from "vitest";
+import { afterEach, describe, expect, test, vi } from "vitest";
 import { page, userEvent } from "vitest/browser";
 import { render } from "vitest-browser-react";
 import { SendouPopover } from "./Popover";
@@ -92,5 +92,33 @@ describe("SendouPopover", () => {
 
 		await expect.element(page.getByText("Popover content")).toBeVisible();
 		expect(popover.matches(":popover-open")).toBe(true);
+	});
+
+	test("does not open before hydration, when nothing could place it", async () => {
+		const app = (
+			<SendouPopover trigger={<button type="button">Open</button>}>
+				Popover content
+			</SendouPopover>
+		);
+
+		const container = document.createElement("div");
+		container.innerHTML = renderToString(app);
+		document.body.appendChild(container);
+		cleanupFns.push(() => container.remove());
+
+		const trigger = container.querySelector("button");
+		const popover = container.querySelector<HTMLElement>("[popover]");
+		if (!trigger || !popover) throw new Error("no popover rendered");
+		trigger.click();
+		expect(popover.matches(":popover-open")).toBe(false);
+
+		const root = hydrateRoot(container, app);
+		cleanupFns.push(() => root.unmount());
+
+		await vi.waitFor(() =>
+			expect(trigger.getAttribute("popovertarget")).toBe(popover.id),
+		);
+		trigger.click();
+		await expect.element(page.getByText("Popover content")).toBeVisible();
 	});
 });

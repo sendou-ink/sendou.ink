@@ -75,7 +75,7 @@
 	width: 100%;
 	align-items: center;
 	border-radius: var(--radius-box);
-	background-color: var(--color-accent-low);
+	background-color: var(--color-bg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	gap: var(--s-2);
@@ -179,7 +179,7 @@
 	padding: 0;
 	border: none;
 	background-color: transparent;
-	color: var(--color-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-md);
 	font-weight: var(--weight-bold);
 	outline: initial;
@@ -245,8 +245,8 @@
 
 .patch {
 	border-radius: var(--radius-selector);
-	background-color: var(--color-accent-low);
-	color: var(--color-accent-high);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding-inline: var(--s-2);

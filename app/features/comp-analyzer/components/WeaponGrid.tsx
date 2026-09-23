@@ -1,5 +1,10 @@
 import { useTranslation } from "react-i18next";
-import { Image, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { Label } from "~/components/Label";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type {
@@ -13,11 +18,7 @@ import {
 	subWeaponIds,
 	weaponCategories,
 } from "~/modules/in-game-lists/weapon-ids";
-import {
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-	weaponCategoryUrl,
-} from "~/utils/urls";
+import { weaponCategoryUrl } from "~/utils/urls";
 import { MAX_WEAPONS } from "../comp-analyzer-constants";
 import type { CategorizationType } from "../comp-analyzer-types";
 import styles from "./WeaponGrid.module.css";
@@ -112,9 +113,7 @@ export function WeaponGrid({
 						{groupedWeapons.map((group) => (
 							<div key={group.key} className={styles.categorySection}>
 								<div className={styles.categoryHeader}>
-									{group.iconPath ? (
-										<Image path={group.iconPath} alt="" size={24} />
-									) : null}
+									<WeaponGroupIcon icon={group.icon} />
 									<span className={styles.categoryName}>
 										{group.name.startsWith("SUB_") ||
 										group.name.startsWith("SPECIAL_")
@@ -155,11 +154,27 @@ export function WeaponGrid({
 	);
 }
 
+type WeaponGroupIconValue =
+	| { kind: "category"; name: (typeof weaponCategories)[number]["name"] }
+	| { kind: "sub"; id: SubWeaponId }
+	| { kind: "special"; id: SpecialWeaponId };
+
 interface WeaponGroup {
 	key: string;
 	name: string;
-	iconPath: string | null;
+	icon: WeaponGroupIconValue;
 	weaponIds: MainWeaponId[];
+}
+
+function WeaponGroupIcon({ icon }: { icon: WeaponGroupIconValue }) {
+	switch (icon.kind) {
+		case "category":
+			return <Image path={weaponCategoryUrl(icon.name)} alt="" size={24} />;
+		case "sub":
+			return <SubWeaponImage subWeaponId={icon.id} size={24} />;
+		case "special":
+			return <SpecialWeaponImage specialWeaponId={icon.id} size={24} />;
+	}
 }
 
 function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
@@ -167,7 +182,7 @@ function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
 		return weaponCategories.map((category) => ({
 			key: category.name,
 			name: category.name.toLowerCase(),
-			iconPath: weaponCategoryUrl(category.name),
+			icon: { kind: "category" as const, name: category.name },
 			weaponIds: [...category.weaponIds] as MainWeaponId[],
 		}));
 	}
@@ -183,7 +198,7 @@ function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
 				return {
 					key: `sub-${subId}`,
 					name: `SUB_${subId}`,
-					iconPath: subWeaponImageUrl(subId as SubWeaponId),
+					icon: { kind: "sub" as const, id: subId as SubWeaponId },
 					weaponIds: weaponsWithSub,
 				};
 			})
@@ -200,7 +215,7 @@ function groupWeaponsByType(categorization: CategorizationType): WeaponGroup[] {
 			return {
 				key: `special-${specialId}`,
 				name: `SPECIAL_${specialId}`,
-				iconPath: specialWeaponImageUrl(specialId as SpecialWeaponId),
+				icon: { kind: "special" as const, id: specialId as SpecialWeaponId },
 				weaponIds: weaponsWithSpecial,
 			};
 		})

@@ -79,6 +79,8 @@
 }
 
 .receiverImage {
+	display: flex;
+	width: fit-content;
 	padding: var(--s-2);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg);
@@ -110,7 +112,7 @@
 }
 
 .multiplier {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	letter-spacing: 0.5px;
@@ -126,8 +128,8 @@
 
 .patch {
 	border-radius: var(--radius-selector);
-	background-color: var(--color-accent-low);
-	color: var(--color-accent-high);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 	padding-inline: var(--s-2);

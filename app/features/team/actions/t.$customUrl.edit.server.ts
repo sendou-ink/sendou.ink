@@ -2,9 +2,9 @@ import type { ActionFunction } from "react-router";
 import { redirect } from "react-router";
 import * as v from "valibot";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import { clampThemeToGamut } from "~/utils/oklch-gamut";
 import { errorToastIfFalsy, notFoundIfNullish } from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { mySlugify, teamPage } from "~/utils/urls";
@@ -45,7 +45,7 @@ export const action: ActionFunction = async ({ request, params }) => {
 
 			await TeamRepository.updateCustomTheme({
 				id: team.id,
-				customTheme: data.newValue ? clampThemeToGamut(data.newValue) : null,
+				customTheme: data.newValue ? ThemePalette.build(data.newValue) : null,
 			});
 
 			return { ok: true };

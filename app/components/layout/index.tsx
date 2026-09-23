@@ -25,8 +25,9 @@ import { useClosePopoversOnNavigation } from "~/hooks/useClosePopoversOnNavigati
 import { useHydrated } from "~/hooks/useHydrated";
 import { MOBILE_LAYOUT_QUERY, useLayoutSize } from "~/hooks/useLayoutSize";
 import { useMediaQuery } from "~/hooks/useMediaQuery";
+import { useScrollLock } from "~/hooks/useScrollLock";
 import { useUnseenFriendRequests } from "~/hooks/useUnseenFriendRequests";
-import { useVisualViewportHeight } from "~/hooks/useVisualViewportHeight";
+import { useVisualViewport } from "~/hooks/useVisualViewport";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { RootLoaderData } from "~/root";
 import { generateIdenticon } from "~/utils/identicon";
@@ -261,9 +262,10 @@ export function Layout({
 	const sideNavRef = React.useRef<HTMLElement>(null);
 	const [sideNavDrawerOpen, setSideNavDrawerOpen] = React.useState(false);
 	useClosePopoversOnNavigation(sideNavRef);
+	useScrollLock(sideNavDrawerOpen);
+	useVisualViewport();
 	const [chatSidebarModalOpen, setChatSidebarModalOpen] =
 		useTabletModal(isTabletLayout);
-	useVisualViewportHeight();
 	const chatSidebarOpen = chatContext?.chatOpen ?? false;
 	const setChatSidebarOpen = chatContext?.setChatOpen ?? (() => {});
 

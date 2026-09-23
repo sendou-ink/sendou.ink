@@ -316,6 +316,12 @@ export const WIDGET_LOADERS = {
 			isTenStar: tenStarWeaponSplIds.includes(weapon.id) ? 1 : 0,
 		}));
 	},
+	"custom-kits": async (
+		_userId: number,
+		settings: ExtractWidgetSettings<"custom-kits">,
+	) => {
+		return settings.kits;
+	},
 	"social-links": async (userId: number) => {
 		return UserRepository.findSocialLinksByUserId(userId);
 	},

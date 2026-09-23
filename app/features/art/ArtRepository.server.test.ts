@@ -76,11 +76,9 @@ describe("findAllTags", () => {
 		const result = await ArtRepository.findAllTags();
 
 		expect(result).toHaveLength(3);
-		expect(result.map((t) => t.name).sort()).toEqual([
-			"Character",
-			"Landscape",
-			"Weapon",
-		]);
+		expect(
+			result.map((t) => t.name).sort((a, b) => a.localeCompare(b)),
+		).toEqual(["Character", "Landscape", "Weapon"]);
 	});
 
 	test("returns empty array when no tags exist", async () => {

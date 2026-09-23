@@ -83,12 +83,7 @@ export function CompGraphic({
 					<GraphicSectionDivider>
 						{t("analyzer:comp.weaponRanges")}
 					</GraphicSectionDivider>
-					<RangeChart
-						weapons={weaponsWithRange.map((weapon) => ({
-							...weapon,
-							slot: weaponIds.indexOf(weapon.weaponId),
-						}))}
-					/>
+					<RangeChart weapons={weaponsWithRange} />
 				</>
 			) : null}
 			{showCombos && topCombos.length > 0 ? (

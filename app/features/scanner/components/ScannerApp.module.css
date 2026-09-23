@@ -14,11 +14,11 @@ from sendou.ink's app/styles/vars.css.
 		align-items: center;
 		justify-content: center;
 		gap: var(--s-1-5);
-		border: var(--border-style-accent);
+		border: var(--border-width) solid var(--color-fill-accent);
 		border-radius: var(--radius-field);
 		appearance: none;
-		background: var(--color-text-accent);
-		color: var(--color-text-inverse);
+		background: var(--color-fill-accent);
+		color: var(--color-fg-on-accent);
 		cursor: pointer;
 		font-family: inherit;
 		font-size: var(--font-xs);
@@ -80,7 +80,7 @@ from sendou.ink's app/styles/vars.css.
 			}
 
 			&.active {
-				color: var(--color-text-accent);
+				color: var(--color-fg-accent);
 				background: var(--color-bg-high);
 			}
 		}

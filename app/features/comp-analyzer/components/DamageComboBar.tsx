@@ -1,7 +1,12 @@
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import { SendouSwitch } from "~/components/elements/Switch";
-import { Image, WeaponImage } from "~/components/Image";
+import {
+	Image,
+	SpecialWeaponImage,
+	SubWeaponImage,
+	WeaponImage,
+} from "~/components/Image";
 import { MAX_AP } from "~/features/build-analyzer/analyzer-constants";
 import { mainWeaponParams } from "~/features/build-analyzer/core/utils";
 import type {
@@ -9,11 +14,7 @@ import type {
 	SpecialWeaponId,
 	SubWeaponId,
 } from "~/modules/in-game-lists/types";
-import {
-	abilityImageUrl,
-	specialWeaponImageUrl,
-	subWeaponImageUrl,
-} from "~/utils/urls";
+import { abilityImageUrl } from "~/utils/urls";
 import { LETHAL_DAMAGE } from "../comp-analyzer-constants";
 import {
 	useSingleWeaponCombos,
@@ -201,9 +202,8 @@ function WeaponIcon({
 }: WeaponIconProps) {
 	if (isSubWeapon) {
 		return (
-			<Image
-				path={subWeaponImageUrl(subWeaponId)}
-				alt=""
+			<SubWeaponImage
+				subWeaponId={subWeaponId}
 				size={18}
 				className={styles.subSpecialWeaponIcon}
 			/>
@@ -212,9 +212,8 @@ function WeaponIcon({
 
 	if (isSpecialWeapon) {
 		return (
-			<Image
-				path={specialWeaponImageUrl(specialWeaponId)}
-				alt=""
+			<SpecialWeaponImage
+				specialWeaponId={specialWeaponId}
 				size={18}
 				className={styles.subSpecialWeaponIcon}
 			/>

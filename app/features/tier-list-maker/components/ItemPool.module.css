@@ -1,17 +1,25 @@
 .pool {
+	--tier-list-item-gap: var(--s-3);
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-3);
+	gap: var(--tier-list-item-gap);
 	min-height: 50px;
 }
 
 .clickableItem {
+	position: relative;
 	min-height: 50px;
 	padding: 0;
 	border: none;
 	background: transparent;
 	cursor: pointer;
 	transition: transform 0.1s;
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: calc(var(--tier-list-item-gap) / -2);
+	}
 
 	&:hover:not(:disabled) {
 		transform: scale(1.1);

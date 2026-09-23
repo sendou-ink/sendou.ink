@@ -48,7 +48,7 @@
 	margin-top: -8px;
 	margin-right: auto;
 	margin-left: auto;
-	color: var(--color-accent-high);
+	color: var(--color-fg-accent);
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-bold);
 }

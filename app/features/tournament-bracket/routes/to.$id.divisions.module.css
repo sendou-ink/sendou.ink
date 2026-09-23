@@ -15,13 +15,13 @@
 	border: var(--border-style);
 
 	&:focus-visible {
-		outline: 3px solid var(--color-accent);
+		outline: 3px solid var(--color-fg-accent);
 		outline-offset: 3px;
 	}
 }
 
 .participant {
-	border-color: var(--color-text-accent);
+	border-color: var(--color-fg-accent);
 }
 
 .participantCounts {

@@ -1,17 +1,11 @@
 import { Check, Clipboard, PencilLine } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as v from "valibot";
 import type { CustomTheme } from "~/db/tables-json";
+import * as ThemePalette from "~/features/theme/core/ThemePalette";
 import { CUSTOM_THEME_VARS } from "~/features/theme/theme-constants";
 import { useCopyToClipboard } from "~/hooks/useCopyToClipboard";
-import {
-	ACCENT_CHROMA_MULTIPLIERS,
-	BASE_CHROMA_MULTIPLIERS,
-	clampThemeToGamut,
-	type ThemeInput,
-} from "~/utils/oklch-gamut";
-import { THEME_INPUT_LIMITS, themeInputSchema } from "~/utils/schema";
+import { THEME_INPUT_LIMITS } from "~/utils/schema";
 import styles from "./CustomThemeSelector.module.css";
 import { Divider } from "./Divider";
 import { LinkButton, SendouButton } from "./elements/Button";
@@ -53,6 +47,15 @@ const COLOR_SLIDERS = [
 		max: THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX,
 		step: 0.01,
 		labelKey: "accentChroma",
+		isHue: false,
+	},
+	{
+		id: "bg-lightness",
+		inputKey: "bgLightness",
+		min: THEME_INPUT_LIMITS.BG_LIGHTNESS_MIN,
+		max: THEME_INPUT_LIMITS.BG_LIGHTNESS_MAX,
+		step: THEME_INPUT_LIMITS.BG_LIGHTNESS_STEP,
+		labelKey: "bgLightness",
 		isHue: false,
 	},
 ] as const;
@@ -129,91 +132,10 @@ type ThemeInputKey =
 	| (typeof SIZE_SLIDERS)[number]["inputKey"]
 	| "chatHue";
 
-const THEME_STRING_KEYS: readonly ThemeInputKey[] = [
-	...COLOR_SLIDERS.map((s) => s.inputKey),
-	...RADIUS_SLIDERS.map((s) => s.inputKey),
-	...BORDER_SLIDERS.map((s) => s.inputKey),
-	...SIZE_SLIDERS.map((s) => s.inputKey),
-	"chatHue",
-];
+function applyThemeInput(input: ThemePalette.ThemeInput) {
+	const theme = ThemePalette.build(input);
 
-function themeInputToString(input: ThemeInput): string {
-	return THEME_STRING_KEYS.map((key) => {
-		const value = input[key];
-		return value === null ? "_" : String(value);
-	}).join(";");
-}
-
-function themeInputFromString(str: string): ThemeInput | null {
-	const parts = str.split(";");
-	if (parts.length !== THEME_STRING_KEYS.length) return null;
-
-	const raw: Record<string, number | null> = {};
-	for (let i = 0; i < THEME_STRING_KEYS.length; i++) {
-		const key = THEME_STRING_KEYS[i];
-		const part = parts[i].trim();
-
-		if (key === "chatHue" && part === "_") {
-			raw[key] = null;
-			continue;
-		}
-
-		const num = Number(part);
-		if (Number.isNaN(num)) return null;
-		raw[key] = num;
-	}
-
-	const parsed = v.safeParse(themeInputSchema, raw);
-	return parsed.success ? parsed.output : null;
-}
-
-const DEFAULT_THEME_INPUT: ThemeInput = {
-	baseHue: 268,
-	baseChroma: 0.05,
-	accentHue: 253,
-	accentChroma: 0.24,
-	chatHue: null,
-	radiusBox: 3,
-	radiusField: 2,
-	radiusSelector: 2,
-	borderWidth: 2,
-	sizeField: 1,
-	sizeSelector: 1,
-	sizeSpacing: 1,
-};
-
-function themeInputFromCustomTheme(customTheme: CustomTheme): ThemeInput {
-	return {
-		baseHue: customTheme["--_base-h"] ?? DEFAULT_THEME_INPUT.baseHue,
-		baseChroma:
-			typeof customTheme["--_base-c-2"] === "number"
-				? customTheme["--_base-c-2"] / BASE_CHROMA_MULTIPLIERS[2]
-				: DEFAULT_THEME_INPUT.baseChroma,
-		accentHue: customTheme["--_acc-h"] ?? DEFAULT_THEME_INPUT.accentHue,
-		accentChroma:
-			typeof customTheme["--_acc-c-2"] === "number"
-				? customTheme["--_acc-c-2"] / ACCENT_CHROMA_MULTIPLIERS[2]
-				: DEFAULT_THEME_INPUT.accentChroma,
-		chatHue: customTheme["--_chat-h"],
-		radiusBox: customTheme["--_radius-box"] ?? DEFAULT_THEME_INPUT.radiusBox,
-		radiusField:
-			customTheme["--_radius-field"] ?? DEFAULT_THEME_INPUT.radiusField,
-		radiusSelector:
-			customTheme["--_radius-selector"] ?? DEFAULT_THEME_INPUT.radiusSelector,
-		borderWidth:
-			customTheme["--_border-width"] ?? DEFAULT_THEME_INPUT.borderWidth,
-		sizeField: customTheme["--_size-field"] ?? DEFAULT_THEME_INPUT.sizeField,
-		sizeSelector:
-			customTheme["--_size-selector"] ?? DEFAULT_THEME_INPUT.sizeSelector,
-		sizeSpacing:
-			customTheme["--_size-spacing"] ?? DEFAULT_THEME_INPUT.sizeSpacing,
-	};
-}
-
-function applyThemeInput(input: ThemeInput) {
-	const clampedTheme = clampThemeToGamut(input);
-
-	for (const [key, value] of Object.entries(clampedTheme)) {
+	for (const [key, value] of Object.entries(theme)) {
 		document.documentElement.style.setProperty(key, String(value));
 	}
 }
@@ -268,7 +190,7 @@ export function CustomThemeSelector({
 	initialTheme: CustomTheme | null | undefined;
 	isSupporter: boolean;
 	isPersonalTheme: boolean;
-	onSave: (themeInput: ThemeInput) => void;
+	onSave: (themeInput: ThemePalette.ThemeInput) => void;
 	onReset: () => void;
 	hidePatreonInfo?: boolean;
 	fetcherState?: "idle" | "submitting" | "loading";
@@ -276,11 +198,11 @@ export function CustomThemeSelector({
 	const { t } = useTranslation(["common"]);
 
 	const initialThemeInput = initialTheme
-		? themeInputFromCustomTheme(initialTheme)
-		: DEFAULT_THEME_INPUT;
+		? ThemePalette.toThemeInput(initialTheme)
+		: ThemePalette.DEFAULT_THEME_INPUT;
 
 	const [themeInput, setThemeInput] =
-		React.useState<ThemeInput>(initialThemeInput);
+		React.useState<ThemePalette.ThemeInput>(initialThemeInput);
 
 	const handleSliderChange = (inputKey: ThemeInputKey, value: number) => {
 		const updatedInput = { ...themeInput, [inputKey]: value };
@@ -304,7 +226,7 @@ export function CustomThemeSelector({
 	};
 
 	const handleReset = () => {
-		setThemeInput(DEFAULT_THEME_INPUT);
+		setThemeInput(ThemePalette.DEFAULT_THEME_INPUT);
 		for (const varDef of CUSTOM_THEME_VARS) {
 			document.documentElement.style.removeProperty(varDef);
 		}
@@ -464,17 +386,17 @@ function ThemeShareInput({
 	themeInput,
 	onImport,
 }: {
-	themeInput: ThemeInput;
-	onImport: (input: ThemeInput) => void;
+	themeInput: ThemePalette.ThemeInput;
+	onImport: (input: ThemePalette.ThemeInput) => void;
 }) {
 	const { t } = useTranslation(["common"]);
 	const { copyToClipboard, copySuccess } = useCopyToClipboard();
 
-	const themeString = themeInputToString(themeInput);
+	const themeString = ThemePalette.toShareCode(themeInput);
 
 	const handlePaste = async () => {
 		const text = await navigator.clipboard.readText();
-		const parsed = themeInputFromString(text);
+		const parsed = ThemePalette.fromShareCode(text);
 		if (parsed) onImport(parsed);
 	};
 

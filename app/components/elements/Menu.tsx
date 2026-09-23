@@ -8,15 +8,14 @@ import {
 } from "~/utils/roving-focus";
 import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import { Image } from "../Image";
-import { useAnchorPositioning } from "./anchor-positioning";
 import styles from "./Menu.module.css";
 import {
 	focusLeftTo,
 	isOwnToggle,
-	useAnchorSafeId,
+	usePopoverTargetOnceHydrated,
 	useShowPopoverOnOpen,
 } from "./Popover";
-import { useCloseOnScrollClip } from "./useCloseOnScrollClip";
+import { useFloatingLayer } from "./useFloatingLayer";
 
 type MenuPlacement = "bottom start" | "bottom end" | "bottom right";
 
@@ -27,7 +26,7 @@ interface SendouMenuProps {
 	children: React.ReactNode;
 	popoverClassName?: string;
 	placement?: MenuPlacement;
-	/** Render the items while closed too, so the menu works before hydration (and without JavaScript). */
+	/** Render the items while closed too, so they are in the server markup and ready the moment the menu opens. */
 	eager?: boolean;
 }
 
@@ -44,10 +43,9 @@ export function SendouMenu({
 	popoverClassName,
 	eager,
 }: SendouMenuProps) {
-	const uid = useAnchorSafeId();
+	const popoverId = `${React.useId()}-menu`;
+	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
 	const topLayerStyle = useTopLayerViewTransitionStyle();
-	const popoverId = `${uid}-menu`;
-	const anchorName = `--menu-anchor-${uid}`;
 
 	const [open, setOpen] = React.useState(false);
 	const popoverRef = React.useRef<HTMLDivElement>(null);
@@ -63,12 +61,10 @@ export function SendouMenu({
 		open,
 		onOpen: () => setOpen(true),
 	});
-	useCloseOnScrollClip(open, popoverRef, () =>
-		popoverRef.current?.hidePopover(),
-	);
-	useAnchorPositioning({
+
+	useFloatingLayer({
 		isOpen: open,
-		popoverRef,
+		floatingRef: popoverRef,
 		getAnchor: () => triggerContainerRef.current?.firstElementChild ?? null,
 		placement:
 			opensLeft || (placement && placement !== "bottom start")
@@ -115,11 +111,10 @@ export function SendouMenu({
 			<span
 				ref={triggerContainerRef}
 				className={styles.triggerContainer}
-				style={{ "--menu-anchor": anchorName } as React.CSSProperties}
 				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
-					popoverTarget: popoverId,
+					popoverTarget,
 					"aria-expanded": open,
 					"aria-haspopup": "menu",
 				})}
@@ -132,15 +127,8 @@ export function SendouMenu({
 				tabIndex={-1}
 				className={clsx(styles.popover, "scrollbar", popoverClassName, {
 					[styles.scrolling]: scrolling,
-					[styles.opensLeft]: opensLeft,
 				})}
-				style={
-					{
-						positionAnchor: anchorName,
-						...topLayerStyle,
-					} as React.CSSProperties
-				}
-				data-placement={placement}
+				style={topLayerStyle}
 				onBeforeToggle={onBeforeToggle}
 				onToggle={onToggle}
 				onKeyDown={onKeyDown}

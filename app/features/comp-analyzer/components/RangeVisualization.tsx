@@ -80,7 +80,6 @@ export function RangeVisualization({ weaponIds }: RangeVisualizationProps) {
 						maxRange={maxRange}
 						minY={minY}
 						maxY={maxY}
-						weaponIds={weaponIds}
 					/>
 				</div>
 			) : null}
@@ -98,7 +97,6 @@ interface TrajectoryChartProps {
 	maxRange: number;
 	minY: number;
 	maxY: number;
-	weaponIds: MainWeaponId[];
 }
 
 function TrajectoryChart({
@@ -107,7 +105,6 @@ function TrajectoryChart({
 	maxRange,
 	minY,
 	maxY,
-	weaponIds,
 }: TrajectoryChartProps) {
 	const chartWidth = 600;
 	const chartHeight = 200;
@@ -180,12 +177,11 @@ function TrajectoryChart({
 	return (
 		<div className={styles.chartContainer}>
 			<div className={styles.weaponLegend}>
-				{weapons.map((weapon, index) => {
-					const slotIndex = weaponIds.indexOf(weapon.weaponId);
-					const color = SLOT_COLORS[slotIndex % SLOT_COLORS.length];
+				{weapons.map((weapon) => {
+					const color = SLOT_COLORS[weapon.slot % SLOT_COLORS.length];
 					return (
 						<div
-							key={`${weapon.weaponId}-${index}`}
+							key={`${weapon.weaponId}-${weapon.slot}`}
 							className={styles.weaponLegendItem}
 						>
 							<WeaponImage
@@ -262,13 +258,12 @@ function TrajectoryChart({
 					})}
 
 					{/* Weapon trajectories */}
-					{weapons.map((weapon, index) => {
+					{weapons.map((weapon) => {
 						if (!weapon.trajectory) return null;
-						const slotIndex = weaponIds.indexOf(weapon.weaponId);
-						const color = SLOT_COLORS[slotIndex % SLOT_COLORS.length];
+						const color = SLOT_COLORS[weapon.slot % SLOT_COLORS.length];
 						return (
 							<path
-								key={`${weapon.weaponId}-${index}`}
+								key={`${weapon.weaponId}-${weapon.slot}`}
 								d={trajectoryToPath(weapon.trajectory)}
 								fill="none"
 								stroke={color}
@@ -278,16 +273,15 @@ function TrajectoryChart({
 					})}
 
 					{/* Blast radius circles */}
-					{weapons.map((weapon, index) => {
+					{weapons.map((weapon) => {
 						if (!weapon.blastRadius || !weapon.trajectory) return null;
 						const groundPoint = getGroundIntersection(weapon.trajectory);
 						if (!groundPoint) return null;
-						const slotIndex = weaponIds.indexOf(weapon.weaponId);
-						const color = SLOT_COLORS[slotIndex % SLOT_COLORS.length];
+						const color = SLOT_COLORS[weapon.slot % SLOT_COLORS.length];
 						const radiusPixels = xScale(weapon.blastRadius);
 						return (
 							<circle
-								key={`blast-${weapon.weaponId}-${index}`}
+								key={`blast-${weapon.weaponId}-${weapon.slot}`}
 								cx={xScale(groundPoint.z)}
 								cy={yScale(0)}
 								r={radiusPixels}

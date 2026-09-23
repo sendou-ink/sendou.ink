@@ -10,7 +10,7 @@ import {
 	SendouSelectItem,
 	SendouSelectItemSection,
 } from "~/components/elements/Select";
-import { Image, ModeImage } from "~/components/Image";
+import { ModeImage } from "~/components/Image";
 import { LocaleTimeRange } from "~/components/LocaleTimeRange";
 import { Main } from "~/components/Main";
 import { topSearchPage } from "~/features/top-search/top-search-urls";
@@ -18,7 +18,8 @@ import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { useSearchParamsTyped } from "~/modules/search-params/hooks";
 import { metaTags, ogPageImage } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { brandImageUrl, navIconUrl } from "~/utils/urls";
+import { navIconUrl } from "~/utils/urls";
+import { DivisionImage } from "../components/DivisionImage";
 import { PlacementsTable } from "../components/Placements";
 import { loader } from "../loaders/xsearch.server";
 import { topSearchSearchParams } from "../top-search-search-params";
@@ -26,10 +27,7 @@ import { type MonthYear, monthYearToSpan } from "../top-search-utils";
 
 export { loader };
 
-const DIVISIONS = [
-	{ region: "WEST", brandId: "B10" },
-	{ region: "JPN", brandId: "B11" },
-] as const;
+const DIVISIONS = ["WEST", "JPN"] as const;
 
 export const handle: SendouRouteHandle = {
 	breadcrumb: () => ({
@@ -148,7 +146,7 @@ function DivisionFilter() {
 
 	return (
 		<SendouChipRadioGroup>
-			{DIVISIONS.map(({ region, brandId }) => (
+			{DIVISIONS.map((region) => (
 				<SendouChipRadio
 					key={region}
 					name="region"
@@ -157,7 +155,12 @@ function DivisionFilter() {
 					onChange={() => setParams({ region })}
 				>
 					<span className="stack horizontal xs items-center">
-						<Image path={brandImageUrl(brandId)} size={18} alt="" />
+						<DivisionImage
+							region={region}
+							size={18}
+							alt=""
+							inverted={params.region === region}
+						/>
 						{t(`common:divisions.${region}`)}
 					</span>
 				</SendouChipRadio>

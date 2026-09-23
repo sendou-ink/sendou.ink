@@ -1,5 +1,10 @@
 import * as React from "react";
-import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
+import type {
+	MainWeaponId,
+	SpecialWeaponId,
+	StageId,
+	SubWeaponId,
+} from "~/modules/in-game-lists/types";
 import type { AnySyncSchema } from "~/utils/schema";
 import { formRegistry } from "./fields";
 import { ArrayFormField } from "./fields/ArrayFormField";
@@ -16,6 +21,7 @@ import {
 } from "./fields/InputGroupFormField";
 import { SelectFormField } from "./fields/SelectFormField";
 import { StageSelectFormField } from "./fields/StageSelectFormField";
+import { SubSpecialSelectFormField } from "./fields/SubSpecialSelectFormField";
 import { SwitchFormField } from "./fields/SwitchFormField";
 import { TeamSearchFormField } from "./fields/TeamSearchFormField";
 import { TextareaFormField } from "./fields/TextareaFormField";
@@ -592,6 +598,24 @@ export function FormField({
 				disabled={isDisabled}
 				value={value as MainWeaponId | null}
 				onChange={handleChange as (v: MainWeaponId | null) => void}
+			/>
+		);
+	}
+
+	if (
+		formField.type === "sub-weapon-select" ||
+		formField.type === "special-weapon-select"
+	) {
+		return (
+			<SubSpecialSelectFormField
+				{...commonProps}
+				{...formField}
+				weaponType={formField.type === "sub-weapon-select" ? "SUB" : "SPECIAL"}
+				disabled={isDisabled}
+				value={value as SubWeaponId | SpecialWeaponId | null}
+				onChange={
+					handleChange as (v: SubWeaponId | SpecialWeaponId | null) => void
+				}
 			/>
 		);
 	}

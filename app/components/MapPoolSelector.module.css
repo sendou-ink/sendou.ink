@@ -49,7 +49,7 @@
 	border: var(--border-style);
 	border-radius: var(--radius-full);
 	background-color: var(--color-bg);
-	color: var(--color-accent);
+	color: var(--color-fg-accent);
 	opacity: 1 !important;
 	outline: initial;
 

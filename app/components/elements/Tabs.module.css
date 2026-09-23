@@ -88,12 +88,12 @@
 	}
 
 	&[data-selected] .tabButton {
-		border-color: var(--color-text-accent);
+		border-color: var(--color-fg-accent);
 		color: var(--color-text);
 	}
 
 	&:focus-visible .tabButton {
-		color: var(--color-text-accent) !important;
+		color: var(--color-fg-accent) !important;
 		outline: none;
 	}
 }
@@ -141,7 +141,7 @@
 }
 
 .tabNumber {
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 	margin-inline-start: var(--s-2);
 }
 
@@ -186,7 +186,7 @@
 
 		&[data-selected] .tabButton {
 			border-bottom-color: transparent;
-			border-inline-end-color: var(--color-text-accent);
+			border-inline-end-color: var(--color-fg-accent);
 		}
 	}
 

@@ -50,5 +50,5 @@
 
 button.outlined {
 	background: transparent;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }

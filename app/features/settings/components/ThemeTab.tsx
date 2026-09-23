@@ -3,11 +3,11 @@ import { useMatches } from "react-router";
 import { CustomThemeSelector } from "~/components/CustomThemeSelector";
 import { FormMessage } from "~/components/FormMessage";
 import { Theme, useTheme } from "~/features/theme/core/provider";
+import type { ThemeInput } from "~/features/theme/core/ThemePalette";
 import { SelectFormField } from "~/form/fields/SelectFormField";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { useHasRole } from "~/modules/permissions/hooks";
 import type { RootLoaderData } from "~/root";
-import type { ThemeInput } from "~/utils/oklch-gamut";
 import { customThemeSchema } from "../settings-schemas";
 
 export function ThemeTab() {

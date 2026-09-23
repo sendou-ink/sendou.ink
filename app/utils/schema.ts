@@ -127,7 +127,11 @@ export const THEME_INPUT_LIMITS = {
 	ACCENT_HUE_MIN: 0,
 	ACCENT_HUE_MAX: 360,
 	ACCENT_CHROMA_MIN: 0,
-	ACCENT_CHROMA_MAX: 0.3,
+	ACCENT_CHROMA_MAX: 0.5,
+	BG_LIGHTNESS_MIN: 0.06,
+	BG_LIGHTNESS_MAX: 0.17,
+	BG_LIGHTNESS_STEP: 0.01,
+	BG_LIGHTNESS_DEFAULT: 0.17,
 	RADIUS_MIN: 0,
 	RADIUS_MAX: 5,
 	RADIUS_STEP: 1,
@@ -165,6 +169,23 @@ export const themeInputSchema = v.object({
 		v.number(),
 		v.minValue(THEME_INPUT_LIMITS.ACCENT_CHROMA_MIN),
 		v.maxValue(THEME_INPUT_LIMITS.ACCENT_CHROMA_MAX),
+	),
+	bgLightness: v.optional(
+		v.pipe(
+			v.number(),
+			v.minValue(THEME_INPUT_LIMITS.BG_LIGHTNESS_MIN),
+			v.maxValue(THEME_INPUT_LIMITS.BG_LIGHTNESS_MAX),
+			v.check(
+				(val) =>
+					isValidStep(
+						val,
+						THEME_INPUT_LIMITS.BG_LIGHTNESS_MIN,
+						THEME_INPUT_LIMITS.BG_LIGHTNESS_STEP,
+					),
+				"Must be a valid step increment",
+			),
+		),
+		THEME_INPUT_LIMITS.BG_LIGHTNESS_DEFAULT,
 	),
 	chatHue: v.nullable(
 		v.pipe(
