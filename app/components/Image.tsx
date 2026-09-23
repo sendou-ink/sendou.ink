@@ -274,6 +274,42 @@ function InkTintedImage({
 	);
 }
 
+/** Image with the same subtle outline sub and special weapon icons have, so light art stays visible on light backgrounds. */
+export function OutlinedImage({
+	path,
+	alt,
+	title,
+	className,
+	containerClassName,
+	containerStyle,
+	width,
+	height,
+	size,
+	style,
+	testId,
+}: Omit<ImageProps, "onClick" | "loading">) {
+	return (
+		<div title={title} className={containerClassName} style={containerStyle}>
+			<span
+				role="img"
+				aria-label={alt}
+				data-testid={testId}
+				className={clsx(styles.inkTinted, className)}
+				style={
+					{
+						...style,
+						width: size ?? width,
+						height: size ?? height,
+						"--ink-silhouette": `url("${path}.avif")`,
+					} as React.CSSProperties
+				}
+			>
+				<span className={styles.outlinedArt} />
+			</span>
+		</div>
+	);
+}
+
 type TierImageProps = {
 	tier: { name: TierName; isPlus: boolean };
 } & Omit<ImageProps, "path" | "alt" | "title" | "size" | "height">;

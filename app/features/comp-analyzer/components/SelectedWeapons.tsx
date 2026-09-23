@@ -20,7 +20,7 @@ import { nanoid } from "nanoid";
 import { useState } from "react";
 import { useTranslation } from "react-i18next";
 import {
-	Image,
+	OutlinedImage,
 	SpecialWeaponImage,
 	SubWeaponImage,
 	WeaponImage,
@@ -103,7 +103,7 @@ export function SelectedWeapons({
 			{Array.from({ length: emptySlotCount }, (_, i) => (
 				<div key={`empty-${i}`} className={styles.selectedWeaponRow}>
 					<div className={styles.weaponImageContainerEmpty}>
-						<Image path={abilityImageUrl("UNKNOWN")} alt="" size={48} />
+						<OutlinedImage path={abilityImageUrl("UNKNOWN")} alt="" size={48} />
 					</div>
 					<div className={styles.weaponNamePillEmpty}>
 						<span className={styles.weaponNameEmpty}>

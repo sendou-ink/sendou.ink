@@ -44,7 +44,8 @@
    inlines mask images it finds on real ones, and a dropped mask paints the
    whole layer over the icon */
 .inkArt,
-.inkHighlight {
+.inkHighlight,
+.outlinedArt {
 	position: absolute;
 	inset: 0;
 	mask-size: var(--_art-size);
@@ -64,4 +65,11 @@
 .inkHighlight {
 	background-color: #fff;
 	mask-image: var(--ink-highlight);
+}
+
+.outlinedArt {
+	background-image: var(--ink-silhouette);
+	background-size: var(--_art-size);
+	background-repeat: no-repeat;
+	background-position: center;
 }
