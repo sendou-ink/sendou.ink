@@ -194,7 +194,6 @@ function TierListMakerContent() {
 			</div>
 
 			<DndContext
-				key={itemType}
 				sensors={sensors}
 				collisionDetection={tierAwareCollisionDetection}
 				modifiers={[restrictTierDragToVerticalAxis]}
