@@ -174,8 +174,8 @@ describe("AvailabilityRepository.upsertOwnWeek", () => {
 			...WINDOW,
 		});
 
-		expect(weeks.map((week) => week.userId).sort()).toEqual(
-			[users.id(1), users.id(2)].sort(),
+		expect(weeks.map((week) => week.userId).sort((a, b) => a - b)).toEqual(
+			[users.id(1), users.id(2)].sort((a, b) => a - b),
 		);
 	});
 });
@@ -469,7 +469,7 @@ describe("AvailabilityRepository.findAllTeamEventsByUserIds", () => {
 			events
 				.filter((event) => event.userId === users.id(2))
 				.map((e) => e.name)
-				.sort(),
+				.sort((a, b) => a.localeCompare(b)),
 		).toEqual(["Selected only", "Whole team"]);
 	});
 });

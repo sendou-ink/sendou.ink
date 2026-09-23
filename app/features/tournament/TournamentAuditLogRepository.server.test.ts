@@ -124,7 +124,9 @@ describe("TournamentAuditLogRepository", () => {
 			tournament.id,
 		);
 		expect(teams).toHaveLength(2);
-		expect(teams.map((team) => team.name).sort()).toEqual(["Team A", "Team B"]);
+		expect(
+			teams.map((team) => team.name).sort((a, b) => a.localeCompare(b)),
+		).toEqual(["Team A", "Team B"]);
 
 		const events = await TournamentAuditLogRepository.findByTournamentId({
 			tournamentId: tournament.id,

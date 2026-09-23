@@ -114,10 +114,11 @@ describe("syncLiveStreams tournament streamers", () => {
 
 		const rows = await findAllLiveStreams();
 		expect(rows).toHaveLength(2);
-		expect(rows.map((r) => r.twitch).sort()).toEqual([
-			"streamer_one",
-			"streamer_two",
-		]);
+		expect(
+			rows
+				.map((r) => r.twitch)
+				.sort((a, b) => (a ?? "").localeCompare(b ?? "")),
+		).toEqual(["streamer_one", "streamer_two"]);
 		expect(rows[0].viewerCount).toBe(100);
 	});
 
