@@ -52,7 +52,7 @@ import {
 	refreshFeed,
 	subscribeFeed,
 } from "./events-feed";
-import { type FixtureData, saveFixture } from "./fixture-export";
+import { type FixtureData, saveFrame } from "./fixture-export";
 import {
 	matchContaining,
 	retryableUnlinkedMatches,
@@ -141,7 +141,6 @@ let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
 const gates = new Map<string, GateResult>();
-let latestParse: { type: string; data: FixtureData } | null = null;
 // the open match is known to be a non-SZ mode, so counter reads are
 // misreads of another mode's overlay and are not collected at all
 let objectiveBlocked = false;
@@ -315,10 +314,10 @@ export function stopCapture(): void {
 	void trimEvents().catch(() => {});
 }
 
-/** Debug: the current frame plus the latest parse as a fixture download. */
+/** Debug: the current capture frame as a PNG download. */
 export function saveCurrentFrameAsFixture(): void {
 	if (!video) return;
-	void saveFixture(video, latestParse);
+	void saveFrame(video);
 }
 
 function release(): void {
@@ -389,7 +388,6 @@ function onResult(
 	});
 	if (!result.gate.pass) return;
 	for (const event of result.events as DetectedEvent<FixtureData>[]) {
-		latestParse = { type: event.type, data: event.data };
 		if (
 			(event.type === OBJECTIVE_EVENT_TYPE ||
 				event.type === PLAYER_STATUS_EVENT_TYPE) &&

@@ -14,6 +14,7 @@ import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { GameTimeline } from "~/components/GameTimeline";
 import { ModeImage, WeaponImage } from "~/components/Image";
+import { LocaleTime } from "~/components/LocaleTime";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import { abilities as ALL_ABILITIES } from "~/modules/in-game-lists/abilities";
@@ -121,6 +122,9 @@ export function MatchCard({
 	const result = matchResult(match);
 	const pov = povPlayer(match);
 	const matchOrigin = timelineOrigin(match);
+	const scannedAt = built.sources.find(
+		(event) => event.detectedAt !== undefined,
+	)?.detectedAt;
 	const meta = [
 		kind === "vod" && match.startsAt !== null
 			? `at ${formatPosition(match.startsAt - originT)}`
@@ -143,7 +147,16 @@ export function MatchCard({
 	const head = (
 		<div className={styles.head}>
 			<div className={styles.main}>
-				<span className={styles.number}>Game {number}</span>
+				<div className={clsx(styles.numberColumn, "line-height-tight")}>
+					<span className={styles.number}>Game {number}</span>
+					{scannedAt !== undefined ? (
+						<LocaleTime
+							date={new Date(scannedAt)}
+							options={{ timeStyle: "short" }}
+							className={styles.scannedAt}
+						/>
+					) : null}
+				</div>
 				{match.mode !== null ? (
 					<ModeImage mode={match.mode} size={26} className={styles.mode} />
 				) : null}

@@ -1,10 +1,10 @@
 /**
  * The settings popover, opened from ⚙ on the landing and the live header:
- * the upload and clip toggles, the retention notes, and in development the
- * fixtures link. The source lives on the landing's Live card, the one place
+ * the upload and clip toggles, the retention notes, and the debug tools
+ * (enabling debug mode, saving the live frame, the fixtures link in development). The source lives on the landing's Live card, the one place
  * it must be right.
  */
-import { Settings } from "lucide-react";
+import { Bug, Camera, Settings } from "lucide-react";
 import { Link } from "react-router";
 import { SendouButton } from "~/components/elements/Button";
 import {
@@ -13,6 +13,7 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSwitch } from "~/components/elements/Switch";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { SCANNER_PAGE } from "~/utils/urls";
 import { MAX_SESSIONS } from "../core/sessions";
 import { scannerSearchParams } from "../scanner-search-params";
@@ -25,13 +26,23 @@ import {
 	useScannerSettings,
 } from "./settings";
 import { isLoggedIn } from "./upload";
+import { useDebug } from "./use-debug";
 
 /** a step of one frame-ish: fine enough to tune by ear, coarse enough to reach a second in a few clicks */
 const AUDIO_OFFSET_STEP_MS = 25;
 
-export function SettingsPopover() {
+export function SettingsPopover({
+	onSaveFrame,
+}: {
+	/** set while capturing: downloads the current live frame */
+	onSaveFrame?: () => void;
+}) {
 	const settings = useScannerSettings();
 	const loggedIn = isLoggedIn();
+	const debug = useDebug();
+	const [, setDebugParam] = useSearchParam(scannerSearchParams, "debug");
+	const showFixturesLink = process.env.NODE_ENV === "development";
+	const showSaveFrame = debug && onSaveFrame !== undefined;
 
 	return (
 		<SendouPopover
@@ -120,18 +131,40 @@ export function SettingsPopover() {
 					<br />
 					Sessions: last 30 days or {MAX_SESSIONS} sessions.
 				</p>
-				{process.env.NODE_ENV === "development" ? (
+				{!debug || showSaveFrame || showFixturesLink ? (
 					<section className={styles.section}>
 						<span className={styles.label}>Debug</span>
 						<div className={styles.row}>
-							<Link
-								to={scannerSearchParams.href(SCANNER_PAGE, {
-									view: "fixtures",
-								})}
-								defaultShouldRevalidate={false}
-							>
-								Fixtures
-							</Link>
+							{!debug ? (
+								<SendouButton
+									size="small"
+									variant="minimal"
+									icon={<Bug />}
+									onClick={() => setDebugParam(true)}
+								>
+									Enable debug
+								</SendouButton>
+							) : null}
+							{showSaveFrame ? (
+								<SendouButton
+									size="small"
+									variant="minimal"
+									icon={<Camera />}
+									onClick={onSaveFrame}
+								>
+									Save frame as fixture
+								</SendouButton>
+							) : null}
+							{showFixturesLink ? (
+								<Link
+									to={scannerSearchParams.href(SCANNER_PAGE, {
+										view: "fixtures",
+									})}
+									defaultShouldRevalidate={false}
+								>
+									Fixtures
+								</Link>
+							) : null}
 						</div>
 					</section>
 				) : null}

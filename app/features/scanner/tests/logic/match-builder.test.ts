@@ -86,6 +86,7 @@ function scoreboard(
 		weapons: weaponIds = ALL as (MainWeaponId | null)[],
 		povIndex = 0 as number | null,
 		matchScores = [100, 47] as [number | null, number | null],
+		paints = [] as (number | null)[],
 	} = {},
 ): DetectedEvent {
 	const data: ScoreboardData = {
@@ -96,7 +97,7 @@ function scoreboard(
 		players: weaponIds.map((weaponId, i) => ({
 			name: NAMES[i] ?? `p${i}`,
 			weaponId,
-			paint: 1000,
+			paint: paints.length > 0 ? (paints[i] ?? null) : 1000,
 			ka: 10,
 			d: 5,
 			s: 2,
@@ -125,9 +126,9 @@ function replayScoreboard(
 
 function battleLogScoreboard(
 	t: number,
-	{ timestamp = null as string | null } = {},
+	{ timestamp = null as string | null, paints = [] as (number | null)[] } = {},
 ): DetectedEvent & { detectedAt?: number } {
-	const base = scoreboard(t).data as ScoreboardData;
+	const base = scoreboard(t, { paints }).data as ScoreboardData;
 	const data: ScoreboardBattleLogData = {
 		...base,
 		timestamp,
@@ -736,6 +737,92 @@ test("without a replay timestamp, playedAt falls back to the scoreboard's detect
 	event.detectedAt = 1_700_000_000_000;
 	const built = buildScannerMatches([event]);
 	assert.equal(built[0]!.match.playedAt, 1_700_000_000_000);
+});
+
+const GAME_PAINTS = [1204, 987, 1530, 842, 1102, 765, 1311, 690];
+const OTHER_GAME_PAINTS = [1188, 1003, 1421, 901, 1250, 612, 1377, 745];
+const PLAYED_AT = new Date(2025, 11, 25, 21, 34).getTime();
+
+function playedGame(): DetectedEvent[] {
+	const results = scoreboard(300, { paints: GAME_PAINTS }) as DetectedEvent & {
+		detectedAt?: number;
+	};
+	results.detectedAt = PLAYED_AT;
+	return [mapStart(0), death(100, "l1"), results];
+}
+
+test("a battle log view of an already built game joins its match", () => {
+	const view = battleLogScoreboard(900, {
+		timestamp: "25.12.2025 21:30",
+		paints: GAME_PAINTS,
+	});
+	const built = buildScannerMatches([...playedGame(), view]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.sources.at(-1), view);
+	assert.equal(built[0]!.match.playedAt, PLAYED_AT);
+});
+
+test("a battle log view with the winner panel misplaced still joins its match", () => {
+	const swapped = [...GAME_PAINTS.slice(4), ...GAME_PAINTS.slice(0, 4)];
+	const built = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, { paints: swapped }),
+	]);
+	assert.equal(built.length, 1);
+});
+
+test("a battle log view of another game forms its own match", () => {
+	const built = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, { paints: OTHER_GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 2);
+});
+
+test("a battle log view whose recording time contradicts the earlier read forms its own match", () => {
+	const built = buildScannerMatches([
+		...playedGame(),
+		battleLogScoreboard(900, {
+			timestamp: "25.12.2025 19:30",
+			paints: GAME_PAINTS,
+		}),
+	]);
+	assert.equal(built.length, 2);
+});
+
+test("a battle log view with too few paint totals read forms its own match", () => {
+	const sparse = GAME_PAINTS.map((paint, i) => (i < 5 ? paint : null));
+	const results = scoreboard(300, { paints: sparse });
+	const built = buildScannerMatches([
+		mapStart(0),
+		results,
+		battleLogScoreboard(900, { paints: sparse }),
+	]);
+	assert.equal(built.length, 2);
+});
+
+test("a battle log view does not close the match still gathering events", () => {
+	const built = buildScannerMatches([
+		...playedGame(),
+		mapStart(1000),
+		death(1100, "l2"),
+		battleLogScoreboard(1150, { paints: GAME_PAINTS }),
+		scoreboard(1300, { paints: OTHER_GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 2);
+	assert.deepEqual(
+		built[1]!.sources.map((e) => e.t),
+		[1000, 1100, 1300],
+	);
+});
+
+test("a results screen repeating an earlier board is a new game", () => {
+	const built = buildScannerMatches([
+		...playedGame(),
+		mapStart(1000),
+		scoreboard(1300, { paints: GAME_PAINTS }),
+	]);
+	assert.equal(built.length, 2);
 });
 
 test("a minimap-only match has no playedAt and no winner", () => {

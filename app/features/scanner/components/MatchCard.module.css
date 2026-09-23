@@ -82,12 +82,25 @@
 	gap: var(--s-2) var(--s-3);
 }
 
+.numberColumn {
+	display: flex;
+	flex-direction: column;
+	align-items: center;
+	gap: var(--s-0-5);
+}
+
 .number {
-	font-size: var(--font-2xs);
+	font-size: 0.55rem;
 	font-weight: var(--weight-semi);
 	text-transform: uppercase;
 	letter-spacing: 0.08em;
 	color: var(--color-text-high);
+	white-space: nowrap;
+}
+
+.scannedAt {
+	font-size: var(--font-2xs);
+	color: var(--color-text);
 	white-space: nowrap;
 }
 
