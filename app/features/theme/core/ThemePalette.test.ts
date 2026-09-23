@@ -1,7 +1,7 @@
 import { readFileSync } from "node:fs";
 import { describe, expect, test } from "vitest";
 import type { CustomTheme } from "~/db/tables-json";
-import { isInSrgbGamut } from "~/utils/oklch-gamut";
+import { isInSrgbGamut, type Oklch } from "~/utils/oklch-gamut";
 import { THEME_INPUT_LIMITS } from "~/utils/schema";
 import * as ThemePalette from "./ThemePalette";
 
@@ -21,6 +21,42 @@ describe("ThemePalette.build", () => {
 		expect(Object.keys(cssDefaults).length).toBeGreaterThan(50);
 		for (const [key, value] of Object.entries(cssDefaults)) {
 			expect(theme[key as keyof CustomTheme], key).toBeCloseTo(value, 10);
+		}
+	});
+
+	test("vars.css resolves every color to the same value as resolveColors", () => {
+		const css = varsCssColors();
+		const { base, dark, light } = ThemePalette.resolveColors(built());
+		const kebab = (key: string) =>
+			key.replace(/[A-Z]/g, (letter) => `-${letter.toLowerCase()}`);
+		const expectColor = (label: string, actual: Oklch, expected: Oklch) => {
+			expect(actual.l, `${label} lightness`).toBeCloseTo(expected.l, 6);
+			expect(actual.c, `${label} chroma`).toBeCloseTo(expected.c, 6);
+			expect(actual.h, `${label} hue`).toBeCloseTo(expected.h, 6);
+		};
+
+		for (const [mode, colors] of [
+			["dark", dark],
+			["light", light],
+		] as const) {
+			for (const [key, color] of Object.entries(colors)) {
+				const name = `--color-${kebab(key)}`;
+				expectColor(`${mode} ${name}`, css.resolve(name, mode), color);
+			}
+		}
+		for (const [index, color] of base.entries()) {
+			if (index < 5) {
+				expectColor(
+					`dark base-${index}`,
+					css.resolve(`--color-base-${index}`, "dark"),
+					color,
+				);
+			}
+			expectColor(
+				`light base-${7 - index}`,
+				css.resolve(`--color-base-${7 - index}`, "light"),
+				color,
+			);
 		}
 	});
 
@@ -159,24 +195,44 @@ function* sampledInputs() {
 	}
 }
 
+const VARS_CSS = readFileSync(
+	new URL("../../../styles/vars.css", import.meta.url),
+	"utf8",
+).replace(/\r\n/g, "\n");
+
+type VarsBlock = "defaults" | "dark" | "light" | "semantic";
+
+/** Custom property declarations of the top level blocks of vars.css, keyed by what the block is for */
+function varsCssBlocks() {
+	const blocks = new Map<VarsBlock, Map<string, string>>();
+	const blockFor = (selector: string): VarsBlock | null => {
+		const lastLine = selector.trim().split("\n").at(-1)!;
+		if (lastLine.includes("[data-default-theme]")) return "defaults";
+		if (lastLine.includes('[data-theme="dark"]')) return "dark";
+		if (lastLine.includes('[data-theme="light"]')) return "light";
+		if (lastLine === "[data-theme]") return "semantic";
+		return null;
+	};
+
+	for (const [, selector, body] of VARS_CSS.matchAll(
+		/^([^{}]+?)\{\n([^{}]*)\n\}/gm,
+	)) {
+		const block = blockFor(selector);
+		if (!block) continue;
+
+		const declarations = new Map<string, string>();
+		for (const [, key, value] of body.matchAll(/(--[\w-]+):\s*([^;]+);/g)) {
+			declarations.set(key, value.replace(/\s+/g, " ").trim());
+		}
+		blocks.set(block, declarations);
+	}
+
+	return blocks;
+}
+
 /** Theme variable defaults from vars.css, `var()` references resolved */
 function varsCssThemeDefaults() {
-	const css = readFileSync(
-		new URL("../../../styles/vars.css", import.meta.url),
-		"utf8",
-	);
-	const blocks = [
-		...css.matchAll(/^html,\n\[data-default-theme\][^{]*\{([^}]*)\}/gm),
-	];
-
-	const raw = new Map<string, string>();
-	for (const block of blocks) {
-		for (const [, key, value] of block[1].matchAll(
-			/(--_[\w-]+):\s*([^;]+);/g,
-		)) {
-			raw.set(key, value.trim());
-		}
-	}
+	const raw = varsCssBlocks().get("defaults")!;
 
 	const resolve = (value: string): number => {
 		const reference = value.match(/^var\((--_[\w-]+)\)$/);
@@ -188,4 +244,75 @@ function varsCssThemeDefaults() {
 	return Object.fromEntries(
 		[...raw.entries()].map(([key, value]) => [key, resolve(value)]),
 	);
+}
+
+/** Evaluates the oklch() colors of vars.css for a color scheme the way the browser would */
+function varsCssColors() {
+	const blocks = varsCssBlocks();
+
+	const lookup = (name: string, mode: "dark" | "light"): string => {
+		const value =
+			blocks.get(mode)?.get(name) ??
+			blocks.get("semantic")?.get(name) ??
+			blocks.get("defaults")?.get(name);
+		if (value === undefined)
+			throw new Error(`${name} is not defined for ${mode}`);
+
+		return value;
+	};
+
+	const substituteVars = (value: string, mode: "dark" | "light"): string => {
+		let result = value;
+		while (result.includes("var(")) {
+			result = result.replace(/var\((--[\w-]+)\)/g, (_, name) =>
+				lookup(name, mode),
+			);
+		}
+
+		return result;
+	};
+
+	const evaluate = (expression: string): number => {
+		const arithmetic = expression
+			.replaceAll("calc", "")
+			.replace(/(\d+(?:\.\d+)?)%/g, "($1/100)");
+		if (!/^[\d\s.+\-*/()]+$/.test(arithmetic)) {
+			throw new Error(`cannot evaluate ${expression}`);
+		}
+
+		return new Function(`return ${arithmetic}`)();
+	};
+
+	const splitTopLevel = (value: string) => {
+		const parts: string[] = [];
+		let depth = 0;
+		let current = "";
+		for (const char of value) {
+			if (char === "(") depth++;
+			if (char === ")") depth--;
+			if (char === " " && depth === 0) {
+				if (current) parts.push(current);
+				current = "";
+			} else {
+				current += char;
+			}
+		}
+		if (current) parts.push(current);
+
+		return parts;
+	};
+
+	const resolve = (name: string, mode: "dark" | "light"): Oklch => {
+		const value = substituteVars(lookup(name, mode), mode);
+		const inner = value.match(/^oklch\((.*)\)$/s)?.[1];
+		if (!inner)
+			throw new Error(
+				`${name} does not resolve to oklch() for ${mode}: ${value}`,
+			);
+		const [l, c, h] = splitTopLevel(inner.trim()).map(evaluate);
+
+		return { l, c, h };
+	};
+
+	return { resolve };
 }

@@ -250,11 +250,13 @@ export function resolveColors(theme: CustomTheme) {
 		base(lightness, index),
 	);
 
+	const darkBg = base(theme["--_base-l"], 7);
+
 	return {
 		/** light mode lightnesses, also used as dark mode text colors */
 		base: lightBase,
 		dark: {
-			bg: base(theme["--_base-l"], 7),
+			bg: darkBg,
 			bgHigh: base(theme["--_base-l"] + DARK_SURFACE_OFFSETS[6]!, 6),
 			bgHigher: base(theme["--_base-l"] + DARK_SURFACE_OFFSETS[5]!, 5),
 			text: lightBase[0],
@@ -265,6 +267,14 @@ export function resolveColors(theme: CustomTheme) {
 			secondLow: slot("second", 0),
 			second: slot("second", 1),
 			secondHigh: slot("second", 2),
+			bgAccent: slot("acc", 0),
+			fgAccent: slot("acc", 2),
+			fillAccent: slot("acc", 2),
+			fgOnAccent: darkBg,
+			bgSecond: slot("second", 0),
+			fgSecond: slot("second", 2),
+			fillSecond: slot("second", 2),
+			fgOnSecond: darkBg,
 		},
 		light: {
 			bg: lightBase[0],
@@ -275,14 +285,18 @@ export function resolveColors(theme: CustomTheme) {
 			accentLow: slot("acc", 3),
 			accent: slot("acc", 4),
 			accentHigh: slot("acc", 5),
-			fillAccent: slot("acc", 6),
-			textOnAccent:
-				theme["--_acc-fill-dark-text"] === 1 ? lightBase[7] : lightBase[0],
 			secondLow: slot("second", 3),
 			second: slot("second", 4),
 			secondHigh: slot("second", 5),
+			bgAccent: slot("acc", 3),
+			fgAccent: slot("acc", 4),
+			fillAccent: slot("acc", 6),
+			fgOnAccent:
+				theme["--_acc-fill-dark-text"] === 1 ? lightBase[7] : lightBase[0],
+			bgSecond: slot("second", 3),
+			fgSecond: slot("second", 4),
 			fillSecond: slot("second", 6),
-			textOnSecond:
+			fgOnSecond:
 				theme["--_second-fill-dark-text"] === 1 ? lightBase[7] : lightBase[0],
 		},
 	};
@@ -297,58 +311,50 @@ export function textContrastPairs(theme: CustomTheme) {
 	return [
 		{ name: "dark text", fg: dark.text, bg: dark.bgHigher },
 		{ name: "dark text-high", fg: dark.textHigh, bg: dark.bgHigh },
-		{ name: "dark fg-accent", fg: dark.accentHigh, bg: dark.bgHigher },
+		{ name: "dark fg-accent", fg: dark.fgAccent, bg: dark.bgHigher },
 		{
-			name: "dark fg-accent on low",
-			fg: dark.accentHigh,
-			bg: dark.accentLow,
+			name: "dark fg-accent on bg-accent",
+			fg: dark.fgAccent,
+			bg: dark.bgAccent,
 		},
-		{ name: "dark fg-on-accent", fg: dark.bg, bg: dark.accentHigh },
-		{ name: "dark text on bg-accent", fg: dark.text, bg: dark.accentLow },
-		{ name: "dark fg-second", fg: dark.secondHigh, bg: dark.bgHigher },
+		{ name: "dark fg-on-accent", fg: dark.fgOnAccent, bg: dark.fillAccent },
+		{ name: "dark text on bg-accent", fg: dark.text, bg: dark.bgAccent },
+		{ name: "dark fg-second", fg: dark.fgSecond, bg: dark.bgHigher },
 		{
-			name: "dark fg-second on low",
-			fg: dark.secondHigh,
-			bg: dark.secondLow,
+			name: "dark fg-second on bg-second",
+			fg: dark.fgSecond,
+			bg: dark.bgSecond,
 		},
-		{ name: "dark fg-on-second", fg: dark.bg, bg: dark.secondHigh },
-		{ name: "dark text on bg-second", fg: dark.text, bg: dark.secondLow },
+		{ name: "dark fg-on-second", fg: dark.fgOnSecond, bg: dark.fillSecond },
+		{ name: "dark text on bg-second", fg: dark.text, bg: dark.bgSecond },
 		{ name: "light text", fg: light.text, bg: light.bgHigh },
 		{ name: "light text-high", fg: light.textHigh, bg: light.bg },
-		{ name: "light fg-accent", fg: light.accent, bg: light.bgHigh },
+		{ name: "light fg-accent", fg: light.fgAccent, bg: light.bgHigh },
 		{
 			name: "light accent-high on low",
 			fg: light.accentHigh,
 			bg: light.accentLow,
 		},
-		{
-			name: "light fg-on-accent",
-			fg: light.textOnAccent,
-			bg: light.fillAccent,
-		},
+		{ name: "light fg-on-accent", fg: light.fgOnAccent, bg: light.fillAccent },
 		{
 			name: "light fg-accent on bg-accent",
-			fg: light.accent,
-			bg: light.accentLow,
+			fg: light.fgAccent,
+			bg: light.bgAccent,
 		},
-		{ name: "light text on bg-accent", fg: light.text, bg: light.accentLow },
-		{ name: "light fg-second", fg: light.second, bg: light.bgHigh },
+		{ name: "light text on bg-accent", fg: light.text, bg: light.bgAccent },
+		{ name: "light fg-second", fg: light.fgSecond, bg: light.bgHigh },
 		{
 			name: "light second-high on low",
 			fg: light.secondHigh,
 			bg: light.secondLow,
 		},
-		{
-			name: "light fg-on-second",
-			fg: light.textOnSecond,
-			bg: light.fillSecond,
-		},
+		{ name: "light fg-on-second", fg: light.fgOnSecond, bg: light.fillSecond },
 		{
 			name: "light fg-second on bg-second",
-			fg: light.second,
-			bg: light.secondLow,
+			fg: light.fgSecond,
+			bg: light.bgSecond,
 		},
-		{ name: "light text on bg-second", fg: light.text, bg: light.secondLow },
+		{ name: "light text on bg-second", fg: light.text, bg: light.bgSecond },
 	].map((pair) => ({ ...pair, contrast: contrastRatio(pair.fg, pair.bg) }));
 }
 

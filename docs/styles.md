@@ -39,7 +39,7 @@ Every color slot has a designed lightness (e.g. dark mode `--color-accent-high` 
 
 The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mode surfaces (`--color-base-5...7`) keep their distance from it.
 
-`ThemePalette.test.ts` sweeps inputs, checks the contrast of every text/background pair (`textContrastPairs()`) and that every resolved color (`resolveColors()`) is inside the sRGB gamut. Keep both in sync with how `vars.css` uses the variables.
+`ThemePalette.test.ts` sweeps inputs, checks the contrast of every text/background pair (`textContrastPairs()`) and that every resolved color (`resolveColors()`) is inside the sRGB gamut. It also evaluates the `oklch()` and `calc()` expressions of `vars.css` for the default theme and checks that every `--color-x` resolves to the same value as the matching key of `resolveColors()`, so the lightness values, surface offsets and slot mapping cannot drift apart between the two files.
 
 ## Changing Default Theme Values
 
@@ -50,7 +50,7 @@ The dark mode background lightness (`--_base-l`) is a slider of its own. Dark mo
 1. Edit `DEFAULT_THEME_INPUT` or the constants in `ThemePalette.ts`
 2. Run `ThemePalette.build(DEFAULT_THEME_INPUT)` to get the output CSS variable values
 3. Update `vars.css` with the output values
-4. If lightness values or offsets changed, check the `oklch()` / `calc()` calls in `vars.css` still match
+4. If lightness values or offsets changed, update the `oklch()` / `calc()` calls in `vars.css` to match (the sync test fails until they do)
 
 ## Gotchas
 
