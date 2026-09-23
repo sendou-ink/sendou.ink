@@ -63,11 +63,12 @@ opens it, for anyone, through the same handoff Inspect uses.
   `Matches` (`core/csv/matches.ts`, one row per game, the rows the cards
   render) and `Raw detections` (`core/csv/events.ts`, one row per event).
   Column names stay English keys.
-- **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`):
-  `Save frame as fixture`, `?telemetry=true`, and the `Raw detections`
-  disclosure inside a match card (the per-event cards with Inspect). The
-  screenshot view (`ScreenshotPage.tsx`) is not gated; the fixtures view is
-  dev-only.
+- **Debug gate** (`use-debug.ts`: DEV/ADMIN role or `?debug=true`, which
+  Settings → Debug → `Enable debug` sets):
+  `Save frame as fixture` (Settings → Debug, live only), `?telemetry=true`,
+  and the `Raw detections` disclosure inside a match card (the per-event
+  cards with Inspect). The screenshot view (`ScreenshotPage.tsx`) is not
+  gated; the fixtures view is dev-only.
 
 ## Clips
 
@@ -188,7 +189,12 @@ sequenceDiagram
 - `core/match-builder.ts` turns a timeline into `ScannerMatch`es: a MapStart
   opens a match, a scoreboard closes one (claiming the last 8 min of deaths
   when the intro was missed), minimaps group per map by confirmed stage
-  change and >5 min gap. An event belongs to at most one match; deaths
+  change and >5 min gap. A battle history screen (battle log, replay
+  browser) showing a game already built — same scoreboard fingerprint (the
+  order-free paint/K+A/deaths/specials lines), recording time within 20 min
+  of its play time — joins that match's sources instead of forming a new
+  one, so browsing the log after playing neither adds a card nor re-uploads
+  (the match was already sent). An event belongs to at most one match; deaths
   reveal enemy builds (`ability-harvest.ts`), the personal results screen
   (`ScoreboardOwn`, seen within `OWN_RESULTS_WINDOW_SECONDS` of a closed
   match's scoreboard) completes the POV player's full build, and minimap

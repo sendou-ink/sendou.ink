@@ -3,7 +3,7 @@
  * capture preview, the LIVE/IDLE status line, Stop — over the same
  * SessionView. The capture itself lives in live-session.ts and outlives this view.
  */
-import { Camera, Square } from "lucide-react";
+import { Square } from "lucide-react";
 import { SendouButton } from "~/components/elements/Button";
 import { LocaleTime } from "~/components/LocaleTime";
 import { useUser } from "~/features/auth/core/user";
@@ -27,7 +27,6 @@ import { matchContaining } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
 import { useScannerSettings } from "./settings";
 import { sendLive } from "./upload";
-import { useDebug } from "./use-debug";
 
 /** a game is "being read" while its newest event is this fresh */
 const READING_WINDOW_MS = 60_000;
@@ -39,7 +38,6 @@ export function LiveView() {
 	const settings = useScannerSettings();
 	const user = useUser();
 	const [, setParams] = useSearchParamsTyped(scannerSearchParams);
-	const debug = useDebug();
 
 	const session = currentSession(feed);
 	const events = session?.events ?? [];
@@ -55,7 +53,7 @@ export function LiveView() {
 		newest.match.winner === null &&
 		Date.now() - (session?.endedAt ?? 0) < READING_WINDOW_MS;
 	const uploadNote = !user
-		? "Upload off · log in"
+		? "Upload off (log in)"
 		: settings.upload
 			? "Upload on ✓"
 			: "Upload off";
@@ -99,7 +97,7 @@ export function LiveView() {
 				if (id !== undefined) void sendLive(matchContaining(id));
 			}}
 			getFrame={frameLoader}
-			emptyText="Play a game — it shows up here as soon as its intro or results screen is read."
+			emptyText="Play a game — it shows up here once its results screen is read."
 			header={(info) => (
 				<SessionHeader
 					actions={
@@ -114,16 +112,6 @@ export function LiveView() {
 								clipCounts={info.clipCounts}
 								fileBase={`scanner-${new Date(session?.startedAt ?? Date.now()).toISOString().slice(0, 10)}`}
 							/>
-							{debug ? (
-								<SendouButton
-									size="small"
-									variant="minimal"
-									icon={<Camera />}
-									onClick={saveCurrentFrameAsFixture}
-								>
-									Save frame as fixture
-								</SendouButton>
-							) : null}
 							<SendouButton
 								size="small"
 								variant="destructive"
@@ -132,7 +120,7 @@ export function LiveView() {
 							>
 								Stop
 							</SendouButton>
-							<SettingsPopover />
+							<SettingsPopover onSaveFrame={saveCurrentFrameAsFixture} />
 						</>
 					}
 				>

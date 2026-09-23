@@ -146,6 +146,23 @@ const KILL_SAME_ROW_MIN_SIMILARITY = 0.7;
  */
 const OWN_RESULTS_WINDOW_SECONDS = 90;
 
+/** Battle history screens: browsing them after playing shows games the timeline already holds. */
+const HISTORY_SCOREBOARD_EVENT_TYPES: readonly string[] = [
+	SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE,
+	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
+	QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
+];
+
+/** Paint totals a board must read to fingerprint its game; fewer could collide between games. */
+const FINGERPRINT_MIN_PAINT_READ = 6;
+
+/**
+ * How far a history screen's recording time may sit from the earlier read of
+ * the same game: it is on the console clock and marks the game's start, while
+ * a results screen's time is the PC clock at the game's end.
+ */
+const REVISIT_PLAYED_AT_TOLERANCE_MS = 20 * 60 * 1000;
+
 export interface BuiltMatch<E extends DetectedEvent> {
 	match: ScannerMatch;
 	/** input events the match was built from, chronological — the send-status unit for callers */
@@ -155,8 +172,10 @@ export interface BuiltMatch<E extends DetectedEvent> {
 /**
  * Splits a timeline into ScannerMatch objects, chronological. A personal
  * results screen identifies no match of its own but completes the POV
- * player's build on the match whose results screen it follows. Every input
- * event ends up in at most one match's `sources`.
+ * player's build on the match whose results screen it follows. A battle
+ * history screen showing an already built game (same scoreboard fingerprint,
+ * recording time not contradicting it) joins that match's `sources` instead of
+ * forming a new one. Every input event ends up in at most one match's `sources`.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
@@ -193,6 +212,13 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			orphanStripWeapons = [];
 			orphanKills = [];
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
+			const revisited = revisitedMatch(built, event);
+			if (revisited) {
+				// the game already has its match, and the one being played (if
+				// any) keeps gathering events
+				revisited.sources.push(event);
+				continue;
+			}
 			if (!open) {
 				open = startMatch();
 				open.deaths = orphanDeaths.filter(
@@ -471,15 +497,6 @@ function toBuiltMatch<E extends DetectedEvent>(
 
 	const board = open.scoreboard?.data as ScoreboardData | undefined;
 	const start = open.mapStart?.data as MapStartData | undefined;
-	// the replay-browser and both battle log screens carry the recording
-	// timestamp; only the former a replay code
-	const timestamped =
-		open.scoreboard?.type === SCOREBOARD_BATTLE_LOG_REPLAY_EVENT_TYPE ||
-		open.scoreboard?.type === SCOREBOARD_BATTLE_LOG_EVENT_TYPE ||
-		open.scoreboard?.type === QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE
-			? (open.scoreboard.data as ScoreboardBattleLogData &
-					Partial<ScoreboardBattleLogReplayData>)
-			: undefined;
 	const deaths = open.deaths.map((event) => event.data as DeathData);
 	const objectives = open.objectives.map((event) => ({
 		t: event.t,
@@ -531,14 +548,14 @@ function toBuiltMatch<E extends DetectedEvent>(
 		startsAt:
 			sources.length > 0 ? Math.max(0, Math.floor(sources[0]!.t)) : null,
 		endsAt: floorOrNull(open.scoreboard?.t ?? open.minimaps.at(-1)?.t),
-		playedAt: playedAt(open.scoreboard, timestamped),
+		playedAt: playedAt(open.scoreboard),
 		lobby: board?.lobby ?? null,
 		mode,
 		stage: board?.stage ?? start?.stage ?? leadingStage(open.stageVotes),
 		matchScores: board?.matchScores.some((score) => score !== null)
 			? board.matchScores
 			: null,
-		replayCode: timestamped?.replayCode ?? null,
+		replayCode: historyData(open.scoreboard)?.replayCode ?? null,
 		// layout alone cannot flag a broadcast (S3 POV footage draws both narrow
 		// strip geometries), so only the spectator map screen or badge-proven
 		// strips count; a results screen that identified the POV seat disproves
@@ -1324,12 +1341,10 @@ function bestCount(
  * closing scoreboard's detection time — read structurally off richer event
  * records (StoredEvent) so the builder stays generic.
  */
-function playedAt(
-	scoreboard: DetectedEvent | null,
-	timestamped: ScoreboardBattleLogData | undefined,
-): number | null {
+function playedAt(scoreboard: DetectedEvent | null): number | null {
 	if (!scoreboard) return null;
 	const detectedAt = (scoreboard as { detectedAt?: number }).detectedAt ?? null;
+	const timestamped = historyData(scoreboard);
 	if (timestamped?.timestamp) {
 		const recorded = parseReplayTimestamp(timestamped.timestamp, {
 			now: detectedAt ?? undefined,
@@ -1337,6 +1352,77 @@ function playedAt(
 		if (recorded !== null) return recorded;
 	}
 	return detectedAt;
+}
+
+/** The replay-browser and both battle log screens carry the recording timestamp; only the former a replay code. */
+function historyData(
+	scoreboard: DetectedEvent | null,
+):
+	| (ScoreboardBattleLogData & Partial<ScoreboardBattleLogReplayData>)
+	| undefined {
+	if (!scoreboard || !HISTORY_SCOREBOARD_EVENT_TYPES.includes(scoreboard.type))
+		return undefined;
+	return scoreboard.data as ScoreboardBattleLogData &
+		Partial<ScoreboardBattleLogReplayData>;
+}
+
+/**
+ * The earlier match a battle history screen shows again: its closing board
+ * has the same fingerprint and its play time doesn't contradict the screen's
+ * recording time (either may be unknown, e.g. on VoD scans).
+ */
+function revisitedMatch<E extends DetectedEvent>(
+	built: readonly BuiltMatch<E>[],
+	event: E,
+): BuiltMatch<E> | undefined {
+	if (!HISTORY_SCOREBOARD_EVENT_TYPES.includes(event.type)) return undefined;
+	const fingerprint = scoreboardFingerprint(event.data as ScoreboardData);
+	if (fingerprint === null) return undefined;
+	const recordedAt = playedAt(event);
+
+	return built.findLast((candidate) => {
+		const board = candidate.sources.find((source) =>
+			SCOREBOARD_EVENT_TYPES.includes(source.type),
+		);
+		if (
+			!board ||
+			scoreboardFingerprint(board.data as ScoreboardData) !== fingerprint
+		) {
+			return false;
+		}
+		return (
+			recordedAt === null ||
+			candidate.match.playedAt === null ||
+			Math.abs(recordedAt - candidate.match.playedAt) <=
+				REVISIT_PLAYED_AT_TOLERANCE_MS
+		);
+	});
+}
+
+/**
+ * A game's identity off its board: each team's stat lines (paint, K+A, deaths,
+ * specials) as an order-free multiset, teams order-free too (a history screen
+ * can misplace the winner panel). Paint totals practically never repeat
+ * between games; names (OCR wobble) and weapons (icon sizes differ per
+ * screen) are left out. Null when too few paint totals were read to tell games apart.
+ */
+function scoreboardFingerprint(board: ScoreboardData): string | null {
+	const paintsRead = board.players.filter(
+		(player) => player.paint !== null,
+	).length;
+	if (paintsRead < FINGERPRINT_MIN_PAINT_READ) return null;
+
+	const teamKey = (players: ScoreboardData["players"]) =>
+		players
+			.map((player) => [player.paint, player.ka, player.d, player.s].join(":"))
+			.sort()
+			.join(",");
+	return [
+		teamKey(board.players.slice(0, PLAYERS_PER_TEAM)),
+		teamKey(board.players.slice(PLAYERS_PER_TEAM)),
+	]
+		.sort()
+		.join("|");
 }
 
 function teamsFromScoreboard(

@@ -1,5 +1,5 @@
 /**
- * "Save as fixture": downloads the raw captured frame as PNG plus an
+ * Fixture downloads: the raw captured frame as PNG, and for a detection an
  * expected.json prefilled from the detector's output, so labeling is review-and-correct.
  */
 
@@ -279,10 +279,8 @@ export function saveFixtureFromEvent(
 	);
 }
 
-export async function saveFixture(
-	video: HTMLVideoElement,
-	latest: { type: string; data: FixtureData } | null,
-): Promise<void> {
+/** The video's current frame as frame.png, the fixture's raw input. */
+export async function saveFrame(video: HTMLVideoElement): Promise<void> {
 	const canvas = document.createElement("canvas");
 	canvas.width = video.videoWidth;
 	canvas.height = video.videoHeight;
@@ -292,10 +290,4 @@ export async function saveFixture(
 	);
 	if (!blob) throw new Error("could not encode frame");
 	download("frame.png", blob);
-	download(
-		"expected.json",
-		new Blob([buildExpectedJson(latest?.data ?? null, latest?.type)], {
-			type: "application/json",
-		}),
-	);
 }
