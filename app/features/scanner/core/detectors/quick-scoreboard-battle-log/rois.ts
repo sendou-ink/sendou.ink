@@ -81,6 +81,12 @@ function statRoi(cy: number, index: 0 | 1 | 2): Roi {
 	return { x, y: cy + 3, w: 30, h: 20 };
 }
 
+/**
+ * The rectified card's digits render softer than the atlas crops: at the default 150 a 7's
+ * antialiased bar thins out and the ink penalty hands it to 1. 90-130 read every stat cell.
+ */
+const STAT_BIN_THRESHOLD = 110;
+
 /** POV arrow left of the pill (x ~901-944), reaching the pill's rounded cap (~x 940). */
 function povArrowRoi(cy: number): Roi {
 	return { x: 890, y: cy - 32, w: 56, h: 62 };
@@ -162,6 +168,7 @@ export const ROIS: BattleLogRois = {
 	paintRoi,
 	paintSuffixRoi,
 	statRoi,
+	STAT_BIN_THRESHOLD,
 	povArrowRoi,
 	teamScoreRoi,
 	resultTagRoi,

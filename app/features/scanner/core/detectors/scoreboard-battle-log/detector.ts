@@ -70,6 +70,8 @@ export interface BattleLogRois {
 	paintRoi(cy: number): Roi;
 	paintSuffixRoi(cy: number): Roi;
 	statRoi(cy: number, index: 0 | 1 | 2): Roi;
+	/** stat digit binarization threshold when the default (150) erodes this layout's digits */
+	STAT_BIN_THRESHOLD?: number;
 	povArrowRoi(cy: number): Roi;
 	teamScoreRoi(panel: PanelIndex): Roi;
 	resultTagRoi(panel: PanelIndex): Roi;
@@ -322,7 +324,7 @@ export function createBattleLogDetector(
 						base + dy,
 						rowRois,
 						resources,
-						{},
+						{ statBinThreshold: rois.STAT_BIN_THRESHOLD },
 						speculative,
 					),
 				),

@@ -1,0 +1,87 @@
+{
+  "event": "QuickScoreboardBattleLog",
+  "data": {
+    "lobby": "PRIVATE",
+    "mode": "SZ",
+    "stage": 20,
+    "matchScores": [
+      100,
+      0
+    ],
+    "povIndex": 1,
+    "players": [
+      {
+        "name": "でんさく",
+        "paint": 894,
+        "ka": 13,
+        "d": 2,
+        "s": 3,
+        "weaponId": 60
+      },
+      {
+        "name": "R.O.B.O.T",
+        "paint": 662,
+        "ka": 12,
+        "d": 2,
+        "s": 1,
+        "weaponId": 211
+      },
+      {
+        "name": "いちごシロップ",
+        "paint": 398,
+        "ka": 6,
+        "d": 2,
+        "s": 1,
+        "weaponId": 2030
+      },
+      {
+        "name": "でんさく",
+        "paint": 464,
+        "ka": 6,
+        "d": 4,
+        "s": 1,
+        "weaponId": 3000
+      },
+      {
+        "name": "Chronos",
+        "paint": 532,
+        "ka": 4,
+        "d": 7,
+        "s": 3,
+        "weaponId": 6011
+      },
+      {
+        "name": "Hawaiian",
+        "paint": 1102,
+        "ka": 3,
+        "d": 4,
+        "s": 4,
+        "weaponId": 7011
+      },
+      {
+        "name": "GIMME",
+        "paint": 588,
+        "ka": 3,
+        "d": 6,
+        "s": 3,
+        "weaponId": 5000
+      },
+      {
+        "name": "Pika ☆",
+        "paint": 330,
+        "ka": 2,
+        "d": 7,
+        "s": 2,
+        "weaponId": 50
+      }
+    ],
+    "stageLabel": "Bluefin Depot"
+  },
+  "options": {
+    "skipFields": [
+      "players.1.name",
+      "players.2.name"
+    ],
+    "notes": "1080p VoD frame (InTheZone #52, t=11491.5) of the lobby's quick battle log, opened 16s after this game's results screen. players.4.stats and players.7.stats (deaths x07) once read 1: the rectified card's digits are softer than the atlas crops, so at the default binarization the 7's antialiased bar thins out and the ink penalty hands the segment to 1. The misread broke the match builder's history-screen fingerprint and the revisit became a duplicate match card. players.1.name reads R_O_B_Or and players.2.name ι′ちごシロッフ (small-size name misreads, unrelated). timestamp omitted: the screen shows 10:43PM on a 12h clock and the parse drops the PM."
+  }
+}
