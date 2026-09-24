@@ -48,6 +48,8 @@ export interface RowOptions {
 	weaponInkThreshold?: number;
 	/** replay only: the left-aligned paint puts the "p" suffix inside the ROI under 4 digits */
 	paintDropLoweredTrailing?: boolean;
+	/** binarization threshold for the stat digits, for layouts whose digits render softer */
+	statBinThreshold?: number;
 }
 
 /**
@@ -71,7 +73,7 @@ export function* parseScoreboardRowSteps(
 	const [weaponRead, { paint, name }, stats] = yield* all([
 		readWeapon(rgb, cy, rois, resources, options),
 		readPaintAndName(gray, cy, rois, resources, options, speculative),
-		readStats(gray, cy, rois, resources, speculative),
+		readStats(gray, cy, rois, resources, options, speculative),
 	]);
 	const { weapon, special } = weaponRead ?? { weapon: null };
 
@@ -178,6 +180,7 @@ function* readStats(
 	cy: number,
 	rois: RowRois,
 	resources: RowResources,
+	options: RowOptions,
 	speculative: boolean,
 ): MatchSteps<ParsedNumber[] | null> {
 	const { statDigits } = resources;
@@ -186,7 +189,14 @@ function* readStats(
 		cropRoi(gray, rois.stat(cy, i)),
 	);
 	const parsed = yield* all(
-		crops.map((crop) => parseNumberSteps(crop, statDigits, {}, speculative)),
+		crops.map((crop) =>
+			parseNumberSteps(
+				crop,
+				statDigits,
+				{ binThreshold: options.statBinThreshold },
+				speculative,
+			),
+		),
 	);
 	for (const crop of crops) crop.delete();
 	return parsed;
