@@ -67,7 +67,7 @@
 .head {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2);
+	gap: var(--s-4);
 	padding: var(--s-3) var(--s-4);
 }
 
@@ -120,11 +120,15 @@
 }
 
 .title {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
 	font-size: var(--font-sm);
 	line-height: 1.1;
 }
 
 .modeName {
+	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
@@ -211,8 +215,8 @@
 }
 
 .weapon {
-	width: 28px;
-	height: 28px;
+	width: 32px;
+	height: 32px;
 	background: var(--color-bg-higher);
 	border-radius: var(--radius-full);
 	padding: 2px;

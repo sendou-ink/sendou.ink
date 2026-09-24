@@ -126,9 +126,6 @@ export function MatchCard({
 		(event) => event.detectedAt !== undefined,
 	)?.detectedAt;
 	const meta = [
-		kind === "vod" && match.startsAt !== null
-			? `at ${formatPosition(match.startsAt - originT)}`
-			: null,
 		match.lobby !== null && match.lobby !== "PRIVATE"
 			? lobbyLabel(match.lobby)
 			: null,
@@ -149,7 +146,13 @@ export function MatchCard({
 			<div className={styles.main}>
 				<div className={clsx(styles.numberColumn, "line-height-tight")}>
 					<span className={styles.number}>Game {number}</span>
-					{scannedAt !== undefined ? (
+					{kind === "vod" ? (
+						match.startsAt !== null ? (
+							<span className={styles.scannedAt}>
+								{formatPosition(match.startsAt - originT)}
+							</span>
+						) : null
+					) : scannedAt !== undefined ? (
 						<LocaleTime
 							date={new Date(scannedAt)}
 							options={{ timeStyle: "short" }}
@@ -163,9 +166,7 @@ export function MatchCard({
 				<div className={styles.headline}>
 					<div className={styles.title}>
 						{modeLabel(match.mode) ? (
-							<span className={styles.modeName}>
-								{modeLabel(match.mode)} ·{" "}
-							</span>
+							<span className={styles.modeName}>{modeLabel(match.mode)}</span>
 						) : null}
 						<span className={styles.stage}>
 							{stageLabel(match.stage) ?? "Unknown stage"}
@@ -361,8 +362,8 @@ function TeamWeapons({ match }: { match: ScannerMatch }) {
 							<WeaponImage
 								key={index}
 								weaponSplId={weaponId}
-								variant="build"
-								size={24}
+								variant="badge"
+								size={28}
 								className={clsx(styles.weapon, { [styles.pov]: isPov })}
 							/>
 						) : (
