@@ -37,8 +37,12 @@ const TrophyCtx = createContext<TrophyCtxValue | undefined>(undefined);
 
 let sharedContext: PicoCAD2Context | undefined;
 
+// even a single frame blocks the main thread for seconds on software WebGL (e2e is always CPU),
+// racing hydration and the test's own actions
+const RENDERS_MODELS = !IS_E2E_TEST_RUN;
+
 function getSharedTrophyContext() {
-	if (typeof window === "undefined") return undefined;
+	if (typeof window === "undefined" || !RENDERS_MODELS) return undefined;
 	if (!sharedContext) sharedContext = new PicoCAD2Context();
 	return sharedContext;
 }
@@ -175,13 +179,9 @@ export function Trophy({
 			viewer.cameraModeSpeed = 5;
 			viewer.animation.setTime(0);
 
-			// render loops starve the main thread on software WebGL, so e2e (always CPU) and surfaces
+			// render loops starve the main thread on software WebGL, so surfaces
 			// showing many trophies without GPU acceleration draw a single static frame
-			if (
-				preview ||
-				IS_E2E_TEST_RUN ||
-				(staticOnSoftwareRendering && isSoftwareRendering())
-			) {
+			if (preview || (staticOnSoftwareRendering && isSoftwareRendering())) {
 				viewer.whenReady().then(() => {
 					const drawOnce = () => {
 						if (viewerRef.current !== viewer) return;
@@ -275,7 +275,7 @@ export function Trophy({
 
 	return (
 		<div className={style.container} style={containerStyle} aria-busy={!drawn}>
-			{deferred || isLoadingSharedContext ? (
+			{deferred || isLoadingSharedContext || !RENDERS_MODELS ? (
 				<div className={style.trophy} />
 			) : (
 				<canvas
