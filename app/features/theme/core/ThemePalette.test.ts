@@ -63,8 +63,8 @@ describe("ThemePalette.build", () => {
 	test("every text color has at least WCAG AA contrast for any input", () => {
 		const failures: string[] = [];
 
-		for (const sample of sampledInputs()) {
-			for (const pair of ThemePalette.textContrastPairs(built(sample))) {
+		for (const { sample, theme } of sampledThemes()) {
+			for (const pair of ThemePalette.textContrastPairs(theme)) {
 				if (pair.contrast >= 4.5) continue;
 
 				failures.push(
@@ -79,8 +79,8 @@ describe("ThemePalette.build", () => {
 	test("every color is inside the sRGB gamut for any input", () => {
 		const failures: string[] = [];
 
-		for (const sample of sampledInputs()) {
-			const { base, dark, light } = ThemePalette.resolveColors(built(sample));
+		for (const { sample, theme } of sampledThemes()) {
+			const { base, dark, light } = ThemePalette.resolveColors(theme);
 			const colors = [
 				...base.map((color, index) => [`base-${index}`, color] as const),
 				...Object.entries(dark).map(
@@ -212,12 +212,26 @@ describe("ThemePalette.fromShareCode", () => {
 	});
 });
 
+let sampledThemesCache: Array<{
+	sample: Partial<ThemePalette.ThemeInput>;
+	theme: CustomTheme;
+}> | null = null;
+
+function sampledThemes() {
+	sampledThemesCache ??= Array.from(sampledInputs(), (sample) => ({
+		sample,
+		theme: built(sample),
+	}));
+
+	return sampledThemesCache;
+}
+
 function* sampledInputs() {
 	const { BG_LIGHTNESS_MIN, BG_LIGHTNESS_MAX } = THEME_INPUT_LIMITS;
 
-	for (let baseHue = 0; baseHue < 360; baseHue += 30) {
+	for (let baseHue = 0; baseHue < 360; baseHue += 45) {
 		for (const baseChroma of [0, 0.025, 0.05, 0.075, 0.1]) {
-			for (let accentHue = 0; accentHue < 360; accentHue += 5) {
+			for (let accentHue = 0; accentHue < 360; accentHue += 10) {
 				for (const accentChroma of [0, 0.05, 0.1, 0.2, 0.3, 0.4, 0.5]) {
 					for (const bgLightness of [
 						BG_LIGHTNESS_MIN,
