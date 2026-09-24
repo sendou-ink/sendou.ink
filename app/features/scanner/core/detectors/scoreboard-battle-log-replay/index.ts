@@ -6,9 +6,11 @@
  * scoreboard helpers with glyph sets rescaled to this screen.
  */
 import { getCV, type Mat } from "../../cv";
-import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
+import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	cropRoi,
+	frameGray,
+	frameRgb,
 	maxBrightness,
 	maxChannel,
 	meanBrightness,
@@ -16,13 +18,14 @@ import {
 	roiSignature,
 } from "../../image";
 import { RESULT_TAG_ENTRIES } from "../../localized";
+import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestBy } from "../../text";
 import {
 	FULL_COUNT_TEAM_SCORE,
 	KO_MATCH_SCORE,
 	MATCH_SCORE_MIN_CONF,
 } from "../scoreboard/banner";
-import { type ParsedNumber, parseNumber } from "../scoreboard/digits";
+import { type ParsedNumber, parseNumberSteps } from "../scoreboard/digits";
 import type {
 	ScoreboardData,
 	ScoreboardPlayer,
@@ -30,10 +33,10 @@ import type {
 	ScoreboardRowDebug,
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
-import { parseScoreboardRow, type RowRois } from "../scoreboard/row";
+import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
 import type { DetectedEvent, Detector, GateResult } from "../types";
-import { codeCharsetOf, type ParsedReplayCode, parseReplayCode } from "./code";
-import { type ParsedReplayHeader, parseReplayHeader } from "./header";
+import { codeCharsetOf, parseReplayCodeSteps } from "./code";
+import { parseReplayHeaderSteps } from "./header";
 import {
 	CODE_TEXT_HEIGHT,
 	GATE_CODE_BLUE_MAX,
@@ -129,8 +132,6 @@ function greenFraction(frame: Mat, roi: Roi): number {
 export function createScoreboardBattleLogReplayDetector(
 	resources: ScoreboardResources,
 ): Detector<ScoreboardBattleLogReplayData> {
-	const cv = getCV();
-
 	const scaled = (set: GlyphSet | null, height: number): GlyphSet | null =>
 		set ? scaleGlyphSet(set, height / set.height) : null;
 
@@ -160,8 +161,7 @@ export function createScoreboardBattleLogReplayDetector(
 			: null;
 
 	function gate(frame: Mat): GateResult {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
 
 		let flatOk = 0;
 		let suffixOk = 0;
@@ -194,7 +194,6 @@ export function createScoreboardBattleLogReplayDetector(
 		// browsing between replays never drops this gate, so fingerprint what
 		// differs between battles (timestamp, code, names) for the scheduler
 		const signature = pass ? contentSignature(gray) : undefined;
-		gray.delete();
 		return { pass, score, signature };
 	}
 
@@ -209,11 +208,13 @@ export function createScoreboardBattleLogReplayDetector(
 		return signature;
 	}
 
-	function parsePanel(gray: Mat, rgb: Mat, dx: number): PanelParse {
-		const players: ScoreboardPlayer[] = [];
-		const rows: ScoreboardRowDebug[] = [];
-		const confidences: number[] = [];
-
+	/** One panel's rows, totals and result tag, all read in one lockstep. */
+	function* parsePanelSteps(
+		gray: Mat,
+		rgb: Mat,
+		dx: number,
+		speculative: boolean,
+	): MatchSteps<PanelParse> {
 		const rowRois: RowRois = {
 			weapon: (cy) => weaponRoi(cy, dx),
 			specialIcon: (cy) => specialIconRoi(cy, dx),
@@ -229,54 +230,81 @@ export function createScoreboardBattleLogReplayDetector(
 			statDigits,
 			nameGlyphs,
 		};
-		for (const cy of ROW_CENTERS) {
-			// a short team (7-player private battle) renders no pill for the unused
-			// bottom row (gate's flatOk >= 7 tolerates it); skip it, no phantom player
+		// a short team (7-player private battle) renders no pill for the unused
+		// bottom row (gate's flatOk >= 7 tolerates it); skip it, no phantom player
+		const rowCenters = ROW_CENTERS.filter((cy) => {
 			const flat = meanBrightness(rgb, gateFlatProbe(cy, dx));
-			if (flat < GATE_FLAT_MIN_MEAN || flat > GATE_FLAT_MAX_MEAN) continue;
-
-			// paint is left-aligned so the "p" suffix lands inside the ROI on short paints
-			const row = parseScoreboardRow(
-				gray,
-				rgb,
-				cy,
-				rowRois,
-				rowResources,
-				confidences,
-				{
-					weaponInkThreshold: REPLAY_INK_THRESHOLD,
-					paintDropLoweredTrailing: true,
-				},
-			);
-			players.push(row.player);
-			rows.push(row.debug);
-		}
-
+			return flat >= GATE_FLAT_MIN_MEAN && flat <= GATE_FLAT_MAX_MEAN;
+		});
 		// the point total is read only to recognize a knockout below (only a
 		// knockout's full count reaches 500); never emitted as a score
-		let teamScore: ParsedNumber | null = null;
-		if (teamDigits) {
-			const crop = cropRoi(gray, teamScoreRoi(dx));
-			teamScore = parseNumber(crop, teamDigits, {
-				binThreshold: BANNER_BIN_THRESHOLD,
-			});
-			crop.delete();
-			confidences.push(teamScore.confidence);
-		}
+		const teamCrop = teamDigits ? cropRoi(gray, teamScoreRoi(dx)) : null;
+		const matchCrop = matchScoreDigits
+			? cropRoi(gray, MATCH_SCORE_ROIS[dx === 0 ? 0 : 1]!)
+			: null;
+		const bright = resultGlyphs ? maxChannel(rgb, resultTagRoi(dx)) : null;
+		const [rowReads, teamScore, matchRead, resultRaw] = yield* all([
+			all(
+				rowCenters.map((cy) =>
+					// paint is left-aligned so the "p" suffix lands inside the ROI on short paints
+					parseScoreboardRowSteps(
+						gray,
+						rgb,
+						cy,
+						rowRois,
+						rowResources,
+						{
+							weaponInkThreshold: REPLAY_INK_THRESHOLD,
+							paintDropLoweredTrailing: true,
+						},
+						speculative,
+					),
+				),
+			),
+			teamDigits && teamCrop
+				? parseNumberSteps(
+						teamCrop,
+						teamDigits,
+						{ binThreshold: BANNER_BIN_THRESHOLD },
+						speculative,
+					)
+				: done(null),
+			matchScoreDigits && matchCrop
+				? parseNumberSteps(
+						matchCrop,
+						matchScoreDigits,
+						{ binThreshold: BANNER_BIN_THRESHOLD },
+						speculative,
+					)
+				: done(null),
+			resultGlyphs && bright
+				? recognizeTextSteps(
+						bright,
+						resultGlyphs,
+						{
+							binThreshold: RESULT_TAG_BIN_THRESHOLD,
+							spaceGap: Number.POSITIVE_INFINITY,
+							minCharScore: 0.25,
+						},
+						speculative,
+					)
+				: done(null),
+		]);
+		teamCrop?.delete();
+		matchCrop?.delete();
+		bright?.delete();
 
-		let matchScore: ParsedNumber | null = null;
-		if (matchScoreDigits) {
-			const crop = cropRoi(gray, MATCH_SCORE_ROIS[dx === 0 ? 0 : 1]!);
-			matchScore = parseNumber(crop, matchScoreDigits, {
-				binThreshold: BANNER_BIN_THRESHOLD,
-			});
+		const confidences = rowReads.flatMap((row) => row.confidences);
+		if (teamScore) confidences.push(teamScore.confidence);
+
+		let matchScore: ParsedNumber | null = matchRead;
+		if (matchScore) {
 			if (
 				matchScore.confidence < MATCH_SCORE_MIN_CONF ||
 				(matchScore.value !== null && matchScore.value > KO_MATCH_SCORE)
 			) {
 				matchScore = { ...matchScore, value: null };
 			}
-			crop.delete();
 			confidences.push(matchScore.confidence);
 			// no number + a full team count = the KNOCKOUT! burst sits where the score
 			// would be; an unreadable banner on a lesser total stays null
@@ -291,15 +319,8 @@ export function createScoreboardBattleLogReplayDetector(
 		let result: PanelParse["result"] = null;
 		let resultReading = "";
 		let resultScore = 0;
-		if (resultGlyphs) {
-			const bright = maxChannel(rgb, resultTagRoi(dx));
-			const raw = recognizeText(bright, resultGlyphs, {
-				binThreshold: RESULT_TAG_BIN_THRESHOLD,
-				spaceGap: Number.POSITIVE_INFINITY,
-				minCharScore: 0.25,
-			});
-			bright.delete();
-			resultReading = raw.text;
+		if (resultRaw) {
+			resultReading = resultRaw.text;
 			if (resultReading) {
 				const match = closestBy(
 					resultReading,
@@ -315,8 +336,8 @@ export function createScoreboardBattleLogReplayDetector(
 		}
 
 		return {
-			players,
-			rows,
+			players: rowReads.map((row) => row.player),
+			rows: rowReads.map((row) => row.debug),
 			teamScore,
 			matchScore,
 			result,
@@ -326,19 +347,31 @@ export function createScoreboardBattleLogReplayDetector(
 		};
 	}
 
-	function parse(
+	function* parseSteps(
 		frame: Mat,
 		t: number,
-	): DetectedEvent<ScoreboardBattleLogReplayData>[] {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-		const rgb = new cv.Mat();
-		cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<ScoreboardBattleLogReplayData>[]> {
+		const gray = frameGray(frame);
+		const rgb = frameRgb(frame);
 
-		const [left, right] = PANEL_XS.map((dx) => parsePanel(gray, rgb, dx)) as [
-			PanelParse,
-			PanelParse,
-		];
+		const [left, right, header, code] = yield* all([
+			parsePanelSteps(gray, rgb, PANEL_XS[0]!, speculative),
+			parsePanelSteps(gray, rgb, PANEL_XS[1]!, speculative),
+			headerTopGlyphs && headerBottomGlyphs
+				? parseReplayHeaderSteps(
+						gray,
+						headerTopGlyphs,
+						headerBottomGlyphs,
+						undefined,
+						speculative,
+					)
+				: done(null),
+			codeGlyphs
+				? parseReplayCodeSteps(rgb, codeGlyphs, speculative)
+				: done(null),
+		]);
 
 		// winners first: confident VICTORY/DEFEAT tag, else the higher "Score:"
 		// banner, else left
@@ -356,19 +389,6 @@ export function createScoreboardBattleLogReplayDetector(
 		const povIndex = findPovIndex(
 			[...winner.rows, ...loser.rows].map((r) => r.povFraction),
 		);
-
-		let header: ParsedReplayHeader | null = null;
-		if (headerTopGlyphs && headerBottomGlyphs) {
-			header = parseReplayHeader(gray, headerTopGlyphs, headerBottomGlyphs);
-		}
-
-		let code: ParsedReplayCode | null = null;
-		if (codeGlyphs) {
-			code = parseReplayCode(rgb, codeGlyphs);
-		}
-
-		gray.delete();
-		rgb.delete();
 
 		const confidences = [
 			...winner.confidences,
@@ -435,6 +455,8 @@ export function createScoreboardBattleLogReplayDetector(
 		id: "scoreboard-battle-log-replay",
 		sufficientConfidence: 0.8,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
 }

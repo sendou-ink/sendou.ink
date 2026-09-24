@@ -5,8 +5,9 @@
  * enough since it only splits near-tied main icons (Splash- vs Sploosh-o-matic)
  * whose kit silhouettes are far apart (stamp vs crab, bomb vs beakon).
  */
-import { getCV, type Mat, minMaxLoc } from "../../cv";
+import { getCV, type Mat } from "../../cv";
 import type { FrameData } from "../../image";
+import type { MatchSteps } from "../../match-steps";
 import { WEAPON_KITS } from "./kits";
 import type { WeaponMatch } from "./weapons";
 
@@ -18,8 +19,8 @@ const SPECIAL_INK_THRESHOLD = 48;
 
 export interface SpecialTemplate {
 	id: string;
-	/** binary silhouette + ink pixel count at each templateSizes entry */
-	sizes: { mat: Mat; ink: number }[];
+	/** binary silhouette (dimensions mirrored off embind) + ink pixel count at each templateSizes entry */
+	sizes: { mat: Mat; rows: number; cols: number; ink: number }[];
 }
 
 export interface SpecialMatch {
@@ -81,7 +82,7 @@ export function prepareSpecialTemplates(
 			resized.delete();
 			let ink = 0;
 			for (const v of mat.data) if (v > 0) ink++;
-			return { mat, ink };
+			return { mat, rows: mat.rows, cols: mat.cols, ink };
 		});
 		silhouette.delete();
 		return { id, sizes };
@@ -89,10 +90,10 @@ export function prepareSpecialTemplates(
 }
 
 /** searchRgb: RGB crop of the icon ROI (view is fine); binarized on max(r,g,b) so any tint reads as shape. */
-export function matchSpecial(
+export function* matchSpecialSteps(
 	searchRgb: Mat,
 	templates: SpecialTemplate[],
-): SpecialMatch {
+): MatchSteps<SpecialMatch> {
 	const cv = getCV();
 
 	// binarized copy of the search region (pixel access needs a copy)
@@ -112,14 +113,20 @@ export function matchSpecial(
 	}
 	cont.delete();
 
-	const result = new cv.Mat();
+	const sizesOf = (template: SpecialTemplate) =>
+		template.sizes.filter((size) => size.rows <= rows && size.cols <= cols);
+	const [scoreOf] = yield [
+		{
+			image: binary,
+			templates: templates.flatMap((t) => sizesOf(t).map((s) => s.mat)),
+		},
+	];
 	const ranked: { id: string; score: number }[] = [];
+	let index = 0;
 	for (const template of templates) {
 		let score = -1;
-		for (const { mat, ink } of template.sizes) {
-			if (mat.rows > binary.rows || mat.cols > binary.cols) continue;
-			cv.matchTemplate(binary, mat, result, cv.TM_CCOEFF_NORMED);
-			const { maxVal } = minMaxLoc(result);
+		for (const { ink } of sizesOf(template)) {
+			const maxVal = scoreOf!(index++);
 			const r =
 				Math.min(ink, searchInk) / Math.max(Math.max(ink, searchInk), 1);
 			const adjusted = maxVal * (0.75 + 0.25 * r);
@@ -127,7 +134,6 @@ export function matchSpecial(
 		}
 		ranked.push({ id: template.id, score });
 	}
-	result.delete();
 	binary.delete();
 	ranked.sort((a, b) => b.score - a.score);
 	return {

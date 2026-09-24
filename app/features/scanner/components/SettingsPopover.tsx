@@ -1,6 +1,6 @@
 /**
  * The settings popover, opened from ⚙ on the landing and the live header:
- * the upload and clip toggles, the retention notes, and the debug tools
+ * the upload, clip and GPU toggles, the retention notes, and the debug tools
  * (enabling debug mode, saving the live frame, the fixtures link in development). The source lives on the landing's Live card, the one place
  * it must be right.
  */
@@ -43,6 +43,7 @@ export function SettingsPopover({
 	const [, setDebugParam] = useSearchParam(scannerSearchParams, "debug");
 	const showFixturesLink = process.env.NODE_ENV === "development";
 	const showSaveFrame = debug && onSaveFrame !== undefined;
+	const gpuSupported = "gpu" in navigator;
 
 	return (
 		<SendouPopover
@@ -77,6 +78,16 @@ export function SettingsPopover({
 						onChange={(saveClips) => updateSettings({ saveClips })}
 					>
 						Save clips
+					</SendouSwitch>
+					<SendouSwitch
+						size="small"
+						isSelected={gpuSupported && settings.webgpu}
+						isDisabled={!gpuSupported}
+						onChange={(webgpu) => updateSettings({ webgpu })}
+					>
+						{gpuSupported
+							? "Use the graphics card (faster scans)"
+							: "Use the graphics card (not supported by this browser)"}
 					</SendouSwitch>
 					<div className={styles.row}>
 						<span className={styles.rowLabel}>Clip on splats in a row</span>

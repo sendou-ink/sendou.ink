@@ -1,7 +1,7 @@
 /**
  * The scanner's settings, kept in localStorage: the capture source, what
- * clips hear, whether results upload to sendou.ink and whether live clips
- * are saved. Read through a store so the controllers (outside React) and
+ * clips hear, whether results upload to sendou.ink, whether live clips are
+ * saved and whether matching runs on the GPU. Read through a store so the controllers (outside React) and
  * the views see one value.
  */
 import { useSyncExternalStore } from "react";
@@ -21,6 +21,8 @@ export interface ScannerSettings {
 	clipMinKills: ClipMinKills;
 	/** milliseconds the clips' sound is moved later (negative: earlier) against the picture */
 	audioOffsetMs: number;
+	/** match on the GPU (WebGPU) when the browser has one; results are identical either way */
+	webgpu: boolean;
 }
 
 export const CLIP_MIN_KILLS_OPTIONS = [3, 4, 5] as const;
@@ -43,6 +45,7 @@ const DEFAULT_SETTINGS: ScannerSettings = {
 	saveClips: true,
 	clipMinKills: 4,
 	audioOffsetMs: 0,
+	webgpu: true,
 };
 
 let settings: ScannerSettings | null = null;
@@ -119,6 +122,10 @@ function load(): ScannerSettings {
 							Math.min(AUDIO_OFFSET_LIMIT_MS, parsed.audioOffsetMs),
 						)
 					: DEFAULT_SETTINGS.audioOffsetMs,
+			webgpu:
+				typeof parsed.webgpu === "boolean"
+					? parsed.webgpu
+					: DEFAULT_SETTINGS.webgpu,
 		};
 	} catch {
 		return DEFAULT_SETTINGS;

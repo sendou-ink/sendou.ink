@@ -10,6 +10,7 @@
 import type { StageId } from "~/modules/in-game-lists/types";
 import { getCV, type Mat } from "../../cv";
 import type { FrameData } from "../../image";
+import { frameGray, frameHsv } from "../../image";
 
 /** Downscaled signature dimensions (canonical 1920x1080 / 16). */
 export const PLANNER_SIG_W = 120;
@@ -47,17 +48,11 @@ export interface StageMatch {
  */
 export function plannerSignature(frame: Mat): Float32Array {
 	const cv = getCV();
-	const gray = new cv.Mat();
-	cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-	const rgb = new cv.Mat();
-	cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
-	const hsv = new cv.Mat();
-	cv.cvtColor(rgb, hsv, cv.COLOR_RGB2HSV);
-	rgb.delete();
+	const gray = frameGray(frame);
+	const hsv = frameHsv(frame);
 
 	const lap = new cv.Mat();
 	cv.Laplacian(gray, lap, cv.CV_16S, 3);
-	gray.delete();
 	const edges = new cv.Mat();
 	cv.convertScaleAbs(lap, edges);
 	lap.delete();
@@ -72,7 +67,6 @@ export function plannerSignature(frame: Mat): Float32Array {
 	for (let i = 0; i < n; i++) {
 		if (hd[i * 3 + 1]! >= INK_SATURATION_MIN) md[i] = 0;
 	}
-	hsv.delete();
 
 	const down = new cv.Mat();
 	cv.resize(
@@ -109,16 +103,14 @@ function shiftedDot(
 	dy: number,
 ): number {
 	let dot = 0;
-	for (let y = 0; y < PLANNER_SIG_H; y++) {
-		const sy = y + dy;
-		if (sy < 0 || sy >= PLANNER_SIG_H) continue;
+	const y0 = Math.max(0, -dy);
+	const y1 = Math.min(PLANNER_SIG_H, PLANNER_SIG_H - dy);
+	const x0 = Math.max(0, -dx);
+	const x1 = Math.min(PLANNER_SIG_W, PLANNER_SIG_W - dx);
+	for (let y = y0; y < y1; y++) {
 		const ar = y * PLANNER_SIG_W;
-		const br = sy * PLANNER_SIG_W;
-		for (let x = 0; x < PLANNER_SIG_W; x++) {
-			const sx = x + dx;
-			if (sx < 0 || sx >= PLANNER_SIG_W) continue;
-			dot += a[ar + x]! * b[br + sx]!;
-		}
+		const br = (y + dy) * PLANNER_SIG_W + dx;
+		for (let x = x0; x < x1; x++) dot += a[ar + x]! * b[br + x]!;
 	}
 	return dot;
 }

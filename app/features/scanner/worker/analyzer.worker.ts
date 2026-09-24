@@ -16,6 +16,7 @@ import {
 	VideoSampleSink,
 } from "mediabunny";
 import { loadOpenCV } from "../core/cv";
+import { runDetectorPass } from "../core/detectors/frame-pass";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start/index";
 import {
 	createAllDetectors,
@@ -24,12 +25,13 @@ import {
 import { DetectorScheduler } from "../core/detectors/scheduler";
 import {
 	createScanTelemetry,
-	detectorTelemetry,
 	type ScanTelemetry,
 } from "../core/detectors/telemetry";
 import type { Detector } from "../core/detectors/types";
 import { normalizeFrame, toMat } from "../core/image";
 import { TimelineBuilder } from "../core/timeline/index";
+import { createGpuFrameScaler, type GpuFrameScaler } from "./gpu-frame-scaler";
+import { createGpuMatcher, type GpuMatcher } from "./gpu-matcher";
 import type {
 	AnalyzeRequest,
 	InitRequest,
@@ -47,6 +49,8 @@ const PREVIEW_WIDTH = 480;
 const PREVIEW_HEIGHT = 270;
 
 let detectors: Detector<unknown>[] = [];
+let gpuMatcher: GpuMatcher | null = null;
+let gpuScaler: GpuFrameScaler | null = null;
 let scheduler: DetectorScheduler | null = null;
 /** null unless the init message asked for telemetry */
 let telemetry: ScanTelemetry | null = null;
@@ -71,9 +75,22 @@ async function init({
 	assetsBaseUrl,
 	suppressSteadyFrames = true,
 	collectTelemetry: collect = false,
+	webgpu = false,
 }: InitRequest): Promise<void> {
 	try {
 		await loadOpenCV();
+		if (webgpu && navigator.gpu) {
+			gpuMatcher = await createGpuMatcher(navigator.gpu).catch((error) => {
+				// biome-ignore lint/suspicious/noConsole: a missing GPU silently costs speed, so say why
+				console.warn("scanner: WebGPU unavailable, matching on the CPU", error);
+				return null;
+			});
+			if (gpuMatcher) {
+				gpuScaler = await createGpuFrameScaler(gpuMatcher.device).catch(
+					() => null,
+				);
+			}
+		}
 		const resources = await fetchScoreboardResources(assetsBaseUrl);
 		detectors = createAllDetectors(resources);
 		scheduler = new DetectorScheduler(detectors, {
@@ -115,7 +132,10 @@ async function analyzeFrame(
 	});
 	let frame: ReturnType<typeof normalizeFrame>;
 	try {
-		frame = normalizeFrame(src);
+		frame =
+			gpuScaler && gpuRunner()
+				? await gpuScaler.normalize(src)
+				: normalizeFrame(src);
 	} finally {
 		src.delete();
 	}
@@ -130,31 +150,16 @@ async function analyzeFrame(
 	};
 
 	try {
-		for (const detector of detectors) {
-			if (!due.includes(detector.id)) continue;
-			const counters = telemetry
-				? detectorTelemetry(telemetry, detector.id)
-				: null;
-			const gateStart = counters ? performance.now() : 0;
-			const gate = detector.gate(frame);
-			if (counters) {
-				counters.checks++;
-				counters.gateMs += performance.now() - gateStart;
-			}
-			scheduler!.recordGate(detector.id, t, gate.pass, gate.signature);
-			if (counters && gate.pass) counters.gatePasses++;
-			const runParse = gate.pass && scheduler!.shouldParse(detector.id, t);
-			if (counters && gate.pass && !runParse) counters.suppressedParses++;
-			let events: ReturnType<typeof detector.parse> = [];
-			if (runParse) {
-				const parseStart = counters ? performance.now() : 0;
-				events = detector.parse(frame, t, gate);
-				if (counters) {
-					counters.parses++;
-					counters.parseMs += performance.now() - parseStart;
-				}
-				scheduler!.recordParse(detector.id, t, events);
-			}
+		const outcomes = await runDetectorPass({
+			frame,
+			t,
+			detectors,
+			due,
+			scheduler: scheduler!,
+			telemetry,
+			runSteps: gpuRunner(),
+		});
+		for (const { detector, gate, events } of outcomes) {
 			let listed = false;
 			for (const event of events) {
 				const { action } = shadowTimeline.push(event);
@@ -203,6 +208,7 @@ async function scanChunk({
 	telemetry = freshTelemetry();
 	shadowTimeline = new TimelineBuilder();
 	const wallStart = performance.now();
+	const gpuWaitStart = gpuMatcher?.stats.gpuWaitMs ?? 0;
 	let lastProgressAt = 0;
 	let lastPreviewAt = 0;
 	let cursor = tStart;
@@ -304,7 +310,11 @@ async function scanChunk({
 			}
 		}
 
-		if (telemetry) telemetry.wallMs = performance.now() - wallStart;
+		if (telemetry) {
+			telemetry.wallMs = performance.now() - wallStart;
+			telemetry.gpuScans = gpuMatcher ? 1 : 0;
+			telemetry.gpuWaitMs = (gpuMatcher?.stats.gpuWaitMs ?? 0) - gpuWaitStart;
+		}
 		post({ kind: "chunkDone", chunkIndex, telemetry });
 	} catch (error) {
 		post({
@@ -314,6 +324,20 @@ async function scanChunk({
 	} finally {
 		input.dispose();
 	}
+}
+
+/** The GPU matcher's runner while its device lives; once lost, parses run on the CPU. */
+function gpuRunner() {
+	if (!gpuMatcher) return undefined;
+	if (!gpuMatcher.lost) return gpuMatcher.run;
+	// biome-ignore lint/suspicious/noConsole: a lost device silently costs speed, so say so once
+	console.warn(
+		"scanner: WebGPU device lost, continuing on the CPU",
+		gpuMatcher.lostReason,
+	);
+	gpuMatcher = null;
+	gpuScaler = null;
+	return undefined;
 }
 
 function freshTelemetry(): ScanTelemetry | null {

@@ -9,10 +9,17 @@
  * fixtures. Each read also emits a PlayerStatus event (player-status.ts) off
  * the same frame, paired downstream by the shared timer value.
  */
-import { getCV, type Mat, minMaxLoc } from "../../cv";
-import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
-import { copyRoi, maxChannel, minChannel, type Roi } from "../../image";
+import { type Mat, minMaxLoc } from "../../cv";
+import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
+import {
+	copyRoi,
+	frameGray,
+	maxChannel,
+	minChannel,
+	type Roi,
+} from "../../image";
 import { type InkRgb, meanInkColor } from "../../ink-color";
+import { all, type MatchSteps, runSync } from "../../match-steps";
 import {
 	type BannerScoreRead,
 	isBetterRead,
@@ -44,8 +51,8 @@ import {
 	STATUS_LAYOUT_STICKY_MAX_GAP_S,
 	STRIP_WEAPON_SAMPLE_INTERVAL,
 } from "./rois";
-import { parseStripWeapons, type StripWeaponsData } from "./strip-weapons";
-import { readMatchTimer, timerBoxChecks, timerGlyphSets } from "./timer";
+import { parseStripWeaponsSteps, type StripWeaponsData } from "./strip-weapons";
+import { readMatchTimerSteps, timerBoxChecks, timerGlyphSets } from "./timer";
 
 export type ObjectiveData = SplatZonesObjectiveData;
 
@@ -102,7 +109,6 @@ interface SideRead {
 export function createObjectiveDetector(
 	resources: ScoreboardResources,
 ): Detector<ObjectiveData | PlayerStatusData | StripWeaponsData> {
-	const cv = getCV();
 	let lastStatus: { layout: PlayerStatusLayout; t: number } | undefined;
 	// primed so the very first read samples (short matches, single-frame fixtures)
 	let readsSinceWeaponSample = STRIP_WEAPON_SAMPLE_INTERVAL;
@@ -148,8 +154,7 @@ export function createObjectiveDetector(
 	}
 
 	function gate(frame: Mat): GateResult {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
 		const checks = [
 			...timerBoxChecks(gray),
 			plateProbeOk(gray, PLATE_PROBE_ROIS[0]),
@@ -157,13 +162,17 @@ export function createObjectiveDetector(
 			scoreInkOk(frame, SCORE_ROIS[0]),
 			scoreInkOk(frame, SCORE_ROIS[1]),
 		];
-		gray.delete();
 		const passed = checks.filter(Boolean).length;
 		return { pass: passed === checks.length, score: passed / checks.length };
 	}
 
-	/** Best trailing-digit read across channel extractions, thresholds and glyph sizes. */
-	function readScore(frame: Mat, gray: Mat, roi: Roi): BannerScoreRead {
+	/** Best trailing-digit read across channel extractions, thresholds and glyph sizes; every combination reads in one lockstep. */
+	function* readScore(
+		frame: Mat,
+		gray: Mat,
+		roi: Roi,
+		speculative: boolean,
+	): MatchSteps<BannerScoreRead> {
 		let best: BannerScoreRead = {
 			value: null,
 			confidence: 0,
@@ -175,25 +184,39 @@ export function createObjectiveDetector(
 			minChannel(frame, roi),
 			maxChannel(frame, roi),
 		];
-		for (const band of bands) {
-			for (const set of scoreSets) {
-				for (const binThreshold of SCORE_BIN_THRESHOLDS) {
-					const raw = recognizeText(band, set, {
+		const reads = bands.flatMap((band) =>
+			scoreSets.flatMap((set) =>
+				SCORE_BIN_THRESHOLDS.map((binThreshold) => ({
+					band,
+					set,
+					binThreshold,
+				})),
+			),
+		);
+		const raws = yield* all(
+			reads.map(({ band, set, binThreshold }) =>
+				recognizeTextSteps(
+					band,
+					set,
+					{
 						binThreshold,
 						spaceGap: Number.POSITIVE_INFINITY,
 						minCharScore: 0.3,
-					});
-					// the band holds only the count, so a leading digit under the
-					// extension floor voids the read instead of truncating it
-					const read = trailingDigitRun(raw, set, {
-						extendMinScore: SCORE_EXTEND_MIN_CONF,
-						rejectTruncated: true,
-					});
-					if (isBetterRead(read, best)) best = read;
-				}
-			}
-			band.delete();
+					},
+					speculative,
+				),
+			),
+		);
+		for (const [i, { set }] of reads.entries()) {
+			// the band holds only the count, so a leading digit under the
+			// extension floor voids the read instead of truncating it
+			const read = trailingDigitRun(raws[i]!, set, {
+				extendMinScore: SCORE_EXTEND_MIN_CONF,
+				rejectTruncated: true,
+			});
+			if (isBetterRead(read, best)) best = read;
 		}
+		for (const band of bands) band.delete();
 		return best;
 	}
 
@@ -202,11 +225,12 @@ export function createObjectiveDetector(
 	 * "+N" digits. A nameplate badge can cover one end, so a lone pill-like
 	 * probe still reads but the digits must be confident on their own.
 	 */
-	function readPenalty(
+	function* readPenalty(
 		frame: Mat,
 		gray: Mat,
 		side: 0 | 1,
-	): BannerScoreRead | null {
+		speculative: boolean,
+	): MatchSteps<BannerScoreRead | null> {
 		if (!penaltySet) return null;
 		const pillLikeProbes = PENALTY_PROBE_ROIS[side].filter((roi) => {
 			const { mean, std } = meanStd(gray, roi);
@@ -214,11 +238,16 @@ export function createObjectiveDetector(
 		}).length;
 		if (pillLikeProbes === 0) return null;
 		const band = minChannel(frame, PENALTY_ROIS[side]);
-		const raw = recognizeText(band, penaltySet, {
-			binThreshold: PENALTY_BIN_THRESHOLD,
-			spaceGap: Number.POSITIVE_INFINITY,
-			minCharScore: 0.3,
-		});
+		const raw = yield* recognizeTextSteps(
+			band,
+			penaltySet,
+			{
+				binThreshold: PENALTY_BIN_THRESHOLD,
+				spaceGap: Number.POSITIVE_INFINITY,
+				minCharScore: 0.3,
+			},
+			speculative,
+		);
 		band.delete();
 		const read = trailingDigitRun(raw, penaltySet);
 		if (
@@ -253,16 +282,29 @@ export function createObjectiveDetector(
 		return { mean: sum / count, saturation: satSum / count };
 	}
 
-	function parse(
+	function* parseSteps(
 		frame: Mat,
 		t: number,
-	): DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[] {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<
+		DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[]
+	> {
+		const gray = frameGray(frame);
 
+		const [scoreL, scoreR, penaltyL, penaltyR, timer] = yield* all([
+			readScore(frame, gray, SCORE_ROIS[0], speculative),
+			readScore(frame, gray, SCORE_ROIS[1], speculative),
+			readPenalty(frame, gray, 0, speculative),
+			readPenalty(frame, gray, 1, speculative),
+			readMatchTimerSteps(gray, timerSets, speculative),
+		]);
+		const reads = [
+			{ score: scoreL, penalty: penaltyL },
+			{ score: scoreR, penalty: penaltyR },
+		];
 		const sides = [0 as const, 1 as const].map((side): SideRead => {
-			const score = readScore(frame, gray, SCORE_ROIS[side]);
-			const penalty = readPenalty(frame, gray, side);
+			const { score, penalty } = reads[side]!;
 			const fill = plateFill(frame, side);
 			return {
 				score,
@@ -278,8 +320,6 @@ export function createObjectiveDetector(
 				]),
 			};
 		}) as [SideRead, SideRead];
-		const timer = readMatchTimer(gray, timerSets);
-		gray.delete();
 
 		// no readable count on either side = the gate hit a lookalike
 		if (sides.every((side) => side.score.value === null)) return [];
@@ -303,7 +343,7 @@ export function createObjectiveDetector(
 			readsSinceWeaponSample >= STRIP_WEAPON_SAMPLE_INTERVAL
 		) {
 			readsSinceWeaponSample = 0;
-			stripWeapons = parseStripWeapons(
+			stripWeapons = yield* parseStripWeaponsSteps(
 				frame,
 				t,
 				playerStatus.data,
@@ -351,6 +391,8 @@ export function createObjectiveDetector(
 		checkIntervalS: CHECK_INTERVAL_SECONDS,
 		attachFrame: false,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
 }

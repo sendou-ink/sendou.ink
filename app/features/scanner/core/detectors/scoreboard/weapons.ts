@@ -4,8 +4,9 @@
  * template can't win on a lucky sub-window of a bigger icon. Large sets run
  * coarse-to-fine (quarter-res ranking, shortlist re-matched at full res).
  */
-import { getCV, type Mat, minMaxLoc } from "../../cv";
+import { getCV, type Mat } from "../../cv";
 import type { FrameData } from "../../image";
+import type { MatchSteps } from "../../match-steps";
 
 /** Icon heights to try: live rows ~44-56px, replay browser ~60-64px (skipped inside the live 56px ROI). */
 const WEAPON_TEMPLATE_SIZES = [40, 44, 48, 52, 56, 60, 64] as const;
@@ -34,11 +35,14 @@ const COARSE_SCALE = 0.25;
 /** How many coarse-ranked ids survive into the full-resolution pass. */
 const COARSE_SHORTLIST = 16;
 
+/** `rows`/`cols` mirror the mat's dimensions, kept off the embind accessors in the matching loops. */
 export interface TemplateSize {
 	mat: Mat;
+	rows: number;
+	cols: number;
 	ink: number;
 	/** the same template at COARSE_SCALE, for the coarse ranking pass */
-	coarse: { mat: Mat; ink: number };
+	coarse: { mat: Mat; rows: number; cols: number; ink: number };
 }
 
 export interface WeaponTemplate {
@@ -115,8 +119,15 @@ export function buildTemplateSizes(
 		);
 		return {
 			mat,
+			rows: mat.rows,
+			cols: mat.cols,
 			ink: countInkRgb(mat, inkThreshold),
-			coarse: { mat: coarseMat, ink: countInkRgb(coarseMat, inkThreshold) },
+			coarse: {
+				mat: coarseMat,
+				rows: coarseMat.rows,
+				cols: coarseMat.cols,
+				ink: countInkRgb(coarseMat, inkThreshold),
+			},
 		};
 	});
 }
@@ -218,11 +229,11 @@ function compositeOnBackground(rgba: Mat, background: number): Mat {
  * COARSE_SHORTLIST ids; scoped ids drag their unscoped twin along for the
  * tie-break. Null when no coarse template fits.
  */
-function coarseShortlist(
+function* coarseShortlist(
 	searchRgb: Mat,
 	templates: WeaponTemplate[],
 	inkThreshold: number,
-): Set<string> | null {
+): MatchSteps<Set<string> | null> {
 	const cv = getCV();
 	const region = new cv.Mat();
 	cv.resize(
@@ -235,21 +246,31 @@ function coarseShortlist(
 	);
 	const searchInk = countInkRgb(region, inkThreshold);
 
-	const result = new cv.Mat();
-	const scored: { id: string; score: number }[] = [];
 	const searchRows = searchRgb.rows;
 	const searchCols = searchRgb.cols;
 	const regionRows = region.rows;
 	const regionCols = region.cols;
+	// gate on the *full-res* dims so a size competes here iff it competes in the full pass
+	const sizesOf = (template: WeaponTemplate) =>
+		template.sizes.filter(
+			({ rows, cols, coarse }) =>
+				rows <= searchRows &&
+				cols <= searchCols &&
+				coarse.rows <= regionRows &&
+				coarse.cols <= regionCols,
+		);
+	const [scoreOf] = yield [
+		{
+			image: region,
+			templates: templates.flatMap((t) => sizesOf(t).map((s) => s.coarse.mat)),
+		},
+	];
+	const scored: { id: string; score: number }[] = [];
+	let index = 0;
 	for (const template of templates) {
 		let score = -1;
-		for (const { mat, coarse } of template.sizes) {
-			// gate on the *full-res* dims so a size competes here iff it competes in the full pass
-			if (mat.rows > searchRows || mat.cols > searchCols) continue;
-			if (coarse.mat.rows > regionRows || coarse.mat.cols > regionCols)
-				continue;
-			cv.matchTemplate(region, coarse.mat, result, cv.TM_CCOEFF_NORMED);
-			const { maxVal } = minMaxLoc(result);
+		for (const { coarse } of sizesOf(template)) {
+			const maxVal = scoreOf!(index++);
 			const r =
 				Math.min(coarse.ink, searchInk) /
 				Math.max(Math.max(coarse.ink, searchInk), 1);
@@ -258,7 +279,6 @@ function coarseShortlist(
 		}
 		if (score > -1) scored.push({ id: template.id, score });
 	}
-	result.delete();
 	region.delete();
 	if (scored.length === 0) return null;
 
@@ -274,13 +294,14 @@ function coarseShortlist(
 /**
  * searchRgb: RGB crop of the weapon ROI (view is fine). Raise inkThreshold on
  * screens with lighter pills (replay browser ~61 vs live ~12) or everything
- * counts as ink and the coverage penalty collapses.
+ * counts as ink and the coverage penalty collapses. Runs as match steps: a
+ * coarse shortlist pass, then one full-res pass.
  */
-export function matchWeapon(
+export function* matchWeaponSteps(
 	searchRgb: Mat,
 	templates: WeaponTemplate[],
 	options: { inkThreshold?: number; topN?: number } = {},
-): WeaponMatch {
+): MatchSteps<WeaponMatch> {
 	const cv = getCV();
 	const inkThreshold = options.inkThreshold ?? INK_THRESHOLD;
 	const topN = options.topN ?? 3;
@@ -294,20 +315,28 @@ export function matchWeapon(
 	// below ~2x the shortlist size the coarse pass costs more calls than it saves
 	let pool = templates;
 	if (templates.length > COARSE_SHORTLIST * 2) {
-		const ids = coarseShortlist(searchRgb, templates, inkThreshold);
+		const ids = yield* coarseShortlist(searchRgb, templates, inkThreshold);
 		if (ids) pool = templates.filter((t) => ids.has(t.id));
 	}
 
-	const result = new cv.Mat();
 	const best = new Map<string, number>();
 	const searchRows = searchRgb.rows;
 	const searchCols = searchRgb.cols;
+	const sizesOf = (template: WeaponTemplate) =>
+		template.sizes.filter(
+			({ rows, cols }) => rows <= searchRows && cols <= searchCols,
+		);
+	const [scoreOf] = yield [
+		{
+			image: searchRgb,
+			templates: pool.flatMap((t) => sizesOf(t).map((s) => s.mat)),
+		},
+	];
+	let index = 0;
 	for (const template of pool) {
 		let score = -1;
-		for (const { mat, ink } of template.sizes) {
-			if (mat.rows > searchRows || mat.cols > searchCols) continue;
-			cv.matchTemplate(searchRgb, mat, result, cv.TM_CCOEFF_NORMED);
-			const { maxVal } = minMaxLoc(result);
+		for (const { ink } of sizesOf(template)) {
+			const maxVal = scoreOf!(index++);
 			const r =
 				Math.min(ink, searchInk) / Math.max(Math.max(ink, searchInk), 1);
 			const adjusted = maxVal * (0.75 + 0.25 * r);
@@ -315,7 +344,6 @@ export function matchWeapon(
 		}
 		best.set(template.id, score);
 	}
-	result.delete();
 	const ranked = [...best.entries()]
 		.map(([id, score]) => ({ id, score }))
 		.sort((a, b) => b.score - a.score);

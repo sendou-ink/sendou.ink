@@ -141,12 +141,14 @@ pnpm test:unit:browser                  # includes tests/logic/ — the fixture-
 pnpm scanner:report                     # accuracy table + name character error rate across fixtures
 pnpm scanner:fixtures [name-substring]  # run detectors over matching fixtures, verbose
 pnpm scanner:replay <dir> <startT> <fps> # replay ffmpeg-extracted frames through the scheduler+detectors
-pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out
+pnpm scanner:scan-vod <video>           # VoD scan as a CLI (ffmpeg): video in, events CSV out (--gpu, --record, see "WebGPU")
 pnpm scanner:status-audit <events.csv>  # diff the CSV's timeline vs scoreboard D/S, rank fixture candidates
 pnpm scanner:bootstrap-atlas            # harvest labeled fixture crops into the glyph atlases
 pnpm scanner:build-glyph-atlas          # add the font-rendered charset (fonts required, see below)
 pnpm scanner:build-localized-entries    # regen localized closed sets from ../splat3
 pnpm scanner:build-planner-signatures   # regen the minimap stage-ID atlas from the assets repo
+pnpm scanner:gpu-parity                 # every fixture: OpenCV vs WebGPU parse decisions + GPU upscale pixels
+pnpm scanner:gpu-replay <corpus-dir>    # replay recorded match requests on WebGPU, timed, exact-checked
 ```
 
 Scanner scripts run through `vite-node -c scripts/scanner/vite-node.config.ts`:
@@ -374,8 +376,78 @@ sequenceDiagram
   names a `RECTIFY` quad: its ROIs are in the frame warped by that
   homography, which the debug overlays map back onto the raw frame.
 - New event types implement `Detector` (`core/detectors/types.ts`): a cheap
-  `gate(mat)` at sample rate plus `parse(mat, t)` when the gate fires.
-  Register in `core/detectors/registry.ts`.
+  `gate(mat)` at sample rate plus `parseSteps` (match steps, see "WebGPU")
+  when the gate fires, `parse` being `runSync` of it. Register in
+  `core/detectors/registry.ts`. Gates and parses read the frame's gray/RGB/HSV
+  through `frameGray`/`frameRgb`/`frameHsv` (`core/image.ts`), converted once
+  per frame and shared: never delete or write them, and never pass them a
+  derived mat.
+
+## WebGPU
+
+Template matching (every `TM_CCOEFF_NORMED` the recognizers run) and the
+sub-1080p frame upscale can run on the GPU; every other step stays on the CPU.
+The GPU is an accelerator only: the same algorithms make the same decisions.
+
+- **Match steps** (`core/match-steps.ts`): recognizers are generators that
+  yield every match their next decision needs (`MatchRequest`: an image,
+  templates, a placement window per template, optionally a content `key`) and
+  resume with the max scores. `runSync` answers lazily on the calling thread
+  and is what `Detector.parse` runs; `all` steps generators in lockstep so
+  independent reads share a round trip. Every detector implements
+  `parseSteps`; within a parse, reads are lockstepped wherever the sequential
+  code's consumption order, memo reads/writes (death tag, kill rows: the kill
+  parse predicts its memo misses on a copy of the memo and reads only those
+  ahead) and detector state stay exactly as before. `speculative`
+  additionally prefetches merge / recut candidate sets in lockstep (batching
+  drivers only; on the CPU it is wasted work).
+- **Exact scores on both drivers**: a score is TM_CCOEFF_NORMED computed
+  exactly — integer cross, window and square sums, one f64 normalization with
+  OpenCV's guards (`normalizeNcc`), f32 result — so the CPU and the GPU give
+  bit-identical scores and the same events. OpenCV's own `matchTemplate` (the
+  pre-migration CPU path) runs a float DFT that wanders up to ~3e-4 from the
+  exact score: never a decision on the fixtures or the VoD test slices, but
+  enough to reorder a near-tie (seen once in a browser scan: an 8th-ranked
+  strip-weapon candidate, scores 7e-7 apart), hence exact on both. On the CPU
+  the cross sums run in WebAssembly SIMD (`core/cross-sums.c`, compiled into
+  `cross-sums.ts`; regeneration steps in the C file), large jobs as one f64
+  `filter2D` (rounded: exact), and the window sums come from integral
+  images — faster than the `matchTemplate` path it replaced.
+- **Frame pass** (`core/detectors/frame-pass.ts`): the worker and the CLI gate
+  every due detector in registry order, then run all approved parses — one
+  lockstep of their steps on the GPU — and record results in registry order.
+  Scheduler decisions within a frame depend only on each detector's own
+  state, so this equals gating and parsing one detector at a time.
+- **Matcher** (`worker/gpu-matcher.ts`): each step is one submit of three
+  passes — per-image integral images (window sums), a score pass (one thread
+  per 4 vertically adjacent placements; cross sums as packed u8 dot products;
+  an f32 estimate folded into the job's max) and a select pass returning the
+  exact 64-bit integer sums of the placements within `EPS` of that max. The
+  CPU finishes those with `normalizeNcc` — the exact score, identical on
+  every GPU and to `runSync`'s. More than `K` near-tied placements, or a
+  request the kernel cannot take, are finished on the CPU with the same exact
+  arithmetic. Scores are cached per run by (`key`, template, window) — the
+  window is part of a score's identity.
+- **Frame upscale** (`worker/gpu-frame-scaler.ts`): `normalizeFrame`'s
+  INTER_CUBIC upscale of sub-1080p pictures (13-25 ms of WASM per 720p frame)
+  as an integer kernel reproducing OpenCV's 8-bit cubic resize bit for bit;
+  1080p copies and INTER_AREA downscales stay on the CPU. Importing the
+  VideoFrame as a GPU texture was rejected: its YUV→RGB conversion differs
+  from the 2D canvas readback the CPU path sees.
+- **Worker** (`worker/analyzer.worker.ts`): creates the matcher (and scaler on
+  its device) at init when enabled and an adapter exists; a failed creation
+  or a device lost mid-run (`device.lost`, or a failed readback) hands the
+  pending step to `runSync`, so the generators still run exactly once and no
+  event is dropped or duplicated, and later frames stay on the CPU.
+- **Node** (`node/webgpu.ts`): scripts get WebGPU from Dawn, the `webgpu` npm
+  package — deliberately not a dependency: `npm i webgpu` anywhere and point
+  `WEBGPU_NODE` at its package dir. `scanner:scan-vod --gpu` scans on it
+  (the CSV must stay byte-identical to a CPU scan), `--record <dir>` writes a
+  replay corpus (`scripts/scanner/match-corpus.ts`), `scanner:gpu-replay`
+  times it and checks every score against an exact JS reference and, with
+  `--cpu`, against `runSync` (0 mismatches is the bar for any kernel change),
+  and `scanner:gpu-parity` requires byte-identical events from both paths on
+  every fixture.
 
 ## Assets (CDN) and fonts
 

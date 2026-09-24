@@ -10,10 +10,11 @@ import { getCV, type Mat } from "../../cv";
 import {
 	type GlyphSet,
 	type RecognizeOptions,
-	recognizeText,
+	recognizeTextSteps,
 } from "../../glyphs";
 import { copyRoi } from "../../image";
 import { ALL_LOBBY_ENTRIES, MODE_STAGE_COMBOS } from "../../localized";
+import { all, type MatchSteps } from "../../match-steps";
 import { closestBy } from "../../text";
 import { HEADER_LINE_BAND, HEADER_LOBBY_BAND } from "./rois";
 
@@ -99,12 +100,13 @@ export interface TagBandOptions extends RecognizeOptions {
 }
 
 /** OCR one header band: trim to the black-tag extent, recognize as a single line. */
-export function readTagBand(
+export function* readTagBandSteps(
 	gray: Mat,
 	band: { x: number; y: number; w: number; h: number },
 	glyphs: GlyphSet,
 	options: TagBandOptions = {},
-): string {
+	speculative = false,
+): MatchSteps<string> {
 	const crop = copyRoi(gray, band);
 	const { start, end } = tagExtent(
 		crop,
@@ -122,22 +124,30 @@ export function readTagBand(
 	view.copyTo(trimmed);
 	view.delete();
 	crop.delete();
-	const result = recognizeText(trimmed, glyphs, {
-		spaceGap: 9,
-		minCharScore: 0.3,
-		...options,
-	});
+	const result = yield* recognizeTextSteps(
+		trimmed,
+		glyphs,
+		{
+			spaceGap: 9,
+			minCharScore: 0.3,
+			...options,
+		},
+		speculative,
+	);
 	trimmed.delete();
 	return result.text.trim();
 }
 
-export function parseHeader(
+export function* parseHeaderSteps(
 	gray: Mat,
 	lobbyGlyphs: GlyphSet,
 	lineGlyphs: GlyphSet,
-): ParsedHeader {
-	const lobbyReading = readTagBand(gray, HEADER_LOBBY_BAND, lobbyGlyphs);
-	const lineReading = readTagBand(gray, HEADER_LINE_BAND, lineGlyphs);
+	speculative = false,
+): MatchSteps<ParsedHeader> {
+	const [lobbyReading, lineReading] = yield* all([
+		readTagBandSteps(gray, HEADER_LOBBY_BAND, lobbyGlyphs, {}, speculative),
+		readTagBandSteps(gray, HEADER_LINE_BAND, lineGlyphs, {}, speculative),
+	]);
 
 	const lobbyMatch = lobbyReading
 		? closestBy(lobbyReading, ALL_LOBBY_ENTRIES, (e) => e.text)

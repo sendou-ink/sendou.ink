@@ -257,7 +257,7 @@ export async function startVodScan(
 						seek.frameDone?.();
 						seek.frameDone = null;
 					},
-					{ collectTelemetry: telemetry },
+					{ collectTelemetry: telemetry, webgpu: readSettings().webgpu },
 				),
 		);
 		await Promise.all(clients.map((c) => c.whenReady()));

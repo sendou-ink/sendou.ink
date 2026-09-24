@@ -66,6 +66,8 @@ export class AnalyzerClient {
 			collectTelemetry?: boolean;
 			/** max frames buffered while a frame is in flight (0 = drop them) */
 			frameQueueLimit?: number;
+			/** match templates on WebGPU when the browser has an adapter (settings `webgpu`) */
+			webgpu?: boolean;
 		} = {},
 	) {
 		this.#frameQueueLimit = options.frameQueueLimit ?? 0;
@@ -120,6 +122,7 @@ export class AnalyzerClient {
 			assetsBaseUrl: Config.staticAssetsUrl,
 			suppressSteadyFrames: options.suppressSteadyFrames ?? true,
 			collectTelemetry: options.collectTelemetry ?? false,
+			webgpu: options.webgpu ?? false,
 		});
 	}
 

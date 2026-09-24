@@ -12,9 +12,10 @@ import {
 	type GlyphSet,
 	type RecognizedChar,
 	type RecognizedText,
-	recognizeText,
+	recognizeTextSteps,
 } from "../../glyphs";
 import { copyRoi, type Roi } from "../../image";
+import { all, type MatchSteps } from "../../match-steps";
 
 /** The count a knockout wins at — the burst hides it, so it is never read. */
 export const KO_MATCH_SCORE = 100;
@@ -83,31 +84,41 @@ const EMPTY_READ: BannerScoreRead = {
 
 /**
  * One banner side's score: each digit set at each threshold, best read kept
- * (isBetterRead). The score is the trailing run of full-height, confident
- * digits; label and burst leftovers fail at least one of those tests.
+ * (isBetterRead); every combination reads in one lockstep. The score is the
+ * trailing run of full-height, confident digits; label and burst leftovers
+ * fail at least one of those tests.
  */
-export function parseBannerScore(
+export function* parseBannerScoreSteps(
 	gray: Mat,
 	roi: Roi,
 	sets: readonly GlyphSet[],
-): BannerScoreRead {
+	speculative = false,
+): MatchSteps<BannerScoreRead> {
 	const crop = copyRoi(gray, roi);
 	clearShortBlobs(crop);
-	let best = EMPTY_READ;
-	for (const binThreshold of [
+	const reads = [
 		BANNER_SCORE_BIN_THRESHOLD,
 		BANNER_SCORE_BRIGHT_BIN_THRESHOLD,
 		BANNER_SCORE_BRIGHTEST_BIN_THRESHOLD,
-	]) {
-		for (const set of sets) {
-			const raw = recognizeText(crop, set, {
-				binThreshold,
-				spaceGap: Number.POSITIVE_INFINITY,
-				minCharScore: 0.3,
-			});
-			const read = trailingDigitRun(raw, set);
-			if (isBetterRead(read, best)) best = read;
-		}
+	].flatMap((binThreshold) => sets.map((set) => ({ binThreshold, set })));
+	const raws = yield* all(
+		reads.map(({ binThreshold, set }) =>
+			recognizeTextSteps(
+				crop,
+				set,
+				{
+					binThreshold,
+					spaceGap: Number.POSITIVE_INFINITY,
+					minCharScore: 0.3,
+				},
+				speculative,
+			),
+		),
+	);
+	let best = EMPTY_READ;
+	for (const [i, { set }] of reads.entries()) {
+		const read = trailingDigitRun(raws[i]!, set);
+		if (isBetterRead(read, best)) best = read;
 	}
 	crop.delete();
 	return best;

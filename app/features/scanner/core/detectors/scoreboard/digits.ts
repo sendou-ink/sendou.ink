@@ -3,8 +3,9 @@ import type { Mat } from "../../cv";
 import {
 	type GlyphSet,
 	type RecognizedText,
-	recognizeText,
+	recognizeTextSteps,
 } from "../../glyphs";
+import type { MatchSteps } from "../../match-steps";
 
 export interface ParsedNumber {
 	value: number | null;
@@ -18,16 +19,22 @@ export interface ParsedNumber {
 /** A lowercase "p" suffix starts ~7px below the digits' cap line; a trailing char this far down is the suffix. */
 const LOWERED_TRAILING_MIN_PX = 5;
 
-export function parseNumber(
+export function* parseNumberSteps(
 	gray: Mat,
 	digits: GlyphSet,
 	options: { binThreshold?: number; dropLoweredTrailing?: boolean } = {},
-): ParsedNumber {
-	const raw = recognizeText(gray, digits, {
-		spaceGap: Number.POSITIVE_INFINITY,
-		minCharScore: 0.3,
-		binThreshold: options.binThreshold,
-	});
+	speculative = false,
+): MatchSteps<ParsedNumber> {
+	const raw = yield* recognizeTextSteps(
+		gray,
+		digits,
+		{
+			spaceGap: Number.POSITIVE_INFINITY,
+			minCharScore: 0.3,
+			binThreshold: options.binThreshold,
+		},
+		speculative,
+	);
 	// the replay paint's "p" suffix can land inside the ROI and misread as a "6"
 	let chars = raw.chars;
 	if (options.dropLoweredTrailing && chars.length > 1) {

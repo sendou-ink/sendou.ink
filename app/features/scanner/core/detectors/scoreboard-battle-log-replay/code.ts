@@ -6,9 +6,10 @@ import { getCV, type Mat } from "../../cv";
 import {
 	type GlyphSet,
 	type RecognizedText,
-	recognizeText,
+	recognizeTextSteps,
 } from "../../glyphs";
 import { cropRoi } from "../../image";
+import type { MatchSteps } from "../../match-steps";
 import { REPLAY_CODE_ROI } from "./rois";
 
 /**
@@ -81,7 +82,7 @@ const CODE_RE = /^[0-9A-Z]{4}(-[0-9A-Z]{4}){3}$/;
 /** Glyph set restricted to code characters; a shallow view, so dispose only the source set. */
 export function codeCharsetOf(set: GlyphSet): GlyphSet {
 	const glyphs = set.glyphs.filter((g) => /^[0-9A-Z-]$/.test(g.char));
-	const widths = glyphs.map((g) => g.mat.cols).sort((a, b) => a - b);
+	const widths = glyphs.map((g) => g.cols).sort((a, b) => a - b);
 	return {
 		glyphs,
 		height: set.height,
@@ -90,7 +91,11 @@ export function codeCharsetOf(set: GlyphSet): GlyphSet {
 }
 
 /** rgb: full normalized frame in RGB (not RGBA). */
-export function parseReplayCode(rgb: Mat, glyphs: GlyphSet): ParsedReplayCode {
+export function* parseReplayCodeSteps(
+	rgb: Mat,
+	glyphs: GlyphSet,
+	speculative = false,
+): MatchSteps<ParsedReplayCode> {
 	const cv = getCV();
 	const view = cropRoi(rgb, REPLAY_CODE_ROI);
 	const channels = new cv.MatVector();
@@ -102,10 +107,15 @@ export function parseReplayCode(rgb: Mat, glyphs: GlyphSet): ParsedReplayCode {
 	channels.delete();
 	view.delete();
 
-	const raw = recognizeText(green, glyphs, {
-		spaceGap: Number.POSITIVE_INFINITY,
-		minCharScore: 0.3,
-	});
+	const raw = yield* recognizeTextSteps(
+		green,
+		glyphs,
+		{
+			spaceGap: Number.POSITIVE_INFINITY,
+			minCharScore: 0.3,
+		},
+		speculative,
+	);
 	const resolved = resolveUsByTopRightInk(raw, green);
 	green.delete();
 

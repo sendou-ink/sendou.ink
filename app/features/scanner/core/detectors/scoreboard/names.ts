@@ -4,8 +4,9 @@ import {
 	type GlyphSet,
 	type RecognizedChar,
 	type RecognizedText,
-	recognizeText,
+	recognizeTextSteps,
 } from "../../glyphs";
+import type { MatchSteps } from "../../match-steps";
 
 export interface ParsedName {
 	name: string;
@@ -516,7 +517,7 @@ function preferPlainTies(raw: RecognizedText, margin: number): RecognizedText {
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
 
-export function parseName(
+export function* parseNameSteps(
 	gray: Mat,
 	glyphs: GlyphSet,
 	options: {
@@ -525,14 +526,20 @@ export function parseName(
 		/** re-decide near-tie homoglyphs toward the plain form (preferPlainTies) */
 		plainTieMargin?: number;
 	} = {},
-): ParsedName {
+	speculative = false,
+): MatchSteps<ParsedName> {
 	const binThreshold = options.binThreshold ?? DEFAULT_BIN_THRESHOLD;
-	const recognized = recognizeText(gray, glyphs, {
-		spaceGap: options.spaceGap ?? 7,
-		binThreshold,
-		minCharScore: 0.35,
-		maxCandidates: NAME_MAX_CANDIDATES,
-	});
+	const recognized = yield* recognizeTextSteps(
+		gray,
+		glyphs,
+		{
+			spaceGap: options.spaceGap ?? 7,
+			binThreshold,
+			minCharScore: 0.35,
+			maxCandidates: NAME_MAX_CANDIDATES,
+		},
+		speculative,
+	);
 	const raw =
 		options.plainTieMargin === undefined
 			? recognized
