@@ -23,7 +23,7 @@ export const LEAGUE_SCHEDULING = {
 } as const;
 
 /**
- * `CLOSED` = nothing to schedule (not a league, over, or a team missing), `NOT_OPEN` = the board opens
+ * `CLOSED` = nothing to schedule (no scheduling in the bracket, over, or a team missing), `NOT_OPEN` = the board opens
  * later, `UNSCHEDULED` = the teams are agreeing on a time, `SCHEDULED_LOCKED` = a time is agreed but the
  * round is not playable yet, `SCHEDULED` = agreed and playable.
  */
@@ -43,21 +43,22 @@ export type ProposalError =
 
 /** Which point of the scheduling flow the set is at; every timestamp in unix seconds. */
 export function phase({
-	isLeague,
+	hasScheduling,
 	isOver,
 	hasBothTeams,
 	isPlayableAt,
 	scheduledAt,
 	now,
 }: {
-	isLeague: boolean;
+	/** False outside leagues and in a league's real-time brackets. */
+	hasScheduling: boolean;
 	isOver: boolean;
 	hasBothTeams: boolean;
 	isPlayableAt: number | null;
 	scheduledAt: number | null;
 	now: number;
 }): Phase {
-	if (!isLeague || isOver || !hasBothTeams) return "CLOSED";
+	if (!hasScheduling || isOver || !hasBothTeams) return "CLOSED";
 
 	const isPlayable = isPlayableAt === null || now >= isPlayableAt;
 

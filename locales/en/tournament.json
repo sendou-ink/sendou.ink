@@ -78,6 +78,8 @@
 	"mapList.rerollAllMaps": "Reroll all maps",
 	"mapList.teamsPick": "Team's pick",
 	"mapList.customFlow": "Custom flow",
+	"mapList.realtime": "Play in real time",
+	"mapList.realtimeInfo": "Sets are played right away like in a regular tournament, teams don't schedule them",
 	"rules.teamPick.stageRepeat": "A stage can appear in at most {{cap}} modes of a team's picks",
 	"team.label": "Team",
 	"team.teamPage": "Team page",

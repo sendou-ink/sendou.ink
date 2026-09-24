@@ -18,6 +18,7 @@ import {
 	SendouSelectItemSection,
 	searchContains,
 } from "~/components/elements/Select";
+import { SendouSwitch } from "~/components/elements/Switch";
 import { ModeImage, StageImage } from "~/components/Image";
 import { InfoPopover } from "~/components/InfoPopover";
 import { Input } from "~/components/Input";
@@ -201,6 +202,8 @@ export function BracketMapListDialog({
 				]) ?? [],
 			),
 	);
+	const [isRealtime, setIsRealtime] = React.useState(false);
+	const hasPlayableAts = tournament.isLeague && !isRealtime;
 	const [pickBanStyle, setPickBanStyle] = React.useState(
 		Array.from(maps.values()).find((round) => round.pickBan)?.pickBan ??
 			"COUNTERPICK",
@@ -369,9 +372,7 @@ export function BracketMapListDialog({
 		section: rounds.find((r) => r.id === key)?.section ?? null,
 		type: countType,
 		customFlow: value.pickBan === "CUSTOM" ? customFlow : undefined,
-		isPlayableAt: tournament.isLeague
-			? (playableAts.get(key) ?? null)
-			: undefined,
+		isPlayableAt: hasPlayableAts ? (playableAts.get(key) ?? null) : undefined,
 	}));
 
 	return (
@@ -387,6 +388,11 @@ export function BracketMapListDialog({
 					type="hidden"
 					name="thirdPlaceMatchLinked"
 					value={thirdPlaceMatchLinked ? "on" : "off"}
+				/>
+				<input
+					type="hidden"
+					name="isRealtime"
+					value={isRealtime ? "on" : "off"}
 				/>
 				<input
 					type="hidden"
@@ -541,6 +547,12 @@ export function BracketMapListDialog({
 										onPatternsChange={setPatterns}
 									/>
 								) : null}
+								{tournament.isLeague && !isPreparing ? (
+									<RealtimeSwitch
+										isRealtime={isRealtime}
+										onChange={setIsRealtime}
+									/>
+								) : null}
 							</div>
 							{tournament.mapPool.length > 0 &&
 							!needsToPickEliminationTeamCount ? (
@@ -605,7 +617,7 @@ export function BracketMapListDialog({
 												name={round.name}
 												maps={roundMaps}
 												playableAt={
-													tournament.isLeague
+													hasPlayableAts
 														? {
 																value: playableAts.get(round.id) ?? null,
 																onChange: (value) =>
@@ -926,6 +938,33 @@ function EliminationTeamCountSelect({
 					);
 				})}
 			</select>
+		</div>
+	);
+}
+
+function RealtimeSwitch({
+	isRealtime,
+	onChange,
+}: {
+	isRealtime: boolean;
+	onChange: (isRealtime: boolean) => void;
+}) {
+	const { t } = useTranslation(["tournament"]);
+
+	return (
+		<div>
+			<div className="stack horizontal xs items-center">
+				<Label htmlFor="is-realtime">{t("tournament:mapList.realtime")}</Label>
+				<InfoPopover tiny className={styles.infoPopover}>
+					{t("tournament:mapList.realtimeInfo")}
+				</InfoPopover>
+			</div>
+			<SendouSwitch
+				id="is-realtime"
+				isSelected={isRealtime}
+				onChange={onChange}
+				data-testid="realtime-switch"
+			/>
 		</div>
 	);
 }

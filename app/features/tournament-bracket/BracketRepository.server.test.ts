@@ -45,6 +45,7 @@ const ROUND_ROBIN: TournamentSettings["bracketProgression"] = [
 const setupStartedMatch = async (
 	overrides?: Partial<Parameters<typeof TournamentFactory.create>[0]>,
 	options?: Parameters<typeof TournamentFactory.create>[1],
+	startBracketArgs?: Parameters<typeof TournamentFactory.startBracket>[1],
 ) => {
 	const authorId = users.id(1);
 	const teamAlphaUserIds = [users.id(2), users.id(3), users.id(4), users.id(5)];
@@ -60,7 +61,7 @@ const setupStartedMatch = async (
 			{ isCheckedIn: true },
 		);
 	}
-	await TournamentFactory.startBracket(tournament.id);
+	await TournamentFactory.startBracket(tournament.id, startBracketArgs);
 
 	const match = await db
 		.selectFrom("TournamentMatch")
@@ -194,6 +195,26 @@ describe("BracketRepository league chat room expiry", () => {
 		});
 
 		expect(await roomLifespanDays(setup.chatRoomId)).toBe(60);
+	});
+
+	test("a real-time league bracket's room lives a week, also after reopening", async () => {
+		const setup = await setupStartedMatch(
+			{ bracketProgression: ROUND_ROBIN },
+			{ isLeague: true },
+			{ isRealtime: true },
+		);
+		expect(await roomLifespanDays(setup.chatRoomId)).toBe(7);
+
+		await playOutMatch(setup);
+		await executeBracketOperation({
+			tournamentId: setup.tournamentId,
+			tournament: await tournamentFromDB(setup.tournamentId),
+			operation: (bracketData) =>
+				Engine.reopenMatch(bracketData, setup.matchId),
+			endDroppedTeams: false,
+		});
+
+		expect(await roomLifespanDays(setup.chatRoomId)).toBe(7);
 	});
 });
 

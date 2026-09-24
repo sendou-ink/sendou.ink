@@ -21,7 +21,10 @@ export function create(input: CreateBracketInput): BracketData {
 	const data = createResolved({
 		type: input.type,
 		seeding: input.seeding,
-		settings: resolveStageSettings(input),
+		settings: {
+			...resolveStageSettings(input),
+			...(input.isRealtime ? { isRealtime: true } : {}),
+		},
 		abDivisions: input.abDivisions,
 		number: input.number,
 	});

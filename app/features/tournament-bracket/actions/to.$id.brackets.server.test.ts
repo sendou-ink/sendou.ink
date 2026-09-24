@@ -189,7 +189,13 @@ async function startedSwissFirstRound(tournamentId: number) {
 	};
 }
 
+/** The dialog submits its switches as checkbox values, the schema turns them into booleans. */
+const checkboxValue = (isChecked: boolean) =>
+	(isChecked ? "on" : "off") as unknown as boolean;
+
 const RANKED_MODE_ORDER: ModeShort[] = ["SZ", "TC", "RM"];
+/** Any fixed point in time works. */
+const PLAYABLE_AT = 1_800_000_000;
 /** Turf War is not among the ranked modes a default team picked tournament plays. */
 const MODE_ORDER_WITH_UNPLAYED_MODE: ModeShort[] = ["SZ", "TW", "TC"];
 
@@ -207,6 +213,7 @@ describe("Brackets action START_BRACKET", () => {
 				_action: "START_BRACKET",
 				bracketIdx: 0,
 				thirdPlaceMatchLinked: false,
+				isRealtime: false,
 				maps: rounds.map((round) =>
 					teamPickedRoundMaps(round, MODE_ORDER_WITH_UNPLAYED_MODE),
 				),
@@ -232,6 +239,7 @@ describe("Brackets action START_BRACKET", () => {
 				_action: "START_BRACKET",
 				bracketIdx: 0,
 				thirdPlaceMatchLinked: false,
+				isRealtime: false,
 				maps: rounds.map((round) =>
 					teamPickedRoundMaps(round, RANKED_MODE_ORDER),
 				),
@@ -252,6 +260,40 @@ describe("Brackets action START_BRACKET", () => {
 			expect(round.maps?.list).toBeFalsy();
 		}
 	});
+
+	test.each([
+		{ isRealtime: false, hasScheduling: true, isPlayableAt: PLAYABLE_AT },
+		{ isRealtime: true, hasScheduling: false, isPlayableAt: null },
+	])(
+		"starts a league bracket with isRealtime $isRealtime",
+		async ({ isRealtime, hasScheduling, isPlayableAt }) => {
+			const tournament = await createTeamPickedTournament(organizerId(), {
+				isLeague: true,
+			});
+			const rounds = await previewRounds(tournament.id);
+
+			await bracketsAction(
+				{
+					_action: "START_BRACKET",
+					bracketIdx: 0,
+					thirdPlaceMatchLinked: false,
+					isRealtime: checkboxValue(isRealtime),
+					maps: rounds.map((round) => ({
+						...teamPickedRoundMaps(round, RANKED_MODE_ORDER),
+						isPlayableAt: PLAYABLE_AT,
+					})),
+				},
+				{ user: organizerId(), params: { id: String(tournament.id) } },
+			);
+
+			const bracket = (await tournamentFromDB(tournament.id)).bracketByIdx(0);
+			invariant(bracket && !bracket.preview);
+			expect(bracket.hasScheduling).toBe(hasScheduling);
+			for (const round of bracket.data.round) {
+				expect(round.isPlayableAt).toBe(isPlayableAt);
+			}
+		},
+	);
 });
 
 describe("Brackets action PREPARE_MAPS", () => {
@@ -316,12 +358,18 @@ describe("Brackets action PREPARE_MAPS", () => {
 });
 
 /** Single elimination tournament whose teams pick their own maps, every team checked in and ready to start. */
-async function createTeamPickedTournament(authorId: number) {
-	const tournament = await TournamentFactory.create({
-		authorId,
-		minMembersPerTeam: 1,
-		mapPickingStyle: "AUTO",
-	});
+async function createTeamPickedTournament(
+	authorId: number,
+	options?: { isLeague?: boolean },
+) {
+	const tournament = await TournamentFactory.create(
+		{
+			authorId,
+			minMembersPerTeam: 1,
+			mapPickingStyle: "AUTO",
+		},
+		options,
+	);
 	for (const userId of users.ids(TEAM_COUNT)) {
 		await TournamentTeamFactory.create(
 			{ tournamentId: tournament.id, memberUserIds: [userId] },

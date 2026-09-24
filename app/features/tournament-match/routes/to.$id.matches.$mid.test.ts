@@ -392,4 +392,39 @@ describe("Tournament match page", () => {
 			await expect(loadMatchData()).resolves.toBeDefined();
 		});
 	});
+
+	describe("league scheduling", () => {
+		const startLeagueMatch = async (isRealtime: boolean) => {
+			const league = await TournamentFactory.create(
+				{ authorId: organizerId },
+				{ isLeague: true },
+			);
+			await createTournamentTeam(league.id, users.ids(ROSTER_SIZE));
+			await createTournamentTeam(
+				league.id,
+				users.ids(ROSTER_SIZE * 2).slice(ROSTER_SIZE),
+			);
+
+			const [match] = await TournamentFactory.startBracket(league.id, {
+				isRealtime,
+			});
+
+			return { id: String(league.id), mid: String(match.id) };
+		};
+
+		test.each([
+			{ isRealtime: false, hasScheduling: true, phase: "UNSCHEDULED" },
+			{ isRealtime: true, hasScheduling: false, phase: "CLOSED" },
+		])(
+			"a set of a league bracket with isRealtime $isRealtime is $phase",
+			async ({ isRealtime, hasScheduling, phase }) => {
+				const data = await tournamentMatchLoader({
+					params: await startLeagueMatch(isRealtime),
+				});
+
+				expect(data.schedule.hasScheduling).toBe(hasScheduling);
+				expect(data.schedule.phase).toBe(phase);
+			},
+		);
+	});
 });

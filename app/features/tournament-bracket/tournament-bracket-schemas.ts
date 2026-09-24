@@ -159,6 +159,10 @@ export const bracketSchema = v.union([
 			preprocess(checkboxValueToBoolean, v.boolean()),
 			false,
 		),
+		isRealtime: v.optional(
+			preprocess(checkboxValueToBoolean, v.boolean()),
+			false,
+		),
 		maps: tournamentRoundMapsList,
 	}),
 	v.object({

@@ -269,9 +269,10 @@ async function resolveLeagueSchedule({
 	matchIsOver: boolean;
 }) {
 	const now = databaseTimestampNow();
-	const isPlayableAt = tournament.isLeague ? match.roundIsPlayableAt : null;
+	const hasScheduling = bracket?.hasScheduling ?? false;
+	const isPlayableAt = hasScheduling ? match.roundIsPlayableAt : null;
 	const phase = LeagueScheduling.phase({
-		isLeague: tournament.isLeague,
+		hasScheduling,
 		isOver: matchIsOver,
 		hasBothTeams: Boolean(match.opponentOne?.id && match.opponentTwo?.id),
 		isPlayableAt,
@@ -282,11 +283,10 @@ async function resolveLeagueSchedule({
 		match.players.find((player) => player.id === user?.id)?.tournamentTeamId ??
 		null;
 	const canSeeBoard =
-		tournament.isLeague &&
-		(isParticipant || tournament.isOrganizerOrStreamer(user));
+		hasScheduling && (isParticipant || tournament.isOrganizerOrStreamer(user));
 	const boardOpen = phase !== "CLOSED" && phase !== "NOT_OPEN";
 
-	if (tournament.isLeague && user) {
+	if (hasScheduling && user) {
 		for (const type of [
 			"TO_LEAGUE_TIMES_PROPOSED",
 			"TO_LEAGUE_MATCH_SCHEDULED",
@@ -301,6 +301,7 @@ async function resolveLeagueSchedule({
 	}
 
 	return {
+		hasScheduling,
 		phase,
 		now,
 		isPlayableAt,

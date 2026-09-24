@@ -59,7 +59,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 	);
 
 	const matches = tournament.brackets.flatMap((bracket, bracketIdx) => {
-		if (bracket.preview) return [];
+		if (bracket.preview || !bracket.hasScheduling) return [];
 		if (
 			divisionIdx !== null &&
 			tournament.leagueDivisionOfBracket(bracketIdx) !== divisionIdx
@@ -106,7 +106,7 @@ export const loader = async ({ params, request }: LoaderFunctionArgs) => {
 					scheduledAt,
 					isSchedulable:
 						LeagueScheduling.phase({
-							isLeague: true,
+							hasScheduling: true,
 							isOver: match.winnerSide !== null,
 							hasBothTeams: true,
 							isPlayableAt: round?.isPlayableAt ?? null,

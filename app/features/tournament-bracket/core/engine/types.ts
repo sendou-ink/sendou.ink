@@ -50,6 +50,9 @@ export interface StageSettings {
 
 	/** Optional final between semi-final losers. */
 	consolationFinal?: boolean;
+
+	/** Leagues: sets are played in real time like in a regular tournament instead of the teams scheduling them. */
+	isRealtime?: boolean;
 }
 
 export interface ParticipantResult {
@@ -144,6 +147,8 @@ export interface CreateBracketInput {
 	settings: TournamentStageSettings | null;
 	/** (Round robin only) Whether matches are playable independently of rounds (league divisions). */
 	independentRounds?: boolean;
+	/** Leagues: sets are played in real time like in a regular tournament instead of the teams scheduling them. */
+	isRealtime?: boolean;
 	/** Parallel to seeding; required when settings.hasAbDivisions. 0 = A, 1 = B. */
 	abDivisions?: (0 | 1)[];
 	/** Stage number within the tournament. Defaults to 1 (local data; the repository assigns the real number on insert). */
@@ -165,7 +170,10 @@ export type RoundMapsInput = TournamentRoundMaps & {
 
 /** {@link CreateBracketInput} with settings already resolved to internal {@link StageSettings}. */
 export interface ResolvedCreateBracketInput
-	extends Omit<CreateBracketInput, "settings" | "independentRounds"> {
+	extends Omit<
+		CreateBracketInput,
+		"settings" | "independentRounds" | "isRealtime"
+	> {
 	settings: StageSettings;
 }
 

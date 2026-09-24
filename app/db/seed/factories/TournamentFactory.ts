@@ -72,6 +72,8 @@ type StartBracketArgs = {
 	bracketIdx?: number;
 	maps?: RoundMaps | ((round: { number: number }) => RoundMaps);
 	isPlayableAt?: (roundNumber: number) => number | null;
+	/** Leagues: the bracket is played in real time, its sets are not scheduled. */
+	isRealtime?: boolean;
 };
 
 /** Which of the playable matches to play; every one of them by default. */
@@ -199,7 +201,12 @@ export async function playOut(
  */
 export async function startBracket(
 	tournamentId: number,
-	{ bracketIdx = 0, maps = ROUND_MAPS, isPlayableAt }: StartBracketArgs = {},
+	{
+		bracketIdx = 0,
+		maps = ROUND_MAPS,
+		isPlayableAt,
+		isRealtime = false,
+	}: StartBracketArgs = {},
 ) {
 	const tournament = await tournamentFromDB(tournamentId);
 
@@ -213,7 +220,8 @@ export async function startBracket(
 		type: bracket.type,
 		seeding,
 		settings: bracket.settings,
-		independentRounds: tournament.isLeague,
+		independentRounds: tournament.isLeague && !isRealtime,
+		isRealtime,
 	};
 
 	await BracketRepository.insertBracket({
@@ -362,7 +370,7 @@ async function generateNextSwissRound(
 		await BracketRepository.insertRoundMatches({
 			stageId,
 			round: round.value,
-			isLeague: tournament.isLeague,
+			hasScheduling: bracket.hasScheduling,
 		});
 		generated = true;
 	}

@@ -286,7 +286,7 @@ function TournamentMatchBannerTopRow({
 	};
 
 	// league sets start at bracket start, only the agreed time says anything
-	if (tournament.isLeague) {
+	if (data.schedule.hasScheduling) {
 		return (
 			<MatchBannerTopRow score={score}>
 				{data.schedule.scheduledAt ? (

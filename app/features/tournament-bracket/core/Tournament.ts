@@ -865,6 +865,14 @@ export class Tournament {
 		return idx;
 	}
 
+	/** Whether the teams schedule the set, see {@link Bracket.hasScheduling}. */
+	matchHasScheduling(matchId: number) {
+		const bracketIdx = this.matchIdToBracketIdx(matchId);
+		if (bracketIdx === null) return false;
+
+		return this.bracketByIdx(bracketIdx)?.hasScheduling ?? false;
+	}
+
 	canFinalize(user: OptionalIdObject) {
 		// underground bracket can be skipped
 		const relevantBrackets = this.bracketsMeta.filter(

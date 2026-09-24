@@ -8,7 +8,7 @@ const PLAYABLE_AT = 1_800_000_000;
 
 describe("LeagueScheduling.phase", () => {
 	const base = {
-		isLeague: true,
+		hasScheduling: true,
 		isOver: false,
 		hasBothTeams: true,
 		isPlayableAt: PLAYABLE_AT,
@@ -17,8 +17,8 @@ describe("LeagueScheduling.phase", () => {
 
 	test.each([
 		{
-			why: "not a league",
-			args: { ...base, isLeague: false, now: PLAYABLE_AT },
+			why: "no scheduling (not a league or a real-time bracket)",
+			args: { ...base, hasScheduling: false, now: PLAYABLE_AT },
 			expected: "CLOSED",
 		},
 		{

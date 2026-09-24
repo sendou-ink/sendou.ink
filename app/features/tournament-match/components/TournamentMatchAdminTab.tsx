@@ -49,7 +49,9 @@ export function TournamentMatchAdminTab({
 
 	const topActionsVisible = !!teamOne && !!teamTwo;
 	const scheduleSectionVisible =
-		isOrganizer && tournament.isLeague && data.schedule.phase !== "CLOSED";
+		isOrganizer &&
+		data.schedule.hasScheduling &&
+		data.schedule.phase !== "CLOSED";
 	const castSectionVisible = !data.matchIsOver;
 	const editScoresVisible =
 		isOrganizer && !!teamOne && !!teamTwo && data.results.length > 0;

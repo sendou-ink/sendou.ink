@@ -914,7 +914,7 @@ function leagueSchedule(
 	return {
 		now,
 		phase: LeagueScheduling.phase({
-			isLeague: tournament.isLeague,
+			hasScheduling: tournament.matchHasScheduling(match.id),
 			isOver: Boolean(match.winnerSide),
 			hasBothTeams: Boolean(match.opponentOne?.id && match.opponentTwo?.id),
 			isPlayableAt: match.roundIsPlayableAt,
