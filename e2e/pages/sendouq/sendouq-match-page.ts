@@ -158,21 +158,27 @@ export class SendouQMatchPage {
 		await expect(this.locators.confirmScoreButton).toBeEnabled({
 			timeout: 10_000,
 		});
-		await this.locators.confirmScoreButton.click();
+		// only a loss needs a second tap; any other first tap already submits, so
+		// the response wait has to be armed before it
+		const isLoss = (
+			await this.locators.confirmScoreButton.textContent()
+		)?.includes("loss");
 
-		const armedLossButton = this.locators.confirmScoreButton.filter({
-			hasText: "Tap again",
-		});
-
-		const isArmed = await armedLossButton.isVisible();
-		if (isArmed) {
+		if (isLoss) {
+			await this.locators.confirmScoreButton.click();
+			const armedLossButton = this.locators.confirmScoreButton.filter({
+				hasText: "Tap again",
+			});
+			await expect(armedLossButton).toBeVisible();
 			await waitOutLossConfirmMinGap(this.page);
+			await waitForPOSTResponse(this.page, async () => {
+				await armedLossButton.click();
+			});
+			return;
 		}
 
 		await waitForPOSTResponse(this.page, async () => {
-			if (isArmed) {
-				await armedLossButton.click();
-			}
+			await this.locators.confirmScoreButton.click();
 		});
 	}
 
