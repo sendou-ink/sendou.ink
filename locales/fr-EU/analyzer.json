@@ -57,6 +57,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Vitesse de nage (Bazookarpe)",
 	"stat.runSpeed": "Vitesse de course (unités/frames)",
 	"stat.runSpeedInEnemyInk": "Vitesse de course dans l'encre ennemie",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Vitesse de course en tirant",
 	"stat.shootingRunSpeedCharging": "Vitesse de course en chargeant",
 	"stat.shootingRunSpeedFullCharge": "Vitesse de course (charge complète)",

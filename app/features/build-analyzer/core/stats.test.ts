@@ -218,6 +218,17 @@ describe("Analyze build", () => {
 		expect(statWithISM.value).toBeGreaterThan(statWithISM.baseValue);
 	});
 
+	test("RES increases jump height in enemy ink", () => {
+		const analyzed = buildStats({
+			weaponSplId: 40,
+			abilityPoints: new Map([["RES", 57]]),
+			hasTacticooler: false,
+		});
+
+		expect(analyzed.stats.jumpHeightInEnemyInk.baseValue).toBe(0.8);
+		expect(analyzed.stats.jumpHeightInEnemyInk.value).toBe(1.1);
+	});
+
 	test("Accounts for Jr. big ink tank with main weapon ink consumption %", () => {
 		const analyzedJr = buildStats({
 			weaponSplId: 10,

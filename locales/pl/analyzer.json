@@ -58,6 +58,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Prędkość pływania (trzymając Rainmaker)",
 	"stat.runSpeed": "Prędkość biegania (jednostka na klatkę)",
 	"stat.runSpeedInEnemyInk": "Prędkośc biegania w farbie przeciwnika",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Prędkość biegania podczas strzelania",
 	"stat.shootingRunSpeedCharging": "Prędkość biegania podczas ładowania",
 	"stat.shootingRunSpeedFullCharge": "Prędkość biegania (trzymając strzał)",

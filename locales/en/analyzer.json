@@ -56,6 +56,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Swim speed (holding Rainmaker)",
 	"stat.runSpeed": "Run speed (units per frame)",
 	"stat.runSpeedInEnemyInk": "Run speed in enemy ink",
+	"stat.jumpHeightInEnemyInk": "Jump height in enemy ink",
 	"stat.shootingRunSpeed": "Run speed while shooting",
 	"stat.shootingRunSpeedCharging": "Run speed while charging",
 	"stat.shootingRunSpeedFullCharge": "Run speed (holding a full charge)",

@@ -58,6 +58,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Скорость плавания (с Мегакарпом)",
 	"stat.runSpeed": "Скорость бега (единицы расстояния за кадр)",
 	"stat.runSpeedInEnemyInk": "Скорость бега во вражеских чернилах",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Скорость бега во время стрельбы",
 	"stat.shootingRunSpeedCharging": "Скорость бега во время заряда",
 	"stat.shootingRunSpeedFullCharge": "Скорость бега с полным зарядом",

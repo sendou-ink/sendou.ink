@@ -54,6 +54,7 @@
 	"stat.swimSpeedHoldingRainmaker": "游速 (持有真格鱼虎)",
 	"stat.runSpeed": "走速 (单位/帧)",
 	"stat.runSpeedInEnemyInk": "敌方墨汁上走速",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "射击走速",
 	"stat.shootingRunSpeedCharging": "蓄力走速",
 	"stat.shootingRunSpeedFullCharge": "完全蓄力走速",

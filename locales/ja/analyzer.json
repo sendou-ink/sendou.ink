@@ -54,6 +54,7 @@
 	"stat.swimSpeedHoldingRainmaker": "イカ速 (ホコ持ち状態)",
 	"stat.runSpeed": "ヒト速 (DU/F)",
 	"stat.runSpeedInEnemyInk": "敵インク上でのヒト速",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "撃っている最中のヒト速",
 	"stat.shootingRunSpeedCharging": "チャージ中のヒト速",
 	"stat.shootingRunSpeedFullCharge": "ヒト速(フルチャージ中)",

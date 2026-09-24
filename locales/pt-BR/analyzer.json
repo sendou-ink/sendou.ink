@@ -57,6 +57,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Velocidade de nado (segurando o Rainmaker)",
 	"stat.runSpeed": "Velocidade de corrida (unidades por quadro)",
 	"stat.runSpeedInEnemyInk": "Velocidade de corrida na tinta inimiga",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Velocidade de corrida enquanto atira",
 	"stat.shootingRunSpeedCharging": "Velocidade de corrida enquanto carrega",
 	"stat.shootingRunSpeedFullCharge": "Velocidade de corrida (segurando uma carga completa)",

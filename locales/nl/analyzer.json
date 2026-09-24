@@ -56,6 +56,7 @@
 	"stat.swimSpeedHoldingRainmaker": "",
 	"stat.runSpeed": "Hardloper (eenheden per frame)",
 	"stat.runSpeedInEnemyInk": "Hardloper in vijandige inkt",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Hardloper tijdens schieten",
 	"stat.shootingRunSpeedCharging": "Hardloper tijdens opladen",
 	"stat.shootingRunSpeedFullCharge": "Hardloper (terwijl opgeladen)",

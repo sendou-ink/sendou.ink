@@ -54,6 +54,7 @@
 	"stat.swimSpeedHoldingRainmaker": "징어대시 (랭크 피쉬)",
 	"stat.runSpeed": "인간 이동 속도 (프레임 당 거리)",
 	"stat.runSpeedInEnemyInk": "상대 잉크에서 인간 이동 속도",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "사격 중 인간 이동 속도",
 	"stat.shootingRunSpeedCharging": "충전 중 인간 이동 속도",
 	"stat.shootingRunSpeedFullCharge": "인간 이동 속도 (풀충전 중)",

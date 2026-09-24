@@ -57,6 +57,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Velocidad de nado (con Pez Dorado)",
 	"stat.runSpeed": "Velocidad al correr (unidades por fotograma)",
 	"stat.runSpeedInEnemyInk": "Velocidad al correr sobre tinta rival",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Velocidad al correr disparando",
 	"stat.shootingRunSpeedCharging": "Velocidad al correr cargando disparo",
 	"stat.shootingRunSpeedFullCharge": "Velocidad al correr (manteniendo carga completa)",

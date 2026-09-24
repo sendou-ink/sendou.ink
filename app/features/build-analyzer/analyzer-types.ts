@@ -311,6 +311,7 @@ export interface AnalyzedBuild {
 		swimSpeed: Stat;
 		swimSpeedHoldingRainmaker: Stat;
 		runSpeedInEnemyInk: Stat;
+		jumpHeightInEnemyInk: Stat;
 		framesBeforeTakingDamageInEnemyInk: Stat;
 		damageTakenInEnemyInkPerSecond: Stat;
 		enemyInkDamageLimit: Stat;

@@ -56,6 +56,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Schwimmtempo (wenn mit Goldfischkanone)",
 	"stat.runSpeed": "Renntempo (Einheiten per Frame)",
 	"stat.runSpeedInEnemyInk": "Renntempo in gegnerischer Tinte",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Renntempo beim Schießen",
 	"stat.shootingRunSpeedCharging": "Renntempo beim Aufladen",
 	"stat.shootingRunSpeedFullCharge": "Renntempo beim Halten voller Ladung",

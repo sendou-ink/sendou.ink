@@ -57,6 +57,7 @@
 	"stat.swimSpeedHoldingRainmaker": "Velocità nuoto (tenendo il bazookarp)",
 	"stat.runSpeed": "Velocità movimento (unità per fotogrammo)",
 	"stat.runSpeedInEnemyInk": "Velocità movimento in inchiostro nemico",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "Velocità movimento durante uso arma principale",
 	"stat.shootingRunSpeedCharging": "Velocità movimento durante la carica",
 	"stat.shootingRunSpeedFullCharge": "Velocità movimento a carica piena",

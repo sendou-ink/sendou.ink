@@ -142,6 +142,7 @@ export function buildStats({
 			swimSpeed: swimSpeed(input),
 			swimSpeedHoldingRainmaker: swimSpeedHoldingRainmaker(input),
 			runSpeedInEnemyInk: runSpeedInEnemyInk(input),
+			jumpHeightInEnemyInk: jumpHeightInEnemyInk(input),
 			damageTakenInEnemyInkPerSecond: damageTakenInEnemyInkPerSecond(input),
 			enemyInkDamageLimit: enemyInkDamageLimit(input),
 			framesBeforeTakingDamageInEnemyInk:
@@ -923,6 +924,26 @@ function runSpeedInEnemyInk(
 		baseValue: effectToRounded(baseEffect * 10),
 		value: effectToRounded(effect * 10),
 		modifiedBy: RUN_SPEED_IN_ENEMY_INK_ABILITY,
+	};
+}
+
+function jumpHeightInEnemyInk(
+	args: StatFunctionInput,
+): AnalyzedBuild["stats"]["jumpHeightInEnemyInk"] {
+	const JUMP_HEIGHT_IN_ENEMY_INK_ABILITY = "RES";
+	const { baseEffect, effect } = abilityPointsToEffects({
+		abilityPoints: apFromMap({
+			abilityPoints: args.abilityPoints,
+			ability: JUMP_HEIGHT_IN_ENEMY_INK_ABILITY,
+		}),
+		key: "OpInk_JumpVel",
+		weapon: args.mainWeaponParams,
+	});
+
+	return {
+		baseValue: effectToRounded(baseEffect * 10),
+		value: effectToRounded(effect * 10),
+		modifiedBy: JUMP_HEIGHT_IN_ENEMY_INK_ABILITY,
 	};
 }
 

@@ -929,6 +929,11 @@ function BuildAnalyzerPage() {
 						/>
 						<StatCard
 							context={context}
+							stat={statKeyToTuple("jumpHeightInEnemyInk")}
+							title={t("analyzer:stat.jumpHeightInEnemyInk")}
+						/>
+						<StatCard
+							context={context}
 							stat={statKeyToTuple("framesBeforeTakingDamageInEnemyInk")}
 							title={t("analyzer:stat.framesBeforeTakingDamageInEnemyInk")}
 						/>

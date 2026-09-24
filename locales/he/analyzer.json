@@ -57,6 +57,7 @@
 	"stat.swimSpeedHoldingRainmaker": "מהירות שחייה (בהחזקת Rainmaker)",
 	"stat.runSpeed": "מהירות ריצה (יחידות לפריים)",
 	"stat.runSpeedInEnemyInk": "מהירות ריצה על דיו של היריב",
+	"stat.jumpHeightInEnemyInk": "",
 	"stat.shootingRunSpeed": "מהירות ריצה בזמן יריה",
 	"stat.shootingRunSpeedCharging": "מהירות ריצה בזמן טעינה",
 	"stat.shootingRunSpeedFullCharge": "מהירות ריצה (החזקת טעינה מלאה)",
