@@ -131,10 +131,12 @@ function parseConnections(
 	const result: {
 		twitch: string | null;
 		youtubeId: string | null;
+		youtubeName: string | null;
 		bsky: string | null;
 	} = {
 		twitch: null,
 		youtubeId: null,
+		youtubeName: null,
 		bsky: null,
 	};
 
@@ -147,6 +149,7 @@ function parseConnections(
 				break;
 			case "youtube":
 				result.youtubeId = connection.id;
+				result.youtubeName = connection.name;
 				break;
 			case "bluesky":
 				result.bsky = connection.name;

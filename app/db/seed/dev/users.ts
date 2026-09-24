@@ -74,6 +74,7 @@ export async function seedUsers(): Promise<SeededUsers> {
 			discordAvatar: NZAP_TEST_AVATAR,
 			twitch: "nzap_stream",
 			youtubeId: "UCWbJLXByvsfQvTcR4HLPs5Q",
+			youtubeName: "N-ZAP Plays",
 			bsky: "nzap.bsky.social",
 			profile: {
 				country: "SE",

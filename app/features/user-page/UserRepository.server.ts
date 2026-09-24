@@ -1236,6 +1236,7 @@ export function upsert(
 		| "discordUniqueName"
 		| "twitch"
 		| "youtubeId"
+		| "youtubeName"
 		| "bsky"
 	>,
 ) {
@@ -1516,6 +1517,7 @@ export async function findSocialLinksByUserId(userId: number) {
 		.select([
 			"User.twitch",
 			"User.youtubeId",
+			"User.youtubeName",
 			"User.bsky",
 			"User.discordUniqueName",
 		])
@@ -1547,7 +1549,7 @@ export async function findSocialLinksByUserId(userId: number) {
 		links.push({
 			type: "url",
 			platform: "youtube",
-			name: null,
+			name: user.youtubeName,
 			url: youtubeUrl(user.youtubeId),
 		});
 	}

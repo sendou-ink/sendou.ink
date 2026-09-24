@@ -1006,6 +1006,7 @@ export interface User {
 	bsky: string | null;
 	vc: Generated<"YES" | "NO" | "LISTEN_ONLY">;
 	youtubeId: string | null;
+	youtubeName: string | null;
 	mapModePreferences: JSONColumnTypeNullable<UserMapModePreferences>;
 	weaponPool: JSONColumnTypeNullable<WeaponPoolEntry[]>;
 	plusSkippedForSeasonNth: number | null;

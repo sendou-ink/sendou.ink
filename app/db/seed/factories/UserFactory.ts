@@ -94,6 +94,7 @@ export const { create, createMany } = defineFactory({
 		discordAvatar: null,
 		twitch: null,
 		youtubeId: null,
+		youtubeName: null,
 		bsky: null,
 		profile: fakeProfile(),
 		friendCode: fakeFriendCode(),
@@ -176,6 +177,7 @@ export async function linkTwitch(userId: number, twitch: string | null) {
 			"discordAvatar",
 			"discordUniqueName",
 			"youtubeId",
+			"youtubeName",
 			"bsky",
 		])
 		.where("id", "=", userId)
