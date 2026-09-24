@@ -50,6 +50,7 @@
 	"stat.shotAutofireSpreadGround": "第二射击模式乱数 (地面)",
 	"stat.shotAutofireSpreadAir": "第二射击模式乱数 (跳跃)",
 	"stat.squidSurgeChargeFrames": "鱿鱼登顶蓄力时间",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "游速 (单位/帧)",
 	"stat.swimSpeedHoldingRainmaker": "游速 (持有真格鱼虎)",
 	"stat.runSpeed": "走速 (单位/帧)",

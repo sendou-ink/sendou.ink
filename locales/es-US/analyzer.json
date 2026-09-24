@@ -53,6 +53,7 @@
 	"stat.shotAutofireSpreadGround": "Modo de disparo secundario (parado)",
 	"stat.shotAutofireSpreadAir": "Modo de disparo secundario (saltando)",
 	"stat.squidSurgeChargeFrames": "Tiempo de carga para saltar desde la tinta en fotogramas",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Velocidad de nado (unidades por fotograma)",
 	"stat.swimSpeedHoldingRainmaker": "Velocidad de nado (con Pez Dorado)",
 	"stat.runSpeed": "Velocidad al correr (unidades por fotograma)",

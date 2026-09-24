@@ -52,6 +52,7 @@
 	"stat.shotAutofireSpreadGround": "Sekundær tilstands skudspredning (på jorden)",
 	"stat.shotAutofireSpreadAir": "Sekundær tilstands skudspredning (ved spring)",
 	"stat.squidSurgeChargeFrames": "Opladningstid for Murspring (Squid Surge) i billeder (frames)",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Svømmehastighed (Distanceenheder per billede)",
 	"stat.swimSpeedHoldingRainmaker": "Svømmehastighed imens man bærer Rainmakeren",
 	"stat.runSpeed": "Løbehastighed (Distanceenheder per billede)",

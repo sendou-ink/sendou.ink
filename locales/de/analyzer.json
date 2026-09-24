@@ -52,6 +52,7 @@
 	"stat.shotAutofireSpreadGround": "",
 	"stat.shotAutofireSpreadAir": "",
 	"stat.squidSurgeChargeFrames": "Wandsprung Frames für volle Aufladung",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Schwimmtempo (Einheiten per Frame)",
 	"stat.swimSpeedHoldingRainmaker": "Schwimmtempo (wenn mit Goldfischkanone)",
 	"stat.runSpeed": "Renntempo (Einheiten per Frame)",

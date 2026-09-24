@@ -52,6 +52,7 @@
 	"stat.shotAutofireSpreadGround": "",
 	"stat.shotAutofireSpreadAir": "",
 	"stat.squidSurgeChargeFrames": "Wall Boost tot volledig opgeladen in frames",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Zwemdiploma (eenheden per frame)",
 	"stat.swimSpeedHoldingRainmaker": "",
 	"stat.runSpeed": "Hardloper (eenheden per frame)",

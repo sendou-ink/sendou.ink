@@ -325,6 +325,7 @@ export interface AnalyzedBuild {
 		shotAutofireSpreadAir?: Stat;
 		shotAutofireSpreadGround?: number;
 		squidSurgeChargeFrames: Stat;
+		squidRollSpeedRetained: Stat;
 
 		subDefPointSensorMarkedTimeInSeconds: Stat;
 		subDefInkMineMarkedTimeInSeconds: Stat;

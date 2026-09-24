@@ -156,6 +156,7 @@ export function buildStats({
 			shotAutofireSpreadAir: shotAutofireSpreadAir(input),
 			shotAutofireSpreadGround: mainWeaponParams.Variable_Stand_DegSwerve,
 			squidSurgeChargeFrames: squidSurgeChargeFrames(input),
+			squidRollSpeedRetained: squidRollSpeedRetained(input),
 			subDefPointSensorMarkedTimeInSeconds:
 				subDefPointSensorMarkedTimeInSeconds(input),
 			subDefInkMineMarkedTimeInSeconds: subDefInkMineMarkedTimeInSeconds(input),
@@ -1229,6 +1230,26 @@ function squidSurgeChargeFrames(
 		baseValue: Math.ceil(baseEffect),
 		value: Math.ceil(effect),
 		modifiedBy: SQUID_SURGE_CHARGE_FRAMES_ABILITY,
+	};
+}
+
+function squidRollSpeedRetained(
+	args: StatFunctionInput,
+): AnalyzedBuild["stats"]["squidRollSpeedRetained"] {
+	const SQUID_ROLL_SPEED_RETAINED_ABILITY = "IA";
+	const { baseEffect, effect } = abilityPointsToEffects({
+		abilityPoints: apFromMap({
+			abilityPoints: args.abilityPoints,
+			ability: SQUID_ROLL_SPEED_RETAINED_ABILITY,
+		}),
+		key: "Somersault_MoveVelKd",
+		weapon: args.mainWeaponParams,
+	});
+
+	return {
+		baseValue: effectToRounded(baseEffect * 100, 1),
+		value: effectToRounded(effect * 100, 1),
+		modifiedBy: SQUID_ROLL_SPEED_RETAINED_ABILITY,
 	};
 }
 

@@ -53,6 +53,7 @@
 	"stat.shotAutofireSpreadGround": "התפשטות במצב המשני (קרקע)",
 	"stat.shotAutofireSpreadAir": "התפשטות במצב המשני (קפיצה)",
 	"stat.squidSurgeChargeFrames": "פריימים מלאים עבור Squid Surge",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "מהירות שחייה (יחידות לפריים)",
 	"stat.swimSpeedHoldingRainmaker": "מהירות שחייה (בהחזקת Rainmaker)",
 	"stat.runSpeed": "מהירות ריצה (יחידות לפריים)",

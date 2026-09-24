@@ -52,6 +52,7 @@
 	"stat.shotAutofireSpreadGround": "Secondary mode spread (ground)",
 	"stat.shotAutofireSpreadAir": "Secondary mode spread (jumping)",
 	"stat.squidSurgeChargeFrames": "Squid Surge charge to full frames",
+	"stat.squidRollSpeedRetained": "Squid Roll speed kept (consecutive rolls)",
 	"stat.swimSpeed": "Swim speed (units per frame)",
 	"stat.swimSpeedHoldingRainmaker": "Swim speed (holding Rainmaker)",
 	"stat.runSpeed": "Run speed (units per frame)",

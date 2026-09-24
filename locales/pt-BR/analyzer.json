@@ -53,6 +53,7 @@
 	"stat.shotAutofireSpreadGround": "Propagação do modo secundário (no chão)",
 	"stat.shotAutofireSpreadAir": "Propagação do modo secundário (pulando)",
 	"stat.squidSurgeChargeFrames": "Quadros para carregar o Squid Surge completamente",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Velocidade de nado (unidades por quadro)",
 	"stat.swimSpeedHoldingRainmaker": "Velocidade de nado (segurando o Rainmaker)",
 	"stat.runSpeed": "Velocidade de corrida (unidades por quadro)",

@@ -50,6 +50,7 @@
 	"stat.shotAutofireSpreadGround": "보조 모드 탄퍼짐 (지상)",
 	"stat.shotAutofireSpreadAir": "보조 모드 탄퍼짐 (점프)",
 	"stat.squidSurgeChargeFrames": "징어클라임 완전 충전 프레임",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "징어대시 (프레임 당 거리)",
 	"stat.swimSpeedHoldingRainmaker": "징어대시 (랭크 피쉬)",
 	"stat.runSpeed": "인간 이동 속도 (프레임 당 거리)",

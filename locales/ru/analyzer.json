@@ -54,6 +54,7 @@
 	"stat.shotAutofireSpreadGround": "Разброс выстрелов вторичного режима (на земле)",
 	"stat.shotAutofireSpreadAir": "Разброс выстрелов вторичного режима (в прыжке)",
 	"stat.squidSurgeChargeFrames": "Заряд Кальмарного Рывка (в кадрах)",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Скорость плавания (единицы расстояния за кадр)",
 	"stat.swimSpeedHoldingRainmaker": "Скорость плавания (с Мегакарпом)",
 	"stat.runSpeed": "Скорость бега (единицы расстояния за кадр)",

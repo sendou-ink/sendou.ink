@@ -54,6 +54,7 @@
 	"stat.shotAutofireSpreadGround": "",
 	"stat.shotAutofireSpreadAir": "",
 	"stat.squidSurgeChargeFrames": "Czas naładowania Squid Surge'u w klatkach",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Prędkość pływania (jednostka na klatkę)",
 	"stat.swimSpeedHoldingRainmaker": "Prędkość pływania (trzymając Rainmaker)",
 	"stat.runSpeed": "Prędkość biegania (jednostka na klatkę)",

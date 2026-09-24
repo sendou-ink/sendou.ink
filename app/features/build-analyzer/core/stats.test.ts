@@ -229,6 +229,17 @@ describe("Analyze build", () => {
 		expect(analyzed.stats.jumpHeightInEnemyInk.value).toBe(1.1);
 	});
 
+	test("IA removes the speed loss of consecutive Squid Rolls", () => {
+		const analyzed = buildStats({
+			weaponSplId: 40,
+			abilityPoints: new Map([["IA", 57]]),
+			hasTacticooler: false,
+		});
+
+		expect(analyzed.stats.squidRollSpeedRetained.baseValue).toBe(85);
+		expect(analyzed.stats.squidRollSpeedRetained.value).toBe(100);
+	});
+
 	test("Accounts for Jr. big ink tank with main weapon ink consumption %", () => {
 		const analyzedJr = buildStats({
 			weaponSplId: 10,

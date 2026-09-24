@@ -50,6 +50,7 @@
 	"stat.shotAutofireSpreadGround": "長押し時のブレの角度(立ち撃ち)",
 	"stat.shotAutofireSpreadAir": "長押し時のブレの角度 (ジャンプ撃ち)",
 	"stat.squidSurgeChargeFrames": "イカノボリのチャージ完了までのフレーム数",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "イカ速 (DU/F)",
 	"stat.swimSpeedHoldingRainmaker": "イカ速 (ホコ持ち状態)",
 	"stat.runSpeed": "ヒト速 (DU/F)",

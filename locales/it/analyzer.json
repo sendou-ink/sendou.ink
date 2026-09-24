@@ -53,6 +53,7 @@
 	"stat.shotAutofireSpreadGround": "Diffusione a caso proiettili modalità secondaria (ground)",
 	"stat.shotAutofireSpreadAir": "Diffusione a caso proiettili modalità secondaria (saltando)",
 	"stat.squidSurgeChargeFrames": "Tempo carica avvitotano",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Velocità nuoto (unità per fotogrammo)",
 	"stat.swimSpeedHoldingRainmaker": "Velocità nuoto (tenendo il bazookarp)",
 	"stat.runSpeed": "Velocità movimento (unità per fotogrammo)",

@@ -53,6 +53,7 @@
 	"stat.shotAutofireSpreadGround": "Degrés de dispersion mode auto (sol)",
 	"stat.shotAutofireSpreadAir": "Degrés de dispersion mode auto (saut)",
 	"stat.squidSurgeChargeFrames": "Temps de charge de la déferlante (en frames)",
+	"stat.squidRollSpeedRetained": "",
 	"stat.swimSpeed": "Vitesse de nage (unités/frames)",
 	"stat.swimSpeedHoldingRainmaker": "Vitesse de nage (Bazookarpe)",
 	"stat.runSpeed": "Vitesse de course (unités/frames)",

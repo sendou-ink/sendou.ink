@@ -924,6 +924,12 @@ function BuildAnalyzerPage() {
 						/>
 						<StatCard
 							context={context}
+							stat={statKeyToTuple("squidRollSpeedRetained")}
+							title={t("analyzer:stat.squidRollSpeedRetained")}
+							suffix="%"
+						/>
+						<StatCard
+							context={context}
 							stat={statKeyToTuple("runSpeedInEnemyInk")}
 							title={t("analyzer:stat.runSpeedInEnemyInk")}
 						/>
