@@ -141,6 +141,7 @@
 	"damage.WAVE": "Wave",
 	"damage.SPECIAL_MAX_CHARGE": "Maximum charge",
 	"damage.SPECIAL_MIN_CHARGE": "Minimum charge",
+	"damage.SPECIAL_INHALE": "Suction (Per frame)",
 	"damage.SPECIAL_THROW_DIRECT": "Throw (Direct)",
 	"damage.SPECIAL_THROW": "Throw",
 	"damage.SPECIAL_SWING": "Swing",

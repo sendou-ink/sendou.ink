@@ -177,6 +177,7 @@ export type SpecialWeaponParams = SpecialWeaponParamsObject[SpecialWeaponId] & {
 	WaveDamage?: number;
 	ExhaleBlastParamMaxChargeDistanceDamage?: Array<DistanceDamage>;
 	ExhaleBlastParamMinChargeDistanceDamage?: Array<DistanceDamage>;
+	InhaleDamage?: number;
 	SwingDamage?: Array<DistanceDamage>;
 	ThrowDamage?: Array<DistanceDamage>;
 	ThrowDirectDamage?: number;

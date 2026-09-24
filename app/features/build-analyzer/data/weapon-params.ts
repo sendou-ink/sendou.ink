@@ -2468,6 +2468,7 @@ export const weaponParams = {
 					Distance: 11,
 				},
 			],
+			InhaleDamage: 20,
 		},
 		"9": {
 			overwrites: {

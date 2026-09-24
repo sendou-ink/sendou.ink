@@ -969,6 +969,7 @@ function parametersToSpecialWeaponResult(params: any) {
 			params.ExhaleBlastParamMinCharge?.DistanceDamage,
 		ExhaleBlastParamMaxChargeDistanceDamage:
 			params.ExhaleBlastParamMaxCharge?.DistanceDamage,
+		InhaleDamage: params.InhaleParam?.DamagePerFrameByObject,
 		SwingDamage: SwingDamage(),
 		ThrowDamage: ThrowDamage(),
 		ThrowDirectDamage: params.ThrowMoveParam?.DirectDamageValue,

@@ -143,6 +143,7 @@
 	"damage.WAVE": "Onda",
 	"damage.SPECIAL_MAX_CHARGE": "Carica massima",
 	"damage.SPECIAL_MIN_CHARGE": "Carica minima",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "Lancio (Direct)",
 	"damage.SPECIAL_THROW": "Lancio",
 	"damage.SPECIAL_SWING": "Colpo",

@@ -145,6 +145,7 @@
 	"damage.WAVE": "Волна",
 	"damage.SPECIAL_MAX_CHARGE": "Максимальный заряд",
 	"damage.SPECIAL_MIN_CHARGE": "Минимальный заряд",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "Бросок (Прямое попадание)",
 	"damage.SPECIAL_THROW": "Бросок",
 	"damage.SPECIAL_SWING": "Взмах",

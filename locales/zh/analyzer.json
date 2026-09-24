@@ -138,6 +138,7 @@
 	"damage.WAVE": "声波",
 	"damage.SPECIAL_MAX_CHARGE": "最大蓄力",
 	"damage.SPECIAL_MIN_CHARGE": "最小蓄力",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "投掷 (直击)",
 	"damage.SPECIAL_THROW": "投掷",
 	"damage.SPECIAL_SWING": "挥动",

@@ -143,6 +143,7 @@
 	"damage.WAVE": "Onde",
 	"damage.SPECIAL_MAX_CHARGE": "Charge maximum",
 	"damage.SPECIAL_MIN_CHARGE": "Charge minimum",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "Lancé (direct)",
 	"damage.SPECIAL_THROW": "Lancé",
 	"damage.SPECIAL_SWING": "Tamponnage",

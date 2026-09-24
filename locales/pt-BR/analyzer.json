@@ -143,6 +143,7 @@
 	"damage.WAVE": "Onda",
 	"damage.SPECIAL_MAX_CHARGE": "Carga máxima",
 	"damage.SPECIAL_MIN_CHARGE": "Carga mínima",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "Lançamento (Direto)",
 	"damage.SPECIAL_THROW": "Lançamento",
 	"damage.SPECIAL_SWING": "Martelada",

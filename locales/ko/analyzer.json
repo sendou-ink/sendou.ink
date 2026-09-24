@@ -137,6 +137,7 @@
 	"damage.WAVE": "파동",
 	"damage.SPECIAL_MAX_CHARGE": "최대 충전",
 	"damage.SPECIAL_MIN_CHARGE": "최소 충전",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "던지기 (직격)",
 	"damage.SPECIAL_THROW": "던지기",
 	"damage.SPECIAL_SWING": "휘두르기",

@@ -137,6 +137,7 @@
 	"damage.WAVE": "衝撃波",
 	"damage.SPECIAL_MAX_CHARGE": "最大吸引時",
 	"damage.SPECIAL_MIN_CHARGE": "最小吸引時",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "投げ (直撃)",
 	"damage.SPECIAL_THROW": "投げ",
 	"damage.SPECIAL_SWING": "連続攻撃",

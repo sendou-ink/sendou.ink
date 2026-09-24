@@ -141,6 +141,7 @@
 	"damage.WAVE": "Bølge",
 	"damage.SPECIAL_MAX_CHARGE": "Ved højeste opladning",
 	"damage.SPECIAL_MIN_CHARGE": "Ved mindste opladning",
+	"damage.SPECIAL_INHALE": "",
 	"damage.SPECIAL_THROW_DIRECT": "Kast (Ved fuldtræffer)",
 	"damage.SPECIAL_THROW": "Kast",
 	"damage.SPECIAL_SWING": "Sving",
