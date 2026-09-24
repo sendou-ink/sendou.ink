@@ -10,7 +10,7 @@ import { useTopLayerViewTransitionStyle } from "~/utils/view-transition";
 import {
 	focusLeftTo,
 	isOwnToggle,
-	usePopoverTargetOnceHydrated,
+	usePopoverTriggerPropsOnceHydrated,
 	useShowPopoverOnOpen,
 } from "./Popover";
 import styles from "./Select.module.css";
@@ -146,7 +146,7 @@ export function SendouSelect<T extends object>({
 	const uid = React.useId();
 	const topLayerStyle = useTopLayerViewTransitionStyle();
 	const popoverId = `${uid}-select-popover`;
-	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
+	const popoverTriggerProps = usePopoverTriggerPropsOnceHydrated(popoverId);
 	const listboxId = `${uid}-select-listbox`;
 	const labelId = label ? `${uid}-select-label` : undefined;
 	const valueId = `${uid}-select-value`;
@@ -536,7 +536,7 @@ export function SendouSelect<T extends object>({
 						: undefined
 				}
 				data-required={isRequired || undefined}
-				popoverTarget={popoverTarget}
+				{...popoverTriggerProps}
 				onKeyDown={onTriggerKeyDown}
 			>
 				<span

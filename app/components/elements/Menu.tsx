@@ -12,7 +12,7 @@ import styles from "./Menu.module.css";
 import {
 	focusLeftTo,
 	isOwnToggle,
-	usePopoverTargetOnceHydrated,
+	usePopoverTriggerPropsOnceHydrated,
 	useShowPopoverOnOpen,
 } from "./Popover";
 import { useFloatingLayer } from "./useFloatingLayer";
@@ -44,7 +44,7 @@ export function SendouMenu({
 	eager,
 }: SendouMenuProps) {
 	const popoverId = `${React.useId()}-menu`;
-	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
+	const popoverTriggerProps = usePopoverTriggerPropsOnceHydrated(popoverId);
 	const topLayerStyle = useTopLayerViewTransitionStyle();
 
 	const [open, setOpen] = React.useState(false);
@@ -114,7 +114,7 @@ export function SendouMenu({
 				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
-					popoverTarget,
+					...popoverTriggerProps,
 					"aria-expanded": open,
 					"aria-haspopup": "menu",
 				})}

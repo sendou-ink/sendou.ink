@@ -19,8 +19,13 @@ export function isOwnToggle(event: React.ToggleEvent<HTMLElement>) {
 	return event.target === event.currentTarget;
 }
 
-export function usePopoverTargetOnceHydrated(popoverId: string) {
-	return useHydrated() ? popoverId : undefined;
+/**
+ * Props making the trigger open the popover natively once hydrated. `form=""`
+ * detaches the trigger from a surrounding form, as Safari before 18.2 ignores
+ * `popovertarget` on a button that has a form owner.
+ */
+export function usePopoverTriggerPropsOnceHydrated(popoverId: string) {
+	return useHydrated() ? { popoverTarget: popoverId, form: "" } : {};
 }
 
 /**
@@ -106,7 +111,7 @@ export function SendouPopover({
 	eager?: boolean;
 }) {
 	const popoverId = `${React.useId()}-popover`;
-	const popoverTarget = usePopoverTargetOnceHydrated(popoverId);
+	const popoverTriggerProps = usePopoverTriggerPropsOnceHydrated(popoverId);
 
 	const [isControlled] = React.useState(isOpen !== undefined);
 	const [uncontrolledOpen, setUncontrolledOpen] = React.useState(false);
@@ -190,7 +195,7 @@ export function SendouPopover({
 				onBlur={onBlur}
 			>
 				{React.cloneElement(trigger, {
-					popoverTarget,
+					...popoverTriggerProps,
 					"aria-haspopup": "dialog",
 				})}
 			</span>
