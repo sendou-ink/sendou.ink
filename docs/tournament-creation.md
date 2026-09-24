@@ -111,6 +111,10 @@ All teams added by the tournament organizer manually. No open registration and n
 
 Test tournaments are for dry-run testing. They don't appear on the calendar, don't send notifications to players, and won't show up in players' profiles or results. Test mode cannot be changed after creation and the tournament will never become a real tournament. The toggle is only available when creating a new tournament, not when editing.
 
+### League
+
+Makes the tournament a league: an event played over weeks where every starting bracket is a division and the teams schedule their sets themselves. See [Leagues](#leagues) below. League tournaments get the League tag on the calendar automatically.
+
 ### Draft
 
 Draft mode hides the tournament from the calendar and front page. Only organizers can see and access it. This is useful for preparing a tournament privately before making it visible to participants.
@@ -198,7 +202,7 @@ Placements are relative in the sense that the amount of teams that sign up don't
 
 ### Start time
 
-Whether to start the bracket right after the previous one concludes or at some other time. This can be useful for two day tournaments. Note that it's not really meant to organize an event that spans many weeks (organization page features can be used instead). Only available for brackets that take their teams from another bracket.
+Whether to start the bracket right after the previous one concludes or at some other time. This can be useful for two day tournaments. Note that it's not really meant to organize an event that spans many weeks, use a [league](#leagues) for that instead. Only available for brackets that take their teams from another bracket.
 
 ### Check-in required
 
@@ -220,3 +224,49 @@ Current limitations. Feel free to leave feedback if it's blocking you from runni
 - The highest placement that can be used is 100.
 - A/B divisions are only available on starting round robin brackets.
 - The final bracket can't be a Swiss bracket with more than one group.
+
+## Leagues
+
+A league is a tournament played over weeks instead of a single day/weekend. It is enabled with the League toggle when creating the tournament.
+
+### Divisions
+
+Every starting bracket (bracket that takes its teams from the sign-up) is a division. Teams are placed into divisions on the seeding page like with any tournament that has many starting brackets. A division can continue to other brackets (e.g. a round robin followed by playoffs) and teams from different divisions never meet.
+
+When there is more than one division the tournament gets a Divisions tab listing them and the brackets are viewed one division at a time.
+
+### Registration
+
+- There is no check-in, registration simply closes at the tournament's start time
+- After registration has closed teams can't unregister on their own, the organizers handle it
+
+### Starting a division's bracket
+
+When starting a bracket the organizer picks a "Playable from" date for each round next to its maps. A round can't be playable before the round preceding it. The date is a calendar day that starts in the earliest time zone (UTC+14), so the round is playable everywhere once that day has begun there. A round without a date is playable right away.
+
+Alternatively the bracket can be started with "Play in real time" on. Then its sets are played right away like in a regular tournament and the teams don't schedule them. This is useful for example for top 4 playoffs played on one day after a scheduled round robin.
+
+### Scheduling sets
+
+Every set of a scheduled bracket has a Schedule tab on its match page, visible to both teams, the organizers and the streamers.
+
+1) Scheduling opens a day before the round becomes playable (right away if the round has no playable date).
+2) Either team proposes up to 6 times they could play. The tab shows when their own roster is free based on the teammates' availability.
+3) The other team picks one of the proposed times, or answers with times of their own.
+4) Once a time is agreed the set can be played from the moment its round is playable. Teams are free to play before the agreed time if both are ready.
+
+After agreeing either team can propose new times to reschedule. The other team doesn't have to agree.
+
+Organizers can pick a proposed time on behalf of the teams or set the time themselves from the admin tab of the match page. A time set by the organizer is final, teams can't propose other times after it.
+
+Notifications are sent when times are proposed to your team, when a set gets its time and when a set is starting soon (an hour before the agreed time). Events related to scheduling also appear in the match chat.
+
+### Matches page
+
+Once the league has started it has a Matches tab listing the sets of a division (the viewer's own division by default, or all divisions) split into scheduled, unscheduled and past sets. Sets marked for cast by the organizer get a Cast badge and sets currently streamed by a team member a Live badge.
+
+### Elsewhere on the site
+
+- Scheduled sets are shown in the sidebar's events
+- A scheduled set marks its players as busy in their availability for an hour from the agreed time
+- A set streamed by a team member or marked for cast shows up among the sidebar's streams around its agreed time
