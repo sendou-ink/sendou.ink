@@ -16,9 +16,11 @@ import {
 	unionRoi,
 } from "../../canonical";
 import { getCV, type Mat } from "../../cv";
-import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
+import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
 	cropRoi,
+	frameGray,
+	frameRgb,
 	maxBrightness,
 	maxChannel,
 	meanBrightness,
@@ -26,15 +28,16 @@ import {
 	warpPerspective,
 } from "../../image";
 import { RESULT_TAG_ENTRIES } from "../../localized";
+import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { homographyFromQuad, type PerspectiveQuad } from "../../rectify";
 import { closestBy } from "../../text";
 import {
 	type BannerScoreRead,
 	FULL_COUNT_TEAM_SCORE,
-	parseBannerScore,
+	parseBannerScoreSteps,
 	resolveMatchScores,
 } from "../scoreboard/banner";
-import { type ParsedNumber, parseNumber } from "../scoreboard/digits";
+import { type ParsedNumber, parseNumberSteps } from "../scoreboard/digits";
 import type {
 	ScoreboardData,
 	ScoreboardPlayer,
@@ -42,11 +45,8 @@ import type {
 	ScoreboardRowDebug,
 } from "../scoreboard/index";
 import { findPovIndex } from "../scoreboard/pov";
-import { parseScoreboardRow, type RowRois } from "../scoreboard/row";
-import {
-	type ParsedReplayHeader,
-	parseReplayHeader,
-} from "../scoreboard-battle-log-replay/header";
+import { parseScoreboardRowSteps, type RowRois } from "../scoreboard/row";
+import { parseReplayHeaderSteps } from "../scoreboard-battle-log-replay/header";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 
 export interface ScoreboardBattleLogData extends ScoreboardData {
@@ -188,13 +188,27 @@ export function createBattleLogDetector(
 
 	/**
 	 * `frame` as the ROIs see it: itself for a flat layout, else `region` of it
-	 * rectified into a region-sized mat, `local` shifting a ROI into it.
+	 * rectified into a region-sized mat, `local` shifting a ROI into it. Its
+	 * gray/RGB conversions (the frame's shared ones when flat) live until release.
 	 */
 	function rectifiedView(frame: Mat, region: Roi) {
 		if (!homography) {
-			return { mat: frame, local: (roi: Roi) => roi, release: () => {} };
+			return {
+				mat: frame,
+				local: (roi: Roi) => roi,
+				gray: () => frameGray(frame),
+				rgb: () => frameRgb(frame),
+				release: () => {},
+			};
 		}
 		const mat = warpPerspective(frame, homography, region);
+		const converted: Mat[] = [];
+		const convert = (code: number) => {
+			const out = new cv.Mat();
+			cv.cvtColor(mat, out, code);
+			converted.push(out);
+			return out;
+		};
 		return {
 			mat,
 			local: (roi: Roi): Roi => ({
@@ -202,19 +216,18 @@ export function createBattleLogDetector(
 				x: roi.x - region.x,
 				y: roi.y - region.y,
 			}),
-			release: () => mat.delete(),
+			gray: () => convert(cv.COLOR_RGBA2GRAY),
+			rgb: () => convert(cv.COLOR_RGBA2RGB),
+			release: () => {
+				mat.delete();
+				for (const out of converted) out.delete();
+			},
 		};
-	}
-
-	function toGray(rgba: Mat): Mat {
-		const gray = new cv.Mat();
-		cv.cvtColor(rgba, gray, cv.COLOR_RGBA2GRAY);
-		return gray;
 	}
 
 	function gate(frame: Mat): GateResult {
 		const probes = rectifiedView(frame, gateRegion);
-		const gray = toGray(probes.mat);
+		const gray = probes.gray();
 
 		let darkOk = 0;
 		let suffixOk = 0;
@@ -257,14 +270,11 @@ export function createBattleLogDetector(
 		let signature: number[] | undefined;
 		if (pass && homography) {
 			const flat = rectifiedView(frame, FULL_FRAME);
-			const flatGray = toGray(flat.mat);
-			signature = contentSignature(flatGray);
-			flatGray.delete();
+			signature = contentSignature(flat.gray());
 			flat.release();
 		} else if (pass) {
 			signature = contentSignature(gray);
 		}
-		gray.delete();
 		probes.release();
 		return { pass, score, signature };
 	}
@@ -279,11 +289,13 @@ export function createBattleLogDetector(
 		return signature;
 	}
 
-	function parsePanel(gray: Mat, rgb: Mat, panel: PanelIndex): PanelParse {
-		const players: ScoreboardPlayer[] = [];
-		const rows: ScoreboardRowDebug[] = [];
-		const confidences: number[] = [];
-
+	/** One panel's rows, team total and result tag, all read in one lockstep. */
+	function* parsePanelSteps(
+		gray: Mat,
+		rgb: Mat,
+		panel: PanelIndex,
+		speculative: boolean,
+	): MatchSteps<PanelParse> {
 		const rowRois: RowRois = {
 			weapon: rois.weaponRoi,
 			specialIcon: rois.specialIconRoi,
@@ -293,43 +305,60 @@ export function createBattleLogDetector(
 			povArrow: rois.povArrowRoi,
 		};
 		const dy = rois.PANEL_DYS[panel];
-		for (const base of rois.ROW_CENTERS) {
-			const row = parseScoreboardRow(
-				gray,
-				rgb,
-				base + dy,
-				rowRois,
-				resources,
-				confidences,
-			);
-			players.push(row.player);
-			rows.push(row.debug);
-		}
-
 		// the point total is read only to recognize a knockout (only a knockout's
 		// full count reaches 500); never emitted as a score
-		let teamScore: ParsedNumber | null = null;
-		if (teamDigits) {
-			const crop = cropRoi(gray, rois.teamScoreRoi(panel));
-			teamScore = parseNumber(crop, teamDigits, {
-				binThreshold: TEAM_SCORE_BIN_THRESHOLD,
-			});
-			crop.delete();
-			confidences.push(teamScore.confidence);
-		}
+		const teamCrop = teamDigits
+			? cropRoi(gray, rois.teamScoreRoi(panel))
+			: null;
+		const bright = resultGlyphs
+			? maxChannel(rgb, rois.resultTagRoi(panel))
+			: null;
+		const [rowReads, teamScore, resultRaw] = yield* all([
+			all(
+				rois.ROW_CENTERS.map((base) =>
+					parseScoreboardRowSteps(
+						gray,
+						rgb,
+						base + dy,
+						rowRois,
+						resources,
+						{},
+						speculative,
+					),
+				),
+			),
+			teamDigits && teamCrop
+				? parseNumberSteps(
+						teamCrop,
+						teamDigits,
+						{ binThreshold: TEAM_SCORE_BIN_THRESHOLD },
+						speculative,
+					)
+				: done(null),
+			resultGlyphs && bright
+				? recognizeTextSteps(
+						bright,
+						resultGlyphs,
+						{
+							binThreshold: RESULT_TAG_BIN_THRESHOLD,
+							spaceGap: Number.POSITIVE_INFINITY,
+							minCharScore: 0.25,
+						},
+						speculative,
+					)
+				: done(null),
+		]);
+		teamCrop?.delete();
+		bright?.delete();
+
+		const confidences = rowReads.flatMap((row) => row.confidences);
+		if (teamScore) confidences.push(teamScore.confidence);
 
 		let result: PanelParse["result"] = null;
 		let resultReading = "";
 		let resultScore = 0;
-		if (resultGlyphs) {
-			const bright = maxChannel(rgb, rois.resultTagRoi(panel));
-			const raw = recognizeText(bright, resultGlyphs, {
-				binThreshold: RESULT_TAG_BIN_THRESHOLD,
-				spaceGap: Number.POSITIVE_INFINITY,
-				minCharScore: 0.25,
-			});
-			bright.delete();
-			resultReading = raw.text;
+		if (resultRaw) {
+			resultReading = resultRaw.text;
 			if (resultReading) {
 				const match = closestBy(
 					resultReading,
@@ -345,8 +374,8 @@ export function createBattleLogDetector(
 		}
 
 		return {
-			players,
-			rows,
+			players: rowReads.map((row) => row.player),
+			rows: rowReads.map((row) => row.debug),
 			teamScore,
 			result,
 			resultReading,
@@ -355,25 +384,52 @@ export function createBattleLogDetector(
 		};
 	}
 
-	function parse(
+	function* parseSteps(
 		frame: Mat,
 		t: number,
-	): DetectedEvent<ScoreboardBattleLogData>[] {
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<ScoreboardBattleLogData>[]> {
 		const flat = rectifiedView(frame, FULL_FRAME);
-		const gray = toGray(flat.mat);
-		const rgb = new cv.Mat();
-		cv.cvtColor(flat.mat, rgb, cv.COLOR_RGBA2RGB);
-		flat.release();
+		const gray = flat.gray();
+		const rgb = flat.rgb();
 
-		const top = parsePanel(gray, rgb, 0);
-		const bottom = parsePanel(gray, rgb, 1);
-
-		let left: BannerScoreRead | null = null;
-		let right: BannerScoreRead | null = null;
-		if (matchScoreSets.length > 0) {
-			left = parseBannerScore(gray, rois.MATCH_SCORE_ROIS[0], matchScoreSets);
-			right = parseBannerScore(gray, rois.MATCH_SCORE_ROIS[1], matchScoreSets);
-		}
+		const [top, bottom, banners, header] = yield* all([
+			parsePanelSteps(gray, rgb, 0, speculative),
+			parsePanelSteps(gray, rgb, 1, speculative),
+			matchScoreSets.length > 0
+				? all([
+						parseBannerScoreSteps(
+							gray,
+							rois.MATCH_SCORE_ROIS[0],
+							matchScoreSets,
+							speculative,
+						),
+						parseBannerScoreSteps(
+							gray,
+							rois.MATCH_SCORE_ROIS[1],
+							matchScoreSets,
+							speculative,
+						),
+					])
+				: done(null),
+			headerTopGlyphs && headerBottomGlyphs
+				? parseReplayHeaderSteps(
+						gray,
+						headerTopGlyphs,
+						headerBottomGlyphs,
+						{
+							top: rois.HEADER_TOP_BAND,
+							bottom: rois.HEADER_BOTTOM_BAND,
+							tagLeadInMax: rois.HEADER_TAG_LEAD_IN_MAX,
+							tagColumnFraction: rois.HEADER_TAG_COLUMN_FRACTION,
+						},
+						speculative,
+					)
+				: done(null),
+		]);
+		const [left, right]: [BannerScoreRead | null, BannerScoreRead | null] =
+			banners ?? [null, null];
 
 		const swapped = decideSwapped(top, bottom, left, right);
 		const [winner, loser] = swapped ? [bottom, top] : [top, bottom];
@@ -391,18 +447,7 @@ export function createBattleLogDetector(
 			bannerDebug = { left, right, knockout };
 		}
 
-		let header: ParsedReplayHeader | null = null;
-		if (headerTopGlyphs && headerBottomGlyphs) {
-			header = parseReplayHeader(gray, headerTopGlyphs, headerBottomGlyphs, {
-				top: rois.HEADER_TOP_BAND,
-				bottom: rois.HEADER_BOTTOM_BAND,
-				tagLeadInMax: rois.HEADER_TAG_LEAD_IN_MAX,
-				tagColumnFraction: rois.HEADER_TAG_COLUMN_FRACTION,
-			});
-		}
-
-		gray.delete();
-		rgb.delete();
+		flat.release();
 
 		const confidences = [
 			...winner.confidences,
@@ -460,7 +505,9 @@ export function createBattleLogDetector(
 		id: layout.id,
 		sufficientConfidence: 0.8,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
 }
 

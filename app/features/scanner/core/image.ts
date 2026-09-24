@@ -56,6 +56,58 @@ export function normalizeFrame(src: Mat): Mat {
 	return dst;
 }
 
+let conversions: { frame: Mat; gray?: Mat; rgb?: Mat; hsv?: Mat } | null = null;
+
+function conversionsOf(frame: Mat) {
+	if (conversions?.frame !== frame) {
+		conversions?.gray?.delete();
+		conversions?.rgb?.delete();
+		conversions?.hsv?.delete();
+		conversions = { frame };
+	}
+	return conversions;
+}
+
+/**
+ * Grayscale of a canonical frame, shared by every gate and parse that reads
+ * the frame: the first caller converts, the rest reuse the mat until a
+ * different frame is converted. Read-only; never delete it. Pass only the
+ * frame the detectors receive, never a derived mat (that would release the
+ * frame's conversions while a parse still reads them).
+ */
+export function frameGray(frame: Mat): Mat {
+	const cached = conversionsOf(frame);
+	if (!cached.gray) {
+		const cv = getCV();
+		cached.gray = new cv.Mat();
+		cv.cvtColor(frame, cached.gray, cv.COLOR_RGBA2GRAY);
+	}
+	return cached.gray;
+}
+
+/** RGB of a canonical frame, shared like frameGray. */
+export function frameRgb(frame: Mat): Mat {
+	const cached = conversionsOf(frame);
+	if (!cached.rgb) {
+		const cv = getCV();
+		cached.rgb = new cv.Mat();
+		cv.cvtColor(frame, cached.rgb, cv.COLOR_RGBA2RGB);
+	}
+	return cached.rgb;
+}
+
+/** HSV (from frameRgb) of a canonical frame, shared like frameGray. */
+export function frameHsv(frame: Mat): Mat {
+	const rgb = frameRgb(frame);
+	const cached = conversionsOf(frame);
+	if (!cached.hsv) {
+		const cv = getCV();
+		cached.hsv = new cv.Mat();
+		cv.cvtColor(rgb, cached.hsv, cv.COLOR_RGB2HSV);
+	}
+	return cached.hsv;
+}
+
 /**
  * Crops a rect out of a mat as a view: fine as *input* to OpenCV calls but
  * NEVER read `.data` off it — this opencv.js build mishandles `.data` and

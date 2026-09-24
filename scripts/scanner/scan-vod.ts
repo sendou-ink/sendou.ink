@@ -8,8 +8,13 @@
  *
  * Requires ffmpeg (and ffprobe for the progress percentage) on PATH.
  *
- * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry]
+ * Usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]
  * --telemetry prints the VoD tab's ?telemetry=true scan counters after the run.
+ * --gpu matches templates on WebGPU (worker/gpu-matcher.ts) like the browser's
+ *   GPU path; needs Dawn (node/webgpu.ts: WEBGPU_NODE). The CSV must stay
+ *   byte-identical to a CPU scan's.
+ * --record writes every template-match request as a replay corpus for
+ *   `pnpm scanner:gpu-replay` (match-corpus.ts).
  */
 import { spawn } from "node:child_process";
 import { writeFileSync } from "node:fs";
@@ -19,19 +24,21 @@ import {
 	eventsToCsv,
 } from "../../app/features/scanner/core/csv/events";
 import { loadOpenCV } from "../../app/features/scanner/core/cv";
+import { runDetectorPass } from "../../app/features/scanner/core/detectors/frame-pass";
 import { MAP_START_EVENT_TYPE } from "../../app/features/scanner/core/detectors/map-start/index";
 import {
 	createAllDetectors,
 	SCOREBOARD_EVENT_TYPES,
 } from "../../app/features/scanner/core/detectors/registry";
 import { DetectorScheduler } from "../../app/features/scanner/core/detectors/scheduler";
-import {
-	createScanTelemetry,
-	detectorTelemetry,
-} from "../../app/features/scanner/core/detectors/telemetry";
+import { createScanTelemetry } from "../../app/features/scanner/core/detectors/telemetry";
 import { normalizeFrame, toMat } from "../../app/features/scanner/core/image";
+import { runSync } from "../../app/features/scanner/core/match-steps";
 import { TimelineBuilder } from "../../app/features/scanner/core/timeline/index";
 import { loadScoreboardResources } from "../../app/features/scanner/node/resources";
+import { nodeGpu } from "../../app/features/scanner/node/webgpu";
+import { createGpuMatcher } from "../../app/features/scanner/worker/gpu-matcher";
+import { recordingRunner } from "./match-corpus";
 
 const FRAME_WIDTH = 1920;
 const FRAME_HEIGHT = 1080;
@@ -43,13 +50,30 @@ const PROGRESS_INTERVAL_SECONDS = 60;
 const options = parseArgs(process.argv.slice(2));
 if (!options) {
 	console.error(
-		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry]",
+		"usage: pnpm scanner:scan-vod <video> [--fps 8] [--start T] [--duration S] [--out file.csv] [--telemetry] [--gpu] [--record dir]",
 	);
 	process.exit(1);
 }
-const { videoPath, fps, start, duration, outPath, collectTelemetry } = options;
+const {
+	videoPath,
+	fps,
+	start,
+	duration,
+	outPath,
+	collectTelemetry,
+	gpu,
+	recordDir,
+} = options;
 
 await loadOpenCV();
+const matcher = gpu ? await createGpuMatcher(nodeGpu()) : null;
+const recorder = recordDir
+	? recordingRunner(
+			matcher?.run ?? (async (steps) => runSync(steps)),
+			recordDir,
+		)
+	: null;
+const runSteps = recorder?.run ?? matcher?.run;
 const detectors = createAllDetectors(await loadScoreboardResources());
 const scheduler = new DetectorScheduler(detectors, {
 	matchOpeningTypes: [MAP_START_EVENT_TYPE],
@@ -58,6 +82,8 @@ const scheduler = new DetectorScheduler(detectors, {
 scheduler.reset(start);
 const timeline = new TimelineBuilder();
 const telemetry = collectTelemetry ? createScanTelemetry() : null;
+/** per detector: the whole frame pass's latency on each frame it parsed */
+const passLatencies = new Map<string, number[]>();
 
 const totalSeconds = await probeDurationSeconds(videoPath);
 const scanEnd =
@@ -104,7 +130,7 @@ for await (const chunk of ffmpeg.stdout) {
 		offset += take;
 		if (frameFill < FRAME_BYTES) continue;
 		frameFill = 0;
-		processFrame(start + frameIndex / fps);
+		await processFrame(start + frameIndex / fps);
 		frameIndex++;
 	}
 }
@@ -127,6 +153,8 @@ function parseArgs(argv: string[]): {
 	duration: number | undefined;
 	outPath: string;
 	collectTelemetry: boolean;
+	gpu: boolean;
+	recordDir: string | undefined;
 } | null {
 	let parsedVideoPath: string | undefined;
 	let parsedFps = DEFAULT_FPS;
@@ -134,6 +162,8 @@ function parseArgs(argv: string[]): {
 	let parsedDuration: number | undefined;
 	let parsedOutPath: string | undefined;
 	let parsedCollectTelemetry = false;
+	let parsedGpu = false;
+	let parsedRecordDir: string | undefined;
 	// biome-ignore lint/style/useForOf: the index advances inside the loop to consume flag values
 	for (let i = 0; i < argv.length; i++) {
 		const arg = argv[i]!;
@@ -142,6 +172,8 @@ function parseArgs(argv: string[]): {
 		else if (arg === "--duration") parsedDuration = Number(argv[++i]);
 		else if (arg === "--out") parsedOutPath = argv[++i];
 		else if (arg === "--telemetry") parsedCollectTelemetry = true;
+		else if (arg === "--gpu") parsedGpu = true;
+		else if (arg === "--record") parsedRecordDir = argv[++i];
 		else if (!arg.startsWith("--") && parsedVideoPath === undefined)
 			parsedVideoPath = arg;
 		else return null;
@@ -164,6 +196,8 @@ function parseArgs(argv: string[]): {
 			parsedOutPath ??
 			`${basename(parsedVideoPath).replace(/\.[^.]+$/, "")}-events.csv`,
 		collectTelemetry: parsedCollectTelemetry,
+		gpu: parsedGpu,
+		recordDir: parsedRecordDir,
 	};
 }
 
@@ -194,7 +228,7 @@ function probeDurationSeconds(path: string): Promise<number | null> {
 	});
 }
 
-function processFrame(t: number): void {
+async function processFrame(t: number): Promise<void> {
 	if (t >= nextProgressT) {
 		const percent =
 			scanEnd === null
@@ -226,31 +260,26 @@ function processFrame(t: number): void {
 	});
 	const frame = normalizeFrame(src);
 	src.delete();
-	for (const detector of detectors) {
-		if (!due.includes(detector.id)) continue;
-		const counters = telemetry
-			? detectorTelemetry(telemetry, detector.id)
-			: null;
-		const gateStart = counters ? performance.now() : 0;
-		const gate = detector.gate(frame);
-		if (counters) {
-			counters.checks++;
-			counters.gateMs += performance.now() - gateStart;
+	const passStart = performance.now();
+	const outcomes = await runDetectorPass({
+		frame,
+		t,
+		detectors,
+		due,
+		scheduler,
+		telemetry,
+		runSteps,
+	});
+	if (telemetry) {
+		const ms = performance.now() - passStart;
+		for (const { detector, parsed } of outcomes) {
+			if (!parsed) continue;
+			const list = passLatencies.get(detector.id) ?? [];
+			list.push(ms);
+			passLatencies.set(detector.id, list);
 		}
-		scheduler.recordGate(detector.id, t, gate.pass, gate.signature);
-		if (!gate.pass) continue;
-		if (counters) counters.gatePasses++;
-		if (!scheduler.shouldParse(detector.id, t)) {
-			if (counters) counters.suppressedParses++;
-			continue;
-		}
-		const parseStart = counters ? performance.now() : 0;
-		const events = detector.parse(frame, t, gate);
-		if (counters) {
-			counters.parses++;
-			counters.parseMs += performance.now() - parseStart;
-		}
-		scheduler.recordParse(detector.id, t, events);
+	}
+	for (const { events } of outcomes) {
 		for (const event of events) {
 			const action = timeline.push(event);
 			if (action.action === "added" || action.action === "replaced") {
@@ -277,6 +306,8 @@ function printSummary(): void {
 	console.error(`timeline events: ${timeline.events.length} (${countText})`);
 	console.error(`wrote ${outPath}`);
 	if (telemetry) printTelemetry();
+	if (matcher) console.error(`GPU matcher: ${JSON.stringify(matcher.stats)}`);
+	if (recorder) console.error(recorder.save());
 	console.error(`next: pnpm scanner:status-audit ${outPath}`);
 }
 
@@ -318,4 +349,17 @@ function printTelemetry(): void {
 			.join("  ");
 	console.error(line(header));
 	for (const row of rows) console.error(line(row));
+	// how long a frame waits for its results when the detector parses it: the
+	// whole pass (every gate and parse of the frame, GPU round trips included)
+	for (const [id, list] of [...passLatencies].sort(([a], [b]) =>
+		a.localeCompare(b),
+	)) {
+		const sorted = [...list].sort((a, b) => a - b);
+		const mean = sorted.reduce((sum, ms) => sum + ms, 0) / sorted.length;
+		const p95 =
+			sorted[Math.min(sorted.length - 1, Math.floor(sorted.length * 0.95))]!;
+		console.error(
+			`frame pass with a ${id} parse: mean ${mean.toFixed(1)} ms · p95 ${p95.toFixed(1)} ms · max ${sorted[sorted.length - 1]!.toFixed(1)} ms (${sorted.length} frames)`,
+		);
+	}
 }

@@ -18,14 +18,22 @@ import { getCV, type Mat, minMaxLoc } from "../../cv";
 import {
 	type GlyphSet,
 	type RecognizedText,
-	recognizeText,
+	recognizeTextSteps,
 	scaleGlyphSet,
 } from "../../glyphs";
-import { copyRoi, cropRoi, meanBrightness, type Roi } from "../../image";
+import {
+	copyRoi,
+	cropRoi,
+	frameGray,
+	frameRgb,
+	meanBrightness,
+	type Roi,
+} from "../../image";
+import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestEntry, matchKey, rankBy, rankByRead } from "../../text";
 import type { ScoreboardResources } from "../scoreboard/index";
-import { parseName } from "../scoreboard/names";
-import { matchWeapon, type WeaponMatch } from "../scoreboard/weapons";
+import { type ParsedName, parseNameSteps } from "../scoreboard/names";
+import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
 	DEATH_MESSAGE_TEMPLATES,
@@ -211,8 +219,7 @@ export function createDeathDetector(
 			if (meanBrightness(frame, roi) < GATE_DARK_MAX_MEAN) darkOk++;
 		}
 
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
 		const line1 = copyRoi(gray, SPLAT_LINE1_ROI);
 		const { maxVal } = minMaxLoc(line1);
 		const bin = new cv.Mat();
@@ -240,7 +247,6 @@ export function createDeathDetector(
 			probe.delete();
 			if (maxCh > GATE_ICON_MIN_MAX) iconOk++;
 		}
-		gray.delete();
 
 		const score =
 			(darkOk / darkProbes.length + (textOk ? 1 : 0) + iconOk / 3) / 3;
@@ -473,11 +479,174 @@ export function createDeathDetector(
 		labels.delete();
 	}
 
-	function parse(frame: Mat, t: number): DetectedEvent<DeathData>[] {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-		const rgb = new cv.Mat();
-		cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
+	/** Splash-tag name read on a band's ink: against the banner color, then refined against the text color estimated from that ink. */
+	function* readWithBackground(
+		inner: Mat,
+		backgrounds: readonly [number, number, number][],
+		spaceGap: number,
+		speculative: boolean,
+	): MatchSteps<{
+		parsed: ParsedName;
+		background: [number, number, number];
+		textColor: [number, number, number] | null;
+	}> {
+		const band = distanceBand(inner, backgrounds, false);
+		cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
+		clearBorderBlobs(band, TAG_NAME_BIN_THRESHOLD);
+
+		let textColor: [number, number, number] | null = null;
+		let refined: Mat | null = null;
+		const ink = band.data;
+		let inkCount = 0;
+		for (let i = 0; i < ink.length; i++)
+			if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
+		if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
+			textColor = medianColor(inner, (i) => ink[i]! > TAG_NAME_BIN_THRESHOLD);
+			refined = distanceBand(inner, [textColor], true);
+			clearBorderBlobs(refined, TAG_NAME_REFINE_BIN_THRESHOLD);
+		}
+		const [bandParse, refinedParse] = yield* all([
+			parseNameSteps(
+				band,
+				tagNameGlyphs!,
+				{ spaceGap, binThreshold: TAG_NAME_BIN_THRESHOLD },
+				speculative,
+			),
+			refined
+				? parseNameSteps(
+						refined,
+						tagNameGlyphs!,
+						{ spaceGap, binThreshold: TAG_NAME_REFINE_BIN_THRESHOLD },
+						speculative,
+					)
+				: done(null),
+		]);
+		refined?.delete();
+		band.delete();
+		const parsed =
+			refinedParse && refinedParse.confidence > bandParse.confidence
+				? refinedParse
+				: bandParse;
+		return { parsed, background: backgrounds[0]!, textColor };
+	}
+
+	/**
+	 * 4. splash-tag name: read against the banner color, then (busy art survives
+	 * that as fake glyphs) against closeness to the text color estimated from
+	 * pass 1's ink; the more confident read wins. Same for each background estimator.
+	 */
+	function* readTagName(
+		rgb: Mat,
+		speculative: boolean,
+	): MatchSteps<{ read: TagNameRead; memoHit: boolean }> {
+		const spaceGap = Math.max(7, Math.round(tagNameGlyphs!.medianWidth * 0.55));
+		const inner = levelTagInner(rgb);
+		const signature = tagSignature(inner);
+		let read = tagMemoLookup(signature);
+		const memoHit = read !== null;
+		if (read === null) {
+			const median = medianColor(inner);
+			const dominants = dominantColors(inner, 2);
+			const dominant = dominants[0]!.color;
+			const candidates: [number, number, number][][] = [[median]];
+			if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
+				candidates.push([dominant]);
+			const second = dominants[1];
+			if (
+				second &&
+				second.fraction >= TAG_SPLIT_MIN_FRACTION &&
+				second.color.some(
+					(c, i) => Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
+				)
+			) {
+				candidates.push([dominant, second.color]);
+			}
+			// an empty read never beats one with glyphs (a blanked band scores confidence 1);
+			// near ties go to the longer read since confidence is the *min* char score
+			// and erasing most of a name can still read the survivors immaculately
+			const NEAR_TIE = 0.03;
+			const beats = (
+				a: { parsed: { name: string; confidence: number } },
+				b: typeof a,
+			) => {
+				const aRead = a.parsed.name.length > 0 ? 1 : 0;
+				const bRead = b.parsed.name.length > 0 ? 1 : 0;
+				if (aRead !== bRead) return aRead - bRead;
+				if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
+					return a.parsed.name.length - b.parsed.name.length;
+				}
+				return a.parsed.confidence - b.parsed.confidence;
+			};
+			const reads = yield* all(
+				candidates.map((backgrounds) =>
+					readWithBackground(inner, backgrounds, spaceGap, speculative),
+				),
+			);
+			let best = reads[0]!;
+			for (const alt of reads.slice(1)) {
+				if (beats(alt, best) > 0) best = alt;
+			}
+			read = {
+				name: best.parsed.name.length > 0 ? best.parsed.name : null,
+				confidence: best.parsed.confidence,
+				raw: best.parsed.raw.text,
+				background: best.background,
+				textColor: best.textColor,
+			};
+			if (read.confidence >= TAG_MEMO_MIN_CONFIDENCE && read.name !== null) {
+				tagMemoStore(signature, read);
+			}
+		}
+		inner.delete();
+		return { read, memoHit };
+	}
+
+	/** 3. ability grid; rows carry 1-3 left-aligned sub circles, so a sub box without badge ink ends the row. */
+	function* readAbilities(rgb: Mat): MatchSteps<WeaponMatch[][]> {
+		const rows = Array.from({ length: ABILITY_ROWS }, (_, row) => {
+			const crops = [cropRoi(rgb, abilityMainRoi(row))];
+			for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
+				const crop = copyRoi(rgb, abilitySubRoi(row, slot));
+				const d = crop.data;
+				const n = crop.rows * crop.cols;
+				let ink = 0;
+				for (let i = 0; i < n; i++) {
+					const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
+					if (v > ABILITY_INK_THRESHOLD) ink++;
+				}
+				if (ink < ABILITY_SLOT_MIN_INK) {
+					crop.delete();
+					break;
+				}
+				crops.push(crop);
+			}
+			return crops;
+		});
+		const matches = yield* all(
+			rows.map((crops) =>
+				all(
+					crops.map((crop, slot) =>
+						matchWeaponSteps(
+							crop,
+							slot === 0 ? abilities!.mains : abilities!.subs,
+							{ inkThreshold: ABILITY_INK_THRESHOLD },
+						),
+					),
+				),
+			),
+		);
+		for (const crop of rows.flat()) crop.delete();
+		return matches;
+	}
+
+	function* parseSteps(
+		frame: Mat,
+		t: number,
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<DeathData>[]> {
+		const gray = frameGray(frame);
+		const rgb = frameRgb(frame);
 
 		const confidences: number[] = [];
 
@@ -491,17 +660,24 @@ export function createDeathDetector(
 		let template: DeathMessageTemplate | null = null;
 		let line1Score = 0;
 		if (weaponGlyphs) {
-			const readLine = (roi: Roi, glyphs: GlyphSet) => {
+			const readLine = function* (
+				roi: Roi,
+				glyphs: GlyphSet,
+			): MatchSteps<RecognizedText> {
 				const crop = cropRoi(gray, roi);
-				const read = recognizeText(crop, glyphs, {
-					binThreshold: SPLAT_TEXT_BIN_THRESHOLD,
-					minCharScore: 0.3,
-				});
+				const read = yield* recognizeTextSteps(
+					crop,
+					glyphs,
+					{ binThreshold: SPLAT_TEXT_BIN_THRESHOLD, minCharScore: 0.3 },
+					speculative,
+				);
 				crop.delete();
 				return read;
 			};
-			line1 = readLine(SPLAT_LINE1_ROI, weaponGlyphs);
-			line2 = readLine(WEAPON_LINE_ROI, weaponGlyphs);
+			[line1, line2] = yield* all([
+				readLine(SPLAT_LINE1_ROI, weaponGlyphs),
+				readLine(WEAPON_LINE_ROI, weaponGlyphs),
+			]);
 			for (const candidate of DEATH_MESSAGE_TEMPLATES) {
 				if (isJaTemplate(candidate)) continue;
 				const constReading =
@@ -515,8 +691,10 @@ export function createDeathDetector(
 			}
 			// JA line reads cost ~2x, so they only run when no Latin template owns the frame
 			if (jaGlyphs && line1Score < LATIN_DECISIVE_SCORE) {
-				jaWeaponLine = readLine(JA_WEAPON_LINE_ROI, jaGlyphs);
-				jaConstLine = readLine(JA_CONST_LINE_ROI, jaGlyphs);
+				[jaWeaponLine, jaConstLine] = yield* all([
+					readLine(JA_WEAPON_LINE_ROI, jaGlyphs),
+					readLine(JA_CONST_LINE_ROI, jaGlyphs),
+				]);
 				for (const candidate of DEATH_MESSAGE_TEMPLATES) {
 					if (!isJaTemplate(candidate)) continue;
 					const score =
@@ -528,8 +706,6 @@ export function createDeathDetector(
 				}
 			}
 			if (!template || line1Score < LINE1_MIN_SCORE) {
-				gray.delete();
-				rgb.delete();
 				return [];
 			}
 		}
@@ -567,12 +743,19 @@ export function createDeathDetector(
 
 		// 2b. the WIPEOUT banner can cover the text while the burst icon stays intact:
 		// match it against the main-weapon set. Fixture positives score 0.55+, best
-		// off-target frame (icon displaced by a rainmaker line) 0.48.
-		let burstIcon: WeaponMatch | null = null;
-		if (weapon === null && burstWeapons) {
-			const crop = cropRoi(rgb, BURST_ICON_ROI);
-			burstIcon = matchWeapon(crop, burstWeapons);
-			crop.delete();
+		// off-target frame (icon displaced by a rainmaker line) 0.48. The ability
+		// grid (3.) and the tag name (4.) read in the same lockstep.
+		const burstCrop =
+			weapon === null && burstWeapons ? cropRoi(rgb, BURST_ICON_ROI) : null;
+		const [burstIcon, abilityMatches, tag] = yield* all([
+			burstCrop && burstWeapons
+				? matchWeaponSteps(burstCrop, burstWeapons)
+				: done(null),
+			abilities ? readAbilities(rgb) : done(null),
+			tagNameGlyphs ? readTagName(rgb, speculative) : done(null),
+		]);
+		burstCrop?.delete();
+		if (burstIcon) {
 			const entry =
 				burstIcon.score >= BURST_ICON_MIN_SCORE
 					? mainById.get(burstIcon.id)
@@ -642,162 +825,35 @@ export function createDeathDetector(
 		}
 		if (weaponGlyphs && template) confidences.push(weaponScore);
 
-		// 3. ability grid; rows carry 1-3 left-aligned sub circles, so a sub box without badge ink ends the row
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
-		if (abilities) {
-			for (let row = 0; row < ABILITY_ROWS; row++) {
-				const ids: AbilityWithUnknown[] = [];
-				const debug: (WeaponMatch | null)[] = [];
-				const mainCrop = cropRoi(rgb, abilityMainRoi(row));
-				const main = matchWeapon(mainCrop, abilities.mains, {
-					inkThreshold: ABILITY_INK_THRESHOLD,
-				});
-				mainCrop.delete();
-				ids.push(toAbilityWithUnknown(main.id) ?? "UNKNOWN");
-				debug.push(main);
-				confidences.push(Math.max(0, main.score));
-				for (let slot = 0; slot < ABILITY_SUB_XS.length; slot++) {
-					const crop = copyRoi(rgb, abilitySubRoi(row, slot));
-					const d = crop.data;
-					const n = crop.rows * crop.cols;
-					let ink = 0;
-					for (let i = 0; i < n; i++) {
-						const v = Math.max(d[i * 3]!, d[i * 3 + 1]!, d[i * 3 + 2]!);
-						if (v > ABILITY_INK_THRESHOLD) ink++;
-					}
-					if (ink < ABILITY_SLOT_MIN_INK) {
-						crop.delete();
-						break;
-					}
-					const sub = matchWeapon(crop, abilities.subs, {
-						inkThreshold: ABILITY_INK_THRESHOLD,
-					});
-					crop.delete();
-					ids.push(toAbilityWithUnknown(sub.id) ?? "UNKNOWN");
-					debug.push(sub);
-					confidences.push(Math.max(0, sub.score));
-				}
-				abilityRows.push(ids);
-				abilityDebug.push(debug);
+		for (const matches of abilityMatches ?? []) {
+			const ids: AbilityWithUnknown[] = [];
+			const debug: (WeaponMatch | null)[] = [];
+			for (const match of matches) {
+				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
+				debug.push(match);
+				confidences.push(Math.max(0, match.score));
 			}
+			abilityRows.push(ids);
+			abilityDebug.push(debug);
 		}
 
-		// 4. splash-tag name: read against the banner color, then (busy art survives
-		// that as fake glyphs) against closeness to the text color estimated from
-		// pass 1's ink; the more confident read wins. Same for each background estimator.
 		let name: string | null = null;
 		let nameConfidence = 0;
 		let nameRaw = "";
 		let tagBackground: [number, number, number] | null = null;
 		let tagTextColor: [number, number, number] | null = null;
 		let nameMemoHit = false;
-		if (tagNameGlyphs) {
-			const spaceGap = Math.max(
-				7,
-				Math.round(tagNameGlyphs.medianWidth * 0.55),
-			);
-			const inner = levelTagInner(rgb);
-			const signature = tagSignature(inner);
-			const memoized = tagMemoLookup(signature);
-			nameMemoHit = memoized !== null;
-			const readWithBackground = (
-				backgrounds: readonly [number, number, number][],
-			) => {
-				const band = distanceBand(inner, backgrounds, false);
-				cv.normalize(band, band, 0, 255, cv.NORM_MINMAX);
-				clearBorderBlobs(band, TAG_NAME_BIN_THRESHOLD);
-				let parsed = parseName(band, tagNameGlyphs, {
-					spaceGap,
-					binThreshold: TAG_NAME_BIN_THRESHOLD,
-				});
-
-				let textColor: [number, number, number] | null = null;
-				const ink = band.data;
-				let inkCount = 0;
-				for (let i = 0; i < ink.length; i++)
-					if (ink[i]! > TAG_NAME_BIN_THRESHOLD) inkCount++;
-				if (inkCount >= TAG_NAME_REFINE_MIN_INK) {
-					textColor = medianColor(
-						inner,
-						(i) => ink[i]! > TAG_NAME_BIN_THRESHOLD,
-					);
-					const refined = distanceBand(inner, [textColor], true);
-					clearBorderBlobs(refined, TAG_NAME_REFINE_BIN_THRESHOLD);
-					const reparsed = parseName(refined, tagNameGlyphs, {
-						spaceGap,
-						binThreshold: TAG_NAME_REFINE_BIN_THRESHOLD,
-					});
-					refined.delete();
-					if (reparsed.confidence > parsed.confidence) parsed = reparsed;
-				}
-				band.delete();
-				return { parsed, background: backgrounds[0]!, textColor };
-			};
-
-			let read = memoized;
-			if (read === null) {
-				const median = medianColor(inner);
-				const dominants = dominantColors(inner, 2);
-				const dominant = dominants[0]!.color;
-				const candidates: [number, number, number][][] = [[median]];
-				if (dominant.some((c, i) => Math.abs(c - median[i]!) > 8))
-					candidates.push([dominant]);
-				const second = dominants[1];
-				if (
-					second &&
-					second.fraction >= TAG_SPLIT_MIN_FRACTION &&
-					second.color.some(
-						(c, i) =>
-							Math.abs(c - dominant[i]!) > TAG_SPLIT_MIN_CHANNEL_DISTANCE,
-					)
-				) {
-					candidates.push([dominant, second.color]);
-				}
-				// an empty read never beats one with glyphs (a blanked band scores confidence 1);
-				// near ties go to the longer read since confidence is the *min* char score
-				// and erasing most of a name can still read the survivors immaculately
-				const NEAR_TIE = 0.03;
-				const beats = (
-					a: { parsed: { name: string; confidence: number } },
-					b: typeof a,
-				) => {
-					const aRead = a.parsed.name.length > 0 ? 1 : 0;
-					const bRead = b.parsed.name.length > 0 ? 1 : 0;
-					if (aRead !== bRead) return aRead - bRead;
-					if (Math.abs(a.parsed.confidence - b.parsed.confidence) <= NEAR_TIE) {
-						return a.parsed.name.length - b.parsed.name.length;
-					}
-					return a.parsed.confidence - b.parsed.confidence;
-				};
-				let best = readWithBackground(candidates[0]!);
-				for (const backgrounds of candidates.slice(1)) {
-					const alt = readWithBackground(backgrounds);
-					if (beats(alt, best) > 0) best = alt;
-				}
-				read = {
-					name: best.parsed.name.length > 0 ? best.parsed.name : null,
-					confidence: best.parsed.confidence,
-					raw: best.parsed.raw.text,
-					background: best.background,
-					textColor: best.textColor,
-				};
-				if (read.confidence >= TAG_MEMO_MIN_CONFIDENCE && read.name !== null) {
-					tagMemoStore(signature, read);
-				}
-			}
-			inner.delete();
-
-			tagBackground = read.background;
-			tagTextColor = read.textColor;
-			nameRaw = read.raw;
-			name = read.name;
-			nameConfidence = read.confidence;
+		if (tag) {
+			nameMemoHit = tag.memoHit;
+			tagBackground = tag.read.background;
+			tagTextColor = tag.read.textColor;
+			nameRaw = tag.read.raw;
+			name = tag.read.name;
+			nameConfidence = tag.read.confidence;
 			confidences.push(nameConfidence);
 		}
-
-		gray.delete();
-		rgb.delete();
 
 		const confidence =
 			confidences.length > 0
@@ -855,6 +911,8 @@ export function createDeathDetector(
 		rearmCooldownS: 4,
 		maxStagnantParses: 3,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
 }

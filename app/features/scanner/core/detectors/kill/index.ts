@@ -14,18 +14,21 @@ import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, scaleGlyphSet } from "../../glyphs";
 import {
 	copyRoi,
+	frameGray,
 	maxBrightness,
 	meanBrightness,
 	type Roi,
 	roiSignature,
 } from "../../image";
+import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import {
-	readMatchTimer,
+	readMatchTimerSteps,
+	type TimerRead,
 	timerBoxChecks,
 	timerGlyphSets,
 } from "../objective/timer";
 import type { ScoreboardResources } from "../scoreboard/index";
-import { type ParsedName, parseName } from "../scoreboard/names";
+import { type ParsedName, parseNameSteps } from "../scoreboard/names";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import { matchKillMessage } from "./message";
 import {
@@ -115,30 +118,37 @@ export function createKillDetector(
 
 	/** Memoized read of a band within the signature caps, freshened to the list's end. */
 	function rowMemoLookup(signature: number[]): ParsedName | null {
-		for (let i = 0; i < rowMemo.length; i++) {
-			const entry = rowMemo[i]!;
-			let sum = 0;
-			let cell = 0;
-			for (let k = 0; k < signature.length; k++) {
-				const diff = Math.abs(signature[k]! - entry.signature[k]!);
-				sum += diff;
-				if (diff > cell) cell = diff;
-			}
-			if (
-				cell <= ROW_MEMO_MAX_CELL_DIFF &&
-				sum / signature.length <= ROW_MEMO_MAX_MEAN_DIFF
-			) {
-				rowMemo.splice(i, 1);
-				rowMemo.push(entry);
-				return entry.read;
-			}
-		}
-		return null;
+		const index = rowMemoIndex(rowMemo, signature);
+		if (index === -1) return null;
+		const [entry] = rowMemo.splice(index, 1);
+		rowMemo.push(entry!);
+		return entry!.read;
 	}
 
 	function rowMemoStore(signature: number[], read: ParsedName): void {
 		rowMemo.push({ signature, read });
 		if (rowMemo.length > ROW_MEMO_MAX_ENTRIES) rowMemo.shift();
+	}
+
+	/**
+	 * Rows the memo will miss if the stack is read through `signatures` in
+	 * order: the lookups and stores replayed on a copy of the memo's signatures,
+	 * so the misses can be read ahead in one lockstep.
+	 */
+	function predictedMemoMisses(signatures: number[][]): number[] {
+		const memo = rowMemo.map(({ signature }) => ({ signature }));
+		const misses: number[] = [];
+		for (const [row, signature] of signatures.entries()) {
+			const index = rowMemoIndex(memo, signature);
+			if (index !== -1) {
+				memo.push(...memo.splice(index, 1));
+				continue;
+			}
+			misses.push(row);
+			memo.push({ signature });
+			if (memo.length > ROW_MEMO_MAX_ENTRIES) memo.shift();
+		}
+		return misses;
 	}
 
 	function whiteFraction(gray: Mat, roi: Roi): number {
@@ -171,48 +181,82 @@ export function createKillDetector(
 	}
 
 	function gate(frame: Mat): GateResult {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
 		const checks = rowChecks(gray, 0);
-		gray.delete();
 		const passed = checks.filter(Boolean).length;
 		return { pass: passed === checks.length, score: passed / checks.length };
 	}
 
-	function readRow(
+	function* readBand(
 		gray: Mat,
 		row: number,
-	): { parsed: ParsedName; memoized: boolean } {
-		const roi = textRoi(row);
-		const signature = roiSignature(gray, roi, ROW_MEMO_COLS, ROW_MEMO_ROWS);
-		const memoized = rowMemoLookup(signature);
-		if (memoized) return { parsed: memoized, memoized: true };
-		const band = copyRoi(gray, roi);
-		const parsed = parseName(band, glyphs!, {
-			binThreshold: KILL_TEXT_BIN_THRESHOLD,
-			spaceGap: Math.max(6, Math.round(glyphs!.medianWidth * 0.55)),
-			plainTieMargin: PLAIN_TIE_MARGIN,
-		});
+		speculative: boolean,
+	): MatchSteps<ParsedName> {
+		const band = copyRoi(gray, textRoi(row));
+		const parsed = yield* parseNameSteps(
+			band,
+			glyphs!,
+			{
+				binThreshold: KILL_TEXT_BIN_THRESHOLD,
+				spaceGap: Math.max(6, Math.round(glyphs!.medianWidth * 0.55)),
+				plainTieMargin: PLAIN_TIE_MARGIN,
+			},
+			speculative,
+		);
 		band.delete();
-		rowMemoStore(signature, parsed);
-		return { parsed, memoized: false };
+		return parsed;
 	}
 
-	function parse(frame: Mat, t: number): DetectedEvent<KillData>[] {
+	function* parseSteps(
+		frame: Mat,
+		t: number,
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<KillData>[]> {
 		if (!glyphs) return [];
 		// reads carry forward in time only: a clock that stands still or rewinds
 		// (a fresh scan, the fixture harness) starts from a blank memo
 		if (t <= lastParseT) rowMemo.length = 0;
 		lastParseT = t;
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
+
+		// the rows a sequential read can reach, and their memo signatures
+		const signatures: number[][] = [];
+		for (let row = 0; row < MAX_ROWS; row++) {
+			if (row > 0 && !rowChecks(gray, row).every(Boolean)) break;
+			signatures.push(
+				roiSignature(gray, textRoi(row), ROW_MEMO_COLS, ROW_MEMO_ROWS),
+			);
+		}
+		const timerVisible = timerBoxChecks(gray).every(Boolean);
+
+		// batching drivers read every memo miss and the timer ahead in one
+		// lockstep; the sequential pass below then only consults the memo
+		const prefetched = new Map<number, ParsedName>();
+		let prefetchedTimer: TimerRead | null = null;
+		if (speculative) {
+			const misses = predictedMemoMisses(signatures);
+			const [reads, timer] = yield* all([
+				all(misses.map((row) => readBand(gray, row, speculative))),
+				timerVisible
+					? readMatchTimerSteps(gray, timerSets, speculative)
+					: noTimer(),
+			]);
+			for (const [i, row] of misses.entries()) prefetched.set(row, reads[i]!);
+			prefetchedTimer = timer;
+		}
 
 		const names: (string | null)[] = [];
 		const confidences: number[] = [];
 		const rows: Record<string, unknown>[] = [];
-		for (let row = 0; row < MAX_ROWS; row++) {
-			if (row > 0 && !rowChecks(gray, row).every(Boolean)) break;
-			const { parsed, memoized } = readRow(gray, row);
+		for (const [row, signature] of signatures.entries()) {
+			const memoized = rowMemoLookup(signature);
+			let parsed = memoized;
+			if (!parsed) {
+				parsed =
+					prefetched.get(row) ?? (yield* readBand(gray, row, speculative));
+				rowMemoStore(signature, parsed);
+			}
 			const message = matchKillMessage(parsed.name);
 			rows.push({
 				raw: parsed.raw.text,
@@ -220,21 +264,21 @@ export function createKillDetector(
 				readScore: parsed.confidence,
 				messageLangs: message?.template.langs,
 				messageScore: message?.score,
-				memoized,
+				memoized: memoized !== null,
 			});
 			if (!message || message.score < MESSAGE_MIN_SCORE) break;
 			names.push(message.name);
 			confidences.push((message.score + parsed.confidence) / 2);
 		}
 		if (names.length === 0) {
-			gray.delete();
 			return [];
 		}
 
-		const timer = timerBoxChecks(gray).every(Boolean)
-			? readMatchTimer(gray, timerSets)
-			: { value: null, reading: "" };
-		gray.delete();
+		const timer =
+			prefetchedTimer ??
+			(timerVisible
+				? yield* readMatchTimerSteps(gray, timerSets, speculative)
+				: yield* noTimer());
 
 		return [
 			{
@@ -255,6 +299,31 @@ export function createKillDetector(
 		id: "kill",
 		checkIntervalS: 0.5,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
+}
+
+function noTimer(): MatchSteps<TimerRead> {
+	return done({ value: null, reading: "" });
+}
+
+function rowMemoIndex(
+	memo: readonly { signature: number[] }[],
+	signature: number[],
+): number {
+	return memo.findIndex((entry) => {
+		let sum = 0;
+		let cell = 0;
+		for (let k = 0; k < signature.length; k++) {
+			const diff = Math.abs(signature[k]! - entry.signature[k]!);
+			sum += diff;
+			if (diff > cell) cell = diff;
+		}
+		return (
+			cell <= ROW_MEMO_MAX_CELL_DIFF &&
+			sum / signature.length <= ROW_MEMO_MAX_MEAN_DIFF
+		);
+	});
 }

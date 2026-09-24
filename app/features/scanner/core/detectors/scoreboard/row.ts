@@ -7,18 +7,23 @@ import { toMainWeaponId } from "../../../scanner-types";
 import type { Mat } from "../../cv";
 import type { GlyphSet } from "../../glyphs";
 import { cropRoi, type Roi } from "../../image";
-import { type ParsedNumber, parseNumber } from "./digits";
+import { all, type MatchSteps } from "../../match-steps";
+import { type ParsedNumber, parseNumberSteps } from "./digits";
 import type { ScoreboardPlayer, ScoreboardRowDebug } from "./index";
-import { parseName } from "./names";
+import { type ParsedName, parseNameSteps } from "./names";
 import { povYellowFraction } from "./pov";
 import {
 	disambiguateWeaponBySpecial,
-	matchSpecial,
+	matchSpecialSteps,
 	type SpecialMatch,
 	type SpecialTemplate,
 	tiedWeaponsWithDistinctSpecials,
 } from "./specials";
-import { matchWeapon, type WeaponMatch, type WeaponTemplate } from "./weapons";
+import {
+	matchWeaponSteps,
+	type WeaponMatch,
+	type WeaponTemplate,
+} from "./weapons";
 
 /** Per-row ROI geometry; the replay detector closes these over its panel dx. */
 export interface RowRois {
@@ -45,77 +50,41 @@ export interface RowOptions {
 	paintDropLoweredTrailing?: boolean;
 }
 
-/** Parses one player row; per-field confidences append to `confidences`. */
-export function parseScoreboardRow(
+/**
+ * Parses one player row; its per-field confidences come back in field order
+ * (weapon, paint, name, stats). Weapon, paint→name and the stats read in one
+ * lockstep.
+ */
+export function* parseScoreboardRowSteps(
 	gray: Mat,
 	rgb: Mat,
 	cy: number,
 	rois: RowRois,
 	resources: RowResources,
-	confidences: number[],
 	options: RowOptions = {},
-): { player: ScoreboardPlayer; debug: ScoreboardRowDebug } {
-	let weapon: WeaponMatch | null = null;
-	let special: SpecialMatch | undefined;
-	if (resources.weapons.length > 0) {
-		const crop = cropRoi(rgb, rois.weapon(cy));
-		weapon = matchWeapon(
-			crop,
-			resources.weapons,
-			options.weaponInkThreshold !== undefined
-				? { inkThreshold: options.weaponInkThreshold }
-				: {},
-		);
-		crop.delete();
-		// near-tied icons with different kit specials: the row's special icon breaks the tie
-		if (resources.specials?.length && tiedWeaponsWithDistinctSpecials(weapon)) {
-			const spCrop = cropRoi(rgb, rois.specialIcon(cy));
-			special = matchSpecial(spCrop, resources.specials);
-			spCrop.delete();
-			weapon = disambiguateWeaponBySpecial(weapon, special);
-		}
-		confidences.push(Math.max(0, weapon.score));
-	}
+	speculative = false,
+): MatchSteps<{
+	player: ScoreboardPlayer;
+	debug: ScoreboardRowDebug;
+	confidences: number[];
+}> {
+	const [weaponRead, { paint, name }, stats] = yield* all([
+		readWeapon(rgb, cy, rois, resources, options),
+		readPaintAndName(gray, cy, rois, resources, options, speculative),
+		readStats(gray, cy, rois, resources, speculative),
+	]);
+	const { weapon, special } = weaponRead ?? { weapon: null };
 
-	// paint (parse first so the name region can be trimmed at the digits)
-	let paint: ParsedNumber | null = null;
-	const pRoi = rois.paint(cy);
-	if (resources.paintDigits) {
-		const crop = cropRoi(gray, pRoi);
-		paint = parseNumber(crop, resources.paintDigits, {
-			dropLoweredTrailing: options.paintDropLoweredTrailing,
-		});
-		crop.delete();
-		confidences.push(paint.confidence);
-	}
-
-	// name, trimmed at the leftmost paint digit
-	let name: ReturnType<typeof parseName> | null = null;
-	if (resources.nameGlyphs) {
-		const base = rois.name(cy);
-		const paintLeftAbs =
-			paint && paint.leftX !== null ? pRoi.x + paint.leftX : pRoi.x + pRoi.w;
-		const w = Math.min(base.w, Math.max(0, paintLeftAbs - 6 - base.x));
-		if (w > 8) {
-			const crop = cropRoi(gray, { ...base, w });
-			name = parseName(crop, resources.nameGlyphs);
-			crop.delete();
-			confidences.push(name.confidence);
-		}
-	}
-
-	// stat counters
+	const confidences: number[] = [];
+	if (weapon) confidences.push(Math.max(0, weapon.score));
+	if (paint) confidences.push(paint.confidence);
+	if (name) confidences.push(name.confidence);
 	const statValues: (number | null)[] = [null, null, null];
 	const statScores: [number, number, number] = [0, 0, 0];
-	if (resources.statDigits) {
-		for (const i of [0, 1, 2] as const) {
-			const crop = cropRoi(gray, rois.stat(cy, i));
-			const parsed = parseNumber(crop, resources.statDigits);
-			crop.delete();
-			statValues[i] = parsed.value;
-			statScores[i] = parsed.confidence;
-			confidences.push(parsed.confidence);
-		}
+	for (const [i, parsed] of (stats ?? []).entries()) {
+		statValues[i] = parsed.value;
+		statScores[i] = parsed.confidence;
+		confidences.push(parsed.confidence);
 	}
 
 	return {
@@ -135,5 +104,90 @@ export function parseScoreboardRow(
 			statScores,
 			povFraction: povYellowFraction(rgb, rois.povArrow(cy)),
 		},
+		confidences,
 	};
+}
+
+function* readWeapon(
+	rgb: Mat,
+	cy: number,
+	rois: RowRois,
+	resources: RowResources,
+	options: RowOptions,
+): MatchSteps<{ weapon: WeaponMatch; special?: SpecialMatch } | null> {
+	if (resources.weapons.length === 0) return null;
+	const crop = cropRoi(rgb, rois.weapon(cy));
+	let weapon = yield* matchWeaponSteps(
+		crop,
+		resources.weapons,
+		options.weaponInkThreshold !== undefined
+			? { inkThreshold: options.weaponInkThreshold }
+			: {},
+	);
+	crop.delete();
+	// near-tied icons with different kit specials: the row's special icon breaks the tie
+	let special: SpecialMatch | undefined;
+	if (resources.specials?.length && tiedWeaponsWithDistinctSpecials(weapon)) {
+		const spCrop = cropRoi(rgb, rois.specialIcon(cy));
+		special = yield* matchSpecialSteps(spCrop, resources.specials);
+		spCrop.delete();
+		weapon = disambiguateWeaponBySpecial(weapon, special);
+	}
+	return { weapon, special };
+}
+
+/** Paint first, so the name region can be trimmed at the leftmost paint digit. */
+function* readPaintAndName(
+	gray: Mat,
+	cy: number,
+	rois: RowRois,
+	resources: RowResources,
+	options: RowOptions,
+	speculative: boolean,
+): MatchSteps<{ paint: ParsedNumber | null; name: ParsedName | null }> {
+	let paint: ParsedNumber | null = null;
+	const pRoi = rois.paint(cy);
+	if (resources.paintDigits) {
+		const crop = cropRoi(gray, pRoi);
+		paint = yield* parseNumberSteps(
+			crop,
+			resources.paintDigits,
+			{ dropLoweredTrailing: options.paintDropLoweredTrailing },
+			speculative,
+		);
+		crop.delete();
+	}
+
+	let name: ParsedName | null = null;
+	if (resources.nameGlyphs) {
+		const base = rois.name(cy);
+		const paintLeftAbs =
+			paint && paint.leftX !== null ? pRoi.x + paint.leftX : pRoi.x + pRoi.w;
+		const w = Math.min(base.w, Math.max(0, paintLeftAbs - 6 - base.x));
+		if (w > 8) {
+			const crop = cropRoi(gray, { ...base, w });
+			name = yield* parseNameSteps(crop, resources.nameGlyphs, {}, speculative);
+			crop.delete();
+		}
+	}
+	return { paint, name };
+}
+
+function* readStats(
+	gray: Mat,
+	cy: number,
+	rois: RowRois,
+	resources: RowResources,
+	speculative: boolean,
+): MatchSteps<ParsedNumber[] | null> {
+	const { statDigits } = resources;
+	if (!statDigits) return null;
+	const crops = ([0, 1, 2] as const).map((i) =>
+		cropRoi(gray, rois.stat(cy, i)),
+	);
+	const parsed = yield* all(
+		crops.map((crop) => parseNumberSteps(crop, statDigits, {}, speculative)),
+	);
+	for (const crop of crops) crop.delete();
+	return parsed;
 }

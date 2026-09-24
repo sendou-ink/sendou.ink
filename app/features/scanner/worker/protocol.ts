@@ -13,6 +13,8 @@ export interface InitRequest {
 	suppressSteadyFrames?: boolean;
 	/** accumulate scan telemetry counters and time the detectors; default false (VoD telemetry panel opts in) */
 	collectTelemetry?: boolean;
+	/** match templates (and upscale sub-1080p frames) on WebGPU when an adapter exists; default false */
+	webgpu?: boolean;
 }
 
 export interface AnalyzeRequest {

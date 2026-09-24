@@ -344,6 +344,9 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 				{telemetry.wallMs > 0
 					? ` · ${formatTime(telemetry.wallMs / 1000)} cpu`
 					: null}
+				{telemetry.gpuScans > 0
+					? ` · WebGPU in ${telemetry.gpuScans} workers, ${formatTime(telemetry.gpuWaitMs / 1000)} waited`
+					: null}
 			</summary>
 			<table>
 				<thead>

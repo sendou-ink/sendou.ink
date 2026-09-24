@@ -239,6 +239,7 @@ export async function startCapture(): Promise<void> {
 		// the worker first: a failed init must not leave the camera on
 		client = new AnalyzerClient(onResult, onWorkerError, undefined, {
 			frameQueueLimit: FRAME_QUEUE_LIMIT,
+			webgpu: settings.webgpu,
 		});
 		try {
 			await client.whenReady();

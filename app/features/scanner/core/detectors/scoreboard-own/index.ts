@@ -17,15 +17,23 @@ import {
 	toAbilityWithUnknown,
 	toMainWeaponId,
 } from "../../../scanner-types";
-import { getCV, type Mat } from "../../cv";
-import { type GlyphSet, recognizeText, scaleGlyphSet } from "../../glyphs";
-import { copyRoi, cropRoi, maxBrightness, meanBrightness } from "../../image";
+import type { Mat } from "../../cv";
+import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
+import {
+	copyRoi,
+	cropRoi,
+	frameGray,
+	frameRgb,
+	maxBrightness,
+	meanBrightness,
+} from "../../image";
+import { all, done, type MatchSteps, runSync } from "../../match-steps";
 import { closestBy, matchKey } from "../../text";
 import { LOCALIZED_WEAPON_NAMES } from "../death/localized-messages";
 import { ALL_WEAPON_ENTRIES, type WeaponEntry } from "../death/weapon-names";
-import { type ParsedHeader, parseHeader } from "../scoreboard/header";
+import { parseHeaderSteps } from "../scoreboard/header";
 import type { ScoreboardResources } from "../scoreboard/index";
-import { matchWeapon, type WeaponMatch } from "../scoreboard/weapons";
+import { matchWeaponSteps, type WeaponMatch } from "../scoreboard/weapons";
 import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
 	GATE_PANEL_MAX_MEAN,
@@ -89,8 +97,6 @@ function mainWeaponCandidates(): WeaponCandidate[] {
 export function createScoreboardOwnDetector(
 	resources: ScoreboardResources,
 ): Detector<ScoreboardOwnData> {
-	const cv = getCV();
-
 	const titleGlyphs: GlyphSet | null = resources.deathWeaponGlyphs
 		? scaleGlyphSet(
 				resources.deathWeaponGlyphs,
@@ -105,13 +111,11 @@ export function createScoreboardOwnDetector(
 			if (meanBrightness(frame, roi) < GATE_PANEL_MAX_MEAN) panelOk++;
 		}
 
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
+		const gray = frameGray(frame);
 		let textOk = 0;
 		for (const roi of GATE_TITLE_TEXT_PROBES) {
 			if (maxBrightness(gray, roi) > GATE_TEXT_MIN_MAX) textOk++;
 		}
-		gray.delete();
 
 		let stripOk = 0;
 		for (let row = 0; row < GEAR_ROWS; row++) {
@@ -131,40 +135,75 @@ export function createScoreboardOwnDetector(
 		return { pass, score };
 	}
 
-	function parse(frame: Mat, t: number): DetectedEvent<ScoreboardOwnData>[] {
-		const gray = new cv.Mat();
-		cv.cvtColor(frame, gray, cv.COLOR_RGBA2GRAY);
-		const rgb = new cv.Mat();
-		cv.cvtColor(frame, rgb, cv.COLOR_RGBA2RGB);
+	function* parseSteps(
+		frame: Mat,
+		t: number,
+		_gate: GateResult | undefined,
+		speculative: boolean,
+	): MatchSteps<DetectedEvent<ScoreboardOwnData>[]> {
+		const gray = frameGray(frame);
+		const rgb = frameRgb(frame);
 
-		const confidences: number[] = [];
-
-		// header tags sit at the live scoreboard's positions — shared parser
-		let header: ParsedHeader | null = null;
-		if (resources.headerLobbyGlyphs && resources.headerLineGlyphs) {
-			header = parseHeader(
-				gray,
-				resources.headerLobbyGlyphs,
-				resources.headerLineGlyphs,
-			);
-			confidences.push(header.confidence);
-		}
-
+		const { headerLobbyGlyphs, headerLineGlyphs } = resources;
 		// weapon card title, recognized whole and NOT via readTagBand: the tag is
 		// fixed-width, and long names render condensed, whose dense antialiased
 		// columns fail the tag-column test and truncate the read mid-name
+		const band = titleGlyphs ? copyRoi(gray, WEAPON_TITLE_BAND) : null;
+		// gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
+		const abilityCrops = abilities
+			? Array.from({ length: GEAR_ROWS }, (_, row) => [
+					cropRoi(rgb, gearMainRoi(row)),
+					...[0, 1, 2].map((slot) => cropRoi(rgb, gearSubRoi(row, slot))),
+				])
+			: [];
+		const [header, title, abilityMatches] = yield* all([
+			// header tags sit at the live scoreboard's positions — shared parser
+			headerLobbyGlyphs && headerLineGlyphs
+				? parseHeaderSteps(
+						gray,
+						headerLobbyGlyphs,
+						headerLineGlyphs,
+						speculative,
+					)
+				: done(null),
+			titleGlyphs && band
+				? recognizeTextSteps(
+						band,
+						titleGlyphs,
+						{
+							binThreshold: WEAPON_TITLE_BIN_THRESHOLD,
+							spaceGap: 9,
+							minCharScore: 0.3,
+						},
+						speculative,
+					)
+				: done(null),
+			all(
+				abilityCrops.map((crops) =>
+					all(
+						crops.map((crop, slot) =>
+							matchWeaponSteps(
+								crop,
+								slot === 0 ? abilities!.mains : abilities!.subs,
+								{ inkThreshold: OWN_ABILITY_INK_THRESHOLD },
+							),
+						),
+					),
+				),
+			),
+		]);
+		band?.delete();
+		for (const crop of abilityCrops.flat()) crop.delete();
+
+		const confidences: number[] = [];
+		if (header) confidences.push(header.confidence);
+
 		let weapon: string | null = null;
 		let weaponId: MainWeaponId | null = null;
 		let weaponScore = 0;
 		let weaponReading = "";
-		if (titleGlyphs) {
-			const band = copyRoi(gray, WEAPON_TITLE_BAND);
-			weaponReading = recognizeText(band, titleGlyphs, {
-				binThreshold: WEAPON_TITLE_BIN_THRESHOLD,
-				spaceGap: 9,
-				minCharScore: 0.3,
-			}).text.trim();
-			band.delete();
+		if (title) {
+			weaponReading = title.text.trim();
 			const match = weaponReading
 				? closestBy(weaponReading, mainWeaponCandidates(), (c) => c.text)
 				: null;
@@ -178,38 +217,19 @@ export function createScoreboardOwnDetector(
 			confidences.push(weaponScore);
 		}
 
-		// gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
 		const abilityRows: AbilityWithUnknown[][] = [];
 		const abilityDebug: (WeaponMatch | null)[][] = [];
-		if (abilities) {
-			for (let row = 0; row < GEAR_ROWS; row++) {
-				const ids: AbilityWithUnknown[] = [];
-				const debug: (WeaponMatch | null)[] = [];
-				const mainCrop = cropRoi(rgb, gearMainRoi(row));
-				const main = matchWeapon(mainCrop, abilities.mains, {
-					inkThreshold: OWN_ABILITY_INK_THRESHOLD,
-				});
-				mainCrop.delete();
-				ids.push(toAbilityWithUnknown(main.id) ?? "UNKNOWN");
-				debug.push(main);
-				confidences.push(Math.max(0, main.score));
-				for (let slot = 0; slot < 3; slot++) {
-					const crop = cropRoi(rgb, gearSubRoi(row, slot));
-					const sub = matchWeapon(crop, abilities.subs, {
-						inkThreshold: OWN_ABILITY_INK_THRESHOLD,
-					});
-					crop.delete();
-					ids.push(toAbilityWithUnknown(sub.id) ?? "UNKNOWN");
-					debug.push(sub);
-					confidences.push(Math.max(0, sub.score));
-				}
-				abilityRows.push(ids);
-				abilityDebug.push(debug);
+		for (const matches of abilityMatches) {
+			const ids: AbilityWithUnknown[] = [];
+			const debug: (WeaponMatch | null)[] = [];
+			for (const match of matches) {
+				ids.push(toAbilityWithUnknown(match.id) ?? "UNKNOWN");
+				debug.push(match);
+				confidences.push(Math.max(0, match.score));
 			}
+			abilityRows.push(ids);
+			abilityDebug.push(debug);
 		}
-
-		gray.delete();
-		rgb.delete();
 
 		const confidence =
 			confidences.length > 0
@@ -247,6 +267,8 @@ export function createScoreboardOwnDetector(
 		id: "scoreboard-own",
 		sufficientConfidence: 0.55,
 		gate,
-		parse,
+		parse: (frame, t, gateResult) =>
+			runSync(parseSteps(frame, t, gateResult, false)),
+		parseSteps,
 	};
 }
