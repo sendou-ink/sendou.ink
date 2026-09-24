@@ -41,7 +41,7 @@ import {
 	normalizedTeamCount,
 	tournamentIsRanked,
 } from "../tournament/tournament-utils";
-import type { CalendarEvent } from "./calendar-types";
+import type { CalendarEvent, CalendarEventTag } from "./calendar-types";
 import { calendarEventSorter } from "./calendar-utils";
 
 const RECENT_TOURNAMENTS_SHOWN = 10;
@@ -210,7 +210,10 @@ function findAllBetweenTwoTimestampsMapped(
 }> {
 	const mapped: Array<CalendarEvent & { startsAt: number }> = rows.map(
 		(row) => {
-			const tags = row.tags ?? [];
+			// a virtual tag: leagues are told apart by their setting, not by anything the organizer picks
+			const tags: Array<CalendarEventTag> = row.tournamentSettings?.isLeague
+				? ["LEAGUE", ...(row.tags ?? [])]
+				: (row.tags ?? []);
 
 			const isPastEvent =
 				databaseTimestampToDate(row.startsAt) < sub(new Date(), { days: 1 });
@@ -544,6 +547,7 @@ type CreateArgs = Pick<
 	requireSendouQParticipation?: boolean;
 	isRanked?: boolean;
 	isTest?: boolean;
+	isLeague?: boolean;
 	isDraft?: boolean;
 	isInvitational?: boolean;
 	enableNoScreenToggle?: boolean;
@@ -578,6 +582,7 @@ export async function insert(args: CreateArgs) {
 				thirdPlaceMatch: args.thirdPlaceMatch,
 				isRanked: args.isRanked,
 				isTest: args.isTest,
+				isLeague: args.isLeague,
 				isDraft: args.isDraft,
 				isInvitational: args.isInvitational,
 				enableNoScreenToggle: args.enableNoScreenToggle,
@@ -765,6 +770,7 @@ async function updateTournamentTables(
 		thirdPlaceMatch: args.thirdPlaceMatch,
 		isRanked: args.isRanked,
 		isTest: existingSettings.isTest, // this one is not editable after creation
+		isLeague: args.isLeague,
 		isDraft: args.isDraft,
 		isInvitational: args.isInvitational,
 		enableNoScreenToggle: args.enableNoScreenToggle,

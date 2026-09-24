@@ -1,5 +1,6 @@
 import clsx from "clsx";
 import {
+	CalendarClock,
 	ClipboardCheck,
 	LayoutGrid,
 	Medal,
@@ -29,6 +30,7 @@ type NavItemKey =
 	| "register"
 	| "brackets"
 	| "divisions"
+	| "matches"
 	| "teams"
 	| "streams"
 	| "results"
@@ -49,6 +51,7 @@ const PRIORITY_ORDER: NavItemKey[] = [
 	"register",
 	"brackets",
 	"divisions",
+	"matches",
 	"teams",
 	"results",
 	"lfg",
@@ -171,8 +174,8 @@ function useNavItems({
 		};
 	}
 
-	// a league's brackets are reached through its divisions page, one division at a time
-	if (tournament.isLeague) {
+	// a league with several divisions reaches its brackets through the divisions page, one division at a time
+	if (tournament.leagueDivisions.length > 1) {
 		items.divisions = {
 			key: "divisions",
 			label: t("tournament:nav.divisions"),
@@ -187,6 +190,16 @@ function useNavItems({
 			to: "brackets",
 			icon: <Trophy />,
 			testId: "brackets-tab",
+		};
+	}
+
+	if (tournament.isLeague && tournament.hasStarted) {
+		items.matches = {
+			key: "matches",
+			label: t("tournament:nav.matches"),
+			to: "matches",
+			icon: <CalendarClock />,
+			testId: "matches-tab",
 		};
 	}
 

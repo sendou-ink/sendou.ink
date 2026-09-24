@@ -7,6 +7,8 @@ import {
 	ACTION_TYPES,
 	WHO_SIDES,
 } from "~/features/tournament-bracket/tournament-bracket-constants";
+import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
+import { leagueScheduleSchemas } from "~/features/tournament-match/tournament-match-schemas";
 import {
 	_action,
 	checkboxValueToBoolean,
@@ -95,6 +97,7 @@ export const matchSchema = v.union([
 	}),
 	reportWeaponSchema,
 	undoWeaponReportSchema,
+	...leagueScheduleSchemas,
 ]);
 
 export const bracketIdx = v.pipe(
@@ -136,7 +139,18 @@ const tournamentRoundMaps = v.object({
 	type: v.picklist(["BEST_OF", "PLAY_ALL"]),
 	pickBan: v.nullish(v.picklist(PickBan.types)),
 	customFlow: customPickBanFlow,
+	isPlayableAt: v.nullish(v.pipe(v.number(), v.integer(), v.minValue(0))),
 });
+const tournamentRoundMapsList = preprocess(
+	safeJSONParse,
+	v.pipe(
+		v.array(tournamentRoundMaps),
+		v.check(
+			(maps) => LeagueScheduling.playableAtsAreAscending(maps),
+			"A round can't be playable before the round preceding it",
+		),
+	),
+);
 export const bracketSchema = v.union([
 	v.object({
 		_action: _action("START_BRACKET"),
@@ -145,12 +159,16 @@ export const bracketSchema = v.union([
 			preprocess(checkboxValueToBoolean, v.boolean()),
 			false,
 		),
-		maps: preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
+		isRealtime: v.optional(
+			preprocess(checkboxValueToBoolean, v.boolean()),
+			false,
+		),
+		maps: tournamentRoundMapsList,
 	}),
 	v.object({
 		_action: _action("PREPARE_MAPS"),
 		bracketIdx,
-		maps: preprocess(safeJSONParse, v.array(tournamentRoundMaps)),
+		maps: tournamentRoundMapsList,
 		thirdPlaceMatchLinked: v.optional(
 			preprocess(checkboxValueToBoolean, v.boolean()),
 			false,

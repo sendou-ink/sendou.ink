@@ -176,6 +176,7 @@
 	"match.banner.playAll": "打满 {{count}} 局",
 	"match.banner.vs": "对战",
 	"match.tabs.rosters": "名单",
+	"match.tabs.schedule": "",
 	"match.tabs.action": "操作",
 	"match.tabs.result": "结果",
 	"match.tabs.stats": "统计数据",

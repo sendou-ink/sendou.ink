@@ -42,6 +42,46 @@ type SeededSchedule = {
 
 const EMPTY_WEEK: WeekSchedule = [[], [], [], [], [], [], []];
 
+/** N-ZAP's league teammates: evenings in common with one of them out on Wednesday, so the set's board shows both full and one-short windows. */
+const LEAGUE_TEAMMATE_WEEKS: WeekSchedule[] = [
+	[
+		[["18:00", "23:00"]],
+		[["18:00", "23:00"]],
+		[["18:00", "23:00"]],
+		[["18:00", "23:00"]],
+		[["18:00", "23:00"]],
+		[["14:00", "23:00"]],
+		[["14:00", "22:00"]],
+	],
+	[
+		[["19:00", "22:00"]],
+		[["19:00", "23:00"]],
+		[],
+		[["18:00", "22:00"]],
+		[["19:00", "23:00"]],
+		[["12:00", "23:00"]],
+		[["12:00", "20:00"]],
+	],
+	[
+		[["17:00", "22:00"]],
+		[["18:00", "22:00"]],
+		[["18:00", "22:00"]],
+		[["18:00", "22:00"]],
+		[],
+		[["14:00", "22:00"]],
+		[["14:00", "22:00"]],
+	],
+	[
+		[["18:00", "22:00"]],
+		[["18:00", "23:00"]],
+		[["19:00", "22:00"]],
+		[["18:00", "23:00"]],
+		[["18:00", "23:00"]],
+		[["10:00", "23:00"]],
+		[],
+	],
+];
+
 const EVENINGS: WeekSchedule = [
 	[["18:00", "22:00"]],
 	[["18:00", "22:00"]],
@@ -194,6 +234,12 @@ export async function seedAvailability({
 			weekly: EVENINGS,
 			fillsNextWeek: true,
 		},
+		...tournaments.luti.nzapTeammateIds.map((userId, index) => ({
+			userId,
+			timezone: "Europe/Helsinki",
+			weekly: LEAGUE_TEAMMATE_WEEKS[index % LEAGUE_TEAMMATE_WEEKS.length],
+			fillsNextWeek: true,
+		})),
 	];
 
 	// the friends the admin could ask to sub are free when the tournament runs

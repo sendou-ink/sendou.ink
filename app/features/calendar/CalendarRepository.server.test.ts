@@ -237,3 +237,34 @@ describe("findAvatarImgIds", () => {
 		expect(await CalendarRepository.findAvatarImgIds({})).toEqual([]);
 	});
 });
+
+describe("findAllBetweenTwoTimestamps", () => {
+	const authorId = () => users.id(1);
+
+	beforeEach(async () => {
+		await users.create(1);
+	});
+
+	test("tags only leagues with the virtual LEAGUE tag, ahead of their own tags", async () => {
+		await TournamentFactory.create(
+			{ authorId: authorId(), name: "League", tags: ["SPECIAL"] },
+			{ isLeague: true },
+		);
+		await TournamentFactory.create({
+			authorId: authorId(),
+			name: "Tournament",
+			tags: ["SPECIAL"],
+		});
+
+		const days = await CalendarRepository.findAllBetweenTwoTimestamps({
+			startTime: sub(new Date(), { hours: 1 }),
+			endTime: new Date(Date.now() + 60 * 60 * 1000),
+		});
+		const tagsOf = (name: string) =>
+			days.flatMap((day) => day.events).find((event) => event.name === name)
+				?.tags;
+
+		expect(tagsOf("League")).toEqual(["LEAGUE", "SPECIAL"]);
+		expect(tagsOf("Tournament")).toEqual(["SPECIAL"]);
+	});
+});

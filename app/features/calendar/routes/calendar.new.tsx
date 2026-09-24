@@ -44,6 +44,7 @@ import {
 	defaultBracketsFormValues,
 	progressionToFormValues,
 } from "../calendar-progression-form";
+import type { CalendarEventTag } from "../calendar-types";
 import { datesToRegClosesAt } from "../calendar-utils";
 import { BracketProgressionFormFields } from "../components/BracketProgressionFormFields";
 import { loader } from "../loaders/calendar.new.server";
@@ -194,7 +195,7 @@ function useDefaultValues() {
 			? ""
 			: (data.eventToEdit?.bracketUrl ?? ""),
 		discordInviteCode: baseEvent?.discordInviteCode ?? "",
-		tags: baseEvent?.tags ?? [],
+		tags: (baseEvent?.tags ?? []).filter(isPickableTag),
 		badges: baseEvent?.badgePrizes?.map((b) => b.id) ?? [],
 		trophyId: baseEvent?.trophy?.id ?? null,
 		avatarImgId: existingImage(
@@ -222,6 +223,7 @@ function useDefaultValues() {
 		requireInGameNames: settings?.requireInGameNames ?? false,
 		isInvitational: settings?.isInvitational ?? false,
 		isTest: settings?.isTest ?? false,
+		isLeague: settings?.isLeague ?? false,
 		isDraft: settings?.isDraft ?? false,
 		requireSendouQParticipation: settings?.requireSendouQParticipation ?? false,
 	};
@@ -314,6 +316,7 @@ function CalendarNewFields() {
 					<FormField name="requireInGameNames" />
 					<FormField name="isInvitational" />
 					{!isEditing ? <FormField name="isTest" /> : null}
+					<FormField name="isLeague" />
 					<DraftField />
 					{isAdmin ? <FormField name="requireSendouQParticipation" /> : null}
 				</>
@@ -438,6 +441,13 @@ function MemberCountFields() {
 			) : null}
 		</>
 	);
+}
+
+/** The league tag is derived from the league setting, so the picker never holds it. */
+function isPickableTag(
+	tag: CalendarEventTag,
+): tag is Exclude<CalendarEventTag, "LEAGUE"> {
+	return tag !== "LEAGUE";
 }
 
 function DraftField() {

@@ -3,7 +3,7 @@ import { differenceInMinutes } from "date-fns";
 import { LocaleTime } from "~/components/LocaleTime";
 import type { TournamentRoundMaps } from "~/db/tables-json";
 import { useTournament } from "~/features/tournament/tournament-context";
-import { resolveLeagueRoundStartDate } from "~/features/tournament/tournament-utils";
+import { leagueRoundPlayableAt } from "~/features/tournament/tournament-utils";
 import { useAutoRerender } from "~/hooks/useAutoRerender";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { Unpacked } from "~/utils/types";
@@ -148,7 +148,7 @@ function useLeagueRoundStartDate(bracketIdx: number, roundId: number) {
 
 	if (!tournament.isLeague) return null;
 
-	return resolveLeagueRoundStartDate(
+	return leagueRoundPlayableAt(
 		tournament,
 		tournament.bracketByIdx(bracketIdx) ?? undefined,
 		roundId,

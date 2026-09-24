@@ -3,6 +3,7 @@ import * as ScrimPostFactory from "~/db/seed/factories/ScrimPostFactory";
 import * as TeamEventFactory from "~/db/seed/factories/TeamEventFactory";
 import * as TeamFactory from "~/db/seed/factories/TeamFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentMatchScheduleFactory from "~/db/seed/factories/TournamentMatchScheduleFactory";
 import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
@@ -28,6 +29,15 @@ const WINDOW = {
 	startsAt: WEEK_STARTS_AT,
 	endsAt: WEEK_STARTS_AT + 7 * DAY,
 };
+
+const ROUND_ROBIN: TournamentSettings["bracketProgression"] = [
+	{
+		name: "Groups",
+		type: "round_robin",
+		requiresCheckIn: false,
+		settings: {},
+	},
+];
 
 const DOUBLE_ELIMINATION: TournamentSettings["bracketProgression"] = [
 	{
@@ -223,6 +233,50 @@ describe("Commitments.busyBlocksByUserIds", () => {
 		});
 
 		expect(await blocksOf(memberId())).toBeUndefined();
+	});
+
+	test("a league set agreed to be played blocks both rosters for an hour", async () => {
+		const league = await TournamentFactory.create(
+			{
+				authorId: organizerId(),
+				startTimes: [WEEK_STARTS_AT - 7 * DAY],
+				bracketProgression: ROUND_ROBIN,
+				minMembersPerTeam: 1,
+			},
+			{ isLeague: true },
+		);
+		for (const userId of [memberId(), opponentId()]) {
+			await TournamentTeamFactory.create(
+				{ tournamentId: league.id, memberUserIds: [userId] },
+				{ isCheckedIn: true },
+			);
+		}
+		const [match] = await TournamentFactory.startBracket(league.id);
+		await TournamentMatchScheduleFactory.schedule({
+			matchId: match.id,
+			scheduledAt: WEEK_STARTS_AT + 2 * DAY,
+		});
+
+		for (const userId of [memberId(), opponentId()]) {
+			expect(await blocksOf(userId)).toEqual([
+				{
+					type: "tournament",
+					name: expect.any(String),
+					startsAt: WEEK_STARTS_AT + 2 * DAY,
+					endsAt: WEEK_STARTS_AT + 2 * DAY + HOUR,
+				},
+			]);
+		}
+
+		expect(
+			(
+				await Commitments.busyBlocksByUserIds({
+					userIds: [memberId()],
+					...WINDOW,
+					excludeTournamentId: league.id,
+				})
+			).get(memberId()),
+		).toBeUndefined();
 	});
 
 	test("a dropped-out team's registration is not a block", async () => {

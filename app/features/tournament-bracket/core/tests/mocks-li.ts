@@ -3,6 +3,7 @@ import type { TournamentData } from "../Tournament.server";
 /** Low Ink with groups (swiss) finished but none of the follow-up brackets started */
 export const LOW_INK_DECEMBER_2024 = (): TournamentData => ({
 	streams: [],
+	divisionTiers: [],
 	data: {
 		stage: [
 			{

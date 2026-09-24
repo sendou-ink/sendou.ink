@@ -176,6 +176,7 @@
 	"match.banner.playAll": "Jugar los {{count}}",
 	"match.banner.vs": "vs.",
 	"match.tabs.rosters": "Plantillas",
+	"match.tabs.schedule": "",
 	"match.tabs.action": "Acción",
 	"match.tabs.result": "Resultado",
 	"match.tabs.stats": "Estadísticas",

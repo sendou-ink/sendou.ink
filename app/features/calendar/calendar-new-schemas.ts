@@ -123,7 +123,8 @@ export const calendarNewBaseSchema = v.object({
 	}),
 	tags: checkboxGroup({
 		label: "labels.tags",
-		items: CALENDAR_EVENT.TAGS.map((tag) => ({
+		// derived from the league setting, never picked by hand
+		items: CALENDAR_EVENT.TAGS.filter((tag) => tag !== "LEAGUE").map((tag) => ({
 			value: tag,
 			label: `options.tag.${tag}` as const,
 		})),
@@ -188,6 +189,10 @@ export const calendarNewBaseSchema = v.object({
 		bottomText: "bottomTexts.invitational",
 	}),
 	isTest: toggle({ label: "labels.test", bottomText: "bottomTexts.test" }),
+	isLeague: toggle({
+		label: "labels.league",
+		bottomText: "bottomTexts.league",
+	}),
 	isDraft: toggle({
 		label: "labels.draft",
 		bottomText: "bottomTexts.draftInfo",

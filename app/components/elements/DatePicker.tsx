@@ -11,7 +11,8 @@ const DATETIME_INPUT_FORMAT = "yyyy-MM-dd'T'HH:mm";
 interface SendouDatePickerProps {
 	label: string;
 	value: Date | null;
-	onChange: (value: Date | null) => void;
+	/** `isBadInput` = the input holds a partial or impossible date, e.g. 31.9. */
+	onChange: (value: Date | null, meta: { isBadInput: boolean }) => void;
 	granularity?: "day" | "minute";
 	bottomText?: string;
 	errorText?: string;
@@ -53,7 +54,9 @@ export function SendouDatePicker({
 				type={granularity === "day" ? "date" : "datetime-local"}
 				value={inputValue}
 				onChange={(event) =>
-					onChange(parseInputValue(event.target.value, granularity))
+					onChange(parseInputValue(event.target.value, granularity), {
+						isBadInput: event.target.validity.badInput,
+					})
 				}
 				onBlur={() => onBlur?.()}
 				disabled={isDisabled}

@@ -15,6 +15,7 @@ import {
 	scrimsPage,
 	sendouQMatchPage,
 	teamSchedulePage,
+	tournamentMatchPage,
 	tournamentRegisterPage,
 	tournamentSubsPage,
 	tournamentTeamPage,
@@ -55,6 +56,9 @@ export const notificationNavIcon = (type: Notification["type"]) => {
 		case "TO_TEST_CREATED":
 		case "TO_LIKE_RECEIVED":
 		case "TO_LIKE_ACCEPTED":
+		case "TO_LEAGUE_TIMES_PROPOSED":
+		case "TO_LEAGUE_MATCH_SCHEDULED":
+		case "TO_LEAGUE_MATCH_STARTING_SOON":
 			return "medal";
 		case "SCRIM_NEW_REQUEST":
 		case "SCRIM_SCHEDULED":
@@ -142,6 +146,14 @@ export const notificationLink = (
 		case "TO_LIKE_RECEIVED":
 		case "TO_LIKE_ACCEPTED": {
 			return tournamentSubsPage(notification.meta.tournamentId);
+		}
+		case "TO_LEAGUE_TIMES_PROPOSED":
+		case "TO_LEAGUE_MATCH_SCHEDULED":
+		case "TO_LEAGUE_MATCH_STARTING_SOON": {
+			return tournamentMatchPage({
+				tournamentId: notification.meta.tournamentId,
+				matchId: notification.meta.matchId,
+			});
 		}
 		case "TEAM_EVENT_ADDED": {
 			return teamSchedulePage(notification.meta.teamCustomUrl);

@@ -268,6 +268,24 @@ export async function updateRoomExpiresAt(
 		.execute();
 }
 
+/** Sets rooms' expiry, e.g. to wind down league match rooms once their set is decided. */
+export async function updateRoomsExpiresAt(
+	roomIds: Array<number | null>,
+	expiresAt: Date,
+	trx?: Transaction<DB>,
+) {
+	const idsToUpdate = roomIds.filter((id) => id !== null);
+	if (idsToUpdate.length === 0) return;
+
+	const executor = trx ?? db;
+
+	await executor
+		.updateTable("ChatRoom")
+		.set({ expiresAt: dateToDatabaseTimestamp(expiresAt) })
+		.where("ChatRoom.id", "in", idsToUpdate)
+		.execute();
+}
+
 /** Marks rooms' owner activity as concluded, or active again (a reopened tournament match). */
 export async function updateRoomsInactive(
 	roomIds: Array<number | null>,

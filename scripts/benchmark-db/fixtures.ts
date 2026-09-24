@@ -38,6 +38,8 @@ export interface Fixtures {
 	heavyResultsTournamentId: number | null;
 	heavyTournamentMatchId: number | null;
 	tournamentMatchGameResultId: number | null;
+	/** Newest proposal of the match with the most schedule proposals. */
+	scheduleProposal: { id: number; matchId: number } | null;
 	heavyTournamentTeamId: number | null;
 	tournamentTeamPair: [number, number] | null;
 	tournamentTeamInviteCode: string | null;
@@ -164,6 +166,7 @@ export async function resolveFixtures(): Promise<Fixtures> {
 		heavyResultsTournamentId: await resolveHeavyResultsTournamentId(),
 		heavyTournamentMatchId: await resolveHeavyTournamentMatchId(),
 		tournamentMatchGameResultId: await resolveTournamentMatchGameResultId(),
+		scheduleProposal: await resolveScheduleProposal(),
 		heavyTournamentTeamId:
 			await resolveHeavyTournamentTeamId(heavyTournamentId),
 		tournamentTeamPair: await resolveTournamentTeamPair(heavyTournamentId),
@@ -494,6 +497,23 @@ async function resolveTournamentMatchGameResultId() {
 		.executeTakeFirst();
 
 	return row?.id ?? null;
+}
+
+async function resolveScheduleProposal() {
+	const row = await db
+		.selectFrom("TournamentMatchScheduleProposal")
+		.select(({ fn }) => [
+			"matchId",
+			fn.max("id").as("id"),
+			fn.countAll<number>().as("count"),
+		])
+		.groupBy("matchId")
+		.orderBy("count", "desc")
+		.limit(1)
+		.executeTakeFirst();
+	if (!row) return null;
+
+	return { id: row.id, matchId: row.matchId };
 }
 
 async function resolveHeavyTournamentTeamId(heavyTournamentId: number | null) {

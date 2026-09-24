@@ -3,6 +3,7 @@ import type { TournamentData } from "../Tournament.server";
 export const PADDLING_POOL_257 = () =>
 	({
 		streams: [],
+		divisionTiers: [],
 		data: {
 			stage: [
 				{
@@ -2551,6 +2552,7 @@ export const PADDLING_POOL_257 = () =>
 export const PADDLING_POOL_255 = () =>
 	({
 		streams: [],
+		divisionTiers: [],
 		data: {
 			stage: [
 				{
@@ -5144,6 +5146,7 @@ export const IN_THE_ZONE_32 = ({
 }) =>
 	({
 		streams: [],
+		divisionTiers: [],
 		data: {
 			stage: [
 				{

@@ -1,3 +1,4 @@
+import { addMinutes } from "date-fns";
 import { sql } from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
@@ -19,6 +20,7 @@ import { resolveMatchMapList } from "~/features/tournament-match/core/mapList.se
 import { reportScore } from "~/features/tournament-match/core/reportScore.server";
 import * as TournamentMatchRepository from "~/features/tournament-match/TournamentMatchRepository.server";
 import { invariant } from "~/utils/invariant";
+import { backdate } from "../core/backdate";
 import { defineFactory } from "../core/defineFactory";
 import { eventDefaults } from "./CalendarEventFactory";
 import * as TournamentTeamFactory from "./TournamentTeamFactory";
@@ -44,8 +46,11 @@ const ROUND_MAPS = {
 	})),
 } satisfies RoundMaps;
 
+/** How long a backdated game is assumed to take. */
+const MINUTES_PER_GAME = 8;
+
 /** The maps every round of a factory-started bracket is played on. */
-export type RoundMaps = Omit<Engine.RoundMapsInput, "roundId">;
+export type RoundMaps = Omit<Engine.RoundMapsInput, "roundId" | "isPlayableAt">;
 
 /** The wrapping calendar event is not the caller's to choose, so it is not an argument. */
 type InsertArgs = Omit<
@@ -56,8 +61,25 @@ type InsertArgs = Omit<
 type Options = {
 	/** Confirmed tier, as starting the first bracket computes one. */
 	tier?: TournamentTierNumber;
+	/** Confirmed tier per starting bracket, for a league whose divisions are tiered apart. */
+	tiers?: Record<number, TournamentTierNumber>;
 	/** Marks the tournament a league. Leagues have no creation UI, the flag is set straight in the db. */
 	isLeague?: boolean;
+};
+
+/** The maps of each round the factory starts, or one list every round shares; `isPlayableAt` is when a league round opens. */
+type StartBracketArgs = {
+	bracketIdx?: number;
+	maps?: RoundMaps | ((round: { number: number }) => RoundMaps);
+	isPlayableAt?: (roundNumber: number) => number | null;
+	/** Leagues: the bracket is played in real time, its sets are not scheduled. */
+	isRealtime?: boolean;
+};
+
+/** Which of the playable matches to play; every one of them by default. */
+type PlayMatchesFilter = {
+	roundNumbers?: number[];
+	matchIds?: number[];
 };
 
 /** Bracket idx(s) in the progression, or `"all"` = every bracket then finalize. */
@@ -80,7 +102,7 @@ export const { create } = defineFactory({
 
 		return { id: tournamentId, eventId };
 	},
-	applyOptions: async (tournament, { tier, isLeague }: Options) => {
+	applyOptions: async (tournament, { tier, tiers, isLeague }: Options) => {
 		if (isLeague) {
 			await db
 				.updateTable("Tournament")
@@ -91,13 +113,14 @@ export const { create } = defineFactory({
 				.execute();
 		}
 
-		if (!tier) return;
-
-		await TournamentRepository.upsertDivisionTier({
-			tournamentId: tournament.id,
-			bracketIdx: 0,
-			tier,
-		});
+		const tierByBracketIdx = { ...(tier ? { 0: tier } : {}), ...tiers };
+		for (const [bracketIdx, divisionTier] of Object.entries(tierByBracketIdx)) {
+			await TournamentRepository.upsertDivisionTier({
+				tournamentId: tournament.id,
+				bracketIdx: Number(bracketIdx),
+				tier: divisionTier,
+			});
+		}
 	},
 });
 
@@ -181,7 +204,9 @@ export async function startBracket(
 	{
 		bracketIdx = 0,
 		maps = ROUND_MAPS,
-	}: { bracketIdx?: number; maps?: RoundMaps } = {},
+		isPlayableAt,
+		isRealtime = false,
+	}: StartBracketArgs = {},
 ) {
 	const tournament = await tournamentFromDB(tournamentId);
 
@@ -195,6 +220,8 @@ export async function startBracket(
 		type: bracket.type,
 		seeding,
 		settings: bracket.settings,
+		independentRounds: tournament.isLeague && !isRealtime,
+		isRealtime,
 	};
 
 	await BracketRepository.insertBracket({
@@ -202,7 +229,12 @@ export async function startBracket(
 		name: bracket.name,
 		bracket: Engine.create({
 			...createInput,
-			maps: roundMapsFor(Engine.create(createInput), bracket.type, maps),
+			maps: roundMapsFor({
+				bracket: Engine.create(createInput),
+				type: bracket.type,
+				maps,
+				isPlayableAt,
+			}),
 		}),
 		isLeague: tournament.isLeague,
 	});
@@ -251,6 +283,7 @@ interface PlayedMatch {
 	id: number;
 	/** Index of the bracket the match belongs to in the progression. */
 	bracketIdx: number;
+	roundNumber: number;
 	/** Number of the bracket group the match belongs to, e.g. its round robin pool. */
 	groupNumber: number;
 	winnerTeamId: number;
@@ -263,10 +296,11 @@ interface PlayedMatch {
  */
 export async function playMatches(
 	tournamentId: number,
+	filter: PlayMatchesFilter = {},
 ): Promise<PlayedMatch[]> {
 	const tournament = await tournamentFromDB(tournamentId);
 
-	const played = playableMatches(tournament);
+	const played = playableMatches(tournament, filter);
 	for (const match of played) {
 		await setActiveRosters(tournamentId, match);
 		await playOutMatch(tournamentId, match);
@@ -336,7 +370,7 @@ async function generateNextSwissRound(
 		await BracketRepository.insertRoundMatches({
 			stageId,
 			round: round.value,
-			isLeague: tournament.isLeague,
+			hasScheduling: bracket.hasScheduling,
 		});
 		generated = true;
 	}
@@ -363,22 +397,33 @@ async function persistSeeds(
 	});
 }
 
-function roundMapsFor(
-	bracket: Engine.BracketData,
-	type: Engine.StageType,
-	maps: RoundMaps,
-): Engine.RoundMapsInput[] {
+function roundMapsFor({
+	bracket,
+	type,
+	maps,
+	isPlayableAt,
+}: {
+	bracket: Engine.BracketData;
+	type: Engine.StageType;
+	maps: NonNullable<StartBracketArgs["maps"]>;
+	isPlayableAt: StartBracketArgs["isPlayableAt"];
+}): Engine.RoundMapsInput[] {
 	// round robin and swiss share one map list per round number across their groups
 	const rounds =
 		type === "round_robin" || type === "swiss"
 			? R.uniqueBy(bracket.round, (round) => round.number)
 			: bracket.round;
 
-	return rounds.map((round) => ({ roundId: round.id, ...maps }));
+	return rounds.map((round) => ({
+		roundId: round.id,
+		...(typeof maps === "function" ? maps(round) : maps),
+		isPlayableAt: isPlayableAt?.(round.number) ?? null,
+	}));
 }
 
 function playableMatches(
 	tournament: Awaited<ReturnType<typeof tournamentFromDB>>,
+	filter: PlayMatchesFilter = {},
 ): PlayedMatch[] {
 	return tournament.brackets.flatMap((bracket, bracketIdx) => {
 		if (bracket.preview) return [];
@@ -386,15 +431,25 @@ function playableMatches(
 		const groupNumbers = new Map(
 			bracket.data.group.map((group) => [group.id, group.number]),
 		);
+		const roundNumbers = new Map(
+			bracket.data.round.map((round) => [round.id, round.number]),
+		);
 
 		return bracket.data.match
 			.filter((match) => bracket.matchStatus(match.id) === "STARTED")
+			.filter((match) => !filter.matchIds || filter.matchIds.includes(match.id))
+			.filter(
+				(match) =>
+					!filter.roundNumbers ||
+					filter.roundNumbers.includes(roundNumbers.get(match.roundId)!),
+			)
 			.flatMap((match) =>
 				match.opponent1?.id && match.opponent2?.id
 					? [
 							{
 								id: match.id,
 								bracketIdx,
+								roundNumber: roundNumbers.get(match.roundId)!,
 								groupNumber: groupNumbers.get(match.groupId)!,
 								winnerTeamId: match.opponent1.id,
 								loserTeamId: match.opponent2.id,
@@ -403,6 +458,24 @@ function playableMatches(
 					: [],
 			);
 	});
+}
+
+/** Moves a played match into the past: its start and every reported game, a few minutes apart. */
+export async function backdateMatch({
+	matchId,
+	playedAt,
+}: {
+	matchId: number;
+	playedAt: Date;
+}) {
+	await backdate("TournamentMatch", matchId, { startedAt: playedAt });
+
+	const results = await TournamentMatchRepository.findResultsByMatchId(matchId);
+	for (const [index, result] of results.entries()) {
+		await backdate("TournamentMatchGameResult", result.id, {
+			createdAt: addMinutes(playedAt, (index + 1) * MINUTES_PER_GAME),
+		});
+	}
 }
 
 async function setActiveRosters(tournamentId: number, match: PlayedMatch) {

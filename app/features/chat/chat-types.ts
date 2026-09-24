@@ -24,7 +24,11 @@ export type SystemMessageType =
 	| "MAP_PICKED"
 	| "MAP_BANNED"
 	| "MODE_PICKED"
-	| "MODE_BANNED";
+	| "MODE_BANNED"
+	| "LEAGUE_TIMES_PROPOSED"
+	| "LEAGUE_TIME_PICKED"
+	| "LEAGUE_RESCHEDULE_DECLINED"
+	| "LEAGUE_TIME_SET_BY_ORGANIZER";
 
 export type PersistedSystemMessageType = Extract<
 	SystemMessageType,
@@ -40,6 +44,10 @@ export type PersistedSystemMessageType = Extract<
 	| "MAP_BANNED"
 	| "MODE_PICKED"
 	| "MODE_BANNED"
+	| "LEAGUE_TIMES_PROPOSED"
+	| "LEAGUE_TIME_PICKED"
+	| "LEAGUE_RESCHEDULE_DECLINED"
+	| "LEAGUE_TIME_SET_BY_ORGANIZER"
 >;
 
 export type UnthrottledSystemMessageType = Extract<

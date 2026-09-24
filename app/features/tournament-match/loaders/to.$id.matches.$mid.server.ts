@@ -1,16 +1,18 @@
 import cachified from "@epic-web/cachified";
 import type { LoaderFunctionArgs } from "react-router";
+import type { WindowSchedule } from "~/features/availability/availability-types";
+import * as Availability from "~/features/availability/core/Availability";
+import * as VisibleSchedules from "~/features/availability/core/VisibleSchedules.server";
 import * as RouteChatRooms from "~/features/chat/RouteChatRooms.server";
+import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import * as ScannerIngestRepository from "~/features/scanner-ingest/ScannerIngestRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import * as TournamentTeamRepository from "~/features/tournament/TournamentTeamRepository.server";
-import {
-	isLeagueRoundLocked,
-	resolveLeagueRoundStartDate,
-} from "~/features/tournament/tournament-utils";
+import type { Bracket } from "~/features/tournament-bracket/core/Bracket";
 import { matchEndedEarly } from "~/features/tournament-bracket/core/engine";
 import * as PickBan from "~/features/tournament-bracket/core/PickBan";
+import type { Tournament } from "~/features/tournament-bracket/core/Tournament";
 import {
 	tournamentFromParams,
 	tournamentTeamsFullCached,
@@ -19,12 +21,13 @@ import { matchPageParamsSchema } from "~/features/tournament-bracket/tournament-
 import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { cache, IN_MILLISECONDS, ttl } from "~/utils/cache.server";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { databaseTimestampNow } from "~/utils/dates";
 import { IS_E2E_TEST_RUN } from "~/utils/e2e";
 import { logger } from "~/utils/logger";
 import type { SerializeFrom } from "~/utils/remix";
 import { notFoundIfNullish, parseParams } from "~/utils/remix.server";
 import { executeRoll } from "../core/executeRoll.server";
+import * as LeagueScheduling from "../core/LeagueScheduling";
 import { mapListFromResults, resolveMapList } from "../core/mapList.server";
 import * as TournamentMatchRepository from "../TournamentMatchRepository.server";
 
@@ -164,24 +167,26 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 	const isTournamentStaff = tournament.isOrganizer(user);
 
 	const isParticipant = match.players.some((p) => p.id === user?.id);
-	const leagueRoundLocked = isLeagueRoundLocked(tournament, match.roundId);
+
+	const bracketIdx = tournament.matchIdToBracketIdx(matchId);
+	const bracket =
+		typeof bracketIdx === "number" ? tournament.bracketByIdx(bracketIdx) : null;
+
+	const schedule = await resolveLeagueSchedule({
+		tournament,
+		match,
+		bracket,
+		user,
+		isParticipant,
+		matchIsOver,
+	});
+
 	const canJoin =
 		!matchIsOver &&
 		match.opponentOne?.id != null &&
 		match.opponentTwo?.id != null &&
 		(isParticipant || tournament.isOrganizerOrStreamer(user)) &&
-		!leagueRoundLocked;
-
-	const bracketIdx = tournament.matchIdToBracketIdx(matchId);
-	const bracket =
-		typeof bracketIdx === "number" ? tournament.bracketByIdx(bracketIdx) : null;
-	const leagueRoundStartDate = leagueRoundLocked
-		? resolveLeagueRoundStartDate(
-				tournament,
-				bracket ?? undefined,
-				match.roundId,
-			)
-		: null;
+		(schedule.phase === "CLOSED" || schedule.phase === "SCHEDULED");
 
 	return {
 		...(await UserCardRepository.findAllByUserIdsCached({
@@ -217,6 +222,7 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 				: [],
 		),
 		canJoin,
+		schedule,
 		// the views can't derive these themselves, the layout ships no bracket match data
 		bracketContext: {
 			bracketIdx,
@@ -230,10 +236,6 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 			),
 			names: tournament.matchContextNamesById(matchId),
 			canBeReopened: tournament.matchCanBeReopened(matchId),
-			leagueRoundLocked,
-			leagueRoundStartDate: leagueRoundStartDate
-				? dateToDatabaseTimestamp(leagueRoundStartDate)
-				: null,
 		},
 		pickBanEventCount: pickBanEvents.length,
 		pickBanEvents: pickBanEvents.map((e) => ({
@@ -244,3 +246,156 @@ export const loader = async ({ params }: LoaderFunctionArgs) => {
 		})),
 	};
 };
+
+const WEEK_SECONDS = 7 * 24 * 60 * 60;
+
+/**
+ * Where the set is in the league scheduling flow. The candidate board is only for the two teams
+ * and organizers/streamers, the availability panel only for the viewer's own team.
+ */
+async function resolveLeagueSchedule({
+	tournament,
+	match,
+	bracket,
+	user,
+	isParticipant,
+	matchIsOver,
+}: {
+	tournament: Tournament;
+	match: NonNullable<TournamentMatchRepository.FindMatchById>;
+	bracket: Bracket | null;
+	user: { id: number } | undefined;
+	isParticipant: boolean;
+	matchIsOver: boolean;
+}) {
+	const now = databaseTimestampNow();
+	const hasScheduling = bracket?.hasScheduling ?? false;
+	const isPlayableAt = hasScheduling ? match.roundIsPlayableAt : null;
+	const phase = LeagueScheduling.phase({
+		hasScheduling,
+		isOver: matchIsOver,
+		hasBothTeams: Boolean(match.opponentOne?.id && match.opponentTwo?.id),
+		isPlayableAt,
+		scheduledAt: match.scheduledAt,
+		now,
+	});
+	const ownTeamId =
+		match.players.find((player) => player.id === user?.id)?.tournamentTeamId ??
+		null;
+	const canSeeBoard =
+		hasScheduling && (isParticipant || tournament.isOrganizerOrStreamer(user));
+	const boardOpen = phase !== "CLOSED" && phase !== "NOT_OPEN";
+
+	if (hasScheduling && user) {
+		for (const type of [
+			"TO_LEAGUE_TIMES_PROPOSED",
+			"TO_LEAGUE_MATCH_SCHEDULED",
+			"TO_LEAGUE_MATCH_STARTING_SOON",
+		] as const) {
+			await resolveNotifications({
+				userIds: [user.id],
+				type,
+				meta: { matchId: match.id },
+			});
+		}
+	}
+
+	return {
+		hasScheduling,
+		phase,
+		now,
+		isPlayableAt,
+		opensAt: LeagueScheduling.opensAt(isPlayableAt),
+		scheduledAt: match.scheduledAt,
+		scheduleSetByOrganizer: Boolean(match.scheduleSetByOrganizer),
+		ownTeamId,
+		canSeeBoard,
+		proposals:
+			canSeeBoard && boardOpen
+				? await TournamentMatchRepository.findScheduleProposalsByMatchId(
+						match.id,
+					)
+				: [],
+		availability:
+			user && ownTeamId && boardOpen
+				? await ownTeamAvailability({
+						tournament,
+						viewerId: user.id,
+						ownTeamId,
+						window: LeagueScheduling.availabilityWindow({
+							now,
+							isPlayableAt,
+							nextIsPlayableAt: nextRoundPlayableAt(bracket, match),
+						}),
+					})
+				: null,
+	};
+}
+
+function nextRoundPlayableAt(
+	bracket: Bracket | null,
+	match: NonNullable<TournamentMatchRepository.FindMatchById>,
+) {
+	const round = bracket?.data.round.find((r) => r.id === match.roundId);
+	if (!round) return null;
+
+	return (
+		bracket?.data.round.find(
+			(r) =>
+				r.groupId === round.groupId &&
+				r.section === round.section &&
+				r.number === round.number + 1,
+		)?.isPlayableAt ?? null
+	);
+}
+
+/** Every member of the viewer's own team, sharing implied by the roster. The set's own league doesn't count as busy. */
+async function ownTeamAvailability({
+	tournament,
+	viewerId,
+	ownTeamId,
+	window,
+}: {
+	tournament: Tournament;
+	viewerId: number;
+	ownTeamId: number;
+	window: { startsAt: number; endsAt: number };
+}) {
+	const memberUserIds = tournament.teamById(ownTeamId)?.memberUserIds ?? [];
+
+	const { reportedWeeks, busyByUserId } = await VisibleSchedules.findByUserIds({
+		userIds: memberUserIds,
+		viewerId,
+		...window,
+		excludeTournamentId: tournament.ctx.id,
+		bypassVisibility: true,
+	});
+
+	return {
+		window,
+		minPlayers: tournament.minMembersPerTeam,
+		members: memberUserIds.map((userId): WindowSchedule => {
+			const memberWeeks = reportedWeeks.filter(
+				(week) => week.userId === userId,
+			);
+			const busy = busyByUserId.get(userId) ?? [];
+
+			return {
+				userId,
+				reported: memberWeeks.some(
+					(week) =>
+						week.weekStartsAt < window.endsAt &&
+						week.weekStartsAt + WEEK_SECONDS > window.startsAt,
+				),
+				ranges: Availability.subtract(
+					Availability.clip(
+						memberWeeks.flatMap((week) => week.slots),
+						window,
+					),
+					busy,
+				),
+				busy: busy.filter((block) => Availability.overlaps(block, window)),
+			};
+		}),
+	};
+}

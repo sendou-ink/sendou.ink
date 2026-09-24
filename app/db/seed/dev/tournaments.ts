@@ -1,19 +1,27 @@
-import { sub } from "date-fns";
+import { addDays, addHours, addWeeks, sub, subWeeks } from "date-fns";
 import type { TeamPickSettings, TournamentSettings } from "~/db/tables-json";
+import * as Availability from "~/features/availability/core/Availability";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import { BANNED_MAPS } from "~/features/match-profile/banned-maps";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
+import { tournamentFromDB } from "~/features/tournament-bracket/core/Tournament.server";
+import * as LeagueScheduling from "~/features/tournament-match/core/LeagueScheduling";
 import { rankedModesShort } from "~/modules/in-game-lists/modes";
 import { stageIds } from "~/modules/in-game-lists/stage-ids";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	databaseTimestampToDate,
+	dateToDatabaseTimestamp,
+} from "~/utils/dates";
 import { faker, unique } from "../core/faker";
 import * as showcaseNames from "../core/showcaseNames";
 import * as ImageFactory from "../factories/ImageFactory";
 import * as SavedCalendarEventFactory from "../factories/SavedCalendarEventFactory";
 import * as TournamentFactory from "../factories/TournamentFactory";
 import * as TournamentLFGTeamFactory from "../factories/TournamentLFGTeamFactory";
+import * as TournamentMatchScheduleFactory from "../factories/TournamentMatchScheduleFactory";
+import * as TournamentStaffFactory from "../factories/TournamentStaffFactory";
 import * as TournamentStreamerFactory from "../factories/TournamentStreamerFactory";
 import * as TournamentTeamFactory from "../factories/TournamentTeamFactory";
 import type { SeededBadges } from "./badges";
@@ -48,6 +56,22 @@ const TOURNAMENT_NAME_STEMS = [
 	{ name: "The Depths", avatarFileName: "the-depths.png" },
 	{ name: "Leagues Under The Ink", avatarFileName: "luti.png" },
 ];
+
+/** The season in progress; the players' divisions come from the one before it. */
+const LUTI_SEASON_IN_PROGRESS = 18;
+/** Prod runs 13 divisions of 12–48 teams, the seed keeps three worth of every scheduling state. */
+const LUTI_DIVISIONS = [
+	{ name: "Division X", teamCount: 6, tier: 1 as TournamentTierNumber },
+	{ name: "Division 1", teamCount: 12, tier: 3 as TournamentTierNumber },
+	{ name: "Division 2", teamCount: 12, tier: 6 as TournamentTierNumber },
+];
+const LUTI_TEAMS_PER_GROUP = 6;
+/** The round being played this week; the ones before it are done, the ones after not open. */
+const LUTI_CURRENT_ROUND = 3;
+const LUTI_BEST_OF = 9;
+const LUTI_MODE_CYCLE: ModeShort[] = ["SZ", "TC", "RM", "CB"];
+const LUTI_MIN_MEMBERS = 4;
+const LUTI_MAX_MEMBERS = 8;
 
 const HISTORICAL_COUNT = 5;
 /** Showcase users seeded into every played tournament, so their results paginate. */
@@ -149,6 +173,17 @@ export type SeededTournaments = {
 	};
 	/** Teams N-ZAP played on in the tournaments that were played to the end. */
 	nzapTeamIds: number[];
+	/** The league in progress, with the pieces other seeds hang their data on. */
+	luti: {
+		id: number;
+		name: string;
+		/** N-ZAP's set of the current round, the one with the other team's candidates on the board. */
+		nzapMatchId: number;
+		nzapOpponentTeamName: string;
+		nzapTeammateIds: number[];
+		/** Members streaming a set that is live right now. */
+		streamerUserIds: number[];
+	};
 };
 
 export async function seedTournaments({
@@ -165,6 +200,8 @@ export async function seedTournaments({
 	trophies: SeededTrophies;
 }): Promise<SeededTournaments> {
 	const rosters = rosterBuilder(users, teams);
+	// editions of a series share one logo image, an image row not being allowed the url of another
+	const seriesLogoImgIds = new Map<string, number>();
 
 	const inTheZone = await seedInTheZone({
 		users,
@@ -176,6 +213,12 @@ export async function seedTournaments({
 	await seedPaddlingPool({ users, organizations, rosters });
 	await seedLowInk({ users, organizations, rosters });
 	await seedSwimOrSink({ users, organizations, rosters });
+	const luti = await seedLuti({
+		users,
+		organizations,
+		rosters,
+		seriesLogoImgIds,
+	});
 
 	const nzapTeamIds = await seedHistoricalTournaments({
 		users,
@@ -183,9 +226,10 @@ export async function seedTournaments({
 		badges,
 		rosters,
 		trophies,
+		seriesLogoImgIds,
 	});
 
-	return { regOpen: inTheZone, nzapTeamIds };
+	return { regOpen: inTheZone, nzapTeamIds, luti };
 }
 
 type Ctx = {
@@ -352,14 +396,337 @@ async function seedSwimOrSink({ users, rosters }: Ctx) {
 	});
 }
 
+/**
+ * #5 LUTI in progress, mirroring prod: an org's league of three divisions, each a round robin feeding
+ * playoffs, five weekly rounds on Bo9 TO map lists. Rounds 1–2 are played, round 3 is this week's with
+ * every scheduling state on show (N-ZAP has the other team's candidates waiting, the admin organizes
+ * and plays a set scheduled for tomorrow), rounds 4–5 are not open yet.
+ */
+async function seedLuti({
+	users,
+	organizations,
+	rosters,
+	seriesLogoImgIds,
+}: Ctx & { seriesLogoImgIds: Map<string, number> }) {
+	const now = new Date();
+	const thisMonday = databaseTimestampToDate(
+		Availability.weekStartsAt(now, "UTC"),
+	);
+	const roundMonday = (roundNumber: number) =>
+		addWeeks(thisMonday, roundNumber - LUTI_CURRENT_ROUND);
+	const startsAt = addHours(roundMonday(1), 8);
+	const name = `LUTI: Season ${LUTI_SEASON_IN_PROGRESS}`;
+
+	const tournament = await TournamentFactory.create(
+		{
+			name,
+			authorId: users.adminId,
+			organizationId: organizations.find(
+				(organization) => organization.name === "Leagues Under The Ink",
+			)?.id,
+			avatarImgId: await seriesLogoImgId(
+				seriesLogoImgIds,
+				TOURNAMENT_NAME_STEMS[2],
+				users.adminId,
+			),
+			startTimes: [dateToDatabaseTimestamp(startsAt)],
+			regClosesAt: dateToDatabaseTimestamp(subWeeks(startsAt, 1)),
+			mapPickingStyle: "TO",
+			mapPoolMaps: toSetMapPool(),
+			bracketProgression: lutiProgression(),
+			minMembersPerTeam: LUTI_MIN_MEMBERS,
+			maxMembersPerTeam: LUTI_MAX_MEMBERS,
+			isRanked: false,
+		},
+		{
+			isLeague: true,
+			tiers: Object.fromEntries(
+				LUTI_DIVISIONS.map((division, index) => [index * 2, division.tier]),
+			),
+		},
+	);
+
+	const teamCount = LUTI_DIVISIONS.reduce(
+		(sum, division) => sum + division.teamCount,
+		0,
+	);
+	const nzapTeamIdx = LUTI_DIVISIONS[0].teamCount;
+	const teamRosters = rosters.take({
+		teamCount,
+		teamSize: LUTI_MAX_MEMBERS,
+		// the admin's team plays Division X, N-ZAP's opens Division 1
+		pinned: [
+			{ teamIdx: 0, userId: users.adminId },
+			{ teamIdx: nzapTeamIdx, userId: users.nzapId },
+		],
+	});
+
+	const divisionOfTeamIdx = (teamIdx: number) => {
+		let firstIdxOfDivision = 0;
+		for (const [index, division] of LUTI_DIVISIONS.entries()) {
+			if (teamIdx < firstIdxOfDivision + division.teamCount) return index;
+			firstIdxOfDivision += division.teamCount;
+		}
+		throw new Error(`No division for team ${teamIdx}`);
+	};
+
+	const teams: Awaited<ReturnType<typeof TournamentTeamFactory.create>>[] = [];
+	for (const [i, roster] of teamRosters.entries()) {
+		const memberUserIds = roster.memberUserIds.slice(
+			0,
+			LUTI_MIN_MEMBERS + (i % (LUTI_MAX_MEMBERS - LUTI_MIN_MEMBERS + 1)),
+		);
+		teams.push(
+			await TournamentTeamFactory.create(
+				{
+					tournamentId: tournament.id,
+					team: fakeTeamProfile(roster),
+					memberUserIds,
+					registeredAt: sub(startsAt, { days: 10 + (i % 5) }),
+					hasAvatar: roster.teamId === null && i % 4 === 0,
+				},
+				{ isCheckedIn: true, startingBracketIdx: divisionOfTeamIdx(i) * 2 },
+			),
+		);
+	}
+
+	await TournamentStaffFactory.create({
+		tournamentId: tournament.id,
+		userId: users.showcaseIds[96],
+		role: "STREAMER",
+	});
+	await TournamentStreamerFactory.create({
+		tournamentId: tournament.id,
+		twitchAccount: "luti_cast",
+	});
+
+	for (const [index] of LUTI_DIVISIONS.entries()) {
+		await TournamentFactory.startBracket(tournament.id, {
+			bracketIdx: index * 2,
+			maps: lutiRoundMaps,
+			isPlayableAt: (roundNumber) =>
+				LeagueScheduling.playableAtFromDate(roundMonday(roundNumber)),
+		});
+	}
+
+	const started = await tournamentFromDB(tournament.id);
+	const setsOf = (divisionIndex: number, roundNumber: number) => {
+		const bracket = started.bracketByIdx(divisionIndex * 2);
+		if (!bracket) throw new Error(`Division ${divisionIndex} not started`);
+		const roundIds = bracket.data.round
+			.filter((round) => round.number === roundNumber)
+			.map((round) => round.id);
+
+		return bracket.data.match.filter((match) =>
+			roundIds.includes(match.roundId),
+		);
+	};
+	const teamIdsOf = (match: {
+		opponent1: { id: number | null } | null;
+		opponent2: { id: number | null } | null;
+	}) =>
+		[match.opponent1?.id, match.opponent2?.id].filter(
+			(id): id is number => typeof id === "number",
+		);
+	const memberIdsOf = (teamId: number) =>
+		teams.find((team) => team.id === teamId)?.memberUserIds ?? [];
+	const nameOf = (teamId: number) => started.teamById(teamId)?.name ?? "";
+
+	// Division 2 has two round 2 stragglers, the rest of rounds 1–2 got played on their week
+	const stragglerIds = setsOf(2, 2)
+		.slice(0, 2)
+		.map((match) => match.id);
+	for (const roundNumber of [1, 2]) {
+		const played = await TournamentFactory.playMatches(tournament.id, {
+			roundNumbers: [roundNumber],
+			matchIds: LUTI_DIVISIONS.flatMap((_, divisionIndex) =>
+				setsOf(divisionIndex, roundNumber)
+					.map((match) => match.id)
+					.filter((id) => !stragglerIds.includes(id)),
+			),
+		});
+		for (const [i, match] of played.entries()) {
+			await TournamentFactory.backdateMatch({
+				matchId: match.id,
+				playedAt: addHours(
+					addDays(roundMonday(roundNumber), 1 + (i % 5)),
+					17 + (i % 4),
+				),
+			});
+		}
+	}
+
+	const at = (daysFromMonday: number, hour: number) =>
+		dateToDatabaseTimestamp(
+			addHours(addDays(thisMonday, daysFromMonday), hour),
+		);
+	const nowAt = dateToDatabaseTimestamp(now);
+	const streamerUserIds: number[] = [];
+
+	// Division X: every set scheduled, one of them live right now
+	const [xLive, xAdmin, xLater] = setsOf(0, LUTI_CURRENT_ROUND).toSorted(
+		(a, b) =>
+			Number(teamIdsOf(a).includes(teams[0].id)) -
+			Number(teamIdsOf(b).includes(teams[0].id)),
+	);
+	await TournamentMatchScheduleFactory.schedule({
+		matchId: xLive.id,
+		scheduledAt: nowAt - 10 * 60,
+	});
+	streamerUserIds.push(memberIdsOf(teamIdsOf(xLive)[0])[1]);
+	await TournamentMatchScheduleFactory.schedule({
+		matchId: xAdmin.id,
+		scheduledAt: dateToDatabaseTimestamp(
+			new Date(
+				Date.UTC(
+					now.getUTCFullYear(),
+					now.getUTCMonth(),
+					now.getUTCDate() + 1,
+					19,
+				),
+			),
+		),
+	});
+	await TournamentMatchScheduleFactory.schedule({
+		matchId: xLater.id,
+		scheduledAt: at(5, 20),
+	});
+
+	// Division 1: N-ZAP's set has the other team's candidates waiting, the rest spread over every state
+	const nzapTeamId = teams[nzapTeamIdx].id;
+	const [nzapSet, ...otherSets] = setsOf(1, LUTI_CURRENT_ROUND).toSorted(
+		(a, b) =>
+			Number(teamIdsOf(b).includes(nzapTeamId)) -
+			Number(teamIdsOf(a).includes(nzapTeamId)),
+	);
+	const nzapOpponentId = teamIdsOf(nzapSet).find((id) => id !== nzapTeamId)!;
+	await TournamentMatchScheduleFactory.propose({
+		matchId: nzapSet.id,
+		tournamentTeamId: nzapOpponentId,
+		authorId: memberIdsOf(nzapOpponentId)[0],
+		proposedAts: [at(1, 20), at(3, 19)],
+		createdAt: sub(now, { days: 1 }),
+	});
+	const [playedSet, scheduledSet, organizerSet, liveSet, castSet] = otherSets;
+	if (playedSet) {
+		await TournamentFactory.playMatches(tournament.id, {
+			matchIds: [playedSet.id],
+		});
+		await TournamentFactory.backdateMatch({
+			matchId: playedSet.id,
+			playedAt: sub(now, { days: 1, hours: 2 }),
+		});
+	}
+	if (scheduledSet) {
+		await TournamentMatchScheduleFactory.schedule({
+			matchId: scheduledSet.id,
+			scheduledAt: at(4, 19),
+		});
+	}
+	if (organizerSet) {
+		await TournamentMatchScheduleFactory.schedule({
+			matchId: organizerSet.id,
+			scheduledAt: at(5, 18),
+			byOrganizer: true,
+		});
+	}
+	if (liveSet) {
+		await TournamentMatchScheduleFactory.schedule({
+			matchId: liveSet.id,
+			scheduledAt: nowAt - 5 * 60,
+		});
+		streamerUserIds.push(memberIdsOf(teamIdsOf(liveSet)[1])[0]);
+	}
+	if (castSet) {
+		await TournamentMatchScheduleFactory.schedule({
+			matchId: castSet.id,
+			scheduledAt: nowAt + 26 * 60 * 60,
+		});
+		await TournamentFactory.castMatch({
+			tournamentId: tournament.id,
+			matchId: castSet.id,
+			twitchAccount: "luti_cast",
+		});
+	}
+
+	// Division 2: half unscheduled and quiet, one board with both teams' candidates, the rest scheduled
+	const [bothProposed, scheduledA, scheduledB] = setsOf(2, LUTI_CURRENT_ROUND);
+	for (const [index, teamId] of teamIdsOf(bothProposed).entries()) {
+		await TournamentMatchScheduleFactory.propose({
+			matchId: bothProposed.id,
+			tournamentTeamId: teamId,
+			authorId: memberIdsOf(teamId)[0],
+			proposedAts: [at(2 + index, 20), at(4 + index, 19)],
+			createdAt: sub(now, { hours: 20 - index * 6 }),
+		});
+	}
+	await TournamentMatchScheduleFactory.schedule({
+		matchId: scheduledA.id,
+		scheduledAt: at(3, 20),
+	});
+	await TournamentMatchScheduleFactory.schedule({
+		matchId: scheduledB.id,
+		scheduledAt: at(6, 17),
+	});
+
+	return {
+		id: tournament.id,
+		name,
+		nzapMatchId: nzapSet.id,
+		nzapOpponentTeamName: nameOf(nzapOpponentId),
+		nzapTeammateIds: teams[nzapTeamIdx].memberUserIds.filter(
+			(userId) => userId !== users.nzapId,
+		),
+		streamerUserIds,
+	};
+}
+
+/** Every division is a round robin whose top two go on to its playoffs. */
+function lutiProgression(): Progression {
+	return LUTI_DIVISIONS.flatMap((division, index) => [
+		{
+			type: "round_robin" as const,
+			name: division.name,
+			requiresCheckIn: false,
+			settings: { teamsPerGroup: LUTI_TEAMS_PER_GROUP },
+		},
+		{
+			type: "single_elimination" as const,
+			name: `${division.name} Playoffs`,
+			requiresCheckIn: false,
+			settings: {},
+			sources: [{ bracketIdx: index * 2, placements: [1, 2] }],
+		},
+	]);
+}
+
+/** Bo9 TO map lists cycling the modes, a different list per round. */
+function lutiRoundMaps(round: { number: number }): TournamentFactory.RoundMaps {
+	return {
+		count: LUTI_BEST_OF,
+		type: "BEST_OF",
+		list: Array.from({ length: LUTI_BEST_OF }, (_, i) => {
+			const mode =
+				LUTI_MODE_CYCLE[(round.number - 1 + i) % LUTI_MODE_CYCLE.length];
+			const stages = legalStages(mode);
+
+			return { mode, stageId: stages[(round.number * 3 + i) % stages.length] };
+		}),
+	};
+}
+
 async function seedHistoricalTournaments({
 	users,
 	badges,
 	rosters,
 	trophies,
-}: Ctx & { badges: SeededBadges; trophies: SeededTrophies }) {
+	seriesLogoImgIds,
+}: Ctx & {
+	badges: SeededBadges;
+	trophies: SeededTrophies;
+	seriesLogoImgIds: Map<string, number>;
+}) {
 	const nzapTeamIds: number[] = [];
-	const seriesLogoImgIds = new Map<string, number>();
 
 	for (let i = 0; i < HISTORICAL_COUNT; i++) {
 		const progression = faker.helpers.weightedArrayElement([

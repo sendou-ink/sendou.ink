@@ -34,5 +34,24 @@ export async function seedOrganizations(
 		},
 	);
 
-	return [{ id: created.id, name: "sendou.ink", seriesNames: ["PICNIC"] }];
+	const luti = await TournamentOrganizationFactory.create(
+		{ name: "Leagues Under The Ink", ownerId: users.orgAdminId },
+		{
+			description: "The long-running Splatoon league, one season at a time",
+			series: [
+				{
+					name: "LUTI",
+					description: "Seasons of Leagues Under The Ink",
+					showLeaderboard: false,
+				},
+			],
+			members: [{ userId: users.adminId, role: "ADMIN" }],
+			isEstablished: true,
+		},
+	);
+
+	return [
+		{ id: created.id, name: "sendou.ink", seriesNames: ["PICNIC"] },
+		{ id: luti.id, name: "Leagues Under The Ink", seriesNames: ["LUTI"] },
+	];
 }

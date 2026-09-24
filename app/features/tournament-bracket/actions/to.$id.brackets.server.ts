@@ -75,12 +75,17 @@ export const action: ActionFunction = async ({ params, request }) => {
 				"Mode order includes a mode not played in the tournament",
 			);
 
-			const maps = hasThirdPlaceMatch
+			const isRealtime = tournament.isLeague && data.isRealtime;
+
+			const linkedMaps = hasThirdPlaceMatch
 				? adjustLinkedRounds({
 						maps: data.maps,
 						thirdPlaceMatchLinked: data.thirdPlaceMatchLinked,
 					})
 				: data.maps;
+			const maps = isRealtime
+				? linkedMaps.map((round) => ({ ...round, isPlayableAt: null }))
+				: linkedMaps;
 
 			const abDivisions =
 				bracket.type === "round_robin" && bracket.settings?.hasAbDivisions
@@ -103,7 +108,8 @@ export const action: ActionFunction = async ({ params, request }) => {
 				type: bracket.type,
 				seeding,
 				settings: bracket.settings,
-				independentRounds: tournament.isLeague,
+				independentRounds: tournament.isLeague && !isRealtime,
+				isRealtime,
 				abDivisions,
 				maps,
 			});
@@ -261,7 +267,7 @@ export const action: ActionFunction = async ({ params, request }) => {
 			await BracketRepository.insertRoundMatches({
 				stageId,
 				round: round.value,
-				isLeague: tournament.isLeague,
+				hasScheduling: bracket.hasScheduling,
 			});
 
 			emitTournamentUpdate = true;

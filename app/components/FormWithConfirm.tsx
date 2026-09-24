@@ -130,7 +130,10 @@ export function FormWithConfirm({
 			</SendouDialog>
 			{children
 				? React.cloneElement(children, {
-						onClick: openDialog,
+						onClick: () => {
+							children.props.onClick?.();
+							openDialog();
+						},
 						type: "button",
 					})
 				: null}

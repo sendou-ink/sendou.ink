@@ -2,7 +2,7 @@ import { subMinutes } from "date-fns";
 import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { expect, impersonate, test } from "./helpers/playwright";
-import { TournamentDivisionsPage } from "./pages/tournament/tournament-divisions-page";
+import { TournamentBracketsPage } from "./pages/tournament/tournament-brackets-page";
 import { TournamentSeedsPage } from "./pages/tournament/tournament-seeds-page";
 
 const TEAMS_PER_DIVISION = 6;
@@ -65,16 +65,9 @@ test.describe("Tournament A/B divisions", () => {
 
 		await seeds.saveAbDivisions();
 
-		// a league's brackets are reached through its divisions page
-		const divisions = new TournamentDivisionsPage(page);
-		await divisions.goto(tournament.id);
-
-		await expect(divisions.locators.divisionLinks).toHaveCount(1);
-		await expect(divisions.divisionLink("Groups stage")).toContainText(
-			`${teamCount} teams`,
-		);
-
-		const brackets = await divisions.openDivision("Groups stage");
+		// a one-division league has no divisions page, its brackets page is the one
+		const brackets = new TournamentBracketsPage(page);
+		await brackets.goto(tournament.id);
 		await brackets.finalize();
 
 		await expect(brackets.locators.bracketsViewer).toBeVisible();

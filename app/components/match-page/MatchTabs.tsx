@@ -1,4 +1,11 @@
-import { BarChart3, Key, ScrollText, Tally5, Users } from "lucide-react";
+import {
+	BarChart3,
+	CalendarClock,
+	Key,
+	ScrollText,
+	Tally5,
+	Users,
+} from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useSearchParam } from "~/modules/search-params/hooks";
@@ -13,10 +20,13 @@ interface MatchTabsProps {
 	tabs: Array<MatchTabsKey>;
 	/** tabs showing a warning-colored alert icon */
 	alertTabs?: Array<MatchTabsKey>;
+	/** the tab opened without one in the URL; the first one otherwise */
+	defaultTab?: MatchTabsKey;
 }
 
 export const TAB_KEYS = {
 	ROSTERS: "rosters",
+	SCHEDULE: "schedule",
 	ACTION: "action",
 	RESULT: "result",
 	STATS: "stats",
@@ -25,6 +35,7 @@ export const TAB_KEYS = {
 
 const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 	rosters: <Users />,
+	schedule: <CalendarClock />,
 	action: <Tally5 />,
 	result: <ScrollText />,
 	stats: <BarChart3 />,
@@ -33,17 +44,26 @@ const TAB_ICONS: Record<MatchTabsKey, React.ReactNode> = {
 
 const TAB_TRANSLATION_KEYS = {
 	rosters: "q:match.tabs.rosters",
+	schedule: "q:match.tabs.schedule",
 	action: "q:match.tabs.action",
 	result: "q:match.tabs.result",
 	stats: "q:match.tabs.stats",
 	admin: "common:pages.admin",
 } as const;
 
-export function MatchTabs({ children, tabs, alertTabs }: MatchTabsProps) {
+export function MatchTabs({
+	children,
+	tabs,
+	alertTabs,
+	defaultTab,
+}: MatchTabsProps) {
 	const { t } = useTranslation(["q", "common"]);
 	const [tabParam, setTab] = useSearchParam(matchPageSearchParams, "tab");
 
-	const currentTab = tabs.find((tab) => tabParam === tab) ?? tabs.at(0);
+	const currentTab =
+		tabs.find((tab) => tabParam === tab) ??
+		tabs.find((tab) => tab === defaultTab) ??
+		tabs.at(0);
 	invariant(currentTab);
 
 	return (

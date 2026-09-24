@@ -141,6 +141,8 @@ export interface PreparedMaps {
 		TournamentRoundMaps & {
 			roundId: number;
 			section: TournamentRoundSection | null;
+			/** Leagues: when the round's sets are playable from, so sibling divisions start with the same times. */
+			isPlayableAt?: number | null;
 		}
 	>;
 	eliminationTeamCount?: number;

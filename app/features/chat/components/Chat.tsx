@@ -146,6 +146,18 @@ function MessageLog({
 			case "MODE_BANNED": {
 				return t("common:chat.systemMsg.modeBanned", { name });
 			}
+			case "LEAGUE_TIMES_PROPOSED": {
+				return t("common:chat.systemMsg.leagueTimesProposed", { name });
+			}
+			case "LEAGUE_TIME_PICKED": {
+				return t("common:chat.systemMsg.leagueTimePicked", { name });
+			}
+			case "LEAGUE_RESCHEDULE_DECLINED": {
+				return t("common:chat.systemMsg.leagueRescheduleDeclined", { name });
+			}
+			case "LEAGUE_TIME_SET_BY_ORGANIZER": {
+				return t("common:chat.systemMsg.leagueTimeSetByOrganizer", { name });
+			}
 			default: {
 				return null;
 			}

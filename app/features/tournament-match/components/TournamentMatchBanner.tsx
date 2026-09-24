@@ -1,5 +1,6 @@
 import { differenceInMinutes } from "date-fns";
 import {
+	CalendarClock,
 	Flag,
 	Gavel,
 	Hourglass,
@@ -20,6 +21,7 @@ import {
 	preloadStageBanners,
 } from "~/components/match-page/MatchBanner";
 import { MatchBannerBottomRow } from "~/components/match-page/MatchBannerBottomRow";
+import { MatchBannerScheduledTime } from "~/components/match-page/MatchBannerScheduledTime";
 import { MatchBannerStartedAt } from "~/components/match-page/MatchBannerStartedAt";
 import { MatchBannerTimer } from "~/components/match-page/MatchBannerTimer";
 import { MatchBannerTopRow } from "~/components/match-page/MatchBannerTopRow";
@@ -31,6 +33,7 @@ import { useAutoRerender } from "~/hooks/useAutoRerender";
 import type { ModeShort } from "~/modules/in-game-lists/types";
 import type { TournamentMaplistSource } from "~/modules/tournament-map-list-generator/types";
 import { databaseTimestampToDate } from "~/utils/dates";
+import * as LeagueScheduling from "../core/LeagueScheduling";
 import type { TournamentMatchLoaderData } from "../loaders/to.$id.matches.$mid.server";
 import { useMatch } from "../match-page-context";
 import { resolveHostingTeam } from "../tournament-match-utils";
@@ -45,6 +48,13 @@ export function TournamentMatchBanner({
 		day: "numeric",
 		month: "numeric",
 		year: "numeric",
+	});
+	const { formatter: scheduleFormatter } = useDateTimeFormat({
+		weekday: "short",
+		day: "numeric",
+		month: "numeric",
+		hour: "numeric",
+		minute: "2-digit",
 	});
 	const tournament = useTournament();
 	const {
@@ -86,10 +96,11 @@ export function TournamentMatchBanner({
 		tournament,
 	});
 
-	const { leagueRoundLocked } = data.bracketContext;
-	const leagueRoundStartDate = data.bracketContext.leagueRoundStartDate
-		? databaseTimestampToDate(data.bracketContext.leagueRoundStartDate)
-		: null;
+	const { schedule } = data;
+	const leagueRoundStartDate =
+		schedule.isPlayableAt !== null
+			? LeagueScheduling.playableDate(schedule.isPlayableAt)
+			: null;
 
 	const pickBanBanner = resolvePickBanBanner(data, tournament, t);
 
@@ -134,10 +145,30 @@ export function TournamentMatchBanner({
 						stageIds={data.results.map((result) => result.stageId)}
 					/>
 				)
-			) : leagueRoundLocked ? (
+			) : schedule.phase === "NOT_OPEN" ? (
+				<IconBanner
+					icon={<CalendarClock size={32} />}
+					header={t("tournament:match.schedule.notOpen.header")}
+					subtitle={t("tournament:match.schedule.notOpen.subtitle", {
+						date: scheduleFormatter.format(
+							databaseTimestampToDate(schedule.opensAt),
+						),
+					})}
+					testId="league-not-open-banner"
+				/>
+			) : schedule.phase === "UNSCHEDULED" ? (
+				<IconBanner
+					icon={<CalendarClock size={32} />}
+					header={t("tournament:match.schedule.unscheduled.header")}
+					subtitle={t("tournament:match.schedule.unscheduled.subtitle")}
+					testId="league-unscheduled-banner"
+				/>
+			) : schedule.phase === "SCHEDULED_LOCKED" && schedule.scheduledAt ? (
 				<IconBanner
 					icon={<Lock size={32} />}
-					header={t("tournament:match.leagueLocked.header")}
+					header={scheduleFormatter.format(
+						databaseTimestampToDate(schedule.scheduledAt),
+					)}
 					subtitle={
 						leagueRoundStartDate
 							? t("tournament:match.leagueLocked.subtitle", {
@@ -146,6 +177,7 @@ export function TournamentMatchBanner({
 								})
 							: undefined
 					}
+					testId="league-scheduled-locked-banner"
 				/>
 			) : matchIsLocked ? (
 				<IconBanner
@@ -243,12 +275,30 @@ function TournamentMatchBannerTopRow({
 	const currentTime = useAutoRerender("ten seconds");
 	const { scores } = useMatch();
 
-	if (
-		!data.match.startedAt ||
-		!data.match.opponentOne ||
-		!data.match.opponentTwo
-	)
-		return null;
+	if (!data.match.opponentOne || !data.match.opponentTwo) return null;
+
+	const score = {
+		alpha: scores[0],
+		bravo: scores[1],
+		isFinal: Boolean(data.match.winnerSide),
+		count: data.match.roundMaps.count,
+		bestOf: data.match.roundMaps.type === "BEST_OF",
+	};
+
+	// league sets start at bracket start, only the agreed time says anything
+	if (data.schedule.hasScheduling) {
+		return (
+			<MatchBannerTopRow score={score}>
+				{data.schedule.scheduledAt ? (
+					<MatchBannerScheduledTime
+						time={databaseTimestampToDate(data.schedule.scheduledAt)}
+					/>
+				) : null}
+			</MatchBannerTopRow>
+		);
+	}
+
+	if (!data.match.startedAt) return null;
 
 	const startedAt = databaseTimestampToDate(data.match.startedAt);
 	const totalMinutes = differenceInMinutes(currentTime, startedAt);
@@ -266,15 +316,7 @@ function TournamentMatchBannerTopRow({
 	});
 
 	return (
-		<MatchBannerTopRow
-			score={{
-				alpha: scores[0],
-				bravo: scores[1],
-				isFinal: Boolean(data.match.winnerSide),
-				count: data.match.roundMaps.count,
-				bestOf: data.match.roundMaps.type === "BEST_OF",
-			}}
-		>
+		<MatchBannerTopRow score={score}>
 			{data.matchIsOver ? (
 				<MatchBannerStartedAt time={startedAt} endTime={endedAt} />
 			) : (

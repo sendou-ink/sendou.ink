@@ -704,6 +704,21 @@ export interface TournamentMatch {
 	startedAt: number | null;
 	/** The side that won the set. `null` while the match has no winner. */
 	winnerSide: Side | null;
+	/** Leagues: the time the teams (or the organizer) agreed the set is played at. */
+	scheduledAt: number | null;
+	/** Leagues: the organizer set {@link TournamentMatch.scheduledAt}, closing the candidate board for the teams. */
+	scheduleSetByOrganizer: Generated<DBBoolean>;
+}
+
+/** Leagues: a candidate time one team put on the set's scheduling board. Only exists while open, accepting or rejecting deletes the match's proposals. */
+export interface TournamentMatchScheduleProposal {
+	id: GeneratedAlways<number>;
+	matchId: number;
+	tournamentTeamId: number;
+	authorId: number;
+	/** The candidate time. */
+	proposedAt: number;
+	createdAt: Generated<number>;
 }
 
 /** Represents one decision, pick or ban, during tournaments pick/ban (counterpick, ban 2) phase. */
@@ -760,8 +775,8 @@ export interface TournamentRound {
 	/** Part of the elimination group the round belongs to. `null` in round robin and swiss. */
 	section: TournamentRoundSection | null;
 	maps: JSONColumnType<TournamentRoundMaps>;
-	/** Datetime the round is played by default (leagues). Null = no default play time, the round is played whenever. */
-	defaultPlayTime: number | null;
+	/** Leagues: the round's sets are playable from this time on. Null = playable whenever. */
+	isPlayableAt: number | null;
 }
 
 /** A stage is an intermediate phase in a tournament. In essence a bracket. */
@@ -1439,6 +1454,7 @@ export interface DB {
 	TournamentGroup: TournamentGroup;
 	TournamentLFGLike: TournamentLFGLike;
 	TournamentMatch: TournamentMatch;
+	TournamentMatchScheduleProposal: TournamentMatchScheduleProposal;
 	TournamentMatchPickBanEvent: TournamentMatchPickBanEvent;
 	TournamentMatchGameResult: TournamentMatchGameResult;
 	TournamentMatchGameResultParticipant: TournamentMatchGameResultParticipant;

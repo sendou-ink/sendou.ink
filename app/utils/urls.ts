@@ -322,6 +322,8 @@ export const tournamentDivisionsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/divisions`;
 export const tournamentResultsPage = (tournamentId: number) =>
 	`/to/${tournamentId}/results`;
+export const tournamentMatchesPage = (tournamentId: number) =>
+	`/to/${tournamentId}/matches`;
 export const tournamentMatchPage = ({
 	tournamentId,
 	matchId,

@@ -123,6 +123,11 @@ export abstract class Bracket {
 		return this.tournament.regularCheckInHasEnded;
 	}
 
+	/** League bracket whose sets the teams schedule, false when it was started to be played in real time. */
+	get hasScheduling() {
+		return this.tournament.isLeague && !this.data.stage[0]?.settings.isRealtime;
+	}
+
 	/** Unplayed matches filled in with the expected results. Simulating is expensive so it happens on first access only. */
 	get simulatedData(): BracketData | undefined {
 		if (!this._simulatedData) {

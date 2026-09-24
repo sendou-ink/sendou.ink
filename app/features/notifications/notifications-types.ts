@@ -85,6 +85,18 @@ export type Notification =
 			"SCRIM_STARTING_SOON",
 			{ id: number; opponentTeamName: string }
 	  >
+	| NotificationItem<
+			"TO_LEAGUE_TIMES_PROPOSED",
+			{ tournamentId: number; matchId: number; opponentTeamName: string }
+	  >
+	| NotificationItem<
+			"TO_LEAGUE_MATCH_SCHEDULED",
+			{ tournamentId: number; matchId: number; opponentTeamName: string }
+	  >
+	| NotificationItem<
+			"TO_LEAGUE_MATCH_STARTING_SOON",
+			{ tournamentId: number; matchId: number; opponentTeamName: string }
+	  >
 	| NotificationItem<"SCRIM_AUTO_DELETED", { at: number }>
 	| NotificationItem<"COMMISSIONS_CLOSED", { discordId: string }>
 	| NotificationItem<

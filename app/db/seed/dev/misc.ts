@@ -48,9 +48,17 @@ export async function seedMisc({
 	await seedNotifications(users, tournaments);
 	await seedUserReports(users, sendouq);
 
+	const showcaseStreamerIds = users.showcaseIds.slice(0, STREAM_COUNT);
 	await LiveStreamFactory.replaceAll([
 		{ userId: users.nzapId, twitch: "nzap_stream" },
-		...users.showcaseIds.slice(0, STREAM_COUNT).map((userId) => ({ userId })),
+		...showcaseStreamerIds.map((userId) => ({ userId })),
+		// the league sets live right now have a member of theirs on, unless they already are
+		...tournaments.luti.streamerUserIds
+			.filter(
+				(userId) =>
+					userId !== users.nzapId && !showcaseStreamerIds.includes(userId),
+			)
+			.map((userId) => ({ userId })),
 	]);
 	await SplatoonRotationFactory.replaceAll();
 
@@ -203,6 +211,14 @@ async function seedNotifications(
 			type: "TO_CHECK_IN_OPENED",
 			meta: { tournamentId, tournamentName },
 			pictureUrl: `${Config.staticAssetsUrl}/img/tournament-logos/pn.avif`,
+		},
+		{
+			type: "TO_LEAGUE_TIMES_PROPOSED",
+			meta: {
+				tournamentId: tournaments.luti.id,
+				matchId: tournaments.luti.nzapMatchId,
+				opponentTeamName: tournaments.luti.nzapOpponentTeamName,
+			},
 		},
 	];
 

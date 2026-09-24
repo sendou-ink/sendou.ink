@@ -13,6 +13,7 @@ import { DeleteOrphanArtTagsRoutine } from "./deleteOrphanArtTags";
 import { EvictStaleRunningTournamentsRoutine } from "./evictStaleRunningTournaments";
 import { ExpireReadyChecksRoutine } from "./expireReadyChecks";
 import { NotifyCheckInStartRoutine } from "./notifyCheckInStart";
+import { NotifyLeagueMatchStartingSoonRoutine } from "./notifyLeagueMatchStartingSoon";
 import { NotifyPlusServerVotingRoutine } from "./notifyPlusServerVoting";
 import { NotifyScheduleTeamReminderRoutine } from "./notifyScheduleTeamReminder";
 import { NotifyScrimStartingSoonRoutine } from "./notifyScrimStartingSoon";
@@ -33,6 +34,7 @@ export const everyHourAt00 = [
 	NotifyPlusServerVotingRoutine,
 	NotifyCheckInStartRoutine,
 	NotifyScrimStartingSoonRoutine,
+	NotifyLeagueMatchStartingSoonRoutine,
 	SyncSplatoonRotationsRoutine,
 	SyncTournamentVodsRoutine,
 ];

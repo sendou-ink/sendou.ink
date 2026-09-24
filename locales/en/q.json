@@ -176,6 +176,7 @@
 	"match.banner.playAll": "Play all {{count}}",
 	"match.banner.vs": "vs.",
 	"match.tabs.rosters": "Rosters",
+	"match.tabs.schedule": "Schedule",
 	"match.tabs.action": "Action",
 	"match.tabs.result": "Result",
 	"match.tabs.stats": "Stats",

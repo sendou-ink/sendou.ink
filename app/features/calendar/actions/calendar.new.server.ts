@@ -144,6 +144,7 @@ export const action: ActionFunction = async ({ request }) => {
 				: undefined,
 		isRanked: data.isRanked,
 		isTest: data.isTest,
+		isLeague: data.isLeague,
 		isDraft: data.isDraft,
 		isInvitational: data.isInvitational,
 		enableNoScreenToggle: data.enableNoScreenToggle,
