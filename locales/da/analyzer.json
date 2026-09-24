@@ -38,6 +38,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Påfyldningstid af blæktank i blæksprutteform",
 	"stat.humanoidFormInkRecoverySeconds": "Påfyldningstid af blæktank  i menneskeform",
 	"stat.quickRespawnTime": "Tilbagekomsttid med Quick respawn (hurtig tilbagekomst)",

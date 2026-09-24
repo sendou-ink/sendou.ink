@@ -36,6 +36,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "잉크 완전 회복 시간 (오징어의 모습)",
 	"stat.humanoidFormInkRecoverySeconds": "잉크 완전 회복 시간 (인간의 모습)",
 	"stat.quickRespawnTime": "부활 시간 단축",

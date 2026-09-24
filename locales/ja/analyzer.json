@@ -36,6 +36,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "インクタンクの完全回復までの時間(イカ状態)",
 	"stat.humanoidFormInkRecoverySeconds": "インクタンクの完全回復までの時間(ヒト状態)",
 	"stat.quickRespawnTime": "復活するまで",

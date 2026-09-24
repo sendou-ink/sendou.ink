@@ -39,6 +39,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Tempo de recarga completa do tanque de tinta (forma de lula/polvo)",
 	"stat.humanoidFormInkRecoverySeconds": "Tempo de recarga completa do tanque de tinta (forma humanoide)",
 	"stat.quickRespawnTime": "Tempo de Quick Respawn",

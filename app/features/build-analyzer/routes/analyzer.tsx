@@ -214,6 +214,16 @@ function BuildAnalyzerPage() {
 				suffix="%"
 			/>
 		)),
+		analyzed.stats.mainWeaponRollSeconds ? (
+			<StatCard
+				context={context}
+				key="mainWeaponRollSeconds"
+				stat={statKeyToTuple("mainWeaponRollSeconds")}
+				title={t("analyzer:stat.mainWeaponRollSeconds")}
+				suffix={t("analyzer:suffix.seconds")}
+				popoverInfo={t("analyzer:stat.mainWeaponRollSeconds.explanation")}
+			/>
+		) : null,
 		typeof analyzed.stats.mainWeaponWhiteInkSeconds === "number" ? (
 			<StatCard
 				context={context}

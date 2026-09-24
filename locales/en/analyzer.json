@@ -38,6 +38,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "Consumption per full charge",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "Consumption per shield launch",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "Consumption per dodge roll",
+	"stat.mainWeaponRollSeconds": "Rolling time on a full tank",
+	"stat.mainWeaponRollSeconds.explanation": "How long a full ink tank lasts when rolling at full speed. Rollers use less ink when moving slower.",
 	"stat.squidFormInkRecoverySeconds": "Ink tank full recovery time (squid form)",
 	"stat.humanoidFormInkRecoverySeconds": "Ink tank full recovery time (humanoid form)",
 	"stat.quickRespawnTime": "Quick respawn time",

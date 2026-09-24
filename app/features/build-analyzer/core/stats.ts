@@ -125,6 +125,7 @@ export function buildStats({
 			subWeaponInkConsumptionPercentage:
 				subWeaponInkConsumptionPercentage(input),
 			...mainWeaponInkConsumptionPercentages(input),
+			mainWeaponRollSeconds: mainWeaponRollSeconds(input),
 			squidFormInkRecoverySeconds: squidFormInkRecoverySeconds(input),
 			humanoidFormInkRecoverySeconds: humanoidFormInkRecoverySeconds(input),
 			runSpeed: runSpeed(input),
@@ -386,6 +387,34 @@ function mainWeaponInkConsumptionPercentages(
 	}
 
 	return result;
+}
+
+function mainWeaponRollSeconds({
+	mainWeaponParams,
+	abilityPoints,
+	weaponSplId,
+}: StatFunctionInput): AnalyzedBuild["stats"]["mainWeaponRollSeconds"] {
+	const inkConsumePerFrame =
+		mainWeaponParams.InkConsumeMaxPerFrame_WeaponRollParam;
+	if (typeof inkConsumePerFrame !== "number") return;
+
+	const { baseEffect, effect } = abilityPointsToEffects({
+		abilityPoints: apFromMap({
+			abilityPoints,
+			ability: "ISM",
+		}),
+		key: "ConsumeRt_Main",
+		weapon: mainWeaponParams,
+	});
+
+	const rollFrames = (consumeRate: number) =>
+		inkTankSize(weaponSplId) / (inkConsumePerFrame * consumeRate);
+
+	return {
+		baseValue: framesToSeconds(rollFrames(baseEffect)),
+		value: framesToSeconds(rollFrames(effect)),
+		modifiedBy: "ISM",
+	};
 }
 
 function mainWeaponInkConsumeByType({

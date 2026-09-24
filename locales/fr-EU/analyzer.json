@@ -39,6 +39,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Temps de recharge du réservoir (calamar)",
 	"stat.humanoidFormInkRecoverySeconds": "Temps de recharge du réservoir (humanoïde)",
 	"stat.quickRespawnTime": "Délai de réapparition",

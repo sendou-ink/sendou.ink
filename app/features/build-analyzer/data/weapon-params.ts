@@ -430,6 +430,7 @@ export const weaponParams = {
 			WideSwingUnitGroupParam_DamageParam_DamageMinValue: 250,
 			WideSwingUnitGroupParam_DamageParam_DamageMaxValue: 1000,
 			InkConsume_WeaponSwingParam: 0.0396,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.001,
 		},
 		"1010": {
 			Range_SpawnSpeed: 1.8338,
@@ -443,6 +444,7 @@ export const weaponParams = {
 			WideSwingUnitGroupParam_DamageParam_DamageMinValue: 350,
 			WideSwingUnitGroupParam_DamageParam_DamageMaxValue: 1500,
 			InkConsume_WeaponSwingParam: 0.085,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.001,
 		},
 		"1020": {
 			Range_SpawnSpeed: 2.0289,
@@ -457,6 +459,7 @@ export const weaponParams = {
 			WideSwingUnitGroupParam_DamageParam_DamageMinValue: 400,
 			WideSwingUnitGroupParam_DamageParam_DamageMaxValue: 1800,
 			InkConsume_WeaponSwingParam: 0.21,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.001,
 		},
 		"1030": {
 			Range_SpawnSpeed: 1.7026,
@@ -471,6 +474,7 @@ export const weaponParams = {
 			WideSwingUnitGroupParam_DamageParam_DamageMaxValue: 1500,
 			InkConsume_WeaponVerticalSwingParam: 0.12,
 			InkConsume_WeaponWideSwingParam: 0.08,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.001,
 		},
 		"1040": {
 			Range_SpawnSpeed: 2.2749,
@@ -484,6 +488,7 @@ export const weaponParams = {
 			WideSwingUnitGroupParam_DamageParam_DamageMinValue: 400,
 			WideSwingUnitGroupParam_DamageParam_DamageMaxValue: 700,
 			InkConsume_WeaponSwingParam: 0.09,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.0005,
 		},
 		"1100": {
 			Range_SpawnSpeed: 0.72,
@@ -494,6 +499,7 @@ export const weaponParams = {
 			SwingUnitGroupParam_DamageParam_DamageMinValue: 150,
 			SwingUnitGroupParam_DamageParam_DamageMaxValue: 300,
 			InkConsume_WeaponSwingParam: 0.02,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.00125,
 		},
 		"1110": {
 			Range_SpawnSpeed: 0.84,
@@ -503,6 +509,7 @@ export const weaponParams = {
 			SwingUnitGroupParam_DamageParam_DamageMinValue: 200,
 			SwingUnitGroupParam_DamageParam_DamageMaxValue: 400,
 			InkConsume_WeaponSwingParam: 0.027,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.0015,
 		},
 		"1120": {
 			Range_SpawnSpeed: 1.05,
@@ -512,6 +519,7 @@ export const weaponParams = {
 			SwingUnitGroupParam_DamageParam_DamageMinValue: 310,
 			SwingUnitGroupParam_DamageParam_DamageMaxValue: 600,
 			InkConsume_WeaponSwingParam: 0.048,
+			InkConsumeMaxPerFrame_WeaponRollParam: 0.0018,
 		},
 		"2000": {
 			DistanceFullCharge: 16.765,

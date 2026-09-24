@@ -96,6 +96,8 @@ export interface BaseWeaponStats {
 	InkConsume_WeaponShelterShotgunParam?: number;
 	/** How much ink a dualie dodge roll consumes? */
 	InkConsume_SideStepParam?: number;
+	/** How much ink rolling with a roller or brush consumes per frame at full rolling speed? */
+	InkConsumeMaxPerFrame_WeaponRollParam?: number;
 	/** How much ink a fully charged Splatana shot consumes? */
 	InkConsumeFullCharge_ChargeParam?: number;
 
@@ -293,6 +295,8 @@ export interface AnalyzedBuild {
 		mainWeaponWhiteInkSeconds?: number;
 		subWeaponWhiteInkSeconds: number;
 		subWeaponInkConsumptionPercentage: Stat;
+		/** Seconds a full ink tank lasts rolling at full speed (rollers and brushes) */
+		mainWeaponRollSeconds?: Stat;
 		fullInkTankOptions: Array<FullInkTankOption & { id: string }>;
 		damages: Array<Damage & { id: string }>;
 		specialWeaponDamages: Array<Damage & { id: string }>;

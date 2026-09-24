@@ -190,6 +190,34 @@ describe("Analyze build", () => {
 		expect(statWithISM.value).toBeLessThan(statWithISM.baseValue);
 	});
 
+	test("Rolling time on a full tank only exists for rollers and brushes", () => {
+		const splatRoller = buildStats({
+			weaponSplId: 1010,
+			hasTacticooler: false,
+		});
+		const inkbrush = buildStats({ weaponSplId: 1100, hasTacticooler: false });
+		const splattershot = buildStats({ weaponSplId: 40, hasTacticooler: false });
+
+		expect(splatRoller.stats.mainWeaponRollSeconds?.baseValue).toBe(16.667);
+		expect(inkbrush.stats.mainWeaponRollSeconds?.baseValue).toBe(13.333);
+		expect(splattershot.stats.mainWeaponRollSeconds).toBeUndefined();
+	});
+
+	test("ISM increases rolling time on a full tank", () => {
+		const analyzed = buildStats({ weaponSplId: 1100, hasTacticooler: false });
+		const analyzedWithISM = buildStats({
+			weaponSplId: 1100,
+			abilityPoints: new Map([["ISM", 20]]),
+			hasTacticooler: false,
+		});
+
+		const stat = analyzed.stats.mainWeaponRollSeconds!;
+		const statWithISM = analyzedWithISM.stats.mainWeaponRollSeconds!;
+
+		expect(statWithISM.baseValue).toBe(stat.baseValue);
+		expect(statWithISM.value).toBeGreaterThan(statWithISM.baseValue);
+	});
+
 	test("Accounts for Jr. big ink tank with main weapon ink consumption %", () => {
 		const analyzedJr = buildStats({
 			weaponSplId: 10,

@@ -39,6 +39,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Tempo ricarica piena serbatoio (forma calamaro)",
 	"stat.humanoidFormInkRecoverySeconds": "Tempo ricarica piena serbatoio (forma umanoide)",
 	"stat.quickRespawnTime": "Tempo per respawnare con \"Il tempo è colore\"",

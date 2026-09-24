@@ -36,6 +36,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "完全回墨时间 (鱿鱼形态)",
 	"stat.humanoidFormInkRecoverySeconds": "完全回墨时间 (人型形态)",
 	"stat.quickRespawnTime": "复活时间",

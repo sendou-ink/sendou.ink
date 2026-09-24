@@ -39,6 +39,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "Consumo por carga completa",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "Consumo por lanzamiento de parasol",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "Consumo por voltereta",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Tiempo de recuperación completa del tanque de tinta (forma calamar)",
 	"stat.humanoidFormInkRecoverySeconds": "Tiempo de recuperación completa del tanque de tinta (forma humana)",
 	"stat.quickRespawnTime": "Tiempo de regeneración rápida",

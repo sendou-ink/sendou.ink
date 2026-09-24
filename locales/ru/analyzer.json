@@ -40,6 +40,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Время до полного восстановления баллона (в краске)",
 	"stat.humanoidFormInkRecoverySeconds": "Время до полного восстановления баллона (вне краски)",
 	"stat.quickRespawnTime": "Время ускоренного воскрешения",

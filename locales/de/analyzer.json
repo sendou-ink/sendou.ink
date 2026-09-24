@@ -38,6 +38,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Dauer vollst. Tintenregeneration (als Tintenfisch)",
 	"stat.humanoidFormInkRecoverySeconds": "Dauer vollst. Tintenregeneration (als Humanoid)",
 	"stat.quickRespawnTime": "Dauer schneller Rückkehr",

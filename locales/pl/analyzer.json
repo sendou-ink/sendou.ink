@@ -40,6 +40,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "Czas pełnej regeneracji zbiornika farbowego (forma kalmara)",
 	"stat.humanoidFormInkRecoverySeconds": "Czas pełnej regeneracji zbiornika farbowego (forma ludzka)",
 	"stat.quickRespawnTime": "Czas z użyciem Quick Respawn",

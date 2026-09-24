@@ -642,6 +642,8 @@ function parametersToMainWeaponResult(
 		InkConsume_WeaponShelterShotgunParam:
 			InkConsume_WeaponShelterShotgunParam(),
 		InkConsume_SideStepParam: params.SideStepParam?.InkConsume,
+		InkConsumeMaxPerFrame_WeaponRollParam:
+			params.WeaponRollParam?.InkConsumeMaxPerFrame,
 		InkConsume_SwingParam: params.spl__WeaponSaberParam?.SwingParam?.InkConsume,
 		InkConsumeFullCharge_ChargeParam:
 			params.spl__WeaponSaberParam?.ChargeParam?.InkConsumeFullCharge ??

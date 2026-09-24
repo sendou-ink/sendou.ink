@@ -39,6 +39,8 @@
 	"stat.mainWeaponInkConsumptionPercentage.SPLATLING_CHARGE": "",
 	"stat.mainWeaponInkConsumptionPercentage.SHIELD_LAUNCH": "",
 	"stat.mainWeaponInkConsumptionPercentage.DUALIE_ROLL": "",
+	"stat.mainWeaponRollSeconds": "",
+	"stat.mainWeaponRollSeconds.explanation": "",
 	"stat.squidFormInkRecoverySeconds": "זמן התאוששות מלא של מיכל הדיו (צורת דיונון)",
 	"stat.humanoidFormInkRecoverySeconds": "זמן התאוששות מלא של מיכל הדיו (צורת אדם)",
 	"stat.quickRespawnTime": "זמן הופעה מחדש במהירות",
