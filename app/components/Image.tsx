@@ -14,6 +14,7 @@ import {
 	outlinedFiveStarMainWeaponImageUrl,
 	outlinedMainWeaponImageUrl,
 	outlinedTenStarMainWeaponImageUrl,
+	type SpecialWeaponImageVariant,
 	specialWeaponDetailImageUrl,
 	specialWeaponHighlightImageUrl,
 	specialWeaponImageUrl,
@@ -199,11 +200,13 @@ export function SubWeaponImage({
 
 type SpecialWeaponImageProps = {
 	specialWeaponId: SpecialWeaponId;
+	variant?: SpecialWeaponImageVariant;
 	alt?: string;
 } & Omit<ImageProps, "path" | "alt" | "title">;
 
 export function SpecialWeaponImage({
 	specialWeaponId,
+	variant,
 	alt,
 	testId,
 	...rest
@@ -218,9 +221,9 @@ export function SpecialWeaponImage({
 			alt={name}
 			title={name || undefined}
 			testId={testId}
-			path={specialWeaponImageUrl(specialWeaponId)}
-			detailPath={specialWeaponDetailImageUrl(specialWeaponId)}
-			highlightPath={specialWeaponHighlightImageUrl(specialWeaponId)}
+			path={specialWeaponImageUrl(specialWeaponId, variant)}
+			detailPath={specialWeaponDetailImageUrl(specialWeaponId, variant)}
+			highlightPath={specialWeaponHighlightImageUrl(specialWeaponId, variant)}
 		/>
 	);
 }

@@ -42,7 +42,7 @@ import {
 	modeImageUrl,
 	navIconUrl,
 	OBJECT_DAMAGE_CALCULATOR_URL,
-	specialWeaponVariantImageUrl,
+	type SpecialWeaponImageVariant,
 } from "~/utils/urls";
 import { translateDamageReceiver } from "../calculator-constants";
 import { useObjectDamage } from "../calculator-hooks";
@@ -202,7 +202,11 @@ const RECEIVER_IMAGE_SIZE = 24;
 
 type DamageReceiverIcon =
 	| { kind: "sub"; id: SubWeaponId }
-	| { kind: "special"; id: SpecialWeaponId }
+	| {
+			kind: "special";
+			id: SpecialWeaponId;
+			variant?: SpecialWeaponImageVariant;
+	  }
 	| { kind: "path"; path: string };
 
 const damageReceiverImages: Record<DamageReceiver, DamageReceiverIcon> = {
@@ -212,8 +216,9 @@ const damageReceiverImages: Record<DamageReceiver, DamageReceiverIcon> = {
 	Gachihoko_Barrier: { kind: "path", path: modeImageUrl("RM") },
 	GreatBarrier_Barrier: { kind: "special", id: BIG_BUBBLER_ID },
 	GreatBarrier_WeakPoint: {
-		kind: "path",
-		path: specialWeaponVariantImageUrl(BIG_BUBBLER_ID, "weakpoints"),
+		kind: "special",
+		id: BIG_BUBBLER_ID,
+		variant: "weakpoints",
 	},
 	NiceBall_Armor: { kind: "special", id: BOOYAH_BOMB_ID },
 	ShockSonar: { kind: "special", id: WAVE_BREAKER_ID },
@@ -264,6 +269,7 @@ function DamageReceiverImage({
 			return (
 				<SpecialWeaponImage
 					specialWeaponId={icon.id}
+					variant={icon.variant}
 					alt={alt}
 					size={RECEIVER_IMAGE_SIZE}
 					containerClassName={styles.receiverImage}
