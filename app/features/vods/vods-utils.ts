@@ -37,6 +37,28 @@ export function extractYoutubeIdFromVideoUrl(url: string): string | null {
 	return match ? match[1] : null;
 }
 
+export async function getYouTubeChannelName(channelId: string): Promise<string | null> {
+  const url = `https://youtube.com/channel/${channelId}`;
+  
+  // Mimics a web browser so YouTube returns the standard HTML page
+  const response = await fetch(url, {
+    headers: {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+    }
+  });
+
+  if (!response.ok) {
+    throw new Error(`Failed to fetch page: ${response.statusText}`);
+  }
+
+  const html = await response.text();
+  
+  // Extract channel name
+  const match = html.match(/<meta property="og:title" content="([^"]+)"/);
+  
+  return match ? match[1] : null;
+}
+
 export function secondsToHoursMinutesSecondString(seconds: number) {
 	if (seconds < 0) {
 		throw new Error("Negative number of seconds");

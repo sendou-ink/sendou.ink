@@ -36,6 +36,7 @@ import {
 import { logger } from "~/utils/logger";
 import { seededRandom } from "~/utils/random";
 import { bskyUrl, twitchUrl, youtubeUrl } from "~/utils/urls";
+import { getYouTubeChannelName } from "../vods/vods-utils";
 import {
 	DEFAULT_WIDGETS,
 	findWidgetById,
@@ -1547,7 +1548,7 @@ export async function findSocialLinksByUserId(userId: number) {
 		links.push({
 			type: "url",
 			platform: "youtube",
-			name: null,
+			name: String(await getYouTubeChannelName(user.youtubeId)),
 			url: youtubeUrl(user.youtubeId),
 		});
 	}
