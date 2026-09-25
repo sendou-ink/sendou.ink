@@ -257,12 +257,17 @@ sequenceDiagram
   badge-less frame scores the geometries on how decisively the bodies
   read and sticks with the established layout unless another wins
   clearly, or unless the slot comb — which is positional, so it sees a
-  pitch the body reads cannot — puts narrow-right decisively ahead of a
-  latched `even`, as happens when a spectator toggles between the
-  overhead map and a player POV mid-match — the special-ready wash also pulses, so its dim trough is told
+  pitch the body reads cannot — decisively picks a geometry (even needs
+  the widest win) or puts narrow-right decisively ahead of a latched
+  `even`, as happens when a spectator toggles between the overhead map and
+  a player POV mid-match, and in S3 POV itself, which resizes each side's
+  icons as the objective swings and so cycles through all three
+  geometries within one game — the special-ready wash also pulses, so its dim trough is told
   apart from a splat by its team tint: a splat is a neutral grey plate under
   a grey X, which a blown-out backdrop turns near-white while a wash stays
-  tinted at every pulse phase, and a ready read
+  tinted at every pulse phase (a big dark weapon render such as the
+  Nautilus drum dilutes that tint, but a diluted wash still reads pale,
+  which a tinted splat never does), and a ready read
   must also see a washed (ink-poor) body: pale backdrop, a ship's hull or
   the lead banner leaking past an icon edge fakes the shoulder glow, and a ready the shoulder glow does
   not corroborate needs the body's ink gone rather than merely paled,

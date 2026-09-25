@@ -1,0 +1,19 @@
+{
+	"event": "PlayerStatus",
+	"data": {
+		"layout": "even",
+		"cast": null,
+		"time": 257,
+		"special": [
+			[false, false, false, true],
+			[true, false, false, false]
+		],
+		"dead": [
+			[false, false, false, false],
+			[false, false, false, false]
+		]
+	},
+	"options": {
+		"notes": "Triton cup VoD (v2811381928, 720p S3 POV), Brinewater Springs SZ at 4:17, t=6087.3. S3 POV resizes each side's icons as the objective swings, and this game cycles through even, narrow-left, narrow-right and back a dozen times. Here both sides sit at the even pitch (apexes ~[570,659,748,833 | 1087,1175,1263,1351]) but decisiveness is a near-tie (even 0.257 vs narrow-right 0.246, under the 0.025 lead a fresh even pick needs), so the fresh pick stayed narrow-right, and a live scan kept whatever geometry it had latched: the Nautilus wash on right slot 0 then read as a splat under narrow-right's probes. The comb sees the pitch (even 1.07 vs 0.62/0.62), so a decisive comb win now picks even outright, fresh or sticky (STATUS_DECISIVE_EVEN_COMB_*)."
+	}
+}
