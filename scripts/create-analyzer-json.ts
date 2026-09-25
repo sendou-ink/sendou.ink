@@ -812,12 +812,6 @@ function parametersToSpecialWeaponResult(params: any) {
 		}
 	}
 
-	// for Ultra Splashdown
-	if (params.BlastParamDokanWarp) {
-		result.SubSpecialSpecUpList =
-			params.BlastParamDokanWarp.SubSpecialSpecUpList;
-	}
-
 	const resultUnwrapped = unwrapSubSpecialSpecUpList(result);
 
 	const specialDurationFrameKeyAlises = [
@@ -834,29 +828,17 @@ function parametersToSpecialWeaponResult(params: any) {
 	}
 
 	if (resultUnwrapped.SplashAroundPaintRadius) {
-		// Inkjet
-		if (params.BlastParam?.PaintRadius) {
-			const regularPaintRadius = params.BlastParam.PaintRadius;
-
-			resultUnwrapped.PaintRadius = {
-				High: resultUnwrapped.SplashAroundPaintRadius.High + regularPaintRadius,
-				Mid: resultUnwrapped.SplashAroundPaintRadius.Mid + regularPaintRadius,
-				Low: resultUnwrapped.SplashAroundPaintRadius.Low + regularPaintRadius,
-			};
-			// Reefslider
-		} else {
-			resultUnwrapped.PaintRadius = {
-				High:
-					resultUnwrapped.SplashAroundPaintRadius.High +
-					resultUnwrapped.PaintRadius.High,
-				Mid:
-					resultUnwrapped.SplashAroundPaintRadius.Mid +
-					resultUnwrapped.PaintRadius.Mid,
-				Low:
-					resultUnwrapped.SplashAroundPaintRadius.Low +
-					resultUnwrapped.PaintRadius.Low,
-			};
-		}
+		resultUnwrapped.PaintRadius = {
+			High:
+				resultUnwrapped.SplashAroundPaintRadius.High +
+				resultUnwrapped.PaintRadius.High,
+			Mid:
+				resultUnwrapped.SplashAroundPaintRadius.Mid +
+				resultUnwrapped.PaintRadius.Mid,
+			Low:
+				resultUnwrapped.SplashAroundPaintRadius.Low +
+				resultUnwrapped.PaintRadius.Low,
+		};
 
 		resultUnwrapped.SplashAroundPaintRadius = undefined;
 	}
@@ -993,14 +975,14 @@ function unwrapSubSpecialSpecUpList(result: any) {
 			if (Array.isArray(value)) {
 				return value.map((entry: any) => {
 					if (
-						!entry.SpecUpType ||
-						(entry.Value.Low === entry.Value.Mid &&
-							entry.Value.Mid === entry.Value.High)
+						entry.Value.Low === entry.Value.Mid &&
+						entry.Value.Mid === entry.Value.High
 					) {
 						return [];
 					}
 
-					return [entry.SpecUpType, entry.Value];
+					// datamine omits SpecUpType when it's the enum default
+					return [entry.SpecUpType ?? "PaintRadius", entry.Value];
 				});
 			}
 

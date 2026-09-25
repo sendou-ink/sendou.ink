@@ -2378,6 +2378,11 @@ export const weaponParams = {
 		},
 		"4": {
 			overwrites: {
+				PaintRadius: {
+					High: 3.78,
+					Low: 3.15,
+					Mid: 3.465,
+				},
 				TargetInCircleRadius: {
 					High: 240,
 					Low: 140,
@@ -2482,6 +2487,11 @@ export const weaponParams = {
 		},
 		"10": {
 			overwrites: {
+				PaintRadius: {
+					High: 4.7,
+					Mid: 4.265000000000001,
+					Low: 3.83,
+				},
 				DistanceDamageDistanceRate: {
 					High: 1.3,
 					Low: 1,
@@ -2501,11 +2511,6 @@ export const weaponParams = {
 					High: 510,
 					Low: 450,
 					Mid: 480,
-				},
-				PaintRadius: {
-					High: 3.9000000000000004,
-					Mid: 3.865,
-					Low: 3.83,
 				},
 			},
 			DistanceDamage: [
@@ -2640,6 +2645,11 @@ export const weaponParams = {
 		},
 		"16": {
 			overwrites: {
+				PaintRadius: {
+					High: 4.1,
+					Low: 3.5,
+					Mid: 3.8,
+				},
 				CrossPaintCheckLength: {
 					High: 3,
 					Low: 2.5,
