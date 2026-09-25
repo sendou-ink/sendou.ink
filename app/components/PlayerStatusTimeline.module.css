@@ -29,11 +29,11 @@
 }
 
 .legendSwatchDead {
-	background-color: var(--color-error);
+	background-color: var(--color-chart-splatted);
 }
 
 .legendSwatchSpecial {
-	background-color: var(--color-info);
+	background-color: var(--color-chart-special);
 }
 
 .team {
@@ -80,13 +80,11 @@
 }
 
 .spanDead {
-	background-color: var(--color-error);
-	opacity: 0.75;
+	background-color: var(--color-chart-splatted);
 }
 
 .spanSpecial {
-	background-color: var(--color-info);
-	opacity: 0.75;
+	background-color: var(--color-chart-special);
 }
 
 .unknownWeapon {
