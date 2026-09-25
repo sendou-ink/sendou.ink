@@ -88,10 +88,7 @@ function ScanVodView({ name }: { name: string }) {
 									const file = e.target.files?.[0];
 									e.target.value = "";
 									if (file) {
-										void startVodScan(file, {
-											saveClips: scan.saveClips,
-											telemetry: telemetryOn,
-										});
+										void startVodScan(file, { telemetry: telemetryOn });
 									}
 								}}
 							/>
@@ -115,10 +112,7 @@ function ScanVodView({ name }: { name: string }) {
 						<div className={styles.previewRow}>
 							<canvas ref={setVodPreviewCanvas} className={styles.preview} />
 							<div className={styles.previewNotes}>
-								<div>
-									Save clips {scan.saveClips ? "on" : "off"} · Upload{" "}
-									{user && settings.upload ? "on" : "off"}
-								</div>
+								<div>Upload {user && settings.upload ? "on" : "off"}</div>
 								{scan.error ? (
 									<div className={styles.error}>{scan.error}</div>
 								) : null}
