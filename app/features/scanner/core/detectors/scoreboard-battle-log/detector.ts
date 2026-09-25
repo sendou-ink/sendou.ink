@@ -18,6 +18,7 @@ import {
 import { getCV, type Mat } from "../../cv";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
 import {
+	createProbeWarp,
 	cropRoi,
 	frameGray,
 	frameRgb,
@@ -131,7 +132,7 @@ export function createBattleLogDetector(
 	const cv = getCV();
 	const { rois } = layout;
 	const homography = rois.RECTIFY ? homographyFromQuad(rois.RECTIFY) : null;
-	const gateRegion = unionRoi([
+	const gateProbes = [
 		...rois.PANEL_DYS.flatMap((dy) =>
 			rois.ROW_CENTERS.flatMap((base) => [
 				rois.gateDarkProbe(base + dy),
@@ -139,7 +140,20 @@ export function createBattleLogDetector(
 			]),
 		),
 		...rois.GATE_COLOR_PROBES,
-	]);
+	];
+	const gateRegion = unionRoi(gateProbes);
+	// the gate reads only its probes, so only those pixels are rectified
+	const gateWarp = homography
+		? createProbeWarp(
+				homography,
+				gateRegion,
+				gateProbes.map((roi) => ({
+					...roi,
+					x: roi.x - gateRegion.x,
+					y: roi.y - gateRegion.y,
+				})),
+			)
+		: undefined;
 
 	const scaled = (set: GlyphSet | null, height: number): GlyphSet | null =>
 		set ? scaleGlyphSet(set, height / set.height) : null;
@@ -193,7 +207,11 @@ export function createBattleLogDetector(
 	 * rectified into a region-sized mat, `local` shifting a ROI into it. Its
 	 * gray/RGB conversions (the frame's shared ones when flat) live until release.
 	 */
-	function rectifiedView(frame: Mat, region: Roi) {
+	function rectifiedView(
+		frame: Mat,
+		region: Roi,
+		warp = (src: Mat) => warpPerspective(src, homography!, region),
+	) {
 		if (!homography) {
 			return {
 				mat: frame,
@@ -203,7 +221,7 @@ export function createBattleLogDetector(
 				release: () => {},
 			};
 		}
-		const mat = warpPerspective(frame, homography, region);
+		const mat = warp(frame);
 		const converted: Mat[] = [];
 		const convert = (code: number) => {
 			const out = new cv.Mat();
@@ -228,7 +246,7 @@ export function createBattleLogDetector(
 	}
 
 	function gate(frame: Mat): GateResult {
-		const probes = rectifiedView(frame, gateRegion);
+		const probes = rectifiedView(frame, gateRegion, gateWarp);
 		const gray = probes.gray();
 
 		let darkOk = 0;

@@ -37,6 +37,7 @@ export async function runDetectorPass({
 	telemetry,
 	runSteps,
 	speculative = true,
+	onGated,
 }: {
 	frame: Mat;
 	t: number;
@@ -48,6 +49,8 @@ export async function runDetectorPass({
 	runSteps?: StepsRunner;
 	/** prefetch candidate sets in lockstep (batching drivers only) */
 	speculative?: boolean;
+	/** called once every gate is recorded, before the parses run, with the parsing detectors' ids */
+	onGated?: (parsing: readonly string[]) => void;
 }): Promise<DetectorOutcome[]> {
 	const gated: DetectorOutcome[] = [];
 	for (const detector of detectors) {
@@ -69,6 +72,7 @@ export async function runDetectorPass({
 	}
 
 	const parsing = gated.filter((outcome) => outcome.parsed);
+	onGated?.(parsing.map((outcome) => outcome.detector.id));
 	const addParseMs = (detector: Detector<unknown>, ms: number) => {
 		if (telemetry) detectorTelemetry(telemetry, detector.id).parseMs += ms;
 	};

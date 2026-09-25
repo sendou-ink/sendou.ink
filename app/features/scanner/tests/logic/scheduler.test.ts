@@ -277,3 +277,54 @@ test("nextDueT lets frames skip analysis entirely", () => {
 	s.recordGate("b", 0, false);
 	assert.equal(s.nextDueT(), 0.5);
 });
+
+test("nextDueLowerBound never exceeds nextDueT, whatever pending gates and parses report", () => {
+	for (const { refineIntervalS, sufficientConfidence } of [
+		{ refineIntervalS: 0.5, sufficientConfidence: undefined },
+		{ refineIntervalS: 2, sufficientConfidence: 0.9 },
+	]) {
+		for (const confidence of [0.1, 0.95]) {
+			const s = new DetectorScheduler(
+				[
+					{
+						id: "a",
+						searchIntervalS: 1,
+						refineIntervalS,
+						sufficientConfidence,
+					},
+					{ id: "b", searchIntervalS: 3 },
+				],
+				OPTS,
+			);
+			s.dueDetectors(0);
+			const beforeGates = s.nextDueLowerBound(0, ["a", "b"]);
+			s.recordGate("a", 0, true);
+			s.recordGate("b", 0, false);
+			const bound = s.nextDueLowerBound(0, ["a"]);
+			s.recordParse("a", 0, [{ type: "Event", confidence }]);
+			assert.ok(
+				beforeGates <= bound,
+				`gates tightened ${beforeGates} to ${bound}`,
+			);
+			assert.ok(
+				bound <= s.nextDueT(),
+				`bound ${bound} > next ${s.nextDueT()} (refine ${refineIntervalS}, confidence ${confidence})`,
+			);
+		}
+	}
+});
+
+test("nextDueLowerBound is exact for detectors without a pending parse", () => {
+	const s = new DetectorScheduler(
+		[
+			{ id: "a", searchIntervalS: 0.5 },
+			{ id: "b", searchIntervalS: 1 },
+		],
+		OPTS,
+	);
+	assert.equal(s.nextDueLowerBound(0, []), Number.NEGATIVE_INFINITY);
+	s.dueDetectors(0);
+	s.recordGate("a", 0, false);
+	s.recordGate("b", 0, false);
+	assert.equal(s.nextDueLowerBound(0, []), s.nextDueT());
+});

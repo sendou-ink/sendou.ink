@@ -21,6 +21,7 @@
  */
 import { getCV, type Mat } from "../core/cv";
 import {
+	exactMatchMax,
 	type MatchRequest,
 	type MatchSteps,
 	normalizeNcc,
@@ -670,7 +671,10 @@ export async function createGpuMatcher(
 			const count = (info & ~ZERO_FLAG) >>> 0;
 			if (count > K || (count === 0 && !(info & ZERO_FLAG))) {
 				stats.cpuFallbacks++;
-				resolveJob(job, exactMax(job.image, job.template, job.lo, job.hi));
+				resolveJob(
+					job,
+					exactMatchMax(job.image, job.template.image, job.lo, job.hi),
+				);
 				continue;
 			}
 			let best = info & ZERO_FLAG ? 0 : Number.NEGATIVE_INFINITY;
@@ -801,7 +805,7 @@ export async function createGpuMatcher(
 				image.cols > MAX_IMAGE_COLS
 			) {
 				stats.unsupported++;
-				resolveJob(job, exactMax(image, template, lo, hi));
+				resolveJob(job, exactMatchMax(image, template.image, lo, hi));
 				continue;
 			}
 			pending?.set(scoreKey, job);
@@ -868,41 +872,4 @@ function templateStats(t: U8Image) {
 	let varInt = 0;
 	for (let c = 0; c < t.ch; c++) varInt += n * sq[c]! - sum[c]! * sum[c]!;
 	return { n, sum, varInt };
-}
-
-function exactMax(
-	image: U8Image,
-	template: TemplateEntry,
-	lo: number,
-	hi: number,
-): number {
-	const t = template.image;
-	const { ch } = image;
-	let best = Number.NEGATIVE_INFINITY;
-	for (let y = 0; y + t.rows <= image.rows; y++) {
-		for (let x = lo; x <= hi; x++) {
-			let num = 0;
-			let windowVar = 0;
-			for (let c = 0; c < ch; c++) {
-				let S = 0;
-				let Q = 0;
-				let P = 0;
-				for (let ty = 0; ty < t.rows; ty++) {
-					const ib = ((y + ty) * image.cols + x) * ch + c;
-					const tb = ty * t.cols * ch + c;
-					for (let tx = 0; tx < t.cols; tx++) {
-						const iv = image.data[ib + tx * ch]!;
-						S += iv;
-						Q += iv * iv;
-						P += iv * t.data[tb + tx * ch]!;
-					}
-				}
-				num += template.n * P - S * template.sum[c]!;
-				windowVar += template.n * Q - S * S;
-			}
-			const score = normalizeNcc(num, windowVar, template.varInt);
-			if (score > best) best = score;
-		}
-	}
-	return best;
 }

@@ -294,8 +294,27 @@ function readPixels(mat: Mat): Pixels {
 	return pixels;
 }
 
+/**
+ * The exact score `runSync` gives one job — the max over placements x in
+ * [lo, hi] of every row — for batching drivers finishing jobs on the CPU.
+ */
+export function exactMatchMax(
+	image: Pixels,
+	template: Pixels,
+	lo: number,
+	hi: number,
+): number {
+	const integral = integralPixels(image);
+	const score = exactWindowMax(integral, templateStats(template), [lo, hi]);
+	integral.plane?.delete();
+	return score;
+}
+
 function imagePixels(mat: Mat): ImagePixels {
-	const pixels = readPixels(mat);
+	return integralPixels(readPixels(mat));
+}
+
+function integralPixels(pixels: Pixels): ImagePixels {
 	const { rows, cols, ch, data } = pixels;
 	const sum = new Float64Array((rows + 1) * (cols + 1) * ch);
 	const squares = new Float64Array((rows + 1) * (cols + 1));
@@ -321,7 +340,12 @@ function imagePixels(mat: Mat): ImagePixels {
 function templateOf(mat: Mat): TemplatePixels {
 	const known = templatePixels.get(mat);
 	if (known) return known;
-	const pixels = readPixels(mat);
+	const template = templateStats(readPixels(mat));
+	templatePixels.set(mat, template);
+	return template;
+}
+
+function templateStats(pixels: Pixels): TemplatePixels {
 	const { ch, data } = pixels;
 	const n = pixels.rows * pixels.cols;
 	const sum = new Array<number>(ch).fill(0);
@@ -335,7 +359,5 @@ function templateOf(mat: Mat): TemplatePixels {
 	}
 	let varInt = 0;
 	for (let c = 0; c < ch; c++) varInt += n * sq[c]! - sum[c]! * sum[c]!;
-	const template = { ...pixels, n, sum, varInt };
-	templatePixels.set(mat, template);
-	return template;
+	return { ...pixels, n, sum, varInt };
 }

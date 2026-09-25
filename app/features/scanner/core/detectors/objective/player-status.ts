@@ -75,6 +75,36 @@ import {
 
 export const PLAYER_STATUS_EVENT_TYPE = "PlayerStatus";
 
+/**
+ * classFractions' per-pixel classes by (max, min) channel: bit 0 ink, 1 glow,
+ * 2 pale glow, 3 pale, 4 tint.
+ */
+const PIXEL_CLASSES = (() => {
+	const classes = new Uint8Array(1 << 16);
+	for (let value = 0; value < 256; value++) {
+		for (let low = 0; low <= value; low++) {
+			const spread = value - low;
+			let flags = 0;
+			if (spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE)
+				flags |= 1;
+			if (value >= STATUS_GLOW_MIN_VALUE) {
+				flags |= 2;
+				if (spread <= STATUS_GLOW_MAX_SPREAD) flags |= 4;
+			}
+			if (value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD)
+				flags |= 8;
+			if (
+				value >= STATUS_TINT_MIN_VALUE &&
+				spread > STATUS_TINT_MIN_SPREAD &&
+				spread < STATUS_INK_MIN_SPREAD
+			)
+				flags |= 16;
+			classes[(value << 8) | low] = flags;
+		}
+	}
+	return classes;
+})();
+
 export type PlayerStatusFlags = [boolean, boolean, boolean, boolean];
 
 export type PlayerStatusLayout = "even" | "narrow-right" | "narrow-left";
@@ -450,37 +480,46 @@ function classFractions(
 	frame: Mat,
 	roi: Roi,
 ): { ink: number; glow: number; paleGlow: number; pale: number; tint: number } {
-	const crop = copyRoi(frame, roi);
-	const { data } = crop;
-	const channels = crop.channels();
+	const cols = frame.cols;
+	const inside =
+		roi.x >= 0 &&
+		roi.y >= 0 &&
+		roi.w > 0 &&
+		roi.h > 0 &&
+		roi.x + roi.w <= cols &&
+		roi.y + roi.h <= frame.rows &&
+		frame.channels() === 4 &&
+		frame.isContinuous();
+	// read in place when possible: the frame is a continuous RGBA mat
+	const crop = inside ? null : copyRoi(frame, roi);
+	const data = (crop ?? frame).data as Uint8Array;
+	const channels = crop ? crop.channels() : 4;
+	const rowStride = crop ? roi.w * channels : cols * 4;
+	const start = crop ? 0 : (roi.y * cols + roi.x) * 4;
 	let ink = 0;
 	let glow = 0;
 	let paleGlow = 0;
 	let pale = 0;
 	let tint = 0;
-	let count = 0;
-	for (let i = 0; i < data.length; i += channels) {
-		const r = data[i]!;
-		const g = data[i + 1]!;
-		const b = data[i + 2]!;
-		const value = Math.max(r, g, b);
-		const spread = value - Math.min(r, g, b);
-		if (spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE) ink++;
-		if (value >= STATUS_GLOW_MIN_VALUE) {
-			glow++;
-			if (spread <= STATUS_GLOW_MAX_SPREAD) paleGlow++;
+	for (let y = 0; y < roi.h; y++) {
+		const rowStart = start + y * rowStride;
+		const rowEnd = rowStart + roi.w * channels;
+		for (let i = rowStart; i < rowEnd; i += channels) {
+			const r = data[i]!;
+			const g = data[i + 1]!;
+			const b = data[i + 2]!;
+			const high = r > g ? (r > b ? r : b) : g > b ? g : b;
+			const low = r < g ? (r < b ? r : b) : g < b ? g : b;
+			const flags = PIXEL_CLASSES[(high << 8) | low]!;
+			ink += flags & 1;
+			glow += (flags >> 1) & 1;
+			paleGlow += (flags >> 2) & 1;
+			pale += (flags >> 3) & 1;
+			tint += flags >> 4;
 		}
-		if (value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD)
-			pale++;
-		if (
-			value >= STATUS_TINT_MIN_VALUE &&
-			spread > STATUS_TINT_MIN_SPREAD &&
-			spread < STATUS_INK_MIN_SPREAD
-		)
-			tint++;
-		count++;
 	}
-	crop.delete();
+	crop?.delete();
+	const count = roi.w * roi.h;
 	return {
 		ink: ink / count,
 		glow: glow / count,
@@ -538,13 +577,10 @@ function iconnessProfile(frame: Mat, x0: number, x1: number): number[] {
 			const r = data[i]!;
 			const g = data[i + 1]!;
 			const b = data[i + 2]!;
-			const value = Math.max(r, g, b);
-			const spread = value - Math.min(r, g, b);
-			const isInk =
-				spread >= STATUS_INK_MIN_SPREAD && value >= STATUS_INK_MIN_VALUE;
-			const isPale =
-				value >= STATUS_PALE_MIN_VALUE && spread <= STATUS_PALE_MAX_SPREAD;
-			if (isInk || isPale) profile[x]! += 1 / height;
+			const high = r > g ? (r > b ? r : b) : g > b ? g : b;
+			const low = r < g ? (r < b ? r : b) : g < b ? g : b;
+			// ink or pale
+			if (PIXEL_CLASSES[(high << 8) | low]! & 9) profile[x]! += 1 / height;
 		}
 	}
 	crop.delete();
