@@ -68,6 +68,8 @@ export interface BaseWeaponStats {
 	DamageParam_ValueMinCharge?: number;
 	BlastParam_SplashDamage?: number;
 	BlastParam_DistanceDamage?: Array<DistanceDamage>;
+	/** S-BLAST's blast when the shot is fired mid-jump */
+	BlastJumpParam_DistanceDamage?: Array<DistanceDamage>;
 	/** Brella shield HP */
 	CanopyHP?: number;
 	/** Amount of frames white ink (=no ink recovery during this time) takes */

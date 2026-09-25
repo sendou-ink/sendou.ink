@@ -125,6 +125,7 @@
 	"damage.MAX_CHARGE": "최대 반충전",
 	"damage.TAP_SHOT": "단타",
 	"damage.DISTANCE": "간접",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "간접",
 	"damage.SPLASH_MIN": "간접 (최소)",
 	"damage.SPLASH_MAX": "간접 (최대)",

@@ -129,6 +129,7 @@
 	"damage.MAX_CHARGE": "Maximum gedeeltelijk opgeladen",
 	"damage.TAP_SHOT": "Tik schot",
 	"damage.DISTANCE": "Spatschade",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Spatschade",
 	"damage.SPLASH_MIN": "",
 	"damage.SPLASH_MAX": "",

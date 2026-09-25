@@ -133,6 +133,7 @@
 	"damage.MAX_CHARGE": "Максимальный частичный заряд",
 	"damage.TAP_SHOT": "Тап шот",
 	"damage.DISTANCE": "Разрыв",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Разрыв",
 	"damage.SPLASH_MIN": "Разрыв (Минимум)",
 	"damage.SPLASH_MAX": "Разрыв (Максимум)",

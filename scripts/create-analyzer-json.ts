@@ -563,6 +563,7 @@ function parametersToMainWeaponResult(
 			? params.UnitGroupParam?.Unit?.[1]?.DamageParam?.ValueMax
 			: undefined,
 		BlastParam_DistanceDamage: BlastParam_DistanceDamage(),
+		BlastJumpParam_DistanceDamage: params.BlastJumpParam?.DistanceDamage,
 		DamageParam_ValueFullCharge: params.DamageParam?.ValueFullCharge,
 		DamageParam_ValueFullChargeMax:
 			params.DamageParam?.ValueFullChargeMax !== DamageParam_ValueMax()

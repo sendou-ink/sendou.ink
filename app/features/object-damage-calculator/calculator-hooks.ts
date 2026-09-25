@@ -95,6 +95,7 @@ const damageTypePriorityList = [
 	"SPLASH",
 	"TAP_SHOT",
 	"DISTANCE",
+	"DISTANCE_JUMP",
 	"WAVE",
 	"BOMB_DIRECT",
 	"BOMB_NORMAL",

@@ -131,6 +131,7 @@
 	"damage.MAX_CHARGE": "טעינה חלקית מקסימלית",
 	"damage.TAP_SHOT": "יריה בודדת",
 	"damage.DISTANCE": "התזה",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "התזה",
 	"damage.SPLASH_MIN": "התזה (מינימום)",
 	"damage.SPLASH_MAX": "התזה (מקסימום)",

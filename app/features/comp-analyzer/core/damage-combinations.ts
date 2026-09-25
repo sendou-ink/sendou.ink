@@ -41,6 +41,8 @@ export function extractDamageSources(
 
 		for (const damage of stats.stats.damages) {
 			const weaponType = damageTypeToWeaponType[damage.type];
+			// same values as the grounded blast, only the radius differs
+			if (damage.type === "DISTANCE_JUMP") continue;
 			if (weaponType === "MAIN") {
 				damages.push({
 					type: damage.type,

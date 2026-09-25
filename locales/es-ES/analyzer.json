@@ -131,6 +131,7 @@
 	"damage.MAX_CHARGE": "Carga parcial máxima",
 	"damage.TAP_SHOT": "Disparo rápido",
 	"damage.DISTANCE": "Daño de salpicadura",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Daño de salpicadura",
 	"damage.SPLASH_MIN": "Daño de salpicadura (mínimo)",
 	"damage.SPLASH_MAX": "Daño de salpicadura (máximo)",

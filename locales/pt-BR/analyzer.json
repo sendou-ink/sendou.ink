@@ -131,6 +131,7 @@
 	"damage.MAX_CHARGE": "Carga parcial máxima",
 	"damage.TAP_SHOT": "Tiro de toque",
 	"damage.DISTANCE": "Dano de área",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Dano de área",
 	"damage.SPLASH_MIN": "Dano de área (Mínimo)",
 	"damage.SPLASH_MAX": "Dano de área (Máximo)",

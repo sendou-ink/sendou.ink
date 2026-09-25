@@ -131,6 +131,7 @@ export const damagePriorities: Array<
 > = [
 	["MAIN", [210, 220, 260], "DIRECT", "Blaster_KillOneShot"],
 	["MAIN", [210, 260], "DISTANCE", "Blaster_BlasterMiddle"],
+	["MAIN", [260], "DISTANCE_JUMP", "Blaster_BlasterMiddle"],
 	["MAIN", [220], "DISTANCE", "Blaster"],
 
 	["MAIN", [400], "NORMAL_MAX", "Shooter_Flash"],

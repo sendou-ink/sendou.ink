@@ -125,6 +125,7 @@
 	"damage.MAX_CHARGE": "半チャージ",
 	"damage.TAP_SHOT": "ノーチャージ射撃",
 	"damage.DISTANCE": "距離",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "爆風",
 	"damage.SPLASH_MIN": "爆風 (最小)",
 	"damage.SPLASH_MAX": "爆風 (最大)",

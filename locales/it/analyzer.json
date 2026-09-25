@@ -131,6 +131,7 @@
 	"damage.MAX_CHARGE": "Massima carica parziale",
 	"damage.TAP_SHOT": "Colpo con zero carica",
 	"damage.DISTANCE": "Schizzo",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Schizzo",
 	"damage.SPLASH_MIN": "Schizzo (Minimo)",
 	"damage.SPLASH_MAX": "Schizzo (Massimo)",

@@ -361,6 +361,16 @@ export const weaponParams = {
 					Distance: 2.035,
 				},
 			],
+			BlastJumpParam_DistanceDamage: [
+				{
+					Damage: 700,
+					Distance: 0.975,
+				},
+				{
+					Damage: 500,
+					Distance: 3.635,
+				},
+			],
 			Jump_DegSwerve: 8,
 			Stand_DegSwerve: 0,
 			InkRecoverStop: 60,

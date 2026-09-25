@@ -129,6 +129,7 @@
 	"damage.MAX_CHARGE": "Maksimal skade fra en delvis opladning",
 	"damage.TAP_SHOT": "Uopladt skud",
 	"damage.DISTANCE": "Knald",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Knald",
 	"damage.SPLASH_MIN": "Knald (Minimum)",
 	"damage.SPLASH_MAX": "Knald (Maksimum)",

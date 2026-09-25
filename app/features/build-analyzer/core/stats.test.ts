@@ -182,6 +182,18 @@ describe("Analyze build", () => {
 		},
 	);
 
+	test("S-BLAST '92 jumping blast has its own radius", () => {
+		const analyzed = buildStats({ weaponSplId: 260, hasTacticooler: false });
+
+		const jumpDamages = analyzed.stats.damages.filter(
+			(damage) => damage.type === "DISTANCE_JUMP",
+		);
+
+		expect(jumpDamages.map((damage) => damage.distance)).toEqual([
+			0.975, 3.635,
+		]);
+	});
+
 	test("Roller no ink recovery time is split by swing direction", () => {
 		const analyzed = buildStats({ weaponSplId: 1010, hasTacticooler: false });
 

@@ -133,6 +133,7 @@
 	"damage.MAX_CHARGE": "Maximum partial charge",
 	"damage.TAP_SHOT": "Tap-shot",
 	"damage.DISTANCE": "Splash",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Splash",
 	"damage.SPLASH_MIN": "",
 	"damage.SPLASH_MAX": "",

@@ -129,6 +129,7 @@
 	"damage.MAX_CHARGE": "Maximum (teilweise aufgeladen)",
 	"damage.TAP_SHOT": "Tap-Schuss",
 	"damage.DISTANCE": "Schuss",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Schuss",
 	"damage.SPLASH_MIN": "",
 	"damage.SPLASH_MAX": "",

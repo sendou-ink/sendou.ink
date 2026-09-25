@@ -506,6 +506,7 @@ const damageTypeToParamsKey: Record<
 	DIRECT_SECONDARY_MIN: "DamageParam_Secondary_ValueDirectMin",
 	DIRECT_SECONDARY_MAX: "DamageParam_Secondary_ValueDirectMax",
 	DISTANCE: ["BlastParam_DistanceDamage", "DistanceDamage_BlastParamArray"],
+	DISTANCE_JUMP: "BlastJumpParam_DistanceDamage",
 	SPLASH: ["BlastParam_SplashDamage", "DistanceDamage_SplashBlastParam"],
 	SPLASH_MIN: "SwingUnitGroupParam_DamageParam_DamageMinValue",
 	SPLASH_MAX: "SwingUnitGroupParam_DamageParam_DamageMaxValue",

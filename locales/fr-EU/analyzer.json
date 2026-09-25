@@ -131,6 +131,7 @@
 	"damage.MAX_CHARGE": "Charge partielle maximale",
 	"damage.TAP_SHOT": "Charge minimale",
 	"damage.DISTANCE": "Distance",
+	"damage.DISTANCE_JUMP": "",
 	"damage.SPLASH": "Explosion",
 	"damage.SPLASH_MIN": "Coup (Minimum)",
 	"damage.SPLASH_MAX": "Coup (Maximum)",
