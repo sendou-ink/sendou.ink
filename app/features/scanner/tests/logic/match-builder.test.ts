@@ -97,7 +97,7 @@ function scoreboard(
 		players: weaponIds.map((weaponId, i) => ({
 			name: NAMES[i] ?? `p${i}`,
 			weaponId,
-			paint: paints.length > 0 ? (paints[i] ?? null) : 1000,
+			paint: paints.length > 0 ? (paints[i] ?? null) : 1000 + t,
 			ka: 10,
 			d: 5,
 			s: 2,
@@ -814,6 +814,13 @@ test("a battle log view does not close the match still gathering events", () => 
 		built[1]!.sources.map((e) => e.t),
 		[1000, 1100, 1300],
 	);
+});
+
+test("a results screen read again with no match opened since joins its match", () => {
+	const reread = scoreboard(345, { paints: GAME_PAINTS });
+	const built = buildScannerMatches([...playedGame(), reread]);
+	assert.equal(built.length, 1);
+	assert.equal(built[0]!.sources.at(-1), reread);
 });
 
 test("a results screen repeating an earlier board is a new game", () => {
