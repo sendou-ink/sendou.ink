@@ -4,7 +4,7 @@ import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import * as SearchParams from "~/modules/search-params/search-params";
 import { codec, SP } from "~/modules/search-params/search-params";
 import { numericEnum } from "~/utils/schema";
-import { MAX_LDE_INTENSITY } from "./analyzer-constants";
+import { LDE_CLOCK_INTENSITY } from "./analyzer-constants";
 import type { SpecialEffectType } from "./analyzer-types";
 import { deserializeBuild, serializeBuild } from "./core/serializer";
 import { SPECIAL_EFFECTS } from "./core/specialEffects";
@@ -43,7 +43,7 @@ export const analyzerSearchParams = SearchParams.define({
 			v.number(),
 			v.integer(),
 			v.minValue(0),
-			v.maxValue(MAX_LDE_INTENSITY),
+			v.maxValue(LDE_CLOCK_INTENSITY),
 		),
 		{
 			default: 0,

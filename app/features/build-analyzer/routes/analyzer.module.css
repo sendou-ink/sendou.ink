@@ -56,8 +56,9 @@
 	place-items: center;
 }
 
+/* Fixed width so picking a longer option doesn't resize the column */
 .ldeIntensitySelect {
-	font-size: var(--font-2xs);
+	width: 12.5rem;
 }
 
 .apSummary {

@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { applySpecialEffects } from "./specialEffects";
+import {
+	applySpecialEffects,
+	lastDitchEffortIntensityToOpponentPoints,
+} from "./specialEffects";
 
 describe("applySpecialEffects()", () => {
 	test("Adds an effect to empty build", () => {
@@ -82,5 +85,15 @@ describe("applySpecialEffects()", () => {
 		});
 
 		expect(aps.get("ISM")).toBe(13);
+	});
+});
+
+describe("lastDitchEffortIntensityToOpponentPoints()", () => {
+	test.each([
+		{ why: "first step of the ramp", intensity: 1, points: 50 },
+		{ why: "middle of the ramp", intensity: 15, points: 36 },
+		{ why: "maximum boost", intensity: 21, points: 30 },
+	])("$why", ({ intensity, points }) => {
+		expect(lastDitchEffortIntensityToOpponentPoints(intensity)).toBe(points);
 	});
 });

@@ -8,6 +8,7 @@ import * as R from "remeda";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Ability } from "~/components/Ability";
 import { Chart } from "~/components/Chart";
+import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
 	SendouTab,
@@ -59,8 +60,8 @@ import { SendouPopover } from "../../../components/elements/Popover";
 import { metaTags, ogPageImage } from "../../../utils/remix";
 import {
 	damageTypeToWeaponType,
+	LDE_CLOCK_INTENSITY,
 	MAX_AP,
-	MAX_LDE_INTENSITY,
 	TENACITY_PLAYER_DEFICITS,
 } from "../analyzer-constants";
 import { useAnalyzeBuild } from "../analyzer-hooks";
@@ -82,6 +83,7 @@ import {
 } from "../core/abilityChunksCalc";
 import {
 	lastDitchEffortIntensityToAp,
+	lastDitchEffortIntensityToOpponentPoints,
 	SPECIAL_EFFECTS,
 } from "../core/specialEffects";
 import { buildStats } from "../core/stats";
@@ -1332,8 +1334,6 @@ function EffectsSelector({
 	handleAddEffect: (effect: SpecialEffectType) => void;
 	handleRemoveEffect: (effect: SpecialEffectType) => void;
 }) {
-	const { t } = useTranslation(["weapons", "analyzer"]);
-
 	const effectsToShow = SPECIAL_EFFECTS.filter(
 		(effect) =>
 			!isAbility(effect.type) ||
@@ -1357,26 +1357,10 @@ function EffectsSelector({
 						</div>
 						<div>
 							{effect.type === "LDE" ? (
-								<select
-									value={ldeIntensity}
-									onChange={(e) =>
-										handleLdeIntensityChange(Number(e.target.value))
-									}
-									className={styles.ldeIntensitySelect}
-								>
-									{new Array(MAX_LDE_INTENSITY + 1).fill(null).map((_, i) => {
-										const percentage = ((i / MAX_LDE_INTENSITY) * 100)
-											.toFixed(2)
-											.replace(".00", "");
-
-										return (
-											<option key={i} value={i}>
-												{percentage}% (+{lastDitchEffortIntensityToAp(i)}{" "}
-												{t("analyzer:abilityPoints.short")})
-											</option>
-										);
-									})}
-								</select>
+								<LdeIntensitySelect
+									ldeIntensity={ldeIntensity}
+									onChange={handleLdeIntensityChange}
+								/>
 							) : (
 								<SendouSwitch
 									isSelected={effects.includes(effect.type)}
@@ -1392,6 +1376,45 @@ function EffectsSelector({
 				);
 			})}
 		</div>
+	);
+}
+
+function LdeIntensitySelect({
+	ldeIntensity,
+	onChange,
+}: {
+	ldeIntensity: number;
+	onChange: (newLdeIntensity: number) => void;
+}) {
+	const { t } = useTranslation(["analyzer"]);
+
+	const intensityLabel = (intensity: number) => {
+		if (intensity === 0) return t("analyzer:lde.inactive");
+
+		const activation =
+			intensity === LDE_CLOCK_INTENSITY
+				? t("analyzer:lde.secondsLeft")
+				: t("analyzer:lde.points", {
+						points: lastDitchEffortIntensityToOpponentPoints(intensity),
+					});
+		const ap = lastDitchEffortIntensityToAp(intensity);
+
+		return `${activation} (+${ap} ${t("analyzer:abilityPoints.short")})`;
+	};
+
+	return (
+		<SendouSelect
+			selectedKey={ldeIntensity}
+			onSelectionChange={(intensity) => onChange(Number(intensity))}
+			aria-label="Last-Ditch Effort intensity"
+			className={styles.ldeIntensitySelect}
+		>
+			{nullFilledArray(LDE_CLOCK_INTENSITY + 1).map((_, intensity) => (
+				<SendouSelectItem key={intensity} id={intensity}>
+					{intensityLabel(intensity)}
+				</SendouSelectItem>
+			))}
+		</SendouSelect>
 	);
 }
 

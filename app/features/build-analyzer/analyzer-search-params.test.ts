@@ -25,7 +25,7 @@ describe("analyzerSearchParams", () => {
 			weapon: [0, 10, 8000],
 			build: [EMPTY_BUILD, FULL_BUILD, PARTIAL_BUILD],
 			build2: [EMPTY_BUILD, FULL_BUILD],
-			lde: [0, 21, 10],
+			lde: [0, 22, 10],
 			effect: [[], ["LDE"], ["OG", "TACTICOOLER"]],
 			focused: [1, 2, 3],
 		});
@@ -43,7 +43,7 @@ describe("analyzerSearchParams", () => {
 			["XX,XX,XX,XX,XX,XX,XX,XX,XX,XX,XX,XX"],
 		]);
 		assertDecodesToDefault(analyzerSearchParams, "lde", [
-			["22"],
+			["23"],
 			["-1"],
 			["x"],
 		]);

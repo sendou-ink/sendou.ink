@@ -1,6 +1,15 @@
 import type { DamageType, TenacityPlayerDeficit } from "./analyzer-types";
 
-export const MAX_LDE_INTENSITY = 21;
+/** Opponent's remaining points when Last-Ditch Effort starts ramping up in ranked modes. */
+export const LDE_START_POINTS = 50;
+
+/** Opponent's remaining points when Last-Ditch Effort reaches its maximum. */
+const LDE_MAX_POINTS = 30;
+
+const MAX_LDE_INTENSITY = LDE_START_POINTS - LDE_MAX_POINTS + 1;
+
+/** Intensity standing for the clock based activation, which always grants the maximum boost. */
+export const LDE_CLOCK_INTENSITY = MAX_LDE_INTENSITY + 1;
 
 /** Every ability point total reachable by some main/sub slot combination, ascending. */
 export function possibleApValues() {
