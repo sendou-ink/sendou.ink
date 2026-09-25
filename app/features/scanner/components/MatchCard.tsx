@@ -4,16 +4,16 @@
  * the game's clips and, once the game is over, its upload state beside the
  * expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
- * timeline, deaths and kills (each with a ▶ when a clip covers it) and the
- * builds read for both teams.
+ * timeline and deaths and kills (each with a ▶ when a clip covers it).
  */
 import clsx from "clsx";
 import { ChevronDown, Play } from "lucide-react";
 import { useState } from "react";
 import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
+import { SendouPopover } from "~/components/elements/Popover";
 import { GameTimeline } from "~/components/GameTimeline";
-import { ModeImage, WeaponImage } from "~/components/Image";
+import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { matchScoresFromObjective } from "~/components/objective-timeline-utils";
 import { StageBannerBox } from "~/components/StageBannerBox";
@@ -22,6 +22,7 @@ import type {
 	AbilityWithUnknown,
 	ModeShort,
 } from "~/modules/in-game-lists/types";
+import { navIconUrl } from "~/utils/urls";
 import { clipCovers } from "../core/clips/scoring";
 import {
 	DEATH_EVENT_TYPE,
@@ -54,10 +55,11 @@ const KO_MATCH_SCORE = 100;
 const MATCH_CLOCK_SECONDS: Partial<Record<ModeShort, number>> = { TW: 180 };
 const DEFAULT_MATCH_CLOCK_SECONDS = 300;
 
-/** The scan knows the on-screen sides only, not who is playing. */
+/** The scan knows the on-screen sides only, not who is playing: left, right. */
 const TEAM_LABELS = ["Alpha", "Bravo"] as const;
 
-const ROW_LABELS = ["head", "clothes", "shoes"] as const;
+const GEAR_ROWS = 3;
+const SLOTS_PER_ROW = 4;
 
 /** the gear row a slot-only main can only sit in; stackables fit anywhere */
 const MAIN_ONLY_ROW = new Map<string, number>(
@@ -239,7 +241,6 @@ export function MatchCard({
 			{expanded && expandable ? (
 				<div className={styles.details}>
 					<Scoreboard match={match} result={result} />
-					<Builds match={match} />
 					{match.objective || match.playerStatus ? (
 						<GameTimeline
 							objectiveEvents={(match.objective?.samples ?? []).map(
@@ -248,7 +249,7 @@ export function MatchCard({
 							playerStatusSamples={(match.playerStatus?.samples ?? []).map(
 								(sample) => ({ ...sample, t: sample.t - matchOrigin }),
 							)}
-							teams={playerStatusTeams(match, TEAM_LABELS)}
+							teams={playerStatusTeams(match, teamLabels(match))}
 						/>
 					) : null}
 					<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
@@ -296,6 +297,13 @@ function elapsed(mode: ModeShort | null, timeLeft: number): number {
  */
 function displayOrder(match: ScannerMatch): [0 | 1, 0 | 1] {
 	return match.pov?.team === 1 ? [1, 0] : [0, 1];
+}
+
+/** labels by team index: Alpha is whichever team the card shows on the left */
+function teamLabels(match: ScannerMatch): readonly [string, string] {
+	return displayOrder(match)[0] === 0
+		? TEAM_LABELS
+		: [TEAM_LABELS[1], TEAM_LABELS[0]];
 }
 
 function Score({
@@ -395,16 +403,10 @@ function Scoreboard({
 	const [left, right] = displayOrder(match);
 	return (
 		<div className={styles.scoreboard}>
-			{[left, right].map((team) => (
-				<div
-					key={team}
-					className={clsx(styles.team, {
-						[styles.teamWin]: match.winner === team,
-						[styles.teamLoss]: match.winner !== null && match.winner !== team,
-					})}
-				>
+			{[left, right].map((team, side) => (
+				<div key={team} className={styles.team}>
 					<div className={styles.teamHeading}>
-						{TEAM_LABELS[team]}
+						{TEAM_LABELS[side]}
 						{match.winner === team ? " · WIN" : null}
 						{result === null && match.pov?.team === team ? " · you" : null}
 					</div>
@@ -437,6 +439,9 @@ function Scoreboard({
 											)}
 										</td>
 										<td className={styles.name}>{player.name ?? "?"}</td>
+										<td>
+											<PlayerAbilities abilities={player.abilities} />
+										</td>
 										<td className={styles.num}>
 											{player.ka ?? "?"}/{player.d ?? "?"}/{player.s ?? "?"}
 										</td>
@@ -579,63 +584,56 @@ function matchClockAt(match: ScannerMatch, t: number): number | null {
 }
 
 /**
- * Builds cover both teams: the POV player's full gear comes from the
- * personal-results screen, an enemy's full grid from the death overlay when
- * they splatted you, and everyone else's mains from the minimap cards. A row
- * renders as far as it was read, with unread slots blank.
+ * A player's mains in head/clothes/shoes order, then a build button when
+ * every slot was read. The POV player's full gear comes from the
+ * personal-results screen, an enemy's from the death overlay when they
+ * splatted you, everyone else's mains from the minimap cards.
  */
-function Builds({ match }: { match: ScannerMatch }) {
-	const [left, right] = displayOrder(match);
-	const players = [left, right].flatMap((team) =>
-		match.teams[team].players
-			.map((player, index) => ({
-				player,
-				isPov: match.pov?.team === team && match.pov.index === index,
-			}))
-			.filter(({ player }) => player.abilities && player.abilities.length > 0),
-	);
-	if (players.length === 0) return null;
-	return (
-		<div className={styles.builds}>
-			<div className={styles.columnHeading}>Builds</div>
-			<div className={styles.buildGrid}>
-				{players.map(({ player, isPov }, i) => (
-					<div key={i} className={styles.build}>
-						<div className={styles.buildHead}>
-							{player.weaponId !== null ? (
-								<WeaponImage
-									weaponSplId={player.weaponId}
-									variant="build"
-									size={22}
-								/>
-							) : null}
-							<span className={styles.buildName}>
-								{isPov ? "You" : (player.name ?? "?")}
-							</span>
-						</div>
-						<BuildRows abilities={player.abilities!} />
-					</div>
-				))}
-			</div>
-		</div>
-	);
-}
-
-function BuildRows({ abilities }: { abilities: AbilityWithUnknown[][] }) {
+function PlayerAbilities({
+	abilities,
+}: {
+	abilities: AbilityWithUnknown[][] | undefined;
+}) {
+	if (!abilities || abilities.length === 0) return null;
 	const rows = gearRows(abilities);
+	const fullBuild = rows.every((row) => row?.length === SLOTS_PER_ROW)
+		? (rows as AbilityWithUnknown[][])
+		: null;
 	return (
-		<div className={styles.buildRows}>
-			{ROW_LABELS.map((label, row) => (
-				<div key={label} className={styles.buildRow}>
-					{(rows[row] ?? []).map((ability, slot) => (
-						<Ability
-							key={slot}
-							ability={ability}
-							size={slot === 0 ? "SUBTINY" : "TINY"}
-						/>
-					))}
-				</div>
-			))}
+		<div className={styles.abilities}>
+			{rows.map((row, i) =>
+				row?.[0] ? (
+					<Ability key={i} ability={row[0]} size="SUBTINY" />
+				) : (
+					<span key={i} className={styles.abilitySlot} />
+				),
+			)}
+			{fullBuild ? (
+				<SendouPopover
+					popoverClassName={styles.buildPopover}
+					trigger={
+						<button
+							type="button"
+							className={styles.buildButton}
+							aria-label="Show build"
+						>
+							<Image path={navIconUrl("builds")} alt="" size={20} />
+						</button>
+					}
+				>
+					<div className={styles.buildGrid}>
+						{fullBuild.flatMap((row, rowIndex) =>
+							row.map((ability, slot) => (
+								<Ability
+									key={`${rowIndex}-${slot}`}
+									ability={ability}
+									size={slot === 0 ? "MAIN" : "SUB"}
+								/>
+							)),
+						)}
+					</div>
+				</SendouPopover>
+			) : null}
 		</div>
 	);
 }
@@ -655,7 +653,7 @@ function gearRows(
 		undefined,
 	];
 	const loose: AbilityWithUnknown[][] = [];
-	for (const row of abilities.slice(0, ROW_LABELS.length)) {
+	for (const row of abilities.slice(0, GEAR_ROWS)) {
 		const pinned = row[0] === undefined ? undefined : MAIN_ONLY_ROW.get(row[0]);
 		if (pinned !== undefined && rows[pinned] === undefined) rows[pinned] = row;
 		else loose.push(row);
