@@ -88,20 +88,6 @@
 	display: none;
 }
 
-.checkbox {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	font-size: var(--font-xs);
-	cursor: pointer;
-
-	& input {
-		width: var(--selector-size-sm);
-		height: var(--selector-size-sm);
-		margin: 0;
-	}
-}
-
 .sessions {
 	display: flex;
 	flex-direction: column;

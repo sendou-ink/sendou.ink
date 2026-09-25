@@ -56,7 +56,6 @@ export function LandingView() {
 	const clips = useClips();
 	const [telemetry] = useSearchParam(scannerSearchParams, "telemetry");
 	const [, setParams] = useSearchParamsTyped(scannerSearchParams);
-	const [saveClipsFromFile, setSaveClipsFromFile] = useState(false);
 	const [over, setOver] = useState(false);
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
 
@@ -78,7 +77,7 @@ export function LandingView() {
 			void inspectScreenshot(file);
 			return;
 		}
-		void startVodScan(file, { saveClips: saveClipsFromFile, telemetry });
+		void startVodScan(file, { telemetry });
 		setParams({ view: "vod", name: file.name });
 	};
 
@@ -161,14 +160,6 @@ export function LandingView() {
 								if (file) scanFile(file);
 							}}
 						/>
-					</label>
-					<label className={styles.checkbox}>
-						<input
-							type="checkbox"
-							checked={saveClipsFromFile}
-							onChange={(e) => setSaveClipsFromFile(e.target.checked)}
-						/>
-						Save clips from this VoD
 					</label>
 				</section>
 			</div>

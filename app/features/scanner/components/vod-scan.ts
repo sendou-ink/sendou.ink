@@ -81,7 +81,6 @@ export interface VodScanSnapshot {
 	progress: VodScanProgress | null;
 	/** what the scan found, chronological; reloaded from the store once saved */
 	events: ScanEvent[];
-	saveClips: boolean;
 	clipsWork: ClipsWork | null;
 	telemetry: ScanTelemetry | null;
 	/** matches uploading right after the scan */
@@ -94,7 +93,6 @@ const IDLE: VodScanSnapshot = {
 	error: null,
 	progress: null,
 	events: [],
-	saveClips: false,
 	clipsWork: null,
 	telemetry: null,
 	uploading: false,
@@ -180,7 +178,7 @@ export async function uploadVodScan(
 /** Scans `file` as fast as decoding allows; a finished scan replaces any saved one of the same name. */
 export async function startVodScan(
 	file: File,
-	{ saveClips, telemetry }: { saveClips: boolean; telemetry: boolean },
+	{ telemetry }: { telemetry: boolean },
 ): Promise<void> {
 	cancelVodScan();
 	const abort = { aborted: false };
@@ -197,7 +195,6 @@ export async function startVodScan(
 		...IDLE,
 		name: file.name,
 		status: "scanning",
-		saveClips,
 	});
 
 	const timeline = new TimelineBuilder();
@@ -424,7 +421,7 @@ export async function startVodScan(
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
 		update({ events, status: "done" });
 		void refreshVods();
-		if (saveClips) await cutClips(file, events, update);
+		await cutClips(file, events, update);
 		if (uploadEnabled()) await uploadVodScan();
 	}
 }
