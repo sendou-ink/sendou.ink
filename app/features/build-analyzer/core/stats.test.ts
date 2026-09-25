@@ -169,6 +169,21 @@ describe("Analyze build", () => {
 		).toBeUndefined();
 	});
 
+	test("Squeezer rapid fire has its own ink consumption and run speed", () => {
+		const analyzed = buildStats({
+			weaponSplId: 400,
+			hasTacticooler: false,
+		});
+
+		expect(
+			analyzed.stats.mainWeaponInkConsumptionPercentage_SECONDARY_MODE!
+				.baseValue,
+		).toBeLessThan(
+			analyzed.stats.mainWeaponInkConsumptionPercentage_NORMAL!.baseValue,
+		);
+		expect(analyzed.stats.shootingRunSpeedSecondaryMode!.baseValue).toBe(0.72);
+	});
+
 	test("ISM decreases main weapon ink consumption %", () => {
 		const analyzed = buildStats({
 			weaponSplId: 0,
@@ -262,7 +277,13 @@ describe("Analyze build", () => {
 			ism: 57,
 			expected: 101.99,
 		},
-		{ why: "Jr. just under 100", weaponSplId: 10, iss: 3, ism: 1, expected: 99.99 },
+		{
+			why: "Jr. just under 100",
+			weaponSplId: 10,
+			iss: 3,
+			ism: 1,
+			expected: 99.99,
+		},
 	] as const)(
 		"Full ink tank actions are truncated, not rounded up ($why)",
 		({ weaponSplId, iss, ism, expected }) => {

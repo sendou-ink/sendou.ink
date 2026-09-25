@@ -74,6 +74,8 @@ export interface BaseWeaponStats {
 	InkRecoverStop?: number;
 	/** How much ink one shot consumes? InkConsume = 0.5 means 2 shots per full tank */
 	InkConsume?: number;
+	/** Squeezer rapid fire (secondary mode) consumption per shot */
+	InkConsumeVariable?: number;
 	/** How much ink one slosh of slosher consumes? */
 	InkConsumeSlosher?: number;
 	/** How much ink one fully charged shot consumes? */
@@ -243,6 +245,7 @@ export const INK_CONSUME_TYPES = [
 	"SLOSH",
 	"VERTICAL_SWING",
 	"HORIZONTAL_SWING",
+	"SECONDARY_MODE",
 	"TAP_SHOT",
 	"FULL_CHARGE",
 	"SPLATLING_CHARGE",

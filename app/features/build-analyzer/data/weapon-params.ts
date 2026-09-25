@@ -407,6 +407,7 @@ export const weaponParams = {
 			Range_FreeGravity: 0.016,
 			Range_ZRate: 2,
 			MoveSpeed: 0.066,
+			MoveSpeedVariable: 0.072,
 			DamageParam_ValueMax: 380,
 			DamageParam_ValueMin: 190,
 			Variable_Damage_ValueMax: 300,
@@ -416,6 +417,7 @@ export const weaponParams = {
 			Variable_Jump_DegSwerve: 13,
 			Variable_Stand_DegSwerve: 8,
 			InkConsume: 0.024,
+			InkConsumeVariable: 0.0108,
 		},
 		"1000": {
 			Range_SpawnSpeed: 1.5166,

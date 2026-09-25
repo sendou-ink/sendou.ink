@@ -545,7 +545,9 @@ function parametersToMainWeaponResult(
 		MoveSpeedFullCharge:
 			params.WeaponParam?.MoveSpeedFullCharge ??
 			params.spl__WeaponStringerParam?.ChargeParam?.MoveSpeedFullCharge,
-		MoveSpeedVariable: params.VariableShotParam?.MoveSpeed,
+		MoveSpeedVariable:
+			params.VariableWeaponParam?.MoveSpeed ??
+			params.VariableShotParam?.MoveSpeed,
 		DamageParam_ValueMax: DamageParam_ValueMax(),
 		DamageParam_ValueMin: !DamageParam_ValueDirect
 			? (params.DamageParam?.ValueMin ??
@@ -627,6 +629,7 @@ function parametersToMainWeaponResult(
 			params.VariableShotParam?.Stand_DegSwerve,
 		InkRecoverStop: params.WeaponParam?.InkRecoverStop,
 		InkConsume,
+		InkConsumeVariable: params.VariableWeaponParam?.InkConsume,
 		InkConsumeSlosher,
 		InkConsumeFullCharge: params.WeaponParam?.InkConsumeFullCharge,
 		InkConsumeMinCharge: params.WeaponParam?.InkConsumeMinCharge,
