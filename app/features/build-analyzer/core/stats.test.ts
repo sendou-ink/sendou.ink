@@ -253,6 +253,36 @@ describe("Analyze build", () => {
 		).toBe(roundToNDecimalPlaces((jrParams.InkConsume! * 100) / 1.1));
 	});
 
+	test.each([
+		{ why: "Sploosh 64.995", weaponSplId: 0, iss: 9, ism: 16, expected: 64.99 },
+		{
+			why: "Sploosh 101.998",
+			weaponSplId: 0,
+			iss: 15,
+			ism: 57,
+			expected: 101.99,
+		},
+		{ why: "Jr. just under 100", weaponSplId: 10, iss: 3, ism: 1, expected: 99.99 },
+	] as const)(
+		"Full ink tank actions are truncated, not rounded up ($why)",
+		({ weaponSplId, iss, ism, expected }) => {
+			const analyzed = buildStats({
+				weaponSplId,
+				abilityPoints: new Map([
+					["ISS", iss],
+					["ISM", ism],
+				]),
+				hasTacticooler: false,
+			});
+
+			const oneSubOption = analyzed.stats.fullInkTankOptions.find(
+				(option) => option.subsUsed === 1,
+			);
+
+			expect(oneSubOption?.value).toBe(expected);
+		},
+	);
+
 	test("Sub Power Up Beakon AP boost matches Lean", () => {
 		for (const [subPowerAp, quickSuperJumpAp] of subPowerApToQuickSuperJumpAp) {
 			const analyzed = buildStats({

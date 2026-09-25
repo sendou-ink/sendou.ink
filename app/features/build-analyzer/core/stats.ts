@@ -316,11 +316,10 @@ export function fullInkTankOptions(
 				id: nanoid(),
 				subsUsed: subsFromFullInkTank,
 				type,
-				value: effectToRounded(
+				value: cutToNDecimalPlaces(
 					(inkTankSize(args.weaponSplId) -
 						subWeaponInkConsume * subsFromFullInkTank) /
 						mainWeaponInkConsume,
-					2,
 				),
 			});
 		}
