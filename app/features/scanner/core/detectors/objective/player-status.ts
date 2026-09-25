@@ -33,6 +33,8 @@ import {
 	STATUS_COMB_GAP_HALF_WIDTH,
 	STATUS_COMB_MAX_SHIFT,
 	STATUS_COMB_SIDE_SPANS,
+	STATUS_CROSSED_MIN_BODY_DARK,
+	STATUS_CROSSED_MIN_BODY_GREY,
 	STATUS_DARK_MAX_VALUE,
 	STATUS_DEAD_MAX_BODY_INK,
 	STATUS_DEAD_MAX_SHOULDER_GLOW,
@@ -447,7 +449,8 @@ function sideDecisiveness(reads: SlotRead[]): number {
  * backdrop turns the plate near-white, or the trough dims the wash under both
  * ready floors. Where a big dark weapon render dilutes the wash's tint as low
  * as a splat over a bright tinted backdrop reads, the splat's grey X strokes
- * still tell them apart. Only unsaturated glow counts as the wash's
+ * still tell them apart, and they veto a tinted body outright when the dark
+ * squid shows under them (a splat over a pale tinted backdrop). Only unsaturated glow counts as the wash's
  * (STATUS_GLOW_MAX_SPREAD): bright team ink lights the shoulder on its own
  * once the ink is light enough (orange clears the glow floor, lime does not).
  * The wash also replaces the body's ink, so an ink-heavy body means backdrop
@@ -471,8 +474,11 @@ function classifySlot(
 	// the wash glows pale on every layout; raw brightness is team ink or backdrop
 	const washGlow = shoulderPaleGlow;
 	const inkPoor = bodyInk <= STATUS_DEAD_MAX_BODY_INK;
+	const crossed =
+		bodyGrey >= STATUS_CROSSED_MIN_BODY_GREY &&
+		bodyDark >= STATUS_CROSSED_MIN_BODY_DARK;
 	const tinted =
-		bodyTint >= STATUS_WASH_MIN_BODY_TINT ||
+		(bodyTint >= STATUS_WASH_MIN_BODY_TINT && !crossed) ||
 		(bodyTint >= STATUS_UNCROSSED_WASH_MIN_BODY_TINT &&
 			bodyGrey <= STATUS_UNCROSSED_WASH_MAX_BODY_GREY &&
 			bodyDark <= STATUS_UNCROSSED_WASH_MAX_BODY_DARK);
