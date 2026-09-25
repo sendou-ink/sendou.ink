@@ -812,7 +812,6 @@ function BuildAnalyzerPage() {
 										? analyzed2.stats.subWeaponDefenseDamages
 										: undefined
 								}
-								multiShots={analyzed.weapon.multiShots}
 							/>
 						</StatCategory>
 					) : null}
