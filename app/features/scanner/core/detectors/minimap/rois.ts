@@ -113,11 +113,20 @@ export const CROSS_VALUE_MIN = 110;
 export const CROSS_MIN_FRACTION = 0.08;
 /**
  * Saturation alone is not a cross-out: the POV map screen bleeds team ink
- * through the cards (phantom fractions 0.61-0.65 on Um'ami, everyone alive).
- * The X is crisp while bleed is softened: mean |Laplacian| struck >=98 vs bleed
- * <=34 (clean cards read up to ~62 of line art at fraction ~0).
+ * through the cards (phantom fractions 0.56-0.70 at mean |Laplacian| 22-42 on
+ * the Um'ami and Triton cup VoDs, everyone alive), while the X is crisp
+ * (clean cards read up to ~62 of line art, but at fraction ~0). The X is drawn
+ * in the card owner's pale team tint, so over a bright team-colored scene
+ * (Triton cup VoD, yellow team) its strokes soften: 21 struck cards and rows
+ * there read 41-65 at fractions 0.11-0.34. Bleed saturates far more of the
+ * probe, so past CROSS_BLEED_MIN_FRACTION only the crisp floor counts — the
+ * two soft struck reads up there (0.56 at 55, 0.66 at 33) stay lost. Margins
+ * are THIN (bleed 0.56 at 41.6 vs struck 0.15 at 41.5) — re-measure before
+ * moving any.
  */
-export const CROSS_MIN_LAPLACIAN = 65;
+export const CROSS_MIN_LAPLACIAN = 40;
+export const CROSS_BLEED_MIN_FRACTION = 0.5;
+export const CROSS_BLEED_MIN_LAPLACIAN = 65;
 
 /** Sub-tile silhouettes matched shape-only (specials.ts) to split near-tied main-weapon icons. */
 export const SUB_TILE_TEMPLATE_SIZES = [24, 27, 30, 33, 36] as const;

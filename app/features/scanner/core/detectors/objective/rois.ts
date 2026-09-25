@@ -247,6 +247,19 @@ export const STATUS_UNCROSSED_WASH_MIN_BODY_TINT = 0.2;
 export const STATUS_UNCROSSED_WASH_MAX_BODY_GREY = 0.15;
 export const STATUS_UNCROSSED_WASH_MAX_BODY_DARK = 0.45;
 
+/**
+ * ...and a body the X does cross is never a wash, however tinted: a pale teal
+ * or sky backdrop through the translucent plate lifts a splat's tint to
+ * 0.30-0.46 (Triton cup VoD, 21 such splats over the whole VoD). Neither
+ * stroke class alone splits them from washes: grey or two-tone weapon renders
+ * put washes at grey up to 0.26, and dark renders (Nautilus drum, frying pan)
+ * at dark up to 0.35. Together they do: those splats read grey >=0.21 at dark
+ * >=0.17, while every wash reading grey >=0.2 reads dark <=0.16. Margins are
+ * THIN on dark (0.16 vs 0.17) — re-measure before moving either.
+ */
+export const STATUS_CROSSED_MIN_BODY_GREY = 0.2;
+export const STATUS_CROSSED_MIN_BODY_DARK = 0.17;
+
 /** Special ready: shoulder glow past this (attested >=0.40 vs <=0.06). */
 export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
 

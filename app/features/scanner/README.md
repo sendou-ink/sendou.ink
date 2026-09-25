@@ -269,7 +269,9 @@ sequenceDiagram
   a grey X, which a blown-out backdrop turns near-white while a wash stays
   tinted at every pulse phase (a big dark weapon render such as the
   Nautilus drum dilutes that tint, but a diluted wash still reads pale,
-  which a tinted splat never does), and a ready read
+  which a tinted splat never does; a pale backdrop showing through a
+  splat's translucent plate tints it like a wash, but the X's grey strokes
+  over the dark squid still give it away), and a ready read
   must also see a washed (ink-poor) body: pale backdrop, a ship's hull or
   the lead banner leaking past an icon edge fakes the shoulder glow, and a ready the shoulder glow does
   not corroborate needs the body's ink gone rather than merely paled,

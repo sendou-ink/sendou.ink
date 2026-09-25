@@ -46,6 +46,8 @@ import type { DetectedEvent, Detector, GateResult } from "../types";
 import {
 	badgeRoi,
 	CARD_LAYOUTS,
+	CROSS_BLEED_MIN_FRACTION,
+	CROSS_BLEED_MIN_LAPLACIAN,
 	CROSS_MIN_FRACTION,
 	CROSS_MIN_LAPLACIAN,
 	CROSS_SATURATION_MIN,
@@ -180,6 +182,17 @@ function minTopCorner(
 	for (let i = 0; i < n; i++) satSum += crop.data[i * 3 + 1]!;
 	crop.delete();
 	return { mean: Math.min(...means), saturation: satSum / n };
+}
+
+/** the cross probe's saturated strokes are crisp enough to be the X, not scene bleed */
+function crossedOut(crossFraction: number, crossLap: number): boolean {
+	if (crossFraction < CROSS_MIN_FRACTION) return false;
+	return (
+		crossLap >=
+		(crossFraction > CROSS_BLEED_MIN_FRACTION
+			? CROSS_BLEED_MIN_LAPLACIAN
+			: CROSS_MIN_LAPLACIAN)
+	);
 }
 
 /** fraction of the probe that is saturated-and-bright (cross-out strokes) */
@@ -452,9 +465,7 @@ export function createMinimapDetector(
 				}
 				const crossFraction = saturatedFraction(hsv, layout.cross);
 				const crossLap = meanBrightness(lap, layout.cross);
-				const occluded =
-					crossFraction >= CROSS_MIN_FRACTION &&
-					crossLap >= CROSS_MIN_LAPLACIAN;
+				const occluded = crossedOut(crossFraction, crossLap);
 				const corner = minTopCorner(gray, hsv, layout.weapon);
 				const lightSurface =
 					corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
@@ -623,8 +634,7 @@ export function createMinimapDetector(
 			}
 			const crossFraction = saturatedFraction(hsv, layout.cross);
 			const crossLap = meanBrightness(lap, layout.cross);
-			const occluded =
-				crossFraction >= CROSS_MIN_FRACTION && crossLap >= CROSS_MIN_LAPLACIAN;
+			const occluded = crossedOut(crossFraction, crossLap);
 			const corner = minTopCorner(gray, hsv, layout.weapon);
 			const lightSurface =
 				corner.mean >= SPECIAL_READY_MIN_CORNER_MEAN &&
@@ -643,8 +653,7 @@ export function createMinimapDetector(
 			}
 			const crossFraction = saturatedFraction(hsv, enemyCrossRoi(cy));
 			const crossLap = meanBrightness(lap, enemyCrossRoi(cy));
-			const occluded =
-				crossFraction >= CROSS_MIN_FRACTION && crossLap >= CROSS_MIN_LAPLACIAN;
+			const occluded = crossedOut(crossFraction, crossLap);
 			// light camo rows: pick template variant by corner brightness, raise ink threshold past it
 			const corner = minTopCorner(gray, hsv, weaponRoi);
 			const lightSurface =
