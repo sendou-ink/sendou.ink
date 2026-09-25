@@ -43,7 +43,10 @@ import {
 } from "./detectors/objective/strip-weapons";
 import { QUICK_SCOREBOARD_BATTLE_LOG_EVENT_TYPE } from "./detectors/quick-scoreboard-battle-log/index";
 import { SCOREBOARD_EVENT_TYPES } from "./detectors/registry";
-import type { ScoreboardData } from "./detectors/scoreboard/index";
+import {
+	SCOREBOARD_EVENT_TYPE,
+	type ScoreboardData,
+} from "./detectors/scoreboard/index";
 import {
 	SCOREBOARD_BATTLE_LOG_EVENT_TYPE,
 	type ScoreboardBattleLogData,
@@ -175,7 +178,8 @@ export interface BuiltMatch<E extends DetectedEvent> {
  * player's build on the match whose results screen it follows. A battle
  * history screen showing an already built game (same scoreboard fingerprint,
  * recording time not contradicting it) joins that match's `sources` instead of
- * forming a new one. Every input event ends up in at most one match's `sources`.
+ * forming a new one, as does a results screen read again with no match
+ * opened since. Every input event ends up in at most one match's `sources`.
  */
 export function buildScannerMatches<E extends DetectedEvent>(
 	events: readonly E[],
@@ -212,7 +216,9 @@ export function buildScannerMatches<E extends DetectedEvent>(
 			orphanStripWeapons = [];
 			orphanKills = [];
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
-			const revisited = revisitedMatch(built, event);
+			const revisited =
+				revisitedMatch(built, event) ??
+				(open ? undefined : reshownResultsMatch(built, event));
 			if (revisited) {
 				// the game already has its match, and the one being played (if
 				// any) keeps gathering events
@@ -1381,15 +1387,7 @@ function revisitedMatch<E extends DetectedEvent>(
 	const recordedAt = playedAt(event);
 
 	return built.findLast((candidate) => {
-		const board = candidate.sources.find((source) =>
-			SCOREBOARD_EVENT_TYPES.includes(source.type),
-		);
-		if (
-			!board ||
-			scoreboardFingerprint(board.data as ScoreboardData) !== fingerprint
-		) {
-			return false;
-		}
+		if (closingBoardFingerprint(candidate) !== fingerprint) return false;
 		return (
 			recordedAt === null ||
 			candidate.match.playedAt === null ||
@@ -1397,6 +1395,31 @@ function revisitedMatch<E extends DetectedEvent>(
 				REVISIT_PLAYED_AT_TOLERANCE_MS
 		);
 	});
+}
+
+/**
+ * The last match again when its results screen is read a second time with no
+ * match opened since: an overlay (e.g. a lost-connection dialog) hid the screen
+ * long enough for the detector to re-arm.
+ */
+function reshownResultsMatch<E extends DetectedEvent>(
+	built: readonly BuiltMatch<E>[],
+	event: E,
+): BuiltMatch<E> | undefined {
+	if (event.type !== SCOREBOARD_EVENT_TYPE) return undefined;
+	const last = built.at(-1);
+	const fingerprint = scoreboardFingerprint(event.data as ScoreboardData);
+	if (!last || fingerprint === null) return undefined;
+	return closingBoardFingerprint(last) === fingerprint ? last : undefined;
+}
+
+function closingBoardFingerprint<E extends DetectedEvent>(
+	built: BuiltMatch<E>,
+): string | null {
+	const board = built.sources.find((source) =>
+		SCOREBOARD_EVENT_TYPES.includes(source.type),
+	);
+	return board ? scoreboardFingerprint(board.data as ScoreboardData) : null;
 }
 
 /**

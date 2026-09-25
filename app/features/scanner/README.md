@@ -199,7 +199,9 @@ sequenceDiagram
   order-free paint/K+A/deaths/specials lines), recording time within 20 min
   of its play time — joins that match's sources instead of forming a new
   one, so browsing the log after playing neither adds a card nor re-uploads
-  (the match was already sent). An event belongs to at most one match; deaths
+  (the match was already sent). Likewise a results screen read again with no
+  match opened since (a lost-connection dialog hid it and the detector
+  re-armed) joins the last match. An event belongs to at most one match; deaths
   reveal enemy builds (`ability-harvest.ts`), the personal results screen
   (`ScoreboardOwn`, seen within `OWN_RESULTS_WINDOW_SECONDS` of a closed
   match's scoreboard) completes the POV player's full build, and minimap
