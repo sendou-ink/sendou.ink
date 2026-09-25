@@ -49,6 +49,17 @@ export class UserCard {
 		);
 	}
 
+	async sendFriendRequest() {
+		await waitForPOSTResponse(this.page, () =>
+			this.locators.sendFriendRequestButton.click(),
+		);
+	}
+
+	async close() {
+		await this.page.keyboard.press("Escape");
+		await expect(this.locators.banner).not.toBeVisible();
+	}
+
 	async openReportDialog() {
 		await this.locators.reportUserButton.click();
 		return new ReportUserDialog(this.page);

@@ -1,10 +1,12 @@
-import { NZAP_TEST_ID } from "~/db/seed/constants";
+import { NZAP_TEST_DISCORD_ID, NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import { SENDOUQ_LOOKING_PAGE } from "~/utils/urls";
 import { expect, impersonate, test } from "./helpers/playwright";
 import { FriendsPage } from "./pages/friends/friends-page";
 import { LFGPage } from "./pages/lfg/lfg-page";
+import { GlobalSearchDialog } from "./pages/search/global-search-dialog";
 import { SendouQLookingPage } from "./pages/sendouq/sendouq-looking-page";
+import { UserPage } from "./pages/user/user-page";
 
 test.describe("User card", () => {
 	test("edits banner and bio from the looking page", async ({
@@ -125,5 +127,36 @@ test.describe("User card friend request", () => {
 		await expect(card.locators.pendingFriendRequestButton).toBeVisible();
 		await expect(card.locators.pendingFriendRequestButton).toBeDisabled();
 		await expect(card.locators.acceptFriendRequestButton).not.toBeVisible();
+	});
+
+	test("sending a request does not mark another user's card pending after navigating between user pages", async ({
+		page,
+		factories,
+	}) => {
+		const otherUsername = "FriendTarget";
+		await factories.UserFactory.create({ discordName: otherUsername });
+
+		await impersonate(page);
+
+		const userPage = new UserPage(page);
+		await userPage.goto(NZAP_TEST_DISCORD_ID);
+
+		const nzapCard = await userPage.openUserCard("N-ZAP");
+		await nzapCard.sendFriendRequest();
+		await expect(nzapCard.locators.pendingFriendRequestButton).toBeVisible();
+		await nzapCard.close();
+
+		const search = new GlobalSearchDialog(page);
+		await search.open();
+		await search.selectType("users");
+		await search.search(otherUsername);
+		await search.selectOption(otherUsername);
+		await expect(userPage.usernameHeading(otherUsername)).toBeVisible();
+
+		const otherCard = await userPage.openUserCard(otherUsername);
+		await expect(otherCard.locators.sendFriendRequestButton).toBeVisible();
+		await expect(
+			otherCard.locators.pendingFriendRequestButton,
+		).not.toBeVisible();
 	});
 });

@@ -3,6 +3,7 @@ import { userPage } from "~/utils/urls";
 import { navigate } from "../../helpers/playwright";
 import { TeamPage } from "../team/team-page";
 import { TopSearchPlayerPage } from "../top-search/top-search-player-page";
+import { UserCard } from "./user-card";
 import { UserEditProfilePage } from "./user-edit-profile-page";
 import { UserEditWidgetsPage } from "./user-edit-widgets-page";
 import { UserResultsPage } from "./user-results-page";
@@ -74,6 +75,14 @@ export class UserPage {
 
 	usernameHeading(username: string) {
 		return this.page.getByRole("heading", { name: username });
+	}
+
+	/** Opens the user card from the username heading. */
+	openUserCard(username: string) {
+		return UserCard.open(
+			this.page,
+			this.usernameHeading(username).getByRole("button"),
+		);
 	}
 
 	async openEditProfile() {

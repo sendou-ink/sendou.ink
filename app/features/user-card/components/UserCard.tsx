@@ -95,15 +95,39 @@ export function UserCard({
 	withMutualFriends?: boolean;
 	children: React.ReactNode;
 }) {
-	const { t } = useTranslation(["common", "q"]);
 	const lookedUpData = useUserCardData(userId);
 	const data = dataProp ?? lookedUpData;
+
+	if (!data) return <>{children}</>;
+
+	// keyed so friendship state doesn't carry over to another user e.g. when navigating between user pages
+	return (
+		<UserCardPopover
+			key={data.id}
+			data={data}
+			withMutualFriends={withMutualFriends}
+		>
+			{children}
+		</UserCardPopover>
+	);
+}
+
+function UserCardPopover({
+	data,
+	withMutualFriends,
+	children,
+}: {
+	data: UserCardData;
+	withMutualFriends: boolean;
+	children: React.ReactNode;
+}) {
+	const { t } = useTranslation(["common", "q"]);
 
 	// on narrow viewports the card is placed vertically so React Aria can shift it to stay on-screen
 	const placement = useLayoutSize() === "mobile" ? "bottom" : "right";
 
 	const user = useUser();
-	const isOwnCard = user?.id === data?.id;
+	const isOwnCard = user?.id === data.id;
 
 	const [isOpen, setIsOpen] = React.useState(false);
 	// outside the popover so the modals survive it closing when they take focus
@@ -120,7 +144,6 @@ export function UserCard({
 		if (!nextIsOpen) return;
 		if (friendshipLoadedRef.current) return;
 		if (isOwnCard) return;
-		if (typeof data?.id !== "number") return;
 
 		friendshipLoadedRef.current = true;
 		fetcher.load(
@@ -147,8 +170,6 @@ export function UserCard({
 		setIsOpen(false);
 		setIsReportDialogOpen(true);
 	};
-
-	if (!data) return <>{children}</>;
 
 	return (
 		<>
