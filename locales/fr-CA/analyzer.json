@@ -28,6 +28,8 @@
 	"stat.tenacitySecondsToSpecial_other": "",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "Délai avant recharge de l'encre",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "Consommation du réservoir d'encre",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

@@ -29,6 +29,8 @@
 	"stat.tenacitySecondsToSpecial_other": "",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "Время до начала восстановления краски после использования",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "Потребление чернил",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

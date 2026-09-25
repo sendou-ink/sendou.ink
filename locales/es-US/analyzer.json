@@ -28,6 +28,8 @@
 	"stat.tenacitySecondsToSpecial_other": "Tiempo para el especial con Tenacidad ({{count}} menos)",
 	"stat.tenacitySecondsToSpecial.explanation": "El tiempo que tarda Tenacidad en llenar el medidor especial desde cero mientras tu equipo tiene menos jugadores activos que el rival, ej. {{teamPlayerCount}} contra {{opponentPlayerCount}}. Solo importa la diferencia entre los equipos, por lo que un duelo igualado como 3 contra 3 no carga el medidor en absoluto.",
 	"stat.whiteInk": "Tiempo sin recuperar tinta después de uso",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "Consumo del tanque de tinta",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "Consumo por disparo",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "Consumo por ataque",

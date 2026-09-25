@@ -25,6 +25,8 @@
 	"stat.specialLostSplattedByRP": "復活ペナルティアップ付きでやられた場合に失うスペシャルポイント数",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "インクロック",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "インクタンク消費量(%)",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

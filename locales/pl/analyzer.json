@@ -29,6 +29,8 @@
 	"stat.tenacitySecondsToSpecial_other": "",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "Brak czasu regeneracji farby po użyciu",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "Konsumpcja zbiornika farbowego",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

@@ -627,7 +627,15 @@ function parametersToMainWeaponResult(
 		Variable_Stand_DegSwerve:
 			params.VariableWeaponParam?.Stand_DegSwerve ??
 			params.VariableShotParam?.Stand_DegSwerve,
-		InkRecoverStop: params.WeaponParam?.InkRecoverStop,
+		InkRecoverStop:
+			params.WeaponParam?.InkRecoverStop ??
+			params.WeaponSwingParam?.InkRecoverStop ??
+			params.spl__WeaponSaberParam?.SwingParam?.InkRecoverStop ??
+			params.spl__WeaponShelterShotgunParam?.InkRecoverStop,
+		InkRecoverStop_WeaponVerticalSwingParam:
+			params.WeaponVerticalSwingParam?.InkRecoverStop,
+		InkRecoverStop_WeaponWideSwingParam:
+			params.WeaponWideSwingParam?.InkRecoverStop,
 		InkConsume,
 		InkConsumeVariable: params.VariableWeaponParam?.InkConsume,
 		InkConsumeSlosher,

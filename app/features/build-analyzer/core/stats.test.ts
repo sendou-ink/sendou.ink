@@ -169,6 +169,27 @@ describe("Analyze build", () => {
 		).toBeUndefined();
 	});
 
+	test.each([
+		{ why: "Painbrush", weaponSplId: 1120, expected: 0.833 },
+		{ why: "Splatana Stamper", weaponSplId: 8000, expected: 0.667 },
+		{ why: "Tenta Brella", weaponSplId: 6010, expected: 1.167 },
+	] as const)(
+		"Main weapon no ink recovery time comes from the weapon's action params ($why)",
+		({ weaponSplId, expected }) => {
+			const analyzed = buildStats({ weaponSplId, hasTacticooler: false });
+
+			expect(analyzed.stats.mainWeaponWhiteInkSeconds).toBe(expected);
+		},
+	);
+
+	test("Roller no ink recovery time is split by swing direction", () => {
+		const analyzed = buildStats({ weaponSplId: 1010, hasTacticooler: false });
+
+		expect(analyzed.stats.mainWeaponWhiteInkSeconds).toBeUndefined();
+		expect(analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing).toBe(0.717);
+		expect(analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing).toBe(0.967);
+	});
+
 	test("Squeezer rapid fire has its own ink consumption and run speed", () => {
 		const analyzed = buildStats({
 			weaponSplId: 400,

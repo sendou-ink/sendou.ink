@@ -28,6 +28,8 @@
 	"stat.tenacitySecondsToSpecial_other": "",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "Tempo sem recarga de tinta após o uso",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "Consumo do tanque de tinta",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

@@ -235,6 +235,26 @@ function BuildAnalyzerPage() {
 				suffix={t("analyzer:suffix.seconds")}
 			/>
 		) : null,
+		typeof analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing ===
+		"number" ? (
+			<StatCard
+				context={context}
+				key="whiteInkSecondsHorizontalSwing"
+				stat={analyzed.stats.mainWeaponWhiteInkSecondsHorizontalSwing}
+				title={t("analyzer:stat.whiteInk.horizontalSwing")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
+		typeof analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing ===
+		"number" ? (
+			<StatCard
+				context={context}
+				key="whiteInkSecondsVerticalSwing"
+				stat={analyzed.stats.mainWeaponWhiteInkSecondsVerticalSwing}
+				title={t("analyzer:stat.whiteInk.verticalSwing")}
+				suffix={t("analyzer:suffix.seconds")}
+			/>
+		) : null,
 		typeof analyzed.weapon.brellaCanopyHp === "number" ? (
 			<StatCard
 				context={context}

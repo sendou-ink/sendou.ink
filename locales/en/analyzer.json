@@ -27,6 +27,8 @@
 	"stat.tenacitySecondsToSpecial_other": "Time to special with Tenacity ({{count}} down)",
 	"stat.tenacitySecondsToSpecial.explanation": "How long it takes Tenacity to fill the special gauge from empty while your team has that many fewer active players than the opponent's team, e.g. {{teamPlayerCount}}v{{opponentPlayerCount}}. Only the difference between the teams matters, so an even matchup such as 3v3 does not charge the gauge at all.",
 	"stat.whiteInk": "No ink recovery time after usage",
+	"stat.whiteInk.horizontalSwing": "No ink recovery time after horizontal swing",
+	"stat.whiteInk.verticalSwing": "No ink recovery time after vertical swing",
 	"stat.subWeaponInkConsumptionPercentage": "Ink tank consumption",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "Consumption per shot",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "Consumption per swing",

@@ -25,6 +25,8 @@
 	"stat.specialLostSplattedByRP": "페널티 유저에게 쓰러졌을 대 잃는 스페셜 포인트",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "사용 이후 잉크 회복 불가 시간",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "잉크 소모 비율",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

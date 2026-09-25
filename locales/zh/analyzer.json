@@ -25,6 +25,8 @@
 	"stat.specialLostSplattedByRP": "被死惩使用者击倒时的特殊武器点数损失",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "使用后回墨间隔",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "耗墨量",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

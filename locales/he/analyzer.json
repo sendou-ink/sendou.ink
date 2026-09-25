@@ -28,6 +28,8 @@
 	"stat.tenacitySecondsToSpecial_other": "",
 	"stat.tenacitySecondsToSpecial.explanation": "",
 	"stat.whiteInk": "זמן ללא שחזור דיו לאחר שימוש",
+	"stat.whiteInk.horizontalSwing": "",
+	"stat.whiteInk.verticalSwing": "",
 	"stat.subWeaponInkConsumptionPercentage": "צריכת דיו מהמיכל",
 	"stat.mainWeaponInkConsumptionPercentage.NORMAL": "",
 	"stat.mainWeaponInkConsumptionPercentage.SWING": "",

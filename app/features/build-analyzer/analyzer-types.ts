@@ -72,6 +72,8 @@ export interface BaseWeaponStats {
 	CanopyHP?: number;
 	/** Amount of frames white ink (=no ink recovery during this time) takes */
 	InkRecoverStop?: number;
+	InkRecoverStop_WeaponVerticalSwingParam?: number;
+	InkRecoverStop_WeaponWideSwingParam?: number;
 	/** How much ink one shot consumes? InkConsume = 0.5 means 2 shots per full tank */
 	InkConsume?: number;
 	/** Squeezer rapid fire (secondary mode) consumption per shot */
@@ -297,6 +299,8 @@ export interface AnalyzedBuild {
 		/** Seconds for Tenacity to fill the special gauge, keyed by how many players the team is down. */
 		tenacitySecondsToSpecial?: Record<TenacityPlayerDeficit, number>;
 		mainWeaponWhiteInkSeconds?: number;
+		mainWeaponWhiteInkSecondsHorizontalSwing?: number;
+		mainWeaponWhiteInkSecondsVerticalSwing?: number;
 		subWeaponWhiteInkSeconds: number;
 		subWeaponInkConsumptionPercentage: Stat;
 		/** Seconds a full ink tank lasts rolling at full speed (rollers and brushes) */

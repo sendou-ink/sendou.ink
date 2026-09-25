@@ -117,10 +117,15 @@ export function buildStats({
 			damages: damages(input),
 			specialWeaponDamages: specialWeaponDamages(input),
 			subWeaponDefenseDamages: subWeaponDefenseDamages(input),
-			mainWeaponWhiteInkSeconds:
-				typeof mainWeaponParams.InkRecoverStop === "number"
-					? framesToSeconds(mainWeaponParams.InkRecoverStop)
-					: undefined,
+			mainWeaponWhiteInkSeconds: optionalFramesToSeconds(
+				mainWeaponParams.InkRecoverStop,
+			),
+			mainWeaponWhiteInkSecondsHorizontalSwing: optionalFramesToSeconds(
+				mainWeaponParams.InkRecoverStop_WeaponWideSwingParam,
+			),
+			mainWeaponWhiteInkSecondsVerticalSwing: optionalFramesToSeconds(
+				mainWeaponParams.InkRecoverStop_WeaponVerticalSwingParam,
+			),
 			subWeaponWhiteInkSeconds: framesToSeconds(subWeaponParams.InkRecoverStop),
 			subWeaponInkConsumptionPercentage:
 				subWeaponInkConsumptionPercentage(input),
@@ -846,6 +851,8 @@ export function subWeaponDamageValue({
 
 const framesToSeconds = (frames: number) =>
 	effectToRounded(Math.ceil(frames) / 60);
+const optionalFramesToSeconds = (frames: number | undefined) =>
+	typeof frames === "number" ? framesToSeconds(frames) : undefined;
 function squidFormInkRecoverySeconds(
 	args: StatFunctionInput,
 ): AnalyzedBuild["stats"]["squidFormInkRecoverySeconds"] {
