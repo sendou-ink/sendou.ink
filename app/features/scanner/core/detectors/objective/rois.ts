@@ -215,11 +215,37 @@ export const STATUS_DEAD_MAX_SHOULDER_GLOW = 0.2;
 /**
  * Wash body: tinted past this on an ink-poor body means the special-ready
  * wash at any pulse phase (bright frames and the dim trough alike), under it
- * a splat. Splats read <=0.19 (SWS26 splat on a blown-out white sky: 0.07 at
+ * a splat. Splats read <=0.25 (SWS26 splat on a blown-out white sky: 0.07 at
  * pale 0.80), ink-poor washes >=0.45 (SWS26 even-layout trough: 0.57 at pale
  * 0.13, shoulder glow 0.20 — under both ready floors).
  */
 export const STATUS_WASH_MIN_BODY_TINT = 0.3;
+
+/**
+ * Grey pixel: neutral (the tint class's complement) at mid brightness — the
+ * splat's X strokes, which cross the whole body box on every splat whatever
+ * the backdrop does to the translucent plate under them.
+ */
+export const STATUS_GREY_MIN_VALUE = 90;
+export const STATUS_GREY_MAX_VALUE = 200;
+
+/** Dark pixel: the unlit plate of a splatted or vacant slot. */
+export const STATUS_DARK_MAX_VALUE = 70;
+
+/**
+ * ...or tinted past a lower floor on a body no X crosses: a large dark weapon
+ * render (Nautilus drum) fills the body box and dilutes the wash to 0.2-0.3
+ * tint (Triton cup VoD, S3 POV), where splats over a bright tinted backdrop
+ * land too (sky and sunlit walls through the translucent plate). The X strokes
+ * split them: splats in that band read grey >=0.17 (median ~0.35), the
+ * drum-diluted washes <=0.10. Grey renders (Painbrush) put other washes at
+ * 0.15-0.25, left to the main floor. The dark cap keeps out the unlit black
+ * squid a slot shows without any X (InTheZone VoD: dark >=0.57, drum-diluted
+ * washes 0.20-0.35).
+ */
+export const STATUS_UNCROSSED_WASH_MIN_BODY_TINT = 0.2;
+export const STATUS_UNCROSSED_WASH_MAX_BODY_GREY = 0.15;
+export const STATUS_UNCROSSED_WASH_MAX_BODY_DARK = 0.45;
 
 /** Special ready: shoulder glow past this (attested >=0.40 vs <=0.06). */
 export const STATUS_READY_MIN_SHOULDER_GLOW = 0.25;
@@ -310,8 +336,17 @@ export const STATUS_FRESH_NARROW_LEFT_RIVAL_COMB_VETO = 0.3;
 /**
  * Slot-comb contrast (combContrast): a rigid comb exposes the pitch — badge-less
  * narrow-left scores 0.81 while narrow-right reads it at -0.07 (sendou-triton
- * MakoMart), so a decisive win proves narrow-left despite the shared right
- * column. Both gates needed: worst false narrow-left comb is 0.44 with a 0.24 lead.
+ * MakoMart), so a decisive win (past the floor AND leading both rivals) proves
+ * that geometry whatever came before. Both gates needed: worst false narrow-left
+ * comb is 0.44 with a 0.24 lead. S3 POV resizes each side's icons as the
+ * objective swings (there, a side both holding the zone and leading drew
+ * large), so one Splat Zones game cycles through all three geometries and some
+ * in-between pitches (Triton cup VoD, Brinewater Springs: a dozen switches),
+ * which only the comb follows. Even needs the stronger win: its columns sit between the narrow ones, so the
+ * comb's ±10px shift lets it half-fit either, and the AREA CUP overhead view
+ * (left column ~12px off narrow-right) combs even 0.77 with a 0.30 lead. Clean
+ * even frames in that Triton game comb 0.98 with a 0.40 lead at the median,
+ * and three in four clear both floors — enough, as the pick is sticky.
  */
 export const STATUS_COMB_BAND_Y = 35;
 export const STATUS_COMB_BAND_H = 61;
@@ -325,12 +360,14 @@ export const STATUS_COMB_SIDE_SPANS: readonly [
 export const STATUS_COMB_CENTER_HALF_WIDTH = 16;
 export const STATUS_COMB_GAP_HALF_WIDTH = 7;
 export const STATUS_COMB_MAX_SHIFT = 10;
-export const STATUS_NARROW_LEFT_COMB_MIN = 0.5;
-export const STATUS_NARROW_LEFT_COMB_LEAD = 0.25;
+export const STATUS_DECISIVE_COMB_MIN = 0.5;
+export const STATUS_DECISIVE_COMB_LEAD = 0.25;
+export const STATUS_DECISIVE_EVEN_COMB_MIN = 0.8;
+export const STATUS_DECISIVE_EVEN_COMB_LEAD = 0.35;
 
 /**
  * Sticky flips away from narrow-right need comb corroboration (past this floor
- * AND leading by STATUS_NARROW_LEFT_COMB_LEAD): while the S3 POV player is dead
+ * AND leading by STATUS_DECISIVE_COMB_LEAD): while the S3 POV player is dead
  * the strip shrinks ~0.77 toward the timer, landing near narrow-left pitches
  * (2026-08-11 Um'ami VoD locked 107 of 136 reads that way). True narrow-left
  * combs 0.41-0.81 with >=0.31 lead; worst POV false comb 0.20, negative lead.
