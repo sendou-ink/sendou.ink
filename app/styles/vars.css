@@ -160,8 +160,10 @@ html.dark [data-custom-theme],
 	--color-error: oklch(65% 0.25 10);
 	--color-error-high: oklch(87% 0.07 10);
 
-	--color-chart-alpha: #da5b76;
-	--color-chart-bravo: #6572e4;
+	--color-chart-alpha: oklch(64% 0.16 10);
+	--color-chart-bravo: oklch(60% 0.17 275);
+	--color-chart-splatted: oklch(66% 0.03 var(--_base-h));
+	--color-chart-special: oklch(80% 0.14 84);
 
 	/* inlined instead of var() because data URIs can't read custom properties: keep in sync with --color-text-high */
 	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(122, 139, 183)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -226,8 +228,10 @@ html.light [data-custom-theme],
 	--color-error: oklch(65.223% 0.22164 5.216);
 	--color-error-high: oklch(41.268% 0.15511 8.446);
 
-	--color-chart-alpha: #b82851;
-	--color-chart-bravo: #4246c2;
+	--color-chart-alpha: oklch(52% 0.18 10);
+	--color-chart-bravo: oklch(47% 0.19 275);
+	--color-chart-splatted: oklch(50% 0.03 var(--_base-h));
+	--color-chart-special: oklch(67% 0.14 72);
 
 	/* inlined instead of var() because data URIs can't read custom properties: keep in sync with --color-text-high */
 	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(72, 87, 124)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");

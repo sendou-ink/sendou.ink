@@ -101,11 +101,11 @@
 
 .readoutStatusLabel {
 	&.statusLabelDead {
-		color: var(--color-error);
+		color: var(--color-chart-splatted);
 	}
 
 	&.statusLabelSpecial {
-		color: var(--color-info);
+		color: var(--color-chart-special);
 	}
 }
 

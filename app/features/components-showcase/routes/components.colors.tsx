@@ -353,6 +353,10 @@ const REFERENCE = [
 		tokens: ["--color-chart-alpha", "--color-chart-bravo"],
 		use: "The two sides in charts and timelines",
 	},
+	{
+		tokens: ["--color-chart-splatted", "--color-chart-special"],
+		use: "Player states in timelines, kept apart from the side colors",
+	},
 ] as const;
 
 export default function ComponentsColorsPage() {

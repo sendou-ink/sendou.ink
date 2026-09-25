@@ -138,8 +138,8 @@ export function ObjectiveTimeline({
 					y: lastScore === null ? null : lastScore + (penalties[i] ?? 0),
 				};
 			}),
-			borderColor: `${teamColors[side]}8c`,
-			backgroundColor: `${teamColors[side]}38`,
+			borderColor: withAlpha(teamColors[side], 0.55),
+			backgroundColor: withAlpha(teamColors[side], 0.22),
 			borderWidth: 1,
 			pointRadius: 0,
 			pointHoverRadius: 0,
@@ -266,6 +266,11 @@ function gridColor(
 ) {
 	if (value < 0) return "transparent";
 	return value === 0 ? colors.borderHigh : colors.border;
+}
+
+/** `oklch(64% 0.16 10)` → `oklch(64% 0.16 10 / 0.55)` */
+function withAlpha(oklchColor: string, alpha: number) {
+	return oklchColor.replace(/\)$/, ` / ${alpha})`);
 }
 
 /** the match timer's M:SS (215 → "3:35") */
