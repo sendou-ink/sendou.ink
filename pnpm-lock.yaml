@@ -6,7 +6,7 @@ settings:
 
 patchedDependencies:
   '@react-router/serve@8.1.0': 08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673
-  '@techstark/opencv-js@5.0.0-release.1': 0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3
+  '@techstark/opencv-js@5.0.0-release.1': 810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6
   i18next@26.3.6: 34c245cebb3f9c7861d2576a3a44228364cb898037f86b23a5bbf8b20f55fb1a
   kysely@0.29.0: a3e94339939b1be5b70610601e96fff19ed5678aab525de24b52dfc5212c686a
   react-i18next@17.0.11: 1f928881d134daf116e494299036454a3c311fe6fb81f60ef8d158f27466a269
@@ -47,7 +47,7 @@ importers:
         version: 8.1.0(patch_hash=08673b8f56959ba82db6ff8ed55ba89920d92eed8e1beedede3eb64f5a44f673)(react-router@8.3.1(react-dom@19.3.0(react@19.3.0))(react@19.3.0))(typescript@7.0.2)
       '@techstark/opencv-js':
         specifier: 5.0.0-release.1
-        version: 5.0.0-release.1(patch_hash=0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3)
+        version: 5.0.0-release.1(patch_hash=810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6)
       '@tldraw/tldraw':
         specifier: 3.12.1
         version: 3.12.1(@types/react-dom@19.3.0(@types/react@19.3.0))(@types/react@19.3.0)(react-dom@19.3.0(react@19.3.0))(react@19.3.0)
@@ -6672,7 +6672,7 @@ snapshots:
       '@stdlib/utils-constructor-name': 0.2.3
       '@stdlib/utils-global': 0.2.3
 
-  '@techstark/opencv-js@5.0.0-release.1(patch_hash=0e23b4243e8e2f88294c00eefdf8dfc3624f59442bd0c8d075be89a8136144f3)': {}
+  '@techstark/opencv-js@5.0.0-release.1(patch_hash=810344500e8099b2f8d80c7c3fc28977abfcd115a2616abd1329f7f89f0534b6)': {}
 
   '@tiptap/core@2.27.2(@tiptap/pm@2.27.2)':
     dependencies:

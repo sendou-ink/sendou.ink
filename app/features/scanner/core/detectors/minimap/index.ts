@@ -219,14 +219,12 @@ export function createMinimapDetector(
 						),
 			)
 		: [];
-	const cardWeapons = resources.minimapCardWeapons ?? null;
-	const lightWeapons = resources.minimapLightWeapons ?? null;
-	const badges = resources.minimapAbilities ?? null;
-	const subWeapons = resources.minimapSubWeapons ?? null;
-	const plannerStages = resources.plannerStages ?? null;
+	// template sets and the stage signatures build on first use (the resource
+	// getters memoize them)
 
 	/** Identify the stage from the drawn map; contributes to confidence. */
 	function detectStage(frame: Mat, confidences: number[]): StageMatch | null {
+		const plannerStages = resources.plannerStages ?? null;
 		if (!plannerStages?.length) return null;
 		const sig = plannerSignature(frame);
 		const match = matchStage(sig, plannerStages);
@@ -299,6 +297,7 @@ export function createMinimapDetector(
 		centers: readonly (readonly [number, number])[],
 		inkThreshold: number,
 	): MatchSteps<WeaponMatch[] | null> {
+		const badges = resources.minimapAbilities ?? null;
 		if (!badges) return null;
 		const crops = centers.map(([cx, cy]) => cropRoi(rgb, badgeRoi(cx, cy)));
 		const matches = yield* all(
@@ -338,6 +337,9 @@ export function createMinimapDetector(
 		lightSurface: boolean,
 		cornerMin: number,
 	): MatchSteps<WeaponMatch | null> {
+		const cardWeapons = resources.minimapCardWeapons ?? null;
+		const lightWeapons = resources.minimapLightWeapons ?? null;
+		const subWeapons = resources.minimapSubWeapons ?? null;
 		const darkThreshold = Math.max(
 			MINIMAP_WEAPON_INK_THRESHOLD,
 			Math.round(cornerMin) + 50,

@@ -103,7 +103,8 @@ export function createScoreboardOwnDetector(
 				WEAPON_TITLE_TEXT_HEIGHT / resources.deathWeaponGlyphs.height,
 			)
 		: null;
-	const abilities = resources.ownAbilities ?? null;
+	// built on first use (the resource getter memoizes it)
+	const abilities = () => resources.ownAbilities ?? null;
 
 	function gate(frame: Mat): GateResult {
 		let panelOk = 0;
@@ -150,7 +151,7 @@ export function createScoreboardOwnDetector(
 		// columns fail the tag-column test and truncate the read mid-name
 		const band = titleGlyphs ? copyRoi(gray, WEAPON_TITLE_BAND) : null;
 		// gear-card ability strips: [head, clothes, shoes] x [main, sub, sub, sub]
-		const abilityCrops = abilities
+		const abilityCrops = abilities()
 			? Array.from({ length: GEAR_ROWS }, (_, row) => [
 					cropRoi(rgb, gearMainRoi(row)),
 					...[0, 1, 2].map((slot) => cropRoi(rgb, gearSubRoi(row, slot))),
@@ -184,7 +185,7 @@ export function createScoreboardOwnDetector(
 						crops.map((crop, slot) =>
 							matchWeaponSteps(
 								crop,
-								slot === 0 ? abilities!.mains : abilities!.subs,
+								slot === 0 ? abilities()!.mains : abilities()!.subs,
 								{ inkThreshold: OWN_ABILITY_INK_THRESHOLD },
 							),
 						),

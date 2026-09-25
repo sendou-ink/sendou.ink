@@ -206,8 +206,9 @@ export function createDeathDetector(
 		resources.deathTagNameGlyphs,
 		TAG_NAME_TEXT_HEIGHT,
 	);
-	const abilities = resources.abilities ?? null;
-	const burstWeapons = resources.deathBurstWeapons ?? null;
+	// template sets build on first use (the resource getters memoize them)
+	const abilities = () => resources.abilities ?? null;
+	const burstWeapons = () => resources.deathBurstWeapons ?? null;
 	const mainById = new Map(
 		ALL_WEAPON_ENTRIES.filter((e) => e.type === "MAIN").map((e) => [e.id, e]),
 	);
@@ -628,7 +629,7 @@ export function createDeathDetector(
 					crops.map((crop, slot) =>
 						matchWeaponSteps(
 							crop,
-							slot === 0 ? abilities!.mains : abilities!.subs,
+							slot === 0 ? abilities()!.mains : abilities()!.subs,
 							{ inkThreshold: ABILITY_INK_THRESHOLD },
 						),
 					),
@@ -746,12 +747,12 @@ export function createDeathDetector(
 		// off-target frame (icon displaced by a rainmaker line) 0.48. The ability
 		// grid (3.) and the tag name (4.) read in the same lockstep.
 		const burstCrop =
-			weapon === null && burstWeapons ? cropRoi(rgb, BURST_ICON_ROI) : null;
+			weapon === null && burstWeapons() ? cropRoi(rgb, BURST_ICON_ROI) : null;
 		const [burstIcon, abilityMatches, tag] = yield* all([
-			burstCrop && burstWeapons
-				? matchWeaponSteps(burstCrop, burstWeapons)
+			burstCrop && burstWeapons()
+				? matchWeaponSteps(burstCrop, burstWeapons()!)
 				: done(null),
-			abilities ? readAbilities(rgb) : done(null),
+			abilities() ? readAbilities(rgb) : done(null),
 			tagNameGlyphs ? readTagName(rgb, speculative) : done(null),
 		]);
 		burstCrop?.delete();

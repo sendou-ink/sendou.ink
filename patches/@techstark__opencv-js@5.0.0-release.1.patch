@@ -1,5 +1,5 @@
 diff --git a/dist/opencv.js b/dist/opencv.js
-index 0ad5948a0b3bc2caa751c80b17a8ccd237dd3a70..2346f10d411eafc727a78f5c847e089612f7021b 100644
+index 0ad5948a0b3bc2caa751c80b17a8ccd237dd3a70..6d8b46952219f83023860e4d1abed3a7272c113c 100644
 --- a/dist/opencv.js
 +++ b/dist/opencv.js
 @@ -8,7 +8,7 @@
@@ -11,3 +11,23 @@ index 0ad5948a0b3bc2caa751c80b17a8ccd237dd3a70..2346f10d411eafc727a78f5c847e0896
    } else if (typeof window === 'object') {
      // Browser globals
      root.cv = factory();
+@@ -25,6 +25,19 @@
+ 
+   if (typeof Module === 'undefined')
+     var Module = {};
++  // expose the heap's WebAssembly.Memory as cv.wasmMemory, so kernels can
++  // run in place on Mat data (the runtime keeps it private)
++  var instantiate = WebAssembly.instantiate;
++  WebAssembly.instantiate = function (binary, imports) {
++    WebAssembly.instantiate = instantiate;
++    return instantiate(binary, imports).then(function (result) {
++      var exports = result.instance.exports;
++      for (var key in exports) {
++        if (exports[key] instanceof WebAssembly.Memory) Module.wasmMemory = exports[key];
++      }
++      return result;
++    });
++  };
+   return cv(Module);
+ }));
+         

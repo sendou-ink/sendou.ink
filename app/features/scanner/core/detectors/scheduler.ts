@@ -138,6 +138,44 @@ export class DetectorScheduler {
 		return next;
 	}
 
+	/**
+	 * What `nextDueT()` can at the earliest return once the `pending`
+	 * detectors report their checks at `t` — gates, parses or both: whatever
+	 * they report only moves them between the refine and search cadences, so
+	 * every frame before this bound is certainly skipped.
+	 */
+	nextDueLowerBound(t: number, pending: readonly string[]): number {
+		let next = Number.POSITIVE_INFINITY;
+		for (const [id, state] of this.#states) {
+			if (pending.includes(id)) {
+				const fastest = Math.min(
+					this.#interval({ ...state, streak: null, gatePassing: true }),
+					this.#interval({ ...state, streak: null, gatePassing: false }),
+				);
+				next = Math.min(next, t + fastest);
+				continue;
+			}
+			if (state.lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
+			next = Math.min(next, state.lastCheckT + this.#interval(state));
+		}
+		return next;
+	}
+
+	/**
+	 * `nextDueT()` once the `due` detectors are checked at `t`, guessing each
+	 * keeps its current cadence (gates mostly report what they did last
+	 * time); a hint for reading ahead, never a decision.
+	 */
+	predictNextDueT(t: number, due: readonly string[]): number {
+		let next = Number.POSITIVE_INFINITY;
+		for (const [id, state] of this.#states) {
+			const lastCheckT = due.includes(id) ? t : state.lastCheckT;
+			if (lastCheckT === undefined) return Number.NEGATIVE_INFINITY;
+			next = Math.min(next, lastCheckT + this.#interval(state));
+		}
+		return next;
+	}
+
 	/** Detector ids that should gate the frame at `t`. */
 	dueDetectors(t: number): string[] {
 		if (t + RESET_TOLERANCE_S < this.#maxT) this.reset(t);

@@ -155,7 +155,10 @@ Scanner scripts run through `vite-node -c scripts/scanner/vite-node.config.ts`:
 the root vite config pre-bundles `@techstark/opencv-js` for the browser worker
 and vite-node must not consume that prebundle. The package is pnpm-patched
 (`patches/`) to wrap its thenable CJS export as `{ cvReadyPromise }`,
-unwrapped in `core/cv.ts`.
+unwrapped in `core/cv.ts`, and to expose its heap's `WebAssembly.Memory` as
+`cv.wasmMemory` (captured from its one `WebAssembly.instantiate` call, all
+in the short wrapper lines: the minified runtime line is never touched, so
+the patch stays small). `core/frame-kernels.ts` runs on that memory.
 
 ## Architecture
 
@@ -325,7 +328,12 @@ sequenceDiagram
   when a newer one enters; the per-cell cap of the signature compare is
   what keeps near-twin names apart) and `classifySegment` prescreens
   oversized eligibility lists at half scale — all tuned so
-  `scanner:report` stays bit-identical.
+  `scanner:report` stays bit-identical. Within one recognition,
+  classifications are memoized by span, floor and candidate cap (a pure
+  function of those: scores are exact), which the speculative prefetch and
+  the sequential pass after it otherwise repeat. Glyph sets (atlas slices
+  and every `scaleGlyphSet`, shared per source set and factor) and the
+  template sets build on first use, not at detector creation.
 - Scheduling (`core/detectors/scheduler.ts`): the per-session
   DetectorScheduler decides which detectors see a frame. Failing gates are
   re-checked every `searchIntervalS` (0.25s — produced VoDs cut screens to
@@ -355,8 +363,22 @@ sequenceDiagram
   parse stall can no longer swallow a results screen whole (the exact
   failure that cost a live match its scoreboard on 2026-08-22).
 - VoD scans (`components/vod-scan.ts`): on the WebCodecs path each worker
-  demuxes + decodes its own contiguous slice (mediabunny in the worker — no
-  frames cross the main thread). When the scheduler reports calm (no gate
+  scans its own contiguous slice (no frames cross the main thread), with two
+  helper workers of its own that keep the waits off its thread: the dense
+  stretches decode in `worker/decode.worker.ts` (mediabunny; the per-sample
+  bookkeeping of a 60 fps slice cost the analyzer ~0.15 ms a sample), and
+  frames are read back in `worker/readback.worker.ts` (the canvas readback
+  blocks its thread for 3-5 ms a frame). The analyzer takes every sample's
+  step strictly in stream order — bookkeeping, analysis when due, the calm
+  check — against the scheduler state the previous analysis left, so the
+  analyzed frames are exactly those of a one-frame-at-a-time scan. Only the
+  waits overlap: while a pass runs, the next samples are decoded and held,
+  those before `nextDueLowerBound` (certainly skipped: a gate or parse only
+  moves a detector between its refine and search cadences) released, and
+  the one `predictNextDueT` expects to be next read back and normalized
+  ahead. The decode worker is told that lower bound (`floor`) and closes the
+  samples before it itself, sending bare timestamps. When the scheduler
+  reports calm (no gate
   pass for a quiet period, no open match), the worker skims
   keyframe-to-keyframe (hop capped at 2.5s so short screens can't hide),
   snapping back to dense decode on any gate pass. The seek fallback drives
@@ -381,7 +403,11 @@ sequenceDiagram
   `core/detectors/registry.ts`. Gates and parses read the frame's gray/RGB/HSV
   through `frameGray`/`frameRgb`/`frameHsv` (`core/image.ts`), converted once
   per frame and shared: never delete or write them, and never pass them a
-  derived mat.
+  derived mat. Gray and RGB come from WebAssembly SIMD kernels
+  (`core/frame-kernels.c`) bit-identical to `cvtColor` (tested on every
+  24-bit color) at under half its cost. A gate probing a few small ROIs of a
+  rectified region uses `createProbeWarp`, which replays OpenCV's f32
+  bilinear warp at those pixels only (exact; `tests/frame-kernels.test.ts`).
 
 ## WebGPU
 
