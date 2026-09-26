@@ -3,7 +3,6 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { Chart } from "~/components/Chart";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -16,6 +15,7 @@ import {
 import { ModeImage, StageImage, WeaponImage } from "~/components/Image";
 import { Placement } from "~/components/Placement";
 import { SeasonSelect } from "~/features/mmr/components/SeasonSelect";
+import { SeasonSpChart } from "~/features/mmr/components/SeasonSpChart";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useWeaponUsage } from "~/hooks/swr";
@@ -54,6 +54,7 @@ const TAB_LABEL_KEYS = {
 } as const satisfies Record<SeasonStatsTab, string>;
 
 const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;
+const POWER_CHART_HEIGHT = 220;
 const OVERVIEW_WEAPONS_COUNT = 5;
 const OVERVIEW_STAGES_COUNT = 8;
 const OVERVIEW_PLAYERS_COUNT = 4;
@@ -340,26 +341,14 @@ function PowerChart({
 }: {
 	skills: UserSeasonsStatsLoaderData["skills"];
 }) {
-	const chartOptions = React.useMemo(() => {
-		return [
-			{
-				label: "SP",
-				data: skills.map((s) => {
-					return {
-						primary: new Date(s.date),
-						secondary: ordinalToSp(s.ordinal),
-					};
-				}),
-			},
-		];
-	}, [skills]);
-
 	return (
-		<Chart
-			xTicksLimit={5}
-			yTicksLimit={5}
-			options={chartOptions as any}
-			xAxis="localTime"
+		<SeasonSpChart
+			points={skills.map((skill) => ({
+				date: skill.date,
+				sp: ordinalToSp(skill.ordinal),
+			}))}
+			height={POWER_CHART_HEIGHT}
+			interactive
 		/>
 	);
 }

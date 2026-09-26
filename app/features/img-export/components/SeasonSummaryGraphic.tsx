@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { parseISO } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Avatar } from "~/components/Avatar";
@@ -11,9 +10,9 @@ import {
 	type SeasonActivity,
 	SeasonActivityCalendar,
 } from "~/features/mmr/components/SeasonActivityCalendar";
+import { SeasonSpChart } from "~/features/mmr/components/SeasonSpChart";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import {
 	GraphicBoxLabel,
@@ -35,11 +34,7 @@ import {
 } from "./Graphic";
 import styles from "./SeasonSummaryGraphic.module.css";
 
-const CHART_WIDTH = 672;
-const CHART_HEIGHT = 170;
-const CHART_MARGIN = { top: 26, right: 14, bottom: 22, left: 14 };
 const CHART_POINTS_NEEDED = 2;
-const CHART_PEAK_LABEL_CLAMP = 48;
 const TOP_MATES_COUNT = 3;
 /** Without weapons the teammates box is alone next to the calendar, so it has room for more */
 const TOP_MATES_COUNT_WITHOUT_WEAPONS = 6;
@@ -254,7 +249,7 @@ export function SeasonSummaryGraphic({
 			</GraphicStatsRow>
 			{spProgression.length >= CHART_POINTS_NEEDED ? (
 				<SummaryBox>
-					<SpChart points={spProgression} />
+					<SeasonSpChart points={spProgression} />
 				</SummaryBox>
 			) : null}
 			{bestStage ? (
@@ -429,95 +424,6 @@ export function SeasonSummaryGraphic({
 				</GraphicFooter>
 			)}
 		</GraphicContainer>
-	);
-}
-
-function SpChart({ points }: { points: Array<{ date: string; sp: number }> }) {
-	const { formatter } = useDateTimeFormat({ month: "short", day: "numeric" });
-	const gradientId = React.useId();
-
-	const times = points.map((point) => parseISO(point.date).getTime());
-	const minTime = times[0];
-	const maxTime = times[times.length - 1];
-	const sps = points.map((point) => point.sp);
-	const minSp = Math.min(...sps);
-	const maxSp = Math.max(...sps);
-
-	const innerWidth = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
-	const innerHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
-	const bottomY = CHART_HEIGHT - CHART_MARGIN.bottom;
-
-	const xAt = (time: number) =>
-		CHART_MARGIN.left +
-		((time - minTime) / Math.max(maxTime - minTime, 1)) * innerWidth;
-	const yAt = (spValue: number) =>
-		CHART_MARGIN.top +
-		(1 - (spValue - minSp) / Math.max(maxSp - minSp, 1)) * innerHeight;
-
-	const linePath = points
-		.map(
-			(point, index) =>
-				`${index === 0 ? "M" : "L"}${xAt(times[index]).toFixed(1)} ${yAt(point.sp).toFixed(1)}`,
-		)
-		.join(" ");
-	const areaPath = `${linePath} L${xAt(maxTime).toFixed(1)} ${bottomY} L${xAt(minTime).toFixed(1)} ${bottomY} Z`;
-
-	const peakIndex = sps.indexOf(maxSp);
-	const peakX = xAt(times[peakIndex]);
-	const peakY = yAt(maxSp);
-	const peakLabelX = Math.min(
-		Math.max(peakX, CHART_PEAK_LABEL_CLAMP),
-		CHART_WIDTH - CHART_PEAK_LABEL_CLAMP,
-	);
-
-	return (
-		<svg
-			className={styles.chart}
-			viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-			role="img"
-			aria-label="SP"
-		>
-			<defs>
-				{/* presentation attributes, not CSS: the image export does not style elements inside defs */}
-				<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-					<stop offset="0" stopColor="currentColor" stopOpacity={0.3} />
-					<stop offset="1" stopColor="currentColor" stopOpacity={0} />
-				</linearGradient>
-			</defs>
-			<line
-				className={styles.chartGridLine}
-				x1={CHART_MARGIN.left}
-				y1={yAt(minSp)}
-				x2={CHART_WIDTH - CHART_MARGIN.right}
-				y2={yAt(minSp)}
-			/>
-			<path d={areaPath} fill={`url(#${gradientId})`} />
-			<path className={styles.chartLine} d={linePath} />
-			<circle className={styles.chartDot} cx={peakX} cy={peakY} r={4.5} />
-			<text
-				className={styles.chartPeakLabel}
-				x={peakLabelX}
-				y={peakY - 10}
-				textAnchor="middle"
-			>
-				{maxSp.toFixed(1)}SP
-			</text>
-			<text
-				className={styles.chartLabel}
-				x={CHART_MARGIN.left}
-				y={CHART_HEIGHT - 6}
-			>
-				{formatter.format(parseISO(points[0].date))}
-			</text>
-			<text
-				className={styles.chartLabel}
-				x={CHART_WIDTH - CHART_MARGIN.right}
-				y={CHART_HEIGHT - 6}
-				textAnchor="end"
-			>
-				{formatter.format(parseISO(points[points.length - 1].date))}
-			</text>
-		</svg>
 	);
 }
 

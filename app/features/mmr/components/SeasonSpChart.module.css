@@ -1,0 +1,78 @@
+.container {
+	position: relative;
+}
+
+.chart {
+	display: block;
+	width: 100%;
+	/* the area gradient's stops resolve their color from here via currentColor */
+	color: var(--color-fg-accent);
+
+	&.interactive {
+		cursor: crosshair;
+		touch-action: pan-y;
+	}
+}
+
+.line {
+	fill: none;
+	stroke: var(--color-fg-accent);
+	stroke-width: 2.5;
+	stroke-linecap: round;
+	stroke-linejoin: round;
+}
+
+.gridLine {
+	stroke: color-mix(in oklch, var(--color-text) 8%, transparent);
+	stroke-width: 1;
+
+	&.gridLineDashed {
+		stroke-dasharray: 3 4;
+	}
+}
+
+.hoverLine {
+	stroke: color-mix(in oklch, var(--color-text) 30%, transparent);
+	stroke-width: 1;
+}
+
+.label {
+	font-size: 10px;
+	font-weight: var(--weight-semi);
+	fill: var(--color-text-high);
+}
+
+.peakLabel {
+	font-size: 11px;
+	font-weight: var(--weight-extra);
+	fill: var(--color-text);
+}
+
+.dot {
+	fill: var(--color-fg-accent);
+	stroke: var(--color-bg-high);
+	stroke-width: 2;
+}
+
+.tooltip {
+	position: absolute;
+	translate: -50% calc(-100% - var(--s-3));
+	padding: var(--s-1) var(--s-2);
+	background-color: var(--color-bg);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.tooltipDate {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.tooltipSp {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}

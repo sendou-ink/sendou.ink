@@ -76,44 +76,6 @@
 	color: var(--graphic-accent);
 }
 
-.chart {
-	display: block;
-	width: 100%;
-	/* the area gradient's stops resolve their color from here via currentColor */
-	color: var(--graphic-accent);
-}
-
-.chartLine {
-	fill: none;
-	stroke: var(--graphic-accent);
-	stroke-width: 2.5;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-}
-
-.chartGridLine {
-	stroke: var(--graphic-row-border);
-	stroke-width: 1;
-}
-
-.chartLabel {
-	font-size: 10px;
-	font-weight: var(--weight-semi);
-	fill: var(--graphic-text-dim);
-}
-
-.chartPeakLabel {
-	font-size: 11px;
-	font-weight: var(--weight-extra);
-	fill: var(--color-text);
-}
-
-.chartDot {
-	fill: var(--graphic-accent);
-	stroke: var(--graphic-row-bg);
-	stroke-width: 2;
-}
-
 .middleGrid {
 	display: grid;
 	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
