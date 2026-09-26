@@ -1,0 +1,123 @@
+.container {
+	/* categorical palette, all-pairs CVD separation validated against the dark surface */
+	--activity-none: color-mix(in oklch, var(--color-text) 8%, transparent);
+	--activity-sq: oklch(70% 0.11 253);
+	--activity-tournament: oklch(75% 0.12 85);
+	--activity-both: oklch(94% 0.02 253);
+
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+:global(:where(html.light)) .container,
+:global(:where([data-theme="light"])) .container {
+	--activity-sq: oklch(56% 0.13 253);
+	--activity-tournament: oklch(66% 0.13 85);
+	--activity-both: oklch(30% 0.04 253);
+}
+
+:global(:where([data-theme="dark"])) .container {
+	--activity-sq: oklch(70% 0.11 253);
+	--activity-tournament: oklch(75% 0.12 85);
+	--activity-both: oklch(94% 0.02 253);
+}
+
+.label {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	text-transform: uppercase;
+	letter-spacing: 0.5px;
+	color: var(--color-text-high);
+}
+
+.calendar {
+	display: flex;
+	align-items: flex-end;
+	justify-content: var(--calendar-justify, center);
+	gap: var(--calendar-gap, 4px);
+}
+
+.calendarWeekdays {
+	display: flex;
+	flex-direction: column;
+	gap: var(--calendar-gap, 4px);
+	margin-inline-end: var(--s-1-5);
+}
+
+.calendarWeekday {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	height: var(--calendar-cell-size, 18px);
+}
+
+.calendarMonth {
+	display: flex;
+	flex-direction: column;
+	gap: var(--calendar-gap, 4px);
+}
+
+.calendarMonthName {
+	text-align: center;
+	white-space: nowrap;
+}
+
+.calendarWeeks {
+	display: flex;
+	gap: var(--calendar-gap, 4px);
+}
+
+.calendarWeek {
+	display: flex;
+	flex-direction: column;
+	gap: var(--calendar-gap, 4px);
+}
+
+.calendarCell {
+	width: var(--calendar-cell-size, 18px);
+	height: var(--calendar-cell-size, 18px);
+	border-radius: 3px;
+	background-color: var(--activity-none);
+
+	&.calendarCellHidden {
+		visibility: hidden;
+	}
+
+	&.calendarSq {
+		background-color: var(--activity-sq);
+	}
+
+	&.calendarTournament {
+		background-color: var(--activity-tournament);
+	}
+
+	&.calendarBoth {
+		background-color: var(--activity-both);
+	}
+
+	&.calendarUpcoming {
+		background-color: transparent;
+		outline: 1px dashed color-mix(in oklch, var(--color-text) 30%, transparent);
+		outline-offset: -1px;
+	}
+}
+
+.calendarLegend {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: var(--calendar-justify, center);
+	gap: var(--s-1-5) var(--s-2-5);
+}
+
+.calendarLegendItem {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+
+	& .calendarCell {
+		width: 10px;
+		height: 10px;
+	}
+}

@@ -2,7 +2,7 @@ import type { Page } from "@playwright/test";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { navigate } from "../../helpers/playwright";
 
-/** A user profile's `/seasons` page, including the season summary image export. */
+/** A user profile's `/seasons` page, including the season summary image export, and its `/seasons/stats` page. */
 export class UserSeasonsPage {
 	private readonly page: Page;
 	readonly locators;
@@ -41,7 +41,14 @@ export class UserSeasonsPage {
 		return downloadPromise;
 	}
 
-	async openStatsTab(name: "Weapons" | "Stages" | "Teammates" | "Opponents") {
+	/** Follows the link to the season's stats page. */
+	async openStats() {
+		await this.page.getByRole("link", { name: "See all stats" }).click();
+	}
+
+	async openStatsTab(
+		name: "Overview" | "Weapons" | "Stages" | "Teammates" | "Opponents",
+	) {
 		await this.page.getByRole("tab", { name }).click();
 	}
 
@@ -50,7 +57,7 @@ export class UserSeasonsPage {
 		return this.page.getByRole("img", { name: label });
 	}
 
-	/** A per-mode win/loss record of the Stages tab, e.g. `"4W 0L"`. */
+	/** A stage & mode win/loss record of the Stages tab, e.g. `"4–0"`. */
 	stageRecord(record: string) {
 		return this.page.getByText(record, { exact: true });
 	}

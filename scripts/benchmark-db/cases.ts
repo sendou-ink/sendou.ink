@@ -496,6 +496,9 @@ export function buildCases(fx: Fixtures): {
 	add("SkillRepository.findSeasonProgressionByUserId", fx.sq, (sq) =>
 		SkillRepository.findSeasonProgressionByUserId(sq),
 	);
+	add("SkillRepository.findSeasonPeakOrdinalByUserId", fx.sq, (sq) =>
+		SkillRepository.findSeasonPeakOrdinalByUserId(sq),
+	);
 	add("SkillRepository.findSeasonActiveDaysByUserId", fx.sq, (sq) =>
 		SkillRepository.findSeasonActiveDaysByUserId(sq),
 	);

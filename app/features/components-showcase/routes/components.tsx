@@ -70,7 +70,6 @@ import type { GlobalStatus } from "~/features/global-status/global-status-types"
 import { CompGraphic } from "~/features/img-export/components/CompGraphic";
 import {
 	SeasonSummaryGraphic,
-	type SeasonSummaryGraphicActivity,
 	type SeasonSummaryGraphicBestSet,
 	type SeasonSummaryGraphicStats,
 } from "~/features/img-export/components/SeasonSummaryGraphic";
@@ -82,6 +81,7 @@ import {
 	TournamentRunGraphic,
 	type TournamentRunGraphicMatch,
 } from "~/features/img-export/components/TournamentRunGraphic";
+import type { SeasonActivity } from "~/features/mmr/components/SeasonActivityCalendar";
 import {
 	Trophy,
 	TrophyContextProvider,
@@ -2047,7 +2047,7 @@ function TournamentRunGraphicSection({ id }: { id: string }) {
 }
 
 const SEASON_SUMMARY_DAYS: Array<
-	[date: string, sp: number, activity: SeasonSummaryGraphicActivity]
+	[date: string, sp: number, activity: SeasonActivity]
 > = [
 	["2026-03-02", 1875.2, "sq"],
 	["2026-03-03", 1922.7, "sq"],
@@ -2175,6 +2175,7 @@ const SEASON_SUMMARY_STATS: SeasonSummaryGraphicStats = {
 		{ player: { name: "Yeti" }, discordId: "153113232128507904", setsCount: 4 },
 	],
 	bestStage: { stageId: 14, winratePercentage: 78 },
+	peakSp: Math.max(...SEASON_SUMMARY_DAYS.map(([, sp]) => sp)),
 	spProgression: SEASON_SUMMARY_DAYS.map(([date, sp]) => ({ date, sp })),
 	activeDays: SEASON_SUMMARY_DAYS.map(([date, , activity]) => ({
 		date,

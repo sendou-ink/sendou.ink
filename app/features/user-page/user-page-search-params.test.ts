@@ -12,6 +12,8 @@ import {
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,
 	RESULTS_FIRST_YEAR,
+	SEASON_RESULT_SOURCES,
+	SEASON_STATS_TABS,
 } from "./user-page-constants";
 import {
 	userArtSearchParams,
@@ -19,6 +21,7 @@ import {
 	userResultsSearchParams,
 	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
+	userSeasonsStatsSearchParams,
 } from "./user-page-search-params";
 
 const startedSeasons = Seasons.allStarted(new Date());
@@ -90,14 +93,14 @@ describe("userSeasonsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(userSeasonsSearchParams, {
 			page: [1, 2, 99],
-			info: ["weapons", "stages", "mates", "enemies"],
+			source: [...SEASON_RESULT_SOURCES],
 			season: [null, newestSeason, oldestSeason],
 		});
 	});
 
 	test("malformed values decode to defaults", () => {
 		assertDecodesToDefault(userSeasonsSearchParams, "page", [["0"], ["abc"]]);
-		assertDecodesToDefault(userSeasonsSearchParams, "info", [["INVALID"]]);
+		assertDecodesToDefault(userSeasonsSearchParams, "source", [["INVALID"]]);
 		assertDecodesToDefault(userSeasonsSearchParams, "season", [
 			[String(notStartedSeason)],
 			["-1"],
@@ -122,6 +125,23 @@ describe("userSeasonsSearchParams", () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe("userSeasonsStatsSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(userSeasonsStatsSearchParams, {
+			tab: [...SEASON_STATS_TABS],
+			season: [null, newestSeason, oldestSeason],
+		});
+	});
+
+	test("malformed values decode to defaults", () => {
+		assertDecodesToDefault(userSeasonsStatsSearchParams, "tab", [["INVALID"]]);
+		assertDecodesToDefault(userSeasonsStatsSearchParams, "season", [
+			[String(notStartedSeason)],
+			["abc"],
+		]);
 	});
 });
 

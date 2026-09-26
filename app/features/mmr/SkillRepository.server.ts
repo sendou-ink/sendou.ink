@@ -132,6 +132,7 @@ export async function addInitialSkill(
 		.executeTakeFirstOrThrow();
 }
 
+/** User's ordinal after the last set of each day of the season they played on, days ascending. */
 export async function findSeasonProgressionByUserId({
 	userId,
 	season,
@@ -139,10 +140,35 @@ export async function findSeasonProgressionByUserId({
 	userId: number;
 	season: number;
 }) {
-	return seasonSkillsByDayQuery({ userId, season })
-		.select(({ fn }) => fn.max("Skill.ordinal").as("ordinal"))
+	const rows = await seasonSkillsByDayQuery({ userId, season })
+		// sqlite bare column: the ordinal is read off the row holding the day's max id
+		.select(({ fn }) => [
+			fn.max("Skill.id").as("latestSkillId"),
+			"Skill.ordinal",
+		])
 		.where("Skill.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
 		.execute();
+
+	return rows.map((row) => ({ date: row.date, ordinal: row.ordinal }));
+}
+
+/** User's highest ordinal of the season, `null` before they have played enough sets for one. */
+export async function findSeasonPeakOrdinalByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}) {
+	const row = await db
+		.selectFrom("Skill")
+		.select(({ fn }) => fn.max("Skill.ordinal").as("peakOrdinal"))
+		.where("Skill.userId", "=", userId)
+		.where("Skill.season", "=", season)
+		.where("Skill.matchesCount", ">=", MATCHES_COUNT_NEEDED_FOR_LEADERBOARD)
+		.executeTakeFirst();
+
+	return row?.peakOrdinal ?? null;
 }
 
 /** Days (`yyyy-MM-dd`) of the season the user played a set on, with whether it was SendouQ, tournaments or both. */

@@ -363,6 +363,7 @@ test.describe("User page", () => {
 
 		const seasonsPage = new UserSeasonsPage(page);
 		await seasonsPage.goto(ADMIN_DISCORD_ID);
+		await seasonsPage.openStats();
 
 		await seasonsPage.openStatsTab("Weapons");
 		await expect(
@@ -371,7 +372,7 @@ test.describe("User page", () => {
 
 		await seasonsPage.openStatsTab("Stages");
 		await expect(
-			seasonsPage.stageRecord(`${PLAYED_MAPS_COUNT}W 0L`),
+			seasonsPage.stageRecord(`${PLAYED_MAPS_COUNT}–0`),
 		).toBeVisible();
 
 		await seasonsPage.openStatsTab("Teammates");

@@ -1,19 +1,16 @@
 import clsx from "clsx";
-import {
-	eachDayOfInterval,
-	format,
-	parseISO,
-	startOfDay,
-	startOfWeek,
-} from "date-fns";
+import { parseISO } from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import { TierPill } from "~/components/TierPill";
+import {
+	type SeasonActivity,
+	SeasonActivityCalendar,
+} from "~/features/mmr/components/SeasonActivityCalendar";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
@@ -44,15 +41,8 @@ const CHART_MARGIN = { top: 26, right: 14, bottom: 22, left: 14 };
 const CHART_POINTS_NEEDED = 2;
 const CHART_PEAK_LABEL_CLAMP = 48;
 const TOP_MATES_COUNT = 3;
-const CALENDAR_WEEK_LENGTH = 7;
-/** Thursday, the day that decides which month a week column belongs to */
-const CALENDAR_WEEK_MONTH_DAY_INDEX = 3;
-/** Monday and Friday, the only rows the calendar names */
-const CALENDAR_NAMED_WEEKDAY_INDICES = [0, 4];
 /** Without weapons the teammates box is alone next to the calendar, so it has room for more */
 const TOP_MATES_COUNT_WITHOUT_WEAPONS = 6;
-
-export type SeasonSummaryGraphicActivity = "sq" | "tournament" | "both";
 
 export interface SeasonSummaryGraphicBestSet {
 	opponentPlayers: GraphicPlayer[];
@@ -92,10 +82,12 @@ export interface SeasonSummaryGraphicStats {
 		setsCount: number;
 	}>;
 	bestStage?: { stageId: StageId; winratePercentage: number };
-	/** Per day peak SP, dates in "yyyy-MM-dd" format */
+	/** Highest SP reached during the season */
+	peakSp: number;
+	/** SP at the end of each day played, dates in "yyyy-MM-dd" format */
 	spProgression: Array<{ date: string; sp: number }>;
 	/** Days with at least one set played, dates in "yyyy-MM-dd" format */
-	activeDays: Array<{ date: string; activity: SeasonSummaryGraphicActivity }>;
+	activeDays: Array<{ date: string; activity: SeasonActivity }>;
 	bestSets: SeasonSummaryGraphicBestSet[];
 	bestTournament?: {
 		name: string;
@@ -140,6 +132,7 @@ export function SeasonSummaryGraphic({
 		teamRank,
 		topMates,
 		bestStage,
+		peakSp,
 		spProgression,
 		activeDays,
 		bestSets,
@@ -147,10 +140,6 @@ export function SeasonSummaryGraphic({
 		topWeapons,
 	} = stats;
 
-	const peakSp =
-		spProgression.length > 0
-			? Math.max(...spProgression.map((point) => point.sp))
-			: sp;
 	const shownMates = topMates.slice(
 		0,
 		topWeapons.length > 0 ? TOP_MATES_COUNT : TOP_MATES_COUNT_WITHOUT_WEAPONS,
@@ -285,15 +274,15 @@ export function SeasonSummaryGraphic({
 				</StageBannerBox>
 			) : null}
 			<div className={styles.middleGrid}>
-				<SummaryBox className={styles.activityBox}>
+				<SummaryBox>
 					<GraphicBoxLabel>
 						{t("user:seasons.summary.activity")}
 					</GraphicBoxLabel>
-					<ActivityCalendar
+					<SeasonActivityCalendar
 						seasonDateRange={seasonDateRange}
 						activeDays={activeDays}
+						className={styles.activityCalendar}
 					/>
-					<ActivityLegend />
 				</SummaryBox>
 				<div className={styles.sideStack}>
 					{topWeapons.length > 0 ? (
@@ -530,157 +519,6 @@ function SpChart({ points }: { points: Array<{ date: string; sp: number }> }) {
 			</text>
 		</svg>
 	);
-}
-
-function ActivityCalendar({
-	seasonDateRange,
-	activeDays,
-}: {
-	seasonDateRange: { starts: Date; ends: Date };
-	activeDays: Array<{ date: string; activity: SeasonSummaryGraphicActivity }>;
-}) {
-	const { formatter } = useDateTimeFormat({ month: "long" });
-
-	const activityByDay = new Map(
-		activeDays.map((day) => [day.date, day.activity]),
-	);
-	const seasonFirstDay = startOfDay(seasonDateRange.starts);
-	const weeks = seasonWeeks({
-		seasonFirstDay,
-		seasonLastDay: seasonDateRange.ends,
-	});
-	const months = calendarMonths(weeks);
-
-	return (
-		<div className={styles.calendar}>
-			<CalendarWeekdays firstWeek={weeks[0]} />
-			{months.map((month) => (
-				<div key={month.key} className={styles.calendarMonth}>
-					<GraphicBoxLabel className={styles.calendarMonthName}>
-						{formatter.format(month.month)}
-					</GraphicBoxLabel>
-					<div className={styles.calendarWeeks}>
-						{month.weeks.map((week) => (
-							<div
-								key={format(week[0], "yyyy-MM-dd")}
-								className={styles.calendarWeek}
-							>
-								{week.map((day) => {
-									const key = format(day, "yyyy-MM-dd");
-									const beforeSeason = day.getTime() < seasonFirstDay.getTime();
-
-									return (
-										<div
-											key={key}
-											className={clsx(
-												styles.calendarCell,
-												activityClass(activityByDay.get(key)),
-												{ [styles.calendarCellHidden]: beforeSeason },
-											)}
-										/>
-									);
-								})}
-							</div>
-						))}
-					</div>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function CalendarWeekdays({ firstWeek }: { firstWeek: Date[] }) {
-	const { formatter } = useDateTimeFormat({ weekday: "short" });
-
-	return (
-		<GraphicBoxLabel className={styles.calendarWeekdays}>
-			{firstWeek.map((day, dayIndex) => (
-				<div key={format(day, "yyyy-MM-dd")} className={styles.calendarWeekday}>
-					{CALENDAR_NAMED_WEEKDAY_INDICES.includes(dayIndex)
-						? formatter.format(day)
-						: null}
-				</div>
-			))}
-		</GraphicBoxLabel>
-	);
-}
-
-/** Monday to Sunday week columns; an incomplete last week (a season ending mid-week) is left out. */
-function seasonWeeks({
-	seasonFirstDay,
-	seasonLastDay,
-}: {
-	seasonFirstDay: Date;
-	seasonLastDay: Date;
-}): Date[][] {
-	const weeks: Date[][] = R.chunk(
-		eachDayOfInterval({
-			start: startOfWeek(seasonFirstDay, { weekStartsOn: 1 }),
-			end: seasonLastDay,
-		}),
-		CALENDAR_WEEK_LENGTH,
-	);
-
-	const lastWeek = weeks[weeks.length - 1];
-	if (weeks.length > 1 && lastWeek.length < CALENDAR_WEEK_LENGTH) {
-		weeks.pop();
-	}
-
-	return weeks;
-}
-
-/** Groups the week columns under the month that holds most of the week */
-function calendarMonths(weeks: Date[][]) {
-	const months: Array<{ key: string; month: Date; weeks: Date[][] }> = [];
-
-	for (const week of weeks) {
-		const monthDay =
-			week[CALENDAR_WEEK_MONTH_DAY_INDEX] ?? week[week.length - 1];
-		const key = format(monthDay, "yyyy-MM");
-		const latestMonth = months[months.length - 1];
-
-		if (latestMonth?.key === key) {
-			latestMonth.weeks.push(week);
-		} else {
-			months.push({ key, month: monthDay, weeks: [week] });
-		}
-	}
-
-	return months;
-}
-
-function ActivityLegend() {
-	const { t } = useTranslation(["user"]);
-
-	return (
-		<GraphicBoxLabel className={styles.calendarLegend}>
-			<div className={styles.calendarLegendItem}>
-				<div className={clsx(styles.calendarCell, styles.calendarSq)} />
-				SendouQ
-			</div>
-			<div className={styles.calendarLegendItem}>
-				<div className={clsx(styles.calendarCell, styles.calendarTournament)} />
-				{t("user:seasons.summary.activity.tournament")}
-			</div>
-			<div className={styles.calendarLegendItem}>
-				<div className={clsx(styles.calendarCell, styles.calendarBoth)} />
-				{t("user:seasons.summary.activity.both")}
-			</div>
-		</GraphicBoxLabel>
-	);
-}
-
-function activityClass(activity?: SeasonSummaryGraphicActivity) {
-	if (!activity) return undefined;
-
-	switch (activity) {
-		case "sq":
-			return styles.calendarSq;
-		case "tournament":
-			return styles.calendarTournament;
-		case "both":
-			return styles.calendarBoth;
-	}
 }
 
 function SummaryBox({

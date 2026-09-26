@@ -73,7 +73,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-const WIDE_LAYOUT_SUB_PAGES = ["results", "edit-widgets"];
+const WIDE_LAYOUT_SUB_PAGES = ["results", "edit-widgets", "seasons"];
 
 export default function UserPageLayout() {
 	const data = useLoaderData<typeof loader>();

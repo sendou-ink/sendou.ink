@@ -347,6 +347,27 @@ export async function findSeasonBestSetsByUserId({
 	).slice(0, limit);
 }
 
+/** Placement and field size of each of the user's ranked tournament results in a season. */
+export async function findSeasonTournamentPlacementsByUserId({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}) {
+	return db
+		.selectFrom("Skill")
+		.innerJoin("TournamentResult", (join) =>
+			join
+				.onRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
+				.on("TournamentResult.userId", "=", userId),
+		)
+		.select(["TournamentResult.placement", "TournamentResult.participantCount"])
+		.where("Skill.userId", "=", userId)
+		.where("Skill.season", "=", season)
+		.execute();
+}
+
 /** The user's ranked tournament results of a season with tier, field size and the average end-of-season ordinal of the top 8, for picking their best run. */
 export async function findSeasonTournamentRunsByUserId({
 	userId,

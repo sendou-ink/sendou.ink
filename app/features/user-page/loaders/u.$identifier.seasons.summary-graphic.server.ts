@@ -1,6 +1,7 @@
 import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as SeasonSummary from "~/features/img-export/core/SeasonSummary";
+import { findUserTeamEntry } from "~/features/leaderboards/core/leaderboards.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
@@ -46,6 +47,10 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		throw forbidden();
 	}
 
+	const peakOrdinal = await SkillRepository.findSeasonPeakOrdinalByUserId({
+		userId,
+		season,
+	});
 	const setScores = await PlayerStatRepository.findSeasonSetScoresByUserId({
 		userId,
 		season,
@@ -62,7 +67,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const soloRank = (
 		await LeaderboardRepository.findUserSPLeaderboard(season)
 	).find((entry) => entry.id === userId)?.placementRank;
-	const teamEntry = await findTeamEntry({ season, userId });
+	const teamEntry = await findUserTeamEntry({ season, userId });
 
 	const mates = await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
 		userId,
@@ -147,6 +152,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 				season,
 			}),
 		),
+		peakSp: ordinalToSp(peakOrdinal ?? skill.ordinal),
 		spProgression: (
 			await SkillRepository.findSeasonProgressionByUserId({
 				userId,
@@ -184,37 +190,3 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		),
 	};
 };
-
-async function findTeamEntry({
-	season,
-	userId,
-}: {
-	season: number;
-	userId: number;
-}) {
-	const hasUser = (entry: { members: Array<{ id: number }> }) =>
-		entry.members.some((member) => member.id === userId);
-
-	const rankedEntry = (
-		await LeaderboardRepository.findTeamLeaderboardBySeason({
-			season,
-			onlyOneEntryPerUser: true,
-		})
-	).find(hasUser);
-
-	// a skipped team is on the leaderboard without taking a placement
-	if (rankedEntry)
-		return { entry: rankedEntry, rank: rankedEntry.placementRank ?? undefined };
-
-	// "all entries" only rosters have no placement comparable to the main team leaderboard's
-	const unrankedEntry = (
-		await LeaderboardRepository.findTeamLeaderboardBySeason({
-			season,
-			onlyOneEntryPerUser: false,
-		})
-	).find(hasUser);
-
-	if (!unrankedEntry) return undefined;
-
-	return { entry: unrankedEntry, rank: undefined };
-}

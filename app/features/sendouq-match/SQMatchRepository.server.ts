@@ -43,7 +43,10 @@ import type { Unpacked } from "~/utils/types";
 import { FULL_GROUP_SIZE } from "../sendouq/q-constants";
 import { SendouQError } from "../sendouq/q-utils.server";
 import * as SQGroupRepository from "../sendouq/SQGroupRepository.server";
-import { MATCHES_PER_SEASONS_PAGE } from "../user-page/user-page-constants";
+import {
+	MATCHES_PER_SEASONS_PAGE,
+	type SeasonResultSource,
+} from "../user-page/user-page-constants";
 import { compareMatchToReportedScores } from "./core/match.server";
 import * as RejoinVote from "./core/RejoinVote";
 import * as SendouQMatch from "./core/SendouQMatch";
@@ -344,13 +347,15 @@ function groupWithTeamAndMembers(
 	);
 }
 
-/** Page count of a user's season results, counting both SendouQ matches and ranked tournaments. */
+/** Page count of a user's season results, counting SendouQ matches, ranked tournaments or both per `source`. */
 export async function countSeasonResultPagesByUserId({
 	userId,
 	season,
+	source = "ALL",
 }: {
 	userId: number;
 	season: number;
+	source?: SeasonResultSource;
 }): Promise<number> {
 	const row = await db
 		.selectFrom("Skill")
@@ -358,10 +363,21 @@ export async function countSeasonResultPagesByUserId({
 		.where("userId", "=", userId)
 		.where("season", "=", season)
 		.where((eb) => skillCountsAsSeasonSet(eb, userId))
+		.where((eb) => isOfSeasonResultSource(eb, source))
 		.executeTakeFirstOrThrow();
 
 	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
 }
+
+const isOfSeasonResultSource = (
+	eb: ExpressionBuilder<DB, "Skill">,
+	source: SeasonResultSource,
+) => {
+	if (source === "SENDOUQ") return eb("Skill.groupMatchId", "is not", null);
+	if (source === "TOURNAMENT") return eb("Skill.tournamentId", "is not", null);
+
+	return eb.and([]);
+};
 
 const tournamentResultsSubQuery = (
 	eb: ExpressionBuilder<DB, "Skill">,
@@ -383,9 +399,22 @@ const tournamentResultsSubQuery = (
 			"TournamentResult.setResults",
 			"TournamentResult.tournamentId",
 			"TournamentResult.tournamentTeamId",
+			"TournamentResult.placement",
+			"TournamentResult.participantCount",
 			"CalendarEventDate.startsAt as tournamentStartTime",
 			"CalendarEvent.name as tournamentName",
 			tournamentLogoWithDefault(resultEb).as("logoUrl"),
+			jsonArrayFrom(
+				resultEb
+					.selectFrom("TournamentResult as TeammateResult")
+					.innerJoin("User", "User.id", "TeammateResult.userId")
+					.select((teammateEb) => commonUserSelect(teammateEb))
+					.whereRef(
+						"TeammateResult.tournamentTeamId",
+						"=",
+						"TournamentResult.tournamentTeamId",
+					),
+			).as("teamMembers"),
 		])
 		.whereRef("TournamentResult.tournamentId", "=", "Skill.tournamentId")
 		.where("TournamentResult.userId", "=", userId);
@@ -411,11 +440,25 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 
 	return eb
 		.selectFrom("GroupMatch")
+		.innerJoin(
+			"Group as AlphaGroup",
+			"AlphaGroup.id",
+			"GroupMatch.alphaGroupId",
+		)
+		.innerJoin(
+			"Group as BravoGroup",
+			"BravoGroup.id",
+			"GroupMatch.bravoGroupId",
+		)
 		.select((innerEb) => [
 			"GroupMatch.id",
 			"GroupMatch.createdAt",
 			"GroupMatch.alphaGroupId",
 			"GroupMatch.bravoGroupId",
+			"AlphaGroup.tierName as alphaTierName",
+			"AlphaGroup.tierIsPlus as alphaTierIsPlus",
+			"BravoGroup.tierName as bravoTierName",
+			"BravoGroup.tierIsPlus as bravoTierIsPlus",
 			groupMembersSubQuery(innerEb, "alpha").as("groupAlphaMembers"),
 			groupMembersSubQuery(innerEb, "bravo").as("groupBravoMembers"),
 			jsonArrayFrom(
@@ -499,15 +542,17 @@ const previousRatingColumns = (
 			.as("previousMatchesCount"),
 	] as const;
 
-/** A page of a user's season results, both SendouQ matches and ranked tournaments. */
+/** A page of a user's season results, SendouQ matches, ranked tournaments or both per `source`. */
 export async function findSeasonResultsByUserId({
 	userId,
 	season,
 	page = 1,
+	source = "ALL",
 }: {
 	userId: number;
 	season: number;
 	page: number;
+	source?: SeasonResultSource;
 }) {
 	const rows = await db
 		.with("userSkill", (cte) =>
@@ -582,6 +627,7 @@ export async function findSeasonResultsByUserId({
 		.where("Skill.userId", "=", userId)
 		.where("Skill.season", "=", season)
 		.where((eb) => skillCountsAsSeasonSet(eb, userId))
+		.where((eb) => isOfSeasonResultSource(eb, source))
 		.limit(MATCHES_PER_SEASONS_PAGE)
 		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
 		.orderBy("Skill.id", "desc")
@@ -611,7 +657,22 @@ export async function findSeasonResultsByUserId({
 					// older skills don't have createdAt, so we use groupMatch's createdAt as fallback
 					createdAt: row.createdAt ?? row.groupMatch.createdAt,
 					groupMatch: {
-						...R.omit(row.groupMatch, ["createdAt", "maps"]),
+						...R.omit(row.groupMatch, [
+							"createdAt",
+							"maps",
+							"alphaTierName",
+							"alphaTierIsPlus",
+							"bravoTierName",
+							"bravoTierIsPlus",
+						]),
+						alphaTier: SendouQMatch.groupTier({
+							tierName: row.groupMatch.alphaTierName,
+							tierIsPlus: row.groupMatch.alphaTierIsPlus,
+						}),
+						bravoTier: SendouQMatch.groupTier({
+							tierName: row.groupMatch.bravoTierName,
+							tierIsPlus: row.groupMatch.bravoTierIsPlus,
+						}),
 						// null while the rating is still being calculated and so has never been
 						// shown, which is the case expression spDiffOf builds
 						spDiff: row.spDiff,

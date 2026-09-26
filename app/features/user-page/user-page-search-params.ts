@@ -17,6 +17,8 @@ import {
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,
 	RESULTS_FIRST_YEAR,
+	SEASON_RESULT_SOURCES,
+	SEASON_STATS_TABS,
 } from "./user-page-constants";
 
 const BUILD_FILTER_TABS = ["ALL", "PUBLIC", "PRIVATE"] as const;
@@ -99,13 +101,25 @@ const startedSeason = v.pipe(
 
 export const userSeasonsSearchParams = SearchParams.define({
 	page: SP.page(),
-	info: SP.param(v.picklist(["weapons", "stages", "mates", "enemies"]), {
-		default: "weapons",
+	source: SP.param(v.picklist(SEASON_RESULT_SOURCES), {
+		default: "ALL",
 		loader: true,
+		resets: ["page"],
 	}),
 	season: SP.param(v.nullable(startedSeason), {
 		loader: true,
 		resets: ["page"],
+		timeDependent: true,
+	}),
+});
+
+export const userSeasonsStatsSearchParams = SearchParams.define({
+	tab: SP.param(v.picklist(SEASON_STATS_TABS), {
+		default: "overview",
+		loader: false,
+	}),
+	season: SP.param(v.nullable(startedSeason), {
+		loader: true,
 		timeDependent: true,
 	}),
 });

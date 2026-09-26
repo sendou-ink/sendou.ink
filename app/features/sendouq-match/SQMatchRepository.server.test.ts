@@ -1002,6 +1002,34 @@ describe("findSeasonResultsByUserId", () => {
 		return result.tournamentResult;
 	};
 
+	test.each([
+		{ source: "ALL", expectedCount: 1 },
+		{ source: "TOURNAMENT", expectedCount: 1 },
+		{ source: "SENDOUQ", expectedCount: 0 },
+	] as const)(
+		"includes a tournament result only for source $source",
+		async ({ source, expectedCount }) => {
+			await finalizeTournament({ ordinal: 1, matchesCount: 1 });
+
+			const rows = await SQMatchRepository.findSeasonResultsByUserId({
+				userId: actorId(),
+				season: SEASON,
+				page: 1,
+				source,
+			});
+			const pagesCount = await SQMatchRepository.countSeasonResultPagesByUserId(
+				{
+					userId: actorId(),
+					season: SEASON,
+					source,
+				},
+			);
+
+			expect(rows).toHaveLength(expectedCount);
+			expect(pagesCount).toBe(expectedCount);
+		},
+	);
+
 	test("leaves out the SP change while the rating is still being calculated", async () => {
 		await finalizeTournament({ ordinal: 1, matchesCount: 1 });
 
