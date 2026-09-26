@@ -17,7 +17,7 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
-import { formatPosition, formatTime } from "../core/format";
+import { formatTime } from "../core/format";
 import { scannerSearchParams } from "../scanner-search-params";
 import { deleteVodClips } from "../store/clips";
 import {
@@ -30,7 +30,8 @@ import {
 import { refreshClips, useClips } from "./clips-feed";
 import { ExportMenu } from "./ExportMenu";
 import { NotFound } from "./NotFound";
-import { SessionHeader, StatusPill } from "./SessionHeader";
+import { ScanWorkers } from "./ScanWorkers";
+import { SessionHeader } from "./SessionHeader";
 import { type SessionInfo, SessionView } from "./SessionView";
 import { matchContaining } from "./sendou-ingest";
 import { sendouUpload } from "./sendou-upload";
@@ -40,7 +41,6 @@ import { sendVod } from "./upload";
 import { useDebug } from "./use-debug";
 import styles from "./VodView.module.css";
 import {
-	setVodPreviewCanvas,
 	startVodScan,
 	uploadVodScan,
 	useVodScan,
@@ -99,18 +99,14 @@ function ScanVodView({ name }: { name: string }) {
 						</label>
 					</div>
 				) : scanning ? (
-					<div className={styles.scanning}>
-						<ScanProgressRow />
-						<div className={styles.previewRow}>
-							<canvas ref={setVodPreviewCanvas} className={styles.preview} />
-							<div className={styles.previewNotes}>
-								<div>Upload {user && settings.upload ? "on" : "off"}</div>
-								{scan.error ? (
-									<div className={styles.error}>{scan.error}</div>
-								) : null}
-							</div>
-						</div>
-					</div>
+					<ScanWorkers
+						events={scan.events}
+						headerEnd={`Upload ${user && settings.upload ? "on" : "off"}`}
+					>
+						{scan.error ? (
+							<div className={styles.error}>{scan.error}</div>
+						) : null}
+					</ScanWorkers>
 				) : (
 					<div className={styles.afterScan}>
 						{scan.clipsWork?.state === "cutting"
@@ -127,26 +123,6 @@ function ScanVodView({ name }: { name: string }) {
 			}
 			telemetry={debug && telemetryOn ? <ScanTelemetryPanel /> : null}
 		/>
-	);
-}
-
-function ScanProgressRow() {
-	const { progress } = useVodScanProgress();
-
-	return (
-		<div className={styles.progressRow}>
-			<StatusPill>Scanning</StatusPill>
-			<progress
-				className={styles.progress}
-				value={progress?.t ?? 0}
-				max={progress?.duration ?? 1}
-			/>
-			<span className={styles.progressText}>
-				{progress
-					? `${Math.round((progress.t / Math.max(1, progress.duration)) * 100)}% · ${formatPosition(progress.t)} / ${formatPosition(progress.duration)}${progress.rate > 0 ? ` · ${progress.rate.toFixed(1)}× realtime` : ""}`
-					: "opening the file…"}
-			</span>
-		</div>
 	);
 }
 
