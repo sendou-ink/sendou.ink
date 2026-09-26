@@ -166,27 +166,38 @@ function retext(text: string, chars: RecognizedChar[]): string {
 
 /**
  * '.', '・', '·' tight-crop to near-identical blobs. A dot floating well above
- * the baseline cannot be '.', so it rereads as the best middle-dot candidate;
- * the reverse does not hold (BlitzMain draws '・' ON the baseline in some names,
- * scoreboard/robot row 5), so baseline dots keep the template ranking.
+ * the baseline cannot be '.', so it rereads as the best middle-dot candidate.
+ * BlitzMain draws '・' ON the baseline in some names (scoreboard/robot row 5,
+ * next to symbols), so a baseline dot only rereads as '.' between two Latin
+ * letters or digits ("R.O.B.O.T", "Lv.13"), where no fixture attests a '・'.
  */
 const DOT_CHARS = new Set([".", "・", "·"]);
 const DOT_BASELINE_SLACK_PX = 3;
+const LATIN_OR_DIGIT = /^[\p{Script=Latin}\d]$/u;
 
-function fixRaisedDots(raw: RecognizedText): RecognizedText {
-	if (!raw.chars.some((c) => c.char === ".")) return raw;
+function fixDotsByPosition(raw: RecognizedText): RecognizedText {
+	if (!raw.chars.some((c) => DOT_CHARS.has(c.char))) return raw;
 	const anchors = raw.chars
 		.filter((c) => !DOT_CHARS.has(c.char))
 		.map((c) => c.y1)
 		.sort((a, b) => a - b);
 	if (anchors.length === 0) return raw;
 	const baseline = anchors[Math.floor(anchors.length / 2)]!;
-	const chars = raw.chars.map((c) => {
-		if (c.char !== "." || baseline - c.y1 <= DOT_BASELINE_SLACK_PX) return c;
-		const alt = c.candidates?.find(
-			(k) => DOT_CHARS.has(k.char) && k.char !== ".",
-		);
-		return { ...c, char: alt?.char ?? "・" };
+	const chars = raw.chars.map((c, i) => {
+		if (!DOT_CHARS.has(c.char)) return c;
+		const raised = baseline - c.y1 > DOT_BASELINE_SLACK_PX;
+		if (raised && c.char === ".") {
+			const alt = c.candidates?.find(
+				(k) => DOT_CHARS.has(k.char) && k.char !== ".",
+			);
+			return { ...c, char: alt?.char ?? "・" };
+		}
+		const betweenLatin =
+			LATIN_OR_DIGIT.test(raw.chars[i - 1]?.char ?? "") &&
+			LATIN_OR_DIGIT.test(raw.chars[i + 1]?.char ?? "");
+		if (raised || c.char === "." || !betweenLatin) return c;
+		const period = c.candidates?.find((k) => k.char === ".");
+		return period ? { ...c, char: ".", score: period.score } : c;
 	});
 	return { ...raw, text: retext(raw.text, chars), chars };
 }
@@ -259,6 +270,198 @@ function resolveBhByBowlFloor(
 }
 
 /**
+ * 'D' and 'O' differ only in the left corners, which soft text blurs until the
+ * ink penalty decides (the quick battle log's "DUDE" read "OUDE"). The edge
+ * profile keeps them: an O's top and bottom solid rows sit inset from its
+ * mid-height edge on both sides alike, a D's only on the right. Measured
+ * across fixtures at 15-29px, a D's right inset exceeds its left by 0.15+ of
+ * the glyph height, an O's by under 0.08. Only an O read over a near-tied D
+ * is re-decided: a D read already stands.
+ */
+const ROUND_CHARS = new Set(["O", "0"]);
+const DO_SCORE_MARGIN = 0.05;
+const D_MIN_CORNER_ASYMMETRY = 0.15;
+/** solid rows reach this share of the glyph's brightest pixel */
+const SOLID_ROW_FRACTION = 0.8;
+const EDGE_LEVEL = 128;
+
+function resolveDoByCorners(
+	raw: RecognizedText,
+	grayView: Mat,
+): RecognizedText {
+	const contested = (c: RecognizedChar) =>
+		ROUND_CHARS.has(c.char) &&
+		(c.candidates?.some(
+			(k) => k.char === "D" && c.score - k.score <= DO_SCORE_MARGIN,
+		) ??
+			false);
+	if (!raw.chars.some(contested)) return raw;
+
+	const gray = new (getCV().Mat)();
+	grayView.copyTo(gray);
+	const { cols, data } = gray;
+	const chars = raw.chars.map((c) => {
+		if (!contested(c)) return c;
+		const asymmetry = cornerAsymmetry(data, cols, c);
+		if (!(asymmetry >= D_MIN_CORNER_ASYMMETRY * (c.y1 - c.y0))) return c;
+		const d = c.candidates!.find((k) => k.char === "D")!;
+		return { ...c, char: "D", score: d.score };
+	});
+	gray.delete();
+	return { ...raw, text: retext(raw.text, chars), chars };
+}
+
+/**
+ * How much further the segment's top and bottom solid rows are inset from the
+ * mid-height edge on the right than on the left, in px (NaN when unmeasurable).
+ */
+function cornerAsymmetry(
+	data: Uint8Array,
+	cols: number,
+	c: RecognizedChar,
+): number {
+	const at = (x: number, y: number) =>
+		x >= c.x0 && x < c.x1 ? data[y * cols + x]! : 0;
+	const crossing = (x: number, y: number, step: -1 | 1) => {
+		const v = at(x, y);
+		const outside = at(x - step, y);
+		return x - step + (step * (EDGE_LEVEL - outside)) / (v - outside);
+	};
+	const leftEdge = (y: number) => {
+		for (let x = c.x0; x < c.x1; x++) {
+			if (at(x, y) >= EDGE_LEVEL) return crossing(x, y, 1);
+		}
+		return Number.NaN;
+	};
+	const rightEdge = (y: number) => {
+		for (let x = c.x1 - 1; x >= c.x0; x--) {
+			if (at(x, y) >= EDGE_LEVEL) return crossing(x, y, -1);
+		}
+		return Number.NaN;
+	};
+	const rowMax = (y: number) => {
+		let max = 0;
+		for (let x = c.x0; x < c.x1; x++) max = Math.max(max, at(x, y));
+		return max;
+	};
+
+	const h = c.y1 - c.y0;
+	let glyphMax = 0;
+	for (let y = c.y0; y < c.y1; y++) glyphMax = Math.max(glyphMax, rowMax(y));
+	let top = c.y0;
+	while (top < c.y1 - 1 && rowMax(top) < SOLID_ROW_FRACTION * glyphMax) top++;
+	let bottom = c.y1 - 1;
+	while (bottom > top && rowMax(bottom) < SOLID_ROW_FRACTION * glyphMax)
+		bottom--;
+	const midRows: number[] = [];
+	for (
+		let y = c.y0 + Math.round(h * 0.3);
+		y <= c.y1 - 1 - Math.round(h * 0.3);
+		y++
+	) {
+		midRows.push(y);
+	}
+	if (midRows.length === 0) return Number.NaN;
+	const median = (values: number[]) =>
+		values.sort((a, b) => a - b)[Math.floor(values.length / 2)]!;
+	const leftMid = median(midRows.map(leftEdge));
+	const rightMid = median(midRows.map(rightEdge));
+	const leftInset = leftEdge(top) + leftEdge(bottom) - 2 * leftMid;
+	const rightInset = 2 * rightMid - rightEdge(top) - rightEdge(bottom);
+	return rightInset - leftInset;
+}
+
+/**
+ * Soft text also blurs the letters that differ only in where their stem meets
+ * the baseline, so the ink penalty settles near-ties: a 'T' read 'r' (quick log
+ * "R.O.B.O.T"), a 'Y' read 'u' (720p "BDAYBOY"). The bottom rows keep the stem:
+ * a T's sits centered where an r's hugs the left (ink centroid 0.44+ of the
+ * width vs 0.42 and under across fixtures), and a Y ends in a lone stem where
+ * a u's bowl spans the glyph (bottom ink width 0.40 and under vs 0.57+). Only
+ * the lowercase read of a near-tie is re-decided.
+ */
+const STEM_TWINS: {
+	read: string;
+	twin: string;
+	isTwin: (bottom: { centroid: number; width: number }) => boolean;
+}[] = [
+	{ read: "r", twin: "T", isTwin: (bottom) => bottom.centroid >= 0.43 },
+	{ read: "u", twin: "Y", isTwin: (bottom) => bottom.width < 0.5 },
+];
+const STEM_SCORE_MARGIN = 0.05;
+const STEM_BOTTOM_FRACTION = 0.3;
+
+function resolveStemTwins(
+	raw: RecognizedText,
+	grayView: Mat,
+	binThreshold: number,
+): RecognizedText {
+	const contested = (c: RecognizedChar) => {
+		const rule = STEM_TWINS.find((r) => r.read === c.char);
+		const twin = c.candidates?.find(
+			(k) => k.char === rule?.twin && c.score - k.score <= STEM_SCORE_MARGIN,
+		);
+		return rule && twin ? { rule, twin } : undefined;
+	};
+	if (!raw.chars.some(contested)) return raw;
+
+	const gray = new (getCV().Mat)();
+	grayView.copyTo(gray);
+	const { cols, data } = gray;
+	const chars = raw.chars.map((c) => {
+		const match = contested(c);
+		if (!match) return c;
+		const bottom = bottomInk(data, cols, c, binThreshold);
+		if (!bottom || !match.rule.isTwin(bottom)) return c;
+		return { ...c, char: match.twin.char, score: match.twin.score };
+	});
+	gray.delete();
+	return { ...raw, text: retext(raw.text, chars), chars };
+}
+
+/**
+ * The segment's bottom rows: brightness-weighted ink centroid and mean ink
+ * extent per row, both as fractions of the segment width.
+ */
+function bottomInk(
+	data: Uint8Array,
+	cols: number,
+	c: RecognizedChar,
+	binThreshold: number,
+): { centroid: number; width: number } | null {
+	const w = c.x1 - c.x0;
+	const h = c.y1 - c.y0;
+	let weight = 0;
+	let weightedX = 0;
+	let extents = 0;
+	let rows = 0;
+	for (
+		let y = c.y1 - Math.max(2, Math.round(h * STEM_BOTTOM_FRACTION));
+		y < c.y1;
+		y++
+	) {
+		let lo = -1;
+		let hi = -1;
+		for (let x = c.x0; x < c.x1; x++) {
+			const v = data[y * cols + x]!;
+			if (v <= binThreshold) continue;
+			weight += v;
+			weightedX += v * (x + 0.5);
+			if (lo < 0) lo = x;
+			hi = x;
+		}
+		if (lo < 0) continue;
+		extents += hi - lo + 1;
+		rows++;
+	}
+	if (rows === 0) return null;
+	return {
+		centroid: (weightedX / weight - c.x0) / w,
+		width: extents / rows / w,
+	};
+}
+
+/**
  * A (han)dakuten is two short ticks (or a ring) floating above the base kana's
  * upper right. Capture blur thins those ticks, so the ink-coverage penalty lets
  * the plain twin ('か') edge out the voiced glyph ('が') whose extra template ink
@@ -270,7 +473,9 @@ function resolveBhByBowlFloor(
  * direction is re-decided: the game draws some marks touching the base stroke
  * (quick-log ば, ギ) and the templates already read those right, so a missing gap
  * must not demote a voiced read. A plain kana's own detached top tick (う) starts
- * far left of the mark's column band and fails the left-edge floor.
+ * far left of the mark's column band and fails the left-edge floor. Blur can
+ * bridge the gap with a single antialiased row (quick-log プ read フ), so the
+ * probe retries on the strokes' cores, above that antialiasing.
  */
 const VOICED_TWINS: Record<string, string[]> = {};
 for (const [plain, voiced] of [
@@ -293,6 +498,7 @@ const VOICED_SCORE_MARGIN = 0.1;
 const MARK_MAX_HEIGHT_FRACTION = 0.4;
 const BASE_MIN_HEIGHT_FRACTION = 0.5;
 /** the (han)dakuten: upper-right corner; a blank gap row tolerates one noise pixel */
+const MARK_CORE_THRESHOLD_LIFT = 50;
 const VOICED_MARK_SHAPE: MarkShape = {
 	minLeft: 0.35,
 	minRight: 0.75,
@@ -321,7 +527,16 @@ function resolveVoicedByMark(
 		const twin = voicedRunnerUp(c);
 		if (
 			!twin ||
-			!hasFloatingMark(data, cols, c, binThreshold, VOICED_MARK_SHAPE)
+			!(
+				hasFloatingMark(data, cols, c, binThreshold, VOICED_MARK_SHAPE) ||
+				hasFloatingMark(
+					data,
+					cols,
+					c,
+					binThreshold + MARK_CORE_THRESHOLD_LIFT,
+					VOICED_MARK_SHAPE,
+				)
+			)
 		)
 			return c;
 		return { ...c, char: twin.char, score: twin.score };
@@ -551,7 +766,14 @@ export function* parseNameSteps(
 					resolveAccentByMark(
 						resolveVoicedByMark(
 							resolveBhByBowlFloor(
-								fixRaisedDots(resolveUnderscoreByBaseline(raw)),
+								resolveStemTwins(
+									resolveDoByCorners(
+										fixDotsByPosition(resolveUnderscoreByBaseline(raw)),
+										gray,
+									),
+									gray,
+									binThreshold,
+								),
 								gray,
 							),
 							gray,
