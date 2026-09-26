@@ -32,17 +32,22 @@
 }
 
 .calendar {
-	display: flex;
-	align-items: flex-end;
-	justify-content: var(--calendar-justify, center);
-	gap: var(--calendar-gap, 4px);
+	display: grid;
+	grid-template-columns: 1fr auto 1fr;
+	align-items: end;
 }
 
 .calendarWeekdays {
 	display: flex;
 	flex-direction: column;
+	justify-self: end;
 	gap: var(--calendar-gap, 4px);
 	margin-inline-end: var(--s-1-5);
+}
+
+.calendarMonths {
+	display: flex;
+	gap: var(--calendar-gap, 4px);
 }
 
 .calendarWeekday {
@@ -107,7 +112,7 @@
 	display: flex;
 	flex-wrap: wrap;
 	align-items: center;
-	justify-content: var(--calendar-justify, center);
+	justify-content: center;
 	gap: var(--s-1-5) var(--s-2-5);
 }
 

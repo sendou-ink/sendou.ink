@@ -1,6 +1,7 @@
 import clsx from "clsx";
 import { format } from "date-fns";
 import {
+	CalendarDays,
 	ChartColumn,
 	ChevronRight,
 	HardDriveDownload,
@@ -124,13 +125,17 @@ export default function UserSeasonsPage() {
 				{data.teamEntry ? (
 					<TeamRank season={data.season} teamEntry={data.teamEntry} />
 				) : null}
-				<section className={styles.overviewCard}>
+				<section className={clsx(styles.overviewCard, styles.activity)}>
+					<h2 className={styles.overviewCardHeading}>
+						<CalendarDays size={14} />
+						{t("user:seasons.summary.activity")}
+					</h2>
 					<SeasonActivityCalendar
 						seasonDateRange={Seasons.nthToDateRange(data.season)}
 						activeDays={data.activeDays}
 						today={new Date()}
 						monthNames="short"
-						className={clsx(styles.activity, "scrollbar")}
+						className={clsx(styles.activityCalendar, "scrollbar")}
 					/>
 				</section>
 				<StatsPeek
@@ -321,7 +326,7 @@ function TeamRank({
 	return (
 		<section className={clsx(styles.overviewCard, styles.teamRank)}>
 			<h2 className={styles.overviewCardHeading}>
-				<Users size={18} />
+				<Users size={14} />
 				{t("user:seasons.summary.teamRank")}
 			</h2>
 			<div className={styles.teamRankSummary}>
@@ -383,7 +388,7 @@ function StatsPeek({
 	return (
 		<section className={clsx(styles.overviewCard, styles.statsPeek)}>
 			<h2 className={styles.overviewCardHeading}>
-				<ChartColumn size={18} />
+				<ChartColumn size={14} />
 				{t("user:seasons.stats.title", { season })}
 			</h2>
 			<dl className={styles.statsPeekList}>

@@ -53,41 +53,43 @@ export function SeasonActivityCalendar({
 		>
 			<div className={styles.calendar}>
 				<CalendarWeekdays firstWeek={weeks[0]} />
-				{months.map((month) => (
-					<div key={month.key} className={styles.calendarMonth}>
-						<div className={clsx(styles.label, styles.calendarMonthName)}>
-							{formatter.format(month.month)}
-						</div>
-						<div className={styles.calendarWeeks}>
-							{month.weeks.map((week) => (
-								<div
-									key={format(week[0], "yyyy-MM-dd")}
-									className={styles.calendarWeek}
-								>
-									{week.map((day) => {
-										const key = format(day, "yyyy-MM-dd");
-										const beforeSeason =
-											day.getTime() < seasonFirstDay.getTime();
+				<div className={styles.calendarMonths}>
+					{months.map((month) => (
+						<div key={month.key} className={styles.calendarMonth}>
+							<div className={clsx(styles.label, styles.calendarMonthName)}>
+								{formatter.format(month.month)}
+							</div>
+							<div className={styles.calendarWeeks}>
+								{month.weeks.map((week) => (
+									<div
+										key={format(week[0], "yyyy-MM-dd")}
+										className={styles.calendarWeek}
+									>
+										{week.map((day) => {
+											const key = format(day, "yyyy-MM-dd");
+											const beforeSeason =
+												day.getTime() < seasonFirstDay.getTime();
 
-										return (
-											<div
-												key={key}
-												className={clsx(
-													styles.calendarCell,
-													activityClass(activityByDay.get(key)),
-													{
-														[styles.calendarCellHidden]: beforeSeason,
-														[styles.calendarUpcoming]: isUpcoming(day),
-													},
-												)}
-											/>
-										);
-									})}
-								</div>
-							))}
+											return (
+												<div
+													key={key}
+													className={clsx(
+														styles.calendarCell,
+														activityClass(activityByDay.get(key)),
+														{
+															[styles.calendarCellHidden]: beforeSeason,
+															[styles.calendarUpcoming]: isUpcoming(day),
+														},
+													)}
+												/>
+											);
+										})}
+									</div>
+								))}
+							</div>
 						</div>
-					</div>
-				))}
+					))}
+				</div>
 			</div>
 			<ActivityLegend />
 		</div>
