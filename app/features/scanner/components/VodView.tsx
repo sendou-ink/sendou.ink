@@ -18,6 +18,7 @@ import {
 } from "~/modules/search-params/hooks";
 import type { ScanTelemetry } from "../core/detectors/telemetry";
 import { formatTime } from "../core/format";
+import { type BuiltMatch, buildScannerMatches } from "../core/match-builder";
 import { scannerSearchParams } from "../scanner-search-params";
 import { deleteVodClips } from "../store/clips";
 import {
@@ -48,6 +49,13 @@ import {
 	vodScanFrame,
 } from "./vod-scan";
 import { refreshVods } from "./vods-feed";
+
+/**
+ * Builds keyed by the events array: views re-render for reasons other than new
+ * events (clips, upload state), and reusing the same `BuiltMatch` objects lets
+ * the unchanged cards skip rendering.
+ */
+const builtCache = new WeakMap<readonly ScanEvent[], BuiltMatch<ScanEvent>[]>();
 
 export function VodView() {
 	const [name] = useSearchParam(scannerSearchParams, "name");
@@ -236,6 +244,7 @@ function VodSessionView({
 	return (
 		<SessionView
 			kind="vod"
+			built={cachedBuild(events)}
 			events={events}
 			originT={0}
 			clips={vodClips}
@@ -363,4 +372,12 @@ function TelemetryPanel({ telemetry }: { telemetry: ScanTelemetry }) {
 			</table>
 		</details>
 	);
+}
+
+function cachedBuild(events: readonly ScanEvent[]): BuiltMatch<ScanEvent>[] {
+	const cached = builtCache.get(events);
+	if (cached) return cached;
+	const built = buildScannerMatches(events);
+	builtCache.set(events, built);
+	return built;
 }

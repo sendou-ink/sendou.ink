@@ -2,6 +2,7 @@
  * Shared IndexedDB handle. Stores:
  *  - `events`: live detections, keyed by auto id (events.ts)
  *  - `frames`: their full-res analyzed PNGs by event id, kept apart so listing the feed never deserializes them
+ *  - `compacted-matches`: older live sessions' games, frozen as built, indexed by session (compacted-matches.ts)
  *  - `vods`: one summary per scanned VoD, keyed by file name (vods.ts)
  *  - `vod-events`: each saved VoD's detections, indexed by VoD name
  *  - `vod-frames`: their PNGs, keyed by vod-event id
@@ -10,10 +11,11 @@
  *  - `inspect-frames`: one-shot Inspect handoffs into a new debug tab (inspect.ts)
  */
 const DB_NAME = "scanner";
-const DB_VERSION = 2;
+const DB_VERSION = 3;
 
 export const EVENTS_STORE = "events";
 export const FRAMES_STORE = "frames";
+export const COMPACTED_MATCHES_STORE = "compacted-matches";
 export const VODS_STORE = "vods";
 export const VOD_EVENTS_STORE = "vod-events";
 export const VOD_FRAMES_STORE = "vod-frames";
@@ -25,7 +27,8 @@ export const INSPECT_FRAMES_STORE = "inspect-frames";
  * Adds the stores a DB_VERSION bump introduced, keeping the existing ones and
  * their data. v2 added the clip stores and moved live event times onto the
  * wall clock, so a v1 database's live events (stamped on the page clock)
- * are dropped. Changing an existing store's shape needs a real migration here.
+ * are dropped; v3 added the compacted matches. Changing an existing store's
+ * shape needs a real migration here.
  */
 function upgrade(database: IDBDatabase, oldVersion: number): void {
 	const has = (name: string) => database.objectStoreNames.contains(name);
@@ -42,6 +45,13 @@ function upgrade(database: IDBDatabase, oldVersion: number): void {
 		});
 		events.createIndex("t", "t");
 		events.createIndex("detectedAt", "detectedAt");
+	}
+
+	if (!has(COMPACTED_MATCHES_STORE)) {
+		const compacted = database.createObjectStore(COMPACTED_MATCHES_STORE, {
+			keyPath: "id",
+		});
+		compacted.createIndex("sessionKey", "session.key");
 	}
 
 	if (!has(VODS_STORE)) {

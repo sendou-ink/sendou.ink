@@ -4,9 +4,18 @@
  * never overlap (a send requested mid-flight runs right after), and one
  * place that knows whether uploading is on at all (the setting, and a login).
  */
-import type { BuiltMatch } from "../core/match-builder";
-import { EVENTS_STORE, VOD_EVENTS_STORE } from "../store/db";
-import { listEvents } from "../store/events";
+import { type BuiltMatch, buildScannerMatches } from "../core/match-builder";
+import {
+	compactedBuilt,
+	listCompactedMatches,
+	updateCompactedMatchesSend,
+} from "../store/compacted-matches";
+import {
+	COMPACTED_MATCHES_STORE,
+	EVENTS_STORE,
+	VOD_EVENTS_STORE,
+} from "../store/db";
+import { listEvents, type SendStatus, updateEventsSend } from "../store/events";
 import { loadVodEvents } from "../store/vods";
 import { refreshFeed } from "./events-feed";
 import { type SendResult, sendMatches } from "./sendou-ingest";
@@ -15,9 +24,24 @@ import { readSettings } from "./settings";
 
 export type MatchSelector = (built: BuiltMatch<ScanEvent>) => boolean;
 
+interface SendRequest {
+	include: MatchSelector;
+	/** live: the session key built matches are loaded from; VoD: unused */
+	since: number;
+}
+
+interface SendTarget {
+	load: (since: number) => Promise<BuiltMatch<ScanEvent>[]>;
+	writeSend: (
+		matches: readonly BuiltMatch<ScanEvent>[],
+		send: SendStatus,
+	) => Promise<void>;
+	onStatus: (since: number) => void;
+}
+
 interface Sender {
 	sending: boolean;
-	pending: MatchSelector[];
+	pending: SendRequest[];
 }
 
 let user: { id: number } | null = null;
@@ -37,9 +61,45 @@ export function uploadEnabled(): boolean {
 	return user !== null && readSettings().upload;
 }
 
-/** Sends the live matches `include` selects; the feed refreshes as statuses change. */
-export function sendLive(include: MatchSelector): Promise<SendResult | null> {
-	return send(EVENTS_STORE, listEvents, include, refreshFeed);
+/**
+ * Sends the matches `include` selects among the live events detected since
+ * `since` (the key of the session they belong to); the feed refreshes from
+ * there as statuses change.
+ */
+export function sendLive(
+	include: MatchSelector,
+	since: number,
+): Promise<SendResult | null> {
+	return send(
+		EVENTS_STORE,
+		{ include, since },
+		{
+			load: async (from) => buildScannerMatches(await listEvents(from)),
+			writeSend: eventsSendWriter(EVENTS_STORE),
+			onStatus: refreshFeed,
+		},
+	);
+}
+
+/** Sends the matches `include` selects among the compacted games of the session keyed `sessionKey`. */
+export function sendCompacted(
+	include: MatchSelector,
+	sessionKey: number,
+): Promise<SendResult | null> {
+	return send(
+		COMPACTED_MATCHES_STORE,
+		{ include, since: sessionKey },
+		{
+			load: async (from) =>
+				(await listCompactedMatches(from)).map(compactedBuilt),
+			writeSend: (matches, sendStatus) =>
+				updateCompactedMatchesSend(
+					matches.map((built) => built.sources[0]!.id!),
+					sendStatus,
+				),
+			onStatus: refreshFeed,
+		},
+	);
 }
 
 /** Sends the VoD's matches `include` selects; `onStatus` runs after each status write. */
@@ -50,19 +110,19 @@ export function sendVod(
 ): Promise<SendResult | null> {
 	return send(
 		`${VOD_EVENTS_STORE}:${name}`,
-		() => loadVodEvents(name),
-		include,
-		onStatus,
-		VOD_EVENTS_STORE,
+		{ include, since: 0 },
+		{
+			load: async () => buildScannerMatches(await loadVodEvents(name)),
+			writeSend: eventsSendWriter(VOD_EVENTS_STORE),
+			onStatus,
+		},
 	);
 }
 
 async function send(
 	key: string,
-	loadEvents: () => Promise<ScanEvent[]>,
-	include: MatchSelector,
-	onStatus: () => void,
-	store: string = EVENTS_STORE,
+	request: SendRequest,
+	target: SendTarget,
 ): Promise<SendResult | null> {
 	if (!isLoggedIn()) return null;
 	let sender = senders.get(key);
@@ -71,20 +131,22 @@ async function send(
 		senders.set(key, sender);
 	}
 	if (sender.sending) {
-		sender.pending.push(include);
+		sender.pending.push(request);
 		return null;
 	}
 	sender.sending = true;
 	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
+	let sentSince = request.since;
 	try {
-		let next: MatchSelector | undefined = include;
+		let next: SendRequest | undefined = request;
 		while (next) {
-			const events = await loadEvents();
+			const { since } = next;
+			sentSince = Math.min(sentSince, since);
 			const pass = await sendMatches({
-				events,
-				include: next,
-				onStatus,
-				store,
+				matches: await target.load(since),
+				include: next.include,
+				onStatus: () => target.onStatus(since),
+				writeSend: target.writeSend,
 			});
 			result.sentMatches += pass.sentMatches;
 			result.failedMatches += pass.failedMatches;
@@ -92,12 +154,24 @@ async function send(
 			sender.pending = [];
 			next =
 				pending.length > 0
-					? (built) => pending.some((fn) => fn(built))
+					? {
+							include: (built) => pending.some((p) => p.include(built)),
+							since: Math.min(...pending.map((p) => p.since)),
+						}
 					: undefined;
 		}
 	} finally {
 		sender.sending = false;
-		onStatus();
+		target.onStatus(sentSince);
 	}
 	return result;
+}
+
+function eventsSendWriter(store: string): SendTarget["writeSend"] {
+	return (matches, sendStatus) =>
+		updateEventsSend(
+			matches.flatMap((built) => built.sources.map((event) => event.id!)),
+			sendStatus,
+			store,
+		);
 }

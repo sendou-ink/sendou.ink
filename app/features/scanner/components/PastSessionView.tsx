@@ -9,6 +9,7 @@ import {
 	useSearchParamsTyped,
 } from "~/modules/search-params/hooks";
 import { scannerSearchParams } from "../scanner-search-params";
+import { deleteCompactedSessions } from "../store/compacted-matches";
 import { deleteEvents, loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
 import { ExportMenu } from "./ExportMenu";
@@ -20,7 +21,7 @@ import { SessionView } from "./SessionView";
 import { sessionLabel } from "./SettingsPopover";
 import { matchContaining } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
-import { sendLive } from "./upload";
+import { sendCompacted, sendLive } from "./upload";
 
 export function PastSessionView() {
 	const [id] = useSearchParam(scannerSearchParams, "id");
@@ -43,18 +44,23 @@ export function PastSessionView() {
 	);
 
 	const remove = async () => {
-		await deleteEvents(
-			session.events
-				.map((event) => event.id)
-				.filter((eventId): eventId is number => eventId !== undefined),
-		);
-		refreshFeed();
+		if (session.compacted) {
+			await deleteCompactedSessions([session.key]);
+		} else {
+			await deleteEvents(
+				session.events
+					.map((event) => event.id)
+					.filter((eventId): eventId is number => eventId !== undefined),
+			);
+		}
+		refreshFeed(session.key);
 		setParams({ view: "home" });
 	};
 
 	return (
 		<SessionView
 			kind="session"
+			built={session.built}
 			events={session.events}
 			originT={session.originT}
 			clips={sessionClips}
@@ -63,7 +69,11 @@ export function PastSessionView() {
 			canUpload={Boolean(user)}
 			onUpload={(built) => {
 				const eventId = built.sources[0]?.id;
-				if (eventId !== undefined) void sendLive(matchContaining(eventId));
+				if (eventId === undefined) return;
+				void (session.compacted ? sendCompacted : sendLive)(
+					matchContaining(eventId),
+					session.key,
+				);
 			}}
 			getFrame={frameLoader}
 			emptyText="No games were read in this session."
@@ -73,7 +83,7 @@ export function PastSessionView() {
 						<>
 							<ExportMenu
 								built={info.built}
-								events={session.events}
+								events={session.compacted ? null : session.events}
 								source={{
 									label: sessionLabel(session.startedAt),
 									originT: session.originT,

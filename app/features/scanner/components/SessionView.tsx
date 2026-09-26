@@ -18,11 +18,7 @@ import {
 } from "~/components/elements/Tabs";
 import { MAP_START_EVENT_TYPE } from "../core/detectors/map-start";
 import type { IngestSkipReason } from "../core/match-builder";
-import {
-	type BuiltMatch,
-	buildScannerMatches,
-	ingestSkipReasons,
-} from "../core/match-builder";
+import { type BuiltMatch, ingestSkipReasons } from "../core/match-builder";
 import { assignMatchSets } from "../core/match-sets";
 import type { ScannerMatch } from "../core/scanner-match";
 import { kdRatio, type SessionSummary, sessionSummary } from "../core/sessions";
@@ -39,13 +35,6 @@ import { uploadStateOf } from "./UploadStatus";
 import { useDebug } from "./use-debug";
 
 const NO_KEYS: ReadonlySet<React.Key> = new Set();
-
-/**
- * Builds keyed by the events array: views re-render for reasons other than new
- * events (clips, upload state), and reusing the same `BuiltMatch` objects lets
- * the unchanged cards skip rendering.
- */
-const builtCache = new WeakMap<readonly ScanEvent[], BuiltMatch<ScanEvent>[]>();
 
 type LobbyGroup = "private" | "x" | "other";
 
@@ -70,6 +59,7 @@ export interface SessionInfo {
 
 export function SessionView({
 	kind,
+	built,
 	events,
 	originT,
 	clips,
@@ -83,6 +73,11 @@ export function SessionView({
 	children,
 }: {
 	kind: SessionKind;
+	/**
+	 * `events` built into matches, chronological. Reusing the same `BuiltMatch`
+	 * objects across renders lets the unchanged cards skip rendering.
+	 */
+	built: BuiltMatch<ScanEvent>[];
 	/** chronological */
 	events: readonly ScanEvent[];
 	/** stream/file second positions count from */
@@ -104,7 +99,6 @@ export function SessionView({
 	const debug = useDebug();
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
 
-	const built = cachedBuild(events);
 	const skipReasons = ingestSkipReasons(built);
 	const clipsByMatch = built.map((b, index) =>
 		clipsOf(b.match, built[index + 1]?.match, clips),
@@ -242,14 +236,6 @@ function MatchList({
 			})}
 		</div>
 	);
-}
-
-function cachedBuild(events: readonly ScanEvent[]): BuiltMatch<ScanEvent>[] {
-	const cached = builtCache.get(events);
-	if (cached) return cached;
-	const built = buildScannerMatches(events);
-	builtCache.set(events, built);
-	return built;
 }
 
 function lobbyGroup(lobby: ScannerLobby | null): LobbyGroup {

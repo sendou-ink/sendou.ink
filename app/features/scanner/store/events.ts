@@ -4,21 +4,13 @@
  * analyzed PNG lives in the separate `frames` store under the same id
  * (loadEventFrame) so listing the feed never deserializes megabytes of
  * blobs. Retention runs on save (throttled): whole sessions past
- * `core/sessions.ts`'s age/count limits go, frames go after `FRAME_MAX_AGE_MS`
- * or past `MAX_FRAMES` (the events stay, marked frameless), and `MAX_EVENTS`
- * remains a hard floor.
+ * `core/sessions.ts`'s age/count/event limits go, and frames go after
+ * `FRAME_MAX_AGE_MS` or past `MAX_FRAMES` (the events stay, marked frameless).
  */
 import type { IngestedMatchLink } from "~/features/scanner-ingest/scanner-ingest-schemas";
 import type { DetectedEvent } from "../core/detectors/types";
 import { expiredSessionEventIds } from "../core/sessions";
 import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
-
-/**
- * Counter/status reads land ~2.2 events a second of match time, so the cap must
- * hold a whole session: at 1000 the store rolled over in ~8 minutes and evicted
- * matches before they were sent (2026-08-23: Mahi-Mahi reached sendou.ink with no data).
- */
-const MAX_EVENTS = 10_000;
 
 /**
  * Full-res frame PNGs (~1-2MB each) are what makes a misread reportable; only
@@ -91,7 +83,6 @@ export async function saveEvent(
 			id = add.result;
 			if (frame) frames.put(frame, id);
 			else if (reuseId !== undefined) frames.delete(id);
-			evictBeyondCap(events, frames);
 			const now = Date.now();
 			if (now - lastRetentionAt >= RETENTION_INTERVAL_MS) {
 				lastRetentionAt = now;
@@ -112,24 +103,6 @@ export function trimEvents(): Promise<void> {
 			Date.now(),
 		),
 	);
-}
-
-/** Delete records (and frames) beyond MAX_EVENTS, oldest ids first. */
-function evictBeyondCap(events: IDBObjectStore, frames: IDBObjectStore): void {
-	const count = events.count();
-	count.onsuccess = () => {
-		let excess = count.result - MAX_EVENTS;
-		if (excess <= 0) return;
-		const cursor = events.openKeyCursor(); // ascending id = oldest first
-		cursor.onsuccess = () => {
-			const c = cursor.result;
-			if (!c || excess <= 0) return;
-			frames.delete(c.primaryKey);
-			events.delete(c.primaryKey);
-			excess--;
-			if (excess > 0) c.continue();
-		};
-	};
 }
 
 /**
@@ -231,11 +204,15 @@ export async function deleteEvents(ids: number[]): Promise<void> {
 	});
 }
 
-export function listEvents(): Promise<StoredEvent[]> {
+/** Events detected at or after `since` (wall-clock ms), every event by default. */
+export function listEvents(since = 0): Promise<StoredEvent[]> {
 	return tx(
 		EVENTS_STORE,
 		"readonly",
-		(store) => store.getAll() as IDBRequest<StoredEvent[]>,
+		(store) =>
+			store
+				.index("detectedAt")
+				.getAll(IDBKeyRange.lowerBound(since)) as IDBRequest<StoredEvent[]>,
 	);
 }
 
