@@ -40,6 +40,13 @@ import { useDebug } from "./use-debug";
 
 const NO_KEYS: ReadonlySet<React.Key> = new Set();
 
+/**
+ * Builds keyed by the events array: views re-render for reasons other than new
+ * events (clips, upload state), and reusing the same `BuiltMatch` objects lets
+ * the unchanged cards skip rendering.
+ */
+const builtCache = new WeakMap<readonly ScanEvent[], BuiltMatch<ScanEvent>[]>();
+
 type LobbyGroup = "private" | "x" | "other";
 
 const LOBBY_GROUPS: LobbyGroup[] = ["private", "x", "other"];
@@ -97,7 +104,7 @@ export function SessionView({
 	const debug = useDebug();
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
 
-	const built = buildScannerMatches(events);
+	const built = cachedBuild(events);
 	const skipReasons = ingestSkipReasons(built);
 	const clipsByMatch = built.map((b, index) =>
 		clipsOf(b.match, built[index + 1]?.match, clips),
@@ -235,6 +242,14 @@ function MatchList({
 			})}
 		</div>
 	);
+}
+
+function cachedBuild(events: readonly ScanEvent[]): BuiltMatch<ScanEvent>[] {
+	const cached = builtCache.get(events);
+	if (cached) return cached;
+	const built = buildScannerMatches(events);
+	builtCache.set(events, built);
+	return built;
 }
 
 function lobbyGroup(lobby: ScannerLobby | null): LobbyGroup {

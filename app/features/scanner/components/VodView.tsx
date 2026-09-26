@@ -44,6 +44,7 @@ import {
 	startVodScan,
 	uploadVodScan,
 	useVodScan,
+	useVodScanProgress,
 	vodScanFrame,
 } from "./vod-scan";
 import { refreshVods } from "./vods-feed";
@@ -96,19 +97,7 @@ function ScanVodView({ name }: { name: string }) {
 					</div>
 				) : scanning ? (
 					<div className={styles.scanning}>
-						<div className={styles.progressRow}>
-							<StatusPill>Scanning</StatusPill>
-							<progress
-								className={styles.progress}
-								value={scan.progress?.t ?? 0}
-								max={scan.progress?.duration ?? 1}
-							/>
-							<span className={styles.progressText}>
-								{scan.progress
-									? `${Math.round((scan.progress.t / Math.max(1, scan.progress.duration)) * 100)}% · ${formatPosition(scan.progress.t)} / ${formatPosition(scan.progress.duration)}${scan.progress.rate > 0 ? ` · ${scan.progress.rate.toFixed(1)}× realtime` : ""}`
-									: "opening the file…"}
-							</span>
-						</div>
+						<ScanProgressRow />
 						<div className={styles.previewRow}>
 							<canvas ref={setVodPreviewCanvas} className={styles.preview} />
 							<div className={styles.previewNotes}>
@@ -133,9 +122,34 @@ function ScanVodView({ name }: { name: string }) {
 					</div>
 				)
 			}
-			telemetry={debug && telemetryOn ? scan.telemetry : null}
+			telemetry={debug && telemetryOn ? <ScanTelemetryPanel /> : null}
 		/>
 	);
+}
+
+function ScanProgressRow() {
+	const { progress } = useVodScanProgress();
+
+	return (
+		<div className={styles.progressRow}>
+			<StatusPill>Scanning</StatusPill>
+			<progress
+				className={styles.progress}
+				value={progress?.t ?? 0}
+				max={progress?.duration ?? 1}
+			/>
+			<span className={styles.progressText}>
+				{progress
+					? `${Math.round((progress.t / Math.max(1, progress.duration)) * 100)}% · ${formatPosition(progress.t)} / ${formatPosition(progress.duration)}${progress.rate > 0 ? ` · ${progress.rate.toFixed(1)}× realtime` : ""}`
+					: "opening the file…"}
+			</span>
+		</div>
+	);
+}
+
+function ScanTelemetryPanel() {
+	const { telemetry } = useVodScanProgress();
+	return telemetry ? <TelemetryPanel telemetry={telemetry} /> : null;
 }
 
 /** A saved scan reopened from the landing. */
@@ -223,7 +237,7 @@ function VodSessionView({
 	getFrame: (event: ScanEvent) => (() => Promise<Blob | undefined>) | undefined;
 	onUpload: (built: SessionInfo["built"][number]) => void;
 	status: React.ReactNode;
-	telemetry: ScanTelemetry | null;
+	telemetry: React.ReactNode;
 }) {
 	const [, setParams] = useSearchParamsTyped(scannerSearchParams);
 	const clips = useClips();
@@ -317,7 +331,7 @@ function VodSessionView({
 			)}
 		>
 			{status}
-			{telemetry ? <TelemetryPanel telemetry={telemetry} /> : null}
+			{telemetry}
 		</SessionView>
 	);
 }
