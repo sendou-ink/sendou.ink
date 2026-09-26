@@ -12,6 +12,7 @@ import { modeLabel, stageLabel } from "../core/labels";
 import { scannerSearchParams } from "../scanner-search-params";
 import { loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
+import { EventFeed } from "./EventFeed";
 import { ExportMenu } from "./ExportMenu";
 import { currentSession, useFeed } from "./events-feed";
 import styles from "./LiveView.module.css";
@@ -136,6 +137,13 @@ export function LiveView() {
 							playsInline
 							autoPlay
 						/>
+						<div className={styles.feed}>
+							<EventFeed
+								events={events}
+								matches={info.built.map((built) => built.match)}
+								originT={session?.originT ?? 0}
+							/>
+						</div>
 						<div className={styles.status}>
 							<div className={styles.statusLine}>
 								{reading && newest ? (

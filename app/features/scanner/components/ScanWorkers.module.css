@@ -1,0 +1,162 @@
+.scanWorkers {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-3);
+}
+
+.headerRow {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2) var(--s-3);
+}
+
+.progressText {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.headerEnd {
+	margin-inline-start: auto;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+}
+
+.progress {
+	width: 100%;
+	height: 8px;
+	accent-color: var(--color-fg-accent);
+}
+
+.laneGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+	gap: var(--s-3);
+}
+
+.lane {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+}
+
+.laneScreen {
+	position: relative;
+	border-radius: var(--radius-box);
+	outline: 2px solid var(--color-bg-high);
+	overflow: hidden;
+}
+
+.canvas {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	background: #000;
+}
+
+.laneDone .canvas {
+	opacity: 0.35;
+	filter: grayscale(1);
+}
+
+.laneChip,
+.modeChip {
+	position: absolute;
+	top: var(--s-1-5);
+	padding: var(--s-0-5) var(--s-2);
+	border-radius: var(--radius-full);
+	background: rgb(0 0 0 / 0.6);
+	color: #fff;
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-bold);
+}
+
+.laneChip {
+	left: var(--s-1-5);
+}
+
+.modeChip {
+	right: var(--s-1-5);
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	color: rgb(255 255 255 / 0.7);
+
+	&::before {
+		content: "";
+		width: 6px;
+		height: 6px;
+		border-radius: 50%;
+		background: currentColor;
+	}
+
+	&:has(svg)::before {
+		display: none;
+	}
+}
+
+.modeActive {
+	color: var(--color-chart-kill);
+
+	&::before {
+		animation: pulse 1s ease-in-out infinite;
+	}
+}
+
+.laneFooter {
+	position: absolute;
+	inset: auto 0 0;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	padding: var(--s-4) var(--s-2) var(--s-1-5);
+	background: linear-gradient(transparent, rgb(0 0 0 / 0.75));
+}
+
+.laneClock {
+	color: #fff;
+	font-size: var(--font-md);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+}
+
+.laneBar {
+	height: 4px;
+	border-radius: var(--radius-full);
+	background: rgb(255 255 255 / 0.2);
+	overflow: hidden;
+}
+
+.laneBarFill {
+	height: 100%;
+	background: var(--color-fg-accent);
+	transition: width 0.25s linear;
+}
+
+.laneMeta {
+	display: flex;
+	justify-content: space-between;
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.laneGames {
+	color: var(--color-text);
+	font-weight: var(--weight-bold);
+}
+
+@keyframes pulse {
+	50% {
+		opacity: 0.3;
+	}
+}
+
+@media (prefers-reduced-motion: reduce) {
+	.modeActive::before,
+	.laneBarFill {
+		animation: none;
+		transition: none;
+	}
+}

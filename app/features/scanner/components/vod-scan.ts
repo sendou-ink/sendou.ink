@@ -72,11 +72,24 @@ export type ClipsWork =
 	| { state: "cutting"; done: number; total: number }
 	| { state: "done"; saved: number; error: string | null };
 
+export type VodScanMode = "active" | "skim";
+
+/** One worker's slice of the file. */
+export interface VodScanLane {
+	tStart: number;
+	tEnd: number;
+	/** seconds of video the lane has reached */
+	t: number;
+	mode: VodScanMode;
+	done: boolean;
+}
+
 export interface VodScanProgress {
 	t: number;
 	duration: number;
 	/** scan speed as a multiple of realtime */
 	rate: number;
+	lanes: VodScanLane[];
 }
 
 export interface VodScanSnapshot {
@@ -114,7 +127,7 @@ let snapshot = IDLE;
 const listeners = new Set<() => void>();
 let progressSnapshot = IDLE_PROGRESS;
 const progressListeners = new Set<() => void>();
-let previewCanvas: HTMLCanvasElement | null = null;
+const laneCanvases = new Map<number, HTMLCanvasElement>();
 /** lossless PNGs of the frames the detectors analyzed this scan, until saved */
 let frames = new WeakMap<ScanEvent, Blob>();
 let abortRef = { aborted: false };
@@ -162,9 +175,13 @@ function setProgress(patch: Partial<VodScanProgressSnapshot>): void {
 	for (const listener of progressListeners) listener();
 }
 
-/** The view showing the scan hands over its canvas for the frame preview. */
-export function setVodPreviewCanvas(canvas: HTMLCanvasElement | null): void {
-	previewCanvas = canvas;
+/** The view showing the scan hands over a canvas per lane (worker slice) for its frame preview. */
+export function setVodLaneCanvas(
+	lane: number,
+	canvas: HTMLCanvasElement | null,
+): void {
+	if (canvas) laneCanvases.set(lane, canvas);
+	else laneCanvases.delete(lane);
 }
 
 /** The frame an event of this scan was read from: in memory while scanning, the store once saved. */
@@ -227,8 +244,8 @@ export async function startVodScan(
 	const updateProgress = (patch: Partial<VodScanProgressSnapshot>) => {
 		if (own === generation) setProgress(patch);
 	};
-	const preview = (frame: ImageBitmap | VideoFrame) => {
-		if (own === generation) drawPreview(frame);
+	const preview = (frame: ImageBitmap | VideoFrame, lane: number) => {
+		if (own === generation) drawPreview(laneCanvases.get(lane), frame);
 	};
 	set({
 		...IDLE,
@@ -325,6 +342,7 @@ export async function startVodScan(
 				tStart: i * span,
 				tEnd: i === clients.length - 1 ? duration : (i + 1) * span,
 				t: i * span,
+				mode: "active" as VodScanMode,
 				done: false,
 				telemetry: null as ScanTelemetry | null,
 			}));
@@ -336,9 +354,9 @@ export async function startVodScan(
 				return parts.length > 0 ? mergeScanTelemetry(parts) : null;
 			};
 			let lastUiUpdate = Number.NEGATIVE_INFINITY;
-			const pushUiUpdate = () => {
+			const pushUiUpdate = ({ force }: { force: boolean }) => {
 				const now = performance.now();
-				if (now - lastUiUpdate < UI_UPDATE_INTERVAL_MS) return;
+				if (!force && now - lastUiUpdate < UI_UPDATE_INTERVAL_MS) return;
 				lastUiUpdate = now;
 				const covered = R.sumBy(
 					chunks,
@@ -350,6 +368,13 @@ export async function startVodScan(
 						t: covered,
 						duration,
 						rate: elapsed > 0 ? covered / elapsed : 0,
+						lanes: chunks.map((c) => ({
+							tStart: c.tStart,
+							tEnd: c.tEnd,
+							t: Math.min(c.t, c.tEnd),
+							mode: c.mode,
+							done: c.done,
+						})),
 					},
 					telemetry: mergedTelemetry(),
 				});
@@ -361,15 +386,13 @@ export async function startVodScan(
 							{ file, chunkIndex, tStart: chunk.tStart, tEnd: chunk.tEnd },
 							(chunkProgress) => {
 								chunk.t = chunkProgress.t;
+								chunk.mode = chunkProgress.mode;
 								chunk.telemetry = chunkProgress.telemetry;
 								if (chunkProgress.preview) {
-									// show one chunk at a time: the earliest still running
-									if (chunks.find((c) => !c.done) === chunk) {
-										preview(chunkProgress.preview);
-									}
+									preview(chunkProgress.preview, chunkIndex);
 									chunkProgress.preview.close();
 								}
-								pushUiUpdate();
+								pushUiUpdate({ force: false });
 							},
 						)
 						.then(
@@ -377,6 +400,7 @@ export async function startVodScan(
 								chunk.done = true;
 								chunk.t = chunk.tEnd;
 								chunk.telemetry = chunkTelemetry;
+								pushUiUpdate({ force: true });
 							},
 							(error) => {
 								chunk.done = true;
@@ -415,13 +439,22 @@ export async function startVodScan(
 					lastUiUpdate = now;
 					// the preview draw must precede analyze — transferring the
 					// frame to the worker detaches it
-					preview(frame);
+					preview(frame, 0);
 					const elapsed = (now - started) / 1000;
 					updateProgress({
 						progress: {
 							t,
 							duration: vod.duration,
 							rate: elapsed > 0 ? t / elapsed : 0,
+							lanes: [
+								{
+									tStart: 0,
+									tEnd: vod.duration,
+									t,
+									mode: seek.doneInfo?.calm ? "skim" : "active",
+									done: false,
+								},
+							],
 						},
 						telemetry: seek.doneInfo?.telemetry ?? null,
 					});
@@ -450,7 +483,14 @@ export async function startVodScan(
 		await Promise.all(thumbnailWork);
 		events = withoutInvalidObjectives(events);
 		update({ events });
-		updateProgress({ progress: { t: duration, duration, rate: 0 } });
+		updateProgress({
+			progress: {
+				t: duration,
+				duration,
+				rate: 0,
+				lanes: progressSnapshot.progress?.lanes ?? [],
+			},
+		});
 		await saveVod(
 			{
 				name: file.name,
@@ -569,8 +609,10 @@ function sameEvent(a: ScanEvent, b: DetectedEvent): boolean {
 	return a === b || (a.type === b.type && a.t === b.t && a.data === b.data);
 }
 
-function drawPreview(frame: ImageBitmap | VideoFrame): void {
-	const canvas = previewCanvas;
+function drawPreview(
+	canvas: HTMLCanvasElement | null | undefined,
+	frame: ImageBitmap | VideoFrame,
+): void {
 	if (!canvas) return;
 	const width = "displayWidth" in frame ? frame.displayWidth : frame.width;
 	const height = "displayHeight" in frame ? frame.displayHeight : frame.height;
