@@ -1,7 +1,7 @@
 import type { Page } from "@playwright/test";
 import { userEditProfileBaseSchema } from "~/features/user-page/user-page-schemas";
 import { userEditProfilePage } from "~/utils/urls";
-import { navigate, submit } from "../../helpers/playwright";
+import { expect, navigate, submit } from "../../helpers/playwright";
 import { createFormHelpers } from "../../helpers/playwright-form";
 
 /** `/u/:identifier/edit` */
@@ -23,8 +23,18 @@ export class UserEditProfilePage {
 
 	async selectCountry(name: string) {
 		await this.page.getByLabel("Country").click();
-		await this.page.getByRole("combobox", { name: "Search" }).fill(name);
-		await this.page.getByRole("option", { name }).click();
+		const search = this.page.getByRole("combobox", { name: "Search" });
+		await search.fill(name);
+
+		// not a click: the popover moves as the list filters and Playwright's retry scrolls the trigger off screen, hiding it
+		const optionId = await this.page
+			.getByRole("option", { name })
+			.getAttribute("id");
+		await expect(search).toHaveAttribute(
+			"aria-activedescendant",
+			optionId ?? "",
+		);
+		await search.press("Enter");
 	}
 
 	async deleteWeapon(name: string | RegExp) {
