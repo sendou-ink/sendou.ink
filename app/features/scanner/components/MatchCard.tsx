@@ -39,8 +39,8 @@ import type {
 import { matchResult } from "../core/sessions";
 import type { ScannerClip } from "../store/clips";
 import type { GetFrame } from "./EventCard";
+import { displayOrder, gameTimelineProps } from "./game-timeline-view";
 import styles from "./MatchCard.module.css";
-import { playerStatusTeams } from "./player-status-view";
 import { RawDetections } from "./RawDetections";
 import type { ScanEvent, SessionKind } from "./session-data";
 import { type UploadState, UploadStatusButton } from "./UploadStatus";
@@ -243,13 +243,7 @@ export function MatchCard({
 					<Scoreboard match={match} result={result} />
 					{match.objective || match.playerStatus ? (
 						<GameTimeline
-							objectiveEvents={(match.objective?.samples ?? []).map(
-								(sample) => ({ t: sample.t - matchOrigin, data: sample }),
-							)}
-							playerStatusSamples={(match.playerStatus?.samples ?? []).map(
-								(sample) => ({ ...sample, t: sample.t - matchOrigin }),
-							)}
-							teams={playerStatusTeams(match, teamLabels(match))}
+							{...gameTimelineProps(match, matchOrigin, TEAM_LABELS)}
 						/>
 					) : null}
 					<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
@@ -287,23 +281,6 @@ function elapsed(mode: ModeShort | null, timeLeft: number): number {
 		(mode !== null ? MATCH_CLOCK_SECONDS[mode] : undefined) ??
 		DEFAULT_MATCH_CLOCK_SECONDS;
 	return Math.max(0, clockStart - timeLeft);
-}
-
-/**
- * `teams` order is winner-first on a scoreboard-closed match, so it flips
- * between games. The card keeps the scan's own side left and the enemy right
- * for every match so consecutive games line up; footage with no POV seat
- * read (casts) keeps `teams` order.
- */
-function displayOrder(match: ScannerMatch): [0 | 1, 0 | 1] {
-	return match.pov?.team === 1 ? [1, 0] : [0, 1];
-}
-
-/** labels by team index: Alpha is whichever team the card shows on the left */
-function teamLabels(match: ScannerMatch): readonly [string, string] {
-	return displayOrder(match)[0] === 0
-		? TEAM_LABELS
-		: [TEAM_LABELS[1], TEAM_LABELS[0]];
 }
 
 function Score({

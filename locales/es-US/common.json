@@ -219,6 +219,8 @@
 	"objectiveTimeline.inControl": "Con el control",
 	"playerStatusTimeline.splatted": "Reventado",
 	"playerStatusTimeline.specialReady": "Especial listo",
+	"playerStatusTimeline.kill": "",
+	"playerStatusTimeline.splattedByPov": "",
 	"maps.createMapList": "Crear lista de escenarios",
 	"maps.halfSz": "50% Pintazonas",
 	"maps.mapPool": "Grupo de escenarios",

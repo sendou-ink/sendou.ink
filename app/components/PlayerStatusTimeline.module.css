@@ -22,7 +22,9 @@
 }
 
 .legendSwatchDead,
-.legendSwatchSpecial {
+.legendSwatchSpecial,
+.legendSwatchKill,
+.legendSwatchSplattedByPov {
 	width: 10px;
 	height: 10px;
 	border-radius: 2px;
@@ -34,6 +36,15 @@
 
 .legendSwatchSpecial {
 	background-color: var(--color-chart-special);
+}
+
+.legendSwatchKill {
+	width: 3px;
+	background-color: var(--color-chart-kill);
+}
+
+.legendSwatchSplattedByPov {
+	background-color: var(--color-chart-kill);
 }
 
 .team {
@@ -61,13 +72,25 @@
 	padding-right: var(--s-2);
 }
 
-.track {
+.trackArea {
 	position: relative;
 	flex: 1;
+}
+
+.track {
+	position: relative;
 	height: 14px;
 	overflow: hidden;
 	border-radius: var(--radius-selector);
 	background-color: var(--color-bg-higher);
+
+	&.trackPov {
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-higher) 75%,
+			var(--color-accent) 25%
+		);
+	}
 }
 
 .spanDead,
@@ -81,10 +104,25 @@
 
 .spanDead {
 	background-color: var(--color-chart-splatted);
+
+	&.spanSplattedByPov {
+		background-color: var(--color-chart-kill);
+	}
 }
 
 .spanSpecial {
 	background-color: var(--color-chart-special);
+}
+
+.killTick {
+	position: absolute;
+	top: -3px;
+	bottom: -3px;
+	width: 3px;
+	transform: translateX(-50%);
+	border-radius: 2px;
+	background-color: var(--color-chart-kill);
+	box-shadow: 0 0 0 1px var(--color-bg-high);
 }
 
 .unknownWeapon {

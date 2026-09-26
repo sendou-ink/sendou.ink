@@ -164,6 +164,7 @@ html.dark [data-custom-theme],
 	--color-chart-bravo: oklch(60% 0.17 275);
 	--color-chart-splatted: oklch(66% 0.03 var(--_base-h));
 	--color-chart-special: oklch(80% 0.14 84);
+	--color-chart-kill: oklch(78% 0.19 150);
 
 	/* inlined instead of var() because data URIs can't read custom properties: keep in sync with --color-text-high */
 	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(122, 139, 183)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
@@ -232,6 +233,7 @@ html.light [data-custom-theme],
 	--color-chart-bravo: oklch(47% 0.19 275);
 	--color-chart-splatted: oklch(50% 0.03 var(--_base-h));
 	--color-chart-special: oklch(67% 0.14 72);
+	--color-chart-kill: oklch(55% 0.17 150);
 
 	/* inlined instead of var() because data URIs can't read custom properties: keep in sync with --color-text-high */
 	--field-icon-chevron: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24' fill='none' stroke='rgb(72, 87, 124)' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");

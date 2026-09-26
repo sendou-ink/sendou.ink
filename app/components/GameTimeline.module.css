@@ -107,6 +107,10 @@
 	&.statusLabelSpecial {
 		color: var(--color-chart-special);
 	}
+
+	&.statusLabelKill {
+		color: var(--color-chart-kill);
+	}
 }
 
 .readoutWeapons {
