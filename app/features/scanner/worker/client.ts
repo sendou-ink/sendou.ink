@@ -68,6 +68,8 @@ export class AnalyzerClient {
 			frameQueueLimit?: number;
 			/** match templates on WebGPU when the browser has an adapter (settings `webgpu`) */
 			webgpu?: boolean;
+			/** ship the analyzed frame's PNG on results (default true) */
+			attachFrames?: boolean;
 		} = {},
 	) {
 		this.#frameQueueLimit = options.frameQueueLimit ?? 0;
@@ -123,6 +125,7 @@ export class AnalyzerClient {
 			suppressSteadyFrames: options.suppressSteadyFrames ?? true,
 			collectTelemetry: options.collectTelemetry ?? false,
 			webgpu: options.webgpu ?? false,
+			attachFrames: options.attachFrames ?? true,
 		});
 	}
 

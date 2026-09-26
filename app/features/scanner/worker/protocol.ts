@@ -15,6 +15,8 @@ export interface InitRequest {
 	collectTelemetry?: boolean;
 	/** match templates (and upscale sub-1080p frames) on WebGPU when an adapter exists; default false */
 	webgpu?: boolean;
+	/** PNG-encode the analyzed frame onto results whose events fired; default true (live and VoD scans only want it in debug mode) */
+	attachFrames?: boolean;
 }
 
 export interface AnalyzeRequest {

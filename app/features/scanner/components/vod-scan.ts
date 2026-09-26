@@ -207,10 +207,14 @@ export async function uploadVodScan(
 	}
 }
 
-/** Scans `file` as fast as decoding allows; a finished scan replaces any saved one of the same name. */
+/**
+ * Scans `file` as fast as decoding allows; a finished scan replaces any saved
+ * one of the same name. `saveFrames` (debug mode) keeps each event's analyzed
+ * frame and thumbnail for the raw detections.
+ */
 export async function startVodScan(
 	file: File,
-	{ telemetry }: { telemetry: boolean },
+	{ telemetry, saveFrames }: { telemetry: boolean; saveFrames: boolean },
 ): Promise<void> {
 	cancelVodScan();
 	const abort = { aborted: false };
@@ -296,7 +300,11 @@ export async function startVodScan(
 						seek.frameDone?.();
 						seek.frameDone = null;
 					},
-					{ collectTelemetry: telemetry, webgpu: readSettings().webgpu },
+					{
+						collectTelemetry: telemetry,
+						webgpu: readSettings().webgpu,
+						attachFrames: saveFrames,
+					},
 				),
 		);
 		await Promise.all(clients.map((c) => c.whenReady()));

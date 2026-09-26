@@ -81,6 +81,7 @@ let scheduler: DetectorScheduler | null = null;
 /** null unless the init message asked for telemetry */
 let telemetry: ScanTelemetry | null = null;
 let collectTelemetry = false;
+let attachFrames = true;
 let chunkAborted = false;
 /** last per-frame t, to reset telemetry when a new session rewinds the clock */
 let lastFrameT = Number.NEGATIVE_INFINITY;
@@ -110,6 +111,7 @@ async function init({
 	suppressSteadyFrames = true,
 	collectTelemetry: collect = false,
 	webgpu = false,
+	attachFrames: attach = true,
 }: InitRequest): Promise<void> {
 	// VoD scans need the helper workers: start them booting alongside init
 	if (typeof VideoDecoder !== "undefined") {
@@ -138,6 +140,7 @@ async function init({
 			matchClosingTypes: SCOREBOARD_EVENT_TYPES,
 		});
 		collectTelemetry = collect;
+		attachFrames = attach;
 		telemetry = freshTelemetry();
 		post({ kind: "ready" });
 	} catch (error) {
@@ -216,7 +219,7 @@ async function analyzePrepared(
 				if (action === "added" || action === "replaced") listed = true;
 			}
 			const blob =
-				listed && detector.attachFrame !== false
+				attachFrames && listed && detector.attachFrame !== false
 					? await frameBlob()
 					: undefined;
 			post({
