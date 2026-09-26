@@ -44,6 +44,8 @@ Convert with `~/utils/dates`: `dateToDatabaseTimestamp`, `databaseTimestampToDat
 
 Every id is a `number`. Primary keys are `GeneratedAlways<number>`, foreign keys are plain `number` (or `number | null` when optional) and named `*Id`.
 
+In migrations, a generated primary key is `"id" integer primary key autoincrement` (without it SQLite reuses the id of a deleted newest row), and every integer `*Id` column gets a real `references` clause. Game data ids are named `*SplId` and have none. `app/db/schema.test.ts` enforces both; a column that deliberately isn't a foreign key goes in its `NOT_FOREIGN_KEYS` with the reason.
+
 ## JSON columns
 
 Stored as text, typed with `JSONColumnType<T>` (not null) or `JSONColumnTypeNullable<T>` (nullable) from `~/utils/kysely.server`. Both serialize to `string` on insert, so pass `JSON.stringify(...)`.

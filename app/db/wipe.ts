@@ -21,5 +21,7 @@ export async function deleteAllRows() {
 	for (const table of tables) {
 		await sql`DELETE FROM ${sql.table(table.name)}`.execute(db);
 	}
+	// AUTOINCREMENT tables would otherwise keep counting up from the ids of the deleted rows
+	await sql`DELETE FROM sqlite_sequence`.execute(db);
 	await sql`PRAGMA foreign_keys = ON`.execute(db);
 }
