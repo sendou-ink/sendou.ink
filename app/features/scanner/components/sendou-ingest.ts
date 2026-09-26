@@ -15,10 +15,9 @@ import type { IngestResponse } from "~/features/scanner-ingest/scanner-ingest-sc
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
 import type { DetectedEvent } from "../core/detectors/types";
 import type { BuiltMatch } from "../core/match-builder";
-import { buildScannerMatches, ingestSkipReasons } from "../core/match-builder";
+import { ingestSkipReasons } from "../core/match-builder";
 import type { ScannerMatch } from "../core/scanner-match";
-import { EVENTS_STORE } from "../store/db";
-import { type SendStatus, updateEventsSend } from "../store/events";
+import type { SendStatus } from "../store/events";
 import type { ScanEvent } from "./session-data";
 
 const INGEST_URL = "/ingest";
@@ -39,9 +38,9 @@ export interface SendResult {
 }
 
 /**
- * Builds the stored events into matches, POSTs the ingestable ones `include`
- * selects, and records the outcome on every source event's `send` status
- * (calling `onStatus` after each request's store writes).
+ * POSTs the ingestable `matches` (a whole session or file, which
+ * the skip rules look across) that `include` selects, and records the outcome
+ * through `writeSend` (calling `onStatus` after each request's store writes).
  *
  * Matches go out in as few requests as the server cap allows: sendou.ink
  * resolves a whole request at once, so several matches anchor on their
@@ -51,30 +50,26 @@ export interface SendResult {
  * "unlinked"; the retry carries only those, which then resolve on their own.
  */
 export async function sendMatches({
-	events,
+	matches,
 	include,
 	onStatus,
-	store = EVENTS_STORE,
+	writeSend,
 }: {
-	events: readonly ScanEvent[];
+	/** chronological */
+	matches: readonly BuiltMatch<ScanEvent>[];
 	include: (built: BuiltMatch<ScanEvent>) => boolean;
 	onStatus: () => void;
-	/** the IndexedDB store the events' send statuses are written to */
-	store?: string;
+	/** stores a send status on the given matches */
+	writeSend: (
+		matches: readonly BuiltMatch<ScanEvent>[],
+		send: SendStatus,
+	) => Promise<void>;
 }): Promise<SendResult> {
-	const allBuilt = ingestableBuilt(
-		buildScannerMatches(events.filter((e) => e.id !== undefined)),
-	);
-	const selected = allBuilt.filter(include);
+	const selected = ingestableBuilt(matches).filter(include);
 
 	const result: SendResult = { sentMatches: 0, failedMatches: 0 };
 	for (const request of R.chunk(selected, MAX_MATCHES_PER_REQUEST)) {
-		const idsPerMatch = request.map((built) => built.sources.map((e) => e.id!));
-		await updateEventsSend(
-			idsPerMatch.flat(),
-			{ state: "sending", at: Date.now() },
-			store,
-		);
+		await writeSend(request, { state: "sending", at: Date.now() });
 		onStatus();
 		try {
 			const response = await postIngestMatches(
@@ -88,33 +83,25 @@ export async function sendMatches({
 				// match: the game is just not reported yet, so a later resend can still
 				// land it. Without a context there is nothing to wait for.
 				const unlinked = !link && response.contextResolved;
-				await updateEventsSend(
-					idsPerMatch[matchIndex]!,
-					{
-						state: unlinked ? "unlinked" : "sent",
-						at: Date.now(),
-						...(link ? { link } : null),
-						...(unlinked
-							? {
-									attempts:
-										(aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
-								}
-							: null),
-					},
-					store,
-				);
+				await writeSend([built], {
+					state: unlinked ? "unlinked" : "sent",
+					at: Date.now(),
+					...(link ? { link } : null),
+					...(unlinked
+						? {
+								attempts:
+									(aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
+							}
+						: null),
+				});
 			}
 			result.sentMatches += request.length;
 		} catch (err) {
-			await updateEventsSend(
-				idsPerMatch.flat(),
-				{
-					state: "failed",
-					at: Date.now(),
-					error: err instanceof Error ? err.message : String(err),
-				},
-				store,
-			);
+			await writeSend(request, {
+				state: "failed",
+				at: Date.now(),
+				error: err instanceof Error ? err.message : String(err),
+			});
 			result.failedMatches += request.length;
 		}
 		onStatus();
@@ -180,7 +167,7 @@ export function unsentClosedMatches(built: BuiltMatch<ScanEvent>): boolean {
 }
 
 function ingestableBuilt<E extends DetectedEvent>(
-	built: BuiltMatch<E>[],
+	built: readonly BuiltMatch<E>[],
 ): BuiltMatch<E>[] {
 	const skipped = ingestSkipReasons(built);
 	return built.filter((match) => !skipped.has(match));

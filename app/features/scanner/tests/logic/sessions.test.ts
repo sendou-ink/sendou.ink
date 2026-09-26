@@ -6,9 +6,12 @@
 import assert from "node:assert/strict";
 import type { ScannerMatch } from "../../core/scanner-match";
 import {
+	compactSources,
+	expiredCompactedSessionKeys,
 	expiredSessionEventIds,
 	kdRatio,
 	MAX_SESSIONS,
+	MAX_STORED_EVENTS,
 	SESSION_GAP_MS,
 	SESSION_MAX_AGE_MS,
 	sessionKey,
@@ -19,6 +22,14 @@ import { test } from "../node-test-compat";
 
 const HOUR = 60 * 60 * 1000;
 const DAY = 24 * HOUR;
+
+/** `count` events a second apart from `start`, ids continuing from `firstId` */
+function eventRun(start: number, count: number, firstId: number) {
+	return Array.from({ length: count }, (_, i) => ({
+		id: firstId + i,
+		detectedAt: start + i * 1000,
+	}));
+}
 
 function stamped(...detectedAts: number[]) {
 	return detectedAts.map((detectedAt, id) => ({ id, detectedAt }));
@@ -125,4 +136,69 @@ test("retention keeps the newest sessions only", () => {
 		detectedAt: now - (MAX_SESSIONS + 2 - i) * 3 * HOUR,
 	}));
 	assert.deepEqual(expiredSessionEventIds(events, now), [0, 1]);
+});
+
+test("retention drops the oldest whole sessions past the event budget", () => {
+	const now = 100 * DAY;
+	const half = MAX_STORED_EVENTS / 2;
+	const oldest = eventRun(now - 3 * DAY, half, 0);
+	const middle = eventRun(now - 2 * DAY, half, half);
+	const newest = eventRun(now - DAY, half, 2 * half);
+	const ids = expiredSessionEventIds([...oldest, ...middle, ...newest], now);
+	assert.deepEqual(
+		ids,
+		oldest.map((e) => e.id),
+	);
+});
+
+test("retention keeps the newest session whole even past the event budget", () => {
+	const now = 100 * DAY;
+	const older = eventRun(now - 2 * DAY, 10, 0);
+	const newest = eventRun(now - DAY, MAX_STORED_EVENTS + 1, 10);
+	const ids = expiredSessionEventIds([...older, ...newest], now);
+	assert.deepEqual(
+		ids,
+		older.map((e) => e.id),
+	);
+});
+
+test("compaction keeps every source but the per-second reads", () => {
+	const sources = [
+		{ type: "Objective" },
+		{ type: "MapStart" },
+		{ type: "PlayerStatus" },
+		{ type: "StripWeapons" },
+		{ type: "Death" },
+		{ type: "Scoreboard" },
+	];
+	assert.deepEqual(
+		compactSources(sources).map((event) => event.type),
+		["MapStart", "Death", "Scoreboard"],
+	);
+});
+
+test("a match read only off per-second reads keeps its first source", () => {
+	const sources = [{ type: "Objective" }, { type: "PlayerStatus" }];
+	assert.deepEqual(compactSources(sources), [sources[0]]);
+});
+
+test("compacted retention counts the raw sessions against the session cap", () => {
+	const now = 100 * DAY;
+	const compacted = Array.from({ length: MAX_SESSIONS }, (_, i) => ({
+		key: now - (MAX_SESSIONS - i) * DAY,
+		endedAt: now - (MAX_SESSIONS - i) * DAY + HOUR,
+	}));
+	assert.deepEqual(expiredCompactedSessionKeys(compacted, 2, now), [
+		compacted[1]!.key,
+		compacted[0]!.key,
+	]);
+});
+
+test("compacted retention drops sessions older than 30 days", () => {
+	const now = 100 * DAY;
+	const old = { key: now - 40 * DAY, endedAt: now - 40 * DAY + HOUR };
+	const recent = { key: now - 5 * DAY, endedAt: now - 5 * DAY + HOUR };
+	assert.deepEqual(expiredCompactedSessionKeys([old, recent], 0, now), [
+		old.key,
+	]);
 });

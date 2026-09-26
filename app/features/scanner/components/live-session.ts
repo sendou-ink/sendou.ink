@@ -49,6 +49,7 @@ import { describeError } from "./errors";
 import {
 	currentSession,
 	getFeed,
+	newestSessionKey,
 	refreshFeed,
 	subscribeFeed,
 } from "./events-feed";
@@ -278,13 +279,18 @@ export async function startCapture({
 				void sendLive(
 					(built) =>
 						retryableUnlinkedMatches(built) || unsentClosedMatches(built),
+					newestSessionKey(),
 				);
 			}
 		}, UNLINKED_RETRY_TICK_MS);
 		clipTimer = setInterval(clipTick, CLIP_TICK_MS);
 		audioTimer = setInterval(audioCheck, AUDIO_CHECK_MS);
 		unsubscribeFeed = subscribeFeed(clipTick);
-		void trimEvents().catch(() => {});
+		// a session is only worth coming back to if the browser keeps it
+		requestPersistentStorage();
+		void trimEvents()
+			.then(() => refreshFeed(0))
+			.catch(() => {});
 		set({
 			status: "running",
 			since: Date.now(),
@@ -309,11 +315,13 @@ export function stopCapture(): void {
 	set({ ...IDLE });
 	// the scan ending is the last match boundary — flush what's unsent
 	// (partials are safe: the server merges them into fuller resends)
-	if (uploadEnabled()) void sendLive(unsentMatches);
+	if (uploadEnabled()) void sendLive(unsentMatches, newestSessionKey());
 	void rollSessionClipsIntoHistory()
 		.then(() => refreshClips())
 		.catch(() => {});
-	void trimEvents().catch(() => {});
+	void trimEvents()
+		.then(() => refreshFeed(0))
+		.catch(() => {});
 }
 
 /** Debug: the current capture frame as a PNG download. */
@@ -421,6 +429,7 @@ async function persist(
 			refreshFeed();
 			await sendLive(
 				(built) => matchContaining(id)(built) && unsentMatches(built),
+				newestSessionKey(),
 			);
 		}
 	} catch (error) {

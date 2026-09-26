@@ -3,26 +3,43 @@
  * sessions (core/sessions.ts) with each session's matches built once per
  * refresh rather than per render. Every saved event asks for a refresh, ~2-3
  * a second during a match; requests landing while one runs coalesce into a
- * single trailing pass.
+ * single trailing pass. A refresh re-reads only the newest session unless
+ * told otherwise: the store holds weeks of sessions, and only a send status
+ * write or a delete changes an older one. Refreshes also compact the sessions
+ * that ended `SESSION_COMPACT_AFTER_MS` ago (store/compacted-matches.ts) and
+ * apply retention to the compacted ones.
  */
 import { useSyncExternalStore } from "react";
+import * as R from "remeda";
 import {
 	type BuiltMatch,
 	buildScannerMatches,
 	invalidObjectiveEvents,
 } from "../core/match-builder";
 import {
+	compactSources,
+	expiredCompactedSessionKeys,
+	SESSION_COMPACT_AFTER_MS,
 	SESSION_GAP_MS,
 	type SessionSummary,
 	sessionKey,
 	sessionSummary,
 	splitSessions,
 } from "../core/sessions";
+import {
+	type CompactedMatch,
+	compactedBuilt,
+	compactSessions,
+	deleteCompactedSessions,
+	listCompactedMatches,
+} from "../store/compacted-matches";
 import { deleteEvents, listEvents, type StoredEvent } from "../store/events";
 
 export interface LiveSession {
 	/** the first event's detection time — the URL id */
 	key: number;
+	/** its games are frozen as built and `events` holds only what compaction kept */
+	compacted: boolean;
 	/** oldest first */
 	events: StoredEvent[];
 	/** chronological */
@@ -44,31 +61,65 @@ const EMPTY: FeedSnapshot = { loaded: false, sessions: [] };
 
 let snapshot: FeedSnapshot = EMPTY;
 const listeners = new Set<() => void>();
-const state = { running: false, queued: false };
+let running = false;
+/** the earliest `since` requested while a refresh was running */
+let pendingSince: number | null = null;
 /** an older session's events don't change, so its build is kept */
 const buildCache = new Map<number, { signature: string; built: LiveSession }>();
+/** the raw events the snapshot's not yet compacted sessions were built from */
+let rawEvents: StoredEvent[] = [];
+/** the compacted sessions, by key */
+const compactedSessions = new Map<number, LiveSession>();
 
-export function refreshFeed(): void {
-	if (state.running) {
-		state.queued = true;
-		return;
-	}
-	state.running = true;
+/**
+ * Re-reads the events detected at or after `since` (a session's key, 0 for
+ * everything) and keeps the older sessions as they are. Defaults to the newest
+ * session, the one a capture adds to — everything before the feed first loads.
+ */
+export function refreshFeed(since = newestSessionKey()): void {
+	pendingSince = Math.min(pendingSince ?? since, since);
+	if (running) return;
+	running = true;
 	void (async () => {
 		try {
-			do {
-				state.queued = false;
-				const events = await listEvents();
-				snapshot = { loaded: true, sessions: await toSessions(events) };
+			while (pendingSince !== null) {
+				const from = pendingSince;
+				pendingSince = null;
+				const [loaded, loadedCompacted] = await Promise.all([
+					listEvents(from),
+					listCompactedMatches(from),
+				]);
+				const loadedIds = new Set(loaded.map((event) => event.id));
+				rawEvents = [
+					...rawEvents.filter(
+						(event) => event.detectedAt < from && !loadedIds.has(event.id),
+					),
+					...loaded,
+				];
+				for (const key of compactedSessions.keys()) {
+					if (key >= from) compactedSessions.delete(key);
+				}
+				addCompactedSessions(loadedCompacted);
+				snapshot = { loaded: true, sessions: await toSessions() };
 				for (const listener of listeners) listener();
-			} while (state.queued);
+			}
 		} catch {
+			pendingSince = null;
 			snapshot = { loaded: true, sessions: snapshot.sessions };
 			for (const listener of listeners) listener();
 		} finally {
-			state.running = false;
+			running = false;
 		}
 	})();
+}
+
+/**
+ * The newest session's key, 0 before the feed loads. Reading from here always
+ * covers the session a capture is adding to, even one its latest event just
+ * started.
+ */
+export function newestSessionKey(): number {
+	return snapshot.loaded ? (snapshot.sessions.at(-1)?.key ?? 0) : 0;
 }
 
 export function useFeed(): FeedSnapshot {
@@ -76,7 +127,7 @@ export function useFeed(): FeedSnapshot {
 }
 
 export function getFeed(): FeedSnapshot {
-	if (!snapshot.loaded && !state.running) refreshFeed();
+	if (!snapshot.loaded && !running) refreshFeed();
 	return snapshot;
 }
 
@@ -104,7 +155,82 @@ export function findSession(
 	return feed.sessions.find((session) => session.key === key) ?? null;
 }
 
-async function toSessions(events: StoredEvent[]): Promise<LiveSession[]> {
+/**
+ * Every session oldest first: the raw ones built from `rawEvents`, less those
+ * this pass compacts, then the compacted ones retention keeps.
+ */
+async function toSessions(): Promise<LiveSession[]> {
+	const now = Date.now();
+	const raw = await rawSessions(rawEvents);
+	const ripe = raw.filter(
+		(session) => now - session.endedAt > SESSION_COMPACT_AFTER_MS,
+	);
+	if (ripe.length > 0) await compact(ripe);
+	const kept = raw.filter((session) => !ripe.includes(session));
+
+	const expired = expiredCompactedSessionKeys(
+		[...compactedSessions.values()],
+		kept.length,
+		now,
+	);
+	if (expired.length > 0) {
+		await deleteCompactedSessions(expired);
+		for (const key of expired) compactedSessions.delete(key);
+	}
+
+	return [...compactedSessions.values(), ...kept].sort((a, b) => a.key - b.key);
+}
+
+async function compact(sessions: readonly LiveSession[]): Promise<void> {
+	const matches: CompactedMatch[] = sessions.flatMap((session) =>
+		session.built.map((built, index) => {
+			const sources = compactSources(built.sources).map((event) => ({
+				...event,
+				hasFrame: false,
+			}));
+			return {
+				id: sources[0]!.id!,
+				session: {
+					key: session.key,
+					endedAt: session.endedAt,
+					originT: session.originT,
+				},
+				index,
+				match: built.match,
+				sources,
+			};
+		}),
+	);
+	const eventIds = new Set(
+		sessions.flatMap((session) => session.events.map((event) => event.id!)),
+	);
+	await compactSessions(matches, [...eventIds]);
+	rawEvents = rawEvents.filter((event) => !eventIds.has(event.id!));
+	addCompactedSessions(matches);
+}
+
+function addCompactedSessions(matches: readonly CompactedMatch[]): void {
+	for (const games of Object.values(
+		R.groupBy(matches, (match) => match.session.key),
+	)) {
+		const { session } = games[0];
+		const built = games
+			.toSorted((a, b) => a.index - b.index)
+			.map(compactedBuilt);
+		compactedSessions.set(session.key, {
+			key: session.key,
+			compacted: true,
+			events: built.flatMap((b) => b.sources).toSorted((a, b) => a.t - b.t),
+			built,
+			summary: sessionSummary(built.map((b) => b.match)),
+			startedAt: session.key,
+			endedAt: session.endedAt,
+			originT: session.originT,
+		});
+	}
+}
+
+async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 	const sessions: LiveSession[] = [];
 	const seen = new Set<number>();
 	for (const sessionEvents of splitSessions(events)) {
@@ -134,6 +260,7 @@ async function toSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 		}
 		const session: LiveSession = {
 			key,
+			compacted: false,
 			events: sorted,
 			built,
 			summary: sessionSummary(built.map((b) => b.match)),

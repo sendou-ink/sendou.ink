@@ -48,7 +48,21 @@ opens it, for anyone, through the same handoff Inspect uses.
   so events from different page loads share one timeline; the ring buffer
   stamps footage the same way.
 - **Retention** (`store/events.ts`, on a throttled pass at every save):
-  whole sessions older than 30 days or beyond the newest 20 go. Full-res
+  whole sessions older than 30 days, beyond the newest 20 or past the
+  `MAX_STORED_EVENTS` budget (~140 SZ games; the newest session is never
+  cut) go — never part of one, so a kept session's cards always expand to
+  their full timeline and scoreboards. The feed and live sends re-read only
+  the newest session (`refreshFeed`/`sendLive` take a session key to read
+  from), so the store's size costs nothing per saved event.
+- **Compaction** (`events-feed.ts` on refresh, `store/compacted-matches.ts`):
+  72 h after a session ends its games are frozen as built, one record each,
+  keeping every source event except the per-second Objective/PlayerStatus/
+  StripWeapons reads (`compactSources`; ~85% of a game's events, ~6× its
+  bytes), and its raw events are deleted in the same transaction. Cards,
+  uploads (`sendCompacted`) and the debug tab read a compacted session like
+  a raw one, but it no longer picks up match builder fixes and its
+  `Raw detections` CSV option is disabled. Compacted sessions share the
+  30-day / 20-session retention with the raw ones. Full-res
   frames (and the thumbnails made from them) are only captured in debug
   mode — the worker skips the PNG encode otherwise (`attachFrames`) — and
   are bounded by 72 h and `MAX_FRAMES`, the event staying with

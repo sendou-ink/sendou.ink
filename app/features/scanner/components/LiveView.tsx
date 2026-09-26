@@ -14,7 +14,7 @@ import { loadEventFrame } from "../store/events";
 import { useClips } from "./clips-feed";
 import { EventFeed } from "./EventFeed";
 import { ExportMenu } from "./ExportMenu";
-import { currentSession, useFeed } from "./events-feed";
+import { currentSession, newestSessionKey, useFeed } from "./events-feed";
 import styles from "./LiveView.module.css";
 import {
 	saveCurrentFrameAsFixture,
@@ -87,6 +87,7 @@ export function LiveView() {
 	return (
 		<SessionView
 			kind="live"
+			built={session?.built ?? []}
 			events={events}
 			originT={session?.originT ?? 0}
 			clips={sessionClips}
@@ -95,7 +96,9 @@ export function LiveView() {
 			canUpload={Boolean(user)}
 			onUpload={(built) => {
 				const id = built.sources[0]?.id;
-				if (id !== undefined) void sendLive(matchContaining(id));
+				if (id !== undefined) {
+					void sendLive(matchContaining(id), newestSessionKey());
+				}
 			}}
 			getFrame={frameLoader}
 			emptyText="Play a game — it shows up here once its results screen is read."

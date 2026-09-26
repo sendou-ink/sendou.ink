@@ -2,13 +2,41 @@
  * Sessions are client-only and derived at render: live detections ordered by
  * wall-clock time, split wherever two consecutive detections lie ≥ 2 h apart.
  * A session is keyed by its first event's `detectedAt` (stable across reloads,
- * usable in a URL). Retention evicts whole sessions on the same split.
+ * usable in a URL). Retention evicts whole sessions on the same split, so a
+ * kept session's games always rebuild with their full details. A session
+ * `SESSION_COMPACT_AFTER_MS` past its end is compacted: its games are frozen
+ * as built and the per-second reads behind them dropped (`compactSources`).
  */
+import { OBJECTIVE_EVENT_TYPE } from "./detectors/objective/index";
+import { PLAYER_STATUS_EVENT_TYPE } from "./detectors/objective/player-status";
+import { STRIP_WEAPONS_EVENT_TYPE } from "./detectors/objective/strip-weapons";
 import type { ScannerMatch } from "./scanner-match";
 
 export const SESSION_GAP_MS = 2 * 60 * 60 * 1000;
 export const SESSION_MAX_AGE_MS = 30 * 24 * 60 * 60 * 1000;
 export const MAX_SESSIONS = 20;
+/**
+ * Stored events across sessions. A Splat Zones game keeps ~350 (the counter
+ * and status reads behind its timeline), so this holds ~140 games; past it the
+ * oldest whole sessions go.
+ */
+export const MAX_STORED_EVENTS = 50_000;
+/**
+ * Until then a session keeps its raw reads: debugging a misread and rebuilding
+ * after a match builder fix both need them, and frames are kept as long.
+ */
+export const SESSION_COMPACT_AFTER_MS = 72 * 60 * 60 * 1000;
+
+/**
+ * The per-second reads a compacted match drops: its frozen `objective`,
+ * `playerStatus` and team weapons already hold what they were read for, and
+ * they are ~85% of a game's events.
+ */
+const COMPACTED_AWAY_TYPES = [
+	OBJECTIVE_EVENT_TYPE,
+	PLAYER_STATUS_EVENT_TYPE,
+	STRIP_WEAPONS_EVENT_TYPE,
+];
 
 interface Stamped {
 	/** wall-clock ms of detection */
@@ -84,20 +112,62 @@ export function kdRatio(summary: SessionSummary): number | null {
 
 /**
  * Ids of the events retention evicts: every event of a session older than
- * `SESSION_MAX_AGE_MS` or beyond the newest `MAX_SESSIONS`. A session's age is
- * its last event's.
+ * `SESSION_MAX_AGE_MS`, beyond the newest `MAX_SESSIONS` or past the
+ * `MAX_STORED_EVENTS` budget, oldest first. A session's age is its last
+ * event's. The newest session is never cut for the budget: a session missing
+ * its first events would rebuild its games without their intro and timeline.
  */
 export function expiredSessionEventIds<E extends Stamped & { id: number }>(
 	events: readonly E[],
 	now: number,
 ): number[] {
 	const sessions = splitSessions(events);
-	const kept = sessions.slice(-MAX_SESSIONS);
+	let keptCount = 0;
+	let keptEvents = 0;
+	for (const session of sessions.toReversed()) {
+		const tooOld = now - session.at(-1)!.detectedAt > SESSION_MAX_AGE_MS;
+		const overBudget =
+			keptCount > 0 && keptEvents + session.length > MAX_STORED_EVENTS;
+		if (tooOld || overBudget || keptCount === MAX_SESSIONS) break;
+		keptCount++;
+		keptEvents += session.length;
+	}
 	return sessions
-		.filter(
-			(session) =>
-				!kept.includes(session) ||
-				now - session.at(-1)!.detectedAt > SESSION_MAX_AGE_MS,
-		)
+		.slice(0, sessions.length - keptCount)
 		.flatMap((session) => session.map((event) => event.id));
+}
+
+/**
+ * The source events a compacted match keeps: all but the per-second reads,
+ * so its card still lists deaths, shows its scan time and upload state, and
+ * the debug view its detections. A match read off nothing else keeps its first
+ * source, which the card and uploads identify it by.
+ */
+export function compactSources<E extends { type: string }>(
+	sources: readonly E[],
+): E[] {
+	const kept = sources.filter(
+		(event) => !COMPACTED_AWAY_TYPES.includes(event.type),
+	);
+	return kept.length > 0 ? kept : sources.slice(0, 1);
+}
+
+/**
+ * Keys of the compacted sessions retention evicts: older than
+ * `SESSION_MAX_AGE_MS`, or beyond the newest `MAX_SESSIONS` once the
+ * `rawSessionCount` sessions not yet compacted (always the newest) are counted.
+ */
+export function expiredCompactedSessionKeys(
+	compacted: readonly { key: number; endedAt: number }[],
+	rawSessionCount: number,
+	now: number,
+): number[] {
+	const room = Math.max(0, MAX_SESSIONS - rawSessionCount);
+	return compacted
+		.toSorted((a, b) => b.key - a.key)
+		.filter(
+			(session, index) =>
+				index >= room || now - session.endedAt > SESSION_MAX_AGE_MS,
+		)
+		.map((session) => session.key);
 }
