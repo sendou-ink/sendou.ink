@@ -188,6 +188,26 @@ test("kill stacks merge while unchanged and split when a row enters", () => {
 	assert.equal(tl.events.length, 2);
 });
 
+// Triton cup VoD: "Splatted Jrod_14!" shows from 4:21 but a sharper read at 4:16 took over
+test("a kill stack stays at its first read when a repeat reads more confidently", () => {
+	const tl = new TimelineBuilder();
+	tl.push({
+		type: "Kill",
+		t: 11077.3,
+		confidence: 0.92,
+		data: { time: 261, names: ["Jrod_14"] },
+	});
+	tl.push({
+		type: "Kill",
+		t: 11082.3,
+		confidence: 0.937,
+		data: { time: 256, names: ["Jrod_14"] },
+	});
+	assert.equal(tl.events.length, 1);
+	assert.equal(tl.events[0]!.t, 11077.3);
+	assert.deepEqual(tl.events[0]!.data, { time: 261, names: ["Jrod_14"] });
+});
+
 const NO_FLAGS: PlayerStatusData["dead"] = [
 	[false, false, false, false],
 	[false, false, false, false],

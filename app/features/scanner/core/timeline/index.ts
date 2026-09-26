@@ -51,6 +51,13 @@ export interface TimelineOptions {
 	 * it for the match builder's smoothing. Confidence never moves a sample.
 	 */
 	sampledTypes: readonly string[];
+	/**
+	 * types whose first read is the event: their content guard only merges
+	 * identical repeats, so a more confident one carries nothing new except a
+	 * later `t` — and a kill-feed row is re-read over its whole ~5s+ life, so
+	 * taking it over would move the kill to when the row was about to leave.
+	 */
+	firstReadTypes: readonly string[];
 }
 
 const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
@@ -90,6 +97,7 @@ const DEFAULT_TIMELINE_OPTIONS: TimelineOptions = {
 		[STRIP_WEAPONS_EVENT_TYPE]: 0,
 	},
 	sampledTypes: [PLAYER_STATUS_EVENT_TYPE],
+	firstReadTypes: [KILL_EVENT_TYPE],
 };
 
 export type TimelineAction =
@@ -136,7 +144,10 @@ export class TimelineBuilder {
 			this.#events.sort((a, b) => a.t - b.t);
 			return { action: "added", event };
 		}
-		if (event.confidence > near.confidence) {
+		if (
+			event.confidence > near.confidence &&
+			!this.#options.firstReadTypes.includes(event.type)
+		) {
 			this.#events[this.#events.indexOf(near)] = event;
 			this.#events.sort((a, b) => a.t - b.t);
 			return { action: "replaced", event, replaced: near };

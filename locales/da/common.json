@@ -213,6 +213,8 @@
 	"objectiveTimeline.inControl": "",
 	"playerStatusTimeline.splatted": "",
 	"playerStatusTimeline.specialReady": "",
+	"playerStatusTimeline.kill": "",
+	"playerStatusTimeline.splattedByPov": "",
 	"maps.createMapList": "Lav bane-liste",
 	"maps.halfSz": "50% DD",
 	"maps.mapPool": "Banepulje",

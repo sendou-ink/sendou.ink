@@ -1,7 +1,7 @@
 /**
  * A game's two scanned-timeline charts (player status bands above the objective-counter chart)
  * on one shared time axis. Hovering scrubs both: a cursor line spans the charts and a readout
- * shows the moment's state, replacing the chart's own tooltip.
+ * shows the moment's state and any kills under the cursor, replacing the chart's own tooltip.
  */
 import clsx from "clsx";
 import { memo, useRef, useState } from "react";
@@ -23,6 +23,8 @@ import {
 import {
 	PLAYER_STATUS_TAIL_SECONDS,
 	PlayerStatusTimeline,
+	type PlayerStatusTimelineKill,
+	type PlayerStatusTimelinePov,
 	type PlayerStatusTimelineSample,
 	type PlayerStatusTimelineTeam,
 	statusSpans,
@@ -31,11 +33,14 @@ import {
 /** Cursor position past this fraction of the plot flips the readout to its left side. */
 const READOUT_FLIP_RATIO = 0.55;
 const READOUT_CURSOR_GAP_PX = 12;
+/** Kill ticks this close to the cursor show up in the readout. */
+const KILL_READOUT_RADIUS_PX = 4;
 
 interface GameTimelineProps {
 	objectiveEvents?: readonly ObjectiveTimelineEvent[];
 	playerStatusSamples?: readonly PlayerStatusTimelineSample[];
 	teams: readonly [PlayerStatusTimelineTeam, PlayerStatusTimelineTeam];
+	pov?: PlayerStatusTimelinePov;
 }
 
 interface ScrubPosition {
@@ -52,6 +57,7 @@ export function GameTimeline({
 	objectiveEvents,
 	playerStatusSamples,
 	teams,
+	pov,
 }: GameTimelineProps) {
 	const [scrub, setScrub] = useState<ScrubPosition | null>(null);
 	const plotRef = useRef<HTMLDivElement>(null);
@@ -91,6 +97,7 @@ export function GameTimeline({
 				objectiveEvents={objectiveEvents}
 				playerStatusSamples={playerStatusSamples}
 				teams={teams}
+				pov={pov}
 			/>
 			<div className={styles.plotOverlay} ref={plotRef}>
 				{scrub ? (
@@ -100,6 +107,7 @@ export function GameTimeline({
 						objective={objective}
 						samples={samples}
 						teams={teams}
+						pov={samples.length > 0 ? pov : undefined}
 					/>
 				) : null}
 			</div>
@@ -114,6 +122,7 @@ const TimelineCharts = memo(function TimelineCharts({
 	objectiveEvents,
 	playerStatusSamples,
 	teams,
+	pov,
 }: GameTimelineProps) {
 	const objective = (objectiveEvents ?? []).toSorted((a, b) => a.t - b.t);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
@@ -123,7 +132,12 @@ const TimelineCharts = memo(function TimelineCharts({
 	return (
 		<>
 			{samples.length > 0 ? (
-				<PlayerStatusTimeline samples={samples} teams={teams} domain={domain} />
+				<PlayerStatusTimeline
+					samples={samples}
+					teams={teams}
+					domain={domain}
+					pov={pov}
+				/>
 			) : null}
 			{objective.length > 0 ? (
 				<ObjectiveTimeline
@@ -143,18 +157,24 @@ function ScrubReadout({
 	objective,
 	samples,
 	teams,
+	pov,
 }: {
 	scrub: ScrubPosition;
 	domain: [number, number];
 	objective: readonly ObjectiveTimelineEvent[];
 	samples: readonly PlayerStatusTimelineSample[];
 	teams: GameTimelineProps["teams"];
+	pov?: PlayerStatusTimelinePov;
 }) {
 	const { t } = useTranslation(["common"]);
 	const [min, max] = domain;
 	const time = min + (scrub.x / scrub.width) * (max - min);
 	const objectiveNow = objectiveStateAt(objective, time);
 	const statusNow = playerStatusAt(samples, time);
+	const killRadius = (KILL_READOUT_RADIUS_PX / scrub.width) * (max - min);
+	const killsNow = (pov?.kills ?? []).filter(
+		(kill) => Math.abs(kill.t - time) <= killRadius,
+	);
 	const flipped = scrub.x > scrub.width * READOUT_FLIP_RATIO;
 
 	return (
@@ -230,6 +250,7 @@ function ScrubReadout({
 								/>
 							</>
 						) : null}
+						{pov?.side === side ? <KillsRow kills={killsNow} /> : null}
 					</div>
 				))}
 			</div>
@@ -280,6 +301,20 @@ function StatusWeaponsRow({
 					),
 				)}
 			</span>
+		</div>
+	);
+}
+
+function KillsRow({ kills }: { kills: PlayerStatusTimelineKill[] }) {
+	const { t } = useTranslation(["common"]);
+	if (kills.length === 0) return null;
+
+	return (
+		<div className={styles.readoutStatusRow}>
+			<span className={clsx(styles.readoutStatusLabel, styles.statusLabelKill)}>
+				{t("common:playerStatusTimeline.kill")}
+			</span>
+			<span>{kills.map((kill) => kill.name ?? "?").join(" · ")}</span>
 		</div>
 	);
 }

@@ -213,6 +213,8 @@
 	"objectiveTimeline.inControl": "",
 	"playerStatusTimeline.splatted": "",
 	"playerStatusTimeline.specialReady": "",
+	"playerStatusTimeline.kill": "",
+	"playerStatusTimeline.splattedByPov": "",
 	"maps.createMapList": "Crear lista de mapas",
 	"maps.halfSz": "50% Pintazonas",
 	"maps.mapPool": "Rotación de mapas",

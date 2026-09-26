@@ -213,6 +213,8 @@
 	"objectiveTimeline.inControl": "",
 	"playerStatusTimeline.splatted": "",
 	"playerStatusTimeline.specialReady": "",
+	"playerStatusTimeline.kill": "",
+	"playerStatusTimeline.splattedByPov": "",
 	"maps.createMapList": "Создать список карт",
 	"maps.halfSz": "50% Зон",
 	"maps.mapPool": "Пул карт",
