@@ -78,10 +78,6 @@
     "stageLabel": "Bluefin Depot"
   },
   "options": {
-    "skipFields": [
-      "players.1.name",
-      "players.2.name"
-    ],
-    "notes": "1080p VoD frame (InTheZone #52, t=11491.5) of the lobby's quick battle log, opened 16s after this game's results screen. players.4.stats and players.7.stats (deaths x07) once read 1: the rectified card's digits are softer than the atlas crops, so at the default binarization the 7's antialiased bar thins out and the ink penalty hands the segment to 1. The misread broke the match builder's history-screen fingerprint and the revisit became a duplicate match card. players.1.name reads R_O_B_Or and players.2.name ι′ちごシロッフ (small-size name misreads, unrelated). timestamp omitted: the screen shows 10:43PM on a 12h clock and the parse drops the PM."
+    "notes": "1080p VoD frame (InTheZone #52, t=11491.5) of the lobby's quick battle log, opened 16s after this game's results screen. players.4.stats and players.7.stats (deaths x07) once read 1: the rectified card's digits are softer than the atlas crops, so at the default binarization the 7's antialiased bar thins out and the ink penalty hands the segment to 1. The misread broke the match builder's history-screen fingerprint and the revisit became a duplicate match card. players.1.name once read R_O_B_Or: the 4x3 dots were too short for the dot templates (only '_' qualified) and the soft T lost to r on the ink penalty. players.2.name once read ι′ちごシロッフ: い's split strokes read ι + ′ (a raised mark on the baseline no longer blocks the merge), and プ's ring touches the bar through one antialiased row, so the mark probe now retries on the stroke cores. timestamp omitted: the screen shows 10:43PM on a 12h clock and the parse drops the PM."
   }
 }

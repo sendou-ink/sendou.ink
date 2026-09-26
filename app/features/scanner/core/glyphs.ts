@@ -362,6 +362,14 @@ const FIXTURE_TIEBREAK = 0.02;
 const FIXTURE_TIEBREAK_MAX_INK_GAP = 0.1;
 
 const DEFAULT_MAX_CANDIDATES = 5;
+/**
+ * A dot's template carries a pad row above and below its few ink rows, so on a
+ * soft capture (quick log "R.O.B.O.T": 4x3 dots) it outgrows the height ratio
+ * and only '_' was left to read them. Blobs no wider than they are tall (plus
+ * that pad) accept templates up to the pad taller; bars stay height-checked,
+ * which is what tells '_' from '-'.
+ */
+const DOT_TEMPLATE_PAD_ROWS = 2;
 
 /**
  * A CJK-charset segment leaves thousands of templates eligible with barely
@@ -442,7 +450,10 @@ function* classifySegment(
 		const hRatio = tRows / Math.max(seg.height, 1);
 		// a template sliding freely in a taller region can score high on a fragment
 		// of the segment (an 'l' bar inside a 'c'), so reject height mismatches
-		if (hRatio < 0.5 || hRatio > 1.3) continue;
+		const padded =
+			segWidth <= seg.height + DOT_TEMPLATE_PAD_ROWS &&
+			tRows - seg.height <= DOT_TEMPLATE_PAD_ROWS;
+		if (hRatio < 0.5 || (hRatio > 1.3 && !padded)) continue;
 		// ink-coverage penalty: templates should explain the segment's ink
 		const r =
 			Math.min(glyph.ink, seg.ink) / Math.max(Math.max(glyph.ink, seg.ink), 1);
@@ -784,6 +795,14 @@ const MERGE_MARGIN = 0.02;
 const MERGE_WEAK_FRAGMENT = 0.65;
 const MERGE_STRONG_READ = 0.8;
 const MERGE_WEAK_SLACK = 0.03;
+/**
+ * Marks drawn at the cap line: a fragment read as one while its ink reaches the
+ * baseline is a stroke of a split glyph, however well the stroke matches (ル's
+ * left stroke reads ′ at 0.78 beside its right stroke as ι at 0.87, ル at 0.83),
+ * so its pair only needs the merge to be a strong read.
+ */
+const RAISED_MARKS = new Set([..."′″‘’‛“”'\"`´ªº°¹²³^˜¨¯"]);
+const RAISED_MARK_BASELINE_SLACK_PX = 2;
 
 function* mergeSplitGlyphs(
 	items: ClassifiedSegment[],
@@ -792,6 +811,11 @@ function* mergeSplitGlyphs(
 	const { set, maxCandidates } = ctx;
 	const maxGap = Math.max(3, Math.round(set.medianWidth * MERGE_MAX_GAP_RATIO));
 	const maxCharWidth = Math.round(set.medianWidth * 1.5);
+	const bottoms = items.map((item) => item.seg.y1).sort((a, b) => a - b);
+	const baseline = bottoms[Math.floor(bottoms.length / 2)] ?? 0;
+	const strayMark = ({ seg, ranked }: ClassifiedSegment) =>
+		RAISED_MARKS.has(ranked[0]?.char ?? "") &&
+		baseline - seg.y1 <= RAISED_MARK_BASELINE_SLACK_PX;
 	const mergeCandidate = (i: number) => {
 		const a = items[i]!;
 		const b = items[i + 1]!;
@@ -803,7 +827,9 @@ function* mergeSplitGlyphs(
 		const bScore = b.ranked[0]?.score ?? 0;
 		const fragmentBest = Math.max(aScore, bScore);
 		let floor = fragmentBest + MERGE_MARGIN;
-		if (Math.min(aScore, bScore) < MERGE_WEAK_FRAGMENT) {
+		if (strayMark(a) || strayMark(b)) {
+			floor = Math.min(floor, MERGE_STRONG_READ);
+		} else if (Math.min(aScore, bScore) < MERGE_WEAK_FRAGMENT) {
 			floor = Math.min(
 				floor,
 				Math.max(MERGE_STRONG_READ, fragmentBest - MERGE_WEAK_SLACK),
