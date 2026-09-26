@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import { format } from "date-fns";
 import {
 	CalendarDays,
 	ChartColumn,
@@ -54,11 +53,11 @@ import {
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { databaseTimestampToDate } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
+	navIconUrl,
 	resolveAvatarUrl,
 	sendouQMatchPage,
 	tierImageUrl,
@@ -496,7 +495,7 @@ function SeasonHistory() {
 					))}
 				</SendouChipRadioGroup>
 			</div>
-			{data.results.value.length === 0 ? (
+			{data.results.days.length === 0 ? (
 				<EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>
 			) : (
 				<Results results={data.results} />
@@ -505,7 +504,7 @@ function SeasonHistory() {
 	);
 }
 
-type SeasonResult = UserSeasonsPageLoaderData["results"]["value"][number];
+type SeasonResultsDay = UserSeasonsPageLoaderData["results"]["days"][number];
 
 function Results({
 	results,
@@ -532,9 +531,9 @@ function Results({
 		<div className="stack lg">
 			<div ref={ref} />
 			<div className={styles.days}>
-				{groupByDay(results.value).map((day) => (
-					<div key={day.key} className="stack sm">
-						<DayHeader results={day.results} userId={layoutData.user.id} />
+				{results.days.map((day) => (
+					<div key={day.summary.date} className="stack sm">
+						<DayHeader summary={day.summary} />
 						{day.results.map((result) =>
 							result.type === "GROUP_MATCH" ? (
 								<GroupMatchResult
@@ -558,77 +557,71 @@ function Results({
 	);
 }
 
-function groupByDay(results: SeasonResult[]) {
-	const days = new Map<string, SeasonResult[]>();
-
-	for (const result of results) {
-		const key = format(databaseTimestampToDate(result.createdAt), "yyyy-MM-dd");
-		days.set(key, [...(days.get(key) ?? []), result]);
-	}
-
-	return Array.from(days, ([key, dayResults]) => ({
-		key,
-		results: dayResults,
-	}));
-}
-
-function DayHeader({
-	results,
-	userId,
-}: {
-	results: SeasonResult[];
-	userId: number;
-}) {
+function DayHeader({ summary }: { summary: SeasonResultsDay["summary"] }) {
 	const { t } = useTranslation(["user"]);
-
-	const groupMatches = results.flatMap((result) =>
-		result.type === "GROUP_MATCH" ? [result.groupMatch] : [],
-	);
-	const wins = groupMatches.filter(
-		(match) => groupMatchOutcome(match, userId) === "W",
-	).length;
-	const losses = groupMatches.filter(
-		(match) => groupMatchOutcome(match, userId) === "L",
-	).length;
-
-	const spDiffs = results.flatMap((result) => {
-		const spDiff =
-			result.type === "GROUP_MATCH"
-				? result.groupMatch.spDiff
-				: result.tournamentResult.spDiff;
-		return typeof spDiff === "number" ? [spDiff] : [];
-	});
-	const spTotal = spDiffs.reduce((acc, cur) => acc + cur, 0);
 
 	return (
 		<div className={styles.dayHeader}>
 			<LocaleTime
-				date={results[0].createdAt}
+				date={new Date(summary.date)}
 				options={{
 					weekday: "long",
 					month: "short",
 					day: "numeric",
+					timeZone: "UTC",
 				}}
 				className="text-sm font-semi-bold"
 			/>
 			<span className="stack horizontal xs items-center text-xs text-lighter">
-				{groupMatches.length > 0 ? (
-					<span>
-						{t("user:seasons.summary.count.sets", {
-							count: groupMatches.length,
-						})}{" "}
-						· {wins}–{losses}
-					</span>
+				{summary.setsCount > 0 ? (
+					<DayHeaderCount
+						icon="sendouq"
+						label={t("user:seasons.summary.count.sets", {
+							count: summary.setsCount,
+						})}
+					>
+						{summary.setWins}–{summary.setLosses}
+					</DayHeaderCount>
 				) : null}
-				{spDiffs.length > 0 ? (
+				{summary.tournamentsCount > 0 ? (
 					<>
-						{groupMatches.length > 0 ? <span>·</span> : null}
-						<SpDelta diff={spTotal} />
+						{summary.setsCount > 0 ? <span>·</span> : null}
+						<DayHeaderCount
+							icon="medal"
+							label={t("user:seasons.summary.count.tournaments", {
+								count: summary.tournamentsCount,
+							})}
+						>
+							{summary.tournamentsCount}
+						</DayHeaderCount>
+					</>
+				) : null}
+				{typeof summary.spDiff === "number" ? (
+					<>
+						<span>·</span>
+						<SpDelta diff={summary.spDiff} />
 					</>
 				) : null}
 			</span>
 			<span className={styles.dayHeaderLine} />
 		</div>
+	);
+}
+
+function DayHeaderCount({
+	icon,
+	label,
+	children,
+}: {
+	icon: "sendouq" | "medal";
+	label: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<span className="stack horizontal xxs items-center" title={label}>
+			<Image path={navIconUrl(icon)} alt={label} size={16} />
+			{children}
+		</span>
 	);
 }
 

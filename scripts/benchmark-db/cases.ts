@@ -1,4 +1,4 @@
-import { subDays } from "date-fns";
+import { eachDayOfInterval, subDays } from "date-fns";
 import * as AdminRepository from "~/features/admin/AdminRepository.server";
 import * as ExternalStreamRepository from "~/features/admin/ExternalStreamRepository.server";
 import * as ApiRepository from "~/features/api/ApiRepository.server";
@@ -17,6 +17,7 @@ import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepos
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
+import * as Seasons from "~/features/mmr/core/Seasons";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
 import * as NotificationRepository from "~/features/notifications/NotificationRepository.server";
 import * as PlusSuggestionRepository from "~/features/plus-suggestions/PlusSuggestionRepository.server";
@@ -50,7 +51,7 @@ import * as UserCardRepository from "~/features/user-card/UserCardRepository.ser
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { LUTI_NAME_PREFIX } from "~/routines/computeLutiDivs";
-import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
 
 const SEARCH_QUERY = { query: "s", limit: 25 };
@@ -772,6 +773,16 @@ export function buildCases(fx: Fixtures): {
 	);
 	add("SQMatchRepository.findSeasonResultsByUserId", fx.sq, (sq) =>
 		SQMatchRepository.findSeasonResultsByUserId({ ...sq, page: 1 }),
+	);
+	add("SQMatchRepository.findSeasonDaySummariesByUserId", fx.sq, (sq) =>
+		SQMatchRepository.findSeasonDaySummariesByUserId({
+			...sq,
+			// every day of the season, the worst case of a page spanning it all
+			dates: eachDayOfInterval({
+				start: Seasons.nthToDateRange(sq.season).starts,
+				end: Seasons.nthToDateRange(sq.season).ends,
+			}).map(dateToYYYYMMDD),
+		}),
 	);
 	add("SQMatchRepository.findSeasonCanceledMatchesByUserId", fx.sq, (sq) =>
 		SQMatchRepository.findSeasonCanceledMatchesByUserId(sq),

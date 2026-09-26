@@ -1,5 +1,6 @@
 import { add, sub } from "date-fns";
 import { beforeEach, describe, expect, test, vi } from "vitest";
+import { backdate } from "~/db/seed/core/backdate";
 import * as SplatoonFaker from "~/db/seed/core/SplatoonFaker";
 import * as SQGroupFactory from "~/db/seed/factories/SQGroupFactory";
 import * as SQMatchFactory from "~/db/seed/factories/SQMatchFactory";
@@ -15,6 +16,7 @@ import {
 import * as SQGroupRepository from "~/features/sendouq/SQGroupRepository.server";
 import * as TournamentRepository from "~/features/tournament/TournamentRepository.server";
 import type { TournamentSummary } from "~/features/tournament-bracket/core/summarizer.server";
+import { dateToYYYYMMDD } from "~/utils/dates";
 import { invariant } from "~/utils/invariant";
 import { withUserId } from "~/utils/Test";
 import * as GroupMatchContinueVoteRepository from "./GroupMatchContinueVoteRepository.server";
@@ -902,89 +904,102 @@ describe("findSeasonCanceledMatchesByUserId", () => {
 	});
 });
 
+const SEASON = 0;
+const RANKED_MATCHES = 7;
+
+const seasonUsers = UserFactory.pool();
+const rosterUserIds = () => [1, 2, 3, 4].map((nth) => seasonUsers.id(nth));
+/** The roster the actor gets when their team subs the 4th member out mid-tournament. */
+const subbedRosterUserIds = () =>
+	[1, 2, 3, 5].map((nth) => seasonUsers.id(nth));
+const actorId = () => seasonUsers.id(1);
+
+/**
+ * Finalizes a tournament that moved the actor's rating to `ordinal` and each of
+ * `rosters` to its `ordinal`, counting the given `matchesCount` of sets towards each.
+ */
+const finalizeTournament = async ({
+	ordinal,
+	matchesCount,
+	playedAt,
+	rosters = [],
+}: {
+	ordinal: number;
+	matchesCount: number;
+	/** When the actor's rating changed, defaults to now. */
+	playedAt?: Date;
+	rosters?: Array<{
+		ordinal: number;
+		matchesCount: number;
+		/** Defaults to {@link rosterUserIds}. */
+		userIds?: number[];
+	}>;
+}) => {
+	const { id: tournamentId } = await TournamentFactory.create({
+		authorId: actorId(),
+	});
+	const { id: tournamentTeamId } = await TournamentTeamFactory.create({
+		tournamentId,
+		memberUserIds: [actorId()],
+	});
+
+	const skills: TournamentSummary["skills"] = [
+		{
+			userId: actorId(),
+			identifier: null,
+			mu: ordinal,
+			sigma: 0,
+			matchesCount,
+		},
+		...rosters.map((roster) => ({
+			userId: null,
+			identifier: (roster.userIds ?? rosterUserIds()).join(
+				"-",
+			) as `${number}-${number}-${number}-${number}`,
+			mu: roster.ordinal,
+			sigma: 0,
+			matchesCount: roster.matchesCount,
+		})),
+	];
+
+	await TournamentRepository.finalize({
+		tournamentId,
+		season: SEASON,
+		summary: {
+			skills,
+			seedingSkills: [],
+			mapResultDeltas: [],
+			playerResultDeltas: [],
+			tournamentResults: [
+				{
+					userId: actorId(),
+					placement: 1,
+					participantCount: 1,
+					tournamentTeamId,
+					div: null,
+				},
+			],
+			setResults: new Map([[actorId(), ["W"]]]),
+		},
+	});
+
+	if (playedAt) {
+		const actorSkill = await db
+			.selectFrom("Skill")
+			.select("id")
+			.where("tournamentId", "=", tournamentId)
+			.where("userId", "=", actorId())
+			.executeTakeFirstOrThrow();
+		await backdate("Skill", actorSkill.id, { createdAt: playedAt });
+	}
+
+	return tournamentId;
+};
+
 describe("findSeasonResultsByUserId", () => {
-	const SEASON = 0;
-	const RANKED_MATCHES = 7;
-
-	const seasonUsers = UserFactory.pool();
-	const rosterUserIds = () => [1, 2, 3, 4].map((nth) => seasonUsers.id(nth));
-	/** The roster the actor gets when their team subs the 4th member out mid-tournament. */
-	const subbedRosterUserIds = () =>
-		[1, 2, 3, 5].map((nth) => seasonUsers.id(nth));
-	const actorId = () => seasonUsers.id(1);
-
 	beforeEach(async () => {
 		await seasonUsers.create(5);
 	});
-
-	/**
-	 * Finalizes a tournament that moved the actor's rating to `ordinal` and each of
-	 * `rosters` to its `ordinal`, counting the given `matchesCount` of sets towards each.
-	 */
-	const finalizeTournament = async ({
-		ordinal,
-		matchesCount,
-		rosters = [],
-	}: {
-		ordinal: number;
-		matchesCount: number;
-		rosters?: Array<{
-			ordinal: number;
-			matchesCount: number;
-			/** Defaults to {@link rosterUserIds}. */
-			userIds?: number[];
-		}>;
-	}) => {
-		const { id: tournamentId } = await TournamentFactory.create({
-			authorId: actorId(),
-		});
-		const { id: tournamentTeamId } = await TournamentTeamFactory.create({
-			tournamentId,
-			memberUserIds: [actorId()],
-		});
-
-		const skills: TournamentSummary["skills"] = [
-			{
-				userId: actorId(),
-				identifier: null,
-				mu: ordinal,
-				sigma: 0,
-				matchesCount,
-			},
-			...rosters.map((roster) => ({
-				userId: null,
-				identifier: (roster.userIds ?? rosterUserIds()).join(
-					"-",
-				) as `${number}-${number}-${number}-${number}`,
-				mu: roster.ordinal,
-				sigma: 0,
-				matchesCount: roster.matchesCount,
-			})),
-		];
-
-		await TournamentRepository.finalize({
-			tournamentId,
-			season: SEASON,
-			summary: {
-				skills,
-				seedingSkills: [],
-				mapResultDeltas: [],
-				playerResultDeltas: [],
-				tournamentResults: [
-					{
-						userId: actorId(),
-						placement: 1,
-						participantCount: 1,
-						tournamentTeamId,
-						div: null,
-					},
-				],
-				setResults: new Map([[actorId(), ["W"]]]),
-			},
-		});
-
-		return tournamentId;
-	};
 
 	const latestResult = async () => {
 		const rows = await SQMatchRepository.findSeasonResultsByUserId({
@@ -1142,5 +1157,114 @@ describe("findSeasonResultsByUserId", () => {
 		const result = await latestResult();
 		expect(result.teamSp).toBeNull();
 		expect(result.teamSpDiff).toBeNull();
+	});
+});
+
+describe("findSeasonDaySummariesByUserId", () => {
+	const dateOf = (day: number) =>
+		add(new Date("2026-01-01T12:00:00Z"), { days: day });
+	const dayOf = (day: number) => dateToYYYYMMDD(dateOf(day));
+
+	beforeEach(async () => {
+		await seasonUsers.create(5);
+	});
+
+	describe("tournaments", () => {
+		beforeEach(async () => {
+			// day 0 ranks the actor without an SP change, day 10 is +30SP and -15SP, day 20 is +30SP
+			await finalizeTournament({
+				ordinal: 1,
+				matchesCount: RANKED_MATCHES,
+				playedAt: dateOf(0),
+			});
+			await finalizeTournament({
+				ordinal: 3,
+				matchesCount: 1,
+				playedAt: dateOf(10),
+			});
+			await finalizeTournament({
+				ordinal: 2,
+				matchesCount: 1,
+				playedAt: dateOf(10),
+			});
+			await finalizeTournament({
+				ordinal: 4,
+				matchesCount: 1,
+				playedAt: dateOf(20),
+			});
+		});
+
+		test.each([
+			{
+				why: "the day's tournaments with their SP changes summed",
+				days: [10],
+				expected: [{ day: 10, tournamentsCount: 2, spDiff: 15 }],
+			},
+			{
+				why: "each day on its own",
+				days: [10, 20],
+				expected: [
+					{ day: 10, tournamentsCount: 2, spDiff: 15 },
+					{ day: 20, tournamentsCount: 1, spDiff: 30 },
+				],
+			},
+			{
+				why: "no SP change for the day ranking the user",
+				days: [0],
+				expected: [{ day: 0, tournamentsCount: 1, spDiff: null }],
+			},
+			{ why: "nothing for a day without sets", days: [5], expected: [] },
+		])("returns $why", async ({ days, expected }) => {
+			const rows = await SQMatchRepository.findSeasonDaySummariesByUserId({
+				userId: actorId(),
+				season: SEASON,
+				dates: days.map(dayOf),
+			});
+
+			expect(rows).toEqual(
+				expected.map(({ day, ...summary }) => ({
+					date: dayOf(day),
+					setsCount: 0,
+					setWins: 0,
+					setLosses: 0,
+					...summary,
+				})),
+			);
+		});
+	});
+
+	test("counts the day's SendouQ sets won and lost", async () => {
+		const players = await UserFactory.createMany(FULL_GROUP_SIZE * 2);
+		const teamA = players.slice(0, FULL_GROUP_SIZE).map((user) => user.id);
+		const teamB = players.slice(FULL_GROUP_SIZE).map((user) => user.id);
+
+		// alpha always wins, so team A wins the first set and loses the second
+		for (const [alphaUserIds, bravoUserIds, day] of [
+			[teamA, teamB, 0],
+			[teamB, teamA, 0],
+			[teamA, teamB, 1],
+		] as const) {
+			await SQMatchFactory.create(
+				{ alphaUserIds: [...alphaUserIds], bravoUserIds: [...bravoUserIds] },
+				{ isConcluded: true, createdAt: dateOf(day) },
+			);
+		}
+
+		const rows = await SQMatchRepository.findSeasonDaySummariesByUserId({
+			userId: teamA[0],
+			season: Seasons.currentOrPrevious()!.nth,
+			dates: [dayOf(0)],
+		});
+
+		expect(rows).toEqual([
+			{
+				date: dayOf(0),
+				setsCount: 2,
+				setWins: 1,
+				setLosses: 1,
+				tournamentsCount: 0,
+				spDiff: null,
+			},
+		]);
 	});
 });

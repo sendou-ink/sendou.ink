@@ -254,6 +254,8 @@
 	"seasons.summary.count.sets_other": "",
 	"seasons.summary.count.maps_one": "",
 	"seasons.summary.count.maps_other": "",
+	"seasons.summary.count.tournaments_one": "",
+	"seasons.summary.count.tournaments_other": "",
 	"seasons.summary.export": "",
 	"seasons.summary.export.supporterPerk": "",
 	"builds.sorting.changeButton": "Ændr sortering",

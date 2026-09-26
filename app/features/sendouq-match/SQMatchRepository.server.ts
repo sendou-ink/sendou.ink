@@ -452,7 +452,6 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 		)
 		.select((innerEb) => [
 			"GroupMatch.id",
-			"GroupMatch.createdAt",
 			"GroupMatch.alphaGroupId",
 			"GroupMatch.bravoGroupId",
 			"AlphaGroup.tierName as alphaTierName",
@@ -542,6 +541,45 @@ const previousRatingColumns = (
 			.as("previousMatchesCount"),
 	] as const;
 
+/** User's Skill rows of the season, each carrying the rating it replaced. */
+const userSeasonSkills = ({
+	userId,
+	season,
+}: {
+	userId: number;
+	season: number;
+}) =>
+	db
+		.selectFrom("Skill")
+		.select((eb) => [
+			"Skill.id",
+			"Skill.ordinal",
+			...previousRatingColumns(eb, "Skill.userId"),
+		])
+		.where("Skill.userId", "=", userId)
+		.where("Skill.season", "=", season);
+
+/** When a season set was played. Older Skill rows lack `createdAt`, so the match's or tournament's start stands in. */
+const seasonSetPlayedAt = (eb: ExpressionBuilder<DB, "Skill">) =>
+	eb.fn
+		.coalesce(
+			"Skill.createdAt",
+			eb
+				.selectFrom("GroupMatch")
+				.select("GroupMatch.createdAt")
+				.whereRef("GroupMatch.id", "=", "Skill.groupMatchId"),
+			eb
+				.selectFrom("CalendarEventDate")
+				.innerJoin(
+					"CalendarEvent",
+					"CalendarEvent.id",
+					"CalendarEventDate.eventId",
+				)
+				.select(({ fn }) => fn.min("CalendarEventDate.startsAt").as("startsAt"))
+				.whereRef("CalendarEvent.tournamentId", "=", "Skill.tournamentId"),
+		)
+		.$castTo<number>();
+
 /** A page of a user's season results, SendouQ matches, ranked tournaments or both per `source`. */
 export async function findSeasonResultsByUserId({
 	userId,
@@ -555,17 +593,7 @@ export async function findSeasonResultsByUserId({
 	source?: SeasonResultSource;
 }) {
 	const rows = await db
-		.with("userSkill", (cte) =>
-			cte
-				.selectFrom("Skill")
-				.select((eb) => [
-					"Skill.id",
-					"Skill.ordinal",
-					...previousRatingColumns(eb, "Skill.userId"),
-				])
-				.where("Skill.userId", "=", userId)
-				.where("Skill.season", "=", season),
-		)
+		.with("userSkill", () => userSeasonSkills({ userId, season }))
 		.with("rosterSkill", (cte) =>
 			cte
 				.selectFrom("Skill")
@@ -615,7 +643,7 @@ export async function findSeasonResultsByUserId({
 		)
 		.select((eb) => [
 			"Skill.id",
-			"Skill.createdAt",
+			seasonSetPlayedAt(eb).as("createdAt"),
 			spDiffOf("userSkill").as("spDiff"),
 			"tournamentRosterSkill.teamSp",
 			"tournamentRosterSkill.teamSpDiff",
@@ -654,11 +682,8 @@ export async function findSeasonResultsByUserId({
 						"teamSp",
 						"teamSpDiff",
 					]),
-					// older skills don't have createdAt, so we use groupMatch's createdAt as fallback
-					createdAt: row.createdAt ?? row.groupMatch.createdAt,
 					groupMatch: {
 						...R.omit(row.groupMatch, [
-							"createdAt",
 							"maps",
 							"alphaTierName",
 							"alphaTierIsPlus",
@@ -707,8 +732,6 @@ export async function findSeasonResultsByUserId({
 						"teamSp",
 						"teamSpDiff",
 					]),
-					// older skills don't have createdAt, so we use tournament's start time as a fallback
-					createdAt: row.createdAt ?? row.tournamentResult.tournamentStartTime,
 					tournamentResult: {
 						...row.tournamentResult,
 						spDiff: row.spDiff,
@@ -723,6 +746,111 @@ export async function findSeasonResultsByUserId({
 		})
 		.filter((result) => result !== null);
 }
+
+/**
+ * Summary of each of the given days (`yyyy-MM-dd`, UTC, ascending) a user played season sets on, SendouQ matches,
+ * ranked tournaments or both per `source`. The SP change is `null` when every change of the day was made while the
+ * rating was still being calculated and so never shown.
+ */
+export async function findSeasonDaySummariesByUserId({
+	userId,
+	season,
+	source = "ALL",
+	dates,
+}: {
+	userId: number;
+	season: number;
+	source?: SeasonResultSource;
+	dates: string[];
+}) {
+	const playedOn = (eb: ExpressionBuilder<DB, "Skill">) =>
+		sql<string>`date(${seasonSetPlayedAt(eb)}, 'unixepoch')`;
+
+	return db
+		.with("userSkill", () => userSeasonSkills({ userId, season }))
+		.with("daySet", (cte) =>
+			cte
+				.selectFrom("Skill")
+				.innerJoin("userSkill", "userSkill.id", "Skill.id")
+				.select((eb) => [
+					playedOn(eb).as("date"),
+					"Skill.groupMatchId",
+					"Skill.tournamentId",
+					spDiffOf("userSkill").as("spDiff"),
+					groupMatchMapBalance(eb, userId).as("mapBalance"),
+				])
+				.where("Skill.userId", "=", userId)
+				.where("Skill.season", "=", season)
+				.where((eb) => skillCountsAsSeasonSet(eb, userId))
+				.where((eb) => isOfSeasonResultSource(eb, source))
+				.where((eb) => eb(playedOn(eb), "in", dates)),
+		)
+		.selectFrom("daySet")
+		.select(({ fn, eb }) => [
+			"daySet.date",
+			fn.count<number>("daySet.groupMatchId").as("setsCount"),
+			fn
+				.sum<number>(
+					eb.case().when("daySet.mapBalance", ">", 0).then(1).else(0).end(),
+				)
+				.as("setWins"),
+			fn
+				.sum<number>(
+					eb.case().when("daySet.mapBalance", "<", 0).then(1).else(0).end(),
+				)
+				.as("setLosses"),
+			fn.count<number>("daySet.tournamentId").as("tournamentsCount"),
+			fn.sum<number | null>("daySet.spDiff").as("spDiff"),
+		])
+		.groupBy("daySet.date")
+		.orderBy("daySet.date", "asc")
+		.execute();
+}
+
+/** Maps the user's group won minus the ones it lost of a SendouQ set, `null` for a tournament. */
+const groupMatchMapBalance = (
+	eb: ExpressionBuilder<DB, "Skill">,
+	userId: number,
+) =>
+	eb
+		.selectFrom("GroupMatchMap")
+		.innerJoin("GroupMatch", "GroupMatch.id", "GroupMatchMap.matchId")
+		.innerJoin("GroupMember", (join) =>
+			join
+				.on("GroupMember.userId", "=", userId)
+				.on((onEb) =>
+					onEb.or([
+						onEb(
+							"GroupMember.groupId",
+							"=",
+							onEb.ref("GroupMatch.alphaGroupId"),
+						),
+						onEb(
+							"GroupMember.groupId",
+							"=",
+							onEb.ref("GroupMatch.bravoGroupId"),
+						),
+					]),
+				),
+		)
+		.select(({ fn, eb: mapEb }) =>
+			fn
+				.sum<number>(
+					mapEb
+						.case()
+						.when(
+							"GroupMatchMap.winnerGroupId",
+							"=",
+							mapEb.ref("GroupMember.groupId"),
+						)
+						.then(1)
+						.else(-1)
+						.end(),
+				)
+				.as("mapBalance"),
+		)
+		.whereRef("GroupMatchMap.matchId", "=", "Skill.groupMatchId")
+		.where("GroupMatchMap.winnerGroupId", "is not", null);
 
 export async function findSeasonCanceledMatchesByUserId({
 	userId,
