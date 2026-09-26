@@ -387,10 +387,7 @@ function StatsPeek({
 	const { t } = useTranslation(["user", "game-misc", "weapons"]);
 
 	return (
-		<SendouSection
-			title={t("user:seasons.stats.title", { season })}
-			icon={ChartColumn}
-		>
+		<SendouSection title={t("user:seasons.summary.stats")} icon={ChartColumn}>
 			<dl className={styles.statsPeekList}>
 				{peek.bestStage ? (
 					<StatsPeekItem label={t("user:seasons.summary.bestStage")}>
@@ -712,10 +709,8 @@ function GroupTier({
 	tier: NonNullable<SeasonGroupMatch["alphaTier"]>;
 }) {
 	return (
-		<span className={styles.tierPill}>
-			<TierImage tier={tier} width={20} />
-			{tier.name}
-			{tier.isPlus ? "+" : ""}
+		<span className={styles.tierTile}>
+			<TierImage tier={tier} width={28} />
 		</span>
 	);
 }
