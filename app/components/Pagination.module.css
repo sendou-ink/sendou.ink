@@ -4,6 +4,7 @@
 	justify-content: center;
 	gap: var(--s-1);
 	background-color: var(--color-bg-high);
+	border: var(--border-style);
 	padding: var(--s-2) var(--s-3);
 	border-radius: var(--radius-full);
 	width: fit-content;
@@ -55,8 +56,8 @@
 }
 
 .pageActive {
-	background-color: var(--color-text);
-	color: var(--color-text-inverse);
+	background-color: var(--color-fill-accent);
+	color: var(--color-fg-on-accent);
 }
 
 .ellipsis {
@@ -91,7 +92,7 @@
 	max-width: 2.5rem;
 	max-height: 1.75rem;
 	padding: 0 var(--s-1);
-	border: 2px solid var(--color-primary);
+	border: 2px solid var(--color-fg-accent);
 	border-radius: var(--radius-sm);
 	background-color: var(--color-bg);
 	color: var(--color-text);
