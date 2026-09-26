@@ -291,7 +291,7 @@ test.describe("Tournament bracket elimination", () => {
 		const bracketsAfterReset = await admin.nav.openBrackets();
 		await bracketsAfterReset.finalize();
 		// bye is gone
-		await expect(bracketsAfterReset.match(1)).toBeVisible();
+		expect(await bracketsAfterReset.firstRoundTeamNames(16)).not.toContain("");
 	});
 
 	test("dropping team out ends ongoing match early and auto-forfeits losers bracket match", async ({
