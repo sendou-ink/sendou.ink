@@ -2,6 +2,7 @@ import clsx from "clsx";
 import {
 	ArrowRight,
 	ChevronDown,
+	Gauge,
 	MousePointerClick,
 	RefreshCcw,
 	TrendingUp,
@@ -824,7 +825,7 @@ function SpMemberDetail({ member }: { member: TimelineSpMember }) {
 			<div className={styles.spDetail}>
 				<Avatar user={member.user} size="xxs" />
 				<div className={styles.spDetailContent}>
-					<span className={styles.spCalculatingIcon}>◆</span>
+					<Gauge size={18} />
 					<span>
 						{member.skillDifference.newSp ? (
 							<>{member.skillDifference.newSp}SP</>
@@ -839,7 +840,7 @@ function SpMemberDetail({ member }: { member: TimelineSpMember }) {
 		<div className={styles.spDetail}>
 			<Avatar user={member.user} size="xxs" />
 			<div className={styles.spDetailContent}>
-				<span className={styles.spCalculatingIcon}>◆</span>
+				<Gauge size={18} />
 				<span>
 					{member.skillDifference.matchesCount}/
 					{member.skillDifference.matchesCountNeeded}
@@ -874,7 +875,7 @@ function SpTeamDetail({
 					<Users size={16} />
 				</div>
 				<div className={styles.spDetailContent}>
-					<span className={styles.spCalculatingIcon}>◆</span>
+					<Gauge size={18} />
 					<span>{skillDifference.newSp}SP</span>
 				</div>
 			</div>
@@ -887,7 +888,7 @@ function SpTeamDetail({
 				<Users size={16} />
 			</div>
 			<div className={styles.spDetailContent}>
-				<span className={styles.spCalculatingIcon}>◆</span>
+				<Gauge size={18} />
 				<span>
 					{skillDifference.matchesCount}/{skillDifference.matchesCountNeeded}
 				</span>

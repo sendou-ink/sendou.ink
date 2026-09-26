@@ -4,6 +4,7 @@ import {
 	CalendarDays,
 	ChartColumn,
 	ChevronRight,
+	Gauge,
 	HardDriveDownload,
 	Users,
 } from "lucide-react";
@@ -818,7 +819,10 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 						{result.teamSpDiff !== null ? (
 							<SpDelta diff={result.teamSpDiff} />
 						) : (
-							<>◆ {roundToNDecimalPlaces(result.teamSp)}SP</>
+							<>
+								<Gauge size={14} />
+								{roundToNDecimalPlaces(result.teamSp)}SP
+							</>
 						)}
 					</span>
 				) : null}
