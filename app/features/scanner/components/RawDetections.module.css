@@ -1,23 +1,7 @@
-.details {
-	font-size: var(--font-2xs);
-}
-
-.summary {
-	cursor: pointer;
-	color: var(--color-text-high);
-	font-weight: var(--weight-semi);
-	text-transform: uppercase;
-	letter-spacing: 0.08em;
-}
-
 .events {
 	--scanner-card-padding: var(--s-2-5) 14px;
 
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-2);
-	margin-top: var(--s-2);
-	margin-inline-start: var(--s-2-5);
-	padding-inline-start: var(--s-3);
-	border-inline-start: var(--border-width) solid var(--color-border);
 }

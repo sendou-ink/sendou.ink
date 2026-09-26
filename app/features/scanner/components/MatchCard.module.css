@@ -315,13 +315,16 @@ button.expand {
 
 /* the expanded content, indented under its card via a rail */
 .details {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-4);
 	margin-inline-start: var(--s-2-5);
 	padding: var(--s-1) 0 var(--s-2) var(--s-3);
 	border-inline-start: var(--border-width) solid var(--color-border);
 	animation: scanner-detail-in 0.25s ease both;
+}
+
+.summary {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
 }
 
 @keyframes scanner-detail-in {

@@ -4,14 +4,21 @@
  * the game's clips and, once the game is over, its upload state beside the
  * expand arrow. Expanded it shows the data and
  * nothing interpreted: the scoreboard, the objective + player-status
- * timeline and deaths and kills (each with a ▶ when a clip covers it).
+ * timeline and deaths and kills (each with a ▶ when a clip covers it). In
+ * debug mode that summary sits in a tab beside the raw events and frames.
  */
 import clsx from "clsx";
 import { ChevronDown, Play } from "lucide-react";
-import { useState } from "react";
+import { useId, useState } from "react";
 import { Ability } from "~/components/Ability";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import {
+	SendouTab,
+	SendouTabList,
+	SendouTabPanel,
+	SendouTabs,
+} from "~/components/elements/Tabs";
 import { GameTimeline } from "~/components/GameTimeline";
 import { Image, ModeImage, WeaponImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
@@ -108,6 +115,7 @@ export function MatchCard({
 }) {
 	const { match } = built;
 	const [expanded, setExpanded] = useState(false);
+	const tabIdPrefix = useId();
 	// fixed at mount: re-rendering must not cut the animation short
 	const [enter] = useState(justFormed);
 	const [prevUploadKind, setPrevUploadKind] = useState(upload.kind);
@@ -226,6 +234,16 @@ export function MatchCard({
 		</div>
 	);
 
+	const summary = (
+		<div className={styles.summary}>
+			<Scoreboard match={match} result={result} />
+			{match.objective || match.playerStatus ? (
+				<GameTimeline {...gameTimelineProps(match, matchOrigin, TEAM_LABELS)} />
+			) : null}
+			<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
+		</div>
+	);
+
 	const card =
 		match.stage !== null ? (
 			<StageBannerBox stageId={match.stage} className={className}>
@@ -240,16 +258,22 @@ export function MatchCard({
 			{card}
 			{expanded && expandable ? (
 				<div className={styles.details}>
-					<Scoreboard match={match} result={result} />
-					{match.objective || match.playerStatus ? (
-						<GameTimeline
-							{...gameTimelineProps(match, matchOrigin, TEAM_LABELS)}
-						/>
-					) : null}
-					<DeathsAndKills built={built} clips={clips} onPlayClip={onPlayClip} />
 					{debug ? (
-						<RawDetections sources={built.sources} getFrame={getFrame} />
-					) : null}
+						<SendouTabs>
+							<SendouTabList>
+								<SendouTab id={`${tabIdPrefix}-summary`}>Summary</SendouTab>
+								<SendouTab id={`${tabIdPrefix}-events`}>Events</SendouTab>
+							</SendouTabList>
+							<SendouTabPanel id={`${tabIdPrefix}-summary`}>
+								{summary}
+							</SendouTabPanel>
+							<SendouTabPanel id={`${tabIdPrefix}-events`}>
+								<RawDetections sources={built.sources} getFrame={getFrame} />
+							</SendouTabPanel>
+						</SendouTabs>
+					) : (
+						summary
+					)}
 				</div>
 			) : null}
 		</div>
