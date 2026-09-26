@@ -31,7 +31,7 @@ const MATCH: ScannerMatch = {
 				time: 290,
 				score: [90, 100],
 				penalty: [null, 5],
-				control: [true, false],
+				control: 0,
 			},
 		],
 	},
@@ -65,6 +65,35 @@ const withKills = (
 ): ScannerMatch => ({ ...MATCH, kills, teams });
 
 describe("gameTimelineProps", () => {
+	test("flips a track position along with the sides", () => {
+		const props = gameTimelineProps(
+			{
+				...MATCH,
+				objective: {
+					mode: "TC",
+					samples: [
+						{
+							t: 110,
+							time: 290,
+							score: [60, null],
+							penalty: [null, null],
+							control: 0,
+							position: 40,
+						},
+					],
+				},
+			},
+			100,
+			LABELS,
+		);
+
+		expect(props.objectiveEvents![0]!.data).toMatchObject({
+			score: [null, 60],
+			control: 1,
+			position: -40,
+		});
+	});
+
 	test("puts the POV's team first", () => {
 		const props = gameTimelineProps(MATCH, 100, LABELS);
 
@@ -74,7 +103,7 @@ describe("gameTimelineProps", () => {
 				time: 290,
 				score: [100, 90],
 				penalty: [5, null],
-				control: [false, true],
+				control: 1,
 			},
 		});
 		expect(props.pov?.side).toBe(0);

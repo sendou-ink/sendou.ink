@@ -135,8 +135,9 @@ let releaseCaptureLock: (() => void) | null = null;
 let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
-// the open match is known to be a non-SZ mode, so counter reads are
-// misreads of another mode's overlay and are not collected at all
+// the open match is known to be a mode with no parsed counter overlay (Turf
+// War, Clam Blitz), so counter reads are lookalike misreads and are not
+// collected at all
 let objectiveBlocked = false;
 /** windows already cut, `${match first source id}:${window t}` */
 /**
@@ -401,7 +402,8 @@ function onResult(
 		if (action.action === "merged" || action.action === "dropped") continue;
 		if (event.type === MAP_START_EVENT_TYPE) {
 			const mode = (event.data as MapStartData).mode;
-			objectiveBlocked = mode !== null && mode !== "SZ";
+			objectiveBlocked =
+				mode !== null && mode !== "SZ" && mode !== "TC" && mode !== "RM";
 		} else if (SCOREBOARD_EVENT_TYPES.includes(event.type)) {
 			objectiveBlocked = false;
 		}

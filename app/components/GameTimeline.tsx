@@ -1,6 +1,6 @@
 /**
- * A game's two scanned-timeline charts (player status bands above the objective-counter chart)
- * on one shared time axis. Hovering scrubs both: a cursor line spans the charts and a readout
+ * A game's scanned-timeline charts (player status bands above the objective-counter chart, plus a
+ * TC/RM objective's position along its track) on one shared time axis. Hovering scrubs both: a cursor line spans the charts and a readout
  * shows the moment's state and any kills under the cursor, replacing the chart's own tooltip.
  */
 import clsx from "clsx";
@@ -11,6 +11,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
 import styles from "./GameTimeline.module.css";
 import { Image, WeaponImage } from "./Image";
+import { ObjectivePositionTimeline } from "./ObjectivePositionTimeline";
 import {
 	ObjectiveTimeline,
 	type ObjectiveTimelineEvent,
@@ -19,6 +20,7 @@ import {
 	formatElapsed,
 	smoothPenalties,
 	TIMELINE_PLOT_GUTTER_PX,
+	withUnpushedTrackCounts,
 } from "./objective-timeline-utils";
 import {
 	PLAYER_STATUS_TAIL_SECONDS,
@@ -62,7 +64,9 @@ export function GameTimeline({
 	const [scrub, setScrub] = useState<ScrubPosition | null>(null);
 	const plotRef = useRef<HTMLDivElement>(null);
 
-	const objective = (objectiveEvents ?? []).toSorted((a, b) => a.t - b.t);
+	const objective = withUnpushedTrackCounts(
+		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
+	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
 	const domain = timelineDomain(objective, samples);
 	if (!domain) return null;
@@ -124,7 +128,9 @@ const TimelineCharts = memo(function TimelineCharts({
 	teams,
 	pov,
 }: GameTimelineProps) {
-	const objective = (objectiveEvents ?? []).toSorted((a, b) => a.t - b.t);
+	const objective = withUnpushedTrackCounts(
+		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
+	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
 	const domain = timelineDomain(objective, samples);
 	if (!domain) return null;
@@ -146,6 +152,9 @@ const TimelineCharts = memo(function TimelineCharts({
 					domain={domain}
 					showTooltip={false}
 				/>
+			) : null}
+			{objective.some((event) => event.data.position !== undefined) ? (
+				<ObjectivePositionTimeline events={objective} domain={domain} />
 			) : null}
 		</>
 	);
@@ -228,9 +237,17 @@ function ScrubReadout({
 									})}
 								</span>
 							) : null}
-							{objectiveNow?.control[side] ? (
+							{objectiveNow?.control === side ? (
 								<span className={styles.readoutControl}>
 									{t("common:objectiveTimeline.inControl")}
+								</span>
+							) : null}
+							{objectiveNow?.position != null &&
+							pushingSide(objectiveNow.position) === side ? (
+								<span className={styles.readoutControl}>
+									{t("common:objectiveTimeline.pushed", {
+										value: Math.abs(objectiveNow.position),
+									})}
 								</span>
 							) : null}
 						</div>
@@ -343,7 +360,9 @@ interface ObjectiveStateAtTime {
 	/** last readable count per team at the scrubbed moment */
 	scores: [number | null, number | null];
 	penalties: [number | null, number | null];
-	control: [boolean, boolean];
+	control: 0 | 1 | null;
+	/** TC/RM: the last read objective position (see ObjectiveTimelineSample); null when none */
+	position: number | null;
 }
 
 /** State implied by the last objective read at or before `time`, scores carried across unreadable reads. */
@@ -373,13 +392,24 @@ function objectiveStateAt(
 			)[index] ?? null,
 	) as [number | null, number | null];
 	const latest = sorted[index]!;
+	let position: number | null = null;
+	for (let i = 0; i <= index; i++) {
+		position = sorted[i]!.data.position ?? position;
+	}
 
 	return {
 		clock: latest.data.time,
 		scores,
 		penalties,
-		control: [latest.data.control[0], latest.data.control[1]],
+		control: latest.data.control,
+		position,
 	};
+}
+
+/** The side a track position is progress for: past the middle toward bravo's end is alpha's. */
+function pushingSide(position: number): 0 | 1 | null {
+	if (position === 0) return null;
+	return position > 0 ? 0 : 1;
 }
 
 interface PlayerStatusAtTime {

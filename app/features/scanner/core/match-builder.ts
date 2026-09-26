@@ -11,6 +11,7 @@
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
+	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
 import {
@@ -340,31 +341,81 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 }
 
 /**
- * Objective-counter, player-status and strip-weapon reads on a match whose
- * detected mode is not Splat Zones — the SZ parser (the only one so far)
- * misreading another mode's overlay. The builder already leaves such a match's
- * `objective`/`playerStatus` null; callers should delete these from their stores.
+ * Objective-counter reads on a match whose detected mode rules their overlay
+ * out — lookalike misreads the builder already left out of the match's
+ * `objective` — plus, on a mode with no parsed overlay (Turf War, Clam
+ * Blitz), the player-status and strip-weapon reads riding along with them.
+ * Callers should delete these from their stores. A match with no mode read
+ * yet loses nothing: its minority overlay is only left out of the build.
  */
 export function invalidObjectiveEvents<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
 ): E[] {
-	return built
-		.filter((b) => b.match.mode !== null && b.match.mode !== "SZ")
-		.flatMap((b) =>
-			b.sources.filter(
-				(event) =>
-					event.type === OBJECTIVE_EVENT_TYPE ||
-					event.type === PLAYER_STATUS_EVENT_TYPE ||
-					event.type === STRIP_WEAPONS_EVENT_TYPE,
-			),
-		);
+	return built.flatMap(({ match, sources }) => {
+		if (match.mode === null) return [];
+		const kind = matchCounterKind(match.mode, []);
+		return sources.filter((event) => {
+			if (event.type === OBJECTIVE_EVENT_TYPE) {
+				return counterKindOfRead(event.data as ObjectiveData) !== kind;
+			}
+			return (
+				kind === null &&
+				(event.type === PLAYER_STATUS_EVENT_TYPE ||
+					event.type === STRIP_WEAPONS_EVENT_TYPE)
+			);
+		});
+	});
+}
+
+type CounterKind = "zones" | "track";
+
+/**
+ * Which counter overlay the match's reads should come from: the one its mode
+ * draws, or with the mode unknown whichever kind most reads saw (the other is
+ * a lookalike). Null = a mode with no parsed overlay, or no reads.
+ */
+function matchCounterKind(
+	mode: ModeShort | null,
+	reads: readonly ObjectiveData[],
+): CounterKind | null {
+	if (mode === "SZ") return "zones";
+	if (mode === "TC" || mode === "RM") return "track";
+	if (mode !== null) return null;
+	const trackReads = reads.filter(
+		(read) => counterKindOfRead(read) === "track",
+	).length;
+	if (reads.length === 0) return null;
+	return trackReads * 2 > reads.length ? "track" : "zones";
+}
+
+function counterKindOfRead(data: ObjectiveData): CounterKind {
+	return data.mode === "SZ" ? "zones" : "track";
+}
+
+/**
+ * The objective's mode: the match's when known, else what most track reads'
+ * checkpoint markers showed; null when a track match's markers never read.
+ */
+function objectiveMode(
+	kind: CounterKind,
+	mode: ModeShort | null,
+	reads: readonly ObjectiveData[],
+): ScannerMatchObjective["mode"] {
+	if (kind === "zones") return "SZ";
+	if (mode === "TC" || mode === "RM") return mode;
+	const votes = { TC: 0, RM: 0 };
+	for (const read of reads) {
+		if (read.mode === "TC" || read.mode === "RM") votes[read.mode]++;
+	}
+	if (votes.TC === votes.RM) return null;
+	return votes.TC > votes.RM ? "TC" : "RM";
 }
 
 /**
  * A disconnect ended the match before it was decided: a results screen with no
  * score, and the last counter read still needed more game than the footage
- * gave it — a game ends no sooner than the clock running out or the lower
- * counter falling to zero at its 1/s cap (penalty worked off first).
+ * gave it — a game ends no sooner than the clock running out or (SZ) the
+ * lower counter falling to zero at its 1/s cap (penalty worked off first).
  */
 function endedEarly(match: ScannerMatch): boolean {
 	// no results screen at all: an unfinished scan, not an unfinished game
@@ -373,19 +424,26 @@ function endedEarly(match: ScannerMatch): boolean {
 	const lastSample = match.objective?.samples.at(-1);
 	if (!lastSample || match.endsAt === null) return false;
 
-	const soonestEnd = secondsUntilSoonestEnd(lastSample);
+	const soonestEnd = secondsUntilSoonestEnd(
+		lastSample,
+		match.objective?.mode === "SZ",
+	);
 	if (soonestEnd === null) return false;
 
 	const secondsLeftInFootage = match.endsAt - lastSample.t;
 	return soonestEnd - secondsLeftInFootage > EARLY_END_MARGIN_SECONDS;
 }
 
+/** Only SZ's count ticks at a known rate (1/s), so only it bounds a knockout. */
 function secondsUntilSoonestEnd(
 	sample: ScannerMatchObjectiveSample,
+	countsSeconds: boolean,
 ): number | null {
-	const knockouts = sample.score.map((score, team) =>
-		score === null ? null : score + (sample.penalty[team] ?? 0),
-	);
+	const knockouts = countsSeconds
+		? sample.score.map((score, team) =>
+				score === null ? null : score + (sample.penalty[team] ?? 0),
+			)
+		: [];
 	const seconds = [sample.time, ...knockouts].filter(
 		(value): value is number => value !== null,
 	);
@@ -527,15 +585,29 @@ function toBuiltMatch<E extends DetectedEvent>(
 	const minimaps = minimapReads.map((read) => read.data);
 
 	const mode = board?.mode ?? start?.mode ?? null;
-	// only the SZ counter is parsed: reads on a known other-mode match are
-	// lookalike-overlay misreads (statuses ride along with counter reads).
+	// reads of the overlay the mode doesn't draw are lookalike misreads, and on
+	// a mode with no parsed overlay the statuses riding along with them go too.
 	// Minimap card states and the kill feed are mode-agnostic and feed their
 	// samples regardless
-	const counterModeValid = mode === null || mode === "SZ";
+	const counterKind = matchCounterKind(
+		mode,
+		objectives.map((read) => read.data),
+	);
+	const counterReads = objectives.filter(
+		(read) => counterKindOfRead(read.data) === counterKind,
+	);
+	const statusesValid = counterKind !== null || mode === null;
 	const progress = buildProgress(
-		counterModeValid ? objectives : [],
-		counterModeValid ? playerStatuses : [],
-		counterModeValid ? stripWeapons : [],
+		counterReads,
+		counterKind === null
+			? null
+			: objectiveMode(
+					counterKind,
+					mode,
+					counterReads.map((read) => read.data),
+				),
+		statusesValid ? playerStatuses : [],
+		statusesValid ? stripWeapons : [],
 		minimapReads,
 		killReads,
 		board,
@@ -627,6 +699,7 @@ function floorOrNull(t: number | undefined): number | null {
  */
 function buildProgress(
 	objectives: readonly { t: number; data: ObjectiveData }[],
+	mode: ScannerMatchObjective["mode"],
 	playerStatuses: readonly { t: number; data: PlayerStatusData }[],
 	stripWeapons: readonly { t: number; data: StripWeaponsData }[],
 	minimapReads: readonly { t: number; data: MinimapData }[],
@@ -686,7 +759,7 @@ function buildProgress(
 		oriented.length === 0
 			? null
 			: {
-					mode: "SZ" as const,
+					mode,
 					samples: oriented.map((read): ScannerMatchObjectiveSample => {
 						const [a, b] = swap ? ([1, 0] as const) : ([0, 1] as const);
 						return {
@@ -694,7 +767,14 @@ function buildProgress(
 							time: read.time,
 							score: [read.score[a], read.score[b]],
 							penalty: [read.penalty[a], read.penalty[b]],
-							control: [read.control[a], read.control[b]],
+							control: swap ? flippedSide(read.control) : read.control,
+							...(read.position !== undefined
+								? {
+										position: swap
+											? flippedPosition(read.position)
+											: read.position,
+									}
+								: null),
 						};
 					}),
 				};
@@ -1113,7 +1193,9 @@ interface OrientedObjectiveRead {
 	time: number | null;
 	score: [number | null, number | null];
 	penalty: [number | null, number | null];
-	control: [boolean, boolean];
+	control: 0 | 1 | null;
+	/** TC/RM only: the objective along the track, positive = the first side's progress */
+	position?: number | null;
 }
 
 /**
@@ -1159,14 +1241,29 @@ function orientObjectives(
 ): OrientedObjectiveRead[] {
 	return objectives.map(({ t, data }, i): OrientedObjectiveRead => {
 		const [a, b] = swapFlags[i] ? ([1, 0] as const) : ([0, 1] as const);
-		return {
+		const oriented: OrientedObjectiveRead = {
 			t,
 			time: data.time,
 			score: [data.score[a], data.score[b]],
-			penalty: [data.penalty[a], data.penalty[b]],
-			control: [data.control[a], data.control[b]],
+			penalty:
+				data.mode === "SZ" ? [data.penalty[a], data.penalty[b]] : [null, null],
+			control: swapFlags[i] ? flippedSide(data.control) : data.control,
+		};
+		if (data.mode === "SZ") return oriented;
+		return {
+			...oriented,
+			position: swapFlags[i] ? flippedPosition(data.position) : data.position,
 		};
 	});
+}
+
+function flippedSide(side: 0 | 1 | null): 0 | 1 | null {
+	return side === null ? null : side === 0 ? 1 : 0;
+}
+
+/** A track position seen from the other side: each team pushes toward the other's end. */
+function flippedPosition(position: number | null): number | null {
+	return position === null ? null : 0 - position;
 }
 
 function readSwapped(

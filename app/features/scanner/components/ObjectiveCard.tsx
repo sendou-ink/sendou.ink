@@ -23,10 +23,12 @@ export function ObjectiveCard(props: {
 	const side = (index: 0 | 1) => {
 		const score = data.score[index] ?? "?";
 		const penalty =
-			data.penalty[index] !== null ? ` (+${data.penalty[index]})` : "";
+			data.mode === "SZ" && data.penalty[index] !== null
+				? ` (+${data.penalty[index]})`
+				: "";
 		return `${score}${penalty}`;
 	};
-	const holder = data.control.findIndex(Boolean);
+	const holder = data.control;
 	const formatDetectedAt = useEventTimeFormatter();
 	return (
 		<EventCardShell>
@@ -42,8 +44,11 @@ export function ObjectiveCard(props: {
 					<b>
 						{side(0)} – {side(1)}
 					</b>
-					{holder >= 0
+					{holder !== null
 						? ` · ${holder === 0 ? "alpha" : "bravo"} in control`
+						: null}
+					{data.mode !== "SZ" && data.position !== null
+						? ` · at ${data.position > 0 ? "+" : ""}${data.position}`
 						: null}
 				</span>
 				{detectedAt ? <span>{formatDetectedAt(detectedAt)}</span> : null}

@@ -21,7 +21,7 @@ describe("canonicalMatch", () => {
 						time: 215,
 						score: [95, 53],
 						penalty: [4, null],
-						control: [true, false],
+						control: 0,
 					},
 				],
 			},
@@ -195,6 +195,34 @@ describe("mergeMatches", () => {
 		const { merged } = Matches.mergeMatches(existing, incoming);
 		expect(merged.stage).toBe(0);
 		expect(merged.teams[0].players[0]!.name).toBe("w1");
+	});
+
+	test("flips a side-swapped track position back with its sides", () => {
+		const existing = scannerMatch({ objective: null });
+		const incoming = sideSwapped(
+			scannerMatch({
+				objective: {
+					mode: "TC",
+					samples: [
+						{
+							t: 120,
+							time: 215,
+							score: [100, 60],
+							penalty: [null, null],
+							control: 1,
+							position: -30,
+						},
+					],
+				},
+			}),
+		);
+
+		const { merged } = Matches.mergeMatches(existing, incoming);
+		expect(merged.objective!.samples[0]).toMatchObject({
+			score: [100, 60],
+			control: 1,
+			position: -30,
+		});
 	});
 
 	test("aligns a side-swapped incoming match before merging", () => {

@@ -86,6 +86,43 @@ export function matchScoresFromObjective(
 	return [lastCountTaken(0), lastCountTaken(1)];
 }
 
+interface TrackCountEvent {
+	data: {
+		score: [number | null, number | null];
+		position?: number | null;
+	};
+}
+
+/**
+ * TC/RM draw no count plate for a team that never pushed past the middle, so
+ * a side's reads before its first count showed its full count, not an
+ * unreadable one. SZ events (no `position`) pass through untouched.
+ *
+ * @param sorted events sorted by `t` ascending; result is index-aligned
+ */
+export function withUnpushedTrackCounts<T extends TrackCountEvent>(
+	sorted: readonly T[],
+): T[] {
+	if (!sorted.some((event) => event.data.position !== undefined)) {
+		return [...sorted];
+	}
+	const firstRead = ([0, 1] as const).map((side) =>
+		sorted.findIndex((event) => event.data.score[side] !== null),
+	);
+	return sorted.map((event, i) => {
+		const score = event.data.score.map((value, side) => {
+			const first = firstRead[side]!;
+			return value === null && (first === -1 || i < first) ? FULL_COUNT : value;
+		}) as [number | null, number | null];
+		return { ...event, data: { ...event.data, score } };
+	});
+}
+
+/** `oklch(64% 0.16 10)` → `oklch(64% 0.16 10 / 0.55)` */
+export function withAlpha(oklchColor: string, alpha: number) {
+	return oklchColor.replace(/\)$/, ` / ${alpha})`);
+}
+
 /** Seconds formatted as m:ss, with an hours part only when needed. */
 export function formatElapsed(seconds: number): string {
 	const hours = Math.floor(seconds / 3600);

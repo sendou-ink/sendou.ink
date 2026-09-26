@@ -12,7 +12,10 @@ import type {
 	MinimapEnemy,
 	MinimapTeammate,
 } from "../../core/detectors/minimap/index";
-import type { ObjectiveData } from "../../core/detectors/objective/index";
+import type {
+	ObjectiveData,
+	TrackObjectiveData,
+} from "../../core/detectors/objective/index";
 import type { PlayerStatusData } from "../../core/detectors/objective/player-status";
 import type { StripWeaponsData } from "../../core/detectors/objective/strip-weapons";
 import type { ScoreboardData } from "../../core/detectors/scoreboard/index";
@@ -62,7 +65,7 @@ function objective(
 		time = (300 - Math.round(t)) as number | null,
 		score = [95, 53] as [number | null, number | null],
 		penalty = [null, null] as [number | null, number | null],
-		control = [true, false] as [boolean, boolean],
+		control = 0 as ObjectiveData["control"],
 		teamColor = [null, null] as ObjectiveData["teamColor"],
 	} = {},
 ): DetectedEvent {
@@ -72,6 +75,28 @@ function objective(
 		score,
 		penalty,
 		control,
+		teamColor,
+	};
+	return { type: "Objective", t, confidence: 0.9, data };
+}
+
+function trackObjective(
+	t: number,
+	{
+		mode = "TC" as TrackObjectiveData["mode"],
+		time = (300 - Math.round(t)) as number | null,
+		score = [80, 100] as [number | null, number | null],
+		control = 0 as TrackObjectiveData["control"],
+		position = 30 as number | null,
+		teamColor = [null, null] as ObjectiveData["teamColor"],
+	} = {},
+): DetectedEvent {
+	const data: TrackObjectiveData = {
+		mode,
+		time,
+		score,
+		control,
+		position,
 		teamColor,
 	};
 	return { type: "Objective", t, confidence: 0.9, data };
@@ -260,14 +285,14 @@ test("objective reads become teams-order samples on the match", () => {
 				time: 215,
 				score: [95, 53],
 				penalty: [4, null],
-				control: [true, false],
+				control: 0,
 			},
 			{
 				t: 180,
 				time: 155,
 				score: [80, 53],
 				penalty: [null, null],
-				control: [true, false],
+				control: 0,
 			},
 		],
 	});
@@ -283,8 +308,131 @@ test("a losing-side pov swaps objective samples into teams order", () => {
 		time: 180,
 		score: [53, 95],
 		penalty: [null, 4],
-		control: [false, true],
+		control: 1,
 	});
+});
+
+test("track reads become samples with the objective's position", () => {
+	const built = buildScannerMatches([
+		mapStart(0, { mode: "RM" }),
+		trackObjective(120, { control: null, position: 0, score: [null, null] }),
+		trackObjective(130, { control: 1, position: -40, score: [null, 60] }),
+		scoreboard(300, { mode: "RM" }),
+	]);
+	assert.deepEqual(built[0]!.match.objective, {
+		mode: "RM",
+		samples: [
+			{
+				t: 120,
+				time: 180,
+				score: [null, null],
+				penalty: [null, null],
+				control: null,
+				position: 0,
+			},
+			{
+				t: 130,
+				time: 170,
+				score: [null, 60],
+				penalty: [null, null],
+				control: 1,
+				position: -40,
+			},
+		],
+	});
+});
+
+test("a losing-side pov flips the track position with the sides", () => {
+	const built = buildScannerMatches([
+		mapStart(0, { mode: "TC" }),
+		trackObjective(120, { control: 0, position: 30, score: [80, 100] }),
+		scoreboard(300, { mode: "TC", povIndex: 6 }),
+	]);
+	assert.deepEqual(built[0]!.match.objective!.samples[0], {
+		t: 120,
+		time: 180,
+		score: [100, 80],
+		penalty: [null, null],
+		control: 1,
+		position: -30,
+	});
+});
+
+test("casted track swaps flip the position with the sides", () => {
+	const built = buildScannerMatches([
+		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
+		trackObjective(60, {
+			control: 0,
+			position: 20,
+			teamColor: [GREEN_INK, PURPLE_INK],
+		}),
+		// the caster specs a purple player: purple's side moves left
+		trackObjective(61, {
+			control: 1,
+			position: -25,
+			teamColor: [PURPLE_INK, GREEN_INK],
+		}),
+		minimap(90, { teamColors: [GREEN_INK, PURPLE_INK] }),
+	]);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => [
+			sample.control,
+			sample.position,
+		]),
+		[
+			[0, 20],
+			[0, 25],
+		],
+	);
+});
+
+test("an unknown-mode track match takes its mode from the checkpoint markers", () => {
+	const built = buildScannerMatches([
+		mapStart(0, { mode: null }),
+		trackObjective(60, { mode: "RM" }),
+		trackObjective(61, { mode: null, position: 31 }),
+		trackObjective(62, { mode: "RM", position: 32 }),
+		scoreboard(300, { mode: null }),
+	]);
+	assert.equal(built[0]!.match.objective!.mode, "RM");
+});
+
+test("a known TC/RM match drops SZ lookalike reads, and an SZ match track ones", () => {
+	const track = [
+		mapStart(0, { mode: "TC" }),
+		objective(60),
+		trackObjective(61),
+		scoreboard(300, { mode: "TC" }),
+	];
+	const trackBuilt = buildScannerMatches(track);
+	assert.equal(trackBuilt[0]!.match.objective!.samples[0]!.t, 61);
+	assert.deepEqual(invalidObjectiveEvents(trackBuilt), [track[1]]);
+
+	const zones = [
+		mapStart(0),
+		objective(60),
+		trackObjective(61),
+		scoreboard(300),
+	];
+	const zonesBuilt = buildScannerMatches(zones);
+	assert.equal(zonesBuilt[0]!.match.objective!.samples[0]!.t, 60);
+	assert.deepEqual(invalidObjectiveEvents(zonesBuilt), [zones[2]]);
+});
+
+test("an unknown-mode match builds from its majority overlay and deletes nothing", () => {
+	const events = [
+		mapStart(0, { mode: null }),
+		objective(60),
+		trackObjective(61),
+		trackObjective(62, { position: 35 }),
+		scoreboard(300, { mode: null }),
+	];
+	const built = buildScannerMatches(events);
+	assert.deepEqual(
+		built[0]!.match.objective!.samples.map((sample) => sample.t),
+		[61, 62],
+	);
+	assert.deepEqual(invalidObjectiveEvents(built), []);
 });
 
 test("a known non-SZ match drops its objective reads", () => {
@@ -317,20 +465,20 @@ test("casted plate swaps are reoriented by team ink color", () => {
 		minimap(0, { teamColors: [GREEN_INK, PURPLE_INK] }),
 		objective(60, {
 			score: [80, 90],
-			control: [true, false],
+			control: 0,
 			teamColor: [GREEN_INK, PURPLE_INK],
 		}),
 		// the caster specs a purple player: purple's plate moves left
 		objective(120, {
 			score: [90, 75],
 			penalty: [4, null],
-			control: [true, false],
+			control: 0,
 			teamColor: [PURPLE_INK, GREEN_INK],
 		}),
 		// colors unreadable: the previous arrangement carries over
 		objective(125, {
 			score: [85, 75],
-			control: [true, false],
+			control: 0,
 			teamColor: [null, null],
 		}),
 		minimap(180),
@@ -355,11 +503,7 @@ test("casted plate swaps are reoriented by team ink color", () => {
 	);
 	assert.deepEqual(
 		samples.map((sample) => sample.control),
-		[
-			[true, false],
-			[false, true],
-			[false, true],
-		],
+		[0, 1, 1],
 	);
 });
 
@@ -369,14 +513,14 @@ test("minimap ink colors anchor a bravo-first cluster into teams order", () => {
 		// every read had purple (bravo) on the left plate
 		objective(60, {
 			score: [90, 80],
-			control: [false, true],
+			control: 1,
 			teamColor: [PURPLE_INK, GREEN_INK],
 		}),
 		minimap(120),
 	]);
 	const samples = built[0]!.match.objective!.samples;
 	assert.deepEqual(samples[0]!.score, [80, 90]);
-	assert.deepEqual(samples[0]!.control, [true, false]);
+	assert.equal(samples[0]!.control, 0);
 });
 
 test("without a pov the side whose count got lower is the winner side", () => {

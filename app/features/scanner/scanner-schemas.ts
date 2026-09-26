@@ -57,7 +57,7 @@ const scannerMatchTeamSchema = v.object({
 
 const teamIndexSchema = v.union([v.literal(0), v.literal(1)]);
 
-/** counters change at most 1/s, so a match yields a few hundred samples */
+/** counters (and a TC/RM track's position) change at most 1/s, so a match yields a few hundred samples */
 const MAX_OBJECTIVE_SAMPLES = 1000;
 
 const scannerMatchObjectiveSampleSchema = v.object({
@@ -65,11 +65,14 @@ const scannerMatchObjectiveSampleSchema = v.object({
 	time: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	score: v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
 	penalty: v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
-	control: v.tuple([v.boolean(), v.boolean()]),
+	control: v.nullable(teamIndexSchema),
+	position: v.optional(
+		v.nullable(v.pipe(v.number(), v.minValue(-100), v.maxValue(100))),
+	),
 });
 
 const scannerMatchObjectiveSchema = v.object({
-	mode: v.literal("SZ"),
+	mode: v.nullable(v.picklist(["SZ", "TC", "RM"])),
 	samples: v.pipe(
 		v.array(scannerMatchObjectiveSampleSchema),
 		v.maxLength(MAX_OBJECTIVE_SAMPLES),

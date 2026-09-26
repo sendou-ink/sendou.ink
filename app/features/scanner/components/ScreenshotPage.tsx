@@ -884,13 +884,17 @@ export function ScreenshotPage() {
 									<Stat label="score">
 										{data.score[0] ?? "?"}–{data.score[1] ?? "?"}
 									</Stat>
-									<Stat label="penalty">
-										{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
-									</Stat>
+									{data.mode === "SZ" ? (
+										<Stat label="penalty">
+											{data.penalty[0] ?? "—"} / {data.penalty[1] ?? "—"}
+										</Stat>
+									) : (
+										<Stat label="position">{data.position ?? "—"}</Stat>
+									)}
 									<Stat label="control">
-										{data.control[0]
+										{data.control === 0
 											? "left"
-											: data.control[1]
+											: data.control === 1
 												? "right"
 												: "none"}
 									</Stat>

@@ -161,7 +161,8 @@ function canonicalObjective(
 			time: sample.time,
 			score: [sample.score[0], sample.score[1]],
 			penalty: [sample.penalty[0], sample.penalty[1]],
-			control: [sample.control[0], sample.control[1]],
+			control: sample.control,
+			...(sample.position !== undefined ? { position: sample.position } : null),
 		})),
 	};
 }
@@ -294,7 +295,11 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							...sample,
 							score: [sample.score[1], sample.score[0]],
 							penalty: [sample.penalty[1], sample.penalty[0]],
-							control: [sample.control[1], sample.control[0]],
+							control:
+								sample.control === null ? null : sample.control === 0 ? 1 : 0,
+							...(sample.position != null
+								? { position: 0 - sample.position }
+								: null),
 						})),
 					},
 		playerStatus:

@@ -40,10 +40,15 @@ export interface ScannerMatchObjectiveSample {
 	time: number | null;
 	/** displayed count per team, in `teams` order; null = unreadable */
 	score: [number | null, number | null];
-	/** penalty pill value per team; null = no pill (or unreadable) */
+	/** penalty pill value per team; null = no pill (or unreadable); always null on TC/RM */
 	penalty: [number | null, number | null];
-	/** which team held the objective at the read */
-	control: [boolean, boolean];
+	/** which team held the objective at the read, in `teams` order; null = neither */
+	control: 0 | 1 | null;
+	/**
+	 * TC/RM only: the tower / Rainmaker along its track, -100..100 — positive
+	 * toward the end `teams[0]` pushes to (its progress); null = icon unread
+	 */
+	position?: number | null;
 }
 
 /**
@@ -53,7 +58,11 @@ export interface ScannerMatchObjectiveSample {
  * observed (capture gap, covered HUD): render it as unknown, don't interpolate.
  */
 export interface ScannerMatchObjective {
-	mode: "SZ";
+	/**
+	 * the counter's mode; null on a TC/RM track whose mode neither the match
+	 * nor the checkpoint markers told
+	 */
+	mode: "SZ" | "TC" | "RM" | null;
 	samples: ScannerMatchObjectiveSample[];
 }
 

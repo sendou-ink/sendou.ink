@@ -49,8 +49,13 @@ export interface ObjectiveTimelineSample {
 	score: [number | null, number | null];
 	/** penalty pill value per team; null = no pill (or unreadable) */
 	penalty: [number | null, number | null];
-	/** which team held the objective at the read */
-	control: [boolean, boolean];
+	/** which team held the objective at the read; null = neither */
+	control: 0 | 1 | null;
+	/**
+	 * TC/RM: the objective along its track, -100..100, positive toward the end
+	 * alpha pushes to; absent on SZ, null = unread
+	 */
+	position?: number | null;
 }
 
 export interface ObjectiveTimelineEvent {
@@ -319,7 +324,7 @@ export function ObjectiveTimeline({
 													value: penalty[side],
 												})
 											: null,
-										control[side]
+										control === side
 											? t("common:objectiveTimeline.inControl")
 											: null,
 									]
@@ -446,7 +451,7 @@ function controlRuns(
 	let current: { start: number; end: number } | null = null;
 	for (const [i, event] of sorted.entries()) {
 		const inLane =
-			event.data.control[side] || sorted[i - 1]?.data.control[side];
+			event.data.control === side || sorted[i - 1]?.data.control === side;
 		if (inLane) {
 			current ??= { start: event.t, end: event.t };
 			current.end = event.t;

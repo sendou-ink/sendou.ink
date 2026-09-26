@@ -238,8 +238,10 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 		case OBJECTIVE_EVENT_TYPE: {
 			const d = event.data as ObjectiveData;
 			const sideText = (side: 0 | 1) =>
-				`${d.score[side] ?? "?"}${d.penalty[side] !== null ? ` (+${d.penalty[side]})` : ""}${d.control[side] ? " ctrl" : ""}`;
+				`${d.score[side] ?? "?"}${d.mode === "SZ" && d.penalty[side] !== null ? ` (+${d.penalty[side]})` : ""}${d.control === side ? " ctrl" : ""}`;
 			const clock = d.time === null ? "" : `${formatClock(d.time)} · `;
+			const position =
+				d.mode !== "SZ" && d.position !== null ? ` @ ${d.position}` : "";
 			return [
 				...base,
 				"",
@@ -251,7 +253,7 @@ function eventCells(event: CsvEvent, originT: number): CsvCell[] {
 				"",
 				"",
 				"",
-				`${clock}${sideText(0)} vs ${sideText(1)}`,
+				`${clock}${sideText(0)} vs ${sideText(1)}${position}`,
 				"",
 				"",
 			];

@@ -241,8 +241,9 @@ sequenceDiagram
   `scoreboard-battle-log/detector.ts` reads it), `scoreboard-own` (personal results), `death`
   (respawn overlay), `map-start` (match intro), `minimap` (in-match overlay
   + casted 8-player spectator variant), `objective` (ranked counter overlay:
-  counts, penalties, holder, match timer — a mode-discriminated union with
-  only the SZ member so far), `kill` (the "Splatted <name>!" feed
+  counts, penalties, holder, match timer — a mode-discriminated union: SZ
+  plates, and the Tower Control / Rainmaker track, see below; Clam Blitz is
+  not parsed), `kill` (the "Splatted <name>!" feed
   bottom-center). The feed is the POV player's — on the SWS26 broadcast the
   specced player's, so a cast's kills follow camera swaps. One `Kill` event
   per frame carries the whole visible stack newest-first, up to four rows,
@@ -326,13 +327,15 @@ sequenceDiagram
   control, the digit ink otherwise): casted footage keeps the specced
   player's team on the left plate, so the builder orients samples by ink
   hue and anchors them to `teams` order via the minimap sub-tile colors
-  (casts never show a results screen). Reads grouping into a match
-  whose detected mode is not SZ are lookalike misreads: the builder nulls
-  that match's `objective` and callers discard the events
-  (`invalidObjectiveEvents`; Live also stops collecting once a MapStart
-  reveals a non-SZ mode). PlayerStatus reads follow the objective pipeline
-  wholesale: same replay-wipe anchor, cast orientation inherited from the
-  nearest counter read, nulled together on non-SZ matches, and rendered as
+  (casts never show a results screen). Reads of the overlay the match's
+  mode doesn't draw (SZ plates on TC/RM, a track on SZ) are lookalike
+  misreads the builder leaves out, and on Turf War / Clam Blitz every read
+  is: the builder nulls that match's `objective` and callers discard the
+  events (`invalidObjectiveEvents`; Live also stops collecting once a
+  MapStart reveals such a mode). A match with no mode read builds from its
+  majority overlay and discards nothing. PlayerStatus reads follow the
+  objective pipeline wholesale: same replay-wipe anchor, cast orientation
+  inherited from the nearest counter read, nulled together on TW/CB matches, and rendered as
   per-player splat/special bands (`~/components/PlayerStatusTimeline.tsx`,
   shared with the match page) above the objective chart. Minimap reads
   feed the same samples: every card/row carries `dead` (respawn
@@ -575,3 +578,30 @@ finished labeling work can be handed over as a reviewable link, e.g.
 `/scanner?view=fixtures&q=gauge-overlay,ready-trough`. Fixtures are committed as plain blobs
 (no LFS for now); keep additions deliberate — fixture IO is isolated in
 `node/fixtures.ts` if a retreat to LFS/an external corpus is needed.
+
+## Tower Control / Rainmaker track
+
+Both modes draw one overlay (`core/detectors/objective/track.ts`, geometry in
+`rois.ts`): a dotted track under the icon strip, ends x514..1405 at y155,
+with the objective's icon riding it and a "Remaining" plate per team hanging
+under the furthest point that team pushed to — so a team's plate always sits
+on the half it pushes into, and the left team pushes right. The gate tells the
+track from the SZ plates by the dots, which sit at a fixed pitch and phase in
+every lobby (a comb projected at that phase). The icon is scored
+procedurally (held: team-ink disc around a white glyph; neutral: white ring
+around an olive disc), its x mapped linearly to `position` -100..100; the
+holder is the icon's ink against each team's ink off its own track end (end
+marker plus first dots, which the backdrop can't drown like the strip); the
+counts are every confident digit run in the plate band, each assigned by the
+plate ink around it (no label is read: localized). The checkpoint markers
+tell the modes apart (TC black-framed squares, RM pedestals); when neither
+reads, the read's `mode` is null and the match's mode decides. `control` is
+the holder's side (`0 | 1 | null`) on every overlay — in SZ too, where a
+plate fills only while its team holds every zone. Samples add `position`,
+positive toward the end `teams[0]` pushes to: every side swap (cast
+orientation, winner-first ingest, display order) negates it and flips
+`control`. A team with no plate yet has
+never pushed past the middle: the charts show its full count until its
+first plate read (`withUnpushedTrackCounts`). Fixtures: `objective/tower-*`,
+`objective/rainmaker-*` (tower_control / rainmaker VoDs plus TC/RM death
+frames symlinked).

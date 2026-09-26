@@ -143,13 +143,22 @@ function buildExpectedJson(
 		return `${JSON.stringify(
 			{
 				event: eventType,
-				data: {
-					mode: objective.mode,
-					time: objective.time,
-					score: objective.score,
-					penalty: objective.penalty,
-					control: objective.control,
-				},
+				data:
+					objective.mode === "SZ"
+						? {
+								mode: objective.mode,
+								time: objective.time,
+								score: objective.score,
+								penalty: objective.penalty,
+								control: objective.control,
+							}
+						: {
+								mode: objective.mode,
+								time: objective.time,
+								score: objective.score,
+								control: objective.control,
+								position: objective.position,
+							},
 			},
 			null,
 			2,

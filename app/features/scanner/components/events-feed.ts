@@ -246,8 +246,9 @@ async function rawSessions(events: StoredEvent[]): Promise<LiveSession[]> {
 			(a, b) => a.t - b.t || (a.id ?? 0) - (b.id ?? 0),
 		);
 		let built = buildScannerMatches(sorted);
-		// objective reads grouped into a known non-SZ match slipped past the live
-		// block (e.g. the mode read arrived after them) — delete them
+		// objective reads grouped into a match whose mode rules their overlay out
+		// slipped past the live block (e.g. the mode read arrived after them) —
+		// delete them
 		const invalid = invalidObjectiveEvents(built);
 		if (invalid.length > 0) {
 			await deleteEvents(

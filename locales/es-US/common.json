@@ -217,6 +217,7 @@
 	"objectiveTimeline.timeLeft": "Quedan {{time}}",
 	"objectiveTimeline.penalty": "+{{value}} de penalización",
 	"objectiveTimeline.inControl": "Con el control",
+	"objectiveTimeline.pushed": "",
 	"playerStatusTimeline.splatted": "Reventado",
 	"playerStatusTimeline.specialReady": "Especial listo",
 	"playerStatusTimeline.kill": "",

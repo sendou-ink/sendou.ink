@@ -217,6 +217,7 @@
 	"objectiveTimeline.timeLeft": "{{time}} left",
 	"objectiveTimeline.penalty": "+{{value}} penalty",
 	"objectiveTimeline.inControl": "In control",
+	"objectiveTimeline.pushed": "Pushed {{value}}%",
 	"playerStatusTimeline.splatted": "Splatted",
 	"playerStatusTimeline.specialReady": "Special ready",
 	"playerStatusTimeline.kill": "Kill",

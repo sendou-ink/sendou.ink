@@ -77,7 +77,8 @@ interface ExpectedScoreboard {
 		| "none";
 	data?: {
 		lobby?: ScannerLobby;
-		mode?: ModeShort;
+		/** Objective: null = a TC/RM track whose checkpoint markers could not tell */
+		mode?: ModeShort | null;
 		stage?: StageId;
 		/** informational for the human corrector; tests compare `stage` */
 		stageLabel?: string;
@@ -109,8 +110,10 @@ interface ExpectedScoreboard {
 		score?: [number | null, number | null];
 		/** Objective only: penalty pill value per team; null = no pill */
 		penalty?: [number | null, number | null];
-		/** Objective only: which team currently holds the objective */
-		control?: [boolean, boolean];
+		/** Objective only: which team currently holds the objective; null = neither */
+		control?: 0 | 1 | null;
+		/** Objective TC/RM only: the icon along the track, -100 (left end) .. 100 (right end); null = no icon */
+		position?: number | null;
 		/** PlayerStatus only: special held per slot, [left team, right team] */
 		special?: [boolean[], boolean[]];
 		/** PlayerStatus only: splatted per slot, [left team, right team] */

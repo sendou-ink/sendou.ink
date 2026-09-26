@@ -368,13 +368,18 @@ function ObjectiveExpected(props: {
 	data: ExpectedData;
 }) {
 	const { data } = props;
+	if (data.position !== undefined) return <TrackObjectiveExpected {...props} />;
 	return (
 		<div className={styles.rich}>
 			<div className={styles.richStats}>
 				<span>
 					control{" "}
 					<b>
-						{data.control?.[0] ? "left" : data.control?.[1] ? "right" : "none"}
+						{data.control === 0
+							? "left"
+							: data.control === 1
+								? "right"
+								: "none"}
 					</b>
 				</span>
 				<span>
@@ -399,6 +404,60 @@ function ObjectiveExpected(props: {
 						<figcaption>right count {data.score?.[1] ?? "?"}</figcaption>
 					</figure>
 				</div>
+			) : null}
+		</div>
+	);
+}
+
+/** TC/RM: the track with its icon and the plate band under it, whose plates slide with the pushes. */
+function TrackObjectiveExpected(props: {
+	frame: HTMLCanvasElement | null;
+	data: ExpectedData;
+}) {
+	const { data } = props;
+	return (
+		<div className={styles.rich}>
+			<div className={styles.richStats}>
+				<span>
+					mode <b>{data.mode ?? "?"}</b>
+				</span>
+				<span>
+					timer <b>{formatTimer(data.time ?? null)}</b>
+				</span>
+				<span>
+					control{" "}
+					<b>
+						{data.control === 0
+							? "left"
+							: data.control === 1
+								? "right"
+								: "none"}
+					</b>
+				</span>
+				<span>
+					position <b>{data.position ?? "—"}</b>
+				</span>
+				<span>
+					counts{" "}
+					<b>
+						{data.score?.[0] ?? "—"} / {data.score?.[1] ?? "—"}
+					</b>
+				</span>
+			</div>
+			{props.frame ? (
+				<RoiCrop
+					frame={props.frame}
+					roi={{
+						x: objective.TRACK_PLATE_DIGIT_ROI.x,
+						y: objective.TRACK_Y - 30,
+						w: objective.TRACK_PLATE_DIGIT_ROI.w,
+						h:
+							objective.TRACK_PLATE_DIGIT_ROI.y +
+							objective.TRACK_PLATE_DIGIT_ROI.h -
+							(objective.TRACK_Y - 30),
+					}}
+					scale={0.75}
+				/>
 			) : null}
 		</div>
 	);

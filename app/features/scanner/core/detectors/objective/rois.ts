@@ -460,3 +460,134 @@ export const STATUS_DPAD_PROBES_EVEN: readonly Roi[] = [
 export const STATUS_WHITE_MIN_VALUE = 215;
 export const STATUS_WHITE_MAX_SPREAD = 40;
 export const STATUS_CAST_MIN_DPAD_WHITE = 0.25;
+
+// Tower Control / Rainmaker track overlay (track.ts): a dotted track under the
+// icon strip, end to end x514..1405 at y155 in both modes, with the objective's
+// icon riding it and each team's "Remaining" plate hanging under the point its
+// push reached (so a side's plate always sits on the half it pushes into:
+// the left team pushes right). Calibrated on the tower_control / rainmaker VoDs
+// (720p upscaled) and the TC/RM death fixtures (German, lime/magenta,
+// yellow/purple lobbies).
+
+export const TRACK_Y = 155;
+export const TRACK_CENTER_X = 959.5;
+export const TRACK_HALF_LENGTH = 445.5;
+
+/**
+ * Track dots sit at a fixed pitch and phase in every attested lobby and mode
+ * (DFT peak 14.10-14.15 px, dot centers x528.7 + k·14.13), whatever markers
+ * cover some of them.
+ */
+export const TRACK_DOT_PITCH = 14.13;
+export const TRACK_FIRST_DOT_X = 528.7;
+export const TRACK_COMB_SPAN: readonly [number, number] = [520, 1400];
+/** Rows above/below the line a dot stands out from: past its ~9px diameter. */
+export const TRACK_COMB_OFFSET_Y = 9;
+
+/**
+ * Comb projection at the dot phase: gameplay with the track reads >=17 (a
+ * dark backdrop leaves little between dots and ground), every other frame
+ * <=7 (SZ HUD, lobby, results, the intro).
+ */
+export const GATE_TRACK_MIN_COMB = 11;
+
+/**
+ * Held icon: team-ink disc (outer radius ~18) with a white squid glyph filling
+ * r7-11. Neutral (the anchor badge, dropped Rainmaker / idle tower): white
+ * ring r18-21 around an olive disc r13-16.
+ */
+export const TRACK_ICON_SPAN: readonly [number, number] = [505, 1415];
+export const TRACK_ICON_RING_RADII = [15.5, 16.5, 17.5] as const;
+export const TRACK_ICON_CORE_RADII = [8, 9.5, 11] as const;
+export const TRACK_NEUTRAL_RING_RADII = [18.5, 19.5, 20.5] as const;
+export const TRACK_NEUTRAL_DISC_RADII = [13.5, 14.5, 15.5] as const;
+export const TRACK_ICON_Y_JITTER = 1;
+
+/**
+ * Icon pixel classes: saturated ink / white glyph / the neutral badge's olive
+ * (~130,133,30 in every lobby). Pale sky (~188,220,252) must be neither ink nor
+ * white, or a sky backdrop scores as the neutral badge's white ring.
+ */
+export const TRACK_INK_MIN_SPREAD = 80;
+export const TRACK_INK_MIN_VALUE = 90;
+export const TRACK_WHITE_MIN_VALUE = 170;
+export const TRACK_WHITE_MAX_SPREAD = 55;
+/** Olive is duller than team ink: compressed footage reads it at spread ~60. */
+export const TRACK_OLIVE_HUE_RANGE: readonly [number, number] = [40, 75];
+export const TRACK_OLIVE_MIN_SPREAD = 45;
+export const TRACK_OLIVE_MAX_VALUE = 190;
+
+/**
+ * Checkpoint markers tell the modes apart: TC squares (31 or 40px, ~3px black
+ * frame, pale ink quadrants), RM pedestals (white base ~47px wide at y169, white cap y133-141, ink
+ * body above). Squares are scored off the ends (both modes draw rings there);
+ * pedestals up to them, as RM's goal pedestals replace the end rings.
+ */
+export const TRACK_SQUARE_SPAN: readonly [number, number] = [545, 1375];
+export const TRACK_PEDESTAL_SPAN: readonly [number, number] = [505, 1415];
+export const TRACK_SQUARE_SIZES = [31, 40] as const;
+export const TRACK_PEDESTAL = {
+	baseY: 169,
+	baseHalfWidth: 18,
+	bodyY: 160,
+	capY: 137,
+	capHalfWidth: 10,
+};
+export const TRACK_MARKER_MIN_SCORE = 0.75;
+export const TRACK_MARKER_ICON_CLEARANCE = 30;
+export const TRACK_DARK_MAX_VALUE = 60;
+
+/** Shape score (ring fraction × core fraction) an icon must reach. */
+export const TRACK_ICON_MIN_SCORE = 0.5;
+
+/** A held icon's ink hue must sit this close to its team's strip hue. */
+export const TRACK_ICON_MAX_TEAM_HUE_DIST = 40;
+
+/**
+ * "Remaining" plates: localized label over ~35px white digits with a dark
+ * outline; digits sit y220-255 wherever the plate slides. The band spans every
+ * plate position (centers x514..1405, ~90px wide).
+ */
+export const TRACK_PLATE_DIGIT_ROI: Roi = { x: 460, y: 214, w: 1000, h: 48 };
+export const TRACK_PLATE_TEXT_HEIGHTS = [33, 36] as const;
+export const TRACK_PLATE_BIN_THRESHOLD = 190;
+export const TRACK_PLATE_DIGIT_MIN_CONF = 0.75;
+/** Plate ink sampled beside a digit run: this far out and this tall. */
+export const TRACK_PLATE_INK_PAD_X = 10;
+/**
+ * A plate sits on the half its team pushes into; the tip can reach just past
+ * the center when a side's record is still ~100.
+ */
+export const TRACK_PLATE_CENTER_SLACK = 30;
+
+/**
+ * Each team's ink off its own end of the track: the end marker's core (TC
+ * ring center, RM pedestal body) and the first four dots are always drawn in
+ * the ink of the team defending that end. Kept tight: the backdrop around them
+ * is often inked too. The icon only covers them when pushed there by the other
+ * team, so they are skipped while it is within reach.
+ */
+export const TRACK_END_INK_ROIS: readonly [readonly Roi[], readonly Roi[]] =
+	(() => {
+		const dot = (k: number): Roi => ({
+			x: Math.round(TRACK_FIRST_DOT_X + k * TRACK_DOT_PITCH) - 2,
+			y: TRACK_Y - 2,
+			w: 4,
+			h: 4,
+		});
+		const lastDot = Math.floor((1400 - TRACK_FIRST_DOT_X) / TRACK_DOT_PITCH);
+		return [
+			[{ x: 508, y: 149, w: 12, h: 12 }, ...[0, 1, 2, 3].map(dot)],
+			[
+				{ x: 1399, y: 149, w: 12, h: 12 },
+				...[0, 1, 2, 3].map((k) => dot(lastDot - k)),
+			],
+		];
+	})();
+export const TRACK_END_INK_ICON_CLEARANCE = 25;
+
+/** Fallback: the icon strip (team-ink squid plates) per side; splats and backdrop can drown it. */
+export const TRACK_STRIP_INK_ROIS: readonly [Roi, Roi] = [
+	{ x: 520, y: 40, w: 370, h: 55 },
+	{ x: 1030, y: 40, w: 370, h: 55 },
+];

@@ -201,7 +201,7 @@ export interface IngestedScoreboardData {
 	scores: [number | null, number | null];
 	/** in scoreboard order: rows 0-3 winning team, rows 4-7 losing team */
 	players: IngestedScoreboardPlayer[];
-	/** objective-counter progress, per-team values [winner, loser], `t` in seconds since the game's first read (the source video is not stored). Absent when no counter was read. */
+	/** objective-counter progress winner-first (per-team values [winner, loser], `control` 0 = winner), `t` in seconds since the game's first read (the source video is not stored). Absent when no counter was read. */
 	objective?: ScannerMatchObjective;
 	/** per-player special/death samples, teams winner-first, `t` on the same origin as `objective`. Absent when the icon strip was never read. */
 	playerStatus?: ScannerMatchPlayerStatus;
@@ -373,7 +373,21 @@ function winnerFirstObjective(
 			time: sample.time,
 			score: winnerFirst(sample.score),
 			penalty: winnerFirst(sample.penalty),
-			control: winnerFirst(sample.control),
+			control:
+				winner === 0 || sample.control === null
+					? sample.control
+					: sample.control === 0
+						? 1
+						: 0,
+			// a track position is measured toward the end the first side pushes to
+			...(sample.position !== undefined
+				? {
+						position:
+							winner === 1 && sample.position !== null
+								? 0 - sample.position
+								: sample.position,
+					}
+				: null),
 		})),
 	};
 }

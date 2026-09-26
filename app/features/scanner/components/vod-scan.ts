@@ -518,7 +518,7 @@ export async function startVodScan(
 	}
 }
 
-/** Objective reads that grouped into a known non-SZ match (misreads) are dropped. */
+/** Objective reads that grouped into a match whose mode rules their overlay out (misreads) are dropped. */
 function withoutInvalidObjectives(events: ScanEvent[]): ScanEvent[] {
 	const invalid = new Set(invalidObjectiveEvents(buildScannerMatches(events)));
 	return invalid.size > 0 ? events.filter((e) => !invalid.has(e)) : events;

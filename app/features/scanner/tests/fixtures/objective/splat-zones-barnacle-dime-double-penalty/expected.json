@@ -5,7 +5,7 @@
 		"time": 157,
 		"score": [2, 15],
 		"penalty": [64, 65],
-		"control": [true, false]
+		"control": 0
 	},
 	"options": {
 		"notes": "Penalty pills under both plates at once; alpha (bright green fill) in control."

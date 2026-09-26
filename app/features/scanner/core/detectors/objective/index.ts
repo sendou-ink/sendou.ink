@@ -1,13 +1,16 @@
 /**
- * ObjectiveDetector: parses the ranked counter overlay top-center — count plates,
- * penalty pills, control (the controlling plate keeps its team-color fill, the
- * other is near-black with digits in team ink) and the M:SS timer. Digits read
- * as the trailing digit run (banner.ts) under several channel extractions (ink
- * on black needs the brightest channel, ink on a team fill the darkest); best
- * read wins. No readable count on either side = lookalike, emits nothing.
- * `ObjectiveData` is discriminated on `mode`; only SZ exists until TC/RM/CB
- * fixtures. Each read also emits a PlayerStatus event (player-status.ts) off
- * the same frame, paired downstream by the shared timer value.
+ * ObjectiveDetector: parses the ranked counter overlay top-center. Splat Zones
+ * draws count plates, penalty pills, control (the controlling plate keeps its
+ * team-color fill, the other is near-black with digits in team ink) and the
+ * M:SS timer. Digits read as the trailing digit run (banner.ts) under several
+ * channel extractions (ink on black needs the brightest channel, ink on a team
+ * fill the darkest); best read wins. No readable count on either side =
+ * lookalike, emits nothing. Tower Control and Rainmaker share a different
+ * overlay, a track with the objective riding it (track.ts), which the gate
+ * tells apart by the track's dot comb (`variant`). `ObjectiveData` is
+ * discriminated on `mode`; Clam Blitz is not parsed. Each read also emits a
+ * PlayerStatus event (player-status.ts) off the same frame, paired downstream
+ * by the shared timer value.
  */
 import { type Mat, minMaxLoc } from "../../cv";
 import { type GlyphSet, recognizeTextSteps, scaleGlyphSet } from "../../glyphs";
@@ -36,6 +39,7 @@ import {
 	CONTROL_PLATE_MIN_SATURATION,
 	GATE_PLATE_MAX_STD,
 	GATE_SCORE_MIN_MAX_BRIGHTNESS,
+	GATE_TRACK_MIN_COMB,
 	PENALTY_BIN_THRESHOLD,
 	PENALTY_PROBE_MAX_MEAN,
 	PENALTY_PROBE_MAX_STD,
@@ -50,11 +54,13 @@ import {
 	SCORE_TEXT_HEIGHTS,
 	STATUS_LAYOUT_STICKY_MAX_GAP_S,
 	STRIP_WEAPON_SAMPLE_INTERVAL,
+	TRACK_PLATE_TEXT_HEIGHTS,
 } from "./rois";
 import { parseStripWeaponsSteps, type StripWeaponsData } from "./strip-weapons";
 import { readMatchTimerSteps, timerBoxChecks, timerGlyphSets } from "./timer";
+import { readTrackSteps, trackComb } from "./track";
 
-export type ObjectiveData = SplatZonesObjectiveData;
+export type ObjectiveData = SplatZonesObjectiveData | TrackObjectiveData;
 
 export interface SplatZonesObjectiveData {
 	mode: "SZ";
@@ -64,8 +70,11 @@ export interface SplatZonesObjectiveData {
 	score: [number | null, number | null];
 	/** penalty pill value per team; null = no pill (or unreadable) */
 	penalty: [number | null, number | null];
-	/** which team currently holds the zone (team-color plate fill) */
-	control: [boolean, boolean];
+	/**
+	 * which team is in control (its plate fills team color: it holds every
+	 * zone); null = neither
+	 */
+	control: 0 | 1 | null;
 	/**
 	 * mean team-ink RGB per side off the plate (fill in control, digit ink
 	 * otherwise); null on too little ink. The stable team identity on casted
@@ -74,28 +83,62 @@ export interface SplatZonesObjectiveData {
 	teamColor: [InkRgb | null, InkRgb | null];
 }
 
+/** Tower Control / Rainmaker: one overlay, told apart only by its checkpoint markers. */
+export interface TrackObjectiveData {
+	/** off the checkpoint markers; null when none read (the match's mode decides) */
+	mode: "TC" | "RM" | null;
+	/** match timer seconds; null = unreadable */
+	time: number | null;
+	/**
+	 * displayed "Remaining" count per team, [alpha, bravo]; null = no plate
+	 * read (a team that never pushed past the middle shows none: 100)
+	 */
+	score: [number | null, number | null];
+	/** which team holds the objective (the icon's ink); null = neutral */
+	control: 0 | 1 | null;
+	/**
+	 * the objective along the track, -100 (left end) .. 100 (right end): the
+	 * left team pushes right, so positive is alpha's progress; null = no icon
+	 */
+	position: number | null;
+	/** each team's ink off its own end of the track, for cast orientation */
+	teamColor: [InkRgb | null, InkRgb | null];
+}
+
 export const OBJECTIVE_EVENT_TYPE = "Objective";
+
+/** Gate variants: which overlay the parse reads. */
+const ZONES_VARIANT = "zones";
+const TRACK_VARIANT = "track";
 
 /** How often the counter is worth checking (it changes at most 1/s). */
 const CHECK_INTERVAL_SECONDS = 1;
 
 /**
  * Timeline content guard: reads merge only with the same state so every tick/
- * penalty/control change is its own event. `time` (ticks every second) and
- * `teamColor` (pixel means jitter) are deliberately not compared.
+ * penalty/control/position change is its own event. `time` (ticks every
+ * second), `teamColor` (pixel means jitter) and a track read's marker `mode`
+ * (markers come and go as checkpoints fall) are deliberately not compared.
  */
 export function sameObjectiveData(a: unknown, b: unknown): boolean {
 	const da = a as ObjectiveData;
 	const db = b as ObjectiveData;
-	return (
-		da.mode === db.mode &&
-		da.score[0] === db.score[0] &&
-		da.score[1] === db.score[1] &&
-		da.penalty[0] === db.penalty[0] &&
-		da.penalty[1] === db.penalty[1] &&
-		da.control[0] === db.control[0] &&
-		da.control[1] === db.control[1]
-	);
+	if (
+		da.score[0] !== db.score[0] ||
+		da.score[1] !== db.score[1] ||
+		da.control !== db.control
+	) {
+		return false;
+	}
+	if (da.mode === "SZ" || db.mode === "SZ") {
+		return (
+			da.mode === "SZ" &&
+			db.mode === "SZ" &&
+			da.penalty[0] === db.penalty[0] &&
+			da.penalty[1] === db.penalty[1]
+		);
+	}
+	return da.position === db.position;
 }
 
 interface SideRead {
@@ -128,6 +171,14 @@ export function createObjectiveDetector(
 			)
 		: null;
 	const timerSets = timerGlyphSets(resources);
+	const trackSets: GlyphSet[] = resources.paintDigits
+		? TRACK_PLATE_TEXT_HEIGHTS.map((h) =>
+				scaleGlyphSet(
+					resources.paintDigits!,
+					h / resources.paintDigits!.height,
+				),
+			)
+		: [];
 
 	/** Mean and standard deviation of a grayscale ROI. */
 	function meanStd(gray: Mat, roi: Roi): { mean: number; std: number } {
@@ -153,17 +204,26 @@ export function createObjectiveDetector(
 		return maxVal >= GATE_SCORE_MIN_MAX_BRIGHTNESS;
 	}
 
+	/** The timer box, then the track's dot comb (TC/RM) or the SZ plates. */
 	function gate(frame: Mat): GateResult {
 		const gray = frameGray(frame);
+		const timerChecks = timerBoxChecks(gray);
+		if (timerChecks.every(Boolean) && trackComb(frame) >= GATE_TRACK_MIN_COMB) {
+			return { pass: true, score: 1, variant: TRACK_VARIANT };
+		}
 		const checks = [
-			...timerBoxChecks(gray),
+			...timerChecks,
 			plateProbeOk(gray, PLATE_PROBE_ROIS[0]),
 			plateProbeOk(gray, PLATE_PROBE_ROIS[1]),
 			scoreInkOk(frame, SCORE_ROIS[0]),
 			scoreInkOk(frame, SCORE_ROIS[1]),
 		];
 		const passed = checks.filter(Boolean).length;
-		return { pass: passed === checks.length, score: passed / checks.length };
+		return {
+			pass: passed === checks.length,
+			score: passed / checks.length,
+			variant: ZONES_VARIANT,
+		};
 	}
 
 	/** Best trailing-digit read across channel extractions, thresholds and glyph sizes; every combination reads in one lockstep. */
@@ -285,11 +345,60 @@ export function createObjectiveDetector(
 	function* parseSteps(
 		frame: Mat,
 		t: number,
-		_gate: GateResult | undefined,
+		gateResult: GateResult | undefined,
 		speculative: boolean,
 	): MatchSteps<
 		DetectedEvent<ObjectiveData | PlayerStatusData | StripWeaponsData>[]
 	> {
+		const variant = (gateResult ?? gate(frame)).variant;
+		const counter =
+			variant === TRACK_VARIANT
+				? yield* parseTrackSteps(frame, speculative)
+				: yield* parseZonesSteps(frame, speculative);
+		if (!counter) return [];
+		const timeValue = counter.event.data.time;
+
+		const playerStatus = parsePlayerStatus(
+			frame,
+			t,
+			timeValue,
+			lastStatus && t - lastStatus.t <= STATUS_LAYOUT_STICKY_MAX_GAP_S
+				? lastStatus.layout
+				: undefined,
+		);
+		lastStatus = { layout: playerStatus.data.layout, t };
+
+		// sampled slot-identity evidence for the strip → scoreboard-row assignment;
+		// identities are fixed so every read would re-measure at full sweep cost
+		let stripWeapons: DetectedEvent<StripWeaponsData> | null = null;
+		readsSinceWeaponSample++;
+		if (
+			resources.stripWeapons &&
+			readsSinceWeaponSample >= STRIP_WEAPON_SAMPLE_INTERVAL
+		) {
+			readsSinceWeaponSample = 0;
+			stripWeapons = yield* parseStripWeaponsSteps(
+				frame,
+				t,
+				playerStatus.data,
+				resources.stripWeapons,
+			);
+		}
+
+		return [
+			// the strip statuses ride along with every counter read; the shared
+			// timer value pairs the two events downstream
+			{ ...counter.event, t },
+			playerStatus,
+			...(stripWeapons ? [stripWeapons] : []),
+		];
+	}
+
+	/** The SZ counter read; null = no readable count on either side (a lookalike). */
+	function* parseZonesSteps(
+		frame: Mat,
+		speculative: boolean,
+	): MatchSteps<{ event: DetectedEvent<SplatZonesObjectiveData> } | null> {
 		const gray = frameGray(frame);
 
 		const [scoreL, scoreR, penaltyL, penaltyR, timer] = yield* all([
@@ -321,46 +430,16 @@ export function createObjectiveDetector(
 			};
 		}) as [SideRead, SideRead];
 
-		// no readable count on either side = the gate hit a lookalike
-		if (sides.every((side) => side.score.value === null)) return [];
-
-		const playerStatus = parsePlayerStatus(
-			frame,
-			t,
-			timer.value,
-			lastStatus && t - lastStatus.t <= STATUS_LAYOUT_STICKY_MAX_GAP_S
-				? lastStatus.layout
-				: undefined,
-		);
-		lastStatus = { layout: playerStatus.data.layout, t };
-
-		// sampled slot-identity evidence for the strip → scoreboard-row assignment;
-		// identities are fixed so every read would re-measure at full sweep cost
-		let stripWeapons: DetectedEvent<StripWeaponsData> | null = null;
-		readsSinceWeaponSample++;
-		if (
-			resources.stripWeapons &&
-			readsSinceWeaponSample >= STRIP_WEAPON_SAMPLE_INTERVAL
-		) {
-			readsSinceWeaponSample = 0;
-			stripWeapons = yield* parseStripWeaponsSteps(
-				frame,
-				t,
-				playerStatus.data,
-				resources.stripWeapons,
-			);
-		}
+		if (sides.every((side) => side.score.value === null)) return null;
 
 		const confidences = sides.flatMap((side) => [
 			...(side.score.value !== null ? [side.score.confidence] : []),
 			...(side.penalty?.value != null ? [side.penalty.confidence] : []),
 		]);
-		return [
-			// the strip statuses ride along with every counter read; the shared
-			// timer value pairs the two events downstream
-			{
+		return {
+			event: {
 				type: OBJECTIVE_EVENT_TYPE,
-				t,
+				t: 0,
 				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
 				data: {
 					mode: "SZ",
@@ -370,7 +449,13 @@ export function createObjectiveDetector(
 						sides[0].penalty?.value ?? null,
 						sides[1].penalty?.value ?? null,
 					],
-					control: [sides[0].control, sides[1].control],
+					// both plates filled is impossible in-game: a misread, so neither
+					control:
+						sides[0].control === sides[1].control
+							? null
+							: sides[0].control
+								? 0
+								: 1,
 					teamColor: [sides[0].teamColor, sides[1].teamColor],
 				},
 				debug: {
@@ -381,9 +466,47 @@ export function createObjectiveDetector(
 					plateFills: sides.map((side) => side.fill),
 				},
 			},
-			playerStatus,
-			...(stripWeapons ? [stripWeapons] : []),
+		};
+	}
+
+	/** The TC/RM track read; null = neither the icon nor a plate read (a lookalike). */
+	function* parseTrackSteps(
+		frame: Mat,
+		speculative: boolean,
+	): MatchSteps<{ event: DetectedEvent<TrackObjectiveData> } | null> {
+		const gray = frameGray(frame);
+		const [track, timer] = yield* all([
+			readTrackSteps(frame, trackSets, speculative),
+			readMatchTimerSteps(gray, timerSets, speculative),
+		]);
+		const plates = track.score.filter((read) => read.value !== null);
+		if (track.position === null && plates.length === 0) return null;
+
+		const confidences = [
+			...(track.iconScore !== null ? [track.iconScore] : []),
+			...plates.map((read) => read.confidence),
 		];
+		return {
+			event: {
+				type: OBJECTIVE_EVENT_TYPE,
+				t: 0,
+				confidence: confidences.reduce((a, b) => a + b, 0) / confidences.length,
+				data: {
+					mode: track.mode,
+					time: timer.value,
+					score: [track.score[0].value, track.score[1].value],
+					control: track.holder,
+					position: track.position,
+					teamColor: track.teamColor,
+				},
+				debug: {
+					timerReading: timer.reading,
+					scoreReadings: track.score.map((read) => read.reading),
+					scoreConfidences: track.score.map((read) => read.confidence),
+					...track.debug,
+				},
+			},
+		};
 	}
 
 	return {

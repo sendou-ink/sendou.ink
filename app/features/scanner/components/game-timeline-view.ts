@@ -51,7 +51,12 @@ export function gameTimelineProps(
 				time: sample.time,
 				score: ordered(sample.score),
 				penalty: ordered(sample.penalty),
-				control: ordered(sample.control),
+				control:
+					sample.control === null ? null : sample.control === first ? 0 : 1,
+				position:
+					first === 1 && sample.position != null
+						? 0 - sample.position
+						: sample.position,
 			},
 		})),
 		playerStatusSamples: (match.playerStatus?.samples ?? []).map((sample) => ({

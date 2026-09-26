@@ -117,14 +117,30 @@ function testObjective(): ScannerMatchObjective {
 				time: 300,
 				score: [100, 100],
 				penalty: [null, null],
-				control: [false, false],
+				control: null,
 			},
 			{
 				t: 630,
 				time: 270,
 				score: [80, 100],
 				penalty: [null, 12],
-				control: [true, false],
+				control: 0,
+			},
+		],
+	};
+}
+
+function testTrackObjective(): ScannerMatchObjective {
+	return {
+		mode: "RM",
+		samples: [
+			{
+				t: 600,
+				time: 300,
+				score: [75, null],
+				penalty: [null, null],
+				control: 0,
+				position: 25,
 			},
 		],
 	};
@@ -163,7 +179,11 @@ function swapSides(match: ScannerMatch): ScannerMatch {
 							...sample,
 							score: [sample.score[1], sample.score[0]],
 							penalty: [sample.penalty[1], sample.penalty[0]],
-							control: [sample.control[1], sample.control[0]],
+							control:
+								sample.control === null ? null : sample.control === 0 ? 1 : 0,
+							...(sample.position != null
+								? { position: 0 - sample.position }
+								: null),
 						})),
 					},
 		playerStatus:
@@ -541,14 +561,14 @@ describe("deriveScoreboardData", () => {
 					time: 300,
 					score: [100, 100],
 					penalty: [null, null],
-					control: [false, false],
+					control: null,
 				},
 				{
 					t: 30,
 					time: 270,
 					score: [80, 100],
 					penalty: [null, 12],
-					control: [true, false],
+					control: 0,
 				},
 			],
 		});
@@ -565,6 +585,21 @@ describe("deriveScoreboardData", () => {
 			},
 		]);
 
+		expect(swapped!.objective).toEqual(straight!.objective);
+	});
+
+	test("derives track positions winner-first", () => {
+		const straight = derive([
+			{ data: testMatch({ objective: testTrackObjective() }), povUserId: null },
+		]);
+		const swapped = derive([
+			{
+				data: swapSides(testMatch({ objective: testTrackObjective() })),
+				povUserId: null,
+			},
+		]);
+
+		expect(straight!.objective!.samples[0]!.position).toBe(25);
 		expect(swapped!.objective).toEqual(straight!.objective);
 	});
 
