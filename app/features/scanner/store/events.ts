@@ -21,8 +21,8 @@ import { EVENTS_STORE, FRAMES_STORE, readwrite, tx } from "./db";
 const MAX_EVENTS = 10_000;
 
 /**
- * Full-res frame PNGs (~1-2MB each) are what makes a misread reportable, so
- * they are kept for everyone — bounded by age and count, whichever bites first.
+ * Full-res frame PNGs (~1-2MB each) are what makes a misread reportable; only
+ * debug-mode captures save them, bounded by age and count, whichever bites first.
  */
 const MAX_FRAMES = 200;
 const FRAME_MAX_AGE_MS = 72 * 60 * 60 * 1000;

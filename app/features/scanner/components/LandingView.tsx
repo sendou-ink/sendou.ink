@@ -28,6 +28,7 @@ import styles from "./LandingView.module.css";
 import { getLiveSession, startCapture, useLiveSession } from "./live-session";
 import { SettingsPopover } from "./SettingsPopover";
 import { SourceSelect } from "./SourceSelect";
+import { useDebug } from "./use-debug";
 import { startVodScan } from "./vod-scan";
 import { useVods } from "./vods-feed";
 
@@ -55,6 +56,7 @@ export function LandingView() {
 	const vods = useVods();
 	const clips = useClips();
 	const [telemetry] = useSearchParam(scannerSearchParams, "telemetry");
+	const debug = useDebug();
 	const [, setParams] = useSearchParamsTyped(scannerSearchParams);
 	const [over, setOver] = useState(false);
 	const [playing, setPlaying] = useState<ScannerClip | null>(null);
@@ -68,7 +70,7 @@ export function LandingView() {
 			setParams({ view: "live" });
 			return;
 		}
-		await startCapture();
+		await startCapture({ saveFrames: debug });
 		if (getLiveSession().status === "running") setParams({ view: "live" });
 	};
 
@@ -77,7 +79,7 @@ export function LandingView() {
 			void inspectScreenshot(file);
 			return;
 		}
-		void startVodScan(file, { telemetry });
+		void startVodScan(file, { telemetry, saveFrames: debug });
 		setParams({ view: "vod", name: file.name });
 	};
 

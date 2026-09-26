@@ -89,7 +89,10 @@ function ScanVodView({ name }: { name: string }) {
 									const file = e.target.files?.[0];
 									e.target.value = "";
 									if (file) {
-										void startVodScan(file, { telemetry: telemetryOn });
+										void startVodScan(file, {
+											telemetry: telemetryOn,
+											saveFrames: debug,
+										});
 									}
 								}}
 							/>

@@ -48,9 +48,10 @@ opens it, for anyone, through the same handoff Inspect uses.
   so events from different page loads share one timeline; the ring buffer
   stamps footage the same way.
 - **Retention** (`store/events.ts`, on a throttled pass at every save):
-  whole sessions older than 30 days or beyond the newest 20 go; full-res
-  frames are kept for everyone — a misread is only reportable while the
-  frame exists — bounded by 72 h and `MAX_FRAMES`, the event staying with
+  whole sessions older than 30 days or beyond the newest 20 go. Full-res
+  frames (and the thumbnails made from them) are only captured in debug
+  mode — the worker skips the PNG encode otherwise (`attachFrames`) — and
+  are bounded by 72 h and `MAX_FRAMES`, the event staying with
   `hasFrame: false`. Clips have their own cap and outlive session deletion.
 - **Upload** is on by default when logged in (settings toggle, persisted).
   Live: a scoreboard closes its match and sends it, a 15 s tick retries

@@ -179,8 +179,16 @@ function set(patch: Partial<LiveSnapshot>): void {
 	for (const listener of listeners) listener();
 }
 
-/** Opens the source, brings the worker up, then starts sampling; a second call while running is ignored. */
-export async function startCapture(): Promise<void> {
+/**
+ * Opens the source, brings the worker up, then starts sampling; a second call
+ * while running is ignored. `saveFrames` (debug mode) keeps each event's
+ * analyzed frame and thumbnail for the raw detections.
+ */
+export async function startCapture({
+	saveFrames,
+}: {
+	saveFrames: boolean;
+}): Promise<void> {
 	if (snapshot.status === "starting" || snapshot.status === "running") return;
 	releaseCaptureLock = await acquireCaptureLock();
 	if (!releaseCaptureLock) {
@@ -232,6 +240,7 @@ export async function startCapture(): Promise<void> {
 		client = new AnalyzerClient(onResult, onWorkerError, undefined, {
 			frameQueueLimit: FRAME_QUEUE_LIMIT,
 			webgpu: settings.webgpu,
+			attachFrames: saveFrames,
 		});
 		try {
 			await client.whenReady();
