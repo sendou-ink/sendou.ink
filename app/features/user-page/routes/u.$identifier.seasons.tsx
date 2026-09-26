@@ -233,30 +233,30 @@ function SeasonPicker({
 						aria-current={overview.season === seasonViewed ? "page" : undefined}
 						preventScrollReset
 					>
-						<span className="stack horizontal sm justify-between text-xs text-lighter">
-							<span>
+						<span className="stack horizontal sm justify-between items-center">
+							<span className="text-md font-bold">
 								{t("user:seasons.season.short")}
 								{overview.season}
 							</span>
 							{typeof overview.sp === "number" ? (
-								<span className="text-main-forced font-semi-bold">
+								<span className="text-xs text-lighter font-semi-bold">
 									{overview.sp}SP
 								</span>
 							) : null}
 						</span>
 						{overview.tier ? (
-							<span className="stack horizontal xs items-center text-sm font-semi-bold">
-								<TierImage tier={overview.tier} width={24} />
+							<span className="stack horizontal xs items-center text-xs text-lighter font-semi-bold">
+								<TierImage tier={overview.tier} width={20} />
 								{overview.tier.name}
 								{overview.tier.isPlus ? "+" : ""}
 							</span>
 						) : (
-							<span className="stack horizontal xs items-center text-sm font-semi-bold text-uppercase">
+							<span className="stack horizontal xs items-center text-xs text-lighter font-semi-bold text-uppercase">
 								<Image
 									path={tierImageUrl("CALCULATING")}
 									alt=""
-									width={24}
-									height={24 * 0.8675}
+									width={20}
+									height={20 * 0.8675}
 								/>
 								{t("user:seasons.unranked")}
 							</span>
