@@ -55,6 +55,7 @@ export function EventFeed({
 		],
 		R.sortBy([R.prop("t"), "desc"]),
 		R.take(FEED_LENGTH),
+		withUniqueKeys,
 	);
 
 	return (
@@ -63,7 +64,7 @@ export function EventFeed({
 				<li className={styles.empty}>Waiting for the first read…</li>
 			) : (
 				items.map((item) => (
-					<li key={`${item.type}-${item.t}`} className={styles.item}>
+					<li key={item.key} className={styles.item}>
 						<span className={styles.icon}>
 							<EventTypeIcon type={item.type} size={14} />
 						</span>
@@ -76,6 +77,17 @@ export function EventFeed({
 			)}
 		</ol>
 	);
+}
+
+/** `t` is whole seconds, so e.g. a double splat shares type and `t` */
+function withUniqueKeys(items: FeedItem[]) {
+	const seen = new Map<string, number>();
+	return items.map((item) => {
+		const base = `${item.type}-${item.t}-${item.label}`;
+		const count = seen.get(base) ?? 0;
+		seen.set(base, count + 1);
+		return { ...item, key: `${base}-${count}` };
+	});
 }
 
 function eventLabel(event: ScanEvent): string | null {
