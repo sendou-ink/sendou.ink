@@ -1,12 +1,15 @@
 .container {
+	/* ring around the dots, matches what the chart sits on */
+	--line-chart-surface: var(--color-bg-high);
+
 	position: relative;
+	height: 170px;
 }
 
 .chart {
 	display: block;
 	width: 100%;
-	/* the area gradient's stops resolve their color from here via currentColor */
-	color: var(--color-fg-accent);
+	height: 100%;
 
 	&.interactive {
 		cursor: crosshair;
@@ -14,9 +17,22 @@
 	}
 }
 
+/* the area gradient's stops and the lines resolve their color from here via currentColor */
+.series0 {
+	color: var(--color-fg-accent);
+}
+
+.series1 {
+	color: var(--color-info-high);
+}
+
+.series2 {
+	color: var(--color-fg-second);
+}
+
 .line {
 	fill: none;
-	stroke: var(--color-fg-accent);
+	stroke: currentColor;
 	stroke-width: 2.5;
 	stroke-linecap: round;
 	stroke-linejoin: round;
@@ -49,14 +65,26 @@
 }
 
 .dot {
-	fill: var(--color-fg-accent);
-	stroke: var(--color-bg-high);
+	fill: currentColor;
+	stroke: var(--line-chart-surface);
 	stroke-width: 2;
+}
+
+.highlight {
+	stroke: var(--line-chart-surface);
+	stroke-width: 2;
+
+	&.highlight0 {
+		fill: var(--color-fg-accent);
+	}
+
+	&.highlight1 {
+		fill: var(--color-fg-second);
+	}
 }
 
 .tooltip {
 	position: absolute;
-	translate: -50% calc(-100% - var(--s-3));
 	padding: var(--s-1) var(--s-2);
 	background-color: var(--color-bg);
 	border: var(--border-style);
@@ -65,14 +93,36 @@
 	pointer-events: none;
 }
 
-.tooltipDate {
+.tooltipHeader {
 	font-size: var(--font-2xs);
 	font-weight: var(--weight-semi);
 	color: var(--color-text-high);
 }
 
-.tooltipSp {
+.tooltipValue {
 	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}
+
+.tooltipRow {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+}
+
+.tooltipDot {
+	width: 8px;
+	height: 8px;
+	border-radius: 100%;
+	background-color: currentColor;
+}
+
+.tooltipRowValue {
+	margin-inline-start: auto;
+	padding-inline-start: var(--s-2);
 	font-weight: var(--weight-extra);
 	font-variant-numeric: tabular-nums;
 }

@@ -54,7 +54,6 @@ const TAB_LABEL_KEYS = {
 } as const satisfies Record<SeasonStatsTab, string>;
 
 const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;
-const POWER_CHART_HEIGHT = 220;
 const OVERVIEW_WEAPONS_COUNT = 5;
 const OVERVIEW_STAGES_COUNT = 8;
 const OVERVIEW_PLAYERS_COUNT = 4;
@@ -347,7 +346,7 @@ function PowerChart({
 				date: skill.date,
 				sp: ordinalToSp(skill.ordinal),
 			}))}
-			height={POWER_CHART_HEIGHT}
+			className={styles.powerChart}
 			interactive
 		/>
 	);

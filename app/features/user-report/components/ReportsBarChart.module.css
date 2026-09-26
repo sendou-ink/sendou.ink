@@ -4,3 +4,65 @@
 	border-radius: var(--radius-box);
 	padding: var(--s-2);
 }
+
+.plot {
+	position: relative;
+	height: 100%;
+}
+
+.chart {
+	position: absolute;
+	inset: 0;
+	display: block;
+	width: 100%;
+	height: 100%;
+	overflow: visible;
+	cursor: crosshair;
+	touch-action: pan-y;
+}
+
+.gridLine {
+	stroke: color-mix(in oklch, var(--color-text) 8%, transparent);
+	stroke-width: 1;
+
+	&.gridLineDashed {
+		stroke-dasharray: 3 4;
+	}
+}
+
+.label {
+	font-size: 10px;
+	font-weight: var(--weight-semi);
+	fill: var(--color-text-high);
+}
+
+.bar {
+	fill: var(--color-fg-accent);
+}
+
+.hoverBand {
+	fill: color-mix(in oklch, var(--color-text) 6%, transparent);
+}
+
+.tooltip {
+	position: absolute;
+	translate: -50% calc(-100% - var(--s-2));
+	padding: var(--s-1) var(--s-2);
+	background-color: var(--color-bg);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	white-space: nowrap;
+	pointer-events: none;
+}
+
+.tooltipMonth {
+	font-size: var(--font-2xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.tooltipCount {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-extra);
+	font-variant-numeric: tabular-nums;
+}

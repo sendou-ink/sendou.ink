@@ -7,7 +7,6 @@ import { Link } from "react-router";
 import * as R from "remeda";
 import { AbilitiesSelector } from "~/components/AbilitiesSelector";
 import { Ability } from "~/components/Ability";
-import { Chart } from "~/components/Chart";
 import { SendouSelect, SendouSelectItem } from "~/components/elements/Select";
 import { SendouSwitch } from "~/components/elements/Switch";
 import {
@@ -17,6 +16,7 @@ import {
 	SendouTabs,
 } from "~/components/elements/Tabs";
 import { Image, SpecialWeaponImage, SubWeaponImage } from "~/components/Image";
+import { LineChart, type LineChartSeries } from "~/components/LineChart";
 import { weaponToSelectedWeapon } from "~/components/layout/WeaponSearch";
 import { Main } from "~/components/Main";
 import { Placeholder } from "~/components/Placeholder";
@@ -1073,6 +1073,7 @@ function StatChartPopover(props: StatChartProps) {
 function StatChart({
 	statKey,
 	modifiedBy,
+	title,
 	valueSuffix,
 	mainWeaponId,
 	subWeaponId,
@@ -1080,47 +1081,42 @@ function StatChart({
 }: StatChartProps) {
 	const { t } = useTranslation(["analyzer"]);
 
-	const distanceLabel = t("analyzer:damage.header.distance");
-	const chartOptions = React.useMemo(() => {
-		const stackableAbility = modifiedBy.find(isStackableAbility)!;
-		const mainOnlyAbility = modifiedBy.find(isMainOnlyAbility);
-
-		return statKey
-			? statKeyGraphOptions({
-					stackableAbility,
-					mainOnlyAbility,
-					statKey,
-					mainWeaponId,
+	const stackableAbility = modifiedBy.find(isStackableAbility)!;
+	const mainOnlyAbility = modifiedBy.find(isMainOnlyAbility);
+	const series = statKey
+		? statKeyGraphSeries({
+				stackableAbility,
+				mainOnlyAbility,
+				statKey,
+				mainWeaponId,
+			})
+		: typeof subWeaponId === "number"
+			? subDefenseGraphSeries({
+					subWeaponId,
+					distanceLabel: t("analyzer:damage.header.distance"),
 				})
-			: typeof subWeaponId === "number"
-				? subDefenseGraphOptions({
-						subWeaponId,
-						distanceLabel,
-					})
-				: [];
-	}, [statKey, modifiedBy, mainWeaponId, subWeaponId, distanceLabel]);
+			: [];
 
 	// prevent crash but this should not happen
-	if (chartOptions.length === 0) {
-		logger.error("no chart options");
+	if (series.length === 0) {
+		logger.error("no chart series");
 		return null;
 	}
 
 	return (
-		<Chart
-			options={chartOptions as any}
-			containerClassName={styles.statChartContainer}
-			headerSuffix={t("analyzer:abilityPoints.short")}
-			valueSuffix={valueSuffix}
-			xAxis="linear"
-			xAbilityLimit={57}
+		<LineChart
+			series={series}
+			xAxis={{ type: "number", suffix: t("analyzer:abilityPoints.short") }}
+			formatValue={(value) => `${value}${valueSuffix ?? ""}`}
 			highlight={highlight}
-			crosshair
+			interactive
+			className={styles.statChart}
+			ariaLabel={title}
 		/>
 	);
 }
 
-function statKeyGraphOptions({
+function statKeyGraphSeries({
 	stackableAbility,
 	mainOnlyAbility,
 	statKey,
@@ -1140,12 +1136,12 @@ function statKeyGraphOptions({
 		}),
 	);
 
-	const result = [
+	const result: LineChartSeries[] = [
 		{
 			label: <Ability ability={stackableAbility} size="TINY" />,
-			data: analyzedBuilds.map((a, i) => ({
-				primary: i,
-				secondary: (a.stats[statKey] as Stat).value,
+			points: analyzedBuilds.map((a, i) => ({
+				x: i,
+				y: (a.stats[statKey] as Stat).value,
 			})),
 		},
 	];
@@ -1168,9 +1164,9 @@ function statKeyGraphOptions({
 					<Ability ability={mainOnlyAbility} size="TINY" />
 				</div>
 			),
-			data: mainOnlyAbilityAnalyzedBuilds.map((a, i) => ({
-				primary: i,
-				secondary: (a.stats[statKey] as Stat).value,
+			points: mainOnlyAbilityAnalyzedBuilds.map((a, i) => ({
+				x: i,
+				y: (a.stats[statKey] as Stat).value,
 			})),
 		});
 	}
@@ -1185,7 +1181,7 @@ const damageToKey = (damage: SubWeaponDamage) => {
 
 	return `${damage.distance!.join(",")},${damage.baseValue}`;
 };
-function subDefenseGraphOptions({
+function subDefenseGraphSeries({
 	subWeaponId,
 	distanceLabel,
 }: {
@@ -1208,19 +1204,16 @@ function subDefenseGraphOptions({
 			.map((d) => damageToKey(d)),
 	);
 
-	const result: Array<{
-		label: string;
-		data: Array<{ primary: number; secondary: number }>;
-	}> = [];
+	const result: LineChartSeries[] = [];
 
 	for (const key of distanceKeys) {
 		const distance = key.split(",")[0];
 
 		result.push({
 			label: `${distanceLabel}: ${distance}`,
-			data: analyzedBuilds.map((a, i) => ({
-				primary: i,
-				secondary:
+			points: analyzedBuilds.map((a, i) => ({
+				x: i,
+				y:
 					a.stats.subWeaponDefenseDamages.find(
 						(d) =>
 							(d as SubWeaponDamage).subWeaponId === subWeaponId &&
