@@ -70,18 +70,8 @@
 	}
 }
 
-.overviewCard {
-	padding: var(--s-4) var(--s-5);
-	border: var(--border-style);
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg-high);
-	container-type: inline-size;
-}
-
 .activity {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-3);
+	container-type: inline-size;
 }
 
 .activityCalendar {
@@ -97,29 +87,7 @@
 	overflow-x: auto;
 }
 
-.statsPeek {
-	display: flex;
-	flex-direction: column;
-	gap: var(--s-3);
-}
-
-.overviewCardHeading {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	margin: 0;
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	color: var(--color-text-high);
-
-	& svg {
-		color: var(--color-fg-accent);
-	}
-}
-
 .teamRank {
-	display: flex;
-	flex-direction: column;
 	gap: var(--s-2);
 }
 

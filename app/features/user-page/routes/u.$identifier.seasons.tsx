@@ -20,6 +20,7 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSection } from "~/components/elements/Section";
 import {
 	Image,
 	ModeImage,
@@ -126,11 +127,11 @@ export default function UserSeasonsPage() {
 				{data.teamEntry ? (
 					<TeamRank season={data.season} teamEntry={data.teamEntry} />
 				) : null}
-				<section className={clsx(styles.overviewCard, styles.activity)}>
-					<h2 className={styles.overviewCardHeading}>
-						<CalendarDays size={14} />
-						{t("user:seasons.summary.activity")}
-					</h2>
+				<SendouSection
+					title={t("user:seasons.summary.activity")}
+					icon={CalendarDays}
+					className={styles.activity}
+				>
 					<SeasonActivityCalendar
 						seasonDateRange={Seasons.nthToDateRange(data.season)}
 						activeDays={data.activeDays}
@@ -138,7 +139,7 @@ export default function UserSeasonsPage() {
 						monthNames="short"
 						className={clsx(styles.activityCalendar, "scrollbar")}
 					/>
-				</section>
+				</SendouSection>
 				<StatsPeek
 					user={layoutData.user}
 					season={data.season}
@@ -325,11 +326,11 @@ function TeamRank({
 	const { t } = useTranslation(["user"]);
 
 	return (
-		<section className={clsx(styles.overviewCard, styles.teamRank)}>
-			<h2 className={styles.overviewCardHeading}>
-				<Users size={14} />
-				{t("user:seasons.summary.teamRank")}
-			</h2>
+		<SendouSection
+			title={t("user:seasons.summary.teamRank")}
+			icon={Users}
+			className={styles.teamRank}
+		>
 			<div className={styles.teamRankSummary}>
 				{teamEntry.placement ? (
 					<Link
@@ -371,7 +372,7 @@ function TeamRank({
 					</li>
 				))}
 			</ul>
-		</section>
+		</SendouSection>
 	);
 }
 
@@ -387,11 +388,10 @@ function StatsPeek({
 	const { t } = useTranslation(["user", "game-misc", "weapons"]);
 
 	return (
-		<section className={clsx(styles.overviewCard, styles.statsPeek)}>
-			<h2 className={styles.overviewCardHeading}>
-				<ChartColumn size={14} />
-				{t("user:seasons.stats.title", { season })}
-			</h2>
+		<SendouSection
+			title={t("user:seasons.stats.title", { season })}
+			icon={ChartColumn}
+		>
 			<dl className={styles.statsPeekList}>
 				{peek.bestStage ? (
 					<StatsPeekItem label={t("user:seasons.summary.bestStage")}>
@@ -454,7 +454,7 @@ function StatsPeek({
 				{t("user:seasons.stats.seeAll")}
 				<ChevronRight size={16} />
 			</Link>
-		</section>
+		</SendouSection>
 	);
 }
 

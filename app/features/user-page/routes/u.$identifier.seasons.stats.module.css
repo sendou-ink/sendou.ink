@@ -12,20 +12,15 @@
 	width: 12rem;
 }
 
-.card {
+.keyStat {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-3);
-	padding: var(--s-4);
+	gap: var(--s-1);
+	padding: var(--s-4) var(--s-5);
+	border: var(--border-style);
 	border-radius: var(--radius-box);
 	background-color: var(--color-bg-high);
 	min-width: 0;
-}
-
-.cardHeading {
-	font-size: var(--font-md);
-	font-weight: var(--weight-semi);
-	margin: 0;
 }
 
 .keyStats {
@@ -36,10 +31,6 @@
 
 	& dd {
 		margin: 0;
-	}
-
-	& .card {
-		gap: var(--s-1);
 	}
 }
 

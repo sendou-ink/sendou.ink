@@ -1,4 +1,5 @@
 import clsx from "clsx";
+import { ChartLine, Crosshair, Handshake, MapIcon, Swords } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
@@ -6,6 +7,7 @@ import { Avatar } from "~/components/Avatar";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
+import { SendouSection } from "~/components/elements/Section";
 import {
 	SendouTab,
 	SendouTabList,
@@ -115,24 +117,24 @@ export default function UserSeasonsStatsPage() {
 					<Overview onShowAll={setTab} />
 				</SendouTabPanel>
 				<SendouTabPanel id="stages">
-					<StatsCard>
+					<SendouSection>
 						<StageModeHeatmap stages={data.stages} />
-					</StatsCard>
+					</SendouSection>
 				</SendouTabPanel>
 				<SendouTabPanel id="weapons">
-					<StatsCard>
+					<SendouSection>
 						<Weapons weapons={data.weapons} />
-					</StatsCard>
+					</SendouSection>
 				</SendouTabPanel>
 				<SendouTabPanel id="mates">
-					<StatsCard>
+					<SendouSection>
 						<Players players={data.mates} />
-					</StatsCard>
+					</SendouSection>
 				</SendouTabPanel>
 				<SendouTabPanel id="enemies">
-					<StatsCard>
+					<SendouSection>
 						<Players players={data.enemies} />
-					</StatsCard>
+					</SendouSection>
 				</SendouTabPanel>
 			</SendouTabs>
 		</div>
@@ -165,63 +167,45 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 		<div className="stack lg">
 			<KeyStats />
 			<div className={styles.chartAndWeapons}>
-				<StatsCard title={t("user:seasons.stats.spChart")}>
+				<SendouSection title={t("user:seasons.stats.spChart")} icon={ChartLine}>
 					{data.skills.length >= DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART ? (
 						<PowerChart skills={data.skills} />
 					) : (
 						<NotEnoughData />
 					)}
-				</StatsCard>
-				<StatsCard
+				</SendouSection>
+				<SendouSection
 					title={t("user:seasons.stats.mostPlayedWeapons")}
+					icon={Crosshair}
 					action={data.weapons.length > 0 ? showAllButton("weapons") : null}
 				>
 					<MostPlayedWeapons weapons={data.weapons} />
-				</StatsCard>
+				</SendouSection>
 			</div>
-			<StatsCard
+			<SendouSection
 				title={t("user:seasons.stats.stageModeWinRates")}
+				icon={MapIcon}
 				action={showAllButton("stages")}
 			>
 				<StageModeHeatmap stages={data.stages} limit={OVERVIEW_STAGES_COUNT} />
-			</StatsCard>
+			</SendouSection>
 			<div className={styles.playerCards}>
-				<StatsCard
+				<SendouSection
 					title={t("user:seasons.stats.bestTeammates")}
+					icon={Handshake}
 					action={showAllButton("mates")}
 				>
 					<PlayerHighlights players={data.mates} order="best" />
-				</StatsCard>
-				<StatsCard
+				</SendouSection>
+				<SendouSection
 					title={t("user:seasons.stats.toughestOpponents")}
+					icon={Swords}
 					action={showAllButton("enemies")}
 				>
 					<PlayerHighlights players={data.enemies} order="worst" />
-				</StatsCard>
+				</SendouSection>
 			</div>
 		</div>
-	);
-}
-
-function StatsCard({
-	title,
-	action,
-	children,
-}: {
-	title?: string;
-	action?: React.ReactNode;
-	children: React.ReactNode;
-}) {
-	return (
-		<section className={styles.card}>
-			{title ? (
-				<div className="stack horizontal sm items-center justify-between">
-					<h2 className={styles.cardHeading}>{title}</h2>
-					{action}
-				</div>
-			) : null}
-			{children}
-		</section>
 	);
 }
 
@@ -305,7 +289,7 @@ function KeyStat({
 	sub: React.ReactNode;
 }) {
 	return (
-		<div className={styles.card}>
+		<div className={styles.keyStat}>
 			<dt className={styles.keyStatLabel}>{label}</dt>
 			<dd className={styles.keyStatValue}>{value}</dd>
 			{sub ? <dd className="text-sm text-lighter">{sub}</dd> : null}
