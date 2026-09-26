@@ -256,6 +256,15 @@
 	}
 }
 
+.tierPill {
+	display: inline-flex;
+	align-items: center;
+	gap: var(--s-1);
+	padding: var(--s-0-5) var(--s-2) var(--s-0-5) var(--s-1);
+	border-radius: var(--radius-full);
+	background-color: var(--color-bg);
+}
+
 @container (width < 48rem) {
 	.result {
 		grid-template-columns: auto minmax(0, 1fr) auto;
@@ -283,6 +292,15 @@
 	&[data-outcome="L"] {
 		background-color: var(--color-error-low);
 		color: var(--color-error);
+	}
+
+	&:not([data-outcome]),
+	&[data-outcome="tournament"] {
+		border: var(--border-width) solid transparent;
+
+		.result:hover & {
+			border-color: var(--color-border-high);
+		}
 	}
 
 	&[data-outcome="tournament"] {

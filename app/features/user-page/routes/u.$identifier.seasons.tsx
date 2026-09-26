@@ -718,7 +718,7 @@ function GroupTier({
 	tier: NonNullable<SeasonGroupMatch["alphaTier"]>;
 }) {
 	return (
-		<span className="stack horizontal xxs items-center">
+		<span className={styles.tierPill}>
 			<TierImage tier={tier} width={20} />
 			{tier.name}
 			{tier.isPlus ? "+" : ""}
