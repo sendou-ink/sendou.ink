@@ -60,6 +60,11 @@ const SEEK_CALM_STRIDE_S = 2.5;
 const MAX_VOD_CLIPS = 20;
 
 const UI_UPDATE_INTERVAL_MS = 250;
+/**
+ * Each publish re-renders every match card (expanded ones draw whole charts),
+ * so found events reach the view at most this often, not per event.
+ */
+const EVENTS_PUBLISH_INTERVAL_MS = 1000;
 
 export type VodScanStatus = "idle" | "scanning" | "done" | "error";
 
@@ -78,28 +83,37 @@ export interface VodScanSnapshot {
 	name: string | null;
 	status: VodScanStatus;
 	error: string | null;
-	progress: VodScanProgress | null;
 	/** what the scan found, chronological; reloaded from the store once saved */
 	events: ScanEvent[];
 	clipsWork: ClipsWork | null;
-	telemetry: ScanTelemetry | null;
 	/** matches uploading right after the scan */
 	uploading: boolean;
+}
+
+/** Kept apart from the snapshot: it ticks several times a second, which must not re-render the match cards. */
+export interface VodScanProgressSnapshot {
+	progress: VodScanProgress | null;
+	telemetry: ScanTelemetry | null;
 }
 
 const IDLE: VodScanSnapshot = {
 	name: null,
 	status: "idle",
 	error: null,
-	progress: null,
 	events: [],
 	clipsWork: null,
-	telemetry: null,
 	uploading: false,
+};
+
+const IDLE_PROGRESS: VodScanProgressSnapshot = {
+	progress: null,
+	telemetry: null,
 };
 
 let snapshot = IDLE;
 const listeners = new Set<() => void>();
+let progressSnapshot = IDLE_PROGRESS;
+const progressListeners = new Set<() => void>();
 let previewCanvas: HTMLCanvasElement | null = null;
 /** lossless PNGs of the frames the detectors analyzed this scan, until saved */
 let frames = new WeakMap<ScanEvent, Blob>();
@@ -128,6 +142,24 @@ function subscribe(listener: () => void): () => void {
 function set(patch: Partial<VodScanSnapshot>): void {
 	snapshot = { ...snapshot, ...patch };
 	for (const listener of listeners) listener();
+}
+
+export function useVodScanProgress(): VodScanProgressSnapshot {
+	return useSyncExternalStore(
+		subscribeProgress,
+		() => progressSnapshot,
+		() => IDLE_PROGRESS,
+	);
+}
+
+function subscribeProgress(listener: () => void): () => void {
+	progressListeners.add(listener);
+	return () => progressListeners.delete(listener);
+}
+
+function setProgress(patch: Partial<VodScanProgressSnapshot>): void {
+	progressSnapshot = { ...progressSnapshot, ...patch };
+	for (const listener of progressListeners) listener();
 }
 
 /** The view showing the scan hands over its canvas for the frame preview. */
@@ -188,6 +220,9 @@ export async function startVodScan(
 	const update = (patch: Partial<VodScanSnapshot>) => {
 		if (own === generation) set(patch);
 	};
+	const updateProgress = (patch: Partial<VodScanProgressSnapshot>) => {
+		if (own === generation) setProgress(patch);
+	};
 	const preview = (frame: ImageBitmap | VideoFrame) => {
 		if (own === generation) drawPreview(frame);
 	};
@@ -196,12 +231,19 @@ export async function startVodScan(
 		name: file.name,
 		status: "scanning",
 	});
+	setProgress(IDLE_PROGRESS);
 
 	const timeline = new TimelineBuilder();
 	let events: ScanEvent[] = [];
 	let clients: AnalyzerClient[] = [];
 	const thumbnailWork: Promise<void>[] = [];
-	const publish = () => update({ events });
+	let publishTimer: ReturnType<typeof setTimeout> | null = null;
+	const publish = () => {
+		publishTimer ??= setTimeout(() => {
+			publishTimer = null;
+			update({ events });
+		}, EVENTS_PUBLISH_INTERVAL_MS);
+	};
 
 	try {
 		// seek fallback: latest per-frame done info + the waiter for the next one
@@ -295,7 +337,7 @@ export async function startVodScan(
 					(c) => Math.min(c.t, c.tEnd) - c.tStart,
 				);
 				const elapsed = (now - started) / 1000;
-				update({
+				updateProgress({
 					progress: {
 						t: covered,
 						duration,
@@ -337,7 +379,7 @@ export async function startVodScan(
 			);
 			abortChunks = null;
 			if (abort.aborted) return;
-			update({ telemetry: mergedTelemetry() });
+			updateProgress({ telemetry: mergedTelemetry() });
 			await finalize(duration);
 			return;
 		}
@@ -367,7 +409,7 @@ export async function startVodScan(
 					// frame to the worker detaches it
 					preview(frame);
 					const elapsed = (now - started) / 1000;
-					update({
+					updateProgress({
 						progress: {
 							t,
 							duration: vod.duration,
@@ -392,13 +434,15 @@ export async function startVodScan(
 		if (!abort.aborted)
 			update({ status: "error", error: describeError(error) });
 	} finally {
+		if (publishTimer !== null) clearTimeout(publishTimer);
 		for (const client of clients) client.dispose();
 	}
 
 	async function finalize(duration: number): Promise<void> {
 		await Promise.all(thumbnailWork);
 		events = withoutInvalidObjectives(events);
-		update({ events, progress: { t: duration, duration, rate: 0 } });
+		update({ events });
+		updateProgress({ progress: { t: duration, duration, rate: 0 } });
 		await saveVod(
 			{
 				name: file.name,

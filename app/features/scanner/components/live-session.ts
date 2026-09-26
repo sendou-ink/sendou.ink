@@ -33,7 +33,7 @@ import {
 import { OBJECTIVE_EVENT_TYPE } from "../core/detectors/objective/index";
 import { PLAYER_STATUS_EVENT_TYPE } from "../core/detectors/objective/player-status";
 import { SCOREBOARD_EVENT_TYPES } from "../core/detectors/registry";
-import type { DetectedEvent, GateResult } from "../core/detectors/types";
+import type { DetectedEvent } from "../core/detectors/types";
 import type { ScannerMatch } from "../core/scanner-match";
 import { TimelineBuilder } from "../core/timeline/index";
 import {
@@ -107,10 +107,6 @@ export interface LiveSnapshot {
 	/** what the clip encoder is getting from that track; null while clips are off */
 	audioSignal: AudioSignal | null;
 	clips: ClipsState;
-	/** highest gate score on the latest frame (debug) */
-	gateScore: number | null;
-	/** a detector fired on the latest frame */
-	detecting: boolean;
 }
 
 const IDLE: LiveSnapshot = {
@@ -122,8 +118,6 @@ const IDLE: LiveSnapshot = {
 	audioError: null,
 	audioSignal: null,
 	clips: "off",
-	gateScore: null,
-	detecting: false,
 };
 
 let snapshot = IDLE;
@@ -140,7 +134,6 @@ let releaseCaptureLock: (() => void) | null = null;
 let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
-const gates = new Map<string, GateResult>();
 // the open match is known to be a non-SZ mode, so counter reads are
 // misreads of another mode's overlay and are not collected at all
 let objectiveBlocked = false;
@@ -201,7 +194,6 @@ export async function startCapture(): Promise<void> {
 	}
 	set({ ...IDLE, status: "starting" });
 	objectiveBlocked = false;
-	gates.clear();
 	cuts.length = 0;
 	ownClipIds.clear();
 	timeline = new TimelineBuilder();
@@ -379,14 +371,6 @@ function onWorkerError(message: string): void {
 function onResult(
 	result: Parameters<ConstructorParameters<typeof AnalyzerClient>[0]>[0],
 ): void {
-	// one result arrives per detector per frame; status reflects whether any fired
-	gates.set(result.detector, result.gate);
-	const scores = [...gates.values()];
-	const detecting = scores.some((g) => g.pass);
-	set({
-		gateScore: Math.max(...scores.map((g) => g.score)),
-		detecting,
-	});
 	if (!result.gate.pass) return;
 	for (const event of result.events as DetectedEvent<FixtureData>[]) {
 		if (
