@@ -204,7 +204,6 @@
 	"seasons.ends": "ends {{time}}",
 	"seasons.vs": "vs.",
 	"seasons.unranked": "Unranked",
-	"seasons.leaderboardPlacement": "#{{placement}} on the leaderboard",
 	"seasons.tournaments": "Tournaments",
 	"seasons.bestFinish": "Best finish",
 	"seasons.placementOfTeams": "<0></0> of {{count}} teams",

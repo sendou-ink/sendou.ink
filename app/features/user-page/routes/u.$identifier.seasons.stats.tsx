@@ -249,7 +249,7 @@ function KeyStats() {
 	const { sets, maps } = data.winrates;
 
 	return (
-		<dl className={styles.keyStats}>
+		<div className={styles.keyStats}>
 			<KeyStat
 				label={t("user:seasons.stats.rank")}
 				value={
@@ -262,9 +262,7 @@ function KeyStats() {
 						? [
 								`${ordinalToSp(data.currentOrdinal).toFixed(2)}SP`,
 								data.leaderboardPlacement
-									? t("user:seasons.leaderboardPlacement", {
-											placement: data.leaderboardPlacement,
-										})
+									? `#${data.leaderboardPlacement}`
 									: null,
 							]
 								.filter(Boolean)
@@ -298,7 +296,7 @@ function KeyStats() {
 					) : null
 				}
 			/>
-		</dl>
+		</div>
 	);
 }
 
@@ -312,11 +310,12 @@ function KeyStat({
 	sub: React.ReactNode;
 }) {
 	return (
-		<div className={styles.keyStat}>
-			<dt className={styles.keyStatLabel}>{label}</dt>
-			<dd className={styles.keyStatValue}>{value}</dd>
-			{sub ? <dd className="text-sm text-lighter">{sub}</dd> : null}
-		</div>
+		<SendouSection title={label}>
+			<div className={styles.keyStat}>
+				<div className={styles.keyStatValue}>{value}</div>
+				{sub ? <div className="text-sm text-lighter">{sub}</div> : null}
+			</div>
+		</SendouSection>
 	);
 }
 

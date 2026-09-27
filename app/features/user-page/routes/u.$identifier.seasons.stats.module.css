@@ -16,30 +16,12 @@
 	display: flex;
 	flex-direction: column;
 	gap: var(--s-1);
-	padding: var(--s-4) var(--s-5);
-	border: var(--border-style);
-	border-radius: var(--radius-box);
-	background-color: var(--color-bg-high);
-	min-width: 0;
 }
 
 .keyStats {
 	display: grid;
 	grid-template-columns: repeat(4, minmax(0, 1fr));
 	gap: var(--s-4);
-	margin: 0;
-
-	& dd {
-		margin: 0;
-	}
-}
-
-.keyStatLabel {
-	font-size: var(--font-xs);
-	font-weight: var(--weight-semi);
-	text-transform: uppercase;
-	letter-spacing: 0.05em;
-	color: var(--color-text-high);
 }
 
 .keyStatValue {
