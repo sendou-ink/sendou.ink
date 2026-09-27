@@ -19,6 +19,7 @@ import {
 	userArtSearchParams,
 	userBuildsSearchParams,
 	userResultsSearchParams,
+	userSeasonResultsSearchParams,
 	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
 	userSeasonsStatsSearchParams,
@@ -92,15 +93,11 @@ describe("userResultsSearchParams", () => {
 describe("userSeasonsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(userSeasonsSearchParams, {
-			page: [1, 2, 99],
-			source: [...SEASON_RESULT_SOURCES],
 			season: [null, newestSeason, oldestSeason],
 		});
 	});
 
 	test("malformed values decode to defaults", () => {
-		assertDecodesToDefault(userSeasonsSearchParams, "page", [["0"], ["abc"]]);
-		assertDecodesToDefault(userSeasonsSearchParams, "source", [["INVALID"]]);
 		assertDecodesToDefault(userSeasonsSearchParams, "season", [
 			[String(notStartedSeason)],
 			["-1"],
@@ -125,6 +122,26 @@ describe("userSeasonsSearchParams", () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe("userSeasonResultsSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(userSeasonResultsSearchParams, {
+			page: [1, 2, 99],
+			source: [...SEASON_RESULT_SOURCES],
+			season: [null, newestSeason, oldestSeason],
+		});
+	});
+
+	test("malformed values decode to defaults", () => {
+		assertDecodesToDefault(userSeasonResultsSearchParams, "page", [
+			["0"],
+			["abc"],
+		]);
+		assertDecodesToDefault(userSeasonResultsSearchParams, "source", [
+			["INVALID"],
+		]);
 	});
 });
 

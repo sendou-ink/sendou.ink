@@ -10,10 +10,7 @@ import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatReposi
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
-import { databaseTimestampToDate, dateToYYYYMMDD } from "~/utils/dates";
-import { invariant } from "~/utils/invariant";
 import type { SerializeFrom } from "~/utils/remix";
-import type { SeasonResultSource } from "../user-page-constants";
 import { userSeasonsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsPageLoaderData = NonNullable<
@@ -22,11 +19,7 @@ export type UserSeasonsPageLoaderData = NonNullable<
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const loggedInUser = requireUser();
-	const {
-		season: seasonParam,
-		page,
-		source,
-	} = userSeasonsSearchParams.parse(url);
+	const { season: seasonParam } = userSeasonsSearchParams.parse(url);
 
 	const userId = userPageUserId();
 	const seasonsParticipatedIn =
@@ -64,7 +57,6 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		}),
 		statsPeek: await statsPeek({ season, userId }),
 		teamEntry: await teamEntry({ season, userId }),
-		results: await seasonResults({ season, userId, page, source }),
 		canceled: loggedInUser.roles.includes("STAFF")
 			? await SQMatchRepository.findSeasonCanceledMatchesByUserId({
 					season,
@@ -73,41 +65,6 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			: null,
 	};
 };
-
-/** A page of season results grouped by day (UTC), each day summarized including its sets on other pages. */
-async function seasonResults(args: {
-	season: number;
-	userId: number;
-	page: number;
-	source: SeasonResultSource;
-}) {
-	const results = await SQMatchRepository.findSeasonResultsByUserId(args);
-
-	const resultsByDate = new Map<string, typeof results>();
-	for (const result of results) {
-		const date = dateToYYYYMMDD(databaseTimestampToDate(result.createdAt));
-		resultsByDate.set(date, [...(resultsByDate.get(date) ?? []), result]);
-	}
-
-	const summaries =
-		resultsByDate.size > 0
-			? await SQMatchRepository.findSeasonDaySummariesByUserId({
-					...args,
-					dates: Array.from(resultsByDate.keys()),
-				})
-			: [];
-
-	return {
-		days: Array.from(resultsByDate, ([date, dayResults]) => {
-			const summary = summaries.find((day) => day.date === date);
-			invariant(summary, `Missing summary of ${date}`);
-
-			return { summary, results: dayResults };
-		}),
-		currentPage: args.page,
-		pagesCount: await SQMatchRepository.countSeasonResultPagesByUserId(args),
-	};
-}
 
 async function statsPeek(args: { season: number; userId: number }) {
 	const [stages, weapons, mates] = await Promise.all([

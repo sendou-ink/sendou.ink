@@ -99,18 +99,23 @@ const startedSeason = v.pipe(
 	v.check((nth) => Seasons.allStarted(new Date()).includes(nth)),
 );
 
+const startedSeasonParam = SP.param(v.nullable(startedSeason), {
+	loader: true,
+	timeDependent: true,
+});
+
 export const userSeasonsSearchParams = SearchParams.define({
+	season: startedSeasonParam,
+});
+
+export const userSeasonResultsSearchParams = SearchParams.define({
 	page: SP.page(),
 	source: SP.param(v.picklist(SEASON_RESULT_SOURCES), {
 		default: "ALL",
 		loader: true,
 		resets: ["page"],
 	}),
-	season: SP.param(v.nullable(startedSeason), {
-		loader: true,
-		resets: ["page"],
-		timeDependent: true,
-	}),
+	season: startedSeasonParam,
 });
 
 export const userSeasonsStatsSearchParams = SearchParams.define({
@@ -118,17 +123,11 @@ export const userSeasonsStatsSearchParams = SearchParams.define({
 		default: "overview",
 		loader: false,
 	}),
-	season: SP.param(v.nullable(startedSeason), {
-		loader: true,
-		timeDependent: true,
-	}),
+	season: startedSeasonParam,
 });
 
 export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
-	season: SP.param(v.nullable(startedSeason), {
-		loader: true,
-		timeDependent: true,
-	}),
+	season: startedSeasonParam,
 });
 
 const buildsWeaponFilterCodec = codec(

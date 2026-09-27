@@ -104,7 +104,9 @@ export default [
 			"seasons/summary-graphic",
 			"features/user-page/routes/u.$identifier.seasons.summary-graphic.ts",
 		),
-		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx"),
+		route("seasons", "features/user-page/routes/u.$identifier.seasons.tsx", [
+			index("features/user-page/routes/u.$identifier.seasons.index.tsx"),
+		]),
 		route(
 			"seasons/stats",
 			"features/user-page/routes/u.$identifier.seasons.stats.tsx",
