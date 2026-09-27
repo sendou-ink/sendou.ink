@@ -146,8 +146,8 @@ interface IngestContextCandidate {
  * activity around play time is the strong signal: their match running then (for cast footage,
  * the casted sets of tournaments they help run). Candidates are scored by how many matches would
  * link, but kept even when nothing links yet (a live minimap-only match still gets its hint).
- * Without activity the content decides: mode+stage sequence plus roster sides is near-unique in
- * a user's history.
+ * Without activity (a set that outlasted the activity window) the user's history decides: the
+ * context whose games were reported around the matches' play times.
  */
 async function resolveIngestContext({
 	matches,
@@ -300,7 +300,7 @@ function withoutDisprovenCast(match: ScannerMatch): ScannerMatch {
 	return { ...match, cast: false };
 }
 
-/** When the request's matches were probably played: the latest playedAt, else "now". */
+/** When the request's matches were probably played: the latest playedAt, else "now" (live reads without a scoreboard). */
 function anchorTime(matches: ScannerMatch[]): number {
 	const playedAts = matches
 		.map((match) => match.playedAt)

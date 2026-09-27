@@ -6,8 +6,9 @@
  * (worker/analyzer.worker.ts); the seek fallback drives a <video> element
  * through a single worker. The finished scan persists under its file name
  * (store/vods.ts), then the same path a live session takes runs: clips of
- * the scored windows are cut off the file, and unsent matches upload. A
- * scan is all or nothing: leaving the page cancels it and nothing is saved.
+ * the scored windows are cut off the file. Unlike a live session, a VoD's
+ * matches never upload: without a wall clock they can't be told apart from
+ * someone else's games. A scan is all or nothing: leaving the page cancels it and nothing is saved.
  */
 import { useSyncExternalStore } from "react";
 import * as R from "remeda";
@@ -41,11 +42,9 @@ import {
 import { refreshClips } from "./clips-feed";
 import { describeError } from "./errors";
 import type { FixtureData } from "./fixture-export";
-import { unsentMatches } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
 import { readSettings } from "./settings";
 import { thumbnailFromBlob } from "./thumbnail";
-import { sendVod, uploadEnabled } from "./upload";
 import { refreshVods } from "./vods-feed";
 
 /** seek-fallback stride while the worker reports activity */
@@ -99,8 +98,6 @@ export interface VodScanSnapshot {
 	/** what the scan found, chronological; reloaded from the store once saved */
 	events: ScanEvent[];
 	clipsWork: ClipsWork | null;
-	/** matches uploading right after the scan */
-	uploading: boolean;
 }
 
 /** Kept apart from the snapshot: it ticks several times a second, which must not re-render the match cards. */
@@ -115,7 +112,6 @@ const IDLE: VodScanSnapshot = {
 	error: null,
 	events: [],
 	clipsWork: null,
-	uploading: false,
 };
 
 const IDLE_PROGRESS: VodScanProgressSnapshot = {
@@ -201,27 +197,6 @@ export function vodScanFrame(
 export function cancelVodScan(): void {
 	abortRef.aborted = true;
 	abortChunks?.();
-}
-
-/** Re-reads the saved events (send statuses) of the shown scan. */
-async function reloadVodScanEvents(): Promise<void> {
-	if (!snapshot.name || snapshot.status === "scanning") return;
-	set({ events: await loadVodEvents(snapshot.name) });
-}
-
-/** Uploads the shown scan's unsent matches, or the ones `include` selects. */
-export async function uploadVodScan(
-	include: (
-		built: Parameters<typeof unsentMatches>[0],
-	) => boolean = unsentMatches,
-): Promise<void> {
-	if (!snapshot.name) return;
-	set({ uploading: true });
-	try {
-		await sendVod(snapshot.name, include, () => void reloadVodScanEvents());
-	} finally {
-		set({ uploading: false });
-	}
 }
 
 /**
@@ -507,14 +482,12 @@ export async function startVodScan(
 				data: event.data,
 				thumbnail: event.thumbnail,
 				frame: frames.get(event),
-				send: event.send,
 			})),
 		);
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
 		update({ events, status: "done" });
 		void refreshVods();
 		await cutClips(file, events, update);
-		if (uploadEnabled()) await uploadVodScan();
 	}
 }
 
@@ -600,7 +573,6 @@ function toScanEvent(event: StoredVodEvent): ScanEvent {
 		data: event.data,
 		thumbnail: event.thumbnail,
 		hasFrame: event.hasFrame,
-		send: event.send,
 	};
 }
 

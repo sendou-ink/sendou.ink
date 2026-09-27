@@ -3,8 +3,8 @@
  * so requests are same-origin: the session cookie rides along and the
  * logged-in user comes from the root loader (useUser); the server resolves
  * the tournament/match. The unit of accounting is one ScannerMatch
- * (core/match-builder.ts) — every source event's IndexedDB record, live or
- * VoD, tracks its outcome (the `send` status the match cards display) — while
+ * (core/match-builder.ts) — every live source event's IndexedDB record tracks
+ * its outcome (the `send` status the match cards display) — while
  * the unit of transport is a request of up to `MAX_MATCHES_PER_REQUEST`.
  * Resends are safe: sendou.ink dedupes by content hash, merges partials, and
  * scoreboards are first-ingest-wins.
@@ -43,11 +43,9 @@ export interface SendResult {
  * through `writeSend` (calling `onStatus` after each request's store writes).
  *
  * Matches go out in as few requests as the server cap allows: sendou.ink
- * resolves a whole request at once, so several matches anchor on their
- * mode+stage sequence instead of one match's timestamp — this is what makes
- * catching up on a session's backlog work. One request resolves to one
- * context, so a backlog spanning two links the larger and leaves the rest
- * "unlinked"; the retry carries only those, which then resolve on their own.
+ * resolves a whole request to one context, so a backlog spanning two links
+ * the larger and leaves the rest "unlinked"; the retry carries only those,
+ * which then resolve on their own.
  */
 export async function sendMatches({
 	matches,

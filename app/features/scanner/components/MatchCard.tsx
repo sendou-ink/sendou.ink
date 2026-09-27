@@ -106,7 +106,8 @@ export function MatchCard({
 	justFormed: boolean;
 	/** false while the match is still being scanned: no expand button yet */
 	expandable: boolean;
-	upload: UploadState;
+	/** null when the session's matches never upload */
+	upload: UploadState | null;
 	/** the clips this game produced, best first */
 	clips: readonly ScannerClip[];
 	onPlayClip: (clip: ScannerClip) => void;
@@ -118,14 +119,13 @@ export function MatchCard({
 	const tabIdPrefix = useId();
 	// fixed at mount: re-rendering must not cut the animation short
 	const [enter] = useState(justFormed);
-	const [prevUploadKind, setPrevUploadKind] = useState(upload.kind);
+	const uploadKind = upload?.kind ?? null;
+	const [prevUploadKind, setPrevUploadKind] = useState(uploadKind);
 	const [flash, setFlash] = useState<"uploaded" | "failed" | null>(null);
-	if (prevUploadKind !== upload.kind) {
-		setPrevUploadKind(upload.kind);
+	if (prevUploadKind !== uploadKind) {
+		setPrevUploadKind(uploadKind);
 		setFlash(
-			upload.kind === "uploaded" || upload.kind === "failed"
-				? upload.kind
-				: null,
+			uploadKind === "uploaded" || uploadKind === "failed" ? uploadKind : null,
 		);
 	}
 
@@ -215,7 +215,9 @@ export function MatchCard({
 				) : null}
 				{expandable ? (
 					<span className={styles.footEnd}>
-						<UploadStatusButton state={upload} className={styles.circle} />
+						{upload ? (
+							<UploadStatusButton state={upload} className={styles.circle} />
+						) : null}
 						<SendouButton
 							variant="minimal"
 							size="small"

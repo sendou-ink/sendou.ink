@@ -1,7 +1,7 @@
 /**
  * The landing: two entry cards (Live / File), the clip history strip and
  * the sessions list. Anyone can capture, scan files and get clips locally;
- * only uploading needs a login. Dropping a file anywhere here starts a scan;
+ * only uploading (live captures) needs a login. Dropping a file anywhere here starts a scan;
  * an image opens the screenshot view instead, through the same handoff
  * Inspect uses.
  */

@@ -1,6 +1,6 @@
 /**
- * Uploading to sendou.ink, shared by the live capture, VoD scans and the
- * views' Retry/Upload buttons: one serialized sender per store, so sends
+ * Uploading to sendou.ink, shared by the live capture and the views'
+ * Retry/Upload buttons: one serialized sender per store, so sends
  * never overlap (a send requested mid-flight runs right after), and one
  * place that knows whether uploading is on at all (the setting, and a login).
  */
@@ -10,13 +10,8 @@ import {
 	listCompactedMatches,
 	updateCompactedMatchesSend,
 } from "../store/compacted-matches";
-import {
-	COMPACTED_MATCHES_STORE,
-	EVENTS_STORE,
-	VOD_EVENTS_STORE,
-} from "../store/db";
+import { COMPACTED_MATCHES_STORE, EVENTS_STORE } from "../store/db";
 import { listEvents, type SendStatus, updateEventsSend } from "../store/events";
-import { loadVodEvents } from "../store/vods";
 import { refreshFeed } from "./events-feed";
 import { type SendResult, sendMatches } from "./sendou-ingest";
 import type { ScanEvent } from "./session-data";
@@ -26,7 +21,7 @@ export type MatchSelector = (built: BuiltMatch<ScanEvent>) => boolean;
 
 interface SendRequest {
 	include: MatchSelector;
-	/** live: the session key built matches are loaded from; VoD: unused */
+	/** the session key built matches are loaded from */
 	since: number;
 }
 
@@ -75,7 +70,11 @@ export function sendLive(
 		{ include, since },
 		{
 			load: async (from) => buildScannerMatches(await listEvents(from)),
-			writeSend: eventsSendWriter(EVENTS_STORE),
+			writeSend: (matches, sendStatus) =>
+				updateEventsSend(
+					matches.flatMap((built) => built.sources.map((event) => event.id!)),
+					sendStatus,
+				),
 			onStatus: refreshFeed,
 		},
 	);
@@ -98,23 +97,6 @@ export function sendCompacted(
 					sendStatus,
 				),
 			onStatus: refreshFeed,
-		},
-	);
-}
-
-/** Sends the VoD's matches `include` selects; `onStatus` runs after each status write. */
-export function sendVod(
-	name: string,
-	include: MatchSelector,
-	onStatus: () => void,
-): Promise<SendResult | null> {
-	return send(
-		`${VOD_EVENTS_STORE}:${name}`,
-		{ include, since: 0 },
-		{
-			load: async () => buildScannerMatches(await loadVodEvents(name)),
-			writeSend: eventsSendWriter(VOD_EVENTS_STORE),
-			onStatus,
 		},
 	);
 }
@@ -165,13 +147,4 @@ async function send(
 		target.onStatus(sentSince);
 	}
 	return result;
-}
-
-function eventsSendWriter(store: string): SendTarget["writeSend"] {
-	return (matches, sendStatus) =>
-		updateEventsSend(
-			matches.flatMap((built) => built.sources.map((event) => event.id!)),
-			sendStatus,
-			store,
-		);
 }

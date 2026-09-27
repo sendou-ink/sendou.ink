@@ -18,11 +18,9 @@ import {
 
 export function ScanWorkers({
 	events,
-	headerEnd,
 	children,
 }: {
 	events: ScanEvent[];
-	headerEnd: React.ReactNode;
 	children?: React.ReactNode;
 }) {
 	const gameStarts = buildScannerMatches(events).flatMap(({ match }) =>
@@ -34,7 +32,6 @@ export function ScanWorkers({
 			<div className={styles.headerRow}>
 				<StatusPill>Scanning</StatusPill>
 				<ProgressText />
-				<div className={styles.headerEnd}>{headerEnd}</div>
 			</div>
 			<Lanes gameStarts={gameStarts} />
 			{children}

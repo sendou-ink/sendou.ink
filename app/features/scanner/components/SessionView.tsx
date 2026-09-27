@@ -90,8 +90,9 @@ export function SessionView({
 	header: (info: SessionInfo) => React.ReactNode;
 	getFrame: (event: ScanEvent) => GetFrame | undefined;
 	/** logged in: Retry/Upload buttons show */
-	canUpload: boolean;
-	onUpload: (built: BuiltMatch<ScanEvent>) => void;
+	canUpload?: boolean;
+	/** absent for sessions whose matches never upload (VoD scans): the cards show no upload state */
+	onUpload?: (built: BuiltMatch<ScanEvent>) => void;
 	emptyText: string;
 	/** rendered between the header and the clips (a scan's progress, an error) */
 	children?: React.ReactNode;
@@ -143,13 +144,17 @@ export function SessionView({
 						!newerGameStarted
 					)
 				}
-				upload={uploadStateOf({
-					send: aggregateSendStatus(b.sources),
-					skipReason: skipReasons.get(b),
-					lobby: b.match.lobby,
-					canUpload,
-					onUpload: () => onUpload(b),
-				})}
+				upload={
+					onUpload
+						? uploadStateOf({
+								send: aggregateSendStatus(b.sources),
+								skipReason: skipReasons.get(b),
+								lobby: b.match.lobby,
+								canUpload: canUpload ?? false,
+								onUpload: () => onUpload(b),
+							})
+						: null
+				}
 				clips={clipsByMatch[index]!}
 				onPlayClip={setPlaying}
 				getFrame={getFrame}

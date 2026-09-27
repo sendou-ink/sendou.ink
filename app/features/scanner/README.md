@@ -6,7 +6,7 @@ detects Splatoon 3 UI screens with OpenCV.js in a Web Worker, and parses them
 into events speaking sendou.ink ids (`ModeShort`/`StageId`/weapon ids/`Ability`).
 Events aggregate client-side into `ScannerMatch` objects
 (`core/scanner-match.ts`) — one detected game per object, every field
-nullable — which feed `/ingest` (features/scanner-ingest), the `/vods/new`
+nullable — which feed `/ingest` (features/scanner-ingest, live captures only), the `/vods/new`
 prefill, the match cards and the clip cutter. Imported from the emberz repo;
 see `MIGRATION.md` there.
 
@@ -70,10 +70,11 @@ opens it, for anyone, through the same handoff Inspect uses.
 - **Upload** is on by default when logged in (settings toggle, persisted).
   Live: a scoreboard closes its match and sends it, a 15 s tick retries
   unlinked matches on a backoff (`sendou-ingest.ts`) and flushes closed
-  matches whose send was skipped; Stop sends what is left. VoD: the whole
-  scan sends once saved. Both write per-event send statuses to their own
-  store (`updateEventsSend` takes the store), so the cards' upload status
-  button (`UploadStatus.tsx`) and its Retry/Upload are one code path.
+  matches whose send was skipped; Stop sends what is left. Per-event send
+  statuses back the cards' upload status button (`UploadStatus.tsx`) and its
+  Retry/Upload. VoD scans never upload: their reads carry no wall clock, and
+  without one a stranger's game can't be told apart from the uploader's
+  (linking needs a `playedAt` within 30 min of the game's report).
 - **CSV** is a normal feature: `⇩ CSV` in every session header offers
   `Matches` (`core/csv/matches.ts`, one row per game, the rows the cards
   render) and `Raw detections` (`core/csv/events.ts`, one row per event).
@@ -192,8 +193,8 @@ sequenceDiagram
   TL-->>UI: deduped timeline, status reads kept per run end (IndexedDB: events / vod-events)
   UI->>MB: buildScannerMatches(events)
   MB-->>UI: ScannerMatch[] + source events
-  UI->>ING: POST { matches } (live: on match close / stop, VoD: once saved)
-  ING->>ING: resolve context (current tournament/SendouQ activity, casts via staff roles, else content sequence ≥2)
+  UI->>ING: POST { matches } (live only: on match close / stop)
+  ING->>ING: resolve context (current tournament/SendouQ activity, casts via staff roles, else games reported around the play times ≥2)
   ING->>DB: merge-store IngestedMatch (matchHash, isSameMatch + merge, context hints)
   ING->>DB: link matches to game results → IngestedMatchLink (POV weapon → ReportedWeapon; scoreboards derived at read time)
   Note over UI: VoD "Add to VoDs": ScannerMatch → slim prefill param → /vods/new
@@ -225,8 +226,8 @@ sequenceDiagram
   scanner-ingest merges them server-side. Senders filter with
   `ingestSkipReasons`: private/unread lobby only, and no games a disconnect
   cut short (scoreless + counter left more time than the footage did, or
-  replayed right after on the same map — the latter is a VoD-scan filter in
-  practice since it only resolves after the fact).
+  replayed right after on the same map — the latter only resolves after the
+  fact, so a live scan may already have sent the game).
 - The route (`routes/scanner.tsx`) is SSR-guarded: the client tree loads via
   `React.lazy` after `useHydrated`; nothing from `core/worker/capture/store`
   may be imported at route-module top level. There is no feature flag: the

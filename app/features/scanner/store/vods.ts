@@ -1,8 +1,7 @@
 /**
  * Persistence for scanned VoDs, keyed by file name so a video can be reopened
  * without re-decoding. The summary lives in `vods`, detections in
- * `vod-events` under a `vod` index (each carrying its own /ingest send status,
- * like a live event), full-res PNGs in `vod-frames` under the event id
+ * `vod-events` under a `vod` index, full-res PNGs in `vod-frames` under the event id
  * (loadVodEventFrame), so listing stays cheap. Re-scanning the same file name
  * overwrites the previous save.
  */
@@ -15,7 +14,6 @@ import {
 	VOD_FRAMES_STORE,
 	VODS_STORE,
 } from "./db";
-import type { SendStatus } from "./events";
 
 export interface VodSummary {
 	/** VoD file name — primary key */
@@ -41,7 +39,6 @@ export interface StoredVodEvent {
 	thumbnail?: string;
 	/** whether a full-res frame exists in `vod-frames` under this id */
 	hasFrame?: boolean;
-	send?: SendStatus;
 }
 
 /** A vod-event to persist, with its (separately stored) frame attached. */

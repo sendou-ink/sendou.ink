@@ -171,14 +171,13 @@ function retainFrames(
 	};
 }
 
-/** Sets (or clears) the send status of the given events in one transaction; `storeName` picks the live or VoD store. */
+/** Sets (or clears) the send status of the given events in one transaction. */
 export async function updateEventsSend(
 	ids: number[],
 	send: SendStatus | undefined,
-	storeName: string = EVENTS_STORE,
 ): Promise<void> {
-	await readwrite([storeName], (transaction) => {
-		const events = transaction.objectStore(storeName);
+	await readwrite([EVENTS_STORE], (transaction) => {
+		const events = transaction.objectStore(EVENTS_STORE);
 		for (const id of ids) {
 			const get = events.get(id) as IDBRequest<StoredEvent | undefined>;
 			get.onsuccess = () => {

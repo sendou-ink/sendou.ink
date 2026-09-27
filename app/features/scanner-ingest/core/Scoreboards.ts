@@ -22,7 +22,7 @@ const MIN_LINKED_DUPLICATE_NAME_MATCHES = 6;
 /** How many players on the winning (first) resp. losing side of a scoreboard. */
 const PLAYERS_PER_TEAM = 4;
 
-/** Matches that must align with one context's games before content resolution trusts it: one (mode, stage, sides) is common across a user's history, two carry order. */
+/** Matches that must align with one context's games before content resolution trusts it. */
 const MIN_RESOLVED_SCOREBOARDS = 2;
 
 /**
@@ -127,11 +127,10 @@ export function resolveContext({
 /**
  * Decides which game result each ingested match links to.
  *
- * Only matches with a known winner and two full teams qualify (minimap-only reads never link).
- * Matches and games are walked chronologically: each match takes an unassigned game of the same
- * mode+stage whose sides agree with what is known. A match with a wall clock takes the game
- * reported nearest it (none beyond `PLAYED_AT_TOLERANCE_MS`); a VoD read (video offsets only)
- * takes the next in sequence.
+ * Only matches with a known winner, two full teams and a play time qualify (minimap-only and VoD
+ * reads never link). Matches and games are walked chronologically: each match takes the unassigned
+ * game of the same mode+stage reported nearest it whose sides agree with what is known, none
+ * beyond `PLAYED_AT_TOLERANCE_MS`.
  *
  * The sender is the POV player, so the roster they sit in pins the scan's sides — OCR'd names
  * are too unreliable to overrule it. Only without a POV seat (cast footage) do in-game names
@@ -154,12 +153,12 @@ export function matchedGames({
 	const views = dedupeViews(
 		matches
 			.map((match, matchIndex) => {
-				const view = winnerFirstView(match, matchIndex);
+				const view = winnerFirstView(match);
 				return view ? { ...view, matchIndex } : null;
 			})
-			.filter((view): view is IndexedView => view !== null)
+			.filter((view): view is TimedView => view?.playedAt != null)
 			.filter((view) => isLinkableLobby(view.lobby))
-			.sort((a, b) => a.order - b.order),
+			.sort((a, b) => a.playedAt - b.playedAt),
 	);
 	const orderedGames = games.toSorted(
 		(a, b) => a.playedAt - b.playedAt || a.mapIndex - b.mapIndex,
@@ -231,7 +230,7 @@ export function deriveScoreboardData({
 		merged = Matches.mergeMatches(merged, other.data).merged;
 	}
 
-	const view = winnerFirstView(merged, 0);
+	const view = winnerFirstView(merged);
 	if (!view) return null;
 
 	const players = view.players.map(
@@ -260,7 +259,7 @@ export function deriveScoreboardData({
 
 /** A match's players winner-first in row order (unread names as ""), or null without such a view — a game's `linkedPlayerNames`. */
 export function winnerFirstPlayerNames(match: ScannerMatch): string[] | null {
-	const view = winnerFirstView(match, 0);
+	const view = winnerFirstView(match);
 	return view ? view.players.map((player) => player.name.trim()) : null;
 }
 
@@ -279,12 +278,11 @@ interface WinnerFirstView {
 	povIndex: number | null;
 	/** wall-clock ms the game was played, when the read carried a clock at all */
 	playedAt: number | null;
-	/** chronological walk key: wall-clock, else video time, else input order */
-	order: number;
 }
 
-interface IndexedView extends WinnerFirstView {
+interface TimedView extends WinnerFirstView {
 	matchIndex: number;
+	playedAt: number;
 }
 
 interface WinnerFirstPlayer {
@@ -297,10 +295,7 @@ interface WinnerFirstPlayer {
 	abilities?: AbilityWithUnknown[][];
 }
 
-function winnerFirstView(
-	match: ScannerMatch,
-	index: number,
-): WinnerFirstView | null {
+function winnerFirstView(match: ScannerMatch): WinnerFirstView | null {
 	if (match.winner === null) return null;
 	const winners = match.teams[match.winner];
 	const losers = match.teams[match.winner === 0 ? 1 : 0];
@@ -342,7 +337,6 @@ function winnerFirstView(
 					? match.pov.index
 					: PLAYERS_PER_TEAM + match.pov.index,
 		playedAt: match.playedAt,
-		order: match.playedAt ?? match.startsAt ?? index,
 	};
 }
 
@@ -424,7 +418,7 @@ function attributePovUsers(
 ) {
 	for (const { data, povUserId } of linked) {
 		if (povUserId === null || data.pov === null) continue;
-		const view = winnerFirstView(data, 0);
+		const view = winnerFirstView(data);
 		if (!view || view.povIndex === null) continue;
 		if (players.some((player) => player.userId === povUserId)) continue;
 
@@ -458,8 +452,8 @@ function attributionIndex(
 }
 
 /** Drops re-detections of the same game within one request, with the same OCR-jitter tolerance as isLinkedDuplicate. */
-function dedupeViews(sorted: IndexedView[]): IndexedView[] {
-	const result: IndexedView[] = [];
+function dedupeViews(sorted: TimedView[]): TimedView[] {
+	const result: TimedView[] = [];
 
 	for (const view of sorted) {
 		const isDuplicate = result.some(
@@ -479,11 +473,11 @@ function dedupeViews(sorted: IndexedView[]): IndexedView[] {
 
 /**
  * Index of the game `view` links to, or null. Only games from `from` on are considered so two
- * scans of one request never take the same game. A scan with a play time takes the candidate
- * reported nearest it (keeps two plays of one map apart); one without takes the next in sequence.
+ * scans of one request never take the same game. The candidate reported nearest the scan's play
+ * time wins, which keeps two plays of one map apart.
  */
 function pickGame(
-	view: IndexedView,
+	view: TimedView,
 	orderedGames: IngestableGame[],
 	from: number,
 	povUserId: number | null,
@@ -493,7 +487,6 @@ function pickGame(
 	for (let i = from; i < orderedGames.length; i++) {
 		const game = orderedGames[i]!;
 		if (!canLink(view, game, povUserId)) continue;
-		if (view.playedAt === null) return i;
 
 		const distance = Math.abs(
 			view.playedAt - databaseTimestampToJavascriptTimestamp(game.playedAt),

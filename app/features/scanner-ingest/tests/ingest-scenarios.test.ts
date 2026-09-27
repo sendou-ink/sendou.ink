@@ -442,35 +442,21 @@ describe("tournament flow", () => {
 		expect(laterPage.ingestedScoreboards).toHaveLength(0);
 	});
 
-	test("T2 VoD scan spanning two sets links each read into its own set", async () => {
+	test("T2 reads without a play time (VoD) are stored but never linked", async () => {
 		const w = await tournamentWorld();
-		const [set1, set2] = w.matchesOfTeam(w.championTeamId);
-		const games = [...(await w.games(set1!.id)), ...(await w.games(set2!.id))];
+		const [set1] = w.matchesOfTeam(w.championTeamId);
+		const games = await w.games(set1!.id);
 
 		const res = await ingest(
 			w.povUser,
 			games.map((game) => w.scanned(game, { playedAt: null })),
 		);
 
-		expect(res.linkedGamesCount).toBe(4);
-		expect(res.linkedMatches).toEqual(
-			[set1, set1, set2, set2].map((set, matchIndex) => ({
-				matchIndex,
-				link: {
-					type: "tournament",
-					tournamentId: w.tournamentId,
-					matchId: set!.id,
-				},
-			})),
-		);
-		const set1Page = await tournamentMatchPage(w.tournamentId, set1!.id);
-		expect(set1Page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([
-			0, 1,
-		]);
-		const set2Page = await tournamentMatchPage(w.tournamentId, set2!.id);
-		expect(set2Page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([
-			0, 1,
-		]);
+		expect(res.storedMatchesCount).toBe(games.length);
+		expect(res.linkedGamesCount).toBe(0);
+		expect(res.linkedMatches).toEqual([]);
+		const page = await tournamentMatchPage(w.tournamentId, set1!.id);
+		expect(page.ingestedScoreboards).toHaveLength(0);
 	});
 
 	test("T3 partial then fuller resend: the replay read merges into the stored partial and links", async () => {

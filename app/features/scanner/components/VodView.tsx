@@ -33,17 +33,13 @@ import { ExportMenu } from "./ExportMenu";
 import { NotFound } from "./NotFound";
 import { ScanWorkers } from "./ScanWorkers";
 import { SessionHeader } from "./SessionHeader";
-import { type SessionInfo, SessionView } from "./SessionView";
-import { matchContaining } from "./sendou-ingest";
+import { SessionView } from "./SessionView";
 import { sendouUpload } from "./sendou-upload";
 import type { ScanEvent } from "./session-data";
-import { useScannerSettings } from "./settings";
-import { sendVod } from "./upload";
 import { useDebug } from "./use-debug";
 import styles from "./VodView.module.css";
 import {
 	startVodScan,
-	uploadVodScan,
 	useVodScan,
 	useVodScanProgress,
 	vodScanFrame,
@@ -52,7 +48,7 @@ import { refreshVods } from "./vods-feed";
 
 /**
  * Builds keyed by the events array: views re-render for reasons other than new
- * events (clips, upload state), and reusing the same `BuiltMatch` objects lets
+ * events (clips), and reusing the same `BuiltMatch` objects lets
  * the unchanged cards skip rendering.
  */
 const builtCache = new WeakMap<readonly ScanEvent[], BuiltMatch<ScanEvent>[]>();
@@ -68,8 +64,6 @@ export function VodView() {
 /** The scan running (or finished) this visit. */
 function ScanVodView({ name }: { name: string }) {
 	const scan = useVodScan();
-	const settings = useScannerSettings();
-	const user = useUser();
 	const [telemetryOn] = useSearchParam(scannerSearchParams, "telemetry");
 	const debug = useDebug();
 	const scanning = scan.status === "scanning";
@@ -80,10 +74,6 @@ function ScanVodView({ name }: { name: string }) {
 			events={scan.events}
 			running={scanning}
 			getFrame={vodScanFrame}
-			onUpload={(built) => {
-				const id = built.sources[0]?.id;
-				if (id !== undefined) void uploadVodScan(matchContaining(id));
-			}}
 			status={
 				scan.status === "error" ? (
 					<div className={styles.errorBox}>
@@ -107,10 +97,7 @@ function ScanVodView({ name }: { name: string }) {
 						</label>
 					</div>
 				) : scanning ? (
-					<ScanWorkers
-						events={scan.events}
-						headerEnd={`Upload ${user && settings.upload ? "on" : "off"}`}
-					>
+					<ScanWorkers events={scan.events}>
 						{scan.error ? (
 							<div className={styles.error}>{scan.error}</div>
 						) : null}
@@ -122,7 +109,6 @@ function ScanVodView({ name }: { name: string }) {
 							: scan.clipsWork?.state === "done" && scan.clipsWork.error
 								? `Clips: ${scan.clipsWork.error}`
 								: null}
-						{scan.uploading ? "Uploading…" : null}
 						{scan.error ? (
 							<span className={styles.error}>{scan.error}</span>
 						) : null}
@@ -146,21 +132,16 @@ function StoredVodView({ name }: { name: string }) {
 	if (stored.state === "missing") {
 		return <NotFound>This VoD is no longer saved.</NotFound>;
 	}
-	const { events, reload } = stored;
 	return (
 		<VodSessionView
 			name={name}
-			events={events}
+			events={stored.events}
 			running={false}
 			getFrame={(event) =>
 				event.hasFrame && event.id !== undefined
 					? () => loadVodEventFrame(event.id!)
 					: undefined
 			}
-			onUpload={(built) => {
-				const id = built.sources[0]?.id;
-				if (id !== undefined) void sendVod(name, matchContaining(id), reload);
-			}}
 			status={null}
 			telemetry={null}
 		/>
@@ -174,19 +155,17 @@ type StoredVod =
 			state: "ready";
 			summary: VodSummary;
 			events: ScanEvent[];
-			reload: () => void;
 	  };
 
-/** Loads a saved VoD's summary and events; `reload` re-reads them after a send. */
+/** Loads a saved VoD's summary and events. */
 function useStoredVod(name: string): StoredVod {
 	const [loaded, setLoaded] = useState<{
 		name: string;
 		summary: VodSummary | undefined;
 		events: ScanEvent[];
 	} | null>(null);
-	const [version, setVersion] = useState(0);
 
-	// the store is outside React: read it when the name (or version) changes
+	// the store is outside React: read it when the name changes
 	useEffect(() => {
 		let stale = false;
 		void Promise.all([loadVod(name), loadVodEvents(name)]).then(
@@ -197,7 +176,7 @@ function useStoredVod(name: string): StoredVod {
 		return () => {
 			stale = true;
 		};
-	}, [name, version]);
+	}, [name]);
 
 	if (!loaded || loaded.name !== name) return { state: "loading" };
 	if (!loaded.summary) return { state: "missing" };
@@ -205,7 +184,6 @@ function useStoredVod(name: string): StoredVod {
 		state: "ready",
 		summary: loaded.summary,
 		events: loaded.events,
-		reload: () => setVersion((v) => v + 1),
 	};
 }
 
@@ -214,7 +192,6 @@ function VodSessionView({
 	events,
 	running,
 	getFrame,
-	onUpload,
 	status,
 	telemetry,
 }: {
@@ -222,7 +199,6 @@ function VodSessionView({
 	events: ScanEvent[];
 	running: boolean;
 	getFrame: (event: ScanEvent) => (() => Promise<Blob | undefined>) | undefined;
-	onUpload: (built: SessionInfo["built"][number]) => void;
 	status: React.ReactNode;
 	telemetry: React.ReactNode;
 }) {
@@ -250,8 +226,6 @@ function VodSessionView({
 			clips={vodClips}
 			clipsTitle="Clips"
 			running={running}
-			canUpload={Boolean(user)}
-			onUpload={onUpload}
 			getFrame={getFrame}
 			emptyText={
 				running
