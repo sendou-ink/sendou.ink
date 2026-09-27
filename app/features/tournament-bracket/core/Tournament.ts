@@ -284,23 +284,28 @@ export class Tournament {
 	}
 
 	/** Teams that can play in the bracket: its participants plus the ones still pending check-in. */
-	eligibleTeamsCountOfBracket(bracketIdx: number) {
+	eligibleTeamIdsOfBracket(bracketIdx: number) {
 		const bracket = this.bracketsMeta[bracketIdx];
 
 		if (bracket.sources) {
-			return (
-				(bracket.teamsPendingCheckIn ?? []).length +
-				bracket.participantTournamentTeamIds.length
-			);
+			return [
+				...bracket.participantTournamentTeamIds,
+				...(bracket.teamsPendingCheckIn ?? []),
+			];
 		}
 
-		if (!this.isMultiStartingBracket) {
-			return this.ctx.teams.length;
-		}
+		const teams = this.isMultiStartingBracket
+			? this.ctx.teams.filter(
+					(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
+				)
+			: this.ctx.teams;
 
-		return this.ctx.teams.filter(
-			(team) => (team.startingBracketIdx ?? 0) === bracketIdx,
-		).length;
+		return teams.map((team) => team.id);
+	}
+
+	/** Count of {@link eligibleTeamIdsOfBracket}. */
+	eligibleTeamsCountOfBracket(bracketIdx: number) {
+		return this.eligibleTeamIdsOfBracket(bracketIdx).length;
 	}
 
 	/** Teams of the bracket: its participants, or every eligible team while it is a preview. */

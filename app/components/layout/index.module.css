@@ -19,6 +19,11 @@
 	z-index: 10;
 	/* captured on its own so animating content slides under it instead of over it */
 	view-transition-name: layout-header;
+
+	/* snapshots paint above the top layer, which would lift it over an open modal's backdrop */
+	:root:has(:modal) & {
+		view-transition-name: none;
+	}
 }
 
 ::view-transition-group(layout-header) {

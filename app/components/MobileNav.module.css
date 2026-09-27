@@ -18,6 +18,11 @@
 		var(--layout-nav-height) +
 		env(safe-area-inset-bottom)
 	);
+
+	/* snapshots paint above the top layer, which would lift it over an open modal's backdrop */
+	:root:has(:modal) & {
+		view-transition-name: none;
+	}
 }
 
 @media screen and (min-width: 600px) {

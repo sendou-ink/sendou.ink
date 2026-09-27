@@ -449,6 +449,39 @@ describe("Adjusting team starting bracket", () => {
 	});
 });
 
+describe("eligibleTeamIdsOfBracket", () => {
+	const notCheckedIn = (teamId: number) =>
+		tournamentCtxTeam(teamId, { checkIns: [] });
+
+	test("includes teams not checked in for the starting bracket", () => {
+		const tournament = testTournament({
+			ctx: {
+				teams: [tournamentCtxTeam(1), tournamentCtxTeam(2), notCheckedIn(3)],
+			},
+		});
+
+		expect(tournament.eligibleTeamIdsOfBracket(0)).toEqual([1, 2, 3]);
+	});
+
+	test("includes only teams starting in the bracket when there are many starting brackets", () => {
+		const tournament = testTournament({
+			ctx: {
+				teams: [
+					tournamentCtxTeam(1, { startingBracketIdx: 0 }),
+					tournamentCtxTeam(2, { startingBracketIdx: 1 }),
+					notCheckedIn(3),
+				],
+				settings: {
+					bracketProgression: progressions.manyStartBrackets,
+				},
+			},
+		});
+
+		expect(tournament.eligibleTeamIdsOfBracket(0)).toEqual([1, 3]);
+		expect(tournament.eligibleTeamIdsOfBracket(1)).toEqual([2]);
+	});
+});
+
 describe("League divisions", () => {
 	const leagueTournament = (isLeague = true) =>
 		testTournament({

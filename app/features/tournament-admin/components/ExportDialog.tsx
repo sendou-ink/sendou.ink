@@ -90,7 +90,7 @@ export function ExportDialog({
 
 	const [format, setFormat] = React.useState<ExportFormat>("list");
 	const [status, setStatus] = React.useState<ExportStatus>("all");
-	const [bracketIdx, setBracketIdx] = React.useState<number | null>(null);
+	const [bracketIdx, setBracketIdx] = React.useState(0);
 	const [sort, setSort] = React.useState<ExportSort>("seed");
 	const [roster, setRoster] = React.useState<ExportRoster>("full");
 	const [fields, setFields] = React.useState<Set<ExportField>>(
@@ -108,35 +108,37 @@ export function ExportDialog({
 			return next;
 		});
 
+	const selectedBracket = tournament.bracketsMeta[bracketIdx];
+	const bracketRequiresOwnCheckIn =
+		selectedBracket.requiresCheckIn && !selectedBracket.isStartingBracket;
+	const teams = scopedAndSortedTeams({
+		teams: allTeams,
+		status,
+		sort,
+		bracketIdx,
+		bracketRequiresOwnCheckIn,
+		bracketParticipantIds: new Set(
+			tournament.eligibleTeamIdsOfBracket(bracketIdx),
+		),
+	});
+	const content = buildContent({
+		teams,
+		format,
+		fields,
+		captainsOnly: roster === "captains",
+		bracketIdx,
+		bracketRequiresOwnCheckIn,
+		checkedInLabel: "Checked in",
+		notCheckedInLabel: "Not checked in",
+	});
+	const nothingToExportReason =
+		teams.length === 0
+			? "No teams match the selected bracket and status"
+			: fields.size === 0 || !content
+				? "Nothing to export with the selected fields"
+				: null;
+
 	const onDownload = () => {
-		const selectedBracket =
-			bracketIdx !== null ? tournament.bracketsMeta[bracketIdx] : null;
-		const bracketRequiresOwnCheckIn = Boolean(selectedBracket?.requiresCheckIn);
-		const teams = scopedAndSortedTeams({
-			teams: allTeams,
-			status,
-			sort,
-			bracketIdx,
-			bracketRequiresOwnCheckIn,
-			// a team belongs to a bracket whether or not it has checked in (the rest are pending check-in);
-			// both are scoped out of the export when they don't belong to it
-			bracketParticipantIds: selectedBracket
-				? new Set([
-						...selectedBracket.participantTournamentTeamIds,
-						...(selectedBracket.teamsPendingCheckIn ?? []),
-					])
-				: null,
-		});
-		const content = buildContent({
-			teams,
-			format,
-			fields,
-			captainsOnly: roster === "captains",
-			bracketIdx,
-			bracketRequiresOwnCheckIn,
-			checkedInLabel: "Checked in",
-			notCheckedInLabel: "Not checked in",
-		});
 		handleDownload({
 			filename: `participants.${format === "csv" ? "csv" : "txt"}`,
 			content,
@@ -187,17 +189,12 @@ export function ExportDialog({
 				{tournament.bracketsMeta.length > 1 ? (
 					<RadioRow
 						label="Bracket"
-						value={bracketIdx === null ? "all" : String(bracketIdx)}
-						onChange={(value) =>
-							setBracketIdx(value === "all" ? null : Number(value))
-						}
-						options={[
-							{ value: "all", label: "All brackets" },
-							...tournament.bracketsMeta.map((bracket, idx) => ({
-								value: String(idx),
-								label: bracket.name || `#${idx}`,
-							})),
-						]}
+						value={String(bracketIdx)}
+						onChange={(value) => setBracketIdx(Number(value))}
+						options={tournament.bracketsMeta.map((bracket, idx) => ({
+							value: String(idx),
+							label: bracket.name || `#${idx}`,
+						}))}
 					/>
 				) : null}
 
@@ -221,9 +218,17 @@ export function ExportDialog({
 					}))}
 				/>
 
-				<SendouButton onClick={onDownload} className="mx-auto">
-					Download
-				</SendouButton>
+				<div className="stack sm items-center">
+					<SendouButton
+						onClick={onDownload}
+						isDisabled={nothingToExportReason !== null}
+					>
+						Download
+					</SendouButton>
+					{nothingToExportReason ? (
+						<div className="text-sm text-error">{nothingToExportReason}</div>
+					) : null}
+				</div>
 			</div>
 		</SendouDialog>
 	);
@@ -264,10 +269,10 @@ function RadioRow<T extends string>({
 
 function hasActiveCheckIn(
 	team: TournamentTeamFull,
-	bracketIdx: number | null,
+	bracketIdx: number,
 	bracketRequiresOwnCheckIn: boolean,
 ) {
-	if (bracketIdx !== null && bracketRequiresOwnCheckIn) {
+	if (bracketRequiresOwnCheckIn) {
 		return team.checkIns.some(
 			(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
 		);
@@ -293,12 +298,12 @@ export function scopedAndSortedTeams({
 	teams: TournamentTeamFull[];
 	status: ExportStatus;
 	sort: ExportSort;
-	bracketIdx: number | null;
+	bracketIdx: number;
 	bracketRequiresOwnCheckIn: boolean;
-	bracketParticipantIds: Set<number> | null;
+	bracketParticipantIds: Set<number>;
 }) {
 	const filtered = teams.filter((team) => {
-		if (bracketParticipantIds && !bracketParticipantIds.has(team.id)) {
+		if (!bracketParticipantIds.has(team.id)) {
 			return false;
 		}
 		switch (status) {
@@ -333,7 +338,7 @@ function teamFieldValue(
 	opts: {
 		checkedInLabel: string;
 		notCheckedInLabel: string;
-		bracketIdx: number | null;
+		bracketIdx: number;
 		bracketRequiresOwnCheckIn: boolean;
 	},
 ) {
@@ -389,7 +394,7 @@ function buildContent({
 	format: ExportFormat;
 	fields: Set<ExportField>;
 	captainsOnly: boolean;
-	bracketIdx: number | null;
+	bracketIdx: number;
 	bracketRequiresOwnCheckIn: boolean;
 	checkedInLabel: string;
 	notCheckedInLabel: string;
