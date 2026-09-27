@@ -68,7 +68,7 @@ export function GameTimeline({
 		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
 	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
-	const domain = timelineDomain(objective, samples);
+	const domain = timelineDomain(objective, samples, pov);
 	if (!domain) return null;
 
 	const handlePointer = (event: React.PointerEvent) => {
@@ -132,7 +132,7 @@ const TimelineCharts = memo(function TimelineCharts({
 		(objectiveEvents ?? []).toSorted((a, b) => a.t - b.t),
 	);
 	const samples = (playerStatusSamples ?? []).toSorted((a, b) => a.t - b.t);
-	const domain = timelineDomain(objective, samples);
+	const domain = timelineDomain(objective, samples, pov);
 	if (!domain) return null;
 
 	return (
@@ -336,19 +336,25 @@ function KillsRow({ kills }: { kills: PlayerStatusTimelineKill[] }) {
 	);
 }
 
+/** Spans every read and, when the status rows draw them, the POV's kill ticks — the feed can outlive the other reads. */
 function timelineDomain(
 	objective: readonly ObjectiveTimelineEvent[],
 	samples: readonly PlayerStatusTimelineSample[],
+	pov: PlayerStatusTimelinePov | undefined,
 ): [number, number] | null {
+	const killTimes =
+		samples.length > 0 ? (pov?.kills ?? []).map((kill) => kill.t) : [];
 	const start = Math.min(
 		objective[0]?.t ?? Number.POSITIVE_INFINITY,
 		samples[0]?.t ?? Number.POSITIVE_INFINITY,
+		...killTimes,
 	);
 	const end = Math.max(
 		objective[objective.length - 1]?.t ?? Number.NEGATIVE_INFINITY,
 		samples.length > 0
 			? samples[samples.length - 1]!.t + PLAYER_STATUS_TAIL_SECONDS
 			: Number.NEGATIVE_INFINITY,
+		...killTimes,
 	);
 	if (!Number.isFinite(start) || !Number.isFinite(end)) return null;
 	return [start, Math.max(end, start + 1)];
