@@ -4,7 +4,6 @@ import { ArtGrid } from "~/features/art/components/ArtGrid";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.art.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
@@ -19,7 +18,7 @@ export const handle: SendouRouteHandle = {
 
 const ALL_TAGS_KEY = "ALL";
 export default function UserArtPage() {
-	const { t } = useTranslation(["art"]);
+	const { t } = useTranslation(["art", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const [type, setType] = useSearchParam(userArtSearchParams, "source");
 	const [tagParam, setFilteredTag] = useSearchParam(userArtSearchParams, "tag");
@@ -45,10 +44,7 @@ export default function UserArtPage() {
 
 	return (
 		<div className="stack md">
-			<SubPageHeader
-				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
-			/>
+			<SubPageHeader user={layoutData.user} title={t("common:pages.art")} />
 			<div className="stack horizontal justify-between items-start text-xs text-lighter">
 				<div>
 					{data.unvalidatedArtCount > 0

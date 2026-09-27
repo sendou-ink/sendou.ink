@@ -4,12 +4,6 @@
 	container-type: inline-size;
 }
 
-.heading {
-	font-size: var(--font-xl);
-	font-weight: var(--weight-bold);
-	margin: 0;
-}
-
 .seasonPicker {
 	display: flex;
 	gap: var(--s-2);

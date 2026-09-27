@@ -42,7 +42,7 @@ import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { invariant } from "~/utils/invariant";
-import { navIconUrl, SUPPORT_PAGE, userPage } from "~/utils/urls";
+import { navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
@@ -190,7 +190,7 @@ export default function EditWidgetsPage() {
 			<div className={styles.container}>
 				<SubPageHeader
 					user={layoutData.user}
-					backTo={userPage(layoutData.user)}
+					title={t("user:widgets.editTitle")}
 				/>
 				<Placeholder />
 			</div>
@@ -199,12 +199,7 @@ export default function EditWidgetsPage() {
 
 	return (
 		<div className={styles.container}>
-			<SubPageHeader
-				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
-			/>
-			<header className={styles.header}>
-				<h1>{t("user:widgets.editTitle")}</h1>
+			<SubPageHeader user={layoutData.user} title={t("user:widgets.editTitle")}>
 				<div className={styles.actions}>
 					<SendouButton onClick={handleSubmit}>
 						{t("common:actions.save")}
@@ -219,7 +214,7 @@ export default function EditWidgetsPage() {
 						</FormMessage>
 					) : null}
 				</div>
-			</header>
+			</SubPageHeader>
 
 			<div className={styles.content}>
 				<div className={styles.grid}>

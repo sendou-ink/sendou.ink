@@ -1,40 +1,54 @@
 .subPageHeader {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	gap: var(--s-4);
-	padding-block: var(--s-4);
-	flex-wrap: wrap;
+	container-type: inline-size;
 }
 
-.leftSection {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-}
+.grid {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto;
+	grid-template-areas:
+		"titles back"
+		"titles actions";
+	align-items: start;
+	column-gap: var(--s-4);
+	row-gap: var(--s-3);
+	padding-block: var(--s-2);
 
-.actions {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	flex-wrap: wrap;
-}
-
-.backButton {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	width: 36px;
-	height: 36px;
-	border-radius: 100%;
-	background-color: var(--color-bg);
-	border: 2px solid var(--color-bg-higher);
-	color: var(--color-text);
-	transition: all 0.2s;
-
-	& svg {
-		min-width: 30px;
+	&:not(:has(> .actions)) {
+		grid-template-areas: "titles back";
 	}
+}
+
+.titles {
+	grid-area: titles;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	min-width: 0;
+}
+
+.title {
+	font-size: var(--font-xl);
+	font-weight: var(--weight-bold);
+	margin: 0;
+}
+
+.subtitle {
+	font-size: var(--font-sm);
+	color: var(--color-text-high);
+}
+
+.backLink {
+	grid-area: back;
+	justify-self: end;
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	padding: var(--s-1) var(--s-3) var(--s-1) var(--s-2);
+	border: 2px solid var(--color-bg-higher);
+	border-radius: var(--radius-full);
+	color: var(--color-text);
+	text-decoration: none;
+	transition: background-color 0.2s;
 
 	&:hover {
 		background-color: var(--color-bg-higher);
@@ -42,22 +56,41 @@
 }
 
 .backIcon {
-	width: 24px;
-	height: 24px;
+	width: 18px;
+	height: 18px;
+	flex-shrink: 0;
 }
 
 .avatar {
 	border-radius: var(--radius-avatar);
 }
 
-.userInfo {
-	display: flex;
-	align-items: center;
-	gap: var(--s-2);
-	color: inherit;
-}
-
 .username {
 	font-weight: var(--weight-semi);
 	font-size: var(--font-sm);
+	max-width: 10rem;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.actions {
+	grid-area: actions;
+	justify-self: end;
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	flex-wrap: wrap;
+}
+
+@container (width < 36rem) {
+	.grid {
+		grid-template-areas:
+			"titles back"
+			"actions actions";
+	}
+
+	.actions {
+		justify-self: start;
+	}
 }

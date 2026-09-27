@@ -21,7 +21,7 @@ import { mainWeaponIds } from "~/modules/in-game-lists/weapon-ids";
 import { hasPermission } from "~/modules/permissions/utils";
 import { useSearchParam } from "~/modules/search-params/hooks";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage, weaponCategoryUrl } from "~/utils/urls";
+import { weaponCategoryUrl } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.builds.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import {
@@ -42,7 +42,7 @@ export const handle: SendouRouteHandle = {
 type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;
 
 export default function UserBuildsPage() {
-	const { t } = useTranslation(["builds", "user"]);
+	const { t } = useTranslation(["builds", "user", "common"]);
 	const user = useUser();
 	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
 	const data = useLoaderData<typeof loader>();
@@ -83,7 +83,7 @@ export default function UserBuildsPage() {
 					fetcher={sortingFetcher}
 				/>
 			) : null}
-			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
+			<SubPageHeader user={layoutData.user} title={t("common:pages.builds")}>
 				{isOwnPage ? (
 					<SendouButton
 						onClick={() => setChangingSorting(true)}

@@ -1,11 +1,18 @@
 import clsx from "clsx";
-import { ChartLine, Crosshair, Handshake, MapIcon, Swords } from "lucide-react";
+import {
+	ArrowLeft,
+	ChartLine,
+	Crosshair,
+	Handshake,
+	MapIcon,
+	Swords,
+} from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
-import { SendouButton } from "~/components/elements/Button";
+import { LinkButton, SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
 import { SendouSection } from "~/components/elements/Section";
 import {
@@ -28,7 +35,6 @@ import { useSearchParam } from "~/modules/search-params/hooks";
 import { invariant } from "~/utils/invariant";
 import { cutToNDecimalPlaces, winPercentage } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage } from "~/utils/urls";
 import { SeasonPlayersTable } from "../components/SeasonPlayersTable";
 import { SubPageHeader } from "../components/SubPageHeader";
 import {
@@ -72,10 +78,7 @@ export default function UserSeasonsStatsPage() {
 	if (!data) {
 		return (
 			<div>
-				<SubPageHeader
-					user={layoutData.user}
-					backTo={userPage(layoutData.user)}
-				/>
+				<SubPageHeader user={layoutData.user} title={t("user:seasons")} />
 				<EmptyState navItem="sendouq">{t("user:seasons.noSeasons")}</EmptyState>
 			</div>
 		);
@@ -85,12 +88,19 @@ export default function UserSeasonsStatsPage() {
 		<div className={clsx(styles.container, "stack lg")}>
 			<SubPageHeader
 				user={layoutData.user}
-				backTo={userSeasonsPage({ user: layoutData.user, season: data.season })}
-			/>
-			<div className="stack horizontal md justify-between items-end flex-wrap">
-				<h1 className={styles.heading}>
-					{t("user:seasons.stats.title", { season: data.season })}
-				</h1>
+				title={t("user:seasons.stats.title", { season: data.season })}
+				subtitle={
+					<LinkButton
+						to={userSeasonsPage({ user: layoutData.user, season: data.season })}
+						variant="minimal"
+						size="small"
+						icon={<ArrowLeft />}
+						className={styles.historyLink}
+					>
+						{t("user:seasons.history")}
+					</LinkButton>
+				}
+			>
 				<div className={styles.seasonSelect}>
 					<SeasonSelect
 						label={t("user:seasons.season")}
@@ -101,7 +111,7 @@ export default function UserSeasonsStatsPage() {
 						}
 					/>
 				</div>
-			</div>
+			</SubPageHeader>
 			<SendouTabs
 				selectedKey={tab}
 				onSelectionChange={(key) => setTab(key as SeasonStatsTab)}

@@ -1,23 +1,12 @@
 .container {
 	container-type: inline-size;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-6);
 	width: 100%;
 	max-width: 80rem;
 	margin: 0 auto;
 	padding: var(--s-4);
-}
-
-.header {
-	display: flex;
-	align-items: center;
-	justify-content: space-between;
-	margin-bottom: var(--s-6);
-	flex-wrap: wrap;
-	gap: var(--s-4);
-
-	& h1 {
-		font-size: var(--font-xl);
-		font-weight: var(--weight-bold);
-	}
 }
 
 .actions {

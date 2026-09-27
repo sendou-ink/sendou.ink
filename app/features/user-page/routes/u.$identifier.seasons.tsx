@@ -79,18 +79,31 @@ export default function UserSeasonsPage() {
 	if (!data) {
 		return (
 			<div>
-				<SubPageHeader
-					user={layoutData.user}
-					backTo={userPage(layoutData.user)}
-				/>
+				<SubPageHeader user={layoutData.user} title={t("user:seasons")} />
 				<EmptyState navItem="sendouq">{t("user:seasons.noSeasons")}</EmptyState>
 			</div>
 		);
 	}
 
+	const topTenPlacement = playerTopTenPlacement({
+		season: data.season,
+		userId: layoutData.user.id,
+	});
+
 	return (
 		<div className={clsx(styles.container, "stack lg")}>
-			<SubPageHeader user={layoutData.user} backTo={userPage(layoutData.user)}>
+			<SubPageHeader
+				user={layoutData.user}
+				title={`${t("user:seasons.season")} ${data.season}`}
+				subtitle={<SeasonDates season={data.season} />}
+			>
+				{topTenPlacement ? (
+					<TopTenPlayer
+						small
+						placement={topTenPlacement}
+						season={data.season}
+					/>
+				) : null}
 				<SeasonSummaryExport
 					profileUser={layoutData.user}
 					season={data.season}
@@ -98,7 +111,6 @@ export default function UserSeasonsPage() {
 					hasCalculatedSkill={data.hasCalculatedSkill}
 				/>
 			</SubPageHeader>
-			<SeasonHeading season={data.season} userId={layoutData.user.id} />
 			<SeasonPicker
 				user={layoutData.user}
 				seasonViewed={data.season}
@@ -144,41 +156,30 @@ function useUserPageLayoutData() {
 	return parentRoute.loaderData as UserPageLoaderData;
 }
 
-function SeasonHeading({ season, userId }: { season: number; userId: number }) {
+function SeasonDates({ season }: { season: number }) {
 	const { t } = useTranslation(["user"]);
 	const formatDistanceToNow = useFormatDistanceToNow();
 	const { starts, ends } = Seasons.nthToDateRange(season);
 	const isCurrent = Seasons.current()?.nth === season;
-	const topTenPlacement = playerTopTenPlacement({ season, userId });
 
 	return (
-		<div className="stack horizontal md items-center justify-between flex-wrap">
-			<div className="stack xs">
-				<h1 className={styles.heading}>
-					{t("user:seasons.season")} {season}
-				</h1>
-				<div className="text-sm text-lighter">
-					<LocaleTimeRange
-						from={new Date(starts)}
-						to={new Date(ends)}
-						options={{
-							day: "numeric",
-							month: "short",
-							year: "numeric",
-						}}
-						inline
-					/>
-					{isCurrent
-						? ` · ${t("user:seasons.ends", {
-								time: formatDistanceToNow(new Date(ends), { addSuffix: true }),
-							})}`
-						: null}
-				</div>
-			</div>
-			{topTenPlacement ? (
-				<TopTenPlayer small placement={topTenPlacement} season={season} />
-			) : null}
-		</div>
+		<>
+			<LocaleTimeRange
+				from={new Date(starts)}
+				to={new Date(ends)}
+				options={{
+					day: "numeric",
+					month: "short",
+					year: "numeric",
+				}}
+				inline
+			/>
+			{isCurrent
+				? ` · ${t("user:seasons.ends", {
+						time: formatDistanceToNow(new Date(ends), { addSuffix: true }),
+					})}`
+				: null}
+		</>
 	);
 }
 

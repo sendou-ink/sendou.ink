@@ -10,7 +10,7 @@ import { useHasRole } from "~/modules/permissions/hooks";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
 import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { FAQ_PAGE, userPage } from "~/utils/urls";
+import { FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.edit.server";
@@ -62,7 +62,7 @@ export default function UserEditPage() {
 		<div className="stack lg">
 			<SubPageHeader
 				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
+				title={t("user:widgets.editProfile")}
 			/>
 			<div className="half-width">
 				<SendouForm

@@ -1,3 +1,4 @@
+import { useTranslation } from "react-i18next";
 import { useLoaderData, useMatches } from "react-router";
 import { Pagination } from "~/components/Pagination";
 import {
@@ -8,7 +9,6 @@ import { userVodsSearchParams } from "~/features/vods/vods-search-params";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage } from "~/utils/urls";
 import { SubPageHeader } from "../components/SubPageHeader";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { loader } from "../loaders/u.$identifier.vods.server";
@@ -24,6 +24,7 @@ export default function UserVodsPage() {
 	invariant(parentRoute);
 	const data = useLoaderData<typeof loader>();
 	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const { t } = useTranslation(["common"]);
 
 	const pagination = useSearchParamPagination({
 		definition: userVodsSearchParams,
@@ -33,10 +34,7 @@ export default function UserVodsPage() {
 
 	return (
 		<div className="stack md">
-			<SubPageHeader
-				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
-			/>
+			<SubPageHeader user={layoutData.user} title={t("common:pages.vods")} />
 			<VodListingList>
 				{data.vods.map((vod) => (
 					<VodListing key={vod.id} vod={vod} showUser={false} />
