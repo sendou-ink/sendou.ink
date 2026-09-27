@@ -1,0 +1,29 @@
+.circleBackdrop {
+	position: relative;
+	isolation: isolate;
+	display: grid;
+	place-items: center;
+	flex-shrink: 0;
+	width: fit-content;
+
+	&::before {
+		content: "";
+		position: absolute;
+		top: 50%;
+		left: 50%;
+		height: calc(100% - var(--circle-backdrop-inset, 12%) * 2);
+		aspect-ratio: 1;
+		translate: -50% -50%;
+		z-index: -1;
+		border-radius: 50%;
+		background-color: var(--color-bg-higher);
+	}
+
+	& img {
+		display: block;
+	}
+}
+
+.bordered::before {
+	border: var(--border-style-high);
+}

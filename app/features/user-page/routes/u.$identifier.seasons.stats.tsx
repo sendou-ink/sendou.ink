@@ -4,6 +4,7 @@ import * as React from "react";
 import { useTranslation } from "react-i18next";
 import { Link, useLoaderData, useMatches } from "react-router";
 import { Avatar } from "~/components/Avatar";
+import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouPopover } from "~/components/elements/Popover";
@@ -362,11 +363,13 @@ function MostPlayedWeapons({
 
 					return (
 						<div key={weaponSplId} className={styles.weaponShare}>
-							<WeaponImage
-								weaponSplId={weaponSplId}
-								variant="build"
-								size={28}
-							/>
+							<CircleBackdrop>
+								<WeaponImage
+									weaponSplId={weaponSplId}
+									variant="badge"
+									size={42}
+								/>
+							</CircleBackdrop>
 							<div className="stack xxs">
 								<div className="stack horizontal sm justify-between text-sm">
 									<span>{t(`weapons:MAIN_${weaponSplId}`)}</span>
