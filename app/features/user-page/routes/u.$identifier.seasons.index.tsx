@@ -242,17 +242,24 @@ function GroupMatchResult({
 						)
 					: "–"}
 			</div>
-			<div className={clsx(styles.resultInfo, "stack xs")}>
-				<span className="text-sm font-semi-bold">
+			<div className={styles.resultInfo}>
+				<span className={clsx(styles.resultTitle, "text-sm font-semi-bold")}>
 					SendouQ · {ownScore}–{opponentScore} ·{" "}
-					<LocaleTime
-						date={createdAt}
-						options={{ hour: "numeric", minute: "numeric" }}
-						inline
-					/>
+					<span className="whitespace-nowrap">
+						<LocaleTime
+							date={createdAt}
+							options={{ hour: "numeric", minute: "numeric" }}
+							inline
+						/>
+					</span>
 				</span>
 				{ownTier && opponentTier ? (
-					<span className="stack horizontal xs items-center text-xs text-lighter">
+					<span
+						className={clsx(
+							styles.resultSubtitle,
+							"stack horizontal xs items-center text-xs text-lighter",
+						)}
+					>
 						<GroupTier tier={ownTier} />
 						{t("user:seasons.vs")}
 						<GroupTier tier={opponentTier} />
@@ -295,7 +302,7 @@ function MatchMembers({
 	members: Array<SeasonTournamentResult["teamMembers"][number]>;
 }) {
 	return (
-		<div className="stack horizontal xs">
+		<div className={styles.members}>
 			{members.map((member) => (
 				<Avatar
 					key={member.discordId}
@@ -323,8 +330,13 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 			<div className={styles.outcome} data-outcome="tournament">
 				<Placement placement={result.placement} size={28} />
 			</div>
-			<div className={clsx(styles.resultInfo, "stack xs")}>
-				<span className="stack horizontal sm items-center text-sm font-semi-bold">
+			<div className={styles.resultInfo}>
+				<span
+					className={clsx(
+						styles.resultTitle,
+						"stack horizontal sm items-center text-sm font-semi-bold",
+					)}
+				>
 					<img
 						src={result.logoUrl}
 						width={24}
@@ -334,7 +346,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 					/>
 					{result.tournamentName}
 				</span>
-				<span className="text-xs text-lighter">
+				<span className={clsx(styles.resultSubtitle, "text-xs text-lighter")}>
 					<Trans
 						t={t}
 						i18nKey="user:seasons.placementOfTeams"

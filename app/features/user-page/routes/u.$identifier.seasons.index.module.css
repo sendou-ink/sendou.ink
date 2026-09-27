@@ -54,15 +54,6 @@
 	}
 }
 
-@container (width < 48rem) {
-	.result {
-		grid-template-columns: auto minmax(0, 1fr) auto;
-		grid-template-areas:
-			"outcome info sp"
-			"players players players";
-	}
-}
-
 .outcome {
 	grid-area: outcome;
 	display: grid;
@@ -99,6 +90,17 @@
 
 .resultInfo {
 	grid-area: info;
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+}
+
+.resultTitle {
+	grid-area: title;
+}
+
+.resultSubtitle {
+	grid-area: subtitle;
 }
 
 .players {
@@ -106,6 +108,11 @@
 	display: flex;
 	align-items: center;
 	gap: var(--s-2);
+}
+
+.members {
+	display: flex;
+	gap: var(--s-1-5);
 }
 
 .sp {
@@ -117,4 +124,42 @@
 	min-width: 5rem;
 	font-size: var(--font-sm);
 	font-weight: var(--weight-semi);
+}
+
+@container (width < 48rem) {
+	.result {
+		grid-template-columns: auto minmax(0, 1fr) auto;
+		grid-template-areas:
+			"outcome title title"
+			"outcome subtitle sp"
+			"players players players";
+		row-gap: var(--s-1-5);
+	}
+
+	.resultInfo {
+		display: contents;
+	}
+
+	.players {
+		margin-block-start: var(--s-2);
+	}
+}
+
+@container (width < 22rem) {
+	.members {
+		gap: 0;
+
+		& > * {
+			box-shadow: 0 0 0 2px var(--color-bg-high);
+			transition: box-shadow 0.2s;
+
+			.result:hover & {
+				box-shadow: 0 0 0 2px var(--color-bg-higher);
+			}
+		}
+
+		& > * + * {
+			margin-inline-start: calc(var(--s-1-5) * -1);
+		}
+	}
 }
