@@ -121,7 +121,7 @@ export async function findSeasonStagesByUserId({
 	}, {});
 }
 
-/** Mates or enemies for a user in a given season, ordered by most maps played together. */
+/** Mates or enemies for a user in a given season, ordered by most sets played together. */
 export async function findSeasonMatesEnemiesByUserId({
 	userId,
 	season,
@@ -144,6 +144,7 @@ export async function findSeasonMatesEnemiesByUserId({
 		.where("ownerUserId", "=", userId)
 		.where("season", "=", season)
 		.where("type", "=", type)
+		.orderBy(({ eb }) => eb("setWins", "+", eb.ref("setLosses")), "desc")
 		.orderBy(({ eb }) => eb("mapWins", "+", eb.ref("mapLosses")), "desc")
 		.execute();
 }
@@ -174,6 +175,64 @@ export async function findSeasonSetScoresByUserId(args: {
 			ownScore: set.ownScore,
 			opponentScore: set.opponentScore,
 		}));
+}
+
+/** One row per other player of each set the user played in a season, SendouQ and ranked tournaments. */
+export async function findSeasonSetParticipantsByUserId(args: {
+	userId: number;
+	season: number;
+}): Promise<
+	Array<{ otherUserId: number; type: "MATE" | "ENEMY"; playedAt: number }>
+> {
+	const [sqParticipants, tournamentParticipants] = await Promise.all([
+		sqSeasonMatchesQuery(args)
+			.innerJoin("GroupMember as OtherMember", (join) =>
+				join
+					.onRef("OtherMember.userId", "!=", "OwnMember.userId")
+					.on((eb) =>
+						eb("OtherMember.groupId", "in", [
+							eb.ref("GroupMatch.alphaGroupId"),
+							eb.ref("GroupMatch.bravoGroupId"),
+						]),
+					),
+			)
+			.select([
+				"OtherMember.userId as otherUserId",
+				sql<
+					"MATE" | "ENEMY"
+				>`iif("OtherMember"."groupId" = "OwnMember"."groupId", 'MATE', 'ENEMY')`.as(
+					"type",
+				),
+				"GroupMatch.createdAt as playedAt",
+			])
+			.execute(),
+		db
+			.selectFrom(tournamentSetsQuery(args).as("TournamentSet"))
+			.innerJoin(
+				"TournamentMatchGameResult as SetGame",
+				"SetGame.matchId",
+				"TournamentSet.tournamentMatchId",
+			)
+			.innerJoin(
+				"TournamentMatchGameResultParticipant as OtherParticipant",
+				"OtherParticipant.matchGameResultId",
+				"SetGame.id",
+			)
+			.select([
+				"OtherParticipant.userId as otherUserId",
+				sql<
+					"MATE" | "ENEMY"
+				>`iif("OtherParticipant"."tournamentTeamId" = "TournamentSet"."ownTeamId", 'MATE', 'ENEMY')`.as(
+					"type",
+				),
+				"TournamentSet.playedAt",
+			])
+			.where("OtherParticipant.userId", "!=", args.userId)
+			.groupBy(["TournamentSet.tournamentMatchId", "OtherParticipant.userId"])
+			.execute(),
+	]);
+
+	return [...sqParticipants, ...tournamentParticipants];
 }
 
 /**
@@ -478,7 +537,22 @@ export function upsertPlayerResults(
 }
 
 /** SendouQ sets of the user's season with the map score summed per match; callers add selects and finish with `groupBy("GroupMatch.id")`. */
-function sqSetScoresQuery({
+function sqSetScoresQuery(args: { userId: number; season: number }) {
+	return sqSeasonMatchesQuery(args)
+		.innerJoin("GroupMatchMap", "GroupMatchMap.matchId", "GroupMatch.id")
+		.select([
+			// raw sums of comparisons: counts the maps won by each side of the match
+			sql<number>`sum("GroupMatchMap"."winnerGroupId" = "OwnMember"."groupId")`.as(
+				"ownScore",
+			),
+			sql<number>`sum("GroupMatchMap"."winnerGroupId" is not null and "GroupMatchMap"."winnerGroupId" != "OwnMember"."groupId")`.as(
+				"opponentScore",
+			),
+		]);
+}
+
+/** One row per SendouQ match of the user's season (those they have a `Skill` row for) with their group joined as `OwnMember`. */
+function sqSeasonMatchesQuery({
 	userId,
 	season,
 }: {
@@ -498,16 +572,6 @@ function sqSetScoresQuery({
 					]),
 				),
 		)
-		.innerJoin("GroupMatchMap", "GroupMatchMap.matchId", "GroupMatch.id")
-		.select([
-			// raw sums of comparisons: counts the maps won by each side of the match
-			sql<number>`sum("GroupMatchMap"."winnerGroupId" = "OwnMember"."groupId")`.as(
-				"ownScore",
-			),
-			sql<number>`sum("GroupMatchMap"."winnerGroupId" is not null and "GroupMatchMap"."winnerGroupId" != "OwnMember"."groupId")`.as(
-				"opponentScore",
-			),
-		])
 		.where("Skill.userId", "=", userId)
 		.where("Skill.season", "=", season);
 }

@@ -2,8 +2,7 @@ import clsx from "clsx";
 import { ChartLine, Crosshair, Handshake, MapIcon, Swords } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useMatches } from "react-router";
-import { Avatar } from "~/components/Avatar";
+import { useLoaderData, useMatches } from "react-router";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
@@ -30,6 +29,7 @@ import { invariant } from "~/utils/invariant";
 import { cutToNDecimalPlaces, winPercentage } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { userPage } from "~/utils/urls";
+import { SeasonPlayersTable } from "../components/SeasonPlayersTable";
 import { SubPageHeader } from "../components/SubPageHeader";
 import {
 	loader,
@@ -60,7 +60,6 @@ const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;
 const OVERVIEW_WEAPONS_COUNT = 4;
 const OVERVIEW_STAGES_COUNT = 8;
 const OVERVIEW_PLAYERS_COUNT = 4;
-const OVERVIEW_PLAYER_MIN_SETS = 3;
 const HEATMAP_FEW_MAPS_THRESHOLD = 5;
 
 export default function UserSeasonsStatsPage() {
@@ -129,12 +128,22 @@ export default function UserSeasonsStatsPage() {
 				</SendouTabPanel>
 				<SendouTabPanel id="mates">
 					<SendouSection>
-						<Players players={data.mates} />
+						<SeasonPlayersTable
+							players={data.mates}
+							activityWeeks={data.activityWeeks}
+							season={data.season}
+							variant="full"
+						/>
 					</SendouSection>
 				</SendouTabPanel>
 				<SendouTabPanel id="enemies">
 					<SendouSection>
-						<Players players={data.enemies} />
+						<SeasonPlayersTable
+							players={data.enemies}
+							activityWeeks={data.activityWeeks}
+							season={data.season}
+							variant="full"
+						/>
 					</SendouSection>
 				</SendouTabPanel>
 			</SendouTabs>
@@ -195,18 +204,28 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 			</SendouSection>
 			<div className={styles.playerCards}>
 				<SendouSection
-					title={t("user:seasons.stats.bestTeammates")}
+					title={t("user:seasons.stats.frequentTeammates")}
 					icon={Handshake}
 					action={showAllButton("mates")}
 				>
-					<PlayerHighlights players={data.mates} order="best" />
+					<SeasonPlayersTable
+						players={data.mates.slice(0, OVERVIEW_PLAYERS_COUNT)}
+						activityWeeks={data.activityWeeks}
+						season={data.season}
+						variant="compact"
+					/>
 				</SendouSection>
 				<SendouSection
-					title={t("user:seasons.stats.toughestOpponents")}
+					title={t("user:seasons.stats.frequentOpponents")}
 					icon={Swords}
 					action={showAllButton("enemies")}
 				>
-					<PlayerHighlights players={data.enemies} order="worst" />
+					<SeasonPlayersTable
+						players={data.enemies.slice(0, OVERVIEW_PLAYERS_COUNT)}
+						activityWeeks={data.activityWeeks}
+						season={data.season}
+						variant="compact"
+					/>
 				</SendouSection>
 			</div>
 		</div>
@@ -633,119 +652,6 @@ function StageWeaponUsageStats(props: {
 					</SendouTabPanel>
 				))}
 			</SendouTabs>
-		</div>
-	);
-}
-
-type SeasonPlayer = UserSeasonsStatsLoaderData["mates"][number];
-
-function PlayerHighlights({
-	players,
-	order,
-}: {
-	players: SeasonPlayer[];
-	order: "best" | "worst";
-}) {
-	const data = useStatsLoaderData();
-
-	const highlighted = players
-		.flatMap((player) => {
-			const setWinRate = winPercentage(player.setWins, player.setLosses);
-			if (
-				typeof setWinRate !== "number" ||
-				player.setWins + player.setLosses < OVERVIEW_PLAYER_MIN_SETS
-			) {
-				return [];
-			}
-
-			return [{ ...player, setWinRate }];
-		})
-		.sort((a, b) =>
-			order === "best"
-				? b.setWinRate - a.setWinRate
-				: a.setWinRate - b.setWinRate,
-		)
-		.slice(0, OVERVIEW_PLAYERS_COUNT);
-
-	if (highlighted.length === 0) {
-		return <NotEnoughData />;
-	}
-
-	return (
-		<div className="stack md">
-			{highlighted.map((player) => (
-				<Link
-					key={player.user.id}
-					to={userSeasonsPage({ user: player.user, season: data.season })}
-					className={styles.playerRow}
-				>
-					<Avatar user={player.user} size="xxsm" />
-					<span className={styles.playerRowName}>{player.user.username}</span>
-					<span className="text-sm text-lighter">
-						{player.setWins}–{player.setLosses}
-					</span>
-					<span
-						className={clsx(styles.playerRowWinRate, {
-							"text-success": player.setWinRate >= 50,
-							"text-warning": player.setWinRate < 50,
-						})}
-					>
-						{Math.round(player.setWinRate)}%
-					</span>
-				</Link>
-			))}
-		</div>
-	);
-}
-
-function Players({ players }: { players: SeasonPlayer[] }) {
-	const { t } = useTranslation(["user"]);
-	const data = useStatsLoaderData();
-
-	if (players.length === 0) {
-		return <NotEnoughData />;
-	}
-
-	return (
-		<div className="stack md horizontal justify-center flex-wrap">
-			{players.map((player) => {
-				// a player only met on maps of another team's set has no set record
-				const setWinRate = winPercentage(player.setWins, player.setLosses);
-				const mapWinRate = winPercentage(player.mapWins, player.mapLosses);
-				return (
-					<div key={player.user.id} className="stack">
-						<Link
-							to={userSeasonsPage({ user: player.user, season: data.season })}
-							className={styles.seasonPlayerName}
-						>
-							<Avatar user={player.user} size="xs" className="mx-auto" />
-							{player.user.username}
-						</Link>
-						<div
-							className={clsx("text-xs font-bold", {
-								"text-success":
-									typeof setWinRate === "number" && setWinRate >= 50,
-								"text-warning":
-									typeof setWinRate === "number" && setWinRate < 50,
-							})}
-						>
-							{typeof setWinRate === "number"
-								? `${Math.round(setWinRate)}% `
-								: null}
-							{typeof mapWinRate === "number"
-								? `(${Math.round(mapWinRate)}%)`
-								: null}
-						</div>
-						<div className="text-xs">
-							{player.setWins} ({player.mapWins}) {t("user:seasons.win.short")}
-						</div>
-						<div className="text-xs">
-							{player.setLosses} ({player.mapLosses}){" "}
-							{t("user:seasons.loss.short")}
-						</div>
-					</div>
-				);
-			})}
 		</div>
 	);
 }

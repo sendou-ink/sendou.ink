@@ -65,6 +65,14 @@
 	fill: var(--color-text-high);
 }
 
+/* halo keeps the label readable where the line or area passes under it */
+.yLabel {
+	paint-order: stroke;
+	stroke: var(--line-chart-surface);
+	stroke-width: 3px;
+	stroke-linejoin: round;
+}
+
 .peakLabel {
 	position: absolute;
 	translate: -50% calc(-100% - 7px);

@@ -7,8 +7,10 @@ import styles from "./LineChart.module.css";
 
 const DEFAULT_WIDTH = 672;
 const DEFAULT_HEIGHT = 170;
-const MARGIN = { top: 12, bottom: 22, inline: 14 };
+const MARGIN = { top: 12, bottom: 22, inline: 8 };
 const MARGIN_TOP_WITH_PEAK_LABEL = 26;
+/** Keeps the line's stroke from being clipped at the container's edges */
+const SPARKLINE_MARGIN = 2;
 /** From the plot's bottom edge to the x-axis labels' baseline */
 const X_LABEL_OFFSET = MARGIN.bottom - 6;
 const PEAK_LABEL_CLAMP = 48;
@@ -20,8 +22,8 @@ const Y_TICKS_TARGET_COUNT = 3;
 const TICK_STEP_MULTIPLIERS = [1, 2, 5, 10];
 /** Keeps a tick's label from overlapping the baseline's */
 const Y_TICK_MIN_GAP_FROM_BASELINE = 14;
-const Y_AXIS_PX_PER_CHAR = 6;
-const Y_AXIS_LABEL_GAP = 8;
+/** From a y tick's grid line to its label's baseline, the label sits on top of the line */
+const Y_LABEL_OFFSET = -4;
 const SERIES_COLORS_COUNT = 3;
 const HIGHLIGHT_COLORS_COUNT = 2;
 
@@ -44,6 +46,7 @@ export function LineChart({
 	showPeak = false,
 	highlight,
 	interactive = false,
+	sparkline = false,
 	className,
 	ariaLabel,
 }: {
@@ -60,6 +63,8 @@ export function LineChart({
 	highlight?: Array<{ x: number; y: number }>;
 	/** Hovering shows the values closest to the pointer */
 	interactive?: boolean;
+	/** Only the lines, no axes, labels or grid lines, e.g. inline in a table row */
+	sparkline?: boolean;
 	className?: string;
 	ariaLabel: string;
 }) {
@@ -104,28 +109,26 @@ export function LineChart({
 	const minY = Math.min(...ys);
 	const maxY = Math.max(...ys);
 
-	const marginTop = showPeak ? MARGIN_TOP_WITH_PEAK_LABEL : MARGIN.top;
-	const innerHeight = height - marginTop - MARGIN.bottom;
+	const marginTop = sparkline
+		? SPARKLINE_MARGIN
+		: showPeak
+			? MARGIN_TOP_WITH_PEAK_LABEL
+			: MARGIN.top;
+	const marginBottom = sparkline ? SPARKLINE_MARGIN : MARGIN.bottom;
+	const innerHeight = height - marginTop - marginBottom;
 	const yRange = maxY - minY || 1;
 	const yPercent = (value: number) => (1 - (value - minY) / yRange) * 100;
 
 	const yTicks = niceTicks({
 		min: minY,
 		max: maxY,
-		targetCount: Y_TICKS_TARGET_COUNT,
+		targetCount: sparkline ? 0 : Y_TICKS_TARGET_COUNT,
 	}).filter(
 		(tick) =>
 			((yPercent(minY) - yPercent(tick.value)) / 100) * innerHeight >=
 			Y_TICK_MIN_GAP_FROM_BASELINE,
 	);
-	const yAxisWidth =
-		yTicks.length > 0
-			? Math.max(...yTicks.map((tick) => tick.label.length)) *
-					Y_AXIS_PX_PER_CHAR +
-				Y_AXIS_LABEL_GAP
-			: 0;
-	// same on both sides so the plot is centered
-	const plotInset = MARGIN.inline + yAxisWidth;
+	const plotInset = sparkline ? SPARKLINE_MARGIN : MARGIN.inline;
 	const innerWidth = width - plotInset * 2;
 	const xRange = maxX - minX || 1;
 	const xPercent = (value: number) => ((value - minX) / xRange) * 100;
@@ -138,27 +141,28 @@ export function LineChart({
 			? dateLabelFormatter.format(new Date(value))
 			: `${value}${xAxis.suffix ?? ""}`;
 	// how many fit depends on the width which is only known once measured on the client
-	const middleXLabels = !size
-		? []
-		: xAxis.type === "date"
-			? middleDates({
-					first: new Date(minX),
-					last: new Date(maxX),
-					count: Math.floor(innerWidth / PX_PER_DATE_LABEL) - 1,
-				}).map((date) => ({
-					value: date.getTime(),
-					label: dateLabelFormatter.format(date),
-				}))
-			: niceTicks({
-					min: minX,
-					max: maxX,
-					targetCount: Math.floor(innerWidth / PX_PER_NUMBER_LABEL),
-				})
-					.filter((tick) => isFarEnoughFromEdges(tick.value))
-					.map((tick) => ({
-						...tick,
-						label: `${tick.label}${xAxis.suffix ?? ""}`,
-					}));
+	const middleXLabels =
+		!size || sparkline
+			? []
+			: xAxis.type === "date"
+				? middleDates({
+						first: new Date(minX),
+						last: new Date(maxX),
+						count: Math.floor(innerWidth / PX_PER_DATE_LABEL) - 1,
+					}).map((date) => ({
+						value: date.getTime(),
+						label: dateLabelFormatter.format(date),
+					}))
+				: niceTicks({
+						min: minX,
+						max: maxX,
+						targetCount: Math.floor(innerWidth / PX_PER_NUMBER_LABEL),
+					})
+						.filter((tick) => isFarEnoughFromEdges(tick.value))
+						.map((tick) => ({
+							...tick,
+							label: `${tick.label}${xAxis.suffix ?? ""}`,
+						}));
 
 	const peak = showPeak
 		? R.firstBy(series[0].points, [(point) => point.y, "desc"])
@@ -211,7 +215,7 @@ export function LineChart({
 			<div
 				className={styles.plot}
 				style={{
-					inset: `${marginTop}px ${plotInset}px ${MARGIN.bottom}px`,
+					inset: `${marginTop}px ${plotInset}px ${marginBottom}px`,
 				}}
 			>
 				<svg
@@ -266,13 +270,15 @@ export function LineChart({
 					})}
 				</svg>
 				<svg className={styles.chart} aria-hidden>
-					<line
-						className={styles.gridLine}
-						x1="0"
-						y1="100%"
-						x2="100%"
-						y2="100%"
-					/>
+					{!sparkline ? (
+						<line
+							className={styles.gridLine}
+							x1="0"
+							y1="100%"
+							x2="100%"
+							y2="100%"
+						/>
+					) : null}
 					{yTicks.map((tick) => (
 						<g key={tick.label}>
 							<line
@@ -283,11 +289,10 @@ export function LineChart({
 								y2={`${yPercent(tick.value)}%`}
 							/>
 							<text
-								className={styles.label}
-								x={-6}
+								className={clsx(styles.label, styles.yLabel)}
+								x="0"
 								y={`${yPercent(tick.value)}%`}
-								textAnchor="end"
-								dominantBaseline="middle"
+								dy={Y_LABEL_OFFSET}
 							>
 								{tick.label}
 							</text>
@@ -331,9 +336,11 @@ export function LineChart({
 							r={4.5}
 						/>
 					))}
-					<text className={styles.label} x="0" y="100%" dy={X_LABEL_OFFSET}>
-						{formatX(minX)}
-					</text>
+					{!sparkline ? (
+						<text className={styles.label} x="0" y="100%" dy={X_LABEL_OFFSET}>
+							{formatX(minX)}
+						</text>
+					) : null}
 					{middleXLabels.map((xLabel) => (
 						<text
 							key={xLabel.value}
@@ -346,15 +353,17 @@ export function LineChart({
 							{xLabel.label}
 						</text>
 					))}
-					<text
-						className={styles.label}
-						x="100%"
-						y="100%"
-						dy={X_LABEL_OFFSET}
-						textAnchor="end"
-					>
-						{formatX(maxX)}
-					</text>
+					{!sparkline ? (
+						<text
+							className={styles.label}
+							x="100%"
+							y="100%"
+							dy={X_LABEL_OFFSET}
+							textAnchor="end"
+						>
+							{formatX(maxX)}
+						</text>
+					) : null}
 				</svg>
 				{peak && !tooltipAnchor ? (
 					<div

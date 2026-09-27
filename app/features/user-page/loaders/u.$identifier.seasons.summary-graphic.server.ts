@@ -74,9 +74,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		season,
 		type: "MATE",
 	});
-	const topMates = mates
-		.toSorted((a, b) => b.setWins + b.setLosses - (a.setWins + a.setLosses))
-		.slice(0, TOP_MATES_COUNT);
+	const topMates = mates.slice(0, TOP_MATES_COUNT);
 
 	const countries = await UserRepository.findCountriesByUserIds([
 		...(teamEntry?.entry.members.map((member) => member.id) ?? []),

@@ -210,37 +210,6 @@
 	background-color: var(--bucket-color);
 }
 
-.playerRow {
-	display: flex;
-	align-items: center;
-	gap: var(--s-3);
-	color: var(--color-text);
-	font-size: var(--font-sm);
-}
-
-.playerRowName {
-	flex-grow: 1;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	white-space: nowrap;
-}
-
-.playerRowWinRate {
-	width: 3rem;
-	text-align: end;
-	font-weight: var(--weight-bold);
-}
-
-.seasonPlayerName {
-	width: 64px;
-	font-size: var(--font-xs);
-	white-space: nowrap;
-	overflow: hidden;
-	text-overflow: ellipsis;
-	text-align: center;
-	font-weight: var(--weight-semi);
-}
-
 .seasonWeaponUsageContainer {
 	display: flex;
 	flex-direction: column;

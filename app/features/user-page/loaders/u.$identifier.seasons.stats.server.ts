@@ -6,6 +6,7 @@ import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatReposi
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import type { SerializeFrom } from "~/utils/remix";
+import * as SeasonPlayerActivity from "../core/SeasonPlayerActivity";
 import { seasonStanding } from "../core/season-standing.server";
 import { userSeasonsStatsSearchParams } from "../user-page-search-params";
 
@@ -37,6 +38,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		weapons,
 		mates,
 		enemies,
+		setParticipants,
 	] = await Promise.all([
 		seasonStanding({ userId, season }),
 		PlayerStatRepository.findSeasonMapWinrateByUserId({ season, userId }),
@@ -61,7 +63,15 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 			userId,
 			type: "ENEMY",
 		}),
+		PlayerStatRepository.findSeasonSetParticipantsByUserId({ season, userId }),
 	]);
+
+	const activity = SeasonPlayerActivity.summarize(setParticipants);
+	const withActivity =
+		(type: "MATE" | "ENEMY") => (player: (typeof mates)[number]) => ({
+			...player,
+			setsPerWeek: activity.players[type].get(player.user.id) ?? [],
+		});
 
 	return {
 		...standing,
@@ -78,7 +88,8 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		skills,
 		stages,
 		weapons,
-		mates,
-		enemies,
+		activityWeeks: activity.weeks,
+		mates: mates.map(withActivity("MATE")),
+		enemies: enemies.map(withActivity("ENEMY")),
 	};
 };
