@@ -92,7 +92,7 @@
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
 	align-items: center;
-	gap: var(--s-2);
+	gap: var(--s-4);
 }
 
 .bar {

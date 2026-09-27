@@ -16,7 +16,6 @@ import {
 	useMatches,
 } from "react-router";
 import { Avatar } from "~/components/Avatar";
-import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -386,13 +385,11 @@ function StatsPeek({
 				) : null}
 				{peek.topWeapon ? (
 					<StatsPeekItem label={t("user:seasons.stats.mostPlayedWeapon")}>
-						<CircleBackdrop>
-							<WeaponImage
-								weaponSplId={peek.topWeapon.weaponSplId}
-								variant="build"
-								size={24}
-							/>
-						</CircleBackdrop>
+						<WeaponImage
+							weaponSplId={peek.topWeapon.weaponSplId}
+							variant="badge"
+							size={24}
+						/>
 						<span className={styles.statsPeekValue}>
 							{t(`weapons:MAIN_${peek.topWeapon.weaponSplId}`)}
 						</span>
