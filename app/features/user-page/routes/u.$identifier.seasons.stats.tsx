@@ -213,7 +213,7 @@ function NotEnoughData() {
 	const { t } = useTranslation(["user"]);
 
 	return (
-		<div className="text-sm text-lighter text-center my-4">
+		<div className="text-sm text-lighter text-center italic my-4">
 			{t("user:seasons.stats.notEnoughData")}
 		</div>
 	);
@@ -345,7 +345,7 @@ function MostPlayedWeapons({
 
 	if (weapons.length === 0) {
 		return (
-			<div className="text-sm text-lighter text-center my-4">
+			<div className="text-sm text-lighter text-center italic my-4">
 				{t("user:seasons.noReportedWeapons")}
 			</div>
 		);
@@ -703,7 +703,7 @@ function Weapons({
 	return (
 		<div className="stack sm horizontal justify-center flex-wrap">
 			{weapons.length === 0 ? (
-				<div className="text-lighter font-bold my-4">
+				<div className="text-lighter font-bold italic my-4">
 					{t("user:seasons.noReportedWeapons")}
 				</div>
 			) : null}
