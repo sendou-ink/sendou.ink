@@ -7,8 +7,10 @@ import styles from "./LineChart.module.css";
 
 const DEFAULT_WIDTH = 672;
 const DEFAULT_HEIGHT = 170;
-const MARGIN = { top: 12, right: 14, bottom: 22, left: 14 };
+const MARGIN = { top: 12, bottom: 22, inline: 14 };
 const MARGIN_TOP_WITH_PEAK_LABEL = 26;
+/** From the plot's bottom edge to the x-axis labels' baseline */
+const X_LABEL_OFFSET = MARGIN.bottom - 6;
 const PEAK_LABEL_CLAMP = 48;
 const PX_PER_DATE_LABEL = 120;
 const PX_PER_NUMBER_LABEL = 60;
@@ -71,13 +73,13 @@ export function LineChart({
 		day: "numeric",
 	});
 	const gradientIdPrefix = React.useId();
-	const [size, setSize] = React.useState({
-		width: DEFAULT_WIDTH,
-		height: DEFAULT_HEIGHT,
-	});
+	const [size, setSize] = React.useState<{
+		width: number;
+		height: number;
+	} | null>(null);
 	const [hoveredX, setHoveredX] = React.useState<number | null>(null);
 
-	const measureSize = (element: SVGSVGElement | null) => {
+	const measureSize = (element: HTMLDivElement | null) => {
 		if (!element) return;
 
 		const observer = new ResizeObserver(([entry]) => {
@@ -90,7 +92,10 @@ export function LineChart({
 		return () => observer.disconnect();
 	};
 
-	const { width, height } = size;
+	const { width, height } = size ?? {
+		width: DEFAULT_WIDTH,
+		height: DEFAULT_HEIGHT,
+	};
 	const allPoints = series.flatMap((s) => s.points);
 	const xs = R.unique(allPoints.map((point) => point.x)).sort((a, b) => a - b);
 	const minX = xs[0];
@@ -101,17 +106,17 @@ export function LineChart({
 
 	const marginTop = showPeak ? MARGIN_TOP_WITH_PEAK_LABEL : MARGIN.top;
 	const innerHeight = height - marginTop - MARGIN.bottom;
-	const bottomY = height - MARGIN.bottom;
 	const yRange = maxY - minY || 1;
-	const yAt = (value: number) =>
-		marginTop + (1 - (value - minY) / yRange) * innerHeight;
+	const yPercent = (value: number) => (1 - (value - minY) / yRange) * 100;
 
 	const yTicks = niceTicks({
 		min: minY,
 		max: maxY,
 		targetCount: Y_TICKS_TARGET_COUNT,
 	}).filter(
-		(tick) => yAt(minY) - yAt(tick.value) >= Y_TICK_MIN_GAP_FROM_BASELINE,
+		(tick) =>
+			((yPercent(minY) - yPercent(tick.value)) / 100) * innerHeight >=
+			Y_TICK_MIN_GAP_FROM_BASELINE,
 	);
 	const yAxisWidth =
 		yTicks.length > 0
@@ -119,19 +124,23 @@ export function LineChart({
 					Y_AXIS_PX_PER_CHAR +
 				Y_AXIS_LABEL_GAP
 			: 0;
-	const plotLeft = MARGIN.left + yAxisWidth;
-	const plotRight = width - MARGIN.right;
-	const innerWidth = plotRight - plotLeft;
+	// same on both sides so the plot is centered
+	const plotInset = MARGIN.inline + yAxisWidth;
+	const innerWidth = width - plotInset * 2;
 	const xRange = maxX - minX || 1;
-	const xAt = (value: number) =>
-		plotLeft + ((value - minX) / xRange) * innerWidth;
+	const xPercent = (value: number) => ((value - minX) / xRange) * 100;
+	const isFarEnoughFromEdges = (value: number) =>
+		(xPercent(value) / 100) * innerWidth >= X_LABEL_MIN_GAP_FROM_EDGE &&
+		((100 - xPercent(value)) / 100) * innerWidth >= X_LABEL_MIN_GAP_FROM_EDGE;
 
 	const formatX = (value: number) =>
 		xAxis.type === "date"
 			? dateLabelFormatter.format(new Date(value))
 			: `${value}${xAxis.suffix ?? ""}`;
-	const middleXLabels =
-		xAxis.type === "date"
+	// how many fit depends on the width which is only known once measured on the client
+	const middleXLabels = !size
+		? []
+		: xAxis.type === "date"
 			? middleDates({
 					first: new Date(minX),
 					last: new Date(maxX),
@@ -145,11 +154,7 @@ export function LineChart({
 					max: maxX,
 					targetCount: Math.floor(innerWidth / PX_PER_NUMBER_LABEL),
 				})
-					.filter(
-						(tick) =>
-							xAt(tick.value) - plotLeft >= X_LABEL_MIN_GAP_FROM_EDGE &&
-							plotRight - xAt(tick.value) >= X_LABEL_MIN_GAP_FROM_EDGE,
-					)
+					.filter((tick) => isFarEnoughFromEdges(tick.value))
 					.map((tick) => ({
 						...tick,
 						label: `${tick.label}${xAxis.suffix ?? ""}`,
@@ -159,11 +164,15 @@ export function LineChart({
 		? R.firstBy(series[0].points, [(point) => point.y, "desc"])
 		: undefined;
 
-	const handlePointerMove = (event: React.PointerEvent<SVGSVGElement>) => {
+	const handlePointerMove = (event: React.PointerEvent<HTMLDivElement>) => {
 		const rect = event.currentTarget.getBoundingClientRect();
-		const pointerX = ((event.clientX - rect.left) / rect.width) * width;
+		const pointerPercent =
+			((event.clientX - rect.left - plotInset) / (rect.width - plotInset * 2)) *
+			100;
 
-		setHoveredX(R.firstBy(xs, (x) => Math.abs(xAt(x) - pointerX)) ?? null);
+		setHoveredX(
+			R.firstBy(xs, (x) => Math.abs(xPercent(x) - pointerPercent)) ?? null,
+		);
 	};
 
 	const hoveredPoints =
@@ -176,199 +185,226 @@ export function LineChart({
 	const tooltipAnchor =
 		typeof hoveredX === "number" && hoveredPoints.length > 0
 			? {
-					x: xAt(hoveredX),
-					y: Math.min(...hoveredPoints.map((point) => yAt(point.y))),
+					xPercent: xPercent(hoveredX),
+					yPercent: Math.min(
+						...hoveredPoints.map((point) => yPercent(point.y)),
+					),
 				}
 			: null;
+	const tooltipAnchorX = tooltipAnchor
+		? (tooltipAnchor.xPercent / 100) * innerWidth
+		: 0;
 
 	return (
-		<div className={clsx(styles.container, className)}>
-			<svg
-				ref={measureSize}
-				className={clsx(styles.chart, { [styles.interactive]: interactive })}
-				viewBox={`0 0 ${width} ${height}`}
-				role="img"
-				aria-label={ariaLabel}
-				onPointerMove={interactive ? handlePointerMove : undefined}
-				onPointerDown={interactive ? handlePointerMove : undefined}
-				onPointerLeave={interactive ? () => setHoveredX(null) : undefined}
+		<div
+			ref={measureSize}
+			className={clsx(styles.container, className, {
+				[styles.interactive]: interactive,
+			})}
+			role="img"
+			aria-label={ariaLabel}
+			onPointerMove={interactive ? handlePointerMove : undefined}
+			onPointerDown={interactive ? handlePointerMove : undefined}
+			onPointerLeave={interactive ? () => setHoveredX(null) : undefined}
+		>
+			{/* coordinates are percentages of the plot area so the server render matches the client's at any size */}
+			<div
+				className={styles.plot}
+				style={{
+					inset: `${marginTop}px ${plotInset}px ${MARGIN.bottom}px`,
+				}}
 			>
-				<line
-					className={styles.gridLine}
-					x1={plotLeft}
-					y1={yAt(minY)}
-					x2={plotRight}
-					y2={yAt(minY)}
-				/>
-				{yTicks.map((tick) => (
-					<g key={tick.label}>
-						<line
-							className={clsx(styles.gridLine, styles.gridLineDashed)}
-							x1={plotLeft}
-							y1={yAt(tick.value)}
-							x2={plotRight}
-							y2={yAt(tick.value)}
-						/>
-						<text
-							className={styles.label}
-							x={plotLeft - 6}
-							y={yAt(tick.value)}
-							textAnchor="end"
-							dominantBaseline="middle"
-						>
-							{tick.label}
-						</text>
-					</g>
-				))}
-				{series.map((s, seriesIndex) => {
-					const linePath = s.points
-						.map(
-							(point, index) =>
-								`${index === 0 ? "M" : "L"}${xAt(point.x).toFixed(1)} ${yAt(point.y).toFixed(1)}`,
-						)
-						.join(" ");
-					const gradientId = `${gradientIdPrefix}-${seriesIndex}`;
+				<svg
+					className={styles.chart}
+					viewBox="0 0 100 100"
+					preserveAspectRatio="none"
+					aria-hidden
+				>
+					{series.map((s, seriesIndex) => {
+						const linePath = s.points
+							.map(
+								(point, index) =>
+									`${index === 0 ? "M" : "L"}${xPercent(point.x).toFixed(2)} ${yPercent(point.y).toFixed(2)}`,
+							)
+							.join(" ");
+						const gradientId = `${gradientIdPrefix}-${seriesIndex}`;
 
-					return (
-						<g key={seriesIndex} className={seriesColorClass(seriesIndex)}>
-							{area ? (
-								<>
-									<defs>
-										{/* presentation attributes, not CSS: the image export does not style elements inside defs */}
-										<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-											<stop
-												offset="0"
-												stopColor="currentColor"
-												stopOpacity={0.3}
-											/>
-											<stop
-												offset="1"
-												stopColor="currentColor"
-												stopOpacity={0}
-											/>
-										</linearGradient>
-									</defs>
-									<path
-										d={`${linePath} L${xAt(s.points[s.points.length - 1].x).toFixed(1)} ${bottomY} L${xAt(s.points[0].x).toFixed(1)} ${bottomY} Z`}
-										fill={`url(#${gradientId})`}
-									/>
-								</>
-							) : null}
-							<path className={styles.line} d={linePath} />
-						</g>
-					);
-				})}
-				{tooltipAnchor ? (
+						return (
+							<g key={seriesIndex} className={seriesColorClass(seriesIndex)}>
+								{area ? (
+									<>
+										<defs>
+											{/* presentation attributes, not CSS: the image export does not style elements inside defs */}
+											<linearGradient
+												id={gradientId}
+												x1="0"
+												y1="0"
+												x2="0"
+												y2="1"
+											>
+												<stop
+													offset="0"
+													stopColor="currentColor"
+													stopOpacity={0.3}
+												/>
+												<stop
+													offset="1"
+													stopColor="currentColor"
+													stopOpacity={0}
+												/>
+											</linearGradient>
+										</defs>
+										<path
+											d={`${linePath} L${xPercent(s.points[s.points.length - 1].x).toFixed(2)} 100 L${xPercent(s.points[0].x).toFixed(2)} 100 Z`}
+											fill={`url(#${gradientId})`}
+										/>
+									</>
+								) : null}
+								<path className={styles.line} d={linePath} />
+							</g>
+						);
+					})}
+				</svg>
+				<svg className={styles.chart} aria-hidden>
 					<line
-						className={styles.hoverLine}
-						x1={tooltipAnchor.x}
-						y1={marginTop}
-						x2={tooltipAnchor.x}
-						y2={bottomY}
+						className={styles.gridLine}
+						x1="0"
+						y1="100%"
+						x2="100%"
+						y2="100%"
 					/>
-				) : null}
-				{highlight?.map((point, index) => (
-					<circle
-						key={index}
-						className={clsx(
-							styles.highlight,
-							styles[`highlight${index % HIGHLIGHT_COLORS_COUNT}`],
-						)}
-						cx={xAt(point.x)}
-						cy={yAt(point.y)}
-						r={5}
-					/>
-				))}
-				{peak ? (
-					<circle
-						className={clsx(styles.dot, seriesColorClass(0))}
-						cx={xAt(peak.x)}
-						cy={yAt(peak.y)}
-						r={4.5}
-					/>
-				) : null}
-				{peak && !tooltipAnchor ? (
+					{yTicks.map((tick) => (
+						<g key={tick.label}>
+							<line
+								className={clsx(styles.gridLine, styles.gridLineDashed)}
+								x1="0"
+								y1={`${yPercent(tick.value)}%`}
+								x2="100%"
+								y2={`${yPercent(tick.value)}%`}
+							/>
+							<text
+								className={styles.label}
+								x={-6}
+								y={`${yPercent(tick.value)}%`}
+								textAnchor="end"
+								dominantBaseline="middle"
+							>
+								{tick.label}
+							</text>
+						</g>
+					))}
+					{tooltipAnchor ? (
+						<line
+							className={styles.hoverLine}
+							x1={`${tooltipAnchor.xPercent}%`}
+							y1="0"
+							x2={`${tooltipAnchor.xPercent}%`}
+							y2="100%"
+						/>
+					) : null}
+					{highlight?.map((point, index) => (
+						<circle
+							key={index}
+							className={clsx(
+								styles.highlight,
+								styles[`highlight${index % HIGHLIGHT_COLORS_COUNT}`],
+							)}
+							cx={`${xPercent(point.x)}%`}
+							cy={`${yPercent(point.y)}%`}
+							r={5}
+						/>
+					))}
+					{peak ? (
+						<circle
+							className={clsx(styles.dot, seriesColorClass(0))}
+							cx={`${xPercent(peak.x)}%`}
+							cy={`${yPercent(peak.y)}%`}
+							r={4.5}
+						/>
+					) : null}
+					{hoveredPoints.map((point) => (
+						<circle
+							key={point.seriesIndex}
+							className={clsx(styles.dot, seriesColorClass(point.seriesIndex))}
+							cx={`${xPercent(point.x)}%`}
+							cy={`${yPercent(point.y)}%`}
+							r={4.5}
+						/>
+					))}
+					<text className={styles.label} x="0" y="100%" dy={X_LABEL_OFFSET}>
+						{formatX(minX)}
+					</text>
+					{middleXLabels.map((xLabel) => (
+						<text
+							key={xLabel.value}
+							className={styles.label}
+							x={`${xPercent(xLabel.value)}%`}
+							y="100%"
+							dy={X_LABEL_OFFSET}
+							textAnchor="middle"
+						>
+							{xLabel.label}
+						</text>
+					))}
 					<text
+						className={styles.label}
+						x="100%"
+						y="100%"
+						dy={X_LABEL_OFFSET}
+						textAnchor="end"
+					>
+						{formatX(maxX)}
+					</text>
+				</svg>
+				{peak && !tooltipAnchor ? (
+					<div
 						className={styles.peakLabel}
-						x={Math.min(
-							Math.max(xAt(peak.x), plotLeft + PEAK_LABEL_CLAMP - MARGIN.left),
-							width - PEAK_LABEL_CLAMP,
-						)}
-						y={yAt(peak.y) - 10}
-						textAnchor="middle"
+						style={{
+							left: `clamp(${PEAK_LABEL_CLAMP - plotInset}px, ${xPercent(peak.x)}%, calc(100% + ${plotInset - PEAK_LABEL_CLAMP}px))`,
+							top: `${yPercent(peak.y)}%`,
+						}}
 					>
 						{formatValue(peak.y)}
-					</text>
-				) : null}
-				{hoveredPoints.map((point) => (
-					<circle
-						key={point.seriesIndex}
-						className={clsx(styles.dot, seriesColorClass(point.seriesIndex))}
-						cx={xAt(point.x)}
-						cy={yAt(point.y)}
-						r={4.5}
-					/>
-				))}
-				<text className={styles.label} x={plotLeft} y={height - 6}>
-					{formatX(minX)}
-				</text>
-				{middleXLabels.map((xLabel) => (
-					<text
-						key={xLabel.value}
-						className={styles.label}
-						x={xAt(xLabel.value)}
-						y={height - 6}
-						textAnchor="middle"
-					>
-						{xLabel.label}
-					</text>
-				))}
-				<text
-					className={styles.label}
-					x={plotRight}
-					y={height - 6}
-					textAnchor="end"
-				>
-					{formatX(maxX)}
-				</text>
-			</svg>
-			{tooltipAnchor ? (
-				<div
-					className={styles.tooltip}
-					style={{
-						left: tooltipAnchor.x,
-						top: tooltipAnchor.y,
-						// centered on the point but kept inside the chart's edges
-						translate: `clamp(${-tooltipAnchor.x}px, -50%, calc(${width - tooltipAnchor.x}px - 100%)) calc(-100% - var(--s-3))`,
-					}}
-				>
-					<div className={styles.tooltipHeader}>
-						{xAxis.type === "date"
-							? tooltipDateFormatter.format(new Date(hoveredX!))
-							: formatX(hoveredX!)}
 					</div>
-					{series.length === 1 ? (
-						<div className={styles.tooltipValue}>
-							{formatValue(hoveredPoints[0].y)}
+				) : null}
+				{tooltipAnchor ? (
+					<div
+						className={styles.tooltip}
+						style={{
+							left: `${tooltipAnchor.xPercent}%`,
+							top: `${tooltipAnchor.yPercent}%`,
+							// centered on the point but kept inside the chart's edges
+							translate: `clamp(${-plotInset - tooltipAnchorX}px, -50%, calc(${innerWidth + plotInset - tooltipAnchorX}px - 100%)) calc(-100% - var(--s-3))`,
+						}}
+					>
+						<div className={styles.tooltipHeader}>
+							{xAxis.type === "date"
+								? tooltipDateFormatter.format(new Date(hoveredX!))
+								: formatX(hoveredX!)}
 						</div>
-					) : (
-						hoveredPoints.map((point) => (
-							<div key={point.seriesIndex} className={styles.tooltipRow}>
-								<div
-									className={clsx(
-										styles.tooltipDot,
-										seriesColorClass(point.seriesIndex),
-									)}
-								/>
-								{point.label}
-								<div className={styles.tooltipRowValue}>
-									{formatValue(point.y)}
-								</div>
+						{series.length === 1 ? (
+							<div className={styles.tooltipValue}>
+								{formatValue(hoveredPoints[0].y)}
 							</div>
-						))
-					)}
-				</div>
-			) : null}
+						) : (
+							hoveredPoints.map((point) => (
+								<div key={point.seriesIndex} className={styles.tooltipRow}>
+									<div
+										className={clsx(
+											styles.tooltipDot,
+											seriesColorClass(point.seriesIndex),
+										)}
+									/>
+									{point.label}
+									<div className={styles.tooltipRowValue}>
+										{formatValue(point.y)}
+									</div>
+								</div>
+							))
+						)}
+					</div>
+				) : null}
+			</div>
 		</div>
 	);
 }

@@ -54,7 +54,9 @@
 }
 
 .powerChart {
-	height: 220px;
+	flex-grow: 1;
+	height: auto;
+	min-height: 220px;
 }
 
 .playerCards {

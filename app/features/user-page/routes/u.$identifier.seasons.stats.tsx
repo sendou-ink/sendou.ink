@@ -57,7 +57,7 @@ const TAB_LABEL_KEYS = {
 } as const satisfies Record<SeasonStatsTab, string>;
 
 const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;
-const OVERVIEW_WEAPONS_COUNT = 5;
+const OVERVIEW_WEAPONS_COUNT = 4;
 const OVERVIEW_STAGES_COUNT = 8;
 const OVERVIEW_PLAYERS_COUNT = 4;
 const OVERVIEW_PLAYER_MIN_SETS = 3;
