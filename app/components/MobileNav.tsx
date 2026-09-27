@@ -419,13 +419,13 @@ function MenuPanel({
 								to={SUPPORT_PAGE}
 								size="small"
 								icon={<Heart />}
-								variant="outlined"
+								variant="ghost"
 							>
 								{t("common:pages.support")}
 							</LinkButton>
 						) : null}
 						<ShareUrlButton
-							variant="minimal"
+							variant="ghost"
 							shape="square"
 							url={`${SENDOU_INK_BASE_URL}${location.pathname}${location.search}`}
 						/>

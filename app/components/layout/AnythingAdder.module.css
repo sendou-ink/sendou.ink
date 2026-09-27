@@ -1,15 +1,56 @@
+/* attached to the search button */
+.button {
+	flex-shrink: 0;
+	border-start-start-radius: 0;
+	border-end-start-radius: 0;
+}
+
 /* the status indicator takes the room the label gives up */
-@container (max-width: 760px) {
-	.button.withStatus {
-		aspect-ratio: 1 / 1;
-		padding: 0;
+@media screen and (max-width: 599px) {
+	@container (width < 310px) {
+		.button.withStatus {
+			aspect-ratio: 1 / 1;
+			padding: 0;
 
-		& > svg {
-			margin-inline-end: 0;
+			& > svg {
+				margin-inline-end: 0;
+			}
+
+			& .label {
+				display: none;
+			}
 		}
+	}
+}
 
-		& .label {
-			display: none;
+@media screen and (min-width: 600px) {
+	@container (width < 410px) {
+		.button.withStatus {
+			aspect-ratio: 1 / 1;
+			padding: 0;
+
+			& > svg {
+				margin-inline-end: 0;
+			}
+
+			& .label {
+				display: none;
+			}
+		}
+	}
+
+	@container (width < 228px) {
+		.button {
+			aspect-ratio: 1 / 1;
+			padding: 0;
+
+			& > svg {
+				margin-inline-end: 0;
+			}
+
+			& .label {
+				display: none;
+			}
 		}
 	}
 }

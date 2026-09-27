@@ -123,6 +123,17 @@
 	outline-color: var(--color-error);
 }
 
+/* borderless and in the text color, gets a background on hover */
+.ghost {
+	border-color: transparent;
+	background-color: transparent;
+	color: var(--color-text);
+
+	&:hover {
+		background-color: var(--color-bg-high);
+	}
+}
+
 .buttonIcon {
 	min-width: 20px;
 	max-width: 20px;

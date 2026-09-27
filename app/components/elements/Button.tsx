@@ -14,7 +14,8 @@ type ButtonVariant =
 	| "outlined-destructive"
 	| "minimal"
 	| "minimal-success"
-	| "minimal-destructive";
+	| "minimal-destructive"
+	| "ghost";
 
 export interface SendouButtonProps
 	extends Omit<React.ComponentPropsWithRef<"button">, "disabled" | "children"> {
@@ -171,6 +172,8 @@ function buttonClassName({
 				return styles.minimalSuccess;
 			case "minimal-destructive":
 				return styles.minimalDestructive;
+			case "ghost":
+				return styles.ghost;
 			default:
 				return assertUnreachable(buttonVariant);
 		}

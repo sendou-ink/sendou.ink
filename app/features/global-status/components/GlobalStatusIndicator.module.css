@@ -6,14 +6,18 @@
 	height: var(--field-size-sm);
 	padding: 0 var(--s-3);
 	border-radius: var(--radius-field);
-	background-color: var(--color-bg-higher);
-	color: var(--color-text);
+	background-color: var(--color-bg-accent);
+	color: var(--color-fg-accent);
 	font-size: var(--font-xs);
 	font-weight: var(--weight-semi);
 	white-space: nowrap;
 
 	&:hover {
-		background-color: var(--color-bg-high);
+		background-color: color-mix(
+			in oklch,
+			var(--color-bg-accent),
+			var(--color-fg-accent) 10%
+		);
 	}
 }
 
@@ -27,8 +31,16 @@
 	overflow: hidden;
 	text-overflow: ellipsis;
 
-	@container (width < 660px) {
-		display: none;
+	@media screen and (max-width: 599px) {
+		@container (width < 250px) {
+			display: none;
+		}
+	}
+
+	@media screen and (min-width: 600px) {
+		@container (width < 350px) {
+			display: none;
+		}
 	}
 }
 

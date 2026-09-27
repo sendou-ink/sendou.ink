@@ -288,6 +288,10 @@ function ButtonsSection({ id }: { id: string }) {
 					</SendouButton>
 				</ComponentRow>
 
+				<ComponentRow label="Ghost">
+					<SendouButton variant="ghost">Ghost Button</SendouButton>
+				</ComponentRow>
+
 				<Divider smallText>Sizes</Divider>
 
 				<ComponentRow label="Miniscule">

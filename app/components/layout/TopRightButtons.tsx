@@ -41,7 +41,7 @@ export function TopRightButtons({
 							to={SUPPORT_PAGE}
 							size="small"
 							icon={<Heart />}
-							variant="outlined"
+							variant="ghost"
 						>
 							{t("common:pages.support")}
 						</LinkButton>
@@ -51,7 +51,7 @@ export function TopRightButtons({
 							to={SUPPORT_PAGE}
 							size="small"
 							icon={<Heart />}
-							variant="outlined"
+							variant="ghost"
 							shape="square"
 						/>
 					</div>
@@ -59,10 +59,7 @@ export function TopRightButtons({
 			) : null}
 			<div className={styles.searchAndAddContainer}>
 				<GlobalStatusIndicator />
-				<div
-					className={styles.searchWrapper}
-					data-with-status={hasGlobalStatus ? "" : undefined}
-				>
+				<div className={styles.searchWrapper}>
 					{isLoggedIn ? <GlobalSearch /> : <LoggedOutGlobalSearch />}
 				</div>
 				{isLoggedIn ? <AnythingAdder /> : null}
@@ -72,7 +69,6 @@ export function TopRightButtons({
 					{onChatToggle ? (
 						<div className={styles.chatButtonWrapperPersistent}>
 							<ChatButton
-								variant="outlined"
 								onClick={onChatToggle}
 								unreadCount={chatUnreadCount}
 							/>
@@ -81,7 +77,6 @@ export function TopRightButtons({
 					{onChatModalToggle ? (
 						<div className={styles.chatButtonWrapperModal}>
 							<ChatButton
-								variant="outlined"
 								onClick={onChatModalToggle}
 								unreadCount={chatUnreadCount}
 							/>
@@ -100,11 +95,9 @@ export function TopRightButtons({
 }
 
 function ChatButton({
-	variant,
 	onClick,
 	unreadCount,
 }: {
-	variant: "outlined" | "primary";
 	onClick: () => void;
 	unreadCount?: number;
 }) {
@@ -114,7 +107,7 @@ function ChatButton({
 				shape="square"
 				size="small"
 				icon={<MessageSquare />}
-				variant={variant}
+				variant="ghost"
 				onClick={onClick}
 				testId="chat-toggle-button"
 			/>
