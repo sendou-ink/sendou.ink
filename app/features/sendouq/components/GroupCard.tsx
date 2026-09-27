@@ -33,7 +33,7 @@ import { inGameNameWithoutDiscriminator } from "~/utils/strings";
 import { SENDOUQ_LOOKING_PAGE, TIERS_PAGE, tierImageUrl } from "~/utils/urls";
 import {
 	finishUpdateIfUnmoved,
-	usePageViewTransitionClass,
+	usePageViewTransitionClasses,
 } from "~/utils/view-transition";
 import type {
 	SQGroup,
@@ -306,12 +306,14 @@ function GroupCardContainer({
 	isOwnGroup: boolean;
 	children: React.ReactNode;
 }) {
-	const updateClass = usePageViewTransitionClass("card-update");
+	const transitionClasses = usePageViewTransitionClasses({
+		update: "card-update",
+	});
 
 	if (isOwnGroup) return <>{children}</>;
 
 	return (
-		<ViewTransition update={updateClass} onUpdate={finishUpdateIfUnmoved}>
+		<ViewTransition {...transitionClasses} onUpdate={finishUpdateIfUnmoved}>
 			{children}
 		</ViewTransition>
 	);

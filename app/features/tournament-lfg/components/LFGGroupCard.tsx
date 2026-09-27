@@ -26,7 +26,7 @@ import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { navIconUrl } from "~/utils/urls";
 import {
 	finishUpdateIfUnmoved,
-	usePageViewTransitionClass,
+	usePageViewTransitionClasses,
 } from "~/utils/view-transition";
 import {
 	lookingSchema,
@@ -185,12 +185,14 @@ function LFGGroupCardContainer({
 	isOwnGroup: boolean;
 	children: React.ReactNode;
 }) {
-	const updateClass = usePageViewTransitionClass("card-update");
+	const transitionClasses = usePageViewTransitionClasses({
+		update: "card-update",
+	});
 
 	if (isOwnGroup) return <>{children}</>;
 
 	return (
-		<ViewTransition update={updateClass} onUpdate={finishUpdateIfUnmoved}>
+		<ViewTransition {...transitionClasses} onUpdate={finishUpdateIfUnmoved}>
 			{children}
 		</ViewTransition>
 	);

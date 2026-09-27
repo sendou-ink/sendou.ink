@@ -31,7 +31,6 @@ import { loader } from "../loaders/settings.server";
 import type { SettingsTabSlug } from "../settings-constants";
 import { settingsSearchParams } from "../settings-search-params";
 import { defaultTab, resolveActiveTab } from "../settings-utils";
-import "./settings.global.css";
 
 export { action, loader };
 

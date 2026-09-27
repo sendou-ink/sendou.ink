@@ -1,4 +1,4 @@
-import type { ViewTransitionInstance } from "react";
+import type { ViewTransitionInstance, ViewTransitionProps } from "react";
 import * as React from "react";
 
 interface PseudoElement {
@@ -14,6 +14,12 @@ type PseudoElements = Record<
 const MEASURED_PROPERTIES = ["transform", "width", "height"] as const;
 const NUMBER_PATTERN = /-?\d*\.?\d+/g;
 const HOVER_CURSOR_PROPERTY = "--hover-cursor";
+const MODAL_OPEN_CLASSES: ViewTransitionClasses = { default: "none" };
+
+type ViewTransitionClasses = Pick<
+	ViewTransitionProps,
+	"default" | "enter" | "exit" | "update" | "share"
+>;
 
 /** How many modal dialogs are open, provided by the root. */
 export const OpenModalsContext = React.createContext<{
@@ -113,7 +119,7 @@ export function useHoverCursorForViewTransitions() {
 	}, []);
 }
 
-/** Counts the calling dialog as an open modal while `isOpen`, see `usePageViewTransitionClass`. */
+/** Counts the calling dialog as an open modal while `isOpen`, see `usePageViewTransitionClasses`. */
 export function useReportModalOpen(isOpen: boolean) {
 	const { setCount } = React.useContext(OpenModalsContext);
 
@@ -125,10 +131,12 @@ export function useReportModalOpen(isOpen: boolean) {
 }
 
 /**
- * The `<ViewTransition>` class for an element of the page: `"none"` while a modal dialog is open.
- * Snapshots paint above the dialog's backdrop, so a transition under it would show the page
- * unblurred for a few frames, and there is nothing worth animating under a modal anyway.
+ * The `<ViewTransition>` classes for an element of the page, every trigger `"none"` while a modal
+ * dialog is open. Snapshots paint above the dialog's backdrop, so a transition under it would show
+ * the page unblurred for a few frames, and there is nothing worth animating under a modal anyway.
  */
-export function usePageViewTransitionClass(className: string) {
-	return React.useContext(OpenModalsContext).count > 0 ? "none" : className;
+export function usePageViewTransitionClasses(classes: ViewTransitionClasses) {
+	return React.useContext(OpenModalsContext).count > 0
+		? MODAL_OPEN_CLASSES
+		: classes;
 }
