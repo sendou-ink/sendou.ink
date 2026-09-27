@@ -752,18 +752,24 @@ test("the fallback window does not reach past the previous scoreboard", () => {
 	);
 });
 
-test("non-private lobbies are recorded and skipped on ingest", () => {
+test("lobbies other than private and X battle are recorded and skipped on ingest", () => {
 	const built = buildScannerMatches([
 		mapStart(0),
-		scoreboard(300, { lobby: "X" }),
+		scoreboard(300, { lobby: "REGULAR" }),
 		mapStart(400),
-		scoreboard(700),
+		scoreboard(700, { lobby: "SERIES" }),
+		mapStart(800),
+		scoreboard(1100, { lobby: "X" }),
+		mapStart(1200),
+		scoreboard(1500),
 	]);
 	const skipped = ingestSkipReasons(built);
-	assert.equal(built.length, 2);
-	assert.equal(built[0]!.match.lobby, "X");
+	assert.equal(built.length, 4);
+	assert.equal(built[0]!.match.lobby, "REGULAR");
 	assert.equal(skipped.get(built[0]!), "lobby");
-	assert.equal(skipped.get(built[1]!), undefined);
+	assert.equal(skipped.get(built[1]!), "lobby");
+	assert.equal(skipped.get(built[2]!), undefined);
+	assert.equal(skipped.get(built[3]!), undefined);
 });
 
 test("a scoreless match whose counters had no time to run out is a disconnect", () => {

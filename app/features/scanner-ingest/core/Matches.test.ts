@@ -113,6 +113,15 @@ describe("isSameMatch", () => {
 		).toBe(false);
 	});
 
+	test("differing lobbies contradict identity", () => {
+		expect(
+			Matches.isSameMatch(
+				scannerMatch({ lobby: "PRIVATE" }),
+				scannerMatch({ lobby: "X" }),
+			),
+		).toBe(false);
+	});
+
 	test("a null mode does not contradict a read one", () => {
 		expect(
 			Matches.isSameMatch(

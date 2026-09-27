@@ -14,6 +14,7 @@ import type {
 	ModeShort,
 	StageId,
 } from "~/modules/in-game-lists/types";
+import { isUploadedLobby } from "../scanner-types";
 import {
 	type GearMains,
 	harvestAbilities,
@@ -81,9 +82,6 @@ import {
 	weaponSlotRowPermutation,
 } from "./slot-row-assignment";
 import { editDistance, matchKey } from "./text";
-
-/** The lobby header value private battles (tournament games) carry. */
-const TOURNAMENT_LOBBY = "PRIVATE";
 
 /** How far back a scoreboard with no MapStart claims deaths: matches run well under 8 min. */
 const FALLBACK_WINDOW_SECONDS = 480;
@@ -312,14 +310,14 @@ function attachOwnResults<E extends DetectedEvent>(
 
 /** Why a built match is held back from /ingest; absent = it is sent. */
 export type IngestSkipReason =
-	/** not a tournament (Private Battle) game */
+	/** not a Private Battle or X Battle game */
 	| "lobby"
 	/** a disconnect ended it before it could be decided */
 	| "disconnect";
 
 /**
- * Which built matches are not worth sending to /ingest, and why: non-tournament
- * lobbies (unread lobbies get the benefit of the doubt), and games a disconnect
+ * Which built matches are not worth sending to /ingest, and why: lobbies other
+ * than Private and X Battle (unread lobbies get the benefit of the doubt), and games a disconnect
  * cut short — counter reads show the game couldn't have ended on its own
  * (`endedEarly`), or the same map/mode was replayed right after with a score.
  * Replay evidence only arrives after the fact, so a live scan may already have
@@ -331,7 +329,7 @@ export function ingestSkipReasons<E extends DetectedEvent>(
 	const reasons = new Map<BuiltMatch<E>, IngestSkipReason>();
 	for (const [index, candidate] of built.entries()) {
 		const { match } = candidate;
-		if (match.lobby !== null && match.lobby !== TOURNAMENT_LOBBY) {
+		if (!isUploadedLobby(match.lobby)) {
 			reasons.set(candidate, "lobby");
 		} else if (endedEarly(match) || wasReplayed(built, index)) {
 			reasons.set(candidate, "disconnect");

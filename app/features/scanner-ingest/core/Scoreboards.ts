@@ -3,7 +3,10 @@ import type {
 	ScannerMatchObjective,
 	ScannerMatchPlayerStatus,
 } from "~/features/scanner/core/scanner-match";
-import type { ScannerLobby } from "~/features/scanner/scanner-types";
+import {
+	isLinkableLobby,
+	type ScannerLobby,
+} from "~/features/scanner/scanner-types";
 import type {
 	AbilityWithUnknown,
 	MainWeaponId,
@@ -12,9 +15,6 @@ import type {
 } from "~/modules/in-game-lists/types";
 import { databaseTimestampToJavascriptTimestamp } from "~/utils/dates";
 import * as Matches from "./Matches";
-
-/** Lobby header value scoreboards of tournament/SendouQ games are expected to have. */
-const TOURNAMENT_LOBBY = "PRIVATE";
 
 /** Of 8 player rows, how many must share name and position for a match to count as a re-detection (tolerates a couple of OCR misreads). */
 const MIN_LINKED_DUPLICATE_NAME_MATCHES = 6;
@@ -158,7 +158,7 @@ export function matchedGames({
 				return view ? { ...view, matchIndex } : null;
 			})
 			.filter((view): view is IndexedView => view !== null)
-			.filter((view) => !view.lobby || view.lobby === TOURNAMENT_LOBBY)
+			.filter((view) => isLinkableLobby(view.lobby))
 			.sort((a, b) => a.order - b.order),
 	);
 	const orderedGames = games.toSorted(

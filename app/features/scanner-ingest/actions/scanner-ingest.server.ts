@@ -2,6 +2,10 @@ import { subDays } from "date-fns";
 import type { ActionFunction } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import type { ScannerMatch } from "~/features/scanner/core/scanner-match";
+import {
+	isLinkableLobby,
+	isUploadedLobby,
+} from "~/features/scanner/scanner-types";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import { logger } from "~/utils/logger";
 import { parseBody } from "~/utils/remix.server";
@@ -23,14 +27,15 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const povUserId = user.id;
 
-	const indexedMatches = data.matches
-		.map((match, requestIndex) => ({
-			match: withoutDisprovenCast(match),
-			requestIndex,
-		}))
-		.filter(({ match }) => match.lobby === null || match.lobby === "PRIVATE");
+	const requestMatches = data.matches.map(withoutDisprovenCast);
+	const indexedMatches = requestMatches
+		.map((match, requestIndex) => ({ match, requestIndex }))
+		.filter(({ match }) => isLinkableLobby(match.lobby));
 	const matches = indexedMatches.map(({ match }) => match);
-	if (matches.length === 0) {
+	const storeOnlyMatches = requestMatches.filter(
+		(match) => isUploadedLobby(match.lobby) && !isLinkableLobby(match.lobby),
+	);
+	if (matches.length === 0 && storeOnlyMatches.length === 0) {
 		return {
 			storedMatchesCount: 0,
 			mergedMatchesCount: 0,
@@ -40,19 +45,31 @@ export const action: ActionFunction = async ({ request }) => {
 		} satisfies IngestResponse;
 	}
 
-	const resolved = await resolveIngestContext({
-		matches,
+	const storedOnly = await ScannerIngestRepository.addOrMergeMatches({
 		povUserId,
-		casterUserId: user.id,
+		submitterUserId: user.id,
+		matches: storeOnlyMatches,
+		context: null,
 	});
 
-	const { insertedCount, mergedCount, effectiveMatches } =
-		await ScannerIngestRepository.addOrMergeMatches({
-			povUserId,
-			submitterUserId: user.id,
-			matches,
-			context: resolved?.context ?? null,
-		});
+	const resolved =
+		matches.length > 0
+			? await resolveIngestContext({
+					matches,
+					povUserId,
+					casterUserId: user.id,
+				})
+			: null;
+
+	const linkable = await ScannerIngestRepository.addOrMergeMatches({
+		povUserId,
+		submitterUserId: user.id,
+		matches,
+		context: resolved?.context ?? null,
+	});
+	const { effectiveMatches } = linkable;
+	const insertedCount = storedOnly.insertedCount + linkable.insertedCount;
+	const mergedCount = storedOnly.mergedCount + linkable.mergedCount;
 
 	let linkedGamesCount = 0;
 	let linkedMatches: IngestResponse["linkedMatches"] = [];

@@ -51,6 +51,11 @@ const LOBBY_LABELS: Record<ScannerLobby, string> = {
 	SERIES: "Anarchy Battle (Series)",
 	OPEN: "Anarchy Battle (Open)",
 	PRIVATE: "Private Battle",
+	REGULAR: "Regular Battle",
+	CHALLENGE: "Challenge",
+	SPLATFEST_OPEN: "Splatfest Battle (Open)",
+	SPLATFEST_PRO: "Splatfest Battle (Pro)",
+	TRICOLOR: "Tricolor Battle",
 };
 
 export function lobbyLabel(lobby: ScannerLobby | null): string | null {

@@ -65,10 +65,11 @@ export function canonicalMatch(match: ScannerMatch): ScannerMatch {
 
 /**
  * Whether two (possibly partial) matches describe the same game; callers pre-scope to the same
- * tournament + POV user. Contradicting mode/stage/replay-code/play-time rules identity out; then a
+ * tournament + POV user. Contradicting lobby/mode/stage/replay-code/play-time rules identity out; then a
  * matching replay code, close play times, or an aligning roster (names, else weapons) rules it in.
  */
 export function isSameMatch(a: ScannerMatch, b: ScannerMatch): boolean {
+	if (a.lobby !== null && b.lobby !== null && a.lobby !== b.lobby) return false;
 	if (a.mode !== null && b.mode !== null && a.mode !== b.mode) return false;
 	if (a.stage !== null && b.stage !== null && a.stage !== b.stage) return false;
 

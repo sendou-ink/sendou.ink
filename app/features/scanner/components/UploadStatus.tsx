@@ -186,7 +186,7 @@ function viewOf(state: UploadState): UploadView {
 				detail:
 					state.reason === "disconnect"
 						? "A disconnect ended this game before it was decided, so there is no result to upload."
-						: `Only Private Battle games are uploaded. This one was ${lobbyLabel(state.lobby) ?? "not a private battle"}.`,
+						: `Only Private Battle and X Battle games are uploaded. This one was ${lobbyLabel(state.lobby) ?? "neither"}.`,
 			};
 	}
 }

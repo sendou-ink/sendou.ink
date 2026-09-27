@@ -22,12 +22,13 @@ import {
 } from "./harness";
 
 describe("gating & request filtering", () => {
-	test("G2 non-private lobby: only X-battle matches in the request → skipped entirely", async () => {
+	test("G2 other lobbies: anarchy and casual matches are skipped entirely", async () => {
 		const w = await sendouqWorld();
 		await w.conclude();
 
 		const res = await ingest(w.povUser, [
-			w.scanned(w.maps[0]!, { lobby: "X" }),
+			w.scanned(w.maps[0]!, { lobby: "SERIES" }),
+			w.scanned(w.maps[1]!, { lobby: "REGULAR" }),
 		]);
 
 		expect(res).toEqual({
@@ -40,22 +41,47 @@ describe("gating & request filtering", () => {
 		expect(await fetchIngestedMatches()).toHaveLength(0);
 	});
 
-	test("G3 mixed request keeps indices: only the private match is stored and linked", async () => {
+	test("G3 X battle: stored without a context hint and never linked", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+
+		const res = await ingest(w.povUser, [
+			w.scanned(w.maps[0]!, { lobby: "X" }),
+		]);
+
+		expect(res).toEqual({
+			storedMatchesCount: 1,
+			mergedMatchesCount: 0,
+			linkedGamesCount: 0,
+			linkedMatches: [],
+			contextResolved: false,
+		});
+		const rows = await fetchIngestedMatches();
+		expect(rows).toHaveLength(1);
+		expect(rows[0]!.data.lobby).toBe("X");
+		expect(rows[0]!.groupMatchIdHint).toBeNull();
+		expect(await fetchLinks()).toHaveLength(0);
+	});
+
+	test("G4 mixed request keeps indices: X battle stored, private match stored and linked", async () => {
 		const w = await sendouqWorld();
 		await w.conclude();
 
 		const res = await ingest(w.povUser, [
 			w.scanned(w.maps[1]!, { lobby: "X" }),
+			w.scanned(w.maps[0]!, { lobby: "REGULAR" }),
 			w.scanned(w.maps[0]!),
 		]);
 
-		expect(res.storedMatchesCount).toBe(1);
+		expect(res.storedMatchesCount).toBe(2);
 		expect(res.linkedMatches).toEqual([
-			{ matchIndex: 1, link: { type: "sendouq", groupMatchId: w.match.id } },
+			{ matchIndex: 2, link: { type: "sendouq", groupMatchId: w.match.id } },
 		]);
 		const rows = await fetchIngestedMatches();
-		expect(rows).toHaveLength(1);
-		expect(rows[0]!.data.lobby).toBe("PRIVATE");
+		expect(new Set(rows.map((row) => row.data.lobby))).toEqual(
+			new Set(["PRIVATE", "X"]),
+		);
+		expect(await fetchLinks()).toHaveLength(1);
 	});
 });
 
