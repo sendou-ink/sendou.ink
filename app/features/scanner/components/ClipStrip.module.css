@@ -57,7 +57,7 @@
 
 	&:hover .thumb,
 	&:focus-visible .thumb {
-		outline: 2px solid var(--color-text-accent);
+		outline: 2px solid var(--color-fg-accent);
 		outline-offset: 1px;
 	}
 

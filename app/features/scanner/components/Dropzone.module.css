@@ -19,6 +19,6 @@
 }
 
 .over {
-	border-color: var(--color-text-accent);
-	color: var(--color-text-accent);
+	border-color: var(--color-fg-accent);
+	color: var(--color-fg-accent);
 }

@@ -6,8 +6,8 @@
 
 /* the whole landing accepts a drop, but only the File card's dropzone lights up */
 .over .dropzone {
-	border-color: var(--color-text-accent);
-	color: var(--color-text-accent);
+	border-color: var(--color-fg-accent);
+	color: var(--color-fg-accent);
 }
 
 .top {
@@ -74,14 +74,14 @@
 	cursor: pointer;
 
 	&:hover {
-		border-color: var(--color-text-accent);
+		border-color: var(--color-fg-accent);
 		color: var(--color-text);
 	}
 }
 
 .choose {
 	text-decoration: underline;
-	color: var(--color-text-accent);
+	color: var(--color-fg-accent);
 }
 
 .fileInput {
