@@ -76,6 +76,18 @@
 	}
 }
 
+.weaponShares {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.weaponSharesGrid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(18rem, 1fr));
+	column-gap: var(--s-8);
+}
+
 .weaponShare {
 	display: grid;
 	grid-template-columns: auto minmax(0, 1fr);
@@ -217,57 +229,6 @@
 	width: 3rem;
 	text-align: end;
 	font-weight: var(--weight-bold);
-}
-
-.seasonWeaponContainer {
-	display: flex;
-	align-items: center;
-	font-size: var(--font-sm);
-	flex-direction: column;
-	font-weight: var(--weight-bold);
-	position: relative;
-	width: 60px;
-}
-
-.seasonWeaponBorderOuter {
-	--degree: 80deg;
-	--smoothing: 0.5deg;
-	--color: var(--color-fg-accent);
-
-	display: block;
-	content: "";
-	height: 60px;
-	width: 60px;
-	border-radius: 50%;
-	background: conic-gradient(
-		var(--color) var(--degree),
-		transparent calc(var(--degree) + var(--smoothing)) 100%
-	);
-	position: absolute;
-}
-
-.seasonWeaponBorderOuterStatic {
-	height: 60px;
-	width: 60px;
-	background-color: var(--color-bg-high);
-	position: absolute;
-	border-radius: 50%;
-}
-
-.seasonWeaponBorderInner {
-	height: 84%;
-	width: 84%;
-	top: 8%;
-	left: 8%;
-	position: relative;
-	border-radius: 50%;
-	background: var(--color-bg);
-	display: grid;
-	place-items: center;
-}
-
-.seasonWeaponCount {
-	margin-top: 62px;
 }
 
 .seasonPlayerName {

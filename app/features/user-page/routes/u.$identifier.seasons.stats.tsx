@@ -124,7 +124,7 @@ export default function UserSeasonsStatsPage() {
 				</SendouTabPanel>
 				<SendouTabPanel id="weapons">
 					<SendouSection>
-						<Weapons weapons={data.weapons} />
+						<MostPlayedWeapons weapons={data.weapons} showCounts />
 					</SendouSection>
 				</SendouTabPanel>
 				<SendouTabPanel id="mates">
@@ -180,7 +180,10 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 					icon={Crosshair}
 					action={data.weapons.length > 0 ? showAllButton("weapons") : null}
 				>
-					<MostPlayedWeapons weapons={data.weapons} />
+					<MostPlayedWeapons
+						weapons={data.weapons}
+						limit={OVERVIEW_WEAPONS_COUNT}
+					/>
 				</SendouSection>
 			</div>
 			<SendouSection
@@ -339,8 +342,12 @@ function PowerChart({
 
 function MostPlayedWeapons({
 	weapons,
+	limit,
+	showCounts = false,
 }: {
 	weapons: UserSeasonsStatsLoaderData["weapons"];
+	limit?: number;
+	showCounts?: boolean;
 }) {
 	const { t } = useTranslation(["user", "weapons"]);
 
@@ -356,9 +363,12 @@ function MostPlayedWeapons({
 
 	return (
 		<div className="stack md">
-			{weapons
-				.slice(0, OVERVIEW_WEAPONS_COUNT)
-				.map(({ weaponSplId, count }) => {
+			<div
+				className={clsx(styles.weaponShares, {
+					[styles.weaponSharesGrid]: !limit,
+				})}
+			>
+				{weapons.slice(0, limit).map(({ weaponSplId, count }) => {
 					const share = Math.round((count / totalCount) * 100);
 
 					return (
@@ -373,7 +383,12 @@ function MostPlayedWeapons({
 							<div className="stack xxs">
 								<div className="stack horizontal sm justify-between text-sm">
 									<span>{t(`weapons:MAIN_${weaponSplId}`)}</span>
-									<span className="text-lighter">{share}%</span>
+									<span className="text-lighter whitespace-nowrap">
+										{showCounts
+											? `${t("user:seasons.summary.count.maps", { count })} · `
+											: null}
+										{share}%
+									</span>
 								</div>
 								<div className={styles.bar}>
 									<div style={{ width: `${share}%` }} />
@@ -382,6 +397,7 @@ function MostPlayedWeapons({
 						</div>
 					);
 				})}
+			</div>
 			<div className="text-xs text-lighter">
 				{t("user:seasons.stats.weaponsShare")}
 			</div>
@@ -682,57 +698,6 @@ function PlayerHighlights({
 	);
 }
 
-const MIN_DEGREE = 5;
-const WEAPONS_TO_SHOW = 9;
-function Weapons({
-	weapons,
-}: {
-	weapons: UserSeasonsStatsLoaderData["weapons"];
-}) {
-	const { t } = useTranslation(["user", "weapons"]);
-
-	const slicedWeapons = weapons.slice(0, WEAPONS_TO_SHOW);
-
-	const totalCount = weapons.reduce((acc, cur) => cur.count + acc, 0);
-	const percentage = (count: number) =>
-		cutToNDecimalPlaces((count / totalCount) * 100);
-	const countToDegree = (count: number) =>
-		Math.max((count / totalCount) * 360, MIN_DEGREE);
-
-	const restCount =
-		totalCount - slicedWeapons.reduce((acc, cur) => cur.count + acc, 0);
-	const restWeaponsCount = weapons.length - WEAPONS_TO_SHOW;
-
-	return (
-		<div className="stack sm horizontal justify-center flex-wrap">
-			{weapons.length === 0 ? (
-				<div className="text-lighter font-bold italic my-4">
-					{t("user:seasons.noReportedWeapons")}
-				</div>
-			) : null}
-			{slicedWeapons.map(({ count, weaponSplId }) => (
-				<WeaponCircle
-					key={weaponSplId}
-					degrees={countToDegree(count)}
-					count={count}
-				>
-					<WeaponImage
-						weaponSplId={weaponSplId}
-						variant="build"
-						size={42}
-						title={`${t(`weapons:MAIN_${weaponSplId}`)} (${percentage(count)}%)`}
-					/>
-				</WeaponCircle>
-			))}
-			{restWeaponsCount > 0 ? (
-				<WeaponCircle degrees={countToDegree(restCount)}>
-					+{restWeaponsCount}
-				</WeaponCircle>
-			) : null}
-		</div>
-	);
-}
-
 function Players({ players }: { players: SeasonPlayer[] }) {
 	const { t } = useTranslation(["user"]);
 	const data = useStatsLoaderData();
@@ -781,29 +746,6 @@ function Players({ players }: { players: SeasonPlayer[] }) {
 					</div>
 				);
 			})}
-		</div>
-	);
-}
-
-function WeaponCircle({
-	degrees,
-	children,
-	count,
-}: {
-	degrees: number;
-	children: React.ReactNode;
-	count?: number;
-}) {
-	return (
-		<div className={styles.seasonWeaponContainer}>
-			<div className={styles.seasonWeaponBorderOuterStatic} />
-			<div
-				className={styles.seasonWeaponBorderOuter}
-				style={{ "--degree": `${degrees}deg` }}
-			>
-				<div className={styles.seasonWeaponBorderInner}>{children}</div>
-			</div>
-			{count ? <div className={styles.seasonWeaponCount}>{count}</div> : null}
 		</div>
 	);
 }
