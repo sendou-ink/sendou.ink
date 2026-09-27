@@ -26,6 +26,7 @@ import {
 	type SortState,
 } from "~/components/SortableTableHeader";
 import { Table } from "~/components/Table";
+import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
 import { useTournament } from "~/features/tournament/tournament-context";
 import type {
 	BracketMeta,
@@ -210,11 +211,7 @@ function TeamRow({
 	const logoSrc = team.logoUrl;
 
 	return (
-		<tr
-			className={clsx({ [styles.droppedOut]: team.droppedOut })}
-			data-testid="team-row"
-			data-team-id={team.id}
-		>
+		<tr data-testid="team-row" data-team-id={team.id}>
 			<td>
 				<div className="stack horizontal sm items-center">
 					<Avatar size="xxs" url={logoSrc} identiconInput={team.name} />
@@ -228,6 +225,7 @@ function TeamRow({
 					>
 						{team.name}
 					</Link>
+					{team.droppedOut ? <DroppedOutPopover /> : null}
 				</div>
 			</td>
 			{!tournament.ctx.isFinalized ? (

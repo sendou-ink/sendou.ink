@@ -172,6 +172,8 @@
 	"team.seed.footer": "из {{count}}",
 	"team.placement": "Место",
 	"team.placement.footer": "",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "Сетка будет показана как только {{count}} команд зарегистрируется",
 	"bracket.waiting.checkin": "Сетка будет показана как только {{count}} команд пройдут чек-ин",
 	"bracket.waiting.advanced": "",

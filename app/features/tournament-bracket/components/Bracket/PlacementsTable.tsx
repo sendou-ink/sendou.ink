@@ -2,6 +2,7 @@ import clsx from "clsx";
 import { Check, SquarePen, X } from "lucide-react";
 import * as React from "react";
 import { Link } from "react-router";
+import { DroppedOutPopover } from "~/features/tournament/components/DroppedOutPopover";
 import { tournamentBracketsPage } from "~/features/tournament-bracket/tournament-bracket-urls";
 import { useActionSubmit } from "~/hooks/useActionSubmit";
 import { invariant } from "~/utils/invariant";
@@ -266,21 +267,19 @@ function StandingsTable({
 							) : null}
 							<tr>
 								<td>
-									<Link
-										to={tournamentTeamPage({
-											tournamentId: bracket.tournament.ctx.id,
-											tournamentTeamId: s.team.id,
-										})}
-										className={styles.teamNameLink}
-										title={s.team.name}
-									>
-										{s.team.name}
-									</Link>{" "}
-									{s.team.droppedOut ? (
-										<span className="text-warning text-xxs font-bold">
-											Drop-out
-										</span>
-									) : null}
+									<div className={styles.teamNameCell}>
+										<Link
+											to={tournamentTeamPage({
+												tournamentId: bracket.tournament.ctx.id,
+												tournamentTeamId: s.team.id,
+											})}
+											className={styles.teamNameLink}
+											title={s.team.name}
+										>
+											{s.team.name}
+										</Link>
+										{s.team.droppedOut ? <DroppedOutPopover /> : null}
+									</div>
 								</td>
 								<td>
 									<span>

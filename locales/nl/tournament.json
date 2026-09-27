@@ -170,6 +170,8 @@
 	"team.seed.footer": "",
 	"team.placement": "",
 	"team.placement.footer": "",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "",
 	"bracket.waiting.checkin": "",
 	"bracket.waiting.advanced": "",

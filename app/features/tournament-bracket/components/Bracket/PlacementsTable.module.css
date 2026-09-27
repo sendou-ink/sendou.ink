@@ -31,6 +31,16 @@
 		height: auto;
 	}
 
+	& td .teamNameCell {
+		display: flex;
+		align-items: center;
+		gap: var(--s-1);
+
+		& > span {
+			padding-inline: 0;
+		}
+	}
+
 	& td a.teamNameLink {
 		display: inline-block;
 		max-width: 240px;

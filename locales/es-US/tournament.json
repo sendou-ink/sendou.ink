@@ -171,6 +171,8 @@
 	"team.seed.footer": "de {{count}}",
 	"team.placement": "Colocación",
 	"team.placement.footer": "General/Cuadro",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "El cuadro se mostrará aquí cuando al menos {{count}} equipos se hayan inscrito",
 	"bracket.waiting.checkin": "El cuadro se mostrará aquí cuando al menos {{count}} equipos hayan hecho check-in",
 	"bracket.waiting.advanced": "El cuadro se mostrará aquí cuando al menos {{count}} equipos hayan avanzado",

@@ -171,6 +171,8 @@
 	"team.seed.footer": "dentre {{count}}",
 	"team.placement": "Placar",
 	"team.placement.footer": "",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "O bracket será mostrado aqui quando ao menos {{count}} times estiverem registrados",
 	"bracket.waiting.checkin": "O bracket será mostrado aqui quando pelo menos {{count}} times tiverem feito o check-in",
 	"bracket.waiting.advanced": "",

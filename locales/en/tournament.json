@@ -170,6 +170,8 @@
 	"team.seed.footer": "out of {{count}}",
 	"team.placement": "Placement",
 	"team.placement.footer": "Overall/Bracket",
+	"team.droppedOut.header": "Dropped out",
+	"team.droppedOut.explanation": "This team left the tournament. Their remaining matches are forfeited and they won't advance to further brackets.",
 	"bracket.waiting": "Bracket will be shown here when at least {{count}} teams have registered",
 	"bracket.waiting.checkin": "Bracket will be shown here when at least {{count}} teams have checked in",
 	"bracket.waiting.advanced": "Bracket will be shown here when at least {{count}} teams have advanced",

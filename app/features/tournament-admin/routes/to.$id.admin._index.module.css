@@ -40,10 +40,6 @@
 	text-overflow: ellipsis;
 }
 
-.droppedOut {
-	opacity: 0.6;
-}
-
 .checkInTrigger {
 	display: inline-flex;
 	align-items: center;

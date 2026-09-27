@@ -170,6 +170,8 @@
 	"team.seed.footer": "Ud af {{count}}",
 	"team.placement": "Placering",
 	"team.placement.footer": "",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "Her vil turneringsplanen blive vist, så snart{{count}} hold har registreret sig",
 	"bracket.waiting.checkin": "Her vil turneringsplanen blive vist, så snart{{count}} hold er tjekket ind",
 	"bracket.waiting.advanced": "",

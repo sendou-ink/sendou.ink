@@ -169,6 +169,8 @@
 	"team.seed.footer": "共 {{count}} 支队伍",
 	"team.placement": "排名",
 	"team.placement.footer": "总排名/对战表排名",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "当至少有 {{count}} 支队伍报名后，对战表将在此显示",
 	"bracket.waiting.checkin": "当至少有 {{count}} 支队伍签到后，对战表将在此显示",
 	"bracket.waiting.advanced": "当至少有 {{count}} 支队伍晋级后，对战表将在此显示",

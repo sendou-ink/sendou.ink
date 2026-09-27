@@ -171,6 +171,8 @@
 	"team.seed.footer": "מתוך {{count}}",
 	"team.placement": "מיקום",
 	"team.placement.footer": "",
+	"team.droppedOut.header": "",
+	"team.droppedOut.explanation": "",
 	"bracket.waiting": "מערכים יופיעו כאן כאשר לפחות {{count}} צוותים נרשמו",
 	"bracket.waiting.checkin": "",
 	"bracket.waiting.advanced": "",
