@@ -12,6 +12,12 @@ import { Routine } from "./routine.server";
 const VOD_TIMESTAMP_OFFSET_SECONDS = 180;
 const BRACKET_RESET_OFFSET_SECONDS = 0;
 
+interface VodMatchRound {
+	stageType: string;
+	groupNumber: number;
+	roundNumber: number;
+}
+
 export const SyncTournamentVodsRoutine = new Routine({
 	name: "SyncTournamentVods",
 	func: syncTournamentVods,
@@ -188,9 +194,21 @@ async function fetchArchiveVideos(twitchUserId: string) {
 	return videos.length > 0 ? videos : null;
 }
 
+/** How many seconds past the match start the VoD timestamp of the match points to. */
+export function vodTimestampOffsetSeconds(match: VodMatchRound) {
+	const isBracketReset =
+		match.stageType === "double_elimination" &&
+		match.groupNumber === 3 &&
+		match.roundNumber === 2;
+
+	return isBracketReset
+		? BRACKET_RESET_OFFSET_SECONDS
+		: VOD_TIMESTAMP_OFFSET_SECONDS;
+}
+
 function findMatchingVod(
 	matchStartSeconds: number,
-	match: { stageType: string; groupNumber: number; roundNumber: number },
+	match: VodMatchRound,
 	videos: NonNullable<Awaited<ReturnType<typeof fetchArchiveVideos>>>,
 ) {
 	for (const video of videos) {
@@ -204,15 +222,8 @@ function findMatchingVod(
 			matchStartSeconds >= vodStartSeconds &&
 			matchStartSeconds <= vodEndSeconds
 		) {
-			const isBracketReset =
-				match.stageType === "double_elimination" &&
-				match.groupNumber === 3 &&
-				match.roundNumber === 2;
-			const offsetSeconds = isBracketReset
-				? BRACKET_RESET_OFFSET_SECONDS
-				: VOD_TIMESTAMP_OFFSET_SECONDS;
 			const timestampSeconds =
-				matchStartSeconds - vodStartSeconds + offsetSeconds;
+				matchStartSeconds - vodStartSeconds + vodTimestampOffsetSeconds(match);
 
 			return {
 				platformVideoId: video.id,
