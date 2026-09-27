@@ -1,13 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useMatches } from "react-router";
+import { useLoaderData } from "react-router";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { action } from "../actions/u.$identifier.art.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userArtSearchParams } from "../user-page-search-params";
 
 export { action, loader };
@@ -24,9 +23,7 @@ export default function UserArtPage() {
 	const [tagParam, setFilteredTag] = useSearchParam(userArtSearchParams, "tag");
 	const filteredTag =
 		data.tagCounts?.find((tagCount) => tagCount[0] === tagParam)?.[0] ?? null;
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	const hasBothArtMadeByAndMadeOf =
 		data.arts.some((a) => a.author) && data.arts.some((a) => !a.author);

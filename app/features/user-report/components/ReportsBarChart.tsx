@@ -2,7 +2,9 @@ import clsx from "clsx";
 import { format } from "date-fns";
 import * as React from "react";
 import * as R from "remeda";
+import { useElementSize } from "~/hooks/useElementSize";
 import { useHydrated } from "~/hooks/useHydrated";
+import { niceStep } from "~/utils/number";
 import styles from "./ReportsBarChart.module.css";
 
 const DEFAULT_WIDTH = 600;
@@ -11,7 +13,6 @@ const MARGIN = { top: 8, right: 4, bottom: 20 };
 const Y_LABEL_GAP_PX = 6;
 const Y_LABEL_CHAR_WIDTH_PX = 7;
 const PX_PER_COUNT_TICK = 32;
-const COUNT_TICK_STEP_MULTIPLIERS = [1, 2, 5, 10];
 const PX_PER_MONTH_LABEL = 52;
 const BAR_WIDTH_RATIO = 0.7;
 const MAX_BAR_WIDTH_PX = 40;
@@ -29,10 +30,7 @@ export function ReportsBarChart({
 	}>;
 }) {
 	const isHydrated = useHydrated();
-	const [size, setSize] = React.useState({
-		width: DEFAULT_WIDTH,
-		height: DEFAULT_HEIGHT,
-	});
+	const { ref: measureRef, size } = useElementSize<HTMLDivElement>();
 	const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
 	// month labels depend on the viewer's time zone, so they are only rendered on the client
@@ -40,20 +38,10 @@ export function ReportsBarChart({
 		return <div className={styles.container} />;
 	}
 
-	const measureSize = (element: HTMLDivElement | null) => {
-		if (!element) return;
-
-		const observer = new ResizeObserver(([entry]) => {
-			const width = Math.round(entry.contentRect.width);
-			const height = Math.round(entry.contentRect.height);
-			if (width > 0 && height > 0) setSize({ width, height });
-		});
-		observer.observe(element);
-
-		return () => observer.disconnect();
+	const { width, height } = size ?? {
+		width: DEFAULT_WIDTH,
+		height: DEFAULT_HEIGHT,
 	};
-
-	const { width, height } = size;
 	const plotTop = MARGIN.top;
 	const plotBottom = height - MARGIN.bottom;
 	const countTicks = countTickValues({
@@ -93,7 +81,7 @@ export function ReportsBarChart({
 
 	return (
 		<div className={styles.container}>
-			<div ref={measureSize} className={styles.plot}>
+			<div ref={measureRef} className={styles.plot}>
 				<svg
 					className={styles.chart}
 					viewBox={`0 0 ${width} ${height}`}
@@ -196,12 +184,10 @@ function countTickValues({
 	maxCount: number;
 	maxTickCount: number;
 }) {
-	const roughStep = Math.max(maxCount, 1) / (maxTickCount - 1);
-	const magnitude = Math.max(1, 10 ** Math.floor(Math.log10(roughStep)));
-	const step =
-		(COUNT_TICK_STEP_MULTIPLIERS.find(
-			(multiplier) => multiplier * magnitude >= roughStep,
-		) ?? 10) * magnitude;
+	const step = Math.max(
+		1,
+		niceStep(Math.max(maxCount, 1) / (maxTickCount - 1)),
+	);
 	const tickCount = Math.max(1, Math.ceil(maxCount / step));
 
 	return R.range(0, tickCount + 1).map((multiple) => multiple * step);

@@ -2,7 +2,7 @@ import clsx from "clsx";
 import { Gauge, Users } from "lucide-react";
 import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
-import { Link, useLoaderData, useMatches } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { EmptyState } from "~/components/EmptyState";
 import {
@@ -20,7 +20,6 @@ import type {
 } from "~/features/sendouq-match/SQMatchRepository.server";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { invariant } from "~/utils/invariant";
 import { roundToNDecimalPlaces } from "~/utils/number";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { navIconUrl, sendouQMatchPage, tournamentTeamPage } from "~/utils/urls";
@@ -28,11 +27,11 @@ import {
 	loader,
 	type UserSeasonResultsLoaderData,
 } from "../loaders/u.$identifier.seasons.index.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import {
 	SEASON_RESULT_SOURCES,
 	type SeasonResultSource,
 } from "../user-page-constants";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userSeasonResultsSearchParams } from "../user-page-search-params";
 import styles from "./u.$identifier.seasons.index.module.css";
 
@@ -80,12 +79,6 @@ export default function UserSeasonResultsPage() {
 			)}
 		</section>
 	);
-}
-
-function useUserPageLayoutData() {
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	return parentRoute.loaderData as UserPageLoaderData;
 }
 
 type SeasonResultsDay = UserSeasonResultsLoaderData["days"][number];

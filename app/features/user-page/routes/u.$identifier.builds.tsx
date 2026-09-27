@@ -1,7 +1,7 @@
 import { ArrowDownNarrowWide, Lock, LockOpen, Trash } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useFetcher, useLoaderData, useMatches } from "react-router";
+import { useFetcher, useLoaderData } from "react-router";
 import { BuildCard } from "~/components/BuildCard";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
@@ -28,8 +28,8 @@ import {
 	loader,
 	type UserBuildsPageData,
 } from "../loaders/u.$identifier.builds.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userBuildsSearchParams } from "../user-page-search-params";
 import styles from "./u.$identifier.builds.module.css";
 
@@ -44,7 +44,7 @@ type BuildFilter = "ALL" | "PUBLIC" | "PRIVATE" | MainWeaponId;
 export default function UserBuildsPage() {
 	const { t } = useTranslation(["builds", "user", "common"]);
 	const user = useUser();
-	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 	const data = useLoaderData<typeof loader>();
 	const [weaponFilter, setWeaponFilter] = useSearchParam(
 		userBuildsSearchParams,
@@ -129,7 +129,7 @@ function BuildsFilters({
 	const { t } = useTranslation(["weapons", "builds"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
-	const layoutData = useMatches().at(-2)!.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	if (data.builds.length === 0) return null;
 

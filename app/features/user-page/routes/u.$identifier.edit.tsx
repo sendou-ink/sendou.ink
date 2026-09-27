@@ -1,5 +1,5 @@
 import { Trans, useTranslation } from "react-i18next";
-import { Link, useLoaderData, useMatches } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { FormMessage } from "~/components/FormMessage";
 import { FriendCodePopover } from "~/components/FriendCodePopover";
 import { SMALL_TROPHIES_PER_DISPLAY_PAGE } from "~/features/trophies/trophies-constants";
@@ -8,14 +8,13 @@ import { SendouForm } from "~/form/SendouForm";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
-import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { FAQ_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.edit.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { COUNTRY_CODES } from "../user-page-constants";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userEditProfileBaseSchema } from "../user-page-schemas";
 
 export { action, loader };
@@ -26,9 +25,7 @@ export const handle: SendouRouteHandle = {
 
 export default function UserEditPage() {
 	const { t } = useTranslation(["common", "user"]);
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 	const data = useLoaderData<typeof loader>();
 	const isSupporter = useHasRole("SUPPORTER");
 	const isArtist = useHasRole("ARTIST");

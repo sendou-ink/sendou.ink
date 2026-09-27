@@ -5,7 +5,7 @@ import { cachedTeamLeaderboard } from "~/features/leaderboards/core/leaderboards
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { ordinalToRoundedSp } from "~/features/mmr/mmr-utils";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
-import { userSkills } from "~/features/mmr/tiered.server";
+import { rankedUserSkill } from "~/features/mmr/tiered.server";
 import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as SQMatchRepository from "~/features/sendouq-match/SQMatchRepository.server";
@@ -33,13 +33,12 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 
 	const seasonOverviews = await Promise.all(
 		seasonsParticipatedIn.map(async (nth) => {
-			const skill = (await userSkills(nth)).userSkills[userId];
-			const isRanked = skill && !skill.approximate;
+			const skill = await rankedUserSkill({ season: nth, userId });
 
 			return {
 				season: nth,
-				tier: isRanked ? skill.tier : null,
-				sp: isRanked ? ordinalToRoundedSp(skill.ordinal) : null,
+				tier: skill?.tier ?? null,
+				sp: skill ? ordinalToRoundedSp(skill.ordinal) : null,
 			};
 		}),
 	);

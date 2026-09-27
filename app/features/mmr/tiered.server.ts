@@ -73,6 +73,27 @@ export function userSkills(season: number, { forceFresh = false } = {}) {
 	});
 }
 
+/** User's skill of the season with their SP leaderboard placement, `null` until they have played enough sets to be ranked. */
+export async function rankedUserSkill({
+	season,
+	userId,
+}: {
+	season: number;
+	userId: number;
+}) {
+	const { userSkills: skills } = await userSkills(season);
+	const skill = skills[userId];
+	if (!skill || skill.approximate) return null;
+
+	return {
+		...skill,
+		leaderboardPlacement:
+			Object.values(skills).filter(
+				(other) => !other.approximate && other.ordinal > skill.ordinal,
+			).length + 1,
+	};
+}
+
 export async function refreshUserSkills(season: number) {
 	await userSkills(season, { forceFresh: true });
 }

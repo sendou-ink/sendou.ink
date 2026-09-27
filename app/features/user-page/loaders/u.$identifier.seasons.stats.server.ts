@@ -2,12 +2,12 @@ import type { LoaderFunctionArgs } from "react-router";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
+import { rankedUserSkill } from "~/features/mmr/tiered.server";
 import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import { userPageUserId } from "~/features/user-page/user-page-context.server";
 import type { SerializeFrom } from "~/utils/remix";
 import * as SeasonPlayerActivity from "../core/SeasonPlayerActivity";
-import { seasonStanding } from "../core/season-standing.server";
 import { userSeasonsStatsSearchParams } from "../user-page-search-params";
 
 export type UserSeasonsStatsLoaderData = NonNullable<
@@ -29,7 +29,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const season = seasonParam ?? seasonsParticipatedIn[0];
 
 	const [
-		standing,
+		skill,
 		maps,
 		sets,
 		tournamentPlacements,
@@ -40,7 +40,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		enemies,
 		setParticipants,
 	] = await Promise.all([
-		seasonStanding({ userId, season }),
+		rankedUserSkill({ userId, season }),
 		PlayerStatRepository.findSeasonMapWinrateByUserId({ season, userId }),
 		PlayerStatRepository.findSeasonSetWinrateByUserId({ season, userId }),
 		PlayerStatRepository.findSeasonTournamentPlacementsByUserId({
@@ -74,7 +74,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		});
 
 	return {
-		...standing,
+		skill,
 		winrates: { maps, sets },
 		tournaments: {
 			count: tournamentPlacements.length,

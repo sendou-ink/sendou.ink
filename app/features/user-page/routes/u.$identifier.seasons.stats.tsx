@@ -9,7 +9,7 @@ import {
 } from "lucide-react";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useMatches } from "react-router";
+import { useLoaderData } from "react-router";
 import { CircleBackdrop } from "~/components/CircleBackdrop";
 import { EmptyState } from "~/components/EmptyState";
 import { LinkButton, SendouButton } from "~/components/elements/Button";
@@ -41,8 +41,8 @@ import {
 	loader,
 	type UserSeasonsStatsLoaderData,
 } from "../loaders/u.$identifier.seasons.stats.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
 import { SEASON_STATS_TABS, type SeasonStatsTab } from "../user-page-constants";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userSeasonsStatsSearchParams } from "../user-page-search-params";
 import styles from "./u.$identifier.seasons.stats.module.css";
 
@@ -161,12 +161,6 @@ export default function UserSeasonsStatsPage() {
 	);
 }
 
-function useUserPageLayoutData() {
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	return parentRoute.loaderData as UserPageLoaderData;
-}
-
 function useStatsLoaderData() {
 	const data = useLoaderData<typeof loader>();
 	invariant(data);
@@ -263,20 +257,13 @@ function KeyStats() {
 			<KeyStat
 				label={t("user:seasons.stats.rank")}
 				value={
-					data.currentOrdinal
-						? `${data.tier.name}${data.tier.isPlus ? "+" : ""}`
+					data.skill
+						? `${data.skill.tier.name}${data.skill.tier.isPlus ? "+" : ""}`
 						: "–"
 				}
 				sub={
-					data.currentOrdinal
-						? [
-								`${ordinalToSp(data.currentOrdinal).toFixed(2)}SP`,
-								data.leaderboardPlacement
-									? `#${data.leaderboardPlacement}`
-									: null,
-							]
-								.filter(Boolean)
-								.join(" · ")
+					data.skill
+						? `${ordinalToSp(data.skill.ordinal).toFixed(2)}SP · #${data.skill.leaderboardPlacement}`
 						: null
 				}
 			/>

@@ -359,14 +359,27 @@ export async function countSeasonResultPagesByUserId({
 	const row = await db
 		.selectFrom("Skill")
 		.select(({ fn }) => [fn.countAll().as("count")])
-		.where("userId", "=", userId)
-		.where("season", "=", season)
-		.where((eb) => skillCountsAsSeasonSet(eb, userId))
-		.where((eb) => isOfSeasonResultSource(eb, source))
+		.where((eb) => isSeasonResult(eb, { userId, season, source }))
 		.executeTakeFirstOrThrow();
 
 	return Math.ceil((row.count as number) / MATCHES_PER_SEASONS_PAGE);
 }
+
+/** The user's Skill rows of the season that are results of `source`. */
+const isSeasonResult = (
+	eb: ExpressionBuilder<DB, "Skill">,
+	{
+		userId,
+		season,
+		source,
+	}: { userId: number; season: number; source: SeasonResultSource },
+) =>
+	eb.and([
+		eb("Skill.userId", "=", userId),
+		eb("Skill.season", "=", season),
+		skillCountsAsSeasonSet(eb, userId),
+		isOfSeasonResultSource(eb, source),
+	]);
 
 const isOfSeasonResultSource = (
 	eb: ExpressionBuilder<DB, "Skill">,
@@ -634,10 +647,7 @@ export async function findSeasonResultsByUserId({
 			),
 			jsonObjectFrom(groupMatchResultsSubQuery(eb)).as("groupMatch"),
 		])
-		.where("Skill.userId", "=", userId)
-		.where("Skill.season", "=", season)
-		.where((eb) => skillCountsAsSeasonSet(eb, userId))
-		.where((eb) => isOfSeasonResultSource(eb, source))
+		.where((eb) => isSeasonResult(eb, { userId, season, source }))
 		.limit(MATCHES_PER_SEASONS_PAGE)
 		.offset(MATCHES_PER_SEASONS_PAGE * (page - 1))
 		.orderBy("Skill.id", "desc")
@@ -744,10 +754,7 @@ export async function findSeasonDaySummariesByUserId({
 					spDiffOf("userSkill").as("spDiff"),
 					groupMatchMapBalance(eb, userId).as("mapBalance"),
 				])
-				.where("Skill.userId", "=", userId)
-				.where("Skill.season", "=", season)
-				.where((eb) => skillCountsAsSeasonSet(eb, userId))
-				.where((eb) => isOfSeasonResultSource(eb, source))
+				.where((eb) => isSeasonResult(eb, { userId, season, source }))
 				.where((eb) => eb(playedOn(eb), "in", dates)),
 		)
 		.selectFrom("daySet")

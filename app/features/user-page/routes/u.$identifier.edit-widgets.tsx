@@ -18,7 +18,7 @@ import { Search as SearchIcon, Trash } from "lucide-react";
 import { useRef, useState } from "react";
 import { flushSync } from "react-dom";
 import { useTranslation } from "react-i18next";
-import { Link, useFetcher, useLoaderData, useMatches } from "react-router";
+import { Link, useFetcher, useLoaderData } from "react-router";
 import * as R from "remeda";
 import * as v from "valibot";
 import { SendouButton } from "~/components/elements/Button";
@@ -41,13 +41,12 @@ import { USER } from "~/features/user-page/user-page-constants";
 import { useUnsavedChangesChecker } from "~/form/UnsavedChangesGuard";
 import { useHydrated } from "~/hooks/useHydrated";
 import { useHasRole } from "~/modules/permissions/hooks";
-import { invariant } from "~/utils/invariant";
 import { navIconUrl, SUPPORT_PAGE } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.edit-widgets.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { WidgetSettingsForm } from "../components/WidgetSettingsForm";
 import { loader } from "../loaders/u.$identifier.edit-widgets.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import styles from "./u.$identifier.edit-widgets.module.css";
 
 export { action, loader };
@@ -60,9 +59,7 @@ export default function EditWidgetsPage() {
 	const isHydrated = useHydrated();
 	const fetcher = useFetcher<{ fieldErrors?: Record<string, string> }>();
 
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	const isSupporter = useHasRole("SUPPORTER");
 	const maxWidgets = maxWidgetsPerSlot(isSupporter);

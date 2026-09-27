@@ -10,6 +10,7 @@ import clsx from "clsx";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
 import * as R from "remeda";
+import { useElementSize } from "~/hooks/useElementSize";
 import styles from "./ObjectiveTimeline.module.css";
 import {
 	formatElapsed,
@@ -72,29 +73,16 @@ export function ObjectiveTimeline({
 	showTooltip?: boolean;
 }) {
 	const { t } = useTranslation(["common"]);
-	const [size, setSize] = React.useState({
-		width: DEFAULT_WIDTH,
-		height: DEFAULT_HEIGHT,
-	});
+	const { ref: measureRef, size } = useElementSize<HTMLDivElement>();
 	const [hoveredIndex, setHoveredIndex] = React.useState<number | null>(null);
 
 	const sorted = events.toSorted((a, b) => a.t - b.t);
 	if (sorted.length === 0) return null;
 
-	const measureSize = (element: HTMLDivElement | null) => {
-		if (!element) return;
-
-		const observer = new ResizeObserver(([entry]) => {
-			const width = Math.round(entry.contentRect.width);
-			const height = Math.round(entry.contentRect.height);
-			if (width > 0 && height > 0) setSize({ width, height });
-		});
-		observer.observe(element);
-
-		return () => observer.disconnect();
+	const { width, height } = size ?? {
+		width: DEFAULT_WIDTH,
+		height: DEFAULT_HEIGHT,
 	};
-
-	const { width, height } = size;
 	const series = SIDES.map((side) => {
 		const penalties = smoothPenalties(
 			sorted.map((event) => ({
@@ -175,7 +163,7 @@ export function ObjectiveTimeline({
 					</span>
 				))}
 			</div>
-			<div ref={measureSize} className={styles.plot}>
+			<div ref={measureRef} className={styles.plot}>
 				<svg
 					className={clsx(styles.chart, {
 						[styles.interactive]: showTooltip,

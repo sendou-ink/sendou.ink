@@ -8,13 +8,7 @@ import {
 } from "lucide-react";
 import type * as React from "react";
 import { useTranslation } from "react-i18next";
-import {
-	Link,
-	Outlet,
-	useFetcher,
-	useLoaderData,
-	useMatches,
-} from "react-router";
+import { Link, Outlet, useFetcher, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { EmptyState } from "~/components/EmptyState";
 import { SendouButton } from "~/components/elements/Button";
@@ -45,7 +39,6 @@ import {
 	userSeasonsStatsPage,
 } from "~/features/user-page/user-page-urls";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
-import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
 	resolveAvatarUrl,
@@ -60,6 +53,7 @@ import {
 } from "../loaders/u.$identifier.seasons.server";
 import type { UserSeasonSummaryGraphicLoaderData } from "../loaders/u.$identifier.seasons.summary-graphic.server";
 import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userSeasonsSearchParams } from "../user-page-search-params";
 import styles from "./u.$identifier.seasons.module.css";
 
@@ -148,12 +142,6 @@ export default function UserSeasonsPage() {
 			) : null}
 		</div>
 	);
-}
-
-function useUserPageLayoutData() {
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	return parentRoute.loaderData as UserPageLoaderData;
 }
 
 function SeasonDates({ season }: { season: number }) {

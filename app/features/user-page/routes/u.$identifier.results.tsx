@@ -1,16 +1,15 @@
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useMatches } from "react-router";
+import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import { invariant } from "~/utils/invariant";
 import { userResultsEditHighlightsPage } from "~/utils/urls";
 import { ResultsFiltersBar } from "../components/ResultsFiltersBar";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userResultsSearchParams } from "../user-page-search-params";
 
 export { loader };
@@ -20,9 +19,7 @@ export default function UserResultsPage() {
 	const { t } = useTranslation(["user", "common"]);
 	const data = useLoaderData<typeof loader>();
 
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	const pagination = useSearchParamPagination({
 		definition: userResultsSearchParams,

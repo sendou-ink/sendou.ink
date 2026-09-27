@@ -5,7 +5,7 @@ import { findUserTeamEntry } from "~/features/leaderboards/core/leaderboards.ser
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import { ordinalToSp } from "~/features/mmr/mmr-utils";
 import * as SkillRepository from "~/features/mmr/SkillRepository.server";
-import { userSkills } from "~/features/mmr/tiered.server";
+import { rankedUserSkill } from "~/features/mmr/tiered.server";
 import * as PlayerStatRepository from "~/features/sendouq-match/PlayerStatRepository.server";
 import * as ReportedWeaponRepository from "~/features/sendouq-match/ReportedWeaponRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -31,11 +31,10 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 	const userId = userPageUserId();
 	const seasonsParticipatedIn =
 		await LeaderboardRepository.findSeasonsParticipatedInByUserId(userId);
-	const skill = (await userSkills(season)).userSkills[userId];
+	const skill = await rankedUserSkill({ season, userId });
 
 	if (
 		!skill ||
-		skill.approximate ||
 		!SeasonSummary.canExportSeasonSummary({
 			loggedInUser,
 			profileUserId: userId,
@@ -64,9 +63,6 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		season,
 	});
 
-	const soloRank = (
-		await LeaderboardRepository.findUserSPLeaderboard(season)
-	).find((entry) => entry.id === userId)?.placementRank;
 	const teamEntry = await findUserTeamEntry({ season, userId });
 
 	const mates = await PlayerStatRepository.findSeasonMatesEnemiesByUserId({
@@ -111,7 +107,7 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		mapsLost: mapWinrate.losses,
 		longestWinStreak: SeasonSummary.longestWinStreak(setScores),
 		clutch: SeasonSummary.clutchRecord(setScores),
-		soloRank,
+		soloRank: skill.leaderboardPlacement,
 		teamRank: teamEntry
 			? {
 					rank: teamEntry.rank,

@@ -3,6 +3,8 @@ import { addDays, differenceInCalendarDays } from "date-fns";
 import * as React from "react";
 import * as R from "remeda";
 import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
+import { useElementSize } from "~/hooks/useElementSize";
+import { niceStep } from "~/utils/number";
 import styles from "./LineChart.module.css";
 
 const DEFAULT_WIDTH = 672;
@@ -19,7 +21,6 @@ const PX_PER_NUMBER_LABEL = 60;
 /** Keeps a middle x-axis label from overlapping the first or last one */
 const X_LABEL_MIN_GAP_FROM_EDGE = 24;
 const Y_TICKS_TARGET_COUNT = 3;
-const TICK_STEP_MULTIPLIERS = [1, 2, 5, 10];
 /** Keeps a tick's label from overlapping the baseline's */
 const Y_TICK_MIN_GAP_FROM_BASELINE = 14;
 /** From a y tick's grid line to its label's baseline, the label sits on top of the line */
@@ -78,24 +79,8 @@ export function LineChart({
 		day: "numeric",
 	});
 	const gradientIdPrefix = React.useId();
-	const [size, setSize] = React.useState<{
-		width: number;
-		height: number;
-	} | null>(null);
+	const { ref: measureRef, size } = useElementSize<HTMLDivElement>();
 	const [hoveredX, setHoveredX] = React.useState<number | null>(null);
-
-	const measureSize = (element: HTMLDivElement | null) => {
-		if (!element) return;
-
-		const observer = new ResizeObserver(([entry]) => {
-			const width = Math.round(entry.contentRect.width);
-			const height = Math.round(entry.contentRect.height);
-			if (width > 0 && height > 0) setSize({ width, height });
-		});
-		observer.observe(element);
-
-		return () => observer.disconnect();
-	};
 
 	const { width, height } = size ?? {
 		width: DEFAULT_WIDTH,
@@ -201,7 +186,7 @@ export function LineChart({
 
 	return (
 		<div
-			ref={measureSize}
+			ref={measureRef}
 			className={clsx(styles.container, className, {
 				[styles.interactive]: interactive,
 			})}
@@ -455,12 +440,7 @@ function niceTicks({
 	const range = max - min;
 	if (range <= 0 || targetCount <= 0) return [];
 
-	const roughStep = range / targetCount;
-	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
-	const step =
-		(TICK_STEP_MULTIPLIERS.find(
-			(multiplier) => multiplier * magnitude >= roughStep,
-		) ?? 10) * magnitude;
+	const step = niceStep(range / targetCount);
 	const decimals = Math.max(0, -Math.floor(Math.log10(step)));
 
 	return R.range(Math.floor(min / step) + 1, Math.floor(max / step) + 1).map(
