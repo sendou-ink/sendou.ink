@@ -367,7 +367,7 @@ function MostPlayedWeapons({
 								<WeaponImage
 									weaponSplId={weaponSplId}
 									variant="badge"
-									size={42}
+									size={32}
 								/>
 							</CircleBackdrop>
 							<div className="stack xxs">

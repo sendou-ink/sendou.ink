@@ -165,7 +165,7 @@
 .statsPeekList {
 	display: flex;
 	flex-direction: column;
-	gap: var(--s-2);
+	gap: var(--s-4);
 	margin: 0;
 }
 
