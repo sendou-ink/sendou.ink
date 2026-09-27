@@ -22,7 +22,6 @@ import { identifierToUserIds } from "~/features/mmr/mmr-utils";
 import type { TieredSkill } from "~/features/mmr/tiered.server";
 import { serializeMaplistSource } from "~/modules/tournament-map-list-generator/source";
 import type { TournamentMapListMap } from "~/modules/tournament-map-list-generator/types";
-import { mostPopularArrayElement } from "~/utils/arrays";
 import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
@@ -463,24 +462,7 @@ const groupMatchResultsSubQuery = (eb: ExpressionBuilder<DB, "Skill">) => {
 			jsonArrayFrom(
 				innerEb
 					.selectFrom("GroupMatchMap")
-					.select((innerEb2) => [
-						"GroupMatchMap.winnerGroupId",
-						jsonArrayFrom(
-							innerEb2
-								.selectFrom("ReportedWeapon")
-								.select(["ReportedWeapon.userId", "ReportedWeapon.weaponSplId"])
-								.whereRef(
-									"ReportedWeapon.groupMatchId",
-									"=",
-									"GroupMatchMap.matchId",
-								)
-								.whereRef(
-									"ReportedWeapon.mapIndex",
-									"=",
-									"GroupMatchMap.index",
-								),
-						).as("weapons"),
-					])
+					.select("GroupMatchMap.winnerGroupId")
 					.whereRef("GroupMatchMap.matchId", "=", "GroupMatch.id"),
 			).as("maps"),
 		])
@@ -664,15 +646,6 @@ export async function findSeasonResultsByUserId({
 	return rows
 		.map((row) => {
 			if (row.groupMatch) {
-				const chooseMostPopularWeapon = (memberUserId: number) => {
-					const weaponSplIds = row
-						.groupMatch!.maps.flatMap((map) => map.weapons)
-						.filter((w) => w.userId === memberUserId)
-						.map((w) => w.weaponSplId);
-
-					return mostPopularArrayElement(weaponSplIds);
-				};
-
 				return {
 					type: "GROUP_MATCH" as const,
 					...R.omit(row, [
@@ -701,14 +674,6 @@ export async function findSeasonResultsByUserId({
 						// null while the rating is still being calculated and so has never been
 						// shown, which is the case expression spDiffOf builds
 						spDiff: row.spDiff,
-						groupAlphaMembers: row.groupMatch.groupAlphaMembers.map((m) => ({
-							...m,
-							weaponSplId: chooseMostPopularWeapon(m.id),
-						})),
-						groupBravoMembers: row.groupMatch.groupBravoMembers.map((m) => ({
-							...m,
-							weaponSplId: chooseMostPopularWeapon(m.id),
-						})),
 						score: row.groupMatch.maps.reduce(
 							(acc, cur) => [
 								acc[0] +

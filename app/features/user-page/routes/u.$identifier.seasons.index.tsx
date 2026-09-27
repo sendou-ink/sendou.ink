@@ -9,7 +9,7 @@ import {
 	SendouChipRadio,
 	SendouChipRadioGroup,
 } from "~/components/elements/ChipRadio";
-import { Image, TierImage, WeaponImage } from "~/components/Image";
+import { Image, TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
 import { Placement } from "~/components/Placement";
@@ -231,11 +231,6 @@ function GroupMatchResult({
 		: [match.bravoTier, match.alphaTier];
 	const outcome = groupMatchOutcome(match, userId);
 
-	const showWeapons = [
-		...match.groupAlphaMembers,
-		...match.groupBravoMembers,
-	].every((m) => typeof m.weaponSplId === "number");
-
 	return (
 		<Link to={sendouQMatchPage(match.id)} className={styles.result}>
 			<div className={styles.outcome} data-outcome={outcome ?? undefined}>
@@ -267,12 +262,10 @@ function GroupMatchResult({
 			<div className={styles.players}>
 				<MatchMembers
 					members={isAlpha ? match.groupAlphaMembers : match.groupBravoMembers}
-					showWeapons={showWeapons}
 				/>
 				<span className="text-xs text-lighter">{t("user:seasons.vs")}</span>
 				<MatchMembers
 					members={isAlpha ? match.groupBravoMembers : match.groupAlphaMembers}
-					showWeapons={showWeapons}
 				/>
 			</div>
 			<div className={styles.sp}>
@@ -298,33 +291,18 @@ function GroupTier({
 
 function MatchMembers({
 	members,
-	showWeapons,
 }: {
-	members: Array<
-		SeasonTournamentResult["teamMembers"][number] &
-			Partial<
-				Pick<SeasonGroupMatch["groupAlphaMembers"][number], "weaponSplId">
-			>
-	>;
-	showWeapons: boolean;
+	members: Array<SeasonTournamentResult["teamMembers"][number]>;
 }) {
 	return (
 		<div className="stack horizontal xs">
 			{members.map((member) => (
-				<div key={member.discordId} className="stack xxs items-center">
-					<Avatar
-						user={member}
-						size={showWeapons ? "xxs" : "xxsm"}
-						alt={member.username}
-					/>
-					{showWeapons && typeof member.weaponSplId === "number" ? (
-						<WeaponImage
-							weaponSplId={member.weaponSplId}
-							variant="badge"
-							size={24}
-						/>
-					) : null}
-				</div>
+				<Avatar
+					key={member.discordId}
+					user={member}
+					size="xxsm"
+					alt={member.username}
+				/>
 			))}
 		</div>
 	);
@@ -374,7 +352,7 @@ function TournamentResult({ result }: { result: SeasonTournamentResult }) {
 				</span>
 			</div>
 			<div className={styles.players}>
-				<MatchMembers members={result.teamMembers} showWeapons={false} />
+				<MatchMembers members={result.teamMembers} />
 			</div>
 			<div className={clsx(styles.sp, "stack xxs items-end")}>
 				{result.spDiff ? (

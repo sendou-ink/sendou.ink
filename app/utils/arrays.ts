@@ -56,23 +56,6 @@ export function diff<T extends string | number>(arr1: T[], arr2: T[]): T[] {
 	return result;
 }
 
-export function mostPopularArrayElement<T>(arr: T[]): T | null {
-	if (arr.length === 0) return null;
-
-	const counts = countElements(arr);
-	let mostPopularElement: T | null = null;
-	let maxCount = 0;
-
-	for (const [element, count] of counts) {
-		if (count > maxCount) {
-			maxCount = count;
-			mostPopularElement = element;
-		}
-	}
-
-	return mostPopularElement;
-}
-
 /** Alternates elements of both arrays, then appends the longer array's rest: `flatZip([1, 2, 3], ['a']) → [1, 'a', 2, 3]`. */
 export function flatZip<T, U>(arr1: T[], arr2: U[]): Array<T | U> {
 	const result: Array<T | U> = [];
