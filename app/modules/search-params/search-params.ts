@@ -73,7 +73,10 @@ export interface SearchParamsDefinition<Shape extends AnyShape> {
 		values: Partial<SearchParamsValues<Shape>>,
 		opts?: { compress?: boolean },
 	) => string;
-	/** Revalidates only when a `loader: true` param's decoded canonical value changed. */
+	/**
+	 * On a search-only navigation, revalidates only when a `loader: true` param's decoded canonical value changed.
+	 * Params outside the definition are ignored: the route's loader must read search params only through it.
+	 */
 	shouldRevalidate: ShouldRevalidateFunction;
 }
 
@@ -118,39 +121,15 @@ export function define<Shape extends AnyShape>(
 
 			return `${path}${path.includes("?") ? "&" : "?"}${queryString}`;
 		},
-		shouldRevalidate: (args) => {
-			if (args.currentUrl.pathname !== args.nextUrl.pathname) {
-				return args.defaultShouldRevalidate;
-			}
-			if (args.formMethod && args.formMethod !== "GET") {
-				return args.defaultShouldRevalidate;
-			}
-			if (args.currentUrl.href === args.nextUrl.href) {
-				return args.defaultShouldRevalidate;
-			}
-			const current = args.currentUrl.searchParams;
-			const next = args.nextUrl.searchParams;
-			if (unknownParamsChanged(keys, current, next)) {
-				return args.defaultShouldRevalidate;
-			}
-			for (const key of keys) {
-				const def = shape[key];
-				if (!def.loader) continue;
-				if (
-					!isDeepEqual(
-						decodeParam(def, current.getAll(key)),
-						decodeParam(def, next.getAll(key)),
-					)
-				) {
-					return true;
-				}
-			}
-			return false;
-		},
+		shouldRevalidate: createShouldRevalidate(shape),
 	};
 
 	return definition;
 }
+
+/** `shouldRevalidate` for a route whose loader reads no search params: search-only navigations never rerun it. */
+export const skipSearchOnlyRevalidation: ShouldRevalidateFunction =
+	createShouldRevalidate({});
 
 /**
  * Decodes raw URL values, resolving to the default when missing or malformed. Cached per raw values
@@ -570,25 +549,6 @@ function toSearchParams(
 	return new URL(input.url).searchParams;
 }
 
-function unknownParamsChanged(
-	knownKeys: string[],
-	current: URLSearchParams,
-	next: URLSearchParams,
-): boolean {
-	const unknownKeys = new Set<string>();
-	for (const key of current.keys()) {
-		if (!knownKeys.includes(key)) unknownKeys.add(key);
-	}
-	for (const key of next.keys()) {
-		if (!knownKeys.includes(key)) unknownKeys.add(key);
-	}
-
-	for (const key of unknownKeys) {
-		if (!isDeepEqual(current.getAll(key), next.getAll(key))) return true;
-	}
-	return false;
-}
-
 function wrapValue<T>(plain: string, def: ParamDef<T>, mode: EncodeMode) {
 	if (def.compress) return compressTransportValue(plain);
 
@@ -633,4 +593,35 @@ function unwrapValue(raw: string): string | typeof DECODE_FAILED {
 	}
 
 	return raw;
+}
+
+function createShouldRevalidate(shape: AnyShape): ShouldRevalidateFunction {
+	const keys = Object.keys(shape);
+
+	return (args) => {
+		if (args.currentUrl.pathname !== args.nextUrl.pathname) {
+			return args.defaultShouldRevalidate;
+		}
+		if (args.formMethod && args.formMethod !== "GET") {
+			return args.defaultShouldRevalidate;
+		}
+		if (args.currentUrl.href === args.nextUrl.href) {
+			return args.defaultShouldRevalidate;
+		}
+		const current = args.currentUrl.searchParams;
+		const next = args.nextUrl.searchParams;
+		for (const key of keys) {
+			const def = shape[key];
+			if (!def.loader) continue;
+			if (
+				!isDeepEqual(
+					decodeParam(def, current.getAll(key)),
+					decodeParam(def, next.getAll(key)),
+				)
+			) {
+				return true;
+			}
+		}
+		return false;
+	};
 }

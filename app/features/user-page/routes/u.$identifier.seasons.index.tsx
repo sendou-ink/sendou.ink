@@ -1,269 +1,384 @@
 import clsx from "clsx";
-import { Users } from "lucide-react";
+import { Gauge, Users } from "lucide-react";
 import * as React from "react";
-import { useTranslation } from "react-i18next";
-import { Link, useLoaderData, useMatches } from "react-router";
+import { Trans, useTranslation } from "react-i18next";
+import { Link, useLoaderData } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { EmptyState } from "~/components/EmptyState";
-import { WeaponImage } from "~/components/Image";
+import {
+	SendouChipRadio,
+	SendouChipRadioGroup,
+} from "~/components/elements/ChipRadio";
+import { Image, TierImage } from "~/components/Image";
 import { LocaleTime } from "~/components/LocaleTime";
 import { Pagination } from "~/components/Pagination";
+import { Placement } from "~/components/Placement";
 import { SpDelta } from "~/components/SpDelta";
 import type {
 	SeasonGroupMatch,
 	SeasonTournamentResult,
 } from "~/features/sendouq-match/SQMatchRepository.server";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import { databaseTimestampToDate } from "~/utils/dates";
-import { invariant } from "~/utils/invariant";
+import { useSearchParam } from "~/modules/search-params/hooks";
 import { roundToNDecimalPlaces } from "~/utils/number";
-import { sendouQMatchPage, tournamentTeamPage } from "~/utils/urls";
+import type { SendouRouteHandle } from "~/utils/remix.server";
+import { navIconUrl, sendouQMatchPage, tournamentTeamPage } from "~/utils/urls";
 import {
 	loader,
-	type UserSeasonsSetsLoaderData,
+	type UserSeasonResultsLoaderData,
 } from "../loaders/u.$identifier.seasons.index.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
-import { userSeasonsSearchParams } from "../user-page-search-params";
+import {
+	SEASON_RESULT_SOURCES,
+	type SeasonResultSource,
+} from "../user-page-constants";
+import { useUserPageLayoutData } from "../user-page-hooks";
+import { userSeasonResultsSearchParams } from "../user-page-search-params";
 import styles from "./u.$identifier.seasons.index.module.css";
 
 export { loader };
 
-export const shouldRevalidate = userSeasonsSearchParams.shouldRevalidate;
+export const handle: SendouRouteHandle = {
+	i18n: ["user"],
+};
 
-export default function UserSeasonsSets() {
+export const shouldRevalidate = userSeasonResultsSearchParams.shouldRevalidate;
+
+export default function UserSeasonResultsPage() {
 	const { t } = useTranslation(["user"]);
-	const data = useLoaderData<typeof loader>();
+	const results = useLoaderData<typeof loader>();
+	const [source, setSource] = useSearchParam(
+		userSeasonResultsSearchParams,
+		"source",
+	);
+	const sectionRef = React.useRef<HTMLElement>(null);
 
-	if (!data) return null;
+	if (!results) return null;
 
-	if (data.results.value.length === 0) {
-		return <EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>;
-	}
-
-	return <Results results={data.results} />;
+	return (
+		<section ref={sectionRef} className="stack md">
+			<div className="stack horizontal md items-center justify-between flex-wrap">
+				<h2 className={styles.subHeading}>{t("user:seasons.history")}</h2>
+				<SendouChipRadioGroup>
+					{SEASON_RESULT_SOURCES.map((value) => (
+						<SendouChipRadio
+							key={value}
+							name="source"
+							value={value}
+							checked={source === value}
+							onChange={(newValue) => setSource(newValue as SeasonResultSource)}
+						>
+							{t(`user:seasons.source.${value}`)}
+						</SendouChipRadio>
+					))}
+				</SendouChipRadioGroup>
+			</div>
+			{results.days.length === 0 ? (
+				<EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>
+			) : (
+				<Results results={results} scrollTargetRef={sectionRef} />
+			)}
+		</section>
+	);
 }
+
+type SeasonResultsDay = UserSeasonResultsLoaderData["days"][number];
 
 function Results({
 	results,
+	scrollTargetRef,
 }: {
-	results: UserSeasonsSetsLoaderData["results"];
+	results: UserSeasonResultsLoaderData;
+	scrollTargetRef: React.RefObject<HTMLElement | null>;
 }) {
-	const ref = React.useRef<HTMLDivElement>(null);
+	const layoutData = useUserPageLayoutData();
 
 	const pagination = useSearchParamPagination({
-		definition: userSeasonsSearchParams,
+		definition: userSeasonResultsSearchParams,
 		currentPage: results.currentPage,
 		pagesCount: results.pagesCount,
+		scrollTargetRef,
 	});
 
-	React.useEffect(() => {
-		if (results.currentPage === 1) return;
-		ref.current?.scrollIntoView({
-			block: "center",
-		});
-	}, [results.currentPage]);
-
-	let lastDayRendered: number | null = null;
 	return (
-		<div>
-			<div ref={ref} />
-			<div className="stack lg">
-				<div className="stack">
-					{results.value.map((result) => {
-						const day = databaseTimestampToDate(result.createdAt).getDate();
-						const shouldRenderDateHeader = day !== lastDayRendered;
-						lastDayRendered = day;
-
-						return (
-							<React.Fragment key={result.id}>
-								<LocaleTime
-									date={result.createdAt}
-									options={{
-										weekday: "long",
-										month: "numeric",
-										day: "numeric",
-									}}
-									className={clsx(
-										"text-xs font-semi-bold text-theme-secondary",
-										{
-											invisible: !shouldRenderDateHeader,
-										},
-									)}
+		<div className="stack lg">
+			<div className={styles.days}>
+				{results.days.map((day) => (
+					<div key={day.summary.date} className="stack sm">
+						<DayHeader summary={day.summary} />
+						{day.results.map((result) =>
+							result.type === "GROUP_MATCH" ? (
+								<GroupMatchResult
+									key={result.id}
+									match={result.groupMatch}
+									createdAt={result.createdAt}
+									userId={layoutData.user.id}
 								/>
-								{result.type === "GROUP_MATCH" ? (
-									<GroupMatchResult match={result.groupMatch} />
-								) : (
-									<TournamentResult result={result.tournamentResult} />
-								)}
-							</React.Fragment>
-						);
-					})}
-				</div>
-				{results.pagesCount > 1 ? <Pagination {...pagination} /> : null}
+							) : (
+								<TournamentResult
+									key={result.id}
+									result={result.tournamentResult}
+								/>
+							),
+						)}
+					</div>
+				))}
 			</div>
+			{results.pagesCount > 1 ? <Pagination {...pagination} /> : null}
 		</div>
 	);
 }
 
-function GroupMatchResult({ match }: { match: SeasonGroupMatch }) {
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
-	const userId = layoutData.user.id;
-
-	// score when match has not yet been played or was canceled
-	const specialScoreMarking = () => {
-		if (match.score[0] + match.score[1] === 0) return " ";
-
-		return null;
-	};
-
-	const reserveWeaponSpace =
-		match.groupAlphaMembers.some((m) => m.weaponSplId) ||
-		match.groupBravoMembers.some((m) => m.weaponSplId);
-
-	// make sure user's team is always on the top
-	const rows = match.groupAlphaMembers.some((m) => m.id === userId)
-		? [
-				<MatchMembersRow
-					key="alpha"
-					members={match.groupAlphaMembers}
-					score={specialScoreMarking() ?? match.score[0]}
-					reserveWeaponSpace={reserveWeaponSpace}
-				/>,
-				<MatchMembersRow
-					key="bravo"
-					members={match.groupBravoMembers}
-					score={specialScoreMarking() ?? match.score[1]}
-					reserveWeaponSpace={reserveWeaponSpace}
-				/>,
-			]
-		: [
-				<MatchMembersRow
-					key="bravo"
-					members={match.groupBravoMembers}
-					score={specialScoreMarking() ?? match.score[1]}
-					reserveWeaponSpace={reserveWeaponSpace}
-				/>,
-				<MatchMembersRow
-					key="alpha"
-					members={match.groupAlphaMembers}
-					score={specialScoreMarking() ?? match.score[0]}
-					reserveWeaponSpace={reserveWeaponSpace}
-				/>,
-			];
+function DayHeader({ summary }: { summary: SeasonResultsDay["summary"] }) {
+	const { t } = useTranslation(["user"]);
 
 	return (
-		<div>
-			<Link
-				to={sendouQMatchPage(match.id)}
-				className={clsx(styles.seasonMatch, {
-					[styles.seasonMatchWithSubSection]: match.spDiff,
-				})}
-			>
-				{rows}
-			</Link>
-			{match.spDiff ? (
-				<div className={styles.seasonMatchSubSection}>
-					<SpDiff spDiff={match.spDiff} />
-				</div>
-			) : null}
+		<div className={styles.dayHeader}>
+			<LocaleTime
+				date={new Date(summary.date)}
+				options={{
+					weekday: "long",
+					month: "short",
+					day: "numeric",
+					timeZone: "UTC",
+				}}
+				className="text-sm font-semi-bold"
+			/>
+			<span className="stack horizontal xs items-center text-xs text-lighter">
+				{summary.setsCount > 0 ? (
+					<DayHeaderCount
+						icon="sendouq"
+						label={t("user:seasons.summary.count.sets", {
+							count: summary.setsCount,
+						})}
+					>
+						{summary.setWins}–{summary.setLosses}
+					</DayHeaderCount>
+				) : null}
+				{summary.tournamentsCount > 0 ? (
+					<>
+						{summary.setsCount > 0 ? <span>·</span> : null}
+						<DayHeaderCount
+							icon="medal"
+							label={t("user:seasons.summary.count.tournaments", {
+								count: summary.tournamentsCount,
+							})}
+						>
+							{summary.tournamentsCount}
+						</DayHeaderCount>
+					</>
+				) : null}
+				{typeof summary.spDiff === "number" ? (
+					<>
+						<span>·</span>
+						<SpDelta diff={summary.spDiff} />
+					</>
+				) : null}
+			</span>
+			<span className={styles.dayHeaderLine} />
+		</div>
+	);
+}
+
+function DayHeaderCount({
+	icon,
+	label,
+	children,
+}: {
+	icon: "sendouq" | "medal";
+	label: string;
+	children: React.ReactNode;
+}) {
+	return (
+		<span className="stack horizontal xxs items-center" title={label}>
+			<Image path={navIconUrl(icon)} alt={label} size={16} />
+			{children}
+		</span>
+	);
+}
+
+function groupMatchOutcome(match: SeasonGroupMatch, userId: number) {
+	const isAlpha = match.groupAlphaMembers.some((m) => m.id === userId);
+	const [alphaScore, bravoScore] = match.score;
+	if (alphaScore === bravoScore) return null;
+
+	return alphaScore > bravoScore === isAlpha ? "W" : "L";
+}
+
+function GroupMatchResult({
+	match,
+	createdAt,
+	userId,
+}: {
+	match: SeasonGroupMatch;
+	createdAt: number;
+	userId: number;
+}) {
+	const { t } = useTranslation(["user"]);
+
+	const isAlpha = match.groupAlphaMembers.some((m) => m.id === userId);
+	const [ownScore, opponentScore] = isAlpha
+		? match.score
+		: [match.score[1], match.score[0]];
+	const [ownTier, opponentTier] = isAlpha
+		? [match.alphaTier, match.bravoTier]
+		: [match.bravoTier, match.alphaTier];
+	const outcome = groupMatchOutcome(match, userId);
+
+	return (
+		<Link to={sendouQMatchPage(match.id)} className={styles.result}>
+			<div className={styles.outcome} data-outcome={outcome ?? undefined}>
+				{outcome
+					? t(
+							outcome === "W"
+								? "user:seasons.win.short"
+								: "user:seasons.loss.short",
+						)
+					: "–"}
+			</div>
+			<div className={styles.resultInfo}>
+				<span className={clsx(styles.resultTitle, "text-sm font-semi-bold")}>
+					SendouQ · {ownScore}–{opponentScore} ·{" "}
+					<span className="whitespace-nowrap">
+						<LocaleTime
+							date={createdAt}
+							options={{ hour: "numeric", minute: "numeric" }}
+							inline
+						/>
+					</span>
+				</span>
+				{ownTier && opponentTier ? (
+					<span
+						className={clsx(
+							styles.resultSubtitle,
+							"stack horizontal xs items-center text-xs text-lighter",
+						)}
+					>
+						<GroupTier tier={ownTier} />
+						{t("user:seasons.vs")}
+						<GroupTier tier={opponentTier} />
+					</span>
+				) : null}
+			</div>
+			<div className={styles.players}>
+				<MatchMembers
+					members={isAlpha ? match.groupAlphaMembers : match.groupBravoMembers}
+				/>
+				<span className="text-xs text-lighter">{t("user:seasons.vs")}</span>
+				<MatchMembers
+					members={isAlpha ? match.groupBravoMembers : match.groupAlphaMembers}
+				/>
+			</div>
+			<div className={styles.sp}>
+				{typeof match.spDiff === "number" ? (
+					<SpDelta diff={match.spDiff} />
+				) : null}
+			</div>
+		</Link>
+	);
+}
+
+function GroupTier({
+	tier,
+}: {
+	tier: NonNullable<SeasonGroupMatch["alphaTier"]>;
+}) {
+	return (
+		<span className={styles.tierTile}>
+			<TierImage tier={tier} width={28} />
+		</span>
+	);
+}
+
+function MatchMembers({
+	members,
+}: {
+	members: Array<SeasonTournamentResult["teamMembers"][number]>;
+}) {
+	return (
+		<div className={styles.members}>
+			{members.map((member) => (
+				<Avatar
+					key={member.discordId}
+					user={member}
+					size="xxsm"
+					alt={member.username}
+				/>
+			))}
 		</div>
 	);
 }
 
 function TournamentResult({ result }: { result: SeasonTournamentResult }) {
-	const hasSubSection = Boolean(result.spDiff) || result.teamSp !== null;
+	const { t } = useTranslation(["user"]);
+
+	const setWins = result.setResults.filter((r) => r === "W").length;
+	const setLosses = result.setResults.filter((r) => r === "L").length;
 
 	return (
-		<div data-testid="seasons-tournament-result">
-			<Link
-				to={tournamentTeamPage(result)}
-				className={clsx(styles.seasonMatch, {
-					[styles.seasonMatchWithSubSection]: hasSubSection,
-				})}
-			>
-				<div className="stack sm font-bold items-center text-lg text-center">
+		<Link
+			to={tournamentTeamPage(result)}
+			className={styles.result}
+			data-testid="seasons-tournament-result"
+		>
+			<div className={styles.outcome} data-outcome="tournament">
+				<Placement placement={result.placement} size={28} />
+			</div>
+			<div className={styles.resultInfo}>
+				<span
+					className={clsx(
+						styles.resultTitle,
+						"stack horizontal sm items-center text-sm font-semi-bold",
+					)}
+				>
 					<img
 						src={result.logoUrl}
-						width={36}
-						height={36}
+						width={24}
+						height={24}
 						alt=""
 						className="rounded-full"
 					/>
 					{result.tournamentName}
-				</div>
-				<ul className={styles.seasonMatchSetResults}>
-					{result.setResults.filter(Boolean).map((setResult, i) => (
-						<li key={i} data-is-win={String(setResult === "W")}>
-							{setResult}
-						</li>
-					))}
-				</ul>
-			</Link>
-			{hasSubSection ? (
-				<div className={styles.seasonMatchSubSection}>
-					{result.spDiff ? <SpDiff spDiff={result.spDiff} /> : null}
-					{result.teamSp !== null ? (
-						<div className="stack horizontal xxs items-center text-lighter">
-							<Users size={14} />
-							{result.teamSpDiff !== null ? (
-								<SpDiff spDiff={result.teamSpDiff} />
-							) : (
-								<>◆ {roundToNDecimalPlaces(result.teamSp)}SP</>
-							)}
-						</div>
-					) : null}
-				</div>
-			) : null}
-		</div>
-	);
-}
-
-function SpDiff({ spDiff }: { spDiff: number }) {
-	return (
-		<div className="stack horizontal xxs items-center">
-			<SpDelta diff={spDiff} />
-		</div>
-	);
-}
-
-function MatchMembersRow({
-	score,
-	members,
-	reserveWeaponSpace,
-}: {
-	score: React.ReactNode;
-	members: SeasonGroupMatch["groupAlphaMembers"];
-	reserveWeaponSpace: boolean;
-}) {
-	return (
-		<div className="stack horizontal xs items-center">
-			{members.map((member) => {
-				return (
-					<div key={member.discordId} className={styles.seasonMatchUser}>
-						<Avatar user={member} size="xxs" />
-						<span className={styles.seasonMatchUserName}>
-							{member.username}
-						</span>
-						{typeof member.weaponSplId === "number" ? (
-							<WeaponImage
-								weaponSplId={member.weaponSplId}
-								variant="badge"
-								size={28}
-							/>
-						) : reserveWeaponSpace ? (
-							<WeaponImage
-								weaponSplId={0}
-								variant="badge"
-								size={28}
-								className="invisible"
-							/>
-						) : null}
-					</div>
-				);
-			})}
-			<div className={styles.seasonMatchScore}>{score}</div>
-		</div>
+				</span>
+				<span className={clsx(styles.resultSubtitle, "text-xs text-lighter")}>
+					<Trans
+						t={t}
+						i18nKey="user:seasons.placementOfTeams"
+						values={{ count: result.participantCount }}
+						components={[
+							<Placement
+								key="placement"
+								placement={result.placement}
+								textOnly
+								showAsSuperscript={false}
+							/>,
+						]}
+					/>{" "}
+					· {setWins}–{setLosses}
+				</span>
+			</div>
+			<div className={styles.players}>
+				<MatchMembers members={result.teamMembers} />
+			</div>
+			<div className={clsx(styles.sp, "stack xxs items-end")}>
+				{result.spDiff ? (
+					<span className="stack horizontal xxs items-center">
+						<SpDelta diff={result.spDiff} />
+					</span>
+				) : null}
+				{result.teamSp !== null ? (
+					<span className="stack horizontal xxs items-center text-xs text-lighter">
+						<Users size={14} />
+						{result.teamSpDiff !== null ? (
+							<SpDelta diff={result.teamSpDiff} />
+						) : (
+							<>
+								<Gauge size={14} />
+								{roundToNDecimalPlaces(result.teamSp)}SP
+							</>
+						)}
+					</span>
+				) : null}
+			</div>
+		</Link>
 	);
 }

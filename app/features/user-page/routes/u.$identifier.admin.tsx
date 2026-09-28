@@ -1,5 +1,5 @@
 import { Plus } from "lucide-react";
-import { Link, useLoaderData, useMatches } from "react-router";
+import { Link, useLoaderData } from "react-router";
 import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
@@ -11,26 +11,20 @@ import { ReportsBarChart } from "~/features/user-report/components/ReportsBarCha
 import { USER_REPORT_CATEGORY_LABELS } from "~/features/user-report/user-report-constants";
 import { SendouForm } from "~/form";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
-import { invariant } from "~/utils/invariant";
 import { sendouQMatchPage, userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.admin.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.admin.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 
 export { action, loader };
 
 export default function UserAdminPage() {
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	return (
 		<div className="stack xl">
-			<SubPageHeader
-				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
-			/>
+			<SubPageHeader user={layoutData.user} title={"Admin"} />
 			<AccountInfos />
 
 			<div className="stack sm">

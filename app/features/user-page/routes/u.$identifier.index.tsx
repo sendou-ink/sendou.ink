@@ -1,26 +1,20 @@
 import clsx from "clsx";
 import { Pencil as EditIcon, Puzzle as PuzzleIcon } from "lucide-react";
 import { useTranslation } from "react-i18next";
-import {
-	href,
-	useLoaderData,
-	useMatches,
-	useOutletContext,
-} from "react-router";
+import { href, useLoaderData, useOutletContext } from "react-router";
 import { Avatar } from "~/components/Avatar";
 import { LinkButton } from "~/components/elements/Button";
 import { Flag } from "~/components/Flag";
 import { useUser } from "~/features/auth/core/user";
 import { UserCard } from "~/features/user-card/components/UserCard";
 import { countryCodeToTranslatedName } from "~/utils/i18n";
-import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import { MutualFriends } from "../components/MutualFriends";
 import type { UserPageNavItem } from "../components/UserPageIconNav";
 import { UserPageIconNav } from "../components/UserPageIconNav";
 import { Widget } from "../components/Widget";
 import { loader } from "../loaders/u.$identifier.index.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import styles from "./u.$identifier.index.module.css";
 
 export { loader };
@@ -45,9 +39,7 @@ export default function UserInfoPage() {
 	const { t, i18n } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 	const user = useUser();
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 	const { navItems } = useOutletContext<{ navItems: UserPageNavItem[] }>();
 
 	const mainWidgets = data.widgets.filter((w) => w.slot === "main");

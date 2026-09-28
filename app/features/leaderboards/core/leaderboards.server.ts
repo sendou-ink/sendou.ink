@@ -69,6 +69,37 @@ export async function cachedTeamLeaderboard({
 	});
 }
 
+/**
+ * The user's roster on the season's team leaderboard with its placement. Falls back to the
+ * "all rosters" leaderboard, where the entry has no placement comparable to the main one's.
+ */
+export async function findUserTeamEntry({
+	season,
+	userId,
+}: {
+	season: number;
+	userId: number;
+}) {
+	const hasUser = (entry: { members: Array<{ id: number }> }) =>
+		entry.members.some((member) => member.id === userId);
+
+	const rankedEntry = (
+		await cachedTeamLeaderboard({ season, onlyOneEntryPerUser: true })
+	).find(hasUser);
+
+	// a skipped team is on the leaderboard without taking a placement
+	if (rankedEntry)
+		return { entry: rankedEntry, rank: rankedEntry.placementRank ?? undefined };
+
+	const unrankedEntry = (
+		await cachedTeamLeaderboard({ season, onlyOneEntryPerUser: false })
+	).find(hasUser);
+
+	if (!unrankedEntry) return undefined;
+
+	return { entry: unrankedEntry, rank: undefined };
+}
+
 /** Clears both variants of a season's cached team leaderboard so a skip change shows without waiting for expiry. */
 export function clearCachedTeamLeaderboards(season: number) {
 	for (const onlyOneEntryPerUser of [true, false]) {

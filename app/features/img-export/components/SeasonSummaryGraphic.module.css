@@ -76,44 +76,6 @@
 	color: var(--graphic-accent);
 }
 
-.chart {
-	display: block;
-	width: 100%;
-	/* the area gradient's stops resolve their color from here via currentColor */
-	color: var(--graphic-accent);
-}
-
-.chartLine {
-	fill: none;
-	stroke: var(--graphic-accent);
-	stroke-width: 2.5;
-	stroke-linecap: round;
-	stroke-linejoin: round;
-}
-
-.chartGridLine {
-	stroke: var(--graphic-row-border);
-	stroke-width: 1;
-}
-
-.chartLabel {
-	font-size: 10px;
-	font-weight: var(--weight-semi);
-	fill: var(--graphic-text-dim);
-}
-
-.chartPeakLabel {
-	font-size: 11px;
-	font-weight: var(--weight-extra);
-	fill: var(--color-text);
-}
-
-.chartDot {
-	fill: var(--graphic-accent);
-	stroke: var(--graphic-row-bg);
-	stroke-width: 2;
-}
-
 .middleGrid {
 	display: grid;
 	grid-template-columns: minmax(0, 3fr) minmax(0, 2fr);
@@ -126,113 +88,8 @@
 	gap: var(--s-2);
 }
 
-.activityBox {
-	/* categorical palette, all-pairs CVD separation validated against the dark surface */
-	--activity-none: color-mix(in oklch, var(--color-text) 8%, transparent);
-	--activity-sq: oklch(70% 0.11 253);
-	--activity-tournament: oklch(75% 0.12 85);
-	--activity-both: oklch(94% 0.02 253);
-}
-
-:global(:where(html.light)) .activityBox,
-:global(:where([data-theme="light"])) .activityBox {
-	--activity-sq: oklch(56% 0.13 253);
-	--activity-tournament: oklch(66% 0.13 85);
-	--activity-both: oklch(30% 0.04 253);
-}
-
-:global(:where([data-theme="dark"])) .activityBox {
-	--activity-sq: oklch(70% 0.11 253);
-	--activity-tournament: oklch(75% 0.12 85);
-	--activity-both: oklch(94% 0.02 253);
-}
-
-.calendar {
-	--calendar-cell-size: 18px;
-	--calendar-gap: 4px;
-
-	display: flex;
-	align-items: flex-end;
-	justify-content: center;
-	gap: var(--calendar-gap);
+.activityCalendar {
 	margin-top: var(--s-2-5);
-}
-
-.calendarWeekdays {
-	display: flex;
-	flex-direction: column;
-	gap: var(--calendar-gap);
-	margin-inline-end: var(--s-1-5);
-}
-
-.calendarWeekday {
-	display: flex;
-	align-items: center;
-	justify-content: flex-end;
-	height: var(--calendar-cell-size);
-}
-
-.calendarMonth {
-	display: flex;
-	flex-direction: column;
-	gap: var(--calendar-gap);
-}
-
-.calendarMonthName {
-	text-align: center;
-}
-
-.calendarWeeks {
-	display: flex;
-	gap: var(--calendar-gap);
-}
-
-.calendarWeek {
-	display: flex;
-	flex-direction: column;
-	gap: var(--calendar-gap);
-}
-
-.calendarCell {
-	width: var(--calendar-cell-size, 18px);
-	height: var(--calendar-cell-size, 18px);
-	border-radius: 3px;
-	background-color: var(--activity-none);
-
-	&.calendarCellHidden {
-		visibility: hidden;
-	}
-
-	&.calendarSq {
-		background-color: var(--activity-sq);
-	}
-
-	&.calendarTournament {
-		background-color: var(--activity-tournament);
-	}
-
-	&.calendarBoth {
-		background-color: var(--activity-both);
-	}
-}
-
-.calendarLegend {
-	display: flex;
-	align-items: center;
-	justify-content: center;
-	gap: var(--s-2-5);
-	margin-top: var(--s-3);
-}
-
-.calendarLegendItem {
-	display: flex;
-	align-items: center;
-	gap: var(--s-1-5);
-
-	& .calendarCell {
-		width: 10px;
-		height: 10px;
-	}
 }
 
 .weaponsRow {

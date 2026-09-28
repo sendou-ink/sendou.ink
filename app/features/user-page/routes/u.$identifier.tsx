@@ -7,6 +7,7 @@ import { useUser } from "~/features/auth/core/user";
 import { userPageMiddleware } from "~/features/user-page/user-page-middleware.server";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
 import { useHasRole } from "~/modules/permissions/hooks";
+import * as SearchParams from "~/modules/search-params/search-params";
 import { metaTags } from "~/utils/remix";
 import type { SendouRouteHandle } from "~/utils/remix.server";
 import {
@@ -27,6 +28,8 @@ import type { Route } from "./+types/u.$identifier";
 export { loader };
 
 export const middleware: Route.MiddlewareFunction[] = [userPageMiddleware];
+
+export const shouldRevalidate = SearchParams.skipSearchOnlyRevalidation;
 
 export const meta: MetaFunction<typeof loader> = (args) => {
 	if (!args.loaderData) return [];
@@ -73,7 +76,7 @@ export const handle: SendouRouteHandle = {
 	},
 };
 
-const WIDE_LAYOUT_SUB_PAGES = ["results", "edit-widgets"];
+const WIDE_LAYOUT_SUB_PAGES = ["results", "edit-widgets", "seasons"];
 
 export default function UserPageLayout() {
 	const data = useLoaderData<typeof loader>();

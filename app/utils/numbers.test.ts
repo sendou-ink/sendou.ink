@@ -2,6 +2,7 @@ import { describe, expect, test } from "vitest";
 import {
 	averageArray,
 	cutToNDecimalPlaces,
+	niceStep,
 	roundToNDecimalPlaces,
 	safeNumberParse,
 	winPercentage,
@@ -89,5 +90,17 @@ describe("winPercentage()", () => {
 
 	test("returns null when no games were played", () => {
 		expect(winPercentage(0, 0)).toBeNull();
+	});
+});
+
+describe("niceStep()", () => {
+	test.each([
+		{ why: "exact power of ten", roughStep: 10, expected: 10 },
+		{ why: "rounds up to 2×", roughStep: 13, expected: 20 },
+		{ why: "rounds up to 5×", roughStep: 42, expected: 50 },
+		{ why: "rounds up to the next power of ten", roughStep: 70, expected: 100 },
+		{ why: "fractional step", roughStep: 0.3, expected: 0.5 },
+	])("$why: $roughStep → $expected", ({ roughStep, expected }) => {
+		expect(niceStep(roughStep)).toBeCloseTo(expected);
 	});
 });

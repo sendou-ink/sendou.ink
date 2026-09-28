@@ -431,7 +431,11 @@ describe("SearchParams.shouldRevalidate", () => {
 		expect(run("?limit=24", "")).toBe(false);
 	});
 
-	test("defers to the default for other pathnames, submissions and unknown params", () => {
+	test("does not revalidate when only params outside the definition change", () => {
+		expect(run("?unrelated=1", "?unrelated=2")).toBe(false);
+	});
+
+	test("defers to the default for other pathnames, submissions and revalidations", () => {
 		expect(
 			testDefinition.shouldRevalidate({
 				currentUrl: new URL("http://localhost/x"),
@@ -442,6 +446,33 @@ describe("SearchParams.shouldRevalidate", () => {
 			} as Parameters<ShouldRevalidateFunction>[0]),
 		).toBe(true);
 		expect(run("", "", { formMethod: "POST" })).toBe(true);
-		expect(run("?unrelated=1", "?unrelated=2")).toBe(true);
+		expect(run("?limit=50", "?limit=50")).toBe(true);
+	});
+});
+
+describe("SearchParams.skipSearchOnlyRevalidation", () => {
+	function run(
+		currentUrl: string,
+		nextUrl: string,
+		overrides?: Partial<Parameters<ShouldRevalidateFunction>[0]>,
+	) {
+		return SearchParams.skipSearchOnlyRevalidation({
+			currentUrl: new URL(`http://localhost${currentUrl}`),
+			nextUrl: new URL(`http://localhost${nextUrl}`),
+			currentParams: {},
+			nextParams: {},
+			defaultShouldRevalidate: true,
+			...overrides,
+		} as Parameters<ShouldRevalidateFunction>[0]);
+	}
+
+	test("does not revalidate when only the search changes", () => {
+		expect(run("/x?page=1", "/x?page=2")).toBe(false);
+	});
+
+	test("defers to the default for other pathnames, submissions and revalidations", () => {
+		expect(run("/x", "/y")).toBe(true);
+		expect(run("/x", "/x?page=2", { formMethod: "POST" })).toBe(true);
+		expect(run("/x?page=2", "/x?page=2")).toBe(true);
 	});
 });

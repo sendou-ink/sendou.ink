@@ -17,6 +17,8 @@ import {
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,
 	RESULTS_FIRST_YEAR,
+	SEASON_RESULT_SOURCES,
+	SEASON_STATS_TABS,
 } from "./user-page-constants";
 
 const BUILD_FILTER_TABS = ["ALL", "PUBLIC", "PRIVATE"] as const;
@@ -97,24 +99,35 @@ const startedSeason = v.pipe(
 	v.check((nth) => Seasons.allStarted(new Date()).includes(nth)),
 );
 
+const startedSeasonParam = SP.param(v.nullable(startedSeason), {
+	loader: true,
+	timeDependent: true,
+});
+
 export const userSeasonsSearchParams = SearchParams.define({
+	season: startedSeasonParam,
+});
+
+export const userSeasonResultsSearchParams = SearchParams.define({
 	page: SP.page(),
-	info: SP.param(v.picklist(["weapons", "stages", "mates", "enemies"]), {
-		default: "weapons",
-		loader: true,
-	}),
-	season: SP.param(v.nullable(startedSeason), {
+	source: SP.param(v.picklist(SEASON_RESULT_SOURCES), {
+		default: "ALL",
 		loader: true,
 		resets: ["page"],
-		timeDependent: true,
 	}),
+	season: startedSeasonParam,
+});
+
+export const userSeasonsStatsSearchParams = SearchParams.define({
+	tab: SP.param(v.picklist(SEASON_STATS_TABS), {
+		default: "overview",
+		loader: true,
+	}),
+	season: startedSeasonParam,
 });
 
 export const userSeasonSummaryGraphicSearchParams = SearchParams.define({
-	season: SP.param(v.nullable(startedSeason), {
-		loader: true,
-		timeDependent: true,
-	}),
+	season: startedSeasonParam,
 });
 
 const buildsWeaponFilterCodec = codec(

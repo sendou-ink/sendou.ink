@@ -1,5 +1,7 @@
 import * as R from "remeda";
 
+const NICE_STEP_MULTIPLIERS = [1, 2, 5, 10];
+
 /** Rounds to `n` decimal places (default 2). */
 export function roundToNDecimalPlaces(num: number, n = 2) {
 	return Number((Math.round(num * 10 ** n) / 10 ** n).toFixed(n));
@@ -39,4 +41,15 @@ export function winPercentage(wins: number, losses: number) {
 	if (played === 0) return null;
 
 	return (wins / played) * 100;
+}
+
+/** Smallest round step (1, 2 or 5 times a power of ten) at or above `roughStep`, for spacing axis ticks. */
+export function niceStep(roughStep: number) {
+	const magnitude = 10 ** Math.floor(Math.log10(roughStep));
+
+	return (
+		(NICE_STEP_MULTIPLIERS.find(
+			(multiplier) => multiplier * magnitude >= roughStep,
+		) ?? 10) * magnitude
+	);
 }

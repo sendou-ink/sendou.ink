@@ -79,6 +79,72 @@ export function bestStage(
 	return best;
 }
 
+/** Stage with the most maps played across modes, higher winrate breaking ties; `undefined` when no maps were played. */
+export function mostPlayedStage(
+	stages: Partial<
+		Record<
+			StageId,
+			Partial<Record<ModeShort, { wins: number; losses: number }>>
+		>
+	>,
+): { stageId: StageId; winratePercentage: number } | undefined {
+	const played = Object.entries(stages).flatMap(([stageId, modes]) => {
+		const wins = R.sumBy(Object.values(modes), (record) => record.wins);
+		const losses = R.sumBy(Object.values(modes), (record) => record.losses);
+		const mapsPlayed = wins + losses;
+		if (mapsPlayed === 0) return [];
+
+		return [
+			{
+				stageId: Number(stageId) as StageId,
+				mapsPlayed,
+				winratePercentage: (wins / mapsPlayed) * 100,
+			},
+		];
+	});
+
+	const top = R.firstBy(
+		played,
+		[(stage) => stage.mapsPlayed, "desc"],
+		[(stage) => stage.winratePercentage, "desc"],
+	);
+	if (!top) return undefined;
+
+	return { stageId: top.stageId, winratePercentage: top.winratePercentage };
+}
+
+/** Mode with the most maps played across stages, with its share of all maps played; `null` when no maps were played. */
+export function topModeUsage(
+	stages: Partial<
+		Record<
+			StageId,
+			Partial<Record<ModeShort, { wins: number; losses: number }>>
+		>
+	>,
+): { mode: ModeShort; usagePercentage: number } | null {
+	const mapsPlayedByMode = new Map<ModeShort, number>();
+
+	for (const modes of Object.values(stages)) {
+		for (const [mode, record] of Object.entries(modes) as Array<
+			[ModeShort, { wins: number; losses: number }]
+		>) {
+			mapsPlayedByMode.set(
+				mode,
+				(mapsPlayedByMode.get(mode) ?? 0) + record.wins + record.losses,
+			);
+		}
+	}
+
+	const totalMapsPlayed = R.sum([...mapsPlayedByMode.values()]);
+	const top = R.firstBy([...mapsPlayedByMode], [([, count]) => count, "desc"]);
+	if (!top || totalMapsPlayed === 0) return null;
+
+	return {
+		mode: top[0],
+		usagePercentage: (top[1] / totalMapsPlayed) * 100,
+	};
+}
+
 export interface TournamentRun {
 	/** 1 = X (best) … 9 = C. Null (no calculated tier) ranks below every tiered tournament. */
 	tier: number | null;

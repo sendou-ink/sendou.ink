@@ -32,6 +32,20 @@ export const SENS_OPTIONS = [
 export const SPL2_JOIN_ORDER_CUTOFF = 13_589;
 
 export const MATCHES_PER_SEASONS_PAGE = 8;
+
+export const SEASON_RESULT_SOURCES = ["ALL", "SENDOUQ", "TOURNAMENT"] as const;
+
+export type SeasonResultSource = (typeof SEASON_RESULT_SOURCES)[number];
+
+export const SEASON_STATS_TABS = [
+	"overview",
+	"stages",
+	"weapons",
+	"mates",
+	"enemies",
+] as const;
+
+export type SeasonStatsTab = (typeof SEASON_STATS_TABS)[number];
 export const RESULTS_PER_PAGE = 25;
 export const HIGHLIGHTS_RESULTS_MAX = 500;
 

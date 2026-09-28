@@ -264,10 +264,6 @@
 .statPopover {
 	min-width: 360px;
 
-	--chart-bg: transparent;
-	--chart-height: 250px;
-	--chart-width: 340px;
-
 	flex-direction: column;
 	align-items: center;
 
@@ -282,16 +278,21 @@
 	}
 }
 
-.statChartContainer {
+.statChart {
+	--line-chart-surface: var(--color-bg);
+
 	flex: 1 1 auto;
+	width: 100%;
+	height: 250px;
 	min-height: 0;
-	max-width: 100%;
 }
 
 @media screen and (min-width: 700px) {
 	.statPopover {
 		min-width: calc(360px * 1.75);
-		--chart-height: calc(250px * 1.75);
-		--chart-width: calc(340px * 1.75);
+	}
+
+	.statChart {
+		height: calc(250px * 1.75);
 	}
 }

@@ -79,6 +79,45 @@ describe("bestStage", () => {
 	});
 });
 
+describe("mostPlayedStage", () => {
+	test("returns undefined when no maps were played", () => {
+		expect(SeasonSummary.mostPlayedStage({})).toBeUndefined();
+	});
+
+	test("picks the stage with the most maps across modes", () => {
+		expect(
+			SeasonSummary.mostPlayedStage({
+				1: { SZ: { wins: 1, losses: 1 }, TC: { wins: 1, losses: 1 } },
+				2: { SZ: { wins: 3, losses: 0 } },
+			}),
+		).toEqual({ stageId: 1, winratePercentage: 50 });
+	});
+
+	test("breaks a tie by winrate", () => {
+		expect(
+			SeasonSummary.mostPlayedStage({
+				1: { SZ: { wins: 1, losses: 2 } },
+				2: { SZ: { wins: 2, losses: 1 } },
+			}),
+		).toMatchObject({ stageId: 2 });
+	});
+});
+
+describe("topModeUsage", () => {
+	test("returns null when no maps were played", () => {
+		expect(SeasonSummary.topModeUsage({})).toBeNull();
+	});
+
+	test("sums maps of a mode across stages", () => {
+		expect(
+			SeasonSummary.topModeUsage({
+				1: { SZ: { wins: 2, losses: 1 }, TC: { wins: 2, losses: 1 } },
+				2: { SZ: { wins: 1, losses: 3 } },
+			}),
+		).toEqual({ mode: "SZ", usagePercentage: 70 });
+	});
+});
+
 describe("tournamentRunScore", () => {
 	test("lets tier dominate over placement quality", () => {
 		const higherTierRun = SeasonSummary.tournamentRunScore({

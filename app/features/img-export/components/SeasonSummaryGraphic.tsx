@@ -1,22 +1,18 @@
 import clsx from "clsx";
-import {
-	eachDayOfInterval,
-	format,
-	parseISO,
-	startOfDay,
-	startOfWeek,
-} from "date-fns";
 import * as React from "react";
 import { useTranslation } from "react-i18next";
-import * as R from "remeda";
 import { Avatar } from "~/components/Avatar";
 import { Flag } from "~/components/Flag";
 import { TierImage, WeaponImage } from "~/components/Image";
 import { StageBannerBox } from "~/components/StageBannerBox";
 import { TierPill } from "~/components/TierPill";
+import {
+	type SeasonActivity,
+	SeasonActivityCalendar,
+} from "~/features/mmr/components/SeasonActivityCalendar";
+import { SeasonSpChart } from "~/features/mmr/components/SeasonSpChart";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { userSeasonsPage } from "~/features/user-page/user-page-urls";
-import { useDateTimeFormat } from "~/hooks/intl/useDateTimeFormat";
 import type { MainWeaponId, StageId } from "~/modules/in-game-lists/types";
 import {
 	GraphicBoxLabel,
@@ -38,21 +34,10 @@ import {
 } from "./Graphic";
 import styles from "./SeasonSummaryGraphic.module.css";
 
-const CHART_WIDTH = 672;
-const CHART_HEIGHT = 170;
-const CHART_MARGIN = { top: 26, right: 14, bottom: 22, left: 14 };
 const CHART_POINTS_NEEDED = 2;
-const CHART_PEAK_LABEL_CLAMP = 48;
 const TOP_MATES_COUNT = 3;
-const CALENDAR_WEEK_LENGTH = 7;
-/** Thursday, the day that decides which month a week column belongs to */
-const CALENDAR_WEEK_MONTH_DAY_INDEX = 3;
-/** Monday and Friday, the only rows the calendar names */
-const CALENDAR_NAMED_WEEKDAY_INDICES = [0, 4];
 /** Without weapons the teammates box is alone next to the calendar, so it has room for more */
 const TOP_MATES_COUNT_WITHOUT_WEAPONS = 6;
-
-export type SeasonSummaryGraphicActivity = "sq" | "tournament" | "both";
 
 export interface SeasonSummaryGraphicBestSet {
 	opponentPlayers: GraphicPlayer[];
@@ -92,10 +77,12 @@ export interface SeasonSummaryGraphicStats {
 		setsCount: number;
 	}>;
 	bestStage?: { stageId: StageId; winratePercentage: number };
-	/** Per day peak SP, dates in "yyyy-MM-dd" format */
+	/** Highest SP reached during the season */
+	peakSp: number;
+	/** SP at the end of each day played, dates in "yyyy-MM-dd" format */
 	spProgression: Array<{ date: string; sp: number }>;
 	/** Days with at least one set played, dates in "yyyy-MM-dd" format */
-	activeDays: Array<{ date: string; activity: SeasonSummaryGraphicActivity }>;
+	activeDays: Array<{ date: string; activity: SeasonActivity }>;
 	bestSets: SeasonSummaryGraphicBestSet[];
 	bestTournament?: {
 		name: string;
@@ -140,6 +127,7 @@ export function SeasonSummaryGraphic({
 		teamRank,
 		topMates,
 		bestStage,
+		peakSp,
 		spProgression,
 		activeDays,
 		bestSets,
@@ -147,10 +135,6 @@ export function SeasonSummaryGraphic({
 		topWeapons,
 	} = stats;
 
-	const peakSp =
-		spProgression.length > 0
-			? Math.max(...spProgression.map((point) => point.sp))
-			: sp;
 	const shownMates = topMates.slice(
 		0,
 		topWeapons.length > 0 ? TOP_MATES_COUNT : TOP_MATES_COUNT_WITHOUT_WEAPONS,
@@ -265,7 +249,7 @@ export function SeasonSummaryGraphic({
 			</GraphicStatsRow>
 			{spProgression.length >= CHART_POINTS_NEEDED ? (
 				<SummaryBox>
-					<SpChart points={spProgression} />
+					<SeasonSpChart points={spProgression} />
 				</SummaryBox>
 			) : null}
 			{bestStage ? (
@@ -285,15 +269,15 @@ export function SeasonSummaryGraphic({
 				</StageBannerBox>
 			) : null}
 			<div className={styles.middleGrid}>
-				<SummaryBox className={styles.activityBox}>
+				<SummaryBox>
 					<GraphicBoxLabel>
 						{t("user:seasons.summary.activity")}
 					</GraphicBoxLabel>
-					<ActivityCalendar
+					<SeasonActivityCalendar
 						seasonDateRange={seasonDateRange}
 						activeDays={activeDays}
+						className={styles.activityCalendar}
 					/>
-					<ActivityLegend />
 				</SummaryBox>
 				<div className={styles.sideStack}>
 					{topWeapons.length > 0 ? (
@@ -441,246 +425,6 @@ export function SeasonSummaryGraphic({
 			)}
 		</GraphicContainer>
 	);
-}
-
-function SpChart({ points }: { points: Array<{ date: string; sp: number }> }) {
-	const { formatter } = useDateTimeFormat({ month: "short", day: "numeric" });
-	const gradientId = React.useId();
-
-	const times = points.map((point) => parseISO(point.date).getTime());
-	const minTime = times[0];
-	const maxTime = times[times.length - 1];
-	const sps = points.map((point) => point.sp);
-	const minSp = Math.min(...sps);
-	const maxSp = Math.max(...sps);
-
-	const innerWidth = CHART_WIDTH - CHART_MARGIN.left - CHART_MARGIN.right;
-	const innerHeight = CHART_HEIGHT - CHART_MARGIN.top - CHART_MARGIN.bottom;
-	const bottomY = CHART_HEIGHT - CHART_MARGIN.bottom;
-
-	const xAt = (time: number) =>
-		CHART_MARGIN.left +
-		((time - minTime) / Math.max(maxTime - minTime, 1)) * innerWidth;
-	const yAt = (spValue: number) =>
-		CHART_MARGIN.top +
-		(1 - (spValue - minSp) / Math.max(maxSp - minSp, 1)) * innerHeight;
-
-	const linePath = points
-		.map(
-			(point, index) =>
-				`${index === 0 ? "M" : "L"}${xAt(times[index]).toFixed(1)} ${yAt(point.sp).toFixed(1)}`,
-		)
-		.join(" ");
-	const areaPath = `${linePath} L${xAt(maxTime).toFixed(1)} ${bottomY} L${xAt(minTime).toFixed(1)} ${bottomY} Z`;
-
-	const peakIndex = sps.indexOf(maxSp);
-	const peakX = xAt(times[peakIndex]);
-	const peakY = yAt(maxSp);
-	const peakLabelX = Math.min(
-		Math.max(peakX, CHART_PEAK_LABEL_CLAMP),
-		CHART_WIDTH - CHART_PEAK_LABEL_CLAMP,
-	);
-
-	return (
-		<svg
-			className={styles.chart}
-			viewBox={`0 0 ${CHART_WIDTH} ${CHART_HEIGHT}`}
-			role="img"
-			aria-label="SP"
-		>
-			<defs>
-				{/* presentation attributes, not CSS: the image export does not style elements inside defs */}
-				<linearGradient id={gradientId} x1="0" y1="0" x2="0" y2="1">
-					<stop offset="0" stopColor="currentColor" stopOpacity={0.3} />
-					<stop offset="1" stopColor="currentColor" stopOpacity={0} />
-				</linearGradient>
-			</defs>
-			<line
-				className={styles.chartGridLine}
-				x1={CHART_MARGIN.left}
-				y1={yAt(minSp)}
-				x2={CHART_WIDTH - CHART_MARGIN.right}
-				y2={yAt(minSp)}
-			/>
-			<path d={areaPath} fill={`url(#${gradientId})`} />
-			<path className={styles.chartLine} d={linePath} />
-			<circle className={styles.chartDot} cx={peakX} cy={peakY} r={4.5} />
-			<text
-				className={styles.chartPeakLabel}
-				x={peakLabelX}
-				y={peakY - 10}
-				textAnchor="middle"
-			>
-				{maxSp.toFixed(1)}SP
-			</text>
-			<text
-				className={styles.chartLabel}
-				x={CHART_MARGIN.left}
-				y={CHART_HEIGHT - 6}
-			>
-				{formatter.format(parseISO(points[0].date))}
-			</text>
-			<text
-				className={styles.chartLabel}
-				x={CHART_WIDTH - CHART_MARGIN.right}
-				y={CHART_HEIGHT - 6}
-				textAnchor="end"
-			>
-				{formatter.format(parseISO(points[points.length - 1].date))}
-			</text>
-		</svg>
-	);
-}
-
-function ActivityCalendar({
-	seasonDateRange,
-	activeDays,
-}: {
-	seasonDateRange: { starts: Date; ends: Date };
-	activeDays: Array<{ date: string; activity: SeasonSummaryGraphicActivity }>;
-}) {
-	const { formatter } = useDateTimeFormat({ month: "long" });
-
-	const activityByDay = new Map(
-		activeDays.map((day) => [day.date, day.activity]),
-	);
-	const seasonFirstDay = startOfDay(seasonDateRange.starts);
-	const weeks = seasonWeeks({
-		seasonFirstDay,
-		seasonLastDay: seasonDateRange.ends,
-	});
-	const months = calendarMonths(weeks);
-
-	return (
-		<div className={styles.calendar}>
-			<CalendarWeekdays firstWeek={weeks[0]} />
-			{months.map((month) => (
-				<div key={month.key} className={styles.calendarMonth}>
-					<GraphicBoxLabel className={styles.calendarMonthName}>
-						{formatter.format(month.month)}
-					</GraphicBoxLabel>
-					<div className={styles.calendarWeeks}>
-						{month.weeks.map((week) => (
-							<div
-								key={format(week[0], "yyyy-MM-dd")}
-								className={styles.calendarWeek}
-							>
-								{week.map((day) => {
-									const key = format(day, "yyyy-MM-dd");
-									const beforeSeason = day.getTime() < seasonFirstDay.getTime();
-
-									return (
-										<div
-											key={key}
-											className={clsx(
-												styles.calendarCell,
-												activityClass(activityByDay.get(key)),
-												{ [styles.calendarCellHidden]: beforeSeason },
-											)}
-										/>
-									);
-								})}
-							</div>
-						))}
-					</div>
-				</div>
-			))}
-		</div>
-	);
-}
-
-function CalendarWeekdays({ firstWeek }: { firstWeek: Date[] }) {
-	const { formatter } = useDateTimeFormat({ weekday: "short" });
-
-	return (
-		<GraphicBoxLabel className={styles.calendarWeekdays}>
-			{firstWeek.map((day, dayIndex) => (
-				<div key={format(day, "yyyy-MM-dd")} className={styles.calendarWeekday}>
-					{CALENDAR_NAMED_WEEKDAY_INDICES.includes(dayIndex)
-						? formatter.format(day)
-						: null}
-				</div>
-			))}
-		</GraphicBoxLabel>
-	);
-}
-
-/** Monday to Sunday week columns; an incomplete last week (a season ending mid-week) is left out. */
-function seasonWeeks({
-	seasonFirstDay,
-	seasonLastDay,
-}: {
-	seasonFirstDay: Date;
-	seasonLastDay: Date;
-}): Date[][] {
-	const weeks: Date[][] = R.chunk(
-		eachDayOfInterval({
-			start: startOfWeek(seasonFirstDay, { weekStartsOn: 1 }),
-			end: seasonLastDay,
-		}),
-		CALENDAR_WEEK_LENGTH,
-	);
-
-	const lastWeek = weeks[weeks.length - 1];
-	if (weeks.length > 1 && lastWeek.length < CALENDAR_WEEK_LENGTH) {
-		weeks.pop();
-	}
-
-	return weeks;
-}
-
-/** Groups the week columns under the month that holds most of the week */
-function calendarMonths(weeks: Date[][]) {
-	const months: Array<{ key: string; month: Date; weeks: Date[][] }> = [];
-
-	for (const week of weeks) {
-		const monthDay =
-			week[CALENDAR_WEEK_MONTH_DAY_INDEX] ?? week[week.length - 1];
-		const key = format(monthDay, "yyyy-MM");
-		const latestMonth = months[months.length - 1];
-
-		if (latestMonth?.key === key) {
-			latestMonth.weeks.push(week);
-		} else {
-			months.push({ key, month: monthDay, weeks: [week] });
-		}
-	}
-
-	return months;
-}
-
-function ActivityLegend() {
-	const { t } = useTranslation(["user"]);
-
-	return (
-		<GraphicBoxLabel className={styles.calendarLegend}>
-			<div className={styles.calendarLegendItem}>
-				<div className={clsx(styles.calendarCell, styles.calendarSq)} />
-				SendouQ
-			</div>
-			<div className={styles.calendarLegendItem}>
-				<div className={clsx(styles.calendarCell, styles.calendarTournament)} />
-				{t("user:seasons.summary.activity.tournament")}
-			</div>
-			<div className={styles.calendarLegendItem}>
-				<div className={clsx(styles.calendarCell, styles.calendarBoth)} />
-				{t("user:seasons.summary.activity.both")}
-			</div>
-		</GraphicBoxLabel>
-	);
-}
-
-function activityClass(activity?: SeasonSummaryGraphicActivity) {
-	if (!activity) return undefined;
-
-	switch (activity) {
-		case "sq":
-			return styles.calendarSq;
-		case "tournament":
-			return styles.calendarTournament;
-		case "both":
-			return styles.calendarBoth;
-	}
 }
 
 function SummaryBox({

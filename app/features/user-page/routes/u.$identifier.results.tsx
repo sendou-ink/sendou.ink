@@ -1,18 +1,16 @@
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useMatches } from "react-router";
+import { useLoaderData } from "react-router";
 import { LinkButton } from "~/components/elements/Button";
 import { Pagination } from "~/components/Pagination";
 import { useUser } from "~/features/auth/core/user";
 import { UserResultsTable } from "~/features/user-page/components/UserResultsTable";
 import { useSearchParamPagination } from "~/hooks/useSearchParamPagination";
-import { invariant } from "~/utils/invariant";
-import { userPage, userResultsEditHighlightsPage } from "~/utils/urls";
+import { userResultsEditHighlightsPage } from "~/utils/urls";
 import { ResultsFiltersBar } from "../components/ResultsFiltersBar";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.results.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userResultsSearchParams } from "../user-page-search-params";
-import styles from "./u.$identifier.results.module.css";
 
 export { loader };
 
@@ -21,9 +19,7 @@ export default function UserResultsPage() {
 	const { t } = useTranslation(["user", "common"]);
 	const data = useLoaderData<typeof loader>();
 
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	const pagination = useSearchParamPagination({
 		definition: userResultsSearchParams,
@@ -33,17 +29,13 @@ export default function UserResultsPage() {
 
 	return (
 		<div className="stack lg">
-			<SubPageHeader
-				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
-			/>
-			{user?.id === layoutData.user.id ? (
-				<div className={styles.resultsHeaderActions}>
+			<SubPageHeader user={layoutData.user} title={t("common:results")}>
+				{user?.id === layoutData.user.id ? (
 					<LinkButton to={userResultsEditHighlightsPage(user)} size="small">
 						{t("results.highlights.choose")}
 					</LinkButton>
-				</div>
-			) : null}
+				) : null}
+			</SubPageHeader>
 			<ResultsFiltersBar />
 			{data.results.value.length > 0 ? (
 				<UserResultsTable

@@ -12,13 +12,17 @@ import {
 	RESULT_PLACEMENT_FILTERS,
 	RESULT_SOURCES,
 	RESULTS_FIRST_YEAR,
+	SEASON_RESULT_SOURCES,
+	SEASON_STATS_TABS,
 } from "./user-page-constants";
 import {
 	userArtSearchParams,
 	userBuildsSearchParams,
 	userResultsSearchParams,
+	userSeasonResultsSearchParams,
 	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
+	userSeasonsStatsSearchParams,
 } from "./user-page-search-params";
 
 const startedSeasons = Seasons.allStarted(new Date());
@@ -89,15 +93,11 @@ describe("userResultsSearchParams", () => {
 describe("userSeasonsSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(userSeasonsSearchParams, {
-			page: [1, 2, 99],
-			info: ["weapons", "stages", "mates", "enemies"],
 			season: [null, newestSeason, oldestSeason],
 		});
 	});
 
 	test("malformed values decode to defaults", () => {
-		assertDecodesToDefault(userSeasonsSearchParams, "page", [["0"], ["abc"]]);
-		assertDecodesToDefault(userSeasonsSearchParams, "info", [["INVALID"]]);
 		assertDecodesToDefault(userSeasonsSearchParams, "season", [
 			[String(notStartedSeason)],
 			["-1"],
@@ -122,6 +122,43 @@ describe("userSeasonsSearchParams", () => {
 		} finally {
 			vi.useRealTimers();
 		}
+	});
+});
+
+describe("userSeasonResultsSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(userSeasonResultsSearchParams, {
+			page: [1, 2, 99],
+			source: [...SEASON_RESULT_SOURCES],
+			season: [null, newestSeason, oldestSeason],
+		});
+	});
+
+	test("malformed values decode to defaults", () => {
+		assertDecodesToDefault(userSeasonResultsSearchParams, "page", [
+			["0"],
+			["abc"],
+		]);
+		assertDecodesToDefault(userSeasonResultsSearchParams, "source", [
+			["INVALID"],
+		]);
+	});
+});
+
+describe("userSeasonsStatsSearchParams", () => {
+	test("round-trips", () => {
+		assertRoundTrips(userSeasonsStatsSearchParams, {
+			tab: [...SEASON_STATS_TABS],
+			season: [null, newestSeason, oldestSeason],
+		});
+	});
+
+	test("malformed values decode to defaults", () => {
+		assertDecodesToDefault(userSeasonsStatsSearchParams, "tab", [["INVALID"]]);
+		assertDecodesToDefault(userSeasonsStatsSearchParams, "season", [
+			[String(notStartedSeason)],
+			["abc"],
+		]);
 	});
 });
 

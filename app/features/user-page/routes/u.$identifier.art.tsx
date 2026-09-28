@@ -1,14 +1,12 @@
 import { useTranslation } from "react-i18next";
-import { useLoaderData, useMatches } from "react-router";
+import { useLoaderData } from "react-router";
 import { ArtGrid } from "~/features/art/components/ArtGrid";
 import { useSearchParam } from "~/modules/search-params/hooks";
-import { invariant } from "~/utils/invariant";
 import type { SendouRouteHandle } from "~/utils/remix.server";
-import { userPage } from "~/utils/urls";
 import { action } from "../actions/u.$identifier.art.server";
 import { SubPageHeader } from "../components/SubPageHeader";
 import { loader } from "../loaders/u.$identifier.art.server";
-import type { UserPageLoaderData } from "../loaders/u.$identifier.server";
+import { useUserPageLayoutData } from "../user-page-hooks";
 import { userArtSearchParams } from "../user-page-search-params";
 
 export { action, loader };
@@ -19,15 +17,13 @@ export const handle: SendouRouteHandle = {
 
 const ALL_TAGS_KEY = "ALL";
 export default function UserArtPage() {
-	const { t } = useTranslation(["art"]);
+	const { t } = useTranslation(["art", "common"]);
 	const data = useLoaderData<typeof loader>();
 	const [type, setType] = useSearchParam(userArtSearchParams, "source");
 	const [tagParam, setFilteredTag] = useSearchParam(userArtSearchParams, "tag");
 	const filteredTag =
 		data.tagCounts?.find((tagCount) => tagCount[0] === tagParam)?.[0] ?? null;
-	const [, parentRoute] = useMatches();
-	invariant(parentRoute);
-	const layoutData = parentRoute.loaderData as UserPageLoaderData;
+	const layoutData = useUserPageLayoutData();
 
 	const hasBothArtMadeByAndMadeOf =
 		data.arts.some((a) => a.author) && data.arts.some((a) => !a.author);
@@ -45,10 +41,7 @@ export default function UserArtPage() {
 
 	return (
 		<div className="stack md">
-			<SubPageHeader
-				user={layoutData.user}
-				backTo={userPage(layoutData.user)}
-			/>
+			<SubPageHeader user={layoutData.user} title={t("common:pages.art")} />
 			<div className="stack horizontal justify-between items-start text-xs text-lighter">
 				<div>
 					{data.unvalidatedArtCount > 0

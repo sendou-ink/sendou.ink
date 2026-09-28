@@ -1,5 +1,5 @@
 import { describe, expect, test } from "vitest";
-import { diff, flatZip, mostPopularArrayElement } from "./arrays";
+import { diff, flatZip } from "./arrays";
 
 describe("diff", () => {
 	test.each([
@@ -25,22 +25,6 @@ describe("diff", () => {
 
 		expect(diff([], arr2)).toHaveLength(200_000);
 	});
-});
-
-describe("mostPopularArrayElement", () => {
-	test.each([
-		[[1, 2, 2, 3, 3, 3, 4], 3],
-		[["a", "b", "b", "c", "a", "b"], "b"],
-		// the first of the tied elements wins
-		[[1, 2, 2, 1], 1],
-		[["only"], "only"],
-		[[], null],
-	] as [(string | number)[], string | number | null][])(
-		"%j is most popularly %j",
-		(arr, expected) => {
-			expect(mostPopularArrayElement(arr)).toBe(expected);
-		},
-	);
 });
 
 describe("flatZip", () => {

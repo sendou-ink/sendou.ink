@@ -3,10 +3,12 @@ import type {
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
 import { type UserLinkArgs, userBuildsPage, userPage } from "~/utils/urls";
+import type { SeasonStatsTab } from "./user-page-constants";
 import {
 	userBuildsNewSearchParams,
 	userSeasonSummaryGraphicSearchParams,
 	userSeasonsSearchParams,
+	userSeasonsStatsSearchParams,
 } from "./user-page-search-params";
 
 export const userSeasonsPage = ({
@@ -35,14 +37,14 @@ export const userSeasonSummaryGraphicPage = ({
 export const userSeasonsStatsPage = ({
 	user,
 	season,
-	info,
+	tab,
 }: {
 	user: UserLinkArgs;
 	season?: number;
-	info?: "weapons" | "stages" | "mates" | "enemies";
+	tab?: SeasonStatsTab;
 }) =>
-	userSeasonsSearchParams.href(`${userPage(user)}/seasons/stats`, {
-		...(info ? { info } : {}),
+	userSeasonsStatsSearchParams.href(`${userPage(user)}/seasons/stats`, {
+		...(tab ? { tab } : {}),
 		season: season ?? null,
 	});
 

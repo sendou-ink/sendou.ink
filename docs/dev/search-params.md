@@ -114,7 +114,7 @@ A `<Link>` still navigates, so an href that only changes `loader: false` params 
 />
 ```
 
-Routes without a `shouldRevalidate` then skip their loader; routes with one get it as `args.defaultShouldRevalidate` and make the final call (`definition.shouldRevalidate` passes it through, since a param of another definition changed).
+Routes without a `shouldRevalidate` then skip their loader; routes with one get it as `args.defaultShouldRevalidate` and make the final call (`definition.shouldRevalidate` skips too, since only a param outside its definition changed).
 
 ## Revalidation
 
@@ -125,7 +125,15 @@ export const shouldRevalidate = buildsSearchParams.shouldRevalidate;
 // revalidates only when a loader:true param's decoded canonical value changed
 ```
 
-Submissions, revalidator calls, pathname changes and unknown-param changes defer to the router default.
+Params outside the definition are ignored, so a route's loader must read search params only through the definition its `shouldRevalidate` comes from. Submissions, revalidator calls and pathname changes defer to the router default.
+
+A route whose loader reads no search params at all (a layout, say) uses `SearchParams.skipSearchOnlyRevalidation`, so its child routes' param changes never rerun it:
+
+```ts
+export const shouldRevalidate = SearchParams.skipSearchOnlyRevalidation;
+```
+
+Splitting a page into a layout route (data depending on few params, with its own definition) and an index route (a paginated list, say) this way keeps pagination from refetching the rest of the page.
 
 ## Enforcement
 
