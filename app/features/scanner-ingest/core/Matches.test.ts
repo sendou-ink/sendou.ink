@@ -92,6 +92,48 @@ describe("isSameMatch", () => {
 		expect(Matches.isSameMatch(a, b)).toBe(true);
 	});
 
+	test("close play times do not identify back-to-back games against different opponents", () => {
+		const playedAt = 1_700_000_000_000;
+		const nextSet = scannerMatch({ playedAt: playedAt + 5 * 60 * 1000 });
+		nextSet.teams[1] = {
+			players: ["o1", "o2", "o3", "o4"].map((name, i) =>
+				scannerMatchPlayer(name, (100 + 10 * i) as MainWeaponId),
+			),
+		};
+		expect(Matches.isSameMatch(scannerMatch({ playedAt }), nextSet)).toBe(
+			false,
+		);
+	});
+
+	test("close play times still identify a match with a couple of misread names per team", () => {
+		const playedAt = 1_700_000_000_000;
+		const b = scannerMatch({ playedAt: playedAt + 60 * 1000 });
+		b.teams[0].players[0] = scannerMatchPlayer("misread1", WEAPONS[0]!);
+		b.teams[0].players[1] = scannerMatchPlayer("misread2", WEAPONS[1]!);
+		b.teams[1].players[2] = scannerMatchPlayer("misread3", WEAPONS[6]!);
+		expect(Matches.isSameMatch(scannerMatch({ playedAt }), b)).toBe(true);
+	});
+
+	test("contradicting weapons rule out close play times when names are unread", () => {
+		const playedAt = 1_700_000_000_000;
+		const minimap = scannerMatch({
+			playedAt: playedAt + 5 * 60 * 1000,
+			teams: [
+				{
+					players: WEAPONS.slice(0, 4).map((w) => scannerMatchPlayer(null, w)),
+				},
+				{
+					players: [100, 110, 120, 130].map((w) =>
+						scannerMatchPlayer(null, w as MainWeaponId),
+					),
+				},
+			],
+		});
+		expect(Matches.isSameMatch(scannerMatch({ playedAt }), minimap)).toBe(
+			false,
+		);
+	});
+
 	test("far-apart play times contradict identity even with equal rosters", () => {
 		const a = scannerMatch({ playedAt: 1_700_000_000_000 });
 		const b = scannerMatch({ playedAt: 1_700_000_000_000 + 60 * 60 * 1000 });
