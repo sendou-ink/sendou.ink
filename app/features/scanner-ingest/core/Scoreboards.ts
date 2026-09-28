@@ -64,7 +64,7 @@ export interface IngestableGame {
 	loserInGameNames: string[];
 	/** timestamp of the game's report: the chronological key and what a scan's play time is measured against */
 	playedAt: number;
-	/** winner-first row-order names of an already linked ingest of the game, null when none; lets matching skip taken games yet recognize re-detections */
+	/** winner-first row-order names of the game's earliest linked ingest that read enough names to recognize a re-detection, null when none; lets matching skip taken games yet recognize re-detections */
 	linkedPlayerNames: string[] | null;
 }
 
@@ -257,10 +257,22 @@ export function deriveScoreboardData({
 	};
 }
 
-/** A match's players winner-first in row order (unread names as ""), or null without such a view — a game's `linkedPlayerNames`. */
-export function winnerFirstPlayerNames(match: ScannerMatch): string[] | null {
+/**
+ * A linked match's players winner-first in row order (unread names as ""), the game's
+ * `linkedPlayerNames`. Null when it can't form a view or read too few names to ever recognize
+ * a re-detection: such a read must not lock the game against every other POV's scan.
+ */
+export function recognizablePlayerNames(match: ScannerMatch): string[] | null {
 	const view = winnerFirstView(match);
-	return view ? view.players.map((player) => player.name.trim()) : null;
+	if (!view) return null;
+
+	const names = view.players.map((player) => player.name.trim());
+	const readNamesCount = names.filter((name) =>
+		Matches.normalizeInGameName(name),
+	).length;
+	if (readNamesCount < MIN_LINKED_DUPLICATE_NAME_MATCHES) return null;
+
+	return names;
 }
 
 /** Winner-first row view of a match (unread names as ""). Null when it can't link: unknown winner or a team not fully seen. */

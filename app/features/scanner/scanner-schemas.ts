@@ -23,6 +23,12 @@ import { SCANNER_LOBBIES } from "./scanner-types";
 
 const detectionText = v.pipe(v.string(), v.maxLength(500));
 
+/** longer than any in-game name or replay code the game displays */
+const MAX_PLAUSIBLE_TEXT_LENGTH = 32;
+
+/** how far ahead of the server's clock a sender's clock may run */
+const PLAYED_AT_MAX_CLOCK_SKEW_MS = 24 * 60 * 60 * 1000;
+
 const scannerLobbySchema = v.picklist(SCANNER_LOBBIES);
 export const modeShortSchema = v.picklist(modesShort);
 export const stageIdSchema = v.picklist(stageIds);
@@ -36,12 +42,12 @@ const scannerAbilitySchema = v.union([
 ]);
 
 const scannerMatchPlayerSchema = v.object({
-	name: v.nullable(detectionText),
+	name: plausibleText(),
 	weaponId: v.nullable(mainWeaponIdSchema),
-	paint: v.nullable(v.number()),
-	ka: v.nullable(v.number()),
-	d: v.nullable(v.number()),
-	s: v.nullable(v.number()),
+	paint: plausibleCount(9999),
+	ka: plausibleCount(99),
+	d: plausibleCount(99),
+	s: plausibleCount(99),
 	/** [head, clothes, shoes] ability rows; a row may hold its main alone */
 	abilities: v.optional(
 		v.pipe(
@@ -63,8 +69,8 @@ const MAX_OBJECTIVE_SAMPLES = 1000;
 const scannerMatchObjectiveSampleSchema = v.object({
 	t: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	time: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
-	score: v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
-	penalty: v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
+	score: v.tuple([plausibleCount(100), plausibleCount(100)]),
+	penalty: v.tuple([plausibleCount(999), plausibleCount(999)]),
 	control: v.nullable(teamIndexSchema),
 	position: v.optional(
 		v.nullable(v.pipe(v.number(), v.minValue(-100), v.maxValue(100))),
@@ -106,21 +112,28 @@ const MAX_KILLS = 200;
 const scannerMatchKillSchema = v.object({
 	t: v.pipe(v.number(), v.integer(), v.minValue(0)),
 	time: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
-	name: v.nullable(detectionText),
+	name: plausibleText(),
 });
 
 export const scannerMatchSchema = v.object({
 	startsAt: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	endsAt: v.nullable(v.pipe(v.number(), v.integer(), v.minValue(0))),
 	/** wall-clock ms the game was played */
-	playedAt: v.nullable(v.pipe(v.number(), v.integer(), v.gtValue(0))),
+	playedAt: v.nullable(
+		v.pipe(
+			v.number(),
+			v.integer(),
+			v.gtValue(0),
+			v.transform((playedAt) =>
+				playedAt <= Date.now() + PLAYED_AT_MAX_CLOCK_SKEW_MS ? playedAt : null,
+			),
+		),
+	),
 	lobby: v.nullable(scannerLobbySchema),
 	mode: v.nullable(modeShortSchema),
 	stage: v.nullable(stageIdSchema),
-	matchScores: v.nullable(
-		v.tuple([v.nullable(v.number()), v.nullable(v.number())]),
-	),
-	replayCode: v.nullable(detectionText),
+	matchScores: v.nullable(v.tuple([plausibleCount(100), plausibleCount(100)])),
+	replayCode: plausibleText(),
 	cast: v.boolean(),
 	objective: v.nullable(scannerMatchObjectiveSchema),
 	playerStatus: v.nullable(scannerMatchPlayerStatusSchema),
@@ -136,6 +149,30 @@ export const scannerMatchSchema = v.object({
 		}),
 	),
 });
+
+/** An OCR'd text no game screen could show reads as unread instead of failing the whole upload. */
+function plausibleText() {
+	return v.nullable(
+		v.pipe(
+			detectionText,
+			v.transform((text) =>
+				text.length <= MAX_PLAUSIBLE_TEXT_LENGTH ? text : null,
+			),
+		),
+	);
+}
+
+/** A number the game can't display (a misread or a forged value) reads as unread instead of failing the whole upload. */
+function plausibleCount(max: number) {
+	return v.nullable(
+		v.pipe(
+			v.number(),
+			v.transform((value) =>
+				Number.isInteger(value) && value >= 0 && value <= max ? value : null,
+			),
+		),
+	);
+}
 
 type MutuallyAssignable<A, B> = [A] extends [B]
 	? [B] extends [A]

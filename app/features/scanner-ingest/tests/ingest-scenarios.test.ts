@@ -83,6 +83,61 @@ describe("gating & request filtering", () => {
 		);
 		expect(await fetchLinks()).toHaveLength(1);
 	});
+
+	test("G5 implausible values: stats, scores and names the game can't show are stored as unread", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+		const scan = w.scanned(w.maps[0]!);
+		const [winners, losers] = scan.teams;
+
+		const res = await ingest(w.povUser, [
+			{
+				...scan,
+				matchScores: [99999, -5],
+				teams: [
+					{
+						players: [
+							{
+								...winners.players[0]!,
+								name: "x".repeat(100),
+								ka: 1e12,
+								d: -3,
+								s: 1.5,
+								paint: 1.5e300,
+							},
+							...winners.players.slice(1),
+						],
+					},
+					losers,
+				],
+			},
+		]);
+		expect(res.linkedGamesCount).toBe(1);
+
+		const scoreboard = (await qMatchPage(w.match.id)).ingestedScoreboards[0]!;
+		expect(scoreboard.data.scores).toEqual([null, null]);
+		expect(scoreboard.data.players[0]).toMatchObject({
+			name: "",
+			ka: null,
+			d: null,
+			s: null,
+			paint: null,
+		});
+	});
+
+	test("G6 a play time far in the future: stored without one and never linked", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+
+		const res = await ingest(w.povUser, [
+			w.scanned(w.maps[0]!, { playedAt: 1e300 }),
+		]);
+
+		expect(res.storedMatchesCount).toBe(1);
+		expect(res.linkedGamesCount).toBe(0);
+		const rows = await fetchIngestedMatches();
+		expect(rows[0]!.data.playedAt).toBeNull();
+	});
 });
 
 describe("SendouQ flow", () => {
@@ -267,6 +322,38 @@ describe("SendouQ flow", () => {
 				weaponSplId: WEAPONS[0],
 			},
 		]);
+	});
+
+	test("Q12 a nameless first link: the opponent's named read still joins the game", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+		const scan = w.scanned(w.maps[0]!);
+
+		await ingest(w.povUser, [
+			{
+				...scan,
+				teams: [
+					{
+						players: scan.teams[0].players.map((p) => ({ ...p, name: null })),
+					},
+					{
+						players: scan.teams[1].players.map((p) => ({ ...p, name: null })),
+					},
+				],
+			},
+		]);
+		const res = await ingest(w.bravoUsers[0]!, [
+			w.scanned(w.maps[0]!, { seenFrom: "loser" }),
+		]);
+
+		expect(res.linkedGamesCount).toBe(1);
+		const scoreboard = (await qMatchPage(w.match.id)).ingestedScoreboards[0]!;
+		expect(scoreboard.data.players.map((p) => p.name)).toEqual([
+			...ALPHA_NAMES,
+			...BRAVO_NAMES,
+		]);
+		expect(scoreboard.data.players[0]!.userId).toBe(w.povUser.id);
+		expect(scoreboard.data.players[4]!.userId).toBe(w.bravoUsers[0]!.id);
 	});
 
 	test("Q11 POV read misflagged as cast: the sender's seat still resolves and links their match", async () => {

@@ -949,7 +949,7 @@ async function groupRosters(groupIds: number[]) {
 	return result;
 }
 
-/** Winner-first player names of each game's earliest linked ingest, keyed by the link target column's value. */
+/** Winner-first player names of each game's earliest linked ingest with recognizable names, keyed by the link target column's value. */
 async function linkedPlayerNamesByTarget(
 	column: "tournamentMatchGameResultId" | "groupMatchMapId",
 	targetIds: number[],
@@ -972,7 +972,7 @@ async function linkedPlayerNamesByTarget(
 
 	for (const row of rows) {
 		if (row.targetId === null || result.has(row.targetId)) continue;
-		const names = Scoreboards.winnerFirstPlayerNames(row.data);
+		const names = Scoreboards.recognizablePlayerNames(row.data);
 		if (names) result.set(row.targetId, names);
 	}
 

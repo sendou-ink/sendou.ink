@@ -277,7 +277,7 @@ describe("matchedGames", () => {
 			games: [
 				testGame({
 					matchGameResultId: 11,
-					linkedPlayerNames: ["", "", "", "", "l1", "l2", "l3", "l4"],
+					linkedPlayerNames: ["", "", "w3", "w4", "l1", "l2", "l3", "l4"],
 				}),
 				testGame({ matchGameResultId: 12, playedAt: 2000 }),
 			],
@@ -785,9 +785,9 @@ describe("deriveScoreboardData", () => {
 	});
 });
 
-describe("winnerFirstPlayerNames", () => {
+describe("recognizablePlayerNames", () => {
 	test("returns names winner-first with unread names empty", () => {
-		const names = Scoreboards.winnerFirstPlayerNames(
+		const names = Scoreboards.recognizablePlayerNames(
 			swapSides(
 				testMatch({ names: ["w1", "", "w3", "w4", "l1", "l2", "l3", "l4"] }),
 			),
@@ -798,7 +798,15 @@ describe("winnerFirstPlayerNames", () => {
 
 	test("returns null for a match without a linkable scoreboard", () => {
 		expect(
-			Scoreboards.winnerFirstPlayerNames({ ...testMatch(), winner: null }),
+			Scoreboards.recognizablePlayerNames({ ...testMatch(), winner: null }),
+		).toBe(null);
+	});
+
+	test("returns null for a read with too few names to recognize a re-detection", () => {
+		expect(
+			Scoreboards.recognizablePlayerNames(
+				testMatch({ names: ["w1", "", "", "w4", "l1", "", "l3", "l4"] }),
+			),
 		).toBe(null);
 	});
 });
