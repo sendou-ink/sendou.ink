@@ -1,6 +1,7 @@
 import type { ActionFunction } from "react-router";
 import * as R from "remeda";
 import { db } from "~/db/sql";
+import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import * as ChatSystemMessage from "~/features/chat/ChatSystemMessage.server";
 import type { PersistedSystemMessageType } from "~/features/chat/chat-types";
 import { notify } from "~/features/notifications/core/notify.server";
@@ -710,7 +711,20 @@ export const action: ActionFunction = async ({ params, request }) => {
 
 			if (added.length === 0) break;
 
-			sendLeagueChatMessage(match, "LEAGUE_TIMES_PROPOSED", user.id);
+			const [latestMessage] = match.chatRoomId
+				? await ChatRepository.findAllMessagesByRoomId(match.chatRoomId, {
+						limit: 1,
+					})
+				: [];
+			if (
+				LeagueScheduling.shouldAnnounceProposals({
+					latestMessage,
+					teamMemberUserIds: team.memberUserIds,
+					now: schedule.now,
+				})
+			) {
+				sendLeagueChatMessage(match, "LEAGUE_TIMES_PROPOSED", user.id);
+			}
 			notify({
 				userIds: team.opponent.memberUserIds,
 				notification: {
@@ -943,15 +957,19 @@ function leagueTeamOfUser(
 
 	const nameOf = (teamId: number) => tournament.teamById(teamId)?.name ?? "";
 
+	const memberUserIdsOf = (teamId: number) =>
+		match.players
+			.filter((player) => player.tournamentTeamId === teamId)
+			.map((player) => player.id);
+
 	return {
 		id: ownTeamId,
 		name: nameOf(ownTeamId),
+		memberUserIds: memberUserIdsOf(ownTeamId),
 		opponent: {
 			id: opponentId,
 			name: nameOf(opponentId),
-			memberUserIds: match.players
-				.filter((player) => player.tournamentTeamId === opponentId)
-				.map((player) => player.id),
+			memberUserIds: memberUserIdsOf(opponentId),
 		},
 	};
 }

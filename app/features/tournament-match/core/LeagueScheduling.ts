@@ -20,6 +20,8 @@ export const LEAGUE_SCHEDULING = {
 	STARTING_SOON_SECONDS: HOUR_SECONDS,
 	/** A round's playable date starts in the earliest time zone (UTC+14), so it is playable wherever that date has begun. */
 	EARLIEST_UTC_OFFSET_SECONDS: 14 * HOUR_SECONDS,
+	/** A team updating its candidates within this long of its last chat announcement, with nothing said since, is not announced again. */
+	PROPOSALS_ANNOUNCEMENT_COOLDOWN_SECONDS: HOUR_SECONDS,
 } as const;
 
 /**
@@ -156,6 +158,38 @@ export function validateProposals({
 	}
 
 	return null;
+}
+
+/** Whether a team putting up new candidate times gets a chat line. Not when the room's latest message already announces the same team's times recently, so repeated updates can't flood the chat. */
+export function shouldAnnounceProposals({
+	latestMessage,
+	teamMemberUserIds,
+	now,
+}: {
+	latestMessage:
+		| {
+				type: string | null;
+				authorUserId: number | null;
+				createdAt: number;
+		  }
+		| undefined;
+	teamMemberUserIds: Array<number>;
+	now: number;
+}) {
+	if (latestMessage?.type !== "LEAGUE_TIMES_PROPOSED") {
+		return true;
+	}
+	if (
+		latestMessage.authorUserId === null ||
+		!teamMemberUserIds.includes(latestMessage.authorUserId)
+	) {
+		return true;
+	}
+
+	return (
+		now - latestMessage.createdAt >=
+		LEAGUE_SCHEDULING.PROPOSALS_ANNOUNCEMENT_COOLDOWN_SECONDS
+	);
 }
 
 /** Whether a candidate time can still be picked: it has to be ahead. */

@@ -201,8 +201,10 @@ function CandidateColumn({
 	const { formatter: candidateTimeFormatter } = useDateTimeFormat(
 		CANDIDATE_TIME_FORMAT,
 	);
+	const tierOf = (proposedAt: number) =>
+		isOwn ? null : candidateTier(proposedAt);
 	const someCandidateHasTier = proposals.some(
-		(proposal) => candidateTier(proposal.proposedAt) !== null,
+		(proposal) => tierOf(proposal.proposedAt) !== null,
 	);
 
 	return (
@@ -218,7 +220,7 @@ function CandidateColumn({
 			) : (
 				<ul className={styles.candidates}>
 					{proposals.map((proposal) => {
-						const tier = candidateTier(proposal.proposedAt);
+						const tier = tierOf(proposal.proposedAt);
 						const passed = !LeagueScheduling.isAcceptableProposal({
 							proposedAt: proposal.proposedAt,
 							now,
@@ -310,8 +312,6 @@ function ProposeTimesForm({
 	);
 	const hasProposed = ownProposedAts.length > 0;
 
-	// xxx: you can spam propose to spam the chat
-	// xxx: remove the green dot after proposing to indicate availability
 	return (
 		<section className={styles.proposeSection}>
 			<h3 className={styles.columnHeading}>

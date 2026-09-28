@@ -33,7 +33,6 @@ export const loader = async () => {
 	const leagueMatches = await findUpcomingLeagueMatches(user.id);
 	const myTeams = await TeamRepository.findAllMemberOfByUserId(user.id);
 
-	// xxx: rethink my events, maybe show all events in one list with filters instead of tabs
 	const registered = [
 		...tournamentsData.participatingFor.map(tournamentToSidebarEvent),
 		...leagueMatches.map(leagueMatchToSidebarEvent),

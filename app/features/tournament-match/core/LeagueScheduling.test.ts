@@ -260,6 +260,61 @@ describe("LeagueScheduling.isAcceptableProposal", () => {
 	});
 });
 
+describe("LeagueScheduling.shouldAnnounceProposals", () => {
+	const TEAM_MEMBER_ID = 1;
+	const OPPONENT_ID = 2;
+	const ownAnnouncement = {
+		type: "LEAGUE_TIMES_PROPOSED",
+		authorUserId: TEAM_MEMBER_ID,
+		createdAt: PLAYABLE_AT,
+	};
+
+	test.each([
+		{
+			why: "empty room",
+			latestMessage: undefined,
+			now: PLAYABLE_AT,
+			expected: true,
+		},
+		{
+			why: "someone spoke since the last announcement",
+			latestMessage: {
+				...ownAnnouncement,
+				type: null,
+				authorUserId: OPPONENT_ID,
+			},
+			now: PLAYABLE_AT,
+			expected: true,
+		},
+		{
+			why: "latest announcement is the other team's",
+			latestMessage: { ...ownAnnouncement, authorUserId: OPPONENT_ID },
+			now: PLAYABLE_AT,
+			expected: true,
+		},
+		{
+			why: "own team announced moments ago",
+			latestMessage: ownAnnouncement,
+			now: PLAYABLE_AT + 60,
+			expected: false,
+		},
+		{
+			why: "own team's announcement is an hour old",
+			latestMessage: ownAnnouncement,
+			now: PLAYABLE_AT + HOUR,
+			expected: true,
+		},
+	])("$why -> $expected", ({ latestMessage, now, expected }) => {
+		expect(
+			LeagueScheduling.shouldAnnounceProposals({
+				latestMessage,
+				teamMemberUserIds: [TEAM_MEMBER_ID],
+				now,
+			}),
+		).toBe(expected);
+	});
+});
+
 describe("LeagueScheduling.isLive", () => {
 	const scheduledAt = PLAYABLE_AT + 20 * HOUR;
 
