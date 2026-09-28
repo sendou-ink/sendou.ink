@@ -366,8 +366,9 @@ test.describe("User page", () => {
 		await seasonsPage.openStats();
 
 		await seasonsPage.openStatsTab("Weapons");
+		await expect(seasonsPage.weaponUsageImage("Luna Blaster")).toBeVisible();
 		await expect(
-			seasonsPage.weaponUsageImage("Luna Blaster (100%)"),
+			seasonsPage.weaponUsageShare(`${PLAYED_MAPS_COUNT} maps · 100%`),
 		).toBeVisible();
 
 		await seasonsPage.openStatsTab("Stages");

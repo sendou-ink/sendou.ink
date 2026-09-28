@@ -62,17 +62,17 @@ const TAB_LABEL_KEYS = {
 	enemies: "opponents",
 } as const satisfies Record<SeasonStatsTab, string>;
 
+type OverviewData = NonNullable<UserSeasonsStatsLoaderData["overview"]>;
+
 const DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART = 2;
 const OVERVIEW_WEAPONS_COUNT = 4;
 const OVERVIEW_STAGES_COUNT = 8;
-const OVERVIEW_PLAYERS_COUNT = 4;
 const HEATMAP_FEW_MAPS_THRESHOLD = 5;
 
 export default function UserSeasonsStatsPage() {
 	const { t } = useTranslation(["user"]);
 	const data = useLoaderData<typeof loader>();
 	const layoutData = useUserPageLayoutData();
-	const [tab, setTab] = useSearchParam(userSeasonsStatsSearchParams, "tab");
 	const [, setSeason] = useSearchParam(userSeasonsStatsSearchParams, "season");
 
 	if (!data) {
@@ -112,52 +112,66 @@ export default function UserSeasonsStatsPage() {
 					/>
 				</div>
 			</SubPageHeader>
-			<SendouTabs
-				selectedKey={tab}
-				onSelectionChange={(key) => setTab(key as SeasonStatsTab)}
-			>
-				<SendouTabList>
-					{SEASON_STATS_TABS.map((tabKey) => (
-						<SendouTab key={tabKey} id={tabKey}>
-							{t(`user:seasons.tabs.${TAB_LABEL_KEYS[tabKey]}`)}
-						</SendouTab>
-					))}
-				</SendouTabList>
-				<SendouTabPanel id="overview">
-					<Overview onShowAll={setTab} />
-				</SendouTabPanel>
-				<SendouTabPanel id="stages">
+			{data.seasonsParticipatedIn.includes(data.season) ? (
+				<SeasonStatsTabs />
+			) : (
+				<EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>
+			)}
+		</div>
+	);
+}
+
+function SeasonStatsTabs() {
+	const { t } = useTranslation(["user"]);
+	const data = useStatsLoaderData();
+	const [, setTab] = useSearchParam(userSeasonsStatsSearchParams, "tab");
+
+	return (
+		<SendouTabs
+			selectedKey={data.tab}
+			onSelectionChange={(key) => setTab(key as SeasonStatsTab)}
+		>
+			<SendouTabList>
+				{SEASON_STATS_TABS.map((tabKey) => (
+					<SendouTab key={tabKey} id={tabKey}>
+						{t(`user:seasons.tabs.${TAB_LABEL_KEYS[tabKey]}`)}
+					</SendouTab>
+				))}
+			</SendouTabList>
+			<SendouTabPanel id="overview">
+				{data.overview ? (
+					<Overview overview={data.overview} onShowAll={setTab} />
+				) : null}
+			</SendouTabPanel>
+			<SendouTabPanel id="stages">
+				{data.stages ? (
 					<SendouSection>
 						<StageModeHeatmap stages={data.stages} />
 					</SendouSection>
-				</SendouTabPanel>
-				<SendouTabPanel id="weapons">
+				) : null}
+			</SendouTabPanel>
+			<SendouTabPanel id="weapons">
+				{data.weapons ? (
 					<SendouSection>
 						<MostPlayedWeapons weapons={data.weapons} showCounts />
 					</SendouSection>
+				) : null}
+			</SendouTabPanel>
+			{(["mates", "enemies"] as const).map((playersTab) => (
+				<SendouTabPanel key={playersTab} id={playersTab}>
+					{data.players ? (
+						<SendouSection>
+							<SeasonPlayersTable
+								players={data.players.list}
+								activityWeeks={data.players.activityWeeks}
+								season={data.season}
+								variant="full"
+							/>
+						</SendouSection>
+					) : null}
 				</SendouTabPanel>
-				<SendouTabPanel id="mates">
-					<SendouSection>
-						<SeasonPlayersTable
-							players={data.mates}
-							activityWeeks={data.activityWeeks}
-							season={data.season}
-							variant="full"
-						/>
-					</SendouSection>
-				</SendouTabPanel>
-				<SendouTabPanel id="enemies">
-					<SendouSection>
-						<SeasonPlayersTable
-							players={data.enemies}
-							activityWeeks={data.activityWeeks}
-							season={data.season}
-							variant="full"
-						/>
-					</SendouSection>
-				</SendouTabPanel>
-			</SendouTabs>
-		</div>
+			))}
+		</SendouTabs>
 	);
 }
 
@@ -167,7 +181,13 @@ function useStatsLoaderData() {
 	return data;
 }
 
-function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
+function Overview({
+	overview,
+	onShowAll,
+}: {
+	overview: OverviewData;
+	onShowAll: (tab: SeasonStatsTab) => void;
+}) {
 	const { t } = useTranslation(["user", "common"]);
 	const data = useStatsLoaderData();
 
@@ -179,11 +199,12 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 
 	return (
 		<div className="stack lg">
-			<KeyStats />
+			<KeyStats overview={overview} />
 			<div className={styles.chartAndWeapons}>
 				<SendouSection title={t("user:seasons.stats.spChart")} icon={ChartLine}>
-					{data.skills.length >= DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART ? (
-						<PowerChart skills={data.skills} />
+					{overview.skills.length >=
+					DAYS_WITH_SKILL_NEEDED_TO_SHOW_POWER_CHART ? (
+						<PowerChart skills={overview.skills} />
 					) : (
 						<NotEnoughData />
 					)}
@@ -191,10 +212,10 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 				<SendouSection
 					title={t("user:seasons.stats.mostPlayedWeapons")}
 					icon={Crosshair}
-					action={data.weapons.length > 0 ? showAllButton("weapons") : null}
+					action={overview.weapons.length > 0 ? showAllButton("weapons") : null}
 				>
 					<MostPlayedWeapons
-						weapons={data.weapons}
+						weapons={overview.weapons}
 						limit={OVERVIEW_WEAPONS_COUNT}
 					/>
 				</SendouSection>
@@ -204,7 +225,10 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 				icon={MapIcon}
 				action={showAllButton("stages")}
 			>
-				<StageModeHeatmap stages={data.stages} limit={OVERVIEW_STAGES_COUNT} />
+				<StageModeHeatmap
+					stages={overview.stages}
+					limit={OVERVIEW_STAGES_COUNT}
+				/>
 			</SendouSection>
 			<div className={styles.playerCards}>
 				<SendouSection
@@ -213,8 +237,7 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 					action={showAllButton("mates")}
 				>
 					<SeasonPlayersTable
-						players={data.mates.slice(0, OVERVIEW_PLAYERS_COUNT)}
-						activityWeeks={data.activityWeeks}
+						players={overview.mates}
 						season={data.season}
 						variant="compact"
 					/>
@@ -225,8 +248,7 @@ function Overview({ onShowAll }: { onShowAll: (tab: SeasonStatsTab) => void }) {
 					action={showAllButton("enemies")}
 				>
 					<SeasonPlayersTable
-						players={data.enemies.slice(0, OVERVIEW_PLAYERS_COUNT)}
-						activityWeeks={data.activityWeeks}
+						players={overview.enemies}
 						season={data.season}
 						variant="compact"
 					/>
@@ -246,24 +268,23 @@ function NotEnoughData() {
 	);
 }
 
-function KeyStats() {
+function KeyStats({ overview }: { overview: OverviewData }) {
 	const { t } = useTranslation(["user"]);
-	const data = useStatsLoaderData();
 
-	const { sets, maps } = data.winrates;
+	const { sets, maps } = overview.winrates;
 
 	return (
 		<div className={styles.keyStats}>
 			<KeyStat
 				label={t("user:seasons.stats.rank")}
 				value={
-					data.skill
-						? `${data.skill.tier.name}${data.skill.tier.isPlus ? "+" : ""}`
+					overview.skill
+						? `${overview.skill.tier.name}${overview.skill.tier.isPlus ? "+" : ""}`
 						: "–"
 				}
 				sub={
-					data.skill
-						? `${ordinalToSp(data.skill.ordinal).toFixed(2)}SP · #${data.skill.leaderboardPlacement}`
+					overview.skill
+						? `${ordinalToSp(overview.skill.ordinal).toFixed(2)}SP · #${overview.skill.leaderboardPlacement}`
 						: null
 				}
 			/>
@@ -279,13 +300,13 @@ function KeyStats() {
 			/>
 			<KeyStat
 				label={t("user:seasons.tournaments")}
-				value={String(data.tournaments.count)}
+				value={String(overview.tournaments.count)}
 				sub={
-					data.tournaments.bestPlacement ? (
+					overview.tournaments.bestPlacement ? (
 						<>
 							{t("user:seasons.bestFinish")}:{" "}
 							<Placement
-								placement={data.tournaments.bestPlacement}
+								placement={overview.tournaments.bestPlacement}
 								textOnly
 								showAsSuperscript={false}
 							/>
@@ -338,11 +359,7 @@ function WinRateSub({
 	);
 }
 
-function PowerChart({
-	skills,
-}: {
-	skills: UserSeasonsStatsLoaderData["skills"];
-}) {
+function PowerChart({ skills }: { skills: OverviewData["skills"] }) {
 	return (
 		<SeasonSpChart
 			points={skills.map((skill) => ({
@@ -360,7 +377,7 @@ function MostPlayedWeapons({
 	limit,
 	showCounts = false,
 }: {
-	weapons: UserSeasonsStatsLoaderData["weapons"];
+	weapons: OverviewData["weapons"];
 	limit?: number;
 	showCounts?: boolean;
 }) {
@@ -424,7 +441,7 @@ function StageModeHeatmap({
 	stages,
 	limit,
 }: {
-	stages: UserSeasonsStatsLoaderData["stages"];
+	stages: OverviewData["stages"];
 	limit?: number;
 }) {
 	const { t } = useTranslation(["user", "game-misc"]);

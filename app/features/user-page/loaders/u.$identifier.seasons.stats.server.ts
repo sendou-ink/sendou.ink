@@ -14,9 +14,11 @@ export type UserSeasonsStatsLoaderData = NonNullable<
 	SerializeFrom<typeof loader>
 >;
 
+const OVERVIEW_PLAYERS_COUNT = 4;
+
 export const loader = async ({ url }: LoaderFunctionArgs) => {
 	requireUser();
-	const { season: seasonParam } = userSeasonsStatsSearchParams.parse(url);
+	const { season: seasonParam, tab } = userSeasonsStatsSearchParams.parse(url);
 
 	const userId = userPageUserId();
 	const seasonsParticipatedIn =
@@ -26,8 +28,33 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		return null;
 	}
 
-	const season = seasonParam ?? seasonsParticipatedIn[0];
+	const args = { season: seasonParam ?? seasonsParticipatedIn[0], userId };
+	const tabToLoad = seasonsParticipatedIn.includes(args.season) ? tab : null;
 
+	return {
+		season: args.season,
+		seasonsParticipatedIn,
+		tab,
+		overview: tabToLoad === "overview" ? await overview(args) : null,
+		stages:
+			tabToLoad === "stages"
+				? await PlayerStatRepository.findSeasonStagesByUserId(args)
+				: null,
+		weapons:
+			tabToLoad === "weapons"
+				? await ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args)
+				: null,
+		players:
+			tabToLoad === "mates" || tabToLoad === "enemies"
+				? await playersWithActivity({
+						...args,
+						type: tabToLoad === "mates" ? "MATE" : "ENEMY",
+					})
+				: null,
+	};
+};
+
+async function overview(args: { season: number; userId: number }) {
 	const [
 		skill,
 		maps,
@@ -38,40 +65,23 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 		weapons,
 		mates,
 		enemies,
-		setParticipants,
 	] = await Promise.all([
-		rankedUserSkill({ userId, season }),
-		PlayerStatRepository.findSeasonMapWinrateByUserId({ season, userId }),
-		PlayerStatRepository.findSeasonSetWinrateByUserId({ season, userId }),
-		PlayerStatRepository.findSeasonTournamentPlacementsByUserId({
-			season,
-			userId,
-		}),
-		SkillRepository.findSeasonProgressionByUserId({ season, userId }),
-		PlayerStatRepository.findSeasonStagesByUserId({ season, userId }),
-		ReportedWeaponRepository.findSeasonReportedWeaponsByUserId({
-			season,
-			userId,
-		}),
+		rankedUserSkill(args),
+		PlayerStatRepository.findSeasonMapWinrateByUserId(args),
+		PlayerStatRepository.findSeasonSetWinrateByUserId(args),
+		PlayerStatRepository.findSeasonTournamentPlacementsByUserId(args),
+		SkillRepository.findSeasonProgressionByUserId(args),
+		PlayerStatRepository.findSeasonStagesByUserId(args),
+		ReportedWeaponRepository.findSeasonReportedWeaponsByUserId(args),
 		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
-			season,
-			userId,
+			...args,
 			type: "MATE",
 		}),
 		PlayerStatRepository.findSeasonMatesEnemiesByUserId({
-			season,
-			userId,
+			...args,
 			type: "ENEMY",
 		}),
-		PlayerStatRepository.findSeasonSetParticipantsByUserId({ season, userId }),
 	]);
-
-	const activity = SeasonPlayerActivity.summarize(setParticipants);
-	const withActivity =
-		(type: "MATE" | "ENEMY") => (player: (typeof mates)[number]) => ({
-			...player,
-			setsPerWeek: activity.players[type].get(player.user.id) ?? [],
-		});
 
 	return {
 		skill,
@@ -83,13 +93,31 @@ export const loader = async ({ url }: LoaderFunctionArgs) => {
 					? Math.min(...tournamentPlacements.map((t) => t.placement))
 					: null,
 		},
-		season,
-		seasonsParticipatedIn,
 		skills,
 		stages,
 		weapons,
-		activityWeeks: activity.weeks,
-		mates: mates.map(withActivity("MATE")),
-		enemies: enemies.map(withActivity("ENEMY")),
+		mates: mates.slice(0, OVERVIEW_PLAYERS_COUNT),
+		enemies: enemies.slice(0, OVERVIEW_PLAYERS_COUNT),
 	};
-};
+}
+
+async function playersWithActivity(args: {
+	season: number;
+	userId: number;
+	type: "MATE" | "ENEMY";
+}) {
+	const [players, setParticipants] = await Promise.all([
+		PlayerStatRepository.findSeasonMatesEnemiesByUserId(args),
+		PlayerStatRepository.findSeasonSetParticipantsByUserId(args),
+	]);
+
+	const activity = SeasonPlayerActivity.summarize(setParticipants);
+
+	return {
+		activityWeeks: activity.weeks,
+		list: players.map((player) => ({
+			...player,
+			setsPerWeek: activity.players[args.type].get(player.user.id) ?? [],
+		})),
+	};
+}

@@ -121,7 +121,7 @@ export const userSeasonResultsSearchParams = SearchParams.define({
 export const userSeasonsStatsSearchParams = SearchParams.define({
 	tab: SP.param(v.picklist(SEASON_STATS_TABS), {
 		default: "overview",
-		loader: false,
+		loader: true,
 	}),
 	season: startedSeasonParam,
 });

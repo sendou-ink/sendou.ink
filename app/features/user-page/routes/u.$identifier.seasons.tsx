@@ -110,33 +110,39 @@ export default function UserSeasonsPage() {
 				seasonViewed={data.season}
 				seasonOverviews={data.seasonOverviews}
 			/>
-			<div
-				className={styles.overview}
-				data-has-team={String(Boolean(data.teamEntry))}
-			>
-				{data.teamEntry ? (
-					<TeamRank season={data.season} teamEntry={data.teamEntry} />
-				) : null}
-				<SendouSection
-					title={t("user:seasons.summary.activity")}
-					icon={CalendarDays}
-					className={styles.activity}
-				>
-					<SeasonActivityCalendar
-						seasonDateRange={Seasons.nthToDateRange(data.season)}
-						activeDays={data.activeDays}
-						today={new Date()}
-						monthNames="short"
-						className={clsx(styles.activityCalendar, "scrollbar")}
-					/>
-				</SendouSection>
-				<StatsPeek
-					user={layoutData.user}
-					season={data.season}
-					peek={data.statsPeek}
-				/>
-			</div>
-			<Outlet />
+			{data.seasonsParticipatedIn.includes(data.season) ? (
+				<>
+					<div
+						className={styles.overview}
+						data-has-team={String(Boolean(data.teamEntry))}
+					>
+						{data.teamEntry ? (
+							<TeamRank season={data.season} teamEntry={data.teamEntry} />
+						) : null}
+						<SendouSection
+							title={t("user:seasons.summary.activity")}
+							icon={CalendarDays}
+							className={styles.activity}
+						>
+							<SeasonActivityCalendar
+								seasonDateRange={Seasons.nthToDateRange(data.season)}
+								activeDays={data.activeDays}
+								today={new Date()}
+								monthNames="short"
+								className={clsx(styles.activityCalendar, "scrollbar")}
+							/>
+						</SendouSection>
+						<StatsPeek
+							user={layoutData.user}
+							season={data.season}
+							peek={data.statsPeek}
+						/>
+					</div>
+					<Outlet />
+				</>
+			) : (
+				<EmptyState navItem="sendouq">{t("user:seasons.noQ")}</EmptyState>
+			)}
 			{data.canceled ? (
 				<CanceledMatchesDialog canceledMatches={data.canceled} />
 			) : null}

@@ -52,9 +52,14 @@ export class UserSeasonsPage {
 		await this.page.getByRole("tab", { name }).click();
 	}
 
-	/** A weapon of the Weapons tab, labeled with its usage share, e.g. `"Luna Blaster (100%)"`. */
-	weaponUsageImage(label: string) {
-		return this.page.getByRole("img", { name: label });
+	/** A weapon of the Weapons tab, e.g. `"Luna Blaster"`. */
+	weaponUsageImage(weaponName: string) {
+		return this.page.getByRole("img", { name: weaponName });
+	}
+
+	/** A weapon's maps played and usage share on the Weapons tab, e.g. `"4 maps · 100%"`. */
+	weaponUsageShare(share: string) {
+		return this.page.getByText(share, { exact: true });
 	}
 
 	/** A stage & mode win/loss record of the Stages tab, e.g. `"4–0"`. */

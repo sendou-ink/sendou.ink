@@ -23,6 +23,8 @@ export interface TieredSkill {
 
 export async function freshUserSkills(season: number): Promise<{
 	userSkills: Record<string, TieredSkill>;
+	/** SP leaderboard placement of each user with enough sets to be ranked */
+	leaderboardPlacements: Record<string, number>;
 	intervals: SkillTierInterval[];
 	isAccurateTiers: boolean;
 }> {
@@ -48,6 +50,7 @@ export async function freshUserSkills(season: number): Promise<{
 				];
 			}),
 		),
+		leaderboardPlacements: placementsByUserId(points),
 	};
 }
 
@@ -81,17 +84,12 @@ export async function rankedUserSkill({
 	season: number;
 	userId: number;
 }) {
-	const { userSkills: skills } = await userSkills(season);
+	const { userSkills: skills, leaderboardPlacements } =
+		await userSkills(season);
 	const skill = skills[userId];
 	if (!skill || skill.approximate) return null;
 
-	return {
-		...skill,
-		leaderboardPlacement:
-			Object.values(skills).filter(
-				(other) => !other.approximate && other.ordinal > skill.ordinal,
-			).length + 1,
-	};
+	return { ...skill, leaderboardPlacement: leaderboardPlacements[userId] };
 }
 
 export async function refreshUserSkills(season: number) {
@@ -172,4 +170,28 @@ function skillTierIntervals(
 	}
 
 	return { intervals: result, isAccurateTiers: hasLeviathan };
+}
+
+/** Tied ordinals share a placement, the next one skipping as many as tied ("1224") */
+function placementsByUserId(
+	orderedPoints: Array<
+		Pick<Tables["Skill"], "ordinal" | "matchesCount" | "userId">
+	>,
+) {
+	const result: Record<string, number> = {};
+
+	let rankedCount = 0;
+	let placement = 0;
+	let previousOrdinal: number | null = null;
+	for (const point of orderedPoints) {
+		if (point.matchesCount < MATCHES_COUNT_NEEDED_FOR_LEADERBOARD) continue;
+
+		rankedCount++;
+		if (point.ordinal !== previousOrdinal) placement = rankedCount;
+		previousOrdinal = point.ordinal;
+
+		result[point.userId as number] = placement;
+	}
+
+	return result;
 }

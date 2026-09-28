@@ -9,7 +9,13 @@ import * as SeasonPlayerActivity from "../core/SeasonPlayerActivity";
 import type { UserSeasonsStatsLoaderData } from "../loaders/u.$identifier.seasons.stats.server";
 import styles from "./SeasonPlayersTable.module.css";
 
-type SeasonPlayer = UserSeasonsStatsLoaderData["mates"][number];
+type SeasonPlayer = NonNullable<
+	UserSeasonsStatsLoaderData["overview"]
+>["mates"][number] & {
+	setsPerWeek?: NonNullable<
+		UserSeasonsStatsLoaderData["players"]
+	>["list"][number]["setsPerWeek"];
+};
 
 /**
  * Teammates or opponents of a season, a row per player linking to their season.
@@ -17,12 +23,13 @@ type SeasonPlayer = UserSeasonsStatsLoaderData["mates"][number];
  */
 export function SeasonPlayersTable({
 	players,
-	activityWeeks,
+	activityWeeks = [],
 	season,
 	variant,
 }: {
 	players: SeasonPlayer[];
-	activityWeeks: number[];
+	/** Only shown by the "full" variant, with each player's `setsPerWeek` */
+	activityWeeks?: number[];
 	season: number;
 	variant: "compact" | "full";
 }) {
@@ -98,7 +105,7 @@ export function SeasonPlayersTable({
 										label: t("user:seasons.summary.sets"),
 										points: SeasonPlayerActivity.weeklyPoints({
 											weeks: activityWeeks,
-											setsPerWeek: player.setsPerWeek,
+											setsPerWeek: player.setsPerWeek ?? [],
 										}),
 									},
 								]}
