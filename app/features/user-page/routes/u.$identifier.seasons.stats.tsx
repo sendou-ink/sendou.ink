@@ -638,12 +638,13 @@ function StageWeaponUsageStats(props: {
 
 								return (
 									<div key={u.weaponSplId}>
-										<WeaponImage
-											weaponSplId={u.weaponSplId}
-											variant="build"
-											width={48}
-											className={styles.seasonWeaponUsageWeapon}
-										/>
+										<CircleBackdrop>
+											<WeaponImage
+												weaponSplId={u.weaponSplId}
+												variant="badge"
+												size={48}
+											/>
+										</CircleBackdrop>
 										<div
 											className={clsx("text-xs font-bold", {
 												"text-success": winrate >= 50,

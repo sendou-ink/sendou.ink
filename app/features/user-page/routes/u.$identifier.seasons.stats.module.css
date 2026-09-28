@@ -201,14 +201,9 @@
 .seasonWeaponUsageWeaponsContainer {
 	display: flex;
 	flex-wrap: wrap;
-	gap: var(--s-3);
+	gap: var(--s-6);
 	justify-content: center;
 	max-height: 300px;
 	overflow-y: auto;
-}
-
-.seasonWeaponUsageWeapon {
-	border-radius: 100%;
-	background-color: var(--color-bg-high);
-	padding: var(--s-1-5);
+	padding: var(--s-2);
 }
