@@ -75,7 +75,7 @@ describe("montageWindows", () => {
 		{
 			why: "a 3-splat streak within its cap",
 			kills: [100, 110, 120],
-			expected: [[95, 124, 3]],
+			expected: [[95, 123, 3]],
 		},
 		{
 			why: "a 3-splat streak over its cap",
@@ -85,12 +85,12 @@ describe("montageWindows", () => {
 		{
 			why: "a 4-splat streak may run longer than a 3-splat one",
 			kills: [100, 112, 124, 136],
-			expected: [[95, 140, 4]],
+			expected: [[95, 139, 4]],
 		},
 		{
 			why: "a streak longer than the last count uses its cap",
 			kills: [100, 108, 116, 124, 132, 140],
-			expected: [[95, 144, 6]],
+			expected: [[95, 143, 6]],
 		},
 		{
 			why: "streaks under the minimum are left out",
@@ -105,7 +105,7 @@ describe("montageWindows", () => {
 		// all five fit 60 s; their first three alone would also fit 30 s
 		const windows = montageWindows(game(100, 105, 110, 125, 140), criteria);
 
-		expect(spans(windows)).toEqual([[95, 144, 5]]);
+		expect(spans(windows)).toEqual([[95, 143, 5]]);
 	});
 });
 

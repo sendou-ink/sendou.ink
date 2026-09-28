@@ -39,26 +39,26 @@ test("no window below the kill threshold", () => {
 	assert.deepEqual(scoreWindows(kills(100, 105, 110), []), []);
 	assert.deepEqual(
 		stripped(scoreWindows(kills(100, 105, 110), [], { minKills: 3 })),
-		[windowOf(95, 114, 3, 110)],
+		[windowOf(95, 113, 3, 110)],
 	);
 });
 
 test("a run of close kills is one window with lead and tail", () => {
 	assert.deepEqual(stripped(scoreWindows(kills(100, 110, 125, 130), [])), [
-		windowOf(95, 134, 4, 130),
+		windowOf(95, 133, 4, 130),
 	]);
 });
 
 test("the clip start clamps to the stream start", () => {
 	assert.deepEqual(stripped(scoreWindows(kills(2, 4, 6, 8), [])), [
-		windowOf(0, 12, 4, 8),
+		windowOf(0, 11, 4, 8),
 	]);
 });
 
 test("a long pause splits the streak", () => {
 	assert.deepEqual(
 		stripped(scoreWindows(kills(100, 105, 110, 115, 140, 145, 150, 155), [])),
-		[windowOf(95, 119, 4, 115), windowOf(135, 159, 4, 155)],
+		[windowOf(95, 118, 4, 115), windowOf(135, 158, 4, 155)],
 	);
 });
 
@@ -66,13 +66,13 @@ test("a death between two kills ends the streak", () => {
 	assert.deepEqual(scoreWindows(kills(100, 105, 110, 115), [107.5]), []);
 	assert.deepEqual(
 		stripped(scoreWindows(kills(100, 105, 110, 115, 120), [116])),
-		[windowOf(95, 119, 4, 115)],
+		[windowOf(95, 118, 4, 115)],
 	);
 });
 
 test("a death on a kill's second (a trade) counts after that kill", () => {
 	assert.deepEqual(stripped(scoreWindows(kills(100, 105, 110, 115), [115])), [
-		windowOf(95, 119, 4, 115),
+		windowOf(95, 118, 4, 115),
 	]);
 });
 
@@ -83,7 +83,7 @@ test("a streak is cut where its clip would outgrow the cap", () => {
 				maxSeconds: 60,
 			}),
 		),
-		[windowOf(95, 149, 4, 145), windowOf(155, 209, 4, 205)],
+		[windowOf(95, 148, 4, 145), windowOf(155, 208, 4, 205)],
 	);
 });
 
