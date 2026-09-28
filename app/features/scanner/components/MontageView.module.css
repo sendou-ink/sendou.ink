@@ -1,0 +1,250 @@
+.view {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-4);
+}
+
+.title {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+}
+
+.note {
+	margin: 0;
+	font-size: var(--font-xs);
+	color: var(--color-text-high);
+}
+
+.error {
+	margin: 0;
+	font-size: var(--font-xs);
+	color: var(--color-error);
+}
+
+.panel {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.panelHeader {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}
+
+.panelTitle {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+	overflow-wrap: anywhere;
+}
+
+.criteria {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.criterion {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.criterionLabel {
+	min-width: 7rem;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-semi);
+	color: var(--color-text-high);
+}
+
+.renderProgress {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+	font-variant-numeric: tabular-nums;
+
+	& progress {
+		flex: 1;
+	}
+}
+
+.picks {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1);
+	margin: 0;
+	padding: 0;
+	list-style: none;
+}
+
+.pick {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-2);
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+}
+
+.pickIndex {
+	min-width: 1.5rem;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	font-variant-numeric: tabular-nums;
+	color: var(--color-text-high);
+}
+
+.pickActions {
+	display: inline-flex;
+	margin-inline-start: auto;
+}
+
+.summary {
+	display: flex;
+	flex-direction: column;
+	min-width: 0;
+}
+
+.summaryTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1);
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+}
+
+.summaryMeta {
+	font-size: var(--font-2xs);
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.grid {
+	display: grid;
+	grid-template-columns: repeat(auto-fill, minmax(min(100%, 300px), 1fr));
+	gap: var(--s-4);
+}
+
+.card {
+	display: flex;
+	flex-direction: column;
+	border-radius: var(--radius-box);
+	background: var(--color-bg-high);
+	overflow: hidden;
+}
+
+.video,
+.thumb {
+	display: block;
+	width: 100%;
+	aspect-ratio: 16 / 9;
+	background: #000 center / cover no-repeat;
+	border: none;
+	padding: 0;
+	cursor: pointer;
+	position: relative;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: -3px;
+	}
+}
+
+.video {
+	cursor: default;
+}
+
+.playBadge {
+	position: absolute;
+	inset: 0;
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	color: #fff;
+
+	&::before {
+		content: "";
+		position: absolute;
+		width: 48px;
+		height: 48px;
+		border-radius: var(--radius-full);
+		background: rgb(0 0 0 / 0.6);
+	}
+
+	& svg {
+		position: relative;
+	}
+}
+
+.cardBody {
+	display: flex;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+	padding: var(--s-2-5) var(--s-3);
+}
+
+.group {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+}
+
+.groupTitle {
+	display: flex;
+	align-items: center;
+	gap: var(--s-1-5);
+	width: fit-content;
+	padding: 0;
+	border: none;
+	background: none;
+	color: inherit;
+	font: inherit;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-bold);
+	cursor: pointer;
+
+	&:focus-visible {
+		outline: var(--focus-ring);
+		outline-offset: 2px;
+		border-radius: var(--radius-field);
+	}
+}
+
+.groupCount {
+	color: var(--color-text-high);
+	font-variant-numeric: tabular-nums;
+}
+
+.music {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+}
+
+.musicName {
+	overflow-wrap: anywhere;
+	font-weight: var(--weight-semi);
+}
+
+.musicButton {
+	display: inline-flex;
+	align-items: center;
+	height: var(--field-size-sm);
+	padding: 0 var(--field-padding);
+	border: var(--border-width) solid var(--color-fill-accent);
+	border-radius: var(--radius-field);
+	color: var(--color-fg-accent);
+	font-weight: var(--weight-bold);
+	cursor: pointer;
+
+	& input {
+		display: none;
+	}
+}

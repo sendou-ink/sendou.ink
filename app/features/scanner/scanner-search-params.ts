@@ -11,6 +11,7 @@ const SCANNER_VIEWS = [
 	"clips",
 	"debug",
 	"fixtures",
+	"montage",
 ] as const;
 
 export const scannerSearchParams = SearchParams.define({

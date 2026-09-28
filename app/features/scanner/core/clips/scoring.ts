@@ -29,6 +29,8 @@ export interface ClipWindow {
 	/** that kill's match timer reading, when read */
 	time: number | null;
 	kills: number;
+	/** seconds into the stream/file of each kill, chronological */
+	killTimes: number[];
 	score: number;
 }
 
@@ -77,6 +79,7 @@ function scoreRun(kills: readonly ScannerMatchKill[]): ClipWindow {
 		t: last.t,
 		time: last.time,
 		kills: kills.length,
+		killTimes: kills.map((kill) => kill.t),
 		score: kills.length ** 2 + kills.length / span,
 	};
 }

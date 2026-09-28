@@ -1,7 +1,7 @@
 /**
  * The settings popover, opened from ⚙ on the landing and the live header:
  * the upload, clip and GPU toggles, the retention notes, and the debug tools
- * (enabling debug mode, saving the live frame, the fixtures link in development). The source lives on the landing's Live card, the one place
+ * (enabling debug mode, saving the live frame, the fixtures and montage links in development). The source lives on the landing's Live card, the one place
  * it must be right.
  */
 import { Bug, Camera, Settings } from "lucide-react";
@@ -41,7 +41,7 @@ export function SettingsPopover({
 	const loggedIn = isLoggedIn();
 	const debug = useDebug();
 	const [, setDebugParam] = useSearchParam(scannerSearchParams, "debug");
-	const showFixturesLink = process.env.NODE_ENV === "development";
+	const showDevLinks = process.env.NODE_ENV === "development";
 	const showSaveFrame = debug && onSaveFrame !== undefined;
 	const gpuSupported = "gpu" in navigator;
 
@@ -142,7 +142,7 @@ export function SettingsPopover({
 					<br />
 					Sessions: last 30 days or {MAX_SESSIONS} sessions.
 				</p>
-				{!debug || showSaveFrame || showFixturesLink ? (
+				{!debug || showSaveFrame || showDevLinks ? (
 					<section className={styles.section}>
 						<span className={styles.label}>Debug</span>
 						<div className={styles.row}>
@@ -166,15 +166,25 @@ export function SettingsPopover({
 									Save frame as fixture
 								</SendouButton>
 							) : null}
-							{showFixturesLink ? (
-								<Link
-									to={scannerSearchParams.href(SCANNER_PAGE, {
-										view: "fixtures",
-									})}
-									defaultShouldRevalidate={false}
-								>
-									Fixtures
-								</Link>
+							{showDevLinks ? (
+								<>
+									<Link
+										to={scannerSearchParams.href(SCANNER_PAGE, {
+											view: "fixtures",
+										})}
+										defaultShouldRevalidate={false}
+									>
+										Fixtures
+									</Link>
+									<Link
+										to={scannerSearchParams.href(SCANNER_PAGE, {
+											view: "montage",
+										})}
+										defaultShouldRevalidate={false}
+									>
+										Tournament montage
+									</Link>
+								</>
 							) : null}
 						</div>
 					</section>

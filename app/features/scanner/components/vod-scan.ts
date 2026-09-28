@@ -202,11 +202,16 @@ export function cancelVodScan(): void {
 /**
  * Scans `file` as fast as decoding allows; a finished scan replaces any saved
  * one of the same name. `saveFrames` (debug mode) keeps each event's analyzed
- * frame and thumbnail for the raw detections.
+ * frame and thumbnail for the raw detections; `clips: false` skips cutting
+ * clips of the scan.
  */
 export async function startVodScan(
 	file: File,
-	{ telemetry, saveFrames }: { telemetry: boolean; saveFrames: boolean },
+	{
+		telemetry,
+		saveFrames,
+		clips = true,
+	}: { telemetry: boolean; saveFrames: boolean; clips?: boolean },
 ): Promise<void> {
 	cancelVodScan();
 	const abort = { aborted: false };
@@ -487,7 +492,7 @@ export async function startVodScan(
 		events = (await loadVodEvents(file.name)).map(toScanEvent);
 		update({ events, status: "done" });
 		void refreshVods();
-		await cutClips(file, events, update);
+		if (clips) await cutClips(file, events, update);
 	}
 }
 

@@ -28,7 +28,7 @@ running capture (`LiveView`), a past session (`PastSessionView`) and a
 scanned VoD (`VodView`): header, clip strip, then match cards
 (`components/MatchCard.tsx`) newest first. Views are picked by the `view`
 search param (`scanner-search-params.ts`: `live`, `session&id=`,
-`vod&name=`, `clips`, `debug` and the dev-only `fixtures`). Nothing links to
+`vod&name=`, `clips`, `debug` and the dev-only `fixtures` and `montage`). Nothing links to
 the `debug` screenshot view: dropping an image on the landing's File card
 opens it, for anyone, through the same handoff Inspect uses.
 
@@ -84,7 +84,7 @@ opens it, for anyone, through the same handoff Inspect uses.
   `Save frame as fixture` (Settings → Debug, live only), `?telemetry=true`,
   and the `Raw detections` disclosure inside a match card (the per-event
   cards with Inspect). The screenshot view (`ScreenshotPage.tsx`) is not
-  gated; the fixtures view is dev-only.
+  gated; the fixtures and montage views are dev-only.
 
 ## Clips
 
@@ -148,6 +148,53 @@ scored `kills² + kills / span`. Both controllers run the same
   load; the file is on disk. Clip records carry the real `start`/`end`
   seconds (a packet-copied clip starts at a keyframe), and a card's deaths
   and kills get a ▶ when a clip covers their `t`.
+
+## Tournament montage (dev only, PoC)
+
+`view=montage` (Settings → Debug → Tournament montage, development only)
+builds the basis of a tournament highlight video. `pnpm vods:download <id>`
+writes the tournament's match VoDs to `scripts/output/vods/<id>/` together
+with `tournament.json` (name, start, logo, top 8, each VoD's POV team —
+`MontageManifest` in `core/montage.ts`) and the logos it names; the view
+opens that folder through the File System Access API's directory picker
+(Chrome). `components/montage.ts` scans every VoD without games yet through
+`startVodScan` (`clips: false`: saved like any file scan, so they also show
+in the landing's list) and lists every streak meeting the criteria as a
+candidate, best score first (`montageWindows`): min splats (default 3) and
+a length cap per splat count before fast-forwarding (defaults 2: 20 s,
+3: 30 s, 4: 45 s, 5+: 60 s), picked on the page and kept in localStorage.
+Candidates are grouped by the POV player's base weapon (read off the
+game's scoreboard seat, variants folded to their base). Picking one hides
+that team's other candidates (a cast VoD has no team: only its own go). The scanned games, the picks (stored whole, so changing
+the criteria never drops one) and the folder's handle live in the
+`montages` store (`store/montages.ts`, one record per tournament): a reload
+restores the latest montage at once and reconnects the folder itself when
+Chrome kept the permission, else `Reconnect folder` asks again.
+
+Rendering (`capture/montage-render.ts`, overlays in `montage-overlays.ts`)
+re-encodes everything at 1920×1080 60 fps: the title card, the picks in
+order, then the top 8 (player names for the top 3, and each team's comp:
+`montage-comps.ts` builds it the way the results image export does, from
+the scans alone — every scoreboard names both sides' weapons and the POV
+seat tells which side is the streamer's team, so a team needs VoDs of its
+own or of its opponents to get one). The cards and each
+clip's ribbon (round, both teams, the POV player and their profile link;
+fades out after 5 s) are the image export's graphic blocks
+(`features/img-export`), mounted off screen by `MontageGraphics.tsx` in the
+dark theme and rasterized with snapdom at the scale that makes them full HD —
+the renderer asks for them through `setMontageGraphicCapture`, so the page
+must stay open. The manifest carries what they show (round names, both
+sides, the streamer, top-3 players, tier, organization, counts — no
+weapons: those come from the scans) and the
+download script saves every image it names next to the VoDs. Dead time
+between two kills — from 3 s after one to 3 s before the next, when at
+least 2 s — plays at 4×, muted and badged (`playbackSegments`). Each clip's
+sound is normalized to -16 LUFS (`core/loudness.ts`: BS.1770 integrated
+loudness, at most +24 dB) with a look-ahead limiter holding peaks under
+-1 dBFS. An optional music (or video) file replaces the game sound for the
+whole video: looped as needed, faded in and out, normalized the same way;
+it is kept in the montage's record. Chrome's save dialog streams the MP4 to disk; without it the file
+is built in memory and downloaded.
 
 ## Commands
 

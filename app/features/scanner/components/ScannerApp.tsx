@@ -16,6 +16,8 @@ import { FixturesPage } from "./FixturesPage";
 import { LandingView } from "./LandingView";
 import { LiveView } from "./LiveView";
 import { useLiveSession } from "./live-session";
+import { MontageView } from "./MontageView";
+import { cancelMontageScan } from "./montage";
 import { PastSessionView } from "./PastSessionView";
 import styles from "./ScannerApp.module.css";
 import { ScreenshotPage } from "./ScreenshotPage";
@@ -50,7 +52,13 @@ export function ScannerApp() {
 	}, []);
 
 	// a file scan has no Cancel button: leaving the page is how it is stopped
-	useEffect(() => cancelVodScan, []);
+	useEffect(
+		() => () => {
+			cancelMontageScan();
+			cancelVodScan();
+		},
+		[],
+	);
 
 	const capturing = live.status === "running" || live.status === "starting";
 
@@ -67,6 +75,8 @@ export function ScannerApp() {
 			<ScreenshotPage />
 		) : view === "fixtures" && process.env.NODE_ENV === "development" ? (
 			<FixturesPage />
+		) : view === "montage" && process.env.NODE_ENV === "development" ? (
+			<MontageView />
 		) : (
 			<LandingView />
 		);

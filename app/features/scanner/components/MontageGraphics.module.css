@@ -1,0 +1,114 @@
+/* on screen (snapdom reads layout) but out of sight and reach */
+.stage {
+	position: fixed;
+	inset: 0 auto auto 0;
+	z-index: -1;
+	opacity: 0;
+	pointer-events: none;
+}
+
+.graphic {
+	width: fit-content;
+}
+
+.frame {
+	display: flex;
+	align-items: center;
+	justify-content: center;
+	background:
+		radial-gradient(
+			ellipse 80% 55% at 50% -10%,
+			color-mix(in oklch, var(--color-fg-accent) 22%, transparent),
+			transparent 70%
+		),
+		var(--color-bg);
+}
+
+.ribbon {
+	display: grid;
+	grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+	align-items: center;
+	gap: var(--s-6);
+}
+
+.ribbonRound {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	min-width: 0;
+}
+
+.ribbonRoundName {
+	overflow: hidden;
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	text-overflow: ellipsis;
+}
+
+.ribbonTeams {
+	display: flex;
+	align-items: center;
+	gap: var(--s-3);
+}
+
+.ribbonTeam,
+.ribbonTeamPov {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+	padding: var(--s-1-5) var(--s-3);
+	background-color: var(--color-bg-high);
+	border: 1.5px solid color-mix(in oklch, var(--color-text) 8%, transparent);
+	border-radius: var(--radius-box);
+}
+
+.ribbonTeamPov {
+	border-color: color-mix(in oklch, var(--color-fg-accent) 60%, transparent);
+}
+
+.ribbonTeamName {
+	max-width: 16rem;
+	overflow: hidden;
+	font-size: var(--font-md);
+	font-weight: var(--weight-extra);
+	text-overflow: ellipsis;
+}
+
+.ribbonVersus {
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	text-transform: uppercase;
+	color: var(--color-text-high);
+}
+
+.ribbonPov {
+	display: flex;
+	align-items: center;
+	justify-content: flex-end;
+	gap: var(--s-3);
+	min-width: 0;
+}
+
+.ribbonPovText {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-0-5);
+	min-width: 0;
+	font-size: var(--font-xs);
+	font-weight: var(--weight-extra);
+	color: var(--color-text-high);
+}
+
+.ribbonPovName {
+	overflow: hidden;
+	font-size: var(--font-md);
+	color: var(--color-text);
+	text-overflow: ellipsis;
+}
+
+.ribbonWeapon {
+	display: flex;
+	padding: var(--s-1);
+	background-color: oklch(0% 0 0 / 0.3);
+	border-radius: var(--radius-field);
+}

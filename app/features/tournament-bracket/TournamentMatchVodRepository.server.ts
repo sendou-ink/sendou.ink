@@ -65,7 +65,8 @@ export function findVodsByTournamentId(tournamentId: number) {
 
 /**
  * Every VoD of the tournament with what is needed to download its match: its round, when the match started and
- * when its last game was reported, plus the team whose POV the VoD is and how many sets that team won (`null` for casts).
+ * when its last game was reported, plus the streamer and the team whose POV the VoD is and how many sets that team
+ * won (`null` for casts).
  */
 export async function findAllForDownloadByTournamentId(tournamentId: number) {
 	const [vods, finishedMatches] = await Promise.all([
@@ -94,6 +95,7 @@ export async function findAllForDownloadByTournamentId(tournamentId: number) {
 			.select((eb) => [
 				"TournamentMatchVod.matchId",
 				"TournamentMatchVod.account",
+				"TournamentMatchVod.userId",
 				"TournamentMatchVod.platformVideoId",
 				"TournamentMatchVod.timestampSeconds",
 				"TournamentMatch.startedAt",

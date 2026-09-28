@@ -9,9 +9,10 @@
  *  - `clips`: clip records by auto id, indexed by bucket (clips.ts)
  *  - `clip-blobs`: the clips' MP4s, keyed by clip id
  *  - `inspect-frames`: one-shot Inspect handoffs into a new debug tab (inspect.ts)
+ *  - `montages`: the dev-only tournament montage's state, keyed by tournament id (montages.ts)
  */
 const DB_NAME = "scanner";
-const DB_VERSION = 3;
+const DB_VERSION = 4;
 
 export const EVENTS_STORE = "events";
 export const FRAMES_STORE = "frames";
@@ -22,12 +23,13 @@ export const VOD_FRAMES_STORE = "vod-frames";
 export const CLIPS_STORE = "clips";
 export const CLIP_BLOBS_STORE = "clip-blobs";
 export const INSPECT_FRAMES_STORE = "inspect-frames";
+export const MONTAGES_STORE = "montages";
 
 /**
  * Adds the stores a DB_VERSION bump introduced, keeping the existing ones and
  * their data. v2 added the clip stores and moved live event times onto the
  * wall clock, so a v1 database's live events (stamped on the page clock)
- * are dropped; v3 added the compacted matches. Changing an existing store's
+ * are dropped; v3 added the compacted matches, v4 the montages. Changing an existing store's
  * shape needs a real migration here.
  */
 function upgrade(database: IDBDatabase, oldVersion: number): void {
@@ -72,6 +74,10 @@ function upgrade(database: IDBDatabase, oldVersion: number): void {
 			autoIncrement: true,
 		});
 		clips.createIndex("bucket", "bucket");
+	}
+
+	if (!has(MONTAGES_STORE)) {
+		database.createObjectStore(MONTAGES_STORE, { keyPath: "tournamentId" });
 	}
 
 	for (const name of [

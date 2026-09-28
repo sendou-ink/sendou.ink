@@ -8,7 +8,16 @@ import { scannerSearchParams } from "./scanner-search-params";
 describe("scannerSearchParams", () => {
 	test("round-trips", () => {
 		assertRoundTrips(scannerSearchParams, {
-			view: ["home", "live", "session", "vod", "clips", "debug", "fixtures"],
+			view: [
+				"home",
+				"live",
+				"session",
+				"vod",
+				"clips",
+				"debug",
+				"fixtures",
+				"montage",
+			],
 			id: [1758040920000, 0, null],
 			name: ["sws26-finals.mkv", "a b.mp4", null],
 			q: ["", "gauge-overlay", "player-status/cast,ready-trough"],
