@@ -15,7 +15,7 @@ export const MAX_CLIP_SECONDS = 60;
 /** footage kept before the first kill: the approach */
 const CLIP_LEAD_S = 5;
 /** footage kept after the last kill: the splat's follow-through */
-const CLIP_TAIL_S = 4;
+const CLIP_TAIL_S = 3;
 /** a longer pause between kills is separate fights, not one streak */
 export const STREAK_MAX_GAP_S = 15;
 
