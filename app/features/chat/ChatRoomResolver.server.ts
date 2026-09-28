@@ -224,6 +224,7 @@ async function resolveTournamentTeamRooms(
 		participantUserIds: owner.members.map((member) => member.userId),
 		observerUserIds: organizers.get(owner.tournamentId)?.ORGANIZE ?? [],
 		labelByUserId: organizerLabels(organizers.get(owner.tournamentId)),
+		inactive: Boolean(owner.isFinalized),
 	}));
 }
 

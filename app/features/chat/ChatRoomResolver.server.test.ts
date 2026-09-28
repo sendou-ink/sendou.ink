@@ -196,6 +196,26 @@ describe("ChatRoomResolver.resolve", () => {
 		expect(room.permissions.OBSERVE).toContain(authorId);
 	});
 
+	test("marks a TOURNAMENT_TEAM room inactive once the tournament is finalized", async () => {
+		const tournament = await TournamentFactory.create({
+			authorId: users.id(2),
+		});
+		const team = await TournamentTeamFactory.create(
+			{
+				tournamentId: tournament.id,
+				memberUserIds: [users.id(3), users.id(4)],
+			},
+			{ isLooking: true },
+		);
+		const chatRoomId = await teamChatRoomId(team.id);
+
+		expect((await resolveOrThrow(chatRoomId)).inactive).toBe(false);
+
+		await TournamentRepository.finalizeWithoutSummary(tournament.id);
+
+		expect((await resolveOrThrow(chatRoomId)).inactive).toBe(true);
+	});
+
 	test("resolves a SCRIM room to the post's users plus the accepted request's users", async () => {
 		const { chatRoomId, postUserIds, requestUserIds, startsAt } =
 			await setupAcceptedScrim();

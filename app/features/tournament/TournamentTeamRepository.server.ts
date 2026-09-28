@@ -23,6 +23,7 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 
 	return db
 		.selectFrom("TournamentTeam")
+		.innerJoin("Tournament", "Tournament.id", "TournamentTeam.tournamentId")
 		.innerJoin(
 			"CalendarEvent",
 			"CalendarEvent.tournamentId",
@@ -32,6 +33,7 @@ export async function findAllByChatRoomIds(chatRoomIds: number[]) {
 			"TournamentTeam.chatRoomId",
 			"TournamentTeam.name",
 			"TournamentTeam.tournamentId",
+			"Tournament.isFinalized",
 			"CalendarEvent.name as tournamentName",
 			tournamentLogoWithDefault(eb).as("logoUrl"),
 			jsonArrayFrom(
