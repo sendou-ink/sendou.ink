@@ -71,6 +71,7 @@ export function dragToScroll(element: HTMLElement): () => void {
 	const onMouseDown = (event: MouseEvent) => {
 		suppressNextClick = false;
 		if (event.buttons !== 1) return;
+		if (isInsideNestedOverlay(element, event.target)) return;
 
 		cancelAnimationFrame(momentumFrame);
 		isMouseDown = true;
@@ -179,6 +180,16 @@ export function dragToScroll(element: HTMLElement): () => void {
 		clearSmoothSnapRestore();
 		element.style.scrollSnapType = "";
 	};
+}
+
+function isInsideNestedOverlay(
+	element: HTMLElement,
+	target: EventTarget | null,
+) {
+	if (!(target instanceof Element)) return false;
+
+	const overlay = target.closest("[popover], dialog");
+	return overlay !== null && overlay !== element && element.contains(overlay);
 }
 
 function createGrabbingCursorStyle() {

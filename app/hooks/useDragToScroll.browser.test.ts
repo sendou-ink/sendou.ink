@@ -43,7 +43,12 @@ function setUpScrollableElement({ scrollSnap = false } = {}) {
 
 function mouseDownOn(element: HTMLElement, clientX: number, clientY: number) {
 	element.dispatchEvent(
-		new MouseEvent("mousedown", { buttons: 1, clientX, clientY }),
+		new MouseEvent("mousedown", {
+			buttons: 1,
+			clientX,
+			clientY,
+			bubbles: true,
+		}),
 	);
 }
 
@@ -134,6 +139,43 @@ describe("dragToScroll", () => {
 		child.dispatchEvent(new MouseEvent("click", { bubbles: true }));
 
 		expect(onClick).toHaveBeenCalledTimes(1);
+	});
+
+	test.each([
+		{ why: "popover", overlayTag: "div", overlayAttribute: "popover" },
+		{ why: "dialog", overlayTag: "dialog", overlayAttribute: null },
+	])(
+		"ignores drags that start inside a nested $why",
+		({ overlayTag, overlayAttribute }) => {
+			const { element, child } = setUpScrollableElement();
+			const overlay = document.createElement(overlayTag);
+			if (overlayAttribute) overlay.setAttribute(overlayAttribute, "auto");
+			const overlayContent = document.createElement("canvas");
+			overlay.appendChild(overlayContent);
+			child.appendChild(overlay);
+
+			mouseDownOn(overlayContent, 50, 50);
+			mouseMoveTo(20, 40);
+			mouseUp();
+
+			expect(element.scrollLeft).toBe(0);
+			expect(element.scrollTop).toBe(0);
+		},
+	);
+
+	test("scrolls when the element itself sits inside a dialog", () => {
+		const dialog = document.createElement("dialog");
+		document.body.appendChild(dialog);
+		cleanupFns.push(() => dialog.remove());
+		const { element } = setUpScrollableElement();
+		dialog.appendChild(element);
+		dialog.show();
+
+		mouseDownOn(element, 50, 50);
+		mouseMoveTo(20, 40);
+		mouseUp();
+
+		expect(element.scrollLeft).toBe(30);
 	});
 
 	test("stops reacting to the mouse after cleanup", () => {
