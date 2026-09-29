@@ -64,6 +64,8 @@ const listeners = new Set<() => void>();
 let running = false;
 /** the earliest `since` requested while a refresh was running */
 let pendingSince: number | null = null;
+/** callers waiting on a refresh that has not been read yet */
+let waiters: (() => void)[] = [];
 /** an older session's events don't change, so its build is kept */
 const buildCache = new Map<number, { signature: string; built: LiveSession }>();
 /** the raw events the snapshot's not yet compacted sessions were built from */
@@ -75,16 +77,21 @@ const compactedSessions = new Map<number, LiveSession>();
  * Re-reads the events detected at or after `since` (a session's key, 0 for
  * everything) and keeps the older sessions as they are. Defaults to the newest
  * session, the one a capture adds to — everything before the feed first loads.
+ * Resolves once a read covering the request has landed (or failed).
  */
-export function refreshFeed(since = newestSessionKey()): void {
+export function refreshFeed(since = newestSessionKey()): Promise<void> {
 	pendingSince = Math.min(pendingSince ?? since, since);
-	if (running) return;
+	const landed = new Promise<void>((resolve) => waiters.push(resolve));
+	if (running) return landed;
 	running = true;
 	void (async () => {
+		let covered: (() => void)[] = [];
 		try {
 			while (pendingSince !== null) {
 				const from = pendingSince;
 				pendingSince = null;
+				covered = waiters;
+				waiters = [];
 				const [loaded, loadedCompacted] = await Promise.all([
 					listEvents(from),
 					listCompactedMatches(from),
@@ -102,6 +109,8 @@ export function refreshFeed(since = newestSessionKey()): void {
 				addCompactedSessions(loadedCompacted);
 				snapshot = { loaded: true, sessions: await toSessions() };
 				for (const listener of listeners) listener();
+				for (const resolve of covered) resolve();
+				covered = [];
 			}
 		} catch {
 			pendingSince = null;
@@ -109,8 +118,11 @@ export function refreshFeed(since = newestSessionKey()): void {
 			for (const listener of listeners) listener();
 		} finally {
 			running = false;
+			for (const resolve of [...covered, ...waiters]) resolve();
+			waiters = [];
 		}
 	})();
+	return landed;
 }
 
 /**

@@ -137,9 +137,13 @@ let retryTimer: ReturnType<typeof setInterval> | null = null;
 let clipTimer: ReturnType<typeof setInterval> | null = null;
 let audioTimer: ReturnType<typeof setInterval> | null = null;
 let releaseCaptureLock: (() => void) | null = null;
+/** the last capture's Stop work (its final clips landing), which the next capture waits out */
+let captureEnding: Promise<void> = Promise.resolve();
 let unsubscribeFeed: (() => void) | null = null;
 let timeline = new TimelineBuilder();
 const storedIds = new WeakMap<DetectedEvent, number>();
+/** event saves in flight, so Stop's last clip pass sees the final kills */
+const persisting = new Set<Promise<void>>();
 // the open match is known to be a mode with no parsed counter overlay (Turf
 // War, Clam Blitz), so counter reads are lookalike misreads and are not
 // collected at all
@@ -199,6 +203,7 @@ export async function startCapture({
 	if (snapshot.status === "starting" || snapshot.status === "running") return;
 	// before any await, so a double click's second call sees it and bails
 	set({ ...IDLE, status: "starting" });
+	await captureEnding;
 	const releaseLock = await acquireCaptureLock();
 	if (!releaseLock) {
 		set({
@@ -319,7 +324,11 @@ export async function startCapture({
 	}
 }
 
-/** Ends the capture: the session's clips roll into history and unsent matches get one last send. */
+/**
+ * Ends the capture: windows still open are cut as they stand, the session's
+ * clips roll into history once every cut has landed, and unsent matches get
+ * one last send.
+ */
 export function stopCapture(): void {
 	if (snapshot.status === "idle") return;
 	endCapture({ ...IDLE });
@@ -328,13 +337,17 @@ export function stopCapture(): void {
 /** Tears the capture down into `next`, rolling the session's clips and sending unsent matches as Stop does. */
 function endCapture(next: LiveSnapshot): void {
 	const stream = snapshot.stream;
+	// the ring outlives the capture until its last clips are cut
+	const endingRing = ring;
+	ring = null;
 	release();
 	if (stream) stopTracks(stream);
 	set(next);
 	// the scan ending is the last match boundary — flush what's unsent
 	// (partials are safe: the server merges them into fuller resends)
 	if (uploadEnabled()) void sendLive(unsentMatches, newestSessionKey());
-	void rollSessionClipsIntoHistory()
+	captureEnding = cutRemainingClips(endingRing)
+		.then(() => rollSessionClipsIntoHistory())
 		.then(() => refreshClips())
 		.catch(() => {});
 	void trimEvents()
@@ -468,7 +481,9 @@ function onResult(
 			action.action === "added" ? undefined : storedIds.get(action.replaced);
 		// a run's trailing read only moves its time; the run's first read keeps the frame
 		const frame = action.action === "extended" ? undefined : result.frame;
-		void persist(event, frame, stale);
+		const saving = persist(event, frame, stale);
+		persisting.add(saving);
+		void saving.finally(() => persisting.delete(saving));
 	}
 }
 
@@ -521,9 +536,32 @@ function audioCheck(): void {
 /** Cuts every scored window of the running session whose post-roll is in the ring. */
 function clipTick(): void {
 	if (!ring || snapshot.status !== "running") return;
+	cutWindows(ring, Date.now() / 1000);
+}
+
+/**
+ * Stop's last clip pass: once the final kills are in the feed, every window
+ * still open is cut with the footage there is, and the capture's cuts land
+ * before the ring goes.
+ */
+async function cutRemainingClips(
+	endingRing: ClipRingBuffer | null,
+): Promise<void> {
+	if (!endingRing) return;
+	try {
+		await Promise.all(persisting);
+		await refreshFeed();
+		cutWindows(endingRing, Number.POSITIVE_INFINITY);
+		await Promise.all(cuts.map((cut) => cut.clipId));
+	} finally {
+		endingRing.stop();
+	}
+}
+
+/** Cuts the session's scored windows closed by `nowT` that no better clip already covers. */
+function cutWindows(clipRing: ClipRingBuffer, nowT: number): void {
 	const session = currentSession(getFeed());
 	if (!session) return;
-	const nowT = Date.now() / 1000;
 	const saved: LiveCut[] = getClips()
 		.filter(
 			(clip) =>
@@ -553,7 +591,13 @@ function clipTick(): void {
 				if (cuts.includes(cut)) cuts.splice(cuts.indexOf(cut), 1);
 				else saved.splice(saved.indexOf(cut), 1);
 			}
-			const clipId = cutClip(session.key, built.match, window, overlapping);
+			const clipId = cutClip(
+				clipRing,
+				session.key,
+				built.match,
+				window,
+				overlapping,
+			);
 			cuts.push({
 				start: window.start,
 				end: window.end,
@@ -566,14 +610,14 @@ function clipTick(): void {
 
 /** Cuts and saves the window, then drops the clips it `replaces`; resolves to the saved clip's id. */
 async function cutClip(
+	clipRing: ClipRingBuffer,
 	sessionKey: number,
 	match: ScannerMatch,
 	window: ClipWindow,
 	replaces: readonly LiveCut[],
 ): Promise<number | null> {
-	if (!ring) return null;
 	try {
-		const clip = await ring.cut(
+		const clip = await clipRing.cut(
 			window.start,
 			window.end,
 			readSettings().audioOffsetMs / 1000,
