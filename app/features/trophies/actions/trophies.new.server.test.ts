@@ -5,6 +5,7 @@ import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOr
 import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { decompressFromBase64 } from "~/utils/compression";
 import {
 	assertResponseErrored,
 	wrappedAction,
@@ -15,6 +16,7 @@ import {
 	type TrophyBackfillLoaderData,
 } from "../routes/trophies.$id.backfill.$seriesId";
 import * as TrophyRepository from "../TrophyRepository.server";
+import type { trophyFormSchema } from "../trophies-schemas";
 import { action } from "./trophies.new.server";
 
 type BackfillFormFields = {
@@ -24,6 +26,10 @@ type BackfillFormFields = {
 	awards: string;
 };
 
+const submitAction = wrappedAction<typeof trophyFormSchema>({
+	action,
+	isJsonSubmission: true,
+});
 const backfillAction = wrappedAction<v.GenericSchema<BackfillFormFields>>({
 	action,
 });
@@ -36,6 +42,50 @@ const managerId = () => users.id(1);
 const winnerIds = () => users.ids(5).slice(1, 5);
 const loserIds = () => users.ids(9).slice(5, 9);
 const outsiderId = () => users.id(10);
+
+describe("trophy submissions", () => {
+	const submitterId = () => users.id(1);
+	const artistId = () => users.id(2);
+
+	let organizationId: number;
+
+	beforeEach(async () => {
+		await users.create(2);
+		organizationId = (
+			await TournamentOrganizationFactory.create({ ownerId: submitterId() })
+		).id;
+	});
+
+	const submit = (overrides: { name: string; creatorId?: number }) =>
+		submitAction(
+			{
+				_action: "CREATE",
+				model: decompressFromBase64(TrophyFactory.MODELS[0]) ?? "",
+				organizationId,
+				description: null,
+				...overrides,
+			},
+			{ user: submitterId() },
+		);
+
+	test("a submission awaits review with the submitter as its creator", async () => {
+		expect(await submit({ name: "Regular Trophy" })).toBe(null);
+
+		const pending = await TrophyRepository.pendingBySubmitter(submitterId());
+		expect(pending.map((trophy) => trophy.name)).toEqual(["Regular Trophy"]);
+		expect(pending[0].creatorId).toBe(submitterId());
+	});
+
+	test("a submission can name someone else as the creator", async () => {
+		expect(
+			await submit({ name: "Commissioned Trophy", creatorId: artistId() }),
+		).toBe(null);
+
+		const [pending] = await TrophyRepository.pendingBySubmitter(submitterId());
+		expect(pending.creatorId).toBe(artistId());
+		expect(pending.creator?.id).toBe(artistId());
+	});
+});
 
 describe("trophy backfill", () => {
 	let trophyId: number;

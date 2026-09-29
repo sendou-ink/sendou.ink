@@ -12,7 +12,6 @@ import {
 	tournamentFromDB,
 } from "~/features/tournament-bracket/core/Tournament.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import { parseFormDataWithImages } from "~/form/parse.server";
 import {
 	requirePermission,
@@ -78,10 +77,6 @@ export const action: ActionFunction = async ({ request }) => {
 	}
 
 	if (data.trophyId) {
-		if (!canAccessTrophies(user)) {
-			errorToast("Trophies are not released yet");
-		}
-
 		const trophyOrganizationId = await TrophyRepository.findOrganizationIdById(
 			data.trophyId,
 		);

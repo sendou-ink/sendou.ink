@@ -23,7 +23,6 @@ import { SplatoonRotations } from "~/features/front-page/components/SplatoonRota
 import type * as Changelog from "~/features/front-page/core/Changelog.server";
 import { leaderboardsPage } from "~/features/leaderboards/leaderboards-urls";
 import * as Seasons from "~/features/mmr/core/Seasons";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import styles from "~/styles/front.module.css";
 import { databaseTimestampToDate } from "~/utils/dates";
 import type { SendouRouteHandle } from "~/utils/remix.server";
@@ -334,12 +333,9 @@ const DISCOVER_EXCLUDED_ITEMS = new Set(["settings", "luti"]);
 function DiscoverFeatures() {
 	const { t } = useTranslation(["front", "common"]);
 	const data = useLoaderData<typeof loader>();
-	const user = useUser();
 
 	const filteredNavItems = navItems.filter(
-		(item) =>
-			!DISCOVER_EXCLUDED_ITEMS.has(item.name) &&
-			(item.name !== "trophies" || canAccessTrophies(user)),
+		(item) => !DISCOVER_EXCLUDED_ITEMS.has(item.name),
 	);
 
 	return (

@@ -3,7 +3,6 @@ import { beforeEach, describe, expect, test, vi } from "vitest";
 import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
-	canAccessTrophies,
 	decompressTrophyModel,
 	hasUpcomingTournamentSoon,
 } from "./trophies-utils";
@@ -11,12 +10,6 @@ import {
 vi.mock("~/utils/compression", () => ({
 	compressToBase64: vi.fn((value: string) => value),
 	decompressFromBase64: vi.fn((_compressed: string): string | null => null),
-}));
-
-// pinned to unreleased so the role gating stays covered whatever the real flag says
-vi.mock("./trophies-constants", async (importOriginal) => ({
-	...(await importOriginal<typeof import("./trophies-constants")>()),
-	TROPHIES_RELEASED: false,
 }));
 
 const decompressMock = vi.mocked(decompressFromBase64);
@@ -65,25 +58,6 @@ describe("decompressTrophyModel", () => {
 
 		decompressTrophyModel("lru-b");
 		expect(callsFor("lru-b")).toBe(2);
-	});
-});
-
-describe("canAccessTrophies (before release)", () => {
-	test("true for admin", () => {
-		expect(canAccessTrophies({ roles: ["ADMIN"] })).toBe(true);
-	});
-
-	test("true for QA", () => {
-		expect(canAccessTrophies({ roles: ["QA"] })).toBe(true);
-	});
-
-	test("false for staff", () => {
-		expect(canAccessTrophies({ roles: ["STAFF"] })).toBe(false);
-	});
-
-	test("false for regular and logged out users", () => {
-		expect(canAccessTrophies({ roles: [] })).toBe(false);
-		expect(canAccessTrophies(null)).toBe(false);
 	});
 });
 

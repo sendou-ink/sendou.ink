@@ -15,7 +15,6 @@ import * as TeamRepository from "~/features/team/TeamRepository.server";
 import * as XRankPlacementRepository from "~/features/top-search/XRankPlacementRepository.server";
 import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
 import * as TrophyRepository from "~/features/trophies/TrophyRepository.server";
-import { canAccessTrophies } from "~/features/trophies/trophies-utils";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import * as VodRepository from "~/features/vods/VodRepository.server";
 import { modesShort } from "~/modules/in-game-lists/modes";
@@ -25,8 +24,6 @@ import { cachedUserSQLeaderboardTopData } from "./utils.server";
 
 export const WIDGET_LOADERS = {
 	"trophies-owned": async (userId: number) => {
-		if (!canAccessTrophies(getUser())) return [];
-
 		return TrophyRepository.findByOwnerUserId(userId);
 	},
 	"badges-owned": async (

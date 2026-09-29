@@ -4,7 +4,6 @@ import { ADMIN_DISCORD_ID, ADMIN_ID } from "~/features/admin/admin-constants";
 import { TROPHY_APPROVALS_REQUIRED } from "~/features/trophies/trophies-constants";
 import { decompressFromBase64 } from "~/utils/compression";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
-import { TROPHIES_PAGE } from "~/utils/urls";
 import type { Factories } from "./helpers/factories";
 import {
 	expect,
@@ -26,27 +25,6 @@ const ROSTER_SIZE = 4;
 const UPCOMING_IN_DAYS = 10;
 
 test.describe("Trophies", () => {
-	test("hides trophies from users without early access", async ({
-		page,
-		factories,
-	}) => {
-		await factories.TrophyFactory.create({ name: TROPHY_NAME });
-
-		await impersonate(page, NZAP_TEST_ID);
-
-		const response = await page.goto(TROPHIES_PAGE);
-		expect(response?.status()).toBe(404);
-
-		const userPage = new UserPage(page);
-		await userPage.goto(ADMIN_DISCORD_ID);
-		await isNotVisible(page.getByTestId("trophy-display"));
-
-		// remove once feature is released
-		const newTrophy = new NewTrophyPage(page);
-		await newTrophy.goto();
-		await expect(newTrophy.locators.agreeToTermsButton).toBeVisible();
-	});
-
 	test("shows trophy wins via user page trophy display", async ({
 		page,
 		factories,
@@ -61,7 +39,7 @@ test.describe("Trophies", () => {
 			widgets: [{ id: "trophies-owned" }],
 		});
 
-		await impersonate(page);
+		await impersonate(page, NZAP_TEST_ID);
 
 		const userPage = new UserPage(page);
 		await userPage.goto(ADMIN_DISCORD_ID);
@@ -111,7 +89,7 @@ test.describe("Trophies", () => {
 			trophyId: trophy.id,
 		});
 
-		await impersonate(page);
+		await impersonate(page, NZAP_TEST_ID);
 
 		const trophies = new TrophiesPage(page);
 		await trophies.goto();
