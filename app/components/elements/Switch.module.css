@@ -3,7 +3,7 @@
 	height: var(--height);
 	background: var(--color-bg);
 	border: var(--border-style);
-	border-radius: calc(var(--radius-selector) * 2);
+	border-radius: calc(var(--radius-selector) * 2 * var(--radius-scale));
 	padding: 2px;
 	display: inline-grid;
 	justify-items: center;
@@ -15,7 +15,7 @@
 		height: 100%;
 		aspect-ratio: 1 / 1;
 		background: var(--color-border);
-		border-radius: var(--radius-selector);
+		border-radius: calc(var(--radius-selector) * var(--radius-scale));
 		grid-row-start: 1;
 		grid-column-start: 2;
 	}
@@ -23,6 +23,7 @@
 
 .root {
 	--height: var(--selector-size-sm);
+	--radius-scale: 1;
 
 	cursor: pointer;
 	display: grid;
@@ -75,4 +76,11 @@
 	--height: var(--selector-size-xs);
 
 	font-size: var(--font-2xs);
+}
+
+.large {
+	--height: var(--selector-size-lg);
+	--radius-scale: 1.5;
+
+	font-size: var(--font-sm);
 }

@@ -306,16 +306,21 @@ function BuildAnalyzerPage() {
 								}
 							/>
 						</div>
-						<LinkButton
-							to={weaponParamsPage(
-								weaponToSelectedWeapon(mainWeaponId, t).paramsSlug,
-							)}
-							variant="minimal"
-							size="small"
-							icon={<SlidersHorizontal />}
-						>
-							{t("analyzer:rawParameters")}
-						</LinkButton>
+						<div className="stack horizontal justify-between items-center w-full">
+							<LinkButton
+								to={weaponParamsPage(
+									weaponToSelectedWeapon(mainWeaponId, t).paramsSlug,
+								)}
+								variant="minimal"
+								size="small"
+								icon={<SlidersHorizontal />}
+							>
+								{t("analyzer:rawParameters")}
+							</LinkButton>
+							<div className={styles.patch}>
+								{t("analyzer:patch")} {CURRENT_PATCH}
+							</div>
+						</div>
 					</div>
 					<div className="stack md items-center w-full">
 						<div className="w-full">
@@ -414,9 +419,6 @@ function BuildAnalyzerPage() {
 						{showAbilityChunksRequired ? (
 							<AbilityChunksRequired build={build} />
 						) : null}
-					</div>
-					<div className={styles.patch}>
-						{t("analyzer:patch")} {CURRENT_PATCH}
 					</div>
 				</div>
 				<div className="stack md">
@@ -1346,12 +1348,20 @@ function EffectsSelector({
 	handleAddEffect: (effect: SpecialEffectType) => void;
 	handleRemoveEffect: (effect: SpecialEffectType) => void;
 }) {
+	const { t } = useTranslation(["weapons", "game-misc"]);
 	const effectsToShow = SPECIAL_EFFECTS.filter(
 		(effect) =>
 			!isAbility(effect.type) ||
 			build.flat().includes(effect.type) ||
 			build2.flat().includes(effect.type),
 	).reverse(); // reverse to show Tacticooler first as it always shows
+
+	const effectLabel = (effect: SpecialEffectType) => {
+		if (isAbility(effect)) return t(`game-misc:ABILITY_${effect}`);
+		if (effect === "AURA") return "Aura";
+
+		return t("weapons:SPECIAL_15");
+	};
 
 	return (
 		<div className={styles.effectsSelector}>
@@ -1375,6 +1385,8 @@ function EffectsSelector({
 								/>
 							) : (
 								<SendouSwitch
+									size="large"
+									aria-label={effectLabel(effect.type)}
 									isSelected={effects.includes(effect.type)}
 									onChange={(isSelected) =>
 										isSelected

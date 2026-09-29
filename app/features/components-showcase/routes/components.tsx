@@ -642,6 +642,12 @@ function SwitchSection({ id }: { id: string }) {
 			<SectionTitle id={id}>Switch</SectionTitle>
 
 			<div className="stack md">
+				<ComponentRow label="Large">
+					<SendouSwitch size="large" isSelected={isOn} onChange={setIsOn}>
+						Toggle me
+					</SendouSwitch>
+				</ComponentRow>
+
 				<ComponentRow label="Medium (default)">
 					<SendouSwitch isSelected={isOn} onChange={setIsOn}>
 						Toggle me

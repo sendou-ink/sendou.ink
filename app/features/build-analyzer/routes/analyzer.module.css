@@ -51,14 +51,19 @@
 
 .effectsSelector {
 	display: grid;
-	gap: var(--s-2);
-	grid-template-columns: 1fr 2.5fr;
-	place-items: center;
+	gap: var(--s-2) var(--s-4);
+	grid-template-columns: 3rem 1fr;
+	align-items: center;
+	width: 100%;
+	max-width: 17rem;
+
+	& > :nth-child(odd) {
+		justify-self: center;
+	}
 }
 
-/* Fixed width so picking a longer option doesn't resize the column */
 .ldeIntensitySelect {
-	width: 12.5rem;
+	width: 100%;
 }
 
 .apSummary {

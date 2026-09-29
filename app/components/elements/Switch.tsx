@@ -8,7 +8,7 @@ interface SendouSwitchProps {
 	defaultSelected?: boolean;
 	onChange?: (isSelected: boolean) => void;
 	isDisabled?: boolean;
-	size?: "small";
+	size?: "small" | "large";
 	"aria-label"?: string;
 	"data-testid"?: string;
 	children?: React.ReactNode;
@@ -27,7 +27,10 @@ export function SendouSwitch({
 }: SendouSwitchProps) {
 	return (
 		<label
-			className={clsx(styles.root, { [styles.small]: size === "small" })}
+			className={clsx(styles.root, {
+				[styles.small]: size === "small",
+				[styles.large]: size === "large",
+			})}
 			data-testid={testId}
 		>
 			<input
