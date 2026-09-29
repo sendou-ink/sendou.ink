@@ -195,8 +195,10 @@ export async function startCapture({
 	saveFrames: boolean;
 }): Promise<void> {
 	if (snapshot.status === "starting" || snapshot.status === "running") return;
-	releaseCaptureLock = await acquireCaptureLock();
-	if (!releaseCaptureLock) {
+	// before any await, so a double click's second call sees it and bails
+	set({ ...IDLE, status: "starting" });
+	const releaseLock = await acquireCaptureLock();
+	if (!releaseLock) {
 		set({
 			...IDLE,
 			status: "error",
@@ -205,7 +207,7 @@ export async function startCapture({
 		});
 		return;
 	}
-	set({ ...IDLE, status: "starting" });
+	releaseCaptureLock = releaseLock;
 	objectiveBlocked = false;
 	cuts.length = 0;
 	ownClipIds.clear();
