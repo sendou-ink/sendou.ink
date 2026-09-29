@@ -67,7 +67,7 @@
 ## SQL
 
 - database is Sqlite3, driven by Node's built-in `node:sqlite` through a custom Kysely dialect (`app/db/node-sqlite-dialect.ts`)
-- database code should only be written in Repository files, see [repositories.md](./docs/dev/repositories.md) for their conventions
+- database code lives in Repository files, see [repositories.md](./docs/dev/repositories.md) for their conventions; loaders and actions compose repository chains (`BuildRepository.builds().forWeapon(id).withAuthor()`) and may write one-off `refine` steps
 - import `jsonArrayFrom`/`jsonObjectFrom`/`jsonBuildObject` from `~/utils/kysely.server`, never from `kysely/helpers/sqlite` (enforced by the `no-kysely-sqlite-helpers` Biome plugin); JSON columns are registered in `app/db/json-columns.ts`
 - migrations are Kysely migrations in `/migrations`, scaffolded with `pnpm run migrate:new "description"` and applied with `pnpm run migrate up`, see [how-to.md](./docs/dev/how-to.md)
 - down migrations are not needed, only up migrations

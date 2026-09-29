@@ -5,28 +5,21 @@ import { sortBuilds } from "./build-sorting.server";
 
 type BuildSortingBuildArg = Parameters<
 	typeof sortBuilds
->[number]["builds"][number];
+>[number]["builds"][number] & { id: number };
 
 const mockBuild = (
 	partialBuild: Partial<BuildSortingBuildArg>,
 ): BuildSortingBuildArg => {
 	return {
 		id: 0,
-		abilities: [
-			["ISM", "ISM", "ISM", "ISM"],
-			["ISM", "ISM", "ISM", "ISM"],
-			["ISM", "ISM", "ISM", "ISM"],
-		],
 		headGearSplId: 0,
 		clothesGearSplId: 0,
 		shoesGearSplId: 0,
-		description: null,
 		modes: ["SZ"],
 		isPrivate: 0,
 		title: "",
 		updatedAt: databaseTimestampNow(),
-		weapons: [{ weaponSplId: 0, isTop500: 0 }],
-		permissions: { EDIT: [] },
+		weapons: [{ weaponSplId: 0, isTop500: false }],
 		...partialBuild,
 	};
 };
@@ -54,13 +47,13 @@ describe("sortBuilds()", () => {
 			mockBuild({ id: 1 }),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 1, isTop500: 1 }],
+				weapons: [{ weaponSplId: 1, isTop500: true }],
 			}),
 			mockBuild({
 				id: 3,
 				weapons: [
-					{ weaponSplId: 0, isTop500: 0 },
-					{ weaponSplId: 1, isTop500: 1 },
+					{ weaponSplId: 0, isTop500: false },
+					{ weaponSplId: 1, isTop500: true },
 				],
 			}),
 		];
@@ -110,15 +103,15 @@ describe("sortBuilds()", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
-				weapons: [{ weaponSplId: 1000, isTop500: 0 }],
+				weapons: [{ weaponSplId: 1000, isTop500: false }],
 			}),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 10, isTop500: 0 }],
+				weapons: [{ weaponSplId: 10, isTop500: false }],
 			}),
 			mockBuild({
 				id: 3,
-				weapons: [{ weaponSplId: 1, isTop500: 0 }],
+				weapons: [{ weaponSplId: 1, isTop500: false }],
 			}),
 		];
 
@@ -141,7 +134,7 @@ describe("sortBuilds()", () => {
 				id,
 				weapons: weaponIds.map((wepId) => ({
 					weaponSplId: wepId,
-					isTop500: 0,
+					isTop500: false,
 				})),
 			});
 		};
@@ -221,17 +214,17 @@ describe("sortBuilds()", () => {
 		const builds = [
 			mockBuild({
 				id: 1,
-				weapons: [{ weaponSplId: 1, isTop500: 0 }],
+				weapons: [{ weaponSplId: 1, isTop500: false }],
 			}),
 			mockBuild({
 				id: 2,
-				weapons: [{ weaponSplId: 10, isTop500: 0 }],
+				weapons: [{ weaponSplId: 10, isTop500: false }],
 			}),
 			mockBuild({
 				id: 3,
 				weapons: [
-					{ weaponSplId: 1000, isTop500: 0 },
-					{ weaponSplId: 1, isTop500: 0 },
+					{ weaponSplId: 1000, isTop500: false },
+					{ weaponSplId: 1, isTop500: false },
 				],
 			}),
 		];

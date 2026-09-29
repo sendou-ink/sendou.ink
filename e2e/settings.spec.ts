@@ -1,3 +1,4 @@
+import { NZAP_TEST_ID } from "~/db/seed/constants";
 import { ADMIN_ID } from "~/features/admin/admin-constants";
 import type { BuildAbilitiesTuple } from "~/modules/in-game-lists/types";
 import type { Factories } from "./helpers/factories";
@@ -22,8 +23,9 @@ const UNSORTED_ABILITIES: BuildAbilitiesTuple = [
 
 test.describe("Settings", () => {
 	test("updates 'disableBuildAbilitySorting'", async ({ page, factories }) => {
+		// the viewer's own builds are never sorted, so the build is someone else's
 		await factories.BuildFactory.create({
-			ownerId: ADMIN_ID,
+			ownerId: NZAP_TEST_ID,
 			weaponSplIds: [LUNA_BLASTER_ID],
 			abilities: UNSORTED_ABILITIES,
 		});

@@ -1,5 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
 import type * as v from "valibot";
+import type { QueryRow } from "~/db/entity-query";
 import { requireUser } from "~/features/auth/core/user.server";
 import * as BuildRepository from "~/features/builds/BuildRepository.server";
 import type { WeaponPoolItem } from "~/form/fields/WeaponPoolFormField";
@@ -9,13 +10,11 @@ import type { newBuildBaseSchema } from "../user-page-schemas";
 import { userBuildsNewSearchParams } from "../user-page-search-params";
 
 export const loader = async ({ url }: LoaderFunctionArgs) => {
-	const user = requireUser();
+	requireUser();
 
 	const params = userBuildsNewSearchParams.parse(url);
 
-	const usersBuilds = await BuildRepository.findAllByUserId(user.id, {
-		showPrivate: true,
-	});
+	const usersBuilds = await ownBuilds().execute();
 	const buildToEdit = usersBuilds.find((b) => b.id === params.buildId);
 
 	return {
@@ -40,9 +39,7 @@ type NewBuildDefaultValues = Partial<v.InferOutput<typeof newBuildBaseSchema>>;
 
 function resolveDefaultValues(
 	params: SearchParamsValues<typeof userBuildsNewSearchParams.shape>,
-	buildToEdit:
-		| Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>[number]
-		| undefined,
+	buildToEdit: QueryRow<ReturnType<typeof ownBuilds>> | undefined,
 ): NewBuildDefaultValues | null {
 	const weapons = resolveDefaultWeapons();
 	const abilities = buildToEdit?.abilities ?? params.build;
@@ -78,4 +75,8 @@ function resolveDefaultValues(
 
 		return [];
 	}
+}
+
+function ownBuilds() {
+	return BuildRepository.builds().ownedByActor();
 }

@@ -61,6 +61,8 @@ export interface BenchmarkCase {
 	run: () => Promise<unknown>;
 }
 
+// xxx: think if we can e.g. statically find all queries or something
+
 /** Builds the benchmark case registry from resolved fixtures; cases whose fixture resolved to null go to `skipped`. */
 export function buildCases(fx: Fixtures): {
 	cases: BenchmarkCase[];
@@ -237,11 +239,14 @@ export function buildCases(fx: Fixtures): {
 		BadgeRepository.findByAuthorUserId(userId),
 	);
 
-	add("BuildRepository.findAllByUserId", fx.heavyBuildUserId, (userId) =>
-		BuildRepository.findAllByUserId(userId, {
-			showPrivate: true,
-			sortAbilities: true,
-		}),
+	add("BuildRepository.builds.userBuilds", fx.heavyBuildUserId, (userId) =>
+		BuildRepository.builds()
+			.where({ ownerId: userId })
+			.visibleToActor()
+			.newestFirst()
+			.sortAbilitiesIfPreferred()
+			.withEditPermissions()
+			.execute(),
 	);
 	add("BuildRepository.findOwnerIdById", fx.buildId, (buildId) =>
 		BuildRepository.findOwnerIdById(buildId),
@@ -260,11 +265,16 @@ export function buildCases(fx: Fixtures): {
 		(weaponSplId) =>
 			BuildRepository.findAllPopularAbilitiesByWeaponId(weaponSplId),
 	);
-	add("BuildRepository.findAllByWeaponId", fx.heavyWeaponSplId, (weaponSplId) =>
-		BuildRepository.findAllByWeaponId(weaponSplId, {
-			limit: 60,
-			sortAbilities: true,
-		}),
+	add(
+		"BuildRepository.builds.weaponBuilds",
+		fx.heavyWeaponSplId,
+		(weaponSplId) =>
+			BuildRepository.builds()
+				.forWeapon(weaponSplId)
+				.withAuthor()
+				.sortAbilitiesIfPreferred()
+				.limit(60)
+				.execute(),
 	);
 
 	add(

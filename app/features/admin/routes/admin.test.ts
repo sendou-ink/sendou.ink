@@ -363,7 +363,10 @@ describe("Account migration", () => {
 	test("deletes builds from the new user when migrating", async () => {
 		await BuildFactory.create({ ownerId: users.id(2) });
 
-		const buildsBefore = await BuildRepository.findAllByUserId(users.id(2));
+		const buildsBefore = await BuildRepository.builds()
+			.includingPrivate()
+			.where({ ownerId: users.id(2) })
+			.execute();
 
 		expect(buildsBefore.length).toBe(1);
 
@@ -373,7 +376,10 @@ describe("Account migration", () => {
 		expect(oldUser).toBeUndefined();
 
 		for (const id of [users.id(1), users.id(2)]) {
-			const buildsAfter = await BuildRepository.findAllByUserId(id);
+			const buildsAfter = await BuildRepository.builds()
+				.includingPrivate()
+				.where({ ownerId: id })
+				.execute();
 			expect(buildsAfter.length).toBe(0);
 		}
 	});

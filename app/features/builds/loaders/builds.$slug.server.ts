@@ -1,6 +1,6 @@
 import type { LoaderFunctionArgs } from "react-router";
-import { getUser } from "~/features/auth/core/user.server";
 import { getFixedTForLanguage } from "~/modules/i18n/i18next.server";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToType } from "~/modules/in-game-lists/weapon-ids";
 import { weaponNameSlugToId } from "~/utils/unslugify.server";
 import { mySlugify } from "~/utils/urls";
@@ -10,7 +10,6 @@ import { buildsSearchParams } from "../builds-search-params";
 import { filterBuilds } from "../core/filter.server";
 
 export const loader = async ({ params, url }: LoaderFunctionArgs) => {
-	const user = getUser();
 	const t = await getFixedTForLanguage("en", ["weapons", "common"]);
 	const weaponId = weaponNameSlugToId(params.slug);
 
@@ -27,10 +26,10 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 	const hasActiveFilters =
 		abilities.length > 0 || mode !== null || date !== null;
 
-	const builds = await BuildRepository.findAllByWeaponId(weaponId, {
-		limit: hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
-		sortAbilities: !user?.preferences?.disableBuildAbilitySorting,
-	});
+	const builds = await weaponBuilds(
+		weaponId,
+		hasActiveFilters ? BUILDS_PAGE_MAX_BUILDS : limit + 1,
+	).execute();
 
 	const filteredBuilds = hasActiveFilters
 		? filterBuilds({
@@ -60,3 +59,11 @@ export const loader = async ({ params, url }: LoaderFunctionArgs) => {
 		slug,
 	};
 };
+
+function weaponBuilds(weaponId: MainWeaponId, limit: number) {
+	return BuildRepository.builds()
+		.forWeapon(weaponId)
+		.withAuthor()
+		.sortAbilitiesIfPreferred()
+		.limit(limit); // xxx: here and other migrate to our common pagination
+}

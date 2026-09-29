@@ -1,8 +1,9 @@
 import type { Ability, MainWeaponId } from "~/modules/in-game-lists/types";
 
+// xxx: random interface
 export interface BuildWeaponWithTop500Info {
 	weaponSplId: MainWeaponId;
-	isTop500: number;
+	isTop500: boolean;
 }
 
 export interface AbilityCondition {

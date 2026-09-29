@@ -16,13 +16,9 @@ export const loader = async () => {
 		await UserRepository.findBuildFieldsByUserId(userId),
 	);
 
-	const builds = await BuildRepository.findAllByUserId(userId, {
-		showPrivate: loggedInUser?.id === userId,
-		sortAbilities:
-			loggedInUser?.id !== userId &&
-			!loggedInUser?.preferences?.disableBuildAbilitySorting,
-	});
+	const builds = await userBuilds(userId).execute();
 
+	// xxx: some common way to do this
 	if (builds.length === 0 && loggedInUser?.id !== userId) {
 		throw new Response(null, { status: 404 });
 	}
@@ -42,3 +38,12 @@ export const loader = async () => {
 		),
 	};
 };
+
+function userBuilds(userId: number) {
+	return BuildRepository.builds()
+		.where({ ownerId: userId })
+		.visibleToActor()
+		.newestFirst() // xxx: or should we inline sortBuilds in the repository?
+		.sortAbilitiesIfPreferred()
+		.withEditPermissions();
+}

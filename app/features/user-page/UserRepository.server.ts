@@ -1,6 +1,14 @@
-import type { ExpressionBuilder, NotNull, SqlBool } from "kysely";
+import type {
+	Expression,
+	ExpressionBuilder,
+	NotNull,
+	SelectType,
+	SqlBool,
+} from "kysely";
 import { sql } from "kysely";
 import * as R from "remeda";
+import type { Modifier } from "~/db/entity-query";
+import type { ForeignKeysTo, TableName } from "~/db/schema-types";
 import { db } from "~/db/sql";
 import type { DB, Tables, TablesInsertable } from "~/db/tables";
 import type { CustomTheme, UserPreferences } from "~/db/tables-json";
@@ -25,6 +33,7 @@ import {
 import { invariant } from "~/utils/invariant";
 import {
 	asJson,
+	type CommonUser,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	customAvatarUrl,
@@ -44,6 +53,71 @@ import {
 import { WIDGET_LOADERS } from "./core/widgets/portfolio-loaders.server";
 import type { LoadedWidget } from "./core/widgets/types";
 import { SPL2_JOIN_ORDER_CUTOFF } from "./user-page-constants";
+
+/** User fields beyond {@link CommonUser} that {@link withUser} can add, by name. */
+const USER_EXTRAS = {
+	plusTier: (eb: ExpressionBuilder<DB, "User">) =>
+		eb
+			.selectFrom("PlusTier")
+			.select("PlusTier.tier")
+			.whereRef("PlusTier.userId", "=", "User.id")
+			.$asScalar(),
+	country: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.country"),
+} satisfies Record<
+	string,
+	(eb: ExpressionBuilder<DB, "User">) => Expression<unknown>
+>;
+
+type UserExtra = keyof typeof USER_EXTRAS;
+
+type UserObject<
+	T extends TableName,
+	C extends keyof DB[T],
+	E extends ReadonlyArray<UserExtra>,
+> =
+	| (CommonUser & {
+			[K in E[number]]: ReturnType<(typeof USER_EXTRAS)[K]> extends Expression<
+				infer V
+			>
+				? V
+				: never;
+	  })
+	| (null extends SelectType<DB[T][C]> ? null : never);
+
+/**
+ * Chain step adding the user a foreign key column points at as `as`: {@link CommonUser} plus the
+ * named `extras`, `null` when the column is nullable and empty. The root table and the column come
+ * from the `"Table.column"` string, which must have a foreign key to `User`.
+ */
+export function withUser<
+	const As extends string,
+	T extends TableName,
+	C extends ForeignKeysTo<T, "User">,
+	const E extends ReadonlyArray<UserExtra> = [],
+>(
+	as: As,
+	column: `${T}.${C}`,
+	extras?: E,
+): Modifier<T, { [K in As]: UserObject<T, C, E> }> {
+	return {
+		apply: (qb) =>
+			qb.select((eb: ExpressionBuilder<DB, "User">) =>
+				jsonObjectFrom(
+					eb
+						.selectFrom("User")
+						.select((userEb) => [
+							...commonUserSelect(userEb),
+							...(extras ?? []).map((extra) => {
+								const expression: Expression<unknown> =
+									USER_EXTRAS[extra](userEb);
+								return sql`${expression}`.as(extra);
+							}),
+						])
+						.whereRef("User.id", "=", sql.ref(column)),
+				).as(as),
+			),
+	};
+}
 
 export function findIdByIdentifier(identifier: string) {
 	return userByIdentifierQuery(identifier).executeTakeFirst();

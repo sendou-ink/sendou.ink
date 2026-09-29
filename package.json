@@ -15,6 +15,7 @@
 		"migrate": "node scripts/migrate.ts",
 		"migrate:new": "node scripts/create-migration.ts",
 		"migrate:prod": "cross-env DB_PATH=db-prod.sqlite3 pnpm run migrate up",
+		"schema:generate": "node scripts/generate-db-schema.ts",
 		"check-translation-jsons": "node scripts/check-translation-jsons.ts",
 		"check-translation-jsons:no-write": "node scripts/check-translation-jsons.ts --no-write",
 		"check-articles": "vite-node scripts/check-articles.ts",

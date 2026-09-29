@@ -63,6 +63,7 @@ Notes:
 
 3) Update the typings in `app/db/tables.ts`
 4) Run `pnpm run migrate up` to apply your migration (the unit test database `db-test.sqlite3` is created and migrated automatically when unit tests run)
+5) Run `pnpm run schema:generate` to regenerate `app/db/schema.gen.ts` (keys, unique indexes, foreign keys and triggers read from the migrated database). `schema.gen.test.ts` fails while it's stale or while `tables.ts` disagrees with the database on tables, columns, nullability or defaults
 
 ## Update the OG images
 

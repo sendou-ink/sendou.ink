@@ -1,28 +1,33 @@
-import type * as BuildRepository from "~/features/builds/BuildRepository.server";
+import type { Tables } from "~/db/tables";
+import type { BuildWeaponWithTop500Info } from "~/features/builds/builds-types";
 import type { BuildSort } from "~/features/user-page/user-page-constants";
 import { modesShort } from "~/modules/in-game-lists/modes";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
 import { weaponIdToBaseWeaponId } from "~/modules/in-game-lists/weapon-ids";
 import { DEFAULT_BUILD_SORT } from "../user-page-constants";
 
-interface SortBuildsArgs {
-	builds: Awaited<ReturnType<typeof BuildRepository.findAllByUserId>>;
-	buildSorting: BuildSort[] | null;
-	weaponPool: MainWeaponId[];
-}
+// xxx: why not type from repository?
+type SortableBuild = Pick<
+	Tables["Build"],
+	| "title"
+	| "updatedAt"
+	| "headGearSplId"
+	| "clothesGearSplId"
+	| "shoesGearSplId"
+	| "modes"
+	| "isPrivate"
+> & { weapons: BuildWeaponWithTop500Info[] };
 
-export function sortBuilds({
+export function sortBuilds<T extends SortableBuild>({
 	builds,
 	buildSorting,
 	weaponPool,
-}: SortBuildsArgs) {
-	const sorters: Record<
-		BuildSort,
-		(
-			a: SortBuildsArgs["builds"][number],
-			b: SortBuildsArgs["builds"][number],
-		) => number
-	> = {
+}: {
+	builds: T[];
+	buildSorting: BuildSort[] | null;
+	weaponPool: MainWeaponId[];
+}) {
+	const sorters: Record<BuildSort, (a: T, b: T) => number> = {
 		ALPHABETICAL_TITLE: (a, b) => a.title.localeCompare(b.title),
 		WEAPON_IN_GAME_ORDER: (a, b) =>
 			Math.min(...a.weapons.map((wpn) => wpn.weaponSplId)) -
@@ -48,8 +53,8 @@ export function sortBuilds({
 			return aLowestModeIdx - bLowestModeIdx;
 		},
 		TOP_500: (a, b) => {
-			const aHasTop500 = a.weapons.some((wpn) => wpn.isTop500 === 1);
-			const bHasTop500 = b.weapons.some((wpn) => wpn.isTop500 === 1);
+			const aHasTop500 = a.weapons.some((wpn) => wpn.isTop500);
+			const bHasTop500 = b.weapons.some((wpn) => wpn.isTop500);
 
 			if (aHasTop500 && !bHasTop500) return -1;
 			if (!aHasTop500 && bHasTop500) return 1;

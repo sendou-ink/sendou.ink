@@ -90,7 +90,7 @@ export function BuildCards({ data }: { data: SerializeFrom<typeof loader> }) {
 					<BuildCard
 						key={build.id}
 						build={build}
-						owner={{ ...build.owner, plusTier: build.plusTier }}
+						owner={build.author}
 						canEdit={false}
 					/>
 				);

@@ -91,7 +91,7 @@ export interface Team {
 	bio: string | null;
 	createdAt: Generated<number>;
 	customUrl: string;
-	customTheme: JSONColumnTypeNullable<CustomTheme>;
+	customTheme: Generated<JSONColumnTypeNullable<CustomTheme>>;
 	/** Soft delete marker. Always `null` when selected via the `Team` view, which filters these rows out. */
 	deletedAt: number | null;
 	id: GeneratedAlways<number>;
@@ -230,9 +230,9 @@ export interface Build {
 	title: string;
 	updatedAt: Generated<number>;
 	/** 3x4 ability tuple (head/clothes/shoes × main + 3 subs). */
-	abilities: JSONColumnTypeNullable<BuildAbilitiesTuple>;
+	abilities: JSONColumnType<BuildAbilitiesTuple>;
 	/** Serialized ability+AP combo (e.g. `SSU_30,ISS_10`) used to group identical builds for the popular builds view. */
-	abilitiesSignature: string | null;
+	abilitiesSignature: string;
 }
 
 export interface BuildWeapon {
@@ -241,7 +241,7 @@ export interface BuildWeapon {
 	/** Alt skins collapse to their base weapon (e.g. Hero Shot Replica `45` → Splattershot `40`). Indexed for the builds-by-weapon, popular, and stats queries so they can filter `= ?` against a covering index instead of `IN (alt skins…)`. */
 	canonicalWeaponSplId: MainWeaponId;
 	/** Mirror of `Build.updatedAt`. Denormalized so the `(canonicalWeaponSplId, sortValue, updatedAt, buildId)` covering index serves the builds-by-weapon list. */
-	updatedAt: Generated<number>;
+	updatedAt: number;
 	/** Per-weapon sort priority: `plusTier * 2 + (this weapon is top500 ? 0 : 1)` for public builds, NULL for private. */
 	sortValue: number | null;
 }
@@ -632,7 +632,7 @@ export interface SplatoonPlayer {
 }
 
 export interface Tournament {
-	settings: JSONColumnType<TournamentSettings>;
+	settings: Generated<JSONColumnType<TournamentSettings>>;
 	id: GeneratedAlways<number>;
 	mapPickingStyle: TournamentMapPickingStyle;
 	/** Maps prepared ahead of time for rounds. Follows settings.bracketProgression order. Null in the spot if not defined yet for that bracket. */
@@ -643,7 +643,7 @@ export interface Tournament {
 	/** Is the tournament finalized meaning all the matches are played and TO has locked it making it read-only */
 	isFinalized: Generated<DBBoolean>;
 	/** Snapshot of teams and rosters when seeds were last saved. Used to detect NEW teams/players. */
-	seedingSnapshot: JSONColumnTypeNullable<SeedingSnapshot>;
+	seedingSnapshot: Generated<JSONColumnTypeNullable<SeedingSnapshot>>;
 	/** Tournament tier based on top teams' skill. 1=X, 2=S+, 3=S, 4=A+, 5=A, 6=B+, 7=B, 8=C+, 9=C */
 	tier: TournamentTierNumber | null;
 	vodsLastSyncAt: Generated<number | null>;
@@ -759,7 +759,7 @@ export interface TournamentResult {
 	tournamentId: number;
 	tournamentTeamId: number;
 	/** E.g. ["W", "L", null] = won the first set, lost the second, did not play the third. */
-	setResults: JSONColumnType<WinLossParticipationArray>;
+	setResults: Generated<JSONColumnType<WinLossParticipationArray>>;
 	userId: number;
 	/** Division label for tournaments with multiple starting brackets (e.g., "D1", "D2") */
 	div: string | null;
@@ -924,7 +924,7 @@ export interface TournamentOrganizationBannedUser {
 export interface TrustRelationship {
 	trustGiverUserId: number;
 	trustReceiverUserId: number;
-	lastUsedAt: number;
+	lastUsedAt: Generated<number>;
 }
 
 /** Mutual friendship between two users. Invariant: userOneId < userTwoId. */
@@ -977,7 +977,7 @@ export interface User {
 	commissionsOpenedAt: number | null;
 	commissionText: string | null;
 	country: string | null;
-	customTheme: JSONColumnTypeNullable<CustomTheme>;
+	customTheme: Generated<JSONColumnTypeNullable<CustomTheme>>;
 	customUrl: string | null;
 	discordAvatar: string | null;
 	customAvatarImgId: number | null;
@@ -998,7 +998,7 @@ export interface User {
 	isTournamentOrganizer: Generated<DBBoolean>;
 	isApiAccesser: Generated<DBBoolean>;
 	languages: JSONColumnTypeNullable<UnifiedLanguageCode[]>;
-	pronouns: JSONColumnTypeNullable<Pronouns>;
+	pronouns: Generated<JSONColumnTypeNullable<Pronouns>>;
 	patronStartedAt: number | null;
 	patronTier: number | null;
 	patronExpiresAt: number | null;
@@ -1213,7 +1213,7 @@ export interface ScrimPost {
 	chatRoomId: number | null;
 	/** Refers to the team looking for the team (can also be a pick-up) */
 	teamId: number | null;
-	managedByAnyone: DBBoolean;
+	managedByAnyone: Generated<DBBoolean>;
 	canceledAt: number | null;
 	canceledByUserId: number | null;
 	cancelReason: string | null;

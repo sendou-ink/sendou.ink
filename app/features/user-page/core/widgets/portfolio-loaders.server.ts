@@ -273,12 +273,14 @@ export const WIDGET_LOADERS = {
 		);
 	},
 	builds: async (userId: number) => {
-		const builds = await BuildRepository.findAllByUserId(userId, {
-			showPrivate: false,
-			limit: 3,
-		});
-
-		return builds;
+		return (
+			BuildRepository.builds()
+				// xxx: should we limit the where type to only columns with index..?
+				.where({ ownerId: userId })
+				.newestFirst()
+				.limit(3)
+				.execute()
+		);
 	},
 	art: async (userId: number, settings: ExtractWidgetSettings<"art">) => {
 		const includeAuthored =

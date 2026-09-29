@@ -8,7 +8,9 @@ import type {
 	BuildAbilitiesTuple,
 	MainWeaponId,
 } from "~/modules/in-game-lists/types";
+import { withNoUser, withUserId } from "~/utils/Test";
 import * as BuildRepository from "./BuildRepository.server";
+import { sortAbilities } from "./core/ability-sorting.server";
 
 const users = UserFactory.pool();
 
@@ -257,50 +259,152 @@ describe("BuildRepository.insert — computeBuildData", () => {
 			expect(weapon.sortValue).toBe(2);
 		});
 	});
+});
 
-	test("findAllByWeaponId.weapons[].isTop500 matches the sortValue formula", async () => {
-		await makeTop500(users.id(1), SPLATTERSHOT);
+describe("BuildRepository.builds", () => {
+	const ownerId = () => users.id(1);
+	const otherUserId = () => users.id(2);
 
-		await createBuild({
-			ownerId: users.id(1),
-			weaponSplIds: [SPLATTERSHOT, SPLATTERSHOT_NOUVEAU],
-		});
-
-		const [build] = await BuildRepository.findAllByWeaponId(SPLATTERSHOT, {
-			limit: 10,
-		});
-
-		const splattershot = build.weapons.find(
-			(w) => w.weaponSplId === SPLATTERSHOT,
-		);
-		const nouveau = build.weapons.find(
-			(w) => w.weaponSplId === SPLATTERSHOT_NOUVEAU,
-		);
-
-		expect(splattershot?.isTop500).toBe(1);
-		expect(nouveau?.isTop500).toBe(0);
+	beforeEach(async () => {
+		await users.create(2);
 	});
 
-	test("a multi-weapon build is returned by findAllByWeaponId for each of its weapons", async () => {
+	const titlesOf = (rows: Array<{ title: string }>) =>
+		rows.map((row) => row.title).sort((a, b) => a.localeCompare(b));
+
+	describe("private guard", () => {
+		beforeEach(async () => {
+			await createBuild({ ownerId: ownerId(), title: "public" });
+			await createBuild({ ownerId: ownerId(), title: "private", isPrivate: 1 });
+		});
+
+		test("hides private builds by default", async () => {
+			const rows = await BuildRepository.builds()
+				.where({ ownerId: ownerId() })
+				.execute();
+
+			expect(titlesOf(rows)).toEqual(["public"]);
+		});
+
+		test("visibleToActor shows the actor their own private builds", async () => {
+			const rows = await withUserId(ownerId(), () =>
+				BuildRepository.builds()
+					.where({ ownerId: ownerId() })
+					.visibleToActor()
+					.execute(),
+			);
+
+			expect(titlesOf(rows)).toEqual(["private", "public"]);
+		});
+
+		test("visibleToActor hides another user's private builds", async () => {
+			const rows = await withUserId(otherUserId(), () =>
+				BuildRepository.builds()
+					.where({ ownerId: ownerId() })
+					.visibleToActor()
+					.execute(),
+			);
+
+			expect(titlesOf(rows)).toEqual(["public"]);
+		});
+
+		test("visibleToActor shows anonymous visitors public builds only", async () => {
+			const rows = await withNoUser(() =>
+				BuildRepository.builds()
+					.where({ ownerId: ownerId() })
+					.visibleToActor()
+					.execute(),
+			);
+
+			expect(titlesOf(rows)).toEqual(["public"]);
+		});
+
+		test("ownedByActor returns only the actor's builds, private included", async () => {
+			await createBuild({ ownerId: otherUserId(), title: "other" });
+
+			const rows = await withUserId(ownerId(), () =>
+				BuildRepository.builds().ownedByActor().execute(),
+			);
+
+			expect(titlesOf(rows)).toEqual(["private", "public"]);
+		});
+	});
+
+	test("forWeapon marks a weapon isTop500 by the sortValue formula", async () => {
+		await makeTop500(ownerId(), SPLATTERSHOT);
 		await createBuild({
-			ownerId: users.id(1),
-			title: "Multi-weapon Build",
+			ownerId: ownerId(),
 			weaponSplIds: [SPLATTERSHOT, SPLATTERSHOT_NOUVEAU],
 		});
 
-		const splattershotBuilds = await BuildRepository.findAllByWeaponId(
-			SPLATTERSHOT,
-			{ limit: 10 },
-		);
-		const nouveauBuilds = await BuildRepository.findAllByWeaponId(
-			SPLATTERSHOT_NOUVEAU,
-			{ limit: 10 },
-		);
+		const [build] = await BuildRepository.builds()
+			.forWeapon(SPLATTERSHOT)
+			.execute();
 
-		expect(splattershotBuilds).toHaveLength(1);
-		expect(splattershotBuilds[0].title).toBe("Multi-weapon Build");
-		expect(nouveauBuilds).toHaveLength(1);
-		expect(nouveauBuilds[0].id).toBe(splattershotBuilds[0].id);
+		expect(build.weapons).toEqual([
+			{ weaponSplId: SPLATTERSHOT, isTop500: true },
+			{ weaponSplId: SPLATTERSHOT_NOUVEAU, isTop500: false },
+		]);
+	});
+
+	test("forWeapon returns a multi-weapon build for each of its weapons", async () => {
+		const { id } = await createBuild({
+			ownerId: ownerId(),
+			weaponSplIds: [SPLATTERSHOT, SPLATTERSHOT_NOUVEAU],
+		});
+
+		for (const weaponId of [SPLATTERSHOT, SPLATTERSHOT_NOUVEAU]) {
+			const rows = await BuildRepository.builds().forWeapon(weaponId).execute();
+			expect(rows.map((row) => row.id)).toEqual([id]);
+		}
+	});
+
+	test("forWeapon ranks plus tier and top 500 first, alt skins included", async () => {
+		const plusOwner = await UserFactory.create(null, { plusTier: 1 });
+		await createBuild({ ownerId: ownerId(), title: "no tier" });
+		await createBuild({
+			ownerId: plusOwner.id,
+			title: "plus",
+			weaponSplIds: [HERO_SHOT_REPLICA],
+		});
+
+		const rows = await BuildRepository.builds()
+			.forWeapon(SPLATTERSHOT)
+			.withAuthor()
+			.execute();
+
+		expect(rows.map((row) => row.title)).toEqual(["plus", "no tier"]);
+		expect(rows[0].author).toMatchObject({ id: plusOwner.id, plusTier: 1 });
+		expect(rows[1].author).toMatchObject({ id: ownerId(), plusTier: null });
+	});
+
+	describe("sortAbilitiesIfPreferred", () => {
+		const UNSORTED: BuildAbilitiesTuple = [
+			["ISM", "SSU", "ISM", "SSU"],
+			["ISM", "SSU", "ISM", "SSU"],
+			["ISM", "SSU", "ISM", "SSU"],
+		];
+
+		test("sorts other users' builds", async () => {
+			await createBuild({ ownerId: ownerId(), abilities: UNSORTED });
+
+			const [build] = await withUserId(otherUserId(), () =>
+				BuildRepository.builds().sortAbilitiesIfPreferred().execute(),
+			);
+
+			expect(build.abilities).toEqual(sortAbilities(UNSORTED));
+			expect(build.abilities).not.toEqual(UNSORTED);
+		});
+
+		test("keeps the viewer's own builds in entered order", async () => {
+			await createBuild({ ownerId: ownerId(), abilities: UNSORTED });
+
+			const [build] = await withUserId(ownerId(), () =>
+				BuildRepository.builds().sortAbilitiesIfPreferred().execute(),
+			);
+
+			expect(build.abilities).toEqual(UNSORTED);
+		});
 	});
 });
 
