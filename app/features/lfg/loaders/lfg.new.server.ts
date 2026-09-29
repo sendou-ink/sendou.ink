@@ -13,7 +13,7 @@ export const loader = async ({ request }: LoaderFunctionArgs) => {
 	const userMatchProfile = await MatchProfileRepository.findSettingsByUserId(
 		user.id,
 	);
-	const ownPosts = await LFGRepository.posts().ownedByActor().execute(); // xxx: why no findById? then checking perms
+	const ownPosts = await LFGRepository.posts().ownedByActor().execute();
 	const postToEdit = ownPosts.find((post) => post.id === postId);
 
 	return {
