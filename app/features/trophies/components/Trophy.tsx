@@ -98,6 +98,7 @@ export function Trophy({
 	colorScheme: forcedColorScheme,
 	fps = 60,
 	deferred,
+	showAnimationProgress,
 }: {
 	model: string;
 	preview?: boolean;
@@ -110,6 +111,7 @@ export function Trophy({
 	colorScheme?: ColorScheme;
 	fps?: number;
 	deferred?: boolean;
+	showAnimationProgress?: boolean;
 }) {
 	const ctxValue = useContext(TrophyCtx);
 	const context = ctxValue?.context;
@@ -120,6 +122,8 @@ export function Trophy({
 	const [drawn, setDrawn] = useState(false);
 	const [everDrawn, setEverDrawn] = useState(false);
 	const [activeModel, setActiveModel] = useState(model);
+	const [hasAnimation, setHasAnimation] = useState(false);
+	const animationProgressRef = useRef<HTMLDivElement>(null);
 	const reducedMotion = usePrefersReducedMotion();
 
 	const onRenderStatsRef = useRef(onRenderStats);
@@ -199,9 +203,19 @@ export function Trophy({
 				return;
 			}
 
-			if (context && onRenderStats) {
+			const animationDuration = viewer.modelInfo?.animationDuration ?? 0;
+			const tracksAnimationProgress = Boolean(
+				showAnimationProgress && animationDuration > 0,
+			);
+			setHasAnimation(tracksAnimationProgress);
+
+			if ((context && onRenderStats) || tracksAnimationProgress) {
 				viewer.onFrame = () => {
-					onRenderStatsRef.current?.({ ...context.stats });
+					if (context) onRenderStatsRef.current?.({ ...context.stats });
+					animationProgressRef.current?.style.setProperty(
+						"--animation-progress",
+						String(viewer.animation.time / animationDuration),
+					);
 				};
 			}
 
@@ -234,6 +248,7 @@ export function Trophy({
 			disableCameraControls,
 			colorScheme,
 			fps,
+			showAnimationProgress,
 		],
 	);
 
@@ -289,6 +304,13 @@ export function Trophy({
 					}}
 				/>
 			)}
+			{hasAnimation ? (
+				<div
+					ref={animationProgressRef}
+					className={style.animationProgress}
+					data-testid="trophy-animation-progress"
+				/>
+			) : null}
 			{everDrawn || swapping ? null : (
 				<div className={style.loading}>
 					<div className={style.spinner} />

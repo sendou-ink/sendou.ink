@@ -81,6 +81,17 @@
 	}
 }
 
+.animationProgress {
+	position: absolute;
+	inset-inline: 0;
+	bottom: 0;
+	height: 3px;
+	background-color: var(--color-fill-accent);
+	transform: scaleX(var(--animation-progress, 0));
+	transform-origin: left;
+	pointer-events: none;
+}
+
 .interactive {
 	cursor: grab;
 
