@@ -25,6 +25,13 @@ import {
 	type WeaponTemplate,
 } from "./weapons";
 
+/**
+ * Below this the best icon is no read: every fixture's true icon scores >= 0.53, while a
+ * kit without a template (new after a game patch) reads as its nearest sibling at up to 0.92,
+ * so the floor only drops the clearest non-matches.
+ */
+const WEAPON_MIN_SCORE = 0.5;
+
 /** Per-row ROI geometry; the replay detector closes these over its panel dx. */
 export interface RowRois {
 	weapon(cy: number): Roi;
@@ -92,7 +99,10 @@ export function* parseScoreboardRowSteps(
 	return {
 		player: {
 			name: name?.name ?? "",
-			weaponId: weapon ? toMainWeaponId(weapon.id) : null,
+			weaponId:
+				weapon && weapon.score >= WEAPON_MIN_SCORE
+					? toMainWeaponId(weapon.id)
+					: null,
 			paint: paint?.value ?? null,
 			ka: statValues[0] ?? null,
 			d: statValues[1] ?? null,

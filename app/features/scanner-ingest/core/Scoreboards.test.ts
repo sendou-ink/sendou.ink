@@ -34,6 +34,7 @@ function testGame(
 		loserUserIds: [],
 		winnerInGameNames: [],
 		loserInGameNames: [],
+		inGameNameByUserId: new Map(),
 		playedAt: 1000,
 		linkedPlayerNames: null,
 		...rest,
@@ -807,6 +808,94 @@ describe("recognizablePlayerNames", () => {
 			Scoreboards.recognizablePlayerNames(
 				testMatch({ names: ["w1", "", "", "w4", "l1", "", "l3", "l4"] }),
 			),
+		).toBe(null);
+	});
+});
+
+describe("Scoreboards.povWeaponId", () => {
+	const SENDER_ID = 1;
+	const rosterGame = () =>
+		testGame({
+			winnerUserIds: [1, 2, 3, 4],
+			loserUserIds: [5, 6, 7, 8],
+			inGameNameByUserId: new Map(
+				NAMES.map((name, i) => [i + 1, `${name}#1234`]),
+			),
+		});
+	const weapons: MainWeaponId[] = [10, 20, 30, 40, 50, 60, 70, 80];
+
+	test.each([
+		{
+			why: "the sender's own seat",
+			povIndex: 0,
+			povUserId: SENDER_ID,
+			expected: 10,
+		},
+		{
+			why: "a losing sender's own seat",
+			povIndex: 4,
+			povUserId: 5,
+			expected: 50,
+		},
+		{
+			why: "no POV seat",
+			povIndex: null,
+			povUserId: SENDER_ID,
+			expected: null,
+		},
+		{
+			why: "a sender in neither roster (caster)",
+			povIndex: 0,
+			povUserId: 99,
+			expected: null,
+		},
+		{
+			why: "a seat on the sender's opponents' side",
+			povIndex: 4,
+			povUserId: SENDER_ID,
+			expected: null,
+		},
+		{
+			why: "a teammate's seat (their recording)",
+			povIndex: 1,
+			povUserId: SENDER_ID,
+			expected: null,
+		},
+	])("$why", ({ povIndex, povUserId, expected }) => {
+		expect(
+			Scoreboards.povWeaponId({
+				match: testMatch({ povIndex, weapons }),
+				game: rosterGame(),
+				povUserId,
+			}),
+		).toBe(expected);
+	});
+
+	test.each([
+		{ why: "unread", seatName: "" },
+		{ why: "garbled", seatName: "???1" },
+	])(
+		"a seat whose name is $why can't contradict the sender",
+		({ seatName }) => {
+			const names = NAMES.map((name, i) => (i === 0 ? seatName : name));
+
+			expect(
+				Scoreboards.povWeaponId({
+					match: testMatch({ povIndex: 0, names, weapons }),
+					game: rosterGame(),
+					povUserId: SENDER_ID,
+				}),
+			).toBe(10);
+		},
+	);
+
+	test("returns null when the seat's weapon was not read", () => {
+		expect(
+			Scoreboards.povWeaponId({
+				match: testMatch({ povIndex: 0, weapons: [null, ...weapons.slice(1)] }),
+				game: rosterGame(),
+				povUserId: SENDER_ID,
+			}),
 		).toBe(null);
 	});
 });

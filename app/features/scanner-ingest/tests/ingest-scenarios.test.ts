@@ -356,6 +356,17 @@ describe("SendouQ flow", () => {
 		expect(scoreboard.data.players[4]!.userId).toBe(w.bravoUsers[0]!.id);
 	});
 
+	test("Q13 a teammate's recording: the game links, but their weapon isn't credited to the sender", async () => {
+		const w = await sendouqWorld();
+		await w.conclude();
+
+		// the POV seat is Alpha1's, sent by their teammate Alpha2
+		const res = await ingest(w.alphaUsers[1]!, [w.scanned(w.maps[0]!)]);
+
+		expect(res.linkedGamesCount).toBe(1);
+		expect(await fetchReportedWeapons()).toHaveLength(0);
+	});
+
 	test("Q11 POV read misflagged as cast: the sender's seat still resolves and links their match", async () => {
 		const w = await sendouqWorld();
 		await w.conclude();
@@ -596,6 +607,23 @@ describe("tournament flow", () => {
 		expect(await fetchReportedWeapons()).toHaveLength(0);
 		const page = await tournamentMatchPage(w.tournamentId, finalMatch.id);
 		expect(page.ingestedScoreboards.map((sb) => sb.mapIndex)).toEqual([0, 1]);
+	});
+
+	test("T7 cast footage with a POV seat: the caster gets no weapon for a set they didn't play", async () => {
+		const w = await tournamentWorld();
+		const finalMatch = w.matches.at(-1)!;
+		await w.cast(finalMatch.id);
+		const caster = await createUser();
+		await w.staff(caster);
+		const [firstGame, secondGame] = await w.games(finalMatch.id);
+
+		const res = await ingest(caster, [
+			w.scanned(firstGame!, { cast: true }),
+			w.scanned(secondGame!, { cast: true, pov: { team: 0, index: 0 } }),
+		]);
+
+		expect(res.linkedGamesCount).toBe(2);
+		expect(await fetchReportedWeapons()).toHaveLength(0);
 	});
 });
 

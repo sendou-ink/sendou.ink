@@ -557,6 +557,8 @@ export interface ReportedWeapon {
 	userId: number;
 	weaponSplId: MainWeaponId;
 	createdAt: Generated<number>;
+	/** the scanner read this weapon was reported from, null when reported by hand */
+	ingestedMatchId: number | null;
 }
 
 export interface IngestedMatch {

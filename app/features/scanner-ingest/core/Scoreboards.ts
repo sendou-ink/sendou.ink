@@ -62,6 +62,8 @@ export interface IngestableGame {
 	winnerInGameNames: string[];
 	/** known in-game names of the losing team's roster, the side fallback for reads without a POV seat */
 	loserInGameNames: string[];
+	/** both rosters' known in-game names by user id, tells whose seat a POV read marks */
+	inGameNameByUserId: Map<number, string>;
 	/** timestamp of the game's report: the chronological key and what a scan's play time is measured against */
 	playedAt: number;
 	/** winner-first row-order names of the game's earliest linked ingest that read enough names to recognize a re-detection, null when none; lets matching skip taken games yet recognize re-detections */
@@ -178,6 +180,38 @@ export function matchedGames({
 	}
 
 	return result;
+}
+
+/**
+ * The weapon the sender played in a linked game, read off the scan's POV seat. Null unless the
+ * sender is in the roster on the seat's side and the seat's name isn't another roster member's:
+ * a caster's or a teammate's recording marks someone else's seat.
+ */
+export function povWeaponId({
+	match,
+	game,
+	povUserId,
+}: {
+	match: ScannerMatch;
+	game: IngestableGame;
+	povUserId: number;
+}): MainWeaponId | null {
+	const view = winnerFirstView(match);
+	if (!view || view.povIndex === null) return null;
+	if (povSideAgreement(view, game, povUserId) !== true) return null;
+
+	const seat = view.players[view.povIndex]!;
+	const seatName = Matches.normalizeInGameName(seat.name);
+	const seatUserIds = [...game.inGameNameByUserId]
+		.filter(
+			([, inGameName]) => Matches.normalizeInGameName(inGameName) === seatName,
+		)
+		.map(([userId]) => userId);
+	if (seatName && seatUserIds.length > 0 && !seatUserIds.includes(povUserId)) {
+		return null;
+	}
+
+	return seat.weaponId;
 }
 
 export interface IngestedScoreboardPlayer {

@@ -448,7 +448,8 @@ export async function addOrMergeMatches({
 /**
  * Links ingested matches to their matched game results. A row links to at most one game (re-sends
  * are no-ops); a game collects links from many rows (each POV's scan). A known POV player's
- * weapon is reported as a regular ReportedWeapon unless they already have one for that game.
+ * weapon (Scoreboards.povWeaponId) is reported as a ReportedWeapon tagged with its ingested match,
+ * unless they already have one for that game.
  *
  * @returns count of newly created links
  */
@@ -782,6 +783,10 @@ async function tournamentGames({
 			loserUserIds: loserRoster?.userIds ?? [],
 			winnerInGameNames: winnerRoster?.inGameNames ?? [],
 			loserInGameNames: loserRoster?.inGameNames ?? [],
+			inGameNameByUserId: new Map([
+				...(winnerRoster?.inGameNameByUserId ?? []),
+				...(loserRoster?.inGameNameByUserId ?? []),
+			]),
 			playedAt: row.playedAt,
 			linkedPlayerNames: linkedNames.get(row.matchGameResultId) ?? null,
 		};
@@ -791,6 +796,7 @@ async function tournamentGames({
 interface Roster {
 	userIds: number[];
 	inGameNames: string[];
+	inGameNameByUserId: Map<number, string>;
 }
 
 async function teamRosters(teamIds: Array<number | null>) {
@@ -814,16 +820,20 @@ async function teamRosters(teamIds: Array<number | null>) {
 
 	const result = new Map<number, Roster>();
 	for (const member of members) {
-		const roster = result.get(member.tournamentTeamId) ?? {
-			userIds: [],
-			inGameNames: [],
-		};
+		const roster = result.get(member.tournamentTeamId) ?? emptyRoster();
 		roster.userIds.push(member.userId);
-		if (member.inGameName) roster.inGameNames.push(member.inGameName);
+		if (member.inGameName) {
+			roster.inGameNames.push(member.inGameName);
+			roster.inGameNameByUserId.set(member.userId, member.inGameName);
+		}
 		result.set(member.tournamentTeamId, roster);
 	}
 
 	return result;
+}
+
+function emptyRoster(): Roster {
+	return { userIds: [], inGameNames: [], inGameNameByUserId: new Map() };
 }
 
 async function sendouqGames({
@@ -918,6 +928,10 @@ async function sendouqGames({
 			loserUserIds: loserRoster?.userIds ?? [],
 			winnerInGameNames: winnerRoster?.inGameNames ?? [],
 			loserInGameNames: loserRoster?.inGameNames ?? [],
+			inGameNameByUserId: new Map([
+				...(winnerRoster?.inGameNameByUserId ?? []),
+				...(loserRoster?.inGameNameByUserId ?? []),
+			]),
 			playedAt: row.playedAt,
 			linkedPlayerNames: linkedNames.get(row.groupMatchMapId) ?? null,
 		};
@@ -937,12 +951,12 @@ async function groupRosters(groupIds: number[]) {
 
 	const result = new Map<number, Roster>();
 	for (const member of members) {
-		const roster = result.get(member.groupId) ?? {
-			userIds: [],
-			inGameNames: [],
-		};
+		const roster = result.get(member.groupId) ?? emptyRoster();
 		roster.userIds.push(member.userId);
-		if (member.inGameName) roster.inGameNames.push(member.inGameName);
+		if (member.inGameName) {
+			roster.inGameNames.push(member.inGameName);
+			roster.inGameNameByUserId.set(member.userId, member.inGameName);
+		}
 		result.set(member.groupId, roster);
 	}
 
@@ -981,12 +995,15 @@ async function linkedPlayerNamesByTarget(
 
 async function reportPovWeapon(
 	trx: Transaction<DB>,
-	{ match, game }: { match: ScannerMatch; game: IngestableGame },
+	{
+		ingestedMatchId,
+		match,
+		game,
+	}: { ingestedMatchId: number; match: ScannerMatch; game: IngestableGame },
 	povUserId: number | null,
 ) {
-	if (povUserId === null || match.pov === null) return;
-	const weaponSplId =
-		match.teams[match.pov.team]?.players[match.pov.index]?.weaponId ?? null;
+	if (povUserId === null) return;
+	const weaponSplId = Scoreboards.povWeaponId({ match, game, povUserId });
 	if (weaponSplId === null) return;
 
 	await trx
@@ -1001,6 +1018,9 @@ async function reportPovWeapon(
 			mapIndex: game.mapIndex,
 			userId: povUserId,
 			weaponSplId,
+			ingestedMatchId,
+			// season stats bucket by it, and a scan can arrive long after the game
+			createdAt: game.playedAt,
 		})
 		.onConflict((oc) =>
 			oc
