@@ -838,6 +838,20 @@ export function findAllForShowcase() {
 			).as("organization"),
 			jsonArrayFrom(
 				eb
+					.selectFrom("CalendarEventBadge")
+					.innerJoin("Badge", "CalendarEventBadge.badgeId", "Badge.id")
+					.select(["Badge.id", "Badge.code", "Badge.hue", "Badge.displayName"])
+					.whereRef("CalendarEventBadge.eventId", "=", "CalendarEvent.id")
+					.orderBy("Badge.id", "asc"),
+			).as("badges"),
+			jsonObjectFrom(
+				eb
+					.selectFrom("Trophy")
+					.select(["Trophy.model"])
+					.whereRef("Trophy.id", "=", "CalendarEvent.trophyId"),
+			).as("trophy"),
+			jsonArrayFrom(
+				eb
 					.selectFrom("TournamentResult")
 					.innerJoin("User", "TournamentResult.userId", "User.id")
 					.innerJoin(

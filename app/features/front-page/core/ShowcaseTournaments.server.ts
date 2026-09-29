@@ -316,6 +316,8 @@ function mapTournamentFromDB(
 		minMembersPerTeam: tournament.settings.minMembersPerTeam ?? 4,
 		modes: null,
 		hasVods: (tournament.vodCount ?? 0) > 0,
+		badges: tournament.badges,
+		trophy: tournament.trophy,
 		firstPlacers,
 	};
 }

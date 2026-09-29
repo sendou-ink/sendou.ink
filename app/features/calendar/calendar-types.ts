@@ -28,6 +28,10 @@ interface CommonEvent {
 		slug: string;
 	} | null;
 	authorId: number;
+	badges: Array<
+		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
+	> | null;
+	trophy: Pick<Tables["Trophy"], "model"> | null;
 }
 
 export interface CalendarEvent extends CommonEvent {
@@ -39,10 +43,6 @@ export interface CalendarEvent extends CommonEvent {
 	normalizedTeamCount: number;
 	/** For multi-day tournaments, which day of the event is this */
 	day?: number;
-	badges: Array<
-		Pick<Tables["Badge"], "id" | "code" | "displayName" | "hue">
-	> | null;
-	trophy: Pick<Tables["Trophy"], "model"> | null;
 }
 
 export interface ShowcaseCalendarEvent extends CommonEvent {
