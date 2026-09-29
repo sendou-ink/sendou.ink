@@ -304,7 +304,7 @@ export async function updateRoomsInactive(
 		.execute();
 }
 
-/** Deletes rooms and their messages. Called in the owning entity's delete transaction. */
+/** Deletes rooms and their messages. Only for a room its owner replaces: deleting the owner row deletes its room by trigger. */
 export async function deleteRoomsByIds(
 	roomIds: Array<number | null>,
 	trx?: Transaction<DB>,

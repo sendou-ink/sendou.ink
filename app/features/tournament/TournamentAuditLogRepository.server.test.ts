@@ -110,15 +110,14 @@ describe("TournamentAuditLogRepository", () => {
 		expect(events[0].team?.name).toBe("Team Olive");
 	});
 
-	test("a reused team id does not collapse two teams into one history", async () => {
+	test("a deleted team's id is not reused and both teams keep their history", async () => {
 		const tournament = await createTournament();
 		const teamA = await createTournamentTeam(tournament.id, "Team A");
 
 		await deleteTeam(teamA.id);
 
 		const teamB = await createTournamentTeam(tournament.id, "Team B");
-		// SQLite reuses the highest deleted rowid for the next insert
-		expect(teamB.id).toBe(teamA.id);
+		expect(teamB.id).not.toBe(teamA.id);
 
 		const teams = await TournamentAuditLogRepository.findTeamsByTournamentId(
 			tournament.id,

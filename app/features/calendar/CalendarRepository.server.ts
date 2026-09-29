@@ -11,7 +11,6 @@ import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import type { TeamPickSettings, TournamentSettings } from "~/db/tables-json";
 import { EXCLUDED_TAGS } from "~/features/calendar/calendar-constants";
-import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import { MapPool } from "~/features/map-list-generator/core/map-pool";
 import * as TeamPick from "~/features/tournament/core/TeamPick";
 import * as Progression from "~/features/tournament-bracket/core/Progression";
@@ -996,42 +995,7 @@ async function upsertMapPool(
 		.execute();
 }
 
-export function deleteById({
-	eventId,
-	tournamentId,
-}: {
-	eventId: number;
-	tournamentId: number | null;
-}) {
-	return db.transaction().execute(async (trx) => {
-		await trx.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
-		if (tournamentId) {
-			const teamChatRooms = await trx
-				.selectFrom("TournamentTeam")
-				.select("TournamentTeam.chatRoomId")
-				.where("TournamentTeam.tournamentId", "=", tournamentId)
-				.where("TournamentTeam.chatRoomId", "is not", null)
-				.execute();
-			const matchChatRooms = await trx
-				.selectFrom("TournamentMatch")
-				.innerJoin(
-					"TournamentStage",
-					"TournamentStage.id",
-					"TournamentMatch.stageId",
-				)
-				.select("TournamentMatch.chatRoomId")
-				.where("TournamentStage.tournamentId", "=", tournamentId)
-				.where("TournamentMatch.chatRoomId", "is not", null)
-				.execute();
-			await ChatRepository.deleteRoomsByIds(
-				[...teamChatRooms, ...matchChatRooms].map((room) => room.chatRoomId),
-				trx,
-			);
-
-			await trx
-				.deleteFrom("Tournament")
-				.where("id", "=", tournamentId)
-				.execute();
-		}
-	});
+/** Deletes the event, and its tournament if it has one. */
+export function deleteById(eventId: number) {
+	return db.deleteFrom("CalendarEvent").where("id", "=", eventId).execute();
 }

@@ -404,6 +404,11 @@ export async function submit(page: Page, target?: string | Locator) {
 export async function waitForPOSTResponse(page: Page, cb: () => Promise<void>) {
 	await flushIfDirty(page);
 
+	// A submission aborts in-flight fetcher loads (e.g. UserSearch's initial user) to rerun them
+	// later, but if the action redirects off their route React Router never does and they stay
+	// "loading" forever. The probe below also can't see an already busy router turn busy.
+	await expectRouterIdle(page);
+
 	await armRouterProbe(page);
 
 	const responsePromise = page.waitForResponse(

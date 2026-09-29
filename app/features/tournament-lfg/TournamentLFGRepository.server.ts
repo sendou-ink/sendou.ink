@@ -133,12 +133,6 @@ export function mergeTeams({
 	chatRoomExpiresAt: Date;
 }): Promise<number[]> {
 	return db.transaction().execute(async (trx) => {
-		const otherTeam = await trx
-			.selectFrom("TournamentTeam")
-			.select("chatRoomId")
-			.where("id", "=", otherTeamId)
-			.executeTakeFirst();
-
 		const otherMembers = await trx
 			.selectFrom("TournamentTeamMember")
 			.select(["TournamentTeamMember.userId", "TournamentTeamMember.role"])
@@ -160,8 +154,6 @@ export function mergeTeams({
 		}
 
 		await deleteLikesByTeamId(survivingTeamId, trx);
-
-		await ChatRepository.deleteRoomsByIds([otherTeam?.chatRoomId ?? null], trx);
 
 		await trx
 			.deleteFrom("TournamentTeam")
@@ -346,8 +338,6 @@ export function leaveLfg({
 		const memberUserIds = userTeam.chatRoomId
 			? await findMemberUserIds(userTeam.tournamentTeamId, trx)
 			: [];
-
-		await ChatRepository.deleteRoomsByIds([userTeam.chatRoomId], trx);
 
 		await trx
 			.deleteFrom("TournamentTeam")

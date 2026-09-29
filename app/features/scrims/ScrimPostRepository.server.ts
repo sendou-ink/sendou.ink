@@ -137,16 +137,7 @@ export function insertRequest(args: InsertRequestArgs) {
 }
 
 export function deleteById(scrimPostId: number) {
-	return db.transaction().execute(async (trx) => {
-		const post = await trx
-			.selectFrom("ScrimPost")
-			.select("ScrimPost.chatRoomId")
-			.where("id", "=", scrimPostId)
-			.executeTakeFirst();
-		await ChatRepository.deleteRoomsByIds([post?.chatRoomId ?? null], trx);
-
-		await trx.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
-	});
+	return db.deleteFrom("ScrimPost").where("id", "=", scrimPostId).execute();
 }
 
 const baseFindQuery = db
