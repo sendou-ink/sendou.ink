@@ -88,6 +88,8 @@ const AUDIO_CHECK_MS = 1_000;
 const AUDIO_SILENCE_MS = 5_000;
 /** one capture per browser profile: two would write the same games twice */
 const CAPTURE_LOCK = "scanner:capture";
+const SOURCE_ENDED_ERROR =
+	"The capture source was disconnected — check the capture card or OBS Virtual Camera and start the capture again";
 
 export type LiveStatus = "idle" | "starting" | "running" | "error";
 /** `unsupported`: no WebCodecs/track processor; `failed`: the encoder refused this stream */
@@ -237,6 +239,8 @@ export async function startCapture({
 		});
 		stream = opened.stream;
 		if (desktop?.track) stream.addTrack(desktop.track);
+		const videoTrack = stream.getVideoTracks()[0];
+		videoTrack?.addEventListener("ended", () => onSourceEnded(opened.stream));
 		video = document.createElement("video");
 		video.muted = true;
 		video.playsInline = true;
@@ -276,6 +280,7 @@ export async function startCapture({
 			}
 		}
 
+		if (videoTrack?.readyState === "ended") throw new Error(SOURCE_ENDED_ERROR);
 		stopSampler = startSampler(video, SAMPLE_FPS, (bitmap, t) => {
 			client?.analyze(bitmap, t);
 		});
@@ -406,6 +411,12 @@ function onWorkerError(message: string): void {
 	release();
 	if (stream) stopTracks(stream);
 	set(failed);
+}
+
+/** The video input went away (unplugged, OBS Virtual Camera stopped); without it the capture would sit on a frozen frame. */
+function onSourceEnded(stream: MediaStream): void {
+	if (snapshot.status !== "running" || snapshot.stream !== stream) return;
+	endCapture({ ...IDLE, status: "error", error: SOURCE_ENDED_ERROR });
 }
 
 function onFrameError(message: string): void {
