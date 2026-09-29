@@ -94,6 +94,26 @@ describe("database schema", () => {
 
 		expect(offenders).toEqual([]);
 	});
+
+	test("a row that uniquely owns its set null foreign key target deletes the target when it is deleted", async () => {
+		const offenders: string[] = [];
+		for (const table of await tables()) {
+			for (const fk of table.foreignKeys) {
+				const isOwner =
+					fk.on_delete === "SET NULL" && table.uniqueColumns.includes(fk.from);
+				const deletesTarget = table.triggers.some(
+					(trigger) =>
+						/\bafter delete\b/i.test(trigger) &&
+						trigger.includes(`delete from "${fk.table}"`),
+				);
+				if (isOwner && !deletesTarget) {
+					offenders.push(`${table.name}.${fk.from}`);
+				}
+			}
+		}
+
+		expect(offenders).toEqual([]);
+	});
 });
 
 async function tables() {
@@ -122,12 +142,29 @@ async function tables() {
 			);
 			const { rows: foreignKeys } = await sql<{
 				from: string;
+				table: string;
 				on_delete: string;
-			}>`select "from", "on_delete" from pragma_foreign_key_list(${table.name})`.execute(
+			}>`select "from", "table", "on_delete" from pragma_foreign_key_list(${table.name})`.execute(
 				db,
 			);
+			const { rows: uniqueColumns } = await sql<{ name: string }>`
+				select "info"."name" from pragma_index_list(${table.name}) as "list"
+				join pragma_index_info("list"."name") as "info"
+				where "list"."unique" = 1
+					and (select count(*) from pragma_index_info("list"."name")) = 1
+			`.execute(db);
+			const { rows: triggers } = await sql<{ sql: string }>`
+				select "sql" from "sqlite_master"
+				where "type" = 'trigger' and "tbl_name" = ${table.name}
+			`.execute(db);
 
-			return { ...table, columns, foreignKeys };
+			return {
+				...table,
+				columns,
+				foreignKeys,
+				uniqueColumns: uniqueColumns.map((column) => column.name),
+				triggers: triggers.map((trigger) => trigger.sql),
+			};
 		}),
 	);
 }

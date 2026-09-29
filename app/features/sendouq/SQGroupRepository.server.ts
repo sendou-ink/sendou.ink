@@ -358,11 +358,11 @@ export function morphGroups({
 	otherGroupId: number;
 }) {
 	return db.transaction().execute(async (trx) => {
-		const oldChatRooms = await trx
+		const survivingGroup = await trx
 			.selectFrom("Group")
 			.select(["Group.chatRoomId"])
-			.where("Group.id", "in", [survivingGroupId, otherGroupId])
-			.execute();
+			.where("Group.id", "=", survivingGroupId)
+			.executeTakeFirst();
 
 		// fresh chat room so neither group's previous messages are visible, and
 		// mark as matchmade
@@ -389,8 +389,9 @@ export function morphGroups({
 		await deleteLikesAndSuggestionsByGroupId(survivingGroupId, trx);
 		await refreshGroup(survivingGroupId, trx);
 
+		// replaced rather than deleted with its group, so the trigger doesn't remove it
 		await ChatRepository.deleteRoomsByIds(
-			oldChatRooms.map((room) => room.chatRoomId),
+			[survivingGroup?.chatRoomId ?? null],
 			trx,
 		);
 
@@ -929,7 +930,6 @@ export function leaveGroup(userId: number) {
 			.executeTakeFirst();
 
 		if (!remainingMember) {
-			await ChatRepository.deleteRoomsByIds([userGroup.chatRoomId], trx);
 			await trx.deleteFrom("Group").where("id", "=", userGroup.id).execute();
 			return { abortedReadyCheckGroupIds };
 		}

@@ -89,12 +89,23 @@ const NEW_INDEXES = [
 	`create index "user_banner_img_id" on "User" ("bannerImgId") where "bannerImgId" is not null`,
 ];
 
+// the owner points at its room with a "set null" foreign key, so without these deleting the owner leaves the room behind
+const CHAT_ROOM_OWNERS = [
+	"Group",
+	"GroupMatch",
+	"ScrimPost",
+	"TournamentMatch",
+	"TournamentTeam",
+];
+
 const ROWID_PRIMARY_KEY = /"id" integer primary key(?! autoincrement)/i;
 
 /**
  * Without AUTOINCREMENT, SQLite hands out max(id) + 1, so deleting the newest row lets its id be
  * reused by the next insert. Rebuilds every such table with AUTOINCREMENT, and while at it adds the
- * foreign keys that were only ever enforced by convention and fixes on delete actions that can't work.
+ * foreign keys that were only ever enforced by convention, fixes on delete actions that can't work and
+ * makes deleting a chat room's owner delete the room and deleting a tournament's calendar event
+ * delete the tournament.
  */
 export async function up(db: Kysely<any>): Promise<void> {
 	// a no-op inside a transaction, and needed off so dropping the old tables doesn't cascade
@@ -117,6 +128,15 @@ export async function up(db: Kysely<any>): Promise<void> {
 			for (const statement of viewsAndTriggers) {
 				await sql.raw(statement).execute(trx);
 			}
+			for (const table of CHAT_ROOM_OWNERS) {
+				await createChatRoomDeleteTrigger(trx, table);
+			}
+			// the other direction is the "tournamentId" foreign key's cascade
+			await sql`
+				create trigger "calendar_event_deletes_tournament" after delete on "CalendarEvent"
+				when old."tournamentId" is not null
+				begin delete from "Tournament" where "id" = old."tournamentId"; end
+			`.execute(trx);
 
 			const violations = await sql`pragma foreign_key_check`.execute(trx);
 			if (violations.rows.length > 0) {
@@ -144,6 +164,18 @@ async function removeOrphans(trx: Kysely<any>) {
 			}
 		}
 	}
+}
+
+async function createChatRoomDeleteTrigger(trx: Kysely<any>, table: string) {
+	const triggerName = `${table.replace(/([a-z])([A-Z])/g, "$1_$2").toLowerCase()}_deletes_chat_room`;
+
+	await sql
+		.raw(
+			`create trigger "${triggerName}" after delete on "${table}"
+			when old."chatRoomId" is not null
+			begin delete from "ChatRoom" where "id" = old."chatRoomId"; end`,
+		)
+		.execute(trx);
 }
 
 async function tablesToRebuild(trx: Kysely<any>) {

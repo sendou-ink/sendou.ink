@@ -527,41 +527,17 @@ export async function deleteRoundMatches(args: {
 	groupId: number;
 	roundId: number;
 }): Promise<void> {
-	await db.transaction().execute(async (trx) => {
-		const matches = await trx
-			.selectFrom("TournamentMatch")
-			.select(["TournamentMatch.chatRoomId"])
-			.where("stageId", "=", args.stageId)
-			.where("groupId", "=", args.groupId)
-			.where("roundId", "=", args.roundId)
-			.execute();
-		await ChatRepository.deleteRoomsByIds(
-			matches.map((match) => match.chatRoomId),
-			trx,
-		);
-
-		await trx
-			.deleteFrom("TournamentMatch")
-			.where("stageId", "=", args.stageId)
-			.where("groupId", "=", args.groupId)
-			.where("roundId", "=", args.roundId)
-			.execute();
-	});
+	await db
+		.deleteFrom("TournamentMatch")
+		.where("stageId", "=", args.stageId)
+		.where("groupId", "=", args.groupId)
+		.where("roundId", "=", args.roundId)
+		.execute();
 }
 
 /** Deletes the whole stage subtree (matches, rounds, groups, stage). */
 export function resetBracket(tournamentStageId: number) {
 	return db.transaction().execute(async (trx) => {
-		const matches = await trx
-			.selectFrom("TournamentMatch")
-			.select(["TournamentMatch.chatRoomId"])
-			.where("stageId", "=", tournamentStageId)
-			.execute();
-		await ChatRepository.deleteRoomsByIds(
-			matches.map((match) => match.chatRoomId),
-			trx,
-		);
-
 		await trx
 			.deleteFrom("TournamentMatch")
 			.where("stageId", "=", tournamentStageId)

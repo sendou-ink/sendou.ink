@@ -3,7 +3,6 @@ import { sql } from "kysely";
 import { db } from "~/db/sql";
 import type { DB, Tables } from "~/db/tables";
 import { actorId } from "~/features/auth/core/user.server";
-import * as ChatRepository from "~/features/chat/ChatRepository.server";
 import type { MapPool } from "~/features/map-list-generator/core/map-pool";
 import type { ModeShort, StageId } from "~/modules/in-game-lists/types";
 import { flatZip } from "~/utils/arrays";
@@ -794,7 +793,7 @@ export function join({
 				trx,
 			);
 			roomsChangedUserIds.push(
-				...(await deleteTeamChatRoom(previousTeamIdToDelete, trx)),
+				...(await chatRoomMemberIds(previousTeamIdToDelete, trx)),
 			);
 			await trx
 				.deleteFrom("TournamentTeam")
@@ -851,12 +850,7 @@ export function deleteById(tournamentTeamId: number): Promise<number[]> {
 			trx,
 		);
 
-		await trx
-			.deleteFrom("MapPoolMap")
-			.where("MapPoolMap.tournamentTeamId", "=", tournamentTeamId)
-			.execute();
-
-		const roomsChangedUserIds = await deleteTeamChatRoom(tournamentTeamId, trx);
+		const roomsChangedUserIds = await chatRoomMemberIds(tournamentTeamId, trx);
 
 		await trx
 			.deleteFrom("TournamentTeam")
@@ -1106,8 +1100,8 @@ export async function findRecentlyPlayedMapsByIds({
 	return flatZip(teamOneMaps, teamTwoMaps);
 }
 
-/** @returns the members who lost the room, empty when the team had none. */
-async function deleteTeamChatRoom(
+/** @returns the members who lose the room when the team is deleted, empty when the team has none. */
+async function chatRoomMemberIds(
 	tournamentTeamId: number,
 	trx: Transaction<DB>,
 ): Promise<number[]> {
@@ -1124,8 +1118,6 @@ async function deleteTeamChatRoom(
 		.select("TournamentTeamMember.userId")
 		.where("TournamentTeamMember.tournamentTeamId", "=", tournamentTeamId)
 		.execute();
-
-	await ChatRepository.deleteRoomsByIds([team.chatRoomId], trx);
 
 	return members.map((member) => member.userId);
 }

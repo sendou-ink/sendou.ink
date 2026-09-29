@@ -46,6 +46,10 @@ Every id is a `number`. Primary keys are `GeneratedAlways<number>`, foreign keys
 
 In migrations, a generated primary key is `"id" integer primary key autoincrement` (without it SQLite reuses the id of a deleted newest row), and every integer `*Id` column gets a real `references` clause. Game data ids are named `*SplId` and have none. `app/db/schema.test.ts` enforces both; a column that deliberately isn't a foreign key goes in its `NOT_FOREIGN_KEYS` with the reason.
 
+## Deletes
+
+A delete is complete at the database level: deleting a row removes everything that belongs to it, so repository code never cleans up related rows by hand. Foreign key `on delete cascade` does it where it can. Where a row owns its target through a `set null` foreign key with a unique index (e.g. `TournamentTeam.chatRoomId`), add an `after delete` trigger that deletes the target; `schema.test.ts` enforces this. Triggers also fire for rows removed by a cascade, so deleting a tournament's `CalendarEvent` removes the tournament (a trigger), its teams and matches (cascades) and their chat rooms (triggers) in one statement.
+
 ## JSON columns
 
 Stored as text, typed with `JSONColumnType<T>` (not null) or `JSONColumnTypeNullable<T>` (nullable) from `~/utils/kysely.server`. Both serialize to `string` on insert, so pass `JSON.stringify(...)`.

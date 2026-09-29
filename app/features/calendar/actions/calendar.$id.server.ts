@@ -39,10 +39,7 @@ export const action: ActionFunction = async ({ params }) => {
 		requirePermission(event, "DELETE");
 	}
 
-	await CalendarRepository.deleteById({
-		eventId: event.eventId,
-		tournamentId: event.tournamentId,
-	});
+	await CalendarRepository.deleteById(event.eventId);
 
 	if (event.tournamentId) {
 		clearTournamentDataCache(event.tournamentId);

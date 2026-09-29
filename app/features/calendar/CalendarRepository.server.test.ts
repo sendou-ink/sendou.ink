@@ -4,7 +4,9 @@ import * as CalendarEventFactory from "~/db/seed/factories/CalendarEventFactory"
 import * as ImageFactory from "~/db/seed/factories/ImageFactory";
 import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
 import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TournamentTeamFactory from "~/db/seed/factories/TournamentTeamFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
+import { db } from "~/db/sql";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
 import * as CalendarRepository from "./CalendarRepository.server";
 
@@ -236,6 +238,51 @@ describe("findAvatarImgIds", () => {
 
 		expect(await CalendarRepository.findAvatarImgIds({})).toEqual([]);
 	});
+});
+
+describe("deleteById", () => {
+	const authorId = () => users.id(1);
+
+	beforeEach(async () => {
+		await users.create(5);
+	});
+
+	test("deleting a tournament's event deletes the tournament and its chat rooms", async () => {
+		const tournament = await TournamentFactory.create({ authorId: authorId() });
+		for (const memberUserIds of [
+			[users.id(2), users.id(3)],
+			[users.id(4), users.id(5)],
+		]) {
+			await TournamentTeamFactory.create(
+				{ tournamentId: tournament.id, memberUserIds },
+				{ isCheckedIn: true },
+			);
+		}
+		await TournamentFactory.startBracket(tournament.id);
+		expect(await rowCount("ChatRoom")).toBeGreaterThan(0);
+
+		await CalendarRepository.deleteById(tournament.eventId);
+
+		expect(await rowCount("Tournament")).toBe(0);
+		expect(await rowCount("CalendarEvent")).toBe(0);
+		expect(await rowCount("ChatRoom")).toBe(0);
+	});
+
+	test("deletes an event without a tournament", async () => {
+		const event = await CalendarEventFactory.create({ authorId: authorId() });
+
+		await CalendarRepository.deleteById(event.id);
+
+		expect(await rowCount("CalendarEvent")).toBe(0);
+	});
+
+	const rowCount = async (table: "Tournament" | "CalendarEvent" | "ChatRoom") =>
+		(
+			await db
+				.selectFrom(table)
+				.select(db.fn.countAll().as("count"))
+				.executeTakeFirstOrThrow()
+		).count;
 });
 
 describe("findAllBetweenTwoTimestamps", () => {

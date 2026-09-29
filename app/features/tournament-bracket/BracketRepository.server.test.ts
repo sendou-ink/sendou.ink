@@ -164,6 +164,21 @@ describe("BracketRepository.applyMatchChanges", () => {
 	});
 });
 
+describe("BracketRepository.resetBracket", () => {
+	test("deletes the chat rooms of the stage's matches", async () => {
+		const setup = await setupStartedMatch();
+		const stage = await db
+			.selectFrom("TournamentStage")
+			.select("TournamentStage.id")
+			.where("TournamentStage.tournamentId", "=", setup.tournamentId)
+			.executeTakeFirstOrThrow();
+
+		await BracketRepository.resetBracket(stage.id);
+
+		await expect(roomById(setup.chatRoomId)).rejects.toThrow();
+	});
+});
+
 describe("BracketRepository league chat room expiry", () => {
 	const setupLeagueMatch = () =>
 		setupStartedMatch({ bracketProgression: ROUND_ROBIN }, { isLeague: true });
