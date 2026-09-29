@@ -177,6 +177,19 @@ describe("VodForm", () => {
 			expect(fieldsets.length).toBe(2);
 		});
 
+		test("added match defaults to Splat Zones", async () => {
+			const screen = await renderForm();
+
+			const addButton = screen.getByRole("button", { name: "Add" });
+			await userEvent.click(addButton.element());
+
+			const addedFieldset = screen.container.querySelectorAll("fieldset")[1];
+			const checkedMode = addedFieldset.querySelector<HTMLInputElement>(
+				'input[type="radio"]:checked',
+			);
+			expect(checkedMode?.value).toBe("SZ");
+		});
+
 		test("can remove matches when more than 1", async () => {
 			const screen = await renderForm({
 				defaultValues: {

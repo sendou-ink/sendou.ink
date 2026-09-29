@@ -123,6 +123,7 @@ const matchFieldsetSchema = v.object({
 			label: `modes.${mode}` as const,
 			value: mode,
 		})),
+		initialValue: "SZ",
 	}),
 	stageId: stageSelect({ label: "labels.vodStage" }),
 	weapon: weaponSelectOptional({ label: "labels.vodWeapon" }),

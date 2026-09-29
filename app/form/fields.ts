@@ -565,7 +565,10 @@ export function radioGroup<V extends string>(
 			Omit<FormFieldInputGroup<"radio-group", V>, "type" | "initialValue">,
 			V
 		>
-	>,
+	> & {
+		/** Value selected when the form has no default value for the field. Defaults to the first item. */
+		initialValue?: V;
+	},
 ): v.GenericSchema<ItemValue<V>, ItemValue<V>> {
 	return register(itemsSchema(args.items), {
 		...args,
@@ -573,7 +576,7 @@ export function radioGroup<V extends string>(
 		bottomText: prefixKey(args.bottomText),
 		items: prefixItems(args.items),
 		type: "radio-group",
-		initialValue: args.items[0].value,
+		initialValue: args.initialValue ?? args.items[0].value,
 	});
 }
 
