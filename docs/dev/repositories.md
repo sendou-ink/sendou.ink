@@ -124,13 +124,30 @@ function userBuilds(userId: number) {
 ```
 
 - **Steps are `refine` (plain Kysely, only the root table in scope), `sortedBy`, `mapRows` and `lift`.** They compose freely because the chain applies them in a fixed phase order when it compiles: guards and filters, selections, sort, `limit`, then mappers. Only sort keys depend on call order; they stack like Kysely's `orderBy`, and `defaultSort` is used when no step sorts.
-- **Sorting goes through `sortedBy`**, never `orderBy` inside `refine` (the chain throws when it compiles), so the sort keys stay known to the chain.
+- **Sorting goes through `sortedBy`**, never `orderBy` inside `refine` (the chain throws when it compiles), so the sort keys stay known to the chain. A key is a column or an expression over the root's columns (`[(eb) => eb("LFGPost.authorId", "=", viewerId), "desc"]` puts the viewer's posts first); either must never be `null`.
 - **Row types are inferred.** A mapper declares the fields it reads (`(row: { ownerId: number }) => …`); using it before they are on the row, or writing a key another step mapper already wrote, is a type error. What every read of the entity needs goes in the base `map`, not a step. `QueryRow<typeof chain>` names the resulting row type.
 - **Secure by default.** `guards` apply unless a step lifts them (`visibleToActor`, `ownedByActor`, `includingPrivate`), so a forgotten step returns fewer rows, never someone else's private ones. Keep the guard viewer independent.
 - **Related data comes in through correlated subqueries.** SQLite only has nested-loop joins, so a select-list subquery is the same index probe a join does, and it only runs for rows that make it past the sort and limit. A step may join privately to filter or sort by another table, as `forWeapon` does.
 - **Cross-entity helpers are keyed by the foreign key column**: `UserRepository.withUser("author", "Build.ownerId", ["plusTier"])` infers the root from the string, only accepts columns with a foreign key to `User`, and gives `CommonUser` (or `CommonUser | null` for a nullable column) plus the named extras.
 - **The actor is read, never passed.** Steps call `actorIdOrNull()`/`actorId()`/`getUser()` themselves, so they only work inside a request. Plain equality filters use the generic `.where({ ownerId })` rather than a vocabulary step.
 - **Compositions live at the bottom of the loader or action file.** One needed by a second route moves into the repository as a named export. A one-off step is `.with(refine("Build", (qb) => …))`; the second time it's needed, it moves into the vocabulary.
+
+### Pagination
+
+Paging is a chain call, not something each repository writes. `LFGRepository.posts()` and the LFG board loader are the reference.
+
+```ts
+// numbered pages with a count; `containing` serves the page a linked row is on
+const { items, currentPage, pagesCount, totalCount } = await chain.paginate({ page, size, containing: postId });
+
+// cursor pages; `after` is the previous page's `nextCursor`, straight from a search param
+const { items, nextCursor } = await chain.paginate({ after: cursor, size });
+```
+
+- **Filters must be SQL steps.** Filtering fetched rows in JS gives short pages and fetches everything; turn each filter into a step that is a no-op for an unset value, so the loader can pass the search params straight through.
+- **The order is total.** The root's `id` is appended as the last sort key, so equal keys never swap between pages. Paginating needs a table with a single `id` primary key.
+- **Key-first.** Phase 1 runs the guards, filters, sort and seek, selecting only ids (and the total, as a window count). Phase 2 fetches those ids' rows, keeping only the steps that select something, so a filter or a sort join never runs twice.
+- **Cursors are opaque and forgiving.** A tampered or stale cursor serves the first page instead of throwing, so the search param can be a plain nullable string.
 
 ## Generic CRUD
 

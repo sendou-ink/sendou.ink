@@ -1,19 +1,35 @@
-import type {
-	AnyColumnWithTable,
-	CompiledQuery,
-	OrderByDirection,
-	SelectQueryBuilder,
-	Simplify,
+import {
+	type AnyColumnWithTable,
+	type CompiledQuery,
+	type Expression,
+	type ExpressionBuilder,
+	type OrderByDirection,
+	type SelectQueryBuilder,
+	type Simplify,
+	type SqlBool,
+	sql,
 } from "kysely";
+import { SCHEMA } from "./schema.gen";
 import type { ColumnFilter, TableName } from "./schema-types";
 import { db } from "./sql";
 import type { DB } from "./tables";
 
 type AnyQB = SelectQueryBuilder<any, any, any>;
+type AnyEB = ExpressionBuilder<any, any>;
 type NoFields = Record<never, never>;
 type RootQB<R extends TableName> = SelectQueryBuilder<DB, R, NoFields>;
 type Override<O, A> = Simplify<Omit<O, keyof A> & A>;
-type SortKey = readonly [string, OrderByDirection];
+type SortTarget = string | ((eb: AnyEB) => Expression<unknown>);
+type SortKey = readonly [SortTarget, OrderByDirection];
+type CursorValue = string | number;
+
+/**
+ * Sort key computed from the root's columns, e.g. `(eb) => eb("LFGPost.authorId", "=", id)` to
+ * put the actor's rows first. Like a column key it must never be `null`, or cursors skip rows.
+ */
+type SortExpression<DBT, TB extends keyof DBT> = (
+	eb: ExpressionBuilder<DBT, TB>,
+) => Expression<unknown>;
 
 /**
  * One chain step: SQL refinement, sort keys, lifted guards and/or row mapping, only valid on
@@ -52,7 +68,7 @@ type SelectedOf<B> =
 	B extends SelectQueryBuilder<any, any, infer O> ? O : never;
 type SortableColumn<B> =
 	B extends SelectQueryBuilder<infer D, infer TB, any>
-		? AnyColumnWithTable<D, TB>
+		? AnyColumnWithTable<D, TB> | SortExpression<D, TB>
 		: never;
 
 /**
@@ -76,7 +92,12 @@ export function refine<R extends TableName, B extends AnyQB>(
 /** Step that only sorts. Keys stack in call order, like Kysely's `orderBy`. */
 export function sortedBy<R extends TableName>(
 	_root: R,
-	...keys: Array<readonly [AnyColumnWithTable<DB, R>, OrderByDirection]>
+	...keys: Array<
+		readonly [
+			AnyColumnWithTable<DB, R> | SortExpression<DB, R>,
+			OrderByDirection,
+		]
+	>
 ): Modifier<R> {
 	return { sortKeys: keys };
 }
@@ -112,9 +133,43 @@ interface EntityQuery<R extends TableName, O, V, M extends PropertyKey> {
 		modifier: Mod,
 	): Step<R, O, V, M, Mod>;
 	limit(count: number): Chain<R, O, V, M>;
+	/**
+	 * Numbered pages in the chain's sort order, the root's `id` breaking ties. With `containing`,
+	 * the page holding that row is served instead of `page`, when the row is in the result.
+	 */
+	paginate(options: PageOptions): Promise<Page<O>>;
+	/**
+	 * Pages after an opaque cursor from a previous page's `nextCursor`. A missing, tampered or
+	 * stale cursor serves the first page.
+	 */
+	paginate(options: CursorOptions): Promise<CursorPage<O>>;
 	execute(): Promise<O[]>;
 	executeTakeFirst(): Promise<O | undefined>;
 	compile(): CompiledQuery;
+}
+
+interface PageOptions {
+	/** 1-based. */
+	page: number;
+	size: number;
+	containing?: number | null;
+}
+
+interface Page<O> {
+	items: O[];
+	currentPage: number;
+	pagesCount: number;
+	totalCount: number;
+}
+
+interface CursorOptions {
+	after: string | null;
+	size: number;
+}
+
+interface CursorPage<O> {
+	items: O[];
+	nextCursor: string | null;
 }
 
 export type Chain<
@@ -208,17 +263,21 @@ function createChain(
 	const addStep = (step: Modifier<any, any, any, any>) =>
 		next({ steps: [...state.steps, step] });
 
-	const build = (limit = state.limit) => {
+	const idRef = `${definition.root}.id`;
+
+	// `selectionsOnly` builds only what the rows show, for ids that already passed the filters:
+	// guards, `where` filters and steps selecting nothing (filters, sort joins) are left out
+	const unsorted = ({ selectionsOnly = false } = {}) => {
 		let qb: AnyQB = (db as unknown as SelectFromAny).selectFrom(
 			definition.root,
 		);
 
 		const lifted = new Set(state.steps.flatMap((step) => step.lifts ?? []));
 		for (const [name, guard] of Object.entries(definition.guards ?? {})) {
-			if (!lifted.has(name)) qb = guard(qb);
+			if (!selectionsOnly && !lifted.has(name)) qb = guard(qb);
 		}
 
-		for (const filter of state.filters) {
+		for (const filter of selectionsOnly ? [] : state.filters) {
 			for (const [column, value] of Object.entries(filter)) {
 				if (value === undefined) continue;
 				const ref = `${definition.root}.${column}`;
@@ -230,21 +289,26 @@ function createChain(
 		}
 
 		for (const step of state.steps) {
-			if (step.apply) qb = applyWithoutOrderBy(qb, step.apply);
+			if (!step.apply) continue;
+
+			const applied = applyWithoutOrderBy(qb, step.apply);
+			if (!selectionsOnly || addsSelections(qb, applied)) qb = applied;
 		}
 
-		qb = definition.select(qb);
+		return definition.select(qb);
+	};
 
+	const sortKeys = () => {
 		const stepSortKeys = state.steps.flatMap((step) => step.sortKeys ?? []);
-		const sortKeys =
-			stepSortKeys.length > 0 ? stepSortKeys : (definition.defaultSort ?? []);
-		for (const [column, direction] of sortKeys) {
-			qb = qb.orderBy(column, direction);
-		}
+		return stepSortKeys.length > 0
+			? stepSortKeys
+			: (definition.defaultSort ?? []);
+	};
 
-		if (typeof limit === "number") qb = qb.limit(limit);
+	const build = (limit = state.limit) => {
+		const qb = orderByKeys(unsorted(), sortKeys());
 
-		return qb;
+		return typeof limit === "number" ? qb.limit(limit) : qb;
 	};
 
 	const mapRow = (row: Record<string, unknown>) => {
@@ -255,11 +319,115 @@ function createChain(
 		return result;
 	};
 
+	// total order for paging: the id breaks ties so every row has exactly one position
+	const pageKeys = (): SortKey[] => {
+		if (!hasIdPrimaryKey(definition.root)) {
+			throw new Error(
+				`paginate needs a single "id" primary key, "${definition.root}" has none`,
+			);
+		}
+
+		const keys = sortKeys();
+		return keys.at(-1)?.[0] === idRef ? [...keys] : [...keys, [idRef, "asc"]];
+	};
+
+	// phase 1: filters, sort and seek only, selecting the id and the sort key values
+	const keyQuery = (keys: ReadonlyArray<SortKey>) =>
+		unsorted()
+			.clearSelect()
+			.select((eb: AnyEB) => [
+				eb.ref(idRef).as("__id"),
+				...keys.map(([target], i) =>
+					sql`${sortExpression(eb, target)}`.as(`__key${i}`),
+				),
+			]);
+
+	// phase 2: the full rows of one page, in phase 1's order
+	const rowsByIds = async (ids: number[]) => {
+		if (ids.length === 0) return [];
+
+		const rows = await unsorted({ selectionsOnly: true })
+			.innerJoin(sql`json_each(${JSON.stringify(ids)})`.as("__page"), (join) =>
+				join.onRef("__page.value", "=", idRef),
+			)
+			.orderBy("__page.key")
+			.execute();
+
+		return rows.map(mapRow);
+	};
+
+	const paginateByPage = async ({ page, size, containing }: PageOptions) => {
+		const keys = pageKeys();
+
+		let currentPage = page;
+		if (typeof containing === "number") {
+			const target = await keyQuery(keys)
+				.where(idRef, "=", containing)
+				.executeTakeFirst();
+
+			if (target) {
+				const rowsBefore = await countRows(
+					keyQuery(keys).where((eb: AnyEB) =>
+						seek(eb, keys, keyValuesOf(target, keys), "before"),
+					),
+				);
+				currentPage = Math.floor(rowsBefore / size) + 1;
+			}
+		}
+
+		// the total rides along the page's ids, only a page past a non-empty result's end needs its own count
+		const idRows: Array<{ __id: number; __total: number }> = await orderByKeys(
+			keyQuery(keys).select((eb: AnyEB) =>
+				eb.fn.countAll().over().as("__total"),
+			),
+			keys,
+		)
+			.limit(size)
+			.offset((currentPage - 1) * size)
+			.execute();
+		const totalCount =
+			idRows[0]?.__total ??
+			(currentPage === 1 ? 0 : await countRows(keyQuery(keys)));
+
+		return {
+			items: await rowsByIds(idRows.map((row) => row.__id)),
+			currentPage,
+			pagesCount: Math.max(1, Math.ceil(totalCount / size)),
+			totalCount,
+		};
+	};
+
+	const paginateByCursor = async ({ after, size }: CursorOptions) => {
+		const keys = pageKeys();
+		const cursor = decodeCursor(after, keys.length);
+
+		let query = keyQuery(keys);
+		if (cursor) {
+			query = query.where((eb: AnyEB) => seek(eb, keys, cursor, "after"));
+		}
+
+		const idRows = await orderByKeys(query, keys)
+			.limit(size + 1)
+			.execute();
+		const pageRows = idRows.slice(0, size);
+		const lastRow = pageRows.at(-1);
+
+		return {
+			items: await rowsByIds(pageRows.map((row: { __id: number }) => row.__id)),
+			nextCursor:
+				idRows.length > size && lastRow
+					? encodeCursor(keyValuesOf(lastRow, keys))
+					: null,
+		};
+	};
+
 	const chain: Record<string, unknown> = {
 		where: (filter: Record<string, unknown>) =>
 			next({ filters: [...state.filters, filter] }),
 		with: addStep,
 		limit: (count: number) => next({ limit: count }),
+		paginate: (options: PageOptions | CursorOptions) =>
+			"after" in options ? paginateByCursor(options) : paginateByPage(options),
 		compile: () => build().compile(),
 		execute: async () => (await build().execute()).map(mapRow),
 		executeTakeFirst: async () => {
@@ -276,7 +444,113 @@ function createChain(
 }
 
 interface SelectFromAny {
-	selectFrom(table: string): AnyQB;
+	selectFrom(table: unknown): AnyQB;
+}
+
+function sortExpression(eb: AnyEB, target: SortTarget): Expression<unknown> {
+	// parenthesized so a comparison key like `a = ?` keeps its meaning inside `a = ? < ?`
+	return typeof target === "string" ? eb.ref(target) : sql`(${target(eb)})`;
+}
+
+function orderByKeys(qb: AnyQB, keys: ReadonlyArray<SortKey>) {
+	let result = qb;
+	for (const [target, direction] of keys) {
+		result = result.orderBy(
+			(eb: AnyEB) => sortExpression(eb, target),
+			direction,
+		);
+	}
+	return result;
+}
+
+/**
+ * Rows sorting strictly after (or before) the given key values, expanded so each key keeps its
+ * own direction: `(a > x) or (a = x and b < y) or (a = x and b = y and id > z)`.
+ */
+function seek(
+	eb: AnyEB,
+	keys: ReadonlyArray<SortKey>,
+	values: ReadonlyArray<CursorValue>,
+	side: "after" | "before",
+): Expression<SqlBool> {
+	return eb.or(
+		keys.map(([target, direction], i) =>
+			eb.and([
+				...keys
+					.slice(0, i)
+					.map(([previous], j) =>
+						eb(sortExpression(eb, previous), "=", values[j]),
+					),
+				eb(
+					sortExpression(eb, target),
+					(direction === "asc") === (side === "after") ? ">" : "<",
+					values[i],
+				),
+			]),
+		),
+	);
+}
+
+async function countRows(query: AnyQB) {
+	const { count } = await (db as unknown as SelectFromAny)
+		.selectFrom(query.as("__counted"))
+		.select((eb: AnyEB) => eb.fn.countAll<number>().as("count"))
+		.executeTakeFirstOrThrow();
+
+	return count;
+}
+
+function keyValuesOf(
+	row: Record<string, unknown>,
+	keys: ReadonlyArray<SortKey>,
+): CursorValue[] {
+	return keys.map((_, i) => row[`__key${i}`] as CursorValue);
+}
+
+function hasIdPrimaryKey(table: string) {
+	const primaryKey: ReadonlyArray<string> | undefined = (
+		SCHEMA as Record<string, { primaryKey: ReadonlyArray<string> }>
+	)[table]?.primaryKey;
+
+	return primaryKey?.length === 1 && primaryKey[0] === "id";
+}
+
+function encodeCursor(values: CursorValue[]) {
+	return Buffer.from(JSON.stringify(values)).toString("base64url");
+}
+
+function decodeCursor(
+	cursor: string | null,
+	keyCount: number,
+): CursorValue[] | null {
+	if (!cursor) return null;
+
+	try {
+		const values: unknown = JSON.parse(
+			Buffer.from(cursor, "base64url").toString(),
+		);
+		if (
+			Array.isArray(values) &&
+			values.length === keyCount &&
+			values.every(
+				(value) =>
+					typeof value === "string" ||
+					(typeof value === "number" && Number.isFinite(value)),
+			)
+		) {
+			return values;
+		}
+	} catch {
+		// tampered cursors serve the first page
+	}
+
+	return null;
+}
+
+function addsSelections(before: AnyQB, after: AnyQB) {
+	return (
+		after.toOperationNode().selections !== before.toOperationNode().selections
+	);
 }
 
 function applyWithoutOrderBy(qb: AnyQB, apply: (qb: AnyQB) => AnyQB) {

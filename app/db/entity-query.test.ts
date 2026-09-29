@@ -155,3 +155,148 @@ describe("defineQuery", () => {
 		testBuilds().where({ nope: 1 });
 	});
 });
+
+describe("paginate", () => {
+	const buildIds: number[] = [];
+	let privateBuildId: number;
+
+	// titles sort c, b, b, a, a descending; equal titles fall back to id order
+	beforeEach(async () => {
+		await users.create(2);
+		buildIds.length = 0;
+		for (const [ownerIdx, title] of [
+			[1, "a"],
+			[2, "a"],
+			[1, "b"],
+			[2, "b"],
+			[1, "c"],
+		] as const) {
+			const { id } = await BuildFactory.create({
+				ownerId: users.id(ownerIdx),
+				title,
+			});
+			buildIds.push(id);
+		}
+		({ id: privateBuildId } = await BuildFactory.create({
+			ownerId: users.id(1),
+			title: "z",
+			isPrivate: 1,
+		}));
+	});
+
+	const inTitleDescOrder = () => [
+		buildIds[4],
+		buildIds[2],
+		buildIds[3],
+		buildIds[0],
+		buildIds[1],
+	];
+
+	const idsOf = (rows: Array<{ id: number }>) => rows.map((row) => row.id);
+
+	test("serves numbered pages in sort order, the id breaking ties", async () => {
+		const pages = await Promise.all(
+			[1, 2, 3].map((page) =>
+				testBuilds().titleDesc().paginate({ page, size: 2 }),
+			),
+		);
+
+		expect(pages.flatMap((page) => idsOf(page.items))).toEqual(
+			inTitleDescOrder(),
+		);
+		expect(pages[0]).toMatchObject({
+			currentPage: 1,
+			pagesCount: 3,
+			totalCount: 5,
+		});
+	});
+
+	test("runs the full shape and mappers on the page rows", async () => {
+		const { items } = await testBuilds()
+			.titleDesc()
+			.withTitleLength()
+			.paginate({ page: 1, size: 1 });
+
+		expect(items).toEqual([
+			expect.objectContaining({ id: buildIds[4], title: "C", titleLength: 1 }),
+		]);
+	});
+
+	test("serves the page containing a row", async () => {
+		const page = await testBuilds()
+			.titleDesc()
+			.paginate({ page: 1, size: 2, containing: buildIds[0] });
+
+		expect(page.currentPage).toBe(2);
+		expect(idsOf(page.items)).toContain(buildIds[0]);
+	});
+
+	test("keeps the page asked for when the containing row is filtered out", async () => {
+		const page = await testBuilds()
+			.titleDesc()
+			.paginate({ page: 3, size: 2, containing: privateBuildId });
+
+		expect(page.currentPage).toBe(3);
+	});
+
+	test("walks every row exactly once with cursors", async () => {
+		const seen: number[] = [];
+		let after: string | null = null;
+		do {
+			const page: { items: Array<{ id: number }>; nextCursor: string | null } =
+				await testBuilds().titleDesc().paginate({ after, size: 2 });
+			seen.push(...idsOf(page.items));
+			after = page.nextCursor;
+		} while (after);
+
+		expect(seen).toEqual(inTitleDescOrder());
+	});
+
+	test.each([
+		{ why: "not base64 JSON", cursor: "garbage" },
+		{
+			why: "wrong key count",
+			cursor: Buffer.from("[1]").toString("base64url"),
+		},
+		{
+			why: "non-scalar value",
+			cursor: Buffer.from('[{"a":1},2]').toString("base64url"),
+		},
+	])("a tampered cursor serves the first page ($why)", async ({ cursor }) => {
+		const page = await testBuilds()
+			.titleDesc()
+			.paginate({ after: cursor, size: 2 });
+
+		expect(idsOf(page.items)).toEqual(inTitleDescOrder().slice(0, 2));
+	});
+
+	test("seeks through an expression sort key", async () => {
+		const secondOwnerFirst = sortedBy("Build", [
+			(eb) => eb("Build.ownerId", "=", users.id(2)),
+			"desc",
+		]);
+
+		const seen: number[] = [];
+		let after: string | null = null;
+		do {
+			const page: { items: Array<{ id: number }>; nextCursor: string | null } =
+				await testBuilds().with(secondOwnerFirst).paginate({ after, size: 1 });
+			seen.push(...idsOf(page.items));
+			after = page.nextCursor;
+		} while (after);
+
+		expect(seen).toEqual([
+			buildIds[1],
+			buildIds[3],
+			buildIds[0],
+			buildIds[2],
+			buildIds[4],
+		]);
+	});
+
+	test("throws when a refine step sorts with orderBy", async () => {
+		await expect(
+			testBuilds().sortedInsideRefine().paginate({ page: 1, size: 2 }),
+		).rejects.toThrow("sortedBy");
+	});
+});
