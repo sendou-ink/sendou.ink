@@ -108,6 +108,8 @@ export interface LiveSnapshot {
 	/** what the clip encoder is getting from that track; null while clips are off */
 	audioSignal: AudioSignal | null;
 	clips: ClipsState;
+	/** frames whose analysis threw this capture; each is skipped and the capture carries on */
+	failedFrames: number;
 }
 
 const IDLE: LiveSnapshot = {
@@ -119,6 +121,7 @@ const IDLE: LiveSnapshot = {
 	audioError: null,
 	audioSignal: null,
 	clips: "off",
+	failedFrames: 0,
 };
 
 let snapshot = IDLE;
@@ -239,16 +242,18 @@ export async function startCapture({
 		await video.play();
 
 		// the worker first: a failed init must not leave the camera on
-		client = new AnalyzerClient(onResult, onWorkerError, undefined, {
+		const starting = new AnalyzerClient(onResult, onWorkerError, undefined, {
 			frameQueueLimit: FRAME_QUEUE_LIMIT,
 			webgpu: settings.webgpu,
 			attachFrames: saveFrames,
+			onFrameError,
 		});
+		client = starting;
 		try {
-			await client.whenReady();
+			await starting.whenReady();
 		} catch (error) {
-			client.dispose();
-			client = null;
+			starting.dispose();
+			if (client === starting) client = null;
 			throw error;
 		}
 
@@ -310,10 +315,15 @@ export async function startCapture({
 /** Ends the capture: the session's clips roll into history and unsent matches get one last send. */
 export function stopCapture(): void {
 	if (snapshot.status === "idle") return;
+	endCapture({ ...IDLE });
+}
+
+/** Tears the capture down into `next`, rolling the session's clips and sending unsent matches as Stop does. */
+function endCapture(next: LiveSnapshot): void {
 	const stream = snapshot.stream;
 	release();
 	if (stream) stopTracks(stream);
-	set({ ...IDLE });
+	set(next);
 	// the scan ending is the last match boundary — flush what's unsent
 	// (partials are safe: the server merges them into fuller resends)
 	if (uploadEnabled()) void sendLive(unsentMatches, newestSessionKey());
@@ -379,11 +389,29 @@ function stopTracks(stream: MediaStream): void {
 	for (const track of stream.getTracks()) track.stop();
 }
 
+/** The worker itself is gone (init failed or it crashed), so the capture cannot go on. */
 function onWorkerError(message: string): void {
+	const failed: LiveSnapshot = {
+		...IDLE,
+		status: "error",
+		error: describeError(new Error(message)),
+	};
+	if (snapshot.status === "running") {
+		endCapture(failed);
+		return;
+	}
 	const stream = snapshot.stream;
 	release();
 	if (stream) stopTracks(stream);
-	set({ ...IDLE, status: "error", error: describeError(new Error(message)) });
+	set(failed);
+}
+
+function onFrameError(message: string): void {
+	if (snapshot.failedFrames === 0) {
+		// biome-ignore lint/suspicious/noConsole: the capture carries on, so the console is where a failing frame shows why
+		console.warn("scanner: frame analysis failed", message);
+	}
+	set({ failedFrames: snapshot.failedFrames + 1 });
 }
 
 function onResult(

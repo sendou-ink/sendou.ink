@@ -245,7 +245,11 @@ async function analyze({ bitmap, t }: AnalyzeRequest): Promise<void> {
 	try {
 		await analyzeFrame(bitmap, t);
 	} catch (error) {
-		post({ kind: "error", message: `analyze failed: ${String(error)}` });
+		post({
+			kind: "frameError",
+			t,
+			message: `analyze failed: ${String(error)}`,
+		});
 	}
 	post({ kind: "done", t, calm: scheduler!.calm(t), telemetry });
 }

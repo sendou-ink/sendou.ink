@@ -62,6 +62,8 @@ export type WorkerResponse =
 			/** lossless PNG of the exact frame that was analyzed; present when events fired */
 			frame?: Blob;
 	  }
+	/** frame t threw mid-analysis; the worker is still usable and a "done" follows */
+	| { kind: "frameError"; t: number; message: string }
 	/** all due detectors have reported for frame t (per-frame path only) */
 	| {
 			kind: "done";

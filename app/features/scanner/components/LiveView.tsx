@@ -175,6 +175,9 @@ export function LiveView() {
 							</div>
 							<div className={styles.notes}>
 								{uploadNote} · {clipsNote}
+								{live.failedFrames > 0
+									? ` · ${live.failedFrames} frame${live.failedFrames === 1 ? "" : "s"} skipped (analysis failed)`
+									: null}
 							</div>
 							{live.error ? (
 								<div className={styles.error}>{live.error}</div>

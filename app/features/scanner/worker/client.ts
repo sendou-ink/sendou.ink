@@ -48,6 +48,7 @@ export class AnalyzerClient {
 	#busy = false;
 	readonly #onResult: ResultHandler;
 	readonly #onError: ErrorHandler;
+	readonly #onFrameError: ErrorHandler;
 	readonly #onDone: DoneHandler | undefined;
 	readonly #readyPromise: Promise<void>;
 	#rejectReady: ((error: Error) => void) | undefined;
@@ -70,11 +71,14 @@ export class AnalyzerClient {
 			webgpu?: boolean;
 			/** ship the analyzed frame's PNG on results (default true) */
 			attachFrames?: boolean;
+			/** one frame's analysis threw; the worker carries on (default onError) */
+			onFrameError?: ErrorHandler;
 		} = {},
 	) {
 		this.#frameQueueLimit = options.frameQueueLimit ?? 0;
 		this.#onResult = onResult;
 		this.#onError = onError;
+		this.#onFrameError = options.onFrameError ?? onError;
 		this.#onDone = onDone;
 		this.#worker = new Worker(
 			new URL("./analyzer.worker.ts", import.meta.url),
@@ -97,6 +101,8 @@ export class AnalyzerClient {
 				resolveReady();
 			} else if (msg.kind === "result") {
 				this.#onResult(msg);
+			} else if (msg.kind === "frameError") {
+				this.#onFrameError(msg.message);
 			} else if (msg.kind === "done") {
 				this.#settle();
 				this.#onDone?.(msg.t, { calm: msg.calm, telemetry: msg.telemetry });
