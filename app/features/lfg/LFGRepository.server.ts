@@ -10,6 +10,7 @@ import { crud } from "~/db/crud";
 import { defineQuery, refine, sortedBy, unchanged } from "~/db/entity-query";
 import type { DB } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
 import type { MainWeaponId } from "~/modules/in-game-lists/types";
@@ -102,6 +103,7 @@ export const posts = defineQuery({
 				"country",
 				"languages",
 				"weaponPool",
+				"card",
 			]),
 		/** The team a team post is made for, with its members, `null` for other posts. */
 		withTeam: () =>
@@ -136,6 +138,9 @@ export const posts = defineQuery({
 											"User.country",
 											"PlusTier.tier as plusTier",
 											matchProfileWeapons(memberEb).as("weaponPool"),
+											UserCardRepository.cardOf(memberEb.ref("User.id")).as(
+												"card",
+											),
 										])
 										.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
 								).as("members"),

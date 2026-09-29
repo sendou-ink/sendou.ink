@@ -17,10 +17,7 @@ import { LocaleTime } from "~/components/LocaleTime";
 import { NoteAvatar } from "~/components/NoteAvatar";
 import { ImageExportDialog } from "~/features/img-export/components/ImageExportDialog";
 import { lfgNewPostPage } from "~/features/lfg/lfg-urls";
-import {
-	UserCard,
-	useUserCardData,
-} from "~/features/user-card/components/UserCard";
+import { UserCard } from "~/features/user-card/components/UserCard";
 import { useFormatDistanceToNow } from "~/hooks/intl/useFormatDistanceToNow";
 import { useHydrated } from "~/hooks/useHydrated";
 import type { UnifiedLanguageCode } from "~/modules/i18n/config";
@@ -177,13 +174,11 @@ function PostTeamMember({
 }: {
 	member: NonNullable<Post["team"]>["members"][number];
 }) {
-	const cardData = useUserCardData(member.id);
-
 	return (
 		<div className={clsx("stack sm items-center", styles.teamMember)}>
-			<UserCard userId={member.id} withMutualFriends>
+			<UserCard data={member.card} withMutualFriends>
 				<span className="stack sm items-center">
-					<NoteAvatar sentiment={cardData?.privateNote?.sentiment} size="sm">
+					<NoteAvatar sentiment={member.card?.privateNote?.sentiment} size="sm">
 						<Avatar size="xs" user={member} />
 					</NoteAvatar>
 					<span className={styles.teamMemberName}>{member.username}</span>
@@ -200,16 +195,14 @@ function PostUserHeader({
 	author: Post["author"];
 	includeWeapons: boolean;
 }) {
-	const cardData = useUserCardData(author.id);
-
 	return (
 		<div className="stack sm">
 			<div className="stack sm horizontal items-center">
 				<div className="stack horizontal sm items-center text-md font-bold">
-					<UserCard userId={author.id} withMutualFriends>
+					<UserCard data={author.card} withMutualFriends>
 						<span className="stack sm horizontal items-center">
 							<NoteAvatar
-								sentiment={cardData?.privateNote?.sentiment}
+								sentiment={author.card?.privateNote?.sentiment}
 								size="md"
 							>
 								<Avatar size="xsm" user={author} />

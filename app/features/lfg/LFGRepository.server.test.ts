@@ -274,12 +274,14 @@ describe("LFGRepository.posts filters", () => {
 		expect(farViewer).toHaveLength(0);
 	});
 
-	test("withTeam adds the team's members", async () => {
+	test("withTeam adds the team's members with their cards", async () => {
 		await teamPost();
 
-		const [row] = await LFGRepository.posts().withTeam().execute();
+		const [row] = await withNoUser(() =>
+			LFGRepository.posts().withTeam().execute(),
+		);
 
-		expect(new Set(row.team?.members.map((member) => member.id))).toEqual(
+		expect(new Set(row.team?.members.map((member) => member.card?.id))).toEqual(
 			new Set([authorId(), teammateId()]),
 		);
 	});

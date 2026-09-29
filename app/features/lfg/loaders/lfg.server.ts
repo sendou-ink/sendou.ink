@@ -1,11 +1,9 @@
 import type { LoaderFunctionArgs } from "react-router";
-import * as R from "remeda";
 import * as Seasons from "~/features/mmr/core/Seasons";
 import type { TierName } from "~/features/mmr/mmr-constants";
 import { compareTwoTiers } from "~/features/mmr/mmr-utils";
 import { userSkills } from "~/features/mmr/tiered.server";
 import { getViewerTimezone } from "~/features/timezone/timezone-context.server";
-import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import { paginate } from "~/utils/remix.server";
 import * as LFGRepository from "../LFGRepository.server";
 import { LFG } from "../lfg-constants";
@@ -37,20 +35,9 @@ export const loader = async ({ request, url }: LoaderFunctionArgs) => {
 		totalCount: board.totalCount,
 	});
 
-	// xxx: common use-case we should be able to handle it in some common helper
-	const cardUserIds = R.unique(
-		board.items.flatMap((eachPost) => [
-			eachPost.author.id,
-			...(eachPost.team?.members ?? []).map((member) => member.id),
-		]),
-	);
-
 	return {
 		posts: board.items,
 		viewerTimezone,
-		...(await UserCardRepository.findAllByUserIdsCached({
-			userIds: cardUserIds,
-		})),
 		...pagination,
 	};
 };

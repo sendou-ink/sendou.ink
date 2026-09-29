@@ -79,8 +79,9 @@ const STAT_ORDER: Record<UserCardStat["type"], number> = {
 };
 
 /**
- * Popover trigger showing the user's card. Data is resolved from the route tree by `userId` (a
- * parent loader spread `{ userCards }`) or passed as `data`; without data `children` render plain.
+ * Popover trigger showing the user's card. Data is passed as `data` (e.g. the `card` a chain's
+ * `withUser` resolved) or looked up from the route tree by `userId` (a parent loader spread
+ * `{ userCards }`); without data `children` render plain.
  * Friendship data is lazy-loaded from `/user-card/:id/friendship` on first open.
  */
 export function UserCard({
@@ -90,7 +91,7 @@ export function UserCard({
 	children,
 }: {
 	userId?: number;
-	data?: UserCardData;
+	data?: UserCardData | null; // xxx: make not null when finishing migration from map
 	/** Fetch and show the mutual friends row. Off by default. */
 	withMutualFriends?: boolean;
 	children: React.ReactNode;

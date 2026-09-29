@@ -1,10 +1,27 @@
+import { sql } from "kysely";
 import { beforeEach, describe, expect, expectTypeOf, test } from "vitest";
 import * as BuildFactory from "~/db/seed/factories/BuildFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
-import { defineQuery, mapRows, refine, sortedBy } from "./entity-query";
+import { jsonObjectFrom } from "~/utils/kysely.server";
+import { withNoUser } from "~/utils/Test";
+import {
+	defineQuery,
+	defineResolver,
+	mapRows,
+	refine,
+	sortedBy,
+} from "./entity-query";
 
 const users = UserFactory.pool();
+
+const ownerTagLoads: number[][] = [];
+const ownerTag = defineResolver("testOwnerTag", async (ownerIds) => {
+	ownerTagLoads.push(ownerIds);
+	return new Map(
+		ownerIds.filter((id) => id > 0).map((id) => [id, `owner-${id}`]),
+	);
+});
 
 const testBuilds = defineQuery({
 	root: "Build",
@@ -124,6 +141,57 @@ describe("defineQuery", () => {
 			.execute();
 
 		expect(row.owner).toMatchObject({ id: users.id(1), plusTier: null });
+	});
+
+	test("resolves every key of the rows in one load, nested JSON included", async () => {
+		ownerTagLoads.length = 0;
+
+		const rows = await testBuilds()
+			.with(
+				refine("Build", (qb) =>
+					qb.select((eb) => [
+						ownerTag(eb.ref("Build.ownerId")).as("tag"),
+						jsonObjectFrom(
+							eb
+								.selectFrom("User")
+								.select((userEb) => ownerTag(userEb.ref("User.id")).as("tag"))
+								.whereRef("User.id", "=", "Build.ownerId"),
+						).as("owner"),
+					]),
+				),
+			)
+			.execute();
+
+		expect(rows.map((row) => [row.tag, row.owner?.tag])).toEqual([
+			[`owner-${users.id(1)}`, `owner-${users.id(1)}`],
+			[`owner-${users.id(2)}`, `owner-${users.id(2)}`],
+		]);
+		expect(ownerTagLoads).toEqual([[users.id(1), users.id(2)]]);
+	});
+
+	test("resolves a null key and a key the load lacks to null", async () => {
+		const [row] = await testBuilds()
+			.with(
+				refine("Build", (qb) =>
+					qb.select([
+						ownerTag(sql<number | null>`null`).as("nullKey"),
+						ownerTag(sql<number>`-1`).as("missingKey"),
+					]),
+				),
+			)
+			.execute();
+
+		expect(row).toMatchObject({ nullKey: null, missingKey: null });
+	});
+
+	test("withUser resolves the card extra", async () => {
+		const [row] = await withNoUser(() =>
+			testBuilds()
+				.with(UserRepository.withUser("owner", "Build.ownerId", ["card"]))
+				.execute(),
+		);
+
+		expect(row.owner.card).toMatchObject({ id: users.id(1) });
 	});
 
 	test("chain typing", () => {

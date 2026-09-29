@@ -2,6 +2,7 @@ import { sub } from "date-fns";
 import type { Expression, ExpressionBuilder } from "kysely";
 import { sql } from "kysely";
 import { ServerConfig } from "~/config.server";
+import { defineResolver } from "~/db/entity-query";
 import { db } from "~/db/sql";
 import type { Tables } from "~/db/tables";
 import type { CustomTheme, PeakXP } from "~/db/tables-json";
@@ -124,6 +125,16 @@ export async function findAllByUserIdsCached({
 
 	return { userCards };
 }
+
+/**
+ * The user's card as a chain selection, e.g. `cardOf(eb.ref("User.id")).as("card")` or the
+ * `card` extra of `UserRepository.withUser`. Every card of a query comes from one
+ * {@link findAllByUserIdsCached} call.
+ */
+export const cardOf = defineResolver(
+	"userCard",
+	async (userIds) => (await findAllByUserIdsCached({ userIds })).userCards,
+);
 
 /** Drops every cached card. */
 export function clearUserCardCache() {

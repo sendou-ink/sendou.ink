@@ -9,6 +9,7 @@ import {
 	type SqlBool,
 	sql,
 } from "kysely";
+import { jsonBuildObject } from "~/utils/kysely.server";
 import { SCHEMA } from "./schema.gen";
 import type { ColumnFilter, TableName } from "./schema-types";
 import { db } from "./sql";
@@ -22,6 +23,11 @@ type Override<O, A> = Simplify<Omit<O, keyof A> & A>;
 type SortTarget = string | ((eb: AnyEB) => Expression<unknown>);
 type SortKey = readonly [SortTarget, OrderByDirection];
 type CursorValue = string | number;
+type Row = Record<string, unknown>;
+type ResolveLoad = (keys: number[]) => Promise<Map<number, unknown>>;
+
+const RESOLVE_MARKER = "__resolve";
+const resolveLoads = new Map<string, ResolveLoad>();
 
 /**
  * Sort key computed from the root's columns, e.g. `(eb) => eb("LFGPost.authorId", "=", id)` to
@@ -114,6 +120,25 @@ export function mapRows<
 /** Step that leaves the chain as is, for vocabulary words whose filter is switched off. */
 export function unchanged<R extends TableName>(_root: R): Modifier<R> {
 	return {};
+}
+
+/**
+ * A value the query can't produce by itself (in-memory caches, per-viewer data), selected like
+ * any expression: `cardOf(eb.ref("User.id")).as("card")`, nested JSON included. After the query
+ * ran, the chain loads every key of the rows with one `load` call per resolver and puts the
+ * value in place, `null` when the key is `null` or `load` has none. Mappers see resolved values.
+ */
+export function defineResolver<V>(
+	name: string,
+	load: (keys: number[]) => Promise<Map<number, V>>,
+) {
+	resolveLoads.set(name, load);
+
+	return (key: Expression<number | null>) =>
+		jsonBuildObject({
+			[RESOLVE_MARKER]: sql.lit(name),
+			key,
+		}).$castTo<V | null>();
 }
 
 type Vocabulary<R extends TableName> = Record<
@@ -217,7 +242,7 @@ interface QueryDefinition<
 /**
  * Defines an entity's composable read: the base shape plus a vocabulary of named steps. Returns
  * a function starting a new chain; steps apply in a fixed phase order when it compiles (guards
- * and filters, selections, sort, limit, mappers), so call order only matters for sort keys.
+ * and filters, selections, sort, limit, resolvers, mappers), so call order only matters for sort keys.
  */
 export function defineQuery<
 	R extends TableName,
@@ -316,12 +341,19 @@ function createChain(
 		return typeof limit === "number" ? qb.limit(limit) : qb;
 	};
 
-	const mapRow = (row: Record<string, unknown>) => {
+	const mapRow = (row: Row) => {
 		let result = definition.map ? { ...row, ...definition.map(row) } : row;
 		for (const step of state.steps) {
 			if (step.map) result = { ...result, ...step.map(result) };
 		}
 		return result;
+	};
+
+	const run = async (qb: AnyQB) => {
+		const compiled = qb.compile();
+		const { rows } = await db.executeQuery<Row>(compiled);
+
+		return (await resolveRows(rows, compiled.sql)).map(mapRow);
 	};
 
 	// total order for paging: the id breaks ties so every row has exactly one position
@@ -351,14 +383,14 @@ function createChain(
 	const rowsByIds = async (ids: number[]) => {
 		if (ids.length === 0) return [];
 
-		const rows = await unsorted({ selectionsOnly: true })
-			.innerJoin(sql`json_each(${JSON.stringify(ids)})`.as("__page"), (join) =>
-				join.onRef("__page.value", "=", idRef),
-			)
-			.orderBy("__page.key")
-			.execute();
-
-		return rows.map(mapRow);
+		return run(
+			unsorted({ selectionsOnly: true })
+				.innerJoin(
+					sql`json_each(${JSON.stringify(ids)})`.as("__page"),
+					(join) => join.onRef("__page.value", "=", idRef),
+				)
+				.orderBy("__page.key"),
+		);
 	};
 
 	const paginateByPage = async ({ page, size, containing }: PageOptions) => {
@@ -434,11 +466,8 @@ function createChain(
 		paginate: (options: PageOptions | CursorOptions) =>
 			"after" in options ? paginateByCursor(options) : paginateByPage(options),
 		compile: () => build().compile(),
-		execute: async () => (await build().execute()).map(mapRow),
-		executeTakeFirst: async () => {
-			const row = await build(1).executeTakeFirst();
-			return row ? mapRow(row) : undefined;
-		},
+		execute: () => run(build()),
+		executeTakeFirst: async () => (await run(build(1)))[0],
 	};
 
 	for (const [name, factory] of Object.entries(vocabulary)) {
@@ -450,6 +479,83 @@ function createChain(
 
 interface SelectFromAny {
 	selectFrom(table: unknown): AnyQB;
+}
+
+async function resolveRows(rows: Row[], compiledSql: string) {
+	if (!compiledSql.includes(`'${RESOLVE_MARKER}'`)) return rows;
+
+	const slots: ResolveSlot[] = [];
+	for (const row of rows) collectResolveSlots(row, slots);
+
+	const keysByResolver = new Map<string, Set<number>>();
+	for (const { marker } of slots) {
+		const name = marker[RESOLVE_MARKER];
+		const keys = keysByResolver.get(name) ?? new Set();
+		keysByResolver.set(name, keys);
+		if (typeof marker.key === "number") keys.add(marker.key);
+	}
+
+	const loaded = new Map(
+		await Promise.all(
+			[...keysByResolver].map(async ([name, keys]) => {
+				const load = resolveLoads.get(name);
+				if (!load) throw new Error(`No resolver named "${name}"`);
+
+				return [name, await load([...keys])] as const;
+			}),
+		),
+	);
+
+	// the rows are fresh from the driver, so markers are replaced in place; every place a key
+	// appears gets the same value, which the loader payload then serializes once
+	for (const { container, field, marker } of slots) {
+		container[field] =
+			typeof marker.key === "number"
+				? (loaded.get(marker[RESOLVE_MARKER])?.get(marker.key) ?? null)
+				: null;
+	}
+
+	return rows;
+}
+
+type Container = Record<PropertyKey, unknown>;
+
+interface ResolveMarker {
+	[RESOLVE_MARKER]: string;
+	key: number | null;
+}
+
+interface ResolveSlot {
+	container: Container;
+	field: PropertyKey;
+	marker: ResolveMarker;
+}
+
+function collectResolveSlots(value: object, slots: ResolveSlot[]) {
+	const container = value as Container;
+	const fields = Array.isArray(value) ? value.keys() : Object.keys(value);
+
+	for (const field of fields) {
+		visitResolveSlot(container, field, container[field], slots);
+	}
+}
+
+function visitResolveSlot(
+	container: Container,
+	field: PropertyKey,
+	value: unknown,
+	slots: ResolveSlot[],
+) {
+	if (typeof value !== "object" || value === null) return;
+
+	if (RESOLVE_MARKER in value) {
+		slots.push({ container, field, marker: value as ResolveMarker });
+	} else if (
+		Array.isArray(value) ||
+		Object.getPrototypeOf(value) === Object.prototype
+	) {
+		collectResolveSlots(value, slots);
+	}
 }
 
 function sortExpression(eb: AnyEB, target: SortTarget): Expression<unknown> {

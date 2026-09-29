@@ -20,6 +20,7 @@ import {
 	type TournamentTierNumber,
 	WORST_TIER_NUMBER,
 } from "~/features/tournament/core/tiering";
+import * as UserCardRepository from "~/features/user-card/UserCardRepository.server";
 import type {
 	BuildSort,
 	ResultSource,
@@ -68,6 +69,8 @@ const USER_EXTRAS = {
 	country: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.country"),
 	languages: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.languages"),
 	weaponPool: (eb: ExpressionBuilder<DB, "User">) => matchProfileWeapons(eb),
+	card: (eb: ExpressionBuilder<DB, "User">) =>
+		UserCardRepository.cardOf(eb.ref("User.id")),
 } satisfies Record<
 	string,
 	(eb: ExpressionBuilder<DB, "User">) => AliasableExpression<unknown>
