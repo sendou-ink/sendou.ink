@@ -32,6 +32,18 @@ const MAX_MATCHES_PER_REQUEST = 50;
  */
 const UNLINKED_RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
 
+/** A request sendou.ink hasn't answered by then fails, so a hung one can't hold up the sends queued behind it. */
+const INGEST_TIMEOUT_MS = 30_000;
+
+/**
+ * A "sending" status older than this was cut off (the tab closed mid-request)
+ * and counts as failed. Outlives any live request, which the timeout bounds.
+ */
+const STALE_SENDING_MS = 2 * INGEST_TIMEOUT_MS;
+
+/** Browsers refuse keepalive requests over 64 KiB; bigger ones go out without it. */
+const KEEPALIVE_MAX_BODY_BYTES = 64 * 1024;
+
 export interface SendResult {
 	sentMatches: number;
 	failedMatches: number;
@@ -117,13 +129,13 @@ export function matchContaining(
 /**
  * The single send status a match displays, folded from its source events: an
  * in-flight send wins, then failure, then success; within a state the most
- * recent change is shown.
+ * recent change is shown. A send cut off mid-request shows as failed.
  */
 export function aggregateSendStatus(
 	sources: readonly ScanEvent[],
 ): SendStatus | undefined {
 	const statuses = sources
-		.map((e) => e.send)
+		.map((e) => currentSendStatus(e.send))
 		.filter((status) => status !== undefined);
 	for (const state of ["sending", "failed", "unlinked", "sent"] as const) {
 		const ofState = statuses.filter((status) => status.state === state);
@@ -136,9 +148,10 @@ export function aggregateSendStatus(
 
 /** Match selector: matches not yet sent (nor currently sending). */
 export function unsentMatches(built: BuiltMatch<ScanEvent>): boolean {
-	return !built.sources.some(
-		(e) => e.send?.state === "sent" || e.send?.state === "sending",
-	);
+	return !built.sources.some((e) => {
+		const state = currentSendStatus(e.send)?.state;
+		return state === "sent" || state === "sending";
+	});
 }
 
 /** Match selector: matches stored without a game to link to, whose next retry is due. */
@@ -164,6 +177,22 @@ export function unsentClosedMatches(built: BuiltMatch<ScanEvent>): boolean {
 	);
 }
 
+function currentSendStatus(
+	status: SendStatus | undefined,
+): SendStatus | undefined {
+	if (
+		status?.state !== "sending" ||
+		Date.now() - status.at < STALE_SENDING_MS
+	) {
+		return status;
+	}
+	return {
+		state: "failed",
+		at: status.at,
+		error: "the upload was interrupted before sendou.ink answered",
+	};
+}
+
 function ingestableBuilt<E extends DetectedEvent>(
 	built: readonly BuiltMatch<E>[],
 ): BuiltMatch<E>[] {
@@ -174,17 +203,30 @@ function ingestableBuilt<E extends DetectedEvent>(
 async function postIngestMatches(
 	matches: ScannerMatch[],
 ): Promise<IngestResponse> {
-	const res = await fetch(INGEST_URL, {
-		method: "POST",
-		headers: { "Content-Type": "application/json" },
-		body: JSON.stringify({ matches }),
-	});
-	if (!res.ok) {
-		throw new Error(
-			res.status === 401 ? "not logged in to sendou.ink" : await errorText(res),
-		);
+	const body = new TextEncoder().encode(JSON.stringify({ matches }));
+	try {
+		const res = await fetch(INGEST_URL, {
+			method: "POST",
+			headers: { "Content-Type": "application/json" },
+			body,
+			signal: AbortSignal.timeout(INGEST_TIMEOUT_MS),
+			// lets the send finish when the tab closes right after Stop
+			keepalive: body.byteLength <= KEEPALIVE_MAX_BODY_BYTES,
+		});
+		if (!res.ok) {
+			throw new Error(
+				res.status === 401
+					? "not logged in to sendou.ink"
+					: await errorText(res),
+			);
+		}
+		return await res.json();
+	} catch (err) {
+		if (err instanceof DOMException && err.name === "TimeoutError") {
+			throw new Error("sendou.ink didn't answer in time", { cause: err });
+		}
+		throw err;
 	}
-	return res.json();
 }
 
 async function errorText(res: Response): Promise<string> {
