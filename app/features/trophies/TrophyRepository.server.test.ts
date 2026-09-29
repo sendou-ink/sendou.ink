@@ -6,6 +6,7 @@ import * as UserFactory from "~/db/seed/factories/UserFactory";
 import { db } from "~/db/sql";
 import type { TournamentTierNumber } from "~/features/tournament/core/tiering";
 import { dateToDatabaseTimestamp } from "~/utils/dates";
+import { ConcurrentModificationError } from "~/utils/errors";
 import * as TrophyRepository from "./TrophyRepository.server";
 import { TROPHY_APPROVALS_REQUIRED } from "./trophies-constants";
 
@@ -424,3 +425,86 @@ async function trophyCount() {
 
 const daysFromNow = (days: number) =>
 	new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+
+describe("backfill", () => {
+	const users = UserFactory.pool();
+	const winnerIds = () => users.ids(4);
+
+	beforeEach(async () => {
+		await users.create(8);
+	});
+
+	const createFinalized = (
+		overrides: Partial<Parameters<typeof TournamentFactory.create>[0]> = {},
+	) =>
+		TournamentFactory.createPlayed(
+			{ authorId: users.id(1), ...overrides },
+			{
+				tier: 3,
+				teamRosters: [winnerIds(), users.ids(8).slice(4)],
+				playedOut: "all",
+			},
+		);
+
+	const ownersOf = (trophyId: number) =>
+		db
+			.selectFrom("TrophyOwner")
+			.select([
+				"TrophyOwner.tournamentId",
+				"TrophyOwner.userId",
+				"TrophyOwner.tier",
+			])
+			.where("TrophyOwner.trophyId", "=", trophyId)
+			.orderBy("TrophyOwner.userId", "asc")
+			.execute();
+
+	test("links the trophy to the tournament and awards the chosen players at its tier", async () => {
+		const trophy = await TrophyFactory.create();
+		const tournament = await createFinalized();
+
+		await TrophyRepository.backfill({
+			trophyId: trophy.id,
+			awards: [
+				{
+					tournamentId: tournament.id,
+					tournamentTeamId: tournament.teams[0].id,
+					userIds: winnerIds().slice(0, 2),
+				},
+			],
+		});
+
+		expect(
+			(await TrophyRepository.findTournamentsByTrophyId(trophy.id)).map(
+				(row) => row.tournamentId,
+			),
+		).toEqual([tournament.id]);
+		expect(await ownersOf(trophy.id)).toEqual(
+			winnerIds()
+				.slice(0, 2)
+				.map((userId) => ({ tournamentId: tournament.id, userId, tier: 3 })),
+		);
+	});
+
+	test("awards nothing when one of the tournaments already has a trophy", async () => {
+		const trophy = await TrophyFactory.create();
+		const otherTrophy = await TrophyFactory.create();
+		const withoutTrophy = await createFinalized();
+		const withTrophy = await createFinalized({ trophyId: otherTrophy.id });
+
+		await expect(
+			TrophyRepository.backfill({
+				trophyId: trophy.id,
+				awards: [withoutTrophy, withTrophy].map((tournament) => ({
+					tournamentId: tournament.id,
+					tournamentTeamId: tournament.teams[0].id,
+					userIds: winnerIds(),
+				})),
+			}),
+		).rejects.toThrow(ConcurrentModificationError);
+
+		expect(await TrophyRepository.findTournamentsByTrophyId(trophy.id)).toEqual(
+			[],
+		);
+		expect(await ownersOf(trophy.id)).toEqual([]);
+	});
+});

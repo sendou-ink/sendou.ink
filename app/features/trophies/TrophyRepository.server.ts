@@ -1,5 +1,11 @@
 import { sub } from "date-fns";
-import type { ExpressionBuilder, NotNull, Transaction } from "kysely";
+import {
+	type ExpressionBuilder,
+	type NotNull,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
 import * as R from "remeda";
 import { db } from "~/db/sql";
 import type { DB } from "~/db/tables";
@@ -8,7 +14,9 @@ import {
 	databaseTimestampToDate,
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
+import { ConcurrentModificationError } from "~/utils/errors";
 import {
+	calendarEventNameMatchesSeries,
 	calendarEventStartTime,
 	commonUserSelect,
 	jsonArrayFrom,
@@ -275,6 +283,7 @@ export async function findById(trophyId: number) {
 			"Trophy.name",
 			"Trophy.model",
 			"Trophy.code",
+			"Trophy.organizationId",
 			withCreator(eb),
 			withManager(eb),
 			withOrganization(eb),
@@ -291,9 +300,7 @@ export async function findById(trophyId: number) {
 	return {
 		...trophy,
 		owners: [...trophy.owners, ...specialOwners],
-		permissions: {
-			EDIT: trophy.manager ? [trophy.manager.id] : [],
-		},
+		permissions: trophyPermissions(trophy.manager?.id ?? null),
 	};
 }
 
@@ -491,20 +498,126 @@ export async function existsByName(args: {
 	return Boolean(pending);
 }
 
-export async function findManagedBy(userId: number) {
-	return db
-		.selectFrom("Trophy")
-		.select(["id", "name", "model", "organizationId", "managerId", "creatorId"])
-		.where("managerId", "=", userId)
-		.execute();
-}
-
 export async function findAllForEditing() {
-	return db
+	const rows = await db
 		.selectFrom("Trophy")
 		.select(["id", "name", "model", "organizationId", "managerId", "creatorId"])
 		.where("code", "is", null)
 		.execute();
+
+	return rows.map((row) => ({
+		...row,
+		permissions: trophyPermissions(row.managerId),
+	}));
+}
+
+export function findAllBackfillableTournaments({
+	organizationId,
+	substringMatches,
+}: {
+	organizationId: number;
+	substringMatches: string[];
+}) {
+	return db
+		.selectFrom("CalendarEvent")
+		.innerJoin("Tournament", "Tournament.id", "CalendarEvent.tournamentId")
+		.select((eb) => [
+			"Tournament.id as tournamentId",
+			"Tournament.settings",
+			"CalendarEvent.name",
+			tournamentLogoWithDefault(eb).as("logoUrl"),
+			calendarEventStartTime(eb).as("startTime"),
+			jsonArrayFrom(
+				eb
+					.selectFrom("TournamentResult")
+					.innerJoin("User", "User.id", "TournamentResult.userId")
+					.innerJoin(
+						"TournamentTeam",
+						"TournamentTeam.id",
+						"TournamentResult.tournamentTeamId",
+					)
+					.select((resultEb) => [
+						...commonUserSelect(resultEb),
+						"TournamentResult.tournamentTeamId",
+						"TournamentResult.div",
+						"TournamentResult.setResults",
+						"TournamentTeam.name as teamName",
+					])
+					.whereRef("TournamentResult.tournamentId", "=", "Tournament.id")
+					.where("TournamentResult.placement", "=", 1)
+					.orderBy("User.id", "asc"),
+			).as("firstPlacers"),
+		])
+		.where("CalendarEvent.organizationId", "=", organizationId)
+		.where("CalendarEvent.hidden", "=", 0)
+		.where("CalendarEvent.trophyId", "is", null)
+		.where("Tournament.isFinalized", "=", 1)
+		.where(calendarEventNameMatchesSeries(substringMatches))
+		.orderBy("startTime", "desc")
+		.execute();
+}
+
+type TournamentOwnersArgs = {
+	tournamentId: number;
+	tournamentTeamId?: number;
+	trophyId: number;
+	userIds: number[];
+};
+
+export async function insertTournamentOwners(
+	awards: TournamentOwnersArgs[],
+	trx: Transaction<DB>,
+) {
+	const tieredAwards: Array<
+		TournamentOwnersArgs & { tier: Awaited<ReturnType<typeof trophyTier>> }
+	> = [];
+	for (const award of awards) {
+		tieredAwards.push({ ...award, tier: await trophyTier(trx, award) });
+	}
+
+	const rows = tieredAwards.flatMap(
+		({ tournamentId, trophyId, userIds, tier }) =>
+			userIds.map((userId) => ({ tournamentId, trophyId, userId, tier })),
+	);
+	if (rows.length === 0) return;
+
+	await trx
+		.insertInto("TrophyOwner")
+		.values(rows)
+		.onConflict((oc) =>
+			oc.columns(["tournamentId", "userId", "trophyId"]).doNothing(),
+		)
+		.execute();
+}
+
+export function backfill({
+	trophyId,
+	awards,
+}: {
+	trophyId: number;
+	awards: Array<Omit<TournamentOwnersArgs, "trophyId">>;
+}) {
+	return db.transaction().execute(async (trx) => {
+		const tournamentIds = awards.map((award) => award.tournamentId);
+
+		const { numUpdatedRows } = await trx
+			.updateTable("CalendarEvent")
+			.set({ trophyId })
+			.where("CalendarEvent.tournamentId", "in", tournamentIds)
+			.where("CalendarEvent.trophyId", "is", null)
+			.executeTakeFirst();
+
+		if (Number(numUpdatedRows) !== tournamentIds.length) {
+			throw new ConcurrentModificationError(
+				"A tournament to backfill already has a trophy",
+			);
+		}
+
+		await insertTournamentOwners(
+			awards.map((award) => ({ ...award, trophyId })),
+			trx,
+		);
+	});
 }
 
 /** Recomputes special trophy (supporter, XP) ownership; still-eligible owners keep their `createdAt`. */
@@ -902,4 +1015,44 @@ export async function addApproval(args: {
 			.returning("id")
 			.executeTakeFirstOrThrow();
 	});
+}
+
+async function trophyTier(
+	trx: Transaction<DB>,
+	{
+		tournamentId,
+		tournamentTeamId,
+	}: { tournamentId: number; tournamentTeamId?: number },
+) {
+	const divisionTier = tournamentTeamId
+		? await trx
+				.selectFrom("TournamentDivisionTier")
+				.innerJoin(
+					"TournamentTeam",
+					"TournamentTeam.tournamentId",
+					"TournamentDivisionTier.tournamentId",
+				)
+				.select("TournamentDivisionTier.tier")
+				.where("TournamentTeam.id", "=", tournamentTeamId)
+				.where(
+					sql<SqlBool>`"TournamentDivisionTier"."bracketIdx" = coalesce("TournamentTeam"."startingBracketIdx", 0)`,
+				)
+				.executeTakeFirst()
+		: undefined;
+
+	if (divisionTier) return divisionTier.tier;
+
+	const tournament = await trx
+		.selectFrom("Tournament")
+		.select("tier")
+		.where("id", "=", tournamentId)
+		.executeTakeFirst();
+
+	return tournament?.tier ?? null;
+}
+
+function trophyPermissions(managerId: number | null) {
+	return {
+		EDIT: managerId ? [managerId] : [],
+	};
 }

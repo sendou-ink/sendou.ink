@@ -54,7 +54,9 @@ test.describe("Trophies", () => {
 		test.slow();
 
 		const trophy = await factories.TrophyFactory.create({ name: TROPHY_NAME });
-		const tournament = await playTrophyTournament(factories, trophy.id);
+		const tournament = await playTrophyTournament(factories, {
+			trophyId: trophy.id,
+		});
 		await factories.UserFactory.grant(ADMIN_ID, {
 			widgets: [{ id: "trophies-owned" }],
 		});
@@ -95,7 +97,10 @@ test.describe("Trophies", () => {
 			name: "Chris P. Bacon",
 		});
 
-		await playTrophyTournament(factories, trophy.id, organization.id);
+		await playTrophyTournament(factories, {
+			trophyId: trophy.id,
+			organizationId: organization.id,
+		});
 		const upcoming = await factories.TournamentFactory.create({
 			name: `${TROPHY_NAME} 2`,
 			authorId: ADMIN_ID,
@@ -227,13 +232,74 @@ test.describe("Trophies", () => {
 			notifications.notification(`Your trophy ${declinedName} was declined`),
 		).toBeVisible();
 	});
+
+	test("backfills a trophy to the winners of a past tournament", async ({
+		page,
+		factories,
+	}) => {
+		test.slow();
+
+		const seriesName = "Wellstring";
+		const organization = await factories.TournamentOrganizationFactory.create(
+			{ name: ORGANIZATION_NAME, ownerId: ADMIN_ID },
+			{
+				series: [
+					{ name: seriesName, description: null, showLeaderboard: false },
+				],
+			},
+		);
+		const trophy = await factories.TrophyFactory.create({
+			name: TROPHY_NAME,
+			organizationId: organization.id,
+			managerId: ADMIN_ID,
+		});
+
+		const awardedName = `${TROPHY_NAME} 1`;
+		const skippedName = `${TROPHY_NAME} 2`;
+		const awarded = await playTrophyTournament(factories, {
+			organizationId: organization.id,
+			name: awardedName,
+		});
+		const skipped = await playTrophyTournament(factories, {
+			organizationId: organization.id,
+			name: skippedName,
+		});
+
+		await impersonate(page);
+
+		const newTrophy = new NewTrophyPage(page);
+		await newTrophy.goto();
+
+		const backfill = await newTrophy.openBackfill();
+		await backfill.selectTrophy(TROPHY_NAME);
+		await backfill.selectSeries(seriesName);
+
+		await backfill.toggleTournament(awardedName);
+		await backfill.toggleWinner({
+			tournamentName: awardedName,
+			username: "Sendou",
+		});
+		await backfill.award();
+
+		// an awarded tournament can't be backfilled again
+		await isNotVisible(backfill.tournament(awardedName));
+		await expect(backfill.tournament(skippedName)).toBeVisible();
+
+		const details = await new TrophiesPage(page).gotoTrophy(trophy.id);
+		await expect(details.tournamentRow(awarded.id)).toBeVisible();
+		await isNotVisible(details.tournamentRow(skipped.id));
+		await expect(details.owner("N-ZAP")).toBeVisible();
+		await isNotVisible(details.owner("Sendou"));
+	});
 });
 
-/** Plays a tournament with the trophy as its prize, awarding it to the winning team. */
 async function playTrophyTournament(
 	factories: Factories,
-	trophyId: number,
-	organizationId?: number,
+	{
+		trophyId,
+		organizationId,
+		name = `${TROPHY_NAME} 1`,
+	}: { trophyId?: number; organizationId?: number; name?: string },
 ) {
 	// the top seed wins, so the anchor users are on it and end up owning the trophy
 	const players = await factories.UserFactory.createMany(
@@ -246,7 +312,7 @@ async function playTrophyTournament(
 
 	return factories.TournamentFactory.createPlayed(
 		{
-			name: `${TROPHY_NAME} 1`,
+			name,
 			authorId: ADMIN_ID,
 			organizationId,
 			startTimes: [dateToDatabaseTimestamp(subDays(new Date(), 21))],

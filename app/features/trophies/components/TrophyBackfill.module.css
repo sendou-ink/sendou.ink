@@ -1,0 +1,63 @@
+.tournamentList {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: 0;
+	list-style: none;
+}
+
+.tournament {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-2);
+	padding: var(--s-2-5);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+}
+
+.tournamentHeader {
+	display: flex;
+	align-items: center;
+	gap: var(--s-2);
+}
+
+.logo {
+	border-radius: var(--radius-full);
+}
+
+.tournamentName {
+	font-size: var(--font-sm);
+	font-weight: var(--weight-semi);
+}
+
+.winners {
+	display: flex;
+	flex-direction: column;
+	gap: var(--s-1-5);
+	padding: 0 0 0 var(--s-4);
+	list-style: none;
+}
+
+.winner {
+	display: grid;
+	grid-template-columns: max-content max-content 1fr max-content;
+	align-items: center;
+	gap: var(--s-2);
+	font-size: var(--font-xs);
+}
+
+.winnerName {
+	min-width: 0;
+	overflow: hidden;
+	text-overflow: ellipsis;
+	white-space: nowrap;
+}
+
+.footer {
+	display: flex;
+	flex-wrap: wrap;
+	align-items: center;
+	justify-content: space-between;
+	gap: var(--s-2);
+}

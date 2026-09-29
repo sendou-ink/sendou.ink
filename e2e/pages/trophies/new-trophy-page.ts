@@ -19,6 +19,7 @@ export class NewTrophyPage {
 			agreeToTermsButton: page.getByRole("button", {
 				name: "I have read and agree",
 			}),
+			manageTab: page.getByRole("tab", { name: "Manage" }),
 			pendingTab: page.getByRole("tab", { name: "Pending" }),
 			reviewedTab: page.getByRole("tab", { name: "Reviewed" }),
 		};
@@ -61,6 +62,11 @@ export class NewTrophyPage {
 		return submit(this.page);
 	}
 
+	async openBackfill() {
+		await this.locators.manageTab.click();
+		return new TrophyBackfillSection(this.page);
+	}
+
 	async openPending() {
 		await this.locators.pendingTab.click();
 		return new PendingTrophyList(this.page);
@@ -100,6 +106,61 @@ class PendingTrophyList {
 
 		await waitForPOSTResponse(this.page, () =>
 			dialog.getByRole("button", { name: "Decline" }).click(),
+		);
+	}
+}
+
+class TrophyBackfillSection {
+	private readonly page: Page;
+	readonly locators;
+
+	constructor(page: Page) {
+		this.page = page;
+		this.locators = {
+			trophySelect: page.getByTestId("backfill-trophy-select"),
+			seriesSelect: page.getByTestId("backfill-series-select"),
+			awardButton: page.getByTestId("backfill-submit-button"),
+		};
+	}
+
+	async selectTrophy(name: string) {
+		await this.locators.trophySelect.click();
+		await this.page.getByRole("option", { name, exact: true }).click();
+	}
+
+	async selectSeries(name: string) {
+		await this.locators.seriesSelect.click();
+		await this.page.getByRole("option", { name, exact: true }).click();
+	}
+
+	tournament(name: string) {
+		return this.page
+			.getByTestId("backfill-tournament")
+			.filter({ hasText: name });
+	}
+
+	toggleTournament(name: string) {
+		return this.tournament(name)
+			.getByRole("switch", { name, exact: true })
+			.click({ force: true });
+	}
+
+	toggleWinner({
+		tournamentName,
+		username,
+	}: {
+		tournamentName: string;
+		username: string;
+	}) {
+		return this.tournament(tournamentName)
+			.getByRole("switch", { name: username, exact: true })
+			.click({ force: true });
+	}
+
+	async award() {
+		await this.locators.awardButton.click();
+		await waitForPOSTResponse(this.page, () =>
+			this.page.getByTestId("confirm-button").click(),
 		);
 	}
 }

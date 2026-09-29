@@ -4,21 +4,27 @@ import {
 	type AuthenticatedUser,
 	requireUser,
 } from "~/features/auth/core/user.server";
+import * as ShowcaseTournaments from "~/features/front-page/core/ShowcaseTournaments.server";
 import { notify } from "~/features/notifications/core/notify.server";
 import { resolveNotifications } from "~/features/notifications/core/resolve.server";
 import { clearTrophiesCache } from "~/features/trophies/loaders/trophies.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
 import { parseFormData } from "~/form/parse.server";
 import { requirePermission } from "~/modules/permissions/guards.server";
-import { errorToastIfFalsy, parseRequestPayload } from "~/utils/remix.server";
+import { ConcurrentModificationError } from "~/utils/errors";
+import { logger } from "~/utils/logger";
+import {
+	errorToast,
+	errorToastIfFalsy,
+	parseRequestPayload,
+	successToast,
+} from "~/utils/remix.server";
 import { assertUnreachable } from "~/utils/types";
 import { stripDisabledEffects } from "../core/model-analysis";
+import * as TrophyBackfill from "../core/TrophyBackfill.server";
 import * as TrophyRepository from "../TrophyRepository.server";
 import { TROPHY_PENDING_PER_USER_LIMIT } from "../trophies-constants";
-import {
-	pendingTrophyActionSchema,
-	trophyFormSchema,
-} from "../trophies-schemas";
+import { trophyActionSchema, trophyFormSchema } from "../trophies-schemas";
 import { canReviewTrophies, compressTrophyModel } from "../trophies-utils";
 
 export const action: ActionFunction = async ({ request }) => {
@@ -104,7 +110,7 @@ export const action: ActionFunction = async ({ request }) => {
 
 	const data = await parseRequestPayload({
 		request,
-		schema: pendingTrophyActionSchema,
+		schema: trophyActionSchema,
 	});
 
 	switch (data._action) {
@@ -204,6 +210,57 @@ export const action: ActionFunction = async ({ request }) => {
 			}
 
 			return null;
+		}
+		case "BACKFILL": {
+			const trophy = await TrophyRepository.findById(data.trophyId);
+			errorToastIfFalsy(trophy, "Trophy not found");
+			requirePermission(trophy, "EDIT");
+			errorToastIfFalsy(trophy.organizationId, "Trophy has no organization");
+
+			const tournaments = await TrophyBackfill.backfillableTournaments({
+				organizationId: trophy.organizationId,
+				seriesId: data.seriesId,
+			});
+			errorToastIfFalsy(tournaments, "Series not found");
+
+			const awards = data.awards.map((award) => {
+				const tournament = tournaments.find(
+					(candidate) => candidate.tournamentId === award.tournamentId,
+				);
+				errorToastIfFalsy(tournament, "Tournament can't be backfilled");
+				errorToastIfFalsy(
+					award.userIds.every((userId) =>
+						tournament.winners.some((winner) => winner.id === userId),
+					),
+					"Only the winners of a tournament can receive its trophy",
+				);
+
+				return {
+					tournamentId: award.tournamentId,
+					tournamentTeamId: tournament.tournamentTeamId,
+					userIds: award.userIds,
+				};
+			});
+
+			try {
+				await TrophyRepository.backfill({ trophyId: trophy.id, awards });
+			} catch (error) {
+				if (error instanceof ConcurrentModificationError) {
+					errorToast("A tournament got a trophy in the meantime, try again");
+				}
+				throw error;
+			}
+
+			logger.info(
+				`Trophy ${trophy.id} backfilled by user ${user.id}: ${JSON.stringify(awards)}`,
+			);
+
+			clearTrophiesCache();
+			ShowcaseTournaments.clearCachedTournaments();
+
+			return successToast(
+				`${trophy.name} awarded for ${awards.length} tournament(s)`,
+			);
 		}
 		default: {
 			assertUnreachable(data);

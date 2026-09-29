@@ -243,6 +243,10 @@ export const trophyWinsPage = (args: { trophyId: number; userId: number }) =>
 
 export const trophyTournamentsPage = (trophyId: number) =>
 	`${TROPHIES_PAGE}/${trophyId}/tournaments`;
+export const trophyBackfillPage = (args: {
+	trophyId: number;
+	seriesId: number;
+}) => `${TROPHIES_PAGE}/${args.trophyId}/backfill/${args.seriesId}`;
 
 export interface UserLinkArgs {
 	discordId: Tables["User"]["discordId"];

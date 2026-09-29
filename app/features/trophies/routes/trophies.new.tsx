@@ -5,6 +5,7 @@ import * as React from "react";
 import { Trans, useTranslation } from "react-i18next";
 import { Form, Link, type MetaFunction, useLoaderData } from "react-router";
 import { Alert } from "~/components/Alert";
+import { Divider } from "~/components/Divider";
 import { SendouButton } from "~/components/elements/Button";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { OrganizationSearch } from "~/components/elements/OrganizationSearch";
@@ -35,6 +36,7 @@ import {
 } from "~/utils/urls";
 import { action } from "../actions/trophies.new.server";
 import { Trophy, TrophyContextProvider } from "../components/Trophy";
+import { TrophyBackfill } from "../components/TrophyBackfill";
 import {
 	analyzeTrophyModel,
 	mergePeakRenderStats,
@@ -54,7 +56,7 @@ import {
 } from "../trophies-constants";
 import {
 	createTrophyFormSchema,
-	pendingTrophyActionSchema,
+	trophyActionSchema,
 	updateTrophyFormSchema,
 } from "../trophies-schemas";
 import {
@@ -95,10 +97,10 @@ export default function NewTrophyPage() {
 				<SendouTabList>
 					<SendouTab id="upload">{t("trophies:new.tabs.upload")}</SendouTab>
 					<SendouTab
-						id="update"
+						id="manage"
 						isDisabled={data.editableTrophies.length === 0}
 					>
-						{t("trophies:new.tabs.update")}
+						{t("trophies:new.tabs.manage")}
 					</SendouTab>
 					<SendouTab id="pending" number={data.pendingTrophies.length}>
 						{t("trophies:new.tabs.pending")}
@@ -118,16 +120,28 @@ export default function NewTrophyPage() {
 						</TrophyTermsGate>
 					)}
 				</SendouTabPanel>
-				<SendouTabPanel id="update">
-					{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
-						<Alert variation="WARNING">
-							{t("trophies:new.form.limitReached", {
-								limit: TROPHY_PENDING_PER_USER_LIMIT,
-							})}
-						</Alert>
-					) : (
-						<UpdateTrophyTab key={data.ownUnreviewedCount} />
-					)}
+				<SendouTabPanel id="manage">
+					<div className="stack lg">
+						<div className="stack md">
+							<Divider smallText>{t("trophies:new.manage.update")}</Divider>
+							{data.ownUnreviewedCount >= TROPHY_PENDING_PER_USER_LIMIT ? (
+								<Alert variation="WARNING">
+									{t("trophies:new.form.limitReached", {
+										limit: TROPHY_PENDING_PER_USER_LIMIT,
+									})}
+								</Alert>
+							) : (
+								<UpdateTrophySection key={data.ownUnreviewedCount} />
+							)}
+						</div>
+						<div className="stack md">
+							<Divider smallText>{t("trophies:new.manage.backfill")}</Divider>
+							<TrophyBackfill
+								trophies={data.editableTrophies}
+								series={data.backfillSeries}
+							/>
+						</div>
+					</div>
 				</SendouTabPanel>
 				<SendouTabPanel id="pending">
 					<TrophyList items={data.pendingTrophies} listKind="pending" />
@@ -244,7 +258,7 @@ function NewTrophyForm() {
 	);
 }
 
-function UpdateTrophyTab() {
+function UpdateTrophySection() {
 	const { t } = useTranslation(["trophies"]);
 	const data = useLoaderData<typeof loader>();
 	const [selectedId, setSelectedId] = React.useState<number | null>(null);
@@ -676,7 +690,7 @@ function TrophyListRow({
 	deferred: boolean;
 }) {
 	const { t } = useTranslation(["trophies", "common"]);
-	const { submit, state } = useActionSubmit(pendingTrophyActionSchema);
+	const { submit, state } = useActionSubmit(trophyActionSchema);
 
 	const isOwner = pending.submitterUserId === currentUserId;
 	const isDeclined = pending.declinedAt !== null;
@@ -942,7 +956,7 @@ function DeclineButton({ pendingTrophyId }: { pendingTrophyId: number }) {
 	const { t } = useTranslation(["trophies"]);
 	const [isOpen, setIsOpen] = React.useState(false);
 	const [reason, setReason] = React.useState("");
-	const { submit, fetcher } = useActionSubmit(pendingTrophyActionSchema);
+	const { submit, fetcher } = useActionSubmit(trophyActionSchema);
 	const id = React.useId();
 
 	React.useEffect(() => {

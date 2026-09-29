@@ -15,6 +15,7 @@ import {
 	dateToDatabaseTimestamp,
 } from "~/utils/dates";
 import {
+	calendarEventNameMatchesSeries,
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
 	jsonArrayFrom,
@@ -437,15 +438,6 @@ export function findAllUnfinalizedEvents(organizationId: number) {
 		.execute();
 }
 
-const nameMatchesSeries =
-	(substringMatches: string[]) =>
-	(eb: ExpressionBuilder<DB, "CalendarEvent">) =>
-		eb.or(
-			substringMatches.map((match) =>
-				eb("CalendarEvent.name", "like", `%${match}%`),
-			),
-		);
-
 export async function findPaginatedEventsBySeries({
 	organizationId,
 	substringMatches,
@@ -467,7 +459,7 @@ export async function findPaginatedEventsBySeries({
 		.select("CalendarEvent.id")
 		.where("CalendarEvent.organizationId", "=", organizationId)
 		.where("CalendarEvent.hidden", "=", 0)
-		.where(nameMatchesSeries(substringMatches))
+		.where(calendarEventNameMatchesSeries(substringMatches))
 		.groupBy("CalendarEvent.id")
 		.orderBy(({ fn }) => fn.min("CalendarEventDate.startsAt"), "desc")
 		.limit(TOURNAMENT_SERIES_EVENTS_PER_PAGE)
@@ -507,7 +499,7 @@ export async function findAllEventsBySeries({
 		])
 		.where("CalendarEvent.organizationId", "=", organizationId)
 		.where("CalendarEvent.hidden", "=", 0)
-		.where(nameMatchesSeries(substringMatches))
+		.where(calendarEventNameMatchesSeries(substringMatches))
 		.groupBy("CalendarEvent.id")
 		.orderBy("CalendarEventDate.startsAt", "desc")
 		.execute();

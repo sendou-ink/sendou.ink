@@ -1,0 +1,153 @@
+import type * as v from "valibot";
+import { beforeEach, describe, expect, test } from "vitest";
+import * as TournamentFactory from "~/db/seed/factories/TournamentFactory";
+import * as TournamentOrganizationFactory from "~/db/seed/factories/TournamentOrganizationFactory";
+import * as TrophyFactory from "~/db/seed/factories/TrophyFactory";
+import * as UserFactory from "~/db/seed/factories/UserFactory";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import {
+	assertResponseErrored,
+	wrappedAction,
+	wrappedLoader,
+} from "~/utils/Test";
+import {
+	loader as backfillLoader,
+	type TrophyBackfillLoaderData,
+} from "../routes/trophies.$id.backfill.$seriesId";
+import * as TrophyRepository from "../TrophyRepository.server";
+import { action } from "./trophies.new.server";
+
+type BackfillFormFields = {
+	_action: "BACKFILL";
+	trophyId: number;
+	seriesId: number;
+	awards: string;
+};
+
+const backfillAction = wrappedAction<v.GenericSchema<BackfillFormFields>>({
+	action,
+});
+const loadBackfillable = wrappedLoader<TrophyBackfillLoaderData>({
+	loader: backfillLoader,
+});
+
+const users = UserFactory.pool();
+const managerId = () => users.id(1);
+const winnerIds = () => users.ids(5).slice(1, 5);
+const loserIds = () => users.ids(9).slice(5, 9);
+const outsiderId = () => users.id(10);
+
+describe("trophy backfill", () => {
+	let trophyId: number;
+	let seriesId: number;
+	let tournamentId: number;
+
+	beforeEach(async () => {
+		await users.create(10);
+
+		const organization = await TournamentOrganizationFactory.create(
+			{ ownerId: managerId() },
+			{
+				series: [
+					{ name: "Weekly Cup", description: null, showLeaderboard: false },
+				],
+			},
+		);
+		const [series] =
+			await TournamentOrganizationRepository.findAllSeriesByOrganizationIds([
+				organization.id,
+			]);
+		seriesId = series.id;
+
+		trophyId = (
+			await TrophyFactory.create({
+				organizationId: organization.id,
+				managerId: managerId(),
+			})
+		).id;
+
+		tournamentId = (
+			await TournamentFactory.createPlayed(
+				{
+					authorId: managerId(),
+					name: "Weekly Cup #1",
+					organizationId: organization.id,
+				},
+				{ teamRosters: [winnerIds(), loserIds()], playedOut: "all" },
+			)
+		).id;
+	});
+
+	const backfill = (userIds: number[], user = managerId()) =>
+		backfillAction(
+			{
+				_action: "BACKFILL",
+				trophyId,
+				seriesId,
+				awards: JSON.stringify([{ tournamentId, userIds }]),
+			},
+			{ user },
+		);
+
+	const awardedTournamentIds = async () =>
+		(await TrophyRepository.findTournamentsByTrophyId(trophyId)).map(
+			(tournament) => tournament.tournamentId,
+		);
+
+	test("the manager lists the series' tournaments with their winners", async () => {
+		const data = await loadBackfillable({
+			user: managerId(),
+			params: { id: String(trophyId), seriesId: String(seriesId) },
+		});
+
+		expect(
+			data.tournaments.map((tournament) => tournament.tournamentId),
+		).toEqual([tournamentId]);
+		expect(data.tournaments[0].winners.map((winner) => winner.id)).toEqual(
+			winnerIds(),
+		);
+	});
+
+	test("someone other than the manager can't list the tournaments", async () => {
+		await expect(
+			loadBackfillable({
+				user: outsiderId(),
+				params: { id: String(trophyId), seriesId: String(seriesId) },
+			}),
+		).rejects.toThrow("403");
+	});
+
+	test("the manager awards the trophy to the chosen winners", async () => {
+		await backfill(winnerIds().slice(0, 3));
+
+		expect(await awardedTournamentIds()).toEqual([tournamentId]);
+
+		const ownerIds = (await TrophyRepository.findById(trophyId))?.owners.map(
+			(owner) => owner.id,
+		);
+		expect(ownerIds?.toSorted((a, b) => a - b)).toEqual(
+			winnerIds().slice(0, 3),
+		);
+	});
+
+	test("someone other than the manager can't award the trophy", async () => {
+		await expect(backfill(winnerIds(), outsiderId())).rejects.toThrow("403");
+
+		expect(await awardedTournamentIds()).toEqual([]);
+	});
+
+	test("a player who didn't win the tournament can't receive the trophy", async () => {
+		const response = await backfill([winnerIds()[0], loserIds()[0]]);
+
+		assertResponseErrored(response, "Only the winners");
+		expect(await awardedTournamentIds()).toEqual([]);
+	});
+
+	test("a tournament can't be awarded twice", async () => {
+		await backfill(winnerIds());
+
+		const response = await backfill(winnerIds());
+
+		assertResponseErrored(response, "can't be backfilled");
+	});
+});

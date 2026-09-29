@@ -44,12 +44,6 @@ export function canReviewTrophies(user?: { roles: Array<Role> } | null) {
 	return user.roles.includes("STAFF") || user.roles.includes("QA");
 }
 
-export function canEditAnyTrophy(user?: { roles: Array<Role> } | null) {
-	if (!user) return false;
-
-	return user.roles.includes("ADMIN");
-}
-
 export function hasUpcomingTournamentSoon(
 	upcomingTournamentAt: number | null | undefined,
 ) {

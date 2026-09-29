@@ -1,8 +1,11 @@
 import type { LoaderFunctionArgs } from "react-router";
+import * as R from "remeda";
 import { requireUser } from "~/features/auth/core/user.server";
+import * as TournamentOrganizationRepository from "~/features/tournament-organization/TournamentOrganizationRepository.server";
+import { hasPermission } from "~/modules/permissions/utils";
 import type { SerializeFrom } from "~/utils/remix";
 import * as TrophyRepository from "../TrophyRepository.server";
-import { canEditAnyTrophy, canReviewTrophies } from "../trophies-utils";
+import { canReviewTrophies } from "../trophies-utils";
 
 export type NewTrophyLoaderData = SerializeFrom<typeof loader>;
 
@@ -11,15 +14,27 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 
 	const canReview = canReviewTrophies(user);
 
-	const [rawItems, ownUnreviewedCount, editableTrophies] = await Promise.all([
+	const [rawItems, ownUnreviewedCount, trophies] = await Promise.all([
 		canReview
 			? TrophyRepository.allPending()
 			: TrophyRepository.pendingBySubmitter(user.id),
 		TrophyRepository.unreviewedCountBySubmitter(user.id),
-		canEditAnyTrophy(user)
-			? TrophyRepository.findAllForEditing()
-			: TrophyRepository.findManagedBy(user.id),
+		TrophyRepository.findAllForEditing(),
 	]);
+
+	const editableTrophies = trophies.filter((trophy) =>
+		hasPermission(trophy, "EDIT", user),
+	);
+
+	const backfillSeries = (
+		await TournamentOrganizationRepository.findAllSeriesByOrganizationIds(
+			R.unique(
+				editableTrophies.flatMap((trophy) =>
+					trophy.organizationId ? [trophy.organizationId] : [],
+				),
+			),
+		)
+	).map(({ id, name, organizationId }) => ({ id, name, organizationId }));
 
 	const allItems = canReview ? rawItems : rawItems.map(stripReviewerInfo);
 
@@ -40,6 +55,7 @@ export const loader = async (_args: LoaderFunctionArgs) => {
 		pendingTrophies,
 		reviewedTrophies,
 		editableTrophies,
+		backfillSeries,
 	};
 };
 

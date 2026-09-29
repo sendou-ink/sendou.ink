@@ -5,7 +5,13 @@ import {
 	textAreaOptional,
 	textField,
 } from "~/form/fields";
-import { _action, id, superRefine } from "~/utils/schema";
+import {
+	_action,
+	id,
+	preprocess,
+	safeJSONParse,
+	superRefine,
+} from "~/utils/schema";
 import { analyzeTrophyModel } from "./core/model-analysis";
 import {
 	TROPHY_DECLINE_REASON_MAX_LENGTH,
@@ -86,7 +92,22 @@ export const trophyFormSchema = v.variant("_action", [
 	updateTrophyFormSchema,
 ]);
 
-export const pendingTrophyActionSchema = v.union([
+const trophyBackfillAwards = v.pipe(
+	v.array(
+		v.object({
+			tournamentId: id,
+			userIds: v.pipe(v.array(id), v.minLength(1), v.maxLength(50)),
+		}),
+	),
+	v.minLength(1),
+	v.check(
+		(awards) =>
+			new Set(awards.map((award) => award.tournamentId)).size === awards.length,
+		"Duplicate tournament",
+	),
+);
+
+export const trophyActionSchema = v.union([
 	v.object({
 		_action: _action("DELETE"),
 		pendingTrophyId: id,
@@ -104,5 +125,11 @@ export const pendingTrophyActionSchema = v.union([
 	v.object({
 		_action: _action("APPROVE"),
 		pendingTrophyId: id,
+	}),
+	v.object({
+		_action: _action("BACKFILL"),
+		trophyId: id,
+		seriesId: id,
+		awards: preprocess(safeJSONParse, trophyBackfillAwards),
 	}),
 ]);

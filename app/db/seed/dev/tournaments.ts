@@ -74,6 +74,8 @@ const LUTI_MIN_MEMBERS = 4;
 const LUTI_MAX_MEMBERS = 8;
 
 const HISTORICAL_COUNT = 5;
+/** PICNIC editions from before the series had a trophy, to backfill it for. */
+const PRE_TROPHY_PICNIC_COUNT = 3;
 /** Showcase users seeded into every played tournament, so their results paginate. */
 const CORE_PLAYER_COUNT = 8;
 /** Share of teams registering as one of the site's teams, the rest being pickups. */
@@ -226,6 +228,14 @@ export async function seedTournaments({
 		badges,
 		rosters,
 		trophies,
+		seriesLogoImgIds,
+	});
+
+	await seedPreTrophyPicnics({
+		users,
+		organizations,
+		badges,
+		rosters,
 		seriesLogoImgIds,
 	});
 
@@ -791,6 +801,44 @@ async function seedHistoricalTournaments({
 	}
 
 	return nzapTeamIds;
+}
+
+async function seedPreTrophyPicnics({
+	users,
+	organizations,
+	badges,
+	rosters,
+	seriesLogoImgIds,
+}: Ctx & { badges: SeededBadges; seriesLogoImgIds: Map<string, number> }) {
+	const stem = TOURNAMENT_NAME_STEMS[0];
+	const organizationId = organizations[0].id;
+
+	for (let i = 0; i < PRE_TROPHY_PICNIC_COUNT; i++) {
+		const startsAt = sub(new Date(), { months: 10 + i });
+		const authorId = users.adminId;
+
+		const tournament = await TournamentFactory.create(
+			{
+				name: `${stem.name} ${PRE_TROPHY_PICNIC_COUNT - i}`,
+				avatarImgId: await seriesLogoImgId(seriesLogoImgIds, stem, authorId),
+				authorId,
+				organizationId,
+				startTimes: [dateToDatabaseTimestamp(startsAt)],
+				bracketProgression: DOUBLE_ELIMINATION,
+				badges: i === 0 ? [badges.ids[0]] : [],
+			},
+			{ tier: 4 },
+		);
+
+		await registerTeams({
+			tournamentId: tournament.id,
+			rosters: rosters.take({ teamCount: 8, teamSize: 5 }),
+			isCheckedIn: true,
+			registeredAt: sub(startsAt, { days: 2 }),
+		});
+
+		await TournamentFactory.playOut(tournament.id, "all");
+	}
 }
 
 /** Editions of a series share one logo image, an image row not being allowed the url of another. */

@@ -42,6 +42,11 @@ export class TrophiesPage {
 		await this.locators.trophyLinks.first().click();
 		return new TrophyDetailsPage(this.page);
 	}
+
+	async gotoTrophy(trophyId: number) {
+		await navigate({ page: this.page, url: trophyPage(trophyId) });
+		return new TrophyDetailsPage(this.page);
+	}
 }
 
 /** `/trophies/:id` */
@@ -55,6 +60,12 @@ class TrophyDetailsPage {
 			ownersHeading: page.getByText("Owners", { exact: true }),
 			ownerLinks: page.locator("main").locator("a[href^='/u/']"),
 		};
+	}
+
+	owner(username: string) {
+		return this.page
+			.getByTestId("trophy-owners")
+			.getByRole("link", { name: username, exact: true });
 	}
 
 	tournamentRow(tournamentId: number) {

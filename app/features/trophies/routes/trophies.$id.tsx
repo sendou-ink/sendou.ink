@@ -122,7 +122,7 @@ export default function TrophyDetailsPage() {
 					{t("trophies:details.owners")}
 				</Divider>
 				{trophy.owners.length > 0 ? (
-					<ul className={styles.owners}>
+					<ul className={styles.owners} data-testid="trophy-owners">
 						{trophy.owners.map((owner) => (
 							<li key={owner.id}>
 								<Link to={userPage(owner)}>{owner.username}</Link>
