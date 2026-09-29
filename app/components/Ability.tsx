@@ -1,5 +1,4 @@
 import clsx from "clsx";
-import React from "react";
 import { useTranslation } from "react-i18next";
 import type { AbilityWithUnknown } from "~/modules/in-game-lists/types";
 import { abilityImageUrl } from "~/utils/urls";
@@ -17,33 +16,16 @@ const sizeMap = {
 export function Ability({
 	ability,
 	size,
-	dragStarted = false,
-	dropAllowed = false,
 	onClick,
-	onDrop,
 	className,
 }: {
 	ability: AbilityWithUnknown;
 	size: keyof typeof sizeMap;
-	dragStarted?: boolean;
-	dropAllowed?: boolean;
 	onClick?: () => void;
-	onDrop?: (event: React.DragEvent) => void;
 	className?: string;
 }) {
 	const { t } = useTranslation(["game-misc", "builds"]);
 	const sizeNumber = sizeMap[size];
-
-	const [isDragTarget, setIsDragTarget] = React.useState(false);
-
-	const onDragOver = (event: React.DragEvent) => {
-		event.preventDefault();
-		setIsDragTarget(true);
-	};
-
-	const onDragLeave = () => {
-		setIsDragTarget(false);
-	};
 
 	const readonly = typeof onClick === "undefined" || ability === "UNKNOWN"; // Force "UNKNOWN" ability icons to be readonly
 
@@ -59,9 +41,6 @@ export function Ability({
 			className={clsx(
 				styles.ability,
 				{
-					[styles.isDragTarget]: isDragTarget,
-					[styles.dragStarted]: dragStarted,
-					[styles.dropAllowed]: dropAllowed,
 					[styles.readonly]: readonly,
 				},
 				className,
@@ -71,12 +50,6 @@ export function Ability({
 			}}
 			onClick={onClick}
 			data-testid={`${ability}-ability`}
-			onDragOver={onDragOver}
-			onDragLeave={onDragLeave}
-			onDrop={(event) => {
-				setIsDragTarget(false);
-				onDrop?.(event);
-			}}
 			type={readonly ? undefined : "button"}
 		>
 			<Image

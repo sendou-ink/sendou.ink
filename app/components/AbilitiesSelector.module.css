@@ -14,21 +14,168 @@
 	place-items: center;
 }
 
-.abilityButtons {
+.slot {
+	position: relative;
+	display: grid;
+	border-radius: 50%;
+	touch-action: manipulation;
+	transition:
+		transform 0.1s ease,
+		opacity 0.2s ease,
+		filter 0.2s ease;
+
+	&.draggable {
+		cursor: grab;
+		user-select: none;
+		-webkit-touch-callout: none;
+	}
+
+	&.dimmed {
+		filter: grayscale(1);
+		opacity: 0.3;
+	}
+
+	&.dragSource {
+		opacity: 0.3;
+	}
+
+	&.highlighted {
+		transform: scale(1.15);
+	}
+}
+
+.ghost {
+	position: absolute;
+	display: grid;
+	border: var(--border-style-high);
+	border-radius: 50%;
+	border-right: 0;
+	border-bottom: 0;
+	background: var(--color-bg-ability);
+	animation: ghost-fade-in 0.2s ease;
+	inset: 0;
+	pointer-events: none;
+
+	& img {
+		width: 100%;
+		height: 100%;
+		opacity: 0.35;
+	}
+}
+
+@keyframes ghost-fade-in {
+	from {
+		opacity: 0;
+	}
+}
+
+.palette {
+	--row-marker-offset: var(--s-4);
+	--row-marker-width: var(--s-5);
+	--row-end-padding: var(--s-2);
+	container-type: inline-size;
 	display: flex;
+	flex-direction: column;
+	padding-block: var(--s-2);
+	border: var(--border-style);
+	border-radius: var(--radius-box);
+	background-color: var(--color-bg-high);
+	gap: var(--s-2);
+}
+
+.paletteGroup {
+	--palette-gap: var(--s-1);
+	position: relative;
+	display: flex;
+	min-inline-size: 0;
+	padding-block: 0;
+	padding-inline: calc(var(--row-marker-offset) + var(--row-marker-width))
+		var(--row-end-padding);
+	border: 0;
+	border-radius: 0;
+	margin: 0;
+	background: none;
 	flex-wrap: wrap;
 	justify-content: center;
-	gap: var(--s-1);
-	touch-action: manipulation;
+	gap: var(--palette-gap);
+
+	& + .paletteGroup {
+		padding-block-start: var(--s-2);
+		border-block-start: var(--border-style);
+
+		& .rowMarker {
+			top: var(--s-2);
+		}
+	}
+}
+
+@container (width < 17rem) {
+	.paletteGroup {
+		--row-marker-offset: var(--s-1);
+		--row-end-padding: var(--s-1);
+	}
+
+	.abilityButton img {
+		width: 28px;
+		height: 28px;
+	}
+}
+
+.rowMarker {
+	position: absolute;
+	display: grid;
+	width: var(--row-marker-width);
+	bottom: 0;
+	left: var(--row-marker-offset);
+	color: var(--color-text-high);
+	font-size: var(--font-lg);
+	font-weight: var(--weight-extra);
+	place-items: center;
+	top: 0;
 }
 
 .abilityButton {
+	position: relative;
 	padding: var(--s-0-5);
 	border: var(--border-style);
 	border-radius: 50%;
 	background-color: var(--color-bg-ability);
+	touch-action: manipulation;
+	user-select: none;
+	-webkit-touch-callout: none;
+	transition:
+		transform 0.1s ease,
+		opacity 0.1s ease,
+		filter 0.1s ease;
+
+	@media (hover: hover) {
+		&:hover:not(.unplaceable) {
+			transform: scale(1.15);
+		}
+	}
+
+	&::after {
+		content: "";
+		position: absolute;
+		inset: calc(var(--palette-gap) / -2 - var(--border-width));
+	}
 
 	&.isDragging {
 		box-shadow: 0 0 100px inset rgb(255 255 255 / 25%);
+	}
+
+	&.unplaceable {
+		filter: grayscale(1);
+		opacity: 0.5;
+		cursor: not-allowed;
+	}
+}
+
+.dragOverlay {
+	cursor: grabbing;
+	transition: opacity 0.1s ease;
+
+	&.dropRemoves {
+		opacity: 0.4;
 	}
 }
