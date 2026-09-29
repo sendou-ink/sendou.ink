@@ -1,8 +1,28 @@
 import { sub } from "date-fns";
-import { type NotNull, sql, type Transaction } from "kysely";
-import { db } from "~/db/sql";
-import type { DB, TablesInsertable } from "~/db/tables";
-import { databaseTimestampNow, dateToDatabaseTimestamp } from "~/utils/dates";
+import {
+	type Expression,
+	type ExpressionBuilder,
+	type SqlBool,
+	sql,
+	type Transaction,
+} from "kysely";
+import { crud } from "~/db/crud";
+import {
+	defineQuery,
+	type Modifier,
+	refine,
+	sortedBy,
+} from "~/db/entity-query";
+import type { DB } from "~/db/tables";
+import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
+import * as UserRepository from "~/features/user-page/UserRepository.server";
+import type { UnifiedLanguageCode } from "~/modules/i18n/config";
+import type { MainWeaponId } from "~/modules/in-game-lists/types";
+import {
+	mainWeaponIds,
+	weaponIdToBaseWeaponId,
+} from "~/modules/in-game-lists/weapon-ids";
+import { dateToDatabaseTimestamp } from "~/utils/dates";
 import {
 	commonUserSelect,
 	concatUserSubmittedImagePrefix,
@@ -10,19 +30,24 @@ import {
 	jsonObjectFrom,
 	matchProfileWeapons,
 } from "~/utils/kysely.server";
+import { timezonesWithinHours } from "./core/timezone";
 import { LFG } from "./lfg-constants";
 
-export async function findAllPosts(user?: {
-	id: number;
-	plusTier: number | null;
-}) {
-	// "-1" won't match any user
-	const userId = user?.id ?? -1;
+const postsTable = crud("LFGPost");
 
-	const rows = await db
-		.selectFrom("LFGPost")
-		.select(({ eb }) => [
+export const { insert, updateById, deleteById } = postsTable;
+
+/**
+ * LFG posts. Expired and plus tier restricted posts are hidden unless a step lifts the guard:
+ * `visibleToActor` or `ownedByActor`. The filter steps take the filter's value as is and do
+ * nothing when it is unset (`null` or empty).
+ */
+export const posts = defineQuery({
+	root: "LFGPost",
+	select: (qb) =>
+		qb.select([
 			"LFGPost.id",
+			"LFGPost.authorId",
 			"LFGPost.timezone",
 			"LFGPost.type",
 			"LFGPost.text",
@@ -30,166 +55,260 @@ export async function findAllPosts(user?: {
 			"LFGPost.updatedAt",
 			"LFGPost.plusTierVisibility",
 			"LFGPost.languages",
-			jsonObjectFrom(
-				eb
-					.selectFrom("User")
-					.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-					.select(({ eb: innerEb }) => [
-						...commonUserSelect(innerEb),
-						"User.languages",
-						"User.country",
-						"PlusTier.tier as plusTier",
-						matchProfileWeapons(innerEb).as("weaponPool"),
-					])
-					.whereRef("User.id", "=", "LFGPost.authorId"),
-			).as("author"),
-			jsonObjectFrom(
-				eb
-					.selectFrom("Team")
-					.leftJoin(
-						"UserSubmittedImage",
-						"UserSubmittedImage.id",
-						"Team.avatarImgId",
-					)
-					.select(({ eb: innerEb }) => [
-						"Team.id",
-						"Team.name",
-						concatUserSubmittedImagePrefix(
-							innerEb.ref("UserSubmittedImage.url"),
-						).as("avatarUrl"),
-						jsonArrayFrom(
-							innerEb
-								.selectFrom("TeamMemberWithSecondary")
-								.innerJoin("User", "User.id", "TeamMemberWithSecondary.userId")
-								.leftJoin("PlusTier", "PlusTier.userId", "User.id")
-								.select(({ eb: innestEb }) => [
-									...commonUserSelect(innestEb),
-									"User.languages",
-									"User.country",
-									"PlusTier.tier as plusTier",
-									matchProfileWeapons(innestEb).as("weaponPool"),
-								])
-								.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
-						).as("members"),
-					])
-					.whereRef("Team.id", "=", "LFGPost.teamId"),
-			).as("team"),
-		])
-		.orderBy(sql`LFGPost.authorId = ${sql`${userId}`} desc`)
-		.orderBy("LFGPost.updatedAt", "desc")
-		.orderBy("LFGPost.type", "asc")
-		.where((eb) =>
-			eb.or([
-				eb(
-					"LFGPost.updatedAt",
-					">",
-					dateToDatabaseTimestamp(postExpiryCutoff()),
-				),
-				eb("LFGPost.authorId", "=", userId),
-			]),
-		)
-		.$narrowType<{ author: NotNull }>()
-		.execute();
+		]),
+	map: (row) => ({
+		permissions: {
+			EDIT: [row.authorId],
+			DELETE: [row.authorId],
+		},
+	}),
+	defaultSort: [["LFGPost.updatedAt", "desc"]],
+	guards: {
+		hidden: (qb) =>
+			qb
+				.where("LFGPost.updatedAt", ">", freshnessCutoff())
+				.where("LFGPost.plusTierVisibility", "is", null),
+	},
+	vocabulary: ({ lift }) => ({
+		/** Fresh posts the actor's plus tier allows, plus all of their own (expired ones stay bumpable). */
+		visibleToActor: () =>
+			lift("hidden", (qb) =>
+				qb.where((eb) => {
+					const viewerId = actorIdOrNull();
+					const fresh = eb("LFGPost.updatedAt", ">", freshnessCutoff());
+					const unrestricted = eb("LFGPost.plusTierVisibility", "is", null);
 
-	return rows
-		.filter((row) =>
-			isVisibleToViewer(
-				{ plusTierVisibility: row.plusTierVisibility, authorId: row.author.id },
-				user,
+					if (viewerId === null) return eb.and([fresh, unrestricted]);
+
+					const viewerPlusTier = eb
+						.selectFrom("PlusTier")
+						.select("PlusTier.tier")
+						.where("PlusTier.userId", "=", viewerId);
+
+					return eb.or([
+						eb("LFGPost.authorId", "=", viewerId),
+						eb.and([
+							fresh,
+							eb.or([
+								unrestricted,
+								eb("LFGPost.plusTierVisibility", ">=", viewerPlusTier),
+							]),
+						]),
+					]);
+				}),
 			),
-		)
-		.map((row) => ({
-			...row,
-			permissions: {
-				EDIT: [row.author.id],
-				DELETE: [row.author.id],
-			},
-		}));
-}
-
-const postExpiryCutoff = () =>
-	sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS });
-
-const isVisibleToViewer = (
-	post: { plusTierVisibility: number | null; authorId: number },
-	viewer?: { id: number; plusTier: number | null },
-) => {
-	if (!post.plusTierVisibility) return true;
-	if (post.authorId === viewer?.id) return true;
-	if (!viewer?.plusTier) return false;
-
-	return post.plusTierVisibility >= viewer.plusTier;
-};
-
-export function insertPost(
-	args: Omit<TablesInsertable["LFGPost"], "updatedAt">,
-) {
-	return db
-		.insertInto("LFGPost")
-		.values(args)
-		.returning("id")
-		.executeTakeFirstOrThrow();
-}
-
-export function updatePost(
-	postId: number,
-	args: Omit<TablesInsertable["LFGPost"], "updatedAt" | "authorId">,
-) {
-	return db
-		.updateTable("LFGPost")
-		.set({
-			teamId: args.teamId,
-			text: args.text,
-			timezone: args.timezone,
-			type: args.type,
-			plusTierVisibility: args.plusTierVisibility,
-			languages: args.languages,
-			updatedAt: dateToDatabaseTimestamp(new Date()),
-		})
-		.where("id", "=", postId)
-		.execute();
-}
-
-export function bumpPost(postId: number) {
-	return db
-		.updateTable("LFGPost")
-		.set({
-			updatedAt: databaseTimestampNow(),
-		})
-		.where("id", "=", postId)
-		.execute();
-}
-
-export function deletePost(id: number) {
-	return db.deleteFrom("LFGPost").where("id", "=", id).execute();
-}
-
-export function deletePostsByTeamId(teamId: number, trx?: Transaction<DB>) {
-	return (trx ?? db)
-		.deleteFrom("LFGPost")
-		.where("teamId", "=", teamId)
-		.execute();
-}
-
-/** Posts of one author, as they are visible to `viewer` on the LFG page (expired ones only to their author). */
-export async function findByAuthorUserId(
-	authorId: number,
-	viewer?: { id: number; plusTier: number | null },
-) {
-	const rows = await db
-		.selectFrom("LFGPost")
-		.select(["id", "type", "plusTierVisibility", "authorId"])
-		.where("authorId", "=", authorId)
-		.where((eb) =>
-			eb.or([
-				eb("updatedAt", ">", dateToDatabaseTimestamp(postExpiryCutoff())),
-				eb("authorId", "=", viewer?.id ?? -1),
+		/** The actor's own posts, expired and restricted ones included. */
+		ownedByActor: () =>
+			lift("hidden", (qb) => qb.where("LFGPost.authorId", "=", actorId())),
+		/** The author with what the post card shows of them. */
+		withAuthor: () =>
+			UserRepository.withUser("author", "LFGPost.authorId", [
+				"plusTier",
+				"country",
+				"languages",
+				"weaponPool",
 			]),
-		)
-		.orderBy("updatedAt", "desc")
-		.execute();
+		/** The team a team post is made for, with its members, `null` for other posts. */
+		withTeam: () =>
+			refine("LFGPost", (qb) =>
+				qb.select((eb) =>
+					jsonObjectFrom(
+						eb
+							.selectFrom("Team")
+							.leftJoin(
+								"UserSubmittedImage",
+								"UserSubmittedImage.id",
+								"Team.avatarImgId",
+							)
+							.select((teamEb) => [
+								"Team.id",
+								"Team.name",
+								concatUserSubmittedImagePrefix(
+									teamEb.ref("UserSubmittedImage.url"),
+								).as("avatarUrl"),
+								jsonArrayFrom(
+									teamEb
+										.selectFrom("TeamMemberWithSecondary")
+										.innerJoin(
+											"User",
+											"User.id",
+											"TeamMemberWithSecondary.userId",
+										)
+										.leftJoin("PlusTier", "PlusTier.userId", "User.id")
+										.select((memberEb) => [
+											...commonUserSelect(memberEb),
+											"User.languages",
+											"User.country",
+											"PlusTier.tier as plusTier",
+											matchProfileWeapons(memberEb).as("weaponPool"),
+										])
+										.whereRef("TeamMemberWithSecondary.teamId", "=", "Team.id"),
+								).as("members"),
+							])
+							.whereRef("Team.id", "=", "LFGPost.teamId"),
+					).as("team"),
+				),
+			),
+		/** The actor's own posts first, then the most recently bumped. */
+		boardOrder: () => {
+			const viewerId = actorIdOrNull();
 
-	return rows
-		.filter((row) => isVisibleToViewer(row, viewer))
-		.map((row) => ({ id: row.id, type: row.type }));
+			return sortedBy(
+				"LFGPost",
+				...(typeof viewerId === "number"
+					? [
+							[
+								(eb: ExpressionBuilder<DB, "LFGPost">) =>
+									eb("LFGPost.authorId", "=", viewerId),
+								"desc",
+							] as const,
+						]
+					: []),
+				["LFGPost.updatedAt", "desc"],
+				["LFGPost.type", "asc"],
+			);
+		},
+		newestFirst: () => sortedBy("LFGPost", ["LFGPost.updatedAt", "desc"]),
+		/** Posts where the author or a team member has one of the weapons (or its variants) in their pool. Coach posts don't show weapons, so they never match. */
+		withParticipantPlaying: (weapons: MainWeaponId[]) =>
+			weapons.length === 0
+				? noop()
+				: participantFilter((eb, userId) =>
+						eb.exists(
+							eb
+								.selectFrom("UserWeaponPool")
+								.select("UserWeaponPool.userId")
+								.where("UserWeaponPool.userId", "=", userId)
+								.where(
+									"UserWeaponPool.weaponSplId",
+									"in",
+									weapons.flatMap(weaponIdToRelated),
+								),
+						),
+					),
+		/** Posts where the author or a team member is in the plus server of `plusTier` or a better one. */
+		withParticipantInPlusTier: (plusTier: number | null) =>
+			plusTier === null
+				? noop()
+				: participantFilter(
+						(eb, userId) =>
+							eb.exists(
+								eb
+									.selectFrom("PlusTier")
+									.select("PlusTier.userId")
+									.where("PlusTier.userId", "=", userId)
+									.where("PlusTier.tier", "<=", plusTier),
+							),
+						{ includingCoachPosts: true },
+					),
+		/** Posts where the author or a team member is one of `userIds`. Coach posts never match. */
+		withParticipantAmong: (userIds: number[] | null) => {
+			if (userIds === null) return noop();
+
+			// not correlated to the post, so SQLite builds the id list's lookup table once per query
+			const listedUserIds = sql<number>`(select "value" from json_each(${JSON.stringify(userIds)}))`;
+
+			return refine("LFGPost", (qb) =>
+				qb
+					.where("LFGPost.type", "!=", "COACH_FOR_TEAM")
+					.where((eb) =>
+						eb.or([
+							eb("LFGPost.authorId", "in", listedUserIds),
+							eb(
+								"LFGPost.teamId",
+								"in",
+								eb
+									.selectFrom("TeamMemberWithSecondary")
+									.select("TeamMemberWithSecondary.teamId")
+									.where("TeamMemberWithSecondary.userId", "in", listedUserIds),
+							),
+						]),
+					),
+			);
+		},
+		inLanguage: (language: UnifiedLanguageCode | null) =>
+			language === null
+				? noop()
+				: refine("LFGPost", (qb) =>
+						qb.where(
+							sql<SqlBool>`${language} in (select "value" from json_each("LFGPost"."languages"))`,
+						),
+					),
+		/** Posts whose timezone's clock is at most `maxHourDifference` hours from the viewer's; no-op while the viewer's timezone is unknown. */
+		inTimezoneWithin: (
+			maxHourDifference: number | null,
+			viewerTimezone: string | null,
+		) =>
+			maxHourDifference === null || viewerTimezone === null
+				? noop()
+				: refine("LFGPost", (qb) =>
+						qb.where(
+							"LFGPost.timezone",
+							"in",
+							timezonesWithinHours(viewerTimezone, maxHourDifference),
+						),
+					),
+	}),
+});
+
+/** Moves the post back to the top of the board: an update with no changes only stamps `updatedAt`. */
+export function bumpById(id: number) {
+	return postsTable.updateById(id, {});
+}
+
+// xxx: why not trigger?
+/** Deletes the posts made for the team, when it is deleted. */
+export function deletePostsByTeamId(teamId: number, trx?: Transaction<DB>) {
+	return postsTable.delete({ teamId }, trx);
+}
+
+function freshnessCutoff() {
+	return dateToDatabaseTimestamp(
+		sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS }),
+	);
+}
+
+// xxx: wut???
+function noop(): Modifier<"LFGPost"> {
+	return {};
+}
+
+type UserIdMatcher = (
+	eb: ExpressionBuilder<DB, any>,
+	userId: Expression<number>,
+) => Expression<SqlBool>;
+
+function participantFilter(
+	matches: UserIdMatcher,
+	{ includingCoachPosts = false } = {},
+) {
+	return refine("LFGPost", (qb) =>
+		qb
+			.$if(!includingCoachPosts, (coachQb) =>
+				coachQb.where("LFGPost.type", "!=", "COACH_FOR_TEAM"),
+			)
+			.where((eb) =>
+				eb.or([
+					matches(eb, eb.ref("LFGPost.authorId")),
+					eb.exists(
+						eb
+							.selectFrom("TeamMemberWithSecondary")
+							.select("TeamMemberWithSecondary.userId")
+							.whereRef("TeamMemberWithSecondary.teamId", "=", "LFGPost.teamId")
+							.where((memberEb) =>
+								matches(
+									memberEb,
+									memberEb.ref("TeamMemberWithSecondary.userId"),
+								),
+							),
+					),
+				]),
+			),
+	);
+}
+
+function weaponIdToRelated(weaponSplId: MainWeaponId) {
+	return mainWeaponIds.filter(
+		(id) => weaponIdToBaseWeaponId(id) === weaponIdToBaseWeaponId(weaponSplId),
+	);
 }

@@ -15,6 +15,7 @@ import * as FriendRepository from "~/features/friends/FriendRepository.server";
 import * as ImageRepository from "~/features/img-upload/ImageRepository.server";
 import * as LeaderboardRepository from "~/features/leaderboards/LeaderboardRepository.server";
 import * as LFGRepository from "~/features/lfg/LFGRepository.server";
+import { LFG } from "~/features/lfg/lfg-constants";
 import * as LiveStreamRepository from "~/features/live-streams/LiveStreamRepository.server";
 import * as MatchProfileRepository from "~/features/match-profile/MatchProfileRepository.server";
 import * as Seasons from "~/features/mmr/core/Seasons";
@@ -55,6 +56,7 @@ import { dateToDatabaseTimestamp, dateToYYYYMMDD } from "~/utils/dates";
 import type { Fixtures } from "./fixtures";
 
 const SEARCH_QUERY = { query: "s", limit: 25 };
+const LFG_TIERED_USERS_COUNT = 8_000;
 
 export interface BenchmarkCase {
 	name: string;
@@ -448,14 +450,37 @@ export function buildCases(fx: Fixtures): {
 		LeaderboardRepository.findSeasonPopularUsersWeapon(sq.season),
 	);
 
-	addStatic("LFGRepository.findAllPosts.anon", () =>
-		LFGRepository.findAllPosts(),
+	addStatic("LFGRepository.posts.board.page", () =>
+		lfgBoard().paginate({ page: 1, size: LFG.POSTS_PER_PAGE }),
 	);
-	add("LFGRepository.findAllPosts.loggedIn", fx.heavyUser, (user) =>
-		LFGRepository.findAllPosts({ id: user.id, plusTier: 1 }),
+	addStatic("LFGRepository.posts.board.allFilters", () =>
+		lfgBoard()
+			.withParticipantPlaying([40, 1000, 2000])
+			.withParticipantInPlusTier(3)
+			// both seasons' users with an accurate tier, the largest list the tier filter passes
+			.withParticipantAmong(
+				Array.from({ length: LFG_TIERED_USERS_COUNT }, (_, i) => i + 1),
+			)
+			.inLanguage("en")
+			.inTimezoneWithin(3, "Europe/Helsinki")
+			.paginate({ page: 1, size: LFG.POSTS_PER_PAGE }),
 	);
-	add("LFGRepository.findByAuthorUserId", fx.lfgAuthorId, (authorId) =>
-		LFGRepository.findByAuthorUserId(authorId),
+	add("LFGRepository.posts.board.containing", fx.lfgPostId, (postId) =>
+		lfgBoard().paginate({
+			page: 1,
+			size: LFG.POSTS_PER_PAGE,
+			containing: postId,
+		}),
+	);
+	add("LFGRepository.posts.authorsPosts", fx.lfgAuthorId, (authorId) =>
+		LFGRepository.posts()
+			.where({ authorId })
+			.visibleToActor()
+			.newestFirst()
+			.execute(),
+	);
+	addStatic("LFGRepository.posts.ownedByActor", () =>
+		LFGRepository.posts().ownedByActor().execute(),
 	);
 
 	add("LiveStreamRepository.findByUserId", fx.heavyUser, (user) =>
@@ -1558,4 +1583,12 @@ function both<A, B>(a: A | null, b: B | null): [A, B] | null {
 	if (a === null || b === null) return null;
 
 	return [a, b];
+}
+
+function lfgBoard() {
+	return LFGRepository.posts()
+		.visibleToActor()
+		.withAuthor()
+		.withTeam()
+		.boardOrder();
 }

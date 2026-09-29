@@ -22,7 +22,7 @@ export const { create } = defineFactory({
 		plusTierVisibility: null,
 		languages: null,
 	}),
-	insert: LFGRepository.insertPost,
+	insert: LFGRepository.insert,
 	applyOptions: async (post, { updatedAt }: Options) => {
 		await backdate("LFGPost", post.id, { updatedAt });
 	},

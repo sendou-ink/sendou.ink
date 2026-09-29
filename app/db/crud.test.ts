@@ -59,6 +59,27 @@ describe("crud", () => {
 		expect(await privateNotes.count(key)).toBe(1);
 	});
 
+	test("updates stamp updatedAt, an update with no values included", async () => {
+		const key = { authorId: authorId(), targetId: targetId() };
+		await privateNotes.insert({ ...key, sentiment: "NEUTRAL", updatedAt: 1 });
+
+		await privateNotes.update(key, {});
+
+		expect((await privateNotes.findOneBy(key))?.updatedAt).toBeGreaterThan(1);
+	});
+
+	test("upsert stamps updatedAt on the row it conflicts with", async () => {
+		const key = { authorId: authorId(), targetId: targetId() };
+		await privateNotes.insert({ ...key, sentiment: "NEUTRAL", updatedAt: 1 });
+
+		await privateNotes.upsert(
+			{ ...key, text: "second", sentiment: "NEUTRAL" },
+			{ conflict: ["authorId", "targetId"], update: ["text"] },
+		);
+
+		expect((await privateNotes.findOneBy(key))?.updatedAt).toBeGreaterThan(1);
+	});
+
 	test("findManyBy treats null as is null and applies limit and orderBy", async () => {
 		await privateNotes.insertMany([
 			{ authorId: authorId(), targetId: targetId(), sentiment: "NEUTRAL" },
@@ -104,6 +125,10 @@ describe("crud", () => {
 		expectTypeOf(crud("UserFriendCode")).not.toHaveProperty("findOneBy");
 		expectTypeOf(crud("Team")).not.toHaveProperty("insert");
 		expectTypeOf(crud("Team")).toHaveProperty("findManyBy");
+
+		expectTypeOf(privateNotes.update)
+			.parameter(1)
+			.not.toHaveProperty("updatedAt");
 
 		const userTable = crud("User");
 		expectTypeOf(userTable.findOneBy).toBeCallableWith({ customUrl: "sendou" });

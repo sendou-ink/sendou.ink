@@ -1,5 +1,8 @@
 import { describe, expect, test } from "vitest";
-import { hourDifferenceBetweenTimezones } from "./timezone";
+import {
+	hourDifferenceBetweenTimezones,
+	timezonesWithinHours,
+} from "./timezone";
 
 describe("hourDifferenceBetweenTimezones", () => {
 	// Pacific/Kiritimati is UTC+14 and Pacific/Honolulu is UTC-10, neither
@@ -18,5 +21,20 @@ describe("hourDifferenceBetweenTimezones", () => {
 				hourDifferenceBetweenTimezones("Asia/Tokyo", "Pacific/Honolulu"),
 			),
 		).toBeLessThanOrEqual(12);
+	});
+});
+
+describe("timezonesWithinHours", () => {
+	test("includes a timezone across the date line when local clock times match", () => {
+		expect(timezonesWithinHours("Pacific/Honolulu", 0)).toContain(
+			"Pacific/Kiritimati",
+		);
+	});
+
+	test("leaves out timezones further away than the limit", () => {
+		const timezones = timezonesWithinHours("Europe/Helsinki", 1);
+
+		expect(timezones).toContain("Europe/Berlin");
+		expect(timezones).not.toContain("Asia/Tokyo");
 	});
 });

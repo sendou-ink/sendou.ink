@@ -162,6 +162,7 @@ export const { deleteById: deleteDateById } = crud("CalendarEventDate");
 ```
 
 - The ops follow the table's keys: `findById`/`updateById`/`deleteById` need a single `id` primary key, `findOneBy` takes a complete unique key and `upsert`'s `conflict` must be one, views get no writes. `findManyBy` requires a `limit`, `update`/`delete` reject an empty filter, `trx` is the last parameter.
+- Updates and upserts stamp `updatedAt` on tables that have one, and the ops don't accept it as a value. An update with no values only stamps it: `LFGRepository.bumpById` is `updateById(id, {})`.
 - `crud` reads are raw table access and don't see chain guards. An entity with guards doesn't re-export them for public reads; internal lookups like an ownership check are fine.
 - A table whose derived rows are kept in sync by app code keeps its hand-written writes (`BuildRepository.insert`/`update` maintain `BuildWeapon.sortValue` and the ability sums).
 - Still hand-written: transactions over several tables, `*Own*` actor scoping, domain errors, aggregate/stats queries and perf-tuned reads.

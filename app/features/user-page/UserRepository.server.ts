@@ -1,4 +1,5 @@
 import type {
+	AliasableExpression,
 	Expression,
 	ExpressionBuilder,
 	NotNull,
@@ -39,6 +40,7 @@ import {
 	customAvatarUrl,
 	jsonArrayFrom,
 	jsonObjectFrom,
+	matchProfileWeapons,
 	tournamentLogoOrNull,
 	userByIdentifierQuery,
 } from "~/utils/kysely.server";
@@ -61,11 +63,14 @@ const USER_EXTRAS = {
 			.selectFrom("PlusTier")
 			.select("PlusTier.tier")
 			.whereRef("PlusTier.userId", "=", "User.id")
-			.$asScalar(),
+			.$asScalar()
+			.$castTo<number | null>(),
 	country: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.country"),
+	languages: (eb: ExpressionBuilder<DB, "User">) => eb.ref("User.languages"),
+	weaponPool: (eb: ExpressionBuilder<DB, "User">) => matchProfileWeapons(eb),
 } satisfies Record<
 	string,
-	(eb: ExpressionBuilder<DB, "User">) => Expression<unknown>
+	(eb: ExpressionBuilder<DB, "User">) => AliasableExpression<unknown>
 >;
 
 type UserExtra = keyof typeof USER_EXTRAS;
@@ -107,10 +112,11 @@ export function withUser<
 						.selectFrom("User")
 						.select((userEb) => [
 							...commonUserSelect(userEb),
+							// aliased as is, so a JSON extra is still recognized as one inside the object
 							...(extras ?? []).map((extra) => {
-								const expression: Expression<unknown> =
+								const expression: AliasableExpression<unknown> =
 									USER_EXTRAS[extra](userEb);
-								return sql`${expression}`.as(extra);
+								return expression.as(extra);
 							}),
 						])
 						.whereRef("User.id", "=", sql.ref(column)),

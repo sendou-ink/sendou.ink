@@ -39,12 +39,9 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 		: null;
 
 	if (data.postId) {
-		await validateCanUpdatePost({
-			postId: data.postId,
-			user,
-		});
+		await validateCanUpdatePost(data.postId);
 
-		await LFGRepository.updatePost(data.postId, {
+		await LFGRepository.updateById(data.postId, {
 			text: data.postText,
 			timezone: data.timezone,
 			type,
@@ -54,7 +51,7 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 				data.languages.length > 0 ? JSON.stringify(data.languages) : null,
 		});
 	} else {
-		await LFGRepository.insertPost({
+		await LFGRepository.insert({
 			text: data.postText,
 			timezone: data.timezone,
 			type,
@@ -69,15 +66,11 @@ export const action = async ({ request }: ActionFunctionArgs) => {
 	return redirect(LFG_PAGE);
 };
 
-const validateCanUpdatePost = async ({
-	postId,
-	user,
-}: {
-	postId: number;
-	user: { id: number; plusTier: number | null };
-}) => {
-	const posts = await LFGRepository.findAllPosts(user);
-	const post = posts.find((candidate) => candidate.id === postId);
+const validateCanUpdatePost = async (postId: number) => {
+	const post = await LFGRepository.posts()
+		.visibleToActor()
+		.where({ id: postId })
+		.executeTakeFirst();
 	errorToastIfFalsy(post, "Post to update not found");
 	requirePermission(post, "EDIT");
 };

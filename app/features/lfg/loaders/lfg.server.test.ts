@@ -2,7 +2,7 @@ import { beforeEach, describe, expect, test } from "vitest";
 import * as LFGPostFactory from "~/db/seed/factories/LFGPostFactory";
 import * as UserFactory from "~/db/seed/factories/UserFactory";
 import type { SerializeFrom } from "~/utils/remix";
-import { wrappedLoader } from "~/utils/Test";
+import { withNoUser, wrappedLoader } from "~/utils/Test";
 import { LFG_PAGE } from "~/utils/urls";
 import * as LFGRepository from "../LFGRepository.server";
 import { LFG } from "../lfg-constants";
@@ -20,8 +20,13 @@ const createPlayerPosts = async () => {
 	}
 };
 
+// the board's order for a logged out visitor, whom the loader is called as
 const orderedPostIds = async () =>
-	(await LFGRepository.findAllPosts()).map((post) => post.id);
+	(
+		await withNoUser(() =>
+			LFGRepository.posts().visibleToActor().boardOrder().execute(),
+		)
+	).map((post) => post.id);
 
 const postIds = (data: SerializeFrom<typeof loader>) =>
 	data.posts.map((post) => post.id);

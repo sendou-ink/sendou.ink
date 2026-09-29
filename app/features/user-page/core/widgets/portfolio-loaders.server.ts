@@ -216,7 +216,9 @@ export const WIDGET_LOADERS = {
 		return VodRepository.findByUserId(userId, 3);
 	},
 	"lfg-posts": async (userId: number) => {
-		return LFGRepository.findByAuthorUserId(userId, getUser());
+		const posts = await authorsPosts(userId).execute();
+
+		return posts.map((post) => ({ id: post.id, type: post.type }));
 	},
 	"top-500-weapons": async (userId: number) => {
 		const placements =
@@ -400,4 +402,11 @@ async function getTop500WeaponsByCategory(
 		weaponIds: categoryWeaponIds.sort((a, b) => a - b),
 		total: category.weaponIds.length,
 	};
+}
+
+function authorsPosts(authorId: number) {
+	return LFGRepository.posts()
+		.where({ authorId })
+		.visibleToActor()
+		.newestFirst();
 }

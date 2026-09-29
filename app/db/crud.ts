@@ -7,6 +7,7 @@ import type {
 	Transaction,
 	Updateable,
 } from "kysely";
+import { databaseTimestampNow } from "~/utils/dates";
 import { SCHEMA } from "./schema.gen";
 import type {
 	ColumnFilter,
@@ -21,17 +22,27 @@ import type {
 import { db } from "./sql";
 import type { DB } from "./tables";
 
+const UPDATED_AT = "updatedAt";
+
 /**
  * Generic single-table operations typed from `tables.ts` plus the generated schema metadata. The
  * ops a table gets follow its keys: `findById`/`updateById`/`deleteById` need a single `id`
- * primary key, `findOneBy`/`upsert` a unique key, and views get no writes. Repositories
- * re-export the ops they want to expose: `export const { deleteById } = crud("Build")`.
+ * primary key, `findOneBy`/`upsert` a unique key, and views get no writes. Updates stamp
+ * `updatedAt` themselves on tables that have one. Repositories re-export the ops they want to
+ * expose: `export const { deleteById } = crud("Build")`.
  */
 export function crud<T extends TableName>(table: T): CrudOps<T> {
 	// the ops are typed per table by CrudOps, the body is table agnostic
 	const executor = (trx?: Transaction<DB>): any => trx ?? db;
 	const primaryKey: readonly string[] = SCHEMA[table].primaryKey;
 	const returnsId = () => primaryKey.length === 1 && primaryKey[0] === "id";
+	const stampsUpdatedAt = (SCHEMA[table].columns as readonly string[]).includes(
+		UPDATED_AT,
+	);
+	const stamped = (values: Record<string, unknown>) =>
+		stampsUpdatedAt
+			? { ...values, [UPDATED_AT]: databaseTimestampNow() }
+			: values;
 
 	const selectWhere = (where: Record<string, unknown>, trx?: Transaction<DB>) =>
 		applyWhere(executor(trx).selectFrom(table), table, where);
@@ -100,11 +111,13 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 					oc
 						.columns(options.conflict)
 						.doUpdateSet((eb: ExpressionBuilder<any, any>) =>
-							Object.fromEntries(
-								options.update.map((column) => [
-									column,
-									eb.ref(`excluded.${column}`),
-								]),
+							stamped(
+								Object.fromEntries(
+									options.update.map((column) => [
+										column,
+										eb.ref(`excluded.${column}`),
+									]),
+								),
 							),
 						),
 				);
@@ -121,7 +134,7 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 		) => {
 			assertNotEmpty(where, "update");
 			const result = await applyWhere(
-				executor(trx).updateTable(table).set(values),
+				executor(trx).updateTable(table).set(stamped(values)),
 				table,
 				where,
 			).executeTakeFirst();
@@ -147,6 +160,12 @@ export function crud<T extends TableName>(table: T): CrudOps<T> {
 
 	return ops as unknown as CrudOps<T>;
 }
+
+/** What an update may set: `updatedAt` is stamped by `crud` itself. */
+type UpdateValues<T extends TableName> = Omit<
+	Updateable<DB[T]>,
+	typeof UPDATED_AT
+>;
 
 type FindManyOptions<Column extends string> = {
 	/** Every list read is bounded. */
@@ -205,7 +224,7 @@ type WriteOps<T extends TableName> = {
 	/** Updates the rows matching `where`, returning how many there were. */
 	update(
 		where: NonEmptyFilter<T>,
-		values: Updateable<DB[T]>,
+		values: UpdateValues<T>,
 		trx?: Transaction<DB>,
 	): Promise<number>;
 	/** Deletes the rows matching `where`, returning how many there were. */
@@ -217,7 +236,7 @@ type WriteOps<T extends TableName> = {
 				values: Insertable<DB[T]>,
 				options: {
 					conflict: UniqueKey<T>;
-					update: ReadonlyArray<keyof Updateable<DB[T]> & string>;
+					update: ReadonlyArray<keyof UpdateValues<T> & string>;
 				},
 				trx?: Transaction<DB>,
 			): Promise<InsertResult<T>>;
@@ -225,10 +244,10 @@ type WriteOps<T extends TableName> = {
 	: unknown) &
 	(HasIdPrimaryKey<T> extends true
 		? {
-				/** Updates the row, returning whether it existed. */
+				/** Updates the row, returning whether it existed. With no values it only stamps `updatedAt`. */
 				updateById(
 					id: number,
-					values: Updateable<DB[T]>,
+					values: UpdateValues<T>,
 					trx?: Transaction<DB>,
 				): Promise<boolean>;
 				/** Deletes the row, returning whether it existed. */

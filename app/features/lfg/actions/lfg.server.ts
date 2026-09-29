@@ -6,25 +6,27 @@ import * as LFGRepository from "../LFGRepository.server";
 import { lfgActionSchema } from "../lfg-schemas";
 
 export const action = async ({ request }: ActionFunctionArgs) => {
-	const user = requireUser();
+	requireUser();
 	const data = await parseRequestPayload({
 		request,
 		schema: lfgActionSchema,
 	});
 
-	const posts = await LFGRepository.findAllPosts(user);
-	const post = posts.find((candidate) => candidate.id === data.id);
+	const post = await LFGRepository.posts()
+		.visibleToActor()
+		.where({ id: data.id })
+		.executeTakeFirst();
 	errorToastIfFalsy(post, "Post not found");
 
 	switch (data._action) {
 		case "DELETE_POST": {
 			requirePermission(post, "DELETE");
-			await LFGRepository.deletePost(data.id);
+			await LFGRepository.deleteById(data.id);
 			break;
 		}
 		case "BUMP_POST": {
 			requirePermission(post, "EDIT");
-			await LFGRepository.bumpPost(data.id);
+			await LFGRepository.bumpById(data.id);
 			break;
 		}
 	}
