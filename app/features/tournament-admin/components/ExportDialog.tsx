@@ -6,6 +6,7 @@ import {
 } from "~/components/elements/ChipRadio";
 import { SendouDialog } from "~/components/elements/Dialog";
 import { useTournament } from "~/features/tournament/tournament-context";
+import * as CheckIn from "~/features/tournament-bracket/core/CheckIn";
 import type { TournamentTeamFull } from "~/features/tournament-bracket/core/Tournament.server";
 import * as CSV from "~/modules/csv";
 import { databaseTimestampToDate } from "~/utils/dates";
@@ -109,14 +110,18 @@ export function ExportDialog({
 		});
 
 	const selectedBracket = tournament.bracketsMeta[bracketIdx];
-	const bracketRequiresOwnCheckIn =
-		selectedBracket.requiresCheckIn && !selectedBracket.isStartingBracket;
+	const checkInBracketIdxs =
+		selectedBracket.requiresCheckIn && !selectedBracket.isStartingBracket
+			? CheckIn.sharedBracketIdxs(
+					bracketIdx,
+					tournament.ctx.settings.bracketProgression,
+				)
+			: null;
 	const teams = scopedAndSortedTeams({
 		teams: allTeams,
 		status,
 		sort,
-		bracketIdx,
-		bracketRequiresOwnCheckIn,
+		checkInBracketIdxs,
 		bracketParticipantIds: new Set(
 			tournament.eligibleTeamIdsOfBracket(bracketIdx),
 		),
@@ -126,8 +131,7 @@ export function ExportDialog({
 		format,
 		fields,
 		captainsOnly: roster === "captains",
-		bracketIdx,
-		bracketRequiresOwnCheckIn,
+		checkInBracketIdxs,
 		checkedInLabel: "Checked in",
 		notCheckedInLabel: "Not checked in",
 	});
@@ -267,15 +271,13 @@ function RadioRow<T extends string>({
 	);
 }
 
+/** `checkInBracketIdxs` null = the bracket uses the event-level check-in */
 function hasActiveCheckIn(
 	team: TournamentTeamFull,
-	bracketIdx: number,
-	bracketRequiresOwnCheckIn: boolean,
+	checkInBracketIdxs: number[] | null,
 ) {
-	if (bracketRequiresOwnCheckIn) {
-		return team.checkIns.some(
-			(checkIn) => checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
-		);
+	if (checkInBracketIdxs) {
+		return CheckIn.isCheckedInToBrackets(team.checkIns, checkInBracketIdxs);
 	}
 
 	const eventLevel = team.checkIns.filter(
@@ -291,15 +293,13 @@ export function scopedAndSortedTeams({
 	teams,
 	status,
 	sort,
-	bracketIdx,
-	bracketRequiresOwnCheckIn,
+	checkInBracketIdxs,
 	bracketParticipantIds,
 }: {
 	teams: TournamentTeamFull[];
 	status: ExportStatus;
 	sort: ExportSort;
-	bracketIdx: number;
-	bracketRequiresOwnCheckIn: boolean;
+	checkInBracketIdxs: number[] | null;
 	bracketParticipantIds: Set<number>;
 }) {
 	const filtered = teams.filter((team) => {
@@ -308,9 +308,9 @@ export function scopedAndSortedTeams({
 		}
 		switch (status) {
 			case "checkedIn":
-				return hasActiveCheckIn(team, bracketIdx, bracketRequiresOwnCheckIn);
+				return hasActiveCheckIn(team, checkInBracketIdxs);
 			case "notCheckedIn":
-				return !hasActiveCheckIn(team, bracketIdx, bracketRequiresOwnCheckIn);
+				return !hasActiveCheckIn(team, checkInBracketIdxs);
 			default:
 				return true;
 		}
@@ -338,8 +338,7 @@ function teamFieldValue(
 	opts: {
 		checkedInLabel: string;
 		notCheckedInLabel: string;
-		bracketIdx: number;
-		bracketRequiresOwnCheckIn: boolean;
+		checkInBracketIdxs: number[] | null;
 	},
 ) {
 	switch (field) {
@@ -350,11 +349,7 @@ function teamFieldValue(
 		case "registeredAt":
 			return databaseTimestampToDate(team.createdAt).toISOString();
 		case "checkInStatus":
-			return hasActiveCheckIn(
-				team,
-				opts.bracketIdx,
-				opts.bracketRequiresOwnCheckIn,
-			)
+			return hasActiveCheckIn(team, opts.checkInBracketIdxs)
 				? opts.checkedInLabel
 				: opts.notCheckedInLabel;
 		case "teamPageUrl":
@@ -385,8 +380,7 @@ function buildContent({
 	format,
 	fields,
 	captainsOnly,
-	bracketIdx,
-	bracketRequiresOwnCheckIn,
+	checkInBracketIdxs,
 	checkedInLabel,
 	notCheckedInLabel,
 }: {
@@ -394,8 +388,7 @@ function buildContent({
 	format: ExportFormat;
 	fields: Set<ExportField>;
 	captainsOnly: boolean;
-	bracketIdx: number;
-	bracketRequiresOwnCheckIn: boolean;
+	checkInBracketIdxs: number[] | null;
 	checkedInLabel: string;
 	notCheckedInLabel: string;
 }) {
@@ -408,8 +401,7 @@ function buildContent({
 	const labelOpts = {
 		checkedInLabel,
 		notCheckedInLabel,
-		bracketIdx,
-		bracketRequiresOwnCheckIn,
+		checkInBracketIdxs,
 	};
 
 	if (format === "csv") {

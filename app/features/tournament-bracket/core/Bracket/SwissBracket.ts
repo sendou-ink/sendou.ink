@@ -319,13 +319,23 @@ export class SwissBracket extends Bracket {
 				.filter((t) => t.droppedOut)
 				.map((t) => t.id);
 
-			// wins against tied, results against dropped out teams don't count
+			// teams that finished their run keep counting so dropping them only moves the teams below up
+			const droppedOutMidRunTeamIds = new Set(
+				teams
+					.filter(
+						(team) =>
+							droppedOutTeams.includes(team.id) && !this.runIsComplete(team),
+					)
+					.map((team) => team.id),
+			);
+
+			// wins against tied, results against teams that dropped out mid-run don't count
 			for (const team of teams) {
-				if (droppedOutTeams.includes(team.id)) continue;
+				if (droppedOutMidRunTeamIds.has(team.id)) continue;
 
 				for (const team2 of teams) {
 					if (team.id === team2.id) continue;
-					if (droppedOutTeams.includes(team2.id)) continue;
+					if (droppedOutMidRunTeamIds.has(team2.id)) continue;
 					if (
 						team.setWins !== team2.setWins ||
 						// check also set losses to account for dropped teams
@@ -473,6 +483,30 @@ export class SwissBracket extends Bracket {
 
 		return this.standingsWithoutNonParticipants(
 			Standings.reNumberPlacements(sorted),
+		);
+	}
+
+	/** Has the team played every round or, with an advance threshold, already advanced or been eliminated? */
+	private runIsComplete({
+		setWins,
+		setLosses,
+	}: {
+		setWins: number;
+		setLosses: number;
+	}) {
+		const roundCount = this.swissRoundCount;
+		if (setWins + setLosses >= roundCount) return true;
+
+		const advanceThreshold = this.settings?.advanceThreshold;
+		if (!advanceThreshold) return false;
+
+		return (
+			calculateTeamStatus({
+				wins: setWins,
+				losses: setLosses,
+				advanceThreshold,
+				roundCount,
+			}) !== "active"
 		);
 	}
 

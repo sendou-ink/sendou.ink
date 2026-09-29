@@ -682,6 +682,94 @@ describe("teamMemberOfProgressStatus with a follow-up bracket check-in", () => {
 	});
 });
 
+describe("follow-up bracket check-in shared between brackets", () => {
+	const DAY_2_START = 1_790_528_400;
+
+	const progressionWithBetaStartingAt = (
+		betaStartTime: number,
+	): Progression.ParsedBracket[] => [
+		{
+			name: "Groups",
+			type: "round_robin",
+			requiresCheckIn: false,
+			settings: {},
+		},
+		{
+			name: "Alpha",
+			type: "single_elimination",
+			requiresCheckIn: true,
+			startTime: DAY_2_START,
+			settings: {},
+			sources: [{ bracketIdx: 0, placements: [1, 2] }],
+		},
+		{
+			name: "Beta",
+			type: "single_elimination",
+			requiresCheckIn: true,
+			startTime: betaStartTime,
+			settings: {},
+			sources: [{ bracketIdx: 0, placements: [3, 4] }],
+		},
+	];
+
+	const alphaAfterMovingBetaTeamThere = (betaStartTime: number) => {
+		const data = Engine.create({
+			type: "round_robin",
+			seeding: [1, 2, 3, 4],
+			settings: { groupCount: 1 },
+		});
+		finishPendingMatches(data);
+		const bracketProgression = progressionWithBetaStartingAt(betaStartTime);
+
+		const betaTeamId = testTournament({
+			data,
+			ctx: { settings: { bracketProgression } },
+		}).bracketByIdx(2)!.teamsPendingCheckIn![0];
+
+		const alpha = testTournament({
+			data,
+			ctx: {
+				settings: { bracketProgression },
+				teams: [1, 2, 3, 4].map((teamId) =>
+					tournamentCtxTeam(teamId, {
+						checkIns: [
+							{ checkedInAt: 1, bracketIdx: null, isCheckOut: 0 },
+							...(teamId === betaTeamId
+								? [{ checkedInAt: 2, bracketIdx: 2, isCheckOut: 0 as const }]
+								: []),
+						],
+					}),
+				),
+				bracketProgressionOverrides: [
+					{
+						sourceBracketIdx: 0,
+						destinationBracketIdx: 1,
+						tournamentTeamId: betaTeamId,
+					},
+				],
+			},
+		}).bracketByIdx(1)!;
+
+		return { alpha, betaTeamId };
+	};
+
+	test("keeps the check-in of a team moved to a bracket starting at the same time", () => {
+		const { alpha, betaTeamId } = alphaAfterMovingBetaTeamThere(DAY_2_START);
+
+		expect(alpha.seeding).toContain(betaTeamId);
+		expect(alpha.teamsPendingCheckIn).not.toContain(betaTeamId);
+	});
+
+	test("requires a new check-in from a team moved to a bracket starting at a different time", () => {
+		const { alpha, betaTeamId } = alphaAfterMovingBetaTeamThere(
+			DAY_2_START + 3600,
+		);
+
+		expect(alpha.seeding).not.toContain(betaTeamId);
+		expect(alpha.teamsPendingCheckIn).toContain(betaTeamId);
+	});
+});
+
 describe("Swiss early advance bracket sourcing", () => {
 	const progressionWithConsolation: Progression.ParsedBracket[] = [
 		{

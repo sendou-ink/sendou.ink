@@ -1,6 +1,7 @@
 import * as R from "remeda";
 import { describe, expect, test } from "vitest";
 import { invariant } from "../../../utils/invariant";
+import type { Standing } from "./Bracket";
 import * as Engine from "./engine";
 import { createResolved } from "./engine/create";
 import type { BracketData, MatchData } from "./engine/types";
@@ -93,43 +94,32 @@ describe("swiss standings - losses against tied", () => {
 		expect(standing.stats?.lossesAgainstTied).toBe(0); // they lost against "Tidy Tidings" but that team dropped out before final round
 	});
 
-	test("ignores a dropped out team with an identical record (losses against tied)", () => {
+	test("counts a dropped out team that finished its run (losses against tied)", () => {
 		const data = Engine.create({
 			type: "swiss",
 			seeding: [1, 2, 3, 4, 5, 6],
 			settings: { groupCount: 1, roundCount: 3 },
 		});
 
-		const playedMatch = (
-			id: number,
-			roundIdx: number,
-			number: number,
-			winnerId: number,
-			loserId: number,
-		): MatchData => ({
-			id,
-			stageId: data.stage[0].id,
-			groupId: data.group[0].id,
-			roundId: data.round[roundIdx].id,
-			number,
-			opponent1: { id: winnerId },
-			opponent2: { id: loserId },
-			winnerSide: "opponent1",
-		});
-
 		// teams 1 and 6 both finish 2-1; team 1's only loss is to team 6,
 		// who dropped out after the swiss ended
-		data.match = [
-			playedMatch(0, 0, 1, 1, 2),
-			playedMatch(1, 0, 2, 3, 4),
-			playedMatch(2, 0, 3, 5, 6),
-			playedMatch(3, 1, 1, 1, 3),
-			playedMatch(4, 1, 2, 2, 5),
-			playedMatch(5, 1, 3, 6, 4),
-			playedMatch(6, 2, 1, 6, 1),
-			playedMatch(7, 2, 2, 3, 5),
-			playedMatch(8, 2, 3, 2, 4),
-		];
+		data.match = playedSwissMatches(data, [
+			[
+				[1, 2],
+				[3, 4],
+				[5, 6],
+			],
+			[
+				[1, 3],
+				[2, 5],
+				[6, 4],
+			],
+			[
+				[6, 1],
+				[3, 5],
+				[2, 4],
+			],
+		]);
 
 		const tournament = testTournament({
 			data,
@@ -155,8 +145,121 @@ describe("swiss standings - losses against tied", () => {
 			?.standings.find((candidate) => candidate.team.id === 1);
 		invariant(standing, "Standing not found");
 
-		expect(standing.stats?.lossesAgainstTied).toBe(0);
+		expect(standing.stats?.lossesAgainstTied).toBe(1);
 	});
+
+	test("dropping out a team that finished its run keeps the order of the other teams", () => {
+		const teamOrderByGroup = (standings: Standing[], excludedTeamId: number) =>
+			R.mapValues(
+				R.groupBy(
+					standings.filter((standing) => standing.team.id !== excludedTeamId),
+					(standing) => String(standing.groupId),
+				),
+				(group) => group.map((standing) => standing.team.id),
+			);
+
+		const standingsBefore = new Tournament(
+			LOW_INK_DECEMBER_2024(),
+		).bracketByIdx(0)!.standings;
+
+		for (const { team } of standingsBefore) {
+			if (team.droppedOut) continue;
+
+			const tournamentData = LOW_INK_DECEMBER_2024();
+			const standingsAfter = new Tournament({
+				...tournamentData,
+				ctx: {
+					...tournamentData.ctx,
+					teams: tournamentData.ctx.teams.map((ctxTeam) =>
+						ctxTeam.id === team.id ? { ...ctxTeam, droppedOut: 1 } : ctxTeam,
+					),
+				},
+			}).bracketByIdx(0)!.standings;
+
+			expect(teamOrderByGroup(standingsAfter, team.id)).toEqual(
+				teamOrderByGroup(standingsBefore, team.id),
+			);
+		}
+	});
+
+	test.each([
+		{
+			why: "finished early via advance threshold",
+			advanceThreshold: 3,
+			expected: 1,
+		},
+		{
+			why: "mid-run without advance threshold",
+			advanceThreshold: undefined,
+			expected: 0,
+		},
+	])(
+		"dropped out team whose run $why (losses against tied)",
+		({ advanceThreshold, expected }) => {
+			const data = Engine.create({
+				type: "swiss",
+				seeding: [1, 2, 3, 4, 5, 6, 7, 8],
+				settings: { groupCount: 1, roundCount: 5 },
+			});
+
+			// teams 3 and 7 are both eliminated at 1-3 after round 4; team 7's only
+			// loss to a tied team is to team 3, who then dropped out
+			data.match = playedSwissMatches(data, [
+				[
+					[1, 5],
+					[2, 6],
+					[3, 7],
+					[4, 8],
+				],
+				[
+					[1, 2],
+					[4, 3],
+					[7, 5],
+					[6, 8],
+				],
+				[
+					[1, 4],
+					[2, 3],
+					[6, 7],
+					[5, 8],
+				],
+				[
+					[4, 2],
+					[6, 3],
+					[5, 7],
+				],
+				[[2, 5]],
+			]);
+
+			const tournament = testTournament({
+				data,
+				ctx: {
+					settings: {
+						bracketProgression: [
+							{
+								type: "swiss",
+								name: "Main Bracket",
+								requiresCheckIn: false,
+								settings: { advanceThreshold },
+							},
+						],
+					},
+					teams: [1, 2, 3, 4, 5, 6, 7, 8].map((teamId) =>
+						tournamentCtxTeam(teamId, { droppedOut: teamId === 3 ? 1 : 0 }),
+					),
+				},
+			});
+
+			const standing = tournament
+				.bracketByIdx(0)
+				?.standings.find((candidate) => candidate.team.id === 7);
+			invariant(standing, "Standing not found");
+
+			expect(standing.stats?.setWins).toBe(1);
+			expect(standing.stats?.setLosses).toBe(3);
+			expect(standing.stats?.lossesAgainstTied).toBe(expected);
+		},
+	);
 
 	const inProgressSwissTestTournament = () => {
 		const data = Engine.create({
@@ -1574,6 +1677,27 @@ describe("single elimination sourcing - placements are tiers", () => {
 		expect(top4Seeding(afterFinal)).toEqual([1, 2, 3, 4, 5, 6, 7, 8]);
 	});
 });
+
+/** Matches of a single group swiss where each round lists its sets as [winnerId, loserId] */
+function playedSwissMatches(
+	data: BracketData,
+	rounds: Array<Array<[winnerId: number, loserId: number]>>,
+): MatchData[] {
+	let id = 0;
+
+	return rounds.flatMap((sets, roundIdx) =>
+		sets.map(([winnerId, loserId], setIdx) => ({
+			id: id++,
+			stageId: data.stage[0].id,
+			groupId: data.group[0].id,
+			roundId: data.round[roundIdx].id,
+			number: setIdx + 1,
+			opponent1: { id: winnerId },
+			opponent2: { id: loserId },
+			winnerSide: "opponent1",
+		})),
+	);
+}
 
 function reportLowerIdWinner(data: BracketData, matchId: number): BracketData {
 	const match = matchById(data, matchId);

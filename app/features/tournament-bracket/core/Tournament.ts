@@ -28,6 +28,7 @@ import { logger } from "~/utils/logger";
 import { assertUnreachable } from "~/utils/types";
 import { groupNumberToLetters } from "../tournament-bracket-utils";
 import { type Bracket, createBracket } from "./Bracket";
+import * as CheckIn from "./CheckIn";
 import { calculateTeamStatus } from "./engine/swiss/team-status";
 import { getRounds } from "./rounds";
 import * as Seeding from "./Seeding";
@@ -617,6 +618,11 @@ export class Tournament {
 		usesRegularCheckIn: boolean;
 		requiresCheckIn: boolean;
 	}) {
+		const sharedCheckInBracketIdxs = CheckIn.sharedBracketIdxs(
+			bracketIdx,
+			this.ctx.settings.bracketProgression,
+		);
+
 		return teams.reduce<{
 			checkedInTeams: number[];
 			notCheckedInTeams: number[];
@@ -632,9 +638,9 @@ export class Tournament {
 						acc.notCheckedInTeams.push(cur);
 					}
 				} else if (requiresCheckIn) {
-					const isCheckedIn = team.checkIns.some(
-						(checkIn) =>
-							checkIn.bracketIdx === bracketIdx && !checkIn.isCheckOut,
+					const isCheckedIn = CheckIn.isCheckedInToBrackets(
+						team.checkIns,
+						sharedCheckInBracketIdxs,
 					);
 
 					if (isCheckedIn) {
