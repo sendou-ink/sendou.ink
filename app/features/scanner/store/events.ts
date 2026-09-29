@@ -32,7 +32,7 @@ export interface SendStatus {
 	error?: string;
 	/** the sendou.ink match /ingest linked the sent match to, when it reported one */
 	link?: IngestedMatchLink;
-	/** how many times the match came back unlinked, set while state is "unlinked" */
+	/** how many sends in a row came back unlinked or failed, set while state is "unlinked" or "failed" */
 	attempts?: number;
 }
 

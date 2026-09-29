@@ -26,11 +26,13 @@ const INGEST_URL = "/ingest";
 const MAX_MATCHES_PER_REQUEST = 50;
 
 /**
- * Retry delays after each unlinked send: a live send usually beats the players
- * to reporting the game, so the first attempts find nothing to link to. Running
- * out gives up — the capture ending still makes one last attempt.
+ * Retry delays after each send in a row that didn't land: a live send usually
+ * beats the players to reporting the game, so the first attempts find nothing
+ * to link to, and a failed one (a deploy's 5xx, a dropped connection) usually
+ * goes through a little later. Running out gives up — the capture ending still
+ * makes one last attempt.
  */
-const UNLINKED_RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
+const RETRY_DELAYS_MS = [30_000, 2 * 60_000, 5 * 60_000];
 
 /** A request sendou.ink hasn't answered by then fails, so a hung one can't hold up the sends queued behind it. */
 const INGEST_TIMEOUT_MS = 30_000;
@@ -97,21 +99,20 @@ export async function sendMatches({
 					state: unlinked ? "unlinked" : "sent",
 					at: Date.now(),
 					...(link ? { link } : null),
-					...(unlinked
-						? {
-								attempts:
-									(aggregateSendStatus(built.sources)?.attempts ?? 0) + 1,
-							}
-						: null),
+					...(unlinked ? { attempts: nextAttempt(built) } : null),
 				});
 			}
 			result.sentMatches += request.length;
 		} catch (err) {
-			await writeSend(request, {
-				state: "failed",
-				at: Date.now(),
-				error: err instanceof Error ? err.message : String(err),
-			});
+			const error = err instanceof Error ? err.message : String(err);
+			for (const built of request) {
+				await writeSend([built], {
+					state: "failed",
+					at: Date.now(),
+					error,
+					attempts: nextAttempt(built),
+				});
+			}
 			result.failedMatches += request.length;
 		}
 		onStatus();
@@ -154,14 +155,12 @@ export function unsentMatches(built: BuiltMatch<ScanEvent>): boolean {
 	});
 }
 
-/** Match selector: matches stored without a game to link to, whose next retry is due. */
-export function retryableUnlinkedMatches(
-	built: BuiltMatch<ScanEvent>,
-): boolean {
+/** Match selector: matches stored without a game to link to, or whose send failed, with their next retry due. */
+export function retryDueMatches(built: BuiltMatch<ScanEvent>): boolean {
 	const status = aggregateSendStatus(built.sources);
-	if (status?.state !== "unlinked") return false;
+	if (status?.state !== "unlinked" && status?.state !== "failed") return false;
 
-	const delay = UNLINKED_RETRY_DELAYS_MS[(status.attempts ?? 1) - 1];
+	const delay = RETRY_DELAYS_MS[(status.attempts ?? 1) - 1];
 	return delay !== undefined && Date.now() - status.at >= delay;
 }
 
@@ -175,6 +174,14 @@ export function unsentClosedMatches(built: BuiltMatch<ScanEvent>): boolean {
 		built.sources.some((e) => SCOREBOARD_EVENT_TYPES.includes(e.type)) &&
 		built.sources.every((e) => e.send === undefined)
 	);
+}
+
+/** The count of sends in a row that didn't land the match, this one included. */
+function nextAttempt(built: BuiltMatch<ScanEvent>): number {
+	const previous = aggregateSendStatus(built.sources);
+	return previous?.state === "unlinked" || previous?.state === "failed"
+		? (previous.attempts ?? 1) + 1
+		: 1;
 }
 
 function currentSendStatus(

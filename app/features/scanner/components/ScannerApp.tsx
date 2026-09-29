@@ -15,7 +15,7 @@ import { refreshClips } from "./clips-feed";
 import { FixturesPage } from "./FixturesPage";
 import { LandingView } from "./LandingView";
 import { LiveView } from "./LiveView";
-import { useLiveSession } from "./live-session";
+import { retryUploadsWhileOpen, useLiveSession } from "./live-session";
 import { MontageView } from "./MontageView";
 import { cancelMontageScan } from "./montage";
 import { PastSessionView } from "./PastSessionView";
@@ -41,6 +41,8 @@ export function ScannerApp() {
 	useEffect(() => {
 		setUploadUser(user ? { id: user.id } : null);
 	}, [user]);
+
+	useEffect(() => retryUploadsWhileOpen(), []);
 
 	useEffect(() => {
 		if (storeSettled) return;

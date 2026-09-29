@@ -56,7 +56,7 @@ import {
 import { type FixtureData, saveFrame } from "./fixture-export";
 import {
 	matchContaining,
-	retryableUnlinkedMatches,
+	retryDueMatches,
 	unsentClosedMatches,
 	unsentMatches,
 } from "./sendou-ingest";
@@ -75,8 +75,8 @@ const SAMPLE_FPS = 2;
  */
 const FRAME_QUEUE_LIMIT = 24;
 
-/** How often a running capture rechecks unlinked matches for a retry (backoff in sendou-ingest.ts). */
-const UNLINKED_RETRY_TICK_MS = 15_000;
+/** How often unlinked and failed matches are rechecked for a retry (backoff in sendou-ingest.ts). */
+const UPLOAD_RETRY_TICK_MS = 15_000;
 
 /** Footage kept for clips: the longest clip plus the wait for its window to close, with margin. */
 const RING_BUFFER_SECONDS = MAX_CLIP_SECONDS + STREAK_MAX_GAP_S + 10;
@@ -285,17 +285,17 @@ export async function startCapture({
 			client?.analyze(bitmap, t);
 		});
 		// a match sent the moment its scoreboard closed usually beats the players to
-		// reporting it, so sendou.ink had nothing to link to; retry those while the
-		// capture runs, along with closed matches whose close-send was never attempted
+		// reporting it, so sendou.ink had nothing to link to; retry those (and
+		// failed sends) while the capture runs, along with closed matches whose
+		// close-send was never attempted
 		retryTimer = setInterval(() => {
 			if (uploadEnabled()) {
 				void sendLive(
-					(built) =>
-						retryableUnlinkedMatches(built) || unsentClosedMatches(built),
+					(built) => retryDueMatches(built) || unsentClosedMatches(built),
 					newestSessionKey(),
 				);
 			}
-		}, UNLINKED_RETRY_TICK_MS);
+		}, UPLOAD_RETRY_TICK_MS);
 		clipTimer = setInterval(clipTick, CLIP_TICK_MS);
 		audioTimer = setInterval(audioCheck, AUDIO_CHECK_MS);
 		unsubscribeFeed = subscribeFeed(clipTick);
@@ -340,6 +340,22 @@ function endCapture(next: LiveSnapshot): void {
 	void trimEvents()
 		.then(() => refreshFeed(0))
 		.catch(() => {});
+}
+
+/**
+ * Retries unlinked and failed uploads while the scanner page is open without
+ * a capture (a running one retries on its own tick), so a backlog flushed at
+ * Stop still relinks. The first pass covers every session not yet compacted,
+ * picking up the retries a closed tab cut short. Returns the stop function.
+ */
+export function retryUploadsWhileOpen(): () => void {
+	if (uploadEnabled()) void sendLive(retryDueMatches, 0);
+	const timer = setInterval(() => {
+		if (!retryTimer && uploadEnabled()) {
+			void sendLive(retryDueMatches, newestSessionKey());
+		}
+	}, UPLOAD_RETRY_TICK_MS);
+	return () => clearInterval(timer);
 }
 
 /** Debug: the current capture frame as a PNG download. */
