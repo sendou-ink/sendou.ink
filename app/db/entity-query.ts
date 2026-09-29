@@ -111,6 +111,11 @@ export function mapRows<
 	return { map: map as (row: any) => Out };
 }
 
+/** Step that leaves the chain as is, for vocabulary words whose filter is switched off. */
+export function unchanged<R extends TableName>(_root: R): Modifier<R> {
+	return {};
+}
+
 type Vocabulary<R extends TableName> = Record<
 	string,
 	(...args: any[]) => Modifier<R, any, any, any>

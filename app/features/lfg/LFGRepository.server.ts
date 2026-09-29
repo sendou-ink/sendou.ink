@@ -7,12 +7,7 @@ import {
 	type Transaction,
 } from "kysely";
 import { crud } from "~/db/crud";
-import {
-	defineQuery,
-	type Modifier,
-	refine,
-	sortedBy,
-} from "~/db/entity-query";
+import { defineQuery, refine, sortedBy, unchanged } from "~/db/entity-query";
 import type { DB } from "~/db/tables";
 import { actorId, actorIdOrNull } from "~/features/auth/core/user.server";
 import * as UserRepository from "~/features/user-page/UserRepository.server";
@@ -172,7 +167,7 @@ export const posts = defineQuery({
 		/** Posts where the author or a team member has one of the weapons (or its variants) in their pool. Coach posts don't show weapons, so they never match. */
 		withParticipantPlaying: (weapons: MainWeaponId[]) =>
 			weapons.length === 0
-				? noop()
+				? unchanged("LFGPost")
 				: participantFilter((eb, userId) =>
 						eb.exists(
 							eb
@@ -189,7 +184,7 @@ export const posts = defineQuery({
 		/** Posts where the author or a team member is in the plus server of `plusTier` or a better one. */
 		withParticipantInPlusTier: (plusTier: number | null) =>
 			plusTier === null
-				? noop()
+				? unchanged("LFGPost")
 				: participantFilter(
 						(eb, userId) =>
 							eb.exists(
@@ -203,7 +198,7 @@ export const posts = defineQuery({
 					),
 		/** Posts where the author or a team member is one of `userIds`. Coach posts never match. */
 		withParticipantAmong: (userIds: number[] | null) => {
-			if (userIds === null) return noop();
+			if (userIds === null) return unchanged("LFGPost");
 
 			// not correlated to the post, so SQLite builds the id list's lookup table once per query
 			const listedUserIds = sql<number>`(select "value" from json_each(${JSON.stringify(userIds)}))`;
@@ -228,7 +223,7 @@ export const posts = defineQuery({
 		},
 		inLanguage: (language: UnifiedLanguageCode | null) =>
 			language === null
-				? noop()
+				? unchanged("LFGPost")
 				: refine("LFGPost", (qb) =>
 						qb.where(
 							sql<SqlBool>`${language} in (select "value" from json_each("LFGPost"."languages"))`,
@@ -240,7 +235,7 @@ export const posts = defineQuery({
 			viewerTimezone: string | null,
 		) =>
 			maxHourDifference === null || viewerTimezone === null
-				? noop()
+				? unchanged("LFGPost")
 				: refine("LFGPost", (qb) =>
 						qb.where(
 							"LFGPost.timezone",
@@ -266,11 +261,6 @@ function freshnessCutoff() {
 	return dateToDatabaseTimestamp(
 		sub(new Date(), { days: LFG.POST_FRESHNESS_DAYS }),
 	);
-}
-
-// xxx: wut???
-function noop(): Modifier<"LFGPost"> {
-	return {};
 }
 
 type UserIdMatcher = (
